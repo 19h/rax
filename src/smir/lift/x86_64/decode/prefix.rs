@@ -136,6 +136,12 @@ pub(crate) struct VecPrefix {
 }
 
 #[derive(Clone, Copy, Debug)]
+pub(crate) enum VecPrefixDecode {
+    Prefix(VecPrefix),
+    InvalidOpcode { bytes_consumed: usize },
+}
+
+#[derive(Clone, Copy, Debug)]
 pub(crate) struct ApxEvexPrefix {
     pub(crate) bytes: usize,
     pub(crate) address_size_override: bool,
@@ -379,7 +385,16 @@ pub(crate) fn vex_pp_to_prefix(pp: u8) -> X86SsePrefix {
     }
 }
 
-pub(crate) fn vec_map_from_bits(map: u8) -> Option<X86VecMap> {
+fn vex_map_from_bits(map: u8) -> Option<X86VecMap> {
+    match map {
+        0x01 => Some(X86VecMap::Map0F),
+        0x02 => Some(X86VecMap::Map0F38),
+        0x03 => Some(X86VecMap::Map0F3A),
+        _ => None,
+    }
+}
+
+fn evex_map_from_bits(map: u8) -> Option<X86VecMap> {
     match map {
         0x01 => Some(X86VecMap::Map0F),
         0x02 => Some(X86VecMap::Map0F38),
@@ -407,7 +422,7 @@ pub(crate) fn build_rex(r: u8, x: u8, b: u8, w: bool) -> Option<u8> {
     if rex == 0x40 { None } else { Some(rex) }
 }
 
-pub(crate) fn decode_vex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
+pub(crate) fn decode_vex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefixDecode, LiftError> {
     if bytes.is_empty() {
         return Err(LiftError::Incomplete {
             addr,
@@ -431,7 +446,7 @@ pub(crate) fn decode_vex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, Li
             let l = (b1 >> 2) & 1;
             let pp = vex_pp_to_prefix(b1 & 0x3);
 
-            Ok(VecPrefix {
+            Ok(VecPrefixDecode::Prefix(VecPrefix {
                 encoding: VecEncodingKind::Vex,
                 map: X86VecMap::Map0F,
                 pp,
@@ -453,7 +468,7 @@ pub(crate) fn decode_vex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, Li
                 address_size_override: false,
                 segment_override: None,
                 bytes: 2,
-            })
+            }))
         }
         0xC4 => {
             if bytes.len() < 3 {
@@ -468,16 +483,28 @@ pub(crate) fn decode_vex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, Li
             let r = ((b1 >> 7) & 1) ^ 1;
             let x = ((b1 >> 6) & 1) ^ 1;
             let b = ((b1 >> 5) & 1) ^ 1;
-            let map = vec_map_from_bits(b1 & 0x1F).ok_or_else(|| LiftError::Unsupported {
-                addr,
-                mnemonic: format!("VEX map 0x{:02X}", b1 & 0x1F),
-            })?;
+            let map_bits = b1 & 0x1F;
+            let Some(map) = vex_map_from_bits(map_bits) else {
+                // Intel SDM Vol. 2A Table 2-10 assigns VEX maps 1, 2, and 3.
+                // Intel ISE 319433-059 also assigns MAP5 opcode FD to
+                // AMX-FP8, but RAX does not enumerate AMX-FP8 or tile state.
+                // The direct decoder consumes the opcode before rejecting all
+                // other maps for this deterministic architectural profile.
+                if bytes.len() < 4 {
+                    return Err(LiftError::Incomplete {
+                        addr,
+                        have: bytes.len(),
+                        need: 4,
+                    });
+                }
+                return Ok(VecPrefixDecode::InvalidOpcode { bytes_consumed: 4 });
+            };
             let w = (b2 >> 7) & 1 != 0;
             let vvvv = (!b2 >> 3) & 0x0F;
             let l = (b2 >> 2) & 1;
             let pp = vex_pp_to_prefix(b2 & 0x3);
 
-            Ok(VecPrefix {
+            Ok(VecPrefixDecode::Prefix(VecPrefix {
                 encoding: VecEncodingKind::Vex,
                 map,
                 pp,
@@ -499,16 +526,16 @@ pub(crate) fn decode_vex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, Li
                 address_size_override: false,
                 segment_override: None,
                 bytes: 3,
-            })
+            }))
         }
-        _ => Err(LiftError::Unsupported {
+        _ => Err(LiftError::InvalidEncoding {
             addr,
-            mnemonic: "VEX prefix".to_string(),
+            bytes: bytes.to_vec(),
         }),
     }
 }
 
-pub(crate) fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
+pub(crate) fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefixDecode, LiftError> {
     if bytes.len() < 4 {
         return Err(LiftError::Incomplete {
             addr,
@@ -530,10 +557,34 @@ pub(crate) fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, L
     let x = ((b1 >> 6) & 1) ^ 1;
     let b = ((b1 >> 5) & 1) ^ 1;
     let map_bits = b1 & 0x07;
-    let map = vec_map_from_bits(map_bits).ok_or_else(|| LiftError::Unsupported {
-        addr,
-        mnemonic: format!("EVEX map 0x{map_bits:02X}"),
-    })?;
+    if map_bits == 4 {
+        // Both entry paths route APX MAP4 before invoking the ordinary EVEX
+        // decoder. Treat a mismatch as an internal dispatch error, not as an
+        // unsupported guest instruction.
+        return Err(LiftError::InvalidEncoding {
+            addr,
+            bytes: bytes.to_vec(),
+        });
+    }
+    let Some(map) = evex_map_from_bits(map_bits) else {
+        // For reserved EVEX maps 0 and 7, malformed standard-EVEX fixed bits
+        // fault immediately after the four-byte prefix. Structurally valid
+        // prefixes reach execute_evex(), which consumes the opcode before it
+        // rejects the map. Limit this structural check to reserved maps:
+        // APX-promoted MAP2/MAP3 encodings repurpose these bit positions and
+        // are validated by their instruction-family lifters.
+        if b1 & 0x08 != 0 || b2 & 0x04 == 0 {
+            return Ok(VecPrefixDecode::InvalidOpcode { bytes_consumed: 4 });
+        }
+        if bytes.len() < 5 {
+            return Err(LiftError::Incomplete {
+                addr,
+                have: bytes.len(),
+                need: 5,
+            });
+        }
+        return Ok(VecPrefixDecode::InvalidOpcode { bytes_consumed: 5 });
+    };
 
     let w = (b2 >> 7) & 1 != 0;
     let vvvv = (!b2 >> 3) & 0x0F;
@@ -548,7 +599,7 @@ pub(crate) fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, L
         _ => VecWidth::V512,
     };
 
-    Ok(VecPrefix {
+    Ok(VecPrefixDecode::Prefix(VecPrefix {
         encoding: VecEncodingKind::Evex,
         map,
         pp,
@@ -566,7 +617,7 @@ pub(crate) fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, L
         address_size_override: false,
         segment_override: None,
         bytes: 4,
-    })
+    }))
 }
 
 pub(crate) fn decode_apx_evex_prefix(bytes: &[u8], addr: u64) -> Result<ApxEvexPrefix, LiftError> {
@@ -614,9 +665,11 @@ pub(crate) fn decode_apx_evex_prefix_for_map(
     let p2 = bytes[evex + 3];
     let mm = p0 & 0x07;
     if mm != expected_mm {
-        return Err(LiftError::Unsupported {
+        // Callers select this helper only after their opcode-map dispatcher
+        // has established the expected APX map.
+        return Err(LiftError::InvalidEncoding {
             addr,
-            mnemonic: format!("EVEX map 0x{mm:02X}"),
+            bytes: bytes.to_vec(),
         });
     }
 

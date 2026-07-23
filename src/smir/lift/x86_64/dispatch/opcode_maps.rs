@@ -178,9 +178,30 @@ impl X86_64Lifter {
             return self.lift_apx_evex_map4(pc, bytes, ctx);
         }
 
-        let mut prefix = match bytes.get(legacy.cursor) {
-            Some(0x62) => decode_evex_prefix(&bytes[legacy.cursor..], pc)?,
-            _ => decode_vex_prefix(&bytes[legacy.cursor..], pc)?,
+        let decoded = (match bytes.get(legacy.cursor) {
+            Some(0x62) => decode_evex_prefix(&bytes[legacy.cursor..], pc),
+            _ => decode_vex_prefix(&bytes[legacy.cursor..], pc),
+        })
+        .map_err(|error| match error {
+            LiftError::Incomplete { addr, have, need } => LiftError::Incomplete {
+                addr,
+                have: legacy.cursor + have,
+                need: legacy.cursor + need,
+            },
+            error => error,
+        })?;
+        let mut prefix = match decoded {
+            VecPrefixDecode::Prefix(prefix) => prefix,
+            VecPrefixDecode::InvalidOpcode { bytes_consumed } => {
+                return Ok(LiftResult {
+                    ops: Vec::new(),
+                    bytes_consumed: legacy.cursor + bytes_consumed,
+                    control_flow: ControlFlow::Trap {
+                        kind: TrapKind::InvalidOpcode,
+                    },
+                    branch_targets: Vec::new(),
+                });
+            }
         };
         prefix.bytes += legacy.cursor;
         prefix.address_size_override = legacy.address_size_override;

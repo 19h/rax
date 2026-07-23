@@ -160,6 +160,8 @@ mod three_dnow;
 #[cfg(test)]
 mod tsx;
 #[cfg(test)]
+mod vector_prefix;
+#[cfg(test)]
 mod vex;
 #[cfg(test)]
 mod vmx_controls;

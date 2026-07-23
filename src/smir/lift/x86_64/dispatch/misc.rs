@@ -28,9 +28,22 @@ impl X86_64Lifter {
         bytes: &[u8],
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        let prefix = match bytes.first().copied() {
+        let decoded = match bytes.first().copied() {
             Some(0x62) => decode_evex_prefix(bytes, pc)?,
             _ => decode_vex_prefix(bytes, pc)?,
+        };
+        let prefix = match decoded {
+            VecPrefixDecode::Prefix(prefix) => prefix,
+            VecPrefixDecode::InvalidOpcode { bytes_consumed } => {
+                return Ok(LiftResult {
+                    ops: Vec::new(),
+                    bytes_consumed,
+                    control_flow: ControlFlow::Trap {
+                        kind: TrapKind::InvalidOpcode,
+                    },
+                    branch_targets: Vec::new(),
+                });
+            }
         };
 
         if prefix.map == X86VecMap::Map0F
