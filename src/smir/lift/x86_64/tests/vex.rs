@@ -65,11 +65,13 @@ fn lift_vex_andn_allows_destination_source_alias_like_llvm() {
 }
 #[test]
 fn lift_vex_andn_rejects_invalid_forms_like_spec() {
-    let err = lift_single(&[0xC4, 0xE2, 0x74, 0xF2, 0xC2]).expect_err("ANDN VEX.L=1");
-    assert!(matches!(err, LiftError::InvalidEncoding { .. }), "{err:?}");
-
-    let err = lift_single(&[0xC4, 0xE2, 0x73, 0xF2, 0xC2]).unwrap_err();
-    assert!(matches!(err, LiftError::Unsupported { .. }), "{err:?}");
+    for bytes in [
+        &[0xC4, 0xE2, 0x74, 0xF2, 0xC2][..], // VEX.L=1
+        &[0xC4, 0xE2, 0x73, 0xF2, 0xC2][..], // reserved F2 prefix
+    ] {
+        let result = lift_single(bytes).expect("reserved ANDN must strictly lift to #UD");
+        assert_invalid_opcode_trap(&result, 4);
+    }
 }
 #[test]
 fn lift_vex_bls_register_alias_and_memory_forms() {
@@ -140,11 +142,12 @@ fn lift_vex_bls_register_alias_and_memory_forms() {
 }
 #[test]
 fn lift_vex_bls_rejects_invalid_group_and_vector_length() {
-    for bytes in [
-        &[0xC4, 0xE2, 0x78, 0xF3, 0xC3][..],
-        &[0xC4, 0xE2, 0x7C, 0xF3, 0xCB][..],
+    for (bytes, expected_len) in [
+        (&[0xC4, 0xE2, 0x78, 0xF3, 0xC3][..], 5),
+        (&[0xC4, 0xE2, 0x7C, 0xF3, 0xCB][..], 4),
     ] {
-        assert!(lift_single(bytes).is_err(), "invalid BLS form {bytes:02X?}");
+        let result = lift_single(bytes).expect("reserved BLS must strictly lift to #UD");
+        assert_invalid_opcode_trap(&result, expected_len);
     }
 }
 #[test]
@@ -225,11 +228,8 @@ fn lift_vex_bzhi_bextr_rejects_invalid_forms_like_spec() {
         (&[0xC4, 0xE2, 0x74, 0xF5, 0xC2][..], "bzhi VEX.L=1"),
         (&[0xC4, 0xE2, 0x74, 0xF7, 0xC2][..], "bextr VEX.L=1"),
     ] {
-        let err = lift_single(bytes).expect_err(name);
-        assert!(
-            matches!(err, LiftError::InvalidEncoding { .. }),
-            "{name}: {err:?}"
-        );
+        let result = lift_single(bytes).unwrap_or_else(|error| panic!("{name}: {error:?}"));
+        assert_invalid_opcode_trap(&result, 4);
     }
 }
 #[test]
@@ -310,15 +310,13 @@ fn lift_vex_pdep_pext_rejects_invalid_l_like_spec() {
         (&[0xC4, 0xE2, 0x77, 0xF5, 0xC2][..], "pdep VEX.L=1"),
         (&[0xC4, 0xE2, 0x76, 0xF5, 0xC2][..], "pext VEX.L=1"),
     ] {
-        let err = lift_single(bytes).expect_err(name);
-        assert!(
-            matches!(err, LiftError::InvalidEncoding { .. }),
-            "{name}: {err:?}"
-        );
+        let result = lift_single(bytes).unwrap_or_else(|error| panic!("{name}: {error:?}"));
+        assert_invalid_opcode_trap(&result, 4);
     }
 
-    let err = lift_single(&[0xC4, 0xE2, 0x71, 0xF5, 0xC2]).unwrap_err();
-    assert!(matches!(err, LiftError::Unsupported { .. }), "{err:?}");
+    let result = lift_single(&[0xC4, 0xE2, 0x71, 0xF5, 0xC2])
+        .expect("reserved 66 PDEP/PEXT cell must strictly lift to #UD");
+    assert_invalid_opcode_trap(&result, 4);
 }
 #[test]
 fn lift_vex_mulx_registers_like_llvm() {
@@ -382,11 +380,13 @@ fn lift_vex_mulx_alias_destination_keeps_high_half_like_spec() {
 }
 #[test]
 fn lift_vex_mulx_rejects_invalid_forms_like_spec() {
-    let err = lift_single(&[0xC4, 0xE2, 0x77, 0xF6, 0xC3]).expect_err("MULX VEX.L=1");
-    assert!(matches!(err, LiftError::InvalidEncoding { .. }), "{err:?}");
-
-    let err = lift_single(&[0xC4, 0xE2, 0x72, 0xF6, 0xC3]).unwrap_err();
-    assert!(matches!(err, LiftError::Unsupported { .. }), "{err:?}");
+    for bytes in [
+        &[0xC4, 0xE2, 0x77, 0xF6, 0xC3][..], // VEX.L=1
+        &[0xC4, 0xE2, 0x72, 0xF6, 0xC3][..], // reserved F3 prefix
+    ] {
+        let result = lift_single(bytes).expect("reserved MULX must strictly lift to #UD");
+        assert_invalid_opcode_trap(&result, 4);
+    }
 }
 #[test]
 fn lift_vex_bmi2_shift_registers_like_llvm() {
@@ -470,11 +470,8 @@ fn lift_vex_bmi2_shift_rejects_invalid_forms_like_spec() {
         (&[0xC4, 0xE2, 0x77, 0xF7, 0xC3][..], "shrx VEX.L=1"),
         (&[0xC4, 0xE2, 0x75, 0xF7, 0xC3][..], "shlx VEX.L=1"),
     ] {
-        let err = lift_single(bytes).expect_err(name);
-        assert!(
-            matches!(err, LiftError::InvalidEncoding { .. }),
-            "{name}: {err:?}"
-        );
+        let result = lift_single(bytes).unwrap_or_else(|error| panic!("{name}: {error:?}"));
+        assert_invalid_opcode_trap(&result, 4);
     }
 }
 #[test]
@@ -531,15 +528,13 @@ fn lift_vex_rorx_rejects_invalid_forms_like_llvm() {
             "rorx reserved vvvv",
         ),
     ] {
-        let err = lift_single(bytes).expect_err(name);
-        assert!(
-            matches!(err, LiftError::InvalidEncoding { .. }),
-            "{name}: {err:?}"
-        );
+        let result = lift_single(bytes).unwrap_or_else(|error| panic!("{name}: {error:?}"));
+        assert_invalid_opcode_trap(&result, 4);
     }
 
-    let err = lift_single(&[0xC4, 0xE3, 0x78, 0xF0, 0xC3, 0x0D]).unwrap_err();
-    assert!(matches!(err, LiftError::Unsupported { .. }), "{err:?}");
+    let result = lift_single(&[0xC4, 0xE3, 0x78, 0xF0, 0xC3, 0x0D])
+        .expect("reserved RORX mandatory prefix must strictly lift to #UD");
+    assert_invalid_opcode_trap(&result, 4);
 
     let err = lift_single(&[0xC4, 0xE3, 0x7B, 0xF0, 0xC3]).unwrap_err();
     assert!(matches!(err, LiftError::Incomplete { .. }), "{err:?}");

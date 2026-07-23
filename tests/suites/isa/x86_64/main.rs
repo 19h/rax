@@ -108,6 +108,8 @@ mod x86_64_bmi_pext;
 mod x86_64_bmi_popcnt;
 #[path = "integer/bmi/rorx.rs"]
 mod x86_64_bmi_rorx;
+#[path = "integer/bmi/rorx_reserved.rs"]
+mod x86_64_bmi_rorx_reserved;
 #[path = "integer/bmi/sarx_shlx_shrx.rs"]
 mod x86_64_bmi_sarx_shlx_shrx;
 #[path = "integer/bmi/sarx_shlx_shrx_extended.rs"]

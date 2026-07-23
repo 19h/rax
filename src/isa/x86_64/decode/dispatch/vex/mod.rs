@@ -129,8 +129,9 @@ impl X86_64Vcpu {
         // for the common AVX instructions. The individual handlers support L=1.
         // We reject EVEX (AVX-512) separately in the EVEX dispatcher.
 
-        // VEX.LZ.F2.0F3A.W{0,1} F0 /r ib (RORX)
-        if m_mmmm == 0x3 && vex_pp == 0x3 && vex_l == 0 && opcode == 0xF0 {
+        // VEX.LZ.F2.0F3A.W{0,1} F0 /r ib (RORX). VEX.vvvv is reserved
+        // encoded as 1111b, which is decoded above to zero.
+        if m_mmmm == 0x3 && vex_pp == 0x3 && vex_l == 0 && vvvv == 0 && opcode == 0xF0 {
             return execute::bmi::rorx(self, ctx);
         }
 

@@ -2524,39 +2524,8 @@ impl X86_64Lifter {
                     self.lift_vex_phminposuw(prefix, bytes, pc, ctx)
                 }
                 0xE0..=0xEF => self.lift_cmpccxadd(prefix, opcode, bytes, pc, ctx),
-                0xF2 if prefix.encoding == VecEncodingKind::Vex
-                    && prefix.pp == X86SsePrefix::None =>
-                {
-                    self.lift_vex_andn_0f38(prefix, bytes, pc, ctx)
-                }
-                0xF3 if prefix.encoding == VecEncodingKind::Vex
-                    && prefix.pp == X86SsePrefix::None =>
-                {
-                    self.lift_vex_bls_0f38(prefix, bytes, pc, ctx)
-                }
-                0xF5 | 0xF7
-                    if prefix.encoding == VecEncodingKind::Vex
-                        && prefix.pp == X86SsePrefix::None =>
-                {
-                    self.lift_vex_bzhi_bextr_0f38(prefix, opcode, bytes, pc, ctx)
-                }
-                0xF5 if prefix.encoding == VecEncodingKind::Vex
-                    && matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne) =>
-                {
-                    self.lift_vex_pdep_pext_0f38(prefix, bytes, pc, ctx)
-                }
-                0xF6 if prefix.encoding == VecEncodingKind::Vex
-                    && prefix.pp == X86SsePrefix::Repne =>
-                {
-                    self.lift_vex_mulx_0f38(prefix, bytes, pc, ctx)
-                }
-                0xF7 if prefix.encoding == VecEncodingKind::Vex
-                    && matches!(
-                        prefix.pp,
-                        X86SsePrefix::OpSize | X86SsePrefix::Rep | X86SsePrefix::Repne
-                    ) =>
-                {
-                    self.lift_vex_bmi2_shift_0f38(prefix, bytes, pc, ctx)
+                0xF2 | 0xF3 | 0xF5 | 0xF6 | 0xF7 if prefix.encoding == VecEncodingKind::Vex => {
+                    self.lift_vex_bmi_0f38(prefix, opcode, bytes, pc, ctx)
                 }
                 0xF2 | 0xF3 | 0xF5 | 0xF6 | 0xF7 if prefix.encoding == VecEncodingKind::Evex => {
                     self.lift_apx_bmi_0f38(opcode, bytes, pc, ctx)
@@ -2629,10 +2598,8 @@ impl X86_64Lifter {
                 0x4A..=0x4C if prefix.encoding == VecEncodingKind::Vex => {
                     self.lift_vex_variable_blend(prefix, opcode, bytes, pc, ctx)
                 }
-                0xF0 if prefix.encoding == VecEncodingKind::Vex
-                    && prefix.pp == X86SsePrefix::Repne =>
-                {
-                    self.lift_vex_bmi2_rorx_0f3a(prefix, bytes, pc, ctx)
+                0xF0 if prefix.encoding == VecEncodingKind::Vex => {
+                    self.lift_vex_bmi2_rorx_dispatch(prefix, bytes, pc, ctx)
                 }
                 0xF0 if prefix.encoding == VecEncodingKind::Evex => {
                     self.lift_apx_bmi_rorx(bytes, pc, ctx)

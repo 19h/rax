@@ -10,3 +10,5 @@ mod vector;
 pub use vector::*;
 mod vex;
 pub use vex::*;
+mod vex_bmi_dispatch;
+pub use vex_bmi_dispatch::*;

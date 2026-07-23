@@ -174,6 +174,8 @@ mod vector_prefix;
 #[cfg(test)]
 mod vex;
 #[cfg(test)]
+mod vex_bmi_reserved;
+#[cfg(test)]
 mod vmx_controls;
 #[cfg(test)]
 mod waitpkg;
