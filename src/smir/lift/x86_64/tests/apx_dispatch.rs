@@ -13,23 +13,47 @@ fn assert_map4_needs_modrm(bytes: &[u8]) {
     ));
 }
 
+fn assert_map4_opcode_ud(bytes: &[u8]) {
+    let result = lift_single(bytes).expect("profile-disabled APX CET form must strictly lift");
+    assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
+    assert!(result.ops.is_empty(), "{bytes:02X?}");
+    assert!(result.branch_targets.is_empty(), "{bytes:02X?}");
+    assert!(matches!(
+        result.control_flow,
+        ControlFlow::Trap {
+            kind: TrapKind::InvalidOpcode
+        }
+    ));
+}
+
 #[test]
 fn non_target_map4_families_preserve_their_modrm_frontier() {
     // Valid ADC without NF still needs /r.
     assert_map4_needs_modrm(&[0x62, 0xF4, 0xBC, 0x18, 0x11]);
 
-    // WRUSS (65 /r) and the F2/F3 F8 families are architecturally valid but
-    // remain independent implementation gaps. Removing the global ModR/M
-    // check for NF-invalid ADC/SBB must not reclassify their frontiers.
-    assert_map4_needs_modrm(&[0x62, 0xF4, 0x7D, 0x08, 0x65]);
+    // A valid APX ADCX still needs /r.
+    assert_map4_needs_modrm(&[0x62, 0xF4, 0xBD, 0x18, 0x66]);
+
+    // F2/F3 F8 families remain independent implementation gaps.
     assert_map4_needs_modrm(&[0x62, 0xF4, 0x7F, 0x08, 0xF8]);
     assert_map4_needs_modrm(&[0x62, 0xF4, 0x7E, 0x08, 0xF8]);
 }
 
 #[test]
-fn valid_unimplemented_map4_families_remain_explicit_fallbacks() {
+fn profile_disabled_apx_cet_forms_are_terminal_at_the_opcode_frontier() {
     for bytes in [
-        &[0x62, 0xF4, 0x7D, 0x08, 0x65, 0x00][..], // WRUSSD [rax],eax
+        &[0x62, 0xF4, 0x7C, 0x08, 0x66][..], // WRSSD
+        &[0x62, 0xF4, 0xFC, 0x08, 0x66][..], // WRSSQ
+        &[0x62, 0xF4, 0x7D, 0x08, 0x65][..], // WRUSSD
+        &[0x62, 0xF4, 0xFD, 0x08, 0x65][..], // WRUSSQ
+    ] {
+        assert_map4_opcode_ud(bytes);
+    }
+}
+
+#[test]
+fn valid_unimplemented_f8_families_remain_explicit_fallbacks() {
+    for bytes in [
         &[0x62, 0xF4, 0x7F, 0x08, 0xF8, 0xC0][..], // URDMSR rax,rax
         &[0x62, 0xF4, 0x7E, 0x08, 0xF8, 0xC0][..], // UWRMSR rax,rax
     ] {

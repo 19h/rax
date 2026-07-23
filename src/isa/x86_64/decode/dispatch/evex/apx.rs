@@ -72,6 +72,14 @@ impl X86_64Vcpu {
             // APX-promoted MOVBE load/store directions.
             0x60 | 0x61 => self.execute_apx_movbe(ctx, opcode),
 
+            // MAP4 65 is WRUSS. MAP4 66 is WRSS unless its prefix fields
+            // select the APX ADCX/ADOX NDD forms. RAX never enumerates CET
+            // shadow stacks, so every WRSS/WRUSS encoding is a static #UD.
+            0x65 => self.inject_invalid_opcode(),
+            0x66 if !ndd || nf || evex.z || !matches!(evex.pp, 1 | 2) => {
+                self.inject_invalid_opcode()
+            }
+
             // APX-promoted POPCNT, with optional NF.
             0x88 => self.execute_apx_count(ctx, opcode),
 

@@ -314,30 +314,25 @@ impl X86_64Lifter {
         self.lift_rao_int_modrm(bytes, &modrm_prefix, pc, ctx, op, width)
     }
 
+    fn apx_adx_opcode_fields_valid(prefix: ApxEvexPrefix) -> bool {
+        prefix.nd && !prefix.nf && !prefix.z && matches!(prefix.pp, 1 | 2)
+    }
+
     pub(crate) fn lift_apx_adx(
         &self,
         prefix: ApxEvexPrefix,
         bytes: &[u8],
-        full_bytes: &[u8],
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        if !prefix.nd || prefix.nf || (full_bytes[prefix.bytes - 1] & 0x80) != 0 {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: full_bytes.to_vec(),
-            });
+        if !Self::apx_adx_opcode_fields_valid(prefix) {
+            return Ok(Self::apx_invalid_opcode(prefix.bytes + 1));
         }
 
         let kind = match prefix.pp {
             1 => X86AdxKind::Adcx,
             2 => X86AdxKind::Adox,
-            _ => {
-                return Err(LiftError::InvalidEncoding {
-                    addr: pc,
-                    bytes: full_bytes.to_vec(),
-                });
-            }
+            _ => unreachable!("validated APX ADX prefix has pp=66 or pp=F3"),
         };
         let width = if prefix.w { OpWidth::W64 } else { OpWidth::W32 };
         let modrm_prefix = prefix.as_modrm_prefix(prefix.bytes + 1);
@@ -1049,10 +1044,13 @@ impl X86_64Lifter {
             && !Self::apx_conditional_opcode_fields_valid(prefix, opcode);
         let fixed_movrs_fields_invalid =
             matches!(opcode, 0x8A | 0x8B) && !Self::apx_movrs_opcode_fields_valid(prefix, opcode);
+        let fixed_adx_fields_invalid = opcode == 0x66 && !Self::apx_adx_opcode_fields_valid(prefix);
         let opcode_is_terminal = nf_carry_opcode
             || opcode == 0x82
+            || opcode == 0x65
             || fixed_conditional_fields_invalid
-            || fixed_movrs_fields_invalid;
+            || fixed_movrs_fields_invalid
+            || fixed_adx_fields_invalid;
         if !opcode_is_terminal && bytes.len() < prefix.bytes + 2 {
             return Err(LiftError::Incomplete {
                 addr: pc,
@@ -1086,7 +1084,10 @@ impl X86_64Lifter {
                 self.lift_apx_conditional_map4(prefix, opcode, &bytes[prefix.bytes + 1..], pc, ctx)
             }
             0x60 | 0x61 => self.lift_apx_movbe(prefix, opcode, &bytes[prefix.bytes + 1..], pc, ctx),
-            0x66 => self.lift_apx_adx(prefix, &bytes[prefix.bytes + 1..], bytes, pc, ctx),
+            // RAX's fixed profile does not enumerate CET shadow stacks, so
+            // MAP4 65 (WRUSS) terminates as #UD without observing ModR/M.
+            0x65 => Ok(Self::apx_invalid_opcode(prefix.bytes + 1)),
+            0x66 => self.lift_apx_adx(prefix, &bytes[prefix.bytes + 1..], pc, ctx),
             0x8A | 0x8B => self.lift_apx_movrs(prefix, opcode, &bytes[prefix.bytes + 1..], pc, ctx),
             0x69 | 0x6B => {
                 self.lift_apx_imul_imm(prefix, opcode, &bytes[prefix.bytes + 1..], pc, ctx)
@@ -1122,7 +1123,7 @@ impl X86_64Lifter {
             }
             _ => {
                 // This fallback still includes valid-but-unimplemented APX
-                // encodings (notably WRUSS and several F8 families). Preserve
+                // encodings (notably several F8 families). Preserve
                 // its historical ModR/M frontier until those opcode classes
                 // are classified and implemented independently.
                 let _ = Self::apx_operand_modrm_byte(prefix, &bytes[prefix.bytes + 1..], pc)?;

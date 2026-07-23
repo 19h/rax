@@ -109,6 +109,15 @@ fn lift_adx_rejects_invalid_forms_like_llvm() {
     for (bytes, name) in [
         (&[0x0F, 0x38, 0xF6, 0xC3][..], "legacy missing prefix"),
         (&[0xF2, 0x0F, 0x38, 0xF6, 0xC3][..], "legacy f2 prefix"),
+    ] {
+        let err = lift_single(bytes).expect_err(name);
+        assert!(
+            matches!(err, LiftError::InvalidEncoding { .. }),
+            "{name}: {err:?}"
+        );
+    }
+
+    for (bytes, name) in [
         (&[0x62, 0xF4, 0xBD, 0x08, 0x66, 0xC3][..], "APX missing ND"),
         (&[0x62, 0xF4, 0xBD, 0x1C, 0x66, 0xC3][..], "APX NF reserved"),
         (&[0x62, 0xF4, 0xBC, 0x18, 0x66, 0xC3][..], "APX pp none"),
@@ -118,10 +127,20 @@ fn lift_adx_rejects_invalid_forms_like_llvm() {
             "APX z bit reserved",
         ),
     ] {
-        let err = lift_single(bytes).expect_err(name);
+        let result = lift_single(bytes).unwrap_or_else(|error| {
+            panic!("{name}: reserved APX ADX form must strictly lift to #UD: {error:?}")
+        });
+        assert_eq!(result.bytes_consumed, 5, "{name}");
+        assert!(result.ops.is_empty(), "{name}");
         assert!(
-            matches!(err, LiftError::InvalidEncoding { .. }),
-            "{name}: {err:?}"
+            matches!(
+                result.control_flow,
+                ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode
+                }
+            ),
+            "{name}: {:?}",
+            result.control_flow
         );
     }
 }

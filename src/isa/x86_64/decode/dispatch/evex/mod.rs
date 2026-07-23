@@ -55,6 +55,9 @@ mod apx_crc32_tests;
 mod apx_count_tests;
 
 #[cfg(test)]
+mod apx_cet_tests;
+
+#[cfg(test)]
 mod apx_movbe_tests;
 
 #[cfg(test)]

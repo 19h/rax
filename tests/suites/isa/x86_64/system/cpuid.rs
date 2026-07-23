@@ -232,8 +232,9 @@ fn test_cpuid_function_7_extended_features() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Leaf 7 subleaf 0: EAX=1 (max subleaf). EBX/ECX/EDX reflect the emulator's
-    // implemented scalar/SIMD/system feature surface. IBT (EDX bit 20) must NOT
-    // be advertised because the emulator does not enforce CET branch tracking.
+    // implemented scalar/SIMD/system feature surface. CET shadow stacks (ECX
+    // bit 7) and IBT (EDX bit 20) must NOT be advertised because the emulator
+    // implements neither CET state machine.
     assert_eq!(regs.rax as u32, 1, "leaf 7 max subleaf");
     assert_eq!(regs.rbx as u32, 0xF1BF072B, "leaf 7 EBX feature mask");
     assert!(
@@ -247,6 +248,11 @@ fn test_cpuid_function_7_extended_features() {
     assert!(regs.rbx as u32 & (1 << 29) != 0, "SHA-NI advertised");
     assert_eq!(regs.rcx as u32, 0x1A405F6E, "leaf 7 ECX feature mask");
     assert!(regs.rcx as u32 & (1 << 2) != 0, "UMIP advertised");
+    assert_eq!(
+        regs.rcx as u32 & (1 << 7),
+        0,
+        "CET shadow stacks must not be advertised"
+    );
     assert_eq!(
         regs.rdx as u32, 0x0080_4000,
         "leaf 7 EDX (SERIALIZE|AVX512FP16)"

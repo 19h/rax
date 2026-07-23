@@ -17,6 +17,8 @@ const MEM_SIZE: u64 = 16 * 1024 * 1024;
 
 #[path = "x86_64/apx_bmi.rs"]
 mod apx_bmi;
+#[path = "x86_64/apx_cet.rs"]
+mod apx_cet;
 #[path = "x86_64/apx_movrs.rs"]
 mod apx_movrs;
 #[path = "x86_64/apx_nf_reserved.rs"]
