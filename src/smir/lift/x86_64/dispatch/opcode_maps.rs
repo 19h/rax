@@ -213,6 +213,7 @@ impl X86_64Lifter {
                 need: prefix.cursor + suffix_offset + 1,
             });
         };
+        let bytes_consumed = prefix.cursor + modrm.bytes_consumed + 1;
         let three_d_now_kind = match suffix {
             0x0C => Some(X86ThreeDNowKind::Pi2Fw),
             0x0D => Some(X86ThreeDNowKind::Pi2Fd),
@@ -238,13 +239,22 @@ impl X86_64Lifter {
             0xB7 => Some(X86ThreeDNowKind::PmulHrw),
             0xBB | 0xBF => None,
             _ => {
-                return Err(LiftError::Unsupported {
-                    addr: pc,
-                    mnemonic: format!("3DNow! suffix 0x{suffix:02X}"),
+                // AMD APM volume 3 revision 3.37 section A.1.2 leaves these
+                // suffixes implementation-specific and explicitly permits an
+                // invalid-opcode exception. RAX's configured direct profile
+                // rejects 0F 0F, so expose that deterministic terminal result
+                // after decoding the complete suffix-selected instruction.
+                return Ok(LiftResult {
+                    ops: Vec::new(),
+                    bytes_consumed,
+                    control_flow: ControlFlow::Trap {
+                        kind: TrapKind::InvalidOpcode,
+                    },
+                    branch_targets: Vec::new(),
                 });
             }
         };
-        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64 + 1;
+        let next_pc = pc + bytes_consumed as u64;
         let mut ops = Vec::new();
         let src = if modrm.is_memory {
             let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
@@ -294,10 +304,7 @@ impl X86_64Lifter {
                 addr: None,
             },
         ));
-        Ok(LiftResult::fallthrough(
-            ops,
-            prefix.cursor + modrm.bytes_consumed + 1,
-        ))
+        Ok(LiftResult::fallthrough(ops, bytes_consumed))
     }
 
     /// Lift 0F-prefixed (two-byte) opcodes

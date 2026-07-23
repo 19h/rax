@@ -16,7 +16,7 @@
 # Keep this sorted by path, then source fragment.
 src/smir/lift/x86_64/decode/prefix.rs|4|mixed-dispatch|LiftError::Unsupported
 src/smir/lift/x86_64/dispatch/legacy.rs|1|mixed-dispatch|LiftError::Unsupported
-src/smir/lift/x86_64/dispatch/opcode_maps.rs|4|mixed-dispatch|LiftError::Unsupported
+src/smir/lift/x86_64/dispatch/opcode_maps.rs|3|mixed-dispatch|LiftError::Unsupported
 src/smir/lift/x86_64/dispatch/vector.rs|4|mixed-dispatch|LiftError::Unsupported
 src/smir/lift/x86_64/mod.rs|1|mixed-dispatch|LiftError::Unsupported
 src/smir/lift/x86_64/simd/evex/misc.rs|1|mixed-dispatch|LiftError::Unsupported

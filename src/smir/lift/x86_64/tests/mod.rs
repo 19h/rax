@@ -154,6 +154,8 @@ mod svm_controls;
 #[cfg(test)]
 mod swapgs;
 #[cfg(test)]
+mod three_dnow;
+#[cfg(test)]
 mod tsx;
 #[cfg(test)]
 mod vex;
