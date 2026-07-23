@@ -6367,7 +6367,7 @@ mod decode_cache_invalidation_tests {
         );
     }
 
-    #[cfg(target_arch = "x86_64")]
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
     #[test]
     fn jit_verifier_replays_a_region_that_exits_at_its_entry_pc() {
         let (mut vcpu, mem) = test_vcpu_with_mem();
@@ -6393,7 +6393,7 @@ mod decode_cache_invalidation_tests {
         assert_eq!(vcpu.regs.rip, 0);
     }
 
-    #[cfg(target_arch = "x86_64")]
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
     #[test]
     fn jit_verifier_ignores_forward_arrival_at_an_internal_backedge_target() {
         let (mut vcpu, mem) = test_vcpu_with_mem();
