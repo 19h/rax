@@ -791,7 +791,7 @@ impl X86_64Vcpu {
                     return self.execute_vperm2f128(ctx, vex_l, vvvv);
                 }
                 // VPBLENDD ymm1/xmm1, ymm2/xmm2, ymm3/m, imm8
-                0x02 => {
+                0x02 if vex_w == 0 => {
                     return self.execute_vex_blendd(ctx, vex_l, vvvv);
                 }
                 // VPBLENDW ymm1/xmm1, ymm2/xmm2, ymm3/m, imm8

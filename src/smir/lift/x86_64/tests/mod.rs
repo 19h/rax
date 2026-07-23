@@ -180,6 +180,8 @@ mod vex_bmi_reserved;
 #[cfg(test)]
 mod vmx_controls;
 #[cfg(test)]
+mod vpblendd;
+#[cfg(test)]
 mod waitpkg;
 #[cfg(test)]
 mod write_control;

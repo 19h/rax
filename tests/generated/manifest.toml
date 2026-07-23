@@ -50,7 +50,7 @@ command = "unknown"
 
 [corpora.x86_64_unimplemented_source_sites]
 output = "tests/generated/x86_64/inventories/unimplemented_source_sites.txt"
-sha256 = "d65dd52aec521d8fadd169afd6c87f38c882fd2c53e84522b38983919fdfc84f"
+sha256 = "9fc50dfacc43fbb816d155ed1611954daa340d58ef8c44944da0f8be1df54fe5"
 generator = "unknown"
 generator_revision = "unknown"
 inputs = "src/isa/x86_64 and src/smir/lift/x86_64; exact scan command unknown"

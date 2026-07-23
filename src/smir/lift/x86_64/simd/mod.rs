@@ -10,5 +10,7 @@ mod vector;
 pub use vector::*;
 mod vex;
 pub use vex::*;
+mod vex_blend;
+pub use vex_blend::*;
 mod vex_bmi_dispatch;
 pub use vex_bmi_dispatch::*;

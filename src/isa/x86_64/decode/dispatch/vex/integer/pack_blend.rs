@@ -302,34 +302,52 @@ impl X86_64Vcpu {
         let xmm_dst = reg as usize;
         let xmm_src1 = vvvv as usize;
 
-        let (src2_lo, src2_hi) = if is_memory {
-            (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+        let src2 = if is_memory {
+            [
+                self.read_mem(addr, 8)?,
+                self.read_mem(addr + 8, 8)?,
+                if vex_l == 1 {
+                    self.read_mem(addr + 16, 8)?
+                } else {
+                    0
+                },
+                if vex_l == 1 {
+                    self.read_mem(addr + 24, 8)?
+                } else {
+                    0
+                },
+            ]
         } else {
-            (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+            [
+                self.regs.xmm[rm as usize][0],
+                self.regs.xmm[rm as usize][1],
+                self.regs.ymm_high[rm as usize][0],
+                self.regs.ymm_high[rm as usize][1],
+            ]
         };
-        let src1_lo = self.regs.xmm[xmm_src1][0];
-        let src1_hi = self.regs.xmm[xmm_src1][1];
+        let src1 = [
+            self.regs.xmm[xmm_src1][0],
+            self.regs.xmm[xmm_src1][1],
+            self.regs.ymm_high[xmm_src1][0],
+            self.regs.ymm_high[xmm_src1][1],
+        ];
+        let dst_lo = [
+            self.blend_dwords(src1[0], src2[0], imm8),
+            self.blend_dwords(src1[1], src2[1], imm8 >> 2),
+        ];
 
-        self.regs.xmm[xmm_dst][0] = self.blend_dwords(src1_lo, src2_lo, imm8);
-        self.regs.xmm[xmm_dst][1] = self.blend_dwords(src1_hi, src2_hi, imm8 >> 2);
-
-        if vex_l == 1 {
-            let (src2_hi2, src2_hi3) = if is_memory {
-                (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
-            } else {
-                (
-                    self.regs.ymm_high[rm as usize][0],
-                    self.regs.ymm_high[rm as usize][1],
-                )
-            };
-            let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
-            let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
-            self.regs.ymm_high[xmm_dst][0] = self.blend_dwords(src1_hi2, src2_hi2, imm8 >> 4);
-            self.regs.ymm_high[xmm_dst][1] = self.blend_dwords(src1_hi3, src2_hi3, imm8 >> 6);
+        let dst_hi = if vex_l == 1 {
+            [
+                self.blend_dwords(src1[2], src2[2], imm8 >> 4),
+                self.blend_dwords(src1[3], src2[3], imm8 >> 6),
+            ]
         } else {
-            self.regs.ymm_high[xmm_dst][0] = 0;
-            self.regs.ymm_high[xmm_dst][1] = 0;
-        }
+            [0; 2]
+        };
+
+        self.regs.xmm[xmm_dst] = dst_lo;
+        self.regs.ymm_high[xmm_dst] = dst_hi;
+        self.regs.zmm_high[xmm_dst] = [0; 4];
 
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
