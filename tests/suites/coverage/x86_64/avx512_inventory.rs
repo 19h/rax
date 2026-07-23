@@ -31,6 +31,8 @@ mod packed_compare_replay;
 mod packed_extend_replay;
 #[path = "avx512_inventory/packed_move_replay.rs"]
 mod packed_move_replay;
+#[path = "avx512_inventory/vector_to_mask_replay.rs"]
+mod vector_to_mask_replay;
 
 use avx512_inventory_data::{
     RAX_EVEX_EXTRA_MNEMONICS_NOT_IN_AVX512_SPEC, RAX_EVEX_SIMD_DIFF_MNEMONICS,

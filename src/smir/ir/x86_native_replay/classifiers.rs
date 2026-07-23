@@ -797,6 +797,41 @@ impl X86InstructionBytes {
         Some(ll != 2)
     }
 
+    /// Validate register-only EVEX VPMOVB2M/W2M/D2M/Q2M and return
+    /// `(needs AVX-512VL, needs AVX-512DQ)`. The byte/word forms require
+    /// AVX-512BW; the native vector-state trampoline already requires that
+    /// feature for full-width opmask marshalling. Every E7NM reserved field,
+    /// including both K-destination extension bits, is checked exactly.
+    pub fn evex_register_vector_to_mask_requirements(&self) -> Option<(bool, bool)> {
+        let bytes = self.as_slice();
+        if bytes.len() != 6 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+
+        // Map 2 (0F38), canonical K0-K7 destination encoding, F3, fixed-one
+        // P1 bit, reserved EVEX.vvvv=1111b, and a register-only source.
+        if p0 & 0x9F != 0x92
+            || p1 & 0x7F != 0x7E
+            || !matches!(opcode, 0x29 | 0x39)
+            || modrm >> 6 != 3
+        {
+            return None;
+        }
+
+        let ll = (p2 >> 5) & 0x03;
+        // EVEX.z/b/aaa are reserved and V' must retain its encoded-one value.
+        if p2 & 0x9F != 0x08 || ll == 3 {
+            return None;
+        }
+
+        Some((ll != 2, opcode == 0x39))
+    }
+
     /// Validate register-only EVEX binary32/binary64 shuffle and unpack
     /// operations and return whether the vector length requires AVX-512VL.
     /// VSHUF* carries an imm8 while VUNPCKL*/VUNPCKH* does not. Memory,

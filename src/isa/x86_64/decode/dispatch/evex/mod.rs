@@ -458,6 +458,145 @@ mod tests {
         }
     }
 
+    #[test]
+    fn evex_vector_to_mask_collects_sign_bits_and_clears_high_mask_bits() {
+        for (opcode, w, elem_size) in [
+            (0x29, false, 1usize),
+            (0x29, true, 2),
+            (0x39, false, 4),
+            (0x39, true, 8),
+        ] {
+            for (ll, vl_bytes) in [(0u8, 16usize), (1, 32), (2, 64)] {
+                let mut source = [0u8; 64];
+                let mut expected = 0u64;
+                for lane in 0..(64 / elem_size) {
+                    let sign_byte = lane * elem_size + elem_size - 1;
+                    source[sign_byte] = ((lane * 37 + elem_size * 11) & 0x7F) as u8;
+                    if lane % 3 != 1 {
+                        source[sign_byte] |= 0x80;
+                        if lane < vl_bytes / elem_size {
+                            expected |= 1u64 << lane;
+                        }
+                    }
+                }
+                let source_qwords = std::array::from_fn(|index| {
+                    u64::from_le_bytes(source[index * 8..index * 8 + 8].try_into().unwrap())
+                });
+
+                for source_reg in [0u8, 8, 16, 24] {
+                    let mut p0 = 0xF2;
+                    if source_reg & 0x08 != 0 {
+                        p0 &= !0x20;
+                    }
+                    if source_reg & 0x10 != 0 {
+                        p0 &= !0x40;
+                    }
+                    let code = [
+                        0x62,
+                        p0,
+                        0x7E | if w { 0x80 } else { 0 },
+                        (ll << 5) | 0x08,
+                        opcode,
+                        0xD8 | (source_reg & 0x07),
+                    ];
+                    let mut vcpu = long_mode_vcpu(&code);
+                    if source_reg < 16 {
+                        let index = source_reg as usize;
+                        vcpu.regs.xmm[index].copy_from_slice(&source_qwords[..2]);
+                        vcpu.regs.ymm_high[index].copy_from_slice(&source_qwords[2..4]);
+                        vcpu.regs.zmm_high[index].copy_from_slice(&source_qwords[4..8]);
+                    } else {
+                        vcpu.regs.zmm_ext[(source_reg - 16) as usize] = source_qwords;
+                    }
+                    vcpu.regs.k = [0xA55A_A55A_A55A_A55A; 8];
+                    let before = vcpu.regs.clone();
+
+                    step_ok(&mut vcpu);
+
+                    assert_eq!(vcpu.regs.k[3], expected, "{code:02X?}");
+                    for index in 0..8 {
+                        if index != 3 {
+                            assert_eq!(
+                                vcpu.regs.k[index], before.k[index],
+                                "{code:02X?}, k{index}"
+                            );
+                        }
+                    }
+                    assert_eq!(vcpu.regs.xmm, before.xmm, "{code:02X?}: XMM state");
+                    assert_eq!(
+                        vcpu.regs.ymm_high, before.ymm_high,
+                        "{code:02X?}: YMM state"
+                    );
+                    assert_eq!(
+                        vcpu.regs.zmm_high, before.zmm_high,
+                        "{code:02X?}: ZMM state"
+                    );
+                    assert_eq!(vcpu.regs.zmm_ext, before.zmm_ext, "{code:02X?}: ZMM16-31");
+                    assert_eq!(vcpu.regs.rflags, before.rflags, "{code:02X?}: flags");
+                    assert_eq!(vcpu.regs.rip, CODE + 6, "{code:02X?}: RIP");
+                }
+            }
+        }
+    }
+
+    fn assert_evex_vector_to_mask_reserved_ud(code: &[u8]) {
+        let mut vcpu = long_mode_vcpu(code);
+        vcpu.regs.zmm_ext[0] = [
+            0x807F_FF00_0123_FEDC,
+            0x1122_3344_5566_7788,
+            0x99AA_BBCC_DDEE_FF00,
+            0x0123_4567_89AB_CDEF,
+            0xFEDC_BA98_7654_3210,
+            0x8000_0000_0000_0001,
+            0x7FFF_FFFF_FFFF_FFFF,
+            0xFFFF_0000_AAAA_5555,
+        ];
+        vcpu.regs.k =
+            std::array::from_fn(|index| 0xA55A_3CC3_F00F_9669u64.rotate_left((index * 7) as u32));
+        let before = vcpu.regs.clone();
+
+        let error = match vcpu.step() {
+            Err(error) => error,
+            Ok(exit) => {
+                panic!("reserved EVEX vector-to-mask form committed: {code:02X?}: {exit:?}")
+            }
+        };
+        assert!(
+            format!("{error:?}").contains("IDT entry 6 not present"),
+            "wrong exception for {code:02X?}: {error:?}"
+        );
+        assert_eq!(vcpu.regs.rip, before.rip, "{code:02X?}: fault RIP");
+        assert_eq!(vcpu.regs.xmm, before.xmm, "{code:02X?}: XMM state");
+        assert_eq!(
+            vcpu.regs.ymm_high, before.ymm_high,
+            "{code:02X?}: YMM state"
+        );
+        assert_eq!(
+            vcpu.regs.zmm_high, before.zmm_high,
+            "{code:02X?}: ZMM state"
+        );
+        assert_eq!(vcpu.regs.zmm_ext, before.zmm_ext, "{code:02X?}: ZMM16-31");
+        assert_eq!(vcpu.regs.k, before.k, "{code:02X?}: opmask state");
+        assert_eq!(vcpu.regs.rflags, before.rflags, "{code:02X?}: flags");
+    }
+
+    #[test]
+    fn evex_vector_to_mask_reserved_fields_raise_precise_ud() {
+        for code in [
+            &[0x62, 0xF2, 0x76, 0x08, 0x29, 0xD8][..], // EVEX.vvvv != 1111b
+            &[0x62, 0xF2, 0x7E, 0x00, 0x29, 0xD8],     // EVEX.V' is reserved
+            &[0x62, 0xF2, 0x7E, 0x09, 0x29, 0xD8],     // writemask is forbidden
+            &[0x62, 0xF2, 0x7E, 0x88, 0x29, 0xD8],     // EVEX.z is reserved
+            &[0x62, 0xF2, 0x7E, 0x18, 0x29, 0xD8],     // EVEX.b is reserved
+            &[0x62, 0xF2, 0x7E, 0x68, 0x29, 0xD8],     // L'L=3 is reserved
+            &[0x62, 0xF2, 0x7E, 0x08, 0x29, 0x18],     // memory source is forbidden
+            &[0x62, 0x72, 0x7E, 0x08, 0x29, 0xD8],     // extended K destination via R
+            &[0x62, 0xE2, 0x7E, 0x08, 0x29, 0xD8],     // extended K destination via R'
+        ] {
+            assert_evex_vector_to_mask_reserved_ud(code);
+        }
+    }
+
     fn enable_paging_for_wrapped_stack_test(vcpu: &mut X86_64Vcpu) {
         const PRESENT_WRITABLE: u64 = 0x3;
         const HUGE_PAGE: u64 = 0x80;
