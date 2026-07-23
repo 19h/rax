@@ -458,6 +458,7 @@ impl X86_64Vcpu {
                 let es = if evex.w { 8 } else { 4 };
                 execute::simd::evex_broadcast_gpr(self, ctx, es)
             }
+            0x7A..=0x7C => self.inject_undefined_instruction(),
 
             // FP32/FP64 FMA 132/213/231 packed and scalar families.
             0x96..=0x9F | 0xA6..=0xAF | 0xB6..=0xBF if evex.pp == 1 => {

@@ -862,10 +862,10 @@ impl X86_64Lifter {
             ..X86Prefix::default()
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
-        if (memory_only && !modrm.is_memory)
-            || (gpr_source && modrm.is_memory)
-            || (gpr_source && prefix.rm_high)
-        {
+        // Intel SDM Table 2-41 defines EVEX.X as ignored when ModR/M.r/m is a
+        // GPR. `decode_modrm` uses EVEX.B for GPR bit 3; do not treat X as a
+        // nonexistent bit-4 GPR extension for the GPR-source broadcast forms.
+        if (memory_only && !modrm.is_memory) || (gpr_source && modrm.is_memory) {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes.to_vec(),

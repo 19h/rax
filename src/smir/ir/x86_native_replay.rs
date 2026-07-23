@@ -493,6 +493,19 @@ pub fn x86_evex_narrow_broadcast_replay_spans(
     })
 }
 
+/// Identify valid EVEX GPR-source integer broadcast replay groups in `block`
+/// in O(N) time and O(P) space for N operations and P unique guest PCs.
+pub fn x86_evex_gpr_broadcast_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_gpr_broadcast_needs_vl()
+            .map(|needs_vl| (needs_vl, false, false))
+    })
+}
+
 /// Identify every validated native EVEX replay group in one O(N)-time,
 /// O(P)-space block pass. Classifiers are intentionally disjoint and ordered
 /// explicitly so adding a replay family does not add another scan of the SMIR
@@ -639,6 +652,11 @@ pub fn x86_evex_native_replay_spans(
             .or_else(|| {
                 instruction
                     .evex_register_narrow_broadcast_needs_vl()
+                    .map(|needs_vl| (needs_vl, false, false))
+            })
+            .or_else(|| {
+                instruction
+                    .evex_register_gpr_broadcast_needs_vl()
                     .map(|needs_vl| (needs_vl, false, false))
             })
     })

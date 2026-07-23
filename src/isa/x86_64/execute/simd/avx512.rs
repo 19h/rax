@@ -2297,7 +2297,7 @@ impl ShuffleImmKind {
     }
 }
 
-fn apply_evex_mask(
+pub(super) fn apply_evex_mask(
     vcpu: &X86_64Vcpu,
     evex: &crate::isa::x86_64::cpu::EvexPrefix,
     dest: u8,
@@ -2324,7 +2324,7 @@ fn apply_evex_mask(
 }
 
 #[inline]
-fn evex_reg_vec(evex: &crate::isa::x86_64::cpu::EvexPrefix, reg: u8) -> u8 {
+pub(super) fn evex_reg_vec(evex: &crate::isa::x86_64::cpu::EvexPrefix, reg: u8) -> u8 {
     (reg & 0x07) | if evex.r { 0 } else { 8 } | if evex.r_prime { 0 } else { 16 }
 }
 
@@ -2339,12 +2339,12 @@ fn evex_rm_vec(evex: &crate::isa::x86_64::cpu::EvexPrefix, rm: u8) -> u8 {
 }
 
 #[inline]
-fn evex_rm_gpr(evex: &crate::isa::x86_64::cpu::EvexPrefix, rm: u8) -> u8 {
+pub(super) fn evex_rm_gpr(evex: &crate::isa::x86_64::cpu::EvexPrefix, rm: u8) -> u8 {
     (rm & 0x07) | if evex.b { 0 } else { 8 }
 }
 
 #[inline]
-fn scalar_low_bytes(value: u64, elem_size: usize) -> [u8; 8] {
+pub(super) fn scalar_low_bytes(value: u64, elem_size: usize) -> [u8; 8] {
     let mut bytes = [0u8; 8];
     bytes[..elem_size].copy_from_slice(&value.to_le_bytes()[..elem_size]);
     bytes
@@ -6494,42 +6494,6 @@ pub fn evex_broadcast(
 
     write_vec_vl(vcpu, dest, vl_bytes, &result);
 
-    vcpu.regs.rip += ctx.cursor as u64;
-    Ok(None)
-}
-
-/// EVEX VPBROADCASTB/W/D/Q GPR-source forms (0F38.7A/7B/7C).
-pub fn evex_broadcast_gpr(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-    elem_size: usize,
-) -> Result<Option<VcpuExit>> {
-    let evex = ctx
-        .evex
-        .ok_or_else(|| Error::Emulator("EVEX GPR broadcast requires EVEX prefix".to_string()))?;
-
-    let (reg, rm, is_memory, _, _) = vcpu.decode_modrm(ctx)?;
-    if is_memory {
-        return Err(Error::Emulator(
-            "EVEX GPR broadcast requires register source".to_string(),
-        ));
-    }
-
-    let dest = evex_reg_vec(&evex, reg);
-    let src = evex_rm_gpr(&evex, rm);
-    let vl_bytes = vl_bytes_of(evex.ll);
-    let num_elems = vl_bytes / elem_size;
-    let source_size = if elem_size == 8 { 8 } else { 4 };
-    let elem = scalar_low_bytes(vcpu.get_reg(src, source_size), elem_size);
-
-    let mut raw = [0u8; 64];
-    for lane in 0..num_elems {
-        let base = lane * elem_size;
-        raw[base..base + elem_size].copy_from_slice(&elem[..elem_size]);
-    }
-
-    let result = apply_evex_mask(vcpu, &evex, dest, vl_bytes, elem_size, &raw);
-    write_vec_vl(vcpu, dest, vl_bytes, &result);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

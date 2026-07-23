@@ -23,6 +23,8 @@ mod avx512_inventory_data;
 #[path = "../../../support/x86_64/avx512_spec.rs"]
 mod avx512_spec;
 
+#[path = "avx512_inventory/gpr_broadcast_replay.rs"]
+mod gpr_broadcast_replay;
 #[path = "avx512_inventory/lane_shuffle_replay.rs"]
 mod lane_shuffle_replay;
 #[path = "avx512_inventory/mask_blend_replay.rs"]

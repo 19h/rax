@@ -195,3 +195,96 @@ fn lift_load_broadcasts_cover_scalar_tuple_gpr_masks_compressed_disp_and_invalid
         );
     }
 }
+
+fn gpr_broadcast_encoding(
+    opcode: u8,
+    w: bool,
+    ll: u8,
+    destination: u8,
+    source: u8,
+    ignored_x: bool,
+) -> [u8; 6] {
+    assert!(destination < 32 && source < 16 && ll < 3);
+    let mut p0 = 0xF2;
+    if destination & 0x08 != 0 {
+        p0 &= !0x80;
+    }
+    if destination & 0x10 != 0 {
+        p0 &= !0x10;
+    }
+    if source & 0x08 != 0 {
+        p0 &= !0x20;
+    }
+    if ignored_x {
+        p0 &= !0x40;
+    }
+    [
+        0x62,
+        p0,
+        0x7D | if w { 0x80 } else { 0 },
+        (ll << 5) | 0x08,
+        opcode,
+        0xC0 | ((destination & 0x07) << 3) | (source & 0x07),
+    ]
+}
+
+#[test]
+fn lift_gpr_broadcasts_cover_all_widths_extensions_and_ignored_x() {
+    for (opcode, w, elem) in [
+        (0x7A, false, VecElementType::I8),
+        (0x7B, false, VecElementType::I16),
+        (0x7C, false, VecElementType::I32),
+        (0x7C, true, VecElementType::I64),
+    ] {
+        for (ll, width) in [
+            (0u8, VecWidth::V128),
+            (1, VecWidth::V256),
+            (2, VecWidth::V512),
+        ] {
+            for destination in [1u8, 9, 17, 25] {
+                for source in [0u8, 4, 5, 8, 12, 13, 15] {
+                    for ignored_x in [false, true] {
+                        let bytes =
+                            gpr_broadcast_encoding(opcode, w, ll, destination, source, ignored_x);
+                        let lifted = lift_single(&bytes).unwrap_or_else(|error| {
+                            panic!("failed to lift {bytes:02X?}: {error:?}")
+                        });
+                        assert_eq!(lifted.bytes_consumed, bytes.len(), "{bytes:02X?}");
+                        assert!(
+                            lifted.ops.iter().any(|op| matches!(
+                                op.kind,
+                                OpKind::VBroadcast {
+                                    scalar: VReg::Arch(ArchReg::X86(actual_source)),
+                                    elem: actual_elem,
+                                    lanes,
+                                    ..
+                                } if actual_source == X86Reg::gpr(source)
+                                    && actual_elem == elem
+                                    && lanes == width.lanes(elem) as u8
+                            )),
+                            "{bytes:02X?}: missing exact GPR broadcast"
+                        );
+                        let expected_destination = match ll {
+                            0 => X86Reg::Xmm(destination),
+                            1 => X86Reg::Ymm(destination),
+                            2 => X86Reg::Zmm(destination),
+                            _ => unreachable!(),
+                        };
+                        assert!(
+                            lifted.ops.iter().any(|op| matches!(
+                                op.kind,
+                                OpKind::VMov {
+                                    dst: VReg::Arch(ArchReg::X86(actual_destination)),
+                                    width: actual_width,
+                                    ..
+                                } if actual_destination == expected_destination
+                                    && actual_width == width
+                            )),
+                            "{bytes:02X?}: missing exact destination write"
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
