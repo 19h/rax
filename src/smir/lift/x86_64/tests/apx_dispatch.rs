@@ -77,9 +77,8 @@ fn non_target_map4_families_preserve_their_modrm_frontier() {
     // A valid APX ADCX still needs /r.
     assert_map4_needs_modrm(&[0x62, 0xF4, 0xBD, 0x18, 0x66]);
 
-    // F2/F3 F8 families remain independent implementation gaps.
-    assert_map4_needs_modrm(&[0x62, 0xF4, 0x7F, 0x08, 0xF8]);
-    assert_map4_needs_modrm(&[0x62, 0xF4, 0x7E, 0x08, 0xF8]);
+    // The profile-supported 66 F8 MOVDIR64B form still needs /r.
+    assert_map4_needs_modrm(&[0x62, 0xF4, 0x7D, 0x08, 0xF8]);
 }
 
 #[test]
@@ -91,6 +90,28 @@ fn profile_disabled_apx_cet_forms_are_terminal_at_the_opcode_frontier() {
         &[0x62, 0xF4, 0xFD, 0x08, 0x65][..], // WRUSSQ
     ] {
         assert_map4_opcode_ud(bytes);
+    }
+}
+
+#[test]
+fn profile_disabled_apx_f8_forms_are_terminal_at_the_opcode_frontier() {
+    for (opcode_only, with_modrm) in [
+        (
+            &[0x62, 0xF4, 0x7C, 0x08, 0xF8][..],
+            &[0x62, 0xF4, 0x7C, 0x08, 0xF8, 0x00][..],
+        ), // NP: unassigned
+        (
+            &[0x62, 0xF4, 0x7F, 0x08, 0xF8][..],
+            &[0x62, 0xF4, 0x7F, 0x08, 0xF8, 0x00][..],
+        ), // F2: ENQCMD or URDMSR; ENQCMD and USER_MSR are absent
+        (
+            &[0x62, 0xF4, 0x7E, 0x08, 0xF8][..],
+            &[0x62, 0xF4, 0x7E, 0x08, 0xF8, 0xC0][..],
+        ), // F3: ENQCMDS or UWRMSR; ENQCMD and USER_MSR are absent
+    ] {
+        assert_map4_opcode_ud(opcode_only);
+        let result = lift_single(with_modrm).expect("profile-disabled F8 must strictly lift");
+        assert_invalid_opcode_trap(&result, 5);
     }
 }
 
@@ -131,17 +152,4 @@ fn rex2_lea_remains_available_in_legacy_map0() {
             ..
         }] if *dst == x86_gpr(16) && *base == x86_gpr(3)
     ));
-}
-
-#[test]
-fn valid_unimplemented_f8_families_remain_explicit_fallbacks() {
-    for bytes in [
-        &[0x62, 0xF4, 0x7F, 0x08, 0xF8, 0xC0][..], // URDMSR rax,rax
-        &[0x62, 0xF4, 0x7E, 0x08, 0xF8, 0xC0][..], // UWRMSR rax,rax
-    ] {
-        assert!(matches!(
-            lift_single(bytes),
-            Err(LiftError::Unsupported { .. })
-        ));
-    }
 }

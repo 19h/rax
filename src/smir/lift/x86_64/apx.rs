@@ -1045,13 +1045,16 @@ impl X86_64Lifter {
         let fixed_movrs_fields_invalid =
             matches!(opcode, 0x8A | 0x8B) && !Self::apx_movrs_opcode_fields_valid(prefix, opcode);
         let fixed_adx_fields_invalid = opcode == 0x66 && !Self::apx_adx_opcode_fields_valid(prefix);
+        let f8_is_terminal = opcode == 0xF8
+            && (prefix.pp != 1 || prefix.w || !Self::apx_movdir_fields_valid(prefix));
         let opcode_is_terminal = !Self::apx_map4_opcode_is_assigned(opcode)
             || nf_carry_opcode
             || opcode == 0x82
             || opcode == 0x65
             || fixed_conditional_fields_invalid
             || fixed_movrs_fields_invalid
-            || fixed_adx_fields_invalid;
+            || fixed_adx_fields_invalid
+            || f8_is_terminal;
         if !opcode_is_terminal && bytes.len() < prefix.bytes + 2 {
             return Err(LiftError::Incomplete {
                 addr: pc,
@@ -1101,19 +1104,12 @@ impl X86_64Lifter {
                 self.lift_apx_crc32(prefix, opcode, &bytes[prefix.bytes + 1..], bytes, pc, ctx)
             }
             0xF2 => self.lift_apx_invpcid(prefix, &bytes[prefix.bytes + 1..], bytes, pc, ctx),
-            0xF8 if prefix.pp == 1 => {
-                self.lift_apx_movdir64b(prefix, &bytes[prefix.bytes + 1..], bytes, pc, ctx)
+            0xF8 if prefix.pp == 1 && !prefix.w && Self::apx_movdir_fields_valid(prefix) => {
+                self.lift_apx_movdir64b(prefix, &bytes[prefix.bytes + 1..], pc, ctx)
             }
-            0xF8 => {
-                // The remaining F8 encodings share ENQCMD/ENQCMDS and
-                // URDMSR/UWRMSR. Retain their ModR/M frontier until that
-                // assigned opcode family is classified independently.
-                let _ = Self::apx_operand_modrm_byte(prefix, &bytes[prefix.bytes + 1..], pc)?;
-                Err(LiftError::Unsupported {
-                    addr: pc,
-                    mnemonic: "APX MAP4 F8 family".to_string(),
-                })
-            }
+            // NP is unassigned. F2/F3 select ENQCMD/ENQCMDS or
+            // URDMSR/UWRMSR, but RAX advertises neither ENQCMD nor USER_MSR.
+            0xF8 => Ok(Self::apx_invalid_opcode(prefix.bytes + 1)),
             0xF9 => self.lift_apx_movdiri(prefix, &bytes[prefix.bytes + 1..], bytes, pc, ctx),
             0xFC => self.lift_apx_rao_int(prefix, &bytes[prefix.bytes + 1..], bytes, pc, ctx),
             0xF6 | 0xF7 => {

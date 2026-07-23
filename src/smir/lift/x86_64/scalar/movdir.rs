@@ -7,6 +7,17 @@ use crate::smir::ir::types::*;
 use crate::smir::lift::{LiftContext, LiftError, LiftResult};
 
 impl X86_64Lifter {
+    fn movdir_invalid_opcode(bytes_consumed: usize) -> LiftResult {
+        LiftResult {
+            ops: Vec::new(),
+            bytes_consumed,
+            control_flow: ControlFlow::Trap {
+                kind: TrapKind::InvalidOpcode,
+            },
+            branch_targets: Vec::new(),
+        }
+    }
+
     /// Lift legacy MOVDIRI m32,r32 / m64,r64 (0F 38 F9 /r).
     pub(crate) fn lift_movdiri_0f38(
         &self,
@@ -57,21 +68,19 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        // 66 is mandatory. F2/F3 are refining-prefix conflicts, and neither
-        // LOCK nor the legacy REX2 encoding defines a MOVDIR64B form.
+        // RAX does not enumerate ENQCMD, so F2/F3 F8 terminate as #UD. 66 is
+        // mandatory for MOVDIR64B; neither LOCK nor legacy REX2 defines a form.
+        // All of these outcomes are known at the opcode frontier.
         if prefix.lock
             || !prefix.operand_size_override
             || prefix.rep_prefix.is_some()
             || prefix.rex2.is_some()
         {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: bytes.to_vec(),
-            });
+            return Ok(Self::movdir_invalid_opcode(prefix.cursor));
         }
 
         let modrm = decode_modrm(bytes, prefix, pc)?;
-        self.lift_movdir64b_modrm(modrm, prefix, bytes, pc, ctx, false)
+        self.lift_movdir64b_modrm(modrm, prefix, pc, ctx, false)
     }
 
     /// Lift APX-promoted `EVEX.LLZ.66.MAP4.W0 F8 !(11):rrr:bbb` MOVDIR64B.
@@ -79,23 +88,19 @@ impl X86_64Lifter {
         &self,
         prefix: ApxEvexPrefix,
         bytes: &[u8],
-        full_bytes: &[u8],
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
         if prefix.pp != 1 || prefix.w || !Self::apx_movdir_fields_valid(prefix) {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: full_bytes.to_vec(),
-            });
+            return Ok(Self::movdir_invalid_opcode(prefix.bytes + 1));
         }
 
         let modrm_prefix = prefix.as_modrm_prefix(prefix.bytes + 1);
         let modrm = Self::decode_apx_movdir_modrm(bytes, &modrm_prefix, pc)?;
-        self.lift_movdir64b_modrm(modrm, &modrm_prefix, full_bytes, pc, ctx, true)
+        self.lift_movdir64b_modrm(modrm, &modrm_prefix, pc, ctx, true)
     }
 
-    fn apx_movdir_fields_valid(prefix: ApxEvexPrefix) -> bool {
+    pub(crate) fn apx_movdir_fields_valid(prefix: ApxEvexPrefix) -> bool {
         !prefix.nd
             && !prefix.nf
             && !prefix.z
@@ -174,20 +179,14 @@ impl X86_64Lifter {
         &self,
         modrm: ModRm,
         prefix: &X86Prefix,
-        invalid_bytes: &[u8],
         pc: u64,
         ctx: &mut LiftContext,
         requires_apx: bool,
     ) -> Result<LiftResult, LiftError> {
         if !modrm.is_memory {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: if requires_apx {
-                    invalid_bytes.to_vec()
-                } else {
-                    invalid_bytes[..modrm.bytes_consumed.min(invalid_bytes.len())].to_vec()
-                },
-            });
+            return Ok(Self::movdir_invalid_opcode(
+                prefix.cursor + modrm.bytes_consumed,
+            ));
         }
 
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;

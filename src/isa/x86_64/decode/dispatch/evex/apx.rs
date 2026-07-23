@@ -126,8 +126,12 @@ impl X86_64Vcpu {
             // INC/DEC (0xFE, 0xFF /0,/1) and PUSH2 (0xFF /6)
             0xFE | 0xFF => self.execute_apx_group_ff(ctx, opcode, ndd, nf),
 
-            // These assigned families do not yet have a direct executor.
-            0xF8 | 0xFC => Err(Error::Emulator(format!(
+            // NP is unassigned. F2/F3 select ENQCMD/ENQCMDS or
+            // URDMSR/UWRMSR, but RAX advertises neither ENQCMD nor USER_MSR.
+            0xF8 => self.inject_invalid_opcode(),
+
+            // This assigned family does not yet have a direct executor.
+            0xFC => Err(Error::Emulator(format!(
                 "Unimplemented APX MAP4 opcode {:#x} at RIP={:#x}",
                 opcode, self.regs.rip
             ))),

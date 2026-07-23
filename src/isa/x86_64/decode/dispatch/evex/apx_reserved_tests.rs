@@ -1,4 +1,4 @@
-//! Direct-execution regressions for unassigned Intel APX MAP4 opcodes.
+//! Direct-execution regressions for terminal Intel APX MAP4 #UD forms.
 
 use crate::isa::x86_64::cpu::X86_64Vcpu;
 use crate::vm::vcpu::VCpu;
@@ -106,6 +106,35 @@ fn every_unassigned_apx_map4_opcode_raises_ud_before_modrm_fetch() {
             "opcode {opcode:02X}: RFLAGS"
         );
         assert_eq!(vcpu.regs.rip, before.rip, "opcode {opcode:02X}: fault RIP");
+    }
+}
+
+#[test]
+fn profile_disabled_apx_f8_forms_raise_ud_before_modrm_fetch() {
+    for (name, code) in [
+        ("unassigned NP F8", &[0x62, 0xF4, 0x7C, 0x08, 0xF8][..]),
+        (
+            "F2 F8 without ENQCMD or USER_MSR",
+            &[0x62, 0xF4, 0x7F, 0x08, 0xF8][..],
+        ),
+        (
+            "F3 F8 without ENQCMD or USER_MSR",
+            &[0x62, 0xF4, 0x7E, 0x08, 0xF8][..],
+        ),
+    ] {
+        let mut vcpu = tail_code_vcpu(code);
+        let before = vcpu.regs.clone();
+        let error = vcpu.step().expect_err(name);
+
+        assert!(
+            format!("{error:?}").contains("IDT entry 6 not present"),
+            "{name}: {error:?}"
+        );
+        assert_eq!(vcpu.regs.rax, before.rax, "{name}: RAX");
+        assert_eq!(vcpu.regs.rbx, before.rbx, "{name}: RBX");
+        assert_eq!(vcpu.regs.rsp, before.rsp, "{name}: RSP");
+        assert_eq!(vcpu.regs.rflags, before.rflags, "{name}: RFLAGS");
+        assert_eq!(vcpu.regs.rip, before.rip, "{name}: fault RIP");
     }
 }
 
