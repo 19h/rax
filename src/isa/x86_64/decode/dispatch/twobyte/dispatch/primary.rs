@@ -14,6 +14,7 @@ fn is_legacy_0f_simd_opcode(opcode: u8) -> bool {
         0x10..=0x17
             | 0x28..=0x2F
             | 0x50..=0x77
+            | 0x78..=0x79
             | 0x7C..=0x7F
             | 0xC2
             | 0xC4..=0xC6
@@ -399,6 +400,8 @@ impl X86_64Vcpu {
             0x2E => execute::simd::ucomiss_ucomisd(self, ctx),
             // COMISS/COMISD - compare scalar and set EFLAGS
             0x2F => self.execute_comiss(ctx),
+            // AMD SSE4A EXTRQ/INSERTQ register-only bitfield operations.
+            0x78 | 0x79 => execute::simd::execute_sse4a_bitfield(self, ctx, opcode2),
             0xE6 => {
                 if ctx.rep_prefix == Some(0xF3) {
                     // F3 0F E6: CVTDQ2PD xmm1, xmm2/m64

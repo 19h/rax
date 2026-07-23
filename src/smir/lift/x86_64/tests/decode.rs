@@ -563,10 +563,9 @@ fn lift_popcnt_tzcnt_lzcnt_forms_flags_and_invalid_prefixes() {
         }
     )));
 
-    assert!(matches!(
-        lift_single(&[0x0F, 0xB8, 0xC3]),
-        Err(LiftError::Unsupported { .. })
-    ));
+    let missing_mandatory_prefix =
+        lift_single(&[0x0F, 0xB8, 0xC3]).expect("unprefixed 0F B8 must terminate as #UD");
+    assert_invalid_opcode_trap(&missing_mandatory_prefix, 2);
     assert!(matches!(
         lift_single(&[0xF0, 0xF3, 0x0F, 0xB8, 0xC3]),
         Err(LiftError::InvalidEncoding { .. })

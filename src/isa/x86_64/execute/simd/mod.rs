@@ -22,6 +22,7 @@ pub(crate) mod pcmpxstrx;
 mod shuffle;
 mod sse;
 mod sse4;
+mod sse4a;
 mod ssse3;
 
 // Re-export all instruction functions
@@ -36,4 +37,5 @@ pub use mov::*;
 pub use shuffle::*;
 pub use sse::*;
 pub use sse4::*;
+pub use sse4a::*;
 pub use ssse3::*;

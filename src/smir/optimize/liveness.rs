@@ -104,7 +104,7 @@ pub(super) fn op_fully_defines(kind: &OpKind) -> bool {
 /// updates are not optimization frontiers. Extend this predicate whenever an
 /// op gains an in-block deoptimization path whose state is captured at entry.
 pub(super) fn op_has_precise_deopt_edge(kind: &OpKind) -> bool {
-    matches!(kind, OpKind::X86RequireApx)
+    matches!(kind, OpKind::X86RequireApx | OpKind::X86RequireSse4a)
 }
 
 /// Registers read by a terminator (used at the block's exit point).

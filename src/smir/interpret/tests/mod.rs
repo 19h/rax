@@ -16,6 +16,8 @@ mod scalar;
 #[cfg(test)]
 mod simd;
 #[cfg(test)]
+mod sse4a;
+#[cfg(test)]
 mod string;
 #[cfg(test)]
 mod three_dnow;

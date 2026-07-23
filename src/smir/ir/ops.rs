@@ -242,6 +242,13 @@ pub enum X86AdxKind {
     Adox,
 }
 
+/// AMD SSE4A low-qword bitfield operation selected by EXTRQ or INSERTQ.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86Sse4aBitfieldKind {
+    Extract,
+    Insert,
+}
+
 // ============================================================================
 // OpKind Enum
 // ============================================================================
@@ -3868,6 +3875,25 @@ pub enum OpKind {
     /// provenance. Failure requests #UD at `SmirOp::guest_pc`.
     X86RequireApx,
 
+    /// Require the AMD SSE4A feature and architectural SSE execution state.
+    /// Failure deoptimizes at `SmirOp::guest_pc` so the direct path can deliver
+    /// the precise #UD or #NM without committing the following operation.
+    X86RequireSse4a,
+
+    /// AMD SSE4A EXTRQ/INSERTQ over the low 64 bits of XMM registers. A pair of
+    /// immediate controls is represented by `Some(length), Some(index)`, both
+    /// already truncated to six bits. `None, None` selects register controls:
+    /// EXTRQ reads them from source bits 13:8 and 5:0, while INSERTQ reads them
+    /// from source bits 77:72 and 69:64. The upper destination qword is retained
+    /// as a deterministic value permitted by AMD's undefined-result contract.
+    X86Sse4aBitfield {
+        dst: VReg,
+        source: VReg,
+        kind: X86Sse4aBitfieldKind,
+        length: Option<u8>,
+        index: Option<u8>,
+    },
+
     /// x86 CLI with architectural IOPL/VME/PVI routing. `requires_apx`
     /// records a REX2 encoding so execution can deliver #UD before privilege
     /// checks when APX is disabled. Native execution hands off at the exact
@@ -4613,6 +4639,8 @@ impl OpKind {
                 | OpKind::X86ReadPmc(..)
                 | OpKind::SetAC { .. }
                 | OpKind::X86RequireApx
+                | OpKind::X86RequireSse4a
+                | OpKind::X86Sse4aBitfield { .. }
                 | OpKind::X86Cli { .. }
                 | OpKind::X86Sti { .. }
                 | OpKind::X86Cpuid { .. }
@@ -4799,6 +4827,7 @@ impl OpKind {
             | OpKind::X86Phminposuw { dst, .. }
             | OpKind::X86MovMask { dst, .. }
             | OpKind::X86MovdQ { dst, .. }
+            | OpKind::X86Sse4aBitfield { dst, .. }
             | OpKind::X86Aes { dst, .. }
             | OpKind::X86Sha32 { dst, .. }
             | OpKind::X86PackedStringCompare { dst, .. }
@@ -5142,6 +5171,7 @@ impl OpKind {
             | OpKind::SetDF { .. }
             | OpKind::SetAC { .. }
             | OpKind::X86RequireApx
+            | OpKind::X86RequireSse4a
             | OpKind::X86Cli { .. }
             | OpKind::X86Sti { .. }
             | OpKind::CmcCF
@@ -5233,6 +5263,7 @@ impl OpKind {
                     | OpKind::SetDF { .. }
                     | OpKind::SetAC { .. }
                     | OpKind::X86RequireApx
+                    | OpKind::X86RequireSse4a
                     | OpKind::X86Cli { .. }
                     | OpKind::X86Sti { .. }
                     | OpKind::CmcCF

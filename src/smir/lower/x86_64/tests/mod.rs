@@ -84,6 +84,8 @@ mod simd;
 #[cfg(test)]
 mod smsw;
 #[cfg(test)]
+mod sse4a;
+#[cfg(test)]
 mod state;
 #[cfg(test)]
 mod sti;

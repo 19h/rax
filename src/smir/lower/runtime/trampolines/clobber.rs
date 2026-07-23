@@ -937,6 +937,16 @@ pub(crate) fn block_is_clobber_safe(
         {
             return false;
         }
+        if matches!(op.kind, OpKind::X86RequireSse4a)
+            && !crate::smir::lower::x86_64::x86_require_sse4a_shape_valid(op)
+        {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86Sse4aBitfield { .. })
+            && !crate::smir::lower::x86_64::x86_sse4a_bitfield_shape_valid(op)
+        {
+            return false;
+        }
         if matches!(op.kind, OpKind::X86Cli { .. }) && !cli_ok {
             return false;
         }

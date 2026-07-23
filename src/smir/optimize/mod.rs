@@ -2969,6 +2969,12 @@ impl OpKind {
                 result.push(*src);
             }
 
+            OpKind::X86Sse4aBitfield { dst, source, .. } => {
+                // Both forms read the old destination. Register forms also
+                // obtain their controls (and INSERTQ payload) from `source`.
+                result.extend([*dst, *source]);
+            }
+
             OpKind::VConflict { src, mask, .. } => {
                 result.push(*src);
                 result.extend(mask.iter().copied());
@@ -3782,6 +3788,7 @@ impl OpKind {
             | OpKind::SetDF { .. }
             | OpKind::SetAC { .. }
             | OpKind::X86RequireApx
+            | OpKind::X86RequireSse4a
             | OpKind::X86Cli { .. }
             | OpKind::X86Sti { .. }
             | OpKind::X86Clts

@@ -6,9 +6,10 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate, LazyFlagOp, LazyFlags};
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
-    X86CacheControlKind, X86CountKind, X86OpHint, X86ThreeDNowKind, X86X87ArithmeticDestination,
-    X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind,
-    X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
+    X86CacheControlKind, X86CountKind, X86OpHint, X86Sse4aBitfieldKind, X86ThreeDNowKind,
+    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
+    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
+    X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -3205,6 +3206,51 @@ impl SmirInterpreter {
                 let mut value = Self::read_vec(ctx, *vec);
                 Self::set_lane(&mut value, *lane, elem.bytes() * 8, ctx.read_vreg(*scalar));
                 Self::write_vec(ctx, *dst, value);
+            }
+
+            OpKind::X86Sse4aBitfield {
+                dst,
+                source,
+                kind,
+                length,
+                index,
+            } => {
+                let mut destination = Self::read_vec(ctx, *dst);
+                let source = Self::read_vec(ctx, *source);
+                let controls = match (*length, *index) {
+                    (Some(length @ 0..=63), Some(index @ 0..=63)) => Some((length, index)),
+                    (None, None) => {
+                        let raw = match kind {
+                            X86Sse4aBitfieldKind::Extract => source[0],
+                            X86Sse4aBitfieldKind::Insert => source[1],
+                        };
+                        Some(((raw & 0x3F) as u8, ((raw >> 8) & 0x3F) as u8))
+                    }
+                    _ => None,
+                };
+                let Some((length, index)) = controls else {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                };
+                let mask = if length == 0 {
+                    u64::MAX
+                } else {
+                    u64::MAX >> (64 - length)
+                };
+                destination[0] = match kind {
+                    X86Sse4aBitfieldKind::Extract => {
+                        destination[0].wrapping_shr(u32::from(index)) & mask
+                    }
+                    X86Sse4aBitfieldKind::Insert => {
+                        let shifted_mask = mask.wrapping_shl(u32::from(index));
+                        (destination[0] & !shifted_mask)
+                            | ((source[0] & mask).wrapping_shl(u32::from(index)))
+                    }
+                };
+                Self::write_vec(ctx, *dst, destination);
             }
 
             OpKind::VExtractLane {

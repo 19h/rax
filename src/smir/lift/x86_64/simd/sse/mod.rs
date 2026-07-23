@@ -16,3 +16,5 @@ mod packed;
 pub use packed::*;
 mod shuffle;
 pub use shuffle::*;
+mod sse4a;
+pub use sse4a::*;

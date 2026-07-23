@@ -78,6 +78,8 @@ mod smsw;
 #[cfg(test)]
 mod sqrt;
 #[cfg(test)]
+mod sse4a;
+#[cfg(test)]
 mod sti;
 #[cfg(test)]
 mod swapgs;

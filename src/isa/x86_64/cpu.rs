@@ -4470,9 +4470,9 @@ impl X86_64Vcpu {
         use crate::smir::lower::runtime::is_x86_aarch64_native_clobber_safe_excluding;
         #[cfg(target_arch = "x86_64")]
         use crate::smir::lower::runtime::{
-            is_native_clobber_safe_excluding, uses_x86_maskmovdqu_state_excluding,
-            uses_x86_native_mmx_excluding, uses_x86_native_vectors_excluding,
-            uses_x86_x87_tag_state_excluding, x86_jit_op_uses_mem_helper,
+            is_native_clobber_safe_excluding, uses_x86_native_mmx_excluding,
+            uses_x86_native_vectors_excluding, uses_x86_x87_tag_state_excluding,
+            uses_x86_xmm_state_excluding, x86_jit_op_uses_mem_helper,
             x86_native_mmx_features_supported_excluding, x86_native_mmx_pairs_valid_excluding,
             x86_native_scalar_features_supported_excluding,
             x86_native_vector_features_supported_excluding,
@@ -4789,7 +4789,7 @@ impl X86_64Vcpu {
             let narrow_vector_opmasks =
                 uses_vector && x86_native_vector_uses_k16_opmasks_excluding(&func, &exits);
             #[cfg(target_arch = "x86_64")]
-            let uses_xmm_state = uses_x86_maskmovdqu_state_excluding(&func, &exits);
+            let uses_xmm_state = uses_x86_xmm_state_excluding(&func, &exits);
             #[cfg(target_arch = "x86_64")]
             let uses_mmx = uses_x86_native_mmx_excluding(&func, &exits);
             #[cfg(target_arch = "x86_64")]
@@ -5156,6 +5156,7 @@ impl X86_64Vcpu {
                 crate::smir::lower::runtime::X86_VECTOR_STATE_K64
             };
         }
+        gr.xmm_state_active = u64::from(region.uses_xmm_state);
         if region.uses_mmx {
             gr.mm = self.regs.mm;
             gr.mmx_active = 1;
@@ -5245,7 +5246,7 @@ impl X86_64Vcpu {
         self.regs.r29 = gr.gpr[29];
         self.regs.r30 = gr.gpr[30];
         self.regs.r31 = gr.gpr[31];
-        if region.uses_vector {
+        if region.uses_vector || region.uses_xmm_state {
             for index in 0..16 {
                 let low = gr.get_zmm(index);
                 self.regs.xmm[index] = [low[0], low[1]];
@@ -5253,8 +5254,10 @@ impl X86_64Vcpu {
                 self.regs.zmm_high[index] = [low[4], low[5], low[6], low[7]];
                 self.regs.zmm_ext[index] = gr.get_zmm(index + 16);
             }
-            self.regs.k = gr.k;
-            self.mxcsr = gr.mxcsr;
+            if region.uses_vector {
+                self.regs.k = gr.k;
+                self.mxcsr = gr.mxcsr;
+            }
         }
         if region.uses_mmx {
             self.regs.mm = gr.mm;

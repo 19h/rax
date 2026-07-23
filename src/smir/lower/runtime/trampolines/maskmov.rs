@@ -256,6 +256,23 @@ pub(crate) fn uses_x86_maskmovdqu_state_excluding(
         })
 }
 
+/// Whether a region needs XMM/ZMM slots copied through `GuestRegs` without
+/// activating the AVX-512 native-vector trampoline. This includes read-only
+/// MASKMOVDQU snapshots and state-backed SSE4A operations that commit their
+/// low destination qword directly in the marshalled file.
+pub(crate) fn uses_x86_xmm_state_excluding(
+    function: &SmirFunction,
+    excluded: &std::collections::HashMap<BlockId, u64>,
+) -> bool {
+    uses_x86_maskmovdqu_state_excluding(function, excluded)
+        || function
+            .blocks
+            .iter()
+            .filter(|block| !excluded.contains_key(&block.id))
+            .flat_map(|block| &block.ops)
+            .any(crate::smir::lower::x86_64::x86_sse4a_bitfield_shape_valid)
+}
+
 /// Operations that reach the x86 MMU helper path after exact sequence gates.
 pub(crate) fn x86_jit_op_uses_mem_helper(op: &OpKind) -> bool {
     matches!(

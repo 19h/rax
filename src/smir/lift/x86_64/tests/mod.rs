@@ -84,6 +84,8 @@ mod invlpg;
 #[cfg(test)]
 mod invpcid;
 #[cfg(test)]
+mod legacy_0f;
+#[cfg(test)]
 mod legacy_0f38;
 #[cfg(test)]
 mod legacy_0f3a;
@@ -151,6 +153,8 @@ mod smsw;
 mod software_interrupt;
 #[cfg(test)]
 mod sse;
+#[cfg(test)]
+mod sse4a;
 #[cfg(test)]
 mod sti;
 #[cfg(test)]

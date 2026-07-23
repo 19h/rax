@@ -432,6 +432,11 @@ impl X86_64Lifter {
             // an opcode suffix.
             0x0F => self.lift_3dnow(after_opcode, &prefix2, pc, ctx),
 
+            // AMD SSE4A low-qword extract/insert forms. Mandatory prefixes
+            // distinguish them from Intel VMREAD/VMWRITE, which remain absent
+            // from RAX's VMX-disabled profile.
+            0x78 | 0x79 => self.lift_sse4a_bitfield(opcode2, after_opcode, &prefix2, pc, ctx),
+
             // MOV r64, CR0/CR2/CR3/CR4/CR8. ModR/M.mod is architecturally
             // ignored, so its raw-byte decoder lives outside generic ModR/M
             // address handling.
@@ -1338,19 +1343,19 @@ impl X86_64Lifter {
                 Ok(LiftResult::ret(vec![], prefix2.cursor))
             }
 
-            _ => {
-                if self.strict {
-                    Err(LiftError::Unsupported {
-                        addr: pc,
-                        mnemonic: format!("0x0F 0x{:02X}", opcode2),
-                    })
-                } else {
-                    Ok(LiftResult::fallthrough(
-                        vec![SmirOp::new(OpId(0), pc, OpKind::Nop)],
-                        prefix2.cursor,
-                    ))
-                }
-            }
+            // Every architecturally assigned legacy-map encoding admitted by
+            // the fixed RAX profile is dispatched above. Remaining cells are
+            // unassigned, obsolete test-register encodings, or instructions
+            // behind disabled SMX/VMX facilities; all terminate as #UD at the
+            // two-byte opcode frontier in both strict and permissive modes.
+            _ => Ok(LiftResult {
+                ops: vec![],
+                bytes_consumed: prefix2.cursor,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: vec![],
+            }),
         }
     }
 }

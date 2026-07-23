@@ -101,7 +101,7 @@ pub(super) unsafe extern "C" fn rax_jit_call(
         op: LazyFlagOp::None,
         ..Default::default()
     };
-    if gr.vector_active != 0 {
+    if gr.vector_active != 0 || gr.xmm_state_active != 0 {
         for index in 0..16 {
             let low = gr.get_zmm(index);
             vcpu.regs.xmm[index] = [low[0], low[1]];
@@ -109,8 +109,10 @@ pub(super) unsafe extern "C" fn rax_jit_call(
             vcpu.regs.zmm_high[index] = [low[4], low[5], low[6], low[7]];
             vcpu.regs.zmm_ext[index] = gr.get_zmm(index + 16);
         }
-        vcpu.regs.k = gr.k;
-        vcpu.mxcsr = gr.mxcsr;
+        if gr.vector_active != 0 {
+            vcpu.regs.k = gr.k;
+            vcpu.mxcsr = gr.mxcsr;
+        }
     }
     if gr.mmx_active != 0 {
         vcpu.regs.mm = gr.mm;
@@ -167,7 +169,7 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     // Sync vcpu state back into the marshalled file. Materialize flags first so
     // the native reload or trampoline sees current architectural RFLAGS.
     vcpu.materialize_flags();
-    if gr.vector_active != 0 {
+    if gr.vector_active != 0 || gr.xmm_state_active != 0 {
         for index in 0..16 {
             gr.set_zmm(
                 index,
@@ -184,8 +186,10 @@ pub(super) unsafe extern "C" fn rax_jit_call(
             );
             gr.set_zmm(index + 16, vcpu.regs.zmm_ext[index]);
         }
-        gr.k = vcpu.regs.k;
-        gr.mxcsr = vcpu.mxcsr;
+        if gr.vector_active != 0 {
+            gr.k = vcpu.regs.k;
+            gr.mxcsr = vcpu.mxcsr;
+        }
     }
     if gr.mmx_active != 0 {
         gr.mm = vcpu.regs.mm;

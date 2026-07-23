@@ -1280,6 +1280,8 @@ pub(crate) fn aarch64_block_is_clobber_safe(
             op.kind,
             OpKind::SetAC { .. }
                 | OpKind::X86RequireApx
+                | OpKind::X86RequireSse4a
+                | OpKind::X86Sse4aBitfield { .. }
                 | OpKind::X86Cli { .. }
                 | OpKind::X86Sti { .. }
                 | OpKind::X86Clts

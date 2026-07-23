@@ -44,6 +44,7 @@ use crate::smir::ir::ops::X86SelectorVerifySource;
 use crate::smir::ir::ops::X86Sha32Op;
 use crate::smir::ir::ops::X86SmswOp;
 use crate::smir::ir::ops::X86SmswTarget;
+use crate::smir::ir::ops::X86Sse4aBitfieldKind;
 use crate::smir::ir::ops::X86SystemSelector;
 use crate::smir::ir::ops::X86SystemSelectorLoadOp;
 use crate::smir::ir::ops::X86SystemSelectorSource;
@@ -1325,6 +1326,7 @@ debug_name_json!(
     HexFpOp,
     HexFpRecipKind,
     X86AdxKind,
+    X86Sse4aBitfieldKind,
     X86CacheControlKind,
     X86ControlReg,
     X86DebugReg,
@@ -4423,6 +4425,14 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::SetDF { value } => op_json!("set_df", value),
         OpKind::SetAC { value } => op_json!("set_ac", value),
         OpKind::X86RequireApx => op_json!("x86_require_apx"),
+        OpKind::X86RequireSse4a => op_json!("x86_require_sse4a"),
+        OpKind::X86Sse4aBitfield {
+            dst,
+            source,
+            kind,
+            length,
+            index,
+        } => op_json!("x86_sse4a_bitfield", dst, source, kind, length, index),
         OpKind::X86Cli {
             requires_apx,
             next_pc,

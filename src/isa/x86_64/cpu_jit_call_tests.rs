@@ -153,6 +153,63 @@ fn jit_callout_synchronizes_callee_vector_opmask_and_mmx_state() {
 }
 
 #[test]
+fn jit_callout_synchronizes_state_backed_sse4a_without_vector_trampoline() {
+    use crate::smir::lower::runtime::GuestRegs;
+
+    let mem = Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+    // extrq xmm1,8,4; ret
+    mem.write_slice(
+        &[0x66, 0x0F, 0x78, 0xC1, 0x08, 0x04, 0xC3],
+        GuestAddress(0x100),
+    )
+    .unwrap();
+    let mut vcpu = X86_64Vcpu::new(0, mem);
+    vcpu.sregs.cr0 = 0x21;
+    vcpu.sregs.cr4 = 0x20 | (1 << 9);
+    vcpu.sregs.efer = 0x500;
+    vcpu.sregs.cs.limit = u32::MAX;
+    vcpu.sregs.cs.present = true;
+    vcpu.sregs.cs.s = true;
+    vcpu.sregs.cs.l = true;
+    vcpu.set_sse4a_enabled(true);
+
+    let original = [
+        0xFEDC_BA98_7654_3210,
+        0x1112_1314_1516_1718,
+        0x2122_2324_2526_2728,
+        0x3132_3334_3536_3738,
+        0x4142_4344_4546_4748,
+        0x5152_5354_5556_5758,
+        0x6162_6364_6566_6768,
+        0x7172_7374_7576_7778,
+    ];
+    let mut gr = GuestRegs::default();
+    gr.ctx = (&mut vcpu as *mut X86_64Vcpu) as u64;
+    gr.gpr[4] = 0x8000;
+    gr.rflags = 0x2 | 0x08D5 | flags::bits::DF;
+    gr.interrupt_flags =
+        gr.rflags & crate::isa::x86_64::execute::system::X86_INTERRUPT_CONTROL_RFLAGS_MASK;
+    gr.cr0 = vcpu.sregs.cr0;
+    gr.cr4 = vcpu.sregs.cr4;
+    gr.xmm_state_active = 1;
+    gr.vector_active = 0;
+    gr.set_zmm(1, original);
+    gr.k[3] = 0xA5A5;
+    gr.mxcsr = 0x5F80;
+
+    let ok = unsafe { rax_jit_call(&mut gr, 0x100, 0x200, 0x80) };
+
+    assert_eq!(ok, 1);
+    let mut expected = original;
+    expected[0] = 0x21;
+    assert_eq!(gr.get_zmm(1), expected);
+    assert_eq!(gr.gpr[4], 0x8000, "CALL/RET stack balance");
+    assert_eq!(gr.rflags, 0x2 | 0x08D5 | flags::bits::DF);
+    assert_eq!(gr.k[3], 0xA5A5, "opmask state must remain inactive");
+    assert_eq!(gr.mxcsr, 0x5F80, "MXCSR state must remain inactive");
+}
+
+#[test]
 fn jit_callout_return_push_fault_deopts_at_call_pc_without_executing_target() {
     use crate::smir::lower::runtime::GuestRegs;
 

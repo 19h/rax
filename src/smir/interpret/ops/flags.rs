@@ -78,6 +78,26 @@ impl SmirInterpreter {
                 }
             }
 
+            OpKind::X86RequireSse4a => {
+                const CR0_EM: u64 = 1 << 2;
+                const CR0_TS: u64 = 1 << 3;
+                const CR4_OSFXSR: u64 = 1 << 9;
+                if !matches!(
+                    &ctx.arch_regs,
+                    ArchRegState::X86_64(x86)
+                        if x86.sse4a
+                            && x86.cr0 & (CR0_EM | CR0_TS) == 0
+                            && x86.cr4 & CR4_OSFXSR != 0
+                ) {
+                    // The x86 integration replays this exact instruction on
+                    // the direct path, which distinguishes #UD from #NM.
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                }
+            }
+
             OpKind::X86Cli {
                 requires_apx,
                 next_pc: _,
