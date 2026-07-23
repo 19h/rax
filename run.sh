@@ -6,7 +6,15 @@ set -euo pipefail
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 cd "$SCRIPT_DIR"
 
-KERNEL=${RAX_KERNEL:-"$SCRIPT_DIR/linux/vmlinux"}
+if [[ -n ${RAX_KERNEL:-} ]]; then
+    KERNEL=$RAX_KERNEL
+elif [[ -f "$SCRIPT_DIR/linux/vmlinux" ]]; then
+    KERNEL="$SCRIPT_DIR/linux/vmlinux"
+elif [[ -f "$SCRIPT_DIR/linux/vmlinux-6.17.0-8-generic" ]]; then
+    KERNEL="$SCRIPT_DIR/linux/vmlinux-6.17.0-8-generic"
+else
+    KERNEL="$SCRIPT_DIR/linux/vmlinux"
+fi
 INITRD=${RAX_INITRD:-"$SCRIPT_DIR/initrd.cpio.gz"}
 ARCH=${RAX_ARCH:-x86-64}
 BACKEND=${RAX_BACKEND:-emulator}

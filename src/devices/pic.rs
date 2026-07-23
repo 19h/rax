@@ -36,6 +36,10 @@ enum InitState {
 
 #[derive(Clone, Serialize, Deserialize)]
 struct Pic8259 {
+    /// Current electrical level of each IRQ input. This is transient wiring
+    /// state, reconstructed by device polling after snapshot restore.
+    #[serde(skip)]
+    irq_lines: u8,
     /// Interrupt Request Register - pending interrupt requests.
     irr: u8,
     /// In-Service Register - interrupts currently being serviced.
@@ -83,6 +87,7 @@ const SPURIOUS_IRQ: u8 = 7;
 impl Pic8259 {
     fn new(vector_offset: u8) -> Self {
         Pic8259 {
+            irq_lines: 0,
             irr: 0,
             isr: 0,
             imr: 0xFF, // All interrupts masked initially.
@@ -116,13 +121,20 @@ impl Pic8259 {
             return;
         }
         let bit = 1u8 << irq;
+        let was_high = self.irq_lines & bit != 0;
+        if level {
+            self.irq_lines |= bit;
+        } else {
+            self.irq_lines &= !bit;
+        }
+
         if self.level_triggered {
             if level {
                 self.irr |= bit;
             } else {
                 self.irr &= !bit;
             }
-        } else if level {
+        } else if level && !was_high {
             self.irr |= bit;
         }
     }
@@ -271,6 +283,7 @@ impl Pic8259 {
             self.imr = 0;
             self.isr = 0;
             self.irr = 0;
+            self.irq_lines = 0;
             self.auto_eoi = false;
             self.rotate_in_auto_eoi = false;
             self.special_mask_mode = false;
@@ -458,6 +471,12 @@ impl DualPic {
         }
     }
 
+    /// Generate one pulse on an edge-triggered IRQ input.
+    pub fn pulse_irq(&mut self, irq: u8) {
+        self.set_irq(irq, true);
+        self.set_irq(irq, false);
+    }
+
     /// Acknowledge and return the highest-priority pending interrupt vector
     /// (the INTA path used during interrupt injection). Sets the ISR bit on the
     /// servicing PIC except for spurious interrupts.
@@ -525,6 +544,15 @@ impl DualPic {
     /// includes any deliverable cascade from the slave.
     pub fn has_pending(&self) -> bool {
         self.master.has_pending()
+    }
+
+    /// Whether an unmasked request is pending or an interrupt is in service.
+    pub(crate) fn has_active_irq(&self) -> bool {
+        let master_active = (self.master.irr & !self.master.imr) | self.master.isr;
+        // A deliverable slave request is reflected on the master's cascade
+        // input. Looking only at the master also avoids treating a request
+        // behind a masked cascade line as globally active.
+        master_active != 0
     }
 
     /// Get debug info about the PIC state:
@@ -689,6 +717,56 @@ mod tests {
         assert_eq!(pic.irr & (1 << 3), 1 << 3);
         pic.set_irq(3, false);
         assert_eq!(pic.irr & (1 << 3), 0);
+    }
+
+    #[test]
+    fn edge_triggered_line_requires_a_new_rising_edge() {
+        let mut pic = Pic8259::new(0);
+        init_master(&mut pic);
+        pic.write_data(0x00); // unmask all
+
+        pic.set_irq(4, true);
+        assert_eq!(pic.ack_irq(4), 0x24);
+        assert_eq!(pic.irr & (1 << 4), 0);
+
+        // Device polling commonly reports the same asserted level on every
+        // VMM iteration. It must not synthesize another edge before the device
+        // deasserts its line.
+        pic.set_irq(4, true);
+        assert_eq!(pic.irr & (1 << 4), 0);
+
+        pic.set_irq(4, false);
+        pic.set_irq(4, true);
+        assert_eq!(pic.irr & (1 << 4), 1 << 4);
+    }
+
+    #[test]
+    fn repeated_edge_pulses_latch_repeated_requests() {
+        let mut pic = DualPic::new();
+        init_dual(&mut pic);
+
+        pic.pulse_irq(0);
+        assert_eq!(pic.get_pending_vector(), Some(0x20));
+        pic.master.write_command(0x20); // EOI
+
+        pic.pulse_irq(0);
+        assert_eq!(pic.get_pending_vector(), Some(0x20));
+    }
+
+    #[test]
+    fn active_irq_includes_pending_and_in_service_requests() {
+        let mut pic = DualPic::new();
+        init_dual(&mut pic);
+        assert!(!pic.has_active_irq());
+
+        pic.set_irq(4, true);
+        assert!(pic.has_active_irq());
+        assert_eq!(pic.get_pending_vector(), Some(0x24));
+        assert!(pic.has_active_irq());
+
+        pic.master.write_command(0x20); // EOI
+        pic.set_irq(4, false);
+        assert!(!pic.has_active_irq());
     }
 
     #[test]

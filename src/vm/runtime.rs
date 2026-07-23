@@ -865,12 +865,41 @@ impl Vmm {
                 }
             }
 
+            // Deliver device interrupts that were already pending before
+            // sampling the next timer edge. On a slow software backend, adding
+            // IRQ0 first on every host iteration can otherwise indefinitely
+            // starve lower-priority legacy lines such as the serial IRQ4.
+            {
+                let vcpu = self
+                    .vcpus
+                    .get_mut(0)
+                    .ok_or_else(|| Error::InvalidConfig("no vcpu available".to_string()))?;
+
+                let can_inject = vcpu.can_inject_interrupt();
+                if let Ok(mut pic) = self.pic.lock() {
+                    if pic.has_pending() && can_inject {
+                        if let Some(vector) = pic.get_pending_vector() {
+                            let _ = vcpu.inject_interrupt(vector);
+                        }
+                    }
+                }
+            }
+
             // Tick the PIT and check for timer interrupts
             if let Ok(mut pit) = self.pit.lock() {
-                if pit.tick() {
-                    // Timer fired - raise IRQ 0 via the PIC
+                let timer_due = pit.tick() || pit.has_pending_interrupt();
+                if timer_due {
                     if let Ok(mut pic) = self.pic.lock() {
-                        pic.set_irq(0, true);
+                        // A software-emulated guest can take longer than one
+                        // PIT period per host iteration. Coalesce the timer
+                        // event until the PIC is idle; otherwise fixed-priority
+                        // IRQ0 is recreated continuously and lower IRQs starve.
+                        if !pic.has_active_irq() {
+                            // The PIT OUT pin produces one edge per event.
+                            // Pulse the PIC input and leave it low afterward.
+                            pic.pulse_irq(0);
+                            pit.clear_interrupt();
+                        }
                     }
                 }
             }
@@ -981,25 +1010,6 @@ impl Vmm {
                             IpiRequest::Smi { ref target } => {
                                 // SMI triggers System Management Mode
                                 debug!("IPI SMI to {:?} (SMM not implemented)", target);
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Check for pending PIC interrupts and inject them
-            {
-                let vcpu = self
-                    .vcpus
-                    .get_mut(0)
-                    .ok_or_else(|| Error::InvalidConfig("no vcpu available".to_string()))?;
-
-                let can_inject = vcpu.can_inject_interrupt();
-                if let Ok(mut pic) = self.pic.lock() {
-                    if pic.has_pending() {
-                        if can_inject {
-                            if let Some(vector) = pic.get_pending_vector() {
-                                let _ = vcpu.inject_interrupt(vector);
                             }
                         }
                     }
