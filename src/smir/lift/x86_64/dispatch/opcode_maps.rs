@@ -34,8 +34,8 @@ impl X86_64Lifter {
         if bytes.is_empty() {
             return Err(LiftError::Incomplete {
                 addr: pc,
-                have: prefix.cursor + 1,
-                need: prefix.cursor + 2,
+                have: prefix.cursor,
+                need: prefix.cursor + 1,
             });
         }
 
@@ -81,19 +81,18 @@ impl X86_64Lifter {
             0xF8 => self.lift_movdir64b_0f38(after_opcode, &prefix3, pc, ctx),
             0xF9 => self.lift_movdiri_0f38(after_opcode, &prefix3, pc, ctx),
             0xFC => self.lift_rao_int_0f38(after_opcode, &prefix3, pc, ctx),
-            _ => {
-                if self.strict {
-                    Err(LiftError::Unsupported {
-                        addr: pc,
-                        mnemonic: format!("0x0F 0x38 0x{:02X}", opcode3),
-                    })
-                } else {
-                    Ok(LiftResult::fallthrough(
-                        vec![SmirOp::new(OpId(0), pc, OpKind::Nop)],
-                        prefix3.cursor,
-                    ))
-                }
-            }
+            // Intel SDM Vol. 2 classifies the remaining cells as unassigned,
+            // VEX/EVEX-only, or legacy features outside RAX's fixed CPUID
+            // profile. The direct decoder therefore raises #UD immediately
+            // after the map opcode, without fetching a ModR/M or immediate.
+            _ => Ok(LiftResult {
+                ops: Vec::new(),
+                bytes_consumed: prefix3.cursor,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: Vec::new(),
+            }),
         }
     }
 
