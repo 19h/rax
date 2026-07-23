@@ -168,6 +168,91 @@ mod tests {
         assert_eq!(w0.2, [0; 4], "128-bit EVEX form clears ZMM upper state");
     }
 
+    #[test]
+    fn evex_packed_extend_wig_executes_w0_and_w1_identically() {
+        let execute = |opcode: u8, w: bool, source: [u64; 2]| {
+            let mut code = [0x62, 0xF2, 0x7D, 0x08, opcode, 0xC2];
+            if w {
+                code[2] |= 0x80;
+            }
+            let mut vcpu = long_mode_vcpu(&code);
+            vcpu.regs.xmm[0] = [u64::MAX; 2];
+            vcpu.regs.ymm_high[0] = [u64::MAX; 2];
+            vcpu.regs.zmm_high[0] = [u64::MAX; 4];
+            vcpu.regs.xmm[2] = source;
+
+            step_ok(&mut vcpu);
+            (
+                vcpu.regs.xmm[0],
+                vcpu.regs.ymm_high[0],
+                vcpu.regs.zmm_high[0],
+                vcpu.regs.rip,
+            )
+        };
+
+        let signed_source = [0x0123_4567_FF01_7F80, 0xDEAD_BEEF_CAFE_BABE];
+        for opcode in [0x20, 0x21, 0x22, 0x23, 0x24, 0x30, 0x31, 0x32, 0x33, 0x34] {
+            assert_eq!(
+                execute(opcode, true, signed_source),
+                execute(opcode, false, signed_source),
+                "EVEX.W is ignored for opcode {opcode:#04x}"
+            );
+        }
+
+        // VPMOVSXBW sign-extends the low eight bytes to eight words.
+        let signed_w0 = execute(0x20, false, signed_source);
+        assert_eq!(signed_w0.0[0], 0xFFFF_0001_007F_FF80);
+
+        // VPMOVZXWQ zero-extends the low two words to two qwords.
+        let unsigned_source = [0x0123_4567_8000_FFFF, 0xDEAD_BEEF_CAFE_BABE];
+        let unsigned_w0 = execute(0x34, false, unsigned_source);
+        assert_eq!(unsigned_w0.0, [0xFFFF, 0x8000]);
+        assert_eq!(unsigned_w0.1, [0; 2], "EVEX.128 clears YMM upper state");
+        assert_eq!(unsigned_w0.2, [0; 4], "EVEX.128 clears ZMM upper state");
+    }
+
+    fn assert_evex_packed_extend_reserved_ud(code: &[u8]) {
+        let mut vcpu = long_mode_vcpu(code);
+        vcpu.regs.xmm[0] = [0x1111_2222_3333_4444, 0x5555_6666_7777_8888];
+        vcpu.regs.xmm[2] = [0x9999_AAAA_BBBB_CCCC, 0xDDDD_EEEE_FFFF_0000];
+        vcpu.regs.k[1] = 0xA5A5;
+        let before = vcpu.regs.clone();
+
+        let error = vcpu
+            .step()
+            .expect_err("reserved EVEX packed-extend form must #UD");
+        assert!(
+            format!("{error:?}").contains("IDT entry 6 not present"),
+            "wrong exception for {code:02X?}: {error:?}"
+        );
+        assert_eq!(vcpu.regs.rip, before.rip, "{code:02X?}: fault RIP");
+        assert_eq!(vcpu.regs.xmm, before.xmm, "{code:02X?}: XMM state");
+        assert_eq!(
+            vcpu.regs.ymm_high, before.ymm_high,
+            "{code:02X?}: YMM state"
+        );
+        assert_eq!(
+            vcpu.regs.zmm_high, before.zmm_high,
+            "{code:02X?}: ZMM state"
+        );
+        assert_eq!(vcpu.regs.k, before.k, "{code:02X?}: opmask state");
+    }
+
+    #[test]
+    fn evex_packed_extend_reserved_fields_raise_precise_ud() {
+        for code in [
+            &[0x62, 0xF2, 0x6D, 0x08, 0x20, 0xC2][..], // nonreserved vvvv
+            &[0x62, 0xF2, 0x7D, 0x00, 0x20, 0xC2],     // nonreserved V'
+            &[0x62, 0xF2, 0x7D, 0x18, 0x20, 0xC2],     // EVEX.b
+            &[0x62, 0xF2, 0x7D, 0x68, 0x20, 0xC2],     // reserved L'L=3
+            &[0x62, 0xF2, 0x7D, 0x88, 0x20, 0xC2],     // {z} with k0
+            &[0x62, 0xF2, 0xFD, 0x08, 0x25, 0xC2],     // VPMOVSXDQ requires W0
+            &[0x62, 0xF2, 0xFD, 0x08, 0x35, 0xC2],     // VPMOVZXDQ requires W0
+        ] {
+            assert_evex_packed_extend_reserved_ud(code);
+        }
+    }
+
     fn enable_paging_for_wrapped_stack_test(vcpu: &mut X86_64Vcpu) {
         const PRESENT_WRITABLE: u64 = 0x3;
         const HUGE_PAGE: u64 = 0x80;

@@ -23,6 +23,8 @@ mod avx512_inventory_data;
 #[path = "../../../support/x86_64/avx512_spec.rs"]
 mod avx512_spec;
 
+#[path = "avx512_inventory/packed_extend_replay.rs"]
+mod packed_extend_replay;
 #[path = "avx512_inventory/packed_move_replay.rs"]
 mod packed_move_replay;
 

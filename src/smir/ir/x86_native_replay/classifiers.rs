@@ -903,6 +903,51 @@ impl X86InstructionBytes {
         }
     }
 
+    /// Validate register-only EVEX packed sign/zero-extension moves and return
+    /// whether the destination vector length requires AVX-512VL. This covers
+    /// VPMOVSXBW/BD/BQ/WD/WQ/DQ and VPMOVZXBW/BD/BQ/WD/WQ/DQ. W is ignored
+    /// for every form except the fixed-W0 DQ forms. Reserved EVEX.vvvv/V',
+    /// EVEX.b, vector length, masking, and memory forms fail closed.
+    pub fn evex_register_packed_extend_needs_vl(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        if bytes.len() != 6 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+
+        // Every admitted form uses map 0F38, mandatory 66, reserved
+        // EVEX.vvvv=1111b and EVEX.V'=1, and a register ModR/M source.
+        if p0 & 0x0f != 2
+            || p1 & 0x07 != 0x05
+            || p1 & 0x78 != 0x78
+            || p2 & 0x08 == 0
+            || modrm >> 6 != 3
+            || !matches!(opcode, 0x20..=0x25 | 0x30..=0x35)
+        {
+            return None;
+        }
+        if matches!(opcode, 0x25 | 0x35) && p1 & 0x80 != 0 {
+            return None;
+        }
+
+        let zeroing = p2 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let embedded_control = p2 & 0x10 != 0;
+        let mask = p2 & 0x07;
+        if embedded_control || (zeroing && mask == 0) {
+            return None;
+        }
+        match ll {
+            0 | 1 => Some(true),
+            2 => Some(false),
+            _ => None,
+        }
+    }
+
     /// Validate register-source EVEX broadcasts whose repeated element or
     /// tuple has 32-bit or 64-bit granularity. The admitted encodings are
     /// VBROADCASTSS, VBROADCASTSD, VBROADCASTF32X2, VPBROADCASTD,

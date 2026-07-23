@@ -328,22 +328,26 @@ impl X86_64Vcpu {
                 4,
                 execute::simd::NarrowMode::SignedSaturate,
             ),
+            // VPMOVSX*/VPMOVZX* reserve vvvv, V', b, L'L=3, and {z} with
+            // k0. The DQ forms additionally require W0; W is ignored for the
+            // other ten opcodes.
+            0x20..=0x25 | 0x30..=0x35
+                if evex.pp == 1
+                    && (evex.vvvv != 0xF
+                        || !evex.v_prime
+                        || evex.broadcast
+                        || evex.ll == 3
+                        || (evex.z && evex.aaa == 0)
+                        || (matches!(opcode, 0x25 | 0x35) && evex.w)) =>
+            {
+                self.inject_undefined_instruction()
+            }
             // VPMOVSX*: sign extend packed byte/word/dword elements.
-            0x20 if evex.pp == 1 && !evex.w => {
-                execute::simd::evex_int_extend(self, ctx, 1, 2, true)
-            }
-            0x21 if evex.pp == 1 && !evex.w => {
-                execute::simd::evex_int_extend(self, ctx, 1, 4, true)
-            }
-            0x22 if evex.pp == 1 && !evex.w => {
-                execute::simd::evex_int_extend(self, ctx, 1, 8, true)
-            }
-            0x23 if evex.pp == 1 && !evex.w => {
-                execute::simd::evex_int_extend(self, ctx, 2, 4, true)
-            }
-            0x24 if evex.pp == 1 && !evex.w => {
-                execute::simd::evex_int_extend(self, ctx, 2, 8, true)
-            }
+            0x20 if evex.pp == 1 => execute::simd::evex_int_extend(self, ctx, 1, 2, true),
+            0x21 if evex.pp == 1 => execute::simd::evex_int_extend(self, ctx, 1, 4, true),
+            0x22 if evex.pp == 1 => execute::simd::evex_int_extend(self, ctx, 1, 8, true),
+            0x23 if evex.pp == 1 => execute::simd::evex_int_extend(self, ctx, 2, 4, true),
+            0x24 if evex.pp == 1 => execute::simd::evex_int_extend(self, ctx, 2, 8, true),
             0x25 if evex.pp == 1 && !evex.w => {
                 execute::simd::evex_int_extend(self, ctx, 4, 8, true)
             }
@@ -367,21 +371,11 @@ impl X86_64Vcpu {
                 execute::simd::evex_int_narrow(self, ctx, 8, 4, execute::simd::NarrowMode::Truncate)
             }
             // VPMOVZX*: zero extend packed byte/word/dword elements.
-            0x30 if evex.pp == 1 && !evex.w => {
-                execute::simd::evex_int_extend(self, ctx, 1, 2, false)
-            }
-            0x31 if evex.pp == 1 && !evex.w => {
-                execute::simd::evex_int_extend(self, ctx, 1, 4, false)
-            }
-            0x32 if evex.pp == 1 && !evex.w => {
-                execute::simd::evex_int_extend(self, ctx, 1, 8, false)
-            }
-            0x33 if evex.pp == 1 && !evex.w => {
-                execute::simd::evex_int_extend(self, ctx, 2, 4, false)
-            }
-            0x34 if evex.pp == 1 && !evex.w => {
-                execute::simd::evex_int_extend(self, ctx, 2, 8, false)
-            }
+            0x30 if evex.pp == 1 => execute::simd::evex_int_extend(self, ctx, 1, 2, false),
+            0x31 if evex.pp == 1 => execute::simd::evex_int_extend(self, ctx, 1, 4, false),
+            0x32 if evex.pp == 1 => execute::simd::evex_int_extend(self, ctx, 1, 8, false),
+            0x33 if evex.pp == 1 => execute::simd::evex_int_extend(self, ctx, 2, 4, false),
+            0x34 if evex.pp == 1 => execute::simd::evex_int_extend(self, ctx, 2, 8, false),
             0x35 if evex.pp == 1 && !evex.w => {
                 execute::simd::evex_int_extend(self, ctx, 4, 8, false)
             }
