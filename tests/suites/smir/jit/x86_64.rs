@@ -31,6 +31,8 @@ mod apx_reserved;
 mod cmpccxadd;
 #[path = "x86_64/group3_alias.rs"]
 mod group3_alias;
+#[path = "x86_64/legacy_0f3a_reserved.rs"]
+mod legacy_0f3a_reserved;
 #[path = "x86_64/three_dnow_reserved.rs"]
 mod three_dnow_reserved;
 #[path = "x86_64/vector_prefix_reserved.rs"]

@@ -84,6 +84,8 @@ mod invlpg;
 #[cfg(test)]
 mod invpcid;
 #[cfg(test)]
+mod legacy_0f3a;
+#[cfg(test)]
 mod lmsw;
 #[cfg(test)]
 mod monitor_mwait;

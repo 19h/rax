@@ -107,8 +107,8 @@ impl X86_64Lifter {
         if bytes.is_empty() {
             return Err(LiftError::Incomplete {
                 addr: pc,
-                have: prefix.cursor + 1,
-                need: prefix.cursor + 2,
+                have: prefix.cursor,
+                need: prefix.cursor + 1,
             });
         }
         let opcode = bytes[0];
@@ -130,14 +130,18 @@ impl X86_64Lifter {
             0xCC => self.lift_sse_sha32(opcode, after_opcode, &prefix3, true, pc, ctx),
             0xCE | 0xCF => self.lift_sse_gfni(opcode, after_opcode, &prefix3, true, pc, ctx),
             0xDF => self.lift_sse_aes_keygen(after_opcode, &prefix3, pc, ctx),
-            _ if self.strict => Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: format!("0x0F 0x3A 0x{opcode:02X}"),
+            // Intel SDM Vol. 2 assigns every legacy 0F 3A form handled above.
+            // Other assigned cells require VEX or EVEX, so their legacy
+            // spellings and all unassigned cells raise #UD after the map
+            // opcode without fetching a ModR/M or immediate byte.
+            _ => Ok(LiftResult {
+                ops: Vec::new(),
+                bytes_consumed: prefix3.cursor,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: Vec::new(),
             }),
-            _ => Ok(LiftResult::fallthrough(
-                vec![SmirOp::new(OpId(0), pc, OpKind::Nop)],
-                prefix3.cursor,
-            )),
         }
     }
 
