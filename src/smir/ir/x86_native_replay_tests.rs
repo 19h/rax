@@ -28,6 +28,9 @@ mod gfni;
 #[path = "x86_native_replay_tests/gpr_broadcast.rs"]
 mod gpr_broadcast;
 
+#[path = "x86_native_replay_tests/vpclmulqdq.rs"]
+mod vpclmulqdq;
+
 #[path = "x86_native_replay_tests/vector_align.rs"]
 mod vector_align;
 

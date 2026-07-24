@@ -5905,7 +5905,6 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_bf16 = false;
     let mut needs_cd = replay.needs_avx512cd;
     let mut needs_fp16 = replay.needs_avx512fp16;
-    let needs_gfni = replay.needs_gfni;
     let mut needs_er = false;
     let mut needs_aes = false;
     let mut needs_vaes = false;
@@ -6361,7 +6360,7 @@ pub fn x86_native_vector_features_supported_excluding(
             && (!needs_bf16 || std::is_x86_feature_detected!("avx512bf16"))
             && (!needs_cd || std::is_x86_feature_detected!("avx512cd"))
             && (!needs_fp16 || std::is_x86_feature_detected!("avx512fp16"))
-            && (!needs_gfni || std::is_x86_feature_detected!("gfni"))
+            && replay.x86_host_supported()
             && (!needs_er || x86_host_has_avx512er())
             && (!(needs_dq || needs_mul_dq) || std::is_x86_feature_detected!("avx512dq"))
             && (!needs_aes || std::is_x86_feature_detected!("aes"))
@@ -6441,7 +6440,6 @@ pub fn x86_native_vector_features_supported_excluding(
             needs_bf16,
             needs_cd,
             needs_fp16,
-            needs_gfni,
             needs_er,
             needs_aes,
             needs_vaes,

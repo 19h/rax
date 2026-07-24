@@ -12,6 +12,17 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_avx512fp16: bool,
     pub(crate) needs_avx512cd: bool,
     pub(crate) needs_gfni: bool,
+    pub(crate) needs_vpclmulqdq: bool,
+}
+
+impl X86NativeReplayFeatureRequirements {
+    /// Test replay-family CPUID requirements that are independent of the
+    /// shared AVX-512 vector-state trampoline requirements.
+    #[cfg(target_arch = "x86_64")]
+    pub(crate) fn x86_host_supported(self) -> bool {
+        (!self.needs_gfni || std::is_x86_feature_detected!("gfni"))
+            && (!self.needs_vpclmulqdq || std::is_x86_feature_detected!("vpclmulqdq"))
+    }
 }
 
 /// Accumulate the host features required by exact EVEX native-replay spans in
@@ -44,6 +55,10 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 .evex_register_mask_broadcast_needs_vl()
                 .is_some();
             requirements.needs_gfni |= span.instruction.evex_register_gfni_needs_vl().is_some();
+            requirements.needs_vpclmulqdq |= span
+                .instruction
+                .evex_register_vpclmulqdq_needs_vl()
+                .is_some();
         }
     }
     requirements
