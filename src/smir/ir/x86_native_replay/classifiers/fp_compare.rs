@@ -7,7 +7,8 @@ impl X86InstructionBytes {
     ///
     /// Returns `(needs_avx512vl, needs_avx512fp16)`. Both instructions are
     /// scalar LLIG forms, require AVX-512-FP16 but not AVX-512VL, admit SAE
-    /// through EVEX.b, reserve EVEX.vvvv/V'/z/aaa, and reject memory forms.
+    /// through EVEX.b, and accept the three defined EVEX vector-length
+    /// encodings. They reserve EVEX.vvvv/V'/z/aaa and reject memory forms.
     pub fn evex_register_fp16_flag_compare_requirements(&self) -> Option<(bool, bool)> {
         let bytes = self.as_slice();
         if bytes.len() != 6 || bytes[0] != 0x62 {
@@ -19,9 +20,11 @@ impl X86InstructionBytes {
         let opcode = bytes[4];
         let modrm = bytes[5];
 
+        let ll = (p2 >> 5) & 0x03;
         if p0 & 0x0F != 5
             || p1 != 0x7C
             || p2 & 0x8F != 0x08
+            || ll == 3
             || !matches!(opcode, 0x2E | 0x2F)
             || modrm >> 6 != 3
         {
@@ -77,8 +80,10 @@ impl X86InstructionBytes {
         let ll = (p2 >> 5) & 0x03;
         let suppress_exceptions = p2 & 0x10 != 0;
         if scalar {
-            // L'L is LLIG for scalar forms, while EVEX.b selects SAE.
-            return Some((false, needs_fp16));
+            // EVEX.b selects SAE, not embedded rounding, so L'L remains LLIG:
+            // its three defined vector-length encodings are ignored, while
+            // the reserved 11b vector-length encoding remains invalid.
+            return (ll != 3).then_some((false, needs_fp16));
         }
         if suppress_exceptions {
             // Packed register-source SAE is defined only for VL=512 and uses

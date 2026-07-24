@@ -94,6 +94,10 @@ fn encoding(
     ]
 }
 
+fn valid_control(ll: u8, embedded_control: bool) -> bool {
+    ll != 3 || embedded_control
+}
+
 fn function(bytes: &[u8]) -> crate::smir::ir::SmirFunction {
     use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
     use crate::smir::lift::x86_64::X86_64Lifter;
@@ -148,7 +152,7 @@ fn replay_feature_aggregation_requires_fp16_only_for_binary16_destinations() {
 }
 
 #[test]
-fn replay_admits_and_emits_192_o0_o2_safe_semantic_shapes_and_fails_closed() {
+fn replay_admits_and_emits_168_o0_o2_safe_semantic_shapes_and_fails_closed() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -166,6 +170,9 @@ fn replay_admits_and_emits_192_o0_o2_safe_semantic_shapes_and_fails_closed() {
                 for w in [false, true] {
                     for ll in 0..=3 {
                         for embedded_control in [false, true] {
+                            if !valid_control(ll, embedded_control) {
+                                continue;
+                            }
                             let destination = destinations[lowered % destinations.len()];
                             let merge = merges[(lowered * 3 + 1) % merges.len()];
                             let source = sources[(lowered * 5 + 3) % sources.len()];
@@ -228,7 +235,7 @@ fn replay_admits_and_emits_192_o0_o2_safe_semantic_shapes_and_fails_closed() {
             }
         }
     }
-    assert_eq!(lowered, 192);
+    assert_eq!(lowered, 168);
     assert!(seen_sources.contains(&12) && seen_sources.contains(&13));
 
     let replay_only = encoding(DestinationFormat::F16, false, true, 3, true, 31, 30, 15);
@@ -461,6 +468,9 @@ fn native_cases() -> Vec<NativeCase> {
                     let patterns = format.patterns(signed, w);
                     for ll in 0..=3 {
                         for embedded_control in [false, true] {
+                            if !valid_control(ll, embedded_control) {
+                                continue;
+                            }
                             for sample in 0..2usize {
                                 let cursor = next_pattern.entry(key).or_insert(0usize);
                                 let effective = patterns[*cursor % patterns.len()];
@@ -523,7 +533,7 @@ fn native_cases() -> Vec<NativeCase> {
             }
         }
     }
-    let expected = if has_fp16 { 384 } else { 256 };
+    let expected = if has_fp16 { 336 } else { 224 };
     assert_eq!(cases.len(), expected);
     cases
 }

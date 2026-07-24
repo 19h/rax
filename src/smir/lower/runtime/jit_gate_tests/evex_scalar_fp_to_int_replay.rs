@@ -125,6 +125,10 @@ fn encoding(
     ]
 }
 
+fn valid_control(truncate: bool, ll: u8, embedded_control: bool) -> bool {
+    ll != 3 || (embedded_control && !truncate)
+}
+
 fn function(bytes: &[u8]) -> crate::smir::ir::SmirFunction {
     use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
     use crate::smir::lift::x86_64::X86_64Lifter;
@@ -179,7 +183,7 @@ fn replay_feature_aggregation_requires_fp16_only_for_binary16_sources() {
 }
 
 #[test]
-fn replay_admits_and_emits_384_o0_o2_safe_semantic_shapes_and_fails_closed() {
+fn replay_admits_and_emits_312_o0_o2_safe_semantic_shapes_and_fails_closed() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -196,6 +200,9 @@ fn replay_admits_and_emits_384_o0_o2_safe_semantic_shapes_and_fails_closed() {
                     for w in [false, true] {
                         for ll in 0..=3 {
                             for embedded_control in [false, true] {
+                                if !valid_control(truncate, ll, embedded_control) {
+                                    continue;
+                                }
                                 let destination = destinations[lowered % destinations.len()];
                                 let source = sources[(lowered * 5 + 1) % sources.len()];
                                 let bytes = encoding(
@@ -257,9 +264,9 @@ fn replay_admits_and_emits_384_o0_o2_safe_semantic_shapes_and_fails_closed() {
             }
         }
     }
-    assert_eq!(lowered, 384);
+    assert_eq!(lowered, 312);
 
-    let replay_only = encoding(SourceFormat::F16, false, true, true, 3, true, 15, 31);
+    let replay_only = encoding(SourceFormat::F16, false, true, true, 2, true, 15, 31);
     let mut missing = function(&replay_only);
     missing.x86_instruction_bytes.clear();
     crate::smir::optimize::optimize_function(&mut missing, crate::smir::optimize::OptLevel::O2);
@@ -276,7 +283,7 @@ fn replay_admits_and_emits_384_o0_o2_safe_semantic_shapes_and_fails_closed() {
 
     for destination in [4, 5] {
         for format in SourceFormat::ALL {
-            let bytes = encoding(format, false, true, true, 3, true, destination, 31);
+            let bytes = encoding(format, false, true, true, 2, true, destination, 31);
             assert!(
                 !is_native_clobber_safe(&function(&bytes)),
                 "{format:?} {bytes:02X?}"
@@ -486,6 +493,9 @@ fn native_cases() -> Vec<NativeCase> {
                     for w in [false, true] {
                         for ll in 0..=3 {
                             for embedded_control in [false, true] {
+                                if !valid_control(truncate, ll, embedded_control) {
+                                    continue;
+                                }
                                 for sample in 0..2usize {
                                     let patterns = format.patterns();
                                     let source_bits =
@@ -533,7 +543,7 @@ fn native_cases() -> Vec<NativeCase> {
             );
         }
     }
-    let expected = if has_fp16 { 768 } else { 512 };
+    let expected = if has_fp16 { 624 } else { 416 };
     assert_eq!(cases.len(), expected);
     cases
 }

@@ -33,7 +33,10 @@ impl SqrtKind {
     fn controls(self) -> Vec<(u8, bool)> {
         let scalar = self.fields().3;
         if scalar {
-            (0..=3).flat_map(|ll| [(ll, false), (ll, true)]).collect()
+            (0..=2)
+                .flat_map(|ll| [(ll, false), (ll, true)])
+                .chain([(3, true)])
+                .collect()
         } else {
             (0..=2)
                 .map(|ll| (ll, false))
@@ -93,7 +96,7 @@ fn requirements(kind: SqrtKind, ll: u8, embedded_control: bool) -> (bool, bool) 
 }
 
 #[test]
-fn classifier_covers_10100_legal_control_mask_and_extension_encodings() {
+fn classifier_covers_9100_legal_control_mask_and_extension_encodings() {
     let registers = [0u8, 8, 16, 24, 31];
     let masks = [(0u8, false), (1, false), (1, true), (7, true)];
     let mut classified = 0usize;
@@ -130,7 +133,7 @@ fn classifier_covers_10100_legal_control_mask_and_extension_encodings() {
         }
     }
 
-    assert_eq!(classified, 10_100);
+    assert_eq!(classified, 9_100);
 }
 
 #[test]
@@ -184,7 +187,8 @@ fn classifier_rejects_reserved_or_unsafe_frontiers() {
         None
     );
 
-    // Scalar vvvv/V' and every LLIG value are true operands/control bits.
+    // Scalar vvvv/V' and all three defined LLIG values are true operands.
+    // Embedded rounding repurposes L'L and thereby admits all four values.
     for ll in 0..=3 {
         for embedded_control in [false, true] {
             let bytes = encoding(
@@ -197,11 +201,12 @@ fn classifier_rejects_reserved_or_unsafe_frontiers() {
                 7,
                 true,
             );
+            let expected = (embedded_control || ll != 3).then_some((false, false));
             assert_eq!(
                 X86InstructionBytes::new(&bytes)
                     .unwrap()
                     .evex_register_fp_sqrt_requirements(),
-                Some((false, false)),
+                expected,
                 "{bytes:02X?}"
             );
         }
@@ -225,7 +230,7 @@ fn replay_spans_encode_exact_vl_and_fp16_requirements() {
         (SqrtKind::PackedF32, 1, false),
         (SqrtKind::PackedF64, 2, false),
         (SqrtKind::PackedF64, 3, true),
-        (SqrtKind::ScalarF32, 3, false),
+        (SqrtKind::ScalarF32, 2, false),
         (SqrtKind::ScalarF64, 2, true),
     ] {
         let merge = if kind.fields().3 { 18 } else { 0 };

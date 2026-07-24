@@ -9,7 +9,9 @@ impl X86InstructionBytes {
     /// Returns `(needs_avx512vl, needs_avx512fp16)`. Packed 128-bit and
     /// 256-bit forms require AVX-512VL, except that register-source
     /// `EVEX.b=1` selects a 512-bit operation and uses `L'L` as embedded
-    /// rounding control. Scalar forms are LLIG and never require AVX-512VL.
+    /// rounding control. Scalar forms are LLIG and never require AVX-512VL;
+    /// without embedded rounding, they accept only the three defined EVEX
+    /// vector-length encodings.
     /// Binary16 packed forms require AVX-512-FP16. `VSQRTSH` remains owned by
     /// the disjoint scalar-FP16 arithmetic replay classifier. Memory forms and
     /// every reserved EVEX field fail closed.
@@ -50,9 +52,10 @@ impl X86InstructionBytes {
         }
 
         if scalar {
-            // Scalar forms consume vvvv/V' as source 1. L'L is LLIG when b=0
-            // and selects embedded rounding when b=1.
-            return Some((false, false));
+            // Scalar forms consume vvvv/V' as source 1. L'L is LLIG when b=0,
+            // where the reserved 11b vector-length encoding remains invalid,
+            // and selects one of four rounding controls when b=1.
+            return (embedded_control || ll != 3).then_some((false, false));
         }
 
         // Packed forms reserve vvvv/V' to their all-ones encodings.

@@ -35,7 +35,10 @@ impl SqrtKind {
 
     fn controls(self) -> Vec<(u8, bool)> {
         if self.fields().3 {
-            (0..=3).flat_map(|ll| [(ll, false), (ll, true)]).collect()
+            (0..=2)
+                .flat_map(|ll| [(ll, false), (ll, true)])
+                .chain([(3, true)])
+                .collect()
         } else {
             (0..=2)
                 .map(|ll| (ll, false))
@@ -124,7 +127,7 @@ fn replay_feature_aggregation_requires_bw_and_exact_vl_fp16_features() {
         (SqrtKind::PackedF16, 3, true),
         (SqrtKind::PackedF32, 1, false),
         (SqrtKind::PackedF64, 2, false),
-        (SqrtKind::ScalarF32, 3, false),
+        (SqrtKind::ScalarF32, 2, false),
         (SqrtKind::ScalarF64, 2, true),
     ] {
         let scalar = kind.fields().3;
@@ -162,7 +165,7 @@ fn replay_feature_aggregation_requires_bw_and_exact_vl_fp16_features() {
 }
 
 #[test]
-fn replay_admits_and_emits_555_optimized_legal_encodings_and_fails_closed() {
+fn replay_admits_and_emits_525_optimized_legal_encodings_and_fails_closed() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -264,7 +267,7 @@ fn replay_admits_and_emits_555_optimized_legal_encodings_and_fails_closed() {
     }
 
     assert!(missing_provenance_checked && memory_metadata_checked);
-    assert_eq!(admitted, 555);
+    assert_eq!(admitted, 525);
 }
 
 #[cfg(target_arch = "x86_64")]

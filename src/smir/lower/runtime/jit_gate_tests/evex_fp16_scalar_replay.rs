@@ -30,7 +30,7 @@ fn scalar_fp16_function(bytes: &[u8; 6]) -> crate::smir::ir::SmirFunction {
 }
 
 #[test]
-fn scalar_fp16_arithmetic_replay_admits_every_opcode_llig_and_embedded_control() {
+fn scalar_fp16_arithmetic_replay_admits_54_legal_opcode_control_extension_shapes() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -49,17 +49,18 @@ fn scalar_fp16_arithmetic_replay_admits_every_opcode_llig_and_embedded_control()
 
     let mut admitted = 0usize;
     for opcode in SCALAR_FP16_ARITHMETIC_OPCODES {
-        let encodings = [
+        let mut encodings = vec![
             [0x62, 0xF5, 0x7E, 0x09, opcode, 0xC8],
             [0x62, 0xF5, 0x7E, 0x29, opcode, 0xC8],
             [0x62, 0xF5, 0x7E, 0x49, opcode, 0xC8],
-            [0x62, 0xF5, 0x7E, 0x69, opcode, 0xC8],
             [0x62, 0xF5, 0x7E, 0x19, opcode, 0xC8],
             [0x62, 0xF5, 0x7E, 0x39, opcode, 0xC8],
             [0x62, 0xF5, 0x7E, 0x59, opcode, 0xC8],
-            [0x62, 0xF5, 0x7E, 0x79, opcode, 0xC8],
             [0x62, 0xA5, 0x6E, 0x81, opcode, 0xCB],
         ];
+        if !matches!(opcode, 0x5D | 0x5F) {
+            encodings.push([0x62, 0xF5, 0x7E, 0x79, opcode, 0xC8]);
+        }
 
         for bytes in &encodings {
             let mut function = scalar_fp16_function(bytes);
@@ -115,7 +116,7 @@ fn scalar_fp16_arithmetic_replay_admits_every_opcode_llig_and_embedded_control()
             "opcode={opcode:#04x}"
         );
     }
-    assert_eq!(admitted, 63);
+    assert_eq!(admitted, 54);
 }
 
 #[cfg(target_arch = "x86_64")]

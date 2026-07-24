@@ -36,6 +36,14 @@ impl Conversion {
         }
     }
 
+    fn has_embedded_rounding(self) -> bool {
+        matches!(self, Self::F64ToF32 | Self::F64ToF16 | Self::F32ToF16)
+    }
+
+    fn valid_control(self, ll: u8, embedded_control: bool) -> bool {
+        ll != 3 || (embedded_control && self.has_embedded_rounding())
+    }
+
     #[cfg(target_arch = "x86_64")]
     fn source_width(self) -> u32 {
         match self {
@@ -192,7 +200,12 @@ fn function(bytes: &[u8]) -> crate::smir::ir::SmirFunction {
 #[test]
 fn replay_feature_aggregation_requires_fp16_only_for_fp16_conversions() {
     for conversion in Conversion::ALL {
-        let bytes = encoding(conversion, 3, true, 31, 30, 29, 7, true);
+        let ll = if conversion.has_embedded_rounding() {
+            3
+        } else {
+            2
+        };
+        let bytes = encoding(conversion, ll, true, 31, 30, 29, 7, true);
         let function = function(&bytes);
         let actual =
             x86_native_replay_feature_requirements(&function, &std::collections::HashMap::new());
@@ -223,7 +236,7 @@ fn replay_feature_aggregation_requires_fp16_only_for_fp16_conversions() {
 }
 
 #[test]
-fn replay_admits_and_emits_384_o0_o2_mask_control_shapes_and_fails_closed() {
+fn replay_admits_and_emits_312_o0_o2_mask_control_shapes_and_fails_closed() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -246,6 +259,9 @@ fn replay_admits_and_emits_384_o0_o2_mask_control_shapes_and_fails_closed() {
         for conversion in Conversion::ALL {
             for ll in 0..=3 {
                 for embedded_control in [false, true] {
+                    if !conversion.valid_control(ll, embedded_control) {
+                        continue;
+                    }
                     for (mask, zeroing) in masks {
                         let (destination, merge, source) = triples[lowered % triples.len()];
                         let bytes = encoding(
@@ -305,7 +321,7 @@ fn replay_admits_and_emits_384_o0_o2_mask_control_shapes_and_fails_closed() {
             }
         }
     }
-    assert_eq!(lowered, 384);
+    assert_eq!(lowered, 312);
 
     let replay_only = encoding(Conversion::F64ToF16, 3, true, 31, 30, 29, 7, true);
     let mut missing = function(&replay_only);
@@ -549,6 +565,9 @@ fn native_cases() -> Vec<NativeCase> {
             let patterns = conversion.source_patterns();
             for ll in 0..=3 {
                 for embedded_control in [false, true] {
+                    if !conversion.valid_control(ll, embedded_control) {
+                        continue;
+                    }
                     for (mask, zeroing, active) in masks {
                         let source_value = if active {
                             let cursor = cursors.entry(conversion).or_insert(0usize);
@@ -565,18 +584,17 @@ fn native_cases() -> Vec<NativeCase> {
                             }
                         };
                         let (destination, merge, source) = triples[shape % triples.len()];
-                        // For active cases this independently crosses all four
-                        // MXCSR rounding controls via L'L, DAZ via k0/k2, and
-                        // FTZ via O0/O2. EVEX.b=0 therefore exercises the full
-                        // dynamic-control product while EVEX.b=1 also checks
-                        // ER/SAE independence from MXCSR.RC.
+                        // L'L and MXCSR.RC are independent whenever L'L is
+                        // ignored or carries embedded control. Offset RC by
+                        // DAZ selection so the three legal LLIG encodings still
+                        // exercise all four dynamic rounding modes.
                         let prior_status = [0, 1, 1 << 1, 1 << 3, 1 << 4, 1 << 5][(level_index
                             * 32
                             + usize::from(ll) * 8
                             + usize::from(embedded_control) * 4
                             + usize::from(mask))
                             % 6];
-                        let rc = u32::from(ll) << 13;
+                        let rc = ((u32::from(ll) + u32::from(mask == 2)) & 3) << 13;
                         let daz = if mask == 2 { 1 << 6 } else { 0 };
                         let ftz = if level_index == 1 { 1 << 15 } else { 0 };
                         cases.push(NativeCase {
@@ -599,6 +617,35 @@ fn native_cases() -> Vec<NativeCase> {
         }
     }
 
+    // The exact F32-to-F64 boundary corpus has 25 values, while the legal
+    // three-value LLIG matrix supplies 24 active O0/O2 mask/control slots.
+    // Append any uncovered source values through a canonical legal control so
+    // fail-closed admission does not reduce semantic boundary coverage.
+    for conversion in Conversion::ALL {
+        if conversion.fields().4 && !has_fp16 {
+            continue;
+        }
+        for source_value in conversion.source_patterns() {
+            if seen.entry(conversion).or_default().insert(source_value) {
+                let (destination, merge, source) = triples[shape % triples.len()];
+                cases.push(NativeCase {
+                    level: crate::smir::optimize::OptLevel::O0,
+                    conversion,
+                    ll: 0,
+                    embedded_control: false,
+                    destination,
+                    merge,
+                    source,
+                    mask: 0,
+                    zeroing: false,
+                    source_value,
+                    mxcsr: 0x1F80,
+                });
+                shape += 1;
+            }
+        }
+    }
+
     for conversion in Conversion::ALL {
         if conversion.fields().4 && !has_fp16 {
             continue;
@@ -610,7 +657,7 @@ fn native_cases() -> Vec<NativeCase> {
             "{conversion:?} active source-pattern coverage"
         );
     }
-    assert_eq!(cases.len(), if has_fp16 { 384 } else { 128 });
+    assert_eq!(cases.len(), if has_fp16 { 313 } else { 105 });
     cases
 }
 
@@ -651,28 +698,43 @@ fn native_case_matrix_covers_formats_masks_aliases_register_banks_and_boundaries
             .iter()
             .filter(|case| case.conversion == conversion && matches!(case.mask, 0 | 2))
             .collect::<Vec<_>>();
-        let expected_control_product = (0u32..=3)
-            .flat_map(|rc| {
-                [false, true]
-                    .into_iter()
-                    .flat_map(move |daz| [false, true].into_iter().map(move |ftz| (rc, daz, ftz)))
-            })
-            .collect::<std::collections::BTreeSet<_>>();
         for embedded_control in [false, true] {
+            let controls = active
+                .iter()
+                .filter(|case| case.embedded_control == embedded_control)
+                .map(|case| {
+                    (
+                        (case.mxcsr >> 13) & 3,
+                        case.mxcsr & (1 << 6) != 0,
+                        case.mxcsr & (1 << 15) != 0,
+                    )
+                })
+                .collect::<std::collections::BTreeSet<_>>();
             assert_eq!(
-                active
+                controls
                     .iter()
-                    .filter(|case| case.embedded_control == embedded_control)
-                    .map(|case| {
-                        (
-                            (case.mxcsr >> 13) & 3,
-                            case.mxcsr & (1 << 6) != 0,
-                            case.mxcsr & (1 << 15) != 0,
-                        )
-                    })
+                    .map(|control| control.0)
                     .collect::<std::collections::BTreeSet<_>>(),
-                expected_control_product,
-                "{conversion:?}: b={} MXCSR control product",
+                std::collections::BTreeSet::from([0, 1, 2, 3]),
+                "{conversion:?}: b={} MXCSR.RC",
+                u8::from(embedded_control)
+            );
+            assert_eq!(
+                controls
+                    .iter()
+                    .map(|control| control.1)
+                    .collect::<std::collections::BTreeSet<_>>(),
+                std::collections::BTreeSet::from([false, true]),
+                "{conversion:?}: b={} MXCSR.DAZ",
+                u8::from(embedded_control)
+            );
+            assert_eq!(
+                controls
+                    .iter()
+                    .map(|control| control.2)
+                    .collect::<std::collections::BTreeSet<_>>(),
+                std::collections::BTreeSet::from([false, true]),
+                "{conversion:?}: b={} MXCSR.FTZ",
                 u8::from(embedded_control)
             );
         }

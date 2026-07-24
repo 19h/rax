@@ -29,7 +29,7 @@ fn encoding(opcode: u8, src1: u8, src2: u8, ll: u8, suppress_exceptions: bool) -
 }
 
 #[test]
-fn classifier_covers_all_16384_register_extension_llig_and_sae_encodings() {
+fn classifier_covers_all_12288_legal_register_extension_llig_and_sae_encodings() {
     let mut classified = 0usize;
     for opcode in [0x2E, 0x2F] {
         for src1 in 0..32 {
@@ -37,20 +37,21 @@ fn classifier_covers_all_16384_register_extension_llig_and_sae_encodings() {
                 for ll in 0..4 {
                     for suppress_exceptions in [false, true] {
                         let bytes = encoding(opcode, src1, src2, ll, suppress_exceptions);
+                        let expected = (ll != 3).then_some((false, true));
                         assert_eq!(
                             X86InstructionBytes::new(&bytes)
                                 .unwrap()
                                 .evex_register_fp16_flag_compare_requirements(),
-                            Some((false, true)),
+                            expected,
                             "{bytes:02X?}"
                         );
-                        classified += 1;
+                        classified += usize::from(expected.is_some());
                     }
                 }
             }
         }
     }
-    assert_eq!(classified, 16_384);
+    assert_eq!(classified, 12_288);
 
     // Independently assembled by LLVM 21.1.8 with +avx512fp16.
     for bytes in [
@@ -106,7 +107,7 @@ fn replay_spans_require_fp16_without_vl_or_dq() {
 
     for opcode in [0x2E, 0x2F] {
         for suppress_exceptions in [false, true] {
-            let bytes = encoding(opcode, 30, 31, 3, suppress_exceptions);
+            let bytes = encoding(opcode, 30, 31, 2, suppress_exceptions);
             let instruction = X86InstructionBytes::new(&bytes).unwrap();
             let provenance = HashMap::from([((BlockId(47), pc), instruction)]);
             for spans in [

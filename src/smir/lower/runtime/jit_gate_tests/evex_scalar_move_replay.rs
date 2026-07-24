@@ -94,7 +94,7 @@ fn function(bytes: &[u8]) -> crate::smir::ir::SmirFunction {
 fn replay_feature_aggregation_requires_bw_and_fp16_only_for_vmovsh() {
     for kind in MoveKind::ALL {
         for opcode in [0x10, 0x11] {
-            let bytes = encoding(kind, opcode, 3, 31, 30, 29, 7, true);
+            let bytes = encoding(kind, opcode, 2, 31, 30, 29, 7, true);
             let function = function(&bytes);
             let actual = x86_native_replay_feature_requirements(
                 &function,
@@ -121,7 +121,7 @@ fn replay_feature_aggregation_requires_bw_and_fp16_only_for_vmovsh() {
 }
 
 #[test]
-fn replay_admits_and_emits_360_optimized_legal_encodings_and_fails_closed() {
+fn replay_admits_and_emits_270_optimized_legal_encodings_and_fails_closed() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -140,7 +140,7 @@ fn replay_admits_and_emits_360_optimized_legal_encodings_and_fails_closed() {
     for kind in MoveKind::ALL {
         let needs_fp16 = kind.fields().3;
         for opcode in [0x10, 0x11] {
-            for ll in 0..=3 {
+            for ll in 0..=2 {
                 for (destination, merge, source) in operands {
                     for (mask, zeroing) in masks {
                         let bytes =
@@ -215,7 +215,7 @@ fn replay_admits_and_emits_360_optimized_legal_encodings_and_fails_closed() {
     }
 
     assert!(missing_provenance_checked && memory_metadata_checked);
-    assert_eq!(admitted, 360);
+    assert_eq!(admitted, 270);
 }
 
 #[cfg(target_arch = "x86_64")]
@@ -377,7 +377,7 @@ fn replay_matches_interpreter_for_aliases_llig_masks_extensions_and_full_state()
         }
         available_kinds += 1;
         for opcode in [0x10, 0x11] {
-            for ll in 0..=3 {
+            for ll in 0..=2 {
                 for (destination, merge, source) in operands {
                     for (mask, zeroing) in masks {
                         let bytes =
@@ -397,6 +397,6 @@ fn replay_matches_interpreter_for_aliases_llig_masks_extensions_and_full_state()
     assert!(available_kinds >= 2, "AVX-512F scalar move formats");
     assert_eq!(
         executed,
-        available_kinds * 2 * 4 * operands.len() * masks.len()
+        available_kinds * 2 * 3 * operands.len() * masks.len()
     );
 }

@@ -32,6 +32,14 @@ impl Conversion {
             Self::F16ToF32 => (6, 0x13, 0, false, true),
         }
     }
+
+    fn has_embedded_rounding(self) -> bool {
+        matches!(self, Self::F64ToF32 | Self::F64ToF16 | Self::F32ToF16)
+    }
+
+    fn valid_control(self, ll: u8, embedded_control: bool) -> bool {
+        ll != 3 || (embedded_control && self.has_embedded_rounding())
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -76,7 +84,7 @@ fn encoding(
 }
 
 #[test]
-fn classifier_accepts_exactly_24_000_sampled_legal_register_encodings() {
+fn classifier_accepts_exactly_19_500_sampled_legal_register_encodings() {
     let registers = [0u8, 8, 16, 24, 31];
     let masks = [(0u8, false), (1, false), (1, true), (7, true)];
     let mut classified = 0usize;
@@ -97,14 +105,17 @@ fn classifier_accepts_exactly_24_000_sampled_legal_register_encodings() {
                                     mask,
                                     zeroing,
                                 );
+                                let expected = conversion
+                                    .valid_control(ll, embedded_control)
+                                    .then_some(conversion.fields().4);
                                 assert_eq!(
                                     X86InstructionBytes::new(&bytes)
                                         .unwrap()
                                         .evex_register_scalar_fp_convert_requires_fp16(),
-                                    Some(conversion.fields().4),
+                                    expected,
                                     "{conversion:?} {bytes:02X?}"
                                 );
-                                classified += 1;
+                                classified += usize::from(expected.is_some());
                             }
                         }
                     }
@@ -112,7 +123,7 @@ fn classifier_accepts_exactly_24_000_sampled_legal_register_encodings() {
             }
         }
     }
-    assert_eq!(classified, 24_000);
+    assert_eq!(classified, 19_500);
 
     // Independently assembled by LLVM 21.1.8. Collectively these cover all
     // six mnemonics, high destination/merge/source registers, k1/k7,
@@ -219,11 +230,16 @@ fn replay_spans_expose_exact_fp16_requirements() {
                 let instruction = X86InstructionBytes::new(&bytes).unwrap();
                 let provenance =
                     std::collections::HashMap::from([((BlockId(90), pc), instruction)]);
+                let valid = conversion.valid_control(ll, embedded_control);
                 for spans in [
                     x86_evex_scalar_fp_convert_replay_spans(&block, &provenance),
                     x86_evex_native_replay_spans(&block, &provenance),
                 ] {
-                    let span = spans.get(&0).unwrap_or_else(|| panic!("{bytes:02X?}"));
+                    let Some(span) = spans.get(&0) else {
+                        assert!(!valid, "missing legal replay span: {bytes:02X?}");
+                        continue;
+                    };
+                    assert!(valid, "admitted reserved replay encoding: {bytes:02X?}");
                     assert_eq!(span.end, 1, "{bytes:02X?}");
                     assert_eq!(span.instruction, instruction, "{bytes:02X?}");
                     assert!(!span.needs_avx512vl, "{bytes:02X?}");

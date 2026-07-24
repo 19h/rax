@@ -38,7 +38,7 @@ impl CompareKind {
 
     fn controls(self) -> Vec<(u8, bool)> {
         if self.fields().3 {
-            (0..=3).flat_map(|ll| [(ll, false), (ll, true)]).collect()
+            (0..=2).flat_map(|ll| [(ll, false), (ll, true)]).collect()
         } else {
             (0..=2).map(|ll| (ll, false)).chain([(0, true)]).collect()
         }
@@ -118,8 +118,8 @@ fn replay_feature_aggregation_requires_bw_and_exact_vl_fp16_features() {
         (CompareKind::PackedF16, 0, true),
         (CompareKind::PackedF32, 1, false),
         (CompareKind::PackedF64, 2, false),
-        (CompareKind::ScalarF16, 3, true),
-        (CompareKind::ScalarF32, 3, false),
+        (CompareKind::ScalarF16, 2, true),
+        (CompareKind::ScalarF32, 2, false),
         (CompareKind::ScalarF64, 2, true),
     ] {
         let bytes = encoding(kind, ll, suppress_exceptions, 7, 17, 24, 1, 31);
@@ -147,7 +147,7 @@ fn replay_feature_aggregation_requires_bw_and_exact_vl_fp16_features() {
 }
 
 #[test]
-fn replay_admits_and_emits_180_optimized_legal_encodings_and_fails_closed() {
+fn replay_admits_and_emits_150_optimized_legal_encodings_and_fails_closed() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -243,7 +243,7 @@ fn replay_admits_and_emits_180_optimized_legal_encodings_and_fails_closed() {
     }
 
     assert!(missing_provenance_checked && memory_metadata_checked);
-    assert_eq!(admitted, 180);
+    assert_eq!(admitted, 150);
 }
 
 #[cfg(target_arch = "x86_64")]
@@ -518,7 +518,7 @@ fn replay_matches_interpreter_for_all_predicates_formats_sae_masks_extensions_an
             continue;
         }
         for (suppress_exceptions, writemask) in [(false, 3), (true, 3), (false, 2)] {
-            let bytes = encoding(kind, 3, suppress_exceptions, 5, 22, 27, writemask, 19);
+            let bytes = encoding(kind, 2, suppress_exceptions, 5, 22, 27, writemask, 19);
             let initial = initial_state(kind, 0x1F80);
             assert_eq!(
                 execute_native(&bytes, &initial),

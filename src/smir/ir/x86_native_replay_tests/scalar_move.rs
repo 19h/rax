@@ -67,7 +67,7 @@ fn encoding(
 }
 
 #[test]
-fn classifier_covers_12000_legal_alias_llig_mask_and_extension_encodings() {
+fn classifier_covers_9000_legal_alias_llig_mask_and_extension_encodings() {
     let registers = [0u8, 8, 16, 24, 31];
     let masks = [(0u8, false), (1, false), (1, true), (7, true)];
     let mut classified = 0usize;
@@ -89,14 +89,15 @@ fn classifier_covers_12000_legal_alias_llig_mask_and_extension_encodings() {
                                     mask,
                                     zeroing,
                                 );
+                                let expected = (ll != 3).then_some(kind.fields().3);
                                 assert_eq!(
                                     X86InstructionBytes::new(&bytes)
                                         .unwrap()
                                         .evex_register_scalar_move_requires_fp16(),
-                                    Some(kind.fields().3),
+                                    expected,
                                     "{kind:?} {bytes:02X?}"
                                 );
-                                classified += 1;
+                                classified += usize::from(expected.is_some());
                             }
                         }
                     }
@@ -105,7 +106,7 @@ fn classifier_covers_12000_legal_alias_llig_mask_and_extension_encodings() {
         }
     }
 
-    assert_eq!(classified, 12_000);
+    assert_eq!(classified, 9_000);
 }
 
 #[test]
@@ -137,16 +138,18 @@ fn classifier_rejects_reserved_or_unsafe_frontiers() {
     }
 
     // Both opcode directions consume all four extension channels plus
-    // EVEX.vvvv/V', and L'L is ignored for every scalar family.
+    // EVEX.vvvv/V'. The three defined L'L vector-length values are ignored;
+    // the reserved 11b encoding remains invalid.
     for kind in MoveKind::ALL {
         for opcode in [0x10, 0x11] {
             for ll in 0..=3 {
                 let bytes = encoding(kind, opcode, ll, 31, 30, 29, 7, true);
+                let expected = (ll != 3).then_some(kind.fields().3);
                 assert_eq!(
                     X86InstructionBytes::new(&bytes)
                         .unwrap()
                         .evex_register_scalar_move_requires_fp16(),
-                    Some(kind.fields().3),
+                    expected,
                     "{bytes:02X?}"
                 );
             }
@@ -162,7 +165,7 @@ fn replay_spans_encode_exact_fp16_requirement_without_vl_or_dq() {
 
     for kind in MoveKind::ALL {
         for opcode in [0x10, 0x11] {
-            let bytes = encoding(kind, opcode, 3, 31, 30, 29, 7, true);
+            let bytes = encoding(kind, opcode, 2, 31, 30, 29, 7, true);
             let instruction = X86InstructionBytes::new(&bytes).unwrap();
             let provenance = HashMap::from([((BlockId(33), pc), instruction)]);
             for spans in [

@@ -10,8 +10,10 @@ impl X86InstructionBytes {
     /// sources. Map-1 binary32/binary64 forms require AVX-512F; map-5 binary16
     /// forms require AVX-512-FP16. `L'L` is ignored when `EVEX.b=0` and selects
     /// embedded rounding/SAE when `EVEX.b=1`, except that binary64 W0 is exact
-    /// for every input and architecturally ignores attempted embedded rounding.
-    /// All four `L'L` values therefore remain valid.
+    /// for every input and architecturally ignores the selected rounding mode.
+    /// `L'L=11` is valid only when `EVEX.b=1` repurposes the field as embedded
+    /// rounding; otherwise L'L remains LLIG and accepts the three defined EVEX
+    /// vector-length encodings.
     ///
     /// Memory sources, masks, zeroing, fabricated GPR bit 4, and RSP/RBP
     /// sources fail closed. RSP/RBP are unsafe because raw native replay
@@ -49,6 +51,12 @@ impl X86InstructionBytes {
             (5, 2) => true,
             _ => return None,
         };
+
+        let ll = (p2 >> 5) & 0x03;
+        let embedded_control = p2 & 0x10 != 0;
+        if ll == 3 && !embedded_control {
+            return None;
+        }
 
         // EVEX.B selects GPR0-7/GPR8-15. Reject guest RSP/RBP only in the low
         // bank; R12/R13 are ordinary identity-mapped source registers.
