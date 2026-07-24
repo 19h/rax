@@ -502,11 +502,10 @@ impl SmirInterpreter {
                 length_width,
                 kind,
                 imm,
+                zero_upper,
             } => {
                 use crate::isa::x86_64::execute::simd::pcmpxstrx;
 
-                let first = Self::read_vec(ctx, *src1);
-                let second = Self::read_vec(ctx, *src2);
                 macro_rules! invalid {
                     () => {{
                         ctx.request_exit(ExitReason::Undefined {
@@ -516,6 +515,19 @@ impl SmirInterpreter {
                         return Ok(());
                     }};
                 }
+                if (!kind.returns_mask() && *zero_upper)
+                    || (kind.is_explicit()
+                        && (!matches!(length_width, OpWidth::W32 | OpWidth::W64)
+                            || len1.is_none()
+                            || len2.is_none()))
+                    || (!kind.is_explicit()
+                        && (len1.is_some() || len2.is_some() || *length_width != OpWidth::W32))
+                {
+                    invalid!();
+                }
+
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
                 let (first_length, second_length) = if kind.is_explicit() {
                     let (Some(first_length), Some(second_length)) = (len1, len2) else {
                         invalid!();
@@ -554,7 +566,11 @@ impl SmirInterpreter {
                 );
 
                 if kind.returns_mask() {
-                    let mut destination = Self::read_vec(ctx, *dst);
+                    let mut destination = if *zero_upper {
+                        [0; 16]
+                    } else {
+                        Self::read_vec(ctx, *dst)
+                    };
                     destination[0] = result.value as u64;
                     destination[1] = (result.value >> 64) as u64;
                     Self::write_vec(ctx, *dst, destination);

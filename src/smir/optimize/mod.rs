@@ -4076,16 +4076,17 @@ impl OpKind {
                 len1,
                 len2,
                 kind,
+                zero_upper,
                 ..
             } => {
                 result.push(*src1);
                 result.push(*src2);
                 result.extend(len1.iter().copied());
                 result.extend(len2.iter().copied());
-                // Legacy mask forms overwrite only XMM0 bits 127:0. The
-                // shared architectural vector value above bit 127 is merged
-                // from the old destination, so this is a true RMW use.
-                if kind.returns_mask() {
+                // Legacy mask forms overwrite only XMM0 bits 127:0. VEX mask
+                // forms clear the shared architectural vector value above bit
+                // 127 and therefore do not read the old destination.
+                if kind.returns_mask() && !zero_upper {
                     result.push(*dst);
                 }
             }

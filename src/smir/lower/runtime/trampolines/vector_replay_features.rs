@@ -1,4 +1,4 @@
-//! Feature requirements contributed by exact EVEX native-replay spans.
+//! Feature requirements contributed by exact x86 native-replay spans.
 
 /// Host features accumulated from byte-validated replay spans in executable
 /// blocks. The surrounding vector trampoline separately accumulates features
@@ -6,6 +6,7 @@
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) any: bool,
+    pub(crate) needs_avx: bool,
     pub(crate) needs_avx512bw: bool,
     pub(crate) needs_avx512vl: bool,
     pub(crate) needs_avx512dq: bool,
@@ -21,14 +22,15 @@ impl X86NativeReplayFeatureRequirements {
     /// shared AVX-512 vector-state trampoline requirements.
     #[cfg(target_arch = "x86_64")]
     pub(crate) fn x86_host_supported(self) -> bool {
-        (!self.needs_gfni || std::is_x86_feature_detected!("gfni"))
+        (!self.needs_avx || std::is_x86_feature_detected!("avx"))
+            && (!self.needs_gfni || std::is_x86_feature_detected!("gfni"))
             && (!self.needs_avx512vp2intersect
                 || std::is_x86_feature_detected!("avx512vp2intersect"))
             && (!self.needs_vpclmulqdq || std::is_x86_feature_detected!("vpclmulqdq"))
     }
 }
 
-/// Accumulate the host features required by exact EVEX native-replay spans in
+/// Accumulate the host features required by exact x86 native-replay spans in
 /// O(N) time and O(P) temporary space per block for N operations and P guest
 /// instruction addresses.
 pub(crate) fn x86_native_replay_feature_requirements(
@@ -41,11 +43,11 @@ pub(crate) fn x86_native_replay_feature_requirements(
         .iter()
         .filter(|block| !excluded.contains_key(&block.id))
     {
-        for span in
-            crate::smir::ir::x86_evex_native_replay_spans(block, &func.x86_instruction_bytes)
-                .into_values()
+        for span in crate::smir::ir::x86_native_replay_spans(block, &func.x86_instruction_bytes)
+            .into_values()
         {
             requirements.any = true;
+            requirements.needs_avx |= span.instruction.is_vex_register_packed_string_compare();
             // Replay spans use the full-width K0-K7 helper boundary. KMOVQ is
             // an AVX-512BW instruction, independently of the replayed opcode's
             // own CPUID feature set.

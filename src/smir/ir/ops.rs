@@ -3621,12 +3621,13 @@ pub enum OpKind {
         imm: u8,
     },
 
-    /// Exact legacy SSE4.2 packed-string comparison (`PCMPxSTRx`). `src1`
+    /// Exact SSE4.2/AVX packed-string comparison (`(V)PCMPxSTRx`). `src1`
     /// names the ModR/M.reg XMM operand and `src2` the snapshotted register or
     /// memory operand. Explicit forms carry signed EAX/EDX or RAX/RDX sources;
-    /// implicit forms carry neither length. Mask forms write XMM0 bits 127:0
-    /// while preserving shared vector state above bit 127; index forms write
-    /// ECX, which zero-extends RCX. All six x86 status flags are defined.
+    /// implicit forms carry neither length. Mask forms write XMM0 bits 127:0;
+    /// `zero_upper` distinguishes VEX forms, which clear all shared vector
+    /// state above bit 127, from legacy forms, which preserve it. Index forms
+    /// write ECX, which zero-extends RCX. All six x86 status flags are defined.
     X86PackedStringCompare {
         dst: VReg,
         src1: VReg,
@@ -3636,6 +3637,7 @@ pub enum OpKind {
         length_width: OpWidth,
         kind: X86PackedStringKind,
         imm: u8,
+        zero_upper: bool,
     },
 
     /// SHA-512 message schedule, first stage.

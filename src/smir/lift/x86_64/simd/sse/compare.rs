@@ -58,6 +58,105 @@ impl X86_64Lifter {
         let imm = bytes[imm_offset];
         let bytes_consumed = prefix.cursor + imm_offset + 1;
         let next_pc = pc + bytes_consumed as u64;
+        let length_width = if kind.is_explicit() && prefix.rex_w() {
+            OpWidth::W64
+        } else {
+            OpWidth::W32
+        };
+        Ok(self.lift_pcmpxstrx_decoded(
+            kind,
+            modrm,
+            imm,
+            length_width,
+            false,
+            bytes_consumed,
+            next_pc,
+            pc,
+            ctx,
+        ))
+    }
+
+    /// Lift the four AVX VEX.128 packed-string comparison forms. Intel SDM
+    /// Vol. 2B defines map 0F3A opcodes 60H through 63H with mandatory 66H,
+    /// VEX.L=0, and reserved VEX.vvvv=1111b. VEX.W retains REX.W's explicit-
+    /// length selection; it is ignored by the implicit-length forms.
+    pub(crate) fn lift_vex_pcmpxstrx(
+        &self,
+        prefix: VecPrefix,
+        opcode: u8,
+        bytes: &[u8],
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let kind = match opcode {
+            0x60 => X86PackedStringKind::ExplicitMask,
+            0x61 => X86PackedStringKind::ExplicitIndex,
+            0x62 => X86PackedStringKind::ImplicitMask,
+            0x63 => X86PackedStringKind::ImplicitIndex,
+            _ => unreachable!(),
+        };
+        if prefix.encoding != VecEncodingKind::Vex
+            || prefix.pp != X86SsePrefix::OpSize
+            || prefix.width != VecWidth::V128
+            || prefix.vvvv != 0
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let cursor = prefix.bytes + 1;
+        let modrm_prefix = X86Prefix {
+            rex: prefix.rex,
+            operand_size_override: true,
+            address_size_override: prefix.address_size_override,
+            segment_override: prefix.segment_override,
+            cursor,
+            ..X86Prefix::default()
+        };
+        let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
+        let imm_offset = cursor + modrm.bytes_consumed;
+        let Some(&imm) = bytes.get(imm_offset) else {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: bytes.len(),
+                need: imm_offset + 1,
+            });
+        };
+        let bytes_consumed = imm_offset + 1;
+        let next_pc = pc + bytes_consumed as u64;
+        let length_width = if kind.is_explicit() && prefix.w {
+            OpWidth::W64
+        } else {
+            OpWidth::W32
+        };
+        Ok(self.lift_pcmpxstrx_decoded(
+            kind,
+            modrm,
+            imm,
+            length_width,
+            kind.returns_mask(),
+            bytes_consumed,
+            next_pc,
+            pc,
+            ctx,
+        ))
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn lift_pcmpxstrx_decoded(
+        &self,
+        kind: X86PackedStringKind,
+        modrm: ModRm,
+        imm: u8,
+        length_width: OpWidth,
+        zero_upper: bool,
+        bytes_consumed: usize,
+        next_pc: u64,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> LiftResult {
         let mut ops = Vec::new();
         let src2 = if modrm.is_memory {
             let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
@@ -76,18 +175,10 @@ impl X86_64Lifter {
         } else {
             self.xmm(modrm.rm)
         };
-        let (len1, len2, length_width) = if kind.is_explicit() {
-            (
-                Some(self.gpr(0)),
-                Some(self.gpr(2)),
-                if prefix.rex_w() {
-                    OpWidth::W64
-                } else {
-                    OpWidth::W32
-                },
-            )
+        let (len1, len2) = if kind.is_explicit() {
+            (Some(self.gpr(0)), Some(self.gpr(2)))
         } else {
-            (None, None, OpWidth::W32)
+            (None, None)
         };
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
@@ -105,10 +196,11 @@ impl X86_64Lifter {
                 length_width,
                 kind,
                 imm,
+                zero_upper,
             },
         ));
 
-        Ok(LiftResult::fallthrough(ops, bytes_consumed))
+        LiftResult::fallthrough(ops, bytes_consumed)
     }
 
     /// Lift MMX/SSE2/SSE4.1 packed integer equality and signed greater-than

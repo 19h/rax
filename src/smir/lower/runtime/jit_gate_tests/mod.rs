@@ -158,6 +158,8 @@ mod trap;
 #[cfg(test)]
 mod vector;
 #[cfg(test)]
+mod vex_packed_string_replay;
+#[cfg(test)]
 mod waitpkg;
 #[cfg(test)]
 mod write_control;

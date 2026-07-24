@@ -64,6 +64,9 @@ mod scalar_lane_transfer;
 #[path = "x86_native_replay_tests/scalar_move.rs"]
 mod scalar_move;
 
+#[path = "x86_native_replay_tests/vex_packed_string.rs"]
+mod vex_packed_string;
+
 #[path = "x86_native_replay_tests/vp2intersect.rs"]
 mod vp2intersect;
 

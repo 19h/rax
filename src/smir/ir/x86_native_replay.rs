@@ -60,7 +60,7 @@ pub struct X86NativeReplaySpan {
 /// Compatibility name for the first replay family.
 pub type X86EvexFpReplaySpan = X86NativeReplaySpan;
 
-fn x86_evex_replay_spans_where(
+fn x86_native_replay_spans_where(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
     classify: impl Fn(&X86InstructionBytes) -> Option<(bool, bool, bool)>,
@@ -98,6 +98,14 @@ fn x86_evex_replay_spans_where(
             ))
         })
         .collect()
+}
+
+fn x86_evex_replay_spans_where(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+    classify: impl Fn(&X86InstructionBytes) -> Option<(bool, bool, bool)>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, classify)
 }
 
 /// Identify valid register-only EVEX floating-point replay groups in `block`.
@@ -811,15 +819,15 @@ pub fn x86_evex_gpr_broadcast_replay_spans(
     })
 }
 
-/// Identify every validated native EVEX replay group in one O(N)-time,
+/// Identify every validated native x86 source-replay group in one O(N)-time,
 /// O(P)-space block pass. Classifiers are intentionally disjoint and ordered
 /// explicitly so adding a replay family does not add another scan of the SMIR
 /// operation stream.
-pub fn x86_evex_native_replay_spans(
+pub fn x86_native_replay_spans(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
 ) -> HashMap<usize, X86NativeReplaySpan> {
-    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
         if let Some(needs_vl) = instruction.evex_register_fp_arithmetic_needs_vl() {
             return Some((needs_vl, false, false));
         }
@@ -1066,6 +1074,35 @@ pub fn x86_evex_native_replay_spans(
                     .evex_register_gpr_broadcast_needs_vl()
                     .map(|needs_vl| (needs_vl, false, false))
             })
+            .or_else(|| {
+                instruction
+                    .is_vex_register_packed_string_compare()
+                    .then_some((false, false, false))
+            })
+    })
+}
+
+/// Identify every validated native EVEX replay group in O(N) time and O(P)
+/// space while preserving the established EVEX-only API.
+pub fn x86_evex_native_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    let mut spans = x86_native_replay_spans(block, instruction_bytes);
+    spans.retain(|_, span| span.instruction.as_slice().first() == Some(&0x62));
+    spans
+}
+
+/// Identify register-only AVX VEX packed-string comparison replay groups in
+/// O(N) time and O(P) space for N operations and P unique guest PCs.
+pub fn x86_vex_packed_string_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .is_vex_register_packed_string_compare()
+            .then_some((false, false, false))
     })
 }
 

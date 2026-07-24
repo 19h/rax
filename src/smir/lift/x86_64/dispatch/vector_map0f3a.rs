@@ -80,6 +80,9 @@ impl X86_64Lifter {
             0x4A..=0x4C if prefix.encoding == VecEncodingKind::Vex => {
                 self.lift_vex_variable_blend(prefix, opcode, bytes, pc, ctx)
             }
+            0x60..=0x63 if prefix.encoding == VecEncodingKind::Vex => {
+                self.lift_vex_pcmpxstrx(prefix, opcode, bytes, pc, ctx)
+            }
             0xF0 if prefix.encoding == VecEncodingKind::Vex => {
                 self.lift_vex_bmi2_rorx_dispatch(prefix, bytes, pc, ctx)
             }

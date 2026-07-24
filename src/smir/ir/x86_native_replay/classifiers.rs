@@ -14,6 +14,7 @@ mod scalar_int_to_fp;
 mod scalar_integer_move;
 mod scalar_lane_transfer;
 mod scalar_move;
+mod vex_packed_string;
 mod vp2intersect;
 mod vpclmulqdq;
 

@@ -166,7 +166,7 @@ pub(crate) fn block_is_clobber_safe(
         return false;
     }
     let native_replay_spans =
-        crate::smir::ir::x86_evex_native_replay_spans(block, x86_instruction_bytes);
+        crate::smir::ir::x86_native_replay_spans(block, x86_instruction_bytes);
     // Count virtual definitions and uses once. Exact helper-sequence validation
     // then remains O(1) per candidate and the complete gate remains O(N).
     let mut virtual_definitions = std::collections::HashMap::new();

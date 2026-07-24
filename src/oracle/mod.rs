@@ -4194,6 +4194,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             length_width,
             kind,
             imm,
+            zero_upper,
         } => op_json!(
             "x86_packed_string_compare",
             dst,
@@ -4203,7 +4204,8 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             len2,
             length_width,
             kind,
-            imm
+            imm,
+            zero_upper
         ),
         OpKind::X86Sha512Msg1 { dst, src } => op_json!("x86_sha512_msg1", dst, src),
         OpKind::X86Sha512Msg2 { dst, src } => op_json!("x86_sha512_msg2", dst, src),

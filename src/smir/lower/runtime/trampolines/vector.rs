@@ -5781,8 +5781,7 @@ pub fn uses_x86_native_vectors_excluding(
         .iter()
         .filter(|block| !excluded.contains_key(&block.id))
         .any(|block| {
-            !crate::smir::ir::x86_evex_native_replay_spans(block, &func.x86_instruction_bytes)
-                .is_empty()
+            !crate::smir::ir::x86_native_replay_spans(block, &func.x86_instruction_bytes).is_empty()
                 || block.ops.iter().any(|op| {
                     x86_native_vector_smir_op(op) || x86_jit_vector_mem_shape_valid(&op.kind)
                 })

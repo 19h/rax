@@ -1,5 +1,5 @@
 //! Strict lifting, interpretation, optimization, and admission coverage for
-//! legacy SSE4.2 packed-string comparisons.
+//! SSE4.2 and AVX packed-string comparisons.
 
 use super::*;
 use crate::smir::interpret::{BlockResult, SmirInterpreter};
@@ -57,6 +57,26 @@ fn execute(bytes: &[u8], context: &mut SmirContext, memory: &mut FlatMemory) {
     ));
 }
 
+fn vex_pcmp_encoding(opcode: u8, w: bool, src1: u8, src2: u8, imm: u8) -> [u8; 6] {
+    assert!(matches!(opcode, 0x60..=0x63));
+    assert!(src1 < 16 && src2 < 16);
+    let mut p0 = 0xE3;
+    if src1 >= 8 {
+        p0 &= !0x80;
+    }
+    if src2 >= 8 {
+        p0 &= !0x20;
+    }
+    [
+        0xC4,
+        p0,
+        (if w { 0x80 } else { 0 }) | 0x79,
+        opcode,
+        0xC0 | ((src1 & 7) << 3) | (src2 & 7),
+        imm,
+    ]
+}
+
 #[test]
 fn legacy_pcmpxstrx_strictly_lifts_all_four_forms_and_dependencies() {
     for (opcode, kind) in [
@@ -80,11 +100,13 @@ fn legacy_pcmpxstrx_strictly_lifts_all_four_forms_and_dependencies() {
                 length_width,
                 kind: got_kind,
                 imm,
+                zero_upper,
             } => {
                 assert_eq!(*got_kind, kind);
                 assert_eq!(*src1, VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))));
                 assert_eq!(*src2, VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))));
                 assert_eq!(*imm, 0xFD);
+                assert!(!zero_upper);
                 if kind.is_explicit() {
                     assert_eq!(*len1, Some(x86_gpr(0)));
                     assert_eq!(*len2, Some(x86_gpr(2)));
@@ -158,6 +180,133 @@ fn legacy_pcmpestri_rex_w_selects_high_xmm_registers_and_64_bit_lengths() {
             ..
         }
     ));
+}
+
+#[test]
+fn vex_pcmpxstrx_strictly_lifts_all_forms_w_bits_and_high_registers() {
+    for (opcode, kind) in [
+        (0x60, X86PackedStringKind::ExplicitMask),
+        (0x61, X86PackedStringKind::ExplicitIndex),
+        (0x62, X86PackedStringKind::ImplicitMask),
+        (0x63, X86PackedStringKind::ImplicitIndex),
+    ] {
+        for w in [false, true] {
+            let bytes = vex_pcmp_encoding(opcode, w, 10, 9, 0xFD);
+            let result =
+                lift_single(&bytes).unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
+            assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
+            assert!(matches!(result.control_flow, ControlFlow::Fallthrough));
+            let op = exact_compare(&result);
+            assert!(matches!(
+                op.kind,
+                OpKind::X86PackedStringCompare {
+                    dst,
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(10))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(9))),
+                    len1,
+                    len2,
+                    length_width,
+                    kind: got_kind,
+                    imm: 0xFD,
+                    zero_upper,
+                } if got_kind == kind
+                    && dst == if kind.returns_mask() {
+                        VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)))
+                    } else {
+                        x86_gpr(1)
+                    }
+                    && len1 == kind.is_explicit().then_some(x86_gpr(0))
+                    && len2 == kind.is_explicit().then_some(x86_gpr(2))
+                    && length_width == if kind.is_explicit() && w {
+                        OpWidth::W64
+                    } else {
+                        OpWidth::W32
+                    }
+                    && zero_upper == kind.returns_mask()
+            ));
+
+            let mut expected_sources = vec![
+                VReg::Arch(ArchReg::X86(X86Reg::Xmm(10))),
+                VReg::Arch(ArchReg::X86(X86Reg::Xmm(9))),
+            ];
+            if kind.is_explicit() {
+                expected_sources.extend([x86_gpr(0), x86_gpr(2)]);
+            }
+            // Unlike the legacy mask forms, VEX mask forms do not merge old
+            // XMM0 state above bit 127.
+            assert_eq!(op.kind.source_vregs(), expected_sources, "{bytes:02X?}");
+            assert_eq!(op.kind.flags_written(), FlagSet::ALL_X86);
+            assert!(!op.kind.is_jit_safe());
+        }
+    }
+}
+
+#[test]
+fn vex_pcmpxstrx_tracks_rip_addr32_segment_and_unaligned_memory_contracts() {
+    let rip = lift_single(&[0xC4, 0xE3, 0x79, 0x63, 0x05, 0x20, 0, 0, 0, 0x3A]).unwrap();
+    assert_eq!(rip.bytes_consumed, 10);
+    assert!(rip.ops.iter().any(|op| matches!(
+        &op.kind,
+        OpKind::VLoad {
+            addr: Address::PcRel {
+                offset: 0x20,
+                base: Some(0x100A),
+                ..
+            },
+            width: VecWidth::V128,
+            ..
+        }
+    )));
+    assert!(
+        !rip.ops
+            .iter()
+            .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. }))
+    );
+
+    let addr32 = lift_single(&[0x64, 0x67, 0xC4, 0xE3, 0x79, 0x62, 0x04, 0x88, 0x40]).unwrap();
+    assert_eq!(addr32.bytes_consumed, 9);
+    assert!(addr32.ops.iter().any(|op| matches!(
+        &op.kind,
+        OpKind::VLoad {
+            addr: Address::X86Addr32(inner),
+            width: VecWidth::V128,
+            ..
+        } if matches!(
+            inner.as_ref(),
+            Address::SegmentRel {
+                segment: VReg::Arch(ArchReg::X86(X86Reg::FsBase)),
+                base: Some(VReg::Arch(ArchReg::X86(X86Reg::Rax))),
+                index: Some(VReg::Arch(ArchReg::X86(X86Reg::Rcx))),
+                scale: 4,
+                disp: 0,
+            }
+        )
+    )));
+}
+
+#[test]
+fn vex_pcmpxstrx_rejects_reserved_prefix_fields_and_truncation() {
+    for bytes in [
+        &[0xC4, 0xE3, 0x78, 0x60, 0xD1, 0x00][..], // pp != 66H
+        &[0xC4, 0xE3, 0x7D, 0x61, 0xD1, 0x00][..], // VEX.L = 1
+        &[0xC4, 0xE3, 0x71, 0x62, 0xD1, 0x00][..], // VEX.vvvv != 1111b
+    ] {
+        assert!(
+            matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
+            "reserved VEX packed-string encoding accepted: {bytes:02X?}"
+        );
+    }
+
+    for bytes in [
+        &[0xC4, 0xE3, 0x79, 0x60][..],
+        &[0xC4, 0xE3, 0x79, 0x60, 0xD1][..],
+        &[0xC4, 0xE3, 0x79, 0x60, 0x84, 0x88, 0, 0][..],
+    ] {
+        assert!(
+            matches!(lift_single(bytes), Err(LiftError::Incomplete { .. })),
+            "truncated VEX packed-string encoding did not report Incomplete: {bytes:02X?}"
+        );
+    }
 }
 
 #[test]
@@ -349,6 +498,54 @@ fn packed_string_interpreter_matches_hard_coded_byte_mask_index_and_flags() {
 }
 
 #[test]
+fn vex_pcmpxstrx_interpreter_zeroes_mask_upper_state_and_honors_w_lengths() {
+    let mut mask_context = SmirContext::new_x86_64();
+    set_xmm(&mut mask_context, 2, xmm_bytes(b"abc"));
+    set_xmm(&mut mask_context, 1, xmm_bytes(b"xbycz"));
+    let old_xmm0 = std::array::from_fn(|index| 0xA55A_0000_0000_0000 | index as u64);
+    set_xmm(&mut mask_context, 0, old_xmm0);
+    mask_context.write_vreg(x86_gpr(0), 3);
+    mask_context.write_vreg(x86_gpr(2), 5);
+    execute(
+        &vex_pcmp_encoding(0x60, false, 2, 1, 0),
+        &mut mask_context,
+        &mut FlatMemory::new(1),
+    );
+    let mask = get_xmm(&mask_context, 0);
+    assert_eq!(mask[0], 0x0A);
+    assert_eq!(mask[1], 0);
+    assert!(mask[2..].iter().all(|word| *word == 0));
+
+    for first_length in [0x0000_0001_0000_0000, i64::MIN as u64] {
+        for (w, expected) in [(false, 16), (true, 0)] {
+            let mut context = SmirContext::new_x86_64();
+            set_xmm(&mut context, 2, xmm_bytes(b"A"));
+            set_xmm(&mut context, 1, xmm_bytes(b"A"));
+            context.write_vreg(x86_gpr(0), first_length);
+            context.write_vreg(x86_gpr(2), 1);
+            execute(
+                &vex_pcmp_encoding(0x61, w, 2, 1, 0),
+                &mut context,
+                &mut FlatMemory::new(1),
+            );
+            assert_eq!(context.read_vreg(x86_gpr(1)), expected);
+        }
+    }
+
+    // VEX.W is ignored for implicit-length forms.
+    for w in [false, true] {
+        let mut context = SmirContext::new_x86_64();
+        set_xmm(&mut context, 2, xmm_bytes(b"abc\0suffix"));
+        execute(
+            &vex_pcmp_encoding(0x63, w, 2, 2, 0x3A),
+            &mut context,
+            &mut FlatMemory::new(1),
+        );
+        assert_eq!(context.read_vreg(x86_gpr(1)), 3);
+    }
+}
+
+#[test]
 fn packed_string_interpreter_handles_implicit_strlen_signed_words_and_rex_w_lengths() {
     let mut strlen_context = SmirContext::new_x86_64();
     set_xmm(&mut strlen_context, 2, xmm_bytes(b"abc\0suffix"));
@@ -437,6 +634,7 @@ fn packed_string_copy_propagation_o2_and_native_gate_remain_exact() {
             length_width: OpWidth::W64,
             kind: X86PackedStringKind::ExplicitIndex,
             imm: 0,
+            zero_upper: false,
         },
     ));
     assert_eq!(crate::smir::optimize::copy_propagation(&mut copies), 4);
@@ -516,6 +714,7 @@ fn malformed_packed_string_ir_exits_undefined_without_partial_writeback() {
             length_width: OpWidth::W32,
             kind: X86PackedStringKind::ExplicitIndex,
             imm: 0,
+            zero_upper: false,
         },
         OpKind::X86PackedStringCompare {
             dst: x86_gpr(1),
@@ -526,6 +725,18 @@ fn malformed_packed_string_ir_exits_undefined_without_partial_writeback() {
             length_width: OpWidth::W64,
             kind: X86PackedStringKind::ImplicitIndex,
             imm: 0,
+            zero_upper: false,
+        },
+        OpKind::X86PackedStringCompare {
+            dst: x86_gpr(1),
+            src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+            src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+            len1: None,
+            len2: None,
+            length_width: OpWidth::W32,
+            kind: X86PackedStringKind::ImplicitIndex,
+            imm: 0,
+            zero_upper: true,
         },
     ] {
         let mut block = SmirBlock::new(BlockId(0), 0x1000);

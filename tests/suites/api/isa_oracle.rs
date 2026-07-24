@@ -6,6 +6,8 @@ use rax::oracle::{
 
 #[path = "isa_oracle_invpcid.rs"]
 mod invpcid;
+#[path = "isa_oracle_packed_string.rs"]
+mod packed_string;
 
 #[test]
 fn parses_hex_bytes_with_prefixes_and_separators() {
