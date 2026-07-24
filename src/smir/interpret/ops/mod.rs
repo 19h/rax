@@ -13,6 +13,7 @@ mod logic;
 mod memory;
 mod meta;
 mod opmask;
+mod scalar_fp_convert;
 mod scalar_fp_to_int;
 mod scalar_int_to_fp;
 mod shift;

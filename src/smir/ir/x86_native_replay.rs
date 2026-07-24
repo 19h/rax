@@ -616,6 +616,22 @@ pub fn x86_evex_scalar_fp_to_int_replay_spans(
     })
 }
 
+/// Identify valid register-only EVEX scalar floating-point precision-
+/// conversion replay groups in `block` in O(N) time and O(P) space for N
+/// operations and P unique guest PCs. The six scalar F16/F32/F64 conversion
+/// directions are admitted; memory forms remain at the precise SMIR
+/// interpreter boundary.
+pub fn x86_evex_scalar_fp_convert_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_scalar_fp_convert_requires_fp16()
+            .map(|needs_fp16| (false, false, needs_fp16))
+    })
+}
+
 /// Identify valid register-only EVEX scalar integer-to-floating-point replay
 /// groups in `block` in O(N) time and O(P) space for N operations and P unique
 /// guest PCs. `VCVT{,U}SI2{SS,SD,SH}` forms are admitted; memory forms and
@@ -978,6 +994,11 @@ pub fn x86_evex_native_replay_spans(
             .or_else(|| {
                 instruction
                     .evex_register_scalar_fp_to_int_requires_fp16()
+                    .map(|needs_fp16| (false, false, needs_fp16))
+            })
+            .or_else(|| {
+                instruction
+                    .evex_register_scalar_fp_convert_requires_fp16()
                     .map(|needs_fp16| (false, false, needs_fp16))
             })
             .or_else(|| {

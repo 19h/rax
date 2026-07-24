@@ -45,6 +45,26 @@ impl OpKind {
             return !*suppress_exceptions || !canonical;
         }
 
+        if let OpKind::X86FpConvert {
+            from,
+            to,
+            round,
+            suppress_exceptions,
+            ..
+        } = self
+        {
+            let canonical = matches!(
+                (from, to),
+                (VecElementType::F16, VecElementType::F32)
+                    | (VecElementType::F16, VecElementType::F64)
+                    | (VecElementType::F32, VecElementType::F16)
+                    | (VecElementType::F32, VecElementType::F64)
+                    | (VecElementType::F64, VecElementType::F16)
+                    | (VecElementType::F64, VecElementType::F32)
+            ) && *round != FpRoundMode::RoundNearestTiesAway;
+            return !canonical || !*suppress_exceptions;
+        }
+
         matches!(
             self,
             OpKind::X86Round { .. }
@@ -95,10 +115,6 @@ impl OpKind {
                     ..
                 }
                 | OpKind::X86Sqrt {
-                    suppress_exceptions: false,
-                    ..
-                }
-                | OpKind::X86FpConvert {
                     suppress_exceptions: false,
                     ..
                 }
@@ -191,6 +207,25 @@ mod tests {
         }
     }
 
+    fn scalar_fp_convert(
+        from: VecElementType,
+        to: VecElementType,
+        suppress_exceptions: bool,
+    ) -> OpKind {
+        OpKind::X86FpConvert {
+            dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+            merge: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+            src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+            mask: None,
+            from,
+            to,
+            mask_zeroing: false,
+            round: FpRoundMode::Dynamic,
+            suppress_exceptions,
+            zero_upper: true,
+        }
+    }
+
     #[test]
     fn scalar_fp_to_int_is_side_effecting_exactly_without_sae() {
         assert!(scalar_conversion(false).has_side_effects());
@@ -220,5 +255,33 @@ mod tests {
         };
         *round = FpRoundMode::RoundNearestTiesAway;
         assert!(invalid.has_side_effects(), "invalid IR must fail closed");
+    }
+
+    #[test]
+    fn scalar_fp_convert_classifies_status_sae_and_invalid_ir() {
+        assert!(
+            scalar_fp_convert(VecElementType::F16, VecElementType::F64, false).has_side_effects()
+        );
+        assert!(
+            scalar_fp_convert(VecElementType::F64, VecElementType::F16, false).has_side_effects()
+        );
+        assert!(
+            !scalar_fp_convert(VecElementType::F64, VecElementType::F32, true).has_side_effects()
+        );
+
+        let invalid_same = scalar_fp_convert(VecElementType::F32, VecElementType::F32, true);
+        assert!(
+            invalid_same.has_side_effects(),
+            "invalid IR must fail closed"
+        );
+        let mut invalid_round = scalar_fp_convert(VecElementType::F64, VecElementType::F32, true);
+        let OpKind::X86FpConvert { round, .. } = &mut invalid_round else {
+            unreachable!()
+        };
+        *round = FpRoundMode::RoundNearestTiesAway;
+        assert!(
+            invalid_round.has_side_effects(),
+            "invalid IR must fail closed"
+        );
     }
 }

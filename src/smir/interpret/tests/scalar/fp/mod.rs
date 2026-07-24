@@ -12,6 +12,8 @@ mod part2;
 #[cfg(test)]
 mod part3;
 #[cfg(test)]
+mod x86_fp_convert;
+#[cfg(test)]
 mod x86_fp_to_int;
 #[cfg(test)]
 mod x86_int_to_fp;
