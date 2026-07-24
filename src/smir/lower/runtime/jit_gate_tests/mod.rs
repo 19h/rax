@@ -58,6 +58,8 @@ mod evex_packed_extend_replay;
 #[cfg(test)]
 mod evex_permute_replay;
 #[cfg(test)]
+mod evex_scalar_integer_move_replay;
+#[cfg(test)]
 mod evex_scalar_move_replay;
 #[cfg(test)]
 mod evex_vector_align_replay;
