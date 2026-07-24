@@ -1215,9 +1215,11 @@ pub enum X86FpBinaryOp {
     Max,
 }
 
-/// Operand permutation selected by the x86 FMA3 opcode high nibble.
+/// Operand permutation selected by an x86 FMA encoding.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum X86FmaOrder {
+    /// `(src1 * src2) + src3` (four-operand FMA4 syntax order).
+    Order123,
     /// `(src1 * src3) + src2`.
     Order132,
     /// `(src2 * src1) + src3`.
@@ -1226,7 +1228,7 @@ pub enum X86FmaOrder {
     Order231,
 }
 
-/// Arithmetic/sign variant selected by the x86 FMA3 opcode low nibble.
+/// Arithmetic/sign variant selected by an x86 FMA opcode.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum X86FmaKind {
     Add,

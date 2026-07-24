@@ -120,9 +120,12 @@ impl SmirInterpreter {
                         Self::get_lane(&second, lane, format.total_bits),
                         Self::get_lane(&third, lane, format.total_bits),
                     ];
-                    // Intel SDM Vol. 1, Table 14-17 defines NaN selection in
-                    // x/y/z arithmetic order, i.e. the mnemonic's digits.
+                    // Intel SDM Vol. 1, Table 14-17 defines FMA3 NaN selection
+                    // in x/y/z arithmetic order. AMD APM Volume 1, Table 4-5
+                    // and Figure 4-49 establish the corresponding a/b/c source
+                    // order for FMA4.
                     let ordered = match fma.order {
+                        X86FmaOrder::Order123 => architectural,
                         X86FmaOrder::Order132 => {
                             [architectural[0], architectural[2], architectural[1]]
                         }
@@ -189,6 +192,13 @@ impl SmirInterpreter {
                 round,
                 lanes,
             } => {
+                if *order == X86FmaOrder::Order123 {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
                 let first = Self::read_vec(ctx, *src1);
                 let second = Self::read_vec(ctx, *src2);
                 let third = Self::read_vec(ctx, *src3);
@@ -236,6 +246,7 @@ impl SmirInterpreter {
                     }
 
                     let (mut a, b, mut c) = match order {
+                        X86FmaOrder::Order123 => (sources[0], sources[1], sources[2]),
                         X86FmaOrder::Order132 => (sources[0], sources[2], sources[1]),
                         X86FmaOrder::Order213 => (sources[1], sources[0], sources[2]),
                         X86FmaOrder::Order231 => (sources[1], sources[2], sources[0]),

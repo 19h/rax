@@ -8,6 +8,8 @@ mod crypto;
 pub use crypto::*;
 mod fp;
 pub use fp::*;
+mod fma4;
+pub use fma4::*;
 mod mem;
 pub use mem::*;
 mod misc;

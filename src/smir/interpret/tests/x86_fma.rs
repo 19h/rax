@@ -205,6 +205,175 @@ fn lifted_evex_fma3_executes_nondefault_rc_with_sae_and_scalar_merge() {
 }
 
 #[test]
+fn lifted_vex_fma4_w_swaps_sources_and_scalar_l_is_ignored_with_zero_upper() {
+    for (opcode, width, first, rm, is4, expected_w0, expected_w1) in [
+        (
+            0x6A,
+            32,
+            2.0f32.to_bits() as u64,
+            5.0f32.to_bits() as u64,
+            7.0f32.to_bits() as u64,
+            17.0f32.to_bits() as u64,
+            19.0f32.to_bits() as u64,
+        ),
+        (
+            0x6B,
+            64,
+            2.0f64.to_bits(),
+            5.0f64.to_bits(),
+            7.0f64.to_bits(),
+            17.0f64.to_bits(),
+            19.0f64.to_bits(),
+        ),
+    ] {
+        for (w, expected) in [(false, expected_w0), (true, expected_w1)] {
+            let mut ctx = SmirContext::new_x86_64();
+            let sentinel = [0xA5A5_A5A5_A5A5_A5A5; 16];
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[1] = sentinel;
+            }
+            set_lane(&mut ctx, X86Reg::Xmm(2), 0, width, first);
+            set_lane(&mut ctx, X86Reg::Xmm(3), 0, width, is4);
+            set_lane(&mut ctx, X86Reg::Xmm(4), 0, width, rm);
+
+            // L=1 is ignored for scalar FMA4. dest=1, vvvv=2, r/m=4, /is4=3.
+            let p1 = 0x6D | (u8::from(w) << 7);
+            assert!(matches!(
+                execute_lifted_x86(
+                    &[0xC4, 0xE3, p1, opcode, 0xCC, 0x30],
+                    &mut ctx,
+                    &mut FlatMemory::new(1),
+                ),
+                BlockResult::Exit(ExitReason::Halt)
+            ));
+            assert_eq!(lane(&ctx, X86Reg::Xmm(1), 0, width), expected);
+            assert_eq!(mxcsr(&ctx) & 0x3F, 0);
+            let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+                unreachable!()
+            };
+            if width == 32 {
+                assert_eq!(x86.xmm[1][0], expected);
+            }
+            assert!(
+                x86.xmm[1][1..].iter().all(|word| *word == 0),
+                "scalar FMA4 must clear all bits above the low element"
+            );
+        }
+    }
+}
+
+#[test]
+fn lifted_vex_fma4_packed_kinds_are_fused_and_clear_above_vl() {
+    for (opcode, expected) in [
+        (0x5C, [5.0f32, 7.0, 5.0, 7.0, 5.0, 7.0, 5.0, 7.0]),
+        (0x5E, [7.0f32, 5.0, 7.0, 5.0, 7.0, 5.0, 7.0, 5.0]),
+        (0x68, [7.0f32; 8]),
+        (0x6C, [5.0f32; 8]),
+        (0x78, [-5.0f32; 8]),
+        (0x7C, [-7.0f32; 8]),
+    ] {
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [0xB6B6_B6B6_B6B6_B6B6; 16];
+        }
+        for lane_index in 0..8 {
+            set_lane(
+                &mut ctx,
+                X86Reg::Xmm(2),
+                lane_index,
+                32,
+                2.0f32.to_bits() as u64,
+            );
+            set_lane(
+                &mut ctx,
+                X86Reg::Xmm(3),
+                lane_index,
+                32,
+                1.0f32.to_bits() as u64,
+            );
+            set_lane(
+                &mut ctx,
+                X86Reg::Xmm(4),
+                lane_index,
+                32,
+                3.0f32.to_bits() as u64,
+            );
+        }
+
+        // VEX.256, W=0: ymm1 = ymm2 * ymm4 (+/-) ymm3.
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0xC4, 0xE3, 0x6D, opcode, 0xCC, 0x30],
+                &mut ctx,
+                &mut FlatMemory::new(1),
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        for (lane_index, expected) in expected.into_iter().enumerate() {
+            assert_eq!(
+                lane(&ctx, X86Reg::Xmm(1), lane_index as u8, 32),
+                expected.to_bits() as u64,
+                "opcode={opcode:02X}, lane={lane_index}"
+            );
+        }
+        let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+            unreachable!()
+        };
+        assert!(x86.xmm[1][4..].iter().all(|word| *word == 0));
+    }
+}
+
+#[test]
+fn lifted_vex_fma4_unmasked_exception_is_precise_and_noncommitting() {
+    let sentinel = [0xC7C7_C7C7_C7C7_C7C7; 16];
+    let mut ctx = SmirContext::new_x86_64();
+    set_mxcsr(&mut ctx, 0x1F00); // Invalid-operation exception unmasked.
+    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+        x86.xmm[1] = sentinel;
+    }
+    set_lane(&mut ctx, X86Reg::Xmm(2), 0, 32, 0);
+    set_lane(&mut ctx, X86Reg::Xmm(3), 0, 32, 1.0f32.to_bits() as u64);
+    set_lane(
+        &mut ctx,
+        X86Reg::Xmm(4),
+        0,
+        32,
+        f32::INFINITY.to_bits() as u64,
+    );
+
+    assert!(matches!(
+        execute_lifted_x86(
+            &[0xC4, 0xE3, 0x69, 0x6A, 0xCC, 0x30],
+            &mut ctx,
+            &mut FlatMemory::new(1),
+        ),
+        BlockResult::Exit(ExitReason::SimdFloatingPoint { addr: 0x1000 })
+    ));
+    assert_eq!(mxcsr(&ctx), 0x1F01);
+    let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+        unreachable!()
+    };
+    assert_eq!(x86.xmm[1], sentinel);
+}
+
+#[test]
+fn lifted_vex_fma4_reads_all_aliased_sources_before_destination_write() {
+    let mut ctx = SmirContext::new_x86_64();
+    set_lane(&mut ctx, X86Reg::Xmm(1), 0, 32, 2.0f32.to_bits() as u64);
+
+    // VFMADDSS xmm1,xmm1,xmm1,xmm1: dest, vvvv, r/m and /is4 all alias.
+    assert!(matches!(
+        execute_lifted_x86(
+            &[0xC4, 0xE3, 0x71, 0x6A, 0xC9, 0x10],
+            &mut ctx,
+            &mut FlatMemory::new(1),
+        ),
+        BlockResult::Exit(ExitReason::Halt)
+    ));
+    assert_eq!(lane(&ctx, X86Reg::Xmm(1), 0, 32), 6.0f32.to_bits() as u64);
+}
+
+#[test]
 fn x86_fma_retains_the_single_round_fused_residual() {
     for (elem, width, first, second, accumulator, expected) in [
         (
@@ -315,12 +484,13 @@ fn x86_fma_binary64_round_nearest_matches_independent_fused_oracle() {
 }
 
 #[test]
-fn x86_fma_nan_priority_follows_the_132_213_231_mnemonic_order() {
+fn x86_fma_nan_priority_follows_the_123_132_213_231_arithmetic_order() {
     let numeric = 1.0f32.to_bits() as u64;
     let qnan1 = 0x7FC0_0011;
     let qnan2 = 0x7FC0_0022;
     let qnan3 = 0x7FC0_0033;
     for (order, sources, expected) in [
+        (X86FmaOrder::Order123, [qnan1, qnan2, qnan3], qnan1),
         (X86FmaOrder::Order132, [numeric, qnan2, qnan3], qnan3),
         (X86FmaOrder::Order213, [qnan1, numeric, qnan3], qnan1),
         (X86FmaOrder::Order231, [qnan1, numeric, qnan3], qnan3),
@@ -649,6 +819,36 @@ fn x86_fp16_fma_nan_priority_uses_mnemonic_arithmetic_order() {
     ));
     assert_eq!(lane(&ctx, DST, 0, 16), 0x7E33);
     assert_eq!(mxcsr(&ctx) & 0x3F, 0);
+}
+
+#[test]
+fn x86_fp16_fma_rejects_the_fma4_only_order_without_committing() {
+    let sentinel = [0xD8D8_D8D8_D8D8_D8D8; 16];
+    let mut ctx = SmirContext::new_x86_64();
+    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+        x86.xmm[3] = sentinel;
+    }
+    assert!(matches!(
+        execute(
+            &mut ctx,
+            OpKind::X86FP16Fma {
+                dst: reg(DST),
+                src1: reg(SRC1),
+                src2: reg(SRC2),
+                src3: reg(SRC3),
+                mask: None,
+                kind: X86FmaKind::Add,
+                order: X86FmaOrder::Order123,
+                round: FpRoundMode::Dynamic,
+                lanes: 1,
+            },
+        ),
+        BlockResult::Exit(ExitReason::Undefined { addr: 0x1000, .. })
+    ));
+    let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+        unreachable!()
+    };
+    assert_eq!(x86.xmm[3], sentinel);
 }
 
 #[test]

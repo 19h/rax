@@ -4,14 +4,16 @@ use crate::smir::ir::types::{
     Condition, FpRoundMode, VReg, VecElementType, X86FmaKind, X86FmaOrder,
 };
 
-/// Exact x86 FMA3 operation before architectural destination masking/merging.
+/// Exact x86 FMA operation before architectural destination masking/merging.
 ///
-/// Source numbering follows the instruction syntax rather than the arithmetic
-/// permutation: `src1` is also the architectural destination, `src2` is the
-/// VEX/EVEX.vvvv source, and `src3` is the ModR/M source. Retaining that order
-/// lets interpretation apply the 132/213/231 NaN-priority rule before any
-/// arithmetic sign transformation. Masked-off lanes perform no arithmetic and
-/// therefore cannot update MXCSR or raise a SIMD floating-point exception.
+/// Source numbering follows instruction syntax rather than arithmetic
+/// placement. For FMA3, `src1` is also the architectural destination, `src2`
+/// is the VEX/EVEX.vvvv source, and `src3` is the ModR/M source. FMA4 supplies
+/// three independent sources and uses [`X86FmaOrder::Order123`]. Retaining
+/// syntax order lets interpretation apply the architecture's NaN-priority rule
+/// before arithmetic sign transformation. Masked-off lanes perform no
+/// arithmetic and therefore cannot update MXCSR or raise a SIMD floating-point
+/// exception.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct X86FmaOp {
     pub dst: VReg,
@@ -29,7 +31,7 @@ pub struct X86FmaOp {
 }
 
 impl X86FmaOp {
-    /// Validate the semantic shapes admitted by x86 FMA3 encodings. This is
+    /// Validate the semantic shapes admitted by x86 FMA encodings. This is
     /// intentionally stricter than the arithmetic core so malformed hand-built
     /// IR fails closed instead of reaching an unchecked lane operation.
     pub fn shape_valid(self) -> bool {
@@ -53,7 +55,18 @@ impl X86FmaOp {
             }
             FpRoundMode::RoundNearestTiesAway => false,
         };
-        lane_shape && (!alternating || self.lanes != 1) && rounding_shape
+        let order_shape = match self.order {
+            X86FmaOrder::Order123 => {
+                self.round == FpRoundMode::Dynamic
+                    && self.mask.is_none()
+                    && matches!(
+                        (self.elem, self.lanes),
+                        (VecElementType::F32, 1 | 4 | 8) | (VecElementType::F64, 1 | 2 | 4)
+                    )
+            }
+            X86FmaOrder::Order132 | X86FmaOrder::Order213 | X86FmaOrder::Order231 => true,
+        };
+        lane_shape && (!alternating || self.lanes != 1) && rounding_shape && order_shape
     }
 
     pub fn source_vregs(self) -> Vec<VReg> {
