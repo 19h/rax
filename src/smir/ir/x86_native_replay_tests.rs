@@ -28,6 +28,9 @@ mod fp_compare;
 #[path = "x86_native_replay_tests/fp16_flag_compare.rs"]
 mod fp16_flag_compare;
 
+#[path = "x86_native_replay_tests/fp16_narrow.rs"]
+mod fp16_narrow;
+
 #[path = "x86_native_replay_tests/fp16_widen.rs"]
 mod fp16_widen;
 
