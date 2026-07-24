@@ -296,15 +296,25 @@ fn execute_native(
 }
 
 #[cfg(target_arch = "x86_64")]
-#[test]
-fn replay_matches_o0_o2_interpretation_for_flags_nan_daz_sae_aliases_and_full_state() {
-    if !std::is_x86_feature_detected!("avx512f")
-        || !std::is_x86_feature_detected!("avx512bw")
-        || !std::is_x86_feature_detected!("avx512fp16")
-    {
-        eprintln!("skipping native FP16 flag-compare differential: host lacks AVX-512-FP16");
-        return;
-    }
+const CHILD_RANGE_ENV: &str = "RAX_FP16_FLAG_COMPARE_CHILD_RANGE";
+
+#[cfg(target_arch = "x86_64")]
+#[derive(Clone, Copy, Debug)]
+struct NativeCase {
+    level: crate::smir::optimize::OptLevel,
+    opcode: u8,
+    ll: u8,
+    suppress_exceptions: bool,
+    first: u16,
+    second: u16,
+    src1: u8,
+    src2: u8,
+    mxcsr: u32,
+}
+
+#[cfg(target_arch = "x86_64")]
+fn native_cases() -> Vec<NativeCase> {
+    let mut cases = Vec::new();
 
     let values = [
         (0x3C00, 0x3C00, false), // equal
@@ -319,7 +329,6 @@ fn replay_matches_o0_o2_interpretation_for_flags_nan_daz_sae_aliases_and_full_st
         (0x3C00, 0x3C00, true),  // register alias
     ];
     let register_pairs = [(1, 2), (9, 10), (17, 18), (25, 26), (30, 31), (31, 31)];
-    let mut executed = 0usize;
     for level in [
         crate::smir::optimize::OptLevel::O0,
         crate::smir::optimize::OptLevel::O2,
@@ -334,7 +343,6 @@ fn replay_matches_o0_o2_interpretation_for_flags_nan_daz_sae_aliases_and_full_st
                         if force_alias {
                             src2 = src1;
                         }
-                        let bytes = encoding(opcode, src1, src2, ll, suppress_exceptions);
                         let prior_status = if case % 3 == 0 { 1 << 5 } else { 0 };
                         let rc = ((case as u32) & 3) << 13;
                         let daz_ftz = if case & 1 == 0 {
@@ -342,24 +350,138 @@ fn replay_matches_o0_o2_interpretation_for_flags_nan_daz_sae_aliases_and_full_st
                         } else {
                             (1 << 6) | (1 << 15)
                         };
-                        let initial = initial_state(
-                            usize::from(src1),
+                        cases.push(NativeCase {
+                            level,
+                            opcode,
+                            ll,
+                            suppress_exceptions,
                             first,
-                            usize::from(src2),
                             second,
-                            0x1F80 | prior_status | rc | daz_ftz,
-                        );
-                        let interpreted = interpret(&bytes, &initial, level);
-                        let native = execute_native(&bytes, &initial, level);
-                        assert_eq!(
-                            native, interpreted,
-                            "level={level:?} opcode={opcode:#04x} ll={ll} sae={suppress_exceptions} bytes={bytes:02X?}"
-                        );
-                        executed += 1;
+                            src1,
+                            src2,
+                            mxcsr: 0x1F80 | prior_status | rc | daz_ftz,
+                        });
                     }
                 }
             }
         }
     }
-    assert_eq!(executed, 320);
+    cases
+}
+
+#[cfg(target_arch = "x86_64")]
+fn child_range() -> Option<std::ops::Range<usize>> {
+    let value = std::env::var(CHILD_RANGE_ENV).ok()?;
+    let (start, end) = value
+        .split_once(':')
+        .unwrap_or_else(|| panic!("invalid {CHILD_RANGE_ENV}: {value}"));
+    Some(
+        start
+            .parse::<usize>()
+            .unwrap_or_else(|_| panic!("invalid {CHILD_RANGE_ENV} start: {value}"))
+            ..end
+                .parse::<usize>()
+                .unwrap_or_else(|_| panic!("invalid {CHILD_RANGE_ENV} end: {value}")),
+    )
+}
+
+#[cfg(target_arch = "x86_64")]
+fn execute_native_case_range(cases: &[NativeCase], range: std::ops::Range<usize>) {
+    assert!(range.start < range.end && range.end <= cases.len());
+    for case in &cases[range] {
+        let bytes = encoding(
+            case.opcode,
+            case.src1,
+            case.src2,
+            case.ll,
+            case.suppress_exceptions,
+        );
+        let initial = initial_state(
+            usize::from(case.src1),
+            case.first,
+            usize::from(case.src2),
+            case.second,
+            case.mxcsr,
+        );
+        assert_eq!(
+            execute_native(&bytes, &initial, case.level),
+            interpret(&bytes, &initial, case.level),
+            "{case:?} bytes={bytes:02X?}"
+        );
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+fn run_child_range(test_name: &str, range: std::ops::Range<usize>) -> std::process::Output {
+    std::process::Command::new(std::env::current_exe().expect("current unit-test executable"))
+        .arg(test_name)
+        .arg("--exact")
+        .arg("--nocapture")
+        .env(CHILD_RANGE_ENV, format!("{}:{}", range.start, range.end))
+        .output()
+        .expect("run isolated native FP16 flag-compare differential")
+}
+
+#[cfg(target_arch = "x86_64")]
+fn run_isolated_native_differential(test_name: &str) {
+    let cases = native_cases();
+    assert_eq!(cases.len(), 320);
+    if let Some(range) = child_range() {
+        execute_native_case_range(&cases, range);
+        return;
+    }
+
+    let whole = run_child_range(test_name, 0..cases.len());
+    if whole.status.success() {
+        return;
+    }
+
+    // Raw source replay can terminate the child with SIGILL before Rust can
+    // report assertion context. Bisect child ranges in O(log N) launches and
+    // report the exact guest encoding without killing the parent test binary.
+    let mut start = 0usize;
+    let mut end = cases.len();
+    while end - start > 1 {
+        let middle = start + (end - start) / 2;
+        if run_child_range(test_name, start..middle).status.success() {
+            start = middle;
+        } else {
+            end = middle;
+        }
+    }
+    let singleton = run_child_range(test_name, start..end);
+    let case = cases[start];
+    let bytes = encoding(
+        case.opcode,
+        case.src1,
+        case.src2,
+        case.ll,
+        case.suppress_exceptions,
+    );
+    panic!(
+        "isolated native FP16 flag-compare failure at case {start}/{}: \
+         {case:?} {bytes:02X?}; whole status {}; singleton status {}; \
+         singleton stdout: {}; singleton stderr: {}",
+        cases.len(),
+        whole.status,
+        singleton.status,
+        String::from_utf8_lossy(&singleton.stdout),
+        String::from_utf8_lossy(&singleton.stderr),
+    );
+}
+
+#[cfg(target_arch = "x86_64")]
+#[test]
+fn replay_matches_o0_o2_interpretation_for_flags_nan_daz_sae_aliases_and_full_state() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512fp16")
+    {
+        eprintln!("skipping native FP16 flag-compare differential: host lacks AVX-512-FP16");
+        return;
+    }
+    run_isolated_native_differential(
+        "smir::lower::runtime::jit_gate_tests::evex_fp16_flag_compare_replay::\
+         replay_matches_o0_o2_interpretation_for_flags_nan_daz_sae_aliases_and_full_state",
+    );
 }
