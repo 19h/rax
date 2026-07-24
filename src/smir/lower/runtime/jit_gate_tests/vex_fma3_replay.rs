@@ -1,32 +1,45 @@
-//! Native replay coverage for register-only AVX VEX packed-string compares.
+//! Native replay coverage for register-only AVX VEX FMA3 instructions.
 
 use super::*;
 use crate::smir::lower::runtime::*;
 
-const PC: u64 = 0x6063;
-const STATUS_FLAGS: u64 = 0x08D5;
+const PC: u64 = 0xF3A0;
 
-fn encoding(opcode: u8, w: bool, src1: u8, src2: u8, imm: u8) -> [u8; 6] {
-    assert!(matches!(opcode, 0x60..=0x63));
-    assert!(src1 < 16 && src2 < 16);
-    let mut p0 = 0xE3;
-    if src1 >= 8 {
+fn fma_opcodes() -> impl Iterator<Item = u8> {
+    (0x96..=0x9F).chain(0xA6..=0xAF).chain(0xB6..=0xBF)
+}
+
+fn encoding(
+    opcode: u8,
+    w: bool,
+    l: bool,
+    dst: u8,
+    src2: u8,
+    src3: u8,
+    clear_ignored_x: bool,
+) -> [u8; 5] {
+    assert!(fma_opcodes().any(|candidate| candidate == opcode));
+    assert!(dst < 16 && src2 < 16 && src3 < 16);
+    let mut p0 = 0xE2;
+    if dst >= 8 {
         p0 &= !0x80;
     }
-    if src2 >= 8 {
+    if clear_ignored_x {
+        p0 &= !0x40;
+    }
+    if src3 >= 8 {
         p0 &= !0x20;
     }
     [
         0xC4,
         p0,
-        (if w { 0x80 } else { 0 }) | 0x79,
+        (if w { 0x80 } else { 0 }) | ((!src2 & 0x0F) << 3) | (if l { 0x04 } else { 0 }) | 1,
         opcode,
-        0xC0 | ((src1 & 7) << 3) | (src2 & 7),
-        imm,
+        0xC0 | ((dst & 7) << 3) | (src3 & 7),
     ]
 }
 
-fn function(bytes: &[u8; 6]) -> crate::smir::ir::SmirFunction {
+fn function(bytes: &[u8; 5]) -> crate::smir::ir::SmirFunction {
     use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
     use crate::smir::lift::x86_64::X86_64Lifter;
     use crate::smir::lift::{LiftContext, SmirLifter};
@@ -50,16 +63,16 @@ fn function(bytes: &[u8; 6]) -> crate::smir::ir::SmirFunction {
 }
 
 #[test]
-fn replay_feature_aggregation_requires_avx_and_full_vector_state_boundary() {
-    let bytes = encoding(0x60, true, 15, 8, 0xFF);
+fn replay_feature_aggregation_requires_avx_fma_and_full_vector_state_boundary() {
+    let bytes = encoding(0xBF, true, true, 15, 14, 13, true);
     let function = function(&bytes);
     let requirements =
         x86_native_replay_feature_requirements(&function, &std::collections::HashMap::new());
     assert!(requirements.any);
     assert!(requirements.needs_avx);
-    assert!(!requirements.needs_fma);
-    // The current native vector-state trampoline marshals K0-K7 with KMOVQ,
-    // even though VPCMPxSTRx itself does not access opmask state.
+    assert!(requirements.needs_fma);
+    // The current native vector-state trampoline uses ZMM loads and KMOVQ even
+    // though a VEX FMA3 instruction itself only requires AVX plus FMA.
     assert!(requirements.needs_avx512bw);
     assert!(!requirements.needs_avx512vl);
     assert!(!requirements.needs_avx512dq);
@@ -70,10 +83,22 @@ fn replay_feature_aggregation_requires_avx_and_full_vector_state_boundary() {
     assert!(!requirements.needs_vpclmulqdq);
 
     #[cfg(target_arch = "x86_64")]
-    assert_eq!(
-        requirements.x86_host_supported(),
-        std::is_x86_feature_detected!("avx")
-    );
+    {
+        assert_eq!(
+            requirements.x86_host_supported(),
+            std::is_x86_feature_detected!("avx") && std::is_x86_feature_detected!("fma")
+        );
+        assert_eq!(
+            x86_native_vector_features_supported_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ),
+            std::is_x86_feature_detected!("avx")
+                && std::is_x86_feature_detected!("fma")
+                && std::is_x86_feature_detected!("avx512f")
+                && std::is_x86_feature_detected!("avx512bw")
+        );
+    }
 
     let excluded = std::collections::HashMap::from([(BlockId(0), PC)]);
     assert_eq!(
@@ -83,17 +108,24 @@ fn replay_feature_aggregation_requires_avx_and_full_vector_state_boundary() {
 }
 
 #[test]
-fn replay_admits_emits_o0_o2_register_forms_and_fails_closed() {
+fn replay_admits_emits_o0_o2_all_families_widths_lengths_aliases_and_fails_closed() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
-    let operands = [(1, 2), (9, 10), (15, 15), (0, 1), (1, 0)];
+    const OPERANDS: [(u8, u8, u8); 6] = [
+        (1, 2, 3),
+        (9, 10, 11),
+        (1, 1, 2),
+        (1, 2, 1),
+        (1, 2, 2),
+        (1, 1, 1),
+    ];
     let mut lowered = 0usize;
-    for opcode in 0x60..=0x63 {
+    for opcode in fma_opcodes() {
         for w in [false, true] {
-            for (src1, src2) in operands {
-                for imm in [0x00, 0x40, 0x7F, 0xFF] {
-                    let bytes = encoding(opcode, w, src1, src2, imm);
+            for l in [false, true] {
+                for (operand_index, (dst, src2, src3)) in OPERANDS.into_iter().enumerate() {
+                    let bytes = encoding(opcode, w, l, dst, src2, src3, operand_index & 1 != 0);
                     for level in [
                         crate::smir::optimize::OptLevel::O0,
                         crate::smir::optimize::OptLevel::O2,
@@ -126,9 +158,9 @@ fn replay_admits_emits_o0_o2_register_forms_and_fails_closed() {
             }
         }
     }
-    assert_eq!(lowered, 320);
+    assert_eq!(lowered, 1_440);
 
-    let bytes = encoding(0x60, false, 2, 1, 0);
+    let bytes = encoding(0x98, false, false, 1, 2, 3, false);
     let mut missing = function(&bytes);
     missing.x86_instruction_bytes.clear();
     assert!(!is_native_clobber_safe(&missing));
@@ -145,7 +177,7 @@ fn replay_admits_emits_o0_o2_register_forms_and_fails_closed() {
 
 #[cfg(target_arch = "x86_64")]
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct PackedStringState {
+struct FmaState {
     gprs: [u64; 32],
     vectors: [[u64; 8]; 32],
     masks: [u64; 8],
@@ -159,44 +191,157 @@ struct NativeCase {
     level: crate::smir::optimize::OptLevel,
     opcode: u8,
     w: bool,
-    src1: u8,
+    l: bool,
+    dst: u8,
     src2: u8,
-    imm: u8,
+    src3: u8,
+    clear_ignored_x: bool,
     data_case: usize,
-    length_case: usize,
 }
 
 #[cfg(target_arch = "x86_64")]
-fn input_pair(index: usize) -> ([u8; 16], [u8; 16]) {
-    const INPUTS: [([u8; 16], [u8; 16]); 6] = [
-        (*b"abc\0ABCDEFGHIJKL", *b"xbycz\0ABCDEFGHIJ"),
-        (
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-            [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
-        ),
-        (
-            [
-                0x80, 0xFF, 0x7F, 0, 0x81, 1, 0xFE, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-            ],
-            [
-                0x80, 0x7F, 0xFF, 1, 0x82, 2, 0xFD, 3, 4, 5, 6, 7, 8, 9, 10, 0,
-            ],
-        ),
-        (
-            [1, 0, 2, 0, 0, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0],
-            [2, 0, 1, 0, 3, 0, 0, 0, 5, 0, 4, 0, 7, 0, 6, 0],
-        ),
-        (
-            [0xFE, 0xFF, 2, 0, 0, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0],
-            [0xFD, 0xFF, 0xFE, 0xFF, 2, 0, 0, 0, 3, 0, 5, 0, 7, 0, 9, 0],
-        ),
-        ([0xFF; 16], [0; 16]),
+fn f32_lane(data_case: usize, role: usize, lane: usize) -> u32 {
+    const CASES: [[[u32; 4]; 3]; 5] = [
+        [
+            [0x3F80_0000, 0xC000_0000, 0x4040_0000, 0xC080_0000],
+            [0x4000_0000, 0x4040_0000, 0xC080_0000, 0xC0A0_0000],
+            [0x4120_0000, 0x4130_0000, 0xC140_0000, 0xC150_0000],
+        ],
+        [
+            [0x3F80_0001, 0x3F7F_FFFF, 0x3F80_0000, 0xBF80_0000],
+            [0xBF80_0000, 0x3F80_0000, 0x3380_0000, 0xB380_0000],
+            [0x3F7F_FFFF, 0x3F80_0001, 0x3F80_0000, 0x3F80_0000],
+        ],
+        [
+            [0x7FC0_0011, 0x7F80_0001, 0x0000_0000, 0x7F80_0000],
+            [0x7FC0_0022, 0x3F80_0000, 0xFF80_0000, 0x0000_0000],
+            [0x7FC0_0033, 0x4000_0000, 0x7F80_0000, 0x7F80_0000],
+        ],
+        [
+            [0x0080_0000, 0x7F7F_FFFF, 0x0000_0001, 0x8000_0000],
+            [0x0000_0000, 0x0000_0000, 0x0000_0001, 0x0000_0000],
+            [0x3F00_0000, 0x4000_0000, 0x3F80_0000, 0x8000_0000],
+        ],
+        [
+            [0x3F80_0000, 0xBF80_0000, 0x3F80_0000, 0xBF80_0000],
+            [0x3380_0000, 0xB380_0000, 0x3380_0000, 0xB380_0000],
+            [0x3F80_0000, 0x3F80_0000, 0x3F80_0000, 0x3F80_0000],
+        ],
     ];
-    INPUTS[index % INPUTS.len()]
+    CASES[data_case % CASES.len()][role][lane & 3]
 }
 
 #[cfg(target_arch = "x86_64")]
-fn initial_state(case: NativeCase) -> PackedStringState {
+fn f64_lane(data_case: usize, role: usize, lane: usize) -> u64 {
+    const CASES: [[[u64; 4]; 3]; 5] = [
+        [
+            [
+                0x3FF0_0000_0000_0000,
+                0xC000_0000_0000_0000,
+                0x4008_0000_0000_0000,
+                0xC010_0000_0000_0000,
+            ],
+            [
+                0x4000_0000_0000_0000,
+                0x4008_0000_0000_0000,
+                0xC010_0000_0000_0000,
+                0xC014_0000_0000_0000,
+            ],
+            [
+                0x4024_0000_0000_0000,
+                0x4026_0000_0000_0000,
+                0xC028_0000_0000_0000,
+                0xC02A_0000_0000_0000,
+            ],
+        ],
+        [
+            [
+                0x3FF0_0000_0000_0001,
+                0x3FEF_FFFF_FFFF_FFFF,
+                0x3FF0_0000_0000_0000,
+                0xBFF0_0000_0000_0000,
+            ],
+            [
+                0xBFF0_0000_0000_0000,
+                0x3FF0_0000_0000_0000,
+                0x3CA0_0000_0000_0000,
+                0xBCA0_0000_0000_0000,
+            ],
+            [
+                0x3FEF_FFFF_FFFF_FFFF,
+                0x3FF0_0000_0000_0001,
+                0x3FF0_0000_0000_0000,
+                0x3FF0_0000_0000_0000,
+            ],
+        ],
+        [
+            [
+                0x7FF8_0000_0000_0011,
+                0x7FF0_0000_0000_0001,
+                0,
+                0x7FF0_0000_0000_0000,
+            ],
+            [
+                0x7FF8_0000_0000_0022,
+                0x3FF0_0000_0000_0000,
+                0xFFF0_0000_0000_0000,
+                0,
+            ],
+            [
+                0x7FF8_0000_0000_0033,
+                0x4000_0000_0000_0000,
+                0x7FF0_0000_0000_0000,
+                0x7FF0_0000_0000_0000,
+            ],
+        ],
+        [
+            [
+                0x0010_0000_0000_0000,
+                0x7FEF_FFFF_FFFF_FFFF,
+                1,
+                0x8000_0000_0000_0000,
+            ],
+            [0, 0, 1, 0],
+            [
+                0x3FE0_0000_0000_0000,
+                0x4000_0000_0000_0000,
+                0x3FF0_0000_0000_0000,
+                0x8000_0000_0000_0000,
+            ],
+        ],
+        [
+            [
+                0x3FF0_0000_0000_0000,
+                0xBFF0_0000_0000_0000,
+                0x3FF0_0000_0000_0000,
+                0xBFF0_0000_0000_0000,
+            ],
+            [
+                0x3CA0_0000_0000_0000,
+                0xBCA0_0000_0000_0000,
+                0x3CA0_0000_0000_0000,
+                0xBCA0_0000_0000_0000,
+            ],
+            [0x3FF0_0000_0000_0000; 4],
+        ],
+    ];
+    CASES[data_case % CASES.len()][role][lane & 3]
+}
+
+#[cfg(target_arch = "x86_64")]
+fn role_vector(w: bool, data_case: usize, role: usize) -> [u64; 8] {
+    if w {
+        std::array::from_fn(|lane| f64_lane(data_case, role, lane))
+    } else {
+        std::array::from_fn(|word| {
+            u64::from(f32_lane(data_case, role, word * 2))
+                | (u64::from(f32_lane(data_case, role, word * 2 + 1)) << 32)
+        })
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+fn initial_state(case: NativeCase) -> FmaState {
     let mut vectors = std::array::from_fn(|register| {
         std::array::from_fn(|word| {
             0xF0E1_D2C3_B4A5_9687u64.rotate_left((register * 11 + word * 5) as u32)
@@ -204,30 +349,26 @@ fn initial_state(case: NativeCase) -> PackedStringState {
                 ^ (word as u64).wrapping_mul(0x0102_0408_1020_4081)
         })
     });
-    let (first, second) = input_pair(case.data_case);
-    vectors[usize::from(case.src1)][0] = u64::from_le_bytes(first[..8].try_into().unwrap());
-    vectors[usize::from(case.src1)][1] = u64::from_le_bytes(first[8..].try_into().unwrap());
-    vectors[usize::from(case.src2)][0] = u64::from_le_bytes(second[..8].try_into().unwrap());
-    vectors[usize::from(case.src2)][1] = u64::from_le_bytes(second[8..].try_into().unwrap());
+    // Deliberate assignment order makes aliases consume one shared initial
+    // register value exactly as the architectural instruction does.
+    vectors[usize::from(case.dst)] = role_vector(case.w, case.data_case, 0);
+    vectors[usize::from(case.src2)] = role_vector(case.w, case.data_case, 1);
+    vectors[usize::from(case.src3)] = role_vector(case.w, case.data_case, 2);
 
-    let mut gprs = std::array::from_fn(|register| {
-        0x0123_4567_89AB_CDEFu64.rotate_left((register * 7) as u32)
-            ^ (register as u64).wrapping_mul(0x1020_4081_0204_0810)
-    });
-    const LENGTHS: [(u64, u64); 6] = [
-        (3, 5),
-        ((-3i64) as u64, 5),
-        (0x0000_0001_0000_0003, 0x0000_0001_0000_0005),
-        (i64::MIN as u64, i64::MAX as u64),
-        (u64::MAX, 0),
-        (16, 8),
-    ];
-    let (rax, rdx) = LENGTHS[case.length_case % LENGTHS.len()];
-    gprs[0] = rax;
-    gprs[2] = rdx;
+    let rc = ((usize::from(case.opcode) + case.data_case + usize::from(case.l)) & 3) as u32;
+    let mut mxcsr = 0x1F80 | (rc << 13);
+    if case.data_case == 3 {
+        mxcsr |= (1 << 6) | (1 << 15); // DAZ and FTZ.
+    }
+    if case.data_case == 1 {
+        mxcsr |= 1 << 5; // Preserve an existing sticky precision flag.
+    }
 
-    PackedStringState {
-        gprs,
+    FmaState {
+        gprs: std::array::from_fn(|register| {
+            0x0123_4567_89AB_CDEFu64.rotate_left((register * 7) as u32)
+                ^ (register as u64).wrapping_mul(0x1020_4081_0204_0810)
+        }),
         vectors,
         masks: [
             0x6996_F00F_3CC3_A55A,
@@ -240,13 +381,13 @@ fn initial_state(case: NativeCase) -> PackedStringState {
             u64::MAX,
         ],
         rflags: 0x2 | 0x0CD5,
-        mxcsr: 0x1F80 | (2 << 13) | (1 << 6) | (1 << 15),
+        mxcsr,
     }
 }
 
 #[cfg(target_arch = "x86_64")]
 fn optimized_function(
-    bytes: &[u8; 6],
+    bytes: &[u8; 5],
     level: crate::smir::optimize::OptLevel,
     halt: bool,
 ) -> crate::smir::ir::SmirFunction {
@@ -262,10 +403,10 @@ fn optimized_function(
 
 #[cfg(target_arch = "x86_64")]
 fn interpret(
-    bytes: &[u8; 6],
-    initial: &PackedStringState,
+    bytes: &[u8; 5],
+    initial: &FmaState,
     level: crate::smir::optimize::OptLevel,
-) -> PackedStringState {
+) -> FmaState {
     use crate::smir::interpret::{BlockResult, SmirInterpreter};
     use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext};
     use crate::smir::ir::flags::MaterializedFlags;
@@ -290,7 +431,6 @@ fn interpret(
         &function.blocks[0],
     );
     assert!(matches!(result, BlockResult::Exit(ExitReason::Halt)));
-    context.flags.materialize_all();
 
     let ArchRegState::X86_64(x86) = &context.arch_regs else {
         unreachable!()
@@ -299,22 +439,21 @@ fn interpret(
     for (index, value) in vectors.iter_mut().enumerate() {
         value.copy_from_slice(&x86.xmm[index][..8]);
     }
-    PackedStringState {
+    FmaState {
         gprs: x86.gpr,
         vectors,
         masks: x86.k,
-        rflags: (initial.rflags & !STATUS_FLAGS)
-            | (context.flags.materialized.to_rflags() & STATUS_FLAGS),
+        rflags: x86.rflags,
         mxcsr: x86.mxcsr,
     }
 }
 
 #[cfg(target_arch = "x86_64")]
 fn execute_native(
-    bytes: &[u8; 6],
-    initial: &PackedStringState,
+    bytes: &[u8; 5],
+    initial: &FmaState,
     level: crate::smir::optimize::OptLevel,
-) -> PackedStringState {
+) -> FmaState {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -327,7 +466,7 @@ fn execute_native(
         .finalize()
         .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
     assert!(code.windows(bytes.len()).any(|window| window == bytes));
-    let exec = ExecMem::new(&code).expect("map VEX packed-string replay");
+    let exec = ExecMem::new(&code).expect("map VEX FMA3 replay");
     let mut registers = GuestRegs {
         gpr: initial.gprs,
         rflags: initial.rflags,
@@ -345,7 +484,7 @@ fn execute_native(
     for (index, value) in vectors.iter_mut().enumerate() {
         *value = registers.get_zmm(index);
     }
-    PackedStringState {
+    FmaState {
         gprs: registers.gpr,
         vectors,
         masks: registers.k,
@@ -356,30 +495,36 @@ fn execute_native(
 
 #[cfg(target_arch = "x86_64")]
 fn native_cases() -> Vec<NativeCase> {
-    const IMMEDIATES: [u8; 13] = [
-        0x00, 0x01, 0x02, 0x03, 0x0C, 0x18, 0x24, 0x30, 0x40, 0x47, 0x7F, 0x80, 0xFF,
+    const OPERANDS: [(u8, u8, u8); 6] = [
+        (1, 2, 3),
+        (9, 10, 11),
+        (1, 1, 2),
+        (1, 2, 1),
+        (1, 2, 2),
+        (1, 1, 1),
     ];
-    const OPERANDS: [(u8, u8); 6] = [(1, 2), (9, 10), (15, 15), (0, 1), (1, 0), (0, 0)];
     let mut cases = Vec::new();
+    let mut ordinal = 0usize;
     for level in [
         crate::smir::optimize::OptLevel::O0,
         crate::smir::optimize::OptLevel::O2,
     ] {
-        for opcode in 0x60..=0x63 {
+        for opcode in fma_opcodes() {
             for w in [false, true] {
-                for (index, imm) in IMMEDIATES.into_iter().enumerate() {
-                    let (src1, src2) = OPERANDS
-                        [(index + usize::from(opcode - 0x60) + usize::from(w)) % OPERANDS.len()];
+                for l in [false, true] {
+                    let (dst, src2, src3) = OPERANDS[ordinal % OPERANDS.len()];
                     cases.push(NativeCase {
                         level,
                         opcode,
                         w,
-                        src1,
+                        l,
+                        dst,
                         src2,
-                        imm,
-                        data_case: index + usize::from(opcode - 0x60),
-                        length_case: index + usize::from(w),
+                        src3,
+                        clear_ignored_x: ordinal & 1 != 0,
+                        data_case: ordinal % 5,
                     });
+                    ordinal += 1;
                 }
             }
         }
@@ -388,7 +533,7 @@ fn native_cases() -> Vec<NativeCase> {
 }
 
 #[cfg(target_arch = "x86_64")]
-const CHILD_RANGE_ENV: &str = "RAX_VEX_PACKED_STRING_CHILD_RANGE";
+const CHILD_RANGE_ENV: &str = "RAX_VEX_FMA3_CHILD_RANGE";
 
 #[cfg(target_arch = "x86_64")]
 fn child_range() -> Option<std::ops::Range<usize>> {
@@ -410,7 +555,15 @@ fn child_range() -> Option<std::ops::Range<usize>> {
 fn execute_native_case_range(cases: &[NativeCase], range: std::ops::Range<usize>) {
     assert!(range.start < range.end && range.end <= cases.len());
     for &case in &cases[range] {
-        let bytes = encoding(case.opcode, case.w, case.src1, case.src2, case.imm);
+        let bytes = encoding(
+            case.opcode,
+            case.w,
+            case.l,
+            case.dst,
+            case.src2,
+            case.src3,
+            case.clear_ignored_x,
+        );
         let initial = initial_state(case);
         assert_eq!(
             execute_native(&bytes, &initial, case.level),
@@ -428,13 +581,13 @@ fn run_child_range(test_name: &str, range: std::ops::Range<usize>) -> std::proce
         .arg("--nocapture")
         .env(CHILD_RANGE_ENV, format!("{}:{}", range.start, range.end))
         .output()
-        .expect("run isolated native VEX packed-string differential")
+        .expect("run isolated native VEX FMA3 differential")
 }
 
 #[cfg(target_arch = "x86_64")]
 fn run_isolated_native_differential(test_name: &str) {
     let cases = native_cases();
-    assert_eq!(cases.len(), 208);
+    assert_eq!(cases.len(), 240);
     if let Some(range) = child_range() {
         execute_native_case_range(&cases, range);
         return;
@@ -456,9 +609,17 @@ fn run_isolated_native_differential(test_name: &str) {
     }
     let singleton = run_child_range(test_name, start..end);
     let case = cases[start];
-    let bytes = encoding(case.opcode, case.w, case.src1, case.src2, case.imm);
+    let bytes = encoding(
+        case.opcode,
+        case.w,
+        case.l,
+        case.dst,
+        case.src2,
+        case.src3,
+        case.clear_ignored_x,
+    );
     panic!(
-        "isolated native VEX packed-string failure at case {start}/{}: \
+        "isolated native VEX FMA3 failure at case {start}/{}: \
          {case:?} {bytes:02X?}; whole status {}; singleton status {}; \
          singleton stdout: {}; singleton stderr: {}",
         cases.len(),
@@ -471,16 +632,17 @@ fn run_isolated_native_differential(test_name: &str) {
 
 #[cfg(target_arch = "x86_64")]
 #[test]
-fn replay_matches_o0_o2_interpretation_for_modes_lengths_aliases_flags_and_full_state() {
+fn replay_matches_o0_o2_interpretation_for_all_families_widths_aliases_mxcsr_and_full_state() {
     if !std::is_x86_feature_detected!("avx")
+        || !std::is_x86_feature_detected!("fma")
         || !std::is_x86_feature_detected!("avx512f")
         || !std::is_x86_feature_detected!("avx512bw")
     {
-        eprintln!("skipping native VEX packed-string differential: host lacks AVX/AVX-512F/BW");
+        eprintln!("skipping native VEX FMA3 differential: host lacks AVX/FMA/AVX-512F/BW");
         return;
     }
     run_isolated_native_differential(
-        "smir::lower::runtime::jit_gate_tests::vex_packed_string_replay::\
-         replay_matches_o0_o2_interpretation_for_modes_lengths_aliases_flags_and_full_state",
+        "smir::lower::runtime::jit_gate_tests::vex_fma3_replay::\
+         replay_matches_o0_o2_interpretation_for_all_families_widths_aliases_mxcsr_and_full_state",
     );
 }

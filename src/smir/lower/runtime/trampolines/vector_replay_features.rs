@@ -7,6 +7,7 @@
 pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) any: bool,
     pub(crate) needs_avx: bool,
+    pub(crate) needs_fma: bool,
     pub(crate) needs_avx512bw: bool,
     pub(crate) needs_avx512vl: bool,
     pub(crate) needs_avx512dq: bool,
@@ -23,6 +24,7 @@ impl X86NativeReplayFeatureRequirements {
     #[cfg(target_arch = "x86_64")]
     pub(crate) fn x86_host_supported(self) -> bool {
         (!self.needs_avx || std::is_x86_feature_detected!("avx"))
+            && (!self.needs_fma || std::is_x86_feature_detected!("fma"))
             && (!self.needs_gfni || std::is_x86_feature_detected!("gfni"))
             && (!self.needs_avx512vp2intersect
                 || std::is_x86_feature_detected!("avx512vp2intersect"))
@@ -47,7 +49,9 @@ pub(crate) fn x86_native_replay_feature_requirements(
             .into_values()
         {
             requirements.any = true;
-            requirements.needs_avx |= span.instruction.is_vex_register_packed_string_compare();
+            requirements.needs_avx |= span.instruction.is_vex_register_packed_string_compare()
+                || span.instruction.is_vex_register_fma3();
+            requirements.needs_fma |= span.instruction.is_vex_register_fma3();
             // Replay spans use the full-width K0-K7 helper boundary. KMOVQ is
             // an AVX-512BW instruction, independently of the replayed opcode's
             // own CPUID feature set.

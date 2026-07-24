@@ -203,6 +203,19 @@ pub fn x86_evex_scalar_fma_replay_spans(
     })
 }
 
+/// Identify valid register-only AVX VEX FMA3 replay groups in `block` in
+/// O(N) time and O(P) space for N operations and P unique guest PCs.
+pub fn x86_vex_fma3_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .is_vex_register_fma3()
+            .then_some((false, false, false))
+    })
+}
+
 /// Identify valid register-only EVEX packed binary16 FMA replay groups in
 /// `block` in O(N) time and O(P) space for N operations and P unique guest PCs.
 pub fn x86_evex_packed_fp16_fma_replay_spans(
@@ -1077,6 +1090,11 @@ pub fn x86_native_replay_spans(
             .or_else(|| {
                 instruction
                     .is_vex_register_packed_string_compare()
+                    .then_some((false, false, false))
+            })
+            .or_else(|| {
+                instruction
+                    .is_vex_register_fma3()
                     .then_some((false, false, false))
             })
     })
