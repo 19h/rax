@@ -37,6 +37,9 @@ mod gpr_broadcast;
 #[path = "x86_native_replay_tests/scalar_integer_move.rs"]
 mod scalar_integer_move;
 
+#[path = "x86_native_replay_tests/scalar_lane_transfer.rs"]
+mod scalar_lane_transfer;
+
 #[path = "x86_native_replay_tests/scalar_move.rs"]
 mod scalar_move;
 

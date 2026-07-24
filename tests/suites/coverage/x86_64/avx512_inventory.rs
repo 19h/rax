@@ -59,6 +59,8 @@ mod packed_extend_replay;
 mod packed_move_replay;
 #[path = "avx512_inventory/scalar_integer_move_replay.rs"]
 mod scalar_integer_move_replay;
+#[path = "avx512_inventory/scalar_lane_transfer_replay.rs"]
+mod scalar_lane_transfer_replay;
 #[path = "avx512_inventory/scalar_move_replay.rs"]
 mod scalar_move_replay;
 #[path = "avx512_inventory/vector_align_replay.rs"]
