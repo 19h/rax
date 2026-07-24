@@ -713,6 +713,12 @@ impl X86_64Lifter {
                         });
                     }
                     let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    if prefix.encoding == VecEncodingKind::Evex && prefix.b && modrm.is_memory {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
                     let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
                     let src1 = self.xmm(
                         modrm.reg
@@ -776,6 +782,8 @@ impl X86_64Lifter {
                             src2,
                             elem,
                             signaling: opcode == 0x2F,
+                            suppress_exceptions: prefix.encoding == VecEncodingKind::Evex
+                                && prefix.b,
                         },
                         hint,
                     ));

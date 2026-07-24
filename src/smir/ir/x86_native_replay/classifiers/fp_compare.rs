@@ -3,6 +3,33 @@
 use super::X86InstructionBytes;
 
 impl X86InstructionBytes {
+    /// Validate one register-only EVEX `VCOMISH` or `VUCOMISH` instruction.
+    ///
+    /// Returns `(needs_avx512vl, needs_avx512fp16)`. Both instructions are
+    /// scalar LLIG forms, require AVX-512-FP16 but not AVX-512VL, admit SAE
+    /// through EVEX.b, reserve EVEX.vvvv/V'/z/aaa, and reject memory forms.
+    pub fn evex_register_fp16_flag_compare_requirements(&self) -> Option<(bool, bool)> {
+        let bytes = self.as_slice();
+        if bytes.len() != 6 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+
+        if p0 & 0x0F != 5
+            || p1 != 0x7C
+            || p2 & 0x8F != 0x08
+            || !matches!(opcode, 0x2E | 0x2F)
+            || modrm >> 6 != 3
+        {
+            return None;
+        }
+        Some((false, true))
+    }
+
     /// Validate one register-only EVEX `VCMPPS`, `VCMPPD`, `VCMPSS`,
     /// `VCMPSD`, `VCMPPH`, or `VCMPSH` instruction.
     ///

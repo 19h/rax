@@ -1774,6 +1774,7 @@ fn lift_evex_fp16_flag_compare_covers_signaling_sae_high_regs_memory_and_invalid
                 src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
                 elem: VecElementType::F16,
                 signaling: actual,
+                suppress_exceptions: false,
             } if actual == signaling
         ));
     }
@@ -1786,6 +1787,7 @@ fn lift_evex_fp16_flag_compare_covers_signaling_sae_high_regs_memory_and_invalid
             src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(19))),
             elem: VecElementType::F16,
             signaling: false,
+            suppress_exceptions: false,
         }
     ));
 
@@ -1804,11 +1806,21 @@ fn lift_evex_fp16_flag_compare_covers_signaling_sae_high_regs_memory_and_invalid
             src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
             elem: VecElementType::F16,
             signaling: true,
+            suppress_exceptions: false,
             ..
         }
     ));
 
-    assert!(lift_single(&[0x62, 0xF5, 0x7C, 0x18, 0x2E, 0xD3]).is_ok()); // {sae}
+    let sae = lift_single(&[0x62, 0xF5, 0x7C, 0x18, 0x2E, 0xD3]).unwrap();
+    assert!(matches!(
+        sae.ops.last().unwrap().kind,
+        OpKind::X86FpCompare {
+            elem: VecElementType::F16,
+            signaling: false,
+            suppress_exceptions: true,
+            ..
+        }
+    ));
     assert!(lift_single(&[0x62, 0xF5, 0x7C, 0x68, 0x2E, 0xD3]).is_ok()); // LLIG
 
     for invalid in [

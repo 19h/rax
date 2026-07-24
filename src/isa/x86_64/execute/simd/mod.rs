@@ -19,6 +19,7 @@ mod avx512_bw;
 mod avx512_chunk_extract;
 mod avx512_chunk_insert;
 mod avx512_chunk_shuffle;
+mod avx512_comi;
 mod avx512_compare;
 mod avx512_fp_class;
 mod avx512_gpr_broadcast;
@@ -46,6 +47,7 @@ pub use avx512_bw::*;
 pub use avx512_chunk_extract::*;
 pub use avx512_chunk_insert::*;
 pub use avx512_chunk_shuffle::*;
+pub use avx512_comi::*;
 pub use avx512_compare::*;
 pub use avx512_fp_class::*;
 pub use avx512_gpr_broadcast::*;
@@ -61,3 +63,6 @@ pub use sse::*;
 pub use sse4::*;
 pub use sse4a::*;
 pub use ssse3::*;
+
+#[cfg(test)]
+mod avx512_comi_tests;

@@ -2644,6 +2644,7 @@ impl X86_64Lifter {
                 src2,
                 elem: VecElementType::F16,
                 signaling: opcode == 0x2F,
+                suppress_exceptions: prefix.b,
             },
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))

@@ -166,6 +166,7 @@ impl X86_64Lowerer {
                 src2,
                 elem,
                 signaling,
+                suppress_exceptions,
             } => {
                 let src1_reg = self.get_reg(*src1)?;
                 let src2_reg = self.get_reg(*src2)?;
@@ -185,7 +186,23 @@ impl X86_64Lowerer {
                     }
                 };
                 let opcode = if *signaling { 0x2F } else { 0x2E };
-                if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
+                if *suppress_exceptions {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_evex_unary_fp_rr(
+                        X86VecMap::Map0F,
+                        pp,
+                        VecWidth::V128,
+                        *elem == VecElementType::F64,
+                        opcode,
+                        src1_reg,
+                        None,
+                        src2_reg,
+                        0,
+                        false,
+                        true,
+                        None,
+                    );
+                } else if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
                     self.emit_vec_rr(
                         VecEncoding {
                             width: VecWidth::V128,

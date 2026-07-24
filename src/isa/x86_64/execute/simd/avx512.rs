@@ -7,7 +7,6 @@ use super::compare::{cmp_predicate_f32, cmp_predicate_f64};
 use super::gfni::gf_inv;
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 use crate::isa::x86_64::execute::crypto::aes;
-use crate::isa::x86_64::flags;
 
 /// Helper to get ZMM register value (all 8 qwords)
 fn get_zmm(vcpu: &X86_64Vcpu, reg: u8) -> [u64; 8] {
@@ -2364,7 +2363,7 @@ fn write_vec_scalar_zero_upper(vcpu: &mut X86_64Vcpu, dest: u8, elem_size: usize
     write_vec_vl(vcpu, dest, 16, &raw);
 }
 
-fn f16_to_f32(bits: u16) -> f32 {
+pub(super) fn f16_to_f32(bits: u16) -> f32 {
     let sign = ((bits & 0x8000) as u32) << 16;
     let exp = (bits >> 10) & 0x1f;
     let frac = (bits & 0x03ff) as u32;
@@ -2797,99 +2796,6 @@ fn read_fp_elem(bytes: &[u8; 64], lane: usize, elem_size: usize) -> u64 {
     let mut raw = [0u8; 8];
     raw[..elem_size].copy_from_slice(&bytes[base..base + elem_size]);
     u64::from_le_bytes(raw)
-}
-
-/// EVEX VCOMISS/VCOMISD/VCOMISH and VUCOMISS/VUCOMISD/VUCOMISH: compare
-/// scalar FP and set RFLAGS.
-pub fn evex_comi(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-    elem_size: usize,
-    _ordered: bool,
-) -> Result<Option<VcpuExit>> {
-    let evex = ctx
-        .evex
-        .ok_or_else(|| Error::Emulator("EVEX COMI requires EVEX prefix".to_string()))?;
-
-    if evex.aaa != 0 || evex.z {
-        return vcpu.inject_undefined_instruction();
-    }
-
-    let modrm_start = ctx.cursor;
-    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    if evex.broadcast && is_memory {
-        return vcpu.inject_undefined_instruction();
-    }
-    let addr = if is_memory {
-        evex_scaled_disp8_addr(ctx, modrm_start, addr, elem_size)
-    } else {
-        addr
-    };
-    let src1 = (reg & 0x07) | if evex.r { 0 } else { 8 } | if evex.r_prime { 0 } else { 16 };
-    let src2 = evex_rm_vec(&evex, rm);
-
-    let (unordered, greater, less) = match elem_size {
-        2 => {
-            let src1_bytes = read_reg_bytes(vcpu, src1, 16);
-            let a = f16_to_f32(u16::from_le_bytes(src1_bytes[0..2].try_into().unwrap()));
-            let b = if is_memory {
-                f16_to_f32(vcpu.read_mem(addr, 2)? as u16)
-            } else {
-                let src2_bytes = read_reg_bytes(vcpu, src2, 16);
-                f16_to_f32(u16::from_le_bytes(src2_bytes[0..2].try_into().unwrap()))
-            };
-            (a.is_nan() || b.is_nan(), a > b, a < b)
-        }
-        4 => {
-            let src1_bytes = read_reg_bytes(vcpu, src1, 16);
-            let a = f32::from_bits(u32::from_le_bytes(src1_bytes[0..4].try_into().unwrap()));
-            let b = if is_memory {
-                f32::from_bits(vcpu.read_mem(addr, 4)? as u32)
-            } else {
-                let src2_bytes = read_reg_bytes(vcpu, src2, 16);
-                f32::from_bits(u32::from_le_bytes(src2_bytes[0..4].try_into().unwrap()))
-            };
-            (a.is_nan() || b.is_nan(), a > b, a < b)
-        }
-        8 => {
-            let src1_bytes = read_reg_bytes(vcpu, src1, 16);
-            let a = f64::from_bits(u64::from_le_bytes(src1_bytes[0..8].try_into().unwrap()));
-            let b = if is_memory {
-                f64::from_bits(vcpu.read_mem(addr, 8)?)
-            } else {
-                let src2_bytes = read_reg_bytes(vcpu, src2, 16);
-                f64::from_bits(u64::from_le_bytes(src2_bytes[0..8].try_into().unwrap()))
-            };
-            (a.is_nan() || b.is_nan(), a > b, a < b)
-        }
-        _ => {
-            return Err(Error::Emulator(format!(
-                "EVEX COMI invalid element size {elem_size}"
-            )));
-        }
-    };
-
-    let clear_mask = flags::bits::ZF
-        | flags::bits::PF
-        | flags::bits::CF
-        | flags::bits::OF
-        | flags::bits::AF
-        | flags::bits::SF;
-    vcpu.regs.rflags &= !clear_mask;
-
-    if unordered {
-        vcpu.regs.rflags |= flags::bits::ZF | flags::bits::PF | flags::bits::CF;
-    } else if greater {
-        // ZF=PF=CF=0
-    } else if less {
-        vcpu.regs.rflags |= flags::bits::CF;
-    } else {
-        vcpu.regs.rflags |= flags::bits::ZF;
-    }
-    vcpu.clear_lazy_flags();
-
-    vcpu.regs.rip += ctx.cursor as u64;
-    Ok(None)
 }
 
 /// EVEX VCMPPS/PD/PH and VCMPSD/SS/SH: compare FP elements into a k-mask.

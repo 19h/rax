@@ -2016,7 +2016,15 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src2,
             elem,
             signaling,
-        } => op_json!("x86_fp_compare", src1, src2, elem, signaling),
+            suppress_exceptions,
+        } => op_json!(
+            "x86_fp_compare",
+            src1,
+            src2,
+            elem,
+            signaling,
+            suppress_exceptions
+        ),
         OpKind::X86VectorFpCompare {
             dst,
             src1,

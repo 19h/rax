@@ -198,6 +198,7 @@ fn lift_legacy_vex_evex_comi_ucomi() {
             src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
             elem: VecElementType::F32,
             signaling: false,
+            suppress_exceptions: false,
         }
     ));
 
@@ -220,6 +221,18 @@ fn lift_legacy_vex_evex_comi_ucomi() {
             src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(18))),
             elem: VecElementType::F64,
             signaling: true,
+            suppress_exceptions: false,
+            ..
+        }
+    ));
+
+    let sae = lift_single(&[0x62, 0xF1, 0x7C, 0x18, 0x2F, 0xD1]).unwrap();
+    assert!(matches!(
+        sae.ops.last().unwrap().kind,
+        OpKind::X86FpCompare {
+            elem: VecElementType::F32,
+            signaling: true,
+            suppress_exceptions: true,
             ..
         }
     ));
@@ -230,6 +243,7 @@ fn lift_legacy_vex_evex_comi_ucomi() {
         &[0xC5, 0xF0, 0x2E, 0xC1][..],             // reserved VEX.vvvv
         &[0x62, 0xF1, 0xFC, 0x08, 0x2E, 0xC1][..], // VUCOMISS W=1
         &[0x62, 0xF1, 0x7D, 0x08, 0x2F, 0xC1][..], // VCOMISD W=0
+        &[0x62, 0xF1, 0x7C, 0x18, 0x2F, 0x01][..], // EVEX.b memory
     ] {
         assert!(matches!(
             lift_single(bytes),

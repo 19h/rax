@@ -30,6 +30,8 @@ mod evex_chunk_insert_replay;
 #[cfg(test)]
 mod evex_chunk_shuffle_replay;
 #[cfg(test)]
+mod evex_fp16_flag_compare_replay;
+#[cfg(test)]
 mod evex_fp16_scalar_replay;
 #[cfg(test)]
 mod evex_fp_class_replay;

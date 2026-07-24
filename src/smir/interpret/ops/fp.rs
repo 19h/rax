@@ -157,49 +157,20 @@ impl SmirInterpreter {
             }
 
             OpKind::X86FpCompare {
-                src1, src2, elem, ..
+                src1,
+                src2,
+                elem,
+                signaling,
+                suppress_exceptions,
             } => {
-                let elem_bits = elem.bytes() * 8;
-                let a_bits = Self::get_lane(&Self::read_vec(ctx, *src1), 0, elem_bits);
-                let b_bits = Self::get_lane(&Self::read_vec(ctx, *src2), 0, elem_bits);
-                let ordering = match elem {
-                    VecElementType::F16 => Self::x86_fp16_to_f32(a_bits as u16)
-                        .partial_cmp(&Self::x86_fp16_to_f32(b_bits as u16)),
-                    VecElementType::F32 => {
-                        f32::from_bits(a_bits as u32).partial_cmp(&f32::from_bits(b_bits as u32))
-                    }
-                    VecElementType::F64 => {
-                        f64::from_bits(a_bits).partial_cmp(&f64::from_bits(b_bits))
-                    }
-                    _ => None,
-                };
-                ctx.flags.materialize_all();
-                ctx.flags.lazy = None;
-                ctx.flags.materialized.of = false;
-                ctx.flags.materialized.sf = false;
-                ctx.flags.materialized.af = false;
-                match ordering {
-                    None => {
-                        ctx.flags.materialized.zf = true;
-                        ctx.flags.materialized.pf = true;
-                        ctx.flags.materialized.cf = true;
-                    }
-                    Some(std::cmp::Ordering::Less) => {
-                        ctx.flags.materialized.zf = false;
-                        ctx.flags.materialized.pf = false;
-                        ctx.flags.materialized.cf = true;
-                    }
-                    Some(std::cmp::Ordering::Equal) => {
-                        ctx.flags.materialized.zf = true;
-                        ctx.flags.materialized.pf = false;
-                        ctx.flags.materialized.cf = false;
-                    }
-                    Some(std::cmp::Ordering::Greater) => {
-                        ctx.flags.materialized.zf = false;
-                        ctx.flags.materialized.pf = false;
-                        ctx.flags.materialized.cf = false;
-                    }
-                }
+                self.execute_x86_fp_compare(
+                    ctx,
+                    *src1,
+                    *src2,
+                    *elem,
+                    *signaling,
+                    *suppress_exceptions,
+                );
             }
 
             OpKind::X86VectorFpCompare {

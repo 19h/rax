@@ -60,6 +60,7 @@ fn lower_x86_fp_compare_emits_comi_ucomi_native_opcodes() {
                 src2: xmm1,
                 elem: VecElementType::F32,
                 signaling: false,
+                suppress_exceptions: false,
             },
             &[0x0F, 0x2E, 0xC1][..],
         ),
@@ -70,8 +71,20 @@ fn lower_x86_fp_compare_emits_comi_ucomi_native_opcodes() {
                 src2: xmm1,
                 elem: VecElementType::F64,
                 signaling: true,
+                suppress_exceptions: false,
             },
             &[0x66, 0x0F, 0x2F, 0xC1][..],
+        ),
+        (
+            "VCOMISS {sae}",
+            OpKind::X86FpCompare {
+                src1: xmm0,
+                src2: xmm1,
+                elem: VecElementType::F32,
+                signaling: true,
+                suppress_exceptions: true,
+            },
+            &[0x62, 0xF1, 0x7C, 0x18, 0x2F, 0xC1][..],
         ),
     ] {
         let code = lower_single_op(kind);

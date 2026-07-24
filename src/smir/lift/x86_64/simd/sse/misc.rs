@@ -765,6 +765,7 @@ impl X86_64Lifter {
                 src2,
                 elem,
                 signaling: opcode == 0x2F,
+                suppress_exceptions: false,
             },
             X86OpHint::SseOp {
                 prefix: if elem == VecElementType::F64 {

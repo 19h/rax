@@ -9,3 +9,5 @@ use crate::smir::interpret::*;
 mod part1;
 #[cfg(test)]
 mod part2;
+#[cfg(test)]
+mod part3;

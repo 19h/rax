@@ -8,6 +8,7 @@ mod data_movement;
 mod far_return;
 mod flags;
 mod fp;
+mod fp_compare;
 mod logic;
 mod memory;
 mod meta;

@@ -1339,12 +1339,14 @@ pub enum OpKind {
 
     /// x86 COMIS*/UCOMIS* scalar floating-point comparison. Writes the x86
     /// arithmetic flags with the architectural unordered/equal/less/greater
-    /// truth table. `signaling` distinguishes COMI from UCOMI exception policy.
+    /// truth table. `signaling` distinguishes COMI from UCOMI invalid-exception
+    /// policy; `suppress_exceptions` models EVEX SAE.
     X86FpCompare {
         src1: VReg,
         src2: VReg,
         elem: VecElementType,
         signaling: bool,
+        suppress_exceptions: bool,
     },
 
     /// x86 (V)CMP{PS,PD,PH,SS,SD,SH}. Legacy and VEX encodings write an
@@ -5298,6 +5300,10 @@ impl OpKind {
                     | OpKind::X86Round { .. }
                     | OpKind::X86DotProduct { .. }
                     | OpKind::X86FpBinary {
+                        suppress_exceptions: false,
+                        ..
+                    }
+                    | OpKind::X86FpCompare {
                         suppress_exceptions: false,
                         ..
                     }
