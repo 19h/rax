@@ -70,6 +70,9 @@ mod vex_packed_string;
 #[path = "x86_native_replay_tests/vex_fma3.rs"]
 mod vex_fma3;
 
+#[path = "x86_native_replay_tests/vex_fp_logic.rs"]
+mod vex_fp_logic;
+
 #[path = "x86_native_replay_tests/vp2intersect.rs"]
 mod vp2intersect;
 
