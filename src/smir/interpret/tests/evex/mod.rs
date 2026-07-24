@@ -11,6 +11,8 @@ use crate::smir::ir::types::ShiftOp;
 #[cfg(test)]
 mod binary;
 #[cfg(test)]
+mod fp_compare;
+#[cfg(test)]
 mod part1;
 #[cfg(test)]
 mod part2;
