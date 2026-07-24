@@ -35,6 +35,8 @@ mod chunk_insert_replay;
 mod chunk_shuffle_replay;
 #[path = "avx512_inventory/fp_class_replay.rs"]
 mod fp_class_replay;
+#[path = "avx512_inventory/gfni_replay.rs"]
+mod gfni_replay;
 #[path = "avx512_inventory/gpr_broadcast_replay.rs"]
 mod gpr_broadcast_replay;
 #[path = "avx512_inventory/lane_shuffle_replay.rs"]

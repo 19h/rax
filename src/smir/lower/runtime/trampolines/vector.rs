@@ -5892,9 +5892,10 @@ pub fn x86_native_vector_features_supported_excluding(
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::VecWidth;
 
-    let mut any = false;
-    let mut needs_bw = false;
-    let mut needs_vl = false;
+    let replay = x86_native_replay_feature_requirements(func, excluded);
+    let mut any = replay.any;
+    let mut needs_bw = replay.needs_avx512bw;
+    let mut needs_vl = replay.needs_avx512vl;
     let mut needs_vbmi = false;
     let mut needs_vbmi2 = false;
     let mut needs_bitalg = false;
@@ -5902,8 +5903,9 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_vnni = false;
     let mut needs_ifma = false;
     let mut needs_bf16 = false;
-    let mut needs_cd = false;
-    let mut needs_fp16 = false;
+    let mut needs_cd = replay.needs_avx512cd;
+    let mut needs_fp16 = replay.needs_avx512fp16;
+    let needs_gfni = replay.needs_gfni;
     let mut needs_er = false;
     let mut needs_aes = false;
     let mut needs_vaes = false;
@@ -5914,7 +5916,7 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_shift_avx2 = false;
     let mut needs_logic_avx = false;
     let mut needs_logic_avx2 = false;
-    let mut needs_dq = false;
+    let mut needs_dq = replay.needs_avx512dq;
     let mut needs_int_arith_avx = false;
     let mut needs_int_arith_avx2 = false;
     let mut needs_mul_sse41 = false;
@@ -5964,30 +5966,6 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_maddubs_avx2 = false;
     let mut needs_maddwd_avx = false;
     let mut needs_maddwd_avx2 = false;
-
-    for block in func
-        .blocks
-        .iter()
-        .filter(|block| !excluded.contains_key(&block.id))
-    {
-        for span in
-            crate::smir::ir::x86_evex_native_replay_spans(block, &func.x86_instruction_bytes)
-                .into_values()
-        {
-            any = true;
-            // Replay spans use the full-width K0-K7 helper boundary. KMOVQ is
-            // an AVX-512BW instruction, independently of the replayed opcode's
-            // own CPUID feature set.
-            needs_bw = true;
-            needs_vl |= span.needs_avx512vl;
-            needs_dq |= span.needs_avx512dq;
-            needs_fp16 |= span.needs_avx512fp16;
-            needs_cd |= span
-                .instruction
-                .evex_register_mask_broadcast_needs_vl()
-                .is_some();
-        }
-    }
 
     for op in func
         .blocks
@@ -6383,6 +6361,7 @@ pub fn x86_native_vector_features_supported_excluding(
             && (!needs_bf16 || std::is_x86_feature_detected!("avx512bf16"))
             && (!needs_cd || std::is_x86_feature_detected!("avx512cd"))
             && (!needs_fp16 || std::is_x86_feature_detected!("avx512fp16"))
+            && (!needs_gfni || std::is_x86_feature_detected!("gfni"))
             && (!needs_er || x86_host_has_avx512er())
             && (!(needs_dq || needs_mul_dq) || std::is_x86_feature_detected!("avx512dq"))
             && (!needs_aes || std::is_x86_feature_detected!("aes"))
@@ -6462,6 +6441,7 @@ pub fn x86_native_vector_features_supported_excluding(
             needs_bf16,
             needs_cd,
             needs_fp16,
+            needs_gfni,
             needs_er,
             needs_aes,
             needs_vaes,

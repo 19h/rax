@@ -22,6 +22,9 @@ mod chunk_shuffle;
 #[path = "x86_native_replay_tests/fp_class.rs"]
 mod fp_class;
 
+#[path = "x86_native_replay_tests/gfni.rs"]
+mod gfni;
+
 #[path = "x86_native_replay_tests/gpr_broadcast.rs"]
 mod gpr_broadcast;
 

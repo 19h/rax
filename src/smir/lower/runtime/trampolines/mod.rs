@@ -22,6 +22,7 @@ pub use mmx::*;
 mod mmx_memory;
 pub use mmx_memory::*;
 mod vector;
+mod vector_replay_features;
 use crate::smir::lower::runtime::*;
 use crate::smir::lower::{
     X86_GUEST_APX_ENABLED_OFFSET, X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CPL_OFFSET,
@@ -35,3 +36,4 @@ use crate::smir::lower::{
     X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 pub use vector::*;
+pub(crate) use vector_replay_features::*;

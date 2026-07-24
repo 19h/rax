@@ -2,6 +2,7 @@ use super::X86InstructionBytes;
 
 mod chunk;
 mod fp_class;
+mod gfni;
 
 impl X86InstructionBytes {
     /// Validate the initial native-replay family and return whether its vector
