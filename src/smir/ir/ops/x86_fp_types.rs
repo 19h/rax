@@ -1,6 +1,67 @@
 //! x86 legacy floating-point and 3DNow! operation descriptors.
 
-use crate::smir::ir::types::Condition;
+use crate::smir::ir::types::{
+    Condition, FpRoundMode, VReg, VecElementType, X86FmaKind, X86FmaOrder,
+};
+
+/// Exact x86 FMA3 operation before architectural destination masking/merging.
+///
+/// Source numbering follows the instruction syntax rather than the arithmetic
+/// permutation: `src1` is also the architectural destination, `src2` is the
+/// VEX/EVEX.vvvv source, and `src3` is the ModR/M source. Retaining that order
+/// lets interpretation apply the 132/213/231 NaN-priority rule before any
+/// arithmetic sign transformation. Masked-off lanes perform no arithmetic and
+/// therefore cannot update MXCSR or raise a SIMD floating-point exception.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct X86FmaOp {
+    pub dst: VReg,
+    pub src1: VReg,
+    pub src2: VReg,
+    pub src3: VReg,
+    pub mask: Option<VReg>,
+    pub elem: VecElementType,
+    pub kind: X86FmaKind,
+    pub order: X86FmaOrder,
+    /// Dynamic rounding consults and updates MXCSR. An explicit mode denotes
+    /// EVEX embedded rounding with suppress-all-exceptions semantics.
+    pub round: FpRoundMode,
+    pub lanes: u8,
+}
+
+impl X86FmaOp {
+    /// Validate the semantic shapes admitted by x86 FMA3 encodings. This is
+    /// intentionally stricter than the arithmetic core so malformed hand-built
+    /// IR fails closed instead of reaching an unchecked lane operation.
+    pub fn shape_valid(self) -> bool {
+        let lane_shape = match self.elem {
+            VecElementType::F32 => matches!(self.lanes, 1 | 4 | 8 | 16),
+            VecElementType::F64 => matches!(self.lanes, 1 | 2 | 4 | 8),
+            _ => false,
+        };
+        let alternating = matches!(self.kind, X86FmaKind::AddSub | X86FmaKind::SubAdd);
+        let rounding_shape = match self.round {
+            FpRoundMode::Dynamic => true,
+            FpRoundMode::RoundNearest
+            | FpRoundMode::RoundDown
+            | FpRoundMode::RoundUp
+            | FpRoundMode::RoundTowardZero => {
+                self.lanes == 1
+                    || matches!(
+                        (self.elem, self.lanes),
+                        (VecElementType::F32, 16) | (VecElementType::F64, 8)
+                    )
+            }
+            FpRoundMode::RoundNearestTiesAway => false,
+        };
+        lane_shape && (!alternating || self.lanes != 1) && rounding_shape
+    }
+
+    pub fn source_vregs(self) -> Vec<VReg> {
+        let mut sources = vec![self.src1, self.src2, self.src3];
+        sources.extend(self.mask);
+        sources
+    }
+}
 
 /// 3DNow! operations selected by the trailing `imm8` of `0F 0F /r imm8`
 /// that do not map exactly onto a generic packed-integer SMIR operation.

@@ -7,10 +7,10 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
-    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign, X86VecMap,
-    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
-    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
-    X86XSaveKind,
+    X86FmaOp, X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign,
+    X86VecMap, X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource,
+    X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth,
+    X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{
@@ -748,7 +748,6 @@ impl X86_64Lifter {
             });
         }
         let low = opcode & 0x0F;
-        let alternating = matches!(low, 0x06 | 0x07);
         let scalar = matches!(low, 0x09 | 0x0B | 0x0D | 0x0F);
         if prefix.encoding == VecEncodingKind::Evex && (prefix.zeroing && prefix.aaa == 0) {
             return Err(LiftError::InvalidEncoding {
@@ -776,9 +775,8 @@ impl X86_64Lifter {
         let mut ops = Vec::new();
         let embedded_rounding =
             prefix.encoding == VecEncodingKind::Evex && prefix.b && !modrm.is_memory;
-        if (fp16 && scalar && prefix.b && modrm.is_memory)
+        if (scalar && prefix.b && modrm.is_memory)
             || (!scalar && !embedded_rounding && prefix.l_bits == 3)
-            || (!fp16 && embedded_rounding && !scalar && prefix.width != VecWidth::V512)
         {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
@@ -787,7 +785,7 @@ impl X86_64Lifter {
         }
         let operation_width = if scalar {
             VecWidth::V128
-        } else if fp16 && embedded_rounding {
+        } else if embedded_rounding {
             VecWidth::V512
         } else {
             prefix.width
@@ -797,7 +795,7 @@ impl X86_64Lifter {
         } else {
             operation_width.lanes(elem) as u8
         };
-        let round = if fp16 && embedded_rounding {
+        let round = if embedded_rounding {
             match prefix.l_bits {
                 0 => FpRoundMode::RoundNearest,
                 1 => FpRoundMode::RoundDown,
@@ -966,32 +964,33 @@ impl X86_64Lifter {
             )
         };
 
-        let order = opcode >> 4;
-        let (mul1, mul2, acc) = match order {
-            0x09 => (old_dst, rm_src, vex_src),
-            0x0A => (vex_src, old_dst, rm_src),
-            0x0B => (vex_src, rm_src, old_dst),
+        let order = match opcode >> 4 {
+            0x09 => X86FmaOrder::Order132,
+            0x0A => X86FmaOrder::Order213,
+            0x0B => X86FmaOrder::Order231,
             _ => unreachable!(),
         };
-        let negate_product = matches!(low, 0x0C | 0x0D | 0x0E | 0x0F);
-        let negate_acc = matches!(low, 0x0A | 0x0B | 0x0E | 0x0F);
+        let kind = match low {
+            0x06 => X86FmaKind::AddSub,
+            0x07 => X86FmaKind::SubAdd,
+            0x08 | 0x09 => X86FmaKind::Add,
+            0x0A | 0x0B => X86FmaKind::Sub,
+            0x0C | 0x0D => X86FmaKind::NegativeMultiplyAdd,
+            0x0E | 0x0F => X86FmaKind::NegativeMultiplySub,
+            _ => unreachable!(),
+        };
         let raw = ctx.alloc_vreg();
+        let fma_hint = match self.vec_hint(prefix, opcode) {
+            X86OpHint::EvexOp { map, pp, w, .. } if embedded_rounding => X86OpHint::EvexOp {
+                map,
+                pp,
+                opcode,
+                width: operation_width,
+                w,
+            },
+            hint => hint,
+        };
         if fp16 {
-            let kind = match low {
-                0x06 => X86FmaKind::AddSub,
-                0x07 => X86FmaKind::SubAdd,
-                0x08 | 0x09 => X86FmaKind::Add,
-                0x0A | 0x0B => X86FmaKind::Sub,
-                0x0C | 0x0D => X86FmaKind::NegativeMultiplyAdd,
-                0x0E | 0x0F => X86FmaKind::NegativeMultiplySub,
-                _ => unreachable!(),
-            };
-            let order = match order {
-                0x09 => X86FmaOrder::Order132,
-                0x0A => X86FmaOrder::Order213,
-                0x0B => X86FmaOrder::Order231,
-                _ => unreachable!(),
-            };
             ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,
@@ -1007,76 +1006,30 @@ impl X86_64Lifter {
                     round,
                     lanes,
                 },
-                self.vec_hint(prefix, opcode),
+                fma_hint,
             ));
         } else {
-            ops.push(SmirOp::new(
+            ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,
-                OpKind::VFma {
+                OpKind::X86Fma(X86FmaOp {
                     dst: raw,
-                    src1: mul1,
-                    src2: mul2,
-                    acc,
+                    src1: old_dst,
+                    src2: vex_src,
+                    src3: rm_src,
+                    mask: (prefix.aaa != 0)
+                        .then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa)))),
                     elem,
+                    kind,
+                    order,
+                    round,
                     lanes,
-                    negate_product,
-                    negate_acc: if alternating { false } else { negate_acc },
-                },
+                }),
+                fma_hint,
             ));
         }
 
-        let result = if alternating && !fp16 {
-            let sub = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::VFma {
-                    dst: sub,
-                    src1: mul1,
-                    src2: mul2,
-                    acc,
-                    elem,
-                    lanes,
-                    negate_product: false,
-                    negate_acc: true,
-                },
-            ));
-            let selected = self.append_zero_vector(operation_width, elem, pc, ctx, &mut ops);
-            let subtract_even = low == 0x06;
-            for lane in 0..lanes {
-                let scalar_value = ctx.alloc_vreg();
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::VExtractLane {
-                        dst: scalar_value,
-                        vec: if (lane & 1 == 0) == subtract_even {
-                            sub
-                        } else {
-                            raw
-                        },
-                        lane,
-                        elem,
-                        sign: SignExtend::Zero,
-                    },
-                ));
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::VInsertLane {
-                        dst: selected,
-                        vec: selected,
-                        scalar: scalar_value,
-                        lane,
-                        elem,
-                    },
-                ));
-            }
-            selected
-        } else {
-            raw
-        };
+        let result = raw;
 
         if scalar {
             let low_result = ctx.alloc_vreg();

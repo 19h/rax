@@ -64,6 +64,8 @@ mod fast_system_transfer;
 #[cfg(test)]
 mod fence_aliases;
 #[cfg(test)]
+mod fma;
+#[cfg(test)]
 mod fsgsbase;
 #[cfg(test)]
 mod group11;

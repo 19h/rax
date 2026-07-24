@@ -1,6 +1,7 @@
 //! tests::vex tests
 
 use super::*;
+use crate::smir::ir::ops::X86FmaOp;
 use crate::smir::lift::x86_64::*;
 
 #[test]
@@ -1105,7 +1106,7 @@ fn lift_vex_fma3_covers_orders_signs_scalars_alternation_and_addresses() {
                 result
                     .ops
                     .iter()
-                    .any(|op| matches!(op.kind, OpKind::VFma { .. }))
+                    .any(|op| matches!(op.kind, OpKind::X86Fma(_)))
             );
             assert!(
                 result
@@ -1116,50 +1117,52 @@ fn lift_vex_fma3_covers_orders_signs_scalars_alternation_and_addresses() {
         }
     }
 
-    for (opcode, src1, src2, acc) in [
-        (0x98, X86Reg::Ymm(2), X86Reg::Ymm(3), X86Reg::Ymm(1)),
-        (0xA8, X86Reg::Ymm(1), X86Reg::Ymm(2), X86Reg::Ymm(3)),
-        (0xB8, X86Reg::Ymm(1), X86Reg::Ymm(3), X86Reg::Ymm(2)),
+    for (opcode, expected_order) in [
+        (0x98, X86FmaOrder::Order132),
+        (0xA8, X86FmaOrder::Order213),
+        (0xB8, X86FmaOrder::Order231),
     ] {
         let result = lift_single(&[0xC4, 0xE2, 0x75, opcode, 0xD3]).unwrap();
         assert!(result.ops.iter().any(|op| matches!(
             op.kind,
-            OpKind::VFma {
-                src1: VReg::Arch(ArchReg::X86(actual1)),
-                src2: VReg::Arch(ArchReg::X86(actual2)),
-                acc: VReg::Arch(ArchReg::X86(actual_acc)),
+            OpKind::X86Fma(X86FmaOp {
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                src3: VReg::Arch(ArchReg::X86(X86Reg::Ymm(3))),
                 elem: VecElementType::F32,
                 lanes: 8,
-                negate_product: false,
-                negate_acc: false,
+                kind: X86FmaKind::Add,
+                order,
+                round: FpRoundMode::Dynamic,
                 ..
-            } if actual1 == src1 && actual2 == src2 && actual_acc == acc
+            }) if order == expected_order
         )));
     }
 
-    for (opcode, negate_product, negate_acc) in
-        [(0x9A, false, true), (0x9C, true, false), (0x9E, true, true)]
-    {
+    for (opcode, expected_kind) in [
+        (0x9A, X86FmaKind::Sub),
+        (0x9C, X86FmaKind::NegativeMultiplyAdd),
+        (0x9E, X86FmaKind::NegativeMultiplySub),
+    ] {
         let result = lift_single(&[0xC4, 0xE2, 0xF5, opcode, 0xD3]).unwrap();
         assert!(result.ops.iter().any(|op| matches!(
             op.kind,
-            OpKind::VFma {
+            OpKind::X86Fma(X86FmaOp {
                 elem: VecElementType::F64,
-                negate_product: actual_product,
-                negate_acc: actual_acc,
+                kind,
                 ..
-            } if actual_product == negate_product && actual_acc == negate_acc
+            }) if kind == expected_kind
         )));
     }
 
     let scalar = lift_single(&[0xC4, 0xE2, 0xF1, 0xB9, 0xD3]).unwrap();
     assert!(scalar.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::VFma {
+        OpKind::X86Fma(X86FmaOp {
             elem: VecElementType::F64,
             lanes: 1,
             ..
-        }
+        })
     )));
     assert!(scalar.ops.iter().any(|op| matches!(
         op.kind,
@@ -1176,9 +1179,17 @@ fn lift_vex_fma3_covers_orders_signs_scalars_alternation_and_addresses() {
         alternating
             .ops
             .iter()
-            .filter(|op| matches!(op.kind, OpKind::VFma { .. }))
+            .filter(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86Fma(X86FmaOp {
+                        kind: X86FmaKind::AddSub,
+                        ..
+                    })
+                )
+            })
             .count(),
-        2
+        1
     );
 
     let addr32 = lift_single(&[0x67, 0xC4, 0xE2, 0x75, 0x98, 0x54, 0x77, 0x20]).unwrap();
@@ -1206,13 +1217,14 @@ fn lift_vex_fma3_covers_orders_signs_scalars_alternation_and_addresses() {
     let high_masked = lift_single(&[0x62, 0xA2, 0x75, 0x43, 0x98, 0xC2]).unwrap();
     assert!(high_masked.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::VFma {
+        OpKind::X86Fma(X86FmaOp {
             src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
-            src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
-            acc: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+            src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+            src3: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+            mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(3)))),
             lanes: 16,
             ..
-        }
+        })
     )));
     assert_eq!(
         high_masked
@@ -1274,7 +1286,6 @@ fn lift_vex_fma3_covers_orders_signs_scalars_alternation_and_addresses() {
 
     for bytes in [
         &[0x62, 0xF2, 0x75, 0x88, 0x98, 0xC2][..],
-        &[0x62, 0xF2, 0x75, 0x38, 0x98, 0xC2][..],
         &[0x62, 0xF2, 0x75, 0x60, 0x98, 0xC2][..],
     ] {
         assert!(matches!(

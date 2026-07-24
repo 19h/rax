@@ -74,6 +74,110 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, out);
             }
 
+            OpKind::X86Fma(fma) => {
+                if !fma.shape_valid() || !matches!(ctx.arch_regs, ArchRegState::X86_64(_)) {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+                let first = Self::read_vec(ctx, fma.src1);
+                let second = Self::read_vec(ctx, fma.src2);
+                let third = Self::read_vec(ctx, fma.src3);
+                let active = fma.mask.map_or(u64::MAX, |mask| ctx.read_vreg(mask));
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => unreachable!("x86 FMA architecture checked above"),
+                };
+                // Intel SDM Vol. 1 §15.6.4 defines SAE as if every MXCSR
+                // exception mask were set. This affects the numeric masked
+                // response as well as suppressing #XM/flag updates: notably,
+                // MXCSR.FTZ applies to an underflow result even when the
+                // architectural UM bit is clear.
+                let arithmetic_mxcsr = if fma.round == FpRoundMode::Dynamic {
+                    mxcsr
+                } else {
+                    mxcsr | (0x3F << 7)
+                };
+                let mode = match fma.round {
+                    FpRoundMode::Dynamic => self.dynamic_fp_round_mode(ctx),
+                    mode => mode,
+                };
+                let format = match fma.elem {
+                    VecElementType::F32 => X86_SIMD_F32,
+                    VecElementType::F64 => X86_SIMD_F64,
+                    _ => unreachable!("x86 FMA shape checked above"),
+                };
+                let mut result = [0u64; 16];
+                let mut status = 0u32;
+                for lane in 0..fma.lanes {
+                    if active & (1u64 << lane) == 0 {
+                        continue;
+                    }
+                    let architectural = [
+                        Self::get_lane(&first, lane, format.total_bits),
+                        Self::get_lane(&second, lane, format.total_bits),
+                        Self::get_lane(&third, lane, format.total_bits),
+                    ];
+                    // Intel SDM Vol. 1, Table 14-17 defines NaN selection in
+                    // x/y/z arithmetic order, i.e. the mnemonic's digits.
+                    let ordered = match fma.order {
+                        X86FmaOrder::Order132 => {
+                            [architectural[0], architectural[2], architectural[1]]
+                        }
+                        X86FmaOrder::Order213 => {
+                            [architectural[1], architectural[0], architectural[2]]
+                        }
+                        X86FmaOrder::Order231 => {
+                            [architectural[1], architectural[2], architectural[0]]
+                        }
+                    };
+                    let negate_product = matches!(
+                        fma.kind,
+                        X86FmaKind::NegativeMultiplyAdd | X86FmaKind::NegativeMultiplySub
+                    );
+                    let negate_accumulator = match fma.kind {
+                        X86FmaKind::Sub | X86FmaKind::NegativeMultiplySub => true,
+                        X86FmaKind::AddSub => lane & 1 == 0,
+                        X86FmaKind::SubAdd => lane & 1 != 0,
+                        X86FmaKind::Add | X86FmaKind::NegativeMultiplyAdd => false,
+                    };
+                    let computed = Self::x86_fma_boundary(
+                        ordered[0],
+                        ordered[1],
+                        ordered[2],
+                        format,
+                        negate_product,
+                        negate_accumulator,
+                        mode,
+                        arithmetic_mxcsr,
+                    );
+                    status |= computed.status;
+                    Self::set_lane(&mut result, lane, format.total_bits, computed.bits);
+                }
+                if fma.round == FpRoundMode::Dynamic {
+                    // Intel SDM Vol. 1 §11.5.3 reports unmasked pre-
+                    // computation exceptions before any post-computation
+                    // exception. A handler can then mask/fix and restart the
+                    // instruction to reach the post-computation boundary.
+                    let pre_status = status & 0x07;
+                    let reported_status = if Self::x86_simd_fp_unmasked(pre_status, mxcsr) {
+                        pre_status
+                    } else {
+                        status
+                    };
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.mxcsr |= reported_status;
+                    }
+                    if Self::x86_simd_fp_unmasked(reported_status, mxcsr) {
+                        ctx.request_exit(ExitReason::SimdFloatingPoint { addr: op.guest_pc });
+                        return Ok(());
+                    }
+                }
+                Self::write_vec(ctx, fma.dst, result);
+            }
+
             OpKind::X86FP16Fma {
                 dst,
                 src1,
@@ -136,18 +240,15 @@ impl SmirInterpreter {
                         X86FmaOrder::Order213 => (sources[1], sources[0], sources[2]),
                         X86FmaOrder::Order231 => (sources[1], sources[2], sources[0]),
                     };
-                    let invalid_product = (Self::x86_simd_fp_is_zero(a, X86_SIMD_F16)
-                        && Self::x86_simd_fp_is_infinite(b, X86_SIMD_F16))
-                        || (Self::x86_simd_fp_is_infinite(a, X86_SIMD_F16)
-                            && Self::x86_simd_fp_is_zero(b, X86_SIMD_F16));
-                    let any_snan = sources
+                    let ordered_sources = [a, b, c];
+                    let any_snan = ordered_sources
                         .iter()
                         .any(|bits| Self::x86_simd_fp_is_snan(*bits, X86_SIMD_F16));
-                    if invalid_product || any_snan {
+                    if any_snan {
                         status |= 1;
                     }
 
-                    let bits = if let Some(nan) = sources
+                    let bits = if let Some(nan) = ordered_sources
                         .iter()
                         .copied()
                         .find(|bits| Self::x86_simd_fp_is_nan(*bits, X86_SIMD_F16))
@@ -178,11 +279,17 @@ impl SmirInterpreter {
                     Self::set_lane(&mut result, lane, 16, bits);
                 }
                 if *round == FpRoundMode::Dynamic {
+                    let pre_status = status & 0x07;
+                    let reported_status = if Self::x86_simd_fp_unmasked(pre_status, mxcsr) {
+                        pre_status
+                    } else {
+                        status
+                    };
                     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
-                        x86.mxcsr |= status;
+                        x86.mxcsr |= reported_status;
                     }
-                    if Self::x86_simd_fp_unmasked(status, mxcsr) {
-                        ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
+                    if Self::x86_simd_fp_unmasked(reported_status, mxcsr) {
+                        ctx.request_exit(ExitReason::SimdFloatingPoint { addr: op.guest_pc });
                         return Ok(());
                     }
                 }

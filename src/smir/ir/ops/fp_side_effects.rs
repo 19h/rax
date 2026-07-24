@@ -7,6 +7,13 @@ impl OpKind {
     /// Return whether execution can update architectural floating-point status
     /// or request a floating-point exception independently of the data result.
     pub(super) fn has_fp_status_side_effects(&self) -> bool {
+        if let OpKind::X86Fma(fma) = self {
+            // Malformed IR must remain observable so DCE cannot erase the
+            // interpreter's fail-closed #UD boundary. Canonical embedded-
+            // rounding forms suppress all status/trap effects.
+            return !fma.shape_valid() || fma.round == FpRoundMode::Dynamic;
+        }
+
         if let OpKind::X86IntToFp {
             elem,
             int_width,

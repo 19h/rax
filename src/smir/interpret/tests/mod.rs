@@ -24,6 +24,8 @@ mod string;
 #[cfg(test)]
 mod three_dnow;
 #[cfg(test)]
+mod x86_fma;
+#[cfg(test)]
 mod x87;
 use crate::smir::ir::FunctionBuilder;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate, MaterializedFlags};

@@ -2,6 +2,7 @@
 
 mod address;
 mod call_target;
+mod x86_fma;
 mod x86_opmask;
 
 use call_target::call_target_json;
@@ -3820,6 +3821,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             negate_product,
             negate_acc
         ),
+        OpKind::X86Fma(op) => x86_fma::op_json(op),
         OpKind::X86FP16Fma {
             dst,
             src1,

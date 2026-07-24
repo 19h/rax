@@ -3846,6 +3846,8 @@ impl OpKind {
                 result.push(*acc);
             }
 
+            OpKind::X86Fma(fma) => result.extend(fma.source_vregs()),
+
             OpKind::X86FP16Fma {
                 src1,
                 src2,

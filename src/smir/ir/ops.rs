@@ -3222,7 +3222,9 @@ pub enum OpKind {
         signed: bool,
     },
 
-    /// Vector FMA: dst = acc + (src1 * src2) or dst = acc - (src1 * src2)
+    /// Architecture-neutral vector FMA. Architectural floating-point control
+    /// state and exception behavior remain the responsibility of the emitting
+    /// ISA; x86 FMA3 uses `X86Fma` instead.
     VFma {
         dst: VReg,
         src1: VReg,
@@ -3234,10 +3236,14 @@ pub enum OpKind {
         negate_acc: bool,
     },
 
-    /// x86 AVX512-FP16 fused multiply-add. Source numbering is architectural
-    /// (before the 132/213/231 permutation) so NaN selection retains Intel's
-    /// source-priority rule. Explicit rounding denotes EVEX embedded rounding
-    /// and therefore also suppresses SIMD floating-point exceptions.
+    /// x86 binary32/binary64 FMA3 with MXCSR, writemask, source-order, and
+    /// embedded-rounding semantics represented explicitly.
+    X86Fma(X86FmaOp),
+
+    /// x86 AVX512-FP16 fused multiply-add. Source numbering is architectural;
+    /// interpretation applies the 132/213/231 permutation before Intel's
+    /// arithmetic-order NaN selection. Explicit rounding denotes EVEX embedded
+    /// rounding and therefore also suppresses SIMD floating-point exceptions.
     X86FP16Fma {
         dst: VReg,
         src1: VReg,
@@ -4823,6 +4829,7 @@ impl OpKind {
             | OpKind::VBroadcast { dst, .. }
             | OpKind::VMin { dst, .. }
             | OpKind::VFma { dst, .. }
+            | OpKind::X86Fma(X86FmaOp { dst, .. })
             | OpKind::X86FP16Fma { dst, .. }
             | OpKind::X86FP16Complex { dst, .. }
             | OpKind::X86FourFma { dst, .. }

@@ -6702,7 +6702,7 @@ fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
     );
     let first_fma = ops
         .iter()
-        .position(|op| matches!(op.kind, OpKind::VFma { .. }))
+        .position(|op| matches!(op.kind, OpKind::X86Fma(_)))
         .expect("EVEX FMA computation removed");
     let last_load = ops
         .iter()

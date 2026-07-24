@@ -15,6 +15,8 @@ mod misc;
 mod strength;
 #[cfg(test)]
 mod vector;
+#[cfg(test)]
+mod x86_fma;
 use crate::smir::ir::FunctionBuilder;
 use crate::smir::ir::ops::{
     ArmDpRegShiftKind, OpKind, X86AdxKind, X86BlsKind, X86CacheControlKind, X86CountKind,
