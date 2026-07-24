@@ -1,6 +1,8 @@
 //! x86 scalar floating-point comparisons that write RFLAGS.
 
-use crate::smir::interpret::{SmirInterpreter, X86_SIMD_F16, X86_SIMD_F32, X86_SIMD_F64};
+use crate::smir::interpret::{
+    SmirInterpreter, X86_SIMD_F16, X86_SIMD_F32, X86_SIMD_F64, X86SimdFpResult,
+};
 use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext};
 use crate::smir::ir::types::{VReg, VecElementType, VecWidth};
 
@@ -64,8 +66,21 @@ impl SmirInterpreter {
             }
             let first_raw = Self::get_lane(&first, lane, elem.bytes() * 8);
             let second_raw = Self::get_lane(&second, lane, elem.bytes() * 8);
-            let first_value = Self::x86_simd_fp_apply_daz(first_raw, format, mxcsr);
-            let second_value = Self::x86_simd_fp_apply_daz(second_raw, format, mxcsr);
+            // AVX-512-FP16 comparisons always consume binary16 denormals:
+            // MXCSR.DAZ is ignored, while an active denormal operand reports
+            // MXCSR.DE unless NaN handling takes precedence for this lane.
+            let value = |raw| {
+                if elem == VecElementType::F16 {
+                    X86SimdFpResult {
+                        bits: raw,
+                        status: u32::from(Self::x86_simd_fp_is_denormal(raw, format)) << 1,
+                    }
+                } else {
+                    Self::x86_simd_fp_apply_daz(raw, format, mxcsr)
+                }
+            };
+            let first_value = value(first_raw);
+            let second_value = value(second_raw);
             let first_nan = Self::x86_simd_fp_is_nan(first_value.bits, format);
             let second_nan = Self::x86_simd_fp_is_nan(second_value.bits, format);
             let invalid = Self::x86_simd_fp_is_snan(first_value.bits, format)

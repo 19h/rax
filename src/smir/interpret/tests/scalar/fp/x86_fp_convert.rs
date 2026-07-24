@@ -148,6 +148,24 @@ fn lifted_scalar_fp_convert_sae_and_inactive_masks_suppress_exceptions() {
     assert_eq!(mxcsr(&ctx) & 0x3F, 1 << 5);
     assert_eq!(xmm(&ctx, 1)[0] as u16 & 0x7E00, 0x7E00);
 
+    // VCVTSD2SH {rd-sae}, xmm16, xmm16, xmm16. FP16 output conversion
+    // ignores MXCSR.FTZ and therefore retains the minimum negative subnormal;
+    // SAE preserves every pre-existing status bit.
+    let mut gradual = SmirContext::new_x86_64();
+    if let ArchRegState::X86_64(x86) = &mut gradual.arch_regs {
+        x86.mxcsr = 0xBF82;
+        x86.xmm[16] = [0; 16];
+        x86.xmm[16][0] = 0x800F_FFFF_FFFF_FFFF;
+    }
+    let result = execute_lifted_x86(
+        &[0x62, 0xA5, 0xFF, 0x30, 0x5A, 0xC0],
+        &mut gradual,
+        &mut memory,
+    );
+    assert!(matches!(result, BlockResult::Exit(ExitReason::Halt)));
+    assert_eq!(xmm(&gradual, 16)[0] as u16, 0x8001);
+    assert_eq!(mxcsr(&gradual), 0xBF82);
+
     for (zeroing, expected_low) in [(false, 0xBEEF), (true, 0)] {
         let mut ctx = SmirContext::new_x86_64();
         if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {

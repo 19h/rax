@@ -1589,6 +1589,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
         op,
         round,
         width,
+        lanes,
         zeroing,
     } = op
     {
@@ -1618,6 +1619,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
                     | crate::smir::ir::types::Avx10FP16Op::Max
             )
             || *width == crate::smir::ir::types::VecWidth::V64
+            || u32::from(*lanes) != width.lanes(crate::smir::ir::types::VecElementType::F16)
             || *round != crate::smir::ir::types::FpRoundMode::Dynamic
             || (*zeroing && mask.is_none())
             || mask.is_some_and(|mask| !matches!(mask, VReg::Arch(ArchReg::X86(X86Reg::K(1..=7)))))

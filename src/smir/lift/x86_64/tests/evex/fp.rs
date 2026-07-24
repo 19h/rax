@@ -956,6 +956,7 @@ fn lift_evex_map5_fp16_arithmetic_covers_register_memory_and_broadcast_forms() {
             op: Avx10FP16Op::Add,
             round: FpRoundMode::Dynamic,
             width: VecWidth::V512,
+            lanes: 32,
             zeroing: true,
         }
     ));
@@ -1214,6 +1215,7 @@ fn lift_evex_fp16_sqrt_covers_packed_scalar_masks_rounding_and_fault_suppression
                 op: Avx10FP16Op::Sqrt,
                 round: FpRoundMode::Dynamic,
                 width: VecWidth::V512,
+                lanes: 32,
                 zeroing: true,
             },
             ..
@@ -1295,6 +1297,7 @@ fn lift_evex_fp16_sqrt_covers_packed_scalar_masks_rounding_and_fault_suppression
             op: Avx10FP16Op::Sqrt,
             round: FpRoundMode::Dynamic,
             width: VecWidth::V128,
+            lanes: 1,
             zeroing: false,
         }
     )));
@@ -2050,6 +2053,7 @@ fn lift_evex_fp16_scalar_arithmetic_covers_ops_masks_rounding_aliases_and_memory
                 op,
                 round: FpRoundMode::Dynamic,
                 width: VecWidth::V128,
+                lanes: 1,
                 zeroing: false,
             } if op == expected
         )));

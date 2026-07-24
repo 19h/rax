@@ -4095,9 +4095,14 @@ impl Aarch64Lowerer {
                 op,
                 round,
                 width,
+                lanes,
                 zeroing,
             } => {
-                if *round != FpRoundMode::Dynamic {
+                if u32::from(*lanes) != width.lanes(VecElementType::F16) {
+                    Err(LowerError::UnsupportedOp {
+                        op: "partial-lane x86 FP16 arithmetic on AArch64".into(),
+                    })
+                } else if *round != FpRoundMode::Dynamic {
                     Err(LowerError::UnsupportedOp {
                         op: "x86 FP16 embedded rounding / SAE on AArch64".into(),
                     })

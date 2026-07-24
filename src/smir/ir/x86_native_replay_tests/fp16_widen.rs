@@ -90,6 +90,13 @@ fn classifier_accepts_exactly_1_200_sampled_legal_register_encodings() {
                             expected,
                             "{kind:?} {bytes:02X?}"
                         );
+                        assert_eq!(
+                            X86InstructionBytes::new(&bytes)
+                                .unwrap()
+                                .evex_register_fp16_widen_preserves_mxcsr_de(),
+                            kind == WidenKind::ToF32X,
+                            "{kind:?} {bytes:02X?}"
+                        );
                         classified += 1;
                     }
                 }
@@ -118,6 +125,13 @@ fn classifier_accepts_exactly_1_200_sampled_legal_register_encodings() {
                 .unwrap()
                 .evex_register_fp16_widen_requirements(),
             Some(expected),
+            "{bytes:02X?}"
+        );
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .evex_register_fp16_widen_preserves_mxcsr_de(),
+            bytes[1] & 0x0F == 6,
             "{bytes:02X?}"
         );
     }
@@ -161,13 +175,13 @@ fn classifier_rejects_every_reserved_or_unsafe_frontier() {
     }
 
     for bytes in invalid {
+        let instruction = X86InstructionBytes::new(&bytes).unwrap();
         assert_eq!(
-            X86InstructionBytes::new(&bytes)
-                .unwrap()
-                .evex_register_fp16_widen_requirements(),
+            instruction.evex_register_fp16_widen_requirements(),
             None,
             "{bytes:02X?}"
         );
+        assert!(!instruction.evex_register_fp16_widen_preserves_mxcsr_de());
     }
 
     // Each neighboring map/prefix tuple must remain disjoint.
@@ -221,6 +235,11 @@ fn replay_spans_expose_exact_vl_and_fp16_requirements() {
                 assert_eq!(span.needs_avx512vl, expected_vl, "{bytes:02X?}");
                 assert!(!span.needs_avx512dq, "{bytes:02X?}");
                 assert_eq!(span.needs_avx512fp16, expected_fp16, "{bytes:02X?}");
+                assert_eq!(
+                    span.preserve_mxcsr_de,
+                    kind == WidenKind::ToF32X,
+                    "{bytes:02X?}"
+                );
             }
         }
     }

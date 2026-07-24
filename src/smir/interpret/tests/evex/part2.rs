@@ -742,6 +742,7 @@ fn lifted_evex_fp16_scalar_arithmetic_executes_ops_masks_aliases_and_faults() {
                 );
             }
             SmirInterpreter::set_lane(&mut x86.xmm[3], 0, 16, u64::from(second));
+            x86.mxcsr = 0x1F80;
         }
         execute_lifted_x86(
             &[0x62, 0xF5, 0x6E, 0x08, opcode, 0xCB],
@@ -761,6 +762,10 @@ fn lifted_evex_fp16_scalar_arithmetic_executes_ops_masks_aliases_and_faults() {
                 );
             }
             assert_eq!(&x86.xmm[1][2..], &[0; 14]);
+            assert_eq!(
+                x86.mxcsr, 0x1F80,
+                "scalar FP16 opcode {opcode:#04x} evaluated an upper temporary lane"
+            );
         }
     }
 

@@ -255,6 +255,20 @@ fn x86_sqrt_integer_root_rounds_exactly_and_classifies_special_values() {
         assert_eq!(result.status, status);
     }
 
+    // Invalid takes precedence over denormal-operand for one negative
+    // subnormal source. This is independently checked for binary16 (the CI
+    // regression shape) and binary32; neither form may report MXCSR.DE in
+    // addition to MXCSR.IE.
+    for (bits, format, expected) in [
+        (0x8001, X86_SIMD_F16, 0xFE00),
+        (0x8000_0001, X86_SIMD_F32, 0xFFC0_0000),
+    ] {
+        let result =
+            SmirInterpreter::x86_simd_fp_sqrt(bits, format, FpRoundMode::RoundNearest, 0x1F80);
+        assert_eq!(result.bits, expected);
+        assert_eq!(result.status, 1, "negative subnormal reported DE");
+    }
+
     let gradual =
         SmirInterpreter::x86_simd_fp_sqrt(1, X86_SIMD_F32, FpRoundMode::RoundNearest, 0x1F80);
     assert_eq!(gradual.bits, 0x1A35_04F3);

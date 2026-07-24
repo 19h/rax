@@ -3,6 +3,17 @@
 use super::X86InstructionBytes;
 
 impl X86InstructionBytes {
+    /// Whether replay needs to restore MXCSR.DE to its pre-instruction value.
+    ///
+    /// Current Intel SDM semantics for register-source `VCVTPH2PSX` do not
+    /// report a denormal-operand exception. Some hosts implement the earlier
+    /// AVX-512-FP16 behavior and set MXCSR.DE, so native replay must neutralize
+    /// that host-specific status change. The other widening conversions expose
+    /// their host status directly.
+    pub(crate) fn evex_register_fp16_widen_preserves_mxcsr_de(&self) -> bool {
+        self.evex_register_fp16_widen_requirements().is_some() && self.as_slice()[1] & 0x0F == 6
+    }
+
     /// Validate one register-only EVEX `VCVTPH2PD`, `VCVTPH2PS`, or
     /// `VCVTPH2PSX` instruction.
     ///

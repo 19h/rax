@@ -14,7 +14,8 @@ use crate::smir::ir::types::{
     VecUnaryOp, VecWidth, X86Reg,
 };
 use crate::smir::ir::{
-    CallTarget, SmirBlock, SmirFunction, Terminator, X86InstructionBytes, x86_native_replay_spans,
+    CallTarget, SmirBlock, SmirFunction, Terminator, X86InstructionBytes, X86NativeReplaySpan,
+    x86_native_replay_spans,
 };
 
 use crate::smir::lower::regalloc::{PhysReg, RegAlloc, RegLocation};
@@ -31,6 +32,34 @@ use crate::smir::lower::{
 };
 
 impl X86_64Lowerer {
+    /// Emit one exact source instruction, applying any host-compatibility
+    /// status fixup requested by its byte-validated replay classifier.
+    fn emit_native_replay_span(&mut self, span: &X86NativeReplaySpan) {
+        if !span.preserve_mxcsr_de {
+            self.code.emit_bytes(span.instruction.as_slice());
+            return;
+        }
+
+        // Register-source VCVTPH2PSX must preserve the pre-instruction value
+        // of MXCSR.DE under the current Intel SDM. Snapshot MXCSR immediately
+        // before replay, capture the host result afterwards, and clear only DE
+        // when it was previously clear. PUSHFQ/POPFQ make the wrapper invisible
+        // to guest flag liveness; no guest GPR or vector register is clobbered.
+        self.code.emit_bytes(&[0x9C]); // pushfq
+        self.code.emit_bytes(&[0x48, 0x83, 0xEC, 0x10]); // sub rsp, 16
+        self.code.emit_bytes(&[0x0F, 0xAE, 0x1C, 0x24]); // stmxcsr [rsp]
+        self.code.emit_bytes(span.instruction.as_slice());
+        self.code.emit_bytes(&[0x0F, 0xAE, 0x5C, 0x24, 0x04]); // stmxcsr [rsp+4]
+        self.code
+            .emit_bytes(&[0xF7, 0x04, 0x24, 0x02, 0x00, 0x00, 0x00]); // test dword [rsp], 2
+        self.code.emit_bytes(&[0x75, 0x08]); // jnz preserve-post-DE
+        self.code
+            .emit_bytes(&[0x81, 0x64, 0x24, 0x04, 0xFD, 0xFF, 0xFF, 0xFF]); // and [rsp+4], !2
+        self.code.emit_bytes(&[0x0F, 0xAE, 0x54, 0x24, 0x04]); // ldmxcsr [rsp+4]
+        self.code.emit_bytes(&[0x48, 0x83, 0xC4, 0x10]); // add rsp, 16
+        self.code.emit_bytes(&[0x9D]); // popfq
+    }
+
     /// Emit function prologue
     pub(crate) fn emit_prologue(&mut self) {
         let mut emitter = X86Emitter::new(&mut self.code);
@@ -661,7 +690,7 @@ impl X86_64Lowerer {
         while idx < end_idx {
             self.regalloc.set_current_idx(idx);
             if let Some(span) = native_replay_spans.get(&idx) {
-                self.code.emit_bytes(span.instruction.as_slice());
+                self.emit_native_replay_span(span);
                 idx = span.end;
                 continue;
             }

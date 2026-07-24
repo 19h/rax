@@ -1151,6 +1151,7 @@ fn fp16_mask_and_input_definitions_survive_dead_code_elimination() {
             op: Avx10FP16Op::Add,
             round: FpRoundMode::Dynamic,
             width: VecWidth::V128,
+            lanes: 8,
             zeroing: false,
         },
     ));

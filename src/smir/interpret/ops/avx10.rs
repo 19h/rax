@@ -977,8 +977,16 @@ impl SmirInterpreter {
                 op,
                 round,
                 width,
+                lanes,
                 zeroing,
             } => {
+                if *lanes == 0 || *lanes > width.lanes(VecElementType::F16) as u8 {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: ctx.pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
                 let old = Self::read_vec(ctx, *dst);
                 let first = Self::read_vec(ctx, *src1);
                 let second = Self::read_vec(ctx, *src2);
@@ -1012,7 +1020,7 @@ impl SmirInterpreter {
                 // produces gradual-underflow results independently of
                 // MXCSR.DAZ/FTZ. Preserve every other MXCSR control bit.
                 let fp16_mxcsr = mxcsr & !((1 << 6) | (1 << 15));
-                for lane in 0..width.lanes(VecElementType::F16) as u8 {
+                for lane in 0..*lanes {
                     if mask_bits.is_some_and(|bits| bits & (1u64 << lane) == 0) {
                         if !*zeroing {
                             Self::set_lane(&mut result, lane, 16, Self::get_lane(&old, lane, 16));

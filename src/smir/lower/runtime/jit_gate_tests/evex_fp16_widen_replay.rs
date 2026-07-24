@@ -91,6 +91,17 @@ fn function(bytes: &[u8; 6]) -> crate::smir::ir::SmirFunction {
     function
 }
 
+fn mxcsr_de_preserving_replay(bytes: &[u8; 6]) -> Vec<u8> {
+    let mut wrapped = vec![0x9C, 0x48, 0x83, 0xEC, 0x10, 0x0F, 0xAE, 0x1C, 0x24];
+    wrapped.extend_from_slice(bytes);
+    wrapped.extend_from_slice(&[
+        0x0F, 0xAE, 0x5C, 0x24, 0x04, 0xF7, 0x04, 0x24, 0x02, 0x00, 0x00, 0x00, 0x75, 0x08, 0x81,
+        0x64, 0x24, 0x04, 0xFD, 0xFF, 0xFF, 0xFF, 0x0F, 0xAE, 0x54, 0x24, 0x04, 0x48, 0x83, 0xC4,
+        0x10, 0x9D,
+    ]);
+    wrapped
+}
+
 #[test]
 fn replay_feature_aggregation_requires_bw_and_exact_vl_fp16_features() {
     for kind in WidenKind::ALL {
@@ -209,6 +220,12 @@ fn replay_admits_and_emits_180_optimized_legal_encodings_and_fails_closed() {
                     assert!(
                         code.windows(bytes.len()).any(|window| window == bytes),
                         "{bytes:02X?}"
+                    );
+                    let wrapped = mxcsr_de_preserving_replay(&bytes);
+                    assert_eq!(
+                        code.windows(wrapped.len()).any(|window| window == wrapped),
+                        kind == WidenKind::ToF32X,
+                        "MXCSR.DE wrapper mismatch for {kind:?} {bytes:02X?}"
                     );
                     admitted += 1;
                 }

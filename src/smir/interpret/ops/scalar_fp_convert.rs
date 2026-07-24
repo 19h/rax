@@ -77,8 +77,21 @@ impl SmirInterpreter {
             ArchRegState::X86_64(x86) => x86.mxcsr,
             _ => 0x1F80,
         };
-        let converted =
-            Self::x86_simd_fp_convert_precision(source, from_format, to_format, mode, mxcsr, true);
+        let conversion_mxcsr = if to == VecElementType::F16 {
+            // Scalar conversions to FP16 retain gradual-underflow results
+            // independently of MXCSR.FTZ, like their packed counterparts.
+            mxcsr & !(1 << 15)
+        } else {
+            mxcsr
+        };
+        let converted = Self::x86_simd_fp_convert_precision(
+            source,
+            from_format,
+            to_format,
+            mode,
+            conversion_mxcsr,
+            true,
+        );
         if !suppress_exceptions {
             if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
                 x86.mxcsr |= converted.status;

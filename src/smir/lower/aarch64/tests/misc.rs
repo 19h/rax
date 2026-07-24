@@ -806,6 +806,7 @@ fn issue_32_fp16_arith_gated_on_host_feat_fp16() {
                 op: Avx10FP16Op::Add,
                 round: FpRoundMode::Dynamic,
                 width: VecWidth::V128,
+                lanes: 8,
                 zeroing: false,
             },
         );

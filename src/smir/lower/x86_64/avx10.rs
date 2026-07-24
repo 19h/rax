@@ -440,9 +440,14 @@ impl Avx10Lowerer {
                 op,
                 round,
                 width,
+                lanes,
                 zeroing,
             } => {
-                if *round != FpRoundMode::Dynamic {
+                if u32::from(*lanes) != width.lanes(VecElementType::F16) {
+                    Some(Err(LowerError::UnsupportedOperation(
+                        "partial-lane FP16 arithmetic requires exact source replay".to_string(),
+                    )))
+                } else if *round != FpRoundMode::Dynamic {
                     Some(Err(LowerError::UnsupportedOperation(
                         "packed FP16 embedded rounding / SAE is not lowered natively".to_string(),
                     )))
@@ -2550,6 +2555,7 @@ mod tests {
                 op,
                 round: FpRoundMode::Dynamic,
                 width,
+                lanes: width.lanes(VecElementType::F16) as u8,
                 zeroing,
             };
             let mut code = CodeBuffer::new();
@@ -2557,6 +2563,21 @@ mod tests {
             assert!(result.is_err(), "accepted malformed {invalid:?}");
             assert_eq!(code.len(), 0);
         }
+
+        let scalar = OpKind::VFP16Arith {
+            dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+            src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+            src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+            mask: None,
+            op: Avx10FP16Op::Div,
+            round: FpRoundMode::Dynamic,
+            width: VecWidth::V128,
+            lanes: 1,
+            zeroing: false,
+        };
+        let mut code = CodeBuffer::new();
+        assert!(lowerer.try_lower(&scalar, &mut code).unwrap().is_err());
+        assert_eq!(code.len(), 0);
     }
 
     #[test]
@@ -3558,6 +3579,7 @@ mod tests {
                     op: Avx10FP16Op::Add,
                     round: FpRoundMode::Dynamic,
                     width: VecWidth::V512,
+                    lanes: 32,
                     zeroing: true,
                 },
                 &[0x62, 0xF5, 0x6C, 0xCC, 0x58, 0xCB][..],
@@ -3571,6 +3593,7 @@ mod tests {
                     op: Avx10FP16Op::Mul,
                     round: FpRoundMode::Dynamic,
                     width: VecWidth::V256,
+                    lanes: 16,
                     zeroing: false,
                 },
                 &[0x62, 0xA5, 0x74, 0x27, 0x59, 0xC2][..],
@@ -3584,6 +3607,7 @@ mod tests {
                     op: Avx10FP16Op::Sub,
                     round: FpRoundMode::Dynamic,
                     width: VecWidth::V128,
+                    lanes: 8,
                     zeroing: true,
                 },
                 &[0x62, 0xD5, 0x3C, 0x8B, 0x5C, 0xF9][..],
@@ -3597,6 +3621,7 @@ mod tests {
                     op: Avx10FP16Op::Div,
                     round: FpRoundMode::Dynamic,
                     width: VecWidth::V512,
+                    lanes: 32,
                     zeroing: false,
                 },
                 &[0x62, 0xF5, 0x54, 0x48, 0x5E, 0xE6][..],
@@ -3610,6 +3635,7 @@ mod tests {
                     op: Avx10FP16Op::Min,
                     round: FpRoundMode::Dynamic,
                     width: VecWidth::V128,
+                    lanes: 8,
                     zeroing: true,
                 },
                 &[0x62, 0xD5, 0x3C, 0x8B, 0x5D, 0xF9][..],
@@ -3623,6 +3649,7 @@ mod tests {
                     op: Avx10FP16Op::Max,
                     round: FpRoundMode::Dynamic,
                     width: VecWidth::V256,
+                    lanes: 16,
                     zeroing: false,
                 },
                 &[0x62, 0xA5, 0x74, 0x27, 0x5F, 0xC2][..],

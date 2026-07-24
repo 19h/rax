@@ -771,6 +771,7 @@ fn clobber_gate_admits_only_architectural_native_vector_operands() {
             op: crate::smir::ir::types::Avx10FP16Op::Add,
             round: crate::smir::ir::types::FpRoundMode::Dynamic,
             width: VecWidth::V512,
+            lanes: 32,
             zeroing: true,
         },
         OpKind::VFP16Arith {
@@ -781,6 +782,7 @@ fn clobber_gate_admits_only_architectural_native_vector_operands() {
             op: crate::smir::ir::types::Avx10FP16Op::Min,
             round: crate::smir::ir::types::FpRoundMode::Dynamic,
             width: VecWidth::V512,
+            lanes: 32,
             zeroing: true,
         },
         OpKind::VFP16Arith {
@@ -791,6 +793,7 @@ fn clobber_gate_admits_only_architectural_native_vector_operands() {
             op: crate::smir::ir::types::Avx10FP16Op::Max,
             round: crate::smir::ir::types::FpRoundMode::Dynamic,
             width: VecWidth::V512,
+            lanes: 32,
             zeroing: false,
         },
         OpKind::X86PackedShiftVariable {
@@ -859,10 +862,25 @@ fn clobber_gate_admits_only_architectural_native_vector_operands() {
         op: crate::smir::ir::types::Avx10FP16Op::Add,
         round: crate::smir::ir::types::FpRoundMode::RoundNearest,
         width: VecWidth::V512,
+        lanes: 32,
         zeroing: false,
     };
     assert!(!is_x86_native_vector_op(&embedded_rounding));
     assert!(!x86_gate(embedded_rounding));
+
+    let partial_lanes = OpKind::VFP16Arith {
+        dst: x86(X86Reg::Xmm(1)),
+        src1: x86(X86Reg::Xmm(2)),
+        src2: x86(X86Reg::Xmm(3)),
+        mask: None,
+        op: crate::smir::ir::types::Avx10FP16Op::Div,
+        round: crate::smir::ir::types::FpRoundMode::Dynamic,
+        width: VecWidth::V128,
+        lanes: 1,
+        zeroing: false,
+    };
+    assert!(!is_x86_native_vector_op(&partial_lanes));
+    assert!(!x86_gate(partial_lanes));
 
     let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
     builder.push_op(0x1000, native_ops[0].clone());

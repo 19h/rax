@@ -1553,8 +1553,8 @@ fn lifted_fp_compare_family_executes_all_predicates_masks_mxcsr_sae_and_faults()
     }
 
     // FP16 comparisons share the complete 32-predicate truth table and
-    // additionally use FP16 DAZ, denormal, NaN, opmask, and destination
-    // width rules. Lanes encode greater, less, equal, unordered,
+    // additionally cover DAZ-independent denormal, NaN, opmask, and
+    // destination-width rules. Lanes encode greater, less, equal, unordered,
     // denormal, signed-zero equality, infinity equality, and SNaN.
     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
         x86.xmm[2] = vector_f16(
@@ -1578,7 +1578,7 @@ fn lifted_fp_compare_family_executes_all_predicates_masks_mxcsr_sae_and_faults()
         assert_eq!(x86.mxcsr & 3, 3);
     }
 
-    for (daz, expected, denormal_status) in [(false, 0u64, true), (true, 1, false)] {
+    for daz in [false, true] {
         if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
             x86.xmm[2] = vector_f16(&[1], 0);
             x86.xmm[0] = vector_f16(&[0], 0);
@@ -1592,8 +1592,8 @@ fn lifted_fp_compare_family_executes_all_predicates_masks_mxcsr_sae_and_faults()
             &mut memory,
         );
         if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
-            assert_eq!(x86.k[3], expected);
-            assert_eq!(x86.mxcsr & (1 << 1) != 0, denormal_status);
+            assert_eq!(x86.k[3], 0, "FP16 DAZ changed comparison result");
+            assert_ne!(x86.mxcsr & (1 << 1), 0, "FP16 DAZ suppressed DE");
         }
     }
 

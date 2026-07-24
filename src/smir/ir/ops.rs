@@ -3501,7 +3501,9 @@ pub enum OpKind {
 
     /// FP16 arithmetic operations: VADDPH, VSUBPH, VMULPH, VDIVPH, VSQRTPH,
     /// VMINPH, VMAXPH, and the scalar-compute component of the corresponding
-    /// scalar instructions.
+    /// scalar instructions. `lanes` is the exact number of low binary16
+    /// elements evaluated; scalar forms use one lane even though their
+    /// temporary container is 128 bits wide.
     /// `round` is [`FpRoundMode::Dynamic`] for MXCSR-controlled forms. An
     /// explicit x86 rounding mode represents the 512-bit EVEX `{er}` form;
     /// embedded rounding also suppresses SIMD floating-point exceptions.
@@ -3513,6 +3515,7 @@ pub enum OpKind {
         op: Avx10FP16Op,
         round: FpRoundMode,
         width: VecWidth,
+        lanes: u8,
         zeroing: bool,
     },
 

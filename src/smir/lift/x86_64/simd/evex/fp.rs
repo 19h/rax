@@ -3002,6 +3002,7 @@ impl X86_64Lifter {
                 op,
                 round,
                 width,
+                lanes: width.lanes(VecElementType::F16) as u8,
                 zeroing: prefix.zeroing,
             },
         ));
@@ -3222,6 +3223,7 @@ impl X86_64Lifter {
                 op,
                 round,
                 width: VecWidth::V128,
+                lanes: 1,
                 zeroing: false,
             },
         ));
@@ -3426,6 +3428,7 @@ impl X86_64Lifter {
                     op: Avx10FP16Op::Sqrt,
                     round,
                     width,
+                    lanes: 1,
                     zeroing: false,
                 },
             ));
@@ -3562,6 +3565,7 @@ impl X86_64Lifter {
                 op: Avx10FP16Op::Sqrt,
                 round,
                 width,
+                lanes: width.lanes(VecElementType::F16) as u8,
                 zeroing: prefix.zeroing,
             },
         ));

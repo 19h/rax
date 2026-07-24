@@ -4106,6 +4106,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             op,
             round,
             width,
+            lanes,
             zeroing,
         } => op_json!(
             "vfp16_arith",
@@ -4116,6 +4117,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             op,
             round,
             width,
+            lanes,
             zeroing
         ),
         OpKind::VCvtFpToIntSat {

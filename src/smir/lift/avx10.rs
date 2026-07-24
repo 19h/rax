@@ -838,6 +838,7 @@ impl Avx10Lifter {
                 op: op_type,
                 round,
                 width,
+                lanes: width.lanes(VecElementType::F16) as u8,
                 zeroing: evex.z,
             },
         );

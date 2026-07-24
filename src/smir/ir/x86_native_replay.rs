@@ -55,6 +55,9 @@ pub struct X86NativeReplaySpan {
     pub needs_avx512dq: bool,
     /// Whether native execution requires AVX-512-FP16.
     pub needs_avx512fp16: bool,
+    /// Whether replay must restore MXCSR.DE to its value immediately before
+    /// the source instruction.
+    pub preserve_mxcsr_de: bool,
 }
 
 /// Compatibility name for the first replay family.
@@ -94,6 +97,7 @@ fn x86_native_replay_spans_where(
                     needs_avx512vl,
                     needs_avx512dq,
                     needs_avx512fp16,
+                    preserve_mxcsr_de: instruction.evex_register_fp16_widen_preserves_mxcsr_de(),
                 },
             ))
         })

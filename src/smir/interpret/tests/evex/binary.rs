@@ -226,6 +226,7 @@ fn vfp16_arithmetic_accrues_exact_status_honors_sae_and_traps_before_commit() {
                 op,
                 round,
                 width: VecWidth::V128,
+                lanes: 8,
                 zeroing: false,
             },
         );

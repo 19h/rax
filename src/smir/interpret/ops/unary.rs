@@ -35,7 +35,9 @@ impl SmirInterpreter {
         if bits & sign != 0 {
             return X86SimdFpResult {
                 bits: Self::x86_simd_fp_indefinite(format),
-                status: status | 1,
+                // An invalid square-root operand is classified as #I rather
+                // than also reporting #D for the same negative denormal.
+                status: 1,
             };
         }
         if Self::x86_simd_fp_is_infinite(bits, format) {

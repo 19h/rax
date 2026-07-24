@@ -685,6 +685,7 @@ fn lowers_vector_fp16_arithmetic_runtime() {
             op: Avx10FP16Op::Add,
             round: FpRoundMode::Dynamic,
             width: VecWidth::V128,
+            lanes: 8,
             zeroing: false,
         },
         OpKind::VFP16Arith {
@@ -695,6 +696,7 @@ fn lowers_vector_fp16_arithmetic_runtime() {
             op: Avx10FP16Op::Sub,
             round: FpRoundMode::Dynamic,
             width: VecWidth::V128,
+            lanes: 8,
             zeroing: false,
         },
         OpKind::VFP16Arith {
@@ -705,6 +707,7 @@ fn lowers_vector_fp16_arithmetic_runtime() {
             op: Avx10FP16Op::Mul,
             round: FpRoundMode::Dynamic,
             width: VecWidth::V128,
+            lanes: 8,
             zeroing: false,
         },
         OpKind::VFP16Arith {
@@ -715,6 +718,7 @@ fn lowers_vector_fp16_arithmetic_runtime() {
             op: Avx10FP16Op::Div,
             round: FpRoundMode::Dynamic,
             width: VecWidth::V128,
+            lanes: 8,
             zeroing: false,
         },
         OpKind::VFP16Arith {
@@ -725,6 +729,7 @@ fn lowers_vector_fp16_arithmetic_runtime() {
             op: Avx10FP16Op::Add,
             round: FpRoundMode::Dynamic,
             width: VecWidth::V64,
+            lanes: 4,
             zeroing: false,
         },
         OpKind::VFP16Arith {
@@ -735,6 +740,7 @@ fn lowers_vector_fp16_arithmetic_runtime() {
             op: Avx10FP16Op::Div,
             round: FpRoundMode::Dynamic,
             width: VecWidth::V64,
+            lanes: 4,
             zeroing: false,
         },
     ]);
@@ -3013,6 +3019,7 @@ fn rejects_vector_unsupported_widths() {
         op: Avx10FP16Op::Add,
         round: FpRoundMode::Dynamic,
         width: VecWidth::V256,
+        lanes: 16,
         zeroing: false,
     });
 
@@ -3024,6 +3031,19 @@ fn rejects_vector_unsupported_widths() {
         op: Avx10FP16Op::Min,
         round: FpRoundMode::Dynamic,
         width: VecWidth::V128,
+        lanes: 8,
+        zeroing: false,
+    });
+
+    assert_unsupported(OpKind::VFP16Arith {
+        dst: v(0),
+        src1: v(1),
+        src2: v(2),
+        mask: None,
+        op: Avx10FP16Op::Add,
+        round: FpRoundMode::Dynamic,
+        width: VecWidth::V128,
+        lanes: 1,
         zeroing: false,
     });
 

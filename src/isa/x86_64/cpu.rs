@@ -6907,6 +6907,7 @@ mod tests {
                 op: Avx10FP16Op::Add,
                 round: FpRoundMode::Dynamic,
                 width: VecWidth::V512,
+                lanes: 32,
                 zeroing: false,
             },
         );
