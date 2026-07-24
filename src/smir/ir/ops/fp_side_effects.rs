@@ -7,6 +7,26 @@ impl OpKind {
     /// Return whether execution can update architectural floating-point status
     /// or request a floating-point exception independently of the data result.
     pub(super) fn has_fp_status_side_effects(&self) -> bool {
+        if let OpKind::X86IntToFp {
+            elem,
+            int_width,
+            round,
+            suppress_exceptions,
+            ..
+        } = self
+        {
+            let canonical = matches!(
+                elem,
+                VecElementType::F16 | VecElementType::F32 | VecElementType::F64
+            ) && matches!(int_width, OpWidth::W32 | OpWidth::W64)
+                && *round != FpRoundMode::RoundNearestTiesAway;
+            // Every signed or unsigned 32-bit integer is exactly representable
+            // in binary64's 53-bit precision; all other admitted shapes can
+            // set Precision, and binary16 can additionally set Overflow.
+            let always_exact = *elem == VecElementType::F64 && *int_width == OpWidth::W32;
+            return !canonical || (!*suppress_exceptions && !always_exact);
+        }
+
         if let OpKind::X86FpToInt {
             elem,
             int_width,
@@ -153,6 +173,24 @@ mod tests {
         }
     }
 
+    fn scalar_int_to_fp(
+        elem: VecElementType,
+        int_width: OpWidth,
+        suppress_exceptions: bool,
+    ) -> OpKind {
+        OpKind::X86IntToFp {
+            dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+            merge: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+            src: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+            elem,
+            int_width,
+            signed: true,
+            round: FpRoundMode::Dynamic,
+            suppress_exceptions,
+            zero_upper: true,
+        }
+    }
+
     #[test]
     fn scalar_fp_to_int_is_side_effecting_exactly_without_sae() {
         assert!(scalar_conversion(false).has_side_effects());
@@ -160,6 +198,24 @@ mod tests {
 
         let mut invalid = scalar_conversion(true);
         let OpKind::X86FpToInt { round, .. } = &mut invalid else {
+            unreachable!()
+        };
+        *round = FpRoundMode::RoundNearestTiesAway;
+        assert!(invalid.has_side_effects(), "invalid IR must fail closed");
+    }
+
+    #[test]
+    fn scalar_int_to_fp_classifies_status_exactness_and_invalid_ir() {
+        assert!(scalar_int_to_fp(VecElementType::F32, OpWidth::W64, false).has_side_effects());
+        assert!(scalar_int_to_fp(VecElementType::F16, OpWidth::W32, false).has_side_effects());
+        assert!(!scalar_int_to_fp(VecElementType::F32, OpWidth::W64, true).has_side_effects());
+        assert!(
+            !scalar_int_to_fp(VecElementType::F64, OpWidth::W32, false).has_side_effects(),
+            "binary64 exactly represents the complete 32-bit integer domain"
+        );
+
+        let mut invalid = scalar_int_to_fp(VecElementType::F64, OpWidth::W32, true);
+        let OpKind::X86IntToFp { round, .. } = &mut invalid else {
             unreachable!()
         };
         *round = FpRoundMode::RoundNearestTiesAway;

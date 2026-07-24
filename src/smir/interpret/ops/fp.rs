@@ -1562,22 +1562,21 @@ impl SmirInterpreter {
                 int_width,
                 signed,
                 round,
+                suppress_exceptions,
                 zero_upper,
-                ..
             } => {
-                let raw = ctx.read_vreg(*src) & int_width.mask();
-                let value = if *signed {
-                    self.sign_extend(raw, *int_width) as i64 as i128
-                } else {
-                    raw as i128
-                };
-                let scalar_bits = self.x86_int_to_fp_bits(ctx, value, *elem, *round);
-                let mut result = Self::read_vec(ctx, *merge);
-                Self::set_lane(&mut result, 0, elem.bytes() * 8, scalar_bits);
-                if *zero_upper {
-                    result[2..].fill(0);
-                }
-                Self::write_vec(ctx, *dst, result);
+                self.execute_x86_int_to_fp(
+                    ctx,
+                    *dst,
+                    *merge,
+                    *src,
+                    *elem,
+                    *int_width,
+                    *signed,
+                    *round,
+                    *suppress_exceptions,
+                    *zero_upper,
+                );
             }
 
             OpKind::X86FpConvert {
