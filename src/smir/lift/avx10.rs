@@ -282,12 +282,6 @@ impl Avx10Lifter {
             (2, 0x72, false) => Some(self.lift_vcvtneps2bf16(evex, bytes, pc, ctx)), // F3.0F38.W0
             (3, 0x72, false) => Some(self.lift_vcvtne2ps2bf16(evex, bytes, pc, ctx)), // F2.0F38.W0
 
-            // AVX10.2 saturation conversions
-            (0, 0x68, false) => Some(self.lift_vcvttps2ibs(evex, bytes, pc, ctx, true)),
-            (0, 0x6A, false) => Some(self.lift_vcvttps2ibs(evex, bytes, pc, ctx, false)),
-            (1, 0x6C, true) => Some(self.lift_vcvttpd2qqs(evex, bytes, pc, ctx, false)),
-            (1, 0x6D, true) => Some(self.lift_vcvttpd2qqs(evex, bytes, pc, ctx, true)),
-
             // AVX10.2 media acceleration (byte variants)
             (2, 0x50, false) => Some(self.lift_vpdpbssd(evex, bytes, pc, ctx, true, true, false)),
             (2, 0x51, false) => Some(self.lift_vpdpbssd(evex, bytes, pc, ctx, true, true, true)),
@@ -344,11 +338,15 @@ impl Avx10Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Option<Result<LiftResult, LiftError>> {
-        match (evex.pp, opcode) {
-            (0, 0x58) => Some(self.lift_vfp16_arith(evex, bytes, pc, ctx, Avx10FP16Op::Add)),
-            (0, 0x59) => Some(self.lift_vfp16_arith(evex, bytes, pc, ctx, Avx10FP16Op::Mul)),
-            (0, 0x5C) => Some(self.lift_vfp16_arith(evex, bytes, pc, ctx, Avx10FP16Op::Sub)),
-            (0, 0x5E) => Some(self.lift_vfp16_arith(evex, bytes, pc, ctx, Avx10FP16Op::Div)),
+        match (evex.pp, opcode, evex.w) {
+            (0, 0x58, false) => Some(self.lift_vfp16_arith(evex, bytes, pc, ctx, Avx10FP16Op::Add)),
+            (0, 0x59, false) => Some(self.lift_vfp16_arith(evex, bytes, pc, ctx, Avx10FP16Op::Mul)),
+            (0, 0x5C, false) => Some(self.lift_vfp16_arith(evex, bytes, pc, ctx, Avx10FP16Op::Sub)),
+            (0, 0x5E, false) => Some(self.lift_vfp16_arith(evex, bytes, pc, ctx, Avx10FP16Op::Div)),
+            (1, 0x68, false) => Some(self.lift_vcvttps2ibs(evex, bytes, pc, ctx, true)),
+            (1, 0x6A, false) => Some(self.lift_vcvttps2ibs(evex, bytes, pc, ctx, false)),
+            (1, 0x6C, true) => Some(self.lift_vcvttpd2qqs(evex, bytes, pc, ctx, false)),
+            (1, 0x6D, true) => Some(self.lift_vcvttpd2qqs(evex, bytes, pc, ctx, true)),
             _ => None,
         }
     }
@@ -861,9 +859,32 @@ impl Avx10Lifter {
     ) -> Result<LiftResult, LiftError> {
         let (modrm, consumed) = self.decode_modrm(bytes, pc)?;
 
+        if evex.vvvv != 0
+            || evex.v_prime
+            || evex.ll == 3
+            || (evex.z && evex.aaa == 0)
+            || (evex.b_bit && !modrm.is_memory && evex.ll != 0)
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        if modrm.is_memory {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "standalone AVX10 MAP5 saturation conversion memory operand".into(),
+            });
+        }
+
         let dst_reg = evex.dest_reg(modrm.reg);
         let src_reg = evex.rm_reg(modrm.rm);
-        let width = evex.vec_width();
+        let suppress_exceptions = evex.b_bit;
+        let width = if suppress_exceptions {
+            VecWidth::V512
+        } else {
+            evex.vec_width()
+        };
 
         let dst = self.zmm(dst_reg);
         let src = self.zmm(src_reg);
@@ -874,10 +895,13 @@ impl Avx10Lifter {
             OpKind::VCvtFpToIntSat {
                 dst,
                 src,
+                mask: (evex.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(evex.aaa)))),
                 fp_elem: VecElementType::F32,
                 int_elem: VecElementType::I8,
                 width,
                 signed,
+                zeroing: evex.z,
+                suppress_exceptions,
             },
         );
 
@@ -895,9 +919,32 @@ impl Avx10Lifter {
     ) -> Result<LiftResult, LiftError> {
         let (modrm, consumed) = self.decode_modrm(bytes, pc)?;
 
+        if evex.vvvv != 0
+            || evex.v_prime
+            || evex.ll == 3
+            || (evex.z && evex.aaa == 0)
+            || (evex.b_bit && !modrm.is_memory && evex.ll != 0)
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        if modrm.is_memory {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "standalone AVX10 MAP5 saturation conversion memory operand".into(),
+            });
+        }
+
         let dst_reg = evex.dest_reg(modrm.reg);
         let src_reg = evex.rm_reg(modrm.rm);
-        let width = evex.vec_width();
+        let suppress_exceptions = evex.b_bit;
+        let width = if suppress_exceptions {
+            VecWidth::V512
+        } else {
+            evex.vec_width()
+        };
 
         let dst = self.zmm(dst_reg);
         let src = self.zmm(src_reg);
@@ -908,10 +955,13 @@ impl Avx10Lifter {
             OpKind::VCvtFpToIntSat {
                 dst,
                 src,
+                mask: (evex.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(evex.aaa)))),
                 fp_elem: VecElementType::F64,
                 int_elem: VecElementType::I64,
                 width,
                 signed,
+                zeroing: evex.z,
+                suppress_exceptions,
             },
         );
 
@@ -1339,5 +1389,63 @@ mod tests {
                 Err(LiftError::InvalidEncoding { .. })
             ));
         }
+    }
+
+    #[test]
+    fn standalone_saturating_conversion_uses_map5_66_and_rejects_unmodeled_memory() {
+        let lifter = Avx10Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::X86_64);
+        let bytes = [0x62, 0xA5, 0xFD, 0xCB, 0x6C, 0xCA];
+        let result = lifter
+            .try_lift(&bytes, 0x1000, &mut ctx)
+            .expect("MAP5 saturating conversion must dispatch")
+            .unwrap();
+        assert_eq!(result.bytes_consumed, bytes.len());
+        assert!(matches!(
+            result.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::VCvtFpToIntSat {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                    mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(3)))),
+                    fp_elem: VecElementType::F64,
+                    int_elem: VecElementType::I64,
+                    width: VecWidth::V512,
+                    signed: false,
+                    zeroing: true,
+                    suppress_exceptions: false,
+                },
+                ..
+            }]
+        ));
+
+        // The pre-AVX10.2 draft placement in MAP2 is not an alias.
+        assert!(
+            lifter
+                .try_lift(&[0x62, 0xF2, 0x7D, 0x48, 0x68, 0xCA], 0x1000, &mut ctx,)
+                .is_none()
+        );
+        assert!(matches!(
+            lifter
+                .try_lift(&[0x62, 0xF5, 0x7D, 0x58, 0x68, 0x08], 0x1000, &mut ctx,)
+                .unwrap(),
+            Err(LiftError::Unsupported { .. })
+        ));
+
+        let sae = lifter
+            .try_lift(&[0x62, 0xF5, 0x7D, 0x18, 0x68, 0xCA], 0x1000, &mut ctx)
+            .unwrap()
+            .unwrap();
+        assert!(matches!(
+            sae.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::VCvtFpToIntSat {
+                    width: VecWidth::V512,
+                    suppress_exceptions: true,
+                    ..
+                },
+                ..
+            }]
+        ));
     }
 }

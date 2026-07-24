@@ -72,6 +72,32 @@ impl OpKind {
             return !canonical || !*suppress_exceptions;
         }
 
+        if let OpKind::VCvtFpToIntSat {
+            mask,
+            fp_elem,
+            int_elem,
+            width,
+            zeroing,
+            suppress_exceptions,
+            ..
+        } = self
+        {
+            let canonical = matches!(
+                (fp_elem, int_elem),
+                (VecElementType::F32, VecElementType::I8)
+                    | (VecElementType::F64, VecElementType::I64)
+            ) && matches!(
+                width,
+                crate::smir::ir::types::VecWidth::V128
+                    | crate::smir::ir::types::VecWidth::V256
+                    | crate::smir::ir::types::VecWidth::V512
+            ) && (!*zeroing || mask.is_some())
+                && (!*suppress_exceptions || *width == crate::smir::ir::types::VecWidth::V512);
+            // Malformed IR must survive DCE until interpretation rejects it.
+            // Canonical SAE forms neither update MXCSR nor request #XM.
+            return !canonical || !*suppress_exceptions;
+        }
+
         matches!(
             self,
             OpKind::X86Round { .. }

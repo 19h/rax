@@ -878,153 +878,20 @@ fn lowers_vector_bf16_to_fp32_conversion_runtime() {
     assert_eq!(sp, 0x8000);
 }
 #[test]
-fn lowers_vector_saturating_fp_to_int_conversion_encodings() {
-    let code = lower_ops(vec![
-        OpKind::VCvtFpToIntSat {
-            dst: v(0),
-            src: v(1),
-            fp_elem: VecElementType::F32,
-            int_elem: VecElementType::I8,
-            width: VecWidth::V128,
-            signed: true,
-        },
-        OpKind::VCvtFpToIntSat {
-            dst: v(3),
-            src: v(4),
-            fp_elem: VecElementType::F32,
-            int_elem: VecElementType::I8,
-            width: VecWidth::V64,
-            signed: false,
-        },
-        OpKind::VCvtFpToIntSat {
-            dst: v(5),
-            src: v(6),
-            fp_elem: VecElementType::F64,
-            int_elem: VecElementType::I64,
-            width: VecWidth::V128,
-            signed: true,
-        },
-        OpKind::VCvtFpToIntSat {
-            dst: v(7),
-            src: v(8),
-            fp_elem: VecElementType::F64,
-            int_elem: VecElementType::I64,
-            width: VecWidth::V128,
-            signed: false,
-        },
-    ]);
-    let words = code_words(&code);
-
-    assert_eq!(words[0], enc_simd_two_reg_misc(0, 1, 1, 0, 0b10, 0b11011));
-    assert_eq!(words[1], enc_simd_two_reg_misc(0, 0, 0, 0, 0b01, 0b10100));
-    assert_eq!(words[2], enc_simd_two_reg_misc(0, 0, 0, 0, 0b00, 0b10100));
-    assert_eq!(words[3], enc_simd_two_reg_misc(3, 4, 0, 1, 0b10, 0b11011));
-    assert_eq!(words[4], enc_simd_two_reg_misc(3, 3, 0, 1, 0b01, 0b10100));
-    assert_eq!(words[5], enc_simd_two_reg_misc(3, 3, 0, 1, 0b00, 0b10100));
-    assert_eq!(words[6], enc_simd_two_reg_misc(5, 6, 1, 0, 0b11, 0b11011));
-    assert_eq!(words[7], enc_simd_two_reg_misc(7, 8, 1, 1, 0b11, 0b11011));
-    assert_eq!(words[8], 0xd65f_03c0);
-}
-#[test]
-fn lowers_vector_saturating_fp_to_int_conversion_runtime() {
-    let signed_f32 = [-200.7, -3.9, 4.9, 500.0];
-    let unsigned_f32 = [-1.0, 3.9, 300.0, 255.9];
-    let signed_f64 = [-3.9, 1.0e30];
-    let unsigned_f64 = [-1.0, 42.75];
-    let code = lower_ops(vec![
-        OpKind::VCvtFpToIntSat {
-            dst: v(0),
-            src: v(1),
-            fp_elem: VecElementType::F32,
-            int_elem: VecElementType::I8,
-            width: VecWidth::V128,
-            signed: true,
-        },
-        OpKind::VCvtFpToIntSat {
-            dst: v(3),
-            src: v(4),
-            fp_elem: VecElementType::F32,
-            int_elem: VecElementType::I8,
-            width: VecWidth::V128,
-            signed: false,
-        },
-        OpKind::VCvtFpToIntSat {
-            dst: v(5),
-            src: v(6),
-            fp_elem: VecElementType::F64,
-            int_elem: VecElementType::I64,
-            width: VecWidth::V128,
-            signed: true,
-        },
-        OpKind::VCvtFpToIntSat {
-            dst: v(7),
-            src: v(8),
-            fp_elem: VecElementType::F64,
-            int_elem: VecElementType::I64,
-            width: VecWidth::V128,
-            signed: false,
-        },
-    ]);
-
-    let (_, simd, sp) = run_aarch64_code_with_regs_and_simd(
-        &code,
-        &[],
-        &[
-            (
-                1,
-                simd_pair_from_f32(signed_f32).0,
-                simd_pair_from_f32(signed_f32).1,
-            ),
-            (
-                4,
-                simd_pair_from_f32(unsigned_f32).0,
-                simd_pair_from_f32(unsigned_f32).1,
-            ),
-            (
-                6,
-                simd_pair_from_f64(signed_f64).0,
-                simd_pair_from_f64(signed_f64).1,
-            ),
-            (
-                8,
-                simd_pair_from_f64(unsigned_f64).0,
-                simd_pair_from_f64(unsigned_f64).1,
-            ),
-        ],
-    );
-
-    assert_eq!(
-        simd[0],
-        simd_pair_from_bytes([
-            i8::MIN as u8,
-            (-3i8) as u8,
-            4,
-            i8::MAX as u8,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-        ])
-    );
-    assert_eq!(
-        simd[3],
-        simd_pair_from_bytes([0, 3, u8::MAX, u8::MAX, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-    );
-    assert_eq!(simd[5], simd_pair_from_i64([-3, i64::MAX]));
-    assert_eq!(simd[7], simd_pair_from_u64([0, 42]));
-    assert_eq!(simd[1], simd_pair_from_f32(signed_f32));
-    assert_eq!(simd[4], simd_pair_from_f32(unsigned_f32));
-    assert_eq!(simd[6], simd_pair_from_f64(signed_f64));
-    assert_eq!(simd[8], simd_pair_from_f64(unsigned_f64));
-    assert_eq!(sp, 0x8000);
+fn rejects_x86_saturating_fp_to_int_conversion() {
+    let err = try_lower_single_op(OpKind::VCvtFpToIntSat {
+        dst: v(0),
+        src: v(1),
+        mask: None,
+        fp_elem: VecElementType::F32,
+        int_elem: VecElementType::I8,
+        width: VecWidth::V128,
+        signed: true,
+        zeroing: false,
+        suppress_exceptions: false,
+    })
+    .unwrap_err();
+    assert!(matches!(err, LowerError::UnsupportedOp { .. }));
 }
 #[test]
 fn lowers_vector_bf16_dot_product_encodings() {
@@ -3089,28 +2956,37 @@ fn rejects_vector_unsupported_widths() {
     assert_unsupported(OpKind::VCvtFpToIntSat {
         dst: v(0),
         src: v(1),
+        mask: None,
         fp_elem: VecElementType::F32,
         int_elem: VecElementType::I8,
         width: VecWidth::V256,
         signed: true,
+        zeroing: false,
+        suppress_exceptions: false,
     });
 
     assert_unsupported(OpKind::VCvtFpToIntSat {
         dst: v(0),
         src: v(1),
+        mask: None,
         fp_elem: VecElementType::F64,
         int_elem: VecElementType::I64,
         width: VecWidth::V64,
         signed: false,
+        zeroing: false,
+        suppress_exceptions: false,
     });
 
     assert_unsupported(OpKind::VCvtFpToIntSat {
         dst: v(0),
         src: v(1),
+        mask: None,
         fp_elem: VecElementType::F64,
         int_elem: VecElementType::I8,
         width: VecWidth::V128,
         signed: true,
+        zeroing: false,
+        suppress_exceptions: false,
     });
 
     assert_unsupported(OpKind::VPopcnt {

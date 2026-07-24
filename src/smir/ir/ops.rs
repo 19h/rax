@@ -3522,15 +3522,26 @@ pub enum OpKind {
     // ========================================================================
     // AVX10.2 OPERATIONS
     // ========================================================================
-    /// Saturating FP to int conversion
-    /// VCVTTPS2IBS, VCVTTPS2IUBS, VCVTTPD2QQS, VCVTTPD2UQQS
+    /// x86 AVX10.2 saturating FP-to-integer conversion.
+    ///
+    /// This variant currently represents VCVTTPS2IBS, VCVTTPS2IUBS,
+    /// VCVTTPD2QQS, and VCVTTPD2UQQS. The F32-to-I8 forms retain one result
+    /// per 32-bit source lane: the converted byte occupies bits 7:0 and bits
+    /// 31:8 are zero. The F64-to-I64 forms retain one 64-bit result per source
+    /// lane. `width` is both the source-vector width and the architecturally
+    /// updated destination width; bits above it are zeroed.
     VCvtFpToIntSat {
         dst: VReg,
         src: VReg,
+        mask: Option<VReg>,
         fp_elem: VecElementType,
         int_elem: VecElementType,
         width: VecWidth,
         signed: bool,
+        /// Zero masked-off destination lanes instead of merging old `dst`.
+        zeroing: bool,
+        /// Suppress MXCSR exception status and traps (`{sae}`).
+        suppress_exceptions: bool,
     },
 
     /// VMINMAX with explicit predicate

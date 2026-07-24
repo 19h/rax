@@ -4133,14 +4133,10 @@ impl Aarch64Lowerer {
             OpKind::VCvtBF16ToFP32 { dst, src, width } => {
                 self.lower_vcvt_bf16_to_fp32(*dst, *src, *width)
             }
-            OpKind::VCvtFpToIntSat {
-                dst,
-                src,
-                fp_elem,
-                int_elem,
-                width,
-                signed,
-            } => self.lower_vcvt_fp_to_int_sat(*dst, *src, *fp_elem, *int_elem, *width, *signed),
+            OpKind::VCvtFpToIntSat { .. } => Err(LowerError::UnsupportedOp {
+                op: "x86 AVX10.2 saturating conversion requires MXCSR, opmask, and x86 lane-layout semantics"
+                    .into(),
+            }),
             OpKind::VInterleave { .. } => Err(LowerError::UnsupportedOp {
                 op: "x86 lane-block integer interleave".into(),
             }),

@@ -1704,6 +1704,43 @@ impl SmirInterpreter {
         }
     }
 
+    /// Convert one x86 SIMD floating-point lane to a saturated integer using
+    /// round-toward-zero. Invalid conversions retain IE but replace the
+    /// ordinary indefinite result with the closest endpoint; NaNs map to 0.
+    pub(crate) fn x86_simd_fp_to_int_sat(
+        bits: u64,
+        format: X86SimdFpFormat,
+        int_bits: u32,
+        signed: bool,
+    ) -> X86SimdFpResult {
+        let converted =
+            Self::x86_simd_fp_to_int(bits, format, int_bits, signed, FpRoundMode::RoundTowardZero);
+        if converted.status & 1 == 0 {
+            return converted;
+        }
+
+        let saturated = if Self::x86_simd_fp_is_nan(bits, format) {
+            0
+        } else {
+            let (sign_mask, _, _, _) = Self::x86_simd_fp_masks(format);
+            let negative = bits & sign_mask != 0;
+            match (signed, negative, int_bits) {
+                (true, true, 64) => 1u64 << 63,
+                (true, true, _) => 1u64 << (int_bits - 1),
+                (true, false, 64) => i64::MAX as u64,
+                (true, false, _) => (1u64 << (int_bits - 1)) - 1,
+                (false, true, _) => 0,
+                (false, false, 64) => u64::MAX,
+                (false, false, _) => (1u64 << int_bits) - 1,
+            }
+        };
+        X86SimdFpResult {
+            bits: saturated,
+            // Invalid conversions do not additionally report Precision.
+            status: 1,
+        }
+    }
+
     pub(crate) fn x86_simd_fp_round_up(mode: FpRoundMode, negative: bool, inexact: bool) -> bool {
         inexact
             && matches!(

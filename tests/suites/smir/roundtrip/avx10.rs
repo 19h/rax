@@ -343,29 +343,29 @@ fn test_vdivph_zmm() {
 
 #[test]
 fn test_vcvttps2ibs_zmm() {
-    // VCVTTPS2IBS zmm1, zmm2: 62 F2 7C 48 68 CA
-    let bytes = [0x62, 0xF2, 0x7C, 0x48, 0x68, 0xCA];
+    // VCVTTPS2IBS zmm1, zmm2: EVEX.512.66.MAP5.W0 68 /r
+    let bytes = [0x62, 0xF5, 0x7D, 0x48, 0x68, 0xCA];
     test_roundtrip(&bytes, "VCVTTPS2IBS zmm1, zmm2");
 }
 
 #[test]
 fn test_vcvttps2iubs_zmm() {
-    // VCVTTPS2IUBS zmm1, zmm2: 62 F2 7C 48 6A CA
-    let bytes = [0x62, 0xF2, 0x7C, 0x48, 0x6A, 0xCA];
+    // VCVTTPS2IUBS zmm1, zmm2: EVEX.512.66.MAP5.W0 6A /r
+    let bytes = [0x62, 0xF5, 0x7D, 0x48, 0x6A, 0xCA];
     test_roundtrip(&bytes, "VCVTTPS2IUBS zmm1, zmm2");
 }
 
 #[test]
 fn test_vcvttpd2qqs_zmm() {
-    // VCVTTPD2QQS zmm1, zmm2: 62 F2 FD 48 6D CA
-    let bytes = [0x62, 0xF2, 0xFD, 0x48, 0x6D, 0xCA];
+    // VCVTTPD2QQS zmm1, zmm2: EVEX.512.66.MAP5.W1 6D /r
+    let bytes = [0x62, 0xF5, 0xFD, 0x48, 0x6D, 0xCA];
     test_roundtrip(&bytes, "VCVTTPD2QQS zmm1, zmm2");
 }
 
 #[test]
 fn test_vcvttpd2uqqs_zmm() {
-    // VCVTTPD2UQQS zmm1, zmm2: 62 F2 FD 48 6C CA
-    let bytes = [0x62, 0xF2, 0xFD, 0x48, 0x6C, 0xCA];
+    // VCVTTPD2UQQS zmm1, zmm2: EVEX.512.66.MAP5.W1 6C /r
+    let bytes = [0x62, 0xF5, 0xFD, 0x48, 0x6C, 0xCA];
     test_roundtrip(&bytes, "VCVTTPD2UQQS zmm1, zmm2");
 }
 
@@ -624,10 +624,10 @@ fn test_all_avx10_1_vpopcnt() {
 #[test]
 fn test_all_avx10_2_saturation_converts() {
     let test_cases = [
-        ([0x62, 0xF2, 0x7C, 0x48, 0x68, 0xCA], "VCVTTPS2IBS"),
-        ([0x62, 0xF2, 0x7C, 0x48, 0x6A, 0xCA], "VCVTTPS2IUBS"),
-        ([0x62, 0xF2, 0xFD, 0x48, 0x6D, 0xCA], "VCVTTPD2QQS"),
-        ([0x62, 0xF2, 0xFD, 0x48, 0x6C, 0xCA], "VCVTTPD2UQQS"),
+        ([0x62, 0xF5, 0x7D, 0x48, 0x68, 0xCA], "VCVTTPS2IBS"),
+        ([0x62, 0xF5, 0x7D, 0x48, 0x6A, 0xCA], "VCVTTPS2IUBS"),
+        ([0x62, 0xF5, 0xFD, 0x48, 0x6D, 0xCA], "VCVTTPD2QQS"),
+        ([0x62, 0xF5, 0xFD, 0x48, 0x6C, 0xCA], "VCVTTPD2UQQS"),
     ];
 
     for (bytes, name) in test_cases {

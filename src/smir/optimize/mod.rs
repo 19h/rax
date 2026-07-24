@@ -4216,8 +4216,20 @@ impl OpKind {
                 }
             }
 
-            OpKind::VCvtFpToIntSat { src, .. } => {
+            OpKind::VCvtFpToIntSat {
+                dst,
+                src,
+                mask,
+                zeroing,
+                ..
+            } => {
                 result.push(*src);
+                if let Some(mask) = mask {
+                    result.push(*mask);
+                    if !*zeroing {
+                        result.push(*dst);
+                    }
+                }
             }
 
             OpKind::VDotProductExt {

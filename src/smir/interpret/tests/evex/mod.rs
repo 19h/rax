@@ -19,4 +19,6 @@ mod part2;
 #[cfg(test)]
 mod part3;
 #[cfg(test)]
+mod saturating_convert;
+#[cfg(test)]
 mod sqrt;

@@ -26,6 +26,7 @@ mod avx512_fp_class;
 mod avx512_gpr_broadcast;
 mod avx512_mask_convert;
 mod avx512_pair_intersect;
+mod avx512_sat_convert;
 mod compare;
 mod convert;
 mod gfni;
@@ -55,6 +56,7 @@ pub use avx512_fp16_widen::*;
 pub use avx512_gpr_broadcast::*;
 pub use avx512_mask_convert::*;
 pub use avx512_pair_intersect::*;
+pub use avx512_sat_convert::*;
 pub use compare::*;
 pub use convert::*;
 pub use gfni::*;
@@ -70,3 +72,5 @@ pub use ssse3::*;
 mod avx512_comi_tests;
 #[cfg(test)]
 mod avx512_fp16_widen_tests;
+#[cfg(test)]
+mod avx512_sat_convert_tests;

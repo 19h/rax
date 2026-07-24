@@ -6,6 +6,8 @@ use crate::smir::ir::ops::OpKind;
 use crate::smir::ir::types::*;
 use crate::smir::lower::{CodeBuffer, LowerError};
 
+mod saturating_convert;
+
 /// Result type for AVX10 lowering operations
 pub type Avx10LowerResult<T> = Result<T, LowerError>;
 
@@ -42,6 +44,25 @@ impl<'a> EvexEncoder<'a> {
         mask: u8, // opmask k0-k7
         zeroing: bool,
     ) {
+        self.emit_evex_with_b(map, pp, w, vl, dst, src1, src2, mask, zeroing, false);
+    }
+
+    /// Encode an EVEX prefix with an explicit EVEX.b bit. This is used for
+    /// register-only SAE/embedded-rounding forms; ordinary callers retain the
+    /// default b=0 encoding through [`Self::emit_evex`].
+    pub fn emit_evex_with_b(
+        &mut self,
+        map: u8,
+        pp: u8,
+        w: bool,
+        vl: VecWidth,
+        dst: u8,
+        src1: u8,
+        src2: u8,
+        mask: u8,
+        zeroing: bool,
+        b_bit: bool,
+    ) {
         // Extract register bits
         let r = (dst >> 3) & 1; // bit 3 of dst
         let r_prime = (dst >> 4) & 1; // bit 4 of dst
@@ -73,7 +94,7 @@ impl<'a> EvexEncoder<'a> {
         // Build P3: z L'L b ~V' aaa
         let p3 = ((zeroing as u8) << 7)
             | (ll << 5)
-            | 0 // b bit (broadcast) - could add later
+            | ((b_bit as u8) << 4)
             | ((v_prime ^ 1) << 3)
             | (mask & 0x07);
         self.code.emit_u8(p3);
@@ -469,13 +490,25 @@ impl Avx10Lowerer {
             OpKind::VCvtFpToIntSat {
                 dst,
                 src,
+                mask,
                 fp_elem,
                 int_elem,
                 width,
                 signed,
-            } => Some(
-                self.lower_vcvt_fp_to_int_sat(code, dst, src, *fp_elem, *int_elem, *width, *signed),
-            ),
+                zeroing,
+                suppress_exceptions,
+            } => Some(self.lower_vcvt_fp_to_int_sat(
+                code,
+                dst,
+                src,
+                mask.as_ref(),
+                *fp_elem,
+                *int_elem,
+                *width,
+                *signed,
+                *zeroing,
+                *suppress_exceptions,
+            )),
 
             // AVX10.2 VMINMAX
             OpKind::VMinMax {
@@ -1736,46 +1769,6 @@ impl Avx10Lowerer {
         );
         enc.emit_opcode(opcode);
         enc.emit_modrm_rr(dst_reg, src2_reg);
-
-        Ok(())
-    }
-
-    // ========================================================================
-    // AVX10.2 Saturation Conversions
-    // ========================================================================
-
-    fn lower_vcvt_fp_to_int_sat(
-        &self,
-        code: &mut CodeBuffer,
-        dst: &VReg,
-        src: &VReg,
-        fp_elem: VecElementType,
-        int_elem: VecElementType,
-        width: VecWidth,
-        signed: bool,
-    ) -> Avx10LowerResult<()> {
-        let dst_reg = self.vreg_to_zmm(dst)?;
-        let src_reg = self.vreg_to_zmm(src)?;
-
-        let (opcode, pp, w) = match (fp_elem, int_elem, signed) {
-            (VecElementType::F32, VecElementType::I8, true) => (0x68, 0, false), // VCVTTPS2IBS
-            (VecElementType::F32, VecElementType::I8, false) => (0x6A, 0, false), // VCVTTPS2IUBS
-            (VecElementType::F64, VecElementType::I64, true) => (0x6D, 1, true), // VCVTTPD2QQS
-            (VecElementType::F64, VecElementType::I64, false) => (0x6C, 1, true), // VCVTTPD2UQQS
-            _ => {
-                return Err(LowerError::UnsupportedOperation(
-                    "Saturation conversion: invalid types".to_string(),
-                ));
-            }
-        };
-
-        let mut enc = EvexEncoder::new(code);
-        enc.emit_evex(
-            2, // map 0F38
-            pp, w, width, dst_reg, 0, src_reg, 0, false,
-        );
-        enc.emit_opcode(opcode);
-        enc.emit_modrm_rr(dst_reg, src_reg);
 
         Ok(())
     }

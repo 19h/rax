@@ -1113,10 +1113,105 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, result);
             }
 
-            OpKind::VMin { .. }
-            | OpKind::VCvtBF16ToFP32 { .. }
-            | OpKind::VCvtFpToIntSat { .. }
-            | OpKind::VMinMax { .. } => {
+            OpKind::VCvtFpToIntSat {
+                dst,
+                src,
+                mask,
+                fp_elem,
+                int_elem,
+                width,
+                signed,
+                zeroing,
+                suppress_exceptions,
+            } => {
+                let canonical_shape =
+                    matches!(
+                        (fp_elem, int_elem),
+                        (VecElementType::F32, VecElementType::I8)
+                            | (VecElementType::F64, VecElementType::I64)
+                    ) && matches!(width, VecWidth::V128 | VecWidth::V256 | VecWidth::V512)
+                        && (!*zeroing || mask.is_some())
+                        && (!*suppress_exceptions || *width == VecWidth::V512);
+                if !canonical_shape || !matches!(ctx.arch_regs, ArchRegState::X86_64(_)) {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                let format = match fp_elem {
+                    VecElementType::F32 => X86_SIMD_F32,
+                    VecElementType::F64 => X86_SIMD_F64,
+                    _ => unreachable!("canonical shape checked above"),
+                };
+                let source = Self::read_vec(ctx, *src);
+                let old = Self::read_vec(ctx, *dst);
+                let mut result = old;
+                result[(width.bytes() / 8) as usize..].fill(0);
+                let active = mask.map_or(u64::MAX, |reg| ctx.read_vreg(reg));
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => unreachable!("x86 state checked above"),
+                };
+                let lane_bits = fp_elem.bytes() * 8;
+                let int_bits = int_elem.bytes() * 8;
+                let lanes = width.lanes(*fp_elem) as u8;
+                let mut status = 0;
+                for lane in 0..lanes {
+                    if active & (1u64 << lane) == 0 {
+                        if *zeroing {
+                            Self::set_lane(&mut result, lane, lane_bits, 0);
+                        }
+                        continue;
+                    }
+
+                    let mut source_bits = Self::get_lane(&source, lane, lane_bits);
+                    // These instructions report only Invalid and Precision.
+                    // DAZ substitutes signed zero; a preserved denormal is not
+                    // itself a Denormal exception for this instruction class.
+                    if mxcsr & (1 << 6) != 0 && Self::x86_simd_fp_is_denormal(source_bits, format) {
+                        let (sign, _, _, _) = Self::x86_simd_fp_masks(format);
+                        source_bits &= sign;
+                    }
+                    let converted =
+                        Self::x86_simd_fp_to_int_sat(source_bits, format, int_bits, *signed);
+                    status |= converted.status;
+                    Self::set_lane(
+                        &mut result,
+                        lane,
+                        lane_bits,
+                        converted.bits
+                            & if int_bits == 64 {
+                                u64::MAX
+                            } else {
+                                (1u64 << int_bits) - 1
+                            },
+                    );
+                }
+
+                if !*suppress_exceptions {
+                    // Invalid is detected in the pre-computation phase;
+                    // Precision is post-computation. An unmasked IE therefore
+                    // faults before PE from any lane can be accrued.
+                    let pre_status = status & 1;
+                    let reported_status = if Self::x86_simd_fp_unmasked(pre_status, mxcsr) {
+                        pre_status
+                    } else {
+                        status
+                    };
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.mxcsr |= reported_status;
+                    }
+                    if Self::x86_simd_fp_unmasked(reported_status, mxcsr) {
+                        ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
+                        return Ok(());
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::VMin { .. } | OpKind::VCvtBF16ToFP32 { .. } | OpKind::VMinMax { .. } => {
                 // AVX10 operations not yet implemented in interpreter
                 // These would require full vector register state tracking
                 ctx.request_exit(ExitReason::Undefined {

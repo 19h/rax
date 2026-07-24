@@ -4123,18 +4123,24 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::VCvtFpToIntSat {
             dst,
             src,
+            mask,
             fp_elem,
             int_elem,
             width,
             signed,
+            zeroing,
+            suppress_exceptions,
         } => op_json!(
             "vcvt_fp_to_int_sat",
             dst,
             src,
+            mask,
             fp_elem,
             int_elem,
             width,
-            signed
+            signed,
+            zeroing,
+            suppress_exceptions
         ),
         OpKind::VMinMax {
             dst,

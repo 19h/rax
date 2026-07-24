@@ -14,5 +14,7 @@ mod mul;
 pub use mul::*;
 mod packed;
 pub use packed::*;
+mod saturating_convert;
+pub use saturating_convert::*;
 mod shuffle;
 pub use shuffle::*;

@@ -127,13 +127,29 @@ impl X86_64Vcpu {
                 self.inject_undefined_instruction()
             }
             // VCVTTPS2IBS (0x68) - Convert with Truncation Packed Single to Signed Byte with Saturation
-            0x68 if evex.pp == 1 && !evex.w => self.execute_vcvttps2ibs(ctx),
+            0x68 if evex.pp == 1 && !evex.w => execute::simd::evex_saturating_fp_to_int(
+                self,
+                ctx,
+                execute::simd::SatFpToIntKind::F32ToI8 { signed: true },
+            ),
             // VCVTTPS2IUBS (0x6A) - Convert with Truncation Packed Single to Unsigned Byte with Saturation
-            0x6A if evex.pp == 1 && !evex.w => self.execute_vcvttps2iubs(ctx),
+            0x6A if evex.pp == 1 && !evex.w => execute::simd::evex_saturating_fp_to_int(
+                self,
+                ctx,
+                execute::simd::SatFpToIntKind::F32ToI8 { signed: false },
+            ),
             // VCVTTPD2QQS (0x6D) - Convert with Truncation Packed Double to Signed Qword with Saturation
-            0x6D if evex.pp == 1 && evex.w => self.execute_vcvttpd2qqs(ctx),
+            0x6D if evex.pp == 1 && evex.w => execute::simd::evex_saturating_fp_to_int(
+                self,
+                ctx,
+                execute::simd::SatFpToIntKind::F64ToI64 { signed: true },
+            ),
             // VCVTTPD2UQQS (0x6C) - Convert with Truncation Packed Double to Unsigned Qword with Saturation
-            0x6C if evex.pp == 1 && evex.w => self.execute_vcvttpd2uqqs(ctx),
+            0x6C if evex.pp == 1 && evex.w => execute::simd::evex_saturating_fp_to_int(
+                self,
+                ctx,
+                execute::simd::SatFpToIntKind::F64ToI64 { signed: false },
+            ),
             // VSQRTPH (0x51, NP) / VSQRTSH (0x51, F3)
             0x51 if evex.pp == 0 && !evex.w => self.execute_evex_fp16_unary(ctx, |a| a.sqrt()),
             0x51 if evex.pp == 2 && !evex.w => {

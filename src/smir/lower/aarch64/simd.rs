@@ -825,44 +825,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-    pub(crate) fn lower_vcvt_fp_to_int_sat(
-        &mut self,
-        dst: VReg,
-        src: VReg,
-        fp_elem: VecElementType,
-        int_elem: VecElementType,
-        width: VecWidth,
-        signed: bool,
-    ) -> Result<(), LowerError> {
-        let rd = Self::fp_reg(dst)?;
-        let rn = Self::fp_reg(src)?;
-        let q = Self::simd_vec_q(width)?;
-        let u = if signed { 0 } else { 1 };
-
-        match (fp_elem, int_elem) {
-            (VecElementType::F32, VecElementType::I8) => {
-                self.emit_simd_two_reg_misc(rd, rn, q, u, 0b10, 0b11011);
-                self.emit_simd_two_reg_misc(rd, rd, 0, u, 0b01, 0b10100);
-                self.emit_simd_two_reg_misc(rd, rd, 0, u, 0b00, 0b10100);
-                Ok(())
-            }
-            (VecElementType::F64, VecElementType::I64) => {
-                if width != VecWidth::V128 {
-                    return Err(LowerError::UnsupportedOp {
-                        op: format!("AArch64 native saturating FP64-to-int64 width {width:?}"),
-                    });
-                }
-                self.emit_simd_two_reg_misc(rd, rn, q, u, 0b11, 0b11011);
-                Ok(())
-            }
-            _ => Err(LowerError::UnsupportedOp {
-                op: format!(
-                    "AArch64 native saturating FP-to-int conversion {fp_elem:?} to {int_elem:?}"
-                ),
-            }),
-        }
-    }
-
     pub(crate) fn lower_vlane_three_same(
         &mut self,
         dst: VReg,
