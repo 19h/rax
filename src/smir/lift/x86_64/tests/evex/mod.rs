@@ -8,6 +8,8 @@ mod arithmetic;
 #[cfg(test)]
 mod fp;
 #[cfg(test)]
+mod fp16_convert;
+#[cfg(test)]
 mod integer;
 #[cfg(test)]
 mod legacy;

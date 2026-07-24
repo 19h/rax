@@ -2024,7 +2024,7 @@ fn lifted_packed_fp16_precision_conversions_are_exact_and_honor_daz_ftz_er_sae()
         ArchRegState::X86_64(x86) => x86.mxcsr,
         _ => unreachable!(),
     };
-    let exit = execute_lifted_x86(&[0x62, 0xF5, 0x7C, 0x59, 0x5A, 0xC1], &mut ctx, &mut memory);
+    let exit = execute_lifted_x86(&[0x62, 0xF5, 0x7C, 0x19, 0x5A, 0xC1], &mut ctx, &mut memory);
     assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
     if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
         let result = x86.xmm[0][0];

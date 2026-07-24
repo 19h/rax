@@ -1349,7 +1349,12 @@ impl X86_64Lifter {
                 bytes: bytes.to_vec(),
             });
         }
-        if register_sae_or_er && from.bytes() < to.bytes() && prefix.l_bits != 2 {
+        // Widening conversions use EVEX.b solely for SAE. Intel restricts
+        // this control to the 512-bit register form, whose canonical EVEX
+        // encoding carries L'L=00 (the 512-bit width is implied by SAE).
+        // L'L=10 is the ordinary non-SAE 512-bit encoding and is reserved
+        // when EVEX.b=1 for these widening forms.
+        if register_sae_or_er && from.bytes() < to.bytes() && prefix.l_bits != 0 {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes.to_vec(),
