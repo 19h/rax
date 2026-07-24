@@ -8,7 +8,7 @@ use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
     X86CacheControlKind, X86CountKind, X86OpHint, X86ThreeDNowKind, X86X87ArithmeticDestination,
     X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind,
-    X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
+    X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86XSaveKind, x86_sat_fp_to_int_widths,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -1126,27 +1126,22 @@ impl SmirInterpreter {
                 zeroing,
                 suppress_exceptions,
             } => {
-                let canonical_types = matches!(
-                    (*fp_elem, *int_elem, *truncate),
-                    (VecElementType::F32, VecElementType::I8, _)
-                        | (VecElementType::F64, VecElementType::I64, true)
-                );
+                let widths = x86_sat_fp_to_int_widths(*fp_elem, *int_elem, *width, *truncate);
+                let encoded_width = widths.map(|(_, encoded_width)| encoded_width);
                 let canonical_rounding = *round != FpRoundMode::RoundNearestTiesAway
                     && if *truncate {
                         *round == FpRoundMode::RoundTowardZero
-                            && (!*suppress_exceptions || *width == VecWidth::V512)
+                            && (!*suppress_exceptions || encoded_width == Some(VecWidth::V512))
                     } else {
                         matches!(
                             (*round, *suppress_exceptions),
                             (FpRoundMode::Dynamic, false)
                         ) || (*round != FpRoundMode::Dynamic
                             && *suppress_exceptions
-                            && *width == VecWidth::V512)
+                            && encoded_width == Some(VecWidth::V512))
                     };
-                let canonical_shape = canonical_types
-                    && canonical_rounding
-                    && matches!(width, VecWidth::V128 | VecWidth::V256 | VecWidth::V512)
-                    && (!*zeroing || mask.is_some());
+                let canonical_shape =
+                    encoded_width.is_some() && canonical_rounding && (!*zeroing || mask.is_some());
                 if !canonical_shape || !matches!(ctx.arch_regs, ArchRegState::X86_64(_)) {
                     ctx.request_exit(ExitReason::Undefined {
                         addr: op.guest_pc,
@@ -1179,19 +1174,25 @@ impl SmirInterpreter {
                 } else {
                     *round
                 };
-                let lane_bits = fp_elem.bytes() * 8;
+                let src_lane_bits = fp_elem.bytes() * 8;
                 let int_bits = int_elem.bytes() * 8;
-                let lanes = width.lanes(*fp_elem) as u8;
+                let dst_lane_bits = if *int_elem == VecElementType::I8 {
+                    32
+                } else {
+                    int_bits
+                };
+                let (src_width, _) = widths.expect("canonical conversion shape checked above");
+                let lanes = src_width.lanes(*fp_elem) as u8;
                 let mut status = 0;
                 for lane in 0..lanes {
                     if active & (1u64 << lane) == 0 {
                         if *zeroing {
-                            Self::set_lane(&mut result, lane, lane_bits, 0);
+                            Self::set_lane(&mut result, lane, dst_lane_bits, 0);
                         }
                         continue;
                     }
 
-                    let mut source_bits = Self::get_lane(&source, lane, lane_bits);
+                    let mut source_bits = Self::get_lane(&source, lane, src_lane_bits);
                     // These instructions report only Invalid and Precision.
                     // DAZ substitutes signed zero; a preserved denormal is not
                     // itself a Denormal exception for this instruction class.
@@ -1205,7 +1206,7 @@ impl SmirInterpreter {
                     Self::set_lane(
                         &mut result,
                         lane,
-                        lane_bits,
+                        dst_lane_bits,
                         converted.bits
                             & if int_bits == 64 {
                                 u64::MAX

@@ -1,6 +1,6 @@
 //! Floating-point status/trap side-effect classification.
 
-use super::OpKind;
+use super::{OpKind, x86_sat_fp_to_int_widths};
 use crate::smir::ir::types::{FpRoundMode, OpWidth, VecElementType};
 
 impl OpKind {
@@ -84,28 +84,22 @@ impl OpKind {
             ..
         } = self
         {
-            let canonical = matches!(
-                (*fp_elem, *int_elem, *truncate),
-                (VecElementType::F32, VecElementType::I8, _)
-                    | (VecElementType::F64, VecElementType::I64, true)
-            ) && matches!(
-                width,
-                crate::smir::ir::types::VecWidth::V128
-                    | crate::smir::ir::types::VecWidth::V256
-                    | crate::smir::ir::types::VecWidth::V512
-            ) && (!*zeroing || mask.is_some())
+            let widths = x86_sat_fp_to_int_widths(*fp_elem, *int_elem, *width, *truncate);
+            let encoded_width = widths.map(|(_, encoded_width)| encoded_width);
+            let canonical = widths.is_some()
+                && (!*zeroing || mask.is_some())
                 && *round != FpRoundMode::RoundNearestTiesAway
                 && if *truncate {
                     *round == FpRoundMode::RoundTowardZero
                         && (!*suppress_exceptions
-                            || *width == crate::smir::ir::types::VecWidth::V512)
+                            || encoded_width == Some(crate::smir::ir::types::VecWidth::V512))
                 } else {
                     matches!(
                         (*round, *suppress_exceptions),
                         (FpRoundMode::Dynamic, false)
                     ) || (*round != FpRoundMode::Dynamic
                         && *suppress_exceptions
-                        && *width == crate::smir::ir::types::VecWidth::V512)
+                        && encoded_width == Some(crate::smir::ir::types::VecWidth::V512))
                 };
             // Malformed IR must survive DCE until interpretation rejects it.
             // Canonical SAE/embedded-rounding forms neither update MXCSR nor

@@ -2502,7 +2502,7 @@ impl X86_64Lifter {
                 0x68 | 0x69 | 0x6A | 0x6B if prefix.pp == X86SsePrefix::OpSize && !prefix.w => {
                     self.lift_evex_saturating_fp_to_int(prefix, opcode, bytes, pc, ctx)
                 }
-                0x6C | 0x6D if prefix.pp == X86SsePrefix::OpSize && prefix.w => {
+                0x6C | 0x6D if matches!(prefix.pp, X86SsePrefix::None | X86SsePrefix::OpSize) => {
                     self.lift_evex_saturating_fp_to_int(prefix, opcode, bytes, pc, ctx)
                 }
                 0x6E | 0x7E => self.lift_evex_word_move(prefix, opcode, bytes, pc, ctx),

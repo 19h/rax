@@ -13,7 +13,7 @@
 //! - FP16: VADDPH, VMULPH, VSUBPH, VDIVPH
 //!
 //! ## AVX10.2 Instructions
-//! - Saturation conversions: VCVT[T]PS2I[U]BS, VCVTTPD2QQS, VCVTTPD2UQQS
+//! - Saturation conversions: VCVT[T]PS2I[U]BS and packed FP32/FP64-to-I32/I64 forms
 //! - VMPSADBW
 //! - VMINMAX: VMINMAXPS, VMINMAXPD, VMINMAXSS, VMINMAXSD
 //! - Media acceleration: VPDPB*/VPDPW* variants
@@ -349,8 +349,78 @@ impl Avx10Lifter {
             (1, 0x69, false) => Some(self.lift_vcvtps2ibs(evex, bytes, pc, ctx, true, false)),
             (1, 0x6A, false) => Some(self.lift_vcvtps2ibs(evex, bytes, pc, ctx, false, true)),
             (1, 0x6B, false) => Some(self.lift_vcvtps2ibs(evex, bytes, pc, ctx, false, false)),
-            (1, 0x6C, true) => Some(self.lift_vcvttpd2qqs(evex, bytes, pc, ctx, false)),
-            (1, 0x6D, true) => Some(self.lift_vcvttpd2qqs(evex, bytes, pc, ctx, true)),
+            (0, 0x6C, false) => Some(self.lift_vcvtt_fp_to_int_sat(
+                evex,
+                bytes,
+                pc,
+                ctx,
+                VecElementType::F32,
+                VecElementType::I32,
+                false,
+            )),
+            (0, 0x6D, false) => Some(self.lift_vcvtt_fp_to_int_sat(
+                evex,
+                bytes,
+                pc,
+                ctx,
+                VecElementType::F32,
+                VecElementType::I32,
+                true,
+            )),
+            (1, 0x6C, false) => Some(self.lift_vcvtt_fp_to_int_sat(
+                evex,
+                bytes,
+                pc,
+                ctx,
+                VecElementType::F32,
+                VecElementType::I64,
+                false,
+            )),
+            (1, 0x6D, false) => Some(self.lift_vcvtt_fp_to_int_sat(
+                evex,
+                bytes,
+                pc,
+                ctx,
+                VecElementType::F32,
+                VecElementType::I64,
+                true,
+            )),
+            (0, 0x6C, true) => Some(self.lift_vcvtt_fp_to_int_sat(
+                evex,
+                bytes,
+                pc,
+                ctx,
+                VecElementType::F64,
+                VecElementType::I32,
+                false,
+            )),
+            (0, 0x6D, true) => Some(self.lift_vcvtt_fp_to_int_sat(
+                evex,
+                bytes,
+                pc,
+                ctx,
+                VecElementType::F64,
+                VecElementType::I32,
+                true,
+            )),
+            (1, 0x6C, true) => Some(self.lift_vcvtt_fp_to_int_sat(
+                evex,
+                bytes,
+                pc,
+                ctx,
+                VecElementType::F64,
+                VecElementType::I64,
+                false,
+            )),
+            (1, 0x6D, true) => Some(self.lift_vcvtt_fp_to_int_sat(
+                evex,
+                bytes,
+                pc,
+                ctx,
+                VecElementType::F64,
+                VecElementType::I64,
+                true,
+            )),
             _ => None,
         }
     }
@@ -1300,6 +1370,52 @@ mod tests {
                 ..
             }]
         ));
+
+        for (bytes, fp_elem, int_elem, width, signed) in [
+            (
+                &[0x62, 0xF5, 0xFC, 0x08, 0x6D, 0xCA][..],
+                VecElementType::F64,
+                VecElementType::I32,
+                VecWidth::V64,
+                true,
+            ),
+            (
+                &[0x62, 0xF5, 0x7C, 0x48, 0x6C, 0xCA][..],
+                VecElementType::F32,
+                VecElementType::I32,
+                VecWidth::V512,
+                false,
+            ),
+            (
+                &[0x62, 0xF5, 0x7D, 0x28, 0x6D, 0xCA][..],
+                VecElementType::F32,
+                VecElementType::I64,
+                VecWidth::V256,
+                true,
+            ),
+        ] {
+            let result = lifter
+                .try_lift(bytes, 0x1000, &mut ctx)
+                .expect("packed saturation conversion must dispatch")
+                .unwrap();
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::VCvtFpToIntSat {
+                        fp_elem: actual_fp,
+                        int_elem: actual_int,
+                        width: actual_width,
+                        signed: actual_signed,
+                        truncate: true,
+                        ..
+                    },
+                    ..
+                }] if *actual_fp == fp_elem
+                    && *actual_int == int_elem
+                    && *actual_width == width
+                    && *actual_signed == signed
+            ));
+        }
 
         // The pre-AVX10.2 draft placement in MAP2 is not an alias.
         assert!(

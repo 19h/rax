@@ -1,6 +1,8 @@
 //! AVX10.2 MAP5 saturating floating-point-to-integer conversions.
 
-use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86SsePrefix, X86VecMap};
+use crate::smir::ir::ops::{
+    OpKind, SmirOp, X86OpHint, X86SsePrefix, X86VecMap, x86_sat_fp_to_int_widths,
+};
 use crate::smir::ir::types::*;
 use crate::smir::lift::x86_64::*;
 
@@ -25,6 +27,24 @@ impl X86_64Lifter {
             }
             (0x6B, X86SsePrefix::OpSize, false) => {
                 (VecElementType::F32, VecElementType::I8, false, false)
+            }
+            (0x6D, X86SsePrefix::None, false) => {
+                (VecElementType::F32, VecElementType::I32, true, true)
+            }
+            (0x6C, X86SsePrefix::None, false) => {
+                (VecElementType::F32, VecElementType::I32, false, true)
+            }
+            (0x6D, X86SsePrefix::OpSize, false) => {
+                (VecElementType::F32, VecElementType::I64, true, true)
+            }
+            (0x6C, X86SsePrefix::OpSize, false) => {
+                (VecElementType::F32, VecElementType::I64, false, true)
+            }
+            (0x6D, X86SsePrefix::None, true) => {
+                (VecElementType::F64, VecElementType::I32, true, true)
+            }
+            (0x6C, X86SsePrefix::None, true) => {
+                (VecElementType::F64, VecElementType::I32, false, true)
             }
             (0x6D, X86SsePrefix::OpSize, true) => {
                 (VecElementType::F64, VecElementType::I64, true, true)
@@ -69,11 +89,36 @@ impl X86_64Lifter {
                 bytes: bytes.to_vec(),
             });
         }
-        let width = if embedded_control {
+        let encoded_width = if embedded_control {
             VecWidth::V512
         } else {
             prefix.width
         };
+        let (src_width, width) = match (fp_elem, int_elem, encoded_width) {
+            (VecElementType::F64, VecElementType::I32, VecWidth::V128) => {
+                (VecWidth::V128, VecWidth::V64)
+            }
+            (VecElementType::F64, VecElementType::I32, VecWidth::V256) => {
+                (VecWidth::V256, VecWidth::V128)
+            }
+            (VecElementType::F64, VecElementType::I32, VecWidth::V512) => {
+                (VecWidth::V512, VecWidth::V256)
+            }
+            (VecElementType::F32, VecElementType::I64, VecWidth::V128) => {
+                (VecWidth::V64, VecWidth::V128)
+            }
+            (VecElementType::F32, VecElementType::I64, VecWidth::V256) => {
+                (VecWidth::V128, VecWidth::V256)
+            }
+            (VecElementType::F32, VecElementType::I64, VecWidth::V512) => {
+                (VecWidth::V256, VecWidth::V512)
+            }
+            (_, _, width) => (width, width),
+        };
+        debug_assert_eq!(
+            x86_sat_fp_to_int_widths(fp_elem, int_elem, width, truncate),
+            Some((src_width, encoded_width))
+        );
         let round = if truncate {
             FpRoundMode::RoundTowardZero
         } else if embedded_control {
@@ -99,20 +144,20 @@ impl X86_64Lifter {
                 if broadcast {
                     fp_elem.bytes()
                 } else {
-                    width.bytes()
+                    src_width.bytes()
                 },
                 ctx,
             );
             ops.extend(pre_ops);
             match (mask, broadcast) {
                 (Some(mask), true) => self.append_masked_broadcast_memory_source(
-                    addr, fp_elem, width, mask, pc, ctx, &mut ops,
+                    addr, fp_elem, src_width, mask, pc, ctx, &mut ops,
                 ),
                 (Some(mask), false) => self.append_evex_masked_vector_source(
-                    addr, fp_elem, width, false, mask, pc, ctx, &mut ops,
+                    addr, fp_elem, src_width, false, mask, pc, ctx, &mut ops,
                 ),
                 (None, true) => {
-                    self.append_broadcast_memory_source(addr, fp_elem, width, pc, ctx, &mut ops)
+                    self.append_broadcast_memory_source(addr, fp_elem, src_width, pc, ctx, &mut ops)
                 }
                 (None, false) => {
                     let loaded = ctx.alloc_vreg();
@@ -122,14 +167,14 @@ impl X86_64Lifter {
                         OpKind::VLoad {
                             dst: loaded,
                             addr,
-                            width,
+                            width: src_width,
                         },
                     ));
                     loaded
                 }
             }
         } else {
-            self.vec_reg(modrm.rm + if prefix.rm_high { 16 } else { 0 }, width)
+            self.vec_reg(modrm.rm + if prefix.rm_high { 16 } else { 0 }, src_width)
         };
         let dst = self.vec_reg(modrm.reg + if prefix.reg_high { 16 } else { 0 }, width);
         ops.push(SmirOp::with_hint(
@@ -152,7 +197,7 @@ impl X86_64Lifter {
                 map: prefix.map,
                 pp: prefix.pp,
                 opcode,
-                width,
+                width: encoded_width,
                 w: prefix.w,
             },
         ));

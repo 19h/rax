@@ -6,6 +6,8 @@ use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::types::*;
 
 mod fp_side_effects;
+mod x86_sat_convert_types;
+pub(crate) use x86_sat_convert_types::x86_sat_fp_to_int_widths;
 mod x86_fp_types;
 pub use x86_fp_types::*;
 mod x86_crypto_types;
@@ -3524,12 +3526,14 @@ pub enum OpKind {
     // ========================================================================
     /// x86 AVX10.2 saturating FP-to-integer conversion.
     ///
-    /// This variant represents VCVT[T]PS2I[U]BS and VCVTTPD2[U]QQS. The
-    /// F32-to-I8 forms retain one result per 32-bit source lane: the converted
-    /// byte occupies bits 7:0 and bits 31:8 are zero. The F64-to-I64 forms
-    /// retain one 64-bit result per source lane. `width` is both the source-
-    /// vector width and the architecturally updated destination width; bits
-    /// above it are zeroed. Truncating forms use `truncate=true` and
+    /// This variant represents VCVT[T]PS2I[U]BS and the AVX10.2 packed
+    /// FP32/FP64-to-I32/I64 saturating conversions. The F32-to-I8 forms retain
+    /// one result per 32-bit source lane: the converted byte occupies bits 7:0
+    /// and bits 31:8 are zero. `width` is the destination payload width; the
+    /// source payload and encoded EVEX `VL` are derived from the source/result
+    /// element types for FP64-to-I32 narrowing and FP32-to-I64 widening. Bits
+    /// above `width` in the architectural destination register are zeroed.
+    /// Truncating forms use `truncate=true` and
     /// [`FpRoundMode::RoundTowardZero`]. Non-truncating MXCSR-controlled forms
     /// use [`FpRoundMode::Dynamic`]; an explicit mode represents the 512-bit
     /// EVEX `{er}` form and therefore requires `suppress_exceptions=true`.

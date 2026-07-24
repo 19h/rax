@@ -59,6 +59,28 @@ fn saturating_conversion_metadata_tracks_merge_mask_and_mxcsr_effects() {
     assert!(!sae.has_side_effects());
     assert!(!sae.is_jit_safe());
 
+    let narrowing_sae = OpKind::VCvtFpToIntSat {
+        dst: VReg::virt(2),
+        src: VReg::virt(0),
+        mask: None,
+        fp_elem: VecElementType::F64,
+        int_elem: VecElementType::I32,
+        width: VecWidth::V256,
+        signed: true,
+        truncate: true,
+        round: FpRoundMode::RoundTowardZero,
+        zeroing: false,
+        suppress_exceptions: true,
+    };
+    assert!(!narrowing_sae.has_side_effects());
+
+    let mut malformed_narrowing = narrowing_sae.clone();
+    let OpKind::VCvtFpToIntSat { width, .. } = &mut malformed_narrowing else {
+        unreachable!()
+    };
+    *width = VecWidth::V512;
+    assert!(malformed_narrowing.has_side_effects());
+
     let malformed = conversion(None, true, true, VecWidth::V128);
     assert!(malformed.has_side_effects());
 

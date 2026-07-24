@@ -16,39 +16,73 @@ const CR4_OSXMMEXCPT: u64 = 1 << 10;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SatFpToIntKind {
     F32ToI8 { signed: bool, truncate: bool },
+    F32ToI32 { signed: bool },
+    F32ToI64 { signed: bool },
+    F64ToI32 { signed: bool },
     F64ToI64 { signed: bool },
 }
 
 impl SatFpToIntKind {
     fn fp_bytes(self) -> usize {
         match self {
-            Self::F32ToI8 { .. } => 4,
-            Self::F64ToI64 { .. } => 8,
+            Self::F32ToI8 { .. } | Self::F32ToI32 { .. } | Self::F32ToI64 { .. } => 4,
+            Self::F64ToI32 { .. } | Self::F64ToI64 { .. } => 8,
         }
     }
 
     fn int_bits(self) -> u32 {
         match self {
             Self::F32ToI8 { .. } => 8,
-            Self::F64ToI64 { .. } => 64,
+            Self::F32ToI32 { .. } | Self::F64ToI32 { .. } => 32,
+            Self::F32ToI64 { .. } | Self::F64ToI64 { .. } => 64,
+        }
+    }
+
+    fn dst_lane_bytes(self) -> usize {
+        if matches!(self, Self::F32ToI8 { .. }) {
+            // AVX10.2 byte results occupy low bytes of dword slots.
+            4
+        } else {
+            self.int_bits() as usize / 8
         }
     }
 
     fn signed(self) -> bool {
         match self {
-            Self::F32ToI8 { signed, .. } | Self::F64ToI64 { signed } => signed,
+            Self::F32ToI8 { signed, .. }
+            | Self::F32ToI32 { signed }
+            | Self::F32ToI64 { signed }
+            | Self::F64ToI32 { signed }
+            | Self::F64ToI64 { signed } => signed,
         }
     }
 
     fn truncate(self) -> bool {
         match self {
             Self::F32ToI8 { truncate, .. } => truncate,
-            Self::F64ToI64 { .. } => true,
+            Self::F32ToI32 { .. }
+            | Self::F32ToI64 { .. }
+            | Self::F64ToI32 { .. }
+            | Self::F64ToI64 { .. } => true,
+        }
+    }
+
+    fn pp(self) -> u8 {
+        match self {
+            Self::F32ToI32 { .. } | Self::F64ToI32 { .. } => 0,
+            Self::F32ToI8 { .. } | Self::F32ToI64 { .. } | Self::F64ToI64 { .. } => 1,
         }
     }
 
     fn w(self) -> bool {
-        matches!(self, Self::F64ToI64 { .. })
+        matches!(self, Self::F64ToI32 { .. } | Self::F64ToI64 { .. })
+    }
+
+    fn layout(self, encoded_bytes: usize) -> (usize, usize, usize) {
+        let fp_bytes = self.fp_bytes();
+        let dst_lane_bytes = self.dst_lane_bytes();
+        let lanes = encoded_bytes / fp_bytes.max(dst_lane_bytes);
+        (lanes, lanes * fp_bytes, lanes * dst_lane_bytes)
     }
 }
 
@@ -255,7 +289,7 @@ pub fn evex_saturating_fp_to_int(
     let is_memory = modrm >> 6 != 3;
     let register_control = evex.broadcast && !is_memory;
     if evex.mm != 5
-        || evex.pp != 1
+        || evex.pp != kind.pp()
         || evex.w != kind.w()
         || evex.vvvv != 0x0F
         || !evex.v_prime
@@ -266,13 +300,15 @@ pub fn evex_saturating_fp_to_int(
         return vcpu.inject_undefined_instruction();
     }
 
-    let width = if register_control {
+    let encoded_bytes = if register_control {
         64
     } else {
         16usize << evex.ll
     };
     let fp_bytes = kind.fp_bytes();
-    let lanes = width / fp_bytes;
+    let dst_lane_bytes = kind.dst_lane_bytes();
+    let (lanes, src_bytes, dst_bytes) = kind.layout(encoded_bytes);
+    let dst_register_bytes = dst_bytes.max(16);
     let mask = evex_mask(vcpu, evex.aaa, lanes);
     let modrm_start = ctx.cursor;
     let (reg, rm, decoded_memory, addr, _) = vcpu.decode_modrm(ctx)?;
@@ -284,7 +320,7 @@ pub fn evex_saturating_fp_to_int(
             ctx,
             modrm_start,
             addr,
-            if evex.broadcast { fp_bytes } else { width },
+            if evex.broadcast { fp_bytes } else { src_bytes },
         )
     } else {
         addr
@@ -317,23 +353,25 @@ pub fn evex_saturating_fp_to_int(
             }
         }
     } else {
-        source = read_reg_bytes(vcpu, source_register, width);
+        source = read_reg_bytes(vcpu, source_register, src_bytes.max(16));
     }
 
-    let old = read_reg_bytes(vcpu, destination, width);
+    let old = read_reg_bytes(vcpu, destination, dst_register_bytes);
     let mut result = [0u8; 64];
     let mut status = 0;
     for lane in 0..lanes {
-        let base = lane * fp_bytes;
+        let src_base = lane * fp_bytes;
+        let dst_base = lane * dst_lane_bytes;
         if mask & (1u64 << lane) == 0 {
             if !evex.z {
-                result[base..base + fp_bytes].copy_from_slice(&old[base..base + fp_bytes]);
+                result[dst_base..dst_base + dst_lane_bytes]
+                    .copy_from_slice(&old[dst_base..dst_base + dst_lane_bytes]);
             }
             continue;
         }
 
         let mut raw = [0u8; 8];
-        raw[..fp_bytes].copy_from_slice(&source[base..base + fp_bytes]);
+        raw[..fp_bytes].copy_from_slice(&source[src_base..src_base + fp_bytes]);
         let mut bits = u64::from_le_bytes(raw);
         if vcpu.mxcsr & MXCSR_DAZ != 0 && is_denormal(bits, fp_bytes) {
             bits &= 1u64 << (fp_bytes * 8 - 1);
@@ -353,12 +391,14 @@ pub fn evex_saturating_fp_to_int(
             rounding_control,
         );
         status |= converted.status;
-        if fp_bytes == 4 {
+        if kind.int_bits() == 8 {
             // Byte results occupy bits 7:0 of their corresponding dword;
             // bytes 3:1 remain zero.
-            result[base] = converted.bits as u8;
+            result[dst_base] = converted.bits as u8;
         } else {
-            result[base..base + 8].copy_from_slice(&converted.bits.to_le_bytes());
+            let int_bytes = kind.int_bits() as usize / 8;
+            result[dst_base..dst_base + int_bytes]
+                .copy_from_slice(&converted.bits.to_le_bytes()[..int_bytes]);
         }
     }
 
@@ -386,7 +426,7 @@ pub fn evex_saturating_fp_to_int(
         }
     }
 
-    write_vec_vl(vcpu, destination, width, &result);
+    write_vec_vl(vcpu, destination, dst_register_bytes, &result);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

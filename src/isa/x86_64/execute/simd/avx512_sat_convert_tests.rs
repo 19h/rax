@@ -40,26 +40,48 @@ fn vcpu(code: &[u8]) -> X86_64Vcpu {
     vcpu_with_memory_size(code, 0x10000)
 }
 
-fn fields(kind: SatFpToIntKind) -> (u8, bool, usize) {
+#[derive(Clone, Copy)]
+struct Fields {
+    opcode: u8,
+    pp: u8,
+    w: bool,
+    fp_bytes: usize,
+    dst_lane_bytes: usize,
+}
+
+fn fields(kind: SatFpToIntKind) -> Fields {
+    let fields = |opcode, pp, w, fp_bytes, dst_lane_bytes| Fields {
+        opcode,
+        pp,
+        w,
+        fp_bytes,
+        dst_lane_bytes,
+    };
     match kind {
         SatFpToIntKind::F32ToI8 {
             signed: true,
             truncate: true,
-        } => (0x68, false, 4),
+        } => fields(0x68, 1, false, 4, 4),
         SatFpToIntKind::F32ToI8 {
             signed: true,
             truncate: false,
-        } => (0x69, false, 4),
+        } => fields(0x69, 1, false, 4, 4),
         SatFpToIntKind::F32ToI8 {
             signed: false,
             truncate: true,
-        } => (0x6A, false, 4),
+        } => fields(0x6A, 1, false, 4, 4),
         SatFpToIntKind::F32ToI8 {
             signed: false,
             truncate: false,
-        } => (0x6B, false, 4),
-        SatFpToIntKind::F64ToI64 { signed: true } => (0x6D, true, 8),
-        SatFpToIntKind::F64ToI64 { signed: false } => (0x6C, true, 8),
+        } => fields(0x6B, 1, false, 4, 4),
+        SatFpToIntKind::F32ToI32 { signed: true } => fields(0x6D, 0, false, 4, 4),
+        SatFpToIntKind::F32ToI32 { signed: false } => fields(0x6C, 0, false, 4, 4),
+        SatFpToIntKind::F32ToI64 { signed: true } => fields(0x6D, 1, false, 4, 8),
+        SatFpToIntKind::F32ToI64 { signed: false } => fields(0x6C, 1, false, 4, 8),
+        SatFpToIntKind::F64ToI32 { signed: true } => fields(0x6D, 0, true, 8, 4),
+        SatFpToIntKind::F64ToI32 { signed: false } => fields(0x6C, 0, true, 8, 4),
+        SatFpToIntKind::F64ToI64 { signed: true } => fields(0x6D, 1, true, 8, 8),
+        SatFpToIntKind::F64ToI64 { signed: false } => fields(0x6C, 1, true, 8, 8),
     }
 }
 
@@ -76,7 +98,7 @@ fn encoding(
     disp8: Option<i8>,
 ) -> Vec<u8> {
     assert!(ll < 4 && destination < 32 && source < 32 && mask < 8);
-    let (opcode, w, _) = fields(kind);
+    let fields = fields(kind);
     let mut p0 = 0xF5;
     if destination & 0x08 != 0 {
         p0 &= !0x80;
@@ -93,7 +115,7 @@ fn encoding(
     let mut bytes = vec![
         0x62,
         p0,
-        0x7D | if w { 0x80 } else { 0 },
+        0x7C | fields.pp | if fields.w { 0x80 } else { 0 },
         (if zeroing { 0x80 } else { 0 })
             | (ll << 5)
             | if embedded_control_or_broadcast {
@@ -103,7 +125,7 @@ fn encoding(
             }
             | 0x08
             | mask,
-        opcode,
+        fields.opcode,
         (if memory {
             if disp8.is_some() { 0x40 } else { 0 }
         } else {
@@ -189,6 +211,107 @@ fn cases(kind: SatFpToIntKind) -> Vec<(u64, u64, u32)> {
             (u64::from(f32::NEG_INFINITY.to_bits()), 0, MXCSR_INVALID),
             (1, 0, MXCSR_PRECISION),
         ],
+        SatFpToIntKind::F32ToI32 { signed: true } => vec![
+            (u64::from((-2_147_483_648.0f32).to_bits()), 0x8000_0000, 0),
+            (u64::from((-1.9f32).to_bits()), 0xFFFF_FFFF, MXCSR_PRECISION),
+            (u64::from((-0.5f32).to_bits()), 0, MXCSR_PRECISION),
+            (u64::from(1.9f32.to_bits()), 1, MXCSR_PRECISION),
+            (
+                u64::from(f32::from_bits(2_147_483_648.0f32.to_bits() - 1).to_bits()),
+                0x7FFF_FF80,
+                0,
+            ),
+            (
+                u64::from(2_147_483_648.0f32.to_bits()),
+                0x7FFF_FFFF,
+                MXCSR_INVALID,
+            ),
+            (u64::from(f32::NAN.to_bits()), 0, MXCSR_INVALID),
+            (
+                u64::from(f32::NEG_INFINITY.to_bits()),
+                0x8000_0000,
+                MXCSR_INVALID,
+            ),
+        ],
+        SatFpToIntKind::F32ToI32 { signed: false } => vec![
+            (u64::from((-1.0f32).to_bits()), 0, MXCSR_INVALID),
+            (u64::from((-0.5f32).to_bits()), 0, MXCSR_PRECISION),
+            (u64::from(1.9f32.to_bits()), 1, MXCSR_PRECISION),
+            (
+                u64::from(f32::from_bits(4_294_967_296.0f32.to_bits() - 1).to_bits()),
+                0xFFFF_FF00,
+                0,
+            ),
+            (
+                u64::from(4_294_967_296.0f32.to_bits()),
+                0xFFFF_FFFF,
+                MXCSR_INVALID,
+            ),
+            (u64::from(f32::NAN.to_bits()), 0, MXCSR_INVALID),
+            (
+                u64::from(f32::INFINITY.to_bits()),
+                0xFFFF_FFFF,
+                MXCSR_INVALID,
+            ),
+        ],
+        SatFpToIntKind::F32ToI64 { signed: true } => vec![
+            (
+                u64::from((-9_223_372_036_854_775_808.0f32).to_bits()),
+                0x8000_0000_0000_0000,
+                0,
+            ),
+            (u64::from((-1.9f32).to_bits()), u64::MAX, MXCSR_PRECISION),
+            (u64::from(1.9f32.to_bits()), 1, MXCSR_PRECISION),
+            (
+                u64::from(f32::from_bits(9_223_372_036_854_775_808.0f32.to_bits() - 1).to_bits()),
+                0x7FFF_FF80_0000_0000,
+                0,
+            ),
+            (
+                u64::from(9_223_372_036_854_775_808.0f32.to_bits()),
+                i64::MAX as u64,
+                MXCSR_INVALID,
+            ),
+            (u64::from(f32::NAN.to_bits()), 0, MXCSR_INVALID),
+        ],
+        SatFpToIntKind::F32ToI64 { signed: false } => vec![
+            (u64::from((-1.0f32).to_bits()), 0, MXCSR_INVALID),
+            (u64::from((-0.5f32).to_bits()), 0, MXCSR_PRECISION),
+            (u64::from(1.9f32.to_bits()), 1, MXCSR_PRECISION),
+            (
+                u64::from(f32::from_bits(18_446_744_073_709_551_616.0f32.to_bits() - 1).to_bits()),
+                0xFFFF_FF00_0000_0000,
+                0,
+            ),
+            (
+                u64::from(18_446_744_073_709_551_616.0f32.to_bits()),
+                u64::MAX,
+                MXCSR_INVALID,
+            ),
+            (u64::from(f32::NAN.to_bits()), 0, MXCSR_INVALID),
+        ],
+        SatFpToIntKind::F64ToI32 { signed: true } => vec![
+            ((-2_147_483_648.0f64).to_bits(), 0x8000_0000, 0),
+            (
+                (-2_147_483_648.9f64).to_bits(),
+                0x8000_0000,
+                MXCSR_PRECISION,
+            ),
+            ((-2_147_483_649.0f64).to_bits(), 0x8000_0000, MXCSR_INVALID),
+            ((-1.9f64).to_bits(), 0xFFFF_FFFF, MXCSR_PRECISION),
+            (2_147_483_647.9f64.to_bits(), 0x7FFF_FFFF, MXCSR_PRECISION),
+            (2_147_483_648.0f64.to_bits(), 0x7FFF_FFFF, MXCSR_INVALID),
+            (f64::NAN.to_bits(), 0, MXCSR_INVALID),
+        ],
+        SatFpToIntKind::F64ToI32 { signed: false } => vec![
+            ((-1.0f64).to_bits(), 0, MXCSR_INVALID),
+            ((-0.5f64).to_bits(), 0, MXCSR_PRECISION),
+            (1.9f64.to_bits(), 1, MXCSR_PRECISION),
+            (4_294_967_295.9f64.to_bits(), 0xFFFF_FFFF, MXCSR_PRECISION),
+            (4_294_967_296.0f64.to_bits(), 0xFFFF_FFFF, MXCSR_INVALID),
+            (f64::NAN.to_bits(), 0, MXCSR_INVALID),
+            (f64::INFINITY.to_bits(), 0xFFFF_FFFF, MXCSR_INVALID),
+        ],
         SatFpToIntKind::F64ToI64 { signed: true } => vec![
             ((-9_223_372_036_854_775_808.0f64).to_bits(), 1 << 63, 0),
             ((-1.9f64).to_bits(), u64::MAX, MXCSR_PRECISION),
@@ -234,7 +357,7 @@ fn cases(kind: SatFpToIntKind) -> Vec<(u64, u64, u32)> {
 }
 
 fn set_source(vcpu: &mut X86_64Vcpu, register: u8, kind: SatFpToIntKind, raw: &[u64]) {
-    let (_, _, elem_bytes) = fields(kind);
+    let elem_bytes = fields(kind).fp_bytes;
     let mut bytes = [0u8; 64];
     for (lane, value) in raw.iter().copied().enumerate() {
         bytes[lane * elem_bytes..(lane + 1) * elem_bytes]
@@ -280,16 +403,22 @@ fn register_forms_cover_widths_extensions_boundaries_status_and_upper_zeroing() 
             signed: false,
             truncate: true,
         },
+        SatFpToIntKind::F32ToI32 { signed: true },
+        SatFpToIntKind::F32ToI32 { signed: false },
+        SatFpToIntKind::F32ToI64 { signed: true },
+        SatFpToIntKind::F32ToI64 { signed: false },
+        SatFpToIntKind::F64ToI32 { signed: true },
+        SatFpToIntKind::F64ToI32 { signed: false },
         SatFpToIntKind::F64ToI64 { signed: true },
         SatFpToIntKind::F64ToI64 { signed: false },
     ] {
         let cases = cases(kind);
-        let (_, _, elem_bytes) = fields(kind);
+        let fields = fields(kind);
         for ll in 0..=2 {
             let destination = [1, 17, 31][ll as usize];
             let source = [2, 18, 30][ll as usize];
             let operation_bytes = width(ll, false);
-            let lanes = operation_bytes / elem_bytes;
+            let lanes = operation_bytes / fields.fp_bytes.max(fields.dst_lane_bytes);
             let code = encoding(kind, ll, destination, source, 0, false, false, false, None);
             let mut cpu = vcpu(&code);
             let raw: Vec<_> = (0..lanes).map(|lane| cases[lane % cases.len()].0).collect();
@@ -307,13 +436,14 @@ fn register_forms_cover_widths_extensions_boundaries_status_and_upper_zeroing() 
                 let (_, expected, lane_status) = cases[lane % cases.len()];
                 expected_status |= lane_status;
                 assert_eq!(
-                    read_lane(&actual, lane, elem_bytes),
+                    read_lane(&actual, lane, fields.dst_lane_bytes),
                     expected,
                     "{kind:?} L'L={ll} lane={lane} raw={:#x}",
                     raw[lane]
                 );
             }
-            assert!(actual[operation_bytes..].iter().all(|byte| *byte == 0));
+            let output_bytes = lanes * fields.dst_lane_bytes;
+            assert!(actual[output_bytes..].iter().all(|byte| *byte == 0));
             assert_eq!(cpu.mxcsr & 0x3F, expected_status);
             assert_eq!(cpu.regs.rip, CODE + code.len() as u64);
             assert_eq!(cpu.regs.rflags, flags_before);
@@ -493,6 +623,63 @@ fn masks_zero_or_merge_whole_dword_slots_and_aliases_snapshot_the_source() {
         assert_eq!(read_lane(&actual, lane, 4), expected);
     }
     assert_eq!(alias.mxcsr & 0x3F, MXCSR_INVALID | MXCSR_PRECISION);
+
+    let narrowing = SatFpToIntKind::F64ToI32 { signed: true };
+    for zeroing in [false, true] {
+        let code = encoding(narrowing, 0, 1, 2, 1, zeroing, false, false, None);
+        let mut cpu = vcpu(&code);
+        fill_destination(&mut cpu, 1);
+        set_source(
+            &mut cpu,
+            2,
+            narrowing,
+            &[1.9f64.to_bits(), 2.9f64.to_bits()],
+        );
+        cpu.regs.k[1] = 0b01;
+        assert!(cpu.step().unwrap().is_none());
+        let actual = read_reg_bytes(&cpu, 1, 64);
+        assert_eq!(read_lane(&actual, 0, 4), 1);
+        assert_eq!(
+            read_lane(&actual, 1, 4),
+            if zeroing { 0 } else { sentinel_dword(1) }
+        );
+        assert!(actual[8..].iter().all(|byte| *byte == 0));
+        assert_eq!(cpu.mxcsr & 0x3F, MXCSR_PRECISION);
+    }
+
+    let widening = SatFpToIntKind::F32ToI64 { signed: false };
+    for zeroing in [false, true] {
+        let code = encoding(widening, 1, 1, 2, 1, zeroing, false, false, None);
+        let mut cpu = vcpu(&code);
+        fill_destination(&mut cpu, 1);
+        set_source(
+            &mut cpu,
+            2,
+            widening,
+            &[
+                u64::from(1.9f32.to_bits()),
+                u64::from(2.9f32.to_bits()),
+                u64::from(3.9f32.to_bits()),
+                u64::from(4.9f32.to_bits()),
+            ],
+        );
+        cpu.regs.k[1] = 0b0101;
+        assert!(cpu.step().unwrap().is_none());
+        let actual = read_reg_bytes(&cpu, 1, 64);
+        for (lane, expected) in [
+            1,
+            if zeroing { 0 } else { SENTINEL },
+            3,
+            if zeroing { 0 } else { SENTINEL },
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            assert_eq!(read_lane(&actual, lane, 8), expected);
+        }
+        assert!(actual[32..].iter().all(|byte| *byte == 0));
+        assert_eq!(cpu.mxcsr & 0x3F, MXCSR_PRECISION);
+    }
 }
 
 #[test]
@@ -502,13 +689,15 @@ fn sae_and_daz_have_exact_dynamic_mxcsr_behavior() {
             signed: true,
             truncate: true,
         },
+        SatFpToIntKind::F64ToI32 { signed: true },
+        SatFpToIntKind::F32ToI64 { signed: false },
         SatFpToIntKind::F64ToI64 { signed: false },
     ] {
         let code = encoding(kind, 0, 17, 18, 0, false, true, false, None);
         let mut cpu = vcpu(&code);
         let cases = cases(kind);
-        let (_, _, elem_bytes) = fields(kind);
-        let lanes = 64 / elem_bytes;
+        let fields = fields(kind);
+        let lanes = 64 / fields.fp_bytes.max(fields.dst_lane_bytes);
         let raw: Vec<_> = (0..lanes).map(|lane| cases[lane % cases.len()].0).collect();
         fill_destination(&mut cpu, 17);
         set_source(&mut cpu, 18, kind, &raw);
@@ -519,7 +708,7 @@ fn sae_and_daz_have_exact_dynamic_mxcsr_behavior() {
         let actual = read_reg_bytes(&cpu, 17, 64);
         for lane in 0..lanes {
             assert_eq!(
-                read_lane(&actual, lane, elem_bytes),
+                read_lane(&actual, lane, fields.dst_lane_bytes),
                 cases[lane % cases.len()].1,
                 "{kind:?} SAE lane {lane}"
             );
@@ -675,6 +864,47 @@ fn memory_forms_apply_masks_broadcast_and_compressed_disp8_before_conversion() {
     }
     assert_eq!(full.mxcsr & 0x3F, MXCSR_PRECISION);
 
+    let narrowing = SatFpToIntKind::F64ToI32 { signed: true };
+    let code = encoding(narrowing, 2, 1, 0, 0, false, false, true, Some(1));
+    let mut narrow = vcpu(&code);
+    narrow.regs.rax = DATA;
+    fill_destination(&mut narrow, 1);
+    for lane in 0..8 {
+        narrow
+            .write_mem(
+                DATA + 64 + (lane * 8) as u64,
+                (lane as f64 + 0.75).to_bits(),
+                8,
+            )
+            .unwrap();
+    }
+    assert!(narrow.step().unwrap().is_none());
+    let actual = read_reg_bytes(&narrow, 1, 64);
+    for lane in 0..8 {
+        assert_eq!(read_lane(&actual, lane, 4), lane as u64);
+    }
+    assert!(actual[32..].iter().all(|byte| *byte == 0));
+    assert_eq!(narrow.mxcsr & 0x3F, MXCSR_PRECISION);
+
+    let widening = SatFpToIntKind::F32ToI64 { signed: false };
+    let code = encoding(widening, 2, 1, 0, 0, false, false, true, Some(1));
+    let mut wide = vcpu(&code);
+    wide.regs.rax = DATA;
+    for lane in 0..8 {
+        wide.write_mem(
+            DATA + 32 + (lane * 4) as u64,
+            u64::from((lane as f32 + 0.75).to_bits()),
+            4,
+        )
+        .unwrap();
+    }
+    assert!(wide.step().unwrap().is_none());
+    let actual = read_reg_bytes(&wide, 1, 64);
+    for lane in 0..8 {
+        assert_eq!(read_lane(&actual, lane, 8), lane as u64);
+    }
+    assert_eq!(wide.mxcsr & 0x3F, MXCSR_PRECISION);
+
     let qword = SatFpToIntKind::F64ToI64 { signed: false };
     let code = encoding(qword, 2, 17, 0, 3, true, true, true, Some(1));
     let mut broadcast = vcpu(&code);
@@ -780,6 +1010,17 @@ fn feature_gate_and_reserved_fields_fail_before_address_or_state_access() {
         };
         let memory = encoding(nontruncating, 0, 0, 0, 0, false, false, true, None);
         assert_ud_before_state_or_memory(&memory, false);
+    }
+    for packed in [
+        SatFpToIntKind::F32ToI32 { signed: true },
+        SatFpToIntKind::F32ToI32 { signed: false },
+        SatFpToIntKind::F32ToI64 { signed: true },
+        SatFpToIntKind::F32ToI64 { signed: false },
+        SatFpToIntKind::F64ToI32 { signed: true },
+        SatFpToIntKind::F64ToI32 { signed: false },
+    ] {
+        let register = encoding(packed, 0, 0, 1, 0, false, false, false, None);
+        assert_ud_before_state_or_memory(&register, false);
     }
     let nontruncating = SatFpToIntKind::F32ToI8 {
         signed: false,
@@ -930,6 +1171,45 @@ fn direct_execution_and_canonical_smir_match_register_masks_and_sae() {
         f64_source,
         old_destination,
         Some((3, 0b1101_1011)),
+        0x1F80,
+    );
+
+    let mut narrowing_source = [0u64; 16];
+    for (lane, value) in [-2_147_483_648.9f64, 2_147_483_648.0]
+        .into_iter()
+        .enumerate()
+    {
+        narrowing_source[lane] = value.to_bits();
+    }
+    assert_direct_smir_parity(
+        &[0x62, 0xF5, 0xFC, 0x08, 0x6D, 0xCA],
+        1,
+        2,
+        narrowing_source,
+        old_destination,
+        None,
+        0x1F80,
+    );
+
+    let mut widening_source = [0u64; 16];
+    for (lane, value) in [-1.9f32, 1.9, f32::NAN, f32::INFINITY]
+        .into_iter()
+        .enumerate()
+    {
+        SmirInterpreter::set_lane(
+            &mut widening_source,
+            lane as u8,
+            32,
+            u64::from(value.to_bits()),
+        );
+    }
+    assert_direct_smir_parity(
+        &[0x62, 0xF5, 0x7D, 0x28, 0x6D, 0xCA],
+        1,
+        2,
+        widening_source,
+        old_destination,
+        None,
         0x1F80,
     );
 

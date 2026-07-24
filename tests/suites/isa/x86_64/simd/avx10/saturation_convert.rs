@@ -8,12 +8,75 @@
 //! - VCVTTPS2IUBS - Convert packed single to unsigned byte with truncation and saturation
 //! - VCVTTPD2QQS - Convert packed double to signed quadword with truncation and saturation
 //! - VCVTTPD2UQQS - Convert packed double to unsigned quadword with truncation and saturation
+//! - VCVTTPD2DQS - Convert packed double to signed doubleword with truncation and saturation
+//! - VCVTTPD2UDQS - Convert packed double to unsigned doubleword with truncation and saturation
+//! - VCVTTPS2DQS - Convert packed single to signed doubleword with truncation and saturation
+//! - VCVTTPS2UDQS - Convert packed single to unsigned doubleword with truncation and saturation
 //! - VCVTTPS2QQS - Convert packed single to signed quadword with truncation and saturation
 //! - VCVTTPS2UQQS - Convert packed single to unsigned quadword with truncation and saturation
 //! - VCVTTNEBF162IBS - Convert packed BF16 to signed byte with truncation and saturation
 //! - VCVTTNEBF162IUBS - Convert packed BF16 to unsigned byte with truncation and saturation
 
 use crate::common::*;
+
+fn pack_f32(values: [f32; 4]) -> [u64; 2] {
+    [
+        u64::from(values[0].to_bits()) | (u64::from(values[1].to_bits()) << 32),
+        u64::from(values[2].to_bits()) | (u64::from(values[3].to_bits()) << 32),
+    ]
+}
+
+fn pack_u32(values: [u32; 4]) -> [u64; 2] {
+    [
+        u64::from(values[0]) | (u64::from(values[1]) << 32),
+        u64::from(values[2]) | (u64::from(values[3]) << 32),
+    ]
+}
+
+#[test]
+fn packed_i32_i64_saturation_families_commit_known_results() {
+    let code = [
+        0x62, 0xF5, 0xFC, 0x08, 0x6D, 0xC1, // VCVTTPD2DQS xmm0, xmm1
+        0x62, 0xF5, 0xFC, 0x08, 0x6C, 0xD3, // VCVTTPD2UDQS xmm2, xmm3
+        0x62, 0xF5, 0x7C, 0x08, 0x6D, 0xE5, // VCVTTPS2DQS xmm4, xmm5
+        0x62, 0xF5, 0x7C, 0x08, 0x6C, 0xF7, // VCVTTPS2UDQS xmm6, xmm7
+        0x62, 0x55, 0x7D, 0x28, 0x6D, 0xC1, // VCVTTPS2QQS ymm8, xmm9
+        0x62, 0x55, 0x7D, 0x28, 0x6C, 0xD3, // VCVTTPS2UQQS ymm10, xmm11
+        0xF4,
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    vcpu.set_avx10_sat_convert_enabled(true);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[1] = [
+        (-2_147_483_648.9f64).to_bits(),
+        2_147_483_648.0f64.to_bits(),
+    ];
+    regs.xmm[3] = [(-0.5f64).to_bits(), 4_294_967_296.0f64.to_bits()];
+    regs.xmm[5] = pack_f32([-2_147_483_648.0, -1.9, 1.9, 2_147_483_648.0]);
+    regs.xmm[7] = pack_f32([-0.5, 1.9, 255.0, 4_294_967_296.0]);
+    regs.xmm[9] = pack_f32([
+        -9_223_372_036_854_775_808.0,
+        -1.9,
+        1.9,
+        9_223_372_036_854_775_808.0,
+    ]);
+    regs.xmm[11] = pack_f32([-0.5, 1.9, 255.0, 18_446_744_073_709_551_616.0]);
+    vcpu.set_regs(&regs).unwrap();
+
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.xmm[0], [0x7FFF_FFFF_8000_0000, 0]);
+    assert_eq!(regs.xmm[2], [0xFFFF_FFFF_0000_0000, 0]);
+    assert_eq!(
+        regs.xmm[4],
+        pack_u32([0x8000_0000, 0xFFFF_FFFF, 1, 0x7FFF_FFFF])
+    );
+    assert_eq!(regs.xmm[6], pack_u32([0, 1, 255, 0xFFFF_FFFF]));
+    assert_eq!(regs.xmm[8], [0x8000_0000_0000_0000, u64::MAX]);
+    assert_eq!(regs.ymm_high[8], [1, i64::MAX as u64]);
+    assert_eq!(regs.xmm[10], [0, 1]);
+    assert_eq!(regs.ymm_high[10], [255, u64::MAX]);
+}
 
 // ============================================================================
 // VCVTTPS2IBS Tests - Convert Single to Signed Byte with Saturation
@@ -22,7 +85,7 @@ use crate::common::*;
 #[test]
 fn test_vcvttps2ibs_xmm_basic() {
     // VCVTTPS2IBS XMM0, XMM1
-    // EVEX.128.NP.MAP5.W0 68 /r
+    // EVEX.128.66.MAP5.W0 68 /r
     let code = [
         0x62, 0xF5, 0x7D, 0x08, 0x68, 0xC1, // VCVTTPS2IBS xmm0, xmm1
         0xF4,
@@ -144,7 +207,7 @@ fn test_vcvttps2iubs_xmm_memory() {
 #[test]
 fn test_vcvttpd2qqs_xmm_basic() {
     // VCVTTPD2QQS XMM0, XMM1
-    // EVEX.128.66.0F.W1 6D /r
+    // EVEX.128.66.MAP5.W1 6D /r
     let code = [
         0x62, 0xF5, 0xFD, 0x08, 0x6D, 0xC1, // VCVTTPD2QQS xmm0, xmm1
         0xF4,
@@ -206,7 +269,7 @@ fn test_vcvttpd2qqs_zmm_broadcast() {
 #[test]
 fn test_vcvttpd2uqqs_xmm_basic() {
     // VCVTTPD2UQQS XMM0, XMM1
-    // EVEX.128.66.0F.W1 6C /r
+    // EVEX.128.66.MAP5.W1 6C /r
     let code = [
         0x62, 0xF5, 0xFD, 0x08, 0x6C, 0xC1, // VCVTTPD2UQQS xmm0, xmm1
         0xF4,
@@ -244,7 +307,7 @@ fn test_vcvttpd2uqqs_zmm_basic() {
 #[test]
 fn test_vcvttps2qqs_xmm_basic() {
     // VCVTTPS2QQS XMM0, XMM1
-    // EVEX.128.66.0F.W0 6D /r
+    // EVEX.128.66.MAP5.W0 6D /r
     let code = [
         0x62, 0xF5, 0x7D, 0x08, 0x6D, 0xC1, // VCVTTPS2QQS xmm0, xmm1
         0xF4,
@@ -282,7 +345,7 @@ fn test_vcvttps2qqs_zmm_basic() {
 #[test]
 fn test_vcvttps2uqqs_xmm_basic() {
     // VCVTTPS2UQQS XMM0, XMM1
-    // EVEX.128.66.0F.W0 6C /r
+    // EVEX.128.66.MAP5.W0 6C /r
     let code = [
         0x62, 0xF5, 0x7D, 0x08, 0x6C, 0xC1, // VCVTTPS2UQQS xmm0, xmm1
         0xF4,

@@ -1,6 +1,7 @@
 //! AVX10.2 MAP5 saturating-conversion lowering.
 
 use super::*;
+use crate::smir::ir::ops::x86_sat_fp_to_int_widths;
 
 impl Avx10Lowerer {
     pub(super) fn lower_vcvt_fp_to_int_sat(
@@ -18,27 +19,34 @@ impl Avx10Lowerer {
         zeroing: bool,
         suppress_exceptions: bool,
     ) -> Avx10LowerResult<()> {
-        let vector_matches_width = |reg: &VReg| {
+        let vector_matches_width = |reg: &VReg, reg_width: VecWidth| {
             matches!(
-                (reg, width),
-                (VReg::Arch(ArchReg::X86(X86Reg::Xmm(_))), VecWidth::V128)
+                (reg, reg_width),
+                (VReg::Arch(ArchReg::X86(X86Reg::Xmm(_))), VecWidth::V64)
+                    | (VReg::Arch(ArchReg::X86(X86Reg::Xmm(_))), VecWidth::V128)
                     | (VReg::Arch(ArchReg::X86(X86Reg::Ymm(_))), VecWidth::V256)
                     | (VReg::Arch(ArchReg::X86(X86Reg::Zmm(_))), VecWidth::V512)
             )
         };
-        if !matches!(width, VecWidth::V128 | VecWidth::V256 | VecWidth::V512)
-            || !vector_matches_width(dst)
-            || !vector_matches_width(src)
+        let Some((src_width, encoded_width)) =
+            x86_sat_fp_to_int_widths(fp_elem, int_elem, width, truncate)
+        else {
+            return Err(LowerError::UnsupportedOperation(
+                "Saturation conversion: invalid types or payload width".to_string(),
+            ));
+        };
+        if !vector_matches_width(dst, width)
+            || !vector_matches_width(src, src_width)
             || (zeroing && mask.is_none())
             || round == FpRoundMode::RoundNearestTiesAway
             || if truncate {
                 round != FpRoundMode::RoundTowardZero
-                    || (suppress_exceptions && width != VecWidth::V512)
+                    || (suppress_exceptions && encoded_width != VecWidth::V512)
             } else {
                 !matches!((round, suppress_exceptions), (FpRoundMode::Dynamic, false))
                     && !(round != FpRoundMode::Dynamic
                         && suppress_exceptions
-                        && width == VecWidth::V512)
+                        && encoded_width == VecWidth::V512)
             }
         {
             return Err(LowerError::UnsupportedOperation(
@@ -60,13 +68,19 @@ impl Avx10Lowerer {
             None => 0,
         };
 
-        let (opcode, w) = match (fp_elem, int_elem, signed, truncate) {
-            (VecElementType::F32, VecElementType::I8, true, true) => (0x68, false),
-            (VecElementType::F32, VecElementType::I8, true, false) => (0x69, false),
-            (VecElementType::F32, VecElementType::I8, false, true) => (0x6A, false),
-            (VecElementType::F32, VecElementType::I8, false, false) => (0x6B, false),
-            (VecElementType::F64, VecElementType::I64, true, true) => (0x6D, true),
-            (VecElementType::F64, VecElementType::I64, false, true) => (0x6C, true),
+        let (pp, opcode, w) = match (fp_elem, int_elem, signed, truncate) {
+            (VecElementType::F32, VecElementType::I8, true, true) => (1, 0x68, false),
+            (VecElementType::F32, VecElementType::I8, true, false) => (1, 0x69, false),
+            (VecElementType::F32, VecElementType::I8, false, true) => (1, 0x6A, false),
+            (VecElementType::F32, VecElementType::I8, false, false) => (1, 0x6B, false),
+            (VecElementType::F32, VecElementType::I32, true, true) => (0, 0x6D, false),
+            (VecElementType::F32, VecElementType::I32, false, true) => (0, 0x6C, false),
+            (VecElementType::F32, VecElementType::I64, true, true) => (1, 0x6D, false),
+            (VecElementType::F32, VecElementType::I64, false, true) => (1, 0x6C, false),
+            (VecElementType::F64, VecElementType::I32, true, true) => (0, 0x6D, true),
+            (VecElementType::F64, VecElementType::I32, false, true) => (0, 0x6C, true),
+            (VecElementType::F64, VecElementType::I64, true, true) => (1, 0x6D, true),
+            (VecElementType::F64, VecElementType::I64, false, true) => (1, 0x6C, true),
             _ => {
                 return Err(LowerError::UnsupportedOperation(
                     "Saturation conversion: invalid types".to_string(),
@@ -92,9 +106,9 @@ impl Avx10Lowerer {
         };
         enc.emit_evex_with_b(
             5, // MAP5
-            1, // 66
+            pp,
             w,
-            width,
+            encoded_width,
             dst_reg,
             0, // EVEX.vvvv is reserved and encodes 1111b.
             src_reg,
@@ -149,6 +163,21 @@ mod tests {
                 truncate: false,
                 round,
                 zeroing,
+                suppress_exceptions,
+            }
+        };
+        let shaped = |dst, src, fp_elem, int_elem, width, signed, suppress_exceptions| {
+            OpKind::VCvtFpToIntSat {
+                dst,
+                src,
+                mask: None,
+                fp_elem,
+                int_elem,
+                width,
+                signed,
+                truncate: true,
+                round: FpRoundMode::RoundTowardZero,
+                zeroing: false,
                 suppress_exceptions,
             }
         };
@@ -223,6 +252,90 @@ mod tests {
                     true,
                 ),
                 &[0x62, 0xF5, 0x7D, 0x18, 0x68, 0xCA][..],
+            ),
+            (
+                shaped(
+                    xmm(1),
+                    xmm(2),
+                    VecElementType::F64,
+                    VecElementType::I32,
+                    VecWidth::V64,
+                    true,
+                    false,
+                ),
+                &[0x62, 0xF5, 0xFC, 0x08, 0x6D, 0xCA][..],
+            ),
+            (
+                shaped(
+                    xmm(1),
+                    ymm(2),
+                    VecElementType::F64,
+                    VecElementType::I32,
+                    VecWidth::V128,
+                    false,
+                    false,
+                ),
+                &[0x62, 0xF5, 0xFC, 0x28, 0x6C, 0xCA][..],
+            ),
+            (
+                shaped(
+                    ymm(1),
+                    zmm(2),
+                    VecElementType::F64,
+                    VecElementType::I32,
+                    VecWidth::V256,
+                    true,
+                    true,
+                ),
+                &[0x62, 0xF5, 0xFC, 0x18, 0x6D, 0xCA][..],
+            ),
+            (
+                shaped(
+                    zmm(1),
+                    zmm(2),
+                    VecElementType::F32,
+                    VecElementType::I32,
+                    VecWidth::V512,
+                    true,
+                    false,
+                ),
+                &[0x62, 0xF5, 0x7C, 0x48, 0x6D, 0xCA][..],
+            ),
+            (
+                shaped(
+                    xmm(1),
+                    xmm(2),
+                    VecElementType::F32,
+                    VecElementType::I64,
+                    VecWidth::V128,
+                    false,
+                    false,
+                ),
+                &[0x62, 0xF5, 0x7D, 0x08, 0x6C, 0xCA][..],
+            ),
+            (
+                shaped(
+                    ymm(1),
+                    xmm(2),
+                    VecElementType::F32,
+                    VecElementType::I64,
+                    VecWidth::V256,
+                    true,
+                    false,
+                ),
+                &[0x62, 0xF5, 0x7D, 0x28, 0x6D, 0xCA][..],
+            ),
+            (
+                shaped(
+                    zmm(1),
+                    ymm(2),
+                    VecElementType::F32,
+                    VecElementType::I64,
+                    VecWidth::V512,
+                    false,
+                    true,
+                ),
+                &[0x62, 0xF5, 0x7D, 0x18, 0x6C, 0xCA][..],
             ),
             (
                 rounded(
@@ -331,6 +444,15 @@ mod tests {
                 VecElementType::I8,
                 VecWidth::V128,
                 true,
+                true,
+                false,
+            ),
+            shaped(
+                xmm(1),
+                xmm(2),
+                VecElementType::F64,
+                VecElementType::I32,
+                VecWidth::V128,
                 true,
                 false,
             ),
