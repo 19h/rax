@@ -830,10 +830,19 @@ fn lift_legacy_vex_evex_half_vector_move_family() {
     )));
     assert!(movhl.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::VMov {
+        OpKind::VExtractLane {
+            vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(18))),
+            lane: 1,
+            ..
+        }
+    )));
+    assert!(movhl.ops.iter().any(|op| matches!(
+        op.kind,
+        OpKind::VBroadcast {
             dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
-            src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(18))),
-            width: VecWidth::V128,
+            elem: VecElementType::I64,
+            lanes: 1,
+            ..
         }
     )));
     let compressed = lift_single(&[0x62, 0xE1, 0xBD, 0x00, 0x12, 0x78, 0x08]).unwrap();

@@ -42,6 +42,8 @@ mod evex_gfni_replay;
 #[cfg(test)]
 mod evex_gpr_broadcast_replay;
 #[cfg(test)]
+mod evex_high_low_move_replay;
+#[cfg(test)]
 mod evex_lane_shuffle_replay;
 #[cfg(test)]
 mod evex_mask_blend_replay;

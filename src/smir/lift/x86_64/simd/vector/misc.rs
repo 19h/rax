@@ -339,6 +339,22 @@ impl X86_64Lifter {
                         0
                     },
             );
+            // VEX/EVEX XMM destinations clear all shared vector state above
+            // bit 127. Snapshot the merge lane before clearing `dst` so every
+            // dst/src1/src2 alias remains exact.
+            let preserved_lane = 1 - lane;
+            let preserved = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VExtractLane {
+                    dst: preserved,
+                    vec: merge,
+                    lane: preserved_lane,
+                    elem: VecElementType::I64,
+                    sign: SignExtend::Zero,
+                },
+            ));
             let scalar = if modrm.is_memory {
                 let (addr, pre_ops) = if prefix.encoding == VecEncodingKind::Evex {
                     self.vec_disp8_addr_to_smir(
@@ -387,13 +403,35 @@ impl X86_64Lifter {
                 ));
                 scalar
             };
+            let zero = ctx.alloc_vreg();
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
                 pc,
-                OpKind::VMov {
+                OpKind::Mov {
+                    dst: zero,
+                    src: SrcOperand::Imm(0),
+                    width: OpWidth::W64,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VBroadcast {
                     dst,
-                    src: merge,
-                    width: VecWidth::V128,
+                    scalar: zero,
+                    elem: VecElementType::I64,
+                    lanes: 1,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VInsertLane {
+                    dst,
+                    vec: dst,
+                    scalar: preserved,
+                    lane: preserved_lane,
+                    elem: VecElementType::I64,
                 },
             ));
             ops.push(SmirOp::new(

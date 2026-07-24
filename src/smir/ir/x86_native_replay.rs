@@ -582,6 +582,21 @@ pub fn x86_evex_scalar_lane_transfer_replay_spans(
     })
 }
 
+/// Identify valid register-only EVEX packed-single high/low move replay groups
+/// in `block` in O(N) time and O(P) space for N operations and P unique guest
+/// PCs. `VMOVHLPS` and `VMOVLHPS` are admitted; their architecturally invalid
+/// memory ModR/M forms and every malformed EVEX field remain rejected.
+pub fn x86_evex_high_low_move_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_high_low_move_needs_vl()
+            .map(|needs_vl| (needs_vl, false, false))
+    })
+}
+
 /// Identify valid register-only EVEX GFNI replay groups in `block` in O(N)
 /// time and O(P) space for N operations and P unique guest PCs.
 pub fn x86_evex_gfni_replay_spans(
@@ -888,6 +903,11 @@ pub fn x86_evex_native_replay_spans(
                 instruction
                     .evex_register_scalar_lane_transfer_requires_dq()
                     .map(|needs_dq| (false, needs_dq, false))
+            })
+            .or_else(|| {
+                instruction
+                    .evex_register_high_low_move_needs_vl()
+                    .map(|needs_vl| (needs_vl, false, false))
             })
             .or_else(|| {
                 instruction

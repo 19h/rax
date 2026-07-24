@@ -43,6 +43,8 @@ mod fp_sqrt_replay;
 mod gfni_replay;
 #[path = "avx512_inventory/gpr_broadcast_replay.rs"]
 mod gpr_broadcast_replay;
+#[path = "avx512_inventory/high_low_move_replay.rs"]
+mod high_low_move_replay;
 #[path = "avx512_inventory/lane_shuffle_replay.rs"]
 mod lane_shuffle_replay;
 #[path = "avx512_inventory/mask_blend_replay.rs"]
