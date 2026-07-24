@@ -34,6 +34,9 @@ mod gfni;
 #[path = "x86_native_replay_tests/gpr_broadcast.rs"]
 mod gpr_broadcast;
 
+#[path = "x86_native_replay_tests/scalar_move.rs"]
+mod scalar_move;
+
 #[path = "x86_native_replay_tests/vp2intersect.rs"]
 mod vp2intersect;
 

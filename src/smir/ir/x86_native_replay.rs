@@ -535,6 +535,21 @@ pub fn x86_evex_fp_sqrt_replay_spans(
     })
 }
 
+/// Identify valid register-only EVEX scalar-move replay groups in `block` in
+/// O(N) time and O(P) space for N operations and P unique guest PCs.
+/// `VMOVSH/SS/SD` register forms in both opcode directions are admitted; every
+/// memory form remains at the precise SMIR interpreter boundary.
+pub fn x86_evex_scalar_move_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_scalar_move_requires_fp16()
+            .map(|needs_fp16| (false, false, needs_fp16))
+    })
+}
+
 /// Identify valid register-only EVEX GFNI replay groups in `block` in O(N)
 /// time and O(P) space for N operations and P unique guest PCs.
 pub fn x86_evex_gfni_replay_spans(
@@ -826,6 +841,11 @@ pub fn x86_evex_native_replay_spans(
                 instruction
                     .evex_register_fp_sqrt_requirements()
                     .map(|(needs_vl, needs_fp16)| (needs_vl, false, needs_fp16))
+            })
+            .or_else(|| {
+                instruction
+                    .evex_register_scalar_move_requires_fp16()
+                    .map(|needs_fp16| (false, false, needs_fp16))
             })
             .or_else(|| {
                 instruction

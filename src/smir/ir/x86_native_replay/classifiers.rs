@@ -5,6 +5,7 @@ mod fp_class;
 mod fp_compare;
 mod fp_sqrt;
 mod gfni;
+mod scalar_move;
 mod vp2intersect;
 mod vpclmulqdq;
 
