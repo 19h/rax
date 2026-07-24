@@ -34,6 +34,11 @@ impl X86_64Lifter {
                 bytes: vec![0x0F, opcode],
             });
         }
+        let operation =
+            x86_fp_binary_operation(opcode).ok_or_else(|| LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![0x0F, opcode],
+            })?;
         let prefix_kind = if prefix.rep_prefix == Some(0xF3) {
             X86SsePrefix::Rep
         } else if prefix.rep_prefix == Some(0xF2) {
@@ -90,44 +95,16 @@ impl X86_64Lifter {
             };
             let vector_result = ctx.alloc_vreg();
             let scalar_result = ctx.alloc_vreg();
-            let kind = match opcode {
-                0x58 => OpKind::VAdd {
-                    dst: vector_result,
-                    src1: dst,
-                    src2,
-                    elem,
-                    lanes: 1,
-                },
-                0x59 => OpKind::VMul {
-                    dst: vector_result,
-                    src1: dst,
-                    src2,
-                    elem,
-                    lanes: 1,
-                },
-                0x5C => OpKind::VSub {
-                    dst: vector_result,
-                    src1: dst,
-                    src2,
-                    elem,
-                    lanes: 1,
-                },
-                0x5E => OpKind::VDiv {
-                    dst: vector_result,
-                    src1: dst,
-                    src2,
-                    elem,
-                    lanes: 1,
-                },
-                0x5D | 0x5F => OpKind::VX86MinMax {
-                    dst: vector_result,
-                    src1: dst,
-                    src2,
-                    elem,
-                    lanes: 1,
-                    min: opcode == 0x5D,
-                },
-                _ => unreachable!(),
+            let kind = OpKind::X86FpBinary {
+                dst: vector_result,
+                src1: dst,
+                src2,
+                mask: None,
+                elem,
+                lanes: 1,
+                op: operation,
+                round: FpRoundMode::Dynamic,
+                suppress_exceptions: false,
             };
             ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
@@ -194,49 +171,17 @@ impl X86_64Lifter {
         };
         let dst = self.xmm(modrm.reg);
         let lanes = VecWidth::V128.lanes(elem) as u8;
-        let kind = match opcode {
-            0x58 => OpKind::VAdd {
-                dst,
-                src1: dst,
-                src2,
-                elem,
-                lanes,
-            },
-            0x59 => OpKind::VMul {
-                dst,
-                src1: dst,
-                src2,
-                elem,
-                lanes,
-            },
-            0x5C => OpKind::VSub {
-                dst,
-                src1: dst,
-                src2,
-                elem,
-                lanes,
-            },
-            0x5E => OpKind::VDiv {
-                dst,
-                src1: dst,
-                src2,
-                elem,
-                lanes,
-            },
-            0x5D | 0x5F => OpKind::VX86MinMax {
-                dst,
-                src1: dst,
-                src2,
-                elem,
-                lanes,
-                min: opcode == 0x5D,
-            },
-            _ => {
-                return Err(LiftError::InvalidEncoding {
-                    addr: pc,
-                    bytes: vec![0x0F, opcode],
-                });
-            }
+        let raw = ctx.alloc_vreg();
+        let kind = OpKind::X86FpBinary {
+            dst: raw,
+            src1: dst,
+            src2,
+            mask: None,
+            elem,
+            lanes,
+            op: operation,
+            round: FpRoundMode::Dynamic,
+            suppress_exceptions: false,
         };
         ops.push(SmirOp::with_hint(
             OpId(ops.len() as u16),
@@ -247,6 +192,7 @@ impl X86_64Lifter {
                 opcode,
             },
         ));
+        self.append_legacy_packed_result(dst, raw, elem, pc, ctx, &mut ops);
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,

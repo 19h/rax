@@ -22,6 +22,9 @@ mod chunk_shuffle;
 #[path = "x86_native_replay_tests/fp_class.rs"]
 mod fp_class;
 
+#[path = "x86_native_replay_tests/fp_arithmetic.rs"]
+mod fp_arithmetic;
+
 #[path = "x86_native_replay_tests/fp_compare.rs"]
 mod fp_compare;
 

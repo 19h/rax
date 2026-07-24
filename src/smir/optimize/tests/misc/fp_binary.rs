@@ -50,9 +50,11 @@ fn optimizer_preserves_legacy_and_evex_scalar_min_memory_frontiers() {
     assert!(load < destination_write);
     assert!(ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::VX86MinMax {
-            min: true,
+        OpKind::X86FpBinary {
+            op: X86FpBinaryOp::Min,
             lanes: 1,
+            round: FpRoundMode::Dynamic,
+            suppress_exceptions: false,
             ..
         }
     )));

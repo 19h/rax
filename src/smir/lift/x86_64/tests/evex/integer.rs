@@ -16,12 +16,16 @@ fn lift_legacy_vex_evex_scalar_and_packed_x86_minmax() {
         let result = lift_single(bytes).unwrap();
         assert!(result.ops.iter().any(|op| matches!(
             op.kind,
-            OpKind::VX86MinMax {
+            OpKind::X86FpBinary {
                 elem: actual_elem,
                 lanes: actual_lanes,
-                min: actual_min,
+                op: actual_op,
+                round: FpRoundMode::Dynamic,
+                suppress_exceptions: false,
                 ..
-            } if actual_elem == elem && actual_lanes == lanes && actual_min == min
+            } if actual_elem == elem
+                && actual_lanes == lanes
+                && actual_op == if min { X86FpBinaryOp::Min } else { X86FpBinaryOp::Max }
         )));
     }
 
@@ -42,11 +46,11 @@ fn lift_legacy_vex_evex_scalar_and_packed_x86_minmax() {
     assert!(legacy_packed.ops.iter().any(|op| matches!(
         op,
         SmirOp {
-            kind: OpKind::VX86MinMax {
-                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+            kind: OpKind::X86FpBinary {
+                dst: VReg::Virtual(_),
                 elem: VecElementType::F32,
                 lanes: 4,
-                min: true,
+                op: X86FpBinaryOp::Min,
                 ..
             },
             x86_hint: Some(X86OpHint::SseOp {
@@ -68,7 +72,7 @@ fn lift_legacy_vex_evex_scalar_and_packed_x86_minmax() {
                 }
             ))
             .count(),
-        0
+        4
     );
 
     let masked_memory = lift_single(&[0x62, 0xF1, 0x7E, 0x09, 0x5D, 0x10]).unwrap();
@@ -111,10 +115,10 @@ fn lift_legacy_vex_evex_scalar_and_packed_x86_minmax() {
     )));
     assert!(compressed.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::VX86MinMax {
+        OpKind::X86FpBinary {
             elem: VecElementType::F32,
             lanes: 16,
-            min: true,
+            op: X86FpBinaryOp::Min,
             ..
         }
     )));
@@ -122,9 +126,10 @@ fn lift_legacy_vex_evex_scalar_and_packed_x86_minmax() {
     let high = lift_single(&[0x62, 0xA1, 0x7C, 0x40, 0x5D, 0xD1]).unwrap();
     assert!(high.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::VX86MinMax {
+        OpKind::X86FpBinary {
             src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
             src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+            op: X86FpBinaryOp::Min,
             ..
         }
     )));

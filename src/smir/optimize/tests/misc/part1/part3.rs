@@ -7,7 +7,8 @@ use crate::smir::optimize::*;
 #[test]
 fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
     use crate::smir::ir::types::{
-        FpRoundMode, ShiftOp, SourceArch, VLaneOp, VecCmpCond, VecUnaryOp, VecWidth, X86Reg,
+        FpRoundMode, ShiftOp, SourceArch, VLaneOp, VecCmpCond, VecUnaryOp, VecWidth, X86FpBinaryOp,
+        X86Reg,
     };
     use crate::smir::ir::{FunctionBuilder, SmirFunction};
     use crate::smir::lift::x86_64::X86_64Lifter;
@@ -6084,25 +6085,35 @@ fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
                 )
             })
             .unwrap_or_else(|| panic!("{name}: faulting VLoad removed"));
-        let first_destination_write = ops
+        let arithmetic = ops
             .iter()
             .position(|op| {
                 matches!(
-                    op,
-                    SmirOp {
-                        kind: OpKind::VAdd {
-                            dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
-                            ..
-                        },
-                        x86_hint: Some(X86OpHint::SseOp { .. }),
+                    op.kind,
+                    OpKind::X86FpBinary {
+                        op: X86FpBinaryOp::Add,
+                        elem: VecElementType::F32,
+                        lanes: 4,
                         ..
                     }
                 )
             })
-            .unwrap_or_else(|| panic!("{name}: hinted destination write removed"));
+            .unwrap_or_else(|| panic!("{name}: precise arithmetic removed"));
+        let first_destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        ..
+                    }
+                )
+            })
+            .unwrap_or_else(|| panic!("{name}: architectural destination write removed"));
         assert!(
-            load < first_destination_write,
-            "{name}: write before fault boundary"
+            load < arithmetic && arithmetic < first_destination_write,
+            "{name}: arithmetic or write crossed the memory-fault boundary"
         );
     }
 

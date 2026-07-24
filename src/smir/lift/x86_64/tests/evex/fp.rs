@@ -412,33 +412,53 @@ fn lift_legacy_vex_evex_scalar_fp_precision_conversions() {
 #[test]
 fn lift_evex_packed_fp_arithmetic_covers_ops_masks_e4_broadcast_high_regs_and_invalids() {
     for (bytes, expected) in [
-        (&[0x62, 0xA1, 0x7C, 0xC3, 0x58, 0xCA][..], "add"),
-        (&[0x62, 0xF1, 0xED, 0x2A, 0x59, 0xCB][..], "mul"),
-        (&[0x62, 0xF1, 0x6C, 0xC9, 0x5C, 0x48, 0x02][..], "sub"),
-        (&[0x62, 0xF1, 0xED, 0x59, 0x5E, 0x48, 0x08][..], "div"),
-        (&[0x62, 0xF1, 0x7C, 0x49, 0x5D, 0xCB][..], "min"),
-        (&[0x62, 0xF1, 0xFD, 0x49, 0x5F, 0xCB][..], "max"),
+        (
+            &[0x62, 0xA1, 0x7C, 0xC3, 0x58, 0xCA][..],
+            X86FpBinaryOp::Add,
+        ),
+        (
+            &[0x62, 0xF1, 0xED, 0x2A, 0x59, 0xCB][..],
+            X86FpBinaryOp::Mul,
+        ),
+        (
+            &[0x62, 0xF1, 0x6C, 0xC9, 0x5C, 0x48, 0x02][..],
+            X86FpBinaryOp::Sub,
+        ),
+        (
+            &[0x62, 0xF1, 0xED, 0x59, 0x5E, 0x48, 0x08][..],
+            X86FpBinaryOp::Div,
+        ),
+        (
+            &[0x62, 0xF1, 0x7C, 0x49, 0x5D, 0xCB][..],
+            X86FpBinaryOp::Min,
+        ),
+        (
+            &[0x62, 0xF1, 0xFD, 0x49, 0x5F, 0xCB][..],
+            X86FpBinaryOp::Max,
+        ),
     ] {
         let lifted = lift_single(bytes).unwrap();
-        assert!(lifted.ops.iter().any(|op| match (&op.kind, expected) {
-            (OpKind::VAdd { .. }, "add")
-            | (OpKind::VMul { .. }, "mul")
-            | (OpKind::VSub { .. }, "sub")
-            | (OpKind::VDiv { .. }, "div") => true,
-            (OpKind::VX86MinMax { min: true, .. }, "min")
-            | (OpKind::VX86MinMax { min: false, .. }, "max") => true,
-            _ => false,
-        }));
+        assert!(lifted.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::X86FpBinary {
+                op,
+                round: FpRoundMode::Dynamic,
+                suppress_exceptions: false,
+                ..
+            } if op == expected
+        )));
     }
 
     let high = lift_single(&[0x62, 0xA1, 0x7C, 0xC3, 0x58, 0xCA]).unwrap();
     assert!(high.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::VAdd {
+        OpKind::X86FpBinary {
             src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
             src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+            mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(3)))),
             elem: VecElementType::F32,
             lanes: 16,
+            op: X86FpBinaryOp::Add,
             ..
         }
     )));
@@ -492,16 +512,18 @@ fn lift_evex_packed_fp_arithmetic_covers_ops_masks_e4_broadcast_high_regs_and_in
                 }
             ))
             .count(),
-        8
+        1,
+        "masked scalar broadcast must issue at most one architectural load"
     );
     assert!(broadcast.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::Lea {
+        OpKind::PredLoad {
             addr: Address::BaseOffset {
                 offset: 64,
                 disp_size: DispSize::Disp8,
                 ..
             },
+            width: MemWidth::B8,
             ..
         }
     )));
@@ -511,12 +533,59 @@ fn lift_evex_packed_fp_arithmetic_covers_ops_masks_e4_broadcast_high_regs_and_in
         &[0x62, 0xF1, 0x7D, 0x48, 0x59, 0xC1][..], // VMULPD requires W1
         &[0x62, 0xF1, 0x7C, 0x88, 0x5C, 0xC1][..], // {z} requires a mask
         &[0x62, 0xF1, 0x7C, 0x68, 0x5E, 0xC1][..], // L'L=3 without ER
-        &[0x62, 0xF1, 0x7C, 0x38, 0x5D, 0xC1][..], // ER requires VL=512
     ] {
         assert!(matches!(
             lift_single(bytes),
             Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
         ));
+    }
+}
+
+#[test]
+fn lift_evex_packed_fp_arithmetic_embedded_control_is_exact() {
+    for (ll, round) in [
+        (0u8, FpRoundMode::RoundNearest),
+        (1, FpRoundMode::RoundDown),
+        (2, FpRoundMode::RoundUp),
+        (3, FpRoundMode::RoundTowardZero),
+    ] {
+        let bytes = [0x62, 0xF1, 0x6C, 0x18 | (ll << 5), 0x58, 0xCB];
+        let lifted = lift_single(&bytes).unwrap();
+        assert!(
+            lifted.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::X86FpBinary {
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+                    elem: VecElementType::F32,
+                    lanes: 16,
+                    op: X86FpBinaryOp::Add,
+                    round: actual_round,
+                    suppress_exceptions: true,
+                    ..
+                } if actual_round == round
+            )),
+            "{bytes:02X?}"
+        );
+    }
+
+    for ll in 0u8..=3 {
+        let bytes = [0x62, 0xF1, 0x7C, 0x18 | (ll << 5), 0x5D, 0xCB];
+        let min_sae = lift_single(&bytes).unwrap();
+        assert!(
+            min_sae.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::X86FpBinary {
+                    elem: VecElementType::F32,
+                    lanes: 16,
+                    op: X86FpBinaryOp::Min,
+                    round: FpRoundMode::Dynamic,
+                    suppress_exceptions: true,
+                    ..
+                }
+            )),
+            "{bytes:02X?}"
+        );
     }
 }
 #[test]

@@ -623,18 +623,39 @@ fn lift_packed_sse_moves_arithmetic_and_vex_divide() {
     ));
 
     for (bytes, expected_elem, expected) in [
-        (&[0x0F, 0x58, 0xC1][..], VecElementType::F32, "add"),
-        (&[0x66, 0x0F, 0x59, 0xC1][..], VecElementType::F64, "mul"),
-        (&[0x0F, 0x5C, 0xC1][..], VecElementType::F32, "sub"),
-        (&[0x66, 0x0F, 0x5E, 0xC1][..], VecElementType::F64, "div"),
+        (
+            &[0x0F, 0x58, 0xC1][..],
+            VecElementType::F32,
+            X86FpBinaryOp::Add,
+        ),
+        (
+            &[0x66, 0x0F, 0x59, 0xC1][..],
+            VecElementType::F64,
+            X86FpBinaryOp::Mul,
+        ),
+        (
+            &[0x0F, 0x5C, 0xC1][..],
+            VecElementType::F32,
+            X86FpBinaryOp::Sub,
+        ),
+        (
+            &[0x66, 0x0F, 0x5E, 0xC1][..],
+            VecElementType::F64,
+            X86FpBinaryOp::Div,
+        ),
     ] {
         let result = lift_single(bytes).unwrap();
-        let matches_kind = result.ops.iter().any(|op| match (&op.kind, expected) {
-            (OpKind::VAdd { elem, .. }, "add")
-            | (OpKind::VMul { elem, .. }, "mul")
-            | (OpKind::VSub { elem, .. }, "sub")
-            | (OpKind::VDiv { elem, .. }, "div") => *elem == expected_elem,
-            _ => false,
+        let matches_kind = result.ops.iter().any(|op| {
+            matches!(
+                op.kind,
+                OpKind::X86FpBinary {
+                    elem,
+                    op: actual,
+                    round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
+                    ..
+                } if elem == expected_elem && actual == expected
+            )
         });
         assert!(matches_kind, "{bytes:02X?}");
     }
@@ -642,18 +663,20 @@ fn lift_packed_sse_moves_arithmetic_and_vex_divide() {
     let vex_divps = lift_single(&[0xC5, 0xF8, 0x5E, 0xC1]).unwrap();
     assert!(matches!(
         vex_divps.ops.last().unwrap().kind,
-        OpKind::VDiv {
+        OpKind::X86FpBinary {
             elem: VecElementType::F32,
             lanes: 4,
+            op: X86FpBinaryOp::Div,
             ..
         }
     ));
     let vex_divpd = lift_single(&[0xC5, 0xF9, 0x5E, 0xC1]).unwrap();
     assert!(matches!(
         vex_divpd.ops.last().unwrap().kind,
-        OpKind::VDiv {
+        OpKind::X86FpBinary {
             elem: VecElementType::F64,
             lanes: 2,
+            op: X86FpBinaryOp::Div,
             ..
         }
     ));
@@ -730,9 +753,10 @@ fn lift_packed_sse_moves_arithmetic_and_vex_divide() {
     let addsd = lift_single(&[0xF2, 0x0F, 0x58, 0xC1]).unwrap();
     assert!(addsd.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::VAdd {
+        OpKind::X86FpBinary {
             elem: VecElementType::F64,
             lanes: 1,
+            op: X86FpBinaryOp::Add,
             ..
         }
     )));

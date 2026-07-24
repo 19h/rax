@@ -124,6 +124,21 @@ pub fn x86_evex_fp_replay_spans(
     })
 }
 
+/// Identify valid register-only legacy SSE and AVX VEX binary floating-point
+/// arithmetic replay groups in `block` in O(N) time and O(P) space for N
+/// operations and P unique guest PCs. Memory forms and scalar `VEX.L=1`
+/// encodings remain at the precise SMIR interpreter boundary.
+pub fn x86_legacy_vex_fp_arithmetic_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .legacy_vex_register_fp_arithmetic_needs_avx()
+            .map(|_| (false, false, false))
+    })
+}
+
 /// Identify valid register-only EVEX logical replay groups in `block` in O(N)
 /// time and O(P) space for N operations and P unique guest PCs.
 pub fn x86_evex_logic_replay_spans(
@@ -871,6 +886,12 @@ pub fn x86_native_replay_spans(
     x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
         if let Some(needs_vl) = instruction.evex_register_fp_arithmetic_needs_vl() {
             return Some((needs_vl, false, false));
+        }
+        if instruction
+            .legacy_vex_register_fp_arithmetic_needs_avx()
+            .is_some()
+        {
+            return Some((false, false, false));
         }
         if let Some(requirements) = instruction.evex_register_logic_requirements() {
             return Some((requirements.0, requirements.1, false));

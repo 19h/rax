@@ -86,10 +86,9 @@ impl X86_64Lifter {
                     self.lift_vec_packed_int_fp_convert(prefix, bytes, pc, ctx)
                 }
                 0x58 | 0x59 | 0x5C..=0x5F
-                    if prefix.encoding == VecEncodingKind::Evex
-                        && matches!(prefix.pp, X86SsePrefix::None | X86SsePrefix::OpSize) =>
+                    if matches!(prefix.pp, X86SsePrefix::None | X86SsePrefix::OpSize) =>
                 {
-                    self.lift_evex_packed_fp_arithmetic(prefix, opcode, bytes, pc, ctx)
+                    self.lift_vec_packed_fp_arithmetic(prefix, opcode, bytes, pc, ctx)
                 }
                 0xF6 => self.lift_vec_psadbw(prefix, bytes, pc, ctx),
                 0xC4 | 0xC5 => self.lift_vec_pinsrw_pextrw(prefix, opcode, bytes, pc, ctx),
@@ -2164,125 +2163,7 @@ impl X86_64Lifter {
 
                 // Packed/scalar vector ADD/MUL/SUB/DIV/MIN/MAX.
                 0x58 | 0x59 | 0x5C | 0x5D | 0x5E | 0x5F => {
-                    if matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne) {
-                        return self.lift_vec_scalar_fp_arithmetic(prefix, opcode, bytes, pc, ctx);
-                    }
-
-                    let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
-                    let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
-
-                    let dst = self.vec_reg(
-                        modrm.reg
-                            + if prefix.encoding == VecEncodingKind::Evex && prefix.reg_high {
-                                16
-                            } else {
-                                0
-                            },
-                        prefix.width,
-                    );
-                    let src1 = self.vec_reg(
-                        prefix.vvvv
-                            + if prefix.encoding == VecEncodingKind::Evex && prefix.v_high {
-                                16
-                            } else {
-                                0
-                            },
-                        prefix.width,
-                    );
-
-                    let elem = match prefix.pp {
-                        X86SsePrefix::None => VecElementType::F32,
-                        X86SsePrefix::OpSize => VecElementType::F64,
-                        X86SsePrefix::Rep | X86SsePrefix::Repne => unreachable!(),
-                    };
-                    let lanes = prefix.width.lanes(elem) as u8;
-                    if prefix.encoding == VecEncodingKind::Evex
-                        && ((elem == VecElementType::F32 && prefix.w)
-                            || (elem == VecElementType::F64 && !prefix.w))
-                    {
-                        return Err(LiftError::InvalidEncoding {
-                            addr: pc,
-                            bytes: bytes.to_vec(),
-                        });
-                    }
-
-                    let src2 = if modrm.is_memory {
-                        let x86_addr = modrm.addr.as_ref().unwrap();
-                        let (addr, pre_ops) =
-                            self.vec_full_addr_to_smir(prefix, x86_addr, next_pc, ctx);
-                        ops.extend(pre_ops);
-                        let tmp = ctx.alloc_vreg();
-                        ops.push(SmirOp::with_hint(
-                            OpId(ops.len() as u16),
-                            pc,
-                            OpKind::VLoad {
-                                dst: tmp,
-                                addr,
-                                width: prefix.width,
-                            },
-                            X86OpHint::VecAlign(X86VecAlign::Unaligned),
-                        ));
-                        tmp
-                    } else {
-                        self.vec_reg(
-                            modrm.rm
-                                + if prefix.encoding == VecEncodingKind::Evex && prefix.rm_high {
-                                    16
-                                } else {
-                                    0
-                                },
-                            prefix.width,
-                        )
-                    };
-
-                    let op_kind = match opcode {
-                        0x58 => OpKind::VAdd {
-                            dst,
-                            src1,
-                            src2,
-                            elem,
-                            lanes,
-                        },
-                        0x5C => OpKind::VSub {
-                            dst,
-                            src1,
-                            src2,
-                            elem,
-                            lanes,
-                        },
-                        0x59 => OpKind::VMul {
-                            dst,
-                            src1,
-                            src2,
-                            elem,
-                            lanes,
-                        },
-                        0x5E => OpKind::VDiv {
-                            dst,
-                            src1,
-                            src2,
-                            elem,
-                            lanes,
-                        },
-                        0x5D | 0x5F => OpKind::VX86MinMax {
-                            dst,
-                            src1,
-                            src2,
-                            elem,
-                            lanes,
-                            min: opcode == 0x5D,
-                        },
-                        _ => {
-                            return Err(LiftError::Unsupported {
-                                addr: pc,
-                                mnemonic: format!("VEX opcode 0x{:02X}", opcode),
-                            });
-                        }
-                    };
-
-                    ops.push(SmirOp::with_hint(OpId(ops.len() as u16), pc, op_kind, hint));
-
-                    Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+                    self.lift_vec_scalar_fp_arithmetic(prefix, opcode, bytes, pc, ctx)
                 }
 
                 // VEX.128 VLDMXCSR/VSTMXCSR (VEX.0F.AE /2,/3).

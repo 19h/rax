@@ -3,6 +3,7 @@ use super::X86InstructionBytes;
 mod chunk;
 mod fp16_narrow;
 mod fp16_widen;
+mod fp_arithmetic;
 mod fp_class;
 mod fp_compare;
 mod fp_sqrt;
@@ -21,57 +22,6 @@ mod vp2intersect;
 mod vpclmulqdq;
 
 impl X86InstructionBytes {
-    /// Validate the initial native-replay family and return whether its vector
-    /// length requires AVX-512VL in addition to AVX-512F. The admitted set is
-    /// exactly register-source EVEX VADD*/VMUL*/VSUB*/VMIN*/VDIV*/VMAX* over
-    /// binary32/binary64 packed or scalar elements, without EVEX.b embedded
-    /// rounding/SAE. Every structural and reserved field relevant to this set
-    /// is checked so fabricated metadata fails closed.
-    pub fn evex_register_fp_arithmetic_needs_vl(&self) -> Option<bool> {
-        let bytes = self.as_slice();
-        if bytes.len() != 6 || bytes[0] != 0x62 {
-            return None;
-        }
-        let p0 = bytes[1];
-        let p1 = bytes[2];
-        let p2 = bytes[3];
-        let opcode = bytes[4];
-        let modrm = bytes[5];
-
-        // Map 1 (0F), EVEX.P1's fixed-one bit, and a register ModR/M source.
-        if p0 & 0x0f != 1 || p1 & 0x04 == 0 || modrm >> 6 != 3 {
-            return None;
-        }
-        if !matches!(opcode, 0x58 | 0x59 | 0x5c | 0x5d | 0x5e | 0x5f) {
-            return None;
-        }
-
-        let pp = p1 & 0x03;
-        let w = p1 & 0x80 != 0;
-        // PS/SS use W0; PD/SD use W1.
-        if w != matches!(pp, 1 | 3) {
-            return None;
-        }
-        let zeroing = p2 & 0x80 != 0;
-        let ll = (p2 >> 5) & 0x03;
-        let embedded_control = p2 & 0x10 != 0;
-        let mask = p2 & 0x07;
-        if embedded_control || (zeroing && mask == 0) {
-            return None;
-        }
-
-        let scalar = matches!(pp, 2 | 3);
-        if scalar {
-            (ll == 0).then_some(false)
-        } else {
-            match ll {
-                0 | 1 => Some(true),
-                2 => Some(false),
-                _ => None,
-            }
-        }
-    }
-
     /// Validate register-only EVEX packed logical operations and return
     /// `(needs AVX-512VL, needs AVX-512DQ)`. Floating logical VAND*/VANDN*/
     /// VOR*/VXOR* forms use AVX-512DQ; integer VPANDD/Q, VPANDND/Q, VPORD/Q,

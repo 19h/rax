@@ -8,8 +8,8 @@ mod tests {
     use std::collections::HashMap;
 
     use crate::smir::ir::memory::SmirMemory;
-    use crate::smir::ir::types::{BlockId, FunctionId, SourceArch};
-    use crate::smir::ir::{SmirBlock, SmirFunction, Terminator};
+    use crate::smir::ir::types::{BlockId, FunctionId, GuestAddr, SourceArch};
+    use crate::smir::ir::{SmirBlock, SmirFunction, Terminator, X86InstructionBytes};
     use crate::smir::lift::x86_64::X86_64Lifter;
     use crate::smir::lift::{ControlFlow, LiftContext, SmirLifter};
     use crate::smir::lower::SmirLowerer;
@@ -673,15 +673,22 @@ mod tests {
         u64::from_le_bytes(buf)
     }
 
-    fn lift_bytes_to_block(
+    fn lift_bytes_to_block_with_provenance(
         name: &str,
         bytes: &[u8],
         block_id: BlockId,
         pc_start: u64,
-    ) -> Result<SmirBlock, String> {
+    ) -> Result<
+        (
+            SmirBlock,
+            HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+        ),
+        String,
+    > {
         let mut lifter = X86_64Lifter::new();
         let mut ctx = LiftContext::new(SourceArch::X86_64);
         let mut block = SmirBlock::new(block_id, pc_start);
+        let mut instruction_bytes = HashMap::new();
 
         let mut offset = 0;
         let mut pc = pc_start;
@@ -696,6 +703,21 @@ mod tests {
                     if result.bytes_consumed == 0 {
                         break;
                     }
+                    let instruction = remaining.get(..result.bytes_consumed).ok_or_else(|| {
+                        format!(
+                            "{}: lifter consumed {} bytes from a {}-byte input",
+                            name,
+                            result.bytes_consumed,
+                            remaining.len()
+                        )
+                    })?;
+                    let instruction = X86InstructionBytes::new(instruction).ok_or_else(|| {
+                        format!(
+                            "{}: invalid x86 instruction length {}",
+                            name, result.bytes_consumed
+                        )
+                    })?;
+                    instruction_bytes.insert((block_id, pc), instruction);
                     for op in result.ops {
                         block.push_op(op);
                     }
@@ -715,12 +737,23 @@ mod tests {
         }
 
         block.set_terminator(Terminator::Return { values: vec![] });
-        Ok(block)
+        Ok((block, instruction_bytes))
+    }
+
+    fn lift_bytes_to_block(
+        name: &str,
+        bytes: &[u8],
+        block_id: BlockId,
+        pc_start: u64,
+    ) -> Result<SmirBlock, String> {
+        lift_bytes_to_block_with_provenance(name, bytes, block_id, pc_start).map(|(block, _)| block)
     }
 
     fn lower_body_bytes(name: &str, bytes: &[u8]) -> Result<Vec<u8>, String> {
-        let block = lift_bytes_to_block(name, bytes, BlockId(0), 0x1000)?;
+        let (block, instruction_bytes) =
+            lift_bytes_to_block_with_provenance(name, bytes, BlockId(0), 0x1000)?;
         let mut func = SmirFunction::new(FunctionId(0), BlockId(0), 0x1000);
+        func.x86_instruction_bytes = instruction_bytes;
         func.add_block(block);
 
         let mut lowerer = X86_64Lowerer::new();

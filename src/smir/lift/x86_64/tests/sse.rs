@@ -396,15 +396,29 @@ fn lift_aesni_vaes_covers_rounds_unary_keygen_widths_memory_and_invalids() {
 }
 #[test]
 fn legacy_packed_sse_results_are_bounded_to_xmm_lanes() {
-    for (name, bytes, result_kind) in [
-        ("ADDPS", &[0x0F, 0x58, 0xC1][..], "add"),
-        ("ANDPS", &[0x0F, 0x54, 0xC1][..], "and"),
-        ("PADDD", &[0x66, 0x0F, 0xFE, 0xC1][..], "add"),
-        ("PMULLD", &[0x66, 0x0F, 0x38, 0x40, 0xC1][..], "mul"),
+    for (name, bytes, result_kind, expected_inserts) in [
+        ("ADDPS", &[0x0F, 0x58, 0xC1][..], "fp_add", 4),
+        ("ANDPS", &[0x0F, 0x54, 0xC1][..], "and", 0),
+        ("PADDD", &[0x66, 0x0F, 0xFE, 0xC1][..], "int_add", 0),
+        ("PMULLD", &[0x66, 0x0F, 0x38, 0x40, 0xC1][..], "mul", 0),
     ] {
         let result = lift_single(bytes).unwrap();
         match result_kind {
-            "add" => assert!(result.ops.iter().any(|op| matches!(
+            "fp_add" => assert!(result.ops.iter().any(|op| matches!(
+                op,
+                SmirOp {
+                    kind: OpKind::X86FpBinary {
+                        dst: VReg::Virtual(_),
+                        op: X86FpBinaryOp::Add,
+                        round: FpRoundMode::Dynamic,
+                        suppress_exceptions: false,
+                        ..
+                    },
+                    x86_hint: Some(X86OpHint::SseOp { .. }),
+                    ..
+                }
+            ))),
+            "int_add" => assert!(result.ops.iter().any(|op| matches!(
                 op,
                 SmirOp {
                     kind: OpKind::VAdd {
@@ -451,8 +465,8 @@ fn legacy_packed_sse_results_are_bounded_to_xmm_lanes() {
                     }
                 ))
                 .count(),
-            0,
-            "{name}: canonical legacy operation must remain directly lowerable"
+            expected_inserts,
+            "{name}: legacy XMM write boundary"
         );
     }
 

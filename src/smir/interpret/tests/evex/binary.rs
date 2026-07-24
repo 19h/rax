@@ -391,6 +391,331 @@ fn lifted_vex_scalar_binary_operations_use_exact_mxcsr_semantics_and_lane_contra
 }
 
 #[test]
+fn lifted_legacy_and_vex_packed_binary_operations_preserve_exact_destination_boundaries() {
+    for f64_elements in [false, true] {
+        let elem_bits: u32 = if f64_elements { 64 } else { 32 };
+        let max_lanes: u8 = if f64_elements { 8 } else { 16 };
+        for (opcode, expected_f32, expected_f64) in [
+            (0x58u8, 3.5f32.to_bits(), 3.5f64.to_bits()),
+            (0x59, 3.0f32.to_bits(), 3.0f64.to_bits()),
+            (0x5C, (-0.5f32).to_bits(), (-0.5f64).to_bits()),
+            (0x5D, 1.5f32.to_bits(), 1.5f64.to_bits()),
+            (0x5E, 0.75f32.to_bits(), 0.75f64.to_bits()),
+            (0x5F, 2.0f32.to_bits(), 2.0f64.to_bits()),
+        ] {
+            let expected = if f64_elements {
+                expected_f64
+            } else {
+                u64::from(expected_f32)
+            };
+            let mut legacy = if f64_elements {
+                vec![0x66, 0x0F, opcode, 0xC1]
+            } else {
+                vec![0x0F, opcode, 0xC1]
+            };
+            let vex_pp = u8::from(f64_elements);
+            let vex128 = vec![0xC5, 0xF0 | vex_pp, opcode, 0xC2];
+            let vex256 = vec![0xC5, 0xF4 | vex_pp, opcode, 0xC2];
+
+            for (bytes, lanes, legacy_destination) in [
+                (std::mem::take(&mut legacy), (128 / elem_bits) as u8, true),
+                (vex128, (128 / elem_bits) as u8, false),
+                (vex256, (256 / elem_bits) as u8, false),
+            ] {
+                let mut ctx = SmirContext::new_x86_64();
+                let before;
+                if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                    x86.xmm[0] = [0xA55A_3CC3_F00F_9669; 16];
+                    let first_reg = if legacy_destination { 0 } else { 1 };
+                    let second_reg = if legacy_destination { 1 } else { 2 };
+                    for lane in 0..lanes {
+                        SmirInterpreter::set_lane(
+                            &mut x86.xmm[first_reg],
+                            lane,
+                            elem_bits,
+                            if f64_elements {
+                                1.5f64.to_bits()
+                            } else {
+                                u64::from(1.5f32.to_bits())
+                            },
+                        );
+                        SmirInterpreter::set_lane(
+                            &mut x86.xmm[second_reg],
+                            lane,
+                            elem_bits,
+                            if f64_elements {
+                                2.0f64.to_bits()
+                            } else {
+                                u64::from(2.0f32.to_bits())
+                            },
+                        );
+                    }
+                    before = x86.xmm[0];
+                    x86.mxcsr = 0x1F80;
+                } else {
+                    unreachable!()
+                }
+
+                let exit = execute_lifted_x86(&bytes, &mut ctx, &mut FlatMemory::new(0x100));
+                assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+                let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+                    unreachable!()
+                };
+                for lane in 0..lanes {
+                    assert_eq!(
+                        SmirInterpreter::get_lane(&x86.xmm[0], lane, elem_bits),
+                        expected,
+                        "{bytes:02X?}, lane {lane}"
+                    );
+                }
+                for lane in lanes..max_lanes {
+                    let actual = SmirInterpreter::get_lane(&x86.xmm[0], lane, elem_bits);
+                    let expected_upper = if legacy_destination {
+                        SmirInterpreter::get_lane(&before, lane, elem_bits)
+                    } else {
+                        0
+                    };
+                    assert_eq!(actual, expected_upper, "{bytes:02X?}, upper lane {lane}");
+                }
+                assert_eq!(x86.mxcsr, 0x1F80, "{bytes:02X?}");
+            }
+        }
+    }
+}
+
+#[test]
+fn lifted_packed_binary_dynamic_status_and_unmasked_exceptions_are_atomic() {
+    const PE: u32 = 1 << 5;
+    const PM: u32 = 1 << 12;
+    let half_ulp = u64::from((2.0f32).powi(-24).to_bits());
+    for (round_bits, expected) in [(0u32, 0x3F80_0000), (2, 0x3F80_0001)] {
+        for bytes in [
+            &[0x0F, 0x58, 0xC1][..],
+            &[0xC5, 0xF0, 0x58, 0xC2][..],
+            &[0x62, 0xF1, 0x6C, 0x48, 0x58, 0xCB][..],
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                let (first, second, lanes) = if bytes[0] == 0x0F {
+                    (0usize, 1usize, 4u8)
+                } else if bytes[0] == 0xC5 {
+                    (1, 2, 4)
+                } else {
+                    (2, 3, 16)
+                };
+                for lane in 0..lanes {
+                    SmirInterpreter::set_lane(
+                        &mut x86.xmm[first],
+                        lane,
+                        32,
+                        u64::from(1.0f32.to_bits()),
+                    );
+                    SmirInterpreter::set_lane(&mut x86.xmm[second], lane, 32, half_ulp);
+                }
+                x86.mxcsr = 0x1F80 | (round_bits << 13);
+            }
+            let exit = execute_lifted_x86(bytes, &mut ctx, &mut FlatMemory::new(0x100));
+            assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+            let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+                unreachable!()
+            };
+            let destination = if bytes[0] == 0x62 { 1 } else { 0 };
+            assert_eq!(
+                SmirInterpreter::get_lane(&x86.xmm[destination], 0, 32),
+                expected,
+                "{bytes:02X?}"
+            );
+            assert_eq!(x86.mxcsr & PE, PE, "{bytes:02X?}");
+        }
+    }
+
+    for bytes in [
+        &[0x0F, 0x58, 0xC1][..],
+        &[0xC5, 0xF0, 0x58, 0xC2][..],
+        &[0x62, 0xF1, 0x6C, 0x48, 0x58, 0xCB][..],
+    ] {
+        let sentinel = [0xCAFE_BABE_DEAD_BEEF; 16];
+        let mut ctx = SmirContext::new_x86_64();
+        let destination;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            let (first, second, dst, lanes) = if bytes[0] == 0x0F {
+                (0usize, 1usize, 0usize, 4u8)
+            } else if bytes[0] == 0xC5 {
+                (1, 2, 0, 4)
+            } else {
+                (2, 3, 1, 16)
+            };
+            destination = dst;
+            x86.xmm[dst] = sentinel;
+            for lane in 0..lanes {
+                SmirInterpreter::set_lane(
+                    &mut x86.xmm[first],
+                    lane,
+                    32,
+                    u64::from(1.0f32.to_bits()),
+                );
+                SmirInterpreter::set_lane(&mut x86.xmm[second], lane, 32, half_ulp);
+            }
+            x86.mxcsr = 0x1F80 & !PM;
+        } else {
+            unreachable!()
+        }
+        let before = if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            x86.xmm[destination]
+        } else {
+            unreachable!()
+        };
+        let exit = execute_lifted_x86(bytes, &mut ctx, &mut FlatMemory::new(0x100));
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+        ));
+        let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+            unreachable!()
+        };
+        assert_eq!(x86.xmm[destination], before, "{bytes:02X?}");
+        assert_eq!(x86.mxcsr & PE, PE, "{bytes:02X?}");
+    }
+}
+
+#[test]
+fn lifted_evex_packed_binary_masks_suppress_inactive_faults_and_exceptions() {
+    let sentinel = [0xA55A_3CC3_F00F_9669; 16];
+    for zeroing in [false, true] {
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            SmirInterpreter::set_lane(&mut x86.xmm[2], 0, 32, u64::from(4.0f32.to_bits()));
+            SmirInterpreter::set_lane(&mut x86.xmm[3], 0, 32, u64::from(2.0f32.to_bits()));
+            x86.k[1] = 1;
+            x86.mxcsr = 0x1F80;
+        }
+        let p2 = if zeroing { 0xC9 } else { 0x49 };
+        let bytes = [0x62, 0xF1, 0x6C, p2, 0x5E, 0xCB];
+        let exit = execute_lifted_x86(&bytes, &mut ctx, &mut FlatMemory::new(0x100));
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+            unreachable!()
+        };
+        assert_eq!(
+            SmirInterpreter::get_lane(&x86.xmm[1], 0, 32),
+            u64::from(2.0f32.to_bits())
+        );
+        for lane in 1..16u8 {
+            let expected = if zeroing {
+                0
+            } else {
+                SmirInterpreter::get_lane(&sentinel, lane, 32)
+            };
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], lane, 32), expected);
+        }
+        assert_eq!(x86.mxcsr, 0x1F80, "inactive 0/0 lanes report no status");
+    }
+
+    let mut ctx = SmirContext::new_x86_64();
+    ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x100);
+    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+        x86.xmm[1] = sentinel;
+        x86.k[1] = 0;
+        x86.mxcsr = 0;
+    }
+    let bytes = [0x62, 0xF1, 0x6C, 0xC9, 0x5C, 0x48, 0x02];
+    let exit = execute_lifted_x86(&bytes, &mut ctx, &mut FlatMemory::new(0x100));
+    assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+    let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+        unreachable!()
+    };
+    assert_eq!(x86.xmm[1], [0; 16]);
+    assert_eq!(x86.mxcsr, 0);
+}
+
+#[test]
+fn lifted_evex_packed_embedded_control_is_512_bit_and_state_silent() {
+    for f64_elements in [false, true] {
+        let elem_bits = if f64_elements { 64 } else { 32 };
+        let lanes = if f64_elements { 8 } else { 16 };
+        let p1 = if f64_elements { 0xED } else { 0x6C };
+        for (ll, expected_f32, expected_f64) in [
+            (0u8, 0x3F80_0000u32, 0x3FF0_0000_0000_0000u64),
+            (1, 0x3F80_0000, 0x3FF0_0000_0000_0000),
+            (2, 0x3F80_0001, 0x3FF0_0000_0000_0001),
+            (3, 0x3F80_0000, 0x3FF0_0000_0000_0000),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let before = (0x1F80 & !(1 << 12)) | (1 << 13);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                for lane in 0..lanes {
+                    SmirInterpreter::set_lane(
+                        &mut x86.xmm[2],
+                        lane,
+                        elem_bits,
+                        if f64_elements {
+                            1.0f64.to_bits()
+                        } else {
+                            u64::from(1.0f32.to_bits())
+                        },
+                    );
+                    SmirInterpreter::set_lane(
+                        &mut x86.xmm[3],
+                        lane,
+                        elem_bits,
+                        if f64_elements {
+                            (2.0f64).powi(-53).to_bits()
+                        } else {
+                            u64::from((2.0f32).powi(-24).to_bits())
+                        },
+                    );
+                }
+                x86.mxcsr = before;
+            }
+            let bytes = [0x62, 0xF1, p1, 0x18 | (ll << 5), 0x58, 0xCB];
+            let exit = execute_lifted_x86(&bytes, &mut ctx, &mut FlatMemory::new(0x100));
+            assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+            let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+                unreachable!()
+            };
+            let expected = if f64_elements {
+                expected_f64
+            } else {
+                u64::from(expected_f32)
+            };
+            for lane in 0..lanes {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, elem_bits),
+                    expected,
+                    "{bytes:02X?}, lane {lane}"
+                );
+            }
+            assert_eq!(x86.mxcsr, before, "ER implies SAE");
+        }
+    }
+
+    for ll in 0u8..=3 {
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..16u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[2], lane, 32, u64::from(1.0f32.to_bits()));
+                SmirInterpreter::set_lane(&mut x86.xmm[3], lane, 32, 0x7F81_2345);
+            }
+            x86.mxcsr = 0;
+        }
+        let bytes = [0x62, 0xF1, 0x6C, 0x18 | (ll << 5), 0x5D, 0xCB];
+        let exit = execute_lifted_x86(&bytes, &mut ctx, &mut FlatMemory::new(0x100));
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+            unreachable!()
+        };
+        for lane in 0..16u8 {
+            assert_eq!(
+                SmirInterpreter::get_lane(&x86.xmm[1], lane, 32),
+                0x7F81_2345
+            );
+        }
+        assert_eq!(x86.mxcsr, 0, "SAE suppresses invalid status");
+    }
+}
+
+#[test]
 fn x86_fp_div_rounding_matches_independent_rational_reference_grid() {
     fn finite_parts(bits: u64, format: X86SimdFpFormat) -> (u128, i32) {
         let exponent_field =
