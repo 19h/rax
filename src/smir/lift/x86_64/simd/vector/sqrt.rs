@@ -164,34 +164,72 @@ impl X86_64Lifter {
                 ));
                 vector
             } else {
-                self.xmm(
+                let source = self.xmm(
                     modrm.rm
                         + if prefix.encoding == VecEncodingKind::Evex && prefix.rm_high {
                             16
                         } else {
                             0
                         },
-                )
+                );
+                if let Some(cond) = mask_cond {
+                    // A masked-off scalar source must not participate in the
+                    // computation or report SIMD floating-point exceptions.
+                    let scalar = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::VExtractLane {
+                            dst: scalar,
+                            vec: source,
+                            lane: 0,
+                            elem,
+                            sign: SignExtend::Zero,
+                        },
+                    ));
+                    let scalar = self.append_evex_scalar_select(
+                        VecPrefix {
+                            zeroing: true,
+                            ..operation_prefix
+                        },
+                        Some(cond),
+                        source,
+                        scalar,
+                        elem,
+                        pc,
+                        ctx,
+                        &mut ops,
+                    );
+                    let sanitized = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::VBroadcast {
+                            dst: sanitized,
+                            scalar,
+                            elem,
+                            lanes: 1,
+                        },
+                    ));
+                    sanitized
+                } else {
+                    source
+                }
             };
             let vector_result = ctx.alloc_vreg();
             let scalar_result = ctx.alloc_vreg();
-            let sqrt = if embedded_rounding {
-                OpKind::X86Sqrt {
-                    dst: vector_result,
-                    src,
-                    elem,
-                    lanes: 1,
-                    round: evex_sqrt_round_mode(prefix.l_bits),
-                    suppress_exceptions: true,
-                }
+            let (round, suppress_exceptions) = if embedded_rounding {
+                (evex_sqrt_round_mode(prefix.l_bits), true)
             } else {
-                OpKind::VUnary {
-                    dst: vector_result,
-                    src,
-                    elem,
-                    lanes: 1,
-                    op: VecUnaryOp::FSqrt,
-                }
+                (FpRoundMode::Dynamic, false)
+            };
+            let sqrt = OpKind::X86Sqrt {
+                dst: vector_result,
+                src,
+                elem,
+                lanes: 1,
+                round,
+                suppress_exceptions,
             };
             ops.push(SmirOp::with_hint(OpId(ops.len() as u16), pc, sqrt, hint));
             ops.push(SmirOp::new(
@@ -352,23 +390,18 @@ impl X86_64Lifter {
         } else {
             dst
         };
-        let sqrt = if embedded_rounding {
-            OpKind::X86Sqrt {
-                dst: raw,
-                src,
-                elem,
-                lanes: operation_prefix.width.lanes(elem) as u8,
-                round: evex_sqrt_round_mode(prefix.l_bits),
-                suppress_exceptions: true,
-            }
+        let (round, suppress_exceptions) = if embedded_rounding {
+            (evex_sqrt_round_mode(prefix.l_bits), true)
         } else {
-            OpKind::VUnary {
-                dst: raw,
-                src,
-                elem,
-                lanes: operation_prefix.width.lanes(elem) as u8,
-                op: VecUnaryOp::FSqrt,
-            }
+            (FpRoundMode::Dynamic, false)
+        };
+        let sqrt = OpKind::X86Sqrt {
+            dst: raw,
+            src,
+            elem,
+            lanes: operation_prefix.width.lanes(elem) as u8,
+            round,
+            suppress_exceptions,
         };
         ops.push(SmirOp::with_hint(OpId(ops.len() as u16), pc, sqrt, hint));
         if mask.is_some() {

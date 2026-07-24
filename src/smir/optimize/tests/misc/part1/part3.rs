@@ -4098,9 +4098,9 @@ fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
     );
     assert!(ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::VUnary {
+        OpKind::X86Sqrt {
             dst: VReg::Virtual(_),
-            op: VecUnaryOp::FSqrt,
+            suppress_exceptions: false,
             ..
         }
     )));
@@ -4134,8 +4134,8 @@ fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
     assert!(pred_load < destination_write);
     assert!(ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::VUnary {
-            op: VecUnaryOp::FSqrt,
+        OpKind::X86Sqrt {
+            suppress_exceptions: false,
             ..
         }
     )));

@@ -104,6 +104,8 @@ mod invlpg;
 #[cfg(test)]
 mod invpcid;
 #[cfg(test)]
+mod legacy_vex_fp_sqrt_replay;
+#[cfg(test)]
 mod lmsw;
 #[cfg(test)]
 mod maskmovdqu;

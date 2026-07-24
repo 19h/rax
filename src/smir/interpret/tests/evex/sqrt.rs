@@ -1,4 +1,4 @@
-//! EVEX square-root broadcast execution tests.
+//! x86 square-root execution tests.
 
 use super::*;
 use crate::smir::interpret::tests::*;
@@ -94,6 +94,95 @@ fn lifted_evex_packed_sqrt_broadcast_executes_masks_and_fault_suppression() {
     ));
     if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
         assert_eq!(x86.xmm[3], sentinel);
+    }
+}
+
+#[test]
+fn lifted_dynamic_sqrt_uses_mxcsr_rounding_status_and_atomic_traps() {
+    const BYTES: &[u8] = &[0x62, 0xF1, 0x7C, 0x08, 0x51, 0xCB];
+    const SENTINEL: [u64; 16] = [0xA5A5_5A5A_DEAD_BEEF; 16];
+
+    let initialize_invalid_source = |ctx: &mut SmirContext, mxcsr: u32| {
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = SENTINEL;
+            for (lane, bits) in [0xFF80_0000u32, 0x7FC0_0001, 0x7F80_0001, 0xBF80_0000]
+                .into_iter()
+                .enumerate()
+            {
+                SmirInterpreter::set_lane(&mut x86.xmm[3], lane as u8, 32, u64::from(bits));
+            }
+            x86.mxcsr = mxcsr;
+        }
+    };
+
+    let mut masked = SmirContext::new_x86_64();
+    initialize_invalid_source(&mut masked, 0x1F80);
+    let exit = execute_lifted_x86(BYTES, &mut masked, &mut FlatMemory::new(0x100));
+    assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+    if let ArchRegState::X86_64(x86) = &masked.arch_regs {
+        assert_eq!(x86.mxcsr & 0x3F, 1, "invalid status must accrue");
+        for (lane, expected) in [0xFFC0_0000u32, 0x7FC0_0001, 0x7FC0_0001, 0xFFC0_0000]
+            .into_iter()
+            .enumerate()
+        {
+            assert_eq!(
+                SmirInterpreter::get_lane(&x86.xmm[1], lane as u8, 32),
+                u64::from(expected),
+                "masked invalid lane {lane}"
+            );
+        }
+    }
+
+    let mut unmasked = SmirContext::new_x86_64();
+    initialize_invalid_source(&mut unmasked, 0x1F80 & !(1 << 7));
+    let exit = execute_lifted_x86(BYTES, &mut unmasked, &mut FlatMemory::new(0x100));
+    assert!(matches!(
+        exit,
+        BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+    ));
+    if let ArchRegState::X86_64(x86) = &unmasked.arch_regs {
+        assert_eq!(x86.xmm[1], SENTINEL, "#XM must precede destination commit");
+        assert_eq!(x86.mxcsr & 0x3F, 1, "#XM must still accrue MXCSR.IE");
+    }
+
+    for (rounding_control, expected) in [(1u32, 0x3FB5_04F3), (2, 0x3FB5_04F4)] {
+        let mut rounded = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut rounded.arch_regs {
+            for lane in 0..4u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[3], lane, 32, u64::from(2.0f32.to_bits()));
+            }
+            x86.mxcsr = (0x1F80 & !(3 << 13)) | (rounding_control << 13);
+        }
+        let exit = execute_lifted_x86(BYTES, &mut rounded, &mut FlatMemory::new(0x100));
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &rounded.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 0, 32), expected);
+            assert_eq!(x86.mxcsr & 0x3F, 1 << 5, "inexact status must accrue");
+        }
+    }
+}
+
+#[test]
+fn lifted_dynamic_scalar_sqrt_mask_suppresses_invalid_before_compute() {
+    const SENTINEL: [u64; 16] = [0xA5A5_5A5A_DEAD_BEEF; 16];
+    for (p2, expected_low) in [(0x09, SENTINEL[0]), (0x89, 0)] {
+        let mut context = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut context.arch_regs {
+            x86.xmm[0] = SENTINEL;
+            x86.xmm[1][0] = (-1.0f64).to_bits();
+            x86.k[1] = 0;
+            x86.mxcsr = 0x1F80 & !(1 << 7);
+        }
+        let exit = execute_lifted_x86(
+            &[0x62, 0xF1, 0xFF, p2, 0x51, 0xC1],
+            &mut context,
+            &mut FlatMemory::new(0x100),
+        );
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &context.arch_regs {
+            assert_eq!(x86.xmm[0][0], expected_low);
+            assert_eq!(x86.mxcsr & 0x3F, 0, "masked source reported invalid");
+        }
     }
 }
 

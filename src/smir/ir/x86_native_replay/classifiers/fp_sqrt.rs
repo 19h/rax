@@ -1,8 +1,49 @@
-//! Register-only EVEX floating-point square-root replay classification.
+//! Register-only x86 floating-point square-root replay classification.
 
 use super::X86InstructionBytes;
 
 impl X86InstructionBytes {
+    /// Validate one register-only legacy SSE or AVX VEX
+    /// `SQRTPS`/`SQRTPD`/`SQRTSS`/`SQRTSD` instruction and report whether it
+    /// requires AVX.
+    ///
+    /// Legacy forms accept the canonical mandatory-prefix position, an
+    /// optional REX prefix, and a register ModR/M source. VEX forms require map
+    /// 0F and a register source. Packed VEX forms reserve `vvvv`, while scalar
+    /// forms use it as the upper-lane merge source. Scalar `VEX.L=1` is kept at
+    /// the interpreter boundary because Intel documents generation-dependent
+    /// unpredictable behavior for that encoding. Memory forms remain excluded
+    /// so replay cannot bypass guest translation or fault handling.
+    pub fn legacy_vex_register_fp_sqrt_needs_avx(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        let legacy_modrm = match bytes {
+            [0x0F, 0x51, modrm] => Some(*modrm),
+            [0x66 | 0xF2 | 0xF3, 0x0F, 0x51, modrm] => Some(*modrm),
+            [0x40..=0x4F, 0x0F, 0x51, modrm] => Some(*modrm),
+            [0x66 | 0xF2 | 0xF3, 0x40..=0x4F, 0x0F, 0x51, modrm] => Some(*modrm),
+            _ => None,
+        };
+        if let Some(modrm) = legacy_modrm {
+            return (modrm >> 6 == 3).then_some(false);
+        }
+
+        let (p1, opcode, modrm) = match bytes {
+            [0xC5, p1, opcode, modrm] => (*p1, *opcode, *modrm),
+            [0xC4, p0, p1, opcode, modrm] if p0 & 0x1F == 1 => (*p1, *opcode, *modrm),
+            _ => return None,
+        };
+        if opcode != 0x51 || modrm >> 6 != 3 {
+            return None;
+        }
+
+        let pp = p1 & 0x03;
+        let packed = pp <= 1;
+        if (packed && p1 & 0x78 != 0x78) || (!packed && p1 & 0x04 != 0) {
+            return None;
+        }
+        Some(true)
+    }
+
     /// Validate one register-only EVEX `VSQRTPS`, `VSQRTPD`, `VSQRTSS`,
     /// `VSQRTSD`, or `VSQRTPH` instruction.
     ///

@@ -9,11 +9,12 @@ fn lift_legacy_vex_evex_scalar_and_packed_sqrt() {
     let legacy = lift_single(&[0xF3, 0x0F, 0x51, 0xC1]).unwrap();
     assert!(legacy.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::VUnary {
+        OpKind::X86Sqrt {
             src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
             elem: VecElementType::F32,
             lanes: 1,
-            op: VecUnaryOp::FSqrt,
+            round: FpRoundMode::Dynamic,
+            suppress_exceptions: false,
             ..
         }
     )));
@@ -35,10 +36,11 @@ fn lift_legacy_vex_evex_scalar_and_packed_sqrt() {
         let result = lift_single(bytes).unwrap();
         assert!(result.ops.iter().any(|op| matches!(
             op.kind,
-            OpKind::VUnary {
+            OpKind::X86Sqrt {
                 elem: actual_elem,
                 lanes: actual_lanes,
-                op: VecUnaryOp::FSqrt,
+                round: FpRoundMode::Dynamic,
+                suppress_exceptions: false,
                 ..
             } if actual_elem == elem && actual_lanes == lanes
         )));
@@ -48,11 +50,7 @@ fn lift_legacy_vex_evex_scalar_and_packed_sqrt() {
         .ops
         .iter()
         .find_map(|op| match op.kind {
-            OpKind::VUnary {
-                dst,
-                op: VecUnaryOp::FSqrt,
-                ..
-            } => Some(dst),
+            OpKind::X86Sqrt { dst, .. } => Some(dst),
             _ => None,
         })
         .unwrap();
@@ -76,11 +74,12 @@ fn lift_legacy_vex_evex_scalar_and_packed_sqrt() {
     let vex = lift_single(&[0xC5, 0xF2, 0x51, 0xC2]).unwrap();
     assert!(vex.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::VUnary {
+        OpKind::X86Sqrt {
             src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
             elem: VecElementType::F32,
             lanes: 1,
-            op: VecUnaryOp::FSqrt,
+            round: FpRoundMode::Dynamic,
+            suppress_exceptions: false,
             ..
         }
     )));
@@ -103,9 +102,10 @@ fn lift_legacy_vex_evex_scalar_and_packed_sqrt() {
     )));
     assert!(evex.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::VUnary {
-            op: VecUnaryOp::FSqrt,
+        OpKind::X86Sqrt {
             lanes: 1,
+            round: FpRoundMode::Dynamic,
+            suppress_exceptions: false,
             ..
         }
     )));
@@ -154,12 +154,13 @@ fn lift_legacy_vex_evex_scalar_and_packed_sqrt() {
         let result = lift_single(bytes).unwrap();
         assert!(result.ops.iter().any(|op| matches!(
             op.kind,
-            OpKind::VUnary {
+            OpKind::X86Sqrt {
                 dst: VReg::Virtual(_),
                 src: VReg::Virtual(_),
                 elem: actual_elem,
                 lanes: actual_lanes,
-                op: VecUnaryOp::FSqrt,
+                round: FpRoundMode::Dynamic,
+                suppress_exceptions: false,
             } if actual_elem == elem && actual_lanes == lanes
         )));
         assert_eq!(
@@ -310,10 +311,11 @@ fn lift_legacy_vex_evex_scalar_and_packed_sqrt() {
         )));
         assert!(result.ops.iter().any(|op| matches!(
             op.kind,
-            OpKind::VUnary {
+            OpKind::X86Sqrt {
                 elem: actual_elem,
                 lanes: actual_lanes,
-                op: VecUnaryOp::FSqrt,
+                round: FpRoundMode::Dynamic,
+                suppress_exceptions: false,
                 ..
             } if actual_elem == elem && actual_lanes == lanes
         )));
@@ -532,11 +534,20 @@ fn lift_evex_sqrt_embedded_rounding_and_sae_exact_shapes() {
     assert!(scalar_high.ops.iter().any(|op| matches!(
         op.kind,
         OpKind::X86Sqrt {
-            src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(24))),
+            src: VReg::Virtual(_),
             elem: VecElementType::F64,
             lanes: 1,
             round: FpRoundMode::RoundNearest,
             suppress_exceptions: true,
+            ..
+        }
+    )));
+    assert!(scalar_high.ops.iter().any(|op| matches!(
+        op.kind,
+        OpKind::VExtractLane {
+            vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(24))),
+            lane: 0,
+            elem: VecElementType::F64,
             ..
         }
     )));

@@ -273,12 +273,13 @@ impl X86_64Lifter {
             ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,
-                OpKind::VUnary {
+                OpKind::X86Sqrt {
                     dst: vector_result,
                     src,
                     elem,
                     lanes: 1,
-                    op: VecUnaryOp::FSqrt,
+                    round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
                 },
                 X86OpHint::SseOp {
                     prefix: prefix_kind,
@@ -335,12 +336,13 @@ impl X86_64Lifter {
             ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,
-                OpKind::VUnary {
+                OpKind::X86Sqrt {
                     dst: result,
                     src,
                     elem,
                     lanes: VecWidth::V128.lanes(elem) as u8,
-                    op: VecUnaryOp::FSqrt,
+                    round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
                 },
                 X86OpHint::SseOp {
                     prefix: prefix_kind,
