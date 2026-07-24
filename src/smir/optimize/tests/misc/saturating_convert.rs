@@ -16,7 +16,25 @@ fn conversion(
         int_elem: VecElementType::I8,
         width,
         signed: true,
+        truncate: true,
+        round: FpRoundMode::RoundTowardZero,
         zeroing,
+        suppress_exceptions,
+    }
+}
+
+fn rounded_conversion(round: FpRoundMode, suppress_exceptions: bool, width: VecWidth) -> OpKind {
+    OpKind::VCvtFpToIntSat {
+        dst: VReg::virt(2),
+        src: VReg::virt(0),
+        mask: None,
+        fp_elem: VecElementType::F32,
+        int_elem: VecElementType::I8,
+        width,
+        signed: false,
+        truncate: false,
+        round,
+        zeroing: false,
         suppress_exceptions,
     }
 }
@@ -43,6 +61,21 @@ fn saturating_conversion_metadata_tracks_merge_mask_and_mxcsr_effects() {
 
     let malformed = conversion(None, true, true, VecWidth::V128);
     assert!(malformed.has_side_effects());
+
+    let mxcsr_rounded = rounded_conversion(FpRoundMode::Dynamic, false, VecWidth::V128);
+    assert!(mxcsr_rounded.has_side_effects());
+
+    let embedded = rounded_conversion(FpRoundMode::RoundDown, true, VecWidth::V512);
+    assert!(!embedded.has_side_effects());
+
+    for malformed in [
+        rounded_conversion(FpRoundMode::Dynamic, true, VecWidth::V512),
+        rounded_conversion(FpRoundMode::RoundUp, false, VecWidth::V512),
+        rounded_conversion(FpRoundMode::RoundNearest, true, VecWidth::V128),
+        rounded_conversion(FpRoundMode::RoundNearestTiesAway, true, VecWidth::V512),
+    ] {
+        assert!(malformed.has_side_effects());
+    }
 }
 
 #[test]
@@ -63,4 +96,13 @@ fn dce_preserves_status_and_malformed_boundaries_but_removes_dead_sae_result() {
     sae.set_terminator(Terminator::Return { values: vec![] });
     assert_eq!(dead_code_elimination(&mut sae), 1);
     assert!(sae.ops.is_empty());
+
+    let mut embedded = SmirBlock::new(BlockId(0), 0x1000);
+    embedded.push_op(make_op(
+        0,
+        rounded_conversion(FpRoundMode::RoundDown, true, VecWidth::V512),
+    ));
+    embedded.set_terminator(Terminator::Return { values: vec![] });
+    assert_eq!(dead_code_elimination(&mut embedded), 1);
+    assert!(embedded.ops.is_empty());
 }

@@ -2499,7 +2499,7 @@ impl X86_64Lifter {
                 0x58 | 0x59 | 0x5C | 0x5D | 0x5E | 0x5F => {
                     self.lift_evex_fp16_arithmetic(prefix, opcode, bytes, pc, ctx)
                 }
-                0x68 | 0x6A if prefix.pp == X86SsePrefix::OpSize && !prefix.w => {
+                0x68 | 0x69 | 0x6A | 0x6B if prefix.pp == X86SsePrefix::OpSize && !prefix.w => {
                     self.lift_evex_saturating_fp_to_int(prefix, opcode, bytes, pc, ctx)
                 }
                 0x6C | 0x6D if prefix.pp == X86SsePrefix::OpSize && prefix.w => {

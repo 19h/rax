@@ -356,6 +356,34 @@ fn test_vcvttps2iubs_zmm() {
 }
 
 #[test]
+fn test_vcvtps2ibs_zmm() {
+    // VCVTPS2IBS zmm1, zmm2: EVEX.512.66.MAP5.W0 69 /r
+    let bytes = [0x62, 0xF5, 0x7D, 0x48, 0x69, 0xCA];
+    test_roundtrip(&bytes, "VCVTPS2IBS zmm1, zmm2");
+}
+
+#[test]
+fn test_vcvtps2ibs_zmm_rd_sae() {
+    // VCVTPS2IBS zmm1, zmm2, {rd-sae}: EVEX.512.66.MAP5.W0 69 /r
+    let bytes = [0x62, 0xF5, 0x7D, 0x38, 0x69, 0xCA];
+    test_roundtrip(&bytes, "VCVTPS2IBS zmm1, zmm2, {rd-sae}");
+}
+
+#[test]
+fn test_vcvtps2iubs_zmm() {
+    // VCVTPS2IUBS zmm1, zmm2: EVEX.512.66.MAP5.W0 6B /r
+    let bytes = [0x62, 0xF5, 0x7D, 0x48, 0x6B, 0xCA];
+    test_roundtrip(&bytes, "VCVTPS2IUBS zmm1, zmm2");
+}
+
+#[test]
+fn test_vcvtps2iubs_zmm_rz_sae_mask_zero() {
+    // VCVTPS2IUBS zmm17{k3}{z}, zmm18, {rz-sae}: EVEX.512.66.MAP5.W0 6B /r
+    let bytes = [0x62, 0xA5, 0x7D, 0xFB, 0x6B, 0xCA];
+    test_roundtrip(&bytes, "VCVTPS2IUBS zmm17{k3}{z}, zmm18, {rz-sae}");
+}
+
+#[test]
 fn test_vcvttpd2qqs_zmm() {
     // VCVTTPD2QQS zmm1, zmm2: EVEX.512.66.MAP5.W1 6D /r
     let bytes = [0x62, 0xF5, 0xFD, 0x48, 0x6D, 0xCA];
@@ -626,6 +654,13 @@ fn test_all_avx10_2_saturation_converts() {
     let test_cases = [
         ([0x62, 0xF5, 0x7D, 0x48, 0x68, 0xCA], "VCVTTPS2IBS"),
         ([0x62, 0xF5, 0x7D, 0x48, 0x6A, 0xCA], "VCVTTPS2IUBS"),
+        ([0x62, 0xF5, 0x7D, 0x48, 0x69, 0xCA], "VCVTPS2IBS"),
+        ([0x62, 0xF5, 0x7D, 0x38, 0x69, 0xCA], "VCVTPS2IBS {rd-sae}"),
+        ([0x62, 0xF5, 0x7D, 0x48, 0x6B, 0xCA], "VCVTPS2IUBS"),
+        (
+            [0x62, 0xA5, 0x7D, 0xFB, 0x6B, 0xCA],
+            "VCVTPS2IUBS {k3}{z} {rz-sae}",
+        ),
         ([0x62, 0xF5, 0xFD, 0x48, 0x6D, 0xCA], "VCVTTPD2QQS"),
         ([0x62, 0xF5, 0xFD, 0x48, 0x6C, 0xCA], "VCVTTPD2UQQS"),
     ];

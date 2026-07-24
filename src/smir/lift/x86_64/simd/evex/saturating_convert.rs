@@ -13,11 +13,25 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        let (fp_elem, int_elem, signed) = match (opcode, prefix.pp, prefix.w) {
-            (0x68, X86SsePrefix::OpSize, false) => (VecElementType::F32, VecElementType::I8, true),
-            (0x6A, X86SsePrefix::OpSize, false) => (VecElementType::F32, VecElementType::I8, false),
-            (0x6D, X86SsePrefix::OpSize, true) => (VecElementType::F64, VecElementType::I64, true),
-            (0x6C, X86SsePrefix::OpSize, true) => (VecElementType::F64, VecElementType::I64, false),
+        let (fp_elem, int_elem, signed, truncate) = match (opcode, prefix.pp, prefix.w) {
+            (0x68, X86SsePrefix::OpSize, false) => {
+                (VecElementType::F32, VecElementType::I8, true, true)
+            }
+            (0x69, X86SsePrefix::OpSize, false) => {
+                (VecElementType::F32, VecElementType::I8, true, false)
+            }
+            (0x6A, X86SsePrefix::OpSize, false) => {
+                (VecElementType::F32, VecElementType::I8, false, true)
+            }
+            (0x6B, X86SsePrefix::OpSize, false) => {
+                (VecElementType::F32, VecElementType::I8, false, false)
+            }
+            (0x6D, X86SsePrefix::OpSize, true) => {
+                (VecElementType::F64, VecElementType::I64, true, true)
+            }
+            (0x6C, X86SsePrefix::OpSize, true) => {
+                (VecElementType::F64, VecElementType::I64, false, true)
+            }
             _ => {
                 return Err(LiftError::InvalidEncoding {
                     addr: pc,
@@ -29,7 +43,6 @@ impl X86_64Lifter {
             || prefix.map != X86VecMap::Map5
             || prefix.vvvv != 0
             || prefix.v_high
-            || prefix.l_bits == 3
             || (prefix.zeroing && prefix.aaa == 0)
         {
             return Err(LiftError::InvalidEncoding {
@@ -47,17 +60,32 @@ impl X86_64Lifter {
             ..X86Prefix::default()
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
-        let suppress_exceptions = prefix.b && !modrm.is_memory;
-        if suppress_exceptions && prefix.l_bits != 0 {
+        let embedded_control = prefix.b && !modrm.is_memory;
+        if (!embedded_control && prefix.l_bits == 3)
+            || (embedded_control && truncate && prefix.l_bits != 0)
+        {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes.to_vec(),
             });
         }
-        let width = if suppress_exceptions {
+        let width = if embedded_control {
             VecWidth::V512
         } else {
             prefix.width
+        };
+        let round = if truncate {
+            FpRoundMode::RoundTowardZero
+        } else if embedded_control {
+            match prefix.l_bits {
+                0 => FpRoundMode::RoundNearest,
+                1 => FpRoundMode::RoundDown,
+                2 => FpRoundMode::RoundUp,
+                3 => FpRoundMode::RoundTowardZero,
+                _ => unreachable!("EVEX L'L is two bits"),
+            }
+        } else {
+            FpRoundMode::Dynamic
         };
         let broadcast = prefix.b && modrm.is_memory;
         let mask = (prefix.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))));
@@ -115,8 +143,10 @@ impl X86_64Lifter {
                 int_elem,
                 width,
                 signed,
+                truncate,
+                round,
                 zeroing: prefix.zeroing,
-                suppress_exceptions,
+                suppress_exceptions: embedded_control,
             },
             X86OpHint::EvexOp {
                 map: prefix.map,

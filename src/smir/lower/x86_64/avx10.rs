@@ -44,12 +44,13 @@ impl<'a> EvexEncoder<'a> {
         mask: u8, // opmask k0-k7
         zeroing: bool,
     ) {
-        self.emit_evex_with_b(map, pp, w, vl, dst, src1, src2, mask, zeroing, false);
+        self.emit_evex_with_b(map, pp, w, vl, dst, src1, src2, mask, zeroing, false, None);
     }
 
-    /// Encode an EVEX prefix with an explicit EVEX.b bit. This is used for
-    /// register-only SAE/embedded-rounding forms; ordinary callers retain the
-    /// default b=0 encoding through [`Self::emit_evex`].
+    /// Encode an EVEX prefix with an explicit EVEX.b bit and optional L'L
+    /// override. This is used for register-only SAE/embedded-rounding forms;
+    /// ordinary callers retain b=0 and vector-length-derived L'L through
+    /// [`Self::emit_evex`].
     pub fn emit_evex_with_b(
         &mut self,
         map: u8,
@@ -62,6 +63,7 @@ impl<'a> EvexEncoder<'a> {
         mask: u8,
         zeroing: bool,
         b_bit: bool,
+        ll_override: Option<u8>,
     ) {
         // Extract register bits
         let r = (dst >> 3) & 1; // bit 3 of dst
@@ -71,12 +73,13 @@ impl<'a> EvexEncoder<'a> {
         let vvvv = src1 & 0x0F;
         let v_prime = (src1 >> 4) & 1;
 
-        let ll = match vl {
+        let ll = ll_override.unwrap_or(match vl {
             VecWidth::V128 => 0,
             VecWidth::V256 => 1,
             VecWidth::V512 => 2,
             VecWidth::V64 => 0,
-        };
+        });
+        debug_assert!(ll < 4);
 
         // Build P0
         self.code.emit_u8(0x62);
@@ -495,6 +498,8 @@ impl Avx10Lowerer {
                 int_elem,
                 width,
                 signed,
+                truncate,
+                round,
                 zeroing,
                 suppress_exceptions,
             } => Some(self.lower_vcvt_fp_to_int_sat(
@@ -506,6 +511,8 @@ impl Avx10Lowerer {
                 *int_elem,
                 *width,
                 *signed,
+                *truncate,
+                *round,
                 *zeroing,
                 *suppress_exceptions,
             )),

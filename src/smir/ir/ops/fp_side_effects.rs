@@ -77,24 +77,39 @@ impl OpKind {
             fp_elem,
             int_elem,
             width,
+            truncate,
+            round,
             zeroing,
             suppress_exceptions,
             ..
         } = self
         {
             let canonical = matches!(
-                (fp_elem, int_elem),
-                (VecElementType::F32, VecElementType::I8)
-                    | (VecElementType::F64, VecElementType::I64)
+                (*fp_elem, *int_elem, *truncate),
+                (VecElementType::F32, VecElementType::I8, _)
+                    | (VecElementType::F64, VecElementType::I64, true)
             ) && matches!(
                 width,
                 crate::smir::ir::types::VecWidth::V128
                     | crate::smir::ir::types::VecWidth::V256
                     | crate::smir::ir::types::VecWidth::V512
             ) && (!*zeroing || mask.is_some())
-                && (!*suppress_exceptions || *width == crate::smir::ir::types::VecWidth::V512);
+                && *round != FpRoundMode::RoundNearestTiesAway
+                && if *truncate {
+                    *round == FpRoundMode::RoundTowardZero
+                        && (!*suppress_exceptions
+                            || *width == crate::smir::ir::types::VecWidth::V512)
+                } else {
+                    matches!(
+                        (*round, *suppress_exceptions),
+                        (FpRoundMode::Dynamic, false)
+                    ) || (*round != FpRoundMode::Dynamic
+                        && *suppress_exceptions
+                        && *width == crate::smir::ir::types::VecWidth::V512)
+                };
             // Malformed IR must survive DCE until interpretation rejects it.
-            // Canonical SAE forms neither update MXCSR nor request #XM.
+            // Canonical SAE/embedded-rounding forms neither update MXCSR nor
+            // request #XM.
             return !canonical || !*suppress_exceptions;
         }
 

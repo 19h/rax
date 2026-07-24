@@ -1121,17 +1121,32 @@ impl SmirInterpreter {
                 int_elem,
                 width,
                 signed,
+                truncate,
+                round,
                 zeroing,
                 suppress_exceptions,
             } => {
-                let canonical_shape =
-                    matches!(
-                        (fp_elem, int_elem),
-                        (VecElementType::F32, VecElementType::I8)
-                            | (VecElementType::F64, VecElementType::I64)
-                    ) && matches!(width, VecWidth::V128 | VecWidth::V256 | VecWidth::V512)
-                        && (!*zeroing || mask.is_some())
-                        && (!*suppress_exceptions || *width == VecWidth::V512);
+                let canonical_types = matches!(
+                    (*fp_elem, *int_elem, *truncate),
+                    (VecElementType::F32, VecElementType::I8, _)
+                        | (VecElementType::F64, VecElementType::I64, true)
+                );
+                let canonical_rounding = *round != FpRoundMode::RoundNearestTiesAway
+                    && if *truncate {
+                        *round == FpRoundMode::RoundTowardZero
+                            && (!*suppress_exceptions || *width == VecWidth::V512)
+                    } else {
+                        matches!(
+                            (*round, *suppress_exceptions),
+                            (FpRoundMode::Dynamic, false)
+                        ) || (*round != FpRoundMode::Dynamic
+                            && *suppress_exceptions
+                            && *width == VecWidth::V512)
+                    };
+                let canonical_shape = canonical_types
+                    && canonical_rounding
+                    && matches!(width, VecWidth::V128 | VecWidth::V256 | VecWidth::V512)
+                    && (!*zeroing || mask.is_some());
                 if !canonical_shape || !matches!(ctx.arch_regs, ArchRegState::X86_64(_)) {
                     ctx.request_exit(ExitReason::Undefined {
                         addr: op.guest_pc,
@@ -1154,6 +1169,16 @@ impl SmirInterpreter {
                     ArchRegState::X86_64(x86) => x86.mxcsr,
                     _ => unreachable!("x86 state checked above"),
                 };
+                let mode = if *round == FpRoundMode::Dynamic {
+                    match (mxcsr >> 13) & 3 {
+                        0 => FpRoundMode::RoundNearest,
+                        1 => FpRoundMode::RoundDown,
+                        2 => FpRoundMode::RoundUp,
+                        _ => FpRoundMode::RoundTowardZero,
+                    }
+                } else {
+                    *round
+                };
                 let lane_bits = fp_elem.bytes() * 8;
                 let int_bits = int_elem.bytes() * 8;
                 let lanes = width.lanes(*fp_elem) as u8;
@@ -1175,7 +1200,7 @@ impl SmirInterpreter {
                         source_bits &= sign;
                     }
                     let converted =
-                        Self::x86_simd_fp_to_int_sat(source_bits, format, int_bits, *signed);
+                        Self::x86_simd_fp_to_int_sat(source_bits, format, int_bits, *signed, mode);
                     status |= converted.status;
                     Self::set_lane(
                         &mut result,

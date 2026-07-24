@@ -120,7 +120,7 @@ impl X86_64Vcpu {
             0x7D if evex.pp == 3 && !evex.w => {
                 execute::simd::evex_packed_int_to_fp(self, ctx, 2, 2, false)
             }
-            0x68 | 0x6A if evex.pp == 1 && !evex.w && avx10_sat_convert_disabled => {
+            0x68 | 0x69 | 0x6A | 0x6B if evex.pp == 1 && !evex.w && avx10_sat_convert_disabled => {
                 self.inject_undefined_instruction()
             }
             0x6C | 0x6D if evex.pp == 1 && evex.w && avx10_sat_convert_disabled => {
@@ -130,13 +130,37 @@ impl X86_64Vcpu {
             0x68 if evex.pp == 1 && !evex.w => execute::simd::evex_saturating_fp_to_int(
                 self,
                 ctx,
-                execute::simd::SatFpToIntKind::F32ToI8 { signed: true },
+                execute::simd::SatFpToIntKind::F32ToI8 {
+                    signed: true,
+                    truncate: true,
+                },
+            ),
+            // VCVTPS2IBS (0x69) - Convert Packed Single to Signed Byte with Saturation
+            0x69 if evex.pp == 1 && !evex.w => execute::simd::evex_saturating_fp_to_int(
+                self,
+                ctx,
+                execute::simd::SatFpToIntKind::F32ToI8 {
+                    signed: true,
+                    truncate: false,
+                },
             ),
             // VCVTTPS2IUBS (0x6A) - Convert with Truncation Packed Single to Unsigned Byte with Saturation
             0x6A if evex.pp == 1 && !evex.w => execute::simd::evex_saturating_fp_to_int(
                 self,
                 ctx,
-                execute::simd::SatFpToIntKind::F32ToI8 { signed: false },
+                execute::simd::SatFpToIntKind::F32ToI8 {
+                    signed: false,
+                    truncate: true,
+                },
+            ),
+            // VCVTPS2IUBS (0x6B) - Convert Packed Single to Unsigned Byte with Saturation
+            0x6B if evex.pp == 1 && !evex.w => execute::simd::evex_saturating_fp_to_int(
+                self,
+                ctx,
+                execute::simd::SatFpToIntKind::F32ToI8 {
+                    signed: false,
+                    truncate: false,
+                },
             ),
             // VCVTTPD2QQS (0x6D) - Convert with Truncation Packed Double to Signed Qword with Saturation
             0x6D if evex.pp == 1 && evex.w => execute::simd::evex_saturating_fp_to_int(

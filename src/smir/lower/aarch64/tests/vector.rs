@@ -887,6 +887,8 @@ fn rejects_x86_saturating_fp_to_int_conversion() {
         int_elem: VecElementType::I8,
         width: VecWidth::V128,
         signed: true,
+        truncate: true,
+        round: FpRoundMode::RoundTowardZero,
         zeroing: false,
         suppress_exceptions: false,
     })
@@ -2961,6 +2963,8 @@ fn rejects_vector_unsupported_widths() {
         int_elem: VecElementType::I8,
         width: VecWidth::V256,
         signed: true,
+        truncate: true,
+        round: FpRoundMode::RoundTowardZero,
         zeroing: false,
         suppress_exceptions: false,
     });
@@ -2973,6 +2977,8 @@ fn rejects_vector_unsupported_widths() {
         int_elem: VecElementType::I64,
         width: VecWidth::V64,
         signed: false,
+        truncate: true,
+        round: FpRoundMode::RoundTowardZero,
         zeroing: false,
         suppress_exceptions: false,
     });
@@ -2985,6 +2991,8 @@ fn rejects_vector_unsupported_widths() {
         int_elem: VecElementType::I8,
         width: VecWidth::V128,
         signed: true,
+        truncate: true,
+        round: FpRoundMode::RoundTowardZero,
         zeroing: false,
         suppress_exceptions: false,
     });

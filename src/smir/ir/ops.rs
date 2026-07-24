@@ -3524,12 +3524,15 @@ pub enum OpKind {
     // ========================================================================
     /// x86 AVX10.2 saturating FP-to-integer conversion.
     ///
-    /// This variant currently represents VCVTTPS2IBS, VCVTTPS2IUBS,
-    /// VCVTTPD2QQS, and VCVTTPD2UQQS. The F32-to-I8 forms retain one result
-    /// per 32-bit source lane: the converted byte occupies bits 7:0 and bits
-    /// 31:8 are zero. The F64-to-I64 forms retain one 64-bit result per source
-    /// lane. `width` is both the source-vector width and the architecturally
-    /// updated destination width; bits above it are zeroed.
+    /// This variant represents VCVT[T]PS2I[U]BS and VCVTTPD2[U]QQS. The
+    /// F32-to-I8 forms retain one result per 32-bit source lane: the converted
+    /// byte occupies bits 7:0 and bits 31:8 are zero. The F64-to-I64 forms
+    /// retain one 64-bit result per source lane. `width` is both the source-
+    /// vector width and the architecturally updated destination width; bits
+    /// above it are zeroed. Truncating forms use `truncate=true` and
+    /// [`FpRoundMode::RoundTowardZero`]. Non-truncating MXCSR-controlled forms
+    /// use [`FpRoundMode::Dynamic`]; an explicit mode represents the 512-bit
+    /// EVEX `{er}` form and therefore requires `suppress_exceptions=true`.
     VCvtFpToIntSat {
         dst: VReg,
         src: VReg,
@@ -3538,9 +3541,11 @@ pub enum OpKind {
         int_elem: VecElementType,
         width: VecWidth,
         signed: bool,
+        truncate: bool,
+        round: FpRoundMode,
         /// Zero masked-off destination lanes instead of merging old `dst`.
         zeroing: bool,
-        /// Suppress MXCSR exception status and traps (`{sae}`).
+        /// Suppress MXCSR exception status and traps (`{sae}` or `{er}`).
         suppress_exceptions: bool,
     },
 

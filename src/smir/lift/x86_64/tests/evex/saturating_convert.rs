@@ -6,13 +6,16 @@ use crate::smir::lift::x86_64::*;
 
 #[test]
 fn lifts_avx10_2_saturating_conversion_register_shapes() {
-    for (bytes, fp_elem, int_elem, width, signed) in [
+    for (bytes, fp_elem, int_elem, width, signed, truncate, round, suppress_exceptions) in [
         (
             &[0x62, 0xF5, 0x7D, 0x08, 0x68, 0xCA][..],
             VecElementType::F32,
             VecElementType::I8,
             VecWidth::V128,
             true,
+            true,
+            FpRoundMode::RoundTowardZero,
+            false,
         ),
         (
             &[0x62, 0xF5, 0x7D, 0x28, 0x6A, 0xCA][..],
@@ -20,12 +23,38 @@ fn lifts_avx10_2_saturating_conversion_register_shapes() {
             VecElementType::I8,
             VecWidth::V256,
             false,
+            true,
+            FpRoundMode::RoundTowardZero,
+            false,
         ),
         (
             &[0x62, 0xF5, 0xFD, 0x48, 0x6D, 0xCA][..],
             VecElementType::F64,
             VecElementType::I64,
             VecWidth::V512,
+            true,
+            true,
+            FpRoundMode::RoundTowardZero,
+            false,
+        ),
+        (
+            &[0x62, 0xF5, 0x7D, 0x08, 0x69, 0xCA][..],
+            VecElementType::F32,
+            VecElementType::I8,
+            VecWidth::V128,
+            true,
+            false,
+            FpRoundMode::Dynamic,
+            false,
+        ),
+        (
+            &[0x62, 0xF5, 0x7D, 0x38, 0x6B, 0xCA][..],
+            VecElementType::F32,
+            VecElementType::I8,
+            VecWidth::V512,
+            false,
+            false,
+            FpRoundMode::RoundDown,
             true,
         ),
     ] {
@@ -42,8 +71,10 @@ fn lifts_avx10_2_saturating_conversion_register_shapes() {
                     int_elem: actual_int,
                     width: actual_width,
                     signed: actual_signed,
+                    truncate: actual_truncate,
+                    round: actual_round,
                     zeroing: false,
-                    suppress_exceptions: false,
+                    suppress_exceptions: actual_suppress,
                 },
                 x86_hint: Some(X86OpHint::EvexOp {
                     map: X86VecMap::Map5,
@@ -57,6 +88,9 @@ fn lifts_avx10_2_saturating_conversion_register_shapes() {
                 && *actual_width == width
                 && *hint_width == width
                 && *actual_signed == signed
+                && *actual_truncate == truncate
+                && *actual_round == round
+                && *actual_suppress == suppress_exceptions
                 && *dst == match width {
                     VecWidth::V128 => VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
                     VecWidth::V256 => VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
@@ -84,6 +118,8 @@ fn lifts_avx10_2_saturating_conversion_register_shapes() {
                 int_elem: VecElementType::I64,
                 width: VecWidth::V512,
                 signed: false,
+                truncate: true,
+                round: FpRoundMode::RoundTowardZero,
                 zeroing: true,
                 suppress_exceptions: false,
             },
@@ -110,6 +146,28 @@ fn lifts_avx10_2_saturating_conversion_register_shapes() {
                 }),
                 ..
             }]
+        ));
+    }
+
+    for (p2, round) in [
+        (0x18, FpRoundMode::RoundNearest),
+        (0x38, FpRoundMode::RoundDown),
+        (0x58, FpRoundMode::RoundUp),
+        (0x78, FpRoundMode::RoundTowardZero),
+    ] {
+        let lifted = lift_single(&[0x62, 0xF5, 0x7D, p2, 0x69, 0xCA]).unwrap();
+        assert!(matches!(
+            lifted.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::VCvtFpToIntSat {
+                    width: VecWidth::V512,
+                    truncate: false,
+                    round: actual_round,
+                    suppress_exceptions: true,
+                    ..
+                },
+                ..
+            }] if *actual_round == round
         ));
     }
 }
@@ -206,6 +264,17 @@ fn lifts_avx10_2_saturating_conversion_memory_fault_suppression_and_tuples() {
             ..
         }
     )));
+
+    let rounded_broadcast = lift_single(&[0x62, 0xF5, 0x7D, 0x58, 0x6B, 0x48, 0x01]).unwrap();
+    assert!(matches!(
+        rounded_broadcast.ops.last().map(|op| &op.kind),
+        Some(OpKind::VCvtFpToIntSat {
+            truncate: false,
+            round: FpRoundMode::Dynamic,
+            suppress_exceptions: false,
+            ..
+        })
+    ));
 }
 
 #[test]
@@ -216,6 +285,7 @@ fn rejects_reserved_avx10_2_saturating_conversion_encodings() {
         &[0x62, 0xF5, 0x7D, 0x68, 0x68, 0xCA][..], // L'L=3
         &[0x62, 0xF5, 0x7D, 0xC8, 0x68, 0xCA][..], // {z} with k0
         &[0x62, 0xF5, 0x7D, 0x38, 0x68, 0xCA][..], // register b=1, L'L!=0
+        &[0x62, 0xF5, 0x7D, 0x68, 0x69, 0xCA][..], // non-ER L'L=3
     ] {
         assert!(
             matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),

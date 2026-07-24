@@ -15,7 +15,7 @@ const CR4_OSXMMEXCPT: u64 = 1 << 10;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SatFpToIntKind {
-    F32ToI8 { signed: bool },
+    F32ToI8 { signed: bool, truncate: bool },
     F64ToI64 { signed: bool },
 }
 
@@ -36,7 +36,14 @@ impl SatFpToIntKind {
 
     fn signed(self) -> bool {
         match self {
-            Self::F32ToI8 { signed } | Self::F64ToI64 { signed } => signed,
+            Self::F32ToI8 { signed, .. } | Self::F64ToI64 { signed } => signed,
+        }
+    }
+
+    fn truncate(self) -> bool {
+        match self {
+            Self::F32ToI8 { truncate, .. } => truncate,
+            Self::F64ToI64 { .. } => true,
         }
     }
 
@@ -78,12 +85,14 @@ fn saturation_endpoint(signed: bool, negative: bool, int_bits: u32) -> u64 {
     }
 }
 
-fn truncate_saturating(
+fn convert_saturating(
     bits: u64,
     fp_bytes: usize,
     int_bits: u32,
     signed: bool,
+    rounding_control: u8,
 ) -> ConversionResult {
+    debug_assert!(rounding_control < 4);
     let (exponent_bits, fraction_bits, bias) = fp_layout(fp_bytes);
     let sign_mask = 1u64 << (fp_bytes * 8 - 1);
     let negative = bits & sign_mask != 0;
@@ -105,6 +114,53 @@ fn truncate_saturating(
         return ConversionResult { bits: 0, status: 0 };
     }
 
+    // AVX10.2 defines pre-round representability thresholds for the packed
+    // FP32-to-byte forms. In particular, unsigned inputs in (-1, 0) and
+    // (255, 256) saturate with PE rather than IE even when directed rounding
+    // would otherwise produce -1 or 256.
+    if fp_bytes == 4 && int_bits == 8 {
+        let source = f32::from_bits(bits as u32);
+        let out_of_range = if signed {
+            match rounding_control {
+                0 => source < -128.5 || source >= 127.5,
+                1 => source < -128.0 || source >= 128.0,
+                2 => source <= -129.0 || source > 127.0,
+                3 => source <= -129.0 || source >= 128.0,
+                _ => unreachable!("rounding control validated above"),
+            }
+        } else {
+            source <= -1.0 || source >= 256.0
+        };
+        if out_of_range {
+            return ConversionResult {
+                bits: saturation_endpoint(signed, negative, int_bits),
+                status: MXCSR_INVALID,
+            };
+        }
+        let saturated_without_invalid = if signed {
+            (source >= 127.0)
+                .then_some(0x7F)
+                .or_else(|| if source <= -128.0 { Some(0x80) } else { None })
+        } else if source > 255.0 {
+            Some(0xFF)
+        } else if source < 0.0 {
+            Some(0)
+        } else {
+            None
+        };
+        if let Some(result) = saturated_without_invalid {
+            let exact = if signed && result == 0x80 {
+                source == -128.0
+            } else {
+                source == result as f32
+            };
+            return ConversionResult {
+                bits: result,
+                status: if exact { 0 } else { MXCSR_PRECISION },
+            };
+        }
+    }
+
     let (significand, exponent) = if exponent_field == 0 {
         (u128::from(fraction), 1 - bias - fraction_bits as i32)
     } else {
@@ -124,14 +180,35 @@ fn truncate_saturating(
         (significand << shift, false)
     } else {
         let drop = (-exponent) as u32;
-        if drop >= u128::BITS {
-            (0, significand != 0)
+        let dropped = if drop >= u128::BITS {
+            significand
         } else {
-            (
-                significand >> drop,
-                significand & ((1u128 << drop) - 1) != 0,
-            )
+            significand & ((1u128 << drop) - 1)
+        };
+        let mut magnitude = if drop >= u128::BITS {
+            0
+        } else {
+            significand >> drop
+        };
+        let inexact = dropped != 0;
+        let increment = match rounding_control {
+            0 => {
+                let half = if (1..=u128::BITS).contains(&drop) {
+                    1u128 << (drop - 1)
+                } else {
+                    0
+                };
+                half != 0 && (dropped > half || (dropped == half && magnitude & 1 != 0))
+            }
+            1 => negative && inexact,
+            2 => !negative && inexact,
+            3 => false,
+            _ => unreachable!("rounding control validated above"),
+        };
+        if increment {
+            magnitude += 1;
         }
+        (magnitude, inexact)
     };
 
     let mask = if int_bits == 64 {
@@ -176,20 +253,24 @@ pub fn evex_saturating_fp_to_int(
     })?;
     let modrm = ctx.peek_u8()?;
     let is_memory = modrm >> 6 != 3;
-    let register_sae = evex.broadcast && !is_memory;
+    let register_control = evex.broadcast && !is_memory;
     if evex.mm != 5
         || evex.pp != 1
         || evex.w != kind.w()
         || evex.vvvv != 0x0F
         || !evex.v_prime
-        || evex.ll == 3
         || (evex.z && evex.aaa == 0)
-        || (register_sae && evex.ll != 0)
+        || (!register_control && evex.ll == 3)
+        || (register_control && kind.truncate() && evex.ll != 0)
     {
         return vcpu.inject_undefined_instruction();
     }
 
-    let width = if register_sae { 64 } else { 16usize << evex.ll };
+    let width = if register_control {
+        64
+    } else {
+        16usize << evex.ll
+    };
     let fp_bytes = kind.fp_bytes();
     let lanes = width / fp_bytes;
     let mask = evex_mask(vcpu, evex.aaa, lanes);
@@ -257,7 +338,20 @@ pub fn evex_saturating_fp_to_int(
         if vcpu.mxcsr & MXCSR_DAZ != 0 && is_denormal(bits, fp_bytes) {
             bits &= 1u64 << (fp_bytes * 8 - 1);
         }
-        let converted = truncate_saturating(bits, fp_bytes, kind.int_bits(), kind.signed());
+        let rounding_control = if kind.truncate() {
+            3
+        } else if register_control {
+            evex.ll
+        } else {
+            ((vcpu.mxcsr >> 13) & 3) as u8
+        };
+        let converted = convert_saturating(
+            bits,
+            fp_bytes,
+            kind.int_bits(),
+            kind.signed(),
+            rounding_control,
+        );
         status |= converted.status;
         if fp_bytes == 4 {
             // Byte results occupy bits 7:0 of their corresponding dword;
@@ -268,7 +362,7 @@ pub fn evex_saturating_fp_to_int(
         }
     }
 
-    if !register_sae {
+    if !register_control {
         let mxcsr_before = vcpu.mxcsr;
         let masks = (mxcsr_before >> 7) & MXCSR_STATUS_MASK;
         // Invalid is a pre-computation exception, while Precision is a
@@ -339,12 +433,68 @@ mod tests {
             ),
         ] {
             assert_eq!(
-                truncate_saturating(bits, fp_bytes, int_bits, signed),
+                convert_saturating(bits, fp_bytes, int_bits, signed, 3),
                 ConversionResult {
                     bits: expected,
                     status,
                 }
             );
+        }
+    }
+
+    #[test]
+    fn nontruncating_f32_byte_thresholds_are_bit_precise_for_every_rounding_mode() {
+        let next_more_negative = |value: f32| f32::from_bits(value.to_bits() + 1);
+        let next_more_positive = |value: f32| f32::from_bits(value.to_bits() - 1);
+        let next_down = |value: f32| f32::from_bits(value.to_bits() - 1);
+        let next_up = |value: f32| f32::from_bits(value.to_bits() + 1);
+
+        for (rounding_control, input, expected, status) in [
+            (0, next_more_negative(-128.5), 0x80, MXCSR_INVALID),
+            (0, -128.5, 0x80, MXCSR_PRECISION),
+            (0, next_down(127.5), 0x7F, MXCSR_PRECISION),
+            (0, 127.5, 0x7F, MXCSR_INVALID),
+            (1, next_more_negative(-128.0), 0x80, MXCSR_INVALID),
+            (1, -128.0, 0x80, 0),
+            (1, next_down(128.0), 0x7F, MXCSR_PRECISION),
+            (1, 128.0, 0x7F, MXCSR_INVALID),
+            (2, -129.0, 0x80, MXCSR_INVALID),
+            (2, next_more_positive(-129.0), 0x80, MXCSR_PRECISION),
+            (2, 127.0, 0x7F, 0),
+            (2, next_up(127.0), 0x7F, MXCSR_INVALID),
+            (3, -129.0, 0x80, MXCSR_INVALID),
+            (3, next_more_positive(-129.0), 0x80, MXCSR_PRECISION),
+            (3, next_down(128.0), 0x7F, MXCSR_PRECISION),
+            (3, 128.0, 0x7F, MXCSR_INVALID),
+        ] {
+            assert_eq!(
+                convert_saturating(u64::from(input.to_bits()), 4, 8, true, rounding_control,),
+                ConversionResult {
+                    bits: expected,
+                    status,
+                },
+                "RC={rounding_control}, input={input:?}"
+            );
+        }
+
+        for (input, expected, status) in [
+            (-1.0, 0, MXCSR_INVALID),
+            (next_more_positive(-1.0), 0, MXCSR_PRECISION),
+            (255.0, 0xFF, 0),
+            (next_up(255.0), 0xFF, MXCSR_PRECISION),
+            (next_down(256.0), 0xFF, MXCSR_PRECISION),
+            (256.0, 0xFF, MXCSR_INVALID),
+        ] {
+            for rounding_control in 0..=3 {
+                assert_eq!(
+                    convert_saturating(u64::from(input.to_bits()), 4, 8, false, rounding_control,),
+                    ConversionResult {
+                        bits: expected,
+                        status,
+                    },
+                    "RC={rounding_control}, input={input:?}"
+                );
+            }
         }
     }
 }

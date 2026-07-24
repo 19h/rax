@@ -893,11 +893,29 @@ fn clobber_gate_admits_only_architectural_native_vector_operands() {
         int_elem: VecElementType::I8,
         width: VecWidth::V512,
         signed: true,
+        truncate: true,
+        round: crate::smir::ir::types::FpRoundMode::RoundTowardZero,
         zeroing: true,
         suppress_exceptions: false,
     };
     assert!(!is_x86_native_vector_op(&saturating_conversion));
     assert!(!x86_gate(saturating_conversion));
+
+    let rounded_saturating_conversion = OpKind::VCvtFpToIntSat {
+        dst: zmm1,
+        src: zmm2,
+        mask: Some(k4),
+        fp_elem: VecElementType::F32,
+        int_elem: VecElementType::I8,
+        width: VecWidth::V512,
+        signed: false,
+        truncate: false,
+        round: crate::smir::ir::types::FpRoundMode::RoundUp,
+        zeroing: true,
+        suppress_exceptions: true,
+    };
+    assert!(!is_x86_native_vector_op(&rounded_saturating_conversion));
+    assert!(!x86_gate(rounded_saturating_conversion));
 
     let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
     builder.push_op(0x1000, native_ops[0].clone());
