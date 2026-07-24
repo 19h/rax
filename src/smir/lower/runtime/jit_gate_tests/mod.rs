@@ -34,6 +34,8 @@ mod evex_fp16_scalar_replay;
 #[cfg(test)]
 mod evex_fp_class_replay;
 #[cfg(test)]
+mod evex_fp_compare_replay;
+#[cfg(test)]
 mod evex_fp_sqrt_replay;
 #[cfg(test)]
 mod evex_gfni_replay;

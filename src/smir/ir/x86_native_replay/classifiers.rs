@@ -2,6 +2,7 @@ use super::X86InstructionBytes;
 
 mod chunk;
 mod fp_class;
+mod fp_compare;
 mod fp_sqrt;
 mod gfni;
 mod vp2intersect;
