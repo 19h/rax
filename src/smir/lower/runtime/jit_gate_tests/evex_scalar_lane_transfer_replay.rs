@@ -454,9 +454,11 @@ fn execute_native(bytes: &[u8], initial: &TransferState) -> TransferState {
 }
 
 #[cfg(target_arch = "x86_64")]
-fn run_native_differential(needs_dq: bool) -> usize {
-    let initial = initial_state();
-    let mut executed = 0usize;
+const CHILD_RANGE_ENV: &str = "RAX_SCALAR_LANE_TRANSFER_CHILD_RANGE";
+
+#[cfg(target_arch = "x86_64")]
+fn native_cases(needs_dq: bool) -> Vec<(TransferKind, [u8; 7])> {
+    let mut cases = Vec::new();
     for kind in TransferKind::ALL {
         let (_, _, w_mode, kind_needs_dq, _, _) = kind.fields();
         if kind_needs_dq != needs_dq {
@@ -466,17 +468,92 @@ fn run_native_differential(needs_dq: bool) -> usize {
             for &(destination, merge, source) in operands(kind) {
                 for immediate in native_immediates(kind) {
                     let bytes = encoding(kind, w, destination, merge, source, immediate);
-                    assert_eq!(
-                        execute_native(&bytes, &initial),
-                        interpret(&bytes, &initial),
-                        "{kind:?} {bytes:02X?}"
-                    );
-                    executed += 1;
+                    cases.push((kind, bytes));
                 }
             }
         }
     }
-    executed
+    cases
+}
+
+#[cfg(target_arch = "x86_64")]
+fn child_range() -> Option<std::ops::Range<usize>> {
+    let value = std::env::var(CHILD_RANGE_ENV).ok()?;
+    let (start, end) = value
+        .split_once(':')
+        .unwrap_or_else(|| panic!("invalid {CHILD_RANGE_ENV}: {value}"));
+    Some(
+        start
+            .parse::<usize>()
+            .unwrap_or_else(|_| panic!("invalid {CHILD_RANGE_ENV} start: {value}"))
+            ..end
+                .parse::<usize>()
+                .unwrap_or_else(|_| panic!("invalid {CHILD_RANGE_ENV} end: {value}")),
+    )
+}
+
+#[cfg(target_arch = "x86_64")]
+fn execute_native_case_range(cases: &[(TransferKind, [u8; 7])], range: std::ops::Range<usize>) {
+    assert!(range.start < range.end && range.end <= cases.len());
+    let initial = initial_state();
+    for &(kind, bytes) in &cases[range] {
+        assert_eq!(
+            execute_native(&bytes, &initial),
+            interpret(&bytes, &initial),
+            "{kind:?} {bytes:02X?}"
+        );
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+fn run_child_range(test_name: &str, range: std::ops::Range<usize>) -> std::process::Output {
+    std::process::Command::new(std::env::current_exe().expect("current unit-test executable"))
+        .arg(test_name)
+        .arg("--exact")
+        .arg("--nocapture")
+        .env(CHILD_RANGE_ENV, format!("{}:{}", range.start, range.end))
+        .output()
+        .expect("run isolated native scalar-lane differential")
+}
+
+#[cfg(target_arch = "x86_64")]
+fn run_isolated_native_differential(needs_dq: bool, test_name: &str, expected_cases: usize) {
+    let cases = native_cases(needs_dq);
+    assert_eq!(cases.len(), expected_cases);
+    if let Some(range) = child_range() {
+        execute_native_case_range(&cases, range);
+        return;
+    }
+
+    let whole = run_child_range(test_name, 0..cases.len());
+    if whole.status.success() {
+        return;
+    }
+
+    // A raw replay bug can terminate the child with SIGILL before Rust can
+    // report its assertion context. Bisect isolated child ranges in O(log N)
+    // process launches to retain the exact guest encoding in the parent.
+    let mut start = 0usize;
+    let mut end = cases.len();
+    while end - start > 1 {
+        let middle = start + (end - start) / 2;
+        if run_child_range(test_name, start..middle).status.success() {
+            start = middle;
+        } else {
+            end = middle;
+        }
+    }
+    let singleton = run_child_range(test_name, start..end);
+    let (kind, bytes) = cases[start];
+    panic!(
+        "isolated native scalar-lane failure at case {start}/{expected_cases}: \
+         {kind:?} {bytes:02X?}; whole status {}; singleton status {}; \
+         singleton stdout: {}; singleton stderr: {}",
+        whole.status,
+        singleton.status,
+        String::from_utf8_lossy(&singleton.stdout),
+        String::from_utf8_lossy(&singleton.stderr),
+    );
 }
 
 #[cfg(target_arch = "x86_64")]
@@ -486,7 +563,12 @@ fn replay_matches_interpreter_for_bw_f_lane_controls_extensions_aliases_and_full
         eprintln!("skipping native EVEX scalar lane-transfer differential: host lacks AVX-512F/BW");
         return;
     }
-    assert_eq!(run_native_differential(false), 2_480);
+    run_isolated_native_differential(
+        false,
+        "smir::lower::runtime::jit_gate_tests::evex_scalar_lane_transfer_replay::\
+         replay_matches_interpreter_for_bw_f_lane_controls_extensions_aliases_and_full_state",
+        2_480,
+    );
 }
 
 #[cfg(target_arch = "x86_64")]
@@ -501,5 +583,10 @@ fn replay_matches_interpreter_for_dq_lane_controls_extensions_aliases_and_full_s
         );
         return;
     }
-    assert_eq!(run_native_differential(true), 400);
+    run_isolated_native_differential(
+        true,
+        "smir::lower::runtime::jit_gate_tests::evex_scalar_lane_transfer_replay::\
+         replay_matches_interpreter_for_dq_lane_controls_extensions_aliases_and_full_state",
+        400,
+    );
 }
