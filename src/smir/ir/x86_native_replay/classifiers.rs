@@ -1,6 +1,7 @@
 use super::X86InstructionBytes;
 
 mod chunk;
+mod fp16_widen;
 mod fp_class;
 mod fp_compare;
 mod fp_sqrt;

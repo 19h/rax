@@ -39,7 +39,7 @@ impl X86_64Vcpu {
             }
             // VCVTPH2PS.
             0x13 if evex.pp == 1 && !evex.w => {
-                execute::simd::evex_packed_fp_convert(self, ctx, 2, 4)
+                execute::simd::evex_fp16_widen(self, ctx, execute::simd::Fp16WidenKind::ToF32)
             }
             // VMOVNTDQA (66.0F38.2A) memory load.
             0x2A if evex.pp == 1 && !evex.w => execute::simd::evex_nt_load(self, ctx),

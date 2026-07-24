@@ -21,6 +21,7 @@ mod avx512_chunk_insert;
 mod avx512_chunk_shuffle;
 mod avx512_comi;
 mod avx512_compare;
+mod avx512_fp16_widen;
 mod avx512_fp_class;
 mod avx512_gpr_broadcast;
 mod avx512_mask_convert;
@@ -50,6 +51,7 @@ pub use avx512_chunk_shuffle::*;
 pub use avx512_comi::*;
 pub use avx512_compare::*;
 pub use avx512_fp_class::*;
+pub use avx512_fp16_widen::*;
 pub use avx512_gpr_broadcast::*;
 pub use avx512_mask_convert::*;
 pub use avx512_pair_intersect::*;
@@ -66,3 +68,5 @@ pub use ssse3::*;
 
 #[cfg(test)]
 mod avx512_comi_tests;
+#[cfg(test)]
+mod avx512_fp16_widen_tests;

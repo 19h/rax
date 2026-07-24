@@ -52,7 +52,7 @@ impl X86_64Vcpu {
             0x2C if evex.pp == 2 => execute::simd::evex_fp_to_gpr(self, ctx, 2, false, true),
             0x2D if evex.pp == 2 => execute::simd::evex_fp_to_gpr(self, ctx, 2, false, false),
             0x5A if evex.pp == 0 && !evex.w => {
-                execute::simd::evex_packed_fp_convert(self, ctx, 2, 8)
+                execute::simd::evex_fp16_widen(self, ctx, execute::simd::Fp16WidenKind::ToF64)
             }
             0x5A if evex.pp == 1 && evex.w => {
                 execute::simd::evex_packed_fp_convert(self, ctx, 8, 2)
@@ -196,7 +196,7 @@ impl X86_64Vcpu {
             }
             // VCVTPH2PSX packed FP16-to-FP32 conversion.
             0x13 if evex.pp == 1 && !evex.w => {
-                execute::simd::evex_packed_fp_convert(self, ctx, 2, 4)
+                execute::simd::evex_fp16_widen(self, ctx, execute::simd::Fp16WidenKind::ToF32X)
             }
             // VSCALEFPH/SH.
             0x2C if evex.pp == 1 && !evex.w => execute::simd::evex_fp_ternary_math(
