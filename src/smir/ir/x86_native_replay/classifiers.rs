@@ -8,6 +8,7 @@ mod fp_compare;
 mod fp_sqrt;
 mod gfni;
 mod high_low_move;
+mod scalar_fp_to_int;
 mod scalar_integer_move;
 mod scalar_lane_transfer;
 mod scalar_move;

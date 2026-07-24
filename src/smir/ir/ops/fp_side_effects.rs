@@ -1,0 +1,168 @@
+//! Floating-point status/trap side-effect classification.
+
+use super::OpKind;
+use crate::smir::ir::types::{FpRoundMode, OpWidth, VecElementType};
+
+impl OpKind {
+    /// Return whether execution can update architectural floating-point status
+    /// or request a floating-point exception independently of the data result.
+    pub(super) fn has_fp_status_side_effects(&self) -> bool {
+        if let OpKind::X86FpToInt {
+            elem,
+            int_width,
+            truncate,
+            round,
+            suppress_exceptions,
+            ..
+        } = self
+        {
+            let canonical = matches!(
+                elem,
+                VecElementType::F16 | VecElementType::F32 | VecElementType::F64
+            ) && matches!(int_width, OpWidth::W32 | OpWidth::W64)
+                && *round != FpRoundMode::RoundNearestTiesAway
+                && (!*truncate || *round == FpRoundMode::RoundTowardZero);
+            return !*suppress_exceptions || !canonical;
+        }
+
+        matches!(
+            self,
+            OpKind::X86Round { .. }
+                | OpKind::X86DotProduct { .. }
+                | OpKind::X86FpBinary {
+                    suppress_exceptions: false,
+                    ..
+                }
+                | OpKind::X86FpCompare {
+                    suppress_exceptions: false,
+                    ..
+                }
+                | OpKind::X86VectorFpCompare { .. }
+                | OpKind::X86GetExponent {
+                    suppress_exceptions: false,
+                    ..
+                }
+                | OpKind::X86GetMantissa {
+                    suppress_exceptions: false,
+                    ..
+                }
+                | OpKind::X86RoundScale {
+                    suppress_exceptions: false,
+                    ..
+                }
+                | OpKind::X86Reduce {
+                    suppress_exceptions: false,
+                    ..
+                }
+                | OpKind::X86Range {
+                    suppress_exceptions: false,
+                    ..
+                }
+                | OpKind::X86Exp2 {
+                    suppress_exceptions: false,
+                    ..
+                }
+                | OpKind::X86Recip28 {
+                    suppress_exceptions: false,
+                    ..
+                }
+                | OpKind::X86Rsqrt28 {
+                    suppress_exceptions: false,
+                    ..
+                }
+                | OpKind::X86ScaleF {
+                    suppress_exceptions: false,
+                    ..
+                }
+                | OpKind::X86Sqrt {
+                    suppress_exceptions: false,
+                    ..
+                }
+                | OpKind::X86FpConvert {
+                    suppress_exceptions: false,
+                    ..
+                }
+                | OpKind::X86PackedFpConvert {
+                    suppress_exceptions: false,
+                    ..
+                }
+                | OpKind::X86PackedIntToFp {
+                    suppress_exceptions: false,
+                    ..
+                }
+                | OpKind::X86PackedFpToInt {
+                    suppress_exceptions: false,
+                    ..
+                }
+                | OpKind::X86PackedIntToFp {
+                    round: FpRoundMode::RoundNearestTiesAway,
+                    ..
+                }
+                | OpKind::X86PackedFpToInt {
+                    round: FpRoundMode::RoundNearestTiesAway,
+                    ..
+                }
+                | OpKind::X86PackedIntToFp16 {
+                    suppress_exceptions: false,
+                    ..
+                }
+                | OpKind::X86PackedFp16ToInt {
+                    suppress_exceptions: false,
+                    ..
+                }
+                | OpKind::X86PackedIntToFp16 {
+                    round: FpRoundMode::RoundNearestTiesAway,
+                    ..
+                }
+                | OpKind::X86PackedFp16ToInt {
+                    round: FpRoundMode::RoundNearestTiesAway,
+                    ..
+                }
+                | OpKind::VFP16Arith {
+                    round: FpRoundMode::Dynamic,
+                    ..
+                }
+                | OpKind::X86FP16Fma {
+                    round: FpRoundMode::Dynamic,
+                    ..
+                }
+                | OpKind::X86FP16Complex {
+                    round: FpRoundMode::Dynamic,
+                    ..
+                }
+                | OpKind::X86FourFma { .. }
+        )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::smir::ir::types::{ArchReg, OpWidth, VReg, VecElementType, X86Reg};
+
+    fn scalar_conversion(suppress_exceptions: bool) -> OpKind {
+        OpKind::X86FpToInt {
+            dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+            src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+            elem: VecElementType::F32,
+            int_width: OpWidth::W32,
+            signed: true,
+            truncate: false,
+            round: FpRoundMode::Dynamic,
+            suppress_exceptions,
+        }
+    }
+
+    #[test]
+    fn scalar_fp_to_int_is_side_effecting_exactly_without_sae() {
+        assert!(scalar_conversion(false).has_side_effects());
+        assert!(!scalar_conversion(true).has_side_effects());
+
+        let mut invalid = scalar_conversion(true);
+        let OpKind::X86FpToInt { round, .. } = &mut invalid else {
+            unreachable!()
+        };
+        *round = FpRoundMode::RoundNearestTiesAway;
+        assert!(invalid.has_side_effects(), "invalid IR must fail closed");
+    }
+}

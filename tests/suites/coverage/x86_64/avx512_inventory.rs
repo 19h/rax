@@ -65,6 +65,8 @@ mod packed_compare_replay;
 mod packed_extend_replay;
 #[path = "avx512_inventory/packed_move_replay.rs"]
 mod packed_move_replay;
+#[path = "avx512_inventory/scalar_fp_to_int_replay.rs"]
+mod scalar_fp_to_int_replay;
 #[path = "avx512_inventory/scalar_integer_move_replay.rs"]
 mod scalar_integer_move_replay;
 #[path = "avx512_inventory/scalar_lane_transfer_replay.rs"]

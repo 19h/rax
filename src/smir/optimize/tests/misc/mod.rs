@@ -13,4 +13,6 @@ mod part2;
 #[cfg(test)]
 mod part3;
 #[cfg(test)]
+mod scalar_fp_to_int;
+#[cfg(test)]
 mod x87_transcendental;

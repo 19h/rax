@@ -66,6 +66,8 @@ mod evex_packed_extend_replay;
 #[cfg(test)]
 mod evex_permute_replay;
 #[cfg(test)]
+mod evex_scalar_fp_to_int_replay;
+#[cfg(test)]
 mod evex_scalar_integer_move_replay;
 #[cfg(test)]
 mod evex_scalar_lane_transfer_replay;

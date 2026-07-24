@@ -13,6 +13,7 @@ mod logic;
 mod memory;
 mod meta;
 mod opmask;
+mod scalar_fp_to_int;
 mod shift;
 mod simd;
 mod sse4a;

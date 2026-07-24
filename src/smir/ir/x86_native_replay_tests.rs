@@ -46,6 +46,9 @@ mod gpr_broadcast;
 #[path = "x86_native_replay_tests/high_low_move.rs"]
 mod high_low_move;
 
+#[path = "x86_native_replay_tests/scalar_fp_to_int.rs"]
+mod scalar_fp_to_int;
+
 #[path = "x86_native_replay_tests/scalar_integer_move.rs"]
 mod scalar_integer_move;
 

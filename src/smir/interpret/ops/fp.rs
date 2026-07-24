@@ -1539,71 +1539,19 @@ impl SmirInterpreter {
                 signed,
                 truncate,
                 round,
-                ..
+                suppress_exceptions,
             } => {
-                let bits = if matches!(src, VReg::Virtual(_)) {
-                    ctx.read_vreg(*src)
-                } else {
-                    Self::get_lane(&Self::read_vec(ctx, *src), 0, elem.bytes() * 8)
-                };
-                let value = match elem {
-                    VecElementType::F16 => Self::x86_fp16_to_f32(bits as u16) as f64,
-                    VecElementType::F32 => f32::from_bits(bits as u32) as f64,
-                    VecElementType::F64 => f64::from_bits(bits),
-                    _ => f64::NAN,
-                };
-                let rounded = if *truncate {
-                    value.trunc()
-                } else {
-                    self.round_fp_value(ctx, value, *round)
-                };
-                let indefinite = if *signed {
-                    match int_width {
-                        OpWidth::W32 => 0x8000_0000,
-                        OpWidth::W64 => 0x8000_0000_0000_0000,
-                        _ => 0,
-                    }
-                } else {
-                    int_width.mask()
-                };
-                let valid = if *signed {
-                    match int_width {
-                        OpWidth::W32 => {
-                            rounded.is_finite()
-                                && rounded >= i32::MIN as f64
-                                && rounded <= i32::MAX as f64
-                        }
-                        OpWidth::W64 => {
-                            rounded.is_finite()
-                                && rounded >= -9_223_372_036_854_775_808.0
-                                && rounded < 9_223_372_036_854_775_808.0
-                        }
-                        _ => false,
-                    }
-                } else {
-                    match int_width {
-                        OpWidth::W32 => {
-                            rounded.is_finite() && rounded >= 0.0 && rounded <= 4_294_967_295.0
-                        }
-                        OpWidth::W64 => {
-                            rounded.is_finite()
-                                && rounded >= 0.0
-                                && rounded < 18_446_744_073_709_551_616.0
-                        }
-                        _ => false,
-                    }
-                };
-                let result = if valid {
-                    let converted = if *signed {
-                        rounded as i64 as u64
-                    } else {
-                        rounded as u64
-                    };
-                    converted & int_width.mask()
-                } else {
-                    indefinite
-                };
-                Self::write_gpr(ctx, *dst, result, *int_width);
+                self.execute_x86_fp_to_int(
+                    ctx,
+                    *dst,
+                    *src,
+                    *elem,
+                    *int_width,
+                    *signed,
+                    *truncate,
+                    *round,
+                    *suppress_exceptions,
+                );
             }
 
             OpKind::X86IntToFp {

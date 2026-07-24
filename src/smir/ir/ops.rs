@@ -5,6 +5,7 @@
 use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::types::*;
 
+mod fp_side_effects;
 mod x86_fp_types;
 pub use x86_fp_types::*;
 mod x86_crypto_types;
@@ -5258,6 +5259,7 @@ impl OpKind {
         // Guest memory reads can fault or trigger MMIO/device effects even when
         // their destination is dead.
         self.reads_memory()
+            || self.has_fp_status_side_effects()
             || matches!(self, OpKind::X86Opmask(op) if op.writes_memory())
             || matches!(
                 self,
@@ -5297,110 +5299,6 @@ impl OpKind {
                     | OpKind::X86StoreMxcsr { .. }
                     | OpKind::X86CacheControl { .. }
                     | OpKind::X86CheckAlignment { .. }
-                    | OpKind::X86Round { .. }
-                    | OpKind::X86DotProduct { .. }
-                    | OpKind::X86FpBinary {
-                        suppress_exceptions: false,
-                        ..
-                    }
-                    | OpKind::X86FpCompare {
-                        suppress_exceptions: false,
-                        ..
-                    }
-                    | OpKind::X86VectorFpCompare { .. }
-                    | OpKind::X86GetExponent {
-                        suppress_exceptions: false,
-                        ..
-                    }
-                    | OpKind::X86GetMantissa {
-                        suppress_exceptions: false,
-                        ..
-                    }
-                    | OpKind::X86RoundScale {
-                        suppress_exceptions: false,
-                        ..
-                    }
-                    | OpKind::X86Reduce {
-                        suppress_exceptions: false,
-                        ..
-                    }
-                    | OpKind::X86Range {
-                        suppress_exceptions: false,
-                        ..
-                    }
-                    | OpKind::X86Exp2 {
-                        suppress_exceptions: false,
-                        ..
-                    }
-                    | OpKind::X86Recip28 {
-                        suppress_exceptions: false,
-                        ..
-                    }
-                    | OpKind::X86Rsqrt28 {
-                        suppress_exceptions: false,
-                        ..
-                    }
-                    | OpKind::X86ScaleF {
-                        suppress_exceptions: false,
-                        ..
-                    }
-                    | OpKind::X86Sqrt {
-                        suppress_exceptions: false,
-                        ..
-                    }
-                    | OpKind::X86FpConvert {
-                        suppress_exceptions: false,
-                        ..
-                    }
-                    | OpKind::X86PackedFpConvert {
-                        suppress_exceptions: false,
-                        ..
-                    }
-                    | OpKind::X86PackedIntToFp {
-                        suppress_exceptions: false,
-                        ..
-                    }
-                    | OpKind::X86PackedFpToInt {
-                        suppress_exceptions: false,
-                        ..
-                    }
-                    | OpKind::X86PackedIntToFp {
-                        round: FpRoundMode::RoundNearestTiesAway,
-                        ..
-                    }
-                    | OpKind::X86PackedFpToInt {
-                        round: FpRoundMode::RoundNearestTiesAway,
-                        ..
-                    }
-                    | OpKind::X86PackedIntToFp16 {
-                        suppress_exceptions: false,
-                        ..
-                    }
-                    | OpKind::X86PackedFp16ToInt {
-                        suppress_exceptions: false,
-                        ..
-                    }
-                    | OpKind::X86PackedIntToFp16 {
-                        round: FpRoundMode::RoundNearestTiesAway,
-                        ..
-                    }
-                    | OpKind::X86PackedFp16ToInt {
-                        round: FpRoundMode::RoundNearestTiesAway,
-                        ..
-                    }
-                    | OpKind::VFP16Arith {
-                        round: FpRoundMode::Dynamic,
-                        ..
-                    }
-                    | OpKind::X86FP16Fma {
-                        round: FpRoundMode::Dynamic,
-                        ..
-                    }
-                    | OpKind::X86FP16Complex {
-                        round: FpRoundMode::Dynamic,
-                        ..
-                    }
-                    | OpKind::X86FourFma { .. }
                     | OpKind::X86X87Control {
                         kind:
                             X86X87ControlKind::Init
