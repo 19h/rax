@@ -3,20 +3,21 @@
 //! SMIR preserves the EVEX opmask (`{k}`) and zeroing (`{z}`) directly for
 //! selected native-lowered bit-manipulation operations; other supported vector
 //! families, including aligned moves, expand masking into primitive operations.
-//! EVEX.b memory
-//! broadcast (`{1toN}`) / register embedded rounding (`{er}`+SAE) remains
-//! outside this JIT path. Two layers keep unsupported forms from becoming
-//! silent miscompilations when a hot loop is promoted to native code:
+//! EVEX.b memory broadcast (`{1toN}`) is represented semantically and remains
+//! outside the register-only native replay path. Register embedded rounding
+//! (`{er}`+SAE) is represented explicitly and may use byte-validated exact
+//! native replay. Two layers keep non-native shapes from becoming silent
+//! miscompilations when a hot loop is promoted to native code:
 //!
-//!   1. The lifter preserves masking for explicitly modeled operations and
-//!      refuses unsupported broadcast/rounding forms. Lifted operations that
-//!      are not natively lowerable bail at the JIT safety gate.
+//!   1. The lifter preserves masking, broadcast, and embedded-rounding
+//!      semantics. Lifted operations that are not natively lowerable bail at
+//!      the JIT safety gate.
 //!   2. (Belt-and-suspenders, exercised by `RAX_JIT_VERIFY`, not here.) The JIT
 //!      verifier now also diffs ZMM/opmask state, so any future vector JIT that
 //!      diverged would be caught rather than silently corrupting vector state.
 //!
-//! This test pins layer 1 directly (acceptance and refusal) and end-to-end (a hot
-//! loop containing an unsupported masked move is declined by the JIT and
+//! This test pins layer 1 directly and end-to-end (a hot loop containing a
+//! non-native masked move is declined by the JIT and
 //! produces the correct result via the interpreter). These paths are not
 //! reachable by single-instruction differential runs, which never trigger
 //! hot-loop promotion.
@@ -35,7 +36,7 @@ use rax::smir::lift::x86_64::X86_64Lifter;
 use rax::vm::vcpu::{Registers, SystemRegisters, VCpu, VcpuExit};
 
 // ---------------------------------------------------------------------------
-// Layer 1: modeled masking lifts; unsupported EVEX features are refused.
+// Layer 1: modeled masking, broadcast, and embedded rounding lift.
 // ---------------------------------------------------------------------------
 
 /// Lift a single instruction; `Ok(())` if the lifter accepted it, `Err` if it
@@ -50,7 +51,7 @@ fn lift_one(bytes: &[u8]) -> Result<(), String> {
 }
 
 #[test]
-fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
+fn lifter_accepts_modeled_evex_masking_broadcast_and_embedded_rounding() {
     // Common unmasked EVEX vector ops must still lift. Operations outside the
     // explicit native vector family continue to deopt at the JIT safety gate.
     assert!(
@@ -154,6 +155,10 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         "broadcast vaddps must remain interpreter-liftable"
     );
     assert!(
+        lift_one(&[0x62, 0xf1, 0x6c, 0x18, 0x58, 0xd9]).is_ok(),
+        "vaddps {{rn-sae}} must remain semantically liftable for exact native replay"
+    );
+    assert!(
         lift_one(&[0x62, 0xf1, 0x7d, 0x49, 0x6f, 0xd1]).is_ok(),
         "masked vmovdqa32 must remain interpreter-liftable"
     );
@@ -161,20 +166,6 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         lift_one(&[0x62, 0xf1, 0x7d, 0xc9, 0x6f, 0xd1]).is_ok(),
         "zero-masked vmovdqa32 must remain interpreter-liftable"
     );
-
-    // Every form this SMIR vector path cannot represent must be refused so it
-    // falls back to the interpreter. (Encodings from llvm-mc.)
-    let refused: &[(&str, &[u8])] = &[
-        // vaddps {rn-sae},%zmm1,%zmm2,%zmm3 — embedded rounding (b=1, reg;
-        // here L'L=00 would even misdecode the width as 128-bit if not bailed)
-        ("vaddps {rn-sae}", &[0x62, 0xf1, 0x6c, 0x18, 0x58, 0xd9]),
-    ];
-    for (name, bytes) in refused {
-        assert!(
-            lift_one(bytes).is_err(),
-            "{name} must be refused by the lifter (bytes={bytes:02x?})"
-        );
-    }
 }
 
 // ---------------------------------------------------------------------------
