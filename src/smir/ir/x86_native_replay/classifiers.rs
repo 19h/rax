@@ -3,6 +3,7 @@ use super::X86InstructionBytes;
 mod chunk;
 mod fp_class;
 mod gfni;
+mod vp2intersect;
 mod vpclmulqdq;
 
 impl X86InstructionBytes {

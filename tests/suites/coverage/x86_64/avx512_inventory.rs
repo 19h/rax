@@ -57,6 +57,8 @@ mod packed_move_replay;
 mod vector_align_replay;
 #[path = "avx512_inventory/vector_to_mask_replay.rs"]
 mod vector_to_mask_replay;
+#[path = "avx512_inventory/vp2intersect_replay.rs"]
+mod vp2intersect_replay;
 #[path = "avx512_inventory/vpclmulqdq_replay.rs"]
 mod vpclmulqdq_replay;
 

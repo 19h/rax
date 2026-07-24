@@ -28,6 +28,9 @@ mod gfni;
 #[path = "x86_native_replay_tests/gpr_broadcast.rs"]
 mod gpr_broadcast;
 
+#[path = "x86_native_replay_tests/vp2intersect.rs"]
+mod vp2intersect;
+
 #[path = "x86_native_replay_tests/vpclmulqdq.rs"]
 mod vpclmulqdq;
 

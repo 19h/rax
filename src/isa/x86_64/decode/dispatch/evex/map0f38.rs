@@ -155,6 +155,7 @@ impl X86_64Vcpu {
                 let es = if evex.w { 8 } else { 4 };
                 execute::simd::evex_p2intersect(self, ctx, es)
             }
+            0x68 => self.inject_undefined_instruction(),
             // VPSHUFB.
             0x00 if evex.pp == 1 => execute::simd::evex_bw_pshufb(self, ctx),
             0x00 => self.inject_undefined_instruction(),
