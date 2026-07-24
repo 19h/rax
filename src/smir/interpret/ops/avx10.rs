@@ -880,11 +880,16 @@ impl SmirInterpreter {
                     _ => 0x1F80,
                 };
                 let rounding = match round {
-                    FpRoundMode::Dynamic => ((mxcsr >> 13) & 3) as u8,
-                    FpRoundMode::RoundNearest => 0,
-                    FpRoundMode::RoundDown => 1,
-                    FpRoundMode::RoundUp => 2,
-                    FpRoundMode::RoundTowardZero => 3,
+                    FpRoundMode::Dynamic => match (mxcsr >> 13) & 3 {
+                        0 => FpRoundMode::RoundNearest,
+                        1 => FpRoundMode::RoundDown,
+                        2 => FpRoundMode::RoundUp,
+                        _ => FpRoundMode::RoundTowardZero,
+                    },
+                    FpRoundMode::RoundNearest
+                    | FpRoundMode::RoundDown
+                    | FpRoundMode::RoundUp
+                    | FpRoundMode::RoundTowardZero => *round,
                     FpRoundMode::RoundNearestTiesAway => {
                         ctx.request_exit(ExitReason::Undefined {
                             addr: ctx.pc,
@@ -896,6 +901,10 @@ impl SmirInterpreter {
                 let mask_bits = mask.map(|mask| ctx.read_vreg(mask));
                 let mut result = [0u64; 16];
                 let mut status = 0u32;
+                // AVX-512-FP16 arithmetic consumes binary16 denormals and
+                // produces gradual-underflow results independently of
+                // MXCSR.DAZ/FTZ. Preserve every other MXCSR control bit.
+                let fp16_mxcsr = mxcsr & !((1 << 6) | (1 << 15));
                 for lane in 0..width.lanes(VecElementType::F16) as u8 {
                     if mask_bits.is_some_and(|bits| bits & (1u64 << lane) == 0) {
                         if !*zeroing {
@@ -905,45 +914,79 @@ impl SmirInterpreter {
                     }
                     let a_bits = Self::get_lane(&first, lane, 16) as u16;
                     let b_bits = Self::get_lane(&second, lane, 16) as u16;
-                    let a = Self::x86_fp16_to_f32(a_bits);
-                    let b = Self::x86_fp16_to_f32(b_bits);
-                    let value = match op {
+                    let computed = match op {
                         Avx10FP16Op::Min | Avx10FP16Op::Max => {
                             // AVX512-FP16 always handles denormal FP16 inputs;
                             // MXCSR.DAZ is ignored, but the denormal-operand
                             // exception remains architecturally observable.
+                            let mut lane_status = 0u32;
                             if Self::x86_simd_fp_is_denormal(u64::from(a_bits), X86_SIMD_F16)
                                 || Self::x86_simd_fp_is_denormal(u64::from(b_bits), X86_SIMD_F16)
                             {
-                                status |= 1 << 1;
+                                lane_status |= 1 << 1;
                             }
                             if Self::x86_simd_fp_is_snan(u64::from(a_bits), X86_SIMD_F16)
                                 || Self::x86_simd_fp_is_snan(u64::from(b_bits), X86_SIMD_F16)
                             {
-                                status |= 1;
+                                lane_status |= 1;
                             }
                             // Intel MIN/MAX selects source 2 for unordered or
                             // equal operands. Preserve the selected FP16 bits
                             // exactly, including an SNaN in source 2.
-                            if (*op == Avx10FP16Op::Min && a < b)
-                                || (*op == Avx10FP16Op::Max && a > b)
-                            {
-                                a_bits
-                            } else {
-                                b_bits
+                            let a = Self::x86_fp16_to_f32(a_bits);
+                            let b = Self::x86_fp16_to_f32(b_bits);
+                            X86SimdFpResult {
+                                bits: u64::from(
+                                    if (*op == Avx10FP16Op::Min && a < b)
+                                        || (*op == Avx10FP16Op::Max && a > b)
+                                    {
+                                        a_bits
+                                    } else {
+                                        b_bits
+                                    },
+                                ),
+                                status: lane_status,
                             }
                         }
-                        Avx10FP16Op::Add => Self::x86_f32_to_fp16(a + b, rounding),
-                        Avx10FP16Op::Sub => Self::x86_f32_to_fp16(a - b, rounding),
-                        Avx10FP16Op::Mul => Self::x86_f32_to_fp16(a * b, rounding),
-                        Avx10FP16Op::Div => Self::x86_f32_to_fp16(a / b, rounding),
-                        Avx10FP16Op::Sqrt => Self::x86_f32_to_fp16(a.sqrt(), rounding),
+                        Avx10FP16Op::Add => Self::x86_simd_fp_add(
+                            u64::from(a_bits),
+                            u64::from(b_bits),
+                            X86_SIMD_F16,
+                            rounding,
+                            fp16_mxcsr,
+                        ),
+                        Avx10FP16Op::Sub => Self::x86_simd_fp_sub(
+                            u64::from(a_bits),
+                            u64::from(b_bits),
+                            X86_SIMD_F16,
+                            rounding,
+                            fp16_mxcsr,
+                        ),
+                        Avx10FP16Op::Mul => Self::x86_simd_fp_mul(
+                            u64::from(a_bits),
+                            u64::from(b_bits),
+                            X86_SIMD_F16,
+                            rounding,
+                            fp16_mxcsr,
+                        ),
+                        Avx10FP16Op::Div => Self::x86_simd_fp_div(
+                            u64::from(a_bits),
+                            u64::from(b_bits),
+                            X86_SIMD_F16,
+                            rounding,
+                            fp16_mxcsr,
+                        ),
+                        Avx10FP16Op::Sqrt => Self::x86_simd_fp_sqrt(
+                            u64::from(b_bits),
+                            X86_SIMD_F16,
+                            rounding,
+                            fp16_mxcsr,
+                        ),
                     };
-                    Self::set_lane(&mut result, lane, 16, u64::from(value));
+                    status |= computed.status;
+                    Self::set_lane(&mut result, lane, 16, computed.bits);
                 }
-                if matches!(op, Avx10FP16Op::Min | Avx10FP16Op::Max)
-                    && *round == FpRoundMode::Dynamic
-                {
+                if *round == FpRoundMode::Dynamic && status != 0 {
                     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
                         x86.mxcsr |= status;
                     }

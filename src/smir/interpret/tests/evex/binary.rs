@@ -202,6 +202,141 @@ fn x86_fp_binary_cores_cover_rounding_special_values_daz_and_minmax_selection() 
 }
 
 #[test]
+fn vfp16_arithmetic_accrues_exact_status_honors_sae_and_traps_before_commit() {
+    fn execute(
+        op: Avx10FP16Op,
+        first: u16,
+        second: u16,
+        mxcsr: u32,
+        round: FpRoundMode,
+        active: bool,
+    ) -> (BlockResult, VecValue, u32) {
+        let destination = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+        let source1 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(1)));
+        let source2 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(2)));
+        let mask = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::VFP16Arith {
+                dst: destination,
+                src1: source1,
+                src2: source2,
+                mask: Some(mask),
+                op,
+                round,
+                width: VecWidth::V128,
+                zeroing: false,
+            },
+        );
+        builder.set_terminator(Terminator::Trap {
+            kind: TrapKind::Halt,
+        });
+        let function = builder.finish();
+
+        let sentinel = [0xA55A_3CC3_F00F_9669; 16];
+        let mut context = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut context.arch_regs {
+            x86.xmm[0] = sentinel;
+            SmirInterpreter::set_lane(&mut x86.xmm[1], 0, 16, u64::from(first));
+            SmirInterpreter::set_lane(&mut x86.xmm[2], 0, 16, u64::from(second));
+            x86.k[1] = u64::from(active);
+            x86.mxcsr = mxcsr;
+        }
+        let result = SmirInterpreter::new().execute_block(
+            &mut context,
+            &mut FlatMemory::new(1),
+            &function.blocks[0],
+        );
+        let ArchRegState::X86_64(x86) = &context.arch_regs else {
+            unreachable!()
+        };
+        (result, x86.xmm[0], x86.mxcsr)
+    }
+
+    const IE: u32 = 1;
+    const DE: u32 = 1 << 1;
+    const ZE: u32 = 1 << 2;
+    const OE: u32 = 1 << 3;
+    const UE: u32 = 1 << 4;
+    const PE: u32 = 1 << 5;
+    const DAZ: u32 = 1 << 6;
+    const PM: u32 = 1 << 12;
+    const FTZ: u32 = 1 << 15;
+
+    let lane = |value: &VecValue| SmirInterpreter::get_lane(value, 0, 16) as u16;
+
+    let (exit, result, mxcsr) = execute(
+        Avx10FP16Op::Sqrt,
+        0x4000,
+        0x4000,
+        0x1F80,
+        FpRoundMode::Dynamic,
+        true,
+    );
+    assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+    assert_eq!(lane(&result), 0x3DA8, "RN(sqrt(2))");
+    assert_eq!(mxcsr, 0x1F80 | PE);
+
+    let (exit, result, mxcsr) = execute(
+        Avx10FP16Op::Sqrt,
+        0x4000,
+        0x4000,
+        0x1F80,
+        FpRoundMode::RoundUp,
+        true,
+    );
+    assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+    assert_eq!(lane(&result), 0x3DA9, "RU(sqrt(2))");
+    assert_eq!(mxcsr, 0x1F80, "embedded rounding implies SAE");
+
+    for (op, first, second, expected, status) in [
+        (Avx10FP16Op::Sqrt, 0xBC00, 0xBC00, 0xFE00, IE),
+        (Avx10FP16Op::Div, 0x3C00, 0x0000, 0x7C00, ZE),
+        (Avx10FP16Op::Mul, 0x7BFF, 0x4000, 0x7C00, OE | PE),
+        (Avx10FP16Op::Mul, 0x0400, 0x0400, 0x0000, UE | PE),
+    ] {
+        let (exit, result, mxcsr) = execute(op, first, second, 0x1F80, FpRoundMode::Dynamic, true);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        assert_eq!(lane(&result), expected, "{op:?}");
+        assert_eq!(mxcsr, 0x1F80 | status, "{op:?}");
+    }
+
+    let (exit, result, mxcsr) = execute(
+        Avx10FP16Op::Sqrt,
+        0x0001,
+        0x0001,
+        0x1F80 | DAZ | FTZ,
+        FpRoundMode::Dynamic,
+        true,
+    );
+    assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+    assert_eq!(lane(&result), 0x0C00, "sqrt(2^-24) = 2^-12");
+    assert_eq!(mxcsr, 0x1F80 | DAZ | FTZ | DE);
+
+    let sentinel = [0xA55A_3CC3_F00F_9669; 16];
+    let (exit, result, mxcsr) = execute(
+        Avx10FP16Op::Sqrt,
+        0x4000,
+        0x4000,
+        0x1F80 & !PM,
+        FpRoundMode::Dynamic,
+        true,
+    );
+    assert!(matches!(
+        exit,
+        BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+    ));
+    assert_eq!(result, sentinel, "unmasked PE precedes destination commit");
+    assert_eq!(mxcsr, (0x1F80 & !PM) | PE);
+
+    let (exit, result, mxcsr) = execute(Avx10FP16Op::Div, 0, 0, 0, FpRoundMode::Dynamic, false);
+    assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+    assert_eq!(result[0], sentinel[0], "inactive lane merges destination");
+    assert_eq!(mxcsr, 0, "inactive 0/0 reports no status");
+}
+
+#[test]
 fn lifted_vex_scalar_binary_operations_use_exact_mxcsr_semantics_and_lane_contract() {
     for (opcode, expected) in [
         (0x58, 3.5f32.to_bits()),
