@@ -120,6 +120,11 @@ jobs:
         with:
           toolchain: stable
           cache-key: test-core-${{ matrix.name }}
+      # The library target contains native replay differentials that map and
+      # execute raw host instructions. Serialize every selected test binary so
+      # a native signal or state mismatch is attributable to its exact test;
+      # nocapture preserves earlier assertion context if a later signal aborts
+      # the process.
       - name: cargo test (core slice)
         shell: bash
         run: |
@@ -139,7 +144,7 @@ jobs:
             --test smir_jit_evex_masking \
             --test x86_64_unimplemented_source_inventory \
             --test isa_oracle \
-            -- --include-ignored
+            -- --include-ignored --test-threads=1 --nocapture
       # The x86-64 JIT suite executes transient native mappings and intentionally
       # exercises host feature-specific encodings. Run it serially so a native
       # signal is attributable to one test and concurrent JIT executions cannot

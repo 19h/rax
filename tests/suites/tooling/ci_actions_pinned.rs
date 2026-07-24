@@ -110,6 +110,19 @@ fn push_ci_runs_host_specific_scalar_and_evex_jit_regressions() {
             "push CI core slice must execute {target}"
         );
     }
+
+    let core_step_start = contents
+        .find("      - name: cargo test (core slice)\n")
+        .expect("push CI is missing the core test step");
+    let core_step_end = contents[core_step_start..]
+        .find("      # The x86-64 JIT suite")
+        .map(|offset| core_step_start + offset)
+        .expect("push CI is missing the native x86-64 JIT step boundary");
+    let core_step = &contents[core_step_start..core_step_end];
+    assert!(
+        core_step.contains("-- --include-ignored --test-threads=1 --nocapture"),
+        "push CI must serialize raw native core tests and preserve failure output"
+    );
 }
 
 #[test]
