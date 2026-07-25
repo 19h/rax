@@ -49,6 +49,9 @@ mod gpr_broadcast;
 #[path = "x86_native_replay_tests/high_low_move.rs"]
 mod high_low_move;
 
+#[path = "x86_native_replay_tests/legacy_vex_fp_compare.rs"]
+mod legacy_vex_fp_compare;
+
 #[path = "x86_native_replay_tests/scalar_fp_convert.rs"]
 mod scalar_fp_convert;
 

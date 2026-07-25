@@ -1,8 +1,50 @@
-//! Register-only EVEX floating-point comparison replay classification.
+//! Register-only x86 floating-point comparison replay classification.
 
 use super::X86InstructionBytes;
 
 impl X86InstructionBytes {
+    /// Validate one register-only legacy SSE or AVX VEX `CMPPS`, `CMPPD`,
+    /// `CMPSS`, or `CMPSD` instruction and report whether it requires AVX.
+    ///
+    /// Legacy forms admit predicates 0 through 7; VEX forms admit predicates
+    /// 0 through 31. The remaining immediate bits are reserved. Canonical
+    /// legacy mandatory-prefix placement and an optional final REX prefix are
+    /// accepted. VEX map 0F accepts both C5 and C4 encodings and treats W as
+    /// ignored. Scalar `VEX.L=1` is excluded because Intel documents
+    /// generation-dependent unpredictable behavior for those encodings.
+    /// Memory operands and every non-canonical or reserved byte shape fail
+    /// closed.
+    pub fn legacy_vex_register_fp_compare_needs_avx(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        let legacy = match bytes {
+            [0x0F, 0xC2, modrm, immediate] => Some((*modrm, *immediate)),
+            [0x66 | 0xF2 | 0xF3, 0x0F, 0xC2, modrm, immediate] => Some((*modrm, *immediate)),
+            [0x40..=0x4F, 0x0F, 0xC2, modrm, immediate] => Some((*modrm, *immediate)),
+            [
+                0x66 | 0xF2 | 0xF3,
+                0x40..=0x4F,
+                0x0F,
+                0xC2,
+                modrm,
+                immediate,
+            ] => Some((*modrm, *immediate)),
+            _ => None,
+        };
+        if let Some((modrm, immediate)) = legacy {
+            return (modrm >> 6 == 3 && immediate & !0x07 == 0).then_some(false);
+        }
+
+        let (p1, opcode, modrm, immediate) = match bytes {
+            [0xC5, p1, opcode, modrm, immediate] => (*p1, *opcode, *modrm, *immediate),
+            [0xC4, p0, p1, opcode, modrm, immediate] if p0 & 0x1F == 1 => {
+                (*p1, *opcode, *modrm, *immediate)
+            }
+            _ => return None,
+        };
+        let scalar_l1 = matches!(p1 & 0x03, 2 | 3) && p1 & 0x04 != 0;
+        (opcode == 0xC2 && modrm >> 6 == 3 && immediate & !0x1F == 0 && !scalar_l1).then_some(true)
+    }
+
     /// Validate one register-only EVEX `VCOMISH` or `VUCOMISH` instruction.
     ///
     /// Returns `(needs_avx512vl, needs_avx512fp16)`. Both instructions are
