@@ -407,6 +407,21 @@ pub fn x86_vex_cross_lane_128_replay_spans(
     })
 }
 
+/// Identify valid register-only AVX VEX `VPINSR*`/`VINSERTPS` replay groups in
+/// `block` in O(N) time and O(P) space for N operations and P unique guest
+/// PCs. Guest RSP/RBP sources and memory forms remain at the precise SMIR
+/// interpreter boundary.
+pub fn x86_vex_scalar_insert_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .is_vex_register_scalar_insert()
+            .then_some((false, false, false))
+    })
+}
+
 /// Identify valid register-only AVX VEX floating logical replay groups in
 /// `block` in O(N) time and O(P) space for N operations and P unique guest PCs.
 pub fn x86_vex_fp_logic_replay_spans(
@@ -1392,6 +1407,11 @@ pub fn x86_native_replay_spans(
                 instruction
                     .vex_register_cross_lane_128_needs_avx2()
                     .map(|_| (false, false, false))
+            })
+            .or_else(|| {
+                instruction
+                    .is_vex_register_scalar_insert()
+                    .then_some((false, false, false))
             })
             .or_else(|| {
                 instruction

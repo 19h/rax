@@ -186,6 +186,8 @@ mod vex_immediate_blend_replay;
 #[cfg(test)]
 mod vex_packed_string_replay;
 #[cfg(test)]
+mod vex_scalar_insert_replay;
+#[cfg(test)]
 mod vex_variable_blend_replay;
 #[cfg(test)]
 mod vex_variable_permute_replay;

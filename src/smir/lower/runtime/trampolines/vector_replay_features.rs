@@ -87,6 +87,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             let variable_permute_avx2 = span.instruction.vex_register_variable_permute_needs_avx2();
             let alignr_avx2 = span.instruction.vex_register_alignr_needs_avx2();
             let cross_lane_128_avx2 = span.instruction.vex_register_cross_lane_128_needs_avx2();
+            let scalar_insert_avx = span.instruction.is_vex_register_scalar_insert();
             let fp_horizontal_addsub_avx = span
                 .instruction
                 .legacy_vex_register_fp_horizontal_addsub_needs_avx();
@@ -100,7 +101,8 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || variable_blend_avx2.is_some()
                 || variable_permute_avx2.is_some()
                 || alignr_avx2.is_some()
-                || cross_lane_128_avx2.is_some();
+                || cross_lane_128_avx2.is_some()
+                || scalar_insert_avx;
             requirements.needs_avx |= span.instruction.is_vex_register_packed_string_compare()
                 || span.instruction.is_vex_register_fma3()
                 || is_fma4
@@ -109,6 +111,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || variable_permute_avx2.is_some()
                 || alignr_avx2.is_some()
                 || cross_lane_128_avx2.is_some()
+                || scalar_insert_avx
                 || span.instruction.is_vex_register_fp_logic()
                 || fp_horizontal_addsub_avx == Some(true)
                 || widening_dword_multiply_avx2.is_some()
