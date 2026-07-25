@@ -158,6 +158,21 @@ pub fn x86_legacy_vex_fp_compare_replay_spans(
     })
 }
 
+/// Identify valid register-only legacy SSE and AVX VEX scalar floating-point
+/// move replay groups in `block` in O(N) time and O(P) space for N operations
+/// and P unique guest PCs. Memory forms and `VMOVSS` with `VEX.L=1` remain at
+/// the precise SMIR interpreter boundary.
+pub fn x86_legacy_vex_scalar_move_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .legacy_vex_register_scalar_move_needs_avx()
+            .map(|_| (false, false, false))
+    })
+}
+
 /// Identify valid register-only EVEX logical replay groups in `block` in O(N)
 /// time and O(P) space for N operations and P unique guest PCs.
 pub fn x86_evex_logic_replay_spans(
@@ -914,6 +929,12 @@ pub fn x86_native_replay_spans(
         }
         if instruction
             .legacy_vex_register_fp_compare_needs_avx()
+            .is_some()
+        {
+            return Some((false, false, false));
+        }
+        if instruction
+            .legacy_vex_register_scalar_move_needs_avx()
             .is_some()
         {
             return Some((false, false, false));

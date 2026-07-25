@@ -57,6 +57,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                     .legacy_vex_register_fp_arithmetic_needs_avx()
                     == Some(true)
                 || span.instruction.legacy_vex_register_fp_compare_needs_avx() == Some(true)
+                || span.instruction.legacy_vex_register_scalar_move_needs_avx() == Some(true)
                 || span.instruction.legacy_vex_register_fp_sqrt_needs_avx() == Some(true);
             requirements.needs_fma |= span.instruction.is_vex_register_fma3();
             // Replay spans use the full-width K0-K7 helper boundary. KMOVQ is

@@ -110,6 +110,8 @@ mod legacy_vex_fp_compare_replay;
 #[cfg(test)]
 mod legacy_vex_fp_sqrt_replay;
 #[cfg(test)]
+mod legacy_vex_scalar_move_replay;
+#[cfg(test)]
 mod lmsw;
 #[cfg(test)]
 mod maskmovdqu;
