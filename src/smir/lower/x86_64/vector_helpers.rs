@@ -9,7 +9,7 @@ use crate::smir::lower::{
 };
 
 impl X86_64Lowerer {
-    /// Select the AVX-only helper boundary used by FMA4-only regions.
+    /// Select the AVX-only helper boundary used by YMM16-safe replay regions.
     pub fn set_avx_ymm16_vector_state(&mut self, on: bool) {
         self.avx_ymm16_vector_state = on;
     }

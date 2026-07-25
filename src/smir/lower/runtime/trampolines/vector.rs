@@ -5909,22 +5909,22 @@ fn x86_has_direct_native_vector_op_excluding(
     false
 }
 
-/// Whether every executable vector operation is covered by a register-only
-/// FMA4 replay span. Such a region needs only YMM0-YMM15 plus MXCSR at the
-/// native boundary; upper ZMM halves remain state-backed.
+/// Whether every executable vector operation is covered by a replay span that
+/// needs only YMM0-YMM15 plus MXCSR at the native boundary. Upper ZMM halves
+/// and opmask state then remain state-backed.
 pub(crate) fn x86_native_vector_uses_avx_ymm16_only_excluding(
     func: &crate::smir::ir::SmirFunction,
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
 ) -> bool {
     let replay = x86_native_replay_feature_requirements(func, excluded);
-    replay.all_spans_are_fma4 && !x86_has_direct_native_vector_op_excluding(func, excluded)
+    replay.all_spans_support_avx_ymm16 && !x86_has_direct_native_vector_op_excluding(func, excluded)
 }
 
 /// Verify that this host can execute every admitted vector opcode in `func`.
 /// General vector regions require AVX512F for 512-bit VMOVDQU64/KMOVW and
 /// AVX512BW for full-width KMOVQ; AVX512ER-only regions use the fail-closed
-/// low-16 opmask state mode instead. Pure register-only FMA4 regions use a
-/// separate AVX YMM0-YMM15 bridge and therefore require no AVX-512 feature.
+/// low-16 opmask state mode instead. Replay-only AVX-YMM16-safe regions use a
+/// separate AVX bridge and therefore require no AVX-512 feature.
 pub fn x86_native_vector_features_supported_excluding(
     func: &crate::smir::ir::SmirFunction,
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
@@ -5933,7 +5933,9 @@ pub fn x86_native_vector_features_supported_excluding(
     use crate::smir::ir::types::VecWidth;
 
     let replay = x86_native_replay_feature_requirements(func, excluded);
-    if replay.all_spans_are_fma4 && !x86_has_direct_native_vector_op_excluding(func, excluded) {
+    if replay.all_spans_support_avx_ymm16
+        && !x86_has_direct_native_vector_op_excluding(func, excluded)
+    {
         #[cfg(target_arch = "x86_64")]
         {
             return replay.x86_host_supported();

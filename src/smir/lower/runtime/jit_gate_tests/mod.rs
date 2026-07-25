@@ -178,6 +178,8 @@ mod vex_fma4_replay;
 #[cfg(test)]
 mod vex_fp_logic_replay;
 #[cfg(test)]
+mod vex_immediate_blend_replay;
+#[cfg(test)]
 mod vex_packed_string_replay;
 #[cfg(test)]
 mod vex_widening_dword_multiply_replay;

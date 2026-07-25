@@ -6,10 +6,10 @@
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) any: bool,
-    /// Every admitted replay span is register-only FMA4. A region with no
-    /// separately lowered vector operation can then use the AVX YMM0-YMM15
-    /// state bridge instead of the AVX-512 ZMM/K bridge.
-    pub(crate) all_spans_are_fma4: bool,
+    /// Every admitted replay span can use the AVX YMM0-YMM15 state bridge
+    /// instead of the AVX-512 ZMM/K bridge. The caller separately excludes
+    /// directly lowered vector operations.
+    pub(crate) all_spans_support_avx_ymm16: bool,
     pub(crate) needs_sse3: bool,
     pub(crate) needs_avx: bool,
     pub(crate) needs_avx2: bool,
@@ -72,7 +72,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
 ) -> X86NativeReplayFeatureRequirements {
     let mut requirements = X86NativeReplayFeatureRequirements::default();
-    let mut all_spans_are_fma4 = true;
+    let mut all_spans_support_avx_ymm16 = true;
     for block in func
         .blocks
         .iter()
@@ -82,6 +82,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             .into_values()
         {
             let is_fma4 = span.instruction.is_vex_register_fma4();
+            let immediate_blend_avx2 = span.instruction.vex_register_immediate_blend_needs_avx2();
             let fp_horizontal_addsub_avx = span
                 .instruction
                 .legacy_vex_register_fp_horizontal_addsub_needs_avx();
@@ -90,10 +91,11 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 .vex_register_widening_dword_multiply_needs_avx2();
             requirements.any = true;
             requirements.needs_sse3 |= fp_horizontal_addsub_avx == Some(false);
-            all_spans_are_fma4 &= is_fma4;
+            all_spans_support_avx_ymm16 &= is_fma4 || immediate_blend_avx2.is_some();
             requirements.needs_avx |= span.instruction.is_vex_register_packed_string_compare()
                 || span.instruction.is_vex_register_fma3()
                 || is_fma4
+                || immediate_blend_avx2.is_some()
                 || span.instruction.is_vex_register_fp_logic()
                 || fp_horizontal_addsub_avx == Some(true)
                 || widening_dword_multiply_avx2.is_some()
@@ -109,11 +111,13 @@ pub(crate) fn x86_native_replay_feature_requirements(
                     == Some(true)
                 || span.instruction.legacy_vex_register_scalar_move_needs_avx() == Some(true)
                 || span.instruction.legacy_vex_register_fp_sqrt_needs_avx() == Some(true);
-            requirements.needs_avx2 |= widening_dword_multiply_avx2 == Some(true);
+            requirements.needs_avx2 |=
+                widening_dword_multiply_avx2 == Some(true) || immediate_blend_avx2 == Some(true);
             requirements.needs_fma |= span.instruction.is_vex_register_fma3();
             requirements.needs_fma4 |= is_fma4;
             // Assume the full-width K0-K7 helper boundary while accumulating
-            // mixed replay families. A pure FMA4 set is relaxed after the scan.
+            // replay families. A set containing only AVX-YMM16-safe spans is
+            // relaxed after the scan.
             requirements.needs_avx512bw = true;
             requirements.needs_avx512vl |= span.needs_avx512vl;
             requirements.needs_avx512dq |= span.needs_avx512dq;
@@ -133,10 +137,10 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 .is_some();
         }
     }
-    requirements.all_spans_are_fma4 = requirements.any && all_spans_are_fma4;
-    if requirements.all_spans_are_fma4 {
-        // FMA4 addresses only YMM0-YMM15 and no opmask state. Its dedicated
-        // state bridge requires AVX but no AVX-512 trampoline instruction.
+    requirements.all_spans_support_avx_ymm16 = requirements.any && all_spans_support_avx_ymm16;
+    if requirements.all_spans_support_avx_ymm16 {
+        // These replay families address only YMM0-YMM15 and no opmask state.
+        // Their dedicated state bridge requires AVX but no AVX-512 instruction.
         requirements.needs_avx512bw = false;
     }
     requirements

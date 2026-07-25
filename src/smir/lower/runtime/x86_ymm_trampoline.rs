@@ -3,8 +3,8 @@
 //! The inner trampoline remains authoritative for GPRs, RFLAGS, MXCSR, MMX,
 //! and host-state sanitization. In vector mode three it deliberately skips
 //! AVX-512 ZMM/K instructions; this wrapper imports and exports only the
-//! architectural low 256 bits addressable by FMA4. Upper ZMM halves and all
-//! opmask registers remain in `GuestRegs`.
+//! architectural low 256 bits addressable by the admitted replay families.
+//! Upper ZMM halves and all opmask registers remain in `GuestRegs`.
 
 use super::GuestRegs;
 

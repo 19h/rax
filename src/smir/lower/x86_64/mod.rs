@@ -1255,8 +1255,9 @@ pub struct X86_64Lowerer {
     /// host registers carrying it.
     preserve_vector_system_helpers: bool,
 
-    /// Preserve only YMM0-YMM15 around helper calls for an FMA4-only region.
-    /// Upper ZMM halves and K0-K7 remain authoritative in `GuestRegs`.
+    /// Preserve only YMM0-YMM15 around helper calls for an AVX-YMM16-safe
+    /// replay region. Upper ZMM halves and K0-K7 remain authoritative in
+    /// `GuestRegs`.
     avx_ymm16_vector_state: bool,
 
     /// Spill MM0-MM7 and execute host-only EMMS before every Rust helper call,

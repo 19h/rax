@@ -32,13 +32,14 @@ use crate::smir::lower::{
 };
 
 impl X86_64Lowerer {
-    /// Preserve the architectural VEX zero-upper result when FMA4 executes
-    /// through the AVX-only YMM0-YMM15 entry bridge. That bridge deliberately
-    /// leaves ZMM[511:256] state-backed; clear exactly the dynamically executed
-    /// destination's four upper qwords before any later helper or native exit.
+    /// Preserve the architectural VEX zero-upper result when an instruction
+    /// executes through the AVX-only YMM0-YMM15 entry bridge. That bridge
+    /// deliberately leaves ZMM[511:256] state-backed; clear exactly the
+    /// dynamically executed destination's four upper qwords before any later
+    /// helper or native exit.
     ///
     /// PUSHFQ/PUSH RAX make the bookkeeping invisible to guest GPRs and flags.
-    fn emit_fma4_state_backed_upper_clear(&mut self, destination: u8) {
+    fn emit_avx_ymm16_state_backed_upper_clear(&mut self, destination: u8) {
         debug_assert!(destination < 16);
         self.code.emit_u8(0x9C); // pushfq
         self.code.emit_u8(0x50); // push rax
@@ -57,10 +58,14 @@ impl X86_64Lowerer {
     /// Emit one exact source instruction, applying any host-compatibility
     /// status fixup requested by its byte-validated replay classifier.
     fn emit_native_replay_span(&mut self, span: &X86NativeReplaySpan) {
-        if let Some(destination) = span.instruction.vex_fma4_destination_index() {
+        if let Some(destination) = span
+            .instruction
+            .vex_fma4_destination_index()
+            .or_else(|| span.instruction.vex_immediate_blend_destination_index())
+        {
             self.code.emit_bytes(span.instruction.as_slice());
             if self.avx_ymm16_vector_state {
-                self.emit_fma4_state_backed_upper_clear(destination);
+                self.emit_avx_ymm16_state_backed_upper_clear(destination);
             }
             return;
         }

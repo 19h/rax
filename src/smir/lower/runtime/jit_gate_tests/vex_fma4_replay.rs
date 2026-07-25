@@ -141,7 +141,7 @@ fn replay_feature_aggregation_selects_avx_fma4_ymm16_boundary_and_rejects_mixed_
     let requirements =
         x86_native_replay_feature_requirements(&function, &std::collections::HashMap::new());
     assert!(requirements.any);
-    assert!(requirements.all_spans_are_fma4);
+    assert!(requirements.all_spans_support_avx_ymm16);
     assert!(requirements.needs_avx);
     assert!(!requirements.needs_avx2);
     assert!(!requirements.needs_fma);
