@@ -67,6 +67,7 @@ impl X86_64Lowerer {
             .or_else(|| span.instruction.vex_alignr_destination_index())
             .or_else(|| span.instruction.vex_cross_lane_128_destination_index())
             .or_else(|| span.instruction.vex_scalar_insert_destination_index())
+            .or_else(|| span.instruction.vex_vpclmulqdq_destination_index())
         {
             self.code.emit_bytes(span.instruction.as_slice());
             if self.avx_ymm16_vector_state {

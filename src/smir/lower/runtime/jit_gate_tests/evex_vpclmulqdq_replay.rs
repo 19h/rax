@@ -86,6 +86,7 @@ fn replay_feature_aggregation_requires_vpclmulqdq_bw_and_exact_vl() {
         assert!(!requirements.needs_avx512fp16, "{bytes:02X?}");
         assert!(!requirements.needs_avx512cd, "{bytes:02X?}");
         assert!(!requirements.needs_gfni, "{bytes:02X?}");
+        assert!(!requirements.needs_pclmulqdq, "{bytes:02X?}");
         assert!(requirements.needs_vpclmulqdq, "{bytes:02X?}");
 
         let excluded = std::collections::HashMap::from([(BlockId(0), PC)]);

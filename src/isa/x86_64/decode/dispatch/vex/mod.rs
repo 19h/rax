@@ -807,7 +807,7 @@ impl X86_64Vcpu {
                     return self.execute_vex_mpsadbw(ctx, vex_l, vvvv);
                 }
                 // VPCLMULQDQ ymm1/xmm1, ymm2/xmm2, ymm3/m, imm8.
-                0x44 if vex_w == 0 => {
+                0x44 => {
                     return self.execute_vex_pclmulqdq(ctx, vex_l, vvvv);
                 }
                 // VGF2P8AFFINEQB/VGF2P8AFFINEINVQB ymm1/xmm1, ymm2/xmm2, ymm3/m, imm8.
@@ -1070,6 +1070,8 @@ mod arith;
 mod compare;
 mod convert;
 mod crypto;
+#[cfg(test)]
+mod crypto_tests;
 mod fma;
 mod gather;
 mod integer;

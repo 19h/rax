@@ -959,6 +959,20 @@ pub fn x86_evex_vpclmulqdq_replay_spans(
     })
 }
 
+/// Identify valid register-only VEX VPCLMULQDQ replay groups in `block` in
+/// O(N) time and O(P) space for N operations and P unique guest PCs. Memory
+/// forms remain at the precise SMIR interpreter boundary.
+pub fn x86_vex_vpclmulqdq_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .vex_register_vpclmulqdq_uses_ymm()
+            .map(|_| (false, false, false))
+    })
+}
+
 /// Identify valid register-only EVEX VP2INTERSECTD/Q replay groups in `block`
 /// in O(N) time and O(P) space for N operations and P unique guest PCs.
 pub fn x86_evex_vp2intersect_replay_spans(
@@ -1327,6 +1341,11 @@ pub fn x86_native_replay_spans(
                 instruction
                     .evex_register_vpclmulqdq_needs_vl()
                     .map(|needs_vl| (needs_vl, false, false))
+            })
+            .or_else(|| {
+                instruction
+                    .vex_register_vpclmulqdq_uses_ymm()
+                    .map(|_| (false, false, false))
             })
             .or_else(|| {
                 instruction

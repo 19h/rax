@@ -22,6 +22,7 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_avx512cd: bool,
     pub(crate) needs_gfni: bool,
     pub(crate) needs_avx512vp2intersect: bool,
+    pub(crate) needs_pclmulqdq: bool,
     pub(crate) needs_vpclmulqdq: bool,
 }
 
@@ -60,6 +61,7 @@ impl X86NativeReplayFeatureRequirements {
             && (!self.needs_gfni || std::is_x86_feature_detected!("gfni"))
             && (!self.needs_avx512vp2intersect
                 || std::is_x86_feature_detected!("avx512vp2intersect"))
+            && (!self.needs_pclmulqdq || std::is_x86_feature_detected!("pclmulqdq"))
             && (!self.needs_vpclmulqdq || std::is_x86_feature_detected!("vpclmulqdq"))
     }
 }
@@ -88,6 +90,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             let alignr_avx2 = span.instruction.vex_register_alignr_needs_avx2();
             let cross_lane_128_avx2 = span.instruction.vex_register_cross_lane_128_needs_avx2();
             let scalar_insert_avx = span.instruction.is_vex_register_scalar_insert();
+            let vex_vpclmulqdq_ymm = span.instruction.vex_register_vpclmulqdq_uses_ymm();
             let fp_horizontal_addsub_avx = span
                 .instruction
                 .legacy_vex_register_fp_horizontal_addsub_needs_avx();
@@ -102,7 +105,8 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || variable_permute_avx2.is_some()
                 || alignr_avx2.is_some()
                 || cross_lane_128_avx2.is_some()
-                || scalar_insert_avx;
+                || scalar_insert_avx
+                || vex_vpclmulqdq_ymm.is_some();
             requirements.needs_avx |= span.instruction.is_vex_register_packed_string_compare()
                 || span.instruction.is_vex_register_fma3()
                 || is_fma4
@@ -112,6 +116,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || alignr_avx2.is_some()
                 || cross_lane_128_avx2.is_some()
                 || scalar_insert_avx
+                || vex_vpclmulqdq_ymm.is_some()
                 || span.instruction.is_vex_register_fp_logic()
                 || fp_horizontal_addsub_avx == Some(true)
                 || widening_dword_multiply_avx2.is_some()
@@ -151,10 +156,12 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 .instruction
                 .evex_register_vp2intersect_needs_vl()
                 .is_some();
+            requirements.needs_pclmulqdq |= vex_vpclmulqdq_ymm == Some(false);
             requirements.needs_vpclmulqdq |= span
                 .instruction
                 .evex_register_vpclmulqdq_needs_vl()
-                .is_some();
+                .is_some()
+                || vex_vpclmulqdq_ymm == Some(true);
         }
     }
     requirements.all_spans_support_avx_ymm16 = requirements.any && all_spans_support_avx_ymm16;

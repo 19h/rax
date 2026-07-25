@@ -192,6 +192,8 @@ mod vex_variable_blend_replay;
 #[cfg(test)]
 mod vex_variable_permute_replay;
 #[cfg(test)]
+mod vex_vpclmulqdq_replay;
+#[cfg(test)]
 mod vex_widening_dword_multiply_replay;
 #[cfg(test)]
 mod waitpkg;
