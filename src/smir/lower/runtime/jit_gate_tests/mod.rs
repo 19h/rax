@@ -112,6 +112,8 @@ mod legacy_vex_fp_shuffle_replay;
 #[cfg(test)]
 mod legacy_vex_fp_sqrt_replay;
 #[cfg(test)]
+mod legacy_vex_high_low_move_replay;
+#[cfg(test)]
 mod legacy_vex_scalar_move_replay;
 #[cfg(test)]
 mod lmsw;

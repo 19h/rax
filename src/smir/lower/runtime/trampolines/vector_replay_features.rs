@@ -58,6 +58,10 @@ pub(crate) fn x86_native_replay_feature_requirements(
                     == Some(true)
                 || span.instruction.legacy_vex_register_fp_compare_needs_avx() == Some(true)
                 || span.instruction.legacy_vex_register_fp_shuffle_needs_avx() == Some(true)
+                || span
+                    .instruction
+                    .legacy_vex_register_high_low_move_needs_avx()
+                    == Some(true)
                 || span.instruction.legacy_vex_register_scalar_move_needs_avx() == Some(true)
                 || span.instruction.legacy_vex_register_fp_sqrt_needs_avx() == Some(true);
             requirements.needs_fma |= span.instruction.is_vex_register_fma3();

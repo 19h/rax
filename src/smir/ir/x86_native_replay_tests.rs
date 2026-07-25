@@ -55,6 +55,9 @@ mod high_low_move;
 #[path = "x86_native_replay_tests/legacy_vex_fp_compare.rs"]
 mod legacy_vex_fp_compare;
 
+#[path = "x86_native_replay_tests/legacy_vex_high_low_move.rs"]
+mod legacy_vex_high_low_move;
+
 #[path = "x86_native_replay_tests/legacy_vex_scalar_move.rs"]
 mod legacy_vex_scalar_move;
 
