@@ -23,6 +23,7 @@ mod vex_fp_logic;
 mod vex_immediate_blend;
 mod vex_packed_string;
 mod vex_variable_blend;
+mod vex_variable_permute;
 mod vex_widening_dword_multiply;
 mod vp2intersect;
 mod vpclmulqdq;
