@@ -174,6 +174,8 @@ mod vector;
 #[cfg(test)]
 mod vex_fma3_replay;
 #[cfg(test)]
+mod vex_fma4_replay;
+#[cfg(test)]
 mod vex_fp_logic_replay;
 #[cfg(test)]
 mod vex_packed_string_replay;

@@ -349,7 +349,7 @@ fn vex_fma4_rejects_wrong_mandatory_prefix_and_reports_truncation_exactly() {
 
 #[cfg(feature = "smir-jit")]
 #[test]
-fn vex_fma4_native_admission_remains_fail_closed_with_exact_provenance() {
+fn vex_fma4_native_admission_requires_exact_register_provenance() {
     use crate::smir::lower::runtime::is_native_clobber_safe;
 
     let bytes = fma4_encoding(0x68, false, true, 0xCC, 3, 0);
@@ -364,8 +364,11 @@ fn vex_fma4_native_admission_remains_fail_closed_with_exact_provenance() {
         X86InstructionBytes::new(&bytes).expect("FMA4 provenance"),
     );
 
-    assert!(!is_native_clobber_safe(&function));
+    assert!(is_native_clobber_safe(&function));
     crate::smir::optimize::optimize_function(&mut function, crate::smir::optimize::OptLevel::O2);
+    assert!(is_native_clobber_safe(&function));
+
+    function.x86_instruction_bytes.clear();
     assert!(!is_native_clobber_safe(&function));
 }
 

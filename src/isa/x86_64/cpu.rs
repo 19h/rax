@@ -4524,6 +4524,7 @@ impl X86_64Vcpu {
             x86_native_mmx_features_supported_excluding, x86_native_mmx_pairs_valid_excluding,
             x86_native_scalar_features_supported_excluding,
             x86_native_vector_features_supported_excluding,
+            x86_native_vector_uses_avx_ymm16_only_excluding,
             x86_native_vector_uses_k16_opmasks_excluding,
         };
         #[cfg(target_arch = "x86_64")]
@@ -4850,8 +4851,12 @@ impl X86_64Vcpu {
                 uses_vector
             };
             #[cfg(target_arch = "x86_64")]
-            let narrow_vector_opmasks =
-                uses_vector && x86_native_vector_uses_k16_opmasks_excluding(&func, &exits);
+            let avx_ymm16_vector_state =
+                uses_vector && x86_native_vector_uses_avx_ymm16_only_excluding(&func, &exits);
+            #[cfg(target_arch = "x86_64")]
+            let narrow_vector_opmasks = uses_vector
+                && !avx_ymm16_vector_state
+                && x86_native_vector_uses_k16_opmasks_excluding(&func, &exits);
             #[cfg(target_arch = "x86_64")]
             let uses_xmm_state = uses_x86_xmm_state_excluding(&func, &exits);
             #[cfg(target_arch = "x86_64")]
@@ -4931,6 +4936,8 @@ impl X86_64Vcpu {
             #[cfg(target_arch = "x86_64")]
             lowerer.set_narrow_vector_opmask_helpers(narrow_vector_opmasks);
             #[cfg(target_arch = "x86_64")]
+            lowerer.set_avx_ymm16_vector_state(avx_ymm16_vector_state);
+            #[cfg(target_arch = "x86_64")]
             lowerer.set_guest_pcrel_lea_immediates(true);
             #[cfg(target_arch = "x86_64")]
             lowerer.set_jit_fault_deopt_guards(true);
@@ -4986,6 +4993,8 @@ impl X86_64Vcpu {
                 uses_vector,
                 #[cfg(target_arch = "x86_64")]
                 uses_xmm_state,
+                #[cfg(target_arch = "x86_64")]
+                avx_ymm16_vector_state,
                 #[cfg(target_arch = "x86_64")]
                 narrow_vector_opmasks,
                 #[cfg(target_arch = "x86_64")]
@@ -5217,7 +5226,9 @@ impl X86_64Vcpu {
         if region.uses_vector {
             gr.k = self.regs.k;
             gr.mxcsr = self.mxcsr;
-            gr.vector_active = if region.narrow_vector_opmasks {
+            gr.vector_active = if region.avx_ymm16_vector_state {
+                crate::smir::lower::runtime::X86_VECTOR_STATE_YMM16
+            } else if region.narrow_vector_opmasks {
                 crate::smir::lower::runtime::X86_VECTOR_STATE_K16
             } else {
                 crate::smir::lower::runtime::X86_VECTOR_STATE_K64

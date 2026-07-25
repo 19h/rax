@@ -5882,10 +5882,49 @@ pub(crate) fn x86_sm3_feature_required(op: &crate::smir::ir::ops::OpKind) -> boo
 pub(crate) fn x86_sm4_feature_required(op: &crate::smir::ir::ops::OpKind) -> bool {
     matches!(op, crate::smir::ir::ops::OpKind::X86Sm4 { .. })
 }
+
+fn x86_has_direct_native_vector_op_excluding(
+    func: &crate::smir::ir::SmirFunction,
+    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
+) -> bool {
+    for block in func
+        .blocks
+        .iter()
+        .filter(|block| !excluded.contains_key(&block.id))
+    {
+        let replay = crate::smir::ir::x86_native_replay_spans(block, &func.x86_instruction_bytes);
+        let mut index = 0usize;
+        while index < block.ops.len() {
+            if let Some(span) = replay.get(&index) {
+                index = span.end;
+                continue;
+            }
+            let op = &block.ops[index];
+            if x86_native_vector_smir_op(op) || x86_jit_vector_mem_shape_valid(&op.kind) {
+                return true;
+            }
+            index += 1;
+        }
+    }
+    false
+}
+
+/// Whether every executable vector operation is covered by a register-only
+/// FMA4 replay span. Such a region needs only YMM0-YMM15 plus MXCSR at the
+/// native boundary; upper ZMM halves remain state-backed.
+pub(crate) fn x86_native_vector_uses_avx_ymm16_only_excluding(
+    func: &crate::smir::ir::SmirFunction,
+    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
+) -> bool {
+    let replay = x86_native_replay_feature_requirements(func, excluded);
+    replay.all_spans_are_fma4 && !x86_has_direct_native_vector_op_excluding(func, excluded)
+}
+
 /// Verify that this host can execute every admitted vector opcode in `func`.
-/// The trampoline always requires AVX512F for 512-bit VMOVDQU64 and KMOVW.
-/// General vector regions additionally require AVX512BW for full-width KMOVQ;
-/// AVX512ER-only regions use the fail-closed low-16 opmask state mode instead.
+/// General vector regions require AVX512F for 512-bit VMOVDQU64/KMOVW and
+/// AVX512BW for full-width KMOVQ; AVX512ER-only regions use the fail-closed
+/// low-16 opmask state mode instead. Pure register-only FMA4 regions use a
+/// separate AVX YMM0-YMM15 bridge and therefore require no AVX-512 feature.
 pub fn x86_native_vector_features_supported_excluding(
     func: &crate::smir::ir::SmirFunction,
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
@@ -5894,6 +5933,16 @@ pub fn x86_native_vector_features_supported_excluding(
     use crate::smir::ir::types::VecWidth;
 
     let replay = x86_native_replay_feature_requirements(func, excluded);
+    if replay.all_spans_are_fma4 && !x86_has_direct_native_vector_op_excluding(func, excluded) {
+        #[cfg(target_arch = "x86_64")]
+        {
+            return replay.x86_host_supported();
+        }
+        #[cfg(not(target_arch = "x86_64"))]
+        {
+            return false;
+        }
+    }
     let mut any = replay.any;
     let mut needs_bw = replay.needs_avx512bw;
     let mut needs_vl = replay.needs_avx512vl;

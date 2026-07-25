@@ -18,6 +18,7 @@ mod scalar_integer_move;
 mod scalar_lane_transfer;
 mod scalar_move;
 mod vex_fma3;
+mod vex_fma4;
 mod vex_fp_logic;
 mod vex_packed_string;
 mod vex_widening_dword_multiply;

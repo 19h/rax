@@ -140,6 +140,7 @@ mod state;
 pub use state::*;
 mod state_address;
 pub use state_address::*;
+mod vector_helpers;
 #[cfg(feature = "smir-jit")]
 mod vector_maskmov;
 #[cfg(feature = "smir-jit")]
@@ -1253,6 +1254,10 @@ pub struct X86_64Lowerer {
     /// modify vector state, but the platform ABI permits them to clobber the
     /// host registers carrying it.
     preserve_vector_system_helpers: bool,
+
+    /// Preserve only YMM0-YMM15 around helper calls for an FMA4-only region.
+    /// Upper ZMM halves and K0-K7 remain authoritative in `GuestRegs`.
+    avx_ymm16_vector_state: bool,
 
     /// Spill MM0-MM7 and execute host-only EMMS before every Rust helper call,
     /// then reload the complete MMX file from `GuestRegs` after the call. This

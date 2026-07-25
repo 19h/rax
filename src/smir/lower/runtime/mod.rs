@@ -45,6 +45,8 @@ use super::{
 mod jit_gate_tests;
 mod trampolines;
 pub use trampolines::*;
+#[cfg(target_arch = "x86_64")]
+mod x86_ymm_trampoline;
 
 /// Apple I-cache invalidation (libSystem). Required after writing a `MAP_JIT`
 /// region and before executing it: on AArch64 the instruction cache is not
@@ -136,11 +138,11 @@ pub struct GuestRegs {
     pub zmm: [[u64; 8]; 32],
     /// AVX-512 architectural opmask registers K0-K7.
     pub k: [u64; 8],
-    /// Native vector-state mode. Zero disables every AVX-512 trampoline
-    /// instruction, one imports/exports all 64 opmask bits with KMOVQ, and two
-    /// imports/exports only the low 16 bits with AVX512F KMOVW while preserving
-    /// the upper 48 bits in memory. The narrow mode is valid only for a region
-    /// whose admitted operations cannot read or modify upper opmask bits.
+    /// Native vector-state mode. Zero disables vector marshalling; one
+    /// imports/exports ZMM0-ZMM31 and all 64 opmask bits with KMOVQ; two uses
+    /// the same ZMM bridge but imports/exports only K[15:0] with AVX512F KMOVW;
+    /// and three delegates YMM0-YMM15 to the AVX-only wrapper while leaving
+    /// upper ZMM halves and all opmasks state-backed.
     pub vector_active: u64,
     /// Guest architectural MXCSR control/status. Loaded before native vector
     /// execution and captured afterward.
@@ -335,6 +337,7 @@ pub struct GuestRegs {
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
 pub const X86_VECTOR_STATE_K64: u64 = 1;
 pub const X86_VECTOR_STATE_K16: u64 = 2;
+pub const X86_VECTOR_STATE_YMM16: u64 = 3;
 
 impl Default for GuestRegs {
     fn default() -> Self {
@@ -801,6 +804,10 @@ macro_rules! x86_enter_native_trampoline {
             // are installed, so its CMP cannot perturb architectural flags.
             "cmp qword ptr [rsi+2432], 0",
             "je 2f",
+            // Mode three delegates YMM0-YMM15 to the outer AVX-only wrapper.
+            // This trampoline still owns guest/host MXCSR switching.
+            "cmp qword ptr [rsi+2432], 3",
+            "je 9f",
             "vmovdqu64 zmm0,  [rsi+320]",
             "vmovdqu64 zmm1,  [rsi+384]",
             "vmovdqu64 zmm2,  [rsi+448]",
@@ -854,6 +861,7 @@ macro_rules! x86_enter_native_trampoline {
             "kmovw k6, word ptr [rsi+2416]",
             "kmovw k7, word ptr [rsi+2424]",
             "6:",
+            "9:",
             "ldmxcsr [rsi+2440]",
             "2:",
             // MMX state is independent of the AVX-512 vector path. MOVQ itself
@@ -925,6 +933,9 @@ macro_rules! x86_enter_native_trampoline {
             // longer alter the state returned to the emulator.
             "cmp qword ptr [rax+2432], 0",
             "je 3f",
+            // The outer AVX-only wrapper exports YMM0-YMM15 after this call.
+            "cmp qword ptr [rax+2432], 3",
+            "je 9f",
             "vmovdqu64 [rax+320],  zmm0",
             "vmovdqu64 [rax+384],  zmm1",
             "vmovdqu64 [rax+448],  zmm2",
@@ -978,6 +989,7 @@ macro_rules! x86_enter_native_trampoline {
             "kmovw word ptr [rax+2416], k6",
             "kmovw word ptr [rax+2424], k7",
             "8:",
+            "9:",
             "stmxcsr [rax+2440]",
             "3:",
             // Export the complete guest MMX file before returning the host x87
@@ -1443,7 +1455,13 @@ impl ExecMem {
     #[cfg(target_arch = "x86_64")]
     pub fn run(&self, entry_offset: usize, regs: &mut GuestRegs) {
         let entry = unsafe { self.ptr.add(entry_offset) } as *const u8;
-        unsafe { rax_smir_enter_native(entry, regs as *mut GuestRegs) };
+        if regs.vector_active == X86_VECTOR_STATE_YMM16 {
+            unsafe {
+                x86_ymm_trampoline::enter_native_ymm16(entry, regs as *mut GuestRegs);
+            }
+        } else {
+            unsafe { rax_smir_enter_native(entry, regs as *mut GuestRegs) };
+        }
     }
 
     /// Execute a state-backed AArch64-on-x86 lowered block.

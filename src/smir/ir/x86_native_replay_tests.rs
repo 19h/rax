@@ -91,6 +91,9 @@ mod vex_widening_dword_multiply;
 #[path = "x86_native_replay_tests/vex_fma3.rs"]
 mod vex_fma3;
 
+#[path = "x86_native_replay_tests/vex_fma4.rs"]
+mod vex_fma4;
+
 #[path = "x86_native_replay_tests/vex_fp_logic.rs"]
 mod vex_fp_logic;
 

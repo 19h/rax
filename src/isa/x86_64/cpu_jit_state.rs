@@ -27,7 +27,7 @@ pub(super) struct JitRegion {
     /// makes execution-time SMC protection independent of prior interpreter
     /// fetches and keeps cache invalidation exact if the lift window changes.
     pub(super) source_pages: Vec<u64>,
-    /// Whether the entry trampoline must marshal ZMM0-ZMM31 and K0-K7.
+    /// Whether the entry trampoline must marshal native vector state.
     #[cfg(target_arch = "x86_64")]
     pub(super) uses_vector: bool,
     /// Whether state-backed XMM operations (including helper-backed masked and
@@ -35,6 +35,10 @@ pub(super) struct JitRegion {
     /// without activating the native vector entry bridge.
     #[cfg(target_arch = "x86_64")]
     pub(super) uses_xmm_state: bool,
+    /// Whether the AVX-only wrapper marshals YMM0-YMM15 while upper ZMM halves
+    /// and opmasks remain state-backed.
+    #[cfg(target_arch = "x86_64")]
+    pub(super) avx_ymm16_vector_state: bool,
     /// Whether vector state can use AVX512F KMOVW while retaining K[63:16] in
     /// memory. False selects the general AVX512BW KMOVQ path.
     #[cfg(target_arch = "x86_64")]
@@ -195,6 +199,7 @@ mod tests {
             source_pages: vec![head & !0xFFF],
             uses_vector: false,
             uses_xmm_state: false,
+            avx_ymm16_vector_state: false,
             narrow_vector_opmasks: false,
             uses_mmx: false,
             uses_x87_tag_state: false,
