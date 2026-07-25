@@ -517,14 +517,12 @@ fn replay_admits_and_emits_5_040_evex_shapes_at_o0_o2_and_fails_closed() {
     assert_eq!(lowered, 5_040);
 }
 
-#[cfg(target_arch = "x86_64")]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum NativeCase {
     NonEvex(NonEvexCase),
     Evex(EvexCase),
 }
 
-#[cfg(target_arch = "x86_64")]
 impl NativeCase {
     fn bytes(self) -> Vec<u8> {
         match self {
@@ -540,6 +538,7 @@ impl NativeCase {
         }
     }
 
+    #[cfg(target_arch = "x86_64")]
     fn host_supported(self) -> bool {
         match self {
             Self::NonEvex(_) => true,
@@ -550,7 +549,6 @@ impl NativeCase {
     }
 }
 
-#[cfg(target_arch = "x86_64")]
 fn native_cases() -> Vec<NativeCase> {
     let mut cases: Vec<_> = non_evex_cases()
         .into_iter()
@@ -588,7 +586,6 @@ fn native_cases() -> Vec<NativeCase> {
     cases
 }
 
-#[cfg(target_arch = "x86_64")]
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct ArithmeticState {
     gprs: [u64; 32],
@@ -598,7 +595,6 @@ struct ArithmeticState {
     mxcsr: u32,
 }
 
-#[cfg(target_arch = "x86_64")]
 const F32_PATTERNS: [u64; 16] = [
     0x0000_0000,
     0x8000_0000,
@@ -618,7 +614,6 @@ const F32_PATTERNS: [u64; 16] = [
     0x3EAA_AAAB,
 ];
 
-#[cfg(target_arch = "x86_64")]
 const F64_PATTERNS: [u64; 16] = [
     0x0000_0000_0000_0000,
     0x8000_0000_0000_0000,
@@ -638,7 +633,6 @@ const F64_PATTERNS: [u64; 16] = [
     0x3FD5_5555_5555_5555,
 ];
 
-#[cfg(target_arch = "x86_64")]
 fn patterned_vector(kind: FpKind, register: usize) -> [u64; 8] {
     let element_size = kind.elem_bytes();
     let patterns: &[u64] = if element_size == 4 {
@@ -657,7 +651,6 @@ fn patterned_vector(kind: FpKind, register: usize) -> [u64; 8] {
     })
 }
 
-#[cfg(target_arch = "x86_64")]
 fn initial_state(case: NativeCase, ordinal: usize) -> ArithmeticState {
     let prior_status = (ordinal as u32).rotate_left(3) & 0x3F;
     let rc = ((ordinal as u32 >> 2) & 3) << 13;
@@ -690,7 +683,6 @@ fn initial_state(case: NativeCase, ordinal: usize) -> ArithmeticState {
     }
 }
 
-#[cfg(target_arch = "x86_64")]
 fn optimized_function(
     bytes: &[u8],
     level: crate::smir::optimize::OptLevel,
@@ -706,7 +698,6 @@ fn optimized_function(
     function
 }
 
-#[cfg(target_arch = "x86_64")]
 fn interpret(
     bytes: &[u8],
     initial: &ArithmeticState,
@@ -750,6 +741,38 @@ fn interpret(
         masks: x86.k,
         rflags: x86.rflags,
         mxcsr: x86.mxcsr,
+    }
+}
+
+#[test]
+fn interpreter_o0_o2_gives_nan_precedence_over_same_lane_denormal_status() {
+    let cases = native_cases();
+    let case = cases[2];
+    assert_eq!(
+        case,
+        NativeCase::NonEvex(NonEvexCase {
+            form: NonEvexForm::LegacyRex,
+            kind: FpKind::PackedF32,
+            opcode: 0x58,
+            l: false,
+            dst: 9,
+            src1: 9,
+            src2: 11,
+        })
+    );
+    let bytes = case.bytes();
+    assert_eq!(bytes, [0x4F, 0x0F, 0x58, 0xCB]);
+    let initial = initial_state(case, 2);
+    assert_eq!(initial.mxcsr, 0x1F90);
+    for level in [
+        crate::smir::optimize::OptLevel::O0,
+        crate::smir::optimize::OptLevel::O2,
+    ] {
+        let result = interpret(&bytes, &initial, level);
+        assert_eq!(
+            result.mxcsr, 0x1FB1,
+            "{level:?}: IE|UE|PE prior/final status, without DE"
+        );
     }
 }
 

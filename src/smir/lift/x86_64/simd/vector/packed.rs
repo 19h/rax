@@ -922,7 +922,6 @@ impl X86_64Lifter {
             elem,
             prefix.width,
             pc,
-            ctx,
             &mut ops,
         );
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))

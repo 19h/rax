@@ -151,3 +151,38 @@ fn lifted_x86_fp_compare_handles_fp16_denormals_and_fp32_daz_precisely() {
     assert_eq!(rflags & STATUS_FLAGS, 0);
     assert_eq!(mxcsr & 0x3F, 0);
 }
+
+#[test]
+fn lifted_x86_fp_compare_nan_precedence_suppresses_same_lane_denormal_status() {
+    for (bytes, qnan, snan, denormal) in [
+        (&[0x0F, 0x2E, 0xCA][..], 0x7FC1_2345, 0x7F81_2345, 1),
+        (
+            &[0x66, 0x0F, 0x2E, 0xCA][..],
+            0x7FF8_2468_ACE0_1357,
+            0x7FF0_2468_ACE0_1357,
+            1,
+        ),
+        (&[0x62, 0xF5, 0x7C, 0x08, 0x2E, 0xCA][..], 0x7E42, 0x7C42, 1),
+    ] {
+        for daz in [false, true] {
+            let initial_mxcsr = 0x1F80 | if daz { 1 << 6 } else { 0 };
+            for (nan, invalid) in [(qnan, false), (snan, true)] {
+                for (first, second) in [(nan, denormal), (denormal, nan)] {
+                    let (result, rflags, final_mxcsr) =
+                        execute_compare(bytes, first, second, initial_mxcsr);
+                    assert!(matches!(result, BlockResult::Exit(ExitReason::Halt)));
+                    assert_eq!(
+                        rflags & STATUS_FLAGS,
+                        flags::bits::ZF | flags::bits::PF | flags::bits::CF
+                    );
+                    assert_eq!(final_mxcsr & 1 != 0, invalid);
+                    assert_eq!(
+                        final_mxcsr & (1 << 1),
+                        0,
+                        "{bytes:02X?} DAZ={daz} operands={first:016X}/{second:016X}"
+                    );
+                }
+            }
+        }
+    }
+}

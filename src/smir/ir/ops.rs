@@ -1882,15 +1882,18 @@ pub enum OpKind {
         imm: u8,
     },
 
-    /// Exact x86 ADD*/SUB*/MUL*/DIV*/MIN*/MAX* SIMD floating-point compute.
-    /// Arithmetic lanes observe MXCSR.DAZ/FTZ and rounding; MIN/MAX lanes apply
-    /// DAZ before the architecturally defined source selection. Inactive mask
-    /// lanes produce zero without evaluating operands or reporting exceptions.
-    /// Dynamic forms accrue MXCSR status and raise #XM before destination
-    /// writeback when an exception is unmasked. EVEX ER/SAE forms set
-    /// `suppress_exceptions` and therefore leave MXCSR status unchanged.
-    /// Destination merge/zero masking and scalar upper-lane copying are
-    /// explicit lifter operations around this compute primitive.
+    /// Exact x86 ADD*/SUB*/MUL*/DIV*/MIN*/MAX*/ADDSUB*/HADD*/HSUB* SIMD
+    /// floating-point compute. Arithmetic lanes observe MXCSR.DAZ/FTZ and
+    /// rounding; non-NaN MIN/MAX lanes apply DAZ before the architecturally
+    /// defined source selection. HADD/HSUB pair operands independently inside
+    /// each 128-bit source lane, while ADDSUB subtracts even lanes and adds odd
+    /// lanes. Inactive mask lanes produce zero without evaluating operands or
+    /// reporting exceptions. Dynamic forms aggregate every active lane's
+    /// status and raise #XM before destination writeback when an exception is
+    /// unmasked. EVEX ER/SAE forms set `suppress_exceptions` and therefore
+    /// leave MXCSR status unchanged. Destination merge/zero masking and scalar
+    /// upper-lane copying are explicit lifter operations around this compute
+    /// primitive.
     X86FpBinary {
         dst: VReg,
         src1: VReg,

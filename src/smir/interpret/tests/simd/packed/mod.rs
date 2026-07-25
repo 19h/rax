@@ -6,6 +6,8 @@ use crate::smir::interpret::*;
 
 // ---- even-chunked tests ----
 #[cfg(test)]
+mod fp_addsub_horizontal;
+#[cfg(test)]
 mod part1;
 #[cfg(test)]
 mod part2;

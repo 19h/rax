@@ -238,13 +238,6 @@ impl SmirInterpreter {
                         Self::get_lane(&second, lane, 16),
                         Self::get_lane(&third, lane, 16),
                     ];
-                    if sources
-                        .iter()
-                        .any(|bits| Self::x86_simd_fp_is_denormal(*bits, X86_SIMD_F16))
-                    {
-                        status |= 1 << 1;
-                    }
-
                     let (mut a, b, mut c) = match order {
                         X86FmaOrder::Order123 => (sources[0], sources[1], sources[2]),
                         X86FmaOrder::Order132 => (sources[0], sources[2], sources[1]),
@@ -255,17 +248,23 @@ impl SmirInterpreter {
                     let any_snan = ordered_sources
                         .iter()
                         .any(|bits| Self::x86_simd_fp_is_snan(*bits, X86_SIMD_F16));
-                    if any_snan {
-                        status |= 1;
-                    }
 
                     let bits = if let Some(nan) = ordered_sources
                         .iter()
                         .copied()
                         .find(|bits| Self::x86_simd_fp_is_nan(*bits, X86_SIMD_F16))
                     {
+                        // NaN handling has precedence over the lower-priority
+                        // denormal condition for this lane.
+                        status |= u32::from(any_snan);
                         Self::x86_simd_fp_quiet_nan(nan, X86_SIMD_F16)
                     } else {
+                        if ordered_sources
+                            .iter()
+                            .any(|bits| Self::x86_simd_fp_is_denormal(*bits, X86_SIMD_F16))
+                        {
+                            status |= 1 << 1;
+                        }
                         let negate_product = matches!(
                             kind,
                             X86FmaKind::NegativeMultiplyAdd | X86FmaKind::NegativeMultiplySub

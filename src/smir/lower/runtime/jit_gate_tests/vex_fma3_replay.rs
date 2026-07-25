@@ -201,7 +201,7 @@ struct NativeCase {
 
 #[cfg(target_arch = "x86_64")]
 fn f32_lane(data_case: usize, role: usize, lane: usize) -> u32 {
-    const CASES: [[[u32; 4]; 3]; 5] = [
+    const CASES: [[[u32; 4]; 3]; 6] = [
         [
             [0x3F80_0000, 0xC000_0000, 0x4040_0000, 0xC080_0000],
             [0x4000_0000, 0x4040_0000, 0xC080_0000, 0xC0A0_0000],
@@ -227,13 +227,18 @@ fn f32_lane(data_case: usize, role: usize, lane: usize) -> u32 {
             [0x3380_0000, 0xB380_0000, 0x3380_0000, 0xB380_0000],
             [0x3F80_0000, 0x3F80_0000, 0x3F80_0000, 0x3F80_0000],
         ],
+        [
+            [0x7FC0_0011, 0x0000_0001, 0x7F80_0011, 0x8000_0001],
+            [0x0000_0001, 0x7FC0_0022, 0x8000_0001, 0x7F80_0022],
+            [0x3F80_0000; 4],
+        ],
     ];
     CASES[data_case % CASES.len()][role][lane & 3]
 }
 
 #[cfg(target_arch = "x86_64")]
 fn f64_lane(data_case: usize, role: usize, lane: usize) -> u64 {
-    const CASES: [[[u64; 4]; 3]; 5] = [
+    const CASES: [[[u64; 4]; 3]; 6] = [
         [
             [
                 0x3FF0_0000_0000_0000,
@@ -321,6 +326,21 @@ fn f64_lane(data_case: usize, role: usize, lane: usize) -> u64 {
                 0xBCA0_0000_0000_0000,
                 0x3CA0_0000_0000_0000,
                 0xBCA0_0000_0000_0000,
+            ],
+            [0x3FF0_0000_0000_0000; 4],
+        ],
+        [
+            [
+                0x7FF8_0000_0000_0011,
+                0x0000_0000_0000_0001,
+                0x7FF0_0000_0000_0011,
+                0x8000_0000_0000_0001,
+            ],
+            [
+                0x0000_0000_0000_0001,
+                0x7FF8_0000_0000_0022,
+                0x8000_0000_0000_0001,
+                0x7FF0_0000_0000_0022,
             ],
             [0x3FF0_0000_0000_0000; 4],
         ],
@@ -522,7 +542,7 @@ fn native_cases() -> Vec<NativeCase> {
                         src2,
                         src3,
                         clear_ignored_x: ordinal & 1 != 0,
-                        data_case: ordinal % 5,
+                        data_case: ordinal % 6,
                     });
                     ordinal += 1;
                 }

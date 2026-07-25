@@ -160,6 +160,8 @@ mod software_interrupt;
 #[cfg(test)]
 mod sse;
 #[cfg(test)]
+mod sse3_fp_paired;
+#[cfg(test)]
 mod sse4a;
 #[cfg(test)]
 mod sti;

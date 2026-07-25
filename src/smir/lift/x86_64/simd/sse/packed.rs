@@ -545,7 +545,6 @@ impl X86_64Lifter {
             elem,
             VecWidth::V128,
             pc,
-            ctx,
             &mut ops,
         );
         self.append_legacy_packed_result(dst, raw, elem, pc, ctx, &mut ops);

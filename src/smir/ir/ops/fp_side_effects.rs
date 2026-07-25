@@ -1,7 +1,7 @@
 //! Floating-point status/trap side-effect classification.
 
 use super::{OpKind, x86_sat_fp_to_int_widths};
-use crate::smir::ir::types::{FpRoundMode, OpWidth, VecElementType};
+use crate::smir::ir::types::{FpRoundMode, OpWidth, VecElementType, X86FpBinaryOp};
 
 impl OpKind {
     /// Return whether execution can update architectural floating-point status
@@ -12,6 +12,57 @@ impl OpKind {
             // interpreter's fail-closed #UD boundary. Canonical embedded-
             // rounding forms suppress all status/trap effects.
             return !fma.shape_valid() || fma.round == FpRoundMode::Dynamic;
+        }
+
+        if let OpKind::X86FpBinary {
+            mask,
+            elem,
+            lanes,
+            op,
+            round,
+            suppress_exceptions,
+            ..
+        } = self
+        {
+            let paired = matches!(
+                op,
+                X86FpBinaryOp::AddSub | X86FpBinaryOp::HorizontalAdd | X86FpBinaryOp::HorizontalSub
+            );
+            let arithmetic = matches!(
+                op,
+                X86FpBinaryOp::Add | X86FpBinaryOp::Sub | X86FpBinaryOp::Mul | X86FpBinaryOp::Div
+            ) || paired;
+            let canonical_controls = if paired {
+                *round == FpRoundMode::Dynamic
+                    && !*suppress_exceptions
+                    && mask.is_none()
+                    && matches!(
+                        (elem, lanes),
+                        (VecElementType::F32, 4 | 8) | (VecElementType::F64, 2 | 4)
+                    )
+            } else if arithmetic {
+                matches!(
+                    (round, suppress_exceptions),
+                    (FpRoundMode::Dynamic, false)
+                        | (
+                            FpRoundMode::RoundNearest
+                                | FpRoundMode::RoundDown
+                                | FpRoundMode::RoundUp
+                                | FpRoundMode::RoundTowardZero,
+                            true
+                        )
+                )
+            } else {
+                *round == FpRoundMode::Dynamic
+            };
+            let canonical = matches!(elem, VecElementType::F32 | VecElementType::F64)
+                && *lanes > 0
+                && u32::from(*lanes) <= 64 / elem.bytes()
+                && canonical_controls;
+            // Malformed IR must retain its fail-closed #UD behavior even when
+            // its noncanonical fields claim SAE. Canonical SAE forms have no
+            // independent architectural status or trap effect.
+            return !canonical || !*suppress_exceptions;
         }
 
         if let OpKind::X86IntToFp {
@@ -111,10 +162,6 @@ impl OpKind {
             self,
             OpKind::X86Round { .. }
                 | OpKind::X86DotProduct { .. }
-                | OpKind::X86FpBinary {
-                    suppress_exceptions: false,
-                    ..
-                }
                 | OpKind::X86FpCompare {
                     suppress_exceptions: false,
                     ..

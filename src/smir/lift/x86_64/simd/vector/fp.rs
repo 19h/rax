@@ -193,98 +193,26 @@ impl X86_64Lifter {
         elem: VecElementType,
         width: VecWidth,
         pc: u64,
-        ctx: &mut LiftContext,
         ops: &mut Vec<SmirOp>,
     ) {
-        let lanes = width.lanes(elem) as u8;
-        let per_128 = 16 / elem.bytes() as u8;
-        let result = self.append_zero_vector(width, elem, pc, ctx, ops);
-        for lane in 0..lanes {
-            let (source, left_lane, right_lane, subtract) = if opcode == 0xD0 {
-                (src1, lane, lane, lane & 1 == 0)
-            } else {
-                let group = lane / per_128;
-                let position = lane % per_128;
-                let pairs = per_128 / 2;
-                let (source, pair) = if position < pairs {
-                    (src1, position)
-                } else {
-                    (src2, position - pairs)
-                };
-                let left = group * per_128 + pair * 2;
-                (source, left, left + 1, opcode == 0x7D)
-            };
-            let left = ctx.alloc_vreg();
-            let right = ctx.alloc_vreg();
-            let scalar = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::VExtractLane {
-                    dst: left,
-                    vec: source,
-                    lane: left_lane,
-                    elem,
-                    sign: SignExtend::Zero,
-                },
-            ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::VExtractLane {
-                    dst: right,
-                    vec: if opcode == 0xD0 { src2 } else { source },
-                    lane: right_lane,
-                    elem,
-                    sign: SignExtend::Zero,
-                },
-            ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                if subtract {
-                    OpKind::FSub {
-                        dst: scalar,
-                        src1: left,
-                        src2: right,
-                        precision: if elem == VecElementType::F32 {
-                            FpPrecision::F32
-                        } else {
-                            FpPrecision::F64
-                        },
-                    }
-                } else {
-                    OpKind::FAdd {
-                        dst: scalar,
-                        src1: left,
-                        src2: right,
-                        precision: if elem == VecElementType::F32 {
-                            FpPrecision::F32
-                        } else {
-                            FpPrecision::F64
-                        },
-                    }
-                },
-            ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::VInsertLane {
-                    dst: result,
-                    vec: result,
-                    scalar,
-                    lane,
-                    elem,
-                },
-            ));
-        }
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
-            OpKind::VMov {
+            OpKind::X86FpBinary {
                 dst,
-                src: result,
-                width,
+                src1,
+                src2,
+                mask: None,
+                elem,
+                lanes: width.lanes(elem) as u8,
+                op: match opcode {
+                    0xD0 => X86FpBinaryOp::AddSub,
+                    0x7C => X86FpBinaryOp::HorizontalAdd,
+                    0x7D => X86FpBinaryOp::HorizontalSub,
+                    _ => unreachable!("validated SSE3 horizontal/add-sub opcode"),
+                },
+                round: FpRoundMode::Dynamic,
+                suppress_exceptions: false,
             },
         ));
     }

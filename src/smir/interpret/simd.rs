@@ -1883,22 +1883,12 @@ impl SmirInterpreter {
         mode: FpRoundMode,
         mxcsr: u32,
     ) -> X86SimdFpResult {
+        if let Some(result) = Self::x86_simd_fp_arithmetic_nan(first, second, format) {
+            return result;
+        }
         let first = Self::x86_simd_fp_apply_daz(first, format, mxcsr);
         let second = Self::x86_simd_fp_apply_daz(second, format, mxcsr);
         let mut status = first.status | second.status;
-        let any_nan = Self::x86_simd_fp_is_nan(first.bits, format)
-            || Self::x86_simd_fp_is_nan(second.bits, format);
-        if any_nan {
-            if Self::x86_simd_fp_is_snan(first.bits, format)
-                || Self::x86_simd_fp_is_snan(second.bits, format)
-            {
-                status |= 1;
-            }
-            return X86SimdFpResult {
-                bits: Self::x86_simd_fp_propagate_nan(first.bits, second.bits, format),
-                status,
-            };
-        }
         let first_inf = Self::x86_simd_fp_is_infinite(first.bits, format);
         let second_inf = Self::x86_simd_fp_is_infinite(second.bits, format);
         let first_zero = Self::x86_simd_fp_is_zero(first.bits, format);
@@ -1947,22 +1937,12 @@ impl SmirInterpreter {
         mode: FpRoundMode,
         mxcsr: u32,
     ) -> X86SimdFpResult {
+        if let Some(result) = Self::x86_simd_fp_arithmetic_nan(first, second, format) {
+            return result;
+        }
         let first = Self::x86_simd_fp_apply_daz(first, format, mxcsr);
         let second = Self::x86_simd_fp_apply_daz(second, format, mxcsr);
         let mut status = first.status | second.status;
-        let any_nan = Self::x86_simd_fp_is_nan(first.bits, format)
-            || Self::x86_simd_fp_is_nan(second.bits, format);
-        if any_nan {
-            if Self::x86_simd_fp_is_snan(first.bits, format)
-                || Self::x86_simd_fp_is_snan(second.bits, format)
-            {
-                status |= 1;
-            }
-            return X86SimdFpResult {
-                bits: Self::x86_simd_fp_propagate_nan(first.bits, second.bits, format),
-                status,
-            };
-        }
         let first_inf = Self::x86_simd_fp_is_infinite(first.bits, format);
         let second_inf = Self::x86_simd_fp_is_infinite(second.bits, format);
         let (sign_mask, exponent_mask, _, _) = Self::x86_simd_fp_masks(format);

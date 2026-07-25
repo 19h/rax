@@ -564,7 +564,6 @@ fn interpreter_matches_intel_o0_o2_exact_equations_lane_order_aliases_and_upper_
     }
 }
 
-#[cfg(target_arch = "x86_64")]
 const F32_PATTERNS: [u64; 16] = [
     0x0000_0000,
     0x8000_0000,
@@ -584,7 +583,6 @@ const F32_PATTERNS: [u64; 16] = [
     0x3EAA_AAAB,
 ];
 
-#[cfg(target_arch = "x86_64")]
 const F64_PATTERNS: [u64; 16] = [
     0x0000_0000_0000_0000,
     0x8000_0000_0000_0000,
@@ -604,7 +602,6 @@ const F64_PATTERNS: [u64; 16] = [
     0x3FD5_5555_5555_5555,
 ];
 
-#[cfg(target_arch = "x86_64")]
 fn patterned_vector(element: Element, register: usize) -> [u64; 8] {
     let patterns: &[u64] = if element == Element::F32 {
         &F32_PATTERNS
@@ -622,7 +619,6 @@ fn patterned_vector(element: Element, register: usize) -> [u64; 8] {
     })
 }
 
-#[cfg(target_arch = "x86_64")]
 fn adversarial_initial_state(case: FpCase, ordinal: usize) -> FpState {
     let prior_status = (ordinal as u32).rotate_left(3) & 0x3F;
     let rc = ((ordinal as u32 >> 2) & 3) << 13;
@@ -652,6 +648,34 @@ fn adversarial_initial_state(case: FpCase, ordinal: usize) -> FpState {
         // replay when a mask is clear, preventing host SIGFPE while preserving
         // status, rounding-control, DAZ, and FTZ coverage.
         mxcsr: 0x1F80 | prior_status | rc | denormal_controls,
+    }
+}
+
+#[test]
+fn interpreter_o0_o2_accrues_ci_haddps_denormal_and_precision_status() {
+    let case = cases()[0];
+    assert_eq!(
+        case,
+        FpCase {
+            element: Element::F32,
+            operation: Operation::HorizontalAdd,
+            width: Width::V128,
+            form: EncodingForm::Legacy,
+            dst: 1,
+            src1: 1,
+            src2: 3,
+        }
+    );
+    let bytes = encoding(case);
+    assert_eq!(bytes, [0xF2, 0x0F, 0x7C, 0xCB]);
+    let initial = adversarial_initial_state(case, 0);
+    assert_eq!(initial.mxcsr, 0x1F80);
+    for level in [
+        crate::smir::optimize::OptLevel::O0,
+        crate::smir::optimize::OptLevel::O2,
+    ] {
+        let result = interpret(&bytes, &initial, level);
+        assert_eq!(result.mxcsr, 0x1FA2, "{level:?}: HADDPS must accrue DE|PE");
     }
 }
 

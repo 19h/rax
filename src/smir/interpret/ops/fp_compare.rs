@@ -215,7 +215,14 @@ impl SmirInterpreter {
         let invalid = Self::x86_simd_fp_is_snan(first, format)
             || Self::x86_simd_fp_is_snan(second, format)
             || (signaling && (first_nan || second_nan));
-        let status = first_status | second_status | u32::from(invalid);
+        // Intel SDM Vol. 1 D.4.2.2 and Vol. 3A Table 7-8: NaN handling
+        // suppresses the lower-priority denormal condition for this scalar
+        // comparison, as it does for each lane of packed comparisons.
+        let status = if first_nan || second_nan {
+            u32::from(invalid)
+        } else {
+            first_status | second_status
+        };
 
         if !suppress_exceptions {
             if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {

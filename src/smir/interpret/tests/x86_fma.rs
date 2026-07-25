@@ -549,6 +549,66 @@ fn x86_fma_quiet_nan_preempts_non_nan_invalid_product_classification() {
 }
 
 #[test]
+fn x86_fma_nan_precedence_suppresses_same_lane_denormal_status_for_all_formats() {
+    for (format, denormal, qnan, snan, quieted_snan) in [
+        (X86_SIMD_F32, 1, 0x7FC1_2345, 0x7F81_2345, 0x7FC1_2345),
+        (
+            X86_SIMD_F64,
+            1,
+            0x7FF8_2468_ACE0_1357,
+            0x7FF0_2468_ACE0_1357,
+            0x7FF8_2468_ACE0_1357,
+        ),
+    ] {
+        for mxcsr_value in [0x1F80, 0x1F80 | (1 << 6)] {
+            for nan_index in 0..3 {
+                for (nan, expected, invalid) in [(qnan, qnan, 0), (snan, quieted_snan, 1)] {
+                    let mut sources = [1.0f64.to_bits(); 3];
+                    sources[(nan_index + 1) % 3] = denormal;
+                    sources[nan_index] = nan;
+                    let actual = SmirInterpreter::x86_fma_boundary(
+                        sources[0],
+                        sources[1],
+                        sources[2],
+                        format,
+                        false,
+                        false,
+                        FpRoundMode::RoundNearest,
+                        mxcsr_value,
+                    );
+                    assert_eq!(
+                        actual.bits, expected,
+                        "format={format:?} source={nan_index}"
+                    );
+                    assert_eq!(
+                        actual.status, invalid,
+                        "format={format:?} source={nan_index} MXCSR={mxcsr_value:#06X}"
+                    );
+                }
+            }
+        }
+    }
+
+    for nan_index in 0..3 {
+        for (nan, expected, invalid) in [(0x7E42, 0x7E42, 0), (0x7C42, 0x7E42, 1)] {
+            let mut sources = [0x3C00; 3];
+            sources[(nan_index + 1) % 3] = 1;
+            sources[nan_index] = nan;
+            let actual = SmirInterpreter::x86_fp16_fma_boundary(
+                sources[0],
+                sources[1],
+                sources[2],
+                false,
+                FpRoundMode::RoundNearest,
+                0x1F80,
+            );
+            assert_eq!(actual.bits, expected, "FP16 source={nan_index}");
+            assert_eq!(actual.status, invalid, "FP16 source={nan_index}");
+        }
+    }
+}
+
+#[test]
 fn x86_fma_unmasked_exception_is_precise_and_embedded_rounding_is_sae() {
     let sentinel = [0xA5A5_A5A5_A5A5_A5A5; 16];
     let mut ctx = SmirContext::new_x86_64();
@@ -819,6 +879,48 @@ fn x86_fp16_fma_nan_priority_uses_mnemonic_arithmetic_order() {
     ));
     assert_eq!(lane(&ctx, DST, 0, 16), 0x7E33);
     assert_eq!(mxcsr(&ctx) & 0x3F, 0);
+}
+
+#[test]
+fn x86_fp16_fma_nan_precedence_is_lane_local_when_status_is_aggregated() {
+    let run = |lanes| {
+        let mut ctx = SmirContext::new_x86_64();
+        // Order132 computes src1 * src3 + src2. Lane 0 returns QNaN and
+        // suppresses its src3 denormal; optional lane 1 independently
+        // contributes DE|PE.
+        for lane_index in 0..lanes {
+            set_lane(&mut ctx, SRC1, lane_index, 16, 0x3C00);
+            set_lane(&mut ctx, SRC2, lane_index, 16, 0x3C00);
+            set_lane(&mut ctx, SRC3, lane_index, 16, 1);
+        }
+        set_lane(&mut ctx, SRC1, 0, 16, 0x7E42);
+        assert!(matches!(
+            execute(
+                &mut ctx,
+                OpKind::X86FP16Fma {
+                    dst: reg(DST),
+                    src1: reg(SRC1),
+                    src2: reg(SRC2),
+                    src3: reg(SRC3),
+                    mask: None,
+                    kind: X86FmaKind::Add,
+                    order: X86FmaOrder::Order132,
+                    round: FpRoundMode::Dynamic,
+                    lanes,
+                },
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        assert_eq!(lane(&ctx, DST, 0, 16), 0x7E42);
+        mxcsr(&ctx) & 0x3F
+    };
+
+    assert_eq!(run(1), 0, "same-lane NaN must suppress DE");
+    assert_eq!(
+        run(2),
+        (1 << 1) | (1 << 5),
+        "independent lane contributes DE|PE"
+    );
 }
 
 #[test]

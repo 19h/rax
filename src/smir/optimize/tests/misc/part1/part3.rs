@@ -6727,42 +6727,6 @@ fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
         16,
     );
 
-    let horizontal = optimized(&[0xC5, 0xFF, 0x7C, 0x50, 0x20]);
-    let ops = &horizontal.blocks[0].ops;
-    let load = ops
-        .iter()
-        .position(|op| {
-            matches!(
-                op.kind,
-                OpKind::VLoad {
-                    width: VecWidth::V256,
-                    ..
-                }
-            )
-        })
-        .expect("VHADDPS source load removed");
-    let arithmetic = ops
-        .iter()
-        .position(|op| matches!(op.kind, OpKind::FAdd { .. }))
-        .expect("VHADDPS arithmetic removed");
-    assert!(load < arithmetic);
-    assert!(ops.iter().any(|op| matches!(
-        op.kind,
-        OpKind::VMov {
-            dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
-            width: VecWidth::V256,
-            ..
-        }
-    )));
-
-    let legacy_horizontal = optimized(&[0x66, 0x0F, 0x7D, 0x00]);
-    assert!(
-        legacy_horizontal.blocks[0]
-            .ops
-            .iter()
-            .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
-    );
-
     let reciprocal = optimized(&[0xC5, 0xFC, 0x53, 0x50, 0x20]);
     let ops = &reciprocal.blocks[0].ops;
     let load = ops

@@ -119,7 +119,10 @@ fn x86_fp_binary_cores_cover_rounding_special_values_daz_and_minmax_selection() 
     let sub_nan_denormal =
         SmirInterpreter::x86_simd_fp_sub(qnan, 1, X86_SIMD_F32, FpRoundMode::RoundNearest, 0x1F80);
     assert_eq!(sub_nan_denormal.bits, qnan);
-    assert_eq!(sub_nan_denormal.status, 1 << 1);
+    assert_eq!(
+        sub_nan_denormal.status, 0,
+        "quiet NaN takes precedence over denormal status"
+    );
     let sub_nan_daz = SmirInterpreter::x86_simd_fp_sub(
         qnan,
         1,

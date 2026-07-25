@@ -1213,6 +1213,14 @@ pub enum X86FpBinaryOp {
     Div,
     Min,
     Max,
+    /// SSE3/AVX ADDSUB*: subtract even lanes and add odd lanes.
+    AddSub,
+    /// SSE3/AVX HADD*: add adjacent pairs independently within each 128-bit
+    /// source lane.
+    HorizontalAdd,
+    /// SSE3/AVX HSUB*: subtract adjacent pairs independently within each
+    /// 128-bit source lane.
+    HorizontalSub,
 }
 
 /// Operand permutation selected by an x86 FMA encoding.

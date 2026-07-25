@@ -101,3 +101,51 @@ fn optimizer_preserves_legacy_and_evex_scalar_min_memory_frontiers() {
             .any(|op| matches!(op.kind, OpKind::Select { .. }))
     );
 }
+
+#[test]
+fn optimizer_preserves_sse3_horizontal_memory_frontiers_and_atomic_arithmetic() {
+    let horizontal = optimized(&[0xC5, 0xFF, 0x7C, 0x50, 0x20]);
+    let ops = &horizontal.blocks[0].ops;
+    let load = ops
+        .iter()
+        .position(|op| {
+            matches!(
+                op.kind,
+                OpKind::VLoad {
+                    width: VecWidth::V256,
+                    ..
+                }
+            )
+        })
+        .expect("VHADDPS source load removed");
+    let arithmetic = ops
+        .iter()
+        .position(|op| {
+            matches!(
+                op.kind,
+                OpKind::X86FpBinary {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+                    elem: VecElementType::F32,
+                    lanes: 8,
+                    op: X86FpBinaryOp::HorizontalAdd,
+                    round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
+                    ..
+                }
+            )
+        })
+        .expect("VHADDPS atomic arithmetic removed");
+    assert!(load < arithmetic);
+    assert!(
+        !ops.iter()
+            .any(|op| matches!(op.kind, OpKind::FAdd { .. } | OpKind::FSub { .. }))
+    );
+
+    let legacy_horizontal = optimized(&[0x66, 0x0F, 0x7D, 0x00]);
+    assert!(
+        legacy_horizontal.blocks[0]
+            .ops
+            .iter()
+            .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+    );
+}

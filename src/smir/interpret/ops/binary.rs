@@ -7,6 +7,26 @@ use crate::smir::ir::ops::{OpKind, SmirOp};
 use crate::smir::ir::types::*;
 
 impl SmirInterpreter {
+    /// Intel SDM Vol. 1 D.4.2.2: a NaN result has precedence over every
+    /// non-invalid floating-point exception. In particular, a denormal in the
+    /// other source does not report DE when this lane returns a NaN.
+    pub(crate) fn x86_simd_fp_arithmetic_nan(
+        first: u64,
+        second: u64,
+        format: X86SimdFpFormat,
+    ) -> Option<X86SimdFpResult> {
+        if !Self::x86_simd_fp_is_nan(first, format) && !Self::x86_simd_fp_is_nan(second, format) {
+            return None;
+        }
+        Some(X86SimdFpResult {
+            bits: Self::x86_simd_fp_propagate_nan(first, second, format),
+            status: u32::from(
+                Self::x86_simd_fp_is_snan(first, format)
+                    || Self::x86_simd_fp_is_snan(second, format),
+            ),
+        })
+    }
+
     pub(crate) fn x86_simd_fp_sub(
         first: u64,
         second: u64,
@@ -14,21 +34,12 @@ impl SmirInterpreter {
         mode: FpRoundMode,
         mxcsr: u32,
     ) -> X86SimdFpResult {
+        if let Some(result) = Self::x86_simd_fp_arithmetic_nan(first, second, format) {
+            return result;
+        }
         let first = Self::x86_simd_fp_apply_daz(first, format, mxcsr);
         let second = Self::x86_simd_fp_apply_daz(second, format, mxcsr);
         let status = first.status | second.status;
-        if Self::x86_simd_fp_is_nan(first.bits, format)
-            || Self::x86_simd_fp_is_nan(second.bits, format)
-        {
-            return X86SimdFpResult {
-                bits: Self::x86_simd_fp_propagate_nan(first.bits, second.bits, format),
-                status: status
-                    | u32::from(
-                        Self::x86_simd_fp_is_snan(first.bits, format)
-                            || Self::x86_simd_fp_is_snan(second.bits, format),
-                    ),
-            };
-        }
         let (sign, _, _, _) = Self::x86_simd_fp_masks(format);
         let mut result = Self::x86_simd_fp_add(first.bits, second.bits ^ sign, format, mode, mxcsr);
         result.status |= status;
@@ -46,21 +57,12 @@ impl SmirInterpreter {
         mode: FpRoundMode,
         mxcsr: u32,
     ) -> X86SimdFpResult {
+        if let Some(result) = Self::x86_simd_fp_arithmetic_nan(first, second, format) {
+            return result;
+        }
         let first = Self::x86_simd_fp_apply_daz(first, format, mxcsr);
         let second = Self::x86_simd_fp_apply_daz(second, format, mxcsr);
         let mut status = first.status | second.status;
-        if Self::x86_simd_fp_is_nan(first.bits, format)
-            || Self::x86_simd_fp_is_nan(second.bits, format)
-        {
-            status |= u32::from(
-                Self::x86_simd_fp_is_snan(first.bits, format)
-                    || Self::x86_simd_fp_is_snan(second.bits, format),
-            );
-            return X86SimdFpResult {
-                bits: Self::x86_simd_fp_propagate_nan(first.bits, second.bits, format),
-                status,
-            };
-        }
 
         let first_infinite = Self::x86_simd_fp_is_infinite(first.bits, format);
         let second_infinite = Self::x86_simd_fp_is_infinite(second.bits, format);
@@ -145,17 +147,21 @@ impl SmirInterpreter {
         mxcsr: u32,
         min: bool,
     ) -> X86SimdFpResult {
-        let first = Self::x86_simd_fp_apply_daz(first, format, mxcsr);
-        let second = Self::x86_simd_fp_apply_daz(second, format, mxcsr);
-        let any_nan = Self::x86_simd_fp_is_nan(first.bits, format)
-            || Self::x86_simd_fp_is_nan(second.bits, format);
-        let status = first.status | second.status | u32::from(any_nan);
+        let any_nan =
+            Self::x86_simd_fp_is_nan(first, format) || Self::x86_simd_fp_is_nan(second, format);
         if any_nan {
+            // MIN/MAX selects src2 bit-for-bit for every unordered lane and
+            // reports invalid for both quiet and signaling NaNs. NaN
+            // precedence suppresses a denormal exception from the other
+            // source.
             return X86SimdFpResult {
-                bits: second.bits,
-                status,
+                bits: second,
+                status: 1,
             };
         }
+        let first = Self::x86_simd_fp_apply_daz(first, format, mxcsr);
+        let second = Self::x86_simd_fp_apply_daz(second, format, mxcsr);
+        let status = first.status | second.status;
 
         let (sign, _, _, _) = Self::x86_simd_fp_masks(format);
         let first_magnitude = first.bits & !sign;
@@ -215,14 +221,28 @@ impl SmirInterpreter {
                         return Ok(());
                     }
                 };
+                let sse3_paired = matches!(
+                    op,
+                    X86FpBinaryOp::AddSub
+                        | X86FpBinaryOp::HorizontalAdd
+                        | X86FpBinaryOp::HorizontalSub
+                );
                 let arithmetic = matches!(
                     op,
                     X86FpBinaryOp::Add
                         | X86FpBinaryOp::Sub
                         | X86FpBinaryOp::Mul
                         | X86FpBinaryOp::Div
-                );
-                let valid_rounding = if arithmetic {
+                ) || sse3_paired;
+                let valid_rounding = if sse3_paired {
+                    *round == FpRoundMode::Dynamic
+                        && !*suppress_exceptions
+                        && mask.is_none()
+                        && matches!(
+                            (elem, *lanes),
+                            (VecElementType::F32, 4 | 8) | (VecElementType::F64, 2 | 4)
+                        )
+                } else if arithmetic {
                     matches!(
                         (round, suppress_exceptions),
                         (FpRoundMode::Dynamic, false)
@@ -265,26 +285,66 @@ impl SmirInterpreter {
                     if active & (1u64 << lane) == 0 {
                         continue;
                     }
-                    let first = Self::get_lane(&first, lane, elem_bits);
-                    let second = Self::get_lane(&second, lane, elem_bits);
-                    let computed = match op {
+                    let (first_bits, second_bits, lane_op) = match *op {
+                        X86FpBinaryOp::AddSub => (
+                            Self::get_lane(&first, lane, elem_bits),
+                            Self::get_lane(&second, lane, elem_bits),
+                            if lane & 1 == 0 {
+                                X86FpBinaryOp::Sub
+                            } else {
+                                X86FpBinaryOp::Add
+                            },
+                        ),
+                        X86FpBinaryOp::HorizontalAdd | X86FpBinaryOp::HorizontalSub => {
+                            let per_128 = (16 / elem.bytes()) as u8;
+                            let pairs = per_128 / 2;
+                            let group = lane / per_128;
+                            let position = lane % per_128;
+                            let (source, pair) = if position < pairs {
+                                (&first, position)
+                            } else {
+                                (&second, position - pairs)
+                            };
+                            let left_lane = group * per_128 + pair * 2;
+                            (
+                                Self::get_lane(source, left_lane, elem_bits),
+                                Self::get_lane(source, left_lane + 1, elem_bits),
+                                if *op == X86FpBinaryOp::HorizontalAdd {
+                                    X86FpBinaryOp::Add
+                                } else {
+                                    X86FpBinaryOp::Sub
+                                },
+                            )
+                        }
+                        lane_op => (
+                            Self::get_lane(&first, lane, elem_bits),
+                            Self::get_lane(&second, lane, elem_bits),
+                            lane_op,
+                        ),
+                    };
+                    let computed = match lane_op {
                         X86FpBinaryOp::Add => {
-                            Self::x86_simd_fp_add(first, second, format, mode, mxcsr)
+                            Self::x86_simd_fp_add(first_bits, second_bits, format, mode, mxcsr)
                         }
                         X86FpBinaryOp::Sub => {
-                            Self::x86_simd_fp_sub(first, second, format, mode, mxcsr)
+                            Self::x86_simd_fp_sub(first_bits, second_bits, format, mode, mxcsr)
                         }
                         X86FpBinaryOp::Mul => {
-                            Self::x86_simd_fp_mul(first, second, format, mode, mxcsr)
+                            Self::x86_simd_fp_mul(first_bits, second_bits, format, mode, mxcsr)
                         }
                         X86FpBinaryOp::Div => {
-                            Self::x86_simd_fp_div(first, second, format, mode, mxcsr)
+                            Self::x86_simd_fp_div(first_bits, second_bits, format, mode, mxcsr)
                         }
                         X86FpBinaryOp::Min => {
-                            Self::x86_simd_fp_min_max(first, second, format, mxcsr, true)
+                            Self::x86_simd_fp_min_max(first_bits, second_bits, format, mxcsr, true)
                         }
                         X86FpBinaryOp::Max => {
-                            Self::x86_simd_fp_min_max(first, second, format, mxcsr, false)
+                            Self::x86_simd_fp_min_max(first_bits, second_bits, format, mxcsr, false)
+                        }
+                        X86FpBinaryOp::AddSub
+                        | X86FpBinaryOp::HorizontalAdd
+                        | X86FpBinaryOp::HorizontalSub => {
+                            unreachable!("paired operation must map to scalar add or subtract")
                         }
                     };
                     status |= computed.status;
@@ -292,10 +352,21 @@ impl SmirInterpreter {
                 }
 
                 if !*suppress_exceptions && status != 0 {
+                    // Intel SDM Vol. 1 §11.5.3: an unmasked pre-computation
+                    // exception (#I/#D/#Z) is reported before any
+                    // post-computation #O/#U/#P condition from another active
+                    // lane. If every pre-computation condition is masked, all
+                    // accumulated status remains observable.
+                    let pre_status = status & 0x07;
+                    let reported_status = if Self::x86_simd_fp_unmasked(pre_status, mxcsr) {
+                        pre_status
+                    } else {
+                        status
+                    };
                     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
-                        x86.mxcsr |= status;
+                        x86.mxcsr |= reported_status;
                     }
-                    if Self::x86_simd_fp_unmasked(status, mxcsr) {
+                    if Self::x86_simd_fp_unmasked(reported_status, mxcsr) {
                         ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
                         return Ok(());
                     }

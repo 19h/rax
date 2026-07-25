@@ -212,9 +212,10 @@ impl SmirInterpreter {
 
     /// One binary32/binary64 x86 FMA boundary. `first`, `second`, and
     /// `accumulator` are already in mnemonic arithmetic order, which is also
-    /// Intel's NaN propagation priority. DAZ is applied before classification,
-    /// FTZ is applied by the final rounding core, and arithmetic sign changes
-    /// do not alter a propagated NaN payload.
+    /// Intel's NaN propagation priority. NaN classification precedes DAZ so a
+    /// denormal in another source cannot report the lower-priority DE
+    /// condition for the same lane. FTZ is applied by the final rounding core,
+    /// and arithmetic sign changes do not alter a propagated NaN payload.
     pub(crate) fn x86_fma_boundary(
         first: u64,
         second: u64,
@@ -226,17 +227,7 @@ impl SmirInterpreter {
         mxcsr: u32,
     ) -> X86SimdFpResult {
         debug_assert!(matches!(format.total_bits, 32 | 64));
-        let first = Self::x86_simd_fp_apply_daz(first, format, mxcsr);
-        let second = Self::x86_simd_fp_apply_daz(second, format, mxcsr);
-        let accumulator = Self::x86_simd_fp_apply_daz(accumulator, format, mxcsr);
-        let sources = [first.bits, second.bits, accumulator.bits];
-        let mut status = first.status | second.status | accumulator.status;
-        if sources
-            .iter()
-            .any(|bits| Self::x86_simd_fp_is_snan(*bits, format))
-        {
-            status |= 1;
-        }
+        let sources = [first, second, accumulator];
         if let Some(nan) = sources
             .iter()
             .copied()
@@ -244,9 +235,17 @@ impl SmirInterpreter {
         {
             return X86SimdFpResult {
                 bits: Self::x86_simd_fp_quiet_nan(nan, format),
-                status,
+                status: u32::from(
+                    sources
+                        .iter()
+                        .any(|bits| Self::x86_simd_fp_is_snan(*bits, format)),
+                ),
             };
         }
+        let first = Self::x86_simd_fp_apply_daz(first, format, mxcsr);
+        let second = Self::x86_simd_fp_apply_daz(second, format, mxcsr);
+        let accumulator = Self::x86_simd_fp_apply_daz(accumulator, format, mxcsr);
+        let status = first.status | second.status | accumulator.status;
         let (sign, _, _, _) = Self::x86_simd_fp_masks(format);
         let first = if negate_product {
             first.bits ^ sign
@@ -301,20 +300,6 @@ impl SmirInterpreter {
         mxcsr: u32,
     ) -> X86SimdFpResult {
         let sources = [first, second, accumulator];
-        let mut status = if sources
-            .iter()
-            .any(|bits| Self::x86_simd_fp_is_denormal(*bits, X86_SIMD_F16))
-        {
-            1 << 1
-        } else {
-            0
-        };
-        if sources
-            .iter()
-            .any(|bits| Self::x86_simd_fp_is_snan(*bits, X86_SIMD_F16))
-        {
-            status |= 1;
-        }
         if let Some(nan) = sources
             .iter()
             .copied()
@@ -322,9 +307,21 @@ impl SmirInterpreter {
         {
             return X86SimdFpResult {
                 bits: Self::x86_simd_fp_quiet_nan(nan, X86_SIMD_F16),
-                status,
+                status: u32::from(
+                    sources
+                        .iter()
+                        .any(|bits| Self::x86_simd_fp_is_snan(*bits, X86_SIMD_F16)),
+                ),
             };
         }
+        let status = if sources
+            .iter()
+            .any(|bits| Self::x86_simd_fp_is_denormal(*bits, X86_SIMD_F16))
+        {
+            1 << 1
+        } else {
+            0
+        };
         let first = if negate_first { first ^ 0x8000 } else { first };
         let computed =
             Self::x86_simd_fp_fma_non_nan(first, second, accumulator, X86_SIMD_F16, mode, mxcsr);
