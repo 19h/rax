@@ -173,6 +173,21 @@ pub fn x86_legacy_vex_fp_shuffle_replay_spans(
     })
 }
 
+/// Identify valid register-only legacy SSE3 and AVX VEX packed
+/// floating-point horizontal/add-sub replay groups in `block` in O(N) time and
+/// O(P) space for N operations and P unique guest PCs. Memory forms remain at
+/// the precise SMIR interpreter boundary.
+pub fn x86_legacy_vex_fp_horizontal_addsub_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .legacy_vex_register_fp_horizontal_addsub_needs_avx()
+            .map(|_| (false, false, false))
+    })
+}
+
 /// Identify valid register-only legacy SSE and AVX VEX packed-single high/low
 /// move replay groups in `block` in O(N) time and O(P) space for N operations
 /// and P unique guest PCs. `MOVHLPS`/`MOVLHPS` and their VEX forms are
@@ -981,6 +996,12 @@ pub fn x86_native_replay_spans(
         }
         if instruction
             .legacy_vex_register_fp_shuffle_needs_avx()
+            .is_some()
+        {
+            return Some((false, false, false));
+        }
+        if instruction
+            .legacy_vex_register_fp_horizontal_addsub_needs_avx()
             .is_some()
         {
             return Some((false, false, false));

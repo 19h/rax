@@ -6,6 +6,7 @@
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) any: bool,
+    pub(crate) needs_sse3: bool,
     pub(crate) needs_avx: bool,
     pub(crate) needs_avx2: bool,
     pub(crate) needs_fma: bool,
@@ -24,7 +25,8 @@ impl X86NativeReplayFeatureRequirements {
     /// shared AVX-512 vector-state trampoline requirements.
     #[cfg(target_arch = "x86_64")]
     pub(crate) fn x86_host_supported(self) -> bool {
-        (!self.needs_avx || std::is_x86_feature_detected!("avx"))
+        (!self.needs_sse3 || std::is_x86_feature_detected!("sse3"))
+            && (!self.needs_avx || std::is_x86_feature_detected!("avx"))
             && (!self.needs_avx2 || std::is_x86_feature_detected!("avx2"))
             && (!self.needs_fma || std::is_x86_feature_detected!("fma"))
             && (!self.needs_gfni || std::is_x86_feature_detected!("gfni"))
@@ -50,13 +52,18 @@ pub(crate) fn x86_native_replay_feature_requirements(
         for span in crate::smir::ir::x86_native_replay_spans(block, &func.x86_instruction_bytes)
             .into_values()
         {
+            let fp_horizontal_addsub_avx = span
+                .instruction
+                .legacy_vex_register_fp_horizontal_addsub_needs_avx();
             let widening_dword_multiply_avx2 = span
                 .instruction
                 .vex_register_widening_dword_multiply_needs_avx2();
             requirements.any = true;
+            requirements.needs_sse3 |= fp_horizontal_addsub_avx == Some(false);
             requirements.needs_avx |= span.instruction.is_vex_register_packed_string_compare()
                 || span.instruction.is_vex_register_fma3()
                 || span.instruction.is_vex_register_fp_logic()
+                || fp_horizontal_addsub_avx == Some(true)
                 || widening_dword_multiply_avx2.is_some()
                 || span
                     .instruction
