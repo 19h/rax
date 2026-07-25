@@ -22,7 +22,7 @@ fn register_evex_fp_sqrt_replay_closes_44_generated_lift_lower_gaps() {
             EvexW::WIg => &[false, true],
         };
         let ll_values: &[u8] = match row.key.vl {
-            EvexVl::LlIg => &[0, 1, 2, 3],
+            EvexVl::LlIg => &[0, 1, 2],
             _ => &[avx512_spec::evex_vl_bits(row.key.vl)],
         };
         for &w in widths {
@@ -104,15 +104,17 @@ fn register_evex_fp_sqrt_replay_closes_44_generated_lift_lower_gaps() {
     }
 
     assert_eq!(seen_mnemonics, expected_mnemonics);
-    // Nine packed width rows plus four LLIG encodings for each scalar row.
-    assert_eq!(expected_shapes.len(), 17);
+    // Nine packed width rows plus three defined LLIG encodings for each scalar
+    // row. L'L=11 is reserved when EVEX.b does not select an embedded control.
+    assert_eq!(expected_shapes.len(), 15);
     assert_eq!(register_forms, 44);
     assert_eq!(memory_forms, 11);
 
     // Exhaust map/opcode/pp/W/L'L/length and every R/X/B/R' combination
-    // against independently parsed Intel rows. The scalar LLIG rows expand to
-    // all four L'L values; EVEX.b controls are exhaustively checked by the IR
-    // classifier test because the source inventory records one opcode row.
+    // against independently parsed Intel rows. The loop probes all four L'L
+    // values and requires the reserved L'L=11 encoding to fail closed; EVEX.b
+    // controls are exhaustively checked by the IR classifier test because the
+    // source inventory records one opcode row.
     for extensions in 0u8..=15 {
         for map in 0u8..=7 {
             for opcode in u8::MIN..=u8::MAX {

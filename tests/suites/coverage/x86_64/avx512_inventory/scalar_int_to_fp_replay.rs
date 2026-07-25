@@ -190,6 +190,7 @@ fn register_evex_scalar_int_to_fp_replay_closes_24_generated_lift_lower_gaps() {
                                         |(shape_map, shape_opcode, shape_pp, shape_w, fp16)| {
                                             (!trailing
                                                 && extensions & 0x04 != 0
+                                                && (ll != 3 || embedded_control)
                                                 && (*shape_map, *shape_opcode, *shape_pp, *shape_w)
                                                     == (map, opcode, pp, w))
                                                 .then_some(*fp16)

@@ -22,7 +22,7 @@ fn register_evex_fp_compare_replay_closes_48_generated_lift_lower_gaps() {
             EvexW::WIg => &[false, true],
         };
         let ll_values: &[u8] = match row.key.vl {
-            EvexVl::LlIg => &[0, 1, 2, 3],
+            EvexVl::LlIg => &[0, 1, 2],
             _ => &[avx512_spec::evex_vl_bits(row.key.vl)],
         };
         for &w in widths {
@@ -104,8 +104,9 @@ fn register_evex_fp_compare_replay_closes_48_generated_lift_lower_gaps() {
     }
 
     assert_eq!(seen_mnemonics, expected_mnemonics);
-    // Nine packed width rows plus four LLIG encodings for each scalar row.
-    assert_eq!(expected_shapes.len(), 21);
+    // Nine packed width rows plus three defined LLIG encodings for each scalar
+    // row. L'L=11 is reserved when EVEX.b does not select an embedded control.
+    assert_eq!(expected_shapes.len(), 18);
     assert_eq!(register_forms, 48);
     assert_eq!(memory_forms, 12);
 

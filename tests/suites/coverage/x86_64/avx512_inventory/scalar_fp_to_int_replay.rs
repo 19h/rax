@@ -41,7 +41,14 @@ fn register_evex_scalar_fp_to_int_replay_closes_80_generated_lift_lower_gaps() {
             EvexW::WIg => &[false, true],
         };
         for &w in widths {
-            expected_shapes.insert((row.key.map, row.key.opcode, row.key.pp, w, row.key.map == 5));
+            expected_shapes.insert((
+                row.key.map,
+                row.key.opcode,
+                row.key.pp,
+                w,
+                row.key.map == 5,
+                matches!(row.key.opcode, 0x2C | 0x78),
+            ));
         }
 
         for variant in evex_case_variants_for_row(&row) {
@@ -162,9 +169,17 @@ fn register_evex_scalar_fp_to_int_replay_closes_80_generated_lift_lower_gaps() {
                                         bytes.push(0xA5);
                                     }
                                     let expected = expected_shapes.iter().find_map(
-                                        |(shape_map, shape_opcode, shape_pp, shape_w, fp16)| {
+                                        |(
+                                            shape_map,
+                                            shape_opcode,
+                                            shape_pp,
+                                            shape_w,
+                                            fp16,
+                                            truncating,
+                                        )| {
                                             (!trailing
                                                 && extensions & 1 != 0
+                                                && (ll != 3 || (embedded_control && !*truncating))
                                                 && (*shape_map, *shape_opcode, *shape_pp, *shape_w)
                                                     == (map, opcode, pp, w))
                                                 .then_some(*fp16)

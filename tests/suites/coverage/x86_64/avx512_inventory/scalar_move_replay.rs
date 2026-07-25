@@ -21,7 +21,7 @@ fn register_evex_scalar_move_replay_closes_24_generated_lift_lower_gaps() {
             EvexW::WIg => &[false, true],
         };
         let ll_values: &[u8] = match row.key.vl {
-            EvexVl::LlIg => &[0, 1, 2, 3],
+            EvexVl::LlIg => &[0, 1, 2],
             _ => &[avx512_spec::evex_vl_bits(row.key.vl)],
         };
         for &w in widths {
@@ -99,8 +99,8 @@ fn register_evex_scalar_move_replay_closes_24_generated_lift_lower_gaps() {
     }
 
     assert_eq!(seen_mnemonics, expected_mnemonics);
-    // Three formats, two opcode aliases, and four LLIG encodings.
-    assert_eq!(expected_shapes.len(), 24);
+    // Three formats, two opcode aliases, and three defined LLIG encodings.
+    assert_eq!(expected_shapes.len(), 18);
     assert_eq!(register_forms, 24);
     assert_eq!(memory_forms, 6);
 
@@ -172,7 +172,9 @@ fn register_evex_scalar_move_replay_closes_24_generated_lift_lower_gaps() {
     embedded_control[3] |= 0x10;
     let mut zeroing_k0 = register;
     zeroing_k0[3] = 0x88;
-    for bytes in [memory, embedded_control, zeroing_k0] {
+    let mut reserved_ll = register;
+    reserved_ll[3] |= 0x60;
+    for bytes in [memory, embedded_control, zeroing_k0, reserved_ll] {
         assert_eq!(
             X86InstructionBytes::new(&bytes)
                 .unwrap()
