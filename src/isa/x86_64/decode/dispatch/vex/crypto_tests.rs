@@ -1,4 +1,4 @@
-//! Direct-execution regressions for VEX VPCLMULQDQ.
+//! Direct-execution regressions for VEX VPCLMULQDQ and GFNI.
 
 use crate::isa::x86_64::cpu::X86_64Vcpu;
 use crate::vm::vcpu::{Registers, VCpu};
@@ -16,6 +16,25 @@ const OPERANDS: [(u8, u8, u8); 8] = [
     (9, 10, 9),
     (15, 15, 15),
 ];
+const GFNI_OPERANDS: [(u8, u8, u8); 10] = [
+    (1, 2, 3),
+    (9, 10, 11),
+    (1, 1, 3),
+    (1, 2, 1),
+    (1, 2, 2),
+    (9, 9, 11),
+    (9, 10, 9),
+    (15, 15, 15),
+    (15, 8, 13),
+    (13, 14, 15),
+];
+
+#[derive(Clone, Copy, Debug)]
+enum GfniKind {
+    Multiply,
+    Affine,
+    AffineInverse,
+}
 
 fn encoding(
     w: bool,
@@ -45,6 +64,44 @@ fn encoding(
         0xC0 | ((destination & 7) << 3) | (source2 & 7),
         immediate,
     ]
+}
+
+fn gfni_encoding(
+    kind: GfniKind,
+    ymm: bool,
+    destination: u8,
+    source1: u8,
+    source2: u8,
+    clear_ignored_x: bool,
+    immediate: u8,
+) -> Vec<u8> {
+    assert!(destination < 16 && source1 < 16 && source2 < 16);
+    let (map, w, opcode, has_immediate) = match kind {
+        GfniKind::Multiply => (2, false, 0xCF, false),
+        GfniKind::Affine => (3, true, 0xCE, true),
+        GfniKind::AffineInverse => (3, true, 0xCF, true),
+    };
+    let mut p0 = 0xE0 | map;
+    if destination >= 8 {
+        p0 &= !0x80;
+    }
+    if clear_ignored_x {
+        p0 &= !0x40;
+    }
+    if source2 >= 8 {
+        p0 &= !0x20;
+    }
+    let mut bytes = vec![
+        0xC4,
+        p0,
+        (u8::from(w) << 7) | (((!source1) & 0x0F) << 3) | (u8::from(ymm) << 2) | 1,
+        opcode,
+        0xC0 | ((destination & 7) << 3) | (source2 & 7),
+    ];
+    if has_immediate {
+        bytes.push(immediate);
+    }
+    bytes
 }
 
 fn long_mode_vcpu(code: &[u8]) -> X86_64Vcpu {
@@ -206,6 +263,114 @@ fn assert_case(code: [u8; 6], ordinal: usize, destination: u8, source1: u8, sour
     assert_eq!(vcpu.regs.rip, CODE + code.len() as u64, "{code:02X?}");
 }
 
+fn gf_mul_reference(a: u8, b: u8) -> u8 {
+    let mut product = 0u16;
+    for bit in 0..8 {
+        if b & (1 << bit) != 0 {
+            product ^= u16::from(a) << bit;
+        }
+    }
+    for degree in (8..=14).rev() {
+        if product & (1 << degree) != 0 {
+            product ^= 0x11B << (degree - 8);
+        }
+    }
+    product as u8
+}
+
+fn gf_inverse_reference(value: u8) -> u8 {
+    let mut result = 1u8;
+    let mut power = value;
+    let mut exponent = 254u8;
+    while exponent != 0 {
+        if exponent & 1 != 0 {
+            result = gf_mul_reference(result, power);
+        }
+        power = gf_mul_reference(power, power);
+        exponent >>= 1;
+    }
+    result
+}
+
+fn vector_byte(vector: &[u64; 8], index: usize) -> u8 {
+    (vector[index / 8] >> ((index % 8) * 8)) as u8
+}
+
+fn gfni_expected(
+    vectors: &[[u64; 8]; 16],
+    kind: GfniKind,
+    ymm: bool,
+    source1: u8,
+    source2: u8,
+    immediate: u8,
+) -> [u64; 8] {
+    let mut result = [0u64; 8];
+    let bytes = if ymm { 32 } else { 16 };
+    for lane in 0..bytes {
+        let input = vector_byte(&vectors[usize::from(source1)], lane);
+        let output = match kind {
+            GfniKind::Multiply => {
+                gf_mul_reference(input, vector_byte(&vectors[usize::from(source2)], lane))
+            }
+            GfniKind::Affine | GfniKind::AffineInverse => {
+                let input = if matches!(kind, GfniKind::AffineInverse) {
+                    gf_inverse_reference(input)
+                } else {
+                    input
+                };
+                let qword_base = lane & !7;
+                let mut output = 0u8;
+                for bit in 0..8 {
+                    let matrix_row =
+                        vector_byte(&vectors[usize::from(source2)], qword_base + 7 - bit);
+                    let parity = (matrix_row & input).count_ones() as u8 & 1;
+                    output |= (parity ^ ((immediate >> bit) & 1)) << bit;
+                }
+                output
+            }
+        };
+        result[lane / 8] |= u64::from(output) << ((lane % 8) * 8);
+    }
+    result
+}
+
+fn assert_gfni_case(
+    code: Vec<u8>,
+    ordinal: usize,
+    kind: GfniKind,
+    destination: u8,
+    source1: u8,
+    source2: u8,
+) {
+    let mut vcpu = initialized_vcpu(&code, ordinal);
+    let before_vectors: [[u64; 8]; 16] = std::array::from_fn(|register| zmm(&vcpu, register as u8));
+    let before_gprs = gprs(&vcpu.regs);
+    let before_flags = vcpu.regs.rflags;
+    let before_masks = vcpu.regs.k;
+    let before_mmx = vcpu.regs.mm;
+    let before_mxcsr = vcpu.mxcsr;
+    let ymm = code[2] & 0x04 != 0;
+    let immediate = code.get(5).copied().unwrap_or(0);
+
+    assert!(vcpu.step().unwrap().is_none(), "{code:02X?}");
+
+    let result = gfni_expected(&before_vectors, kind, ymm, source1, source2, immediate);
+    for register in 0u8..16 {
+        let expected = if register == destination {
+            result
+        } else {
+            before_vectors[usize::from(register)]
+        };
+        assert_eq!(zmm(&vcpu, register), expected, "zmm{register} {code:02X?}");
+    }
+    assert_eq!(gprs(&vcpu.regs), before_gprs, "{code:02X?}");
+    assert_eq!(vcpu.regs.rflags, before_flags, "{code:02X?}");
+    assert_eq!(vcpu.regs.k, before_masks, "{code:02X?}");
+    assert_eq!(vcpu.regs.mm, before_mmx, "{code:02X?}");
+    assert_eq!(vcpu.mxcsr, before_mxcsr, "{code:02X?}");
+    assert_eq!(vcpu.regs.rip, CODE + code.len() as u64, "{code:02X?}");
+}
+
 #[test]
 fn direct_vex_vpclmulqdq_accepts_wig_w1() {
     let code = encoding(true, false, 9, 10, 11, true, 0xEF);
@@ -242,4 +407,68 @@ fn direct_vex_vpclmulqdq_covers_all_immediates_widths_wig_extensions_and_aliases
         }
     }
     assert_eq!(tested, 1_024);
+}
+
+#[test]
+fn direct_vex_gfni_matches_llvm_encodings_and_independent_field_equations() {
+    assert_eq!(
+        gfni_encoding(GfniKind::Multiply, false, 9, 10, 11, false, 0),
+        [0xC4, 0x42, 0x29, 0xCF, 0xCB]
+    );
+    assert_eq!(
+        gfni_encoding(GfniKind::Multiply, true, 13, 14, 15, false, 0),
+        [0xC4, 0x42, 0x0D, 0xCF, 0xEF]
+    );
+    assert_eq!(
+        gfni_encoding(GfniKind::Affine, false, 9, 10, 11, false, 0x63),
+        [0xC4, 0x43, 0xA9, 0xCE, 0xCB, 0x63]
+    );
+    assert_eq!(
+        gfni_encoding(GfniKind::AffineInverse, true, 13, 14, 15, false, 0xA5),
+        [0xC4, 0x43, 0x8D, 0xCF, 0xEF, 0xA5]
+    );
+
+    let mut tested = 0usize;
+    for seed in u8::MIN..=u8::MAX {
+        for ymm in [false, true] {
+            let (destination, source1, source2) = GFNI_OPERANDS[tested % GFNI_OPERANDS.len()];
+            let code = gfni_encoding(
+                GfniKind::Multiply,
+                ymm,
+                destination,
+                source1,
+                source2,
+                tested & 1 != 0,
+                seed,
+            );
+            assert_gfni_case(
+                code,
+                tested,
+                GfniKind::Multiply,
+                destination,
+                source1,
+                source2,
+            );
+            tested += 1;
+        }
+    }
+    for kind in [GfniKind::Affine, GfniKind::AffineInverse] {
+        for immediate in u8::MIN..=u8::MAX {
+            for ymm in [false, true] {
+                let (destination, source1, source2) = GFNI_OPERANDS[tested % GFNI_OPERANDS.len()];
+                let code = gfni_encoding(
+                    kind,
+                    ymm,
+                    destination,
+                    source1,
+                    source2,
+                    tested & 1 != 0,
+                    immediate,
+                );
+                assert_gfni_case(code, tested, kind, destination, source1, source2);
+                tested += 1;
+            }
+        }
+    }
+    assert_eq!(tested, 1_536);
 }
