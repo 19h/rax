@@ -61,6 +61,7 @@ impl X86_64Lowerer {
         if let Some(destination) = span
             .instruction
             .vex_fma4_destination_index()
+            .or_else(|| span.instruction.vex_fp_dot_product_destination_index())
             .or_else(|| span.instruction.vex_immediate_blend_destination_index())
             .or_else(|| span.instruction.vex_variable_blend_destination_index())
             .or_else(|| span.instruction.vex_variable_permute_destination_index())

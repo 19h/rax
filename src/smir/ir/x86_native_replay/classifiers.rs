@@ -21,6 +21,7 @@ mod vex_alignr;
 mod vex_cross_lane_128;
 mod vex_fma3;
 mod vex_fma4;
+mod vex_fp_dot_product;
 mod vex_fp_logic;
 mod vex_immediate_blend;
 mod vex_packed_string;
