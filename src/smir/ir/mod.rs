@@ -1317,49 +1317,6 @@ mod tests {
     }
 
     #[test]
-    fn x86_evex_fp_shuffle_replay_classifier_is_exact_and_fail_closed() {
-        let valid = [
-            // vunpcklpd zmm17{k1}{z}, zmm18, zmm19
-            (&[0x62, 0xA1, 0xED, 0xC1, 0x14, 0xCB][..], Some(false)),
-            (&[0x62, 0xF1, 0x6C, 0x29, 0x15, 0xC8][..], Some(true)),
-            (&[0x62, 0xF1, 0xED, 0x09, 0xC6, 0xC8, 0xE4][..], Some(true)),
-        ];
-        for (bytes, expected) in valid {
-            assert_eq!(
-                X86InstructionBytes::new(bytes)
-                    .unwrap()
-                    .evex_register_fp_shuffle_needs_vl(),
-                expected,
-                "{bytes:02X?}"
-            );
-        }
-
-        let invalid: &[&[u8]] = &[
-            &[0x62, 0xF2, 0x7C, 0x09, 0x14, 0xC8],       // wrong map
-            &[0x62, 0xF1, 0x78, 0x09, 0x14, 0xC8],       // missing fixed-one bit
-            &[0x62, 0xF1, 0x7E, 0x09, 0x14, 0xC8],       // invalid mandatory prefix
-            &[0x62, 0xF1, 0xFC, 0x09, 0x14, 0xC8],       // VUNPCKLPS with W1
-            &[0x62, 0xF1, 0x7D, 0x09, 0x14, 0xC8],       // VUNPCKLPD with W0
-            &[0x62, 0xF1, 0x7C, 0x09, 0x14, 0x08],       // memory source
-            &[0x62, 0xF1, 0x7C, 0x19, 0x14, 0xC8],       // EVEX.b
-            &[0x62, 0xF1, 0x7C, 0x88, 0x14, 0xC8],       // {z} with k0
-            &[0x62, 0xF1, 0x7C, 0x69, 0x14, 0xC8],       // L'L=3
-            &[0x62, 0xF1, 0x7C, 0x09, 0xC6, 0xC8],       // missing shuffle imm8
-            &[0x62, 0xF1, 0x7C, 0x09, 0x14, 0xC8, 0x00], // spurious unpack imm8
-            &[0x62, 0xF1, 0x7C, 0x09, 0x16, 0xC8],       // unrelated opcode
-        ];
-        for bytes in invalid {
-            assert_eq!(
-                X86InstructionBytes::new(bytes)
-                    .unwrap()
-                    .evex_register_fp_shuffle_needs_vl(),
-                None,
-                "{bytes:02X?}"
-            );
-        }
-    }
-
-    #[test]
     fn x86_evex_broadcast_replay_classifier_tracks_vl_and_dq_exactly() {
         let valid = [
             // vbroadcastss xmm17{k1}{z},xmm18
