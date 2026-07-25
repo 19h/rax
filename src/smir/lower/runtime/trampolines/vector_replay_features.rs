@@ -7,6 +7,7 @@
 pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) any: bool,
     pub(crate) needs_avx: bool,
+    pub(crate) needs_avx2: bool,
     pub(crate) needs_fma: bool,
     pub(crate) needs_avx512bw: bool,
     pub(crate) needs_avx512vl: bool,
@@ -24,6 +25,7 @@ impl X86NativeReplayFeatureRequirements {
     #[cfg(target_arch = "x86_64")]
     pub(crate) fn x86_host_supported(self) -> bool {
         (!self.needs_avx || std::is_x86_feature_detected!("avx"))
+            && (!self.needs_avx2 || std::is_x86_feature_detected!("avx2"))
             && (!self.needs_fma || std::is_x86_feature_detected!("fma"))
             && (!self.needs_gfni || std::is_x86_feature_detected!("gfni"))
             && (!self.needs_avx512vp2intersect
@@ -48,10 +50,14 @@ pub(crate) fn x86_native_replay_feature_requirements(
         for span in crate::smir::ir::x86_native_replay_spans(block, &func.x86_instruction_bytes)
             .into_values()
         {
+            let widening_dword_multiply_avx2 = span
+                .instruction
+                .vex_register_widening_dword_multiply_needs_avx2();
             requirements.any = true;
             requirements.needs_avx |= span.instruction.is_vex_register_packed_string_compare()
                 || span.instruction.is_vex_register_fma3()
                 || span.instruction.is_vex_register_fp_logic()
+                || widening_dword_multiply_avx2.is_some()
                 || span
                     .instruction
                     .legacy_vex_register_fp_arithmetic_needs_avx()
@@ -64,6 +70,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                     == Some(true)
                 || span.instruction.legacy_vex_register_scalar_move_needs_avx() == Some(true)
                 || span.instruction.legacy_vex_register_fp_sqrt_needs_avx() == Some(true);
+            requirements.needs_avx2 |= widening_dword_multiply_avx2 == Some(true);
             requirements.needs_fma |= span.instruction.is_vex_register_fma3();
             // Replay spans use the full-width K0-K7 helper boundary. KMOVQ is
             // an AVX-512BW instruction, independently of the replayed opcode's

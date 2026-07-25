@@ -176,6 +176,8 @@ mod vex_fp_logic_replay;
 #[cfg(test)]
 mod vex_packed_string_replay;
 #[cfg(test)]
+mod vex_widening_dword_multiply_replay;
+#[cfg(test)]
 mod waitpkg;
 #[cfg(test)]
 mod write_control;

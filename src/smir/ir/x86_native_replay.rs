@@ -189,6 +189,21 @@ pub fn x86_legacy_vex_high_low_move_replay_spans(
     })
 }
 
+/// Identify valid register-only AVX VEX widening doubleword-multiply replay
+/// groups in `block` in O(N) time and O(P) space for N operations and P unique
+/// guest PCs. VEX.128 `VPMULUDQ`/`VPMULDQ` require AVX; VEX.256 forms require
+/// AVX2. Memory forms remain at the precise SMIR interpreter boundary.
+pub fn x86_vex_widening_dword_multiply_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .vex_register_widening_dword_multiply_needs_avx2()
+            .map(|_| (false, false, false))
+    })
+}
+
 /// Identify valid register-only legacy SSE and AVX VEX scalar floating-point
 /// move replay groups in `block` in O(N) time and O(P) space for N operations
 /// and P unique guest PCs. Memory forms and `VMOVSS` with `VEX.L=1` remain at
@@ -972,6 +987,12 @@ pub fn x86_native_replay_spans(
         }
         if instruction
             .legacy_vex_register_high_low_move_needs_avx()
+            .is_some()
+        {
+            return Some((false, false, false));
+        }
+        if instruction
+            .vex_register_widening_dword_multiply_needs_avx2()
             .is_some()
         {
             return Some((false, false, false));

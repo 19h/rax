@@ -82,6 +82,9 @@ mod scalar_move;
 #[path = "x86_native_replay_tests/vex_packed_string.rs"]
 mod vex_packed_string;
 
+#[path = "x86_native_replay_tests/vex_widening_dword_multiply.rs"]
+mod vex_widening_dword_multiply;
+
 #[path = "x86_native_replay_tests/vex_fma3.rs"]
 mod vex_fma3;
 
