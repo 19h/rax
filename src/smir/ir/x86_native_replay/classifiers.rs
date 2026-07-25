@@ -22,6 +22,7 @@ mod vex_fma4;
 mod vex_fp_logic;
 mod vex_immediate_blend;
 mod vex_packed_string;
+mod vex_variable_blend;
 mod vex_widening_dword_multiply;
 mod vp2intersect;
 mod vpclmulqdq;

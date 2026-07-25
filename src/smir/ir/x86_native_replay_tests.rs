@@ -97,6 +97,9 @@ mod vex_fma4;
 #[path = "x86_native_replay_tests/vex_immediate_blend.rs"]
 mod vex_immediate_blend;
 
+#[path = "x86_native_replay_tests/vex_variable_blend.rs"]
+mod vex_variable_blend;
+
 #[path = "x86_native_replay_tests/vex_fp_logic.rs"]
 mod vex_fp_logic;
 

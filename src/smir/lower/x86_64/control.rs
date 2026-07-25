@@ -62,6 +62,7 @@ impl X86_64Lowerer {
             .instruction
             .vex_fma4_destination_index()
             .or_else(|| span.instruction.vex_immediate_blend_destination_index())
+            .or_else(|| span.instruction.vex_variable_blend_destination_index())
         {
             self.code.emit_bytes(span.instruction.as_slice());
             if self.avx_ymm16_vector_state {
