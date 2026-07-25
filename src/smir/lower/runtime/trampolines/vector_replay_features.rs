@@ -85,6 +85,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             let immediate_blend_avx2 = span.instruction.vex_register_immediate_blend_needs_avx2();
             let variable_blend_avx2 = span.instruction.vex_register_variable_blend_needs_avx2();
             let variable_permute_avx2 = span.instruction.vex_register_variable_permute_needs_avx2();
+            let alignr_avx2 = span.instruction.vex_register_alignr_needs_avx2();
             let cross_lane_128_avx2 = span.instruction.vex_register_cross_lane_128_needs_avx2();
             let fp_horizontal_addsub_avx = span
                 .instruction
@@ -98,6 +99,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || immediate_blend_avx2.is_some()
                 || variable_blend_avx2.is_some()
                 || variable_permute_avx2.is_some()
+                || alignr_avx2.is_some()
                 || cross_lane_128_avx2.is_some();
             requirements.needs_avx |= span.instruction.is_vex_register_packed_string_compare()
                 || span.instruction.is_vex_register_fma3()
@@ -105,6 +107,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || immediate_blend_avx2.is_some()
                 || variable_blend_avx2.is_some()
                 || variable_permute_avx2.is_some()
+                || alignr_avx2.is_some()
                 || cross_lane_128_avx2.is_some()
                 || span.instruction.is_vex_register_fp_logic()
                 || fp_horizontal_addsub_avx == Some(true)
@@ -125,6 +128,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || immediate_blend_avx2 == Some(true)
                 || variable_blend_avx2 == Some(true)
                 || variable_permute_avx2 == Some(true)
+                || alignr_avx2 == Some(true)
                 || cross_lane_128_avx2 == Some(true);
             requirements.needs_fma |= span.instruction.is_vex_register_fma3();
             requirements.needs_fma4 |= is_fma4;
