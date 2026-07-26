@@ -517,15 +517,27 @@ fn movrs_jit_gate_admits_every_helper_backed_memory_shape() {
             );
         }
 
+        // The MOVRS-specific recognizer still demands exact opcode provenance.
+        // Without it the same IR is admitted only as a generic helper-backed
+        // scalar load into a state-backed destination, which commits through the
+        // `GuestRegs` slot and is therefore equally safe.
         let mut missing_provenance = state_backed.clone();
         missing_provenance.x86_instruction_bytes.clear();
+        let block = missing_provenance.entry_block().unwrap();
         assert!(
-            !is_native_clobber_safe_excluding(
+            crate::smir::lower::runtime::x86_jit_movrs_state_backed_load_sequence_len(
+                block, 0, true, None,
+            )
+            .is_none(),
+            "the MOVRS recognizer must fail closed without provenance: {encoding:02X?}"
+        );
+        assert!(
+            is_native_clobber_safe_excluding(
                 &missing_provenance,
                 &std::collections::HashMap::new(),
                 true,
             ),
-            "state-backed MOVRS must fail closed without provenance: {encoding:02X?}"
+            "the generic state-backed load path must still admit it: {encoding:02X?}"
         );
     }
 }

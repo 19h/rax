@@ -721,7 +721,7 @@ impl X86_64Lowerer {
                 }
             }
             let op = &block.ops[validate_idx];
-            Self::ensure_native_stack_dests_safe(op)?;
+            Self::ensure_native_stack_dests_safe(op, self.mem_helpers)?;
             Self::ensure_native_stack_memory_safe(op, self.mem_helpers)?;
             validate_idx += 1;
         }

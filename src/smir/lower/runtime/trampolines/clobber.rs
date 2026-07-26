@@ -548,6 +548,12 @@ pub(crate) fn block_is_clobber_safe(
             );
         let stack_mov_ok = x86_state_backed_stack_mov_valid(&op.kind);
         let stack_alu_ok = x86_state_backed_stack_alu_valid(&op.kind);
+        // A helper-backed scalar load commits its result into the destination's
+        // GuestRegs slot rather than into the host register of the same name,
+        // so guest RSP/RBP are valid load destinations under memory JIT.
+        let state_mem_load_ok = allow_mem
+            && matches!(&op.kind, OpKind::Load { .. })
+            && x86_jit_scalar_mem_shape_valid(&op.kind);
         let state_lea_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_lea_valid(op);
         let stack_group1_ok = crate::smir::lower::x86_64::x86_state_backed_stack_group1_valid(op);
         let state_extend_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_extend_valid(op);
@@ -723,6 +729,7 @@ pub(crate) fn block_is_clobber_safe(
             || opmask_ok
             || stack_alu_ok
             || stack_group1_ok
+            || state_mem_load_ok
             || state_lea_ok
             || state_extend_ok
             || state_cmove_ok
