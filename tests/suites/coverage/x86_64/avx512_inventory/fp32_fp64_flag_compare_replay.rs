@@ -64,15 +64,18 @@ fn register_evex_fp32_fp64_flag_compare_replay_closes_16_runtime_gate_gaps() {
                         .x86_instruction_bytes
                         .insert((BlockId(0), 0x1000), instruction);
                     optimize_function(&mut function, OptLevel::O2);
-                    assert!(
-                        is_native_clobber_safe_excluding(
-                            &function,
-                            &std::collections::HashMap::new(),
-                            true,
-                        ),
-                        "{} ({bytes:02X?})",
-                        spec_case_variant_id(&row, variant)
-                    );
+                    #[cfg(feature = "smir-jit")]
+                    {
+                        assert!(
+                            is_native_clobber_safe_excluding(
+                                &function,
+                                &std::collections::HashMap::new(),
+                                true,
+                            ),
+                            "{} ({bytes:02X?})",
+                            spec_case_variant_id(&row, variant)
+                        );
+                    }
 
                     let mut lowerer = X86_64Lowerer::new();
                     lowerer.lower_function(&function).unwrap_or_else(|error| {

@@ -12,6 +12,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
+#[cfg(feature = "smir-jit")]
 use rax::smir::lower::runtime::is_native_clobber_safe_excluding;
 use rax::smir::{
     BlockId, FunctionId, LiftContext, OpKind, OptLevel, SmirBlock, SmirFunction, SmirLifter,
@@ -825,11 +826,13 @@ fn report_evex_spec_forms_rejected_by_smir_lifter() {
 }
 
 /// Diagnostic for the second half of the native-admission boundary. Every
-/// generated EVEX form accepted by the production lifter is optimized at O2,
-/// checked by the production clobber/admission gate with memory helpers
-/// enabled, then presented to a production-configured x86-64 lowerer as a
-/// one-instruction function. This distinguishes absent instruction families
-/// from latent runtime gate and configured-lowerer coverage gaps.
+/// generated EVEX form accepted by the production lifter is optimized at O2
+/// and presented to a production-configured x86-64 lowerer as a
+/// one-instruction function. When `smir-jit` is enabled, the form must first
+/// pass the production clobber/admission gate with memory helpers enabled. This
+/// distinguishes absent instruction families from latent runtime-gate and
+/// configured-lowerer coverage gaps while keeping the lowerer diagnostic
+/// buildable in the non-JIT x86-64 suite.
 #[test]
 #[ignore = "diagnostic: reports EVEX forms accepted by the lifter but rejected by the lowerer"]
 fn report_evex_spec_forms_accepted_by_lifter_but_rejected_by_lowerer() {
@@ -864,23 +867,29 @@ fn report_evex_spec_forms_accepted_by_lifter_but_rejected_by_lowerer() {
             );
             optimize_function(&mut function, OptLevel::O2);
 
-            if !is_native_clobber_safe_excluding(&function, &std::collections::HashMap::new(), true)
+            #[cfg(feature = "smir-jit")]
             {
-                let detail = format!(
-                    "{}: runtime gate rejected ({bytes:02X?})",
-                    spec_case_variant_id(&row, variant)
-                );
-                let failures = match variant.mode {
-                    EvexAsmMode::Register => &mut register_gate_failures,
-                    EvexAsmMode::Memory => &mut memory_gate_failures,
-                };
-                let entry = failures
-                    .entry(row.key.mnemonic.clone())
-                    .or_insert((0, detail));
-                entry.0 += 1;
-                continue;
+                if !is_native_clobber_safe_excluding(
+                    &function,
+                    &std::collections::HashMap::new(),
+                    true,
+                ) {
+                    let detail = format!(
+                        "{}: runtime gate rejected ({bytes:02X?})",
+                        spec_case_variant_id(&row, variant)
+                    );
+                    let failures = match variant.mode {
+                        EvexAsmMode::Register => &mut register_gate_failures,
+                        EvexAsmMode::Memory => &mut memory_gate_failures,
+                    };
+                    let entry = failures
+                        .entry(row.key.mnemonic.clone())
+                        .or_insert((0, detail));
+                    entry.0 += 1;
+                    continue;
+                }
+                admitted += 1;
             }
-            admitted += 1;
 
             let mut lowerer = X86_64Lowerer::new();
             lowerer.set_mem_helpers(true);
@@ -907,7 +916,8 @@ fn report_evex_spec_forms_accepted_by_lifter_but_rejected_by_lowerer() {
         register_gate_failures.is_empty()
             && memory_gate_failures.is_empty()
             && lower_failures.is_empty(),
-        "lifted {lifted} EVEX forms; admitted {admitted}; lowered {lowered}\nregister gate gaps: {} mnemonics / {} forms:\n{}\nmemory gate gaps: {} mnemonics / {} forms:\n{}\nconfigured-lowerer gaps: {} mnemonics / {} forms:\n{}",
+        "lifted {lifted} EVEX forms; runtime gate enabled: {}; admitted {admitted}; lowered {lowered}\nregister gate gaps: {} mnemonics / {} forms:\n{}\nmemory gate gaps: {} mnemonics / {} forms:\n{}\nconfigured-lowerer gaps: {} mnemonics / {} forms:\n{}",
+        cfg!(feature = "smir-jit"),
         register_gate_failures.len(),
         register_gate_failures
             .values()
