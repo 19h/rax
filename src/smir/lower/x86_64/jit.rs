@@ -407,21 +407,27 @@ impl X86_64Lowerer {
         // Only a successful store reaches the replay. It regenerates the exact
         // architectural flags from the original memory/source operands, then
         // restores RAX and releases the caller frame with flag-neutral MOV/LEA.
+        // The three-operation form has no architectural flag update at all
+        // (optimization proved it dead), so it skips straight to the restore.
         {
             let mut emitter = X86Emitter::new(&mut self.code);
-            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 0, width);
-            match source {
-                SrcOperand::Reg(_) => emitter.emit_alu_mem_disp(
-                    opcode,
-                    PhysReg::Rax,
-                    PhysReg::Rsp,
-                    16,
-                    DispSize::Auto,
-                    width,
-                    X86AluEncoding::RegRm,
-                ),
-                SrcOperand::Imm(value) => emitter.emit_alu_ri(digit, PhysReg::Rax, *value, width),
-                _ => unreachable!("validated scalar RMW replay source"),
+            if consumed == 4 {
+                emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 0, width);
+                match source {
+                    SrcOperand::Reg(_) => emitter.emit_alu_mem_disp(
+                        opcode,
+                        PhysReg::Rax,
+                        PhysReg::Rsp,
+                        16,
+                        DispSize::Auto,
+                        width,
+                        X86AluEncoding::RegRm,
+                    ),
+                    SrcOperand::Imm(value) => {
+                        emitter.emit_alu_ri(digit, PhysReg::Rax, *value, width)
+                    }
+                    _ => unreachable!("validated scalar RMW replay source"),
+                }
             }
             emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
             emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 32);
@@ -538,9 +544,11 @@ impl X86_64Lowerer {
 
         // A successful flagged operation replays on the original operand.
         // INC/DEC naturally retain the incoming CF; MOV/LEA cleanup is neutral.
+        // The three-operation form publishes no architectural flags at all
+        // (optimization proved them dead) and therefore has no replay.
         {
             let mut emitter = X86Emitter::new(&mut self.code);
-            if tag != 0 {
+            if tag != 0 && consumed == 4 {
                 emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 0, width);
                 match tag {
                     1 => emitter.emit_neg(PhysReg::Rax, width),

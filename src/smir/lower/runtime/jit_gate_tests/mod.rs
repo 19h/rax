@@ -122,6 +122,8 @@ mod lmsw;
 #[cfg(test)]
 mod maskmovdqu;
 #[cfg(test)]
+mod mem_rmw_flagless;
+#[cfg(test)]
 mod mmx;
 #[cfg(test)]
 mod mmx_maskmov;

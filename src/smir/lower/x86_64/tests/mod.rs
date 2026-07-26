@@ -44,6 +44,8 @@ mod jit;
 #[cfg(test)]
 mod lmsw;
 #[cfg(test)]
+mod mem_rmw_flagless;
+#[cfg(test)]
 mod memory;
 #[cfg(test)]
 mod misc;
