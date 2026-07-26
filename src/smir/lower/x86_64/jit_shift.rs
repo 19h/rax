@@ -1,4 +1,4 @@
-//! Helper-backed x86 VEX BMI2 memory-source shift lowering.
+//! Helper-backed x86 VEX/APX BMI2 memory-source shift lowering.
 
 use std::collections::HashMap;
 
@@ -6,7 +6,7 @@ use super::*;
 
 impl X86_64Lowerer {
     /// Fuse the exact memory-source `SHLX`/`SHRX`/`SARX` pair emitted by the
-    /// VEX BMI2 lifter. The load helper stages a zero-extended scalar in a
+    /// VEX/APX BMI2 lifter. The load helper stages a zero-extended scalar in a
     /// 16-byte caller-owned stack frame and restores every guest register
     /// before this method executes the shift.
     ///
@@ -89,7 +89,7 @@ impl X86_64Lowerer {
             16,
         )?;
 
-        let state_backed = |index: u8| matches!(index, 4 | 5);
+        let state_backed = |index: u8| index >= 16 || matches!(index, 4 | 5);
         if !state_backed(dst_index) && !state_backed(count_index) {
             let dst_reg = self.get_dst_reg(dst)?;
             let count_reg = self.get_reg(count)?;

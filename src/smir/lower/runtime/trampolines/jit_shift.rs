@@ -8,7 +8,7 @@ use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::OpKind;
 use crate::smir::ir::types::{ArchReg, MemWidth, OpWidth, SignExtend, SrcOperand, VReg};
 
-/// Validate the exact memory-source pair emitted by the VEX BMI2
+/// Validate the exact memory-source pair emitted by the VEX/APX BMI2
 /// `SHLX`/`SHRX`/`SARX` lifter:
 ///
 /// ```text
@@ -20,9 +20,8 @@ use crate::smir::ir::types::{ArchReg, MemWidth, OpWidth, SignExtend, SrcOperand,
 /// stack storage, executes the variable shift there, and commits the
 /// architectural destination only after the complete load succeeds. The
 /// virtual load result must therefore remain exact single-definition,
-/// single-use SSA. Destination and count are restricted to the 16-register
-/// VEX GPR namespace; APX uses a distinct three-operation masked-count shape
-/// and remains fail-closed here.
+/// single-use SSA. Destination and count may use the complete 32-register APX
+/// GPR namespace; state-backed lowering handles EGPRs and guest RSP/RBP.
 pub(crate) fn x86_jit_mem_bmi2_shift_source_sequence_len(
     block: &SmirBlock,
     index: usize,
@@ -53,13 +52,8 @@ pub(crate) fn x86_jit_mem_bmi2_shift_source_sequence_len(
 
     let consumer = block.ops.get(index + 1)?;
     let expected_width = mem_width.to_op_width()?;
-    let vex_gpr = |reg: &VReg| {
-        matches!(
-            reg,
-            VReg::Arch(ArchReg::X86(x86))
-                if x86.gpr_index().is_some_and(|index| index < 16)
-        )
-    };
+    let arch_gpr =
+        |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some());
     let valid = consumer.guest_pc == load.guest_pc
         && consumer.x86_hint.is_none()
         && matches!(
@@ -84,9 +78,9 @@ pub(crate) fn x86_jit_mem_bmi2_shift_source_sequence_len(
                 amount: SrcOperand::Reg(count),
                 width: op_width @ (OpWidth::W32 | OpWidth::W64),
                 flags: FlagUpdate::None,
-            } if vex_gpr(dst)
+            } if arch_gpr(dst)
                 && *src == temporary
-                && vex_gpr(count)
+                && arch_gpr(count)
                 && *op_width == expected_width
         );
 

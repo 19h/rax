@@ -466,7 +466,7 @@ fn manual_function(addr: Address, width: OpWidth, dst: VReg, count: SrcOperand) 
 }
 
 #[test]
-fn malformed_memory_bmi2_shift_pairs_and_apx_shape_fail_closed() {
+fn malformed_memory_bmi2_shift_pairs_fail_closed_and_apx_shape_is_admitted() {
     let exact = manual_function(
         Address::Direct(x86(3)),
         OpWidth::W64,
@@ -538,18 +538,6 @@ fn malformed_memory_bmi2_shift_pairs_and_apx_shape_fail_closed() {
         flags,
     };
     malformed.push(("RORX consumer", case));
-
-    let mut case = exact.clone();
-    if let OpKind::Shl { dst, .. } = &mut case.blocks[0].ops[1].kind {
-        *dst = x86(16);
-    }
-    malformed.push(("APX destination", case));
-
-    let mut case = exact.clone();
-    if let OpKind::Shl { amount, .. } = &mut case.blocks[0].ops[1].kind {
-        *amount = SrcOperand::Reg(x86(31));
-    }
-    malformed.push(("APX count", case));
 
     let mut case = exact.clone();
     case.blocks[0].ops[1].guest_pc += 1;
@@ -638,7 +626,7 @@ fn malformed_memory_bmi2_shift_pairs_and_apx_shape_fail_closed() {
             &mut context,
         )
         .expect("lift APX memory SHLX");
-    assert_eq!(apx.ops.len(), 3, "APX retains Load + count mask + shift");
+    assert_eq!(apx.ops.len(), 2, "APX uses canonical Load + shift shape");
     let mut block = SmirBlock::new(BlockId(0), PC);
     block.ops = apx.ops;
     block.set_terminator(Terminator::Return { values: Vec::new() });
@@ -647,9 +635,11 @@ fn malformed_memory_bmi2_shift_pairs_and_apx_shape_fail_closed() {
     for level in LEVELS {
         let function = optimize(function.clone(), level);
         assert!(
-            !is_native_clobber_safe_excluding(&function, &std::collections::HashMap::new(), true),
-            "{level:?}: APX three-operation memory shift must remain fail-closed"
+            is_native_clobber_safe_excluding(&function, &std::collections::HashMap::new(), true),
+            "{level:?}: APX canonical memory shift must enter the helper-backed gate"
         );
+        let (code, _) = lower(&function);
+        assert!(!code.is_empty(), "{level:?}: APX memory shift lowering");
     }
 }
 

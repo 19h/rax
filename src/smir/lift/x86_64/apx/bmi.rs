@@ -233,19 +233,11 @@ impl X86_64Lifter {
             )),
             ApxBmi0f38Kind::Shift(kind) => {
                 let count = self.gpr(prefix.vvvv_reg());
-                let masked_count = ctx.alloc_vreg();
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::And {
-                        dst: masked_count,
-                        src1: count,
-                        src2: SrcOperand::Imm((width.bits() - 1) as i64),
-                        width,
-                        flags: FlagUpdate::None,
-                    },
-                ));
-                let amount = SrcOperand::Reg(masked_count);
+                // Scalar SMIR shifts apply the source architecture's count
+                // mask. Preserve the architectural count operand directly,
+                // matching the VEX BMI2 lift shape and avoiding a redundant
+                // virtual-register definition at the native frontier.
+                let amount = SrcOperand::Reg(count);
                 let op_kind = match kind {
                     ApxBmiShiftKind::Sarx => OpKind::Sar {
                         dst: self.gpr(modrm.reg),

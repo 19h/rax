@@ -10,6 +10,8 @@ mod ac;
 #[cfg(test)]
 mod addr32_memory;
 #[cfg(test)]
+mod apx_bmi2_shift;
+#[cfg(test)]
 mod atomic_rmw;
 #[cfg(test)]
 mod cli;
