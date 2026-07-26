@@ -776,8 +776,7 @@ fn interpreter_o0_o2_gives_nan_precedence_over_same_lane_denormal_status() {
     }
 }
 
-#[test]
-fn lifted_vminps_daz_transforms_nan_selected_negative_denormal_src2() {
+fn daz_vminps_case_and_state() -> (NativeCase, ArithmeticState) {
     let case = NativeCase::NonEvex(NonEvexCase {
         form: NonEvexForm::VexC5,
         kind: FpKind::PackedF32,
@@ -800,7 +799,13 @@ fn lifted_vminps_daz_transforms_nan_selected_negative_denormal_src2() {
     initial.vectors[2][0] = 0x3F80_0000_7FC1_2345;
     initial.vectors[2][1] = 0x3F80_0000_3F80_0000;
     initial.mxcsr = 0x1F80 | (1 << 6) | (1 << 15);
+    (case, initial)
+}
 
+#[test]
+fn lifted_vminps_daz_transforms_nan_selected_negative_denormal_src2() {
+    let (case, initial) = daz_vminps_case_and_state();
+    let bytes = case.bytes();
     for level in [
         crate::smir::optimize::OptLevel::O0,
         crate::smir::optimize::OptLevel::O2,
@@ -861,6 +866,36 @@ fn execute_native(
         masks: registers.k,
         rflags: registers.rflags,
         mxcsr: registers.mxcsr,
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+#[test]
+fn native_vminps_daz_matches_interpreter_without_requiring_avx512() {
+    #[cfg(target_os = "macos")]
+    if running_under_rosetta() {
+        eprintln!(
+            "skipping native VMINPS DAZ regression: Rosetta does not apply MXCSR.DAZ to \
+             MIN/MAX src2 selected by a NaN source"
+        );
+        return;
+    }
+    if !std::is_x86_feature_detected!("avx") {
+        eprintln!("skipping native VMINPS DAZ regression: host lacks AVX");
+        return;
+    }
+
+    let (case, initial) = daz_vminps_case_and_state();
+    let bytes = case.bytes();
+    for level in [
+        crate::smir::optimize::OptLevel::O0,
+        crate::smir::optimize::OptLevel::O2,
+    ] {
+        let native = execute_native(&bytes, &initial, level);
+        let interpreted = interpret(&bytes, &initial, level);
+        assert_eq!(native, interpreted, "{level:?} {case:?} {bytes:02X?}");
+        assert_eq!(native.vectors[1][0], 0x3F80_0000_8000_0000);
+        assert_eq!(native.mxcsr & 0x3F, 1);
     }
 }
 
