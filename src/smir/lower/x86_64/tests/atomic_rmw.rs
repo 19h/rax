@@ -142,6 +142,47 @@ fn locked_xadd_writes_the_pre_operation_value_back_after_the_store() {
     );
 }
 
+#[test]
+fn locked_dec_replays_the_unary_flag_contract() {
+    let (bytes, _) = lower(vec![
+        OpKind::Mov {
+            dst: virt(0),
+            src: SrcOperand::Imm(1),
+            width: OpWidth::W32,
+        },
+        OpKind::AtomicRmw {
+            dst: virt(1),
+            addr: addr(),
+            src: virt(0),
+            op: AtomicOp::Sub,
+            width: MemWidth::B4,
+            order: MemoryOrder::SeqCst,
+        },
+        OpKind::Dec {
+            dst: virt(2),
+            src: virt(1),
+            width: OpWidth::W32,
+            flags: FlagUpdate::All,
+        },
+    ]);
+    // The memory value is produced with `sub eax, 1` (83 /5 ib) ...
+    assert!(
+        bytes.windows(3).any(|b| b == [0x83, 0xE8, 0x01]),
+        "must subtract one from the loaded value: {bytes:02X?}"
+    );
+    // ... while the published flags come from `dec eax` (FF /1), which leaves
+    // CF unchanged exactly as the architecture requires.
+    assert!(
+        bytes.windows(2).any(|b| b == [0xFF, 0xC8]),
+        "must replay the unary DEC flag contract: {bytes:02X?}"
+    );
+    assert_eq!(
+        count(&bytes, &[0x83, 0xE8, 0x01]),
+        1,
+        "the Group-1 form must not also replay: {bytes:02X?}"
+    );
+}
+
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[derive(Default)]
 struct MemoryContext {

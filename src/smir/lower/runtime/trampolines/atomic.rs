@@ -30,6 +30,10 @@ pub(crate) struct X86JitAtomicRmw<'a> {
     pub(crate) source_imm: i64,
     /// Whether the architectural flags are still published.
     pub(crate) replay: bool,
+    /// `INC`/`DEC` publish a different flag set than the equivalent Group-1
+    /// `ADD`/`SUB` (they leave CF unchanged), so the lifter replays the unary
+    /// operation instead. 1 selects `INC`, 2 selects `DEC`.
+    pub(crate) replay_unary: Option<u8>,
     /// `XADD` writes the pre-operation memory value back to an architectural
     /// GPR after the memory update retires.
     pub(crate) writeback: Option<VReg>,
@@ -141,6 +145,7 @@ pub(crate) fn x86_jit_mem_atomic_rmw_sequence<'a>(
         source_reg,
         source_imm,
         replay: false,
+        replay_unary: None,
         writeback: None,
     };
 
@@ -163,17 +168,44 @@ pub(crate) fn x86_jit_mem_atomic_rmw_sequence<'a>(
             replay_flags,
         )) = super::x86_binary_alu_shape(&replay.kind)
         {
+            // Constant propagation can fold the materialized immediate back
+            // into the replay's source operand, leaving the materializing MOV
+            // with a single use.
+            let folded_immediate =
+                immediate_source.is_some() && replay_source == SrcOperand::Imm(source_imm);
             if replay_tag == tag
                 && matches!(flags_result, VReg::Virtual(_))
                 && replay_old == *old
-                && replay_source == expected_source
+                && (replay_source == expected_source || folded_immediate)
                 && replay_width == width
                 && replay_flags == crate::smir::ir::flags::FlagUpdate::All
                 && virtual_definitions.get(&flags_result) == Some(&1)
                 && !virtual_uses.contains_key(&flags_result)
             {
                 result.replay = true;
-                source_uses += 1;
+                if !folded_immediate && immediate_source.is_some() {
+                    source_uses += 1;
+                }
+                tail += 1;
+            }
+        } else if let Some((unary_tag, flags_result, replay_old, replay_width, replay_flags)) =
+            super::x86_flagged_unary_shape(&replay.kind)
+        {
+            // `lock inc`/`lock dec` update memory through ADD/SUB of one but
+            // publish the unary flag contract, which leaves CF unchanged.
+            let unary_matches = matches!((unary_tag, *op), (1, AtomicOp::Add) | (2, AtomicOp::Sub))
+                && source_reg.is_none()
+                && source_imm == 1;
+            if unary_matches
+                && matches!(flags_result, VReg::Virtual(_))
+                && replay_old == *old
+                && replay_width == width
+                && replay_flags == crate::smir::ir::flags::FlagUpdate::All
+                && virtual_definitions.get(&flags_result) == Some(&1)
+                && !virtual_uses.contains_key(&flags_result)
+            {
+                result.replay = true;
+                result.replay_unary = Some(unary_tag);
                 tail += 1;
             }
         }

@@ -360,6 +360,28 @@ impl X86_64Lowerer {
         replay: bool,
         writeback: Option<(PhysReg, OpWidth)>,
     ) -> Result<(), LowerError> {
+        self.emit_fused_mem_alu_rmw_full(
+            guest_pc, addr, mem_width, width, opcode, digit, source, replay, None, writeback,
+        )
+    }
+
+    /// As [`Self::emit_fused_mem_alu_rmw_with_writeback`], additionally
+    /// selecting the unary `INC`/`DEC` flag contract for the post-store replay.
+    #[cfg(feature = "smir-jit")]
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn emit_fused_mem_alu_rmw_full(
+        &mut self,
+        guest_pc: u64,
+        addr: &Address,
+        mem_width: MemWidth,
+        width: OpWidth,
+        opcode: u8,
+        digit: u8,
+        source: &SrcOperand,
+        replay: bool,
+        replay_unary: Option<u8>,
+        writeback: Option<(PhysReg, OpWidth)>,
+    ) -> Result<(), LowerError> {
         // Caller-frame layout after the flag-neutral reservation:
         //   [rsp+0]  original zero-extended memory value
         //   [rsp+8]  computed store value
@@ -465,20 +487,25 @@ impl X86_64Lowerer {
             let mut emitter = X86Emitter::new(&mut self.code);
             if replay {
                 emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 0, width);
-                match source {
-                    SrcOperand::Reg(_) => emitter.emit_alu_mem_disp(
-                        opcode,
-                        PhysReg::Rax,
-                        PhysReg::Rsp,
-                        16,
-                        DispSize::Auto,
-                        width,
-                        X86AluEncoding::RegRm,
-                    ),
-                    SrcOperand::Imm(value) => {
-                        emitter.emit_alu_ri(digit, PhysReg::Rax, *value, width)
-                    }
-                    _ => unreachable!("validated scalar RMW replay source"),
+                match replay_unary {
+                    Some(1) => emitter.emit_inc(PhysReg::Rax, width),
+                    Some(2) => emitter.emit_dec(PhysReg::Rax, width),
+                    Some(_) => unreachable!("validated unary RMW replay tag"),
+                    None => match source {
+                        SrcOperand::Reg(_) => emitter.emit_alu_mem_disp(
+                            opcode,
+                            PhysReg::Rax,
+                            PhysReg::Rsp,
+                            16,
+                            DispSize::Auto,
+                            width,
+                            X86AluEncoding::RegRm,
+                        ),
+                        SrcOperand::Imm(value) => {
+                            emitter.emit_alu_ri(digit, PhysReg::Rax, *value, width)
+                        }
+                        _ => unreachable!("validated scalar RMW replay source"),
+                    },
                 }
             }
             emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
@@ -519,7 +546,7 @@ impl X86_64Lowerer {
             Some(dst) => Some((self.get_dst_reg(dst)?, sequence.width)),
             None => None,
         };
-        self.emit_fused_mem_alu_rmw_with_writeback(
+        self.emit_fused_mem_alu_rmw_full(
             sequence.guest_pc,
             sequence.addr,
             sequence.mem_width,
@@ -528,6 +555,7 @@ impl X86_64Lowerer {
             sequence.digit,
             &source,
             sequence.replay,
+            sequence.replay_unary,
             writeback,
         )?;
         Ok(Some(sequence.consumed))
