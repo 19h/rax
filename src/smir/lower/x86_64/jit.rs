@@ -3364,6 +3364,15 @@ impl X86_64Lowerer {
                         self.emit_struct_mov(PhysReg::Rcx, 0, denc * 8, true);
                     }
                 }
+                // Guest RBP is state-backed: hardware RBP is the native frame
+                // pointer and the prologue saved the guest value at [RBP]. A
+                // load that architecturally writes RBP must keep that saved
+                // word coherent so the epilogue POP returns the loaded value.
+                // RAX is reloaded from the state file below, so using it as the
+                // transfer scratch here is safe.
+                if denc == 5 {
+                    self.emit_sync_saved_rbp_from_state(PhysReg::Rcx);
+                }
             }
         }
         self.emit_helper_call_state(PhysReg::Rcx, false, self.preserve_vector_mem_helpers);

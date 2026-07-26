@@ -166,6 +166,8 @@ mod state_alu;
 #[cfg(test)]
 mod state_lea;
 #[cfg(test)]
+mod state_mem_load;
+#[cfg(test)]
 mod sti;
 #[cfg(test)]
 mod swapgs;

@@ -57,7 +57,16 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-    pub(crate) fn ensure_native_stack_dests_safe(op: &SmirOp) -> Result<(), LowerError> {
+    pub(crate) fn ensure_native_stack_dests_safe(
+        op: &SmirOp,
+        mem_helpers: bool,
+    ) -> Result<(), LowerError> {
+        // A helper-backed load delivers its result into the destination's
+        // `GuestRegs` slot (and re-synchronizes the prologue-saved guest RBP
+        // word), never into the host stack/frame register of the same name.
+        if mem_helpers && matches!(&op.kind, OpKind::Load { .. }) {
+            return Ok(());
+        }
         if Self::mov_touches_state_backed_gpr(&op.kind)
             || matches!(
                 &op.kind,
