@@ -16,6 +16,9 @@ impl X86_64Lifter {
     ) -> Result<LiftResult, LiftError> {
         debug_assert_eq!(prefix.map, X86VecMap::Map0F38);
         match opcode {
+            _ if Self::is_profile_disabled_amx_0f38(prefix, opcode) => {
+                self.lift_profile_disabled_amx(prefix, bytes, pc, false)
+            }
             0xC8 if prefix.encoding == VecEncodingKind::Evex => {
                 self.lift_evex_exp2(prefix, opcode, bytes, pc, ctx)
             }

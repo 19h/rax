@@ -8,6 +8,8 @@ mod addr32;
 #[cfg(test)]
 mod addr32_assertions;
 #[cfg(test)]
+mod amx_disabled;
+#[cfg(test)]
 mod apx;
 #[cfg(test)]
 mod apx_alu;

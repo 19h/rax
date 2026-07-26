@@ -20,6 +20,14 @@ impl X86_64Vcpu {
         let avx10_media_disabled = !self.avx10_media_enabled();
 
         match opcode {
+            // Intel ISE 319433-059 assigns these EVEX.512.W0 cells to
+            // AMX-AVX512. RAX enumerates neither AMX-AVX512 nor tile XSAVE
+            // state, so #UD is determined at the opcode frontier.
+            0x4A if !evex.w && evex.ll == 2 && matches!(evex.pp, 1 | 2) => {
+                self.inject_undefined_instruction()
+            }
+            0x6D if !evex.w && evex.ll == 2 => self.inject_undefined_instruction(),
+
             // VPMULLD/VPMULLQ (0x40)
             // W=0: VPMULLD (32-bit elements)
             // W=1: VPMULLQ (64-bit elements)

@@ -20,6 +20,14 @@ impl X86_64Vcpu {
         let avx10_vminmax_disabled = !self.avx10_vminmax_enabled();
 
         match opcode {
+            // Intel ISE 319433-059 assigns these EVEX.512.W0 cells to
+            // immediate-row AMX-AVX512 operations. The fixed RAX profile has
+            // no AMX or tile state, so the opcode itself determines #UD.
+            0x07 if !evex.w && evex.ll == 2 => self.inject_undefined_instruction(),
+            0x77 if !evex.w && evex.ll == 2 && matches!(evex.pp, 2 | 3) => {
+                self.inject_undefined_instruction()
+            }
+
             // ============================================================================
             // EVEX integer compare with imm8 predicate (write into k-mask)
             // ============================================================================

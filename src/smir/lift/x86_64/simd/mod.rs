@@ -1,5 +1,7 @@
 //! smir::lift::x86_64::simd submodules
 
+mod amx_disabled;
+pub use amx_disabled::*;
 mod evex;
 pub use evex::*;
 mod opmask;

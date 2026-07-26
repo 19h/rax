@@ -176,12 +176,35 @@ fn cpuid_interpreter_tracks_every_mutable_guest_profile_input() {
         0,
         "PCONFIG must remain absent until its platform-key semantics exist"
     );
+    assert_eq!(
+        leaf7[3] & ((1 << 22) | (1 << 24) | (1 << 25)),
+        0,
+        "AMX-BF16, AMX-TILE, and AMX-INT8 must remain absent without tile state"
+    );
 
     let (leaf7_subleaf1, _) = execute_cpuid(7, 1, |_| {});
     assert_eq!(
         leaf7_subleaf1[0] & ((1 << 19) | (1 << 27)),
         0,
         "WRMSRNS and MSRLIST must remain absent until their MSR semantics exist"
+    );
+    assert_eq!(
+        leaf7_subleaf1[0] & (1 << 21),
+        0,
+        "AMX-FP16 must remain absent without tile state"
+    );
+    assert_eq!(
+        leaf7_subleaf1[3] & (1 << 8),
+        0,
+        "AMX-COMPLEX must remain absent without tile state"
+    );
+
+    let (tmul_main, _) = execute_cpuid(0x1E, 0, |_| {});
+    let (tmul_features, _) = execute_cpuid(0x1E, 1, |_| {});
+    assert_eq!(tmul_main, [0; 4], "the AMX TMUL leaf must remain absent");
+    assert_eq!(
+        tmul_features, [0; 4],
+        "AMX-FP8, AMX-TF32, AMX-AVX512, and AMX-MOVRS must remain absent"
     );
 
     let (pconfig, _) = execute_cpuid(0x1B, 0, |_| {});
@@ -198,6 +221,11 @@ fn cpuid_interpreter_tracks_every_mutable_guest_profile_input() {
         x86.xcr0 = 1 | (1 << 19);
     });
     assert_ne!(xsave_apx[0] & (1 << 19), 0);
+    assert_eq!(
+        xsave_apx[0] & ((1 << 17) | (1 << 18)),
+        0,
+        "TILECFG and TILEDATA must remain unsupported XCR0 components"
+    );
     let (apx_leaf, _) = execute_cpuid(0x29, 0, |x86| x86.apx_enabled = true);
     assert_eq!(apx_leaf, [0, 1, 0, 0]);
 }
