@@ -16,11 +16,12 @@
 //!      verifier now also diffs ZMM/opmask state, so any future vector JIT that
 //!      diverged would be caught rather than silently corrupting vector state.
 //!
-//! This test pins layer 1 directly and end-to-end (a hot loop containing a
-//! non-native masked move is declined by the JIT and
-//! produces the correct result via the interpreter). These paths are not
-//! reachable by single-instruction differential runs, which never trigger
-//! hot-loop promotion.
+//! This test pins layer 1 directly and end-to-end. A hot loop containing a
+//! register-only masked packed move uses exact native replay when the host
+//! provides the required AVX-512 state bridge and otherwise remains on the
+//! interpreter; both paths must produce the same architectural result. These
+//! paths are not reachable by single-instruction differential runs, which never
+//! trigger hot-loop promotion.
 
 #![cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 
@@ -256,7 +257,7 @@ fn get_zmm(regs: &Registers, idx: usize) -> [u64; 8] {
 }
 
 #[test]
-fn hot_masked_evex_move_bails_to_interpreter_and_is_correct() {
+fn hot_masked_evex_move_matches_host_admission_and_is_correct() {
     // loop:  vmovdqa32 %zmm1,%zmm2{%k1}   (62 f1 7d 49 6f d1)  dword merge-mask
     //        dec ecx                       (ff c9)
     //        jnz loop                      (75 f6  -> back 10 bytes)
@@ -275,25 +276,35 @@ fn hot_masked_evex_move_bails_to_interpreter_and_is_correct() {
     regs.k[1] = 0x5555; // dword lanes 0,2,4..14 selected; 1,3,..15 masked off
     vcpu.set_regs(&regs).unwrap();
 
-    // Forcing a compile at the loop head must DECLINE (the masked EVEX op is not
-    // liftable), so the region never runs natively.
+    // Exact native replay requires AVX-512F for the instruction and AVX-512BW
+    // for the full-width ZMM/K state bridge. Hosts without either feature must
+    // decline the same region and retain the interpreter path.
+    let host_can_replay =
+        std::is_x86_feature_detected!("avx512f") && std::is_x86_feature_detected!("avx512bw");
     let jitted = vcpu.jit_try_block().expect("jit_try_block");
-    assert!(
-        !jitted,
-        "a region containing a masked EVEX move must bail, not JIT"
+    assert_eq!(
+        jitted, host_can_replay,
+        "masked EVEX packed-move admission must match host capabilities"
     );
 
-    // Now drive the whole hot loop on the interpreter; it must remain ineligible
-    // (zero compiled regions) and produce the correct merge-masked result.
+    // Drive the whole hot loop through the selected tier and validate the
+    // architectural merge-masked result.
     run_to_hlt(&mut vcpu);
     let out = vcpu.get_regs().unwrap();
 
     assert_eq!(out.rcx & 0xffff_ffff, 0, "loop drained");
-    assert_eq!(
-        vcpu.jit_region_count(),
-        0,
-        "the masked-vector hot loop must never be JIT-promoted"
-    );
+    let region_count = vcpu.jit_region_count();
+    if host_can_replay {
+        assert!(
+            region_count >= 1,
+            "an AVX-512-capable host must compile the packed-move loop"
+        );
+    } else {
+        assert_eq!(
+            region_count, 0,
+            "a host without the required AVX-512 features must retain fallback"
+        );
+    }
 
     // Merge masking: dword lane j takes src (0x11111111) where k1 bit j == 1,
     // else keeps dst (0x22222222). With k1=0x5555 → low dword of each u64 is the
