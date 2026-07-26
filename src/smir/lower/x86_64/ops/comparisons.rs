@@ -81,6 +81,9 @@ impl X86_64Lowerer {
             // Comparisons
             // ================================================================
             OpKind::Cmp { src1, src2, width } => {
+                if let Some(shape) = x86_state_backed_stack_group1_lowerable(op) {
+                    return self.lower_state_backed_stack_gpr_group1(&shape);
+                }
                 let src1_reg = self.get_reg(*src1)?;
 
                 match src2 {
@@ -109,6 +112,9 @@ impl X86_64Lowerer {
             }
 
             OpKind::Test { src1, src2, width } => {
+                if let Some(shape) = x86_state_backed_stack_group1_lowerable(op) {
+                    return self.lower_state_backed_stack_gpr_group1(&shape);
+                }
                 let src1_reg = self.get_reg(*src1)?;
 
                 match src2 {

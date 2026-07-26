@@ -87,6 +87,9 @@ impl X86_64Lowerer {
                 width,
                 flags,
             } => {
+                if let Some(shape) = x86_state_backed_stack_group1_lowerable(op) {
+                    return self.lower_state_backed_stack_gpr_group1(&shape);
+                }
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src1_reg = self.get_reg(*src1)?;
                 let preserve_flags = !flags.updates_any();
@@ -190,6 +193,9 @@ impl X86_64Lowerer {
                 width,
                 flags,
             } => {
+                if let Some(shape) = x86_state_backed_stack_group1_lowerable(op) {
+                    return self.lower_state_backed_stack_gpr_group1(&shape);
+                }
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src1_reg = self.get_reg(*src1)?;
                 let preserve_flags = !flags.updates_any();
@@ -260,6 +266,9 @@ impl X86_64Lowerer {
                 width,
                 flags,
             } => {
+                if let Some(shape) = x86_state_backed_stack_group1_lowerable(op) {
+                    return self.lower_state_backed_stack_gpr_group1(&shape);
+                }
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src1_reg = self.get_reg(*src1)?;
                 let preserve_flags = !flags.updates_any();
