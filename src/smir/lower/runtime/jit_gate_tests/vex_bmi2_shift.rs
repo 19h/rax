@@ -470,7 +470,7 @@ fn vex_bmi2_shift_all_24_576_register_shapes_are_single_op_admitted_and_lowerabl
 }
 
 #[test]
-fn vex_bmi2_shift_reserved_l1_and_memory_frontiers_fail_closed() {
+fn vex_bmi2_shift_reserved_l1_and_memory_frontiers_are_precise() {
     for kind in ShiftKind::ALL {
         for width in [OpWidth::W32, OpWidth::W64] {
             for high in [false, true] {
@@ -510,12 +510,23 @@ fn vex_bmi2_shift_reserved_l1_and_memory_frontiers_fail_closed() {
     let memory_function = function(&memory);
     assert_eq!(memory_function.blocks[0].ops.len(), 2);
     assert!(
+        is_native_clobber_safe_excluding(&memory_function, &std::collections::HashMap::new(), true,),
+        "exact memory-source BMI2 shift must enter the helper-backed x86 gate"
+    );
+    assert!(
         !is_native_clobber_safe_excluding(
             &memory_function,
             &std::collections::HashMap::new(),
-            true,
+            false,
         ),
-        "memory-source BMI2 shift must remain fail-closed until its load temporary is supported"
+        "memory-source BMI2 shift must require helper-backed memory"
+    );
+    assert!(
+        !is_x86_aarch64_native_clobber_safe_excluding(
+            &memory_function,
+            &std::collections::HashMap::new(),
+        ),
+        "memory-source BMI2 shift must remain fail-closed on the x86-on-AArch64 path"
     );
 
     let ignored_x_set = encoding(case);

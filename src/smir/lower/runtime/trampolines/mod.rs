@@ -11,6 +11,8 @@ mod jit;
 pub use jit::*;
 mod jit_mul;
 pub use jit_mul::*;
+mod jit_shift;
+pub use jit_shift::*;
 mod maskmov;
 pub use maskmov::*;
 mod misc;
