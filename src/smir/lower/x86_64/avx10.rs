@@ -489,7 +489,25 @@ impl Avx10Lowerer {
                 }
             }
 
-            // AVX10.2 saturation conversions
+            // AVX10.2 scalar saturation conversions
+            OpKind::X86ScalarFpToIntSat {
+                dst,
+                src,
+                elem,
+                int_width,
+                signed,
+                suppress_exceptions,
+            } => Some(self.lower_x86_scalar_fp_to_int_sat(
+                code,
+                dst,
+                src,
+                *elem,
+                *int_width,
+                *signed,
+                *suppress_exceptions,
+            )),
+
+            // AVX10.2 packed saturation conversions
             OpKind::VCvtFpToIntSat {
                 dst,
                 src,
@@ -2209,6 +2227,16 @@ impl Avx10Lowerer {
         match vreg {
             VReg::Arch(ArchReg::X86(X86Reg::K(n))) => Ok(*n),
             _ => Err(LowerError::InvalidRegister(format!("{:?}", vreg))),
+        }
+    }
+
+    fn vreg_to_gpr(&self, vreg: &VReg) -> Avx10LowerResult<u8> {
+        match vreg {
+            VReg::Arch(ArchReg::X86(reg)) => reg
+                .gpr_index()
+                .filter(|index| *index < 32)
+                .ok_or_else(|| LowerError::InvalidRegister(format!("{vreg:?}"))),
+            _ => Err(LowerError::InvalidRegister(format!("{vreg:?}"))),
         }
     }
 }

@@ -14,6 +14,7 @@ impl SmirInterpreter {
         elem: VecElementType,
         int_width: OpWidth,
         signed: bool,
+        saturate: bool,
         truncate: bool,
         round: FpRoundMode,
         suppress_exceptions: bool,
@@ -30,6 +31,13 @@ impl SmirInterpreter {
                 return;
             }
         };
+        if saturate && elem == VecElementType::F16 {
+            ctx.request_exit(ExitReason::Undefined {
+                addr: ctx.pc,
+                opcode: 0,
+            });
+            return;
+        }
         let int_bits = match int_width {
             OpWidth::W32 => 32,
             OpWidth::W64 => 64,
@@ -75,7 +83,11 @@ impl SmirInterpreter {
             let (sign, _, _, _) = Self::x86_simd_fp_masks(format);
             source_bits &= sign;
         }
-        let converted = Self::x86_simd_fp_to_int(source_bits, format, int_bits, signed, mode);
+        let converted = if saturate {
+            Self::x86_simd_fp_to_int_sat(source_bits, format, int_bits, signed, mode)
+        } else {
+            Self::x86_simd_fp_to_int(source_bits, format, int_bits, signed, mode)
+        };
 
         if !suppress_exceptions {
             if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {

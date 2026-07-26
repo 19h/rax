@@ -13,6 +13,56 @@ fn vector_reg(reg: u8, width: VecWidth) -> VReg {
 }
 
 impl Avx10Lifter {
+    /// Lift scalar VCVTT{SS,SD}2{SIS,USIS} register forms.
+    pub(super) fn lift_vcvtt_scalar_fp_to_int_sat(
+        &self,
+        evex: &EvexPrefix,
+        bytes: &[u8],
+        pc: u64,
+        ctx: &mut LiftContext,
+        elem: VecElementType,
+        signed: bool,
+    ) -> Result<LiftResult, LiftError> {
+        let (modrm, consumed) = self.decode_modrm(bytes, pc)?;
+        if evex.vvvv != 0
+            || evex.v_prime
+            || evex.aaa != 0
+            || evex.z
+            || (evex.b_bit && (modrm.is_memory || evex.ll != 0))
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        if modrm.is_memory {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "standalone AVX10 scalar saturation conversion memory operand".into(),
+            });
+        }
+
+        let dst_reg = evex.dest_reg(modrm.reg);
+        let mut ops = Vec::new();
+        if dst_reg >= 16 {
+            ops.push(SmirOp::new(ctx.next_op_id(), pc, OpKind::X86RequireApx));
+        }
+        ops.push(SmirOp::new(
+            ctx.next_op_id(),
+            pc,
+            OpKind::X86ScalarFpToIntSat {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::gpr(dst_reg))),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(evex.rm_reg(modrm.rm)))),
+                elem,
+                int_width: if evex.w { OpWidth::W64 } else { OpWidth::W32 },
+                signed,
+                suppress_exceptions: evex.b_bit,
+            },
+        ));
+
+        Ok(LiftResult::fallthrough(ops, evex.bytes + 1 + consumed))
+    }
+
     /// Lift packed VCVT[T]{PH,PS,BF16}2I[U]BS register forms.
     pub(super) fn lift_vcvt_fp_to_i8_sat(
         &self,
@@ -189,5 +239,73 @@ impl Avx10Lifter {
         );
 
         Ok(LiftResult::fallthrough(vec![op], evex.bytes + 1 + consumed))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn standalone_scalar_saturation_lifts_registers_guards_egprs_and_rejects_memory() {
+        let lifter = Avx10Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::X86_64);
+
+        let regular = lifter
+            .try_lift(&[0x62, 0xF5, 0xFF, 0x18, 0x6D, 0xC2], 0x1000, &mut ctx)
+            .unwrap()
+            .unwrap();
+        assert!(matches!(
+            regular.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::X86ScalarFpToIntSat {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                    elem: VecElementType::F64,
+                    int_width: OpWidth::W64,
+                    signed: true,
+                    suppress_exceptions: true,
+                },
+                ..
+            }]
+        ));
+
+        let egpr = lifter
+            .try_lift(&[0x62, 0xA5, 0x7E, 0x08, 0x6C, 0xCA], 0x1000, &mut ctx)
+            .unwrap()
+            .unwrap();
+        assert!(matches!(
+            egpr.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::X86RequireApx,
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::X86ScalarFpToIntSat {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::R17)),
+                        src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(18))),
+                        elem: VecElementType::F32,
+                        int_width: OpWidth::W32,
+                        signed: false,
+                        suppress_exceptions: false,
+                    },
+                    ..
+                }
+            ]
+        ));
+
+        assert!(matches!(
+            lifter
+                .try_lift(&[0x62, 0xF5, 0x7F, 0x08, 0x6D, 0x00], 0x1000, &mut ctx,)
+                .unwrap(),
+            Err(LiftError::Unsupported { .. })
+        ));
+        assert!(matches!(
+            lifter
+                .try_lift(&[0x62, 0xF5, 0x7E, 0x38, 0x6D, 0xC2], 0x1000, &mut ctx,)
+                .unwrap(),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
     }
 }

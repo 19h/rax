@@ -104,6 +104,12 @@ pub struct X86Prefix {
     pub segment_override: Option<u8>,
     /// LOCK prefix
     pub lock: bool,
+    /// Fifth EVEX memory-base bit (Intel APX EVEX.B4). This is consumed only
+    /// for ModR/M memory addressing; register r/m operands retain ordinary
+    /// EVEX vector-register extension semantics.
+    pub(crate) evex_mem_base_high: bool,
+    /// Fifth EVEX memory-index bit (Intel APX EVEX.X4 = !EVEX.U).
+    pub(crate) evex_mem_index_high: bool,
     /// Cursor position after prefixes
     pub cursor: usize,
 }
@@ -129,6 +135,8 @@ pub(crate) struct VecPrefix {
     pub(crate) b: bool,
     pub(crate) reg_high: bool,
     pub(crate) rm_high: bool,
+    pub(crate) mem_base_high: bool,
+    pub(crate) mem_index_high: bool,
     pub(crate) v_high: bool,
     pub(crate) address_size_override: bool,
     pub(crate) segment_override: Option<u8>,
@@ -464,6 +472,8 @@ pub(crate) fn decode_vex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefixDeco
                 b: false,
                 reg_high: false,
                 rm_high: false,
+                mem_base_high: false,
+                mem_index_high: false,
                 v_high: false,
                 address_size_override: false,
                 segment_override: None,
@@ -522,6 +532,8 @@ pub(crate) fn decode_vex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefixDeco
                 b: false,
                 reg_high: false,
                 rm_high: false,
+                mem_base_high: false,
+                mem_index_high: false,
                 v_high: false,
                 address_size_override: false,
                 segment_override: None,
@@ -613,6 +625,11 @@ pub(crate) fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefixDec
         b: b3 & 0x10 != 0,
         reg_high: r_prime != 0,
         rm_high: x != 0,
+        // Intel APX reuses the formerly reserved payload-byte-0 bit as
+        // EVEX.B4 and the fixed EVEX.U bit with inverted polarity as X4 for
+        // memory addressing by existing EVEX instructions.
+        mem_base_high: b1 & 0x08 != 0,
+        mem_index_high: b2 & 0x04 == 0,
         v_high: v_prime != 0,
         address_size_override: false,
         segment_override: None,

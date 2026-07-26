@@ -103,6 +103,20 @@ impl OpKind {
             return !*suppress_exceptions || !canonical;
         }
 
+        if let OpKind::X86ScalarFpToIntSat {
+            elem,
+            int_width,
+            suppress_exceptions,
+            ..
+        } = self
+        {
+            let canonical = matches!(elem, VecElementType::F32 | VecElementType::F64)
+                && matches!(int_width, OpWidth::W32 | OpWidth::W64);
+            // Malformed IR remains observable until interpretation rejects it.
+            // Canonical SAE forms have no independent MXCSR status/trap effect.
+            return !canonical || !*suppress_exceptions;
+        }
+
         if let OpKind::X86FpConvert {
             from,
             to,

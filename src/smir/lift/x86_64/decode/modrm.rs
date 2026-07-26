@@ -89,6 +89,8 @@ pub(crate) fn decode_modrm(
 
     let reg = reg_field | prefix.rex_r();
     let rm = rm_field | prefix.rex_b();
+    let memory_base_high = if prefix.evex_mem_base_high { 16 } else { 0 };
+    let memory_index_high = if prefix.evex_mem_index_high { 16 } else { 0 };
 
     if mod_bits == 3 {
         // Register operand
@@ -147,8 +149,8 @@ pub(crate) fn decode_modrm(
         let index_field = (sib >> 3) & 0x07;
         let base_field = sib & 0x07;
 
-        let index = index_field | prefix.rex_x();
-        let base = base_field | prefix.rex_b();
+        let index = index_field | prefix.rex_x() | memory_index_high;
+        let base = base_field | prefix.rex_b() | memory_base_high;
 
         x86_addr.scale = scale;
 
@@ -197,7 +199,7 @@ pub(crate) fn decode_modrm(
         x86_addr.disp_size = DispSize::Disp32;
     } else {
         // Regular register indirect
-        x86_addr.base = Some(rm);
+        x86_addr.base = Some(rm | memory_base_high);
     }
 
     // Handle displacement for mod=1 (disp8) and mod=2 (disp32)

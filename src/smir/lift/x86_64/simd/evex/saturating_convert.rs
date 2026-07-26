@@ -7,6 +7,110 @@ use crate::smir::ir::types::*;
 use crate::smir::lift::x86_64::*;
 
 impl X86_64Lifter {
+    pub(crate) fn lift_evex_scalar_saturating_fp_to_int(
+        &self,
+        prefix: VecPrefix,
+        opcode: u8,
+        bytes: &[u8],
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.encoding != VecEncodingKind::Evex
+            || prefix.map != X86VecMap::Map5
+            || !matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne)
+            || !matches!(opcode, 0x6C | 0x6D)
+            || prefix.vvvv != 0
+            || prefix.v_high
+            || prefix.aaa != 0
+            || prefix.zeroing
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let cursor = prefix.bytes + 1;
+        let modrm_prefix = X86Prefix {
+            rex: prefix.rex,
+            address_size_override: prefix.address_size_override,
+            segment_override: prefix.segment_override,
+            evex_mem_base_high: prefix.mem_base_high,
+            evex_mem_index_high: prefix.mem_index_high,
+            cursor,
+            ..X86Prefix::default()
+        };
+        let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
+        if prefix.b && (modrm.is_memory || prefix.l_bits != 0) {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let elem = if prefix.pp == X86SsePrefix::Rep {
+            VecElementType::F32
+        } else {
+            VecElementType::F64
+        };
+        let dst_index = modrm.reg + if prefix.reg_high { 16 } else { 0 };
+        let memory_requires_apx = modrm.addr.as_ref().is_some_and(|addr| {
+            addr.base.is_some_and(|base| base >= 16) || addr.index.is_some_and(|index| index >= 16)
+        });
+        let requires_apx = dst_index >= 16 || memory_requires_apx;
+        let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+        let mut ops = if requires_apx {
+            vec![SmirOp::new(OpId(0), pc, OpKind::X86RequireApx)]
+        } else {
+            Vec::new()
+        };
+        let src = if modrm.is_memory {
+            let (addr, pre_ops) = self.vec_scalar_addr_to_smir(
+                prefix,
+                modrm.addr.as_ref().unwrap(),
+                next_pc,
+                elem,
+                ctx,
+            );
+            ops.extend(pre_ops);
+            let scalar = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Load {
+                    dst: scalar,
+                    addr,
+                    width: if elem == VecElementType::F32 {
+                        MemWidth::B4
+                    } else {
+                        MemWidth::B8
+                    },
+                    sign: SignExtend::Zero,
+                },
+            ));
+            scalar
+        } else {
+            self.xmm(modrm.rm + if prefix.rm_high { 16 } else { 0 })
+        };
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86ScalarFpToIntSat {
+                dst: self.gpr(dst_index),
+                src,
+                elem,
+                int_width: if prefix.w { OpWidth::W64 } else { OpWidth::W32 },
+                signed: opcode == 0x6D,
+                suppress_exceptions: prefix.b,
+            },
+        ));
+        for (index, op) in ops.iter_mut().enumerate() {
+            op.id = OpId(index as u16);
+        }
+
+        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+    }
+
     pub(crate) fn lift_evex_saturating_fp_to_int(
         &self,
         prefix: VecPrefix,

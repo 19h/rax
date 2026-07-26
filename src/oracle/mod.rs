@@ -2408,6 +2408,22 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             round,
             suppress_exceptions
         ),
+        OpKind::X86ScalarFpToIntSat {
+            dst,
+            src,
+            elem,
+            int_width,
+            signed,
+            suppress_exceptions,
+        } => op_json!(
+            "x86_scalar_fp_to_int_sat",
+            dst,
+            src,
+            elem,
+            int_width,
+            signed,
+            suppress_exceptions
+        ),
         OpKind::X86IntToFp {
             dst,
             merge,

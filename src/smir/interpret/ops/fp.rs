@@ -1453,8 +1453,31 @@ impl SmirInterpreter {
                     *elem,
                     *int_width,
                     *signed,
+                    false,
                     *truncate,
                     *round,
+                    *suppress_exceptions,
+                );
+            }
+
+            OpKind::X86ScalarFpToIntSat {
+                dst,
+                src,
+                elem,
+                int_width,
+                signed,
+                suppress_exceptions,
+            } => {
+                self.execute_x86_fp_to_int(
+                    ctx,
+                    *dst,
+                    *src,
+                    *elem,
+                    *int_width,
+                    *signed,
+                    true,
+                    true,
+                    FpRoundMode::RoundTowardZero,
                     *suppress_exceptions,
                 );
             }

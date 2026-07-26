@@ -922,3 +922,321 @@ fn optimized_nontruncating_conversion_matches_o0_o1_o2() {
     }
     assert_eq!(observed[0].1 & 0x3F, 1 | (1 << 5));
 }
+
+#[test]
+fn lifted_scalar_saturation_clamps_signed_unsigned_nan_and_infinity_exactly() {
+    let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+    for (bytes, elem, bits, expected, status) in [
+        (
+            &[0x62, 0xF5, 0x7E, 0x08, 0x6D, 0xC2][..],
+            VecElementType::F32,
+            u64::from(2.9f32.to_bits()),
+            2,
+            1 << 5,
+        ),
+        (
+            &[0x62, 0xF5, 0x7E, 0x08, 0x6C, 0xC2][..],
+            VecElementType::F32,
+            u64::from((-1.0f32).to_bits()),
+            0,
+            1,
+        ),
+        (
+            &[0x62, 0xF5, 0x7E, 0x08, 0x6C, 0xC2][..],
+            VecElementType::F32,
+            u64::from((-0.5f32).to_bits()),
+            0,
+            1 << 5,
+        ),
+        (
+            &[0x62, 0xF5, 0x7F, 0x08, 0x6D, 0xC2][..],
+            VecElementType::F64,
+            2_147_483_647.9f64.to_bits(),
+            0x7FFF_FFFF,
+            1 << 5,
+        ),
+        (
+            &[0x62, 0xF5, 0xFF, 0x08, 0x6D, 0xC2][..],
+            VecElementType::F64,
+            f64::INFINITY.to_bits(),
+            i64::MAX as u64,
+            1,
+        ),
+        (
+            &[0x62, 0xF5, 0xFF, 0x08, 0x6D, 0xC2][..],
+            VecElementType::F64,
+            f64::NEG_INFINITY.to_bits(),
+            i64::MIN as u64,
+            1,
+        ),
+        (
+            &[0x62, 0xF5, 0xFF, 0x08, 0x6C, 0xC2][..],
+            VecElementType::F64,
+            f64::NAN.to_bits(),
+            0,
+            1,
+        ),
+        (
+            &[0x62, 0xF5, 0xFF, 0x08, 0x6C, 0xC2][..],
+            VecElementType::F64,
+            f64::INFINITY.to_bits(),
+            u64::MAX,
+            1,
+        ),
+    ] {
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[2], 0, elem.bytes() * 8, bits);
+            x86.mxcsr = 0x1F80;
+        }
+        ctx.write_vreg(rax, 0xFFFF_FFFF_FFFF_FFFF);
+        let exit = execute_lifted_x86(bytes, &mut ctx, &mut FlatMemory::new(0x100));
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        assert_eq!(ctx.read_vreg(rax), expected, "{bytes:02X?}");
+        let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+            unreachable!()
+        };
+        assert_eq!(x86.mxcsr & 0x3F, status, "{bytes:02X?}");
+    }
+
+    // W0 writes a 32-bit GPR and therefore clears the architectural upper half.
+    let mut zero_extend = SmirContext::new_x86_64();
+    if let ArchRegState::X86_64(x86) = &mut zero_extend.arch_regs {
+        SmirInterpreter::set_lane(&mut x86.xmm[2], 0, 32, u64::from(7.0f32.to_bits()));
+        x86.mxcsr = 0x1F80;
+    }
+    zero_extend.write_vreg(rax, u64::MAX);
+    execute_lifted_x86(
+        &[0x62, 0xF5, 0x7E, 0x08, 0x6D, 0xC2],
+        &mut zero_extend,
+        &mut FlatMemory::new(0x100),
+    );
+    assert_eq!(zero_extend.read_vreg(rax), 7);
+}
+
+#[test]
+fn lifted_scalar_saturation_unmasked_exceptions_are_precise_and_sae_suppresses_them() {
+    let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+    for (name, bits, mxcsr, expected_status) in [
+        (
+            "invalid",
+            u64::from(f32::NAN.to_bits()),
+            0x1F80 & !(1 << 7),
+            1,
+        ),
+        (
+            "precision",
+            u64::from(2.5f32.to_bits()),
+            0x1F80 & !(1 << 12),
+            1 << 5,
+        ),
+    ] {
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[2], 0, 32, bits);
+            x86.mxcsr = mxcsr;
+        }
+        ctx.write_vreg(rax, 0x0123_4567_89AB_CDEF);
+        let exit = execute_lifted_x86(
+            &[0x62, 0xF5, 0x7E, 0x08, 0x6D, 0xC2],
+            &mut ctx,
+            &mut FlatMemory::new(0x100),
+        );
+        assert!(
+            matches!(
+                exit,
+                BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+            ),
+            "{name}: {exit:?}"
+        );
+        assert_eq!(ctx.read_vreg(rax), 0x0123_4567_89AB_CDEF, "{name}");
+        let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+            unreachable!()
+        };
+        assert_eq!(
+            x86.mxcsr & expected_status,
+            expected_status,
+            "{name}: MXCSR"
+        );
+    }
+
+    let mut sae = SmirContext::new_x86_64();
+    if let ArchRegState::X86_64(x86) = &mut sae.arch_regs {
+        SmirInterpreter::set_lane(&mut x86.xmm[2], 0, 32, u64::from(f32::NAN.to_bits()));
+        x86.mxcsr = (0x1F80 & !(1 << 7)) | (1 << 5);
+    }
+    sae.write_vreg(rax, u64::MAX);
+    let exit = execute_lifted_x86(
+        &[0x62, 0xF5, 0xFE, 0x18, 0x6D, 0xC2],
+        &mut sae,
+        &mut FlatMemory::new(0x100),
+    );
+    assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+    assert_eq!(sae.read_vreg(rax), 0);
+    let ArchRegState::X86_64(x86) = &sae.arch_regs else {
+        unreachable!()
+    };
+    assert_eq!(x86.mxcsr & 0x3F, 1 << 5, "SAE preserves prior status");
+}
+
+#[test]
+fn lifted_scalar_saturation_honors_daz_apx_addresses_and_memory_fault_order() {
+    let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+    for (daz, expected_status) in [(false, 1 << 5), (true, 0)] {
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[2], 0, 32, 1);
+            x86.mxcsr = 0x1F80 | if daz { 1 << 6 } else { 0 };
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF5, 0x7E, 0x08, 0x6D, 0xC2],
+            &mut ctx,
+            &mut FlatMemory::new(0x100),
+        );
+        assert_eq!(ctx.read_vreg(rax), 0);
+        let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+            unreachable!()
+        };
+        assert_eq!(x86.mxcsr & 0x3F, expected_status);
+    }
+
+    let r31 = VReg::Arch(ArchReg::X86(X86Reg::R31));
+    let mut memory = FlatMemory::new(0x400);
+    memory
+        .write(0x120, &123.75f32.to_bits().to_le_bytes())
+        .unwrap();
+    let mut extended = SmirContext::new_x86_64();
+    if let ArchRegState::X86_64(x86) = &mut extended.arch_regs {
+        x86.apx_enabled = true;
+        x86.gpr[17] = 4;
+        x86.gpr[18] = 0x100;
+        x86.gpr[31] = u64::MAX;
+        x86.mxcsr = 0x1F80;
+    }
+    let bytes = [0x62, 0x6D, 0x7A, 0x08, 0x6C, 0x7C, 0x8A, 0x04];
+    let exit = execute_lifted_x86(&bytes, &mut extended, &mut memory);
+    assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+    assert_eq!(extended.read_vreg(r31), 123);
+    let ArchRegState::X86_64(x86) = &extended.arch_regs else {
+        unreachable!()
+    };
+    assert_eq!(x86.mxcsr & 0x3F, 1 << 5);
+
+    let mut no_apx = SmirContext::new_x86_64();
+    if let ArchRegState::X86_64(x86) = &mut no_apx.arch_regs {
+        x86.gpr[17] = 4;
+        // The effective address is deliberately unmapped: APX #UD must win
+        // before address generation or the memory read.
+        x86.gpr[18] = 0x1000;
+        x86.gpr[31] = 0x0123_4567_89AB_CDEF;
+        x86.mxcsr = 0x1F80;
+    }
+    let exit = execute_lifted_x86(&bytes, &mut no_apx, &mut memory);
+    assert!(matches!(
+        exit,
+        BlockResult::Exit(ExitReason::Undefined { .. })
+    ));
+    assert_eq!(no_apx.read_vreg(r31), 0x0123_4567_89AB_CDEF);
+
+    let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+    let mut fault = SmirContext::new_x86_64();
+    fault.write_vreg(rax, 0x200);
+    fault.write_vreg(rcx, 0x0123_4567_89AB_CDEF);
+    if let ArchRegState::X86_64(x86) = &mut fault.arch_regs {
+        x86.mxcsr = 0x1F80;
+    }
+    let exit = execute_lifted_x86(
+        &[0x62, 0xF5, 0x7E, 0x08, 0x6D, 0x08],
+        &mut fault,
+        &mut FlatMemory::new(0x100),
+    );
+    assert!(matches!(
+        exit,
+        BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+    ));
+    assert_eq!(fault.read_vreg(rcx), 0x0123_4567_89AB_CDEF);
+    let ArchRegState::X86_64(x86) = &fault.arch_regs else {
+        unreachable!()
+    };
+    assert_eq!(x86.mxcsr, 0x1F80);
+}
+
+#[test]
+fn malformed_scalar_saturation_ir_fails_closed_without_committing() {
+    let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+    for (elem, int_width) in [
+        (VecElementType::F16, OpWidth::W32),
+        (VecElementType::F32, OpWidth::W16),
+    ] {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::X86ScalarFpToIntSat {
+                dst: rax,
+                src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                elem,
+                int_width,
+                signed: true,
+                suppress_exceptions: true,
+            },
+        );
+        builder.set_terminator(Terminator::Trap {
+            kind: TrapKind::Halt,
+        });
+        let function = builder.finish();
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.write_vreg(rax, 0x0123_4567_89AB_CDEF);
+        let exit = SmirInterpreter::new().execute_block(
+            &mut ctx,
+            &mut FlatMemory::new(0x100),
+            &function.blocks[0],
+        );
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::Undefined { .. })
+        ));
+        assert_eq!(ctx.read_vreg(rax), 0x0123_4567_89AB_CDEF);
+    }
+}
+
+#[test]
+fn optimized_scalar_saturation_matches_o0_o1_o2() {
+    use crate::smir::lift::x86_64::X86_64Lifter;
+    use crate::smir::lift::{LiftContext, SmirLifter};
+    use crate::smir::optimize::{OptLevel, optimize_function};
+
+    let bytes = [0x62, 0xF5, 0x7E, 0x08, 0x6D, 0xC2];
+    let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+    let mut observed = Vec::new();
+    for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+        let mut lifter = X86_64Lifter::strict();
+        let mut lift_ctx = LiftContext::new(SourceArch::X86_64);
+        let lifted = lifter.lift_insn(0x1000, &bytes, &mut lift_ctx).unwrap();
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.set_terminator(Terminator::Trap {
+            kind: TrapKind::Halt,
+        });
+        let mut function = builder.finish();
+        function.blocks[0].ops = lifted.ops;
+        optimize_function(&mut function, level);
+
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[2], 0, 32, u64::from(127.75f32.to_bits()));
+            x86.mxcsr = 0x1F80;
+        }
+        let exit = SmirInterpreter::new().execute_block(
+            &mut ctx,
+            &mut FlatMemory::new(0x100),
+            &function.blocks[0],
+        );
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+            unreachable!()
+        };
+        observed.push((ctx.read_vreg(rax), x86.mxcsr));
+    }
+    assert_eq!(observed[0], observed[1]);
+    assert_eq!(observed[0], observed[2]);
+    assert_eq!(observed[0], (127, 0x1FA0));
+}

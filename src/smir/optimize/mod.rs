@@ -2516,6 +2516,7 @@ impl OpKind {
             | OpKind::IntToFp { src, .. }
             | OpKind::FpToInt { src, .. }
             | OpKind::X86FpToInt { src, .. }
+            | OpKind::X86ScalarFpToIntSat { src, .. }
             | OpKind::FRound { src, .. } => {
                 result.push(*src);
             }

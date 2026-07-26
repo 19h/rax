@@ -4,6 +4,61 @@ use super::*;
 use crate::smir::ir::ops::{X86SatFpFormat, x86_sat_fp_to_int_controls, x86_sat_fp_to_int_widths};
 
 impl Avx10Lowerer {
+    pub(super) fn lower_x86_scalar_fp_to_int_sat(
+        &self,
+        code: &mut CodeBuffer,
+        dst: &VReg,
+        src: &VReg,
+        elem: VecElementType,
+        int_width: OpWidth,
+        signed: bool,
+        suppress_exceptions: bool,
+    ) -> Avx10LowerResult<()> {
+        if !matches!(src, VReg::Arch(ArchReg::X86(X86Reg::Xmm(index))) if *index < 32) {
+            return Err(LowerError::UnsupportedOperation(
+                "Scalar saturation conversion: source must be XMM0-XMM31".to_string(),
+            ));
+        }
+        let dst_reg = self.vreg_to_gpr(dst)?;
+        let src_reg = self.vreg_to_zmm(src)?;
+        let pp = match elem {
+            VecElementType::F32 => 2,
+            VecElementType::F64 => 3,
+            _ => {
+                return Err(LowerError::UnsupportedOperation(
+                    "Scalar saturation conversion: source must be binary32 or binary64".to_string(),
+                ));
+            }
+        };
+        let w = match int_width {
+            OpWidth::W32 => false,
+            OpWidth::W64 => true,
+            _ => {
+                return Err(LowerError::UnsupportedOperation(
+                    "Scalar saturation conversion: result must be 32 or 64 bits".to_string(),
+                ));
+            }
+        };
+
+        let mut enc = EvexEncoder::new(code);
+        enc.emit_evex_with_b(
+            5,
+            pp,
+            w,
+            VecWidth::V128,
+            dst_reg,
+            0,
+            src_reg,
+            0,
+            false,
+            suppress_exceptions,
+            Some(0),
+        );
+        enc.emit_opcode(if signed { 0x6D } else { 0x6C });
+        enc.emit_modrm_rr(dst_reg, src_reg);
+        Ok(())
+    }
+
     pub(super) fn lower_vcvt_fp_to_int_sat(
         &self,
         code: &mut CodeBuffer,
@@ -617,6 +672,118 @@ mod tests {
                 FpRoundMode::RoundNearestTiesAway,
                 false,
                 true,
+            ),
+        ] {
+            let mut code = CodeBuffer::new();
+            assert!(matches!(
+                lowerer.try_lower(&malformed, &mut code).unwrap(),
+                Err(LowerError::InvalidRegister(_) | LowerError::UnsupportedOperation(_))
+            ));
+            assert!(code.as_slice().is_empty());
+        }
+    }
+
+    #[test]
+    fn emits_scalar_map5_saturation_llvm_encodings_and_rejects_bad_shapes() {
+        let lowerer = Avx10Lowerer::new();
+        let gpr = |reg| VReg::Arch(ArchReg::X86(reg));
+        let xmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Xmm(index)));
+        let scalar =
+            |dst, src, elem, int_width, signed, suppress_exceptions| OpKind::X86ScalarFpToIntSat {
+                dst,
+                src,
+                elem,
+                int_width,
+                signed,
+                suppress_exceptions,
+            };
+
+        for (kind, expected) in [
+            (
+                scalar(
+                    gpr(X86Reg::Rax),
+                    xmm(2),
+                    VecElementType::F64,
+                    OpWidth::W64,
+                    true,
+                    true,
+                ),
+                &[0x62, 0xF5, 0xFF, 0x18, 0x6D, 0xC2][..],
+            ),
+            (
+                scalar(
+                    gpr(X86Reg::R17),
+                    xmm(18),
+                    VecElementType::F32,
+                    OpWidth::W32,
+                    false,
+                    false,
+                ),
+                &[0x62, 0xA5, 0x7E, 0x08, 0x6C, 0xCA][..],
+            ),
+            (
+                scalar(
+                    gpr(X86Reg::R31),
+                    xmm(30),
+                    VecElementType::F64,
+                    OpWidth::W64,
+                    false,
+                    true,
+                ),
+                &[0x62, 0x05, 0xFF, 0x18, 0x6C, 0xFE][..],
+            ),
+            (
+                scalar(
+                    gpr(X86Reg::R8),
+                    xmm(17),
+                    VecElementType::F32,
+                    OpWidth::W32,
+                    true,
+                    false,
+                ),
+                &[0x62, 0x35, 0x7E, 0x08, 0x6D, 0xC1][..],
+            ),
+        ] {
+            let mut code = CodeBuffer::new();
+            lowerer
+                .try_lower(&kind, &mut code)
+                .expect("scalar saturation conversion must be recognized")
+                .unwrap();
+            assert_eq!(code.as_slice(), expected, "{kind:?}");
+        }
+
+        for malformed in [
+            scalar(
+                gpr(X86Reg::Rax),
+                xmm(2),
+                VecElementType::F16,
+                OpWidth::W32,
+                true,
+                false,
+            ),
+            scalar(
+                gpr(X86Reg::Rax),
+                xmm(2),
+                VecElementType::F32,
+                OpWidth::W16,
+                true,
+                false,
+            ),
+            scalar(
+                gpr(X86Reg::Rax),
+                VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+                VecElementType::F32,
+                OpWidth::W32,
+                true,
+                false,
+            ),
+            scalar(
+                xmm(1),
+                xmm(2),
+                VecElementType::F32,
+                OpWidth::W32,
+                true,
+                false,
             ),
         ] {
             let mut code = CodeBuffer::new();

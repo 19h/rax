@@ -886,6 +886,18 @@ fn clobber_gate_admits_only_architectural_native_vector_operands() {
     // The byte encoder knows the AVX10.2 MAP5 form, but runtime admission
     // remains fail-closed until an AVX10.2 host feature probe and MXCSR replay
     // contract are available.
+    let scalar_saturating_conversion = OpKind::X86ScalarFpToIntSat {
+        dst: x86(X86Reg::Rax),
+        src: xmm2,
+        elem: VecElementType::F64,
+        int_width: OpWidth::W64,
+        signed: true,
+        suppress_exceptions: true,
+    };
+    assert!(!is_x86_native_vector_op(&scalar_saturating_conversion));
+    assert!(!scalar_saturating_conversion.is_jit_safe());
+    assert!(!x86_gate(scalar_saturating_conversion));
+
     let saturating_conversion = OpKind::VCvtFpToIntSat {
         dst: zmm1,
         src: zmm2,

@@ -370,6 +370,38 @@ fn test_modrm_decode() {
     assert!(modrm.addr.as_ref().unwrap().rip_relative);
     assert_eq!(modrm.bytes_consumed, 5);
 }
+
+#[test]
+fn modrm_memory_decode_retains_apx_evex_base_and_index_high_bits() {
+    let prefix = X86Prefix {
+        evex_mem_base_high: true,
+        evex_mem_index_high: true,
+        ..X86Prefix::default()
+    };
+    // mod=01, r/m=SIB; scale=4, index=1, base=2, disp8=4.
+    let modrm = decode_modrm(&[0x44, 0x8A, 0x04], &prefix, 0).unwrap();
+    let addr = modrm.addr.as_ref().unwrap();
+    assert_eq!(addr.base, Some(18));
+    assert_eq!(addr.index, Some(17));
+    assert_eq!(addr.scale, 4);
+    assert_eq!(addr.disp, 4);
+    assert_eq!(addr.disp_size, DispSize::Disp8);
+
+    // A low SIB index field of 4 is the no-index sentinel only when every
+    // extension bit is zero. EVEX.X4 turns it into R20.
+    let prefix = X86Prefix {
+        evex_mem_index_high: true,
+        ..X86Prefix::default()
+    };
+    let modrm = decode_modrm(&[0x04, 0x65, 0x20, 0, 0, 0], &prefix, 0).unwrap();
+    let addr = modrm.addr.as_ref().unwrap();
+    assert_eq!(addr.base, None);
+    assert_eq!(addr.index, Some(20));
+    assert_eq!(addr.scale, 2);
+    assert_eq!(addr.disp, 0x20);
+    assert_eq!(addr.disp_size, DispSize::Disp32);
+}
+
 #[test]
 fn lift_complete_x86_string_opcode_and_width_inventory() {
     for (opcode, expected_kind, expected_width) in [

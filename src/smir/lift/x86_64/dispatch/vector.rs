@@ -2332,6 +2332,9 @@ impl X86_64Lifter {
                 0x6C | 0x6D if matches!(prefix.pp, X86SsePrefix::None | X86SsePrefix::OpSize) => {
                     self.lift_evex_saturating_fp_to_int(prefix, opcode, bytes, pc, ctx)
                 }
+                0x6C | 0x6D if matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne) => {
+                    self.lift_evex_scalar_saturating_fp_to_int(prefix, opcode, bytes, pc, ctx)
+                }
                 0x6E | 0x7E => self.lift_evex_word_move(prefix, opcode, bytes, pc, ctx),
                 _ => self.unsupported_evex_map_opcode(prefix.map, opcode, pc),
             },

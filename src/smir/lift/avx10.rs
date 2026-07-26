@@ -13,7 +13,8 @@
 //! - FP16: VADDPH, VMULPH, VSUBPH, VDIVPH
 //!
 //! ## AVX10.2 Instructions
-//! - Saturation conversions: packed FP16/BF16/FP32-to-I8 and FP32/FP64-to-I32/I64 forms
+//! - Saturation conversions: packed FP16/BF16/FP32-to-I8,
+//!   packed FP32/FP64-to-I32/I64, and scalar FP32/FP64-to-GPR forms
 //! - VMPSADBW
 //! - VMINMAX: VMINMAXPS, VMINMAXPD, VMINMAXSS, VMINMAXSD
 //! - Media acceleration: VPDPB*/VPDPW* variants
@@ -473,6 +474,20 @@ impl Avx10Lifter {
                 VecElementType::I64,
                 true,
             )),
+            (pp @ (2 | 3), opcode @ (0x6C | 0x6D), _) => {
+                Some(self.lift_vcvtt_scalar_fp_to_int_sat(
+                    evex,
+                    bytes,
+                    pc,
+                    ctx,
+                    if pp == 2 {
+                        VecElementType::F32
+                    } else {
+                        VecElementType::F64
+                    },
+                    opcode == 0x6D,
+                ))
+            }
             _ => None,
         }
     }

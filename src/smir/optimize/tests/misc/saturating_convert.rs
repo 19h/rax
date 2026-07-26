@@ -56,6 +56,21 @@ fn bf16_conversion(round: FpRoundMode) -> OpKind {
     }
 }
 
+fn scalar_conversion(
+    elem: VecElementType,
+    int_width: OpWidth,
+    suppress_exceptions: bool,
+) -> OpKind {
+    OpKind::X86ScalarFpToIntSat {
+        dst: VReg::virt(2),
+        src: VReg::virt(0),
+        elem,
+        int_width,
+        signed: true,
+        suppress_exceptions,
+    }
+}
+
 #[test]
 fn saturating_conversion_metadata_tracks_merge_mask_and_mxcsr_effects() {
     let merging = conversion(Some(VReg::virt(1)), false, false, VecWidth::V128);
@@ -153,4 +168,45 @@ fn dce_preserves_status_and_malformed_boundaries_but_removes_dead_sae_result() {
     bf16.set_terminator(Terminator::Return { values: vec![] });
     assert_eq!(dead_code_elimination(&mut bf16), 1);
     assert!(bf16.ops.is_empty());
+}
+
+#[test]
+fn scalar_saturation_metadata_and_dce_preserve_mxcsr_and_malformed_boundaries() {
+    let ordinary = scalar_conversion(VecElementType::F32, OpWidth::W32, false);
+    assert_eq!(ordinary.dests(), vec![VReg::virt(2)]);
+    assert_eq!(ordinary.source_vregs(), vec![VReg::virt(0)]);
+    assert!(ordinary.has_side_effects());
+    assert!(!ordinary.is_jit_safe());
+    assert!(!make_op(0, ordinary.clone()).is_jit_safe());
+
+    let sae = scalar_conversion(VecElementType::F64, OpWidth::W64, true);
+    assert!(!sae.has_side_effects());
+
+    for malformed in [
+        scalar_conversion(VecElementType::F16, OpWidth::W32, true),
+        scalar_conversion(VecElementType::F32, OpWidth::W16, true),
+    ] {
+        assert!(malformed.has_side_effects());
+    }
+
+    let mut status = SmirBlock::new(BlockId(0), 0x1000);
+    status.push_op(make_op(0, ordinary));
+    status.set_terminator(Terminator::Return { values: vec![] });
+    assert_eq!(dead_code_elimination(&mut status), 0);
+    assert_eq!(status.ops.len(), 1);
+
+    let mut dead_sae = SmirBlock::new(BlockId(0), 0x1000);
+    dead_sae.push_op(make_op(0, sae));
+    dead_sae.set_terminator(Terminator::Return { values: vec![] });
+    assert_eq!(dead_code_elimination(&mut dead_sae), 1);
+    assert!(dead_sae.ops.is_empty());
+
+    let mut malformed = SmirBlock::new(BlockId(0), 0x1000);
+    malformed.push_op(make_op(
+        0,
+        scalar_conversion(VecElementType::F16, OpWidth::W32, true),
+    ));
+    malformed.set_terminator(Terminator::Return { values: vec![] });
+    assert_eq!(dead_code_elimination(&mut malformed), 0);
+    assert_eq!(malformed.ops.len(), 1);
 }

@@ -1653,6 +1653,21 @@ pub enum OpKind {
         suppress_exceptions: bool,
     },
 
+    /// x86 AVX10.2 VCVTT{SS,SD}2{SIS,USIS} scalar saturating conversion.
+    /// The low binary32/binary64 source is truncated toward zero and converted
+    /// to a signed/unsigned 32- or 64-bit GPR result. Out-of-range inputs,
+    /// including infinities, clamp to the nearest endpoint and NaNs produce
+    /// zero. Invalid and Precision are the only SIMD floating-point exceptions;
+    /// `suppress_exceptions` records the register-only EVEX `{sae}` form.
+    X86ScalarFpToIntSat {
+        dst: VReg,
+        src: VReg,
+        elem: VecElementType,
+        int_width: OpWidth,
+        signed: bool,
+        suppress_exceptions: bool,
+    },
+
     /// x86 CVTSI2SS/CVTSI2SD and EVEX VCVT(U)SI2SS/SD/SH scalar integer
     /// conversion. `merge` supplies destination bits above the converted
     /// scalar through bit 127. `signed` selects signed or unsigned integer
@@ -4801,6 +4816,7 @@ impl OpKind {
             | OpKind::IntToFp { dst, .. }
             | OpKind::FpToInt { dst, .. }
             | OpKind::X86FpToInt { dst, .. }
+            | OpKind::X86ScalarFpToIntSat { dst, .. }
             | OpKind::X86VectorFpCompare { dst, .. }
             | OpKind::X86GetExponent { dst, .. }
             | OpKind::X86GetMantissa { dst, .. }

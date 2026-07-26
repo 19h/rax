@@ -895,6 +895,17 @@ fn rejects_x86_saturating_fp_to_int_conversion() {
     })
     .unwrap_err();
     assert!(matches!(err, LowerError::UnsupportedOp { .. }));
+
+    let err = try_lower_single_op(OpKind::X86ScalarFpToIntSat {
+        dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+        src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+        elem: VecElementType::F64,
+        int_width: OpWidth::W64,
+        signed: true,
+        suppress_exceptions: false,
+    })
+    .unwrap_err();
+    assert!(matches!(err, LowerError::UnsupportedOp { .. }));
 }
 #[test]
 fn lowers_vector_bf16_dot_product_encodings() {

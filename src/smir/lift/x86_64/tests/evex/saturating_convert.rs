@@ -506,6 +506,137 @@ fn lifts_avx10_2_saturating_conversion_memory_fault_suppression_and_tuples() {
 }
 
 #[test]
+fn lifts_avx10_2_scalar_saturation_register_width_sae_and_apx_shapes() {
+    for (bytes, dst, src, elem, int_width, signed, sae, requires_apx) in [
+        (
+            &[0x62, 0xF5, 0x7F, 0x08, 0x6D, 0xC2][..],
+            X86Reg::Rax,
+            2,
+            VecElementType::F64,
+            OpWidth::W32,
+            true,
+            false,
+            false,
+        ),
+        (
+            &[0x62, 0xF5, 0xFE, 0x18, 0x6C, 0xC2][..],
+            X86Reg::Rax,
+            2,
+            VecElementType::F32,
+            OpWidth::W64,
+            false,
+            true,
+            false,
+        ),
+        (
+            &[0x62, 0xA5, 0x7E, 0x08, 0x6C, 0xCA][..],
+            X86Reg::R17,
+            18,
+            VecElementType::F32,
+            OpWidth::W32,
+            false,
+            false,
+            true,
+        ),
+        (
+            &[0x62, 0x05, 0xFF, 0x18, 0x6C, 0xFE][..],
+            X86Reg::R31,
+            30,
+            VecElementType::F64,
+            OpWidth::W64,
+            false,
+            true,
+            true,
+        ),
+    ] {
+        let result = lift_single(bytes).unwrap();
+        assert_eq!(result.bytes_consumed, bytes.len());
+        assert_eq!(
+            result
+                .ops
+                .iter()
+                .filter(|op| matches!(op.kind, OpKind::X86RequireApx))
+                .count(),
+            usize::from(requires_apx),
+            "{bytes:02X?}"
+        );
+        assert!(matches!(
+            result.ops.last(),
+            Some(SmirOp {
+                kind: OpKind::X86ScalarFpToIntSat {
+                    dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(actual_src))),
+                    elem: actual_elem,
+                    int_width: actual_width,
+                    signed: actual_signed,
+                    suppress_exceptions: actual_sae,
+                },
+                ..
+            }) if *actual_dst == dst
+                && *actual_src == src
+                && *actual_elem == elem
+                && *actual_width == int_width
+                && *actual_signed == signed
+                && *actual_sae == sae
+        ));
+    }
+}
+
+#[test]
+fn lifts_avx10_2_scalar_saturation_memory_tuples_and_apx_addresses() {
+    let scalar = lift_single(&[0x62, 0xF5, 0x7F, 0x08, 0x6D, 0x40, 0x7F]).unwrap();
+    assert!(scalar.ops.iter().any(|op| matches!(
+        op.kind,
+        OpKind::Load {
+            addr: Address::BaseOffset {
+                base: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                offset: 1016,
+                disp_size: DispSize::Disp8,
+            },
+            width: MemWidth::B8,
+            ..
+        }
+    )));
+    assert!(
+        !scalar
+            .ops
+            .iter()
+            .any(|op| matches!(op.kind, OpKind::X86RequireApx))
+    );
+
+    // LLVM 23: VCVTTSS2USIS r31d, dword ptr [r18 + 4*r17 + 16].
+    let extended = lift_single(&[0x62, 0x6D, 0x7A, 0x08, 0x6C, 0x7C, 0x8A, 0x04]).unwrap();
+    assert!(matches!(
+        extended.ops.first().map(|op| &op.kind),
+        Some(OpKind::X86RequireApx)
+    ));
+    assert!(extended.ops.iter().any(|op| matches!(
+        op.kind,
+        OpKind::Load {
+            addr: Address::BaseIndexScale {
+                base: Some(VReg::Arch(ArchReg::X86(X86Reg::R18))),
+                index: VReg::Arch(ArchReg::X86(X86Reg::R17)),
+                scale: 4,
+                disp: 16,
+                disp_size: DispSize::Disp8,
+            },
+            width: MemWidth::B4,
+            ..
+        }
+    )));
+    assert!(matches!(
+        extended.ops.last().map(|op| &op.kind),
+        Some(OpKind::X86ScalarFpToIntSat {
+            dst: VReg::Arch(ArchReg::X86(X86Reg::R31)),
+            elem: VecElementType::F32,
+            int_width: OpWidth::W32,
+            signed: false,
+            ..
+        })
+    ));
+}
+
+#[test]
 fn rejects_reserved_avx10_2_saturating_conversion_encodings() {
     for bytes in [
         &[0x62, 0xF5, 0x75, 0x48, 0x68, 0xCA][..], // EVEX.vvvv
@@ -523,9 +654,20 @@ fn rejects_reserved_avx10_2_saturating_conversion_encodings() {
         );
     }
 
-    // F3 MAP5 6D is a distinct AVX10.2 scalar conversion family.
-    assert!(matches!(
-        lift_single(&[0x62, 0xF5, 0x7E, 0x08, 0x6D, 0xCA]),
-        Err(LiftError::Unsupported { .. })
-    ));
+    for bytes in [
+        &[0x62, 0xF5, 0x76, 0x08, 0x6D, 0xCA][..], // EVEX.vvvv
+        &[0x62, 0xF5, 0x7E, 0x00, 0x6D, 0xCA][..], // EVEX.V'
+        &[0x62, 0xF5, 0x7E, 0x09, 0x6D, 0xCA][..], // writemask
+        &[0x62, 0xF5, 0x7E, 0x88, 0x6D, 0xCA][..], // zeroing
+        &[0x62, 0xF5, 0x7E, 0x18, 0x6D, 0x00][..], // memory SAE
+        &[0x62, 0xF5, 0x7E, 0x38, 0x6D, 0xCA][..], // SAE with L'L=1
+    ] {
+        assert!(
+            matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
+            "reserved scalar saturation-conversion encoding accepted: {bytes:02X?}"
+        );
+    }
+
+    // L'L is ignored when EVEX.b=0.
+    assert!(lift_single(&[0x62, 0xF5, 0x7E, 0x68, 0x6D, 0xCA]).is_ok());
 }

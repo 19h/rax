@@ -4133,6 +4133,12 @@ impl Aarch64Lowerer {
             OpKind::VCvtBF16ToFP32 { dst, src, width } => {
                 self.lower_vcvt_bf16_to_fp32(*dst, *src, *width)
             }
+            OpKind::X86ScalarFpToIntSat { .. } => {
+                Err(LowerError::UnsupportedOp {
+                    op: "x86 AVX10.2 scalar saturating conversion requires MXCSR and x86 GPR semantics"
+                        .into(),
+                })
+            }
             OpKind::VCvtFpToIntSat { .. } => Err(LowerError::UnsupportedOp {
                 op: "x86 AVX10.2 saturating conversion requires MXCSR, opmask, and x86 lane-layout semantics"
                     .into(),
