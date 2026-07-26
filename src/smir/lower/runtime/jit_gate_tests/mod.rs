@@ -42,6 +42,8 @@ mod evex_fp16_scalar_replay;
 #[cfg(test)]
 mod evex_fp16_widen_replay;
 #[cfg(test)]
+mod evex_fp32_fp64_convert_replay;
+#[cfg(test)]
 mod evex_fp32_fp64_flag_compare_replay;
 #[cfg(test)]
 mod evex_fp_class_replay;

@@ -32,6 +32,8 @@ mod vector;
 pub(crate) use vector::*;
 mod vector_fp_flag_compare;
 pub(crate) use vector_fp_flag_compare::*;
+mod vector_fp_precision_convert;
+pub(crate) use vector_fp_precision_convert::*;
 mod vector_map0f38;
 pub(crate) use vector_map0f38::*;
 mod vector_map0f3a;

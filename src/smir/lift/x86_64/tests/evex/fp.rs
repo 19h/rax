@@ -590,7 +590,7 @@ fn lift_evex_packed_fp_arithmetic_embedded_control_is_exact() {
 }
 #[test]
 fn lift_evex_packed_fp_precision_masks_broadcast_rounding_and_high_registers() {
-    for (bytes, dst, src, mask, from, to, lanes, dst_width, zeroing, round) in [
+    for (bytes, dst, src, mask, from, to, lanes, dst_width, zeroing, round, suppress_exceptions) in [
         (
             &[0x62, 0xF1, 0x7C, 0xC9, 0x5A, 0xC1][..],
             X86Reg::Zmm(0),
@@ -602,6 +602,7 @@ fn lift_evex_packed_fp_precision_masks_broadcast_rounding_and_high_registers() {
             VecWidth::V512,
             true,
             FpRoundMode::Dynamic,
+            false,
         ),
         (
             &[0x62, 0xF1, 0xFD, 0xCC, 0x5A, 0xEE][..],
@@ -614,6 +615,7 @@ fn lift_evex_packed_fp_precision_masks_broadcast_rounding_and_high_registers() {
             VecWidth::V256,
             true,
             FpRoundMode::Dynamic,
+            false,
         ),
         (
             &[0x62, 0xA1, 0x7C, 0x4B, 0x5A, 0xD1][..],
@@ -626,6 +628,7 @@ fn lift_evex_packed_fp_precision_masks_broadcast_rounding_and_high_registers() {
             VecWidth::V512,
             false,
             FpRoundMode::Dynamic,
+            false,
         ),
         (
             &[0x62, 0xA1, 0xFD, 0xCD, 0x5A, 0xDC][..],
@@ -638,6 +641,7 @@ fn lift_evex_packed_fp_precision_masks_broadcast_rounding_and_high_registers() {
             VecWidth::V256,
             true,
             FpRoundMode::Dynamic,
+            false,
         ),
         (
             &[0x62, 0xF1, 0xFD, 0x39, 0x5A, 0xC1][..],
@@ -650,6 +654,7 @@ fn lift_evex_packed_fp_precision_masks_broadcast_rounding_and_high_registers() {
             VecWidth::V256,
             false,
             FpRoundMode::RoundDown,
+            true,
         ),
     ] {
         let result = lift_single(bytes).unwrap();
@@ -672,7 +677,28 @@ fn lift_evex_packed_fp_precision_masks_broadcast_rounding_and_high_registers() {
                 && actual_from == from && actual_to == to && actual_lanes == lanes
                 && actual_width == dst_width && actual_zeroing == zeroing
                 && actual_round == round
-                && actual_suppress == (round != FpRoundMode::Dynamic)
+                && actual_suppress == suppress_exceptions
+        ));
+    }
+
+    // VCVTPS2PD is an exact widening conversion: EVEX.b selects SAE and a
+    // 512-bit destination, while all four EVEX.L'L encodings are ignored.
+    for byte4 in [0x19, 0x39, 0x59, 0x79] {
+        let result = lift_single(&[0x62, 0xF1, 0x7C, byte4, 0x5A, 0xC1]).unwrap();
+        assert!(matches!(
+            result.ops.last().unwrap().kind,
+            OpKind::X86PackedFpConvert {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(1)))),
+                from: VecElementType::F32,
+                to: VecElementType::F64,
+                lanes: 8,
+                dst_width: VecWidth::V512,
+                round: FpRoundMode::Dynamic,
+                suppress_exceptions: true,
+                ..
+            }
         ));
     }
 
@@ -741,8 +767,7 @@ fn lift_evex_packed_fp_precision_masks_broadcast_rounding_and_high_registers() {
         &[0x62, 0xF1, 0x7C, 0xC8, 0x5A, 0xC1][..], // {z} with k0
         &[0x62, 0xF1, 0xFC, 0x48, 0x5A, 0xC1][..], // VCVTPS2PD W=1
         &[0x62, 0xF1, 0x7D, 0x48, 0x5A, 0xC1][..], // VCVTPD2PS W=0
-        &[0x62, 0xF1, 0x7C, 0x58, 0x5A, 0xC1][..], // widening EVEX.b reg
-        &[0x62, 0xF1, 0x7C, 0x68, 0x5A, 0xC1][..], // reserved EVEX.L'L=3
+        &[0x62, 0xF1, 0x7C, 0x68, 0x5A, 0xC1][..], // EVEX.b=0 reserves L'L=3
     ] {
         assert!(matches!(
             lift_single(bytes),

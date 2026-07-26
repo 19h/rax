@@ -3,6 +3,7 @@ use super::X86InstructionBytes;
 mod chunk;
 mod fp16_narrow;
 mod fp16_widen;
+mod fp32_fp64_convert;
 mod fp_arithmetic;
 mod fp_class;
 mod fp_compare;

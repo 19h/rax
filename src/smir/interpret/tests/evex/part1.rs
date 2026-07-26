@@ -1892,6 +1892,57 @@ fn lifted_evex_packed_fp_convert_honors_masks_high_regs_and_embedded_rounding() 
         }
     }
 
+    // VCVTPS2PD is exact: register-source EVEX.b selects SAE and a 512-bit
+    // result, while all four L'L encodings are ignored rather than selecting
+    // rounding control. Unmasked invalid/denormal exceptions therefore neither
+    // trap nor update MXCSR.
+    let source: [u32; 8] = [
+        0x7F80_0001,
+        0x0000_0001,
+        0xFF80_0001,
+        0x8000_0001,
+        0x3F80_0000,
+        0xC000_0000,
+        0x7F80_0000,
+        0xFF80_0000,
+    ];
+    let mut first_result = None;
+    for p2 in [0x19, 0x39, 0x59, 0x79] {
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [sentinel; 16];
+            for (lane, bits) in source.into_iter().enumerate() {
+                SmirInterpreter::set_lane(&mut x86.xmm[1], lane as u8, 32, u64::from(bits));
+            }
+            x86.k[1] = 0xFF;
+            x86.mxcsr = 0x1F80 & !((1 << 7) | (1 << 8));
+        }
+        let mxcsr_before = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.mxcsr,
+            _ => unreachable!(),
+        };
+        let exit = execute_lifted_x86(&[0x62, 0xF1, 0x7C, p2, 0x5A, 0xC1], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mxcsr, mxcsr_before, "SAE status for p2={p2:#04X}");
+            assert_eq!(
+                x86.xmm[0][1],
+                f64::from(f32::from_bits(1)).to_bits(),
+                "exact denormal widening for p2={p2:#04X}"
+            );
+            assert_eq!(
+                x86.xmm[0][0] & 0x7FF8_0000_0000_0000,
+                0x7FF8_0000_0000_0000,
+                "SNaN quieting for p2={p2:#04X}"
+            );
+            assert!(x86.xmm[0][8..].iter().all(|word| *word == 0));
+            if let Some(expected) = first_result {
+                assert_eq!(x86.xmm[0], expected, "L'L must be ignored for p2={p2:#04X}");
+            } else {
+                first_result = Some(x86.xmm[0]);
+            }
+        }
+    }
+
     ctx.flags.materialize_all();
     assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
 }
