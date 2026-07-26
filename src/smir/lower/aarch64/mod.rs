@@ -29,6 +29,8 @@ mod bit;
 pub use bit::*;
 mod branch;
 pub use branch::*;
+mod carry_rotate;
+pub use carry_rotate::*;
 mod fence;
 pub use fence::*;
 mod flags;

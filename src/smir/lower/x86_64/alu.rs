@@ -154,15 +154,40 @@ impl X86_64Lowerer {
                     return Ok(());
                 }
 
+                if amt_reg != PhysReg::Rcx {
+                    if preserve_flags {
+                        self.code.emit_u8(0x9C); // pushfq
+                    }
+                    {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        // CL is the only architectural variable-count input.
+                        // Save both guest RCX and the count before copying the
+                        // source, because the destination may alias the count
+                        // and the source may alias RCX.
+                        emitter.emit_push(PhysReg::Rcx);
+                        emitter.emit_push(amt_reg);
+                        if dst_reg != src_reg {
+                            emitter.emit_mov_rr(dst_reg, src_reg, width);
+                        }
+                        emitter.emit_pop(PhysReg::Rcx);
+                    }
+                    self.emit_shift_reg_cl(kind, dst_reg, width);
+                    {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        // POP preserves the native result flags.
+                        emitter.emit_pop(PhysReg::Rcx);
+                    }
+                    if preserve_flags {
+                        self.code.emit_u8(0x9D); // popfq
+                    }
+                    return Ok(());
+                }
+
                 if dst_reg != src_reg {
                     let mut emitter = X86Emitter::new(&mut self.code);
                     emitter.emit_mov_rr(dst_reg, src_reg, width);
                 }
 
-                if amt_reg != PhysReg::Rcx {
-                    let mut emitter = X86Emitter::new(&mut self.code);
-                    emitter.emit_mov_rr(PhysReg::Rcx, amt_reg, OpWidth::W8);
-                }
                 if preserve_flags {
                     self.code.emit_u8(0x9C); // pushfq
                 }

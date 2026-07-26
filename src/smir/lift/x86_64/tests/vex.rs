@@ -432,7 +432,7 @@ fn lift_vex_bmi2_shift_memory_source_like_llvm() {
         //       => c4 82 31 f7 44 9a 20
         let result = lift_single(bytes).unwrap();
         assert_eq!(result.bytes_consumed, bytes.len(), "{expected_op}");
-        assert_eq!(result.ops.len(), 3, "{expected_op}");
+        assert_eq!(result.ops.len(), 2, "{expected_op}");
         let src = match &result.ops[0].kind {
             OpKind::Load {
                 dst,

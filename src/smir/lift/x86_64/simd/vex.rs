@@ -852,20 +852,11 @@ impl X86_64Lifter {
 
         let dst = self.gpr(modrm.reg);
         let count = self.gpr(prefix.vvvv);
-        let masked_count = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::And {
-                dst: masked_count,
-                src1: count,
-                src2: SrcOperand::Imm((width.bits() - 1) as i64),
-                width,
-                flags: FlagUpdate::None,
-            },
-        ));
-
-        let amount = SrcOperand::Reg(masked_count);
+        // Scalar SMIR shifts apply the source-architecture count mask before
+        // shifting. Keep the architectural count operand intact so the
+        // state-backed native path can stage it directly without a redundant
+        // virtual-register mask.
+        let amount = SrcOperand::Reg(count);
         let op = match prefix.pp {
             X86SsePrefix::Rep => OpKind::Sar {
                 dst,

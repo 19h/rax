@@ -469,7 +469,7 @@ fn assert_vex_bmi2_shift(
 ) {
     let result = lift_single(bytes).unwrap();
     assert_eq!(result.bytes_consumed, bytes.len(), "{expected_op}");
-    assert_eq!(result.ops.len(), 2, "{expected_op}");
+    assert_eq!(result.ops.len(), 1, "{expected_op}");
     assert_vex_bmi2_shift_ops(&result.ops, 0, expected_op, dst, src, count, width);
 }
 
@@ -482,22 +482,7 @@ fn assert_vex_bmi2_shift_ops(
     count: VReg,
     width: OpWidth,
 ) {
-    let masked_count = match &ops[start].kind {
-        OpKind::And {
-            dst,
-            src1,
-            src2: SrcOperand::Imm(mask),
-            width: got_width,
-            flags: FlagUpdate::None,
-        } => {
-            assert_eq!(*src1, count, "{expected_op}");
-            assert_eq!(*mask, (width.bits() - 1) as i64, "{expected_op}");
-            assert_eq!(*got_width, width, "{expected_op}");
-            *dst
-        }
-        other => panic!("expected VEX BMI2 {expected_op} count mask, got {other:?}"),
-    };
-    match (&ops[start + 1].kind, expected_op) {
+    match (&ops[start].kind, expected_op) {
         (
             OpKind::Sar {
                 dst: got_dst,
@@ -530,7 +515,7 @@ fn assert_vex_bmi2_shift_ops(
         ) => {
             assert_eq!(*got_dst, dst, "{expected_op}");
             assert_eq!(*got_src, src, "{expected_op}");
-            assert_eq!(*amount, masked_count, "{expected_op}");
+            assert_eq!(*amount, count, "{expected_op}");
             assert_eq!(*got_width, width, "{expected_op}");
         }
         (other, _) => panic!("expected VEX BMI2 {expected_op}, got {other:?}"),
