@@ -174,6 +174,8 @@ mod vector;
 #[cfg(test)]
 mod vex_alignr_replay;
 #[cfg(test)]
+mod vex_apx_mulx;
+#[cfg(test)]
 mod vex_bmi2_shift;
 #[cfg(test)]
 mod vex_cross_lane_128_replay;

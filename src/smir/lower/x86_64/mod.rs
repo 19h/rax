@@ -138,6 +138,8 @@ mod sse4a;
 pub use sse4a::*;
 mod state;
 pub use state::*;
+mod state_mulx;
+pub use state_mulx::*;
 mod state_address;
 pub use state_address::*;
 mod vector_helpers;

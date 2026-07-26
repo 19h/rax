@@ -551,6 +551,7 @@ pub(crate) fn block_is_clobber_safe(
         let state_adx_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_adx_valid(op);
         let state_pdep_pext_ok =
             crate::smir::lower::x86_64::x86_state_backed_gpr_pdep_pext_valid(op);
+        let state_mulx_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_mulx_valid(op);
         let state_bswap_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_bswap_valid(op);
         let state_xchg_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_xchg_valid(op);
         let fsgsbase_ok = crate::smir::lower::x86_64::x86_fsgsbase_shape_valid(&op.kind);
@@ -718,6 +719,7 @@ pub(crate) fn block_is_clobber_safe(
             || state_bls_ok
             || state_adx_ok
             || state_pdep_pext_ok
+            || state_mulx_ok
             || state_bswap_ok
             || state_xchg_ok
             || waitpkg_ok
@@ -771,6 +773,8 @@ pub(crate) fn block_is_clobber_safe(
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_adx_candidate(op) && !state_adx_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_pdep_pext_candidate(op)
                 && !state_pdep_pext_ok)
+            || (crate::smir::lower::x86_64::x86_state_backed_gpr_mulx_candidate(op)
+                && !state_mulx_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_bswap_candidate(op)
                 && !state_bswap_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_xchg_candidate(op)
@@ -830,7 +834,10 @@ pub(crate) fn block_is_clobber_safe(
         {
             return false;
         }
-        if matches!(op.x86_hint, Some(X86OpHint::Mulx)) && !x86_mulx_shape_valid(op) {
+        if matches!(op.x86_hint, Some(X86OpHint::Mulx))
+            && !x86_mulx_shape_valid(op)
+            && !state_mulx_ok
+        {
             return false;
         }
         if matches!(
@@ -1117,7 +1124,10 @@ pub(crate) fn block_is_clobber_safe(
         {
             return false;
         }
-        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/INC/DEC/ROL/ROR/RCL/RCR/SHL/SHR/SAR/SHLD/SHRD (including APX NDD)/count/bit-scan/bit-test/CRC32/BMI/ADX/PDEP/PEXT/BSWAP/XCHG/ADD/SUB reads/writes are state-backed.
+        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/INC/DEC/
+        // ROL/ROR/RCL/RCR/SHL/SHR/SAR/SHLD/SHRD (including APX NDD)/count/
+        // bit-scan/bit-test/CRC32/BMI/ADX/PDEP/PEXT/MULX/BSWAP/XCHG/ADD/SUB
+        // reads/writes are state-backed.
         // Other writes are not modeled and bail. A read is additionally valid
         // as an operand of a mem-JIT Load/Store (an address base/index, or a stored value): the MMU
         // helper reads the value from the GuestRegs struct — the current guest

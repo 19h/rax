@@ -653,6 +653,18 @@ impl X86_64Lowerer {
                         });
                     };
 
+                    if x86_state_backed_gpr_mulx_candidate(op) {
+                        if !x86_state_backed_gpr_mulx_valid(op) {
+                            return Err(LowerError::InvalidOperand {
+                                op: "state-backed MULX".to_string(),
+                                operand: format!(
+                                    "invalid x86 GPR operands {dst_lo:?}, {dst_hi:?}, {src2:?}"
+                                ),
+                            });
+                        }
+                        return self.lower_state_backed_gpr_mulx(*dst_lo, *dst_hi, *src2, *width);
+                    }
+
                     let dst_lo_reg = self.get_dst_reg(*dst_lo)?;
                     let dst_hi_reg = self.get_dst_reg(*dst_hi)?;
                     let src2_reg = self.get_reg(*src2)?;

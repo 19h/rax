@@ -172,7 +172,7 @@ pub(crate) fn x86_aarch64_block_is_clobber_safe(
         if matches!(op.x86_hint, Some(X86OpHint::LegacyHighByteReg)) {
             return false;
         }
-        if matches!(op.x86_hint, Some(X86OpHint::Mulx)) && !x86_mulx_shape_valid(op) {
+        if matches!(op.x86_hint, Some(X86OpHint::Mulx)) && !x86_mulx_arch_shape_valid(op) {
             return false;
         }
         if matches!(

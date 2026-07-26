@@ -119,10 +119,31 @@ pub(crate) fn x86_bswap_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
         } if native_gpr(dst) && native_gpr(src)
     )
 }
-pub(crate) fn x86_mulx_shape_valid(op: &crate::smir::ir::ops::SmirOp) -> bool {
-    use crate::smir::ir::flags::{FlagSet, FlagUpdate};
+fn x86_mulx_shape_valid_for(
+    op: &crate::smir::ir::ops::SmirOp,
+    valid_gpr: impl Fn(&crate::smir::ir::types::VReg) -> bool,
+) -> bool {
+    use crate::smir::ir::flags::FlagUpdate;
     use crate::smir::ir::ops::{OpKind, X86OpHint};
     use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg, X86Reg};
+
+    matches!(op.x86_hint, Some(X86OpHint::Mulx))
+        && matches!(
+                &op.kind,
+                OpKind::MulU {
+                    dst_lo,
+                    dst_hi: Some(dst_hi),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Rdx)),
+                    src2: SrcOperand::Reg(src2),
+                    width: OpWidth::W32 | OpWidth::W64,
+                    flags: FlagUpdate::None,
+                } if valid_gpr(dst_lo) && valid_gpr(dst_hi) && valid_gpr(src2)
+        )
+}
+
+/// Validate a `MULX` that can use the x86-64 native identity GPR map directly.
+pub(crate) fn x86_mulx_shape_valid(op: &crate::smir::ir::ops::SmirOp) -> bool {
+    use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
 
     let native_gpr = |reg: &VReg| {
         matches!(
@@ -146,16 +167,17 @@ pub(crate) fn x86_mulx_shape_valid(op: &crate::smir::ir::ops::SmirOp) -> bool {
         )
     };
 
-    matches!(op.x86_hint, Some(X86OpHint::Mulx))
-        && matches!(
-            &op.kind,
-            OpKind::MulU {
-                dst_lo,
-                dst_hi: Some(dst_hi),
-                src1: VReg::Arch(ArchReg::X86(X86Reg::Rdx)),
-                src2: SrcOperand::Reg(src2),
-                width: OpWidth::W32 | OpWidth::W64,
-                flags: FlagUpdate::None,
-            } if native_gpr(dst_lo) && native_gpr(dst_hi) && native_gpr(src2)
-        )
+    x86_mulx_shape_valid_for(op, native_gpr)
+}
+
+/// Validate architectural `MULX` operands independently of a host register
+/// map. The x86-64 gate applies its stricter identity/state-backed split,
+/// whereas the AArch64 cross-lowerer can identity-map all 16 legacy GPRs.
+pub(crate) fn x86_mulx_arch_shape_valid(op: &crate::smir::ir::ops::SmirOp) -> bool {
+    use crate::smir::ir::types::{ArchReg, VReg};
+
+    let arch_gpr =
+        |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some());
+
+    x86_mulx_shape_valid_for(op, arch_gpr)
 }
