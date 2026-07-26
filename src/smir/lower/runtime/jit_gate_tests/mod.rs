@@ -132,6 +132,8 @@ mod maskmovdqu;
 #[cfg(test)]
 mod mem_rmw_flagless;
 #[cfg(test)]
+mod mem_state_compare;
+#[cfg(test)]
 mod mmx;
 #[cfg(test)]
 mod mmx_maskmov;

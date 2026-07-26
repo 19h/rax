@@ -47,6 +47,8 @@ mod jit;
 mod lmsw;
 #[cfg(all(test, feature = "smir-jit"))]
 mod mem_rmw_flagless;
+#[cfg(all(test, feature = "smir-jit"))]
+mod mem_state_compare;
 #[cfg(test)]
 mod memory;
 #[cfg(test)]

@@ -295,6 +295,16 @@ pub(crate) fn block_is_clobber_safe(
             i += consumed;
             continue;
         }
+        if let Some(consumed) = x86_jit_mem_state_compare_sequence_len(
+            block,
+            i,
+            allow_mem,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += consumed;
+            continue;
+        }
         if let Some(consumed) = x86_jit_mem_bit_update_rmw_sequence_len(
             block,
             i,

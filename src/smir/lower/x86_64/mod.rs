@@ -122,6 +122,8 @@ mod jit_memory_address;
 pub use jit_memory_address::*;
 mod lmsw;
 pub use lmsw::*;
+mod mem_state_compare;
+pub use mem_state_compare::*;
 mod memory;
 pub use memory::*;
 #[cfg(feature = "smir-jit")]

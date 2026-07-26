@@ -17,6 +17,8 @@ mod jit_shift;
 pub use jit_shift::*;
 mod maskmov;
 pub use maskmov::*;
+mod mem_state_compare;
+pub use mem_state_compare::*;
 mod misc;
 pub use misc::*;
 mod movbe;
