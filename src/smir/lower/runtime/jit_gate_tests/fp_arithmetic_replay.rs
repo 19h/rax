@@ -829,12 +829,14 @@ fn execute_native(
     bytes: &[u8],
     initial: &ArithmeticState,
     level: crate::smir::optimize::OptLevel,
+    avx_ymm16_vector_state: bool,
 ) -> ArithmeticState {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
     let function = optimized_function(bytes, level, false);
     let mut lowerer = X86_64Lowerer::new();
+    lowerer.set_avx_ymm16_vector_state(avx_ymm16_vector_state);
     let lowered = lowerer
         .lower_function(&function)
         .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
@@ -846,7 +848,11 @@ fn execute_native(
     let mut registers = GuestRegs {
         gpr: initial.gprs,
         rflags: initial.rflags,
-        vector_active: 1,
+        vector_active: if avx_ymm16_vector_state {
+            X86_VECTOR_STATE_YMM16
+        } else {
+            X86_VECTOR_STATE_K64
+        },
         k: initial.masks,
         mxcsr: initial.mxcsr,
         ..GuestRegs::default()
@@ -891,7 +897,7 @@ fn native_vminps_daz_matches_interpreter_without_requiring_avx512() {
         crate::smir::optimize::OptLevel::O0,
         crate::smir::optimize::OptLevel::O2,
     ] {
-        let native = execute_native(&bytes, &initial, level);
+        let native = execute_native(&bytes, &initial, level, true);
         let interpreted = interpret(&bytes, &initial, level);
         assert_eq!(native, interpreted, "{level:?} {case:?} {bytes:02X?}");
         assert_eq!(native.vectors[1][0], 0x3F80_0000_8000_0000);
@@ -933,7 +939,7 @@ fn execute_native_case_range(cases: &[NativeCase], range: std::ops::Range<usize>
             crate::smir::optimize::OptLevel::O2
         };
         assert_eq!(
-            execute_native(&bytes, &initial, level),
+            execute_native(&bytes, &initial, level, false),
             interpret(&bytes, &initial, level),
             "{level:?} {case:?} {bytes:02X?}"
         );
