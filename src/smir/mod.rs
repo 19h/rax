@@ -80,7 +80,7 @@ pub use ir::memory::{
     ExclusiveMonitor, FlatMemory, MemoryError, MemoryReader, SmirMemory, bytes_to_u64,
     check_alignment, u64_to_bytes,
 };
-pub use ir::ops::{OpKind, SmirOp};
+pub use ir::ops::{OpKind, SmirOp, X86SatFpFormat};
 pub use ir::types::{
     Address, ArchReg, ArmReg, AtomicOp, Avx10DotProductKind, Avx10Encoding, Avx10FP16Op, BlockId,
     BlockIdAllocator, Condition, Endian, ExtendOp, FenceKind, FpPrecision, FpRoundMode, FunctionId,

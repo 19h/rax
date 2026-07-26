@@ -13,12 +13,12 @@
 //! - FP16: VADDPH, VMULPH, VSUBPH, VDIVPH
 //!
 //! ## AVX10.2 Instructions
-//! - Saturation conversions: VCVT[T]PS2I[U]BS and packed FP32/FP64-to-I32/I64 forms
+//! - Saturation conversions: packed FP16/BF16/FP32-to-I8 and FP32/FP64-to-I32/I64 forms
 //! - VMPSADBW
 //! - VMINMAX: VMINMAXPS, VMINMAXPD, VMINMAXSS, VMINMAXSD
 //! - Media acceleration: VPDPB*/VPDPW* variants
 
-use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86SsePrefix, X86VecMap};
+use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86SatFpFormat, X86SsePrefix, X86VecMap};
 use crate::smir::ir::types::*;
 use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult};
 
@@ -345,16 +345,68 @@ impl Avx10Lifter {
             (0, 0x59, false) => Some(self.lift_vfp16_arith(evex, bytes, pc, ctx, Avx10FP16Op::Mul)),
             (0, 0x5C, false) => Some(self.lift_vfp16_arith(evex, bytes, pc, ctx, Avx10FP16Op::Sub)),
             (0, 0x5E, false) => Some(self.lift_vfp16_arith(evex, bytes, pc, ctx, Avx10FP16Op::Div)),
-            (1, 0x68, false) => Some(self.lift_vcvtps2ibs(evex, bytes, pc, ctx, true, true)),
-            (1, 0x69, false) => Some(self.lift_vcvtps2ibs(evex, bytes, pc, ctx, true, false)),
-            (1, 0x6A, false) => Some(self.lift_vcvtps2ibs(evex, bytes, pc, ctx, false, true)),
-            (1, 0x6B, false) => Some(self.lift_vcvtps2ibs(evex, bytes, pc, ctx, false, false)),
+            (pp @ (0 | 1 | 3), 0x68, false) => Some(self.lift_vcvt_fp_to_i8_sat(
+                evex,
+                bytes,
+                pc,
+                ctx,
+                match pp {
+                    0 => X86SatFpFormat::F16,
+                    1 => X86SatFpFormat::F32,
+                    3 => X86SatFpFormat::BF16,
+                    _ => unreachable!("match pattern constrains mandatory prefix"),
+                },
+                true,
+                true,
+            )),
+            (pp @ (0 | 1 | 3), 0x69, false) => Some(self.lift_vcvt_fp_to_i8_sat(
+                evex,
+                bytes,
+                pc,
+                ctx,
+                match pp {
+                    0 => X86SatFpFormat::F16,
+                    1 => X86SatFpFormat::F32,
+                    3 => X86SatFpFormat::BF16,
+                    _ => unreachable!("match pattern constrains mandatory prefix"),
+                },
+                true,
+                false,
+            )),
+            (pp @ (0 | 1 | 3), 0x6A, false) => Some(self.lift_vcvt_fp_to_i8_sat(
+                evex,
+                bytes,
+                pc,
+                ctx,
+                match pp {
+                    0 => X86SatFpFormat::F16,
+                    1 => X86SatFpFormat::F32,
+                    3 => X86SatFpFormat::BF16,
+                    _ => unreachable!("match pattern constrains mandatory prefix"),
+                },
+                false,
+                true,
+            )),
+            (pp @ (0 | 1 | 3), 0x6B, false) => Some(self.lift_vcvt_fp_to_i8_sat(
+                evex,
+                bytes,
+                pc,
+                ctx,
+                match pp {
+                    0 => X86SatFpFormat::F16,
+                    1 => X86SatFpFormat::F32,
+                    3 => X86SatFpFormat::BF16,
+                    _ => unreachable!("match pattern constrains mandatory prefix"),
+                },
+                false,
+                false,
+            )),
             (0, 0x6C, false) => Some(self.lift_vcvtt_fp_to_int_sat(
                 evex,
                 bytes,
                 pc,
                 ctx,
-                VecElementType::F32,
+                X86SatFpFormat::F32,
                 VecElementType::I32,
                 false,
             )),
@@ -363,7 +415,7 @@ impl Avx10Lifter {
                 bytes,
                 pc,
                 ctx,
-                VecElementType::F32,
+                X86SatFpFormat::F32,
                 VecElementType::I32,
                 true,
             )),
@@ -372,7 +424,7 @@ impl Avx10Lifter {
                 bytes,
                 pc,
                 ctx,
-                VecElementType::F32,
+                X86SatFpFormat::F32,
                 VecElementType::I64,
                 false,
             )),
@@ -381,7 +433,7 @@ impl Avx10Lifter {
                 bytes,
                 pc,
                 ctx,
-                VecElementType::F32,
+                X86SatFpFormat::F32,
                 VecElementType::I64,
                 true,
             )),
@@ -390,7 +442,7 @@ impl Avx10Lifter {
                 bytes,
                 pc,
                 ctx,
-                VecElementType::F64,
+                X86SatFpFormat::F64,
                 VecElementType::I32,
                 false,
             )),
@@ -399,7 +451,7 @@ impl Avx10Lifter {
                 bytes,
                 pc,
                 ctx,
-                VecElementType::F64,
+                X86SatFpFormat::F64,
                 VecElementType::I32,
                 true,
             )),
@@ -408,7 +460,7 @@ impl Avx10Lifter {
                 bytes,
                 pc,
                 ctx,
-                VecElementType::F64,
+                X86SatFpFormat::F64,
                 VecElementType::I64,
                 false,
             )),
@@ -417,7 +469,7 @@ impl Avx10Lifter {
                 bytes,
                 pc,
                 ctx,
-                VecElementType::F64,
+                X86SatFpFormat::F64,
                 VecElementType::I64,
                 true,
             )),
@@ -1358,7 +1410,7 @@ mod tests {
                     dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
                     src: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
                     mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(3)))),
-                    fp_elem: VecElementType::F64,
+                    fp_elem: X86SatFpFormat::F64,
                     int_elem: VecElementType::I64,
                     width: VecWidth::V512,
                     signed: false,
@@ -1371,24 +1423,24 @@ mod tests {
             }]
         ));
 
-        for (bytes, fp_elem, int_elem, width, signed) in [
+        for (bytes, fp_format, int_elem, width, signed) in [
             (
                 &[0x62, 0xF5, 0xFC, 0x08, 0x6D, 0xCA][..],
-                VecElementType::F64,
+                X86SatFpFormat::F64,
                 VecElementType::I32,
                 VecWidth::V64,
                 true,
             ),
             (
                 &[0x62, 0xF5, 0x7C, 0x48, 0x6C, 0xCA][..],
-                VecElementType::F32,
+                X86SatFpFormat::F32,
                 VecElementType::I32,
                 VecWidth::V512,
                 false,
             ),
             (
                 &[0x62, 0xF5, 0x7D, 0x28, 0x6D, 0xCA][..],
-                VecElementType::F32,
+                X86SatFpFormat::F32,
                 VecElementType::I64,
                 VecWidth::V256,
                 true,
@@ -1410,12 +1462,55 @@ mod tests {
                         ..
                     },
                     ..
-                }] if *actual_fp == fp_elem
+                }] if *actual_fp == fp_format
                     && *actual_int == int_elem
                     && *actual_width == width
                     && *actual_signed == signed
             ));
         }
+
+        for (bytes, fp_format, truncate, round) in [
+            (
+                &[0x62, 0xF5, 0x7C, 0x08, 0x68, 0xCA][..],
+                X86SatFpFormat::F16,
+                true,
+                FpRoundMode::RoundTowardZero,
+            ),
+            (
+                &[0x62, 0xF5, 0x7F, 0x28, 0x6B, 0xCA][..],
+                X86SatFpFormat::BF16,
+                false,
+                FpRoundMode::RoundNearest,
+            ),
+        ] {
+            let result = lifter
+                .try_lift(bytes, 0x1000, &mut ctx)
+                .expect("word-source saturation conversion must dispatch")
+                .unwrap();
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::VCvtFpToIntSat {
+                        fp_elem: actual_format,
+                        int_elem: VecElementType::I8,
+                        truncate: actual_truncate,
+                        round: actual_round,
+                        suppress_exceptions: false,
+                        ..
+                    },
+                    ..
+                }] if *actual_format == fp_format
+                    && *actual_truncate == truncate
+                    && *actual_round == round
+            ));
+        }
+
+        assert!(matches!(
+            lifter
+                .try_lift(&[0x62, 0xF5, 0x7F, 0x18, 0x68, 0xCA], 0x1000, &mut ctx)
+                .unwrap(),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
 
         // The pre-AVX10.2 draft placement in MAP2 is not an alias.
         assert!(

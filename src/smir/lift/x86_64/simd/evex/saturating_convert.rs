@@ -1,7 +1,7 @@
 //! AVX10.2 MAP5 saturating floating-point-to-integer conversions.
 
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86OpHint, X86SsePrefix, X86VecMap, x86_sat_fp_to_int_widths,
+    OpKind, SmirOp, X86OpHint, X86SatFpFormat, X86SsePrefix, X86VecMap, x86_sat_fp_to_int_widths,
 };
 use crate::smir::ir::types::*;
 use crate::smir::lift::x86_64::*;
@@ -15,42 +15,66 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        let (fp_elem, int_elem, signed, truncate) = match (opcode, prefix.pp, prefix.w) {
+        let (fp_format, int_elem, signed, truncate) = match (opcode, prefix.pp, prefix.w) {
+            (0x68, X86SsePrefix::None, false) => {
+                (X86SatFpFormat::F16, VecElementType::I8, true, true)
+            }
+            (0x69, X86SsePrefix::None, false) => {
+                (X86SatFpFormat::F16, VecElementType::I8, true, false)
+            }
+            (0x6A, X86SsePrefix::None, false) => {
+                (X86SatFpFormat::F16, VecElementType::I8, false, true)
+            }
+            (0x6B, X86SsePrefix::None, false) => {
+                (X86SatFpFormat::F16, VecElementType::I8, false, false)
+            }
             (0x68, X86SsePrefix::OpSize, false) => {
-                (VecElementType::F32, VecElementType::I8, true, true)
+                (X86SatFpFormat::F32, VecElementType::I8, true, true)
             }
             (0x69, X86SsePrefix::OpSize, false) => {
-                (VecElementType::F32, VecElementType::I8, true, false)
+                (X86SatFpFormat::F32, VecElementType::I8, true, false)
             }
             (0x6A, X86SsePrefix::OpSize, false) => {
-                (VecElementType::F32, VecElementType::I8, false, true)
+                (X86SatFpFormat::F32, VecElementType::I8, false, true)
             }
             (0x6B, X86SsePrefix::OpSize, false) => {
-                (VecElementType::F32, VecElementType::I8, false, false)
+                (X86SatFpFormat::F32, VecElementType::I8, false, false)
+            }
+            (0x68, X86SsePrefix::Repne, false) => {
+                (X86SatFpFormat::BF16, VecElementType::I8, true, true)
+            }
+            (0x69, X86SsePrefix::Repne, false) => {
+                (X86SatFpFormat::BF16, VecElementType::I8, true, false)
+            }
+            (0x6A, X86SsePrefix::Repne, false) => {
+                (X86SatFpFormat::BF16, VecElementType::I8, false, true)
+            }
+            (0x6B, X86SsePrefix::Repne, false) => {
+                (X86SatFpFormat::BF16, VecElementType::I8, false, false)
             }
             (0x6D, X86SsePrefix::None, false) => {
-                (VecElementType::F32, VecElementType::I32, true, true)
+                (X86SatFpFormat::F32, VecElementType::I32, true, true)
             }
             (0x6C, X86SsePrefix::None, false) => {
-                (VecElementType::F32, VecElementType::I32, false, true)
+                (X86SatFpFormat::F32, VecElementType::I32, false, true)
             }
             (0x6D, X86SsePrefix::OpSize, false) => {
-                (VecElementType::F32, VecElementType::I64, true, true)
+                (X86SatFpFormat::F32, VecElementType::I64, true, true)
             }
             (0x6C, X86SsePrefix::OpSize, false) => {
-                (VecElementType::F32, VecElementType::I64, false, true)
+                (X86SatFpFormat::F32, VecElementType::I64, false, true)
             }
             (0x6D, X86SsePrefix::None, true) => {
-                (VecElementType::F64, VecElementType::I32, true, true)
+                (X86SatFpFormat::F64, VecElementType::I32, true, true)
             }
             (0x6C, X86SsePrefix::None, true) => {
-                (VecElementType::F64, VecElementType::I32, false, true)
+                (X86SatFpFormat::F64, VecElementType::I32, false, true)
             }
             (0x6D, X86SsePrefix::OpSize, true) => {
-                (VecElementType::F64, VecElementType::I64, true, true)
+                (X86SatFpFormat::F64, VecElementType::I64, true, true)
             }
             (0x6C, X86SsePrefix::OpSize, true) => {
-                (VecElementType::F64, VecElementType::I64, false, true)
+                (X86SatFpFormat::F64, VecElementType::I64, false, true)
             }
             _ => {
                 return Err(LiftError::InvalidEncoding {
@@ -81,7 +105,8 @@ impl X86_64Lifter {
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let embedded_control = prefix.b && !modrm.is_memory;
-        if (!embedded_control && prefix.l_bits == 3)
+        if (fp_format == X86SatFpFormat::BF16 && embedded_control)
+            || (!embedded_control && prefix.l_bits == 3)
             || (embedded_control && truncate && prefix.l_bits != 0)
         {
             return Err(LiftError::InvalidEncoding {
@@ -94,32 +119,38 @@ impl X86_64Lifter {
         } else {
             prefix.width
         };
-        let (src_width, width) = match (fp_elem, int_elem, encoded_width) {
-            (VecElementType::F64, VecElementType::I32, VecWidth::V128) => {
+        let (src_width, width) = match (fp_format, int_elem, encoded_width) {
+            (X86SatFpFormat::F64, VecElementType::I32, VecWidth::V128) => {
                 (VecWidth::V128, VecWidth::V64)
             }
-            (VecElementType::F64, VecElementType::I32, VecWidth::V256) => {
+            (X86SatFpFormat::F64, VecElementType::I32, VecWidth::V256) => {
                 (VecWidth::V256, VecWidth::V128)
             }
-            (VecElementType::F64, VecElementType::I32, VecWidth::V512) => {
+            (X86SatFpFormat::F64, VecElementType::I32, VecWidth::V512) => {
                 (VecWidth::V512, VecWidth::V256)
             }
-            (VecElementType::F32, VecElementType::I64, VecWidth::V128) => {
+            (X86SatFpFormat::F32, VecElementType::I64, VecWidth::V128) => {
                 (VecWidth::V64, VecWidth::V128)
             }
-            (VecElementType::F32, VecElementType::I64, VecWidth::V256) => {
+            (X86SatFpFormat::F32, VecElementType::I64, VecWidth::V256) => {
                 (VecWidth::V128, VecWidth::V256)
             }
-            (VecElementType::F32, VecElementType::I64, VecWidth::V512) => {
+            (X86SatFpFormat::F32, VecElementType::I64, VecWidth::V512) => {
                 (VecWidth::V256, VecWidth::V512)
             }
             (_, _, width) => (width, width),
         };
         debug_assert_eq!(
-            x86_sat_fp_to_int_widths(fp_elem, int_elem, width, truncate),
+            x86_sat_fp_to_int_widths(fp_format, int_elem, width, truncate),
             Some((src_width, encoded_width))
         );
-        let round = if truncate {
+        let round = if fp_format == X86SatFpFormat::BF16 {
+            if truncate {
+                FpRoundMode::RoundTowardZero
+            } else {
+                FpRoundMode::RoundNearest
+            }
+        } else if truncate {
             FpRoundMode::RoundTowardZero
         } else if embedded_control {
             match prefix.l_bits {
@@ -133,6 +164,7 @@ impl X86_64Lifter {
             FpRoundMode::Dynamic
         };
         let broadcast = prefix.b && modrm.is_memory;
+        let memory_elem = fp_format.memory_elem();
         let mask = (prefix.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))));
         let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();
@@ -142,7 +174,7 @@ impl X86_64Lifter {
                 modrm.addr.as_ref().unwrap(),
                 next_pc,
                 if broadcast {
-                    fp_elem.bytes()
+                    fp_format.bytes()
                 } else {
                     src_width.bytes()
                 },
@@ -151,14 +183,32 @@ impl X86_64Lifter {
             ops.extend(pre_ops);
             match (mask, broadcast) {
                 (Some(mask), true) => self.append_masked_broadcast_memory_source(
-                    addr, fp_elem, src_width, mask, pc, ctx, &mut ops,
+                    addr,
+                    memory_elem,
+                    src_width,
+                    mask,
+                    pc,
+                    ctx,
+                    &mut ops,
                 ),
                 (Some(mask), false) => self.append_evex_masked_vector_source(
-                    addr, fp_elem, src_width, false, mask, pc, ctx, &mut ops,
+                    addr,
+                    memory_elem,
+                    src_width,
+                    false,
+                    mask,
+                    pc,
+                    ctx,
+                    &mut ops,
                 ),
-                (None, true) => {
-                    self.append_broadcast_memory_source(addr, fp_elem, src_width, pc, ctx, &mut ops)
-                }
+                (None, true) => self.append_broadcast_memory_source(
+                    addr,
+                    memory_elem,
+                    src_width,
+                    pc,
+                    ctx,
+                    &mut ops,
+                ),
                 (None, false) => {
                     let loaded = ctx.alloc_vreg();
                     ops.push(SmirOp::new(
@@ -184,7 +234,7 @@ impl X86_64Lifter {
                 dst,
                 src,
                 mask,
-                fp_elem,
+                fp_elem: fp_format,
                 int_elem,
                 width,
                 signed,

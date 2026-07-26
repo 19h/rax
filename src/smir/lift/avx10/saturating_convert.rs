@@ -13,13 +13,14 @@ fn vector_reg(reg: u8, width: VecWidth) -> VReg {
 }
 
 impl Avx10Lifter {
-    /// Lift VCVT[T]PS2IBS/VCVT[T]PS2IUBS.
-    pub(super) fn lift_vcvtps2ibs(
+    /// Lift packed VCVT[T]{PH,PS,BF16}2I[U]BS register forms.
+    pub(super) fn lift_vcvt_fp_to_i8_sat(
         &self,
         evex: &EvexPrefix,
         bytes: &[u8],
         pc: u64,
         ctx: &mut LiftContext,
+        fp_format: X86SatFpFormat,
         signed: bool,
         truncate: bool,
     ) -> Result<LiftResult, LiftError> {
@@ -29,6 +30,7 @@ impl Avx10Lifter {
         if evex.vvvv != 0
             || evex.v_prime
             || (evex.z && evex.aaa == 0)
+            || (fp_format == X86SatFpFormat::BF16 && embedded_control)
             || (!embedded_control && evex.ll == 3)
             || (embedded_control && truncate && evex.ll != 0)
         {
@@ -52,7 +54,13 @@ impl Avx10Lifter {
         } else {
             evex.vec_width()
         };
-        let round = if truncate {
+        let round = if fp_format == X86SatFpFormat::BF16 {
+            if truncate {
+                FpRoundMode::RoundTowardZero
+            } else {
+                FpRoundMode::RoundNearest
+            }
+        } else if truncate {
             FpRoundMode::RoundTowardZero
         } else if suppress_exceptions {
             match evex.ll {
@@ -76,7 +84,7 @@ impl Avx10Lifter {
                 dst,
                 src,
                 mask: (evex.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(evex.aaa)))),
-                fp_elem: VecElementType::F32,
+                fp_elem: fp_format,
                 int_elem: VecElementType::I8,
                 width,
                 signed,
@@ -97,7 +105,7 @@ impl Avx10Lifter {
         bytes: &[u8],
         pc: u64,
         ctx: &mut LiftContext,
-        fp_elem: VecElementType,
+        fp_format: X86SatFpFormat,
         int_elem: VecElementType,
         signed: bool,
     ) -> Result<LiftResult, LiftError> {
@@ -129,28 +137,28 @@ impl Avx10Lifter {
         } else {
             evex.vec_width()
         };
-        let (src_width, width) = match (fp_elem, int_elem, encoded_width) {
-            (VecElementType::F64, VecElementType::I32, VecWidth::V128) => {
+        let (src_width, width) = match (fp_format, int_elem, encoded_width) {
+            (X86SatFpFormat::F64, VecElementType::I32, VecWidth::V128) => {
                 (VecWidth::V128, VecWidth::V64)
             }
-            (VecElementType::F64, VecElementType::I32, VecWidth::V256) => {
+            (X86SatFpFormat::F64, VecElementType::I32, VecWidth::V256) => {
                 (VecWidth::V256, VecWidth::V128)
             }
-            (VecElementType::F64, VecElementType::I32, VecWidth::V512) => {
+            (X86SatFpFormat::F64, VecElementType::I32, VecWidth::V512) => {
                 (VecWidth::V512, VecWidth::V256)
             }
-            (VecElementType::F32, VecElementType::I64, VecWidth::V128) => {
+            (X86SatFpFormat::F32, VecElementType::I64, VecWidth::V128) => {
                 (VecWidth::V64, VecWidth::V128)
             }
-            (VecElementType::F32, VecElementType::I64, VecWidth::V256) => {
+            (X86SatFpFormat::F32, VecElementType::I64, VecWidth::V256) => {
                 (VecWidth::V128, VecWidth::V256)
             }
-            (VecElementType::F32, VecElementType::I64, VecWidth::V512) => {
+            (X86SatFpFormat::F32, VecElementType::I64, VecWidth::V512) => {
                 (VecWidth::V256, VecWidth::V512)
             }
             (_, _, width) => (width, width),
         };
-        if x86_sat_fp_to_int_widths(fp_elem, int_elem, width, true)
+        if x86_sat_fp_to_int_widths(fp_format, int_elem, width, true)
             != Some((src_width, encoded_width))
         {
             return Err(LiftError::InvalidEncoding {
@@ -169,7 +177,7 @@ impl Avx10Lifter {
                 dst,
                 src,
                 mask: (evex.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(evex.aaa)))),
-                fp_elem,
+                fp_elem: fp_format,
                 int_elem,
                 width,
                 signed,

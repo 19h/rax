@@ -1,6 +1,7 @@
 //! AVX10.2 MAP5 saturating-conversion lifting tests.
 
 use super::*;
+use crate::smir::ir::ops::X86SatFpFormat;
 use crate::smir::lift::x86_64::tests::*;
 use crate::smir::lift::x86_64::*;
 
@@ -8,7 +9,7 @@ use crate::smir::lift::x86_64::*;
 fn lifts_avx10_2_saturating_conversion_register_shapes() {
     for (
         bytes,
-        fp_elem,
+        fp_format,
         int_elem,
         src_width,
         width,
@@ -21,7 +22,7 @@ fn lifts_avx10_2_saturating_conversion_register_shapes() {
     ) in [
         (
             &[0x62, 0xF5, 0x7D, 0x08, 0x68, 0xCA][..],
-            VecElementType::F32,
+            X86SatFpFormat::F32,
             VecElementType::I8,
             VecWidth::V128,
             VecWidth::V128,
@@ -34,7 +35,7 @@ fn lifts_avx10_2_saturating_conversion_register_shapes() {
         ),
         (
             &[0x62, 0xF5, 0x7D, 0x28, 0x6A, 0xCA][..],
-            VecElementType::F32,
+            X86SatFpFormat::F32,
             VecElementType::I8,
             VecWidth::V256,
             VecWidth::V256,
@@ -47,7 +48,7 @@ fn lifts_avx10_2_saturating_conversion_register_shapes() {
         ),
         (
             &[0x62, 0xF5, 0xFD, 0x48, 0x6D, 0xCA][..],
-            VecElementType::F64,
+            X86SatFpFormat::F64,
             VecElementType::I64,
             VecWidth::V512,
             VecWidth::V512,
@@ -60,7 +61,7 @@ fn lifts_avx10_2_saturating_conversion_register_shapes() {
         ),
         (
             &[0x62, 0xF5, 0xFC, 0x08, 0x6D, 0xCA][..],
-            VecElementType::F64,
+            X86SatFpFormat::F64,
             VecElementType::I32,
             VecWidth::V128,
             VecWidth::V64,
@@ -73,7 +74,7 @@ fn lifts_avx10_2_saturating_conversion_register_shapes() {
         ),
         (
             &[0x62, 0xF5, 0x7C, 0x48, 0x6C, 0xCA][..],
-            VecElementType::F32,
+            X86SatFpFormat::F32,
             VecElementType::I32,
             VecWidth::V512,
             VecWidth::V512,
@@ -86,7 +87,7 @@ fn lifts_avx10_2_saturating_conversion_register_shapes() {
         ),
         (
             &[0x62, 0xF5, 0x7D, 0x28, 0x6D, 0xCA][..],
-            VecElementType::F32,
+            X86SatFpFormat::F32,
             VecElementType::I64,
             VecWidth::V128,
             VecWidth::V256,
@@ -99,7 +100,7 @@ fn lifts_avx10_2_saturating_conversion_register_shapes() {
         ),
         (
             &[0x62, 0xF5, 0x7D, 0x08, 0x69, 0xCA][..],
-            VecElementType::F32,
+            X86SatFpFormat::F32,
             VecElementType::I8,
             VecWidth::V128,
             VecWidth::V128,
@@ -112,7 +113,7 @@ fn lifts_avx10_2_saturating_conversion_register_shapes() {
         ),
         (
             &[0x62, 0xF5, 0x7D, 0x38, 0x6B, 0xCA][..],
-            VecElementType::F32,
+            X86SatFpFormat::F32,
             VecElementType::I8,
             VecWidth::V512,
             VecWidth::V512,
@@ -122,6 +123,58 @@ fn lifts_avx10_2_saturating_conversion_register_shapes() {
             false,
             FpRoundMode::RoundDown,
             true,
+        ),
+        (
+            &[0x62, 0xF5, 0x7C, 0x08, 0x68, 0xCA][..],
+            X86SatFpFormat::F16,
+            VecElementType::I8,
+            VecWidth::V128,
+            VecWidth::V128,
+            VecWidth::V128,
+            X86SsePrefix::None,
+            true,
+            true,
+            FpRoundMode::RoundTowardZero,
+            false,
+        ),
+        (
+            &[0x62, 0xF5, 0x7C, 0x58, 0x69, 0xCA][..],
+            X86SatFpFormat::F16,
+            VecElementType::I8,
+            VecWidth::V512,
+            VecWidth::V512,
+            VecWidth::V512,
+            X86SsePrefix::None,
+            true,
+            false,
+            FpRoundMode::RoundUp,
+            true,
+        ),
+        (
+            &[0x62, 0xF5, 0x7F, 0x28, 0x6B, 0xCA][..],
+            X86SatFpFormat::BF16,
+            VecElementType::I8,
+            VecWidth::V256,
+            VecWidth::V256,
+            VecWidth::V256,
+            X86SsePrefix::Repne,
+            false,
+            false,
+            FpRoundMode::RoundNearest,
+            false,
+        ),
+        (
+            &[0x62, 0xF5, 0x7F, 0x48, 0x6A, 0xCA][..],
+            X86SatFpFormat::BF16,
+            VecElementType::I8,
+            VecWidth::V512,
+            VecWidth::V512,
+            VecWidth::V512,
+            X86SsePrefix::Repne,
+            false,
+            true,
+            FpRoundMode::RoundTowardZero,
+            false,
         ),
     ] {
         let lifted = lift_single(bytes).unwrap();
@@ -149,7 +202,7 @@ fn lifts_avx10_2_saturating_conversion_register_shapes() {
                     ..
                 }),
                 ..
-            }] if *actual_fp == fp_elem
+            }] if *actual_fp == fp_format
                 && *actual_int == int_elem
                 && *actual_width == width
                 && *hint_width == encoded_width
@@ -181,7 +234,7 @@ fn lifts_avx10_2_saturating_conversion_register_shapes() {
                 dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
                 src: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
                 mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(3)))),
-                fp_elem: VecElementType::F64,
+                fp_elem: X86SatFpFormat::F64,
                 int_elem: VecElementType::I64,
                 width: VecWidth::V512,
                 signed: false,
@@ -255,6 +308,68 @@ fn lifts_avx10_2_saturating_conversion_memory_fault_suppression_and_tuples() {
         }
     )));
 
+    for bytes in [
+        &[0x62, 0xF5, 0x7C, 0x48, 0x68, 0x48, 0x01][..],
+        &[0x62, 0xF5, 0x7F, 0x48, 0x68, 0x48, 0x01][..],
+    ] {
+        let full_word_source = lift_single(bytes).unwrap();
+        assert!(full_word_source.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VLoad {
+                addr: Address::BaseOffset {
+                    offset: 64,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                width: VecWidth::V512,
+                ..
+            }
+        )));
+    }
+
+    let word_broadcast = lift_single(&[0x62, 0xF5, 0x7C, 0x58, 0x68, 0x48, 0x01]).unwrap();
+    assert_eq!(
+        word_broadcast
+            .ops
+            .iter()
+            .filter(|op| matches!(
+                op.kind,
+                OpKind::Load {
+                    width: MemWidth::B2,
+                    ..
+                }
+            ))
+            .count(),
+        1
+    );
+    assert!(word_broadcast.ops.iter().any(|op| matches!(
+        op.kind,
+        OpKind::Load {
+            addr: Address::BaseOffset {
+                offset: 2,
+                disp_size: DispSize::Disp8,
+                ..
+            },
+            ..
+        }
+    )));
+
+    let masked_word_source = lift_single(&[0x62, 0xF5, 0x7F, 0x4A, 0x68, 0x48, 0x01]).unwrap();
+    assert_eq!(
+        masked_word_source
+            .ops
+            .iter()
+            .filter(|op| matches!(
+                op.kind,
+                OpKind::PredLoad {
+                    width: MemWidth::B2,
+                    ..
+                }
+            ))
+            .count(),
+        32
+    );
+
     let narrowing = lift_single(&[0x62, 0xF5, 0xFC, 0x48, 0x6D, 0x48, 0x01]).unwrap();
     assert!(narrowing.ops.iter().any(|op| matches!(
         op.kind,
@@ -271,7 +386,7 @@ fn lifts_avx10_2_saturating_conversion_memory_fault_suppression_and_tuples() {
     assert!(matches!(
         narrowing.ops.last().map(|op| &op.kind),
         Some(OpKind::VCvtFpToIntSat {
-            fp_elem: VecElementType::F64,
+            fp_elem: X86SatFpFormat::F64,
             int_elem: VecElementType::I32,
             width: VecWidth::V256,
             ..
@@ -294,7 +409,7 @@ fn lifts_avx10_2_saturating_conversion_memory_fault_suppression_and_tuples() {
     assert!(matches!(
         widening.ops.last().map(|op| &op.kind),
         Some(OpKind::VCvtFpToIntSat {
-            fp_elem: VecElementType::F32,
+            fp_elem: X86SatFpFormat::F32,
             int_elem: VecElementType::I64,
             width: VecWidth::V512,
             ..
@@ -399,6 +514,8 @@ fn rejects_reserved_avx10_2_saturating_conversion_encodings() {
         &[0x62, 0xF5, 0x7D, 0xC8, 0x68, 0xCA][..], // {z} with k0
         &[0x62, 0xF5, 0x7D, 0x38, 0x68, 0xCA][..], // register b=1, L'L!=0
         &[0x62, 0xF5, 0x7D, 0x68, 0x69, 0xCA][..], // non-ER L'L=3
+        &[0x62, 0xF5, 0x7F, 0x18, 0x68, 0xCA][..], // BF16 has no SAE form
+        &[0x62, 0xF5, 0xFC, 0x08, 0x68, 0xCA][..], // FP16 W=1
     ] {
         assert!(
             matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
@@ -406,15 +523,9 @@ fn rejects_reserved_avx10_2_saturating_conversion_encodings() {
         );
     }
 
-    // Other mandatory-prefix assignments are distinct AVX10.2 scalar or BF16
-    // conversion families and must not be misdecoded as these packed forms.
-    for bytes in [
-        &[0x62, 0xF5, 0x7C, 0x48, 0x68, 0xCA][..],
-        &[0x62, 0xF5, 0x7E, 0x08, 0x6D, 0xCA][..],
-    ] {
-        assert!(matches!(
-            lift_single(bytes),
-            Err(LiftError::Unsupported { .. })
-        ));
-    }
+    // F3 MAP5 6D is a distinct AVX10.2 scalar conversion family.
+    assert!(matches!(
+        lift_single(&[0x62, 0xF5, 0x7E, 0x08, 0x6D, 0xCA]),
+        Err(LiftError::Unsupported { .. })
+    ));
 }

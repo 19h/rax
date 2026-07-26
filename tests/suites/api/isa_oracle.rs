@@ -189,6 +189,52 @@ fn decodes_x86_with_smir_lift() {
 }
 
 #[test]
+fn emits_structured_avx10_2_fp16_and_bf16_saturation_smir() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    for (bytes, fp_elem, round, truncate, side_effects) in [
+        (
+            &[0x62, 0xF5, 0x7C, 0x08, 0x68, 0xCA][..],
+            "F16",
+            "RoundTowardZero",
+            true,
+            true,
+        ),
+        (
+            &[0x62, 0xF5, 0x7F, 0x08, 0x69, 0xCA][..],
+            "BF16",
+            "RoundNearest",
+            false,
+            false,
+        ),
+    ] {
+        let value = decode_to_json(bytes, &opts).unwrap();
+        let smir = &value["smir"];
+        assert_eq!(smir["available"], true, "{bytes:02X?}");
+        assert_eq!(smir["bytes_consumed"], bytes.len(), "{bytes:02X?}");
+        assert_eq!(smir["control_flow"]["kind"], "fallthrough", "{bytes:02X?}");
+        assert!(smir.get("error").is_none(), "{bytes:02X?}: {smir}");
+
+        let ops = smir["ops"].as_array().unwrap();
+        assert_eq!(ops.len(), 1, "{bytes:02X?}: {smir}");
+        let op = &ops[0];
+        assert_eq!(op["kind"]["opcode"], "vcvt_fp_to_int_sat");
+        assert_eq!(op["kind"]["dst"]["name"], "xmm1");
+        assert_eq!(op["kind"]["src"]["name"], "xmm2");
+        assert_eq!(op["kind"]["fp_elem"], fp_elem);
+        assert_eq!(op["kind"]["int_elem"], "I8");
+        assert_eq!(op["kind"]["width"], "V128");
+        assert_eq!(op["kind"]["round"], round);
+        assert_eq!(op["kind"]["truncate"], truncate);
+        assert_eq!(op["kind"]["suppress_exceptions"], false);
+        assert_eq!(op["side_effects"], side_effects);
+        assert_eq!(op["memory"]["reads"], false);
+        assert_eq!(op["memory"]["writes"], false);
+    }
+}
+
+#[test]
 fn emits_structured_x86_opmask_smir() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

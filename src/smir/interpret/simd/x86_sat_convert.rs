@@ -5,9 +5,10 @@ use super::*;
 impl SmirInterpreter {
     /// Convert one x86 SIMD floating-point lane to a saturated integer.
     /// Invalid conversions retain IE but replace the ordinary indefinite
-    /// result with the closest endpoint; NaNs map to 0. The F32-to-I8 family
-    /// uses AVX10.2's pre-round representability thresholds, which intentionally
-    /// differ from a generic conversion followed by clamping near 0 and 255.
+    /// result with the closest endpoint; NaNs map to 0. The FP16/F32-to-I8
+    /// families use AVX10.2's pre-round representability thresholds, which
+    /// intentionally differ from a generic conversion followed by clamping near
+    /// 0 and 255.
     pub(crate) fn x86_simd_fp_to_int_sat(
         bits: u64,
         format: X86SimdFpFormat,
@@ -20,18 +21,30 @@ impl SmirInterpreter {
             FpRoundMode::Dynamic | FpRoundMode::RoundNearestTiesAway
         ));
 
-        if format.total_bits == 32
+        if matches!(format.total_bits, 16 | 32)
             && int_bits == 8
             && !Self::x86_simd_fp_is_nan(bits, format)
             && !Self::x86_simd_fp_is_infinite(bits, format)
         {
-            let source = f32::from_bits(bits as u32);
+            let source = if format.total_bits == 16 {
+                Self::x86_fp16_to_f32(bits as u16)
+            } else {
+                f32::from_bits(bits as u32)
+            };
             let out_of_range = if signed {
                 match mode {
                     FpRoundMode::RoundNearest => source < -128.5 || source >= 127.5,
                     FpRoundMode::RoundDown => source < -128.0 || source >= 128.0,
                     FpRoundMode::RoundUp => source <= -129.0 || source > 127.0,
                     FpRoundMode::RoundTowardZero => source <= -129.0 || source >= 128.0,
+                    _ => unreachable!("rounding mode validated above"),
+                }
+            } else if format.total_bits == 16 {
+                match mode {
+                    FpRoundMode::RoundNearest => source < -0.5 || source >= 255.5,
+                    FpRoundMode::RoundDown => source < 0.0 || source >= 256.0,
+                    FpRoundMode::RoundUp => source <= -1.0 || source > 255.0,
+                    FpRoundMode::RoundTowardZero => source <= -1.0 || source >= 256.0,
                     _ => unreachable!("rounding mode validated above"),
                 }
             } else {

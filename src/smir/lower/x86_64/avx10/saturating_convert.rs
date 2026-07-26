@@ -1,7 +1,7 @@
 //! AVX10.2 MAP5 saturating-conversion lowering.
 
 use super::*;
-use crate::smir::ir::ops::x86_sat_fp_to_int_widths;
+use crate::smir::ir::ops::{X86SatFpFormat, x86_sat_fp_to_int_controls, x86_sat_fp_to_int_widths};
 
 impl Avx10Lowerer {
     pub(super) fn lower_vcvt_fp_to_int_sat(
@@ -10,7 +10,7 @@ impl Avx10Lowerer {
         dst: &VReg,
         src: &VReg,
         mask: Option<&VReg>,
-        fp_elem: VecElementType,
+        fp_format: X86SatFpFormat,
         int_elem: VecElementType,
         width: VecWidth,
         signed: bool,
@@ -29,7 +29,7 @@ impl Avx10Lowerer {
             )
         };
         let Some((src_width, encoded_width)) =
-            x86_sat_fp_to_int_widths(fp_elem, int_elem, width, truncate)
+            x86_sat_fp_to_int_widths(fp_format, int_elem, width, truncate)
         else {
             return Err(LowerError::UnsupportedOperation(
                 "Saturation conversion: invalid types or payload width".to_string(),
@@ -38,16 +38,13 @@ impl Avx10Lowerer {
         if !vector_matches_width(dst, width)
             || !vector_matches_width(src, src_width)
             || (zeroing && mask.is_none())
-            || round == FpRoundMode::RoundNearestTiesAway
-            || if truncate {
-                round != FpRoundMode::RoundTowardZero
-                    || (suppress_exceptions && encoded_width != VecWidth::V512)
-            } else {
-                !matches!((round, suppress_exceptions), (FpRoundMode::Dynamic, false))
-                    && !(round != FpRoundMode::Dynamic
-                        && suppress_exceptions
-                        && encoded_width == VecWidth::V512)
-            }
+            || !x86_sat_fp_to_int_controls(
+                fp_format,
+                truncate,
+                round,
+                suppress_exceptions,
+                encoded_width,
+            )
         {
             return Err(LowerError::UnsupportedOperation(
                 "Saturation conversion: invalid vector, mask, or rounding shape".to_string(),
@@ -68,19 +65,27 @@ impl Avx10Lowerer {
             None => 0,
         };
 
-        let (pp, opcode, w) = match (fp_elem, int_elem, signed, truncate) {
-            (VecElementType::F32, VecElementType::I8, true, true) => (1, 0x68, false),
-            (VecElementType::F32, VecElementType::I8, true, false) => (1, 0x69, false),
-            (VecElementType::F32, VecElementType::I8, false, true) => (1, 0x6A, false),
-            (VecElementType::F32, VecElementType::I8, false, false) => (1, 0x6B, false),
-            (VecElementType::F32, VecElementType::I32, true, true) => (0, 0x6D, false),
-            (VecElementType::F32, VecElementType::I32, false, true) => (0, 0x6C, false),
-            (VecElementType::F32, VecElementType::I64, true, true) => (1, 0x6D, false),
-            (VecElementType::F32, VecElementType::I64, false, true) => (1, 0x6C, false),
-            (VecElementType::F64, VecElementType::I32, true, true) => (0, 0x6D, true),
-            (VecElementType::F64, VecElementType::I32, false, true) => (0, 0x6C, true),
-            (VecElementType::F64, VecElementType::I64, true, true) => (1, 0x6D, true),
-            (VecElementType::F64, VecElementType::I64, false, true) => (1, 0x6C, true),
+        let (pp, opcode, w) = match (fp_format, int_elem, signed, truncate) {
+            (X86SatFpFormat::F16, VecElementType::I8, true, true) => (0, 0x68, false),
+            (X86SatFpFormat::F16, VecElementType::I8, true, false) => (0, 0x69, false),
+            (X86SatFpFormat::F16, VecElementType::I8, false, true) => (0, 0x6A, false),
+            (X86SatFpFormat::F16, VecElementType::I8, false, false) => (0, 0x6B, false),
+            (X86SatFpFormat::BF16, VecElementType::I8, true, true) => (3, 0x68, false),
+            (X86SatFpFormat::BF16, VecElementType::I8, true, false) => (3, 0x69, false),
+            (X86SatFpFormat::BF16, VecElementType::I8, false, true) => (3, 0x6A, false),
+            (X86SatFpFormat::BF16, VecElementType::I8, false, false) => (3, 0x6B, false),
+            (X86SatFpFormat::F32, VecElementType::I8, true, true) => (1, 0x68, false),
+            (X86SatFpFormat::F32, VecElementType::I8, true, false) => (1, 0x69, false),
+            (X86SatFpFormat::F32, VecElementType::I8, false, true) => (1, 0x6A, false),
+            (X86SatFpFormat::F32, VecElementType::I8, false, false) => (1, 0x6B, false),
+            (X86SatFpFormat::F32, VecElementType::I32, true, true) => (0, 0x6D, false),
+            (X86SatFpFormat::F32, VecElementType::I32, false, true) => (0, 0x6C, false),
+            (X86SatFpFormat::F32, VecElementType::I64, true, true) => (1, 0x6D, false),
+            (X86SatFpFormat::F32, VecElementType::I64, false, true) => (1, 0x6C, false),
+            (X86SatFpFormat::F64, VecElementType::I32, true, true) => (0, 0x6D, true),
+            (X86SatFpFormat::F64, VecElementType::I32, false, true) => (0, 0x6C, true),
+            (X86SatFpFormat::F64, VecElementType::I64, true, true) => (1, 0x6D, true),
+            (X86SatFpFormat::F64, VecElementType::I64, false, true) => (1, 0x6C, true),
             _ => {
                 return Err(LowerError::UnsupportedOperation(
                     "Saturation conversion: invalid types".to_string(),
@@ -136,12 +141,12 @@ mod tests {
         let zmm = |n| VReg::Arch(ArchReg::X86(X86Reg::Zmm(n)));
         let k = |n| VReg::Arch(ArchReg::X86(X86Reg::K(n)));
         let op =
-            |dst, src, mask, fp_elem, int_elem, width, signed, zeroing, suppress_exceptions| {
+            |dst, src, mask, fp_format, int_elem, width, signed, zeroing, suppress_exceptions| {
                 OpKind::VCvtFpToIntSat {
                     dst,
                     src,
                     mask,
-                    fp_elem,
+                    fp_elem: fp_format,
                     int_elem,
                     width,
                     signed,
@@ -156,7 +161,7 @@ mod tests {
                 dst,
                 src,
                 mask,
-                fp_elem: VecElementType::F32,
+                fp_elem: X86SatFpFormat::F32,
                 int_elem: VecElementType::I8,
                 width,
                 signed,
@@ -166,12 +171,12 @@ mod tests {
                 suppress_exceptions,
             }
         };
-        let shaped = |dst, src, fp_elem, int_elem, width, signed, suppress_exceptions| {
+        let shaped = |dst, src, fp_format, int_elem, width, signed, suppress_exceptions| {
             OpKind::VCvtFpToIntSat {
                 dst,
                 src,
                 mask: None,
-                fp_elem,
+                fp_elem: fp_format,
                 int_elem,
                 width,
                 signed,
@@ -188,7 +193,7 @@ mod tests {
                     xmm(1),
                     xmm(2),
                     None,
-                    VecElementType::F32,
+                    X86SatFpFormat::F32,
                     VecElementType::I8,
                     VecWidth::V128,
                     true,
@@ -202,7 +207,7 @@ mod tests {
                     ymm(1),
                     ymm(2),
                     None,
-                    VecElementType::F32,
+                    X86SatFpFormat::F32,
                     VecElementType::I8,
                     VecWidth::V256,
                     false,
@@ -213,10 +218,70 @@ mod tests {
             ),
             (
                 op(
+                    xmm(1),
+                    xmm(2),
+                    None,
+                    X86SatFpFormat::F16,
+                    VecElementType::I8,
+                    VecWidth::V128,
+                    true,
+                    false,
+                    false,
+                ),
+                &[0x62, 0xF5, 0x7C, 0x08, 0x68, 0xCA][..],
+            ),
+            (
+                OpKind::VCvtFpToIntSat {
+                    dst: zmm(17),
+                    src: zmm(18),
+                    mask: Some(k(3)),
+                    fp_elem: X86SatFpFormat::F16,
+                    int_elem: VecElementType::I8,
+                    width: VecWidth::V512,
+                    signed: true,
+                    truncate: false,
+                    round: FpRoundMode::RoundUp,
+                    zeroing: true,
+                    suppress_exceptions: true,
+                },
+                &[0x62, 0xA5, 0x7C, 0xDB, 0x69, 0xCA][..],
+            ),
+            (
+                OpKind::VCvtFpToIntSat {
+                    dst: ymm(1),
+                    src: ymm(2),
+                    mask: None,
+                    fp_elem: X86SatFpFormat::BF16,
+                    int_elem: VecElementType::I8,
+                    width: VecWidth::V256,
+                    signed: false,
+                    truncate: false,
+                    round: FpRoundMode::RoundNearest,
+                    zeroing: false,
+                    suppress_exceptions: false,
+                },
+                &[0x62, 0xF5, 0x7F, 0x28, 0x6B, 0xCA][..],
+            ),
+            (
+                op(
+                    zmm(17),
+                    zmm(18),
+                    Some(k(3)),
+                    X86SatFpFormat::BF16,
+                    VecElementType::I8,
+                    VecWidth::V512,
+                    false,
+                    true,
+                    false,
+                ),
+                &[0x62, 0xA5, 0x7F, 0xCB, 0x6A, 0xCA][..],
+            ),
+            (
+                op(
                     zmm(1),
                     zmm(2),
                     None,
-                    VecElementType::F64,
+                    X86SatFpFormat::F64,
                     VecElementType::I64,
                     VecWidth::V512,
                     true,
@@ -230,7 +295,7 @@ mod tests {
                     zmm(17),
                     zmm(18),
                     Some(k(3)),
-                    VecElementType::F64,
+                    X86SatFpFormat::F64,
                     VecElementType::I64,
                     VecWidth::V512,
                     false,
@@ -244,7 +309,7 @@ mod tests {
                     zmm(1),
                     zmm(2),
                     None,
-                    VecElementType::F32,
+                    X86SatFpFormat::F32,
                     VecElementType::I8,
                     VecWidth::V512,
                     true,
@@ -257,7 +322,7 @@ mod tests {
                 shaped(
                     xmm(1),
                     xmm(2),
-                    VecElementType::F64,
+                    X86SatFpFormat::F64,
                     VecElementType::I32,
                     VecWidth::V64,
                     true,
@@ -269,7 +334,7 @@ mod tests {
                 shaped(
                     xmm(1),
                     ymm(2),
-                    VecElementType::F64,
+                    X86SatFpFormat::F64,
                     VecElementType::I32,
                     VecWidth::V128,
                     false,
@@ -281,7 +346,7 @@ mod tests {
                 shaped(
                     ymm(1),
                     zmm(2),
-                    VecElementType::F64,
+                    X86SatFpFormat::F64,
                     VecElementType::I32,
                     VecWidth::V256,
                     true,
@@ -293,7 +358,7 @@ mod tests {
                 shaped(
                     zmm(1),
                     zmm(2),
-                    VecElementType::F32,
+                    X86SatFpFormat::F32,
                     VecElementType::I32,
                     VecWidth::V512,
                     true,
@@ -305,7 +370,7 @@ mod tests {
                 shaped(
                     xmm(1),
                     xmm(2),
-                    VecElementType::F32,
+                    X86SatFpFormat::F32,
                     VecElementType::I64,
                     VecWidth::V128,
                     false,
@@ -317,7 +382,7 @@ mod tests {
                 shaped(
                     ymm(1),
                     xmm(2),
-                    VecElementType::F32,
+                    X86SatFpFormat::F32,
                     VecElementType::I64,
                     VecWidth::V256,
                     true,
@@ -329,7 +394,7 @@ mod tests {
                 shaped(
                     zmm(1),
                     ymm(2),
-                    VecElementType::F32,
+                    X86SatFpFormat::F32,
                     VecElementType::I64,
                     VecWidth::V512,
                     false,
@@ -426,10 +491,34 @@ mod tests {
 
         for malformed in [
             op(
+                zmm(1),
+                zmm(2),
+                None,
+                X86SatFpFormat::BF16,
+                VecElementType::I8,
+                VecWidth::V512,
+                true,
+                false,
+                true,
+            ),
+            OpKind::VCvtFpToIntSat {
+                dst: xmm(1),
+                src: xmm(2),
+                mask: None,
+                fp_elem: X86SatFpFormat::BF16,
+                int_elem: VecElementType::I8,
+                width: VecWidth::V128,
+                signed: true,
+                truncate: false,
+                round: FpRoundMode::Dynamic,
+                zeroing: false,
+                suppress_exceptions: false,
+            },
+            op(
                 ymm(1),
                 ymm(2),
                 None,
-                VecElementType::F32,
+                X86SatFpFormat::F32,
                 VecElementType::I8,
                 VecWidth::V128,
                 true,
@@ -440,7 +529,7 @@ mod tests {
                 xmm(1),
                 xmm(2),
                 None,
-                VecElementType::F32,
+                X86SatFpFormat::F32,
                 VecElementType::I8,
                 VecWidth::V128,
                 true,
@@ -450,7 +539,7 @@ mod tests {
             shaped(
                 xmm(1),
                 xmm(2),
-                VecElementType::F64,
+                X86SatFpFormat::F64,
                 VecElementType::I32,
                 VecWidth::V128,
                 true,
@@ -460,7 +549,7 @@ mod tests {
                 xmm(1),
                 xmm(2),
                 None,
-                VecElementType::F32,
+                X86SatFpFormat::F32,
                 VecElementType::I8,
                 VecWidth::V128,
                 true,
@@ -471,7 +560,7 @@ mod tests {
                 zmm(1),
                 zmm(2),
                 Some(k(0)),
-                VecElementType::F64,
+                X86SatFpFormat::F64,
                 VecElementType::I64,
                 VecWidth::V512,
                 false,
@@ -482,7 +571,7 @@ mod tests {
                 xmm(1),
                 xmm(2),
                 None,
-                VecElementType::F64,
+                X86SatFpFormat::F64,
                 VecElementType::I8,
                 VecWidth::V128,
                 true,

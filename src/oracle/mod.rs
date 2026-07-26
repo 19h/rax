@@ -37,6 +37,7 @@ use crate::smir::ir::ops::X86MsrOp;
 use crate::smir::ir::ops::X86PackedStringKind;
 use crate::smir::ir::ops::X86ReadPmcOp;
 use crate::smir::ir::ops::X86ReadTscOp;
+use crate::smir::ir::ops::X86SatFpFormat;
 use crate::smir::ir::ops::X86SelectorQueryKind;
 use crate::smir::ir::ops::X86SelectorQueryOp;
 use crate::smir::ir::ops::X86SelectorQuerySource;
@@ -1309,6 +1310,7 @@ debug_name_json!(
     FpPrecision,
     FpRoundMode,
     VecWidth,
+    X86SatFpFormat,
     VecElementType,
     VecCmpCond,
     VShiftVKind,

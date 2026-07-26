@@ -1,6 +1,6 @@
 //! Floating-point status/trap side-effect classification.
 
-use super::{OpKind, x86_sat_fp_to_int_widths};
+use super::{OpKind, X86SatFpFormat, x86_sat_fp_to_int_controls, x86_sat_fp_to_int_widths};
 use crate::smir::ir::types::{FpRoundMode, OpWidth, VecElementType, X86FpBinaryOp};
 
 impl OpKind {
@@ -125,7 +125,7 @@ impl OpKind {
 
         if let OpKind::VCvtFpToIntSat {
             mask,
-            fp_elem,
+            fp_elem: fp_format,
             int_elem,
             width,
             truncate,
@@ -135,27 +135,21 @@ impl OpKind {
             ..
         } = self
         {
-            let widths = x86_sat_fp_to_int_widths(*fp_elem, *int_elem, *width, *truncate);
-            let encoded_width = widths.map(|(_, encoded_width)| encoded_width);
-            let canonical = widths.is_some()
-                && (!*zeroing || mask.is_some())
-                && *round != FpRoundMode::RoundNearestTiesAway
-                && if *truncate {
-                    *round == FpRoundMode::RoundTowardZero
-                        && (!*suppress_exceptions
-                            || encoded_width == Some(crate::smir::ir::types::VecWidth::V512))
-                } else {
-                    matches!(
-                        (*round, *suppress_exceptions),
-                        (FpRoundMode::Dynamic, false)
-                    ) || (*round != FpRoundMode::Dynamic
-                        && *suppress_exceptions
-                        && encoded_width == Some(crate::smir::ir::types::VecWidth::V512))
-                };
+            let widths = x86_sat_fp_to_int_widths(*fp_format, *int_elem, *width, *truncate);
+            let canonical = widths.is_some_and(|(_, encoded_width)| {
+                x86_sat_fp_to_int_controls(
+                    *fp_format,
+                    *truncate,
+                    *round,
+                    *suppress_exceptions,
+                    encoded_width,
+                )
+            }) && (!*zeroing || mask.is_some())
+                && *round != FpRoundMode::RoundNearestTiesAway;
             // Malformed IR must survive DCE until interpretation rejects it.
-            // Canonical SAE/embedded-rounding forms neither update MXCSR nor
-            // request #XM.
-            return !canonical || !*suppress_exceptions;
+            // Canonical SAE/embedded-rounding forms and every BF16 form
+            // neither update MXCSR nor request #XM.
+            return !canonical || (*fp_format != X86SatFpFormat::BF16 && !*suppress_exceptions);
         }
 
         matches!(

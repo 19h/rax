@@ -1,6 +1,7 @@
 //! jit_gate_tests::vector tests
 
 use super::*;
+use crate::smir::ir::ops::X86SatFpFormat;
 use crate::smir::lower::runtime::*;
 
 #[test]
@@ -889,7 +890,7 @@ fn clobber_gate_admits_only_architectural_native_vector_operands() {
         dst: zmm1,
         src: zmm2,
         mask: Some(k4),
-        fp_elem: VecElementType::F32,
+        fp_elem: X86SatFpFormat::F32,
         int_elem: VecElementType::I8,
         width: VecWidth::V512,
         signed: true,
@@ -905,7 +906,7 @@ fn clobber_gate_admits_only_architectural_native_vector_operands() {
         dst: zmm1,
         src: zmm2,
         mask: Some(k4),
-        fp_elem: VecElementType::F32,
+        fp_elem: X86SatFpFormat::F32,
         int_elem: VecElementType::I8,
         width: VecWidth::V512,
         signed: false,
@@ -921,7 +922,7 @@ fn clobber_gate_admits_only_architectural_native_vector_operands() {
         dst: zmm1,
         src: x86(X86Reg::Ymm(2)),
         mask: None,
-        fp_elem: VecElementType::F32,
+        fp_elem: X86SatFpFormat::F32,
         int_elem: VecElementType::I64,
         width: VecWidth::V512,
         signed: true,
@@ -932,6 +933,22 @@ fn clobber_gate_admits_only_architectural_native_vector_operands() {
     };
     assert!(!is_x86_native_vector_op(&widening_saturating_conversion));
     assert!(!x86_gate(widening_saturating_conversion));
+
+    let bf16_saturating_conversion = OpKind::VCvtFpToIntSat {
+        dst: zmm1,
+        src: zmm2,
+        mask: None,
+        fp_elem: X86SatFpFormat::BF16,
+        int_elem: VecElementType::I8,
+        width: VecWidth::V512,
+        signed: true,
+        truncate: false,
+        round: crate::smir::ir::types::FpRoundMode::RoundNearest,
+        zeroing: false,
+        suppress_exceptions: false,
+    };
+    assert!(!is_x86_native_vector_op(&bf16_saturating_conversion));
+    assert!(!x86_gate(bf16_saturating_conversion));
 
     let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
     builder.push_op(0x1000, native_ops[0].clone());

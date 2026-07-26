@@ -1,6 +1,7 @@
 //! tests::vector tests
 
 use super::*;
+use crate::smir::ir::ops::X86SatFpFormat;
 use crate::smir::lower::aarch64::*;
 
 #[test]
@@ -883,7 +884,7 @@ fn rejects_x86_saturating_fp_to_int_conversion() {
         dst: v(0),
         src: v(1),
         mask: None,
-        fp_elem: VecElementType::F32,
+        fp_elem: X86SatFpFormat::F32,
         int_elem: VecElementType::I8,
         width: VecWidth::V128,
         signed: true,
@@ -2959,7 +2960,7 @@ fn rejects_vector_unsupported_widths() {
         dst: v(0),
         src: v(1),
         mask: None,
-        fp_elem: VecElementType::F32,
+        fp_elem: X86SatFpFormat::F32,
         int_elem: VecElementType::I8,
         width: VecWidth::V256,
         signed: true,
@@ -2973,7 +2974,7 @@ fn rejects_vector_unsupported_widths() {
         dst: v(0),
         src: v(1),
         mask: None,
-        fp_elem: VecElementType::F64,
+        fp_elem: X86SatFpFormat::F64,
         int_elem: VecElementType::I64,
         width: VecWidth::V64,
         signed: false,
@@ -2987,7 +2988,7 @@ fn rejects_vector_unsupported_widths() {
         dst: v(0),
         src: v(1),
         mask: None,
-        fp_elem: VecElementType::F64,
+        fp_elem: X86SatFpFormat::F64,
         int_elem: VecElementType::I8,
         width: VecWidth::V128,
         signed: true,

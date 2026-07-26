@@ -6,9 +6,10 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate, LazyFlagOp, LazyFlags};
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
-    X86CacheControlKind, X86CountKind, X86OpHint, X86ThreeDNowKind, X86X87ArithmeticDestination,
-    X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind,
-    X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86XSaveKind, x86_sat_fp_to_int_widths,
+    X86CacheControlKind, X86CountKind, X86OpHint, X86SatFpFormat, X86ThreeDNowKind,
+    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
+    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
+    X86XSaveKind, x86_sat_fp_to_int_controls, x86_sat_fp_to_int_widths,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -1127,7 +1128,7 @@ impl SmirInterpreter {
                 dst,
                 src,
                 mask,
-                fp_elem,
+                fp_elem: fp_format,
                 int_elem,
                 width,
                 signed,
@@ -1136,22 +1137,16 @@ impl SmirInterpreter {
                 zeroing,
                 suppress_exceptions,
             } => {
-                let widths = x86_sat_fp_to_int_widths(*fp_elem, *int_elem, *width, *truncate);
-                let encoded_width = widths.map(|(_, encoded_width)| encoded_width);
-                let canonical_rounding = *round != FpRoundMode::RoundNearestTiesAway
-                    && if *truncate {
-                        *round == FpRoundMode::RoundTowardZero
-                            && (!*suppress_exceptions || encoded_width == Some(VecWidth::V512))
-                    } else {
-                        matches!(
-                            (*round, *suppress_exceptions),
-                            (FpRoundMode::Dynamic, false)
-                        ) || (*round != FpRoundMode::Dynamic
-                            && *suppress_exceptions
-                            && encoded_width == Some(VecWidth::V512))
-                    };
-                let canonical_shape =
-                    encoded_width.is_some() && canonical_rounding && (!*zeroing || mask.is_some());
+                let widths = x86_sat_fp_to_int_widths(*fp_format, *int_elem, *width, *truncate);
+                let canonical_shape = widths.is_some_and(|(_, encoded_width)| {
+                    x86_sat_fp_to_int_controls(
+                        *fp_format,
+                        *truncate,
+                        *round,
+                        *suppress_exceptions,
+                        encoded_width,
+                    )
+                }) && (!*zeroing || mask.is_some());
                 if !canonical_shape || !matches!(ctx.arch_regs, ArchRegState::X86_64(_)) {
                     ctx.request_exit(ExitReason::Undefined {
                         addr: op.guest_pc,
@@ -1160,10 +1155,10 @@ impl SmirInterpreter {
                     return Ok(());
                 }
 
-                let format = match fp_elem {
-                    VecElementType::F32 => X86_SIMD_F32,
-                    VecElementType::F64 => X86_SIMD_F64,
-                    _ => unreachable!("canonical shape checked above"),
+                let format = match fp_format {
+                    X86SatFpFormat::F16 => X86_SIMD_F16,
+                    X86SatFpFormat::BF16 | X86SatFpFormat::F32 => X86_SIMD_F32,
+                    X86SatFpFormat::F64 => X86_SIMD_F64,
                 };
                 let source = Self::read_vec(ctx, *src);
                 let old = Self::read_vec(ctx, *dst);
@@ -1184,15 +1179,15 @@ impl SmirInterpreter {
                 } else {
                     *round
                 };
-                let src_lane_bits = fp_elem.bytes() * 8;
+                let src_lane_bits = fp_format.bytes() * 8;
                 let int_bits = int_elem.bytes() * 8;
                 let dst_lane_bits = if *int_elem == VecElementType::I8 {
-                    32
+                    src_lane_bits
                 } else {
                     int_bits
                 };
                 let (src_width, _) = widths.expect("canonical conversion shape checked above");
-                let lanes = src_width.lanes(*fp_elem) as u8;
+                let lanes = (src_width.bytes() / fp_format.bytes()) as u8;
                 let mut status = 0;
                 for lane in 0..lanes {
                     if active & (1u64 << lane) == 0 {
@@ -1203,16 +1198,24 @@ impl SmirInterpreter {
                     }
 
                     let mut source_bits = Self::get_lane(&source, lane, src_lane_bits);
-                    // These instructions report only Invalid and Precision.
-                    // DAZ substitutes signed zero; a preserved denormal is not
-                    // itself a Denormal exception for this instruction class.
-                    if mxcsr & (1 << 6) != 0 && Self::x86_simd_fp_is_denormal(source_bits, format) {
+                    if *fp_format == X86SatFpFormat::BF16 {
+                        // BF16 inputs always use DAZ and are exactly widened to
+                        // binary32 before fixed-RNE or RTZ integer conversion.
+                        source_bits = u64::from(Self::x86_bf16_to_fp32_daz(source_bits as u16));
+                    } else if *fp_format != X86SatFpFormat::F16
+                        && mxcsr & (1 << 6) != 0
+                        && Self::x86_simd_fp_is_denormal(source_bits, format)
+                    {
+                        // FP32/FP64 forms apply MXCSR.DAZ. AVX-512-FP16
+                        // assumes DAZ=0 for binary16 inputs.
                         let (sign, _, _, _) = Self::x86_simd_fp_masks(format);
                         source_bits &= sign;
                     }
                     let converted =
                         Self::x86_simd_fp_to_int_sat(source_bits, format, int_bits, *signed, mode);
-                    status |= converted.status;
+                    if *fp_format != X86SatFpFormat::BF16 {
+                        status |= converted.status;
+                    }
                     Self::set_lane(
                         &mut result,
                         lane,
@@ -1226,7 +1229,7 @@ impl SmirInterpreter {
                     );
                 }
 
-                if !*suppress_exceptions {
+                if *fp_format != X86SatFpFormat::BF16 && !*suppress_exceptions {
                     // Invalid is detected in the pre-computation phase;
                     // Precision is post-computation. An unmasked IE therefore
                     // faults before PE from any lane can be accrued.

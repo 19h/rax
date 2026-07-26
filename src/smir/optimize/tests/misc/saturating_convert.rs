@@ -1,6 +1,7 @@
 //! Optimizer contracts for AVX10.2 saturating-conversion effects.
 
 use super::*;
+use crate::smir::ir::ops::X86SatFpFormat;
 
 fn conversion(
     mask: Option<VReg>,
@@ -12,7 +13,7 @@ fn conversion(
         dst: VReg::virt(2),
         src: VReg::virt(0),
         mask,
-        fp_elem: VecElementType::F32,
+        fp_elem: X86SatFpFormat::F32,
         int_elem: VecElementType::I8,
         width,
         signed: true,
@@ -28,7 +29,7 @@ fn rounded_conversion(round: FpRoundMode, suppress_exceptions: bool, width: VecW
         dst: VReg::virt(2),
         src: VReg::virt(0),
         mask: None,
-        fp_elem: VecElementType::F32,
+        fp_elem: X86SatFpFormat::F32,
         int_elem: VecElementType::I8,
         width,
         signed: false,
@@ -36,6 +37,22 @@ fn rounded_conversion(round: FpRoundMode, suppress_exceptions: bool, width: VecW
         round,
         zeroing: false,
         suppress_exceptions,
+    }
+}
+
+fn bf16_conversion(round: FpRoundMode) -> OpKind {
+    OpKind::VCvtFpToIntSat {
+        dst: VReg::virt(2),
+        src: VReg::virt(0),
+        mask: None,
+        fp_elem: X86SatFpFormat::BF16,
+        int_elem: VecElementType::I8,
+        width: VecWidth::V128,
+        signed: true,
+        truncate: false,
+        round,
+        zeroing: false,
+        suppress_exceptions: false,
     }
 }
 
@@ -63,7 +80,7 @@ fn saturating_conversion_metadata_tracks_merge_mask_and_mxcsr_effects() {
         dst: VReg::virt(2),
         src: VReg::virt(0),
         mask: None,
-        fp_elem: VecElementType::F64,
+        fp_elem: X86SatFpFormat::F64,
         int_elem: VecElementType::I32,
         width: VecWidth::V256,
         signed: true,
@@ -89,6 +106,9 @@ fn saturating_conversion_metadata_tracks_merge_mask_and_mxcsr_effects() {
 
     let embedded = rounded_conversion(FpRoundMode::RoundDown, true, VecWidth::V512);
     assert!(!embedded.has_side_effects());
+
+    assert!(!bf16_conversion(FpRoundMode::RoundNearest).has_side_effects());
+    assert!(bf16_conversion(FpRoundMode::Dynamic).has_side_effects());
 
     for malformed in [
         rounded_conversion(FpRoundMode::Dynamic, true, VecWidth::V512),
@@ -127,4 +147,10 @@ fn dce_preserves_status_and_malformed_boundaries_but_removes_dead_sae_result() {
     embedded.set_terminator(Terminator::Return { values: vec![] });
     assert_eq!(dead_code_elimination(&mut embedded), 1);
     assert!(embedded.ops.is_empty());
+
+    let mut bf16 = SmirBlock::new(BlockId(0), 0x1000);
+    bf16.push_op(make_op(0, bf16_conversion(FpRoundMode::RoundNearest)));
+    bf16.set_terminator(Terminator::Return { values: vec![] });
+    assert_eq!(dead_code_elimination(&mut bf16), 1);
+    assert!(bf16.ops.is_empty());
 }
