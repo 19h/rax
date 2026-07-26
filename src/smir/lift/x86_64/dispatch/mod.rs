@@ -30,5 +30,7 @@ mod opcode_maps;
 pub(crate) use opcode_maps::*;
 mod vector;
 pub(crate) use vector::*;
+mod vector_map0f38;
+pub(crate) use vector_map0f38::*;
 mod vector_map0f3a;
 pub(crate) use vector_map0f3a::*;
