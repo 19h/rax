@@ -9,6 +9,8 @@ mod crc32;
 pub use crc32::*;
 mod jit;
 pub use jit::*;
+mod jit_mul;
+pub use jit_mul::*;
 mod maskmov;
 pub use maskmov::*;
 mod misc;

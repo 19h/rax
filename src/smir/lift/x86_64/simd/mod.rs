@@ -16,3 +16,5 @@ mod vex_bmi_dispatch;
 pub use vex_bmi_dispatch::*;
 mod vex_chunk;
 pub use vex_chunk::*;
+mod vex_mulx;
+pub use vex_mulx::*;

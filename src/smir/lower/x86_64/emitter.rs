@@ -3743,6 +3743,31 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_rr(dst, src);
     }
 
+    pub fn emit_vex_bmi_rm_disp_pp(
+        &mut self,
+        opcode: u8,
+        pp: X86SsePrefix,
+        dst: PhysReg,
+        base: PhysReg,
+        disp: i32,
+        control: PhysReg,
+        width: OpWidth,
+    ) {
+        let r = (dst.encoding() >> 3) & 0x1;
+        let b = (base.encoding() >> 3) & 0x1;
+        let vvvv = control.encoding() & 0x0f;
+        let w = u8::from(width == OpWidth::W64);
+        let pp = Self::vex_pp_bits(pp);
+
+        self.code.emit_u8(0xC4);
+        self.code
+            .emit_u8((((r ^ 1) & 1) << 7) | (1 << 6) | (((b ^ 1) & 1) << 5) | 0x02);
+        self.code
+            .emit_u8((w << 7) | (((vvvv ^ 0x0f) & 0x0f) << 3) | pp);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_mem_disp(dst, base, disp, DispSize::Auto);
+    }
+
     /// VEX.LZ.0F38.F3 /1..=/3 BLSR/BLSMSK/BLSI r, r/m.
     pub fn emit_vex_bls_rr(
         &mut self,

@@ -106,6 +106,10 @@ mod ops;
 pub use emitter::*;
 mod jit;
 pub use jit::*;
+#[cfg(feature = "smir-jit")]
+mod jit_mul;
+#[cfg(feature = "smir-jit")]
+pub use jit_mul::*;
 mod jit_crc32;
 pub use jit_crc32::*;
 mod jit_call;

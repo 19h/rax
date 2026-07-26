@@ -500,7 +500,7 @@ fn vex_apx_mulx_interpreter_matches_primary_spec_at_width_and_alias_boundaries()
 }
 
 #[test]
-fn vex_apx_mulx_reserved_and_memory_forms_fail_closed_at_the_exact_frontier() {
+fn vex_apx_mulx_reserved_forms_fail_closed_and_memory_stays_x86_host_only() {
     let vex = MulxCase {
         encoding: EncodingKind::Vex,
         width: OpWidth::W64,
@@ -559,9 +559,14 @@ fn vex_apx_mulx_reserved_and_memory_forms_fail_closed_at_the_exact_frontier() {
         assert_eq!(result.ops.len(), 2, "{name}");
         let function = function_from_ops(result.ops, false);
         assert!(
-            !is_native_clobber_safe_excluding(&function, &std::collections::HashMap::new(), true,),
+            is_native_clobber_safe_excluding(&function, &std::collections::HashMap::new(), true,),
             "{name}: x86-64 gate"
         );
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer.set_mem_helpers(true);
+        lowerer
+            .lower_function(&function)
+            .unwrap_or_else(|error| panic!("{name}: x86-64 lowering failed: {error:?}"));
         assert!(
             !is_x86_aarch64_native_clobber_safe_excluding(
                 &function,
