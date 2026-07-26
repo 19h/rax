@@ -136,10 +136,10 @@ impl SmirInterpreter {
         }
     }
 
-    /// Intel MIN*/MAX* selection: unordered and equal operands select src2
-    /// bit-for-bit, and every NaN (including a QNaN) reports invalid. DAZ is
-    /// applied before finite selection and can therefore turn a denormal into a
-    /// signed zero without accruing the denormal status bit.
+    /// Intel MIN*/MAX* selection: unordered and equal operands select src2,
+    /// and every NaN (including a QNaN) reports invalid. MXCSR.DAZ converts
+    /// every denormal source operand to signed zero before selection, including
+    /// a denormal src2 selected because src1 is NaN, without accruing DE.
     pub(crate) fn x86_simd_fp_min_max(
         first: u64,
         second: u64,
@@ -150,12 +150,13 @@ impl SmirInterpreter {
         let any_nan =
             Self::x86_simd_fp_is_nan(first, format) || Self::x86_simd_fp_is_nan(second, format);
         if any_nan {
-            // MIN/MAX selects src2 bit-for-bit for every unordered lane and
-            // reports invalid for both quiet and signaling NaNs. NaN
-            // precedence suppresses a denormal exception from the other
-            // source.
+            // MIN/MAX selects src2 for every unordered lane and reports
+            // invalid for both quiet and signaling NaNs. DAZ still transforms
+            // a selected denormal src2 to signed zero before the computation;
+            // discard the helper's DE status so NaN exception precedence
+            // remains exact when DAZ is clear.
             return X86SimdFpResult {
-                bits: second,
+                bits: Self::x86_simd_fp_apply_daz(second, format, mxcsr).bits,
                 status: 1,
             };
         }

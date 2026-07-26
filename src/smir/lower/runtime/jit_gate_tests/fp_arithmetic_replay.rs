@@ -776,6 +776,49 @@ fn interpreter_o0_o2_gives_nan_precedence_over_same_lane_denormal_status() {
     }
 }
 
+#[test]
+fn lifted_vminps_daz_transforms_nan_selected_negative_denormal_src2() {
+    let case = NativeCase::NonEvex(NonEvexCase {
+        form: NonEvexForm::VexC5,
+        kind: FpKind::PackedF32,
+        opcode: 0x5D,
+        l: false,
+        dst: 1,
+        src1: 2,
+        src2: 1,
+    });
+    let bytes = case.bytes();
+    assert_eq!(bytes, [0xC5, 0xE8, 0x5D, 0xC9]);
+
+    let mut initial = initial_state(case, 0);
+    initial.vectors[1] = [0; 8];
+    initial.vectors[2] = [0; 8];
+    // Lane 0 selects src2 because src1 is a QNaN. MXCSR.DAZ must first
+    // transform the selected negative minimum subnormal into -0.0.
+    initial.vectors[1][0] = 0x3F80_0000_8000_0001;
+    initial.vectors[1][1] = 0x3F80_0000_3F80_0000;
+    initial.vectors[2][0] = 0x3F80_0000_7FC1_2345;
+    initial.vectors[2][1] = 0x3F80_0000_3F80_0000;
+    initial.mxcsr = 0x1F80 | (1 << 6) | (1 << 15);
+
+    for level in [
+        crate::smir::optimize::OptLevel::O0,
+        crate::smir::optimize::OptLevel::O2,
+    ] {
+        let result = interpret(&bytes, &initial, level);
+        assert_eq!(
+            result.vectors[1][0], 0x3F80_0000_8000_0000,
+            "{level:?}: DAZ-selected src2"
+        );
+        assert_eq!(result.vectors[1][1], 0x3F80_0000_3F80_0000);
+        assert_eq!(
+            result.mxcsr & 0x3F,
+            1,
+            "{level:?}: invalid without denormal status"
+        );
+    }
+}
+
 #[cfg(target_arch = "x86_64")]
 fn execute_native(
     bytes: &[u8],
@@ -914,6 +957,14 @@ fn run_isolated_native_differential(test_name: &str) {
 #[cfg(target_arch = "x86_64")]
 #[test]
 fn replay_matches_o0_o2_interpretation_for_all_ops_formats_controls_masks_aliases_and_mxcsr() {
+    #[cfg(target_os = "macos")]
+    if running_under_rosetta() {
+        eprintln!(
+            "skipping native binary FP arithmetic differential: Rosetta does not apply \
+             MXCSR.DAZ to MIN/MAX src2 selected by a NaN source"
+        );
+        return;
+    }
     if !std::is_x86_feature_detected!("avx")
         || !std::is_x86_feature_detected!("avx512f")
         || !std::is_x86_feature_detected!("avx512bw")

@@ -54,22 +54,45 @@ fn arithmetic_nan_precedence_suppresses_same_lane_denormal_status_for_every_core
 
 #[test]
 fn minmax_nan_precedence_selects_src2_without_denormal_status() {
-    let denormal = 1u64;
-    let qnan = 0x7FC1_2345u64;
-    let snan = 0x7F81_2345u64;
+    for (format, denormals, nans) in [
+        (
+            X86_SIMD_F32,
+            [1u64, 0x8000_0001],
+            [0x7FC1_2345u64, 0x7F81_2345],
+        ),
+        (
+            X86_SIMD_F64,
+            [1u64, 0x8000_0000_0000_0001],
+            [0x7FF8_2468_ACE0_1357u64, 0x7FF0_2468_ACE0_1357],
+        ),
+    ] {
+        let (sign, _, _, _) = SmirInterpreter::x86_simd_fp_masks(format);
+        for min in [true, false] {
+            for daz in [false, true] {
+                let mxcsr = 0x1F80 | (u32::from(daz) << 6);
+                for denormal in denormals {
+                    let selected_src2 = if daz { denormal & sign } else { denormal };
+                    for nan in nans {
+                        let first_nan =
+                            SmirInterpreter::x86_simd_fp_min_max(nan, denormal, format, mxcsr, min);
+                        assert_eq!(
+                            first_nan.bits, selected_src2,
+                            "MIN/MAX selects DAZ-transformed src2; DAZ={daz}"
+                        );
+                        assert_eq!(
+                            first_nan.status, 1,
+                            "MIN/MAX NaN must suppress src2 DE; DAZ={daz}"
+                        );
 
-    for min in [true, false] {
-        for mxcsr in [0x1F80, 0x1F80 | (1 << 6)] {
-            for nan in [qnan, snan] {
-                let first_nan =
-                    SmirInterpreter::x86_simd_fp_min_max(nan, denormal, X86_SIMD_F32, mxcsr, min);
-                assert_eq!(first_nan.bits, denormal, "MIN/MAX selects raw src2");
-                assert_eq!(first_nan.status, 1, "MIN/MAX NaN must suppress src2 DE");
-
-                let second_nan =
-                    SmirInterpreter::x86_simd_fp_min_max(denormal, nan, X86_SIMD_F32, mxcsr, min);
-                assert_eq!(second_nan.bits, nan, "MIN/MAX selects raw NaN src2");
-                assert_eq!(second_nan.status, 1, "MIN/MAX NaN must suppress src1 DE");
+                        let second_nan =
+                            SmirInterpreter::x86_simd_fp_min_max(denormal, nan, format, mxcsr, min);
+                        assert_eq!(second_nan.bits, nan, "MIN/MAX selects NaN src2");
+                        assert_eq!(
+                            second_nan.status, 1,
+                            "MIN/MAX NaN must suppress src1 DE; DAZ={daz}"
+                        );
+                    }
+                }
             }
         }
     }
