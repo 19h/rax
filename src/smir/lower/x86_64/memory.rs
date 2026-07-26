@@ -65,6 +65,7 @@ impl X86_64Lowerer {
             )
             || Self::alu_touches_state_backed_stack_gpr(&op.kind)
             || x86_state_backed_gpr_lea_valid(op)
+            || x86_state_backed_stack_group1_valid(op)
             || x86_state_backed_gpr_extend_valid(op)
             || x86_state_backed_gpr_cmove_valid(op)
             || x86_state_backed_gpr_setcc_valid(op)

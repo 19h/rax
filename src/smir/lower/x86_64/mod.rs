@@ -146,6 +146,8 @@ mod sse4a;
 pub use sse4a::*;
 mod state;
 pub use state::*;
+mod state_alu;
+pub use state_alu::*;
 mod state_lea;
 pub use state_lea::*;
 mod state_mulx;

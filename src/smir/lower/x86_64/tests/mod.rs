@@ -90,6 +90,8 @@ mod sse4a;
 #[cfg(test)]
 mod state;
 #[cfg(test)]
+mod state_alu;
+#[cfg(test)]
 mod state_lea;
 #[cfg(test)]
 mod sti;
