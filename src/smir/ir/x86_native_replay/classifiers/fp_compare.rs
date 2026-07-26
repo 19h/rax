@@ -2,6 +2,13 @@
 
 use super::X86InstructionBytes;
 
+#[inline]
+fn evex_llig_sae_control_is_valid(p2: u8) -> bool {
+    let ll = (p2 >> 5) & 0x03;
+    let suppress_exceptions = p2 & 0x10 != 0;
+    suppress_exceptions || ll != 3
+}
+
 impl X86InstructionBytes {
     /// Validate one register-only legacy SSE or AVX VEX `CMPPS`, `CMPPD`,
     /// `CMPSS`, or `CMPSD` instruction and report whether it requires AVX.
@@ -48,9 +55,10 @@ impl X86InstructionBytes {
     /// Validate one register-only EVEX `VCOMISH` or `VUCOMISH` instruction.
     ///
     /// Returns `(needs_avx512vl, needs_avx512fp16)`. Both instructions are
-    /// scalar LLIG forms, require AVX-512-FP16 but not AVX-512VL, admit SAE
-    /// through EVEX.b, and ignore all four EVEX.L'L values. They reserve
-    /// EVEX.vvvv/V'/z/aaa and reject memory forms.
+    /// scalar LLIG forms, require AVX-512-FP16 but not AVX-512VL, and admit
+    /// SAE through EVEX.b. Without SAE, the three defined EVEX.L'L values are
+    /// ignored and `11b` is reserved; with SAE, all four control values are
+    /// valid. They reserve EVEX.vvvv/V'/z/aaa and reject memory forms.
     pub fn evex_register_fp16_flag_compare_requirements(&self) -> Option<(bool, bool)> {
         let bytes = self.as_slice();
         if bytes.len() != 6 || bytes[0] != 0x62 {
@@ -65,6 +73,7 @@ impl X86InstructionBytes {
         if p0 & 0x0F != 5
             || p1 != 0x7C
             || p2 & 0x8F != 0x08
+            || !evex_llig_sae_control_is_valid(p2)
             || !matches!(opcode, 0x2E | 0x2F)
             || modrm >> 6 != 3
         {
@@ -78,9 +87,10 @@ impl X86InstructionBytes {
     ///
     /// Returns `(needs_avx512vl, needs_avx512fp16)`, which is always
     /// `(false, false)`: these scalar LLIG forms require AVX-512F but neither
-    /// AVX-512VL nor AVX-512-FP16. EVEX.b selects SAE and all four EVEX.L'L
-    /// values are ignored. EVEX.vvvv/V'/z/aaa are reserved; all memory forms
-    /// fail closed.
+    /// AVX-512VL nor AVX-512-FP16. EVEX.b selects SAE. Without SAE, the three
+    /// defined EVEX.L'L values are ignored and `11b` is reserved; with SAE,
+    /// all four control values are valid. EVEX.vvvv/V'/z/aaa are reserved;
+    /// all memory forms fail closed.
     pub fn evex_register_fp32_fp64_flag_compare_requirements(&self) -> Option<(bool, bool)> {
         let bytes = self.as_slice();
         if bytes.len() != 6 || bytes[0] != 0x62 {
@@ -95,6 +105,7 @@ impl X86InstructionBytes {
         if p0 & 0x0F != 1
             || !matches!(p1, 0x7C | 0xFD)
             || p2 & 0x8F != 0x08
+            || !evex_llig_sae_control_is_valid(p2)
             || !matches!(opcode, 0x2E | 0x2F)
             || modrm >> 6 != 3
         {

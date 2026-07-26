@@ -103,7 +103,7 @@ fn evex_comi_covers_truth_table_nan_classes_llig_extensions_aliases_and_state() 
     let register_pairs = [(1, 2), (9, 10), (17, 18), (25, 26), (31, 31)];
     for elem_size in [2, 4, 8] {
         let (one, two, qnan, snan, _) = patterns(elem_size);
-        for ll in 0..4 {
+        for ll in 0..3 {
             for (case, (first, second, expected)) in [
                 (one, one, flags::bits::ZF),
                 (one, two, flags::bits::CF),
@@ -161,7 +161,7 @@ fn evex_comi_covers_truth_table_nan_classes_llig_extensions_aliases_and_state() 
             }
         }
 
-        let code = encoding(elem_size, false, 31, 31, 3, false);
+        let code = encoding(elem_size, false, 31, 31, 3, true);
         let mut alias = vcpu(&code);
         set_scalar(&mut alias, 31, one);
         assert!(alias.step().unwrap().is_none());
@@ -195,17 +195,20 @@ fn evex_comi_handles_fp16_denormals_fp32_fp64_daz_and_sae() {
     }
 
     let (_, _, qnan, _, _) = patterns(2);
-    let code = encoding(2, true, 1, 2, 0, true);
-    let mut vcpu = vcpu(&code);
-    vcpu.mxcsr = 0x1F80 & !(1 << 7);
-    set_scalar(&mut vcpu, 1, qnan);
-    set_scalar(&mut vcpu, 2, 0);
-    assert!(vcpu.step().unwrap().is_none());
-    assert_eq!(
-        vcpu.regs.rflags & STATUS_FLAGS,
-        flags::bits::ZF | flags::bits::PF | flags::bits::CF
-    );
-    assert_eq!(vcpu.mxcsr & 0x3F, 0, "SAE must not accrue status");
+    for ll in 0..4 {
+        let code = encoding(2, true, 1, 2, ll, true);
+        let mut vcpu = vcpu(&code);
+        vcpu.mxcsr = 0x1F80 & !(1 << 7);
+        set_scalar(&mut vcpu, 1, qnan);
+        set_scalar(&mut vcpu, 2, 0);
+        assert!(vcpu.step().unwrap().is_none(), "{code:02X?}");
+        assert_eq!(
+            vcpu.regs.rflags & STATUS_FLAGS,
+            flags::bits::ZF | flags::bits::PF | flags::bits::CF,
+            "{code:02X?}"
+        );
+        assert_eq!(vcpu.mxcsr & 0x3F, 0, "SAE must not accrue status");
+    }
 }
 
 fn assert_unmasked_exception(vector: u8, cr4: u64) {
@@ -255,7 +258,7 @@ fn assert_reserved_ud(code: &[u8]) {
 #[test]
 fn evex_comi_rejects_reserved_fields_before_address_or_state_access() {
     for elem_size in [2, 4, 8] {
-        let valid = encoding(elem_size, true, 17, 25, 3, false);
+        let valid = encoding(elem_size, true, 17, 25, 2, false);
         let mut invalid = Vec::new();
         let mut vvvv = valid;
         vvvv[2] &= !0x08;
@@ -269,6 +272,7 @@ fn evex_comi_rejects_reserved_fields_before_address_or_state_access() {
         let mut zeroing = valid;
         zeroing[3] |= 0x80;
         invalid.push(zeroing);
+        invalid.push(encoding(elem_size, true, 17, 25, 3, false));
         for code in invalid {
             assert_reserved_ud(&code);
         }
@@ -276,6 +280,10 @@ fn evex_comi_rejects_reserved_fields_before_address_or_state_access() {
         let mut memory_sae = encoding(elem_size, true, 1, 0, 0, true);
         memory_sae[5] &= 0x38;
         assert_reserved_ud(&memory_sae);
+
+        let mut memory_reserved_ll = encoding(elem_size, true, 1, 0, 3, false);
+        memory_reserved_ll[5] &= 0x38;
+        assert_reserved_ud(&memory_reserved_ll);
     }
 }
 
@@ -283,7 +291,7 @@ fn evex_comi_rejects_reserved_fields_before_address_or_state_access() {
 fn evex_comi_memory_form_reads_scalar_and_commits_only_after_access() {
     for elem_size in [2, 4, 8] {
         let (one, two, _, _, _) = patterns(elem_size);
-        let mut code = encoding(elem_size, false, 17, 0, 3, false);
+        let mut code = encoding(elem_size, false, 17, 0, 2, false);
         code[5] &= 0x38; // source2 = [RAX]
         let mut vcpu = vcpu(&code);
         vcpu.regs.rax = DATA;

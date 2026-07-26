@@ -1,4 +1,4 @@
-//! Scalar FP32/FP64 comparisons that write x86 status flags.
+//! Scalar FP16/FP32/FP64 comparisons that write x86 status flags.
 
 use crate::smir::ir::ops::{OpKind, SmirOp, X86SsePrefix};
 use crate::smir::ir::types::*;
@@ -32,7 +32,8 @@ impl X86_64Lifter {
         if prefix.vvvv != 0
             || prefix.v_high
             || matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne)
-            || (prefix.encoding == VecEncodingKind::Evex && (prefix.aaa != 0 || prefix.zeroing))
+            || (prefix.encoding == VecEncodingKind::Evex
+                && (prefix.aaa != 0 || prefix.zeroing || (!prefix.b && prefix.l_bits == 3)))
         {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
@@ -128,6 +129,98 @@ impl X86_64Lifter {
                 suppress_exceptions: prefix.encoding == VecEncodingKind::Evex && prefix.b,
             },
             self.vec_hint(prefix, opcode),
+        ));
+        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+    }
+
+    pub(crate) fn lift_evex_fp16_flag_compare(
+        &self,
+        prefix: VecPrefix,
+        opcode: u8,
+        bytes: &[u8],
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.encoding != VecEncodingKind::Evex
+            || prefix.map != X86VecMap::Map5
+            || prefix.pp != X86SsePrefix::None
+            || prefix.w
+            || prefix.vvvv != 0
+            || prefix.v_high
+            || prefix.aaa != 0
+            || prefix.zeroing
+            || (!prefix.b && prefix.l_bits == 3)
+            || !matches!(opcode, 0x2E | 0x2F)
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let cursor = prefix.bytes + 1;
+        let modrm_prefix = X86Prefix {
+            rex: prefix.rex,
+            address_size_override: prefix.address_size_override,
+            segment_override: prefix.segment_override,
+            cursor,
+            ..X86Prefix::default()
+        };
+        let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
+        if prefix.b && modrm.is_memory {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+        let src1 = self.xmm(modrm.reg + if prefix.reg_high { 16 } else { 0 });
+        let mut ops = Vec::new();
+        let src2 = if modrm.is_memory {
+            let (addr, pre_ops) = self.vec_scalar_addr_to_smir(
+                prefix,
+                modrm.addr.as_ref().unwrap(),
+                next_pc,
+                VecElementType::F16,
+                ctx,
+            );
+            ops.extend(pre_ops);
+            let scalar = ctx.alloc_vreg();
+            let vector = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Load {
+                    dst: scalar,
+                    addr,
+                    width: MemWidth::B2,
+                    sign: SignExtend::Zero,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VBroadcast {
+                    dst: vector,
+                    scalar,
+                    elem: VecElementType::F16,
+                    lanes: 1,
+                },
+            ));
+            vector
+        } else {
+            self.xmm(modrm.rm + if prefix.rm_high { 16 } else { 0 })
+        };
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86FpCompare {
+                src1,
+                src2,
+                elem: VecElementType::F16,
+                signaling: opcode == 0x2F,
+                suppress_exceptions: prefix.b,
+            },
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }

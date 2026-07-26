@@ -66,6 +66,9 @@ fn replay_admits_and_emits_all_control_and_register_extension_samples() {
     for opcode in [0x2E, 0x2F] {
         for ll in 0..4 {
             for suppress_exceptions in [false, true] {
+                if ll == 3 && !suppress_exceptions {
+                    continue;
+                }
                 for (src1, src2) in registers {
                     let bytes = encoding(opcode, src1, src2, ll, suppress_exceptions);
                     let mut function = function(&bytes);
@@ -87,6 +90,14 @@ fn replay_admits_and_emits_all_control_and_register_extension_samples() {
                             crate::smir::ir::X86InstructionBytes::new(&memory).unwrap(),
                         );
                         assert!(!is_native_clobber_safe(&malformed));
+
+                        let mut reserved_ll = function.clone();
+                        let invalid = encoding(opcode, src1, src2, 3, false);
+                        reserved_ll.x86_instruction_bytes.insert(
+                            (BlockId(0), PC),
+                            crate::smir::ir::X86InstructionBytes::new(&invalid).unwrap(),
+                        );
+                        assert!(!is_native_clobber_safe(&reserved_ll));
                         checked_fail_closed = true;
                     }
 
@@ -144,7 +155,7 @@ fn replay_admits_and_emits_all_control_and_register_extension_samples() {
         }
     }
     assert!(checked_fail_closed);
-    assert_eq!(admitted, 96);
+    assert_eq!(admitted, 84);
 }
 
 #[cfg(target_arch = "x86_64")]
@@ -336,6 +347,9 @@ fn native_cases() -> Vec<NativeCase> {
         for opcode in [0x2E, 0x2F] {
             for ll in 0..4 {
                 for suppress_exceptions in [false, true] {
+                    if ll == 3 && !suppress_exceptions {
+                        continue;
+                    }
                     for (case, (first, second, force_alias)) in values.into_iter().enumerate() {
                         let (src1, mut src2) =
                             register_pairs[(case + usize::from(opcode == 0x2F) + usize::from(ll))
@@ -425,7 +439,7 @@ fn run_child_range(test_name: &str, range: std::ops::Range<usize>) -> std::proce
 #[cfg(target_arch = "x86_64")]
 fn run_isolated_native_differential(test_name: &str) {
     let cases = native_cases();
-    assert_eq!(cases.len(), 320);
+    assert_eq!(cases.len(), 280);
     if let Some(range) = child_range() {
         execute_native_case_range(&cases, range);
         return;

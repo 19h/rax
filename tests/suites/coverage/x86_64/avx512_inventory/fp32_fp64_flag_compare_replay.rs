@@ -109,4 +109,24 @@ fn register_evex_fp32_fp64_flag_compare_replay_closes_16_runtime_gate_gaps() {
     // memory form. Only the 16 register forms are replay-safe.
     assert_eq!(register_forms, 16);
     assert_eq!(memory_forms, 4);
+
+    for p1 in [0x7C, 0xFD] {
+        let reserved = [0x62, 0xF1, p1, 0x68, 0x2E, 0xC8];
+        assert_eq!(
+            X86InstructionBytes::new(&reserved)
+                .unwrap()
+                .evex_register_fp32_fp64_flag_compare_requirements(),
+            None,
+            "{reserved:02X?}"
+        );
+
+        let sae = [0x62, 0xF1, p1, 0x78, 0x2E, 0xC8];
+        assert_eq!(
+            X86InstructionBytes::new(&sae)
+                .unwrap()
+                .evex_register_fp32_fp64_flag_compare_requirements(),
+            Some((false, false)),
+            "{sae:02X?}"
+        );
+    }
 }

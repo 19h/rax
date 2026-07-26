@@ -108,6 +108,7 @@ pub fn evex_comi(
         || !evex.v_prime
         || evex.aaa != 0
         || evex.z
+        || (!evex.broadcast && evex.ll == 3)
         || (evex.broadcast && is_memory)
     {
         return vcpu.inject_undefined_instruction();

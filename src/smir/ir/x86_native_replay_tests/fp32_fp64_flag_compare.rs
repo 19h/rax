@@ -53,7 +53,7 @@ fn encoding(
 }
 
 #[test]
-fn classifier_covers_all_32768_legal_format_extension_llig_and_sae_encodings() {
+fn classifier_covers_all_28672_legal_format_extension_llig_and_sae_encodings() {
     let mut classified = 0usize;
     for format in Format::ALL {
         for opcode in [0x2E, 0x2F] {
@@ -63,7 +63,8 @@ fn classifier_covers_all_32768_legal_format_extension_llig_and_sae_encodings() {
                         for suppress_exceptions in [false, true] {
                             let bytes =
                                 encoding(format, opcode, src1, src2, ll, suppress_exceptions);
-                            let expected = Some((false, false));
+                            let expected =
+                                (suppress_exceptions || ll != 3).then_some((false, false));
                             assert_eq!(
                                 X86InstructionBytes::new(&bytes)
                                     .unwrap()
@@ -78,7 +79,7 @@ fn classifier_covers_all_32768_legal_format_extension_llig_and_sae_encodings() {
             }
         }
     }
-    assert_eq!(classified, 32_768);
+    assert_eq!(classified, 28_672);
 }
 
 #[test]
@@ -88,6 +89,8 @@ fn classifier_accepts_independently_assembled_samples_and_rejects_frontiers() {
         [0x62, 0xF1, 0x7C, 0x18, 0x2F, 0xD3],
         [0x62, 0xF1, 0xFD, 0x08, 0x2E, 0xD3],
         [0x62, 0xF1, 0xFD, 0x18, 0x2F, 0xD3],
+        [0x62, 0xF1, 0x7C, 0x78, 0x2E, 0xD3],
+        [0x62, 0xF1, 0xFD, 0x78, 0x2F, 0xD3],
         [0x62, 0x01, 0x7C, 0x18, 0x2E, 0xF7],
         [0x62, 0x01, 0xFD, 0x18, 0x2F, 0xF7],
     ] {
@@ -110,6 +113,8 @@ fn classifier_accepts_independently_assembled_samples_and_rejects_frontiers() {
         &[0x62, 0xF1, 0x7C, 0x00, 0x2F, 0xD3],       // reserved V'
         &[0x62, 0xF1, 0x7C, 0x09, 0x2F, 0xD3],       // reserved opmask
         &[0x62, 0xF1, 0x7C, 0x88, 0x2F, 0xD3],       // reserved zeroing
+        &[0x62, 0xF1, 0x7C, 0x68, 0x2F, 0xD3],       // reserved no-SAE L'L=11b
+        &[0x62, 0xF1, 0xFD, 0x68, 0x2E, 0xD3],       // reserved no-SAE L'L=11b
         &[0x62, 0xF1, 0x7C, 0x08, 0x2D, 0xD3],       // unrelated opcode
         &[0x62, 0xF1, 0x7C, 0x08, 0x2F, 0x13],       // memory source
         &[0x62, 0xF1, 0x7C, 0x08, 0x2F],             // missing ModR/M

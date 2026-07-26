@@ -116,8 +116,9 @@ fn register_evex_fp16_flag_compare_replay_closes_8_generated_lift_lower_gaps() {
                                         bytes.push(0xA5);
                                     }
                                     let expected = (!trailing
-                                        && expected_shapes.contains(&(map, opcode, pp, w)))
-                                    .then_some((false, true));
+                                        && expected_shapes.contains(&(map, opcode, pp, w))
+                                        && (suppress_exceptions || ll != 3))
+                                        .then_some((false, true));
                                     assert_eq!(
                                         X86InstructionBytes::new(&bytes)
                                             .unwrap()
@@ -145,7 +146,16 @@ fn register_evex_fp16_flag_compare_replay_closes_8_generated_lift_lower_gaps() {
     zeroing[3] |= 0x80;
     let mut opmask = register;
     opmask[3] |= 1;
-    for bytes in [memory, reserved_vvvv, reserved_v_prime, zeroing, opmask] {
+    let mut reserved_ll = register;
+    reserved_ll[3] = 0x68;
+    for bytes in [
+        memory,
+        reserved_vvvv,
+        reserved_v_prime,
+        zeroing,
+        opmask,
+        reserved_ll,
+    ] {
         assert_eq!(
             X86InstructionBytes::new(&bytes)
                 .unwrap()
@@ -154,4 +164,13 @@ fn register_evex_fp16_flag_compare_replay_closes_8_generated_lift_lower_gaps() {
             "{bytes:02X?}"
         );
     }
+
+    let mut sae_ll3 = register;
+    sae_ll3[3] = 0x78;
+    assert_eq!(
+        X86InstructionBytes::new(&sae_ll3)
+            .unwrap()
+            .evex_register_fp16_flag_compare_requirements(),
+        Some((false, true))
+    );
 }
