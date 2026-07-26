@@ -10,6 +10,8 @@ mod ac;
 #[cfg(test)]
 mod addr32_memory;
 #[cfg(test)]
+mod atomic_rmw;
+#[cfg(test)]
 mod cli;
 #[cfg(test)]
 mod clts;

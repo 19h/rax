@@ -307,7 +307,59 @@ impl X86_64Lowerer {
             OpKind::Xor { src2, .. } => (0x30, 6, src2),
             _ => unreachable!("validated scalar RMW consumer"),
         };
+        self.emit_fused_mem_alu_rmw(
+            load.guest_pc,
+            addr,
+            mem_width,
+            width,
+            opcode,
+            digit,
+            source,
+            consumed == 4,
+        )?;
+        Ok(Some(consumed))
+    }
 
+    /// Emit the fault-precise helper-backed memory read-modify-write body
+    /// shared by the plain and LOCK-prefixed forms. `replay` regenerates the
+    /// architectural flags after a successful store; a caller whose flag result
+    /// was proven dead passes `false`.
+    #[cfg(feature = "smir-jit")]
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn emit_fused_mem_alu_rmw(
+        &mut self,
+        guest_pc: u64,
+        addr: &Address,
+        mem_width: MemWidth,
+        width: OpWidth,
+        opcode: u8,
+        digit: u8,
+        source: &SrcOperand,
+        replay: bool,
+    ) -> Result<(), LowerError> {
+        self.emit_fused_mem_alu_rmw_with_writeback(
+            guest_pc, addr, mem_width, width, opcode, digit, source, replay, None,
+        )
+    }
+
+    /// As [`Self::emit_fused_mem_alu_rmw`], additionally delivering the
+    /// pre-operation memory value into an architectural GPR once the store has
+    /// retired. `MOV` is flag-neutral, so the optional replay's published flags
+    /// survive the write-back.
+    #[cfg(feature = "smir-jit")]
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn emit_fused_mem_alu_rmw_with_writeback(
+        &mut self,
+        guest_pc: u64,
+        addr: &Address,
+        mem_width: MemWidth,
+        width: OpWidth,
+        opcode: u8,
+        digit: u8,
+        source: &SrcOperand,
+        replay: bool,
+        writeback: Option<(PhysReg, OpWidth)>,
+    ) -> Result<(), LowerError> {
         // Caller-frame layout after the flag-neutral reservation:
         //   [rsp+0]  original zero-extended memory value
         //   [rsp+8]  computed store value
@@ -340,7 +392,7 @@ impl X86_64Lowerer {
         // The load helper writes to caller [rsp+0]: its own PUSH RAX/PUSHFQ
         // make that slot [rsp+16] while the call-out is active.
         self.emit_jit_mem_op(
-            load.guest_pc,
+            guest_pc,
             true,
             None,
             Some(16),
@@ -391,7 +443,7 @@ impl X86_64Lowerer {
         // active [rsp+24]. A store fault removes the complete caller frame and
         // exits at the current instruction without committing flags or GPRs.
         self.emit_jit_mem_op(
-            load.guest_pc,
+            guest_pc,
             false,
             None,
             None,
@@ -411,7 +463,7 @@ impl X86_64Lowerer {
         // (optimization proved it dead), so it skips straight to the restore.
         {
             let mut emitter = X86Emitter::new(&mut self.code);
-            if consumed == 4 {
+            if replay {
                 emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 0, width);
                 match source {
                     SrcOperand::Reg(_) => emitter.emit_alu_mem_disp(
@@ -430,9 +482,55 @@ impl X86_64Lowerer {
                 }
             }
             emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
+            if let Some((destination, destination_width)) = writeback {
+                emitter.emit_mov_rm(destination, PhysReg::Rsp, 0, destination_width);
+            }
             emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 32);
         }
-        Ok(Some(consumed))
+        Ok(())
+    }
+
+    /// Fuse the LOCK-prefixed memory read-modify-write emitted by the x86
+    /// lifter. The emulator realizes a locked ALU as an ordinary
+    /// read-modify-write through the vCPU MMU in both interpreters, so the
+    /// fused native form reproduces interpretation exactly.
+    #[cfg(feature = "smir-jit")]
+    pub(crate) fn try_lower_jit_mem_atomic_rmw(
+        &mut self,
+        block: &SmirBlock,
+        idx: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let Some(sequence) = crate::smir::lower::runtime::x86_jit_mem_atomic_rmw_sequence(
+            block,
+            idx,
+            true,
+            virtual_definitions,
+            virtual_uses,
+        ) else {
+            return Ok(None);
+        };
+        let source = match sequence.source_reg {
+            Some(reg) => SrcOperand::Reg(reg),
+            None => SrcOperand::Imm(sequence.source_imm),
+        };
+        let writeback = match sequence.writeback {
+            Some(dst) => Some((self.get_dst_reg(dst)?, sequence.width)),
+            None => None,
+        };
+        self.emit_fused_mem_alu_rmw_with_writeback(
+            sequence.guest_pc,
+            sequence.addr,
+            sequence.mem_width,
+            sequence.width,
+            sequence.opcode,
+            sequence.digit,
+            &source,
+            sequence.replay,
+            writeback,
+        )?;
+        Ok(Some(sequence.consumed))
     }
 
     /// Fuse the exact fault-precise memory-destination unary sequence emitted
