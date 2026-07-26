@@ -11,7 +11,7 @@ mod addr32_memory;
 mod alu;
 #[cfg(test)]
 mod apx;
-#[cfg(test)]
+#[cfg(all(test, feature = "smir-jit"))]
 mod atomic_rmw;
 #[cfg(test)]
 mod call_helpers;
