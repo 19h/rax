@@ -163,6 +163,94 @@ fn every_lifted_locked_alu_shape_is_recognized() {
 }
 
 #[test]
+fn locked_inc_dec_and_folded_immediate_replays_are_recognized() {
+    // `lock dec dword [rdi+592]` updates memory with SUB 1 but publishes the
+    // unary DEC flag contract, which leaves CF unchanged.
+    assert_eq!(
+        sequence_len(vec![
+            mov_imm(virt(0), 1, OpWidth::W32),
+            atomic(virt(1), virt(0), AtomicOp::Sub, MemWidth::B4),
+            OpKind::Dec {
+                dst: virt(2),
+                src: virt(1),
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+        ]),
+        Some(3)
+    );
+    assert_eq!(
+        sequence_len(vec![
+            mov_imm(virt(0), 1, OpWidth::W8),
+            atomic(virt(1), virt(0), AtomicOp::Add, MemWidth::B1),
+            OpKind::Inc {
+                dst: virt(2),
+                src: virt(1),
+                width: OpWidth::W8,
+                flags: FlagUpdate::All,
+            },
+        ]),
+        Some(3)
+    );
+    // Constant propagation can fold the materialized immediate into the replay.
+    assert_eq!(
+        sequence_len(vec![
+            mov_imm(virt(0), 4, OpWidth::W32),
+            atomic(virt(1), virt(0), AtomicOp::Or, MemWidth::B4),
+            OpKind::Or {
+                dst: virt(2),
+                src1: virt(1),
+                src2: SrcOperand::Imm(4),
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+        ]),
+        Some(3)
+    );
+
+    // The unary replay is only exact for a memory update by exactly one, and
+    // only for the matching direction.
+    assert_eq!(
+        sequence_len(vec![
+            mov_imm(virt(0), 2, OpWidth::W32),
+            atomic(virt(1), virt(0), AtomicOp::Sub, MemWidth::B4),
+            OpKind::Dec {
+                dst: virt(2),
+                src: virt(1),
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+        ]),
+        None
+    );
+    assert_eq!(
+        sequence_len(vec![
+            mov_imm(virt(0), 1, OpWidth::W32),
+            atomic(virt(1), virt(0), AtomicOp::Add, MemWidth::B4),
+            OpKind::Dec {
+                dst: virt(2),
+                src: virt(1),
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+        ]),
+        None
+    );
+    assert_eq!(
+        sequence_len(vec![
+            atomic(virt(1), x86(X86Reg::Rcx), AtomicOp::Add, MemWidth::B4),
+            OpKind::Inc {
+                dst: virt(2),
+                src: virt(1),
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+        ]),
+        None
+    );
+}
+
+#[test]
 fn unmodeled_locked_shapes_fail_closed() {
     // Only the Group-1 arithmetic/logic operations have an exact native form.
     for op in [
