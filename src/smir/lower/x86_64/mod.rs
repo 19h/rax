@@ -142,6 +142,8 @@ mod sse4a;
 pub use sse4a::*;
 mod state;
 pub use state::*;
+mod state_lea;
+pub use state_lea::*;
 mod state_mulx;
 pub use state_mulx::*;
 mod state_address;
@@ -986,6 +988,54 @@ pub(crate) fn x86_state_backed_gpr_xchg_valid(op: &SmirOp) -> bool {
             && reg1.gpr_index().is_some()
             && reg2.gpr_index().is_some()
     )
+}
+
+/// An `X86Lea` whose destination or whose effective-address operands name a
+/// state-backed GPR (guest RSP/RBP, or an APX EGPR). Under the native identity
+/// register map those values live in the `GuestRegs` file rather than in the
+/// host register of the same name, so the ordinary LEA lowering would compute
+/// against the host frame pointer / host stack pointer.
+pub(crate) fn x86_state_backed_gpr_lea_candidate(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::X86Lea { dst, addr, .. }
+            if x86_state_backed_arch_gpr(dst)
+                || addr.regs().iter().any(x86_state_backed_arch_gpr)
+    )
+}
+
+/// The exact `X86Lea` shapes the state-backed lowering reconstructs from the
+/// `GuestRegs` snapshot. LEA never accesses memory and never updates flags, so
+/// only forms whose effective address is a pure GPR expression are admitted:
+/// segment-relative, RIP-relative, absolute, `GpRel`, and explicit addr32
+/// addresses are excluded and fail closed.
+pub(crate) fn x86_state_backed_gpr_lea_valid(op: &SmirOp) -> bool {
+    let OpKind::X86Lea { dst, addr, width } = &op.kind else {
+        return false;
+    };
+    if !x86_state_backed_gpr_lea_candidate(op)
+        || op.x86_hint.is_some()
+        || !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+    {
+        return false;
+    }
+    let gpr =
+        |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some());
+    if !gpr(dst) {
+        return false;
+    }
+    match addr {
+        Address::Direct(base) => gpr(base),
+        Address::BaseOffset { base, offset, .. } => gpr(base) && i32::try_from(*offset).is_ok(),
+        Address::BaseIndexScale {
+            base, index, scale, ..
+        } => {
+            base.as_ref().is_none_or(|base| gpr(base))
+                && gpr(index)
+                && matches!(scale, 1 | 2 | 4 | 8)
+        }
+        _ => false,
+    }
 }
 
 // ============================================================================

@@ -538,6 +538,7 @@ pub(crate) fn block_is_clobber_safe(
             );
         let stack_mov_ok = x86_state_backed_stack_mov_valid(&op.kind);
         let stack_alu_ok = x86_state_backed_stack_alu_valid(&op.kind);
+        let state_lea_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_lea_valid(op);
         let state_extend_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_extend_valid(op);
         let state_cmove_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_cmove_valid(op);
         let state_setcc_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_setcc_valid(op);
@@ -710,6 +711,7 @@ pub(crate) fn block_is_clobber_safe(
         let stack_state_ok = stack_mov_ok
             || opmask_ok
             || stack_alu_ok
+            || state_lea_ok
             || state_extend_ok
             || state_cmove_ok
             || state_setcc_ok
@@ -749,8 +751,9 @@ pub(crate) fn block_is_clobber_safe(
             || read_debug_ok
             || write_control_ok
             || write_debug_ok;
-        if (crate::smir::lower::x86_64::x86_state_backed_gpr_extend_candidate(op)
-            && !state_extend_ok)
+        if (crate::smir::lower::x86_64::x86_state_backed_gpr_lea_candidate(op) && !state_lea_ok)
+            || (crate::smir::lower::x86_64::x86_state_backed_gpr_extend_candidate(op)
+                && !state_extend_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_cmove_candidate(op)
                 && !state_cmove_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_setcc_candidate(op)

@@ -162,6 +162,8 @@ mod sqrt;
 #[cfg(test)]
 mod sse4a;
 #[cfg(test)]
+mod state_lea;
+#[cfg(test)]
 mod sti;
 #[cfg(test)]
 mod swapgs;
