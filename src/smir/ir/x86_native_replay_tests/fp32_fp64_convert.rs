@@ -11,12 +11,27 @@ enum ConvertKind {
 impl ConvertKind {
     const ALL: [Self; 2] = [Self::Widen, Self::Narrow];
 
+    fn vex_pp(self) -> u8 {
+        match self {
+            Self::Widen => 0,
+            Self::Narrow => 1,
+        }
+    }
+
     fn p1(self) -> u8 {
         match self {
             Self::Widen => 0x7C,
             Self::Narrow => 0xFD,
         }
     }
+}
+
+fn vex_c5_encoding(p1: u8, modrm: u8) -> [u8; 4] {
+    [0xC5, p1, 0x5A, modrm]
+}
+
+fn vex_c4_encoding(p0: u8, p1: u8, modrm: u8) -> [u8; 5] {
+    [0xC4, p0, p1, 0x5A, modrm]
 }
 
 fn encoding(
@@ -55,6 +70,167 @@ fn encoding(
         0x5A,
         0xC0 | ((destination & 7) << 3) | (source & 7),
     ]
+}
+
+#[test]
+fn vex_classifier_covers_all_4608_legal_register_encodings_and_destinations() {
+    let mut classified = 0usize;
+    for kind in ConvertKind::ALL {
+        for p1 in u8::MIN..=u8::MAX {
+            if p1 & 0x78 != 0x78 || p1 & 0x03 != kind.vex_pp() {
+                continue;
+            }
+            for modrm in 0xC0..=0xFF {
+                let bytes = vex_c5_encoding(p1, modrm);
+                let instruction = X86InstructionBytes::new(&bytes).unwrap();
+                assert!(
+                    instruction.is_vex_register_fp32_fp64_convert(),
+                    "{kind:?} {bytes:02X?}"
+                );
+                assert_eq!(
+                    instruction.vex_fp32_fp64_convert_destination_index(),
+                    Some(((modrm >> 3) & 7) + if p1 & 0x80 == 0 { 8 } else { 0 }),
+                    "{kind:?} {bytes:02X?}"
+                );
+                classified += 1;
+            }
+        }
+
+        for p0 in u8::MIN..=u8::MAX {
+            if p0 & 0x1F != 1 {
+                continue;
+            }
+            for p1 in u8::MIN..=u8::MAX {
+                if p1 & 0x78 != 0x78 || p1 & 0x03 != kind.vex_pp() {
+                    continue;
+                }
+                for modrm in 0xC0..=0xFF {
+                    let bytes = vex_c4_encoding(p0, p1, modrm);
+                    let instruction = X86InstructionBytes::new(&bytes).unwrap();
+                    assert!(
+                        instruction.is_vex_register_fp32_fp64_convert(),
+                        "{kind:?} {bytes:02X?}"
+                    );
+                    assert_eq!(
+                        instruction.vex_fp32_fp64_convert_destination_index(),
+                        Some(((modrm >> 3) & 7) + if p0 & 0x80 == 0 { 8 } else { 0 }),
+                        "{kind:?} {bytes:02X?}"
+                    );
+                    classified += 1;
+                }
+            }
+        }
+    }
+    assert_eq!(classified, 4_608);
+}
+
+#[test]
+fn vex_classifier_exhausts_prefix_opcode_and_modrm_frontiers() {
+    for p1 in u8::MIN..=u8::MAX {
+        let bytes = vex_c5_encoding(p1, 0xCA);
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .is_vex_register_fp32_fp64_convert(),
+            p1 & 0x78 == 0x78 && matches!(p1 & 0x03, 0 | 1),
+            "{bytes:02X?}"
+        );
+    }
+
+    for p0 in u8::MIN..=u8::MAX {
+        for kind in ConvertKind::ALL {
+            let p1 = 0x78 | kind.vex_pp();
+            let bytes = vex_c4_encoding(p0, p1, 0xFE);
+            assert_eq!(
+                X86InstructionBytes::new(&bytes)
+                    .unwrap()
+                    .is_vex_register_fp32_fp64_convert(),
+                p0 & 0x1F == 1,
+                "{kind:?} {bytes:02X?}"
+            );
+        }
+    }
+
+    for opcode in u8::MIN..=u8::MAX {
+        let bytes = [0xC4, 0x01, 0xFC, opcode, 0xCA];
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .is_vex_register_fp32_fp64_convert(),
+            opcode == 0x5A,
+            "{bytes:02X?}"
+        );
+    }
+
+    for modrm in u8::MIN..=u8::MAX {
+        for bytes in [
+            vex_c5_encoding(0xF8, modrm).to_vec(),
+            vex_c4_encoding(0x01, 0xFD, modrm).to_vec(),
+        ] {
+            assert_eq!(
+                X86InstructionBytes::new(&bytes)
+                    .unwrap()
+                    .is_vex_register_fp32_fp64_convert(),
+                modrm >> 6 == 3,
+                "{bytes:02X?}"
+            );
+        }
+    }
+}
+
+#[test]
+fn vex_classifier_accepts_llvm_samples_and_rejects_reserved_neighbors() {
+    // Independently assembled by LLVM 23.0.0. The last two samples were
+    // independently disassembled after setting the WIG bit and clearing the
+    // ignored VEX.X bit; LLVM canonicalizes them to the preceding high-register
+    // forms.
+    for (bytes, destination) in [
+        (vec![0xC5, 0xF8, 0x5A, 0xCA], 1),
+        (vec![0xC4, 0x41, 0x7C, 0x5A, 0xCA], 9),
+        (vec![0xC5, 0xF9, 0x5A, 0xCA], 1),
+        (vec![0xC4, 0x41, 0x7D, 0x5A, 0xCA], 9),
+        (vec![0xC4, 0x01, 0xFC, 0x5A, 0xCA], 9),
+        (vec![0xC4, 0x01, 0xFD, 0x5A, 0xCA], 9),
+    ] {
+        let instruction = X86InstructionBytes::new(&bytes).unwrap();
+        assert!(
+            instruction.is_vex_register_fp32_fp64_convert(),
+            "{bytes:02X?}"
+        );
+        assert_eq!(
+            instruction.vex_fp32_fp64_convert_destination_index(),
+            Some(destination),
+            "{bytes:02X?}"
+        );
+    }
+
+    let invalid: &[&[u8]] = &[
+        &[0x0F, 0x5A, 0xCA],
+        &[0x66, 0x0F, 0x5A, 0xCA],
+        &[0xC5, 0xF8, 0x5A],
+        &[0xC5, 0xF8, 0x5A, 0xCA, 0],
+        &[0xC4, 0x41, 0x7C, 0x5A],
+        &[0xC4, 0x41, 0x7C, 0x5A, 0xCA, 0],
+        &[0xC4, 0x42, 0x7C, 0x5A, 0xCA], // map 0F38
+        &[0xC4, 0x41, 0x74, 0x5A, 0xCA], // VEX.vvvv != 1111b
+        &[0xC4, 0x41, 0x7E, 0x5A, 0xCA], // F3 scalar conversion
+        &[0xC4, 0x41, 0x7F, 0x5A, 0xCA], // F2 scalar conversion
+        &[0xC4, 0x41, 0x7C, 0x5B, 0xCA], // unrelated opcode
+        &[0xC4, 0x41, 0x7C, 0x5A, 0x0A], // memory source
+        &[0x62, 0xF1, 0x7C, 0x08, 0x5A, 0xCA],
+    ];
+    for bytes in invalid {
+        let instruction = X86InstructionBytes::new(bytes).unwrap();
+        assert!(
+            !instruction.is_vex_register_fp32_fp64_convert(),
+            "{bytes:02X?}"
+        );
+        assert_eq!(
+            instruction.vex_fp32_fp64_convert_destination_index(),
+            None,
+            "{bytes:02X?}"
+        );
+    }
 }
 
 #[test]
@@ -207,5 +383,38 @@ fn replay_spans_expose_exact_vl_requirements_without_dq_or_fp16() {
                 assert!(!span.preserve_mxcsr_de, "{bytes:02X?}");
             }
         }
+    }
+}
+
+#[test]
+fn vex_replay_spans_preserve_exact_bytes_without_avx512_requirements() {
+    let pc = 0x5A10;
+    let mut block = SmirBlock::new(BlockId(61), pc);
+    block.push_op(SmirOp::new(OpId(0), pc, OpKind::Nop));
+
+    for bytes in [
+        vec![0xC5, 0xF8, 0x5A, 0xCA],
+        vec![0xC4, 0x41, 0x7C, 0x5A, 0xCA],
+        vec![0xC5, 0xF9, 0x5A, 0xCA],
+        vec![0xC4, 0x01, 0xFD, 0x5A, 0xCA],
+    ] {
+        let instruction = X86InstructionBytes::new(&bytes).unwrap();
+        let provenance = HashMap::from([((BlockId(61), pc), instruction)]);
+        for spans in [
+            x86_vex_fp32_fp64_convert_replay_spans(&block, &provenance),
+            x86_native_replay_spans(&block, &provenance),
+        ] {
+            let span = spans.get(&0).unwrap_or_else(|| panic!("{bytes:02X?}"));
+            assert_eq!(span.end, 1, "{bytes:02X?}");
+            assert_eq!(span.instruction, instruction, "{bytes:02X?}");
+            assert!(!span.needs_avx512vl, "{bytes:02X?}");
+            assert!(!span.needs_avx512dq, "{bytes:02X?}");
+            assert!(!span.needs_avx512fp16, "{bytes:02X?}");
+            assert!(!span.preserve_mxcsr_de, "{bytes:02X?}");
+        }
+        assert!(
+            x86_evex_fp32_fp64_convert_replay_spans(&block, &provenance).is_empty(),
+            "{bytes:02X?}"
+        );
     }
 }
