@@ -55,9 +55,53 @@ impl X86_64Lowerer {
         self.code.emit_u8(0x9D); // popfq
     }
 
+    /// Clear the state-backed ZMM[511:256] halves of registers 0-15 after an
+    /// operandless VEX zero instruction executes through the AVX-only
+    /// YMM0-YMM15 bridge. `VZEROUPPER` and `VZEROALL` both clear this range
+    /// architecturally; the native instruction supplies the low-256-bit
+    /// effect, while this 16-iteration loop supplies the state-backed part.
+    ///
+    /// The loop is O(16) time, O(1) space, and preserves guest RAX, RCX, and
+    /// RFLAGS. It deliberately leaves registers 16-31 and opmask state intact.
+    fn emit_avx_ymm16_state_backed_all_upper_clear(&mut self) {
+        self.code.emit_u8(0x9C); // pushfq
+        self.code.emit_u8(0x50); // push rax
+        self.code.emit_u8(0x51); // push rcx
+        self.code.emit_bytes(&[0x48, 0x8B, 0x45]);
+        self.code.emit_u8(X86_STATE_PTR_AT_RBP as u8); // mov rax,[rbp+state]
+        self.code.emit_bytes(&[0x48, 0x8D, 0x80]); // lea rax,[rax+zmm0.upper]
+        self.code.emit_u32((X86_GUEST_ZMM_OFFSET + 32) as u32);
+        self.code.emit_u8(0xB9); // mov ecx,16
+        self.code.emit_u32(16);
+
+        let loop_start = self.code.position();
+        for offset in [0u8, 8, 16, 24] {
+            self.code.emit_bytes(&[0x48, 0xC7, 0x40, offset]); // mov qword [rax+disp8],0
+            self.code.emit_u32(0);
+        }
+        self.code.emit_bytes(&[0x48, 0x83, 0xC0, 0x40]); // add rax,64
+        self.code.emit_bytes(&[0xFF, 0xC9]); // dec ecx
+        self.code.emit_u8(0x75); // jnz loop_start
+        let next_ip = self.code.position() + 1;
+        let displacement = i8::try_from(loop_start as isize - next_ip as isize)
+            .expect("fixed ZMM upper-clear loop must fit a rel8 branch");
+        self.code.emit_u8(displacement as u8);
+
+        self.code.emit_u8(0x59); // pop rcx
+        self.code.emit_u8(0x58); // pop rax
+        self.code.emit_u8(0x9D); // popfq
+    }
+
     /// Emit one exact source instruction, applying any host-compatibility
     /// status fixup requested by its byte-validated replay classifier.
     fn emit_native_replay_span(&mut self, span: &X86NativeReplaySpan) {
+        if span.instruction.vex_zeroes_all_register_bits().is_some() {
+            self.code.emit_bytes(span.instruction.as_slice());
+            if self.avx_ymm16_vector_state {
+                self.emit_avx_ymm16_state_backed_all_upper_clear();
+            }
+            return;
+        }
         if let Some(destination) = span
             .instruction
             .vex_fma4_destination_index()

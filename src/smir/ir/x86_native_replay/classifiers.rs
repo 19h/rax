@@ -32,6 +32,7 @@ mod vex_variable_blend;
 mod vex_variable_permute;
 mod vex_vpermil2;
 mod vex_widening_dword_multiply;
+mod vex_zero;
 mod vp2intersect;
 mod vpclmulqdq;
 

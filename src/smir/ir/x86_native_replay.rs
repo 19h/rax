@@ -234,6 +234,21 @@ pub fn x86_vex_packed_extend_replay_spans(
     })
 }
 
+/// Identify operandless AVX `VZEROUPPER`/`VZEROALL` replay groups in `block`
+/// in O(N) time and O(P) space for N operations and P unique guest PCs.
+/// Both instructions require AVX; their complete 512-bit architectural state
+/// effects are supplied by the selected native vector-state bridge.
+pub fn x86_vex_zero_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .vex_zeroes_all_register_bits()
+            .map(|_| (false, false, false))
+    })
+}
+
 /// Identify valid register-only legacy SSE and AVX VEX scalar floating-point
 /// move replay groups in `block` in O(N) time and O(P) space for N operations
 /// and P unique guest PCs. Memory forms and `VMOVSS` with `VEX.L=1` remain at
@@ -1476,6 +1491,11 @@ pub fn x86_native_replay_spans(
             .or_else(|| {
                 instruction
                     .vex_register_packed_extend_needs_avx2()
+                    .map(|_| (false, false, false))
+            })
+            .or_else(|| {
+                instruction
+                    .vex_zeroes_all_register_bits()
                     .map(|_| (false, false, false))
             })
             .or_else(|| {

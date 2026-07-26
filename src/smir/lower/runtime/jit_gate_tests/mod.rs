@@ -230,6 +230,8 @@ mod vex_vpermil2_replay;
 #[cfg(test)]
 mod vex_widening_dword_multiply_replay;
 #[cfg(test)]
+mod vex_zero_replay;
+#[cfg(test)]
 mod waitpkg;
 #[cfg(test)]
 mod write_control;
