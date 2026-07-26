@@ -226,6 +226,15 @@ impl X86_64Lowerer {
 
             OpKind::Lea { dst, addr } => self.lower_lea_width(*dst, addr, OpWidth::W64)?,
             OpKind::X86Lea { dst, addr, width } => {
+                if x86_state_backed_gpr_lea_candidate(op) {
+                    if !x86_state_backed_gpr_lea_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed LEA".to_string(),
+                            operand: format!("invalid x86 GPR effective address {width:?}"),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_lea(*dst, addr, *width);
+                }
                 self.lower_lea_width(*dst, addr, *width)?;
             }
 
