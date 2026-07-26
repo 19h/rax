@@ -639,8 +639,7 @@ pub(crate) fn x86_jit_mem_alu_rmw_sequence_len(
 
     let compute = block.ops.get(index + 1)?;
     let store = block.ops.get(index + 2)?;
-    let replay = block.ops.get(index + 3)?;
-    if [compute, store, replay]
+    if [compute, store]
         .into_iter()
         .any(|op| op.guest_pc != load.guest_pc)
     {
@@ -648,12 +647,7 @@ pub(crate) fn x86_jit_mem_alu_rmw_sequence_len(
     }
     let (compute_tag, result, compute_old, source, compute_width, compute_flags) =
         x86_binary_alu_shape(&compute.kind)?;
-    let (replay_tag, flags_result, replay_old, replay_source, replay_width, replay_flags) =
-        x86_binary_alu_shape(&replay.kind)?;
     let VReg::Virtual(_) = result else {
-        return None;
-    };
-    let VReg::Virtual(_) = flags_result else {
         return None;
     };
     let source_valid = match &source {
@@ -661,14 +655,9 @@ pub(crate) fn x86_jit_mem_alu_rmw_sequence_len(
         SrcOperand::Imm(value) => width != OpWidth::W64 || i32::try_from(*value).is_ok(),
         _ => false,
     };
-    if compute_tag != replay_tag
-        || compute_old != old
-        || replay_old != old
-        || source != replay_source
+    if compute_old != old
         || compute_width != width
-        || replay_width != width
         || compute_flags != FlagUpdate::None
-        || replay_flags != FlagUpdate::All
         || !source_valid
         || !matches!(
             &store.kind,
@@ -679,9 +668,35 @@ pub(crate) fn x86_jit_mem_alu_rmw_sequence_len(
             } if *src == result && *store_addr == *addr && *store_width == mem_width
         )
         || virtual_definitions.get(&old) != Some(&1)
-        || virtual_uses.get(&old) != Some(&2)
         || virtual_definitions.get(&result) != Some(&1)
         || virtual_uses.get(&result) != Some(&1)
+    {
+        return None;
+    }
+
+    // Optimization can prove the architectural flags dead and delete the
+    // post-store replay. The remaining three-operation form publishes no flags
+    // at all, so the loaded value is consumed exactly once and the fused
+    // lowering simply omits the replay.
+    if virtual_uses.get(&old) == Some(&1) {
+        return Some(3);
+    }
+
+    let replay = block.ops.get(index + 3)?;
+    if replay.guest_pc != load.guest_pc {
+        return None;
+    }
+    let (replay_tag, flags_result, replay_old, replay_source, replay_width, replay_flags) =
+        x86_binary_alu_shape(&replay.kind)?;
+    let VReg::Virtual(_) = flags_result else {
+        return None;
+    };
+    if compute_tag != replay_tag
+        || replay_old != old
+        || source != replay_source
+        || replay_width != width
+        || replay_flags != FlagUpdate::All
+        || virtual_uses.get(&old) != Some(&2)
         || virtual_definitions.get(&flags_result) != Some(&1)
         || virtual_uses.contains_key(&flags_result)
     {
@@ -769,19 +784,10 @@ pub(crate) fn x86_jit_mem_unary_rmw_sequence_len(
     if let Some((compute_tag, result, compute_old, compute_width, compute_flags)) =
         x86_flagged_unary_shape(&compute.kind)
     {
-        let replay = block.ops.get(index + 3)?;
-        let (replay_tag, flags_result, replay_old, replay_width, replay_flags) =
-            x86_flagged_unary_shape(&replay.kind)?;
-        if replay.guest_pc != load.guest_pc
-            || !matches!(result, VReg::Virtual(_))
-            || !matches!(flags_result, VReg::Virtual(_))
-            || compute_tag != replay_tag
+        if !matches!(result, VReg::Virtual(_))
             || compute_old != old
-            || replay_old != old
             || compute_width != width
-            || replay_width != width
             || compute_flags != FlagUpdate::None
-            || replay_flags != FlagUpdate::All
             || !matches!(
                 &store.kind,
                 OpKind::Store {
@@ -791,9 +797,29 @@ pub(crate) fn x86_jit_mem_unary_rmw_sequence_len(
                 } if *src == result && *store_addr == *addr && *store_width == mem_width
             )
             || virtual_definitions.get(&old) != Some(&1)
-            || virtual_uses.get(&old) != Some(&2)
             || virtual_definitions.get(&result) != Some(&1)
             || virtual_uses.get(&result) != Some(&1)
+        {
+            return None;
+        }
+
+        // Optimization can prove the architectural flags dead and delete the
+        // post-store replay; the remaining three-operation form publishes no
+        // flags and consumes the loaded value exactly once.
+        if virtual_uses.get(&old) == Some(&1) {
+            return Some(3);
+        }
+
+        let replay = block.ops.get(index + 3)?;
+        let (replay_tag, flags_result, replay_old, replay_width, replay_flags) =
+            x86_flagged_unary_shape(&replay.kind)?;
+        if replay.guest_pc != load.guest_pc
+            || !matches!(flags_result, VReg::Virtual(_))
+            || compute_tag != replay_tag
+            || replay_old != old
+            || replay_width != width
+            || replay_flags != FlagUpdate::All
+            || virtual_uses.get(&old) != Some(&2)
             || virtual_definitions.get(&flags_result) != Some(&1)
             || virtual_uses.contains_key(&flags_result)
         {
