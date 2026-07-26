@@ -43,7 +43,7 @@ mod invpcid;
 mod jit;
 #[cfg(test)]
 mod lmsw;
-#[cfg(test)]
+#[cfg(all(test, feature = "smir-jit"))]
 mod mem_rmw_flagless;
 #[cfg(test)]
 mod memory;
