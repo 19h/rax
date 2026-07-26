@@ -12,6 +12,8 @@ mod alu;
 #[cfg(test)]
 mod apx;
 #[cfg(test)]
+mod atomic_rmw;
+#[cfg(test)]
 mod call_helpers;
 #[cfg(test)]
 mod cli;

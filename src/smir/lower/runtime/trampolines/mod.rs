@@ -3,6 +3,8 @@
 // ---- split submodules ----
 mod aarch64;
 pub use aarch64::*;
+mod atomic;
+pub use atomic::*;
 mod clobber;
 pub use clobber::*;
 mod crc32;

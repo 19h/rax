@@ -1,0 +1,303 @@
+//! Native admission for LOCK-prefixed x86 memory read-modify-write.
+
+use super::*;
+use crate::smir::ir::types::{AtomicOp, MemoryOrder};
+use crate::smir::lower::runtime::x86_jit_mem_atomic_rmw_sequence_len;
+
+fn x86(reg: X86Reg) -> VReg {
+    VReg::Arch(ArchReg::X86(reg))
+}
+
+fn virt(id: u32) -> VReg {
+    VReg::Virtual(crate::smir::ir::types::VirtualId(id))
+}
+
+const PC: u64 = 0x1000;
+
+fn addr() -> Address {
+    Address::BaseOffset {
+        base: x86(X86Reg::Rdi),
+        offset: 592,
+        disp_size: DispSize::Disp32,
+    }
+}
+
+fn mov_imm(dst: VReg, value: i64, width: OpWidth) -> OpKind {
+    OpKind::Mov {
+        dst,
+        src: SrcOperand::Imm(value),
+        width,
+    }
+}
+
+fn atomic(dst: VReg, src: VReg, op: AtomicOp, width: MemWidth) -> OpKind {
+    OpKind::AtomicRmw {
+        dst,
+        addr: addr(),
+        src,
+        op,
+        width,
+        order: MemoryOrder::SeqCst,
+    }
+}
+
+fn or_flags(dst: VReg, old: VReg, src: VReg, width: OpWidth) -> OpKind {
+    OpKind::Or {
+        dst,
+        src1: old,
+        src2: SrcOperand::Reg(src),
+        width,
+        flags: FlagUpdate::All,
+    }
+}
+
+fn function(ops: Vec<OpKind>) -> crate::smir::ir::SmirFunction {
+    let mut builder = FunctionBuilder::new(FunctionId(0), PC);
+    for op in ops {
+        builder.push_op(PC, op);
+    }
+    builder.set_terminator(Terminator::Return { values: vec![] });
+    builder.finish()
+}
+
+fn counts(
+    block: &crate::smir::ir::SmirBlock,
+) -> (
+    std::collections::HashMap<VReg, usize>,
+    std::collections::HashMap<VReg, usize>,
+) {
+    let mut definitions = std::collections::HashMap::new();
+    let mut uses = std::collections::HashMap::new();
+    for op in &block.ops {
+        for reg in op.kind.dests() {
+            if matches!(reg, VReg::Virtual(_)) {
+                *definitions.entry(reg).or_insert(0usize) += 1;
+            }
+        }
+        for reg in op.kind.source_vregs() {
+            if matches!(reg, VReg::Virtual(_)) {
+                *uses.entry(reg).or_insert(0usize) += 1;
+            }
+        }
+    }
+    (definitions, uses)
+}
+
+fn sequence_len(ops: Vec<OpKind>) -> Option<usize> {
+    let function = function(ops);
+    let block = function.entry_block().unwrap();
+    let (definitions, uses) = counts(block);
+    x86_jit_mem_atomic_rmw_sequence_len(block, 0, true, &definitions, &uses)
+}
+
+fn gate(ops: Vec<OpKind>, allow_mem: bool) -> bool {
+    is_native_clobber_safe_excluding(&function(ops), &std::collections::HashMap::new(), allow_mem)
+}
+
+#[test]
+fn every_lifted_locked_alu_shape_is_recognized() {
+    // `lock or byte [rdi+592],1` with the architectural flags still live.
+    assert_eq!(
+        sequence_len(vec![
+            mov_imm(virt(0), 1, OpWidth::W8),
+            atomic(virt(1), virt(0), AtomicOp::Or, MemWidth::B1),
+            or_flags(virt(2), virt(1), virt(0), OpWidth::W8),
+        ]),
+        Some(3)
+    );
+    // The same instruction after optimization proved the flags dead.
+    assert_eq!(
+        sequence_len(vec![
+            mov_imm(virt(0), 1, OpWidth::W8),
+            atomic(virt(1), virt(0), AtomicOp::Or, MemWidth::B1),
+        ]),
+        Some(2)
+    );
+    // A register source needs no materialization.
+    assert_eq!(
+        sequence_len(vec![
+            atomic(virt(1), x86(X86Reg::Rcx), AtomicOp::Add, MemWidth::B8),
+            OpKind::Add {
+                dst: virt(2),
+                src1: virt(1),
+                src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+        ]),
+        Some(2)
+    );
+    // `lock xadd dword [rdi+592],eax`: the pre-operation value is written back.
+    assert_eq!(
+        sequence_len(vec![
+            mov_imm(virt(0), 1, OpWidth::W32),
+            atomic(virt(1), virt(0), AtomicOp::Add, MemWidth::B4),
+            OpKind::Mov {
+                dst: x86(X86Reg::Rax),
+                src: SrcOperand::Reg(virt(1)),
+                width: OpWidth::W32,
+            },
+        ]),
+        Some(3)
+    );
+    // Flag replay plus write-back is the full four-operation form.
+    assert_eq!(
+        sequence_len(vec![
+            mov_imm(virt(0), 1, OpWidth::W32),
+            atomic(virt(1), virt(0), AtomicOp::Add, MemWidth::B4),
+            OpKind::Add {
+                dst: virt(2),
+                src1: virt(1),
+                src2: SrcOperand::Reg(virt(0)),
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+            OpKind::Mov {
+                dst: x86(X86Reg::Rax),
+                src: SrcOperand::Reg(virt(1)),
+                width: OpWidth::W32,
+            },
+        ]),
+        Some(4)
+    );
+}
+
+#[test]
+fn unmodeled_locked_shapes_fail_closed() {
+    // Only the Group-1 arithmetic/logic operations have an exact native form.
+    for op in [
+        AtomicOp::Swap,
+        AtomicOp::Nand,
+        AtomicOp::Max,
+        AtomicOp::Min,
+        AtomicOp::Umax,
+        AtomicOp::Umin,
+        AtomicOp::Neg,
+    ] {
+        assert_eq!(
+            sequence_len(vec![
+                mov_imm(virt(0), 1, OpWidth::W32),
+                atomic(virt(1), virt(0), op, MemWidth::B4),
+            ]),
+            None,
+            "{op:?} must fail closed"
+        );
+    }
+    // A weaker ordering is not the LOCK-prefixed shape the lifter emits.
+    assert_eq!(
+        sequence_len(vec![
+            mov_imm(virt(0), 1, OpWidth::W32),
+            OpKind::AtomicRmw {
+                dst: virt(1),
+                addr: addr(),
+                src: virt(0),
+                op: AtomicOp::Or,
+                width: MemWidth::B4,
+                order: MemoryOrder::Relaxed,
+            },
+        ]),
+        None
+    );
+    // An unconsumed loaded value must not be left dangling in a virtual.
+    assert_eq!(
+        sequence_len(vec![
+            mov_imm(virt(0), 1, OpWidth::W32),
+            atomic(virt(1), virt(0), AtomicOp::Or, MemWidth::B4),
+            OpKind::Mov {
+                dst: x86(X86Reg::Rax),
+                src: SrcOperand::Reg(virt(1)),
+                width: OpWidth::W8,
+            },
+        ]),
+        None
+    );
+    // A byte write-back is ambiguous between SPL and AH-class registers.
+    assert_eq!(
+        sequence_len(vec![
+            mov_imm(virt(0), 1, OpWidth::W8),
+            atomic(virt(1), virt(0), AtomicOp::Add, MemWidth::B1),
+            OpKind::Mov {
+                dst: x86(X86Reg::Rax),
+                src: SrcOperand::Reg(virt(1)),
+                width: OpWidth::W8,
+            },
+        ]),
+        None
+    );
+    // A state-backed write-back destination has no identity host register.
+    assert_eq!(
+        sequence_len(vec![
+            mov_imm(virt(0), 1, OpWidth::W64),
+            atomic(virt(1), virt(0), AtomicOp::Add, MemWidth::B8),
+            OpKind::Mov {
+                dst: x86(X86Reg::Rsp),
+                src: SrcOperand::Reg(virt(1)),
+                width: OpWidth::W64,
+            },
+        ]),
+        None
+    );
+    // A 64-bit immediate wider than imm32 has no Group-1 encoding.
+    assert_eq!(
+        sequence_len(vec![
+            mov_imm(virt(0), 0x8000_0000, OpWidth::W64),
+            atomic(virt(1), virt(0), AtomicOp::Or, MemWidth::B8),
+        ]),
+        None
+    );
+}
+
+#[test]
+fn locked_rmw_regions_are_admitted_only_under_memory_jit() {
+    for ops in [
+        vec![
+            mov_imm(virt(0), 1, OpWidth::W8),
+            atomic(virt(1), virt(0), AtomicOp::Or, MemWidth::B1),
+        ],
+        vec![
+            mov_imm(virt(0), 1, OpWidth::W32),
+            atomic(virt(1), virt(0), AtomicOp::Add, MemWidth::B4),
+            OpKind::Mov {
+                dst: x86(X86Reg::Rax),
+                src: SrcOperand::Reg(virt(1)),
+                width: OpWidth::W32,
+            },
+        ],
+    ] {
+        assert!(gate(ops.clone(), true));
+        assert!(!gate(ops, false));
+    }
+}
+
+#[test]
+fn an_optimized_locked_set_bit_region_stays_admitted() {
+    let mut builder = FunctionBuilder::new(FunctionId(0), PC);
+    builder.push_op(PC, mov_imm(virt(0), 2, OpWidth::W8));
+    builder.push_op(PC, atomic(virt(1), virt(0), AtomicOp::Or, MemWidth::B1));
+    builder.push_op(PC, or_flags(virt(2), virt(1), virt(0), OpWidth::W8));
+    builder.push_op(
+        PC + 4,
+        OpKind::Test {
+            src1: x86(X86Reg::Rax),
+            src2: SrcOperand::Reg(x86(X86Reg::Rax)),
+            width: OpWidth::W64,
+        },
+    );
+    builder.set_terminator(Terminator::Return { values: vec![] });
+    let mut function = builder.finish();
+    crate::smir::optimize::optimize_function(&mut function, crate::smir::optimize::OptLevel::O2);
+
+    assert!(
+        function
+            .blocks
+            .iter()
+            .flat_map(|block| &block.ops)
+            .any(|op| matches!(op.kind, OpKind::AtomicRmw { .. })),
+        "O2 must retain the locked memory update"
+    );
+    assert!(is_native_clobber_safe_excluding(
+        &function,
+        &std::collections::HashMap::new(),
+        true,
+    ));
+}
