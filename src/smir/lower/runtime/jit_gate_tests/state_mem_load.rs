@@ -72,6 +72,15 @@ fn stack_destination_loads_are_admitted_only_under_memory_jit() {
             ),
         ),
         (
+            "movsx rbp,byte ptr [rbx] sign-extending",
+            load(
+                X86Reg::Rbp,
+                Address::Direct(x86(X86Reg::Rbx)),
+                MemWidth::B1,
+                SignExtend::Sign,
+            ),
+        ),
+        (
             "mov spl,[rbx+rcx*4+16] partial destination",
             load(
                 X86Reg::Rsp,

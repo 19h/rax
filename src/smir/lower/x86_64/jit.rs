@@ -3343,16 +3343,18 @@ impl X86_64Lowerer {
                 // the upper register bits, whereas `mov eax,[mem]` (B4) zero-extends
                 // to 64 (the helper already returned a zero-extended value, so a full
                 // 8-byte store is correct) and B8 is a full store. Writing the full
-                // RAX for B1/B2 would wrongly clobber the upper bits — exactly the
-                // divergence a `mov al, gs:[...]` per-CPU read exposes.
-                match mem_width {
-                    MemWidth::B1 => {
+                // full RAX for an unsigned architectural B1/B2 load would
+                // wrongly clobber the upper bits — exactly the divergence a
+                // `mov al, gs:[...]` per-CPU read exposes. Signed loads replace
+                // the complete destination with the helper's sign extension.
+                match (mem_width, sign) {
+                    (MemWidth::B1, SignExtend::Zero) => {
                         // mov byte [rcx + off], al  (88 81 <disp32>)
                         self.code.emit_u8(0x88);
                         self.code.emit_u8(0x81);
                         self.code.emit_u32(off);
                     }
-                    MemWidth::B2 => {
+                    (MemWidth::B2, SignExtend::Zero) => {
                         // mov word [rcx + off], ax  (66 89 81 <disp32>)
                         self.code.emit_u8(0x66);
                         self.code.emit_u8(0x89);
@@ -3360,7 +3362,8 @@ impl X86_64Lowerer {
                         self.code.emit_u32(off);
                     }
                     _ => {
-                        // B4 (zero-extended by the helper) / B8: full 8-byte store.
+                        // Signed B1/B2/B4, unsigned B4, and B8 are complete
+                        // 64-bit values under the load-helper ABI.
                         self.emit_struct_mov(PhysReg::Rcx, 0, denc * 8, true);
                     }
                 }
