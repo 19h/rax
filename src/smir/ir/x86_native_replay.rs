@@ -775,9 +775,9 @@ pub fn x86_evex_fp_class_replay_spans(
 
 /// Identify valid register-only EVEX floating-point comparison replay groups
 /// in `block` in O(N) time and O(P) space for N operations and P unique guest
-/// PCs. Register-source `VCMPPS/PD/SS/SD/PH/SH` and `VCOMISH/VUCOMISH` forms
-/// are admitted; every memory form remains at the precise SMIR interpreter
-/// boundary.
+/// PCs. Register-source `VCMPPS/PD/SS/SD/PH/SH`,
+/// `VCOMISS/SD/SH`, and `VUCOMISS/SD/SH` forms are admitted; every memory form
+/// remains at the precise SMIR interpreter boundary.
 pub fn x86_evex_fp_compare_replay_spans(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
@@ -786,6 +786,7 @@ pub fn x86_evex_fp_compare_replay_spans(
         instruction
             .evex_register_fp_compare_requirements()
             .or_else(|| instruction.evex_register_fp16_flag_compare_requirements())
+            .or_else(|| instruction.evex_register_fp32_fp64_flag_compare_requirements())
             .map(|(needs_vl, needs_fp16)| (needs_vl, false, needs_fp16))
     })
 }
@@ -1317,6 +1318,7 @@ pub fn x86_native_replay_spans(
                 instruction
                     .evex_register_fp_compare_requirements()
                     .or_else(|| instruction.evex_register_fp16_flag_compare_requirements())
+                    .or_else(|| instruction.evex_register_fp32_fp64_flag_compare_requirements())
                     .map(|(needs_vl, needs_fp16)| (needs_vl, false, needs_fp16))
             })
             .or_else(|| {

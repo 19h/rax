@@ -12,9 +12,11 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
+use rax::smir::lower::runtime::is_native_clobber_safe_excluding;
 use rax::smir::{
-    BlockId, FunctionId, LiftContext, OpKind, SmirBlock, SmirFunction, SmirLifter, SmirLowerer,
-    SourceArch, Terminator, X86_64Lifter, X86_64Lowerer, X86InstructionBytes,
+    BlockId, FunctionId, LiftContext, OpKind, OptLevel, SmirBlock, SmirFunction, SmirLifter,
+    SmirLowerer, SourceArch, Terminator, X86_64Lifter, X86_64Lowerer, X86InstructionBytes,
+    optimize_function,
 };
 
 #[path = "../../../generated/x86_64/inventories/avx512.rs"]
@@ -39,6 +41,8 @@ mod fp16_flag_compare_replay;
 mod fp16_narrow_replay;
 #[path = "avx512_inventory/fp16_widen_replay.rs"]
 mod fp16_widen_replay;
+#[path = "avx512_inventory/fp32_fp64_flag_compare_replay.rs"]
+mod fp32_fp64_flag_compare_replay;
 #[path = "avx512_inventory/fp_class_replay.rs"]
 mod fp_class_replay;
 #[path = "avx512_inventory/fp_compare_replay.rs"]
@@ -821,14 +825,19 @@ fn report_evex_spec_forms_rejected_by_smir_lifter() {
 }
 
 /// Diagnostic for the second half of the native-admission boundary. Every
-/// generated EVEX form accepted by the production lifter is presented to the
-/// production x86-64 lowerer as a one-instruction function. This distinguishes
-/// absent instruction families from latent lift/lower coverage gaps.
+/// generated EVEX form accepted by the production lifter is optimized at O2,
+/// checked by the production clobber/admission gate with memory helpers
+/// enabled, then presented to a production-configured x86-64 lowerer as a
+/// one-instruction function. This distinguishes absent instruction families
+/// from latent runtime gate and configured-lowerer coverage gaps.
 #[test]
 #[ignore = "diagnostic: reports EVEX forms accepted by the lifter but rejected by the lowerer"]
 fn report_evex_spec_forms_accepted_by_lifter_but_rejected_by_lowerer() {
-    let mut failures = BTreeMap::<String, (usize, String)>::new();
+    let mut register_gate_failures = BTreeMap::<String, (usize, String)>::new();
+    let mut memory_gate_failures = BTreeMap::<String, (usize, String)>::new();
+    let mut lower_failures = BTreeMap::<String, (usize, String)>::new();
     let mut lifted = 0usize;
+    let mut admitted = 0usize;
     let mut lowered = 0usize;
 
     for row in avx512_spec_evex_rows() {
@@ -853,8 +862,31 @@ fn report_evex_spec_forms_accepted_by_lifter_but_rejected_by_lowerer() {
                 (BlockId(0), 0x1000),
                 X86InstructionBytes::new(&bytes).expect("generated x86 instruction length"),
             );
+            optimize_function(&mut function, OptLevel::O2);
+
+            if !is_native_clobber_safe_excluding(&function, &std::collections::HashMap::new(), true)
+            {
+                let detail = format!(
+                    "{}: runtime gate rejected ({bytes:02X?})",
+                    spec_case_variant_id(&row, variant)
+                );
+                let failures = match variant.mode {
+                    EvexAsmMode::Register => &mut register_gate_failures,
+                    EvexAsmMode::Memory => &mut memory_gate_failures,
+                };
+                let entry = failures
+                    .entry(row.key.mnemonic.clone())
+                    .or_insert((0, detail));
+                entry.0 += 1;
+                continue;
+            }
+            admitted += 1;
 
             let mut lowerer = X86_64Lowerer::new();
+            lowerer.set_mem_helpers(true);
+            lowerer.set_preserve_vector_mem_helpers(true);
+            lowerer.set_guest_pcrel_lea_immediates(true);
+            lowerer.set_jit_fault_deopt_guards(true);
             match lowerer.lower_function(&function) {
                 Ok(_) => lowered += 1,
                 Err(error) => {
@@ -862,7 +894,7 @@ fn report_evex_spec_forms_accepted_by_lifter_but_rejected_by_lowerer() {
                         "{}: {error:?} ({bytes:02X?})",
                         spec_case_variant_id(&row, variant)
                     );
-                    let entry = failures
+                    let entry = lower_failures
                         .entry(row.key.mnemonic.clone())
                         .or_insert((0, detail));
                     entry.0 += 1;
@@ -872,11 +904,34 @@ fn report_evex_spec_forms_accepted_by_lifter_but_rejected_by_lowerer() {
     }
 
     assert!(
-        failures.is_empty(),
-        "lifted {lifted} EVEX forms; lowered {lowered}; lift/lower gaps in {} mnemonics / {} forms:\n{}",
-        failures.len(),
-        failures.values().map(|entry| entry.0).sum::<usize>(),
-        failures
+        register_gate_failures.is_empty()
+            && memory_gate_failures.is_empty()
+            && lower_failures.is_empty(),
+        "lifted {lifted} EVEX forms; admitted {admitted}; lowered {lowered}\nregister gate gaps: {} mnemonics / {} forms:\n{}\nmemory gate gaps: {} mnemonics / {} forms:\n{}\nconfigured-lowerer gaps: {} mnemonics / {} forms:\n{}",
+        register_gate_failures.len(),
+        register_gate_failures
+            .values()
+            .map(|entry| entry.0)
+            .sum::<usize>(),
+        register_gate_failures
+            .iter()
+            .map(|(mnemonic, (count, detail))| format!("{mnemonic}: {count} ({detail})"))
+            .collect::<Vec<_>>()
+            .join("\n"),
+        memory_gate_failures.len(),
+        memory_gate_failures
+            .values()
+            .map(|entry| entry.0)
+            .sum::<usize>(),
+        format_row_set(
+            &memory_gate_failures
+                .iter()
+                .map(|(mnemonic, (count, detail))| format!("{mnemonic}: {count} ({detail})"))
+                .collect()
+        ),
+        lower_failures.len(),
+        lower_failures.values().map(|entry| entry.0).sum::<usize>(),
+        lower_failures
             .iter()
             .map(|(mnemonic, (count, detail))| format!("{mnemonic}: {count} ({detail})"))
             .collect::<Vec<_>>()

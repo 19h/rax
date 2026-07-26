@@ -1,15 +1,46 @@
-//! Native replay coverage for register-only VCOMISH and VUCOMISH.
+//! Native replay coverage for register-only EVEX FP32/FP64 flag compares.
 
 use super::*;
 use crate::smir::lower::runtime::*;
 
-const PC: u64 = 0x2F00;
+const PC: u64 = 0x2F40;
 const STATUS_FLAGS: u64 = (1 << 0) | (1 << 2) | (1 << 4) | (1 << 6) | (1 << 7) | (1 << 11);
 
-fn encoding(opcode: u8, src1: u8, src2: u8, ll: u8, suppress_exceptions: bool) -> [u8; 6] {
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Format {
+    F32,
+    F64,
+}
+
+impl Format {
+    const ALL: [Self; 2] = [Self::F32, Self::F64];
+
+    fn p1(self) -> u8 {
+        match self {
+            Self::F32 => 0x7C,
+            Self::F64 => 0xFD,
+        }
+    }
+
+    fn bit_mask(self) -> u64 {
+        match self {
+            Self::F32 => u64::from(u32::MAX),
+            Self::F64 => u64::MAX,
+        }
+    }
+}
+
+fn encoding(
+    format: Format,
+    opcode: u8,
+    src1: u8,
+    src2: u8,
+    ll: u8,
+    suppress_exceptions: bool,
+) -> [u8; 6] {
     assert!(matches!(opcode, 0x2E | 0x2F));
     assert!(src1 < 32 && src2 < 32 && ll < 4);
-    let mut p0 = 0xF5;
+    let mut p0 = 0xF1;
     if src1 & 0x08 != 0 {
         p0 &= !0x80;
     }
@@ -25,7 +56,7 @@ fn encoding(opcode: u8, src1: u8, src2: u8, ll: u8, suppress_exceptions: bool) -
     [
         0x62,
         p0,
-        0x7C,
+        format.p1(),
         (ll << 5) | if suppress_exceptions { 0x10 } else { 0 } | 0x08,
         opcode,
         0xC0 | ((src1 & 7) << 3) | (src2 & 7),
@@ -56,95 +87,96 @@ fn function(bytes: &[u8; 6]) -> crate::smir::ir::SmirFunction {
 }
 
 #[test]
-fn replay_admits_and_emits_all_control_and_register_extension_samples() {
+fn replay_admits_and_emits_all_format_control_and_register_extension_samples() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
     let registers = [(0, 1), (1, 9), (9, 10), (17, 18), (25, 26), (30, 31)];
     let mut admitted = 0usize;
     let mut checked_fail_closed = false;
-    for opcode in [0x2E, 0x2F] {
-        for ll in 0..4 {
-            for suppress_exceptions in [false, true] {
-                for (src1, src2) in registers {
-                    let bytes = encoding(opcode, src1, src2, ll, suppress_exceptions);
-                    let mut function = function(&bytes);
+    for format in Format::ALL {
+        for opcode in [0x2E, 0x2F] {
+            for ll in 0..4 {
+                for suppress_exceptions in [false, true] {
+                    for (src1, src2) in registers {
+                        let bytes = encoding(format, opcode, src1, src2, ll, suppress_exceptions);
+                        let mut function = function(&bytes);
 
-                    if !checked_fail_closed {
-                        let mut missing = function.clone();
-                        missing.x86_instruction_bytes.clear();
+                        if !checked_fail_closed {
+                            let mut missing = function.clone();
+                            missing.x86_instruction_bytes.clear();
+                            crate::smir::optimize::optimize_function(
+                                &mut missing,
+                                crate::smir::optimize::OptLevel::O2,
+                            );
+                            assert!(!is_native_clobber_safe(&missing));
+
+                            let mut memory = bytes;
+                            memory[5] &= 0x3F;
+                            let mut malformed = function.clone();
+                            malformed.x86_instruction_bytes.insert(
+                                (BlockId(0), PC),
+                                crate::smir::ir::X86InstructionBytes::new(&memory).unwrap(),
+                            );
+                            assert!(!is_native_clobber_safe(&malformed));
+                            checked_fail_closed = true;
+                        }
+
                         crate::smir::optimize::optimize_function(
-                            &mut missing,
+                            &mut function,
                             crate::smir::optimize::OptLevel::O2,
                         );
-                        assert!(!is_native_clobber_safe(&missing));
-
-                        let mut memory = bytes;
-                        memory[5] &= 0x3F;
-                        let mut malformed = function.clone();
-                        malformed.x86_instruction_bytes.insert(
-                            (BlockId(0), PC),
-                            crate::smir::ir::X86InstructionBytes::new(&memory).unwrap(),
+                        assert!(is_native_clobber_safe(&function), "{bytes:02X?}");
+                        assert!(
+                            uses_x86_native_vectors_excluding(
+                                &function,
+                                &std::collections::HashMap::new()
+                            ),
+                            "{bytes:02X?}"
                         );
-                        assert!(!is_native_clobber_safe(&malformed));
-                        checked_fail_closed = true;
+                        let requirements = x86_native_replay_feature_requirements(
+                            &function,
+                            &std::collections::HashMap::new(),
+                        );
+                        assert!(requirements.any, "{bytes:02X?}");
+                        assert!(requirements.needs_avx512bw, "{bytes:02X?}");
+                        assert!(!requirements.needs_avx512fp16, "{bytes:02X?}");
+                        assert!(!requirements.needs_avx512vl, "{bytes:02X?}");
+                        assert!(!requirements.needs_avx512dq, "{bytes:02X?}");
+
+                        #[cfg(target_arch = "x86_64")]
+                        let expected_features = std::is_x86_feature_detected!("avx512f")
+                            && std::is_x86_feature_detected!("avx512bw");
+                        #[cfg(not(target_arch = "x86_64"))]
+                        let expected_features = false;
+                        assert_eq!(
+                            x86_native_vector_features_supported_excluding(
+                                &function,
+                                &std::collections::HashMap::new()
+                            ),
+                            expected_features,
+                            "{bytes:02X?}"
+                        );
+
+                        let mut lowerer = X86_64Lowerer::new();
+                        lowerer
+                            .lower_function(&function)
+                            .unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
+                        let code = lowerer
+                            .finalize()
+                            .unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
+                        assert!(
+                            code.windows(bytes.len()).any(|window| window == bytes),
+                            "{bytes:02X?}"
+                        );
+                        admitted += 1;
                     }
-
-                    crate::smir::optimize::optimize_function(
-                        &mut function,
-                        crate::smir::optimize::OptLevel::O2,
-                    );
-                    assert!(is_native_clobber_safe(&function), "{bytes:02X?}");
-                    assert!(
-                        uses_x86_native_vectors_excluding(
-                            &function,
-                            &std::collections::HashMap::new()
-                        ),
-                        "{bytes:02X?}"
-                    );
-                    let requirements = x86_native_replay_feature_requirements(
-                        &function,
-                        &std::collections::HashMap::new(),
-                    );
-                    assert!(requirements.any, "{bytes:02X?}");
-                    assert!(requirements.needs_avx512bw, "{bytes:02X?}");
-                    assert!(requirements.needs_avx512fp16, "{bytes:02X?}");
-                    assert!(!requirements.needs_avx512vl, "{bytes:02X?}");
-                    assert!(!requirements.needs_avx512dq, "{bytes:02X?}");
-
-                    #[cfg(target_arch = "x86_64")]
-                    let expected_features = std::is_x86_feature_detected!("avx512f")
-                        && std::is_x86_feature_detected!("avx512bw")
-                        && std::is_x86_feature_detected!("avx512fp16");
-                    #[cfg(not(target_arch = "x86_64"))]
-                    let expected_features = false;
-                    assert_eq!(
-                        x86_native_vector_features_supported_excluding(
-                            &function,
-                            &std::collections::HashMap::new()
-                        ),
-                        expected_features,
-                        "{bytes:02X?}"
-                    );
-
-                    let mut lowerer = X86_64Lowerer::new();
-                    lowerer
-                        .lower_function(&function)
-                        .unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
-                    let code = lowerer
-                        .finalize()
-                        .unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
-                    assert!(
-                        code.windows(bytes.len()).any(|window| window == bytes),
-                        "{bytes:02X?}"
-                    );
-                    admitted += 1;
                 }
             }
         }
     }
     assert!(checked_fail_closed);
-    assert_eq!(admitted, 96);
+    assert_eq!(admitted, 192);
 }
 
 #[cfg(target_arch = "x86_64")]
@@ -158,15 +190,23 @@ struct CompareState {
 }
 
 #[cfg(target_arch = "x86_64")]
-fn initial_state(src1: usize, first: u16, src2: usize, second: u16, mxcsr: u32) -> CompareState {
+fn initial_state(
+    format: Format,
+    src1: usize,
+    first: u64,
+    src2: usize,
+    second: u64,
+    mxcsr: u32,
+) -> CompareState {
     let mut vectors = std::array::from_fn(|register| {
         std::array::from_fn(|word| {
             0x0123_4567_89AB_CDEFu64.rotate_left((register * 9 + word * 5) as u32)
                 ^ (register as u64).wrapping_mul(0x1020_4081_0204_0810)
         })
     });
-    vectors[src1][0] = (vectors[src1][0] & !0xFFFF) | u64::from(first);
-    vectors[src2][0] = (vectors[src2][0] & !0xFFFF) | u64::from(second);
+    let mask = format.bit_mask();
+    vectors[src1][0] = (vectors[src1][0] & !mask) | (first & mask);
+    vectors[src2][0] = (vectors[src2][0] & !mask) | (second & mask);
     CompareState {
         gprs: std::array::from_fn(|register| {
             0xA55A_6996_F00F_3CC3u64.rotate_left((register * 7) as u32)
@@ -268,7 +308,7 @@ fn execute_native(
         .finalize()
         .unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
     assert!(code.windows(bytes.len()).any(|window| window == bytes));
-    let exec = ExecMem::new(&code).expect("map FP16 flag-compare replay");
+    let exec = ExecMem::new(&code).expect("map FP32/FP64 flag-compare replay");
     let mut registers = GuestRegs {
         gpr: initial.gprs,
         rflags: initial.rflags,
@@ -296,71 +336,95 @@ fn execute_native(
 }
 
 #[cfg(target_arch = "x86_64")]
-const CHILD_RANGE_ENV: &str = "RAX_FP16_FLAG_COMPARE_CHILD_RANGE";
+const CHILD_RANGE_ENV: &str = "RAX_FP32_FP64_FLAG_COMPARE_CHILD_RANGE";
 
 #[cfg(target_arch = "x86_64")]
 #[derive(Clone, Copy, Debug)]
 struct NativeCase {
     level: crate::smir::optimize::OptLevel,
+    format: Format,
     opcode: u8,
     ll: u8,
     suppress_exceptions: bool,
-    first: u16,
-    second: u16,
+    first: u64,
+    second: u64,
     src1: u8,
     src2: u8,
     mxcsr: u32,
 }
 
 #[cfg(target_arch = "x86_64")]
+fn values(format: Format) -> [(u64, u64, bool); 10] {
+    match format {
+        Format::F32 => [
+            (0x3F80_0000, 0x3F80_0000, false), // equal
+            (0x3F80_0000, 0x4000_0000, false), // less
+            (0x4000_0000, 0x3F80_0000, false), // greater
+            (0x0000_0000, 0x8000_0000, false), // signed-zero equality
+            (0x7FC0_0001, 0x3F80_0000, false), // QNaN
+            (0x7F80_0001, 0x3F80_0000, false), // SNaN
+            (0x0000_0001, 0x0000_0000, false), // positive denormal
+            (0x8000_0001, 0x8000_0000, false), // negative denormal
+            (0x7F80_0000, 0x7F80_0000, false), // infinity equality
+            (0xBF80_0000, 0xBF80_0000, true),  // register alias
+        ],
+        Format::F64 => [
+            (0x3FF0_0000_0000_0000, 0x3FF0_0000_0000_0000, false),
+            (0x3FF0_0000_0000_0000, 0x4000_0000_0000_0000, false),
+            (0x4000_0000_0000_0000, 0x3FF0_0000_0000_0000, false),
+            (0x0000_0000_0000_0000, 0x8000_0000_0000_0000, false),
+            (0x7FF8_0000_0000_0001, 0x3FF0_0000_0000_0000, false),
+            (0x7FF0_0000_0000_0001, 0x3FF0_0000_0000_0000, false),
+            (0x0000_0000_0000_0001, 0x0000_0000_0000_0000, false),
+            (0x8000_0000_0000_0001, 0x8000_0000_0000_0000, false),
+            (0x7FF0_0000_0000_0000, 0x7FF0_0000_0000_0000, false),
+            (0xBFF0_0000_0000_0000, 0xBFF0_0000_0000_0000, true),
+        ],
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
 fn native_cases() -> Vec<NativeCase> {
     let mut cases = Vec::new();
-
-    let values = [
-        (0x3C00, 0x3C00, false), // equal
-        (0x3C00, 0x4000, false), // less
-        (0x4000, 0x3C00, false), // greater
-        (0x0000, 0x8000, false), // signed-zero equality
-        (0x7E01, 0x3C00, false), // QNaN
-        (0x7C01, 0x3C00, false), // SNaN
-        (0x0001, 0x0000, false), // positive denormal
-        (0x8001, 0x8000, false), // negative denormal
-        (0x7C00, 0x7C00, false), // infinity equality
-        (0x3C00, 0x3C00, true),  // register alias
-    ];
     let register_pairs = [(1, 2), (9, 10), (17, 18), (25, 26), (30, 31), (31, 31)];
     for level in [
         crate::smir::optimize::OptLevel::O0,
         crate::smir::optimize::OptLevel::O2,
     ] {
-        for opcode in [0x2E, 0x2F] {
-            for ll in 0..4 {
-                for suppress_exceptions in [false, true] {
-                    for (case, (first, second, force_alias)) in values.into_iter().enumerate() {
-                        let (src1, mut src2) =
-                            register_pairs[(case + usize::from(opcode == 0x2F) + usize::from(ll))
+        for format in Format::ALL {
+            for opcode in [0x2E, 0x2F] {
+                for ll in 0..4 {
+                    for suppress_exceptions in [false, true] {
+                        for (case, (first, second, force_alias)) in
+                            values(format).into_iter().enumerate()
+                        {
+                            let (src1, mut src2) = register_pairs[(case
+                                + usize::from(opcode == 0x2F)
+                                + usize::from(ll))
                                 % register_pairs.len()];
-                        if force_alias {
-                            src2 = src1;
+                            if force_alias {
+                                src2 = src1;
+                            }
+                            let prior_status = 1 << (case % 6);
+                            let rc = ((case as u32) & 3) << 13;
+                            let daz_ftz = if case & 1 == 0 {
+                                0
+                            } else {
+                                (1 << 6) | (1 << 15)
+                            };
+                            cases.push(NativeCase {
+                                level,
+                                format,
+                                opcode,
+                                ll,
+                                suppress_exceptions,
+                                first,
+                                second,
+                                src1,
+                                src2,
+                                mxcsr: 0x1F80 | prior_status | rc | daz_ftz,
+                            });
                         }
-                        let prior_status = if case % 3 == 0 { 1 << 5 } else { 0 };
-                        let rc = ((case as u32) & 3) << 13;
-                        let daz_ftz = if case & 1 == 0 {
-                            0
-                        } else {
-                            (1 << 6) | (1 << 15)
-                        };
-                        cases.push(NativeCase {
-                            level,
-                            opcode,
-                            ll,
-                            suppress_exceptions,
-                            first,
-                            second,
-                            src1,
-                            src2,
-                            mxcsr: 0x1F80 | prior_status | rc | daz_ftz,
-                        });
                     }
                 }
             }
@@ -390,6 +454,7 @@ fn execute_native_case_range(cases: &[NativeCase], range: std::ops::Range<usize>
     assert!(range.start < range.end && range.end <= cases.len());
     for case in &cases[range] {
         let bytes = encoding(
+            case.format,
             case.opcode,
             case.src1,
             case.src2,
@@ -397,6 +462,7 @@ fn execute_native_case_range(cases: &[NativeCase], range: std::ops::Range<usize>
             case.suppress_exceptions,
         );
         let initial = initial_state(
+            case.format,
             usize::from(case.src1),
             case.first,
             usize::from(case.src2),
@@ -419,13 +485,13 @@ fn run_child_range(test_name: &str, range: std::ops::Range<usize>) -> std::proce
         .arg("--nocapture")
         .env(CHILD_RANGE_ENV, format!("{}:{}", range.start, range.end))
         .output()
-        .expect("run isolated native FP16 flag-compare differential")
+        .expect("run isolated native FP32/FP64 flag-compare differential")
 }
 
 #[cfg(target_arch = "x86_64")]
 fn run_isolated_native_differential(test_name: &str) {
     let cases = native_cases();
-    assert_eq!(cases.len(), 320);
+    assert_eq!(cases.len(), 640);
     if let Some(range) = child_range() {
         execute_native_case_range(&cases, range);
         return;
@@ -436,9 +502,6 @@ fn run_isolated_native_differential(test_name: &str) {
         return;
     }
 
-    // Raw source replay can terminate the child with SIGILL before Rust can
-    // report assertion context. Bisect child ranges in O(log N) launches and
-    // report the exact guest encoding without killing the parent test binary.
     let mut start = 0usize;
     let mut end = cases.len();
     while end - start > 1 {
@@ -452,6 +515,7 @@ fn run_isolated_native_differential(test_name: &str) {
     let singleton = run_child_range(test_name, start..end);
     let case = cases[start];
     let bytes = encoding(
+        case.format,
         case.opcode,
         case.src1,
         case.src2,
@@ -459,7 +523,7 @@ fn run_isolated_native_differential(test_name: &str) {
         case.suppress_exceptions,
     );
     panic!(
-        "isolated native FP16 flag-compare failure at case {start}/{}: \
+        "isolated native FP32/FP64 flag-compare failure at case {start}/{}: \
          {case:?} {bytes:02X?}; whole status {}; singleton status {}; \
          singleton stdout: {}; singleton stderr: {}",
         cases.len(),
@@ -473,15 +537,12 @@ fn run_isolated_native_differential(test_name: &str) {
 #[cfg(target_arch = "x86_64")]
 #[test]
 fn replay_matches_o0_o2_interpretation_for_flags_nan_daz_sae_aliases_and_full_state() {
-    if !std::is_x86_feature_detected!("avx512f")
-        || !std::is_x86_feature_detected!("avx512bw")
-        || !std::is_x86_feature_detected!("avx512fp16")
-    {
-        eprintln!("skipping native FP16 flag-compare differential: host lacks AVX-512-FP16");
+    if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
+        eprintln!("skipping native FP32/FP64 flag-compare differential: host lacks AVX-512F/BW");
         return;
     }
     run_isolated_native_differential(
-        "smir::lower::runtime::jit_gate_tests::evex_fp16_flag_compare_replay::\
+        "smir::lower::runtime::jit_gate_tests::evex_fp32_fp64_flag_compare_replay::\
          replay_matches_o0_o2_interpretation_for_flags_nan_daz_sae_aliases_and_full_state",
     );
 }

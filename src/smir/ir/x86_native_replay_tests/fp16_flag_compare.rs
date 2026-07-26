@@ -29,7 +29,7 @@ fn encoding(opcode: u8, src1: u8, src2: u8, ll: u8, suppress_exceptions: bool) -
 }
 
 #[test]
-fn classifier_covers_all_12288_legal_register_extension_llig_and_sae_encodings() {
+fn classifier_covers_all_16384_legal_register_extension_llig_and_sae_encodings() {
     let mut classified = 0usize;
     for opcode in [0x2E, 0x2F] {
         for src1 in 0..32 {
@@ -37,7 +37,7 @@ fn classifier_covers_all_12288_legal_register_extension_llig_and_sae_encodings()
                 for ll in 0..4 {
                     for suppress_exceptions in [false, true] {
                         let bytes = encoding(opcode, src1, src2, ll, suppress_exceptions);
-                        let expected = (ll != 3).then_some((false, true));
+                        let expected = Some((false, true));
                         assert_eq!(
                             X86InstructionBytes::new(&bytes)
                                 .unwrap()
@@ -51,7 +51,7 @@ fn classifier_covers_all_12288_legal_register_extension_llig_and_sae_encodings()
             }
         }
     }
-    assert_eq!(classified, 12_288);
+    assert_eq!(classified, 16_384);
 
     // Independently assembled by LLVM 21.1.8 with +avx512fp16.
     for bytes in [

@@ -34,6 +34,9 @@ mod fp_shuffle;
 #[path = "x86_native_replay_tests/fp16_flag_compare.rs"]
 mod fp16_flag_compare;
 
+#[path = "x86_native_replay_tests/fp32_fp64_flag_compare.rs"]
+mod fp32_fp64_flag_compare;
+
 #[path = "x86_native_replay_tests/fp16_narrow.rs"]
 mod fp16_narrow;
 
