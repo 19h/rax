@@ -29,6 +29,50 @@ fn assert_terminal_ud(bytes: &[u8], expected_len: usize) {
     assert_invalid_opcode_trap(&nonstrict, expected_len);
 }
 
+fn x86(reg: X86Reg) -> VReg {
+    VReg::Arch(ArchReg::X86(reg))
+}
+
+fn vex_bmi_semantic(op: &SmirOp) -> (&'static str, OpWidth) {
+    match (&op.kind, op.x86_hint) {
+        (OpKind::AndNot { width, .. }, None) => ("ANDN", *width),
+        (
+            OpKind::X86Bls {
+                kind: X86BlsKind::Blsr,
+                width,
+                ..
+            },
+            None,
+        ) => ("BLSR", *width),
+        (
+            OpKind::X86Bls {
+                kind: X86BlsKind::Blsmsk,
+                width,
+                ..
+            },
+            None,
+        ) => ("BLSMSK", *width),
+        (
+            OpKind::X86Bls {
+                kind: X86BlsKind::Blsi,
+                width,
+                ..
+            },
+            None,
+        ) => ("BLSI", *width),
+        (OpKind::Bzhi { width, .. }, None) => ("BZHI", *width),
+        (OpKind::Bextr { width, .. }, None) => ("BEXTR", *width),
+        (OpKind::Pdep { width, .. }, None) => ("PDEP", *width),
+        (OpKind::Pext { width, .. }, None) => ("PEXT", *width),
+        (OpKind::Shl { width, .. }, None) => ("SHLX", *width),
+        (OpKind::Shr { width, .. }, None) => ("SHRX", *width),
+        (OpKind::Sar { width, .. }, None) => ("SARX", *width),
+        (OpKind::Ror { width, .. }, None) => ("RORX", *width),
+        (OpKind::MulU { width, .. }, Some(X86OpHint::Mulx)) => ("MULX", *width),
+        (kind, hint) => panic!("unexpected VEX BMI semantic operation: {kind:?}, hint={hint:?}"),
+    }
+}
+
 fn valid_0f38_pp(opcode: u8, pp: u8) -> bool {
     match opcode {
         0xF2 | 0xF3 => pp == 0,
@@ -36,6 +80,123 @@ fn valid_0f38_pp(opcode: u8, pp: u8) -> bool {
         0xF6 => pp == 3,
         0xF7 => pp <= 3,
         _ => false,
+    }
+}
+
+#[test]
+fn vex_bmi_memory_forms_preserve_address_size_segment_and_sib_metadata() {
+    // Independently assembled as W1 with LLVM 23. Each instruction uses
+    // `qword ptr fs:[ebx + 4*e{c,d}x + 32]`, combining the two legacy
+    // prefixes whose state was previously lost by semantic re-decoding. W0 is
+    // the same primary-spec encoding with VEX.W cleared and must preserve the
+    // identical effective address while selecting a 32-bit data operand.
+    let cases: &[(&str, &[u8], X86Reg)] = &[
+        (
+            "ANDN",
+            &[0x64, 0x67, 0xC4, 0xE2, 0xF0, 0xF2, 0x44, 0x8B, 0x20],
+            X86Reg::Rcx,
+        ),
+        (
+            "BLSR",
+            &[0x64, 0x67, 0xC4, 0xE2, 0xF8, 0xF3, 0x4C, 0x8B, 0x20],
+            X86Reg::Rcx,
+        ),
+        (
+            "BLSMSK",
+            &[0x64, 0x67, 0xC4, 0xE2, 0xF8, 0xF3, 0x54, 0x8B, 0x20],
+            X86Reg::Rcx,
+        ),
+        (
+            "BLSI",
+            &[0x64, 0x67, 0xC4, 0xE2, 0xF8, 0xF3, 0x5C, 0x8B, 0x20],
+            X86Reg::Rcx,
+        ),
+        (
+            "BZHI",
+            &[0x64, 0x67, 0xC4, 0xE2, 0xF0, 0xF5, 0x44, 0x8B, 0x20],
+            X86Reg::Rcx,
+        ),
+        (
+            "BEXTR",
+            &[0x64, 0x67, 0xC4, 0xE2, 0xF0, 0xF7, 0x44, 0x8B, 0x20],
+            X86Reg::Rcx,
+        ),
+        (
+            "PDEP",
+            &[0x64, 0x67, 0xC4, 0xE2, 0xF3, 0xF5, 0x44, 0x93, 0x20],
+            X86Reg::Rdx,
+        ),
+        (
+            "PEXT",
+            &[0x64, 0x67, 0xC4, 0xE2, 0xF2, 0xF5, 0x44, 0x93, 0x20],
+            X86Reg::Rdx,
+        ),
+        (
+            "SHLX",
+            &[0x64, 0x67, 0xC4, 0xE2, 0xF1, 0xF7, 0x44, 0x93, 0x20],
+            X86Reg::Rdx,
+        ),
+        (
+            "SHRX",
+            &[0x64, 0x67, 0xC4, 0xE2, 0xF3, 0xF7, 0x44, 0x93, 0x20],
+            X86Reg::Rdx,
+        ),
+        (
+            "SARX",
+            &[0x64, 0x67, 0xC4, 0xE2, 0xF2, 0xF7, 0x44, 0x93, 0x20],
+            X86Reg::Rdx,
+        ),
+        (
+            "RORX",
+            &[0x64, 0x67, 0xC4, 0xE3, 0xFB, 0xF0, 0x44, 0x8B, 0x20, 0x11],
+            X86Reg::Rcx,
+        ),
+        (
+            "MULX",
+            &[0x64, 0x67, 0xC4, 0xE2, 0xF3, 0xF6, 0x44, 0x8B, 0x20],
+            X86Reg::Rcx,
+        ),
+    ];
+
+    for &(expected_name, w1_bytes, index) in cases {
+        for w64 in [false, true] {
+            let mut bytes = w1_bytes.to_vec();
+            if !w64 {
+                bytes[4] &= !0x80;
+            }
+            let expected_mem_width = if w64 { MemWidth::B8 } else { MemWidth::B4 };
+            let expected_op_width = if w64 { OpWidth::W64 } else { OpWidth::W32 };
+
+            let result = lift_single(&bytes)
+                .unwrap_or_else(|error| panic!("{expected_name} {bytes:02X?}: {error:?}"));
+            assert_eq!(result.bytes_consumed, bytes.len(), "{expected_name}");
+            assert!(matches!(result.control_flow, ControlFlow::Fallthrough));
+
+            let (addr, width) = result
+                .ops
+                .iter()
+                .find_map(|op| match &op.kind {
+                    OpKind::Load { addr, width, .. } => Some((addr, *width)),
+                    _ => None,
+                })
+                .unwrap_or_else(|| panic!("{expected_name} did not emit an exact scalar load"));
+            assert_eq!(width, expected_mem_width, "{expected_name}");
+            assert_eq!(
+                addr,
+                &Address::X86Addr32(Box::new(Address::SegmentRel {
+                    segment: x86(X86Reg::FsBase),
+                    base: Some(x86(X86Reg::Rbx)),
+                    index: Some(x86(index)),
+                    scale: 4,
+                    disp: 32,
+                })),
+                "{expected_name}"
+            );
+            assert_eq!(
+                vex_bmi_semantic(result.ops.last().expect("semantic operation")),
+                (expected_name, expected_op_width)
+            );
+        }
     }
 }
 

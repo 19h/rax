@@ -80,8 +80,8 @@ impl X86_64Lifter {
 
         match (opcode, prefix.pp) {
             (0xF2, X86SsePrefix::None) => {
-                self.vex_bmi_modrm(prefix, bytes, pc)?;
-                self.lift_vex_andn_0f38(prefix, bytes, pc, ctx)
+                let modrm = self.vex_bmi_modrm(prefix, bytes, pc)?;
+                self.lift_vex_andn_0f38(prefix, modrm, bytes, pc, ctx)
             }
             (0xF3, X86SsePrefix::None) => {
                 let Some(&modrm_byte) = bytes.get(opcode_end) else {
@@ -94,24 +94,24 @@ impl X86_64Lifter {
                 if !matches!((modrm_byte >> 3) & 7, 1..=3) {
                     return Ok(Self::vex_bmi_invalid_opcode(opcode_end + 1));
                 }
-                self.vex_bmi_modrm(prefix, bytes, pc)?;
-                self.lift_vex_bls_0f38(prefix, bytes, pc, ctx)
+                let modrm = self.vex_bmi_modrm(prefix, bytes, pc)?;
+                self.lift_vex_bls_0f38(prefix, modrm, bytes, pc, ctx)
             }
             (0xF5, X86SsePrefix::None) | (0xF7, X86SsePrefix::None) => {
-                self.vex_bmi_modrm(prefix, bytes, pc)?;
-                self.lift_vex_bzhi_bextr_0f38(prefix, opcode, bytes, pc, ctx)
+                let modrm = self.vex_bmi_modrm(prefix, bytes, pc)?;
+                self.lift_vex_bzhi_bextr_0f38(prefix, modrm, opcode, bytes, pc, ctx)
             }
             (0xF5, X86SsePrefix::Rep | X86SsePrefix::Repne) => {
-                self.vex_bmi_modrm(prefix, bytes, pc)?;
-                self.lift_vex_pdep_pext_0f38(prefix, bytes, pc, ctx)
+                let modrm = self.vex_bmi_modrm(prefix, bytes, pc)?;
+                self.lift_vex_pdep_pext_0f38(prefix, modrm, bytes, pc, ctx)
             }
             (0xF6, X86SsePrefix::Repne) => {
-                self.vex_bmi_modrm(prefix, bytes, pc)?;
-                self.lift_vex_mulx_0f38(prefix, bytes, pc, ctx)
+                let modrm = self.vex_bmi_modrm(prefix, bytes, pc)?;
+                self.lift_vex_mulx_0f38(prefix, modrm, bytes, pc, ctx)
             }
             (0xF7, X86SsePrefix::OpSize | X86SsePrefix::Rep | X86SsePrefix::Repne) => {
-                self.vex_bmi_modrm(prefix, bytes, pc)?;
-                self.lift_vex_bmi2_shift_0f38(prefix, bytes, pc, ctx)
+                let modrm = self.vex_bmi_modrm(prefix, bytes, pc)?;
+                self.lift_vex_bmi2_shift_0f38(prefix, modrm, bytes, pc, ctx)
             }
             (0xF2 | 0xF3 | 0xF5 | 0xF6 | 0xF7, _) => Ok(Self::vex_bmi_invalid_opcode(opcode_end)),
             _ => Err(LiftError::InvalidEncoding {
@@ -150,6 +150,6 @@ impl X86_64Lifter {
                 need: imm_offset + 1,
             });
         }
-        self.lift_vex_bmi2_rorx_0f3a(prefix, bytes, pc, ctx)
+        self.lift_vex_bmi2_rorx_0f3a(prefix, modrm, bytes, pc, ctx)
     }
 }
