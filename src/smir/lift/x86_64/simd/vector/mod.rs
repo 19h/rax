@@ -22,3 +22,5 @@ mod shuffle;
 pub use shuffle::*;
 mod sqrt;
 pub use sqrt::*;
+mod vpermil2;
+pub use vpermil2::*;

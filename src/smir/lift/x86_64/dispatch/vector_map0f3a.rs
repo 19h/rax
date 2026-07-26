@@ -82,6 +82,9 @@ impl X86_64Lifter {
             0x40 | 0x41 => self.lift_vex_dot_product(prefix, opcode, bytes, pc, ctx),
             0x42 => self.lift_vec_mpsadbw(prefix, bytes, pc, ctx),
             0x44 => self.lift_vec_pclmulqdq(prefix, bytes, pc, ctx),
+            0x48 | 0x49 if prefix.encoding == VecEncodingKind::Vex => {
+                self.lift_vex_vpermil2(prefix, opcode, bytes, pc, ctx)
+            }
             0xDF => self.lift_vec_aes_keygen(prefix, bytes, pc, ctx),
             0x4A..=0x4C if prefix.encoding == VecEncodingKind::Vex => {
                 self.lift_vex_variable_blend(prefix, opcode, bytes, pc, ctx)

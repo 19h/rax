@@ -15,6 +15,7 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_avx2: bool,
     pub(crate) needs_fma: bool,
     pub(crate) needs_fma4: bool,
+    pub(crate) needs_xop: bool,
     pub(crate) needs_avx512bw: bool,
     pub(crate) needs_avx512vl: bool,
     pub(crate) needs_avx512dq: bool,
@@ -28,6 +29,10 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
 
 fn cpuid_enumerates_fma4(max_extended_leaf: u32, extended_features_ecx: u32) -> bool {
     max_extended_leaf >= 0x8000_0001 && extended_features_ecx & (1 << 16) != 0
+}
+
+fn cpuid_enumerates_xop(max_extended_leaf: u32, extended_features_ecx: u32) -> bool {
+    max_extended_leaf >= 0x8000_0001 && extended_features_ecx & (1 << 11) != 0
 }
 
 /// AMD APM Volume 3 defines FMA4 at CPUID Fn8000_0001_ECX[16]. Stable Rust
@@ -48,6 +53,24 @@ pub(crate) fn x86_host_has_fma4() -> bool {
     }
 }
 
+/// AMD APM Volume 3 defines XOP at CPUID Fn8000_0001_ECX[11]. Stable Rust
+/// does not expose an `is_x86_feature_detected!("xop")` probe, so query the
+/// architectural bit directly.
+#[cfg(target_arch = "x86_64")]
+pub(crate) fn x86_host_has_xop() -> bool {
+    // SAFETY: CPUID is architecturally available in x86-64 mode. The maximum
+    // extended leaf is checked before querying Fn8000_0001.
+    unsafe {
+        let max_extended_leaf = std::arch::x86_64::__cpuid(0x8000_0000).eax;
+        let extended_features_ecx = if max_extended_leaf >= 0x8000_0001 {
+            std::arch::x86_64::__cpuid(0x8000_0001).ecx
+        } else {
+            0
+        };
+        cpuid_enumerates_xop(max_extended_leaf, extended_features_ecx)
+    }
+}
+
 impl X86NativeReplayFeatureRequirements {
     /// Test replay-family CPUID requirements that are independent of the
     /// shared AVX-512 vector-state trampoline requirements.
@@ -58,6 +81,7 @@ impl X86NativeReplayFeatureRequirements {
             && (!self.needs_avx2 || std::is_x86_feature_detected!("avx2"))
             && (!self.needs_fma || std::is_x86_feature_detected!("fma"))
             && (!self.needs_fma4 || x86_host_has_fma4())
+            && (!self.needs_xop || x86_host_has_xop())
             && (!self.needs_gfni || std::is_x86_feature_detected!("gfni"))
             && (!self.needs_avx512vp2intersect
                 || std::is_x86_feature_detected!("avx512vp2intersect"))
@@ -84,6 +108,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             .into_values()
         {
             let is_fma4 = span.instruction.is_vex_register_fma4();
+            let is_vpermil2 = span.instruction.is_vex_register_vpermil2();
             let vex_fp_dot_product_ymm = span.instruction.vex_register_fp_dot_product_uses_ymm();
             let immediate_blend_avx2 = span.instruction.vex_register_immediate_blend_needs_avx2();
             let variable_blend_avx2 = span.instruction.vex_register_variable_blend_needs_avx2();
@@ -102,6 +127,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             requirements.any = true;
             requirements.needs_sse3 |= fp_horizontal_addsub_avx == Some(false);
             all_spans_support_avx_ymm16 &= is_fma4
+                || is_vpermil2
                 || vex_fp_dot_product_ymm.is_some()
                 || immediate_blend_avx2.is_some()
                 || variable_blend_avx2.is_some()
@@ -114,6 +140,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             requirements.needs_avx |= span.instruction.is_vex_register_packed_string_compare()
                 || span.instruction.is_vex_register_fma3()
                 || is_fma4
+                || is_vpermil2
                 || vex_fp_dot_product_ymm.is_some()
                 || immediate_blend_avx2.is_some()
                 || variable_blend_avx2.is_some()
@@ -146,6 +173,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || cross_lane_128_avx2 == Some(true);
             requirements.needs_fma |= span.instruction.is_vex_register_fma3();
             requirements.needs_fma4 |= is_fma4;
+            requirements.needs_xop |= is_vpermil2;
             // Assume the full-width K0-K7 helper boundary while accumulating
             // replay families. A set containing only AVX-YMM16-safe spans is
             // relaxed after the scan.
@@ -182,7 +210,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
 
 #[cfg(test)]
 mod tests {
-    use super::cpuid_enumerates_fma4;
+    use super::{cpuid_enumerates_fma4, cpuid_enumerates_xop};
 
     #[test]
     fn fma4_cpuid_bit_requires_the_extended_feature_leaf() {
@@ -190,5 +218,13 @@ mod tests {
         assert!(!cpuid_enumerates_fma4(0x8000_0001, 0));
         assert!(cpuid_enumerates_fma4(0x8000_0001, 1 << 16));
         assert!(cpuid_enumerates_fma4(u32::MAX, u32::MAX));
+    }
+
+    #[test]
+    fn xop_cpuid_bit_requires_the_extended_feature_leaf() {
+        assert!(!cpuid_enumerates_xop(0x8000_0000, 1 << 11));
+        assert!(!cpuid_enumerates_xop(0x8000_0001, 0));
+        assert!(cpuid_enumerates_xop(0x8000_0001, 1 << 11));
+        assert!(cpuid_enumerates_xop(u32::MAX, u32::MAX));
     }
 }

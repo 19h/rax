@@ -192,6 +192,8 @@ mod vmx_controls;
 #[cfg(test)]
 mod vpblendd;
 #[cfg(test)]
+mod vpermil2;
+#[cfg(test)]
 mod waitpkg;
 #[cfg(test)]
 mod write_control;

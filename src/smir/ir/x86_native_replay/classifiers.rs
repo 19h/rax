@@ -28,6 +28,7 @@ mod vex_packed_string;
 mod vex_scalar_insert;
 mod vex_variable_blend;
 mod vex_variable_permute;
+mod vex_vpermil2;
 mod vex_widening_dword_multiply;
 mod vp2intersect;
 mod vpclmulqdq;
