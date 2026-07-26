@@ -124,6 +124,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             let widening_dword_multiply_avx2 = span
                 .instruction
                 .vex_register_widening_dword_multiply_needs_avx2();
+            let vex_packed_extend_avx2 = span.instruction.vex_register_packed_extend_needs_avx2();
             let vex_fp32_fp64_convert = span.instruction.is_vex_register_fp32_fp64_convert();
             requirements.any = true;
             requirements.needs_sse3 |= fp_horizontal_addsub_avx == Some(false);
@@ -138,6 +139,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || scalar_insert_avx
                 || vex_gfni_ymm.is_some()
                 || vex_vpclmulqdq_ymm.is_some()
+                || vex_packed_extend_avx2.is_some()
                 || vex_fp32_fp64_convert;
             requirements.needs_avx |= span.instruction.is_vex_register_packed_string_compare()
                 || span.instruction.is_vex_register_fma3()
@@ -155,6 +157,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || span.instruction.is_vex_register_fp_logic()
                 || fp_horizontal_addsub_avx == Some(true)
                 || widening_dword_multiply_avx2.is_some()
+                || vex_packed_extend_avx2.is_some()
                 || span
                     .instruction
                     .legacy_vex_register_fp_arithmetic_needs_avx()
@@ -173,7 +176,8 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || variable_blend_avx2 == Some(true)
                 || variable_permute_avx2 == Some(true)
                 || alignr_avx2 == Some(true)
-                || cross_lane_128_avx2 == Some(true);
+                || cross_lane_128_avx2 == Some(true)
+                || vex_packed_extend_avx2 == Some(true);
             requirements.needs_fma |= span.instruction.is_vex_register_fma3();
             requirements.needs_fma4 |= is_fma4;
             requirements.needs_xop |= is_vpermil2;

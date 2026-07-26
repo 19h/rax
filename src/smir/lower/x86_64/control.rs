@@ -71,6 +71,7 @@ impl X86_64Lowerer {
             .or_else(|| span.instruction.vex_scalar_insert_destination_index())
             .or_else(|| span.instruction.vex_gfni_destination_index())
             .or_else(|| span.instruction.vex_vpclmulqdq_destination_index())
+            .or_else(|| span.instruction.vex_packed_extend_destination_index())
             .or_else(|| span.instruction.vex_fp32_fp64_convert_destination_index())
         {
             self.code.emit_bytes(span.instruction.as_slice());
