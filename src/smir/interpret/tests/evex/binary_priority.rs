@@ -53,6 +53,62 @@ fn arithmetic_nan_precedence_suppresses_same_lane_denormal_status_for_every_core
 }
 
 #[test]
+fn divide_by_zero_precedence_suppresses_same_lane_denormal_status() {
+    for (format, denormals, zeroes, infinity, indefinite) in [
+        (
+            X86_SIMD_F32,
+            [1u64, 0x8000_0001],
+            [0u64, 0x8000_0000],
+            0x7F80_0000u64,
+            0xFFC0_0000u64,
+        ),
+        (
+            X86_SIMD_F64,
+            [1u64, 0x8000_0000_0000_0001],
+            [0u64, 0x8000_0000_0000_0000],
+            0x7FF0_0000_0000_0000u64,
+            0xFFF8_0000_0000_0000u64,
+        ),
+    ] {
+        let (sign, _, _, _) = SmirInterpreter::x86_simd_fp_masks(format);
+        for denormal in denormals {
+            for zero in zeroes {
+                let result = SmirInterpreter::x86_simd_fp_div(
+                    denormal,
+                    zero,
+                    format,
+                    FpRoundMode::RoundNearest,
+                    0x1F80,
+                );
+                assert_eq!(
+                    result.bits,
+                    ((denormal ^ zero) & sign) | infinity,
+                    "masked #Z result"
+                );
+                assert_eq!(
+                    result.status,
+                    1 << 2,
+                    "higher-priority #Z must suppress same-lane #D"
+                );
+
+                let daz = SmirInterpreter::x86_simd_fp_div(
+                    denormal,
+                    zero,
+                    format,
+                    FpRoundMode::RoundNearest,
+                    0x1F80 | (1 << 6),
+                );
+                assert_eq!(
+                    daz.bits, indefinite,
+                    "DAZ changes denormal/zero to zero/zero"
+                );
+                assert_eq!(daz.status, 1, "DAZ zero/zero reports #I only");
+            }
+        }
+    }
+}
+
+#[test]
 fn minmax_nan_precedence_selects_src2_without_denormal_status() {
     for (format, denormals, nans) in [
         (

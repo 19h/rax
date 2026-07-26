@@ -776,6 +776,47 @@ fn interpreter_o0_o2_gives_nan_precedence_over_same_lane_denormal_status() {
     }
 }
 
+fn divps_denormal_over_zero_case_and_state() -> (NativeCase, ArithmeticState) {
+    let case = NativeCase::NonEvex(NonEvexCase {
+        form: NonEvexForm::Legacy,
+        kind: FpKind::PackedF32,
+        opcode: 0x5E,
+        l: false,
+        dst: 1,
+        src1: 1,
+        src2: 3,
+    });
+    assert_eq!(native_cases()[352], case);
+    assert_eq!(case.bytes(), [0x0F, 0x5E, 0xCB]);
+
+    let initial = initial_state(case, 352);
+    assert_eq!(initial.mxcsr, 0x1F80);
+    assert_eq!(initial.vectors[1][0], 0x0000_0001_3F00_0000);
+    assert_eq!(initial.vectors[1][1], 0x0080_0000_8000_0001);
+    assert_eq!(initial.vectors[3][0], 0x0000_0000_3EAA_AAAB);
+    assert_eq!(initial.vectors[3][1], 0x3F80_0000_8000_0000);
+    (case, initial)
+}
+
+#[test]
+fn lifted_divps_zero_divide_suppresses_same_lane_denormal_status() {
+    let (case, initial) = divps_denormal_over_zero_case_and_state();
+    let bytes = case.bytes();
+    for level in [
+        crate::smir::optimize::OptLevel::O0,
+        crate::smir::optimize::OptLevel::O2,
+    ] {
+        let result = interpret(&bytes, &initial, level);
+        assert_eq!(result.vectors[1][0], 0x7F80_0000_3FC0_0000);
+        assert_eq!(result.vectors[1][1], 0x0080_0000_7F80_0000);
+        assert_eq!(
+            result.mxcsr & 0x3F,
+            (1 << 2) | (1 << 5),
+            "{level:?}: ZE|PE without lower-priority same-lane DE"
+        );
+    }
+}
+
 fn daz_vminps_case_and_state() -> (NativeCase, ArithmeticState) {
     let case = NativeCase::NonEvex(NonEvexCase {
         form: NonEvexForm::VexC5,
@@ -902,6 +943,27 @@ fn native_vminps_daz_matches_interpreter_without_requiring_avx512() {
         assert_eq!(native, interpreted, "{level:?} {case:?} {bytes:02X?}");
         assert_eq!(native.vectors[1][0], 0x3F80_0000_8000_0000);
         assert_eq!(native.mxcsr & 0x3F, 1);
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+#[test]
+fn native_divps_zero_divide_precedence_matches_interpreter_without_requiring_avx512() {
+    if !std::is_x86_feature_detected!("avx") {
+        eprintln!("skipping native DIVPS exception-priority regression: host lacks AVX");
+        return;
+    }
+
+    let (case, initial) = divps_denormal_over_zero_case_and_state();
+    let bytes = case.bytes();
+    for level in [
+        crate::smir::optimize::OptLevel::O0,
+        crate::smir::optimize::OptLevel::O2,
+    ] {
+        let native = execute_native(&bytes, &initial, level, true);
+        let interpreted = interpret(&bytes, &initial, level);
+        assert_eq!(native, interpreted, "{level:?} {case:?} {bytes:02X?}");
+        assert_eq!(native.mxcsr & 0x3F, (1 << 2) | (1 << 5));
     }
 }
 

@@ -62,7 +62,7 @@ impl SmirInterpreter {
         }
         let first = Self::x86_simd_fp_apply_daz(first, format, mxcsr);
         let second = Self::x86_simd_fp_apply_daz(second, format, mxcsr);
-        let mut status = first.status | second.status;
+        let status = first.status | second.status;
 
         let first_infinite = Self::x86_simd_fp_is_infinite(first.bits, format);
         let second_infinite = Self::x86_simd_fp_is_infinite(second.bits, format);
@@ -91,9 +91,12 @@ impl SmirInterpreter {
             };
         }
         if second_zero {
+            // Intel SDM Vol. 1 §4.9.2: divide-by-zero has precedence over
+            // denormal-operand. A denormal numerator divided by zero therefore
+            // reports masked #Z, not #D|#Z, for this lane.
             return X86SimdFpResult {
                 bits: signed | exponent,
-                status: status | (1 << 2),
+                status: 1 << 2,
             };
         }
         if first_zero {
