@@ -25,6 +25,12 @@ pub fn x86_native_replay_spans(
             return Some((false, false, false));
         }
         if instruction
+            .legacy_vex_register_fp_estimate_needs_avx()
+            .is_some()
+        {
+            return Some((false, false, false));
+        }
+        if instruction
             .legacy_vex_register_fp_compare_needs_avx()
             .is_some()
         {
@@ -501,6 +507,20 @@ pub fn x86_vex_scalar_int_to_fp_replay_spans(
     x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
         instruction
             .vex_scalar_int_to_fp_destination_index()
+            .map(|_| (false, false, false))
+    })
+}
+
+/// Identify valid register-only legacy SSE and AVX VEX reciprocal-estimate
+/// replay groups in O(N) time and O(P) space for N operations and P unique
+/// guest PCs. Memory forms remain at the precise SMIR interpreter boundary.
+pub fn x86_legacy_vex_fp_estimate_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .legacy_vex_register_fp_estimate_needs_avx()
             .map(|_| (false, false, false))
     })
 }

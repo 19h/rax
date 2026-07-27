@@ -159,6 +159,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             let fp_horizontal_addsub_avx = span
                 .instruction
                 .legacy_vex_register_fp_horizontal_addsub_needs_avx();
+            let fp_estimate_avx = span.instruction.legacy_vex_register_fp_estimate_needs_avx();
             let widening_dword_multiply_avx2 = span
                 .instruction
                 .vex_register_widening_dword_multiply_needs_avx2();
@@ -198,6 +199,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             all_spans_support_avx_ymm16 &= is_fma4
                 || is_vpermil2
                 || vex_fp_dot_product_ymm.is_some()
+                || fp_estimate_avx.is_some()
                 || immediate_blend_avx2.is_some()
                 || immediate_permute_avx2.is_some()
                 || chunk_extract_avx2.is_some()
@@ -254,6 +256,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                     .legacy_vex_register_fp_arithmetic_needs_avx()
                     == Some(true)
                 || span.instruction.legacy_vex_register_fp_compare_needs_avx() == Some(true)
+                || fp_estimate_avx == Some(true)
                 || span.instruction.legacy_vex_register_fp_shuffle_needs_avx() == Some(true)
                 || span
                     .instruction
@@ -321,7 +324,9 @@ pub(crate) fn x86_native_replay_feature_requirements(
     requirements.all_spans_support_avx_ymm16 = requirements.any && all_spans_support_avx_ymm16;
     if requirements.all_spans_support_avx_ymm16 {
         // These replay families address only YMM0-YMM15 and no opmask state.
-        // Their dedicated state bridge requires AVX but no AVX-512 instruction.
+        // Their dedicated state bridge itself requires AVX even when every
+        // replayed source instruction is legacy SSE, but no AVX-512 feature.
+        requirements.needs_avx = true;
         requirements.needs_avx512bw = false;
     }
     requirements

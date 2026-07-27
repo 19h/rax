@@ -6452,6 +6452,10 @@ mod jit_call_tests;
 mod jit_scalar_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_fp_estimate_tests.rs"]
+mod jit_fp_estimate_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_cpuid_tests.rs"]
 mod jit_cpuid_tests;
 
