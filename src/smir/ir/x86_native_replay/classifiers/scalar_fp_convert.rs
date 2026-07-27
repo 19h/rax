@@ -3,6 +3,27 @@
 use super::X86InstructionBytes;
 
 impl X86InstructionBytes {
+    /// Validate one register-only AVX VEX `VCVTSS2SD` or `VCVTSD2SS`
+    /// instruction and return its architectural destination.
+    ///
+    /// Both forms use map 0F, opcode 5A, and consume `VEX.vvvv` as the
+    /// upper-lane merge source. F3 selects binary32-to-binary64 and F2 selects
+    /// binary64-to-binary32. `VEX.W` and register-form `VEX.X` are ignored.
+    /// Intel documents `VEX.L=1` as generation-dependent unpredictable, so
+    /// only `VEX.L=0` register forms are admitted. Memory and non-exact source
+    /// byte strings fail closed.
+    pub fn vex_scalar_fp_convert_destination_index(&self) -> Option<u8> {
+        let (encoded_r, p1, opcode, modrm) = match self.as_slice() {
+            &[0xC5, p1, opcode, modrm] => (p1 & 0x80 != 0, p1, opcode, modrm),
+            &[0xC4, p0, p1, opcode, modrm] if p0 & 0x1F == 1 => (p0 & 0x80 != 0, p1, opcode, modrm),
+            _ => return None,
+        };
+        if p1 & 0x04 != 0 || !matches!(p1 & 0x03, 2 | 3) || opcode != 0x5A || modrm >> 6 != 3 {
+            return None;
+        }
+        Some(((modrm >> 3) & 7) | (u8::from(!encoded_r) << 3))
+    }
+
     /// Validate one register-only EVEX scalar floating-point precision
     /// conversion and return whether it requires AVX-512-FP16.
     ///

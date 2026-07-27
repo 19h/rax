@@ -2,6 +2,178 @@
 
 use super::*;
 
+fn vex_destination(encoded_r: bool, modrm: u8) -> u8 {
+    ((modrm >> 3) & 7) | (u8::from(!encoded_r) << 3)
+}
+
+#[test]
+fn vex_classifier_covers_all_36864_defined_l0_register_byte_images() {
+    let mut classified = 0usize;
+
+    for encoded_r in [false, true] {
+        for encoded_vvvv in 0u8..16 {
+            for pp in [2u8, 3] {
+                let p1 = (u8::from(encoded_r) << 7) | (encoded_vvvv << 3) | pp;
+                for modrm in 0xC0u8..=0xFF {
+                    let bytes = [0xC5, p1, 0x5A, modrm];
+                    assert_eq!(
+                        X86InstructionBytes::new(&bytes)
+                            .unwrap()
+                            .vex_scalar_fp_convert_destination_index(),
+                        Some(vex_destination(encoded_r, modrm)),
+                        "{bytes:02X?}"
+                    );
+                    classified += 1;
+                }
+            }
+        }
+    }
+
+    for extension_bits in 0u8..8 {
+        let p0 = (extension_bits << 5) | 1;
+        for w in [false, true] {
+            for encoded_vvvv in 0u8..16 {
+                for pp in [2u8, 3] {
+                    let p1 = (u8::from(w) << 7) | (encoded_vvvv << 3) | pp;
+                    for modrm in 0xC0u8..=0xFF {
+                        let bytes = [0xC4, p0, p1, 0x5A, modrm];
+                        assert_eq!(
+                            X86InstructionBytes::new(&bytes)
+                                .unwrap()
+                                .vex_scalar_fp_convert_destination_index(),
+                            Some(vex_destination(p0 & 0x80 != 0, modrm)),
+                            "{bytes:02X?}"
+                        );
+                        classified += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    assert_eq!(classified, 36_864);
+
+    // Independently assembled by LLVM 23.0.0.
+    for (bytes, expected_destination) in [
+        (&[0xC4, 0x41, 0x2B, 0x5A, 0xCB][..], 9),
+        (&[0xC5, 0xEA, 0x5A, 0xCB][..], 1),
+        (&[0xC5, 0xEB, 0x5A, 0xCB][..], 1),
+        (&[0xC4, 0x41, 0x2A, 0x5A, 0xCB][..], 9),
+    ] {
+        assert_eq!(
+            X86InstructionBytes::new(bytes)
+                .unwrap()
+                .vex_scalar_fp_convert_destination_index(),
+            Some(expected_destination),
+            "{bytes:02X?}"
+        );
+    }
+}
+
+#[test]
+fn vex_classifier_exhausts_prefix_opcode_modrm_and_shape_frontiers() {
+    for p0 in u8::MIN..=u8::MAX {
+        let bytes = [0xC4, p0, 0x2A, 0x5A, 0xCB];
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .vex_scalar_fp_convert_destination_index(),
+            (p0 & 0x1F == 1).then_some(vex_destination(p0 & 0x80 != 0, 0xCB)),
+            "{bytes:02X?}"
+        );
+    }
+    for p1 in u8::MIN..=u8::MAX {
+        let valid = p1 & 0x04 == 0 && matches!(p1 & 3, 2 | 3);
+        let c5 = [0xC5, p1, 0x5A, 0xCB];
+        assert_eq!(
+            X86InstructionBytes::new(&c5)
+                .unwrap()
+                .vex_scalar_fp_convert_destination_index(),
+            valid.then_some(vex_destination(p1 & 0x80 != 0, 0xCB)),
+            "{c5:02X?}"
+        );
+        let c4 = [0xC4, 0xE1, p1, 0x5A, 0xCB];
+        assert_eq!(
+            X86InstructionBytes::new(&c4)
+                .unwrap()
+                .vex_scalar_fp_convert_destination_index(),
+            valid.then_some(1),
+            "{c4:02X?}"
+        );
+    }
+    for opcode in u8::MIN..=u8::MAX {
+        let bytes = [0xC4, 0xE1, 0x2A, opcode, 0xCB];
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .vex_scalar_fp_convert_destination_index(),
+            (opcode == 0x5A).then_some(1),
+            "{bytes:02X?}"
+        );
+    }
+    for modrm in u8::MIN..=u8::MAX {
+        let bytes = [0xC4, 0x61, 0xAA, 0x5A, modrm];
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .vex_scalar_fp_convert_destination_index(),
+            (modrm >> 6 == 3).then_some(vex_destination(false, modrm)),
+            "{bytes:02X?}"
+        );
+    }
+
+    for invalid in [
+        &[0xC5, 0xEE, 0x5A, 0xCB][..],             // VEX.L=1 is unpredictable
+        &[0xC4, 0xE2, 0x2A, 0x5A, 0xCB][..],       // map 0F38
+        &[0xC4, 0xE1, 0x29, 0x5A, 0xCB][..],       // wrong mandatory prefix
+        &[0xC4, 0xE1, 0x2A, 0x5A, 0x0B][..],       // memory source
+        &[0x66, 0xC4, 0xE1, 0x2A, 0x5A, 0xCB][..], // leading prefix
+        &[0xC4, 0xE1, 0x2A, 0x5A][..],             // missing ModR/M
+        &[0xC4, 0xE1, 0x2A, 0x5A, 0xCB, 0x90][..], // trailing byte
+        &[0x62, 0xF1, 0x66, 0x08, 0x5A, 0xCB][..], // EVEX neighbor
+    ] {
+        assert!(
+            X86InstructionBytes::new(invalid)
+                .unwrap()
+                .vex_scalar_fp_convert_destination_index()
+                .is_none(),
+            "{invalid:02X?}"
+        );
+    }
+}
+
+#[test]
+fn vex_replay_spans_preserve_exact_defined_source_provenance() {
+    let pc = 0x5A32_64;
+    let mut block = SmirBlock::new(BlockId(48), pc);
+    block.push_op(SmirOp::new(OpId(0), pc, OpKind::Nop));
+
+    for bytes in [
+        &[0xC4, 0x41, 0x2B, 0x5A, 0xCB][..],
+        &[0xC5, 0xEA, 0x5A, 0xCB][..],
+        &[0xC4, 0x01, 0xAA, 0x5A, 0xFF][..],
+    ] {
+        let instruction = X86InstructionBytes::new(bytes).unwrap();
+        let provenance = HashMap::from([((BlockId(48), pc), instruction)]);
+        for spans in [
+            x86_vex_scalar_fp_convert_replay_spans(&block, &provenance),
+            x86_native_replay_spans(&block, &provenance),
+        ] {
+            let span = spans.get(&0).unwrap_or_else(|| panic!("{bytes:02X?}"));
+            assert_eq!(span.end, 1, "{bytes:02X?}");
+            assert_eq!(span.instruction, instruction, "{bytes:02X?}");
+            assert!(!span.needs_avx512vl, "{bytes:02X?}");
+            assert!(!span.needs_avx512dq, "{bytes:02X?}");
+            assert!(!span.needs_avx512fp16, "{bytes:02X?}");
+            assert!(!span.preserve_mxcsr_de, "{bytes:02X?}");
+        }
+        assert!(
+            x86_evex_scalar_fp_convert_replay_spans(&block, &provenance).is_empty(),
+            "{bytes:02X?}"
+        );
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Conversion {
     F64ToF32,

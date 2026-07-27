@@ -252,6 +252,8 @@ mod vex_register_broadcast_replay;
 #[cfg(test)]
 mod vex_scalar_extract_replay;
 #[cfg(test)]
+mod vex_scalar_fp_convert_replay;
+#[cfg(test)]
 mod vex_scalar_insert_replay;
 #[cfg(test)]
 mod vex_scalar_vmovq_replay;
