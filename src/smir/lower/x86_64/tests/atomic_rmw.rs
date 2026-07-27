@@ -196,19 +196,31 @@ struct MemoryContext {
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-extern "C" fn load(context: *mut MemoryContext, addr: u64, _size: u64) -> (u64, u64) {
+extern "C" fn load(context: *mut MemoryContext, addr: u64, size: u64) -> (u64, u64) {
     let context = unsafe { &mut *context };
     context.loads += 1;
     context.last_addr = addr;
-    (context.value, context.load_ok)
+    // Mirror `rax_jit_mem_load`, which yields exactly `size` zero-extended bytes.
+    let mask = if size >= 8 {
+        u64::MAX
+    } else {
+        (1u64 << (size * 8)) - 1
+    };
+    (context.value & mask, context.load_ok)
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-extern "C" fn store(context: *mut MemoryContext, addr: u64, value: u64, _size: u64) -> u64 {
+extern "C" fn store(context: *mut MemoryContext, addr: u64, value: u64, size: u64) -> u64 {
     let context = unsafe { &mut *context };
     context.stores += 1;
     context.last_addr = addr;
-    context.stored = value;
+    // Mirror `rax_jit_mem_store`, which commits exactly `size` bytes.
+    let mask = if size >= 8 {
+        u64::MAX
+    } else {
+        (1u64 << (size * 8)) - 1
+    };
+    context.stored = value & mask;
     context.store_ok
 }
 
@@ -297,5 +309,107 @@ fn native_locked_rmw_updates_memory_publishes_flags_and_writes_back() {
     regs.store_fn = store as usize as u64;
     exec.run(entry, &mut regs);
     assert_eq!(regs.gpr, initial, "faulting store must not commit");
+    assert_eq!(regs.exit_pc, PC);
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[test]
+fn native_exchange_replaces_the_element_and_leaves_flags_untouched() {
+    use crate::smir::ir::types::{AtomicOp, MemoryOrder};
+    use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+    const FLAGS: u64 = 0x8D5;
+    const SENTINEL_PC: u64 = 0xAAAA_BBBB_CCCC_DDDD;
+    const MEMORY: u64 = 0x0F1E_2D3C_4B5A_6978;
+
+    let mut initial = [0u64; 32];
+    initial[1] = 0x1111_2222_3333_4444; // RCX replacement
+    initial[7] = 0x8000; // RDI address base
+
+    let exchange = |width: MemWidth, op_width: OpWidth| {
+        vec![
+            OpKind::AtomicRmw {
+                dst: virt(0),
+                addr: addr(),
+                src: x86(X86Reg::Rcx),
+                op: AtomicOp::Swap,
+                width,
+                order: MemoryOrder::SeqCst,
+            },
+            OpKind::Mov {
+                dst: x86(X86Reg::Rdx),
+                src: SrcOperand::Reg(virt(0)),
+                width: op_width,
+            },
+        ]
+    };
+
+    for (mem_width, op_width, bytes) in [
+        (MemWidth::B8, OpWidth::W64, 8u64),
+        (MemWidth::B4, OpWidth::W32, 4),
+        (MemWidth::B2, OpWidth::W16, 2),
+    ] {
+        let mask = if bytes >= 8 {
+            u64::MAX
+        } else {
+            (1u64 << (bytes * 8)) - 1
+        };
+        let (code, entry) = lower(exchange(mem_width, op_width));
+        let exec = ExecMem::new(&code).expect("map fused exchange");
+        let mut context = MemoryContext {
+            value: MEMORY,
+            load_ok: 1,
+            store_ok: 1,
+            ..MemoryContext::default()
+        };
+        let mut regs = GuestRegs::default();
+        regs.gpr = initial;
+        regs.rflags = 0x2 | FLAGS;
+        regs.exit_pc = SENTINEL_PC;
+        regs.ctx = (&mut context as *mut MemoryContext) as u64;
+        regs.load_fn = load as usize as u64;
+        regs.store_fn = store as usize as u64;
+        exec.run(entry, &mut regs);
+
+        assert_eq!(context.loads, 1, "{mem_width:?}");
+        assert_eq!(context.stores, 1, "{mem_width:?}");
+        assert_eq!(context.last_addr, 0x8008);
+        assert_eq!(
+            context.stored,
+            initial[1] & mask,
+            "{mem_width:?} replacement element"
+        );
+        let mut expected = initial;
+        expected[2] = match op_width {
+            OpWidth::W16 => (initial[2] & !mask) | (MEMORY & mask),
+            _ => MEMORY & mask,
+        };
+        assert_eq!(regs.gpr, expected, "{mem_width:?} write-back");
+        assert_eq!(
+            regs.rflags & FLAGS,
+            FLAGS,
+            "{mem_width:?} XCHG must not change flags"
+        );
+        assert_eq!(regs.exit_pc, SENTINEL_PC);
+    }
+
+    // A faulting store commits nothing.
+    let (code, entry) = lower(exchange(MemWidth::B8, OpWidth::W64));
+    let exec = ExecMem::new(&code).expect("map fused exchange");
+    let mut context = MemoryContext {
+        value: MEMORY,
+        load_ok: 1,
+        store_ok: 0,
+        ..MemoryContext::default()
+    };
+    let mut regs = GuestRegs::default();
+    regs.gpr = initial;
+    regs.rflags = 0x2 | FLAGS;
+    regs.exit_pc = SENTINEL_PC;
+    regs.ctx = (&mut context as *mut MemoryContext) as u64;
+    regs.load_fn = load as usize as u64;
+    regs.store_fn = store as usize as u64;
+    exec.run(entry, &mut regs);
+    assert_eq!(regs.gpr, initial, "faulting exchange must not write back");
     assert_eq!(regs.exit_pc, PC);
 }
