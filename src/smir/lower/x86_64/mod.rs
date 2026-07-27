@@ -124,6 +124,10 @@ mod lmsw;
 pub use lmsw::*;
 mod mem_state_compare;
 pub use mem_state_compare::*;
+#[cfg(feature = "smir-jit")]
+mod push_value;
+#[cfg(feature = "smir-jit")]
+pub use push_value::*;
 mod memory;
 pub use memory::*;
 #[cfg(feature = "smir-jit")]
