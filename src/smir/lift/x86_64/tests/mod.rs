@@ -198,6 +198,8 @@ mod vex_integer_compare;
 #[cfg(test)]
 mod vex_lane_shuffle;
 #[cfg(test)]
+mod vex_memory_prefixes;
+#[cfg(test)]
 mod vex_mov_mask_stack_destination;
 #[cfg(test)]
 mod vex_mxcsr;

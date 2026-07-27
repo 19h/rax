@@ -143,6 +143,20 @@ pub(crate) struct VecPrefix {
     pub(crate) bytes: usize,
 }
 
+impl VecPrefix {
+    pub(crate) fn modrm_prefix(&self, cursor: usize) -> X86Prefix {
+        X86Prefix {
+            rex: self.rex,
+            address_size_override: self.address_size_override,
+            segment_override: self.segment_override,
+            evex_mem_base_high: self.mem_base_high,
+            evex_mem_index_high: self.mem_index_high,
+            cursor,
+            ..X86Prefix::default()
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum VecPrefixDecode {
     Prefix(VecPrefix),
