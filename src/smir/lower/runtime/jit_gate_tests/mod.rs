@@ -154,6 +154,8 @@ mod pkru;
 #[cfg(test)]
 mod pmc;
 #[cfg(test)]
+mod push_flags;
+#[cfg(test)]
 mod push_value;
 #[cfg(test)]
 mod read_control;

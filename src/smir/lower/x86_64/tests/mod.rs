@@ -71,6 +71,8 @@ mod pkru;
 mod pmc;
 #[cfg(test)]
 mod pop_segment;
+#[cfg(all(test, feature = "smir-jit"))]
+mod push_flags;
 #[cfg(test)]
 mod push_segment;
 #[cfg(all(test, feature = "smir-jit"))]
