@@ -33,12 +33,16 @@ enum LogicKind {
 impl LogicKind {
     const ALL: [Self; 4] = [Self::And, Self::AndNot, Self::Or, Self::Xor];
 
-    const fn opcode(self) -> u8 {
-        match self {
-            Self::And => 0x54,
-            Self::AndNot => 0x55,
-            Self::Or => 0x56,
-            Self::Xor => 0x57,
+    const fn opcode(self, family: LogicFamily) -> u8 {
+        match (self, family) {
+            (Self::And, LogicFamily::Ps | LogicFamily::Pd) => 0x54,
+            (Self::AndNot, LogicFamily::Ps | LogicFamily::Pd) => 0x55,
+            (Self::Or, LogicFamily::Ps | LogicFamily::Pd) => 0x56,
+            (Self::Xor, LogicFamily::Ps | LogicFamily::Pd) => 0x57,
+            (Self::And, LogicFamily::Integer) => 0xDB,
+            (Self::AndNot, LogicFamily::Integer) => 0xDF,
+            (Self::Or, LogicFamily::Integer) => 0xEB,
+            (Self::Xor, LogicFamily::Integer) => 0xEF,
         }
     }
 
@@ -53,25 +57,26 @@ impl LogicKind {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Precision {
+enum LogicFamily {
     Ps,
     Pd,
+    Integer,
 }
 
-impl Precision {
-    const ALL: [Self; 2] = [Self::Ps, Self::Pd];
+impl LogicFamily {
+    const ALL: [Self; 3] = [Self::Ps, Self::Pd, Self::Integer];
 
     const fn pp(self) -> u8 {
         match self {
             Self::Ps => 0,
-            Self::Pd => 1,
+            Self::Pd | Self::Integer => 1,
         }
     }
 
     const fn prefix(self) -> X86SsePrefix {
         match self {
             Self::Ps => X86SsePrefix::None,
-            Self::Pd => X86SsePrefix::OpSize,
+            Self::Pd | Self::Integer => X86SsePrefix::OpSize,
         }
     }
 }
@@ -94,7 +99,7 @@ impl EncodingForm {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct LogicMemoryCase {
     kind: LogicKind,
-    precision: Precision,
+    family: LogicFamily,
     width: VecWidth,
     form: EncodingForm,
 }
@@ -139,8 +144,8 @@ impl LogicMemoryCase {
                 (if destination < 8 { 0x80 } else { 0 })
                     | (((!source1) & 0x0F) << 3)
                     | (l << 2)
-                    | self.precision.pp(),
-                self.kind.opcode(),
+                    | self.family.pp(),
+                self.kind.opcode(self.family),
                 modrm,
                 DISP as u8,
             ],
@@ -153,8 +158,8 @@ impl LogicMemoryCase {
                 (u8::from(self.form.w()) << 7)
                     | (((!source1) & 0x0F) << 3)
                     | (l << 2)
-                    | self.precision.pp(),
-                self.kind.opcode(),
+                    | self.family.pp(),
+                self.kind.opcode(self.family),
                 modrm,
                 DISP as u8,
             ],
@@ -175,16 +180,16 @@ impl LogicMemoryCase {
                 (if destination < 8 { 0x80 } else { 0 })
                     | (((!source1) & 0x0F) << 3)
                     | (l << 2)
-                    | self.precision.pp(),
-                self.kind.opcode(),
+                    | self.family.pp(),
+                self.kind.opcode(self.family),
                 modrm,
             ]
         } else {
             vec![
                 0xC4,
                 (if destination < 8 { 0x80 } else { 0 }) | 0x60 | 0x01,
-                0x80 | (((!source1) & 0x0F) << 3) | (l << 2) | self.precision.pp(),
-                self.kind.opcode(),
+                0x80 | (((!source1) & 0x0F) << 3) | (l << 2) | self.family.pp(),
+                self.kind.opcode(self.family),
                 modrm,
             ]
         }
@@ -233,8 +238,8 @@ fn assert_exact_pair(ops: &[SmirOp], case: LogicMemoryCase) {
         consumer.x86_hint,
         Some(X86OpHint::VexOp {
             map: X86VecMap::Map0F,
-            pp: case.precision.prefix(),
-            opcode: case.kind.opcode(),
+            pp: case.family.prefix(),
+            opcode: case.kind.opcode(case.family),
             width: case.width,
             w: case.form.w(),
         }),
@@ -320,7 +325,7 @@ fn optimize(mut function: SmirFunction, level: OptLevel) -> SmirFunction {
     function
 }
 
-fn lower(function: &SmirFunction) -> (Vec<u8>, usize) {
+fn lower(function: &SmirFunction, case: LogicMemoryCase) -> (Vec<u8>, usize) {
     let excluded = std::collections::HashMap::new();
     assert!(is_native_clobber_safe_excluding(function, &excluded, true));
     assert!(!is_native_clobber_safe_excluding(
@@ -338,7 +343,11 @@ fn lower(function: &SmirFunction) -> (Vec<u8>, usize) {
     assert!(requirements.any);
     assert!(requirements.all_spans_support_avx_ymm16);
     assert!(requirements.needs_avx);
-    assert!(!requirements.needs_avx2);
+    assert_eq!(
+        requirements.needs_avx2,
+        case.family == LogicFamily::Integer && case.width == VecWidth::V256,
+        "{case:?}"
+    );
     assert!(!requirements.needs_avx512bw);
     assert!(!requirements.needs_avx512vl);
     assert!(!requirements.needs_avx512dq);
@@ -362,12 +371,12 @@ fn lower(function: &SmirFunction) -> (Vec<u8>, usize) {
 fn all_cases() -> Vec<LogicMemoryCase> {
     let mut cases = Vec::new();
     for kind in LogicKind::ALL {
-        for precision in Precision::ALL {
+        for family in LogicFamily::ALL {
             for width in [VecWidth::V128, VecWidth::V256] {
                 for form in EncodingForm::ALL {
                     cases.push(LogicMemoryCase {
                         kind,
-                        precision,
+                        family,
                         width,
                         form,
                     });
@@ -379,15 +388,15 @@ fn all_cases() -> Vec<LogicMemoryCase> {
 }
 
 #[test]
-fn all_48_c4_c5_wig_width_precision_and_logic_shapes_are_lifted_admitted_and_lowered() {
+fn all_72_c4_c5_wig_width_family_and_logic_shapes_are_lifted_admitted_and_lowered() {
     let cases = all_cases();
-    assert_eq!(cases.len(), 4 * 2 * 2 * 3);
+    assert_eq!(cases.len(), 4 * 3 * 2 * 3);
     let mut lowered = 0usize;
     for case in cases {
         for level in LEVELS {
             let function = optimize(lift_case(case), level);
             assert_exact_pair(&function.blocks[0].ops, case);
-            let (code, _) = lower(&function);
+            let (code, _) = lower(&function, case);
             assert!(
                 code.windows(5)
                     .any(|window| window == [0xBA, 0x20, 0, 0, 0]),
@@ -408,7 +417,7 @@ fn all_48_c4_c5_wig_width_precision_and_logic_shapes_are_lifted_admitted_and_low
             lowered += 1;
         }
     }
-    assert_eq!(lowered, 48 * LEVELS.len());
+    assert_eq!(lowered, 72 * LEVELS.len());
 }
 
 fn assert_rejected(name: &str, function: &SmirFunction) {
@@ -430,7 +439,7 @@ fn assert_rejected(name: &str, function: &SmirFunction) {
 fn classifier_and_lowerer_fail_closed_for_every_pair_invariant() {
     let case = LogicMemoryCase {
         kind: LogicKind::And,
-        precision: Precision::Ps,
+        family: LogicFamily::Ps,
         width: VecWidth::V128,
         form: EncodingForm::C5,
     };
@@ -492,6 +501,20 @@ fn classifier_and_lowerer_fail_closed_for_every_pair_invariant() {
         w: false,
     });
 
+    let mut integer_wrong_prefix = lift_case(LogicMemoryCase {
+        kind: LogicKind::And,
+        family: LogicFamily::Integer,
+        width: VecWidth::V128,
+        form: EncodingForm::C5,
+    });
+    integer_wrong_prefix.blocks[0].ops[1].x86_hint = Some(X86OpHint::VexOp {
+        map: X86VecMap::Map0F,
+        pp: X86SsePrefix::None,
+        opcode: 0xDB,
+        width: VecWidth::V128,
+        w: false,
+    });
+
     let mut evex_hint = base.clone();
     evex_hint.blocks[0].ops[1].x86_hint = Some(X86OpHint::EvexOp {
         map: X86VecMap::Map0F,
@@ -526,6 +549,7 @@ fn classifier_and_lowerer_fail_closed_for_every_pair_invariant() {
         ("wrong VEX map", wrong_map),
         ("wrong mandatory prefix", wrong_prefix),
         ("wrong opcode", wrong_opcode),
+        ("integer opcode without mandatory 66", integer_wrong_prefix),
         ("EVEX consumer", evex_hint),
         ("different guest PCs", wrong_pc),
         ("virtual address component", virtual_address),
@@ -716,12 +740,18 @@ fn native_memory_logic_matches_interpreter_and_is_fault_precise_noncommitting() 
     }
 
     let cases = all_cases();
+    let avx2 = std::is_x86_feature_detected!("avx2");
+    let cases = cases
+        .into_iter()
+        .filter(|case| avx2 || case.family != LogicFamily::Integer || case.width != VecWidth::V256)
+        .collect::<Vec<_>>();
+    let expected_executions = cases.len() * DIFFERENTIAL_LEVELS.len();
     let mut successes = 0usize;
     let mut faults = 0usize;
     for (ordinal, case) in cases.into_iter().enumerate() {
         for level in DIFFERENTIAL_LEVELS {
             let function = optimize(lift_case(case), level);
-            let (code, entry) = lower(&function);
+            let (code, entry) = lower(&function, case);
             let exec =
                 ExecMem::new(&code).unwrap_or_else(|error| panic!("{level:?} {case:?}: {error:?}"));
             let source = source_value(ordinal);
@@ -795,6 +825,6 @@ fn native_memory_logic_matches_interpreter_and_is_fault_precise_noncommitting() 
         }
     }
 
-    assert_eq!(successes, 48 * DIFFERENTIAL_LEVELS.len());
-    assert_eq!(faults, 48 * DIFFERENTIAL_LEVELS.len());
+    assert_eq!(successes, expected_executions);
+    assert_eq!(faults, expected_executions);
 }

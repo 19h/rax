@@ -408,6 +408,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             ) {
                 requirements.any = true;
                 requirements.needs_avx = true;
+                requirements.needs_avx2 |= sequence.needs_avx2;
                 index += sequence.consumed;
             } else {
                 index += 1;

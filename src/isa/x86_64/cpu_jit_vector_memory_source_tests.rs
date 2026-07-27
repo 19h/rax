@@ -158,6 +158,59 @@ fn jit_verify_executes_chained_c4_c5_wig_logic_memory_sources_with_avx_only_stat
 }
 
 #[test]
+fn jit_verify_executes_packed_integer_logic_memory_sources_with_avx2_gate() {
+    if !std::is_x86_feature_detected!("avx2") {
+        eprintln!("skipping CPU JIT VEX integer memory-logic verification: host lacks AVX2");
+        return;
+    }
+
+    let memory =
+        Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+    // vpand xmm2,xmm3,[r11+0x20]       (VEX.128 requires AVX)
+    // vpxor ymm14,ymm2,[r11+0x20]      (VEX.256 requires AVX2)
+    // jmp next; hlt
+    let code = [
+        0xC4, 0xC1, 0x61, 0xDB, 0x53, 0x20, 0xC4, 0x41, 0x6D, 0xEF, 0x73, 0x20, 0xEB, 0x00, 0xF4,
+    ];
+    memory.write_slice(&code, GuestAddress(0)).unwrap();
+    let source: [u8; 32] = std::array::from_fn(|index| (index as u8).wrapping_mul(0xA7) ^ 0x5C);
+    memory
+        .write_slice(&source, GuestAddress(DATA_BASE + DISP))
+        .unwrap();
+
+    let mut direct = long_mode_vcpu(memory.clone());
+    let mut verified = long_mode_vcpu(memory);
+    seed_architectural_state(&mut direct);
+    seed_architectural_state(&mut verified);
+
+    let frontier = code.len() as u64 - 1;
+    let mut direct_steps = 0usize;
+    while direct.regs.rip != frontier {
+        assert!(direct.step().unwrap().is_none());
+        direct_steps += 1;
+        assert!(direct_steps <= 3, "direct execution missed HLT frontier");
+    }
+    assert_eq!(direct_steps, 3);
+
+    let region = verified
+        .jit_compile_region()
+        .expect("compile VEX integer memory-logic region")
+        .expect("helper-backed VEX integer memory logic must be native eligible");
+    assert!(region.uses_vector);
+    assert!(region.avx_ymm16_vector_state);
+    assert!(!region.narrow_vector_opmasks);
+
+    verified.jit_run_region_verified(&region);
+    assert_architectural_state_equal(
+        &verified,
+        &direct.regs,
+        direct.mxcsr,
+        "verified packed-integer logic",
+    );
+    assert_eq!(verified.regs.rip, frontier);
+}
+
+#[test]
 fn jit_memory_logic_fault_exits_at_instruction_without_architectural_commit() {
     if !std::is_x86_feature_detected!("avx") {
         eprintln!("skipping CPU JIT VEX memory-logic fault test: host lacks AVX");

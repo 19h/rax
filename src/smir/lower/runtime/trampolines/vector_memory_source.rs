@@ -18,6 +18,7 @@ pub(crate) struct X86JitVexLogicMemorySequence {
     pub(crate) prefix: X86SsePrefix,
     pub(crate) opcode: u8,
     pub(crate) w: bool,
+    pub(crate) needs_avx2: bool,
 }
 
 fn low_vex_vector_index(reg: &VReg, width: VecWidth) -> Option<u8> {
@@ -28,9 +29,9 @@ fn low_vex_vector_index(reg: &VReg, width: VecWidth) -> Option<u8> {
     }
 }
 
-/// Validate one full-width, unmasked VEX.128/VEX.256 packed floating-point
-/// logic memory source. The lifter represents these instructions as one
-/// virtual `VLoad` immediately consumed by `VAnd`, `VAndNot`, `VOr`, or
+/// Validate one full-width, unmasked VEX.128/VEX.256 packed floating-point or
+/// integer logic memory source. The lifter represents these instructions as
+/// one virtual `VLoad` immediately consumed by `VAnd`, `VAndNot`, `VOr`, or
 /// `VXor`. Exact single-definition/single-use checks prevent the fused lowerer
 /// from hiding any independently observable virtual value.
 ///
@@ -66,31 +67,31 @@ pub(crate) fn x86_jit_vex_logic_memory_sequence(
     if consumer.guest_pc != load.guest_pc {
         return None;
     }
-    let (destination, source1, source2, consumer_width, expected_opcode) = match &consumer.kind {
+    let (destination, source1, source2, consumer_width) = match &consumer.kind {
         OpKind::VAnd {
             dst,
             src1,
             src2,
             width,
-        } => (dst, src1, src2, *width, 0x54),
-        OpKind::VAndNot {
+        }
+        | OpKind::VAndNot {
             dst,
             src1,
             src2,
             width,
-        } => (dst, src1, src2, *width, 0x55),
-        OpKind::VOr {
+        }
+        | OpKind::VOr {
             dst,
             src1,
             src2,
             width,
-        } => (dst, src1, src2, *width, 0x56),
-        OpKind::VXor {
+        }
+        | OpKind::VXor {
             dst,
             src1,
             src2,
             width,
-        } => (dst, src1, src2, *width, 0x57),
+        } => (dst, src1, src2, *width),
         _ => return None,
     };
     if *source2 != temporary || consumer_width != width {
@@ -108,7 +109,14 @@ pub(crate) fn x86_jit_vex_logic_memory_sequence(
     else {
         return None;
     };
-    if opcode != expected_opcode || hint_width != width {
+    if hint_width != width
+        || !super::x86_vector_logic_encoding_valid(&consumer.kind, prefix, opcode, false, w)
+    {
+        return None;
+    }
+    let (needs_avx, needs_avx2, needs_avx512dq, needs_avx512vl) =
+        super::x86_vector_logic_feature_requirements(consumer);
+    if !needs_avx || needs_avx512dq || needs_avx512vl {
         return None;
     }
 
@@ -120,5 +128,6 @@ pub(crate) fn x86_jit_vex_logic_memory_sequence(
         prefix,
         opcode,
         w,
+        needs_avx2,
     })
 }
