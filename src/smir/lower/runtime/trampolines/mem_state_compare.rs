@@ -75,7 +75,15 @@ pub(crate) fn x86_jit_mem_state_compare_sequence<'a>(
     }
 
     let consumer = block.ops.get(index + 1)?;
-    if consumer.guest_pc != load.guest_pc || consumer.x86_hint.is_some() {
+    // The architectural operand order comes from the IR, so an encoding-
+    // direction hint does not change the result; every other hint class leaves
+    // the modeled shape.
+    if consumer.guest_pc != load.guest_pc
+        || !matches!(
+            consumer.x86_hint,
+            None | Some(crate::smir::ir::ops::X86OpHint::AluEncoding(_))
+        )
+    {
         return None;
     }
     let (is_test, src1, src2, consumer_width) = match &consumer.kind {

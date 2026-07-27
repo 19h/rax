@@ -211,7 +211,30 @@ fn unmodeled_compare_shapes_fail_closed() {
         assert_eq!(sequence_len(ops), None, "{name}");
     }
 
-    // A hinted compare leaves the modeled shape.
+    // An encoding-direction hint does not change the architectural result: the
+    // operand order is taken from the IR, so the shape stays admitted.
+    let mut encoded = function(vec![
+        load(virt(0), MemWidth::B4),
+        OpKind::Cmp {
+            src1: virt(0),
+            src2: SrcOperand::Reg(x86(X86Reg::Rbp)),
+            width: OpWidth::W32,
+        },
+    ]);
+    encoded.blocks[0].ops[1].x86_hint = Some(X86OpHint::AluEncoding(X86AluEncoding::RegRm));
+    let block = encoded.entry_block().unwrap();
+    let (definitions, uses) = counts(block);
+    assert_eq!(
+        x86_jit_mem_state_compare_sequence_len(block, 0, true, &definitions, &uses),
+        Some(2)
+    );
+    assert!(is_native_clobber_safe_excluding(
+        &encoded,
+        &std::collections::HashMap::new(),
+        true,
+    ));
+
+    // Every other hint class does leave the modeled shape.
     let mut hinted = function(vec![
         load(virt(0), MemWidth::B4),
         OpKind::Cmp {
@@ -220,7 +243,7 @@ fn unmodeled_compare_shapes_fail_closed() {
             width: OpWidth::W32,
         },
     ]);
-    hinted.blocks[0].ops[1].x86_hint = Some(X86OpHint::AluEncoding(X86AluEncoding::RegRm));
+    hinted.blocks[0].ops[1].x86_hint = Some(X86OpHint::RexByteReg);
     let block = hinted.entry_block().unwrap();
     let (definitions, uses) = counts(block);
     assert_eq!(
