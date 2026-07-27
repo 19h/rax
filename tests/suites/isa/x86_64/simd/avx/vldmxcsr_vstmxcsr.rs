@@ -20,6 +20,27 @@ use vm_memory::{Bytes, GuestAddress};
 
 const ALIGNED_ADDR: u64 = 0x3000; // 32-byte aligned address for testing
 
+#[test]
+fn test_vldmxcsr_vstmxcsr_vex_w_is_ignored() {
+    let code = [
+        0x48, 0xB8, 0x00, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0x3000
+        0xC4, 0xE1, 0xF8, 0xAE, 0x10, // VLDMXCSR [RAX], VEX.W=1
+        0xC4, 0xE1, 0xF8, 0xAE, 0x58, 0x04, // VSTMXCSR [RAX+4], VEX.W=1
+        0xF4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    let expected = 0x5F80u32.to_le_bytes();
+    mem.write_slice(&expected, GuestAddress(ALIGNED_ADDR))
+        .unwrap();
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let mut observed = [0u8; 4];
+    mem.read_slice(&mut observed, GuestAddress(ALIGNED_ADDR + 4))
+        .unwrap();
+    assert_eq!(observed, expected);
+}
+
 // ============================================================================
 // VLDMXCSR Tests
 // ============================================================================

@@ -1753,12 +1753,11 @@ impl X86_64Lifter {
                     self.lift_vec_scalar_fp_arithmetic(prefix, opcode, bytes, pc, ctx)
                 }
 
-                // VEX.128 VLDMXCSR/VSTMXCSR (VEX.0F.AE /2,/3).
+                // VEX.LZ.WIG VLDMXCSR/VSTMXCSR (VEX.0F.AE /2,/3).
                 0xAE => {
                     if prefix.encoding != VecEncodingKind::Vex
                         || prefix.pp != X86SsePrefix::None
                         || prefix.width != VecWidth::V128
-                        || prefix.w
                         || prefix.vvvv != 0
                     {
                         return Err(LiftError::InvalidEncoding {
