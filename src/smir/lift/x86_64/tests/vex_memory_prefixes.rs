@@ -1,6 +1,10 @@
 //! Effective-address prefix coverage for standalone VEX lifters.
 
 use super::*;
+use crate::smir::interpret::{BlockResult, SmirInterpreter};
+use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext};
+use crate::smir::ir::flags::MaterializedFlags;
+use crate::smir::ir::memory::FlatMemory;
 
 const MEMORY_CASES: &[(&str, &[u8])] = &[
     ("VPERM2I128", &[0xC4, 0xE3, 0x7D, 0x46, 0x00, 0x82]),
@@ -22,6 +26,12 @@ const MEMORY_CASES: &[(&str, &[u8])] = &[
     ("VCVTNEEBF162PS", &[0xC4, 0xE2, 0x7A, 0xB0, 0x00]),
     ("VDPPS", &[0xC4, 0xE3, 0x79, 0x40, 0x00, 0x00]),
     ("VROUNDPS", &[0xC4, 0xE3, 0x79, 0x08, 0x00, 0x00]),
+];
+
+const VECTOR_CRYPTO_MEMORY_CASES: &[(&str, &[u8])] = &[
+    ("VAESENC", &[0xC4, 0xE2, 0x71, 0xDC, 0x00]),
+    ("VAESKEYGENASSIST", &[0xC4, 0xE3, 0x79, 0xDF, 0x00, 0x01]),
+    ("VGF2P8MULB", &[0xC4, 0xE2, 0x71, 0xCF, 0x00]),
 ];
 
 fn with_legacy_prefixes(prefixes: &[u8], instruction: &[u8]) -> Vec<u8> {
@@ -63,6 +73,18 @@ fn segment_address(segment: X86Reg) -> Address {
     }
 }
 
+fn crypto_function(bytes: &[u8]) -> SmirFunction {
+    let result = lift_single(bytes).expect("lift vector crypto memory form");
+    let mut block = SmirBlock::new(BlockId(0), 0x1000);
+    block.ops = result.ops;
+    block.set_terminator(Terminator::Trap {
+        kind: TrapKind::Halt,
+    });
+    let mut function = SmirFunction::new(FunctionId(0), block.id, 0x1000);
+    function.add_block(block);
+    function
+}
+
 #[test]
 fn standalone_vex_memory_families_preserve_address_size_and_segment_prefixes() {
     for &(name, instruction) in MEMORY_CASES {
@@ -86,5 +108,180 @@ fn standalone_vex_memory_families_preserve_address_size_and_segment_prefixes() {
             Address::X86Addr32(Box::new(segment_address(X86Reg::GsBase))),
             "{name}: gs:[eax]"
         );
+    }
+}
+
+#[test]
+fn vector_crypto_memory_families_preserve_address_size_and_segment_prefixes() {
+    for &(name, instruction) in VECTOR_CRYPTO_MEMORY_CASES {
+        assert_eq!(
+            memory_address(name, &with_legacy_prefixes(&[0x67], instruction)),
+            Address::X86Addr32(Box::new(Address::Direct(x86_gpr(0)))),
+            "{name}: addr32 [eax]"
+        );
+        assert_eq!(
+            memory_address(name, &with_legacy_prefixes(&[0x64], instruction)),
+            segment_address(X86Reg::FsBase),
+            "{name}: fs:[rax]"
+        );
+        assert_eq!(
+            memory_address(name, &with_legacy_prefixes(&[0x65, 0x67], instruction)),
+            Address::X86Addr32(Box::new(segment_address(X86Reg::GsBase))),
+            "{name}: gs:[eax]"
+        );
+    }
+}
+
+#[test]
+fn evex_vector_crypto_memory_preserves_apx_base_and_index_extension_bits() {
+    for (name, standard_bytes, base_bytes, index_bytes) in [
+        (
+            "EVEX VAESENC",
+            &[0x62, 0xF2, 0x75, 0x08, 0xDC, 0x00][..],
+            &[0x62, 0xFA, 0x75, 0x08, 0xDC, 0x00][..],
+            &[0x62, 0xF2, 0x71, 0x08, 0xDC, 0x04, 0x20][..],
+        ),
+        (
+            "EVEX VGF2P8MULB",
+            &[0x62, 0xF2, 0x75, 0x08, 0xCF, 0x00][..],
+            &[0x62, 0xFA, 0x75, 0x08, 0xCF, 0x00][..],
+            &[0x62, 0xF2, 0x71, 0x08, 0xCF, 0x04, 0x20][..],
+        ),
+    ] {
+        let standard = lift_single(standard_bytes).unwrap();
+        assert!(
+            standard
+                .ops
+                .iter()
+                .all(|op| !matches!(op.kind, OpKind::X86RequireApx)),
+            "{name}: ordinary EVEX address must not require APX"
+        );
+        for bytes in [base_bytes, index_bytes] {
+            let extended = lift_single(bytes).unwrap();
+            assert!(
+                matches!(
+                    extended.ops.first(),
+                    Some(SmirOp {
+                        kind: OpKind::X86RequireApx,
+                        ..
+                    })
+                ),
+                "{name}: extended address must guard before memory"
+            );
+            assert_eq!(
+                extended
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(op.kind, OpKind::X86RequireApx))
+                    .count(),
+                1,
+                "{name}: extended address must have one APX guard"
+            );
+            for (index, op) in extended.ops.iter().enumerate() {
+                assert_eq!(op.id, OpId(index as u16), "{name}: operation IDs");
+            }
+        }
+        assert_eq!(
+            memory_address(name, base_bytes),
+            Address::Direct(x86_gpr(16)),
+            "{name}: [r16]"
+        );
+        assert_eq!(
+            memory_address(name, index_bytes),
+            Address::BaseIndexScale {
+                base: Some(x86_gpr(0)),
+                index: x86_gpr(20),
+                scale: 1,
+                disp: 0,
+                disp_size: DispSize::Auto,
+            },
+            "{name}: [rax+r20]"
+        );
+    }
+}
+
+#[test]
+fn evex_vector_crypto_apx_guard_survives_o2_and_precedes_memory_faults() {
+    for (name, bytes) in [
+        ("VAESENC [r16]", &[0x62, 0xFA, 0x75, 0x08, 0xDC, 0x00][..]),
+        (
+            "VAESENC [rax+r20]",
+            &[0x62, 0xF2, 0x71, 0x08, 0xDC, 0x04, 0x20][..],
+        ),
+        (
+            "VGF2P8MULB [r16]",
+            &[0x62, 0xFA, 0x75, 0x08, 0xCF, 0x00][..],
+        ),
+        (
+            "VGF2P8MULB [rax+r20]",
+            &[0x62, 0xF2, 0x71, 0x08, 0xCF, 0x04, 0x20][..],
+        ),
+    ] {
+        let original = crypto_function(bytes);
+        let mut optimized = original.clone();
+        crate::smir::optimize::optimize_function(
+            &mut optimized,
+            crate::smir::optimize::OptLevel::O2,
+        );
+
+        for (level, function) in [("O0", &original), ("O2", &optimized)] {
+            assert!(matches!(
+                function.entry_block().unwrap().ops.first(),
+                Some(SmirOp {
+                    kind: OpKind::X86RequireApx,
+                    ..
+                })
+            ));
+            for enabled in [false, true] {
+                let mut context = SmirContext::new_x86_64();
+                context.write_vreg(x86_gpr(0), 0);
+                context.write_vreg(x86_gpr(16), 0x200);
+                context.write_vreg(x86_gpr(20), 0x200);
+                context.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+                let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
+                    unreachable!()
+                };
+                x86.apx_enabled = enabled;
+                let destination = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+                let sentinel = [0x0123_4567_89AB_CDEF_u64; 16];
+                SmirInterpreter::write_vec(&mut context, destination, sentinel);
+
+                let execution = SmirInterpreter::new().execute_block(
+                    &mut context,
+                    &mut FlatMemory::new(0x40),
+                    function.entry_block().unwrap(),
+                );
+                if enabled {
+                    assert!(
+                        matches!(
+                            execution,
+                            BlockResult::Exit(ExitReason::MemoryFault {
+                                addr: 0x200,
+                                write: false,
+                            })
+                        ),
+                        "{name} {level}: {execution:?}"
+                    );
+                } else {
+                    assert!(
+                        matches!(
+                            execution,
+                            BlockResult::Exit(ExitReason::Undefined { addr: 0x1000, .. })
+                        ),
+                        "{name} {level}: {execution:?}"
+                    );
+                }
+                assert_eq!(
+                    SmirInterpreter::read_vec(&context, destination),
+                    sentinel,
+                    "{name} {level}: destination committed"
+                );
+                assert_eq!(
+                    context.flags.materialized.to_rflags(),
+                    0xCD7,
+                    "{name} {level}: flags changed"
+                );
+            }
+        }
     }
 }

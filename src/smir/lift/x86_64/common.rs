@@ -52,6 +52,30 @@ impl X86_64Lifter {
         }
     }
 
+    /// Preserve the dynamic APX requirement when an existing EVEX instruction
+    /// accesses an extended memory base or index register.
+    pub(crate) fn retain_evex_memory_apx_requirement(
+        &self,
+        modrm: &ModRm,
+        pc: u64,
+        mut result: LiftResult,
+    ) -> LiftResult {
+        let requires_apx = modrm.addr.as_ref().is_some_and(|addr| {
+            addr.base.is_some_and(|base| base >= 16) || addr.index.is_some_and(|index| index >= 16)
+        });
+        if !requires_apx || Self::result_starts_with_apx_requirement(&result) {
+            return result;
+        }
+
+        result
+            .ops
+            .insert(0, SmirOp::new(OpId(0), pc, OpKind::X86RequireApx));
+        for (index, op) in result.ops.iter_mut().enumerate() {
+            op.id = OpId(index as u16);
+        }
+        result
+    }
+
     /// Preserve the dynamic APX requirement for every successful REX2 lift.
     /// Dedicated fault-precise system operations retain the requirement in
     /// their first operation; all generic instruction decompositions receive

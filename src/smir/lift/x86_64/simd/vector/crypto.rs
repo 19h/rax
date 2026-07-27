@@ -48,10 +48,8 @@ impl X86_64Lifter {
         }
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
@@ -123,7 +121,11 @@ impl X86_64Lifter {
                 imm: 0,
             },
         ));
-        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+        Ok(self.retain_evex_memory_apx_requirement(
+            &modrm,
+            pc,
+            LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed),
+        ))
     }
 
     pub(crate) fn lift_vec_aes_keygen(
@@ -145,10 +147,8 @@ impl X86_64Lifter {
         }
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let imm_offset = cursor + modrm.bytes_consumed;
@@ -222,12 +222,8 @@ impl X86_64Lifter {
 
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         if evex && prefix.b && !modrm.is_memory {
@@ -335,6 +331,10 @@ impl X86_64Lifter {
                 },
             ));
         }
-        Ok(LiftResult::fallthrough(ops, bytes_consumed))
+        Ok(self.retain_evex_memory_apx_requirement(
+            &modrm,
+            pc,
+            LiftResult::fallthrough(ops, bytes_consumed),
+        ))
     }
 }
