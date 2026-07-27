@@ -7,6 +7,8 @@ mod atomic;
 pub use atomic::*;
 mod clobber;
 pub use clobber::*;
+mod cmpxchg;
+pub use cmpxchg::*;
 mod crc32;
 pub use crc32::*;
 mod jit;

@@ -47,6 +47,10 @@ mod clts;
 pub use clts::*;
 mod cli;
 pub use cli::*;
+#[cfg(feature = "smir-jit")]
+mod cmpxchg;
+#[cfg(feature = "smir-jit")]
+pub use cmpxchg::*;
 mod sti;
 pub use sti::*;
 mod cpuid;

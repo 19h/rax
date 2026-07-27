@@ -19,6 +19,8 @@ mod call_helpers;
 mod cli;
 #[cfg(test)]
 mod clts;
+#[cfg(all(test, feature = "smir-jit"))]
+mod cmpxchg;
 #[cfg(test)]
 mod cpuid;
 #[cfg(test)]
