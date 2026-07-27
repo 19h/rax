@@ -124,6 +124,7 @@ impl X86_64Lowerer {
                 span.instruction
                     .vex_unaligned_packed_fp_move_destination_index()
             })
+            .or_else(|| span.instruction.vex_packed_integer_move_destination_index())
             .or_else(|| span.instruction.vex_fp32_fp64_convert_destination_index())
         {
             self.code.emit_bytes(span.instruction.as_slice());

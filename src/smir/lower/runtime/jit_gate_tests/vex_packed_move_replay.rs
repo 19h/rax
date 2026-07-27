@@ -1,4 +1,5 @@
-//! Native replay coverage for register-only VEX `VMOVAPS`/`VMOVAPD`.
+//! Native replay coverage for register-only VEX `VMOVAPS`/`VMOVAPD` and
+//! `VMOVDQA`/`VMOVDQU`.
 
 use super::*;
 use crate::smir::lower::runtime::*;
@@ -9,15 +10,27 @@ const PC: u64 = 0x1011;
 enum MoveKind {
     F32,
     F64,
+    Dqa,
+    Dqu,
 }
 
 impl MoveKind {
-    const ALL: [Self; 2] = [Self::F32, Self::F64];
+    const ALL: [Self; 4] = [Self::F32, Self::F64, Self::Dqa, Self::Dqu];
 
     fn pp(self) -> u8 {
         match self {
             Self::F32 => 0,
-            Self::F64 => 1,
+            Self::F64 | Self::Dqa => 1,
+            Self::Dqu => 2,
+        }
+    }
+
+    fn opcode(self, direction: Direction) -> u8 {
+        match (self, direction) {
+            (Self::F32 | Self::F64, Direction::Load) => 0x28,
+            (Self::F32 | Self::F64, Direction::Store) => 0x29,
+            (Self::Dqa | Self::Dqu, Direction::Load) => 0x6F,
+            (Self::Dqa | Self::Dqu, Direction::Store) => 0x7F,
         }
     }
 }
@@ -30,13 +43,6 @@ enum Direction {
 
 impl Direction {
     const ALL: [Self; 2] = [Self::Load, Self::Store];
-
-    fn opcode(self) -> u8 {
-        match self {
-            Self::Load => 0x28,
-            Self::Store => 0x29,
-        }
-    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -66,7 +72,7 @@ fn encoding(case: MoveCase) -> Vec<u8> {
         src,
     } = case;
     assert!(dst < 16 && src < 16);
-    let opcode = direction.opcode();
+    let opcode = kind.opcode(direction);
     let (reg, rm) = match direction {
         Direction::Load => (dst, src),
         Direction::Store => (src, dst),
@@ -184,6 +190,22 @@ fn replay_uses_the_avx_ymm16_bridge_without_avx512() {
             dst: 11,
             src: 9,
         },
+        MoveCase {
+            form: EncodingForm::VexC5,
+            kind: MoveKind::Dqa,
+            direction: Direction::Load,
+            l: true,
+            dst: 9,
+            src: 3,
+        },
+        MoveCase {
+            form: EncodingForm::VexC4W1IgnoredX,
+            kind: MoveKind::Dqu,
+            direction: Direction::Store,
+            l: false,
+            dst: 11,
+            src: 9,
+        },
     ] {
         let bytes = encoding(case);
         let function = function(&bytes);
@@ -217,13 +239,13 @@ fn replay_uses_the_avx_ymm16_bridge_without_avx512() {
 }
 
 #[test]
-fn replay_admits_and_emits_208_optimized_legal_encodings_and_nonmatching_provenance_stays_general()
+fn replay_admits_and_emits_416_optimized_legal_encodings_and_nonmatching_provenance_stays_general()
 {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
     let cases = cases();
-    assert_eq!(cases.len(), 104);
+    assert_eq!(cases.len(), 208);
     let mut lowered = 0usize;
     for case in cases {
         let bytes = encoding(case);
@@ -255,11 +277,11 @@ fn replay_admits_and_emits_208_optimized_legal_encodings_and_nonmatching_provena
             lowered += 1;
         }
     }
-    assert_eq!(lowered, 208);
+    assert_eq!(lowered, 416);
 
     let case = MoveCase {
         form: EncodingForm::VexC5,
-        kind: MoveKind::F32,
+        kind: MoveKind::Dqa,
         direction: Direction::Load,
         l: false,
         dst: 1,
@@ -335,6 +357,22 @@ fn ymm16_replay_clears_the_exact_state_backed_destination_upper_half() {
             kind: MoveKind::F64,
             direction: Direction::Store,
             l: true,
+            dst: 11,
+            src: 9,
+        },
+        MoveCase {
+            form: EncodingForm::VexC5,
+            kind: MoveKind::Dqa,
+            direction: Direction::Load,
+            l: true,
+            dst: 9,
+            src: 3,
+        },
+        MoveCase {
+            form: EncodingForm::VexC4W1IgnoredX,
+            kind: MoveKind::Dqu,
+            direction: Direction::Store,
+            l: false,
             dst: 11,
             src: 9,
         },
@@ -474,7 +512,7 @@ fn interpret(
 #[test]
 fn interpreter_matches_intel_o0_o2_state_for_directions_lengths_aliases_and_upper_lanes() {
     let cases = cases();
-    assert_eq!(cases.len(), 104);
+    assert_eq!(cases.len(), 208);
     for (ordinal, case) in cases.into_iter().enumerate() {
         let bytes = encoding(case);
         let initial = initial_state(ordinal);
@@ -511,7 +549,7 @@ fn execute_native(
         .finalize()
         .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
     assert!(code.windows(bytes.len()).any(|window| window == bytes));
-    let exec = ExecMem::new(&code).expect("map VEX aligned packed-move replay");
+    let exec = ExecMem::new(&code).expect("map VEX packed-move replay");
     let mut registers = GuestRegs {
         gpr: initial.gprs,
         rflags: initial.rflags,
@@ -539,7 +577,7 @@ fn execute_native(
 }
 
 #[cfg(target_arch = "x86_64")]
-const CHILD_RANGE_ENV: &str = "RAX_VEX_ALIGNED_PACKED_FP_MOVE_CHILD_RANGE";
+const CHILD_RANGE_ENV: &str = "RAX_VEX_PACKED_MOVE_CHILD_RANGE";
 
 #[cfg(target_arch = "x86_64")]
 fn child_range() -> Option<std::ops::Range<usize>> {
@@ -590,13 +628,13 @@ fn run_child_range(test_name: &str, range: std::ops::Range<usize>) -> std::proce
         .arg("--nocapture")
         .env(CHILD_RANGE_ENV, format!("{}:{}", range.start, range.end))
         .output()
-        .expect("run isolated native VEX aligned packed-move differential")
+        .expect("run isolated native VEX packed-move differential")
 }
 
 #[cfg(target_arch = "x86_64")]
 fn run_isolated_native_differential(test_name: &str) {
     let cases = cases();
-    assert_eq!(cases.len(), 104);
+    assert_eq!(cases.len(), 208);
     if let Some(range) = child_range() {
         execute_native_case_range(&cases, range);
         return;
@@ -620,7 +658,7 @@ fn run_isolated_native_differential(test_name: &str) {
     let case = cases[start];
     let bytes = encoding(case);
     panic!(
-        "isolated native VEX aligned packed-move failure at case {start}/{}: \
+        "isolated native VEX packed-move failure at case {start}/{}: \
          {case:?} {bytes:02X?}; whole status {}; singleton status {}; \
          singleton stdout: {}; singleton stderr: {}",
         cases.len(),
@@ -635,11 +673,11 @@ fn run_isolated_native_differential(test_name: &str) {
 #[test]
 fn replay_matches_intel_o0_o2_state_for_directions_lengths_aliases_and_upper_lanes() {
     if !std::is_x86_feature_detected!("avx") {
-        eprintln!("skipping native VEX aligned packed-move differential: host lacks AVX");
+        eprintln!("skipping native VEX packed-move differential: host lacks AVX");
         return;
     }
     run_isolated_native_differential(
-        "smir::lower::runtime::jit_gate_tests::vex_aligned_packed_fp_move_replay::\
+        "smir::lower::runtime::jit_gate_tests::vex_packed_move_replay::\
          replay_matches_intel_o0_o2_state_for_directions_lengths_aliases_and_upper_lanes",
     );
 }

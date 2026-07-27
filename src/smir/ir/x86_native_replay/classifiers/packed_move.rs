@@ -1,12 +1,13 @@
-//! Register-only VEX packed floating-point move replay classification.
+//! Register-only VEX packed move replay classification.
 
 use super::X86InstructionBytes;
 
 impl X86InstructionBytes {
-    fn is_vex_register_packed_fp_move_with_opcodes(
+    fn is_vex_register_packed_move_with_opcodes_and_prefixes(
         &self,
         load_opcode: u8,
         store_opcode: u8,
+        prefixes: [u8; 2],
     ) -> bool {
         let bytes = self.as_slice();
         let (p1, opcode, modrm) = match bytes {
@@ -16,17 +17,22 @@ impl X86InstructionBytes {
         };
 
         p1 & 0x78 == 0x78
-            && matches!(p1 & 0x03, 0 | 1)
+            && prefixes.contains(&(p1 & 0x03))
             && (opcode == load_opcode || opcode == store_opcode)
             && modrm >> 6 == 3
     }
 
-    fn vex_register_packed_fp_move_destination_index(
+    fn vex_register_packed_move_destination_index(
         &self,
         load_opcode: u8,
         store_opcode: u8,
+        prefixes: [u8; 2],
     ) -> Option<u8> {
-        if !self.is_vex_register_packed_fp_move_with_opcodes(load_opcode, store_opcode) {
+        if !self.is_vex_register_packed_move_with_opcodes_and_prefixes(
+            load_opcode,
+            store_opcode,
+            prefixes,
+        ) {
             return None;
         }
         let (reg_extension, rm_extension, opcode, modrm) = match self.as_slice() {
@@ -51,7 +57,7 @@ impl X86InstructionBytes {
     /// reserved and must be encoded as `1111b`. Memory forms and every
     /// noncanonical byte shape fail closed.
     pub fn is_vex_register_aligned_packed_fp_move(&self) -> bool {
-        self.is_vex_register_packed_fp_move_with_opcodes(0x28, 0x29)
+        self.is_vex_register_packed_move_with_opcodes_and_prefixes(0x28, 0x29, [0, 1])
     }
 
     /// Return the architectural destination register after exact validation.
@@ -60,7 +66,7 @@ impl X86InstructionBytes {
     /// state-backed ZMM[511:256] after the replayed VEX instruction zeros its
     /// architectural upper state.
     pub(crate) fn vex_aligned_packed_fp_move_destination_index(&self) -> Option<u8> {
-        self.vex_register_packed_fp_move_destination_index(0x28, 0x29)
+        self.vex_register_packed_move_destination_index(0x28, 0x29, [0, 1])
     }
 
     /// Validate one register-only VEX `VMOVUPS` or `VMOVUPD` instruction in
@@ -71,7 +77,7 @@ impl X86InstructionBytes {
     /// reserved and must be encoded as `1111b`. Memory forms and every
     /// noncanonical byte shape fail closed.
     pub fn is_vex_register_unaligned_packed_fp_move(&self) -> bool {
-        self.is_vex_register_packed_fp_move_with_opcodes(0x10, 0x11)
+        self.is_vex_register_packed_move_with_opcodes_and_prefixes(0x10, 0x11, [0, 1])
     }
 
     /// Return the architectural destination register after exact validation.
@@ -80,6 +86,26 @@ impl X86InstructionBytes {
     /// state-backed ZMM[511:256] after the replayed VEX instruction zeros its
     /// architectural upper state.
     pub(crate) fn vex_unaligned_packed_fp_move_destination_index(&self) -> Option<u8> {
-        self.vex_register_packed_fp_move_destination_index(0x10, 0x11)
+        self.vex_register_packed_move_destination_index(0x10, 0x11, [0, 1])
+    }
+
+    /// Validate one register-only VEX `VMOVDQA` or `VMOVDQU` instruction in
+    /// either opcode direction.
+    ///
+    /// Both VEX.128 and VEX.256 forms require AVX. C5 and C4 encodings are
+    /// accepted; C4.W and C4.X are ignored for register operands. VEX.vvvv is
+    /// reserved and must be encoded as `1111b`. Memory forms and every
+    /// noncanonical byte shape fail closed.
+    pub fn is_vex_register_packed_integer_move(&self) -> bool {
+        self.is_vex_register_packed_move_with_opcodes_and_prefixes(0x6F, 0x7F, [1, 2])
+    }
+
+    /// Return the architectural destination register after exact validation.
+    /// Opcode `6Fh` writes ModR/M.reg; opcode `7Fh` writes ModR/M.r/m. The
+    /// AVX-only state bridge uses the result to clear the destination's
+    /// state-backed ZMM[511:256] after the replayed VEX instruction zeros its
+    /// architectural upper state.
+    pub(crate) fn vex_packed_integer_move_destination_index(&self) -> Option<u8> {
+        self.vex_register_packed_move_destination_index(0x6F, 0x7F, [1, 2])
     }
 }
