@@ -47,6 +47,10 @@ mod clts;
 pub use clts::*;
 mod cli;
 pub use cli::*;
+#[cfg(feature = "smir-jit")]
+mod cmpxchg;
+#[cfg(feature = "smir-jit")]
+pub use cmpxchg::*;
 mod sti;
 pub use sti::*;
 mod cpuid;
@@ -122,6 +126,12 @@ mod jit_memory_address;
 pub use jit_memory_address::*;
 mod lmsw;
 pub use lmsw::*;
+mod mem_state_compare;
+pub use mem_state_compare::*;
+#[cfg(feature = "smir-jit")]
+mod push_value;
+#[cfg(feature = "smir-jit")]
+pub use push_value::*;
 mod memory;
 pub use memory::*;
 #[cfg(feature = "smir-jit")]

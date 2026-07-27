@@ -18,6 +18,8 @@ mod cli;
 #[cfg(test)]
 mod clts;
 #[cfg(test)]
+mod cmpxchg;
+#[cfg(test)]
 mod cpuid;
 #[cfg(test)]
 mod descriptor_table;
@@ -132,6 +134,8 @@ mod maskmovdqu;
 #[cfg(test)]
 mod mem_rmw_flagless;
 #[cfg(test)]
+mod mem_state_compare;
+#[cfg(test)]
 mod mmx;
 #[cfg(test)]
 mod mmx_maskmov;
@@ -151,6 +155,10 @@ mod opmask;
 mod pkru;
 #[cfg(test)]
 mod pmc;
+#[cfg(test)]
+mod push_flags;
+#[cfg(test)]
+mod push_value;
 #[cfg(test)]
 mod read_control;
 #[cfg(test)]

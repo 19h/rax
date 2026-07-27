@@ -520,6 +520,54 @@ impl X86_64Lowerer {
                         continue;
                     }
                     if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_mem_state_compare_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
+                        validate_idx += consumed;
+                        continue;
+                    }
+                    if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_push_memory_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
+                        validate_idx += consumed;
+                        continue;
+                    }
+                    if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_push_flags_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
+                        validate_idx += consumed;
+                        continue;
+                    }
+                    if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_cmpxchg_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
+                        validate_idx += consumed;
+                        continue;
+                    }
+                    if let Some(consumed) =
                         crate::smir::lower::runtime::x86_jit_mem_bit_update_rmw_sequence_len(
                             block,
                             validate_idx,
@@ -1001,6 +1049,37 @@ impl X86_64Lowerer {
                     &virtual_definitions,
                     &virtual_uses,
                 )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_mem_state_compare(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) =
+                    self.try_lower_jit_push_memory(block, idx, &virtual_definitions, &virtual_uses)?
+                {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) =
+                    self.try_lower_jit_push_flags(block, idx, &virtual_definitions, &virtual_uses)?
+                {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) =
+                    self.try_lower_jit_cmpxchg(block, idx, &virtual_definitions, &virtual_uses)?
+                {
                     idx += consumed;
                     continue;
                 }

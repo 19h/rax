@@ -19,6 +19,8 @@ mod call_helpers;
 mod cli;
 #[cfg(test)]
 mod clts;
+#[cfg(all(test, feature = "smir-jit"))]
+mod cmpxchg;
 #[cfg(test)]
 mod cpuid;
 #[cfg(test)]
@@ -47,6 +49,8 @@ mod jit;
 mod lmsw;
 #[cfg(all(test, feature = "smir-jit"))]
 mod mem_rmw_flagless;
+#[cfg(all(test, feature = "smir-jit"))]
+mod mem_state_compare;
 #[cfg(test)]
 mod memory;
 #[cfg(test)]
@@ -69,8 +73,12 @@ mod pkru;
 mod pmc;
 #[cfg(test)]
 mod pop_segment;
+#[cfg(all(test, feature = "smir-jit"))]
+mod push_flags;
 #[cfg(test)]
 mod push_segment;
+#[cfg(all(test, feature = "smir-jit"))]
+mod push_value;
 #[cfg(test)]
 mod read_control;
 #[cfg(test)]
