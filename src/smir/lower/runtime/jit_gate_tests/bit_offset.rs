@@ -1,7 +1,9 @@
 //! Native admission for `BT` with a register bit offset into memory.
 
 use super::*;
-use crate::smir::lower::runtime::x86_jit_mem_bit_offset_test_sequence_len;
+use crate::smir::lower::runtime::{
+    x86_jit_mem_bit_offset_test_sequence_len, x86_jit_mem_bit_offset_update_sequence_len,
+};
 
 fn x86(reg: X86Reg) -> VReg {
     VReg::Arch(ArchReg::X86(reg))
@@ -254,4 +256,150 @@ fn a_bitmap_probe_region_survives_o2_and_stays_admitted() {
         &std::collections::HashMap::new(),
         true,
     ));
+}
+
+/// The lifted expansion for `bts`/`btr`/`btc [mem],reg`.
+fn bit_update(width: OpWidth, mem_width: MemWidth, update: u8, publish_cf: bool) -> Vec<OpKind> {
+    let mut ops = bit_test(width, mem_width, X86Reg::Rcx);
+    ops.pop();
+    ops.push(OpKind::Mov {
+        dst: virt(7),
+        src: SrcOperand::Imm(1),
+        width,
+    });
+    ops.push(OpKind::Shl {
+        dst: virt(7),
+        src: virt(7),
+        amount: SrcOperand::Reg(virt(5)),
+        width,
+        flags: FlagUpdate::None,
+    });
+    if update == 6 {
+        ops.push(OpKind::Not {
+            dst: virt(7),
+            src: virt(7),
+            width,
+        });
+    }
+    ops.push(match update {
+        5 => OpKind::Or {
+            dst: virt(8),
+            src1: virt(6),
+            src2: SrcOperand::Reg(virt(7)),
+            width,
+            flags: FlagUpdate::None,
+        },
+        6 => OpKind::And {
+            dst: virt(8),
+            src1: virt(6),
+            src2: SrcOperand::Reg(virt(7)),
+            width,
+            flags: FlagUpdate::None,
+        },
+        _ => OpKind::Xor {
+            dst: virt(8),
+            src1: virt(6),
+            src2: SrcOperand::Reg(virt(7)),
+            width,
+            flags: FlagUpdate::None,
+        },
+    });
+    ops.push(OpKind::Store {
+        src: virt(8),
+        addr: Address::Direct(virt(4)),
+        width: mem_width,
+    });
+    if publish_cf {
+        ops.push(OpKind::Bt {
+            src: virt(6),
+            index: SrcOperand::Reg(virt(5)),
+            width,
+        });
+    }
+    ops
+}
+
+fn update_sequence_len(ops: Vec<OpKind>) -> Option<usize> {
+    let function = function(ops);
+    let block = function.entry_block().unwrap();
+    let (definitions, uses) = counts(block);
+    x86_jit_mem_bit_offset_update_sequence_len(block, 0, true, &definitions, &uses)
+}
+
+#[test]
+fn memory_bit_updates_are_admitted_for_every_operation_and_width() {
+    for (name, update) in [("bts", 5u8), ("btr", 6), ("btc", 7)] {
+        for (width, mem_width) in [
+            (OpWidth::W64, MemWidth::B8),
+            (OpWidth::W32, MemWidth::B4),
+            (OpWidth::W16, MemWidth::B2),
+        ] {
+            for publish_cf in [false, true] {
+                let ops = bit_update(width, mem_width, update, publish_cf);
+                let expected = ops.len();
+                assert_eq!(
+                    update_sequence_len(ops.clone()),
+                    Some(expected),
+                    "{name} {width:?} cf {publish_cf}"
+                );
+                assert!(
+                    gate(ops.clone(), true),
+                    "{name} {width:?} cf {publish_cf} must be admitted"
+                );
+                assert!(
+                    !gate(ops, false),
+                    "{name} {width:?} cf {publish_cf} must need memory JIT"
+                );
+            }
+        }
+    }
+    // The test-only recognizer must not claim an update shape.
+    assert_eq!(
+        sequence_len(bit_update(OpWidth::W64, MemWidth::B8, 5, true)),
+        None
+    );
+}
+
+#[test]
+fn unmodeled_bit_update_shapes_fail_closed() {
+    // Only BTR complements the mask; pairing the complement with OR or XOR is
+    // not an architectural bit-string update.
+    let mut mismatched = bit_update(OpWidth::W64, MemWidth::B8, 6, true);
+    mismatched[9] = OpKind::Or {
+        dst: virt(8),
+        src1: virt(6),
+        src2: SrcOperand::Reg(virt(7)),
+        width: OpWidth::W64,
+        flags: FlagUpdate::None,
+    };
+    assert_eq!(update_sequence_len(mismatched), None);
+
+    // The mask must start from one.
+    let mut wrong_seed = bit_update(OpWidth::W64, MemWidth::B8, 5, true);
+    wrong_seed[7] = OpKind::Mov {
+        dst: virt(7),
+        src: SrcOperand::Imm(3),
+        width: OpWidth::W64,
+    };
+    assert_eq!(update_sequence_len(wrong_seed), None);
+
+    // The mask must be shifted by the normalized bit index.
+    let mut wrong_shift = bit_update(OpWidth::W64, MemWidth::B8, 5, true);
+    wrong_shift[8] = OpKind::Shl {
+        dst: virt(7),
+        src: virt(7),
+        amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+        width: OpWidth::W64,
+        flags: FlagUpdate::None,
+    };
+    assert_eq!(update_sequence_len(wrong_shift), None);
+
+    // The store must write the addressed element.
+    let mut wrong_store = bit_update(OpWidth::W64, MemWidth::B8, 5, true);
+    wrong_store[10] = OpKind::Store {
+        src: virt(8),
+        addr: Address::Direct(x86(X86Reg::Rbx)),
+        width: MemWidth::B8,
+    };
+    assert_eq!(update_sequence_len(wrong_store), None);
 }

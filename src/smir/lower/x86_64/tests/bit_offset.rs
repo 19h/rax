@@ -150,14 +150,158 @@ fn narrower_operand_widths_sign_extend_the_offset_before_scaling() {
     );
 }
 
+/// The lifted expansion for `bts`/`btr`/`btc [mem],reg`.
+fn bit_update(
+    width: OpWidth,
+    mem_width: MemWidth,
+    index: X86Reg,
+    update: u8,
+    publish_cf: bool,
+) -> Vec<OpKind> {
+    let bits = match width {
+        OpWidth::W16 => 16i64,
+        OpWidth::W32 => 32,
+        OpWidth::W64 => 64,
+        _ => unreachable!(),
+    };
+    let mut ops = bit_test(width, mem_width, index);
+    ops.pop(); // the trailing Bt is re-appended last
+    ops.push(OpKind::Mov {
+        dst: virt(7),
+        src: SrcOperand::Imm(1),
+        width,
+    });
+    ops.push(OpKind::Shl {
+        dst: virt(7),
+        src: virt(7),
+        amount: SrcOperand::Reg(virt(5)),
+        width,
+        flags: FlagUpdate::None,
+    });
+    if update == 6 {
+        ops.push(OpKind::Not {
+            dst: virt(7),
+            src: virt(7),
+            width,
+        });
+    }
+    ops.push(match update {
+        5 => OpKind::Or {
+            dst: virt(8),
+            src1: virt(6),
+            src2: SrcOperand::Reg(virt(7)),
+            width,
+            flags: FlagUpdate::None,
+        },
+        6 => OpKind::And {
+            dst: virt(8),
+            src1: virt(6),
+            src2: SrcOperand::Reg(virt(7)),
+            width,
+            flags: FlagUpdate::None,
+        },
+        _ => OpKind::Xor {
+            dst: virt(8),
+            src1: virt(6),
+            src2: SrcOperand::Reg(virt(7)),
+            width,
+            flags: FlagUpdate::None,
+        },
+    });
+    ops.push(OpKind::Store {
+        src: virt(8),
+        addr: Address::Direct(virt(4)),
+        width: mem_width,
+    });
+    let _ = bits;
+    if publish_cf {
+        ops.push(OpKind::Bt {
+            src: virt(6),
+            index: SrcOperand::Reg(virt(5)),
+            width,
+        });
+    }
+    ops
+}
+
+#[test]
+fn memory_bit_updates_compute_the_mask_and_store_before_publishing_cf() {
+    let (bytes, _) = lower(bit_update(OpWidth::W64, MemWidth::B8, X86Reg::Rcx, 5, true));
+    assert!(
+        bytes
+            .windows(5)
+            .any(|b| b == [0x48, 0x8D, 0x64, 0x24, 0xD0]),
+        "must reserve the six-slot caller frame: {bytes:02X?}"
+    );
+    // `and rcx,63` then `shl rax,cl` builds the architectural mask.
+    assert!(
+        bytes.windows(4).any(|b| b == [0x48, 0x83, 0xE1, 0x3F]),
+        "must mask the shift count to the operand width: {bytes:02X?}"
+    );
+    assert!(
+        bytes.windows(3).any(|b| b == [0x48, 0xD3, 0xE0]),
+        "must build the mask with a variable shift: {bytes:02X?}"
+    );
+    assert!(
+        bytes.windows(3).any(|b| b == [0x48, 0x09, 0xC2]),
+        "BTS must OR the mask into the element: {bytes:02X?}"
+    );
+    // The CF publication comes last, after the store helper.
+    let bt = bytes
+        .windows(4)
+        .position(|b| b == [0x48, 0x0F, 0xA3, 0xD0])
+        .expect("must publish CF");
+    let store_calls = bytes
+        .windows(2)
+        .enumerate()
+        .filter(|(_, b)| *b == [0xFF, 0x90])
+        .map(|(index, _)| index)
+        .collect::<Vec<_>>();
+    assert!(
+        store_calls.iter().all(|call| *call < bt),
+        "CF must be published after both helper calls: {bytes:02X?}"
+    );
+
+    let (reset, _) = lower(bit_update(OpWidth::W64, MemWidth::B8, X86Reg::Rcx, 6, true));
+    assert!(
+        reset.windows(3).any(|b| b == [0x48, 0xF7, 0xD0]),
+        "BTR must complement the mask: {reset:02X?}"
+    );
+    assert!(
+        reset.windows(3).any(|b| b == [0x48, 0x21, 0xC2]),
+        "BTR must AND the complemented mask: {reset:02X?}"
+    );
+
+    let (complement, _) = lower(bit_update(
+        OpWidth::W64,
+        MemWidth::B8,
+        X86Reg::Rcx,
+        7,
+        false,
+    ));
+    assert!(
+        complement.windows(3).any(|b| b == [0x48, 0x31, 0xC2]),
+        "BTC must XOR the mask: {complement:02X?}"
+    );
+    assert!(
+        !complement.windows(4).any(|b| b == [0x48, 0x0F, 0xA3, 0xD0]),
+        "a dead CF must not be published: {complement:02X?}"
+    );
+}
+
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[derive(Default)]
 struct MemoryContext {
     loads: u64,
     load_addr: u64,
     load_size: u64,
+    stores: u64,
+    store_addr: u64,
+    stored: u64,
+    stored_size: u64,
     value: u64,
     load_ok: u64,
+    store_ok: u64,
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -252,5 +396,138 @@ fn native_memory_bit_test_addresses_the_bit_string_and_publishes_only_cf() {
     let mut expected = initial;
     expected[1] = 0;
     assert_eq!(regs.gpr, expected);
+    assert_eq!(regs.exit_pc, PC);
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+extern "C" fn store_helper(context: *mut MemoryContext, addr: u64, value: u64, size: u64) -> u64 {
+    let context = unsafe { &mut *context };
+    context.stores += 1;
+    context.store_addr = addr;
+    let mask = if size >= 8 {
+        u64::MAX
+    } else {
+        (1u64 << (size * 8)) - 1
+    };
+    context.stored = value & mask;
+    context.stored_size = size;
+    context.store_ok
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[test]
+fn native_memory_bit_update_writes_the_masked_element_and_orders_cf_last() {
+    use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+    const CF: u64 = 1 << 0;
+    const OTHER_STATUS: u64 = 0x8D4;
+    const SENTINEL_PC: u64 = 0xAAAA_BBBB_CCCC_DDDD;
+    const VALUE: u64 = 0x8000_0000_0000_0001;
+
+    let mut initial = [0u64; 32];
+    initial[3] = 0x2_0000; // RBX base
+
+    let run = |ops: Vec<OpKind>, offset: u64, store_ok: u64| {
+        let (code, entry) = lower(ops);
+        let exec = ExecMem::new(&code).expect("map fused memory bit update");
+        let mut context = MemoryContext {
+            value: VALUE,
+            load_ok: 1,
+            store_ok,
+            ..MemoryContext::default()
+        };
+        let mut regs = GuestRegs::default();
+        regs.gpr = initial;
+        regs.gpr[1] = offset;
+        regs.rflags = 0x2 | OTHER_STATUS;
+        regs.exit_pc = SENTINEL_PC;
+        regs.ctx = (&mut context as *mut MemoryContext) as u64;
+        regs.load_fn = load_helper as usize as u64;
+        regs.store_fn = store_helper as usize as u64;
+        exec.run(entry, &mut regs);
+        (context, regs)
+    };
+
+    for (update, name) in [(5u8, "bts"), (6, "btr"), (7, "btc")] {
+        for (width, mem_width, bytes) in [
+            (OpWidth::W64, MemWidth::B8, 8u64),
+            (OpWidth::W32, MemWidth::B4, 4),
+            (OpWidth::W16, MemWidth::B2, 2),
+        ] {
+            let element_mask = if bytes >= 8 {
+                u64::MAX
+            } else {
+                (1u64 << (bytes * 8)) - 1
+            };
+            let bits = bytes * 8;
+            for offset in [
+                0i64,
+                1,
+                (bits as i64) - 1,
+                bits as i64,
+                -1,
+                -(bits as i64) - 1,
+            ] {
+                let (context, regs) = run(
+                    bit_update(width, mem_width, X86Reg::Rcx, update, true),
+                    offset as u64,
+                    1,
+                );
+                let element = VALUE & element_mask;
+                let bit = (offset as u64) & (bits - 1);
+                let mask = 1u64 << bit;
+                let expected_element = match update {
+                    5 => element | mask,
+                    6 => element & !mask,
+                    _ => element ^ mask,
+                } & element_mask;
+                let shift = match bytes {
+                    8 => 3,
+                    4 => 2,
+                    _ => 1,
+                };
+                let element_shift = match bits {
+                    64 => 6,
+                    32 => 5,
+                    _ => 4,
+                };
+                let expected_addr =
+                    (0x2_0000u64 + 512).wrapping_add(((offset >> element_shift) << shift) as u64);
+
+                assert_eq!(context.loads, 1, "{name} {width:?} offset {offset}");
+                assert_eq!(context.load_addr, expected_addr, "{name} address");
+                assert_eq!(context.stores, 1, "{name} must store");
+                assert_eq!(context.store_addr, expected_addr, "{name} store address");
+                assert_eq!(context.stored, expected_element, "{name} stored element");
+                assert_eq!(context.stored_size, bytes);
+                assert_eq!(
+                    regs.rflags & CF,
+                    (element >> bit) & 1,
+                    "{name} {width:?} offset {offset} CF"
+                );
+                assert_eq!(
+                    regs.rflags & OTHER_STATUS,
+                    OTHER_STATUS,
+                    "{name} must preserve the architecturally undefined flags"
+                );
+                let mut expected = initial;
+                expected[1] = offset as u64;
+                assert_eq!(regs.gpr, expected, "{name} GPR file");
+                assert_eq!(regs.exit_pc, SENTINEL_PC);
+            }
+        }
+    }
+
+    // A faulting store publishes no CF and resumes at the guest PC.
+    let (context, regs) = run(
+        bit_update(OpWidth::W64, MemWidth::B8, X86Reg::Rcx, 5, true),
+        0,
+        0,
+    );
+    assert_eq!(context.stores, 1);
+    let mut expected = initial;
+    expected[1] = 0;
+    assert_eq!(regs.gpr, expected);
+    assert_eq!(regs.rflags & CF, 0, "a faulting store must not commit CF");
     assert_eq!(regs.exit_pc, PC);
 }
