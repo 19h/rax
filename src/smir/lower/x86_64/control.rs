@@ -39,7 +39,7 @@ impl X86_64Lowerer {
     /// helper or native exit.
     ///
     /// PUSHFQ/PUSH RAX make the bookkeeping invisible to guest GPRs and flags.
-    fn emit_avx_ymm16_state_backed_upper_clear(&mut self, destination: u8) {
+    pub(crate) fn emit_avx_ymm16_state_backed_upper_clear(&mut self, destination: u8) {
         debug_assert!(destination < 16);
         self.code.emit_u8(0x9C); // pushfq
         self.code.emit_u8(0x50); // push rax
@@ -600,6 +600,18 @@ impl X86_64Lowerer {
                         validate_idx += consumed;
                         continue;
                     }
+                    if let Some(sequence) =
+                        crate::smir::lower::runtime::x86_jit_vex_logic_memory_sequence(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
+                        validate_idx += sequence.consumed;
+                        continue;
+                    }
                     if let Some(consumed) =
                         crate::smir::lower::runtime::x86_jit_mem_shift_rmw_sequence_len(
                             block,
@@ -1138,6 +1150,16 @@ impl X86_64Lowerer {
             // (see `emit_jit_mem_op`). The helper-backed scalar, XMM/MMX
             // masked, and CRC fusions below are explicitly restricted to that mode.
             if self.mem_helpers {
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_vex_logic_memory_source(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
                 #[cfg(feature = "smir-jit")]
                 if let Some(consumed) =
                     self.try_lower_jit_maskmovdqu(block, idx, &virtual_definitions, &virtual_uses)?

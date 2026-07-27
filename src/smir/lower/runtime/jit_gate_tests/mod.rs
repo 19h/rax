@@ -244,6 +244,8 @@ mod vex_integer_dot_ext_replay;
 #[cfg(test)]
 mod vex_lane_shuffle_replay;
 #[cfg(test)]
+mod vex_logic_memory_source;
+#[cfg(test)]
 mod vex_mov_mask_stack_destination_replay;
 #[cfg(test)]
 mod vex_packed_extend_replay;

@@ -173,7 +173,8 @@ pub struct GuestRegs {
     /// Non-zero when the emulator exposes APX and permits XCR0.APX_F.
     pub apx_enabled: u64,
     /// Address of `extern "C" fn(state, addr, dst_idx, size, zero_upper) -> ok`.
-    /// The helper writes a complete post-load ZMM slot in `state.zmm[dst_idx]`.
+    /// Architectural indices write a complete post-load ZMM slot. The reserved
+    /// internal index 32 writes `vector_scratch` without modifying guest state.
     pub vec_load_fn: u64,
     /// Address of `extern "C" fn(state, addr, src_idx, size) -> ok`.
     /// The helper reads the source bytes from `state.zmm[src_idx]`.
@@ -336,6 +337,9 @@ pub struct GuestRegs {
     /// activating the native vector entry trampoline. Interpreter callouts use
     /// this marker to synchronize `mxcsr` independently of the vector file.
     pub mxcsr_state_active: u64,
+    /// Nonarchitectural helper transfer slot used by exact fused vector-memory
+    /// sequences. It is never imported or exported by the native trampoline.
+    pub vector_scratch: [u64; 8],
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -424,6 +428,7 @@ impl Default for GuestRegs {
             umwait_control: 0,
             xmm_state_active: 0,
             mxcsr_state_active: 0,
+            vector_scratch: [0; 8],
         }
     }
 }

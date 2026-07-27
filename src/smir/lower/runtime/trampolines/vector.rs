@@ -5779,14 +5779,17 @@ pub fn uses_x86_native_vectors_excluding(
     func: &crate::smir::ir::SmirFunction,
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
 ) -> bool {
+    if x86_native_replay_feature_requirements(func, excluded).any {
+        return true;
+    }
     func.blocks
         .iter()
         .filter(|block| !excluded.contains_key(&block.id))
         .any(|block| {
-            !crate::smir::ir::x86_native_replay_spans(block, &func.x86_instruction_bytes).is_empty()
-                || block.ops.iter().any(|op| {
-                    x86_native_vector_smir_op(op) || x86_jit_vector_mem_shape_valid(&op.kind)
-                })
+            block
+                .ops
+                .iter()
+                .any(|op| x86_native_vector_smir_op(op) || x86_jit_vector_mem_shape_valid(&op.kind))
         })
 }
 /// Whether every admitted native vector operation in executable blocks is a

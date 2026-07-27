@@ -1,0 +1,124 @@
+//! Fail-closed helper-backed VEX packed-logic memory-source admission.
+
+use std::collections::HashMap;
+
+use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix, X86VecMap};
+use crate::smir::ir::types::{ArchReg, VReg, VecWidth, X86Reg};
+
+use super::x86_jit_mem_address_shape_valid;
+
+/// Exact contiguous `VLoad` plus VEX packed-logic sequence consumed by the
+/// helper-backed lowerer.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86JitVexLogicMemorySequence {
+    pub(crate) consumed: usize,
+    pub(crate) destination: u8,
+    pub(crate) source1: u8,
+    pub(crate) width: VecWidth,
+    pub(crate) prefix: X86SsePrefix,
+    pub(crate) opcode: u8,
+    pub(crate) w: bool,
+}
+
+fn low_vex_vector_index(reg: &VReg, width: VecWidth) -> Option<u8> {
+    match (reg, width) {
+        (VReg::Arch(ArchReg::X86(X86Reg::Xmm(index @ 0..=15))), VecWidth::V128)
+        | (VReg::Arch(ArchReg::X86(X86Reg::Ymm(index @ 0..=15))), VecWidth::V256) => Some(*index),
+        _ => None,
+    }
+}
+
+/// Validate one full-width, unmasked VEX.128/VEX.256 packed floating-point
+/// logic memory source. The lifter represents these instructions as one
+/// virtual `VLoad` immediately consumed by `VAnd`, `VAndNot`, `VOr`, or
+/// `VXor`. Exact single-definition/single-use checks prevent the fused lowerer
+/// from hiding any independently observable virtual value.
+///
+/// The classifier is O(1); callers build the definition/use maps once in O(N)
+/// time and O(V) space for N operations and V virtual registers.
+pub(crate) fn x86_jit_vex_logic_memory_sequence(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<X86JitVexLogicMemorySequence> {
+    if !allow_mem {
+        return None;
+    }
+    let load = block.ops.get(index)?;
+    let (temporary, width) = match &load.kind {
+        OpKind::VLoad { dst, addr, width }
+            if matches!(dst, VReg::Virtual(_))
+                && matches!(width, VecWidth::V128 | VecWidth::V256)
+                && load.x86_hint.is_none()
+                && x86_jit_mem_address_shape_valid(addr) =>
+        {
+            (*dst, *width)
+        }
+        _ => return None,
+    };
+    if virtual_definitions.get(&temporary) != Some(&1) || virtual_uses.get(&temporary) != Some(&1) {
+        return None;
+    }
+
+    let consumer = block.ops.get(index + 1)?;
+    if consumer.guest_pc != load.guest_pc {
+        return None;
+    }
+    let (destination, source1, source2, consumer_width, expected_opcode) = match &consumer.kind {
+        OpKind::VAnd {
+            dst,
+            src1,
+            src2,
+            width,
+        } => (dst, src1, src2, *width, 0x54),
+        OpKind::VAndNot {
+            dst,
+            src1,
+            src2,
+            width,
+        } => (dst, src1, src2, *width, 0x55),
+        OpKind::VOr {
+            dst,
+            src1,
+            src2,
+            width,
+        } => (dst, src1, src2, *width, 0x56),
+        OpKind::VXor {
+            dst,
+            src1,
+            src2,
+            width,
+        } => (dst, src1, src2, *width, 0x57),
+        _ => return None,
+    };
+    if *source2 != temporary || consumer_width != width {
+        return None;
+    }
+    let destination = low_vex_vector_index(destination, width)?;
+    let source1 = low_vex_vector_index(source1, width)?;
+    let Some(X86OpHint::VexOp {
+        map: X86VecMap::Map0F,
+        pp: prefix @ (X86SsePrefix::None | X86SsePrefix::OpSize),
+        opcode,
+        width: hint_width,
+        w,
+    }) = consumer.x86_hint
+    else {
+        return None;
+    };
+    if opcode != expected_opcode || hint_width != width {
+        return None;
+    }
+
+    Some(X86JitVexLogicMemorySequence {
+        consumed: 2,
+        destination,
+        source1,
+        width,
+        prefix,
+        opcode,
+        w,
+    })
+}

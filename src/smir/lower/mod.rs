@@ -230,6 +230,16 @@ pub const X86_GUEST_INVLPG_FN_OFFSET: i32 = X86_GUEST_STI_FN_OFFSET + 8;
 pub const X86_GUEST_FAST_SYSTEM_TRANSFER_FN_OFFSET: i32 = X86_GUEST_INVLPG_FN_OFFSET + 8;
 /// Offset of the append-only INVPCID helper pointer.
 pub const X86_GUEST_INVPCID_FN_OFFSET: i32 = X86_GUEST_FAST_SYSTEM_TRANSFER_FN_OFFSET + 8;
+/// Offset of the append-only nonarchitectural vector-memory transfer scratch.
+///
+/// `misc_enable`, `pat`, `umwait_control`, `xmm_state_active`, and
+/// `mxcsr_state_active` occupy the five intervening 8-byte fields. Keeping the
+/// scratch last preserves every established native helper/state offset.
+pub const X86_GUEST_VECTOR_SCRATCH_OFFSET: i32 = X86_GUEST_INVPCID_FN_OFFSET + 6 * 8;
+/// Internal `vec_load_fn` destination namespace for
+/// [`runtime::GuestRegs::vector_scratch`]. Architectural ZMM indices remain
+/// exactly 0..=31; every value above this singleton tag is invalid.
+pub(crate) const X86_JIT_VECTOR_SCRATCH_INDEX: u32 = 32;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

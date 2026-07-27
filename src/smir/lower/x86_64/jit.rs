@@ -196,7 +196,7 @@ impl X86_64Lowerer {
         )
     }
 
-    fn emit_jit_vector_mem_helper(
+    pub(crate) fn emit_jit_vector_mem_helper(
         &mut self,
         guest_pc: u64,
         is_load: bool,

@@ -177,9 +177,10 @@ impl X86NativeReplayFeatureRequirements {
     }
 }
 
-/// Accumulate the host features required by exact x86 native-replay spans in
-/// O(N) time and O(P) temporary space per block for N operations and P guest
-/// instruction addresses.
+/// Accumulate the host features required by exact x86 native-replay spans and
+/// helper-backed VEX packed-logic memory-source sequences in O(N) time and
+/// O(P + V) temporary space per block for N operations, P guest instruction
+/// addresses, and V virtual registers.
 pub(crate) fn x86_native_replay_feature_requirements(
     func: &crate::smir::ir::SmirFunction,
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
@@ -380,6 +381,37 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 .evex_register_vpclmulqdq_needs_vl()
                 .is_some()
                 || vex_vpclmulqdq_ymm == Some(true);
+        }
+
+        let mut virtual_definitions = std::collections::HashMap::new();
+        let mut virtual_uses = std::collections::HashMap::new();
+        for op in &block.ops {
+            for register in op.kind.dests() {
+                if matches!(register, crate::smir::ir::types::VReg::Virtual(_)) {
+                    *virtual_definitions.entry(register).or_insert(0usize) += 1;
+                }
+            }
+            for register in op.kind.source_vregs() {
+                if matches!(register, crate::smir::ir::types::VReg::Virtual(_)) {
+                    *virtual_uses.entry(register).or_insert(0usize) += 1;
+                }
+            }
+        }
+        let mut index = 0usize;
+        while index < block.ops.len() {
+            if let Some(sequence) = super::x86_jit_vex_logic_memory_sequence(
+                block,
+                index,
+                true,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                index += sequence.consumed;
+            } else {
+                index += 1;
+            }
         }
     }
     requirements.all_spans_support_avx_ymm16 = requirements.any && all_spans_support_avx_ymm16;

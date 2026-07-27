@@ -3720,6 +3720,12 @@ mod jit_mem_load;
 use jit_mem_load::rax_jit_mem_load;
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_vector_memory.rs"]
+mod jit_vector_memory;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use jit_vector_memory::{rax_jit_vec_load, rax_jit_vec_store};
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_call.rs"]
 mod jit_call;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -3990,102 +3996,6 @@ unsafe extern "C" fn rax_jit_mem_store(
         Ok(()) => 1,
         Err(_) => 0,
     }
-}
-
-/// JIT architectural vector-load helper. The complete memory operand is read
-/// before the destination slot is modified, preserving precise restart on an
-/// MMU fault. Legacy SSE retains bits 511:128 of the overlapping ZMM slot;
-/// VEX/EVEX forms pass `zero_upper != 0` and clear every bit above the transfer.
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-unsafe extern "C" fn rax_jit_vec_load(
-    state: *mut crate::smir::lower::runtime::GuestRegs,
-    addr: u64,
-    dst_idx: u32,
-    size: u32,
-    zero_upper: u32,
-) -> u64 {
-    if dst_idx >= 32 || !matches!(size, 16 | 32 | 64) {
-        return 0;
-    }
-    let Some(state) = (unsafe { state.as_mut() }) else {
-        return 0;
-    };
-    let Some(vcpu) = (unsafe { (state.ctx as *mut X86_64Vcpu).as_mut() }) else {
-        return 0;
-    };
-    let Ok(bytes) = vcpu.read_bytes(addr, size as usize) else {
-        return 0;
-    };
-
-    let mut value = if zero_upper != 0 {
-        [0u64; 8]
-    } else {
-        state.zmm[dst_idx as usize]
-    };
-    for (word, chunk) in value.iter_mut().zip(bytes.chunks_exact(8)) {
-        *word = u64::from_le_bytes(chunk.try_into().expect("8-byte vector chunk"));
-    }
-    state.zmm[dst_idx as usize] = value;
-    1
-}
-
-/// JIT architectural vector-store helper. Source bytes are copied from the
-/// canonical ZMM slot before entering the MMU. Code-page destinations bail to
-/// the interpreter so decode/JIT invalidation retains its instruction-boundary
-/// ordering. Verify-mode undo records use the existing 64-bit memory-log ABI.
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-unsafe extern "C" fn rax_jit_vec_store(
-    state: *mut crate::smir::lower::runtime::GuestRegs,
-    addr: u64,
-    src_idx: u32,
-    size: u32,
-) -> u64 {
-    if src_idx >= 32 || !matches!(size, 4 | 8 | 16 | 32 | 64) {
-        return 0;
-    }
-    let Some(state) = (unsafe { state.as_mut() }) else {
-        return 0;
-    };
-    let Some(vcpu) = (unsafe { (state.ctx as *mut X86_64Vcpu).as_mut() }) else {
-        return 0;
-    };
-    let Some(last) = addr.checked_add(u64::from(size) - 1) else {
-        return 0;
-    };
-    if vcpu.mmu.is_code_page(addr) || vcpu.mmu.is_code_page(last) {
-        return 0;
-    }
-
-    let mut bytes = [0u8; 64];
-    for (chunk, word) in bytes[..size as usize]
-        .chunks_mut(8)
-        .zip(state.zmm[src_idx as usize])
-    {
-        let word = word.to_le_bytes();
-        chunk.copy_from_slice(&word[..chunk.len()]);
-    }
-
-    if vcpu.jit_mem_log.is_some() {
-        match vcpu.read_bytes(addr, size as usize) {
-            Ok(old) => {
-                for (offset, chunk) in old.chunks(8).enumerate() {
-                    let mut value = [0u8; 8];
-                    value[..chunk.len()].copy_from_slice(chunk);
-                    vcpu.push_jit_mem_log((
-                        addr.wrapping_add((offset * 8) as u64),
-                        chunk.len() as u8,
-                        u64::from_le_bytes(value),
-                    ));
-                    if vcpu.jit_mem_log.is_none() {
-                        break;
-                    }
-                }
-            }
-            Err(_) => vcpu.jit_mem_log = None,
-        }
-    }
-
-    u64::from(vcpu.write_bytes(addr, &bytes[..size as usize]).is_ok())
 }
 
 /// JIT APX POP2 helper. A complete aligned 16-byte read is staged before any
@@ -6422,6 +6332,10 @@ mod jit_opmask_tests;
 mod jit_mmx_memory_source_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_vector_memory_source_tests.rs"]
+mod jit_vector_memory_source_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_call_tests.rs"]
 mod jit_call_tests;
 
@@ -6733,111 +6647,6 @@ mod tests {
     fn jit_memory_and_call_capabilities_default_on_with_explicit_opt_out() {
         assert!(jit_default_enabled(false));
         assert!(!jit_default_enabled(true));
-    }
-
-    #[test]
-    fn jit_vector_memory_helpers_preserve_lane_semantics_fault_atomicity_and_store_undo() {
-        use crate::smir::lower::runtime::GuestRegs;
-
-        let mem =
-            Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
-        let mut vcpu = X86_64Vcpu::new(0, mem.clone());
-        let source: Vec<u8> = (0..64).map(|byte| byte as u8 ^ 0xA5).collect();
-        mem.write_slice(&source, GuestAddress(0x2000)).unwrap();
-
-        let mut state = GuestRegs::default();
-        state.ctx = (&mut vcpu as *mut X86_64Vcpu) as u64;
-        state.zmm[3] = [0xDEAD_BEEF_CAFE_BABE; 8];
-        assert_eq!(unsafe { rax_jit_vec_load(&mut state, 0x2000, 3, 16, 0) }, 1);
-        assert_eq!(
-            state.zmm[3][0],
-            u64::from_le_bytes(source[0..8].try_into().unwrap())
-        );
-        assert_eq!(
-            state.zmm[3][1],
-            u64::from_le_bytes(source[8..16].try_into().unwrap())
-        );
-        assert_eq!(state.zmm[3][2..], [0xDEAD_BEEF_CAFE_BABE; 6]);
-
-        state.zmm[3] = [u64::MAX; 8];
-        assert_eq!(unsafe { rax_jit_vec_load(&mut state, 0x2000, 3, 32, 1) }, 1);
-        for (word, chunk) in state.zmm[3][..4].iter().zip(source[..32].chunks_exact(8)) {
-            assert_eq!(*word, u64::from_le_bytes(chunk.try_into().unwrap()));
-        }
-        assert_eq!(state.zmm[3][4..], [0; 4]);
-
-        let before_fault = state.zmm[3];
-        assert_eq!(unsafe { rax_jit_vec_load(&mut state, 0xFFFF, 3, 64, 1) }, 0);
-        assert_eq!(state.zmm[3], before_fault, "faulting load must not commit");
-        assert_eq!(
-            unsafe { rax_jit_vec_load(&mut state, 0x2000, 32, 16, 0) },
-            0
-        );
-        assert_eq!(unsafe { rax_jit_vec_load(&mut state, 0x2000, 3, 8, 0) }, 0);
-
-        state.zmm[31] = [
-            0x0706_0504_0302_0100,
-            0x0F0E_0D0C_0B0A_0908,
-            0x1716_1514_1312_1110,
-            0x1F1E_1D1C_1B1A_1918,
-            0x2726_2524_2322_2120,
-            0x2F2E_2D2C_2B2A_2928,
-            0x3736_3534_3332_3130,
-            0x3F3E_3D3C_3B3A_3938,
-        ];
-        let old = vec![0xCC; 64];
-        mem.write_slice(&old, GuestAddress(0x3000)).unwrap();
-        assert_eq!(unsafe { rax_jit_vec_store(&mut state, 0x3000, 31, 64) }, 1);
-        let mut stored = [0u8; 64];
-        mem.read_slice(&mut stored, GuestAddress(0x3000)).unwrap();
-        assert_eq!(stored, std::array::from_fn::<_, 64, _>(|index| index as u8));
-
-        mem.write_slice(&old[..32], GuestAddress(0x3000)).unwrap();
-        vcpu.jit_mem_log = Some(Vec::new());
-        assert_eq!(unsafe { rax_jit_vec_store(&mut state, 0x3000, 31, 32) }, 1);
-        let log = vcpu.jit_mem_log.take().unwrap();
-        assert_eq!(log.len(), 4);
-        for (index, &(addr, size, value)) in log.iter().enumerate() {
-            assert_eq!(addr, 0x3000 + index as u64 * 8);
-            assert_eq!(size, 8);
-            assert_eq!(value, 0xCCCC_CCCC_CCCC_CCCC);
-        }
-
-        for (addr, size, expected_prefix) in [
-            (0x3100, 4_u32, &[0, 1, 2, 3][..]),
-            (0x3110, 8_u32, &[0, 1, 2, 3, 4, 5, 6, 7][..]),
-        ] {
-            mem.write_slice(&old[..8], GuestAddress(addr)).unwrap();
-            vcpu.jit_mem_log = Some(Vec::new());
-            assert_eq!(unsafe { rax_jit_vec_store(&mut state, addr, 31, size) }, 1);
-            let mut scalar = [0u8; 8];
-            mem.read_slice(&mut scalar, GuestAddress(addr)).unwrap();
-            assert_eq!(&scalar[..size as usize], expected_prefix);
-            assert_eq!(&scalar[size as usize..], &old[size as usize..8]);
-            assert_eq!(
-                vcpu.jit_mem_log.take().unwrap(),
-                vec![(addr, size as u8, 0xCCCC_CCCC_CCCC_CCCC >> (64 - size * 8))]
-            );
-        }
-
-        vcpu.mmu.mark_code_page(0x6000);
-        let protected = [0x55u8; 16];
-        mem.write_slice(&protected, GuestAddress(0x5FF8)).unwrap();
-        assert_eq!(unsafe { rax_jit_vec_store(&mut state, 0x5FF8, 31, 16) }, 0);
-        let mut unchanged = [0u8; 16];
-        mem.read_slice(&mut unchanged, GuestAddress(0x5FF8))
-            .unwrap();
-        assert_eq!(unchanged, protected, "either covered code page must deopt");
-        assert_eq!(unsafe { rax_jit_vec_store(&mut state, 0x3000, 32, 16) }, 0);
-        assert_eq!(unsafe { rax_jit_vec_store(&mut state, 0x3000, 0, 2) }, 0);
-        assert_eq!(
-            unsafe { rax_jit_vec_load(std::ptr::null_mut(), 0, 0, 16, 0) },
-            0
-        );
-        assert_eq!(
-            unsafe { rax_jit_vec_store(std::ptr::null_mut(), 0, 0, 16) },
-            0
-        );
     }
 
     #[test]

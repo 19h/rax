@@ -38,6 +38,7 @@ pub use mmx::*;
 mod mmx_memory;
 pub use mmx_memory::*;
 mod vector;
+mod vector_memory_source;
 mod vector_replay_features;
 use crate::smir::lower::runtime::*;
 use crate::smir::lower::{
@@ -52,4 +53,5 @@ use crate::smir::lower::{
     X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 pub use vector::*;
+pub(crate) use vector_memory_source::*;
 pub(crate) use vector_replay_features::*;

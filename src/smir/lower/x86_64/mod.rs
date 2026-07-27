@@ -175,6 +175,8 @@ mod vector_maskmov;
 pub use vector_maskmov::*;
 #[cfg(test)]
 mod tests;
+#[cfg(feature = "smir-jit")]
+mod vex_logic_memory_source;
 
 fn x86_state_backed_arch_gpr(reg: &VReg) -> bool {
     matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index >= 16 || matches!(index, 4 | 5)))

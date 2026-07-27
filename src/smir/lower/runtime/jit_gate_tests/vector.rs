@@ -2,6 +2,7 @@
 
 use super::*;
 use crate::smir::ir::ops::X86SatFpFormat;
+use crate::smir::lower::X86_GUEST_VECTOR_SCRATCH_OFFSET;
 use crate::smir::lower::runtime::*;
 
 #[test]
@@ -198,6 +199,14 @@ fn x86_vector_guest_state_layout_matches_trampoline_offsets() {
         std::mem::offset_of!(GuestRegs, dr7),
         X86_GUEST_DR7_OFFSET as usize
     );
+    assert_eq!(
+        std::mem::offset_of!(GuestRegs, vector_scratch),
+        X86_GUEST_VECTOR_SCRATCH_OFFSET as usize
+    );
+    assert_eq!(
+        std::mem::offset_of!(GuestRegs, vector_scratch),
+        std::mem::offset_of!(GuestRegs, mxcsr_state_active) + 8
+    );
     assert_eq!(std::mem::align_of::<GuestRegs>(), 64);
 
     let mut regs = GuestRegs::default();
@@ -215,6 +224,7 @@ fn x86_vector_guest_state_layout_matches_trampoline_offsets() {
     assert_eq!(regs.cpuid_sse4a, 0);
     assert_eq!(regs.kernel_gs_base, 0);
     assert_eq!(regs.tsc_fn, 0);
+    assert_eq!(regs.vector_scratch, [0; 8]);
 }
 #[test]
 fn recip28_native_gate_validates_packed_scalar_masks_and_encodings() {
