@@ -226,6 +226,8 @@ mod vex_fp16_widen_replay;
 #[cfg(test)]
 mod vex_fp32_fp64_convert_replay;
 #[cfg(test)]
+mod vex_fp_arithmetic_memory_source;
+#[cfg(test)]
 mod vex_fp_dot_product_replay;
 #[cfg(test)]
 mod vex_fp_flag_compare_replay;

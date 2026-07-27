@@ -276,6 +276,126 @@ fn jit_verify_executes_wrapping_and_saturating_integer_arithmetic_memory_sources
 }
 
 #[test]
+fn jit_verify_executes_packed_fp_arithmetic_memory_sources_with_mxcsr_state() {
+    if !std::is_x86_feature_detected!("avx") {
+        eprintln!("skipping CPU JIT VEX FP memory-arithmetic verification: host lacks AVX");
+        return;
+    }
+
+    let memory =
+        Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+    // vaddps xmm0,xmm1,[rbx+0x20]     (C5, binary32, scratch=2)
+    // vmulpd ymm15,ymm2,[r11+0x20]    (C4.W0, binary64, scratch=1)
+    // vdivps ymm9,ymm9,[r11+0x20]     (C4.W1 ignored, alias, scratch=0)
+    // vminpd xmm14,xmm2,[r11+0x20]    (C4.W0, binary64, scratch=0)
+    // jmp next; hlt
+    let code = [
+        0xC5, 0xF0, 0x58, 0x43, 0x20, 0xC4, 0x41, 0x6D, 0x59, 0x7B, 0x20, 0xC4, 0x41, 0xB4, 0x5E,
+        0x4B, 0x20, 0xC4, 0x41, 0x69, 0x5D, 0x73, 0x20, 0xEB, 0x00, 0xF4,
+    ];
+    memory.write_slice(&code, GuestAddress(0)).unwrap();
+    let source_words = [
+        0x4000_0000_3F80_0000u64,
+        0x4080_0000_4040_0000,
+        0xBF80_0000_C000_0000,
+        0x3F00_0000_3E80_0000,
+    ];
+    let mut source = [0u8; 32];
+    for (bytes, word) in source.chunks_exact_mut(8).zip(source_words) {
+        bytes.copy_from_slice(&word.to_le_bytes());
+    }
+    memory
+        .write_slice(&source, GuestAddress(DATA_BASE + DISP))
+        .unwrap();
+
+    let mut direct = long_mode_vcpu(memory.clone());
+    let mut verified = long_mode_vcpu(memory);
+    seed_architectural_state(&mut direct);
+    seed_architectural_state(&mut verified);
+    for vcpu in [&mut direct, &mut verified] {
+        vcpu.regs.xmm[1] = [0; 2];
+        vcpu.regs.xmm[2] = [0x3FF0_0000_0000_0000; 2];
+        vcpu.regs.ymm_high[2] = [0x3FF0_0000_0000_0000; 2];
+        vcpu.regs.xmm[9] = [source_words[0], source_words[1]];
+        vcpu.regs.ymm_high[9] = [source_words[2], source_words[3]];
+    }
+    let masked_mxcsr = verified.mxcsr;
+    for exception_mask in 7..=12 {
+        verified.mxcsr = masked_mxcsr & !(1 << exception_mask);
+        assert!(
+            verified
+                .jit_compile_region()
+                .expect("reject unmasked VEX FP memory-arithmetic region")
+                .is_none(),
+            "MXCSR exception mask bit {exception_mask} was not enforced"
+        );
+    }
+    verified.mxcsr = masked_mxcsr;
+
+    let frontier = code.len() as u64 - 1;
+    let mut direct_steps = 0usize;
+    while direct.regs.rip != frontier {
+        assert!(direct.step().unwrap().is_none());
+        direct_steps += 1;
+        assert!(direct_steps <= 5, "direct execution missed HLT frontier");
+    }
+    assert_eq!(direct_steps, 5);
+
+    let region = verified
+        .jit_compile_region()
+        .expect("compile VEX FP memory-arithmetic region")
+        .expect("helper-backed VEX FP arithmetic must be native eligible");
+    assert!(region.uses_vector);
+    assert!(region.avx_ymm16_vector_state);
+    assert!(!region.narrow_vector_opmasks);
+
+    verified.jit_run_region_verified(&region);
+    assert_architectural_state_equal(
+        &verified,
+        &direct.regs,
+        direct.mxcsr,
+        "verified packed-FP arithmetic",
+    );
+    assert_eq!(verified.regs.rip, frontier);
+}
+
+#[test]
+fn jit_fp_arithmetic_memory_fault_preserves_destination_and_mxcsr() {
+    if !std::is_x86_feature_detected!("avx") {
+        eprintln!("skipping CPU JIT VEX FP memory-arithmetic fault test: host lacks AVX");
+        return;
+    }
+
+    let memory =
+        Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+    // vdivpd ymm14,ymm2,[r11+0x20]; jmp next; hlt
+    let code = [0xC4, 0x41, 0x6D, 0x5E, 0x73, 0x20, 0xEB, 0x00, 0xF4];
+    memory.write_slice(&code, GuestAddress(0)).unwrap();
+
+    let mut vcpu = long_mode_vcpu(memory);
+    seed_architectural_state(&mut vcpu);
+    vcpu.regs.r11 = 0x2_0000;
+    let before = vcpu.regs.clone();
+    let before_mxcsr = vcpu.mxcsr;
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile faulting VEX FP memory-arithmetic region")
+        .expect("dynamic faulting address must not prevent native admission");
+    assert!(region.uses_vector);
+    assert!(region.avx_ymm16_vector_state);
+    vcpu.jit_run_region_native(&region);
+
+    assert_architectural_state_equal(
+        &vcpu,
+        &before,
+        before_mxcsr,
+        "FP-arithmetic fault deoptimization",
+    );
+    assert_eq!(vcpu.regs.rip, 0);
+}
+
+#[test]
 fn jit_integer_arithmetic_memory_fault_exits_without_architectural_commit() {
     if !std::is_x86_feature_detected!("avx2") {
         eprintln!("skipping CPU JIT VEX integer memory-arithmetic fault test: host lacks AVX2");

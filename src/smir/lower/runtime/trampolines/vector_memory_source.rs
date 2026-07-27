@@ -2,8 +2,10 @@
 
 use std::collections::HashMap;
 
-use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix, X86VecMap};
-use crate::smir::ir::types::{ArchReg, VReg, VecWidth, X86Reg};
+use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix, X86VecAlign, X86VecMap};
+use crate::smir::ir::types::{
+    ArchReg, FpRoundMode, VReg, VecElementType, VecWidth, X86FpBinaryOp, X86Reg,
+};
 
 use super::x86_jit_mem_address_shape_valid;
 
@@ -29,11 +31,63 @@ fn low_vex_vector_index(reg: &VReg, width: VecWidth) -> Option<u8> {
     }
 }
 
-/// Validate one full-width, unmasked VEX.128/VEX.256 packed logic or integer
-/// add/subtract memory source. The lifter represents these instructions as one
-/// virtual `VLoad` immediately consumed by the corresponding binary operation.
-/// Exact single-definition/single-use checks prevent the fused lowerer from
-/// hiding any independently observable virtual value.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum VexBinaryKind {
+    Logic,
+    IntegerArithmetic,
+    FloatingPointArithmetic,
+}
+
+fn vex_packed_fp_binary_encoding_valid(
+    kind: &OpKind,
+    map: X86VecMap,
+    prefix: X86SsePrefix,
+    opcode: u8,
+) -> bool {
+    let OpKind::X86FpBinary {
+        mask,
+        elem,
+        lanes,
+        op,
+        round,
+        suppress_exceptions,
+        ..
+    } = kind
+    else {
+        return false;
+    };
+    let expected_op = match opcode {
+        0x58 => X86FpBinaryOp::Add,
+        0x59 => X86FpBinaryOp::Mul,
+        0x5C => X86FpBinaryOp::Sub,
+        0x5D => X86FpBinaryOp::Min,
+        0x5E => X86FpBinaryOp::Div,
+        0x5F => X86FpBinaryOp::Max,
+        _ => return false,
+    };
+    let expected_prefix = match elem {
+        VecElementType::F32 => X86SsePrefix::None,
+        VecElementType::F64 => X86SsePrefix::OpSize,
+        _ => return false,
+    };
+    map == X86VecMap::Map0F
+        && prefix == expected_prefix
+        && *op == expected_op
+        && mask.is_none()
+        && *round == FpRoundMode::Dynamic
+        && !*suppress_exceptions
+        && matches!(
+            (elem, lanes),
+            (VecElementType::F32, 4 | 8) | (VecElementType::F64, 2 | 4)
+        )
+}
+
+/// Validate one full-width, unmasked VEX.128/VEX.256 packed logic, integer
+/// add/subtract, or binary32/binary64 arithmetic memory source. The lifter
+/// represents these instructions as one virtual `VLoad` immediately consumed
+/// by the corresponding binary operation. Exact single-definition/single-use
+/// checks prevent the fused lowerer from hiding any independently observable
+/// virtual value.
 ///
 /// The classifier is O(1); callers build the definition/use maps once in O(N)
 /// time and O(V) space for N operations and V virtual registers.
@@ -52,7 +106,6 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
         OpKind::VLoad { dst, addr, width }
             if matches!(dst, VReg::Virtual(_))
                 && matches!(width, VecWidth::V128 | VecWidth::V256)
-                && load.x86_hint.is_none()
                 && x86_jit_mem_address_shape_valid(addr) =>
         {
             (*dst, *width)
@@ -67,7 +120,7 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
     if consumer.guest_pc != load.guest_pc {
         return None;
     }
-    let (destination, source1, source2, consumer_width, integer_arithmetic) = match &consumer.kind {
+    let (destination, source1, source2, consumer_width, binary_kind) = match &consumer.kind {
         OpKind::VAnd {
             dst,
             src1,
@@ -91,7 +144,7 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
             src1,
             src2,
             width,
-        } => (dst, src1, src2, *width, false),
+        } => (dst, src1, src2, *width, VexBinaryKind::Logic),
         OpKind::VAdd {
             dst,
             src1,
@@ -118,7 +171,21 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
             src1,
             src2,
             super::x86_vector_width_from_lanes(*elem, *lanes)?,
-            true,
+            VexBinaryKind::IntegerArithmetic,
+        ),
+        OpKind::X86FpBinary {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            ..
+        } => (
+            dst,
+            src1,
+            src2,
+            super::x86_vector_width_from_lanes(*elem, *lanes)?,
+            VexBinaryKind::FloatingPointArithmetic,
         ),
         _ => return None,
     };
@@ -140,36 +207,49 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
     if hint_width != width {
         return None;
     }
-    let needs_avx2 = if integer_arithmetic {
-        if !super::x86_vector_integer_arithmetic_map_valid(&consumer.kind, map)
-            || !super::x86_vector_integer_arithmetic_encoding_valid(
-                &consumer.kind,
-                prefix,
-                opcode,
-                false,
-                w,
-            )
-        {
-            return None;
+    let needs_avx2 = match binary_kind {
+        VexBinaryKind::Logic => {
+            if load.x86_hint.is_some()
+                || map != X86VecMap::Map0F
+                || !super::x86_vector_logic_encoding_valid(&consumer.kind, prefix, opcode, false, w)
+            {
+                return None;
+            }
+            let (needs_avx, needs_avx2, needs_avx512dq, needs_avx512vl) =
+                super::x86_vector_logic_feature_requirements(consumer);
+            if !needs_avx || needs_avx512dq || needs_avx512vl {
+                return None;
+            }
+            needs_avx2
         }
-        let (needs_avx, needs_avx2, needs_avx512vl) =
-            super::x86_vector_integer_arithmetic_feature_requirements(consumer);
-        if !needs_avx || needs_avx512vl {
-            return None;
+        VexBinaryKind::IntegerArithmetic => {
+            if load.x86_hint.is_some()
+                || !super::x86_vector_integer_arithmetic_map_valid(&consumer.kind, map)
+                || !super::x86_vector_integer_arithmetic_encoding_valid(
+                    &consumer.kind,
+                    prefix,
+                    opcode,
+                    false,
+                    w,
+                )
+            {
+                return None;
+            }
+            let (needs_avx, needs_avx2, needs_avx512vl) =
+                super::x86_vector_integer_arithmetic_feature_requirements(consumer);
+            if !needs_avx || needs_avx512vl {
+                return None;
+            }
+            needs_avx2
         }
-        needs_avx2
-    } else {
-        if map != X86VecMap::Map0F
-            || !super::x86_vector_logic_encoding_valid(&consumer.kind, prefix, opcode, false, w)
-        {
-            return None;
+        VexBinaryKind::FloatingPointArithmetic => {
+            if load.x86_hint != Some(X86OpHint::VecAlign(X86VecAlign::Unaligned))
+                || !vex_packed_fp_binary_encoding_valid(&consumer.kind, map, prefix, opcode)
+            {
+                return None;
+            }
+            false
         }
-        let (needs_avx, needs_avx2, needs_avx512dq, needs_avx512vl) =
-            super::x86_vector_logic_feature_requirements(consumer);
-        if !needs_avx || needs_avx512dq || needs_avx512vl {
-            return None;
-        }
-        needs_avx2
     };
 
     Some(X86JitVexBinaryMemorySequence {

@@ -72,11 +72,11 @@ impl X86_64Lowerer {
         }
     }
 
-    /// Fuse one exact `VLoad` plus VEX packed logic or integer add/subtract
-    /// operation. The MMU helper commits only a nonarchitectural transfer slot.
-    /// One low vector register not named by the guest instruction carries that
-    /// value for the native operation and is restored in full before
-    /// continuation.
+    /// Fuse one exact `VLoad` plus VEX packed logic, integer add/subtract, or
+    /// binary floating-point operation. The MMU helper commits only a
+    /// nonarchitectural transfer slot. One low vector register not named by the
+    /// guest instruction carries that value for the native operation and is
+    /// restored in full before continuation.
     pub(crate) fn try_lower_jit_vex_binary_memory_source(
         &mut self,
         block: &SmirBlock,
