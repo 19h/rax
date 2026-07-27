@@ -190,6 +190,8 @@ mod vex_bmi_reserved;
 #[cfg(test)]
 mod vex_chunk;
 #[cfg(test)]
+mod vex_chunk_extract;
+#[cfg(test)]
 mod vex_immediate_permute;
 #[cfg(test)]
 mod vex_lane_shuffle;

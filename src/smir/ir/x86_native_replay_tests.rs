@@ -127,6 +127,9 @@ mod vex_immediate_blend;
 #[path = "x86_native_replay_tests/vex_immediate_permute.rs"]
 mod vex_immediate_permute;
 
+#[path = "x86_native_replay_tests/vex_chunk_extract.rs"]
+mod vex_chunk_extract;
+
 #[path = "x86_native_replay_tests/vex_variable_blend.rs"]
 mod vex_variable_blend;
 

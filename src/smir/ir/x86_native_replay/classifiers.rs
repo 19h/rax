@@ -21,6 +21,7 @@ mod scalar_integer_move;
 mod scalar_lane_transfer;
 mod scalar_move;
 mod vex_alignr;
+mod vex_chunk_extract;
 mod vex_cross_lane_128;
 mod vex_fma3;
 mod vex_fma4;

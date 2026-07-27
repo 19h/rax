@@ -109,6 +109,7 @@ impl X86_64Lowerer {
             .or_else(|| span.instruction.vex_fp_dot_product_destination_index())
             .or_else(|| span.instruction.vex_immediate_blend_destination_index())
             .or_else(|| span.instruction.vex_immediate_permute_destination_index())
+            .or_else(|| span.instruction.vex_chunk_extract_destination_index())
             .or_else(|| span.instruction.vex_variable_blend_destination_index())
             .or_else(|| span.instruction.vex_variable_permute_destination_index())
             .or_else(|| span.instruction.vex_alignr_destination_index())
