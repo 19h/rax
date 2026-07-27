@@ -145,6 +145,10 @@ pub(crate) fn x86_native_replay_feature_requirements(
             let vex_unaligned_packed_fp_move =
                 span.instruction.is_vex_register_unaligned_packed_fp_move();
             let vex_packed_integer_move = span.instruction.is_vex_register_packed_integer_move();
+            let vex_register_broadcast = span
+                .instruction
+                .vex_register_broadcast_element_bits()
+                .is_some();
             let vex_lane_shuffle_avx2 = span.instruction.vex_register_lane_shuffle_needs_avx2();
             let vex_fp32_fp64_convert = span.instruction.is_vex_register_fp32_fp64_convert();
             let vex_zero = span.instruction.vex_zeroes_all_register_bits().is_some();
@@ -166,6 +170,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_aligned_packed_fp_move
                 || vex_unaligned_packed_fp_move
                 || vex_packed_integer_move
+                || vex_register_broadcast
                 || vex_lane_shuffle_avx2.is_some()
                 || vex_fp32_fp64_convert
                 || vex_zero;
@@ -201,6 +206,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_aligned_packed_fp_move
                 || vex_unaligned_packed_fp_move
                 || vex_packed_integer_move
+                || vex_register_broadcast
                 || vex_lane_shuffle_avx2.is_some()
                 || vex_fp32_fp64_convert
                 || vex_zero;
@@ -211,6 +217,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || alignr_avx2 == Some(true)
                 || cross_lane_128_avx2 == Some(true)
                 || vex_packed_extend_avx2 == Some(true)
+                || vex_register_broadcast
                 || vex_lane_shuffle_avx2 == Some(true);
             requirements.needs_fma |= span.instruction.is_vex_register_fma3();
             requirements.needs_fma4 |= is_fma4;

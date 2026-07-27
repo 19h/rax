@@ -194,6 +194,8 @@ mod vex_lane_shuffle;
 #[cfg(test)]
 mod vex_packed_integer_move;
 #[cfg(test)]
+mod vex_register_broadcast;
+#[cfg(test)]
 mod vex_unaligned_packed_fp_move;
 #[cfg(test)]
 mod vmx_controls;

@@ -281,6 +281,21 @@ pub fn x86_vex_packed_integer_move_replay_spans(
     })
 }
 
+/// Identify valid register-only AVX2 VEX scalar-broadcast replay groups in
+/// `block` in O(N) time and O(P) space for N operations and P unique guest
+/// PCs. VBROADCASTSS/SD and VPBROADCASTB/W/D/Q register forms are admitted;
+/// memory forms remain at the precise SMIR interpreter boundary.
+pub fn x86_vex_register_broadcast_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .vex_register_broadcast_element_bits()
+            .map(|_| (false, false, false))
+    })
+}
+
 /// Identify valid register-only AVX/AVX2 VEX one-source lane-shuffle replay
 /// groups in `block` in O(N) time and O(P) space for N operations and P unique
 /// guest PCs. Duplicate moves require AVX at both vector lengths; packed
@@ -1309,6 +1324,9 @@ pub fn x86_native_replay_spans(
             return Some((false, false, false));
         }
         if instruction.is_vex_register_packed_integer_move() {
+            return Some((false, false, false));
+        }
+        if instruction.vex_register_broadcast_element_bits().is_some() {
             return Some((false, false, false));
         }
         if instruction.vex_register_lane_shuffle_needs_avx2().is_some() {

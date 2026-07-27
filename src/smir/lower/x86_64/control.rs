@@ -125,6 +125,7 @@ impl X86_64Lowerer {
                     .vex_unaligned_packed_fp_move_destination_index()
             })
             .or_else(|| span.instruction.vex_packed_integer_move_destination_index())
+            .or_else(|| span.instruction.vex_register_broadcast_destination_index())
             .or_else(|| span.instruction.vex_lane_shuffle_destination_index())
             .or_else(|| span.instruction.vex_fp32_fp64_convert_destination_index())
         {

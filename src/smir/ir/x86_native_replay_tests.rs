@@ -103,6 +103,9 @@ mod vex_unaligned_packed_fp_move;
 #[path = "x86_native_replay_tests/vex_packed_integer_move.rs"]
 mod vex_packed_integer_move;
 
+#[path = "x86_native_replay_tests/vex_register_broadcast.rs"]
+mod vex_register_broadcast;
+
 #[path = "x86_native_replay_tests/vex_lane_shuffle.rs"]
 mod vex_lane_shuffle;
 
