@@ -113,8 +113,10 @@ pub(super) unsafe extern "C" fn rax_jit_call(
         }
         if gr.vector_active != 0 {
             vcpu.regs.k = gr.k;
-            vcpu.mxcsr = gr.mxcsr;
         }
+    }
+    if gr.vector_active != 0 || gr.mxcsr_state_active != 0 {
+        vcpu.mxcsr = gr.mxcsr;
     }
     if gr.mmx_active != 0 {
         vcpu.regs.mm = gr.mm;
@@ -208,8 +210,10 @@ pub(super) unsafe extern "C" fn rax_jit_call(
         }
         if gr.vector_active != 0 {
             gr.k = vcpu.regs.k;
-            gr.mxcsr = vcpu.mxcsr;
         }
+    }
+    if gr.vector_active != 0 || gr.mxcsr_state_active != 0 {
+        gr.mxcsr = vcpu.mxcsr;
     }
     if gr.mmx_active != 0 {
         gr.mm = vcpu.regs.mm;

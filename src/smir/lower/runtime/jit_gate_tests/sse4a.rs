@@ -203,15 +203,21 @@ fn sse4a_movnt_gate_requires_memory_mode_and_exact_shape() {
 #[test]
 fn sse4a_state_detection_layout_and_o2_retention_are_exact() {
     assert_eq!(GuestRegs::default().xmm_state_active, 0);
+    assert_eq!(GuestRegs::default().mxcsr_state_active, 0);
     assert_eq!(
         std::mem::offset_of!(GuestRegs, xmm_state_active),
         std::mem::offset_of!(GuestRegs, umwait_control) + std::mem::size_of::<u64>()
     );
-    let field_end = std::mem::offset_of!(GuestRegs, xmm_state_active) + std::mem::size_of::<u64>();
+    assert_eq!(
+        std::mem::offset_of!(GuestRegs, mxcsr_state_active),
+        std::mem::offset_of!(GuestRegs, xmm_state_active) + std::mem::size_of::<u64>()
+    );
+    let field_end =
+        std::mem::offset_of!(GuestRegs, mxcsr_state_active) + std::mem::size_of::<u64>();
     assert!(field_end <= std::mem::size_of::<GuestRegs>());
     assert!(
         std::mem::size_of::<GuestRegs>() - field_end < std::mem::align_of::<GuestRegs>(),
-        "only trailing repr(C) alignment padding may follow xmm_state_active"
+        "only trailing repr(C) alignment padding may follow mxcsr_state_active"
     );
 
     let mut function = function_with(bitfield(

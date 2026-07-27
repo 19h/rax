@@ -29,6 +29,8 @@ mod movbe;
 pub use movbe::*;
 mod movrs;
 pub use movrs::*;
+mod mxcsr;
+pub use mxcsr::*;
 mod push_value;
 pub use push_value::*;
 mod mmx;

@@ -125,6 +125,8 @@ impl X86_64Lowerer {
 
             OpKind::X86Clts => self.emit_x86_clts(op)?,
 
+            OpKind::X86StoreMxcsr { .. } => self.emit_x86_store_mxcsr(op)?,
+
             OpKind::X86Msr(..) => self.emit_x86_msr(op)?,
 
             OpKind::X86WaitPkg(..) => self.emit_x86_waitpkg(op)?,

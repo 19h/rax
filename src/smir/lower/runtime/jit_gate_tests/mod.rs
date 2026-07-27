@@ -154,6 +154,8 @@ mod movbe;
 #[cfg(test)]
 mod msr;
 #[cfg(test)]
+mod mxcsr_store;
+#[cfg(test)]
 mod opmask;
 #[cfg(test)]
 mod pkru;

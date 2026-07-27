@@ -68,6 +68,8 @@ mod movbe_memory;
 #[cfg(test)]
 mod msr;
 #[cfg(test)]
+mod mxcsr;
+#[cfg(test)]
 mod opmask;
 #[cfg(test)]
 mod pkru;

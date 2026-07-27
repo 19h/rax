@@ -4518,11 +4518,11 @@ impl X86_64Vcpu {
         use crate::smir::lower::runtime::is_x86_aarch64_native_clobber_safe_excluding;
         #[cfg(target_arch = "x86_64")]
         use crate::smir::lower::runtime::{
-            is_native_clobber_safe_excluding, uses_x86_native_mmx_excluding,
-            uses_x86_native_vectors_excluding, uses_x86_x87_tag_state_excluding,
-            uses_x86_xmm_state_excluding, x86_jit_op_uses_mem_helper,
-            x86_native_mmx_features_supported_excluding, x86_native_mmx_pairs_valid_excluding,
-            x86_native_scalar_features_supported_excluding,
+            is_native_clobber_safe_excluding, uses_x86_mxcsr_state_excluding,
+            uses_x86_native_mmx_excluding, uses_x86_native_vectors_excluding,
+            uses_x86_x87_tag_state_excluding, uses_x86_xmm_state_excluding,
+            x86_jit_op_uses_mem_helper, x86_native_mmx_features_supported_excluding,
+            x86_native_mmx_pairs_valid_excluding, x86_native_scalar_features_supported_excluding,
             x86_native_vector_features_supported_excluding,
             x86_native_vector_uses_avx_ymm16_only_excluding,
             x86_native_vector_uses_k16_opmasks_excluding,
@@ -4860,6 +4860,8 @@ impl X86_64Vcpu {
             #[cfg(target_arch = "x86_64")]
             let uses_xmm_state = uses_x86_xmm_state_excluding(&func, &exits);
             #[cfg(target_arch = "x86_64")]
+            let uses_mxcsr_state = uses_x86_mxcsr_state_excluding(&func, &exits);
+            #[cfg(target_arch = "x86_64")]
             let uses_mmx = uses_x86_native_mmx_excluding(&func, &exits);
             #[cfg(target_arch = "x86_64")]
             let uses_x87_tag_state = uses_x86_x87_tag_state_excluding(&func, &exits);
@@ -4993,6 +4995,8 @@ impl X86_64Vcpu {
                 uses_vector,
                 #[cfg(target_arch = "x86_64")]
                 uses_xmm_state,
+                #[cfg(target_arch = "x86_64")]
+                uses_mxcsr_state,
                 #[cfg(target_arch = "x86_64")]
                 avx_ymm16_vector_state,
                 #[cfg(target_arch = "x86_64")]
@@ -5225,7 +5229,6 @@ impl X86_64Vcpu {
         }
         if region.uses_vector {
             gr.k = self.regs.k;
-            gr.mxcsr = self.mxcsr;
             gr.vector_active = if region.avx_ymm16_vector_state {
                 crate::smir::lower::runtime::X86_VECTOR_STATE_YMM16
             } else if region.narrow_vector_opmasks {
@@ -5234,7 +5237,11 @@ impl X86_64Vcpu {
                 crate::smir::lower::runtime::X86_VECTOR_STATE_K64
             };
         }
+        if region.uses_vector || region.uses_mxcsr_state {
+            gr.mxcsr = self.mxcsr;
+        }
         gr.xmm_state_active = u64::from(region.uses_xmm_state);
+        gr.mxcsr_state_active = u64::from(region.uses_mxcsr_state);
         if region.uses_mmx {
             gr.mm = self.regs.mm;
             gr.mmx_active = 1;
@@ -5334,8 +5341,10 @@ impl X86_64Vcpu {
             }
             if region.uses_vector {
                 self.regs.k = gr.k;
-                self.mxcsr = gr.mxcsr;
             }
+        }
+        if region.uses_vector || region.uses_mxcsr_state {
+            self.mxcsr = gr.mxcsr;
         }
         if region.uses_mmx {
             self.regs.mm = gr.mm;
@@ -6454,6 +6463,10 @@ mod jit_scalar_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_fp_estimate_tests.rs"]
 mod jit_fp_estimate_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_mxcsr_tests.rs"]
+mod jit_mxcsr_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_cpuid_tests.rs"]

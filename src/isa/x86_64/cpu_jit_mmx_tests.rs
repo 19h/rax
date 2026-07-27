@@ -33,6 +33,7 @@ fn jit_native_region_synchronizes_mmx_values_and_precise_guest_tags() {
         source_pages: Vec::new(),
         uses_vector: false,
         uses_xmm_state: false,
+        uses_mxcsr_state: false,
         avx_ymm16_vector_state: false,
         narrow_vector_opmasks: false,
         uses_mmx: true,

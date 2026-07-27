@@ -332,6 +332,10 @@ pub struct GuestRegs {
     /// `zmm` without activating the host AVX-512 entry trampoline. Interpreter
     /// callouts use this marker to synchronize the same state-backed image.
     pub xmm_state_active: u64,
+    /// Non-zero when a region reads or writes architectural MXCSR without
+    /// activating the native vector entry trampoline. Interpreter callouts use
+    /// this marker to synchronize `mxcsr` independently of the vector file.
+    pub mxcsr_state_active: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -419,6 +423,7 @@ impl Default for GuestRegs {
             pat: crate::isa::x86_64::execute::system::IA32_PAT_RESET,
             umwait_control: 0,
             xmm_state_active: 0,
+            mxcsr_state_active: 0,
         }
     }
 }
