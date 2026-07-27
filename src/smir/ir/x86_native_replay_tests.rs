@@ -103,6 +103,9 @@ mod vex_unaligned_packed_fp_move;
 #[path = "x86_native_replay_tests/vex_packed_integer_move.rs"]
 mod vex_packed_integer_move;
 
+#[path = "x86_native_replay_tests/vex_lane_shuffle.rs"]
+mod vex_lane_shuffle;
+
 #[path = "x86_native_replay_tests/vex_widening_dword_multiply.rs"]
 mod vex_widening_dword_multiply;
 

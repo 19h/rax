@@ -190,6 +190,8 @@ mod vex_bmi_reserved;
 #[cfg(test)]
 mod vex_chunk;
 #[cfg(test)]
+mod vex_lane_shuffle;
+#[cfg(test)]
 mod vex_packed_integer_move;
 #[cfg(test)]
 mod vex_unaligned_packed_fp_move;

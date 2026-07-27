@@ -281,6 +281,22 @@ pub fn x86_vex_packed_integer_move_replay_spans(
     })
 }
 
+/// Identify valid register-only AVX/AVX2 VEX one-source lane-shuffle replay
+/// groups in `block` in O(N) time and O(P) space for N operations and P unique
+/// guest PCs. Duplicate moves require AVX at both vector lengths; packed
+/// immediate shuffles require AVX for VEX.128 and AVX2 for VEX.256. Memory
+/// forms remain at the precise SMIR interpreter boundary.
+pub fn x86_vex_lane_shuffle_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .vex_register_lane_shuffle_needs_avx2()
+            .map(|_| (false, false, false))
+    })
+}
+
 /// Identify operandless AVX `VZEROUPPER`/`VZEROALL` replay groups in `block`
 /// in O(N) time and O(P) space for N operations and P unique guest PCs.
 /// Both instructions require AVX; their complete 512-bit architectural state
@@ -1293,6 +1309,9 @@ pub fn x86_native_replay_spans(
             return Some((false, false, false));
         }
         if instruction.is_vex_register_packed_integer_move() {
+            return Some((false, false, false));
+        }
+        if instruction.vex_register_lane_shuffle_needs_avx2().is_some() {
             return Some((false, false, false));
         }
         if let Some(requirements) = instruction.evex_register_logic_requirements() {

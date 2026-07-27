@@ -27,6 +27,7 @@ mod vex_fma4;
 mod vex_fp_dot_product;
 mod vex_fp_logic;
 mod vex_immediate_blend;
+mod vex_lane_shuffle;
 mod vex_packed_string;
 mod vex_scalar_insert;
 mod vex_variable_blend;
