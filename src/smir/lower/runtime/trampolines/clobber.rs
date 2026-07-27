@@ -260,6 +260,7 @@ pub(crate) fn block_is_clobber_safe(
             block,
             i,
             allow_mem,
+            x86_instruction_bytes,
             &virtual_definitions,
             &virtual_uses,
         ) {

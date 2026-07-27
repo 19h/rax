@@ -1,19 +1,22 @@
-//! Fail-closed helper-backed VEX packed-binary memory-source admission.
+//! Fail-closed helper-backed VEX binary memory-source admission.
 
 use std::collections::HashMap;
 
+use crate::smir::ir::X86InstructionBytes;
 use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix, X86VecAlign, X86VecMap};
 use crate::smir::ir::types::{
-    ArchReg, FpRoundMode, VReg, VecElementType, VecWidth, X86FpBinaryOp, X86Reg,
+    ArchReg, BlockId, FpRoundMode, GuestAddr, MemWidth, OpWidth, SignExtend, SrcOperand, VReg,
+    VecElementType, VecWidth, X86FpBinaryOp, X86Reg,
 };
 
 use super::x86_jit_mem_address_shape_valid;
 
-/// Exact contiguous `VLoad` plus VEX packed-binary sequence consumed by the
+/// Exact contiguous VEX binary memory-source sequence consumed by the
 /// helper-backed lowerer.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct X86JitVexBinaryMemorySequence {
     pub(crate) consumed: usize,
+    pub(crate) memory_size: u32,
     pub(crate) destination: u8,
     pub(crate) source1: u8,
     pub(crate) width: VecWidth,
@@ -82,12 +85,13 @@ fn vex_packed_fp_binary_encoding_valid(
         )
 }
 
-/// Validate one full-width, unmasked VEX.128/VEX.256 packed logic, integer
-/// add/subtract, or binary32/binary64 arithmetic memory source. The lifter
-/// represents these instructions as one virtual `VLoad` immediately consumed
-/// by the corresponding binary operation. Exact single-definition/single-use
-/// checks prevent the fused lowerer from hiding any independently observable
-/// virtual value.
+/// Validate one unmasked VEX.128/VEX.256 packed logic, integer add/subtract, or
+/// binary32/binary64 arithmetic memory source, or one defined `VEX.L=0` scalar
+/// binary32/binary64 arithmetic source. Packed forms are an exact two-op
+/// `VLoad`/consumer pair. Scalar forms are the complete lane-extract,
+/// destination-clear, and lane-insert chain plus exact instruction-byte
+/// provenance. Single-definition/single-use checks prevent the fused lowerer
+/// from hiding any independently observable virtual value.
 ///
 /// The classifier is O(1); callers build the definition/use maps once in O(N)
 /// time and O(V) space for N operations and V virtual registers.
@@ -95,6 +99,7 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
     allow_mem: bool,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
 ) -> Option<X86JitVexBinaryMemorySequence> {
@@ -102,6 +107,15 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
         return None;
     }
     let load = block.ops.get(index)?;
+    if matches!(load.kind, OpKind::Load { .. }) {
+        return x86_jit_vex_scalar_fp_binary_memory_sequence(
+            block,
+            index,
+            instruction_bytes,
+            virtual_definitions,
+            virtual_uses,
+        );
+    }
     let (temporary, width) = match &load.kind {
         OpKind::VLoad { dst, addr, width }
             if matches!(dst, VReg::Virtual(_))
@@ -254,6 +268,7 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
 
     Some(X86JitVexBinaryMemorySequence {
         consumed: 2,
+        memory_size: width.bytes(),
         destination,
         source1,
         width,
@@ -261,5 +276,272 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
         opcode,
         w,
         needs_avx2,
+    })
+}
+
+fn virtual_single_definition_single_use(
+    register: VReg,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> bool {
+    matches!(register, VReg::Virtual(_))
+        && virtual_definitions.get(&register) == Some(&1)
+        && virtual_uses.get(&register) == Some(&1)
+}
+
+fn x86_jit_vex_scalar_fp_binary_memory_sequence(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<X86JitVexBinaryMemorySequence> {
+    let load = block.ops.get(index)?;
+    let (loaded_scalar, memory_size, elem) = match &load.kind {
+        OpKind::Load {
+            dst,
+            addr,
+            width: MemWidth::B4,
+            sign: SignExtend::Zero,
+        } if x86_jit_mem_address_shape_valid(addr) => (*dst, 4, VecElementType::F32),
+        OpKind::Load {
+            dst,
+            addr,
+            width: MemWidth::B8,
+            sign: SignExtend::Zero,
+        } if x86_jit_mem_address_shape_valid(addr) => (*dst, 8, VecElementType::F64),
+        _ => return None,
+    };
+    if !virtual_single_definition_single_use(loaded_scalar, virtual_definitions, virtual_uses) {
+        return None;
+    }
+    let same_pc = |offset: usize| {
+        block
+            .ops
+            .get(index + offset)
+            .is_some_and(|op| op.guest_pc == load.guest_pc)
+    };
+
+    let source_vector = match &block.ops.get(index + 1)?.kind {
+        OpKind::VBroadcast {
+            dst,
+            scalar,
+            elem: broadcast_elem,
+            lanes: 1,
+        } if *scalar == loaded_scalar && *broadcast_elem == elem => *dst,
+        _ => return None,
+    };
+    if !same_pc(1)
+        || !virtual_single_definition_single_use(source_vector, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+
+    let binary = block.ops.get(index + 2)?;
+    let (binary_result, source1) = match &binary.kind {
+        OpKind::X86FpBinary {
+            dst,
+            src1,
+            src2,
+            mask: None,
+            elem: binary_elem,
+            lanes: 1,
+            op,
+            round: FpRoundMode::Dynamic,
+            suppress_exceptions: false,
+        } if *src2 == source_vector
+            && *binary_elem == elem
+            && matches!(
+                op,
+                X86FpBinaryOp::Add
+                    | X86FpBinaryOp::Mul
+                    | X86FpBinaryOp::Sub
+                    | X86FpBinaryOp::Min
+                    | X86FpBinaryOp::Div
+                    | X86FpBinaryOp::Max
+            ) =>
+        {
+            (*dst, *src1)
+        }
+        _ => return None,
+    };
+    if !same_pc(2)
+        || !virtual_single_definition_single_use(binary_result, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+    let source1_index = low_vex_vector_index(&source1, VecWidth::V128)?;
+    let Some(X86OpHint::VexOp {
+        map: X86VecMap::Map0F,
+        pp: prefix,
+        opcode,
+        width: VecWidth::V128,
+        w,
+    }) = binary.x86_hint
+    else {
+        return None;
+    };
+    let expected_prefix = match elem {
+        VecElementType::F32 => X86SsePrefix::Rep,
+        VecElementType::F64 => X86SsePrefix::Repne,
+        _ => unreachable!("scalar binary classifier selected F32/F64"),
+    };
+    let expected_op = match opcode {
+        0x58 => X86FpBinaryOp::Add,
+        0x59 => X86FpBinaryOp::Mul,
+        0x5C => X86FpBinaryOp::Sub,
+        0x5D => X86FpBinaryOp::Min,
+        0x5E => X86FpBinaryOp::Div,
+        0x5F => X86FpBinaryOp::Max,
+        _ => return None,
+    };
+    let OpKind::X86FpBinary { op, .. } = &binary.kind else {
+        unreachable!("validated scalar FP binary operation")
+    };
+    if prefix != expected_prefix || *op != expected_op {
+        return None;
+    }
+
+    let scalar_result = match &block.ops.get(index + 3)?.kind {
+        OpKind::VExtractLane {
+            dst,
+            vec,
+            lane: 0,
+            elem: extract_elem,
+            sign: SignExtend::Zero,
+        } if *vec == binary_result && *extract_elem == elem => *dst,
+        _ => return None,
+    };
+    if !same_pc(3)
+        || !virtual_single_definition_single_use(scalar_result, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+
+    let xmm_lanes = VecWidth::V128.lanes(elem) as usize;
+    let mut upper_scalars = Vec::with_capacity(xmm_lanes - 1);
+    for lane in 1..xmm_lanes {
+        let offset = 3 + lane;
+        let upper_scalar = match &block.ops.get(index + offset)?.kind {
+            OpKind::VExtractLane {
+                dst,
+                vec,
+                lane: extract_lane,
+                elem: extract_elem,
+                sign: SignExtend::Zero,
+            } if *vec == source1 && usize::from(*extract_lane) == lane && *extract_elem == elem => {
+                *dst
+            }
+            _ => return None,
+        };
+        if !same_pc(offset)
+            || !virtual_single_definition_single_use(
+                upper_scalar,
+                virtual_definitions,
+                virtual_uses,
+            )
+        {
+            return None;
+        }
+        upper_scalars.push(upper_scalar);
+    }
+
+    let zero_offset = 3 + xmm_lanes;
+    let zero = match &block.ops.get(index + zero_offset)?.kind {
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Imm(0),
+            width: OpWidth::W64,
+        } => *dst,
+        _ => return None,
+    };
+    if !same_pc(zero_offset)
+        || !virtual_single_definition_single_use(zero, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+
+    let clear_offset = zero_offset + 1;
+    let destination = match &block.ops.get(index + clear_offset)?.kind {
+        OpKind::VBroadcast {
+            dst,
+            scalar,
+            elem: broadcast_elem,
+            lanes: 1,
+        } if *scalar == zero && *broadcast_elem == elem => *dst,
+        _ => return None,
+    };
+    if !same_pc(clear_offset) {
+        return None;
+    }
+    let destination_index = low_vex_vector_index(&destination, VecWidth::V128)?;
+
+    let low_insert_offset = clear_offset + 1;
+    if !matches!(
+        &block.ops.get(index + low_insert_offset)?.kind,
+        OpKind::VInsertLane {
+            dst,
+            vec,
+            scalar,
+            lane: 0,
+            elem: insert_elem,
+        } if *dst == destination
+            && *vec == destination
+            && *scalar == scalar_result
+            && *insert_elem == elem
+    ) || !same_pc(low_insert_offset)
+    {
+        return None;
+    }
+    for (lane, upper_scalar) in upper_scalars.into_iter().enumerate() {
+        let lane = lane + 1;
+        let offset = low_insert_offset + lane;
+        if !matches!(
+            &block.ops.get(index + offset)?.kind,
+            OpKind::VInsertLane {
+                dst,
+                vec,
+                scalar,
+                lane: insert_lane,
+                elem: insert_elem,
+            } if *dst == destination
+                && *vec == destination
+                && *scalar == upper_scalar
+                && usize::from(*insert_lane) == lane
+                && *insert_elem == elem
+        ) || !same_pc(offset)
+        {
+            return None;
+        }
+    }
+
+    let consumed = low_insert_offset + xmm_lanes;
+    let instruction = instruction_bytes.get(&(block.id, load.guest_pc))?;
+    let (encoded_destination, encoded_source1, encoded_pp, encoded_opcode, encoded_w) =
+        instruction.vex_scalar_memory_fp_arithmetic_fields()?;
+    let encoded_prefix = match encoded_pp {
+        2 => X86SsePrefix::Rep,
+        3 => X86SsePrefix::Repne,
+        _ => return None,
+    };
+    if encoded_destination != destination_index
+        || encoded_source1 != source1_index
+        || encoded_prefix != prefix
+        || encoded_opcode != opcode
+        || encoded_w != w
+    {
+        return None;
+    }
+
+    Some(X86JitVexBinaryMemorySequence {
+        consumed,
+        memory_size,
+        destination: destination_index,
+        source1: source1_index,
+        width: VecWidth::V128,
+        prefix,
+        opcode,
+        w,
+        needs_avx2: false,
     })
 }

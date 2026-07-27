@@ -174,7 +174,8 @@ pub struct GuestRegs {
     pub apx_enabled: u64,
     /// Address of `extern "C" fn(state, addr, dst_idx, size, zero_upper) -> ok`.
     /// Architectural indices write a complete post-load ZMM slot. The reserved
-    /// internal index 32 writes `vector_scratch` without modifying guest state.
+    /// internal index 32 writes a 4/8/16/32/64-byte operand to `vector_scratch`
+    /// without modifying guest state.
     pub vec_load_fn: u64,
     /// Address of `extern "C" fn(state, addr, src_idx, size) -> ok`.
     /// The helper reads the source bytes from `state.zmm[src_idx]`.

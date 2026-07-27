@@ -72,11 +72,10 @@ impl X86_64Lowerer {
         }
     }
 
-    /// Fuse one exact `VLoad` plus VEX packed logic, integer add/subtract, or
-    /// binary floating-point operation. The MMU helper commits only a
-    /// nonarchitectural transfer slot. One low vector register not named by the
-    /// guest instruction carries that value for the native operation and is
-    /// restored in full before continuation.
+    /// Fuse one exact VEX packed or scalar binary memory-source sequence. The
+    /// MMU helper commits only a nonarchitectural transfer slot. One low vector
+    /// register not named by the guest instruction carries that value for the
+    /// native operation and is restored in full before continuation.
     pub(crate) fn try_lower_jit_vex_binary_memory_source(
         &mut self,
         block: &SmirBlock,
@@ -88,26 +87,22 @@ impl X86_64Lowerer {
             block,
             index,
             true,
+            &self.x86_instruction_bytes,
             virtual_definitions,
             virtual_uses,
         ) else {
             return Ok(None);
         };
         let address = match &block.ops[index].kind {
-            OpKind::VLoad { addr, .. } => addr,
-            _ => unreachable!("validated VEX binary sequence starts with VLoad"),
-        };
-        let byte_size = match sequence.width {
-            VecWidth::V128 => 16,
-            VecWidth::V256 => 32,
-            _ => unreachable!("validated VEX binary width"),
+            OpKind::Load { addr, .. } | OpKind::VLoad { addr, .. } => addr,
+            _ => unreachable!("validated VEX binary sequence starts with a memory load"),
         };
         self.emit_jit_vector_mem_helper(
             block.ops[index].guest_pc,
             true,
             X86_JIT_VECTOR_SCRATCH_INDEX as u8,
             address,
-            byte_size,
+            sequence.memory_size,
             true,
             true,
         )?;

@@ -605,6 +605,7 @@ impl X86_64Lowerer {
                             block,
                             validate_idx,
                             true,
+                            &self.x86_instruction_bytes,
                             &virtual_definitions,
                             &virtual_uses,
                         )

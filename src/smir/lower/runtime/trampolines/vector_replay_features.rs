@@ -403,6 +403,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 block,
                 index,
                 true,
+                &func.x86_instruction_bytes,
                 &virtual_definitions,
                 &virtual_uses,
             ) {

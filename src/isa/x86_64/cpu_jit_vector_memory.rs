@@ -4,9 +4,10 @@ use super::X86_64Vcpu;
 use crate::smir::lower::X86_JIT_VECTOR_SCRATCH_INDEX;
 use crate::smir::lower::runtime::GuestRegs;
 
-/// Read one complete vector operand before modifying either an architectural
-/// ZMM slot or the reserved nonarchitectural fusion scratch. Architectural
-/// indices are 0..=31; index 32 names only `GuestRegs::vector_scratch`.
+/// Read one complete vector operand before modifying an architectural ZMM slot,
+/// or a 4/8/16/32/64-byte fusion operand into the reserved nonarchitectural
+/// scratch. Architectural indices are 0..=31; index 32 names only
+/// `GuestRegs::vector_scratch`.
 pub(super) unsafe extern "C" fn rax_jit_vec_load(
     state: *mut GuestRegs,
     addr: u64,
@@ -14,7 +15,13 @@ pub(super) unsafe extern "C" fn rax_jit_vec_load(
     size: u32,
     zero_upper: u32,
 ) -> u64 {
-    if dst_idx > X86_JIT_VECTOR_SCRATCH_INDEX || !matches!(size, 16 | 32 | 64) {
+    let scratch = dst_idx == X86_JIT_VECTOR_SCRATCH_INDEX;
+    let size_valid = if scratch {
+        matches!(size, 4 | 8 | 16 | 32 | 64)
+    } else {
+        matches!(size, 16 | 32 | 64)
+    };
+    if dst_idx > X86_JIT_VECTOR_SCRATCH_INDEX || !size_valid {
         return 0;
     }
     let Some(state) = (unsafe { state.as_mut() }) else {
@@ -37,8 +44,10 @@ pub(super) unsafe extern "C" fn rax_jit_vec_load(
     } else {
         *destination
     };
-    for (word, chunk) in value.iter_mut().zip(bytes.chunks_exact(8)) {
-        *word = u64::from_le_bytes(chunk.try_into().expect("8-byte vector chunk"));
+    for (word, chunk) in value.iter_mut().zip(bytes.chunks(8)) {
+        let mut word_bytes = word.to_le_bytes();
+        word_bytes[..chunk.len()].copy_from_slice(chunk);
+        *word = u64::from_le_bytes(word_bytes);
     }
     *destination = value;
     1
@@ -151,6 +160,24 @@ mod tests {
             ]
         );
         assert_eq!(state.vector_scratch[2..], [0; 6]);
+
+        for size in [4, 8] {
+            state.vector_scratch = [u64::MAX; 8];
+            assert_eq!(
+                unsafe {
+                    rax_jit_vec_load(&mut state, 0x2000, X86_JIT_VECTOR_SCRATCH_INDEX, size, 1)
+                },
+                1
+            );
+            let mut expected = [0u8; 64];
+            expected[..size as usize].copy_from_slice(&source[..size as usize]);
+            let actual: Vec<_> = state
+                .vector_scratch
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .collect();
+            assert_eq!(actual, expected, "{size}-byte scratch load");
+        }
 
         let scratch_before_fault = state.vector_scratch;
         assert_eq!(
