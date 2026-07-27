@@ -28,6 +28,8 @@ pub(crate) struct X86JitAtomicRmw<'a> {
     /// `None` for the immediate form, otherwise the architectural source GPR.
     pub(crate) source_reg: Option<VReg>,
     pub(crate) source_imm: i64,
+    /// `XCHG` replaces the element outright and publishes no flags.
+    pub(crate) swap: bool,
     /// Whether the architectural flags are still published.
     pub(crate) replay: bool,
     /// `INC`/`DEC` publish a different flag set than the equivalent Group-1
@@ -40,13 +42,16 @@ pub(crate) struct X86JitAtomicRmw<'a> {
 }
 
 fn atomic_group(op: AtomicOp) -> Option<(u8, u8, u8)> {
-    // (Group-1 opcode base, /digit, x86_binary_alu_shape tag)
+    // (Group-1 opcode base, /digit, x86_binary_alu_shape tag). `Swap` has no
+    // arithmetic at all: the element is replaced by the source, and the encoding
+    // fields are never consulted.
     match op {
         AtomicOp::Add => Some((0x00, 0, 0)),
         AtomicOp::Or => Some((0x08, 1, 1)),
         AtomicOp::And => Some((0x20, 4, 4)),
         AtomicOp::Sub => Some((0x28, 5, 5)),
         AtomicOp::Xor => Some((0x30, 6, 6)),
+        AtomicOp::Swap => Some((0x00, 0, u8::MAX)),
         _ => None,
     }
 }
@@ -144,6 +149,7 @@ pub(crate) fn x86_jit_mem_atomic_rmw_sequence<'a>(
         digit,
         source_reg,
         source_imm,
+        swap: matches!(op, AtomicOp::Swap),
         replay: false,
         replay_unary: None,
         writeback: None,
@@ -154,10 +160,11 @@ pub(crate) fn x86_jit_mem_atomic_rmw_sequence<'a>(
     // source), then XADD's architectural write-back of the loaded value.
     let mut tail = cursor + 1;
     let mut source_uses = 1usize;
-    if let Some(replay) = block
-        .ops
-        .get(tail)
-        .filter(|op| op.guest_pc == atomic.guest_pc)
+    if !result.swap
+        && let Some(replay) = block
+            .ops
+            .get(tail)
+            .filter(|op| op.guest_pc == atomic.guest_pc)
     {
         if let Some((
             replay_tag,

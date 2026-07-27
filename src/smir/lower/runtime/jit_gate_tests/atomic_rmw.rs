@@ -252,9 +252,9 @@ fn locked_inc_dec_and_folded_immediate_replays_are_recognized() {
 
 #[test]
 fn unmodeled_locked_shapes_fail_closed() {
-    // Only the Group-1 arithmetic/logic operations have an exact native form.
+    // Only the Group-1 arithmetic/logic operations and XCHG have an exact
+    // native form.
     for op in [
-        AtomicOp::Swap,
         AtomicOp::Nand,
         AtomicOp::Max,
         AtomicOp::Min,
@@ -333,6 +333,64 @@ fn unmodeled_locked_shapes_fail_closed() {
         ]),
         None
     );
+}
+
+#[test]
+fn exchange_forms_are_admitted_and_publish_no_flags() {
+    // `xchg [rdi+592],rcx` replaces the element outright; the loaded value may
+    // be written back to an architectural GPR or dropped entirely.
+    assert_eq!(
+        sequence_len(vec![atomic(
+            virt(1),
+            x86(X86Reg::Rcx),
+            AtomicOp::Swap,
+            MemWidth::B8
+        )]),
+        Some(1)
+    );
+    assert_eq!(
+        sequence_len(vec![
+            atomic(virt(1), x86(X86Reg::Rcx), AtomicOp::Swap, MemWidth::B8),
+            OpKind::Mov {
+                dst: x86(X86Reg::Rcx),
+                src: SrcOperand::Reg(virt(1)),
+                width: OpWidth::W64,
+            },
+        ]),
+        Some(2)
+    );
+    // XCHG writes no flags, so a Group-1 replay is not part of its shape.
+    assert_eq!(
+        sequence_len(vec![
+            atomic(virt(1), x86(X86Reg::Rcx), AtomicOp::Swap, MemWidth::B8),
+            OpKind::Add {
+                dst: virt(2),
+                src1: virt(1),
+                src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+        ]),
+        None
+    );
+    assert!(gate(
+        vec![atomic(
+            virt(1),
+            x86(X86Reg::Rcx),
+            AtomicOp::Swap,
+            MemWidth::B8
+        )],
+        true
+    ));
+    assert!(!gate(
+        vec![atomic(
+            virt(1),
+            x86(X86Reg::Rcx),
+            AtomicOp::Swap,
+            MemWidth::B8
+        )],
+        false
+    ));
 }
 
 #[test]

@@ -382,6 +382,40 @@ impl X86_64Lowerer {
         replay_unary: Option<u8>,
         writeback: Option<(PhysReg, OpWidth)>,
     ) -> Result<(), LowerError> {
+        self.emit_fused_mem_alu_rmw_swap(
+            guest_pc,
+            addr,
+            mem_width,
+            width,
+            opcode,
+            digit,
+            source,
+            replay,
+            replay_unary,
+            writeback,
+            false,
+        )
+    }
+
+    /// As [`Self::emit_fused_mem_alu_rmw_full`], additionally supporting the
+    /// `XCHG` form, whose stored element is the source itself rather than an
+    /// arithmetic combination and which publishes no flags at all.
+    #[cfg(feature = "smir-jit")]
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn emit_fused_mem_alu_rmw_swap(
+        &mut self,
+        guest_pc: u64,
+        addr: &Address,
+        mem_width: MemWidth,
+        width: OpWidth,
+        opcode: u8,
+        digit: u8,
+        source: &SrcOperand,
+        replay: bool,
+        replay_unary: Option<u8>,
+        writeback: Option<(PhysReg, OpWidth)>,
+        swap: bool,
+    ) -> Result<(), LowerError> {
         // Caller-frame layout after the flag-neutral reservation:
         //   [rsp+0]  original zero-extended memory value
         //   [rsp+8]  computed store value
@@ -430,6 +464,20 @@ impl X86_64Lowerer {
         // Compute the store value while preserving the incoming flags. PUSHFQ
         // shifts the staged register source from caller +16 to active +24;
         // ADC/SBB still read the incoming CF because PUSHFQ is flag-neutral.
+        if swap {
+            // The replacement element is the source itself.
+            let mut emitter = X86Emitter::new(&mut self.code);
+            match source {
+                SrcOperand::Reg(_) => {
+                    emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 16, OpWidth::W64)
+                }
+                SrcOperand::Imm(value) => emitter.emit_mov_ri(PhysReg::Rax, *value, OpWidth::W64),
+                _ => unreachable!("validated scalar RMW source"),
+            }
+            emitter.emit_mov_mr(PhysReg::Rsp, 8, PhysReg::Rax, OpWidth::W64);
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
+            return self.emit_fused_mem_alu_rmw_tail(guest_pc, addr, mem_width, writeback);
+        }
         {
             let mut emitter = X86Emitter::new(&mut self.code);
             emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 0, width);
@@ -517,6 +565,41 @@ impl X86_64Lowerer {
         Ok(())
     }
 
+    /// Commit a fused read-modify-write whose replacement element is already
+    /// staged at caller `[rsp+8]`: run the store helper, restore the scratch
+    /// accumulator, deliver the optional architectural write-back, and release
+    /// the caller frame. Every instruction here is `MOV`/`LEA`, so a flag image
+    /// published earlier survives unchanged.
+    #[cfg(feature = "smir-jit")]
+    pub(crate) fn emit_fused_mem_alu_rmw_tail(
+        &mut self,
+        guest_pc: u64,
+        addr: &Address,
+        mem_width: MemWidth,
+        writeback: Option<(PhysReg, OpWidth)>,
+    ) -> Result<(), LowerError> {
+        self.emit_jit_mem_op(
+            guest_pc,
+            false,
+            None,
+            None,
+            None,
+            None,
+            Some(24),
+            addr,
+            mem_width,
+            SignExtend::Zero,
+            32,
+        )?;
+        let mut emitter = X86Emitter::new(&mut self.code);
+        emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
+        if let Some((destination, destination_width)) = writeback {
+            emitter.emit_mov_rm(destination, PhysReg::Rsp, 0, destination_width);
+        }
+        emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 32);
+        Ok(())
+    }
+
     /// Fuse the LOCK-prefixed memory read-modify-write emitted by the x86
     /// lifter. The emulator realizes a locked ALU as an ordinary
     /// read-modify-write through the vCPU MMU in both interpreters, so the
@@ -546,7 +629,7 @@ impl X86_64Lowerer {
             Some(dst) => Some((self.get_dst_reg(dst)?, sequence.width)),
             None => None,
         };
-        self.emit_fused_mem_alu_rmw_full(
+        self.emit_fused_mem_alu_rmw_swap(
             sequence.guest_pc,
             sequence.addr,
             sequence.mem_width,
@@ -557,6 +640,7 @@ impl X86_64Lowerer {
             sequence.replay,
             sequence.replay_unary,
             writeback,
+            sequence.swap,
         )?;
         Ok(Some(sequence.consumed))
     }
