@@ -184,6 +184,8 @@ mod vector_prefix;
 #[cfg(test)]
 mod vex;
 #[cfg(test)]
+mod vex_aligned_packed_fp_move;
+#[cfg(test)]
 mod vex_bmi_reserved;
 #[cfg(test)]
 mod vex_chunk;

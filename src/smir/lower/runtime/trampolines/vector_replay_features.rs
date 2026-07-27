@@ -140,6 +140,8 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 .instruction
                 .vex_register_widening_dword_multiply_needs_avx2();
             let vex_packed_extend_avx2 = span.instruction.vex_register_packed_extend_needs_avx2();
+            let vex_aligned_packed_fp_move =
+                span.instruction.is_vex_register_aligned_packed_fp_move();
             let vex_unaligned_packed_fp_move =
                 span.instruction.is_vex_register_unaligned_packed_fp_move();
             let vex_fp32_fp64_convert = span.instruction.is_vex_register_fp32_fp64_convert();
@@ -159,6 +161,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_gfni_ymm.is_some()
                 || vex_vpclmulqdq_ymm.is_some()
                 || vex_packed_extend_avx2.is_some()
+                || vex_aligned_packed_fp_move
                 || vex_unaligned_packed_fp_move
                 || vex_fp32_fp64_convert
                 || vex_zero;
@@ -191,6 +194,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                     == Some(true)
                 || span.instruction.legacy_vex_register_scalar_move_needs_avx() == Some(true)
                 || span.instruction.legacy_vex_register_fp_sqrt_needs_avx() == Some(true)
+                || vex_aligned_packed_fp_move
                 || vex_unaligned_packed_fp_move
                 || vex_fp32_fp64_convert
                 || vex_zero;

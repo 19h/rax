@@ -118,6 +118,10 @@ impl X86_64Lowerer {
             .or_else(|| span.instruction.vex_packed_extend_destination_index())
             .or_else(|| {
                 span.instruction
+                    .vex_aligned_packed_fp_move_destination_index()
+            })
+            .or_else(|| {
+                span.instruction
                     .vex_unaligned_packed_fp_move_destination_index()
             })
             .or_else(|| span.instruction.vex_fp32_fp64_convert_destination_index())

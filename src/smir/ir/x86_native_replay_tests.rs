@@ -94,6 +94,9 @@ mod scalar_move;
 #[path = "x86_native_replay_tests/vex_packed_string.rs"]
 mod vex_packed_string;
 
+#[path = "x86_native_replay_tests/vex_aligned_packed_fp_move.rs"]
+mod vex_aligned_packed_fp_move;
+
 #[path = "x86_native_replay_tests/vex_unaligned_packed_fp_move.rs"]
 mod vex_unaligned_packed_fp_move;
 

@@ -198,6 +198,8 @@ mod trap;
 #[cfg(test)]
 mod vector;
 #[cfg(test)]
+mod vex_aligned_packed_fp_move_replay;
+#[cfg(test)]
 mod vex_alignr_replay;
 #[cfg(test)]
 mod vex_apx_mulx;

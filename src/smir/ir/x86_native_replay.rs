@@ -234,6 +234,22 @@ pub fn x86_vex_packed_extend_replay_spans(
     })
 }
 
+/// Identify valid register-only AVX VEX `VMOVAPS`/`VMOVAPD` replay groups in
+/// `block` in O(N) time and O(P) space for N operations and P unique guest
+/// PCs. VEX.128 and VEX.256 forms both require AVX. Memory forms remain at the
+/// precise SMIR interpreter boundary because their alignment faults must be
+/// checked against guest memory.
+pub fn x86_vex_aligned_packed_fp_move_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .is_vex_register_aligned_packed_fp_move()
+            .then_some((false, false, false))
+    })
+}
+
 /// Identify valid register-only AVX VEX `VMOVUPS`/`VMOVUPD` replay groups in
 /// `block` in O(N) time and O(P) space for N operations and P unique guest
 /// PCs. VEX.128 and VEX.256 forms both require AVX. Memory forms remain at the
@@ -1252,6 +1268,9 @@ pub fn x86_native_replay_spans(
             .legacy_vex_register_scalar_move_needs_avx()
             .is_some()
         {
+            return Some((false, false, false));
+        }
+        if instruction.is_vex_register_aligned_packed_fp_move() {
             return Some((false, false, false));
         }
         if instruction.is_vex_register_unaligned_packed_fp_move() {
