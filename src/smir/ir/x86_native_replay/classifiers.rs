@@ -31,6 +31,7 @@ mod vex_fp_dot_product;
 mod vex_fp_logic;
 mod vex_immediate_blend;
 mod vex_immediate_permute;
+mod vex_integer_dot_ext;
 mod vex_lane_shuffle;
 mod vex_mov_mask;
 mod vex_packed_string;

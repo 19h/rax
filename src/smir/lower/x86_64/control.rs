@@ -200,6 +200,7 @@ impl X86_64Lowerer {
             .vex_fma4_destination_index()
             .or_else(|| span.instruction.vex_vpermil2_destination_index())
             .or_else(|| span.instruction.vex_fp_dot_product_destination_index())
+            .or_else(|| span.instruction.vex_integer_dot_ext_destination_index())
             .or_else(|| span.instruction.vex_immediate_blend_destination_index())
             .or_else(|| span.instruction.vex_immediate_permute_destination_index())
             .or_else(|| span.instruction.vex_chunk_extract_destination_index())
