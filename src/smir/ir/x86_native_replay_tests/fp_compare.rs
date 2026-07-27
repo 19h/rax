@@ -35,7 +35,10 @@ impl CompareKind {
 
     fn controls(self) -> Vec<(u8, bool)> {
         if self.fields().3 {
-            (0..=2).flat_map(|ll| [(ll, false), (ll, true)]).collect()
+            (0..=2)
+                .flat_map(|ll| [(ll, false), (ll, true)])
+                .chain([(3, true)])
+                .collect()
         } else {
             (0..=2).map(|ll| (ll, false)).chain([(0, true)]).collect()
         }
@@ -86,7 +89,7 @@ fn requirements(kind: CompareKind, ll: u8, suppress_exceptions: bool) -> (bool, 
 }
 
 #[test]
-fn classifier_covers_144000_legal_control_mask_extension_and_predicate_encodings() {
+fn classifier_covers_158400_legal_control_mask_extension_and_predicate_encodings() {
     let sources = [0u8, 8, 16, 24, 31];
     let destinations = [0u8, 7];
     let writemasks = [0u8, 1, 7];
@@ -125,7 +128,7 @@ fn classifier_covers_144000_legal_control_mask_extension_and_predicate_encodings
         }
     }
 
-    assert_eq!(classified, 144_000);
+    assert_eq!(classified, 158_400);
 }
 
 #[test]
@@ -160,9 +163,9 @@ fn classifier_rejects_reserved_or_unsafe_frontiers() {
         );
     }
 
-    // Scalar vvvv/V', all three defined LLIG values, SAE, and every predicate
-    // are architectural operands/control bits. L'L=11 remains reserved because
-    // EVEX.b selects SAE rather than repurposing L'L as embedded rounding.
+    // Intel SDM revision 092 specifies scalar LLIG and SAE; Intel XED
+    // 2026.07.15 independently accepts SAE L'L=11b while rejecting the same
+    // control value without SAE.
     for kind in [
         CompareKind::ScalarF16,
         CompareKind::ScalarF32,
@@ -172,7 +175,8 @@ fn classifier_rejects_reserved_or_unsafe_frontiers() {
             for suppress_exceptions in [false, true] {
                 for predicate in 0..32 {
                     let bytes = encoding(kind, ll, suppress_exceptions, 7, 31, 31, 7, predicate);
-                    let expected = (ll != 3).then_some((false, kind.fields().4));
+                    let expected =
+                        (suppress_exceptions || ll != 3).then_some((false, kind.fields().4));
                     assert_eq!(
                         X86InstructionBytes::new(&bytes)
                             .unwrap()

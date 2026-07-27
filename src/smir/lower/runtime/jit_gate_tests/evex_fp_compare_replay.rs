@@ -38,7 +38,10 @@ impl CompareKind {
 
     fn controls(self) -> Vec<(u8, bool)> {
         if self.fields().3 {
-            (0..=2).flat_map(|ll| [(ll, false), (ll, true)]).collect()
+            (0..=2)
+                .flat_map(|ll| [(ll, false), (ll, true)])
+                .chain([(3, true)])
+                .collect()
         } else {
             (0..=2).map(|ll| (ll, false)).chain([(0, true)]).collect()
         }
@@ -118,9 +121,9 @@ fn replay_feature_aggregation_requires_bw_and_exact_vl_fp16_features() {
         (CompareKind::PackedF16, 0, true),
         (CompareKind::PackedF32, 1, false),
         (CompareKind::PackedF64, 2, false),
-        (CompareKind::ScalarF16, 2, true),
+        (CompareKind::ScalarF16, 3, true),
         (CompareKind::ScalarF32, 2, false),
-        (CompareKind::ScalarF64, 2, true),
+        (CompareKind::ScalarF64, 3, true),
     ] {
         let bytes = encoding(kind, ll, suppress_exceptions, 7, 17, 24, 1, 31);
         let function = function(&bytes);
@@ -147,7 +150,7 @@ fn replay_feature_aggregation_requires_bw_and_exact_vl_fp16_features() {
 }
 
 #[test]
-fn replay_admits_and_emits_150_optimized_legal_encodings_and_fails_closed() {
+fn replay_admits_and_emits_165_optimized_legal_encodings_and_fails_closed() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -161,6 +164,7 @@ fn replay_admits_and_emits_150_optimized_legal_encodings_and_fails_closed() {
     let mut admitted = 0usize;
     let mut missing_provenance_checked = false;
     let mut memory_metadata_checked = false;
+    let mut reserved_control_checked = false;
 
     for kind in CompareKind::ALL {
         for (ll, suppress_exceptions) in kind.controls() {
@@ -198,6 +202,16 @@ fn replay_admits_and_emits_150_optimized_legal_encodings_and_fails_closed() {
                     );
                     assert!(!is_native_clobber_safe(&malformed));
                     memory_metadata_checked = true;
+                }
+                if !reserved_control_checked {
+                    let invalid = encoding(CompareKind::ScalarF32, 3, false, 1, 9, 10, 1, 3);
+                    let mut reserved = function.clone();
+                    reserved.x86_instruction_bytes.insert(
+                        (BlockId(0), PC),
+                        crate::smir::ir::X86InstructionBytes::new(&invalid).unwrap(),
+                    );
+                    assert!(!is_native_clobber_safe(&reserved));
+                    reserved_control_checked = true;
                 }
 
                 crate::smir::optimize::optimize_function(
@@ -242,8 +256,8 @@ fn replay_admits_and_emits_150_optimized_legal_encodings_and_fails_closed() {
         }
     }
 
-    assert!(missing_provenance_checked && memory_metadata_checked);
-    assert_eq!(admitted, 150);
+    assert!(missing_provenance_checked && memory_metadata_checked && reserved_control_checked);
+    assert_eq!(admitted, 165);
 }
 
 #[cfg(target_arch = "x86_64")]

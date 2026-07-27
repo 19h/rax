@@ -112,8 +112,8 @@ fn register_evex_fp_compare_replay_closes_48_generated_lift_lower_gaps() {
 
     // Exhaust map/opcode/pp/W/L'L/immediate/length and every R/X/B/R'
     // combination against independently parsed Intel rows. Register-source
-    // SAE controls are checked by the IR classifier test because the source
-    // inventory records one opcode row rather than a second encoding row.
+    // SAE controls are checked explicitly below because the source inventory
+    // records one opcode row rather than a second encoding row.
     for extensions in 0u8..=15 {
         for map in 0u8..=7 {
             for opcode in u8::MIN..=u8::MAX {
@@ -206,4 +206,50 @@ fn register_evex_fp_compare_replay_closes_48_generated_lift_lower_gaps() {
             "{bytes:02X?}"
         );
     }
+
+    let mut sae_scalar_forms = 0usize;
+    for (p0, p1, needs_fp16) in [(0xF3, 0x7E, true), (0xF1, 0x7E, false), (0xF1, 0xFF, false)] {
+        let reserved = [0x62, p0, p1, 0x69, 0xC2, 0xC8, 0x03];
+        assert_eq!(
+            X86InstructionBytes::new(&reserved)
+                .unwrap()
+                .evex_register_fp_compare_requirements(),
+            None,
+            "{reserved:02X?}"
+        );
+        let mut lifter = X86_64Lifter::strict();
+        let mut context = LiftContext::new(SourceArch::X86_64);
+        assert!(
+            lifter.lift_insn(0x1000, &reserved, &mut context).is_err(),
+            "{reserved:02X?}"
+        );
+
+        let sae = [0x62, p0, p1, 0x79, 0xC2, 0xC8, 0x03];
+        let instruction = X86InstructionBytes::new(&sae).unwrap();
+        assert_eq!(
+            instruction.evex_register_fp_compare_requirements(),
+            Some((false, needs_fp16)),
+            "{sae:02X?}"
+        );
+        let mut context = LiftContext::new(SourceArch::X86_64);
+        let result = lifter
+            .lift_insn(0x1000, &sae, &mut context)
+            .unwrap_or_else(|error| panic!("{sae:02X?}: {error:?}"));
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.ops = result.ops;
+        block.set_terminator(Terminator::Return { values: vec![] });
+        let mut function = SmirFunction::new(FunctionId(0), block.id, 0x1000);
+        function.add_block(block);
+        function
+            .x86_instruction_bytes
+            .insert((BlockId(0), 0x1000), instruction);
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer
+            .lower_function(&function)
+            .unwrap_or_else(|error| panic!("{sae:02X?}: {error:?}"));
+        let code = lowerer.finalize().expect("finalize scalar SAE LLIG replay");
+        assert!(code.windows(sae.len()).any(|window| window == sae));
+        sae_scalar_forms += 1;
+    }
+    assert_eq!(sae_scalar_forms, 3);
 }

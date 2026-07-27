@@ -405,6 +405,10 @@ impl X86_64Lifter {
         if (fp16 && (prefix.encoding != VecEncodingKind::Evex || prefix.w))
             || (!scalar && prefix.l_bits == 3)
             || (prefix.encoding == VecEncodingKind::Evex
+                && scalar
+                && !prefix.b
+                && prefix.l_bits == 3)
+            || (prefix.encoding == VecEncodingKind::Evex
                 && ((elem == VecElementType::F32 && prefix.w)
                     || (elem == VecElementType::F64 && !prefix.w)))
             || (prefix.encoding == VecEncodingKind::Evex && prefix.zeroing)
