@@ -19,9 +19,9 @@
 //! This test pins layer 1 directly and end-to-end. A hot loop containing a
 //! register-only masked packed move uses exact native replay when the host
 //! provides the required AVX-512 state bridge and otherwise remains on the
-//! interpreter; both paths must produce the same architectural result. These
-//! paths are not reachable by single-instruction differential runs, which never
-//! trigger hot-loop promotion.
+//! interpreter; both paths must produce the same architectural result. This
+//! exercises the production vCPU region compiler and execution handoff rather
+//! than only the lowerer's single-instruction differential surface.
 
 #![cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 
@@ -170,8 +170,9 @@ fn lifter_accepts_modeled_evex_masking_broadcast_and_embedded_rounding() {
 }
 
 // ---------------------------------------------------------------------------
-// Layer 1 end-to-end: a hot loop with a masked EVEX move is declined by the JIT
-// and runs correctly on the interpreter (which honors the opmask).
+// Layer 1 end-to-end: a hot loop with a masked EVEX move uses exact native
+// replay when the host supports its state boundary and otherwise runs correctly
+// on the interpreter (which honors the opmask).
 // ---------------------------------------------------------------------------
 
 const LOAD_ADDR: u64 = 0x10_0000;
@@ -287,24 +288,36 @@ fn hot_masked_evex_move_matches_host_admission_and_is_correct() {
         "masked EVEX packed-move admission must match host capabilities"
     );
 
-    // Drive the whole hot loop through the selected tier and validate the
-    // architectural merge-masked result.
+    // `jit_try_block` compiles and executes an explicit region without inserting
+    // it into the auto-promotion cache counted by `jit_region_count`. Validate
+    // the native execution frontier directly; on a rejected host the probe must
+    // leave all execution state at the loop head for interpreter fallback.
+    let after_probe = vcpu.get_regs().unwrap();
+    if host_can_replay {
+        assert_eq!(after_probe.rcx & 0xffff_ffff, 0, "native loop drained");
+        assert_eq!(
+            after_probe.rip,
+            LOAD_ADDR + 10,
+            "native region must hand off at HLT"
+        );
+    } else {
+        assert_eq!(
+            after_probe.rcx & 0xffff_ffff,
+            200,
+            "declined JIT probe must not execute the loop"
+        );
+        assert_eq!(
+            after_probe.rip, LOAD_ADDR,
+            "declined JIT probe must remain at the loop head"
+        );
+    }
+
+    // Drive the fallback path when needed, consume HLT after native handoff,
+    // and validate the architectural merge-masked result.
     run_to_hlt(&mut vcpu);
     let out = vcpu.get_regs().unwrap();
 
     assert_eq!(out.rcx & 0xffff_ffff, 0, "loop drained");
-    let region_count = vcpu.jit_region_count();
-    if host_can_replay {
-        assert!(
-            region_count >= 1,
-            "an AVX-512-capable host must compile the packed-move loop"
-        );
-    } else {
-        assert_eq!(
-            region_count, 0,
-            "a host without the required AVX-512 features must retain fallback"
-        );
-    }
 
     // Merge masking: dword lane j takes src (0x11111111) where k1 bit j == 1,
     // else keeps dst (0x22222222). With k1=0x5555 → low dword of each u64 is the
