@@ -3,6 +3,34 @@
 use super::X86InstructionBytes;
 
 impl X86InstructionBytes {
+    /// Validate one register-destination F16C VEX `VCVTPS2PH` instruction.
+    ///
+    /// The instruction requires map 0F3A, `pp=66`, `W=0`, and reserved
+    /// `VEX.vvvv=1111b`; `VEX.L` selects four or eight FP32 source elements.
+    /// ModRM.reg names the source and ModRM.r/m names the destination. VEX.X
+    /// and all five high immediate bits are ignored but retained in the exact
+    /// source-byte universe. Memory destinations and malformed shapes fail
+    /// closed.
+    pub fn is_vex_register_fp16_narrow(&self) -> bool {
+        matches!(
+            self.as_slice(),
+            [0xC4, p0, p1, 0x1D, modrm, _]
+                if p0 & 0x1F == 3 && p1 & 0xFB == 0x79 && modrm >> 6 == 3
+        )
+    }
+
+    /// Return the architectural VEX destination after exact validation. The
+    /// destination uses ModRM.r/m plus inverted VEX.B, not ModRM.reg/VEX.R.
+    pub(crate) fn vex_fp16_narrow_destination_index(&self) -> Option<u8> {
+        if !self.is_vex_register_fp16_narrow() {
+            return None;
+        }
+        let [0xC4, p0, _, 0x1D, modrm, _] = self.as_slice() else {
+            unreachable!("VEX FP16 narrowing shape was validated");
+        };
+        Some((modrm & 7) + if p0 & 0x20 == 0 { 8 } else { 0 })
+    }
+
     /// Validate one register-only EVEX `VCVTPD2PH`, `VCVTPS2PH`, or
     /// `VCVTPS2PHX` instruction.
     ///

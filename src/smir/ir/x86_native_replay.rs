@@ -1020,6 +1020,21 @@ pub fn x86_vex_fp16_widen_replay_spans(
     })
 }
 
+/// Identify valid register-destination F16C VEX `VCVTPS2PH` replay groups in
+/// `block` in O(N) time and O(P) space for N operations and P unique guest
+/// PCs. Every memory-destination form remains at the precise SMIR interpreter
+/// boundary.
+pub fn x86_vex_fp16_narrow_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .is_vex_register_fp16_narrow()
+            .then_some((false, false, false))
+    })
+}
+
 /// Identify valid register-only EVEX binary16 narrowing-conversion replay
 /// groups in `block` in O(N) time and O(P) space for N operations and P unique
 /// guest PCs. Register-only `VCVTPD2PH`, `VCVTPS2PH`, and `VCVTPS2PHX` forms
@@ -1441,6 +1456,9 @@ pub fn x86_native_replay_spans(
             return Some((false, false, false));
         }
         if instruction.is_vex_register_fp16_widen() {
+            return Some((false, false, false));
+        }
+        if instruction.is_vex_register_fp16_narrow() {
             return Some((false, false, false));
         }
         if let Some(requirements) = instruction.evex_register_logic_requirements() {

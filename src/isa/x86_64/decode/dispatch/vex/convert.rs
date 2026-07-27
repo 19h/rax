@@ -8,9 +8,32 @@ use crate::isa::x86_64::execute;
 
 const MXCSR_STATUS_MASK: u32 = 0x3F;
 const MXCSR_INVALID: u32 = 1 << 0;
+const MXCSR_DENORMAL: u32 = 1 << 1;
+const MXCSR_OVERFLOW: u32 = 1 << 3;
+const MXCSR_UNDERFLOW: u32 = 1 << 4;
+const MXCSR_PRECISION: u32 = 1 << 5;
+const MXCSR_DAZ: u32 = 1 << 6;
+const MXCSR_UNDERFLOW_MASK: u32 = 1 << 11;
 const CR4_OSXMMEXCPT: u64 = 1 << 10;
 
 impl X86_64Vcpu {
+    /// Accrue SIMD floating-point status and report an unmasked exception
+    /// before the caller commits its architectural destination.
+    fn commit_vex_fp_status(&mut self, status: u32, mxcsr_before: u32) -> Result<bool> {
+        self.mxcsr |= status;
+        let masks = (mxcsr_before >> 7) & MXCSR_STATUS_MASK;
+        if status & !masks == 0 {
+            return Ok(false);
+        }
+        let vector = if self.sregs.cr4 & CR4_OSXMMEXCPT != 0 {
+            19 // #XM: SIMD floating-point exception
+        } else {
+            6 // #UD when CR4.OSXMMEXCPT is clear
+        };
+        self.inject_exception(vector, None)?;
+        Ok(true)
+    }
+
     /// VEX.256/128.66.0F38.W0 13 /r: VCVTPH2PS.
     pub(in crate::isa::x86_64) fn execute_vex_vcvtph2ps(
         &mut self,
@@ -41,15 +64,7 @@ impl X86_64Vcpu {
         }
 
         let mxcsr_before = self.mxcsr;
-        self.mxcsr |= status;
-        let masks = (mxcsr_before >> 7) & MXCSR_STATUS_MASK;
-        if status & !masks != 0 {
-            let vector = if self.sregs.cr4 & CR4_OSXMMEXCPT != 0 {
-                19 // #XM: SIMD floating-point exception
-            } else {
-                6 // #UD when CR4.OSXMMEXCPT is clear
-            };
-            self.inject_exception(vector, None)?;
+        if self.commit_vex_fp_status(status, mxcsr_before)? {
             return Ok(None);
         }
 
@@ -93,7 +108,16 @@ impl X86_64Vcpu {
         let xmm_src = reg as usize;
         let lanes = if vex_l == 0 { 4 } else { 8 };
         let mut halves = [0u16; 8];
+        if is_memory {
+            // Type 11 memory-fault conditions take precedence over SIMD
+            // floating-point exceptions. Preflight the complete destination
+            // so a late page fault also cannot expose a partial packed store.
+            self.mmu
+                .preflight_write_range(addr, lanes * 2, &self.sregs)?;
+        }
 
+        let mxcsr_before = self.mxcsr;
+        let mut status = 0;
         for lane in 0..lanes {
             let bits = if lane < 4 {
                 let qword = self.regs.xmm[xmm_src][lane / 2];
@@ -110,7 +134,13 @@ impl X86_64Vcpu {
                     (qword >> 32) as u32
                 }
             };
-            halves[lane] = f32_to_f16_bits(f32::from_bits(bits), rounding);
+            let converted = f32_to_f16_bits(bits, rounding, mxcsr_before);
+            halves[lane] = converted.bits;
+            status |= converted.status;
+        }
+
+        if self.commit_vex_fp_status(status, mxcsr_before)? {
+            return Ok(None);
         }
 
         if is_memory {
@@ -132,6 +162,10 @@ impl X86_64Vcpu {
                     | ((halves[7] as u64) << 48)
             };
             self.regs.ymm_high[xmm_dst] = [0; 2];
+            // VEX.128 and VEX.256 zero every destination bit above the
+            // 64-bit/128-bit packed result, even when the low result already
+            // equals its pre-instruction value.
+            self.regs.zmm_high[xmm_dst] = [0; 4];
         }
 
         self.regs.rip += ctx.cursor as u64;
@@ -881,8 +915,13 @@ fn f16_overflow_bits(sign: u32, negative: bool, rounding: u8) -> u16 {
     }
 }
 
-fn f32_to_f16_bits(value: f32, rounding: u8) -> u16 {
-    let bits = value.to_bits();
+#[derive(Clone, Copy)]
+struct F16Conversion {
+    bits: u16,
+    status: u32,
+}
+
+fn f32_to_f16_bits(bits: u32, rounding: u8, mxcsr: u32) -> F16Conversion {
     let sign = (bits >> 16) & 0x8000;
     let negative = sign != 0;
     let abs = bits & 0x7fff_ffff;
@@ -891,20 +930,40 @@ fn f32_to_f16_bits(value: f32, rounding: u8) -> u16 {
 
     if exp == 0xff {
         if mant == 0 {
-            return (sign | 0x7c00) as u16;
+            return F16Conversion {
+                bits: (sign | 0x7c00) as u16,
+                status: 0,
+            };
         }
-        let payload = ((mant >> 13) | 0x0200).max(1);
-        return (sign | 0x7c00 | payload) as u16;
+        let payload = (mant >> 13) | 0x0200;
+        return F16Conversion {
+            bits: (sign | 0x7c00 | payload) as u16,
+            status: u32::from(mant & 0x0040_0000 == 0) * MXCSR_INVALID,
+        };
     }
 
+    if exp == 0 && mant == 0 {
+        return F16Conversion {
+            bits: sign as u16,
+            status: 0,
+        };
+    }
+    if exp == 0 && mxcsr & MXCSR_DAZ != 0 {
+        return F16Conversion {
+            bits: sign as u16,
+            status: 0,
+        };
+    }
+
+    let mut status = if exp == 0 { MXCSR_DENORMAL } else { 0 };
     if abs < 0x3300_0000 {
-        if abs != 0 && matches!(rounding & 0x03, 1 if negative) {
-            return (sign | 1) as u16;
-        }
-        if abs != 0 && matches!(rounding & 0x03, 2 if !negative) {
-            return (sign | 1) as u16;
-        }
-        return sign as u16;
+        let increment =
+            matches!(rounding & 0x03, 1 if negative) || matches!(rounding & 0x03, 2 if !negative);
+        status |= MXCSR_UNDERFLOW | MXCSR_PRECISION;
+        return F16Conversion {
+            bits: (sign | u32::from(increment)) as u16,
+            status,
+        };
     }
 
     if abs < 0x3880_0000 {
@@ -915,7 +974,18 @@ fn f32_to_f16_bits(value: f32, rounding: u8) -> u16 {
         if f16_round_increment(negative, half_mant, remainder, shift, rounding) {
             half_mant += 1;
         }
-        return (sign | half_mant) as u16;
+        let inexact = remainder != 0;
+        if inexact {
+            status |= MXCSR_PRECISION;
+        }
+        let tiny = half_mant < 0x0400;
+        if tiny && (mxcsr & MXCSR_UNDERFLOW_MASK == 0 || inexact) {
+            status |= MXCSR_UNDERFLOW;
+        }
+        return F16Conversion {
+            bits: (sign | half_mant) as u16,
+            status,
+        };
     }
 
     let mut half = (abs - 0x3800_0000) >> 13;
@@ -925,8 +995,17 @@ fn f32_to_f16_bits(value: f32, rounding: u8) -> u16 {
     }
 
     if half >= 0x7c00 {
-        f16_overflow_bits(sign, negative, rounding)
+        F16Conversion {
+            bits: f16_overflow_bits(sign, negative, rounding),
+            status: status | MXCSR_OVERFLOW | MXCSR_PRECISION,
+        }
     } else {
-        (sign | half) as u16
+        if remainder != 0 {
+            status |= MXCSR_PRECISION;
+        }
+        F16Conversion {
+            bits: (sign | half) as u16,
+            status,
+        }
     }
 }

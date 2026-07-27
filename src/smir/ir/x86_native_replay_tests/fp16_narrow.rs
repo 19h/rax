@@ -2,6 +2,192 @@
 
 use super::*;
 
+fn vex_encoding(
+    ymm: bool,
+    destination: u8,
+    source: u8,
+    ignored_x_clear: bool,
+    immediate: u8,
+) -> [u8; 6] {
+    assert!(destination < 16 && source < 16);
+    let mut p0 = 0xE3;
+    if source >= 8 {
+        p0 &= !0x80;
+    }
+    if ignored_x_clear {
+        p0 &= !0x40;
+    }
+    if destination >= 8 {
+        p0 &= !0x20;
+    }
+    [
+        0xC4,
+        p0,
+        0x79 | (u8::from(ymm) << 2),
+        0x1D,
+        0xC0 | ((source & 7) << 3) | (destination & 7),
+        immediate,
+    ]
+}
+
+#[test]
+fn vex_classifier_covers_all_262144_legal_register_byte_images_and_destinations() {
+    let mut classified = 0usize;
+    for p0 in u8::MIN..=u8::MAX {
+        if p0 & 0x1F != 3 {
+            continue;
+        }
+        for p1 in u8::MIN..=u8::MAX {
+            if p1 & 0xFB != 0x79 {
+                continue;
+            }
+            for modrm in 0xC0..=0xFF {
+                for immediate in u8::MIN..=u8::MAX {
+                    let bytes = [0xC4, p0, p1, 0x1D, modrm, immediate];
+                    let instruction = X86InstructionBytes::new(&bytes).unwrap();
+                    assert!(instruction.is_vex_register_fp16_narrow(), "{bytes:02X?}");
+                    assert_eq!(
+                        instruction.vex_fp16_narrow_destination_index(),
+                        Some((modrm & 7) + if p0 & 0x20 == 0 { 8 } else { 0 }),
+                        "{bytes:02X?}"
+                    );
+                    classified += 1;
+                }
+            }
+        }
+    }
+    assert_eq!(classified, 262_144);
+}
+
+#[test]
+fn vex_classifier_exhausts_prefix_opcode_modrm_and_immediate_frontiers() {
+    for p0 in u8::MIN..=u8::MAX {
+        let bytes = [0xC4, p0, 0x79, 0x1D, 0xD1, 0xA5];
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .is_vex_register_fp16_narrow(),
+            p0 & 0x1F == 3,
+            "{bytes:02X?}"
+        );
+    }
+    for p1 in u8::MIN..=u8::MAX {
+        let bytes = [0xC4, 0xE3, p1, 0x1D, 0xD1, 0xA5];
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .is_vex_register_fp16_narrow(),
+            p1 & 0xFB == 0x79,
+            "{bytes:02X?}"
+        );
+    }
+    for opcode in u8::MIN..=u8::MAX {
+        let bytes = [0xC4, 0xE3, 0x79, opcode, 0xD1, 0xA5];
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .is_vex_register_fp16_narrow(),
+            opcode == 0x1D,
+            "{bytes:02X?}"
+        );
+    }
+    for modrm in u8::MIN..=u8::MAX {
+        let bytes = [0xC4, 0xE3, 0x7D, 0x1D, modrm, 0xA5];
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .is_vex_register_fp16_narrow(),
+            modrm >> 6 == 3,
+            "{bytes:02X?}"
+        );
+    }
+    for immediate in u8::MIN..=u8::MAX {
+        let bytes = [0xC4, 0xE3, 0x79, 0x1D, 0xD1, immediate];
+        assert!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .is_vex_register_fp16_narrow(),
+            "{bytes:02X?}"
+        );
+    }
+}
+
+#[test]
+fn vex_classifier_accepts_independent_samples_and_rejects_reserved_neighbors() {
+    // The first two canonical samples were assembled by LLVM 23.0.0.
+    // iced-x86 1.21.0 independently decodes all three, including the final
+    // encoding with ignored VEX.X cleared.
+    for (bytes, destination) in [
+        ([0xC4, 0xE3, 0x79, 0x1D, 0xD1, 0x00], 1),
+        ([0xC4, 0x43, 0x7D, 0x1D, 0xD1, 0xFF], 9),
+        ([0xC4, 0x03, 0x7D, 0x1D, 0xD1, 0xFF], 9),
+    ] {
+        let instruction = X86InstructionBytes::new(&bytes).unwrap();
+        assert!(instruction.is_vex_register_fp16_narrow(), "{bytes:02X?}");
+        assert_eq!(
+            instruction.vex_fp16_narrow_destination_index(),
+            Some(destination),
+            "{bytes:02X?}"
+        );
+    }
+
+    let invalid: &[&[u8]] = &[
+        &[0xC4, 0xE3, 0x79, 0x1D, 0xD1],
+        &[0xC4, 0xE3, 0x79, 0x1D, 0xD1, 0, 0],
+        &[0xC5, 0x79, 0x1D, 0xD1, 0],
+        &[0xC4, 0xE1, 0x79, 0x1D, 0xD1, 0], // map 0F
+        &[0xC4, 0xE2, 0x79, 0x1D, 0xD1, 0], // map 0F38
+        &[0xC4, 0xE3, 0xF9, 0x1D, 0xD1, 0], // W1
+        &[0xC4, 0xE3, 0x71, 0x1D, 0xD1, 0], // VEX.vvvv != 1111b
+        &[0xC4, 0xE3, 0x78, 0x1D, 0xD1, 0], // wrong mandatory prefix
+        &[0xC4, 0xE3, 0x79, 0x1C, 0xD1, 0], // unrelated opcode
+        &[0xC4, 0xE3, 0x79, 0x1D, 0x11, 0], // memory destination
+        &[0x62, 0xF3, 0x7D, 0x08, 0x1D, 0xD1, 0],
+    ];
+    for bytes in invalid {
+        let instruction = X86InstructionBytes::new(bytes).unwrap();
+        assert!(!instruction.is_vex_register_fp16_narrow(), "{bytes:02X?}");
+        assert_eq!(
+            instruction.vex_fp16_narrow_destination_index(),
+            None,
+            "{bytes:02X?}"
+        );
+    }
+}
+
+#[test]
+fn vex_replay_spans_preserve_exact_instruction_provenance() {
+    let pc = 0xF32_2F16;
+    let mut block = SmirBlock::new(BlockId(61), pc);
+    block.push_op(SmirOp::new(OpId(0), pc, OpKind::Nop));
+
+    for bytes in [
+        vex_encoding(false, 1, 2, false, 0),
+        vex_encoding(true, 9, 10, false, 0xFF),
+        vex_encoding(false, 1, 2, true, 0xA5),
+        vex_encoding(true, 15, 15, true, 0x5A),
+    ] {
+        let instruction = X86InstructionBytes::new(&bytes).unwrap();
+        let provenance = std::collections::HashMap::from([((BlockId(61), pc), instruction)]);
+        for spans in [
+            x86_vex_fp16_narrow_replay_spans(&block, &provenance),
+            x86_native_replay_spans(&block, &provenance),
+        ] {
+            let span = spans.get(&0).unwrap_or_else(|| panic!("{bytes:02X?}"));
+            assert_eq!(span.end, 1, "{bytes:02X?}");
+            assert_eq!(span.instruction, instruction, "{bytes:02X?}");
+            assert!(!span.needs_avx512vl, "{bytes:02X?}");
+            assert!(!span.needs_avx512dq, "{bytes:02X?}");
+            assert!(!span.needs_avx512fp16, "{bytes:02X?}");
+            assert!(!span.preserve_mxcsr_de, "{bytes:02X?}");
+        }
+        assert!(
+            x86_evex_fp16_narrow_replay_spans(&block, &provenance).is_empty(),
+            "{bytes:02X?}"
+        );
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum NarrowKind {
     F64ToF16,
