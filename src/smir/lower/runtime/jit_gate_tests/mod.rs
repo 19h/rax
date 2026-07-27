@@ -228,6 +228,8 @@ mod vex_fp_flag_compare_replay;
 #[cfg(test)]
 mod vex_fp_logic_replay;
 #[cfg(test)]
+mod vex_fp_round_replay;
+#[cfg(test)]
 mod vex_gfni_replay;
 #[cfg(test)]
 mod vex_immediate_blend_replay;

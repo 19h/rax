@@ -28,6 +28,9 @@ mod fp_arithmetic;
 #[path = "x86_native_replay_tests/fp_compare.rs"]
 mod fp_compare;
 
+#[path = "x86_native_replay_tests/fp_round.rs"]
+mod fp_round;
+
 #[path = "x86_native_replay_tests/fp_shuffle.rs"]
 mod fp_shuffle;
 

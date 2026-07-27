@@ -8,6 +8,7 @@ mod fp_arithmetic;
 mod fp_class;
 mod fp_compare;
 mod fp_horizontal;
+mod fp_round;
 mod fp_shuffle;
 mod fp_sqrt;
 mod gfni;
