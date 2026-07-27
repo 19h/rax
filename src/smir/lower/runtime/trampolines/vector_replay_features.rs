@@ -129,6 +129,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             let immediate_permute_avx2 =
                 span.instruction.vex_register_immediate_permute_needs_avx2();
             let chunk_extract_avx2 = span.instruction.vex_register_chunk_extract_needs_avx2();
+            let scalar_extract_avx = span.instruction.is_vex_register_scalar_extract();
             let variable_blend_avx2 = span.instruction.vex_register_variable_blend_needs_avx2();
             let variable_permute_avx2 = span.instruction.vex_register_variable_permute_needs_avx2();
             let alignr_avx2 = span.instruction.vex_register_alignr_needs_avx2();
@@ -164,6 +165,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || immediate_blend_avx2.is_some()
                 || immediate_permute_avx2.is_some()
                 || chunk_extract_avx2.is_some()
+                || scalar_extract_avx
                 || variable_blend_avx2.is_some()
                 || variable_permute_avx2.is_some()
                 || alignr_avx2.is_some()
@@ -187,6 +189,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || immediate_blend_avx2.is_some()
                 || immediate_permute_avx2.is_some()
                 || chunk_extract_avx2.is_some()
+                || scalar_extract_avx
                 || variable_blend_avx2.is_some()
                 || variable_permute_avx2.is_some()
                 || alignr_avx2.is_some()

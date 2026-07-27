@@ -92,6 +92,40 @@ impl X86_64Lowerer {
         self.code.emit_u8(0x9D); // popfq
     }
 
+    /// Execute a scalar vector-to-GPR extract whose architectural destination
+    /// is guest RSP or RBP without exposing the host stack/frame register.
+    ///
+    /// The exact instruction is rewritten to target RAX. Preserved host RAX
+    /// and RCX provide the result and state-pointer temporaries, and the
+    /// zero-extended 64-bit result is committed directly to `GuestRegs::gpr`.
+    /// Guest RBP additionally updates the prologue's saved-RBP word because the
+    /// outer trampoline exports that restored physical register after return.
+    /// PUSH/POP and MOV do not alter RFLAGS, so the O(1)-time, O(1)-space
+    /// wrapper preserves the instruction's flag-neutral contract.
+    fn emit_vex_scalar_extract_state_backed_destination(
+        &mut self,
+        instruction: &X86InstructionBytes,
+        destination: u8,
+    ) {
+        debug_assert!(matches!(destination, 4 | 5));
+        let rewritten = instruction
+            .vex_scalar_extract_with_destination(0)
+            .expect("validated VEX scalar extract must rewrite to RAX");
+
+        self.code.emit_u8(0x50); // push rax
+        self.code.emit_u8(0x51); // push rcx
+        self.code.emit_bytes(rewritten.as_slice());
+        self.code.emit_bytes(&[0x48, 0x8B, 0x4D]);
+        self.code.emit_u8(X86_STATE_PTR_AT_RBP as u8); // mov rcx,[rbp+state]
+        self.code.emit_bytes(&[0x48, 0x89, 0x41]);
+        self.code.emit_u8(destination * 8); // mov [rcx+gpr[destination]],rax
+        if destination == 5 {
+            self.code.emit_bytes(&[0x48, 0x89, 0x45, 0x00]); // mov [rbp],rax
+        }
+        self.code.emit_u8(0x59); // pop rcx
+        self.code.emit_u8(0x58); // pop rax
+    }
+
     /// Emit one exact source instruction, applying any host-compatibility
     /// status fixup requested by its byte-validated replay classifier.
     fn emit_native_replay_span(&mut self, span: &X86NativeReplaySpan) {
@@ -100,6 +134,12 @@ impl X86_64Lowerer {
             if self.avx_ymm16_vector_state {
                 self.emit_avx_ymm16_state_backed_all_upper_clear();
             }
+            return;
+        }
+        if let Some(destination) = span.instruction.vex_scalar_extract_destination_index()
+            && matches!(destination, 4 | 5)
+        {
+            self.emit_vex_scalar_extract_state_backed_destination(&span.instruction, destination);
             return;
         }
         if let Some(destination) = span

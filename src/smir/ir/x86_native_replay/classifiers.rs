@@ -32,6 +32,7 @@ mod vex_immediate_permute;
 mod vex_lane_shuffle;
 mod vex_packed_string;
 mod vex_register_broadcast;
+mod vex_scalar_extract;
 mod vex_scalar_insert;
 mod vex_variable_blend;
 mod vex_variable_permute;

@@ -238,6 +238,8 @@ mod vex_packed_string_replay;
 #[cfg(test)]
 mod vex_register_broadcast_replay;
 #[cfg(test)]
+mod vex_scalar_extract_replay;
+#[cfg(test)]
 mod vex_scalar_insert_replay;
 #[cfg(test)]
 mod vex_unaligned_packed_fp_move_replay;

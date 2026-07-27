@@ -518,6 +518,21 @@ pub fn x86_vex_chunk_extract_replay_spans(
     })
 }
 
+/// Identify valid register-destination AVX VEX scalar lane-extraction replay
+/// groups in `block` in O(N) time and O(P) space for N operations and P unique
+/// guest PCs. Every GPR destination for `VEXTRACTPS` and `VPEXTRB/D/Q/W` is
+/// admitted; memory forms remain at the precise SMIR interpreter boundary.
+pub fn x86_vex_scalar_extract_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .is_vex_register_scalar_extract()
+            .then_some((false, false, false))
+    })
+}
+
 /// Identify valid register-only AVX VEX variable-blend replay groups in
 /// `block` in O(N) time and O(P) space for N operations and P unique guest PCs.
 pub fn x86_vex_variable_blend_replay_spans(
@@ -1680,6 +1695,11 @@ pub fn x86_native_replay_spans(
                 instruction
                     .vex_register_chunk_extract_needs_avx2()
                     .map(|_| (false, false, false))
+            })
+            .or_else(|| {
+                instruction
+                    .is_vex_register_scalar_extract()
+                    .then_some((false, false, false))
             })
             .or_else(|| {
                 instruction

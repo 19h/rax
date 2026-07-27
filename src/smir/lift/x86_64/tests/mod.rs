@@ -200,6 +200,8 @@ mod vex_packed_integer_move;
 #[cfg(test)]
 mod vex_register_broadcast;
 #[cfg(test)]
+mod vex_scalar_extract;
+#[cfg(test)]
 mod vex_unaligned_packed_fp_move;
 #[cfg(test)]
 mod vmx_controls;
