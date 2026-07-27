@@ -2630,7 +2630,9 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             requires_apx,
             next_pc,
         } => op_json!("x86_load_mxcsr", addr, requires_apx, next_pc),
-        OpKind::X86StoreMxcsr { addr } => op_json!("x86_store_mxcsr", addr),
+        OpKind::X86StoreMxcsr { addr, requires_apx } => {
+            op_json!("x86_store_mxcsr", addr, requires_apx)
+        }
         OpKind::X86CacheControl { addr, kind } => op_json!("x86_cache_control", addr, kind),
         OpKind::X86CheckAlignment { addr, alignment } => {
             op_json!("x86_check_alignment", addr, alignment)

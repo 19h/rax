@@ -3,6 +3,7 @@
 use super::*;
 use crate::smir::ir::ops::{SmirOp, X86OpHint, X86SsePrefix, X86VecMap};
 use crate::smir::ir::types::{ArchReg, MemWidth, OpId, VReg, VecWidth, X86Reg};
+use crate::smir::lower::X86_GUEST_APX_ENABLED_OFFSET;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 use crate::smir::lower::runtime::GuestRegs;
 
@@ -13,7 +14,11 @@ fn x86(reg: X86Reg) -> VReg {
 }
 
 fn store_op(addr: Address, hint: Option<X86OpHint>) -> SmirOp {
-    let kind = OpKind::X86StoreMxcsr { addr };
+    store_op_with_apx(addr, hint, false)
+}
+
+fn store_op_with_apx(addr: Address, hint: Option<X86OpHint>, requires_apx: bool) -> SmirOp {
+    let kind = OpKind::X86StoreMxcsr { addr, requires_apx };
     match hint {
         Some(hint) => SmirOp::with_hint(OpId(0), PC, kind, hint),
         None => SmirOp::new(OpId(0), PC, kind),
@@ -163,6 +168,29 @@ fn lower_mxcsr_store_requires_helpers_accepts_vex_wig_and_embeds_exact_store_abi
             "scalar MXCSR store must source GuestRegs rather than live host MXCSR"
         );
     }
+
+    let (rex2, _) = lower(
+        store_op_with_apx(Address::Direct(x86(X86Reg::R31)), None, true),
+        true,
+        false,
+    )
+    .expect("lower APX-guarded STMXCSR");
+    for (name, value) in [
+        (
+            "APX guard displacement",
+            X86_GUEST_APX_ENABLED_OFFSET as u32,
+        ),
+        ("CR0 guard displacement", X86_GUEST_CR0_OFFSET as u32),
+        (
+            "store helper displacement",
+            X86_GUEST_STORE_FN_OFFSET as u32,
+        ),
+    ] {
+        assert!(
+            rex2.windows(4).any(|window| window == value.to_le_bytes()),
+            "REX2 store missing {name} {value:#x}: {rex2:02X?}"
+        );
+    }
 }
 
 #[test]
@@ -209,12 +237,32 @@ fn lower_mxcsr_operations_reject_every_non_lifter_shape() {
         ));
     }
 
+    for malformed in [
+        store_op(Address::Direct(x86(X86Reg::R31)), None),
+        store_op_with_apx(
+            Address::Direct(x86(X86Reg::R31)),
+            Some(vex_hint(false)),
+            true,
+        ),
+    ] {
+        assert!(matches!(
+            lower(malformed, true, false),
+            Err(LowerError::InvalidOperand { .. })
+        ));
+    }
+
     lower(
         load_op(Address::Direct(x86(X86Reg::R31)), None, true, PC + 4),
         true,
         false,
     )
     .expect("REX2 LDMXCSR with a guarded EGPR address");
+    lower(
+        store_op_with_apx(Address::Direct(x86(X86Reg::R31)), None, true),
+        true,
+        false,
+    )
+    .expect("REX2 STMXCSR with a guarded EGPR address");
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -408,6 +456,48 @@ fn native_rex2_mxcsr_load_guards_apx_before_memory() {
                 (INITIAL_MXCSR, PC)
             }
         );
+    }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[test]
+fn native_rex2_mxcsr_store_guards_apx_before_ts_and_memory() {
+    use crate::smir::lower::runtime::ExecMem;
+
+    const MXCSR: u32 = 0x5F80;
+    const SENTINEL_PC: u64 = 0xAAAA_BBBB_CCCC_DDDD;
+    let (code, entry) = lower(
+        store_op_with_apx(Address::Direct(x86(X86Reg::R31)), None, true),
+        true,
+        false,
+    )
+    .expect("lower APX-guarded STMXCSR");
+    let exec = ExecMem::new(&code).expect("map APX-guarded STMXCSR");
+
+    for enabled in [false, true] {
+        let mut context = MemoryContext {
+            ok: 1,
+            ..MemoryContext::default()
+        };
+        let mut regs = initialized_regs(&mut context, MXCSR);
+        regs.gpr[31] = 0x6000;
+        regs.apx_enabled = u64::from(enabled);
+        regs.cr0 = if enabled { 0 } else { 1 << 3 };
+        let before_gpr = regs.gpr;
+        let before_rflags = regs.rflags;
+        exec.run(entry, &mut regs);
+
+        assert_eq!(context.loads, 0);
+        assert_eq!(context.stores, usize::from(enabled) as u64);
+        if enabled {
+            assert_eq!(context.addr, 0x6000);
+            assert_eq!(context.value, u64::from(MXCSR));
+            assert_eq!(context.size, 4);
+        }
+        assert_eq!(regs.gpr, before_gpr);
+        assert_eq!(regs.rflags, before_rflags);
+        assert_eq!(regs.mxcsr, MXCSR);
+        assert_eq!(regs.exit_pc, if enabled { SENTINEL_PC } else { PC });
     }
 }
 

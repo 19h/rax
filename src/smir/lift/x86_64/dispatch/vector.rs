@@ -1786,7 +1786,10 @@ impl X86_64Lifter {
                                 next_pc,
                             }
                         } else {
-                            OpKind::X86StoreMxcsr { addr }
+                            OpKind::X86StoreMxcsr {
+                                addr,
+                                requires_apx: false,
+                            }
                         },
                         hint,
                     ));

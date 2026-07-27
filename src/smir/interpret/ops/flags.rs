@@ -250,7 +250,19 @@ impl SmirInterpreter {
                 }
             }
 
-            OpKind::X86StoreMxcsr { addr } => {
+            OpKind::X86StoreMxcsr { addr, requires_apx } => {
+                if *requires_apx
+                    && !matches!(
+                        &ctx.arch_regs,
+                        ArchRegState::X86_64(x86) if x86.apx_enabled
+                    )
+                {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
                 if matches!(
                     &ctx.arch_regs,
                     ArchRegState::X86_64(x86) if x86.cr0 & (1 << 3) != 0

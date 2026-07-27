@@ -52,6 +52,14 @@ fn lift_legacy_and_vex_mxcsr_memory_operations() {
                     ..
                 }) if *next_pc == 0x1000 + bytes.len() as u64
             ));
+        } else {
+            assert!(matches!(
+                result.ops.last().map(|op| &op.kind),
+                Some(OpKind::X86StoreMxcsr {
+                    requires_apx: false,
+                    ..
+                })
+            ));
         }
     }
 
@@ -68,6 +76,33 @@ fn lift_legacy_and_vex_mxcsr_memory_operations() {
             },
             ..
         }] if *base == x86_gpr(31)
+    ));
+
+    let rex2_store = lift_single(&[0xD5, 0x91, 0xAE, 0x1F])
+        .expect("REX2.M1 STMXCSR [R31] must lift without a duplicate APX guard");
+    assert_eq!(rex2_store.bytes_consumed, 4);
+    assert!(matches!(
+        rex2_store.ops.as_slice(),
+        [SmirOp {
+            kind: OpKind::X86StoreMxcsr {
+                addr: Address::Direct(base),
+                requires_apx: true,
+            },
+            ..
+        }] if *base == x86_gpr(31)
+    ));
+
+    let rex2_low_store = lift_single(&[0xD5, 0x80, 0xAE, 0x1B])
+        .expect("REX2.M1 STMXCSR [RBX] still requires APX without an EGPR");
+    assert!(matches!(
+        rex2_low_store.ops.as_slice(),
+        [SmirOp {
+            kind: OpKind::X86StoreMxcsr {
+                addr: Address::Direct(base),
+                requires_apx: true,
+            },
+            ..
+        }] if *base == x86_gpr(3)
     ));
 
     let reserved_register = lift_single(&[0x0F, 0xAE, 0xD0])

@@ -4004,8 +4004,11 @@ pub enum OpKind {
     },
 
     /// x86 STMXCSR/VSTMXCSR: store the 32-bit SIMD control/status register.
+    /// `requires_apx` records a legacy REX2 encoding so #UD precedes CR0.TS
+    /// and the memory access when APX is disabled.
     X86StoreMxcsr {
         addr: Address,
+        requires_apx: bool,
     },
 
     /// x87 environment/control operation. Memory forms carry `Some(addr)`;

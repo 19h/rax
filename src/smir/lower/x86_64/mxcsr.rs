@@ -50,30 +50,31 @@ pub(crate) fn x86_load_mxcsr_shape_valid(op: &SmirOp) -> bool {
 }
 
 /// Validate the exact legacy or VEX.LZ.WIG `STMXCSR` shape emitted by the
-/// strict x86-64 lifter. The VEX W bit is architecturally ignored.
+/// strict x86-64 lifter. The APX marker proves that a legacy REX2 form is
+/// dynamically guarded; the VEX W bit is architecturally ignored.
 pub(crate) fn x86_store_mxcsr_shape_valid(op: &SmirOp) -> bool {
-    let OpKind::X86StoreMxcsr { addr } = &op.kind else {
+    let OpKind::X86StoreMxcsr { addr, requires_apx } = &op.kind else {
         return false;
     };
-    // VEX cannot encode EGPR address operands, while the legacy IR shape does
-    // not carry the preceding REX2/APX requirement inside this operation.
-    // Reject both ambiguous cases until native admission can prove that guard.
     let uses_egpr = addr
         .regs()
         .iter()
         .any(|reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()));
-    addr.is_x86_state_backed_shape()
-        && !uses_egpr
-        && matches!(
-            op.x86_hint,
-            None | Some(X86OpHint::VexOp {
-                map: X86VecMap::Map0F,
-                pp: X86SsePrefix::None,
-                opcode: 0xAE,
-                width: VecWidth::V128,
-                ..
-            })
-        )
+    if !addr.is_x86_state_backed_shape() || (uses_egpr && !requires_apx) {
+        return false;
+    }
+
+    match op.x86_hint {
+        None => true,
+        Some(X86OpHint::VexOp {
+            map: X86VecMap::Map0F,
+            pp: X86SsePrefix::None,
+            opcode: 0xAE,
+            width: VecWidth::V128,
+            ..
+        }) => !requires_apx && !uses_egpr,
+        _ => false,
+    }
 }
 
 impl X86_64Lowerer {
@@ -230,9 +231,12 @@ impl X86_64Lowerer {
                 operand: "requires a legacy or VEX.LZ.WIG state-backed x86 address".to_string(),
             });
         }
-        let OpKind::X86StoreMxcsr { addr } = &op.kind else {
+        let OpKind::X86StoreMxcsr { addr, requires_apx } = &op.kind else {
             unreachable!("validated MXCSR store shape changed")
         };
+        if *requires_apx {
+            self.emit_x86_require_apx_guard(op.guest_pc)?;
+        }
         self.emit_x86_mxcsr_ts_guard(op.guest_pc)?;
 
         // Reserve one aligned caller slot without modifying flags. In a vector

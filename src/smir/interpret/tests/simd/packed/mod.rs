@@ -8,6 +8,8 @@ use crate::smir::interpret::*;
 #[cfg(test)]
 mod fp_addsub_horizontal;
 #[cfg(test)]
+mod mxcsr;
+#[cfg(test)]
 mod part1;
 #[cfg(test)]
 mod part2;

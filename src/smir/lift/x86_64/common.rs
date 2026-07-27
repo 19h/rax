@@ -82,7 +82,8 @@ impl X86_64Lifter {
             OpKind::X86Cli { requires_apx, .. }
             | OpKind::X86Sti { requires_apx, .. }
             | OpKind::X86FsGsBase { requires_apx, .. }
-            | OpKind::X86LoadMxcsr { requires_apx, .. } => *requires_apx,
+            | OpKind::X86LoadMxcsr { requires_apx, .. }
+            | OpKind::X86StoreMxcsr { requires_apx, .. } => *requires_apx,
             OpKind::X86Smsw(op) => op.requires_apx,
             OpKind::X86SystemSelectorStore(op) => op.requires_apx,
             OpKind::X86SystemSelectorLoad(op) => op.requires_apx,

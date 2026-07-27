@@ -118,7 +118,10 @@ impl X86_64Lifter {
                         next_pc,
                     }
                 } else {
-                    OpKind::X86StoreMxcsr { addr }
+                    OpKind::X86StoreMxcsr {
+                        addr,
+                        requires_apx: prefix.rex2.is_some(),
+                    }
                 },
             ));
             return Ok(LiftResult::fallthrough(

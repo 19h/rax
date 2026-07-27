@@ -498,6 +498,70 @@ fn jit_mxcsr_stores_match_direct_for_legacy_and_both_vex_wig_encodings() {
 }
 
 #[test]
+fn jit_rex2_mxcsr_store_admission_is_dynamic_and_apx_precedes_ts_and_memory() {
+    const STORE_SENTINEL: u32 = 0xDEAD_BEEF;
+    // REX2.M=1 STMXCSR [R31]; JMP HLT; HLT.
+    let code = [0xD5, 0x91, 0xAE, 0x1F, 0xEB, 0x00, 0xF4];
+
+    let disabled_memory = memory_with_code(&code);
+    disabled_memory
+        .write_slice(&STORE_SENTINEL.to_le_bytes(), GuestAddress(DEST))
+        .unwrap();
+    let mut disabled = test_vcpu(disabled_memory.clone());
+    disabled.regs.r31 = DEST;
+    disabled.sregs.cr0 |= 1 << 3;
+    let before = (disabled.mxcsr, disabled.regs.r31, disabled.regs.rflags);
+    let region = disabled
+        .jit_compile_region()
+        .expect("compile REX2 MXCSR-store region")
+        .expect("REX2 STMXCSR must retain a dynamic APX guard");
+    disabled.jit_run_region_native(&region);
+    assert_eq!(disabled.regs.rip, 0);
+    assert_eq!(
+        (disabled.mxcsr, disabled.regs.r31, disabled.regs.rflags),
+        before
+    );
+    assert_eq!(read_u32(&disabled_memory, DEST), STORE_SENTINEL);
+    assert!(
+        exception_without_idt(&mut disabled).contains("IDT entry 6 not present"),
+        "APX-disabled REX2 must deliver #UD before CR0.TS can deliver #NM"
+    );
+
+    let direct_memory = memory_with_code(&code);
+    let native_memory = memory_with_code(&code);
+    for memory in [&direct_memory, &native_memory] {
+        memory
+            .write_slice(&STORE_SENTINEL.to_le_bytes(), GuestAddress(DEST))
+            .unwrap();
+    }
+    let mut direct = test_vcpu(direct_memory.clone());
+    let mut native = test_vcpu(native_memory.clone());
+    for vcpu in [&mut direct, &mut native] {
+        vcpu.regs.r31 = DEST;
+        vcpu.set_apx_enabled(true);
+    }
+
+    run_direct_to(&mut direct, 6);
+    let region = native
+        .jit_compile_region()
+        .expect("compile enabled REX2 MXCSR-store region")
+        .expect("enabled REX2 STMXCSR must be native eligible");
+    assert!(region.uses_mxcsr_state);
+    native.jit_run_region_native(&region);
+
+    assert_eq!(native.regs.rip, 6);
+    assert_eq!(native.regs.rip, direct.regs.rip);
+    assert_eq!(read_u32(&native_memory, DEST), MXCSR);
+    assert_eq!(
+        read_u32(&native_memory, DEST),
+        read_u32(&direct_memory, DEST)
+    );
+    assert_eq!(native.mxcsr, direct.mxcsr);
+    assert_eq!(native.regs.r31, direct.regs.r31);
+    assert_eq!(native.regs.rflags, direct.regs.rflags);
+}
+
+#[test]
 fn jit_mxcsr_store_fault_is_precise_and_noncommitting() {
     let code = [0x0F, 0xAE, 0x1B, 0xEB, 0x00, 0xF4];
     let memory = memory_with_code(&code);

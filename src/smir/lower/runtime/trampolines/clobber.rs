@@ -617,7 +617,7 @@ pub(crate) fn block_is_clobber_safe(
             && x86_store_mxcsr_shape_valid(op)
             && matches!(
                 &op.kind,
-                OpKind::X86StoreMxcsr { addr } if x86_jit_mem_address_shape_valid(addr)
+                OpKind::X86StoreMxcsr { addr, .. } if x86_jit_mem_address_shape_valid(addr)
             );
         let mxcsr_load_ok = allow_mem
             && x86_load_mxcsr_shape_valid(op)

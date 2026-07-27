@@ -8,7 +8,11 @@ use crate::smir::lower::x86_64::{x86_load_mxcsr_shape_valid, x86_store_mxcsr_sha
 const PC: u64 = 0x1000;
 
 fn store(addr: Address, hint: Option<X86OpHint>) -> SmirOp {
-    let kind = OpKind::X86StoreMxcsr { addr };
+    store_with_apx(addr, hint, false)
+}
+
+fn store_with_apx(addr: Address, hint: Option<X86OpHint>, requires_apx: bool) -> SmirOp {
+    let kind = OpKind::X86StoreMxcsr { addr, requires_apx };
     match hint {
         Some(hint) => SmirOp::with_hint(OpId(0), PC, kind, hint),
         None => SmirOp::new(OpId(0), PC, kind),
@@ -51,7 +55,7 @@ fn gate(op: SmirOp, allow_mem: bool) -> bool {
 }
 
 #[test]
-fn mxcsr_store_gate_requires_helpers_and_accepts_exact_legacy_and_vex_wig_shapes() {
+fn mxcsr_store_gate_requires_helpers_and_accepts_exact_legacy_vex_and_rex2_shapes() {
     let addresses = [
         Address::Absolute(0x4000),
         Address::Direct(x86(X86Reg::Rsp)),
@@ -95,6 +99,20 @@ fn mxcsr_store_gate_requires_helpers_and_accepts_exact_legacy_and_vex_wig_shapes
             ));
         }
     }
+
+    let rex2 = store_with_apx(
+        Address::BaseIndexScale {
+            base: Some(x86(X86Reg::R20)),
+            index: x86(X86Reg::R31),
+            scale: 8,
+            disp: 0x40,
+            disp_size: DispSize::Disp8,
+        },
+        None,
+        true,
+    );
+    assert!(x86_store_mxcsr_shape_valid(&rex2));
+    assert!(gate(rex2, true));
 }
 
 #[test]
@@ -239,10 +257,13 @@ fn mxcsr_gates_reject_malformed_hints_frontiers_and_non_x86_addresses() {
         assert!(!gate(op, true));
     }
 
-    // VEX has no EGPR address extension, and the legacy operation itself does
-    // not retain enough provenance to prove its preceding REX2/APX guard.
-    for hint in [None, Some(vex_hint(false)), Some(vex_hint(true))] {
-        let op = store(Address::Direct(x86(X86Reg::R31)), hint);
+    let unguarded_egpr = store(Address::Direct(x86(X86Reg::R31)), None);
+    assert!(!x86_store_mxcsr_shape_valid(&unguarded_egpr));
+    assert!(!gate(unguarded_egpr, true));
+
+    // VEX cannot carry APX provenance or encode an EGPR address.
+    for hint in [Some(vex_hint(false)), Some(vex_hint(true))] {
+        let op = store_with_apx(Address::Direct(x86(X86Reg::R31)), hint, true);
         assert!(!x86_store_mxcsr_shape_valid(&op), "{op:?}");
         assert!(!gate(op, true));
     }
@@ -284,6 +305,16 @@ fn mxcsr_state_marker_is_append_only_exclusion_aware_and_retained_at_o2() {
             .count(),
         1
     );
+    assert!(matches!(
+        store_function.entry_block().unwrap().ops.as_slice(),
+        [SmirOp {
+            kind: OpKind::X86StoreMxcsr {
+                requires_apx: false,
+                ..
+            },
+            ..
+        }]
+    ));
     assert!(uses_x86_mxcsr_state_excluding(&store_function, &excluded));
     assert!(is_native_clobber_safe_excluding(
         &store_function,
