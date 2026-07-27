@@ -14,6 +14,8 @@ mod apx_bmi2_shift;
 #[cfg(test)]
 mod atomic_rmw;
 #[cfg(test)]
+mod bit_offset;
+#[cfg(test)]
 mod cli;
 #[cfg(test)]
 mod clts;

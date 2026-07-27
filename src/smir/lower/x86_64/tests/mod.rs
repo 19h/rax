@@ -13,6 +13,8 @@ mod alu;
 mod apx;
 #[cfg(all(test, feature = "smir-jit"))]
 mod atomic_rmw;
+#[cfg(all(test, feature = "smir-jit"))]
+mod bit_offset;
 #[cfg(test)]
 mod call_helpers;
 #[cfg(test)]

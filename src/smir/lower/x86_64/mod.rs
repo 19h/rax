@@ -39,6 +39,8 @@ mod ac;
 pub use ac::*;
 mod alu;
 pub use alu::*;
+mod bit_offset;
+pub use bit_offset::*;
 mod common;
 pub use common::*;
 mod control;

@@ -3291,6 +3291,46 @@ impl X86_64Lowerer {
             sign,
             fault_stack_cleanup,
             false,
+            None,
+        )
+    }
+
+    /// As [`Self::emit_jit_mem_op`], with an extra architectural bit-offset
+    /// term folded into the effective address. `BT`/`BTS`/`BTR`/`BTC` with a
+    /// register bit offset address memory as
+    /// `base + ((sign_extend(index) >> log2(bits)) << log2(bytes))`, which no
+    /// [`Address`] can express; the term is evaluated where the helper prologue
+    /// has already spilled every guest GPR, so RSI/RDI are free scratch.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn emit_jit_mem_op_bit_offset(
+        &mut self,
+        guest_pc: u64,
+        is_load: bool,
+        load_dst: Option<VReg>,
+        load_stack_dst: Option<i32>,
+        store_src_reg: Option<VReg>,
+        store_src_imm: Option<i64>,
+        store_stack_src: Option<i32>,
+        addr: &Address,
+        mem_width: MemWidth,
+        sign: SignExtend,
+        fault_stack_cleanup: i32,
+        bit_offset: crate::smir::lower::X86JitBitOffsetTerm,
+    ) -> Result<(), LowerError> {
+        self.emit_jit_mem_op_inner(
+            guest_pc,
+            is_load,
+            load_dst,
+            load_stack_dst,
+            store_src_reg,
+            store_src_imm,
+            store_stack_src,
+            addr,
+            mem_width,
+            sign,
+            fault_stack_cleanup,
+            false,
+            Some(bit_offset),
         )
     }
 
@@ -3325,6 +3365,7 @@ impl X86_64Lowerer {
             sign,
             fault_stack_cleanup,
             true,
+            None,
         )
     }
 
@@ -3342,6 +3383,7 @@ impl X86_64Lowerer {
         sign: SignExtend,
         fault_stack_cleanup: i32,
         address_size_32: bool,
+        bit_offset: Option<crate::smir::lower::X86JitBitOffsetTerm>,
     ) -> Result<(), LowerError> {
         let size: i32 = match mem_width {
             MemWidth::B1 => 1,
@@ -3409,6 +3451,9 @@ impl X86_64Lowerer {
         self.emit_helper_call_state(PhysReg::Rax, true, self.preserve_vector_mem_helpers);
 
         self.emit_jit_mem_effective_address(addr, address_size_32)?;
+        if let Some(term) = bit_offset {
+            self.emit_jit_mem_bit_offset_term(term)?;
+        }
 
         // --- args + call ---
         if is_load {

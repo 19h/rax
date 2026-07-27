@@ -380,6 +380,17 @@ pub(crate) fn x86_native_identity_gpr(reg: &crate::smir::ir::types::VReg) -> boo
 
     matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index <= 15 && !matches!(index, 4 | 5)))
 }
+/// Architectural encoding of an identity-mapped GPR, if `reg` is one.
+pub(crate) fn x86_native_identity_gpr_index(reg: &crate::smir::ir::types::VReg) -> Option<u8> {
+    use crate::smir::ir::types::{ArchReg, VReg};
+
+    match reg {
+        VReg::Arch(ArchReg::X86(x86)) => x86
+            .gpr_index()
+            .filter(|index| *index <= 15 && !matches!(index, 4 | 5)),
+        _ => None,
+    }
+}
 pub(crate) fn x86_state_backed_stack_mov_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg};
