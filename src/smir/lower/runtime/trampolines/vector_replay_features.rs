@@ -177,6 +177,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             let vex_fp32_fp64_convert = span.instruction.is_vex_register_fp32_fp64_convert();
             let vex_fp16_widen = span.instruction.is_vex_register_fp16_widen();
             let vex_fp16_narrow = span.instruction.is_vex_register_fp16_narrow();
+            let vex_fp_flag_compare = span.instruction.is_vex_register_fp_flag_compare();
             let vex_zero = span.instruction.vex_zeroes_all_register_bits().is_some();
             requirements.any = true;
             requirements.needs_sse3 |= fp_horizontal_addsub_avx == Some(false);
@@ -207,6 +208,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_fp32_fp64_convert
                 || vex_fp16_widen
                 || vex_fp16_narrow
+                || vex_fp_flag_compare
                 || vex_zero;
             requirements.needs_avx |= span.instruction.is_vex_register_packed_string_compare()
                 || span.instruction.is_vex_register_fma3()
@@ -251,6 +253,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_fp32_fp64_convert
                 || vex_fp16_widen
                 || vex_fp16_narrow
+                || vex_fp_flag_compare
                 || vex_zero;
             requirements.needs_avx2 |= widening_dword_multiply_avx2 == Some(true)
                 || immediate_blend_avx2 == Some(true)

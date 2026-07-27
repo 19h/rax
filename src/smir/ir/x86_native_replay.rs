@@ -158,6 +158,21 @@ pub fn x86_legacy_vex_fp_compare_replay_spans(
     })
 }
 
+/// Identify defined register-only AVX VEX scalar flag-compare replay groups in
+/// `block` in O(N) time and O(P) space for N operations and P unique guest PCs.
+/// Memory forms and generation-dependent unpredictable `VEX.L=1` encodings
+/// remain at the precise SMIR interpreter boundary.
+pub fn x86_vex_fp_flag_compare_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .is_vex_register_fp_flag_compare()
+            .then_some((false, false, false))
+    })
+}
+
 /// Identify valid register-only legacy SSE and AVX VEX floating-point
 /// shuffle/interleave replay groups in `block` in O(N) time and O(P) space for
 /// N operations and P unique guest PCs. Memory forms remain at the precise
@@ -1405,6 +1420,9 @@ pub fn x86_native_replay_spans(
             .legacy_vex_register_fp_compare_needs_avx()
             .is_some()
         {
+            return Some((false, false, false));
+        }
+        if instruction.is_vex_register_fp_flag_compare() {
             return Some((false, false, false));
         }
         if instruction

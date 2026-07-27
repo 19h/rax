@@ -1,6 +1,176 @@
-//! Exact source-byte replay classification for EVEX floating-point compares.
+//! Exact source-byte replay classification for floating-point compares.
 
 use super::*;
+
+#[test]
+fn vex_flag_compare_classifier_covers_all_4608_defined_register_byte_images() {
+    let mut classified = 0usize;
+
+    for encoded_r in [false, true] {
+        for pp in 0u8..=1 {
+            for opcode in [0x2Eu8, 0x2F] {
+                for modrm in 0xC0u8..=0xFF {
+                    let bytes = [0xC5, (u8::from(encoded_r) << 7) | 0x78 | pp, opcode, modrm];
+                    assert!(
+                        X86InstructionBytes::new(&bytes)
+                            .unwrap()
+                            .is_vex_register_fp_flag_compare(),
+                        "{bytes:02X?}"
+                    );
+                    classified += 1;
+                }
+            }
+        }
+    }
+
+    for extension_bits in (0u8..8).map(|value| value << 5) {
+        for w in [false, true] {
+            for pp in 0u8..=1 {
+                for opcode in [0x2Eu8, 0x2F] {
+                    for modrm in 0xC0u8..=0xFF {
+                        let bytes = [
+                            0xC4,
+                            extension_bits | 1,
+                            (u8::from(w) << 7) | 0x78 | pp,
+                            opcode,
+                            modrm,
+                        ];
+                        assert!(
+                            X86InstructionBytes::new(&bytes)
+                                .unwrap()
+                                .is_vex_register_fp_flag_compare(),
+                            "{bytes:02X?}"
+                        );
+                        classified += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    assert_eq!(classified, 4_608);
+
+    // Independently assembled by LLVM 23.0.0.
+    for bytes in [
+        &[0xC5, 0xF8, 0x2F, 0xCA][..],       // VCOMISS xmm1, xmm2
+        &[0xC4, 0x41, 0x79, 0x2E, 0xCA][..], // VUCOMISD xmm9, xmm10
+    ] {
+        assert!(
+            X86InstructionBytes::new(bytes)
+                .unwrap()
+                .is_vex_register_fp_flag_compare(),
+            "{bytes:02X?}"
+        );
+    }
+}
+
+#[test]
+fn vex_flag_compare_classifier_exhausts_prefix_opcode_and_modrm_frontiers() {
+    for p0 in u8::MIN..=u8::MAX {
+        let bytes = [0xC4, p0, 0x78, 0x2E, 0xCA];
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .is_vex_register_fp_flag_compare(),
+            p0 & 0x1F == 1,
+            "{bytes:02X?}"
+        );
+    }
+    for p1 in u8::MIN..=u8::MAX {
+        let c4 = [0xC4, 0xE1, p1, 0x2E, 0xCA];
+        let c5 = [0xC5, p1, 0x2E, 0xCA];
+        for bytes in [&c4[..], &c5[..]] {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .is_vex_register_fp_flag_compare(),
+                p1 & 0x7E == 0x78,
+                "{bytes:02X?}"
+            );
+        }
+    }
+    for opcode in u8::MIN..=u8::MAX {
+        let bytes = [0xC4, 0xE1, 0x78, opcode, 0xCA];
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .is_vex_register_fp_flag_compare(),
+            matches!(opcode, 0x2E | 0x2F),
+            "{bytes:02X?}"
+        );
+    }
+    for modrm in u8::MIN..=u8::MAX {
+        let bytes = [0xC4, 0xE1, 0x78, 0x2E, modrm];
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .is_vex_register_fp_flag_compare(),
+            modrm >> 6 == 3,
+            "{bytes:02X?}"
+        );
+    }
+}
+
+#[test]
+fn vex_flag_compare_classifier_rejects_reserved_unpredictable_and_memory_frontiers() {
+    let invalid: &[&[u8]] = &[
+        &[0xC5, 0xFC, 0x2F, 0xCA],             // VEX.L=1 is unpredictable
+        &[0xC5, 0xF0, 0x2F, 0xCA],             // VEX.vvvv != 1111b
+        &[0xC5, 0xFA, 0x2F, 0xCA],             // wrong mandatory prefix
+        &[0xC5, 0xF8, 0x2D, 0xCA],             // unrelated opcode
+        &[0xC5, 0xF8, 0x2F, 0x0A],             // memory source
+        &[0xC4, 0xE2, 0x78, 0x2F, 0xCA],       // map 0F38
+        &[0xC4, 0xE1, 0x74, 0x2F, 0xCA],       // L1 and non-reserved vvvv
+        &[0x66, 0xC5, 0xF8, 0x2F, 0xCA],       // leading legacy prefix
+        &[0xC5, 0xF8, 0x2F],                   // missing ModR/M
+        &[0xC5, 0xF8, 0x2F, 0xCA, 0x00],       // trailing byte
+        &[0x62, 0xF1, 0x7C, 0x08, 0x2F, 0xCA], // EVEX neighbor
+    ];
+    for bytes in invalid {
+        assert!(
+            !X86InstructionBytes::new(bytes)
+                .unwrap()
+                .is_vex_register_fp_flag_compare(),
+            "{bytes:02X?}"
+        );
+    }
+}
+
+#[test]
+fn vex_flag_compare_replay_spans_preserve_exact_defined_source_provenance() {
+    let pc = 0x2F2E;
+    let mut block = SmirBlock::new(BlockId(46), pc);
+    block.push_op(SmirOp::new(OpId(0), pc, OpKind::Nop));
+
+    for bytes in [
+        &[0xC5, 0xF8, 0x2F, 0xCA][..],
+        &[0xC5, 0x79, 0x2E, 0xCA][..],
+        &[0xC4, 0x01, 0xF9, 0x2E, 0xFF][..],
+    ] {
+        let instruction = X86InstructionBytes::new(bytes).unwrap();
+        let provenance = HashMap::from([((BlockId(46), pc), instruction)]);
+        for spans in [
+            x86_vex_fp_flag_compare_replay_spans(&block, &provenance),
+            x86_native_replay_spans(&block, &provenance),
+        ] {
+            let span = spans.get(&0).unwrap_or_else(|| panic!("{bytes:02X?}"));
+            assert_eq!(span.end, 1, "{bytes:02X?}");
+            assert_eq!(span.instruction, instruction, "{bytes:02X?}");
+            assert!(!span.needs_avx512vl, "{bytes:02X?}");
+            assert!(!span.needs_avx512dq, "{bytes:02X?}");
+            assert!(!span.needs_avx512fp16, "{bytes:02X?}");
+            assert!(!span.preserve_mxcsr_de, "{bytes:02X?}");
+        }
+        assert!(
+            x86_legacy_vex_fp_compare_replay_spans(&block, &provenance).is_empty(),
+            "{bytes:02X?}"
+        );
+        assert!(
+            x86_evex_native_replay_spans(&block, &provenance).is_empty(),
+            "{bytes:02X?}"
+        );
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum CompareKind {

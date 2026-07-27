@@ -10,6 +10,24 @@ fn evex_llig_sae_control_is_valid(p2: u8) -> bool {
 }
 
 impl X86InstructionBytes {
+    /// Validate one register-only AVX VEX `VCOMISS`, `VUCOMISS`, `VCOMISD`,
+    /// or `VUCOMISD` instruction.
+    ///
+    /// The defined deterministic replay surface requires map 0F,
+    /// `VEX.vvvv=1111b`, `VEX.L=0`, and `pp=NP/66` for binary32/binary64.
+    /// VEX.W and VEX.X are ignored but retained in the exact source-byte
+    /// universe. Intel documents `VEX.L=1` as generation-dependent
+    /// unpredictable behavior, so those encodings and all memory forms remain
+    /// at the precise interpreter frontier.
+    pub fn is_vex_register_fp_flag_compare(&self) -> bool {
+        let (p1, opcode, modrm) = match self.as_slice() {
+            [0xC5, p1, opcode, modrm] => (*p1, *opcode, *modrm),
+            [0xC4, p0, p1, opcode, modrm] if p0 & 0x1F == 1 => (*p1, *opcode, *modrm),
+            _ => return false,
+        };
+        p1 & 0x7E == 0x78 && matches!(opcode, 0x2E | 0x2F) && modrm >> 6 == 3
+    }
+
     /// Validate one register-only legacy SSE or AVX VEX `CMPPS`, `CMPPD`,
     /// `CMPSS`, or `CMPSD` instruction and report whether it requires AVX.
     ///
