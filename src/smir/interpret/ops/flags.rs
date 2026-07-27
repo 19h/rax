@@ -209,16 +209,60 @@ impl SmirInterpreter {
                 ctx.flags.lazy = None;
             }
 
-            OpKind::X86LoadMxcsr { addr } => {
+            OpKind::X86LoadMxcsr {
+                addr, requires_apx, ..
+            } => {
+                if *requires_apx
+                    && !matches!(
+                        &ctx.arch_regs,
+                        ArchRegState::X86_64(x86) if x86.apx_enabled
+                    )
+                {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+                if matches!(
+                    &ctx.arch_regs,
+                    ArchRegState::X86_64(x86) if x86.cr0 & (1 << 3) != 0
+                ) {
+                    // The x86 integration replays this exact instruction on
+                    // the direct path, which delivers #NM before memory.
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
                 let effective_addr = self.compute_address(ctx, addr);
                 let mut bytes = [0u8; 4];
                 memory.read(effective_addr, &mut bytes)?;
-                if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
-                    x86.mxcsr = u32::from_le_bytes(bytes);
+                let value = u32::from_le_bytes(bytes);
+                if !crate::isa::x86_64::mxcsr_value_is_valid(value) {
+                    ctx.request_exit(ExitReason::GeneralProtection {
+                        addr: op.guest_pc,
+                        error_code: 0,
+                    });
+                } else if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                    x86.mxcsr = value;
                 }
             }
 
             OpKind::X86StoreMxcsr { addr } => {
+                if matches!(
+                    &ctx.arch_regs,
+                    ArchRegState::X86_64(x86) if x86.cr0 & (1 << 3) != 0
+                ) {
+                    // The x86 integration replays this exact instruction on
+                    // the direct path, which delivers #NM before memory.
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
                 let effective_addr = self.compute_address(ctx, addr);
                 let value = match &ctx.arch_regs {
                     ArchRegState::X86_64(x86) => x86.mxcsr,

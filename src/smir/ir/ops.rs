@@ -3994,8 +3994,13 @@ pub enum OpKind {
     X86XTest,
 
     /// x86 LDMXCSR/VLDMXCSR: load the 32-bit SIMD control/status register.
+    /// `requires_apx` records a legacy REX2 encoding so #UD precedes the
+    /// memory access when APX is disabled. Native execution leaves at the
+    /// exact `next_pc` after a successful, reserved-bit-validated commit.
     X86LoadMxcsr {
         addr: Address,
+        requires_apx: bool,
+        next_pc: GuestAddr,
     },
 
     /// x86 STMXCSR/VSTMXCSR: store the 32-bit SIMD control/status register.

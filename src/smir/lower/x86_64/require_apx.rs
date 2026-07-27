@@ -11,19 +11,13 @@ pub(crate) fn x86_require_apx_shape_valid(op: &SmirOp) -> bool {
 }
 
 impl X86_64Lowerer {
-    /// Continue only while APX remains enabled in the marshalled guest state.
-    /// A disabled feature restores RAX and the complete native RFLAGS image,
-    /// then exits at the original guest PC so direct execution delivers #UD.
-    pub(crate) fn emit_x86_require_apx(&mut self, op: &SmirOp) -> Result<(), LowerError> {
+    /// Emit the dynamic APX state check shared by the standalone lifter guard
+    /// and terminal helper-backed operations whose shape carries APX
+    /// provenance internally.
+    pub(crate) fn emit_x86_require_apx_guard(&mut self, guest_pc: u64) -> Result<(), LowerError> {
         if !self.jit_fault_deopt_guards {
             return Err(LowerError::UnsupportedOp {
                 op: "X86RequireApx requires JIT fault-deoptimization guards".to_string(),
-            });
-        }
-        if !x86_require_apx_shape_valid(op) {
-            return Err(LowerError::InvalidOperand {
-                op: "X86RequireApx".to_string(),
-                operand: "requires the exact unhinted operand-free guard".to_string(),
             });
         }
 
@@ -37,11 +31,24 @@ impl X86_64Lowerer {
 
         self.code.emit_u8(0x58); // pop rax
         self.code.emit_u8(0x9D); // popfq
-        self.emit_native_exit(op.guest_pc);
+        self.emit_native_exit(guest_pc);
 
         self.patch_rel32_to_current(enabled)?;
         self.code.emit_u8(0x58); // pop rax
         self.code.emit_u8(0x9D); // popfq
         Ok(())
+    }
+
+    /// Continue only while APX remains enabled in the marshalled guest state.
+    /// A disabled feature restores RAX and the complete native RFLAGS image,
+    /// then exits at the original guest PC so direct execution delivers #UD.
+    pub(crate) fn emit_x86_require_apx(&mut self, op: &SmirOp) -> Result<(), LowerError> {
+        if !x86_require_apx_shape_valid(op) {
+            return Err(LowerError::InvalidOperand {
+                op: "X86RequireApx".to_string(),
+                operand: "requires the exact unhinted operand-free guard".to_string(),
+            });
+        }
+        self.emit_x86_require_apx_guard(op.guest_pc)
     }
 }

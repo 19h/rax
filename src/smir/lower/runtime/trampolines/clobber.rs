@@ -12,9 +12,9 @@ use crate::smir::lower::x86_64::{
     x86_far_return_shape_valid, x86_far_return_terminal_shape_valid,
     x86_fast_system_transfer_shape_valid, x86_fast_system_transfer_terminal_shape_valid,
     x86_invlpg_shape_valid, x86_invpcid_shape_valid, x86_lmsw_shape_valid,
-    x86_read_control_shape_valid, x86_read_debug_shape_valid, x86_selector_query_shape_valid,
-    x86_selector_verify_shape_valid, x86_smsw_shape_valid, x86_sti_shape_valid,
-    x86_store_mxcsr_shape_valid, x86_system_selector_load_shape_valid,
+    x86_load_mxcsr_shape_valid, x86_read_control_shape_valid, x86_read_debug_shape_valid,
+    x86_selector_query_shape_valid, x86_selector_verify_shape_valid, x86_smsw_shape_valid,
+    x86_sti_shape_valid, x86_store_mxcsr_shape_valid, x86_system_selector_load_shape_valid,
     x86_system_selector_store_shape_valid, x86_waitpkg_shape_valid, x86_write_control_shape_valid,
     x86_write_debug_shape_valid,
 };
@@ -619,6 +619,12 @@ pub(crate) fn block_is_clobber_safe(
                 &op.kind,
                 OpKind::X86StoreMxcsr { addr } if x86_jit_mem_address_shape_valid(addr)
             );
+        let mxcsr_load_ok = allow_mem
+            && x86_load_mxcsr_shape_valid(op)
+            && matches!(
+                &op.kind,
+                OpKind::X86LoadMxcsr { addr, .. } if x86_jit_mem_address_shape_valid(addr)
+            );
         let stack_mov_ok = x86_state_backed_stack_mov_valid(&op.kind);
         let stack_alu_ok = x86_state_backed_stack_alu_valid(&op.kind);
         // A helper-backed scalar load commits its result into the destination's
@@ -827,6 +833,7 @@ pub(crate) fn block_is_clobber_safe(
             || state_bswap_ok
             || state_xchg_ok
             || mxcsr_store_ok
+            || mxcsr_load_ok
             || waitpkg_ok
             || fsgsbase_ok
             || read_control_ok
@@ -901,6 +908,7 @@ pub(crate) fn block_is_clobber_safe(
             || mmx_mem_ok
             || sse4a_movnt_ok
             || mxcsr_store_ok
+            || mxcsr_load_ok
             || descriptor_store_ok
             || descriptor_load_ok
             || far_jump_ok
@@ -1020,9 +1028,7 @@ pub(crate) fn block_is_clobber_safe(
         if matches!(op.kind, OpKind::X86StoreMxcsr { .. }) && !mxcsr_store_ok {
             return false;
         }
-        // LDMXCSR requires reserved-bit #GP validation and a completed-
-        // instruction deoptimization frontier before native admission.
-        if matches!(op.kind, OpKind::X86LoadMxcsr { .. }) {
+        if matches!(op.kind, OpKind::X86LoadMxcsr { .. }) && !mxcsr_load_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86XGetBv { .. }) && !x86_xgetbv_shape_valid(&op.kind) {

@@ -6,6 +6,7 @@ use crate::vm::vcpu::VcpuExit;
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 use crate::isa::x86_64::execute;
 use crate::isa::x86_64::flags;
+use crate::isa::x86_64::mxcsr_value_is_valid;
 
 impl X86_64Vcpu {
     fn kmask_bits(size_bits: u8) -> u64 {
@@ -583,10 +584,21 @@ impl X86_64Vcpu {
 
         match reg_op {
             2 => {
+                if !self.require_cr0_ts_clear_for_nm()? {
+                    return Ok(None);
+                }
                 // VLDMXCSR: load MXCSR from memory
-                self.mxcsr = self.read_mem(addr, 4)? as u32;
+                let value = self.read_mem(addr, 4)? as u32;
+                if !mxcsr_value_is_valid(value) {
+                    self.inject_exception(13, Some(0))?;
+                    return Ok(None);
+                }
+                self.mxcsr = value;
             }
             3 => {
+                if !self.require_cr0_ts_clear_for_nm()? {
+                    return Ok(None);
+                }
                 // VSTMXCSR: store MXCSR to memory
                 self.write_mem(addr, self.mxcsr as u64, 4)?;
             }

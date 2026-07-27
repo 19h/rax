@@ -7,6 +7,7 @@ use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 use crate::isa::x86_64::execute;
 use crate::isa::x86_64::execute::crypto::aes;
 use crate::isa::x86_64::flags;
+use crate::isa::x86_64::mxcsr_value_is_valid;
 
 const CR0_TS: u64 = 1 << 3;
 const CR4_TSD: u64 = 1 << 2;
@@ -662,7 +663,12 @@ impl X86_64Vcpu {
                         return Ok(None);
                     }
                     // LDMXCSR - load MXCSR register from memory
-                    self.mxcsr = self.read_mem32(addr)?;
+                    let value = self.read_mem32(addr)?;
+                    if !mxcsr_value_is_valid(value) {
+                        self.inject_exception(13, Some(0))?;
+                        return Ok(None);
+                    }
+                    self.mxcsr = value;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }

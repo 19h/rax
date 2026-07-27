@@ -112,7 +112,11 @@ impl X86_64Lifter {
                 OpId(ops.len() as u16),
                 pc,
                 if group == 2 {
-                    OpKind::X86LoadMxcsr { addr }
+                    OpKind::X86LoadMxcsr {
+                        addr,
+                        requires_apx: prefix.rex2.is_some(),
+                        next_pc,
+                    }
                 } else {
                     OpKind::X86StoreMxcsr { addr }
                 },

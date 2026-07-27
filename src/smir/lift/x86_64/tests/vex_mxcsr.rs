@@ -43,7 +43,32 @@ fn lift_legacy_and_vex_mxcsr_memory_operations() {
                 }) if w == vex_w
             ));
         }
+        if load {
+            assert!(matches!(
+                result.ops.last().map(|op| &op.kind),
+                Some(OpKind::X86LoadMxcsr {
+                    requires_apx: false,
+                    next_pc,
+                    ..
+                }) if *next_pc == 0x1000 + bytes.len() as u64
+            ));
+        }
     }
+
+    let rex2_load = lift_single(&[0xD5, 0x91, 0xAE, 0x17])
+        .expect("REX2.M1 LDMXCSR [R31] must lift without a duplicate APX guard");
+    assert_eq!(rex2_load.bytes_consumed, 4);
+    assert!(matches!(
+        rex2_load.ops.as_slice(),
+        [SmirOp {
+            kind: OpKind::X86LoadMxcsr {
+                addr: Address::Direct(base),
+                requires_apx: true,
+                next_pc: 0x1004,
+            },
+            ..
+        }] if *base == x86_gpr(31)
+    ));
 
     let reserved_register = lift_single(&[0x0F, 0xAE, 0xD0])
         .expect("reserved legacy register /2 must strictly lift to #UD");
@@ -68,20 +93,24 @@ fn lift_legacy_and_vex_mxcsr_memory_operations() {
 
     let addr32 = lift_single(&[0x67, 0x0F, 0xAE, 0x14, 0x77]).unwrap();
     assert_eq!(addr32.bytes_consumed, 5);
-    assert!(addr32.ops[..addr32.ops.len() - 1].iter().all(|op| matches!(
-        op.kind,
-        OpKind::Shl {
-            width: OpWidth::W32,
-            flags: FlagUpdate::None,
-            ..
-        } | OpKind::Add {
-            width: OpWidth::W32,
-            flags: FlagUpdate::None,
-            ..
-        }
-    )));
     assert!(matches!(
-        addr32.ops.last().map(|op| &op.kind),
-        Some(OpKind::X86LoadMxcsr { .. })
+        addr32.ops.as_slice(),
+        [SmirOp {
+            kind: OpKind::X86LoadMxcsr {
+                addr: Address::X86Addr32(inner),
+                requires_apx: false,
+                next_pc: 0x1005,
+            },
+            ..
+        }] if matches!(
+            inner.as_ref(),
+            Address::BaseIndexScale {
+                base: Some(base),
+                index,
+                scale: 2,
+                disp: 0,
+                ..
+            } if *base == x86_gpr(7) && *index == x86_gpr(6)
+        )
     ));
 }

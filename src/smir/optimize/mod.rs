@@ -3588,7 +3588,7 @@ impl OpKind {
                 result.extend(addr.regs());
             }
 
-            OpKind::X86LoadMxcsr { addr } | OpKind::X86StoreMxcsr { addr } => {
+            OpKind::X86LoadMxcsr { addr, .. } | OpKind::X86StoreMxcsr { addr } => {
                 result.extend(addr.regs());
             }
 

@@ -1065,6 +1065,13 @@ impl X86_64Lowerer {
                 // guest op.
                 return Ok(());
             }
+            if matches!(block.ops[idx].kind, OpKind::X86LoadMxcsr { .. }) {
+                self.emit_x86_load_mxcsr(&block.ops[idx])?;
+                // A valid load commits MXCSR and leaves at next_pc; every
+                // fault or feature rejection leaves at the original guest PC.
+                // No later operation or terminator in this block is reachable.
+                return Ok(());
+            }
             if matches!(block.ops[idx].kind, OpKind::X86FarJump(..)) {
                 if idx + 1 != block.ops.len() || !x86_far_jump_terminal_shape_valid(block) {
                     return Err(LowerError::InvalidOperand {

@@ -3714,6 +3714,12 @@ use jit_state::JitRegion;
 use jit_state::jit_mxcsr_masks_all_exceptions;
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_mem_load.rs"]
+mod jit_mem_load;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use jit_mem_load::rax_jit_mem_load;
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_call.rs"]
 mod jit_call;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -3825,16 +3831,6 @@ fn jit_mem_enabled() -> bool {
     use std::sync::OnceLock;
     static ON: OnceLock<bool> = OnceLock::new();
     *ON.get_or_init(|| jit_default_enabled(std::env::var_os("RAX_JIT_NO_MEM").is_some()))
-}
-
-/// Result of a JIT memory load: `value` in RAX, `ok` in RDX (SysV two-eightbyte
-/// integer struct return). `ok == 0` signals a fault/MMIO/unmapped access — the
-/// native region bails to the interpreter at the faulting instruction.
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-#[repr(C)]
-struct JitLoadRet {
-    value: u64,
-    ok: u64,
 }
 
 /// Guest entry PC of the JIT region currently executing natively (RAX_JIT_TRACE).
@@ -3951,35 +3947,6 @@ fn jit_install_crash_handler() {
         libc::sigaction(libc::SIGBUS, &sa, std::ptr::null_mut());
         libc::sigaction(libc::SIGILL, &sa, std::ptr::null_mut());
     });
-}
-
-/// JIT memory-load helper: translate + read `size` bytes at guest `addr` via the
-/// vcpu MMU, sign- or zero-extending to 64 bits. Called from lowered native code
-/// with the vcpu pointer in `ctx`.
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-unsafe extern "C" fn rax_jit_mem_load(
-    ctx: *mut X86_64Vcpu,
-    addr: u64,
-    size: u32,
-    signed: u32,
-) -> JitLoadRet {
-    let vcpu = unsafe { &mut *ctx };
-    match vcpu.read_mem(addr, size as u8) {
-        Ok(val) => {
-            let value = if signed != 0 {
-                match size {
-                    1 => val as u8 as i8 as i64 as u64,
-                    2 => val as u16 as i16 as i64 as u64,
-                    4 => val as u32 as i32 as i64 as u64,
-                    _ => val,
-                }
-            } else {
-                val
-            };
-            JitLoadRet { value, ok: 1 }
-        }
-        Err(_) => JitLoadRet { value: 0, ok: 0 },
-    }
 }
 
 /// JIT memory-store helper: translate + write `size` bytes of `value` at guest
@@ -4797,6 +4764,8 @@ impl X86_64Vcpu {
                                 | OpKind::X86SwapGs { .. }
                                 | OpKind::X86MonitorMwait(..)
                                 | OpKind::X86WaitPkg(..)
+                                | OpKind::X86LoadMxcsr { .. }
+                                | OpKind::X86StoreMxcsr { .. }
                                 | OpKind::X86Msr(..)
                                 | OpKind::X86ReadControl { .. }
                                 | OpKind::X86Smsw(..)

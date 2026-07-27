@@ -1423,6 +1423,43 @@ fn lifted_legacy_and_vex_mxcsr_roundtrip_and_fault_atomicity() {
         assert_eq!(x86.mxcsr, 0x1F80, "faulting load changed MXCSR");
     }
 
+    memory.write(0x200, &0x0001_1F80u32.to_le_bytes()).unwrap();
+    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+        x86.mxcsr = 0x3F80;
+    }
+    let exit = execute_lifted_x86(&[0xC5, 0xF8, 0xAE, 0x10], &mut ctx, &mut memory);
+    assert!(matches!(
+        exit,
+        BlockResult::Exit(ExitReason::GeneralProtection {
+            addr: 0x1000,
+            error_code: 0
+        })
+    ));
+    if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+        assert_eq!(x86.mxcsr, 0x3F80, "reserved-bit load changed MXCSR");
+    }
+
+    // CR0.TS requests direct replay for #NM before either memory direction.
+    // Use an out-of-range address so a missing guard reports a memory fault
+    // instead, and preserve the existing MXCSR value across both forms.
+    ctx.write_vreg(rax, 0x1000);
+    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+        x86.cr0 |= 1 << 3;
+    }
+    for bytes in [&[0x0F, 0xAE, 0x10][..], &[0xC5, 0xF8, 0xAE, 0x18][..]] {
+        let exit = execute_lifted_x86(bytes, &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::Undefined {
+                addr: 0x1000,
+                opcode: 0
+            })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mxcsr, 0x3F80, "CR0.TS path changed MXCSR");
+        }
+    }
+
     ctx.flags.materialize_all();
     assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
 }

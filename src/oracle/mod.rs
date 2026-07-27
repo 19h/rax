@@ -2625,7 +2625,11 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             lanes,
             round,
         } => op_json!("x86_packed_fp_convert_store", addr, src, mask, lanes, round),
-        OpKind::X86LoadMxcsr { addr } => op_json!("x86_load_mxcsr", addr),
+        OpKind::X86LoadMxcsr {
+            addr,
+            requires_apx,
+            next_pc,
+        } => op_json!("x86_load_mxcsr", addr, requires_apx, next_pc),
         OpKind::X86StoreMxcsr { addr } => op_json!("x86_store_mxcsr", addr),
         OpKind::X86CacheControl { addr, kind } => op_json!("x86_cache_control", addr, kind),
         OpKind::X86CheckAlignment { addr, alignment } => {

@@ -97,6 +97,7 @@ impl X86_64Lowerer {
                 emitter.emit_nop();
             }
 
+            OpKind::X86LoadMxcsr { .. } => self.emit_x86_load_mxcsr(op)?,
             OpKind::X86RequireApx => self.emit_x86_require_apx(op)?,
             OpKind::X86RequireSse4a => self.emit_x86_require_sse4a(op)?,
             OpKind::X86Sse4aBitfield { .. } => self.emit_x86_sse4a_bitfield(op)?,
