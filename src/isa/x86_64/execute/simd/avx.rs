@@ -207,6 +207,7 @@ pub fn vmovd_load(
     vcpu.regs.xmm[xmm_dst][1] = 0;
     vcpu.regs.ymm_high[xmm_dst][0] = 0;
     vcpu.regs.ymm_high[xmm_dst][1] = 0;
+    vcpu.regs.zmm_high[xmm_dst] = [0; 4];
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -249,6 +250,7 @@ pub fn vmovq_load(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
     vcpu.regs.xmm[xmm_dst][1] = 0;
     vcpu.regs.ymm_high[xmm_dst][0] = 0;
     vcpu.regs.ymm_high[xmm_dst][1] = 0;
+    vcpu.regs.zmm_high[xmm_dst] = [0; 4];
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -266,6 +268,7 @@ pub fn vmovq_store(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
         vcpu.regs.xmm[xmm_dst][1] = 0;
         vcpu.regs.ymm_high[xmm_dst][0] = 0;
         vcpu.regs.ymm_high[xmm_dst][1] = 0;
+        vcpu.regs.zmm_high[xmm_dst] = [0; 4];
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)

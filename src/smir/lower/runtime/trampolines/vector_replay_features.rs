@@ -151,6 +151,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             let vex_unaligned_packed_fp_move =
                 span.instruction.is_vex_register_unaligned_packed_fp_move();
             let vex_packed_integer_move = span.instruction.is_vex_register_packed_integer_move();
+            let vex_scalar_vmovq = span.instruction.is_vex_register_scalar_vmovq();
             let vex_register_broadcast = span
                 .instruction
                 .vex_register_broadcast_element_bits()
@@ -181,6 +182,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_aligned_packed_fp_move
                 || vex_unaligned_packed_fp_move
                 || vex_packed_integer_move
+                || vex_scalar_vmovq
                 || vex_register_broadcast
                 || vex_lane_shuffle_avx2.is_some()
                 || vex_fp32_fp64_convert
@@ -222,6 +224,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_aligned_packed_fp_move
                 || vex_unaligned_packed_fp_move
                 || vex_packed_integer_move
+                || vex_scalar_vmovq
                 || vex_register_broadcast
                 || vex_lane_shuffle_avx2.is_some()
                 || vex_fp32_fp64_convert

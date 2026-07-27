@@ -325,13 +325,21 @@ impl X86_64Vcpu {
 
             match (vex_pp, opcode) {
                 // VMOVD/VMOVQ load - VEX.66.0F 6E /r (GPR/mem -> xmm)
-                (1, 0x6E) => return execute::simd::vmovd_load(self, ctx, vex_w),
+                (1, 0x6E) if vex_l == 0 && vvvv == 0 => {
+                    return execute::simd::vmovd_load(self, ctx, vex_w);
+                }
                 // VMOVD/VMOVQ store - VEX.66.0F 7E /r (xmm -> GPR/mem)
-                (1, 0x7E) => return execute::simd::vmovd_store(self, ctx, vex_w),
+                (1, 0x7E) if vex_l == 0 && vvvv == 0 => {
+                    return execute::simd::vmovd_store(self, ctx, vex_w);
+                }
                 // VMOVQ load - VEX.F3.0F 7E /r (xmm/m64 -> xmm, zero-extend)
-                (2, 0x7E) => return execute::simd::vmovq_load(self, ctx),
+                (2, 0x7E) if vex_l == 0 && vvvv == 0 => {
+                    return execute::simd::vmovq_load(self, ctx);
+                }
                 // VMOVQ store - VEX.66.0F D6 /r (xmm -> xmm/m64)
-                (1, 0xD6) => return execute::simd::vmovq_store(self, ctx),
+                (1, 0xD6) if vex_l == 0 && vvvv == 0 => {
+                    return execute::simd::vmovq_store(self, ctx);
+                }
                 // VPINSRW xmm1, xmm2, r32/m16, imm8 - VEX.66.0F.W0 C4 /r ib
                 (1, 0xC4) => return self.execute_vpinsrw(ctx, vex_l, vex_w, vvvv),
                 // VPEXTRW r32, xmm1, imm8 - VEX.66.0F.W0 C5 /r ib

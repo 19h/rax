@@ -990,6 +990,8 @@ mod x86_64_simd_avx_vmovntdqa;
 mod x86_64_simd_avx_vmovntpd;
 #[path = "simd/avx/vmovntps.rs"]
 mod x86_64_simd_avx_vmovntps;
+#[path = "simd/avx/vmovq.rs"]
+mod x86_64_simd_avx_vmovq;
 #[path = "simd/avx/vmovsd.rs"]
 mod x86_64_simd_avx_vmovsd;
 #[path = "simd/avx/vmovshdup.rs"]

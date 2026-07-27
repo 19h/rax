@@ -281,6 +281,21 @@ pub fn x86_vex_packed_integer_move_replay_spans(
     })
 }
 
+/// Identify valid register-only AVX VEX scalar `VMOVQ` replay groups in
+/// `block` in O(N) time and O(P) space for N operations and P unique guest
+/// PCs. The `F3 0F 7E` and `66 0F D6` XMM aliases are admitted; memory forms
+/// remain at the precise SMIR interpreter boundary.
+pub fn x86_vex_scalar_vmovq_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .is_vex_register_scalar_vmovq()
+            .then_some((false, false, false))
+    })
+}
+
 /// Identify valid register-only AVX2 VEX scalar-broadcast replay groups in
 /// `block` in O(N) time and O(P) space for N operations and P unique guest
 /// PCs. VBROADCASTSS/SD and VPBROADCASTB/W/D/Q register forms are admitted;
@@ -1399,6 +1414,9 @@ pub fn x86_native_replay_spans(
             return Some((false, false, false));
         }
         if instruction.is_vex_register_packed_integer_move() {
+            return Some((false, false, false));
+        }
+        if instruction.is_vex_register_scalar_vmovq() {
             return Some((false, false, false));
         }
         if instruction.vex_register_broadcast_element_bits().is_some() {

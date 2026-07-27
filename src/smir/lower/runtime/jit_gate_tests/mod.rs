@@ -246,6 +246,8 @@ mod vex_scalar_extract_replay;
 #[cfg(test)]
 mod vex_scalar_insert_replay;
 #[cfg(test)]
+mod vex_scalar_vmovq_replay;
+#[cfg(test)]
 mod vex_unaligned_packed_fp_move_replay;
 #[cfg(test)]
 mod vex_variable_blend_replay;
