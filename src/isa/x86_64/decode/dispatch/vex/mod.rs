@@ -914,7 +914,7 @@ impl X86_64Vcpu {
                     return self.execute_vex_broadcast_128(ctx, vex_l, vvvv, "VBROADCASTF128");
                 }
                 // VTESTPS/VTESTPD
-                0x0E | 0x0F => {
+                0x0E | 0x0F if vex_w == 0 => {
                     return self.execute_vex_vtest(ctx, vex_l, vvvv, opcode);
                 }
                 // VCVTPH2PS: convert packed half-precision to packed single-precision.

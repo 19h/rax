@@ -1,7 +1,7 @@
 use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
 
-// VPTEST - Logical Compare and Set Flags (AVX2)
+// VPTEST - Logical Compare and Set Flags (AVX for both vector lengths)
 //
 // Performs a bitwise AND or AND-NOT operation and sets flags based on the result.
 // Sets ZF=1 if the bitwise AND of the two operands is all zeros.

@@ -51,3 +51,30 @@ fn test_vptest_xmm_flags() {
     assert!(!pf_set(regs.rflags));
     assert!(!sf_set(regs.rflags));
 }
+
+#[test]
+fn test_vptest_wig_accepts_w1_at_both_vector_lengths() {
+    for p1 in [0xF9, 0xFD] {
+        let code = [
+            0xC4, 0xE2, p1, 0x17, 0xC1, // VPTEST XMM/YMM0, XMM/YMM1
+            0xF4,
+        ];
+        let (mut vcpu, _) = setup_vm(&code, None);
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.xmm[0] = [0x00FF, 0];
+        regs.xmm[1] = [0x00FF, 0];
+        regs.ymm_high[0] = [0xFF00, 0];
+        regs.ymm_high[1] = [0xFF00, 0];
+        regs.rflags = 0x2 | 0x8D5 | (1 << 10);
+        vcpu.set_regs(&regs).unwrap();
+
+        let actual = run_until_hlt(&mut vcpu).unwrap();
+        assert!(cf_set(actual.rflags), "p1={p1:02X}: CF");
+        assert!(!zf_set(actual.rflags), "p1={p1:02X}: ZF");
+        assert!(!af_set(actual.rflags), "p1={p1:02X}: AF");
+        assert!(!of_set(actual.rflags), "p1={p1:02X}: OF");
+        assert!(!pf_set(actual.rflags), "p1={p1:02X}: PF");
+        assert!(!sf_set(actual.rflags), "p1={p1:02X}: SF");
+        assert!(df_set(actual.rflags), "p1={p1:02X}: DF");
+    }
+}

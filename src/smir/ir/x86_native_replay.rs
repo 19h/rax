@@ -548,6 +548,21 @@ pub fn x86_vex_mov_mask_stack_destination_replay_spans(
     })
 }
 
+/// Identify valid register-only AVX VEX `VPTEST`, `VTESTPS`, and `VTESTPD`
+/// replay groups in `block` in O(N) time and O(P) space for N operations and P
+/// unique guest PCs. Memory forms remain at the precise SMIR interpreter
+/// boundary.
+pub fn x86_vex_ptest_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .is_vex_register_ptest()
+            .then_some((false, false, false))
+    })
+}
+
 /// Identify valid register-only AVX VEX variable-blend replay groups in
 /// `block` in O(N) time and O(P) space for N operations and P unique guest PCs.
 pub fn x86_vex_variable_blend_replay_spans(
@@ -1720,6 +1735,11 @@ pub fn x86_native_replay_spans(
                 instruction
                     .vex_mov_mask_stack_destination_needs_avx2()
                     .map(|_| (false, false, false))
+            })
+            .or_else(|| {
+                instruction
+                    .is_vex_register_ptest()
+                    .then_some((false, false, false))
             })
             .or_else(|| {
                 instruction

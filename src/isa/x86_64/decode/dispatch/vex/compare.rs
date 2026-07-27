@@ -96,24 +96,22 @@ impl X86_64Vcpu {
         let reg_sign_mask = |vcpu: &X86_64Vcpu, reg: usize| -> u32 {
             let mut mask = 0u32;
             for lane in 0..lane_count {
-                let qword = match lane {
-                    0 | 1 => vcpu.regs.xmm[reg][0],
-                    2 | 3 => {
-                        if lane_bits == 32 {
-                            vcpu.regs.xmm[reg][1]
-                        } else {
-                            vcpu.regs.ymm_high[reg][lane - 2]
-                        }
-                    }
-                    4 | 5 => vcpu.regs.ymm_high[reg][0],
-                    _ => vcpu.regs.ymm_high[reg][1],
-                };
-                let sign_set = if lane_bits == 32 {
-                    ((qword >> (31 + 32 * (lane & 1))) & 1) != 0
+                let (qword, sign_bit) = if lane_bits == 32 {
+                    let qword = if lane < 4 {
+                        vcpu.regs.xmm[reg][lane / 2]
+                    } else {
+                        vcpu.regs.ymm_high[reg][(lane - 4) / 2]
+                    };
+                    (qword, 31 + 32 * (lane & 1))
                 } else {
-                    ((qword >> 63) & 1) != 0
+                    let qword = if lane < 2 {
+                        vcpu.regs.xmm[reg][lane]
+                    } else {
+                        vcpu.regs.ymm_high[reg][lane - 2]
+                    };
+                    (qword, 63)
                 };
-                if sign_set {
+                if (qword >> sign_bit) & 1 != 0 {
                     mask |= 1u32 << lane;
                 }
             }

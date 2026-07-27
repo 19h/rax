@@ -182,6 +182,18 @@ impl X86_64Lowerer {
             }
             return;
         }
+        if span.instruction.is_vex_register_ptest() {
+            self.code.emit_bytes(span.instruction.as_slice());
+            // Intel defines OF/SF/AF/PF as zero for VPTEST/VTESTPS/VTESTPD.
+            // Some translated x86-64 hosts compute CF/ZF but preserve these
+            // four bits. Canonicalize the pushed flag image without exposing
+            // the temporary flags produced by AND or modifying any guest GPR.
+            self.code.emit_u8(0x9C); // pushfq
+            self.code
+                .emit_bytes(&[0x48, 0x81, 0x24, 0x24, 0x6B, 0xF7, 0xFF, 0xFF]);
+            self.code.emit_u8(0x9D); // popfq
+            return;
+        }
         if !span.preserve_mxcsr_de {
             self.code.emit_bytes(span.instruction.as_slice());
             return;

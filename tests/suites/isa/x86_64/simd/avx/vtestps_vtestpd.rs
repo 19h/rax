@@ -826,3 +826,113 @@ fn test_vtestpd_multiple_tests() {
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+fn assert_vtestpd_register_flags(wide: bool, first: [u64; 4], second: [u64; 4]) {
+    let code = [
+        0xC4,
+        0xE2,
+        if wide { 0x7D } else { 0x79 },
+        0x0F,
+        0xC1, // VTESTPD XMM/YMM0, XMM/YMM1
+        0xF4,
+    ];
+    let mut initial = Registers::default();
+    initial.xmm[0] = [first[0], first[1]];
+    initial.ymm_high[0] = [first[2], first[3]];
+    initial.xmm[1] = [second[0], second[1]];
+    initial.ymm_high[1] = [second[2], second[3]];
+    initial.rflags = 0x2 | 0x8D5 | (1 << 10);
+
+    let (mut vcpu, _) = setup_vm(&code, Some(initial.clone()));
+    let actual = run_until_hlt(&mut vcpu).unwrap();
+    let lane_count = if wide { 4 } else { 2 };
+    let mut intersection = 0u64;
+    let mut outside = 0u64;
+    for lane in 0..lane_count {
+        let first_sign = first[lane] & (1 << 63);
+        let second_sign = second[lane] & (1 << 63);
+        intersection |= first_sign & second_sign;
+        outside |= second_sign & !first_sign;
+    }
+    let expected_rflags =
+        (initial.rflags & !0x8D5) | u64::from(outside == 0) | (u64::from(intersection == 0) << 6);
+    assert_eq!(actual.rflags, expected_rflags, "wide={wide}");
+    assert_eq!(actual.xmm[0], initial.xmm[0], "wide={wide}: XMM0");
+    assert_eq!(
+        actual.ymm_high[0], initial.ymm_high[0],
+        "wide={wide}: YMM0 high"
+    );
+    assert_eq!(actual.xmm[1], initial.xmm[1], "wide={wide}: XMM1");
+    assert_eq!(
+        actual.ymm_high[1], initial.ymm_high[1],
+        "wide={wide}: YMM1 high"
+    );
+}
+
+#[test]
+fn vtestpd_tests_each_64_bit_sign_lane_and_all_defined_flag_outcomes() {
+    const SIGN: u64 = 1 << 63;
+    for wide in [false, true] {
+        let lane_count = if wide { 4 } else { 2 };
+        for lane in 0..lane_count {
+            let mut first = [0u64; 4];
+            let mut second = [0u64; 4];
+            assert_vtestpd_register_flags(wide, first, second);
+
+            second[lane] = SIGN;
+            assert_vtestpd_register_flags(wide, first, second);
+
+            first[lane] = SIGN;
+            assert_vtestpd_register_flags(wide, first, second);
+
+            second[if lane == 0 { 1 } else { 0 }] = SIGN;
+            assert_vtestpd_register_flags(wide, first, second);
+        }
+    }
+}
+
+fn assert_reserved_vtest_ud_noncommitting(opcode: u8, p1: u8, name: &str) {
+    let code = [0xC4, 0xE2, p1, opcode, 0xC1, 0xF4];
+    let mut initial = Registers::default();
+    initial.rax = 0x0123_4567_89AB_CDEF;
+    initial.rflags = 0x2 | 0x8D5 | (1 << 10);
+    initial.xmm[0] = [1, 2];
+    initial.ymm_high[0] = [3, 4];
+    initial.xmm[1] = [5, 6];
+    initial.ymm_high[1] = [7, 8];
+
+    let (mut vcpu, _) = setup_vm_no_idt(&code, Some(initial));
+    for path in ["cold decode", "decode-cache hit"] {
+        let before = vcpu.get_regs().unwrap();
+        let error = vcpu
+            .step()
+            .expect_err("reserved VTEST encoding must raise #UD");
+        assert!(
+            error.to_string().contains("IDT entry 6 not present"),
+            "{name} ({path}): expected #UD delivery failure, got {error}"
+        );
+        let after = vcpu.get_regs().unwrap();
+        assert_eq!(after.rip, before.rip, "{name} ({path}): RIP");
+        assert_eq!(after.rax, before.rax, "{name} ({path}): RAX");
+        assert_eq!(after.rflags, before.rflags, "{name} ({path}): RFLAGS");
+        assert_eq!(after.xmm, before.xmm, "{name} ({path}): XMM state");
+        assert_eq!(
+            after.ymm_high, before.ymm_high,
+            "{name} ({path}): YMM upper state"
+        );
+    }
+}
+
+#[test]
+fn vtestps_vtestpd_reserved_w_and_vvvv_raise_ud_without_committing() {
+    for (opcode, mnemonic) in [(0x0E, "VTESTPS"), (0x0F, "VTESTPD")] {
+        for (p1, field) in [
+            (0xF9, "W=1,L=0"),
+            (0xFD, "W=1,L=1"),
+            (0x71, "vvvv!=1111,L=0"),
+            (0x75, "vvvv!=1111,L=1"),
+        ] {
+            assert_reserved_vtest_ud_noncommitting(opcode, p1, &format!("{mnemonic} {field}"));
+        }
+    }
+}
