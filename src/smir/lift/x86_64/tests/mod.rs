@@ -188,6 +188,8 @@ mod vex_bmi_reserved;
 #[cfg(test)]
 mod vex_chunk;
 #[cfg(test)]
+mod vex_unaligned_packed_fp_move;
+#[cfg(test)]
 mod vmx_controls;
 #[cfg(test)]
 mod vpblendd;

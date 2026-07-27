@@ -13,6 +13,7 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_sse3: bool,
     pub(crate) needs_avx: bool,
     pub(crate) needs_avx2: bool,
+    pub(crate) needs_vex_unaligned_packed_fp_move: bool,
     pub(crate) needs_fma: bool,
     pub(crate) needs_fma4: bool,
     pub(crate) needs_xop: bool,
@@ -71,6 +72,18 @@ pub(crate) fn x86_host_has_xop() -> bool {
     }
 }
 
+#[cfg(target_arch = "x86_64")]
+fn x86_host_supports_vex_unaligned_packed_fp_move() -> bool {
+    // Rosetta currently enumerates AVX but raises #UD for valid register-only
+    // VEX VMOVUPS/VMOVUPD encodings. Keep this replay family at the SMIR
+    // interpreter frontier in translated x86-64 processes.
+    #[cfg(target_os = "macos")]
+    if super::super::running_under_rosetta() {
+        return false;
+    }
+    true
+}
+
 impl X86NativeReplayFeatureRequirements {
     /// Test replay-family CPUID requirements that are independent of the
     /// shared AVX-512 vector-state trampoline requirements.
@@ -79,6 +92,8 @@ impl X86NativeReplayFeatureRequirements {
         (!self.needs_sse3 || std::is_x86_feature_detected!("sse3"))
             && (!self.needs_avx || std::is_x86_feature_detected!("avx"))
             && (!self.needs_avx2 || std::is_x86_feature_detected!("avx2"))
+            && (!self.needs_vex_unaligned_packed_fp_move
+                || x86_host_supports_vex_unaligned_packed_fp_move())
             && (!self.needs_fma || std::is_x86_feature_detected!("fma"))
             && (!self.needs_fma4 || x86_host_has_fma4())
             && (!self.needs_xop || x86_host_has_xop())
@@ -125,10 +140,13 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 .instruction
                 .vex_register_widening_dword_multiply_needs_avx2();
             let vex_packed_extend_avx2 = span.instruction.vex_register_packed_extend_needs_avx2();
+            let vex_unaligned_packed_fp_move =
+                span.instruction.is_vex_register_unaligned_packed_fp_move();
             let vex_fp32_fp64_convert = span.instruction.is_vex_register_fp32_fp64_convert();
             let vex_zero = span.instruction.vex_zeroes_all_register_bits().is_some();
             requirements.any = true;
             requirements.needs_sse3 |= fp_horizontal_addsub_avx == Some(false);
+            requirements.needs_vex_unaligned_packed_fp_move |= vex_unaligned_packed_fp_move;
             all_spans_support_avx_ymm16 &= is_fma4
                 || is_vpermil2
                 || vex_fp_dot_product_ymm.is_some()
@@ -141,6 +159,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_gfni_ymm.is_some()
                 || vex_vpclmulqdq_ymm.is_some()
                 || vex_packed_extend_avx2.is_some()
+                || vex_unaligned_packed_fp_move
                 || vex_fp32_fp64_convert
                 || vex_zero;
             requirements.needs_avx |= span.instruction.is_vex_register_packed_string_compare()
@@ -172,6 +191,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                     == Some(true)
                 || span.instruction.legacy_vex_register_scalar_move_needs_avx() == Some(true)
                 || span.instruction.legacy_vex_register_fp_sqrt_needs_avx() == Some(true)
+                || vex_unaligned_packed_fp_move
                 || vex_fp32_fp64_convert
                 || vex_zero;
             requirements.needs_avx2 |= widening_dword_multiply_avx2 == Some(true)

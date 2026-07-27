@@ -13,6 +13,7 @@ mod fp_sqrt;
 mod gfni;
 mod high_low_move;
 mod packed_extend;
+mod packed_move;
 mod scalar_fp_convert;
 mod scalar_fp_to_int;
 mod scalar_int_to_fp;
