@@ -196,6 +196,8 @@ mod vex_immediate_permute;
 #[cfg(test)]
 mod vex_lane_shuffle;
 #[cfg(test)]
+mod vex_mov_mask_stack_destination;
+#[cfg(test)]
 mod vex_packed_integer_move;
 #[cfg(test)]
 mod vex_register_broadcast;

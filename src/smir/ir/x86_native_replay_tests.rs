@@ -133,6 +133,9 @@ mod vex_chunk_extract;
 #[path = "x86_native_replay_tests/vex_scalar_extract.rs"]
 mod vex_scalar_extract;
 
+#[path = "x86_native_replay_tests/vex_mov_mask.rs"]
+mod vex_mov_mask;
+
 #[path = "x86_native_replay_tests/vex_variable_blend.rs"]
 mod vex_variable_blend;
 

@@ -92,25 +92,18 @@ impl X86_64Lowerer {
         self.code.emit_u8(0x9D); // popfq
     }
 
-    /// Execute a scalar vector-to-GPR extract whose architectural destination
+    /// Execute an exact vector-to-GPR replay whose architectural destination
     /// is guest RSP or RBP without exposing the host stack/frame register.
     ///
-    /// The exact instruction is rewritten to target RAX. Preserved host RAX
-    /// and RCX provide the result and state-pointer temporaries, and the
-    /// zero-extended 64-bit result is committed directly to `GuestRegs::gpr`.
-    /// Guest RBP additionally updates the prologue's saved-RBP word because the
-    /// outer trampoline exports that restored physical register after return.
-    /// PUSH/POP and MOV do not alter RFLAGS, so the O(1)-time, O(1)-space
-    /// wrapper preserves the instruction's flag-neutral contract.
-    fn emit_vex_scalar_extract_state_backed_destination(
-        &mut self,
-        instruction: &X86InstructionBytes,
-        destination: u8,
-    ) {
+    /// `rewritten` must target RAX. Preserved host RAX and RCX provide the
+    /// result and state-pointer temporaries, and the exact 64-bit result is
+    /// committed directly to `GuestRegs::gpr`. Guest RBP additionally updates
+    /// the prologue's saved-RBP word because the outer trampoline exports that
+    /// restored physical register after return. PUSH/POP and MOV do not alter
+    /// RFLAGS, so the O(1)-time, O(1)-space wrapper preserves the admitted
+    /// instructions' flag-neutral contracts.
+    fn emit_state_backed_gpr_replay(&mut self, rewritten: &X86InstructionBytes, destination: u8) {
         debug_assert!(matches!(destination, 4 | 5));
-        let rewritten = instruction
-            .vex_scalar_extract_with_destination(0)
-            .expect("validated VEX scalar extract must rewrite to RAX");
 
         self.code.emit_u8(0x50); // push rax
         self.code.emit_u8(0x51); // push rcx
@@ -139,7 +132,19 @@ impl X86_64Lowerer {
         if let Some(destination) = span.instruction.vex_scalar_extract_destination_index()
             && matches!(destination, 4 | 5)
         {
-            self.emit_vex_scalar_extract_state_backed_destination(&span.instruction, destination);
+            let rewritten = span
+                .instruction
+                .vex_scalar_extract_with_destination(0)
+                .expect("validated VEX scalar extract must rewrite to RAX");
+            self.emit_state_backed_gpr_replay(&rewritten, destination);
+            return;
+        }
+        if let Some(destination) = span.instruction.vex_mov_mask_stack_destination_index() {
+            let rewritten = span
+                .instruction
+                .vex_mov_mask_stack_destination_with_destination(0)
+                .expect("validated VEX MOVMSK stack destination must rewrite to EAX");
+            self.emit_state_backed_gpr_replay(&rewritten, destination);
             return;
         }
         if let Some(destination) = span

@@ -230,6 +230,8 @@ mod vex_immediate_permute_replay;
 #[cfg(test)]
 mod vex_lane_shuffle_replay;
 #[cfg(test)]
+mod vex_mov_mask_stack_destination_replay;
+#[cfg(test)]
 mod vex_packed_extend_replay;
 #[cfg(test)]
 mod vex_packed_move_replay;
