@@ -256,7 +256,7 @@ pub(crate) fn block_is_clobber_safe(
             i += consumed;
             continue;
         }
-        if let Some(sequence) = x86_jit_vex_logic_memory_sequence(
+        if let Some(sequence) = x86_jit_vex_binary_memory_sequence(
             block,
             i,
             allow_mem,

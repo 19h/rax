@@ -601,7 +601,7 @@ impl X86_64Lowerer {
                         continue;
                     }
                     if let Some(sequence) =
-                        crate::smir::lower::runtime::x86_jit_vex_logic_memory_sequence(
+                        crate::smir::lower::runtime::x86_jit_vex_binary_memory_sequence(
                             block,
                             validate_idx,
                             true,
@@ -1151,7 +1151,7 @@ impl X86_64Lowerer {
             // masked, and CRC fusions below are explicitly restricted to that mode.
             if self.mem_helpers {
                 #[cfg(feature = "smir-jit")]
-                if let Some(consumed) = self.try_lower_jit_vex_logic_memory_source(
+                if let Some(consumed) = self.try_lower_jit_vex_binary_memory_source(
                     block,
                     idx,
                     &virtual_definitions,

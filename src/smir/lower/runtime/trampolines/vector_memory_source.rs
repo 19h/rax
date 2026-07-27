@@ -1,4 +1,4 @@
-//! Fail-closed helper-backed VEX packed-logic memory-source admission.
+//! Fail-closed helper-backed VEX packed-binary memory-source admission.
 
 use std::collections::HashMap;
 
@@ -7,10 +7,10 @@ use crate::smir::ir::types::{ArchReg, VReg, VecWidth, X86Reg};
 
 use super::x86_jit_mem_address_shape_valid;
 
-/// Exact contiguous `VLoad` plus VEX packed-logic sequence consumed by the
+/// Exact contiguous `VLoad` plus VEX packed-binary sequence consumed by the
 /// helper-backed lowerer.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) struct X86JitVexLogicMemorySequence {
+pub(crate) struct X86JitVexBinaryMemorySequence {
     pub(crate) consumed: usize,
     pub(crate) destination: u8,
     pub(crate) source1: u8,
@@ -29,21 +29,21 @@ fn low_vex_vector_index(reg: &VReg, width: VecWidth) -> Option<u8> {
     }
 }
 
-/// Validate one full-width, unmasked VEX.128/VEX.256 packed floating-point or
-/// integer logic memory source. The lifter represents these instructions as
-/// one virtual `VLoad` immediately consumed by `VAnd`, `VAndNot`, `VOr`, or
-/// `VXor`. Exact single-definition/single-use checks prevent the fused lowerer
-/// from hiding any independently observable virtual value.
+/// Validate one full-width, unmasked VEX.128/VEX.256 packed logic or integer
+/// add/subtract memory source. The lifter represents these instructions as one
+/// virtual `VLoad` immediately consumed by the corresponding binary operation.
+/// Exact single-definition/single-use checks prevent the fused lowerer from
+/// hiding any independently observable virtual value.
 ///
 /// The classifier is O(1); callers build the definition/use maps once in O(N)
 /// time and O(V) space for N operations and V virtual registers.
-pub(crate) fn x86_jit_vex_logic_memory_sequence(
+pub(crate) fn x86_jit_vex_binary_memory_sequence(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
     allow_mem: bool,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
-) -> Option<X86JitVexLogicMemorySequence> {
+) -> Option<X86JitVexBinaryMemorySequence> {
     if !allow_mem {
         return None;
     }
@@ -67,7 +67,7 @@ pub(crate) fn x86_jit_vex_logic_memory_sequence(
     if consumer.guest_pc != load.guest_pc {
         return None;
     }
-    let (destination, source1, source2, consumer_width) = match &consumer.kind {
+    let (destination, source1, source2, consumer_width, integer_arithmetic) = match &consumer.kind {
         OpKind::VAnd {
             dst,
             src1,
@@ -91,7 +91,35 @@ pub(crate) fn x86_jit_vex_logic_memory_sequence(
             src1,
             src2,
             width,
-        } => (dst, src1, src2, *width),
+        } => (dst, src1, src2, *width, false),
+        OpKind::VAdd {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+        }
+        | OpKind::VSub {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+        }
+        | OpKind::VAddSubSat {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            ..
+        } => (
+            dst,
+            src1,
+            src2,
+            super::x86_vector_width_from_lanes(*elem, *lanes)?,
+            true,
+        ),
         _ => return None,
     };
     if *source2 != temporary || consumer_width != width {
@@ -100,8 +128,8 @@ pub(crate) fn x86_jit_vex_logic_memory_sequence(
     let destination = low_vex_vector_index(destination, width)?;
     let source1 = low_vex_vector_index(source1, width)?;
     let Some(X86OpHint::VexOp {
-        map: X86VecMap::Map0F,
-        pp: prefix @ (X86SsePrefix::None | X86SsePrefix::OpSize),
+        map,
+        pp: prefix,
         opcode,
         width: hint_width,
         w,
@@ -109,18 +137,42 @@ pub(crate) fn x86_jit_vex_logic_memory_sequence(
     else {
         return None;
     };
-    if hint_width != width
-        || !super::x86_vector_logic_encoding_valid(&consumer.kind, prefix, opcode, false, w)
-    {
+    if hint_width != width {
         return None;
     }
-    let (needs_avx, needs_avx2, needs_avx512dq, needs_avx512vl) =
-        super::x86_vector_logic_feature_requirements(consumer);
-    if !needs_avx || needs_avx512dq || needs_avx512vl {
-        return None;
-    }
+    let needs_avx2 = if integer_arithmetic {
+        if !super::x86_vector_integer_arithmetic_map_valid(&consumer.kind, map)
+            || !super::x86_vector_integer_arithmetic_encoding_valid(
+                &consumer.kind,
+                prefix,
+                opcode,
+                false,
+                w,
+            )
+        {
+            return None;
+        }
+        let (needs_avx, needs_avx2, needs_avx512vl) =
+            super::x86_vector_integer_arithmetic_feature_requirements(consumer);
+        if !needs_avx || needs_avx512vl {
+            return None;
+        }
+        needs_avx2
+    } else {
+        if map != X86VecMap::Map0F
+            || !super::x86_vector_logic_encoding_valid(&consumer.kind, prefix, opcode, false, w)
+        {
+            return None;
+        }
+        let (needs_avx, needs_avx2, needs_avx512dq, needs_avx512vl) =
+            super::x86_vector_logic_feature_requirements(consumer);
+        if !needs_avx || needs_avx512dq || needs_avx512vl {
+            return None;
+        }
+        needs_avx2
+    };
 
-    Some(X86JitVexLogicMemorySequence {
+    Some(X86JitVexBinaryMemorySequence {
         consumed: 2,
         destination,
         source1,

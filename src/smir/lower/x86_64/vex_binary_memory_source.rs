@@ -1,4 +1,4 @@
-//! Helper-backed VEX packed-logic memory-source lowering.
+//! Helper-backed VEX packed-binary memory-source lowering.
 
 use std::collections::HashMap;
 
@@ -12,11 +12,11 @@ use crate::smir::lower::{
 };
 
 impl X86_64Lowerer {
-    fn vex_logic_phys_reg(index: u8, width: VecWidth) -> PhysReg {
+    fn vex_binary_phys_reg(index: u8, width: VecWidth) -> PhysReg {
         match width {
             VecWidth::V128 => PhysReg::Xmm(index),
             VecWidth::V256 => PhysReg::Ymm(index),
-            _ => unreachable!("validated VEX logic width"),
+            _ => unreachable!("validated VEX binary width"),
         }
     }
 
@@ -39,7 +39,7 @@ impl X86_64Lowerer {
     /// Restore the complete architectural register borrowed as the transfer
     /// carrier. The AVX-only bridge owns only YMM0-YMM15; the general bridge
     /// owns complete ZMM state and therefore requires a 512-bit restore.
-    fn emit_vex_logic_scratch_restore(&mut self, index: u8) {
+    fn emit_vex_binary_scratch_restore(&mut self, index: u8) {
         if self.avx_ymm16_vector_state {
             self.emit_vex_scratch_load(
                 PhysReg::Ymm(index),
@@ -72,19 +72,19 @@ impl X86_64Lowerer {
         }
     }
 
-    /// Fuse one exact `VLoad` plus VEX packed floating-point or integer logic
-    /// operation. The MMU helper commits only a nonarchitectural transfer
-    /// slot. One low vector register not named by the guest instruction
-    /// carries that value for the native operation and is restored in full
-    /// before continuation.
-    pub(crate) fn try_lower_jit_vex_logic_memory_source(
+    /// Fuse one exact `VLoad` plus VEX packed logic or integer add/subtract
+    /// operation. The MMU helper commits only a nonarchitectural transfer slot.
+    /// One low vector register not named by the guest instruction carries that
+    /// value for the native operation and is restored in full before
+    /// continuation.
+    pub(crate) fn try_lower_jit_vex_binary_memory_source(
         &mut self,
         block: &SmirBlock,
         index: usize,
         virtual_definitions: &HashMap<VReg, usize>,
         virtual_uses: &HashMap<VReg, usize>,
     ) -> Result<Option<usize>, LowerError> {
-        let Some(sequence) = crate::smir::lower::runtime::x86_jit_vex_logic_memory_sequence(
+        let Some(sequence) = crate::smir::lower::runtime::x86_jit_vex_binary_memory_sequence(
             block,
             index,
             true,
@@ -95,12 +95,12 @@ impl X86_64Lowerer {
         };
         let address = match &block.ops[index].kind {
             OpKind::VLoad { addr, .. } => addr,
-            _ => unreachable!("validated VEX logic sequence starts with VLoad"),
+            _ => unreachable!("validated VEX binary sequence starts with VLoad"),
         };
         let byte_size = match sequence.width {
             VecWidth::V128 => 16,
             VecWidth::V256 => 32,
-            _ => unreachable!("validated VEX logic width"),
+            _ => unreachable!("validated VEX binary width"),
         };
         self.emit_jit_vector_mem_helper(
             block.ops[index].guest_pc,
@@ -115,9 +115,9 @@ impl X86_64Lowerer {
         let scratch_index = (0..16u8)
             .find(|candidate| *candidate != sequence.destination && *candidate != sequence.source1)
             .expect("two VEX operands leave at least fourteen scratch registers");
-        let scratch = Self::vex_logic_phys_reg(scratch_index, sequence.width);
-        let destination = Self::vex_logic_phys_reg(sequence.destination, sequence.width);
-        let source1 = Self::vex_logic_phys_reg(sequence.source1, sequence.width);
+        let scratch = Self::vex_binary_phys_reg(scratch_index, sequence.width);
+        let destination = Self::vex_binary_phys_reg(sequence.destination, sequence.width);
+        let source1 = Self::vex_binary_phys_reg(sequence.source1, sequence.width);
 
         self.code.emit_u8(0x50); // push rax
         self.emit_load_state_ptr_rax();
@@ -135,7 +135,7 @@ impl X86_64Lowerer {
             source1,
             scratch,
         );
-        self.emit_vex_logic_scratch_restore(scratch_index);
+        self.emit_vex_binary_scratch_restore(scratch_index);
         self.code.emit_u8(0x58); // pop rax
 
         if self.avx_ymm16_vector_state {

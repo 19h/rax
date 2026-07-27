@@ -1,4 +1,4 @@
-//! CPU-level native-JIT coverage for helper-backed VEX logic memory sources.
+//! CPU-level native-JIT coverage for helper-backed VEX binary memory sources.
 
 use super::*;
 use std::sync::Arc;
@@ -208,6 +208,107 @@ fn jit_verify_executes_packed_integer_logic_memory_sources_with_avx2_gate() {
         "verified packed-integer logic",
     );
     assert_eq!(verified.regs.rip, frontier);
+}
+
+#[test]
+fn jit_verify_executes_wrapping_and_saturating_integer_arithmetic_memory_sources() {
+    if !std::is_x86_feature_detected!("avx2") {
+        eprintln!("skipping CPU JIT VEX integer memory-arithmetic verification: host lacks AVX2");
+        return;
+    }
+
+    let memory =
+        Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+    // vpaddsb xmm2,xmm3,[rbx+0x20]     (C5, signed saturation, scratch=0)
+    // vpsubusb xmm15,xmm0,[r11+0x20]  (C4.W0, unsigned saturation, scratch=1)
+    // vpaddq ymm9,ymm9,[r11+0x20]      (C4.W1 ignored, wrapping, scratch=0)
+    // vpsubsw ymm14,ymm2,[r11+0x20]    (C4.W0, signed saturation, scratch=0)
+    // jmp next; hlt
+    let code = [
+        0xC5, 0xE1, 0xEC, 0x53, 0x20, 0xC4, 0x41, 0x79, 0xD8, 0x7B, 0x20, 0xC4, 0x41, 0xB5, 0xD4,
+        0x4B, 0x20, 0xC4, 0x41, 0x6D, 0xE9, 0x73, 0x20, 0xEB, 0x00, 0xF4,
+    ];
+    memory.write_slice(&code, GuestAddress(0)).unwrap();
+    let source: [u8; 32] = std::array::from_fn(|index| match index % 8 {
+        0 => 0x01,
+        1 => 0x7F,
+        2 => 0x80,
+        3 => 0xFF,
+        4 => 0x55,
+        5 => 0xAA,
+        6 => 0x00,
+        _ => index as u8,
+    });
+    memory
+        .write_slice(&source, GuestAddress(DATA_BASE + DISP))
+        .unwrap();
+
+    let mut direct = long_mode_vcpu(memory.clone());
+    let mut verified = long_mode_vcpu(memory);
+    seed_architectural_state(&mut direct);
+    seed_architectural_state(&mut verified);
+
+    let frontier = code.len() as u64 - 1;
+    let mut direct_steps = 0usize;
+    while direct.regs.rip != frontier {
+        assert!(direct.step().unwrap().is_none());
+        direct_steps += 1;
+        assert!(direct_steps <= 5, "direct execution missed HLT frontier");
+    }
+    assert_eq!(direct_steps, 5);
+
+    let region = verified
+        .jit_compile_region()
+        .expect("compile VEX integer memory-arithmetic region")
+        .expect("helper-backed VEX integer arithmetic must be native eligible");
+    assert!(region.uses_vector);
+    assert!(region.avx_ymm16_vector_state);
+    assert!(!region.narrow_vector_opmasks);
+
+    verified.jit_run_region_verified(&region);
+    assert_architectural_state_equal(
+        &verified,
+        &direct.regs,
+        direct.mxcsr,
+        "verified packed-integer arithmetic",
+    );
+    assert_eq!(verified.regs.rip, frontier);
+}
+
+#[test]
+fn jit_integer_arithmetic_memory_fault_exits_without_architectural_commit() {
+    if !std::is_x86_feature_detected!("avx2") {
+        eprintln!("skipping CPU JIT VEX integer memory-arithmetic fault test: host lacks AVX2");
+        return;
+    }
+
+    let memory =
+        Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+    // vpsubusb ymm14,ymm2,[r11+0x20]; jmp next; hlt
+    let code = [0xC4, 0x41, 0x6D, 0xD8, 0x73, 0x20, 0xEB, 0x00, 0xF4];
+    memory.write_slice(&code, GuestAddress(0)).unwrap();
+
+    let mut vcpu = long_mode_vcpu(memory);
+    seed_architectural_state(&mut vcpu);
+    vcpu.regs.r11 = 0x2_0000;
+    let before = vcpu.regs.clone();
+    let before_mxcsr = vcpu.mxcsr;
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile faulting VEX integer memory-arithmetic region")
+        .expect("dynamic faulting address must not prevent native admission");
+    assert!(region.uses_vector);
+    assert!(region.avx_ymm16_vector_state);
+    vcpu.jit_run_region_native(&region);
+
+    assert_architectural_state_equal(
+        &vcpu,
+        &before,
+        before_mxcsr,
+        "integer-arithmetic fault deoptimization",
+    );
+    assert_eq!(vcpu.regs.rip, 0);
 }
 
 #[test]

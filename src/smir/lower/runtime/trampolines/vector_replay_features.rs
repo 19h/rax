@@ -399,7 +399,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
         }
         let mut index = 0usize;
         while index < block.ops.len() {
-            if let Some(sequence) = super::x86_jit_vex_logic_memory_sequence(
+            if let Some(sequence) = super::x86_jit_vex_binary_memory_sequence(
                 block,
                 index,
                 true,
