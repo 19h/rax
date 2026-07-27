@@ -488,6 +488,21 @@ pub fn x86_vex_immediate_blend_replay_spans(
     })
 }
 
+/// Identify valid register-only AVX/AVX2 VEX immediate-permute replay groups
+/// in `block` in O(N) time and O(P) space for N operations and P unique guest
+/// PCs. VPERMILPS/PD require AVX; VPERMQ/PD require AVX2. Memory forms remain
+/// at the precise SMIR interpreter boundary.
+pub fn x86_vex_immediate_permute_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .vex_register_immediate_permute_needs_avx2()
+            .map(|_| (false, false, false))
+    })
+}
+
 /// Identify valid register-only AVX VEX variable-blend replay groups in
 /// `block` in O(N) time and O(P) space for N operations and P unique guest PCs.
 pub fn x86_vex_variable_blend_replay_spans(
@@ -1639,6 +1654,11 @@ pub fn x86_native_replay_spans(
             .or_else(|| {
                 instruction
                     .vex_register_immediate_blend_needs_avx2()
+                    .map(|_| (false, false, false))
+            })
+            .or_else(|| {
+                instruction
+                    .vex_register_immediate_permute_needs_avx2()
                     .map(|_| (false, false, false))
             })
             .or_else(|| {

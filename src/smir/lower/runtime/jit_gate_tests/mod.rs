@@ -224,6 +224,8 @@ mod vex_gfni_replay;
 #[cfg(test)]
 mod vex_immediate_blend_replay;
 #[cfg(test)]
+mod vex_immediate_permute_replay;
+#[cfg(test)]
 mod vex_lane_shuffle_replay;
 #[cfg(test)]
 mod vex_packed_extend_replay;
