@@ -3,6 +3,34 @@
 use super::X86InstructionBytes;
 
 impl X86InstructionBytes {
+    /// Validate one register-only F16C VEX `VCVTPH2PS` instruction.
+    ///
+    /// The instruction requires map 0F38, `pp=66`, `W=0`, and reserved
+    /// `VEX.vvvv=1111b`; `VEX.L` selects four or eight FP16 source elements.
+    /// VEX.X is ignored for the register source but retained as part of the
+    /// exact source-byte universe. Memory and malformed byte shapes fail
+    /// closed.
+    pub fn is_vex_register_fp16_widen(&self) -> bool {
+        matches!(
+            self.as_slice(),
+            [0xC4, p0, p1, 0x13, modrm]
+                if p0 & 0x1F == 2 && p1 & 0xFB == 0x79 && modrm >> 6 == 3
+        )
+    }
+
+    /// Return the architectural VEX destination after exact validation. The
+    /// AVX-YMM16 bridge keeps ZMM[511:256] state-backed, so the lowerer uses
+    /// this index to perform the VEX-mandated upper-state clear.
+    pub(crate) fn vex_fp16_widen_destination_index(&self) -> Option<u8> {
+        if !self.is_vex_register_fp16_widen() {
+            return None;
+        }
+        let [0xC4, p0, _, 0x13, modrm] = self.as_slice() else {
+            unreachable!("VEX FP16 widening shape was validated");
+        };
+        Some(((modrm >> 3) & 7) + if p0 & 0x80 == 0 { 8 } else { 0 })
+    }
+
     /// Whether replay needs to restore MXCSR.DE to its pre-instruction value.
     ///
     /// Current Intel SDM semantics for register-source `VCVTPH2PSX` do not

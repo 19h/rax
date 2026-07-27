@@ -1077,6 +1077,8 @@ impl X86_64Vcpu {
 mod arith;
 mod compare;
 mod convert;
+#[cfg(test)]
+mod convert_tests;
 mod crypto;
 #[cfg(test)]
 mod crypto_tests;

@@ -216,6 +216,8 @@ mod vex_fma3_replay;
 #[cfg(test)]
 mod vex_fma4_replay;
 #[cfg(test)]
+mod vex_fp16_widen_replay;
+#[cfg(test)]
 mod vex_fp32_fp64_convert_replay;
 #[cfg(test)]
 mod vex_fp_dot_product_replay;

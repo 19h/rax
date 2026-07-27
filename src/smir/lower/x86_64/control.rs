@@ -179,6 +179,7 @@ impl X86_64Lowerer {
             .or_else(|| span.instruction.vex_register_broadcast_destination_index())
             .or_else(|| span.instruction.vex_lane_shuffle_destination_index())
             .or_else(|| span.instruction.vex_fp32_fp64_convert_destination_index())
+            .or_else(|| span.instruction.vex_fp16_widen_destination_index())
         {
             self.code.emit_bytes(span.instruction.as_slice());
             if self.avx_ymm16_vector_state {

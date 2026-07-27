@@ -6,6 +6,10 @@ use crate::vm::vcpu::VcpuExit;
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 use crate::isa::x86_64::execute;
 
+const MXCSR_STATUS_MASK: u32 = 0x3F;
+const MXCSR_INVALID: u32 = 1 << 0;
+const CR4_OSXMMEXCPT: u64 = 1 << 10;
+
 impl X86_64Vcpu {
     /// VEX.256/128.66.0F38.W0 13 /r: VCVTPH2PS.
     pub(in crate::isa::x86_64) fn execute_vex_vcvtph2ps(
@@ -22,6 +26,7 @@ impl X86_64Vcpu {
         let xmm_dst = reg as usize;
         let lanes = if vex_l == 0 { 4 } else { 8 };
         let mut out = [0u32; 8];
+        let mut status = 0u32;
 
         for lane in 0..lanes {
             let half = if is_memory {
@@ -29,7 +34,23 @@ impl X86_64Vcpu {
             } else {
                 read_half_from_xmm(self.regs.xmm[rm as usize], lane)
             };
+            if f16_is_snan(half) {
+                status |= MXCSR_INVALID;
+            }
             out[lane] = f16_to_f32_bits(half);
+        }
+
+        let mxcsr_before = self.mxcsr;
+        self.mxcsr |= status;
+        let masks = (mxcsr_before >> 7) & MXCSR_STATUS_MASK;
+        if status & !masks != 0 {
+            let vector = if self.sregs.cr4 & CR4_OSXMMEXCPT != 0 {
+                19 // #XM: SIMD floating-point exception
+            } else {
+                6 // #UD when CR4.OSXMMEXCPT is clear
+            };
+            self.inject_exception(vector, None)?;
+            return Ok(None);
         }
 
         self.regs.xmm[xmm_dst][0] = out[0] as u64 | ((out[1] as u64) << 32);
@@ -40,6 +61,12 @@ impl X86_64Vcpu {
             self.regs.ymm_high[xmm_dst][0] = out[4] as u64 | ((out[5] as u64) << 32);
             self.regs.ymm_high[xmm_dst][1] = out[6] as u64 | ((out[7] as u64) << 32);
         }
+        // VEX.128 and VEX.256 both zero all architectural destination bits
+        // above VL. Do this explicitly rather than relying on the outer VEX
+        // changed-low-state detector: the converted low value can equal the
+        // pre-instruction destination while stale ZMM[511:256] still requires
+        // clearing.
+        self.regs.zmm_high[xmm_dst] = [0; 4];
 
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
@@ -781,6 +808,11 @@ impl X86_64Vcpu {
 fn read_half_from_xmm(xmm: [u64; 2], lane: usize) -> u16 {
     let qword = xmm[lane / 4];
     ((qword >> ((lane % 4) * 16)) & 0xFFFF) as u16
+}
+
+#[inline]
+fn f16_is_snan(bits: u16) -> bool {
+    bits & 0x7C00 == 0x7C00 && bits & 0x03FF != 0 && bits & 0x0200 == 0
 }
 
 fn f16_to_f32_bits(bits: u16) -> u32 {

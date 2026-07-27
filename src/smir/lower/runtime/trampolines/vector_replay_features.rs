@@ -13,6 +13,7 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_sse3: bool,
     pub(crate) needs_avx: bool,
     pub(crate) needs_avx2: bool,
+    pub(crate) needs_f16c: bool,
     pub(crate) needs_vex_unaligned_packed_fp_move: bool,
     pub(crate) needs_fma: bool,
     pub(crate) needs_fma4: bool,
@@ -92,6 +93,7 @@ impl X86NativeReplayFeatureRequirements {
         (!self.needs_sse3 || std::is_x86_feature_detected!("sse3"))
             && (!self.needs_avx || std::is_x86_feature_detected!("avx"))
             && (!self.needs_avx2 || std::is_x86_feature_detected!("avx2"))
+            && (!self.needs_f16c || std::is_x86_feature_detected!("f16c"))
             && (!self.needs_vex_unaligned_packed_fp_move
                 || x86_host_supports_vex_unaligned_packed_fp_move())
             && (!self.needs_fma || std::is_x86_feature_detected!("fma"))
@@ -158,6 +160,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 .is_some();
             let vex_lane_shuffle_avx2 = span.instruction.vex_register_lane_shuffle_needs_avx2();
             let vex_fp32_fp64_convert = span.instruction.is_vex_register_fp32_fp64_convert();
+            let vex_fp16_widen = span.instruction.is_vex_register_fp16_widen();
             let vex_zero = span.instruction.vex_zeroes_all_register_bits().is_some();
             requirements.any = true;
             requirements.needs_sse3 |= fp_horizontal_addsub_avx == Some(false);
@@ -186,6 +189,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_register_broadcast
                 || vex_lane_shuffle_avx2.is_some()
                 || vex_fp32_fp64_convert
+                || vex_fp16_widen
                 || vex_zero;
             requirements.needs_avx |= span.instruction.is_vex_register_packed_string_compare()
                 || span.instruction.is_vex_register_fma3()
@@ -228,6 +232,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_register_broadcast
                 || vex_lane_shuffle_avx2.is_some()
                 || vex_fp32_fp64_convert
+                || vex_fp16_widen
                 || vex_zero;
             requirements.needs_avx2 |= widening_dword_multiply_avx2 == Some(true)
                 || immediate_blend_avx2 == Some(true)
@@ -242,6 +247,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_register_broadcast
                 || vex_lane_shuffle_avx2 == Some(true);
             requirements.needs_fma |= span.instruction.is_vex_register_fma3();
+            requirements.needs_f16c |= vex_fp16_widen;
             requirements.needs_fma4 |= is_fma4;
             requirements.needs_xop |= is_vpermil2;
             // Assume the full-width K0-K7 helper boundary while accumulating

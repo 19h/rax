@@ -21,6 +21,176 @@ impl WidenKind {
     }
 }
 
+fn vex_encoding(ymm: bool, destination: u8, source: u8, ignored_x_clear: bool) -> [u8; 5] {
+    assert!(destination < 16 && source < 16);
+    let mut p0 = 0xE2;
+    if destination >= 8 {
+        p0 &= !0x80;
+    }
+    if ignored_x_clear {
+        p0 &= !0x40;
+    }
+    if source >= 8 {
+        p0 &= !0x20;
+    }
+    [
+        0xC4,
+        p0,
+        0x79 | (u8::from(ymm) << 2),
+        0x13,
+        0xC0 | ((destination & 7) << 3) | (source & 7),
+    ]
+}
+
+#[test]
+fn vex_classifier_covers_all_1024_legal_register_byte_images_and_destinations() {
+    let mut classified = 0usize;
+    for p0 in u8::MIN..=u8::MAX {
+        if p0 & 0x1F != 2 {
+            continue;
+        }
+        for p1 in u8::MIN..=u8::MAX {
+            if p1 & 0xFB != 0x79 {
+                continue;
+            }
+            for modrm in 0xC0..=0xFF {
+                let bytes = [0xC4, p0, p1, 0x13, modrm];
+                let instruction = X86InstructionBytes::new(&bytes).unwrap();
+                assert!(instruction.is_vex_register_fp16_widen(), "{bytes:02X?}");
+                assert_eq!(
+                    instruction.vex_fp16_widen_destination_index(),
+                    Some(((modrm >> 3) & 7) + if p0 & 0x80 == 0 { 8 } else { 0 }),
+                    "{bytes:02X?}"
+                );
+                classified += 1;
+            }
+        }
+    }
+    assert_eq!(classified, 1_024);
+}
+
+#[test]
+fn vex_classifier_exhausts_prefix_opcode_and_modrm_frontiers() {
+    for p0 in u8::MIN..=u8::MAX {
+        let bytes = [0xC4, p0, 0x79, 0x13, 0xCA];
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .is_vex_register_fp16_widen(),
+            p0 & 0x1F == 2,
+            "{bytes:02X?}"
+        );
+    }
+    for p1 in u8::MIN..=u8::MAX {
+        let bytes = [0xC4, 0xE2, p1, 0x13, 0xCA];
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .is_vex_register_fp16_widen(),
+            p1 & 0xFB == 0x79,
+            "{bytes:02X?}"
+        );
+    }
+    for opcode in u8::MIN..=u8::MAX {
+        let bytes = [0xC4, 0xE2, 0x79, opcode, 0xCA];
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .is_vex_register_fp16_widen(),
+            opcode == 0x13,
+            "{bytes:02X?}"
+        );
+    }
+    for modrm in u8::MIN..=u8::MAX {
+        let bytes = [0xC4, 0xE2, 0x7D, 0x13, modrm];
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .is_vex_register_fp16_widen(),
+            modrm >> 6 == 3,
+            "{bytes:02X?}"
+        );
+    }
+}
+
+#[test]
+fn vex_classifier_accepts_independent_samples_and_rejects_reserved_neighbors() {
+    // The canonical samples were assembled by LLVM 23.0.0. iced-x86 1.21.0
+    // independently decodes the last two samples after clearing ignored VEX.X.
+    for (bytes, destination) in [
+        ([0xC4, 0xE2, 0x79, 0x13, 0xCA], 1),
+        ([0xC4, 0x42, 0x79, 0x13, 0xCA], 9),
+        ([0xC4, 0xE2, 0x7D, 0x13, 0xCA], 1),
+        ([0xC4, 0x42, 0x7D, 0x13, 0xCA], 9),
+        ([0xC4, 0xA2, 0x79, 0x13, 0xCA], 1),
+        ([0xC4, 0x02, 0x7D, 0x13, 0xCA], 9),
+    ] {
+        let instruction = X86InstructionBytes::new(&bytes).unwrap();
+        assert!(instruction.is_vex_register_fp16_widen(), "{bytes:02X?}");
+        assert_eq!(
+            instruction.vex_fp16_widen_destination_index(),
+            Some(destination),
+            "{bytes:02X?}"
+        );
+    }
+
+    let invalid: &[&[u8]] = &[
+        &[0xC4, 0xE2, 0x79, 0x13],
+        &[0xC4, 0xE2, 0x79, 0x13, 0xCA, 0],
+        &[0xC5, 0x79, 0x13, 0xCA],
+        &[0xC4, 0xE1, 0x79, 0x13, 0xCA], // map 0F
+        &[0xC4, 0xE3, 0x79, 0x13, 0xCA], // map 0F3A
+        &[0xC4, 0xE2, 0xF9, 0x13, 0xCA], // W1
+        &[0xC4, 0xE2, 0x71, 0x13, 0xCA], // VEX.vvvv != 1111b
+        &[0xC4, 0xE2, 0x78, 0x13, 0xCA], // wrong mandatory prefix
+        &[0xC4, 0xE2, 0x79, 0x12, 0xCA], // unrelated opcode
+        &[0xC4, 0xE2, 0x79, 0x13, 0x0A], // memory source
+        &[0x62, 0xF2, 0x7D, 0x08, 0x13, 0xCA],
+    ];
+    for bytes in invalid {
+        let instruction = X86InstructionBytes::new(bytes).unwrap();
+        assert!(!instruction.is_vex_register_fp16_widen(), "{bytes:02X?}");
+        assert_eq!(
+            instruction.vex_fp16_widen_destination_index(),
+            None,
+            "{bytes:02X?}"
+        );
+    }
+}
+
+#[test]
+fn vex_replay_spans_preserve_exact_instruction_provenance() {
+    let pc = 0xF16C;
+    let mut block = SmirBlock::new(BlockId(60), pc);
+    block.push_op(SmirOp::new(OpId(0), pc, OpKind::Nop));
+
+    for bytes in [
+        vex_encoding(false, 1, 2, false),
+        vex_encoding(true, 9, 10, false),
+        vex_encoding(false, 1, 2, true),
+        vex_encoding(true, 15, 15, true),
+    ] {
+        let instruction = X86InstructionBytes::new(&bytes).unwrap();
+        let provenance = std::collections::HashMap::from([((BlockId(60), pc), instruction)]);
+        for spans in [
+            x86_vex_fp16_widen_replay_spans(&block, &provenance),
+            x86_native_replay_spans(&block, &provenance),
+        ] {
+            let span = spans.get(&0).unwrap_or_else(|| panic!("{bytes:02X?}"));
+            assert_eq!(span.end, 1, "{bytes:02X?}");
+            assert_eq!(span.instruction, instruction, "{bytes:02X?}");
+            assert!(!span.needs_avx512vl, "{bytes:02X?}");
+            assert!(!span.needs_avx512dq, "{bytes:02X?}");
+            assert!(!span.needs_avx512fp16, "{bytes:02X?}");
+            assert!(!span.preserve_mxcsr_de, "{bytes:02X?}");
+        }
+        assert!(
+            x86_evex_native_replay_spans(&block, &provenance).is_empty(),
+            "{bytes:02X?}"
+        );
+    }
+}
+
 fn encoding(
     kind: WidenKind,
     ll: u8,
