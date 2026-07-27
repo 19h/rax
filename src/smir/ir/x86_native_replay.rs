@@ -42,7 +42,10 @@ impl X86InstructionBytes {
 mod aggregate;
 mod classifiers;
 
-pub use aggregate::x86_native_replay_spans;
+pub use aggregate::{
+    x86_native_replay_spans, x86_vex_scalar_fp_to_int_replay_spans,
+    x86_vex_scalar_int_to_fp_replay_spans,
+};
 
 /// A contiguous semantic-op group that may be replaced by one exact native x86
 /// instruction after byte-level validation.

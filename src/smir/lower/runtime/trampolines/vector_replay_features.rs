@@ -183,6 +183,14 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 .instruction
                 .vex_scalar_fp_convert_destination_index()
                 .is_some();
+            let vex_scalar_fp_to_int = span
+                .instruction
+                .vex_scalar_fp_to_int_destination_index()
+                .is_some();
+            let vex_scalar_int_to_fp = span
+                .instruction
+                .vex_scalar_int_to_fp_destination_index()
+                .is_some();
             let vex_zero = span.instruction.vex_zeroes_all_register_bits().is_some();
             requirements.any = true;
             requirements.needs_sse3 |= fp_horizontal_addsub_avx == Some(false);
@@ -216,6 +224,8 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_fp_flag_compare
                 || vex_round
                 || vex_scalar_fp_convert
+                || vex_scalar_fp_to_int
+                || vex_scalar_int_to_fp
                 || vex_zero;
             requirements.needs_avx |= span.instruction.is_vex_register_packed_string_compare()
                 || span.instruction.is_vex_register_fma3()
@@ -263,6 +273,8 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_fp_flag_compare
                 || vex_round
                 || vex_scalar_fp_convert
+                || vex_scalar_fp_to_int
+                || vex_scalar_int_to_fp
                 || vex_zero;
             requirements.needs_avx2 |= widening_dword_multiply_avx2 == Some(true)
                 || immediate_blend_avx2 == Some(true)

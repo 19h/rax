@@ -43,6 +43,18 @@ pub fn x86_native_replay_spans(
             return Some((false, false, false));
         }
         if instruction
+            .vex_scalar_fp_to_int_destination_index()
+            .is_some()
+        {
+            return Some((false, false, false));
+        }
+        if instruction
+            .vex_scalar_int_to_fp_destination_index()
+            .is_some()
+        {
+            return Some((false, false, false));
+        }
+        if instruction
             .legacy_vex_register_fp_shuffle_needs_avx()
             .is_some()
         {
@@ -460,5 +472,35 @@ pub fn x86_native_replay_spans(
                     .is_vex_register_fp_logic()
                     .then_some((false, false, false))
             })
+    })
+}
+
+/// Identify valid register-only AVX VEX signed scalar floating-point-to-
+/// integer replay groups in O(N) time and O(P) space for N operations and P
+/// unique guest PCs. The rounding and truncating binary32/binary64 forms are
+/// admitted; memory forms remain at the precise SMIR interpreter boundary.
+pub fn x86_vex_scalar_fp_to_int_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .vex_scalar_fp_to_int_destination_index()
+            .map(|_| (false, false, false))
+    })
+}
+
+/// Identify valid register-only AVX VEX signed integer-to-scalar-FP replay
+/// groups in O(N) time and O(P) space for N operations and P unique guest PCs.
+/// The binary32/binary64 destination forms are admitted; memory forms remain
+/// at the precise SMIR interpreter boundary.
+pub fn x86_vex_scalar_int_to_fp_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .vex_scalar_int_to_fp_destination_index()
+            .map(|_| (false, false, false))
     })
 }

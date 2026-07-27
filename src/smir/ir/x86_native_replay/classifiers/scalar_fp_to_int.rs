@@ -1,8 +1,67 @@
-//! Register-only EVEX scalar floating-point-to-integer replay classification.
+//! Register-only VEX/EVEX scalar floating-point-to-integer replay classification.
 
 use super::X86InstructionBytes;
 
 impl X86InstructionBytes {
+    /// Validate one register-only AVX VEX signed scalar floating-point-to-
+    /// integer conversion and return its architectural GPR destination.
+    ///
+    /// The admitted set is `VCVTSS2SI`, `VCVTSD2SI`, `VCVTTSS2SI`, and
+    /// `VCVTTSD2SI`, with W0/W1 selecting 32-/64-bit results in the C4 form.
+    /// `VEX.vvvv` must be encoded as `1111b`; F3/F2 select binary32/binary64.
+    /// Intel documents `VEX.L=1` as generation-dependent unpredictable, so
+    /// only `VEX.L=0` is admitted. C4 register-form `VEX.X` is ignored.
+    /// Memory sources and every non-exact byte string fail closed.
+    pub(crate) fn vex_scalar_fp_to_int_destination_index(&self) -> Option<u8> {
+        let (encoded_r, p1, opcode, modrm) = match self.as_slice() {
+            &[0xC5, p1, opcode, modrm] => (p1 & 0x80 != 0, p1, opcode, modrm),
+            &[0xC4, p0, p1, opcode, modrm] if p0 & 0x1F == 1 => (p0 & 0x80 != 0, p1, opcode, modrm),
+            _ => return None,
+        };
+        if p1 & 0x7C != 0x78
+            || !matches!(p1 & 0x03, 2 | 3)
+            || !matches!(opcode, 0x2C | 0x2D)
+            || modrm >> 6 != 3
+        {
+            return None;
+        }
+        Some(((modrm >> 3) & 7) | (u8::from(!encoded_r) << 3))
+    }
+
+    /// Rewrite a validated VEX scalar FP-to-integer destination while
+    /// retaining every non-destination bit, including ignored W/X bits.
+    pub(crate) fn vex_scalar_fp_to_int_with_destination(&self, destination: u8) -> Option<Self> {
+        if destination >= 16 || self.vex_scalar_fp_to_int_destination_index().is_none() {
+            return None;
+        }
+
+        let mut rewritten = *self;
+        match self.as_slice() {
+            [0xC5, _p1, _opcode, _modrm] => {
+                if destination < 8 {
+                    rewritten.bytes[1] |= 0x80;
+                } else {
+                    rewritten.bytes[1] &= !0x80;
+                }
+                rewritten.bytes[3] = (rewritten.bytes[3] & !0x38) | ((destination & 7) << 3);
+            }
+            [0xC4, _p0, _p1, _opcode, _modrm] => {
+                if destination < 8 {
+                    rewritten.bytes[1] |= 0x80;
+                } else {
+                    rewritten.bytes[1] &= !0x80;
+                }
+                rewritten.bytes[4] = (rewritten.bytes[4] & !0x38) | ((destination & 7) << 3);
+            }
+            _ => unreachable!("VEX scalar FP-to-integer shape was validated"),
+        }
+        debug_assert_eq!(
+            rewritten.vex_scalar_fp_to_int_destination_index(),
+            Some(destination)
+        );
+        Some(rewritten)
+    }
+
     /// Validate one register-only EVEX scalar floating-point-to-integer
     /// conversion and return whether it requires AVX-512-FP16.
     ///

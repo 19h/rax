@@ -1,8 +1,69 @@
-//! Register-only EVEX scalar integer-to-floating-point replay classification.
+//! Register-only VEX/EVEX scalar integer-to-floating-point replay classification.
 
 use super::X86InstructionBytes;
 
 impl X86InstructionBytes {
+    /// Validate one register-only AVX VEX signed integer-to-scalar-FP
+    /// conversion and return its architectural XMM destination.
+    ///
+    /// The admitted set is `VCVTSI2SS` and `VCVTSI2SD`. F3/F2 select the
+    /// binary32/binary64 destination; C4 W0/W1 select a 32-/64-bit GPR source.
+    /// `VEX.vvvv` supplies the upper-lane merge source. Intel documents
+    /// `VEX.L=1` as generation-dependent unpredictable, so only `VEX.L=0` is
+    /// admitted. C4 register-form `VEX.X` is ignored. Memory sources and every
+    /// non-exact byte string fail closed.
+    pub(crate) fn vex_scalar_int_to_fp_destination_index(&self) -> Option<u8> {
+        let (encoded_r, p1, modrm) = match self.as_slice() {
+            &[0xC5, p1, 0x2A, modrm] => (p1 & 0x80 != 0, p1, modrm),
+            &[0xC4, p0, p1, 0x2A, modrm] if p0 & 0x1F == 1 => (p0 & 0x80 != 0, p1, modrm),
+            _ => return None,
+        };
+        if p1 & 0x04 != 0 || !matches!(p1 & 0x03, 2 | 3) || modrm >> 6 != 3 {
+            return None;
+        }
+        Some(((modrm >> 3) & 7) | (u8::from(!encoded_r) << 3))
+    }
+
+    /// Return the architectural GPR source of a validated VEX signed
+    /// integer-to-scalar-FP conversion.
+    pub(crate) fn vex_scalar_int_to_fp_source_index(&self) -> Option<u8> {
+        self.vex_scalar_int_to_fp_destination_index()?;
+        match self.as_slice() {
+            [0xC5, _p1, 0x2A, modrm] => Some(modrm & 7),
+            [0xC4, p0, _p1, 0x2A, modrm] => Some((modrm & 7) | (u8::from(p0 & 0x20 == 0) << 3)),
+            _ => unreachable!("VEX scalar integer-to-FP shape was validated"),
+        }
+    }
+
+    /// Rewrite a validated VEX scalar integer source while retaining every
+    /// non-source bit, including ignored X and merge-source fields.
+    pub(crate) fn vex_scalar_int_to_fp_with_source(&self, source: u8) -> Option<Self> {
+        if source >= 16 || self.vex_scalar_int_to_fp_source_index().is_none() {
+            return None;
+        }
+
+        let mut rewritten = *self;
+        match self.as_slice() {
+            [0xC5, _p1, 0x2A, _modrm] => {
+                if source >= 8 {
+                    return None;
+                }
+                rewritten.bytes[3] = (rewritten.bytes[3] & !0x07) | source;
+            }
+            [0xC4, _p0, _p1, 0x2A, _modrm] => {
+                if source < 8 {
+                    rewritten.bytes[1] |= 0x20;
+                } else {
+                    rewritten.bytes[1] &= !0x20;
+                }
+                rewritten.bytes[4] = (rewritten.bytes[4] & !0x07) | (source & 7);
+            }
+            _ => unreachable!("VEX scalar integer-to-FP shape was validated"),
+        }
+        debug_assert_eq!(rewritten.vex_scalar_int_to_fp_source_index(), Some(source));
+        Some(rewritten)
+    }
+
     /// Validate one register-only EVEX scalar integer-to-floating-point
     /// conversion and return whether it requires AVX-512-FP16.
     ///

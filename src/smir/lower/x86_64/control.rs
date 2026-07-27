@@ -119,6 +119,25 @@ impl X86_64Lowerer {
         self.code.emit_u8(0x58); // pop rax
     }
 
+    /// Execute an exact GPR-to-vector replay whose architectural source is
+    /// guest RSP or RBP without exposing the host stack/frame register.
+    ///
+    /// `rewritten` must read RAX. Guest RSP/RBP are continuously materialized
+    /// in `GuestRegs::gpr`; load the selected 64-bit slot into a push/pop-saved
+    /// RAX and execute the instruction. W0 naturally reads EAX. PUSH/POP and
+    /// MOV do not alter RFLAGS, so the O(1)-time, O(1)-space wrapper preserves
+    /// the admitted conversions' flag-neutral contract.
+    fn emit_state_backed_gpr_source_replay(&mut self, rewritten: &X86InstructionBytes, source: u8) {
+        debug_assert!(matches!(source, 4 | 5));
+
+        self.code.emit_u8(0x50); // push rax
+        self.code.emit_bytes(&[0x48, 0x8B, 0x45]);
+        self.code.emit_u8(X86_STATE_PTR_AT_RBP as u8); // mov rax,[rbp+state]
+        self.code.emit_bytes(&[0x48, 0x8B, 0x40, source * 8]); // mov rax,[rax+gpr]
+        self.code.emit_bytes(rewritten.as_slice());
+        self.code.emit_u8(0x58); // pop rax
+    }
+
     /// Emit one exact source instruction, applying any host-compatibility
     /// status fixup requested by its byte-validated replay classifier.
     fn emit_native_replay_span(&mut self, span: &X86NativeReplaySpan) {
@@ -145,6 +164,35 @@ impl X86_64Lowerer {
                 .vex_mov_mask_stack_destination_with_destination(0)
                 .expect("validated VEX MOVMSK stack destination must rewrite to EAX");
             self.emit_state_backed_gpr_replay(&rewritten, destination);
+            return;
+        }
+        if let Some(destination) = span.instruction.vex_scalar_fp_to_int_destination_index() {
+            if matches!(destination, 4 | 5) {
+                let rewritten = span
+                    .instruction
+                    .vex_scalar_fp_to_int_with_destination(0)
+                    .expect("validated VEX scalar FP-to-integer must rewrite to RAX");
+                self.emit_state_backed_gpr_replay(&rewritten, destination);
+            } else {
+                self.code.emit_bytes(span.instruction.as_slice());
+            }
+            return;
+        }
+        if let Some(source) = span.instruction.vex_scalar_int_to_fp_source_index()
+            && matches!(source, 4 | 5)
+        {
+            let destination = span
+                .instruction
+                .vex_scalar_int_to_fp_destination_index()
+                .expect("validated VEX scalar integer-to-FP must have a destination");
+            let rewritten = span
+                .instruction
+                .vex_scalar_int_to_fp_with_source(0)
+                .expect("validated VEX scalar integer-to-FP must rewrite to RAX");
+            self.emit_state_backed_gpr_source_replay(&rewritten, source);
+            if self.avx_ymm16_vector_state {
+                self.emit_avx_ymm16_state_backed_upper_clear(destination);
+            }
             return;
         }
         if let Some(destination) = span
@@ -183,6 +231,7 @@ impl X86_64Lowerer {
             .or_else(|| span.instruction.vex_fp16_narrow_destination_index())
             .or_else(|| span.instruction.vex_round_destination_index())
             .or_else(|| span.instruction.vex_scalar_fp_convert_destination_index())
+            .or_else(|| span.instruction.vex_scalar_int_to_fp_destination_index())
         {
             self.code.emit_bytes(span.instruction.as_slice());
             if self.avx_ymm16_vector_state {
