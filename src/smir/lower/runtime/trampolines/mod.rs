@@ -5,6 +5,8 @@ mod aarch64;
 pub use aarch64::*;
 mod atomic;
 pub use atomic::*;
+mod bit_offset;
+pub use bit_offset::*;
 mod clobber;
 pub use clobber::*;
 mod cmpxchg;

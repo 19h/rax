@@ -48,6 +48,24 @@ use crate::smir::ir::types::{BlockId, GuestAddr};
 
 /// Number of x86-64 guest GPR slots in the native JIT register file. APX adds
 /// R16-R31, which are state-backed because the host has no physical EGPRs.
+/// Architectural bit-offset term folded into a JIT memory-helper address.
+///
+/// `BT`/`BTS`/`BTR`/`BTC` with a register bit offset address a bit *string*:
+/// the accessed element is
+/// `base + ((sign_extend(index) >> shift_right) << shift_left)`, which no
+/// [`types::Address`] can express.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct X86JitBitOffsetTerm {
+    /// Architectural GPR encoding holding the bit offset.
+    pub index: u8,
+    /// Operand width the offset is sign-extended from.
+    pub from_width: crate::smir::ir::types::OpWidth,
+    /// `log2(bits per element)`: 4, 5 or 6.
+    pub shift_right: u8,
+    /// `log2(bytes per element)`: 1, 2 or 3.
+    pub shift_left: u8,
+}
+
 pub const X86_GUEST_GPR_COUNT: usize = 32;
 /// Byte offset of `GuestRegs.rflags`.
 pub const X86_GUEST_RFLAGS_OFFSET: i32 = (X86_GUEST_GPR_COUNT as i32) * 8;
