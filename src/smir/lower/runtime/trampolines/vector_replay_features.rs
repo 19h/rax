@@ -178,9 +178,9 @@ impl X86NativeReplayFeatureRequirements {
 }
 
 /// Accumulate the host features required by exact x86 native-replay spans and
-/// helper-backed VEX packed-logic memory-source sequences in O(N) time and
-/// O(P + V) temporary space per block for N operations, P guest instruction
-/// addresses, and V virtual registers.
+/// helper-backed VEX binary memory-source sequences in O(N) time and O(P + V)
+/// temporary space per block for N operations, P guest instruction addresses,
+/// and V virtual registers.
 pub(crate) fn x86_native_replay_feature_requirements(
     func: &crate::smir::ir::SmirFunction,
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,

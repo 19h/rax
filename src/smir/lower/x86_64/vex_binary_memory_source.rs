@@ -1,4 +1,4 @@
-//! Helper-backed VEX packed-binary memory-source lowering.
+//! Helper-backed VEX binary memory-source lowering.
 
 use std::collections::HashMap;
 
@@ -120,7 +120,7 @@ impl X86_64Lowerer {
         self.emit_vec_rrr(
             VecEncoding {
                 kind: VecEncodingKind::Vex,
-                map: X86VecMap::Map0F,
+                map: sequence.map,
                 pp: sequence.prefix,
                 opcode: sequence.opcode,
                 width: sequence.width,

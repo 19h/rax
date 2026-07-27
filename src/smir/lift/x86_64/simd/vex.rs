@@ -455,6 +455,8 @@ impl X86_64Lifter {
         let modrm_prefix = X86Prefix {
             rex: prefix.rex,
             operand_size_override: true,
+            address_size_override: prefix.address_size_override,
+            segment_override: prefix.segment_override,
             cursor,
             ..X86Prefix::default()
         };

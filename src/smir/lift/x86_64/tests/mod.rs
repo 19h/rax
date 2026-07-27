@@ -194,6 +194,8 @@ mod vex_chunk_extract;
 #[cfg(test)]
 mod vex_immediate_permute;
 #[cfg(test)]
+mod vex_integer_compare;
+#[cfg(test)]
 mod vex_lane_shuffle;
 #[cfg(test)]
 mod vex_mov_mask_stack_destination;

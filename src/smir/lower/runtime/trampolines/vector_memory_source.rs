@@ -20,6 +20,7 @@ pub(crate) struct X86JitVexBinaryMemorySequence {
     pub(crate) destination: u8,
     pub(crate) source1: u8,
     pub(crate) width: VecWidth,
+    pub(crate) map: X86VecMap,
     pub(crate) prefix: X86SsePrefix,
     pub(crate) opcode: u8,
     pub(crate) w: bool,
@@ -38,6 +39,7 @@ fn low_vex_vector_index(reg: &VReg, width: VecWidth) -> Option<u8> {
 enum VexBinaryKind {
     Logic,
     IntegerArithmetic,
+    IntegerCompare,
     FloatingPointArithmetic,
 }
 
@@ -85,13 +87,14 @@ fn vex_packed_fp_binary_encoding_valid(
         )
 }
 
-/// Validate one unmasked VEX.128/VEX.256 packed logic, integer add/subtract, or
-/// binary32/binary64 arithmetic memory source, or one defined `VEX.L=0` scalar
-/// binary32/binary64 arithmetic source. Packed forms are an exact two-op
-/// `VLoad`/consumer pair. Scalar forms are the complete lane-extract,
-/// destination-clear, and lane-insert chain plus exact instruction-byte
-/// provenance. Single-definition/single-use checks prevent the fused lowerer
-/// from hiding any independently observable virtual value.
+/// Validate one unmasked VEX.128/VEX.256 packed logic, integer add/subtract,
+/// fixed-predicate integer compare, or binary32/binary64 arithmetic memory
+/// source, or one defined `VEX.L=0` scalar binary32/binary64 arithmetic source.
+/// Packed forms are an exact two-op `VLoad`/consumer pair. Fixed comparisons
+/// and scalar forms additionally require exact instruction-byte provenance.
+/// Scalar forms include the complete lane-extract, destination-clear, and
+/// lane-insert chain. Single-definition/single-use checks prevent the fused
+/// lowerer from hiding any independently observable virtual value.
 ///
 /// The classifier is O(1); callers build the definition/use maps once in O(N)
 /// time and O(V) space for N operations and V virtual registers.
@@ -201,6 +204,20 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
             super::x86_vector_width_from_lanes(*elem, *lanes)?,
             VexBinaryKind::FloatingPointArithmetic,
         ),
+        OpKind::VCmp {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            ..
+        } => (
+            dst,
+            src1,
+            src2,
+            super::x86_vector_width_from_lanes(*elem, *lanes)?,
+            VexBinaryKind::IntegerCompare,
+        ),
         _ => return None,
     };
     if *source2 != temporary || consumer_width != width {
@@ -256,6 +273,39 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
             }
             needs_avx2
         }
+        VexBinaryKind::IntegerCompare => {
+            let OpKind::VCmp { elem, cond, .. } = &consumer.kind else {
+                unreachable!("VEX integer-compare classifier selected VCmp")
+            };
+            let expected_map = match elem {
+                VecElementType::I8 | VecElementType::I16 | VecElementType::I32 => X86VecMap::Map0F,
+                VecElementType::I64 => X86VecMap::Map0F38,
+                _ => return None,
+            };
+            if load.x86_hint.is_some()
+                || map != expected_map
+                || !super::x86_vector_integer_compare_encoding_valid(*elem, *cond, prefix, opcode)
+            {
+                return None;
+            }
+            let (needs_sse41, needs_sse42, needs_avx, needs_avx2) =
+                super::x86_vector_integer_compare_feature_requirements(consumer);
+            if needs_sse41 || needs_sse42 || !needs_avx {
+                return None;
+            }
+            let instruction = instruction_bytes.get(&(block.id, load.guest_pc))?;
+            if !instruction.is_vex_memory_fixed_integer_compare(
+                destination,
+                source1,
+                *elem,
+                *cond,
+                width,
+                w,
+            ) {
+                return None;
+            }
+            needs_avx2
+        }
         VexBinaryKind::FloatingPointArithmetic => {
             if load.x86_hint != Some(X86OpHint::VecAlign(X86VecAlign::Unaligned))
                 || !vex_packed_fp_binary_encoding_valid(&consumer.kind, map, prefix, opcode)
@@ -272,6 +322,7 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
         destination,
         source1,
         width,
+        map,
         prefix,
         opcode,
         w,
@@ -539,6 +590,7 @@ fn x86_jit_vex_scalar_fp_binary_memory_sequence(
         destination: destination_index,
         source1: source1_index,
         width: VecWidth::V128,
+        map: X86VecMap::Map0F,
         prefix,
         opcode,
         w,
