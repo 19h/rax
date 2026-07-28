@@ -61,6 +61,8 @@ mod cpuid;
 pub use cpuid::*;
 mod descriptor_table;
 pub use descriptor_table::*;
+#[cfg(feature = "smir-jit")]
+mod evex_fma3_memory_source;
 mod invlpg;
 pub use invlpg::*;
 mod invpcid;

@@ -35,6 +35,20 @@ pub(crate) struct X86VpclmulqdqMemoryEncoding {
     pub(crate) supports_avx_ymm16: bool,
 }
 
+/// Exact unmasked, non-broadcast EVEX packed FMA3 memory encoding rewritten
+/// to use one nonarchitectural low vector register as its third source.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86EvexPackedFma3MemoryEncoding {
+    pub(crate) width: crate::smir::ir::types::VecWidth,
+    pub(crate) destination: u8,
+    pub(crate) source1: u8,
+    pub(crate) scratch: u8,
+    pub(crate) opcode: u8,
+    pub(crate) w: bool,
+    pub(crate) register_instruction: X86InstructionBytes,
+    pub(crate) needs_avx512vl: bool,
+}
+
 impl X86InstructionBytes {
     /// Capture one complete x86 instruction.
     pub fn new(bytes: &[u8]) -> Option<Self> {

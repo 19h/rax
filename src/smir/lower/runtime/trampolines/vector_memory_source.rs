@@ -169,7 +169,7 @@ enum VexBinaryKind {
     FloatingPointArithmetic,
 }
 
-fn vex_fma3_kind(opcode: u8) -> Option<X86FmaKind> {
+pub(super) fn vex_fma3_kind(opcode: u8) -> Option<X86FmaKind> {
     match opcode & 0x0F {
         0x06 => Some(X86FmaKind::AddSub),
         0x07 => Some(X86FmaKind::SubAdd),
@@ -181,7 +181,7 @@ fn vex_fma3_kind(opcode: u8) -> Option<X86FmaKind> {
     }
 }
 
-fn vex_fma3_order(opcode: u8) -> Option<X86FmaOrder> {
+pub(super) fn vex_fma3_order(opcode: u8) -> Option<X86FmaOrder> {
     match opcode >> 4 {
         0x09 => Some(X86FmaOrder::Order132),
         0x0A => Some(X86FmaOrder::Order213),

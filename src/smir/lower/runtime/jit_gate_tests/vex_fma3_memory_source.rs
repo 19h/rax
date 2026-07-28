@@ -839,18 +839,18 @@ fn packed_fma3_memory_sequence_fails_closed_for_every_structural_invariant() {
 
 #[cfg(target_arch = "x86_64")]
 #[derive(Clone, Debug)]
-struct VectorMemoryContext {
-    value: [u64; 8],
-    ok: u64,
-    calls: u64,
-    last_addr: u64,
-    last_index: u32,
-    last_size: u32,
-    last_zero_upper: u32,
+pub(super) struct VectorMemoryContext {
+    pub(super) value: [u64; 8],
+    pub(super) ok: u64,
+    pub(super) calls: u64,
+    pub(super) last_addr: u64,
+    pub(super) last_index: u32,
+    pub(super) last_size: u32,
+    pub(super) last_zero_upper: u32,
 }
 
 #[cfg(target_arch = "x86_64")]
-extern "C" fn vector_load_helper(
+pub(super) extern "C" fn vector_load_helper(
     state: *mut GuestRegs,
     addr: u64,
     destination: u32,
@@ -866,7 +866,7 @@ extern "C" fn vector_load_helper(
     context.last_zero_upper = zero_upper;
     if context.ok == 0
         || destination != crate::smir::lower::X86_JIT_VECTOR_SCRATCH_INDEX
-        || !matches!(size, 16 | 32)
+        || !matches!(size, 16 | 32 | 64)
     {
         return 0;
     }
@@ -881,8 +881,7 @@ extern "C" fn vector_load_helper(
     1
 }
 
-#[cfg(target_arch = "x86_64")]
-fn role_vector(w: bool, data_case: usize, role: usize) -> [u64; 8] {
+pub(super) fn role_vector(w: bool, data_case: usize, role: usize) -> [u64; 8] {
     const F32: [[[u32; 4]; 3]; 4] = [
         [
             [0x3F80_0000, 0xC000_0000, 0x4040_0000, 0xC080_0000],
@@ -1027,7 +1026,6 @@ fn full_guest_regs(case: FmaMemoryCase, ordinal: usize, data_case: usize) -> Gue
     registers
 }
 
-#[cfg(target_arch = "x86_64")]
 fn source_bytes(source: [u64; 8]) -> [u8; 64] {
     let mut bytes = [0; 64];
     for (chunk, word) in bytes.chunks_exact_mut(8).zip(source) {
@@ -1036,8 +1034,7 @@ fn source_bytes(source: [u64; 8]) -> [u8; 64] {
     bytes
 }
 
-#[cfg(target_arch = "x86_64")]
-fn interpreter_success(
+pub(super) fn interpreter_success(
     function: &SmirFunction,
     initial: &GuestRegs,
     source: [u64; 8],
@@ -1058,6 +1055,8 @@ fn interpreter_success(
         x86.k = initial.k;
         x86.rflags = initial.rflags;
         x86.mxcsr = initial.mxcsr;
+        x86.fs_base = initial.fs_base;
+        x86.gs_base = initial.gs_base;
     }
     context.flags.materialized = MaterializedFlags::from_rflags(initial.rflags);
     context.flags.lazy = None;

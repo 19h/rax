@@ -10,6 +10,7 @@ pub use bit_offset::*;
 mod clobber;
 pub use clobber::*;
 mod cmpxchg;
+mod evex_fma3_memory_source;
 pub use cmpxchg::*;
 mod crc32;
 pub use crc32::*;
@@ -53,6 +54,7 @@ use crate::smir::lower::{
     X86_GUEST_X87_TAG_WORD_OFFSET, X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET,
     X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
 };
+pub(crate) use evex_fma3_memory_source::*;
 pub use vector::*;
 pub(crate) use vector_memory_source::*;
 pub(crate) use vector_replay_features::*;
