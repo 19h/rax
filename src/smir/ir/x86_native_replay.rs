@@ -19,6 +19,22 @@ pub struct X86InstructionBytes {
     len: u8,
 }
 
+/// Byte-validated unmasked VEX/EVEX VPCLMULQDQ memory encoding rewritten to
+/// use one nonarchitectural low vector register as its second source.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86VpclmulqdqMemoryEncoding {
+    pub(crate) width: crate::smir::ir::types::VecWidth,
+    pub(crate) destination: u8,
+    pub(crate) source1: u8,
+    pub(crate) scratch: u8,
+    pub(crate) immediate: u8,
+    pub(crate) register_instruction: X86InstructionBytes,
+    pub(crate) needs_pclmulqdq: bool,
+    pub(crate) needs_vpclmulqdq: bool,
+    pub(crate) needs_avx512vl: bool,
+    pub(crate) supports_avx_ymm16: bool,
+}
+
 impl X86InstructionBytes {
     /// Capture one complete x86 instruction.
     pub fn new(bytes: &[u8]) -> Option<Self> {

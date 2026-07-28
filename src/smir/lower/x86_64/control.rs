@@ -1148,9 +1148,20 @@ impl X86_64Lowerer {
             // The memory-fusion peepholes emit direct host-pointer accesses,
             // which are invalid under the JIT's MMU helper-call mode. In that
             // mode each Load/Store is lowered individually via the helper path
-            // (see `emit_jit_mem_op`). The helper-backed scalar, XMM/MMX
-            // masked, and CRC fusions below are explicitly restricted to that mode.
+            // (see `emit_jit_mem_op`). The helper-backed scalar, vector-source,
+            // XMM/MMX masked, and CRC fusions below are explicitly restricted
+            // to that mode.
             if self.mem_helpers {
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_vpclmulqdq_memory_source(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
                 #[cfg(feature = "smir-jit")]
                 if let Some(consumed) = self.try_lower_jit_aes_memory_source(
                     block,

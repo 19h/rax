@@ -40,6 +40,7 @@ pub use mmx_memory::*;
 mod vector;
 mod vector_memory_source;
 mod vector_replay_features;
+mod vpclmulqdq_memory_source;
 use crate::smir::lower::runtime::*;
 use crate::smir::lower::{
     X86_GUEST_APX_ENABLED_OFFSET, X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CPL_OFFSET,
@@ -55,3 +56,4 @@ use crate::smir::lower::{
 pub use vector::*;
 pub(crate) use vector_memory_source::*;
 pub(crate) use vector_replay_features::*;
+pub(crate) use vpclmulqdq_memory_source::*;
