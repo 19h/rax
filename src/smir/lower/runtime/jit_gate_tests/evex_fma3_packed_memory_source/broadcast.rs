@@ -7,6 +7,8 @@ use crate::smir::ir::flags::MaterializedFlags;
 use crate::smir::ir::memory::FlatMemory;
 use crate::smir::ir::types::{MemWidth, SignExtend};
 
+mod masked;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum BroadcastFormat {
     F16,
@@ -474,6 +476,8 @@ fn packed_evex_fma3_broadcast_classifier_exhaustively_rewrites_1_658_880_operand
                         assert_eq!(encoding.elem, format.elem(), "{bytes:02X?}");
                         assert_eq!(encoding.destination, destination, "{bytes:02X?}");
                         assert_eq!(encoding.source1, source1, "{bytes:02X?}");
+                        assert_eq!(encoding.writemask, None, "{bytes:02X?}");
+                        assert!(!encoding.zeroing, "{bytes:02X?}");
                         assert_eq!(encoding.opcode, opcode, "{bytes:02X?}");
                         assert_eq!(encoding.w, format.w(), "{bytes:02X?}");
                         assert_eq!(encoding.needs_avx512vl, ll != 2, "{bytes:02X?}");
@@ -574,6 +578,7 @@ fn all_1134_broadcast_shapes_lift_optimize_admit_and_lower_exactly() {
             )
             .unwrap_or_else(|| panic!("{level:?} {case:?}: sequence rejected"));
             assert_eq!(sequence.consumed, 4, "{level:?} {case:?}");
+            assert_eq!(sequence.memory_offset, 0, "{level:?} {case:?}");
             assert_eq!(
                 sequence.memory_size,
                 case.format.memory_width().bytes(),
@@ -637,7 +642,7 @@ fn packed_evex_fma3_broadcast_rejects_reserved_encodings_and_non_owned_graphs() 
     register[5] |= 0xC0;
     register.truncate(6);
     malformed.push(register);
-    for (byte_index, mask) in [(1, 0x01), (2, 0x01), (3, 0x80), (3, 0x01)] {
+    for (byte_index, mask) in [(1, 0x01), (2, 0x01), (3, 0x80)] {
         let mut bytes = valid.clone();
         bytes[byte_index] ^= mask;
         malformed.push(bytes);

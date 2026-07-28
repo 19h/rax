@@ -121,12 +121,16 @@ impl X86_64Lowerer {
         }
     }
 
-    /// Fuse the exact unmasked packed EVEX FMA3 memory-source decomposition.
-    /// A full-vector source uses the nonarchitectural vector transfer slot and
-    /// a byte-validated register rewrite. A broadcast source uses one scalar
-    /// helper load into a 16-byte host-stack slot and a byte-validated
+    /// Fuse the exact packed EVEX FMA3 memory-source decomposition. A
+    /// full-vector source uses the nonarchitectural vector transfer slot and a
+    /// byte-validated register rewrite. A broadcast source uses at most one
+    /// scalar helper load into a 16-byte host-stack slot and a byte-validated
     /// `[rsp]{1toN}` rewrite, without borrowing an architectural vector
-    /// register. Either helper exits precisely before FMA execution on fault.
+    /// register. For a writemasked broadcast, a live applicable-lane test
+    /// bypasses the helper when the scalar access is architecturally
+    /// suppressed while the rewritten instruction still applies merge/zero
+    /// masking and upper clearing. Either helper exits precisely before FMA
+    /// execution on fault.
     pub(crate) fn try_lower_jit_evex_packed_fma3_memory_source(
         &mut self,
         block: &SmirBlock,
@@ -178,21 +182,54 @@ impl X86_64Lowerer {
                 self.code.emit_u8(0x58); // pop guest RAX
             }
             X86EvexPackedFma3MemoryReplay::Broadcast { stack_instruction } => {
-                let (address, memory_width) = match &block.ops[index].kind {
+                let memory_index = index + sequence.memory_offset;
+                let (address, memory_width) = match &block.ops[memory_index].kind {
                     OpKind::Load {
                         addr,
                         width,
                         sign: SignExtend::Zero,
                         ..
                     } => (addr, *width),
+                    OpKind::PredLoad {
+                        addr,
+                        width,
+                        signed: SignExtend::Zero,
+                        ..
+                    } => (addr, *width),
                     _ => {
-                        unreachable!("validated EVEX packed FMA3 broadcast starts with scalar Load")
+                        unreachable!(
+                            "validated EVEX packed FMA3 broadcast owns one scalar memory op"
+                        )
                     }
                 };
                 debug_assert_eq!(memory_width.bytes(), sequence.memory_size);
                 {
                     let mut emitter = X86Emitter::new(&mut self.code);
                     emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -16);
+                }
+                let inactive = if let Some(mask) = sequence.encoding.writemask {
+                    let lanes = sequence.encoding.width.lanes(sequence.encoding.elem);
+                    debug_assert!(lanes <= 32, "packed FMA3 applicable opmask width");
+                    let lane_mask = (1u64 << lanes) - 1;
+                    self.code.emit_u8(0x9C); // pushfq
+                    self.code.emit_u8(0x50); // push guest RAX
+                    self.emit_opmask_mask_to_rax64(mask);
+                    {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        // W32 is required for the 32-lane FP16/ZMM mask:
+                        // TEST r64,imm32 would sign-extend 0xFFFF_FFFF and
+                        // incorrectly observe architecturally ignored high
+                        // opmask bits.
+                        emitter.emit_test_ri(PhysReg::Rax, lane_mask as i64, OpWidth::W32);
+                    }
+                    Some(self.emit_jcc_placeholder(X86Cond::E))
+                } else {
+                    None
+                };
+
+                if inactive.is_some() {
+                    self.code.emit_u8(0x58); // pop guest RAX
+                    self.code.emit_u8(0x9D); // restore exact pre-guard flags
                 }
                 self.emit_jit_mem_op(
                     block.ops[index].guest_pc,
@@ -207,6 +244,15 @@ impl X86_64Lowerer {
                     SignExtend::Zero,
                     16,
                 )?;
+                if let Some(inactive) = inactive {
+                    self.code.emit_u8(0xE9);
+                    let execute = self.code.position();
+                    self.code.emit_u32(0);
+                    self.patch_rel32_to_current(inactive)?;
+                    self.code.emit_u8(0x58); // pop guest RAX
+                    self.code.emit_u8(0x9D); // restore exact pre-guard flags
+                    self.patch_rel32_to_current(execute)?;
+                }
                 self.code.emit_bytes(stack_instruction.as_slice());
                 {
                     let mut emitter = X86Emitter::new(&mut self.code);

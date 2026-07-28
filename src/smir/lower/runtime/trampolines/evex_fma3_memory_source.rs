@@ -16,12 +16,12 @@ use crate::smir::ir::{
 use super::vector_memory_source::{vex_fma3_kind, vex_fma3_order};
 use super::x86_jit_mem_address_shape_valid;
 
-/// Exact contiguous unmasked EVEX packed FMA3 vector-memory or scalar-
-/// broadcast-memory decomposition consumed by the helper-backed x86-64
-/// lowerer.
+/// Exact contiguous EVEX packed FMA3 vector-memory or scalar-broadcast-memory
+/// decomposition consumed by the helper-backed x86-64 lowerer.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct X86JitEvexPackedFma3MemorySequence {
     pub(crate) consumed: usize,
+    pub(crate) memory_offset: usize,
     pub(crate) memory_size: u32,
     pub(crate) encoding: X86EvexPackedFma3MemoryEncoding,
 }
@@ -74,16 +74,439 @@ fn exact_virtual_definition_use(
         && virtual_uses.get(&register) == Some(&uses)
 }
 
-/// Validate the complete three-op vector-memory or four-op scalar-broadcast-
-/// memory decomposition emitted for one unmasked EVEX packed FMA3 source.
-/// Exact instruction provenance binds vector width, element type,
-/// architectural operands, opcode semantics, and the selected native rewrite.
-/// Every source/result virtual must have exactly one definition and one use in
-/// the complete block.
+fn x86_jit_masked_evex_packed_fma3_broadcast_sequence(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    encoding: X86EvexPackedFma3MemoryEncoding,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<X86JitEvexPackedFma3MemorySequence> {
+    if !matches!(
+        encoding.replay,
+        X86EvexPackedFma3MemoryReplay::Broadcast { .. }
+    ) {
+        return None;
+    }
+    let mask_index = encoding.writemask?;
+    let mask = VReg::Arch(ArchReg::X86(X86Reg::K(mask_index)));
+    let width = encoding.width;
+    let elem = encoding.elem;
+    let lanes = width.lanes(elem) as u8;
+    let lane_mask = (1u64 << lanes) - 1;
+    let condition_op = block.ops.get(index)?;
+    let condition = match &condition_op.kind {
+        OpKind::And {
+            dst,
+            src1,
+            src2: SrcOperand::Imm(actual_lane_mask),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } if condition_op.x86_hint.is_none()
+            && *src1 == mask
+            && *actual_lane_mask == lane_mask as i64 =>
+        {
+            *dst
+        }
+        _ => return None,
+    };
+    if !exact_virtual_definition_use(condition, 1, 1, virtual_definitions, virtual_uses) {
+        return None;
+    }
+    let same_pc = |offset: usize| {
+        block
+            .ops
+            .get(index + offset)
+            .is_some_and(|op| op.guest_pc == condition_op.guest_pc)
+    };
+
+    let seed = block.ops.get(index + 1)?;
+    let loaded_scalar = match &seed.kind {
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Imm(0),
+            width: OpWidth::W64,
+        } if seed.x86_hint.is_none() => *dst,
+        _ => return None,
+    };
+    if !same_pc(1)
+        || !exact_virtual_definition_use(loaded_scalar, 2, 1, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+
+    let memory_width = match elem {
+        VecElementType::F16 => MemWidth::B2,
+        VecElementType::F32 => MemWidth::B4,
+        VecElementType::F64 => MemWidth::B8,
+        _ => return None,
+    };
+    let pred_load = block.ops.get(index + 2)?;
+    if !matches!(
+        &pred_load.kind,
+        OpKind::PredLoad {
+            dst,
+            cond,
+            addr,
+            width: actual_width,
+            signed: SignExtend::Zero,
+        } if pred_load.x86_hint.is_none()
+            && *dst == loaded_scalar
+            && *cond == condition
+            && *actual_width == memory_width
+            && x86_jit_mem_address_shape_valid(addr)
+    ) || !same_pc(2)
+    {
+        return None;
+    }
+
+    let broadcast = block.ops.get(index + 3)?;
+    let loaded = match &broadcast.kind {
+        OpKind::VBroadcast {
+            dst,
+            scalar,
+            elem: broadcast_elem,
+            lanes: broadcast_lanes,
+        } if broadcast.x86_hint.is_none()
+            && *scalar == loaded_scalar
+            && *broadcast_elem == elem
+            && *broadcast_lanes == lanes =>
+        {
+            *dst
+        }
+        _ => return None,
+    };
+    if !same_pc(3) || !single_definition_single_use(loaded, virtual_definitions, virtual_uses) {
+        return None;
+    }
+
+    let fma = block.ops.get(index + 4)?;
+    let (raw, src1, src2, src3, fma_mask, kind, order, round, fma_lanes) = match &fma.kind {
+        OpKind::X86Fma(fma_op) if elem != VecElementType::F16 && fma_op.elem == elem => (
+            fma_op.dst,
+            fma_op.src1,
+            fma_op.src2,
+            fma_op.src3,
+            fma_op.mask,
+            fma_op.kind,
+            fma_op.order,
+            fma_op.round,
+            fma_op.lanes,
+        ),
+        OpKind::X86FP16Fma {
+            dst,
+            src1,
+            src2,
+            src3,
+            mask,
+            kind,
+            order,
+            round,
+            lanes,
+        } if elem == VecElementType::F16 => (
+            *dst, *src1, *src2, *src3, *mask, *kind, *order, *round, *lanes,
+        ),
+        _ => return None,
+    };
+    if !same_pc(4)
+        || !exact_virtual_definition_use(
+            raw,
+            1,
+            usize::from(lanes),
+            virtual_definitions,
+            virtual_uses,
+        )
+        || vector_index(&src1, width) != Some(encoding.destination)
+        || vector_index(&src2, width) != Some(encoding.source1)
+        || src3 != loaded
+        || fma_mask != Some(mask)
+        || kind != vex_fma3_kind(encoding.opcode)?
+        || order != vex_fma3_order(encoding.opcode)?
+        || round != FpRoundMode::Dynamic
+        || fma_lanes != lanes
+        || fma.x86_hint
+            != Some(X86OpHint::EvexOp {
+                map: if elem == VecElementType::F16 {
+                    X86VecMap::Map6
+                } else {
+                    X86VecMap::Map0F38
+                },
+                pp: X86SsePrefix::OpSize,
+                opcode: encoding.opcode,
+                width,
+                w: encoding.w,
+            })
+    {
+        return None;
+    }
+
+    let mut offset = 5;
+    let old = if encoding.zeroing {
+        None
+    } else {
+        let old_op = block.ops.get(index + offset)?;
+        let old = match &old_op.kind {
+            OpKind::VMov {
+                dst,
+                src,
+                width: old_width,
+            } if old_op.x86_hint.is_none()
+                && vector_index(src, width) == Some(encoding.destination)
+                && *old_width == width =>
+            {
+                *dst
+            }
+            _ => return None,
+        };
+        if !same_pc(offset)
+            || !exact_virtual_definition_use(
+                old,
+                1,
+                usize::from(lanes),
+                virtual_definitions,
+                virtual_uses,
+            )
+        {
+            return None;
+        }
+        offset += 1;
+        Some(old)
+    };
+
+    let zero_op = block.ops.get(index + offset)?;
+    let zero = match &zero_op.kind {
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Imm(0),
+            width: OpWidth::W64,
+        } if zero_op.x86_hint.is_none() => *dst,
+        _ => return None,
+    };
+    let zero_uses = if encoding.zeroing {
+        usize::from(lanes) + 1
+    } else {
+        1
+    };
+    if !same_pc(offset)
+        || !exact_virtual_definition_use(zero, 1, zero_uses, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+    offset += 1;
+
+    let result_base_op = block.ops.get(index + offset)?;
+    let result_base = match &result_base_op.kind {
+        OpKind::VBroadcast {
+            dst,
+            scalar,
+            elem: broadcast_elem,
+            lanes: broadcast_lanes,
+        } if result_base_op.x86_hint.is_none()
+            && *scalar == zero
+            && *broadcast_elem == elem
+            && *broadcast_lanes == lanes =>
+        {
+            *dst
+        }
+        _ => return None,
+    };
+    if !same_pc(offset)
+        || !single_definition_single_use(result_base, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+    offset += 1;
+
+    let lane_width = match elem {
+        VecElementType::F16 => OpWidth::W16,
+        VecElementType::F32 => OpWidth::W32,
+        VecElementType::F64 => OpWidth::W64,
+        _ => unreachable!("validated packed FMA3 element"),
+    };
+    for lane in 0..lanes {
+        let first_lane_op = block.ops.get(index + offset)?;
+        let direct_lane_zero = lane == 0
+            && matches!(
+                &first_lane_op.kind,
+                OpKind::And {
+                    src1,
+                    src2: SrcOperand::Imm(1),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                    ..
+                } if first_lane_op.x86_hint.is_none() && *src1 == mask
+            );
+        let lane_condition = if direct_lane_zero {
+            match &first_lane_op.kind {
+                OpKind::And { dst, .. } => *dst,
+                _ => unreachable!("direct lane-zero predicate matched And"),
+            }
+        } else {
+            let shifted = match &first_lane_op.kind {
+                OpKind::Shr {
+                    dst,
+                    src,
+                    amount: SrcOperand::Imm(amount),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                } if first_lane_op.x86_hint.is_none()
+                    && *src == mask
+                    && *amount == i64::from(lane) =>
+                {
+                    *dst
+                }
+                _ => return None,
+            };
+            if !same_pc(offset)
+                || !single_definition_single_use(shifted, virtual_definitions, virtual_uses)
+            {
+                return None;
+            }
+            offset += 1;
+            let lane_condition_op = block.ops.get(index + offset)?;
+            match &lane_condition_op.kind {
+                OpKind::And {
+                    dst,
+                    src1,
+                    src2: SrcOperand::Imm(1),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                } if lane_condition_op.x86_hint.is_none() && *src1 == shifted => *dst,
+                _ => return None,
+            }
+        };
+        if !same_pc(offset)
+            || !single_definition_single_use(lane_condition, virtual_definitions, virtual_uses)
+        {
+            return None;
+        }
+        offset += 1;
+
+        let active_op = block.ops.get(index + offset)?;
+        let active = match &active_op.kind {
+            OpKind::VExtractLane {
+                dst,
+                vec,
+                lane: active_lane,
+                elem: active_elem,
+                sign: SignExtend::Zero,
+            } if active_op.x86_hint.is_none()
+                && *vec == raw
+                && *active_lane == lane
+                && *active_elem == elem =>
+            {
+                *dst
+            }
+            _ => return None,
+        };
+        if !same_pc(offset)
+            || !single_definition_single_use(active, virtual_definitions, virtual_uses)
+        {
+            return None;
+        }
+        offset += 1;
+
+        let inactive = if let Some(old) = old {
+            let inactive_op = block.ops.get(index + offset)?;
+            let inactive = match &inactive_op.kind {
+                OpKind::VExtractLane {
+                    dst,
+                    vec,
+                    lane: inactive_lane,
+                    elem: inactive_elem,
+                    sign: SignExtend::Zero,
+                } if inactive_op.x86_hint.is_none()
+                    && *vec == old
+                    && *inactive_lane == lane
+                    && *inactive_elem == elem =>
+                {
+                    *dst
+                }
+                _ => return None,
+            };
+            if !same_pc(offset)
+                || !single_definition_single_use(inactive, virtual_definitions, virtual_uses)
+            {
+                return None;
+            }
+            offset += 1;
+            inactive
+        } else {
+            zero
+        };
+
+        let select_op = block.ops.get(index + offset)?;
+        let selected = match &select_op.kind {
+            OpKind::Select {
+                dst,
+                cond,
+                src_true,
+                src_false,
+                width: select_width,
+            } if select_op.x86_hint.is_none()
+                && *cond == lane_condition
+                && *src_true == active
+                && *src_false == inactive
+                && *select_width == lane_width =>
+            {
+                *dst
+            }
+            _ => return None,
+        };
+        if !same_pc(offset)
+            || !single_definition_single_use(selected, virtual_definitions, virtual_uses)
+        {
+            return None;
+        }
+        offset += 1;
+
+        let insert_op = block.ops.get(index + offset)?;
+        if insert_op.x86_hint.is_some()
+            || !matches!(
+                &insert_op.kind,
+                OpKind::VInsertLane {
+                    dst,
+                    vec,
+                    scalar,
+                    lane: insert_lane,
+                    elem: insert_elem,
+                } if vector_index(dst, width) == Some(encoding.destination)
+                    && *vec == if lane == 0 { result_base } else { *dst }
+                    && *scalar == selected
+                    && *insert_lane == lane
+                    && *insert_elem == elem
+            )
+            || !same_pc(offset)
+        {
+            return None;
+        }
+        offset += 1;
+    }
+
+    if block
+        .ops
+        .get(index + offset)
+        .is_some_and(|op| op.guest_pc == condition_op.guest_pc)
+    {
+        return None;
+    }
+    Some(X86JitEvexPackedFma3MemorySequence {
+        consumed: offset,
+        memory_offset: 2,
+        memory_size: memory_width.bytes(),
+        encoding,
+    })
+}
+
+/// Validate the complete decomposition emitted for one EVEX packed FMA3
+/// memory source. Exact instruction provenance binds vector width, element
+/// type, architectural operands, opcode semantics, writemasking, and the
+/// selected native rewrite. Unmasked vector and broadcast sources use constant
+/// three/four-op graphs. Masked broadcasts additionally validate the
+/// aggregate fault predicate and every merge/zero result-lane reconstruction.
 ///
-/// Classification is O(1) time and O(1) auxiliary space. Callers build the
-/// global definition/use maps once in O(N) time and O(V) space for N operations
-/// and V virtual registers.
+/// Classification is O(L) time and O(1) auxiliary space for L destination
+/// lanes (L <= 32). Callers build the global definition/use maps once in O(N)
+/// time and O(V) space for N operations and V virtual registers.
 pub(crate) fn x86_jit_evex_packed_fma3_memory_sequence(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
@@ -99,6 +522,18 @@ pub(crate) fn x86_jit_evex_packed_fma3_memory_sequence(
     let encoding = instruction_bytes
         .get(&(block.id, load.guest_pc))?
         .evex_packed_fma3_memory_encoding()?;
+    if encoding.writemask.is_some() {
+        return x86_jit_masked_evex_packed_fma3_broadcast_sequence(
+            block,
+            index,
+            encoding,
+            virtual_definitions,
+            virtual_uses,
+        );
+    }
+    if encoding.zeroing {
+        return None;
+    }
     let width = encoding.width;
     let elem = encoding.elem;
     let (loaded, fma_offset, memory_size) = match encoding.replay {
@@ -250,6 +685,7 @@ pub(crate) fn x86_jit_evex_packed_fma3_memory_sequence(
 
     Some(X86JitEvexPackedFma3MemorySequence {
         consumed,
+        memory_offset: 0,
         memory_size,
         encoding,
     })

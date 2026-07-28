@@ -472,6 +472,8 @@ fn packed_evex_fma3_memory_byte_classifier_exhaustively_rewrites_110_592_operand
                         );
                         assert_eq!(encoding.destination, destination, "{bytes:02X?}");
                         assert_eq!(encoding.source1, source1, "{bytes:02X?}");
+                        assert_eq!(encoding.writemask, None, "{bytes:02X?}");
+                        assert!(!encoding.zeroing, "{bytes:02X?}");
                         let (actual_scratch, register_instruction) = match encoding.replay {
                             X86EvexPackedFma3MemoryReplay::Vector {
                                 scratch,
@@ -642,6 +644,7 @@ fn all_756_evex_packed_memory_shapes_lift_optimize_admit_and_lower_exactly() {
             )
             .unwrap_or_else(|| panic!("{level:?} {case:?}: sequence rejected"));
             assert_eq!(sequence.consumed, 3, "{level:?} {case:?}");
+            assert_eq!(sequence.memory_offset, 0, "{level:?} {case:?}");
             assert_eq!(
                 sequence.memory_size,
                 case.width.bytes(),

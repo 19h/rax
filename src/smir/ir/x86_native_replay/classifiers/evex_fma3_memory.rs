@@ -3,8 +3,7 @@
 use super::X86InstructionBytes;
 use crate::smir::ir::types::{VecElementType, VecWidth};
 
-/// Native source-replay strategy for one exact unmasked packed FMA3 memory
-/// encoding.
+/// Native source-replay strategy for one exact packed FMA3 memory encoding.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum X86EvexPackedFma3MemoryReplay {
     /// A complete vector helper load followed by a register-source rewrite
@@ -20,14 +19,16 @@ pub(crate) enum X86EvexPackedFma3MemoryReplay {
     },
 }
 
-/// Exact unmasked EVEX packed FMA3 memory encoding and its byte-validated
-/// native replay strategy.
+/// Exact EVEX packed FMA3 memory encoding and its byte-validated native replay
+/// strategy.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct X86EvexPackedFma3MemoryEncoding {
     pub(crate) width: VecWidth,
     pub(crate) elem: VecElementType,
     pub(crate) destination: u8,
     pub(crate) source1: u8,
+    pub(crate) writemask: Option<u8>,
+    pub(crate) zeroing: bool,
     pub(crate) opcode: u8,
     pub(crate) w: bool,
     pub(crate) replay: X86EvexPackedFma3MemoryReplay,
@@ -199,20 +200,21 @@ impl X86InstructionBytes {
         })
     }
 
-    /// Validate one unmasked EVEX packed binary16/binary32/binary64 FMA3
-    /// memory encoding and select an exact native replay.
+    /// Validate one EVEX packed binary16/binary32/binary64 FMA3 memory
+    /// encoding and select an exact native replay.
     ///
     /// Intel SDM Vol. 2 assigns binary32/binary64 to map 0F38 with W selecting
     /// the element width, and binary16 to MAP6.W0. All use mandatory prefix
     /// 66H, opcode low nibbles 6H, 7H, 8H, AH, CH, or EH, and L'L to select
-    /// 128/256/512 bits. The admitted subset has `aaa=000` and `z=0`, so it
-    /// updates every active-width lane. With `EVEX.b=0`, a complete vector
-    /// helper load is replayed through a low scratch register. With
-    /// `EVEX.b=1`, the helper performs one scalar 2/4/8-byte load and the
-    /// broadcast memory form is rewritten to consume `[rsp]`. Both retain
-    /// MXCSR rounding. Segment/address-size prefixes and APX extended memory
-    /// address bits are consumed only by the helper-computed guest address and
-    /// are therefore removed from either rewrite.
+    /// 128/256/512 bits. With `EVEX.b=0`, the admitted subset has `aaa=000`
+    /// and `z=0`; a complete vector helper load is replayed through a low
+    /// scratch register. With `EVEX.b=1`, merge/zero writemasking is retained:
+    /// the helper performs at most one scalar 2/4/8-byte load and the
+    /// broadcast memory form is rewritten to consume `[rsp]` with the exact
+    /// original opmask controls. Both retain MXCSR rounding.
+    /// Segment/address-size prefixes and APX extended memory address bits are
+    /// consumed only by the helper-computed guest address and are therefore
+    /// removed from either rewrite.
     pub(crate) fn evex_packed_fma3_memory_encoding(
         &self,
     ) -> Option<X86EvexPackedFma3MemoryEncoding> {
@@ -234,9 +236,15 @@ impl X86InstructionBytes {
             (6, false) => VecElementType::F16,
             _ => return None,
         };
+        let writemask = match p2 & 0x07 {
+            0 => None,
+            index => Some(index),
+        };
+        let zeroing = p2 & 0x80 != 0;
+        let broadcast = p2 & 0x10 != 0;
         if p1 & 0x03 != 1
-            || p2 & 0x80 != 0
-            || p2 & 0x07 != 0
+            || (zeroing && writemask.is_none())
+            || (!broadcast && (writemask.is_some() || zeroing))
             || p2 & 0x60 == 0x60
             || modrm >> 6 == 3
             || !matches!(
@@ -276,7 +284,7 @@ impl X86InstructionBytes {
             (u8::from(p0 & 0x80 == 0) << 3) | (u8::from(p0 & 0x10 == 0) << 4) | ((modrm >> 3) & 7);
         let source1 = ((!p1 >> 3) & 0x0F) | (u8::from(p2 & 0x08 == 0) << 4);
         let needs_avx512vl = width != VecWidth::V512;
-        let replay = if p2 & 0x10 != 0 {
+        let replay = if broadcast {
             let stack_bytes = [
                 0x62,
                 // Preserve R/R' and the map, select unextended SIB
@@ -285,8 +293,8 @@ impl X86InstructionBytes {
                 (p0 & 0x97) | 0x60,
                 // Preserve W/vvvv/pp and restore the ordinary EVEX.U bit.
                 p1 | 0x04,
-                // Preserve L'L, b, and V'; z/aaa were validated as zero.
-                p2 & 0x78,
+                // Preserve z, L'L, b, V', and aaa exactly.
+                p2,
                 opcode,
                 (modrm & 0x38) | 0x04,
                 0x24,
@@ -331,6 +339,8 @@ impl X86InstructionBytes {
             elem,
             destination,
             source1,
+            writemask,
+            zeroing,
             opcode,
             w: p1 & 0x80 != 0,
             replay,
