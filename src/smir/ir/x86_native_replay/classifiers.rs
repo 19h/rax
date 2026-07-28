@@ -35,6 +35,7 @@ mod vex_horizontal_integer;
 mod vex_immediate_blend;
 mod vex_immediate_permute;
 mod vex_integer_dot_ext;
+mod vex_integer_interleave;
 mod vex_integer_minmax;
 mod vex_integer_multiply_add;
 mod vex_lane_shuffle;

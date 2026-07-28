@@ -1,6 +1,7 @@
 //! Fail-closed helper-backed VEX binary memory-source admission.
 
 mod vex_horizontal_integer;
+mod vex_integer_interleave;
 mod vex_integer_minmax;
 mod vex_integer_multiply_add;
 mod vex_pmul_high_word;
@@ -856,8 +857,8 @@ fn vex_packed_fp_binary_encoding_valid(
 
 /// Validate one unmasked VEX.128/VEX.256 packed logic, integer add/subtract,
 /// unsigned rounded average, packed sign, rounded-high word multiply, packed
-/// integer multiply-add, packed integer minimum/maximum, packed horizontal
-/// integer arithmetic, fixed-predicate integer compare,
+/// integer multiply-add, packed integer interleave, packed integer
+/// minimum/maximum, packed horizontal integer arithmetic, fixed-predicate integer compare,
 /// binary32/binary64 arithmetic, or packed FMA3 memory source, or one scalar
 /// binary32/binary64 arithmetic or FMA3 source. Binary packed forms are exact
 /// two-op `VLoad`/consumer pairs; packed FMA3 is an exact
@@ -921,6 +922,15 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
         return Some(sequence);
     }
     if let Some(sequence) = vex_integer_multiply_add::sequence(
+        block,
+        index,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence);
+    }
+    if let Some(sequence) = vex_integer_interleave::sequence(
         block,
         index,
         instruction_bytes,
