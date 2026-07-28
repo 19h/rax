@@ -6709,7 +6709,8 @@ fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
                 }
             ))
             .count(),
-        16,
+        1,
+        "optimizer must preserve the aggregate-gated scalar fault boundary",
     );
     let first_fma = ops
         .iter()

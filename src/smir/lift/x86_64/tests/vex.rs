@@ -1221,7 +1221,8 @@ fn lift_vex_fma3_covers_orders_signs_scalars_alternation_and_addresses() {
                 }
             ))
             .count(),
-        16
+        1,
+        "masked packed broadcast has one aggregate-gated scalar memory operand"
     );
     let scalar_masked = lift_single(&[0x62, 0xE2, 0x55, 0x82, 0xB9, 0x20]).unwrap();
     assert!(scalar_masked.ops.iter().any(|op| matches!(

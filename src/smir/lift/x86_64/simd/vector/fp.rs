@@ -750,7 +750,11 @@ impl X86_64Lifter {
                 },
             operation_width,
         );
-        let mask_cond = self.append_evex_mask_condition(prefix, pc, ctx, &mut ops);
+        let mask_cond = if scalar {
+            self.append_evex_mask_condition(prefix, pc, ctx, &mut ops)
+        } else {
+            None
+        };
         let rm_src = if modrm.is_memory {
             let (addr, pre_ops) = if scalar {
                 self.vec_scalar_addr_to_smir(
@@ -825,46 +829,38 @@ impl X86_64Lifter {
                     },
                 ));
                 vector
+            } else if prefix.encoding == VecEncodingKind::Evex && prefix.b {
+                if prefix.aaa == 0 {
+                    self.append_broadcast_memory_source(
+                        addr,
+                        elem,
+                        operation_width,
+                        pc,
+                        ctx,
+                        &mut ops,
+                    )
+                } else {
+                    self.append_masked_broadcast_memory_source(
+                        addr,
+                        elem,
+                        operation_width,
+                        VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))),
+                        pc,
+                        ctx,
+                        &mut ops,
+                    )
+                }
             } else if prefix.encoding == VecEncodingKind::Evex && prefix.aaa != 0 {
                 self.append_evex_masked_vector_source(
                     addr,
                     elem,
                     operation_width,
-                    prefix.b,
+                    false,
                     VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))),
                     pc,
                     ctx,
                     &mut ops,
                 )
-            } else if prefix.encoding == VecEncodingKind::Evex && prefix.b {
-                let scalar_value = ctx.alloc_vreg();
-                let vector = ctx.alloc_vreg();
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Load {
-                        dst: scalar_value,
-                        addr,
-                        width: match elem {
-                            VecElementType::F16 => MemWidth::B2,
-                            VecElementType::F32 => MemWidth::B4,
-                            VecElementType::F64 => MemWidth::B8,
-                            _ => unreachable!(),
-                        },
-                        sign: SignExtend::Zero,
-                    },
-                ));
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::VBroadcast {
-                        dst: vector,
-                        scalar: scalar_value,
-                        elem,
-                        lanes,
-                    },
-                ));
-                vector
             } else {
                 let vector = ctx.alloc_vreg();
                 ops.push(SmirOp::new(

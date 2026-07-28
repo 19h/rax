@@ -461,3 +461,124 @@ fn x86_fma3_ir_retains_architectural_sources_mask_kind_and_order() {
         "alternating FMA must aggregate exceptions in one semantic operation"
     );
 }
+
+#[test]
+fn masked_packed_evex_fma3_broadcast_uses_one_aggregate_gated_scalar_read() {
+    for (p0, p1, elem, memory_width) in [
+        (0xF6, 0x75, VecElementType::F16, MemWidth::B2),
+        (0xF2, 0x75, VecElementType::F32, MemWidth::B4),
+        (0xF2, 0xF5, VecElementType::F64, MemWidth::B8),
+    ] {
+        for (ll, width) in [
+            (0u8, VecWidth::V128),
+            (1, VecWidth::V256),
+            (2, VecWidth::V512),
+        ] {
+            let lanes = width.lanes(elem) as u8;
+            let applicable_lane_mask = (1u64 << lanes) - 1;
+            for mask_index in 1..=7u8 {
+                for zeroing in [false, true] {
+                    // VFMADD132P{H,S,D} v0{k}{z},v1,[rbx+disp8]{1toN}.
+                    let p2 = (u8::from(zeroing) << 7) | (ll << 5) | 0x18 | mask_index;
+                    let bytes = [0x62, p0, p1, p2, 0x98, 0x43, 0x01];
+                    let lifted = lift_single(&bytes)
+                        .unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
+                    let mask = VReg::Arch(ArchReg::X86(X86Reg::K(mask_index)));
+
+                    let pred_loads: Vec<_> = lifted
+                        .ops
+                        .iter()
+                        .filter(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+                        .collect();
+                    assert_eq!(
+                        pred_loads.len(),
+                        1,
+                        "{bytes:02X?}: one architectural scalar memory operand"
+                    );
+                    let (loaded_scalar, condition) = match pred_loads[0].kind {
+                        OpKind::PredLoad {
+                            dst,
+                            cond,
+                            addr:
+                                Address::BaseOffset {
+                                    base: VReg::Arch(ArchReg::X86(X86Reg::Rbx)),
+                                    offset,
+                                    disp_size: DispSize::Disp8,
+                                },
+                            width: actual_width,
+                            signed: SignExtend::Zero,
+                        } if actual_width == memory_width && offset == i64::from(elem.bytes()) => {
+                            (dst, cond)
+                        }
+                        ref other => panic!("{bytes:02X?}: unexpected scalar read {other:?}"),
+                    };
+                    assert!(lifted.ops.iter().any(|op| matches!(
+                        op.kind,
+                        OpKind::And {
+                            dst,
+                            src1,
+                            src2: SrcOperand::Imm(lane_mask),
+                            width: OpWidth::W64,
+                            flags: FlagUpdate::None,
+                        } if dst == condition
+                            && src1 == mask
+                            && lane_mask == applicable_lane_mask as i64
+                    )));
+                    assert_eq!(
+                        lifted
+                            .ops
+                            .iter()
+                            .filter(|op| matches!(
+                                op.kind,
+                                OpKind::And { src1, .. } if src1 == mask
+                            ))
+                            .count(),
+                        1,
+                        "{bytes:02X?}: packed lifting must not emit a dead bit-0 mask test"
+                    );
+                    assert!(lifted.ops.iter().any(|op| matches!(
+                        op.kind,
+                        OpKind::Mov {
+                            dst,
+                            src: SrcOperand::Imm(0),
+                            width: OpWidth::W64,
+                        } if dst == loaded_scalar
+                    )));
+                    let broadcast = lifted.ops.iter().find_map(|op| match op.kind {
+                        OpKind::VBroadcast {
+                            dst,
+                            scalar,
+                            elem: actual_elem,
+                            lanes: actual_lanes,
+                        } if scalar == loaded_scalar
+                            && actual_elem == elem
+                            && actual_lanes == lanes =>
+                        {
+                            Some(dst)
+                        }
+                        _ => None,
+                    });
+                    let broadcast =
+                        broadcast.unwrap_or_else(|| panic!("{bytes:02X?}: missing broadcast"));
+                    assert!(lifted.ops.iter().any(|op| match &op.kind {
+                        OpKind::X86Fma(fma) => {
+                            fma.src3 == broadcast && fma.mask == Some(mask)
+                        }
+                        OpKind::X86FP16Fma {
+                            src3,
+                            mask: actual_mask,
+                            ..
+                        } => *src3 == broadcast && *actual_mask == Some(mask),
+                        _ => false,
+                    }));
+                    assert!(
+                        !lifted.ops.iter().any(|op| {
+                            matches!(op.kind, OpKind::Load { .. } | OpKind::VLoad { .. })
+                        }),
+                        "{bytes:02X?}: aggregate-gated broadcast must not issue eager reads"
+                    );
+                }
+            }
+        }
+    }
+}

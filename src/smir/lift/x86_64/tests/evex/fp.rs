@@ -106,12 +106,14 @@ fn lift_evex_map6_fp16_fma_covers_all_families_masks_memory_broadcast_and_roundi
                 }
             ))
             .count(),
-        32
+        1,
+        "masked FP16 broadcast has one aggregate-gated scalar memory operand"
     );
     assert!(broadcast.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::Lea {
+        OpKind::PredLoad {
             addr: Address::BaseOffset { offset: 2, .. },
+            width: MemWidth::B2,
             ..
         }
     )));
