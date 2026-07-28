@@ -34,6 +34,39 @@ fn write_xmm_zero_upper(vcpu: &mut X86_64Vcpu, register: u8, bytes: [u8; 16]) {
 }
 
 #[inline]
+fn vector_bytes(vcpu: &X86_64Vcpu, register: u8, width: usize) -> [u8; 32] {
+    debug_assert!(matches!(width, 16 | 32));
+    let index = usize::from(register);
+    let mut bytes = [0_u8; 32];
+    bytes[..8].copy_from_slice(&vcpu.regs.xmm[index][0].to_le_bytes());
+    bytes[8..16].copy_from_slice(&vcpu.regs.xmm[index][1].to_le_bytes());
+    if width == 32 {
+        bytes[16..24].copy_from_slice(&vcpu.regs.ymm_high[index][0].to_le_bytes());
+        bytes[24..32].copy_from_slice(&vcpu.regs.ymm_high[index][1].to_le_bytes());
+    }
+    bytes
+}
+
+#[inline]
+fn write_vector_zero_upper(vcpu: &mut X86_64Vcpu, register: u8, width: usize, bytes: [u8; 32]) {
+    debug_assert!(matches!(width, 16 | 32));
+    let index = usize::from(register);
+    vcpu.regs.xmm[index] = [
+        u64::from_le_bytes(bytes[..8].try_into().unwrap()),
+        u64::from_le_bytes(bytes[8..16].try_into().unwrap()),
+    ];
+    vcpu.regs.ymm_high[index] = if width == 32 {
+        [
+            u64::from_le_bytes(bytes[16..24].try_into().unwrap()),
+            u64::from_le_bytes(bytes[24..32].try_into().unwrap()),
+        ]
+    } else {
+        [0; 2]
+    };
+    vcpu.regs.zmm_high[index] = [0; 4];
+}
+
+#[inline]
 fn transform_element(value: u64, bits: u32, count: i8, kind: XopPackedBitKind) -> u64 {
     let mask = if bits == 64 {
         u64::MAX
@@ -179,6 +212,78 @@ pub(in crate::isa::x86_64) fn execute_xop_packed_bit(
     };
     let result = transform_vector(source, counts, fixed_count, element_bytes, kind);
     write_xmm_zero_upper(vcpu, destination, result);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// Execute AMD XOP VPCMOV.
+///
+/// Encoding and dynamic XOP/#NM validation have already completed. The
+/// immediate source-register selector is decoded before the data read; memory
+/// canonicality and enabled #AC are validated before the complete 16-byte or
+/// 32-byte read and before any destination state commits.
+pub(in crate::isa::x86_64) fn execute_xop_vpcmov(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    vvvv: u8,
+    w: bool,
+    l: u8,
+) -> Result<Option<VcpuExit>> {
+    let width = if l == 0 { 16 } else { 32 };
+    let modrm_offset = ctx.cursor;
+    let modrm = ctx.consume_u8()?;
+    let destination = ((modrm >> 3) & 7) | ctx.any_rex_r();
+    let rm = (modrm & 7) | ctx.any_rex_b();
+    let is_memory = modrm >> 6 != 3;
+
+    let memory_operand = if is_memory {
+        let (address, extra, stack_segment) =
+            vcpu.decode_modrm_addr_with_stack_segment(ctx, modrm_offset)?;
+        ctx.cursor = modrm_offset + 1 + extra;
+        Some((address, stack_segment))
+    } else {
+        None
+    };
+    let immediate = ctx.consume_u8()?;
+    // In protected/compatibility 32-bit mode the high selector bit is ignored,
+    // matching the architectural restriction to XMM/YMM0-7.
+    let selected_register = (immediate >> 4) & if vcpu.sregs.cs.l { 0x0F } else { 0x07 };
+
+    let rm_value = if let Some((address, stack_segment)) = memory_operand {
+        if vcpu.sregs.cs.l {
+            let canonical = address
+                .checked_add(width as u64 - 1)
+                .is_some_and(|last| is_canonical_48(address) && is_canonical_48(last));
+            if !canonical {
+                vcpu.inject_exception(if stack_segment { 12 } else { 13 }, Some(0))?;
+                return Ok(None);
+            }
+        }
+        if address & 15 != 0 && alignment_check_enabled(vcpu) {
+            vcpu.inject_exception(17, Some(0))?;
+            return Ok(None);
+        }
+
+        let loaded = vcpu.read_bytes(address, width)?;
+        let mut bytes = [0_u8; 32];
+        bytes[..width].copy_from_slice(&loaded);
+        bytes
+    } else {
+        vector_bytes(vcpu, rm, width)
+    };
+
+    let source1 = vector_bytes(vcpu, vvvv, width);
+    let selected = vector_bytes(vcpu, selected_register, width);
+    let (source2, mask) = if w {
+        (selected, rm_value)
+    } else {
+        (rm_value, selected)
+    };
+    let mut result = [0_u8; 32];
+    for byte in 0..width {
+        result[byte] = (source1[byte] & mask[byte]) | (source2[byte] & !mask[byte]);
+    }
+    write_vector_zero_upper(vcpu, destination, width, result);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

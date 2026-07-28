@@ -210,6 +210,8 @@ mod timing;
 #[cfg(test)]
 mod trap;
 #[cfg(test)]
+mod vbit_select;
+#[cfg(test)]
 mod vector;
 #[cfg(test)]
 mod vex_alignr_replay;

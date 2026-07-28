@@ -235,6 +235,8 @@ mod x87_transcendental;
 mod xop_packed;
 #[cfg(test)]
 mod xop_tbm;
+#[cfg(test)]
+mod xop_vpcmov;
 
 /// Test memory reader for unit tests
 struct TestMemory {

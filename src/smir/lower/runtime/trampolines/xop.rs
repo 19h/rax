@@ -7,6 +7,40 @@ use crate::smir::ir::SmirBlock;
 use crate::smir::ir::ops::{OpKind, X86OpHint, X86VecAlign};
 use crate::smir::ir::types::{ArchReg, SrcOperand, VReg, VecElementType, VecWidth, X86Reg};
 
+pub(crate) fn x86_xop_memory_guards_match(
+    block: &SmirBlock,
+    load_index: usize,
+    addr: &crate::smir::ir::types::Address,
+    access_size: u8,
+) -> bool {
+    let Some(feature_index) = load_index.checked_sub(2) else {
+        return false;
+    };
+    let Some(feature) = block.ops.get(feature_index) else {
+        return false;
+    };
+    let Some(alignment) = block.ops.get(load_index - 1) else {
+        return false;
+    };
+    let Some(load) = block.ops.get(load_index) else {
+        return false;
+    };
+    feature.guest_pc == alignment.guest_pc
+        && alignment.guest_pc == load.guest_pc
+        && feature.x86_hint.is_none()
+        && alignment.x86_hint.is_none()
+        && matches!(feature.kind, OpKind::X86RequireXop)
+        && matches!(
+            &alignment.kind,
+            OpKind::X86CheckAlignmentAc {
+                addr: checked,
+                access_size: checked_size,
+                alignment: 16,
+                ..
+            } if checked == addr && *checked_size == access_size
+        )
+}
+
 pub(crate) fn x86_jit_mem_xop_source_sequence_len(
     block: &SmirBlock,
     index: usize,
@@ -33,6 +67,7 @@ pub(crate) fn x86_jit_mem_xop_source_sequence_len(
         _ => return None,
     };
     if !x86_jit_mem_address_shape_valid(addr)
+        || !x86_xop_memory_guards_match(block, index, addr, 16)
         || virtual_definitions.get(&temporary) != Some(&1)
         || virtual_uses.get(&temporary) != Some(&1)
     {

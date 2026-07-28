@@ -27,9 +27,9 @@ impl X86_64Lifter {
     }
 
     /// Lift AMD XOP maps 8-10. This semantic unit admits all ten scalar TBM
-    /// instructions and delegates packed rotate/shift cells to the vector XOP
-    /// lifter; other assigned XOP cells remain explicit interpreter frontiers
-    /// rather than being mislabeled #UD.
+    /// instructions and delegates packed rotate/shift plus VPCMOV cells to the
+    /// vector XOP lifter; other assigned XOP cells remain explicit interpreter
+    /// frontiers rather than being mislabeled #UD.
     pub(crate) fn lift_xop(
         &self,
         bytes: &[u8],
@@ -81,6 +81,9 @@ impl X86_64Lifter {
             return self.lift_xop_packed_bit(
                 bytes, legacy, pc, ctx, lead, p0, opcode, map, w, vvvv, l, pp,
             );
+        }
+        if map == 8 && opcode == 0xA2 {
+            return self.lift_xop_vpcmov(bytes, legacy, pc, ctx, lead, p0, w, vvvv, l, pp);
         }
         if !scalar_tbm {
             return Err(Self::xop_unsupported(pc, map, opcode));

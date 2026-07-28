@@ -70,20 +70,26 @@ impl X86_64Vcpu {
         ctx.op_size = if long_mode && w { 8 } else { 4 };
         ctx.rip_relative_offset = 0;
 
-        // All scalar TBM forms require pp=00 and L=0. Feature/mode checks
-        // precede ModR/M address calculation and memory access, preserving #UD
-        // priority over any potential memory fault.
+        // All implemented XOP forms require pp=00. Scalar TBM and packed
+        // rotate/shift additionally require L=0; VPCMOV admits both vector
+        // lengths. Feature/mode checks precede ModR/M address calculation and
+        // memory access, preserving #UD priority over any potential memory
+        // fault.
         let scalar_tbm =
             (map == 9 && matches!(opcode, 0x01 | 0x02)) || (map == 10 && opcode == 0x10);
         let packed_immediate = map == 8 && matches!(opcode, 0xC0..=0xC3);
         let packed_variable = map == 9 && matches!(opcode, 0x90..=0x9B);
         let packed_bit = packed_immediate || packed_variable;
-        if (!scalar_tbm && !packed_bit) || pp != 0 || l != 0 || packed_immediate && (w || vvvv != 0)
+        let vpcmov = map == 8 && opcode == 0xA2;
+        if (!scalar_tbm && !packed_bit && !vpcmov)
+            || pp != 0
+            || (!vpcmov && l != 0)
+            || packed_immediate && (w || vvvv != 0)
         {
             return self.inject_undefined_instruction();
         }
 
-        if packed_bit {
+        if packed_bit || vpcmov {
             const CR0_TS: u64 = 1 << 3;
             const CR4_OSXSAVE: u64 = 1 << 18;
             if !self.xop_enabled()
@@ -98,7 +104,10 @@ impl X86_64Vcpu {
                 self.inject_exception(7, None)?;
                 return Ok(None);
             }
-            ctx.rip_relative_offset = usize::from(packed_immediate);
+            ctx.rip_relative_offset = usize::from(packed_immediate || vpcmov);
+            if vpcmov {
+                return execute::simd::execute_xop_vpcmov(self, ctx, vvvv, w, l);
+            }
             return execute::simd::execute_xop_packed_bit(
                 self,
                 ctx,

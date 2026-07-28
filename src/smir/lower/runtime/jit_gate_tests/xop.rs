@@ -52,6 +52,7 @@ fn memory_function(memory_is_source: bool) -> crate::smir::ir::SmirFunction {
         OpKind::X86RequireXop,
         OpKind::X86CheckAlignmentAc {
             addr: addr.clone(),
+            access_size: 16,
             alignment: 16,
             stack_segment: false,
         },
@@ -122,6 +123,7 @@ fn exact_guard_and_alignment_check_are_x86_only_and_fail_closed_on_hints() {
 
     let alignment = OpKind::X86CheckAlignmentAc {
         addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rbx))),
+        access_size: 16,
         alignment: 16,
         stack_segment: true,
     };
@@ -130,11 +132,24 @@ fn exact_guard_and_alignment_check_are_x86_only_and_fail_closed_on_hints() {
     assert!(x86_gate(alignment.clone()));
     assert!(!aarch64_gate(vec![alignment.clone()], false));
     assert!(!x86_aarch64_gate(vec![alignment]));
+    let wide_alignment = OpKind::X86CheckAlignmentAc {
+        addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rbx))),
+        access_size: 32,
+        alignment: 16,
+        stack_segment: false,
+    };
+    assert!(x86_check_alignment_ac_shape_valid(&SmirOp::new(
+        OpId(2),
+        0x1000,
+        wide_alignment.clone()
+    )));
+    assert!(x86_gate(wide_alignment));
 
     for kind in [
         OpKind::X86RequireXop,
         OpKind::X86CheckAlignmentAc {
             addr: Address::Absolute(0x2000),
+            access_size: 16,
             alignment: 16,
             stack_segment: false,
         },
@@ -147,11 +162,19 @@ fn exact_guard_and_alignment_check_are_x86_only_and_fail_closed_on_hints() {
     for malformed in [
         OpKind::X86CheckAlignmentAc {
             addr: Address::Absolute(0x2000),
+            access_size: 16,
             alignment: 8,
             stack_segment: false,
         },
         OpKind::X86CheckAlignmentAc {
             addr: Address::Direct(VReg::Virtual(VirtualId(0))),
+            access_size: 16,
+            alignment: 16,
+            stack_segment: false,
+        },
+        OpKind::X86CheckAlignmentAc {
+            addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rbx))),
+            access_size: 8,
             alignment: 16,
             stack_segment: false,
         },
@@ -364,6 +387,25 @@ fn memory_pair_classifier_rejects_all_semantic_and_ssa_mutations() {
     wrong_hint.blocks[0].ops[2].x86_hint = Some(X86OpHint::VecAlign(X86VecAlign::Unaligned));
     malformed.push(wrong_hint);
 
+    let mut wrong_guard_width = exact.clone();
+    if let OpKind::X86CheckAlignmentAc { access_size, .. } =
+        &mut wrong_guard_width.blocks[0].ops[1].kind
+    {
+        *access_size = 32;
+    }
+    malformed.push(wrong_guard_width);
+
+    let mut wrong_guard_address = exact.clone();
+    if let OpKind::X86CheckAlignmentAc { addr, .. } = &mut wrong_guard_address.blocks[0].ops[1].kind
+    {
+        *addr = Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rcx)));
+    }
+    malformed.push(wrong_guard_address);
+
+    let mut missing_feature_guard = exact.clone();
+    missing_feature_guard.blocks[0].ops.remove(0);
+    malformed.push(missing_feature_guard);
+
     let mut unsafe_address = exact.clone();
     if let OpKind::VLoad { addr, .. } = &mut unsafe_address.blocks[0].ops[2].kind {
         *addr = Address::Direct(VReg::Virtual(VirtualId(99)));
@@ -423,6 +465,7 @@ fn xop_state_layout_and_side_effect_metadata_are_append_only_and_exact() {
     assert!(
         OpKind::X86CheckAlignmentAc {
             addr: Address::Absolute(0x2000),
+            access_size: 16,
             alignment: 16,
             stack_segment: false,
         }

@@ -26,10 +26,11 @@ impl SmirInterpreter {
 
             OpKind::X86CheckAlignmentAc {
                 addr,
+                access_size,
                 alignment,
                 stack_segment,
             } => {
-                if *alignment != 16 {
+                if !matches!(*access_size, 16 | 32) || *alignment != 16 {
                     ctx.request_exit(ExitReason::Undefined {
                         addr: op.guest_pc,
                         opcode: 0,
@@ -50,7 +51,7 @@ impl SmirInterpreter {
 
                 if x86.cs_l {
                     let canonical = effective_addr
-                        .checked_add(u64::from(*alignment) - 1)
+                        .checked_add(u64::from(*access_size) - 1)
                         .is_some_and(|last| {
                             crate::isa::x86_64::execute::system::is_canonical_48(effective_addr)
                                 && crate::isa::x86_64::execute::system::is_canonical_48(last)

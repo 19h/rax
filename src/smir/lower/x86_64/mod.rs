@@ -187,13 +187,17 @@ mod state_mulx;
 pub use state_mulx::*;
 mod state_address;
 pub use state_address::*;
+mod vbit_select;
 mod vector_helpers;
+pub use vbit_select::*;
 #[cfg(feature = "smir-jit")]
 mod vector_maskmov;
 #[cfg(feature = "smir-jit")]
 pub use vector_maskmov::*;
 #[cfg(test)]
 mod tests;
+#[cfg(feature = "smir-jit")]
+mod vbit_select_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_binary_memory_source;
 #[cfg(feature = "smir-jit")]

@@ -121,6 +121,8 @@ mod tbm;
 mod timing;
 #[cfg(test)]
 mod tsx;
+#[cfg(test)]
+mod vbit_select;
 #[cfg(all(test, feature = "smir-jit"))]
 mod vector_maskmov;
 #[cfg(test)]

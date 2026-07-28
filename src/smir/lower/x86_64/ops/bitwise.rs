@@ -738,6 +738,10 @@ impl X86_64Lowerer {
                 self.emit_x86_xop_packed_bit(op)?;
             }
 
+            OpKind::VBitSelect { .. } => {
+                self.emit_x86_vbit_select(op)?;
+            }
+
             OpKind::X86Adx {
                 dst,
                 src1,

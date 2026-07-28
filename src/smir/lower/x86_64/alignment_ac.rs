@@ -15,17 +15,20 @@ pub(crate) fn x86_check_alignment_ac_shape_valid(op: &SmirOp) -> bool {
         &op.kind,
         OpKind::X86CheckAlignmentAc {
             addr,
+            access_size,
             alignment: 16,
             ..
-        } if op.x86_hint.is_none() && addr.is_x86_state_backed_shape()
+        } if op.x86_hint.is_none()
+            && matches!(*access_size, 16 | 32)
+            && addr.is_x86_state_backed_shape()
     )
 }
 
 impl X86_64Lowerer {
-    /// Validate the complete 16-byte guest linear range before translation,
-    /// then apply the live CR0.AM/RFLAGS.AC/CPL alignment predicate. A failing
-    /// condition deoptimizes at the source PC so direct replay can select
-    /// #GP(0), #SS(0), or #AC(0) with architectural priority.
+    /// Validate the complete 16-byte or 32-byte guest linear range before
+    /// translation, then apply the live CR0.AM/RFLAGS.AC/CPL alignment
+    /// predicate. A failing condition deoptimizes at the source PC so direct
+    /// replay can select #GP(0), #SS(0), or #AC(0) with architectural priority.
     pub(crate) fn emit_x86_check_alignment_ac(&mut self, op: &SmirOp) -> Result<(), LowerError> {
         if !self.jit_fault_deopt_guards {
             return Err(LowerError::UnsupportedOp {
@@ -35,15 +38,21 @@ impl X86_64Lowerer {
         if !x86_check_alignment_ac_shape_valid(op) {
             return Err(LowerError::InvalidOperand {
                 op: "X86CheckAlignmentAc".to_string(),
-                operand: "requires an unhinted state-backed 16-byte address".to_string(),
+                operand:
+                    "requires an unhinted state-backed 16-byte-aligned, 16-byte or 32-byte range"
+                        .to_string(),
             });
         }
         let OpKind::X86CheckAlignmentAc {
-            addr, alignment, ..
+            addr,
+            access_size,
+            alignment,
+            ..
         } = &op.kind
         else {
             unreachable!("validated X86CheckAlignmentAc operation changed kind");
         };
+        debug_assert!(matches!(*access_size, 16 | 32));
         debug_assert_eq!(*alignment, 16);
 
         const CR0_AM: i64 = 1 << 18;
@@ -77,7 +86,7 @@ impl X86_64Lowerer {
         {
             let mut emitter = X86Emitter::new(&mut self.code);
             emitter.emit_mov_rr(PhysReg::Rdx, PhysReg::Rsi, OpWidth::W64);
-            emitter.emit_add_ri(PhysReg::Rdx, i64::from(*alignment - 1), OpWidth::W64);
+            emitter.emit_add_ri(PhysReg::Rdx, i64::from(*access_size - 1), OpWidth::W64);
         }
         // Wrapping the final byte below the first byte invalidates the range.
         faults.push(self.emit_jcc_placeholder(X86Cond::B));

@@ -36,6 +36,8 @@ mod push_value;
 pub use push_value::*;
 mod tbm;
 pub use tbm::*;
+mod vbit_select;
+pub use vbit_select::*;
 mod xop;
 pub use xop::*;
 mod mmx;

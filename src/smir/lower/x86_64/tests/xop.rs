@@ -86,6 +86,7 @@ fn memory_function(memory_is_source: bool) -> SmirFunction {
             PC,
             OpKind::X86CheckAlignmentAc {
                 addr: addr.clone(),
+                access_size: 16,
                 alignment: 16,
                 stack_segment: false,
             },
@@ -165,6 +166,7 @@ fn guard_requires_deoptimization_and_embeds_every_live_state_field_and_fault_pc(
 fn alignment_guard_requires_precise_deoptimization_and_exact_state_backed_shape() {
     let alignment = OpKind::X86CheckAlignmentAc {
         addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rcx))),
+        access_size: 16,
         alignment: 16,
         stack_segment: false,
     };
@@ -176,6 +178,26 @@ fn alignment_guard_requires_precise_deoptimization_and_exact_state_backed_shape(
     let op = SmirOp::new(OpId(0), PC, alignment);
     assert!(x86_check_alignment_ac_shape_valid(&op));
     let (code, _) = lower(&function, true, false, false, false, false).expect("lower #AC guard");
+    let wide = OpKind::X86CheckAlignmentAc {
+        addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rcx))),
+        access_size: 32,
+        alignment: 16,
+        stack_segment: false,
+    };
+    assert!(x86_check_alignment_ac_shape_valid(&SmirOp::new(
+        OpId(0),
+        PC,
+        wide.clone()
+    )));
+    lower(
+        &function_with(vec![(PC, wide)]),
+        true,
+        false,
+        false,
+        false,
+        false,
+    )
+    .expect("lower 32-byte-range #AC guard");
     for (name, offset) in [
         ("CR0", X86_GUEST_CR0_OFFSET),
         ("CPL", X86_GUEST_CPL_OFFSET),
@@ -197,11 +219,19 @@ fn alignment_guard_requires_precise_deoptimization_and_exact_state_backed_shape(
     for malformed in [
         OpKind::X86CheckAlignmentAc {
             addr: Address::Absolute(0x2000),
+            access_size: 16,
             alignment: 8,
             stack_segment: false,
         },
         OpKind::X86CheckAlignmentAc {
             addr: Address::Direct(VReg::Virtual(VirtualId(0))),
+            access_size: 16,
+            alignment: 16,
+            stack_segment: false,
+        },
+        OpKind::X86CheckAlignmentAc {
+            addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rcx))),
+            access_size: 8,
             alignment: 16,
             stack_segment: false,
         },
@@ -629,6 +659,7 @@ fn native_alignment_guard_is_dynamic_precise_and_noncommitting() {
             PC,
             OpKind::X86CheckAlignmentAc {
                 addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rcx))),
+                access_size: 16,
                 alignment: 16,
                 stack_segment: false,
             },
@@ -671,6 +702,15 @@ fn native_alignment_guard_is_dynamic_precise_and_noncommitting() {
             false,
         ),
         (
+            "16-byte range remains canonical",
+            0x0000_7FFF_FFFF_FFF0,
+            true,
+            false,
+            0,
+            false,
+            true,
+        ),
+        (
             "compatibility skips canonicality",
             0x0000_8000_0000_0000,
             false,
@@ -707,6 +747,43 @@ fn native_alignment_guard_is_dynamic_precise_and_noncommitting() {
             "{name}"
         );
     }
+
+    let wide_function = function_with(vec![
+        (
+            PC,
+            OpKind::X86CheckAlignmentAc {
+                addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rcx))),
+                access_size: 32,
+                alignment: 16,
+                stack_segment: false,
+            },
+        ),
+        (
+            PC,
+            OpKind::Mov {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rbx)),
+                src: SrcOperand::Imm(0x1357_9BDF_2468_ACE0_u64 as i64),
+                width: OpWidth::W64,
+            },
+        ),
+    ]);
+    let (wide_code, wide_entry) =
+        lower(&wide_function, true, false, false, false, false).expect("lower wide #AC guard");
+    let wide_exec = ExecMem::new(&wide_code).expect("map wide #AC guard");
+    let mut wide_regs = GuestRegs {
+        gpr: std::array::from_fn(|index| 0xA500_0000_0000_0000 | index as u64),
+        rflags: 0x2 | STATUS_FLAGS,
+        exit_pc: SENTINEL_PC,
+        cr0: CR0_PE,
+        cs_l: 1,
+        ..GuestRegs::default()
+    };
+    wide_regs.gpr[1] = 0x0000_7FFF_FFFF_FFF0;
+    let wide_before = wide_regs.gpr;
+    wide_exec.run(wide_entry, &mut wide_regs);
+    assert_eq!(wide_regs.gpr, wide_before, "32-byte canonical-range fault");
+    assert_eq!(wide_regs.rflags, 0x2 | STATUS_FLAGS);
+    assert_eq!(wide_regs.exit_pc, PC);
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]

@@ -134,6 +134,7 @@ fn memory_source_and_count_forms_preserve_alignment_segment_and_operand_roles() 
                 SmirOp {
                     kind: OpKind::X86CheckAlignmentAc {
                         addr: checked,
+                        access_size: 16,
                         alignment: 16,
                         stack_segment: true,
                     },

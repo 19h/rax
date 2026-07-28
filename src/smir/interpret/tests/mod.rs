@@ -31,6 +31,8 @@ mod x86_fma;
 mod x87;
 #[cfg(test)]
 mod xop;
+#[cfg(test)]
+mod xop_vpcmov;
 use crate::smir::ir::FunctionBuilder;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate, MaterializedFlags};
 use crate::smir::ir::memory::{FlatMemory, SmirMemory};

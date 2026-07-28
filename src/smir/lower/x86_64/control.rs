@@ -1165,6 +1165,16 @@ impl X86_64Lowerer {
             // to that mode.
             if self.mem_helpers {
                 #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_vbit_select_memory_source(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
                 if let Some(consumed) = self.try_lower_jit_xop_memory_source(
                     block,
                     idx,

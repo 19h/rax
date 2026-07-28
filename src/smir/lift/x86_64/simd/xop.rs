@@ -28,6 +28,120 @@ fn memory_uses_stack_segment(modrm: u8, following: &[u8], segment_override: Opti
 
 impl X86_64Lifter {
     #[allow(clippy::too_many_arguments)]
+    pub(crate) fn lift_xop_vpcmov(
+        &self,
+        bytes: &[u8],
+        legacy: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+        lead: usize,
+        p0: u8,
+        w: bool,
+        vvvv: u8,
+        l: u8,
+        pp: u8,
+    ) -> Result<LiftResult, LiftError> {
+        let opcode_end = lead + 4;
+        if pp != 0 {
+            return Ok(Self::xop_invalid(opcode_end));
+        }
+
+        let r = ((p0 >> 7) & 1) ^ 1;
+        let x = ((p0 >> 6) & 1) ^ 1;
+        let b = ((p0 >> 5) & 1) ^ 1;
+        let modrm_prefix = X86Prefix {
+            rex: build_rex(r, x, b, w),
+            address_size_override: legacy.address_size_override,
+            segment_override: legacy.segment_override,
+            cursor: opcode_end,
+            ..X86Prefix::default()
+        };
+        let modrm =
+            decode_modrm(&bytes[opcode_end..], &modrm_prefix, pc).map_err(|error| match error {
+                LiftError::Incomplete { addr, have, need } => LiftError::Incomplete {
+                    addr,
+                    have: opcode_end + have,
+                    need: opcode_end + need,
+                },
+                error => error,
+            })?;
+        let bytes_consumed = opcode_end + modrm.bytes_consumed + 1;
+        if bytes.len() < bytes_consumed {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: bytes.len(),
+                need: bytes_consumed,
+            });
+        }
+
+        let next_pc = pc.wrapping_add(bytes_consumed as u64);
+        let width = if l == 0 {
+            VecWidth::V128
+        } else {
+            VecWidth::V256
+        };
+        // The dynamic #UD/#NM guard must precede address generation, alignment
+        // validation, and the memory read.
+        let mut ops = vec![SmirOp::new(OpId(0), pc, OpKind::X86RequireXop)];
+        let rm_operand = if modrm.is_memory {
+            let (addr, pre_ops) = self.x86_addr_to_smir(
+                modrm.addr.as_ref().expect("decoded VPCMOV memory address"),
+                next_pc,
+                ctx,
+            );
+            ops.extend(pre_ops);
+            let stack_segment = memory_uses_stack_segment(
+                modrm.byte,
+                &bytes[opcode_end + 1..],
+                legacy.segment_override,
+            );
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86CheckAlignmentAc {
+                    addr: addr.clone(),
+                    access_size: width.bytes() as u8,
+                    alignment: 16,
+                    stack_segment,
+                },
+            ));
+            let loaded = ctx.alloc_vreg();
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VLoad {
+                    dst: loaded,
+                    addr,
+                    width,
+                },
+                X86OpHint::VecAlign(X86VecAlign::Aligned),
+            ));
+            loaded
+        } else {
+            self.vec_reg(modrm.rm, width)
+        };
+
+        let selected = self.vec_reg(bytes[bytes_consumed - 1] >> 4, width);
+        let (src_false, mask) = if w {
+            (selected, rm_operand)
+        } else {
+            (rm_operand, selected)
+        };
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::VBitSelect {
+                dst: self.vec_reg(modrm.reg, width),
+                mask,
+                src_true: self.vec_reg(vvvv, width),
+                src_false,
+                width,
+            },
+        ));
+        Ok(LiftResult::fallthrough(ops, bytes_consumed))
+    }
+
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn lift_xop_packed_bit(
         &self,
         bytes: &[u8],
@@ -117,6 +231,7 @@ impl X86_64Lifter {
                 pc,
                 OpKind::X86CheckAlignmentAc {
                     addr: addr.clone(),
+                    access_size: 16,
                     alignment: 16,
                     stack_segment,
                 },

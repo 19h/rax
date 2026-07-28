@@ -10,6 +10,8 @@ mod fma;
 mod invpcid;
 #[path = "isa_oracle_packed_string.rs"]
 mod packed_string;
+#[path = "isa_oracle_xop.rs"]
+mod xop;
 
 #[test]
 fn parses_hex_bytes_with_prefixes_and_separators() {

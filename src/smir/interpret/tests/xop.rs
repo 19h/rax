@@ -508,7 +508,16 @@ fn malformed_xop_ir_operands_fail_closed_without_destination_commit() {
 
 #[test]
 fn malformed_xop_alignment_ir_fails_closed_without_address_observation() {
-    for alignment in [0, 1, 8, 32] {
+    for (access_size, alignment) in [
+        (0, 16),
+        (1, 16),
+        (8, 16),
+        (64, 16),
+        (16, 0),
+        (16, 1),
+        (16, 8),
+        (16, 32),
+    ] {
         let mut ctx = enabled_context();
         ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0xFFFF_FFFF_FFFF_FFFF);
         let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
@@ -516,6 +525,7 @@ fn malformed_xop_alignment_ir_fails_closed_without_address_observation() {
             0x1000,
             OpKind::X86CheckAlignmentAc {
                 addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rax))),
+                access_size,
                 alignment,
                 stack_segment: false,
             },
@@ -534,7 +544,57 @@ fn malformed_xop_alignment_ir_fails_closed_without_address_observation() {
                 exit,
                 BlockResult::Exit(ExitReason::Undefined { addr: 0x1000, .. })
             ),
-            "alignment={alignment}: {exit:?}"
+            "access_size={access_size}, alignment={alignment}: {exit:?}"
         );
+    }
+}
+
+#[test]
+fn xop_alignment_ir_checks_the_complete_access_range_independently_of_alignment() {
+    for (access_size, long_mode, expected_exit) in
+        [(16, true, None), (32, true, Some("gp")), (32, false, None)]
+    {
+        let mut ctx = enabled_context();
+        let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+            unreachable!();
+        };
+        x86.cs_l = long_mode;
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x0000_7FFF_FFFF_FFF0);
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::X86CheckAlignmentAc {
+                addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rax))),
+                access_size,
+                alignment: 16,
+                stack_segment: false,
+            },
+        );
+        builder.set_terminator(Terminator::Trap {
+            kind: TrapKind::Halt,
+        });
+        let function = builder.finish();
+        let exit = SmirInterpreter::new().execute_block(
+            &mut ctx,
+            &mut FlatMemory::new(0),
+            &function.blocks[0],
+        );
+        match expected_exit {
+            None => assert!(
+                matches!(exit, BlockResult::Exit(ExitReason::Halt)),
+                "access_size={access_size}, long_mode={long_mode}: {exit:?}"
+            ),
+            Some("gp") => assert!(
+                matches!(
+                    exit,
+                    BlockResult::Exit(ExitReason::GeneralProtection {
+                        addr: 0x1000,
+                        error_code: 0,
+                    })
+                ),
+                "access_size={access_size}, long_mode={long_mode}: {exit:?}"
+            ),
+            _ => unreachable!(),
+        }
     }
 }

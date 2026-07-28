@@ -152,6 +152,31 @@ fn bytes_to_words(bytes: [u8; 16]) -> [u64; 2] {
     ]
 }
 
+fn vector_words(regs: &Registers, register: usize, width: usize) -> [u64; 4] {
+    assert!(matches!(width, 16 | 32));
+    let mut result = [0_u64; 4];
+    result[..2].copy_from_slice(&regs.xmm[register]);
+    if width == 32 {
+        result[2..].copy_from_slice(&regs.ymm_high[register]);
+    }
+    result
+}
+
+/// Specification-derived oracle for AMD APM Vol. 4 VPCMOV semantics.
+fn vpcmov_reference(
+    source1: [u64; 4],
+    source2: [u64; 4],
+    mask: [u64; 4],
+    width: usize,
+) -> [u64; 4] {
+    assert!(matches!(width, 16 | 32));
+    let mut result = [0_u64; 4];
+    for word in 0..width / 8 {
+        result[word] = (source1[word] & mask[word]) | (source2[word] & !mask[word]);
+    }
+    result
+}
+
 fn packed_shape(opcode: u8) -> (PackedKind, usize) {
     match opcode {
         0x90 | 0xC0 => (PackedKind::Rotate, 1),
@@ -314,6 +339,283 @@ fn direct_packed_xop_executes_every_assigned_cell_and_both_w_operand_orders() {
             );
         }
     }
+}
+
+#[test]
+fn direct_vpcmov_executes_both_widths_w_roles_aliases_and_high_registers() {
+    for l in [false, true] {
+        let width = if l { 32 } else { 16 };
+        for w in [false, true] {
+            // VPCMOV {X,Y}MM3,{X,Y}MM2,{X,Y}MM1,{X,Y}MM4. The low immediate
+            // nibble is architecturally ignored.
+            let code = xop(8, w, l, 0, 2, 0xA2, &[0xD9, 0x4D]);
+            let mut vcpu = test_vcpu(memory_with_code(&code), false);
+            seed_architectural_state(&mut vcpu);
+            let before = vcpu.regs.clone();
+            let source1 = vector_words(&before, 2, width);
+            let rm = vector_words(&before, 1, width);
+            let selected = vector_words(&before, 4, width);
+            let (source2, mask) = if w { (selected, rm) } else { (rm, selected) };
+            let expected = vpcmov_reference(source1, source2, mask, width);
+
+            assert!(vcpu.step().expect("direct VPCMOV").is_none());
+
+            assert_eq!(vcpu.regs.xmm[3], expected[..2], "W={w}, L={l}");
+            assert_eq!(
+                vcpu.regs.ymm_high[3],
+                if l {
+                    [expected[2], expected[3]]
+                } else {
+                    [0; 2]
+                },
+                "W={w}, L={l}"
+            );
+            assert_eq!(vcpu.regs.zmm_high[3], [0; 4], "W={w}, L={l}");
+            assert_eq!(vcpu.regs.rflags, before.rflags, "W={w}, L={l}");
+            assert_eq!(vcpu.mxcsr, 0x5F80, "W={w}, L={l}");
+            assert_eq!(gprs(&vcpu.regs), gprs(&before), "W={w}, L={l}");
+            assert_eq!(vcpu.regs.rip, code.len() as u64, "W={w}, L={l}");
+        }
+    }
+
+    // ~R=0 and ~B=0 extend the destination and ModR/M source; vvvv and IS4
+    // independently select the other two high registers.
+    let code = [0x8F, 0x48, 0x28, 0xA2, 0xD9, 0xF0];
+    let mut vcpu = test_vcpu(memory_with_code(&code), false);
+    seed_architectural_state(&mut vcpu);
+    let before = vcpu.regs.clone();
+    let expected = vpcmov_reference(
+        vector_words(&before, 10, 16),
+        vector_words(&before, 9, 16),
+        vector_words(&before, 15, 16),
+        16,
+    );
+    assert!(vcpu.step().expect("high-register VPCMOV").is_none());
+    assert_eq!(vcpu.regs.xmm[11], expected[..2]);
+    assert_eq!(vcpu.regs.ymm_high[11], [0; 2]);
+    assert_eq!(vcpu.regs.zmm_high[11], [0; 4]);
+
+    // Every architectural alias is legal; all inputs must be snapshotted
+    // before destination commit.
+    for (name, destination, source1, rm, selected) in [
+        ("dst=src1", 2, 2, 1, 4),
+        ("dst=src2", 1, 2, 1, 4),
+        ("dst=mask", 4, 2, 1, 4),
+        ("all operands", 2, 2, 2, 2),
+    ] {
+        let code = xop(
+            8,
+            false,
+            false,
+            0,
+            source1,
+            0xA2,
+            &[0xC0 | (destination << 3) | rm, selected << 4],
+        );
+        let mut vcpu = test_vcpu(memory_with_code(&code), false);
+        seed_architectural_state(&mut vcpu);
+        let before = vcpu.regs.clone();
+        let expected = vpcmov_reference(
+            vector_words(&before, usize::from(source1), 16),
+            vector_words(&before, usize::from(rm), 16),
+            vector_words(&before, usize::from(selected), 16),
+            16,
+        );
+        assert!(vcpu.step().expect("aliased VPCMOV").is_none());
+        assert_eq!(
+            vcpu.regs.xmm[usize::from(destination)],
+            expected[..2],
+            "{name}"
+        );
+    }
+}
+
+#[test]
+fn direct_vpcmov_memory_forms_preserve_roles_alignment_and_fault_precision() {
+    for l in [false, true] {
+        let width = if l { 32 } else { 16 };
+        for w in [false, true] {
+            let code = xop(8, w, l, 0, 2, 0xA2, &[0x1B, 0x40]);
+            let memory = memory_with_code(&code);
+            let memory_value = [
+                0x0123_4567_89AB_CDEF,
+                0xFEDC_BA98_7654_3210,
+                0x6996_F00F_3CC3_A55A,
+                0x9669_0FF0_C33C_5AA5,
+            ];
+            for (index, value) in memory_value[..width / 8].iter().enumerate() {
+                memory
+                    .write_obj(*value, GuestAddress(DATA + (index * 8) as u64))
+                    .unwrap();
+            }
+            let mut vcpu = test_vcpu(memory, false);
+            seed_architectural_state(&mut vcpu);
+            let before = vcpu.regs.clone();
+            let source1 = vector_words(&before, 2, width);
+            let selected = vector_words(&before, 4, width);
+            let (source2, mask) = if w {
+                (selected, memory_value)
+            } else {
+                (memory_value, selected)
+            };
+            let expected = vpcmov_reference(source1, source2, mask, width);
+
+            assert!(vcpu.step().expect("memory VPCMOV").is_none());
+            assert_eq!(vcpu.regs.xmm[3], expected[..2], "W={w}, L={l}");
+            assert_eq!(
+                vcpu.regs.ymm_high[3],
+                if l {
+                    [expected[2], expected[3]]
+                } else {
+                    [0; 2]
+                },
+                "W={w}, L={l}"
+            );
+        }
+    }
+
+    let instruction_len = 10_u64;
+    let displacement = (DATA - instruction_len) as i32;
+    let mut tail = vec![0x1D];
+    tail.extend_from_slice(&displacement.to_le_bytes());
+    tail.push(0x40);
+    let code = xop(8, false, false, 0, 2, 0xA2, &tail);
+    assert_eq!(code.len() as u64, instruction_len);
+    let memory = memory_with_code(&code);
+    let rip_relative_value = [0x0123_4567_89AB_CDEF, 0xFEDC_BA98_7654_3210];
+    for (index, value) in rip_relative_value.iter().enumerate() {
+        memory
+            .write_obj(*value, GuestAddress(DATA + (index * 8) as u64))
+            .unwrap();
+    }
+    let mut rip_relative = test_vcpu(memory, false);
+    seed_architectural_state(&mut rip_relative);
+    let before = rip_relative.regs.clone();
+    let mut memory_operand = [0_u64; 4];
+    memory_operand[..2].copy_from_slice(&rip_relative_value);
+    let expected = vpcmov_reference(
+        vector_words(&before, 2, 16),
+        memory_operand,
+        vector_words(&before, 4, 16),
+        16,
+    );
+    assert!(rip_relative.step().expect("RIP-relative VPCMOV").is_none());
+    assert_eq!(rip_relative.regs.xmm[3], expected[..2]);
+    assert_eq!(rip_relative.regs.rip, instruction_len);
+
+    let code = xop(8, false, true, 0, 2, 0xA2, &[0x1B, 0x40]);
+    let mut alignment = test_vcpu(memory_with_code(&code), false);
+    seed_architectural_state(&mut alignment);
+    alignment.regs.rbx = 0x20_001;
+    alignment.sregs.cr0 |= CR0_AM;
+    alignment.sregs.cs.selector = 3;
+    alignment.regs.rflags |= flags::bits::AC;
+    assert_fault_noncommitting(&mut alignment, 17, "VPCMOV #AC precedes #PF");
+
+    let mut range = test_vcpu(memory_with_code(&code), false);
+    seed_architectural_state(&mut range);
+    range.regs.rbx = 0x0000_7FFF_FFFF_FFF0;
+    assert_fault_noncommitting(&mut range, 13, "VPCMOV canonical range crossing");
+
+    let stack_code = xop(8, false, true, 0, 2, 0xA2, &[0x1C, 0x24, 0x40]);
+    let mut stack = test_vcpu(memory_with_code(&stack_code), false);
+    seed_architectural_state(&mut stack);
+    stack.regs.rsp = 0x0000_8000_0000_0000;
+    assert_fault_noncommitting(&mut stack, 12, "VPCMOV noncanonical stack address");
+}
+
+#[test]
+fn direct_vpcmov_reserved_and_dynamic_faults_precede_memory_observation() {
+    let memory_code = xop(8, false, true, 0, 2, 0xA2, &[0x1B, 0x40]);
+    let mut invalid_pp = test_vcpu(
+        memory_with_code(&xop(8, false, true, 1, 2, 0xA2, &[0x1B, 0x40])),
+        false,
+    );
+    seed_architectural_state(&mut invalid_pp);
+    invalid_pp.sregs.cr0 |= CR0_TS;
+    invalid_pp.regs.rbx = 0x20_000;
+    assert_fault_noncommitting(&mut invalid_pp, 6, "VPCMOV pp=01");
+
+    for case in 0..6 {
+        let mut vcpu = test_vcpu(memory_with_code(&memory_code), false);
+        seed_architectural_state(&mut vcpu);
+        vcpu.regs.rbx = 0x20_000;
+        vcpu.sregs.cr0 |= CR0_TS;
+        let (vector, name) = match case {
+            0 => {
+                vcpu.set_xop_enabled(false);
+                (6, "CPUID.XOP=0")
+            }
+            1 => {
+                vcpu.sregs.cr4 &= !CR4_OSXSAVE;
+                (6, "CR4.OSXSAVE=0")
+            }
+            2 => {
+                vcpu.xcr0 &= !0b100;
+                (6, "XCR0.YMM=0")
+            }
+            3 => {
+                vcpu.sregs.cr0 &= !CR0_PE;
+                (6, "CR0.PE=0")
+            }
+            4 => {
+                vcpu.regs.rflags |= flags::bits::VM;
+                (6, "RFLAGS.VM=1")
+            }
+            5 => (7, "CR0.TS=1"),
+            _ => unreachable!(),
+        };
+        assert_fault_noncommitting(&mut vcpu, vector, name);
+    }
+}
+
+#[test]
+fn direct_vpcmov_compatibility_mode_ignores_is4_high_bit_and_keeps_w_role() {
+    for w in [false, true] {
+        let code = xop(8, w, true, 0, 2, 0xA2, &[0xD9, 0xF0]);
+        let mut vcpu = test_vcpu(memory_with_code(&code), false);
+        seed_architectural_state(&mut vcpu);
+        vcpu.sregs.cs.l = false;
+        let before = vcpu.regs.clone();
+        let source1 = vector_words(&before, 2, 32);
+        let rm = vector_words(&before, 1, 32);
+        let selected = vector_words(&before, 7, 32);
+        let (source2, mask) = if w { (selected, rm) } else { (rm, selected) };
+        let expected = vpcmov_reference(source1, source2, mask, 32);
+
+        assert!(vcpu.step().expect("compatibility-mode VPCMOV").is_none());
+        assert_eq!(vcpu.regs.xmm[3], expected[..2], "W={w}");
+        assert_eq!(vcpu.regs.ymm_high[3], [expected[2], expected[3]], "W={w}");
+        assert_eq!(vcpu.regs.zmm_high[3], [0; 4], "W={w}");
+    }
+
+    // VEX/XOP.R and X must be encoded as 1, and decoded vvvv values 8-15
+    // are invalid outside 64-bit mode. B is architecturally ignored.
+    for (name, code) in [
+        ("R=0", [0x8F, 0x68, 0x6C, 0xA2, 0xD9, 0x40]),
+        ("X=0", [0x8F, 0xA8, 0x6C, 0xA2, 0xD9, 0x40]),
+        ("vvvv=8", [0x8F, 0xE8, 0xBC, 0xA2, 0xD9, 0x40]),
+    ] {
+        let mut vcpu = test_vcpu(memory_with_code(&code), false);
+        seed_architectural_state(&mut vcpu);
+        vcpu.sregs.cs.l = false;
+        assert_fault_noncommitting(&mut vcpu, 6, name);
+    }
+
+    let b_ignored = [0x8F, 0xC8, 0x6C, 0xA2, 0xD9, 0x40];
+    let mut vcpu = test_vcpu(memory_with_code(&b_ignored), false);
+    seed_architectural_state(&mut vcpu);
+    vcpu.sregs.cs.l = false;
+    let before = vcpu.regs.clone();
+    let expected = vpcmov_reference(
+        vector_words(&before, 2, 32),
+        vector_words(&before, 1, 32),
+        vector_words(&before, 4, 32),
+        32,
+    );
+    assert!(vcpu.step().expect("compatibility-mode B ignored").is_none());
+    assert_eq!(vcpu.regs.xmm[3], expected[..2]);
+    assert_eq!(vcpu.regs.ymm_high[3], [expected[2], expected[3]]);
 }
 
 #[test]
