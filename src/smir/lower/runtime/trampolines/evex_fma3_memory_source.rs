@@ -9,14 +9,16 @@ use crate::smir::ir::types::{
     VecElementType, VecWidth, X86Reg,
 };
 use crate::smir::ir::{
-    X86EvexPackedFma3MemoryEncoding, X86EvexScalarFma3MemoryEncoding, X86InstructionBytes,
+    X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay,
+    X86EvexScalarFma3MemoryEncoding, X86InstructionBytes,
 };
 
 use super::vector_memory_source::{vex_fma3_kind, vex_fma3_order};
 use super::x86_jit_mem_address_shape_valid;
 
-/// Exact contiguous unmasked, non-broadcast EVEX packed FMA3 memory-source
-/// decomposition consumed by the helper-backed x86-64 lowerer.
+/// Exact contiguous unmasked EVEX packed FMA3 vector-memory or scalar-
+/// broadcast-memory decomposition consumed by the helper-backed x86-64
+/// lowerer.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct X86JitEvexPackedFma3MemorySequence {
     pub(crate) consumed: usize,
@@ -72,11 +74,12 @@ fn exact_virtual_definition_use(
         && virtual_uses.get(&register) == Some(&uses)
 }
 
-/// Validate the complete three-op decomposition emitted for one unmasked,
-/// non-broadcast EVEX packed FMA3 memory source. Exact instruction provenance
-/// binds vector width, element type, architectural operands, opcode semantics,
-/// and the native register-source rewrite. Both virtual results must have
-/// exactly one definition and one use in the complete block.
+/// Validate the complete three-op vector-memory or four-op scalar-broadcast-
+/// memory decomposition emitted for one unmasked EVEX packed FMA3 source.
+/// Exact instruction provenance binds vector width, element type,
+/// architectural operands, opcode semantics, and the selected native rewrite.
+/// Every source/result virtual must have exactly one definition and one use in
+/// the complete block.
 ///
 /// Classification is O(1) time and O(1) auxiliary space. Callers build the
 /// global definition/use maps once in O(N) time and O(V) space for N operations
@@ -93,29 +96,82 @@ pub(crate) fn x86_jit_evex_packed_fma3_memory_sequence(
         return None;
     }
     let load = block.ops.get(index)?;
-    let (loaded, width) = match &load.kind {
-        OpKind::VLoad { dst, addr, width }
-            if load.x86_hint.is_none()
-                && matches!(width, VecWidth::V128 | VecWidth::V256 | VecWidth::V512)
-                && x86_jit_mem_address_shape_valid(addr) =>
-        {
-            (*dst, *width)
-        }
-        _ => return None,
-    };
-    if !single_definition_single_use(loaded, virtual_definitions, virtual_uses) {
-        return None;
-    }
-
     let encoding = instruction_bytes
         .get(&(block.id, load.guest_pc))?
         .evex_packed_fma3_memory_encoding()?;
-    if encoding.width != width {
-        return None;
-    }
+    let width = encoding.width;
     let elem = encoding.elem;
+    let (loaded, fma_offset, memory_size) = match encoding.replay {
+        X86EvexPackedFma3MemoryReplay::Vector { .. } => {
+            let loaded = match &load.kind {
+                OpKind::VLoad {
+                    dst,
+                    addr,
+                    width: load_width,
+                } if load.x86_hint.is_none()
+                    && *load_width == width
+                    && matches!(load_width, VecWidth::V128 | VecWidth::V256 | VecWidth::V512)
+                    && x86_jit_mem_address_shape_valid(addr) =>
+                {
+                    *dst
+                }
+                _ => return None,
+            };
+            if !single_definition_single_use(loaded, virtual_definitions, virtual_uses) {
+                return None;
+            }
+            (loaded, 1, width.bytes())
+        }
+        X86EvexPackedFma3MemoryReplay::Broadcast { .. } => {
+            let memory_width = match elem {
+                VecElementType::F16 => MemWidth::B2,
+                VecElementType::F32 => MemWidth::B4,
+                VecElementType::F64 => MemWidth::B8,
+                _ => return None,
+            };
+            let scalar = match &load.kind {
+                OpKind::Load {
+                    dst,
+                    addr,
+                    width: load_width,
+                    sign: SignExtend::Zero,
+                } if load.x86_hint.is_none()
+                    && *load_width == memory_width
+                    && x86_jit_mem_address_shape_valid(addr) =>
+                {
+                    *dst
+                }
+                _ => return None,
+            };
+            if !single_definition_single_use(scalar, virtual_definitions, virtual_uses) {
+                return None;
+            }
 
-    let fma = block.ops.get(index + 1)?;
+            let broadcast = block.ops.get(index + 1)?;
+            let vector = match &broadcast.kind {
+                OpKind::VBroadcast {
+                    dst,
+                    scalar: broadcast_scalar,
+                    elem: broadcast_elem,
+                    lanes,
+                } if broadcast.guest_pc == load.guest_pc
+                    && broadcast.x86_hint.is_none()
+                    && *broadcast_scalar == scalar
+                    && *broadcast_elem == elem
+                    && *lanes == width.lanes(elem) as u8 =>
+                {
+                    *dst
+                }
+                _ => return None,
+            };
+            if !single_definition_single_use(vector, virtual_definitions, virtual_uses) {
+                return None;
+            }
+            (vector, 2, memory_width.bytes())
+        }
+    };
+
+    let fma = block.ops.get(index + fma_offset)?;
     let (raw, src1, src2, src3, mask, kind, order, round, lanes) = match &fma.kind {
         OpKind::X86Fma(fma_op) if elem != VecElementType::F16 => (
             fma_op.dst,
@@ -169,7 +225,9 @@ pub(crate) fn x86_jit_evex_packed_fma3_memory_sequence(
         return None;
     }
 
-    let result = block.ops.get(index + 2)?;
+    let result_offset = fma_offset + 1;
+    let consumed = result_offset + 1;
+    let result = block.ops.get(index + result_offset)?;
     if result.guest_pc != load.guest_pc
         || result.x86_hint.is_some()
         || !matches!(
@@ -184,15 +242,15 @@ pub(crate) fn x86_jit_evex_packed_fma3_memory_sequence(
         )
         || block
             .ops
-            .get(index + 3)
+            .get(index + consumed)
             .is_some_and(|op| op.guest_pc == load.guest_pc)
     {
         return None;
     }
 
     Some(X86JitEvexPackedFma3MemorySequence {
-        consumed: 3,
-        memory_size: width.bytes(),
+        consumed,
+        memory_size,
         encoding,
     })
 }

@@ -4,6 +4,9 @@ use super::*;
 use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
+#[path = "cpu_jit_vector_memory_source_tests/broadcast.rs"]
+mod broadcast;
+
 const DATA_BASE: u64 = 0x3000;
 const DISP: u64 = 0x20;
 

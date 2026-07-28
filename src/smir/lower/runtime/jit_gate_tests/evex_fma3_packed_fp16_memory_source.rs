@@ -8,7 +8,9 @@ use crate::smir::ir::types::{
     Address, ArchReg, BlockId, FpRoundMode, FunctionId, OpId, VReg, VecElementType, VecWidth,
     VirtualId, X86FmaKind, X86FmaOrder, X86Reg,
 };
-use crate::smir::ir::{SmirBlock, SmirFunction, Terminator, X86InstructionBytes};
+use crate::smir::ir::{
+    SmirBlock, SmirFunction, Terminator, X86EvexPackedFma3MemoryReplay, X86InstructionBytes,
+};
 use crate::smir::lift::x86_64::X86_64Lifter;
 use crate::smir::lift::{ControlFlow, LiftContext, SmirLifter};
 use crate::smir::lower::SmirLowerer;
@@ -450,14 +452,21 @@ fn packed_evex_fp16_fma3_memory_byte_classifier_exhaustively_rewrites_55_296_ope
                     assert_eq!(encoding.elem, VecElementType::F16, "{bytes:02X?}");
                     assert_eq!(encoding.destination, destination, "{bytes:02X?}");
                     assert_eq!(encoding.source1, source1, "{bytes:02X?}");
-                    assert_eq!(encoding.scratch, scratch, "{bytes:02X?}");
+                    let (actual_scratch, register_instruction) = match encoding.replay {
+                        X86EvexPackedFma3MemoryReplay::Vector {
+                            scratch,
+                            register_instruction,
+                        } => (scratch, register_instruction),
+                        X86EvexPackedFma3MemoryReplay::Broadcast { .. } => {
+                            panic!("{bytes:02X?}: non-broadcast source selected broadcast replay")
+                        }
+                    };
+                    assert_eq!(actual_scratch, scratch, "{bytes:02X?}");
                     assert_eq!(encoding.opcode, opcode, "{bytes:02X?}");
                     assert!(!encoding.w, "{bytes:02X?}");
                     assert_eq!(encoding.needs_avx512vl, ll != 2, "{bytes:02X?}");
                     assert_eq!(
-                        encoding
-                            .register_instruction
-                            .evex_register_packed_fp16_fma_needs_vl(),
+                        register_instruction.evex_register_packed_fp16_fma_needs_vl(),
                         Some(ll != 2),
                         "{bytes:02X?}"
                     );
@@ -514,7 +523,14 @@ fn packed_evex_fp16_fma3_rewrite_matches_independent_llvm_23_encodings() {
             .unwrap()
             .evex_packed_fma3_memory_encoding()
             .unwrap();
-        assert_eq!(encoding.register_instruction.as_slice(), llvm, "{case:?}");
+        let X86EvexPackedFma3MemoryReplay::Vector {
+            register_instruction,
+            ..
+        } = encoding.replay
+        else {
+            panic!("{case:?}: non-broadcast source selected broadcast replay");
+        };
+        assert_eq!(register_instruction.as_slice(), llvm, "{case:?}");
         assert_eq!(case.emitted_fma_bytes(), llvm, "{case:?}");
     }
 }
@@ -555,11 +571,11 @@ fn all_378_evex_packed_fp16_memory_shapes_lift_optimize_admit_and_lower_exactly(
                 case.source1(),
                 "{level:?} {case:?}"
             );
-            assert_eq!(
-                sequence.encoding.scratch,
-                case.scratch(),
-                "{level:?} {case:?}"
-            );
+            let X86EvexPackedFma3MemoryReplay::Vector { scratch, .. } = sequence.encoding.replay
+            else {
+                panic!("{level:?} {case:?}: non-broadcast source selected broadcast replay");
+            };
+            assert_eq!(scratch, case.scratch(), "{level:?} {case:?}");
 
             let (code, _) = lower(&function, case);
             let expected = case.emitted_fma_bytes();
@@ -636,7 +652,6 @@ fn packed_evex_fp16_fma3_memory_classifier_rejects_reserved_and_non_owned_encodi
         (1, 0x01), // MAP6 -> MAP7
         (2, 0x01), // mandatory 66H -> no mandatory prefix
         (2, 0x80), // MAP6.W1 is reserved for packed FP16 FMA3
-        (3, 0x10), // broadcast/embedded rounding
         (3, 0x80), // zero masking
         (3, 0x01), // nonzero opmask
     ] {
@@ -714,6 +729,12 @@ fn packed_evex_fp16_fma3_memory_sequence_fails_closed_for_semantic_mutations() {
     let mut bytes = case.bytes();
     bytes[2] ^= 0x08;
     metadata_source
+        .x86_instruction_bytes
+        .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
+    let mut metadata_broadcast = base.clone();
+    let mut bytes = case.bytes();
+    bytes[3] |= 0x10;
+    metadata_broadcast
         .x86_instruction_bytes
         .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
     let mut metadata_width = base.clone();
@@ -883,6 +904,7 @@ fn packed_evex_fp16_fma3_memory_sequence_fails_closed_for_semantic_mutations() {
         ("truncated metadata", truncated_metadata),
         ("metadata destination", metadata_destination),
         ("metadata source", metadata_source),
+        ("metadata broadcast", metadata_broadcast),
         ("metadata width", metadata_width),
         ("metadata element", metadata_element),
         ("load hint", load_hint),

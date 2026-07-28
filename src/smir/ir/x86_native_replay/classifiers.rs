@@ -51,6 +51,10 @@ mod vex_zero;
 mod vp2intersect;
 mod vpclmulqdq;
 
+pub(crate) use evex_fma3_memory::{
+    X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay, X86EvexScalarFma3MemoryEncoding,
+};
+
 impl X86InstructionBytes {
     /// Validate register-only EVEX packed logical operations and return
     /// `(needs AVX-512VL, needs AVX-512DQ)`. Floating logical VAND*/VANDN*/
