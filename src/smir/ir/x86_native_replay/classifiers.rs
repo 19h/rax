@@ -41,6 +41,7 @@ mod vex_mov_mask;
 mod vex_pabs;
 mod vex_packed_string;
 mod vex_pavg;
+mod vex_pmul_high_word;
 mod vex_pmulhrsw;
 mod vex_psign;
 mod vex_ptest;

@@ -1,6 +1,7 @@
 //! Fail-closed helper-backed VEX binary memory-source admission.
 
 mod vex_horizontal_integer;
+mod vex_pmul_high_word;
 
 use std::collections::HashMap;
 
@@ -906,6 +907,15 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
         return Some(sequence);
     }
     if let Some(sequence) = x86_jit_vex_pmulhrsw_memory_sequence(
+        block,
+        index,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence);
+    }
+    if let Some(sequence) = vex_pmul_high_word::sequence(
         block,
         index,
         instruction_bytes,
