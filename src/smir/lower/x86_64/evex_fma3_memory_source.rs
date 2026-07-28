@@ -1,15 +1,82 @@
-//! Helper-backed EVEX packed FMA3 memory-source lowering.
+//! Helper-backed EVEX packed/scalar FMA3 memory-source lowering.
 
 use std::collections::HashMap;
 
-use super::X86_64Lowerer;
+use super::{X86_64Lowerer, X86Emitter};
 use crate::smir::ir::SmirBlock;
 use crate::smir::ir::ops::OpKind;
-use crate::smir::ir::types::{VReg, VecWidth};
+use crate::smir::ir::types::{SignExtend, VReg, VecWidth};
 use crate::smir::lower::regalloc::PhysReg;
 use crate::smir::lower::{LowerError, X86_JIT_VECTOR_SCRATCH_INDEX};
 
 impl X86_64Lowerer {
+    /// Fuse the exact scalar `Load`/`VBroadcast`/`X86Fma|X86FP16Fma`/result
+    /// reconstruction emitted for one unmasked EVEX memory source. The scalar
+    /// MMU helper stages the complete 2/4/8-byte source in a 16-byte
+    /// nonarchitectural host-stack slot. A byte-validated rewrite of the
+    /// original instruction then consumes `[rsp]`, preserving native FMA,
+    /// MXCSR, destination-lane, and upper-zeroing behavior without borrowing an
+    /// architectural vector register.
+    pub(crate) fn try_lower_jit_evex_scalar_fma3_memory_source(
+        &mut self,
+        block: &SmirBlock,
+        index: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let Some(sequence) = crate::smir::lower::runtime::x86_jit_evex_scalar_fma3_memory_sequence(
+            block,
+            index,
+            true,
+            &self.x86_instruction_bytes,
+            virtual_definitions,
+            virtual_uses,
+        ) else {
+            return Ok(None);
+        };
+        if self.avx_ymm16_vector_state {
+            return Err(LowerError::InvalidOperand {
+                op: "EVEX scalar FMA3 memory source".to_string(),
+                operand: "AVX-only vector bridge cannot carry EVEX FMA3".to_string(),
+            });
+        }
+        let address = match &block.ops[index].kind {
+            OpKind::Load {
+                addr,
+                width,
+                sign: SignExtend::Zero,
+                ..
+            } if *width == sequence.memory_width => addr,
+            _ => unreachable!("validated EVEX scalar FMA3 sequence starts with scalar Load"),
+        };
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -16);
+        }
+        self.emit_jit_mem_op(
+            block.ops[index].guest_pc,
+            true,
+            None,
+            Some(16),
+            None,
+            None,
+            None,
+            address,
+            sequence.memory_width,
+            SignExtend::Zero,
+            16,
+        )?;
+        self.code
+            .emit_bytes(sequence.encoding.stack_instruction.as_slice());
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
+        }
+
+        Ok(Some(sequence.consumed))
+    }
+
     fn evex_fma3_memory_phys_reg(index: u8, width: VecWidth) -> PhysReg {
         match width {
             VecWidth::V128 => PhysReg::Xmm(index),

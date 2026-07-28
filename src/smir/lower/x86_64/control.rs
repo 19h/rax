@@ -1153,6 +1153,16 @@ impl X86_64Lowerer {
             // to that mode.
             if self.mem_helpers {
                 #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_evex_scalar_fma3_memory_source(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
                 if let Some(consumed) = self.try_lower_jit_evex_packed_fma3_memory_source(
                     block,
                     idx,

@@ -1,6 +1,6 @@
-//! EVEX packed FMA3 memory-source replay classification.
+//! EVEX packed and scalar FMA3 memory-source replay classification.
 
-use super::super::X86EvexPackedFma3MemoryEncoding;
+use super::super::{X86EvexPackedFma3MemoryEncoding, X86EvexScalarFma3MemoryEncoding};
 use super::X86InstructionBytes;
 use crate::smir::ir::types::{VecElementType, VecWidth};
 
@@ -39,6 +39,113 @@ fn vector_legacy_prefix_len(bytes: &[u8]) -> usize {
 }
 
 impl X86InstructionBytes {
+    /// Validate one unmasked EVEX scalar binary16/binary32/binary64 FMA3
+    /// memory encoding and rewrite only its memory operand to `[rsp]`.
+    ///
+    /// Intel SDM Vol. 2 assigns binary32/binary64 to map 0F38 with W selecting
+    /// the element width, and binary16 to MAP6.W0. All use mandatory prefix
+    /// 66H, scalar opcode low nibbles 9H, BH, DH, or FH, and LLIG. The admitted
+    /// subset has `EVEX.b=0`, `aaa=000`, and `z=0`, so the memory access is
+    /// unconditional and MXCSR supplies the rounding mode. The rewritten
+    /// instruction canonicalizes LLIG to L'L=0 and consumes the helper-staged
+    /// scalar from a 16-byte host-stack slot. Segment/address-size prefixes and
+    /// APX extended address bits are removed because the helper has already
+    /// evaluated the complete guest effective address.
+    pub(crate) fn evex_scalar_fma3_memory_encoding(
+        &self,
+    ) -> Option<X86EvexScalarFma3MemoryEncoding> {
+        let bytes = self.as_slice();
+        let start = vector_legacy_prefix_len(bytes);
+        if bytes.get(start) != Some(&0x62) {
+            return None;
+        }
+
+        let p0 = *bytes.get(start + 1)?;
+        let p1 = *bytes.get(start + 2)?;
+        let p2 = *bytes.get(start + 3)?;
+        let opcode = *bytes.get(start + 4)?;
+        let modrm_index = start + 5;
+        let modrm = *bytes.get(modrm_index)?;
+        let elem = match (p0 & 0x07, p1 & 0x80 != 0) {
+            (2, false) => VecElementType::F32,
+            (2, true) => VecElementType::F64,
+            (6, false) => VecElementType::F16,
+            _ => return None,
+        };
+        if p1 & 0x03 != 1
+            || p2 & 0x90 != 0
+            || p2 & 0x07 != 0
+            || modrm >> 6 == 3
+            || !matches!(
+                opcode,
+                0x99 | 0x9B | 0x9D | 0x9F | 0xA9 | 0xAB | 0xAD | 0xAF | 0xB9 | 0xBB | 0xBD | 0xBF
+            )
+        {
+            return None;
+        }
+        if memory_operand_end(bytes, modrm_index)? != bytes.len() {
+            return None;
+        }
+
+        let hint_width = match (p2 >> 5) & 3 {
+            0 => VecWidth::V128,
+            1 => VecWidth::V256,
+            2 | 3 => VecWidth::V512,
+            _ => unreachable!("two-bit EVEX vector length"),
+        };
+        let destination =
+            (u8::from(p0 & 0x80 == 0) << 3) | (u8::from(p0 & 0x10 == 0) << 4) | ((modrm >> 3) & 7);
+        let source1 = ((!p1 >> 3) & 0x0F) | (u8::from(p2 & 0x08 == 0) << 4);
+
+        let stack_bytes = [
+            0x62,
+            // Preserve R/R' and the map, select unextended SIB index/base, and
+            // clear APX B4 because the rewritten base is architectural RSP.
+            (p0 & 0x97) | 0x60,
+            // Preserve W/vvvv/pp and restore the ordinary EVEX.U fixed bit.
+            p1 | 0x04,
+            // Preserve V' while canonicalizing LLIG, b, z, and aaa.
+            p2 & 0x08,
+            opcode,
+            (modrm & 0x38) | 0x04,
+            0x24,
+        ];
+        let stack_instruction = X86InstructionBytes::new(&stack_bytes).unwrap();
+
+        // Reuse the independent register-form validator as a second semantic
+        // oracle for map/W/opcode/operand-extension fields. Register r/m=0 is
+        // arbitrary; only classification, not execution, consumes this clone.
+        let register_bytes = [
+            0x62,
+            (p0 & 0x97) | 0x60,
+            p1 | 0x04,
+            p2 & 0x08,
+            opcode,
+            0xC0 | (modrm & 0x38),
+        ];
+        let register_instruction = X86InstructionBytes::new(&register_bytes).unwrap();
+        let rewritten_needs_vl = match elem {
+            VecElementType::F16 => register_instruction.evex_register_scalar_fp16_fma_needs_vl(),
+            VecElementType::F32 | VecElementType::F64 => {
+                register_instruction.evex_register_scalar_fma_needs_vl()
+            }
+            _ => unreachable!("validated EVEX scalar FMA3 element"),
+        };
+        if rewritten_needs_vl != Some(false) {
+            return None;
+        }
+
+        Some(X86EvexScalarFma3MemoryEncoding {
+            hint_width,
+            elem,
+            destination,
+            source1,
+            opcode,
+            w: p1 & 0x80 != 0,
+            stack_instruction,
+        })
+    }
+
     /// Validate one unmasked, non-broadcast EVEX packed binary16/binary32/
     /// binary64 FMA3 memory encoding and rewrite it to an exact
     /// register-source instruction using a low scratch register distinct from
