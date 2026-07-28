@@ -287,6 +287,8 @@ mod vex_pavg_memory_source;
 #[cfg(test)]
 mod vex_pmul_high_word_memory_source;
 #[cfg(test)]
+mod vex_pmul_low_memory_source;
+#[cfg(test)]
 mod vex_pmulhrsw_memory_source;
 #[cfg(test)]
 mod vex_psign_memory_source;
