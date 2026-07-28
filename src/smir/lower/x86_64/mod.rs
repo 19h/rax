@@ -190,6 +190,8 @@ pub use state_address::*;
 mod vbit_select;
 mod vector_helpers;
 pub use vbit_select::*;
+mod vector_compare;
+pub use vector_compare::*;
 #[cfg(feature = "smir-jit")]
 mod vector_maskmov;
 #[cfg(feature = "smir-jit")]
@@ -198,6 +200,8 @@ pub use vector_maskmov::*;
 mod tests;
 #[cfg(feature = "smir-jit")]
 mod vbit_select_memory_source;
+#[cfg(feature = "smir-jit")]
+mod vector_compare_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_binary_memory_source;
 #[cfg(feature = "smir-jit")]

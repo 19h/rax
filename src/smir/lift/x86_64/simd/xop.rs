@@ -1,7 +1,7 @@
 //! AMD XOP packed rotate and signed-direction shift lifting.
 
 use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86VecAlign, X86XopPackedBitKind};
-use crate::smir::ir::types::{OpId, SrcOperand, VecElementType, VecWidth};
+use crate::smir::ir::types::{OpId, SrcOperand, VecCmpCond, VecElementType, VecWidth};
 use crate::smir::lift::x86_64::{X86_64Lifter, X86Prefix, build_rex, decode_modrm};
 use crate::smir::lift::{LiftContext, LiftError, LiftResult};
 
@@ -27,6 +27,135 @@ fn memory_uses_stack_segment(modrm: u8, following: &[u8], segment_override: Opti
 }
 
 impl X86_64Lifter {
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn lift_xop_vpcom(
+        &self,
+        bytes: &[u8],
+        legacy: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+        lead: usize,
+        p0: u8,
+        opcode: u8,
+        w: bool,
+        vvvv: u8,
+        l: u8,
+        pp: u8,
+    ) -> Result<LiftResult, LiftError> {
+        let opcode_end = lead + 4;
+        if w || l != 0 || pp != 0 {
+            return Ok(Self::xop_invalid(opcode_end));
+        }
+
+        let (elem, signed) = match opcode {
+            0xCC => (VecElementType::I8, true),
+            0xCD => (VecElementType::I16, true),
+            0xCE => (VecElementType::I32, true),
+            0xCF => (VecElementType::I64, true),
+            0xEC => (VecElementType::I8, false),
+            0xED => (VecElementType::I16, false),
+            0xEE => (VecElementType::I32, false),
+            0xEF => (VecElementType::I64, false),
+            _ => unreachable!("VPCOM dispatch validated opcode"),
+        };
+        let r = ((p0 >> 7) & 1) ^ 1;
+        let x = ((p0 >> 6) & 1) ^ 1;
+        let b = ((p0 >> 5) & 1) ^ 1;
+        let modrm_prefix = X86Prefix {
+            rex: build_rex(r, x, b, false),
+            address_size_override: legacy.address_size_override,
+            segment_override: legacy.segment_override,
+            cursor: opcode_end,
+            ..X86Prefix::default()
+        };
+        let modrm =
+            decode_modrm(&bytes[opcode_end..], &modrm_prefix, pc).map_err(|error| match error {
+                LiftError::Incomplete { addr, have, need } => LiftError::Incomplete {
+                    addr,
+                    have: opcode_end + have,
+                    need: opcode_end + need,
+                },
+                error => error,
+            })?;
+        let bytes_consumed = opcode_end + modrm.bytes_consumed + 1;
+        if bytes.len() < bytes_consumed {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: bytes.len(),
+                need: bytes_consumed,
+            });
+        }
+        let predicate = bytes[bytes_consumed - 1] & 7;
+        let cond = match (predicate, signed) {
+            (0, true) => VecCmpCond::Lt,
+            (1, true) => VecCmpCond::Le,
+            (2, true) => VecCmpCond::Gt,
+            (3, true) => VecCmpCond::Ge,
+            (0, false) => VecCmpCond::Ltu,
+            (1, false) => VecCmpCond::Leu,
+            (2, false) => VecCmpCond::Gtu,
+            (3, false) => VecCmpCond::Geu,
+            (4, _) => VecCmpCond::Eq,
+            (5, _) => VecCmpCond::Ne,
+            (6, _) => VecCmpCond::False,
+            (7, _) => VecCmpCond::True,
+            _ => unreachable!("VPCOM predicate is masked to three bits"),
+        };
+        let next_pc = pc.wrapping_add(bytes_consumed as u64);
+        let mut ops = vec![SmirOp::new(OpId(0), pc, OpKind::X86RequireXop)];
+        let source2 = if modrm.is_memory {
+            let (addr, pre_ops) = self.x86_addr_to_smir(
+                modrm.addr.as_ref().expect("decoded VPCOM memory address"),
+                next_pc,
+                ctx,
+            );
+            ops.extend(pre_ops);
+            let stack_segment = memory_uses_stack_segment(
+                modrm.byte,
+                &bytes[opcode_end + 1..],
+                legacy.segment_override,
+            );
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86CheckAlignmentAc {
+                    addr: addr.clone(),
+                    access_size: 16,
+                    alignment: 16,
+                    stack_segment,
+                },
+            ));
+            let loaded = ctx.alloc_vreg();
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VLoad {
+                    dst: loaded,
+                    addr,
+                    width: VecWidth::V128,
+                },
+                X86OpHint::VecAlign(X86VecAlign::Aligned),
+            ));
+            loaded
+        } else {
+            self.xmm(modrm.rm)
+        };
+        ops.push(SmirOp::with_hint(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::VCmp {
+                dst: self.xmm(modrm.reg),
+                src1: self.xmm(vvvv),
+                src2: source2,
+                cond,
+                elem,
+                lanes: VecWidth::V128.lanes(elem) as u8,
+            },
+            X86OpHint::XopVpcom,
+        ));
+        Ok(LiftResult::fallthrough(ops, bytes_consumed))
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn lift_xop_vpcmov(
         &self,

@@ -6420,6 +6420,10 @@ mod ptwrite_tests;
 #[path = "cpu_xop_tests.rs"]
 mod xop_tests;
 
+#[cfg(test)]
+#[path = "cpu_xop_vpcom_tests.rs"]
+mod xop_vpcom_tests;
+
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_hypercall_tests.rs"]
 mod jit_hypercall_tests;

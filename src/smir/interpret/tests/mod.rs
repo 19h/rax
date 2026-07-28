@@ -33,6 +33,8 @@ mod x87;
 mod xop;
 #[cfg(test)]
 mod xop_vpcmov;
+#[cfg(test)]
+mod xop_vpcom;
 use crate::smir::ir::FunctionBuilder;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate, MaterializedFlags};
 use crate::smir::ir::memory::{FlatMemory, SmirMemory};

@@ -686,6 +686,20 @@ impl X86_64Lowerer {
             }
 
             OpKind::VCmp {
+                cond, elem, lanes, ..
+            } if x86_state_vcmp_candidate(op) => {
+                if !x86_state_vcmp_shape_valid(op) {
+                    return Err(LowerError::InvalidOperand {
+                        op: "state-backed VCmp".to_string(),
+                        operand: format!(
+                            "invalid XOP VPCOM vector compare {cond:?} {elem:?}x{lanes}"
+                        ),
+                    });
+                }
+                self.emit_x86_state_vcmp_op(op)?;
+            }
+
+            OpKind::VCmp {
                 dst,
                 src1,
                 src2,

@@ -214,6 +214,8 @@ mod vbit_select;
 #[cfg(test)]
 mod vector;
 #[cfg(test)]
+mod vector_compare;
+#[cfg(test)]
 mod vex_alignr_replay;
 #[cfg(test)]
 mod vex_apx_mulx;

@@ -1123,6 +1123,12 @@ pub enum VecCmpCond {
     Leu,
     Gtu,
     Geu,
+    /// Predicate is false for every lane while retaining explicit source
+    /// dependencies. Used by instruction sets with immediate predicate tables.
+    False,
+    /// Predicate is true for every lane while retaining explicit source
+    /// dependencies. Used by instruction sets with immediate predicate tables.
+    True,
 }
 
 /// Per-lane bidirectional shift kind for `OpKind::VShiftV` (HVX vector-amount

@@ -38,6 +38,8 @@ mod tbm;
 pub use tbm::*;
 mod vbit_select;
 pub use vbit_select::*;
+mod vector_compare;
+pub use vector_compare::*;
 mod xop;
 pub use xop::*;
 mod mmx;

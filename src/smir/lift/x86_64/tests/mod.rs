@@ -237,6 +237,8 @@ mod xop_packed;
 mod xop_tbm;
 #[cfg(test)]
 mod xop_vpcmov;
+#[cfg(test)]
+mod xop_vpcom;
 
 /// Test memory reader for unit tests
 struct TestMemory {

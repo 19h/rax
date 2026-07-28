@@ -246,6 +246,12 @@ pub(crate) fn block_is_clobber_safe(
             i += consumed;
             continue;
         }
+        if let Some(consumed) =
+            x86_jit_mem_vpcom_sequence_len(block, i, allow_mem, &virtual_definitions, &virtual_uses)
+        {
+            i += consumed;
+            continue;
+        }
         if let Some(consumed) = x86_jit_mmx_maskmovq_sequence_len(
             block,
             i,
@@ -739,6 +745,7 @@ pub(crate) fn block_is_clobber_safe(
         let state_tbm_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_tbm_valid(op);
         let state_xop_ok = crate::smir::lower::x86_64::x86_xop_packed_bit_shape_valid(op);
         let state_vbit_select_ok = crate::smir::lower::x86_64::x86_vbit_select_shape_valid(op);
+        let state_vcmp_ok = crate::smir::lower::x86_64::x86_state_vcmp_shape_valid(op);
         let state_adx_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_adx_valid(op);
         let state_pdep_pext_ok =
             crate::smir::lower::x86_64::x86_state_backed_gpr_pdep_pext_valid(op);
@@ -1033,6 +1040,7 @@ pub(crate) fn block_is_clobber_safe(
             && !scalar_ok
             && !state_xop_ok
             && !state_vbit_select_ok
+            && !state_vcmp_ok
             && !vector_ok
             && !mmx_ok
         {
@@ -1221,6 +1229,12 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::VBitSelect { .. }) && !state_vbit_select_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::VCmp { .. })
+            && matches!(op.x86_hint, Some(X86OpHint::XopVpcom))
+            && !state_vcmp_ok
+        {
             return false;
         }
         if matches!(op.kind, OpKind::X86Sse4aBitfield { .. })

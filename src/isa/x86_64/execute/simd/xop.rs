@@ -288,6 +288,111 @@ pub(in crate::isa::x86_64) fn execute_xop_vpcmov(
     Ok(None)
 }
 
+#[inline]
+fn vpcom_lane(value: &[u8], offset: usize, element_bytes: usize) -> u64 {
+    let mut lane = [0_u8; 8];
+    lane[..element_bytes].copy_from_slice(&value[offset..offset + element_bytes]);
+    u64::from_le_bytes(lane)
+}
+
+#[inline]
+fn vpcom_signed(value: u64, bits: u32) -> i64 {
+    if bits == 64 {
+        value as i64
+    } else {
+        let shift = 64 - bits;
+        ((value << shift) as i64) >> shift
+    }
+}
+
+/// Execute AMD XOP VPCOMB/W/D/Q and VPCOMUB/UW/UD/UQ.
+///
+/// Encoding and dynamic XOP/#NM validation have already completed. The
+/// immediate follows ModR/M addressing, so `rip_relative_offset` accounts for
+/// it before address calculation. A memory source is validated as one aligned
+/// 16-byte access before any destination state commits.
+pub(in crate::isa::x86_64) fn execute_xop_vpcom(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    opcode: u8,
+    vvvv: u8,
+) -> Result<Option<VcpuExit>> {
+    let (element_bytes, signed) = match opcode {
+        0xCC => (1, true),
+        0xCD => (2, true),
+        0xCE => (4, true),
+        0xCF => (8, true),
+        0xEC => (1, false),
+        0xED => (2, false),
+        0xEE => (4, false),
+        0xEF => (8, false),
+        _ => return vcpu.inject_undefined_instruction(),
+    };
+
+    let modrm_offset = ctx.cursor;
+    let modrm = ctx.consume_u8()?;
+    let destination = ((modrm >> 3) & 7) | ctx.any_rex_r();
+    let rm = (modrm & 7) | ctx.any_rex_b();
+    let memory_operand = if modrm >> 6 != 3 {
+        let (address, extra, stack_segment) =
+            vcpu.decode_modrm_addr_with_stack_segment(ctx, modrm_offset)?;
+        ctx.cursor = modrm_offset + 1 + extra;
+        Some((address, stack_segment))
+    } else {
+        None
+    };
+    let predicate = ctx.consume_u8()? & 7;
+
+    let source2 = if let Some((address, stack_segment)) = memory_operand {
+        if vcpu.sregs.cs.l {
+            let canonical = address
+                .checked_add(15)
+                .is_some_and(|last| is_canonical_48(address) && is_canonical_48(last));
+            if !canonical {
+                vcpu.inject_exception(if stack_segment { 12 } else { 13 }, Some(0))?;
+                return Ok(None);
+            }
+        }
+        if address & 15 != 0 && alignment_check_enabled(vcpu) {
+            vcpu.inject_exception(17, Some(0))?;
+            return Ok(None);
+        }
+        let bytes = vcpu.read_bytes(address, 16)?;
+        bytes
+            .try_into()
+            .expect("complete 16-byte VPCOM memory read")
+    } else {
+        xmm_bytes(vcpu, rm)
+    };
+    let source1 = xmm_bytes(vcpu, vvvv);
+    let bits = (element_bytes * 8) as u32;
+    let mut result = [0_u8; 16];
+    for offset in (0..16).step_by(element_bytes) {
+        let left = vpcom_lane(&source1, offset, element_bytes);
+        let right = vpcom_lane(&source2, offset, element_bytes);
+        let condition = match predicate {
+            0 if signed => vpcom_signed(left, bits) < vpcom_signed(right, bits),
+            1 if signed => vpcom_signed(left, bits) <= vpcom_signed(right, bits),
+            2 if signed => vpcom_signed(left, bits) > vpcom_signed(right, bits),
+            3 if signed => vpcom_signed(left, bits) >= vpcom_signed(right, bits),
+            0 => left < right,
+            1 => left <= right,
+            2 => left > right,
+            3 => left >= right,
+            4 => left == right,
+            5 => left != right,
+            6 => false,
+            7 => true,
+            _ => unreachable!("VPCOM predicate is masked to three bits"),
+        };
+        result[offset..offset + element_bytes].fill(if condition { u8::MAX } else { 0 });
+    }
+
+    write_xmm_zero_upper(vcpu, destination, result);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
 #[cfg(test)]
 mod tests {
     use super::{XopPackedBitKind, transform_element, transform_vector};

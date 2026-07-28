@@ -123,6 +123,8 @@ mod timing;
 mod tsx;
 #[cfg(test)]
 mod vbit_select;
+#[cfg(test)]
+mod vector_compare;
 #[cfg(all(test, feature = "smir-jit"))]
 mod vector_maskmov;
 #[cfg(test)]

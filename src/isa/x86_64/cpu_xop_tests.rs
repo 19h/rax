@@ -5,12 +5,12 @@ use crate::isa::x86_64::flags;
 use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
-const DATA: u64 = 0x3000;
-const CR0_PE: u64 = 1;
-const CR0_TS: u64 = 1 << 3;
-const CR0_AM: u64 = 1 << 18;
-const CR4_OSFXSR: u64 = 1 << 9;
-const CR4_OSXSAVE: u64 = 1 << 18;
+pub(super) const DATA: u64 = 0x3000;
+pub(super) const CR0_PE: u64 = 1;
+pub(super) const CR0_TS: u64 = 1 << 3;
+pub(super) const CR0_AM: u64 = 1 << 18;
+pub(super) const CR4_OSFXSR: u64 = 1 << 9;
+pub(super) const CR4_OSXSAVE: u64 = 1 << 18;
 
 #[derive(Clone, Copy, Debug)]
 enum PackedKind {
@@ -19,14 +19,14 @@ enum PackedKind {
     ArithmeticShift,
 }
 
-fn memory_with_code(code: &[u8]) -> Arc<GuestMemoryMmap> {
+pub(super) fn memory_with_code(code: &[u8]) -> Arc<GuestMemoryMmap> {
     let memory =
         Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
     memory.write_slice(code, GuestAddress(0)).unwrap();
     memory
 }
 
-fn test_vcpu(memory: Arc<GuestMemoryMmap>, jit_mem: bool) -> X86_64Vcpu {
+pub(super) fn test_vcpu(memory: Arc<GuestMemoryMmap>, jit_mem: bool) -> X86_64Vcpu {
     let mut vcpu = X86_64Vcpu::new(0, memory);
     vcpu.sregs.cr0 = CR0_PE;
     vcpu.sregs.cr4 = CR4_OSFXSR | CR4_OSXSAVE;
@@ -49,7 +49,7 @@ fn test_vcpu(memory: Arc<GuestMemoryMmap>, jit_mem: bool) -> X86_64Vcpu {
     vcpu
 }
 
-fn xop(map: u8, w: bool, l: bool, pp: u8, vvvv: u8, opcode: u8, tail: &[u8]) -> Vec<u8> {
+pub(super) fn xop(map: u8, w: bool, l: bool, pp: u8, vvvv: u8, opcode: u8, tail: &[u8]) -> Vec<u8> {
     assert!((8..=31).contains(&map));
     assert!(pp < 4 && vvvv < 16);
     let mut bytes = vec![
@@ -62,7 +62,7 @@ fn xop(map: u8, w: bool, l: bool, pp: u8, vvvv: u8, opcode: u8, tail: &[u8]) -> 
     bytes
 }
 
-fn seed_architectural_state(vcpu: &mut X86_64Vcpu) {
+pub(super) fn seed_architectural_state(vcpu: &mut X86_64Vcpu) {
     vcpu.regs.rax = 0x0123_4567_89AB_CDEF;
     vcpu.regs.rcx = 0x1111_2222_3333_4444;
     vcpu.regs.rdx = 0x5555_6666_7777_8888;
@@ -126,7 +126,7 @@ fn gprs(regs: &Registers) -> [u64; 32] {
     ]
 }
 
-fn assert_registers_equal(actual: &Registers, expected: &Registers, context: &str) {
+pub(super) fn assert_registers_equal(actual: &Registers, expected: &Registers, context: &str) {
     assert_eq!(gprs(actual), gprs(expected), "{context}: GPRs");
     assert_eq!(actual.xmm, expected.xmm, "{context}: XMM");
     assert_eq!(actual.ymm_high, expected.ymm_high, "{context}: YMM high");
@@ -261,7 +261,7 @@ fn exception_without_idt(vcpu: &mut X86_64Vcpu) -> String {
     )
 }
 
-fn assert_fault_noncommitting(vcpu: &mut X86_64Vcpu, vector: u8, context: &str) {
+pub(super) fn assert_fault_noncommitting(vcpu: &mut X86_64Vcpu, vector: u8, context: &str) {
     let before = vcpu.regs.clone();
     let error = exception_without_idt(vcpu);
     assert!(

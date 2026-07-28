@@ -267,6 +267,7 @@ pub(crate) fn uses_x86_xmm_state_excluding(
     uses_x86_maskmovdqu_state_excluding(function, excluded)
         || super::xop::uses_x86_xop_state_excluding(function, excluded)
         || super::vbit_select::uses_x86_vbit_select_state_excluding(function, excluded)
+        || super::vector_compare::uses_x86_state_vcmp_excluding(function, excluded)
         || function
             .blocks
             .iter()

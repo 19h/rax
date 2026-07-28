@@ -81,15 +81,17 @@ impl X86_64Vcpu {
         let packed_variable = map == 9 && matches!(opcode, 0x90..=0x9B);
         let packed_bit = packed_immediate || packed_variable;
         let vpcmov = map == 8 && opcode == 0xA2;
-        if (!scalar_tbm && !packed_bit && !vpcmov)
+        let vpcom = map == 8 && matches!(opcode, 0xCC..=0xCF | 0xEC..=0xEF);
+        if (!scalar_tbm && !packed_bit && !vpcmov && !vpcom)
             || pp != 0
             || (!vpcmov && l != 0)
             || packed_immediate && (w || vvvv != 0)
+            || vpcom && w
         {
             return self.inject_undefined_instruction();
         }
 
-        if packed_bit || vpcmov {
+        if packed_bit || vpcmov || vpcom {
             const CR0_TS: u64 = 1 << 3;
             const CR4_OSXSAVE: u64 = 1 << 18;
             if !self.xop_enabled()
@@ -104,9 +106,12 @@ impl X86_64Vcpu {
                 self.inject_exception(7, None)?;
                 return Ok(None);
             }
-            ctx.rip_relative_offset = usize::from(packed_immediate || vpcmov);
+            ctx.rip_relative_offset = usize::from(packed_immediate || vpcmov || vpcom);
             if vpcmov {
                 return execute::simd::execute_xop_vpcmov(self, ctx, vvvv, w, l);
+            }
+            if vpcom {
+                return execute::simd::execute_xop_vpcom(self, ctx, opcode, vvvv);
             }
             return execute::simd::execute_xop_packed_bit(
                 self,
