@@ -337,6 +337,78 @@ fn x86_jit_vex_packed_sign_memory_sequence(
     })
 }
 
+fn x86_jit_vex_pmulhrsw_memory_sequence(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<X86JitVexBinaryMemorySequence> {
+    let load = block.ops.get(index)?;
+    let (temporary, width) = match &load.kind {
+        OpKind::VLoad { dst, addr, width }
+            if load.x86_hint.is_none()
+                && matches!(dst, VReg::Virtual(_))
+                && matches!(width, VecWidth::V128 | VecWidth::V256)
+                && x86_jit_mem_address_shape_valid(addr) =>
+        {
+            (*dst, *width)
+        }
+        _ => return None,
+    };
+    if !virtual_single_definition_single_use(temporary, virtual_definitions, virtual_uses) {
+        return None;
+    }
+
+    let consumer = block.ops.get(index + 1)?;
+    if consumer.guest_pc != load.guest_pc || consumer.x86_hint.is_some() {
+        return None;
+    }
+    let OpKind::VMulShiftSat {
+        dst,
+        src1,
+        src2,
+        src_elem: VecElementType::I16,
+        lanes,
+        signed1: true,
+        signed2: true,
+        shift_left: 0,
+        round: true,
+        sat_bits: 0,
+        out_shift: 15,
+    } = &consumer.kind
+    else {
+        return None;
+    };
+    if *src2 != temporary || *lanes != width.lanes(VecElementType::I16) as u8 {
+        return None;
+    }
+    let destination = low_vex_vector_index(dst, width)?;
+    let source1 = low_vex_vector_index(src1, width)?;
+
+    let instruction = instruction_bytes.get(&(block.id, load.guest_pc))?;
+    let (encoded_destination, encoded_source1, encoded_width, _encoded_w) =
+        instruction.vex_memory_pmulhrsw_fields()?;
+    if (encoded_destination, encoded_source1, encoded_width) != (destination, source1, width) {
+        return None;
+    }
+
+    Some(X86JitVexBinaryMemorySequence {
+        consumed: 2,
+        memory_size: width.bytes(),
+        destination,
+        source1,
+        width,
+        map: X86VecMap::Map0F38,
+        prefix: X86SsePrefix::OpSize,
+        opcode: 0x0B,
+        // VPMULHRSW is WIG. Match both guest values but emit canonical W=0.
+        w: false,
+        needs_avx2: width == VecWidth::V256,
+        needs_fma: false,
+    })
+}
+
 pub(super) fn vex_fma3_kind(opcode: u8) -> Option<X86FmaKind> {
     match opcode & 0x0F {
         0x06 => Some(X86FmaKind::AddSub),
@@ -776,10 +848,11 @@ fn vex_packed_fp_binary_encoding_valid(
 }
 
 /// Validate one unmasked VEX.128/VEX.256 packed logic, integer add/subtract,
-/// unsigned rounded average, packed sign, fixed-predicate integer compare,
-/// binary32/binary64 arithmetic, or packed FMA3 memory source, or one scalar
-/// binary32/binary64 arithmetic or FMA3 source. Binary packed forms are exact
-/// two-op `VLoad`/consumer pairs; packed FMA3 is an exact
+/// unsigned rounded average, packed sign, rounded-high word multiply,
+/// fixed-predicate integer compare, binary32/binary64 arithmetic, or packed
+/// FMA3 memory source, or one scalar binary32/binary64 arithmetic or FMA3
+/// source. Binary packed forms are exact two-op `VLoad`/consumer pairs;
+/// packed FMA3 is an exact
 /// `VLoad`/`X86Fma`/architectural-`VMov` chain. Rounded averages, packed sign,
 /// fixed comparisons, FMA3, and scalar forms additionally require exact
 /// instruction-byte provenance. Scalar forms include the complete lane-extract,
@@ -821,6 +894,15 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
         return Some(sequence);
     }
     if let Some(sequence) = x86_jit_vex_packed_sign_memory_sequence(
+        block,
+        index,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence);
+    }
+    if let Some(sequence) = x86_jit_vex_pmulhrsw_memory_sequence(
         block,
         index,
         instruction_bytes,
