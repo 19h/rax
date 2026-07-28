@@ -51,6 +51,7 @@ pub use mmx_memory::*;
 mod vector;
 mod vector_memory_source;
 mod vector_replay_features;
+mod vex_unary_memory_source;
 mod vpclmulqdq_memory_source;
 use crate::smir::lower::runtime::*;
 use crate::smir::lower::{
@@ -68,4 +69,5 @@ pub(crate) use evex_fma3_memory_source::*;
 pub use vector::*;
 pub(crate) use vector_memory_source::*;
 pub(crate) use vector_replay_features::*;
+pub(crate) use vex_unary_memory_source::*;
 pub(crate) use vpclmulqdq_memory_source::*;
