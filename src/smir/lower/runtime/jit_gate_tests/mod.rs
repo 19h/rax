@@ -269,6 +269,8 @@ mod vex_integer_compare_memory_source;
 #[cfg(test)]
 mod vex_integer_dot_ext_replay;
 #[cfg(test)]
+mod vex_integer_multiply_add_memory_source;
+#[cfg(test)]
 mod vex_lane_shuffle_replay;
 #[cfg(test)]
 mod vex_logic_memory_source;
