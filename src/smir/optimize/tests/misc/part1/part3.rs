@@ -1565,9 +1565,9 @@ fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
         .position(|op| {
             matches!(
                 op.kind,
-                OpKind::VAndNot {
+                OpKind::VLane {
                     dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
-                    width: VecWidth::V256,
+                    op: VLaneOp::Sign,
                     ..
                 }
             )

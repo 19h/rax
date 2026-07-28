@@ -847,22 +847,23 @@ impl X86_64Lifter {
         };
         let dst = self.vec_reg(modrm.reg, prefix.width);
         let value = self.vec_reg(prefix.vvvv, prefix.width);
+        let kind = OpKind::VLane {
+            dst,
+            src1: value,
+            src2: control,
+            elem,
+            lanes: prefix.width.lanes(elem) as u8,
+            op: VLaneOp::Sign,
+            signed: true,
+            set_ovf: false,
+        };
         if modrm.is_memory {
-            self.append_packed_sign(dst, value, control, elem, prefix.width, pc, ctx, &mut ops);
+            ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
         } else {
             ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,
-                OpKind::VLane {
-                    dst,
-                    src1: value,
-                    src2: control,
-                    elem,
-                    lanes: prefix.width.lanes(elem) as u8,
-                    op: VLaneOp::Sign,
-                    signed: true,
-                    set_ovf: false,
-                },
+                kind,
                 self.vec_hint(prefix, opcode),
             ));
         }
