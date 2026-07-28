@@ -173,10 +173,10 @@ fn vex_fma3_kind(opcode: u8) -> Option<X86FmaKind> {
     match opcode & 0x0F {
         0x06 => Some(X86FmaKind::AddSub),
         0x07 => Some(X86FmaKind::SubAdd),
-        0x08 => Some(X86FmaKind::Add),
-        0x0A => Some(X86FmaKind::Sub),
-        0x0C => Some(X86FmaKind::NegativeMultiplyAdd),
-        0x0E => Some(X86FmaKind::NegativeMultiplySub),
+        0x08 | 0x09 => Some(X86FmaKind::Add),
+        0x0A | 0x0B => Some(X86FmaKind::Sub),
+        0x0C | 0x0D => Some(X86FmaKind::NegativeMultiplyAdd),
+        0x0E | 0x0F => Some(X86FmaKind::NegativeMultiplySub),
         _ => None,
     }
 }
@@ -305,6 +305,264 @@ fn x86_jit_vex_packed_fma3_memory_sequence(
     })
 }
 
+fn x86_jit_vex_scalar_fma3_memory_sequence(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<X86JitVexBinaryMemorySequence> {
+    let load = block.ops.get(index)?;
+    let (loaded_scalar, memory_size, elem) = match &load.kind {
+        OpKind::Load {
+            dst,
+            addr,
+            width: MemWidth::B4,
+            sign: SignExtend::Zero,
+        } if load.x86_hint.is_none() && x86_jit_mem_address_shape_valid(addr) => {
+            (*dst, 4, VecElementType::F32)
+        }
+        OpKind::Load {
+            dst,
+            addr,
+            width: MemWidth::B8,
+            sign: SignExtend::Zero,
+        } if load.x86_hint.is_none() && x86_jit_mem_address_shape_valid(addr) => {
+            (*dst, 8, VecElementType::F64)
+        }
+        _ => return None,
+    };
+    if !virtual_single_definition_single_use(loaded_scalar, virtual_definitions, virtual_uses) {
+        return None;
+    }
+    let same_pc = |offset: usize| {
+        block
+            .ops
+            .get(index + offset)
+            .is_some_and(|op| op.guest_pc == load.guest_pc)
+    };
+
+    let broadcast = block.ops.get(index + 1)?;
+    let source_vector = match &broadcast.kind {
+        OpKind::VBroadcast {
+            dst,
+            scalar,
+            elem: broadcast_elem,
+            lanes: 1,
+        } if broadcast.x86_hint.is_none()
+            && *scalar == loaded_scalar
+            && *broadcast_elem == elem =>
+        {
+            *dst
+        }
+        _ => return None,
+    };
+    if !same_pc(1)
+        || !virtual_single_definition_single_use(source_vector, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+
+    let fma = block.ops.get(index + 2)?;
+    let OpKind::X86Fma(fma_op) = &fma.kind else {
+        return None;
+    };
+    let raw = fma_op.dst;
+    if !same_pc(2)
+        || !virtual_single_definition_single_use(raw, virtual_definitions, virtual_uses)
+        || fma_op.src3 != source_vector
+        || fma_op.mask.is_some()
+        || fma_op.elem != elem
+        || fma_op.lanes != 1
+        || fma_op.round != FpRoundMode::Dynamic
+    {
+        return None;
+    }
+    let destination = low_vex_vector_index(&fma_op.src1, VecWidth::V128)?;
+    let source1 = low_vex_vector_index(&fma_op.src2, VecWidth::V128)?;
+    let upper_source = fma_op.src1;
+    let Some(X86OpHint::VexOp {
+        map: X86VecMap::Map0F38,
+        pp: X86SsePrefix::OpSize,
+        opcode,
+        width: hint_width,
+        w,
+    }) = fma.x86_hint
+    else {
+        return None;
+    };
+    if !matches!(hint_width, VecWidth::V128 | VecWidth::V256)
+        || w != (elem == VecElementType::F64)
+        || fma_op.kind != vex_fma3_kind(opcode)?
+        || fma_op.order != vex_fma3_order(opcode)?
+    {
+        return None;
+    }
+
+    let result_extract = block.ops.get(index + 3)?;
+    let scalar_result = match &result_extract.kind {
+        OpKind::VExtractLane {
+            dst,
+            vec,
+            lane: 0,
+            elem: extract_elem,
+            sign: SignExtend::Zero,
+        } if result_extract.x86_hint.is_none() && *vec == raw && *extract_elem == elem => *dst,
+        _ => return None,
+    };
+    if !same_pc(3)
+        || !virtual_single_definition_single_use(scalar_result, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+
+    let xmm_lanes = VecWidth::V128.lanes(elem) as usize;
+    let mut upper_scalars = Vec::with_capacity(xmm_lanes - 1);
+    for lane in 1..xmm_lanes {
+        let offset = 3 + lane;
+        let extract = block.ops.get(index + offset)?;
+        let upper_scalar = match &extract.kind {
+            OpKind::VExtractLane {
+                dst,
+                vec,
+                lane: extract_lane,
+                elem: extract_elem,
+                sign: SignExtend::Zero,
+            } if extract.x86_hint.is_none()
+                && *vec == upper_source
+                && usize::from(*extract_lane) == lane
+                && *extract_elem == elem =>
+            {
+                *dst
+            }
+            _ => return None,
+        };
+        if !same_pc(offset)
+            || !virtual_single_definition_single_use(
+                upper_scalar,
+                virtual_definitions,
+                virtual_uses,
+            )
+        {
+            return None;
+        }
+        upper_scalars.push(upper_scalar);
+    }
+
+    let zero_offset = 3 + xmm_lanes;
+    let zero_op = block.ops.get(index + zero_offset)?;
+    let zero = match &zero_op.kind {
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Imm(0),
+            width: OpWidth::W64,
+        } if zero_op.x86_hint.is_none() => *dst,
+        _ => return None,
+    };
+    if !same_pc(zero_offset)
+        || !virtual_single_definition_single_use(zero, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+
+    let clear_offset = zero_offset + 1;
+    let clear = block.ops.get(index + clear_offset)?;
+    if clear.x86_hint.is_some()
+        || !matches!(
+            &clear.kind,
+            OpKind::VBroadcast {
+                dst,
+                scalar,
+                elem: broadcast_elem,
+                lanes: 1,
+            } if low_vex_vector_index(dst, VecWidth::V128) == Some(destination)
+                && *scalar == zero
+                && *broadcast_elem == elem
+        )
+        || !same_pc(clear_offset)
+    {
+        return None;
+    }
+
+    let low_insert_offset = clear_offset + 1;
+    let low_insert = block.ops.get(index + low_insert_offset)?;
+    if low_insert.x86_hint.is_some()
+        || !matches!(
+            &low_insert.kind,
+            OpKind::VInsertLane {
+                dst,
+                vec,
+                scalar,
+                lane: 0,
+                elem: insert_elem,
+            } if low_vex_vector_index(dst, VecWidth::V128) == Some(destination)
+                && dst == vec
+                && *scalar == scalar_result
+                && *insert_elem == elem
+        )
+        || !same_pc(low_insert_offset)
+    {
+        return None;
+    }
+    for (lane, upper_scalar) in upper_scalars.into_iter().enumerate() {
+        let lane = lane + 1;
+        let offset = low_insert_offset + lane;
+        let insert = block.ops.get(index + offset)?;
+        if insert.x86_hint.is_some()
+            || !matches!(
+                &insert.kind,
+                OpKind::VInsertLane {
+                    dst,
+                    vec,
+                    scalar,
+                    lane: insert_lane,
+                    elem: insert_elem,
+                } if low_vex_vector_index(dst, VecWidth::V128) == Some(destination)
+                    && dst == vec
+                    && *scalar == upper_scalar
+                    && usize::from(*insert_lane) == lane
+                    && *insert_elem == elem
+            )
+            || !same_pc(offset)
+        {
+            return None;
+        }
+    }
+
+    let consumed = low_insert_offset + xmm_lanes;
+    if block
+        .ops
+        .get(index + consumed)
+        .is_some_and(|op| op.guest_pc == load.guest_pc)
+    {
+        return None;
+    }
+    let instruction = instruction_bytes.get(&(block.id, load.guest_pc))?;
+    let (encoded_destination, encoded_source1, encoded_opcode, encoded_w) =
+        instruction.vex_memory_scalar_fma3_fields()?;
+    if encoded_destination != destination
+        || encoded_source1 != source1
+        || encoded_opcode != opcode
+        || encoded_w != w
+    {
+        return None;
+    }
+
+    Some(X86JitVexBinaryMemorySequence {
+        consumed,
+        memory_size,
+        destination,
+        source1,
+        width: VecWidth::V128,
+        map: X86VecMap::Map0F38,
+        prefix: X86SsePrefix::OpSize,
+        opcode,
+        w,
+        needs_avx2: false,
+        needs_fma: true,
+    })
+}
+
 fn vex_packed_fp_binary_encoding_valid(
     kind: &OpKind,
     map: X86VecMap,
@@ -351,12 +609,14 @@ fn vex_packed_fp_binary_encoding_valid(
 
 /// Validate one unmasked VEX.128/VEX.256 packed logic, integer add/subtract,
 /// fixed-predicate integer compare, binary32/binary64 arithmetic, or packed
-/// FMA3 memory source, or one defined `VEX.L=0` scalar binary32/binary64
-/// arithmetic source. Binary packed forms are exact two-op `VLoad`/consumer
-/// pairs; packed FMA3 is an exact `VLoad`/`X86Fma`/architectural-`VMov` chain.
-/// Fixed comparisons, FMA3, and scalar forms additionally require exact
+/// FMA3 memory source, or one scalar binary32/binary64 arithmetic or FMA3
+/// source. Binary packed forms are exact two-op `VLoad`/consumer pairs; packed
+/// FMA3 is an exact `VLoad`/`X86Fma`/architectural-`VMov` chain. Fixed
+/// comparisons, FMA3, and scalar forms additionally require exact
 /// instruction-byte provenance. Scalar forms include the complete
-/// lane-extract, destination-clear, and lane-insert chain.
+/// lane-extract, destination-clear, and lane-insert chain. Scalar arithmetic
+/// requires `VEX.L=0`; scalar FMA3 accepts both values because `VEX.L` is
+/// architecturally ignored.
 /// Single-definition/single-use checks prevent the fused lowerer from hiding
 /// any independently observable virtual value.
 ///
@@ -384,6 +644,15 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
     }
     let load = block.ops.get(index)?;
     if matches!(load.kind, OpKind::Load { .. }) {
+        if let Some(sequence) = x86_jit_vex_scalar_fma3_memory_sequence(
+            block,
+            index,
+            instruction_bytes,
+            virtual_definitions,
+            virtual_uses,
+        ) {
+            return Some(sequence);
+        }
         return x86_jit_vex_scalar_fp_binary_memory_sequence(
             block,
             index,

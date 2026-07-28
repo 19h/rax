@@ -18,7 +18,7 @@ impl X86_64Lowerer {
         }
     }
 
-    /// Fuse one exact VEX packed/scalar binary or packed FMA3 memory-source
+    /// Fuse one exact VEX packed/scalar binary or packed/scalar FMA3 memory-source
     /// sequence. The MMU helper commits only a nonarchitectural transfer slot.
     /// One low vector register not named by the guest instruction carries that
     /// value for the native operation and is restored in full before

@@ -1,9 +1,31 @@
-//! Register-only AVX VEX FMA3 replay.
+//! AVX VEX FMA3 replay.
 
 use super::X86InstructionBytes;
 use crate::smir::ir::types::VecWidth;
 
 impl X86InstructionBytes {
+    /// Validate one complete scalar VEX FMA3 instruction with a memory third
+    /// source and return `(destination, source2, opcode, W)`.
+    ///
+    /// Intel SDM Vol. 2 assigns the scalar binary32/binary64 forms to map
+    /// 0F38, mandatory prefix 66H, and opcode low nibbles 9H, BH, DH, or FH.
+    /// `VEX.L` is ignored for these forms, so both encoded values are accepted.
+    /// The shared memory parser accepts only segment/address-size legacy
+    /// prefixes and validates the complete ModR/M/SIB/displacement length.
+    pub(crate) fn vex_memory_scalar_fma3_fields(&self) -> Option<(u8, u8, u8, bool)> {
+        let fields = self.vex_memory_fields()?;
+        if fields.map != 2
+            || fields.pp != 1
+            || !matches!(
+                fields.opcode,
+                0x99 | 0x9B | 0x9D | 0x9F | 0xA9 | 0xAB | 0xAD | 0xAF | 0xB9 | 0xBB | 0xBD | 0xBF
+            )
+        {
+            return None;
+        }
+        Some((fields.destination, fields.source1, fields.opcode, fields.w))
+    }
+
     /// Validate one complete packed VEX FMA3 instruction with a memory third
     /// source and return `(destination, source2, opcode, width, W)`.
     ///
