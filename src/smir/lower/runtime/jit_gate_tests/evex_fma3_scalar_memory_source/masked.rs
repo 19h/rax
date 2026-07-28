@@ -151,6 +151,10 @@ fn assert_exact_masked_sequence(function: &SmirFunction, case: MaskedScalarFmaCa
             assert_eq!(*cond, condition, "{case:?}");
             assert_eq!(*width, case.scalar.format.memory_width(), "{case:?}");
             assert!(addr.is_x86_state_backed_shape(), "{case:?}: {addr:?}");
+            assert!(
+                crate::smir::lower::runtime::x86_jit_op_uses_mem_helper(&ops[2].kind),
+                "{case:?}: PredLoad must preserve live vector state across its MMU helper"
+            );
         }
         other => panic!("{case:?}: expected PredLoad, got {other:?}"),
     }

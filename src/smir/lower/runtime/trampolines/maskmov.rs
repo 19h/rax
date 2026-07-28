@@ -281,6 +281,7 @@ pub(crate) fn x86_jit_op_uses_mem_helper(op: &OpKind) -> bool {
     matches!(
         op,
         OpKind::Load { .. }
+            | OpKind::PredLoad { .. }
             | OpKind::Store { .. }
             | OpKind::VLoad { .. }
             | OpKind::VStore { .. }
