@@ -108,6 +108,15 @@ fn packed_f32_words(values: [f32; 16]) -> [u64; 8] {
     })
 }
 
+fn packed_f16_words(values: [u16; 32]) -> [u64; 8] {
+    std::array::from_fn(|word| {
+        u64::from(values[word * 4])
+            | (u64::from(values[word * 4 + 1]) << 16)
+            | (u64::from(values[word * 4 + 2]) << 32)
+            | (u64::from(values[word * 4 + 3]) << 48)
+    })
+}
+
 #[test]
 fn jit_verify_executes_unmasked_evex_packed_fma3_memory_source() {
     if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
@@ -200,6 +209,124 @@ fn jit_evex_packed_fma3_memory_fault_preserves_destination_and_mxcsr() {
         &before,
         before_mxcsr,
         "EVEX packed FMA3 fault deoptimization",
+    );
+    assert_eq!(vcpu.regs.rip, 0);
+}
+
+#[test]
+fn jit_verify_executes_unmasked_evex_packed_fp16_fma3_memory_source() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512fp16")
+    {
+        eprintln!(
+            "skipping CPU JIT EVEX FP16 FMA3 memory verification: \
+             host lacks AVX-512F/BW/FP16"
+        );
+        return;
+    }
+
+    let memory =
+        Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+    // vfmadd231ph zmm17,zmm18,[rbx+0x40]; jmp next; hlt
+    // LLVM 23 independently emits 62 E6 6D 40 B8 4B 01 for the FMA. Intel
+    // full-tuple disp8 compression encodes the 64-byte displacement as 1.
+    let code = [0x62, 0xE6, 0x6D, 0x40, 0xB8, 0x4B, 0x01, 0xEB, 0x00, 0xF4];
+    memory.write_slice(&code, GuestAddress(0)).unwrap();
+    let memory_words = packed_f16_words(std::array::from_fn(|lane| {
+        [0x4900, 0x4980, 0xCA00, 0xCA80][lane & 3]
+    }));
+    let mut memory_bytes = [0u8; 64];
+    for (bytes, word) in memory_bytes.chunks_exact_mut(8).zip(memory_words) {
+        bytes.copy_from_slice(&word.to_le_bytes());
+    }
+    memory
+        .write_slice(&memory_bytes, GuestAddress(DATA_BASE + 64))
+        .unwrap();
+
+    let mut direct = long_mode_vcpu(memory.clone());
+    let mut verified = long_mode_vcpu(memory);
+    seed_architectural_state(&mut direct);
+    seed_architectural_state(&mut verified);
+    let destination = packed_f16_words(std::array::from_fn(|lane| {
+        [0x3C00, 0xC000, 0x4200, 0xC400][lane & 3]
+    }));
+    let source1 = packed_f16_words(std::array::from_fn(|lane| {
+        [0x4000, 0x4200, 0xC400, 0xC500][lane & 3]
+    }));
+    for vcpu in [&mut direct, &mut verified] {
+        vcpu.regs.zmm_ext[1] = destination;
+        vcpu.regs.zmm_ext[2] = source1;
+    }
+
+    let frontier = code.len() as u64 - 1;
+    let mut direct_steps = 0usize;
+    while direct.regs.rip != frontier {
+        assert!(direct.step().unwrap().is_none());
+        direct_steps += 1;
+        assert!(
+            direct_steps <= 2,
+            "direct FP16 execution missed HLT frontier"
+        );
+    }
+    assert_eq!(direct_steps, 2);
+
+    let region = verified
+        .jit_compile_region()
+        .expect("compile EVEX packed FP16 FMA3 memory region")
+        .expect("helper-backed EVEX packed FP16 FMA3 must be native eligible");
+    assert!(region.uses_vector);
+    assert!(!region.avx_ymm16_vector_state);
+    assert!(!region.narrow_vector_opmasks);
+
+    verified.jit_run_region_verified(&region);
+    assert_architectural_state_equal(
+        &verified,
+        &direct.regs,
+        direct.mxcsr,
+        "verified EVEX packed FP16 FMA3",
+    );
+    assert_eq!(verified.regs.rip, frontier);
+}
+
+#[test]
+fn jit_evex_packed_fp16_fma3_memory_fault_preserves_destination_and_mxcsr() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512fp16")
+    {
+        eprintln!(
+            "skipping CPU JIT EVEX FP16 FMA3 memory fault test: \
+             host lacks AVX-512F/BW/FP16"
+        );
+        return;
+    }
+
+    let memory =
+        Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+    // vfmadd231ph zmm17,zmm18,[rbx+0x40]; jmp next; hlt
+    let code = [0x62, 0xE6, 0x6D, 0x40, 0xB8, 0x4B, 0x01, 0xEB, 0x00, 0xF4];
+    memory.write_slice(&code, GuestAddress(0)).unwrap();
+
+    let mut vcpu = long_mode_vcpu(memory);
+    seed_architectural_state(&mut vcpu);
+    vcpu.regs.rbx = 0x2_0000;
+    let before = vcpu.regs.clone();
+    let before_mxcsr = vcpu.mxcsr;
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile faulting EVEX packed FP16 FMA3 memory region")
+        .expect("dynamic faulting address must not prevent EVEX FP16 FMA3 admission");
+    assert!(region.uses_vector);
+    assert!(!region.avx_ymm16_vector_state);
+    vcpu.jit_run_region_native(&region);
+
+    assert_architectural_state_equal(
+        &vcpu,
+        &before,
+        before_mxcsr,
+        "EVEX packed FP16 FMA3 fault deoptimization",
     );
     assert_eq!(vcpu.regs.rip, 0);
 }

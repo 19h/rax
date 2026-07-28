@@ -19,9 +19,9 @@ impl X86_64Lowerer {
         }
     }
 
-    /// Fuse the exact `VLoad`/`X86Fma`/`VMov` decomposition for one unmasked,
-    /// non-broadcast EVEX packed FMA3 memory source. The MMU helper commits
-    /// only the nonarchitectural vector transfer slot. A byte-validated
+    /// Fuse the exact `VLoad`/`X86Fma|X86FP16Fma`/`VMov` decomposition for one
+    /// unmasked, non-broadcast EVEX packed FMA3 memory source. The MMU helper
+    /// commits only the nonarchitectural vector transfer slot. A byte-validated
     /// register-source rewrite consumes that value from a borrowed low vector
     /// register, which is restored completely before native execution
     /// continues.

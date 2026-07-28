@@ -40,6 +40,7 @@ pub(crate) struct X86VpclmulqdqMemoryEncoding {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct X86EvexPackedFma3MemoryEncoding {
     pub(crate) width: crate::smir::ir::types::VecWidth,
+    pub(crate) elem: crate::smir::ir::types::VecElementType,
     pub(crate) destination: u8,
     pub(crate) source1: u8,
     pub(crate) scratch: u8,

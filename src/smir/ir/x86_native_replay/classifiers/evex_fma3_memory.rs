@@ -2,7 +2,7 @@
 
 use super::super::X86EvexPackedFma3MemoryEncoding;
 use super::X86InstructionBytes;
-use crate::smir::ir::types::VecWidth;
+use crate::smir::ir::types::{VecElementType, VecWidth};
 
 fn memory_operand_end(bytes: &[u8], modrm_index: usize) -> Option<usize> {
     let modrm = *bytes.get(modrm_index)?;
@@ -39,19 +39,20 @@ fn vector_legacy_prefix_len(bytes: &[u8]) -> usize {
 }
 
 impl X86InstructionBytes {
-    /// Validate one unmasked, non-broadcast EVEX packed binary32/binary64
-    /// FMA3 memory encoding and rewrite it to an exact register-source
-    /// instruction using a low scratch register distinct from both
-    /// architectural register operands.
+    /// Validate one unmasked, non-broadcast EVEX packed binary16/binary32/
+    /// binary64 FMA3 memory encoding and rewrite it to an exact
+    /// register-source instruction using a low scratch register distinct from
+    /// both architectural register operands.
     ///
-    /// Intel SDM Vol. 2 assigns these forms to map 0F38, mandatory prefix
-    /// 66H, and opcode low nibbles 6H, 7H, 8H, AH, CH, or EH. W selects
-    /// binary32/binary64 and L'L selects 128/256/512 bits. The admitted subset
-    /// has `EVEX.b=0`, `aaa=000`, and `z=0`, so both the memory and rewritten
-    /// register form use MXCSR rounding and update every active-width lane.
-    /// Segment/address-size prefixes and APX extended memory address bits are
-    /// consumed only by the helper-computed guest address and are therefore
-    /// removed from the register-source rewrite.
+    /// Intel SDM Vol. 2 assigns binary32/binary64 to map 0F38 with W selecting
+    /// the element width, and binary16 to MAP6.W0. All use mandatory prefix
+    /// 66H, opcode low nibbles 6H, 7H, 8H, AH, CH, or EH, and L'L to select
+    /// 128/256/512 bits. The admitted subset has `EVEX.b=0`, `aaa=000`, and
+    /// `z=0`, so both the memory and rewritten register form use MXCSR
+    /// rounding and update every active-width lane. Segment/address-size
+    /// prefixes and APX extended memory address bits are consumed only by the
+    /// helper-computed guest address and are therefore removed from the
+    /// register-source rewrite.
     pub(crate) fn evex_packed_fma3_memory_encoding(
         &self,
     ) -> Option<X86EvexPackedFma3MemoryEncoding> {
@@ -67,8 +68,13 @@ impl X86InstructionBytes {
         let opcode = *bytes.get(start + 4)?;
         let modrm_index = start + 5;
         let modrm = *bytes.get(modrm_index)?;
-        if p0 & 0x07 != 2
-            || p1 & 0x03 != 1
+        let elem = match (p0 & 0x07, p1 & 0x80 != 0) {
+            (2, false) => VecElementType::F32,
+            (2, true) => VecElementType::F64,
+            (6, false) => VecElementType::F16,
+            _ => return None,
+        };
+        if p1 & 0x03 != 1
             || p2 & 0x90 != 0
             || p2 & 0x07 != 0
             || p2 & 0x60 == 0x60
@@ -123,12 +129,20 @@ impl X86InstructionBytes {
         register_bytes[5] = 0xC0 | (modrm & 0x38) | (scratch & 7);
         let register_instruction = X86InstructionBytes::new(&register_bytes).unwrap();
         let needs_avx512vl = width != VecWidth::V512;
-        if register_instruction.evex_register_packed_fma_needs_vl() != Some(needs_avx512vl) {
+        let rewritten_needs_vl = match elem {
+            VecElementType::F16 => register_instruction.evex_register_packed_fp16_fma_needs_vl(),
+            VecElementType::F32 | VecElementType::F64 => {
+                register_instruction.evex_register_packed_fma_needs_vl()
+            }
+            _ => unreachable!("validated EVEX packed FMA3 element"),
+        };
+        if rewritten_needs_vl != Some(needs_avx512vl) {
             return None;
         }
 
         Some(X86EvexPackedFma3MemoryEncoding {
             width,
+            elem,
             destination,
             source1,
             scratch,

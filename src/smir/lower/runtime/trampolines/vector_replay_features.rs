@@ -416,6 +416,8 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.needs_avx = true;
                 requirements.needs_avx512bw = true;
                 requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+                requirements.needs_avx512fp16 |=
+                    sequence.encoding.elem == crate::smir::ir::types::VecElementType::F16;
                 all_spans_support_avx_ymm16 = false;
                 index += sequence.consumed;
             } else if let Some(sequence) = super::x86_jit_vpclmulqdq_memory_sequence(

@@ -1,12 +1,12 @@
-//! Exact helper-backed packed EVEX FMA3 memory-source coverage.
+//! Exact helper-backed packed EVEX FP16 FMA3 memory-source coverage.
 
 use std::collections::HashMap;
 
 use super::*;
-use crate::smir::ir::ops::{OpKind, SmirOp, X86FmaOp, X86OpHint, X86SsePrefix, X86VecMap};
+use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86SsePrefix, X86VecMap};
 use crate::smir::ir::types::{
-    Address, ArchReg, BlockId, DispSize, FpRoundMode, FunctionId, OpId, VReg, VecElementType,
-    VecWidth, VirtualId, X86FmaKind, X86FmaOrder, X86Reg,
+    Address, ArchReg, BlockId, FpRoundMode, FunctionId, OpId, VReg, VecElementType, VecWidth,
+    VirtualId, X86FmaKind, X86FmaOrder, X86Reg,
 };
 use crate::smir::ir::{SmirBlock, SmirFunction, Terminator, X86InstructionBytes};
 use crate::smir::lift::x86_64::X86_64Lifter;
@@ -22,7 +22,7 @@ use crate::smir::lower::runtime::{
 use crate::smir::lower::x86_64::X86_64Lowerer;
 use crate::smir::optimize::OptLevel;
 
-const PC: u64 = 0xE3F0;
+const PC: u64 = 0xE800;
 const DISP8: u8 = 1;
 const DISP32: i32 = 0x20;
 const LEVELS: [OptLevel; 3] = [OptLevel::O0, OptLevel::O1, OptLevel::O2];
@@ -58,14 +58,13 @@ impl MemoryForm {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-struct FmaMemoryCase {
+struct Fp16FmaMemoryCase {
     opcode: u8,
-    w: bool,
     width: VecWidth,
     form: MemoryForm,
 }
 
-impl FmaMemoryCase {
+impl Fp16FmaMemoryCase {
     const fn destination(self) -> u8 {
         match self.form {
             MemoryForm::Low | MemoryForm::FsAddr32Sib | MemoryForm::ApxR16Base => 0,
@@ -109,14 +108,6 @@ impl FmaMemoryCase {
             .expect("two EVEX operands leave at least fourteen low scratch registers")
     }
 
-    const fn elem(self) -> VecElementType {
-        if self.w {
-            VecElementType::F64
-        } else {
-            VecElementType::F32
-        }
-    }
-
     const fn kind(self) -> X86FmaKind {
         match self.opcode & 0x0F {
             0x06 => X86FmaKind::AddSub,
@@ -156,12 +147,11 @@ impl FmaMemoryCase {
             | (if base & 8 == 0 { 0x20 } else { 0 })
             | (if destination & 16 == 0 { 0x10 } else { 0 })
             | (if base & 16 != 0 { 0x08 } else { 0 })
-            | 0x02
+            | 0x06
     }
 
     fn p1(self) -> u8 {
-        (u8::from(self.w) << 7)
-            | (((!self.source1()) & 0x0F) << 3)
+        (((!self.source1()) & 0x0F) << 3)
             | (if self.index().is_some_and(|index| index & 16 != 0) {
                 0
             } else {
@@ -217,11 +207,11 @@ fn vector(index: u8, width: VecWidth) -> VReg {
         VecWidth::V128 => X86Reg::Xmm(index),
         VecWidth::V256 => X86Reg::Ymm(index),
         VecWidth::V512 => X86Reg::Zmm(index),
-        _ => unreachable!("packed EVEX FMA3 width"),
+        _ => unreachable!("packed EVEX FP16 FMA3 width"),
     }))
 }
 
-fn lift_case(case: FmaMemoryCase) -> SmirFunction {
+fn lift_case(case: Fp16FmaMemoryCase) -> SmirFunction {
     let bytes = case.bytes();
     let mut lifter = X86_64Lifter::strict();
     let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
@@ -238,7 +228,7 @@ fn lift_case(case: FmaMemoryCase) -> SmirFunction {
     function.add_block(block);
     function.x86_instruction_bytes.insert(
         (BlockId(0), PC),
-        X86InstructionBytes::new(&bytes).expect("EVEX FMA3 instruction provenance"),
+        X86InstructionBytes::new(&bytes).expect("EVEX packed FP16 FMA3 instruction provenance"),
     );
     function
 }
@@ -253,7 +243,7 @@ fn sequence_index(function: &SmirFunction) -> usize {
         .ops
         .iter()
         .position(|op| matches!(op.kind, OpKind::VLoad { .. }))
-        .expect("packed EVEX FMA3 memory load")
+        .expect("packed EVEX FP16 FMA3 memory load")
 }
 
 fn virtual_counts(function: &SmirFunction) -> (HashMap<VReg, usize>, HashMap<VReg, usize>) {
@@ -274,7 +264,7 @@ fn virtual_counts(function: &SmirFunction) -> (HashMap<VReg, usize>, HashMap<VRe
     (definitions, uses)
 }
 
-fn assert_exact_sequence(function: &SmirFunction, case: FmaMemoryCase) {
+fn assert_exact_sequence(function: &SmirFunction, case: Fp16FmaMemoryCase) {
     let index = sequence_index(function);
     let ops = &function.blocks[0].ops[index..];
     assert_eq!(ops.len(), 3, "{case:?}: {ops:#?}");
@@ -295,39 +285,41 @@ fn assert_exact_sequence(function: &SmirFunction, case: FmaMemoryCase) {
     assert_eq!(ops[0].x86_hint, None, "{case:?}");
 
     let raw = match &ops[1].kind {
-        OpKind::X86Fma(X86FmaOp {
+        OpKind::X86FP16Fma {
             dst: raw @ VReg::Virtual(_),
             src1,
             src2,
             src3,
             mask,
-            elem,
             kind,
             order,
             round,
             lanes,
-        }) => {
+        } => {
             assert_eq!(*src1, vector(case.destination(), case.width), "{case:?}");
             assert_eq!(*src2, vector(case.source1(), case.width), "{case:?}");
             assert_eq!(*src3, loaded, "{case:?}");
             assert_eq!(*mask, None, "{case:?}");
-            assert_eq!(*elem, case.elem(), "{case:?}");
             assert_eq!(*kind, case.kind(), "{case:?}");
             assert_eq!(*order, case.order(), "{case:?}");
             assert_eq!(*round, FpRoundMode::Dynamic, "{case:?}");
-            assert_eq!(*lanes, case.width.lanes(case.elem()) as u8, "{case:?}");
+            assert_eq!(
+                *lanes,
+                case.width.lanes(VecElementType::F16) as u8,
+                "{case:?}"
+            );
             *raw
         }
-        other => panic!("{case:?}: expected X86Fma, got {other:?}"),
+        other => panic!("{case:?}: expected X86FP16Fma, got {other:?}"),
     };
     assert_eq!(
         ops[1].x86_hint,
         Some(X86OpHint::EvexOp {
-            map: X86VecMap::Map0F38,
+            map: X86VecMap::Map6,
             pp: X86SsePrefix::OpSize,
             opcode: case.opcode,
             width: case.width,
-            w: case.w,
+            w: false,
         }),
         "{case:?}"
     );
@@ -348,7 +340,7 @@ fn assert_exact_sequence(function: &SmirFunction, case: FmaMemoryCase) {
     assert_eq!(ops[2].x86_hint, None, "{case:?}");
 }
 
-fn lower(function: &SmirFunction, case: FmaMemoryCase) -> (Vec<u8>, usize) {
+fn lower(function: &SmirFunction, case: Fp16FmaMemoryCase) -> (Vec<u8>, usize) {
     let excluded = HashMap::new();
     assert!(is_native_clobber_safe_excluding(function, &excluded, true));
     assert!(!is_native_clobber_safe_excluding(
@@ -372,12 +364,14 @@ fn lower(function: &SmirFunction, case: FmaMemoryCase) -> (Vec<u8>, usize) {
         case.width != VecWidth::V512,
         "{case:?}"
     );
+    assert!(requirements.needs_avx512fp16, "{case:?}");
     assert!(!requirements.needs_fma, "{case:?}");
     #[cfg(target_arch = "x86_64")]
     assert_eq!(
         x86_native_vector_features_supported_excluding(function, &excluded),
         std::is_x86_feature_detected!("avx512f")
             && std::is_x86_feature_detected!("avx512bw")
+            && std::is_x86_feature_detected!("avx512fp16")
             && (case.width == VecWidth::V512 || std::is_x86_feature_detected!("avx512vl")),
         "{case:?}"
     );
@@ -391,31 +385,28 @@ fn lower(function: &SmirFunction, case: FmaMemoryCase) -> (Vec<u8>, usize) {
     lowerer.set_mem_helpers(true);
     lowerer.set_preserve_vector_mem_helpers(true);
     lowerer.set_avx_ymm16_vector_state(false);
-    let result = lowerer
-        .lower_function(function)
-        .unwrap_or_else(|error| panic!("{case:?}: helper-backed EVEX FMA3 lowering: {error:?}"));
+    let result = lowerer.lower_function(function).unwrap_or_else(|error| {
+        panic!("{case:?}: helper-backed EVEX FP16 FMA3 lowering: {error:?}")
+    });
     assert!(result.relocations.is_empty(), "{case:?}");
     (
         lowerer
             .finalize()
-            .expect("finalize helper-backed packed EVEX FMA3"),
+            .expect("finalize helper-backed packed EVEX FP16 FMA3"),
         result.entry_offset,
     )
 }
 
-fn all_cases() -> Vec<FmaMemoryCase> {
+fn all_cases() -> Vec<Fp16FmaMemoryCase> {
     let mut cases = Vec::new();
     for opcode in PACKED_OPCODES {
-        for w in [false, true] {
-            for width in [VecWidth::V128, VecWidth::V256, VecWidth::V512] {
-                for form in MemoryForm::ALL {
-                    cases.push(FmaMemoryCase {
-                        opcode,
-                        w,
-                        width,
-                        form,
-                    });
-                }
+        for width in [VecWidth::V128, VecWidth::V256, VecWidth::V512] {
+            for form in MemoryForm::ALL {
+                cases.push(Fp16FmaMemoryCase {
+                    opcode,
+                    width,
+                    form,
+                });
             }
         }
     }
@@ -423,72 +414,62 @@ fn all_cases() -> Vec<FmaMemoryCase> {
 }
 
 #[test]
-fn packed_evex_fma3_memory_byte_classifier_exhaustively_rewrites_110_592_operands() {
+fn packed_evex_fp16_fma3_memory_byte_classifier_exhaustively_rewrites_55_296_operands() {
     let mut accepted = 0usize;
     for opcode in PACKED_OPCODES {
-        for w in [false, true] {
-            for (ll, width) in [
-                (0, VecWidth::V128),
-                (1, VecWidth::V256),
-                (2, VecWidth::V512),
-            ] {
-                for destination in 0..32u8 {
-                    for source1 in 0..32u8 {
-                        let p0 = (if destination & 8 == 0 { 0x80 } else { 0 })
-                            | 0x60
-                            | (if destination & 16 == 0 { 0x10 } else { 0 })
-                            | 2;
-                        let p1 = (u8::from(w) << 7) | (((!source1) & 0x0F) << 3) | 0x05;
-                        let p2 = (ll << 5) | if source1 & 16 == 0 { 0x08 } else { 0 };
-                        let bytes = [
-                            0x62,
-                            p0,
-                            p1,
-                            p2,
-                            opcode,
-                            0x40 | ((destination & 7) << 3) | 3,
-                            DISP8,
-                        ];
-                        let encoding = X86InstructionBytes::new(&bytes)
-                            .unwrap()
-                            .evex_packed_fma3_memory_encoding()
-                            .unwrap_or_else(|| panic!("{bytes:02X?}"));
-                        let scratch = (0..16)
-                            .find(|candidate| *candidate != destination && *candidate != source1)
-                            .unwrap();
-                        assert_eq!(encoding.width, width, "{bytes:02X?}");
-                        assert_eq!(
-                            encoding.elem,
-                            if w {
-                                VecElementType::F64
-                            } else {
-                                VecElementType::F32
-                            },
-                            "{bytes:02X?}"
-                        );
-                        assert_eq!(encoding.destination, destination, "{bytes:02X?}");
-                        assert_eq!(encoding.source1, source1, "{bytes:02X?}");
-                        assert_eq!(encoding.scratch, scratch, "{bytes:02X?}");
-                        assert_eq!(encoding.opcode, opcode, "{bytes:02X?}");
-                        assert_eq!(encoding.w, w, "{bytes:02X?}");
-                        assert_eq!(encoding.needs_avx512vl, ll != 2, "{bytes:02X?}");
-                        assert_eq!(
-                            encoding
-                                .register_instruction
-                                .evex_register_packed_fma_needs_vl(),
-                            Some(ll != 2),
-                            "{bytes:02X?}"
-                        );
-                        accepted += 1;
-                    }
+        for (ll, width) in [
+            (0, VecWidth::V128),
+            (1, VecWidth::V256),
+            (2, VecWidth::V512),
+        ] {
+            for destination in 0..32u8 {
+                for source1 in 0..32u8 {
+                    let p0 = (if destination & 8 == 0 { 0x80 } else { 0 })
+                        | 0x60
+                        | (if destination & 16 == 0 { 0x10 } else { 0 })
+                        | 6;
+                    let p1 = (((!source1) & 0x0F) << 3) | 0x05;
+                    let p2 = (ll << 5) | if source1 & 16 == 0 { 0x08 } else { 0 };
+                    let bytes = [
+                        0x62,
+                        p0,
+                        p1,
+                        p2,
+                        opcode,
+                        0x40 | ((destination & 7) << 3) | 3,
+                        DISP8,
+                    ];
+                    let encoding = X86InstructionBytes::new(&bytes)
+                        .unwrap()
+                        .evex_packed_fma3_memory_encoding()
+                        .unwrap_or_else(|| panic!("{bytes:02X?}"));
+                    let scratch = (0..16)
+                        .find(|candidate| *candidate != destination && *candidate != source1)
+                        .unwrap();
+                    assert_eq!(encoding.width, width, "{bytes:02X?}");
+                    assert_eq!(encoding.elem, VecElementType::F16, "{bytes:02X?}");
+                    assert_eq!(encoding.destination, destination, "{bytes:02X?}");
+                    assert_eq!(encoding.source1, source1, "{bytes:02X?}");
+                    assert_eq!(encoding.scratch, scratch, "{bytes:02X?}");
+                    assert_eq!(encoding.opcode, opcode, "{bytes:02X?}");
+                    assert!(!encoding.w, "{bytes:02X?}");
+                    assert_eq!(encoding.needs_avx512vl, ll != 2, "{bytes:02X?}");
+                    assert_eq!(
+                        encoding
+                            .register_instruction
+                            .evex_register_packed_fp16_fma_needs_vl(),
+                        Some(ll != 2),
+                        "{bytes:02X?}"
+                    );
+                    accepted += 1;
                 }
             }
         }
     }
-    assert_eq!(accepted, 18 * 2 * 3 * 32 * 32);
+    assert_eq!(accepted, 18 * 3 * 32 * 32);
 
     for opcode in 0..=u8::MAX {
-        let bytes = [0x62, 0xF2, 0x75, 0x08, opcode, 0x43, DISP8];
+        let bytes = [0x62, 0xF6, 0x75, 0x08, opcode, 0x43, DISP8];
         assert_eq!(
             X86InstructionBytes::new(&bytes)
                 .unwrap()
@@ -501,34 +482,31 @@ fn packed_evex_fma3_memory_byte_classifier_exhaustively_rewrites_110_592_operand
 }
 
 #[test]
-fn packed_evex_fma3_rewrite_matches_independent_llvm_23_encodings() {
+fn packed_evex_fp16_fma3_rewrite_matches_independent_llvm_23_encodings() {
     let cases = [
         (
-            FmaMemoryCase {
+            Fp16FmaMemoryCase {
                 opcode: 0x98,
-                w: false,
                 width: VecWidth::V128,
                 form: MemoryForm::ApxR16R17Sib,
             },
-            [0x62, 0xE2, 0x75, 0x00, 0x98, 0xC0],
+            [0x62, 0xE6, 0x75, 0x00, 0x98, 0xC0],
         ),
         (
-            FmaMemoryCase {
+            Fp16FmaMemoryCase {
                 opcode: 0xBA,
-                w: true,
                 width: VecWidth::V256,
                 form: MemoryForm::High,
             },
-            [0x62, 0x62, 0xB5, 0x20, 0xBA, 0xC0],
+            [0x62, 0x66, 0x35, 0x20, 0xBA, 0xC0],
         ),
         (
-            FmaMemoryCase {
+            Fp16FmaMemoryCase {
                 opcode: 0xAC,
-                w: false,
                 width: VecWidth::V512,
                 form: MemoryForm::DestinationSourceAlias,
             },
-            [0x62, 0xE2, 0x75, 0x40, 0xAC, 0xC8],
+            [0x62, 0xE6, 0x75, 0x40, 0xAC, 0xC8],
         ),
     ];
     for (case, llvm) in cases {
@@ -542,69 +520,9 @@ fn packed_evex_fma3_rewrite_matches_independent_llvm_23_encodings() {
 }
 
 #[test]
-fn canonical_fma3_modrm_prefix_preserves_apx_base_and_index_for_scalar_and_fp16() {
-    // EVEX.B4=1 promotes SIB.base=0 to R16; EVEX.X4=!U=1 promotes
-    // SIB.index=1 to R17. Disp8 compression is by the scalar element size or
-    // the complete packed-vector width, respectively.
-    for (name, bytes, displacement) in [
-        (
-            "scalar F32",
-            [0x62, 0xFA, 0x71, 0x08, 0x99, 0x44, 0x48, 0x01],
-            4,
-        ),
-        (
-            "scalar F64",
-            [0x62, 0xFA, 0xF1, 0x08, 0x99, 0x44, 0x48, 0x01],
-            8,
-        ),
-        (
-            "packed F16",
-            [0x62, 0xFE, 0x71, 0x08, 0x98, 0x44, 0x48, 0x01],
-            16,
-        ),
-        (
-            "scalar F16",
-            [0x62, 0xFE, 0x71, 0x08, 0x99, 0x44, 0x48, 0x01],
-            2,
-        ),
-    ] {
-        let mut lifter = X86_64Lifter::strict();
-        let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
-        let result = lifter
-            .lift_insn(PC, &bytes, &mut context)
-            .unwrap_or_else(|error| panic!("{name} {bytes:02X?}: {error:?}"));
-        assert_eq!(result.bytes_consumed, bytes.len(), "{name}");
-
-        let memory_addresses: Vec<_> = result
-            .ops
-            .iter()
-            .filter_map(|op| match &op.kind {
-                OpKind::Load { addr, .. }
-                | OpKind::PredLoad { addr, .. }
-                | OpKind::VLoad { addr, .. } => Some(addr),
-                _ => None,
-            })
-            .collect();
-        assert_eq!(memory_addresses.len(), 1, "{name}: {:#?}", result.ops);
-        assert_eq!(
-            memory_addresses[0],
-            &Address::BaseIndexScale {
-                base: Some(VReg::Arch(ArchReg::X86(X86Reg::R16))),
-                index: VReg::Arch(ArchReg::X86(X86Reg::R17)),
-                scale: 2,
-                disp: displacement,
-                disp_size: DispSize::Disp8,
-            },
-            "{name}: {:#?}",
-            result.ops
-        );
-    }
-}
-
-#[test]
-fn all_756_evex_packed_memory_shapes_lift_optimize_admit_and_lower_exactly() {
+fn all_378_evex_packed_fp16_memory_shapes_lift_optimize_admit_and_lower_exactly() {
     let cases = all_cases();
-    assert_eq!(cases.len(), 18 * 2 * 3 * 7);
+    assert_eq!(cases.len(), 18 * 3 * 7);
     let mut lowered = 0usize;
     for case in cases {
         for level in LEVELS {
@@ -664,7 +582,7 @@ fn all_756_evex_packed_memory_shapes_lift_optimize_admit_and_lower_exactly() {
             lowered += 1;
         }
     }
-    assert_eq!(lowered, 756 * LEVELS.len());
+    assert_eq!(lowered, 378 * LEVELS.len());
 }
 
 fn assert_rejected(name: &str, function: &SmirFunction) {
@@ -679,11 +597,11 @@ fn assert_rejected(name: &str, function: &SmirFunction) {
             &uses,
         )
         .is_none(),
-        "{name}: sequence classifier admitted malformed EVEX FMA3 sequence"
+        "{name}: sequence classifier admitted malformed EVEX FP16 FMA3 sequence"
     );
     assert!(
         !is_native_clobber_safe_excluding(function, &HashMap::new(), true),
-        "{name}: clobber gate admitted malformed EVEX FMA3 sequence"
+        "{name}: clobber gate admitted malformed EVEX FP16 FMA3 sequence"
     );
     let mut lowerer = X86_64Lowerer::new();
     lowerer.set_mem_helpers(true);
@@ -691,21 +609,21 @@ fn assert_rejected(name: &str, function: &SmirFunction) {
     lowerer.set_avx_ymm16_vector_state(false);
     assert!(
         lowerer.lower_function(function).is_err(),
-        "{name}: lowerer accepted malformed EVEX FMA3 sequence"
+        "{name}: lowerer accepted malformed EVEX FP16 FMA3 sequence"
     );
 }
 
 #[test]
-fn packed_evex_fma3_memory_classifiers_reject_reserved_and_non_owned_encodings() {
-    let valid = FmaMemoryCase {
+fn packed_evex_fp16_fma3_memory_classifier_rejects_reserved_and_non_owned_encodings() {
+    let valid = Fp16FmaMemoryCase {
         opcode: 0x98,
-        w: false,
         width: VecWidth::V128,
         form: MemoryForm::Low,
     }
     .bytes();
     let evex = 0usize;
     let mut malformed = Vec::new();
+
     malformed.push(valid[..valid.len() - 1].to_vec());
     let mut trailing = valid.clone();
     trailing.push(0);
@@ -714,7 +632,14 @@ fn packed_evex_fma3_memory_classifiers_reject_reserved_and_non_owned_encodings()
     register[evex + 5] |= 0xC0;
     register.truncate(6);
     malformed.push(register);
-    for (byte_index, mask) in [(1, 0x01), (2, 0x01), (3, 0x10), (3, 0x80), (3, 0x01)] {
+    for (byte_index, mask) in [
+        (1, 0x01), // MAP6 -> MAP7
+        (2, 0x01), // mandatory 66H -> no mandatory prefix
+        (2, 0x80), // MAP6.W1 is reserved for packed FP16 FMA3
+        (3, 0x10), // broadcast/embedded rounding
+        (3, 0x80), // zero masking
+        (3, 0x01), // nonzero opmask
+    ] {
         let mut bytes = valid.clone();
         bytes[evex + byte_index] ^= mask;
         malformed.push(bytes);
@@ -728,6 +653,7 @@ fn packed_evex_fma3_memory_classifiers_reject_reserved_and_non_owned_encodings()
     let mut operand_size = valid.clone();
     operand_size.insert(0, 0x66);
     malformed.push(operand_size);
+
     for bytes in malformed {
         assert!(
             X86InstructionBytes::new(&bytes)
@@ -740,10 +666,9 @@ fn packed_evex_fma3_memory_classifiers_reject_reserved_and_non_owned_encodings()
 }
 
 #[test]
-fn packed_evex_fma3_memory_sequence_fails_closed_for_semantic_mutations() {
-    let case = FmaMemoryCase {
+fn packed_evex_fp16_fma3_memory_sequence_fails_closed_for_semantic_mutations() {
+    let case = Fp16FmaMemoryCase {
         opcode: 0x98,
-        w: false,
         width: VecWidth::V128,
         form: MemoryForm::Low,
     };
@@ -753,7 +678,7 @@ fn packed_evex_fma3_memory_sequence_fails_closed_for_semantic_mutations() {
         _ => unreachable!(),
     };
     let raw = match base.blocks[0].ops[1].kind {
-        OpKind::X86Fma(X86FmaOp { dst, .. }) => dst,
+        OpKind::X86FP16Fma { dst, .. } => dst,
         _ => unreachable!(),
     };
 
@@ -767,11 +692,18 @@ fn packed_evex_fma3_memory_sequence_fails_closed_for_semantic_mutations() {
             &definitions,
             &uses,
         )
-        .is_none()
+        .is_none(),
+        "memory-disabled admission must reject the sequence"
     );
 
     let mut missing_metadata = base.clone();
     missing_metadata.x86_instruction_bytes.clear();
+    let mut truncated_metadata = base.clone();
+    let truncated = case.bytes();
+    truncated_metadata.x86_instruction_bytes.insert(
+        (BlockId(0), PC),
+        X86InstructionBytes::new(&truncated[..truncated.len() - 1]).unwrap(),
+    );
     let mut metadata_destination = base.clone();
     let mut bytes = case.bytes();
     bytes[5] ^= 0x08;
@@ -784,6 +716,19 @@ fn packed_evex_fma3_memory_sequence_fails_closed_for_semantic_mutations() {
     metadata_source
         .x86_instruction_bytes
         .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
+    let mut metadata_width = base.clone();
+    let mut bytes = case.bytes();
+    bytes[3] ^= 0x20;
+    metadata_width
+        .x86_instruction_bytes
+        .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
+    let mut metadata_element = base.clone();
+    let mut bytes = case.bytes();
+    bytes[1] = (bytes[1] & !0x07) | 0x02;
+    metadata_element
+        .x86_instruction_bytes
+        .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
+
     let mut load_hint = base.clone();
     load_hint.blocks[0].ops[0].x86_hint = Some(X86OpHint::VecAlign(
         crate::smir::ir::ops::X86VecAlign::Unaligned,
@@ -820,13 +765,14 @@ fn packed_evex_fma3_memory_sequence_fails_closed_for_semantic_mutations() {
             width: VecWidth::V128,
         },
     ));
+
     let mut fma_pc = base.clone();
     fma_pc.blocks[0].ops[1].guest_pc += 1;
     let mut fma_hint = base.clone();
     fma_hint.blocks[0].ops[1].x86_hint = None;
     let mut fma_map = base.clone();
     if let Some(X86OpHint::EvexOp { map, .. }) = &mut fma_map.blocks[0].ops[1].x86_hint {
-        *map = X86VecMap::Map0F;
+        *map = X86VecMap::Map0F38;
     }
     let mut fma_prefix = base.clone();
     if let Some(X86OpHint::EvexOp { pp, .. }) = &mut fma_prefix.blocks[0].ops[1].x86_hint {
@@ -845,41 +791,40 @@ fn packed_evex_fma3_memory_sequence_fails_closed_for_semantic_mutations() {
         *w = true;
     }
     let mut fma_destination = base.clone();
-    if let OpKind::X86Fma(op) = &mut fma_destination.blocks[0].ops[1].kind {
-        op.src1 = vector(2, VecWidth::V128);
+    if let OpKind::X86FP16Fma { src1, .. } = &mut fma_destination.blocks[0].ops[1].kind {
+        *src1 = vector(2, VecWidth::V128);
     }
     let mut fma_source = base.clone();
-    if let OpKind::X86Fma(op) = &mut fma_source.blocks[0].ops[1].kind {
-        op.src2 = vector(2, VecWidth::V128);
+    if let OpKind::X86FP16Fma { src2, .. } = &mut fma_source.blocks[0].ops[1].kind {
+        *src2 = vector(2, VecWidth::V128);
     }
     let mut fma_memory = base.clone();
-    if let OpKind::X86Fma(op) = &mut fma_memory.blocks[0].ops[1].kind {
-        op.src3 = vector(3, VecWidth::V128);
+    if let OpKind::X86FP16Fma { src3, .. } = &mut fma_memory.blocks[0].ops[1].kind {
+        *src3 = vector(3, VecWidth::V128);
     }
     let mut fma_mask = base.clone();
-    if let OpKind::X86Fma(op) = &mut fma_mask.blocks[0].ops[1].kind {
-        op.mask = Some(VReg::Arch(ArchReg::X86(X86Reg::K(1))));
-    }
-    let mut fma_elem = base.clone();
-    if let OpKind::X86Fma(op) = &mut fma_elem.blocks[0].ops[1].kind {
-        op.elem = VecElementType::F64;
-        op.lanes = 2;
+    if let OpKind::X86FP16Fma { mask, .. } = &mut fma_mask.blocks[0].ops[1].kind {
+        *mask = Some(VReg::Arch(ArchReg::X86(X86Reg::K(1))));
     }
     let mut fma_lanes = base.clone();
-    if let OpKind::X86Fma(op) = &mut fma_lanes.blocks[0].ops[1].kind {
-        op.lanes -= 1;
+    if let OpKind::X86FP16Fma { lanes, .. } = &mut fma_lanes.blocks[0].ops[1].kind {
+        *lanes -= 1;
     }
     let mut fma_round = base.clone();
-    if let OpKind::X86Fma(op) = &mut fma_round.blocks[0].ops[1].kind {
-        op.round = FpRoundMode::RoundUp;
+    if let OpKind::X86FP16Fma { round, .. } = &mut fma_round.blocks[0].ops[1].kind {
+        *round = FpRoundMode::RoundUp;
     }
     let mut fma_kind = base.clone();
-    if let OpKind::X86Fma(op) = &mut fma_kind.blocks[0].ops[1].kind {
-        op.kind = X86FmaKind::Sub;
+    if let OpKind::X86FP16Fma { kind, .. } = &mut fma_kind.blocks[0].ops[1].kind {
+        *kind = X86FmaKind::Sub;
     }
     let mut fma_order = base.clone();
-    if let OpKind::X86Fma(op) = &mut fma_order.blocks[0].ops[1].kind {
-        op.order = X86FmaOrder::Order231;
+    if let OpKind::X86FP16Fma { order, .. } = &mut fma_order.blocks[0].ops[1].kind {
+        *order = X86FmaOrder::Order231;
+    }
+    let mut architectural_raw = base.clone();
+    if let OpKind::X86FP16Fma { dst, .. } = &mut architectural_raw.blocks[0].ops[1].kind {
+        *dst = vector(4, VecWidth::V128);
     }
     let mut raw_twice = base.clone();
     raw_twice.blocks[0].ops.push(SmirOp::new(
@@ -901,6 +846,7 @@ fn packed_evex_fma3_memory_sequence_fails_closed_for_semantic_mutations() {
             width: VecWidth::V128,
         },
     ));
+
     let mut result_pc = base.clone();
     result_pc.blocks[0].ops[2].guest_pc += 1;
     let mut result_hint = base.clone();
@@ -934,8 +880,11 @@ fn packed_evex_fma3_memory_sequence_fails_closed_for_semantic_mutations() {
 
     let malformed = [
         ("missing metadata", missing_metadata),
+        ("truncated metadata", truncated_metadata),
         ("metadata destination", metadata_destination),
         ("metadata source", metadata_source),
+        ("metadata width", metadata_width),
+        ("metadata element", metadata_element),
         ("load hint", load_hint),
         ("architectural load", load_arch),
         ("load width", load_width),
@@ -953,11 +902,11 @@ fn packed_evex_fma3_memory_sequence_fails_closed_for_semantic_mutations() {
         ("FMA source", fma_source),
         ("FMA memory", fma_memory),
         ("FMA mask", fma_mask),
-        ("FMA element", fma_elem),
         ("FMA lanes", fma_lanes),
         ("FMA round", fma_round),
         ("FMA kind", fma_kind),
         ("FMA order", fma_order),
+        ("architectural raw result", architectural_raw),
         ("raw temporary reused", raw_twice),
         ("raw temporary redefined", raw_defined_twice),
         ("result PC", result_pc),
@@ -973,7 +922,41 @@ fn packed_evex_fma3_memory_sequence_fails_closed_for_semantic_mutations() {
     }
 }
 
-fn full_guest_regs(case: FmaMemoryCase, ordinal: usize, data_case: usize) -> GuestRegs {
+fn role_vector_fp16(data_case: usize, role: usize) -> [u64; 8] {
+    const F16: [[[u16; 4]; 3]; 4] = [
+        [
+            [0x3C00, 0xC000, 0x4200, 0xC400],
+            [0x4000, 0x4200, 0xC400, 0xC500],
+            [0x4900, 0x4980, 0xCA00, 0xCA80],
+        ],
+        [
+            [0x3C01, 0x3BFF, 0x3C00, 0xBC00],
+            [0xBC00, 0x3C00, 0x1000, 0x9000],
+            [0x3BFF, 0x3C01, 0x3C00, 0x3C00],
+        ],
+        [
+            [0x7E11, 0x7D01, 0x0000, 0x7C00],
+            [0x7E22, 0x3C00, 0xFC00, 0x0000],
+            [0x7E33, 0x4000, 0x7C00, 0x7C00],
+        ],
+        [
+            [0x0400, 0x7BFF, 0x0001, 0x8000],
+            [0x0000, 0x0000, 0x0001, 0x0000],
+            [0x3800, 0x4000, 0x3C00, 0x8000],
+        ],
+    ];
+
+    let mut bytes = [0xA5; 64];
+    for lane in 0..32 {
+        bytes[lane * 2..lane * 2 + 2]
+            .copy_from_slice(&F16[data_case % F16.len()][role][lane & 3].to_le_bytes());
+    }
+    std::array::from_fn(|word| {
+        u64::from_le_bytes(bytes[word * 8..word * 8 + 8].try_into().unwrap())
+    })
+}
+
+fn full_guest_regs(case: Fp16FmaMemoryCase, ordinal: usize, data_case: usize) -> GuestRegs {
     let mut registers = GuestRegs {
         gpr: std::array::from_fn(|index| {
             0x1000u64
@@ -997,11 +980,9 @@ fn full_guest_regs(case: FmaMemoryCase, ordinal: usize, data_case: usize) -> Gue
                 ^ (word as u64).wrapping_mul(0x0102_0408_1020_4081)
         });
     }
-    registers.zmm[usize::from(case.destination())] =
-        super::vex_fma3_memory_source::role_vector(case.w, data_case, 0);
+    registers.zmm[usize::from(case.destination())] = role_vector_fp16(data_case, 0);
     if case.source1() != case.destination() {
-        registers.zmm[usize::from(case.source1())] =
-            super::vex_fma3_memory_source::role_vector(case.w, data_case, 1);
+        registers.zmm[usize::from(case.source1())] = role_vector_fp16(data_case, 1);
     }
     if let Some(base) = case.base() {
         registers.gpr[usize::from(base)] = 0x2000 + ((ordinal & 0x0F) as u64) * 0x100;
@@ -1012,7 +993,7 @@ fn full_guest_regs(case: FmaMemoryCase, ordinal: usize, data_case: usize) -> Gue
     registers
 }
 
-fn memory_address(case: FmaMemoryCase, registers: &GuestRegs) -> u64 {
+fn memory_address(case: Fp16FmaMemoryCase, registers: &GuestRegs) -> u64 {
     let compressed_displacement = u64::from(DISP8) * u64::from(case.width.bytes());
     match case.form {
         MemoryForm::Low
@@ -1036,19 +1017,16 @@ fn memory_address(case: FmaMemoryCase, registers: &GuestRegs) -> u64 {
     }
 }
 
-fn native_cases() -> Vec<FmaMemoryCase> {
+fn native_cases() -> Vec<Fp16FmaMemoryCase> {
     let mut cases = Vec::new();
     for opcode in PACKED_OPCODES {
-        for w in [false, true] {
-            for width in [VecWidth::V128, VecWidth::V256, VecWidth::V512] {
-                for form in MemoryForm::NATIVE {
-                    cases.push(FmaMemoryCase {
-                        opcode,
-                        w,
-                        width,
-                        form,
-                    });
-                }
+        for width in [VecWidth::V128, VecWidth::V256, VecWidth::V512] {
+            for form in MemoryForm::NATIVE {
+                cases.push(Fp16FmaMemoryCase {
+                    opcode,
+                    width,
+                    form,
+                });
             }
         }
     }
@@ -1056,65 +1034,74 @@ fn native_cases() -> Vec<FmaMemoryCase> {
 }
 
 #[test]
-fn interpreter_o0_o1_o2_match_all_756_opcode_format_width_and_address_shapes() {
-    use super::vex_fma3_memory_source::{interpreter_success, role_vector};
+fn interpreter_o0_o1_o2_match_all_378_fp16_opcode_width_and_address_shapes() {
+    use super::vex_fma3_memory_source::interpreter_success;
 
     let cases = all_cases();
-    assert_eq!(cases.len(), 18 * 2 * 3 * 7);
+    assert_eq!(cases.len(), 18 * 3 * 7);
     let mut executions = 0usize;
     for (ordinal, case) in cases.into_iter().enumerate() {
-        let source = role_vector(case.w, 0, 2);
-        let alternate_source = role_vector(case.w, 0, 1);
-        let initial = full_guest_regs(case, ordinal, 0);
-        let address = memory_address(case, &initial);
-        assert!(
-            address + u64::from(case.width.bytes()) <= 0x10000,
-            "{case:?}: address {address:#x}"
-        );
-        let expected = interpreter_success(
-            &optimize(lift_case(case), OptLevel::O0),
-            &initial,
-            source,
-            address,
-            case.width,
-        );
-        let alternate = interpreter_success(
-            &optimize(lift_case(case), OptLevel::O0),
-            &initial,
-            alternate_source,
-            address,
-            case.width,
-        );
-        assert_ne!(
-            expected.zmm[usize::from(case.destination())],
-            alternate.zmm[usize::from(case.destination())],
-            "{case:?}: decoded memory address did not affect the FMA result"
-        );
-        for level in LEVELS {
-            let actual = interpreter_success(
-                &optimize(lift_case(case), level),
+        for data_case in 0..4 {
+            let source = role_vector_fp16(data_case, 2);
+            let initial = full_guest_regs(case, ordinal, data_case);
+            let address = memory_address(case, &initial);
+            assert!(
+                address + u64::from(case.width.bytes()) <= 0x10000,
+                "{case:?}: address {address:#x}"
+            );
+            let expected = interpreter_success(
+                &optimize(lift_case(case), OptLevel::O0),
                 &initial,
                 source,
                 address,
                 case.width,
             );
-            assert_eq!(actual, expected, "{level:?} {case:?}");
-            executions += 1;
+            if data_case == 0 {
+                let alternate = interpreter_success(
+                    &optimize(lift_case(case), OptLevel::O0),
+                    &initial,
+                    role_vector_fp16(0, 1),
+                    address,
+                    case.width,
+                );
+                assert_ne!(
+                    expected.zmm[usize::from(case.destination())],
+                    alternate.zmm[usize::from(case.destination())],
+                    "{case:?}: decoded memory address did not affect the FP16 FMA result"
+                );
+            }
+            for level in LEVELS {
+                let actual = interpreter_success(
+                    &optimize(lift_case(case), level),
+                    &initial,
+                    source,
+                    address,
+                    case.width,
+                );
+                assert_eq!(actual, expected, "{level:?} data={data_case} {case:?}");
+                executions += 1;
+            }
         }
     }
-    assert_eq!(executions, 756 * LEVELS.len());
+    assert_eq!(executions, 378 * 4 * LEVELS.len());
 }
 
 #[cfg(target_arch = "x86_64")]
 #[test]
-fn native_packed_evex_fma3_memory_matches_interpretation_and_faults_without_commit() {
+fn native_packed_evex_fp16_fma3_memory_matches_interpretation_and_faults_without_commit() {
     use super::vex_fma3_memory_source::{
-        VectorMemoryContext, interpreter_success, role_vector, vector_load_helper,
+        VectorMemoryContext, interpreter_success, vector_load_helper,
     };
     use crate::smir::lower::runtime::ExecMem;
 
-    if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
-        eprintln!("skipping native packed EVEX FMA3 memory differential: host lacks AVX-512F/BW");
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512fp16")
+    {
+        eprintln!(
+            "skipping native packed EVEX FP16 FMA3 memory differential: \
+             host lacks AVX-512F/BW/FP16"
+        );
         return;
     }
 
@@ -1123,7 +1110,7 @@ fn native_packed_evex_fma3_memory_matches_interpretation_and_faults_without_comm
         .into_iter()
         .filter(|case| case.width == VecWidth::V512 || has_vl)
         .collect();
-    assert_eq!(cases.len(), 18 * 2 * if has_vl { 3 } else { 1 } * 3);
+    assert_eq!(cases.len(), 18 * if has_vl { 3 } else { 1 } * 3);
     let expected_executions = cases.len() * NATIVE_LEVELS.len();
     let mut successes = 0usize;
     let mut faults = 0usize;
@@ -1133,7 +1120,7 @@ fn native_packed_evex_fma3_memory_matches_interpretation_and_faults_without_comm
             let (code, entry) = lower(&function, case);
             let exec =
                 ExecMem::new(&code).unwrap_or_else(|error| panic!("{level:?} {case:?}: {error:?}"));
-            let source = role_vector(case.w, ordinal, 2);
+            let source = role_vector_fp16(0, 2);
 
             let mut context = VectorMemoryContext {
                 value: source,
@@ -1144,7 +1131,7 @@ fn native_packed_evex_fma3_memory_matches_interpretation_and_faults_without_comm
                 last_size: 0,
                 last_zero_upper: 0,
             };
-            let mut registers = full_guest_regs(case, ordinal, ordinal);
+            let mut registers = full_guest_regs(case, ordinal, 0);
             let address = memory_address(case, &registers);
             registers.ctx = (&mut context as *mut VectorMemoryContext) as u64;
             registers.vec_load_fn = vector_load_helper as usize as u64;
@@ -1174,7 +1161,7 @@ fn native_packed_evex_fma3_memory_matches_interpretation_and_faults_without_comm
                 last_size: 0,
                 last_zero_upper: 0,
             };
-            let mut registers = full_guest_regs(case, ordinal ^ 0x55, ordinal);
+            let mut registers = full_guest_regs(case, ordinal ^ 0x55, 0);
             let address = memory_address(case, &registers);
             registers.ctx = (&mut context as *mut VectorMemoryContext) as u64;
             registers.vec_load_fn = vector_load_helper as usize as u64;
