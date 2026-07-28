@@ -279,7 +279,8 @@ pub fn x86_legacy_vex_high_low_move_replay_spans(
 /// Identify valid register-only AVX VEX widening doubleword-multiply replay
 /// groups in `block` in O(N) time and O(P) space for N operations and P unique
 /// guest PCs. VEX.128 `VPMULUDQ`/`VPMULDQ` require AVX; VEX.256 forms require
-/// AVX2. Memory forms remain at the precise SMIR interpreter boundary.
+/// AVX2. This span classifier remains register-only; exact memory-source
+/// semantic chains are admitted separately by the helper-backed runtime gate.
 pub fn x86_vex_widening_dword_multiply_replay_spans(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,

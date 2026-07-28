@@ -3,6 +3,7 @@
 mod vex_horizontal_integer;
 mod vex_pmul_high_word;
 mod vex_pmul_low;
+mod vex_widening_dword_multiply;
 
 use std::collections::HashMap;
 
@@ -926,6 +927,15 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
         return Some(sequence);
     }
     if let Some(sequence) = vex_pmul_high_word::sequence(
+        block,
+        index,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence);
+    }
+    if let Some(sequence) = vex_widening_dword_multiply::sequence(
         block,
         index,
         instruction_bytes,
