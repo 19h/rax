@@ -149,6 +149,57 @@ fn scheduled_full_suite_runs_every_host_specific_jit_regression_binary() {
     }
 }
 
+#[test]
+fn scheduled_full_suite_serializes_native_jit_shards_and_preserves_diagnostics() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let workflow = root.join(".github/workflows/full-suite.yml");
+    let contents = fs::read_to_string(&workflow)
+        .unwrap_or_else(|err| panic!("failed to read {}: {err}", workflow.display()));
+
+    for shard in ["unit", "smir-host"] {
+        let marker = format!("name: {shard},");
+        let shard_line = contents
+            .lines()
+            .find(|line| line.contains(&marker))
+            .unwrap_or_else(|| panic!("scheduled Full suite is missing the {shard} shard"));
+        assert!(
+            shard_line.contains("harness: \"--include-ignored --test-threads=1 --nocapture\""),
+            "scheduled Full suite {shard} shard must serialize native tests and preserve output"
+        );
+    }
+
+    for shard in ["x86_64", "arm"] {
+        let marker = format!("name: {shard},");
+        let shard_line = contents
+            .lines()
+            .find(|line| line.contains(&marker))
+            .unwrap_or_else(|| panic!("scheduled Full suite is missing the {shard} shard"));
+        assert!(
+            shard_line.contains("harness: \"--include-ignored\""),
+            "host-independent Full suite {shard} shard must retain its parallel harness"
+        );
+    }
+
+    let cargo_step_start = contents
+        .find("      - name: cargo test (${{ matrix.shard.name }})\n")
+        .expect("scheduled Full suite is missing its cargo test step");
+    let cargo_step_end = contents[cargo_step_start..]
+        .find("\n  # Doctests")
+        .map(|offset| cargo_step_start + offset)
+        .expect("scheduled Full suite is missing the doctest step boundary");
+    let cargo_step = &contents[cargo_step_start..cargo_step_end];
+    assert!(
+        cargo_step.contains(
+            "if [ \"${{ matrix.shard.name }}\" = \"unit\" ] || [ \"${{ matrix.shard.name }}\" = \"smir-host\" ]; then"
+        ) && cargo_step.contains("export RAX_JIT_TRACE=1"),
+        "scheduled Full suite must arm native crash diagnostics only for native JIT shards"
+    );
+    assert!(
+        cargo_step.contains("-- ${{ matrix.shard.harness }}"),
+        "scheduled Full suite must apply each shard's explicit harness policy"
+    );
+}
+
 fn collect_yaml_files(dir: &Path, files: &mut Vec<PathBuf>) {
     let entries =
         fs::read_dir(dir).unwrap_or_else(|err| panic!("failed to read {}: {err}", dir.display()));
