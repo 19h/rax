@@ -1,5 +1,7 @@
 //! Fail-closed helper-backed VEX binary memory-source admission.
 
+mod vex_horizontal_integer;
+
 use std::collections::HashMap;
 
 use crate::smir::ir::X86InstructionBytes;
@@ -848,17 +850,18 @@ fn vex_packed_fp_binary_encoding_valid(
 }
 
 /// Validate one unmasked VEX.128/VEX.256 packed logic, integer add/subtract,
-/// unsigned rounded average, packed sign, rounded-high word multiply,
-/// fixed-predicate integer compare, binary32/binary64 arithmetic, or packed
-/// FMA3 memory source, or one scalar binary32/binary64 arithmetic or FMA3
-/// source. Binary packed forms are exact two-op `VLoad`/consumer pairs;
-/// packed FMA3 is an exact
+/// unsigned rounded average, packed sign, rounded-high word multiply, packed
+/// horizontal integer arithmetic, fixed-predicate integer compare,
+/// binary32/binary64 arithmetic, or packed FMA3 memory source, or one scalar
+/// binary32/binary64 arithmetic or FMA3 source. Binary packed forms are exact
+/// two-op `VLoad`/consumer pairs; packed FMA3 is an exact
 /// `VLoad`/`X86Fma`/architectural-`VMov` chain. Rounded averages, packed sign,
-/// fixed comparisons, FMA3, and scalar forms additionally require exact
-/// instruction-byte provenance. Scalar forms include the complete lane-extract,
-/// destination-clear, and lane-insert chain. Scalar arithmetic requires
-/// `VEX.L=0`; scalar FMA3 accepts both values because `VEX.L` is architecturally
-/// ignored.
+/// rounded-high word multiply, horizontal integer arithmetic, fixed
+/// comparisons, FMA3, and scalar forms additionally require exact
+/// instruction-byte provenance. Scalar forms include the complete
+/// lane-extract, destination-clear, and lane-insert chain. Scalar arithmetic
+/// requires `VEX.L=0`; scalar FMA3 accepts both values because `VEX.L` is
+/// architecturally ignored.
 /// Single-definition/single-use checks prevent the fused lowerer from hiding
 /// any independently observable virtual value.
 ///
@@ -903,6 +906,15 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
         return Some(sequence);
     }
     if let Some(sequence) = x86_jit_vex_pmulhrsw_memory_sequence(
+        block,
+        index,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence);
+    }
+    if let Some(sequence) = vex_horizontal_integer::sequence(
         block,
         index,
         instruction_bytes,

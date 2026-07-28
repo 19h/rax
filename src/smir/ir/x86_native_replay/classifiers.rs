@@ -31,6 +31,7 @@ mod vex_fma3;
 mod vex_fma4;
 mod vex_fp_dot_product;
 mod vex_fp_logic;
+mod vex_horizontal_integer;
 mod vex_immediate_blend;
 mod vex_immediate_permute;
 mod vex_integer_dot_ext;
