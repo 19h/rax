@@ -53,6 +53,7 @@ mod vex_register_broadcast;
 mod vex_scalar_extract;
 mod vex_scalar_insert;
 mod vex_scalar_vmovq;
+mod vex_shared_count_shift;
 mod vex_variable_blend;
 mod vex_variable_permute;
 mod vex_vpermil2;

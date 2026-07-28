@@ -6,6 +6,7 @@ mod vex_integer_minmax;
 mod vex_integer_multiply_add;
 mod vex_pmul_high_word;
 mod vex_pmul_low;
+mod vex_shared_count_shift;
 mod vex_widening_dword_multiply;
 
 use std::collections::HashMap;
@@ -862,8 +863,9 @@ fn vex_packed_fp_binary_encoding_valid(
 /// binary32/binary64 arithmetic, or packed FMA3 memory source, or one scalar
 /// binary32/binary64 arithmetic or FMA3 source. Binary packed forms are exact
 /// two-op `VLoad`/consumer pairs; packed FMA3 is an exact
-/// `VLoad`/`X86Fma`/architectural-`VMov` chain. Rounded averages, packed sign,
-/// rounded-high word multiply, horizontal integer arithmetic, fixed
+/// `VLoad`/`X86Fma`/architectural-`VMov` chain. Shared-count shifts use an
+/// exact `VLoad`/`VExtractLane`/`X86PackedShift` chain. Rounded averages, packed
+/// sign, rounded-high word multiply, horizontal integer arithmetic, fixed
 /// comparisons, FMA3, and scalar forms additionally require exact
 /// instruction-byte provenance. Scalar forms include the complete
 /// lane-extract, destination-clear, and lane-insert chain. Scalar arithmetic
@@ -931,6 +933,15 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
         return Some(sequence);
     }
     if let Some(sequence) = vex_integer_interleave::sequence(
+        block,
+        index,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence);
+    }
+    if let Some(sequence) = vex_shared_count_shift::sequence(
         block,
         index,
         instruction_bytes,
