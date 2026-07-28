@@ -2,20 +2,22 @@
 
 use std::collections::HashMap;
 
-use super::{X86_64Lowerer, X86Emitter};
+use super::{X86_64Lowerer, X86Cond, X86Emitter};
 use crate::smir::ir::SmirBlock;
 use crate::smir::ir::ops::OpKind;
-use crate::smir::ir::types::{SignExtend, VReg, VecWidth};
+use crate::smir::ir::types::{OpWidth, SignExtend, VReg, VecWidth};
 use crate::smir::lower::regalloc::PhysReg;
 use crate::smir::lower::{LowerError, X86_JIT_VECTOR_SCRATCH_INDEX};
 
 impl X86_64Lowerer {
-    /// Fuse the exact scalar `Load`/`VBroadcast`/`X86Fma|X86FP16Fma`/result
-    /// reconstruction emitted for one unmasked EVEX memory source. The scalar
-    /// MMU helper stages the complete 2/4/8-byte source in a 16-byte
-    /// nonarchitectural host-stack slot. A byte-validated rewrite of the
-    /// original instruction then consumes `[rsp]`, preserving native FMA,
-    /// MXCSR, destination-lane, and upper-zeroing behavior without borrowing an
+    /// Fuse the exact scalar memory-source decomposition emitted for one
+    /// unmasked or writemasked EVEX FMA3 instruction. The scalar MMU helper
+    /// stages the complete 2/4/8-byte source in a 16-byte nonarchitectural
+    /// host-stack slot. For a writemasked source, a live-host-K bit-0 test
+    /// bypasses the helper completely when the access is architecturally
+    /// suppressed. A byte-validated rewrite of the original instruction then
+    /// consumes `[rsp]`, preserving native FMA, MXCSR, merge/zero masking,
+    /// destination-lane, and upper-zeroing behavior without borrowing an
     /// architectural vector register.
     pub(crate) fn try_lower_jit_evex_scalar_fma3_memory_source(
         &mut self,
@@ -40,19 +42,43 @@ impl X86_64Lowerer {
                 operand: "AVX-only vector bridge cannot carry EVEX FMA3".to_string(),
             });
         }
-        let address = match &block.ops[index].kind {
+        let load_index = index + sequence.load_offset;
+        let address = match &block.ops[load_index].kind {
             OpKind::Load {
                 addr,
                 width,
                 sign: SignExtend::Zero,
                 ..
             } if *width == sequence.memory_width => addr,
-            _ => unreachable!("validated EVEX scalar FMA3 sequence starts with scalar Load"),
+            OpKind::PredLoad {
+                addr,
+                width,
+                signed: SignExtend::Zero,
+                ..
+            } if *width == sequence.memory_width => addr,
+            _ => unreachable!("validated EVEX scalar FMA3 sequence owns its scalar memory op"),
         };
 
         {
             let mut emitter = X86Emitter::new(&mut self.code);
             emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -16);
+        }
+        let inactive = if let Some(mask) = sequence.encoding.writemask {
+            self.code.emit_u8(0x9C); // pushfq
+            self.code.emit_u8(0x50); // push guest RAX
+            self.emit_opmask_mask_to_rax64(mask);
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_test_ri(PhysReg::Rax, 1, OpWidth::W64);
+            }
+            Some(self.emit_jcc_placeholder(X86Cond::E))
+        } else {
+            None
+        };
+
+        if inactive.is_some() {
+            self.code.emit_u8(0x58); // pop guest RAX
+            self.code.emit_u8(0x9D); // restore exact pre-guard flags
         }
         self.emit_jit_mem_op(
             block.ops[index].guest_pc,
@@ -67,6 +93,15 @@ impl X86_64Lowerer {
             SignExtend::Zero,
             16,
         )?;
+        if let Some(inactive) = inactive {
+            self.code.emit_u8(0xE9);
+            let execute = self.code.position();
+            self.code.emit_u32(0);
+            self.patch_rel32_to_current(inactive)?;
+            self.code.emit_u8(0x58); // pop guest RAX
+            self.code.emit_u8(0x9D); // restore exact pre-guard flags
+            self.patch_rel32_to_current(execute)?;
+        }
         self.code
             .emit_bytes(sequence.encoding.stack_instruction.as_slice());
         {

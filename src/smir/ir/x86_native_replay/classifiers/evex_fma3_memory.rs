@@ -39,18 +39,19 @@ fn vector_legacy_prefix_len(bytes: &[u8]) -> usize {
 }
 
 impl X86InstructionBytes {
-    /// Validate one unmasked EVEX scalar binary16/binary32/binary64 FMA3
-    /// memory encoding and rewrite only its memory operand to `[rsp]`.
+    /// Validate one EVEX scalar binary16/binary32/binary64 FMA3 memory
+    /// encoding and rewrite only its memory operand to `[rsp]`.
     ///
     /// Intel SDM Vol. 2 assigns binary32/binary64 to map 0F38 with W selecting
     /// the element width, and binary16 to MAP6.W0. All use mandatory prefix
     /// 66H, scalar opcode low nibbles 9H, BH, DH, or FH, and LLIG. The admitted
-    /// subset has `EVEX.b=0`, `aaa=000`, and `z=0`, so the memory access is
-    /// unconditional and MXCSR supplies the rounding mode. The rewritten
-    /// instruction canonicalizes LLIG to L'L=0 and consumes the helper-staged
-    /// scalar from a 16-byte host-stack slot. Segment/address-size prefixes and
-    /// APX extended address bits are removed because the helper has already
-    /// evaluated the complete guest effective address.
+    /// subset has `EVEX.b=0`; `aaa=000` requires `z=0`, while
+    /// `aaa=001..111` retains merge/zero masking. MXCSR supplies the rounding
+    /// mode. The rewritten instruction canonicalizes LLIG to L'L=0 and
+    /// consumes the helper-staged scalar from a 16-byte host-stack slot.
+    /// Segment/address-size prefixes and APX extended address bits are removed
+    /// because the helper has already evaluated the complete guest effective
+    /// address.
     pub(crate) fn evex_scalar_fma3_memory_encoding(
         &self,
     ) -> Option<X86EvexScalarFma3MemoryEncoding> {
@@ -72,9 +73,14 @@ impl X86InstructionBytes {
             (6, false) => VecElementType::F16,
             _ => return None,
         };
+        let writemask = match p2 & 0x07 {
+            0 => None,
+            index => Some(index),
+        };
+        let zeroing = p2 & 0x80 != 0;
         if p1 & 0x03 != 1
-            || p2 & 0x90 != 0
-            || p2 & 0x07 != 0
+            || p2 & 0x10 != 0
+            || (zeroing && writemask.is_none())
             || modrm >> 6 == 3
             || !matches!(
                 opcode,
@@ -104,8 +110,8 @@ impl X86InstructionBytes {
             (p0 & 0x97) | 0x60,
             // Preserve W/vvvv/pp and restore the ordinary EVEX.U fixed bit.
             p1 | 0x04,
-            // Preserve V' while canonicalizing LLIG, b, z, and aaa.
-            p2 & 0x08,
+            // Preserve z/V'/aaa while canonicalizing LLIG and b.
+            p2 & 0x8F,
             opcode,
             (modrm & 0x38) | 0x04,
             0x24,
@@ -119,7 +125,7 @@ impl X86InstructionBytes {
             0x62,
             (p0 & 0x97) | 0x60,
             p1 | 0x04,
-            p2 & 0x08,
+            p2 & 0x8F,
             opcode,
             0xC0 | (modrm & 0x38),
         ];
@@ -140,6 +146,8 @@ impl X86InstructionBytes {
             elem,
             destination,
             source1,
+            writemask,
+            zeroing,
             opcode,
             w: p1 & 0x80 != 0,
             stack_instruction,

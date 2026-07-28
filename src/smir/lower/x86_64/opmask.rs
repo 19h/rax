@@ -335,6 +335,11 @@ impl X86_64Lowerer {
         Ok(())
     }
 
+    pub(crate) fn emit_opmask_mask_to_rax64(&mut self, src: u8) {
+        debug_assert!(src <= 7, "architectural opmask index");
+        self.emit_opmask_mask_to_gpr_rr(src, 0, OpWidth::W64);
+    }
+
     fn emit_opmask_mask_to_gpr_rr(&mut self, src: u8, dst: u8, width: OpWidth) {
         self.emit_opmask_vex_prefix(
             X86VecMap::Map0F,

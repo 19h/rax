@@ -50,14 +50,16 @@ pub(crate) struct X86EvexPackedFma3MemoryEncoding {
     pub(crate) needs_avx512vl: bool,
 }
 
-/// Exact unmasked EVEX scalar FMA3 memory encoding rewritten to consume an
-/// equivalent 2/4/8-byte operand from a nonarchitectural host-stack slot.
+/// Exact EVEX scalar FMA3 memory encoding rewritten to consume an equivalent
+/// 2/4/8-byte operand from a nonarchitectural host-stack slot.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct X86EvexScalarFma3MemoryEncoding {
     pub(crate) hint_width: crate::smir::ir::types::VecWidth,
     pub(crate) elem: crate::smir::ir::types::VecElementType,
     pub(crate) destination: u8,
     pub(crate) source1: u8,
+    pub(crate) writemask: Option<u8>,
+    pub(crate) zeroing: bool,
     pub(crate) opcode: u8,
     pub(crate) w: bool,
     pub(crate) stack_instruction: X86InstructionBytes,

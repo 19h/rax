@@ -22,6 +22,8 @@ use crate::smir::lower::runtime::{
 use crate::smir::lower::x86_64::X86_64Lowerer;
 use crate::smir::optimize::OptLevel;
 
+mod masked;
+
 const PC: u64 = 0xE5A0;
 const DISP8: u8 = 1;
 const DISP32: i32 = 0x20;
@@ -524,6 +526,8 @@ fn scalar_evex_fma3_byte_classifier_exhaustively_rewrites_147_456_operands() {
                         assert_eq!(encoding.elem, format.elem(), "{bytes:02X?}");
                         assert_eq!(encoding.destination, destination, "{bytes:02X?}");
                         assert_eq!(encoding.source1, source1, "{bytes:02X?}");
+                        assert_eq!(encoding.writemask, None, "{bytes:02X?}");
+                        assert!(!encoding.zeroing, "{bytes:02X?}");
                         assert_eq!(encoding.opcode, opcode, "{bytes:02X?}");
                         assert_eq!(encoding.w, format.w(), "{bytes:02X?}");
                         assert_eq!(
@@ -626,6 +630,7 @@ fn all_1008_scalar_evex_memory_shapes_lift_optimize_admit_and_lower_exactly() {
                 case.format.memory_width(),
                 "{level:?} {case:?}"
             );
+            assert_eq!(sequence.load_offset, 0, "{level:?} {case:?}");
             assert_eq!(
                 sequence.encoding.destination,
                 case.destination(),
@@ -661,7 +666,7 @@ fn all_1008_scalar_evex_memory_shapes_lift_optimize_admit_and_lower_exactly() {
 }
 
 #[test]
-fn scalar_evex_fma3_classifier_rejects_reserved_masked_and_non_owned_encodings() {
+fn scalar_evex_fma3_classifier_rejects_reserved_and_non_owned_encodings() {
     let valid_case = ScalarFmaCase {
         opcode: 0x99,
         format: ScalarFormat::F32,
@@ -679,7 +684,7 @@ fn scalar_evex_fma3_classifier_rejects_reserved_masked_and_non_owned_encodings()
     register[evex + 5] |= 0xC0;
     register.truncate(6);
     malformed.push(register);
-    for (byte_index, mask) in [(1, 0x01), (2, 0x01), (3, 0x10), (3, 0x80), (3, 0x01)] {
+    for (byte_index, mask) in [(1, 0x01), (2, 0x01), (3, 0x10), (3, 0x80)] {
         let mut bytes = valid.clone();
         bytes[evex + byte_index] ^= mask;
         malformed.push(bytes);
