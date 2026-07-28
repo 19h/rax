@@ -2542,90 +2542,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-    pub(crate) fn lower_bextr(
-        &mut self,
-        dst: VReg,
-        src: VReg,
-        control: VReg,
-        width: OpWidth,
-        flags: FlagUpdate,
-    ) -> Result<(), LowerError> {
-        let set_flags = flags.updates_any();
-        let emit_width = match width {
-            OpWidth::W8 | OpWidth::W16 | OpWidth::W32 => OpWidth::W32,
-            OpWidth::W64 => OpWidth::W64,
-            other => {
-                return Err(LowerError::UnsupportedOp {
-                    op: format!("AArch64 native Bextr width {other:?}"),
-                });
-            }
-        };
-        if let VReg::Imm(value) = src {
-            if (value as u64 & width.mask()) == 0 {
-                let dst = Self::dst_gpr_arm_or_x86(dst)?;
-                self.emit_mov_imm(dst, 0, emit_width)?;
-                if set_flags {
-                    self.lower_bmi_result_flags(dst, emit_width, false)?;
-                }
-                return Ok(());
-            }
-        }
-        let bits = width.bits();
-        let control = match control {
-            VReg::Imm(value) => value as u64,
-            other => {
-                return self.lower_bextr_register_control(
-                    dst, src, other, width, emit_width, bits, set_flags,
-                );
-            }
-        };
-        let start = (control & 0xff) as u32;
-        let len = ((control >> 8) & 0xff) as u32;
-        let dst = Self::dst_gpr_arm_or_x86(dst)?;
-        if let VReg::Imm(value) = src {
-            let src = (value as u64) & width.mask();
-            let result = if start >= bits || len == 0 {
-                0
-            } else {
-                let shifted = src >> start;
-                if len >= bits {
-                    shifted
-                } else {
-                    shifted & ((1_u64 << len) - 1)
-                }
-            } & width.mask();
-            if !self.try_emit_movn_single(dst, result, emit_width)? {
-                self.emit_mov_imm(dst, result as i64, emit_width)?;
-            }
-            if set_flags {
-                self.lower_bmi_result_flags(dst, emit_width, false)?;
-            }
-            return Ok(());
-        }
-
-        if start >= bits || len == 0 {
-            self.emit_mov_imm(dst, 0, emit_width)?;
-            if set_flags {
-                self.lower_bmi_result_flags(dst, emit_width, false)?;
-            }
-            return Ok(());
-        }
-
-        let width_bits = len.min(bits - start) as u8;
-        self.lower_bfx(
-            VReg::Arch(ArchReg::Arm(ArmReg::X(dst))),
-            src,
-            start as u8,
-            width_bits,
-            false,
-            emit_width,
-        )?;
-        if set_flags {
-            self.lower_bmi_result_flags(dst, emit_width, false)?;
-        }
-        Ok(())
-    }
-
     pub(crate) fn emit_keep_nz_flags(&mut self, dst: u8, src: u8) -> Result<(), LowerError> {
         let (imm_n, immr, imms) = Self::logical_bitmask_imm(NZCV_N | NZCV_Z, OpWidth::W32)?;
         self.emit_logic_imm(dst, src, 0b00, imm_n, immr, imms, OpWidth::W32)
@@ -3683,6 +3599,7 @@ impl Aarch64Lowerer {
             }),
             OpKind::MaterializeFlags => Ok(()),
             OpKind::X86RequireApx => self.emit_x86_require_apx(op),
+            OpKind::X86RequireTbm => self.emit_x86_require_tbm(op),
             OpKind::X86RequireSse4a
             | OpKind::X86Sse4aBitfield { .. }
             | OpKind::X86Sse4aMovntStore { .. } => Err(LowerError::UnsupportedOp {
@@ -4503,6 +4420,21 @@ impl Aarch64Lowerer {
                 kind,
                 flags,
             } => self.lower_x86_bls(*dst, *src, *width, *kind, *flags),
+            OpKind::X86Tbm {
+                dst,
+                src,
+                width,
+                kind,
+                flags,
+            } => {
+                if op.x86_hint.is_some() {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86Tbm".to_string(),
+                        operand: "encoding hints are unsupported".to_string(),
+                    });
+                }
+                self.lower_x86_tbm(*dst, *src, *width, *kind, *flags)
+            }
             OpKind::X86Adx {
                 dst,
                 src1,

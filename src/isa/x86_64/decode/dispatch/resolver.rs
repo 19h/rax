@@ -110,6 +110,9 @@ fn sh_les_or_vex3(v: &mut X86_64Vcpu, c: &mut InsnContext) -> Result<Option<Vcpu
 fn sh_lds_or_vex2(v: &mut X86_64Vcpu, c: &mut InsnContext) -> Result<Option<VcpuExit>> {
     v.execute_lds_or_vex2(c)
 }
+fn sh_pop_or_xop(v: &mut X86_64Vcpu, c: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    v.execute_pop_or_xop(c)
+}
 fn sh_mov_rax_moffs_or_jmp_abs(
     v: &mut X86_64Vcpu,
     c: &mut InsnContext,
@@ -199,7 +202,7 @@ impl X86_64Vcpu {
             0xC7 => execute::data::mov_rm_imm,
             0x50..=0x57 => sh_push_r64,
             0x58..=0x5F => sh_pop_r64,
-            0x8F => execute::data::pop_rm,
+            0x8F => sh_pop_or_xop,
             0x6A => execute::data::push_imm8,
             0x68 => execute::data::push_imm32,
             0x86 => execute::data::xchg_r8_rm8,

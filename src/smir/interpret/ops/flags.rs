@@ -98,6 +98,22 @@ impl SmirInterpreter {
                 }
             }
 
+            OpKind::X86RequireTbm => {
+                if !matches!(
+                    &ctx.arch_regs,
+                    ArchRegState::X86_64(x86)
+                        if x86.tbm
+                            && x86.cr0 & 1 != 0
+                            && x86.cs_l
+                            && x86.rflags & crate::isa::x86_64::flags::bits::VM == 0
+                ) {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                }
+            }
+
             OpKind::X86Cli {
                 requires_apx,
                 next_pc: _,

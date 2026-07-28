@@ -87,6 +87,16 @@ pub fn setup_vm_with_cr4(
     (vcpu, mem)
 }
 
+/// Create a test VM whose emulated CPUID profile advertises AMD TBM.
+pub fn setup_tbm_vm(
+    code: &[u8],
+    initial_regs: Option<Registers>,
+) -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
+    let (mut vcpu, mem) = setup_vm(code, initial_regs);
+    vcpu.set_tbm_enabled(true);
+    (vcpu, mem)
+}
+
 /// Create a test VM with the given code and initial register state.
 pub fn setup_vm(
     code: &[u8],

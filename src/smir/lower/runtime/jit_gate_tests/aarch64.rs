@@ -21,9 +21,19 @@ fn aarch64_guest_state_layout_matches_native_exit_offsets() {
         std::mem::offset_of!(Aarch64GuestRegs, x86_apx_enabled),
         Aarch64GuestRegs::X86_APX_ENABLED_OFFSET as usize
     );
+    assert_eq!(
+        std::mem::offset_of!(Aarch64GuestRegs, x86_tbm_enabled),
+        Aarch64GuestRegs::X86_TBM_ENABLED_OFFSET as usize
+    );
+    assert_eq!(
+        std::mem::offset_of!(Aarch64GuestRegs, x86_tbm_mode_valid),
+        Aarch64GuestRegs::X86_TBM_MODE_VALID_OFFSET as usize
+    );
     assert_eq!(Aarch64GuestRegs::EXIT_FLAGS_OFFSET, 864);
     assert_eq!(Aarch64GuestRegs::X86_APX_ENABLED_OFFSET, 872);
-    assert_eq!(std::mem::size_of::<Aarch64GuestRegs>(), 880);
+    assert_eq!(Aarch64GuestRegs::X86_TBM_ENABLED_OFFSET, 880);
+    assert_eq!(Aarch64GuestRegs::X86_TBM_MODE_VALID_OFFSET, 888);
+    assert_eq!(std::mem::size_of::<Aarch64GuestRegs>(), 896);
     assert_eq!(Aarch64GuestRegs::EXIT_VALID, 1);
     assert_eq!(Aarch64GuestRegs::EXIT_AARCH32_T, 2);
     assert_eq!(Aarch64GuestRegs::EXIT_AARCH32_T_VALID, 4);

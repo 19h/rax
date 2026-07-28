@@ -233,9 +233,10 @@ pub const X86_GUEST_INVPCID_FN_OFFSET: i32 = X86_GUEST_FAST_SYSTEM_TRANSFER_FN_O
 /// Offset of the append-only nonarchitectural vector-memory transfer scratch.
 ///
 /// `misc_enable`, `pat`, `umwait_control`, `xmm_state_active`, and
-/// `mxcsr_state_active` occupy the five intervening 8-byte fields. Keeping the
-/// scratch last preserves every established native helper/state offset.
+/// `mxcsr_state_active` occupy the five intervening 8-byte fields.
 pub const X86_GUEST_VECTOR_SCRATCH_OFFSET: i32 = X86_GUEST_INVPCID_FN_OFFSET + 6 * 8;
+/// Offset of the append-only guest TBM enumeration policy.
+pub const X86_GUEST_CPUID_TBM_OFFSET: i32 = X86_GUEST_VECTOR_SCRATCH_OFFSET + 8 * 8;
 /// Internal `vec_load_fn` destination namespace for
 /// [`runtime::GuestRegs::vector_scratch`]. Architectural ZMM indices remain
 /// exactly 0..=31; every value above this singleton tag is invalid.

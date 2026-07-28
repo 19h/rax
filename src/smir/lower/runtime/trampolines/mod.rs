@@ -34,6 +34,8 @@ mod mxcsr;
 pub use mxcsr::*;
 mod push_value;
 pub use push_value::*;
+mod tbm;
+pub use tbm::*;
 mod mmx;
 pub use mmx::*;
 mod mmx_memory;

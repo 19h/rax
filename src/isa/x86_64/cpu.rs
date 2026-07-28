@@ -319,6 +319,10 @@ pub struct X86_64Vcpu {
     /// advertise this extension, so its opcodes must #UD unless a semantic
     /// harness opts in explicitly.
     pub(super) sse4a: bool,
+    /// Enable AMD TBM instructions. The base emulated CPUID profile does not
+    /// advertise this extension, so its XOP encodings must #UD unless a
+    /// semantic harness opts in explicitly.
+    pub(super) tbm: bool,
     /// Enable AVX10.2 media dot-product instructions (AVX_VNNI_INT8 and
     /// AVX_VNNI_INT16 families). The base emulated CPUID profile does not
     /// advertise these extensions, so their opcodes must #UD unless a semantic
@@ -1005,6 +1009,7 @@ impl X86_64Vcpu {
             xeon_phi_avx512: false,
             vp2intersect: false,
             sse4a: false,
+            tbm: false,
             avx10_media: false,
             avx10_vminmax: false,
             avx10_sat_convert: false,
@@ -1102,6 +1107,16 @@ impl X86_64Vcpu {
     #[inline]
     pub(in crate::isa::x86_64) fn sse4a_enabled(&self) -> bool {
         self.sse4a
+    }
+
+    /// Enable or disable AMD TBM instructions for semantic harnesses.
+    pub fn set_tbm_enabled(&mut self, enabled: bool) {
+        self.tbm = enabled;
+    }
+
+    #[inline]
+    pub(in crate::isa::x86_64) fn tbm_enabled(&self) -> bool {
+        self.tbm
     }
 
     /// Enable or disable AVX10.2 media dot-product instructions for semantic harnesses.
@@ -5050,6 +5065,7 @@ impl X86_64Vcpu {
         gr.cpuid_xeon_phi_avx512 = u64::from(self.xeon_phi_avx512_enabled());
         gr.cpuid_vp2intersect = u64::from(self.vp2intersect_enabled());
         gr.cpuid_sse4a = u64::from(self.sse4a_enabled());
+        gr.cpuid_tbm = u64::from(self.tbm_enabled());
         gr.gpr[0] = self.regs.rax;
         gr.gpr[1] = self.regs.rcx;
         gr.gpr[2] = self.regs.rdx;
@@ -5282,6 +5298,12 @@ impl X86_64Vcpu {
             pc: self.regs.rip,
             nzcv: x86_rflags_to_aarch64_nzcv(pre_rflags),
             x86_apx_enabled: u64::from(self.apx_enabled()),
+            x86_tbm_enabled: u64::from(self.tbm_enabled()),
+            x86_tbm_mode_valid: u64::from(
+                self.sregs.cr0 & 1 != 0
+                    && self.sregs.cs.l
+                    && self.regs.rflags & flags::bits::VM == 0,
+            ),
             ..Default::default()
         };
         for index in 0_u8..16 {

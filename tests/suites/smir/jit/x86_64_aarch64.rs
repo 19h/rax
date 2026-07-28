@@ -16,6 +16,9 @@ const LOAD_ADDR: u64 = 0x10_0000;
 const MEM_SIZE: u64 = 16 * 1024 * 1024;
 const STATUS: u64 = (1 << 0) | (1 << 2) | (1 << 4) | (1 << 6) | (1 << 7) | (1 << 11);
 
+#[path = "x86_64_aarch64/tbm.rs"]
+mod tbm;
+
 fn make_vcpu_code(code: &[u8]) -> X86_64Vcpu {
     let region = MmapRegion::new(MEM_SIZE as usize).unwrap();
     let guest_region = GuestRegionMmap::new(region, GuestAddress(0)).unwrap();

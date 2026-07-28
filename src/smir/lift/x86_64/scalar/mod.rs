@@ -38,3 +38,5 @@ mod tsx;
 pub use tsx::*;
 mod x87;
 pub use x87::*;
+mod xop_tbm;
+pub use xop_tbm::*;

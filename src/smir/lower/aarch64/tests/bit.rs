@@ -1581,7 +1581,9 @@ fn lowers_bextr_x_imm_control_with_flags_as_ubfx_ands() {
 
     let mut expected = Vec::new();
     expected.extend_from_slice(&enc_bitfield_regs(1, 0b10, 8, 23, 1, 0).to_le_bytes());
-    expected.extend_from_slice(&enc_logical_reg_n(1, 0b11, 0, 31, 0, 0).to_le_bytes());
+    for word in expected_bextr_flag_merge_words(1, 0) {
+        expected.extend_from_slice(&word.to_le_bytes());
+    }
     expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
     assert_eq!(code, expected);
 }
@@ -1608,7 +1610,9 @@ fn lowers_bextr_x_two_imms_with_flags_as_movz_movk_ands() {
     let mut expected = Vec::new();
     expected.extend_from_slice(&enc_mov_wide(1, 0b10, 0, 0x9abc, 0).to_le_bytes());
     expected.extend_from_slice(&enc_mov_wide(1, 0b11, 1, 0x5678, 0).to_le_bytes());
-    expected.extend_from_slice(&enc_logical_reg_n(1, 0b11, 0, 31, 0, 0).to_le_bytes());
+    for word in expected_bextr_flag_merge_words(1, 0) {
+        expected.extend_from_slice(&word.to_le_bytes());
+    }
     expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
     assert_eq!(code, expected);
 }
@@ -1634,12 +1638,17 @@ fn lowers_bextr_x_two_imms_all_ones_with_flags_as_movn_ands() {
 
     let mut expected = Vec::new();
     expected.extend_from_slice(&enc_mov_wide(1, 0b00, 0, 0, 0).to_le_bytes());
-    expected.extend_from_slice(&enc_logical_reg_n(1, 0b11, 0, 31, 0, 0).to_le_bytes());
+    for word in expected_bextr_flag_merge_words(1, 0) {
+        expected.extend_from_slice(&word.to_le_bytes());
+    }
     expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
     assert_eq!(code, expected);
 }
 #[test]
 fn lowers_bextr_zero_imm_source_reg_control_as_zero() {
+    let mut flagful_zero = vec![enc_mov_wide(0, 0b10, 0, 0, 0)];
+    flagful_zero.extend(expected_bextr_flag_merge_words(0, 0));
+    flagful_zero.push(0xd65f_03c0);
     let cases = [
         (
             OpKind::Bextr {
@@ -1659,11 +1668,7 @@ fn lowers_bextr_zero_imm_source_reg_control_as_zero() {
                 width: OpWidth::W32,
                 flags: bextr_flags(),
             },
-            vec![
-                enc_mov_wide(0, 0b10, 0, 0, 0),
-                enc_logical_reg_n(0, 0b11, 0, 31, 0, 0),
-                0xd65f_03c0u32,
-            ],
+            flagful_zero,
         ),
         (
             OpKind::Bextr {

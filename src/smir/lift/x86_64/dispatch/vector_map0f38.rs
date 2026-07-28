@@ -1,11 +1,23 @@
 //! VEX/EVEX opcode-map `0F 38` dispatch.
 
+use crate::smir::ir::TrapKind;
 use crate::smir::ir::ops::{X86SsePrefix, X86VecMap};
 use crate::smir::ir::types::VecElementType;
 use crate::smir::lift::x86_64::{VecEncodingKind, VecPrefix, X86_64Lifter};
-use crate::smir::lift::{LiftContext, LiftError, LiftResult};
+use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult};
 
 impl X86_64Lifter {
+    fn vex_map0f38_invalid_opcode(bytes_consumed: usize) -> LiftResult {
+        LiftResult {
+            ops: Vec::new(),
+            bytes_consumed,
+            control_flow: ControlFlow::Trap {
+                kind: TrapKind::InvalidOpcode,
+            },
+            branch_targets: Vec::new(),
+        }
+    }
+
     pub(crate) fn lift_vector_map0f38(
         &self,
         prefix: VecPrefix,
@@ -109,6 +121,11 @@ impl X86_64Lifter {
             }
             0x00 if prefix.encoding == VecEncodingKind::Evex => {
                 self.lift_evex_pshufb(prefix, bytes, pc, ctx)
+            }
+            0x01..=0x03 | 0x05..=0x07
+                if prefix.encoding == VecEncodingKind::Vex && prefix.pp != X86SsePrefix::OpSize =>
+            {
+                Ok(Self::vex_map0f38_invalid_opcode(prefix.bytes + 1))
             }
             0x01..=0x03 | 0x05..=0x07 if prefix.encoding == VecEncodingKind::Vex => {
                 self.lift_vex_horizontal_integer(prefix, opcode, bytes, pc, ctx)

@@ -6,9 +6,10 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate, LazyFlagOp, LazyFlags};
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
-    X86CacheControlKind, X86CountKind, X86OpHint, X86ThreeDNowKind, X86X87ArithmeticDestination,
-    X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind,
-    X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
+    X86CacheControlKind, X86CountKind, X86OpHint, X86TbmKind, X86ThreeDNowKind,
+    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
+    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
+    X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -227,6 +228,47 @@ impl SmirInterpreter {
                         X86BlsKind::Blsmsk => ctx.flags.set_lazy_blsmsk(src, result, *width),
                         X86BlsKind::Blsi => ctx.flags.set_lazy_blsi(src, result, *width),
                     }
+                }
+            }
+
+            OpKind::X86Tbm {
+                dst,
+                src,
+                width,
+                kind,
+                flags,
+            } => {
+                let src = ctx.read_vreg(*src) & width.mask();
+                let incremented = src.wrapping_add(1) & width.mask();
+                let decremented = src.wrapping_sub(1) & width.mask();
+                let result = match kind {
+                    X86TbmKind::Blcfill => src & incremented,
+                    X86TbmKind::Blci => src | !incremented,
+                    X86TbmKind::Blcic => !src & incremented,
+                    X86TbmKind::Blcmsk => src ^ incremented,
+                    X86TbmKind::Blcs => src | incremented,
+                    X86TbmKind::Blsfill => src | decremented,
+                    X86TbmKind::Blsic => !src | decremented,
+                    X86TbmKind::T1mskc => !src | incremented,
+                    X86TbmKind::Tzmsk => !src & decremented,
+                } & width.mask();
+                Self::write_gpr(ctx, *dst, result, *width);
+
+                if flags.updates_any() {
+                    ctx.flags.materialize_all();
+                    let carry = match kind {
+                        X86TbmKind::Blsfill | X86TbmKind::Blsic | X86TbmKind::Tzmsk => src == 0,
+                        X86TbmKind::Blcfill
+                        | X86TbmKind::Blci
+                        | X86TbmKind::Blcic
+                        | X86TbmKind::Blcmsk
+                        | X86TbmKind::Blcs
+                        | X86TbmKind::T1mskc => src == width.mask(),
+                    };
+                    ctx.flags.materialized.cf = carry;
+                    ctx.flags.materialized.of = false;
+                    ctx.flags.materialized.sf = result & (1_u64 << (width.bits() - 1)) != 0;
+                    ctx.flags.materialized.zf = result == 0;
                 }
             }
 

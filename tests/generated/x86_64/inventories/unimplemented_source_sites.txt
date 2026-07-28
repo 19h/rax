@@ -18,4 +18,5 @@ src/smir/lift/x86_64/dispatch/vector.rs|1|mixed-dispatch|LiftError::Unsupported
 src/smir/lift/x86_64/dispatch/vector_map0f38.rs|1|mixed-dispatch|LiftError::Unsupported
 src/smir/lift/x86_64/dispatch/vector_map0f3a.rs|1|mixed-dispatch|LiftError::Unsupported
 src/smir/lift/x86_64/mod.rs|1|mixed-dispatch|LiftError::Unsupported
+src/smir/lift/x86_64/scalar/xop_tbm.rs|1|valid-gap-needs-diff|LiftError::Unsupported
 src/smir/lift/x86_64/simd/evex/misc.rs|1|mixed-dispatch|LiftError::Unsupported

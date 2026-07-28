@@ -2583,9 +2583,16 @@ fn lift_pop_rm_orders_rsp_update_before_memory_destination() {
             ..
         }
     ));
+    // 8F C8 is not a legacy POP /1 after AMD XOP disambiguation: C8H carries
+    // XOP map selector 8. The decoder therefore needs the remaining XOP prefix
+    // and opcode bytes before it can classify the instruction.
     assert!(matches!(
         lift_single(&[0x8F, 0xC8]),
-        Err(LiftError::InvalidEncoding { .. })
+        Err(LiftError::Incomplete {
+            have: 2,
+            need: 4,
+            ..
+        })
     ));
 
     let pop_sp = lift_single(&[0x66, 0x8F, 0xC4]).unwrap();

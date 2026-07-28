@@ -23,7 +23,7 @@
 use super::{
     X86_GUEST_AC_FLAG_OFFSET, X86_GUEST_APX_ENABLED_OFFSET, X86_GUEST_CALL_FN_OFFSET,
     X86_GUEST_CONTROL_WRITE_FN_OFFSET, X86_GUEST_CPL_OFFSET, X86_GUEST_CPUID_FN_OFFSET,
-    X86_GUEST_CPUID_SSE4A_OFFSET, X86_GUEST_CPUID_VP2INTERSECT_OFFSET,
+    X86_GUEST_CPUID_SSE4A_OFFSET, X86_GUEST_CPUID_TBM_OFFSET, X86_GUEST_CPUID_VP2INTERSECT_OFFSET,
     X86_GUEST_CPUID_XEON_PHI_AVX512_OFFSET, X86_GUEST_CR0_OFFSET, X86_GUEST_CR2_OFFSET,
     X86_GUEST_CR3_OFFSET, X86_GUEST_CR4_OFFSET, X86_GUEST_CR8_OFFSET, X86_GUEST_CS_L_OFFSET,
     X86_GUEST_CTX_OFFSET, X86_GUEST_DR0_OFFSET, X86_GUEST_DR1_OFFSET, X86_GUEST_DR2_OFFSET,
@@ -341,6 +341,9 @@ pub struct GuestRegs {
     /// Nonarchitectural helper transfer slot used by exact fused vector-memory
     /// sequences. It is never imported or exported by the native trampoline.
     pub vector_scratch: [u64; 8],
+    /// Non-zero when CPUID leaf 0x80000001 enumerates TBM. This field is
+    /// append-only so every established native helper/state offset is stable.
+    pub cpuid_tbm: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -430,6 +433,7 @@ impl Default for GuestRegs {
             xmm_state_active: 0,
             mxcsr_state_active: 0,
             vector_scratch: [0; 8],
+            cpuid_tbm: 0,
         }
     }
 }
@@ -510,6 +514,12 @@ pub struct Aarch64GuestRegs {
     /// Ordinary AArch64 and AArch32 guests leave this zero and cannot admit
     /// x86-specific feature guards through their native gates.
     pub x86_apx_enabled: u64,
+    /// Dynamic AMD TBM enable state for admitted x86-on-AArch64 regions.
+    pub x86_tbm_enabled: u64,
+    /// Non-zero when the bridged x86 guest is in protected, non-virtual-8086
+    /// 64-bit mode. Architectural compatibility-mode TBM deoptimizes because
+    /// the strict x86-64 lifter models long-mode XOP.W and address defaults.
+    pub x86_tbm_mode_valid: u64,
 }
 
 impl Default for Aarch64GuestRegs {
@@ -532,6 +542,8 @@ impl Default for Aarch64GuestRegs {
             vec_store_fn: 0,
             exit_flags: 0,
             x86_apx_enabled: 0,
+            x86_tbm_enabled: 0,
+            x86_tbm_mode_valid: 0,
         }
     }
 }
@@ -554,6 +566,8 @@ impl Aarch64GuestRegs {
     pub const VEC_STORE_FN_OFFSET: i32 = Self::VEC_LOAD_FN_OFFSET + 8;
     pub const EXIT_FLAGS_OFFSET: i32 = Self::VEC_STORE_FN_OFFSET + 8;
     pub const X86_APX_ENABLED_OFFSET: i32 = Self::EXIT_FLAGS_OFFSET + 8;
+    pub const X86_TBM_ENABLED_OFFSET: i32 = Self::X86_APX_ENABLED_OFFSET + 8;
+    pub const X86_TBM_MODE_VALID_OFFSET: i32 = Self::X86_TBM_ENABLED_OFFSET + 8;
 
     /// A native exit, rather than an ordinary `Return`, recorded `pc`.
     pub const EXIT_VALID: u64 = 1 << 0;

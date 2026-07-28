@@ -1661,6 +1661,7 @@ impl SmirInterpreter {
                         xeon_phi_avx512: x86.xeon_phi_avx512,
                         vp2intersect: x86.vp2intersect,
                         sse4a: x86.sse4a,
+                        tbm: x86.tbm,
                         apx: x86.apx_enabled,
                     },
                 );

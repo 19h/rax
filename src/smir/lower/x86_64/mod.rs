@@ -9,7 +9,8 @@ use std::collections::HashMap;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
-    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86VecAlign, X86VecMap, X86X87ControlKind,
+    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86TbmKind, X86VecAlign, X86VecMap,
+    X86X87ControlKind,
 };
 use crate::smir::ir::types::{
     Address, ArchReg, BlockId, Condition, DispSize, FenceKind, FpRoundMode, GuestAddr, MemWidth,
@@ -96,6 +97,8 @@ mod require_apx;
 pub use require_apx::*;
 mod require_sse4a;
 pub use require_sse4a::*;
+mod require_tbm;
+pub use require_tbm::*;
 mod read_control;
 pub use read_control::*;
 mod read_debug;
@@ -126,6 +129,10 @@ pub use jit_mul::*;
 mod jit_shift;
 #[cfg(feature = "smir-jit")]
 pub use jit_shift::*;
+#[cfg(feature = "smir-jit")]
+mod jit_tbm;
+#[cfg(feature = "smir-jit")]
+pub use jit_tbm::*;
 mod jit_crc32;
 pub use jit_crc32::*;
 mod jit_call;
@@ -164,6 +171,8 @@ mod sse4a;
 pub use sse4a::*;
 mod state;
 pub use state::*;
+mod state_tbm;
+pub use state_tbm::*;
 mod state_alu;
 pub use state_alu::*;
 mod state_lea;
@@ -847,7 +856,7 @@ pub(crate) fn x86_state_backed_gpr_bextr_bzhi_valid(op: &SmirOp) -> bool {
         } => {
             arch_gpr(dst)
                 && arch_gpr(src)
-                && arch_gpr(control)
+                && (arch_gpr(control) || matches!(control, VReg::Imm(_)))
                 && (*flags == FlagUpdate::None || *flags == FlagUpdate::Specific(bextr_flags))
         }
         OpKind::Bzhi {
@@ -887,6 +896,38 @@ pub(crate) fn x86_state_backed_gpr_bls_valid(op: &SmirOp) -> bool {
         && matches!(
             &op.kind,
             OpKind::X86Bls {
+                dst,
+                src,
+                width: OpWidth::W32 | OpWidth::W64,
+                flags,
+                ..
+            } if arch_gpr(dst)
+                && arch_gpr(src)
+                && (*flags == FlagUpdate::None || *flags == FlagUpdate::Specific(defined))
+        )
+}
+
+pub(crate) fn x86_state_backed_gpr_tbm_candidate(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::X86Tbm { dst, src, .. }
+            if x86_state_backed_arch_gpr(dst) || x86_state_backed_arch_gpr(src)
+    )
+}
+
+pub(crate) fn x86_state_backed_gpr_tbm_valid(op: &SmirOp) -> bool {
+    let arch_gpr =
+        |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some());
+    let defined = FlagSet::CF
+        .union(FlagSet::ZF)
+        .union(FlagSet::SF)
+        .union(FlagSet::OF);
+
+    x86_state_backed_gpr_tbm_candidate(op)
+        && op.x86_hint.is_none()
+        && matches!(
+            &op.kind,
+            OpKind::X86Tbm {
                 dst,
                 src,
                 width: OpWidth::W32 | OpWidth::W64,

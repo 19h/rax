@@ -158,10 +158,6 @@ impl X86_64Vcpu {
         // VEX.LZ.0F38 BMI1/BMI2 instructions
         if m_mmmm == 0x2 && vex_l == 0 {
             match (vex_pp, opcode) {
-                // TBM group: VEX.NDD.LZ.0F38 01 /1,/2,/3,/4,/6,/7
-                (0, 0x01) => return execute::bmi::tbm_01_group(self, ctx, vvvv),
-                // BLCI: VEX.NDD.LZ.0F38 02 /6
-                (0, 0x02) => return execute::bmi::tbm_blci(self, ctx, vvvv),
                 // ANDN: VEX.LZ.0F38.W{0,1} F2 /r
                 (0, 0xF2) => return execute::bmi::andn(self, ctx, vvvv),
                 // BLSI/BLSMSK/BLSR: VEX.LZ.0F38.W{0,1} F3 /1,/2,/3

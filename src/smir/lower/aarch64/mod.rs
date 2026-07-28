@@ -9,7 +9,7 @@ use std::collections::HashMap;
 
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::ops::{
-    ArmDpRegShiftKind, OpKind, SmirOp, X86AdxKind, X86BlsKind, X86CountKind,
+    ArmDpRegShiftKind, OpKind, SmirOp, X86AdxKind, X86BlsKind, X86CountKind, X86TbmKind,
 };
 use crate::smir::ir::types::{
     Address, ArchReg, ArmReg, AtomicOp, Avx10FP16Op, BlockId, Condition, ExtendOp, FenceKind,
@@ -25,6 +25,8 @@ mod arithmetic;
 pub use arithmetic::*;
 mod atomic;
 pub use atomic::*;
+mod bextr;
+pub use bextr::*;
 mod bit;
 pub use bit::*;
 mod branch;
@@ -49,6 +51,8 @@ mod mov;
 pub use mov::*;
 mod require_apx;
 pub use require_apx::*;
+mod require_tbm;
+pub use require_tbm::*;
 mod shift;
 pub use shift::*;
 mod simd;
@@ -90,6 +94,8 @@ const A64_GUEST_VEC_LOAD_FN_OFFSET: u32 = 848;
 const A64_GUEST_VEC_STORE_FN_OFFSET: u32 = 856;
 const A64_GUEST_EXIT_FLAGS_OFFSET: u32 = 864;
 const A64_GUEST_X86_APX_ENABLED_OFFSET: u32 = A64_GUEST_EXIT_FLAGS_OFFSET + 8;
+const A64_GUEST_X86_TBM_ENABLED_OFFSET: u32 = A64_GUEST_X86_APX_ENABLED_OFFSET + 8;
+const A64_GUEST_X86_TBM_MODE_VALID_OFFSET: u32 = A64_GUEST_X86_TBM_ENABLED_OFFSET + 8;
 const A64_EXIT_VALID: i64 = 1 << 0;
 const A64_EXIT_AARCH32_T: i64 = 1 << 1;
 const A64_EXIT_AARCH32_T_VALID: i64 = 1 << 2;

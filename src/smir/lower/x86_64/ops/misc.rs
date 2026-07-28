@@ -100,6 +100,7 @@ impl X86_64Lowerer {
             OpKind::X86LoadMxcsr { .. } => self.emit_x86_load_mxcsr(op)?,
             OpKind::X86RequireApx => self.emit_x86_require_apx(op)?,
             OpKind::X86RequireSse4a => self.emit_x86_require_sse4a(op)?,
+            OpKind::X86RequireTbm => self.emit_x86_require_tbm(op)?,
             OpKind::X86Sse4aBitfield { .. } => self.emit_x86_sse4a_bitfield(op)?,
             OpKind::X86Sse4aMovntStore { .. } => self.emit_x86_sse4a_movnt_store(op)?,
 

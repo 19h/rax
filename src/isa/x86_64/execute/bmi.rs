@@ -2,7 +2,8 @@
 //!
 //! BMI1: ANDN, BEXTR, BLSI, BLSMSK, BLSR, TZCNT, LZCNT
 //! BMI2: BZHI, MULX, PDEP, PEXT, RORX, SARX, SHRX, SHLX
-//! TBM: BLCFILL, BLCI, BLCS, BLSFILL, BLSIC, T1MSKC, TZMSK (AMD)
+//! TBM: BEXTR, BLCFILL, BLCI, BLCIC, BLCMSK, BLCS, BLSFILL, BLSIC,
+//! T1MSKC, TZMSK (AMD)
 
 use crate::error::Result;
 use crate::vm::vcpu::VcpuExit;
@@ -430,68 +431,106 @@ pub fn shlx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, vvvv: u8) -> Result<Op
 // TBM Instructions (AMD)
 // =============================================================================
 
-/// TBM group (VEX.NDD.LZ.0F38 01 /1,/2,/3,/4,/6,/7)
-/// BLCFILL, BLSFILL, BLCS, TZMSK, BLSIC, T1MSKC
-pub fn tbm_01_group(
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(in crate::isa::x86_64) enum TbmKind {
+    Blcfill,
+    Blci,
+    Blcic,
+    Blcmsk,
+    Blcs,
+    Blsfill,
+    Blsic,
+    T1mskc,
+    Tzmsk,
+}
+
+/// Execute an XOP map-9 scalar TBM operation.
+pub fn tbm(
     vcpu: &mut X86_64Vcpu,
     ctx: &mut InsnContext,
-    vvvv: u8,
+    dst: u8,
+    kind: TbmKind,
 ) -> Result<Option<VcpuExit>> {
     let mask = if ctx.op_size == 8 {
         !0u64
     } else {
         0xFFFF_FFFFu64
     };
-    let modrm = ctx.peek_u8()?;
-    let reg_op = (modrm >> 3) & 0x07;
     let (_, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let src = if is_memory {
         vcpu.read_mem(addr, ctx.op_size)? & mask
     } else {
         vcpu.get_reg(rm, ctx.op_size) & mask
     };
-    let inv = !src & mask;
-    let add1 = src.wrapping_add(1);
-    let sub1 = src.wrapping_sub(1);
-    let result = match reg_op {
-        1 => src & add1, // BLCFILL: src & (src + 1)
-        2 => src | sub1, // BLSFILL: src | (src - 1)
-        3 => src | add1, // BLCS: src | (src + 1)
-        4 => inv & sub1, // TZMSK: ~src & (src - 1)
-        6 => inv | sub1, // BLSIC: ~src | (src - 1)
-        7 => inv | add1, // T1MSKC: ~src | (src + 1)
-        _ => return vcpu.inject_undefined_instruction(),
+    let incremented = src.wrapping_add(1) & mask;
+    let decremented = src.wrapping_sub(1) & mask;
+    let result = match kind {
+        TbmKind::Blcfill => src & incremented,
+        TbmKind::Blci => src | !incremented,
+        TbmKind::Blcic => !src & incremented,
+        TbmKind::Blcmsk => src ^ incremented,
+        TbmKind::Blcs => src | incremented,
+        TbmKind::Blsfill => src | decremented,
+        TbmKind::Blsic => !src | decremented,
+        TbmKind::T1mskc => !src | incremented,
+        TbmKind::Tzmsk => !src & decremented,
+    } & mask;
+    vcpu.set_reg(dst, result, ctx.op_size);
+
+    let carry = match kind {
+        TbmKind::Blsfill | TbmKind::Blsic | TbmKind::Tzmsk => src == 0,
+        _ => src == mask,
     };
-    vcpu.set_reg(vvvv, result & mask, ctx.op_size);
+    vcpu.materialize_flags();
+    vcpu.regs.rflags &= !(flags::bits::SF | flags::bits::ZF | flags::bits::OF | flags::bits::CF);
+    if carry {
+        vcpu.regs.rflags |= flags::bits::CF;
+    }
+    if result == 0 {
+        vcpu.regs.rflags |= flags::bits::ZF;
+    }
+    if result & (1_u64 << (u32::from(ctx.op_size) * 8 - 1)) != 0 {
+        vcpu.regs.rflags |= flags::bits::SF;
+    }
+    vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
 
-/// BLCI - Isolate Lowest Clear Bit (VEX.NDD.LZ.0F38 02 /6)
-pub fn tbm_blci(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-    vvvv: u8,
-) -> Result<Option<VcpuExit>> {
+/// Immediate-control BEXTR (XOP.L0.0A.W{0,1} 10 /r id).
+pub fn tbm_bextr_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let mask = if ctx.op_size == 8 {
-        !0u64
+        u64::MAX
     } else {
-        0xFFFF_FFFFu64
+        u64::from(u32::MAX)
     };
-    let modrm = ctx.peek_u8()?;
-    let reg_op = (modrm >> 3) & 0x07;
-    if reg_op != 6 {
-        return vcpu.inject_undefined_instruction();
-    }
-    let (_, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let (dst, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let control = ctx.consume_u32()?;
     let src = if is_memory {
         vcpu.read_mem(addr, ctx.op_size)? & mask
     } else {
         vcpu.get_reg(rm, ctx.op_size) & mask
     };
-    let inv = !src & mask;
-    let result = inv & src.wrapping_add(1); // BLCI: ~src & (src + 1)
-    vcpu.set_reg(vvvv, result & mask, ctx.op_size);
+    let start = control & 0xff;
+    let length = (control >> 8) & 0xff;
+    let bits = u32::from(ctx.op_size) * 8;
+    let result = if start >= bits || length == 0 {
+        0
+    } else {
+        let shifted = src >> start;
+        if length >= bits {
+            shifted
+        } else {
+            shifted & ((1_u64 << length) - 1)
+        }
+    };
+    vcpu.set_reg(dst, result, ctx.op_size);
+    vcpu.materialize_flags();
+    vcpu.regs.rflags &= !(flags::bits::ZF | flags::bits::OF | flags::bits::CF);
+    if result == 0 {
+        vcpu.regs.rflags |= flags::bits::ZF;
+    }
+    vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

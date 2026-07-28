@@ -116,6 +116,8 @@ mod sti;
 #[cfg(test)]
 mod swapgs;
 #[cfg(test)]
+mod tbm;
+#[cfg(test)]
 mod timing;
 #[cfg(test)]
 mod tsx;

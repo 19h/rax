@@ -239,6 +239,35 @@ pub enum X86BlsKind {
     Blsi,
 }
 
+/// AMD TBM scalar bit-manipulation operation selected by XOP map 9.
+///
+/// These operations derive CF from an internal increment/decrement and derive
+/// OF/SF/ZF from the final logical result. PF and AF are architecturally
+/// undefined and are preserved by RAX's deterministic undefined-flag policy.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86TbmKind {
+    /// Fill through the lowest clear bit: `src & (src + 1)`.
+    Blcfill,
+    /// Isolate the lowest clear bit and complement the remainder:
+    /// `src | !(src + 1)`.
+    Blci,
+    /// Isolate the lowest clear bit: `!src & (src + 1)`.
+    Blcic,
+    /// Create a mask through the lowest clear bit: `src ^ (src + 1)`.
+    Blcmsk,
+    /// Set the lowest clear bit: `src | (src + 1)`.
+    Blcs,
+    /// Fill through the lowest set bit: `src | (src - 1)`.
+    Blsfill,
+    /// Clear the lowest set bit and complement the remainder:
+    /// `!src | (src - 1)`.
+    Blsic,
+    /// Inverse mask from trailing ones: `!src | (src + 1)`.
+    T1mskc,
+    /// Mask from trailing zeros: `!src & (src - 1)`.
+    Tzmsk,
+}
+
 /// ADX carry-chain selected by the ADCX/ADOX mandatory prefix.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum X86AdxKind {
@@ -874,6 +903,15 @@ pub enum OpKind {
         src: VReg,
         width: OpWidth,
         kind: X86BlsKind,
+        flags: FlagUpdate,
+    },
+
+    /// AMD TBM scalar bit operation with its exact architectural flag contract.
+    X86Tbm {
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        kind: X86TbmKind,
         flags: FlagUpdate,
     },
 
@@ -3939,6 +3977,15 @@ pub enum OpKind {
     /// the precise #UD or #NM without committing the following operation.
     X86RequireSse4a,
 
+    /// Require AMD TBM in protected, non-virtual-8086 64-bit mode before the
+    /// remainder of the XOP instruction may execute. Architectural TBM also
+    /// exists in 32-bit protected/compatibility mode, where XOP.W is ignored
+    /// and address-size defaults differ; the strict x86-64 lifter therefore
+    /// deoptimizes those modes to direct execution at `SmirOp::guest_pc`.
+    /// Failure occurs before any following memory address calculation or load
+    /// can fault.
+    X86RequireTbm,
+
     /// AMD SSE4A EXTRQ/INSERTQ over the low 64 bits of XMM registers. A pair of
     /// immediate controls is represented by `Some(length), Some(index)`, both
     /// already truncated to six bits. `None, None` selects register controls:
@@ -4722,6 +4769,7 @@ impl OpKind {
                 | OpKind::SetAC { .. }
                 | OpKind::X86RequireApx
                 | OpKind::X86RequireSse4a
+                | OpKind::X86RequireTbm
                 | OpKind::X86Sse4aBitfield { .. }
                 | OpKind::X86Cli { .. }
                 | OpKind::X86Sti { .. }
@@ -4779,6 +4827,7 @@ impl OpKind {
             | OpKind::Bextr { dst, .. }
             | OpKind::Bzhi { dst, .. }
             | OpKind::X86Bls { dst, .. }
+            | OpKind::X86Tbm { dst, .. }
             | OpKind::X86Adx { dst, .. }
             | OpKind::Pdep { dst, .. }
             | OpKind::Pext { dst, .. }
@@ -5259,6 +5308,7 @@ impl OpKind {
             | OpKind::SetAC { .. }
             | OpKind::X86RequireApx
             | OpKind::X86RequireSse4a
+            | OpKind::X86RequireTbm
             | OpKind::X86Cli { .. }
             | OpKind::X86Sti { .. }
             | OpKind::CmcCF
@@ -5354,6 +5404,7 @@ impl OpKind {
                     | OpKind::SetAC { .. }
                     | OpKind::X86RequireApx
                     | OpKind::X86RequireSse4a
+                    | OpKind::X86RequireTbm
                     | OpKind::X86Cli { .. }
                     | OpKind::X86Sti { .. }
                     | OpKind::CmcCF

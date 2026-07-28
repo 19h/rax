@@ -496,6 +496,8 @@ pub struct X86RegState {
     pub vp2intersect: bool,
     /// Opt-in AMD SSE4A feature profile used by CPUID leaf 0x80000001.
     pub sse4a: bool,
+    /// Opt-in AMD TBM feature profile used by CPUID leaf 0x80000001.
+    pub tbm: bool,
     /// Whether the guest profile exposes Intel APX and its XSAVE component.
     pub apx_enabled: bool,
     /// IA32_TSC_ADJUST local timestamp-counter offset.

@@ -26,7 +26,11 @@ mod misc;
 #[cfg(test)]
 mod require_apx;
 #[cfg(test)]
+mod require_tbm;
+#[cfg(test)]
 mod shift;
+#[cfg(test)]
+mod tbm;
 #[cfg(test)]
 mod vector;
 use crate::isa::arm::aarch64::{AArch64Config, AArch64Cpu};
@@ -3592,12 +3596,26 @@ fn expected_bzhi_nzcv(
 }
 
 fn expected_bextr_nzcv(old_nzcv: u8, result: u64, width: OpWidth, flags: FlagUpdate) -> u8 {
-    let flag_width = if width == OpWidth::W64 {
-        OpWidth::W64
-    } else {
-        OpWidth::W32
-    };
-    expected_bzhi_nzcv(old_nzcv, result, false, flag_width, flags)
+    if !flags.updates_any() {
+        return old_nzcv;
+    }
+    (old_nzcv & 0b1000) | (u8::from(result & width.mask() == 0) << 2)
+}
+
+fn expected_bextr_flag_merge_words(sf: u32, result: u32) -> [u32; 11] {
+    [
+        enc_ldst_simm_regs(3, 0b00, 0b11, -16, 16, 31), // str x16,[sp,#-16]!
+        enc_ldst_simm_regs(3, 0b00, 0b11, -16, 17, 31), // str x17,[sp,#-16]!
+        0xd53b_4210,                                    // mrs x16,nzcv
+        enc_logical_reg_n(sf, 0b11, 0, 31, result, result), // ands xzr,result,result
+        0xd53b_4211,                                    // mrs x17,nzcv
+        0x1201_7210,                                    // and w16,w16,#0x8fffffff
+        0x1204_0a31,                                    // and w17,w17,#0x70000000
+        enc_logical_reg_n(0, 0b01, 0, 16, 16, 17),      // orr w16,w16,w17
+        0xd51b_4210,                                    // msr nzcv,x16
+        enc_ldst_simm_regs(3, 0b01, 0b01, 16, 17, 31),  // ldr x17,[sp],#16
+        enc_ldst_simm_regs(3, 0b01, 0b01, 16, 16, 31),  // ldr x16,[sp],#16
+    ]
 }
 
 fn assert_bzhi_imm_index_lowering(

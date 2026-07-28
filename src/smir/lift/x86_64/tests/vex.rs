@@ -2448,11 +2448,24 @@ fn lift_legacy_and_vex_horizontal_integer_family_covers_modes_and_invalids() {
         wig.ops.last().and_then(|op| op.x86_hint),
         Some(X86OpHint::VexOp { w: true, .. })
     ));
+
+    // VEX.pp=00 reserves this opcode cell. It is terminal at the four-byte
+    // prefix+opcode frontier, before ModR/M decode, and must not become an
+    // interpreter fallback.
+    let reserved = lift_single(&[0xC4, 0xE2, 0x70, 0x01, 0xC1]).unwrap();
+    assert_eq!(reserved.bytes_consumed, 4);
+    assert!(reserved.ops.is_empty());
+    assert!(matches!(
+        reserved.control_flow,
+        ControlFlow::Trap {
+            kind: TrapKind::InvalidOpcode
+        }
+    ));
+
     for bytes in [
         &[0x0F, 0x38, 0x01][..],                   // missing ModR/M
         &[0xF3, 0x66, 0x0F, 0x38, 0x01, 0xC1][..], // conflicting prefix
         &[0xF0, 0x66, 0x0F, 0x38, 0x07, 0xC1][..], // LOCK
-        &[0xC4, 0xE2, 0x70, 0x01, 0xC1][..],       // VEX.pp != 66
         &[0xC4, 0xE2, 0x71, 0x01][..],             // missing ModR/M
         &[0x62, 0xF2, 0x75, 0x08, 0x01, 0xC1][..], // no EVEX PHADDW form
     ] {

@@ -6,7 +6,8 @@ use std::collections::HashMap;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
-    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86VecAlign, X86VecMap, X86X87ControlKind,
+    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86TbmKind, X86VecAlign, X86VecMap,
+    X86X87ControlKind,
 };
 use crate::smir::ir::types::{
     Address, ArchReg, BlockId, Condition, DispSize, FenceKind, FpRoundMode, GuestAddr, MemWidth,
@@ -320,6 +321,146 @@ impl X86_64Lowerer {
         let mut emitter = X86Emitter::new(&mut self.code);
         emitter.emit_vex_bls_rr(kind, dst_reg, src_reg, width);
         self.finish_bmi_flags(dst_reg, defined_rflags_mask);
+        Ok(())
+    }
+
+    pub(crate) fn emit_x86_tbm_regs(
+        &mut self,
+        dst: PhysReg,
+        src: PhysReg,
+        width: OpWidth,
+        kind: X86TbmKind,
+        defined_rflags_mask: Option<i64>,
+    ) {
+        let decrement = matches!(
+            kind,
+            X86TbmKind::Blsfill | X86TbmKind::Blsic | X86TbmKind::Tzmsk
+        );
+        let invert_source = matches!(
+            kind,
+            X86TbmKind::Blcic | X86TbmKind::Blsic | X86TbmKind::T1mskc | X86TbmKind::Tzmsk
+        );
+        let logical_opcode = match kind {
+            X86TbmKind::Blcfill | X86TbmKind::Blcic | X86TbmKind::Tzmsk => 0x20,
+            X86TbmKind::Blcmsk => 0x30,
+            X86TbmKind::Blci
+            | X86TbmKind::Blcs
+            | X86TbmKind::Blsfill
+            | X86TbmKind::Blsic
+            | X86TbmKind::T1mskc => 0x08,
+        };
+
+        self.code.emit_u8(0x9C); // old RFLAGS
+        let mut emitter = X86Emitter::new(&mut self.code);
+        emitter.emit_push(src); // original source
+        emitter.emit_mov_rr(dst, src, width);
+        emitter.emit_alu_ri(if decrement { 5 } else { 0 }, dst, 1, width);
+        emitter.code.emit_u8(0x9C); // pseudo ADD/SUB RFLAGS
+
+        if kind == X86TbmKind::Blci {
+            emitter.emit_not(dst, width);
+        } else if invert_source {
+            emitter.emit_group3_m_disp(2, PhysReg::Rsp, 8, DispSize::Auto, width);
+        }
+        emitter.emit_alu_mem_disp(
+            logical_opcode,
+            dst,
+            PhysReg::Rsp,
+            8,
+            DispSize::Auto,
+            width,
+            X86AluEncoding::RegRm,
+        );
+
+        // Save the final logical flags, then splice in only pseudo ADD/SUB.CF.
+        // BT leaves several status flags undefined, so it is used only while
+        // editing the saved image; POPFQ restores the exact OF/SF/ZF image
+        // before the ordinary deterministic undefined-flag merge.
+        emitter.code.emit_u8(0x9C); // final logical RFLAGS
+        emitter.emit_alu_mi_disp(4, PhysReg::Rsp, 0, DispSize::Auto, !1, OpWidth::W64);
+        emitter.emit_bit_test_mi_disp(BitTestRegOp::Test, PhysReg::Rsp, 8, 0, OpWidth::W64);
+        emitter.emit_alu_mi_disp(2, PhysReg::Rsp, 0, DispSize::Auto, 0, OpWidth::W64);
+        emitter.code.emit_u8(0x9D); // merged logical flags
+        emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
+        self.finish_bmi_flags(dst, defined_rflags_mask);
+    }
+
+    pub(crate) fn emit_x86_bextr_imm_regs(
+        &mut self,
+        dst: PhysReg,
+        src: PhysReg,
+        control: i64,
+        width: OpWidth,
+        defined_rflags_mask: Option<i64>,
+    ) -> Result<(), LowerError> {
+        // Host BMI1 BEXTR requires a register control operand. Reuse the dead
+        // incoming destination when it does not alias the source. For an alias,
+        // save one explicit guest-mapped scratch so materializing the immediate
+        // cannot corrupt any architectural GPR.
+        let saved_scratch = if dst == src {
+            Some(if dst == PhysReg::Rax {
+                PhysReg::Rcx
+            } else {
+                PhysReg::Rax
+            })
+        } else {
+            None
+        };
+        let control_reg = saved_scratch.unwrap_or(dst);
+        Self::ensure_flag_stack_operands_safe("Bextr", &[dst, src, control_reg])?;
+        if let Some(scratch) = saved_scratch {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_push(scratch);
+        }
+        self.code.emit_u8(0x9C); // pushfq
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_ri(control_reg, control, OpWidth::W64);
+            emitter.emit_vex_bmi_rr(0xF7, dst, src, control_reg, width);
+        }
+        self.finish_bmi_flags(dst, defined_rflags_mask);
+        if let Some(scratch) = saved_scratch {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_pop(scratch);
+        }
+        Ok(())
+    }
+
+    pub(crate) fn lower_x86_tbm(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        kind: X86TbmKind,
+        flags: FlagUpdate,
+    ) -> Result<(), LowerError> {
+        if !matches!(width, OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::InvalidOperand {
+                op: format!("X86Tbm::{kind:?}"),
+                operand: format!("unsupported width {width:?}"),
+            });
+        }
+        let defined = FlagSet::CF
+            .union(FlagSet::ZF)
+            .union(FlagSet::SF)
+            .union(FlagSet::OF);
+        let defined_rflags_mask = match flags {
+            FlagUpdate::None => None,
+            FlagUpdate::Specific(set) if set == defined => {
+                Some(Self::x86_status_rflags_mask(defined))
+            }
+            _ => {
+                return Err(LowerError::InvalidOperand {
+                    op: format!("X86Tbm::{kind:?}"),
+                    operand: format!("unsupported flag update {flags:?}"),
+                });
+            }
+        };
+
+        let dst_reg = self.get_dst_reg(dst)?;
+        let src_reg = self.get_reg(src)?;
+        Self::ensure_flag_stack_operands_safe("X86Tbm", &[dst_reg, src_reg])?;
+        self.emit_x86_tbm_regs(dst_reg, src_reg, width, kind, defined_rflags_mask);
         Ok(())
     }
 

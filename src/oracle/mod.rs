@@ -53,6 +53,7 @@ use crate::smir::ir::ops::X86SystemSelectorLoadOp;
 use crate::smir::ir::ops::X86SystemSelectorSource;
 use crate::smir::ir::ops::X86SystemSelectorStoreOp;
 use crate::smir::ir::ops::X86SystemSelectorTarget;
+use crate::smir::ir::ops::X86TbmKind;
 use crate::smir::ir::ops::X86ThreeDNowKind;
 use crate::smir::ir::ops::X86WaitPkgOp;
 use crate::smir::ir::ops::X86X87CompareSource;
@@ -1336,6 +1337,7 @@ debug_name_json!(
     X86DebugReg,
     X86FastSystemTransferKind,
     X86BlsKind,
+    X86TbmKind,
     X86CountKind,
     X86ThreeDNowKind,
     X86X87Constant,
@@ -1742,6 +1744,13 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             kind,
             flags,
         } => op_json!("x86_bls", dst, src, width, kind, flags),
+        OpKind::X86Tbm {
+            dst,
+            src,
+            width,
+            kind,
+            flags,
+        } => op_json!("x86_tbm", dst, src, width, kind, flags),
         OpKind::X86Adx {
             dst,
             src1,
@@ -4475,6 +4484,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::SetAC { value } => op_json!("set_ac", value),
         OpKind::X86RequireApx => op_json!("x86_require_apx"),
         OpKind::X86RequireSse4a => op_json!("x86_require_sse4a"),
+        OpKind::X86RequireTbm => op_json!("x86_require_tbm"),
         OpKind::X86Sse4aBitfield {
             dst,
             source,

@@ -92,6 +92,7 @@ impl X86_64Lowerer {
             || x86_state_backed_gpr_and_not_valid(op)
             || x86_state_backed_gpr_bextr_bzhi_valid(op)
             || x86_state_backed_gpr_bls_valid(op)
+            || x86_state_backed_gpr_tbm_valid(op)
             || x86_state_backed_gpr_adx_valid(op)
             || x86_state_backed_gpr_pdep_pext_valid(op)
             || x86_state_backed_gpr_mulx_valid(op)

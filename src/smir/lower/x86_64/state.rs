@@ -1815,11 +1815,24 @@ impl X86_64Lowerer {
             op: format!("state-backed {name}"),
             operand: "source is not an architectural x86 GPR".to_string(),
         })?;
-        let control_idx =
-            Self::x86_gpr_index(control).ok_or_else(|| LowerError::InvalidOperand {
-                op: format!("state-backed {name}"),
-                operand: "control is not an architectural x86 GPR".to_string(),
-            })?;
+        let control_idx = Self::x86_gpr_index(control);
+        let control_imm = match control {
+            VReg::Imm(value) if !bzhi => Some(value),
+            VReg::Imm(_) => {
+                return Err(LowerError::InvalidOperand {
+                    op: format!("state-backed {name}"),
+                    operand: "BZHI index must be an architectural x86 GPR".to_string(),
+                });
+            }
+            _ if control_idx.is_some() => None,
+            _ => {
+                return Err(LowerError::InvalidOperand {
+                    op: format!("state-backed {name}"),
+                    operand: "control is neither an architectural x86 GPR nor an immediate"
+                        .to_string(),
+                });
+            }
+        };
         if !matches!(width, OpWidth::W32 | OpWidth::W64) {
             return Err(LowerError::InvalidOperand {
                 op: format!("state-backed {name}"),
@@ -1834,7 +1847,15 @@ impl X86_64Lowerer {
         {
             let mut emitter = X86Emitter::new(&mut self.code);
             emitter.emit_mov_rm(PhysReg::Rdi, PhysReg::Rax, i32::from(src_idx) * 8, width);
-            emitter.emit_mov_rm(PhysReg::R8, PhysReg::Rax, i32::from(control_idx) * 8, width);
+            if let Some(control_idx) = control_idx {
+                emitter.emit_mov_rm(PhysReg::R8, PhysReg::Rax, i32::from(control_idx) * 8, width);
+            } else {
+                emitter.emit_mov_ri(
+                    PhysReg::R8,
+                    control_imm.expect("validated immediate control"),
+                    OpWidth::W64,
+                );
+            }
         }
         self.code.emit_u8(0x9C); // pushfq: preserve undefined or all status flags
         {

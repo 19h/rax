@@ -22,6 +22,8 @@ mod sse4a;
 #[cfg(test)]
 mod string;
 #[cfg(test)]
+mod tbm;
+#[cfg(test)]
 mod three_dnow;
 #[cfg(test)]
 mod x86_fma;

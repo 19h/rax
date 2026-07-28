@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::ops::{
-    ArmDpRegShiftKind, OpKind, SmirOp, X86AdxKind, X86BlsKind, X86CountKind,
+    ArmDpRegShiftKind, OpKind, SmirOp, X86AdxKind, X86BlsKind, X86CountKind, X86TbmKind,
 };
 use crate::smir::ir::types::{
     Address, ArchReg, ArmReg, AtomicOp, Avx10FP16Op, BlockId, Condition, ExtendOp, FenceKind,
@@ -372,6 +372,84 @@ impl Aarch64Lowerer {
             );
             self.lower_cfinv()?;
             self.patch_compare_branch_to_current(skip_carry_set, original, skip_when_nonzero)?;
+        }
+
+        self.emit_scratch_restore(&scratches);
+        Ok(())
+    }
+
+    pub(crate) fn lower_x86_tbm(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        kind: X86TbmKind,
+        flags: FlagUpdate,
+    ) -> Result<(), LowerError> {
+        let defined_flags = FlagSet::CF
+            .union(FlagSet::ZF)
+            .union(FlagSet::SF)
+            .union(FlagSet::OF);
+        let set_flags = match flags {
+            FlagUpdate::None => false,
+            FlagUpdate::Specific(set) if set == defined_flags => true,
+            other => {
+                return Err(LowerError::InvalidOperand {
+                    op: "AArch64 native X86Tbm".into(),
+                    operand: format!("flag contract {other:?}"),
+                });
+            }
+        };
+        if !matches!(width, OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::UnsupportedOp {
+                op: format!("AArch64 native X86Tbm width {width:?}"),
+            });
+        }
+
+        let dst = Self::dst_gpr_arm_or_x86(dst)?;
+        let src = Self::gpr_arm_or_x86(src)?;
+        let scratches = Self::scratch_regs(&[dst, src], 2)?;
+        let original = scratches[0];
+        let transformed = scratches[1];
+        self.emit_scratch_save(&scratches);
+        self.emit_mov_reg(original, src, width)?;
+
+        let decrement = matches!(
+            kind,
+            X86TbmKind::Blsfill | X86TbmKind::Blsic | X86TbmKind::Tzmsk
+        );
+        self.emit_addsub_imm(transformed, original, 1, decrement, false, width)?;
+        match kind {
+            X86TbmKind::Blcfill => {
+                self.emit_logic_reg_n(dst, original, transformed, 0b00, false, width)?;
+            }
+            X86TbmKind::Blci => {
+                self.emit_logic_reg_n(dst, original, transformed, 0b01, true, width)?;
+            }
+            X86TbmKind::Blcic | X86TbmKind::Tzmsk => {
+                self.emit_logic_reg_n(dst, transformed, original, 0b00, true, width)?;
+            }
+            X86TbmKind::Blcmsk => {
+                self.emit_logic_reg_n(dst, original, transformed, 0b10, false, width)?;
+            }
+            X86TbmKind::Blcs | X86TbmKind::Blsfill => {
+                self.emit_logic_reg_n(dst, original, transformed, 0b01, false, width)?;
+            }
+            X86TbmKind::Blsic | X86TbmKind::T1mskc => {
+                self.emit_logic_reg_n(dst, transformed, original, 0b01, true, width)?;
+            }
+        }
+
+        if set_flags {
+            // ANDS establishes x86 SF/ZF and clears C/V. For decrement-based
+            // forms x86 CF is set iff src==0; for increment-based forms it is
+            // set iff the width-truncated increment wrapped to zero.
+            self.emit_logic_reg_n(31, dst, dst, 0b11, false, width)?;
+            let carry_probe = if decrement { original } else { transformed };
+            let skip_carry_set = self.code.position();
+            self.emit(0xb500_0000 | u32::from(carry_probe)); // cbnz probe, skip
+            self.lower_cfinv()?;
+            self.patch_compare_branch_to_current(skip_carry_set, carry_probe, true)?;
         }
 
         self.emit_scratch_restore(&scratches);

@@ -152,6 +152,10 @@ fn x86_vector_guest_state_layout_matches_trampoline_offsets() {
         X86_GUEST_CPUID_SSE4A_OFFSET as usize
     );
     assert_eq!(
+        std::mem::offset_of!(GuestRegs, cpuid_tbm),
+        X86_GUEST_CPUID_TBM_OFFSET as usize
+    );
+    assert_eq!(
         std::mem::offset_of!(GuestRegs, kernel_gs_base),
         X86_GUEST_KERNEL_GS_BASE_OFFSET as usize
     );
@@ -222,6 +226,7 @@ fn x86_vector_guest_state_layout_matches_trampoline_offsets() {
     assert_eq!(regs.cpuid_xeon_phi_avx512, 0);
     assert_eq!(regs.cpuid_vp2intersect, 0);
     assert_eq!(regs.cpuid_sse4a, 0);
+    assert_eq!(regs.cpuid_tbm, 0);
     assert_eq!(regs.kernel_gs_base, 0);
     assert_eq!(regs.tsc_fn, 0);
     assert_eq!(regs.vector_scratch, [0; 8]);

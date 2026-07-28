@@ -554,6 +554,12 @@ impl X86_64Lifter {
                 pc,
                 ctx,
             ),
+            0x8F if after_opcode
+                .first()
+                .is_some_and(|p0| p0 & 0x1f >= 8) =>
+            {
+                self.lift_xop(bytes, &prefix, pc, ctx)
+            }
             0x8F => self.lift_pop_rm(
                 after_opcode,
                 &X86Prefix {

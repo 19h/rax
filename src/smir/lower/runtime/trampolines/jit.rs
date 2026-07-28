@@ -323,6 +323,7 @@ pub(crate) fn x86_flag_defs(op: &crate::smir::ir::ops::OpKind) -> crate::smir::i
         | OpKind::Bextr { flags, .. }
         | OpKind::Bzhi { flags, .. }
         | OpKind::X86Bls { flags, .. }
+        | OpKind::X86Tbm { flags, .. }
         | OpKind::X86Adx { flags, .. }
         | OpKind::X86Count { flags, .. } => flags.as_set(),
         OpKind::Cmp { .. } | OpKind::Test { .. } | OpKind::X86XTest => FlagSet::ALL_X86,
@@ -2628,7 +2629,7 @@ pub(crate) fn x86_bmi_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
         } => {
             native_gpr(dst)
                 && native_gpr(src)
-                && native_gpr(control)
+                && (native_gpr(control) || matches!(control, VReg::Imm(_)))
                 && (*flags == FlagUpdate::None || *flags == FlagUpdate::Specific(bextr_flags))
         }
         OpKind::Bzhi {
@@ -2644,6 +2645,17 @@ pub(crate) fn x86_bmi_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
                 && (*flags == FlagUpdate::None || *flags == FlagUpdate::Specific(bzhi_flags))
         }
         OpKind::X86Bls {
+            dst,
+            src,
+            width: OpWidth::W32 | OpWidth::W64,
+            flags,
+            ..
+        } => {
+            native_gpr(dst)
+                && native_gpr(src)
+                && (*flags == FlagUpdate::None || *flags == FlagUpdate::Specific(andn_flags))
+        }
+        OpKind::X86Tbm {
             dst,
             src,
             width: OpWidth::W32 | OpWidth::W64,

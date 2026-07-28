@@ -215,6 +215,8 @@ fn cpuid_interpreter_tracks_every_mutable_guest_profile_input() {
 
     let (sse4a, _) = execute_cpuid(0x8000_0001, 0, |x86| x86.sse4a = true);
     assert_ne!(sse4a[2] & (1 << 6), 0);
+    let (tbm, _) = execute_cpuid(0x8000_0001, 0, |x86| x86.tbm = true);
+    assert_ne!(tbm[2] & (1 << 21), 0);
 
     let (xsave_apx, _) = execute_cpuid(0xD, 0, |x86| {
         x86.apx_enabled = true;

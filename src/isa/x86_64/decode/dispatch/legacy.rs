@@ -121,7 +121,7 @@ impl X86_64Vcpu {
             0xC7 => execute::data::mov_rm_imm(self, ctx),
             0x50..=0x57 => execute::data::push_r64(self, ctx, opcode),
             0x58..=0x5F => execute::data::pop_r64(self, ctx, opcode),
-            0x8F => execute::data::pop_rm(self, ctx),
+            0x8F => self.execute_pop_or_xop(ctx),
             0x6A => execute::data::push_imm8(self, ctx),
             0x68 => execute::data::push_imm32(self, ctx),
             0x86 => execute::data::xchg_r8_rm8(self, ctx),

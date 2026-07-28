@@ -166,6 +166,14 @@ pub(crate) fn x86_aarch64_block_is_clobber_safe(
         {
             return false;
         }
+        if matches!(op.kind, OpKind::X86RequireTbm)
+            && !crate::smir::lower::x86_64::x86_require_tbm_shape_valid(op)
+        {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86Tbm { .. }) && op.x86_hint.is_some() {
+            return false;
+        }
         // AH/CH/DH/BH require x86 byte-lane extraction. The generic AArch64
         // register map sees only the parent GPR and cannot infer that lane from
         // the encoding hint, so retain interpreter fallback for these forms.
@@ -209,9 +217,11 @@ pub(crate) fn x86_aarch64_block_is_clobber_safe(
                 | OpKind::Bextr { .. }
                 | OpKind::Bzhi { .. }
                 | OpKind::X86Bls { .. }
+                | OpKind::X86Tbm { .. }
                 | OpKind::Pdep { .. }
                 | OpKind::Pext { .. }
         ) && !x86_bmi_shape_valid(&op.kind)
+            && !x86_aarch64_tbm_bextr_shape_valid(&op.kind)
         {
             return false;
         }
@@ -247,6 +257,16 @@ pub(crate) fn x86_aarch64_block_is_clobber_safe(
             return false;
         }
 
+        let source_is_representable = |source: &VReg| {
+            x86_aarch64_legacy_gpr(source)
+                || matches!(
+                    &op.kind,
+                    OpKind::Bextr {
+                        control: VReg::Imm(control),
+                        ..
+                    } if source == &VReg::Imm(*control)
+                )
+        };
         if op
             .kind
             .dests()
@@ -256,7 +276,7 @@ pub(crate) fn x86_aarch64_block_is_clobber_safe(
                 .kind
                 .source_vregs()
                 .iter()
-                .any(|source| !x86_aarch64_legacy_gpr(source))
+                .any(|source| !source_is_representable(source))
         {
             return false;
         }
@@ -304,6 +324,49 @@ pub(crate) fn x86_aarch64_legacy_gpr(vreg: &crate::smir::ir::types::VReg) -> boo
         ))
     )
 }
+
+/// Validate the TBM subset whose AArch64 identity mapping can use X4/X5 for
+/// guest RSP/RBP. The shared x86-host BMI validator deliberately excludes
+/// those two registers because they are state-backed on an x86-64 host.
+fn x86_aarch64_tbm_bextr_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::flags::{FlagSet, FlagUpdate};
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{OpWidth, VReg};
+
+    let tbm_flags = FlagSet::CF
+        .union(FlagSet::ZF)
+        .union(FlagSet::SF)
+        .union(FlagSet::OF);
+    let bextr_flags = FlagSet::CF.union(FlagSet::ZF).union(FlagSet::OF);
+
+    match op {
+        OpKind::X86Tbm {
+            dst,
+            src,
+            width: OpWidth::W32 | OpWidth::W64,
+            flags,
+            ..
+        } => {
+            x86_aarch64_legacy_gpr(dst)
+                && x86_aarch64_legacy_gpr(src)
+                && (*flags == FlagUpdate::None || *flags == FlagUpdate::Specific(tbm_flags))
+        }
+        OpKind::Bextr {
+            dst,
+            src,
+            control,
+            width: OpWidth::W32 | OpWidth::W64,
+            flags,
+        } => {
+            x86_aarch64_legacy_gpr(dst)
+                && x86_aarch64_legacy_gpr(src)
+                && (x86_aarch64_legacy_gpr(control) || matches!(control, VReg::Imm(_)))
+                && (*flags == FlagUpdate::None || *flags == FlagUpdate::Specific(bextr_flags))
+        }
+        _ => false,
+    }
+}
+
 /// Architecture-specific scalar whitelist for the x86 VCPU identity bridge.
 ///
 /// AArch64 W-register writes zero-extend. That is exact for x86 32-bit GPR
@@ -436,6 +499,7 @@ pub(crate) fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) 
         | OpKind::Bextr { width, .. }
         | OpKind::Bzhi { width, .. }
         | OpKind::X86Bls { width, .. }
+        | OpKind::X86Tbm { width, .. }
         | OpKind::X86Adx { width, .. }
         | OpKind::Pdep { width, .. }
         | OpKind::Pext { width, .. }
@@ -500,6 +564,7 @@ pub(crate) fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) 
         | OpKind::SetCF { .. }
         | OpKind::CmcCF
         | OpKind::X86RequireApx
+        | OpKind::X86RequireTbm
         | OpKind::Nop => true,
         OpKind::Fence {
             kind: FenceKind::InstructionSerialize,
@@ -1281,6 +1346,7 @@ pub(crate) fn aarch64_block_is_clobber_safe(
             OpKind::SetAC { .. }
                 | OpKind::X86RequireApx
                 | OpKind::X86RequireSse4a
+                | OpKind::X86RequireTbm
                 | OpKind::X86Sse4aBitfield { .. }
                 | OpKind::X86Cli { .. }
                 | OpKind::X86Sti { .. }

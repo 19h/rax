@@ -1865,6 +1865,7 @@ impl OpKind {
             | OpKind::Bextr { flags, .. }
             | OpKind::Bzhi { flags, .. }
             | OpKind::X86Bls { flags, .. }
+            | OpKind::X86Tbm { flags, .. }
             | OpKind::X86Adx { flags, .. }
             | OpKind::MulU { flags, .. }
             | OpKind::MulS { flags, .. } => Some(flags),
@@ -1898,6 +1899,7 @@ impl OpKind {
             | OpKind::Bextr { flags, .. }
             | OpKind::Bzhi { flags, .. }
             | OpKind::X86Bls { flags, .. }
+            | OpKind::X86Tbm { flags, .. }
             | OpKind::X86Adx { flags, .. }
             | OpKind::MulU { flags, .. }
             | OpKind::MulS { flags, .. } => flags.as_set(),
@@ -2178,7 +2180,7 @@ impl OpKind {
                 result.push(*index);
             }
 
-            OpKind::X86Bls { src, .. } => result.push(*src),
+            OpKind::X86Bls { src, .. } | OpKind::X86Tbm { src, .. } => result.push(*src),
 
             OpKind::X86Adx { src1, src2, .. } => {
                 result.push(*src1);
@@ -3799,6 +3801,7 @@ impl OpKind {
             | OpKind::SetAC { .. }
             | OpKind::X86RequireApx
             | OpKind::X86RequireSse4a
+            | OpKind::X86RequireTbm
             | OpKind::X86Cli { .. }
             | OpKind::X86Sti { .. }
             | OpKind::X86Clts

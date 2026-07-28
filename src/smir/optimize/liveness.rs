@@ -50,6 +50,7 @@ pub(super) fn op_out_width(kind: &OpKind) -> Option<OpWidth> {
         | OpKind::Popcnt { width, .. }
         | OpKind::X86Count { width, .. }
         | OpKind::X86Bls { width, .. }
+        | OpKind::X86Tbm { width, .. }
         | OpKind::X86Adx { width, .. }
         | OpKind::Bswap { width, .. }
         | OpKind::Bt { width, .. }
@@ -104,7 +105,10 @@ pub(super) fn op_fully_defines(kind: &OpKind) -> bool {
 /// updates are not optimization frontiers. Extend this predicate whenever an
 /// op gains an in-block deoptimization path whose state is captured at entry.
 pub(super) fn op_has_precise_deopt_edge(kind: &OpKind) -> bool {
-    matches!(kind, OpKind::X86RequireApx | OpKind::X86RequireSse4a)
+    matches!(
+        kind,
+        OpKind::X86RequireApx | OpKind::X86RequireSse4a | OpKind::X86RequireTbm
+    )
 }
 
 /// Registers read by a terminator (used at the block's exit point).

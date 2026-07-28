@@ -586,12 +586,25 @@ impl X86_64Lowerer {
                 };
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src_reg = self.get_reg(*src)?;
-                let control_reg = self.get_reg(*control)?;
-                Self::ensure_flag_stack_operands_safe("Bextr", &[dst_reg, src_reg, control_reg])?;
-                self.code.emit_u8(0x9C); // pushfq
-                let mut emitter = X86Emitter::new(&mut self.code);
-                emitter.emit_vex_bmi_rr(0xF7, dst_reg, src_reg, control_reg, *width);
-                self.finish_bmi_flags(dst_reg, defined_rflags_mask);
+                if let VReg::Imm(value) = control {
+                    self.emit_x86_bextr_imm_regs(
+                        dst_reg,
+                        src_reg,
+                        *value,
+                        *width,
+                        defined_rflags_mask,
+                    )?;
+                } else {
+                    let control_reg = self.get_reg(*control)?;
+                    Self::ensure_flag_stack_operands_safe(
+                        "Bextr",
+                        &[dst_reg, src_reg, control_reg],
+                    )?;
+                    self.code.emit_u8(0x9C); // pushfq
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_vex_bmi_rr(0xF7, dst_reg, src_reg, control_reg, *width);
+                    self.finish_bmi_flags(dst_reg, defined_rflags_mask);
+                }
             }
 
             OpKind::Bzhi {
@@ -683,6 +696,42 @@ impl X86_64Lowerer {
                     );
                 }
                 self.lower_x86_bls(*dst, *src, *width, *kind, *flags)?;
+            }
+
+            OpKind::X86Tbm {
+                dst,
+                src,
+                width,
+                kind,
+                flags,
+            } => {
+                if op.x86_hint.is_some() {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86Tbm".to_string(),
+                        operand: "encoding hints are unsupported".to_string(),
+                    });
+                }
+                if x86_state_backed_gpr_tbm_candidate(op) {
+                    if !x86_state_backed_gpr_tbm_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed X86Tbm".to_string(),
+                            operand: format!("invalid x86 GPR TBM {kind:?} {width:?} {flags:?}"),
+                        });
+                    }
+                    let defined_rflags_mask = match flags {
+                        FlagUpdate::None => None,
+                        FlagUpdate::Specific(_) => Some(0x8C1),
+                        _ => unreachable!(),
+                    };
+                    return self.lower_state_backed_gpr_tbm(
+                        *dst,
+                        *src,
+                        *width,
+                        *kind,
+                        defined_rflags_mask,
+                    );
+                }
+                self.lower_x86_tbm(*dst, *src, *width, *kind, *flags)?;
             }
 
             OpKind::X86Adx {

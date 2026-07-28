@@ -118,6 +118,10 @@ mod x86_64_bmi_sarx_shlx_shrx_extended;
 mod x86_64_bmi_tbm_blcfill;
 #[path = "integer/bmi/tbm_blci.rs"]
 mod x86_64_bmi_tbm_blci;
+#[path = "integer/bmi/tbm_blcic.rs"]
+mod x86_64_bmi_tbm_blcic;
+#[path = "integer/bmi/tbm_blcmsk_bextr.rs"]
+mod x86_64_bmi_tbm_blcmsk_bextr;
 #[path = "integer/bmi/tbm_blcs_blsfill_blsic_t1mskc_tzmsk.rs"]
 mod x86_64_bmi_tbm_blcs_blsfill_blsic_t1mskc_tzmsk;
 #[path = "integer/bmi/tzcnt.rs"]

@@ -422,6 +422,16 @@ pub(crate) fn block_is_clobber_safe(
             i += consumed;
             continue;
         }
+        if let Some(consumed) = x86_jit_mem_tbm_source_sequence_len(
+            block,
+            i,
+            allow_mem,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += consumed;
+            continue;
+        }
         if let Some(consumed) = x86_jit_mem_cmove_source_sequence_len(
             block,
             i,
@@ -705,6 +715,7 @@ pub(crate) fn block_is_clobber_safe(
         let state_bextr_bzhi_ok =
             crate::smir::lower::x86_64::x86_state_backed_gpr_bextr_bzhi_valid(op);
         let state_bls_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_bls_valid(op);
+        let state_tbm_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_tbm_valid(op);
         let state_adx_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_adx_valid(op);
         let state_pdep_pext_ok =
             crate::smir::lower::x86_64::x86_state_backed_gpr_pdep_pext_valid(op);
@@ -877,6 +888,7 @@ pub(crate) fn block_is_clobber_safe(
             || state_and_not_ok
             || state_bextr_bzhi_ok
             || state_bls_ok
+            || state_tbm_ok
             || state_adx_ok
             || state_pdep_pext_ok
             || state_mulx_ok
@@ -935,6 +947,7 @@ pub(crate) fn block_is_clobber_safe(
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_bextr_bzhi_candidate(op)
                 && !state_bextr_bzhi_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_bls_candidate(op) && !state_bls_ok)
+            || (crate::smir::lower::x86_64::x86_state_backed_gpr_tbm_candidate(op) && !state_tbm_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_adx_candidate(op) && !state_adx_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_pdep_pext_candidate(op)
                 && !state_pdep_pext_ok)
@@ -981,6 +994,7 @@ pub(crate) fn block_is_clobber_safe(
             op.kind,
             OpKind::AndNot { .. }
                 | OpKind::X86Bls { .. }
+                | OpKind::X86Tbm { .. }
                 | OpKind::X86Adx { .. }
                 | OpKind::X86XTest
         ) || guarded_div_ok;
@@ -1156,6 +1170,14 @@ pub(crate) fn block_is_clobber_safe(
         {
             return false;
         }
+        if matches!(op.kind, OpKind::X86RequireTbm)
+            && !crate::smir::lower::x86_64::x86_require_tbm_shape_valid(op)
+        {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86Tbm { .. }) && op.x86_hint.is_some() {
+            return false;
+        }
         if matches!(op.kind, OpKind::X86Sse4aBitfield { .. })
             && !crate::smir::lower::x86_64::x86_sse4a_bitfield_shape_valid(op)
         {
@@ -1240,12 +1262,14 @@ pub(crate) fn block_is_clobber_safe(
                 | OpKind::Bextr { .. }
                 | OpKind::Bzhi { .. }
                 | OpKind::X86Bls { .. }
+                | OpKind::X86Tbm { .. }
                 | OpKind::Pdep { .. }
                 | OpKind::Pext { .. }
         ) && !x86_bmi_shape_valid(&op.kind)
             && !state_and_not_ok
             && !state_bextr_bzhi_ok
             && !state_bls_ok
+            && !state_tbm_ok
             && !state_pdep_pext_ok
         {
             return false;

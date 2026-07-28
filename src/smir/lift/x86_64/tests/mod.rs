@@ -231,6 +231,8 @@ mod x87_noops;
 mod x87_reserved;
 #[cfg(test)]
 mod x87_transcendental;
+#[cfg(test)]
+mod xop_tbm;
 
 /// Test memory reader for unit tests
 struct TestMemory {

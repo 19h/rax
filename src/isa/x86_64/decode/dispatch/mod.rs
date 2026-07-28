@@ -13,6 +13,7 @@ mod legacy;
 mod resolver;
 mod twobyte;
 mod vex;
+mod xop;
 
 #[inline(always)]
 fn f32_is_nan_bits(bits: u32) -> bool {
