@@ -22,3 +22,5 @@ mod vex_chunk;
 pub use vex_chunk::*;
 mod vex_mulx;
 pub use vex_mulx::*;
+mod xop;
+pub use xop::*;

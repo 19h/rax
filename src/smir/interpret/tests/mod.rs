@@ -29,6 +29,8 @@ mod three_dnow;
 mod x86_fma;
 #[cfg(test)]
 mod x87;
+#[cfg(test)]
+mod xop;
 use crate::smir::ir::FunctionBuilder;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate, MaterializedFlags};
 use crate::smir::ir::memory::{FlatMemory, SmirMemory};

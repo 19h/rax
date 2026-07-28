@@ -323,6 +323,10 @@ pub struct X86_64Vcpu {
     /// advertise this extension, so its XOP encodings must #UD unless a
     /// semantic harness opts in explicitly.
     pub(super) tbm: bool,
+    /// Enable AMD XOP packed-vector instructions. The base emulated CPUID
+    /// profile does not advertise XOP, so its encodings must #UD unless a
+    /// semantic harness opts in explicitly.
+    pub(super) xop: bool,
     /// Enable AVX10.2 media dot-product instructions (AVX_VNNI_INT8 and
     /// AVX_VNNI_INT16 families). The base emulated CPUID profile does not
     /// advertise these extensions, so their opcodes must #UD unless a semantic
@@ -1010,6 +1014,7 @@ impl X86_64Vcpu {
             vp2intersect: false,
             sse4a: false,
             tbm: false,
+            xop: false,
             avx10_media: false,
             avx10_vminmax: false,
             avx10_sat_convert: false,
@@ -1117,6 +1122,17 @@ impl X86_64Vcpu {
     #[inline]
     pub(in crate::isa::x86_64) fn tbm_enabled(&self) -> bool {
         self.tbm
+    }
+
+    /// Enable or disable AMD XOP packed-vector instructions for semantic
+    /// harnesses.
+    pub fn set_xop_enabled(&mut self, enabled: bool) {
+        self.xop = enabled;
+    }
+
+    #[inline]
+    pub(in crate::isa::x86_64) fn xop_enabled(&self) -> bool {
+        self.xop
     }
 
     /// Enable or disable AVX10.2 media dot-product instructions for semantic harnesses.
@@ -4834,6 +4850,8 @@ impl X86_64Vcpu {
             #[cfg(target_arch = "x86_64")]
             lowerer.set_avx_ymm16_vector_state(avx_ymm16_vector_state);
             #[cfg(target_arch = "x86_64")]
+            lowerer.set_native_vector_state_active(uses_vector);
+            #[cfg(target_arch = "x86_64")]
             lowerer.set_guest_pcrel_lea_immediates(true);
             #[cfg(target_arch = "x86_64")]
             lowerer.set_jit_fault_deopt_guards(true);
@@ -5066,6 +5084,7 @@ impl X86_64Vcpu {
         gr.cpuid_vp2intersect = u64::from(self.vp2intersect_enabled());
         gr.cpuid_sse4a = u64::from(self.sse4a_enabled());
         gr.cpuid_tbm = u64::from(self.tbm_enabled());
+        gr.cpuid_xop = u64::from(self.xop_enabled());
         gr.gpr[0] = self.regs.rax;
         gr.gpr[1] = self.regs.rcx;
         gr.gpr[2] = self.regs.rdx;
@@ -6396,6 +6415,10 @@ mod waitpkg_tests;
 #[cfg(test)]
 #[path = "cpu_ptwrite_tests.rs"]
 mod ptwrite_tests;
+
+#[cfg(test)]
+#[path = "cpu_xop_tests.rs"]
+mod xop_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_hypercall_tests.rs"]

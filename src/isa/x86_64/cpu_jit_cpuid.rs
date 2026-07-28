@@ -21,6 +21,7 @@ pub(super) unsafe extern "C" fn rax_jit_cpuid(state: *mut GuestRegs) {
             vp2intersect: state.cpuid_vp2intersect != 0,
             sse4a: state.cpuid_sse4a != 0,
             tbm: state.cpuid_tbm != 0,
+            xop: state.cpuid_xop != 0,
             apx: state.apx_enabled != 0,
         },
     );

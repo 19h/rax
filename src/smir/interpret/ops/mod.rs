@@ -22,4 +22,6 @@ mod sse4a;
 mod system;
 mod system_selector;
 mod unary;
+mod x86_alignment;
 mod x86_invpcid;
+mod xop;

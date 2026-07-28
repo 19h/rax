@@ -505,7 +505,7 @@ impl SmirInterpreter {
                 memory.fence(*kind);
             }
 
-            _ => return self.execute_op_fp(ctx, memory, op),
+            _ => return self.execute_op_x86_alignment(ctx, memory, op),
         }
 
         Ok(())

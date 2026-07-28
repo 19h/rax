@@ -1246,7 +1246,7 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, result);
             }
 
-            _ => return self.execute_op_avx10(ctx, memory, op),
+            _ => return self.execute_op_xop(ctx, memory, op),
         }
 
         Ok(())

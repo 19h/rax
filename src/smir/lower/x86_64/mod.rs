@@ -38,6 +38,8 @@ use super::{
 // ---- module tree (auto-split) ----
 mod ac;
 pub use ac::*;
+mod alignment_ac;
+pub use alignment_ac::*;
 #[cfg(feature = "smir-jit")]
 mod aes_memory_source;
 mod alu;
@@ -99,6 +101,8 @@ mod require_sse4a;
 pub use require_sse4a::*;
 mod require_tbm;
 pub use require_tbm::*;
+mod require_xop;
+pub use require_xop::*;
 mod read_control;
 pub use read_control::*;
 mod read_debug;
@@ -169,6 +173,8 @@ mod simd;
 pub use simd::*;
 mod sse4a;
 pub use sse4a::*;
+mod xop;
+pub use xop::*;
 mod state;
 pub use state::*;
 mod state_tbm;
@@ -192,6 +198,8 @@ mod tests;
 mod vex_binary_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vpclmulqdq_memory_source;
+#[cfg(feature = "smir-jit")]
+mod xop_memory_source;
 
 fn x86_state_backed_arch_gpr(reg: &VReg) -> bool {
     matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index >= 16 || matches!(index, 4 | 5)))
@@ -1384,6 +1392,11 @@ pub struct X86_64Lowerer {
     /// replay region. Upper ZMM halves and K0-K7 remain authoritative in
     /// `GuestRegs`.
     avx_ymm16_vector_state: bool,
+
+    /// Whether physical host vector registers also carry architectural state.
+    /// State-backed vector operations synchronize their inputs and outputs at
+    /// each boundary while this is set.
+    native_vector_state_active: bool,
 
     /// Spill MM0-MM7 and execute host-only EMMS before every Rust helper call,
     /// then reload the complete MMX file from `GuestRegs` after the call. This

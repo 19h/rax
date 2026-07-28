@@ -265,6 +265,7 @@ pub(crate) fn uses_x86_xmm_state_excluding(
     excluded: &std::collections::HashMap<BlockId, u64>,
 ) -> bool {
     uses_x86_maskmovdqu_state_excluding(function, excluded)
+        || super::xop::uses_x86_xop_state_excluding(function, excluded)
         || function
             .blocks
             .iter()

@@ -314,6 +314,8 @@ mod write_control;
 mod write_debug;
 #[cfg(test)]
 mod x87_transcendental;
+#[cfg(test)]
+mod xop;
 
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::ops::{

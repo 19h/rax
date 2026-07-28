@@ -30,6 +30,9 @@ pub enum ExitReason {
     Undefined { addr: GuestAddr, opcode: u32 },
     /// x86 general-protection exception with its architectural error code.
     GeneralProtection { addr: GuestAddr, error_code: u32 },
+    /// x86 alignment-check exception. Architecturally #AC pushes error code
+    /// zero; the address identifies the faulting guest instruction.
+    AlignmentCheck { addr: GuestAddr },
     /// x86 segment-not-present exception with its selector-derived error code.
     SegmentNotPresent { addr: GuestAddr, error_code: u32 },
     /// Fault-class x86 debug exception, including DR7.GD general detect.
@@ -498,6 +501,8 @@ pub struct X86RegState {
     pub sse4a: bool,
     /// Opt-in AMD TBM feature profile used by CPUID leaf 0x80000001.
     pub tbm: bool,
+    /// Opt-in AMD XOP feature profile used by CPUID leaf 0x80000001.
+    pub xop: bool,
     /// Whether the guest profile exposes Intel APX and its XSAVE component.
     pub apx_enabled: bool,
     /// IA32_TSC_ADJUST local timestamp-counter offset.

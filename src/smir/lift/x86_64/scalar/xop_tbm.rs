@@ -8,7 +8,7 @@ use crate::smir::lift::x86_64::{X86_64Lifter, X86Prefix, build_rex, decode_modrm
 use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult};
 
 impl X86_64Lifter {
-    fn xop_invalid(bytes_consumed: usize) -> LiftResult {
+    pub(crate) fn xop_invalid(bytes_consumed: usize) -> LiftResult {
         LiftResult {
             ops: Vec::new(),
             bytes_consumed,
@@ -27,8 +27,9 @@ impl X86_64Lifter {
     }
 
     /// Lift AMD XOP maps 8-10. This semantic unit admits all ten scalar TBM
-    /// instructions; other assigned XOP vector/LWP cells remain explicit
-    /// interpreter frontiers rather than being mislabeled #UD.
+    /// instructions and delegates packed rotate/shift cells to the vector XOP
+    /// lifter; other assigned XOP cells remain explicit interpreter frontiers
+    /// rather than being mislabeled #UD.
     pub(crate) fn lift_xop(
         &self,
         bytes: &[u8],
@@ -74,6 +75,13 @@ impl X86_64Lifter {
         let pp = p1 & 3;
         let scalar_tbm =
             (map == 9 && matches!(opcode, 0x01 | 0x02)) || (map == 10 && opcode == 0x10);
+        let packed_bit = (map == 8 && matches!(opcode, 0xC0..=0xC3))
+            || (map == 9 && matches!(opcode, 0x90..=0x9B));
+        if packed_bit {
+            return self.lift_xop_packed_bit(
+                bytes, legacy, pc, ctx, lead, p0, opcode, map, w, vvvv, l, pp,
+            );
+        }
         if !scalar_tbm {
             return Err(Self::xop_unsupported(pc, map, opcode));
         }

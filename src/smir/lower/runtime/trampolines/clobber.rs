@@ -226,6 +226,16 @@ pub(crate) fn block_is_clobber_safe(
             i += consumed;
             continue;
         }
+        if let Some(consumed) = x86_jit_mem_xop_source_sequence_len(
+            block,
+            i,
+            allow_mem,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += consumed;
+            continue;
+        }
         if let Some(consumed) = x86_jit_mmx_maskmovq_sequence_len(
             block,
             i,
@@ -650,6 +660,7 @@ pub(crate) fn block_is_clobber_safe(
             OpKind::X86CheckAlignment { addr, alignment }
                 if matches!(alignment, 16 | 32 | 64) && x86_jit_mem_address_shape_valid(addr)
         );
+        let alignment_ac_ok = crate::smir::lower::x86_64::x86_check_alignment_ac_shape_valid(op);
         let opmask_ok = matches!(
             &op.kind,
             OpKind::X86Opmask(opmask)
@@ -716,6 +727,7 @@ pub(crate) fn block_is_clobber_safe(
             crate::smir::lower::x86_64::x86_state_backed_gpr_bextr_bzhi_valid(op);
         let state_bls_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_bls_valid(op);
         let state_tbm_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_tbm_valid(op);
+        let state_xop_ok = crate::smir::lower::x86_64::x86_xop_packed_bit_shape_valid(op);
         let state_adx_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_adx_valid(op);
         let state_pdep_pext_ok =
             crate::smir::lower::x86_64::x86_state_backed_gpr_pdep_pext_valid(op);
@@ -966,6 +978,7 @@ pub(crate) fn block_is_clobber_safe(
         let mem_ok = (allow_mem && x86_jit_scalar_mem_shape_valid(&op.kind))
             || cldemote_ok
             || alignment_ok
+            || alignment_ac_ok
             || opmask_mem_ok
             || vector_mem_ok
             || mmx_mem_ok
@@ -1004,7 +1017,7 @@ pub(crate) fn block_is_clobber_safe(
             x86_native_vector_smir_op(op)
         };
         let mmx_ok = is_x86_native_mmx_op(op) || mmx_mem_ok;
-        if !op.is_jit_safe() && !mem_ok && !scalar_ok && !vector_ok && !mmx_ok {
+        if !op.is_jit_safe() && !mem_ok && !scalar_ok && !state_xop_ok && !vector_ok && !mmx_ok {
             return false;
         }
         if x86_movx_uses_ambiguous_high_byte_source(op) {
@@ -1075,6 +1088,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86CheckAlignment { .. }) && !alignment_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86CheckAlignmentAc { .. }) && !alignment_ac_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86Opmask(_)) && !opmask_ok {
@@ -1175,7 +1191,15 @@ pub(crate) fn block_is_clobber_safe(
         {
             return false;
         }
+        if matches!(op.kind, OpKind::X86RequireXop)
+            && !crate::smir::lower::x86_64::x86_require_xop_shape_valid(op)
+        {
+            return false;
+        }
         if matches!(op.kind, OpKind::X86Tbm { .. }) && op.x86_hint.is_some() {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86XopPackedBit { .. }) && !state_xop_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86Sse4aBitfield { .. })

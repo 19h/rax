@@ -734,6 +734,10 @@ impl X86_64Lowerer {
                 self.lower_x86_tbm(*dst, *src, *width, *kind, *flags)?;
             }
 
+            OpKind::X86XopPackedBit { .. } => {
+                self.emit_x86_xop_packed_bit(op)?;
+            }
+
             OpKind::X86Adx {
                 dst,
                 src1,

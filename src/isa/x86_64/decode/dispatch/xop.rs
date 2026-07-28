@@ -75,9 +75,40 @@ impl X86_64Vcpu {
         // priority over any potential memory fault.
         let scalar_tbm =
             (map == 9 && matches!(opcode, 0x01 | 0x02)) || (map == 10 && opcode == 0x10);
-        if !scalar_tbm || pp != 0 || l != 0 {
+        let packed_immediate = map == 8 && matches!(opcode, 0xC0..=0xC3);
+        let packed_variable = map == 9 && matches!(opcode, 0x90..=0x9B);
+        let packed_bit = packed_immediate || packed_variable;
+        if (!scalar_tbm && !packed_bit) || pp != 0 || l != 0 || packed_immediate && (w || vvvv != 0)
+        {
             return self.inject_undefined_instruction();
         }
+
+        if packed_bit {
+            const CR0_TS: u64 = 1 << 3;
+            const CR4_OSXSAVE: u64 = 1 << 18;
+            if !self.xop_enabled()
+                || self.sregs.cr0 & 1 == 0
+                || self.regs.rflags & flags::bits::VM != 0
+                || self.sregs.cr4 & CR4_OSXSAVE == 0
+                || self.xcr0 & 0b110 != 0b110
+            {
+                return self.inject_undefined_instruction();
+            }
+            if self.sregs.cr0 & CR0_TS != 0 {
+                self.inject_exception(7, None)?;
+                return Ok(None);
+            }
+            ctx.rip_relative_offset = usize::from(packed_immediate);
+            return execute::simd::execute_xop_packed_bit(
+                self,
+                ctx,
+                opcode,
+                vvvv,
+                w,
+                packed_immediate,
+            );
+        }
+
         if !self.tbm_enabled() || self.sregs.cr0 & 1 == 0 || self.regs.rflags & flags::bits::VM != 0
         {
             return self.inject_undefined_instruction();

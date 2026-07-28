@@ -36,6 +36,8 @@ mod push_value;
 pub use push_value::*;
 mod tbm;
 pub use tbm::*;
+mod xop;
+pub use xop::*;
 mod mmx;
 pub use mmx::*;
 mod mmx_memory;

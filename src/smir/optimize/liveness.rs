@@ -73,6 +73,7 @@ pub(super) fn op_out_width(kind: &OpKind) -> Option<OpWidth> {
             VecWidth::V128 => Some(OpWidth::W128),
             _ => None,
         },
+        OpKind::X86XopPackedBit { .. } => Some(OpWidth::W128),
         _ => None,
     }
 }
@@ -107,7 +108,10 @@ pub(super) fn op_fully_defines(kind: &OpKind) -> bool {
 pub(super) fn op_has_precise_deopt_edge(kind: &OpKind) -> bool {
     matches!(
         kind,
-        OpKind::X86RequireApx | OpKind::X86RequireSse4a | OpKind::X86RequireTbm
+        OpKind::X86RequireApx
+            | OpKind::X86RequireSse4a
+            | OpKind::X86RequireTbm
+            | OpKind::X86RequireXop
     )
 }
 

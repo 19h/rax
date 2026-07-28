@@ -1662,6 +1662,7 @@ impl SmirInterpreter {
                         vp2intersect: x86.vp2intersect,
                         sse4a: x86.sse4a,
                         tbm: x86.tbm,
+                        xop: x86.xop,
                         apx: x86.apx_enabled,
                     },
                 );

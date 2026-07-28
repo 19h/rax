@@ -90,6 +90,7 @@ pub(crate) struct X86CpuidState {
     pub vp2intersect: bool,
     pub sse4a: bool,
     pub tbm: bool,
+    pub xop: bool,
     pub apx: bool,
 }
 
@@ -275,6 +276,7 @@ pub(crate) fn evaluate_cpuid(
             let features_ecx = (1u32 << 5)  // LZCNT/ABM
                              | ((state.sse4a as u32) << 6) // SSE4A
                              | (1u32 << 8)  // PREFETCHW / 3DNow! PREFETCH
+                             | ((state.xop as u32) << 11) // XOP
                              | ((state.tbm as u32) << 21) // TBM
                              | (1u32 << 0); // LAHF/SAHF in long mode
             let features_edx = (1u32 << 29)  // LM (Long Mode)
@@ -375,6 +377,7 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             vp2intersect: vcpu.vp2intersect,
             sse4a: vcpu.sse4a_enabled(),
             tbm: vcpu.tbm_enabled(),
+            xop: vcpu.xop_enabled(),
             apx: vcpu.apx_enabled(),
         },
     );
@@ -463,8 +466,29 @@ mod tests {
         assert_eq!(
             vcpu.regs.rcx & (1 << 11),
             0,
-            "the independent XOP bit must remain clear until the wider XOP vector subset exists"
+            "the independent XOP bit must remain clear unless explicitly enabled"
         );
+    }
+
+    #[test]
+    fn cpuid_xop_bit_tracks_feature_gate_independently_from_tbm() {
+        let mut vcpu = vcpu();
+        let mut ctx = cpuid_ctx();
+        vcpu.regs.rax = 0x8000_0001;
+
+        cpuid(&mut vcpu, &mut ctx).unwrap();
+
+        assert_eq!(vcpu.regs.rcx & (1 << 11), 0);
+        assert_eq!(vcpu.regs.rcx & (1 << 21), 0);
+
+        let mut ctx = cpuid_ctx();
+        vcpu.set_xop_enabled(true);
+        vcpu.regs.rax = 0x8000_0001;
+
+        cpuid(&mut vcpu, &mut ctx).unwrap();
+
+        assert_eq!(vcpu.regs.rcx & (1 << 11), 1 << 11);
+        assert_eq!(vcpu.regs.rcx & (1 << 21), 0);
     }
 
     #[test]

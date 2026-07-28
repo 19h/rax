@@ -3594,7 +3594,9 @@ impl OpKind {
                 result.extend(addr.regs());
             }
 
-            OpKind::X86CacheControl { addr, .. } | OpKind::X86CheckAlignment { addr, .. } => {
+            OpKind::X86CacheControl { addr, .. }
+            | OpKind::X86CheckAlignment { addr, .. }
+            | OpKind::X86CheckAlignmentAc { addr, .. } => {
                 result.extend(addr.regs());
             }
 
@@ -3802,6 +3804,7 @@ impl OpKind {
             | OpKind::X86RequireApx
             | OpKind::X86RequireSse4a
             | OpKind::X86RequireTbm
+            | OpKind::X86RequireXop
             | OpKind::X86Cli { .. }
             | OpKind::X86Sti { .. }
             | OpKind::X86Clts
@@ -4172,6 +4175,13 @@ impl OpKind {
                 }
                 if let Some(mask) = mask {
                     result.push(*mask);
+                }
+            }
+
+            OpKind::X86XopPackedBit { src, count, .. } => {
+                result.push(*src);
+                if let SrcOperand::Reg(register) = count {
+                    result.push(*register);
                 }
             }
 

@@ -10,6 +10,10 @@ use crate::smir::lower::{
 };
 
 impl X86_64Lowerer {
+    pub fn set_native_vector_state_active(&mut self, on: bool) {
+        self.native_vector_state_active = on;
+    }
+
     /// Select the AVX-only helper boundary used by YMM16-safe replay regions.
     pub fn set_avx_ymm16_vector_state(&mut self, on: bool) {
         self.avx_ymm16_vector_state = on;
@@ -49,6 +53,59 @@ impl X86_64Lowerer {
         }
         emitter.code.emit_u8(0x6F); // VMOVDQU xmm/ymm or VMOVDQU64 zmm
         emitter.emit_modrm_mem_disp(register, PhysReg::Rax, offset, DispSize::Disp32);
+    }
+
+    fn emit_unaligned_vector_store(&mut self, register: PhysReg, width: VecWidth, offset: i32) {
+        let mut emitter = X86Emitter::new(&mut self.code);
+        match width {
+            VecWidth::V128 | VecWidth::V256 => {
+                emitter.emit_vex_prefix(
+                    X86VecMap::Map0F,
+                    X86SsePrefix::Rep,
+                    width,
+                    false,
+                    register.vec_ext(),
+                    0,
+                    PhysReg::Rax.vec_ext(),
+                    0,
+                );
+            }
+            VecWidth::V512 => {
+                emitter.emit_evex_prefix(
+                    X86VecMap::Map0F,
+                    X86SsePrefix::Rep,
+                    width,
+                    true,
+                    register.vec_ext(),
+                    0,
+                    PhysReg::Rax.vec_ext(),
+                    register.vec_ext2(),
+                    0,
+                    PhysReg::Rax.vec_ext2(),
+                    0,
+                );
+            }
+            _ => unreachable!("JIT vector transfer width"),
+        }
+        emitter.code.emit_u8(0x7F); // VMOVDQU/VMOVDQU64 memory destination
+        emitter.emit_modrm_mem_disp(register, PhysReg::Rax, offset, DispSize::Disp32);
+    }
+
+    /// Synchronize one low architectural vector register between its physical
+    /// carrier and `GuestRegs`. RAX must contain the state pointer.
+    pub(crate) fn emit_state_backed_xmm_sync(&mut self, index: u8, store: bool) {
+        debug_assert!(index < 16);
+        let offset = X86_GUEST_ZMM_OFFSET + i32::from(index) * 64;
+        let (register, width) = if self.avx_ymm16_vector_state {
+            (PhysReg::Ymm(index), VecWidth::V256)
+        } else {
+            (PhysReg::Zmm(index), VecWidth::V512)
+        };
+        if store {
+            self.emit_unaligned_vector_store(register, width, offset);
+        } else {
+            self.emit_unaligned_vector_load(register, width, offset);
+        }
     }
 
     /// Import a helper-produced nonarchitectural value into a borrowed vector

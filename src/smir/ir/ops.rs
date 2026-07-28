@@ -19,6 +19,8 @@ mod x86_system_types;
 pub use x86_system_types::*;
 mod x86_opmask_types;
 pub use x86_opmask_types::*;
+mod x86_xop_types;
+pub use x86_xop_types::*;
 
 // ============================================================================
 // Operation Structure
@@ -1284,6 +1286,17 @@ pub enum OpKind {
     X86CheckAlignment {
         addr: Address,
         alignment: u8,
+    },
+
+    /// Validate an AMD XOP 128-bit memory operand before its load. In 64-bit
+    /// mode a noncanonical range raises #GP(0), or #SS(0) for an SS-based
+    /// address. Otherwise a misaligned address raises #AC(0) only while
+    /// CR0.AM=1, RFLAGS.AC=1, and CPL=3. This operation precedes translation so
+    /// enabled #AC has priority over #PF.
+    X86CheckAlignmentAc {
+        addr: Address,
+        alignment: u8,
+        stack_segment: bool,
     },
 
     /// Memory fence
@@ -3876,6 +3889,19 @@ pub enum OpKind {
         zeroing: bool,
     },
 
+    /// AMD XOP VPROT*/VPSHL*/VPSHA*. `count` is either a vector whose low byte
+    /// in each corresponding element is interpreted as signed i8, or an
+    /// immediate byte applied to every element. Counts are reduced modulo the
+    /// element width after extracting their sign. The operation is fixed to
+    /// V128 and clears every destination bit above bit 127.
+    X86XopPackedBit {
+        dst: VReg,
+        src: VReg,
+        count: SrcOperand,
+        elem: VecElementType,
+        kind: X86XopPackedBitKind,
+    },
+
     /// EVEX VPTERNLOGD/Q. For every bit, `(src1, src2, src3)` forms a
     /// three-bit index into `imm`; bit 0 of `imm` selects index 000 and bit 7
     /// selects 111. The architectural destination is supplied as `src1`.
@@ -3985,6 +4011,12 @@ pub enum OpKind {
     /// Failure occurs before any following memory address calculation or load
     /// can fault.
     X86RequireTbm,
+
+    /// Require AMD XOP in protected, non-virtual-8086 64-bit mode with
+    /// CR4.OSXSAVE=1 and XCR0[2:1]=11b. CR0.TS is checked after every #UD
+    /// condition and before address generation or memory access. Failure
+    /// requests exact direct replay at `SmirOp::guest_pc`.
+    X86RequireXop,
 
     /// AMD SSE4A EXTRQ/INSERTQ over the low 64 bits of XMM registers. A pair of
     /// immediate controls is represented by `Some(length), Some(index)`, both
@@ -4770,6 +4802,7 @@ impl OpKind {
                 | OpKind::X86RequireApx
                 | OpKind::X86RequireSse4a
                 | OpKind::X86RequireTbm
+                | OpKind::X86RequireXop
                 | OpKind::X86Sse4aBitfield { .. }
                 | OpKind::X86Cli { .. }
                 | OpKind::X86Sti { .. }
@@ -4979,6 +5012,7 @@ impl OpKind {
             | OpKind::X86PackedShift { dst, .. }
             | OpKind::X86PackedShiftVariable { dst, .. }
             | OpKind::X86PackedRotate { dst, .. }
+            | OpKind::X86XopPackedBit { dst, .. }
             | OpKind::X86TernaryLogic { dst, .. }
             | OpKind::X86PackedFunnelShift { dst, .. }
             | OpKind::X86MultiShiftQB { dst, .. }
@@ -5297,6 +5331,7 @@ impl OpKind {
             | OpKind::Prefetch { .. }
             | OpKind::X86CacheControl { .. }
             | OpKind::X86CheckAlignment { .. }
+            | OpKind::X86CheckAlignmentAc { .. }
             | OpKind::Fence { .. }
             | OpKind::FCmp { .. }
             | OpKind::X86FpCompare { .. }
@@ -5309,6 +5344,7 @@ impl OpKind {
             | OpKind::X86RequireApx
             | OpKind::X86RequireSse4a
             | OpKind::X86RequireTbm
+            | OpKind::X86RequireXop
             | OpKind::X86Cli { .. }
             | OpKind::X86Sti { .. }
             | OpKind::CmcCF
@@ -5405,6 +5441,7 @@ impl OpKind {
                     | OpKind::X86RequireApx
                     | OpKind::X86RequireSse4a
                     | OpKind::X86RequireTbm
+                    | OpKind::X86RequireXop
                     | OpKind::X86Cli { .. }
                     | OpKind::X86Sti { .. }
                     | OpKind::CmcCF
@@ -5414,6 +5451,7 @@ impl OpKind {
                     | OpKind::X86StoreMxcsr { .. }
                     | OpKind::X86CacheControl { .. }
                     | OpKind::X86CheckAlignment { .. }
+                    | OpKind::X86CheckAlignmentAc { .. }
                     | OpKind::X86X87Control {
                         kind:
                             X86X87ControlKind::Init

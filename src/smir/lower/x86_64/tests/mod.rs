@@ -129,6 +129,8 @@ mod waitpkg;
 mod write_control;
 #[cfg(test)]
 mod write_debug;
+#[cfg(test)]
+mod xop;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::types::{

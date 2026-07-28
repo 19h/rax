@@ -13,6 +13,7 @@ fn test_vcpu(memory: Arc<GuestMemoryMmap>) -> X86_64Vcpu {
     vcpu.set_xeon_phi_avx512_enabled(true);
     vcpu.set_vp2intersect_enabled(true);
     vcpu.set_sse4a_enabled(true);
+    vcpu.set_xop_enabled(true);
     vcpu.set_apx_enabled(true);
     vcpu.regs.rip = 0;
     vcpu.regs.rflags = 0x2 | 0x08D5 | (1 << 10);

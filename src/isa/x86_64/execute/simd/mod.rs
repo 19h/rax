@@ -39,6 +39,7 @@ mod sse;
 mod sse4;
 mod sse4a;
 mod ssse3;
+mod xop;
 
 // Re-export all instruction functions
 pub use arith::*;
@@ -69,6 +70,7 @@ pub use sse::*;
 pub use sse4::*;
 pub use sse4a::*;
 pub use ssse3::*;
+pub use xop::*;
 
 #[cfg(test)]
 mod avx512_comi_tests;

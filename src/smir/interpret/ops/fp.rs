@@ -1213,17 +1213,6 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, result);
             }
 
-            OpKind::X86CheckAlignment { addr, alignment } => {
-                debug_assert!(alignment.is_power_of_two());
-                let effective_addr = self.compute_address(ctx, addr);
-                if effective_addr & (u64::from(*alignment) - 1) != 0 {
-                    ctx.request_exit(ExitReason::GeneralProtection {
-                        addr: op.guest_pc,
-                        error_code: 0,
-                    });
-                }
-            }
-
             OpKind::FConvert { dst, src, from, to } => {
                 let a = self.read_fp(ctx, *src, *from);
                 self.write_fp(ctx, *dst, a, *to);

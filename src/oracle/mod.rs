@@ -64,6 +64,7 @@ use crate::smir::ir::ops::X86X87EnvWidth;
 use crate::smir::ir::ops::X86X87FloatWidth;
 use crate::smir::ir::ops::X86X87IntWidth;
 use crate::smir::ir::ops::X86XSaveKind;
+use crate::smir::ir::ops::X86XopPackedBitKind;
 use crate::smir::ir::ops::{
     X86FarCallOp, X86FarJumpOp, X86FarReturnOp, X86FastSystemTransferKind, X86FastSystemTransferOp,
 };
@@ -1338,6 +1339,7 @@ debug_name_json!(
     X86FastSystemTransferKind,
     X86BlsKind,
     X86TbmKind,
+    X86XopPackedBitKind,
     X86CountKind,
     X86ThreeDNowKind,
     X86X87Constant,
@@ -2646,6 +2648,11 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::X86CheckAlignment { addr, alignment } => {
             op_json!("x86_check_alignment", addr, alignment)
         }
+        OpKind::X86CheckAlignmentAc {
+            addr,
+            alignment,
+            stack_segment,
+        } => op_json!("x86_check_alignment_ac", addr, alignment, stack_segment),
         OpKind::X86X87Control { kind, addr } => op_json!("x86_x87_control", kind, addr),
         OpKind::X86X87Data {
             kind,
@@ -4391,6 +4398,13 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             left,
             zeroing
         ),
+        OpKind::X86XopPackedBit {
+            dst,
+            src,
+            count,
+            elem,
+            kind,
+        } => op_json!("x86_xop_packed_bit", dst, src, count, elem, kind),
         OpKind::X86TernaryLogic {
             dst,
             src1,
@@ -4485,6 +4499,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::X86RequireApx => op_json!("x86_require_apx"),
         OpKind::X86RequireSse4a => op_json!("x86_require_sse4a"),
         OpKind::X86RequireTbm => op_json!("x86_require_tbm"),
+        OpKind::X86RequireXop => op_json!("x86_require_xop"),
         OpKind::X86Sse4aBitfield {
             dst,
             source,

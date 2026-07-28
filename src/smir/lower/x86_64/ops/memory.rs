@@ -2747,6 +2747,10 @@ impl X86_64Lowerer {
                 self.emit_x86_check_alignment(op.guest_pc, addr, *alignment)?;
             }
 
+            OpKind::X86CheckAlignmentAc { .. } => {
+                self.emit_x86_check_alignment_ac(op)?;
+            }
+
             OpKind::X86CacheControl { kind, .. } if *kind == X86CacheControlKind::Cldemote => {
                 // CLDEMOTE is an architecturally ignorable cache-placement
                 // hint and raises no memory-address exception. Executing no

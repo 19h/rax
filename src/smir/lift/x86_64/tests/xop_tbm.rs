@@ -234,14 +234,3 @@ fn removed_vex_tbm_aliases_are_reserved_without_hiding_avx2_cells() {
     assert_eq!(valid.bytes_consumed, 5);
     assert!(matches!(valid.control_flow, ControlFlow::Fallthrough));
 }
-
-#[test]
-fn assigned_non_tbm_xop_remains_an_explicit_unsupported_frontier() {
-    // Iced-x86 1.21 independently encodes this as VPROTB XMM1,XMM2,3.
-    let bytes = [0x8F, 0xE8, 0x78, 0xC0, 0xCA, 0x03];
-    assert!(matches!(
-        lift_single(&bytes),
-        Err(LiftError::Unsupported { mnemonic, .. })
-            if mnemonic == "XOP map 0x08 opcode 0xc0"
-    ));
-}

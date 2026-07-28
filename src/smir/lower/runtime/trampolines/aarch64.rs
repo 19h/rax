@@ -1347,6 +1347,9 @@ pub(crate) fn aarch64_block_is_clobber_safe(
                 | OpKind::X86RequireApx
                 | OpKind::X86RequireSse4a
                 | OpKind::X86RequireTbm
+                | OpKind::X86RequireXop
+                | OpKind::X86CheckAlignmentAc { .. }
+                | OpKind::X86XopPackedBit { .. }
                 | OpKind::X86Sse4aBitfield { .. }
                 | OpKind::X86Cli { .. }
                 | OpKind::X86Sti { .. }

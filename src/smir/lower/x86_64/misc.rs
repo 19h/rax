@@ -54,6 +54,7 @@ impl X86_64Lowerer {
             preserve_vector_call_helpers: false,
             preserve_vector_system_helpers: false,
             avx_ymm16_vector_state: false,
+            native_vector_state_active: false,
             preserve_mmx_helpers: false,
             narrow_vector_opmask_helpers: false,
             call_helpers: false,

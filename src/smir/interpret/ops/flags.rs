@@ -114,6 +114,29 @@ impl SmirInterpreter {
                 }
             }
 
+            OpKind::X86RequireXop => {
+                const CR0_TS: u64 = 1 << 3;
+                const CR4_OSXSAVE: u64 = 1 << 18;
+                if !matches!(
+                    &ctx.arch_regs,
+                    ArchRegState::X86_64(x86)
+                        if x86.xop
+                            && x86.cr0 & 1 != 0
+                            && x86.cs_l
+                            && x86.rflags & crate::isa::x86_64::flags::bits::VM == 0
+                            && x86.cr4 & CR4_OSXSAVE != 0
+                            && x86.xcr0 & 0b110 == 0b110
+                            && x86.cr0 & CR0_TS == 0
+                ) {
+                    // Exact integration replays this instruction on the direct
+                    // path, which distinguishes every #UD condition from #NM.
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                }
+            }
+
             OpKind::X86Cli {
                 requires_apx,
                 next_pc: _,
