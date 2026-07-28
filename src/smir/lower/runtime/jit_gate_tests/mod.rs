@@ -218,6 +218,8 @@ mod vector_compare;
 #[cfg(test)]
 mod vex_alignr_replay;
 #[cfg(test)]
+mod vex_apx_bmi_memory;
+#[cfg(test)]
 mod vex_apx_mulx;
 #[cfg(test)]
 mod vex_apx_mulx_memory;

@@ -854,6 +854,18 @@ impl X86_64Lowerer {
                         continue;
                     }
                     if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_mem_bmi_source_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
+                        validate_idx += consumed;
+                        continue;
+                    }
+                    if let Some(consumed) =
                         crate::smir::lower::runtime::x86_jit_mem_bmi2_shift_source_sequence_len(
                             block,
                             validate_idx,
@@ -1450,6 +1462,16 @@ impl X86_64Lowerer {
                 }
                 #[cfg(feature = "smir-jit")]
                 if let Some(consumed) = self.try_lower_jit_mem_mulx_source(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_mem_bmi_source(
                     block,
                     idx,
                     &virtual_definitions,

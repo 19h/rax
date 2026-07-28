@@ -130,6 +130,10 @@ mod jit_mul;
 #[cfg(feature = "smir-jit")]
 pub use jit_mul::*;
 #[cfg(feature = "smir-jit")]
+mod jit_bmi;
+#[cfg(feature = "smir-jit")]
+pub use jit_bmi::*;
+#[cfg(feature = "smir-jit")]
 mod jit_shift;
 #[cfg(feature = "smir-jit")]
 pub use jit_shift::*;
