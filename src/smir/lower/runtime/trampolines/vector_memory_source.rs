@@ -6,7 +6,7 @@ use crate::smir::ir::X86InstructionBytes;
 use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix, X86VecAlign, X86VecMap};
 use crate::smir::ir::types::{
     ArchReg, BlockId, FpRoundMode, GuestAddr, MemWidth, OpWidth, SignExtend, SrcOperand, VReg,
-    VecElementType, VecWidth, X86AesOp, X86FpBinaryOp, X86Reg,
+    VecElementType, VecWidth, X86AesOp, X86FmaKind, X86FmaOrder, X86FpBinaryOp, X86Reg,
 };
 
 use super::x86_jit_mem_address_shape_valid;
@@ -150,6 +150,7 @@ pub(crate) struct X86JitVexBinaryMemorySequence {
     pub(crate) opcode: u8,
     pub(crate) w: bool,
     pub(crate) needs_avx2: bool,
+    pub(crate) needs_fma: bool,
 }
 
 fn low_vex_vector_index(reg: &VReg, width: VecWidth) -> Option<u8> {
@@ -166,6 +167,142 @@ enum VexBinaryKind {
     IntegerArithmetic,
     IntegerCompare,
     FloatingPointArithmetic,
+}
+
+fn vex_fma3_kind(opcode: u8) -> Option<X86FmaKind> {
+    match opcode & 0x0F {
+        0x06 => Some(X86FmaKind::AddSub),
+        0x07 => Some(X86FmaKind::SubAdd),
+        0x08 => Some(X86FmaKind::Add),
+        0x0A => Some(X86FmaKind::Sub),
+        0x0C => Some(X86FmaKind::NegativeMultiplyAdd),
+        0x0E => Some(X86FmaKind::NegativeMultiplySub),
+        _ => None,
+    }
+}
+
+fn vex_fma3_order(opcode: u8) -> Option<X86FmaOrder> {
+    match opcode >> 4 {
+        0x09 => Some(X86FmaOrder::Order132),
+        0x0A => Some(X86FmaOrder::Order213),
+        0x0B => Some(X86FmaOrder::Order231),
+        _ => None,
+    }
+}
+
+fn x86_jit_vex_packed_fma3_memory_sequence(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<X86JitVexBinaryMemorySequence> {
+    let load = block.ops.get(index)?;
+    let (loaded, width) = match &load.kind {
+        OpKind::VLoad { dst, addr, width }
+            if load.x86_hint.is_none()
+                && matches!(dst, VReg::Virtual(_))
+                && matches!(width, VecWidth::V128 | VecWidth::V256)
+                && x86_jit_mem_address_shape_valid(addr) =>
+        {
+            (*dst, *width)
+        }
+        _ => return None,
+    };
+    if !virtual_single_definition_single_use(loaded, virtual_definitions, virtual_uses) {
+        return None;
+    }
+
+    let fma = block.ops.get(index + 1)?;
+    let OpKind::X86Fma(fma_op) = &fma.kind else {
+        return None;
+    };
+    let raw = fma_op.dst;
+    if fma.guest_pc != load.guest_pc
+        || !virtual_single_definition_single_use(raw, virtual_definitions, virtual_uses)
+        || fma_op.src3 != loaded
+        || fma_op.mask.is_some()
+        || fma_op.round != FpRoundMode::Dynamic
+    {
+        return None;
+    }
+    let destination = low_vex_vector_index(&fma_op.src1, width)?;
+    let source1 = low_vex_vector_index(&fma_op.src2, width)?;
+    let expected_elem = if fma_op.elem == VecElementType::F64 {
+        VecElementType::F64
+    } else if fma_op.elem == VecElementType::F32 {
+        VecElementType::F32
+    } else {
+        return None;
+    };
+    if fma_op.lanes != width.lanes(expected_elem) as u8 {
+        return None;
+    }
+
+    let Some(X86OpHint::VexOp {
+        map: X86VecMap::Map0F38,
+        pp: X86SsePrefix::OpSize,
+        opcode,
+        width: hint_width,
+        w,
+    }) = fma.x86_hint
+    else {
+        return None;
+    };
+    if hint_width != width
+        || w != (expected_elem == VecElementType::F64)
+        || fma_op.kind != vex_fma3_kind(opcode)?
+        || fma_op.order != vex_fma3_order(opcode)?
+    {
+        return None;
+    }
+
+    let result = block.ops.get(index + 2)?;
+    if result.guest_pc != load.guest_pc
+        || result.x86_hint.is_some()
+        || !matches!(
+            result.kind,
+            OpKind::VMov {
+                dst,
+                src,
+                width: result_width,
+            } if low_vex_vector_index(&dst, width) == Some(destination)
+                && src == raw
+                && result_width == width
+        )
+        || block
+            .ops
+            .get(index + 3)
+            .is_some_and(|op| op.guest_pc == load.guest_pc)
+    {
+        return None;
+    }
+
+    let instruction = instruction_bytes.get(&(block.id, load.guest_pc))?;
+    let (encoded_destination, encoded_source1, encoded_opcode, encoded_width, encoded_w) =
+        instruction.vex_memory_packed_fma3_fields()?;
+    if encoded_destination != destination
+        || encoded_source1 != source1
+        || encoded_opcode != opcode
+        || encoded_width != width
+        || encoded_w != w
+    {
+        return None;
+    }
+
+    Some(X86JitVexBinaryMemorySequence {
+        consumed: 3,
+        memory_size: width.bytes(),
+        destination,
+        source1,
+        width,
+        map: X86VecMap::Map0F38,
+        prefix: X86SsePrefix::OpSize,
+        opcode,
+        w,
+        needs_avx2: false,
+        needs_fma: true,
+    })
 }
 
 fn vex_packed_fp_binary_encoding_valid(
@@ -213,13 +350,15 @@ fn vex_packed_fp_binary_encoding_valid(
 }
 
 /// Validate one unmasked VEX.128/VEX.256 packed logic, integer add/subtract,
-/// fixed-predicate integer compare, or binary32/binary64 arithmetic memory
-/// source, or one defined `VEX.L=0` scalar binary32/binary64 arithmetic source.
-/// Packed forms are an exact two-op `VLoad`/consumer pair. Fixed comparisons
-/// and scalar forms additionally require exact instruction-byte provenance.
-/// Scalar forms include the complete lane-extract, destination-clear, and
-/// lane-insert chain. Single-definition/single-use checks prevent the fused
-/// lowerer from hiding any independently observable virtual value.
+/// fixed-predicate integer compare, binary32/binary64 arithmetic, or packed
+/// FMA3 memory source, or one defined `VEX.L=0` scalar binary32/binary64
+/// arithmetic source. Binary packed forms are exact two-op `VLoad`/consumer
+/// pairs; packed FMA3 is an exact `VLoad`/`X86Fma`/architectural-`VMov` chain.
+/// Fixed comparisons, FMA3, and scalar forms additionally require exact
+/// instruction-byte provenance. Scalar forms include the complete
+/// lane-extract, destination-clear, and lane-insert chain.
+/// Single-definition/single-use checks prevent the fused lowerer from hiding
+/// any independently observable virtual value.
 ///
 /// The classifier is O(1); callers build the definition/use maps once in O(N)
 /// time and O(V) space for N operations and V virtual registers.
@@ -233,6 +372,15 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
 ) -> Option<X86JitVexBinaryMemorySequence> {
     if !allow_mem {
         return None;
+    }
+    if let Some(sequence) = x86_jit_vex_packed_fma3_memory_sequence(
+        block,
+        index,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence);
     }
     let load = block.ops.get(index)?;
     if matches!(load.kind, OpKind::Load { .. }) {
@@ -452,6 +600,7 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
         opcode,
         w,
         needs_avx2,
+        needs_fma: false,
     })
 }
 
@@ -720,5 +869,6 @@ fn x86_jit_vex_scalar_fp_binary_memory_sequence(
         opcode,
         w,
         needs_avx2: false,
+        needs_fma: false,
     })
 }

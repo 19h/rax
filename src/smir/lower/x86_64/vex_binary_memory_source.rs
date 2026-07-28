@@ -1,4 +1,4 @@
-//! Helper-backed VEX binary memory-source lowering.
+//! Helper-backed VEX binary/FMA3 memory-source lowering.
 
 use std::collections::HashMap;
 
@@ -18,10 +18,11 @@ impl X86_64Lowerer {
         }
     }
 
-    /// Fuse one exact VEX packed or scalar binary memory-source sequence. The
-    /// MMU helper commits only a nonarchitectural transfer slot. One low vector
-    /// register not named by the guest instruction carries that value for the
-    /// native operation and is restored in full before continuation.
+    /// Fuse one exact VEX packed/scalar binary or packed FMA3 memory-source
+    /// sequence. The MMU helper commits only a nonarchitectural transfer slot.
+    /// One low vector register not named by the guest instruction carries that
+    /// value for the native operation and is restored in full before
+    /// continuation.
     pub(crate) fn try_lower_jit_vex_binary_memory_source(
         &mut self,
         block: &SmirBlock,
