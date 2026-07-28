@@ -6,10 +6,135 @@ use crate::smir::ir::X86InstructionBytes;
 use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix, X86VecAlign, X86VecMap};
 use crate::smir::ir::types::{
     ArchReg, BlockId, FpRoundMode, GuestAddr, MemWidth, OpWidth, SignExtend, SrcOperand, VReg,
-    VecElementType, VecWidth, X86FpBinaryOp, X86Reg,
+    VecElementType, VecWidth, X86AesOp, X86FpBinaryOp, X86Reg,
 };
 
 use super::x86_jit_mem_address_shape_valid;
+
+/// Exact contiguous VEX/EVEX AES memory-source sequence consumed by the
+/// helper-backed lowerer.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86JitAesMemorySequence {
+    pub(crate) consumed: usize,
+    pub(crate) memory_size: u32,
+    pub(crate) destination: u8,
+    /// Architectural first source for binary rounds. Unary VAESIMC and
+    /// VAESKEYGENASSIST receive the helper value as their first source.
+    pub(crate) source1: Option<u8>,
+    pub(crate) width: VecWidth,
+    pub(crate) needs_aes: bool,
+    pub(crate) needs_vaes: bool,
+    pub(crate) needs_avx512vl: bool,
+    pub(crate) supports_avx_ymm16: bool,
+}
+
+fn aes_vector_index(reg: &VReg, width: VecWidth) -> Option<u8> {
+    match (reg, width) {
+        (VReg::Arch(ArchReg::X86(X86Reg::Xmm(index @ 0..=31))), VecWidth::V128)
+        | (VReg::Arch(ArchReg::X86(X86Reg::Ymm(index @ 0..=31))), VecWidth::V256)
+        | (VReg::Arch(ArchReg::X86(X86Reg::Zmm(index @ 0..=31))), VecWidth::V512) => Some(*index),
+        _ => None,
+    }
+}
+
+/// Validate one exact unmasked VEX/EVEX AES memory-source pair. The memory
+/// value must be a single-definition/single-use virtual consumed immediately
+/// by one architectural AES operation at the same guest PC. This lets the
+/// lowerer replace the virtual with a borrowed vector register without making
+/// any allocator-owned value observable.
+///
+/// The classifier is O(1); callers build definition/use maps once in O(N) time
+/// and O(V) space for N operations and V virtual registers.
+pub(crate) fn x86_jit_aes_memory_sequence(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<X86JitAesMemorySequence> {
+    if !allow_mem {
+        return None;
+    }
+    let load = block.ops.get(index)?;
+    let (temporary, width) = match &load.kind {
+        OpKind::VLoad { dst, addr, width }
+            if load.x86_hint.is_none()
+                && matches!(dst, VReg::Virtual(_))
+                && matches!(width, VecWidth::V128 | VecWidth::V256 | VecWidth::V512)
+                && x86_jit_mem_address_shape_valid(addr) =>
+        {
+            (*dst, *width)
+        }
+        _ => return None,
+    };
+    if virtual_definitions.get(&temporary) != Some(&1) || virtual_uses.get(&temporary) != Some(&1) {
+        return None;
+    }
+
+    let consumer = block.ops.get(index + 1)?;
+    if consumer.guest_pc != load.guest_pc || consumer.x86_hint.is_some() {
+        return None;
+    }
+    let OpKind::X86Aes {
+        dst,
+        src1,
+        src2,
+        width: consumer_width,
+        op,
+        imm,
+    } = &consumer.kind
+    else {
+        return None;
+    };
+    if *consumer_width != width {
+        return None;
+    }
+    let destination = aes_vector_index(dst, width)?;
+    let source1 = match op {
+        X86AesOp::Enc | X86AesOp::EncLast | X86AesOp::Dec | X86AesOp::DecLast
+            if *imm == 0 && *src2 == Some(temporary) =>
+        {
+            Some(aes_vector_index(src1, width)?)
+        }
+        X86AesOp::InvMixColumns
+            if width == VecWidth::V128
+                && *imm == 0
+                && *src1 == temporary
+                && src2.is_none()
+                && destination <= 15 =>
+        {
+            None
+        }
+        X86AesOp::KeygenAssist
+            if width == VecWidth::V128
+                && *src1 == temporary
+                && src2.is_none()
+                && destination <= 15 =>
+        {
+            None
+        }
+        _ => return None,
+    };
+
+    let high_register = destination >= 16 || source1.is_some_and(|source_index| source_index >= 16);
+    // Intel SDM Vol. 2 specifies AES+AVX for VEX.128 round forms and
+    // VAES for VEX.256 or EVEX round forms. The lowerer re-encodes every
+    // unmasked low-register 128-bit round with VEX, irrespective of the guest
+    // encoding. Unary VAESIMC/VAESKEYGENASSIST likewise require AES+AVX.
+    let needs_aes = source1.is_none() || (width == VecWidth::V128 && !high_register);
+    let needs_vaes = source1.is_some() && !needs_aes;
+    Some(X86JitAesMemorySequence {
+        consumed: 2,
+        memory_size: width.bytes(),
+        destination,
+        source1,
+        width,
+        needs_aes,
+        needs_vaes,
+        needs_avx512vl: width != VecWidth::V512 && high_register,
+        supports_avx_ymm16: width != VecWidth::V512 && !high_register,
+    })
+}
 
 /// Exact contiguous VEX binary memory-source sequence consumed by the
 /// helper-backed lowerer.

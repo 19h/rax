@@ -37,6 +37,8 @@ use super::{
 // ---- module tree (auto-split) ----
 mod ac;
 pub use ac::*;
+#[cfg(feature = "smir-jit")]
+mod aes_memory_source;
 mod alu;
 pub use alu::*;
 mod bit_offset;

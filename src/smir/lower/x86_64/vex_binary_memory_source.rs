@@ -2,14 +2,12 @@
 
 use std::collections::HashMap;
 
-use super::{VecEncoding, VecEncodingKind, X86_64Lowerer, X86Emitter};
+use super::{VecEncoding, VecEncodingKind, X86_64Lowerer};
 use crate::smir::ir::SmirBlock;
-use crate::smir::ir::ops::{OpKind, X86VecMap};
-use crate::smir::ir::types::{DispSize, VReg, VecWidth};
+use crate::smir::ir::ops::OpKind;
+use crate::smir::ir::types::{VReg, VecWidth};
 use crate::smir::lower::regalloc::PhysReg;
-use crate::smir::lower::{
-    LowerError, X86_GUEST_VECTOR_SCRATCH_OFFSET, X86_GUEST_ZMM_OFFSET, X86_JIT_VECTOR_SCRATCH_INDEX,
-};
+use crate::smir::lower::{LowerError, X86_JIT_VECTOR_SCRATCH_INDEX};
 
 impl X86_64Lowerer {
     fn vex_binary_phys_reg(index: u8, width: VecWidth) -> PhysReg {
@@ -17,58 +15,6 @@ impl X86_64Lowerer {
             VecWidth::V128 => PhysReg::Xmm(index),
             VecWidth::V256 => PhysReg::Ymm(index),
             _ => unreachable!("validated VEX binary width"),
-        }
-    }
-
-    fn emit_vex_scratch_load(&mut self, register: PhysReg, width: VecWidth, offset: i32) {
-        let mut emitter = X86Emitter::new(&mut self.code);
-        emitter.emit_vex_prefix(
-            X86VecMap::Map0F,
-            crate::smir::ir::ops::X86SsePrefix::Rep,
-            width,
-            false,
-            register.vec_ext(),
-            0,
-            PhysReg::Rax.vec_ext(),
-            0,
-        );
-        emitter.code.emit_u8(0x6F); // VMOVDQU xmm/ymm, m128/m256
-        emitter.emit_modrm_mem_disp(register, PhysReg::Rax, offset, DispSize::Disp32);
-    }
-
-    /// Restore the complete architectural register borrowed as the transfer
-    /// carrier. The AVX-only bridge owns only YMM0-YMM15; the general bridge
-    /// owns complete ZMM state and therefore requires a 512-bit restore.
-    fn emit_vex_binary_scratch_restore(&mut self, index: u8) {
-        if self.avx_ymm16_vector_state {
-            self.emit_vex_scratch_load(
-                PhysReg::Ymm(index),
-                VecWidth::V256,
-                X86_GUEST_ZMM_OFFSET + i32::from(index) * 64,
-            );
-        } else {
-            let register = PhysReg::Zmm(index);
-            let mut emitter = X86Emitter::new(&mut self.code);
-            emitter.emit_evex_prefix(
-                X86VecMap::Map0F,
-                crate::smir::ir::ops::X86SsePrefix::Rep,
-                VecWidth::V512,
-                true,
-                register.vec_ext(),
-                0,
-                PhysReg::Rax.vec_ext(),
-                register.vec_ext2(),
-                0,
-                PhysReg::Rax.vec_ext2(),
-                0,
-            );
-            emitter.code.emit_u8(0x6F); // VMOVDQU64 zmm, m512
-            emitter.emit_modrm_mem_disp(
-                register,
-                PhysReg::Rax,
-                X86_GUEST_ZMM_OFFSET + i32::from(index) * 64,
-                DispSize::Disp32,
-            );
         }
     }
 
@@ -116,7 +62,7 @@ impl X86_64Lowerer {
 
         self.code.emit_u8(0x50); // push rax
         self.emit_load_state_ptr_rax();
-        self.emit_vex_scratch_load(scratch, sequence.width, X86_GUEST_VECTOR_SCRATCH_OFFSET);
+        self.emit_jit_vector_scratch_load(scratch, sequence.width);
         self.emit_vec_rrr(
             VecEncoding {
                 kind: VecEncodingKind::Vex,
@@ -130,7 +76,7 @@ impl X86_64Lowerer {
             source1,
             scratch,
         );
-        self.emit_vex_binary_scratch_restore(scratch_index);
+        self.emit_jit_vector_scratch_restore(scratch_index);
         self.code.emit_u8(0x58); // pop rax
 
         if self.avx_ymm16_vector_state {

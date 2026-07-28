@@ -28,6 +28,8 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_avx512cd: bool,
     pub(crate) needs_gfni: bool,
     pub(crate) needs_avx512vp2intersect: bool,
+    pub(crate) needs_aes: bool,
+    pub(crate) needs_vaes: bool,
     pub(crate) needs_pclmulqdq: bool,
     pub(crate) needs_vpclmulqdq: bool,
 }
@@ -172,15 +174,17 @@ impl X86NativeReplayFeatureRequirements {
             && (!self.needs_gfni || std::is_x86_feature_detected!("gfni"))
             && (!self.needs_avx512vp2intersect
                 || std::is_x86_feature_detected!("avx512vp2intersect"))
+            && (!self.needs_aes || std::is_x86_feature_detected!("aes"))
+            && (!self.needs_vaes || std::is_x86_feature_detected!("vaes"))
             && (!self.needs_pclmulqdq || std::is_x86_feature_detected!("pclmulqdq"))
             && (!self.needs_vpclmulqdq || std::is_x86_feature_detected!("vpclmulqdq"))
     }
 }
 
 /// Accumulate the host features required by exact x86 native-replay spans and
-/// helper-backed VEX binary memory-source sequences in O(N) time and O(P + V)
-/// temporary space per block for N operations, P guest instruction addresses,
-/// and V virtual registers.
+/// helper-backed AES or VEX binary memory-source sequences in O(N) time and
+/// O(P + V) temporary space per block for N operations, P guest instruction
+/// addresses, and V virtual registers.
 pub(crate) fn x86_native_replay_feature_requirements(
     func: &crate::smir::ir::SmirFunction,
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
@@ -399,7 +403,22 @@ pub(crate) fn x86_native_replay_feature_requirements(
         }
         let mut index = 0usize;
         while index < block.ops.len() {
-            if let Some(sequence) = super::x86_jit_vex_binary_memory_sequence(
+            if let Some(sequence) = super::x86_jit_aes_memory_sequence(
+                block,
+                index,
+                true,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                requirements.needs_avx512bw |= !sequence.supports_avx_ymm16;
+                requirements.needs_avx512vl |= sequence.needs_avx512vl;
+                requirements.needs_aes |= sequence.needs_aes;
+                requirements.needs_vaes |= sequence.needs_vaes;
+                all_spans_support_avx_ymm16 &= sequence.supports_avx_ymm16;
+                index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_vex_binary_memory_sequence(
                 block,
                 index,
                 true,

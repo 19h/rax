@@ -5,13 +5,75 @@ use crate::smir::ir::ops::{X86SsePrefix, X86VecMap};
 use crate::smir::ir::types::{DispSize, VecWidth};
 use crate::smir::lower::regalloc::PhysReg;
 use crate::smir::lower::{
-    X86_GUEST_K_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET,
+    X86_GUEST_K_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_VECTOR_SCRATCH_OFFSET,
+    X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET,
 };
 
 impl X86_64Lowerer {
     /// Select the AVX-only helper boundary used by YMM16-safe replay regions.
     pub fn set_avx_ymm16_vector_state(&mut self, on: bool) {
         self.avx_ymm16_vector_state = on;
+    }
+
+    fn emit_unaligned_vector_load(&mut self, register: PhysReg, width: VecWidth, offset: i32) {
+        let mut emitter = X86Emitter::new(&mut self.code);
+        match width {
+            VecWidth::V128 | VecWidth::V256 => {
+                emitter.emit_vex_prefix(
+                    X86VecMap::Map0F,
+                    X86SsePrefix::Rep,
+                    width,
+                    false,
+                    register.vec_ext(),
+                    0,
+                    PhysReg::Rax.vec_ext(),
+                    0,
+                );
+            }
+            VecWidth::V512 => {
+                emitter.emit_evex_prefix(
+                    X86VecMap::Map0F,
+                    X86SsePrefix::Rep,
+                    width,
+                    true,
+                    register.vec_ext(),
+                    0,
+                    PhysReg::Rax.vec_ext(),
+                    register.vec_ext2(),
+                    0,
+                    PhysReg::Rax.vec_ext2(),
+                    0,
+                );
+            }
+            _ => unreachable!("JIT vector transfer width"),
+        }
+        emitter.code.emit_u8(0x6F); // VMOVDQU xmm/ymm or VMOVDQU64 zmm
+        emitter.emit_modrm_mem_disp(register, PhysReg::Rax, offset, DispSize::Disp32);
+    }
+
+    /// Import a helper-produced nonarchitectural value into a borrowed vector
+    /// register.
+    pub(crate) fn emit_jit_vector_scratch_load(&mut self, register: PhysReg, width: VecWidth) {
+        self.emit_unaligned_vector_load(register, width, X86_GUEST_VECTOR_SCRATCH_OFFSET);
+    }
+
+    /// Restore the complete architectural vector register borrowed as a
+    /// helper-result carrier. The AVX-only bridge owns YMM0-YMM15; the general
+    /// bridge owns complete ZMM state.
+    pub(crate) fn emit_jit_vector_scratch_restore(&mut self, index: u8) {
+        if self.avx_ymm16_vector_state {
+            self.emit_unaligned_vector_load(
+                PhysReg::Ymm(index),
+                VecWidth::V256,
+                X86_GUEST_ZMM_OFFSET + i32::from(index) * 64,
+            );
+        } else {
+            self.emit_unaligned_vector_load(
+                PhysReg::Zmm(index),
+                VecWidth::V512,
+                X86_GUEST_ZMM_OFFSET + i32::from(index) * 64,
+            );
+        }
     }
 
     /// Spill or reload every host-resident architectural vector register

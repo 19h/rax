@@ -256,6 +256,12 @@ pub(crate) fn block_is_clobber_safe(
             i += consumed;
             continue;
         }
+        if let Some(sequence) =
+            x86_jit_aes_memory_sequence(block, i, allow_mem, &virtual_definitions, &virtual_uses)
+        {
+            i += sequence.consumed;
+            continue;
+        }
         if let Some(sequence) = x86_jit_vex_binary_memory_sequence(
             block,
             i,

@@ -21,6 +21,16 @@ fn x86_aes_feature_requirements_distinguish_vex_evex_vl_and_aes_ni() {
             VecWidth::V128,
             X86AesOp::Enc,
         )),
+        (true, false, false)
+    );
+    assert_eq!(
+        x86_aes_feature_requirements(&aes(
+            x86(X86Reg::Ymm(1)),
+            x86(X86Reg::Ymm(2)),
+            Some(x86(X86Reg::Ymm(3))),
+            VecWidth::V256,
+            X86AesOp::Dec,
+        )),
         (false, true, false)
     );
     assert_eq!(

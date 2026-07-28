@@ -5826,8 +5826,9 @@ pub fn x86_native_vector_uses_k16_opmasks_excluding(
     saw_narrow_opmask_operation
 }
 /// Return `(AES-NI, VAES, AVX-512VL)` requirements contributed by an admitted
-/// `X86Aes` operation. Low-register 128/256-bit rounds are re-encoded with VEX;
-/// high registers require EVEX.VL, while 512-bit rounds use EVEX without VL.
+/// `X86Aes` operation. Low-register 128-bit rounds are re-encoded with VEX and
+/// require AES+AVX; 256-bit or EVEX rounds require VAES. High 128/256-bit
+/// registers require EVEX.VL, while 512-bit rounds use EVEX without VL.
 pub(crate) fn x86_aes_feature_requirements(
     op: &crate::smir::ir::ops::OpKind,
 ) -> (bool, bool, bool) {
@@ -5856,11 +5857,13 @@ pub(crate) fn x86_aes_feature_requirements(
                     ))
                 )
             };
-            let needs_vl = *width != VecWidth::V512
-                && (high_vector(dst)
-                    || high_vector(src1)
-                    || src2.is_some_and(|reg| high_vector(&reg)));
-            (false, true, needs_vl)
+            let high_register =
+                high_vector(dst) || high_vector(src1) || src2.is_some_and(|reg| high_vector(&reg));
+            if *width == VecWidth::V128 && !high_register {
+                (true, false, false)
+            } else {
+                (false, true, *width != VecWidth::V512 && high_register)
+            }
         }
     }
 }
@@ -5961,8 +5964,8 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_cd = replay.needs_avx512cd;
     let mut needs_fp16 = replay.needs_avx512fp16;
     let mut needs_er = false;
-    let mut needs_aes = false;
-    let mut needs_vaes = false;
+    let mut needs_aes = replay.needs_aes;
+    let mut needs_vaes = replay.needs_vaes;
     let mut needs_sha512 = false;
     let mut needs_sm3 = false;
     let mut needs_sm4 = false;
