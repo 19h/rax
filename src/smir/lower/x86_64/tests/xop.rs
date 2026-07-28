@@ -293,6 +293,7 @@ fn register_lowering_accepts_all_semantic_cells_and_rejects_malformed_shapes() {
     }
 }
 
+#[cfg(feature = "smir-jit")]
 #[test]
 fn helper_backed_memory_pair_requires_memory_mode_and_preserves_physical_vectors_when_active() {
     for memory_is_source in [false, true] {
