@@ -505,6 +505,18 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.any = true;
                 requirements.needs_avx = true;
                 index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_vex_alignr_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                requirements.needs_avx2 |= sequence.width == crate::smir::ir::types::VecWidth::V256;
+                index += sequence.consumed;
             } else if let Some(sequence) = super::x86_jit_vex_fp_shuffle_memory_sequence(
                 block,
                 index,

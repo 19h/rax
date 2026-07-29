@@ -1,6 +1,7 @@
-//! Register-only AVX/AVX2 VEX VPALIGNR.
+//! AVX/AVX2 VEX `VPALIGNR` replay classifiers.
 
 use super::X86InstructionBytes;
+use crate::smir::ir::types::VecWidth;
 
 impl X86InstructionBytes {
     /// Validate one exact six-byte register-only VEX VPALIGNR instruction and
@@ -28,6 +29,34 @@ impl X86InstructionBytes {
         let bytes = self.as_slice();
         let extension = u8::from(bytes[1] & 0x80 == 0) << 3;
         Some(extension | ((bytes[4] >> 3) & 7))
+    }
+
+    /// Validate one complete VEX `VPALIGNR` instruction whose second source
+    /// is memory and return `(destination, first source, width, immediate, W)`.
+    ///
+    /// Intel SDM Volume 2 assigns `VPALIGNR` to map 0F3A, mandatory prefix
+    /// 66H, opcode 0FH, with 128- and 256-bit vector lengths. VEX.W is ignored
+    /// and retained so native replay can preserve either accepted encoding.
+    /// The shared parser validates the complete ModR/M/SIB/displacement plus
+    /// imm8 shape and permits only segment/address-size legacy prefixes.
+    /// Runtime and auxiliary space are O(1) because x86 instructions are at
+    /// most 15 bytes.
+    pub(crate) fn vex_memory_alignr_fields(&self) -> Option<(u8, u8, VecWidth, u8, bool)> {
+        let (fields, immediate) = self.vex_memory_fields_with_imm8()?;
+        if fields.map != 3 || fields.pp != 1 || fields.opcode != 0x0F {
+            return None;
+        }
+        Some((
+            fields.destination,
+            fields.source1,
+            if fields.width_256 {
+                VecWidth::V256
+            } else {
+                VecWidth::V128
+            },
+            immediate,
+            fields.w,
+        ))
     }
 }
 
@@ -60,6 +89,119 @@ mod tests {
             modrm,
             imm,
         ]
+    }
+
+    fn memory_encoding(
+        destination: u8,
+        source1: u8,
+        base: u8,
+        width: VecWidth,
+        immediate: u8,
+        w: bool,
+    ) -> Vec<u8> {
+        assert!(destination < 16 && source1 < 16 && base < 16);
+        vec![
+            0xC4,
+            (if destination < 8 { 0x80 } else { 0 }) | 0x40 | (if base < 8 { 0x20 } else { 0 }) | 3,
+            (u8::from(w) << 7)
+                | (((!source1) & 0x0F) << 3)
+                | (u8::from(width == VecWidth::V256) << 2)
+                | 1,
+            0x0F,
+            0x40 | ((destination & 7) << 3) | (base & 7),
+            0x20,
+            immediate,
+        ]
+    }
+
+    #[test]
+    fn memory_classifier_covers_all_register_width_w_and_immediate_cells() {
+        let mut classified = 0usize;
+        for destination in 0..16 {
+            for source1 in 0..16 {
+                for width in [VecWidth::V128, VecWidth::V256] {
+                    for w in [false, true] {
+                        for immediate in u8::MIN..=u8::MAX {
+                            let base = if immediate & 1 == 0 { 3 } else { 11 };
+                            let bytes =
+                                memory_encoding(destination, source1, base, width, immediate, w);
+                            assert_eq!(
+                                X86InstructionBytes::new(&bytes)
+                                    .unwrap()
+                                    .vex_memory_alignr_fields(),
+                                Some((destination, source1, width, immediate, w)),
+                                "{bytes:02X?}"
+                            );
+                            classified += 1;
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(classified, 16 * 16 * 2 * 2 * 256);
+    }
+
+    #[test]
+    fn memory_classifier_accepts_complete_prefixed_sib_displacement_shape() {
+        // FS addr32: VPALIGNR ymm14,ymm9,[r14d+r15d*2+0x44332211],0xA5.
+        let bytes = [
+            0x64, 0x67, 0xC4, 0x03, 0xB5, 0x0F, 0xB4, 0x7E, 0x11, 0x22, 0x33, 0x44, 0xA5,
+        ];
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .vex_memory_alignr_fields(),
+            Some((14, 9, VecWidth::V256, 0xA5, true))
+        );
+    }
+
+    #[test]
+    fn memory_classifier_rejects_every_structural_frontier() {
+        let valid = memory_encoding(3, 9, 11, VecWidth::V128, 0xA5, false);
+        let mut cases = Vec::new();
+
+        let mut wrong_map = valid.clone();
+        wrong_map[1] = (wrong_map[1] & !0x1F) | 2;
+        cases.push(wrong_map);
+
+        let mut wrong_prefix = valid.clone();
+        wrong_prefix[2] = (wrong_prefix[2] & !3) | 2;
+        cases.push(wrong_prefix);
+
+        let mut wrong_opcode = valid.clone();
+        wrong_opcode[3] = 0x0E;
+        cases.push(wrong_opcode);
+
+        let mut register_source = valid.clone();
+        register_source[4] |= 0xC0;
+        register_source.remove(5);
+        cases.push(register_source);
+
+        let mut missing_immediate = valid.clone();
+        missing_immediate.pop();
+        cases.push(missing_immediate);
+
+        let mut truncated_displacement = valid.clone();
+        truncated_displacement.remove(5);
+        cases.push(truncated_displacement);
+
+        let mut trailing = valid.clone();
+        trailing.push(0);
+        cases.push(trailing);
+
+        let mut forbidden_prefix = valid;
+        forbidden_prefix.insert(0, 0x66);
+        cases.push(forbidden_prefix);
+
+        for bytes in cases {
+            assert_eq!(
+                X86InstructionBytes::new(&bytes)
+                    .unwrap()
+                    .vex_memory_alignr_fields(),
+                None,
+                "{bytes:02X?}"
+            );
+        }
     }
 
     #[test]

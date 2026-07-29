@@ -207,6 +207,8 @@ mod vbit_select_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vector_compare_memory_source;
 #[cfg(feature = "smir-jit")]
+mod vex_alignr_memory_source;
+#[cfg(feature = "smir-jit")]
 mod vex_binary_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_duplicate_move_memory_source;

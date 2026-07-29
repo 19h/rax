@@ -216,6 +216,8 @@ mod vector;
 #[cfg(test)]
 mod vector_compare;
 #[cfg(test)]
+mod vex_alignr_memory_source;
+#[cfg(test)]
 mod vex_alignr_replay;
 #[cfg(test)]
 mod vex_apx_bmi_memory;
