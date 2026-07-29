@@ -1,6 +1,7 @@
-//! Register-only AVX VEX floating-point dot-product replay classification.
+//! AVX VEX floating-point dot-product replay classification.
 
 use super::X86InstructionBytes;
+use crate::smir::ir::types::{VecElementType, VecWidth};
 
 impl X86InstructionBytes {
     /// Validate one exact register-only VEX `VDPPS` or `VDPPD` instruction
@@ -35,6 +36,38 @@ impl X86InstructionBytes {
             unreachable!()
         };
         Some((u8::from(p0 & 0x80 == 0) << 3) | ((modrm >> 3) & 7))
+    }
+
+    /// Validate one complete AVX VEX `VDPPS` or `VDPPD` instruction whose
+    /// second source is memory and return
+    /// `(destination, source1, element, width, immediate, W)`.
+    ///
+    /// Both instructions use map 0F3A with mandatory prefix 66H and define
+    /// VEX.W as ignored. `VDPPS` admits VEX.128 and VEX.256; `VDPPD` admits
+    /// only VEX.128. The shared parser accepts only segment/address-size
+    /// legacy prefixes and validates the complete ModR/M/SIB/displacement
+    /// plus imm8 shape.
+    pub(crate) fn vex_memory_fp_dot_product_fields(
+        &self,
+    ) -> Option<(u8, u8, VecElementType, VecWidth, u8, bool)> {
+        let (fields, immediate) = self.vex_memory_fields_with_imm8()?;
+        if fields.map != 3 || fields.pp != 1 {
+            return None;
+        }
+        let (elem, width) = match (fields.opcode, fields.width_256) {
+            (0x40, false) => (VecElementType::F32, VecWidth::V128),
+            (0x40, true) => (VecElementType::F32, VecWidth::V256),
+            (0x41, false) => (VecElementType::F64, VecWidth::V128),
+            _ => return None,
+        };
+        Some((
+            fields.destination,
+            fields.source1,
+            elem,
+            width,
+            immediate,
+            fields.w,
+        ))
     }
 }
 
@@ -211,6 +244,153 @@ mod tests {
                 X86InstructionBytes::new(&bytes)
                     .unwrap()
                     .vex_register_fp_dot_product_uses_ymm(),
+                None,
+                "{bytes:02X?}"
+            );
+        }
+    }
+
+    fn memory_encoding(
+        destination: u8,
+        source1: u8,
+        base: u8,
+        elem: VecElementType,
+        width: VecWidth,
+        immediate: u8,
+        w: bool,
+    ) -> Vec<u8> {
+        assert!(destination < 16 && source1 < 16 && base < 16);
+        assert!(
+            (elem, width) != (VecElementType::F64, VecWidth::V256),
+            "VDPPD has no VEX.256 encoding"
+        );
+        vec![
+            0xC4,
+            (if destination < 8 { 0x80 } else { 0 }) | 0x40 | (if base < 8 { 0x20 } else { 0 }) | 3,
+            (u8::from(w) << 7)
+                | (((!source1) & 0x0F) << 3)
+                | (u8::from(width == VecWidth::V256) << 2)
+                | 1,
+            if elem == VecElementType::F32 {
+                0x40
+            } else {
+                0x41
+            },
+            0x40 | ((destination & 7) << 3) | (base & 7),
+            0x20,
+            immediate,
+        ]
+    }
+
+    #[test]
+    fn memory_classifier_covers_all_393_216_register_width_w_and_immediate_cells() {
+        let mut classified = 0usize;
+        for destination in 0..16 {
+            for source1 in 0..16 {
+                for (elem, width) in [
+                    (VecElementType::F32, VecWidth::V128),
+                    (VecElementType::F32, VecWidth::V256),
+                    (VecElementType::F64, VecWidth::V128),
+                ] {
+                    for w in [false, true] {
+                        for immediate in u8::MIN..=u8::MAX {
+                            let bytes =
+                                memory_encoding(destination, source1, 3, elem, width, immediate, w);
+                            assert_eq!(
+                                X86InstructionBytes::new(&bytes)
+                                    .unwrap()
+                                    .vex_memory_fp_dot_product_fields(),
+                                Some((destination, source1, elem, width, immediate, w)),
+                                "{bytes:02X?}"
+                            );
+                            classified += 1;
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(classified, 16 * 16 * 3 * 2 * 256);
+    }
+
+    #[test]
+    fn memory_classifier_accepts_llvm_23_and_complete_prefixed_address_shapes() {
+        for (bytes, expected) in [
+            (
+                vec![0xC4, 0x43, 0x29, 0x40, 0x4B, 0x20, 0xA5],
+                (9, 10, VecElementType::F32, VecWidth::V128, 0xA5, false),
+            ),
+            (
+                vec![0xC4, 0x43, 0x0D, 0x40, 0x7B, 0x20, 0x5A],
+                (15, 14, VecElementType::F32, VecWidth::V256, 0x5A, false),
+            ),
+            (
+                vec![0xC4, 0x43, 0x29, 0x41, 0x4B, 0x20, 0x3C],
+                (9, 10, VecElementType::F64, VecWidth::V128, 0x3C, false),
+            ),
+            (
+                vec![
+                    0x64, 0x67, 0xC4, 0x63, 0xAD, 0x40, 0xB4, 0x75, 0x11, 0x22, 0x33, 0x44, 0xA5,
+                ],
+                (14, 10, VecElementType::F32, VecWidth::V256, 0xA5, true),
+            ),
+        ] {
+            assert_eq!(
+                X86InstructionBytes::new(&bytes)
+                    .unwrap()
+                    .vex_memory_fp_dot_product_fields(),
+                Some(expected),
+                "{bytes:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn memory_classifier_rejects_semantically_different_or_malformed_encodings() {
+        let valid = memory_encoding(9, 10, 11, VecElementType::F32, VecWidth::V256, 0xA5, true);
+        let mut cases = Vec::new();
+
+        let mut wrong_map = valid.clone();
+        wrong_map[1] = (wrong_map[1] & !0x1F) | 2;
+        cases.push(wrong_map);
+
+        let mut wrong_prefix = valid.clone();
+        wrong_prefix[2] = (wrong_prefix[2] & !3) | 2;
+        cases.push(wrong_prefix);
+
+        let mut wrong_opcode = valid.clone();
+        wrong_opcode[3] = 0x42;
+        cases.push(wrong_opcode);
+
+        let mut invalid_vdppd_l1 = valid.clone();
+        invalid_vdppd_l1[3] = 0x41;
+        cases.push(invalid_vdppd_l1);
+
+        let mut register_source = valid.clone();
+        register_source[4] |= 0xC0;
+        register_source.remove(5);
+        cases.push(register_source);
+
+        let mut missing_immediate = valid.clone();
+        missing_immediate.pop();
+        cases.push(missing_immediate);
+
+        let mut truncated_displacement = valid.clone();
+        truncated_displacement.remove(5);
+        cases.push(truncated_displacement);
+
+        let mut trailing = valid.clone();
+        trailing.push(0);
+        cases.push(trailing);
+
+        let mut forbidden_prefix = valid;
+        forbidden_prefix.insert(0, 0x66);
+        cases.push(forbidden_prefix);
+
+        for bytes in cases {
+            assert_eq!(
+                X86InstructionBytes::new(&bytes)
+                    .unwrap()
+                    .vex_memory_fp_dot_product_fields(),
                 None,
                 "{bytes:02X?}"
             );

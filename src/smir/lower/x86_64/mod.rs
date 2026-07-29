@@ -225,6 +225,8 @@ mod vex_fma4_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_fp_compare_memory_source;
 #[cfg(feature = "smir-jit")]
+mod vex_fp_dot_product_memory_source;
+#[cfg(feature = "smir-jit")]
 mod vex_fp_flag_compare_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_fp_shuffle_memory_source;
