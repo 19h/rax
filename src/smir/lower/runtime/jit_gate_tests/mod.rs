@@ -349,6 +349,8 @@ mod vex_ptest_replay;
 #[cfg(test)]
 mod vex_register_broadcast_replay;
 #[cfg(test)]
+mod vex_round_memory_source;
+#[cfg(test)]
 mod vex_scalar_extract_replay;
 #[cfg(test)]
 mod vex_scalar_fp_arithmetic_memory_source;
