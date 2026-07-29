@@ -512,17 +512,58 @@ fn masked_packed_evex_fma3_broadcast_uses_one_aggregate_gated_scalar_read() {
                         }
                         ref other => panic!("{bytes:02X?}: unexpected scalar read {other:?}"),
                     };
+                    let active_mask = lifted
+                        .ops
+                        .iter()
+                        .find_map(|op| match op.kind {
+                            OpKind::And {
+                                dst,
+                                src1,
+                                src2: SrcOperand::Imm(lane_mask),
+                                width: OpWidth::W64,
+                                flags: FlagUpdate::None,
+                            } if src1 == mask && lane_mask == applicable_lane_mask as i64 => {
+                                Some(dst)
+                            }
+                            _ => None,
+                        })
+                        .unwrap_or_else(|| panic!("{bytes:02X?}: missing applicable-mask AND"));
+                    let negated = lifted
+                        .ops
+                        .iter()
+                        .find_map(|op| match op.kind {
+                            OpKind::Neg {
+                                dst,
+                                src,
+                                width: OpWidth::W64,
+                                flags: FlagUpdate::None,
+                            } if src == active_mask => Some(dst),
+                            _ => None,
+                        })
+                        .unwrap_or_else(|| panic!("{bytes:02X?}: missing predicate negation"));
+                    let combined = lifted
+                        .ops
+                        .iter()
+                        .find_map(|op| match op.kind {
+                            OpKind::Or {
+                                dst,
+                                src1,
+                                src2: SrcOperand::Reg(src2),
+                                width: OpWidth::W64,
+                                flags: FlagUpdate::None,
+                            } if src1 == active_mask && src2 == negated => Some(dst),
+                            _ => None,
+                        })
+                        .unwrap_or_else(|| panic!("{bytes:02X?}: missing predicate OR"));
                     assert!(lifted.ops.iter().any(|op| matches!(
                         op.kind,
-                        OpKind::And {
+                        OpKind::Shr {
                             dst,
-                            src1,
-                            src2: SrcOperand::Imm(lane_mask),
+                            src,
+                            amount: SrcOperand::Imm(63),
                             width: OpWidth::W64,
                             flags: FlagUpdate::None,
-                        } if dst == condition
-                            && src1 == mask
-                            && lane_mask == applicable_lane_mask as i64
+                        } if dst == condition && src == combined
                     )));
                     assert_eq!(
                         lifted

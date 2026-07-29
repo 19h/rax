@@ -125,17 +125,46 @@ fn assert_exact_masked_prefix(function: &SmirFunction, case: MaskedBroadcastCase
         "{case:?}: masked broadcast must not contain an eager load"
     );
 
-    let condition = match ops[0].kind {
+    let active_mask = match ops[0].kind {
         OpKind::And {
-            dst: condition @ VReg::Virtual(_),
+            dst: active_mask @ VReg::Virtual(_),
             src1,
             src2: SrcOperand::Imm(lane_mask),
             width: OpWidth::W64,
             flags: FlagUpdate::None,
-        } if src1 == mask && lane_mask == case.lane_mask() as i64 => condition,
+        } if src1 == mask && lane_mask == case.lane_mask() as i64 => active_mask,
         ref other => panic!("{case:?}: aggregate mask condition {other:?}"),
     };
-    let scalar = match ops[1].kind {
+    let negated = match ops[1].kind {
+        OpKind::Neg {
+            dst: negated @ VReg::Virtual(_),
+            src,
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } if src == active_mask => negated,
+        ref other => panic!("{case:?}: aggregate mask negation {other:?}"),
+    };
+    let combined = match ops[2].kind {
+        OpKind::Or {
+            dst: combined @ VReg::Virtual(_),
+            src1,
+            src2: SrcOperand::Reg(src2),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } if src1 == active_mask && src2 == negated => combined,
+        ref other => panic!("{case:?}: aggregate mask combination {other:?}"),
+    };
+    let condition = match ops[3].kind {
+        OpKind::Shr {
+            dst: condition @ VReg::Virtual(_),
+            src,
+            amount: SrcOperand::Imm(63),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } if src == combined => condition,
+        ref other => panic!("{case:?}: aggregate mask normalization {other:?}"),
+    };
+    let scalar = match ops[4].kind {
         OpKind::Mov {
             dst: scalar @ VReg::Virtual(_),
             src: SrcOperand::Imm(0),
@@ -143,7 +172,7 @@ fn assert_exact_masked_prefix(function: &SmirFunction, case: MaskedBroadcastCase
         } => scalar,
         ref other => panic!("{case:?}: scalar seed {other:?}"),
     };
-    let address = match &ops[2].kind {
+    let address = match &ops[5].kind {
         OpKind::PredLoad {
             dst,
             cond,
@@ -159,11 +188,11 @@ fn assert_exact_masked_prefix(function: &SmirFunction, case: MaskedBroadcastCase
         other => panic!("{case:?}: scalar PredLoad {other:?}"),
     };
     assert!(
-        crate::smir::lower::runtime::x86_jit_op_uses_mem_helper(&ops[2].kind),
+        crate::smir::lower::runtime::x86_jit_op_uses_mem_helper(&ops[5].kind),
         "{case:?}: PredLoad must preserve live vector state across its MMU helper"
     );
     assert!(address.is_x86_state_backed_shape(), "{case:?}: {address:?}");
-    let loaded = match ops[3].kind {
+    let loaded = match ops[6].kind {
         OpKind::VBroadcast {
             dst: loaded @ VReg::Virtual(_),
             scalar: source,
@@ -174,7 +203,7 @@ fn assert_exact_masked_prefix(function: &SmirFunction, case: MaskedBroadcastCase
         }
         ref other => panic!("{case:?}: source broadcast {other:?}"),
     };
-    match (&ops[4].kind, case.broadcast.format) {
+    match (&ops[7].kind, case.broadcast.format) {
         (
             OpKind::X86Fma(X86FmaOp {
                 src3,
@@ -349,14 +378,14 @@ fn all_15_876_masked_broadcast_shapes_lift_optimize_admit_and_lower_exactly() {
                 )
             });
             let unoptimized_consumed = if case.zeroing {
-                7 + 5 * usize::from(case.lanes())
+                10 + 5 * usize::from(case.lanes())
             } else {
-                8 + 6 * usize::from(case.lanes())
+                11 + 6 * usize::from(case.lanes())
             };
             let expected_consumed =
                 unoptimized_consumed - usize::from(matches!(level, OptLevel::O2));
             assert_eq!(sequence.consumed, expected_consumed, "{level:?} {case:?}");
-            assert_eq!(sequence.memory_offset, 2, "{level:?} {case:?}");
+            assert_eq!(sequence.memory_offset, 5, "{level:?} {case:?}");
             assert_eq!(
                 sequence.memory_size,
                 case.broadcast.format.memory_width().bytes(),
@@ -480,7 +509,7 @@ fn masked_broadcast_sequence_fails_closed_for_fault_mask_tail_and_ssa_mutations(
     let base = lift_masked_case(case);
     assert_eq!(sequence_index(&base, case), 0);
     assert!(masked_sequence(&base, case).is_some());
-    let raw = match base.blocks[0].ops[4].kind {
+    let raw = match base.blocks[0].ops[7].kind {
         OpKind::X86Fma(X86FmaOp { dst, .. }) => dst,
         _ => unreachable!(),
     };
@@ -504,86 +533,104 @@ fn masked_broadcast_sequence_fails_closed_for_fault_mask_tail_and_ssa_mutations(
     }
     malformed.push(("aggregate lane mask", lane_mask));
 
+    let mut predicate_negation = base.clone();
+    if let OpKind::Neg { src, .. } = &mut predicate_negation.blocks[0].ops[1].kind {
+        *src = VReg::Virtual(VirtualId(0xFFFD));
+    }
+    malformed.push(("aggregate mask negation", predicate_negation));
+
+    let mut predicate_or = base.clone();
+    if let OpKind::Or { src2, .. } = &mut predicate_or.blocks[0].ops[2].kind {
+        *src2 = SrcOperand::Imm(0);
+    }
+    malformed.push(("aggregate mask combination", predicate_or));
+
+    let mut predicate_shift = base.clone();
+    if let OpKind::Shr { amount, .. } = &mut predicate_shift.blocks[0].ops[3].kind {
+        *amount = SrcOperand::Imm(62);
+    }
+    malformed.push(("aggregate mask normalization", predicate_shift));
+
     let mut seed = base.clone();
-    if let OpKind::Mov { src, .. } = &mut seed.blocks[0].ops[1].kind {
+    if let OpKind::Mov { src, .. } = &mut seed.blocks[0].ops[4].kind {
         *src = SrcOperand::Imm(1);
     }
     malformed.push(("nonzero scalar seed", seed));
 
     let mut pred_condition = base.clone();
-    if let OpKind::PredLoad { cond, .. } = &mut pred_condition.blocks[0].ops[2].kind {
+    if let OpKind::PredLoad { cond, .. } = &mut pred_condition.blocks[0].ops[5].kind {
         *cond = VReg::Imm(1);
     }
     malformed.push(("PredLoad condition", pred_condition));
 
     let mut pred_address = base.clone();
-    if let OpKind::PredLoad { addr, .. } = &mut pred_address.blocks[0].ops[2].kind {
+    if let OpKind::PredLoad { addr, .. } = &mut pred_address.blocks[0].ops[5].kind {
         *addr = Address::Direct(VReg::Virtual(VirtualId(0xFFFF)));
     }
     malformed.push(("PredLoad address", pred_address));
 
     let mut pred_width = base.clone();
-    if let OpKind::PredLoad { width, .. } = &mut pred_width.blocks[0].ops[2].kind {
+    if let OpKind::PredLoad { width, .. } = &mut pred_width.blocks[0].ops[5].kind {
         *width = MemWidth::B8;
     }
     malformed.push(("PredLoad width", pred_width));
 
     let mut pred_sign = base.clone();
-    if let OpKind::PredLoad { signed, .. } = &mut pred_sign.blocks[0].ops[2].kind {
+    if let OpKind::PredLoad { signed, .. } = &mut pred_sign.blocks[0].ops[5].kind {
         *signed = SignExtend::Sign;
     }
     malformed.push(("PredLoad sign", pred_sign));
 
     let mut broadcast_lanes = base.clone();
-    if let OpKind::VBroadcast { lanes, .. } = &mut broadcast_lanes.blocks[0].ops[3].kind {
+    if let OpKind::VBroadcast { lanes, .. } = &mut broadcast_lanes.blocks[0].ops[6].kind {
         *lanes -= 1;
     }
     malformed.push(("source broadcast lanes", broadcast_lanes));
 
     let mut fma_mask = base.clone();
-    if let OpKind::X86Fma(fma) = &mut fma_mask.blocks[0].ops[4].kind {
+    if let OpKind::X86Fma(fma) = &mut fma_mask.blocks[0].ops[7].kind {
         fma.mask = Some(VReg::Arch(ArchReg::X86(X86Reg::K(4))));
     }
     malformed.push(("FMA mask", fma_mask));
 
     let mut old_source = base.clone();
-    if let OpKind::VMov { src, .. } = &mut old_source.blocks[0].ops[5].kind {
+    if let OpKind::VMov { src, .. } = &mut old_source.blocks[0].ops[8].kind {
         *src = vector(2, case.broadcast.width);
     }
     malformed.push(("merge source", old_source));
 
     let mut result_zero = base.clone();
-    if let OpKind::Mov { src, .. } = &mut result_zero.blocks[0].ops[6].kind {
+    if let OpKind::Mov { src, .. } = &mut result_zero.blocks[0].ops[9].kind {
         *src = SrcOperand::Imm(1);
     }
     malformed.push(("result zero", result_zero));
 
     let mut mask_shift = base.clone();
-    if let OpKind::Shr { amount, .. } = &mut mask_shift.blocks[0].ops[8].kind {
+    if let OpKind::Shr { amount, .. } = &mut mask_shift.blocks[0].ops[11].kind {
         *amount = SrcOperand::Imm(1);
     }
     malformed.push(("lane-zero mask shift", mask_shift));
 
     let mut active_lane = base.clone();
-    if let OpKind::VExtractLane { lane, .. } = &mut active_lane.blocks[0].ops[10].kind {
+    if let OpKind::VExtractLane { lane, .. } = &mut active_lane.blocks[0].ops[13].kind {
         *lane = 1;
     }
     malformed.push(("active result lane", active_lane));
 
     let mut inactive_lane = base.clone();
-    if let OpKind::VExtractLane { lane, .. } = &mut inactive_lane.blocks[0].ops[11].kind {
+    if let OpKind::VExtractLane { lane, .. } = &mut inactive_lane.blocks[0].ops[14].kind {
         *lane = 1;
     }
     malformed.push(("inactive merge lane", inactive_lane));
 
     let mut select_condition = base.clone();
-    if let OpKind::Select { cond, .. } = &mut select_condition.blocks[0].ops[12].kind {
+    if let OpKind::Select { cond, .. } = &mut select_condition.blocks[0].ops[15].kind {
         *cond = VReg::Imm(1);
     }
     malformed.push(("lane select condition", select_condition));
 
     let mut insert_lane = base.clone();
-    if let OpKind::VInsertLane { lane, .. } = &mut insert_lane.blocks[0].ops[13].kind {
+    if let OpKind::VInsertLane { lane, .. } = &mut insert_lane.blocks[0].ops[16].kind {
         *lane = 1;
     }
     malformed.push(("result insert lane", insert_lane));
@@ -627,7 +674,7 @@ fn masked_broadcast_sequence_fails_closed_for_fault_mask_tail_and_ssa_mutations(
     let zero = lift_masked_case(zero_case);
     assert!(masked_sequence(&zero, zero_case).is_some());
     let mut zero_fallback = zero;
-    let zero_register = match zero_fallback.blocks[0].ops[5].kind {
+    let zero_register = match zero_fallback.blocks[0].ops[8].kind {
         OpKind::Mov { dst, .. } => dst,
         _ => unreachable!(),
     };

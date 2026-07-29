@@ -13,6 +13,10 @@ use crate::smir::ir::{
     X86EvexScalarFma3MemoryEncoding, X86InstructionBytes,
 };
 
+use super::evex_memory_source_common::{
+    exact_nonzero_mask_predicate, exact_virtual_definition_use, single_definition_single_use,
+    vector_index,
+};
 use super::vector_memory_source::{vex_fma3_kind, vex_fma3_order};
 use super::x86_jit_mem_address_shape_valid;
 
@@ -36,42 +40,11 @@ pub(crate) struct X86JitEvexScalarFma3MemorySequence {
     pub(crate) encoding: X86EvexScalarFma3MemoryEncoding,
 }
 
-fn vector_index(reg: &VReg, width: VecWidth) -> Option<u8> {
-    match (reg, width) {
-        (VReg::Arch(ArchReg::X86(X86Reg::Xmm(index @ 0..=31))), VecWidth::V128)
-        | (VReg::Arch(ArchReg::X86(X86Reg::Ymm(index @ 0..=31))), VecWidth::V256)
-        | (VReg::Arch(ArchReg::X86(X86Reg::Zmm(index @ 0..=31))), VecWidth::V512) => Some(*index),
-        _ => None,
-    }
-}
-
 fn xmm_index(reg: &VReg) -> Option<u8> {
     match reg {
         VReg::Arch(ArchReg::X86(X86Reg::Xmm(index @ 0..=31))) => Some(*index),
         _ => None,
     }
-}
-
-fn single_definition_single_use(
-    register: VReg,
-    virtual_definitions: &HashMap<VReg, usize>,
-    virtual_uses: &HashMap<VReg, usize>,
-) -> bool {
-    matches!(register, VReg::Virtual(_))
-        && virtual_definitions.get(&register) == Some(&1)
-        && virtual_uses.get(&register) == Some(&1)
-}
-
-fn exact_virtual_definition_use(
-    register: VReg,
-    definitions: usize,
-    uses: usize,
-    virtual_definitions: &HashMap<VReg, usize>,
-    virtual_uses: &HashMap<VReg, usize>,
-) -> bool {
-    matches!(register, VReg::Virtual(_))
-        && virtual_definitions.get(&register) == Some(&definitions)
-        && virtual_uses.get(&register) == Some(&uses)
 }
 
 fn x86_jit_masked_evex_packed_fma3_broadcast_sequence(
@@ -93,33 +66,27 @@ fn x86_jit_masked_evex_packed_fma3_broadcast_sequence(
     let elem = encoding.elem;
     let lanes = width.lanes(elem) as u8;
     let lane_mask = (1u64 << lanes) - 1;
-    let condition_op = block.ops.get(index)?;
-    let condition = match &condition_op.kind {
-        OpKind::And {
-            dst,
-            src1,
-            src2: SrcOperand::Imm(actual_lane_mask),
-            width: OpWidth::W64,
-            flags: FlagUpdate::None,
-        } if condition_op.x86_hint.is_none()
-            && *src1 == mask
-            && *actual_lane_mask == lane_mask as i64 =>
-        {
-            *dst
-        }
-        _ => return None,
-    };
-    if !exact_virtual_definition_use(condition, 1, 1, virtual_definitions, virtual_uses) {
-        return None;
-    }
+    let first = block.ops.get(index)?;
+    let guest_pc = first.guest_pc;
     let same_pc = |offset: usize| {
         block
             .ops
             .get(index + offset)
-            .is_some_and(|op| op.guest_pc == condition_op.guest_pc)
+            .is_some_and(|op| op.guest_pc == guest_pc)
     };
+    let mut offset = 0usize;
+    let condition = exact_nonzero_mask_predicate(
+        block,
+        index,
+        &mut offset,
+        guest_pc,
+        mask,
+        lane_mask,
+        virtual_definitions,
+        virtual_uses,
+    )?;
 
-    let seed = block.ops.get(index + 1)?;
+    let seed = block.ops.get(index + offset)?;
     let loaded_scalar = match &seed.kind {
         OpKind::Mov {
             dst,
@@ -128,11 +95,12 @@ fn x86_jit_masked_evex_packed_fma3_broadcast_sequence(
         } if seed.x86_hint.is_none() => *dst,
         _ => return None,
     };
-    if !same_pc(1)
+    if !same_pc(offset)
         || !exact_virtual_definition_use(loaded_scalar, 2, 1, virtual_definitions, virtual_uses)
     {
         return None;
     }
+    offset += 1;
 
     let memory_width = match elem {
         VecElementType::F16 => MemWidth::B2,
@@ -140,7 +108,7 @@ fn x86_jit_masked_evex_packed_fma3_broadcast_sequence(
         VecElementType::F64 => MemWidth::B8,
         _ => return None,
     };
-    let pred_load = block.ops.get(index + 2)?;
+    let pred_load = block.ops.get(index + offset)?;
     if !matches!(
         &pred_load.kind,
         OpKind::PredLoad {
@@ -154,12 +122,14 @@ fn x86_jit_masked_evex_packed_fma3_broadcast_sequence(
             && *cond == condition
             && *actual_width == memory_width
             && x86_jit_mem_address_shape_valid(addr)
-    ) || !same_pc(2)
+    ) || !same_pc(offset)
     {
         return None;
     }
+    let memory_offset = offset;
+    offset += 1;
 
-    let broadcast = block.ops.get(index + 3)?;
+    let broadcast = block.ops.get(index + offset)?;
     let loaded = match &broadcast.kind {
         OpKind::VBroadcast {
             dst,
@@ -175,11 +145,13 @@ fn x86_jit_masked_evex_packed_fma3_broadcast_sequence(
         }
         _ => return None,
     };
-    if !same_pc(3) || !single_definition_single_use(loaded, virtual_definitions, virtual_uses) {
+    if !same_pc(offset) || !single_definition_single_use(loaded, virtual_definitions, virtual_uses)
+    {
         return None;
     }
+    offset += 1;
 
-    let fma = block.ops.get(index + 4)?;
+    let fma = block.ops.get(index + offset)?;
     let (raw, src1, src2, src3, fma_mask, kind, order, round, fma_lanes) = match &fma.kind {
         OpKind::X86Fma(fma_op) if elem != VecElementType::F16 && fma_op.elem == elem => (
             fma_op.dst,
@@ -207,7 +179,7 @@ fn x86_jit_masked_evex_packed_fma3_broadcast_sequence(
         ),
         _ => return None,
     };
-    if !same_pc(4)
+    if !same_pc(offset)
         || !exact_virtual_definition_use(
             raw,
             1,
@@ -238,8 +210,7 @@ fn x86_jit_masked_evex_packed_fma3_broadcast_sequence(
     {
         return None;
     }
-
-    let mut offset = 5;
+    offset += 1;
     let old = if encoding.zeroing {
         None
     } else {
@@ -485,13 +456,13 @@ fn x86_jit_masked_evex_packed_fma3_broadcast_sequence(
     if block
         .ops
         .get(index + offset)
-        .is_some_and(|op| op.guest_pc == condition_op.guest_pc)
+        .is_some_and(|op| op.guest_pc == guest_pc)
     {
         return None;
     }
     Some(X86JitEvexPackedFma3MemorySequence {
         consumed: offset,
-        memory_offset: 2,
+        memory_offset,
         memory_size: memory_width.bytes(),
         encoding,
     })

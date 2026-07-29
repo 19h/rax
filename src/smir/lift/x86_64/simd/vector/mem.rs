@@ -19,6 +19,68 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
+    /// Normalize `mask & applicable_bits` to exactly 0/1 without changing
+    /// architectural flags. PredLoad observes predicate bit 0 rather than
+    /// generic integer nonzeroness.
+    pub(crate) fn append_nonzero_mask_predicate(
+        &self,
+        mask: VReg,
+        applicable_bits: u64,
+        pc: u64,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) -> VReg {
+        let active_mask = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::And {
+                dst: active_mask,
+                src1: mask,
+                src2: SrcOperand::Imm(applicable_bits as i64),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+        // For nonzero x, x | -x has bit 63 set.
+        let negated = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Neg {
+                dst: negated,
+                src: active_mask,
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+        let combined = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Or {
+                dst: combined,
+                src1: active_mask,
+                src2: SrcOperand::Reg(negated),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+        let active = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Shr {
+                dst: active,
+                src: combined,
+                amount: SrcOperand::Imm(63),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+        active
+    }
+
     pub(crate) fn append_broadcast_memory_source(
         &self,
         addr: Address,
@@ -79,18 +141,7 @@ impl X86_64Lifter {
         } else {
             (1u64 << lanes) - 1
         };
-        let active = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::And {
-                dst: active,
-                src1: mask,
-                src2: SrcOperand::Imm(lane_mask as i64),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            },
-        ));
+        let active = self.append_nonzero_mask_predicate(mask, lane_mask, pc, ctx, ops);
         let scalar = ctx.alloc_vreg();
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),

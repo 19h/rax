@@ -16,6 +16,8 @@ mod integer;
 #[cfg(test)]
 mod legacy;
 #[cfg(test)]
+mod logic_broadcast;
+#[cfg(test)]
 mod mask;
 #[cfg(test)]
 mod ops;

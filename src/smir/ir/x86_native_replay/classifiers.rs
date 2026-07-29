@@ -1,7 +1,9 @@
 use super::X86InstructionBytes;
 
 mod chunk;
+mod evex_broadcast_xor_memory;
 mod evex_fma3_memory;
+mod evex_memory;
 mod fp16_narrow;
 mod fp16_widen;
 mod fp32_fp64_convert;
@@ -67,6 +69,7 @@ mod vex_zero;
 mod vp2intersect;
 mod vpclmulqdq;
 
+pub(crate) use evex_broadcast_xor_memory::X86EvexBroadcastXorMemoryEncoding;
 pub(crate) use evex_fma3_memory::{
     X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay, X86EvexScalarFma3MemoryEncoding,
 };
