@@ -4,6 +4,7 @@ mod vex_horizontal_integer;
 mod vex_integer_interleave;
 mod vex_integer_minmax;
 mod vex_integer_multiply_add;
+mod vex_integer_pack;
 mod vex_pmul_high_word;
 mod vex_pmul_low;
 mod vex_shared_count_shift;
@@ -856,21 +857,15 @@ fn vex_packed_fp_binary_encoding_valid(
         )
 }
 
-/// Validate one unmasked VEX.128/VEX.256 packed logic, integer add/subtract,
-/// unsigned rounded average, packed sign, rounded-high word multiply, packed
-/// integer multiply-add, packed integer interleave, packed integer
-/// minimum/maximum, packed horizontal integer arithmetic, fixed-predicate integer compare,
-/// binary32/binary64 arithmetic, or packed FMA3 memory source, or one scalar
-/// binary32/binary64 arithmetic or FMA3 source. Binary packed forms are exact
-/// two-op `VLoad`/consumer pairs; packed FMA3 is an exact
-/// `VLoad`/`X86Fma`/architectural-`VMov` chain. Shared-count shifts use an
-/// exact `VLoad`/`VExtractLane`/`X86PackedShift` chain. Rounded averages, packed
-/// sign, rounded-high word multiply, horizontal integer arithmetic, fixed
-/// comparisons, FMA3, and scalar forms additionally require exact
-/// instruction-byte provenance. Scalar forms include the complete
-/// lane-extract, destination-clear, and lane-insert chain. Scalar arithmetic
-/// requires `VEX.L=0`; scalar FMA3 accepts both values because `VEX.L` is
-/// architecturally ignored.
+/// Validate one exact helper-backed unmasked VEX.128/VEX.256 memory-source
+/// sequence. Supported packed families include logic, arithmetic, average,
+/// sign, multiply, interleave, saturating pack, min/max, horizontal, compare,
+/// and FMA3; scalar binary32/binary64 arithmetic and FMA3 are also accepted.
+/// Most packed families are two-op `VLoad`/consumer pairs. Shared-count shifts
+/// use `VLoad`/`VExtractLane`/`X86PackedShift`; packed FMA3 and scalar forms
+/// validate their complete multi-op chains. Families whose IR hints do not
+/// retain the encoding require exact instruction-byte provenance. Scalar
+/// arithmetic requires `VEX.L=0`; scalar FMA3 accepts ignored `VEX.L`.
 /// Single-definition/single-use checks prevent the fused lowerer from hiding
 /// any independently observable virtual value.
 ///
@@ -933,6 +928,15 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
         return Some(sequence);
     }
     if let Some(sequence) = vex_integer_interleave::sequence(
+        block,
+        index,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence);
+    }
+    if let Some(sequence) = vex_integer_pack::sequence(
         block,
         index,
         instruction_bytes,
