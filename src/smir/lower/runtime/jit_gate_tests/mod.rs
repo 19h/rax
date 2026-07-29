@@ -228,6 +228,8 @@ mod vex_bmi2_shift;
 #[cfg(test)]
 mod vex_bmi2_shift_memory;
 #[cfg(test)]
+mod vex_byte_shuffle_memory_source;
+#[cfg(test)]
 mod vex_chunk_extract_replay;
 #[cfg(test)]
 mod vex_cross_lane_128_replay;
