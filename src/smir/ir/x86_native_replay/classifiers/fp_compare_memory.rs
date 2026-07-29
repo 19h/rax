@@ -4,6 +4,42 @@ use super::X86InstructionBytes;
 use crate::smir::ir::types::{VecElementType, VecWidth};
 
 impl X86InstructionBytes {
+    /// Validate one complete AVX VEX `VCOMISS`, `VUCOMISS`, `VCOMISD`, or
+    /// `VUCOMISD` instruction whose second source is memory and return
+    /// `(source1, element, signaling, memory size, W)`.
+    ///
+    /// These scalar flag-setting comparisons use map 0F opcodes 2EH/2FH,
+    /// reserve VEX.vvvv as `1111b`, define VEX.W as ignored, and require only
+    /// AVX. Although the opcode table labels VEX.L as ignored, Intel documents
+    /// VEX.L=1 behavior as generation-dependent unpredictable; native
+    /// admission therefore accepts only VEX.L=0. Runtime and auxiliary space
+    /// are O(1).
+    pub(crate) fn vex_memory_fp_flag_compare_fields(
+        &self,
+    ) -> Option<(u8, VecElementType, bool, u32, bool)> {
+        let fields = self.vex_memory_fields()?;
+        if fields.map != 1
+            || fields.source1 != 0
+            || fields.width_256
+            || !matches!(fields.opcode, 0x2E | 0x2F)
+            || !matches!(fields.pp, 0 | 1)
+        {
+            return None;
+        }
+        let elem = if fields.pp == 0 {
+            VecElementType::F32
+        } else {
+            VecElementType::F64
+        };
+        Some((
+            fields.destination,
+            elem,
+            fields.opcode == 0x2F,
+            elem.bytes(),
+            fields.w,
+        ))
+    }
+
     /// Validate one complete AVX VEX `VCMPPS` or `VCMPPD` instruction whose
     /// second source is memory and return
     /// `(destination, source1, element, width, predicate, W)`.
@@ -129,6 +165,139 @@ mod tests {
                 0x20,
                 predicate,
             ],
+        }
+    }
+
+    fn flag_instruction(
+        source1: u8,
+        base: u8,
+        elem: VecElementType,
+        signaling: bool,
+        form: Form,
+    ) -> Vec<u8> {
+        let pp = u8::from(elem == VecElementType::F64);
+        let opcode = if signaling { 0x2F } else { 0x2E };
+        let modrm = 0x40 | ((source1 & 7) << 3) | (base & 7);
+        match form {
+            Form::C5 => {
+                assert!(base < 8);
+                vec![
+                    0xC5,
+                    (if source1 < 8 { 0x80 } else { 0 }) | 0x78 | pp,
+                    opcode,
+                    modrm,
+                    0x20,
+                ]
+            }
+            Form::C4 { w } => vec![
+                0xC4,
+                (if source1 < 8 { 0x80 } else { 0 }) | 0x40 | (if base < 8 { 0x20 } else { 0 }) | 1,
+                (u8::from(w) << 7) | 0x78 | pp,
+                opcode,
+                modrm,
+                0x20,
+            ],
+        }
+    }
+
+    #[test]
+    fn classifies_all_320_fp_flag_compare_register_element_opcode_w_and_base_cells() {
+        let mut classified = 0usize;
+        for source1 in 0..16 {
+            for elem in [VecElementType::F32, VecElementType::F64] {
+                for signaling in [false, true] {
+                    let memory_size = elem.bytes();
+                    let bytes = flag_instruction(source1, 3, elem, signaling, Form::C5);
+                    assert_eq!(
+                        X86InstructionBytes::new(&bytes)
+                            .unwrap()
+                            .vex_memory_fp_flag_compare_fields(),
+                        Some((source1, elem, signaling, memory_size, false)),
+                        "{bytes:02X?}"
+                    );
+                    classified += 1;
+
+                    for base in [3, 11] {
+                        for w in [false, true] {
+                            let bytes =
+                                flag_instruction(source1, base, elem, signaling, Form::C4 { w });
+                            assert_eq!(
+                                X86InstructionBytes::new(&bytes)
+                                    .unwrap()
+                                    .vex_memory_fp_flag_compare_fields(),
+                                Some((source1, elem, signaling, memory_size, w)),
+                                "{bytes:02X?}"
+                            );
+                            classified += 1;
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(classified, 16 * 2 * 2 * (1 + 2 * 2));
+    }
+
+    #[test]
+    fn fp_flag_compare_complete_shape_and_malformed_encodings_fail_closed() {
+        // addr32 FS: VCOMISD xmm14,[r14d+r15d*2+0x44332211]
+        let complete = [
+            0x64, 0x67, 0xC4, 0x01, 0xF9, 0x2F, 0xB4, 0x7E, 0x11, 0x22, 0x33, 0x44,
+        ];
+        assert_eq!(
+            X86InstructionBytes::new(&complete)
+                .unwrap()
+                .vex_memory_fp_flag_compare_fields(),
+            Some((14, VecElementType::F64, true, 8, true))
+        );
+
+        let valid = flag_instruction(9, 11, VecElementType::F64, true, Form::C4 { w: true });
+        let mut cases = Vec::new();
+
+        let mut nonreserved_vvvv = valid.clone();
+        nonreserved_vvvv[2] &= !0x08;
+        cases.push(nonreserved_vvvv);
+
+        let mut unpredictable_l1 = valid.clone();
+        unpredictable_l1[2] |= 0x04;
+        cases.push(unpredictable_l1);
+
+        let mut wrong_map = valid.clone();
+        wrong_map[1] = (wrong_map[1] & !0x1F) | 2;
+        cases.push(wrong_map);
+
+        let mut scalar_result_prefix = valid.clone();
+        scalar_result_prefix[2] = (scalar_result_prefix[2] & !3) | 3;
+        cases.push(scalar_result_prefix);
+
+        let mut wrong_opcode = valid.clone();
+        wrong_opcode[3] = 0x30;
+        cases.push(wrong_opcode);
+
+        let mut register_source = valid.clone();
+        register_source[4] |= 0xC0;
+        register_source.remove(5);
+        cases.push(register_source);
+
+        let mut truncated_displacement = valid.clone();
+        truncated_displacement[4] = (truncated_displacement[4] & 0x3F) | 0x80;
+        cases.push(truncated_displacement);
+
+        let mut trailing = valid.clone();
+        trailing.push(0);
+        cases.push(trailing);
+
+        let mut forbidden_prefix = valid;
+        forbidden_prefix.insert(0, 0x66);
+        cases.push(forbidden_prefix);
+
+        for bytes in cases {
+            assert_eq!(
+                X86InstructionBytes::new(&bytes)
+                    .unwrap()
+                    .vex_memory_fp_flag_compare_fields(),
+                None,
+                "{bytes:02X?}"
+            );
         }
     }
 

@@ -253,6 +253,8 @@ mod vex_fp_compare_memory_source;
 #[cfg(test)]
 mod vex_fp_dot_product_replay;
 #[cfg(test)]
+mod vex_fp_flag_compare_memory_source;
+#[cfg(test)]
 mod vex_fp_flag_compare_replay;
 #[cfg(test)]
 mod vex_fp_logic_replay;
