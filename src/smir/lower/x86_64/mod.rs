@@ -237,6 +237,8 @@ mod vex_immediate_blend_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_lane_shuffle_memory_source;
 #[cfg(feature = "smir-jit")]
+mod vex_mpsadbw_memory_source;
+#[cfg(feature = "smir-jit")]
 mod vex_packed_extend_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_sqrt_memory_source;

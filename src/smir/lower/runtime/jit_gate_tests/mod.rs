@@ -317,6 +317,8 @@ mod vex_logic_memory_source;
 #[cfg(test)]
 mod vex_mov_mask_stack_destination_replay;
 #[cfg(test)]
+mod vex_mpsadbw_memory_source;
+#[cfg(test)]
 mod vex_pabs_memory_source;
 #[cfg(test)]
 mod vex_packed_extend_memory_source;

@@ -50,6 +50,7 @@ mod vex_lane_shuffle;
 mod vex_memory;
 mod vex_memory_broadcast;
 mod vex_mov_mask;
+mod vex_mpsadbw;
 mod vex_pabs;
 mod vex_packed_string;
 mod vex_pavg;
