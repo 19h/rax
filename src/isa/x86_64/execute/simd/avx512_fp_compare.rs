@@ -21,13 +21,13 @@ pub fn evex_fp_cmp(
         .evex
         .ok_or_else(|| Error::Emulator("EVEX FP compare requires EVEX prefix".to_string()))?;
 
-    // Opmask destinations cannot consume EVEX.R/R'. Packed L'L=11b is
-    // reserved. Scalar LLIG accepts 00b..10b without SAE and all four control
-    // values when EVEX.b selects SAE.
+    // Opmask destinations cannot consume EVEX.R/R'. Packed no-SAE L'L=11b is
+    // reserved. Register-source packed SAE and scalar SAE ignore all four L'L
+    // control values; scalar no-SAE LLIG accepts 00b..10b.
     if evex.z
         || !evex.r
         || !evex.r_prime
-        || (!scalar && evex.ll == 3)
+        || (!scalar && !evex.broadcast && evex.ll == 3)
         || (scalar && !evex.broadcast && evex.ll == 3)
     {
         return vcpu.inject_undefined_instruction();
@@ -37,7 +37,10 @@ pub fn evex_fp_cmp(
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let imm = ctx.consume_u8()?;
     let packed_sae = !scalar && evex.broadcast && !is_memory;
-    if imm & !0x1F != 0 || (scalar && evex.broadcast && is_memory) || (packed_sae && evex.ll != 0) {
+    if imm & !0x1F != 0
+        || (scalar && evex.broadcast && is_memory)
+        || (!scalar && !packed_sae && evex.ll == 3)
+    {
         return vcpu.inject_undefined_instruction();
     }
 

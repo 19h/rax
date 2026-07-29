@@ -36,16 +36,15 @@ impl CompareKind {
         }
     }
 
-    fn controls(self) -> Vec<(u8, bool)> {
-        if self.fields().3 {
-            (0..=2)
-                .flat_map(|ll| [(ll, false), (ll, true)])
-                .chain([(3, true)])
-                .collect()
-        } else {
-            (0..=2).map(|ll| (ll, false)).chain([(0, true)]).collect()
-        }
-    }
+    const CONTROLS: [(u8, bool); 7] = [
+        (0, false),
+        (0, true),
+        (1, false),
+        (1, true),
+        (2, false),
+        (2, true),
+        (3, true),
+    ];
 }
 
 fn requirements(kind: CompareKind, ll: u8, suppress_exceptions: bool) -> (bool, bool) {
@@ -67,7 +66,6 @@ fn encoding(
     assert!(ll < 4);
     assert!(destination < 8 && source1 < 32 && source2 < 32 && writemask < 8);
     assert!(predicate < 32);
-    assert!(scalar || !suppress_exceptions || ll == 0);
     assert!(scalar || suppress_exceptions || ll < 3);
 
     let mut p0 = 0xF0 | map;
@@ -118,9 +116,9 @@ fn function(bytes: &[u8]) -> crate::smir::ir::SmirFunction {
 fn replay_feature_aggregation_requires_bw_and_exact_vl_fp16_features() {
     for (kind, ll, suppress_exceptions) in [
         (CompareKind::PackedF16, 0, false),
-        (CompareKind::PackedF16, 0, true),
+        (CompareKind::PackedF16, 3, true),
         (CompareKind::PackedF32, 1, false),
-        (CompareKind::PackedF64, 2, false),
+        (CompareKind::PackedF64, 2, true),
         (CompareKind::ScalarF16, 3, true),
         (CompareKind::ScalarF32, 2, false),
         (CompareKind::ScalarF64, 3, true),
@@ -150,7 +148,7 @@ fn replay_feature_aggregation_requires_bw_and_exact_vl_fp16_features() {
 }
 
 #[test]
-fn replay_admits_and_emits_165_optimized_legal_encodings_and_fails_closed() {
+fn replay_admits_and_emits_630_optimized_legal_encodings_and_fails_closed() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -167,7 +165,7 @@ fn replay_admits_and_emits_165_optimized_legal_encodings_and_fails_closed() {
     let mut reserved_control_checked = false;
 
     for kind in CompareKind::ALL {
-        for (ll, suppress_exceptions) in kind.controls() {
+        for (ll, suppress_exceptions) in CompareKind::CONTROLS {
             let (needs_vl, needs_fp16) = requirements(kind, ll, suppress_exceptions);
             for (destination, source1, source2, writemask) in operands {
                 let predicate = ((admitted * 17) & 31) as u8;
@@ -181,7 +179,7 @@ fn replay_admits_and_emits_165_optimized_legal_encodings_and_fails_closed() {
                     writemask,
                     predicate,
                 );
-                let mut function = function(&bytes);
+                let function = function(&bytes);
                 if !missing_provenance_checked {
                     let mut missing = function.clone();
                     missing.x86_instruction_bytes.clear();
@@ -214,50 +212,57 @@ fn replay_admits_and_emits_165_optimized_legal_encodings_and_fails_closed() {
                     reserved_control_checked = true;
                 }
 
-                crate::smir::optimize::optimize_function(
-                    &mut function,
+                for level in [
+                    crate::smir::optimize::OptLevel::O0,
+                    crate::smir::optimize::OptLevel::O1,
                     crate::smir::optimize::OptLevel::O2,
-                );
-                assert!(is_native_clobber_safe(&function), "{bytes:02X?}");
-                assert!(
-                    uses_x86_native_vectors_excluding(&function, &std::collections::HashMap::new()),
-                    "{bytes:02X?}"
-                );
+                ] {
+                    let mut optimized = function.clone();
+                    crate::smir::optimize::optimize_function(&mut optimized, level);
+                    assert!(is_native_clobber_safe(&optimized), "{level:?} {bytes:02X?}");
+                    assert!(
+                        uses_x86_native_vectors_excluding(
+                            &optimized,
+                            &std::collections::HashMap::new()
+                        ),
+                        "{level:?} {bytes:02X?}"
+                    );
 
-                #[cfg(target_arch = "x86_64")]
-                let expected_features = std::is_x86_feature_detected!("avx512f")
-                    && std::is_x86_feature_detected!("avx512bw")
-                    && (!needs_vl || std::is_x86_feature_detected!("avx512vl"))
-                    && (!needs_fp16 || std::is_x86_feature_detected!("avx512fp16"));
-                #[cfg(not(target_arch = "x86_64"))]
-                let expected_features = false;
-                assert_eq!(
-                    x86_native_vector_features_supported_excluding(
-                        &function,
-                        &std::collections::HashMap::new()
-                    ),
-                    expected_features,
-                    "{bytes:02X?}"
-                );
+                    #[cfg(target_arch = "x86_64")]
+                    let expected_features = std::is_x86_feature_detected!("avx512f")
+                        && std::is_x86_feature_detected!("avx512bw")
+                        && (!needs_vl || std::is_x86_feature_detected!("avx512vl"))
+                        && (!needs_fp16 || std::is_x86_feature_detected!("avx512fp16"));
+                    #[cfg(not(target_arch = "x86_64"))]
+                    let expected_features = false;
+                    assert_eq!(
+                        x86_native_vector_features_supported_excluding(
+                            &optimized,
+                            &std::collections::HashMap::new()
+                        ),
+                        expected_features,
+                        "{level:?} {bytes:02X?}"
+                    );
 
-                let mut lowerer = X86_64Lowerer::new();
-                lowerer
-                    .lower_function(&function)
-                    .unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
-                let code = lowerer
-                    .finalize()
-                    .unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
-                assert!(
-                    code.windows(bytes.len()).any(|window| window == bytes),
-                    "{bytes:02X?}"
-                );
-                admitted += 1;
+                    let mut lowerer = X86_64Lowerer::new();
+                    lowerer
+                        .lower_function(&optimized)
+                        .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
+                    let code = lowerer
+                        .finalize()
+                        .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
+                    assert!(
+                        code.windows(bytes.len()).any(|window| window == bytes),
+                        "{level:?} {bytes:02X?}"
+                    );
+                    admitted += 1;
+                }
             }
         }
     }
 
     assert!(missing_provenance_checked && memory_metadata_checked && reserved_control_checked);
-    assert_eq!(admitted, 165);
+    assert_eq!(admitted, 630);
 }
 
 #[cfg(target_arch = "x86_64")]
@@ -463,7 +468,7 @@ fn replay_matches_interpreter_for_all_predicates_formats_sae_masks_extensions_an
     let mut available_controls = 0usize;
 
     for kind in CompareKind::ALL {
-        for (ll, suppress_exceptions) in kind.controls() {
+        for (ll, suppress_exceptions) in CompareKind::CONTROLS {
             let (needs_vl, needs_fp16) = requirements(kind, ll, suppress_exceptions);
             if (needs_vl && !has_vl) || (needs_fp16 && !has_fp16) {
                 continue;

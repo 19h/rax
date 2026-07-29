@@ -480,7 +480,9 @@ impl X86_64Lifter {
             (false, X86SsePrefix::Repne) => (VecElementType::F64, true),
         };
         if (fp16 && (prefix.encoding != VecEncodingKind::Evex || prefix.w))
-            || (!scalar && prefix.l_bits == 3)
+            || (!scalar
+                && prefix.l_bits == 3
+                && !(prefix.encoding == VecEncodingKind::Evex && prefix.b))
             || (prefix.encoding == VecEncodingKind::Evex
                 && scalar
                 && !prefix.b
@@ -527,12 +529,8 @@ impl X86_64Lifter {
         }
         let packed_sae =
             prefix.encoding == VecEncodingKind::Evex && !scalar && prefix.b && !modrm.is_memory;
-        if prefix.encoding == VecEncodingKind::Evex
-            && !scalar
-            && prefix.b
-            && !modrm.is_memory
-            && prefix.l_bits != 0
-        {
+        // Intel SDM Table 2-43: register-source SAE ignores L'L.
+        if !scalar && prefix.l_bits == 3 && !packed_sae {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes[..=imm_offset].to_vec(),

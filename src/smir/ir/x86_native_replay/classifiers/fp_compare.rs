@@ -137,12 +137,12 @@ impl X86InstructionBytes {
     ///
     /// Returns `(needs_avx512vl, needs_avx512fp16)`. Packed 128-bit and
     /// 256-bit forms require AVX-512VL. Register-source packed `EVEX.b=1`
-    /// selects the 512-bit SAE form and requires `L'L=00`; scalar forms are
-    /// LLIG and never require AVX-512VL. For scalar forms, no-SAE `L'L=11b`
-    /// is reserved, while SAE admits all four control values. Binary16 forms
-    /// require AVX-512-FP16. The destination must use the canonical K0-K7
-    /// encoding, EVEX.z and immediate bits 7:5 are reserved, and every memory
-    /// form fails closed.
+    /// selects the 512-bit SAE form and ignores all four `L'L` values; scalar
+    /// forms are LLIG and never require AVX-512VL. For both packed and scalar
+    /// forms, no-SAE `L'L=11b` is reserved, while SAE admits all four control
+    /// values. Binary16 forms require AVX-512-FP16. The destination must use
+    /// the canonical K0-K7 encoding, EVEX.z and immediate bits 7:5 are
+    /// reserved, and every memory form fails closed.
     pub fn evex_register_fp_compare_requirements(&self) -> Option<(bool, bool)> {
         let bytes = self.as_slice();
         if bytes.len() != 7 || bytes[0] != 0x62 {
@@ -184,9 +184,8 @@ impl X86InstructionBytes {
             return evex_llig_sae_control_is_valid(p2).then_some((false, needs_fp16));
         }
         if suppress_exceptions {
-            // Packed register-source SAE is defined only for VL=512 and uses
-            // the canonical L'L=00 encoding.
-            return (ll == 0).then_some((false, needs_fp16));
+            // Packed register-source SAE has implied VL=512 and ignores L'L.
+            return Some((false, needs_fp16));
         }
         match ll {
             0 | 1 => Some((true, needs_fp16)),

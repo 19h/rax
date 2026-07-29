@@ -203,16 +203,15 @@ impl CompareKind {
         }
     }
 
-    fn controls(self) -> Vec<(u8, bool)> {
-        if self.fields().3 {
-            (0..=2)
-                .flat_map(|ll| [(ll, false), (ll, true)])
-                .chain([(3, true)])
-                .collect()
-        } else {
-            (0..=2).map(|ll| (ll, false)).chain([(0, true)]).collect()
-        }
-    }
+    const CONTROLS: [(u8, bool); 7] = [
+        (0, false),
+        (0, true),
+        (1, false),
+        (1, true),
+        (2, false),
+        (2, true),
+        (3, true),
+    ];
 }
 
 fn encoding(
@@ -225,12 +224,10 @@ fn encoding(
     writemask: u8,
     predicate: u8,
 ) -> [u8; 7] {
-    let (map, pp, w, scalar, _) = kind.fields();
+    let (map, pp, w, _, _) = kind.fields();
     assert!(ll < 4);
     assert!(destination < 8 && source1 < 32 && source2 < 32 && writemask < 8);
     assert!(predicate < 32);
-    assert!(scalar || !suppress_exceptions || ll == 0);
-    assert!(scalar || suppress_exceptions || ll < 3);
 
     let mut p0 = 0xF0 | map;
     if source2 & 0x08 != 0 {
@@ -259,14 +256,14 @@ fn requirements(kind: CompareKind, ll: u8, suppress_exceptions: bool) -> (bool, 
 }
 
 #[test]
-fn classifier_covers_158400_legal_control_mask_extension_and_predicate_encodings() {
+fn classifier_covers_201600_legal_control_mask_extension_and_predicate_encodings() {
     let sources = [0u8, 8, 16, 24, 31];
     let destinations = [0u8, 7];
     let writemasks = [0u8, 1, 7];
     let mut classified = 0usize;
 
     for kind in CompareKind::ALL {
-        for (ll, suppress_exceptions) in kind.controls() {
+        for (ll, suppress_exceptions) in CompareKind::CONTROLS {
             for destination in destinations {
                 for source1 in sources {
                     for source2 in sources {
@@ -298,7 +295,7 @@ fn classifier_covers_158400_legal_control_mask_extension_and_predicate_encodings
         }
     }
 
-    assert_eq!(classified, 158_400);
+    assert_eq!(classified, 201_600);
 }
 
 #[test]
@@ -318,7 +315,6 @@ fn classifier_rejects_reserved_or_unsafe_frontiers() {
         &[0x62, 0xF1, 0x7C, 0x09, 0xC2, 0x08, 0x03], // memory source
         &[0x62, 0xF1, 0x7C, 0x89, 0xC2, 0xC8, 0x03], // EVEX.z is reserved
         &[0x62, 0xF1, 0x7C, 0x69, 0xC2, 0xC8, 0x03], // packed L'L=3 without SAE
-        &[0x62, 0xF1, 0x7C, 0x39, 0xC2, 0xC8, 0x03], // packed SAE requires L'L=0
         &[0x62, 0xF1, 0x7C, 0x09, 0xC2, 0xC8, 0x20], // reserved immediate bits 7:5
         &[0x62, 0xF1, 0x7C, 0x09, 0xC2, 0xC8],       // missing immediate
         &[0x62, 0xF1, 0x7C, 0x09, 0xC2, 0xC8, 0x03, 0], // trailing byte
@@ -333,20 +329,18 @@ fn classifier_rejects_reserved_or_unsafe_frontiers() {
         );
     }
 
-    // Intel SDM revision 092 specifies scalar LLIG and SAE; Intel XED
-    // 2026.07.15 independently accepts SAE L'L=11b while rejecting the same
-    // control value without SAE.
-    for kind in [
-        CompareKind::ScalarF16,
-        CompareKind::ScalarF32,
-        CompareKind::ScalarF64,
-    ] {
+    // Intel SDM revision 092 Table 2-43 defines L'L as ignored for every
+    // register-source FP compare whose EVEX.b context selects SAE.
+    for kind in CompareKind::ALL {
         for ll in 0..=3 {
             for suppress_exceptions in [false, true] {
                 for predicate in 0..32 {
                     let bytes = encoding(kind, ll, suppress_exceptions, 7, 31, 31, 7, predicate);
-                    let expected =
-                        (suppress_exceptions || ll != 3).then_some((false, kind.fields().4));
+                    let expected = (suppress_exceptions || ll != 3).then_some(requirements(
+                        kind,
+                        ll,
+                        suppress_exceptions,
+                    ));
                     assert_eq!(
                         X86InstructionBytes::new(&bytes)
                             .unwrap()
@@ -368,9 +362,9 @@ fn replay_spans_encode_exact_vl_and_fp16_requirements() {
 
     for (kind, ll, suppress_exceptions) in [
         (CompareKind::PackedF16, 0, false),
-        (CompareKind::PackedF16, 0, true),
+        (CompareKind::PackedF16, 3, true),
         (CompareKind::PackedF32, 1, false),
-        (CompareKind::PackedF64, 2, false),
+        (CompareKind::PackedF64, 2, true),
         (CompareKind::ScalarF16, 2, true),
         (CompareKind::ScalarF32, 2, false),
         (CompareKind::ScalarF64, 2, true),

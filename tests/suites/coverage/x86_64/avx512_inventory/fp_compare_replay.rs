@@ -253,3 +253,87 @@ fn register_evex_fp_compare_replay_closes_48_generated_lift_lower_gaps() {
     }
     assert_eq!(sae_scalar_forms, 3);
 }
+
+#[test]
+fn packed_sae_llig_closes_54_generated_lift_gaps_at_all_optimization_levels() {
+    use rax::smir::{VecElementType, VecWidth};
+
+    let mut lifted = 0usize;
+    let mut lowered = 0usize;
+    for (map, pp, w, elem, lanes, needs_fp16) in [
+        (1u8, 0u8, false, VecElementType::F32, 16u8, false),
+        (1, 1, true, VecElementType::F64, 8, false),
+        (3, 0, false, VecElementType::F16, 32, true),
+    ] {
+        for vvvv in [0u8, 1, 15] {
+            for ll in 1u8..=3 {
+                for aaa in 0u8..=1 {
+                    let bytes = [
+                        0x62,
+                        0xF0 | map,
+                        (u8::from(w) << 7) | (((!vvvv) & 0x0F) << 3) | 0x04 | pp,
+                        (ll << 5) | 0x18 | aaa,
+                        0xC2,
+                        0xC2,
+                        0,
+                    ];
+                    let instruction = X86InstructionBytes::new(&bytes).unwrap();
+                    assert_eq!(
+                        instruction.evex_register_fp_compare_requirements(),
+                        Some((false, needs_fp16)),
+                        "{bytes:02X?}"
+                    );
+
+                    let mut lifter = X86_64Lifter::strict();
+                    let mut context = LiftContext::new(SourceArch::X86_64);
+                    let result = lifter
+                        .lift_insn(0x1000, &bytes, &mut context)
+                        .unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
+                    assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
+                    assert!(matches!(
+                        result.ops.last().unwrap().kind,
+                        OpKind::X86VectorFpCompare {
+                            elem: actual_elem,
+                            width: VecWidth::V512,
+                            lanes: actual_lanes,
+                            predicate: 0,
+                            scalar: false,
+                            suppress_exceptions: true,
+                            ..
+                        } if actual_elem == elem && actual_lanes == lanes
+                    ));
+
+                    let mut block = SmirBlock::new(BlockId(0), 0x1000);
+                    block.ops = result.ops;
+                    block.set_terminator(Terminator::Return { values: vec![] });
+                    let mut function = SmirFunction::new(FunctionId(0), block.id, 0x1000);
+                    function.add_block(block);
+                    function
+                        .x86_instruction_bytes
+                        .insert((BlockId(0), 0x1000), instruction);
+
+                    for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+                        let mut optimized = function.clone();
+                        optimize_function(&mut optimized, level);
+                        let mut lowerer = X86_64Lowerer::new();
+                        lowerer
+                            .lower_function(&optimized)
+                            .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
+                        let code = lowerer
+                            .finalize()
+                            .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
+                        assert!(
+                            code.windows(bytes.len()).any(|window| window == bytes),
+                            "{level:?} {bytes:02X?}"
+                        );
+                        lowered += 1;
+                    }
+                    lifted += 1;
+                }
+            }
+        }
+    }
+
+    assert_eq!(lifted, 54);
+    assert_eq!(lowered, 162);
+}

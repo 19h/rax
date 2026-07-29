@@ -101,16 +101,20 @@ fn evex_packed_fp_compare_uses_exact_width_and_sae_controls() {
         for ll in 0..3 {
             let code = encoding(elem_size, false, ll, false);
             let mut vcpu = vcpu(&code);
+            vcpu.regs.k[1] = u64::MAX;
             assert!(vcpu.step().unwrap().is_none(), "{code:02X?}");
             let lanes = [16usize, 32, 64][ll as usize] / elem_size;
             assert_eq!(vcpu.regs.k[1], (1u64 << lanes) - 1, "{code:02X?}");
         }
 
-        let sae = encoding(elem_size, false, 0, true);
-        let mut vcpu = vcpu(&sae);
-        assert!(vcpu.step().unwrap().is_none(), "{sae:02X?}");
-        let lanes = 64 / elem_size;
-        assert_eq!(vcpu.regs.k[1], (1u64 << lanes) - 1, "{sae:02X?}");
+        for ll in 0..4 {
+            let sae = encoding(elem_size, false, ll, true);
+            let mut vcpu = vcpu(&sae);
+            vcpu.regs.k[1] = u64::MAX;
+            assert!(vcpu.step().unwrap().is_none(), "{sae:02X?}");
+            let lanes = 64 / elem_size;
+            assert_eq!(vcpu.regs.k[1], (1u64 << lanes) - 1, "{sae:02X?}");
+        }
     }
 }
 
@@ -121,9 +125,6 @@ fn evex_fp_compare_rejects_reserved_controls_before_memory_or_state_access() {
         assert_reserved_ud(&as_memory(encoding(elem_size, true, 0, true)));
         assert_reserved_ud(&encoding(elem_size, false, 3, false));
         assert_reserved_ud(&as_memory(encoding(elem_size, false, 3, true)));
-        for ll in 1..4 {
-            assert_reserved_ud(&encoding(elem_size, false, ll, true));
-        }
     }
 
     let valid = encoding(4, true, 2, false);
