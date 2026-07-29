@@ -45,6 +45,48 @@ impl X86InstructionBytes {
         Some(((modrm >> 3) & 7) + if reg_extension { 8 } else { 0 })
     }
 
+    /// Validate one complete VEX `VMOVSLDUP`, `VMOVSHDUP`, or `VMOVDDUP`
+    /// instruction whose source is memory and return
+    /// `(destination, width, element, high, memory size, W)`.
+    ///
+    /// Every form uses map 0F, reserves VEX.vvvv as `1111b`, defines VEX.W
+    /// as ignored, and requires only AVX at both vector lengths. `VMOVDDUP`
+    /// with a 128-bit destination is the architectural exception that reads
+    /// only 8 bytes from memory; the other forms read the full vector width.
+    /// Runtime and auxiliary space are O(1).
+    pub(crate) fn vex_memory_duplicate_move_fields(
+        &self,
+    ) -> Option<(u8, VecWidth, VecElementType, bool, u32, bool)> {
+        let fields = self.vex_memory_fields()?;
+        if fields.map != 1 || fields.source1 != 0 {
+            return None;
+        }
+        let (element, high) = match (fields.opcode, fields.pp) {
+            (0x12, 2) => (VecElementType::F32, false),
+            (0x16, 2) => (VecElementType::F32, true),
+            (0x12, 3) => (VecElementType::F64, false),
+            _ => return None,
+        };
+        let width = if fields.width_256 {
+            VecWidth::V256
+        } else {
+            VecWidth::V128
+        };
+        let memory_size = if element == VecElementType::F64 && width == VecWidth::V128 {
+            8
+        } else {
+            width.bytes()
+        };
+        Some((
+            fields.destination,
+            width,
+            element,
+            high,
+            memory_size,
+            fields.w,
+        ))
+    }
+
     /// Validate one complete VEX `VPSHUFD`, `VPSHUFHW`, or `VPSHUFLW`
     /// instruction whose source is memory and return
     /// `(destination, width, element, high-words selector, imm8, W)`.
@@ -134,12 +176,151 @@ mod tests {
         }
     }
 
+    fn duplicate_instruction(
+        destination: u8,
+        base: u8,
+        width: VecWidth,
+        opcode: u8,
+        pp: u8,
+        form: Form,
+    ) -> Vec<u8> {
+        let l = u8::from(width == VecWidth::V256);
+        let modrm = 0x40 | ((destination & 7) << 3) | (base & 7);
+        match form {
+            Form::C5 => {
+                assert!(base < 8);
+                vec![
+                    0xC5,
+                    (if destination < 8 { 0x80 } else { 0 }) | 0x78 | (l << 2) | pp,
+                    opcode,
+                    modrm,
+                    0x20,
+                ]
+            }
+            Form::C4 { w } => vec![
+                0xC4,
+                (if destination < 8 { 0x80 } else { 0 })
+                    | 0x40
+                    | (if base < 8 { 0x20 } else { 0 })
+                    | 1,
+                (u8::from(w) << 7) | 0x78 | (l << 2) | pp,
+                opcode,
+                modrm,
+                0x20,
+            ],
+        }
+    }
+
     fn expected_kind(pp: u8) -> (VecElementType, Option<bool>) {
         match pp {
             1 => (VecElementType::I32, None),
             2 => (VecElementType::I16, Some(true)),
             3 => (VecElementType::I16, Some(false)),
             _ => unreachable!(),
+        }
+    }
+
+    #[test]
+    fn classifies_all_480_duplicate_destination_width_kind_w_and_base_cells() {
+        let mut classified = 0usize;
+        for destination in 0..16 {
+            for width in [VecWidth::V128, VecWidth::V256] {
+                for (opcode, pp, element, high) in [
+                    (0x12, 2, VecElementType::F32, false),
+                    (0x16, 2, VecElementType::F32, true),
+                    (0x12, 3, VecElementType::F64, false),
+                ] {
+                    let memory_size = if element == VecElementType::F64 && width == VecWidth::V128 {
+                        8
+                    } else {
+                        width.bytes()
+                    };
+                    let bytes = duplicate_instruction(destination, 3, width, opcode, pp, Form::C5);
+                    assert_eq!(
+                        X86InstructionBytes::new(&bytes)
+                            .unwrap()
+                            .vex_memory_duplicate_move_fields(),
+                        Some((destination, width, element, high, memory_size, false)),
+                        "{bytes:02X?}"
+                    );
+                    classified += 1;
+
+                    for base in [3, 11] {
+                        for w in [false, true] {
+                            let bytes = duplicate_instruction(
+                                destination,
+                                base,
+                                width,
+                                opcode,
+                                pp,
+                                Form::C4 { w },
+                            );
+                            assert_eq!(
+                                X86InstructionBytes::new(&bytes)
+                                    .unwrap()
+                                    .vex_memory_duplicate_move_fields(),
+                                Some((destination, width, element, high, memory_size, w)),
+                                "{bytes:02X?}"
+                            );
+                            classified += 1;
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(classified, 16 * 2 * 3 * (1 + 2 * 2));
+    }
+
+    #[test]
+    fn malformed_reserved_or_different_duplicate_encodings_fail_closed() {
+        let valid = duplicate_instruction(9, 11, VecWidth::V256, 0x16, 2, Form::C4 { w: true });
+        let mut cases = Vec::new();
+
+        let mut nonreserved_vvvv = valid.clone();
+        nonreserved_vvvv[2] &= !0x08;
+        cases.push(nonreserved_vvvv);
+
+        let mut wrong_map = valid.clone();
+        wrong_map[1] = (wrong_map[1] & !0x1F) | 2;
+        cases.push(wrong_map);
+
+        let mut wrong_prefix = valid.clone();
+        wrong_prefix[2] = (wrong_prefix[2] & !3) | 1;
+        cases.push(wrong_prefix);
+
+        let mut wrong_opcode = valid.clone();
+        wrong_opcode[3] = 0x17;
+        cases.push(wrong_opcode);
+
+        let mut invalid_opcode_prefix_pair = valid.clone();
+        invalid_opcode_prefix_pair[2] = (invalid_opcode_prefix_pair[2] & !3) | 3;
+        cases.push(invalid_opcode_prefix_pair);
+
+        let mut register_source = valid.clone();
+        register_source[4] |= 0xC0;
+        register_source.remove(5);
+        cases.push(register_source);
+
+        let mut truncated_displacement = valid.clone();
+        truncated_displacement[4] = (truncated_displacement[4] & 0x3F) | 0x80;
+        cases.push(truncated_displacement);
+
+        let mut trailing = valid.clone();
+        trailing.push(0);
+        cases.push(trailing);
+
+        let mut forbidden_prefix = valid;
+        forbidden_prefix.insert(0, 0x66);
+        cases.push(forbidden_prefix);
+
+        for bytes in cases {
+            assert_eq!(
+                X86InstructionBytes::new(&bytes)
+                    .unwrap()
+                    .vex_memory_duplicate_move_fields(),
+                None,
+                "{bytes:02X?}"
+            );
         }
     }
 
