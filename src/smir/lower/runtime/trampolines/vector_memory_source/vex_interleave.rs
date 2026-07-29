@@ -1,11 +1,11 @@
-//! Exact VEX packed-integer interleave memory-source sequence admission.
+//! Exact VEX packed interleave memory-source sequence admission.
 
 use std::collections::HashMap;
 
 use super::{X86JitVexBinaryMemorySequence, low_vex_vector_index, x86_jit_mem_address_shape_valid};
 use crate::smir::ir::X86InstructionBytes;
-use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix, X86VecMap};
-use crate::smir::ir::types::{BlockId, GuestAddr, VReg, VecWidth};
+use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix, X86VecAlign, X86VecMap};
+use crate::smir::ir::types::{BlockId, GuestAddr, VReg, VecElementType, VecWidth};
 
 pub(super) fn sequence(
     block: &crate::smir::ir::SmirBlock,
@@ -17,8 +17,10 @@ pub(super) fn sequence(
     let load = block.ops.get(index)?;
     let (loaded, width) = match &load.kind {
         OpKind::VLoad { dst, addr, width }
-            if load.x86_hint.is_none()
-                && matches!(dst, VReg::Virtual(_))
+            if matches!(
+                load.x86_hint,
+                None | Some(X86OpHint::VecAlign(X86VecAlign::Unaligned))
+            ) && matches!(dst, VReg::Virtual(_))
                 && matches!(width, VecWidth::V128 | VecWidth::V256)
                 && x86_jit_mem_address_shape_valid(addr) =>
         {
@@ -49,6 +51,25 @@ pub(super) fn sequence(
     if *src2 != loaded
         || *lanes != width.lanes(*elem) as u8
         || *block_lanes != (16 / elem.bytes()) as u8
+        || !matches!(
+            elem,
+            VecElementType::F32
+                | VecElementType::F64
+                | VecElementType::I8
+                | VecElementType::I16
+                | VecElementType::I32
+                | VecElementType::I64
+        )
+    {
+        return None;
+    }
+    let floating = matches!(elem, VecElementType::F32 | VecElementType::F64);
+    if load.x86_hint
+        != if floating {
+            Some(X86OpHint::VecAlign(X86VecAlign::Unaligned))
+        } else {
+            None
+        }
     {
         return None;
     }
@@ -64,7 +85,16 @@ pub(super) fn sequence(
         encoded_width,
         opcode,
         encoded_w,
-    ) = instruction.vex_memory_integer_interleave_fields()?;
+    ) = instruction.vex_memory_interleave_fields()?;
+    let prefix = match encoded_elem {
+        VecElementType::F32 => X86SsePrefix::None,
+        VecElementType::F64
+        | VecElementType::I8
+        | VecElementType::I16
+        | VecElementType::I32
+        | VecElementType::I64 => X86SsePrefix::OpSize,
+        _ => return None,
+    };
     if (
         encoded_destination,
         encoded_source1,
@@ -75,7 +105,7 @@ pub(super) fn sequence(
         || consumer.x86_hint
             != Some(X86OpHint::VexOp {
                 map: X86VecMap::Map0F,
-                pp: X86SsePrefix::OpSize,
+                pp: prefix,
                 opcode,
                 width,
                 w: encoded_w,
@@ -91,11 +121,11 @@ pub(super) fn sequence(
         source1,
         width,
         map: X86VecMap::Map0F,
-        prefix: X86SsePrefix::OpSize,
+        prefix,
         opcode,
-        // VPUNPCK* is WIG. Match both guest values but replay W=0.
+        // V(P)UNPCK* is WIG. Match both guest values but replay W=0.
         w: false,
-        needs_avx2: width == VecWidth::V256,
+        needs_avx2: !floating && width == VecWidth::V256,
         needs_fma: false,
     })
 }

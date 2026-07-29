@@ -335,26 +335,6 @@ impl X86_64Lifter {
                 prefix.width,
             )
         };
-        let raw = ctx.alloc_vreg();
-        self.append_unpack_shuffle(
-            raw,
-            self.vec_reg(
-                prefix.vvvv
-                    + if prefix.encoding == VecEncodingKind::Evex && prefix.v_high {
-                        16
-                    } else {
-                        0
-                    },
-                prefix.width,
-            ),
-            src2,
-            elem,
-            prefix.width,
-            opcode == 0x15,
-            pc,
-            ctx,
-            &mut ops,
-        );
         let dst = self.vec_reg(
             modrm.reg
                 + if prefix.encoding == VecEncodingKind::Evex && prefix.reg_high {
@@ -364,18 +344,44 @@ impl X86_64Lifter {
                 },
             prefix.width,
         );
-        if prefix.encoding == VecEncodingKind::Evex {
-            self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
-        } else {
-            ops.push(SmirOp::new(
+        let src1 = self.vec_reg(
+            prefix.vvvv
+                + if prefix.encoding == VecEncodingKind::Evex && prefix.v_high {
+                    16
+                } else {
+                    0
+                },
+            prefix.width,
+        );
+        if prefix.encoding == VecEncodingKind::Vex {
+            ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,
-                OpKind::VMov {
+                OpKind::VInterleave {
                     dst,
-                    src: raw,
-                    width: prefix.width,
+                    src1,
+                    src2,
+                    elem,
+                    lanes,
+                    block_lanes: (16 / elem.bytes()) as u8,
+                    high: opcode == 0x15,
                 },
+                self.vec_hint(prefix, opcode),
             ));
+        } else {
+            let raw = ctx.alloc_vreg();
+            self.append_unpack_shuffle(
+                raw,
+                src1,
+                src2,
+                elem,
+                prefix.width,
+                opcode == 0x15,
+                pc,
+                ctx,
+                &mut ops,
+            );
+            self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }

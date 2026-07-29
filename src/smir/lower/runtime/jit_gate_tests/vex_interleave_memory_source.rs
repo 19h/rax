@@ -1,9 +1,9 @@
-//! Exact helper-backed VEX VPUNPCK* memory-source coverage.
+//! Exact helper-backed VEX packed interleave memory-source coverage.
 
 use std::collections::HashMap;
 
 use super::*;
-use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86SsePrefix, X86VecMap};
+use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86SsePrefix, X86VecAlign, X86VecMap};
 use crate::smir::ir::types::{
     Address, ArchReg, BlockId, DispSize, FunctionId, OpId, VReg, VecElementType, VecWidth,
     VirtualId, X86Reg,
@@ -33,7 +33,27 @@ struct InterleaveKind {
     high: bool,
 }
 
-const KINDS: [InterleaveKind; 8] = [
+const KINDS: [InterleaveKind; 12] = [
+    InterleaveKind {
+        opcode: 0x14,
+        elem: VecElementType::F32,
+        high: false,
+    },
+    InterleaveKind {
+        opcode: 0x15,
+        elem: VecElementType::F32,
+        high: true,
+    },
+    InterleaveKind {
+        opcode: 0x14,
+        elem: VecElementType::F64,
+        high: false,
+    },
+    InterleaveKind {
+        opcode: 0x15,
+        elem: VecElementType::F64,
+        high: true,
+    },
     InterleaveKind {
         opcode: 0x60,
         elem: VecElementType::I8,
@@ -76,6 +96,29 @@ const KINDS: [InterleaveKind; 8] = [
     },
 ];
 
+impl InterleaveKind {
+    const fn prefix(self) -> X86SsePrefix {
+        if matches!(self.elem, VecElementType::F32) {
+            X86SsePrefix::None
+        } else {
+            X86SsePrefix::OpSize
+        }
+    }
+
+    const fn pp(self) -> u8 {
+        if matches!(self.elem, VecElementType::F32) {
+            0
+        } else {
+            1
+        }
+    }
+
+    const fn needs_avx2(self, width: VecWidth) -> bool {
+        !matches!(self.elem, VecElementType::F32 | VecElementType::F64)
+            && matches!(width, VecWidth::V256)
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum VexForm {
     Vex2,
@@ -84,14 +127,14 @@ enum VexForm {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-struct IntegerInterleaveMemoryCase {
+struct InterleaveMemoryCase {
     kind: InterleaveKind,
     width: VecWidth,
     form: VexForm,
     alias: bool,
 }
 
-impl IntegerInterleaveMemoryCase {
+impl InterleaveMemoryCase {
     const fn operands(self) -> (u8, u8, u8) {
         match (self.form, self.alias) {
             (VexForm::Vex2, false) => (14, 9, 3),
@@ -134,7 +177,7 @@ impl IntegerInterleaveMemoryCase {
                 (if destination < 8 { 0x80 } else { 0 })
                     | (((!source1) & 0x0F) << 3)
                     | (l << 2)
-                    | 1,
+                    | self.kind.pp(),
                 self.kind.opcode,
                 0x40 | ((destination & 7) << 3) | base,
                 DISP as u8,
@@ -145,7 +188,7 @@ impl IntegerInterleaveMemoryCase {
                     | 0x40
                     | (if base < 8 { 0x20 } else { 0 })
                     | 1,
-                (u8::from(self.w()) << 7) | (((!source1) & 0x0F) << 3) | (l << 2) | 1,
+                (u8::from(self.w()) << 7) | (((!source1) & 0x0F) << 3) | (l << 2) | self.kind.pp(),
                 self.kind.opcode,
                 0x40 | ((destination & 7) << 3) | (base & 7),
                 DISP as u8,
@@ -160,20 +203,23 @@ impl IntegerInterleaveMemoryCase {
         let l = u8::from(self.width == VecWidth::V256);
         vec![
             0xC5,
-            (if destination < 8 { 0x80 } else { 0 }) | (((!source1) & 0x0F) << 3) | (l << 2) | 1,
+            (if destination < 8 { 0x80 } else { 0 })
+                | (((!source1) & 0x0F) << 3)
+                | (l << 2)
+                | self.kind.pp(),
             self.kind.opcode,
             0xC0 | ((destination & 7) << 3) | scratch,
         ]
     }
 }
 
-fn all_cases() -> Vec<IntegerInterleaveMemoryCase> {
+fn all_cases() -> Vec<InterleaveMemoryCase> {
     let mut cases = Vec::new();
     for kind in KINDS {
         for width in [VecWidth::V128, VecWidth::V256] {
             for form in [VexForm::Vex2, VexForm::Vex3W0, VexForm::Vex3W1] {
                 for alias in [false, true] {
-                    cases.push(IntegerInterleaveMemoryCase {
+                    cases.push(InterleaveMemoryCase {
                         kind,
                         width,
                         form,
@@ -194,11 +240,11 @@ fn vector(index: u8, width: VecWidth) -> VReg {
     x86(match width {
         VecWidth::V128 => X86Reg::Xmm(index),
         VecWidth::V256 => X86Reg::Ymm(index),
-        _ => unreachable!("VEX packed-integer interleave has only 128-/256-bit forms"),
+        _ => unreachable!("VEX packed interleave has only 128-/256-bit forms"),
     })
 }
 
-fn expected_address(case: IntegerInterleaveMemoryCase) -> Address {
+fn expected_address(case: InterleaveMemoryCase) -> Address {
     Address::BaseOffset {
         base: x86(X86Reg::gpr(case.base())),
         offset: DISP,
@@ -206,11 +252,19 @@ fn expected_address(case: IntegerInterleaveMemoryCase) -> Address {
     }
 }
 
-fn assert_exact_pair(ops: &[SmirOp], case: IntegerInterleaveMemoryCase) {
+fn assert_exact_pair(ops: &[SmirOp], case: InterleaveMemoryCase) {
     let [load, consumer] = ops else {
         panic!("expected exact VLoad + VInterleave pair for {case:?}, got {ops:?}")
     };
-    assert_eq!(load.x86_hint, None, "{case:?}");
+    assert_eq!(
+        load.x86_hint,
+        if matches!(case.kind.elem, VecElementType::F32 | VecElementType::F64) {
+            Some(X86OpHint::VecAlign(X86VecAlign::Unaligned))
+        } else {
+            None
+        },
+        "{case:?}"
+    );
     let loaded = match &load.kind {
         OpKind::VLoad {
             dst: loaded @ VReg::Virtual(_),
@@ -229,7 +283,7 @@ fn assert_exact_pair(ops: &[SmirOp], case: IntegerInterleaveMemoryCase) {
         consumer.x86_hint,
         Some(X86OpHint::VexOp {
             map: X86VecMap::Map0F,
-            pp: X86SsePrefix::OpSize,
+            pp: case.kind.prefix(),
             opcode: case.kind.opcode,
             width: case.width,
             w: case.w(),
@@ -261,7 +315,7 @@ fn assert_exact_pair(ops: &[SmirOp], case: IntegerInterleaveMemoryCase) {
     assert_eq!(*high, case.kind.high, "{case:?}");
 }
 
-fn lift_case(case: IntegerInterleaveMemoryCase) -> SmirFunction {
+fn lift_case(case: InterleaveMemoryCase) -> SmirFunction {
     let bytes = case.bytes();
     let mut lifter = X86_64Lifter::strict();
     let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
@@ -322,7 +376,7 @@ fn sequence(
     )
 }
 
-fn lower(function: &SmirFunction, case: IntegerInterleaveMemoryCase) -> (Vec<u8>, usize) {
+fn lower(function: &SmirFunction, case: InterleaveMemoryCase) -> (Vec<u8>, usize) {
     let excluded = HashMap::new();
     assert!(is_native_clobber_safe_excluding(function, &excluded, true));
     assert!(!is_native_clobber_safe_excluding(
@@ -342,7 +396,7 @@ fn lower(function: &SmirFunction, case: IntegerInterleaveMemoryCase) -> (Vec<u8>
     assert!(requirements.needs_avx);
     assert_eq!(
         requirements.needs_avx2,
-        case.width == VecWidth::V256,
+        case.kind.needs_avx2(case.width),
         "{case:?}"
     );
     assert!(!requirements.needs_avx512bw);
@@ -356,12 +410,12 @@ fn lower(function: &SmirFunction, case: IntegerInterleaveMemoryCase) -> (Vec<u8>
     lowerer.set_avx_ymm16_vector_state(true);
     let result = lowerer
         .lower_function(function)
-        .unwrap_or_else(|error| panic!("helper-backed VEX VPUNPCK* lowering failed: {error:?}"));
+        .unwrap_or_else(|error| panic!("helper-backed VEX interleave lowering failed: {error:?}"));
     assert!(result.relocations.is_empty());
     (
         lowerer
             .finalize()
-            .expect("finalize helper-backed VEX VPUNPCK*"),
+            .expect("finalize helper-backed VEX interleave"),
         result.entry_offset,
     )
 }
@@ -369,7 +423,7 @@ fn lower(function: &SmirFunction, case: IntegerInterleaveMemoryCase) -> (Vec<u8>
 #[test]
 fn every_kind_width_form_alias_and_optimizer_shape_is_lifted_admitted_and_lowered() {
     let cases = all_cases();
-    assert_eq!(cases.len(), 96);
+    assert_eq!(cases.len(), 144);
     let mut lowered = 0usize;
     for case in cases {
         for level in LEVELS {
@@ -384,12 +438,12 @@ fn every_kind_width_form_alias_and_optimizer_shape_is_lifted_admitted_and_lowere
             assert_eq!(actual.source1, case.source1(), "{level:?} {case:?}");
             assert_eq!(actual.width, case.width, "{level:?} {case:?}");
             assert_eq!(actual.map, X86VecMap::Map0F, "{level:?} {case:?}");
-            assert_eq!(actual.prefix, X86SsePrefix::OpSize, "{level:?} {case:?}");
+            assert_eq!(actual.prefix, case.kind.prefix(), "{level:?} {case:?}");
             assert_eq!(actual.opcode, case.kind.opcode, "{level:?} {case:?}");
             assert!(!actual.w, "{level:?} {case:?}: WIG replay must use W=0");
             assert_eq!(
                 actual.needs_avx2,
-                case.width == VecWidth::V256,
+                case.kind.needs_avx2(case.width),
                 "{level:?} {case:?}"
             );
             assert!(!actual.needs_fma, "{level:?} {case:?}");
@@ -419,21 +473,57 @@ fn every_kind_width_form_alias_and_optimizer_shape_is_lifted_admitted_and_lowere
             lowered += 1;
         }
     }
-    assert_eq!(lowered, 96 * LEVELS.len());
+    assert_eq!(lowered, 144 * LEVELS.len());
 }
 
 #[test]
 fn register_rewrite_matches_independent_llvm_23_encodings() {
-    let find = |opcode| {
+    let find = |elem, opcode| {
         KINDS
             .into_iter()
-            .find(|kind| kind.opcode == opcode)
+            .find(|kind| kind.elem == elem && kind.opcode == opcode)
             .unwrap()
     };
     for (case, expected) in [
         (
-            IntegerInterleaveMemoryCase {
-                kind: find(0x60),
+            InterleaveMemoryCase {
+                kind: find(VecElementType::F32, 0x14),
+                width: VecWidth::V128,
+                form: VexForm::Vex3W0,
+                alias: false,
+            },
+            &[0xC5, 0xF0, 0x14, 0xC2][..],
+        ),
+        (
+            InterleaveMemoryCase {
+                kind: find(VecElementType::F32, 0x15),
+                width: VecWidth::V256,
+                form: VexForm::Vex3W0,
+                alias: false,
+            },
+            &[0xC5, 0xF4, 0x15, 0xC2][..],
+        ),
+        (
+            InterleaveMemoryCase {
+                kind: find(VecElementType::F64, 0x14),
+                width: VecWidth::V128,
+                form: VexForm::Vex3W0,
+                alias: false,
+            },
+            &[0xC5, 0xF1, 0x14, 0xC2][..],
+        ),
+        (
+            InterleaveMemoryCase {
+                kind: find(VecElementType::F64, 0x15),
+                width: VecWidth::V256,
+                form: VexForm::Vex3W0,
+                alias: false,
+            },
+            &[0xC5, 0xF5, 0x15, 0xC2][..],
+        ),
+        (
+            InterleaveMemoryCase {
+                kind: find(VecElementType::I8, 0x60),
                 width: VecWidth::V128,
                 form: VexForm::Vex3W0,
                 alias: false,
@@ -441,8 +531,8 @@ fn register_rewrite_matches_independent_llvm_23_encodings() {
             &[0xC5, 0xF1, 0x60, 0xC2][..],
         ),
         (
-            IntegerInterleaveMemoryCase {
-                kind: find(0x69),
+            InterleaveMemoryCase {
+                kind: find(VecElementType::I16, 0x69),
                 width: VecWidth::V256,
                 form: VexForm::Vex3W0,
                 alias: false,
@@ -450,8 +540,8 @@ fn register_rewrite_matches_independent_llvm_23_encodings() {
             &[0xC5, 0xF5, 0x69, 0xC2][..],
         ),
         (
-            IntegerInterleaveMemoryCase {
-                kind: find(0x62),
+            InterleaveMemoryCase {
+                kind: find(VecElementType::I32, 0x62),
                 width: VecWidth::V128,
                 form: VexForm::Vex3W1,
                 alias: false,
@@ -459,8 +549,8 @@ fn register_rewrite_matches_independent_llvm_23_encodings() {
             &[0xC5, 0x31, 0x62, 0xF0][..],
         ),
         (
-            IntegerInterleaveMemoryCase {
-                kind: find(0x6D),
+            InterleaveMemoryCase {
+                kind: find(VecElementType::I64, 0x6D),
                 width: VecWidth::V256,
                 form: VexForm::Vex3W1,
                 alias: false,
@@ -510,8 +600,8 @@ fn replace_instruction_bytes(function: &mut SmirFunction, bytes: &[u8]) {
 
 #[test]
 fn classifier_and_lowerer_fail_closed_for_every_pair_invariant() {
-    let case = IntegerInterleaveMemoryCase {
-        kind: KINDS[6],
+    let case = InterleaveMemoryCase {
+        kind: KINDS[10],
         width: VecWidth::V128,
         form: VexForm::Vex3W0,
         alias: false,
@@ -654,6 +744,69 @@ fn classifier_and_lowerer_fail_closed_for_every_pair_invariant() {
     });
 }
 
+#[test]
+fn floating_interleave_requires_exact_unaligned_load_and_encoding_provenance() {
+    let case = InterleaveMemoryCase {
+        kind: KINDS[1],
+        width: VecWidth::V256,
+        form: VexForm::Vex3W0,
+        alias: false,
+    };
+    let base = lift_case(case);
+
+    assert_mutation_rejected(
+        &base,
+        "floating load lost unaligned provenance",
+        |function| {
+            function.blocks[0].ops[0].x86_hint = None;
+        },
+    );
+    assert_mutation_rejected(
+        &base,
+        "floating load claims aligned provenance",
+        |function| {
+            function.blocks[0].ops[0].x86_hint = Some(X86OpHint::VecAlign(X86VecAlign::Aligned));
+        },
+    );
+    assert_mutation_rejected(
+        &base,
+        "floating consumer element mismatches bytes",
+        |function| {
+            if let OpKind::VInterleave { elem, .. } = &mut function.blocks[0].ops[1].kind {
+                *elem = VecElementType::F64;
+            }
+        },
+    );
+    assert_mutation_rejected(
+        &base,
+        "floating consumer prefix mismatches bytes",
+        |function| {
+            if let Some(X86OpHint::VexOp { pp, .. }) = &mut function.blocks[0].ops[1].x86_hint {
+                *pp = X86SsePrefix::OpSize;
+            }
+        },
+    );
+
+    let mut bytes = case.bytes();
+    bytes[2] |= 1;
+    assert_mutation_rejected(
+        &base,
+        "encoded floating element mismatches IR",
+        |function| {
+            replace_instruction_bytes(function, &bytes);
+        },
+    );
+    let mut bytes = case.bytes();
+    bytes[3] = 0x60;
+    assert_mutation_rejected(
+        &base,
+        "encoded integer opcode under FP prefix",
+        |function| {
+            replace_instruction_bytes(function, &bytes);
+        },
+    );
+}
+
 fn words_to_bytes(words: [u64; 8]) -> [u8; 64] {
     let mut bytes = [0; 64];
     for (chunk, word) in bytes.chunks_exact_mut(8).zip(words) {
@@ -680,36 +833,66 @@ fn write_lane(bytes: &mut [u8], elem: VecElementType, lane: usize, value: u64) {
     bytes[lane * size..lane * size + size].copy_from_slice(&value.to_le_bytes()[..size]);
 }
 
-fn operand_vectors(case: IntegerInterleaveMemoryCase) -> ([u64; 8], [u64; 8]) {
+fn operand_vectors(case: InterleaveMemoryCase) -> ([u64; 8], [u64; 8]) {
     let mut source1 = [0xC3; 64];
     let mut source2 = [0x5A; 64];
     let lanes = usize::try_from(case.width.lanes(case.kind.elem))
-        .expect("packed integer lane count fits usize");
+        .expect("packed interleave lane count fits usize");
     for lane in 0..lanes {
-        let lane = lane as u64;
-        write_lane(
-            &mut source1,
-            case.kind.elem,
-            lane as usize,
-            0x0102_0408_1020_4081u64.rotate_left((lane * 7) as u32)
-                ^ lane.wrapping_mul(0x1111_2222_3333_4444),
-        );
-        write_lane(
-            &mut source2,
-            case.kind.elem,
-            lane as usize,
-            0xF0E1_D2C3_B4A5_9687u64.rotate_right((lane * 5) as u32)
-                ^ lane.wrapping_mul(0x0101_0101_0101_0101),
-        );
+        let ordinal = lane as u64;
+        let (first, second) = match case.kind.elem {
+            VecElementType::F32 => {
+                const FIRST: [u64; 8] = [
+                    0x0000_0000, // +0
+                    0x8000_0000, // -0
+                    0x7F80_0000, // +infinity
+                    0xFF80_0000, // -infinity
+                    0x7FC1_2345, // quiet NaN with payload
+                    0x7F81_2345, // signaling NaN with payload
+                    0x0000_0001, // minimum positive subnormal
+                    0x0080_0000, // minimum positive normal
+                ];
+                const SECOND: [u64; 8] = [
+                    0x8000_0000,
+                    0x0000_0000,
+                    0xFF80_0000,
+                    0x7F80_0000,
+                    0xFFC5_4321,
+                    0xFF85_4321,
+                    0x007F_FFFF,
+                    0x7F7F_FFFF,
+                ];
+                (FIRST[lane % FIRST.len()], SECOND[lane % SECOND.len()])
+            }
+            VecElementType::F64 => {
+                const FIRST: [u64; 4] = [
+                    0x0000_0000_0000_0000, // +0
+                    0x8000_0000_0000_0000, // -0
+                    0x7FF8_1234_5678_9ABC, // quiet NaN with payload
+                    0x7FF0_1234_5678_9ABC, // signaling NaN with payload
+                ];
+                const SECOND: [u64; 4] = [
+                    0x7FF0_0000_0000_0000, // +infinity
+                    0xFFF0_0000_0000_0000, // -infinity
+                    0x0000_0000_0000_0001, // minimum positive subnormal
+                    0x0010_0000_0000_0000, // minimum positive normal
+                ];
+                (FIRST[lane % FIRST.len()], SECOND[lane % SECOND.len()])
+            }
+            _ => (
+                0x0102_0408_1020_4081u64.rotate_left((ordinal * 7) as u32)
+                    ^ ordinal.wrapping_mul(0x1111_2222_3333_4444),
+                0xF0E1_D2C3_B4A5_9687u64.rotate_right((ordinal * 5) as u32)
+                    ^ ordinal.wrapping_mul(0x0101_0101_0101_0101),
+            ),
+        };
+        write_lane(&mut source1, case.kind.elem, lane, first);
+        write_lane(&mut source2, case.kind.elem, lane, second);
     }
     (bytes_to_words(source1), bytes_to_words(source2))
 }
 
-fn model_result(
-    case: IntegerInterleaveMemoryCase,
-    source1: [u64; 8],
-    source2: [u64; 8],
-) -> [u64; 8] {
+fn model_result(case: InterleaveMemoryCase, source1: [u64; 8], source2: [u64; 8]) -> [u64; 8] {
     let source1 = words_to_bytes(source1);
     let source2 = words_to_bytes(source2);
     let mut result = [0; 64];
@@ -781,7 +964,7 @@ extern "C" fn vector_load_helper(
 }
 
 #[cfg(target_arch = "x86_64")]
-fn full_guest_regs(case: IntegerInterleaveMemoryCase, ordinal: usize) -> GuestRegs {
+fn full_guest_regs(case: InterleaveMemoryCase, ordinal: usize) -> GuestRegs {
     let mut registers = GuestRegs {
         gpr: std::array::from_fn(|index| {
             0x1000u64
@@ -817,7 +1000,7 @@ fn full_guest_regs(case: IntegerInterleaveMemoryCase, ordinal: usize) -> GuestRe
 #[cfg(target_arch = "x86_64")]
 fn expected_success(
     mut registers: GuestRegs,
-    case: IntegerInterleaveMemoryCase,
+    case: InterleaveMemoryCase,
     source2: [u64; 8],
 ) -> GuestRegs {
     let source1 = registers.zmm[usize::from(case.source1())];
@@ -835,7 +1018,7 @@ fn assert_interpreter_matches(
     expected: &GuestRegs,
     source2: [u64; 8],
     address: u64,
-    case: IntegerInterleaveMemoryCase,
+    case: InterleaveMemoryCase,
     level: OptLevel,
 ) {
     use crate::smir::interpret::{BlockResult, SmirInterpreter};
@@ -883,18 +1066,18 @@ fn assert_interpreter_matches(
 
 #[cfg(target_arch = "x86_64")]
 #[test]
-fn native_integer_interleave_matches_model_interpreter_and_precise_faults() {
+fn native_interleave_matches_model_interpreter_and_precise_faults() {
     use crate::smir::lower::runtime::ExecMem;
 
     if !std::is_x86_feature_detected!("avx") {
-        eprintln!("skipping native VEX VPUNPCK* memory differential: host lacks AVX");
+        eprintln!("skipping native VEX interleave memory differential: host lacks AVX");
         return;
     }
 
     let avx2 = std::is_x86_feature_detected!("avx2");
     let cases = all_cases()
         .into_iter()
-        .filter(|case| avx2 || case.width == VecWidth::V128)
+        .filter(|case| avx2 || !case.kind.needs_avx2(case.width))
         .collect::<Vec<_>>();
     let expected_executions = cases.len() * DIFFERENTIAL_LEVELS.len();
     let mut successes = 0usize;
@@ -980,6 +1163,6 @@ fn native_integer_interleave_matches_model_interpreter_and_precise_faults() {
     assert_eq!(successes, expected_executions);
     assert_eq!(faults, expected_executions);
     eprintln!(
-        "executed {successes} successful and {faults} faulting native VEX VPUNPCK* memory cases"
+        "executed {successes} successful and {faults} faulting native VEX interleave memory cases"
     );
 }

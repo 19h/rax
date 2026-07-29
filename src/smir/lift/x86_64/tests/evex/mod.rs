@@ -10,6 +10,8 @@ mod fp;
 #[cfg(test)]
 mod fp16_convert;
 #[cfg(test)]
+mod fp_unpack;
+#[cfg(test)]
 mod integer;
 #[cfg(test)]
 mod legacy;
