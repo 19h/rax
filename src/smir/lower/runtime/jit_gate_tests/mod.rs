@@ -233,6 +233,8 @@ mod vex_bmi2_shift_memory;
 mod vex_byte_shuffle_memory_source;
 #[cfg(test)]
 mod vex_chunk_extract_replay;
+#[cfg(feature = "smir-jit")]
+mod vex_cross_lane_128_memory_source;
 #[cfg(test)]
 mod vex_cross_lane_128_replay;
 #[cfg(test)]

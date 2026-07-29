@@ -70,6 +70,7 @@ mod vpclmulqdq;
 pub(crate) use evex_fma3_memory::{
     X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay, X86EvexScalarFma3MemoryEncoding,
 };
+pub(crate) use vex_cross_lane_128::X86VexCrossLane128MemoryEncoding;
 pub(crate) use vex_fma4::X86VexFma4MemoryEncoding;
 pub(crate) use vex_immediate_blend::X86VexImmediateBlendMemoryFields;
 pub(crate) use vex_variable_blend::X86VexVariableBlendMemoryEncoding;
