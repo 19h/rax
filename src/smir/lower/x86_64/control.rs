@@ -138,6 +138,20 @@ impl X86_64Lowerer {
         self.code.emit_u8(0x58); // pop rax
     }
 
+    /// Clear the four status flags that Intel defines as zero after
+    /// `VPTEST`, `VTESTPS`, and `VTESTPD`, preserving CF, ZF, and every
+    /// unaffected flag.
+    ///
+    /// Some translated x86-64 hosts compute CF/ZF but preserve OF/SF/AF/PF.
+    /// Masking a pushed flag image avoids exposing the temporary flags
+    /// produced by the `AND` instruction and does not modify a guest GPR.
+    pub(crate) fn emit_vex_ptest_defined_flag_canonicalization(&mut self) {
+        self.code.emit_u8(0x9C); // pushfq
+        self.code
+            .emit_bytes(&[0x48, 0x81, 0x24, 0x24, 0x6B, 0xF7, 0xFF, 0xFF]);
+        self.code.emit_u8(0x9D); // popfq
+    }
+
     /// Emit one exact source instruction, applying any host-compatibility
     /// status fixup requested by its byte-validated replay classifier.
     fn emit_native_replay_span(&mut self, span: &X86NativeReplaySpan) {
@@ -244,14 +258,7 @@ impl X86_64Lowerer {
         }
         if span.instruction.is_vex_register_ptest() {
             self.code.emit_bytes(span.instruction.as_slice());
-            // Intel defines OF/SF/AF/PF as zero for VPTEST/VTESTPS/VTESTPD.
-            // Some translated x86-64 hosts compute CF/ZF but preserve these
-            // four bits. Canonicalize the pushed flag image without exposing
-            // the temporary flags produced by AND or modifying any guest GPR.
-            self.code.emit_u8(0x9C); // pushfq
-            self.code
-                .emit_bytes(&[0x48, 0x81, 0x24, 0x24, 0x6B, 0xF7, 0xFF, 0xFF]);
-            self.code.emit_u8(0x9D); // popfq
+            self.emit_vex_ptest_defined_flag_canonicalization();
             return;
         }
         if !span.preserve_mxcsr_de {
@@ -1511,6 +1518,16 @@ impl X86_64Lowerer {
                 }
                 #[cfg(feature = "smir-jit")]
                 if let Some(consumed) = self.try_lower_jit_vex_packed_extend_memory_source(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_vex_ptest_memory_source(
                     block,
                     idx,
                     &virtual_definitions,

@@ -87,6 +87,7 @@ pub(crate) use vex_immediate_permute::X86VexImmediatePermuteMemoryEncoding;
 pub(crate) use vex_integer_dot::X86VexIntegerDotMemoryFields;
 pub(crate) use vex_integer_dot_ext::X86VexIntegerDotExtMemoryFields;
 pub(crate) use vex_memory_broadcast::X86VexMemoryBroadcastFields;
+pub(crate) use vex_ptest::X86VexPtestMemoryEncoding;
 pub(crate) use vex_scalar_insert_memory::{
     X86VexScalarInsertMemoryFields, X86VexScalarInsertMemoryKind,
 };

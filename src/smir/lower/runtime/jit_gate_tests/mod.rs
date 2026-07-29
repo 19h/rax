@@ -343,6 +343,8 @@ mod vex_psadbw_memory_source;
 #[cfg(test)]
 mod vex_psign_memory_source;
 #[cfg(test)]
+mod vex_ptest_memory_source;
+#[cfg(test)]
 mod vex_ptest_replay;
 #[cfg(test)]
 mod vex_register_broadcast_replay;

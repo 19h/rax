@@ -63,7 +63,7 @@ pub(crate) use classifiers::{
     X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay,
     X86EvexScalarFma3MemoryEncoding, X86VexCrossLane128MemoryEncoding, X86VexFma4MemoryEncoding,
     X86VexImmediateBlendMemoryFields, X86VexImmediatePermuteMemoryEncoding,
-    X86VexScalarInsertMemoryFields, X86VexScalarInsertMemoryKind,
+    X86VexPtestMemoryEncoding, X86VexScalarInsertMemoryFields, X86VexScalarInsertMemoryKind,
     X86VexVariableBlendMemoryEncoding, X86VexVariablePermuteMemoryEncoding,
 };
 
@@ -673,8 +673,8 @@ pub fn x86_vex_mov_mask_stack_destination_replay_spans(
 
 /// Identify valid register-only AVX VEX `VPTEST`, `VTESTPS`, and `VTESTPD`
 /// replay groups in `block` in O(N) time and O(P) space for N operations and P
-/// unique guest PCs. Memory forms remain at the precise SMIR interpreter
-/// boundary.
+/// unique guest PCs. Exact memory decompositions are admitted separately by
+/// the helper-backed JIT gate.
 pub fn x86_vex_ptest_replay_spans(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
