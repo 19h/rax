@@ -70,6 +70,7 @@ mod vpclmulqdq;
 pub(crate) use evex_fma3_memory::{
     X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay, X86EvexScalarFma3MemoryEncoding,
 };
+pub(crate) use vex_immediate_blend::X86VexImmediateBlendMemoryFields;
 
 impl X86InstructionBytes {
     /// Validate register-only EVEX packed logical operations and return
