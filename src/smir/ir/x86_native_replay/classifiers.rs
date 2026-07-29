@@ -40,6 +40,7 @@ mod vex_fp_logic;
 mod vex_horizontal_integer;
 mod vex_immediate_blend;
 mod vex_immediate_permute;
+mod vex_integer_dot;
 mod vex_integer_dot_ext;
 mod vex_integer_minmax;
 mod vex_integer_multiply_add;
@@ -80,6 +81,7 @@ pub(crate) use evex_fma3_memory::{
 pub(crate) use vex_cross_lane_128::X86VexCrossLane128MemoryEncoding;
 pub(crate) use vex_fma4::X86VexFma4MemoryEncoding;
 pub(crate) use vex_immediate_blend::X86VexImmediateBlendMemoryFields;
+pub(crate) use vex_integer_dot::X86VexIntegerDotMemoryFields;
 pub(crate) use vex_integer_dot_ext::X86VexIntegerDotExtMemoryFields;
 pub(crate) use vex_memory_broadcast::X86VexMemoryBroadcastFields;
 pub(crate) use vex_variable_blend::X86VexVariableBlendMemoryEncoding;

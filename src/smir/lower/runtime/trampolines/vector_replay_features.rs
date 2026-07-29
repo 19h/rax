@@ -13,6 +13,7 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_sse3: bool,
     pub(crate) needs_avx: bool,
     pub(crate) needs_avx2: bool,
+    pub(crate) needs_avx_vnni: bool,
     pub(crate) needs_avx_vnni_int8: bool,
     pub(crate) needs_avx_vnni_int16: bool,
     pub(crate) needs_f16c: bool,
@@ -51,6 +52,15 @@ fn cpuid_enumerates_leaf7_subleaf1_edx_feature(
     max_basic_leaf >= 7 && max_structured_subleaf >= 1 && subleaf1_edx & feature_mask != 0
 }
 
+fn cpuid_enumerates_leaf7_subleaf1_eax_feature(
+    max_basic_leaf: u32,
+    max_structured_subleaf: u32,
+    subleaf1_eax: u32,
+    feature_mask: u32,
+) -> bool {
+    max_basic_leaf >= 7 && max_structured_subleaf >= 1 && subleaf1_eax & feature_mask != 0
+}
+
 /// AMD APM Volume 3 defines FMA4 at CPUID Fn8000_0001_ECX[16]. Stable Rust
 /// exposes `fma4` for code generation but not through
 /// `is_x86_feature_detected!`, so query the architectural bit directly.
@@ -84,6 +94,35 @@ pub(crate) fn x86_host_has_xop() -> bool {
             0
         };
         cpuid_enumerates_xop(max_extended_leaf, extended_features_ecx)
+    }
+}
+
+/// Intel SDM Volume 1 defines AVX_VNNI at CPUID.07H.01H:EAX[4]. Stable Rust
+/// does not expose an `is_x86_feature_detected!` probe for this feature, so
+/// query the structured extended-feature leaf directly.
+#[cfg(target_arch = "x86_64")]
+pub(crate) fn x86_host_has_avx_vnni() -> bool {
+    // SAFETY: CPUID is architecturally available in x86-64 mode. The maximum
+    // basic leaf and CPUID.07H.00H:EAX maximum subleaf are checked before
+    // querying CPUID.07H.01H.
+    unsafe {
+        let max_basic_leaf = std::arch::x86_64::__cpuid(0).eax;
+        let max_structured_subleaf = if max_basic_leaf >= 7 {
+            std::arch::x86_64::__cpuid_count(7, 0).eax
+        } else {
+            0
+        };
+        let subleaf1_eax = if max_basic_leaf >= 7 && max_structured_subleaf >= 1 {
+            std::arch::x86_64::__cpuid_count(7, 1).eax
+        } else {
+            0
+        };
+        cpuid_enumerates_leaf7_subleaf1_eax_feature(
+            max_basic_leaf,
+            max_structured_subleaf,
+            subleaf1_eax,
+            1 << 4,
+        )
     }
 }
 
@@ -162,6 +201,7 @@ impl X86NativeReplayFeatureRequirements {
         (!self.needs_sse3 || std::is_x86_feature_detected!("sse3"))
             && (!self.needs_avx || std::is_x86_feature_detected!("avx"))
             && (!self.needs_avx2 || std::is_x86_feature_detected!("avx2"))
+            && (!self.needs_avx_vnni || x86_host_has_avx_vnni())
             && (!self.needs_avx_vnni_int8 || x86_host_has_avx_vnni_int8())
             && (!self.needs_avx_vnni_int16 || x86_host_has_avx_vnni_int16())
             && (!self.needs_f16c || std::is_x86_feature_detected!("f16c"))
@@ -203,6 +243,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             let is_fma4 = span.instruction.is_vex_register_fma4();
             let is_vpermil2 = span.instruction.is_vex_register_vpermil2();
             let vex_fp_dot_product_ymm = span.instruction.vex_register_fp_dot_product_uses_ymm();
+            let vex_integer_dot = span.instruction.vex_register_integer_dot_fields().is_some();
             let vex_integer_dot_ext_int16 =
                 span.instruction.vex_register_integer_dot_ext_is_int16();
             let immediate_blend_avx2 = span.instruction.vex_register_immediate_blend_needs_avx2();
@@ -262,6 +303,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             all_spans_support_avx_ymm16 &= is_fma4
                 || is_vpermil2
                 || vex_fp_dot_product_ymm.is_some()
+                || vex_integer_dot
                 || vex_integer_dot_ext_int16.is_some()
                 || fp_estimate_avx.is_some()
                 || immediate_blend_avx2.is_some()
@@ -298,6 +340,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || is_fma4
                 || is_vpermil2
                 || vex_fp_dot_product_ymm.is_some()
+                || vex_integer_dot
                 || vex_integer_dot_ext_int16.is_some()
                 || immediate_blend_avx2.is_some()
                 || immediate_permute_avx2.is_some()
@@ -344,6 +387,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_scalar_fp_to_int
                 || vex_scalar_int_to_fp
                 || vex_zero;
+            requirements.needs_avx_vnni |= vex_integer_dot;
             requirements.needs_avx2 |= widening_dword_multiply_avx2 == Some(true)
                 || immediate_blend_avx2 == Some(true)
                 || immediate_permute_avx2 == Some(true)
@@ -694,6 +738,18 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.needs_avx = true;
                 requirements.needs_avx2 |= sequence.width == crate::smir::ir::types::VecWidth::V256;
                 index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_vex_integer_dot_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                requirements.needs_avx_vnni = true;
+                index += sequence.binary.consumed;
             } else if let Some(sequence) = super::x86_jit_vex_integer_dot_ext_memory_sequence(
                 block,
                 index,
@@ -739,7 +795,8 @@ pub(crate) fn x86_native_replay_feature_requirements(
 #[cfg(test)]
 mod tests {
     use super::{
-        cpuid_enumerates_fma4, cpuid_enumerates_leaf7_subleaf1_edx_feature, cpuid_enumerates_xop,
+        cpuid_enumerates_fma4, cpuid_enumerates_leaf7_subleaf1_eax_feature,
+        cpuid_enumerates_leaf7_subleaf1_edx_feature, cpuid_enumerates_xop,
     };
 
     #[test]
@@ -756,6 +813,21 @@ mod tests {
         assert!(!cpuid_enumerates_xop(0x8000_0001, 0));
         assert!(cpuid_enumerates_xop(0x8000_0001, 1 << 11));
         assert!(cpuid_enumerates_xop(u32::MAX, u32::MAX));
+    }
+
+    #[test]
+    fn avx_vnni_cpuid_bit_requires_basic_leaf_7_and_subleaf_1() {
+        let bit = 1 << 4;
+        assert!(!cpuid_enumerates_leaf7_subleaf1_eax_feature(6, 1, bit, bit));
+        assert!(!cpuid_enumerates_leaf7_subleaf1_eax_feature(7, 0, bit, bit));
+        assert!(!cpuid_enumerates_leaf7_subleaf1_eax_feature(7, 1, 0, bit));
+        assert!(cpuid_enumerates_leaf7_subleaf1_eax_feature(7, 1, bit, bit));
+        assert!(cpuid_enumerates_leaf7_subleaf1_eax_feature(
+            u32::MAX,
+            u32::MAX,
+            u32::MAX,
+            bit
+        ));
     }
 
     #[test]
