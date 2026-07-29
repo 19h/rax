@@ -1592,7 +1592,6 @@ impl X86_64Lifter {
         if prefix.encoding != VecEncodingKind::Evex
             || prefix.pp != X86SsePrefix::OpSize
             || prefix.l_bits == 3
-            || prefix.b
             || (prefix.zeroing && prefix.aaa == 0)
             || matches!(elem, VecElementType::I32) && prefix.w
             || matches!(elem, VecElementType::I64) && !prefix.w
@@ -1611,23 +1610,59 @@ impl X86_64Lifter {
             ..X86Prefix::default()
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
+        let broadcast = prefix.b && modrm.is_memory;
+        if prefix.b
+            && (!modrm.is_memory || !matches!(elem, VecElementType::I32 | VecElementType::I64))
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
         let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();
+        let mask = (prefix.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))));
         let src2 = if modrm.is_memory {
-            let (addr, pre_ops) =
-                self.vec_full_addr_to_smir(prefix, modrm.addr.as_ref().unwrap(), next_pc, ctx);
+            let tuple_bytes = if broadcast {
+                elem.bytes()
+            } else {
+                prefix.width.bytes()
+            };
+            let (addr, pre_ops) = self.vec_disp8_addr_to_smir(
+                prefix,
+                modrm.addr.as_ref().unwrap(),
+                next_pc,
+                tuple_bytes,
+                ctx,
+            );
             ops.extend(pre_ops);
-            let loaded = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::VLoad {
-                    dst: loaded,
-                    addr,
-                    width: prefix.width,
-                },
-            ));
-            loaded
+            if broadcast {
+                if let Some(mask) = mask {
+                    self.append_masked_broadcast_memory_source(
+                        addr,
+                        elem,
+                        prefix.width,
+                        mask,
+                        pc,
+                        ctx,
+                        &mut ops,
+                    )
+                } else {
+                    self.append_broadcast_memory_source(addr, elem, prefix.width, pc, ctx, &mut ops)
+                }
+            } else {
+                let loaded = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VLoad {
+                        dst: loaded,
+                        addr,
+                        width: prefix.width,
+                    },
+                ));
+                loaded
+            }
         } else {
             self.vec_reg(modrm.rm + if prefix.rm_high { 16 } else { 0 }, prefix.width)
         };

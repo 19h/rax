@@ -30,6 +30,8 @@ mod descriptor_table;
 #[cfg(test)]
 mod evex;
 #[cfg(test)]
+mod evex_broadcast_interleave_memory_source;
+#[cfg(test)]
 mod evex_broadcast_xor_memory_source;
 #[cfg(test)]
 mod evex_bw_immediate_replay;

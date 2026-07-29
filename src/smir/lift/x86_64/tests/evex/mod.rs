@@ -14,6 +14,8 @@ mod fp_unpack;
 #[cfg(test)]
 mod integer;
 #[cfg(test)]
+mod integer_interleave_broadcast;
+#[cfg(test)]
 mod legacy;
 #[cfg(test)]
 mod logic_broadcast;
