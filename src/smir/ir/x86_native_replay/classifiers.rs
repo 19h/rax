@@ -49,6 +49,7 @@ mod vex_pavg;
 mod vex_pmul_high_word;
 mod vex_pmul_low;
 mod vex_pmulhrsw;
+mod vex_psadbw;
 mod vex_psign;
 mod vex_ptest;
 mod vex_register_broadcast;

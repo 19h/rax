@@ -301,6 +301,8 @@ mod vex_pmul_low_memory_source;
 #[cfg(test)]
 mod vex_pmulhrsw_memory_source;
 #[cfg(test)]
+mod vex_psadbw_memory_source;
+#[cfg(test)]
 mod vex_psign_memory_source;
 #[cfg(test)]
 mod vex_ptest_replay;
