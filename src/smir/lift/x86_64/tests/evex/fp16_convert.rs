@@ -416,28 +416,48 @@ fn lift_packed_fp16_precision_family_widths_masks_memory_er_sae_and_maps() {
         );
     }
 
-    for (bytes, from, to, round) in [
+    for (mut bytes, to, lanes, report_fp16_denormal) in [
         (
-            // LLVM 21: vcvtph2pd zmm0, xmm0, {sae}.
-            &[0x62, 0xF5, 0x7C, 0x18, 0x5A, 0xC0][..],
-            VecElementType::F16,
+            [0x62, 0xF5, 0x7C, 0x18, 0x5A, 0xC0],
             VecElementType::F64,
-            FpRoundMode::Dynamic,
+            8,
+            true,
         ),
         (
-            // LLVM 21: vcvtph2ps zmm0, ymm0, {sae}.
-            &[0x62, 0xF2, 0x7D, 0x18, 0x13, 0xC0][..],
-            VecElementType::F16,
+            [0x62, 0xF2, 0x7D, 0x18, 0x13, 0xC0],
             VecElementType::F32,
-            FpRoundMode::Dynamic,
+            16,
+            false,
         ),
         (
-            // LLVM 21: vcvtph2psx zmm0, ymm0, {sae}.
-            &[0x62, 0xF6, 0x7D, 0x18, 0x13, 0xC0][..],
-            VecElementType::F16,
+            [0x62, 0xF6, 0x7D, 0x18, 0x13, 0xC0],
             VecElementType::F32,
-            FpRoundMode::Dynamic,
+            16,
+            false,
         ),
+    ] {
+        for ll in 0..4 {
+            bytes[3] = (ll << 5) | 0x18;
+            let result = lift_single(&bytes).unwrap();
+            assert!(matches!(
+                result.ops.last().unwrap().kind,
+                OpKind::X86PackedFpConvert {
+                    from: VecElementType::F16,
+                    to: actual_to,
+                    lanes: actual_lanes,
+                    dst_width: VecWidth::V512,
+                    round: FpRoundMode::Dynamic,
+                    suppress_exceptions: true,
+                    report_fp16_denormal: actual_report,
+                    ..
+                } if actual_to == to
+                    && actual_lanes == lanes
+                    && actual_report == report_fp16_denormal
+            ));
+        }
+    }
+
+    for (bytes, from, to, round) in [
         (
             &[0x62, 0xF5, 0xFD, 0x59, 0x5A, 0xC0][..],
             VecElementType::F64,
@@ -468,9 +488,8 @@ fn lift_packed_fp16_precision_family_widths_masks_memory_er_sae_and_maps() {
         &[0x62, 0xF5, 0xFD, 0x88, 0x5A, 0xC0][..], // {z} without a mask
         &[0x62, 0xF5, 0x7D, 0x09, 0x5A, 0xC0][..], // VCVTPD2PH W=0
         &[0x62, 0xF2, 0x7D, 0x19, 0x13, 0x00][..], // VCVTPH2PS has no broadcast
-        &[0x62, 0xF5, 0x7C, 0x38, 0x5A, 0xC0][..], // widening SAE reserves L'L=01
-        &[0x62, 0xF2, 0x7D, 0x58, 0x13, 0xC0][..], // widening SAE reserves L'L=10
-        &[0x62, 0xF6, 0x7D, 0x78, 0x13, 0xC0][..], // widening SAE reserves L'L=11
+        &[0x62, 0xF5, 0x7C, 0x79, 0x5A, 0x00][..], // broadcast L'L=11
+        &[0x62, 0xF6, 0x7D, 0x79, 0x13, 0x00][..], // broadcast L'L=11
         &[0x62, 0xF5, 0x75, 0x09, 0x1D, 0xC0][..], // reserved EVEX.vvvv
         &[0x62, 0xF6, 0x7D, 0x69, 0x13, 0xC0][..], // reserved EVEX.L'L=3
         &[0xC4, 0xE2, 0x71, 0x13, 0xC1][..],       // reserved VEX.vvvv

@@ -232,38 +232,41 @@ fn widening_covers_widths_extensions_masks_aliases_specials_and_full_state() {
 }
 
 #[test]
-fn canonical_sae_is_512_bit_status_suppressing_and_noncanonical_ll_is_ud() {
+fn sae_is_512_bit_status_suppressing_for_all_ignored_ll_values() {
     for kind in [
         Fp16WidenKind::ToF64,
         Fp16WidenKind::ToF32,
         Fp16WidenKind::ToF32X,
     ] {
-        let code = encoding(kind, 0, 17, 18, 1, false, true, false);
-        let mut cpu = vcpu(&code);
-        fill_destination(&mut cpu, 17);
-        let lanes = lane_count(kind, 0, true);
-        let mut source = [0x3C00u16; 16];
-        source[0] = 0x7C01;
-        source[1] = 0x0001;
-        set_fp16_source(&mut cpu, 18, &source[..lanes]);
-        cpu.regs.k[1] = u64::MAX;
-        cpu.mxcsr = 0;
-        assert!(cpu.step().unwrap().is_none(), "{kind:?} {code:02X?}");
-        assert_eq!(cpu.mxcsr, 0, "SAE status {kind:?}");
-        assert_eq!(cpu.regs.rip, CODE + 6);
-        let actual = read_reg_bytes(&cpu, 17, 64);
-        assert_eq!(
-            read_lane(&actual, 0, element_bytes(kind)),
-            expected(0x7C01, kind)
-        );
-        assert_eq!(
-            read_lane(&actual, 1, element_bytes(kind)),
-            expected(0x0001, kind)
-        );
-
-        for ll in 1..=3 {
-            let invalid = encoding(kind, ll, 1, 2, 0, false, true, false);
-            assert_ud_before_state_or_memory(&invalid);
+        let mut reference = None;
+        for ll in 0..=3 {
+            let code = encoding(kind, ll, 17, 18, 1, false, true, false);
+            let mut cpu = vcpu(&code);
+            fill_destination(&mut cpu, 17);
+            let lanes = lane_count(kind, ll, true);
+            let mut source = [0x3C00u16; 16];
+            source[0] = 0x7C01;
+            source[1] = 0x0001;
+            set_fp16_source(&mut cpu, 18, &source[..lanes]);
+            cpu.regs.k[1] = u64::MAX;
+            cpu.mxcsr = 0;
+            assert!(cpu.step().unwrap().is_none(), "{kind:?} {code:02X?}");
+            assert_eq!(cpu.mxcsr, 0, "SAE status {kind:?} {code:02X?}");
+            assert_eq!(cpu.regs.rip, CODE + 6);
+            let actual = read_reg_bytes(&cpu, 17, 64);
+            assert_eq!(
+                read_lane(&actual, 0, element_bytes(kind)),
+                expected(0x7C01, kind)
+            );
+            assert_eq!(
+                read_lane(&actual, 1, element_bytes(kind)),
+                expected(0x0001, kind)
+            );
+            if let Some(expected) = reference {
+                assert_eq!(actual, expected, "ignored L'L changed {kind:?} {code:02X?}");
+            } else {
+                reference = Some(actual);
+            }
         }
     }
 }
@@ -334,6 +337,9 @@ fn reserved_fields_fail_before_effective_address_or_architectural_state_access()
     let mut ll3 = valid;
     ll3[3] |= 0x60;
     invalid.push(ll3);
+    for kind in [Fp16WidenKind::ToF64, Fp16WidenKind::ToF32X] {
+        invalid.push(encoding(kind, 3, 0, 0, 0, false, true, true));
+    }
     let legacy_broadcast = encoding(Fp16WidenKind::ToF32, 0, 0, 0, 0, false, true, true);
     invalid.push(legacy_broadcast);
     for code in invalid {

@@ -102,7 +102,7 @@ fn register_evex_fp16_widen_replay_closes_36_generated_lift_lower_gaps() {
 
     // Exhaust map/opcode/pp/W/L'L/SAE/length and every R/X/B/R' combination
     // against the independently parsed Intel rows. The source inventory has
-    // one row per VL; canonical register SAE is represented by b=1,L'L=00.
+    // one row per VL; register SAE implies VL=512 and ignores L'L.
     for extensions in 0u8..=15 {
         for map in 0u8..=7 {
             for opcode in u8::MIN..=u8::MAX {
@@ -139,13 +139,10 @@ fn register_evex_fp16_widen_replay_closes_36_generated_lift_lower_gaps() {
                                         },
                                     );
                                     let expected = shape.and_then(|(_, _, _, _, _, needs_fp16)| {
-                                        (!trailing
-                                            && if suppress_exceptions {
-                                                ll == 0
-                                            } else {
-                                                ll != 3
-                                            })
-                                        .then_some((!suppress_exceptions && ll != 2, *needs_fp16))
+                                        (!trailing && (suppress_exceptions || ll != 3)).then_some((
+                                            !suppress_exceptions && ll != 2,
+                                            *needs_fp16,
+                                        ))
                                     });
                                     assert_eq!(
                                         X86InstructionBytes::new(&bytes)
@@ -174,15 +171,12 @@ fn register_evex_fp16_widen_replay_closes_36_generated_lift_lower_gaps() {
     zeroing_k0[3] = 0x88;
     let mut reserved_ll = register;
     reserved_ll[3] = (reserved_ll[3] & !0x60) | 0x60;
-    let mut noncanonical_sae = register;
-    noncanonical_sae[3] = 0x39;
     for bytes in [
         memory,
         reserved_vvvv,
         reserved_v_prime,
         zeroing_k0,
         reserved_ll,
-        noncanonical_sae,
     ] {
         assert_eq!(
             X86InstructionBytes::new(&bytes)
@@ -192,4 +186,88 @@ fn register_evex_fp16_widen_replay_closes_36_generated_lift_lower_gaps() {
             "{bytes:02X?}"
         );
     }
+}
+
+#[test]
+fn widening_sae_ignored_ll_closes_27_generated_lift_gaps_at_all_optimization_levels() {
+    use rax::smir::{FpRoundMode, VecElementType, VecWidth};
+
+    let mut lifted = 0usize;
+    let mut lowered = 0usize;
+    for (map, pp, opcode, to, lanes, needs_fp16, report_fp16_denormal) in [
+        (5u8, 0u8, 0x5Au8, VecElementType::F64, 8u8, true, true),
+        (2, 1, 0x13, VecElementType::F32, 16, false, false),
+        (6, 1, 0x13, VecElementType::F32, 16, true, false),
+    ] {
+        for ll in 1u8..=3 {
+            for (aaa, zeroing) in [(0u8, false), (1, false), (1, true)] {
+                let bytes = [
+                    0x62,
+                    0xF0 | map,
+                    0x7C | pp,
+                    (u8::from(zeroing) << 7) | (ll << 5) | 0x18 | aaa,
+                    opcode,
+                    0xC2,
+                ];
+                let instruction = X86InstructionBytes::new(&bytes).unwrap();
+                assert_eq!(
+                    instruction.evex_register_fp16_widen_requirements(),
+                    Some((false, needs_fp16)),
+                    "{bytes:02X?}"
+                );
+
+                let mut lifter = X86_64Lifter::strict();
+                let mut context = LiftContext::new(SourceArch::X86_64);
+                let result = lifter
+                    .lift_insn(0x1000, &bytes, &mut context)
+                    .unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
+                assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
+                assert!(matches!(
+                    result.ops.last().unwrap().kind,
+                    OpKind::X86PackedFpConvert {
+                        from: VecElementType::F16,
+                        to: actual_to,
+                        lanes: actual_lanes,
+                        dst_width: VecWidth::V512,
+                        round: FpRoundMode::Dynamic,
+                        suppress_exceptions: true,
+                        report_fp16_denormal: actual_report,
+                        ..
+                    } if actual_to == to
+                        && actual_lanes == lanes
+                        && actual_report == report_fp16_denormal
+                ));
+
+                let mut block = SmirBlock::new(BlockId(0), 0x1000);
+                block.ops = result.ops;
+                block.set_terminator(Terminator::Return { values: vec![] });
+                let mut function = SmirFunction::new(FunctionId(0), block.id, 0x1000);
+                function.add_block(block);
+                function
+                    .x86_instruction_bytes
+                    .insert((BlockId(0), 0x1000), instruction);
+
+                for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+                    let mut optimized = function.clone();
+                    optimize_function(&mut optimized, level);
+                    let mut lowerer = X86_64Lowerer::new();
+                    lowerer
+                        .lower_function(&optimized)
+                        .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
+                    let code = lowerer
+                        .finalize()
+                        .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
+                    assert!(
+                        code.windows(bytes.len()).any(|window| window == bytes),
+                        "{level:?} {bytes:02X?}"
+                    );
+                    lowered += 1;
+                }
+                lifted += 1;
+            }
+        }
+    }
+
+    assert_eq!(lifted, 27);
+    assert_eq!(lowered, 81);
 }

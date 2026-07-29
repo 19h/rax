@@ -47,10 +47,10 @@ impl X86InstructionBytes {
     ///
     /// Returns `(needs_avx512vl, needs_avx512fp16)`. Ordinary 128-bit and
     /// 256-bit forms require AVX-512VL. Register-source `EVEX.b=1` selects the
-    /// 512-bit SAE form and requires the canonical `L'L=00` encoding. The
-    /// legacy-map `VCVTPH2PS` form requires AVX-512F, whereas `VCVTPH2PD` and
-    /// `VCVTPH2PSX` require AVX-512-FP16. Memory forms and every reserved EVEX
-    /// field fail closed.
+    /// 512-bit SAE form and ignores all four `L'L` values. The legacy-map
+    /// `VCVTPH2PS` form requires AVX-512F, whereas `VCVTPH2PD` and
+    /// `VCVTPH2PSX` require AVX-512-FP16. Memory forms and every reserved
+    /// EVEX field fail closed.
     pub fn evex_register_fp16_widen_requirements(&self) -> Option<(bool, bool)> {
         let bytes = self.as_slice();
         if bytes.len() != 6 || bytes[0] != 0x62 {
@@ -85,9 +85,8 @@ impl X86InstructionBytes {
         let ll = (p2 >> 5) & 0x03;
         let suppress_exceptions = p2 & 0x10 != 0;
         if suppress_exceptions {
-            // Register-source SAE implies VL=512 and has one canonical
-            // encoding; L'L=01/10/11 are reserved.
-            return (ll == 0).then_some((false, needs_fp16));
+            // Register-source SAE implies VL=512 and ignores L'L.
+            return Some((false, needs_fp16));
         }
         match ll {
             0 | 1 => Some((true, needs_fp16)),

@@ -14,6 +14,15 @@ enum WidenKind {
 
 impl WidenKind {
     const ALL: [Self; 3] = [Self::ToF64, Self::ToF32, Self::ToF32X];
+    const CONTROLS: [(u8, bool); 7] = [
+        (0, false),
+        (0, true),
+        (1, false),
+        (1, true),
+        (2, false),
+        (2, true),
+        (3, true),
+    ];
 
     fn fields(self) -> (u8, u8, u8, bool, usize) {
         match self {
@@ -37,8 +46,8 @@ fn encoding(
     mask: u8,
     zeroing: bool,
 ) -> [u8; 6] {
-    assert!(ll < 3 && destination < 32 && source < 32 && mask < 8);
-    assert!(!suppress_exceptions || ll == 0);
+    assert!(ll < 4 && destination < 32 && source < 32 && mask < 8);
+    assert!(suppress_exceptions || ll < 3);
     assert!(!zeroing || mask != 0);
     let (map, pp, opcode, _, _) = kind.fields();
     let mut p0 = 0xF0 | map;
@@ -105,7 +114,7 @@ fn mxcsr_de_preserving_replay(bytes: &[u8; 6]) -> Vec<u8> {
 #[test]
 fn replay_feature_aggregation_requires_bw_and_exact_vl_fp16_features() {
     for kind in WidenKind::ALL {
-        for (ll, suppress_exceptions) in [(0, false), (1, false), (2, false), (0, true)] {
+        for (ll, suppress_exceptions) in WidenKind::CONTROLS {
             let bytes = encoding(kind, ll, suppress_exceptions, 17, 18, 1, false);
             let function = function(&bytes);
             let (needs_vl, needs_fp16) = requirements(kind, ll, suppress_exceptions);
@@ -134,7 +143,7 @@ fn replay_feature_aggregation_requires_bw_and_exact_vl_fp16_features() {
 }
 
 #[test]
-fn replay_admits_and_emits_180_optimized_legal_encodings_and_fails_closed() {
+fn replay_admits_and_emits_945_optimized_legal_encodings_and_fails_closed() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -145,7 +154,7 @@ fn replay_admits_and_emits_180_optimized_legal_encodings_and_fails_closed() {
     let mut memory_metadata_checked = false;
 
     for kind in WidenKind::ALL {
-        for (ll, suppress_exceptions) in [(0, false), (1, false), (2, false), (0, true)] {
+        for (ll, suppress_exceptions) in WidenKind::CONTROLS {
             let (needs_vl, needs_fp16) = requirements(kind, ll, suppress_exceptions);
             for (destination, source) in operands {
                 for (mask, zeroing) in masks {
@@ -158,7 +167,7 @@ fn replay_admits_and_emits_180_optimized_legal_encodings_and_fails_closed() {
                         mask,
                         zeroing,
                     );
-                    let mut function = function(&bytes);
+                    let function = function(&bytes);
                     if !missing_provenance_checked {
                         let mut missing = function.clone();
                         missing.x86_instruction_bytes.clear();
@@ -181,60 +190,64 @@ fn replay_admits_and_emits_180_optimized_legal_encodings_and_fails_closed() {
                         memory_metadata_checked = true;
                     }
 
-                    crate::smir::optimize::optimize_function(
-                        &mut function,
+                    for level in [
+                        crate::smir::optimize::OptLevel::O0,
+                        crate::smir::optimize::OptLevel::O1,
                         crate::smir::optimize::OptLevel::O2,
-                    );
-                    assert!(is_native_clobber_safe(&function), "{bytes:02X?}");
-                    assert!(
-                        uses_x86_native_vectors_excluding(
-                            &function,
-                            &std::collections::HashMap::new()
-                        ),
-                        "{bytes:02X?}"
-                    );
+                    ] {
+                        let mut optimized = function.clone();
+                        crate::smir::optimize::optimize_function(&mut optimized, level);
+                        assert!(is_native_clobber_safe(&optimized), "{level:?} {bytes:02X?}");
+                        assert!(
+                            uses_x86_native_vectors_excluding(
+                                &optimized,
+                                &std::collections::HashMap::new()
+                            ),
+                            "{level:?} {bytes:02X?}"
+                        );
 
-                    #[cfg(target_arch = "x86_64")]
-                    let expected_features = std::is_x86_feature_detected!("avx512f")
-                        && std::is_x86_feature_detected!("avx512bw")
-                        && (!needs_vl || std::is_x86_feature_detected!("avx512vl"))
-                        && (!needs_fp16 || std::is_x86_feature_detected!("avx512fp16"));
-                    #[cfg(not(target_arch = "x86_64"))]
-                    let expected_features = false;
-                    assert_eq!(
-                        x86_native_vector_features_supported_excluding(
-                            &function,
-                            &std::collections::HashMap::new()
-                        ),
-                        expected_features,
-                        "{bytes:02X?}"
-                    );
+                        #[cfg(target_arch = "x86_64")]
+                        let expected_features = std::is_x86_feature_detected!("avx512f")
+                            && std::is_x86_feature_detected!("avx512bw")
+                            && (!needs_vl || std::is_x86_feature_detected!("avx512vl"))
+                            && (!needs_fp16 || std::is_x86_feature_detected!("avx512fp16"));
+                        #[cfg(not(target_arch = "x86_64"))]
+                        let expected_features = false;
+                        assert_eq!(
+                            x86_native_vector_features_supported_excluding(
+                                &optimized,
+                                &std::collections::HashMap::new()
+                            ),
+                            expected_features,
+                            "{level:?} {bytes:02X?}"
+                        );
 
-                    let mut lowerer = X86_64Lowerer::new();
-                    lowerer
-                        .lower_function(&function)
-                        .unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
-                    let code = lowerer
-                        .finalize()
-                        .unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
-                    assert!(
-                        code.windows(bytes.len()).any(|window| window == bytes),
-                        "{bytes:02X?}"
-                    );
-                    let wrapped = mxcsr_de_preserving_replay(&bytes);
-                    assert_eq!(
-                        code.windows(wrapped.len()).any(|window| window == wrapped),
-                        kind == WidenKind::ToF32X,
-                        "MXCSR.DE wrapper mismatch for {kind:?} {bytes:02X?}"
-                    );
-                    admitted += 1;
+                        let mut lowerer = X86_64Lowerer::new();
+                        lowerer
+                            .lower_function(&optimized)
+                            .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
+                        let code = lowerer
+                            .finalize()
+                            .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
+                        assert!(
+                            code.windows(bytes.len()).any(|window| window == bytes),
+                            "{level:?} {bytes:02X?}"
+                        );
+                        let wrapped = mxcsr_de_preserving_replay(&bytes);
+                        assert_eq!(
+                            code.windows(wrapped.len()).any(|window| window == wrapped),
+                            kind == WidenKind::ToF32X,
+                            "MXCSR.DE wrapper mismatch for {level:?} {kind:?} {bytes:02X?}"
+                        );
+                        admitted += 1;
+                    }
                 }
             }
         }
     }
 
     assert!(missing_provenance_checked && memory_metadata_checked);
-    assert_eq!(admitted, 180);
+    assert_eq!(admitted, 945);
 }
 
 #[cfg(target_arch = "x86_64")]
@@ -388,7 +401,7 @@ fn execute_native(
 
 #[cfg(target_arch = "x86_64")]
 #[test]
-fn replay_matches_o0_o2_interpretation_for_formats_controls_masks_aliases_and_mxcsr() {
+fn replay_matches_all_optimization_levels_for_formats_controls_masks_aliases_and_mxcsr() {
     if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
         eprintln!("skipping native FP16 widening differential: host lacks AVX-512F/BW");
         return;
@@ -402,10 +415,11 @@ fn replay_matches_o0_o2_interpretation_for_formats_controls_masks_aliases_and_mx
 
     for level in [
         crate::smir::optimize::OptLevel::O0,
+        crate::smir::optimize::OptLevel::O1,
         crate::smir::optimize::OptLevel::O2,
     ] {
         for kind in WidenKind::ALL {
-            for (ll, suppress_exceptions) in [(0, false), (1, false), (2, false), (0, true)] {
+            for (ll, suppress_exceptions) in WidenKind::CONTROLS {
                 let (needs_vl, needs_fp16) = requirements(kind, ll, suppress_exceptions);
                 if (needs_vl && !has_vl) || (needs_fp16 && !has_fp16) {
                     continue;

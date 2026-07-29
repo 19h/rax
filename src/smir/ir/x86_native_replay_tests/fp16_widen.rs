@@ -11,6 +11,15 @@ enum WidenKind {
 
 impl WidenKind {
     const ALL: [Self; 3] = [Self::ToF64, Self::ToF32, Self::ToF32X];
+    const CONTROLS: [(u8, bool); 7] = [
+        (0, false),
+        (0, true),
+        (1, false),
+        (1, true),
+        (2, false),
+        (2, true),
+        (3, true),
+    ];
 
     fn fields(self) -> (u8, u8, u8, bool) {
         match self {
@@ -231,15 +240,14 @@ fn encoding(
 }
 
 #[test]
-fn classifier_accepts_exactly_1_200_sampled_legal_register_encodings() {
+fn classifier_accepts_exactly_2_100_sampled_legal_register_encodings() {
     let registers = [0, 7, 8, 16, 31];
     let masks = [(0, false), (1, false), (2, true), (7, true)];
-    let controls = [(0, false), (1, false), (2, false), (0, true)];
     let mut classified = 0usize;
 
     for kind in WidenKind::ALL {
         let needs_fp16 = kind.fields().3;
-        for (ll, suppress_exceptions) in controls {
+        for (ll, suppress_exceptions) in WidenKind::CONTROLS {
             let expected = Some((!suppress_exceptions && ll != 2, needs_fp16));
             for destination in registers {
                 for source in registers {
@@ -273,22 +281,24 @@ fn classifier_accepts_exactly_1_200_sampled_legal_register_encodings() {
             }
         }
     }
-    assert_eq!(classified, 1_200);
+    assert_eq!(classified, 2_100);
 
-    // Independently assembled by LLVM 21.1.8.
+    // Canonical samples were independently assembled by LLVM 21.1.8. The SAE
+    // samples also vary the Intel-defined ignored L'L bits; LLVM canonicalizes
+    // those encodings to L'L=00.
     for (bytes, expected) in [
         ([0x62, 0xF5, 0x7C, 0x08, 0x5A, 0xCA], (true, true)),
         ([0x62, 0x55, 0x7C, 0x28, 0x5A, 0xCA], (true, true)),
         ([0x62, 0xA5, 0x7C, 0x48, 0x5A, 0xCA], (false, true)),
-        ([0x62, 0x05, 0x7C, 0x18, 0x5A, 0xEE], (false, true)),
+        ([0x62, 0x05, 0x7C, 0x78, 0x5A, 0xEE], (false, true)),
         ([0x62, 0xA2, 0x7D, 0x09, 0x13, 0xCA], (true, false)),
         ([0x62, 0x52, 0x7D, 0xAA, 0x13, 0xCA], (true, false)),
         ([0x62, 0xA2, 0x7D, 0x48, 0x13, 0xCA], (false, false)),
-        ([0x62, 0x02, 0x7D, 0x18, 0x13, 0xEE], (false, false)),
+        ([0x62, 0x02, 0x7D, 0x38, 0x13, 0xEE], (false, false)),
         ([0x62, 0xF6, 0x7D, 0x08, 0x13, 0xCA], (true, true)),
         ([0x62, 0x56, 0x7D, 0x28, 0x13, 0xCA], (true, true)),
         ([0x62, 0xA6, 0x7D, 0x48, 0x13, 0xCA], (false, true)),
-        ([0x62, 0x06, 0x7D, 0x18, 0x13, 0xEE], (false, true)),
+        ([0x62, 0x06, 0x7D, 0x58, 0x13, 0xEE], (false, true)),
     ] {
         assert_eq!(
             X86InstructionBytes::new(&bytes)
@@ -338,9 +348,6 @@ fn classifier_rejects_every_reserved_or_unsafe_frontier() {
     }
 
     for kind in WidenKind::ALL {
-        for ll in 1..=3 {
-            invalid.push(encoding(kind, ll, true, 1, 2, 0, false).to_vec());
-        }
         invalid.push(encoding(kind, 3, false, 1, 2, 0, false).to_vec());
     }
 
@@ -389,7 +396,7 @@ fn replay_spans_expose_exact_vl_and_fp16_requirements() {
     block.push_op(SmirOp::new(OpId(0), pc, OpKind::Nop));
 
     for kind in WidenKind::ALL {
-        for (ll, suppress_exceptions) in [(0, false), (1, false), (2, false), (0, true)] {
+        for (ll, suppress_exceptions) in WidenKind::CONTROLS {
             let bytes = encoding(kind, ll, suppress_exceptions, 29, 30, 3, true);
             let instruction = X86InstructionBytes::new(&bytes).unwrap();
             let provenance = std::collections::HashMap::from([((BlockId(61), pc), instruction)]);

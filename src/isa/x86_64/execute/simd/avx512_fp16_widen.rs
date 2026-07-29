@@ -132,8 +132,7 @@ pub fn evex_fp16_widen(
     if evex.vvvv != 0x0F
         || !evex.v_prime
         || (evex.z && evex.aaa == 0)
-        || evex.ll == 3
-        || (register_sae && evex.ll != 0)
+        || (!register_sae && evex.ll == 3)
         || (evex.broadcast && is_memory && !kind.permits_memory_broadcast())
     {
         return vcpu.inject_undefined_instruction();
