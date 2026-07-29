@@ -60,7 +60,7 @@ mod classifiers;
 
 pub(crate) use classifiers::{
     X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay,
-    X86EvexScalarFma3MemoryEncoding, X86VexImmediateBlendMemoryFields,
+    X86EvexScalarFma3MemoryEncoding, X86VexFma4MemoryEncoding, X86VexImmediateBlendMemoryFields,
 };
 
 pub use aggregate::{

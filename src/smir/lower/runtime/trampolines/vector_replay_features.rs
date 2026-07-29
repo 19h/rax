@@ -182,7 +182,7 @@ impl X86NativeReplayFeatureRequirements {
 }
 
 /// Accumulate the host features required by exact x86 native-replay spans and
-/// helper-backed AES, EVEX packed FMA3, VPCLMULQDQ, or VEX unary/binary
+/// helper-backed AES, EVEX FMA3, FMA4, VPCLMULQDQ, or VEX unary/binary
 /// memory-source sequences in O(N) time and O(P + V) temporary space per block
 /// for N operations, P guest instruction addresses, and V virtual registers.
 pub(crate) fn x86_native_replay_feature_requirements(
@@ -433,6 +433,18 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.needs_avx512fp16 |=
                     sequence.encoding.elem == crate::smir::ir::types::VecElementType::F16;
                 all_spans_support_avx_ymm16 = false;
+                index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_vex_fma4_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                requirements.needs_fma4 = true;
                 index += sequence.consumed;
             } else if let Some(sequence) = super::x86_jit_vpclmulqdq_memory_sequence(
                 block,

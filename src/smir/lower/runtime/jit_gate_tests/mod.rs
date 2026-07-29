@@ -245,6 +245,8 @@ mod vex_fma3_replay;
 #[cfg(test)]
 mod vex_fma3_scalar_memory_source;
 #[cfg(test)]
+mod vex_fma4_memory_source;
+#[cfg(test)]
 mod vex_fma4_replay;
 #[cfg(test)]
 mod vex_fp16_narrow_replay;
