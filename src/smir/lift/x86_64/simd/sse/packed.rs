@@ -544,6 +544,7 @@ impl X86_64Lifter {
             opcode,
             elem,
             VecWidth::V128,
+            None,
             pc,
             &mut ops,
         );

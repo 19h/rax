@@ -31,16 +31,22 @@ enum FpOperation {
     Min,
     Div,
     Max,
+    AddSub,
+    HorizontalAdd,
+    HorizontalSub,
 }
 
 impl FpOperation {
-    const ALL: [Self; 6] = [
+    const ALL: [Self; 9] = [
         Self::Add,
         Self::Mul,
         Self::Sub,
         Self::Min,
         Self::Div,
         Self::Max,
+        Self::AddSub,
+        Self::HorizontalAdd,
+        Self::HorizontalSub,
     ];
 
     const fn opcode(self) -> u8 {
@@ -51,6 +57,9 @@ impl FpOperation {
             Self::Min => 0x5D,
             Self::Div => 0x5E,
             Self::Max => 0x5F,
+            Self::AddSub => 0xD0,
+            Self::HorizontalAdd => 0x7C,
+            Self::HorizontalSub => 0x7D,
         }
     }
 
@@ -62,7 +71,17 @@ impl FpOperation {
             Self::Min => X86FpBinaryOp::Min,
             Self::Div => X86FpBinaryOp::Div,
             Self::Max => X86FpBinaryOp::Max,
+            Self::AddSub => X86FpBinaryOp::AddSub,
+            Self::HorizontalAdd => X86FpBinaryOp::HorizontalAdd,
+            Self::HorizontalSub => X86FpBinaryOp::HorizontalSub,
         }
+    }
+
+    const fn is_sse3_paired(self) -> bool {
+        matches!(
+            self,
+            Self::AddSub | Self::HorizontalAdd | Self::HorizontalSub
+        )
     }
 }
 
@@ -79,20 +98,6 @@ impl FpFormat {
         match self {
             Self::F32 => VecElementType::F32,
             Self::F64 => VecElementType::F64,
-        }
-    }
-
-    const fn prefix(self) -> X86SsePrefix {
-        match self {
-            Self::F32 => X86SsePrefix::None,
-            Self::F64 => X86SsePrefix::OpSize,
-        }
-    }
-
-    const fn pp(self) -> u8 {
-        match self {
-            Self::F32 => 0,
-            Self::F64 => 1,
         }
     }
 }
@@ -144,6 +149,23 @@ impl FpMemoryCase {
         self.operands().2
     }
 
+    const fn prefix(self) -> X86SsePrefix {
+        match (self.operation.is_sse3_paired(), self.format) {
+            (true, FpFormat::F32) => X86SsePrefix::Repne,
+            (false, FpFormat::F32) => X86SsePrefix::None,
+            (_, FpFormat::F64) => X86SsePrefix::OpSize,
+        }
+    }
+
+    const fn pp(self) -> u8 {
+        match self.prefix() {
+            X86SsePrefix::None => 0,
+            X86SsePrefix::OpSize => 1,
+            X86SsePrefix::Rep => 2,
+            X86SsePrefix::Repne => 3,
+        }
+    }
+
     fn scratch(self) -> u8 {
         (0..16)
             .find(|index| *index != self.destination() && *index != self.source1())
@@ -160,7 +182,7 @@ impl FpMemoryCase {
                 (if destination < 8 { 0x80 } else { 0 })
                     | (((!source1) & 0x0F) << 3)
                     | (l << 2)
-                    | self.format.pp(),
+                    | self.pp(),
                 self.operation.opcode(),
                 modrm,
                 DISP as u8,
@@ -171,10 +193,7 @@ impl FpMemoryCase {
                     | 0x40
                     | (if base < 8 { 0x20 } else { 0 })
                     | 0x01,
-                (u8::from(self.form.w()) << 7)
-                    | (((!source1) & 0x0F) << 3)
-                    | (l << 2)
-                    | self.format.pp(),
+                (u8::from(self.form.w()) << 7) | (((!source1) & 0x0F) << 3) | (l << 2) | self.pp(),
                 self.operation.opcode(),
                 modrm,
                 DISP as u8,
@@ -188,13 +207,14 @@ impl FpMemoryCase {
         let scratch = self.scratch();
         let l = u8::from(self.width == VecWidth::V256);
         let modrm = 0xC0 | ((destination & 7) << 3) | scratch;
-        if !self.form.w() {
+        let emitted_w = self.form.w() && !self.operation.is_sse3_paired();
+        if !emitted_w {
             vec![
                 0xC5,
                 (if destination < 8 { 0x80 } else { 0 })
                     | (((!source1) & 0x0F) << 3)
                     | (l << 2)
-                    | self.format.pp(),
+                    | self.pp(),
                 self.operation.opcode(),
                 modrm,
             ]
@@ -202,7 +222,7 @@ impl FpMemoryCase {
             vec![
                 0xC4,
                 (if destination < 8 { 0x80 } else { 0 }) | 0x60 | 0x01,
-                0x80 | (((!source1) & 0x0F) << 3) | (l << 2) | self.format.pp(),
+                0x80 | (((!source1) & 0x0F) << 3) | (l << 2) | self.pp(),
                 self.operation.opcode(),
                 modrm,
             ]
@@ -256,7 +276,7 @@ fn assert_exact_pair(ops: &[SmirOp], case: FpMemoryCase) {
         consumer.x86_hint,
         Some(X86OpHint::VexOp {
             map: X86VecMap::Map0F,
-            pp: case.format.prefix(),
+            pp: case.prefix(),
             opcode: case.operation.opcode(),
             width: case.width,
             w: case.form.w(),
@@ -383,9 +403,9 @@ fn all_cases() -> Vec<FpMemoryCase> {
 }
 
 #[test]
-fn all_72_c4_c5_wig_width_format_and_operation_shapes_are_lifted_admitted_and_lowered() {
+fn all_108_c4_c5_wig_width_format_and_operation_shapes_are_lifted_admitted_and_lowered() {
     let cases = all_cases();
-    assert_eq!(cases.len(), 6 * 2 * 2 * 3);
+    assert_eq!(cases.len(), 9 * 2 * 2 * 3);
     let mut lowered = 0usize;
     for case in cases {
         for level in LEVELS {
@@ -412,7 +432,51 @@ fn all_72_c4_c5_wig_width_format_and_operation_shapes_are_lifted_admitted_and_lo
             lowered += 1;
         }
     }
-    assert_eq!(lowered, 72 * LEVELS.len());
+    assert_eq!(lowered, 108 * LEVELS.len());
+}
+
+#[test]
+fn llvm_23_canonical_memory_encodings_match_the_case_generator() {
+    for (case, expected) in [
+        (
+            FpMemoryCase {
+                operation: FpOperation::AddSub,
+                format: FpFormat::F32,
+                width: VecWidth::V128,
+                form: EncodingForm::C5,
+            },
+            &[0xC5, 0xF3, 0xD0, 0x43, 0x20][..],
+        ),
+        (
+            FpMemoryCase {
+                operation: FpOperation::AddSub,
+                format: FpFormat::F64,
+                width: VecWidth::V256,
+                form: EncodingForm::C4W0,
+            },
+            &[0xC4, 0x41, 0x7D, 0xD0, 0x7B, 0x20][..],
+        ),
+        (
+            FpMemoryCase {
+                operation: FpOperation::HorizontalAdd,
+                format: FpFormat::F64,
+                width: VecWidth::V256,
+                form: EncodingForm::C5,
+            },
+            &[0xC5, 0xF5, 0x7C, 0x43, 0x20][..],
+        ),
+        (
+            FpMemoryCase {
+                operation: FpOperation::HorizontalSub,
+                format: FpFormat::F32,
+                width: VecWidth::V256,
+                form: EncodingForm::C4W0,
+            },
+            &[0xC4, 0x41, 0x7F, 0x7D, 0x7B, 0x20][..],
+        ),
+    ] {
+        assert_eq!(case.bytes(), expected, "{case:?}");
+    }
 }
 
 fn assert_rejected(name: &str, function: &SmirFunction) {
@@ -581,6 +645,89 @@ fn fp_classifier_and_lowerer_fail_closed_for_every_pair_invariant() {
         ("prefix/element mismatch", wrong_element),
         ("hint/operation semantic mismatch", wrong_operation),
     ];
+    for (name, function) in malformed {
+        assert_rejected(name, &function);
+    }
+}
+
+#[test]
+fn sse3_paired_classifier_requires_exact_ir_and_source_byte_provenance() {
+    let case = FpMemoryCase {
+        operation: FpOperation::HorizontalAdd,
+        format: FpFormat::F32,
+        width: VecWidth::V256,
+        form: EncodingForm::C4W1,
+    };
+    let base = lift_case(case);
+    let mut malformed = Vec::new();
+
+    let mut missing_metadata = base.clone();
+    missing_metadata
+        .x86_instruction_bytes
+        .remove(&(BlockId(0), PC));
+    malformed.push(("missing source-byte provenance", missing_metadata));
+
+    let mut missing_load_hint = base.clone();
+    missing_load_hint.blocks[0].ops[0].x86_hint = None;
+    malformed.push(("missing unaligned load provenance", missing_load_hint));
+
+    let mut wrong_ir_operation = base.clone();
+    if let OpKind::X86FpBinary { op, .. } = &mut wrong_ir_operation.blocks[0].ops[1].kind {
+        *op = X86FpBinaryOp::HorizontalSub;
+    }
+    malformed.push(("IR operation/hint mismatch", wrong_ir_operation));
+
+    let mut masked = base.clone();
+    if let OpKind::X86FpBinary { mask, .. } = &mut masked.blocks[0].ops[1].kind {
+        *mask = Some(x86(X86Reg::K(1)));
+    }
+    malformed.push(("masked paired operation", masked));
+
+    let mut source_mutations = Vec::new();
+    let source = case.bytes();
+
+    let mut wrong_destination = source.clone();
+    wrong_destination[4] ^= 0x08;
+    source_mutations.push(("source-byte destination mismatch", wrong_destination));
+
+    let mut wrong_source1 = source.clone();
+    wrong_source1[2] ^= 0x08;
+    source_mutations.push(("source-byte first-source mismatch", wrong_source1));
+
+    let mut wrong_prefix = source.clone();
+    wrong_prefix[2] = (wrong_prefix[2] & !3) | 1;
+    source_mutations.push(("source-byte element mismatch", wrong_prefix));
+
+    let mut wrong_width = source.clone();
+    wrong_width[2] ^= 0x04;
+    source_mutations.push(("source-byte width mismatch", wrong_width));
+
+    let mut wrong_w = source.clone();
+    wrong_w[2] ^= 0x80;
+    source_mutations.push(("source-byte W mismatch", wrong_w));
+
+    let mut wrong_opcode = source.clone();
+    wrong_opcode[3] = 0x7D;
+    source_mutations.push(("source-byte operation mismatch", wrong_opcode));
+
+    let mut register_source = source.clone();
+    register_source[4] |= 0xC0;
+    register_source.truncate(5);
+    source_mutations.push(("source-byte register operand", register_source));
+
+    let mut trailing = source;
+    trailing.push(0);
+    source_mutations.push(("source-byte trailing data", trailing));
+
+    for (name, bytes) in source_mutations {
+        let mut function = base.clone();
+        function.x86_instruction_bytes.insert(
+            (BlockId(0), PC),
+            X86InstructionBytes::new(&bytes).expect("mutated x86 instruction metadata"),
+        );
+        malformed.push((name, function));
+    }
+
     for (name, function) in malformed {
         assert_rejected(name, &function);
     }
@@ -786,7 +933,7 @@ fn interpreted_architecture(
 
 #[cfg(target_arch = "x86_64")]
 #[test]
-fn native_memory_fp_arithmetic_matches_o0_o2_interpretation_and_faults_precisely() {
+fn native_memory_fp_arithmetic_and_sse3_paired_ops_match_o0_o2_and_fault_precisely() {
     use crate::smir::lower::runtime::ExecMem;
 
     if !std::is_x86_feature_detected!("avx") {

@@ -110,7 +110,21 @@ fn x86_native_replay_spans_where(
     groups
         .into_iter()
         .filter_map(|(guest_pc, (start, end, contiguous))| {
-            if !contiguous {
+            // Source replay executes the captured host instruction directly.
+            // A register-form encoding must therefore never replace an IR
+            // group that can access guest memory or enforce a memory-only
+            // alignment fault, even when provenance and IR are malformed.
+            if !contiguous
+                || block.ops[start..end].iter().any(|op| {
+                    op.kind.reads_memory()
+                        || op.kind.writes_memory()
+                        || matches!(
+                            &op.kind,
+                            crate::smir::ir::ops::OpKind::X86CheckAlignment { .. }
+                                | crate::smir::ir::ops::OpKind::X86CheckAlignmentAc { .. }
+                        )
+                })
+            {
                 return None;
             }
             let instruction = *instruction_bytes.get(&(block.id, guest_pc))?;
@@ -247,8 +261,9 @@ pub fn x86_legacy_vex_fp_shuffle_replay_spans(
 
 /// Identify valid register-only legacy SSE3 and AVX VEX packed
 /// floating-point horizontal/add-sub replay groups in `block` in O(N) time and
-/// O(P) space for N operations and P unique guest PCs. Memory forms remain at
-/// the precise SMIR interpreter boundary.
+/// O(P) space for N operations and P unique guest PCs. This source-replay
+/// classifier remains register-only; exact VEX memory forms use helper-backed
+/// admission so guest-memory faults remain precise.
 pub fn x86_legacy_vex_fp_horizontal_addsub_replay_spans(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,

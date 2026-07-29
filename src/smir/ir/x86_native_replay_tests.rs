@@ -2,7 +2,7 @@
 
 use super::*;
 use crate::smir::ir::ops::{OpKind, SmirOp};
-use crate::smir::ir::types::OpId;
+use crate::smir::ir::types::{Address, OpId, VReg, VecWidth};
 
 #[path = "x86_native_replay_tests/bw_immediate.rs"]
 mod bw_immediate;

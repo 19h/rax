@@ -88,11 +88,27 @@ fn lift_sse3_addsub_horizontal_covers_legacy_vex_widths_addresses_and_invalids()
         .ops
         .iter()
         .find_map(|op| match &op.kind {
-            OpKind::VLoad { addr, .. } => Some(addr),
+            OpKind::VLoad { addr, .. } => Some((addr, op.x86_hint)),
             _ => None,
         })
         .expect("horizontal-add addr32 memory source");
-    super::addr32_assertions::sib(addr, Some(X86Reg::Rdi), X86Reg::Rsi, 2, 0x20);
+    super::addr32_assertions::sib(addr.0, Some(X86Reg::Rdi), X86Reg::Rsi, 2, 0x20);
+    assert_eq!(addr.1, Some(X86OpHint::VecAlign(X86VecAlign::Unaligned)));
+    let paired = addr32
+        .ops
+        .iter()
+        .find(|op| matches!(op.kind, OpKind::X86FpBinary { .. }))
+        .expect("horizontal-add FP consumer");
+    assert_eq!(
+        paired.x86_hint,
+        Some(X86OpHint::VexOp {
+            map: X86VecMap::Map0F,
+            pp: X86SsePrefix::Repne,
+            opcode: 0x7C,
+            width: VecWidth::V256,
+            w: false,
+        })
+    );
     assert!(
         !addr32
             .ops

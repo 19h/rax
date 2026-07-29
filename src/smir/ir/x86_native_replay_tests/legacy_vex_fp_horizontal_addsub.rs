@@ -255,3 +255,56 @@ fn replay_spans_preserve_exact_bytes_and_remain_disjoint() {
         );
     }
 }
+
+#[test]
+fn register_replay_rejects_memory_bearing_semantic_groups() {
+    let pc = 0xD07C;
+    let instruction = X86InstructionBytes::new(&vex_c5_encoding(0xEF, 0x7C, 0xCB)).unwrap();
+    for (name, kind) in [
+        (
+            "read",
+            OpKind::VLoad {
+                dst: VReg::virt(1),
+                addr: Address::Absolute(0x4000),
+                width: VecWidth::V128,
+            },
+        ),
+        (
+            "write",
+            OpKind::VStore {
+                src: VReg::virt(1),
+                addr: Address::Absolute(0x4000),
+                width: VecWidth::V128,
+            },
+        ),
+        (
+            "instruction alignment",
+            OpKind::X86CheckAlignment {
+                addr: Address::Absolute(0x4000),
+                alignment: 16,
+            },
+        ),
+        (
+            "architectural alignment check",
+            OpKind::X86CheckAlignmentAc {
+                addr: Address::Absolute(0x4000),
+                access_size: 16,
+                alignment: 16,
+                stack_segment: false,
+            },
+        ),
+    ] {
+        let mut block = SmirBlock::new(BlockId(39), pc);
+        block.push_op(SmirOp::new(OpId(0), pc, kind));
+        let provenance = HashMap::from([((block.id, pc), instruction)]);
+
+        assert!(
+            x86_legacy_vex_fp_horizontal_addsub_replay_spans(&block, &provenance).is_empty(),
+            "{name}"
+        );
+        assert!(
+            x86_native_replay_spans(&block, &provenance).is_empty(),
+            "{name}"
+        );
+    }
+}

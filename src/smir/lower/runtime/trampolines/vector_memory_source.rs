@@ -1,5 +1,6 @@
 //! Fail-closed helper-backed VEX binary memory-source admission.
 
+mod vex_fp_binary;
 mod vex_horizontal_integer;
 mod vex_integer_minmax;
 mod vex_integer_multiply_add;
@@ -813,50 +814,6 @@ fn x86_jit_vex_scalar_fma3_memory_sequence(
     })
 }
 
-fn vex_packed_fp_binary_encoding_valid(
-    kind: &OpKind,
-    map: X86VecMap,
-    prefix: X86SsePrefix,
-    opcode: u8,
-) -> bool {
-    let OpKind::X86FpBinary {
-        mask,
-        elem,
-        lanes,
-        op,
-        round,
-        suppress_exceptions,
-        ..
-    } = kind
-    else {
-        return false;
-    };
-    let expected_op = match opcode {
-        0x58 => X86FpBinaryOp::Add,
-        0x59 => X86FpBinaryOp::Mul,
-        0x5C => X86FpBinaryOp::Sub,
-        0x5D => X86FpBinaryOp::Min,
-        0x5E => X86FpBinaryOp::Div,
-        0x5F => X86FpBinaryOp::Max,
-        _ => return false,
-    };
-    let expected_prefix = match elem {
-        VecElementType::F32 => X86SsePrefix::None,
-        VecElementType::F64 => X86SsePrefix::OpSize,
-        _ => return false,
-    };
-    map == X86VecMap::Map0F
-        && prefix == expected_prefix
-        && *op == expected_op
-        && mask.is_none()
-        && *round == FpRoundMode::Dynamic
-        && !*suppress_exceptions
-        && matches!(
-            (elem, lanes),
-            (VecElementType::F32, 4 | 8) | (VecElementType::F64, 2 | 4)
-        )
-}
-
 /// Validate one exact helper-backed unmasked VEX.128/VEX.256 memory-source
 /// sequence. Supported packed families include logic, arithmetic, average,
 /// sign, multiply, interleave, saturating pack, min/max, horizontal, compare,
@@ -991,6 +948,15 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
         return Some(sequence);
     }
     if let Some(sequence) = vex_horizontal_integer::sequence(
+        block,
+        index,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence);
+    }
+    if let Some(sequence) = vex_fp_binary::horizontal_addsub_sequence(
         block,
         index,
         instruction_bytes,
@@ -1207,7 +1173,12 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
         }
         VexBinaryKind::FloatingPointArithmetic => {
             if load.x86_hint != Some(X86OpHint::VecAlign(X86VecAlign::Unaligned))
-                || !vex_packed_fp_binary_encoding_valid(&consumer.kind, map, prefix, opcode)
+                || !vex_fp_binary::packed_arithmetic_encoding_valid(
+                    &consumer.kind,
+                    map,
+                    prefix,
+                    opcode,
+                )
             {
                 return None;
             }

@@ -864,69 +864,6 @@ impl X86_64Lifter {
         ));
     }
 
-    pub(crate) fn lift_vec_addsub_horizontal(
-        &self,
-        prefix: VecPrefix,
-        opcode: u8,
-        bytes: &[u8],
-        pc: u64,
-        ctx: &mut LiftContext,
-    ) -> Result<LiftResult, LiftError> {
-        if prefix.encoding != VecEncodingKind::Vex
-            || prefix.map != X86VecMap::Map0F
-            || !matches!(prefix.pp, X86SsePrefix::OpSize | X86SsePrefix::Repne)
-        {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: bytes.to_vec(),
-            });
-        }
-        let elem = if prefix.pp == X86SsePrefix::Repne {
-            VecElementType::F32
-        } else {
-            VecElementType::F64
-        };
-        let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
-        };
-        let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
-        let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
-        let mut ops = Vec::new();
-        let src2 = if modrm.is_memory {
-            let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
-            ops.extend(pre_ops);
-            let loaded = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::VLoad {
-                    dst: loaded,
-                    addr,
-                    width: prefix.width,
-                },
-            ));
-            loaded
-        } else {
-            self.vec_reg(modrm.rm, prefix.width)
-        };
-        self.append_fp_addsub_horizontal(
-            self.vec_reg(modrm.reg, prefix.width),
-            self.vec_reg(prefix.vvvv, prefix.width),
-            src2,
-            opcode,
-            elem,
-            prefix.width,
-            pc,
-            &mut ops,
-        );
-        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
-    }
-
     pub(crate) fn lift_vec_packed_extend(
         &self,
         prefix: VecPrefix,
