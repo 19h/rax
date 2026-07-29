@@ -1,8 +1,66 @@
-//! Register-only x86 floating-point square-root replay classification.
+//! x86 floating-point square-root replay classification.
 
 use super::X86InstructionBytes;
+use crate::smir::ir::types::{VecElementType, VecWidth};
 
 impl X86InstructionBytes {
+    /// Validate one complete VEX `VSQRTPS`, `VSQRTPD`, `VSQRTSS`, or
+    /// `VSQRTSD` instruction whose final source is memory and return
+    /// `(destination, scalar merge source, element, width, memory size, W)`.
+    ///
+    /// Packed forms reserve VEX.vvvv and derive their exact 128- or 256-bit
+    /// memory footprint from VEX.L. Scalar forms consume VEX.vvvv as their
+    /// upper-lane merge source and read exactly 4 or 8 bytes. Although the
+    /// scalar opcode table labels VEX.L as ignored, Intel documents VEX.L=1
+    /// behavior as generation-dependent unpredictable, so only VEX.L=0 is
+    /// admitted. VEX.W is ignored for all four instructions. Runtime and
+    /// auxiliary space are O(1).
+    pub(crate) fn vex_memory_fp_sqrt_fields(
+        &self,
+    ) -> Option<(u8, Option<u8>, VecElementType, VecWidth, u32, bool)> {
+        let fields = self.vex_memory_fields()?;
+        if fields.map != 1 || fields.opcode != 0x51 {
+            return None;
+        }
+
+        let (scalar, elem) = match fields.pp {
+            0 => (false, VecElementType::F32),
+            1 => (false, VecElementType::F64),
+            2 => (true, VecElementType::F32),
+            3 => (true, VecElementType::F64),
+            _ => unreachable!("VEX pp is a two-bit field"),
+        };
+        if scalar {
+            if fields.width_256 {
+                return None;
+            }
+            return Some((
+                fields.destination,
+                Some(fields.source1),
+                elem,
+                VecWidth::V128,
+                elem.bytes(),
+                fields.w,
+            ));
+        }
+        if fields.source1 != 0 {
+            return None;
+        }
+        let width = if fields.width_256 {
+            VecWidth::V256
+        } else {
+            VecWidth::V128
+        };
+        Some((
+            fields.destination,
+            None,
+            elem,
+            width,
+            width.bytes(),
+            fields.w,
+        ))
+    }
+
     /// Validate one register-only legacy SSE or AVX VEX
     /// `SQRTPS`/`SQRTPD`/`SQRTSS`/`SQRTSD` instruction and report whether it
     /// requires AVX.
@@ -113,6 +171,226 @@ impl X86InstructionBytes {
                 2 => Some((false, needs_fp16)),
                 _ => None,
             }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[derive(Clone, Copy)]
+    enum Form {
+        C5,
+        C4 { w: bool },
+    }
+
+    fn instruction(
+        destination: u8,
+        source1: Option<u8>,
+        base: u8,
+        elem: VecElementType,
+        width: VecWidth,
+        form: Form,
+    ) -> Vec<u8> {
+        let pp = match (source1.is_some(), elem) {
+            (false, VecElementType::F32) => 0,
+            (false, VecElementType::F64) => 1,
+            (true, VecElementType::F32) => 2,
+            (true, VecElementType::F64) => 3,
+            _ => unreachable!(),
+        };
+        let encoded_vvvv = source1.map_or(0x0F, |index| !index & 0x0F);
+        let l = u8::from(width == VecWidth::V256);
+        let modrm = 0x40 | ((destination & 7) << 3) | (base & 7);
+        match form {
+            Form::C5 => {
+                assert!(base < 8);
+                vec![
+                    0xC5,
+                    (if destination < 8 { 0x80 } else { 0 }) | (encoded_vvvv << 3) | (l << 2) | pp,
+                    0x51,
+                    modrm,
+                    0x20,
+                ]
+            }
+            Form::C4 { w } => vec![
+                0xC4,
+                (if destination < 8 { 0x80 } else { 0 })
+                    | 0x40
+                    | (if base < 8 { 0x20 } else { 0 })
+                    | 1,
+                (u8::from(w) << 7) | (encoded_vvvv << 3) | (l << 2) | pp,
+                0x51,
+                modrm,
+                0x20,
+            ],
+        }
+    }
+
+    #[test]
+    fn classifies_all_2880_vex_sqrt_operand_format_width_w_and_base_cells() {
+        let mut classified = 0usize;
+        let packed_sources = [None];
+        let scalar_sources = (0..16).map(Some).collect::<Vec<_>>();
+        let packed_widths = [VecWidth::V128, VecWidth::V256];
+        let scalar_widths = [VecWidth::V128];
+        for (source1s, elem, widths) in [
+            (
+                packed_sources.as_slice(),
+                VecElementType::F32,
+                packed_widths.as_slice(),
+            ),
+            (
+                packed_sources.as_slice(),
+                VecElementType::F64,
+                packed_widths.as_slice(),
+            ),
+            (
+                scalar_sources.as_slice(),
+                VecElementType::F32,
+                scalar_widths.as_slice(),
+            ),
+            (
+                scalar_sources.as_slice(),
+                VecElementType::F64,
+                scalar_widths.as_slice(),
+            ),
+        ] {
+            for &source1 in source1s {
+                for &width in widths {
+                    for destination in 0..16 {
+                        let bytes = instruction(destination, source1, 3, elem, width, Form::C5);
+                        assert_eq!(
+                            X86InstructionBytes::new(&bytes)
+                                .unwrap()
+                                .vex_memory_fp_sqrt_fields(),
+                            Some((
+                                destination,
+                                source1,
+                                elem,
+                                width,
+                                if source1.is_some() {
+                                    elem.bytes()
+                                } else {
+                                    width.bytes()
+                                },
+                                false,
+                            )),
+                            "{bytes:02X?}"
+                        );
+                        classified += 1;
+
+                        for base in [3, 11] {
+                            for w in [false, true] {
+                                let bytes = instruction(
+                                    destination,
+                                    source1,
+                                    base,
+                                    elem,
+                                    width,
+                                    Form::C4 { w },
+                                );
+                                assert_eq!(
+                                    X86InstructionBytes::new(&bytes)
+                                        .unwrap()
+                                        .vex_memory_fp_sqrt_fields(),
+                                    Some((
+                                        destination,
+                                        source1,
+                                        elem,
+                                        width,
+                                        if source1.is_some() {
+                                            elem.bytes()
+                                        } else {
+                                            width.bytes()
+                                        },
+                                        w,
+                                    )),
+                                    "{bytes:02X?}"
+                                );
+                                classified += 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(classified, 2_880);
+    }
+
+    #[test]
+    fn complete_address_shapes_and_malformed_vex_sqrt_encodings_fail_closed() {
+        // addr32 FS: VSQRTSD xmm14,xmm13,[r14d+r15d*2+0x44332211]
+        let complete = [
+            0x64, 0x67, 0xC4, 0x01, 0x93, 0x51, 0xB4, 0x7E, 0x11, 0x22, 0x33, 0x44,
+        ];
+        assert_eq!(
+            X86InstructionBytes::new(&complete)
+                .unwrap()
+                .vex_memory_fp_sqrt_fields(),
+            Some((14, Some(13), VecElementType::F64, VecWidth::V128, 8, true,))
+        );
+
+        let scalar = instruction(
+            9,
+            Some(10),
+            11,
+            VecElementType::F64,
+            VecWidth::V128,
+            Form::C4 { w: true },
+        );
+        let packed = instruction(
+            9,
+            None,
+            11,
+            VecElementType::F64,
+            VecWidth::V256,
+            Form::C4 { w: true },
+        );
+        let mut cases = Vec::new();
+
+        let mut unpredictable_scalar_l1 = scalar.clone();
+        unpredictable_scalar_l1[2] |= 0x04;
+        cases.push(unpredictable_scalar_l1);
+
+        let mut nonreserved_packed_vvvv = packed;
+        nonreserved_packed_vvvv[2] &= !0x08;
+        cases.push(nonreserved_packed_vvvv);
+
+        let mut wrong_map = scalar.clone();
+        wrong_map[1] = (wrong_map[1] & !0x1F) | 2;
+        cases.push(wrong_map);
+
+        let mut wrong_opcode = scalar.clone();
+        wrong_opcode[3] = 0x52;
+        cases.push(wrong_opcode);
+
+        let mut register_source = scalar.clone();
+        register_source[4] |= 0xC0;
+        register_source.remove(5);
+        cases.push(register_source);
+
+        let mut truncated_displacement = scalar.clone();
+        truncated_displacement[4] = (truncated_displacement[4] & 0x3F) | 0x80;
+        cases.push(truncated_displacement);
+
+        let mut trailing = scalar.clone();
+        trailing.push(0);
+        cases.push(trailing);
+
+        let mut forbidden_prefix = scalar;
+        forbidden_prefix.insert(0, 0xF3);
+        cases.push(forbidden_prefix);
+
+        for bytes in cases {
+            assert_eq!(
+                X86InstructionBytes::new(&bytes)
+                    .unwrap()
+                    .vex_memory_fp_sqrt_fields(),
+                None,
+                "{bytes:02X?}"
+            );
         }
     }
 }
