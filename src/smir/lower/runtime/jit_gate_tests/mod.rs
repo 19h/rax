@@ -255,6 +255,8 @@ mod vex_fp_logic_replay;
 #[cfg(test)]
 mod vex_fp_round_replay;
 #[cfg(test)]
+mod vex_fp_shuffle_memory_source;
+#[cfg(test)]
 mod vex_gfni_replay;
 #[cfg(test)]
 mod vex_horizontal_integer_memory_source;

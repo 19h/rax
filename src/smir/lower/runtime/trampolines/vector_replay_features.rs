@@ -450,6 +450,17 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.needs_vpclmulqdq |= sequence.encoding.needs_vpclmulqdq;
                 all_spans_support_avx_ymm16 &= sequence.encoding.supports_avx_ymm16;
                 index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_vex_fp_shuffle_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                index += sequence.consumed;
             } else if let Some(sequence) = super::x86_jit_aes_memory_sequence(
                 block,
                 index,

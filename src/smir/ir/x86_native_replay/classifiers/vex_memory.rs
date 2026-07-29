@@ -98,4 +98,16 @@ impl X86InstructionBytes {
             w,
         })
     }
+
+    /// Parse one complete VEX memory-source instruction followed by an imm8.
+    ///
+    /// The non-immediate prefix is validated by [`Self::vex_memory_fields`],
+    /// so a missing displacement, an extra byte, or a register ModR/M shape
+    /// still fails closed. Runtime is O(1) and auxiliary space is O(1) because
+    /// architectural x86 instructions are bounded to 15 bytes.
+    pub(crate) fn vex_memory_fields_with_imm8(&self) -> Option<(X86VexMemoryFields, u8)> {
+        let (immediate, instruction) = self.as_slice().split_last()?;
+        let instruction = X86InstructionBytes::new(instruction)?;
+        Some((instruction.vex_memory_fields()?, *immediate))
+    }
 }

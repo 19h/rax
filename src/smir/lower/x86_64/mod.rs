@@ -209,6 +209,8 @@ mod vector_compare_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_binary_memory_source;
 #[cfg(feature = "smir-jit")]
+mod vex_fp_shuffle_memory_source;
+#[cfg(feature = "smir-jit")]
 mod vex_unary_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vpclmulqdq_memory_source;

@@ -12,6 +12,7 @@ mod fp_estimate;
 mod fp_horizontal;
 mod fp_round;
 mod fp_shuffle;
+mod fp_shuffle_memory;
 mod fp_sqrt;
 mod gfni;
 mod high_low_move;
