@@ -211,6 +211,8 @@ mod vex_binary_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_duplicate_move_memory_source;
 #[cfg(feature = "smir-jit")]
+mod vex_estimate_memory_source;
+#[cfg(feature = "smir-jit")]
 mod vex_fp_compare_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_fp_flag_compare_memory_source;
