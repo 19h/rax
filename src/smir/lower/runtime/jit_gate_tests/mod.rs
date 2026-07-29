@@ -291,6 +291,8 @@ mod vex_immediate_blend_memory_source;
 #[cfg(test)]
 mod vex_immediate_blend_replay;
 #[cfg(test)]
+mod vex_immediate_permute_memory_source;
+#[cfg(test)]
 mod vex_immediate_permute_replay;
 #[cfg(test)]
 mod vex_integer_arithmetic_memory_source;
