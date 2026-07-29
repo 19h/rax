@@ -281,6 +281,8 @@ mod vex_integer_pack_memory_source;
 #[cfg(test)]
 mod vex_interleave_memory_source;
 #[cfg(test)]
+mod vex_lane_shuffle_memory_source;
+#[cfg(test)]
 mod vex_lane_shuffle_replay;
 #[cfg(test)]
 mod vex_logic_memory_source;

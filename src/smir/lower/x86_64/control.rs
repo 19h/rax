@@ -1283,6 +1283,16 @@ impl X86_64Lowerer {
                     continue;
                 }
                 #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_vex_lane_shuffle_memory_source(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
                 if let Some(consumed) = self.try_lower_jit_aes_memory_source(
                     block,
                     idx,

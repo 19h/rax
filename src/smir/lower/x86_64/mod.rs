@@ -213,6 +213,8 @@ mod vex_fp_compare_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_fp_shuffle_memory_source;
 #[cfg(feature = "smir-jit")]
+mod vex_lane_shuffle_memory_source;
+#[cfg(feature = "smir-jit")]
 mod vex_unary_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vpclmulqdq_memory_source;
