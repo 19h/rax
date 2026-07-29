@@ -694,6 +694,19 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.needs_avx = true;
                 requirements.needs_avx2 |= sequence.width == crate::smir::ir::types::VecWidth::V256;
                 index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_vex_integer_dot_ext_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                requirements.needs_avx_vnni_int8 |= !sequence.int16;
+                requirements.needs_avx_vnni_int16 |= sequence.int16;
+                index += sequence.binary.consumed;
             } else if let Some(sequence) = super::x86_jit_vex_binary_memory_sequence(
                 block,
                 index,

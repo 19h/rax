@@ -913,3 +913,5 @@ fn replay_matches_intel_o0_o2_equations_on_every_available_host_feature() {
          replay_matches_intel_o0_o2_equations_on_every_available_host_feature",
     );
 }
+
+mod memory_source;

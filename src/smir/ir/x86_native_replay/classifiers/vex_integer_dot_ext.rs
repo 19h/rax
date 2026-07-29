@@ -1,6 +1,23 @@
-//! Register-only AVX-VNNI-INT8/INT16 VEX dot-product replay classification.
+//! AVX-VNNI-INT8/INT16 VEX dot-product replay classification.
 
 use super::X86InstructionBytes;
+use crate::smir::ir::ops::X86SsePrefix;
+use crate::smir::ir::types::{VecElementType, VecWidth};
+
+/// Architectural fields for one complete AVX-VNNI-INT8/INT16 VEX
+/// dot-product instruction whose third operand is memory.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86VexIntegerDotExtMemoryFields {
+    pub(crate) destination: u8,
+    pub(crate) source1: u8,
+    pub(crate) src_elem: VecElementType,
+    pub(crate) width: VecWidth,
+    pub(crate) src1_signed: bool,
+    pub(crate) src2_signed: bool,
+    pub(crate) saturate: bool,
+    pub(crate) prefix: X86SsePrefix,
+    pub(crate) opcode: u8,
+}
 
 impl X86InstructionBytes {
     /// Validate one exact register-only AVX-VNNI-INT8 or AVX-VNNI-INT16
@@ -36,6 +53,54 @@ impl X86InstructionBytes {
             unreachable!()
         };
         Some((u8::from(p0 & 0x80 == 0) << 3) | ((modrm >> 3) & 7))
+    }
+
+    /// Validate one complete AVX-VNNI-INT8 or AVX-VNNI-INT16 VEX dot
+    /// product whose third operand is memory.
+    ///
+    /// Intel SDM Volume 2 assigns the byte variants to map 0F38 opcodes
+    /// 50H/51H with F2, F3, or no mandatory prefix and the word variants to
+    /// opcodes D2H/D3H with F3, 66H, or no mandatory prefix. All forms are
+    /// W=0 and admit VEX.128 or VEX.256. The shared parser checks the complete
+    /// prefix/ModR/M/SIB/displacement boundary and rejects register sources.
+    pub(crate) fn vex_memory_integer_dot_ext_fields(
+        &self,
+    ) -> Option<X86VexIntegerDotExtMemoryFields> {
+        let fields = self.vex_memory_fields()?;
+        if fields.map != 2 || fields.w {
+            return None;
+        }
+        let prefix = match fields.pp {
+            0 => X86SsePrefix::None,
+            1 => X86SsePrefix::OpSize,
+            2 => X86SsePrefix::Rep,
+            3 => X86SsePrefix::Repne,
+            _ => unreachable!("VEX.pp is two bits"),
+        };
+        let (src_elem, src1_signed, src2_signed) = match (fields.opcode, prefix) {
+            (0x50 | 0x51, X86SsePrefix::Repne) => (VecElementType::I8, true, true),
+            (0x50 | 0x51, X86SsePrefix::Rep) => (VecElementType::I8, true, false),
+            (0x50 | 0x51, X86SsePrefix::None) => (VecElementType::I8, false, false),
+            (0xD2 | 0xD3, X86SsePrefix::Rep) => (VecElementType::I16, true, false),
+            (0xD2 | 0xD3, X86SsePrefix::OpSize) => (VecElementType::I16, false, true),
+            (0xD2 | 0xD3, X86SsePrefix::None) => (VecElementType::I16, false, false),
+            _ => return None,
+        };
+        Some(X86VexIntegerDotExtMemoryFields {
+            destination: fields.destination,
+            source1: fields.source1,
+            src_elem,
+            width: if fields.width_256 {
+                VecWidth::V256
+            } else {
+                VecWidth::V128
+            },
+            src1_signed,
+            src2_signed,
+            saturate: fields.opcode & 1 != 0,
+            prefix,
+            opcode: fields.opcode,
+        })
     }
 }
 
@@ -76,6 +141,48 @@ mod tests {
             opcode,
             modrm,
         ]
+    }
+
+    fn memory_semantics(pp: u8, opcode: u8) -> Option<(VecElementType, bool, bool, X86SsePrefix)> {
+        match (opcode, pp) {
+            (0x50 | 0x51, 3) => Some((VecElementType::I8, true, true, X86SsePrefix::Repne)),
+            (0x50 | 0x51, 2) => Some((VecElementType::I8, true, false, X86SsePrefix::Rep)),
+            (0x50 | 0x51, 0) => Some((VecElementType::I8, false, false, X86SsePrefix::None)),
+            (0xD2 | 0xD3, 2) => Some((VecElementType::I16, true, false, X86SsePrefix::Rep)),
+            (0xD2 | 0xD3, 1) => Some((VecElementType::I16, false, true, X86SsePrefix::OpSize)),
+            (0xD2 | 0xD3, 0) => Some((VecElementType::I16, false, false, X86SsePrefix::None)),
+            _ => None,
+        }
+    }
+
+    fn complete_memory_encoding(
+        extension_bits: u8,
+        encoded_vvvv: u8,
+        ymm: bool,
+        pp: u8,
+        opcode: u8,
+        modrm: u8,
+    ) -> Vec<u8> {
+        assert!(modrm >> 6 != 3);
+        let mut bytes = encoding(extension_bits, encoded_vvvv, ymm, pp, opcode, modrm).to_vec();
+        let mode = modrm >> 6;
+        let rm = modrm & 7;
+        if rm == 4 {
+            // Scale=1, no index, base=5 exercises the no-base disp32 case
+            // when Mod=00 and the ordinary SIB base otherwise.
+            bytes.push(0x25);
+            if mode == 0 {
+                bytes.extend_from_slice(&0x4433_2211u32.to_le_bytes());
+            }
+        } else if mode == 0 && rm == 5 {
+            bytes.extend_from_slice(&0x4433_2211u32.to_le_bytes());
+        }
+        match mode {
+            1 => bytes.push(0x20),
+            2 => bytes.extend_from_slice(&0x4433_2211u32.to_le_bytes()),
+            _ => {}
+        }
+        bytes
     }
 
     #[test]
@@ -153,6 +260,237 @@ mod tests {
         }
         assert_eq!(accepted, 12);
         assert_eq!(tested, 131_072);
+    }
+
+    #[test]
+    fn memory_classifier_exhaustively_covers_589_824_defined_prefix_vvvv_l_and_modrm_cells() {
+        let mut classified = 0usize;
+        for (pp, opcode, _) in SHAPES {
+            let (src_elem, src1_signed, src2_signed, prefix) =
+                memory_semantics(pp, opcode).unwrap();
+            for extension_bits in (0u8..8).map(|value| value << 5) {
+                for encoded_vvvv in 0u8..16 {
+                    for ymm in [false, true] {
+                        for modrm in 0u8..=0xBF {
+                            let bytes = complete_memory_encoding(
+                                extension_bits,
+                                encoded_vvvv,
+                                ymm,
+                                pp,
+                                opcode,
+                                modrm,
+                            );
+                            let instruction = X86InstructionBytes::new(&bytes).unwrap();
+                            let destination =
+                                (u8::from(extension_bits & 0x80 == 0) << 3) | ((modrm >> 3) & 7);
+                            assert_eq!(
+                                instruction.vex_memory_integer_dot_ext_fields(),
+                                Some(X86VexIntegerDotExtMemoryFields {
+                                    destination,
+                                    source1: (!encoded_vvvv) & 0x0F,
+                                    src_elem,
+                                    width: if ymm { VecWidth::V256 } else { VecWidth::V128 },
+                                    src1_signed,
+                                    src2_signed,
+                                    saturate: opcode & 1 != 0,
+                                    prefix,
+                                    opcode,
+                                }),
+                                "{bytes:02X?}"
+                            );
+                            classified += 1;
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(classified, 589_824);
+    }
+
+    #[test]
+    fn memory_classifier_exhaustively_rejects_wrong_map_pp_opcode_w_and_length() {
+        let mut accepted = 0usize;
+        let mut tested = 0usize;
+        for map in 0u8..32 {
+            for pp in 0u8..4 {
+                for opcode in u8::MIN..=u8::MAX {
+                    for w in [false, true] {
+                        for has_modrm in [false, true] {
+                            let mut bytes = vec![
+                                0xC4,
+                                0xE0 | map,
+                                (u8::from(w) << 7) | (0x0D << 3) | 0x04 | pp,
+                                opcode,
+                            ];
+                            if has_modrm {
+                                bytes.push(0x02);
+                            }
+                            let expected = if has_modrm && !w && map == 2 {
+                                memory_semantics(pp, opcode).map(
+                                    |(src_elem, src1_signed, src2_signed, prefix)| {
+                                        X86VexIntegerDotExtMemoryFields {
+                                            destination: 0,
+                                            source1: 2,
+                                            src_elem,
+                                            width: VecWidth::V256,
+                                            src1_signed,
+                                            src2_signed,
+                                            saturate: opcode & 1 != 0,
+                                            prefix,
+                                            opcode,
+                                        }
+                                    },
+                                )
+                            } else {
+                                None
+                            };
+                            let instruction = X86InstructionBytes::new(&bytes).unwrap();
+                            assert_eq!(
+                                instruction.vex_memory_integer_dot_ext_fields(),
+                                expected,
+                                "{bytes:02X?}"
+                            );
+                            accepted += usize::from(expected.is_some());
+                            tested += 1;
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(accepted, 12);
+        assert_eq!(tested, 131_072);
+    }
+
+    #[test]
+    fn memory_classifier_accepts_all_llvm_23_encodings_and_complete_address_prefixes() {
+        // Independently assembled by LLVM 23 with +avxvnniint8 and
+        // +avxvnniint16.
+        let encodings: [(&[u8], VecElementType, bool, bool, bool, VecWidth); 12] = [
+            (
+                &[0xC4, 0x42, 0x2B, 0x50, 0x4B, 0x20],
+                VecElementType::I8,
+                true,
+                true,
+                false,
+                VecWidth::V128,
+            ),
+            (
+                &[0xC4, 0x42, 0x0F, 0x51, 0x7D, 0x20],
+                VecElementType::I8,
+                true,
+                true,
+                true,
+                VecWidth::V256,
+            ),
+            (
+                &[0xC4, 0x42, 0x2A, 0x50, 0x4B, 0x20],
+                VecElementType::I8,
+                true,
+                false,
+                false,
+                VecWidth::V128,
+            ),
+            (
+                &[0xC4, 0x42, 0x0E, 0x51, 0x7D, 0x20],
+                VecElementType::I8,
+                true,
+                false,
+                true,
+                VecWidth::V256,
+            ),
+            (
+                &[0xC4, 0x42, 0x28, 0x50, 0x4B, 0x20],
+                VecElementType::I8,
+                false,
+                false,
+                false,
+                VecWidth::V128,
+            ),
+            (
+                &[0xC4, 0x42, 0x0C, 0x51, 0x7D, 0x20],
+                VecElementType::I8,
+                false,
+                false,
+                true,
+                VecWidth::V256,
+            ),
+            (
+                &[0xC4, 0x42, 0x2A, 0xD2, 0x4B, 0x20],
+                VecElementType::I16,
+                true,
+                false,
+                false,
+                VecWidth::V128,
+            ),
+            (
+                &[0xC4, 0x42, 0x0E, 0xD3, 0x7D, 0x20],
+                VecElementType::I16,
+                true,
+                false,
+                true,
+                VecWidth::V256,
+            ),
+            (
+                &[0xC4, 0x42, 0x29, 0xD2, 0x4B, 0x20],
+                VecElementType::I16,
+                false,
+                true,
+                false,
+                VecWidth::V128,
+            ),
+            (
+                &[0xC4, 0x42, 0x0D, 0xD3, 0x7D, 0x20],
+                VecElementType::I16,
+                false,
+                true,
+                true,
+                VecWidth::V256,
+            ),
+            (
+                &[0xC4, 0x42, 0x28, 0xD2, 0x4B, 0x20],
+                VecElementType::I16,
+                false,
+                false,
+                false,
+                VecWidth::V128,
+            ),
+            (
+                &[0xC4, 0x42, 0x0C, 0xD3, 0x7D, 0x20],
+                VecElementType::I16,
+                false,
+                false,
+                true,
+                VecWidth::V256,
+            ),
+        ];
+        for (bytes, src_elem, src1_signed, src2_signed, saturate, width) in encodings {
+            let fields = X86InstructionBytes::new(bytes)
+                .unwrap()
+                .vex_memory_integer_dot_ext_fields()
+                .unwrap_or_else(|| panic!("{bytes:02X?}"));
+            assert_eq!(
+                fields.destination,
+                if width == VecWidth::V128 { 9 } else { 15 }
+            );
+            assert_eq!(
+                fields.source1,
+                if width == VecWidth::V128 { 10 } else { 14 }
+            );
+            assert_eq!(fields.src_elem, src_elem);
+            assert_eq!(fields.width, width);
+            assert_eq!(fields.src1_signed, src1_signed);
+            assert_eq!(fields.src2_signed, src2_signed);
+            assert_eq!(fields.saturate, saturate);
+        }
+
+        let mut prefixed = vec![0x64, 0x67];
+        prefixed.extend_from_slice(encodings[0].0);
+        assert!(
+            X86InstructionBytes::new(&prefixed)
+                .unwrap()
+                .vex_memory_integer_dot_ext_fields()
+                .is_some()
+        );
     }
 
     #[test]

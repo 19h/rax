@@ -80,6 +80,7 @@ pub(crate) use evex_fma3_memory::{
 pub(crate) use vex_cross_lane_128::X86VexCrossLane128MemoryEncoding;
 pub(crate) use vex_fma4::X86VexFma4MemoryEncoding;
 pub(crate) use vex_immediate_blend::X86VexImmediateBlendMemoryFields;
+pub(crate) use vex_integer_dot_ext::X86VexIntegerDotExtMemoryFields;
 pub(crate) use vex_memory_broadcast::X86VexMemoryBroadcastFields;
 pub(crate) use vex_variable_blend::X86VexVariableBlendMemoryEncoding;
 pub(crate) use vex_variable_permute::X86VexVariablePermuteMemoryEncoding;
