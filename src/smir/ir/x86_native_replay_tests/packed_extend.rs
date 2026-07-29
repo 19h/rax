@@ -1,6 +1,7 @@
 //! Exact classifiers for VEX/EVEX packed sign/zero-extension replay.
 
 use super::*;
+use crate::smir::ir::types::VecElementType;
 
 fn vex_encoding(p0: u8, p1: u8, opcode: u8, modrm: u8) -> [u8; 5] {
     [0xC4, p0, p1, opcode, modrm]
@@ -137,6 +138,300 @@ fn vex_classifier_accepts_llvm_samples_wig_and_ignored_x_and_rejects_neighbors()
         );
         assert_eq!(
             instruction.vex_packed_extend_destination_index(),
+            None,
+            "{bytes:02X?}"
+        );
+    }
+}
+
+fn vex_memory_shape(opcode: u8) -> (VecElementType, VecElementType, bool) {
+    let signed = opcode < 0x30;
+    let (source, destination) = match opcode & 0x0F {
+        0x00 => (VecElementType::I8, VecElementType::I16),
+        0x01 => (VecElementType::I8, VecElementType::I32),
+        0x02 => (VecElementType::I8, VecElementType::I64),
+        0x03 => (VecElementType::I16, VecElementType::I32),
+        0x04 => (VecElementType::I16, VecElementType::I64),
+        0x05 => (VecElementType::I32, VecElementType::I64),
+        _ => unreachable!(),
+    };
+    (source, destination, signed)
+}
+
+fn vex_memory_encoding(
+    destination: u8,
+    base: u8,
+    opcode: u8,
+    width: VecWidth,
+    w: bool,
+    encoded_x: bool,
+) -> Vec<u8> {
+    assert!(destination < 16 && base < 16);
+    assert!(matches!(opcode, 0x20..=0x25 | 0x30..=0x35));
+    vec![
+        0xC4,
+        (if destination < 8 { 0x80 } else { 0 })
+            | (u8::from(encoded_x) << 6)
+            | (if base < 8 { 0x20 } else { 0 })
+            | 2,
+        (u8::from(w) << 7) | 0x78 | (u8::from(width == VecWidth::V256) << 2) | 1,
+        opcode,
+        0x40 | ((destination & 7) << 3) | (base & 7),
+        0x20,
+    ]
+}
+
+#[test]
+fn vex_memory_classifier_covers_all_3072_destination_base_shape_width_and_w_cells() {
+    let mut classified = 0usize;
+    for destination in 0..16 {
+        for base in [3, 11] {
+            for opcode in (0x20..=0x25).chain(0x30..=0x35) {
+                let (source_element, destination_element, signed) = vex_memory_shape(opcode);
+                for width in [VecWidth::V128, VecWidth::V256] {
+                    for w in [false, true] {
+                        for encoded_x in [false, true] {
+                            let bytes =
+                                vex_memory_encoding(destination, base, opcode, width, w, encoded_x);
+                            assert_eq!(
+                                X86InstructionBytes::new(&bytes)
+                                    .unwrap()
+                                    .vex_memory_packed_extend_fields(),
+                                Some((
+                                    destination,
+                                    source_element,
+                                    destination_element,
+                                    width,
+                                    signed,
+                                    opcode,
+                                    w,
+                                )),
+                                "{bytes:02X?}"
+                            );
+                            classified += 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    assert_eq!(classified, 16 * 2 * 12 * 2 * 2 * 2);
+}
+
+#[test]
+fn vex_memory_classifier_accepts_llvm_23_address_and_opcode_encodings() {
+    let samples: &[(
+        &[u8],
+        u8,
+        VecElementType,
+        VecElementType,
+        VecWidth,
+        bool,
+        u8,
+    )] = &[
+        (
+            &[0xC4, 0x42, 0x79, 0x20, 0x4B, 0x20],
+            9,
+            VecElementType::I8,
+            VecElementType::I16,
+            VecWidth::V128,
+            true,
+            0x20,
+        ),
+        (
+            &[0xC4, 0x02, 0x7D, 0x21, 0xBC, 0xEC, 0x44, 0x33, 0x22, 0x11],
+            15,
+            VecElementType::I8,
+            VecElementType::I32,
+            VecWidth::V256,
+            true,
+            0x21,
+        ),
+        (
+            &[
+                0x64, 0xC4, 0x62, 0x79, 0x22, 0x34, 0x8D, 0x44, 0x33, 0x22, 0x11,
+            ],
+            14,
+            VecElementType::I8,
+            VecElementType::I64,
+            VecWidth::V128,
+            true,
+            0x22,
+        ),
+        (
+            &[0xC4, 0x62, 0x7D, 0x23, 0x2D, 0x44, 0x33, 0x22, 0x11],
+            13,
+            VecElementType::I16,
+            VecElementType::I32,
+            VecWidth::V256,
+            true,
+            0x23,
+        ),
+        (
+            &[0x65, 0xC4, 0x42, 0x79, 0x24, 0x62, 0xE0],
+            12,
+            VecElementType::I16,
+            VecElementType::I64,
+            VecWidth::V128,
+            true,
+            0x24,
+        ),
+        (
+            &[0xC4, 0x02, 0x7D, 0x25, 0x5C, 0x48, 0x20],
+            11,
+            VecElementType::I32,
+            VecElementType::I64,
+            VecWidth::V256,
+            true,
+            0x25,
+        ),
+        (
+            &[0xC4, 0x42, 0x7D, 0x30, 0x53, 0x20],
+            10,
+            VecElementType::I8,
+            VecElementType::I16,
+            VecWidth::V256,
+            false,
+            0x30,
+        ),
+        (
+            &[0xC4, 0x02, 0x79, 0x31, 0x8C, 0xEC, 0x44, 0x33, 0x22, 0x11],
+            9,
+            VecElementType::I8,
+            VecElementType::I32,
+            VecWidth::V128,
+            false,
+            0x31,
+        ),
+        (
+            &[
+                0x64, 0xC4, 0x62, 0x7D, 0x32, 0x04, 0x8D, 0x44, 0x33, 0x22, 0x11,
+            ],
+            8,
+            VecElementType::I8,
+            VecElementType::I64,
+            VecWidth::V256,
+            false,
+            0x32,
+        ),
+        (
+            &[0xC4, 0xE2, 0x79, 0x33, 0x3D, 0x44, 0x33, 0x22, 0x11],
+            7,
+            VecElementType::I16,
+            VecElementType::I32,
+            VecWidth::V128,
+            false,
+            0x33,
+        ),
+        (
+            &[0x65, 0xC4, 0xC2, 0x7D, 0x34, 0x72, 0xE0],
+            6,
+            VecElementType::I16,
+            VecElementType::I64,
+            VecWidth::V256,
+            false,
+            0x34,
+        ),
+        (
+            &[0xC4, 0x82, 0x79, 0x35, 0x6C, 0x48, 0x20],
+            5,
+            VecElementType::I32,
+            VecElementType::I64,
+            VecWidth::V128,
+            false,
+            0x35,
+        ),
+        (
+            &[0x67, 0xC4, 0xE2, 0x79, 0x20, 0x4C, 0x77, 0x20],
+            1,
+            VecElementType::I8,
+            VecElementType::I16,
+            VecWidth::V128,
+            true,
+            0x20,
+        ),
+    ];
+    for &(bytes, destination, source_element, destination_element, width, signed, opcode) in samples
+    {
+        let metadata = X86InstructionBytes::new(bytes).unwrap();
+        assert_eq!(
+            metadata.vex_memory_packed_extend_fields(),
+            Some((
+                destination,
+                source_element,
+                destination_element,
+                width,
+                signed,
+                opcode,
+                false,
+            )),
+            "{bytes:02X?}"
+        );
+
+        let mut w1 = bytes.to_vec();
+        let vex = w1.iter().position(|byte| *byte == 0xC4).unwrap();
+        w1[vex + 2] |= 0x80;
+        assert_eq!(
+            X86InstructionBytes::new(&w1)
+                .unwrap()
+                .vex_memory_packed_extend_fields(),
+            Some((
+                destination,
+                source_element,
+                destination_element,
+                width,
+                signed,
+                opcode,
+                true,
+            )),
+            "{w1:02X?}"
+        );
+    }
+}
+
+#[test]
+fn vex_memory_classifier_rejects_every_semantic_and_length_frontier() {
+    let valid = vex_memory_encoding(9, 11, 0x20, VecWidth::V256, true, true);
+    let mut invalid = Vec::new();
+
+    let mut wrong_map = valid.clone();
+    wrong_map[1] = (wrong_map[1] & !0x1F) | 1;
+    invalid.push(wrong_map);
+
+    let mut wrong_prefix = valid.clone();
+    wrong_prefix[2] = (wrong_prefix[2] & !3) | 2;
+    invalid.push(wrong_prefix);
+
+    let mut nonreserved_vvvv = valid.clone();
+    nonreserved_vvvv[2] &= !0x08;
+    invalid.push(nonreserved_vvvv);
+
+    let mut wrong_opcode = valid.clone();
+    wrong_opcode[3] = 0x26;
+    invalid.push(wrong_opcode);
+
+    let mut register_source = valid.clone();
+    register_source[4] |= 0xC0;
+    register_source.truncate(5);
+    invalid.push(register_source);
+
+    let mut missing_displacement = valid.clone();
+    missing_displacement.pop();
+    invalid.push(missing_displacement);
+
+    let mut trailing = valid.clone();
+    trailing.push(0);
+    invalid.push(trailing);
+
+    let mut forbidden_legacy_prefix = valid;
+    forbidden_legacy_prefix.insert(0, 0xF3);
+    invalid.push(forbidden_legacy_prefix);
+
+    for bytes in invalid {
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .vex_memory_packed_extend_fields(),
             None,
             "{bytes:02X?}"
         );
