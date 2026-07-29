@@ -1,4 +1,4 @@
-//! AVX VEX packed floating-point comparison memory-source classification.
+//! AVX VEX floating-point comparison memory-source classification.
 
 use super::X86InstructionBytes;
 use crate::smir::ir::types::{VecElementType, VecWidth};
@@ -38,6 +38,41 @@ impl X86InstructionBytes {
                 VecWidth::V256
             } else {
                 VecWidth::V128
+            },
+            predicate,
+            fields.w,
+        ))
+    }
+
+    /// Validate one complete AVX VEX `VCMPSS` or `VCMPSD` instruction whose
+    /// second source is memory and return
+    /// `(destination, source1, element, predicate, W)`.
+    ///
+    /// Both scalar comparison instructions use map 0F opcode C2H, define
+    /// VEX.W as ignored, and reserve immediate bits 7:5. Although the opcode
+    /// table labels VEX.L as ignored, Intel documents VEX.L=1 behavior as
+    /// generation-dependent unpredictable; native admission therefore accepts
+    /// only VEX.L=0. Packed `VCMPPS`/`VCMPPD` encodings are deliberately
+    /// excluded. Runtime and auxiliary space are O(1).
+    pub(crate) fn vex_memory_scalar_fp_compare_fields(
+        &self,
+    ) -> Option<(u8, u8, VecElementType, u8, bool)> {
+        let (fields, predicate) = self.vex_memory_fields_with_imm8()?;
+        if fields.map != 1
+            || fields.opcode != 0xC2
+            || !matches!(fields.pp, 2 | 3)
+            || fields.width_256
+            || predicate & !0x1F != 0
+        {
+            return None;
+        }
+        Some((
+            fields.destination,
+            fields.source1,
+            if fields.pp == 2 {
+                VecElementType::F32
+            } else {
+                VecElementType::F64
             },
             predicate,
             fields.w,
@@ -223,6 +258,146 @@ mod tests {
                 X86InstructionBytes::new(&bytes)
                     .unwrap()
                     .vex_memory_packed_fp_compare_fields(),
+                None,
+                "{bytes:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn classifies_every_scalar_c4_c5_register_format_predicate_and_w_cell() {
+        let mut classified = 0usize;
+        for destination in 0..16 {
+            for source1 in 0..16 {
+                for elem in [VecElementType::F32, VecElementType::F64] {
+                    for predicate in 0..32 {
+                        let bytes = instruction(
+                            destination,
+                            source1,
+                            3,
+                            elem,
+                            VecWidth::V128,
+                            predicate,
+                            Form::C5,
+                        );
+                        let scalar_prefix = if elem == VecElementType::F32 { 2 } else { 3 };
+                        let mut bytes = bytes;
+                        bytes[1] = (bytes[1] & !3) | scalar_prefix;
+                        assert_eq!(
+                            X86InstructionBytes::new(&bytes)
+                                .unwrap()
+                                .vex_memory_scalar_fp_compare_fields(),
+                            Some((destination, source1, elem, predicate, false)),
+                            "{bytes:02X?}"
+                        );
+                        classified += 1;
+
+                        for base in [3, 11] {
+                            for w in [false, true] {
+                                let mut bytes = instruction(
+                                    destination,
+                                    source1,
+                                    base,
+                                    elem,
+                                    VecWidth::V128,
+                                    predicate,
+                                    Form::C4 { w },
+                                );
+                                bytes[2] = (bytes[2] & !3) | scalar_prefix;
+                                assert_eq!(
+                                    X86InstructionBytes::new(&bytes)
+                                        .unwrap()
+                                        .vex_memory_scalar_fp_compare_fields(),
+                                    Some((destination, source1, elem, predicate, w)),
+                                    "{bytes:02X?}"
+                                );
+                                classified += 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(classified, 16 * 16 * 2 * 32 * (1 + 2 * 2));
+    }
+
+    #[test]
+    fn scalar_classifier_accepts_complete_shape_and_rejects_unpredictable_l1() {
+        // addr32 FS: VCMPSD xmm14,xmm9,[r14d+r15d*2+0x44332211],31
+        let bytes = [
+            0x64, 0x67, 0xC4, 0x01, 0xB3, 0xC2, 0xB4, 0x7E, 0x11, 0x22, 0x33, 0x44, 0x1F,
+        ];
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .vex_memory_scalar_fp_compare_fields(),
+            Some((14, 9, VecElementType::F64, 31, true))
+        );
+
+        let mut l1 = bytes;
+        l1[4] |= 0x04;
+        assert_eq!(
+            X86InstructionBytes::new(&l1)
+                .unwrap()
+                .vex_memory_scalar_fp_compare_fields(),
+            None
+        );
+    }
+
+    #[test]
+    fn scalar_classifier_rejects_packed_reserved_and_malformed_encodings() {
+        let mut valid = instruction(
+            9,
+            10,
+            11,
+            VecElementType::F64,
+            VecWidth::V128,
+            31,
+            Form::C4 { w: true },
+        );
+        valid[2] = (valid[2] & !3) | 3;
+        let mut cases = Vec::new();
+
+        for packed_prefix in [0, 1] {
+            let mut packed = valid.clone();
+            packed[2] = (packed[2] & !3) | packed_prefix;
+            cases.push(packed);
+        }
+
+        let mut wrong_map = valid.clone();
+        wrong_map[1] = (wrong_map[1] & !0x1F) | 2;
+        cases.push(wrong_map);
+
+        let mut wrong_opcode = valid.clone();
+        wrong_opcode[3] = 0xC3;
+        cases.push(wrong_opcode);
+
+        let mut reserved_predicate = valid.clone();
+        *reserved_predicate.last_mut().unwrap() = 0x20;
+        cases.push(reserved_predicate);
+
+        let mut register_source = valid.clone();
+        register_source[4] |= 0xC0;
+        register_source.remove(5);
+        cases.push(register_source);
+
+        let mut missing_immediate = valid.clone();
+        missing_immediate.pop();
+        cases.push(missing_immediate);
+
+        let mut trailing = valid.clone();
+        trailing.push(0);
+        cases.push(trailing);
+
+        let mut forbidden_prefix = valid;
+        forbidden_prefix.insert(0, 0x66);
+        cases.push(forbidden_prefix);
+
+        for bytes in cases {
+            assert_eq!(
+                X86InstructionBytes::new(&bytes)
+                    .unwrap()
+                    .vex_memory_scalar_fp_compare_fields(),
                 None,
                 "{bytes:02X?}"
             );
