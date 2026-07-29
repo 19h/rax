@@ -235,6 +235,8 @@ mod vex_unary_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_variable_blend_memory_source;
 #[cfg(feature = "smir-jit")]
+mod vex_variable_permute_memory_source;
+#[cfg(feature = "smir-jit")]
 mod vpclmulqdq_memory_source;
 #[cfg(feature = "smir-jit")]
 mod xop_memory_source;

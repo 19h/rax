@@ -354,6 +354,8 @@ mod vex_unaligned_packed_fp_move_replay;
 mod vex_variable_blend_memory_source;
 #[cfg(test)]
 mod vex_variable_blend_replay;
+#[cfg(feature = "smir-jit")]
+mod vex_variable_permute_memory_source;
 #[cfg(test)]
 mod vex_variable_permute_replay;
 #[cfg(test)]

@@ -62,6 +62,7 @@ pub(crate) use classifiers::{
     X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay,
     X86EvexScalarFma3MemoryEncoding, X86VexCrossLane128MemoryEncoding, X86VexFma4MemoryEncoding,
     X86VexImmediateBlendMemoryFields, X86VexVariableBlendMemoryEncoding,
+    X86VexVariablePermuteMemoryEncoding,
 };
 
 pub use aggregate::{
