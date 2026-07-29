@@ -8,6 +8,7 @@ mod fp32_fp64_convert;
 mod fp_arithmetic;
 mod fp_class;
 mod fp_compare;
+mod fp_compare_memory;
 mod fp_estimate;
 mod fp_horizontal;
 mod fp_round;
