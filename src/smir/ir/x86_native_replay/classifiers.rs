@@ -47,6 +47,7 @@ mod vex_integer_pack;
 mod vex_interleave;
 mod vex_lane_shuffle;
 mod vex_memory;
+mod vex_memory_broadcast;
 mod vex_mov_mask;
 mod vex_pabs;
 mod vex_packed_string;
@@ -79,6 +80,7 @@ pub(crate) use evex_fma3_memory::{
 pub(crate) use vex_cross_lane_128::X86VexCrossLane128MemoryEncoding;
 pub(crate) use vex_fma4::X86VexFma4MemoryEncoding;
 pub(crate) use vex_immediate_blend::X86VexImmediateBlendMemoryFields;
+pub(crate) use vex_memory_broadcast::X86VexMemoryBroadcastFields;
 pub(crate) use vex_variable_blend::X86VexVariableBlendMemoryEncoding;
 pub(crate) use vex_variable_permute::X86VexVariablePermuteMemoryEncoding;
 

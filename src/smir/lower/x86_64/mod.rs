@@ -215,6 +215,8 @@ mod vex_alignr_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_binary_memory_source;
 #[cfg(feature = "smir-jit")]
+mod vex_broadcast_memory_source;
+#[cfg(feature = "smir-jit")]
 mod vex_cross_lane_128_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_duplicate_move_memory_source;

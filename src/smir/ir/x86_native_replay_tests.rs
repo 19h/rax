@@ -79,6 +79,9 @@ mod legacy_vex_scalar_move;
 #[path = "x86_native_replay_tests/packed_extend.rs"]
 mod packed_extend;
 
+#[path = "x86_native_replay_tests/vex_memory_broadcast.rs"]
+mod vex_memory_broadcast;
+
 #[path = "x86_native_replay_tests/scalar_fp_convert.rs"]
 mod scalar_fp_convert;
 
