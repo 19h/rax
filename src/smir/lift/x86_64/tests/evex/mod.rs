@@ -12,6 +12,8 @@ mod fp16_convert;
 #[cfg(test)]
 mod fp_unpack;
 #[cfg(test)]
+mod int32_to_fp64;
+#[cfg(test)]
 mod integer;
 #[cfg(test)]
 mod integer_interleave_broadcast;

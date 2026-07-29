@@ -1730,25 +1730,21 @@ impl X86_64Lifter {
             ..X86Prefix::default()
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
-        let can_embed_rounding =
-            !int_to_fp || !(int_elem == VecElementType::I32 && fp_elem == VecElementType::F64);
-        let embedded_control = prefix.encoding == VecEncodingKind::Evex
-            && prefix.b
-            && !modrm.is_memory
-            && can_embed_rounding;
-        if (prefix.encoding == VecEncodingKind::Evex
-            && prefix.b
-            && !modrm.is_memory
-            && !can_embed_rounding)
-            || (!embedded_control && prefix.l_bits == 3)
-        {
+        let register_b = prefix.encoding == VecEncodingKind::Evex && prefix.b && !modrm.is_memory;
+        let ignores_embedded_rounding =
+            int_to_fp && int_elem == VecElementType::I32 && fp_elem == VecElementType::F64;
+        let embedded_control = register_b && !ignores_embedded_rounding;
+        if !register_b && prefix.l_bits == 3 {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes.to_vec(),
             });
         }
 
-        let operation_width = if embedded_control {
+        // VCVTDQ2PD and VCVTUDQ2PD ignore an attempted register-source ER
+        // encoding, including L'L, while still implying a 512-bit operation
+        // (Intel SDM revision 092, Table 2-43 and instruction descriptions).
+        let operation_width = if register_b {
             VecWidth::V512
         } else {
             prefix.width
@@ -1844,7 +1840,7 @@ impl X86_64Lifter {
         } else {
             FpRoundMode::Dynamic
         };
-        let hint = if embedded_control {
+        let hint = if register_b {
             X86OpHint::EvexOp {
                 map: prefix.map,
                 pp: prefix.pp,

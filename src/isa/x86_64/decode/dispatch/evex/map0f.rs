@@ -194,7 +194,7 @@ impl X86_64Vcpu {
             }
             0x7A if evex.pp == 2 && !evex.w => {
                 // F3.0F.W0 7A = VCVTUDQ2PD: u32 -> f64
-                execute::simd::evex_packed_int_to_fp(self, ctx, 4, 8, false)
+                execute::simd::evex_packed_i32_to_f64(self, ctx, false)
             }
             0x7A if evex.pp == 2 && evex.w => {
                 // F3.0F.W1 7A = VCVTUQQ2PD: u64 -> f64
@@ -220,7 +220,8 @@ impl X86_64Vcpu {
                 execute::simd::evex_packed_fp_to_int(self, ctx, 8, 4, false, true)
             }
             0xE6 if evex.pp == 2 && !evex.w => {
-                execute::simd::evex_packed_int_to_fp(self, ctx, 4, 8, true)
+                // F3.0F.W0 E6 = VCVTDQ2PD: i32 -> f64
+                execute::simd::evex_packed_i32_to_f64(self, ctx, true)
             }
             0xE6 if evex.pp == 2 && evex.w => {
                 execute::simd::evex_packed_int_to_fp(self, ctx, 8, 8, true)
