@@ -63,6 +63,7 @@ mod vex_ptest;
 mod vex_register_broadcast;
 mod vex_scalar_extract;
 mod vex_scalar_insert;
+mod vex_scalar_insert_memory;
 mod vex_scalar_vmovq;
 mod vex_shared_count_shift;
 mod vex_variable_blend;
@@ -85,6 +86,9 @@ pub(crate) use vex_immediate_blend::X86VexImmediateBlendMemoryFields;
 pub(crate) use vex_integer_dot::X86VexIntegerDotMemoryFields;
 pub(crate) use vex_integer_dot_ext::X86VexIntegerDotExtMemoryFields;
 pub(crate) use vex_memory_broadcast::X86VexMemoryBroadcastFields;
+pub(crate) use vex_scalar_insert_memory::{
+    X86VexScalarInsertMemoryFields, X86VexScalarInsertMemoryKind,
+};
 pub(crate) use vex_variable_blend::X86VexVariableBlendMemoryEncoding;
 pub(crate) use vex_variable_permute::X86VexVariablePermuteMemoryEncoding;
 

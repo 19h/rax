@@ -355,6 +355,8 @@ mod vex_scalar_fp_convert_replay;
 #[cfg(test)]
 mod vex_scalar_fp_to_int_replay;
 #[cfg(test)]
+mod vex_scalar_insert_memory_source;
+#[cfg(test)]
 mod vex_scalar_insert_replay;
 #[cfg(test)]
 mod vex_scalar_int_to_fp_replay;
