@@ -64,6 +64,7 @@ mod vex_scalar_vmovq;
 mod vex_shared_count_shift;
 mod vex_variable_blend;
 mod vex_variable_permute;
+mod vex_variable_shift;
 mod vex_vpermil2;
 mod vex_widening_dword_multiply;
 mod vex_zero;

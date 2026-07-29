@@ -10,6 +10,7 @@ mod vex_interleave;
 mod vex_pmul_high_word;
 mod vex_pmul_low;
 mod vex_shared_count_shift;
+mod vex_variable_shift;
 mod vex_widening_dword_multiply;
 
 use std::collections::HashMap;
@@ -893,12 +894,13 @@ fn x86_jit_vex_scalar_fma3_memory_sequence(
 /// Validate one exact helper-backed unmasked VEX.128/VEX.256 memory-source
 /// sequence. Supported packed families include logic, arithmetic, average,
 /// byte shuffle, sign, multiply, interleave, saturating pack, min/max,
-/// horizontal, compare, and FMA3; scalar binary32/binary64 arithmetic and FMA3
-/// are also accepted. Most packed families are two-op `VLoad`/consumer pairs.
-/// Shared-count shifts use `VLoad`/`VExtractLane`/`X86PackedShift`; packed FMA3
-/// and scalar forms validate their complete multi-op chains. Families whose IR
-/// hints do not retain the encoding require exact instruction-byte provenance.
-/// Scalar arithmetic requires `VEX.L=0`; scalar FMA3 accepts ignored `VEX.L`.
+/// horizontal, compare, per-element variable shift, and FMA3; scalar
+/// binary32/binary64 arithmetic and FMA3 are also accepted. Most packed
+/// families are two-op `VLoad`/consumer pairs. Shared-count shifts use
+/// `VLoad`/`VExtractLane`/`X86PackedShift`; packed FMA3 and scalar forms
+/// validate their complete multi-op chains. Families whose IR hints do not
+/// retain the encoding require exact instruction-byte provenance. Scalar
+/// arithmetic requires `VEX.L=0`; scalar FMA3 accepts ignored `VEX.L`.
 /// Single-definition/single-use checks prevent the fused lowerer from hiding
 /// any independently observable virtual value.
 ///
@@ -997,6 +999,15 @@ pub(crate) fn x86_jit_vex_binary_memory_sequence(
         return Some(sequence);
     }
     if let Some(sequence) = vex_shared_count_shift::sequence(
+        block,
+        index,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence);
+    }
+    if let Some(sequence) = vex_variable_shift::sequence(
         block,
         index,
         instruction_bytes,
