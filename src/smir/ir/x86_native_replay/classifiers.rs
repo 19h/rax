@@ -72,6 +72,7 @@ pub(crate) use evex_fma3_memory::{
 };
 pub(crate) use vex_fma4::X86VexFma4MemoryEncoding;
 pub(crate) use vex_immediate_blend::X86VexImmediateBlendMemoryFields;
+pub(crate) use vex_variable_blend::X86VexVariableBlendMemoryEncoding;
 
 impl X86InstructionBytes {
     /// Validate register-only EVEX packed logical operations and return

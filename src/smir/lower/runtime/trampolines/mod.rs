@@ -62,6 +62,7 @@ mod vex_immediate_blend_memory_source;
 mod vex_lane_shuffle_memory_source;
 mod vex_sqrt_memory_source;
 mod vex_unary_memory_source;
+mod vex_variable_blend_memory_source;
 mod vpclmulqdq_memory_source;
 use crate::smir::lower::runtime::*;
 use crate::smir::lower::{
@@ -90,4 +91,5 @@ pub(crate) use vex_immediate_blend_memory_source::*;
 pub(crate) use vex_lane_shuffle_memory_source::*;
 pub(crate) use vex_sqrt_memory_source::*;
 pub(crate) use vex_unary_memory_source::*;
+pub(crate) use vex_variable_blend_memory_source::*;
 pub(crate) use vpclmulqdq_memory_source::*;

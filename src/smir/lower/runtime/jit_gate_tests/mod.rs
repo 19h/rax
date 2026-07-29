@@ -348,6 +348,8 @@ mod vex_shared_count_shift_memory_source;
 mod vex_sqrt_memory_source;
 #[cfg(test)]
 mod vex_unaligned_packed_fp_move_replay;
+#[cfg(feature = "smir-jit")]
+mod vex_variable_blend_memory_source;
 #[cfg(test)]
 mod vex_variable_blend_replay;
 #[cfg(test)]
