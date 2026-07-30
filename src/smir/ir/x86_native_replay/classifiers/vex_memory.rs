@@ -110,4 +110,50 @@ impl X86InstructionBytes {
         let instruction = X86InstructionBytes::new(instruction)?;
         Some((instruction.vex_memory_fields()?, *immediate))
     }
+
+    /// Rewrite only the ModR/M memory source of one fully validated VEX
+    /// instruction to an architectural vector or GPR register index.
+    ///
+    /// Segment and address-size prefixes, SIB, and displacement bytes belong
+    /// only to the already-evaluated guest address and are omitted. C5 has no
+    /// r/m extension channel and therefore accepts only indices 0-7; C4 uses
+    /// inverted `VEX.B` for indices 0-15. Every other VEX field is preserved,
+    /// including ignored W/X bits. The returned instruction is a complete
+    /// register-form byte string with no immediate operand.
+    pub(crate) fn vex_memory_with_register_source(&self, source: u8) -> Option<Self> {
+        if source >= 16 {
+            return None;
+        }
+        self.vex_memory_fields()?;
+
+        let bytes = self.as_slice();
+        let vex_offset = bytes
+            .iter()
+            .take_while(|byte| matches!(byte, 0x26 | 0x2E | 0x36 | 0x3E | 0x64 | 0x65 | 0x67))
+            .count();
+        match *bytes.get(vex_offset)? {
+            0xC5 => {
+                if source >= 8 {
+                    return None;
+                }
+                let p1 = *bytes.get(vex_offset + 1)?;
+                let opcode = *bytes.get(vex_offset + 2)?;
+                let modrm = *bytes.get(vex_offset + 3)?;
+                Self::new(&[0xC5, p1, opcode, 0xC0 | (modrm & 0x38) | source])
+            }
+            0xC4 => {
+                let mut p0 = *bytes.get(vex_offset + 1)?;
+                let p1 = *bytes.get(vex_offset + 2)?;
+                let opcode = *bytes.get(vex_offset + 3)?;
+                let modrm = *bytes.get(vex_offset + 4)?;
+                if source < 8 {
+                    p0 |= 0x20;
+                } else {
+                    p0 &= !0x20;
+                }
+                Self::new(&[0xC4, p0, p1, opcode, 0xC0 | (modrm & 0x38) | (source & 7)])
+            }
+            _ => None,
+        }
+    }
 }

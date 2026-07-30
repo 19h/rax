@@ -154,7 +154,7 @@ impl X86_64Lowerer {
 
     /// Emit one exact source instruction, applying any host-compatibility
     /// status fixup requested by its byte-validated replay classifier.
-    fn emit_native_replay_span(&mut self, span: &X86NativeReplaySpan) {
+    pub(crate) fn emit_native_replay_span(&mut self, span: &X86NativeReplaySpan) {
         if span.instruction.vex_zeroes_all_register_bits().is_some() {
             self.code.emit_bytes(span.instruction.as_slice());
             if self.avx_ymm16_vector_state {
@@ -610,6 +610,19 @@ impl X86_64Lowerer {
                     }
                     if let Some(sequence) =
                         crate::smir::lower::runtime::x86_jit_vex_fp_compare_memory_sequence(
+                            block,
+                            validate_idx,
+                            true,
+                            &self.x86_instruction_bytes,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
+                        validate_idx += sequence.consumed;
+                        continue;
+                    }
+                    if let Some(sequence) =
+                        crate::smir::lower::runtime::x86_jit_vex_scalar_convert_memory_sequence(
                             block,
                             validate_idx,
                             true,
@@ -1368,6 +1381,16 @@ impl X86_64Lowerer {
                 }
                 #[cfg(feature = "smir-jit")]
                 if let Some(consumed) = self.try_lower_jit_vex_round_memory_source(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_vex_scalar_convert_memory_source(
                     block,
                     idx,
                     &virtual_definitions,

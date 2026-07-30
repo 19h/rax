@@ -63,9 +63,9 @@ pub(crate) use classifiers::{
     X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay,
     X86EvexScalarFma3MemoryEncoding, X86VexCrossLane128MemoryEncoding, X86VexFma4MemoryEncoding,
     X86VexImmediateBlendMemoryFields, X86VexImmediatePermuteMemoryEncoding,
-    X86VexPtestMemoryEncoding, X86VexRoundMemoryEncoding, X86VexScalarInsertMemoryFields,
-    X86VexScalarInsertMemoryKind, X86VexVariableBlendMemoryEncoding,
-    X86VexVariablePermuteMemoryEncoding,
+    X86VexPtestMemoryEncoding, X86VexRoundMemoryEncoding, X86VexScalarConvertMemoryEncoding,
+    X86VexScalarConvertMemoryKind, X86VexScalarInsertMemoryFields, X86VexScalarInsertMemoryKind,
+    X86VexVariableBlendMemoryEncoding, X86VexVariablePermuteMemoryEncoding,
 };
 
 pub use aggregate::{

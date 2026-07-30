@@ -247,6 +247,8 @@ mod vex_ptest_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_round_memory_source;
 #[cfg(feature = "smir-jit")]
+mod vex_scalar_convert_memory_source;
+#[cfg(feature = "smir-jit")]
 mod vex_scalar_insert_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_sqrt_memory_source;
