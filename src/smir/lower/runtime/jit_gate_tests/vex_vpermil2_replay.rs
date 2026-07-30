@@ -192,6 +192,7 @@ fn replay_admits_and_emits_144_o0_o2_family_role_alias_and_extension_shapes() {
                 "{level:?} {case:?} {bytes:02X?}"
             );
             let mut lowerer = X86_64Lowerer::new();
+            lowerer.set_jit_fault_deopt_guards(true);
             lowerer
                 .lower_function(&function)
                 .unwrap_or_else(|error| panic!("{level:?} {case:?}: {error:?}"));
@@ -240,6 +241,87 @@ fn replay_admits_and_emits_144_o0_o2_family_role_alias_and_extension_shapes() {
         crate::smir::ir::X86InstructionBytes::new(&wrong_opcode).unwrap(),
     );
     assert!(!is_native_clobber_safe(&wrong_metadata));
+
+    let mut missing_fault_guards = X86_64Lowerer::new();
+    assert!(matches!(
+        missing_fault_guards.lower_function(&function(&bytes)),
+        Err(crate::smir::lower::LowerError::UnsupportedOp { op })
+            if op == "X86RequireXop requires JIT fault-deoptimization guards"
+    ));
+}
+
+#[cfg(target_arch = "x86_64")]
+#[test]
+fn replay_preserves_the_dynamic_xop_guard_before_the_native_instruction() {
+    use crate::smir::lower::SmirLowerer;
+    use crate::smir::lower::x86_64::X86_64Lowerer;
+
+    const SENTINEL_PC: u64 = 0xA55A_6996_F00F_3CC3;
+    let case = Vpermil2Case {
+        opcode: 0x48,
+        w: false,
+        l: true,
+        dst: 1,
+        src1: 2,
+        rm: 3,
+        is4: 4,
+        ignored_low: 3,
+        clear_ignored_x: false,
+    };
+    let bytes = encoding(case);
+    let function = optimized_function(&bytes, crate::smir::optimize::OptLevel::O2, false);
+    let mut lowerer = X86_64Lowerer::new();
+    lowerer.set_jit_fault_deopt_guards(true);
+    lowerer.set_avx_ymm16_vector_state(true);
+    let lowered = lowerer
+        .lower_function(&function)
+        .expect("lower guarded VPERMIL2 replay");
+    let mut code = lowerer.finalize().expect("finalize guarded replay");
+    let positions = code
+        .windows(bytes.len())
+        .enumerate()
+        .filter_map(|(index, window)| (window == bytes).then_some(index))
+        .collect::<Vec<_>>();
+    assert_eq!(positions.len(), 1, "exact source instruction occurrence");
+    code[positions[0]..positions[0] + bytes.len()].fill(0x90);
+    let exec = ExecMem::new(&code).expect("map patched guarded replay");
+
+    for (name, cpuid_xop, expected_exit_pc) in [
+        ("disabled", 0_u64, PC),
+        ("enabled", 1_u64, SENTINEL_PC),
+        ("disabled again", 0_u64, PC),
+    ] {
+        let initial_gpr =
+            std::array::from_fn(|index| 0x1020_4081_0204_0810_u64.rotate_left(index as u32));
+        let initial_vectors: [[u64; 8]; 32] =
+            std::array::from_fn(|index| [0xA500_0000_0000_0000 | index as u64; 8]);
+        let mut registers = GuestRegs {
+            gpr: initial_gpr,
+            rflags: 0x2 | 0x0CD5,
+            exit_pc: SENTINEL_PC,
+            cr0: 1,
+            cr4: 1 << 18,
+            xcr0: 0b110,
+            cs_l: 1,
+            cpuid_xop,
+            vector_active: X86_VECTOR_STATE_YMM16,
+            ..GuestRegs::default()
+        };
+        for (index, value) in initial_vectors.iter().copied().enumerate() {
+            registers.set_zmm(index, value);
+        }
+        let initial_flags = registers.rflags;
+        exec.run(lowered.entry_offset, &mut registers);
+        assert_eq!(registers.exit_pc, expected_exit_pc, "{name}");
+        assert_eq!(registers.gpr, initial_gpr, "{name}: GPR state");
+        assert_eq!(registers.rflags, initial_flags, "{name}: RFLAGS");
+        for (index, mut expected) in initial_vectors.iter().copied().enumerate() {
+            if cpuid_xop != 0 && index == usize::from(case.dst) {
+                expected[4..].fill(0);
+            }
+            assert_eq!(registers.get_zmm(index), expected, "{name}: ZMM{index}");
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -401,6 +483,11 @@ fn interpret(
     let function = optimized_function(bytes, level, true);
     let mut context = SmirContext::new_x86_64();
     if let ArchRegState::X86_64(x86) = &mut context.arch_regs {
+        x86.xop = true;
+        x86.cr0 = 1;
+        x86.cr4 = 1 << 18;
+        x86.xcr0 = 0b110;
+        x86.cs_l = true;
         x86.gpr = initial.gprs;
         for (index, value) in initial.vectors.iter().enumerate() {
             x86.xmm[index][..8].copy_from_slice(value);
@@ -466,6 +553,7 @@ fn execute_native(
 
     let function = optimized_function(bytes, level, false);
     let mut lowerer = X86_64Lowerer::new();
+    lowerer.set_jit_fault_deopt_guards(true);
     lowerer.set_avx_ymm16_vector_state(true);
     let lowered = lowerer
         .lower_function(&function)

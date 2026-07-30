@@ -1,6 +1,6 @@
 //! AMD XOP `VPERMIL2PS` and `VPERMIL2PD` lifting.
 
-use crate::smir::ir::ops::{OpKind, SmirOp, X86SsePrefix, X86VecMap};
+use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86SsePrefix, X86VecAlign, X86VecMap};
 use crate::smir::ir::types::*;
 use crate::smir::lift::x86_64::{
     VecEncodingKind, VecPrefix, X86_64Lifter, X86Prefix, decode_modrm,
@@ -168,15 +168,41 @@ impl X86_64Lifter {
         }
 
         let next_pc = pc + imm_offset as u64 + 1;
-        let mut ops = Vec::new();
+        // Although VPERMIL2 uses a VEX encoding, AMD assigns it to the XOP
+        // feature subset. The live guest enablement guard must execute before
+        // address generation, alignment validation, or architectural reads.
+        let mut ops = vec![SmirOp::new(OpId(0), pc, OpKind::X86RequireXop)];
         let dst = self.vec_reg(modrm.reg, prefix.width);
         let src1 = self.vec_reg(prefix.vvvv, prefix.width);
         let is4_source = self.vec_reg(bytes[imm_offset] >> 4, prefix.width);
         let rm_source = if modrm.is_memory {
-            let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
-            ops.extend(pre_ops);
-            let loaded = ctx.alloc_vreg();
+            let x86_addr = modrm
+                .addr
+                .as_ref()
+                .expect("decoded VPERMIL2 memory address");
+            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            for mut pre_op in pre_ops {
+                pre_op.id = OpId(ops.len() as u16);
+                ops.push(pre_op);
+            }
+            let stack_segment = match prefix.segment_override {
+                Some(0x36) => true,
+                Some(_) => false,
+                None => x86_addr.base.is_some_and(|base| matches!(base & 7, 4 | 5)),
+            };
             ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86CheckAlignmentAc {
+                    addr: addr.clone(),
+                    access_size: prefix.width.bytes() as u8,
+                    alignment: 16,
+                    stack_segment,
+                    natural_alignment: false,
+                },
+            ));
+            let loaded = ctx.alloc_vreg();
+            ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,
                 OpKind::VLoad {
@@ -184,6 +210,7 @@ impl X86_64Lifter {
                     addr,
                     width: prefix.width,
                 },
+                X86OpHint::VecAlign(X86VecAlign::Aligned),
             ));
             loaded
         } else {

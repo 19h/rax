@@ -10,6 +10,10 @@ use crate::smir::optimize::{OptLevel, optimize_function};
 
 const INITIAL_FLAGS: u64 = 0x2 | 0x08D5;
 const INITIAL_MXCSR: u32 = 0x9FC0;
+const CR0_PE: u64 = 1;
+const CR0_AM: u64 = 1 << 18;
+const CR4_OSXSAVE: u64 = 1 << 18;
+const RFLAGS_AC: u64 = 1 << 18;
 
 fn vpermil2_encoding(
     opcode: u8,
@@ -45,6 +49,17 @@ fn lift_at(pc: u64, bytes: &[u8]) -> Result<LiftResult, LiftError> {
     let mut lifter = X86_64Lifter::strict();
     let mut ctx = LiftContext::new(SourceArch::X86_64);
     lifter.lift_insn(pc, bytes, &mut ctx)
+}
+
+fn enable_vpermil2(ctx: &mut SmirContext) {
+    let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+        unreachable!();
+    };
+    x86.xop = true;
+    x86.cr0 = CR0_PE;
+    x86.cr4 = CR4_OSXSAVE;
+    x86.xcr0 = 0b110;
+    x86.cs_l = true;
 }
 
 fn execute_vpermil2(
@@ -206,6 +221,10 @@ fn vex_vpermil2_strictly_lifts_every_opcode_w_l_and_immediate_value() {
                         .unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
                     assert_eq!(lifted.bytes_consumed, bytes.len(), "{bytes:02X?}");
                     assert!(matches!(lifted.control_flow, ControlFlow::Fallthrough));
+                    assert!(matches!(
+                        lifted.ops.first().map(|op| &op.kind),
+                        Some(OpKind::X86RequireXop)
+                    ));
                     assert!(
                         lifted
                             .ops
@@ -302,6 +321,7 @@ fn vex_vpermil2_memory_uses_full_rip_and_w_selected_role() {
             let bytes = [0xC4, 0xE3, p1, opcode, 0x0D, 0x20, 0x00, 0x00, 0x00, 0x33];
             let lifted = lift_at(pc, &bytes).expect("RIP-relative VPERMIL2 memory form");
             assert_eq!(lifted.bytes_consumed, bytes.len());
+            assert!(matches!(lifted.ops[0].kind, OpKind::X86RequireXop));
             let (loaded, addr) = lifted
                 .ops
                 .iter()
@@ -314,6 +334,25 @@ fn vex_vpermil2_memory_uses_full_rip_and_w_selected_role() {
                     _ => None,
                 })
                 .expect("full-width VPERMIL2 memory load");
+            let load_index = lifted
+                .ops
+                .iter()
+                .position(|op| matches!(op.kind, OpKind::VLoad { .. }))
+                .expect("VPERMIL2 load index");
+            assert!(matches!(
+                lifted.ops[load_index - 1].kind,
+                OpKind::X86CheckAlignmentAc {
+                    access_size: 32,
+                    alignment: 16,
+                    stack_segment: false,
+                    natural_alignment: false,
+                    ..
+                }
+            ));
+            assert_eq!(
+                lifted.ops[load_index].x86_hint,
+                Some(X86OpHint::VecAlign(X86VecAlign::Aligned))
+            );
             assert!(matches!(
                 addr,
                 Address::PcRel {
@@ -355,6 +394,7 @@ fn vex_vpermil2_memory_uses_full_rip_and_w_selected_role() {
     let addr32 = lift_single(&[0x67, 0x64, 0xC4, 0xE3, 0x6D, 0x48, 0x4C, 0x91, 0x20, 0x30])
         .expect("address-size and FS-relative VPERMIL2 memory form");
     assert_eq!(addr32.bytes_consumed, 10);
+    assert!(matches!(addr32.ops[0].kind, OpKind::X86RequireXop));
     assert!(addr32.ops.iter().any(|op| matches!(
         op.kind,
         OpKind::VLoad {
@@ -362,6 +402,143 @@ fn vex_vpermil2_memory_uses_full_rip_and_w_selected_role() {
             ..
         }
     )));
+    assert!(addr32.ops.iter().any(|op| matches!(
+        op.kind,
+        OpKind::X86CheckAlignmentAc {
+            access_size: 32,
+            alignment: 16,
+            stack_segment: false,
+            natural_alignment: false,
+            ..
+        }
+    )));
+}
+
+#[test]
+fn vex_vpermil2_memory_alignment_guard_tracks_width_and_stack_segment_selection() {
+    for (name, bytes, access_size, stack_segment) in [
+        (
+            "RBP default SS",
+            &[0xC4, 0xE3, 0x69, 0x48, 0x4D, 0x00, 0x30][..],
+            16,
+            true,
+        ),
+        (
+            "DS overrides RBP",
+            &[0x3E, 0xC4, 0xE3, 0x69, 0x48, 0x4D, 0x00, 0x30][..],
+            16,
+            false,
+        ),
+        (
+            "SS overrides RAX",
+            &[0x36, 0xC4, 0xE3, 0x69, 0x48, 0x08, 0x30][..],
+            16,
+            true,
+        ),
+        (
+            "FS overrides RBP",
+            &[0x64, 0xC4, 0xE3, 0x6D, 0x48, 0x4D, 0x00, 0x30][..],
+            32,
+            false,
+        ),
+        (
+            "RSP SIB default SS",
+            &[0xC4, 0xE3, 0x6D, 0x49, 0x0C, 0x24, 0x30][..],
+            32,
+            true,
+        ),
+    ] {
+        let lifted = lift_single(bytes).unwrap_or_else(|error| panic!("{name}: {error:?}"));
+        assert!(matches!(lifted.ops[0].kind, OpKind::X86RequireXop));
+        assert!(
+            lifted
+                .ops
+                .iter()
+                .enumerate()
+                .all(|(index, op)| op.id == OpId(index as u16)),
+            "{name}: operation IDs"
+        );
+        let load_index = lifted
+            .ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::VLoad { .. }))
+            .unwrap_or_else(|| panic!("{name}: missing VLoad"));
+        assert_eq!(
+            lifted.ops[load_index].x86_hint,
+            Some(X86OpHint::VecAlign(X86VecAlign::Aligned)),
+            "{name}"
+        );
+        assert!(
+            matches!(
+                lifted.ops[load_index - 1].kind,
+                OpKind::X86CheckAlignmentAc {
+                    access_size: actual_size,
+                    alignment: 16,
+                    stack_segment: actual_stack_segment,
+                    natural_alignment: false,
+                    ..
+                } if actual_size == access_size && actual_stack_segment == stack_segment
+            ),
+            "{name}"
+        );
+    }
+}
+
+#[test]
+fn vex_vpermil2_feature_guard_precedes_semantics_and_rejects_without_commit() {
+    let bytes = vpermil2_encoding(0x48, false, true, 1, 2, 3, 4, 3);
+    let lifted = lift_single(&bytes).expect("register VPERMIL2");
+    assert!(matches!(lifted.ops[0].kind, OpKind::X86RequireXop));
+    assert!(
+        lifted.ops[1..]
+            .iter()
+            .all(|op| !matches!(op.kind, OpKind::X86RequireXop))
+    );
+
+    for (name, configure) in [
+        ("CPUID.XOP absent", 0_u8),
+        ("CR0.PE clear", 1),
+        ("CR0.TS set", 2),
+        ("CR4.OSXSAVE clear", 3),
+        ("XCR0.XMM clear", 4),
+        ("XCR0.YMM clear", 5),
+        ("CS.L clear", 6),
+        ("VM set", 7),
+    ] {
+        let mut context = SmirContext::new_x86_64();
+        enable_vpermil2(&mut context);
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCC_u64; 16];
+        let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
+            unreachable!();
+        };
+        x86.xmm[1] = sentinel;
+        x86.xmm[2] = [0x1111_1111_1111_1111; 16];
+        x86.xmm[3] = [0x2222_2222_2222_2222; 16];
+        x86.xmm[4] = [0; 16];
+        match configure {
+            0 => x86.xop = false,
+            1 => x86.cr0 &= !CR0_PE,
+            2 => x86.cr0 |= 1 << 3,
+            3 => x86.cr4 &= !CR4_OSXSAVE,
+            4 => x86.xcr0 &= !(1 << 1),
+            5 => x86.xcr0 &= !(1 << 2),
+            6 => x86.cs_l = false,
+            7 => x86.rflags |= crate::isa::x86_64::flags::bits::VM,
+            _ => unreachable!(),
+        }
+        let exit = execute_vpermil2(&bytes, OptLevel::O2, &mut context, &mut FlatMemory::new(1));
+        assert!(
+            matches!(
+                exit,
+                BlockResult::Exit(ExitReason::Undefined { addr: 0x1000, .. })
+            ),
+            "{name}: {exit:?}"
+        );
+        let ArchRegState::X86_64(x86) = &context.arch_regs else {
+            unreachable!();
+        };
+        assert_eq!(x86.xmm[1], sentinel, "{name}");
+    }
 }
 
 #[test]
@@ -405,6 +582,7 @@ fn vex_vpermil2_interpretation_matches_block_local_raw_reference_at_all_levels()
                     let expected = vpermil2_reference(&first, &second, &selector, bits, lanes, m2z);
                     for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
                         let mut context = SmirContext::new_x86_64();
+                        enable_vpermil2(&mut context);
                         context.flags.materialized = MaterializedFlags::from_rflags(INITIAL_FLAGS);
                         context.flags.lazy = None;
                         let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
@@ -474,6 +652,7 @@ fn vex_vpermil2_aliases_preserve_all_sources_until_destination_commit() {
             let expected = vpermil2_reference(&first, &second, &selector, 32, 8, 3);
             for level in [OptLevel::O0, OptLevel::O2] {
                 let mut context = SmirContext::new_x86_64();
+                enable_vpermil2(&mut context);
                 let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
                     unreachable!();
                 };
@@ -507,6 +686,7 @@ fn vex_vpermil2_unaligned_memory_is_exact_and_faults_before_destination_commit()
 
         for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
             let mut context = SmirContext::new_x86_64();
+            enable_vpermil2(&mut context);
             context.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x181);
             let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
                 unreachable!();
@@ -524,6 +704,7 @@ fn vex_vpermil2_unaligned_memory_is_exact_and_faults_before_destination_commit()
 
             let sentinel = [0xCCCC_CCCC_CCCC_CCCC_u64; 16];
             let mut context = SmirContext::new_x86_64();
+            enable_vpermil2(&mut context);
             context.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x1F0);
             let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
                 unreachable!();
@@ -535,6 +716,31 @@ fn vex_vpermil2_unaligned_memory_is_exact_and_faults_before_destination_commit()
             assert!(matches!(
                 fault,
                 BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+            ));
+            let ArchRegState::X86_64(x86) = &context.arch_regs else {
+                unreachable!();
+            };
+            assert_eq!(x86.xmm[1], sentinel, "W={}, {level:?}", u8::from(w));
+
+            let mut context = SmirContext::new_x86_64();
+            enable_vpermil2(&mut context);
+            context.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x181);
+            context.flags.materialized.ac = true;
+            let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
+                unreachable!();
+            };
+            x86.cr0 |= CR0_AM;
+            x86.cpl = 3;
+            x86.rflags |= RFLAGS_AC;
+            x86.xmm[1] = sentinel;
+            x86.xmm[2] = first;
+            x86.xmm[3] = if w { second } else { selector };
+            let mut memory = FlatMemory::new(0x400);
+            memory.write(0x181, &memory_bytes).unwrap();
+            let fault = execute_vpermil2(&bytes, level, &mut context, &mut memory);
+            assert!(matches!(
+                fault,
+                BlockResult::Exit(ExitReason::AlignmentCheck { addr: 0x1000 })
             ));
             let ArchRegState::X86_64(x86) = &context.arch_regs else {
                 unreachable!();

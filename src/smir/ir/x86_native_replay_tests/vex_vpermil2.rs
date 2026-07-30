@@ -1,6 +1,7 @@
 //! Exact classifier and span tests for AMD XOP VPERMIL2 replay.
 
 use super::*;
+use crate::smir::ir::ops::X86OpHint;
 
 fn encoding(
     extension_bits: u8,
@@ -171,16 +172,20 @@ fn dedicated_and_aggregate_spans_require_exact_contiguous_provenance() {
     let instruction =
         X86InstructionBytes::new(&encoding(0x40, false, 3, true, 0x49, 0xFF, 0xCF)).unwrap();
     let mut block = SmirBlock::new(BlockId(43), pc);
-    block.push_op(SmirOp::new(OpId(0), pc, OpKind::Nop));
+    block.push_op(SmirOp::new(OpId(0), pc, OpKind::X86RequireXop));
     block.push_op(SmirOp::new(OpId(1), pc, OpKind::Nop));
+    block.push_op(SmirOp::new(OpId(2), pc, OpKind::Nop));
     let provenance = std::collections::HashMap::from([((block.id, pc), instruction)]);
 
     for spans in [
         x86_vex_vpermil2_replay_spans(&block, &provenance),
         x86_native_replay_spans(&block, &provenance),
     ] {
-        let span = spans.get(&0).expect("exact VPERMIL2 replay span");
-        assert_eq!(span.end, 2);
+        assert!(!spans.contains_key(&0));
+        let span = spans
+            .get(&1)
+            .expect("exact VPERMIL2 replay after dynamic XOP guard");
+        assert_eq!(span.end, 3);
         assert_eq!(span.instruction, instruction);
         assert!(!span.needs_avx512vl);
         assert!(!span.needs_avx512dq);
@@ -190,7 +195,15 @@ fn dedicated_and_aggregate_spans_require_exact_contiguous_provenance() {
     assert!(x86_vex_fma4_replay_spans(&block, &provenance).is_empty());
     assert!(x86_evex_native_replay_spans(&block, &provenance).is_empty());
 
-    block.push_op(SmirOp::new(OpId(2), pc + 6, OpKind::Nop));
-    block.push_op(SmirOp::new(OpId(3), pc, OpKind::Nop));
+    let mut missing_guard = block.clone();
+    missing_guard.ops[0].kind = OpKind::Nop;
+    assert!(x86_native_replay_spans(&missing_guard, &provenance).is_empty());
+
+    let mut hinted_guard = block.clone();
+    hinted_guard.ops[0].x86_hint = Some(X86OpHint::XopVpcom);
+    assert!(x86_native_replay_spans(&hinted_guard, &provenance).is_empty());
+
+    block.push_op(SmirOp::new(OpId(3), pc + 6, OpKind::Nop));
+    block.push_op(SmirOp::new(OpId(4), pc, OpKind::Nop));
     assert!(x86_native_replay_spans(&block, &provenance).is_empty());
 }

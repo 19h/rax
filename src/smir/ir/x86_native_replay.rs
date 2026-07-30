@@ -7,6 +7,7 @@
 use std::collections::HashMap;
 
 use super::SmirBlock;
+use super::ops::OpKind;
 use super::types::{BlockId, GuestAddr};
 
 /// Exact bytes of one x86 instruction. Architectural x86 instructions are at
@@ -177,8 +178,22 @@ fn x86_native_replay_spans_where(
             }
             let instruction = *instruction_bytes.get(&(block.id, guest_pc))?;
             let (needs_avx512vl, needs_avx512dq, needs_avx512fp16) = classify(&instruction)?;
+            // VPERMIL2 is VEX encoded but belongs to AMD's XOP feature
+            // subset. Its dynamic guest-state guard must remain independently
+            // lowered before exact register replay replaces the remaining
+            // semantic graph.
+            let replay_start = if instruction.is_vex_register_vpermil2() {
+                if !matches!(block.ops[start].kind, OpKind::X86RequireXop)
+                    || block.ops[start].x86_hint.is_some()
+                {
+                    return None;
+                }
+                start.checked_add(1).filter(|candidate| *candidate < end)?
+            } else {
+                start
+            };
             Some((
-                start,
+                replay_start,
                 X86NativeReplaySpan {
                     end,
                     instruction,
