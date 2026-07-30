@@ -252,6 +252,8 @@ mod vex_immediate_permute_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_lane_shuffle_memory_source;
 #[cfg(feature = "smir-jit")]
+mod vex_masked_memory;
+#[cfg(feature = "smir-jit")]
 mod vex_movntdqa_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_mpsadbw_memory_source;

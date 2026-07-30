@@ -3376,6 +3376,46 @@ impl X86_64Lowerer {
             fault_stack_cleanup,
             false,
             None,
+            0,
+        )
+    }
+
+    /// As [`Self::emit_jit_mem_op`], with a flag-neutral byte displacement
+    /// added after the complete architectural effective address is computed.
+    /// This is distinct from modifying an [`Address::X86Addr32`] displacement:
+    /// masked-vector lanes advance in 64-bit linear-address space after the
+    /// 32-bit effective offset has wrapped and the segment base was applied.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn emit_jit_mem_op_linear_offset(
+        &mut self,
+        guest_pc: u64,
+        is_load: bool,
+        load_dst: Option<VReg>,
+        load_stack_dst: Option<i32>,
+        store_src_reg: Option<VReg>,
+        store_src_imm: Option<i64>,
+        store_stack_src: Option<i32>,
+        addr: &Address,
+        mem_width: MemWidth,
+        sign: SignExtend,
+        fault_stack_cleanup: i32,
+        linear_offset: i32,
+    ) -> Result<(), LowerError> {
+        self.emit_jit_mem_op_inner(
+            guest_pc,
+            is_load,
+            load_dst,
+            load_stack_dst,
+            store_src_reg,
+            store_src_imm,
+            store_stack_src,
+            addr,
+            mem_width,
+            sign,
+            fault_stack_cleanup,
+            false,
+            None,
+            linear_offset,
         )
     }
 
@@ -3415,6 +3455,7 @@ impl X86_64Lowerer {
             fault_stack_cleanup,
             false,
             Some(bit_offset),
+            0,
         )
     }
 
@@ -3450,6 +3491,7 @@ impl X86_64Lowerer {
             fault_stack_cleanup,
             true,
             None,
+            0,
         )
     }
 
@@ -3468,6 +3510,7 @@ impl X86_64Lowerer {
         fault_stack_cleanup: i32,
         address_size_32: bool,
         bit_offset: Option<crate::smir::lower::X86JitBitOffsetTerm>,
+        linear_offset: i32,
     ) -> Result<(), LowerError> {
         let size: i32 = match mem_width {
             MemWidth::B1 => 1,
@@ -3537,6 +3580,10 @@ impl X86_64Lowerer {
         self.emit_jit_mem_effective_address(addr, address_size_32)?;
         if let Some(term) = bit_offset {
             self.emit_jit_mem_bit_offset_term(term)?;
+        }
+        if linear_offset != 0 {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsi, PhysReg::Rsi, linear_offset);
         }
 
         // --- args + call ---

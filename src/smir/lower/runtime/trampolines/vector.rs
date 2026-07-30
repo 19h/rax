@@ -5900,10 +5900,35 @@ fn x86_has_direct_native_vector_op_excluding(
         .filter(|block| !excluded.contains_key(&block.id))
     {
         let replay = crate::smir::ir::x86_native_replay_spans(block, &func.x86_instruction_bytes);
+        let mut virtual_definitions = std::collections::HashMap::new();
+        let mut virtual_uses = std::collections::HashMap::new();
+        for op in &block.ops {
+            for reg in op.kind.dests() {
+                if matches!(reg, crate::smir::ir::types::VReg::Virtual(_)) {
+                    *virtual_definitions.entry(reg).or_insert(0usize) += 1;
+                }
+            }
+            for reg in op.kind.source_vregs() {
+                if matches!(reg, crate::smir::ir::types::VReg::Virtual(_)) {
+                    *virtual_uses.entry(reg).or_insert(0usize) += 1;
+                }
+            }
+        }
         let mut index = 0usize;
         while index < block.ops.len() {
             if let Some(span) = replay.get(&index) {
                 index = span.end;
+                continue;
+            }
+            if let Some(sequence) = super::x86_jit_vex_masked_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                index += sequence.consumed;
                 continue;
             }
             let op = &block.ops[index];

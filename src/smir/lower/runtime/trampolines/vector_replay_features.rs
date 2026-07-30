@@ -598,6 +598,19 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.any = true;
                 requirements.needs_avx = true;
                 index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_vex_masked_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                // The fused implementation emits AVX VMOVDQU only; integer
+                // guest forms therefore do not require host AVX2.
+                requirements.any = true;
+                requirements.needs_avx = true;
+                index += sequence.consumed;
             } else if let Some(sequence) = super::x86_jit_vpclmulqdq_memory_sequence(
                 block,
                 index,
