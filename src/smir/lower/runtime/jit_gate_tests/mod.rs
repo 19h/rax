@@ -348,6 +348,8 @@ mod vex_packed_extend_replay;
 #[cfg(test)]
 mod vex_packed_move_replay;
 #[cfg(test)]
+mod vex_packed_string_memory_source;
+#[cfg(test)]
 mod vex_packed_string_replay;
 #[cfg(test)]
 mod vex_pavg_memory_source;

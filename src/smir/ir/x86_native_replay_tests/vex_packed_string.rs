@@ -1,6 +1,8 @@
 //! Exact classifier and span tests for AVX VEX packed-string replay.
 
 use super::*;
+use crate::smir::ir::ops::X86PackedStringKind;
+use crate::smir::ir::types::OpWidth;
 
 fn encoding(opcode: u8, w: bool, r: bool, x: bool, b: bool, modrm: u8, imm: u8) -> [u8; 6] {
     assert!(matches!(opcode, 0x60..=0x63));
@@ -12,6 +14,23 @@ fn encoding(opcode: u8, w: bool, r: bool, x: bool, b: bool, modrm: u8, imm: u8) 
         modrm,
         imm,
     ]
+}
+
+fn memory_encoding(opcode: u8, w: bool, source1: u8, base: u8, imm: u8) -> Vec<u8> {
+    assert!(matches!(opcode, 0x60..=0x63));
+    assert!(source1 < 16 && base < 16);
+    let mut bytes = vec![
+        0xC4,
+        (if source1 < 8 { 0x80 } else { 0 }) | 0x40 | (if base < 8 { 0x20 } else { 0 }) | 3,
+        (if w { 0x80 } else { 0 }) | 0x79,
+        opcode,
+        0x40 | ((source1 & 7) << 3) | (base & 7),
+    ];
+    if base & 7 == 4 {
+        bytes.push(0x24);
+    }
+    bytes.extend([0x20, imm]);
+    bytes
 }
 
 #[test]
@@ -29,6 +48,13 @@ fn classifier_accepts_all_1_048_576_canonical_register_encodings() {
                                     X86InstructionBytes::new(&bytes)
                                         .unwrap()
                                         .is_vex_register_packed_string_compare(),
+                                    "{bytes:02X?}"
+                                );
+                                assert_eq!(
+                                    X86InstructionBytes::new(&bytes)
+                                        .unwrap()
+                                        .vex_register_packed_string_returns_mask(),
+                                    Some(matches!(opcode, 0x60 | 0x62)),
                                     "{bytes:02X?}"
                                 );
                                 classified += 1;
@@ -53,6 +79,116 @@ fn classifier_accepts_all_1_048_576_canonical_register_encodings() {
                 .unwrap()
                 .is_vex_register_packed_string_compare(),
             "{bytes:02X?}"
+        );
+    }
+}
+
+#[test]
+fn memory_classifier_accepts_all_524_288_family_operand_and_immediate_cells() {
+    let mut classified = 0usize;
+    for opcode in 0x60..=0x63 {
+        for w in [false, true] {
+            for source1 in 0..16 {
+                for base in 0..16 {
+                    for immediate in u8::MIN..=u8::MAX {
+                        let bytes = memory_encoding(opcode, w, source1, base, immediate);
+                        let encoding = X86InstructionBytes::new(&bytes)
+                            .unwrap()
+                            .vex_packed_string_memory_encoding()
+                            .unwrap_or_else(|| panic!("{bytes:02X?}"));
+                        let expected_kind = match opcode {
+                            0x60 => X86PackedStringKind::ExplicitMask,
+                            0x61 => X86PackedStringKind::ExplicitIndex,
+                            0x62 => X86PackedStringKind::ImplicitMask,
+                            0x63 => X86PackedStringKind::ImplicitIndex,
+                            _ => unreachable!(),
+                        };
+                        let scratch = (1..16u8).find(|candidate| *candidate != source1).unwrap();
+                        assert_eq!(encoding.kind, expected_kind, "{bytes:02X?}");
+                        assert_eq!(encoding.source1, source1, "{bytes:02X?}");
+                        assert_eq!(encoding.scratch, scratch, "{bytes:02X?}");
+                        assert_eq!(encoding.immediate, immediate, "{bytes:02X?}");
+                        assert_eq!(
+                            encoding.length_width,
+                            if expected_kind.is_explicit() && w {
+                                OpWidth::W64
+                            } else {
+                                OpWidth::W32
+                            },
+                            "{bytes:02X?}"
+                        );
+                        assert_eq!(encoding.memory_size, 16, "{bytes:02X?}");
+                        assert!(
+                            encoding
+                                .register_instruction
+                                .is_vex_register_packed_string_compare(),
+                            "{bytes:02X?}"
+                        );
+                        assert_eq!(
+                            encoding
+                                .register_instruction
+                                .vex_register_packed_string_returns_mask(),
+                            Some(expected_kind.returns_mask()),
+                            "{bytes:02X?}"
+                        );
+                        classified += 1;
+                    }
+                }
+            }
+        }
+    }
+    assert_eq!(classified, 524_288);
+}
+
+#[test]
+fn memory_classifier_accepts_complete_segment_address_and_displacement_shapes() {
+    for (name, bytes, kind, source1, length_width) in [
+        (
+            "FS addr32 extended SIB explicit mask",
+            &[
+                0x64, 0x67, 0xC4, 0x03, 0x79, 0x60, 0x8C, 0x7E, 0x11, 0x22, 0x33, 0x44, 0xFF,
+            ][..],
+            X86PackedStringKind::ExplicitMask,
+            9,
+            OpWidth::W32,
+        ),
+        (
+            "SS addr32 extended SIB implicit index",
+            &[
+                0x36, 0x67, 0xC4, 0x03, 0xF9, 0x63, 0x8C, 0x7E, 0x11, 0x22, 0x33, 0x44, 0x80,
+            ][..],
+            X86PackedStringKind::ImplicitIndex,
+            9,
+            OpWidth::W32,
+        ),
+        (
+            "RIP-relative implicit mask",
+            &[0xC4, 0xE3, 0x79, 0x62, 0x0D, 0x11, 0x22, 0x33, 0x44, 0x40][..],
+            X86PackedStringKind::ImplicitMask,
+            1,
+            OpWidth::W32,
+        ),
+        (
+            "RBP displacement explicit 64-bit index",
+            &[0xC4, 0xE3, 0xF9, 0x61, 0x4D, 0x20, 0x00][..],
+            X86PackedStringKind::ExplicitIndex,
+            1,
+            OpWidth::W64,
+        ),
+    ] {
+        let encoding = X86InstructionBytes::new(bytes)
+            .unwrap()
+            .vex_packed_string_memory_encoding()
+            .unwrap_or_else(|| panic!("{name}: {bytes:02X?}"));
+        assert_eq!(encoding.kind, kind, "{name}");
+        assert_eq!(encoding.source1, source1, "{name}");
+        assert_eq!(encoding.length_width, length_width, "{name}");
+        assert_eq!(encoding.memory_size, 16, "{name}");
+        assert!(
+            encoding
+                .register_instruction
+                .is_vex_register_packed_string_compare(),
+            "{name}"
         );
     }
 }
@@ -92,6 +228,39 @@ fn classifier_rejects_every_structural_frontier() {
             !X86InstructionBytes::new(&bytes)
                 .unwrap()
                 .is_vex_register_packed_string_compare(),
+            "{bytes:02X?}"
+        );
+    }
+}
+
+#[test]
+fn memory_classifier_rejects_every_structural_frontier() {
+    let canonical = memory_encoding(0x60, true, 9, 11, 0xA5);
+    let mut invalid = vec![
+        canonical[..canonical.len() - 1].to_vec(),
+        canonical.iter().copied().chain([0]).collect(),
+    ];
+    for (index, value) in [
+        (0, 0xC5),
+        (1, (canonical[1] & !0x1F) | 1),
+        (1, (canonical[1] & !0x1F) | 2),
+        (2, canonical[2] & !0x01),
+        (2, canonical[2] | 0x04),
+        (2, canonical[2] & !0x08),
+        (3, 0x5F),
+        (3, 0x64),
+        (4, canonical[4] | 0xC0),
+    ] {
+        let mut bytes = canonical.clone();
+        bytes[index] = value;
+        invalid.push(bytes);
+    }
+    for bytes in invalid {
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .vex_packed_string_memory_encoding(),
+            None,
             "{bytes:02X?}"
         );
     }

@@ -329,6 +329,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 .vex_scalar_int_to_fp_destination_index()
                 .is_some();
             let vex_zero = span.instruction.vex_zeroes_all_register_bits().is_some();
+            let vex_packed_string = span.instruction.is_vex_register_packed_string_compare();
             requirements.any = true;
             requirements.needs_sse3 |= fp_horizontal_addsub_avx == Some(false);
             requirements.needs_vex_unaligned_packed_fp_move |= vex_unaligned_packed_fp_move;
@@ -368,8 +369,9 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_scalar_fp_convert
                 || vex_scalar_fp_to_int
                 || vex_scalar_int_to_fp
-                || vex_zero;
-            requirements.needs_avx |= span.instruction.is_vex_register_packed_string_compare()
+                || vex_zero
+                || vex_packed_string;
+            requirements.needs_avx |= vex_packed_string
                 || span.instruction.is_vex_register_fma3()
                 || is_fma4
                 || is_vpermil2
@@ -584,6 +586,17 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.needs_avx = true;
                 requirements.needs_sm3 |= sequence.encoding.kind.needs_sm3();
                 requirements.needs_sm4 |= sequence.encoding.kind.needs_sm4();
+                index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_vex_packed_string_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
                 index += sequence.consumed;
             } else if let Some(sequence) = super::x86_jit_vpclmulqdq_memory_sequence(
                 block,

@@ -95,6 +95,13 @@ impl X86_64Lowerer {
     /// Emit one exact source instruction, applying any host-compatibility
     /// status fixup requested by its byte-validated replay classifier.
     pub(crate) fn emit_native_replay_span(&mut self, span: &X86NativeReplaySpan) {
+        if let Some(returns_mask) = span.instruction.vex_register_packed_string_returns_mask() {
+            self.code.emit_bytes(span.instruction.as_slice());
+            if returns_mask && self.avx_ymm16_vector_state {
+                self.emit_avx_ymm16_state_backed_upper_clear(0);
+            }
+            return;
+        }
         if span.instruction.vex_zeroes_all_register_bits().is_some() {
             self.code.emit_bytes(span.instruction.as_slice());
             if self.avx_ymm16_vector_state {
@@ -1370,6 +1377,16 @@ impl X86_64Lowerer {
                 }
                 #[cfg(feature = "smir-jit")]
                 if let Some(consumed) = self.try_lower_jit_vex_sm3_sm4_memory_source(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_vex_packed_string_memory_source(
                     block,
                     idx,
                     &virtual_definitions,

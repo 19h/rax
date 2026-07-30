@@ -50,7 +50,7 @@ fn function(bytes: &[u8; 6]) -> crate::smir::ir::SmirFunction {
 }
 
 #[test]
-fn replay_feature_aggregation_requires_avx_and_full_vector_state_boundary() {
+fn replay_feature_aggregation_requires_only_the_avx_ymm16_state_boundary() {
     let bytes = encoding(0x60, true, 15, 8, 0xFF);
     let function = function(&bytes);
     let requirements =
@@ -58,9 +58,8 @@ fn replay_feature_aggregation_requires_avx_and_full_vector_state_boundary() {
     assert!(requirements.any);
     assert!(requirements.needs_avx);
     assert!(!requirements.needs_fma);
-    // The current native vector-state trampoline marshals K0-K7 with KMOVQ,
-    // even though VPCMPxSTRx itself does not access opmask state.
-    assert!(requirements.needs_avx512bw);
+    assert!(requirements.all_spans_support_avx_ymm16);
+    assert!(!requirements.needs_avx512bw);
     assert!(!requirements.needs_avx512vl);
     assert!(!requirements.needs_avx512dq);
     assert!(!requirements.needs_avx512fp16);
@@ -320,6 +319,7 @@ fn execute_native(
 
     let function = optimized_function(bytes, level, false);
     let mut lowerer = X86_64Lowerer::new();
+    lowerer.set_avx_ymm16_vector_state(true);
     let lowered = lowerer
         .lower_function(&function)
         .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
@@ -331,7 +331,7 @@ fn execute_native(
     let mut registers = GuestRegs {
         gpr: initial.gprs,
         rflags: initial.rflags,
-        vector_active: 1,
+        vector_active: X86_VECTOR_STATE_YMM16,
         k: initial.masks,
         mxcsr: initial.mxcsr,
         ..GuestRegs::default()
@@ -472,11 +472,8 @@ fn run_isolated_native_differential(test_name: &str) {
 #[cfg(target_arch = "x86_64")]
 #[test]
 fn replay_matches_o0_o2_interpretation_for_modes_lengths_aliases_flags_and_full_state() {
-    if !std::is_x86_feature_detected!("avx")
-        || !std::is_x86_feature_detected!("avx512f")
-        || !std::is_x86_feature_detected!("avx512bw")
-    {
-        eprintln!("skipping native VEX packed-string differential: host lacks AVX/AVX-512F/BW");
+    if !std::is_x86_feature_detected!("avx") {
+        eprintln!("skipping native VEX packed-string differential: host lacks AVX");
         return;
     }
     run_isolated_native_differential(
