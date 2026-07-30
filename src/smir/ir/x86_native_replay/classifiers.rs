@@ -54,6 +54,7 @@ mod vex_memory_broadcast;
 mod vex_mov_mask;
 mod vex_mpsadbw;
 mod vex_pabs;
+mod vex_packed_convert_memory;
 mod vex_packed_string;
 mod vex_pavg;
 mod vex_pmul_high_word;
@@ -96,6 +97,9 @@ pub(crate) use vex_immediate_permute::X86VexImmediatePermuteMemoryEncoding;
 pub(crate) use vex_integer_dot::X86VexIntegerDotMemoryFields;
 pub(crate) use vex_integer_dot_ext::X86VexIntegerDotExtMemoryFields;
 pub(crate) use vex_memory_broadcast::X86VexMemoryBroadcastFields;
+pub(crate) use vex_packed_convert_memory::{
+    X86VexPackedConvertMemoryEncoding, X86VexPackedConvertMemoryKind,
+};
 pub(crate) use vex_ptest::X86VexPtestMemoryEncoding;
 pub(crate) use vex_scalar_fp_memory::{X86VexScalarFpMemoryEncoding, X86VexScalarFpMemoryKind};
 pub(crate) use vex_scalar_insert_memory::{
