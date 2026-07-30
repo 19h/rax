@@ -76,6 +76,7 @@ mod vex_scalar_fp_memory;
 mod vex_scalar_insert;
 mod vex_scalar_insert_memory;
 mod vex_scalar_integer_memory;
+mod vex_scalar_l1;
 mod vex_scalar_vmovq;
 mod vex_shared_count_shift;
 mod vex_sm3_sm4;

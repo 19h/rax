@@ -1129,14 +1129,35 @@ fn jit_verify_executes_scalar_fp_arithmetic_memory_sources_with_exact_merge_stat
         Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
     let l1_code = [0xC5, 0xF6, 0x58, 0x43, 0x20, 0xEB, 0x00, 0xF4];
     l1_memory.write_slice(&l1_code, GuestAddress(0)).unwrap();
-    let mut l1 = long_mode_vcpu(l1_memory);
-    seed_architectural_state(&mut l1);
-    assert!(
-        l1.jit_compile_region()
-            .expect("classify VEX.L=1 scalar memory region")
-            .is_none(),
-        "generation-dependent VEX.L=1 scalar encoding was natively admitted"
+    l1_memory
+        .write_slice(&source, GuestAddress(DATA_BASE + DISP))
+        .unwrap();
+    let mut l1_direct = long_mode_vcpu(l1_memory.clone());
+    let mut l1_verified = long_mode_vcpu(l1_memory);
+    seed_architectural_state(&mut l1_direct);
+    seed_architectural_state(&mut l1_verified);
+    for vcpu in [&mut l1_direct, &mut l1_verified] {
+        vcpu.regs.xmm[1][0] =
+            (vcpu.regs.xmm[1][0] & 0xFFFF_FFFF_0000_0000) | u64::from(2.0f32.to_bits());
+    }
+    let l1_frontier = l1_code.len() as u64 - 1;
+    while l1_direct.regs.rip != l1_frontier {
+        assert!(l1_direct.step().unwrap().is_none());
+    }
+    let l1_region = l1_verified
+        .jit_compile_region()
+        .expect("compile canonical VEX.L=1 scalar memory region")
+        .expect("VEX.L=1 scalar memory region must canonicalize to native VEX.L=0");
+    assert!(l1_region.uses_vector);
+    assert!(l1_region.avx_ymm16_vector_state);
+    l1_verified.jit_run_region_verified(&l1_region);
+    assert_architectural_state_equal(
+        &l1_verified,
+        &l1_direct.regs,
+        l1_direct.mxcsr,
+        "canonical VEX.L=1 scalar-FP arithmetic",
     );
+    assert_eq!(l1_verified.regs.rip, l1_frontier);
 
     let frontier = code.len() as u64 - 1;
     let mut direct_steps = 0usize;

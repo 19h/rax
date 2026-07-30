@@ -269,6 +269,29 @@ fn optimize(mut function: SmirFunction, level: OptLevel) -> SmirFunction {
 
 fn assert_exact_graph(function: &SmirFunction, case: ScalarFpCase) {
     let ops = &function.blocks[0].ops;
+    let source = function
+        .x86_instruction_bytes
+        .get(&(function.blocks[0].id, PC))
+        .expect("exact scalar-move source provenance");
+    let source_bytes = source.as_slice();
+    let vex_offset = source_bytes
+        .iter()
+        .position(|byte| matches!(byte, 0xC4 | 0xC5))
+        .expect("scalar move uses VEX");
+    let p1_offset = if source_bytes[vex_offset] == 0xC5 {
+        vex_offset + 1
+    } else {
+        vex_offset + 2
+    };
+    let mut expected_hint = case.hint();
+    let X86OpHint::VexOp { width, .. } = &mut expected_hint else {
+        unreachable!("scalar move always carries a VEX operation hint")
+    };
+    *width = if source_bytes[p1_offset] & 0x04 == 0 {
+        VecWidth::V128
+    } else {
+        VecWidth::V256
+    };
     assert_eq!(ops.len(), 2, "{case:?}: {ops:#?}");
     let intermediate = match case.kind {
         X86VexScalarFpMemoryKind::Load => {
@@ -325,7 +348,7 @@ fn assert_exact_graph(function: &SmirFunction, case: ScalarFpCase) {
     };
     assert!(matches!(intermediate, VReg::Virtual(_)));
     assert_eq!(ops[0].x86_hint, None, "{case:?}");
-    assert_eq!(ops[1].x86_hint, Some(case.hint()), "{case:?}");
+    assert_eq!(ops[1].x86_hint, Some(expected_hint), "{case:?}");
     assert!(ops.iter().all(|op| op.guest_pc == PC));
     assert_eq!(
         classified(function, true),
@@ -551,7 +574,7 @@ fn assert_rejected(name: &str, function: &SmirFunction) {
 }
 
 #[test]
-fn vmovss_l1_reserved_source_metadata_and_missing_provenance_fail_closed() {
+fn vmovss_l1_canonicalizes_while_vmovsd_lig_and_invalid_provenance_remain_exact() {
     let ss = ScalarFpCase {
         family: ScalarFpFamily::Ss,
         kind: X86VexScalarFpMemoryKind::Load,
@@ -562,7 +585,12 @@ fn vmovss_l1_reserved_source_metadata_and_missing_provenance_fail_closed() {
     };
     let mut ss_l1 = ss.bytes();
     ss_l1[2] |= 0x04;
-    assert_rejected("VMOVSS L=1", &lift_bytes(&ss_l1));
+    for level in LEVELS {
+        let canonical = lower_case(&optimize(lift_case(ss), level), ss);
+        let l1_function = optimize(lift_bytes(&ss_l1), level);
+        assert_exact_graph(&l1_function, ss);
+        assert_eq!(lower_case(&l1_function, ss), canonical, "{level:?}");
+    }
 
     let sd_l1 = ScalarFpCase {
         family: ScalarFpFamily::Sd,

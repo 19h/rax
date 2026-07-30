@@ -41,13 +41,17 @@ fn element(width: MemWidth) -> Option<VecElementType> {
     }
 }
 
-fn has_exact_hint(op: &SmirOp, encoding: X86VexScalarFpMemoryEncoding) -> bool {
+fn has_exact_hint(
+    op: &SmirOp,
+    encoding: X86VexScalarFpMemoryEncoding,
+    source_width_256: bool,
+) -> bool {
     let expected_pp = match encoding.pp {
         2 => X86SsePrefix::Rep,
         3 => X86SsePrefix::Repne,
         _ => return false,
     };
-    let expected_width = if encoding.width_256 {
+    let expected_width = if source_width_256 {
         VecWidth::V256
     } else {
         VecWidth::V128
@@ -95,8 +99,12 @@ pub(crate) fn x86_jit_vex_scalar_fp_memory_sequence(
     if index != 0 && block.ops[index - 1].guest_pc == first.guest_pc {
         return None;
     }
-    let instruction = instruction_bytes.get(&(block.id, first.guest_pc))?;
+    let source_instruction = instruction_bytes.get(&(block.id, first.guest_pc))?;
+    let instruction = source_instruction
+        .vex_scalar_l1_canonical_l0()
+        .unwrap_or(*source_instruction);
     let encoding = instruction.vex_scalar_fp_memory_encoding()?;
+    let source_width_256 = instruction != *source_instruction || encoding.width_256;
     let vector = xmm(encoding.vector);
     let elem = element(encoding.memory_width)?;
 
@@ -125,7 +133,7 @@ pub(crate) fn x86_jit_vex_scalar_fp_memory_sequence(
                     elem: actual_elem,
                     lanes: 1,
                 } if *dst == vector && *scalar == loaded && *actual_elem == elem
-            ) || !has_exact_hint(broadcast, encoding)
+            ) || !has_exact_hint(broadcast, encoding, source_width_256)
             {
                 return None;
             }
@@ -152,7 +160,7 @@ pub(crate) fn x86_jit_vex_scalar_fp_memory_sequence(
                 } if *src == extracted
                     && *width == encoding.memory_width
                     && x86_jit_mem_address_shape_valid(addr)
-            ) || !has_exact_hint(store, encoding)
+            ) || !has_exact_hint(store, encoding, source_width_256)
             {
                 return None;
             }

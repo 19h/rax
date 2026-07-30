@@ -504,7 +504,8 @@ pub fn x86_native_replay_spans(
 /// Identify valid register-only AVX VEX signed scalar floating-point-to-
 /// integer replay groups in O(N) time and O(P) space for N operations and P
 /// unique guest PCs. The rounding and truncating binary32/binary64 forms are
-/// admitted; memory forms remain at the precise SMIR interpreter boundary.
+/// admitted; memory forms use their precise helper-backed path. Scalar
+/// `VEX.L=1` sources are emitted only as deterministic `VEX.L=0`.
 pub fn x86_vex_scalar_fp_to_int_replay_spans(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
@@ -518,8 +519,9 @@ pub fn x86_vex_scalar_fp_to_int_replay_spans(
 
 /// Identify valid register-only AVX VEX signed integer-to-scalar-FP replay
 /// groups in O(N) time and O(P) space for N operations and P unique guest PCs.
-/// The binary32/binary64 destination forms are admitted; memory forms remain
-/// at the precise SMIR interpreter boundary.
+/// The binary32/binary64 destination forms are admitted; memory forms use their
+/// precise helper-backed path. Scalar `VEX.L=1` sources are emitted only as
+/// deterministic `VEX.L=0`.
 pub fn x86_vex_scalar_int_to_fp_replay_spans(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,

@@ -1,8 +1,9 @@
 //! Byte-validated native replay metadata for x86 instructions.
 //!
 //! These classifiers accept exact register-only instruction shapes whose
-//! source bytes can safely replace the contiguous semantic SMIR group emitted
-//! for the same guest instruction.
+//! source bytes, or a byte-validated deterministic canonical encoding, can
+//! safely replace the contiguous semantic SMIR group emitted for the same
+//! guest instruction.
 
 use std::collections::HashMap;
 
@@ -124,7 +125,9 @@ pub use aggregate::{
 pub struct X86NativeReplaySpan {
     /// Exclusive semantic-op end index.
     pub end: usize,
-    /// Exact source instruction to emit.
+    /// Exact instruction to emit. This is normally the source instruction;
+    /// documented generation-dependent scalar VEX.L=1 sources carry the
+    /// deterministic VEX.L=0 encoding selected by RAX.
     pub instruction: X86InstructionBytes,
     /// Whether native execution requires AVX-512VL.
     pub needs_avx512vl: bool,
@@ -178,8 +181,15 @@ fn x86_native_replay_spans_where(
             {
                 return None;
             }
-            let instruction = *instruction_bytes.get(&(block.id, guest_pc))?;
-            let (needs_avx512vl, needs_avx512dq, needs_avx512fp16) = classify(&instruction)?;
+            let source_instruction = *instruction_bytes.get(&(block.id, guest_pc))?;
+            let (instruction, (needs_avx512vl, needs_avx512dq, needs_avx512fp16)) =
+                if let Some(requirements) = classify(&source_instruction) {
+                    (source_instruction, requirements)
+                } else {
+                    let canonical = source_instruction.vex_scalar_l1_canonical_l0()?;
+                    let requirements = classify(&canonical)?;
+                    (canonical, requirements)
+                };
             // VPERMIL2 is VEX encoded but belongs to AMD's XOP feature
             // subset. Its dynamic guest-state guard must remain independently
             // lowered before exact register replay replaces the remaining
@@ -235,8 +245,9 @@ pub fn x86_evex_fp_replay_spans(
 
 /// Identify valid register-only legacy SSE and AVX VEX binary floating-point
 /// arithmetic replay groups in `block` in O(N) time and O(P) space for N
-/// operations and P unique guest PCs. Memory forms and scalar `VEX.L=1`
-/// encodings remain at the precise SMIR interpreter boundary.
+/// operations and P unique guest PCs. Memory forms use their precise
+/// helper-backed path. Scalar `VEX.L=1` sources are emitted only after exact
+/// validation and deterministic canonicalization to `VEX.L=0`.
 pub fn x86_legacy_vex_fp_arithmetic_replay_spans(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
@@ -265,8 +276,9 @@ pub fn x86_legacy_vex_fp_compare_replay_spans(
 
 /// Identify defined register-only AVX VEX scalar flag-compare replay groups in
 /// `block` in O(N) time and O(P) space for N operations and P unique guest PCs.
-/// Memory forms and generation-dependent unpredictable `VEX.L=1` encodings
-/// remain at the precise SMIR interpreter boundary.
+/// Memory forms use their precise helper-backed path. Generation-dependent
+/// `VEX.L=1` sources are emitted only as byte-validated deterministic
+/// `VEX.L=0` instructions.
 pub fn x86_vex_fp_flag_compare_replay_spans(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
@@ -295,9 +307,9 @@ pub fn x86_vex_round_replay_spans(
 
 /// Identify defined register-only AVX VEX scalar binary32/binary64 precision
 /// conversion replay groups in `block` in O(N) time and O(P) space for N
-/// operations and P unique guest PCs. Memory forms and generation-dependent
-/// unpredictable `VEX.L=1` encodings remain at the precise interpreter
-/// boundary.
+/// operations and P unique guest PCs. Memory forms use their precise
+/// helper-backed path. Generation-dependent `VEX.L=1` sources are emitted
+/// only as byte-validated deterministic `VEX.L=0` instructions.
 pub fn x86_vex_scalar_fp_convert_replay_spans(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
@@ -498,8 +510,8 @@ pub fn x86_vex_zero_replay_spans(
 /// Identify valid register-only legacy SSE and AVX VEX scalar floating-point
 /// move replay groups in `block` in O(N) time and O(P) space for N operations
 /// and P unique guest PCs. Memory forms use their separate precise
-/// helper-backed path; `VMOVSS` with `VEX.L=1` remains at the SMIR interpreter
-/// boundary.
+/// helper-backed path. `VMOVSS` with `VEX.L=1` is emitted only as a
+/// byte-validated deterministic `VEX.L=0` instruction.
 pub fn x86_legacy_vex_scalar_move_replay_spans(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
@@ -1270,8 +1282,9 @@ pub fn x86_evex_fp_sqrt_replay_spans(
 
 /// Identify valid register-only legacy SSE and AVX VEX floating-point
 /// square-root replay groups in `block` in O(N) time and O(P) space for N
-/// operations and P unique guest PCs. Memory forms and scalar `VEX.L=1`
-/// encodings remain at the precise SMIR interpreter boundary.
+/// operations and P unique guest PCs. Memory forms use their precise
+/// helper-backed path. Scalar `VEX.L=1` sources are emitted only after exact
+/// validation and deterministic canonicalization to `VEX.L=0`.
 pub fn x86_legacy_vex_fp_sqrt_replay_spans(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,

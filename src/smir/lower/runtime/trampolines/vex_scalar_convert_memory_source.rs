@@ -12,8 +12,9 @@ use crate::smir::ir::{
 
 use super::x86_jit_mem_address_shape_valid;
 
-/// Exact two-op decomposition consumed for one deterministic VEX.L=0 scalar
-/// conversion memory source.
+/// Exact two-op decomposition consumed for one deterministic scalar conversion
+/// memory source. Generation-dependent VEX.L=1 provenance is canonicalized to
+/// VEX.L=0 before this encoding reaches the native lowerer.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct X86JitVexScalarConvertMemorySequence {
     pub(crate) consumed: usize,
@@ -28,14 +29,15 @@ fn xmm(index: u8) -> VReg {
     x86(X86Reg::Xmm(index))
 }
 
-/// Validate an exact load/conversion pair for the eight deterministic
-/// VEX.L=0 scalar conversion memory families.
+/// Validate an exact load/conversion pair for the eight deterministic scalar
+/// conversion memory families.
 ///
 /// Complete source-byte provenance binds the opcode, W-selected integer
-/// width, F3/F2 floating format, destination, merge source, and forbidden
-/// generation-dependent VEX.L=1 state. The loaded virtual must have exactly
-/// one definition and one use. Classification is O(1); callers construct the
-/// definition/use maps once in O(N) time and O(V) space.
+/// width, F3/F2 floating format, destination, and merge source.
+/// Generation-dependent VEX.L=1 provenance must pass exact scalar-family
+/// validation and is then canonicalized to VEX.L=0. The loaded virtual must
+/// have exactly one definition and one use. Classification is O(1); callers
+/// construct the definition/use maps once in O(N) time and O(V) space.
 pub(crate) fn x86_jit_vex_scalar_convert_memory_sequence(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
@@ -51,7 +53,15 @@ pub(crate) fn x86_jit_vex_scalar_convert_memory_sequence(
     if index != 0 && block.ops[index - 1].guest_pc == load.guest_pc {
         return None;
     }
-    let instruction = instruction_bytes.get(&(block.id, load.guest_pc))?;
+    let source_instruction = instruction_bytes.get(&(block.id, load.guest_pc))?;
+    let instruction = source_instruction
+        .vex_scalar_l1_canonical_l0()
+        .unwrap_or(*source_instruction);
+    let source_width = if instruction == *source_instruction {
+        VecWidth::V128
+    } else {
+        VecWidth::V256
+    };
     let encoding = instruction.vex_scalar_convert_memory_encoding()?;
 
     let expected_mem_width = match encoding.memory_size {
@@ -95,7 +105,7 @@ pub(crate) fn x86_jit_vex_scalar_convert_memory_sequence(
                 map: X86VecMap::Map0F,
                 pp: prefix,
                 opcode: encoding.opcode,
-                width: VecWidth::V128,
+                width: source_width,
                 w: encoding.w,
             })
         || block

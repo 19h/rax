@@ -36,10 +36,12 @@ fn virtual_single_definition_single_use(
 /// decomposition.
 ///
 /// Source-byte provenance binds the architectural source register, element
-/// type, COMI/UCOMI exception policy, WIG encoding, reserved VEX.vvvv,
-/// deterministic VEX.L=0 form, and exact 4- or 8-byte memory footprint. Both
-/// loaded virtuals must be closed single-definition/single-use values, and no
-/// same-PC tail may remain unconsumed.
+/// type, COMI/UCOMI exception policy, WIG encoding, reserved VEX.vvvv, and exact
+/// 4- or 8-byte memory footprint. A generation-dependent VEX.L=1 source is
+/// accepted only after exact validation and canonicalization to the
+/// deterministic VEX.L=0 form. Both loaded virtuals must be closed
+/// single-definition/single-use values, and no same-PC tail may remain
+/// unconsumed.
 ///
 /// Classification is O(1); callers build definition/use maps once in O(N)
 /// time and O(V) space for N operations and V virtual registers.
@@ -125,7 +127,15 @@ pub(crate) fn x86_jit_vex_fp_flag_compare_memory_sequence(
         return None;
     }
 
-    let instruction = instruction_bytes.get(&(block.id, load.guest_pc))?;
+    let source_instruction = instruction_bytes.get(&(block.id, load.guest_pc))?;
+    let instruction = source_instruction
+        .vex_scalar_l1_canonical_l0()
+        .unwrap_or(*source_instruction);
+    let source_width = if instruction == *source_instruction {
+        VecWidth::V128
+    } else {
+        VecWidth::V256
+    };
     let (encoded_source1, encoded_elem, encoded_signaling, encoded_size, w) =
         instruction.vex_memory_fp_flag_compare_fields()?;
     if (
@@ -148,7 +158,7 @@ pub(crate) fn x86_jit_vex_fp_flag_compare_memory_sequence(
             map: X86VecMap::Map0F,
             pp: expected_prefix,
             opcode,
-            width: VecWidth::V128,
+            width: source_width,
             w,
         })
     {

@@ -11,9 +11,10 @@ impl X86InstructionBytes {
     /// These scalar flag-setting comparisons use map 0F opcodes 2EH/2FH,
     /// reserve VEX.vvvv as `1111b`, define VEX.W as ignored, and require only
     /// AVX. Although the opcode table labels VEX.L as ignored, Intel documents
-    /// VEX.L=1 behavior as generation-dependent unpredictable; native
-    /// admission therefore accepts only VEX.L=0. Runtime and auxiliary space
-    /// are O(1).
+    /// VEX.L=1 behavior as generation-dependent unpredictable. This primitive
+    /// accepts only VEX.L=0; the enclosing source-provenance layer separately
+    /// validates and canonicalizes the corresponding VEX.L=1 form. Runtime and
+    /// auxiliary space are O(1).
     pub(crate) fn vex_memory_fp_flag_compare_fields(
         &self,
     ) -> Option<(u8, VecElementType, bool, u32, bool)> {
@@ -87,9 +88,11 @@ impl X86InstructionBytes {
     /// Both scalar comparison instructions use map 0F opcode C2H, define
     /// VEX.W as ignored, and reserve immediate bits 7:5. Although the opcode
     /// table labels VEX.L as ignored, Intel documents VEX.L=1 behavior as
-    /// generation-dependent unpredictable; native admission therefore accepts
-    /// only VEX.L=0. Packed `VCMPPS`/`VCMPPD` encodings are deliberately
-    /// excluded. Runtime and auxiliary space are O(1).
+    /// generation-dependent unpredictable. This primitive accepts only
+    /// VEX.L=0; the enclosing source-provenance layer separately validates and
+    /// canonicalizes the corresponding VEX.L=1 form. Packed
+    /// `VCMPPS`/`VCMPPD` encodings are deliberately excluded. Runtime and
+    /// auxiliary space are O(1).
     pub(crate) fn vex_memory_scalar_fp_compare_fields(
         &self,
     ) -> Option<(u8, u8, VecElementType, u8, bool)> {

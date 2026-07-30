@@ -1229,7 +1229,6 @@ fn scalar_graph_and_source_byte_provenance_fail_closed_for_every_invariant() {
     for (name, byte_index, xor) in [
         ("encoded map", 1, 0x03),
         ("encoded prefix", 2, 0x01),
-        ("unpredictable encoded scalar L=1", 2, 0x04),
         ("encoded W", 2, 0x80),
         ("encoded opcode", 3, 0x01),
         ("encoded destination", 4, 0x08),
@@ -1271,7 +1270,8 @@ fn scalar_graph_and_source_byte_provenance_fail_closed_for_every_invariant() {
 }
 
 #[test]
-fn scalar_vex_l1_lifts_but_stays_at_the_generation_dependent_frontier() {
+fn scalar_vex_l1_lowers_identically_to_canonical_l0() {
+    let mut lowered = 0usize;
     for kind in [SqrtKind::ScalarF32, SqrtKind::ScalarF64] {
         for form in EncodingForm::ALL {
             let case = SqrtMemoryCase {
@@ -1295,12 +1295,12 @@ fn scalar_vex_l1_lifts_but_stays_at_the_generation_dependent_frontier() {
             bytes[p1] |= 0x04;
             for level in LEVELS {
                 let function = optimize(lift_bytes(&bytes), level);
-                assert!(
-                    !function.blocks[0].ops.is_empty(),
-                    "{level:?} {kind:?} {form:?}: scalar L=1 did not lift"
-                );
-                assert_rejected("scalar VEX.L=1", &function);
+                assert_exact_sequence(&function, case);
+                let canonical = lower(&optimize(lift_case(case), level), case);
+                assert_eq!(lower(&function, case), canonical, "{level:?} {case:?}");
+                lowered += 1;
             }
         }
     }
+    assert_eq!(lowered, 2 * EncodingForm::ALL.len() * LEVELS.len());
 }

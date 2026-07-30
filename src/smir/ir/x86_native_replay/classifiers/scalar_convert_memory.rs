@@ -65,9 +65,11 @@ impl X86InstructionBytes {
     /// vector-destination families consume it as the upper-lane merge source.
     ///
     /// Intel documents VEX.L=1 for every listed scalar instruction as
-    /// generation-dependent unpredictable behavior. Only VEX.L=0 is admitted.
-    /// The complete memory instruction must contain only segment/address-size
-    /// legacy prefixes and an exact ModR/M/SIB/displacement shape.
+    /// generation-dependent unpredictable behavior. This primitive admits only
+    /// VEX.L=0; the enclosing source-provenance layer separately validates and
+    /// canonicalizes the corresponding VEX.L=1 form. The complete memory
+    /// instruction must contain only segment/address-size legacy prefixes and
+    /// an exact ModR/M/SIB/displacement shape.
     pub(crate) fn vex_scalar_convert_memory_encoding(
         &self,
     ) -> Option<X86VexScalarConvertMemoryEncoding> {

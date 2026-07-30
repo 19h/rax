@@ -332,7 +332,25 @@ fn replay_admits_and_emits_6_016_optimized_legal_encodings_and_fails_closed() {
     };
     let mut scalar_l1 = encoding(scalar);
     scalar_l1[1] |= 0x04;
-    assert!(!is_native_clobber_safe(&function(&scalar_l1)));
+    let canonical = encoding(scalar);
+    let scalar_l1_function = function(&scalar_l1);
+    assert!(is_native_clobber_safe(&scalar_l1_function));
+    let mut lowerer = X86_64Lowerer::new();
+    lowerer
+        .lower_function(&scalar_l1_function)
+        .expect("lower canonical scalar VEX.L=1 compare replay");
+    let code = lowerer
+        .finalize()
+        .expect("finalize canonical scalar VEX.L=1 compare replay");
+    assert!(
+        code.windows(canonical.len())
+            .any(|window| window == canonical)
+    );
+    assert!(
+        !code
+            .windows(scalar_l1.len())
+            .any(|window| window == scalar_l1)
+    );
 }
 
 #[cfg(target_arch = "x86_64")]

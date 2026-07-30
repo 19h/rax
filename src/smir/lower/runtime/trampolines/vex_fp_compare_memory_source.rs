@@ -273,7 +273,15 @@ fn x86_jit_vex_scalar_fp_compare_memory_sequence(
     let destination = low_vex_vector_index(*dst, VecWidth::V128)?;
     let source1 = low_vex_vector_index(*src1, VecWidth::V128)?;
 
-    let instruction = instruction_bytes.get(&(block.id, load.guest_pc))?;
+    let source_instruction = instruction_bytes.get(&(block.id, load.guest_pc))?;
+    let instruction = source_instruction
+        .vex_scalar_l1_canonical_l0()
+        .unwrap_or(*source_instruction);
+    let source_width = if instruction == *source_instruction {
+        VecWidth::V128
+    } else {
+        VecWidth::V256
+    };
     let (encoded_destination, encoded_source1, encoded_elem, encoded_predicate, w) =
         instruction.vex_memory_scalar_fp_compare_fields()?;
     if (
@@ -295,7 +303,7 @@ fn x86_jit_vex_scalar_fp_compare_memory_sequence(
             map: X86VecMap::Map0F,
             pp: expected_prefix,
             opcode: 0xC2,
-            width: VecWidth::V128,
+            width: source_width,
             w,
         })
     {

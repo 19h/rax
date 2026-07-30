@@ -266,10 +266,23 @@ fn replay_admits_and_emits_176_legacy_vex_shapes_at_o0_o2_and_fails_closed() {
     );
     assert!(!is_native_clobber_safe(&memory_metadata));
 
-    let mut scalar_l1 = bytes;
+    let mut scalar_l1 = bytes.clone();
     scalar_l1[1] |= 0x04;
-    let unpredictable = function(&scalar_l1);
-    assert!(!is_native_clobber_safe(&unpredictable));
+    let scalar_l1_function = function(&scalar_l1);
+    assert!(is_native_clobber_safe(&scalar_l1_function));
+    let mut lowerer = X86_64Lowerer::new();
+    lowerer
+        .lower_function(&scalar_l1_function)
+        .expect("lower canonical scalar VEX.L=1 square-root replay");
+    let code = lowerer
+        .finalize()
+        .expect("finalize canonical scalar VEX.L=1 square-root replay");
+    assert!(code.windows(bytes.len()).any(|window| window == bytes));
+    assert!(
+        !code
+            .windows(scalar_l1.len())
+            .any(|window| window == scalar_l1)
+    );
 }
 
 #[cfg(target_arch = "x86_64")]

@@ -412,6 +412,25 @@ fn optimize(mut function: SmirFunction, level: OptLevel) -> SmirFunction {
 
 fn assert_exact_lift_and_sequence(function: &SmirFunction, case: ConvertCase) {
     let block = &function.blocks[0];
+    let source = function
+        .x86_instruction_bytes
+        .get(&(block.id, PC))
+        .expect("exact scalar-conversion source provenance");
+    let source_bytes = source.as_slice();
+    let vex_offset = source_bytes
+        .iter()
+        .position(|byte| matches!(byte, 0xC4 | 0xC5))
+        .expect("scalar conversion uses VEX");
+    let p1_offset = if source_bytes[vex_offset] == 0xC5 {
+        vex_offset + 1
+    } else {
+        vex_offset + 2
+    };
+    let source_width = if source_bytes[p1_offset] & 0x04 == 0 {
+        VecWidth::V128
+    } else {
+        VecWidth::V256
+    };
     assert_eq!(block.ops.len(), 2, "{case:?}");
     let loaded = match &block.ops[0].kind {
         OpKind::Load {
@@ -454,7 +473,7 @@ fn assert_exact_lift_and_sequence(function: &SmirFunction, case: ConvertCase) {
                 X86SsePrefix::Repne
             },
             opcode: case.kind.opcode(),
-            width: VecWidth::V128,
+            width: source_width,
             w: case.form.w(),
         }),
         "{case:?}"
@@ -741,8 +760,8 @@ fn high_operands_full_address_shapes_and_ignored_vex_fields_remain_exact() {
 }
 
 #[test]
-fn vex_l1_and_reserved_or_nonexact_source_images_fail_closed() {
-    let mut rejected = 0usize;
+fn vex_l1_source_images_lower_identically_to_canonical_l0() {
+    let mut lowered = 0usize;
     for kind in ConvertKind::ALL {
         for form in VexForm::SCANNER_FORMS {
             let case = ConvertCase {
@@ -755,16 +774,24 @@ fn vex_l1_and_reserved_or_nonexact_source_images_fail_closed() {
             let mut l1 = case.bytes();
             let p1 = if matches!(form, VexForm::C5) { 1 } else { 2 };
             l1[p1] |= 0x04;
-            let function = optimize(lift_bytes(&l1), OptLevel::O2);
-            assert_eq!(classified_sequence(&function, true), None, "{case:?}");
-            assert!(
-                !is_native_clobber_safe_excluding(&function, &HashMap::new(), true),
-                "{case:?}"
-            );
-            rejected += 1;
+            for level in LEVELS {
+                let canonical = lower(&optimize(lift_case(case), level), case);
+                let function = optimize(lift_bytes(&l1), level);
+                assert_exact_lift_and_sequence(&function, case);
+                assert_eq!(lower(&function, case), canonical, "{level:?} {case:?}");
+                lowered += 1;
+            }
         }
     }
+    assert_eq!(
+        lowered,
+        ConvertKind::ALL.len() * VexForm::SCANNER_FORMS.len() * LEVELS.len()
+    );
+}
 
+#[test]
+fn reserved_or_nonexact_source_images_fail_closed() {
+    let mut rejected = 0usize;
     let case = ConvertCase {
         kind: ConvertKind::F64ToI32Or64,
         form: VexForm::C4 {
@@ -801,10 +828,7 @@ fn vex_l1_and_reserved_or_nonexact_source_images_fail_closed() {
         );
         rejected += 1;
     }
-    assert_eq!(
-        rejected,
-        ConvertKind::ALL.len() * VexForm::SCANNER_FORMS.len() + 7
-    );
+    assert_eq!(rejected, 7);
 }
 
 fn assert_rejected(name: &str, function: &SmirFunction) {

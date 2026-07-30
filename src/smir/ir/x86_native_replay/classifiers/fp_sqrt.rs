@@ -12,9 +12,10 @@ impl X86InstructionBytes {
     /// memory footprint from VEX.L. Scalar forms consume VEX.vvvv as their
     /// upper-lane merge source and read exactly 4 or 8 bytes. Although the
     /// scalar opcode table labels VEX.L as ignored, Intel documents VEX.L=1
-    /// behavior as generation-dependent unpredictable, so only VEX.L=0 is
-    /// admitted. VEX.W is ignored for all four instructions. Runtime and
-    /// auxiliary space are O(1).
+    /// behavior as generation-dependent unpredictable. This primitive accepts
+    /// only VEX.L=0; the enclosing source-provenance layer separately validates
+    /// and canonicalizes the corresponding VEX.L=1 form. VEX.W is ignored for
+    /// all four instructions. Runtime and auxiliary space are O(1).
     pub(crate) fn vex_memory_fp_sqrt_fields(
         &self,
     ) -> Option<(u8, Option<u8>, VecElementType, VecWidth, u32, bool)> {
@@ -68,10 +69,11 @@ impl X86InstructionBytes {
     /// Legacy forms accept the canonical mandatory-prefix position, an
     /// optional REX prefix, and a register ModR/M source. VEX forms require map
     /// 0F and a register source. Packed VEX forms reserve `vvvv`, while scalar
-    /// forms use it as the upper-lane merge source. Scalar `VEX.L=1` is kept at
-    /// the interpreter boundary because Intel documents generation-dependent
-    /// unpredictable behavior for that encoding. Memory forms remain excluded
-    /// so replay cannot bypass guest translation or fault handling.
+    /// forms use it as the upper-lane merge source. This primitive excludes
+    /// scalar `VEX.L=1`; the enclosing source-provenance layer validates and
+    /// canonicalizes that generation-dependent encoding before replay. Memory
+    /// forms remain excluded so replay cannot bypass guest translation or
+    /// fault handling.
     pub fn legacy_vex_register_fp_sqrt_needs_avx(&self) -> Option<bool> {
         let bytes = self.as_slice();
         let legacy_modrm = match bytes {

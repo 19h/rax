@@ -16,8 +16,10 @@ pub(crate) struct X86VexScalarFpMemoryEncoding {
     pub(crate) kind: X86VexScalarFpMemoryKind,
     pub(crate) vector: u8,
     pub(crate) memory_width: MemWidth,
-    /// Exact L bit. `VMOVSD` is LIG; `VMOVSS` is admitted only at L=0 because
-    /// Intel documents L=1 as generation-dependent unpredictable behavior.
+    /// Exact canonical L bit. `VMOVSD` is LIG; this primitive admits `VMOVSS`
+    /// only at L=0 because Intel documents L=1 as generation-dependent
+    /// unpredictable behavior. The enclosing layer canonicalizes validated
+    /// VMOVSS L=1 provenance before invoking this primitive.
     pub(crate) width_256: bool,
     /// Exact ignored W bit, retained to bind source metadata to its SMIR hint.
     pub(crate) w: bool,
@@ -29,11 +31,12 @@ impl X86InstructionBytes {
     /// Validate one complete VEX `VMOVSS` or `VMOVSD` memory form.
     ///
     /// Both families use map 0F opcodes 10H/11H, reserve VEX.vvvv as encoded
-    /// `1111b`, and treat W as ignored. `VMOVSS` transfers 4 bytes; admission
-    /// restricts it to L=0 because Intel documents L=1 as
-    /// generation-dependent unpredictable. `VMOVSD` transfers 8 bytes and
-    /// accepts both L encodings because it is LIG. These moves are bit
-    /// transfers with no SIMD floating-point exceptions. The shared parser
+    /// `1111b`, and treat W as ignored. `VMOVSS` transfers 4 bytes; this
+    /// primitive restricts it to L=0 because Intel documents L=1 as
+    /// generation-dependent unpredictable. The enclosing layer canonicalizes
+    /// validated VMOVSS L=1 provenance before invoking it. `VMOVSD` transfers
+    /// 8 bytes and accepts both L encodings because it is LIG. These moves are
+    /// bit transfers with no SIMD floating-point exceptions. The shared parser
     /// validates the complete
     /// ModR/M/SIB/displacement image and accepts only segment/address-size
     /// legacy prefixes.

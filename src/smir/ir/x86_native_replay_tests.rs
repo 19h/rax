@@ -145,6 +145,9 @@ mod vex_scalar_extract;
 #[path = "x86_native_replay_tests/vex_scalar_vmovq.rs"]
 mod vex_scalar_vmovq;
 
+#[path = "x86_native_replay_tests/vex_scalar_l1.rs"]
+mod vex_scalar_l1;
+
 #[path = "x86_native_replay_tests/vex_mov_mask.rs"]
 mod vex_mov_mask;
 

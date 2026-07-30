@@ -568,13 +568,6 @@ fn scalar_classifier_and_lowerer_fail_closed_for_semantic_and_provenance_invaria
     let mut missing_metadata = base.clone();
     missing_metadata.x86_instruction_bytes.clear();
 
-    let mut l1_metadata = base.clone();
-    let mut l1 = case.bytes();
-    l1[1] |= 0x04;
-    l1_metadata
-        .x86_instruction_bytes
-        .insert((BlockId(0), PC), X86InstructionBytes::new(&l1).unwrap());
-
     let mut wrong_destination_metadata = base.clone();
     let mut wrong_destination = case.bytes();
     wrong_destination[3] ^= 0x08;
@@ -690,7 +683,6 @@ fn scalar_classifier_and_lowerer_fail_closed_for_semantic_and_provenance_invaria
 
     let malformed = [
         ("missing source metadata", missing_metadata),
-        ("VEX.L=1 source metadata", l1_metadata),
         ("metadata destination mismatch", wrong_destination_metadata),
         ("metadata source1 mismatch", wrong_source1_metadata),
         ("trailing source byte", trailing_metadata),
@@ -716,14 +708,21 @@ fn scalar_classifier_and_lowerer_fail_closed_for_semantic_and_provenance_invaria
 }
 
 #[test]
-fn vex_l1_scalar_memory_forms_lift_but_remain_at_the_interpreter_frontier() {
+fn vex_l1_scalar_memory_forms_lower_identically_to_canonical_l0() {
+    let mut lowered = 0usize;
     for case in all_cases() {
         let mut bytes = case.bytes();
         let p1 = if bytes[0] == 0xC5 { 1 } else { 2 };
         bytes[p1] |= 0x04;
-        let function = lift_bytes(&bytes);
-        assert_rejected("VEX.L=1 generation-dependent scalar encoding", &function);
+        for level in LEVELS {
+            let l0 = lower(&optimize(lift_case(case), level));
+            let l1 = optimize(lift_bytes(&bytes), level);
+            assert_exact_chain(&l1.blocks[0].ops, case);
+            assert_eq!(lower(&l1), l0, "{level:?} {case:?}");
+            lowered += 1;
+        }
     }
+    assert_eq!(lowered, 36 * LEVELS.len());
 }
 
 fn words_to_bytes(words: [u64; 8]) -> [u8; 64] {

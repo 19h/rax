@@ -263,11 +263,6 @@ fn replay_fails_closed_without_exact_defined_source_provenance() {
     for invalid in [
         {
             let mut value = bytes.clone();
-            value[2] |= 0x04; // VEX.L=1 is generation-dependent unpredictable
-            value
-        },
-        {
-            let mut value = bytes.clone();
             value[2] &= !0x08; // VEX.vvvv != 1111b
             value
         },
@@ -289,6 +284,22 @@ fn replay_fails_closed_without_exact_defined_source_provenance() {
         );
         assert!(!is_native_clobber_safe(&malformed), "{invalid:02X?}");
     }
+
+    let mut l1 = bytes.clone();
+    l1[2] |= 0x04;
+    let l1_function = function(&l1);
+    assert!(is_native_clobber_safe(&l1_function));
+    let spans = crate::smir::ir::x86_native_replay_spans(
+        &l1_function.blocks[0],
+        &l1_function.x86_instruction_bytes,
+    );
+    assert_eq!(
+        spans
+            .get(&0)
+            .expect("canonical VEX flag-compare span")
+            .instruction,
+        crate::smir::ir::X86InstructionBytes::new(&bytes).unwrap()
+    );
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -398,6 +398,8 @@ mod vex_scalar_int_to_fp_replay;
 #[cfg(test)]
 mod vex_scalar_integer_memory_source;
 #[cfg(test)]
+mod vex_scalar_l1_canonical;
+#[cfg(test)]
 mod vex_scalar_vmovq_replay;
 #[cfg(test)]
 mod vex_shared_count_shift_memory_source;

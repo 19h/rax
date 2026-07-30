@@ -374,7 +374,10 @@ fn scalar_sequence(
     {
         return None;
     }
-    let instruction = instruction_bytes.get(&(block.id, load.guest_pc))?;
+    let source_instruction = instruction_bytes.get(&(block.id, load.guest_pc))?;
+    let instruction = source_instruction
+        .vex_scalar_l1_canonical_l0()
+        .unwrap_or(*source_instruction);
     let (
         encoded_destination,
         encoded_source1,
@@ -418,8 +421,10 @@ fn scalar_sequence(
 /// the complete low-lane computation, VEX.vvvv upper-lane merge, and VEX
 /// destination clearing chain. Every hidden virtual is single-definition and
 /// single-use, every operation is contiguous at one guest PC, and exact source
-/// bytes bind all architectural operands, widths, prefixes, WIG, reserved
-/// fields, and the deterministic scalar VEX.L=0 frontier.
+/// bytes bind all architectural operands, widths, prefixes, WIG, and reserved
+/// fields. A generation-dependent scalar VEX.L=1 source is accepted only after
+/// exact validation and canonicalization to the deterministic VEX.L=0
+/// frontier.
 ///
 /// Classification is O(1); callers build definition/use maps once in O(N)
 /// time and O(V) space for N operations and V virtual registers.
