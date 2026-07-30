@@ -285,6 +285,8 @@ mod vex_fp_shuffle_memory_source;
 #[cfg(test)]
 mod vex_gfni_replay;
 #[cfg(test)]
+mod vex_half_move_memory_source;
+#[cfg(test)]
 mod vex_horizontal_integer_memory_source;
 #[cfg(test)]
 mod vex_immediate_blend_memory_source;
