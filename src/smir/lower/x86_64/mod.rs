@@ -251,6 +251,8 @@ mod vex_round_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_scalar_convert_memory_source;
 #[cfg(feature = "smir-jit")]
+mod vex_scalar_fp_memory_source;
+#[cfg(feature = "smir-jit")]
 mod vex_scalar_insert_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_scalar_integer_memory_source;

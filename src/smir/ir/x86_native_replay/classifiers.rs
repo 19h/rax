@@ -64,6 +64,7 @@ mod vex_psign;
 mod vex_ptest;
 mod vex_register_broadcast;
 mod vex_scalar_extract;
+mod vex_scalar_fp_memory;
 mod vex_scalar_insert;
 mod vex_scalar_insert_memory;
 mod vex_scalar_integer_memory;
@@ -96,6 +97,7 @@ pub(crate) use vex_integer_dot::X86VexIntegerDotMemoryFields;
 pub(crate) use vex_integer_dot_ext::X86VexIntegerDotExtMemoryFields;
 pub(crate) use vex_memory_broadcast::X86VexMemoryBroadcastFields;
 pub(crate) use vex_ptest::X86VexPtestMemoryEncoding;
+pub(crate) use vex_scalar_fp_memory::{X86VexScalarFpMemoryEncoding, X86VexScalarFpMemoryKind};
 pub(crate) use vex_scalar_insert_memory::{
     X86VexScalarInsertMemoryFields, X86VexScalarInsertMemoryKind,
 };

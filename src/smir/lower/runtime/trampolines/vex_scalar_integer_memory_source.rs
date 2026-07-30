@@ -190,7 +190,7 @@ pub(crate) fn x86_jit_vex_scalar_integer_memory_sequence(
 
 /// Return the exact length of any helper-backed VEX scalar-move memory graph.
 ///
-/// This consolidates half-lane floating moves and scalar-integer moves at
+/// This consolidates half-lane, scalar-floating, and scalar-integer moves at
 /// their common dispatch points while retaining their independent exact
 /// classifiers.
 pub(crate) fn x86_jit_vex_scalar_move_memory_sequence_len(
@@ -212,6 +212,17 @@ pub(crate) fn x86_jit_vex_scalar_move_memory_sequence_len(
     .map(|sequence| sequence.consumed)
     .or_else(|| {
         super::x86_jit_vex_half_move_store_sequence(
+            block,
+            index,
+            allow_mem,
+            instruction_bytes,
+            virtual_definitions,
+            virtual_uses,
+        )
+        .map(|sequence| sequence.consumed)
+    })
+    .or_else(|| {
+        super::x86_jit_vex_scalar_fp_memory_sequence(
             block,
             index,
             allow_mem,

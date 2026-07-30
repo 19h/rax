@@ -64,8 +64,8 @@ pub(crate) use classifiers::{
     X86EvexScalarFma3MemoryEncoding, X86VexCrossLane128MemoryEncoding, X86VexFma4MemoryEncoding,
     X86VexHalfMoveMemoryEncoding, X86VexHalfMoveStoreEncoding, X86VexImmediateBlendMemoryFields,
     X86VexImmediatePermuteMemoryEncoding, X86VexPtestMemoryEncoding, X86VexRoundMemoryEncoding,
-    X86VexScalarConvertMemoryEncoding, X86VexScalarConvertMemoryKind,
-    X86VexScalarInsertMemoryFields, X86VexScalarInsertMemoryKind,
+    X86VexScalarConvertMemoryEncoding, X86VexScalarConvertMemoryKind, X86VexScalarFpMemoryEncoding,
+    X86VexScalarFpMemoryKind, X86VexScalarInsertMemoryFields, X86VexScalarInsertMemoryKind,
     X86VexScalarIntegerMemoryEncoding, X86VexScalarIntegerMemoryKind,
     X86VexVariableBlendMemoryEncoding, X86VexVariablePermuteMemoryEncoding,
 };
@@ -440,8 +440,9 @@ pub fn x86_vex_zero_replay_spans(
 
 /// Identify valid register-only legacy SSE and AVX VEX scalar floating-point
 /// move replay groups in `block` in O(N) time and O(P) space for N operations
-/// and P unique guest PCs. Memory forms and `VMOVSS` with `VEX.L=1` remain at
-/// the precise SMIR interpreter boundary.
+/// and P unique guest PCs. Memory forms use their separate precise
+/// helper-backed path; `VMOVSS` with `VEX.L=1` remains at the SMIR interpreter
+/// boundary.
 pub fn x86_legacy_vex_scalar_move_replay_spans(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,

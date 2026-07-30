@@ -363,6 +363,8 @@ mod vex_scalar_fp_compare_memory_source;
 #[cfg(test)]
 mod vex_scalar_fp_convert_replay;
 #[cfg(test)]
+mod vex_scalar_fp_memory_source;
+#[cfg(test)]
 mod vex_scalar_fp_to_int_replay;
 #[cfg(test)]
 mod vex_scalar_insert_memory_source;

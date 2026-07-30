@@ -2,11 +2,11 @@
 
 use super::{X86_64Lowerer, X86Emitter};
 use crate::smir::ir::ops::{X86SsePrefix, X86VecMap};
-use crate::smir::ir::types::{DispSize, OpWidth, VecWidth};
+use crate::smir::ir::types::{Address, DispSize, MemWidth, OpWidth, VecWidth};
 use crate::smir::lower::regalloc::PhysReg;
 use crate::smir::lower::{
-    X86_GUEST_K_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_VECTOR_SCRATCH_OFFSET,
-    X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET,
+    LowerError, X86_GUEST_K_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_VECTOR_SCRATCH_OFFSET,
+    X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_JIT_VECTOR_SCRATCH_INDEX,
 };
 
 impl X86_64Lowerer {
@@ -170,6 +170,69 @@ impl X86_64Lowerer {
             X86_GUEST_VECTOR_SCRATCH_OFFSET,
             DispSize::Disp32,
         );
+    }
+
+    /// Transfer one 4- or 8-byte scalar between precise guest memory and an
+    /// architectural XMM register through the nonarchitectural helper slot.
+    ///
+    /// Loads commit only after a successful helper return, zero every
+    /// architectural vector bit above the scalar, and repair the state-backed
+    /// ZMM upper half used by the AVX-only bridge. Stores publish the scalar to
+    /// scratch before the helper; scratch is nonarchitectural, so a fault
+    /// leaves all guest-visible register and memory state uncommitted.
+    pub(crate) fn emit_jit_vector_scratch_scalar_memory_transfer(
+        &mut self,
+        guest_pc: u64,
+        load: bool,
+        vector: u8,
+        address: &Address,
+        memory_width: MemWidth,
+    ) -> Result<(), LowerError> {
+        let (width, size) = match memory_width {
+            MemWidth::B4 => (OpWidth::W32, 4),
+            MemWidth::B8 => (OpWidth::W64, 8),
+            _ => {
+                return Err(LowerError::InvalidOperand {
+                    op: "VEX scalar memory transfer".to_string(),
+                    operand: format!("unsupported memory width {memory_width:?}"),
+                });
+            }
+        };
+        let register = PhysReg::Xmm(vector);
+
+        if load {
+            self.emit_jit_vector_mem_helper(
+                guest_pc,
+                true,
+                X86_JIT_VECTOR_SCRATCH_INDEX as u8,
+                address,
+                size,
+                true,
+                true,
+            )?;
+        }
+
+        self.code.emit_u8(0x50); // push guest RAX
+        self.emit_load_state_ptr_rax();
+        self.emit_jit_vector_scratch_scalar_move(register, width, load);
+        self.code.emit_u8(0x58); // pop guest RAX
+
+        if load {
+            if self.avx_ymm16_vector_state {
+                self.emit_avx_ymm16_state_backed_upper_clear(vector);
+            }
+        } else {
+            self.emit_jit_vector_mem_helper(
+                guest_pc,
+                false,
+                X86_JIT_VECTOR_SCRATCH_INDEX as u8,
+                address,
+                size,
+                false,
+                true,
+            )?;
+        }
+        Ok(())
     }
 
     /// Restore the complete architectural vector register borrowed as a
