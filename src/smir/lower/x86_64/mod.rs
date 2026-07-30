@@ -79,6 +79,8 @@ mod evex_fma3_memory_source;
 mod evex_logic_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_masked_logic_memory_source;
+#[cfg(feature = "smir-jit")]
+mod evex_variable_permute_memory_source;
 mod invlpg;
 #[cfg(feature = "smir-jit")]
 mod jit_vector_memory_replay;

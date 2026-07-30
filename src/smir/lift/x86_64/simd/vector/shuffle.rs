@@ -1245,18 +1245,10 @@ impl X86_64Lifter {
 
         let controls = if permil {
             if let Some(addr) = memory_addr.clone() {
-                if let Some(mask) = mask {
-                    self.append_evex_masked_vector_source(
-                        addr,
-                        elem,
-                        prefix.width,
-                        broadcast,
-                        mask,
-                        pc,
-                        ctx,
-                        &mut ops,
-                    )
-                } else if broadcast {
+                // EVEX VPERMILPS/PD are exception class E4NF: their memory
+                // control operand does not support writemask fault
+                // suppression. The mask applies only to the destination.
+                if broadcast {
                     self.append_broadcast_memory_source(addr, elem, prefix.width, pc, ctx, &mut ops)
                 } else {
                     let loaded = ctx.alloc_vreg();

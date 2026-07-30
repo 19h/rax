@@ -1855,13 +1855,20 @@ fn lift_avx_permute_family_covers_domains_widths_masks_memory_and_invalids() {
             .iter()
             .filter(|op| matches!(
                 op.kind,
-                OpKind::PredLoad {
+                OpKind::Load {
                     width: MemWidth::B4,
                     ..
                 }
             ))
             .count(),
-        16
+        1
+    );
+    assert!(
+        !broadcast_controls
+            .ops
+            .iter()
+            .any(|op| matches!(op.kind, OpKind::PredLoad { .. })),
+        "class-E4NF VPERMILPS control memory cannot be fault-suppressed"
     );
 
     for bytes in [

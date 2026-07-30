@@ -7,6 +7,7 @@ mod evex_broadcast_logic_memory;
 mod evex_fma3_memory;
 mod evex_logic_memory;
 mod evex_memory;
+mod evex_variable_permute_memory;
 mod fp16_narrow;
 mod fp16_widen;
 mod fp32_fp64_convert;
@@ -98,6 +99,7 @@ pub(crate) use evex_fma3_memory::{
 pub(crate) use evex_logic_memory::{
     X86EvexLogicMemoryEncoding, X86EvexLogicMemoryKind, X86EvexMaskedLogicMemoryEncoding,
 };
+pub(crate) use evex_variable_permute_memory::X86EvexVariablePermuteMemoryEncoding;
 pub(crate) use fp_round::X86VexRoundMemoryEncoding;
 pub(crate) use fp16_narrow::X86VexFp16NarrowMemoryEncoding;
 pub(crate) use scalar_convert_memory::{
