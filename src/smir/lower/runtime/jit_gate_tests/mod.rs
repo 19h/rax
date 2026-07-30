@@ -297,6 +297,8 @@ mod vex_half_move_memory_source;
 #[cfg(test)]
 mod vex_horizontal_integer_memory_source;
 #[cfg(test)]
+mod vex_ifma52_replay;
+#[cfg(test)]
 mod vex_immediate_blend_memory_source;
 #[cfg(test)]
 mod vex_immediate_blend_replay;

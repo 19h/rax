@@ -42,6 +42,7 @@ mod vex_fp_dot_product;
 mod vex_fp_logic;
 mod vex_half_move_memory;
 mod vex_horizontal_integer;
+mod vex_ifma52;
 mod vex_immediate_blend;
 mod vex_immediate_permute;
 mod vex_integer_dot;

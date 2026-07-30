@@ -14,6 +14,7 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_avx: bool,
     pub(crate) needs_avx2: bool,
     pub(crate) needs_avx_vnni: bool,
+    pub(crate) needs_avx_ifma: bool,
     pub(crate) needs_avx_vnni_int8: bool,
     pub(crate) needs_avx_vnni_int16: bool,
     pub(crate) needs_f16c: bool,
@@ -102,6 +103,20 @@ pub(crate) fn x86_host_has_xop() -> bool {
 /// query the structured extended-feature leaf directly.
 #[cfg(target_arch = "x86_64")]
 pub(crate) fn x86_host_has_avx_vnni() -> bool {
+    x86_host_has_leaf7_subleaf1_eax_feature(1 << 4)
+}
+
+/// Intel SDM Volume 1 defines AVX_IFMA at CPUID.07H.01H:EAX[23]. Stable Rust
+/// exposes the target feature for code generation, but use the architectural
+/// bit directly so replay admission follows the same explicit leaf-bound
+/// validation as the other VEX-only feature classes.
+#[cfg(target_arch = "x86_64")]
+pub(crate) fn x86_host_has_avx_ifma() -> bool {
+    x86_host_has_leaf7_subleaf1_eax_feature(1 << 23)
+}
+
+#[cfg(target_arch = "x86_64")]
+fn x86_host_has_leaf7_subleaf1_eax_feature(feature_mask: u32) -> bool {
     // SAFETY: CPUID is architecturally available in x86-64 mode. The maximum
     // basic leaf and CPUID.07H.00H:EAX maximum subleaf are checked before
     // querying CPUID.07H.01H.
@@ -121,7 +136,7 @@ pub(crate) fn x86_host_has_avx_vnni() -> bool {
             max_basic_leaf,
             max_structured_subleaf,
             subleaf1_eax,
-            1 << 4,
+            feature_mask,
         )
     }
 }
@@ -202,6 +217,7 @@ impl X86NativeReplayFeatureRequirements {
             && (!self.needs_avx || std::is_x86_feature_detected!("avx"))
             && (!self.needs_avx2 || std::is_x86_feature_detected!("avx2"))
             && (!self.needs_avx_vnni || x86_host_has_avx_vnni())
+            && (!self.needs_avx_ifma || x86_host_has_avx_ifma())
             && (!self.needs_avx_vnni_int8 || x86_host_has_avx_vnni_int8())
             && (!self.needs_avx_vnni_int16 || x86_host_has_avx_vnni_int16())
             && (!self.needs_f16c || std::is_x86_feature_detected!("f16c"))
@@ -243,6 +259,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             let is_vpermil2 = span.instruction.is_vex_register_vpermil2();
             let vex_fp_dot_product_ymm = span.instruction.vex_register_fp_dot_product_uses_ymm();
             let vex_integer_dot = span.instruction.vex_register_integer_dot_fields().is_some();
+            let vex_ifma52 = span.instruction.vex_register_ifma52_fields().is_some();
             let vex_integer_dot_ext_int16 =
                 span.instruction.vex_register_integer_dot_ext_is_int16();
             let immediate_blend_avx2 = span.instruction.vex_register_immediate_blend_needs_avx2();
@@ -303,6 +320,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || is_vpermil2
                 || vex_fp_dot_product_ymm.is_some()
                 || vex_integer_dot
+                || vex_ifma52
                 || vex_integer_dot_ext_int16.is_some()
                 || fp_estimate_avx.is_some()
                 || immediate_blend_avx2.is_some()
@@ -340,6 +358,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || is_vpermil2
                 || vex_fp_dot_product_ymm.is_some()
                 || vex_integer_dot
+                || vex_ifma52
                 || vex_integer_dot_ext_int16.is_some()
                 || immediate_blend_avx2.is_some()
                 || immediate_permute_avx2.is_some()
@@ -387,6 +406,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_scalar_int_to_fp
                 || vex_zero;
             requirements.needs_avx_vnni |= vex_integer_dot;
+            requirements.needs_avx_ifma |= vex_ifma52;
             requirements.needs_avx2 |= widening_dword_multiply_avx2 == Some(true)
                 || immediate_blend_avx2 == Some(true)
                 || immediate_permute_avx2 == Some(true)
@@ -900,6 +920,18 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.needs_avx = true;
                 requirements.needs_avx_vnni = true;
                 index += sequence.binary.consumed;
+            } else if let Some(sequence) = super::x86_jit_vex_ifma52_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                requirements.needs_avx_ifma = true;
+                index += sequence.binary.consumed;
             } else if let Some(sequence) = super::x86_jit_vex_integer_dot_ext_memory_sequence(
                 block,
                 index,
@@ -968,6 +1000,21 @@ mod tests {
     #[test]
     fn avx_vnni_cpuid_bit_requires_basic_leaf_7_and_subleaf_1() {
         let bit = 1 << 4;
+        assert!(!cpuid_enumerates_leaf7_subleaf1_eax_feature(6, 1, bit, bit));
+        assert!(!cpuid_enumerates_leaf7_subleaf1_eax_feature(7, 0, bit, bit));
+        assert!(!cpuid_enumerates_leaf7_subleaf1_eax_feature(7, 1, 0, bit));
+        assert!(cpuid_enumerates_leaf7_subleaf1_eax_feature(7, 1, bit, bit));
+        assert!(cpuid_enumerates_leaf7_subleaf1_eax_feature(
+            u32::MAX,
+            u32::MAX,
+            u32::MAX,
+            bit
+        ));
+    }
+
+    #[test]
+    fn avx_ifma_cpuid_bit_requires_basic_leaf_7_and_subleaf_1() {
+        let bit = 1 << 23;
         assert!(!cpuid_enumerates_leaf7_subleaf1_eax_feature(6, 1, bit, bit));
         assert!(!cpuid_enumerates_leaf7_subleaf1_eax_feature(7, 0, bit, bit));
         assert!(!cpuid_enumerates_leaf7_subleaf1_eax_feature(7, 1, 0, bit));
