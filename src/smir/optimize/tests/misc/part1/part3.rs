@@ -6,6 +6,7 @@ use crate::smir::optimize::*;
 
 #[test]
 fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
+    use crate::smir::ir::ops::{X86SsePrefix, X86VecAlign, X86VecMap};
     use crate::smir::ir::types::{
         FpRoundMode, ShiftOp, SourceArch, VLaneOp, VecCmpCond, VecUnaryOp, VecWidth, X86FpBinaryOp,
         X86Reg,
@@ -2857,40 +2858,44 @@ fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
         !ops.iter()
             .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. }))
     );
-    let load = ops
-        .iter()
-        .position(|op| {
-            matches!(
-                op.kind,
-                OpKind::VLoad {
-                    width: VecWidth::V128,
-                    ..
-                }
-            )
-        })
-        .expect("VEX VPHMINPOSUW unaligned source load must survive optimization");
-    let read_flags = ops
-        .iter()
-        .position(|op| matches!(op.kind, OpKind::ReadFlags { .. }))
-        .unwrap();
-    let write_flags = ops
-        .iter()
-        .position(|op| matches!(op.kind, OpKind::WriteFlags { .. }))
-        .unwrap();
-    let destination_write = ops
-        .iter()
-        .position(|op| {
-            matches!(
-                op.kind,
-                OpKind::VMov {
-                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
-                    width: VecWidth::V128,
-                    ..
-                }
-            )
-        })
-        .expect("VEX VPHMINPOSUW zeroing destination write must survive optimization");
-    assert!(load < read_flags && read_flags < write_flags && write_flags < destination_write);
+    let [load, minimum] = ops.as_slice() else {
+        panic!("VEX VPHMINPOSUW must retain its exact load/minimum pair: {ops:?}")
+    };
+    let temporary = match &load.kind {
+        OpKind::VLoad {
+            dst: temporary @ VReg::Virtual(_),
+            width: VecWidth::V128,
+            ..
+        } => *temporary,
+        other => panic!("unexpected VEX VPHMINPOSUW load: {other:?}"),
+    };
+    assert!(matches!(
+        load.x86_hint,
+        Some(X86OpHint::VecAlign(
+            X86VecAlign::Unaligned | X86VecAlign::Aligned
+        ))
+    ));
+    assert!(matches!(
+        minimum,
+        SmirOp {
+            kind: OpKind::X86Phminposuw {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                src,
+            },
+            x86_hint: Some(X86OpHint::VexOp {
+                map: X86VecMap::Map0F38,
+                pp: X86SsePrefix::OpSize,
+                opcode: 0x41,
+                width: VecWidth::V128,
+                ..
+            }),
+            ..
+        } if *src == temporary
+    ));
+    assert!(!ops.iter().any(|op| matches!(
+        op.kind,
+        OpKind::ReadFlags { .. } | OpKind::WriteFlags { .. }
+    )));
 
     for (name, bytes, width, products, legacy_alignment, dst) in [
         (

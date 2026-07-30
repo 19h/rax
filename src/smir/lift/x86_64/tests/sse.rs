@@ -3823,24 +3823,47 @@ fn lift_phminposuw_covers_first_unsigned_minimum_alignment_and_invalids() {
     ));
 
     let vex_mem = lift_single(&[0xC4, 0x62, 0x79, 0x41, 0x48, 0x20]).unwrap();
-    assert!(vex_mem.ops.iter().any(|op| matches!(
-        op.kind,
-        OpKind::VLoad {
-            width: VecWidth::V128,
+    let [load, minpos] = vex_mem.ops.as_slice() else {
+        panic!(
+            "VEX VPHMINPOSUW memory form must be one load/minimum pair: {:?}",
+            vex_mem.ops
+        )
+    };
+    let temporary = match load {
+        SmirOp {
+            kind:
+                OpKind::VLoad {
+                    dst: temporary @ VReg::Virtual(_),
+                    width: VecWidth::V128,
+                    ..
+                },
+            x86_hint: Some(X86OpHint::VecAlign(X86VecAlign::Unaligned)),
             ..
-        }
-    )));
+        } => *temporary,
+        other => panic!("unexpected VEX VPHMINPOSUW load: {other:?}"),
+    };
+    assert!(matches!(
+        minpos,
+        SmirOp {
+            kind: OpKind::X86Phminposuw {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(9))),
+                src,
+            },
+            x86_hint: Some(X86OpHint::VexOp {
+                map: X86VecMap::Map0F38,
+                pp: X86SsePrefix::OpSize,
+                opcode: 0x41,
+                width: VecWidth::V128,
+                w: false,
+            }),
+            ..
+        } if *src == temporary
+    ));
     assert!(
         !vex_mem
             .ops
             .iter()
             .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. }))
-    );
-    assert!(
-        !vex_mem
-            .ops
-            .iter()
-            .any(|op| matches!(op.kind, OpKind::X86Phminposuw { .. }))
     );
 
     // Both legacy REX.W and VEX.W are ignored.

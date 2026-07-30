@@ -1,4 +1,4 @@
-//! Helper-backed VEX packed-absolute-value memory-source lowering.
+//! Helper-backed VEX unary memory-source lowering.
 
 use std::collections::HashMap;
 
@@ -10,6 +10,59 @@ use crate::smir::lower::regalloc::PhysReg;
 use crate::smir::lower::{LowerError, X86_JIT_VECTOR_SCRATCH_INDEX};
 
 impl X86_64Lowerer {
+    /// Fuse one exact VEX.128 `VPHMINPOSUW` memory source.
+    ///
+    /// The precise MMU helper commits only the nonarchitectural 16-byte
+    /// transfer slot. A byte-validated register-source rewrite consumes the
+    /// helper value from a borrowed low XMM register, which is restored in
+    /// full before continuation.
+    pub(crate) fn try_lower_jit_vex_phminposuw_memory_source(
+        &mut self,
+        block: &SmirBlock,
+        index: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let Some(sequence) = crate::smir::lower::runtime::x86_jit_vex_phminposuw_memory_sequence(
+            block,
+            index,
+            true,
+            &self.x86_instruction_bytes,
+            virtual_definitions,
+            virtual_uses,
+        ) else {
+            return Ok(None);
+        };
+        let address = match &block.ops[index].kind {
+            OpKind::VLoad { addr, .. } => addr,
+            _ => unreachable!("validated VEX PHMINPOSUW sequence starts with VLoad"),
+        };
+        self.emit_jit_vector_mem_helper(
+            block.ops[index].guest_pc,
+            true,
+            X86_JIT_VECTOR_SCRATCH_INDEX as u8,
+            address,
+            16,
+            true,
+            true,
+        )?;
+
+        let encoding = sequence.encoding;
+        let scratch = PhysReg::Xmm(encoding.scratch);
+        self.code.emit_u8(0x50); // push guest RAX
+        self.emit_load_state_ptr_rax();
+        self.emit_jit_vector_scratch_load(scratch, VecWidth::V128);
+        self.code
+            .emit_bytes(encoding.register_instruction.as_slice());
+        self.emit_jit_vector_scratch_restore(encoding.scratch);
+        self.code.emit_u8(0x58); // pop guest RAX
+
+        if self.avx_ymm16_vector_state {
+            self.emit_avx_ymm16_state_backed_upper_clear(encoding.destination);
+        }
+        Ok(Some(sequence.consumed))
+    }
+
     fn vex_packed_abs_phys_reg(index: u8, width: VecWidth) -> PhysReg {
         match width {
             VecWidth::V128 => PhysReg::Xmm(index),

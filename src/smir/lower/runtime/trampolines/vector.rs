@@ -371,8 +371,9 @@ pub(crate) fn x86_vector_sad_bytes_shape_valid(op: &crate::smir::ir::ops::OpKind
     [dst, src1, src2].into_iter().all(vector_matches_width)
 }
 /// Exact register-only PHMINPOSUW/VPHMINPOSUW semantic shape. Both encodings
-/// address only the architectural low 16 XMM registers; memory sources remain
-/// expanded so alignment and fault ordering stay explicit in SMIR.
+/// address only the architectural low 16 XMM registers. A separately
+/// byte-validated sequence classifier admits the VEX memory-source pair while
+/// preserving its load frontier.
 pub(crate) fn x86_phminposuw_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::{ArchReg, VReg, X86Reg};

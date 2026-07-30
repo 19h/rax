@@ -338,6 +338,8 @@ mod vex_packed_string_replay;
 #[cfg(test)]
 mod vex_pavg_memory_source;
 #[cfg(test)]
+mod vex_phminposuw_memory_source;
+#[cfg(test)]
 mod vex_pmul_high_word_memory_source;
 #[cfg(test)]
 mod vex_pmul_low_memory_source;

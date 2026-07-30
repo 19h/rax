@@ -58,6 +58,7 @@ mod vex_pabs;
 mod vex_packed_convert_memory;
 mod vex_packed_string;
 mod vex_pavg;
+mod vex_phminposuw;
 mod vex_pmul_high_word;
 mod vex_pmul_low;
 mod vex_pmulhrsw;
@@ -104,6 +105,7 @@ pub(crate) use vex_memory_broadcast::X86VexMemoryBroadcastFields;
 pub(crate) use vex_packed_convert_memory::{
     X86VexPackedConvertMemoryEncoding, X86VexPackedConvertMemoryKind,
 };
+pub(crate) use vex_phminposuw::X86VexPhminposuwMemoryEncoding;
 pub(crate) use vex_ptest::X86VexPtestMemoryEncoding;
 pub(crate) use vex_scalar_fp_memory::{X86VexScalarFpMemoryEncoding, X86VexScalarFpMemoryKind};
 pub(crate) use vex_scalar_insert_memory::{

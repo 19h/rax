@@ -1161,26 +1161,12 @@ impl X86_64Lifter {
             self.vec_reg(modrm.rm, VecWidth::V128)
         };
         let dst = self.vec_reg(modrm.reg, VecWidth::V128);
-        if modrm.is_memory {
-            let raw = ctx.alloc_vreg();
-            self.append_phminposuw(raw, src, pc, ctx, &mut ops);
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::VMov {
-                    dst,
-                    src: raw,
-                    width: VecWidth::V128,
-                },
-            ));
-        } else {
-            ops.push(SmirOp::with_hint(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::X86Phminposuw { dst, src },
-                self.vec_hint(prefix, 0x41),
-            ));
-        }
+        ops.push(SmirOp::with_hint(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86Phminposuw { dst, src },
+            self.vec_hint(prefix, 0x41),
+        ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 

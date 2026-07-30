@@ -661,6 +661,19 @@ impl X86_64Lowerer {
                         continue;
                     }
                     if let Some(sequence) =
+                        crate::smir::lower::runtime::x86_jit_vex_phminposuw_memory_sequence(
+                            block,
+                            validate_idx,
+                            true,
+                            &self.x86_instruction_bytes,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
+                        validate_idx += sequence.consumed;
+                        continue;
+                    }
+                    if let Some(sequence) =
                         crate::smir::lower::runtime::x86_jit_vex_packed_abs_memory_sequence(
                             block,
                             validate_idx,
@@ -1577,6 +1590,16 @@ impl X86_64Lowerer {
                 }
                 #[cfg(feature = "smir-jit")]
                 if let Some(consumed) = self.try_lower_jit_aes_memory_source(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_vex_phminposuw_memory_source(
                     block,
                     idx,
                     &virtual_definitions,
