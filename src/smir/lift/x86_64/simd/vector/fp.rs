@@ -1334,25 +1334,27 @@ impl X86_64Lifter {
             ops.extend(pre_ops);
             let value = ctx.alloc_vreg();
             let zero = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Mov {
-                    dst: zero,
-                    src: SrcOperand::Imm(0),
-                    width: OpWidth::W64,
-                },
-            ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::VBroadcast {
-                    dst: value,
-                    scalar: zero,
-                    elem: from,
-                    lanes,
-                },
-            ));
+            if prefix.encoding != VecEncodingKind::Vex {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Mov {
+                        dst: zero,
+                        src: SrcOperand::Imm(0),
+                        width: OpWidth::W64,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VBroadcast {
+                        dst: value,
+                        scalar: zero,
+                        elem: from,
+                        lanes,
+                    },
+                ));
+            }
             let mem_width = match from {
                 VecElementType::F16 => MemWidth::B2,
                 VecElementType::F32 => MemWidth::B4,

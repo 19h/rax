@@ -36,6 +36,28 @@ fn bytes_to_words(bytes: [u8; 64]) -> [u64; 8] {
 
 #[cfg(target_arch = "x86_64")]
 fn source_words(case: ConvertCase, sample: usize) -> [u64; 8] {
+    const F16_VALUES: [u16; 20] = [
+        0x0000, // +0
+        0x8000, // -0
+        0x3E00, // +1.5
+        0xBE00, // -1.5
+        0x0001, // minimum positive subnormal
+        0x03FF, // maximum positive subnormal
+        0x0400, // minimum positive normal
+        0x7BFF, // maximum finite
+        0x7C00, // +infinity
+        0xFC00, // -infinity
+        0x7E55, // quiet NaN with payload
+        0x7C55, // signaling NaN with payload
+        0x3555, // approximately +1/3
+        0xB555, // approximately -1/3
+        0x6400, // +1024
+        0x0401, // minimum normal plus one ULP
+        0x8001, // minimum negative subnormal
+        0x83FF, // maximum negative subnormal
+        0xFE55, // negative quiet NaN with payload
+        0xFC55, // negative signaling NaN with payload
+    ];
     const F32_VALUES: [u32; 16] = [
         0x0000_0000, // +0
         0x8000_0000, // -0
@@ -96,6 +118,10 @@ fn source_words(case: ConvertCase, sample: usize) -> [u64; 8] {
     for lane in 0..lanes {
         let ordinal = sample + lane;
         match case.kind.source_elem() {
+            VecElementType::F16 => {
+                bytes[lane * 2..(lane + 1) * 2]
+                    .copy_from_slice(&F16_VALUES[ordinal % F16_VALUES.len()].to_le_bytes());
+            }
             VecElementType::F32 => {
                 bytes[lane * 4..(lane + 1) * 4]
                     .copy_from_slice(&F32_VALUES[ordinal % F32_VALUES.len()].to_le_bytes());
@@ -183,7 +209,9 @@ fn full_guest_regs(case: ConvertCase, seed: usize, mxcsr: u32) -> GuestRegs {
                 ^ (word as u64).wrapping_mul(0x8040_2010_0804_0201)
         });
     }
-    registers.gpr[usize::from(case.base)] = 0x2000 + ((seed & 0x1F) as u64) * 0x40;
+    let f16_misalignment = u64::from(case.kind == ConvertKind::F16ToF32) * ((seed & 7) as u64);
+    registers.gpr[usize::from(case.base)] =
+        0x2000 + ((seed & 0x1F) as u64) * 0x40 + f16_misalignment;
     registers
 }
 
@@ -275,16 +303,20 @@ struct NativeCase {
 }
 
 #[cfg(target_arch = "x86_64")]
-fn native_cases() -> Vec<NativeCase> {
+fn native_cases(has_f16c: bool) -> Vec<NativeCase> {
     let destinations = [0u8, 4, 5, 9, 15, 7, 1, 12];
     let c5_bases = [0u8, 2, 4, 5, 7, 1, 3, 6];
     let c4_bases = [11u8, 12, 4, 5, 14, 0, 2, 15];
+    let kinds = ConvertKind::ALL
+        .into_iter()
+        .filter(|kind| has_f16c || *kind != ConvertKind::F16ToF32)
+        .collect::<Vec<_>>();
     let mut cases = Vec::new();
     let mut ordinal = 0usize;
     for level in DIFFERENTIAL_LEVELS {
-        for kind in ConvertKind::ALL {
+        for &kind in &kinds {
             for width in [VecWidth::V128, VecWidth::V256] {
-                for form in VexForm::ALL {
+                for &form in kind.forms() {
                     for sample in 0..NATIVE_SAMPLE_COUNT {
                         let base = if form == VexForm::C5 {
                             c5_bases[sample % c5_bases.len()]
@@ -321,10 +353,9 @@ fn native_cases() -> Vec<NativeCase> {
     assert_eq!(
         cases.len(),
         DIFFERENTIAL_LEVELS.len()
-            * ConvertKind::ALL.len()
             * 2
-            * VexForm::ALL.len()
             * NATIVE_SAMPLE_COUNT
+            * kinds.iter().map(|kind| kind.forms().len()).sum::<usize>()
     );
     assert!(cases.iter().any(|case| case.instruction.destination == 4));
     assert!(cases.iter().any(|case| case.instruction.destination == 5));
@@ -443,7 +474,7 @@ fn run_child_range(test_name: &str, range: std::ops::Range<usize>) -> std::proce
 
 #[cfg(target_arch = "x86_64")]
 fn run_isolated_native_differential(test_name: &str) {
-    let cases = native_cases();
+    let cases = native_cases(std::is_x86_feature_detected!("f16c"));
     if let Some(range) = child_range() {
         execute_native_case_range(&cases, range);
         return;
@@ -494,10 +525,36 @@ fn run_isolated_native_differential(test_name: &str) {
 
 #[cfg(target_arch = "x86_64")]
 #[test]
+fn native_case_matrix_preserves_classic_coverage_without_f16c() {
+    let classic = native_cases(false);
+    let all = native_cases(true);
+    assert_eq!(classic.len(), 1_536);
+    assert_eq!(all.len(), 1_600);
+    assert!(
+        classic
+            .iter()
+            .all(|case| case.instruction.kind != ConvertKind::F16ToF32)
+    );
+    assert_eq!(
+        all.iter()
+            .filter(|case| case.instruction.kind == ConvertKind::F16ToF32)
+            .count(),
+        64
+    );
+}
+
+#[cfg(target_arch = "x86_64")]
+#[test]
 fn native_memory_conversions_match_o0_o2_interpreter_and_fault_without_commit() {
     if !std::is_x86_feature_detected!("avx") {
         eprintln!("skipping native VEX packed conversion memory differential: host lacks AVX");
         return;
+    }
+    if !std::is_x86_feature_detected!("f16c") {
+        eprintln!(
+            "running classic VEX packed conversion memory differential; \
+             FP16 subset skipped because host lacks F16C"
+        );
     }
     run_isolated_native_differential(
         "smir::lower::runtime::jit_gate_tests::vex_packed_convert_memory_source::semantics::\
@@ -637,4 +694,100 @@ fn interpreter_matches_rounding_indefinite_lane_and_upper_zero_contracts() {
         ]
     );
     assert_eq!(actual.zmm[9][4..], [0; 4]);
+}
+
+#[cfg(target_arch = "x86_64")]
+#[test]
+fn interpreter_fp16_widen_is_exact_ignores_daz_ftz_and_reports_only_snan_invalid() {
+    let case = ConvertCase {
+        kind: ConvertKind::F16ToF32,
+        width: VecWidth::V256,
+        form: VexForm::C4W0,
+        destination: 9,
+        base: 11,
+    };
+    let vectors = [
+        (
+            [
+                0x0000u16, // +0
+                0x8000,    // -0
+                0x0001,    // minimum positive subnormal
+                0x03FF,    // maximum positive subnormal
+                0x0400,    // minimum positive normal
+                0x7BFF,    // maximum finite
+                0x7E55,    // quiet NaN with payload
+                0x7C55,    // signaling NaN with payload
+            ],
+            [
+                0x0000_0000u32,
+                0x8000_0000,
+                0x3380_0000,
+                0x387F_C000,
+                0x3880_0000,
+                0x477F_E000,
+                0x7FCA_A000,
+                0x7FCA_A000,
+            ],
+        ),
+        (
+            [
+                0x8001u16, // minimum negative subnormal
+                0x83FF,    // maximum negative subnormal
+                0x8400,    // minimum negative normal
+                0xFBFF,    // maximum negative finite
+                0xFE55,    // negative quiet NaN with payload
+                0xFC55,    // negative signaling NaN with payload
+                0x3C00,    // +1
+                0xBC00,    // -1
+            ],
+            [
+                0xB380_0000u32,
+                0xB87F_C000,
+                0xB880_0000,
+                0xC77F_E000,
+                0xFFCA_A000,
+                0xFFCA_A000,
+                0x3F80_0000,
+                0xBF80_0000,
+            ],
+        ),
+    ];
+
+    for (vector_index, (source, expected)) in vectors.into_iter().enumerate() {
+        let mut source_bytes = [0u8; 64];
+        for (lane, value) in source.into_iter().enumerate() {
+            source_bytes[lane * 2..lane * 2 + 2].copy_from_slice(&value.to_le_bytes());
+        }
+        for rc in 0..4u32 {
+            for daz_ftz in [0, (1 << 6) | (1 << 15)] {
+                let (initial, actual) = interpreter_result(
+                    case,
+                    bytes_to_words(source_bytes),
+                    0x1F80 | (rc << 13) | daz_ftz,
+                    vector_index * 8 + (rc as usize) * 2 + usize::from(daz_ftz != 0),
+                );
+                let destination = words_to_bytes(actual.zmm[9]);
+                for (lane, expected) in expected.into_iter().enumerate() {
+                    assert_eq!(
+                        u32::from_le_bytes(destination[lane * 4..lane * 4 + 4].try_into().unwrap()),
+                        expected,
+                        "vector={vector_index} rc={rc} daz_ftz={daz_ftz:#06X} lane={lane}"
+                    );
+                }
+                assert_ne!(actual.mxcsr & 1, 0, "SNaN must accrue MXCSR.IE");
+                assert_eq!(
+                    actual.mxcsr & (1 << 1),
+                    0,
+                    "FP16 subnormals must not accrue MXCSR.DE"
+                );
+                assert_eq!(
+                    actual.mxcsr & !0x3F,
+                    initial.mxcsr & !0x3F,
+                    "control bits changed"
+                );
+                assert_eq!(actual.zmm[9][4..], [0; 4], "upper 256 bits not zero");
+                assert_eq!(actual.rflags, initial.rflags, "RFLAGS changed");
+            }
+        }
+    }
 }

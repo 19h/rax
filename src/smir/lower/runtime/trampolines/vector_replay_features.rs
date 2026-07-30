@@ -591,6 +591,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             ) {
                 requirements.any = true;
                 requirements.needs_avx = true;
+                requirements.needs_f16c |= sequence.encoding.needs_f16c();
                 index += sequence.consumed;
             } else if let Some(sequence) = super::x86_jit_vex_round_memory_sequence(
                 block,

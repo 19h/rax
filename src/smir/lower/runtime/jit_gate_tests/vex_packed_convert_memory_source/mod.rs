@@ -31,6 +31,7 @@ const LEVELS: [OptLevel; 3] = [OptLevel::O0, OptLevel::O1, OptLevel::O2];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum ConvertKind {
+    F16ToF32,
     F32ToF64,
     F64ToF32,
     I32ToF32,
@@ -42,7 +43,8 @@ enum ConvertKind {
 }
 
 impl ConvertKind {
-    const ALL: [Self; 8] = [
+    const ALL: [Self; 9] = [
+        Self::F16ToF32,
         Self::F32ToF64,
         Self::F64ToF32,
         Self::I32ToF32,
@@ -55,10 +57,26 @@ impl ConvertKind {
 
     const fn pp(self) -> u8 {
         match self {
+            Self::F16ToF32 => 1,
             Self::F32ToF64 | Self::I32ToF32 => 0,
             Self::F64ToF32 | Self::F32ToI32 | Self::F64ToI32Truncate => 1,
             Self::F32ToI32Truncate | Self::I32ToF64 => 2,
             Self::F64ToI32 => 3,
+        }
+    }
+
+    const fn map(self) -> X86VecMap {
+        match self {
+            Self::F16ToF32 => X86VecMap::Map0F38,
+            _ => X86VecMap::Map0F,
+        }
+    }
+
+    const fn map_code(self) -> u8 {
+        match self.map() {
+            X86VecMap::Map0F => 1,
+            X86VecMap::Map0F38 => 2,
+            _ => unreachable!(),
         }
     }
 
@@ -74,6 +92,7 @@ impl ConvertKind {
 
     const fn opcode(self) -> u8 {
         match self {
+            Self::F16ToF32 => 0x13,
             Self::F32ToF64 | Self::F64ToF32 => 0x5A,
             Self::I32ToF32 | Self::F32ToI32 | Self::F32ToI32Truncate => 0x5B,
             Self::I32ToF64 | Self::F64ToI32 | Self::F64ToI32Truncate => 0xE6,
@@ -82,6 +101,10 @@ impl ConvertKind {
 
     const fn expected_kind(self) -> X86VexPackedConvertMemoryKind {
         match self {
+            Self::F16ToF32 => X86VexPackedConvertMemoryKind::FpPrecision {
+                from: VecElementType::F16,
+                to: VecElementType::F32,
+            },
             Self::F32ToF64 => X86VexPackedConvertMemoryKind::FpPrecision {
                 from: VecElementType::F32,
                 to: VecElementType::F64,
@@ -117,6 +140,7 @@ impl ConvertKind {
 
     const fn source_elem(self) -> VecElementType {
         match self {
+            Self::F16ToF32 => VecElementType::F16,
             Self::F32ToF64
             | Self::I32ToF32
             | Self::I32ToF64
@@ -135,6 +159,13 @@ impl ConvertKind {
     const fn truncates(self) -> bool {
         matches!(self, Self::F32ToI32Truncate | Self::F64ToI32Truncate)
     }
+
+    const fn forms(self) -> &'static [VexForm] {
+        match self {
+            Self::F16ToF32 => &VexForm::C4_W0_ONLY,
+            _ => &VexForm::ALL,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -146,6 +177,7 @@ enum VexForm {
 
 impl VexForm {
     const ALL: [Self; 3] = [Self::C5, Self::C4W0, Self::C4W1];
+    const C4_W0_ONLY: [Self; 1] = [Self::C4W0];
 
     const fn w(self) -> bool {
         matches!(self, Self::C4W1)
@@ -164,7 +196,7 @@ struct ConvertCase {
 impl ConvertCase {
     fn source_width(self) -> VecWidth {
         match self.kind {
-            ConvertKind::F32ToF64 | ConvertKind::I32ToF64 => {
+            ConvertKind::F16ToF32 | ConvertKind::F32ToF64 | ConvertKind::I32ToF64 => {
                 if self.width == VecWidth::V128 {
                     VecWidth::V64
                 } else {
@@ -211,6 +243,7 @@ impl ConvertCase {
         let modrm = 0x40 | encoded_reg | if rm == 4 { 4 } else { rm };
         let mut bytes = match self.form {
             VexForm::C5 => {
+                assert_eq!(self.kind.map(), X86VecMap::Map0F);
                 assert!(self.base < 8);
                 vec![
                     0xC5,
@@ -227,7 +260,7 @@ impl ConvertCase {
                 (if self.destination < 8 { 0x80 } else { 0 })
                     | 0x40
                     | (if self.base < 8 { 0x20 } else { 0 })
-                    | 1,
+                    | self.kind.map_code(),
                 (u8::from(self.form.w()) << 7) | 0x78 | (l << 2) | self.kind.pp(),
                 self.kind.opcode(),
                 modrm,
@@ -244,15 +277,21 @@ impl ConvertCase {
         let l = u8::from(self.width == VecWidth::V256);
         let modrm = 0xC0 | ((self.destination & 7) << 3) | self.scratch();
         match self.form {
-            VexForm::C5 => vec![
-                0xC5,
-                (if self.destination < 8 { 0x80 } else { 0 }) | 0x78 | (l << 2) | self.kind.pp(),
-                self.kind.opcode(),
-                modrm,
-            ],
+            VexForm::C5 => {
+                assert_eq!(self.kind.map(), X86VecMap::Map0F);
+                vec![
+                    0xC5,
+                    (if self.destination < 8 { 0x80 } else { 0 })
+                        | 0x78
+                        | (l << 2)
+                        | self.kind.pp(),
+                    self.kind.opcode(),
+                    modrm,
+                ]
+            }
             VexForm::C4W0 | VexForm::C4W1 => vec![
                 0xC4,
-                (if self.destination < 8 { 0x80 } else { 0 }) | 0x60 | 1,
+                (if self.destination < 8 { 0x80 } else { 0 }) | 0x60 | self.kind.map_code(),
                 (u8::from(self.form.w()) << 7) | 0x78 | (l << 2) | self.kind.pp(),
                 self.kind.opcode(),
                 modrm,
@@ -263,6 +302,7 @@ impl ConvertCase {
     fn expected_encoding(self) -> X86VexPackedConvertMemoryEncoding {
         X86VexPackedConvertMemoryEncoding {
             kind: self.kind.expected_kind(),
+            map: self.kind.map(),
             destination: self.destination,
             scratch: self.scratch(),
             source_width: self.source_width(),
@@ -281,7 +321,7 @@ fn scanner_cases() -> Vec<ConvertCase> {
     let mut cases = Vec::new();
     for kind in ConvertKind::ALL {
         for width in [VecWidth::V128, VecWidth::V256] {
-            for form in VexForm::ALL {
+            for &form in kind.forms() {
                 for destination in 0..8 {
                     cases.push(ConvertCase {
                         kind,
@@ -294,7 +334,7 @@ fn scanner_cases() -> Vec<ConvertCase> {
             }
         }
     }
-    assert_eq!(cases.len(), 384);
+    assert_eq!(cases.len(), 400);
     cases
 }
 
@@ -413,7 +453,7 @@ fn assert_exact_lift_and_sequence(function: &SmirFunction, case: ConvertCase, le
     assert_eq!(
         block.ops[1].x86_hint,
         Some(X86OpHint::VexOp {
-            map: X86VecMap::Map0F,
+            map: case.kind.map(),
             pp: case.kind.prefix(),
             opcode: case.kind.opcode(),
             width: case.width,
@@ -561,6 +601,7 @@ fn assert_feature_requirements(function: &SmirFunction, case: ConvertCase) {
     expected.any = true;
     expected.all_spans_support_avx_ymm16 = true;
     expected.needs_avx = true;
+    expected.needs_f16c = case.kind == ConvertKind::F16ToF32;
     assert_eq!(
         x86_native_replay_feature_requirements(function, &excluded),
         expected,
@@ -607,7 +648,7 @@ fn assert_rejected(function: &SmirFunction, label: &str) {
 }
 
 #[test]
-fn all_384_scanner_cells_admit_and_lower_exactly_at_o0_o1_o2() {
+fn all_400_scanner_cells_admit_and_lower_exactly_at_o0_o1_o2() {
     let cases = scanner_cases();
     let mut lowered = 0usize;
     for case in cases {
@@ -618,7 +659,7 @@ fn all_384_scanner_cells_admit_and_lower_exactly_at_o0_o1_o2() {
             lowered += 1;
         }
     }
-    assert_eq!(lowered, 384 * LEVELS.len());
+    assert_eq!(lowered, 400 * LEVELS.len());
 }
 
 #[test]
@@ -652,6 +693,13 @@ fn high_registers_sib_bases_and_wig_encodings_remain_exact() {
             destination: 14,
             base: 5,
         },
+        ConvertCase {
+            kind: ConvertKind::F16ToF32,
+            width: VecWidth::V256,
+            form: VexForm::C4W0,
+            destination: 15,
+            base: 12,
+        },
     ];
     for case in cases {
         for level in LEVELS {
@@ -660,6 +708,64 @@ fn high_registers_sib_bases_and_wig_encodings_remain_exact() {
             lower(&function, case, level);
         }
     }
+}
+
+#[test]
+fn fp16_rip_relative_segment_addr32_sib_and_disp32_shapes_admit_and_lower() {
+    let encodings = [
+        // VCVTPH2PS xmm1,[rip+0x44332211]
+        &[0xC4, 0xE2, 0x79, 0x13, 0x0D, 0x11, 0x22, 0x33, 0x44][..],
+        // FS addr32 VCVTPH2PS xmm14,[r14d+r15d*2+0x44332211]
+        &[
+            0x64, 0x67, 0xC4, 0x02, 0x79, 0x13, 0xB4, 0x7E, 0x11, 0x22, 0x33, 0x44,
+        ][..],
+        // VCVTPH2PS ymm15,[rsp]
+        &[0xC4, 0x62, 0x7D, 0x13, 0x3C, 0x24][..],
+    ];
+    let mut lowered = 0usize;
+    for bytes in encodings {
+        for level in LEVELS {
+            let function = optimize(lift_bytes(bytes), level);
+            let sequence = classified_sequence(&function, true)
+                .unwrap_or_else(|| panic!("{level:?} {bytes:02X?}: not classified"));
+            assert_eq!(sequence.consumed, 2, "{level:?} {bytes:02X?}");
+            assert_eq!(sequence.encoding.map, X86VecMap::Map0F38);
+            assert_eq!(
+                sequence.encoding.kind,
+                X86VexPackedConvertMemoryKind::FpPrecision {
+                    from: VecElementType::F16,
+                    to: VecElementType::F32,
+                }
+            );
+            assert!(sequence.encoding.needs_f16c());
+            assert!(is_native_clobber_safe_excluding(
+                &function,
+                &HashMap::new(),
+                true
+            ));
+            let requirements = x86_native_replay_feature_requirements(&function, &HashMap::new());
+            assert!(requirements.needs_avx && requirements.needs_f16c);
+            assert!(requirements.all_spans_support_avx_ymm16);
+
+            let mut lowerer = X86_64Lowerer::new();
+            lowerer.set_mem_helpers(true);
+            lowerer.set_preserve_vector_mem_helpers(true);
+            lowerer.set_avx_ymm16_vector_state(true);
+            lowerer
+                .lower_function(&function)
+                .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
+            let code = lowerer
+                .finalize()
+                .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
+            assert!(
+                code.windows(sequence.encoding.register_instruction.as_slice().len())
+                    .any(|window| window == sequence.encoding.register_instruction.as_slice()),
+                "{level:?} {bytes:02X?}"
+            );
+            lowered += 1;
+        }
+    }
+    assert_eq!(lowered, encodings.len() * LEVELS.len());
 }
 
 #[test]
@@ -702,6 +808,96 @@ fn malformed_bytes_reserved_vvvv_and_non_memory_forms_fail_closed() {
             "{bytes:02X?}"
         );
     }
+
+    let f16 = ConvertCase {
+        kind: ConvertKind::F16ToF32,
+        width: VecWidth::V128,
+        form: VexForm::C4W0,
+        destination: 13,
+        base: 11,
+    }
+    .bytes();
+    assert!(
+        X86InstructionBytes::new(&f16)
+            .unwrap()
+            .vex_packed_convert_memory_encoding()
+            .is_some()
+    );
+    let mut malformed_f16 = Vec::new();
+    for (index, xor) in [(1, 0x03), (2, 0x80), (2, 0x08), (2, 0x01), (3, 0x01)] {
+        let mut bytes = f16.clone();
+        bytes[index] ^= xor;
+        malformed_f16.push(bytes);
+    }
+    let mut register_source = f16.clone();
+    register_source[4] = (register_source[4] & 0x3F) | 0xC0;
+    register_source.truncate(5);
+    malformed_f16.push(register_source);
+    malformed_f16.push(f16[..f16.len() - 1].to_vec());
+    for bytes in malformed_f16 {
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .vex_packed_convert_memory_encoding(),
+            None,
+            "{bytes:02X?}"
+        );
+    }
+}
+
+#[test]
+fn fp16_graph_hint_and_exception_policy_mutations_fail_closed() {
+    let case = ConvertCase {
+        kind: ConvertKind::F16ToF32,
+        width: VecWidth::V256,
+        form: VexForm::C4W0,
+        destination: 15,
+        base: 12,
+    };
+    let function = optimize(lift_case(case), OptLevel::O2);
+
+    let mut wrong_map = function.clone();
+    let Some(X86OpHint::VexOp { map, .. }) = &mut wrong_map.blocks[0].ops[1].x86_hint else {
+        unreachable!()
+    };
+    *map = X86VecMap::Map0F;
+    assert_rejected(&wrong_map, "FP16 wrong map");
+
+    let mut wrong_lanes = function.clone();
+    let OpKind::X86PackedFpConvert { lanes, .. } = &mut wrong_lanes.blocks[0].ops[1].kind else {
+        unreachable!()
+    };
+    *lanes -= 1;
+    assert_rejected(&wrong_lanes, "FP16 wrong lane count");
+
+    let mut wrong_round = function.clone();
+    let OpKind::X86PackedFpConvert { round, .. } = &mut wrong_round.blocks[0].ops[1].kind else {
+        unreachable!()
+    };
+    *round = FpRoundMode::RoundUp;
+    assert_rejected(&wrong_round, "FP16 wrong rounding control");
+
+    let mut suppressed = function.clone();
+    let OpKind::X86PackedFpConvert {
+        suppress_exceptions,
+        ..
+    } = &mut suppressed.blocks[0].ops[1].kind
+    else {
+        unreachable!()
+    };
+    *suppress_exceptions = true;
+    assert_rejected(&suppressed, "FP16 suppressed exceptions");
+
+    let mut reports_denormal = function;
+    let OpKind::X86PackedFpConvert {
+        report_fp16_denormal,
+        ..
+    } = &mut reports_denormal.blocks[0].ops[1].kind
+    else {
+        unreachable!()
+    };
+    *report_fp16_denormal = true;
+    assert_rejected(&reports_denormal, "FP16 denormal reporting");
 }
 
 #[test]

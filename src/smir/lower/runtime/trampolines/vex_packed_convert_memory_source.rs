@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix, X86VecAlign, X86VecMap};
+use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix, X86VecAlign};
 use crate::smir::ir::types::{
     ArchReg, BlockId, FpRoundMode, GuestAddr, VReg, VecElementType, VecWidth, X86Reg,
 };
@@ -92,7 +92,7 @@ pub(crate) fn x86_jit_vex_packed_convert_memory_sequence(
     if conversion.guest_pc != load.guest_pc
         || conversion.x86_hint
             != Some(X86OpHint::VexOp {
-                map: X86VecMap::Map0F,
+                map: encoding.map,
                 pp: prefix(encoding.pp)?,
                 opcode: encoding.opcode,
                 width: encoding.operation_width,
