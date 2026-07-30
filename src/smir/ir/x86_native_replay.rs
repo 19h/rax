@@ -109,6 +109,7 @@ pub(crate) use classifiers::{
     X86VexScalarInsertMemoryFields, X86VexScalarInsertMemoryKind,
     X86VexScalarIntegerMemoryEncoding, X86VexScalarIntegerMemoryKind,
     X86VexVariableBlendMemoryEncoding, X86VexVariablePermuteMemoryEncoding,
+    X86VexVpermil2MemoryEncoding,
 };
 
 pub use aggregate::{

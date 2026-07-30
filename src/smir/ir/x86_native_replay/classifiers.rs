@@ -123,6 +123,7 @@ pub(crate) use vex_scalar_integer_memory::{
 };
 pub(crate) use vex_variable_blend::X86VexVariableBlendMemoryEncoding;
 pub(crate) use vex_variable_permute::X86VexVariablePermuteMemoryEncoding;
+pub(crate) use vex_vpermil2::X86VexVpermil2MemoryEncoding;
 
 impl X86InstructionBytes {
     /// Validate register-only EVEX packed logical operations and return

@@ -413,6 +413,7 @@ mod vex_variable_permute_replay;
 mod vex_variable_shift_memory_source;
 #[cfg(test)]
 mod vex_vpclmulqdq_replay;
+mod vex_vpermil2_memory_source;
 #[cfg(test)]
 mod vex_vpermil2_replay;
 #[cfg(test)]

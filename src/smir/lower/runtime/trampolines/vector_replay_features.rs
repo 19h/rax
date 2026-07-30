@@ -556,6 +556,18 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.needs_avx = true;
                 requirements.needs_fma4 = true;
                 index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_vex_vpermil2_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                requirements.needs_xop = true;
+                index += sequence.consumed;
             } else if let Some(sequence) = super::x86_jit_vpclmulqdq_memory_sequence(
                 block,
                 index,
