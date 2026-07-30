@@ -142,6 +142,11 @@ pub fn x86_native_replay_spans(
             })
             .or_else(|| {
                 instruction
+                    .evex_register_packed_fp16_embedded_control_needs_vl()
+                    .map(|needs_vl| (needs_vl, false, true))
+            })
+            .or_else(|| {
+                instruction
                     .evex_register_packed_fp16_fma_needs_vl()
                     .map(|needs_vl| (needs_vl, false, true))
             })

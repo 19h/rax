@@ -111,4 +111,34 @@ impl X86InstructionBytes {
             _ => None,
         }
     }
+
+    /// Validate one register-only packed AVX-512-FP16 binary arithmetic
+    /// instruction whose `EVEX.b=1` supplies embedded rounding or SAE.
+    ///
+    /// `VADDPH`, `VMULPH`, `VSUBPH`, and `VDIVPH` interpret `L'L` as one of
+    /// four embedded rounding modes. `VMINPH` and `VMAXPH` use `EVEX.b` for
+    /// SAE; their encoded `L'L` value is immaterial. Every accepted form
+    /// operates on 512 bits, requires AVX-512-FP16, and does not require
+    /// AVX-512VL. `EVEX.b=0` forms retain their existing semantic lowering;
+    /// memory and malformed zeroing-with-k0 forms fail closed.
+    pub fn evex_register_packed_fp16_embedded_control_needs_vl(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        let [0x62, p0, p1, p2, opcode, modrm] = bytes else {
+            return None;
+        };
+
+        // MAP5, W0, no mandatory prefix, EVEX.P1 fixed-one, register ModR/M.
+        if p0 & 0x0F != 5
+            || p1 & 0x87 != 0x04
+            || !OPCODES.contains(opcode)
+            || modrm >> 6 != 3
+            || p2 & 0x10 == 0
+        {
+            return None;
+        }
+
+        let zeroing = p2 & 0x80 != 0;
+        let mask = p2 & 0x07;
+        (!(zeroing && mask == 0)).then_some(false)
+    }
 }

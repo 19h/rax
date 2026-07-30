@@ -56,6 +56,8 @@ mod evex_fp16_flag_compare_replay;
 #[cfg(test)]
 mod evex_fp16_narrow_replay;
 #[cfg(test)]
+mod evex_fp16_packed_arithmetic_replay;
+#[cfg(test)]
 mod evex_fp16_scalar_replay;
 #[cfg(test)]
 mod evex_fp16_widen_replay;

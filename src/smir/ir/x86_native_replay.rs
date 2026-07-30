@@ -844,6 +844,20 @@ pub fn x86_vex_fp_logic_replay_spans(
     })
 }
 
+/// Identify register-only packed AVX-512-FP16 arithmetic replay groups whose
+/// `EVEX.b=1` supplies embedded rounding or SAE. Construction is O(N) time and
+/// O(P) space for N operations and P unique guest PCs.
+pub fn x86_evex_packed_fp16_arithmetic_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_packed_fp16_embedded_control_needs_vl()
+            .map(|needs_vl| (needs_vl, false, true))
+    })
+}
+
 /// Identify valid register-only EVEX packed binary16 FMA replay groups in
 /// `block` in O(N) time and O(P) space for N operations and P unique guest PCs.
 pub fn x86_evex_packed_fp16_fma_replay_spans(
