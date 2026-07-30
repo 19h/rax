@@ -1336,7 +1336,7 @@ impl X86_64Lowerer {
                     continue;
                 }
                 #[cfg(feature = "smir-jit")]
-                if let Some(consumed) = self.try_lower_jit_evex_broadcast_xor_memory_source(
+                if let Some(consumed) = self.try_lower_jit_evex_broadcast_logic_memory_source(
                     block,
                     idx,
                     &virtual_definitions,

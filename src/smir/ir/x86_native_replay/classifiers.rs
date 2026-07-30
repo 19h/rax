@@ -3,7 +3,7 @@ use super::X86InstructionBytes;
 mod chunk;
 mod cmpccxadd;
 mod evex_broadcast_interleave_memory;
-mod evex_broadcast_xor_memory;
+mod evex_broadcast_logic_memory;
 mod evex_fma3_memory;
 mod evex_logic_memory;
 mod evex_memory;
@@ -91,7 +91,7 @@ mod vp2intersect;
 mod vpclmulqdq;
 
 pub(crate) use evex_broadcast_interleave_memory::X86EvexBroadcastInterleaveMemoryEncoding;
-pub(crate) use evex_broadcast_xor_memory::X86EvexBroadcastXorMemoryEncoding;
+pub(crate) use evex_broadcast_logic_memory::X86EvexBroadcastLogicMemoryEncoding;
 pub(crate) use evex_fma3_memory::{
     X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay, X86EvexScalarFma3MemoryEncoding,
 };

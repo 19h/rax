@@ -1,4 +1,4 @@
-//! Exact helper-backed EVEX VXORPS/VXORPD broadcast-memory coverage.
+//! Exact helper-backed EVEX packed-logical broadcast-memory coverage.
 
 use std::collections::HashMap;
 
@@ -12,14 +12,16 @@ use crate::smir::ir::types::{
     Address, ArchReg, BlockId, FunctionId, MemWidth, OpId, VReg, VecElementType, VecWidth,
     VirtualId, X86Reg,
 };
-use crate::smir::ir::{SmirBlock, SmirFunction, Terminator, X86InstructionBytes};
+use crate::smir::ir::{
+    SmirBlock, SmirFunction, Terminator, X86EvexLogicMemoryKind, X86InstructionBytes,
+};
 use crate::smir::lift::x86_64::X86_64Lifter;
 use crate::smir::lift::{ControlFlow, LiftContext, SmirLifter};
 use crate::smir::lower::SmirLowerer;
 use crate::smir::lower::runtime::{
     GuestRegs, X86_VECTOR_STATE_K64, is_native_clobber_safe_excluding,
     is_x86_aarch64_native_clobber_safe_excluding, uses_x86_native_vectors_excluding,
-    x86_jit_evex_broadcast_xor_memory_sequence, x86_native_replay_feature_requirements,
+    x86_jit_evex_broadcast_logic_memory_sequence, x86_native_replay_feature_requirements,
     x86_native_vector_features_supported_excluding,
     x86_native_vector_uses_avx_ymm16_only_excluding,
 };
@@ -42,7 +44,52 @@ impl MemoryForm {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-struct XorCase {
+enum LogicKind {
+    And,
+    AndNot,
+    Or,
+    Xor,
+}
+
+impl LogicKind {
+    const ALL: [Self; 4] = [Self::And, Self::AndNot, Self::Or, Self::Xor];
+
+    const fn production(self) -> X86EvexLogicMemoryKind {
+        match self {
+            Self::And => X86EvexLogicMemoryKind::And,
+            Self::AndNot => X86EvexLogicMemoryKind::AndNot,
+            Self::Or => X86EvexLogicMemoryKind::Or,
+            Self::Xor => X86EvexLogicMemoryKind::Xor,
+        }
+    }
+
+    const fn opcode(self, elem: VecElementType) -> u8 {
+        let integer = matches!(elem, VecElementType::I32 | VecElementType::I64);
+        match (self, integer) {
+            (Self::And, false) => 0x54,
+            (Self::AndNot, false) => 0x55,
+            (Self::Or, false) => 0x56,
+            (Self::Xor, false) => 0x57,
+            (Self::And, true) => 0xDB,
+            (Self::AndNot, true) => 0xDF,
+            (Self::Or, true) => 0xEB,
+            (Self::Xor, true) => 0xEF,
+        }
+    }
+
+    const fn apply_byte(self, source1: u8, source2: u8) -> u8 {
+        match self {
+            Self::And => source1 & source2,
+            Self::AndNot => !source1 & source2,
+            Self::Or => source1 | source2,
+            Self::Xor => source1 ^ source2,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct LogicCase {
+    kind: LogicKind,
     elem: VecElementType,
     width: VecWidth,
     form: MemoryForm,
@@ -50,7 +97,7 @@ struct XorCase {
     zeroing: bool,
 }
 
-impl XorCase {
+impl LogicCase {
     const fn destination(self) -> u8 {
         match self.form {
             MemoryForm::Low => 0,
@@ -76,10 +123,14 @@ impl XorCase {
 
     const fn memory_width(self) -> MemWidth {
         match self.elem {
-            VecElementType::F32 => MemWidth::B4,
-            VecElementType::F64 => MemWidth::B8,
+            VecElementType::F32 | VecElementType::I32 => MemWidth::B4,
+            VecElementType::F64 | VecElementType::I64 => MemWidth::B8,
             _ => unreachable!(),
         }
+    }
+
+    const fn needs_avx512dq(self) -> bool {
+        matches!(self.elem, VecElementType::F32 | VecElementType::F64)
     }
 
     const fn ll(self) -> u8 {
@@ -95,7 +146,12 @@ impl XorCase {
         let destination = self.destination();
         let source1 = self.source1();
         let base = self.base();
-        let f64 = self.elem == VecElementType::F64;
+        let w = matches!(self.elem, VecElementType::F64 | VecElementType::I64);
+        let pp = if self.elem == VecElementType::F32 {
+            0
+        } else {
+            1
+        };
         [
             0x62,
             (if destination & 8 == 0 { 0x80 } else { 0 })
@@ -103,13 +159,13 @@ impl XorCase {
                 | (if base & 8 == 0 { 0x20 } else { 0 })
                 | (if destination & 16 == 0 { 0x10 } else { 0 })
                 | 0x01,
-            (u8::from(f64) << 7) | (((!source1) & 0x0F) << 3) | 0x04 | u8::from(f64),
+            (u8::from(w) << 7) | (((!source1) & 0x0F) << 3) | 0x04 | pp,
             (u8::from(self.zeroing) << 7)
                 | (self.ll() << 5)
                 | 0x10
                 | (if source1 & 16 == 0 { 0x08 } else { 0 })
                 | self.mask,
-            0x57,
+            self.kind.opcode(self.elem),
             0x40 | ((destination & 7) << 3) | (base & 7),
             DISP8,
         ]
@@ -122,7 +178,7 @@ impl XorCase {
             (bytes[1] & 0x97) | 0x60,
             bytes[2] | 0x04,
             bytes[3],
-            0x57,
+            bytes[4],
             (bytes[5] & 0x38) | 0x04,
             0x24,
         ]
@@ -138,7 +194,7 @@ fn vector(index: u8, width: VecWidth) -> VReg {
     }
 }
 
-fn lift_case(case: XorCase) -> SmirFunction {
+fn lift_case(case: LogicCase) -> SmirFunction {
     let bytes = case.bytes();
     let mut lifter = X86_64Lifter::strict();
     let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
@@ -155,7 +211,7 @@ fn lift_case(case: XorCase) -> SmirFunction {
     function.add_block(block);
     function.x86_instruction_bytes.insert(
         (BlockId(0), PC),
-        X86InstructionBytes::new(&bytes).expect("EVEX broadcast XOR provenance"),
+        X86InstructionBytes::new(&bytes).expect("EVEX broadcast logic provenance"),
     );
     function
 }
@@ -183,9 +239,13 @@ fn virtual_counts(function: &SmirFunction) -> (HashMap<VReg, usize>, HashMap<VRe
     (definitions, uses)
 }
 
-fn sequence(function: &SmirFunction) -> X86JitEvexBroadcastXorMemorySequence {
+fn sequence(
+    function: &SmirFunction,
+    case: LogicCase,
+    level: OptLevel,
+) -> X86JitEvexBroadcastLogicMemorySequence {
     let (definitions, uses) = virtual_counts(function);
-    x86_jit_evex_broadcast_xor_memory_sequence(
+    x86_jit_evex_broadcast_logic_memory_sequence(
         &function.blocks[0],
         0,
         true,
@@ -193,10 +253,15 @@ fn sequence(function: &SmirFunction) -> X86JitEvexBroadcastXorMemorySequence {
         &definitions,
         &uses,
     )
-    .expect("exact EVEX broadcast XOR sequence")
+    .unwrap_or_else(|| {
+        panic!(
+            "{level:?} {case:?}: exact EVEX broadcast logic sequence\n{:#?}",
+            function.blocks[0].ops
+        )
+    })
 }
 
-fn lower(function: &SmirFunction, case: XorCase) -> (Vec<u8>, usize) {
+fn lower(function: &SmirFunction, case: LogicCase) -> (Vec<u8>, usize) {
     let excluded = HashMap::new();
     assert!(is_native_clobber_safe_excluding(function, &excluded, true));
     assert!(!is_native_clobber_safe_excluding(
@@ -215,7 +280,11 @@ fn lower(function: &SmirFunction, case: XorCase) -> (Vec<u8>, usize) {
     assert!(!requirements.all_spans_support_avx_ymm16, "{case:?}");
     assert!(requirements.needs_avx, "{case:?}");
     assert!(requirements.needs_avx512bw, "{case:?}");
-    assert!(requirements.needs_avx512dq, "{case:?}");
+    assert_eq!(
+        requirements.needs_avx512dq,
+        case.needs_avx512dq(),
+        "{case:?}"
+    );
     assert_eq!(
         requirements.needs_avx512vl,
         case.width != VecWidth::V512,
@@ -226,7 +295,7 @@ fn lower(function: &SmirFunction, case: XorCase) -> (Vec<u8>, usize) {
         x86_native_vector_features_supported_excluding(function, &excluded),
         std::is_x86_feature_detected!("avx512f")
             && std::is_x86_feature_detected!("avx512bw")
-            && std::is_x86_feature_detected!("avx512dq")
+            && (!case.needs_avx512dq() || std::is_x86_feature_detected!("avx512dq"))
             && (case.width == VecWidth::V512 || std::is_x86_feature_detected!("avx512vl")),
         "{case:?}"
     );
@@ -242,125 +311,155 @@ fn lower(function: &SmirFunction, case: XorCase) -> (Vec<u8>, usize) {
     lowerer.set_avx_ymm16_vector_state(false);
     let result = lowerer
         .lower_function(function)
-        .unwrap_or_else(|error| panic!("{case:?}: helper-backed EVEX broadcast XOR: {error:?}"));
+        .unwrap_or_else(|error| panic!("{case:?}: helper-backed EVEX broadcast logic: {error:?}"));
     assert!(result.relocations.is_empty(), "{case:?}");
     (
         lowerer
             .finalize()
-            .expect("finalize helper-backed EVEX broadcast XOR"),
+            .expect("finalize helper-backed EVEX broadcast logic"),
         result.entry_offset,
     )
 }
 
 #[test]
-fn evex_broadcast_xor_byte_classifier_exhaustively_rewrites_92_160_operands() {
+fn evex_broadcast_logic_byte_classifier_exhaustively_rewrites_737_280_operands() {
     let mut accepted = 0usize;
-    for elem in [VecElementType::F32, VecElementType::F64] {
-        for (ll, width) in [
-            (0, VecWidth::V128),
-            (1, VecWidth::V256),
-            (2, VecWidth::V512),
+    for kind in LogicKind::ALL {
+        for elem in [
+            VecElementType::F32,
+            VecElementType::F64,
+            VecElementType::I32,
+            VecElementType::I64,
         ] {
-            for destination in 0..32u8 {
-                for source1 in 0..32u8 {
-                    for mask in 0..=7u8 {
-                        for zeroing in [false, true] {
-                            if mask == 0 && zeroing {
-                                continue;
-                            }
-                            let f64 = elem == VecElementType::F64;
-                            let p0 = (if destination & 8 == 0 { 0x80 } else { 0 })
-                                | 0x60
-                                | (if destination & 16 == 0 { 0x10 } else { 0 })
-                                | 0x01;
-                            let p1 = (u8::from(f64) << 7)
-                                | (((!source1) & 0x0F) << 3)
-                                | 0x04
-                                | u8::from(f64);
-                            let p2 = (u8::from(zeroing) << 7)
-                                | (ll << 5)
-                                | 0x10
-                                | (if source1 & 16 == 0 { 0x08 } else { 0 })
-                                | mask;
-                            let bytes = [
-                                0x62,
-                                p0,
-                                p1,
-                                p2,
-                                0x57,
-                                0x40 | ((destination & 7) << 3) | 3,
-                                DISP8,
-                            ];
-                            let encoding = X86InstructionBytes::new(&bytes)
-                                .unwrap()
-                                .evex_broadcast_xor_memory_encoding()
-                                .unwrap_or_else(|| panic!("{bytes:02X?}"));
-                            assert_eq!(encoding.width, width, "{bytes:02X?}");
-                            assert_eq!(encoding.elem, elem, "{bytes:02X?}");
-                            assert_eq!(encoding.destination, destination, "{bytes:02X?}");
-                            assert_eq!(encoding.source1, source1, "{bytes:02X?}");
-                            assert_eq!(
-                                encoding.writemask,
-                                (mask != 0).then_some(mask),
-                                "{bytes:02X?}"
-                            );
-                            assert_eq!(encoding.zeroing, zeroing, "{bytes:02X?}");
-                            assert_eq!(
-                                encoding.memory_width,
-                                if f64 { MemWidth::B8 } else { MemWidth::B4 },
-                                "{bytes:02X?}"
-                            );
-                            assert_eq!(encoding.needs_avx512vl, ll != 2, "{bytes:02X?}");
-                            assert_eq!(
-                                encoding.stack_instruction.as_slice(),
-                                [
+            for (ll, width) in [
+                (0, VecWidth::V128),
+                (1, VecWidth::V256),
+                (2, VecWidth::V512),
+            ] {
+                for destination in 0..32u8 {
+                    for source1 in 0..32u8 {
+                        for mask in 0..=7u8 {
+                            for zeroing in [false, true] {
+                                if mask == 0 && zeroing {
+                                    continue;
+                                }
+                                let w = matches!(elem, VecElementType::F64 | VecElementType::I64);
+                                let pp = if elem == VecElementType::F32 { 0 } else { 1 };
+                                let p0 = (if destination & 8 == 0 { 0x80 } else { 0 })
+                                    | 0x60
+                                    | (if destination & 16 == 0 { 0x10 } else { 0 })
+                                    | 0x01;
+                                let p1 =
+                                    (u8::from(w) << 7) | (((!source1) & 0x0F) << 3) | 0x04 | pp;
+                                let p2 = (u8::from(zeroing) << 7)
+                                    | (ll << 5)
+                                    | 0x10
+                                    | (if source1 & 16 == 0 { 0x08 } else { 0 })
+                                    | mask;
+                                let opcode = kind.opcode(elem);
+                                let bytes = [
                                     0x62,
-                                    (p0 & 0x97) | 0x60,
-                                    p1 | 0x04,
+                                    p0,
+                                    p1,
                                     p2,
-                                    0x57,
-                                    (bytes[5] & 0x38) | 0x04,
-                                    0x24,
-                                ],
-                                "{bytes:02X?}"
-                            );
-                            accepted += 1;
+                                    opcode,
+                                    0x40 | ((destination & 7) << 3) | 3,
+                                    DISP8,
+                                ];
+                                let encoding = X86InstructionBytes::new(&bytes)
+                                    .unwrap()
+                                    .evex_broadcast_logic_memory_encoding()
+                                    .unwrap_or_else(|| panic!("{bytes:02X?}"));
+                                assert_eq!(encoding.kind, kind.production(), "{bytes:02X?}");
+                                assert_eq!(encoding.width, width, "{bytes:02X?}");
+                                assert_eq!(encoding.elem, elem, "{bytes:02X?}");
+                                assert_eq!(encoding.destination, destination, "{bytes:02X?}");
+                                assert_eq!(encoding.source1, source1, "{bytes:02X?}");
+                                assert_eq!(
+                                    encoding.writemask,
+                                    (mask != 0).then_some(mask),
+                                    "{bytes:02X?}"
+                                );
+                                assert_eq!(encoding.zeroing, zeroing, "{bytes:02X?}");
+                                assert_eq!(
+                                    encoding.memory_width,
+                                    if w { MemWidth::B8 } else { MemWidth::B4 },
+                                    "{bytes:02X?}"
+                                );
+                                assert_eq!(encoding.needs_avx512vl, ll != 2, "{bytes:02X?}");
+                                assert_eq!(
+                                    encoding.needs_avx512dq,
+                                    matches!(elem, VecElementType::F32 | VecElementType::F64),
+                                    "{bytes:02X?}"
+                                );
+                                assert_eq!(
+                                    encoding.stack_instruction.as_slice(),
+                                    [
+                                        0x62,
+                                        (p0 & 0x97) | 0x60,
+                                        p1 | 0x04,
+                                        p2,
+                                        opcode,
+                                        (bytes[5] & 0x38) | 0x04,
+                                        0x24,
+                                    ],
+                                    "{bytes:02X?}"
+                                );
+                                accepted += 1;
+                            }
                         }
                     }
                 }
             }
         }
     }
-    assert_eq!(accepted, 2 * 3 * 32 * 32 * 15);
+    assert_eq!(accepted, 4 * 4 * 3 * 32 * 32 * 15);
 }
 
 #[test]
-fn evex_broadcast_xor_rewrite_matches_independent_llvm_23_encodings() {
+fn evex_broadcast_logic_rewrite_matches_independent_llvm_23_encodings() {
     for (bytes, expected) in [
         (
-            &[0x62, 0xF1, 0x6C, 0x58, 0x57, 0x0F][..],
-            &[0x62, 0xF1, 0x6C, 0x58, 0x57, 0x0C, 0x24][..],
+            &[0x62, 0xF1, 0x6C, 0x58, 0x54, 0x0F][..],
+            &[0x62, 0xF1, 0x6C, 0x58, 0x54, 0x0C, 0x24][..],
         ),
         (
-            &[0x62, 0x51, 0xAD, 0xBB, 0x57, 0x4B, 0x08][..],
-            &[0x62, 0x71, 0xAD, 0xBB, 0x57, 0x0C, 0x24][..],
+            &[0x62, 0x51, 0xAD, 0xBB, 0x55, 0x4B, 0x08][..],
+            &[0x62, 0x71, 0xAD, 0xBB, 0x55, 0x0C, 0x24][..],
         ),
         (
-            &[0x62, 0x51, 0x04, 0x19, 0x57, 0x7E, 0xFC][..],
-            &[0x62, 0x71, 0x04, 0x19, 0x57, 0x3C, 0x24][..],
+            &[0x62, 0x51, 0x04, 0x19, 0x56, 0x7E, 0xFC][..],
+            &[0x62, 0x71, 0x04, 0x19, 0x56, 0x3C, 0x24][..],
+        ),
+        (
+            &[0x62, 0xF1, 0x55, 0x58, 0xDB, 0x20][..],
+            &[0x62, 0xF1, 0x55, 0x58, 0xDB, 0x24, 0x24][..],
+        ),
+        (
+            &[0x62, 0xC1, 0xD5, 0xB6, 0xDF, 0x65, 0x10][..],
+            &[0x62, 0xE1, 0xD5, 0xB6, 0xDF, 0x24, 0x24][..],
+        ),
+        (
+            &[0x62, 0x41, 0x7D, 0x17, 0xEB, 0x7C, 0x24, 0x01][..],
+            &[0x62, 0x61, 0x7D, 0x17, 0xEB, 0x3C, 0x24][..],
+        ),
+        (
+            &[0x62, 0xE1, 0xE5, 0x52, 0xEF, 0x12][..],
+            &[0x62, 0xE1, 0xE5, 0x52, 0xEF, 0x14, 0x24][..],
         ),
     ] {
         let encoding = X86InstructionBytes::new(bytes)
             .unwrap()
-            .evex_broadcast_xor_memory_encoding()
+            .evex_broadcast_logic_memory_encoding()
             .unwrap_or_else(|| panic!("{bytes:02X?}"));
         assert_eq!(encoding.stack_instruction.as_slice(), expected);
     }
 }
 
 #[test]
-fn evex_broadcast_xor_classifier_rejects_reserved_nonbroadcast_and_trailing_shapes() {
-    let valid = XorCase {
+fn evex_broadcast_logic_classifier_rejects_reserved_nonbroadcast_and_trailing_shapes() {
+    let valid = LogicCase {
+        kind: LogicKind::Xor,
         elem: VecElementType::F32,
         width: VecWidth::V128,
         form: MemoryForm::Low,
@@ -384,7 +483,7 @@ fn evex_broadcast_xor_classifier_rejects_reserved_nonbroadcast_and_trailing_shap
         (2, 0x80), // W without 66
         (2, 0x01), // 66 without W
         (3, 0x10), // nonbroadcast full-vector memory form
-        (4, 0x01), // adjacent opcode
+        (4, 0x08), // non-logical opcode
     ] {
         let mut bytes = valid.clone();
         bytes[index] ^= mask;
@@ -399,12 +498,31 @@ fn evex_broadcast_xor_classifier_rejects_reserved_nonbroadcast_and_trailing_shap
     let mut forbidden_legacy_prefix = valid.clone();
     forbidden_legacy_prefix.insert(0, 0x66);
     malformed.push(forbidden_legacy_prefix);
+    let integer = LogicCase {
+        kind: LogicKind::And,
+        elem: VecElementType::I32,
+        width: VecWidth::V128,
+        form: MemoryForm::Low,
+        mask: 1,
+        zeroing: false,
+    }
+    .bytes()
+    .to_vec();
+    let mut integer_without_66 = integer.clone();
+    integer_without_66[2] &= !0x03;
+    malformed.push(integer_without_66);
+    let mut floating_fields_with_integer_opcode = valid.clone();
+    floating_fields_with_integer_opcode[4] = 0xDB;
+    malformed.push(floating_fields_with_integer_opcode);
+    let mut integer_fields_with_floating_opcode = integer;
+    integer_fields_with_floating_opcode[4] = 0x54;
+    malformed.push(integer_fields_with_floating_opcode);
 
     for bytes in malformed {
         assert!(
             X86InstructionBytes::new(&bytes)
                 .unwrap()
-                .evex_broadcast_xor_memory_encoding()
+                .evex_broadcast_logic_memory_encoding()
                 .is_none(),
             "{bytes:02X?}"
         );
@@ -414,13 +532,13 @@ fn evex_broadcast_xor_classifier_rejects_reserved_nonbroadcast_and_trailing_shap
     prefixed.extend_from_slice(&valid);
     let encoding = X86InstructionBytes::new(&prefixed)
         .unwrap()
-        .evex_broadcast_xor_memory_encoding()
+        .evex_broadcast_logic_memory_encoding()
         .expect("FS/address-size prefixes belong only to helper address evaluation");
     assert_eq!(
         encoding.stack_instruction.as_slice(),
         X86InstructionBytes::new(&valid)
             .unwrap()
-            .evex_broadcast_xor_memory_encoding()
+            .evex_broadcast_logic_memory_encoding()
             .unwrap()
             .stack_instruction
             .as_slice()
@@ -428,64 +546,79 @@ fn evex_broadcast_xor_classifier_rejects_reserved_nonbroadcast_and_trailing_shap
 }
 
 #[test]
-fn all_270_evex_broadcast_xor_shapes_optimize_admit_and_lower_exactly() {
+fn all_2_160_evex_broadcast_logic_shapes_optimize_admit_and_lower_exactly() {
     let mut cases = 0usize;
     let mut lowerings = 0usize;
-    for elem in [VecElementType::F32, VecElementType::F64] {
-        for width in [VecWidth::V128, VecWidth::V256, VecWidth::V512] {
-            for form in MemoryForm::ALL {
-                for mask in 0..=7 {
-                    for zeroing in [false, true] {
-                        if mask == 0 && zeroing {
-                            continue;
-                        }
-                        let case = XorCase {
-                            elem,
-                            width,
-                            form,
-                            mask,
-                            zeroing,
-                        };
-                        cases += 1;
-                        for level in LEVELS {
-                            let function = optimize(lift_case(case), level);
-                            let sequence = sequence(&function);
-                            assert_eq!(
-                                sequence.memory_offset,
-                                if mask == 0 { 1 } else { 5 },
-                                "{level:?} {case:?}"
-                            );
-                            assert_eq!(sequence.encoding.destination, case.destination());
-                            assert_eq!(sequence.encoding.source1, case.source1());
-                            assert_eq!(sequence.encoding.writemask, (mask != 0).then_some(mask));
-                            assert_eq!(sequence.encoding.zeroing, zeroing);
-                            assert_eq!(
-                                sequence.encoding.stack_instruction.as_slice(),
-                                case.stack_instruction(),
-                                "{level:?} {case:?}"
-                            );
+    for kind in LogicKind::ALL {
+        for elem in [
+            VecElementType::F32,
+            VecElementType::F64,
+            VecElementType::I32,
+            VecElementType::I64,
+        ] {
+            for width in [VecWidth::V128, VecWidth::V256, VecWidth::V512] {
+                for form in MemoryForm::ALL {
+                    for mask in 0..=7 {
+                        for zeroing in [false, true] {
+                            if mask == 0 && zeroing {
+                                continue;
+                            }
+                            let case = LogicCase {
+                                kind,
+                                elem,
+                                width,
+                                form,
+                                mask,
+                                zeroing,
+                            };
+                            cases += 1;
+                            for level in LEVELS {
+                                let function = optimize(lift_case(case), level);
+                                let sequence = sequence(&function, case, level);
+                                assert_eq!(
+                                    sequence.memory_offset,
+                                    if mask == 0 { 1 } else { 5 },
+                                    "{level:?} {case:?}"
+                                );
+                                assert_eq!(sequence.encoding.kind, kind.production());
+                                assert_eq!(sequence.encoding.elem, elem);
+                                assert_eq!(sequence.encoding.destination, case.destination());
+                                assert_eq!(sequence.encoding.source1, case.source1());
+                                assert_eq!(
+                                    sequence.encoding.writemask,
+                                    (mask != 0).then_some(mask)
+                                );
+                                assert_eq!(sequence.encoding.zeroing, zeroing);
+                                assert_eq!(sequence.encoding.needs_avx512dq, case.needs_avx512dq());
+                                assert_eq!(
+                                    sequence.encoding.stack_instruction.as_slice(),
+                                    case.stack_instruction(),
+                                    "{level:?} {case:?}"
+                                );
 
-                            let (code, _) = lower(&function, case);
-                            let expected = case.stack_instruction();
-                            assert!(
-                                code.windows(expected.len())
-                                    .any(|window| window == expected),
-                                "{level:?} {case:?}: missing {expected:02X?} in {code:02X?}"
-                            );
-                            lowerings += 1;
+                                let (code, _) = lower(&function, case);
+                                let expected = case.stack_instruction();
+                                assert!(
+                                    code.windows(expected.len())
+                                        .any(|window| window == expected),
+                                    "{level:?} {case:?}: missing {expected:02X?} in {code:02X?}"
+                                );
+                                lowerings += 1;
+                            }
                         }
                     }
                 }
             }
         }
     }
-    assert_eq!(cases, 2 * 3 * 3 * 15);
+    assert_eq!(cases, 4 * 4 * 3 * 3 * 15);
     assert_eq!(lowerings, cases * LEVELS.len());
 }
 
 #[test]
-fn masked_evex_broadcast_xor_lowering_has_exact_live_k_guard_and_rejects_avx_only_bridge() {
-    let case = XorCase {
+fn masked_evex_broadcast_logic_lowering_has_exact_live_k_guard_and_rejects_avx_only_bridge() {
+    let case = LogicCase {
+        kind: LogicKind::AndNot,
         elem: VecElementType::F32,
         width: VecWidth::V512,
         form: MemoryForm::High,
@@ -540,7 +673,7 @@ fn masked_evex_broadcast_xor_lowering_has_exact_live_k_guard_and_rejects_avx_onl
     );
 }
 
-fn initial_registers(case: XorCase, ordinal: usize) -> GuestRegs {
+fn initial_registers(case: LogicCase, ordinal: usize) -> GuestRegs {
     let mut registers = GuestRegs {
         gpr: std::array::from_fn(|index| {
             0x1000u64
@@ -566,19 +699,19 @@ fn initial_registers(case: XorCase, ordinal: usize) -> GuestRegs {
     registers
 }
 
-fn memory_address(case: XorCase, registers: &GuestRegs) -> u64 {
+fn memory_address(case: LogicCase, registers: &GuestRegs) -> u64 {
     registers.gpr[usize::from(case.base())]
         + u64::from(DISP8) * u64::from(case.memory_width().bytes())
 }
 
-fn scalar_bits(case: XorCase, alternate: bool) -> u64 {
+fn scalar_bits(case: LogicCase, alternate: bool) -> u64 {
     match case.elem {
-        VecElementType::F32 => u64::from(if alternate {
+        VecElementType::F32 | VecElementType::I32 => u64::from(if alternate {
             0xA5C3_6996u32
         } else {
             0x1357_9BDFu32
         }),
-        VecElementType::F64 => {
+        VecElementType::F64 | VecElementType::I64 => {
             if alternate {
                 0xA5C3_6996_F00D_5AA5
             } else {
@@ -594,7 +727,7 @@ fn interpreter_success(
     initial: &GuestRegs,
     scalar: u64,
     address: u64,
-    case: XorCase,
+    case: LogicCase,
 ) -> GuestRegs {
     let mut context = SmirContext::new_x86_64();
     if let ArchRegState::X86_64(x86) = &mut context.arch_regs {
@@ -632,7 +765,7 @@ fn interpreter_success(
     expected
 }
 
-fn manual_destination(initial: &GuestRegs, scalar: u64, case: XorCase) -> [u64; 8] {
+fn manual_destination(initial: &GuestRegs, scalar: u64, case: LogicCase) -> [u64; 8] {
     let mut destination_bytes = [0u8; 64];
     let mut source_bytes = [0u8; 64];
     for word in 0..8 {
@@ -653,7 +786,9 @@ fn manual_destination(initial: &GuestRegs, scalar: u64, case: XorCase) -> [u64; 
         let start = lane * elem_bytes;
         if applicable_mask & (1 << lane) != 0 {
             for byte in 0..elem_bytes {
-                destination_bytes[start + byte] = source_bytes[start + byte] ^ scalar_bytes[byte];
+                destination_bytes[start + byte] = case
+                    .kind
+                    .apply_byte(source_bytes[start + byte], scalar_bytes[byte]);
             }
         } else if case.zeroing {
             destination_bytes[start..start + elem_bytes].fill(0);
@@ -673,71 +808,71 @@ fn manual_destination(initial: &GuestRegs, scalar: u64, case: XorCase) -> [u64; 
 fn interpreter_o0_o1_o2_matches_raw_bit_model_for_masks_aliases_and_upper_zeroing() {
     let masks = [(0, false), (1, false), (3, true), (7, false)];
     let mut executions = 0usize;
-    for (ordinal, (elem, width, form, (mask, zeroing))) in
-        [VecElementType::F32, VecElementType::F64]
-            .into_iter()
-            .flat_map(|elem| {
-                [VecWidth::V128, VecWidth::V256, VecWidth::V512]
-                    .into_iter()
-                    .map(move |width| (elem, width))
-            })
-            .flat_map(|(elem, width)| {
-                MemoryForm::ALL
-                    .into_iter()
-                    .map(move |form| (elem, width, form))
-            })
-            .flat_map(|(elem, width, form)| {
-                masks.into_iter().map(move |mask| (elem, width, form, mask))
-            })
-            .enumerate()
-    {
-        let case = XorCase {
-            elem,
-            width,
-            form,
-            mask,
-            zeroing,
-        };
-        let mut initial = initial_registers(case, ordinal);
-        if mask != 0 {
-            initial.k[usize::from(mask)] = match ordinal % 3 {
-                0 => 0,
-                1 => 0xAAAA_AAAA_AAAA_AAAA,
-                _ => u64::MAX,
-            };
-        }
-        let address = memory_address(case, &initial);
-        let scalar = scalar_bits(case, ordinal & 1 != 0);
-        let manual = manual_destination(&initial, scalar, case);
-        for level in LEVELS {
-            let function = optimize(lift_case(case), level);
-            let actual = interpreter_success(&function, &initial, scalar, address, case);
-            assert_eq!(
-                actual.zmm[usize::from(case.destination())],
-                manual,
-                "{level:?} {case:?}"
-            );
-            for index in 0..32 {
-                if index != usize::from(case.destination()) {
-                    assert_eq!(
-                        actual.zmm[index], initial.zmm[index],
-                        "{level:?} {case:?}: clobbered ZMM{index}"
-                    );
+    let mut ordinal = 0usize;
+    for kind in LogicKind::ALL {
+        for elem in [
+            VecElementType::F32,
+            VecElementType::F64,
+            VecElementType::I32,
+            VecElementType::I64,
+        ] {
+            for width in [VecWidth::V128, VecWidth::V256, VecWidth::V512] {
+                for form in MemoryForm::ALL {
+                    for (mask, zeroing) in masks {
+                        let case = LogicCase {
+                            kind,
+                            elem,
+                            width,
+                            form,
+                            mask,
+                            zeroing,
+                        };
+                        let mut initial = initial_registers(case, ordinal);
+                        if mask != 0 {
+                            initial.k[usize::from(mask)] = match ordinal % 3 {
+                                0 => 0,
+                                1 => 0xAAAA_AAAA_AAAA_AAAA,
+                                _ => u64::MAX,
+                            };
+                        }
+                        let address = memory_address(case, &initial);
+                        let scalar = scalar_bits(case, ordinal & 1 != 0);
+                        let manual = manual_destination(&initial, scalar, case);
+                        for level in LEVELS {
+                            let function = optimize(lift_case(case), level);
+                            let actual =
+                                interpreter_success(&function, &initial, scalar, address, case);
+                            assert_eq!(
+                                actual.zmm[usize::from(case.destination())],
+                                manual,
+                                "{level:?} {case:?}"
+                            );
+                            for index in 0..32 {
+                                if index != usize::from(case.destination()) {
+                                    assert_eq!(
+                                        actual.zmm[index], initial.zmm[index],
+                                        "{level:?} {case:?}: clobbered ZMM{index}"
+                                    );
+                                }
+                            }
+                            assert_eq!(actual.gpr, initial.gpr, "{level:?} {case:?}");
+                            assert_eq!(actual.k, initial.k, "{level:?} {case:?}");
+                            assert_eq!(actual.rflags, initial.rflags, "{level:?} {case:?}");
+                            executions += 1;
+                        }
+                        ordinal += 1;
+                    }
                 }
             }
-            assert_eq!(actual.gpr, initial.gpr, "{level:?} {case:?}");
-            assert_eq!(actual.k, initial.k, "{level:?} {case:?}");
-            assert_eq!(actual.rflags, initial.rflags, "{level:?} {case:?}");
-            executions += 1;
         }
     }
-    assert_eq!(executions, 2 * 3 * 3 * masks.len() * LEVELS.len());
+    assert_eq!(executions, 4 * 4 * 3 * 3 * masks.len() * LEVELS.len());
 }
 
 fn assert_rejected(name: &str, function: &SmirFunction) {
     let (definitions, uses) = virtual_counts(function);
     assert!(
-        x86_jit_evex_broadcast_xor_memory_sequence(
+        x86_jit_evex_broadcast_logic_memory_sequence(
             &function.blocks[0],
             0,
             true,
@@ -763,8 +898,9 @@ fn assert_rejected(name: &str, function: &SmirFunction) {
 }
 
 #[test]
-fn evex_broadcast_xor_sequence_fails_closed_for_provenance_and_graph_mutations() {
-    let case = XorCase {
+fn evex_broadcast_logic_sequence_fails_closed_for_provenance_and_graph_mutations() {
+    let case = LogicCase {
+        kind: LogicKind::Xor,
         elem: VecElementType::F32,
         width: VecWidth::V128,
         form: MemoryForm::Low,
@@ -774,7 +910,7 @@ fn evex_broadcast_xor_sequence_fails_closed_for_provenance_and_graph_mutations()
     let base = optimize(lift_case(case), OptLevel::O2);
     let (definitions, uses) = virtual_counts(&base);
     assert!(
-        x86_jit_evex_broadcast_xor_memory_sequence(
+        x86_jit_evex_broadcast_logic_memory_sequence(
             &base.blocks[0],
             0,
             false,
@@ -797,6 +933,14 @@ fn evex_broadcast_xor_sequence_fails_closed_for_provenance_and_graph_mutations()
         .x86_instruction_bytes
         .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
     mutations.push(("metadata source", metadata_source));
+
+    let mut metadata_operation = base.clone();
+    let mut bytes = case.bytes();
+    bytes[4] = LogicKind::Or.opcode(case.elem);
+    metadata_operation
+        .x86_instruction_bytes
+        .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
+    mutations.push(("metadata operation", metadata_operation));
 
     let mut predicate_negation = base.clone();
     if let OpKind::Neg { src, .. } = &mut predicate_negation.blocks[0].ops[2].kind {
@@ -915,31 +1059,67 @@ extern "C" fn scalar_load_helper(
 
 #[cfg(target_arch = "x86_64")]
 #[test]
-fn native_evex_broadcast_xor_matches_interpretation_faults_and_mask_suppression() {
+fn native_evex_broadcast_logic_matches_interpretation_faults_and_mask_suppression() {
     use crate::smir::lower::runtime::ExecMem;
 
-    if !std::is_x86_feature_detected!("avx512f")
-        || !std::is_x86_feature_detected!("avx512bw")
-        || !std::is_x86_feature_detected!("avx512dq")
-    {
-        eprintln!("skipping native EVEX broadcast XOR: host lacks AVX-512F/BW/DQ");
+    if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
+        eprintln!("skipping native EVEX broadcast logic: host lacks AVX-512F/BW");
         return;
     }
     let has_vl = std::is_x86_feature_detected!("avx512vl");
+    let has_dq = std::is_x86_feature_detected!("avx512dq");
     let mut successes = 0usize;
     let mut faults = 0usize;
     let mut suppressed = 0usize;
-    for (ordinal, (elem, width, mask, zeroing)) in [
-        (VecElementType::F32, VecWidth::V128, 1, false),
-        (VecElementType::F64, VecWidth::V256, 3, true),
-        (VecElementType::F32, VecWidth::V512, 0, false),
-        (VecElementType::F64, VecWidth::V512, 7, false),
+    for (ordinal, (kind, elem, width, mask, zeroing)) in [
+        (
+            LogicKind::And,
+            VecElementType::F32,
+            VecWidth::V128,
+            1,
+            false,
+        ),
+        (
+            LogicKind::AndNot,
+            VecElementType::F64,
+            VecWidth::V256,
+            3,
+            true,
+        ),
+        (LogicKind::Or, VecElementType::I32, VecWidth::V512, 0, false),
+        (
+            LogicKind::Xor,
+            VecElementType::I64,
+            VecWidth::V512,
+            7,
+            false,
+        ),
+        (LogicKind::And, VecElementType::I64, VecWidth::V128, 2, true),
+        (
+            LogicKind::AndNot,
+            VecElementType::I32,
+            VecWidth::V256,
+            0,
+            false,
+        ),
+        (LogicKind::Or, VecElementType::F64, VecWidth::V512, 5, true),
+        (
+            LogicKind::Xor,
+            VecElementType::F32,
+            VecWidth::V512,
+            0,
+            false,
+        ),
     ]
     .into_iter()
-    .filter(|(_, width, _, _)| *width == VecWidth::V512 || has_vl)
+    .filter(|(_, elem, width, _, _)| {
+        (*width == VecWidth::V512 || has_vl)
+            && (!matches!(elem, VecElementType::F32 | VecElementType::F64) || has_dq)
+    })
     .enumerate()
     {
-        let case = XorCase {
+        let case = LogicCase {
+            kind,
             elem,
             width,
             form: if ordinal & 1 == 0 {

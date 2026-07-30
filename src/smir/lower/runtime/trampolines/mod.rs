@@ -12,7 +12,7 @@ pub use clobber::*;
 mod cmpccxadd;
 mod cmpxchg;
 mod evex_broadcast_interleave_memory_source;
-mod evex_broadcast_xor_memory_source;
+mod evex_broadcast_logic_memory_source;
 mod evex_fma3_memory_source;
 mod evex_logic_memory_source;
 mod evex_memory_source_common;
@@ -107,7 +107,7 @@ use crate::smir::lower::{
     X86_GUEST_XGETBV1_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 pub(crate) use evex_broadcast_interleave_memory_source::*;
-pub(crate) use evex_broadcast_xor_memory_source::*;
+pub(crate) use evex_broadcast_logic_memory_source::*;
 pub(crate) use evex_fma3_memory_source::*;
 pub(crate) use evex_logic_memory_source::*;
 pub use vector::*;

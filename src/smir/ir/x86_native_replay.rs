@@ -97,7 +97,7 @@ mod aggregate;
 mod classifiers;
 
 pub(crate) use classifiers::{
-    X86EvexBroadcastInterleaveMemoryEncoding, X86EvexBroadcastXorMemoryEncoding,
+    X86EvexBroadcastInterleaveMemoryEncoding, X86EvexBroadcastLogicMemoryEncoding,
     X86EvexLogicMemoryEncoding, X86EvexLogicMemoryKind, X86EvexPackedFma3MemoryEncoding,
     X86EvexPackedFma3MemoryReplay, X86EvexScalarFma3MemoryEncoding,
     X86VexChunkExtractMemoryEncoding, X86VexCrossLane128MemoryEncoding, X86VexFma4MemoryEncoding,

@@ -1,4 +1,4 @@
-//! Helper-backed EVEX VXORPS/VXORPD scalar-broadcast memory lowering.
+//! Helper-backed EVEX packed-logical scalar-broadcast memory lowering.
 
 use std::collections::HashMap;
 
@@ -10,13 +10,13 @@ use crate::smir::lower::LowerError;
 use crate::smir::lower::regalloc::PhysReg;
 
 impl X86_64Lowerer {
-    /// Fuse one exact EVEX VXORPS/VXORPD scalar-broadcast memory
-    /// decomposition. The scalar MMU helper stages 4/8 bytes in a 16-byte
+    /// Fuse one exact EVEX packed-logical scalar-broadcast memory
+    /// decomposition. The scalar MMU helper stages 4 or 8 bytes in a 16-byte
     /// nonarchitectural stack slot, and a byte-validated rewrite consumes
     /// `[rsp]{1toN}`. For writemasking, a live applicable-lane test bypasses
     /// the helper when the memory access is architecturally suppressed; the
     /// native instruction still performs merge/zero masking and upper clearing.
-    pub(crate) fn try_lower_jit_evex_broadcast_xor_memory_source(
+    pub(crate) fn try_lower_jit_evex_broadcast_logic_memory_source(
         &mut self,
         block: &SmirBlock,
         index: usize,
@@ -24,7 +24,7 @@ impl X86_64Lowerer {
         virtual_uses: &HashMap<VReg, usize>,
     ) -> Result<Option<usize>, LowerError> {
         let Some(sequence) =
-            crate::smir::lower::runtime::x86_jit_evex_broadcast_xor_memory_sequence(
+            crate::smir::lower::runtime::x86_jit_evex_broadcast_logic_memory_sequence(
                 block,
                 index,
                 true,
@@ -37,7 +37,7 @@ impl X86_64Lowerer {
         };
         if self.avx_ymm16_vector_state {
             return Err(LowerError::InvalidOperand {
-                op: "EVEX broadcast VXOR memory source".to_string(),
+                op: "EVEX broadcast logical memory source".to_string(),
                 operand: "AVX-only vector bridge cannot carry EVEX state".to_string(),
             });
         }
@@ -56,7 +56,7 @@ impl X86_64Lowerer {
                 signed: SignExtend::Zero,
                 ..
             } if *width == sequence.encoding.memory_width => addr,
-            _ => unreachable!("validated EVEX broadcast XOR sequence owns its scalar memory op"),
+            _ => unreachable!("validated EVEX broadcast logic sequence owns its scalar memory op"),
         };
 
         {
@@ -65,7 +65,7 @@ impl X86_64Lowerer {
         }
         let inactive = if let Some(mask) = sequence.encoding.writemask {
             let lanes = sequence.encoding.width.lanes(sequence.encoding.elem);
-            debug_assert!(lanes <= 16, "EVEX broadcast XOR applicable opmask width");
+            debug_assert!(lanes <= 16, "EVEX broadcast logic applicable opmask width");
             let lane_mask = (1u64 << lanes) - 1;
             self.code.emit_u8(0x9C); // pushfq
             self.code.emit_u8(0x50); // push guest RAX

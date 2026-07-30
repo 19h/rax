@@ -1,4 +1,4 @@
-//! Fail-closed helper-backed EVEX VXORPS/VXORPD broadcast-memory admission.
+//! Fail-closed helper-backed EVEX packed-logical broadcast-memory admission.
 
 use std::collections::HashMap;
 
@@ -8,7 +8,9 @@ use crate::smir::ir::types::{
     ArchReg, BlockId, GuestAddr, OpWidth, SignExtend, SrcOperand, VReg, VecElementType, VecWidth,
     X86Reg,
 };
-use crate::smir::ir::{X86EvexBroadcastXorMemoryEncoding, X86InstructionBytes};
+use crate::smir::ir::{
+    X86EvexBroadcastLogicMemoryEncoding, X86EvexLogicMemoryKind, X86InstructionBytes,
+};
 
 use super::evex_memory_source_common::{
     exact_nonzero_mask_predicate, exact_virtual_definition_use, single_definition_single_use,
@@ -17,44 +19,100 @@ use super::evex_memory_source_common::{
 use super::x86_jit_mem_address_shape_valid;
 
 /// Exact contiguous decomposition consumed by the helper-backed x86-64
-/// EVEX VXORPS/VXORPD scalar-broadcast memory lowerer.
+/// EVEX packed-logical scalar-broadcast memory lowerer.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) struct X86JitEvexBroadcastXorMemorySequence {
+pub(crate) struct X86JitEvexBroadcastLogicMemorySequence {
     pub(crate) consumed: usize,
     pub(crate) memory_offset: usize,
-    pub(crate) encoding: X86EvexBroadcastXorMemoryEncoding,
+    pub(crate) encoding: X86EvexBroadcastLogicMemoryEncoding,
 }
 
-fn exact_xor(
+fn exact_logic(
     op: &SmirOp,
     dst: VReg,
     src1: VReg,
     src2: VReg,
-    encoding: X86EvexBroadcastXorMemoryEncoding,
+    encoding: X86EvexBroadcastLogicMemoryEncoding,
 ) -> bool {
-    matches!(
-        op.kind,
-        OpKind::VXor {
-            dst: actual_dst,
-            src1: actual_src1,
-            src2: actual_src2,
-            width,
-        } if actual_dst == dst
-            && actual_src1 == src1
-            && actual_src2 == src2
-            && width == encoding.width
-    ) && op.x86_hint
-        == Some(X86OpHint::EvexOp {
-            map: X86VecMap::Map0F,
-            pp: if encoding.elem == VecElementType::F32 {
-                X86SsePrefix::None
-            } else {
-                X86SsePrefix::OpSize
+    let operands_match = match (encoding.kind, &op.kind) {
+        (
+            X86EvexLogicMemoryKind::And,
+            OpKind::VAnd {
+                dst: actual_dst,
+                src1: actual_src1,
+                src2: actual_src2,
+                width,
             },
-            opcode: 0x57,
-            width: encoding.width,
-            w: encoding.elem == VecElementType::F64,
-        })
+        )
+        | (
+            X86EvexLogicMemoryKind::AndNot,
+            OpKind::VAndNot {
+                dst: actual_dst,
+                src1: actual_src1,
+                src2: actual_src2,
+                width,
+            },
+        )
+        | (
+            X86EvexLogicMemoryKind::Or,
+            OpKind::VOr {
+                dst: actual_dst,
+                src1: actual_src1,
+                src2: actual_src2,
+                width,
+            },
+        )
+        | (
+            X86EvexLogicMemoryKind::Xor,
+            OpKind::VXor {
+                dst: actual_dst,
+                src1: actual_src1,
+                src2: actual_src2,
+                width,
+            },
+        ) => {
+            *actual_dst == dst
+                && *actual_src1 == src1
+                && *actual_src2 == src2
+                && *width == encoding.width
+        }
+        _ => false,
+    };
+    operands_match
+        && op.x86_hint
+            == Some(X86OpHint::EvexOp {
+                map: X86VecMap::Map0F,
+                pp: if encoding.elem == VecElementType::F32 {
+                    X86SsePrefix::None
+                } else {
+                    X86SsePrefix::OpSize
+                },
+                opcode: match (encoding.kind, encoding.elem) {
+                    (X86EvexLogicMemoryKind::And, VecElementType::F32 | VecElementType::F64) => {
+                        0x54
+                    }
+                    (X86EvexLogicMemoryKind::AndNot, VecElementType::F32 | VecElementType::F64) => {
+                        0x55
+                    }
+                    (X86EvexLogicMemoryKind::Or, VecElementType::F32 | VecElementType::F64) => 0x56,
+                    (X86EvexLogicMemoryKind::Xor, VecElementType::F32 | VecElementType::F64) => {
+                        0x57
+                    }
+                    (X86EvexLogicMemoryKind::And, VecElementType::I32 | VecElementType::I64) => {
+                        0xDB
+                    }
+                    (X86EvexLogicMemoryKind::AndNot, VecElementType::I32 | VecElementType::I64) => {
+                        0xDF
+                    }
+                    (X86EvexLogicMemoryKind::Or, VecElementType::I32 | VecElementType::I64) => 0xEB,
+                    (X86EvexLogicMemoryKind::Xor, VecElementType::I32 | VecElementType::I64) => {
+                        0xEF
+                    }
+                    _ => return false,
+                },
+                width: encoding.width,
+                w: matches!(encoding.elem, VecElementType::F64 | VecElementType::I64),
+            })
 }
 
 fn exact_lane_predicate(
@@ -123,13 +181,13 @@ fn exact_lane_predicate(
     Some(condition)
 }
 
-fn x86_jit_masked_evex_broadcast_xor_memory_sequence(
+fn x86_jit_masked_evex_broadcast_logic_memory_sequence(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
-    encoding: X86EvexBroadcastXorMemoryEncoding,
+    encoding: X86EvexBroadcastLogicMemoryEncoding,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
-) -> Option<X86JitEvexBroadcastXorMemorySequence> {
+) -> Option<X86JitEvexBroadcastLogicMemorySequence> {
     let first = block.ops.get(index)?;
     let guest_pc = first.guest_pc;
     let same_pc = |offset: usize| {
@@ -239,14 +297,17 @@ fn x86_jit_masked_evex_broadcast_xor_memory_sequence(
         return None;
     }
 
-    let xor = block.ops.get(index + offset)?;
-    let raw = match xor.kind {
-        OpKind::VXor { dst, .. } => dst,
+    let logic = block.ops.get(index + offset)?;
+    let raw = match logic.kind {
+        OpKind::VAnd { dst, .. }
+        | OpKind::VAndNot { dst, .. }
+        | OpKind::VOr { dst, .. }
+        | OpKind::VXor { dst, .. } => dst,
         _ => return None,
     };
     if !same_pc(offset)
-        || !exact_xor(
-            xor,
+        || !exact_logic(
+            logic,
             raw,
             match encoding.width {
                 VecWidth::V128 => VReg::Arch(ArchReg::X86(X86Reg::Xmm(encoding.source1))),
@@ -302,8 +363,8 @@ fn x86_jit_masked_evex_broadcast_xor_memory_sequence(
     }
 
     let lane_width = match encoding.elem {
-        VecElementType::F32 => OpWidth::W32,
-        VecElementType::F64 => OpWidth::W64,
+        VecElementType::F32 | VecElementType::I32 => OpWidth::W32,
+        VecElementType::F64 | VecElementType::I64 => OpWidth::W64,
         _ => return None,
     };
     for lane in 0..lanes {
@@ -425,7 +486,7 @@ fn x86_jit_masked_evex_broadcast_xor_memory_sequence(
     {
         return None;
     }
-    Some(X86JitEvexBroadcastXorMemorySequence {
+    Some(X86JitEvexBroadcastLogicMemorySequence {
         consumed: offset,
         memory_offset,
         encoding,
@@ -433,28 +494,29 @@ fn x86_jit_masked_evex_broadcast_xor_memory_sequence(
 }
 
 /// Validate the complete O0/O1/O2 decomposition emitted for one EVEX
-/// VXORPS/VXORPD scalar-broadcast memory source. Exact provenance binds width,
-/// element type, architectural operands, masking, and helper memory width.
+/// packed-logical scalar-broadcast memory source. Exact provenance binds
+/// operation, width, element type, architectural operands, masking, and helper
+/// memory width.
 ///
 /// Classification is O(L) time and O(1) auxiliary space for L <= 16 lanes;
 /// callers build global definition/use maps once in O(N) time and O(V) space.
-pub(crate) fn x86_jit_evex_broadcast_xor_memory_sequence(
+pub(crate) fn x86_jit_evex_broadcast_logic_memory_sequence(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
     allow_mem: bool,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
-) -> Option<X86JitEvexBroadcastXorMemorySequence> {
+) -> Option<X86JitEvexBroadcastLogicMemorySequence> {
     if !allow_mem {
         return None;
     }
     let first = block.ops.get(index)?;
     let encoding = instruction_bytes
         .get(&(block.id, first.guest_pc))?
-        .evex_broadcast_xor_memory_encoding()?;
+        .evex_broadcast_logic_memory_encoding()?;
     if encoding.writemask.is_some() {
-        return x86_jit_masked_evex_broadcast_xor_memory_sequence(
+        return x86_jit_masked_evex_broadcast_logic_memory_sequence(
             block,
             index,
             encoding,
@@ -514,7 +576,7 @@ pub(crate) fn x86_jit_evex_broadcast_xor_memory_sequence(
         return None;
     }
 
-    let xor = block.ops.get(index + 3)?;
+    let logic = block.ops.get(index + 3)?;
     let destination = match encoding.width {
         VecWidth::V128 => VReg::Arch(ArchReg::X86(X86Reg::Xmm(encoding.destination))),
         VecWidth::V256 => VReg::Arch(ArchReg::X86(X86Reg::Ymm(encoding.destination))),
@@ -527,8 +589,8 @@ pub(crate) fn x86_jit_evex_broadcast_xor_memory_sequence(
         VecWidth::V512 => VReg::Arch(ArchReg::X86(X86Reg::Zmm(encoding.source1))),
         _ => return None,
     };
-    if xor.guest_pc != first.guest_pc
-        || !exact_xor(xor, destination, source1, loaded, encoding)
+    if logic.guest_pc != first.guest_pc
+        || !exact_logic(logic, destination, source1, loaded, encoding)
         || block
             .ops
             .get(index + 4)
@@ -537,7 +599,7 @@ pub(crate) fn x86_jit_evex_broadcast_xor_memory_sequence(
         return None;
     }
 
-    Some(X86JitEvexBroadcastXorMemorySequence {
+    Some(X86JitEvexBroadcastLogicMemorySequence {
         consumed: 4,
         memory_offset: 1,
         encoding,
