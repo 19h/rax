@@ -2,7 +2,7 @@
 
 use super::{X86_64Lowerer, X86Emitter};
 use crate::smir::ir::ops::{X86SsePrefix, X86VecMap};
-use crate::smir::ir::types::{DispSize, VecWidth};
+use crate::smir::ir::types::{DispSize, OpWidth, VecWidth};
 use crate::smir::lower::regalloc::PhysReg;
 use crate::smir::lower::{
     X86_GUEST_K_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_VECTOR_SCRATCH_OFFSET,
@@ -132,6 +132,38 @@ impl X86_64Lowerer {
             0,
         );
         emitter.code.emit_u8(if lane == 0 { 0x13 } else { 0x17 });
+        emitter.emit_modrm_mem_disp(
+            register,
+            PhysReg::Rax,
+            X86_GUEST_VECTOR_SCRATCH_OFFSET,
+            DispSize::Disp32,
+        );
+    }
+
+    /// Transfer one low dword or qword between an architectural XMM register
+    /// and the nonarchitectural helper-transfer slot. RAX must contain the
+    /// state pointer. The canonical VEX VMOVD/VMOVQ bit transfer clears upper
+    /// destination bits on loads and does not update MXCSR or flags.
+    pub(crate) fn emit_jit_vector_scratch_scalar_move(
+        &mut self,
+        register: PhysReg,
+        width: OpWidth,
+        load: bool,
+    ) {
+        debug_assert!(matches!(register, PhysReg::Xmm(_)));
+        debug_assert!(matches!(width, OpWidth::W32 | OpWidth::W64));
+        let mut emitter = X86Emitter::new(&mut self.code);
+        emitter.emit_vex_prefix(
+            X86VecMap::Map0F,
+            X86SsePrefix::OpSize,
+            VecWidth::V128,
+            width == OpWidth::W64,
+            register.vec_ext(),
+            0,
+            PhysReg::Rax.vec_ext(),
+            0,
+        );
+        emitter.code.emit_u8(if load { 0x6E } else { 0x7E });
         emitter.emit_modrm_mem_disp(
             register,
             PhysReg::Rax,

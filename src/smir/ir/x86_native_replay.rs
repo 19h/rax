@@ -66,6 +66,7 @@ pub(crate) use classifiers::{
     X86VexImmediatePermuteMemoryEncoding, X86VexPtestMemoryEncoding, X86VexRoundMemoryEncoding,
     X86VexScalarConvertMemoryEncoding, X86VexScalarConvertMemoryKind,
     X86VexScalarInsertMemoryFields, X86VexScalarInsertMemoryKind,
+    X86VexScalarIntegerMemoryEncoding, X86VexScalarIntegerMemoryKind,
     X86VexVariableBlendMemoryEncoding, X86VexVariablePermuteMemoryEncoding,
 };
 

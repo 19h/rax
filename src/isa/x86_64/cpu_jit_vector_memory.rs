@@ -271,6 +271,20 @@ mod tests {
             state.zmm, architectural_before,
             "scratch store must not modify architectural vectors"
         );
+        mem.write_slice(&old, GuestAddress(0x3130)).unwrap();
+        assert_eq!(
+            unsafe { rax_jit_vec_store(&mut state, 0x3130, X86_JIT_VECTOR_SCRATCH_INDEX, 4) },
+            1
+        );
+        let mut scratch_dword = old.clone();
+        mem.read_slice(&mut scratch_dword, GuestAddress(0x3130))
+            .unwrap();
+        assert_eq!(&scratch_dword[..4], &0x4433_2211u32.to_le_bytes());
+        assert_eq!(
+            &scratch_dword[4..],
+            &old[4..],
+            "store width must remain 4 bytes"
+        );
 
         vcpu.mmu.mark_code_page(0x6000);
         let protected = [0x55u8; 16];

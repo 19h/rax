@@ -634,8 +634,8 @@ impl X86_64Lowerer {
                         validate_idx += sequence.consumed;
                         continue;
                     }
-                    if let Some(sequence) =
-                        crate::smir::lower::runtime::x86_jit_vex_half_move_memory_sequence(
+                    if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_vex_scalar_move_memory_sequence_len(
                             block,
                             validate_idx,
                             true,
@@ -644,20 +644,7 @@ impl X86_64Lowerer {
                             &virtual_uses,
                         )
                     {
-                        validate_idx += sequence.consumed;
-                        continue;
-                    }
-                    if let Some(sequence) =
-                        crate::smir::lower::runtime::x86_jit_vex_half_move_store_sequence(
-                            block,
-                            validate_idx,
-                            true,
-                            &self.x86_instruction_bytes,
-                            &virtual_definitions,
-                            &virtual_uses,
-                        )
-                    {
-                        validate_idx += sequence.consumed;
+                        validate_idx += consumed;
                         continue;
                     }
                     if let Some(sequence) =
@@ -1426,17 +1413,7 @@ impl X86_64Lowerer {
                     continue;
                 }
                 #[cfg(feature = "smir-jit")]
-                if let Some(consumed) = self.try_lower_jit_vex_half_move_memory_source(
-                    block,
-                    idx,
-                    &virtual_definitions,
-                    &virtual_uses,
-                )? {
-                    idx += consumed;
-                    continue;
-                }
-                #[cfg(feature = "smir-jit")]
-                if let Some(consumed) = self.try_lower_jit_vex_half_move_memory_store(
+                if let Some(consumed) = self.try_lower_jit_vex_scalar_move_memory_source(
                     block,
                     idx,
                     &virtual_definitions,

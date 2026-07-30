@@ -603,7 +603,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.any = true;
                 requirements.needs_avx = true;
                 index += sequence.consumed;
-            } else if let Some(sequence) = super::x86_jit_vex_half_move_memory_sequence(
+            } else if let Some(consumed) = super::x86_jit_vex_scalar_move_memory_sequence_len(
                 block,
                 index,
                 true,
@@ -613,18 +613,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             ) {
                 requirements.any = true;
                 requirements.needs_avx = true;
-                index += sequence.consumed;
-            } else if let Some(sequence) = super::x86_jit_vex_half_move_store_sequence(
-                block,
-                index,
-                true,
-                &func.x86_instruction_bytes,
-                &virtual_definitions,
-                &virtual_uses,
-            ) {
-                requirements.any = true;
-                requirements.needs_avx = true;
-                index += sequence.consumed;
+                index += consumed;
             } else if let Some(sequence) = super::x86_jit_vex_fp_compare_memory_sequence(
                 block,
                 index,

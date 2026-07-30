@@ -420,7 +420,7 @@ pub(crate) fn block_is_clobber_safe(
             i += sequence.consumed;
             continue;
         }
-        if let Some(sequence) = x86_jit_vex_half_move_memory_sequence(
+        if let Some(consumed) = x86_jit_vex_scalar_move_memory_sequence_len(
             block,
             i,
             allow_mem,
@@ -428,18 +428,7 @@ pub(crate) fn block_is_clobber_safe(
             &virtual_definitions,
             &virtual_uses,
         ) {
-            i += sequence.consumed;
-            continue;
-        }
-        if let Some(sequence) = x86_jit_vex_half_move_store_sequence(
-            block,
-            i,
-            allow_mem,
-            x86_instruction_bytes,
-            &virtual_definitions,
-            &virtual_uses,
-        ) {
-            i += sequence.consumed;
+            i += consumed;
             continue;
         }
         if let Some(sequence) = x86_jit_vex_fp_compare_memory_sequence(

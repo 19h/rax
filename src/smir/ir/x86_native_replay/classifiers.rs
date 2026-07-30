@@ -66,6 +66,7 @@ mod vex_register_broadcast;
 mod vex_scalar_extract;
 mod vex_scalar_insert;
 mod vex_scalar_insert_memory;
+mod vex_scalar_integer_memory;
 mod vex_scalar_vmovq;
 mod vex_shared_count_shift;
 mod vex_variable_blend;
@@ -97,6 +98,9 @@ pub(crate) use vex_memory_broadcast::X86VexMemoryBroadcastFields;
 pub(crate) use vex_ptest::X86VexPtestMemoryEncoding;
 pub(crate) use vex_scalar_insert_memory::{
     X86VexScalarInsertMemoryFields, X86VexScalarInsertMemoryKind,
+};
+pub(crate) use vex_scalar_integer_memory::{
+    X86VexScalarIntegerMemoryEncoding, X86VexScalarIntegerMemoryKind,
 };
 pub(crate) use vex_variable_blend::X86VexVariableBlendMemoryEncoding;
 pub(crate) use vex_variable_permute::X86VexVariablePermuteMemoryEncoding;
