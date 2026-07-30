@@ -6,6 +6,8 @@ mod crypto;
 pub use crypto::*;
 mod fp;
 pub use fp::*;
+mod fp16_arithmetic;
+pub use fp16_arithmetic::*;
 mod mem;
 pub use mem::*;
 mod misc;

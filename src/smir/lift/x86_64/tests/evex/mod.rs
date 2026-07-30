@@ -8,6 +8,8 @@ mod arithmetic;
 #[cfg(test)]
 mod fp;
 #[cfg(test)]
+mod fp16_arithmetic;
+#[cfg(test)]
 mod fp16_convert;
 #[cfg(test)]
 mod fp_unpack;

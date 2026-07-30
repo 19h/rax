@@ -1092,13 +1092,6 @@ fn lift_evex_map5_fp16_arithmetic_covers_register_memory_and_broadcast_forms() {
     ));
 
     let masked_broadcast = lift_single(&[0x62, 0xF5, 0x6C, 0x5C, 0x5E, 0x48, 0x01]).unwrap();
-    assert!(masked_broadcast.ops.iter().any(|op| matches!(
-        op.kind,
-        OpKind::Lea {
-            addr: Address::BaseOffset { offset: 2, .. },
-            ..
-        }
-    )));
     assert_eq!(
         masked_broadcast
             .ops
@@ -1106,13 +1099,13 @@ fn lift_evex_map5_fp16_arithmetic_covers_register_memory_and_broadcast_forms() {
             .filter(|op| matches!(
                 op.kind,
                 OpKind::PredLoad {
-                    addr: Address::BaseOffset { offset: 0, .. },
+                    addr: Address::BaseOffset { offset: 2, .. },
                     width: MemWidth::B2,
                     ..
                 }
             ))
             .count(),
-        32
+        1
     );
 
     let min_broadcast = lift_single(&[0x62, 0xF5, 0x6C, 0x5A, 0x5D, 0x48, 0x01]).unwrap();
@@ -1128,7 +1121,7 @@ fn lift_evex_map5_fp16_arithmetic_covers_register_memory_and_broadcast_forms() {
                 }
             ))
             .count(),
-        32
+        1
     );
     assert!(matches!(
         min_broadcast.ops.last().map(|op| &op.kind),
