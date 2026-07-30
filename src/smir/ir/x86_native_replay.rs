@@ -35,6 +35,27 @@ pub(crate) struct X86VpclmulqdqMemoryEncoding {
     pub(crate) supports_avx_ymm16: bool,
 }
 
+/// Exact VEX GFNI operation selected by one byte-validated memory encoding.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum X86VexGfniMemoryKind {
+    Multiply,
+    Affine,
+    AffineInverse,
+}
+
+/// Byte-validated VEX GFNI memory encoding rewritten to use one
+/// nonarchitectural low vector register as its second source.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86VexGfniMemoryEncoding {
+    pub(crate) kind: X86VexGfniMemoryKind,
+    pub(crate) width: crate::smir::ir::types::VecWidth,
+    pub(crate) destination: u8,
+    pub(crate) source1: u8,
+    pub(crate) scratch: u8,
+    pub(crate) immediate: Option<u8>,
+    pub(crate) register_instruction: X86InstructionBytes,
+}
+
 impl X86InstructionBytes {
     /// Capture one complete x86 instruction.
     pub fn new(bytes: &[u8]) -> Option<Self> {

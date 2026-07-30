@@ -238,6 +238,8 @@ mod vex_fp_flag_compare_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_fp_shuffle_memory_source;
 #[cfg(feature = "smir-jit")]
+mod vex_gfni_memory_source;
+#[cfg(feature = "smir-jit")]
 mod vex_half_move_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_immediate_blend_memory_source;

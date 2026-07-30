@@ -1,6 +1,8 @@
-//! Register-only VEX and EVEX GFNI replay classification.
+//! VEX and EVEX GFNI replay classification.
 
+use super::super::{X86VexGfniMemoryEncoding, X86VexGfniMemoryKind};
 use super::X86InstructionBytes;
+use crate::smir::ir::types::VecWidth;
 
 impl X86InstructionBytes {
     /// Validate one register-only VEX GFNI vector instruction and return
@@ -41,6 +43,90 @@ impl X86InstructionBytes {
             unreachable!()
         };
         Some((u8::from(p0 & 0x80 == 0) << 3) | ((modrm >> 3) & 7))
+    }
+
+    /// Architectural first source selected by an exact register-only VEX GFNI
+    /// instruction.
+    pub(crate) fn vex_gfni_source1_index(&self) -> Option<u8> {
+        self.vex_register_gfni_uses_ymm()?;
+        let [0xC4, _p0, p1, _opcode, _modrm, ..] = self.as_slice() else {
+            unreachable!()
+        };
+        Some((!p1 >> 3) & 0x0F)
+    }
+
+    /// Architectural second source selected by an exact register-only VEX
+    /// GFNI instruction.
+    pub(crate) fn vex_gfni_source2_index(&self) -> Option<u8> {
+        self.vex_register_gfni_uses_ymm()?;
+        let [0xC4, p0, _p1, _opcode, modrm, ..] = self.as_slice() else {
+            unreachable!()
+        };
+        Some((u8::from(p0 & 0x20 == 0) << 3) | (modrm & 7))
+    }
+
+    /// Validate one VEX GFNI memory encoding and rewrite it to an exact
+    /// register-source instruction using a low scratch register distinct from
+    /// both architectural register operands.
+    pub(crate) fn vex_gfni_memory_encoding(&self) -> Option<X86VexGfniMemoryEncoding> {
+        let (fields, kind, immediate, memory_instruction) =
+            if let Some(fields) = self.vex_memory_fields() {
+                if fields.map != 2 || fields.pp != 1 || fields.opcode != 0xCF || fields.w {
+                    return None;
+                }
+                (fields, X86VexGfniMemoryKind::Multiply, None, *self)
+            } else {
+                let (fields, immediate) = self.vex_memory_fields_with_imm8()?;
+                let kind = match (fields.map, fields.pp, fields.opcode, fields.w) {
+                    (3, 1, 0xCE, true) => X86VexGfniMemoryKind::Affine,
+                    (3, 1, 0xCF, true) => X86VexGfniMemoryKind::AffineInverse,
+                    _ => return None,
+                };
+                let bytes_without_immediate =
+                    X86InstructionBytes::new(&self.as_slice()[..self.as_slice().len() - 1])?;
+                (fields, kind, Some(immediate), bytes_without_immediate)
+            };
+
+        let width = if fields.width_256 {
+            VecWidth::V256
+        } else {
+            VecWidth::V128
+        };
+        let scratch = (0..16u8)
+            .find(|candidate| *candidate != fields.destination && *candidate != fields.source1)
+            .expect("two operands cannot consume every low vector register");
+        let rewritten = memory_instruction.vex_memory_with_register_source(scratch)?;
+        let register_instruction = if let Some(immediate) = immediate {
+            let mut bytes = [0u8; 15];
+            let rewritten_bytes = rewritten.as_slice();
+            let len = rewritten_bytes.len().checked_add(1)?;
+            if len > bytes.len() {
+                return None;
+            }
+            bytes[..rewritten_bytes.len()].copy_from_slice(rewritten_bytes);
+            bytes[rewritten_bytes.len()] = immediate;
+            X86InstructionBytes::new(&bytes[..len])?
+        } else {
+            rewritten
+        };
+
+        if register_instruction.vex_register_gfni_uses_ymm() != Some(width == VecWidth::V256)
+            || register_instruction.vex_gfni_destination_index() != Some(fields.destination)
+            || register_instruction.vex_gfni_source1_index() != Some(fields.source1)
+            || register_instruction.vex_gfni_source2_index() != Some(scratch)
+        {
+            return None;
+        }
+
+        Some(X86VexGfniMemoryEncoding {
+            kind,
+            width,
+            destination: fields.destination,
+            source1: fields.source1,
+            scratch,
+            immediate,
+            register_instruction,
+        })
     }
 
     /// Validate one register-only EVEX GFNI vector instruction and return
@@ -149,6 +235,17 @@ mod tests {
                                 expected.map(|_| destination_extension | ((modrm >> 3) & 7)),
                                 "{bytes:02X?}"
                             );
+                            assert_eq!(
+                                instruction.vex_gfni_source1_index(),
+                                expected.map(|_| (!encoded_vvvv) & 0x0F),
+                                "{bytes:02X?}"
+                            );
+                            let source2_extension = u8::from(extension_bits & 0x20 == 0) << 3;
+                            assert_eq!(
+                                instruction.vex_gfni_source2_index(),
+                                expected.map(|_| source2_extension | (modrm & 7)),
+                                "{bytes:02X?}"
+                            );
                             accepted += usize::from(expected.is_some());
                             tested += 1;
                         }
@@ -251,6 +348,14 @@ mod tests {
                 Some(destination),
                 "{bytes:02X?}"
             );
+            assert!(
+                instruction.vex_gfni_source1_index().is_some(),
+                "{bytes:02X?}"
+            );
+            assert!(
+                instruction.vex_gfni_source2_index().is_some(),
+                "{bytes:02X?}"
+            );
         }
     }
 
@@ -279,6 +384,207 @@ mod tests {
                 None,
                 "{bytes:02X?}"
             );
+            assert_eq!(instruction.vex_gfni_source1_index(), None, "{bytes:02X?}");
+            assert_eq!(instruction.vex_gfni_source2_index(), None, "{bytes:02X?}");
+        }
+    }
+
+    fn memory_encoding(
+        kind: X86VexGfniMemoryKind,
+        destination: u8,
+        source1: u8,
+        ymm: bool,
+        modrm_mode_rm: u8,
+        operand_tail: &[u8],
+        immediate: u8,
+    ) -> Vec<u8> {
+        assert!(destination < 16 && source1 < 16);
+        assert!(modrm_mode_rm & 0x38 == 0);
+        let (map, w, opcode, has_immediate) = match kind {
+            X86VexGfniMemoryKind::Multiply => (2, false, 0xCF, false),
+            X86VexGfniMemoryKind::Affine => (3, true, 0xCE, true),
+            X86VexGfniMemoryKind::AffineInverse => (3, true, 0xCF, true),
+        };
+        let mut p0 = 0xE0 | map;
+        if destination >= 8 {
+            p0 &= !0x80;
+        }
+        let mut bytes = vec![
+            0xC4,
+            p0,
+            (u8::from(w) << 7) | (((!source1) & 0x0F) << 3) | (u8::from(ymm) << 2) | 1,
+            opcode,
+            modrm_mode_rm | ((destination & 7) << 3),
+        ];
+        bytes.extend_from_slice(operand_tail);
+        if has_immediate {
+            bytes.push(immediate);
+        }
+        bytes
+    }
+
+    #[test]
+    fn memory_classifier_exhaustively_covers_all_1_536_kind_width_register_and_immediate_cells() {
+        let kinds = [
+            X86VexGfniMemoryKind::Multiply,
+            X86VexGfniMemoryKind::Affine,
+            X86VexGfniMemoryKind::AffineInverse,
+        ];
+        let mut classified = 0usize;
+        for kind in kinds {
+            for ymm in [false, true] {
+                for destination in 0u8..16 {
+                    for source1 in 0u8..16 {
+                        let immediate = destination
+                            .wrapping_mul(17)
+                            .wrapping_add(source1.wrapping_mul(29));
+                        let bytes =
+                            memory_encoding(kind, destination, source1, ymm, 0x03, &[], immediate);
+                        let encoding = X86InstructionBytes::new(&bytes)
+                            .unwrap()
+                            .vex_gfni_memory_encoding()
+                            .unwrap_or_else(|| panic!("{bytes:02X?}"));
+                        assert_eq!(encoding.kind, kind, "{bytes:02X?}");
+                        assert_eq!(
+                            encoding.width,
+                            if ymm { VecWidth::V256 } else { VecWidth::V128 },
+                            "{bytes:02X?}"
+                        );
+                        assert_eq!(encoding.destination, destination, "{bytes:02X?}");
+                        assert_eq!(encoding.source1, source1, "{bytes:02X?}");
+                        assert_ne!(encoding.scratch, destination, "{bytes:02X?}");
+                        assert_ne!(encoding.scratch, source1, "{bytes:02X?}");
+                        assert_eq!(
+                            encoding.immediate,
+                            (kind != X86VexGfniMemoryKind::Multiply).then_some(immediate),
+                            "{bytes:02X?}"
+                        );
+                        assert_eq!(
+                            encoding.register_instruction.vex_register_gfni_uses_ymm(),
+                            Some(ymm),
+                            "{bytes:02X?}"
+                        );
+                        assert_eq!(
+                            encoding.register_instruction.vex_gfni_destination_index(),
+                            Some(destination),
+                            "{bytes:02X?}"
+                        );
+                        assert_eq!(
+                            encoding.register_instruction.vex_gfni_source1_index(),
+                            Some(source1),
+                            "{bytes:02X?}"
+                        );
+                        assert_eq!(
+                            encoding.register_instruction.vex_gfni_source2_index(),
+                            Some(encoding.scratch),
+                            "{bytes:02X?}"
+                        );
+                        classified += 1;
+                    }
+                }
+            }
+        }
+        assert_eq!(classified, 3 * 2 * 16 * 16);
+    }
+
+    #[test]
+    fn memory_classifier_accepts_all_modrm_sib_displacements_prefixes_and_affine_immediates() {
+        let operands: [(u8, &[u8]); 8] = [
+            (0x00, &[]),
+            (0x04, &[0x20]),
+            (0x04, &[0x25, 0x11, 0x22, 0x33, 0x44]),
+            (0x05, &[0x11, 0x22, 0x33, 0x44]),
+            (0x40, &[0x80]),
+            (0x44, &[0xA5, 0x80]),
+            (0x80, &[0x11, 0x22, 0x33, 0x44]),
+            (0x84, &[0xE3, 0x11, 0x22, 0x33, 0x44]),
+        ];
+        let mut classified = 0usize;
+        for kind in [
+            X86VexGfniMemoryKind::Multiply,
+            X86VexGfniMemoryKind::Affine,
+            X86VexGfniMemoryKind::AffineInverse,
+        ] {
+            for (mode_rm, tail) in operands {
+                for immediate in u8::MIN..=u8::MAX {
+                    let mut bytes = memory_encoding(kind, 13, 14, true, mode_rm, tail, immediate);
+                    bytes.splice(0..0, [0x64, 0x67]);
+                    let encoding = X86InstructionBytes::new(&bytes)
+                        .unwrap()
+                        .vex_gfni_memory_encoding()
+                        .unwrap_or_else(|| panic!("{bytes:02X?}"));
+                    assert_eq!(encoding.kind, kind, "{bytes:02X?}");
+                    assert_eq!(encoding.destination, 13, "{bytes:02X?}");
+                    assert_eq!(encoding.source1, 14, "{bytes:02X?}");
+                    assert_eq!(encoding.scratch, 0, "{bytes:02X?}");
+                    assert_eq!(
+                        encoding.immediate,
+                        (kind != X86VexGfniMemoryKind::Multiply).then_some(immediate),
+                        "{bytes:02X?}"
+                    );
+                    let expected = match kind {
+                        X86VexGfniMemoryKind::Multiply => {
+                            vec![0xC4, 0x62, 0x0D, 0xCF, 0xE8]
+                        }
+                        X86VexGfniMemoryKind::Affine => {
+                            vec![0xC4, 0x63, 0x8D, 0xCE, 0xE8, immediate]
+                        }
+                        X86VexGfniMemoryKind::AffineInverse => {
+                            vec![0xC4, 0x63, 0x8D, 0xCF, 0xE8, immediate]
+                        }
+                    };
+                    assert_eq!(
+                        encoding.register_instruction.as_slice(),
+                        expected,
+                        "{bytes:02X?}"
+                    );
+                    classified += 1;
+                }
+            }
+        }
+        assert_eq!(classified, 3 * operands.len() * 256);
+    }
+
+    #[test]
+    fn memory_classifier_fails_closed_for_register_wrong_fields_and_malformed_lengths() {
+        let valid = memory_encoding(
+            X86VexGfniMemoryKind::AffineInverse,
+            9,
+            10,
+            true,
+            0x43,
+            &[0x20],
+            0xA5,
+        );
+        let mut candidates = Vec::new();
+        for (index, mask) in [(1, 0x1F), (2, 0x03), (2, 0x80), (3, 0xFF)] {
+            let mut bytes = valid.clone();
+            bytes[index] ^= mask;
+            candidates.push(bytes);
+        }
+        let mut register = valid.clone();
+        register[4] |= 0xC0;
+        candidates.push(register);
+        candidates.push(valid[..valid.len() - 1].to_vec());
+        candidates.push(valid.iter().copied().chain([0]).collect());
+        candidates.push(
+            [0x62]
+                .into_iter()
+                .chain(valid[1..].iter().copied())
+                .collect(),
+        );
+        candidates.push(
+            [0xC5]
+                .into_iter()
+                .chain(valid[2..].iter().copied())
+                .collect(),
+        );
+
+        for bytes in candidates {
+            let Some(instruction) = X86InstructionBytes::new(&bytes) else {
+                continue;
+            };
+            assert_eq!(instruction.vex_gfni_memory_encoding(), None, "{bytes:02X?}");
         }
     }
 
