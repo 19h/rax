@@ -95,7 +95,9 @@ pub(crate) use evex_broadcast_logic_memory::X86EvexBroadcastLogicMemoryEncoding;
 pub(crate) use evex_fma3_memory::{
     X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay, X86EvexScalarFma3MemoryEncoding,
 };
-pub(crate) use evex_logic_memory::{X86EvexLogicMemoryEncoding, X86EvexLogicMemoryKind};
+pub(crate) use evex_logic_memory::{
+    X86EvexLogicMemoryEncoding, X86EvexLogicMemoryKind, X86EvexMaskedLogicMemoryEncoding,
+};
 pub(crate) use fp_round::X86VexRoundMemoryEncoding;
 pub(crate) use fp16_narrow::X86VexFp16NarrowMemoryEncoding;
 pub(crate) use scalar_convert_memory::{

@@ -88,6 +88,8 @@ mod evex_mask_broadcast_replay;
 #[cfg(test)]
 mod evex_mask_to_vector_replay;
 #[cfg(test)]
+mod evex_masked_logic_memory_source;
+#[cfg(test)]
 mod evex_move_replay;
 #[cfg(test)]
 mod evex_packed_compare_replay;
