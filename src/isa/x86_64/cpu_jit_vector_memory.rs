@@ -53,16 +53,17 @@ pub(super) unsafe extern "C" fn rax_jit_vec_load(
     1
 }
 
-/// Copy source bytes from one architectural ZMM slot, then perform one
-/// complete guest-memory write. The nonarchitectural load-scratch namespace is
-/// deliberately unavailable to stores.
+/// Copy source bytes from one architectural ZMM slot or the reserved
+/// nonarchitectural transfer scratch, then perform one complete guest-memory
+/// write. Architectural indices are 0..=31; index 32 names only
+/// `GuestRegs::vector_scratch`.
 pub(super) unsafe extern "C" fn rax_jit_vec_store(
     state: *mut GuestRegs,
     addr: u64,
     src_idx: u32,
     size: u32,
 ) -> u64 {
-    if src_idx >= 32 || !matches!(size, 4 | 8 | 16 | 32 | 64) {
+    if src_idx > X86_JIT_VECTOR_SCRATCH_INDEX || !matches!(size, 4 | 8 | 16 | 32 | 64) {
         return 0;
     }
     let Some(state) = (unsafe { state.as_mut() }) else {
@@ -78,11 +79,13 @@ pub(super) unsafe extern "C" fn rax_jit_vec_store(
         return 0;
     }
 
+    let source = if src_idx == X86_JIT_VECTOR_SCRATCH_INDEX {
+        &state.vector_scratch
+    } else {
+        &state.zmm[src_idx as usize]
+    };
     let mut bytes = [0u8; 64];
-    for (chunk, word) in bytes[..size as usize]
-        .chunks_mut(8)
-        .zip(state.zmm[src_idx as usize])
-    {
+    for (chunk, word) in bytes[..size as usize].chunks_mut(8).zip(source) {
         let word = word.to_le_bytes();
         chunk.copy_from_slice(&word[..chunk.len()]);
     }
@@ -244,16 +247,45 @@ mod tests {
             );
         }
 
+        state.vector_scratch = [
+            0x8877_6655_4433_2211,
+            0xFFEE_DDCC_BBAA_0099,
+            0x0123_4567_89AB_CDEF,
+            0xFEDC_BA98_7654_3210,
+            0,
+            1,
+            2,
+            3,
+        ];
+        let architectural_before = state.zmm;
+        mem.write_slice(&old[..8], GuestAddress(0x3120)).unwrap();
+        assert_eq!(
+            unsafe { rax_jit_vec_store(&mut state, 0x3120, X86_JIT_VECTOR_SCRATCH_INDEX, 8,) },
+            1
+        );
+        let mut scratch_stored = [0u8; 8];
+        mem.read_slice(&mut scratch_stored, GuestAddress(0x3120))
+            .unwrap();
+        assert_eq!(scratch_stored, 0x8877_6655_4433_2211u64.to_le_bytes());
+        assert_eq!(
+            state.zmm, architectural_before,
+            "scratch store must not modify architectural vectors"
+        );
+
         vcpu.mmu.mark_code_page(0x6000);
         let protected = [0x55u8; 16];
         mem.write_slice(&protected, GuestAddress(0x5FF8)).unwrap();
         assert_eq!(unsafe { rax_jit_vec_store(&mut state, 0x5FF8, 31, 16) }, 0);
+        assert_eq!(
+            unsafe { rax_jit_vec_store(&mut state, 0x5FF8, X86_JIT_VECTOR_SCRATCH_INDEX, 16,) },
+            0
+        );
         let mut unchanged = [0u8; 16];
         mem.read_slice(&mut unchanged, GuestAddress(0x5FF8))
             .unwrap();
         assert_eq!(unchanged, protected, "either covered code page must deopt");
         assert_eq!(
-            unsafe { rax_jit_vec_store(&mut state, 0x3000, X86_JIT_VECTOR_SCRATCH_INDEX, 16,) },
+            unsafe { rax_jit_vec_store(&mut state, 0x3000, X86_JIT_VECTOR_SCRATCH_INDEX + 1, 16,) },
             0
         );
         assert_eq!(unsafe { rax_jit_vec_store(&mut state, 0x3000, 0, 2) }, 0);

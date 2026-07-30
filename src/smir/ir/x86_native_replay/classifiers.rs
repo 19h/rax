@@ -88,7 +88,7 @@ pub(crate) use scalar_convert_memory::{
 };
 pub(crate) use vex_cross_lane_128::X86VexCrossLane128MemoryEncoding;
 pub(crate) use vex_fma4::X86VexFma4MemoryEncoding;
-pub(crate) use vex_half_move_memory::X86VexHalfMoveMemoryEncoding;
+pub(crate) use vex_half_move_memory::{X86VexHalfMoveMemoryEncoding, X86VexHalfMoveStoreEncoding};
 pub(crate) use vex_immediate_blend::X86VexImmediateBlendMemoryFields;
 pub(crate) use vex_immediate_permute::X86VexImmediatePermuteMemoryEncoding;
 pub(crate) use vex_integer_dot::X86VexIntegerDotMemoryFields;

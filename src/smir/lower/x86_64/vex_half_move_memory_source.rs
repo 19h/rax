@@ -1,4 +1,4 @@
-//! Helper-backed VEX high/low 64-bit lane load lowering.
+//! Helper-backed VEX high/low 64-bit lane memory lowering.
 
 use std::collections::HashMap;
 
@@ -84,6 +84,54 @@ impl X86_64Lowerer {
         if self.avx_ymm16_vector_state {
             self.emit_avx_ymm16_state_backed_upper_clear(fields.destination);
         }
+        Ok(Some(sequence.consumed))
+    }
+
+    /// Fuse one exact VEX.128 `VMOVLPS`, `VMOVLPD`, `VMOVHPS`, or `VMOVHPD`
+    /// memory-destination decomposition.
+    ///
+    /// A native VEX lane store first copies the selected source qword into the
+    /// nonarchitectural transfer slot at a trusted host address. The precise
+    /// MMU helper then performs exactly one 8-byte guest-memory write or
+    /// deoptimizes at the instruction PC without modifying architectural
+    /// vector state.
+    pub(crate) fn try_lower_jit_vex_half_move_memory_store(
+        &mut self,
+        block: &SmirBlock,
+        index: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let Some(sequence) = crate::smir::lower::runtime::x86_jit_vex_half_move_store_sequence(
+            block,
+            index,
+            true,
+            &self.x86_instruction_bytes,
+            virtual_definitions,
+            virtual_uses,
+        ) else {
+            return Ok(None);
+        };
+        let address = match &block.ops[index + 1].kind {
+            OpKind::Store { addr, .. } => addr,
+            _ => unreachable!("validated VEX half-move sequence contains an 8-byte store"),
+        };
+        let fields = sequence.encoding;
+
+        self.code.emit_u8(0x50); // push guest RAX
+        self.emit_load_state_ptr_rax();
+        self.emit_jit_vector_scratch_qword_store(PhysReg::Xmm(fields.source), fields.memory_lane);
+        self.code.emit_u8(0x58); // pop guest RAX
+
+        self.emit_jit_vector_mem_helper(
+            block.ops[index].guest_pc,
+            false,
+            X86_JIT_VECTOR_SCRATCH_INDEX as u8,
+            address,
+            8,
+            false,
+            true,
+        )?;
         Ok(Some(sequence.consumed))
     }
 }

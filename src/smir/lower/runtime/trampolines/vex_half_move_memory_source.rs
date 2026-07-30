@@ -7,7 +7,9 @@ use crate::smir::ir::types::{
     ArchReg, BlockId, GuestAddr, MemWidth, OpWidth, SignExtend, SrcOperand, VReg, VecElementType,
     X86Reg,
 };
-use crate::smir::ir::{X86InstructionBytes, X86VexHalfMoveMemoryEncoding};
+use crate::smir::ir::{
+    X86InstructionBytes, X86VexHalfMoveMemoryEncoding, X86VexHalfMoveStoreEncoding,
+};
 
 use super::x86_jit_mem_address_shape_valid;
 
@@ -17,6 +19,14 @@ use super::x86_jit_mem_address_shape_valid;
 pub(crate) struct X86JitVexHalfMoveMemorySequence {
     pub(crate) consumed: usize,
     pub(crate) encoding: X86VexHalfMoveMemoryEncoding,
+}
+
+/// Exact two-op decomposition consumed for one VEX.128 64-bit high/low lane
+/// memory store.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86JitVexHalfMoveStoreSequence {
+    pub(crate) consumed: usize,
+    pub(crate) encoding: X86VexHalfMoveStoreEncoding,
 }
 
 fn xmm(index: u8) -> VReg {
@@ -166,6 +176,81 @@ pub(crate) fn x86_jit_vex_half_move_memory_sequence(
 
     Some(X86JitVexHalfMoveMemorySequence {
         consumed: 6,
+        encoding,
+    })
+}
+
+/// Validate the exact two-op canonical decomposition for a VEX.128
+/// `VMOVLPS`, `VMOVLPD`, `VMOVHPS`, or `VMOVHPD` memory destination.
+///
+/// Complete source-byte provenance binds map, mandatory prefix, WIG, L=0,
+/// reserved VEX.vvvv, opcode, source register, selected qword, and the 8-byte
+/// access width; canonical IR supplies an accepted architectural address
+/// shape. The extracted virtual must have one global definition and one global
+/// use so the fused store cannot elide an observable value. Classification is
+/// O(1); callers build definition/use maps once in O(N) time and O(V) space.
+pub(crate) fn x86_jit_vex_half_move_store_sequence(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<X86JitVexHalfMoveStoreSequence> {
+    if !allow_mem {
+        return None;
+    }
+    let first = block.ops.get(index)?;
+    if index != 0 && block.ops[index - 1].guest_pc == first.guest_pc {
+        return None;
+    }
+    let instruction = instruction_bytes.get(&(block.id, first.guest_pc))?;
+    let encoding = instruction.vex_half_move_store_encoding()?;
+
+    let extracted = match &first.kind {
+        OpKind::VExtractLane {
+            dst,
+            vec,
+            lane,
+            elem: VecElementType::I64,
+            sign: SignExtend::Zero,
+        } if *vec == xmm(encoding.source)
+            && *lane == encoding.memory_lane
+            && first.x86_hint.is_none() =>
+        {
+            *dst
+        }
+        _ => return None,
+    };
+
+    let store = block.ops.get(index + 1)?;
+    if !matches!(
+        &store.kind,
+        OpKind::Store {
+            src,
+            addr,
+            width: MemWidth::B8,
+        } if *src == extracted && x86_jit_mem_address_shape_valid(addr)
+    ) || store.x86_hint.is_some()
+    {
+        return None;
+    }
+
+    let end = index + 2;
+    if block.ops[index..end]
+        .iter()
+        .any(|op| op.guest_pc != first.guest_pc)
+        || block
+            .ops
+            .get(end)
+            .is_some_and(|op| op.guest_pc == first.guest_pc)
+        || !is_single_definition_single_use(extracted, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+
+    Some(X86JitVexHalfMoveStoreSequence {
+        consumed: 2,
         encoding,
     })
 }

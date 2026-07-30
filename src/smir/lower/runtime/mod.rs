@@ -178,7 +178,7 @@ pub struct GuestRegs {
     /// without modifying guest state.
     pub vec_load_fn: u64,
     /// Address of `extern "C" fn(state, addr, src_idx, size) -> ok`.
-    /// The helper reads the source bytes from `state.zmm[src_idx]`.
+    /// Indices 0..=31 read ZMM state; reserved internal index 32 reads vector scratch.
     pub vec_store_fn: u64,
     /// Address of `extern "C" fn(state, dst_low, dst_high) -> ok`.
     /// The helper performs one complete APX POP2 stack transfer and commits the

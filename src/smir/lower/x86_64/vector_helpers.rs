@@ -114,6 +114,32 @@ impl X86_64Lowerer {
         self.emit_unaligned_vector_load(register, width, X86_GUEST_VECTOR_SCRATCH_OFFSET);
     }
 
+    /// Copy one selected qword from an architectural XMM register into the
+    /// nonarchitectural helper-transfer slot. RAX must contain the state
+    /// pointer. The VEX store is a bit transfer and does not update MXCSR.
+    pub(crate) fn emit_jit_vector_scratch_qword_store(&mut self, register: PhysReg, lane: u8) {
+        debug_assert!(matches!(register, PhysReg::Xmm(_)));
+        debug_assert!(lane < 2);
+        let mut emitter = X86Emitter::new(&mut self.code);
+        emitter.emit_vex_prefix(
+            X86VecMap::Map0F,
+            X86SsePrefix::None,
+            VecWidth::V128,
+            false,
+            register.vec_ext(),
+            0,
+            PhysReg::Rax.vec_ext(),
+            0,
+        );
+        emitter.code.emit_u8(if lane == 0 { 0x13 } else { 0x17 });
+        emitter.emit_modrm_mem_disp(
+            register,
+            PhysReg::Rax,
+            X86_GUEST_VECTOR_SCRATCH_OFFSET,
+            DispSize::Disp32,
+        );
+    }
+
     /// Restore the complete architectural vector register borrowed as a
     /// helper-result carrier. The AVX-only bridge owns YMM0-YMM15; the general
     /// bridge owns complete ZMM state.

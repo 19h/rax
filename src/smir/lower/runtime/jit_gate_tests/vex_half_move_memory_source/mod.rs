@@ -23,6 +23,7 @@ use crate::smir::optimize::OptLevel;
 use std::collections::HashMap;
 
 mod semantics;
+mod store;
 
 const PC: u64 = 0x1216_1216;
 const DISP: i64 = 0x20;
