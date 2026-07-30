@@ -849,10 +849,23 @@ impl X86_64Vcpu {
             // VPDPWUUDS (0xD3) - Multiply and Add Unsigned Word Integers with Saturation
             0xD3 if evex.pp == 0 && !evex.w => self.execute_vpdpwuud(ctx, true),
 
-            // CMPccXADD uses EVEX.66.0F38.W{0,1} E0..EF /r. The emulator does
-            // not implement the CMPCCXADD extension, so preserve architectural
-            // unsupported-feature behavior instead of reporting an internal
-            // unimplemented decode error.
+            // Intel APX promotes CMPccXADD from original VEX map 2 into the
+            // same EVEX map/opcode cells. Only V4 may vary in payload byte 3;
+            // APX_F is an additional dynamic requirement. Native admission
+            // remains deliberately VEX-only, so this is the direct fallback.
+            0xE0..=0xEF
+                if evex.apx_mode
+                    && evex.pp == 1
+                    && !evex.z
+                    && evex.ll == 0
+                    && !evex.broadcast
+                    && evex.aaa == 0
+                    && !evex.nf
+                    && self.apx_enabled() =>
+            {
+                let add_register = ctx.evex_vvvv();
+                execute::data::cmpccxadd(self, ctx, add_register, opcode & 0x0F)
+            }
             0xE0..=0xEF => self.inject_undefined_instruction(),
 
             _ => Err(Error::Emulator(format!(

@@ -211,7 +211,17 @@ fn apx_shifted_evex_field_validation_uses_the_actual_payload() {
     let cmpccxadd = lift_single(&[0x67, 0x62, 0xEA, 0x61, 0x00, 0xE2, 0x44, 0x91, 0x20])
         .expect("addr32 APX CMPccXADD EGPR memory form");
     assert_eq!(cmpccxadd.bytes_consumed, 9);
-    match &cmpccxadd.ops[0].kind {
+    assert!(matches!(cmpccxadd.ops[0].kind, OpKind::X86RequireApx));
+    assert!(matches!(
+        &cmpccxadd.ops[1].kind,
+        OpKind::X86CheckAlignmentAc {
+            access_size: 4,
+            alignment: 4,
+            natural_alignment: true,
+            ..
+        }
+    ));
+    match &cmpccxadd.ops[2].kind {
         OpKind::AtomicCmpXadd { addr, .. } => {
             let Address::X86Addr32(inner) = addr else {
                 panic!("expected CMPccXADD addr32 wrapper, got {addr:?}");

@@ -36,6 +36,7 @@ pub(crate) fn x86_xop_memory_guards_match(
                 addr: checked,
                 access_size: checked_size,
                 alignment: 16,
+                natural_alignment: false,
                 ..
             } if checked == addr && *checked_size == access_size
         )

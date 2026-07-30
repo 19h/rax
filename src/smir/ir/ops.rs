@@ -1203,18 +1203,21 @@ pub enum OpKind {
         alignment: u8,
     },
 
-    /// Validate an AMD XOP 16-byte or 32-byte memory operand before its load.
+    /// Validate a fault-sensitive x86 memory operand before its access.
     /// `access_size` controls the complete canonical-address range while
     /// `alignment` independently controls the required byte boundary. In
     /// 64-bit mode a noncanonical range raises #GP(0), or #SS(0) for an
-    /// SS-based address. Otherwise a misaligned address raises #AC(0) only
-    /// while CR0.AM=1, RFLAGS.AC=1, and CPL=3. This operation precedes
-    /// translation so enabled #AC has priority over #PF.
+    /// SS-based address. A misaligned address raises #GP(0) when
+    /// `natural_alignment` is true; otherwise it raises #AC(0) only while
+    /// CR0.AM=1, RFLAGS.AC=1, and CPL=3. This operation precedes translation
+    /// so the architecturally prior alignment exception has priority over
+    /// #PF.
     X86CheckAlignmentAc {
         addr: Address,
         access_size: u8,
         alignment: u8,
         stack_segment: bool,
+        natural_alignment: bool,
     },
 
     /// Memory fence

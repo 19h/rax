@@ -239,6 +239,8 @@ pub const X86_GUEST_VECTOR_SCRATCH_OFFSET: i32 = X86_GUEST_INVPCID_FN_OFFSET + 6
 pub const X86_GUEST_CPUID_TBM_OFFSET: i32 = X86_GUEST_VECTOR_SCRATCH_OFFSET + 8 * 8;
 /// Offset of the append-only guest XOP enumeration policy.
 pub const X86_GUEST_CPUID_XOP_OFFSET: i32 = X86_GUEST_CPUID_TBM_OFFSET + 8;
+/// Offset of the append-only original-VEX CMPccXADD transaction helper.
+pub const X86_GUEST_CMPCCXADD_FN_OFFSET: i32 = X86_GUEST_CPUID_XOP_OFFSET + 8;
 /// Internal `vec_load_fn` destination namespace for
 /// [`runtime::GuestRegs::vector_scratch`]. Architectural ZMM indices remain
 /// exactly 0..=31; every value above this singleton tag is invalid.

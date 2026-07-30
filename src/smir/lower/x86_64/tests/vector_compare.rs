@@ -109,6 +109,7 @@ fn memory_function(elem: VecElementType, lanes: u8, cond: VecCmpCond) -> SmirFun
             access_size: 16,
             alignment: 16,
             stack_segment: false,
+            natural_alignment: false,
         },
         OpKind::VLoad {
             dst: temporary,

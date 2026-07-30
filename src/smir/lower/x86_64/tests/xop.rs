@@ -89,6 +89,7 @@ fn memory_function(memory_is_source: bool) -> SmirFunction {
                 access_size: 16,
                 alignment: 16,
                 stack_segment: false,
+                natural_alignment: false,
             },
         ),
         (
@@ -169,6 +170,7 @@ fn alignment_guard_requires_precise_deoptimization_and_exact_state_backed_shape(
         access_size: 16,
         alignment: 16,
         stack_segment: false,
+        natural_alignment: false,
     };
     let function = function_with(vec![(PC, alignment.clone())]);
     assert!(matches!(
@@ -183,6 +185,7 @@ fn alignment_guard_requires_precise_deoptimization_and_exact_state_backed_shape(
         access_size: 32,
         alignment: 16,
         stack_segment: false,
+        natural_alignment: false,
     };
     assert!(x86_check_alignment_ac_shape_valid(&SmirOp::new(
         OpId(0),
@@ -222,18 +225,28 @@ fn alignment_guard_requires_precise_deoptimization_and_exact_state_backed_shape(
             access_size: 16,
             alignment: 8,
             stack_segment: false,
+            natural_alignment: false,
         },
         OpKind::X86CheckAlignmentAc {
             addr: Address::Direct(VReg::Virtual(VirtualId(0))),
             access_size: 16,
             alignment: 16,
             stack_segment: false,
+            natural_alignment: false,
         },
         OpKind::X86CheckAlignmentAc {
             addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rcx))),
             access_size: 8,
             alignment: 16,
             stack_segment: false,
+            natural_alignment: false,
+        },
+        OpKind::X86CheckAlignmentAc {
+            addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rcx))),
+            access_size: 8,
+            alignment: 8,
+            stack_segment: false,
+            natural_alignment: true,
         },
     ] {
         let function = function_with(vec![(PC, malformed)]);
@@ -662,6 +675,7 @@ fn native_alignment_guard_is_dynamic_precise_and_noncommitting() {
                 access_size: 16,
                 alignment: 16,
                 stack_segment: false,
+                natural_alignment: false,
             },
         ),
         (
@@ -756,6 +770,7 @@ fn native_alignment_guard_is_dynamic_precise_and_noncommitting() {
                 access_size: 32,
                 alignment: 16,
                 stack_segment: false,
+                natural_alignment: false,
             },
         ),
         (

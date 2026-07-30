@@ -729,11 +729,11 @@ fn test_cpuid_function_7_subleaves() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // After the sequence, RAX holds leaf 7 subleaf 1. AVX_VNNI and AVX512_BF16
-    // are always exposed here; APX_F remains hidden by default in EDX.
+    // After the sequence, RAX holds leaf 7 subleaf 1. CMPCCXADD, AVX_VNNI,
+    // and AVX512_BF16 are always exposed here; APX_F remains hidden by default.
     assert_eq!(
-        regs.rax as u32, 0x30,
-        "leaf 7 subleaf 1 EAX = AVX_VNNI|AVX512_BF16"
+        regs.rax as u32, 0xB0,
+        "leaf 7 subleaf 1 EAX = CMPCCXADD|AVX_VNNI|AVX512_BF16"
     );
     assert_eq!(regs.rbx as u32, 0, "leaf 7 subleaf 1 EBX = 0");
     assert_eq!(regs.rcx as u32, 0, "leaf 7 subleaf 1 ECX = 0");
@@ -754,8 +754,8 @@ fn test_cpuid_function_7_subleaf1_apx_enabled() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(
-        regs.rax as u32, 0x30,
-        "leaf 7 subleaf 1 EAX = AVX_VNNI|AVX512_BF16"
+        regs.rax as u32, 0xB0,
+        "leaf 7 subleaf 1 EAX = CMPCCXADD|AVX_VNNI|AVX512_BF16"
     );
     assert_eq!(regs.rbx as u32, 0, "leaf 7 subleaf 1 EBX = 0");
     assert_eq!(regs.rcx as u32, 0, "leaf 7 subleaf 1 ECX = 0");

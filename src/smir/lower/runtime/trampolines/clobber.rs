@@ -709,6 +709,12 @@ pub(crate) fn block_is_clobber_safe(
             i += consumed;
             continue;
         }
+        if let Some(consumed) =
+            x86_jit_cmpccxadd_sequence_len(block, i, allow_mem, x86_instruction_bytes)
+        {
+            i += consumed;
+            continue;
+        }
         if let Some(consumed) = x86_jit_mem_atomic_rmw_sequence_len(
             block,
             i,

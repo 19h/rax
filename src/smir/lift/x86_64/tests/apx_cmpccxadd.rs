@@ -1,12 +1,29 @@
 //! Original VEX and Intel APX-promoted EVEX CMPccXADD lifting tests.
 
 use super::*;
+use crate::smir::interpret::{BlockResult, SmirInterpreter};
+use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext};
+use crate::smir::ir::flags::MaterializedFlags;
+use crate::smir::ir::memory::{FlatMemory, SmirMemory};
 use crate::smir::lift::x86_64::*;
+use crate::smir::optimize::{OptLevel, optimize_function};
 
 fn assert_cmpccxadd_ud(bytes: &[u8], expected_len: usize, name: &str) {
     let result = lift_single(bytes)
         .unwrap_or_else(|error| panic!("{name}: reserved CMPccXADD must lift to #UD: {error:?}"));
     assert_invalid_opcode_trap(&result, expected_len);
+}
+
+fn cmpccxadd_function(bytes: &[u8]) -> SmirFunction {
+    let result = lift_single(bytes).expect("lift guarded CMPccXADD");
+    let mut block = SmirBlock::new(BlockId(0), 0x1000);
+    block.ops = result.ops;
+    block.set_terminator(Terminator::Trap {
+        kind: TrapKind::Halt,
+    });
+    let mut function = SmirFunction::new(FunctionId(0), block.id, 0x1000);
+    function.add_block(block);
+    function
 }
 
 #[test]
@@ -32,8 +49,18 @@ fn lift_cmpccxadd_vex_conditions_like_llvm() {
         let bytes = [0xC4, 0xE2, 0x71, opcode, 0x18];
         let result = lift_single(&bytes).unwrap();
         assert_eq!(result.bytes_consumed, 5, "opcode {opcode:02x}");
-        assert_eq!(result.ops.len(), 1, "opcode {opcode:02x}");
-        match &result.ops[0].kind {
+        assert_eq!(result.ops.len(), 2, "opcode {opcode:02x}");
+        assert!(matches!(
+            &result.ops[0].kind,
+            OpKind::X86CheckAlignmentAc {
+                access_size: 4,
+                alignment: 4,
+                stack_segment: false,
+                natural_alignment: false,
+                ..
+            }
+        ));
+        match &result.ops[1].kind {
             OpKind::AtomicCmpXadd {
                 dst_old,
                 addr: Address::Direct(base),
@@ -77,7 +104,16 @@ fn lift_cmpccxadd_vex_width_and_high_regs_like_llvm() {
     ] {
         let result = lift_single(bytes).unwrap();
         assert_eq!(result.bytes_consumed, 5, "{name}");
-        match &result.ops[0].kind {
+        assert!(matches!(
+            &result.ops[0].kind,
+            OpKind::X86CheckAlignmentAc {
+                access_size,
+                alignment,
+                natural_alignment: false,
+                ..
+            } if *access_size == width.bytes() as u8 && *alignment == width.bytes() as u8
+        ));
+        match &result.ops[1].kind {
             OpKind::AtomicCmpXadd {
                 dst_old,
                 addr: Address::Direct(got_base),
@@ -105,7 +141,7 @@ fn vex_cmpccxadd_preserves_allowed_address_size_and_segment_prefixes() {
     let addr32 = lift_single(&[0x67, 0xC4, 0xE2, 0x71, 0xE2, 0x18]).unwrap();
     assert_eq!(addr32.bytes_consumed, 6);
     assert!(matches!(
-        &addr32.ops[0].kind,
+        &addr32.ops[1].kind,
         OpKind::AtomicCmpXadd {
             addr: Address::X86Addr32(inner),
             ..
@@ -115,7 +151,7 @@ fn vex_cmpccxadd_preserves_allowed_address_size_and_segment_prefixes() {
     let gs = lift_single(&[0x65, 0xC4, 0xE2, 0x71, 0xE2, 0x18]).unwrap();
     assert_eq!(gs.bytes_consumed, 6);
     assert!(matches!(
-        &gs.ops[0].kind,
+        &gs.ops[1].kind,
         OpKind::AtomicCmpXadd {
             addr: Address::SegmentRel {
                 segment: VReg::Arch(ArchReg::X86(X86Reg::GsBase)),
@@ -220,5 +256,206 @@ fn cmpccxadd_valid_frontiers_preserve_incomplete_addressing_errors() {
             matches!(lift_single(bytes), Err(LiftError::Incomplete { .. })),
             "{name}"
         );
+    }
+}
+
+#[test]
+fn cmpccxadd_feature_and_alignment_guards_survive_optimization_in_priority_order() {
+    const VEX: &[u8] = &[0xC4, 0xE2, 0x71, 0xE2, 0x18];
+    const APX: &[u8] = &[0x62, 0xEA, 0x65, 0x08, 0xE2, 0x08];
+    const CR0_PE: u64 = 1;
+    const CR0_AM: u64 = 1 << 18;
+    const RFLAGS_AC: u64 = 1 << 18;
+
+    for level in [OptLevel::O0, OptLevel::O2] {
+        for (name, bytes, apx, address, cr0, cpl, rflags, expected) in [
+            (
+                "unaligned original VEX with #AC disabled",
+                VEX,
+                false,
+                0x21,
+                CR0_PE,
+                0,
+                0x2,
+                "halt",
+            ),
+            (
+                "unaligned original VEX with #AC enabled",
+                VEX,
+                false,
+                0x21,
+                CR0_PE | CR0_AM,
+                3,
+                0x2 | RFLAGS_AC,
+                "ac",
+            ),
+            (
+                "APX disabled before aligned memory",
+                APX,
+                false,
+                0x20,
+                CR0_PE,
+                0,
+                0x2,
+                "ud",
+            ),
+            (
+                "APX natural alignment",
+                APX,
+                true,
+                0x21,
+                CR0_PE,
+                0,
+                0x2,
+                "gp",
+            ),
+            (
+                "aligned APX transaction",
+                APX,
+                true,
+                0x20,
+                CR0_PE,
+                0,
+                0x2,
+                "halt",
+            ),
+        ] {
+            let mut function = cmpccxadd_function(bytes);
+            optimize_function(&mut function, level);
+            let mut context = SmirContext::new_x86_64();
+            context.flags.materialized = MaterializedFlags::from_rflags(rflags);
+            context.flags.lazy = None;
+            let (base, cmp, add) = if bytes == VEX {
+                (x86_gpr(0), x86_gpr(3), x86_gpr(1))
+            } else {
+                (x86_gpr(16), x86_gpr(17), x86_gpr(3))
+            };
+            context.write_vreg(base, address);
+            context.write_vreg(cmp, 10);
+            context.write_vreg(add, 7);
+            let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
+                unreachable!()
+            };
+            x86.apx_enabled = apx;
+            x86.cs_l = true;
+            x86.cr0 = cr0;
+            x86.cpl = cpl;
+
+            let mut memory = FlatMemory::new(0x100);
+            memory
+                .atomic_store(address, 5, MemWidth::B4, MemoryOrder::SeqCst)
+                .unwrap();
+            let before_flags = context.flags.materialized.to_rflags();
+            let execution = SmirInterpreter::new().execute_block(
+                &mut context,
+                &mut memory,
+                function.entry_block().unwrap(),
+            );
+
+            match expected {
+                "halt" => {
+                    assert!(
+                        matches!(execution, BlockResult::Exit(ExitReason::Halt)),
+                        "{level:?} {name}: {execution:?}"
+                    );
+                    assert_eq!(context.read_vreg(cmp), 5, "{level:?} {name}: destination");
+                    assert_eq!(
+                        memory
+                            .atomic_load(address, MemWidth::B4, MemoryOrder::SeqCst)
+                            .unwrap(),
+                        12,
+                        "{level:?} {name}: memory"
+                    );
+                }
+                "ud" => assert!(matches!(
+                    execution,
+                    BlockResult::Exit(ExitReason::Undefined {
+                        addr: 0x1000,
+                        opcode: 0,
+                    })
+                )),
+                "gp" => assert!(matches!(
+                    execution,
+                    BlockResult::Exit(ExitReason::GeneralProtection {
+                        addr: 0x1000,
+                        error_code: 0,
+                    })
+                )),
+                "ac" => assert!(matches!(
+                    execution,
+                    BlockResult::Exit(ExitReason::AlignmentCheck { addr: 0x1000 })
+                )),
+                _ => unreachable!(),
+            }
+            if expected != "halt" {
+                assert_eq!(context.read_vreg(cmp), 10, "{level:?} {name}: destination");
+                assert_eq!(
+                    memory
+                        .atomic_load(address, MemWidth::B4, MemoryOrder::SeqCst)
+                        .unwrap(),
+                    5,
+                    "{level:?} {name}: memory"
+                );
+                assert_eq!(
+                    context.flags.materialized.to_rflags(),
+                    before_flags,
+                    "{level:?} {name}: flags"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn apx_feature_and_noncanonical_ss_checks_precede_natural_alignment() {
+    const APX_SS: &[u8] = &[0x36, 0x62, 0xEA, 0x65, 0x08, 0xE2, 0x08];
+    const NONCANONICAL_MISALIGNED: u64 = 0x0000_8000_0000_0001;
+
+    for level in [OptLevel::O0, OptLevel::O2] {
+        for (apx, expected) in [(false, "ud"), (true, "ss")] {
+            let mut function = cmpccxadd_function(APX_SS);
+            optimize_function(&mut function, level);
+            let mut context = SmirContext::new_x86_64();
+            context.flags.materialized = MaterializedFlags::from_rflags(0x8D7);
+            context.write_vreg(x86_gpr(16), NONCANONICAL_MISALIGNED);
+            context.write_vreg(x86_gpr(17), 10);
+            context.write_vreg(x86_gpr(3), 7);
+            let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
+                unreachable!()
+            };
+            x86.apx_enabled = apx;
+            x86.cs_l = true;
+            x86.cr0 = 1;
+            let before_flags = context.flags.materialized.to_rflags();
+            let execution = SmirInterpreter::new().execute_block(
+                &mut context,
+                &mut FlatMemory::new(0),
+                function.entry_block().unwrap(),
+            );
+
+            match expected {
+                "ud" => assert!(matches!(
+                    execution,
+                    BlockResult::Exit(ExitReason::Undefined {
+                        addr: 0x1000,
+                        opcode: 0,
+                    })
+                )),
+                "ss" => assert!(matches!(
+                    execution,
+                    BlockResult::Exit(ExitReason::StackSegment {
+                        addr: 0x1000,
+                        error_code: 0,
+                    })
+                )),
+                _ => unreachable!(),
+            }
+            assert_eq!(context.read_vreg(x86_gpr(17)), 10, "{level:?}");
+            assert_eq!(
+                context.flags.materialized.to_rflags(),
+                before_flags,
+                "{level:?}"
+            );
+        }
     }
 }

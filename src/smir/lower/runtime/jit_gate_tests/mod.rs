@@ -22,6 +22,8 @@ mod cli;
 #[cfg(test)]
 mod clts;
 #[cfg(test)]
+mod cmpccxadd;
+#[cfg(test)]
 mod cmpxchg;
 #[cfg(test)]
 mod cpuid;

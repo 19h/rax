@@ -29,8 +29,18 @@ impl SmirInterpreter {
                 access_size,
                 alignment,
                 stack_segment,
+                natural_alignment,
             } => {
-                if !matches!(*access_size, 16 | 32) || *alignment != 16 {
+                let supported_shape = matches!(
+                    (*access_size, *alignment, *natural_alignment),
+                    (4, 4, false)
+                        | (8, 8, false)
+                        | (16, 16, false)
+                        | (32, 16, false)
+                        | (4, 4, true)
+                        | (8, 8, true)
+                );
+                if !supported_shape {
                     ctx.request_exit(ExitReason::Undefined {
                         addr: op.guest_pc,
                         opcode: 0,
@@ -73,12 +83,15 @@ impl SmirInterpreter {
                 }
 
                 const CR0_AM: u64 = 1 << 18;
-                if effective_addr & (u64::from(*alignment) - 1) != 0
-                    && x86.cr0 & CR0_AM != 0
-                    && x86.cpl == 3
-                    && ctx.flags.materialized.ac
-                {
-                    ctx.request_exit(ExitReason::AlignmentCheck { addr: op.guest_pc });
+                if effective_addr & (u64::from(*alignment) - 1) != 0 {
+                    if *natural_alignment {
+                        ctx.request_exit(ExitReason::GeneralProtection {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        });
+                    } else if x86.cr0 & CR0_AM != 0 && x86.cpl == 3 && ctx.flags.materialized.ac {
+                        ctx.request_exit(ExitReason::AlignmentCheck { addr: op.guest_pc });
+                    }
                 }
             }
 

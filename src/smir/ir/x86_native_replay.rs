@@ -56,6 +56,21 @@ pub(crate) struct X86VexGfniMemoryEncoding {
     pub(crate) register_instruction: X86InstructionBytes,
 }
 
+/// Byte-validated original VEX `CMPccXADD` memory encoding.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86VexCmpccxaddMemoryEncoding {
+    /// ModR/M.reg comparison operand and architectural old-value destination.
+    pub(crate) cmp: u8,
+    /// VEX.vvvv addend operand.
+    pub(crate) add: u8,
+    /// Low opcode nibble selecting one of the 16 x86 condition codes.
+    pub(crate) condition_code: u8,
+    /// Locked memory transaction width.
+    pub(crate) width: crate::smir::ir::types::MemWidth,
+    /// Whether a noncanonical effective-address range selects #SS(0).
+    pub(crate) stack_segment: bool,
+}
+
 impl X86InstructionBytes {
     /// Capture one complete x86 instruction.
     pub fn new(bytes: &[u8]) -> Option<Self> {

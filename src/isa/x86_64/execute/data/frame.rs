@@ -77,7 +77,13 @@ fn looks_like_evex_prefix(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> bool {
     let p0 = ctx.bytes[ctx.cursor];
     let p1 = ctx.bytes[ctx.cursor + 1];
     let mm = p0 & 0x07;
-    let apx_mode = mm == 4 && vcpu.apx_enabled();
+    let promoted_cmpccxadd = mm == 2
+        && ctx
+            .bytes
+            .get(ctx.cursor + 3)
+            .copied()
+            .is_some_and(|opcode| matches!(opcode, 0xE0..=0xEF));
+    let apx_mode = (mm == 4 && vcpu.apx_enabled()) || promoted_cmpccxadd;
     let supported_map = matches!(mm, 1 | 2 | 3 | 5 | 6) || apx_mode;
 
     supported_map && ((p0 & 0x08) == 0 || apx_mode) && ((p1 & 0x04) != 0 || apx_mode)
@@ -117,11 +123,18 @@ pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
         let p2 = ctx.consume_u8()?;
 
         let mm = p0 & 0x07; // mm field (opcode map)
-        let apx_mode = mm == 4;
+        let promoted_cmpccxadd = mm == 2
+            && ctx
+                .bytes
+                .get(ctx.cursor)
+                .copied()
+                .is_some_and(|opcode| matches!(opcode, 0xE0..=0xEF));
+        let apx_mode = mm == 4 || promoted_cmpccxadd;
 
         // Validate EVEX format:
-        // P0 bit 3 is fixed zero for standard EVEX, but APX MAP4 reuses it as B4.
-        // P1 bit 2 is fixed one for standard EVEX, but APX MAP4 reuses it as X4.
+        // P0 bit 3 is fixed zero for standard EVEX, but APX MAP4 and promoted
+        // CMPccXADD reuse it as B4. P1 bit 2 is fixed one for standard EVEX,
+        // but those APX encodings reuse it as X4.
         if ((p0 & 0x08) != 0 && !apx_mode) || ((p1 & 0x04) == 0 && !apx_mode) {
             return vcpu.inject_undefined_instruction();
         }
@@ -144,7 +157,8 @@ pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
         let v_prime = (p2 & 0x08) != 0; // V' bit (inverted)
         let aaa = p2 & 0x07; // aaa field (opmask)
 
-        // For APX mode, decode additional bits differently:
+        // For APX mode, including promoted CMPccXADD in map 2, decode
+        // additional bits differently:
         // - P2[2] becomes NF (No Flags)
         // - P2[4] (broadcast bit) becomes ND (New Data Destination)
         // - P0[3] becomes B4, the high r/m/base extension bit for EGPR

@@ -55,6 +55,7 @@ fn memory_function(memory_is_source: bool) -> crate::smir::ir::SmirFunction {
             access_size: 16,
             alignment: 16,
             stack_segment: false,
+            natural_alignment: false,
         },
         OpKind::VLoad {
             dst: temporary,
@@ -126,6 +127,7 @@ fn exact_guard_and_alignment_check_are_x86_only_and_fail_closed_on_hints() {
         access_size: 16,
         alignment: 16,
         stack_segment: true,
+        natural_alignment: false,
     };
     let alignment_op = SmirOp::new(OpId(1), 0x1000, alignment.clone());
     assert!(x86_check_alignment_ac_shape_valid(&alignment_op));
@@ -137,6 +139,7 @@ fn exact_guard_and_alignment_check_are_x86_only_and_fail_closed_on_hints() {
         access_size: 32,
         alignment: 16,
         stack_segment: false,
+        natural_alignment: false,
     };
     assert!(x86_check_alignment_ac_shape_valid(&SmirOp::new(
         OpId(2),
@@ -152,6 +155,7 @@ fn exact_guard_and_alignment_check_are_x86_only_and_fail_closed_on_hints() {
             access_size: 16,
             alignment: 16,
             stack_segment: false,
+            natural_alignment: false,
         },
     ] {
         let mut function = function_with(vec![kind]);
@@ -165,18 +169,28 @@ fn exact_guard_and_alignment_check_are_x86_only_and_fail_closed_on_hints() {
             access_size: 16,
             alignment: 8,
             stack_segment: false,
+            natural_alignment: false,
         },
         OpKind::X86CheckAlignmentAc {
             addr: Address::Direct(VReg::Virtual(VirtualId(0))),
             access_size: 16,
             alignment: 16,
             stack_segment: false,
+            natural_alignment: false,
         },
         OpKind::X86CheckAlignmentAc {
             addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rbx))),
             access_size: 8,
             alignment: 16,
             stack_segment: false,
+            natural_alignment: false,
+        },
+        OpKind::X86CheckAlignmentAc {
+            addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rbx))),
+            access_size: 8,
+            alignment: 8,
+            stack_segment: false,
+            natural_alignment: true,
         },
     ] {
         assert!(!x86_gate(malformed));
@@ -468,6 +482,7 @@ fn xop_state_layout_and_side_effect_metadata_are_append_only_and_exact() {
             access_size: 16,
             alignment: 16,
             stack_segment: false,
+            natural_alignment: false,
         }
         .has_side_effects()
     );

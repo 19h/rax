@@ -115,6 +115,7 @@ fn memory_forms_preserve_width_alignment_segment_and_w_selected_role() {
                             access_size,
                             alignment: 16,
                             stack_segment: true,
+                            natural_alignment: false,
                         },
                         ..
                     },

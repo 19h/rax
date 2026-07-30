@@ -13,7 +13,105 @@ use crate::error::Result;
 use crate::vm::vcpu::VcpuExit;
 
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
+use crate::isa::x86_64::execute::system::is_canonical_48;
 use crate::isa::x86_64::flags;
+
+#[inline]
+fn alignment_check_enabled(vcpu: &X86_64Vcpu) -> bool {
+    const CR0_AM: u64 = 1 << 18;
+    vcpu.sregs.cr0 & CR0_AM != 0
+        && vcpu.regs.rflags & flags::bits::AC != 0
+        && vcpu.sregs.cs.selector & 3 == 3
+}
+
+/// Original-VEX and APX-promoted-EVEX
+/// `CMPccXADD r32/r64, r32/r64, m32/m64`.
+///
+/// The emulator's single-vCPU execution model makes the staged read/write one
+/// non-interleaved instruction transaction. Both the successful-add and false
+/// condition paths perform the architecturally required write. Architectural
+/// registers, flags, and RIP commit only after that write succeeds.
+pub(in crate::isa::x86_64) fn cmpccxadd(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    add_register: u8,
+    condition_code: u8,
+) -> Result<Option<VcpuExit>> {
+    if !vcpu.sregs.cs.l {
+        return vcpu.inject_undefined_instruction();
+    }
+    let apx = ctx.is_apx();
+
+    let modrm_start = ctx.cursor;
+    let modrm = ctx.consume_u8()?;
+    if modrm >> 6 == 3 {
+        return vcpu.inject_undefined_instruction();
+    }
+    let cmp_register = ((modrm >> 3) & 7)
+        | if apx {
+            ctx.evex_dest_reg()
+        } else {
+            ctx.any_rex_r()
+        };
+    let (address, extra, stack_segment) =
+        vcpu.decode_modrm_addr_with_stack_segment(ctx, modrm_start)?;
+    ctx.cursor = modrm_start + 1 + extra;
+
+    let size = ctx.op_size;
+    debug_assert!(matches!(size, 4 | 8));
+    let canonical_range = address
+        .checked_add(u64::from(size - 1))
+        .is_some_and(|last| is_canonical_48(address) && is_canonical_48(last));
+    if !canonical_range {
+        vcpu.inject_exception(if stack_segment { 12 } else { 13 }, Some(0))?;
+        return Ok(None);
+    }
+    if address & u64::from(size - 1) != 0 {
+        if apx {
+            vcpu.inject_exception(13, Some(0))?;
+            return Ok(None);
+        }
+        if alignment_check_enabled(vcpu) {
+            vcpu.inject_exception(17, Some(0))?;
+            return Ok(None);
+        }
+    }
+
+    // Snapshot both register operands before the destination write; either may
+    // also participate in effective-address calculation or alias the other.
+    let cmp = vcpu.get_reg(cmp_register, size);
+    let add = vcpu.get_reg(add_register, size);
+    let old = vcpu.read_mem(address, size)?;
+    let mask = if size == 4 {
+        u64::from(u32::MAX)
+    } else {
+        u64::MAX
+    };
+    let old = old & mask;
+    let cmp = cmp & mask;
+    let add = add & mask;
+    let mut candidate_rflags = vcpu.regs.rflags;
+    flags::update_flags_sub(
+        &mut candidate_rflags,
+        old,
+        cmp,
+        old.wrapping_sub(cmp) & mask,
+        size,
+    );
+    let new = if flags::condition_holds(candidate_rflags, condition_code) {
+        old.wrapping_add(add) & mask
+    } else {
+        old
+    };
+
+    // A false condition is still a locked write-back of the original value.
+    vcpu.write_mem(address, new, size)?;
+    vcpu.set_reg(cmp_register, old, size);
+    vcpu.regs.rflags = candidate_rflags;
+    vcpu.clear_lazy_flags();
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
 
 /// XADD r/m8, r8 (0x0F 0xC0) - Exchange and Add
 pub fn xadd_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {

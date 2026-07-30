@@ -74,6 +74,7 @@ fn memory_function(width: VecWidth, memory_is_mask: bool) -> SmirFunction {
             access_size: width.bytes() as u8,
             alignment: 16,
             stack_segment: false,
+            natural_alignment: false,
         },
         OpKind::VLoad {
             dst: temporary,

@@ -3751,6 +3751,12 @@ mod jit_mem_load;
 use jit_mem_load::rax_jit_mem_load;
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_cmpccxadd.rs"]
+mod jit_cmpccxadd;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use jit_cmpccxadd::rax_jit_cmpccxadd;
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_vector_memory.rs"]
 mod jit_vector_memory;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -4685,12 +4691,12 @@ impl X86_64Vcpu {
                 }
                 continue 'modes;
             }
-            // Standalone x86-64 SMIR models the 64-bit FSGSBASE/SWAPGS and
-            // MONITOR/MWAIT/WAITPKG contracts, but this CPU can also compile
-            // compatibility-mode regions. Reject these mode-dependent ops
-            // before native admission and let the direct decoder apply the
-            // compatibility-mode operand/address and exception rules. CS.L is
-            // in the JIT cache tag.
+            // Standalone x86-64 SMIR models original-VEX CMPccXADD plus the
+            // 64-bit FSGSBASE/SWAPGS and MONITOR/MWAIT/WAITPKG contracts, but
+            // this CPU can also compile compatibility-mode regions. Reject
+            // these mode-dependent ops before native admission and let the
+            // direct decoder apply compatibility-mode operand/address and
+            // exception rules. CS.L is in the JIT cache tag.
             #[cfg(target_arch = "x86_64")]
             if !self.sregs.cs.l
                 && func
@@ -4701,7 +4707,8 @@ impl X86_64Vcpu {
                     .any(|op| {
                         matches!(
                             op.kind,
-                            OpKind::X86FsGsBase { .. }
+                            OpKind::AtomicCmpXadd { .. }
+                                | OpKind::X86FsGsBase { .. }
                                 | OpKind::X86SwapGs { .. }
                                 | OpKind::X86MonitorMwait(..)
                                 | OpKind::X86WaitPkg(..)
@@ -5015,6 +5022,7 @@ impl X86_64Vcpu {
         gr.vec_store_fn = rax_jit_vec_store as usize as u64;
         gr.pair_load_fn = rax_jit_pair_load as usize as u64;
         gr.pair_store_fn = rax_jit_pair_store as usize as u64;
+        gr.cmpccxadd_fn = rax_jit_cmpccxadd as usize as u64;
         // Lift-through-calls channel (RAX_JIT_CALL): a guest CALL in the region
         // calls out here to run its callee in the interpreter, then resumes.
         gr.call_fn = rax_jit_call as usize as u64;
@@ -6379,6 +6387,10 @@ mod jit_vector_memory_source_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_call_tests.rs"]
 mod jit_call_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_cmpccxadd_tests.rs"]
+mod jit_cmpccxadd_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_scalar_tests.rs"]

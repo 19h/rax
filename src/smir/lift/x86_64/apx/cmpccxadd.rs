@@ -22,7 +22,7 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        let (modrm_prefix, add, width, prefix_bytes) = match prefix.encoding {
+        let (modrm_prefix, add, width, prefix_bytes, requires_apx) = match prefix.encoding {
             VecEncodingKind::Vex => {
                 // Intel SDM Vol. 2A, CMPccXADD, permits exactly
                 // VEX.128.66.0F38.W{0,1}; pp and L are known at the opcode
@@ -43,6 +43,7 @@ impl X86_64Lifter {
                     self.gpr(prefix.vvvv),
                     width,
                     prefix.bytes,
+                    false,
                 )
             }
             VecEncodingKind::Evex => {
@@ -60,6 +61,7 @@ impl X86_64Lifter {
                     self.gpr(apx.vvvv_reg()),
                     width,
                     apx.bytes,
+                    true,
                 )
             }
         };
@@ -74,6 +76,28 @@ impl X86_64Lifter {
         let next_pc = pc + prefix_bytes as u64 + 1 + modrm.bytes_consumed as u64;
         let x86_addr = modrm.addr.as_ref().unwrap();
         let (addr, mut ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+        let stack_segment = match modrm_prefix.segment_override {
+            Some(0x36) => true,
+            Some(_) => false,
+            None => x86_addr.base.is_some_and(|base| matches!(base & 7, 4 | 5)),
+        };
+        if requires_apx {
+            ops.insert(0, SmirOp::new(OpId(0), pc, OpKind::X86RequireApx));
+            for (index, op) in ops.iter_mut().enumerate() {
+                op.id = OpId(index as u16);
+            }
+        }
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86CheckAlignmentAc {
+                addr: addr.clone(),
+                access_size: width.bytes() as u8,
+                alignment: width.bytes() as u8,
+                stack_segment,
+                natural_alignment: requires_apx,
+            },
+        ));
         let cmp = self.gpr(modrm.reg);
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),

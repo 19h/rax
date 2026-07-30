@@ -149,6 +149,13 @@ impl X86_64Vcpu {
         // for the common AVX instructions. The individual handlers support L=1.
         // We reject EVEX (AVX-512) separately in the EVEX dispatcher.
 
+        // Original VEX.128.66.0F38.W{0,1} E0+cc /r CMPccXADD. The instruction
+        // is memory-only; the handler owns that check plus dynamic fault
+        // priority and the complete implicit locked transaction.
+        if m_mmmm == 0x2 && vex_pp == 0x1 && vex_l == 0 && matches!(opcode, 0xE0..=0xEF) {
+            return execute::data::cmpccxadd(self, ctx, vvvv, opcode & 0x0F);
+        }
+
         // VEX.LZ.F2.0F3A.W{0,1} F0 /r ib (RORX). VEX.vvvv is reserved
         // encoded as 1111b, which is decoded above to zero.
         if m_mmmm == 0x3 && vex_pp == 0x3 && vex_l == 0 && vvvv == 0 && opcode == 0xF0 {

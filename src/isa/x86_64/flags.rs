@@ -52,6 +52,36 @@ pub fn compute_sf(value: u64, size: u8) -> bool {
     }
 }
 
+/// Evaluate one architectural x86 condition-code nibble against a fully
+/// materialized RFLAGS image.
+#[inline(always)]
+pub(crate) fn condition_holds(rflags: u64, condition_code: u8) -> bool {
+    let cf = rflags & bits::CF != 0;
+    let pf = rflags & bits::PF != 0;
+    let zf = rflags & bits::ZF != 0;
+    let sf = rflags & bits::SF != 0;
+    let of = rflags & bits::OF != 0;
+    match condition_code & 0x0F {
+        0x0 => of,
+        0x1 => !of,
+        0x2 => cf,
+        0x3 => !cf,
+        0x4 => zf,
+        0x5 => !zf,
+        0x6 => cf || zf,
+        0x7 => !cf && !zf,
+        0x8 => sf,
+        0x9 => !sf,
+        0xA => pf,
+        0xB => !pf,
+        0xC => sf != of,
+        0xD => sf == of,
+        0xE => zf || sf != of,
+        0xF => !zf && sf == of,
+        _ => unreachable!("condition code is masked to four bits"),
+    }
+}
+
 /// Update flags after an arithmetic operation.
 #[inline]
 pub fn update_flags_add(rflags: &mut u64, a: u64, b: u64, result: u64, size: u8) {

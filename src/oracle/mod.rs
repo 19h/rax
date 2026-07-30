@@ -2653,12 +2653,14 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             access_size,
             alignment,
             stack_segment,
+            natural_alignment,
         } => op_json!(
             "x86_check_alignment_ac",
             addr,
             access_size,
             alignment,
-            stack_segment
+            stack_segment,
+            natural_alignment
         ),
         OpKind::X86X87Control { kind, addr } => op_json!("x86_x87_control", kind, addr),
         OpKind::X86X87Data {

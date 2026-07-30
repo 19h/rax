@@ -253,7 +253,8 @@ pub(crate) fn evaluate_cpuid(
                 }
                 (1, ebx, ecx, edx)
             } else if subleaf == 1 {
-                let eax = (1u32 << 5) // AVX512_BF16
+                let eax = (1u32 << 7) // CMPCCXADD
+                        | (1u32 << 5) // AVX512_BF16
                         | (1u32 << 4); // AVX_VNNI
                 let edx = if state.apx {
                     1u32 << 21 // APX_F

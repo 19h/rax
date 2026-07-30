@@ -17,6 +17,7 @@ pub(crate) fn x86_check_alignment_ac_shape_valid(op: &SmirOp) -> bool {
             addr,
             access_size,
             alignment: 16,
+            natural_alignment: false,
             ..
         } if op.x86_hint.is_none()
             && matches!(*access_size, 16 | 32)
@@ -25,10 +26,10 @@ pub(crate) fn x86_check_alignment_ac_shape_valid(op: &SmirOp) -> bool {
 }
 
 impl X86_64Lowerer {
-    /// Validate the complete 16-byte or 32-byte guest linear range before
-    /// translation, then apply the live CR0.AM/RFLAGS.AC/CPL alignment
-    /// predicate. A failing condition deoptimizes at the source PC so direct
-    /// replay can select #GP(0), #SS(0), or #AC(0) with architectural priority.
+    /// Validate an XOP 16-byte or 32-byte guest linear range before translation,
+    /// then apply the live CR0.AM/RFLAGS.AC/CPL alignment predicate. A failing
+    /// condition deoptimizes at the source PC so direct replay can select
+    /// #GP(0), #SS(0), or #AC(0) with architectural priority.
     pub(crate) fn emit_x86_check_alignment_ac(&mut self, op: &SmirOp) -> Result<(), LowerError> {
         if !self.jit_fault_deopt_guards {
             return Err(LowerError::UnsupportedOp {

@@ -726,6 +726,17 @@ impl X86_64Lowerer {
                         continue;
                     }
                     if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_cmpccxadd_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &self.x86_instruction_bytes,
+                        )
+                    {
+                        validate_idx += consumed;
+                        continue;
+                    }
+                    if let Some(consumed) =
                         crate::smir::lower::runtime::x86_jit_mem_atomic_rmw_sequence_len(
                             block,
                             validate_idx,
@@ -1710,6 +1721,11 @@ impl X86_64Lowerer {
                 if let Some(consumed) =
                     self.try_lower_jit_mem_alu_rmw(block, idx, &virtual_definitions, &virtual_uses)?
                 {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_cmpccxadd(block, idx)? {
                     idx += consumed;
                     continue;
                 }

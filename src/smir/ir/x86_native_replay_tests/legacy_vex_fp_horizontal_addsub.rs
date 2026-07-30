@@ -291,6 +291,7 @@ fn register_replay_rejects_memory_bearing_semantic_groups() {
                 access_size: 16,
                 alignment: 16,
                 stack_segment: false,
+                natural_alignment: false,
             },
         ),
     ] {

@@ -138,6 +138,7 @@ fn memory_form_preserves_alignment_stack_address_and_full_width_load() {
                     access_size: 16,
                     alignment: 16,
                     stack_segment: true,
+                    natural_alignment: false,
                 },
                 ..
             },

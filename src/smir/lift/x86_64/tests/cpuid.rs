@@ -183,6 +183,11 @@ fn cpuid_interpreter_tracks_every_mutable_guest_profile_input() {
     );
 
     let (leaf7_subleaf1, _) = execute_cpuid(7, 1, |_| {});
+    assert_ne!(
+        leaf7_subleaf1[0] & (1 << 7),
+        0,
+        "implemented CMPCCXADD must be enumerated"
+    );
     assert_eq!(
         leaf7_subleaf1[0] & ((1 << 19) | (1 << 27)),
         0,

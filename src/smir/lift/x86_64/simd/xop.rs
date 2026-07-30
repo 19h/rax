@@ -123,6 +123,7 @@ impl X86_64Lifter {
                     access_size: 16,
                     alignment: 16,
                     stack_segment,
+                    natural_alignment: false,
                 },
             ));
             let loaded = ctx.alloc_vreg();
@@ -232,6 +233,7 @@ impl X86_64Lifter {
                     access_size: width.bytes() as u8,
                     alignment: 16,
                     stack_segment,
+                    natural_alignment: false,
                 },
             ));
             let loaded = ctx.alloc_vreg();
@@ -363,6 +365,7 @@ impl X86_64Lifter {
                     access_size: 16,
                     alignment: 16,
                     stack_segment,
+                    natural_alignment: false,
                 },
             ));
             let loaded = ctx.alloc_vreg();

@@ -326,7 +326,10 @@ pub(crate) fn x86_flag_defs(op: &crate::smir::ir::ops::OpKind) -> crate::smir::i
         | OpKind::X86Tbm { flags, .. }
         | OpKind::X86Adx { flags, .. }
         | OpKind::X86Count { flags, .. } => flags.as_set(),
-        OpKind::Cmp { .. } | OpKind::Test { .. } | OpKind::X86XTest => FlagSet::ALL_X86,
+        OpKind::Cmp { .. }
+        | OpKind::Test { .. }
+        | OpKind::AtomicCmpXadd { .. }
+        | OpKind::X86XTest => FlagSet::ALL_X86,
         OpKind::X86Random { .. } => FlagSet::ALL_X86,
         OpKind::X86WaitPkg(X86WaitPkgOp::Umwait { .. } | X86WaitPkgOp::Tpause { .. }) => {
             FlagSet::ALL_X86

@@ -34,8 +34,19 @@ fn evex_decorations_are_validated_by_opcode_lifters() {
 fn lift_cmpccxadd_evex_egpr_memory_like_llvm() {
     let result = lift_single(&[0x62, 0xEA, 0x61, 0x00, 0xE2, 0x44, 0x91, 0x20]).unwrap();
     assert_eq!(result.bytes_consumed, 8);
-    assert_eq!(result.ops.len(), 1);
-    match &result.ops[0].kind {
+    assert_eq!(result.ops.len(), 3);
+    assert!(matches!(result.ops[0].kind, OpKind::X86RequireApx));
+    assert!(matches!(
+        &result.ops[1].kind,
+        OpKind::X86CheckAlignmentAc {
+            access_size: 4,
+            alignment: 4,
+            stack_segment: false,
+            natural_alignment: true,
+            ..
+        }
+    ));
+    match &result.ops[2].kind {
         OpKind::AtomicCmpXadd {
             dst_old,
             addr:
@@ -62,7 +73,17 @@ fn lift_cmpccxadd_evex_egpr_memory_like_llvm() {
     }
 
     let result = lift_single(&[0x62, 0xEA, 0x65, 0x08, 0xE2, 0x08]).unwrap();
-    match &result.ops[0].kind {
+    assert!(matches!(result.ops[0].kind, OpKind::X86RequireApx));
+    assert!(matches!(
+        &result.ops[1].kind,
+        OpKind::X86CheckAlignmentAc {
+            access_size: 4,
+            alignment: 4,
+            natural_alignment: true,
+            ..
+        }
+    ));
+    match &result.ops[2].kind {
         OpKind::AtomicCmpXadd {
             dst_old,
             addr: Address::Direct(base),

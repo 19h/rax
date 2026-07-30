@@ -1,6 +1,7 @@
 use super::X86InstructionBytes;
 
 mod chunk;
+mod cmpccxadd;
 mod evex_broadcast_interleave_memory;
 mod evex_broadcast_xor_memory;
 mod evex_fma3_memory;

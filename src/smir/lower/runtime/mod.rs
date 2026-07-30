@@ -347,6 +347,10 @@ pub struct GuestRegs {
     /// Non-zero when CPUID leaf 0x80000001 enumerates XOP. This field is
     /// append-only so every established native helper/state offset is stable.
     pub cpuid_xop: u64,
+    /// Address of `extern "C" fn(state, addr, cmp, add, size, cc) -> ok`,
+    /// implementing one original-VEX CMPccXADD transaction. This field is
+    /// append-only so every established native helper/state offset is stable.
+    pub cmpccxadd_fn: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -438,6 +442,7 @@ impl Default for GuestRegs {
             vector_scratch: [0; 8],
             cpuid_tbm: 0,
             cpuid_xop: 0,
+            cmpccxadd_fn: 0,
         }
     }
 }

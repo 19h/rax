@@ -11,6 +11,7 @@ pub(crate) struct X86VexMemoryFields {
     pub(crate) opcode: u8,
     pub(crate) width_256: bool,
     pub(crate) w: bool,
+    pub(crate) stack_segment: bool,
 }
 
 impl X86InstructionBytes {
@@ -23,10 +24,14 @@ impl X86InstructionBytes {
     pub(crate) fn vex_memory_fields(&self) -> Option<X86VexMemoryFields> {
         let bytes = self.as_slice();
         let mut vex_offset = 0usize;
+        let mut segment_override = None;
         while bytes
             .get(vex_offset)
             .is_some_and(|byte| matches!(byte, 0x26 | 0x2E | 0x36 | 0x3E | 0x64 | 0x65 | 0x67))
         {
+            if matches!(bytes[vex_offset], 0x26 | 0x2E | 0x36 | 0x3E | 0x64 | 0x65) {
+                segment_override = Some(bytes[vex_offset]);
+            }
             vex_offset += 1;
         }
 
@@ -70,14 +75,21 @@ impl X86InstructionBytes {
         let mode = modrm >> 6;
         let rm = modrm & 7;
         let mut end = modrm_offset + 1;
+        let default_stack_segment;
         if rm == 4 {
             let sib = *bytes.get(end)?;
             end += 1;
-            if mode == 0 && sib & 7 == 5 {
+            let base = sib & 7;
+            let has_base = !(mode == 0 && base == 5);
+            default_stack_segment = has_base && matches!(base, 4 | 5);
+            if !has_base {
                 end += 4;
             }
         } else if mode == 0 && rm == 5 {
+            default_stack_segment = false;
             end += 4;
+        } else {
+            default_stack_segment = matches!(rm, 4 | 5);
         }
         end += match mode {
             1 => 1,
@@ -96,6 +108,11 @@ impl X86InstructionBytes {
             opcode,
             width_256: p1 & 0x04 != 0,
             w,
+            stack_segment: match segment_override {
+                Some(0x36) => true,
+                Some(_) => false,
+                None => default_stack_segment,
+            },
         })
     }
 

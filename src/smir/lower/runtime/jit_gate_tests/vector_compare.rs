@@ -85,6 +85,7 @@ fn memory_function(
             access_size: 16,
             alignment: 16,
             stack_segment: false,
+            natural_alignment: false,
         },
         OpKind::VLoad {
             dst: temporary,

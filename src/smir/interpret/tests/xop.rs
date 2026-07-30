@@ -508,15 +508,18 @@ fn malformed_xop_ir_operands_fail_closed_without_destination_commit() {
 
 #[test]
 fn malformed_xop_alignment_ir_fails_closed_without_address_observation() {
-    for (access_size, alignment) in [
-        (0, 16),
-        (1, 16),
-        (8, 16),
-        (64, 16),
-        (16, 0),
-        (16, 1),
-        (16, 8),
-        (16, 32),
+    for (access_size, alignment, natural_alignment) in [
+        (0, 16, false),
+        (1, 16, false),
+        (8, 16, false),
+        (64, 16, false),
+        (16, 0, false),
+        (16, 1, false),
+        (16, 8, false),
+        (16, 32, false),
+        (4, 8, true),
+        (16, 16, true),
+        (32, 16, true),
     ] {
         let mut ctx = enabled_context();
         ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0xFFFF_FFFF_FFFF_FFFF);
@@ -528,6 +531,7 @@ fn malformed_xop_alignment_ir_fails_closed_without_address_observation() {
                 access_size,
                 alignment,
                 stack_segment: false,
+                natural_alignment,
             },
         );
         builder.set_terminator(Terminator::Trap {
@@ -544,7 +548,8 @@ fn malformed_xop_alignment_ir_fails_closed_without_address_observation() {
                 exit,
                 BlockResult::Exit(ExitReason::Undefined { addr: 0x1000, .. })
             ),
-            "access_size={access_size}, alignment={alignment}: {exit:?}"
+            "access_size={access_size}, alignment={alignment}, \
+             natural_alignment={natural_alignment}: {exit:?}"
         );
     }
 }
@@ -568,6 +573,7 @@ fn xop_alignment_ir_checks_the_complete_access_range_independently_of_alignment(
                 access_size,
                 alignment: 16,
                 stack_segment: false,
+                natural_alignment: false,
             },
         );
         builder.set_terminator(Terminator::Trap {
