@@ -57,6 +57,7 @@ mod vex_memory_broadcast;
 mod vex_mov_mask;
 mod vex_movntdqa;
 mod vex_mpsadbw;
+mod vex_ne_convert;
 mod vex_pabs;
 mod vex_packed_convert_memory;
 mod vex_packed_string;
@@ -107,6 +108,7 @@ pub(crate) use vex_integer_dot::X86VexIntegerDotMemoryFields;
 pub(crate) use vex_integer_dot_ext::X86VexIntegerDotExtMemoryFields;
 pub(crate) use vex_memory_broadcast::X86VexMemoryBroadcastFields;
 pub(crate) use vex_movntdqa::X86VexMovntdqaMemoryEncoding;
+pub(crate) use vex_ne_convert::{X86VexNeConvertKind, X86VexNeConvertMemoryEncoding};
 pub(crate) use vex_packed_convert_memory::{
     X86VexPackedConvertMemoryEncoding, X86VexPackedConvertMemoryKind,
 };

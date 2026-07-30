@@ -335,6 +335,10 @@ mod vex_movntdqa_memory_source;
 #[cfg(test)]
 mod vex_mpsadbw_memory_source;
 #[cfg(test)]
+mod vex_ne_convert_memory_source;
+#[cfg(test)]
+mod vex_ne_convert_replay;
+#[cfg(test)]
 mod vex_pabs_memory_source;
 mod vex_packed_convert_memory_source;
 #[cfg(test)]

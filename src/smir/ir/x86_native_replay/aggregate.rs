@@ -430,6 +430,11 @@ pub fn x86_native_replay_spans(
             })
             .or_else(|| {
                 instruction
+                    .vex_register_ne_convert_fields()
+                    .map(|_| (false, false, false))
+            })
+            .or_else(|| {
+                instruction
                     .vex_register_integer_dot_ext_is_int16()
                     .map(|_| (false, false, false))
             })

@@ -156,6 +156,7 @@ impl X86_64Lowerer {
             .or_else(|| span.instruction.vex_fp_dot_product_destination_index())
             .or_else(|| span.instruction.vex_integer_dot_destination_index())
             .or_else(|| span.instruction.vex_ifma52_destination_index())
+            .or_else(|| span.instruction.vex_ne_convert_destination_index())
             .or_else(|| span.instruction.vex_integer_dot_ext_destination_index())
             .or_else(|| span.instruction.vex_immediate_blend_destination_index())
             .or_else(|| span.instruction.vex_immediate_permute_destination_index())
@@ -564,6 +565,19 @@ impl X86_64Lowerer {
                     }
                     if let Some(sequence) =
                         crate::smir::lower::runtime::x86_jit_vex_scalar_convert_memory_sequence(
+                            block,
+                            validate_idx,
+                            true,
+                            &self.x86_instruction_bytes,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
+                        validate_idx += sequence.consumed;
+                        continue;
+                    }
+                    if let Some(sequence) =
+                        crate::smir::lower::runtime::x86_jit_vex_ne_convert_memory_sequence(
                             block,
                             validate_idx,
                             true,
@@ -1406,6 +1420,16 @@ impl X86_64Lowerer {
                 }
                 #[cfg(feature = "smir-jit")]
                 if let Some(consumed) = self.try_lower_jit_vex_packed_convert_memory_source(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_vex_ne_convert_memory_source(
                     block,
                     idx,
                     &virtual_definitions,

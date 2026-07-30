@@ -15,6 +15,7 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_avx2: bool,
     pub(crate) needs_avx_vnni: bool,
     pub(crate) needs_avx_ifma: bool,
+    pub(crate) needs_avx_ne_convert: bool,
     pub(crate) needs_avx_vnni_int8: bool,
     pub(crate) needs_avx_vnni_int16: bool,
     pub(crate) needs_f16c: bool,
@@ -149,6 +150,15 @@ pub(crate) fn x86_host_has_avx_vnni_int8() -> bool {
     x86_host_has_leaf7_subleaf1_edx_feature(1 << 4)
 }
 
+/// Intel SDM Volume 1 defines AVX_NE_CONVERT at
+/// CPUID.07H.01H:EDX[5]. Stable Rust does not expose an
+/// `is_x86_feature_detected!` probe for this feature, so query the structured
+/// extended-feature leaf directly.
+#[cfg(target_arch = "x86_64")]
+pub(crate) fn x86_host_has_avx_ne_convert() -> bool {
+    x86_host_has_leaf7_subleaf1_edx_feature(1 << 5)
+}
+
 /// Intel SDM Volume 1 defines AVX_VNNI_INT16 at CPUID.07H.01H:EDX[10].
 /// Stable Rust does not expose an `is_x86_feature_detected!` probe for this
 /// feature, so query the structured extended-feature leaf directly.
@@ -218,6 +228,7 @@ impl X86NativeReplayFeatureRequirements {
             && (!self.needs_avx2 || std::is_x86_feature_detected!("avx2"))
             && (!self.needs_avx_vnni || x86_host_has_avx_vnni())
             && (!self.needs_avx_ifma || x86_host_has_avx_ifma())
+            && (!self.needs_avx_ne_convert || x86_host_has_avx_ne_convert())
             && (!self.needs_avx_vnni_int8 || x86_host_has_avx_vnni_int8())
             && (!self.needs_avx_vnni_int16 || x86_host_has_avx_vnni_int16())
             && (!self.needs_f16c || std::is_x86_feature_detected!("f16c"))
@@ -260,6 +271,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
             let vex_fp_dot_product_ymm = span.instruction.vex_register_fp_dot_product_uses_ymm();
             let vex_integer_dot = span.instruction.vex_register_integer_dot_fields().is_some();
             let vex_ifma52 = span.instruction.vex_register_ifma52_fields().is_some();
+            let vex_ne_convert = span.instruction.vex_register_ne_convert_fields().is_some();
             let vex_integer_dot_ext_int16 =
                 span.instruction.vex_register_integer_dot_ext_is_int16();
             let immediate_blend_avx2 = span.instruction.vex_register_immediate_blend_needs_avx2();
@@ -321,6 +333,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_fp_dot_product_ymm.is_some()
                 || vex_integer_dot
                 || vex_ifma52
+                || vex_ne_convert
                 || vex_integer_dot_ext_int16.is_some()
                 || fp_estimate_avx.is_some()
                 || immediate_blend_avx2.is_some()
@@ -359,6 +372,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_fp_dot_product_ymm.is_some()
                 || vex_integer_dot
                 || vex_ifma52
+                || vex_ne_convert
                 || vex_integer_dot_ext_int16.is_some()
                 || immediate_blend_avx2.is_some()
                 || immediate_permute_avx2.is_some()
@@ -407,6 +421,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 || vex_zero;
             requirements.needs_avx_vnni |= vex_integer_dot;
             requirements.needs_avx_ifma |= vex_ifma52;
+            requirements.needs_avx_ne_convert |= vex_ne_convert;
             requirements.needs_avx2 |= widening_dword_multiply_avx2 == Some(true)
                 || immediate_blend_avx2 == Some(true)
                 || immediate_permute_avx2 == Some(true)
@@ -624,6 +639,18 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.any = true;
                 requirements.needs_avx = true;
                 requirements.needs_f16c |= sequence.encoding.needs_f16c();
+                index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_vex_ne_convert_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                requirements.needs_avx_ne_convert = true;
                 index += sequence.consumed;
             } else if let Some(sequence) = super::x86_jit_vex_fp16_narrow_memory_sequence(
                 block,
@@ -1020,6 +1047,21 @@ mod tests {
         assert!(!cpuid_enumerates_leaf7_subleaf1_eax_feature(7, 1, 0, bit));
         assert!(cpuid_enumerates_leaf7_subleaf1_eax_feature(7, 1, bit, bit));
         assert!(cpuid_enumerates_leaf7_subleaf1_eax_feature(
+            u32::MAX,
+            u32::MAX,
+            u32::MAX,
+            bit
+        ));
+    }
+
+    #[test]
+    fn avx_ne_convert_cpuid_bit_requires_basic_leaf_7_and_subleaf_1() {
+        let bit = 1 << 5;
+        assert!(!cpuid_enumerates_leaf7_subleaf1_edx_feature(6, 1, bit, bit));
+        assert!(!cpuid_enumerates_leaf7_subleaf1_edx_feature(7, 0, bit, bit));
+        assert!(!cpuid_enumerates_leaf7_subleaf1_edx_feature(7, 1, 0, bit));
+        assert!(cpuid_enumerates_leaf7_subleaf1_edx_feature(7, 1, bit, bit));
+        assert!(cpuid_enumerates_leaf7_subleaf1_edx_feature(
             u32::MAX,
             u32::MAX,
             u32::MAX,
