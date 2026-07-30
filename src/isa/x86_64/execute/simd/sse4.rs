@@ -473,10 +473,15 @@ pub fn movntdqa(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     if !is_memory {
         return vcpu.inject_undefined_instruction();
     }
+    if addr & 0xF != 0 {
+        vcpu.inject_exception(13, Some(0))?;
+        return Ok(None);
+    }
     let xmm_dst = reg as usize;
-    // Non-temporal hint ignored in emulation, just load normally
-    vcpu.regs.xmm[xmm_dst][0] = vcpu.read_mem(addr, 8)?;
-    vcpu.regs.xmm[xmm_dst][1] = vcpu.read_mem(addr + 8, 8)?;
+    // The cache-placement hint is not architectural in the emulator. Stage
+    // the complete aligned read before committing either destination qword.
+    let value = [vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?];
+    vcpu.regs.xmm[xmm_dst] = value;
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

@@ -792,6 +792,20 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.needs_vaes |= sequence.needs_vaes;
                 all_spans_support_avx_ymm16 &= sequence.supports_avx_ymm16;
                 index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_vex_movntdqa_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                // The helper performs the memory transfer and ignores the
+                // cache-placement hint; only the AVX YMM16 state bridge is
+                // executed on the host, including for the guest AVX2 form.
+                requirements.needs_avx = true;
+                index += sequence.consumed;
             } else if let Some(sequence) = super::x86_jit_vex_phminposuw_memory_sequence(
                 block,
                 index,

@@ -43,6 +43,7 @@ pub use alignment_ac::*;
 #[cfg(feature = "smir-jit")]
 mod aes_memory_source;
 mod alu;
+mod avx_ymm16_state;
 pub use alu::*;
 mod bit_offset;
 pub use bit_offset::*;
@@ -242,6 +243,8 @@ mod vex_immediate_blend_memory_source;
 mod vex_immediate_permute_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_lane_shuffle_memory_source;
+#[cfg(feature = "smir-jit")]
+mod vex_movntdqa_memory_source;
 #[cfg(feature = "smir-jit")]
 mod vex_mpsadbw_memory_source;
 #[cfg(feature = "smir-jit")]

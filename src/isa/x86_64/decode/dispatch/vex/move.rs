@@ -426,20 +426,34 @@ impl X86_64Vcpu {
         if vvvv != 0 {
             return self.inject_undefined_instruction();
         }
+        // VMOVNTDQA has no trailing immediate. The VEX dispatcher starts with
+        // a one-byte immediate bias for the opcodes that do, so remove it
+        // before RIP-relative ModR/M address calculation.
+        ctx.rip_relative_offset = 0;
         let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         if !is_memory {
             return self.inject_undefined_instruction();
         }
-        let xmm_dst = reg as usize;
-        self.regs.xmm[xmm_dst][0] = self.read_mem(addr, 8)?;
-        self.regs.xmm[xmm_dst][1] = self.read_mem(addr + 8, 8)?;
-        if vex_l == 1 {
-            self.regs.ymm_high[xmm_dst][0] = self.read_mem(addr + 16, 8)?;
-            self.regs.ymm_high[xmm_dst][1] = self.read_mem(addr + 24, 8)?;
-        } else {
-            self.regs.ymm_high[xmm_dst][0] = 0;
-            self.regs.ymm_high[xmm_dst][1] = 0;
+        let alignment = if vex_l == 1 { 32 } else { 16 };
+        if addr & (alignment - 1) != 0 {
+            self.inject_exception(13, Some(0))?;
+            return Ok(None);
         }
+        let xmm_dst = reg as usize;
+        let qwords = if vex_l == 1 { 4 } else { 2 };
+        let mut value = [0u64; 4];
+        for (index, word) in value.iter_mut().take(qwords).enumerate() {
+            *word = self.read_mem(addr + (index * 8) as u64, 8)?;
+        }
+        self.regs.xmm[xmm_dst].copy_from_slice(&value[..2]);
+        if vex_l == 1 {
+            self.regs.ymm_high[xmm_dst].copy_from_slice(&value[2..]);
+        } else {
+            self.regs.ymm_high[xmm_dst] = [0; 2];
+        }
+        // Do not rely on change detection in the VEX dispatch wrapper: a load
+        // equal to the existing low value must still clear bits 511:VL.
+        self.regs.zmm_high[xmm_dst] = [0; 4];
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
