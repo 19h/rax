@@ -1,6 +1,21 @@
-//! Register-only EVEX binary16 narrowing-conversion replay classification.
+//! VEX/EVEX binary16 narrowing-conversion replay classification.
 
 use super::X86InstructionBytes;
+use crate::smir::ir::types::{FpRoundMode, VecWidth};
+
+/// One complete F16C VEX `VCVTPS2PH` memory-destination encoding rewritten
+/// to target a borrowed low XMM register.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86VexFp16NarrowMemoryEncoding {
+    pub(crate) source: u8,
+    pub(crate) scratch: u8,
+    pub(crate) source_width: VecWidth,
+    pub(crate) lanes: u8,
+    pub(crate) memory_size: u32,
+    pub(crate) round: FpRoundMode,
+    pub(crate) immediate: u8,
+    pub(crate) register_instruction: X86InstructionBytes,
+}
 
 impl X86InstructionBytes {
     /// Validate one register-destination F16C VEX `VCVTPS2PH` instruction.
@@ -29,6 +44,90 @@ impl X86InstructionBytes {
             unreachable!("VEX FP16 narrowing shape was validated");
         };
         Some((modrm & 7) + if p0 & 0x20 == 0 { 8 } else { 0 })
+    }
+
+    /// Return the architectural FP32 source after exact register-form
+    /// validation. The source uses ModRM.reg plus inverted VEX.R.
+    pub(crate) fn vex_fp16_narrow_source_index(&self) -> Option<u8> {
+        if !self.is_vex_register_fp16_narrow() {
+            return None;
+        }
+        let [0xC4, p0, _, 0x1D, modrm, _] = self.as_slice() else {
+            unreachable!("VEX FP16 narrowing shape was validated");
+        };
+        Some(((modrm >> 3) & 7) + if p0 & 0x80 == 0 { 8 } else { 0 })
+    }
+
+    /// Rewrite only the ModR/M memory destination of one complete F16C VEX
+    /// instruction, preserving the trailing imm8 exactly.
+    fn vex_fp16_memory_with_register_destination(&self, destination: u8) -> Option<Self> {
+        let (immediate, instruction) = self.as_slice().split_last()?;
+        let instruction = Self::new(instruction)?;
+        let rewritten = instruction.vex_memory_with_register_source(destination)?;
+        let mut bytes = [0u8; 15];
+        let len = rewritten.as_slice().len();
+        if len == bytes.len() {
+            return None;
+        }
+        bytes[..len].copy_from_slice(rewritten.as_slice());
+        bytes[len] = *immediate;
+        Self::new(&bytes[..=len])
+    }
+
+    /// Validate and rewrite one F16C VEX `VCVTPS2PH` memory destination.
+    ///
+    /// The instruction is VEX.128/256.66.0F3A.W0 1D /r ib, reserves
+    /// VEX.vvvv=`1111b`, and converts four/eight FP32 source lanes selected by
+    /// ModRM.reg into an unaligned 8-/16-byte memory destination. VEX.X
+    /// participates in SIB index extension in the original memory form, then
+    /// becomes ignored in the register rewrite; imm8[7:3] is ignored in both.
+    /// Both fields remain exact source-byte provenance. A low XMM register
+    /// distinct from the source is borrowed as the rewritten destination.
+    pub(crate) fn vex_fp16_narrow_memory_encoding(&self) -> Option<X86VexFp16NarrowMemoryEncoding> {
+        let (fields, immediate) = self.vex_memory_fields_with_imm8()?;
+        if fields.map != 3
+            || fields.pp != 1
+            || fields.w
+            || fields.opcode != 0x1D
+            || fields.source1 != 0
+        {
+            return None;
+        }
+        let source_width = if fields.width_256 {
+            VecWidth::V256
+        } else {
+            VecWidth::V128
+        };
+        let (lanes, memory_size) = if fields.width_256 { (8, 16) } else { (4, 8) };
+        let round = if immediate & 4 != 0 {
+            FpRoundMode::Dynamic
+        } else {
+            match immediate & 3 {
+                0 => FpRoundMode::RoundNearest,
+                1 => FpRoundMode::RoundDown,
+                2 => FpRoundMode::RoundUp,
+                _ => FpRoundMode::RoundTowardZero,
+            }
+        };
+        let scratch = (0..16u8)
+            .find(|candidate| *candidate != fields.destination)
+            .expect("one VEX source leaves fifteen low scratch registers");
+        let register_instruction = self.vex_fp16_memory_with_register_destination(scratch)?;
+        if register_instruction.vex_fp16_narrow_source_index() != Some(fields.destination)
+            || register_instruction.vex_fp16_narrow_destination_index() != Some(scratch)
+        {
+            return None;
+        }
+        Some(X86VexFp16NarrowMemoryEncoding {
+            source: fields.destination,
+            scratch,
+            source_width,
+            lanes,
+            memory_size,
+            round,
+            immediate,
+            register_instruction,
+        })
     }
 
     /// Validate one register-only EVEX `VCVTPD2PH`, `VCVTPS2PH`, or
@@ -91,6 +190,165 @@ impl X86InstructionBytes {
             0 | 1 => Some((true, needs_fp16)),
             2 => Some((false, needs_fp16)),
             _ => None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn instruction(
+        source: u8,
+        base: u8,
+        width_256: bool,
+        immediate: u8,
+        encoded_x: bool,
+    ) -> Vec<u8> {
+        assert!(source < 16 && base < 16);
+        let mut bytes = vec![
+            0xC4,
+            (if source < 8 { 0x80 } else { 0 })
+                | (u8::from(encoded_x) << 6)
+                | (if base < 8 { 0x20 } else { 0 })
+                | 3,
+            0x79 | (u8::from(width_256) << 2),
+            0x1D,
+            0x40 | ((source & 7) << 3) | if base & 7 == 4 { 4 } else { base & 7 },
+        ];
+        if base & 7 == 4 {
+            bytes.push(0x24);
+        }
+        bytes.extend_from_slice(&[0x20, immediate]);
+        bytes
+    }
+
+    #[test]
+    fn memory_classifier_covers_sources_bases_widths_immediates_and_encoded_x() {
+        let mut classified = 0usize;
+        for source in 0..16 {
+            for base in 0..16 {
+                for width_256 in [false, true] {
+                    for immediate in u8::MIN..=u8::MAX {
+                        for encoded_x in [false, true] {
+                            let bytes = instruction(source, base, width_256, immediate, encoded_x);
+                            let encoding = X86InstructionBytes::new(&bytes)
+                                .unwrap()
+                                .vex_fp16_narrow_memory_encoding()
+                                .unwrap_or_else(|| panic!("{bytes:02X?}"));
+                            assert_eq!(encoding.source, source);
+                            assert_ne!(encoding.scratch, source);
+                            assert_eq!(
+                                encoding.source_width,
+                                if width_256 {
+                                    VecWidth::V256
+                                } else {
+                                    VecWidth::V128
+                                }
+                            );
+                            assert_eq!(encoding.lanes, if width_256 { 8 } else { 4 });
+                            assert_eq!(encoding.memory_size, if width_256 { 16 } else { 8 });
+                            assert_eq!(encoding.immediate, immediate);
+                            assert_eq!(
+                                encoding.round,
+                                if immediate & 4 != 0 {
+                                    FpRoundMode::Dynamic
+                                } else {
+                                    match immediate & 3 {
+                                        0 => FpRoundMode::RoundNearest,
+                                        1 => FpRoundMode::RoundDown,
+                                        2 => FpRoundMode::RoundUp,
+                                        _ => FpRoundMode::RoundTowardZero,
+                                    }
+                                }
+                            );
+                            assert!(encoding.register_instruction.is_vex_register_fp16_narrow());
+                            assert_eq!(
+                                encoding.register_instruction.vex_fp16_narrow_source_index(),
+                                Some(source)
+                            );
+                            assert_eq!(
+                                encoding
+                                    .register_instruction
+                                    .vex_fp16_narrow_destination_index(),
+                                Some(encoding.scratch)
+                            );
+                            assert_eq!(
+                                encoding.register_instruction.as_slice().last(),
+                                Some(&immediate)
+                            );
+                            assert_eq!(
+                                encoding.register_instruction.as_slice()[1] & 0x40,
+                                bytes[1] & 0x40,
+                                "encoded VEX.X must survive the rewrite"
+                            );
+                            classified += 1;
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(classified, 16 * 16 * 2 * 256 * 2);
+    }
+
+    #[test]
+    fn memory_classifier_accepts_defined_address_prefixes_and_shapes() {
+        for bytes in [
+            vec![0x64, 0xC4, 0xE3, 0x79, 0x1D, 0x10, 0xA5],
+            vec![0x67, 0xC4, 0xE3, 0x79, 0x1D, 0x10, 0xA5],
+            vec![0xC4, 0xE3, 0x79, 0x1D, 0x14, 0x8D, 0, 0, 0, 0, 0xA5],
+            vec![0xC4, 0xE3, 0x79, 0x1D, 0x95, 0, 0, 0, 0, 0xA5],
+        ] {
+            let encoding = X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .vex_fp16_narrow_memory_encoding()
+                .unwrap_or_else(|| panic!("{bytes:02X?}"));
+            assert_eq!(encoding.immediate, 0xA5);
+            assert!(encoding.register_instruction.is_vex_register_fp16_narrow());
+        }
+    }
+
+    #[test]
+    fn memory_classifier_rejects_reserved_register_and_nonexact_images() {
+        let valid = instruction(9, 11, true, 0xA5, false);
+        let mut invalid = Vec::new();
+
+        let mut w1 = valid.clone();
+        w1[2] |= 0x80;
+        invalid.push(w1);
+        let mut vvvv = valid.clone();
+        vvvv[2] &= !0x08;
+        invalid.push(vvvv);
+        let mut map = valid.clone();
+        map[1] = (map[1] & !0x1F) | 2;
+        invalid.push(map);
+        let mut pp = valid.clone();
+        pp[2] = (pp[2] & !3) | 2;
+        invalid.push(pp);
+        let mut opcode = valid.clone();
+        opcode[3] = 0x1C;
+        invalid.push(opcode);
+        let mut register = valid.clone();
+        register[4] |= 0xC0;
+        register.remove(5);
+        invalid.push(register);
+        let mut trailing = valid.clone();
+        trailing.push(0);
+        invalid.push(trailing);
+        let mut forbidden_prefix = valid.clone();
+        forbidden_prefix.insert(0, 0x66);
+        invalid.push(forbidden_prefix);
+        for end in 0..valid.len() {
+            invalid.push(valid[..end].to_vec());
+        }
+
+        for bytes in invalid {
+            assert_eq!(
+                X86InstructionBytes::new(&bytes)
+                    .and_then(|instruction| instruction.vex_fp16_narrow_memory_encoding()),
+                None,
+                "{bytes:02X?}"
+            );
         }
     }
 }

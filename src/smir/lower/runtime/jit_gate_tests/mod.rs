@@ -261,6 +261,8 @@ mod vex_fma4_memory_source;
 #[cfg(test)]
 mod vex_fma4_replay;
 #[cfg(test)]
+mod vex_fp16_narrow_memory_destination;
+#[cfg(test)]
 mod vex_fp16_narrow_replay;
 #[cfg(test)]
 mod vex_fp16_widen_replay;

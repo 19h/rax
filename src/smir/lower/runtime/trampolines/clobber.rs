@@ -409,6 +409,12 @@ pub(crate) fn block_is_clobber_safe(
             i += sequence.consumed;
             continue;
         }
+        if let Some(sequence) =
+            x86_jit_vex_fp16_narrow_memory_sequence(block, i, allow_mem, x86_instruction_bytes)
+        {
+            i += sequence.consumed;
+            continue;
+        }
         if let Some(sequence) = x86_jit_vex_round_memory_sequence(
             block,
             i,

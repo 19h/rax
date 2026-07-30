@@ -89,6 +89,7 @@ pub(crate) use evex_fma3_memory::{
     X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay, X86EvexScalarFma3MemoryEncoding,
 };
 pub(crate) use fp_round::X86VexRoundMemoryEncoding;
+pub(crate) use fp16_narrow::X86VexFp16NarrowMemoryEncoding;
 pub(crate) use scalar_convert_memory::{
     X86VexScalarConvertMemoryEncoding, X86VexScalarConvertMemoryKind,
 };

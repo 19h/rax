@@ -62,8 +62,8 @@ pub(crate) use classifiers::{
     X86EvexBroadcastInterleaveMemoryEncoding, X86EvexBroadcastXorMemoryEncoding,
     X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay,
     X86EvexScalarFma3MemoryEncoding, X86VexChunkExtractMemoryEncoding,
-    X86VexCrossLane128MemoryEncoding, X86VexFma4MemoryEncoding, X86VexHalfMoveMemoryEncoding,
-    X86VexHalfMoveStoreEncoding, X86VexImmediateBlendMemoryFields,
+    X86VexCrossLane128MemoryEncoding, X86VexFma4MemoryEncoding, X86VexFp16NarrowMemoryEncoding,
+    X86VexHalfMoveMemoryEncoding, X86VexHalfMoveStoreEncoding, X86VexImmediateBlendMemoryFields,
     X86VexImmediatePermuteMemoryEncoding, X86VexMovntdqaMemoryEncoding,
     X86VexPackedConvertMemoryEncoding, X86VexPackedConvertMemoryKind,
     X86VexPhminposuwMemoryEncoding, X86VexPtestMemoryEncoding, X86VexRoundMemoryEncoding,
@@ -1138,8 +1138,8 @@ pub fn x86_vex_fp16_widen_replay_spans(
 
 /// Identify valid register-destination F16C VEX `VCVTPS2PH` replay groups in
 /// `block` in O(N) time and O(P) space for N operations and P unique guest
-/// PCs. Every memory-destination form remains at the precise SMIR interpreter
-/// boundary.
+/// PCs. Exact memory-destination forms are admitted separately through a
+/// helper-backed sole-store sequence.
 pub fn x86_vex_fp16_narrow_replay_spans(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
@@ -1154,7 +1154,8 @@ pub fn x86_vex_fp16_narrow_replay_spans(
 /// Identify valid register-only EVEX binary16 narrowing-conversion replay
 /// groups in `block` in O(N) time and O(P) space for N operations and P unique
 /// guest PCs. Register-only `VCVTPD2PH`, `VCVTPS2PH`, and `VCVTPS2PHX` forms
-/// are admitted; every memory source or destination remains at the precise
+/// are admitted here. Exact F16C VEX `VCVTPS2PH` memory destinations use a
+/// separate helper-backed sequence; other memory forms remain at the precise
 /// SMIR interpreter boundary.
 pub fn x86_evex_fp16_narrow_replay_spans(
     block: &SmirBlock,

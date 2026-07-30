@@ -575,6 +575,17 @@ impl X86_64Lowerer {
                         continue;
                     }
                     if let Some(sequence) =
+                        crate::smir::lower::runtime::x86_jit_vex_fp16_narrow_memory_sequence(
+                            block,
+                            validate_idx,
+                            true,
+                            &self.x86_instruction_bytes,
+                        )
+                    {
+                        validate_idx += sequence.consumed;
+                        continue;
+                    }
+                    if let Some(sequence) =
                         crate::smir::lower::runtime::x86_jit_vex_extract_memory_sequence(
                             block,
                             validate_idx,
@@ -1378,6 +1389,13 @@ impl X86_64Lowerer {
                     &virtual_definitions,
                     &virtual_uses,
                 )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) =
+                    self.try_lower_jit_vex_fp16_narrow_memory_destination(block, idx)?
+                {
                     idx += consumed;
                     continue;
                 }
