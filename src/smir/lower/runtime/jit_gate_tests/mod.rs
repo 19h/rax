@@ -80,6 +80,8 @@ mod evex_int32_to_fp64_ignored_er;
 #[cfg(test)]
 mod evex_lane_shuffle_replay;
 #[cfg(test)]
+mod evex_logic_memory_source;
+#[cfg(test)]
 mod evex_mask_blend_replay;
 #[cfg(test)]
 mod evex_mask_broadcast_replay;

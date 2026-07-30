@@ -14,6 +14,7 @@ mod cmpxchg;
 mod evex_broadcast_interleave_memory_source;
 mod evex_broadcast_xor_memory_source;
 mod evex_fma3_memory_source;
+mod evex_logic_memory_source;
 mod evex_memory_source_common;
 pub use cmpccxadd::*;
 pub use cmpxchg::*;
@@ -108,6 +109,7 @@ use crate::smir::lower::{
 pub(crate) use evex_broadcast_interleave_memory_source::*;
 pub(crate) use evex_broadcast_xor_memory_source::*;
 pub(crate) use evex_fma3_memory_source::*;
+pub(crate) use evex_logic_memory_source::*;
 pub use vector::*;
 pub(crate) use vector_memory_source::*;
 pub(crate) use vector_replay_features::*;
