@@ -114,6 +114,26 @@ impl X86_64Lowerer {
         self.emit_unaligned_vector_load(register, width, X86_GUEST_VECTOR_SCRATCH_OFFSET);
     }
 
+    /// Copy one borrowed vector register into the nonarchitectural helper
+    /// transfer slot. RAX must contain the state pointer.
+    pub(crate) fn emit_jit_vector_scratch_store(&mut self, register: PhysReg, width: VecWidth) {
+        self.emit_unaligned_vector_store(register, width, X86_GUEST_VECTOR_SCRATCH_OFFSET);
+    }
+
+    /// Copy the low 1/2/4/8 bytes of RAX into the nonarchitectural helper
+    /// transfer slot. RCX must contain the state pointer. The emitted MOV
+    /// preserves RFLAGS.
+    pub(crate) fn emit_jit_vector_scratch_gpr_store(&mut self, width: MemWidth) {
+        match width {
+            MemWidth::B1 => self.code.emit_bytes(&[0x88, 0x81]),
+            MemWidth::B2 => self.code.emit_bytes(&[0x66, 0x89, 0x81]),
+            MemWidth::B4 => self.code.emit_bytes(&[0x89, 0x81]),
+            MemWidth::B8 => self.code.emit_bytes(&[0x48, 0x89, 0x81]),
+            _ => unreachable!("validated VEX scalar-extract memory width"),
+        }
+        self.code.emit_u32(X86_GUEST_VECTOR_SCRATCH_OFFSET as u32);
+    }
+
     /// Copy one selected qword from an architectural XMM register into the
     /// nonarchitectural helper-transfer slot. RAX must contain the state
     /// pointer. The VEX store is a bit transfer and does not update MXCSR.

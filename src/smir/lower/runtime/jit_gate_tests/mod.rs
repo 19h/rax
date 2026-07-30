@@ -249,6 +249,8 @@ mod vex_cross_lane_128_replay;
 mod vex_duplicate_move_memory_source;
 #[cfg(test)]
 mod vex_estimate_memory_source;
+#[cfg(test)]
+mod vex_extract_memory_destination;
 mod vex_fma3_memory_source;
 #[cfg(test)]
 mod vex_fma3_replay;

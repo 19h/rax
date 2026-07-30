@@ -34,6 +34,7 @@ mod vex_alignr;
 mod vex_byte_shuffle;
 mod vex_chunk_extract;
 mod vex_cross_lane_128;
+mod vex_extract_memory;
 mod vex_fma3;
 mod vex_fma4;
 mod vex_fp_dot_product;
@@ -90,6 +91,9 @@ pub(crate) use scalar_convert_memory::{
     X86VexScalarConvertMemoryEncoding, X86VexScalarConvertMemoryKind,
 };
 pub(crate) use vex_cross_lane_128::X86VexCrossLane128MemoryEncoding;
+pub(crate) use vex_extract_memory::{
+    X86VexChunkExtractMemoryEncoding, X86VexScalarExtractMemoryEncoding,
+};
 pub(crate) use vex_fma4::X86VexFma4MemoryEncoding;
 pub(crate) use vex_half_move_memory::{X86VexHalfMoveMemoryEncoding, X86VexHalfMoveStoreEncoding};
 pub(crate) use vex_immediate_blend::X86VexImmediateBlendMemoryFields;

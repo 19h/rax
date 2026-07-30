@@ -61,12 +61,14 @@ mod classifiers;
 pub(crate) use classifiers::{
     X86EvexBroadcastInterleaveMemoryEncoding, X86EvexBroadcastXorMemoryEncoding,
     X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay,
-    X86EvexScalarFma3MemoryEncoding, X86VexCrossLane128MemoryEncoding, X86VexFma4MemoryEncoding,
-    X86VexHalfMoveMemoryEncoding, X86VexHalfMoveStoreEncoding, X86VexImmediateBlendMemoryFields,
+    X86EvexScalarFma3MemoryEncoding, X86VexChunkExtractMemoryEncoding,
+    X86VexCrossLane128MemoryEncoding, X86VexFma4MemoryEncoding, X86VexHalfMoveMemoryEncoding,
+    X86VexHalfMoveStoreEncoding, X86VexImmediateBlendMemoryFields,
     X86VexImmediatePermuteMemoryEncoding, X86VexPackedConvertMemoryEncoding,
     X86VexPackedConvertMemoryKind, X86VexPtestMemoryEncoding, X86VexRoundMemoryEncoding,
-    X86VexScalarConvertMemoryEncoding, X86VexScalarConvertMemoryKind, X86VexScalarFpMemoryEncoding,
-    X86VexScalarFpMemoryKind, X86VexScalarInsertMemoryFields, X86VexScalarInsertMemoryKind,
+    X86VexScalarConvertMemoryEncoding, X86VexScalarConvertMemoryKind,
+    X86VexScalarExtractMemoryEncoding, X86VexScalarFpMemoryEncoding, X86VexScalarFpMemoryKind,
+    X86VexScalarInsertMemoryFields, X86VexScalarInsertMemoryKind,
     X86VexScalarIntegerMemoryEncoding, X86VexScalarIntegerMemoryKind,
     X86VexVariableBlendMemoryEncoding, X86VexVariablePermuteMemoryEncoding,
 };

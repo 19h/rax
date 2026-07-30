@@ -431,6 +431,17 @@ pub(crate) fn block_is_clobber_safe(
             i += sequence.consumed;
             continue;
         }
+        if let Some(sequence) = x86_jit_vex_extract_memory_sequence(
+            block,
+            i,
+            allow_mem,
+            x86_instruction_bytes,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += sequence.consumed();
+            continue;
+        }
         if let Some(consumed) = x86_jit_vex_scalar_move_memory_sequence_len(
             block,
             i,

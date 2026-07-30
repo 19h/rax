@@ -55,15 +55,22 @@ pub(super) unsafe extern "C" fn rax_jit_vec_load(
 
 /// Copy source bytes from one architectural ZMM slot or the reserved
 /// nonarchitectural transfer scratch, then perform one complete guest-memory
-/// write. Architectural indices are 0..=31; index 32 names only
-/// `GuestRegs::vector_scratch`.
+/// write. Architectural indices are 0..=31 and retain their 4/8/16/32/64-byte
+/// contract; index 32 names `GuestRegs::vector_scratch` and additionally
+/// supports exact 1-/2-byte fused stores.
 pub(super) unsafe extern "C" fn rax_jit_vec_store(
     state: *mut GuestRegs,
     addr: u64,
     src_idx: u32,
     size: u32,
 ) -> u64 {
-    if src_idx > X86_JIT_VECTOR_SCRATCH_INDEX || !matches!(size, 4 | 8 | 16 | 32 | 64) {
+    let scratch = src_idx == X86_JIT_VECTOR_SCRATCH_INDEX;
+    let size_valid = if scratch {
+        matches!(size, 1 | 2 | 4 | 8 | 16 | 32 | 64)
+    } else {
+        matches!(size, 4 | 8 | 16 | 32 | 64)
+    };
+    if src_idx > X86_JIT_VECTOR_SCRATCH_INDEX || !size_valid {
         return 0;
     }
     let Some(state) = (unsafe { state.as_mut() }) else {
@@ -271,19 +278,44 @@ mod tests {
             state.zmm, architectural_before,
             "scratch store must not modify architectural vectors"
         );
-        mem.write_slice(&old, GuestAddress(0x3130)).unwrap();
+        for (addr, size, expected_prefix) in [
+            (0x3130, 1_u32, &[0x11][..]),
+            (0x3140, 2_u32, &[0x11, 0x22][..]),
+            (0x3150, 4_u32, &[0x11, 0x22, 0x33, 0x44][..]),
+        ] {
+            mem.write_slice(&old[..8], GuestAddress(addr)).unwrap();
+            vcpu.jit_mem_log = Some(Vec::new());
+            assert_eq!(
+                unsafe { rax_jit_vec_store(&mut state, addr, X86_JIT_VECTOR_SCRATCH_INDEX, size,) },
+                1
+            );
+            let mut scratch_scalar = [0u8; 8];
+            mem.read_slice(&mut scratch_scalar, GuestAddress(addr))
+                .unwrap();
+            assert_eq!(&scratch_scalar[..size as usize], expected_prefix);
+            assert_eq!(
+                &scratch_scalar[size as usize..],
+                &old[size as usize..8],
+                "scratch store width must remain {size} bytes"
+            );
+            assert_eq!(
+                vcpu.jit_mem_log.take().unwrap(),
+                vec![(addr, size as u8, 0xCCCC_CCCC_CCCC_CCCC >> (64 - size * 8))]
+            );
+        }
+
+        let end_before = [0x5Au8; 1];
+        mem.write_slice(&end_before, GuestAddress(0xFFFF)).unwrap();
         assert_eq!(
-            unsafe { rax_jit_vec_store(&mut state, 0x3130, X86_JIT_VECTOR_SCRATCH_INDEX, 4) },
-            1
+            unsafe { rax_jit_vec_store(&mut state, 0xFFFF, X86_JIT_VECTOR_SCRATCH_INDEX, 2,) },
+            0
         );
-        let mut scratch_dword = old.clone();
-        mem.read_slice(&mut scratch_dword, GuestAddress(0x3130))
+        let mut end_after = [0u8; 1];
+        mem.read_slice(&mut end_after, GuestAddress(0xFFFF))
             .unwrap();
-        assert_eq!(&scratch_dword[..4], &0x4433_2211u32.to_le_bytes());
         assert_eq!(
-            &scratch_dword[4..],
-            &old[4..],
-            "store width must remain 4 bytes"
+            end_after, end_before,
+            "faulting word store must not partially commit"
         );
 
         vcpu.mmu.mark_code_page(0x6000);
@@ -302,6 +334,11 @@ mod tests {
             unsafe { rax_jit_vec_store(&mut state, 0x3000, X86_JIT_VECTOR_SCRATCH_INDEX + 1, 16,) },
             0
         );
+        assert_eq!(
+            unsafe { rax_jit_vec_store(&mut state, 0x3000, X86_JIT_VECTOR_SCRATCH_INDEX, 3) },
+            0
+        );
+        assert_eq!(unsafe { rax_jit_vec_store(&mut state, 0x3000, 0, 1) }, 0);
         assert_eq!(unsafe { rax_jit_vec_store(&mut state, 0x3000, 0, 2) }, 0);
         assert_eq!(
             unsafe { rax_jit_vec_load(std::ptr::null_mut(), 0, 0, 16, 0) },
