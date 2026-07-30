@@ -77,6 +77,7 @@ mod vex_scalar_insert_memory;
 mod vex_scalar_integer_memory;
 mod vex_scalar_vmovq;
 mod vex_shared_count_shift;
+mod vex_sm3_sm4;
 mod vex_variable_blend;
 mod vex_variable_permute;
 mod vex_variable_shift;
@@ -121,6 +122,7 @@ pub(crate) use vex_scalar_insert_memory::{
 pub(crate) use vex_scalar_integer_memory::{
     X86VexScalarIntegerMemoryEncoding, X86VexScalarIntegerMemoryKind,
 };
+pub(crate) use vex_sm3_sm4::{X86VexSm3Sm4MemoryEncoding, X86VexSm3Sm4MemoryKind};
 pub(crate) use vex_variable_blend::X86VexVariableBlendMemoryEncoding;
 pub(crate) use vex_variable_permute::X86VexVariablePermuteMemoryEncoding;
 pub(crate) use vex_vpermil2::X86VexVpermil2MemoryEncoding;

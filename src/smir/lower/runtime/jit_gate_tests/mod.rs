@@ -398,6 +398,8 @@ mod vex_scalar_vmovq_replay;
 #[cfg(test)]
 mod vex_shared_count_shift_memory_source;
 #[cfg(test)]
+mod vex_sm3_sm4_memory_source;
+#[cfg(test)]
 mod vex_sqrt_memory_source;
 #[cfg(test)]
 mod vex_unaligned_packed_fp_move_replay;

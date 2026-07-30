@@ -6430,7 +6430,7 @@ pub fn x86_native_vector_features_supported_excluding(
             && (!needs_sm3
                 || (std::is_x86_feature_detected!("avx") && std::is_x86_feature_detected!("sm3")))
             && (!needs_sm4
-                || (std::is_x86_feature_detected!("avx2") && std::is_x86_feature_detected!("sm4")))
+                || (std::is_x86_feature_detected!("avx") && std::is_x86_feature_detected!("sm4")))
             && (!needs_shift_avx || std::is_x86_feature_detected!("avx"))
             && (!needs_shift_avx2 || std::is_x86_feature_detected!("avx2"))
             && (!needs_logic_avx || std::is_x86_feature_detected!("avx"))

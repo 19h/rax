@@ -24,6 +24,8 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_fma: bool,
     pub(crate) needs_fma4: bool,
     pub(crate) needs_xop: bool,
+    pub(crate) needs_sm3: bool,
+    pub(crate) needs_sm4: bool,
     pub(crate) needs_avx512bw: bool,
     pub(crate) needs_avx512vl: bool,
     pub(crate) needs_avx512dq: bool,
@@ -238,6 +240,8 @@ impl X86NativeReplayFeatureRequirements {
             && (!self.needs_fma || std::is_x86_feature_detected!("fma"))
             && (!self.needs_fma4 || x86_host_has_fma4())
             && (!self.needs_xop || x86_host_has_xop())
+            && (!self.needs_sm3 || std::is_x86_feature_detected!("sm3"))
+            && (!self.needs_sm4 || std::is_x86_feature_detected!("sm4"))
             && (!self.needs_gfni || std::is_x86_feature_detected!("gfni"))
             && (!self.needs_avx512vp2intersect
                 || std::is_x86_feature_detected!("avx512vp2intersect"))
@@ -567,6 +571,19 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.any = true;
                 requirements.needs_avx = true;
                 requirements.needs_xop = true;
+                index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_vex_sm3_sm4_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                requirements.needs_sm3 |= sequence.encoding.kind.needs_sm3();
+                requirements.needs_sm4 |= sequence.encoding.kind.needs_sm4();
                 index += sequence.consumed;
             } else if let Some(sequence) = super::x86_jit_vpclmulqdq_memory_sequence(
                 block,

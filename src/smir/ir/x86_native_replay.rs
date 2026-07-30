@@ -107,8 +107,8 @@ pub(crate) use classifiers::{
     X86VexRoundMemoryEncoding, X86VexScalarConvertMemoryEncoding, X86VexScalarConvertMemoryKind,
     X86VexScalarExtractMemoryEncoding, X86VexScalarFpMemoryEncoding, X86VexScalarFpMemoryKind,
     X86VexScalarInsertMemoryFields, X86VexScalarInsertMemoryKind,
-    X86VexScalarIntegerMemoryEncoding, X86VexScalarIntegerMemoryKind,
-    X86VexVariableBlendMemoryEncoding, X86VexVariablePermuteMemoryEncoding,
+    X86VexScalarIntegerMemoryEncoding, X86VexScalarIntegerMemoryKind, X86VexSm3Sm4MemoryEncoding,
+    X86VexSm3Sm4MemoryKind, X86VexVariableBlendMemoryEncoding, X86VexVariablePermuteMemoryEncoding,
     X86VexVpermil2MemoryEncoding,
 };
 
