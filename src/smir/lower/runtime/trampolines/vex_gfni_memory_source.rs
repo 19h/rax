@@ -128,11 +128,12 @@ fn vector_reg(index: u8, width: VecWidth) -> VReg {
     VReg::Arch(ArchReg::X86(match width {
         VecWidth::V128 => X86Reg::Xmm(index),
         VecWidth::V256 => X86Reg::Ymm(index),
-        _ => unreachable!("validated VEX GFNI width"),
+        VecWidth::V512 => X86Reg::Zmm(index),
+        _ => unreachable!("validated GFNI width"),
     }))
 }
 
-fn local_virtual_counts_match(
+pub(super) fn local_gfni_virtual_counts_match(
     ops: &[crate::smir::ir::ops::SmirOp],
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
@@ -162,6 +163,210 @@ fn local_virtual_counts_match(
     }) && local_uses
         .keys()
         .all(|reg| local_definitions.contains_key(reg))
+}
+
+/// Match only the arithmetic expansion shared by VEX and EVEX GFNI replay.
+///
+/// The source memory operation and final architectural commit are deliberately
+/// excluded. Returning the exact raw virtual result lets each encoding family
+/// validate its own source and merge/zero tail while sharing the closed
+/// O0/O1/O2 affine profiles.
+pub(super) fn x86_jit_gfni_expansion_sequence(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    guest_pc: GuestAddr,
+    kind: X86VexGfniMemoryKind,
+    width: VecWidth,
+    source1: u8,
+    loaded: VReg,
+    immediate: Option<u8>,
+) -> Option<(VReg, usize)> {
+    let lanes = width.bytes() as u8;
+    if immediate.is_some() == (kind == X86VexGfniMemoryKind::Multiply) {
+        return None;
+    }
+    for expected in expected_profiles(kind) {
+        let core_len = expected.total().checked_sub(2)?;
+        let Some(sequence) = block.ops.get(index..index.checked_add(core_len)?) else {
+            continue;
+        };
+        let Some(raw) = sequence.last().and_then(|op| match op.kind {
+            OpKind::VXor {
+                dst,
+                width: op_width,
+                ..
+            } if matches!(dst, VReg::Virtual(_)) && op_width == width => Some(dst),
+            _ => None,
+        }) else {
+            continue;
+        };
+
+        let mut profile = GfniOpProfile::default();
+        let mut mov_immediates = Vec::new();
+        let mut left_shifts = [0usize; 8];
+        let mut right_shifts = [0usize; 8];
+        let mut valid = true;
+        for op in sequence {
+            if op.guest_pc != guest_pc || op.x86_hint.is_some() {
+                valid = false;
+                break;
+            }
+            match &op.kind {
+                OpKind::Mov {
+                    dst,
+                    src: SrcOperand::Imm(value),
+                    width: OpWidth::W64,
+                } if matches!(dst, VReg::Virtual(_)) && (0..=u8::MAX as i64).contains(value) => {
+                    profile.mov += 1;
+                    mov_immediates.push(*value);
+                }
+                OpKind::VBroadcast {
+                    dst,
+                    scalar,
+                    elem: VecElementType::I8,
+                    lanes: op_lanes,
+                } if matches!(dst, VReg::Virtual(_))
+                    && matches!(scalar, VReg::Virtual(_))
+                    && *op_lanes == lanes =>
+                {
+                    profile.broadcast += 1;
+                }
+                OpKind::VAnd {
+                    dst,
+                    width: op_width,
+                    ..
+                } if matches!(dst, VReg::Virtual(_)) && *op_width == width => profile.and += 1,
+                OpKind::VOr {
+                    dst,
+                    width: op_width,
+                    ..
+                } if matches!(dst, VReg::Virtual(_)) && *op_width == width => profile.or += 1,
+                OpKind::VXor {
+                    dst,
+                    width: op_width,
+                    ..
+                } if matches!(dst, VReg::Virtual(_)) && *op_width == width => profile.xor += 1,
+                OpKind::VSub {
+                    dst,
+                    elem: VecElementType::I8,
+                    lanes: op_lanes,
+                    ..
+                } if matches!(dst, VReg::Virtual(_)) && *op_lanes == lanes => profile.sub += 1,
+                OpKind::VShift {
+                    dst,
+                    amount: SrcOperand::Imm(amount),
+                    shift,
+                    elem: VecElementType::I8,
+                    lanes: op_lanes,
+                    ..
+                } if matches!(dst, VReg::Virtual(_))
+                    && *op_lanes == lanes
+                    && matches!(shift, ShiftOp::Lsl | ShiftOp::Lsr)
+                    && (1..=7).contains(amount) =>
+                {
+                    profile.shift += 1;
+                    let counts = if *shift == ShiftOp::Lsl {
+                        &mut left_shifts
+                    } else {
+                        &mut right_shifts
+                    };
+                    counts[*amount as usize] += 1;
+                }
+                OpKind::VByteShuffle {
+                    dst,
+                    src,
+                    lanes: op_lanes,
+                    block_lanes: 8,
+                    ..
+                } if matches!(dst, VReg::Virtual(_)) && *src == loaded && *op_lanes == lanes => {
+                    profile.byte_shuffle += 1;
+                }
+                _ => {
+                    valid = false;
+                    break;
+                }
+            }
+
+            if op.kind.reads_memory()
+                || op.kind.writes_memory()
+                || op
+                    .kind
+                    .dests()
+                    .iter()
+                    .any(|reg| !matches!(reg, VReg::Virtual(_)))
+                || op
+                    .kind
+                    .source_vregs()
+                    .iter()
+                    .any(|reg| matches!(reg, VReg::Arch(_)) && *reg != vector_reg(source1, width))
+            {
+                valid = false;
+                break;
+            }
+        }
+
+        // Reconstitute the source-load and final-commit counters used by the
+        // established VEX profiles without weakening the core comparison.
+        profile.load = 1;
+        profile.vector_move = 1;
+
+        let multiply_count = match kind {
+            X86VexGfniMemoryKind::Multiply => 1,
+            X86VexGfniMemoryKind::Affine => 0,
+            X86VexGfniMemoryKind::AffineInverse => 13,
+        };
+        let multiply_iterations = if multiply_count == 0 {
+            0
+        } else if expected.shift
+            == 24 * multiply_count
+                + usize::from(kind != X86VexGfniMemoryKind::Multiply) * GFNI_AFFINE.shift
+        {
+            8
+        } else {
+            7
+        };
+        let mut expected_immediates = Vec::new();
+        for _ in 0..multiply_count {
+            expected_immediates.extend([0, 1, 0x1B]);
+        }
+        if let Some(immediate) = immediate {
+            expected_immediates.extend([0, 1, 0, 1, 2, 3, 4, 5, 6, 7]);
+            expected_immediates.push(i64::from(immediate));
+            for amount in [4usize, 2, 1] {
+                right_shifts[amount] = right_shifts[amount]
+                    .checked_sub(8)
+                    .filter(|_| kind != X86VexGfniMemoryKind::Multiply)?;
+            }
+            for amount in 1usize..=7 {
+                left_shifts[amount] = left_shifts[amount]
+                    .checked_sub(1)
+                    .filter(|_| kind != X86VexGfniMemoryKind::Multiply)?;
+            }
+        }
+        let expected_multiply_shifts = multiply_count * multiply_iterations;
+        if multiply_count != 0 {
+            right_shifts[7] = right_shifts[7].checked_sub(expected_multiply_shifts)?;
+            right_shifts[1] = right_shifts[1].checked_sub(expected_multiply_shifts)?;
+            left_shifts[1] = left_shifts[1].checked_sub(expected_multiply_shifts)?;
+        }
+        mov_immediates.sort_unstable();
+        expected_immediates.sort_unstable();
+        if valid
+            && profile == *expected
+            && mov_immediates == expected_immediates
+            && left_shifts == [0; 8]
+            && right_shifts == [0; 8]
+            && sequence
+                .iter()
+                .flat_map(|op| op.kind.source_vregs())
+                .filter(|reg| *reg == loaded)
+                .count()
+                == 8
+        {
+            return Some((raw, core_len));
+        }
+    }
+    None
 }
 
 /// Validate the complete O0/O1/O2 decomposition emitted for one VEX
@@ -333,7 +538,7 @@ pub(crate) fn x86_jit_vex_gfni_memory_sequence(
             .skip(1)
             .flat_map(|op| op.kind.source_vregs())
             .any(|reg| reg == loaded)
-        || !local_virtual_counts_match(sequence, virtual_definitions, virtual_uses)
+        || !local_gfni_virtual_counts_match(sequence, virtual_definitions, virtual_uses)
     {
         return None;
     }

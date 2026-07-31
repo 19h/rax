@@ -82,7 +82,7 @@ fn register_evex_gfni_replay_closes_36_generated_lift_lower_gaps() {
                     assert_eq!(
                         classified,
                         None,
-                        "memory replay must fail closed: {} ({bytes:02X?})",
+                        "register replay classifier must reject memory: {} ({bytes:02X?})",
                         spec_case_variant_id(&row, variant)
                     );
                     memory_forms += 1;

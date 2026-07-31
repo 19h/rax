@@ -2,7 +2,39 @@
 
 use super::super::{X86VexGfniMemoryEncoding, X86VexGfniMemoryKind};
 use super::X86InstructionBytes;
+use super::evex_memory::{memory_operand_end, vector_legacy_prefix_len};
 use crate::smir::ir::types::VecWidth;
+
+/// Native replay strategy for one exact EVEX affine GFNI memory source.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum X86EvexGfniAffineMemoryReplay {
+    /// One unconditional complete-vector helper load followed by a
+    /// register-source rewrite using a nonarchitectural low vector register.
+    Vector {
+        scratch: u8,
+        register_instruction: X86InstructionBytes,
+    },
+    /// One unconditional 8-byte helper load followed by an `m64bcst`
+    /// instruction rewritten to consume the staged value from `[rsp]`.
+    Broadcast {
+        stack_instruction: X86InstructionBytes,
+    },
+}
+
+/// Exact EVEX VGF2P8AFFINE[INV]QB memory encoding and its byte-validated
+/// helper-backed native replay.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86EvexGfniAffineMemoryEncoding {
+    pub(crate) kind: X86VexGfniMemoryKind,
+    pub(crate) width: VecWidth,
+    pub(crate) destination: u8,
+    pub(crate) source1: u8,
+    pub(crate) writemask: Option<u8>,
+    pub(crate) zeroing: bool,
+    pub(crate) immediate: u8,
+    pub(crate) replay: X86EvexGfniAffineMemoryReplay,
+    pub(crate) needs_avx512vl: bool,
+}
 
 impl X86InstructionBytes {
     /// Validate one register-only VEX GFNI vector instruction and return
@@ -126,6 +158,117 @@ impl X86InstructionBytes {
             scratch,
             immediate,
             register_instruction,
+        })
+    }
+
+    /// Validate one EVEX VGF2P8AFFINEQB or VGF2P8AFFINEINVQB memory source and
+    /// select an exact helper-backed native replay.
+    ///
+    /// Intel SDM Vol. 2 defines map 0F3A, 66H, W1, opcodes CEH/CFH, a Full
+    /// tuple, byte-granular writemasking, and Type E4NF exceptions. Therefore
+    /// every admitted memory form performs one unconditional full-vector or
+    /// 8-byte broadcast helper access even when every effective mask bit is
+    /// zero. Segment/address-size prefixes and APX B4/X4 address extensions
+    /// remain confined to helper address evaluation.
+    pub(crate) fn evex_gfni_affine_memory_encoding(
+        &self,
+    ) -> Option<X86EvexGfniAffineMemoryEncoding> {
+        let bytes = self.as_slice();
+        let start = vector_legacy_prefix_len(bytes);
+        if bytes.get(start) != Some(&0x62) {
+            return None;
+        }
+
+        let p0 = *bytes.get(start + 1)?;
+        let p1 = *bytes.get(start + 2)?;
+        let p2 = *bytes.get(start + 3)?;
+        let opcode = *bytes.get(start + 4)?;
+        let modrm_index = start + 5;
+        let modrm = *bytes.get(modrm_index)?;
+        let operand_end = memory_operand_end(bytes, modrm_index)?;
+        let kind = match opcode {
+            0xCE => X86VexGfniMemoryKind::Affine,
+            0xCF => X86VexGfniMemoryKind::AffineInverse,
+            _ => return None,
+        };
+        let mask = p2 & 0x07;
+        let zeroing = p2 & 0x80 != 0;
+        if p0 & 0x07 != 3
+            || p1 & 0x83 != 0x81
+            || modrm >> 6 == 3
+            || p2 & 0x60 == 0x60
+            || (zeroing && mask == 0)
+            || operand_end.checked_add(1)? != bytes.len()
+        {
+            return None;
+        }
+
+        let width = match (p2 >> 5) & 3 {
+            0 => VecWidth::V128,
+            1 => VecWidth::V256,
+            2 => VecWidth::V512,
+            _ => unreachable!("reserved vector length rejected"),
+        };
+        let destination =
+            (u8::from(p0 & 0x80 == 0) << 3) | (u8::from(p0 & 0x10 == 0) << 4) | ((modrm >> 3) & 7);
+        let source1 = ((!p1 >> 3) & 0x0F) | (u8::from(p2 & 0x08 == 0) << 4);
+        let writemask = (mask != 0).then_some(mask);
+        let immediate = bytes[operand_end];
+        let needs_avx512vl = width != VecWidth::V512;
+        let broadcast = p2 & 0x10 != 0;
+
+        let replay = if broadcast {
+            let stack_instruction = X86InstructionBytes::new(&[
+                0x62,
+                // Retain R/R' and map 0F3A, select unextended SIB index/base,
+                // and clear APX B4 because the rewritten base is RSP.
+                (p0 & 0x97) | 0x60,
+                // Preserve W/vvvv/pp and restore the ordinary EVEX.U bit.
+                p1 | 0x04,
+                // Preserve z, L'L, broadcast, V', and aaa exactly.
+                p2,
+                opcode,
+                (modrm & 0x38) | 0x04,
+                0x24,
+                immediate,
+            ])
+            .unwrap();
+            X86EvexGfniAffineMemoryReplay::Broadcast { stack_instruction }
+        } else {
+            let scratch = (0..16u8)
+                .find(|candidate| *candidate != destination && *candidate != source1)
+                .expect("two operands cannot consume every low vector register");
+            let register_instruction = X86InstructionBytes::new(&[
+                0x62,
+                // Register EVEX.X/B encode scratch bits 4/3 with inverted
+                // polarity. Clear APX B4 and retain destination extensions.
+                (p0 & 0x97) | 0x40 | if scratch & 8 == 0 { 0x20 } else { 0 },
+                p1 | 0x04,
+                p2,
+                opcode,
+                0xC0 | (modrm & 0x38) | (scratch & 7),
+                immediate,
+            ])
+            .unwrap();
+            if register_instruction.evex_register_gfni_needs_vl() != Some(needs_avx512vl) {
+                return None;
+            }
+            X86EvexGfniAffineMemoryReplay::Vector {
+                scratch,
+                register_instruction,
+            }
+        };
+
+        Some(X86EvexGfniAffineMemoryEncoding {
+            kind,
+            width,
+            destination,
+            source1,
+            writemask,
+            zeroing,
+            immediate,
+            replay,
+            needs_avx512vl,
         })
     }
 
@@ -585,6 +728,252 @@ mod tests {
                 continue;
             };
             assert_eq!(instruction.vex_gfni_memory_encoding(), None, "{bytes:02X?}");
+        }
+    }
+
+    fn evex_affine_memory_encoding(
+        kind: X86VexGfniMemoryKind,
+        width: VecWidth,
+        destination: u8,
+        source1: u8,
+        mask: u8,
+        zeroing: bool,
+        broadcast: bool,
+        immediate: u8,
+    ) -> Vec<u8> {
+        assert!(matches!(
+            kind,
+            X86VexGfniMemoryKind::Affine | X86VexGfniMemoryKind::AffineInverse
+        ));
+        assert!(destination < 32 && source1 < 32);
+        assert!(mask < 8 && (!zeroing || mask != 0));
+        let ll = match width {
+            VecWidth::V128 => 0,
+            VecWidth::V256 => 1,
+            VecWidth::V512 => 2,
+            _ => unreachable!("EVEX GFNI width"),
+        };
+        let mut p0 = 0xF3;
+        if destination & 0x08 != 0 {
+            p0 &= !0x80;
+        }
+        if destination & 0x10 != 0 {
+            p0 &= !0x10;
+        }
+        vec![
+            0x62,
+            p0,
+            0x85 | (((!source1) & 0x0F) << 3),
+            (u8::from(zeroing) << 7)
+                | (ll << 5)
+                | (u8::from(broadcast) << 4)
+                | (u8::from(source1 < 16) << 3)
+                | mask,
+            if kind == X86VexGfniMemoryKind::Affine {
+                0xCE
+            } else {
+                0xCF
+            },
+            ((destination & 7) << 3) | 3,
+            immediate,
+        ]
+    }
+
+    #[test]
+    fn evex_affine_memory_classifier_exhaustively_covers_36_864_semantic_cells() {
+        let controls = [(0u8, false), (1, false), (2, true)];
+        let mut classified = 0usize;
+        for kind in [
+            X86VexGfniMemoryKind::Affine,
+            X86VexGfniMemoryKind::AffineInverse,
+        ] {
+            for width in [VecWidth::V128, VecWidth::V256, VecWidth::V512] {
+                for destination in 0u8..32 {
+                    for source1 in 0u8..32 {
+                        for broadcast in [false, true] {
+                            for (mask, zeroing) in controls {
+                                let immediate = destination
+                                    .wrapping_mul(17)
+                                    .wrapping_add(source1.wrapping_mul(29))
+                                    .wrapping_add(mask);
+                                let bytes = evex_affine_memory_encoding(
+                                    kind,
+                                    width,
+                                    destination,
+                                    source1,
+                                    mask,
+                                    zeroing,
+                                    broadcast,
+                                    immediate,
+                                );
+                                let encoding = X86InstructionBytes::new(&bytes)
+                                    .unwrap()
+                                    .evex_gfni_affine_memory_encoding()
+                                    .unwrap_or_else(|| panic!("{bytes:02X?}"));
+                                assert_eq!(encoding.kind, kind, "{bytes:02X?}");
+                                assert_eq!(encoding.width, width, "{bytes:02X?}");
+                                assert_eq!(encoding.destination, destination, "{bytes:02X?}");
+                                assert_eq!(encoding.source1, source1, "{bytes:02X?}");
+                                assert_eq!(
+                                    encoding.writemask,
+                                    (mask != 0).then_some(mask),
+                                    "{bytes:02X?}"
+                                );
+                                assert_eq!(encoding.zeroing, zeroing, "{bytes:02X?}");
+                                assert_eq!(encoding.immediate, immediate, "{bytes:02X?}");
+                                assert_eq!(
+                                    encoding.needs_avx512vl,
+                                    width != VecWidth::V512,
+                                    "{bytes:02X?}"
+                                );
+                                match encoding.replay {
+                                    X86EvexGfniAffineMemoryReplay::Vector {
+                                        scratch,
+                                        register_instruction,
+                                    } => {
+                                        assert!(!broadcast, "{bytes:02X?}");
+                                        assert_ne!(scratch, destination, "{bytes:02X?}");
+                                        assert_ne!(scratch, source1, "{bytes:02X?}");
+                                        assert_eq!(
+                                            register_instruction.evex_register_gfni_needs_vl(),
+                                            Some(width != VecWidth::V512),
+                                            "{bytes:02X?}"
+                                        );
+                                    }
+                                    X86EvexGfniAffineMemoryReplay::Broadcast {
+                                        stack_instruction,
+                                    } => {
+                                        assert!(broadcast, "{bytes:02X?}");
+                                        assert_eq!(
+                                            stack_instruction.as_slice()[5..7],
+                                            [((destination & 7) << 3) | 0x04, 0x24],
+                                            "{bytes:02X?}"
+                                        );
+                                        assert_eq!(
+                                            stack_instruction.as_slice()[7],
+                                            immediate,
+                                            "{bytes:02X?}"
+                                        );
+                                    }
+                                }
+                                classified += 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(classified, 2 * 3 * 32 * 32 * 2 * controls.len());
+    }
+
+    #[test]
+    fn evex_affine_memory_rewrites_match_six_independent_llvm_23_anchors() {
+        let anchors: [(&[u8], &[u8]); 6] = [
+            (
+                &[0x62, 0x53, 0x8D, 0x29, 0xCF, 0x4B, 0x01, 0xA5],
+                &[0x62, 0x73, 0x8D, 0x29, 0xCF, 0xC8, 0xA5],
+            ),
+            (
+                &[0x62, 0x43, 0xAD, 0xC2, 0xCE, 0x4B, 0x01, 0x63],
+                &[0x62, 0x63, 0xAD, 0xC2, 0xCE, 0xC8, 0x63],
+            ),
+            (
+                &[0x62, 0xD3, 0xED, 0x1B, 0xCF, 0x4B, 0x04, 0xA5],
+                &[0x62, 0xF3, 0xED, 0x1B, 0xCF, 0x0C, 0x24, 0xA5],
+            ),
+            (
+                &[0x62, 0xC3, 0xED, 0xB4, 0xCE, 0x4B, 0x04, 0x00],
+                &[0x62, 0xE3, 0xED, 0xB4, 0xCE, 0x0C, 0x24, 0x00],
+            ),
+            (
+                &[0x62, 0x43, 0xAD, 0x55, 0xCF, 0x4B, 0x08, 0xFF],
+                &[0x62, 0x63, 0xAD, 0x55, 0xCF, 0x0C, 0x24, 0xFF],
+            ),
+            (
+                &[0x62, 0xD3, 0xED, 0x0B, 0xCE, 0x4B, 0x20, 0x63],
+                &[0x62, 0xF3, 0xED, 0x0B, 0xCE, 0xC8, 0x63],
+            ),
+        ];
+
+        for (memory, expected) in anchors {
+            let encoding = X86InstructionBytes::new(memory)
+                .unwrap()
+                .evex_gfni_affine_memory_encoding()
+                .unwrap_or_else(|| panic!("{memory:02X?}"));
+            let rewritten = match encoding.replay {
+                X86EvexGfniAffineMemoryReplay::Vector {
+                    register_instruction,
+                    ..
+                } => register_instruction,
+                X86EvexGfniAffineMemoryReplay::Broadcast { stack_instruction } => stack_instruction,
+            };
+            assert_eq!(rewritten.as_slice(), expected, "{memory:02X?}");
+        }
+    }
+
+    #[test]
+    fn evex_affine_memory_classifier_preserves_address_controls_and_fails_closed() {
+        let mut valid = evex_affine_memory_encoding(
+            X86VexGfniMemoryKind::AffineInverse,
+            VecWidth::V512,
+            25,
+            26,
+            5,
+            false,
+            true,
+            0xA5,
+        );
+        valid.splice(0..0, [0x64, 0x67]);
+        valid[3] |= 0x08; // APX B4
+        valid[4] &= !0x04; // APX X4 / EVEX.U=0
+        let encoding = X86InstructionBytes::new(&valid)
+            .unwrap()
+            .evex_gfni_affine_memory_encoding()
+            .unwrap();
+        let X86EvexGfniAffineMemoryReplay::Broadcast { stack_instruction } = encoding.replay else {
+            panic!("broadcast replay")
+        };
+        assert_eq!(
+            stack_instruction.as_slice(),
+            [0x62, 0x63, 0xAD, 0x55, 0xCF, 0x0C, 0x24, 0xA5]
+        );
+
+        let base = evex_affine_memory_encoding(
+            X86VexGfniMemoryKind::Affine,
+            VecWidth::V256,
+            9,
+            14,
+            1,
+            false,
+            false,
+            0x63,
+        );
+        let mut candidates = Vec::new();
+        for (index, mask) in [(1, 0x07), (2, 0x01), (2, 0x80), (4, 0x02)] {
+            let mut bytes = base.clone();
+            bytes[index] ^= mask;
+            candidates.push(bytes);
+        }
+        let mut register = base.clone();
+        register[5] |= 0xC0;
+        candidates.push(register);
+        let mut reserved_length = base.clone();
+        reserved_length[3] = (reserved_length[3] & !0x60) | 0x60;
+        candidates.push(reserved_length);
+        let mut reserved_zeroing = base.clone();
+        reserved_zeroing[3] = (reserved_zeroing[3] & !0x07) | 0x80;
+        candidates.push(reserved_zeroing);
+        candidates.push(base[..base.len() - 1].to_vec());
+        candidates.push(base.iter().copied().chain([0]).collect());
+
+        for bytes in candidates {
+            assert_eq!(
+                X86InstructionBytes::new(&bytes)
+                    .unwrap()
+                    .evex_gfni_affine_memory_encoding(),
+                None,
+                "{bytes:02X?}"
+            );
         }
     }
 

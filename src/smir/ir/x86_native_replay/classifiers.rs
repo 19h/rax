@@ -142,6 +142,7 @@ pub(crate) use evex_vector_align_memory::{
 };
 pub(crate) use fp_round::X86VexRoundMemoryEncoding;
 pub(crate) use fp16_narrow::X86VexFp16NarrowMemoryEncoding;
+pub(crate) use gfni::{X86EvexGfniAffineMemoryEncoding, X86EvexGfniAffineMemoryReplay};
 pub(crate) use scalar_convert_memory::{
     X86VexScalarConvertMemoryEncoding, X86VexScalarConvertMemoryKind,
 };

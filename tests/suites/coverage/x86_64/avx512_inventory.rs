@@ -52,6 +52,9 @@ mod fp_class_replay;
 mod fp_compare_replay;
 #[path = "avx512_inventory/fp_sqrt_replay.rs"]
 mod fp_sqrt_replay;
+#[cfg(feature = "smir-jit")]
+#[path = "avx512_inventory/gfni_memory_replay.rs"]
+mod gfni_memory_replay;
 #[path = "avx512_inventory/gfni_replay.rs"]
 mod gfni_replay;
 #[path = "avx512_inventory/gpr_broadcast_replay.rs"]

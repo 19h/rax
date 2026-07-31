@@ -1296,6 +1296,16 @@ impl X86_64Lowerer {
                     continue;
                 }
                 #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_evex_gfni_affine_memory_source(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
                 if let Some(consumed) = self.try_lower_jit_vex_gfni_memory_source(
                     block,
                     idx,
