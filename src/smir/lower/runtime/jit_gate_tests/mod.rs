@@ -88,6 +88,8 @@ mod evex_int32_to_fp64_ignored_er;
 #[cfg(test)]
 mod evex_integer_arithmetic_memory_source;
 #[cfg(test)]
+mod evex_integer_minmax_memory_source;
+#[cfg(test)]
 mod evex_lane_shuffle_replay;
 #[cfg(test)]
 mod evex_logic_memory_source;

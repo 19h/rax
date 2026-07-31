@@ -166,6 +166,8 @@ mod sse3_fp_paired;
 #[cfg(test)]
 mod sse4a;
 #[cfg(test)]
+mod sse_packed_minmax;
+#[cfg(test)]
 mod sti;
 #[cfg(test)]
 mod string_io;

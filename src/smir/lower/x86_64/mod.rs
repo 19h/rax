@@ -84,6 +84,8 @@ mod evex_fp_arithmetic_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_integer_arithmetic_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_integer_minmax_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_logic_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_mask_blend_memory_source;

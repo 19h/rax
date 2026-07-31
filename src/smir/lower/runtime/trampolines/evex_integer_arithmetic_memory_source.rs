@@ -9,7 +9,7 @@ use crate::smir::ir::types::{
 };
 use crate::smir::ir::{
     X86EvexIntegerArithmeticMemoryEncoding, X86EvexIntegerArithmeticMemoryReplay,
-    X86InstructionBytes,
+    X86EvexIntegerMinMaxMemoryEncoding, X86InstructionBytes,
 };
 
 use super::evex_memory_source_common::{
@@ -29,11 +29,44 @@ pub(crate) struct X86JitEvexIntegerArithmeticMemorySequence {
 }
 
 #[derive(Clone, Copy)]
-struct MatchedMemorySource {
-    loaded: VReg,
-    offset: usize,
-    address_offset: usize,
-    memory_size: u32,
+pub(super) struct X86EvexIntegerMemoryShape {
+    pub(super) width: crate::smir::ir::types::VecWidth,
+    pub(super) elem: VecElementType,
+    pub(super) destination: u8,
+    pub(super) writemask: Option<u8>,
+    pub(super) zeroing: bool,
+}
+
+impl From<X86EvexIntegerArithmeticMemoryEncoding> for X86EvexIntegerMemoryShape {
+    fn from(encoding: X86EvexIntegerArithmeticMemoryEncoding) -> Self {
+        Self {
+            width: encoding.width,
+            elem: encoding.elem,
+            destination: encoding.destination,
+            writemask: encoding.writemask,
+            zeroing: encoding.zeroing,
+        }
+    }
+}
+
+impl From<X86EvexIntegerMinMaxMemoryEncoding> for X86EvexIntegerMemoryShape {
+    fn from(encoding: X86EvexIntegerMinMaxMemoryEncoding) -> Self {
+        Self {
+            width: encoding.width,
+            elem: encoding.elem,
+            destination: encoding.destination,
+            writemask: encoding.writemask,
+            zeroing: encoding.zeroing,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub(super) struct MatchedMemorySource {
+    pub(super) loaded: VReg,
+    pub(super) offset: usize,
+    pub(super) address_offset: usize,
+    pub(super) memory_size: u32,
 }
 
 fn element_memory_width(elem: VecElementType) -> Option<MemWidth> {
@@ -71,7 +104,8 @@ fn same_pc(
 fn unconditional_vector_source(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
-    encoding: X86EvexIntegerArithmeticMemoryEncoding,
+    encoding: X86EvexIntegerMemoryShape,
+    loaded_uses: usize,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
 ) -> Option<MatchedMemorySource> {
@@ -86,7 +120,7 @@ fn unconditional_vector_source(
         }
         _ => return None,
     };
-    if !single_definition_single_use(loaded, virtual_definitions, virtual_uses) {
+    if !exact_virtual_definition_use(loaded, 1, loaded_uses, virtual_definitions, virtual_uses) {
         return None;
     }
     Some(MatchedMemorySource {
@@ -100,7 +134,8 @@ fn unconditional_vector_source(
 fn unconditional_broadcast_source(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
-    encoding: X86EvexIntegerArithmeticMemoryEncoding,
+    encoding: X86EvexIntegerMemoryShape,
+    loaded_uses: usize,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
 ) -> Option<MatchedMemorySource> {
@@ -171,7 +206,7 @@ fn unconditional_broadcast_source(
         _ => return None,
     };
     if !same_pc(block, index, offset, guest_pc)
-        || !single_definition_single_use(loaded, virtual_definitions, virtual_uses)
+        || !exact_virtual_definition_use(loaded, 1, loaded_uses, virtual_definitions, virtual_uses)
     {
         return None;
     }
@@ -187,7 +222,8 @@ fn unconditional_broadcast_source(
 fn masked_broadcast_source(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
-    encoding: X86EvexIntegerArithmeticMemoryEncoding,
+    encoding: X86EvexIntegerMemoryShape,
+    loaded_uses: usize,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
 ) -> Option<MatchedMemorySource> {
@@ -262,7 +298,7 @@ fn masked_broadcast_source(
         _ => return None,
     };
     if !same_pc(block, index, offset, guest_pc)
-        || !single_definition_single_use(loaded, virtual_definitions, virtual_uses)
+        || !exact_virtual_definition_use(loaded, 1, loaded_uses, virtual_definitions, virtual_uses)
     {
         return None;
     }
@@ -278,7 +314,8 @@ fn masked_broadcast_source(
 fn masked_vector_source(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
-    encoding: X86EvexIntegerArithmeticMemoryEncoding,
+    encoding: X86EvexIntegerMemoryShape,
+    loaded_uses: usize,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
 ) -> Option<MatchedMemorySource> {
@@ -318,7 +355,7 @@ fn masked_vector_source(
         || !exact_virtual_definition_use(
             loaded,
             usize::from(lanes) + 1,
-            usize::from(lanes) + 1,
+            usize::from(lanes) + loaded_uses,
             virtual_definitions,
             virtual_uses,
         )
@@ -436,12 +473,12 @@ fn masked_vector_source(
     })
 }
 
-fn exact_old_destination(
+pub(super) fn exact_old_destination(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
     offset: &mut usize,
     guest_pc: GuestAddr,
-    encoding: X86EvexIntegerArithmeticMemoryEncoding,
+    encoding: X86EvexIntegerMemoryShape,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
 ) -> Option<Option<VReg>> {
@@ -551,14 +588,14 @@ fn exact_arithmetic(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn exact_mask_result_tail(
+pub(super) fn exact_mask_result_tail(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
     offset: &mut usize,
     guest_pc: GuestAddr,
     raw: VReg,
     old: Option<VReg>,
-    encoding: X86EvexIntegerArithmeticMemoryEncoding,
+    encoding: X86EvexIntegerMemoryShape,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
 ) -> Option<()> {
@@ -722,6 +759,54 @@ fn exact_mask_result_tail(
     Some(())
 }
 
+#[allow(clippy::too_many_arguments)]
+pub(super) fn matched_integer_memory_source(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    encoding: X86EvexIntegerMemoryShape,
+    replay: X86EvexIntegerArithmeticMemoryReplay,
+    loaded_uses: usize,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<MatchedMemorySource> {
+    match replay {
+        X86EvexIntegerArithmeticMemoryReplay::Vector { .. } => unconditional_vector_source(
+            block,
+            index,
+            encoding,
+            loaded_uses,
+            virtual_definitions,
+            virtual_uses,
+        ),
+        X86EvexIntegerArithmeticMemoryReplay::Broadcast { .. } if encoding.writemask.is_some() => {
+            masked_broadcast_source(
+                block,
+                index,
+                encoding,
+                loaded_uses,
+                virtual_definitions,
+                virtual_uses,
+            )
+        }
+        X86EvexIntegerArithmeticMemoryReplay::Broadcast { .. } => unconditional_broadcast_source(
+            block,
+            index,
+            encoding,
+            loaded_uses,
+            virtual_definitions,
+            virtual_uses,
+        ),
+        X86EvexIntegerArithmeticMemoryReplay::MaskedVector { .. } => masked_vector_source(
+            block,
+            index,
+            encoding,
+            loaded_uses,
+            virtual_definitions,
+            virtual_uses,
+        ),
+    }
+}
+
 /// Validate the complete O0/O1/O2 decomposition emitted for one EVEX packed
 /// integer wrapping/saturating add/subtract memory source.
 ///
@@ -746,24 +831,16 @@ pub(crate) fn x86_jit_evex_integer_arithmetic_memory_sequence(
     let encoding = instruction_bytes
         .get(&(block.id, guest_pc))?
         .evex_integer_arithmetic_memory_encoding()?;
-    let source = match encoding.replay {
-        X86EvexIntegerArithmeticMemoryReplay::Vector { .. } => {
-            unconditional_vector_source(block, index, encoding, virtual_definitions, virtual_uses)?
-        }
-        X86EvexIntegerArithmeticMemoryReplay::Broadcast { .. } if encoding.writemask.is_some() => {
-            masked_broadcast_source(block, index, encoding, virtual_definitions, virtual_uses)?
-        }
-        X86EvexIntegerArithmeticMemoryReplay::Broadcast { .. } => unconditional_broadcast_source(
-            block,
-            index,
-            encoding,
-            virtual_definitions,
-            virtual_uses,
-        )?,
-        X86EvexIntegerArithmeticMemoryReplay::MaskedVector { .. } => {
-            masked_vector_source(block, index, encoding, virtual_definitions, virtual_uses)?
-        }
-    };
+    let shape = X86EvexIntegerMemoryShape::from(encoding);
+    let source = matched_integer_memory_source(
+        block,
+        index,
+        shape,
+        encoding.replay,
+        1,
+        virtual_definitions,
+        virtual_uses,
+    )?;
 
     let mut offset = source.offset;
     let old = if encoding.writemask.is_some() {
@@ -772,7 +849,7 @@ pub(crate) fn x86_jit_evex_integer_arithmetic_memory_sequence(
             index,
             &mut offset,
             guest_pc,
-            encoding,
+            shape,
             virtual_definitions,
             virtual_uses,
         )?
@@ -797,7 +874,7 @@ pub(crate) fn x86_jit_evex_integer_arithmetic_memory_sequence(
             guest_pc,
             raw,
             old,
-            encoding,
+            shape,
             virtual_definitions,
             virtual_uses,
         )?;

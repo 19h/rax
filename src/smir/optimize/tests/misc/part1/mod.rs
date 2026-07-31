@@ -6,6 +6,8 @@ use crate::smir::optimize::*;
 
 // ---- even-chunked tests ----
 #[cfg(test)]
+mod packed_minmax_faults;
+#[cfg(test)]
 mod part1;
 #[cfg(test)]
 mod part2;

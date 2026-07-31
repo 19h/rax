@@ -10,6 +10,7 @@ mod fp;
 pub use fp::*;
 mod fma4;
 pub use fma4::*;
+mod integer_minmax;
 mod mem;
 pub use mem::*;
 mod misc;
