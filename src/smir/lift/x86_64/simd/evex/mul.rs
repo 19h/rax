@@ -58,38 +58,47 @@ impl X86_64Lifter {
                 ctx,
             );
             ops.extend(pre_ops);
-            if let Some(mask) = mask {
-                self.append_evex_masked_vector_source(
+            match (mask, prefix.b) {
+                (Some(mask), true) => self.append_masked_broadcast_memory_source(
                     addr,
                     VecElementType::F32,
                     prefix.width,
-                    prefix.b,
                     mask,
                     pc,
                     ctx,
                     &mut ops,
-                )
-            } else if prefix.b {
-                self.append_broadcast_memory_source(
+                ),
+                (Some(mask), false) => self.append_evex_masked_vector_source(
+                    addr,
+                    VecElementType::F32,
+                    prefix.width,
+                    false,
+                    mask,
+                    pc,
+                    ctx,
+                    &mut ops,
+                ),
+                (None, true) => self.append_broadcast_memory_source(
                     addr,
                     VecElementType::F32,
                     prefix.width,
                     pc,
                     ctx,
                     &mut ops,
-                )
-            } else {
-                let loaded = ctx.alloc_vreg();
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::VLoad {
-                        dst: loaded,
-                        addr,
-                        width: prefix.width,
-                    },
-                ));
-                loaded
+                ),
+                (None, false) => {
+                    let loaded = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::VLoad {
+                            dst: loaded,
+                            addr,
+                            width: prefix.width,
+                        },
+                    ));
+                    loaded
+                }
             }
         } else {
             self.vec_reg(modrm.rm + if prefix.rm_high { 16 } else { 0 }, prefix.width)

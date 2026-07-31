@@ -333,11 +333,7 @@ impl X86_64Lifter {
             });
         }
         let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            cursor,
-            ..X86Prefix::default()
-        };
+        let modrm_prefix = prefix.modrm_prefix(cursor);
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         if prefix.b && (prefix.encoding != VecEncodingKind::Evex || !modrm.is_memory) {
             return Err(LiftError::InvalidEncoding {
@@ -359,38 +355,47 @@ impl X86_64Lifter {
             );
             ops.extend(pre_ops);
             if !two_source {
-                if let Some(mask) = mask {
-                    self.append_evex_masked_vector_source(
+                match (mask, prefix.b) {
+                    (Some(mask), true) => self.append_masked_broadcast_memory_source(
                         addr,
                         VecElementType::F32,
                         prefix.width,
-                        prefix.b,
                         mask,
                         pc,
                         ctx,
                         &mut ops,
-                    )
-                } else if prefix.b {
-                    self.append_broadcast_memory_source(
+                    ),
+                    (Some(mask), false) => self.append_evex_masked_vector_source(
+                        addr,
+                        VecElementType::F32,
+                        prefix.width,
+                        false,
+                        mask,
+                        pc,
+                        ctx,
+                        &mut ops,
+                    ),
+                    (None, true) => self.append_broadcast_memory_source(
                         addr,
                         VecElementType::F32,
                         prefix.width,
                         pc,
                         ctx,
                         &mut ops,
-                    )
-                } else {
-                    let loaded = ctx.alloc_vreg();
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::VLoad {
-                            dst: loaded,
-                            addr,
-                            width: prefix.width,
-                        },
-                    ));
-                    loaded
+                    ),
+                    (None, false) => {
+                        let loaded = ctx.alloc_vreg();
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::VLoad {
+                                dst: loaded,
+                                addr,
+                                width: prefix.width,
+                            },
+                        ));
+                        loaded
+                    }
                 }
             } else if prefix.b {
                 // Intel specifies no memory-fault suppression for this form.
@@ -463,7 +468,11 @@ impl X86_64Lifter {
                 zeroing: prefix.zeroing,
             },
         ));
-        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+        Ok(self.retain_evex_memory_apx_requirement(
+            &modrm,
+            pc,
+            LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed),
+        ))
     }
 
     pub(crate) fn lift_rao_int_0f38(

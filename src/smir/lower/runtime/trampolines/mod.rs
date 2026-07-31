@@ -11,6 +11,7 @@ mod clobber;
 pub use clobber::*;
 mod cmpccxadd;
 mod cmpxchg;
+mod evex_bf16_memory_source;
 mod evex_broadcast_interleave_memory_source;
 mod evex_broadcast_logic_memory_source;
 mod evex_fma3_memory_source;
@@ -115,6 +116,7 @@ use crate::smir::lower::{
     X86_GUEST_VECTOR_ACTIVE_OFFSET, X86_GUEST_X87_TAG_WORD_OFFSET, X86_GUEST_XCR0_OFFSET,
     X86_GUEST_XGETBV1_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
 };
+pub(crate) use evex_bf16_memory_source::*;
 pub(crate) use evex_broadcast_interleave_memory_source::*;
 pub(crate) use evex_broadcast_logic_memory_source::*;
 pub(crate) use evex_fma3_memory_source::*;

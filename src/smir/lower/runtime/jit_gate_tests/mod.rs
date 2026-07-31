@@ -32,6 +32,8 @@ mod descriptor_table;
 #[cfg(test)]
 mod evex;
 #[cfg(test)]
+mod evex_bf16_memory_source;
+#[cfg(test)]
 mod evex_broadcast_interleave_memory_source;
 #[cfg(test)]
 mod evex_broadcast_logic_memory_source;

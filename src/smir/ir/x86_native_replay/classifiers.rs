@@ -2,6 +2,7 @@ use super::X86InstructionBytes;
 
 mod chunk;
 mod cmpccxadd;
+mod evex_bf16_memory;
 mod evex_broadcast_interleave_memory;
 mod evex_broadcast_logic_memory;
 mod evex_fma3_memory;
@@ -97,6 +98,9 @@ mod vex_zero;
 mod vp2intersect;
 mod vpclmulqdq;
 
+pub(crate) use evex_bf16_memory::{
+    X86EvexBf16MemoryEncoding, X86EvexBf16MemoryKind, X86EvexBf16MemoryReplay,
+};
 pub(crate) use evex_broadcast_interleave_memory::X86EvexBroadcastInterleaveMemoryEncoding;
 pub(crate) use evex_broadcast_logic_memory::X86EvexBroadcastLogicMemoryEncoding;
 pub(crate) use evex_fma3_memory::{

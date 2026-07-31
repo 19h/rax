@@ -70,6 +70,8 @@ pub use cpuid::*;
 mod descriptor_table;
 pub use descriptor_table::*;
 #[cfg(feature = "smir-jit")]
+mod evex_bf16_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_broadcast_interleave_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_broadcast_logic_memory_source;

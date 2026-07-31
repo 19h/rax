@@ -2904,7 +2904,8 @@ fn lift_bf16_dot_and_converts_cover_widths_masks_fault_classes_vex_and_invalids(
                 }
             ))
             .count(),
-        16
+        1,
+        "masked m32bcst dot product issues one aggregate scalar access"
     );
 
     for (bytes, width, two_source) in [
@@ -2983,7 +2984,8 @@ fn lift_bf16_dot_and_converts_cover_widths_masks_fault_classes_vex_and_invalids(
                 }
             ))
             .count(),
-        16
+        1,
+        "masked m32bcst conversion issues one aggregate scalar access"
     );
     let pair_memory = lift_single(&[0x62, 0xE2, 0x57, 0x43, 0x72, 0x60, 0x01]).unwrap();
     assert!(pair_memory.ops.iter().any(|op| matches!(
