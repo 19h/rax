@@ -6,6 +6,7 @@ mod evex_alignr_memory;
 mod evex_bf16_memory;
 mod evex_broadcast_interleave_memory;
 mod evex_broadcast_logic_memory;
+mod evex_bw_shuffle_madd_memory;
 mod evex_fixup_imm_memory;
 mod evex_fma3_memory;
 mod evex_fp16_arithmetic_memory;
@@ -110,6 +111,9 @@ pub(crate) use evex_bf16_memory::{
 };
 pub(crate) use evex_broadcast_interleave_memory::X86EvexBroadcastInterleaveMemoryEncoding;
 pub(crate) use evex_broadcast_logic_memory::X86EvexBroadcastLogicMemoryEncoding;
+pub(crate) use evex_bw_shuffle_madd_memory::{
+    X86EvexBwShuffleMaddKind, X86EvexBwShuffleMaddMemoryEncoding,
+};
 pub(crate) use evex_fixup_imm_memory::{
     X86EvexFixupImmMemoryEncoding, X86EvexFixupImmMemoryReplay,
 };

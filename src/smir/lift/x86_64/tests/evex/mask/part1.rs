@@ -2164,7 +2164,7 @@ fn lift_legacy_vex_evex_saturating_packs_cover_widths_masks_tuples_and_invalids(
     }
 }
 #[test]
-fn lift_legacy_vex_evex_pshufb_covers_lane_local_masks_and_fault_suppression() {
+fn lift_legacy_vex_evex_pshufb_covers_lane_local_masks_and_e4nf_complete_memory() {
     let mmx = lift_single(&[0x0F, 0x38, 0x00, 0xC1]).unwrap();
     assert!(matches!(
         mmx.ops.as_slice(),
@@ -2359,30 +2359,31 @@ fn lift_legacy_vex_evex_pshufb_covers_lane_local_masks_and_fault_suppression() {
     )));
 
     let masked_mem = lift_single(&[0x62, 0xF2, 0x75, 0x49, 0x00, 0x40, 0x01]).unwrap();
-    assert!(masked_mem.ops.iter().any(|op| matches!(
-        op.kind,
-        OpKind::Lea {
-            addr: Address::BaseOffset {
-                offset: 64,
-                disp_size: DispSize::Disp8,
-                ..
-            },
-            ..
-        }
-    )));
-    let offsets = masked_mem
-        .ops
-        .iter()
-        .filter_map(|op| match op.kind {
-            OpKind::PredLoad {
-                addr: Address::BaseOffset { offset, .. },
-                width: MemWidth::B1,
-                ..
-            } => Some(offset),
-            _ => None,
-        })
-        .collect::<Vec<_>>();
-    assert_eq!(offsets, (0..64).collect::<Vec<_>>());
+    assert_eq!(
+        masked_mem
+            .ops
+            .iter()
+            .filter(|op| matches!(
+                op.kind,
+                OpKind::VLoad {
+                    addr: Address::BaseOffset {
+                        offset: 64,
+                        disp_size: DispSize::Disp8,
+                        ..
+                    },
+                    width: VecWidth::V512,
+                    ..
+                }
+            ))
+            .count(),
+        1
+    );
+    assert!(
+        !masked_mem
+            .ops
+            .iter()
+            .any(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+    );
 
     // W is ignored; EVEX.b is reserved because PSHUFB has no broadcast.
     let wig = lift_single(&[0x62, 0xF2, 0xF5, 0x08, 0x00, 0xC1]).unwrap();

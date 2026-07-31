@@ -1167,10 +1167,8 @@ impl X86_64Lifter {
         }
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
@@ -1181,103 +1179,18 @@ impl X86_64Lifter {
                 self.vec_full_addr_to_smir(prefix, modrm.addr.as_ref().unwrap(), next_pc, ctx);
             ops.extend(pre_ops);
             let loaded = ctx.alloc_vreg();
-            if prefix.aaa == 0 {
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::VLoad {
-                        dst: loaded,
-                        addr,
-                        width: prefix.width,
-                    },
-                ));
-            } else {
-                let zero = ctx.alloc_vreg();
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Mov {
-                        dst: zero,
-                        src: SrcOperand::Imm(0),
-                        width: OpWidth::W64,
-                    },
-                ));
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::VBroadcast {
-                        dst: loaded,
-                        scalar: zero,
-                        elem: VecElementType::I8,
-                        lanes,
-                    },
-                ));
-                let base = ctx.alloc_vreg();
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Lea { dst: base, addr },
-                ));
-                let mask = VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa)));
-                for lane in 0..lanes {
-                    let shifted = ctx.alloc_vreg();
-                    let active = ctx.alloc_vreg();
-                    let scalar = ctx.alloc_vreg();
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::Shr {
-                            dst: shifted,
-                            src: mask,
-                            amount: SrcOperand::Imm(i64::from(lane)),
-                            width: OpWidth::W64,
-                            flags: FlagUpdate::None,
-                        },
-                    ));
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::And {
-                            dst: active,
-                            src1: shifted,
-                            src2: SrcOperand::Imm(1),
-                            width: OpWidth::W64,
-                            flags: FlagUpdate::None,
-                        },
-                    ));
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::Mov {
-                            dst: scalar,
-                            src: SrcOperand::Imm(0),
-                            width: OpWidth::W64,
-                        },
-                    ));
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::PredLoad {
-                            dst: scalar,
-                            cond: active,
-                            addr: Address::base_off(base, i64::from(lane)),
-                            width: MemWidth::B1,
-                            signed: SignExtend::Zero,
-                        },
-                    ));
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::VInsertLane {
-                            dst: loaded,
-                            vec: loaded,
-                            scalar,
-                            lane,
-                            elem: VecElementType::I8,
-                        },
-                    ));
-                }
-            }
+            // Intel assigns EVEX VPSHUFB to Type E4NF.nb. The complete Full
+            // Mem tuple is read before writemasking; inactive result bytes do
+            // not suppress any portion of the memory access.
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VLoad {
+                    dst: loaded,
+                    addr,
+                    width: prefix.width,
+                },
+            ));
             loaded
         } else {
             self.vec_reg(modrm.rm + if prefix.rm_high { 16 } else { 0 }, prefix.width)
@@ -1317,6 +1230,10 @@ impl X86_64Lifter {
                 &mut ops,
             );
         }
-        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+        Ok(self.retain_evex_memory_apx_requirement(
+            &modrm,
+            pc,
+            LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed),
+        ))
     }
 }

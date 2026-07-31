@@ -475,34 +475,28 @@ fn lifted_pshufb_executes_msb_zeroing_lane_locality_masks_and_faults() {
         }
     }
 
-    // A masked memory control byte is accessed iff its corresponding
-    // output byte is active. Put byte 0 at the final valid address so lane
-    // 0 succeeds while lane 1 demonstrates precise fault suppression.
+    // EVEX VPSHUFB is Type E4NF.nb: every writemask state performs one
+    // complete Full Mem tuple read before any destination byte can commit.
+    // Put only one byte at the final valid address; even lane 0 active (or an
+    // entirely empty mask) must fault because the remaining 15 bytes are
+    // unmapped.
     memory.write(0x3FF, &[0]).unwrap();
     ctx.write_vreg(rax, 0x3FF);
-    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
-        x86.xmm[0] = sentinel;
-        x86.xmm[1] = seeded(&source[..16], 0);
-    }
-    ctx.write_vreg(k1, 1);
-    let suppressed =
-        execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x09, 0x00, 0x00], &mut ctx, &mut memory);
-    assert!(!matches!(
-        suppressed,
-        BlockResult::Exit(ExitReason::MemoryFault { .. })
-    ));
-
-    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
-        x86.xmm[0] = sentinel;
-    }
-    ctx.write_vreg(k1, 1 << 1);
-    let exposed = execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x09, 0x00, 0x00], &mut ctx, &mut memory);
-    assert!(matches!(
-        exposed,
-        BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
-    ));
-    if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
-        assert_eq!(x86.xmm[0], sentinel);
+    for mask in [0, 1, 1 << 1] {
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = seeded(&source[..16], 0);
+        }
+        ctx.write_vreg(k1, mask);
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x09, 0x00, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
     }
 
     ctx.flags.materialize_all();

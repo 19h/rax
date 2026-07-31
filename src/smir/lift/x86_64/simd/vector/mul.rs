@@ -1029,10 +1029,8 @@ impl X86_64Lifter {
         }
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
@@ -1115,6 +1113,11 @@ impl X86_64Lifter {
                 Self::pmaddwd_kind(dst, src1, src2, prefix.width),
             ));
         }
-        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+        let result = LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed);
+        Ok(if prefix.encoding == VecEncodingKind::Evex {
+            self.retain_evex_memory_apx_requirement(&modrm, pc, result)
+        } else {
+            result
+        })
     }
 }

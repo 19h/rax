@@ -99,8 +99,9 @@ mod classifiers;
 pub(crate) use classifiers::{
     X86EvexAlignrMemoryEncoding, X86EvexBf16MemoryEncoding, X86EvexBf16MemoryKind,
     X86EvexBf16MemoryReplay, X86EvexBroadcastInterleaveMemoryEncoding,
-    X86EvexBroadcastLogicMemoryEncoding, X86EvexFixupImmMemoryEncoding,
-    X86EvexFixupImmMemoryReplay, X86EvexGfniAffineMemoryEncoding, X86EvexGfniAffineMemoryReplay,
+    X86EvexBroadcastLogicMemoryEncoding, X86EvexBwShuffleMaddKind,
+    X86EvexBwShuffleMaddMemoryEncoding, X86EvexFixupImmMemoryEncoding, X86EvexFixupImmMemoryReplay,
+    X86EvexGfniAffineMemoryEncoding, X86EvexGfniAffineMemoryReplay,
     X86EvexIntegerArithmeticMemoryEncoding, X86EvexIntegerArithmeticMemoryReplay,
     X86EvexIntegerMinMaxMemoryEncoding, X86EvexIntegerPackMemoryEncoding,
     X86EvexLogicMemoryEncoding, X86EvexLogicMemoryKind, X86EvexMaskBlendMemoryEncoding,

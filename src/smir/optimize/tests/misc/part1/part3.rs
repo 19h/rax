@@ -946,31 +946,23 @@ fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
 
     let evex_pshufb = optimized(&[0x62, 0xF2, 0x75, 0x49, 0x00, 0x00]);
     let ops = &evex_pshufb.blocks[0].ops;
-    assert_eq!(
-        ops.iter()
-            .filter(|op| matches!(
-                op.kind,
-                OpKind::PredLoad {
-                    width: MemWidth::B1,
-                    ..
-                }
-            ))
-            .count(),
-        64,
-        "masked EVEX.512 VPSHUFB requires one conditional control-byte load per output"
-    );
-    let last_load = ops
+    let load = ops
         .iter()
-        .rposition(|op| {
+        .position(|op| {
             matches!(
                 op.kind,
-                OpKind::PredLoad {
-                    width: MemWidth::B1,
+                OpKind::VLoad {
+                    width: VecWidth::V512,
                     ..
                 }
             )
         })
-        .unwrap();
+        .expect("E4NF.nb EVEX VPSHUFB complete control load must survive optimization");
+    assert!(
+        !ops.iter()
+            .any(|op| matches!(op.kind, OpKind::PredLoad { .. })),
+        "EVEX VPSHUFB writemasks must not suppress its E4NF.nb Full Mem tuple"
+    );
     let destination_write = ops
         .iter()
         .position(|op| {
@@ -985,8 +977,8 @@ fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
         })
         .expect("masked EVEX VPSHUFB destination writes must survive optimization");
     assert!(
-        last_load < destination_write,
-        "EVEX VPSHUFB committed its destination before predicated control-byte accesses"
+        load < destination_write,
+        "EVEX VPSHUFB committed its destination before the complete E4NF.nb memory access"
     );
 
     let legacy_horizontal_register = optimized(&[0x66, 0x0F, 0x38, 0x03, 0xC1]);
