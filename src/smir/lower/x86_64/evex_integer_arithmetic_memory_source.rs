@@ -198,8 +198,8 @@ impl X86_64Lowerer {
     }
 
     /// Fuse one exact EVEX packed wrapping/saturating integer add/subtract,
-    /// rounded unsigned average, VNNI dot-product, or IFMA52 multiply-add
-    /// memory decomposition.
+    /// rounded unsigned average, VNNI dot-product, IFMA52 multiply-add, or
+    /// low/high/widening multiply memory decomposition.
     ///
     /// Unmasked vectors use the reserved vector transfer slot. Broadcasts
     /// issue at most one scalar helper access. Writemasked full vectors issue

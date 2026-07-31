@@ -1,7 +1,8 @@
 //! Fail-closed helper-backed EVEX packed integer arithmetic memory admission.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
+use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix};
 use crate::smir::ir::types::{
     ArchReg, BlockId, GuestAddr, MemWidth, OpWidth, SignExtend, SrcOperand, VLaneOp, VReg,
@@ -42,15 +43,18 @@ pub(super) struct X86EvexIntegerMemoryShape {
 
 impl From<X86EvexIntegerArithmeticMemoryEncoding> for X86EvexIntegerMemoryShape {
     fn from(encoding: X86EvexIntegerArithmeticMemoryEncoding) -> Self {
+        let unaligned_vector_load = matches!(encoding.opcode, 0xE0 | 0xE3)
+            || encoding.is_low_multiply()
+            || encoding.is_high_word_multiply();
         Self {
             width: encoding.width,
             elem: encoding.elem,
             destination: encoding.destination,
             writemask: encoding.writemask,
             zeroing: encoding.zeroing,
-            vector_load_hint: matches!(encoding.opcode, 0xE0 | 0xE3).then_some(
-                X86OpHint::VecAlign(crate::smir::ir::ops::X86VecAlign::Unaligned),
-            ),
+            vector_load_hint: unaligned_vector_load.then_some(X86OpHint::VecAlign(
+                crate::smir::ir::ops::X86VecAlign::Unaligned,
+            )),
             masked_broadcast_uses_lane_graph: encoding.is_dot_product(),
         }
     }
@@ -734,6 +738,281 @@ fn exact_ifma52(
     Some(())
 }
 
+fn exact_low_multiply(
+    op: &crate::smir::ir::ops::SmirOp,
+    loaded: VReg,
+    encoding: X86EvexIntegerArithmeticMemoryEncoding,
+) -> Option<(VReg, bool)> {
+    let OpKind::VMul {
+        dst,
+        src1,
+        src2,
+        elem,
+        lanes,
+    } = op.kind
+    else {
+        return None;
+    };
+    let deferred_commit = encoding.writemask.is_some();
+    let expected_destination = if deferred_commit {
+        matches!(dst, VReg::Virtual(_))
+    } else {
+        vector_index(&dst, encoding.width) == Some(encoding.destination)
+    };
+    if !encoding.is_low_multiply()
+        || !expected_destination
+        || vector_index(&src1, encoding.width) != Some(encoding.source1)
+        || src2 != loaded
+        || elem != encoding.elem
+        || lanes != encoding.width.lanes(encoding.elem) as u8
+        || op.x86_hint
+            != Some(X86OpHint::EvexOp {
+                map: encoding.map,
+                pp: X86SsePrefix::OpSize,
+                opcode: encoding.opcode,
+                width: encoding.width,
+                w: encoding.w,
+            })
+    {
+        return None;
+    }
+    Some((dst, deferred_commit))
+}
+
+fn exact_high_word_multiply(
+    op: &crate::smir::ir::ops::SmirOp,
+    loaded: VReg,
+    encoding: X86EvexIntegerArithmeticMemoryEncoding,
+) -> Option<VReg> {
+    let (expected_signed, expected_round, expected_out_shift) =
+        match (encoding.map, encoding.opcode) {
+            (crate::smir::ir::ops::X86VecMap::Map0F, 0xE4) => (false, false, 16),
+            (crate::smir::ir::ops::X86VecMap::Map0F, 0xE5) => (true, false, 16),
+            (crate::smir::ir::ops::X86VecMap::Map0F38, 0x0B) => (true, true, 15),
+            _ => return None,
+        };
+    let OpKind::VMulShiftSat {
+        dst,
+        src1,
+        src2,
+        src_elem,
+        lanes,
+        signed1,
+        signed2,
+        shift_left,
+        round,
+        sat_bits,
+        out_shift,
+    } = op.kind
+    else {
+        return None;
+    };
+    if op.x86_hint.is_some()
+        || !matches!(dst, VReg::Virtual(_))
+        || vector_index(&src1, encoding.width) != Some(encoding.source1)
+        || src2 != loaded
+        || src_elem != VecElementType::I16
+        || encoding.elem != VecElementType::I16
+        || lanes != encoding.width.lanes(VecElementType::I16) as u8
+        || signed1 != expected_signed
+        || signed2 != expected_signed
+        || shift_left != 0
+        || round != expected_round
+        || sat_bits != 0
+        || out_shift != expected_out_shift
+    {
+        return None;
+    }
+    Some(dst)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn exact_widening_dword_multiply(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    offset: &mut usize,
+    guest_pc: GuestAddr,
+    loaded: VReg,
+    encoding: X86EvexIntegerArithmeticMemoryEncoding,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<VReg> {
+    let signed = match (encoding.map, encoding.opcode) {
+        (crate::smir::ir::ops::X86VecMap::Map0F, 0xF4) => false,
+        (crate::smir::ir::ops::X86VecMap::Map0F38, 0x28) => true,
+        _ => return None,
+    };
+    if encoding.elem != VecElementType::I64 {
+        return None;
+    }
+    let sign = if signed {
+        SignExtend::Sign
+    } else {
+        SignExtend::Zero
+    };
+    let qwords = encoding.width.lanes(VecElementType::I64) as usize;
+    let exact_frontier = |offset: usize| {
+        block
+            .ops
+            .get(index + offset)
+            .is_some_and(|op| op.guest_pc == guest_pc && op.x86_hint.is_none())
+    };
+    let mut cursor = *offset;
+    let mut virtuals = HashSet::from([loaded]);
+    let mut products = Vec::with_capacity(qwords);
+    for lane in 0..qwords {
+        let source_lane = u8::try_from(lane * 2).ok()?;
+        let lhs = match block.ops.get(index + cursor)?.kind {
+            OpKind::VExtractLane {
+                dst,
+                vec,
+                lane,
+                elem: VecElementType::I32,
+                sign: actual_sign,
+            } if vector_index(&vec, encoding.width) == Some(encoding.source1)
+                && lane == source_lane
+                && actual_sign == sign =>
+            {
+                dst
+            }
+            _ => return None,
+        };
+        if !exact_frontier(cursor)
+            || !virtuals.insert(lhs)
+            || !single_definition_single_use(lhs, virtual_definitions, virtual_uses)
+        {
+            return None;
+        }
+        cursor += 1;
+
+        let rhs = match block.ops.get(index + cursor)?.kind {
+            OpKind::VExtractLane {
+                dst,
+                vec,
+                lane,
+                elem: VecElementType::I32,
+                sign: actual_sign,
+            } if vec == loaded && lane == source_lane && actual_sign == sign => dst,
+            _ => return None,
+        };
+        if !exact_frontier(cursor)
+            || !virtuals.insert(rhs)
+            || !single_definition_single_use(rhs, virtual_definitions, virtual_uses)
+        {
+            return None;
+        }
+        cursor += 1;
+
+        let product = match (&block.ops.get(index + cursor)?.kind, sign) {
+            (
+                OpKind::MulS {
+                    dst_lo,
+                    dst_hi: None,
+                    src1,
+                    src2: SrcOperand::Reg(src2),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                SignExtend::Sign,
+            )
+            | (
+                OpKind::MulU {
+                    dst_lo,
+                    dst_hi: None,
+                    src1,
+                    src2: SrcOperand::Reg(src2),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                SignExtend::Zero,
+            ) if *src1 == lhs && *src2 == rhs => *dst_lo,
+            _ => return None,
+        };
+        if !exact_frontier(cursor)
+            || !virtuals.insert(product)
+            || !single_definition_single_use(product, virtual_definitions, virtual_uses)
+        {
+            return None;
+        }
+        products.push(product);
+        cursor += 1;
+    }
+
+    let zero = match block.ops.get(index + cursor)?.kind {
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Imm(0),
+            width: OpWidth::W64,
+        } => dst,
+        _ => return None,
+    };
+    if !exact_frontier(cursor)
+        || !virtuals.insert(zero)
+        || !single_definition_single_use(zero, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+    cursor += 1;
+
+    let output = match block.ops.get(index + cursor)?.kind {
+        OpKind::VBroadcast {
+            dst,
+            scalar,
+            elem: VecElementType::I64,
+            lanes,
+        } if scalar == zero && usize::from(lanes) == qwords => dst,
+        _ => return None,
+    };
+    if !exact_frontier(cursor)
+        || !virtuals.insert(output)
+        || !exact_virtual_definition_use(
+            output,
+            qwords + 1,
+            qwords + 1,
+            virtual_definitions,
+            virtual_uses,
+        )
+    {
+        return None;
+    }
+    cursor += 1;
+
+    for (lane, product) in products.into_iter().enumerate() {
+        if !matches!(
+            block.ops.get(index + cursor)?.kind,
+            OpKind::VInsertLane {
+                dst,
+                vec,
+                scalar,
+                lane: actual_lane,
+                elem: VecElementType::I64,
+            } if dst == output
+                && vec == output
+                && scalar == product
+                && usize::from(actual_lane) == lane
+        ) || !exact_frontier(cursor)
+        {
+            return None;
+        }
+        cursor += 1;
+    }
+
+    let raw = match block.ops.get(index + cursor)?.kind {
+        OpKind::VMov { dst, src, width }
+            if src == output && width == encoding.width && matches!(dst, VReg::Virtual(_)) =>
+        {
+            dst
+        }
+        _ => return None,
+    };
+    if !exact_frontier(cursor) || !virtuals.insert(raw) {
+        return None;
+    }
+    cursor += 1;
+    *offset = cursor;
+    Some(raw)
+}
+
 fn exact_unmasked_result_tail(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
@@ -1000,12 +1279,12 @@ pub(super) fn matched_integer_memory_source(
 
 /// Validate the complete O0/O1/O2 decomposition emitted for one EVEX packed
 /// integer wrapping/saturating add/subtract, rounded-average, VNNI dot-product,
-/// or IFMA52 multiply-add memory source.
+/// IFMA52 multiply-add, or low/high/widening multiply memory source.
 ///
 /// Exact provenance binds the opcode, W/WIG interpretation, vector/element
 /// width, architectural operands, mask policy, tuple kind, address, every
 /// active-lane predicate, arithmetic semantics, and final commit. Runtime is
-/// O(L) with O(1) auxiliary space for L <= 64 lanes; callers build global
+/// O(L) with O(L) auxiliary space for L <= 64 lanes; callers build global
 /// definition/use maps once in O(N) time and O(V) space.
 pub(crate) fn x86_jit_evex_integer_arithmetic_memory_sequence(
     block: &crate::smir::ir::SmirBlock,
@@ -1024,19 +1303,82 @@ pub(crate) fn x86_jit_evex_integer_arithmetic_memory_sequence(
         .get(&(block.id, guest_pc))?
         .evex_integer_arithmetic_memory_encoding()?;
     let shape = X86EvexIntegerMemoryShape::from(encoding);
+    let loaded_uses = if encoding.is_widening_dword_multiply() {
+        encoding.width.lanes(VecElementType::I64) as usize
+    } else {
+        1
+    };
     let source = matched_integer_memory_source(
         block,
         index,
         shape,
         encoding.replay,
-        1,
+        loaded_uses,
         virtual_definitions,
         virtual_uses,
     )?;
 
     let mut offset = source.offset;
     let average = matches!(encoding.opcode, 0xE0 | 0xE3);
-    if encoding.is_ifma52() {
+    if encoding.is_integer_multiply() {
+        let (raw, deferred_commit) = if encoding.is_widening_dword_multiply() {
+            (
+                exact_widening_dword_multiply(
+                    block,
+                    index,
+                    &mut offset,
+                    guest_pc,
+                    source.loaded,
+                    encoding,
+                    virtual_definitions,
+                    virtual_uses,
+                )?,
+                true,
+            )
+        } else {
+            let multiply = block.ops.get(index + offset)?;
+            if multiply.guest_pc != guest_pc {
+                return None;
+            }
+            let matched = if encoding.is_low_multiply() {
+                exact_low_multiply(multiply, source.loaded, encoding)?
+            } else {
+                (
+                    exact_high_word_multiply(multiply, source.loaded, encoding)?,
+                    true,
+                )
+            };
+            offset += 1;
+            matched
+        };
+        if let Some(mask) = encoding.writemask {
+            exact_evex_vector_mask_result(
+                block,
+                index,
+                &mut offset,
+                guest_pc,
+                raw,
+                VReg::Arch(ArchReg::X86(X86Reg::K(mask))),
+                encoding.width,
+                encoding.elem,
+                encoding.destination,
+                encoding.zeroing,
+                virtual_definitions,
+                virtual_uses,
+            )?;
+        } else if deferred_commit {
+            exact_unmasked_result_tail(
+                block,
+                index,
+                &mut offset,
+                guest_pc,
+                raw,
+                shape,
+                virtual_definitions,
+                virtual_uses,
+            )?;
+        }
+    } else if encoding.is_ifma52() {
         let ifma52 = block.ops.get(index + offset)?;
         if ifma52.guest_pc != guest_pc {
             return None;

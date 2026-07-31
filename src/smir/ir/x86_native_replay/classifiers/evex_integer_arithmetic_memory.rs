@@ -43,6 +43,7 @@ pub(crate) struct X86EvexIntegerArithmeticMemoryEncoding {
     pub(crate) w: bool,
     pub(crate) replay: X86EvexIntegerArithmeticMemoryReplay,
     pub(crate) needs_avx512vl: bool,
+    pub(crate) needs_avx512dq: bool,
 }
 
 impl X86EvexIntegerArithmeticMemoryEncoding {
@@ -52,6 +53,35 @@ impl X86EvexIntegerArithmeticMemoryEncoding {
 
     pub(crate) fn is_ifma52(self) -> bool {
         self.map == X86VecMap::Map0F38 && matches!(self.opcode, 0xB4 | 0xB5)
+    }
+
+    pub(crate) fn is_widening_dword_multiply(self) -> bool {
+        matches!(
+            (self.map, self.opcode),
+            (X86VecMap::Map0F, 0xF4) | (X86VecMap::Map0F38, 0x28)
+        )
+    }
+
+    pub(crate) fn is_low_multiply(self) -> bool {
+        matches!(
+            (self.map, self.opcode),
+            (X86VecMap::Map0F, 0xD5) | (X86VecMap::Map0F38, 0x40)
+        )
+    }
+
+    pub(crate) fn is_high_word_multiply(self) -> bool {
+        self.map == X86VecMap::Map0F && matches!(self.opcode, 0xE4 | 0xE5)
+    }
+
+    pub(crate) fn is_rounded_high_word_multiply(self) -> bool {
+        self.map == X86VecMap::Map0F38 && self.opcode == 0x0B
+    }
+
+    pub(crate) fn is_integer_multiply(self) -> bool {
+        self.is_widening_dword_multiply()
+            || self.is_low_multiply()
+            || self.is_high_word_multiply()
+            || self.is_rounded_high_word_multiply()
     }
 }
 
@@ -63,18 +93,38 @@ fn integer_arithmetic_elem(map: X86VecMap, opcode: u8, w: bool) -> Option<VecEle
         (X86VecMap::Map0F, 0xE3, _) => Some(VecElementType::I16),
         (X86VecMap::Map0F, 0xFA | 0xFE, false) => Some(VecElementType::I32),
         (X86VecMap::Map0F, 0xD4 | 0xFB, true) => Some(VecElementType::I64),
+        (X86VecMap::Map0F, 0xD5 | 0xE4 | 0xE5, _) => Some(VecElementType::I16),
+        (X86VecMap::Map0F, 0xF4, true) => Some(VecElementType::I64),
+        (X86VecMap::Map0F38, 0x0B, _) => Some(VecElementType::I16),
+        (X86VecMap::Map0F38, 0x28, true) => Some(VecElementType::I64),
+        (X86VecMap::Map0F38, 0x40, false) => Some(VecElementType::I32),
+        (X86VecMap::Map0F38, 0x40, true) => Some(VecElementType::I64),
         (X86VecMap::Map0F38, 0x50..=0x53, false) => Some(VecElementType::I32),
         (X86VecMap::Map0F38, 0xB4 | 0xB5, true) => Some(VecElementType::I64),
         _ => None,
     }
 }
 
-fn register_arithmetic_needs_vl(instruction: &X86InstructionBytes) -> Option<bool> {
+fn register_arithmetic_requirements(instruction: &X86InstructionBytes) -> Option<(bool, bool)> {
     instruction
         .evex_register_integer_arithmetic_needs_vl()
-        .or_else(|| instruction.evex_register_packed_average_needs_vl())
-        .or_else(|| instruction.evex_register_integer_dot_needs_vl())
-        .or_else(|| instruction.evex_register_ifma52_needs_vl())
+        .map(|needs_vl| (needs_vl, false))
+        .or_else(|| {
+            instruction
+                .evex_register_packed_average_needs_vl()
+                .map(|needs_vl| (needs_vl, false))
+        })
+        .or_else(|| {
+            instruction
+                .evex_register_integer_dot_needs_vl()
+                .map(|needs_vl| (needs_vl, false))
+        })
+        .or_else(|| {
+            instruction
+                .evex_register_ifma52_needs_vl()
+                .map(|needs_vl| (needs_vl, false))
+        })
+        .or_else(|| instruction.evex_register_integer_multiply_requirements())
 }
 
 impl X86InstructionBytes {
@@ -128,16 +178,16 @@ impl X86InstructionBytes {
         }
     }
 
-    /// Validate one EVEX packed wrapping/saturating integer add/subtract or
-    /// rounded unsigned average, integer VNNI dot product, or IFMA52
-    /// multiply-add whose source is memory, and select an exact helper-backed
-    /// native replay.
+    /// Validate one EVEX packed integer add/subtract, rounded average, VNNI
+    /// dot product, IFMA52 multiply-add, or low/high/widening multiply whose
+    /// source is memory, and select an exact helper-backed native replay.
     ///
-    /// The 24-instruction family uses Type E4/E4.nb exception semantics:
+    /// The 32-instruction family uses Type E4/E4.nb exception semantics:
     /// inactive writemask lanes suppress their corresponding 1/2/4/8-byte
     /// access. VPADDD/Q and VPSUBD/Q additionally accept m32bcst/m64bcst;
     /// VPDPBUSD/S and VPDPWSSD/S accept m32bcst; VPMADD52LUQ/HUQ accept
-    /// m64bcst; VPAVGB/W use only full-vector memory sources.
+    /// m64bcst; VPMULDQ/UDQ accept m64bcst; VPMULLD/Q accept m32bcst/m64bcst.
+    /// Word multiply and VPAVGB/W forms use only full-vector memory sources.
     /// Segment/address-size prefixes and APX B4/X4 address extensions remain
     /// confined to helper address evaluation.
     pub(crate) fn evex_integer_arithmetic_memory_encoding(
@@ -217,7 +267,9 @@ impl X86InstructionBytes {
             0xC0 | (modrm & 0x38),
         ])
         .unwrap();
-        if register_arithmetic_needs_vl(&register_probe) != Some(needs_avx512vl) {
+        let (probe_needs_avx512vl, needs_avx512dq) =
+            register_arithmetic_requirements(&register_probe)?;
+        if probe_needs_avx512vl != needs_avx512vl {
             return None;
         }
 
@@ -244,7 +296,9 @@ impl X86InstructionBytes {
                 0xC0 | (modrm & 0x38) | (scratch & 7),
             ])
             .unwrap();
-            if register_arithmetic_needs_vl(&register_instruction) != Some(needs_avx512vl) {
+            if register_arithmetic_requirements(&register_instruction)
+                != Some((needs_avx512vl, needs_avx512dq))
+            {
                 return None;
             }
             X86EvexIntegerArithmeticMemoryReplay::Vector {
@@ -265,6 +319,7 @@ impl X86InstructionBytes {
             w,
             replay,
             needs_avx512vl,
+            needs_avx512dq,
         })
     }
 }

@@ -2301,7 +2301,7 @@ fn lift_pmuldq_covers_even_lanes_signed_products_masks_and_broadcasts() {
     let broadcast = lift_single(&[0x62, 0xF2, 0xF5, 0x59, 0x28, 0x40, 0x01]).unwrap();
     assert!(broadcast.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::Lea {
+        OpKind::PredLoad {
             addr: Address::BaseOffset { offset: 8, .. },
             ..
         }
@@ -2318,7 +2318,7 @@ fn lift_pmuldq_covers_even_lanes_signed_products_masks_and_broadcasts() {
                 }
             ))
             .count(),
-        8
+        1
     );
 
     let legacy_mem = lift_single(&[0x66, 0x0F, 0x38, 0x28, 0x00]).unwrap();
@@ -2398,7 +2398,7 @@ fn lift_pmuludq_covers_unsigned_products_widths_masks_and_broadcasts() {
                 }
             ))
             .count(),
-        8,
+        1,
     );
     let legacy_memory = lift_single(&[0x66, 0x0F, 0xF4, 0x00]).unwrap();
     assert!(
@@ -2545,19 +2545,19 @@ fn lift_pmulld_pmulq_covers_widths_high_regs_masks_broadcasts_and_invalids() {
         );
     }
 
-    for (bytes, width, elem, lanes, offset) in [
+    for (bytes, width, elem, pred_loads, offset) in [
         (
             &[0x62, 0xF2, 0x75, 0xD9, 0x40, 0x40, 0x01][..],
             MemWidth::B4,
             VecElementType::I32,
-            16usize,
+            1usize,
             4i64,
         ),
         (
             &[0x62, 0xF2, 0xED, 0x5A, 0x40, 0x58, 0x01][..],
             MemWidth::B8,
             VecElementType::I64,
-            8,
+            1,
             8,
         ),
     ] {
@@ -2574,11 +2574,11 @@ fn lift_pmulld_pmulq_covers_widths_high_regs_masks_broadcasts_and_invalids() {
                     } if actual_width == width
                 ))
                 .count(),
-            lanes,
+            pred_loads,
         );
         assert!(result.ops.iter().any(|op| matches!(
             op.kind,
-            OpKind::Lea {
+            OpKind::PredLoad {
                 addr: Address::BaseOffset {
                     offset: actual,
                     ..

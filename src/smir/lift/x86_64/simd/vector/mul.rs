@@ -601,10 +601,8 @@ impl X86_64Lifter {
         }
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let broadcast = prefix.encoding == VecEncodingKind::Evex && prefix.b && modrm.is_memory;
@@ -631,12 +629,22 @@ impl X86_64Lifter {
                 self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx)
             };
             ops.extend(pre_ops);
-            if let Some(mask) = mask {
+            if let (Some(mask), true) = (mask, broadcast) {
+                self.append_masked_broadcast_memory_source(
+                    addr,
+                    VecElementType::I64,
+                    prefix.width,
+                    mask,
+                    pc,
+                    ctx,
+                    &mut ops,
+                )
+            } else if let Some(mask) = mask {
                 self.append_evex_masked_vector_source(
                     addr,
                     VecElementType::I64,
                     prefix.width,
-                    broadcast,
+                    false,
                     mask,
                     pc,
                     ctx,
@@ -723,7 +731,11 @@ impl X86_64Lifter {
         } else {
             self.append_pmuldq(dst, src1, src2, prefix.width, signed, pc, ctx, &mut ops);
         }
-        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+        Ok(self.retain_evex_memory_apx_requirement(
+            &modrm,
+            pc,
+            LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed),
+        ))
     }
 
     pub(crate) fn lift_vec_pmul_low(
@@ -751,10 +763,8 @@ impl X86_64Lifter {
         };
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let broadcast = opcode == 0x40
@@ -788,12 +798,22 @@ impl X86_64Lifter {
                 self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx)
             };
             ops.extend(pre_ops);
-            if let Some(mask) = mask {
+            if let (Some(mask), true) = (mask, broadcast) {
+                self.append_masked_broadcast_memory_source(
+                    addr,
+                    elem,
+                    prefix.width,
+                    mask,
+                    pc,
+                    ctx,
+                    &mut ops,
+                )
+            } else if let Some(mask) = mask {
                 self.append_evex_masked_vector_source(
                     addr,
                     elem,
                     prefix.width,
-                    broadcast,
+                    false,
                     mask,
                     pc,
                     ctx,
@@ -887,7 +907,11 @@ impl X86_64Lifter {
         if masked {
             self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
         }
-        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+        Ok(self.retain_evex_memory_apx_requirement(
+            &modrm,
+            pc,
+            LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed),
+        ))
     }
 
     pub(crate) fn lift_vec_pmul_high_word(
@@ -910,10 +934,8 @@ impl X86_64Lifter {
         }
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
@@ -1011,7 +1033,11 @@ impl X86_64Lifter {
                 );
             }
         }
-        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+        Ok(self.retain_evex_memory_apx_requirement(
+            &modrm,
+            pc,
+            LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed),
+        ))
     }
 
     pub(crate) fn lift_vec_pmaddwd(
