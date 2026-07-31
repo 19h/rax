@@ -2293,10 +2293,8 @@ impl X86_64Lifter {
         }
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let imm_offset = cursor + modrm.bytes_consumed;
@@ -2319,110 +2317,19 @@ impl X86_64Lifter {
             };
             ops.extend(pre_ops);
             let loaded = ctx.alloc_vreg();
-            if prefix.encoding != VecEncodingKind::Evex || prefix.aaa == 0 {
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::VLoad {
-                        dst: loaded,
-                        addr,
-                        width: prefix.width,
-                    },
-                ));
-            } else {
-                let zero = ctx.alloc_vreg();
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Mov {
-                        dst: zero,
-                        src: SrcOperand::Imm(0),
-                        width: OpWidth::W64,
-                    },
-                ));
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::VBroadcast {
-                        dst: loaded,
-                        scalar: zero,
-                        elem: VecElementType::I8,
-                        lanes,
-                    },
-                ));
-                if imm < 16 {
-                    let base = ctx.alloc_vreg();
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::Lea { dst: base, addr },
-                    ));
-                    let mask = VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa)));
-                    for output_lane in 0..lanes {
-                        let selected = u16::from(imm) + u16::from(output_lane % 16);
-                        if selected >= 16 {
-                            continue;
-                        }
-                        let source_lane = output_lane / 16 * 16 + selected as u8;
-                        let shifted = ctx.alloc_vreg();
-                        let active = ctx.alloc_vreg();
-                        let scalar = ctx.alloc_vreg();
-                        ops.push(SmirOp::new(
-                            OpId(ops.len() as u16),
-                            pc,
-                            OpKind::Shr {
-                                dst: shifted,
-                                src: mask,
-                                amount: SrcOperand::Imm(i64::from(output_lane)),
-                                width: OpWidth::W64,
-                                flags: FlagUpdate::None,
-                            },
-                        ));
-                        ops.push(SmirOp::new(
-                            OpId(ops.len() as u16),
-                            pc,
-                            OpKind::And {
-                                dst: active,
-                                src1: shifted,
-                                src2: SrcOperand::Imm(1),
-                                width: OpWidth::W64,
-                                flags: FlagUpdate::None,
-                            },
-                        ));
-                        ops.push(SmirOp::new(
-                            OpId(ops.len() as u16),
-                            pc,
-                            OpKind::Mov {
-                                dst: scalar,
-                                src: SrcOperand::Imm(0),
-                                width: OpWidth::W64,
-                            },
-                        ));
-                        ops.push(SmirOp::new(
-                            OpId(ops.len() as u16),
-                            pc,
-                            OpKind::PredLoad {
-                                dst: scalar,
-                                cond: active,
-                                addr: Address::base_off(base, i64::from(source_lane)),
-                                width: MemWidth::B1,
-                                signed: SignExtend::Zero,
-                            },
-                        ));
-                        ops.push(SmirOp::new(
-                            OpId(ops.len() as u16),
-                            pc,
-                            OpKind::VInsertLane {
-                                dst: loaded,
-                                vec: loaded,
-                                scalar,
-                                lane: source_lane,
-                                elem: VecElementType::I8,
-                            },
-                        ));
-                    }
-                }
-            }
+            // Intel classifies EVEX VPALIGNR memory as Type E4NF.nb. The
+            // complete Full Mem tuple is therefore read unconditionally even
+            // when no output byte selects memory or every writemask bit is
+            // clear.
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VLoad {
+                    dst: loaded,
+                    addr,
+                    width: prefix.width,
+                },
+            ));
             loaded
         } else {
             self.vec_reg(
@@ -2468,9 +2375,10 @@ impl X86_64Lifter {
         } else {
             self.append_align_right(dst, high, low, prefix.width, imm, pc, ctx, &mut ops);
         }
-        Ok(LiftResult::fallthrough(
-            ops,
-            cursor + modrm.bytes_consumed + 1,
+        Ok(self.retain_evex_memory_apx_requirement(
+            &modrm,
+            pc,
+            LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed + 1),
         ))
     }
 }

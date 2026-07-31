@@ -1822,8 +1822,9 @@ fn lifted_palignr_executes_immediates_grouping_masks_aliases_and_faults() {
         );
     }
 
-    // At imm=0, output byte n consumes memory byte n. Put byte 0 at the
-    // final valid address to distinguish suppressed lane 0 from lane 1.
+    // Type E4NF.nb reads the complete memory operand before applying the
+    // writemask. A single mapped byte at the end of memory therefore cannot
+    // make either active-mask shape succeed.
     memory.write(0x3FF, &[low[0]]).unwrap();
     ctx.write_vreg(rax, 0x3FF);
     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
@@ -1836,13 +1837,12 @@ fn lifted_palignr_executes_immediates_grouping_masks_aliases_and_faults() {
         &mut ctx,
         &mut memory,
     );
-    assert!(!matches!(
+    assert!(matches!(
         lane0,
-        BlockResult::Exit(ExitReason::MemoryFault { .. })
+        BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
     ));
     if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
-        assert_eq!(bytes(&x86.xmm[0], 1), vec![low[0]]);
-        assert!(x86.xmm[0][2..].iter().all(|word| *word == 0));
+        assert_eq!(x86.xmm[0], sentinel);
     }
     ctx.write_vreg(k1, 1 << 1);
     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
@@ -1861,11 +1861,12 @@ fn lifted_palignr_executes_immediates_grouping_masks_aliases_and_faults() {
         assert_eq!(x86.xmm[0], sentinel);
     }
 
-    // imm=16 selects only src1: active output bytes do not consume the
-    // memory concatenand, so the invalid address remains suppressed.
+    // Even when imm=16 selects only src1, E4NF.nb retains the complete memory
+    // access and faults before any destination commit.
     ctx.write_vreg(rax, 0x1000);
     ctx.write_vreg(k1, u64::MAX);
     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+        x86.xmm[0] = sentinel;
         x86.xmm[1] = seeded(&high[..16], 0);
     }
     let shifted_out = execute_lifted_x86(
@@ -1873,12 +1874,12 @@ fn lifted_palignr_executes_immediates_grouping_masks_aliases_and_faults() {
         &mut ctx,
         &mut memory,
     );
-    assert!(!matches!(
+    assert!(matches!(
         shifted_out,
-        BlockResult::Exit(ExitReason::MemoryFault { .. })
+        BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
     ));
     if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
-        assert_eq!(bytes(&x86.xmm[0], 16), high[..16]);
+        assert_eq!(x86.xmm[0], sentinel);
     }
 
     // Without a writemask, the complete memory operand is still read.

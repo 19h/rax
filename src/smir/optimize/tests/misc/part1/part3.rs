@@ -1751,21 +1751,22 @@ fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
         ops.iter()
             .filter(|op| matches!(
                 op.kind,
-                OpKind::PredLoad {
-                    width: MemWidth::B1,
+                OpKind::VLoad {
+                    width: VecWidth::V512,
                     ..
                 }
             ))
             .count(),
-        60
+        1,
+        "E4NF.nb must retain one complete unconditional memory access"
     );
     let last_load = ops
         .iter()
         .rposition(|op| {
             matches!(
                 op.kind,
-                OpKind::PredLoad {
-                    width: MemWidth::B1,
+                OpKind::VLoad {
+                    width: VecWidth::V512,
                     ..
                 }
             )
@@ -1800,11 +1801,20 @@ fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
     assert!(last_load < shuffle && shuffle < destination_write);
 
     let high_only_palignr = optimized(&[0x62, 0xF3, 0x75, 0x49, 0x0F, 0x00, 0x10]);
-    assert!(
-        !high_only_palignr.blocks[0]
+    assert_eq!(
+        high_only_palignr.blocks[0]
             .ops
             .iter()
-            .any(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+            .filter(|op| matches!(
+                op.kind,
+                OpKind::VLoad {
+                    width: VecWidth::V512,
+                    ..
+                }
+            ))
+            .count(),
+        1,
+        "register-only selectors do not suppress the E4NF.nb memory access"
     );
 
     let legacy_pmovsxbq = optimized(&[0x66, 0x0F, 0x38, 0x22, 0x00]);

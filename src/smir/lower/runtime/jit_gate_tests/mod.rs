@@ -31,6 +31,7 @@ mod cpuid;
 mod descriptor_table;
 #[cfg(test)]
 mod evex;
+mod evex_alignr_memory_source;
 #[cfg(test)]
 mod evex_bf16_memory_source;
 #[cfg(test)]

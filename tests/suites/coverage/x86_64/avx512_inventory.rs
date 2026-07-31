@@ -26,6 +26,9 @@ mod avx512_inventory_data;
 #[path = "../../../support/x86_64/avx512_spec.rs"]
 mod avx512_spec;
 
+#[cfg(feature = "smir-jit")]
+#[path = "avx512_inventory/alignr_memory_replay.rs"]
+mod alignr_memory_replay;
 #[path = "avx512_inventory/bw_immediate_replay.rs"]
 mod bw_immediate_replay;
 #[path = "avx512_inventory/bw_shuffle_madd_replay.rs"]

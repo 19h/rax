@@ -1016,30 +1016,30 @@ fn lift_palignr_covers_forms_grouping_masks_memory_and_invalids() {
     let masked_mem = lift_single(&[0x62, 0xF3, 0x75, 0xC9, 0x0F, 0x40, 0x01, 0x01]).unwrap();
     assert!(masked_mem.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::Lea {
+        OpKind::VLoad {
             addr: Address::BaseOffset {
                 offset: 64,
                 disp_size: DispSize::Disp8,
                 ..
             },
+            width: VecWidth::V512,
             ..
         }
     )));
-    assert_eq!(
-        masked_mem
+    assert!(
+        !masked_mem
             .ops
             .iter()
-            .filter(|op| matches!(
-                op.kind,
-                OpKind::PredLoad {
-                    width: MemWidth::B1,
-                    ..
-                }
-            ))
-            .count(),
-        60
+            .any(|op| matches!(op.kind, OpKind::PredLoad { .. }))
     );
     let masked_high_only = lift_single(&[0x62, 0xF3, 0x75, 0x49, 0x0F, 0x00, 0x10]).unwrap();
+    assert!(masked_high_only.ops.iter().any(|op| matches!(
+        op.kind,
+        OpKind::VLoad {
+            width: VecWidth::V512,
+            ..
+        }
+    )));
     assert!(
         !masked_high_only
             .ops
