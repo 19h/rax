@@ -5,6 +5,7 @@ mod cmpccxadd;
 mod evex_broadcast_interleave_memory;
 mod evex_broadcast_logic_memory;
 mod evex_fma3_memory;
+mod evex_fp16_arithmetic_memory;
 mod evex_logic_memory;
 mod evex_memory;
 mod evex_variable_permute_memory;
@@ -95,6 +96,9 @@ pub(crate) use evex_broadcast_interleave_memory::X86EvexBroadcastInterleaveMemor
 pub(crate) use evex_broadcast_logic_memory::X86EvexBroadcastLogicMemoryEncoding;
 pub(crate) use evex_fma3_memory::{
     X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay, X86EvexScalarFma3MemoryEncoding,
+};
+pub(crate) use evex_fp16_arithmetic_memory::{
+    X86EvexPackedFp16ArithmeticMemoryEncoding, X86EvexPackedFp16ArithmeticMemoryReplay,
 };
 pub(crate) use evex_logic_memory::{
     X86EvexLogicMemoryEncoding, X86EvexLogicMemoryKind, X86EvexMaskedLogicMemoryEncoding,

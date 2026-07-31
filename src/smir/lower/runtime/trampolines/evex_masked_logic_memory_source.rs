@@ -5,15 +5,16 @@ use std::collections::HashMap;
 use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86SsePrefix, X86VecMap};
 use crate::smir::ir::types::{
-    Address, ArchReg, BlockId, DispSize, GuestAddr, OpWidth, SignExtend, SrcOperand, VReg,
-    VecElementType, VecWidth, X86Reg,
+    ArchReg, BlockId, GuestAddr, OpWidth, SignExtend, SrcOperand, VReg, VecElementType, VecWidth,
+    X86Reg,
 };
 use crate::smir::ir::{
     X86EvexLogicMemoryKind, X86EvexMaskedLogicMemoryEncoding, X86InstructionBytes,
 };
 
 use super::evex_memory_source_common::{
-    exact_virtual_definition_use, single_definition_single_use, vector_index,
+    exact_lane_address, exact_lane_predicate, exact_virtual_definition_use,
+    single_definition_single_use, vector_index,
 };
 
 /// Exact contiguous decomposition consumed by the helper-backed x86-64
@@ -32,17 +33,6 @@ fn vector(index: u8, width: VecWidth) -> Option<VReg> {
         VecWidth::V512 => VReg::Arch(ArchReg::X86(X86Reg::Zmm(index))),
         _ => return None,
     })
-}
-
-fn exact_lane_address(address: &Address, base: VReg, offset: i64) -> bool {
-    matches!(
-        address,
-        Address::BaseOffset {
-            base: actual_base,
-            offset: actual_offset,
-            disp_size: DispSize::Auto,
-        } if *actual_base == base && *actual_offset == offset
-    )
 }
 
 fn exact_logic(
@@ -129,72 +119,6 @@ fn exact_logic(
                 width: encoding.width,
                 w: matches!(encoding.elem, VecElementType::F64 | VecElementType::I64),
             })
-}
-
-fn exact_lane_predicate(
-    block: &crate::smir::ir::SmirBlock,
-    index: usize,
-    offset: &mut usize,
-    guest_pc: GuestAddr,
-    mask: VReg,
-    lane: u8,
-    virtual_definitions: &HashMap<VReg, usize>,
-    virtual_uses: &HashMap<VReg, usize>,
-) -> Option<VReg> {
-    let first = block.ops.get(index + *offset)?;
-    let direct_lane_zero = lane == 0
-        && matches!(
-            first.kind,
-            OpKind::And {
-                src1,
-                src2: SrcOperand::Imm(1),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-                ..
-            } if first.x86_hint.is_none() && src1 == mask
-        );
-    let condition = if direct_lane_zero {
-        match first.kind {
-            OpKind::And { dst, .. } => dst,
-            _ => unreachable!("direct lane-zero predicate matched And"),
-        }
-    } else {
-        let shifted = match first.kind {
-            OpKind::Shr {
-                dst,
-                src,
-                amount: SrcOperand::Imm(amount),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            } if first.x86_hint.is_none() && src == mask && amount == i64::from(lane) => dst,
-            _ => return None,
-        };
-        if first.guest_pc != guest_pc
-            || !single_definition_single_use(shifted, virtual_definitions, virtual_uses)
-        {
-            return None;
-        }
-        *offset += 1;
-        let and = block.ops.get(index + *offset)?;
-        match and.kind {
-            OpKind::And {
-                dst,
-                src1,
-                src2: SrcOperand::Imm(1),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            } if and.x86_hint.is_none() && src1 == shifted => dst,
-            _ => return None,
-        }
-    };
-    let condition_op = block.ops.get(index + *offset)?;
-    if condition_op.guest_pc != guest_pc
-        || !single_definition_single_use(condition, virtual_definitions, virtual_uses)
-    {
-        return None;
-    }
-    *offset += 1;
-    Some(condition)
 }
 
 /// Validate the complete O0/O1/O2 decomposition emitted for one writemasked

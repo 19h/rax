@@ -76,6 +76,8 @@ mod evex_broadcast_logic_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_fma3_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_fp16_arithmetic_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_logic_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_masked_logic_memory_source;
