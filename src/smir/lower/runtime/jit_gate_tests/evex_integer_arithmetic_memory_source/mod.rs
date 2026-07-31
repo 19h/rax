@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use super::*;
-use crate::smir::ir::ops::{OpKind, SmirOp};
+use crate::smir::ir::ops::{OpKind, SmirOp, X86VecMap};
 use crate::smir::ir::types::{
     Address, ArchReg, BlockId, DispSize, FunctionId, MemWidth, OpId, SourceArch, SrcOperand,
     VLaneOp, VReg, VecElementType, VecWidth, VirtualId, X86Reg,
@@ -51,10 +51,14 @@ enum ArithmeticKind {
     SubUnsignedSaturatingWord,
     AverageByte,
     AverageWord,
+    DotByte,
+    DotByteSaturating,
+    DotWord,
+    DotWordSaturating,
 }
 
 impl ArithmeticKind {
-    const ALL: [Self; 18] = [
+    const ALL: [Self; 22] = [
         Self::AddWrappingByte,
         Self::AddWrappingWord,
         Self::AddWrappingDword,
@@ -73,6 +77,10 @@ impl ArithmeticKind {
         Self::SubUnsignedSaturatingWord,
         Self::AverageByte,
         Self::AverageWord,
+        Self::DotByte,
+        Self::DotByteSaturating,
+        Self::DotWord,
+        Self::DotWordSaturating,
     ];
 
     const fn opcode(self) -> u8 {
@@ -95,9 +103,14 @@ impl ArithmeticKind {
             Self::SubUnsignedSaturatingWord => 0xD9,
             Self::AverageByte => 0xE0,
             Self::AverageWord => 0xE3,
+            Self::DotByte => 0x50,
+            Self::DotByteSaturating => 0x51,
+            Self::DotWord => 0x52,
+            Self::DotWordSaturating => 0x53,
         }
     }
 
+    /// Element granularity used for Type E4 memory accesses and writemasking.
     const fn elem(self) -> VecElementType {
         match self {
             Self::AddWrappingByte
@@ -114,9 +127,36 @@ impl ArithmeticKind {
             | Self::SubSignedSaturatingWord
             | Self::SubUnsignedSaturatingWord
             | Self::AverageWord => VecElementType::I16,
-            Self::AddWrappingDword | Self::SubWrappingDword => VecElementType::I32,
+            Self::AddWrappingDword
+            | Self::SubWrappingDword
+            | Self::DotByte
+            | Self::DotByteSaturating
+            | Self::DotWord
+            | Self::DotWordSaturating => VecElementType::I32,
             Self::AddWrappingQword | Self::SubWrappingQword => VecElementType::I64,
         }
+    }
+
+    /// Multiplicand/source element granularity. VNNI accumulates groups of
+    /// byte or word products into each dword result.
+    const fn source_elem(self) -> VecElementType {
+        match self {
+            Self::DotByte | Self::DotByteSaturating => VecElementType::I8,
+            Self::DotWord | Self::DotWordSaturating => VecElementType::I16,
+            _ => self.elem(),
+        }
+    }
+
+    const fn map(self) -> X86VecMap {
+        if self.is_dot() {
+            X86VecMap::Map0F38
+        } else {
+            X86VecMap::Map0F
+        }
+    }
+
+    const fn map_bits(self) -> u8 {
+        if self.is_dot() { 2 } else { 1 }
     }
 
     const fn is_wig(self) -> bool {
@@ -129,6 +169,13 @@ impl ArithmeticKind {
 
     const fn is_average(self) -> bool {
         matches!(self, Self::AverageByte | Self::AverageWord)
+    }
+
+    const fn is_dot(self) -> bool {
+        matches!(
+            self,
+            Self::DotByte | Self::DotByteSaturating | Self::DotWord | Self::DotWordSaturating
+        )
     }
 }
 
@@ -165,8 +212,8 @@ struct IntegerArithmeticMemoryCase {
     source1: u8,
     form: SourceForm,
     control: MaskControl,
-    /// Raw EVEX.W for byte/word WIG encodings. Fixed-width dword/qword cases
-    /// use W0/W1 respectively.
+    /// Raw EVEX.W for byte/word WIG encodings. Fixed-width dword/qword/VNNI
+    /// cases use W0/W1/W0 respectively.
     wig_w: bool,
 }
 
@@ -243,7 +290,7 @@ fn memory_encoding(case: IntegerArithmeticMemoryCase, sib: bool) -> Vec<u8> {
     assert!(case.destination < 32 && case.source1 < 32);
     assert!(case.mask() < 8 && (!case.zeroing() || case.mask() != 0));
     assert!(!case.broadcast() || case.kind.allows_broadcast());
-    let p0 = 0x01
+    let p0 = case.kind.map_bits()
         | 0x60
         | if case.destination & 8 == 0 { 0x80 } else { 0 }
         | if case.destination & 16 == 0 { 0x10 } else { 0 };
@@ -269,7 +316,8 @@ fn memory_encoding(case: IntegerArithmeticMemoryCase, sib: bool) -> Vec<u8> {
 }
 
 fn stack_encoding(case: IntegerArithmeticMemoryCase) -> Vec<u8> {
-    let p0 = 0x61
+    let p0 = 0x60
+        | case.kind.map_bits()
         | if case.destination & 8 == 0 { 0x80 } else { 0 }
         | if case.destination & 16 == 0 { 0x10 } else { 0 };
     let p1 = if case.w() { 0x80 } else { 0 } | (((!case.source1) & 0x0F) << 3) | 0x05;
@@ -291,7 +339,8 @@ fn stack_encoding(case: IntegerArithmeticMemoryCase) -> Vec<u8> {
 
 fn register_encoding(case: IntegerArithmeticMemoryCase, scratch: u8) -> Vec<u8> {
     assert!(scratch < 16);
-    let p0 = 0x41
+    let p0 = 0x40
+        | case.kind.map_bits()
         | if case.destination & 8 == 0 { 0x80 } else { 0 }
         | if case.destination & 16 == 0 { 0x10 } else { 0 }
         | if scratch & 8 == 0 { 0x20 } else { 0 };
@@ -408,7 +457,8 @@ fn lower(function: &SmirFunction, case: IntegerArithmeticMemoryCase) -> (Vec<u8>
         x86_native_vector_features_supported_excluding(function, &excluded),
         std::is_x86_feature_detected!("avx512f")
             && std::is_x86_feature_detected!("avx512bw")
-            && (case.width == VecWidth::V512 || std::is_x86_feature_detected!("avx512vl")),
+            && (case.width == VecWidth::V512 || std::is_x86_feature_detected!("avx512vl"))
+            && (!case.kind.is_dot() || std::is_x86_feature_detected!("avx512vnni")),
         "{case:?}"
     );
     #[cfg(not(target_arch = "x86_64"))]
@@ -467,7 +517,7 @@ fn all_cases() -> Vec<IntegerArithmeticMemoryCase> {
 }
 
 #[test]
-fn integer_arithmetic_rewrites_match_eight_independent_llvm_23_anchors() {
+fn integer_arithmetic_rewrites_match_twelve_independent_llvm_23_anchors() {
     let anchors: &[(&[u8], &[u8])] = &[
         (
             &[0x62, 0xE1, 0x6D, 0x00, 0xFC, 0x0A],
@@ -501,6 +551,22 @@ fn integer_arithmetic_rewrites_match_eight_independent_llvm_23_anchors() {
             &[0x62, 0x71, 0x2D, 0x2B, 0xE3, 0x0A],
             &[0x62, 0x71, 0x2D, 0x2B, 0xE3, 0x0C, 0x24],
         ),
+        (
+            &[0x62, 0xE2, 0x6D, 0x00, 0x50, 0x0A],
+            &[0x62, 0xE2, 0x6D, 0x00, 0x50, 0xC8],
+        ),
+        (
+            &[0x62, 0x72, 0x2D, 0xBB, 0x51, 0x0A],
+            &[0x62, 0x72, 0x2D, 0xBB, 0x51, 0x0C, 0x24],
+        ),
+        (
+            &[0x62, 0xE2, 0x6D, 0x42, 0x52, 0x0A],
+            &[0x62, 0xE2, 0x6D, 0x42, 0x52, 0x0C, 0x24],
+        ),
+        (
+            &[0x62, 0x62, 0x2D, 0xD4, 0x53, 0x0A],
+            &[0x62, 0x62, 0x2D, 0xD4, 0x53, 0x0C, 0x24],
+        ),
     ];
     for (memory, llvm) in anchors {
         let encoding = X86InstructionBytes::new(memory)
@@ -522,7 +588,7 @@ fn integer_arithmetic_rewrites_match_eight_independent_llvm_23_anchors() {
 }
 
 #[test]
-fn integer_arithmetic_classifier_exhausts_6_635_520_operand_control_wig_and_apx_cells() {
+fn integer_arithmetic_classifier_exhausts_8_110_080_operand_control_wig_and_apx_cells() {
     let mut accepted = 0usize;
     for kind in ArithmeticKind::ALL {
         for wig_w in [false, true] {
@@ -576,6 +642,7 @@ fn integer_arithmetic_classifier_exhausts_6_635_520_operand_control_wig_and_apx_
                                                 "{bytes:02X?}"
                                             );
                                             assert_eq!(encoding.w, case.w(), "{bytes:02X?}");
+                                            assert_eq!(encoding.map, kind.map(), "{bytes:02X?}");
                                             assert_eq!(encoding.width, width, "{bytes:02X?}");
                                             assert_eq!(encoding.elem, kind.elem(), "{bytes:02X?}");
                                             assert_eq!(
@@ -609,6 +676,9 @@ fn integer_arithmetic_classifier_exhausts_6_635_520_operand_control_wig_and_apx_
                                                     let register_needs_vl = if kind.is_average() {
                                                         register_instruction
                                                             .evex_register_packed_average_needs_vl()
+                                                    } else if kind.is_dot() {
+                                                        register_instruction
+                                                            .evex_register_integer_dot_needs_vl()
                                                     } else {
                                                         register_instruction
                                                             .evex_register_integer_arithmetic_needs_vl()
@@ -642,7 +712,86 @@ fn integer_arithmetic_classifier_exhausts_6_635_520_operand_control_wig_and_apx_
             }
         }
     }
-    assert_eq!(accepted, 6_635_520);
+    assert_eq!(accepted, 8_110_080);
+}
+
+#[test]
+fn evex_integer_dot_register_classifier_exhausts_5_898_240_legal_cells() {
+    let mut accepted = 0usize;
+    for opcode in 0x50u8..=0x53 {
+        for extensions in 0u8..16 {
+            for encoded_vvvv in 0u8..16 {
+                for encoded_v_prime in [false, true] {
+                    for ll in 0u8..=2 {
+                        for mask in 0u8..8 {
+                            for zeroing in [false, true] {
+                                if zeroing && mask == 0 {
+                                    continue;
+                                }
+                                let p0 = (extensions << 4) | 2;
+                                let p1 = (encoded_vvvv << 3) | 0x05;
+                                let p2 = (u8::from(zeroing) << 7)
+                                    | (ll << 5)
+                                    | (u8::from(encoded_v_prime) << 3)
+                                    | mask;
+                                for modrm in 0xC0u8..=0xFF {
+                                    let bytes = [0x62, p0, p1, p2, opcode, modrm];
+                                    assert_eq!(
+                                        X86InstructionBytes::new(&bytes)
+                                            .unwrap()
+                                            .evex_register_integer_dot_needs_vl(),
+                                        Some(ll != 2),
+                                        "{bytes:02X?}"
+                                    );
+                                    accepted += 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    assert_eq!(accepted, 5_898_240);
+
+    let valid = [0x62, 0xE2, 0x6D, 0x42, 0x52, 0xC8];
+    let mut malformed = Vec::new();
+    for (index, xor) in [(1, 0x01), (2, 0x01), (4, 0x0D)] {
+        let mut bytes = valid.to_vec();
+        bytes[index] ^= xor;
+        malformed.push(bytes);
+    }
+    for (index, set) in [(1, 0x08), (2, 0x80), (3, 0x10)] {
+        let mut bytes = valid.to_vec();
+        bytes[index] |= set;
+        malformed.push(bytes);
+    }
+    let mut no_u = valid.to_vec();
+    no_u[2] &= !0x04;
+    malformed.push(no_u);
+    let mut reserved_ll = valid.to_vec();
+    reserved_ll[3] |= 0x60;
+    malformed.push(reserved_ll);
+    let mut zero_k0 = valid.to_vec();
+    zero_k0[3] = 0x80;
+    malformed.push(zero_k0);
+    let mut memory = valid.to_vec();
+    memory[5] &= 0x3F;
+    malformed.push(memory);
+    let mut trailing = valid.to_vec();
+    trailing.push(0);
+    malformed.push(trailing);
+    malformed.push(valid[..5].to_vec());
+
+    for bytes in malformed {
+        assert_eq!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .evex_register_integer_dot_needs_vl(),
+            None,
+            "{bytes:02X?}"
+        );
+    }
 }
 
 #[test]
@@ -696,6 +845,14 @@ fn integer_arithmetic_classifier_rejects_reserved_non_owned_and_trailing_shapes(
     .bytes();
     byte_broadcast[3] |= 0x10;
     malformed.push(byte_broadcast);
+    let mut dot_w1 = IntegerArithmeticMemoryCase {
+        kind: ArithmeticKind::DotByte,
+        form: SourceForm::Broadcast,
+        ..case
+    }
+    .bytes();
+    dot_w1[2] |= 0x80;
+    malformed.push(dot_w1);
     let mut forbidden_legacy = valid.clone();
     forbidden_legacy.insert(0, 0x66);
     malformed.push(forbidden_legacy);
@@ -738,15 +895,16 @@ fn integer_arithmetic_classifier_rejects_reserved_non_owned_and_trailing_shapes(
 }
 
 #[test]
-fn all_972_integer_arithmetic_memory_cells_optimize_admit_and_lower_exactly() {
+fn all_1188_integer_arithmetic_memory_cells_optimize_admit_and_lower_exactly() {
     let cases = all_cases();
-    assert_eq!(cases.len(), 972);
+    assert_eq!(cases.len(), 1_188);
     let mut lowerings = 0usize;
     for case in cases {
         for level in LEVELS {
             let function = optimize(lift_case(case), level);
             let exact = sequence(&function, true)
                 .unwrap_or_else(|| panic!("{level:?} {case:?}: {:#?}", function.blocks[0].ops));
+            assert_eq!(exact.encoding.map, case.kind.map());
             assert_eq!(exact.encoding.opcode, case.kind.opcode());
             assert_eq!(exact.encoding.width, case.width);
             assert_eq!(exact.encoding.elem, case.kind.elem());
@@ -779,7 +937,7 @@ fn all_972_integer_arithmetic_memory_cells_optimize_admit_and_lower_exactly() {
             lowerings += 1;
         }
     }
-    assert_eq!(lowerings, 972 * LEVELS.len());
+    assert_eq!(lowerings, 1_188 * LEVELS.len());
 }
 
 #[test]
@@ -802,6 +960,7 @@ fn type_e4_memory_graphs_preserve_exact_access_granularity() {
                 (ordinary_loads, pred_loads),
                 match (case.control, case.form) {
                     (MaskControl::None, _) => (1, 0),
+                    (_, SourceForm::Broadcast) if case.kind.is_dot() => (0, lanes),
                     (_, SourceForm::Broadcast) => (0, 1),
                     (_, SourceForm::Vector) => (0, lanes),
                 },
@@ -924,6 +1083,144 @@ fn integer_arithmetic_sequence_fails_closed_for_provenance_and_graph_mutations()
     }
 }
 
+fn mutate_dot_product(
+    function: &mut SmirFunction,
+    mutation: impl FnOnce(&mut crate::smir::ir::ops::OpKind),
+) {
+    let dot = function.blocks[0]
+        .ops
+        .iter_mut()
+        .find(|op| matches!(op.kind, OpKind::VDotProduct { .. }))
+        .expect("VNNI lift owns one VDotProduct");
+    mutation(&mut dot.kind);
+}
+
+fn assert_dot_mutation_rejected(
+    name: &str,
+    function: &SmirFunction,
+    mutation: impl FnOnce(&mut crate::smir::ir::ops::OpKind),
+) {
+    let mut malformed = function.clone();
+    mutate_dot_product(&mut malformed, mutation);
+    assert_rejected(name, &malformed);
+}
+
+#[test]
+fn vnni_terminal_dot_product_contract_fails_closed_for_every_semantic_axis() {
+    let case = IntegerArithmeticMemoryCase {
+        kind: ArithmeticKind::DotByteSaturating,
+        width: VecWidth::V256,
+        destination: 9,
+        source1: 10,
+        form: SourceForm::Broadcast,
+        control: MaskControl::Zero,
+        wig_w: false,
+    };
+    let function = optimize(lift_case(case), OptLevel::O2);
+    assert!(sequence(&function, true).is_some());
+
+    assert_dot_mutation_rejected("VNNI destination", &function, |kind| {
+        let OpKind::VDotProduct { dst, .. } = kind else {
+            unreachable!()
+        };
+        *dst = vector(8, case.width);
+    });
+    assert_dot_mutation_rejected("VNNI accumulator", &function, |kind| {
+        let OpKind::VDotProduct { acc, .. } = kind else {
+            unreachable!()
+        };
+        *acc = vector(8, case.width);
+    });
+    assert_dot_mutation_rejected("VNNI source1", &function, |kind| {
+        let OpKind::VDotProduct { src1, .. } = kind else {
+            unreachable!()
+        };
+        *src1 = vector(11, case.width);
+    });
+    assert_dot_mutation_rejected("VNNI staged source", &function, |kind| {
+        let OpKind::VDotProduct { src2, .. } = kind else {
+            unreachable!()
+        };
+        *src2 = vector(12, case.width);
+    });
+    assert_dot_mutation_rejected("VNNI opmask", &function, |kind| {
+        let OpKind::VDotProduct { mask, .. } = kind else {
+            unreachable!()
+        };
+        *mask = Some(VReg::Arch(ArchReg::X86(X86Reg::K(2))));
+    });
+    assert_dot_mutation_rejected("VNNI source element", &function, |kind| {
+        let OpKind::VDotProduct { src_elem, .. } = kind else {
+            unreachable!()
+        };
+        *src_elem = VecElementType::I16;
+    });
+    assert_dot_mutation_rejected("VNNI accumulator element", &function, |kind| {
+        let OpKind::VDotProduct { acc_elem, .. } = kind else {
+            unreachable!()
+        };
+        *acc_elem = VecElementType::I64;
+    });
+    assert_dot_mutation_rejected("VNNI width", &function, |kind| {
+        let OpKind::VDotProduct { width, .. } = kind else {
+            unreachable!()
+        };
+        *width = VecWidth::V128;
+    });
+    assert_dot_mutation_rejected("VNNI source signedness", &function, |kind| {
+        let OpKind::VDotProduct { src1_unsigned, .. } = kind else {
+            unreachable!()
+        };
+        *src1_unsigned = false;
+    });
+    assert_dot_mutation_rejected("VNNI saturation", &function, |kind| {
+        let OpKind::VDotProduct { saturate, .. } = kind else {
+            unreachable!()
+        };
+        *saturate = false;
+    });
+    assert_dot_mutation_rejected("VNNI zeroing", &function, |kind| {
+        let OpKind::VDotProduct { zeroing, .. } = kind else {
+            unreachable!()
+        };
+        *zeroing = false;
+    });
+
+    let mut hinted = function.clone();
+    let dot = hinted.blocks[0]
+        .ops
+        .iter_mut()
+        .find(|op| matches!(op.kind, OpKind::VDotProduct { .. }))
+        .unwrap();
+    dot.x86_hint = Some(crate::smir::ir::ops::X86OpHint::MovImmModRm);
+    assert_rejected("hinted VNNI dot product", &hinted);
+
+    let mut wrong_map = function.clone();
+    let mut bytes = case.bytes();
+    bytes[1] = (bytes[1] & !7) | 1;
+    wrong_map
+        .x86_instruction_bytes
+        .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
+    assert_rejected("VNNI map provenance", &wrong_map);
+
+    let mut wrong_broadcast_offset = function;
+    let pred_load = wrong_broadcast_offset.blocks[0]
+        .ops
+        .iter_mut()
+        .filter(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+        .nth(1)
+        .expect("masked VNNI broadcast repeats a guarded dword load");
+    let OpKind::PredLoad {
+        addr: Address::BaseOffset { offset, .. },
+        ..
+    } = &mut pred_load.kind
+    else {
+        panic!("masked VNNI broadcast address graph changed")
+    };
+    *offset = 4;
+    assert_rejected("VNNI broadcast lane address", &wrong_broadcast_offset);
+}
+
 #[test]
 fn packed_average_unmasked_load_compute_and_commit_fail_closed_independently() {
     let case = IntegerArithmeticMemoryCase {
@@ -971,9 +1268,13 @@ fn integer_arithmetic_segment_addr32_rip_and_apx_addresses_admit_and_lower() {
         wig_w: false,
     };
     let broadcast_case = IntegerArithmeticMemoryCase {
+        kind: ArithmeticKind::DotByteSaturating,
+        width: VecWidth::V256,
+        destination: 9,
+        source1: 10,
         form: SourceForm::Broadcast,
         control: MaskControl::Merge,
-        ..vector_case
+        wig_w: false,
     };
 
     let mut rip = vector_case.bytes();
@@ -1075,7 +1376,7 @@ fn integer_arithmetic_segment_addr32_rip_and_apx_addresses_admit_and_lower() {
         ),
         (
             IntegerArithmeticMemoryCase {
-                kind: ArithmeticKind::SubWrappingQword,
+                kind: ArithmeticKind::DotWordSaturating,
                 width: VecWidth::V512,
                 destination: 25,
                 source1: 26,

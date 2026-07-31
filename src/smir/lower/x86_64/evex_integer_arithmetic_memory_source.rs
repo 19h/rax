@@ -136,6 +136,7 @@ impl X86_64Lowerer {
                 signed: SignExtend::Zero,
                 ..
             } if *width == memory_width => addr,
+            OpKind::Lea { addr, .. } => addr,
             _ => unreachable!("validated integer broadcast owns its scalar memory op"),
         };
         {
@@ -196,8 +197,8 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-    /// Fuse one exact EVEX packed wrapping/saturating integer add/subtract or
-    /// rounded unsigned average memory decomposition.
+    /// Fuse one exact EVEX packed wrapping/saturating integer add/subtract,
+    /// rounded unsigned average, or VNNI dot-product memory decomposition.
     ///
     /// Unmasked vectors use the reserved vector transfer slot. Broadcasts
     /// issue at most one scalar helper access. Writemasked full vectors issue

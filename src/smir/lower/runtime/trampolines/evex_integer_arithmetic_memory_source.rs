@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix, X86VecMap};
+use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix};
 use crate::smir::ir::types::{
     ArchReg, BlockId, GuestAddr, MemWidth, OpWidth, SignExtend, SrcOperand, VLaneOp, VReg,
     VecElementType, X86Reg,
@@ -37,6 +37,7 @@ pub(super) struct X86EvexIntegerMemoryShape {
     pub(super) writemask: Option<u8>,
     pub(super) zeroing: bool,
     pub(super) vector_load_hint: Option<X86OpHint>,
+    pub(super) masked_broadcast_uses_lane_graph: bool,
 }
 
 impl From<X86EvexIntegerArithmeticMemoryEncoding> for X86EvexIntegerMemoryShape {
@@ -50,6 +51,7 @@ impl From<X86EvexIntegerArithmeticMemoryEncoding> for X86EvexIntegerMemoryShape 
             vector_load_hint: matches!(encoding.opcode, 0xE0 | 0xE3).then_some(
                 X86OpHint::VecAlign(crate::smir::ir::ops::X86VecAlign::Unaligned),
             ),
+            masked_broadcast_uses_lane_graph: encoding.is_dot_product(),
         }
     }
 }
@@ -63,6 +65,7 @@ impl From<X86EvexIntegerMinMaxMemoryEncoding> for X86EvexIntegerMemoryShape {
             writemask: encoding.writemask,
             zeroing: encoding.zeroing,
             vector_load_hint: None,
+            masked_broadcast_uses_lane_graph: false,
         }
     }
 }
@@ -322,6 +325,7 @@ fn masked_vector_source(
     index: usize,
     encoding: X86EvexIntegerMemoryShape,
     loaded_uses: usize,
+    broadcast: bool,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
 ) -> Option<MatchedMemorySource> {
@@ -341,14 +345,14 @@ fn masked_vector_source(
         return None;
     }
 
-    let broadcast = block.ops.get(index + 1)?;
-    let loaded = match broadcast.kind {
+    let broadcast_op = block.ops.get(index + 1)?;
+    let loaded = match broadcast_op.kind {
         OpKind::VBroadcast {
             dst,
             scalar,
             elem,
             lanes: actual_lanes,
-        } if broadcast.x86_hint.is_none()
+        } if broadcast_op.x86_hint.is_none()
             && scalar == zero
             && elem == encoding.elem
             && actual_lanes == lanes =>
@@ -440,7 +444,11 @@ fn masked_vector_source(
                 && exact_lane_address(
                     addr,
                     base,
-                    i64::from(lane) * i64::from(encoding.elem.bytes()),
+                    if broadcast {
+                        0
+                    } else {
+                        i64::from(lane) * i64::from(encoding.elem.bytes())
+                    },
                 )
         ) || !same_pc(block, index, offset, guest_pc)
         {
@@ -475,7 +483,11 @@ fn masked_vector_source(
         loaded,
         offset,
         address_offset,
-        memory_size: encoding.width.bytes(),
+        memory_size: if broadcast {
+            memory_width.bytes()
+        } else {
+            encoding.width.bytes()
+        },
     })
 }
 
@@ -599,7 +611,7 @@ fn exact_arithmetic(
         None
     } else {
         Some(X86OpHint::EvexOp {
-            map: X86VecMap::Map0F,
+            map: encoding.map,
             pp: X86SsePrefix::OpSize,
             opcode: encoding.opcode,
             width: encoding.width,
@@ -617,6 +629,54 @@ fn exact_arithmetic(
         return None;
     }
     Some(dst)
+}
+
+fn exact_dot_product(
+    op: &crate::smir::ir::ops::SmirOp,
+    loaded: VReg,
+    encoding: X86EvexIntegerArithmeticMemoryEncoding,
+) -> Option<()> {
+    let OpKind::VDotProduct {
+        dst,
+        acc,
+        src1,
+        src2,
+        mask,
+        src_elem,
+        acc_elem,
+        width,
+        src1_unsigned,
+        saturate,
+        zeroing,
+    } = op.kind
+    else {
+        return None;
+    };
+    let expected_mask = encoding
+        .writemask
+        .map(|mask| VReg::Arch(ArchReg::X86(X86Reg::K(mask))));
+    let expected_src_elem = if encoding.opcode < 0x52 {
+        VecElementType::I8
+    } else {
+        VecElementType::I16
+    };
+    if !encoding.is_dot_product()
+        || op.x86_hint.is_some()
+        || dst != acc
+        || vector_index(&dst, encoding.width) != Some(encoding.destination)
+        || vector_index(&src1, encoding.width) != Some(encoding.source1)
+        || src2 != loaded
+        || mask != expected_mask
+        || src_elem != expected_src_elem
+        || acc_elem != VecElementType::I32
+        || width != encoding.width
+        || src1_unsigned != (encoding.opcode < 0x52)
+        || saturate != (encoding.opcode & 1 != 0)
+        || zeroing != encoding.zeroing
+    {
+        return None;
+    }
+    Some(())
 }
 
 fn exact_unmasked_result_tail(
@@ -840,6 +900,19 @@ pub(super) fn matched_integer_memory_source(
             virtual_definitions,
             virtual_uses,
         ),
+        X86EvexIntegerArithmeticMemoryReplay::Broadcast { .. }
+            if encoding.writemask.is_some() && encoding.masked_broadcast_uses_lane_graph =>
+        {
+            masked_vector_source(
+                block,
+                index,
+                encoding,
+                loaded_uses,
+                true,
+                virtual_definitions,
+                virtual_uses,
+            )
+        }
         X86EvexIntegerArithmeticMemoryReplay::Broadcast { .. } if encoding.writemask.is_some() => {
             masked_broadcast_source(
                 block,
@@ -863,6 +936,7 @@ pub(super) fn matched_integer_memory_source(
             index,
             encoding,
             loaded_uses,
+            false,
             virtual_definitions,
             virtual_uses,
         ),
@@ -870,7 +944,8 @@ pub(super) fn matched_integer_memory_source(
 }
 
 /// Validate the complete O0/O1/O2 decomposition emitted for one EVEX packed
-/// integer wrapping/saturating add/subtract or rounded-average memory source.
+/// integer wrapping/saturating add/subtract, rounded-average, or VNNI
+/// dot-product memory source.
 ///
 /// Exact provenance binds the opcode, W/WIG interpretation, vector/element
 /// width, architectural operands, mask policy, tuple kind, address, every
@@ -906,7 +981,14 @@ pub(crate) fn x86_jit_evex_integer_arithmetic_memory_sequence(
 
     let mut offset = source.offset;
     let average = matches!(encoding.opcode, 0xE0 | 0xE3);
-    if average {
+    if encoding.is_dot_product() {
+        let dot_product = block.ops.get(index + offset)?;
+        if dot_product.guest_pc != guest_pc {
+            return None;
+        }
+        exact_dot_product(dot_product, source.loaded, encoding)?;
+        offset += 1;
+    } else if average {
         let arithmetic = block.ops.get(index + offset)?;
         let raw = exact_arithmetic(arithmetic, source.loaded, encoding)?;
         if arithmetic.guest_pc != guest_pc {

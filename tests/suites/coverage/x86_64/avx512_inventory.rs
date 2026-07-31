@@ -93,6 +93,9 @@ mod scalar_move_replay;
 mod vector_align_replay;
 #[path = "avx512_inventory/vector_to_mask_replay.rs"]
 mod vector_to_mask_replay;
+#[cfg(feature = "smir-jit")]
+#[path = "avx512_inventory/vnni_memory_replay.rs"]
+mod vnni_memory_replay;
 #[path = "avx512_inventory/vp2intersect_replay.rs"]
 mod vp2intersect_replay;
 #[path = "avx512_inventory/vpclmulqdq_replay.rs"]

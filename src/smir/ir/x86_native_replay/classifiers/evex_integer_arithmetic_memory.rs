@@ -1,7 +1,8 @@
-//! EVEX packed integer add/subtract/average memory-source classification.
+//! EVEX packed integer arithmetic and VNNI memory-source classification.
 
 use super::X86InstructionBytes;
 use super::evex_memory::{memory_operand_end, vector_legacy_prefix_len};
+use crate::smir::ir::ops::X86VecMap;
 use crate::smir::ir::types::{VecElementType, VecWidth};
 
 /// Native replay strategy for one exact EVEX packed integer arithmetic memory
@@ -27,7 +28,7 @@ pub(crate) enum X86EvexIntegerArithmeticMemoryReplay {
     },
 }
 
-/// Exact EVEX packed integer add/subtract/average memory encoding and its
+/// Exact EVEX packed integer arithmetic or VNNI memory encoding and its
 /// byte-validated native replay.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct X86EvexIntegerArithmeticMemoryEncoding {
@@ -37,20 +38,28 @@ pub(crate) struct X86EvexIntegerArithmeticMemoryEncoding {
     pub(crate) source1: u8,
     pub(crate) writemask: Option<u8>,
     pub(crate) zeroing: bool,
+    pub(crate) map: X86VecMap,
     pub(crate) opcode: u8,
     pub(crate) w: bool,
     pub(crate) replay: X86EvexIntegerArithmeticMemoryReplay,
     pub(crate) needs_avx512vl: bool,
 }
 
-fn integer_arithmetic_elem(opcode: u8, w: bool) -> Option<VecElementType> {
-    match opcode {
-        0xD8 | 0xDC | 0xE8 | 0xEC | 0xF8 | 0xFC => Some(VecElementType::I8),
-        0xD9 | 0xDD | 0xE9 | 0xED | 0xF9 | 0xFD => Some(VecElementType::I16),
-        0xE0 => Some(VecElementType::I8),
-        0xE3 => Some(VecElementType::I16),
-        0xFA | 0xFE if !w => Some(VecElementType::I32),
-        0xD4 | 0xFB if w => Some(VecElementType::I64),
+impl X86EvexIntegerArithmeticMemoryEncoding {
+    pub(crate) fn is_dot_product(self) -> bool {
+        self.map == X86VecMap::Map0F38
+    }
+}
+
+fn integer_arithmetic_elem(map: X86VecMap, opcode: u8, w: bool) -> Option<VecElementType> {
+    match (map, opcode, w) {
+        (X86VecMap::Map0F, 0xD8 | 0xDC | 0xE8 | 0xEC | 0xF8 | 0xFC, _) => Some(VecElementType::I8),
+        (X86VecMap::Map0F, 0xD9 | 0xDD | 0xE9 | 0xED | 0xF9 | 0xFD, _) => Some(VecElementType::I16),
+        (X86VecMap::Map0F, 0xE0, _) => Some(VecElementType::I8),
+        (X86VecMap::Map0F, 0xE3, _) => Some(VecElementType::I16),
+        (X86VecMap::Map0F, 0xFA | 0xFE, false) => Some(VecElementType::I32),
+        (X86VecMap::Map0F, 0xD4 | 0xFB, true) => Some(VecElementType::I64),
+        (X86VecMap::Map0F38, 0x50..=0x53, false) => Some(VecElementType::I32),
         _ => None,
     }
 }
@@ -59,17 +68,44 @@ fn register_arithmetic_needs_vl(instruction: &X86InstructionBytes) -> Option<boo
     instruction
         .evex_register_integer_arithmetic_needs_vl()
         .or_else(|| instruction.evex_register_packed_average_needs_vl())
+        .or_else(|| instruction.evex_register_integer_dot_needs_vl())
 }
 
 impl X86InstructionBytes {
-    /// Validate one EVEX packed wrapping/saturating integer add/subtract or
-    /// rounded unsigned average memory source and select an exact
-    /// helper-backed native replay.
+    /// Validate one exact register-only EVEX VPDPBUSD, VPDPBUSDS, VPDPWSSD,
+    /// or VPDPWSSDS and return whether its vector length requires AVX-512VL.
     ///
-    /// The 18-instruction family uses Type E4/E4.nb exception semantics:
+    /// The family uses map 0F38, mandatory prefix 66H, W=0, opcodes 50H
+    /// through 53H, and AVX-512VNNI. Memory, EVEX.b, reserved vector lengths,
+    /// and malformed masks fail closed.
+    pub fn evex_register_integer_dot_needs_vl(&self) -> Option<bool> {
+        let [0x62, p0, p1, p2, 0x50..=0x53, modrm] = self.as_slice() else {
+            return None;
+        };
+        if p0 & 0x0F != 2
+            || p1 & 0x87 != 0x05
+            || modrm >> 6 != 3
+            || p2 & 0x10 != 0
+            || (p2 & 0x80 != 0 && p2 & 0x07 == 0)
+        {
+            return None;
+        }
+        match (p2 >> 5) & 3 {
+            0 | 1 => Some(true),
+            2 => Some(false),
+            _ => None,
+        }
+    }
+
+    /// Validate one EVEX packed wrapping/saturating integer add/subtract or
+    /// rounded unsigned average, or one integer VNNI dot product, whose source
+    /// is memory, and select an exact helper-backed native replay.
+    ///
+    /// The 22-instruction family uses Type E4/E4.nb exception semantics:
     /// inactive writemask lanes suppress their corresponding 1/2/4/8-byte
     /// access. VPADDD/Q and VPSUBD/Q additionally accept m32bcst/m64bcst;
-    /// VPAVGB/W use only full-vector memory sources.
+    /// VPDPBUSD/S and VPDPWSSD/S accept m32bcst; VPAVGB/W use only full-vector
+    /// memory sources.
     /// Segment/address-size prefixes and APX B4/X4 address extensions remain
     /// confined to helper address evaluation.
     pub(crate) fn evex_integer_arithmetic_memory_encoding(
@@ -88,13 +124,17 @@ impl X86InstructionBytes {
         let modrm_index = start + 5;
         let modrm = *bytes.get(modrm_index)?;
         let w = p1 & 0x80 != 0;
-        let elem = integer_arithmetic_elem(opcode, w)?;
+        let map = match p0 & 0x07 {
+            1 => X86VecMap::Map0F,
+            2 => X86VecMap::Map0F38,
+            _ => return None,
+        };
+        let elem = integer_arithmetic_elem(map, opcode, w)?;
         let mask = p2 & 0x07;
         let zeroing = p2 & 0x80 != 0;
         let broadcast = p2 & 0x10 != 0;
         let broadcast_allowed = matches!(elem, VecElementType::I32 | VecElementType::I64);
-        if p0 & 0x07 != 1
-            || p1 & 0x03 != 1
+        if p1 & 0x03 != 1
             || modrm >> 6 == 3
             || (zeroing && mask == 0)
             || (broadcast && !broadcast_allowed)
@@ -119,8 +159,9 @@ impl X86InstructionBytes {
         let stack_instruction = || {
             X86InstructionBytes::new(&[
                 0x62,
-                // Preserve R/R' and map 0F, select unextended SIB index/base,
-                // and clear APX B4 because the rewritten base is RSP.
+                // Preserve R/R' and the opcode map, select unextended SIB
+                // index/base, and clear APX B4 because the rewritten base is
+                // RSP.
                 (p0 & 0x97) | 0x60,
                 // Preserve W/vvvv/pp and restore the ordinary EVEX.U bit.
                 p1 | 0x04,
@@ -187,6 +228,7 @@ impl X86InstructionBytes {
             source1,
             writemask,
             zeroing,
+            map,
             opcode,
             w,
             replay,

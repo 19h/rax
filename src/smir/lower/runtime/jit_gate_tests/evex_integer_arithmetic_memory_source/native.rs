@@ -86,7 +86,7 @@ fn assert_architectural_state(
     assert_eq!(actual.mxcsr, expected.mxcsr, "{level:?} {case:?}: MXCSR");
 }
 
-fn selected_cases() -> [IntegerArithmeticMemoryCase; 18] {
+fn selected_cases() -> [IntegerArithmeticMemoryCase; 22] {
     [
         IntegerArithmeticMemoryCase {
             kind: ArithmeticKind::AddWrappingByte,
@@ -250,6 +250,42 @@ fn selected_cases() -> [IntegerArithmeticMemoryCase; 18] {
             control: MaskControl::Zero,
             wig_w: false,
         },
+        IntegerArithmeticMemoryCase {
+            kind: ArithmeticKind::DotByte,
+            width: VecWidth::V128,
+            destination: 17,
+            source1: 18,
+            form: SourceForm::Vector,
+            control: MaskControl::None,
+            wig_w: false,
+        },
+        IntegerArithmeticMemoryCase {
+            kind: ArithmeticKind::DotByteSaturating,
+            width: VecWidth::V512,
+            destination: 25,
+            source1: 26,
+            form: SourceForm::Broadcast,
+            control: MaskControl::Zero,
+            wig_w: false,
+        },
+        IntegerArithmeticMemoryCase {
+            kind: ArithmeticKind::DotWord,
+            width: VecWidth::V256,
+            destination: 9,
+            source1: 10,
+            form: SourceForm::Vector,
+            control: MaskControl::Merge,
+            wig_w: false,
+        },
+        IntegerArithmeticMemoryCase {
+            kind: ArithmeticKind::DotWordSaturating,
+            width: VecWidth::V512,
+            destination: 17,
+            source1: 18,
+            form: SourceForm::Vector,
+            control: MaskControl::None,
+            wig_w: false,
+        },
     ]
 }
 
@@ -286,9 +322,12 @@ fn native_integer_arithmetics_match_interpreter_helpers_and_precise_type_e4_faul
         return;
     }
     let has_vl = std::is_x86_feature_detected!("avx512vl");
+    let has_vnni = std::is_x86_feature_detected!("avx512vnni");
     let cases: Vec<_> = selected_cases()
         .into_iter()
-        .filter(|case| case.width == VecWidth::V512 || has_vl)
+        .filter(|case| {
+            (case.width == VecWidth::V512 || has_vl) && (!case.kind.is_dot() || has_vnni)
+        })
         .collect();
     assert!(!cases.is_empty());
 

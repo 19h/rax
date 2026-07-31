@@ -376,10 +376,8 @@ impl X86_64Lifter {
         }
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         if prefix.b && (prefix.encoding != VecEncodingKind::Evex || !modrm.is_memory) {
@@ -484,7 +482,8 @@ impl X86_64Lifter {
                 zeroing: prefix.encoding == VecEncodingKind::Evex && prefix.zeroing,
             },
         ));
-        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+        let result = LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed);
+        Ok(self.retain_evex_memory_apx_requirement(&modrm, pc, result))
     }
 
     pub(crate) fn lift_vec_pclmulqdq(

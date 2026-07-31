@@ -43,12 +43,13 @@ pub(super) fn initial_state(case: IntegerArithmeticMemoryCase, ordinal: usize) -
         mxcsr: 0x1F80,
     };
     state.gpr[3] = 0x2000;
-    for lane in 0..case.width.lanes(case.kind.elem()) as usize {
-        let (source1, _) = boundary_operands(case.kind.elem(), lane, ordinal);
+    let source_elem = case.kind.source_elem();
+    for lane in 0..case.width.lanes(source_elem) as usize {
+        let (source1, _) = boundary_operands(source_elem, lane, ordinal);
         set_lane(
             &mut state.vectors[usize::from(case.source1)],
             lane,
-            case.kind.elem(),
+            source_elem,
             source1,
         );
     }
@@ -57,10 +58,11 @@ pub(super) fn initial_state(case: IntegerArithmeticMemoryCase, ordinal: usize) -
 
 pub(super) fn memory_bytes(case: IntegerArithmeticMemoryCase, ordinal: usize) -> [u8; 64] {
     let mut bytes = [0u8; 64];
-    let lanes = case.width.lanes(case.kind.elem()) as usize;
+    let source_elem = case.kind.source_elem();
+    let lanes = case.width.lanes(source_elem) as usize;
     for lane in 0..lanes {
-        let (_, value) = boundary_operands(case.kind.elem(), lane, ordinal);
-        let lane_bytes = case.kind.elem().bytes() as usize;
+        let (_, value) = boundary_operands(source_elem, lane, ordinal);
+        let lane_bytes = source_elem.bytes() as usize;
         let offset = lane * lane_bytes;
         bytes[offset..offset + lane_bytes].copy_from_slice(&value.to_le_bytes()[..lane_bytes]);
     }
@@ -165,6 +167,55 @@ fn arithmetic_lane(kind: ArithmeticKind, source1: u64, source2: u64) -> u64 {
             (result.clamp(minimum, maximum) as u64) & mask
         }
         ArithmeticKind::AverageByte | ArithmeticKind::AverageWord => (source1 + source2 + 1) >> 1,
+        ArithmeticKind::DotByte
+        | ArithmeticKind::DotByteSaturating
+        | ArithmeticKind::DotWord
+        | ArithmeticKind::DotWordSaturating => {
+            unreachable!("VNNI combines multiple source elements with an accumulator")
+        }
+    }
+}
+
+fn dot_product_lane(
+    kind: ArithmeticKind,
+    lane: usize,
+    source1: &[u64; 16],
+    old_destination: &[u64; 16],
+    memory: &[u8; 64],
+    broadcast: bool,
+) -> u64 {
+    let source_elem = kind.source_elem();
+    let products_per_dword = match source_elem {
+        VecElementType::I8 => 4,
+        VecElementType::I16 => 2,
+        _ => unreachable!("VNNI source element"),
+    };
+    let mut sum = 0i64;
+    for element in 0..products_per_dword {
+        let source_lane = lane * products_per_dword + element;
+        let memory_source_lane = if broadcast { element } else { source_lane };
+        let source1 = get_lane(source1, source_lane, source_elem);
+        let source2 = signed_value(
+            memory_lane(memory, memory_source_lane, source_elem),
+            source_elem,
+        );
+        let source1 = if source_elem == VecElementType::I8 {
+            i64::try_from(source1).unwrap()
+        } else {
+            signed_value(source1, source_elem)
+        };
+        sum += source1 * source2;
+    }
+
+    let accumulator = get_lane(old_destination, lane, VecElementType::I32) as u32;
+    if matches!(
+        kind,
+        ArithmeticKind::DotByteSaturating | ArithmeticKind::DotWordSaturating
+    ) {
+        (i64::from(accumulator as i32) + sum).clamp(i64::from(i32::MIN), i64::from(i32::MAX)) as i32
+            as u32 as u64
+    } else {
+        (i64::from(accumulator) + sum) as u32 as u64
     }
 }
 
@@ -186,11 +237,22 @@ fn manual(
     let destination = &mut expected.vectors[usize::from(case.destination)];
     for lane in 0..lanes {
         let value = if mask & (1u64 << lane) != 0 {
-            arithmetic_lane(
-                case.kind,
-                get_lane(&source1, lane, elem),
-                memory_lane(memory, if case.broadcast() { 0 } else { lane }, elem),
-            )
+            if case.kind.is_dot() {
+                dot_product_lane(
+                    case.kind,
+                    lane,
+                    &source1,
+                    &old_destination,
+                    memory,
+                    case.broadcast(),
+                )
+            } else {
+                arithmetic_lane(
+                    case.kind,
+                    get_lane(&source1, lane, elem),
+                    memory_lane(memory, if case.broadcast() { 0 } else { lane }, elem),
+                )
+            }
         } else if case.zeroing() {
             0
         } else {
@@ -255,9 +317,9 @@ pub(super) fn interpret(
 }
 
 #[test]
-fn all_972_integer_arithmetic_cells_match_manual_semantics_at_o0_o1_o2() {
+fn all_1188_integer_arithmetic_cells_match_manual_semantics_at_o0_o1_o2() {
     let cases = all_cases();
-    assert_eq!(cases.len(), 972);
+    assert_eq!(cases.len(), 1_188);
     let mut comparisons = 0usize;
     for (ordinal, case) in cases.into_iter().enumerate() {
         let initial = initial_state(case, ordinal);
@@ -270,7 +332,104 @@ fn all_972_integer_arithmetic_cells_match_manual_semantics_at_o0_o1_o2() {
             comparisons += 1;
         }
     }
-    assert_eq!(comparisons, 972 * LEVELS.len());
+    assert_eq!(comparisons, 1_188 * LEVELS.len());
+}
+
+#[test]
+fn vnni_wrap_and_signed_saturation_boundaries_match_manual_bits() {
+    let cases: [(IntegerArithmeticMemoryCase, u64, u64, u64); 4] = [
+        (
+            IntegerArithmeticMemoryCase {
+                kind: ArithmeticKind::DotByte,
+                width: VecWidth::V128,
+                destination: 17,
+                source1: 18,
+                form: SourceForm::Vector,
+                control: MaskControl::None,
+                wig_w: false,
+            },
+            0xFFFF_FFF0,
+            0xFF,
+            0x7F,
+        ),
+        (
+            IntegerArithmeticMemoryCase {
+                kind: ArithmeticKind::DotByteSaturating,
+                width: VecWidth::V256,
+                destination: 9,
+                source1: 10,
+                form: SourceForm::Broadcast,
+                control: MaskControl::None,
+                wig_w: false,
+            },
+            0x7FFF_FFFE,
+            0xFF,
+            0x7F,
+        ),
+        (
+            IntegerArithmeticMemoryCase {
+                kind: ArithmeticKind::DotWord,
+                width: VecWidth::V512,
+                destination: 17,
+                source1: 18,
+                form: SourceForm::Vector,
+                control: MaskControl::None,
+                wig_w: false,
+            },
+            0x8000_0000,
+            0x8000,
+            0x8000,
+        ),
+        (
+            IntegerArithmeticMemoryCase {
+                kind: ArithmeticKind::DotWordSaturating,
+                width: VecWidth::V512,
+                destination: 25,
+                source1: 26,
+                form: SourceForm::Broadcast,
+                control: MaskControl::None,
+                wig_w: false,
+            },
+            0x8000_0001,
+            0x8000,
+            0x7FFF,
+        ),
+    ];
+
+    for (ordinal, (case, accumulator, source1, source2)) in cases.into_iter().enumerate() {
+        let mut initial = initial_state(case, ordinal);
+        for lane in 0..case.width.lanes(VecElementType::I32) as usize {
+            set_lane(
+                &mut initial.vectors[usize::from(case.destination)],
+                lane,
+                VecElementType::I32,
+                accumulator,
+            );
+        }
+        let source_elem = case.kind.source_elem();
+        let mut memory = [0u8; 64];
+        for lane in 0..case.width.lanes(source_elem) as usize {
+            set_lane(
+                &mut initial.vectors[usize::from(case.source1)],
+                lane,
+                source_elem,
+                source1,
+            );
+            let lane_bytes = source_elem.bytes() as usize;
+            let offset = lane * lane_bytes;
+            memory[offset..offset + lane_bytes]
+                .copy_from_slice(&source2.to_le_bytes()[..lane_bytes]);
+        }
+        let expected = manual(case, &initial, &memory);
+        for level in LEVELS {
+            let function = optimize(lift_case(case), level);
+            assert_eq!(
+                interpret(&function, &initial, &memory, case),
+                expected,
+                "{level:?} {case:?}"
+            );
+        }
+    }
 }
 
 #[test]
@@ -302,6 +461,24 @@ fn empty_masks_suppress_type_e4_accesses_and_faults_do_not_commit() {
             form: SourceForm::Vector,
             control: MaskControl::Merge,
             wig_w: true,
+        },
+        IntegerArithmeticMemoryCase {
+            kind: ArithmeticKind::DotByteSaturating,
+            width: VecWidth::V512,
+            destination: 17,
+            source1: 18,
+            form: SourceForm::Vector,
+            control: MaskControl::Merge,
+            wig_w: false,
+        },
+        IntegerArithmeticMemoryCase {
+            kind: ArithmeticKind::DotWord,
+            width: VecWidth::V512,
+            destination: 25,
+            source1: 26,
+            form: SourceForm::Broadcast,
+            control: MaskControl::Zero,
+            wig_w: false,
         },
     ] {
         for level in LEVELS {
