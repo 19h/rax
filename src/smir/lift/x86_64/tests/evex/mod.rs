@@ -12,6 +12,8 @@ mod fp16_arithmetic;
 #[cfg(test)]
 mod fp16_convert;
 #[cfg(test)]
+mod fp_arithmetic_apx;
+#[cfg(test)]
 mod fp_unpack;
 #[cfg(test)]
 mod int32_to_fp64;
