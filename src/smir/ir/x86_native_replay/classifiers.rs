@@ -8,6 +8,7 @@ mod evex_broadcast_logic_memory;
 mod evex_fma3_memory;
 mod evex_fp16_arithmetic_memory;
 mod evex_fp_arithmetic_memory;
+mod evex_integer_arithmetic_memory;
 mod evex_logic_memory;
 mod evex_mask_blend_memory;
 mod evex_memory;
@@ -111,6 +112,9 @@ pub(crate) use evex_fp_arithmetic_memory::{
 };
 pub(crate) use evex_fp16_arithmetic_memory::{
     X86EvexPackedFp16ArithmeticMemoryEncoding, X86EvexPackedFp16ArithmeticMemoryReplay,
+};
+pub(crate) use evex_integer_arithmetic_memory::{
+    X86EvexIntegerArithmeticMemoryEncoding, X86EvexIntegerArithmeticMemoryReplay,
 };
 pub(crate) use evex_logic_memory::{
     X86EvexLogicMemoryEncoding, X86EvexLogicMemoryKind, X86EvexMaskedLogicMemoryEncoding,

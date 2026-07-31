@@ -510,6 +510,23 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
                 all_spans_support_avx_ymm16 = false;
                 index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_evex_integer_arithmetic_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                // The full-width vector/opmask bridge requires AVX-512BW.
+                // Byte/word operations also require BW architecturally;
+                // dword/quadword operations require only AVX-512F.
+                requirements.needs_avx512bw = true;
+                requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+                all_spans_support_avx_ymm16 = false;
+                index += sequence.consumed;
             } else if let Some(sequence) = super::x86_jit_evex_logic_memory_sequence(
                 block,
                 index,

@@ -1136,7 +1136,8 @@ impl X86_64Lifter {
                             bytes: bytes.to_vec(),
                         });
                     }
-                    let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    let integer_modrm_prefix = prefix.modrm_prefix(cursor);
+                    let modrm = decode_modrm(after_opcode, &integer_modrm_prefix, pc)?;
                     let broadcast_allowed = matches!(
                         opcode,
                         0x54 | 0x55
@@ -1539,7 +1540,8 @@ impl X86_64Lifter {
                             ));
                         }
                     }
-                    Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+                    let result = LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed);
+                    Ok(self.retain_evex_memory_apx_requirement(&modrm, pc, result))
                 }
 
                 // Full-register VMOVAPS/VMOVAPD and VMOVDQA/VMOVDQU. Aligned
