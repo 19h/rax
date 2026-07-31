@@ -299,7 +299,7 @@ pub(crate) fn block_is_clobber_safe(
             i += sequence.consumed;
             continue;
         }
-        if let Some(sequence) = x86_jit_evex_bw_shuffle_madd_memory_sequence(
+        if let Some(consumed) = x86_jit_evex_integer_memory_replay_sequence_len(
             block,
             i,
             allow_mem,
@@ -307,84 +307,7 @@ pub(crate) fn block_is_clobber_safe(
             &virtual_definitions,
             &virtual_uses,
         ) {
-            i += sequence.consumed;
-            continue;
-        }
-        if let Some(sequence) = x86_jit_evex_integer_arithmetic_memory_sequence(
-            block,
-            i,
-            allow_mem,
-            x86_instruction_bytes,
-            &virtual_definitions,
-            &virtual_uses,
-        ) {
-            i += sequence.consumed;
-            continue;
-        }
-        if let Some(sequence) = x86_jit_evex_integer_pack_memory_sequence(
-            block,
-            i,
-            allow_mem,
-            x86_instruction_bytes,
-            &virtual_definitions,
-            &virtual_uses,
-        ) {
-            i += sequence.consumed;
-            continue;
-        }
-        if let Some(sequence) = x86_jit_evex_integer_minmax_memory_sequence(
-            block,
-            i,
-            allow_mem,
-            x86_instruction_bytes,
-            &virtual_definitions,
-            &virtual_uses,
-        ) {
-            i += sequence.consumed;
-            continue;
-        }
-        if let Some(sequence) = x86_jit_evex_logic_memory_sequence(
-            block,
-            i,
-            allow_mem,
-            x86_instruction_bytes,
-            &virtual_definitions,
-            &virtual_uses,
-        ) {
-            i += sequence.consumed;
-            continue;
-        }
-        if let Some(sequence) = x86_jit_evex_masked_logic_memory_sequence(
-            block,
-            i,
-            allow_mem,
-            x86_instruction_bytes,
-            &virtual_definitions,
-            &virtual_uses,
-        ) {
-            i += sequence.consumed;
-            continue;
-        }
-        if let Some(sequence) = x86_jit_evex_two_table_permute_memory_sequence(
-            block,
-            i,
-            allow_mem,
-            x86_instruction_bytes,
-            &virtual_definitions,
-            &virtual_uses,
-        ) {
-            i += sequence.consumed;
-            continue;
-        }
-        if let Some(sequence) = x86_jit_evex_variable_permute_memory_sequence(
-            block,
-            i,
-            allow_mem,
-            x86_instruction_bytes,
-            &virtual_definitions,
-            &virtual_uses,
-        ) {
-            i += sequence.consumed;
+            i += consumed;
             continue;
         }
         if let Some(sequence) = x86_jit_evex_broadcast_logic_memory_sequence(

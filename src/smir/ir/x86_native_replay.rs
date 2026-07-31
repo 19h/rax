@@ -106,6 +106,7 @@ pub(crate) use classifiers::{
     X86EvexIntegerMinMaxMemoryEncoding, X86EvexIntegerPackMemoryEncoding,
     X86EvexLogicMemoryEncoding, X86EvexLogicMemoryKind, X86EvexMaskBlendMemoryEncoding,
     X86EvexMaskBlendMemoryReplay, X86EvexMaskedLogicMemoryEncoding,
+    X86EvexMultiShiftMemoryEncoding, X86EvexMultiShiftMemoryReplay,
     X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay,
     X86EvexPackedFp16ArithmeticMemoryEncoding, X86EvexPackedFp16ArithmeticMemoryReplay,
     X86EvexPackedFpArithmeticMemoryEncoding, X86EvexPackedFpArithmeticMemoryReplay,

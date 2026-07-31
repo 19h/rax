@@ -1,0 +1,115 @@
+//! Exact EVEX integer memory-replay sequence dispatch for the clobber gate.
+
+use super::*;
+use crate::smir::ir::types::{BlockId, GuestAddr, VReg};
+use crate::smir::ir::{SmirBlock, X86InstructionBytes};
+use std::collections::HashMap;
+
+/// Return the semantic-op count consumed by one exact EVEX integer
+/// memory-source replay sequence.
+///
+/// Each family performs its own byte, graph, provenance, address, and virtual
+/// value validation. Keeping their ordered dispatch together prevents an
+/// implemented family from being admitted by feature discovery and lowering
+/// while remaining invisible to the clobber gate. The fixed family list makes
+/// this O(1) time and O(1) space per candidate.
+pub(crate) fn x86_jit_evex_integer_memory_replay_sequence_len(
+    block: &SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<usize> {
+    if let Some(sequence) = x86_jit_evex_bw_shuffle_madd_memory_sequence(
+        block,
+        index,
+        allow_mem,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence.consumed);
+    }
+    if let Some(sequence) = x86_jit_evex_integer_arithmetic_memory_sequence(
+        block,
+        index,
+        allow_mem,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence.consumed);
+    }
+    if let Some(sequence) = x86_jit_evex_integer_pack_memory_sequence(
+        block,
+        index,
+        allow_mem,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence.consumed);
+    }
+    if let Some(sequence) = x86_jit_evex_integer_minmax_memory_sequence(
+        block,
+        index,
+        allow_mem,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence.consumed);
+    }
+    if let Some(sequence) = x86_jit_evex_logic_memory_sequence(
+        block,
+        index,
+        allow_mem,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence.consumed);
+    }
+    if let Some(sequence) = x86_jit_evex_masked_logic_memory_sequence(
+        block,
+        index,
+        allow_mem,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence.consumed);
+    }
+    if let Some(sequence) = x86_jit_evex_multishift_memory_sequence(
+        block,
+        index,
+        allow_mem,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence.consumed);
+    }
+    if let Some(sequence) = x86_jit_evex_two_table_permute_memory_sequence(
+        block,
+        index,
+        allow_mem,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence.consumed);
+    }
+    if let Some(sequence) = x86_jit_evex_variable_permute_memory_sequence(
+        block,
+        index,
+        allow_mem,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence.consumed);
+    }
+    None
+}
