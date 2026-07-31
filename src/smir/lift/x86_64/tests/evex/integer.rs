@@ -830,8 +830,8 @@ fn lift_evex_packed_rotates_cover_directions_counts_widths_memory_and_invalids()
         assert_eq!(rotate.0.is_some(), variable);
     }
 
-    // Type E4: the broadcast scalar is represented by one predicated
-    // element load per destination lane, with disp8 scaled by 4 bytes.
+    // Type E4: aggregate the applicable mask bits and issue at most one
+    // scalar read, with disp8 scaled by 4 bytes.
     let broadcast = lift_single(&[0x62, 0xF2, 0x4D, 0x5A, 0x14, 0x68, 0x01]).unwrap();
     assert_eq!(
         broadcast
@@ -845,11 +845,11 @@ fn lift_evex_packed_rotates_cover_directions_counts_widths_memory_and_invalids()
                 }
             ))
             .count(),
-        16
+        1
     );
     assert!(broadcast.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::Lea {
+        OpKind::PredLoad {
             addr: Address::BaseOffset { offset: 4, .. },
             ..
         }

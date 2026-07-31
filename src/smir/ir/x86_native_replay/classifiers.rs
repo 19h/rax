@@ -9,6 +9,7 @@ mod evex_fp16_arithmetic_memory;
 mod evex_fp_arithmetic_memory;
 mod evex_logic_memory;
 mod evex_memory;
+mod evex_packed_rotate_memory;
 mod evex_variable_permute_memory;
 mod fp16_narrow;
 mod fp16_widen;
@@ -106,6 +107,9 @@ pub(crate) use evex_fp16_arithmetic_memory::{
 };
 pub(crate) use evex_logic_memory::{
     X86EvexLogicMemoryEncoding, X86EvexLogicMemoryKind, X86EvexMaskedLogicMemoryEncoding,
+};
+pub(crate) use evex_packed_rotate_memory::{
+    X86EvexPackedRotateMemoryEncoding, X86EvexPackedRotateMemoryReplay,
 };
 pub(crate) use evex_variable_permute_memory::X86EvexVariablePermuteMemoryEncoding;
 pub(crate) use fp_round::X86VexRoundMemoryEncoding;

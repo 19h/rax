@@ -6327,26 +6327,23 @@ fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
     assert_eq!(
         rotate_ops
             .iter()
-            .filter(|op| matches!(
-                op.kind,
+            .filter_map(|op| match op.kind {
                 OpKind::PredLoad {
                     width: MemWidth::B4,
                     ..
-                }
-            ))
-            .count(),
-        16,
+                } => Some("load"),
+                OpKind::X86PackedRotate {
+                    count: Some(_),
+                    width: VecWidth::V512,
+                    elem: VecElementType::I32,
+                    left: false,
+                    ..
+                } => Some("rotate"),
+                _ => None,
+            })
+            .collect::<Vec<_>>(),
+        ["load", "rotate"],
     );
-    assert!(rotate_ops.iter().any(|op| matches!(
-        op.kind,
-        OpKind::X86PackedRotate {
-            count: Some(_),
-            width: VecWidth::V512,
-            elem: VecElementType::I32,
-            left: false,
-            ..
-        }
-    )));
 
     let ternary = optimized(&[0x62, 0xF3, 0x6D, 0x08, 0x25, 0xCB, 0x96]);
     assert!(ternary.blocks[0].ops.iter().any(|op| matches!(

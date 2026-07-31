@@ -1759,8 +1759,8 @@ impl X86_64Lifter {
                 ctx,
             );
             ops.extend(pre_ops);
-            let value = ctx.alloc_vreg();
             if e4nf {
+                let value = ctx.alloc_vreg();
                 ops.push(SmirOp::new(
                     OpId(ops.len() as u16),
                     pc,
@@ -1770,69 +1770,23 @@ impl X86_64Lifter {
                         width: prefix.width,
                     },
                 ));
+                value
             } else if broadcast {
-                let scalar = ctx.alloc_vreg();
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Mov {
-                        dst: scalar,
-                        src: SrcOperand::Imm(0),
-                        width: OpWidth::W64,
-                    },
-                ));
-                let mem_width = if elem == VecElementType::I32 {
-                    MemWidth::B4
-                } else {
-                    MemWidth::B8
-                };
-                if let Some(mask_reg) = mask {
-                    let active = ctx.alloc_vreg();
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::And {
-                            dst: active,
-                            src1: mask_reg,
-                            src2: SrcOperand::Imm((1i64 << lanes) - 1),
-                            width: OpWidth::W64,
-                            flags: FlagUpdate::None,
-                        },
-                    ));
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::PredLoad {
-                            dst: scalar,
-                            cond: active,
-                            addr,
-                            width: mem_width,
-                            signed: SignExtend::Zero,
-                        },
-                    ));
-                } else {
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::Load {
-                            dst: scalar,
-                            addr,
-                            width: mem_width,
-                            sign: SignExtend::Zero,
-                        },
-                    ));
-                }
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::VBroadcast {
-                        dst: value,
-                        scalar,
+                if let Some(mask) = mask {
+                    self.append_masked_broadcast_memory_source(
+                        addr,
                         elem,
-                        lanes,
-                    },
-                ));
+                        prefix.width,
+                        mask,
+                        pc,
+                        ctx,
+                        &mut ops,
+                    )
+                } else {
+                    self.append_broadcast_memory_source(addr, elem, prefix.width, pc, ctx, &mut ops)
+                }
             } else if let Some(mask_reg) = mask {
+                let value = ctx.alloc_vreg();
                 let zero = ctx.alloc_vreg();
                 ops.push(SmirOp::new(
                     OpId(ops.len() as u16),
@@ -1924,7 +1878,9 @@ impl X86_64Lifter {
                         },
                     ));
                 }
+                value
             } else {
+                let value = ctx.alloc_vreg();
                 ops.push(SmirOp::new(
                     OpId(ops.len() as u16),
                     pc,
@@ -1934,8 +1890,8 @@ impl X86_64Lifter {
                         width: prefix.width,
                     },
                 ));
+                value
             }
-            value
         } else {
             self.vec_reg(
                 modrm.rm + if evex && prefix.rm_high { 16 } else { 0 },

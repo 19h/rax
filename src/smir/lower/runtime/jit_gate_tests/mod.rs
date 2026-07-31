@@ -102,6 +102,8 @@ mod evex_packed_compare_replay;
 #[cfg(test)]
 mod evex_packed_extend_replay;
 #[cfg(test)]
+mod evex_packed_rotate_memory_source;
+#[cfg(test)]
 mod evex_packed_rotate_replay;
 #[cfg(test)]
 mod evex_permute_replay;
