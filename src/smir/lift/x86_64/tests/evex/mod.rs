@@ -32,6 +32,8 @@ mod ops;
 #[cfg(test)]
 mod packed_compare;
 #[cfg(test)]
+mod packed_rotate_addressing;
+#[cfg(test)]
 mod permute;
 #[cfg(test)]
 mod saturating_convert;
