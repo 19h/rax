@@ -92,6 +92,8 @@ mod evex_gpr_broadcast_replay;
 #[cfg(test)]
 mod evex_high_low_move_replay;
 #[cfg(test)]
+mod evex_ifma52_memory_source;
+#[cfg(test)]
 mod evex_int32_to_fp64_ignored_er;
 #[cfg(test)]
 mod evex_integer_arithmetic_memory_source;

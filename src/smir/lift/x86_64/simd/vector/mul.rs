@@ -247,10 +247,8 @@ impl X86_64Lifter {
         }
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         if prefix.b && (prefix.encoding != VecEncodingKind::Evex || !modrm.is_memory) {
@@ -272,12 +270,22 @@ impl X86_64Lifter {
                 ctx,
             );
             ops.extend(pre_ops);
-            if let Some(mask) = mask {
+            if let (Some(mask), true) = (mask, prefix.b) {
+                self.append_masked_broadcast_memory_source(
+                    addr,
+                    VecElementType::I64,
+                    prefix.width,
+                    mask,
+                    pc,
+                    ctx,
+                    &mut ops,
+                )
+            } else if let Some(mask) = mask {
                 self.append_evex_masked_vector_source(
                     addr,
                     VecElementType::I64,
                     prefix.width,
-                    prefix.b,
+                    false,
                     mask,
                     pc,
                     ctx,
@@ -334,11 +342,6 @@ impl X86_64Lifter {
                 },
             prefix.width,
         );
-        let raw = if prefix.encoding == VecEncodingKind::Evex {
-            ctx.alloc_vreg()
-        } else {
-            dst
-        };
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
@@ -353,7 +356,8 @@ impl X86_64Lifter {
                 zeroing: prefix.encoding == VecEncodingKind::Evex && prefix.zeroing,
             },
         ));
-        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+        let result = LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed);
+        Ok(self.retain_evex_memory_apx_requirement(&modrm, pc, result))
     }
 
     pub(crate) fn lift_vec_vnni_dot(

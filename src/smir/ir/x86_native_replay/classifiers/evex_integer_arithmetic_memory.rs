@@ -47,7 +47,11 @@ pub(crate) struct X86EvexIntegerArithmeticMemoryEncoding {
 
 impl X86EvexIntegerArithmeticMemoryEncoding {
     pub(crate) fn is_dot_product(self) -> bool {
-        self.map == X86VecMap::Map0F38
+        self.map == X86VecMap::Map0F38 && matches!(self.opcode, 0x50..=0x53)
+    }
+
+    pub(crate) fn is_ifma52(self) -> bool {
+        self.map == X86VecMap::Map0F38 && matches!(self.opcode, 0xB4 | 0xB5)
     }
 }
 
@@ -60,6 +64,7 @@ fn integer_arithmetic_elem(map: X86VecMap, opcode: u8, w: bool) -> Option<VecEle
         (X86VecMap::Map0F, 0xFA | 0xFE, false) => Some(VecElementType::I32),
         (X86VecMap::Map0F, 0xD4 | 0xFB, true) => Some(VecElementType::I64),
         (X86VecMap::Map0F38, 0x50..=0x53, false) => Some(VecElementType::I32),
+        (X86VecMap::Map0F38, 0xB4 | 0xB5, true) => Some(VecElementType::I64),
         _ => None,
     }
 }
@@ -69,6 +74,7 @@ fn register_arithmetic_needs_vl(instruction: &X86InstructionBytes) -> Option<boo
         .evex_register_integer_arithmetic_needs_vl()
         .or_else(|| instruction.evex_register_packed_average_needs_vl())
         .or_else(|| instruction.evex_register_integer_dot_needs_vl())
+        .or_else(|| instruction.evex_register_ifma52_needs_vl())
 }
 
 impl X86InstructionBytes {
@@ -97,15 +103,41 @@ impl X86InstructionBytes {
         }
     }
 
-    /// Validate one EVEX packed wrapping/saturating integer add/subtract or
-    /// rounded unsigned average, or one integer VNNI dot product, whose source
-    /// is memory, and select an exact helper-backed native replay.
+    /// Validate one exact register-only EVEX VPMADD52LUQ or VPMADD52HUQ and
+    /// return whether its vector length requires AVX-512VL.
     ///
-    /// The 22-instruction family uses Type E4/E4.nb exception semantics:
+    /// The family uses map 0F38, mandatory prefix 66H, W=1, opcodes B4H/B5H,
+    /// and AVX-512IFMA. Memory, EVEX.b, reserved vector lengths, and malformed
+    /// masks fail closed.
+    pub fn evex_register_ifma52_needs_vl(&self) -> Option<bool> {
+        let [0x62, p0, p1, p2, 0xB4 | 0xB5, modrm] = self.as_slice() else {
+            return None;
+        };
+        if p0 & 0x0F != 2
+            || p1 & 0x87 != 0x85
+            || modrm >> 6 != 3
+            || p2 & 0x10 != 0
+            || (p2 & 0x80 != 0 && p2 & 0x07 == 0)
+        {
+            return None;
+        }
+        match (p2 >> 5) & 3 {
+            0 | 1 => Some(true),
+            2 => Some(false),
+            _ => None,
+        }
+    }
+
+    /// Validate one EVEX packed wrapping/saturating integer add/subtract or
+    /// rounded unsigned average, integer VNNI dot product, or IFMA52
+    /// multiply-add whose source is memory, and select an exact helper-backed
+    /// native replay.
+    ///
+    /// The 24-instruction family uses Type E4/E4.nb exception semantics:
     /// inactive writemask lanes suppress their corresponding 1/2/4/8-byte
     /// access. VPADDD/Q and VPSUBD/Q additionally accept m32bcst/m64bcst;
-    /// VPDPBUSD/S and VPDPWSSD/S accept m32bcst; VPAVGB/W use only full-vector
-    /// memory sources.
+    /// VPDPBUSD/S and VPDPWSSD/S accept m32bcst; VPMADD52LUQ/HUQ accept
+    /// m64bcst; VPAVGB/W use only full-vector memory sources.
     /// Segment/address-size prefixes and APX B4/X4 address extensions remain
     /// confined to helper address evaluation.
     pub(crate) fn evex_integer_arithmetic_memory_encoding(

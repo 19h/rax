@@ -245,19 +245,16 @@ fn masked_broadcast_source(
     };
     let first = block.ops.get(index)?;
     let guest_pc = first.guest_pc;
-    let scalar = match first.kind {
+    let leading_scalar = match first.kind {
         OpKind::Mov {
             dst,
             src: SrcOperand::Imm(0),
             width: OpWidth::W64,
-        } if first.x86_hint.is_none() => dst,
-        _ => return None,
+        } if first.x86_hint.is_none() => Some(dst),
+        _ => None,
     };
-    if !exact_virtual_definition_use(scalar, 2, 1, virtual_definitions, virtual_uses) {
-        return None;
-    }
 
-    let mut offset = 1usize;
+    let mut offset = usize::from(leading_scalar.is_some());
     let condition = exact_nonzero_mask_predicate(
         block,
         index,
@@ -268,6 +265,27 @@ fn masked_broadcast_source(
         virtual_definitions,
         virtual_uses,
     )?;
+    let scalar = if let Some(scalar) = leading_scalar {
+        scalar
+    } else {
+        let seed = block.ops.get(index + offset)?;
+        let scalar = match seed.kind {
+            OpKind::Mov {
+                dst,
+                src: SrcOperand::Imm(0),
+                width: OpWidth::W64,
+            } if seed.x86_hint.is_none() => dst,
+            _ => return None,
+        };
+        if !same_pc(block, index, offset, guest_pc) {
+            return None;
+        }
+        offset += 1;
+        scalar
+    };
+    if !exact_virtual_definition_use(scalar, 2, 1, virtual_definitions, virtual_uses) {
+        return None;
+    }
     let address_offset = offset;
     let memory_width = element_memory_width(encoding.elem)?;
     let load = block.ops.get(index + offset)?;
@@ -679,6 +697,43 @@ fn exact_dot_product(
     Some(())
 }
 
+fn exact_ifma52(
+    op: &crate::smir::ir::ops::SmirOp,
+    loaded: VReg,
+    encoding: X86EvexIntegerArithmeticMemoryEncoding,
+) -> Option<()> {
+    let OpKind::VMultiplyAdd52 {
+        dst,
+        acc,
+        src1,
+        src2,
+        mask,
+        width,
+        high,
+        zeroing,
+    } = op.kind
+    else {
+        return None;
+    };
+    let expected_mask = encoding
+        .writemask
+        .map(|mask| VReg::Arch(ArchReg::X86(X86Reg::K(mask))));
+    if !encoding.is_ifma52()
+        || op.x86_hint.is_some()
+        || dst != acc
+        || vector_index(&dst, encoding.width) != Some(encoding.destination)
+        || vector_index(&src1, encoding.width) != Some(encoding.source1)
+        || src2 != loaded
+        || mask != expected_mask
+        || width != encoding.width
+        || high != (encoding.opcode == 0xB5)
+        || zeroing != encoding.zeroing
+    {
+        return None;
+    }
+    Some(())
+}
+
 fn exact_unmasked_result_tail(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
@@ -944,8 +999,8 @@ pub(super) fn matched_integer_memory_source(
 }
 
 /// Validate the complete O0/O1/O2 decomposition emitted for one EVEX packed
-/// integer wrapping/saturating add/subtract, rounded-average, or VNNI
-/// dot-product memory source.
+/// integer wrapping/saturating add/subtract, rounded-average, VNNI dot-product,
+/// or IFMA52 multiply-add memory source.
 ///
 /// Exact provenance binds the opcode, W/WIG interpretation, vector/element
 /// width, architectural operands, mask policy, tuple kind, address, every
@@ -981,7 +1036,14 @@ pub(crate) fn x86_jit_evex_integer_arithmetic_memory_sequence(
 
     let mut offset = source.offset;
     let average = matches!(encoding.opcode, 0xE0 | 0xE3);
-    if encoding.is_dot_product() {
+    if encoding.is_ifma52() {
+        let ifma52 = block.ops.get(index + offset)?;
+        if ifma52.guest_pc != guest_pc {
+            return None;
+        }
+        exact_ifma52(ifma52, source.loaded, encoding)?;
+        offset += 1;
+    } else if encoding.is_dot_product() {
         let dot_product = block.ops.get(index + offset)?;
         if dot_product.guest_pc != guest_pc {
             return None;

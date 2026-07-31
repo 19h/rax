@@ -121,8 +121,17 @@ fn lift_vpmadd52_covers_vex_evex_high_low_masks_broadcasts_and_invalids() {
                 }
             ))
             .count(),
-        4
+        1,
+        "masked m64bcst must perform exactly one conditional 8-byte access"
     );
+    assert!(broadcast.ops.iter().any(|op| matches!(
+        op.kind,
+        OpKind::VBroadcast {
+            elem: VecElementType::I64,
+            lanes: 4,
+            ..
+        }
+    )));
     for bytes in [
         &[0xC4, 0xE2, 0x69, 0xB4, 0xCB][..],
         &[0x62, 0xA2, 0xE4, 0xC2, 0xB4, 0xCB][..],
