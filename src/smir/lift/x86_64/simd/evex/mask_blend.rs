@@ -219,6 +219,10 @@ impl X86_64Lifter {
                 width: prefix.width,
             },
         ));
-        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+        Ok(self.retain_evex_memory_apx_requirement(
+            &modrm,
+            pc,
+            LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed),
+        ))
     }
 }

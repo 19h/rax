@@ -296,9 +296,13 @@ fn virtual_counts(function: &SmirFunction) -> (HashMap<VReg, usize>, HashMap<VRe
 
 fn sequence(function: &SmirFunction, allow_mem: bool) -> Option<X86JitEvexMaskBlendMemorySequence> {
     let (definitions, uses) = virtual_counts(function);
+    let index = usize::from(matches!(
+        function.blocks[0].ops.first().map(|op| &op.kind),
+        Some(OpKind::X86RequireApx)
+    ));
     x86_jit_evex_mask_blend_memory_sequence(
         &function.blocks[0],
-        0,
+        index,
         allow_mem,
         &function.x86_instruction_bytes,
         &definitions,
@@ -350,6 +354,7 @@ fn lower(function: &SmirFunction, case: MaskBlendMemoryCase) -> (Vec<u8>, usize)
     lowerer.set_mem_helpers(true);
     lowerer.set_preserve_vector_mem_helpers(true);
     lowerer.set_avx_ymm16_vector_state(false);
+    lowerer.set_jit_fault_deopt_guards(true);
     let result = lowerer
         .lower_function(function)
         .unwrap_or_else(|error| panic!("{case:?}: EVEX mask-blend lowering: {error:?}"));
@@ -915,6 +920,13 @@ fn mask_blend_segment_addr32_rip_and_apx_addresses_admit_and_lower() {
         let base = lift_bytes(&bytes);
         for level in LEVELS {
             let function = optimize(base.clone(), level);
+            assert!(
+                matches!(
+                    function.blocks[0].ops.first().map(|op| &op.kind),
+                    Some(OpKind::X86RequireApx)
+                ),
+                "{level:?} {bytes:02X?}: APX address lost its dynamic guard"
+            );
             assert!(
                 function.blocks[0].ops.iter().any(|op| match &op.kind {
                     OpKind::Load { addr, .. }
