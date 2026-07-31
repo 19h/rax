@@ -1121,7 +1121,7 @@ fn lift_evex_mask_blends_cover_types_sources_masks_e4_broadcast_and_invalids() {
                 }
             ))
             .count(),
-        8
+        1
     );
 
     for bytes in [

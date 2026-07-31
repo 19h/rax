@@ -88,6 +88,8 @@ mod evex_lane_shuffle_replay;
 #[cfg(test)]
 mod evex_logic_memory_source;
 #[cfg(test)]
+mod evex_mask_blend_memory_source;
+#[cfg(test)]
 mod evex_mask_blend_replay;
 #[cfg(test)]
 mod evex_mask_broadcast_replay;

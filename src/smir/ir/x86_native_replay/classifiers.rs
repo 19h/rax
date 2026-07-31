@@ -8,6 +8,7 @@ mod evex_fma3_memory;
 mod evex_fp16_arithmetic_memory;
 mod evex_fp_arithmetic_memory;
 mod evex_logic_memory;
+mod evex_mask_blend_memory;
 mod evex_memory;
 mod evex_packed_funnel_shift_memory;
 mod evex_packed_rotate_memory;
@@ -109,6 +110,9 @@ pub(crate) use evex_fp16_arithmetic_memory::{
 };
 pub(crate) use evex_logic_memory::{
     X86EvexLogicMemoryEncoding, X86EvexLogicMemoryKind, X86EvexMaskedLogicMemoryEncoding,
+};
+pub(crate) use evex_mask_blend_memory::{
+    X86EvexMaskBlendMemoryEncoding, X86EvexMaskBlendMemoryReplay,
 };
 pub(crate) use evex_packed_funnel_shift_memory::{
     X86EvexPackedFunnelShiftMemoryEncoding, X86EvexPackedFunnelShiftMemoryReplay,
