@@ -734,6 +734,29 @@ fn lift_evex_packed_rotates_cover_directions_counts_widths_memory_and_invalids()
             true,
             false,
         ),
+        // Intel SDM Table 2-41: EVEX.R and EVEX.R' are ignored when
+        // ModR/M.reg is the immediate rotate's opcode extension.
+        (
+            &[0x62, 0x71, 0x75, 0x08, 0x72, 0xCA, 0x07][..],
+            VecElementType::I32,
+            VecWidth::V128,
+            true,
+            false,
+        ),
+        (
+            &[0x62, 0xE1, 0x75, 0x08, 0x72, 0xCA, 0x07][..],
+            VecElementType::I32,
+            VecWidth::V128,
+            true,
+            false,
+        ),
+        (
+            &[0x62, 0x61, 0x75, 0x08, 0x72, 0xCA, 0x07][..],
+            VecElementType::I32,
+            VecWidth::V128,
+            true,
+            false,
+        ),
         (
             &[0x62, 0xF1, 0x55, 0x09, 0x72, 0xC6, 0x05][..],
             VecElementType::I32,
@@ -838,7 +861,6 @@ fn lift_evex_packed_rotates_cover_directions_counts_widths_memory_and_invalids()
         &[0x62, 0xF1, 0x75, 0x68, 0x72, 0xCA, 7][..], // L'L=3
         &[0x62, 0xF1, 0x75, 0x88, 0x72, 0xCA, 7][..], // {z} with k0
         &[0x62, 0xF1, 0x75, 0x18, 0x72, 0xCA, 7][..], // EVEX.b on register
-        &[0x62, 0xE1, 0x75, 0x08, 0x72, 0xCA, 7][..], // extended opcode group
         &[0x62, 0xF2, 0x6C, 0x08, 0x15, 0xCB][..],    // variable form mandatory 66 absent
         &[0x62, 0xF2, 0x6D, 0x18, 0x15, 0xCB][..],    // variable EVEX.b on register
     ] {

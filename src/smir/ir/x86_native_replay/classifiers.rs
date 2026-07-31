@@ -318,6 +318,53 @@ impl X86InstructionBytes {
         }
     }
 
+    /// Validate register-only EVEX packed doubleword/quadword rotates and
+    /// return whether the destination vector length requires AVX-512VL.
+    /// Immediate VPROL[DQ]/VPROR[DQ] use map 1 opcode 72 /1 and /0; variable
+    /// VPROLV[DQ]/VPRORV[DQ] use map 2 opcodes 15 and 14. All forms require
+    /// AVX-512F, which is already required by the native vector-state
+    /// trampoline.
+    pub fn evex_register_packed_rotate_needs_vl(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        if !matches!(bytes.len(), 6 | 7) || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+        if p1 & 0x04 == 0 || p1 & 0x03 != 1 || modrm >> 6 != 3 {
+            return None;
+        }
+
+        let map = p0 & 0x0f;
+        let immediate = bytes.len() == 7;
+        if immediate {
+            let extension = (modrm >> 3) & 0x07;
+            // The ModR/M.reg field is an opcode extension, not a register;
+            // EVEX R/R' are ignored for this encoding class.
+            if map != 1 || opcode != 0x72 || !matches!(extension, 0 | 1) {
+                return None;
+            }
+        } else if map != 2 || !matches!(opcode, 0x14 | 0x15) {
+            return None;
+        }
+
+        let zeroing = p2 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let embedded_control = p2 & 0x10 != 0;
+        let mask = p2 & 0x07;
+        if embedded_control || (zeroing && mask == 0) {
+            return None;
+        }
+        match ll {
+            0 | 1 => Some(true),
+            2 => Some(false),
+            _ => None,
+        }
+    }
+
     /// Validate register-only EVEX packed binary32/binary64 fused
     /// multiply-add/subtract operations and return whether the vector length
     /// requires AVX-512VL. Memory and EVEX.b embedded-rounding forms are

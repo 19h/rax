@@ -580,6 +580,21 @@ pub fn x86_evex_immediate_count_shift_replay_spans(
     })
 }
 
+/// Identify valid register-only EVEX packed-rotate replay groups in `block`
+/// in O(N) time and O(P) space for N operations and P unique guest PCs.
+/// Immediate and per-element variable-count doubleword/quadword forms are
+/// admitted; memory forms remain at the fault-precise interpreter boundary.
+pub fn x86_evex_packed_rotate_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_packed_rotate_needs_vl()
+            .map(|needs_vl| (needs_vl, false, false))
+    })
+}
+
 /// Identify valid register-only EVEX packed FMA replay groups in `block` in
 /// O(N) time and O(P) space for N operations and P unique guest PCs.
 pub fn x86_evex_packed_fma_replay_spans(

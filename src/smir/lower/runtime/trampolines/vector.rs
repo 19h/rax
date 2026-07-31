@@ -1080,6 +1080,9 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
     if matches!(op, OpKind::X86PackedShift { .. }) && !x86_packed_shift_shape_valid(op) {
         return false;
     }
+    if matches!(op, OpKind::X86PackedRotate { .. }) && !x86_packed_rotate_shape_valid(op) {
+        return false;
+    }
 
     if let OpKind::VDotProduct {
         dst,

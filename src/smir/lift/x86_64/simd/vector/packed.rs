@@ -1726,8 +1726,7 @@ impl X86_64Lifter {
             && ((byte_lane && (prefix.aaa != 0 || prefix.zeroing || prefix.b))
                 || (!byte_lane && prefix.zeroing && prefix.aaa == 0)
                 || (prefix.b && !modrm.is_memory)
-                || (elem == VecElementType::I16 && prefix.b)
-                || (rotate_left.is_some() && prefix.reg_high))
+                || (elem == VecElementType::I16 && prefix.b))
         {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,

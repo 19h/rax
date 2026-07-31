@@ -132,6 +132,11 @@ pub fn x86_native_replay_spans(
             })
             .or_else(|| {
                 instruction
+                    .evex_register_packed_rotate_needs_vl()
+                    .map(|needs_vl| (needs_vl, false, false))
+            })
+            .or_else(|| {
+                instruction
                     .evex_register_packed_fma_needs_vl()
                     .map(|needs_vl| (needs_vl, false, false))
             })
