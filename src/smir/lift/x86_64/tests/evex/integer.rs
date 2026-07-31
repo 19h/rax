@@ -979,6 +979,8 @@ fn lift_evex_packed_funnel_shifts_cover_forms_elements_e4_memory_and_invalids() 
         )));
     }
 
+    // Type E4: aggregate the applicable mask bits and issue at most one
+    // scalar read, with disp8 scaled by 4 bytes.
     let broadcast = lift_single(&[0x62, 0xF3, 0x55, 0xBA, 0x71, 0x60, 0x7F, 0x1F]).unwrap();
     assert_eq!(
         broadcast
@@ -992,11 +994,11 @@ fn lift_evex_packed_funnel_shifts_cover_forms_elements_e4_memory_and_invalids() 
                 }
             ))
             .count(),
-        8
+        1
     );
     assert!(broadcast.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::Lea {
+        OpKind::PredLoad {
             addr: Address::BaseOffset { offset: 508, .. },
             ..
         }

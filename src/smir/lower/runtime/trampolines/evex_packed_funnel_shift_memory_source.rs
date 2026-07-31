@@ -1,4 +1,4 @@
-//! Fail-closed helper-backed EVEX packed rotate memory admission.
+//! Fail-closed helper-backed EVEX packed funnel-shift memory admission.
 
 use std::collections::HashMap;
 
@@ -8,7 +8,8 @@ use crate::smir::ir::types::{
     X86Reg,
 };
 use crate::smir::ir::{
-    X86EvexPackedRotateMemoryEncoding, X86EvexPackedRotateMemoryReplay, X86InstructionBytes,
+    X86EvexPackedFunnelShiftMemoryEncoding, X86EvexPackedFunnelShiftMemoryReplay,
+    X86InstructionBytes,
 };
 
 use super::evex_memory_source_common::{
@@ -18,35 +19,37 @@ use super::evex_memory_source_common::{
 use super::x86_jit_mem_address_shape_valid;
 
 /// Exact contiguous decomposition consumed by the helper-backed x86-64
-/// packed rotate memory lowerer.
+/// packed funnel-shift memory lowerer.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) struct X86JitEvexPackedRotateMemorySequence {
+pub(crate) struct X86JitEvexPackedFunnelShiftMemorySequence {
     pub(crate) consumed: usize,
     pub(crate) address_offset: usize,
     pub(crate) memory_size: u32,
-    pub(crate) encoding: X86EvexPackedRotateMemoryEncoding,
+    pub(crate) encoding: X86EvexPackedFunnelShiftMemoryEncoding,
 }
 
 fn memory_width(elem: VecElementType) -> Option<MemWidth> {
     match elem {
+        VecElementType::I16 => Some(MemWidth::B2),
         VecElementType::I32 => Some(MemWidth::B4),
         VecElementType::I64 => Some(MemWidth::B8),
         _ => None,
     }
 }
 
-fn exact_rotate(
+fn exact_funnel(
     op: &crate::smir::ir::ops::SmirOp,
     memory_source: VReg,
-    encoding: X86EvexPackedRotateMemoryEncoding,
+    encoding: X86EvexPackedFunnelShiftMemoryEncoding,
 ) -> bool {
     let expected_mask = encoding
         .writemask
         .map(|index| VReg::Arch(ArchReg::X86(X86Reg::K(index))));
     let exact = match op.kind {
-        OpKind::X86PackedRotate {
+        OpKind::X86PackedFunnelShift {
             dst,
             src,
+            fill,
             count,
             mask,
             amount,
@@ -55,12 +58,16 @@ fn exact_rotate(
             left,
             zeroing,
         } => {
-            let operands_match = if let Some(source) = encoding.source {
-                vector_index(&src, encoding.width) == Some(source)
+            let operands_match = if let Some(immediate) = encoding.immediate {
+                vector_index(&src, encoding.width) == Some(encoding.source)
+                    && fill == memory_source
+                    && count.is_none()
+                    && amount == immediate
+            } else {
+                vector_index(&src, encoding.width) == Some(encoding.destination)
+                    && vector_index(&fill, encoding.width) == Some(encoding.source)
                     && count == Some(memory_source)
                     && amount == 0
-            } else {
-                src == memory_source && count.is_none() && Some(amount) == encoding.immediate
             };
             vector_index(&dst, encoding.width) == Some(encoding.destination)
                 && operands_match
@@ -90,13 +97,13 @@ fn no_following_same_pc(
 fn unmasked_vector_sequence(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
-    encoding: X86EvexPackedRotateMemoryEncoding,
+    encoding: X86EvexPackedFunnelShiftMemoryEncoding,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
-) -> Option<X86JitEvexPackedRotateMemorySequence> {
+) -> Option<X86JitEvexPackedFunnelShiftMemorySequence> {
     if !matches!(
         encoding.replay,
-        X86EvexPackedRotateMemoryReplay::Vector { .. }
+        X86EvexPackedFunnelShiftMemoryReplay::Vector { .. }
     ) || encoding.writemask.is_some()
         || encoding.zeroing
     {
@@ -113,18 +120,18 @@ fn unmasked_vector_sequence(
         }
         _ => return None,
     };
-    if !single_definition_single_use(loaded, virtual_definitions, virtual_uses) {
+    let funnel = block.ops.get(index + 1)?;
+    if !exact_virtual_definition_use(loaded, 1, 1, virtual_definitions, virtual_uses) {
         return None;
     }
-    let rotate = block.ops.get(index + 1)?;
     let consumed = 2;
-    if rotate.guest_pc != load.guest_pc
-        || !exact_rotate(rotate, loaded, encoding)
+    if funnel.guest_pc != load.guest_pc
+        || !exact_funnel(funnel, loaded, encoding)
         || !no_following_same_pc(block, index, consumed, load.guest_pc)
     {
         return None;
     }
-    Some(X86JitEvexPackedRotateMemorySequence {
+    Some(X86JitEvexPackedFunnelShiftMemorySequence {
         consumed,
         address_offset: 0,
         memory_size: encoding.width.bytes(),
@@ -135,13 +142,13 @@ fn unmasked_vector_sequence(
 fn unmasked_broadcast_sequence(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
-    encoding: X86EvexPackedRotateMemoryEncoding,
+    encoding: X86EvexPackedFunnelShiftMemoryEncoding,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
-) -> Option<X86JitEvexPackedRotateMemorySequence> {
+) -> Option<X86JitEvexPackedFunnelShiftMemorySequence> {
     if !matches!(
         encoding.replay,
-        X86EvexPackedRotateMemoryReplay::Broadcast { .. }
+        X86EvexPackedFunnelShiftMemoryReplay::Broadcast { .. }
     ) || encoding.writemask.is_some()
         || encoding.zeroing
     {
@@ -163,9 +170,10 @@ fn unmasked_broadcast_sequence(
         }
         _ => return None,
     };
-    if !single_definition_single_use(scalar, virtual_definitions, virtual_uses) {
+    if !exact_virtual_definition_use(scalar, 1, 1, virtual_definitions, virtual_uses) {
         return None;
     }
+
     let broadcast = block.ops.get(index + 1)?;
     let loaded = match broadcast.kind {
         OpKind::VBroadcast {
@@ -187,15 +195,15 @@ fn unmasked_broadcast_sequence(
     {
         return None;
     }
-    let rotate = block.ops.get(index + 2)?;
+    let funnel = block.ops.get(index + 2)?;
     let consumed = 3;
-    if rotate.guest_pc != load.guest_pc
-        || !exact_rotate(rotate, loaded, encoding)
+    if funnel.guest_pc != load.guest_pc
+        || !exact_funnel(funnel, loaded, encoding)
         || !no_following_same_pc(block, index, consumed, load.guest_pc)
     {
         return None;
     }
-    Some(X86JitEvexPackedRotateMemorySequence {
+    Some(X86JitEvexPackedFunnelShiftMemorySequence {
         consumed,
         address_offset: 0,
         memory_size: expected_width.bytes(),
@@ -206,13 +214,13 @@ fn unmasked_broadcast_sequence(
 fn masked_broadcast_sequence(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
-    encoding: X86EvexPackedRotateMemoryEncoding,
+    encoding: X86EvexPackedFunnelShiftMemoryEncoding,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
-) -> Option<X86JitEvexPackedRotateMemorySequence> {
+) -> Option<X86JitEvexPackedFunnelShiftMemorySequence> {
     if !matches!(
         encoding.replay,
-        X86EvexPackedRotateMemoryReplay::Broadcast { .. }
+        X86EvexPackedFunnelShiftMemoryReplay::Broadcast { .. }
     ) {
         return None;
     }
@@ -294,15 +302,15 @@ fn masked_broadcast_sequence(
     }
     offset += 1;
 
-    let rotate = block.ops.get(index + offset)?;
-    if rotate.guest_pc != guest_pc || !exact_rotate(rotate, loaded, encoding) {
+    let funnel = block.ops.get(index + offset)?;
+    if funnel.guest_pc != guest_pc || !exact_funnel(funnel, loaded, encoding) {
         return None;
     }
     offset += 1;
     if !no_following_same_pc(block, index, offset, guest_pc) {
         return None;
     }
-    Some(X86JitEvexPackedRotateMemorySequence {
+    Some(X86JitEvexPackedFunnelShiftMemorySequence {
         consumed: offset,
         address_offset,
         memory_size: expected_width.bytes(),
@@ -313,13 +321,13 @@ fn masked_broadcast_sequence(
 fn masked_vector_sequence(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
-    encoding: X86EvexPackedRotateMemoryEncoding,
+    encoding: X86EvexPackedFunnelShiftMemoryEncoding,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
-) -> Option<X86JitEvexPackedRotateMemorySequence> {
+) -> Option<X86JitEvexPackedFunnelShiftMemorySequence> {
     if !matches!(
         encoding.replay,
-        X86EvexPackedRotateMemoryReplay::MaskedVector { .. }
+        X86EvexPackedFunnelShiftMemoryReplay::MaskedVector { .. }
     ) {
         return None;
     }
@@ -462,15 +470,15 @@ fn masked_vector_sequence(
         offset += 1;
     }
 
-    let rotate = block.ops.get(index + offset)?;
-    if rotate.guest_pc != guest_pc || !exact_rotate(rotate, loaded, encoding) {
+    let funnel = block.ops.get(index + offset)?;
+    if funnel.guest_pc != guest_pc || !exact_funnel(funnel, loaded, encoding) {
         return None;
     }
     offset += 1;
     if !no_following_same_pc(block, index, offset, guest_pc) {
         return None;
     }
-    Some(X86JitEvexPackedRotateMemorySequence {
+    Some(X86JitEvexPackedFunnelShiftMemorySequence {
         consumed: offset,
         address_offset,
         memory_size: encoding.width.bytes(),
@@ -479,40 +487,40 @@ fn masked_vector_sequence(
 }
 
 /// Validate the complete O0/O1/O2 decomposition emitted for one packed
-/// AVX-512 doubleword/quadword rotate memory source.
+/// AVX-512 VBMI2 word/doubleword/quadword funnel-shift memory source.
 ///
 /// Exact provenance binds the immediate/variable encoding class, direction,
 /// element and vector widths, architectural operands, writemask policy,
-/// broadcast/full-vector tuple, helper address, and the single architectural
+/// broadcast/full-vector tuple, helper address, and single architectural
 /// destination commit. Classification is O(L) time and O(1) auxiliary space
-/// for L <= 16 lanes; callers build definition/use maps once in O(N) time and
+/// for L <= 32 lanes; callers build definition/use maps once in O(N) time and
 /// O(V) space.
-pub(crate) fn x86_jit_evex_packed_rotate_memory_sequence(
+pub(crate) fn x86_jit_evex_packed_funnel_shift_memory_sequence(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
     allow_mem: bool,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
-) -> Option<X86JitEvexPackedRotateMemorySequence> {
+) -> Option<X86JitEvexPackedFunnelShiftMemorySequence> {
     if !allow_mem {
         return None;
     }
     let first = block.ops.get(index)?;
     let encoding = instruction_bytes
         .get(&(block.id, first.guest_pc))?
-        .evex_packed_rotate_memory_encoding()?;
+        .evex_packed_funnel_shift_memory_encoding()?;
     match encoding.replay {
-        X86EvexPackedRotateMemoryReplay::Vector { .. } => {
+        X86EvexPackedFunnelShiftMemoryReplay::Vector { .. } => {
             unmasked_vector_sequence(block, index, encoding, virtual_definitions, virtual_uses)
         }
-        X86EvexPackedRotateMemoryReplay::Broadcast { .. } if encoding.writemask.is_some() => {
+        X86EvexPackedFunnelShiftMemoryReplay::Broadcast { .. } if encoding.writemask.is_some() => {
             masked_broadcast_sequence(block, index, encoding, virtual_definitions, virtual_uses)
         }
-        X86EvexPackedRotateMemoryReplay::Broadcast { .. } => {
+        X86EvexPackedFunnelShiftMemoryReplay::Broadcast { .. } => {
             unmasked_broadcast_sequence(block, index, encoding, virtual_definitions, virtual_uses)
         }
-        X86EvexPackedRotateMemoryReplay::MaskedVector { .. } => {
+        X86EvexPackedFunnelShiftMemoryReplay::MaskedVector { .. } => {
             masked_vector_sequence(block, index, encoding, virtual_definitions, virtual_uses)
         }
     }

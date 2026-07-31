@@ -882,60 +882,6 @@ pub fn constant_folding(block: &mut SmirBlock) -> usize {
                 width: *width,
             }),
 
-            // VPTERNLOG truth-table projections. With index bits ordered as
-            // (src1, src2, src3), AA/CC/F0 select one input unchanged.
-            OpKind::X86TernaryLogic {
-                dst,
-                src1,
-                src2,
-                src3,
-                mask: None,
-                imm,
-                width,
-                ..
-            } if matches!(imm, 0xAA | 0xCC | 0xF0) => Some(OpKind::VMov {
-                dst: *dst,
-                src: match imm {
-                    0xAA => *src3,
-                    0xCC => *src2,
-                    0xF0 => *src1,
-                    _ => unreachable!(),
-                },
-                width: *width,
-            }),
-
-            // Immediate packed rotates and funnel shifts reduce their counts
-            // modulo the element width. A reduced zero count is an exact copy.
-            OpKind::X86PackedRotate {
-                dst,
-                src,
-                count: None,
-                mask: None,
-                amount,
-                width,
-                elem,
-                ..
-            } if u32::from(*amount) % (elem.bytes() * 8) == 0 => Some(OpKind::VMov {
-                dst: *dst,
-                src: *src,
-                width: *width,
-            }),
-
-            OpKind::X86PackedFunnelShift {
-                dst,
-                src,
-                count: None,
-                mask: None,
-                amount,
-                width,
-                elem,
-                ..
-            } if u32::from(*amount) % (elem.bytes() * 8) == 0 => Some(OpKind::VMov {
-                dst: *dst,
-                src: *src,
-                width: *width,
-            }),
-
             _ => None,
         };
 

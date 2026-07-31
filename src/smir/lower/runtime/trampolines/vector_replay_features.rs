@@ -31,6 +31,7 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_avx512dq: bool,
     pub(crate) needs_avx512fp16: bool,
     pub(crate) needs_avx512cd: bool,
+    pub(crate) needs_avx512vbmi2: bool,
     pub(crate) needs_gfni: bool,
     pub(crate) needs_avx512vp2intersect: bool,
     pub(crate) needs_aes: bool,
@@ -242,6 +243,7 @@ impl X86NativeReplayFeatureRequirements {
             && (!self.needs_xop || x86_host_has_xop())
             && (!self.needs_sm3 || std::is_x86_feature_detected!("sm3"))
             && (!self.needs_sm4 || std::is_x86_feature_detected!("sm4"))
+            && (!self.needs_avx512vbmi2 || std::is_x86_feature_detected!("avx512vbmi2"))
             && (!self.needs_gfni || std::is_x86_feature_detected!("gfni"))
             && (!self.needs_avx512vp2intersect
                 || std::is_x86_feature_detected!("avx512vp2intersect"))
@@ -458,6 +460,10 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 .instruction
                 .evex_register_mask_broadcast_needs_vl()
                 .is_some();
+            requirements.needs_avx512vbmi2 |= span
+                .instruction
+                .evex_register_packed_funnel_shift_needs_vl()
+                .is_some();
             requirements.needs_gfni |=
                 span.instruction.evex_register_gfni_needs_vl().is_some() || vex_gfni_ymm.is_some();
             requirements.needs_avx512vp2intersect |= span
@@ -604,6 +610,23 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 // packed binary32/binary64 arithmetic itself requires F.
                 requirements.needs_avx512bw = true;
                 requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+                all_spans_support_avx_ymm16 = false;
+                index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_evex_packed_funnel_shift_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                // The full-width vector/opmask bridge requires AVX-512BW;
+                // every packed funnel-shift operation requires VBMI2.
+                requirements.needs_avx512bw = true;
+                requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+                requirements.needs_avx512vbmi2 = true;
                 all_spans_support_avx_ymm16 = false;
                 index += sequence.consumed;
             } else if let Some(sequence) = super::x86_jit_evex_packed_rotate_memory_sequence(

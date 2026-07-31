@@ -876,7 +876,7 @@ fn all_864_packed_rotate_memory_cells_optimize_admit_and_lower_exactly() {
 }
 
 #[test]
-fn reduced_zero_immediate_memory_rotates_retain_exact_provenance() {
+fn reduced_zero_immediate_memory_rotates_retain_semantics_and_exact_provenance() {
     for elem in [VecElementType::I32, VecElementType::I64] {
         let bits = (elem.bytes() * 8) as u8;
         for amount in [0, bits, bits * 2, 0xFF] {
@@ -891,13 +891,14 @@ fn reduced_zero_immediate_memory_rotates_retain_exact_provenance() {
                 amount,
             };
             let function = optimize(lift_case(case), OptLevel::O2);
-            let identity = amount % bits == 0;
-            assert_eq!(
-                function.blocks[0]
-                    .ops
-                    .iter()
-                    .any(|op| matches!(op.kind, OpKind::VMov { .. })),
-                identity,
+            assert!(
+                function.blocks[0].ops.iter().any(|op| matches!(
+                    op.kind,
+                    OpKind::X86PackedRotate {
+                        amount: actual,
+                        ..
+                    } if actual == amount
+                )),
                 "{case:?}"
             );
             let exact = sequence(&function, true).unwrap_or_else(|| panic!("{case:?}"));
@@ -909,6 +910,23 @@ fn reduced_zero_immediate_memory_rotates_retain_exact_provenance() {
                     .any(|window| window == expected),
                 "{case:?}"
             );
+
+            if amount % bits == 0 {
+                let mut synthetic_move = function.clone();
+                let rotate = synthetic_move.blocks[0]
+                    .ops
+                    .iter_mut()
+                    .find(|op| matches!(op.kind, OpKind::X86PackedRotate { .. }))
+                    .expect("optimized zero-count rotate remains semantic");
+                let (dst, src, width) = match &rotate.kind {
+                    OpKind::X86PackedRotate {
+                        dst, src, width, ..
+                    } => (*dst, *src, *width),
+                    _ => unreachable!(),
+                };
+                rotate.kind = OpKind::VMov { dst, src, width };
+                assert_rejected("synthetic identity VMov", &synthetic_move);
+            }
         }
     }
 }

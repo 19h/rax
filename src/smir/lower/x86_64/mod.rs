@@ -84,6 +84,8 @@ mod evex_logic_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_masked_logic_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_packed_funnel_shift_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_packed_rotate_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_variable_permute_memory_source;

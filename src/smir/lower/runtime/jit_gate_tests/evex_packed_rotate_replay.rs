@@ -2,6 +2,7 @@
 
 use super::*;
 use crate::smir::lower::runtime::*;
+use crate::smir::lower::{SmirLowerer, x86_64::X86_64Lowerer};
 
 const PC: u64 = 0x45A0;
 
@@ -271,7 +272,7 @@ fn replay_admits_and_emits_576_legal_register_encodings() {
 }
 
 #[test]
-fn replay_preserves_zero_count_rotate_provenance_at_every_optimization_level() {
+fn replay_preserves_zero_count_rotate_semantics_and_provenance_at_every_level() {
     let levels = [
         crate::smir::optimize::OptLevel::O0,
         crate::smir::optimize::OptLevel::O1,
@@ -293,21 +294,23 @@ fn replay_preserves_zero_count_rotate_provenance_at_every_optimization_level() {
                 "{level:?} {bytes:02X?}"
             );
 
-            if level == crate::smir::optimize::OptLevel::O2 {
-                assert!(
-                    function.blocks[0]
-                        .ops
-                        .iter()
-                        .any(|op| matches!(op.kind, crate::smir::ir::ops::OpKind::VMov { .. })),
-                    "{bytes:02X?}"
-                );
-            }
+            assert!(
+                function.blocks[0].ops.iter().any(|op| matches!(
+                    op.kind,
+                    crate::smir::ir::ops::OpKind::X86PackedRotate {
+                        count: None,
+                        amount: 0,
+                        ..
+                    }
+                )),
+                "{level:?} {bytes:02X?}"
+            );
         }
     }
 }
 
 #[test]
-fn optimized_zero_count_replay_fails_closed_without_exact_register_provenance() {
+fn zero_count_rotate_stays_semantically_lowerable_without_replay_provenance() {
     let shape = RotateShape {
         variable: false,
         left: false,
@@ -318,7 +321,19 @@ fn optimized_zero_count_replay_fails_closed_without_exact_register_provenance() 
     let mut missing = function(&register);
     missing.x86_instruction_bytes.clear();
     crate::smir::optimize::optimize_function(&mut missing, crate::smir::optimize::OptLevel::O2);
-    assert!(!is_native_clobber_safe(&missing));
+    assert!(
+        crate::smir::ir::x86_native_replay_spans(
+            &missing.blocks[0],
+            &missing.x86_instruction_bytes,
+        )
+        .is_empty()
+    );
+    assert!(is_native_clobber_safe(&missing));
+    let mut lowerer = X86_64Lowerer::new();
+    lowerer
+        .lower_function(&missing)
+        .expect("semantic packed rotate does not require replay provenance");
+    lowerer.finalize().expect("finalize semantic packed rotate");
 
     let mut unsafe_encodings = Vec::new();
     let mut memory = register.clone();
@@ -348,9 +363,21 @@ fn optimized_zero_count_replay_fails_closed_without_exact_register_provenance() 
             crate::smir::optimize::OptLevel::O2,
         );
         assert!(
-            !is_native_clobber_safe(&malformed),
+            crate::smir::ir::x86_native_replay_spans(
+                &malformed.blocks[0],
+                &malformed.x86_instruction_bytes,
+            )
+            .is_empty(),
             "{unsafe_encoding:02X?}"
         );
+        assert!(is_native_clobber_safe(&malformed), "{unsafe_encoding:02X?}");
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer
+            .lower_function(&malformed)
+            .unwrap_or_else(|error| panic!("{unsafe_encoding:02X?}: {error:?}"));
+        lowerer
+            .finalize()
+            .unwrap_or_else(|error| panic!("{unsafe_encoding:02X?}: {error:?}"));
     }
 }
 

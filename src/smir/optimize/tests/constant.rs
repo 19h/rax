@@ -391,12 +391,12 @@ fn test_constant_folding() {
     }
 }
 #[test]
-fn folds_evex_ternary_projections_and_zero_reduced_immediates() {
+fn retains_x86_vector_identities_that_clear_state_above_the_encoded_width() {
     let mut block = SmirBlock::new(BlockId(0), 0x1000);
-    let dst = VReg::virt(0);
-    let src1 = VReg::virt(1);
-    let src2 = VReg::virt(2);
-    let src3 = VReg::virt(3);
+    let dst = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+    let src1 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(1)));
+    let src2 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(2)));
+    let src3 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(3)));
     block.push_op(make_op(
         0,
         OpKind::X86TernaryLogic {
@@ -406,7 +406,7 @@ fn folds_evex_ternary_projections_and_zero_reduced_immediates() {
             src3,
             mask: None,
             imm: 0xAA,
-            width: VecWidth::V512,
+            width: VecWidth::V128,
             elem: VecElementType::I32,
             zeroing: false,
         },
@@ -419,7 +419,7 @@ fn folds_evex_ternary_projections_and_zero_reduced_immediates() {
             count: None,
             mask: None,
             amount: 64,
-            width: VecWidth::V512,
+            width: VecWidth::V128,
             elem: VecElementType::I32,
             left: true,
             zeroing: false,
@@ -434,7 +434,7 @@ fn folds_evex_ternary_projections_and_zero_reduced_immediates() {
             count: None,
             mask: None,
             amount: 128,
-            width: VecWidth::V512,
+            width: VecWidth::V128,
             elem: VecElementType::I64,
             left: false,
             zeroing: false,
@@ -442,18 +442,34 @@ fn folds_evex_ternary_projections_and_zero_reduced_immediates() {
     ));
     block.set_terminator(Terminator::Return { values: vec![dst] });
 
-    assert_eq!(constant_folding(&mut block), 3);
+    // Although each low 128-bit result is a source copy, all three x86
+    // operations clear shared vector state above bit 127. An unhinted VMov
+    // copies the complete internal vector value and is therefore not
+    // semantically equivalent, including when destination and source alias.
+    assert_eq!(constant_folding(&mut block), 0);
     assert!(matches!(
         block.ops[0].kind,
-        OpKind::VMov { src, width: VecWidth::V512, .. } if src == src3
+        OpKind::X86TernaryLogic {
+            imm: 0xAA,
+            width: VecWidth::V128,
+            ..
+        }
     ));
     assert!(matches!(
         block.ops[1].kind,
-        OpKind::VMov { src, width: VecWidth::V512, .. } if src == src1
+        OpKind::X86PackedRotate {
+            amount: 64,
+            width: VecWidth::V128,
+            ..
+        }
     ));
     assert!(matches!(
         block.ops[2].kind,
-        OpKind::VMov { src, width: VecWidth::V512, .. } if src == src2
+        OpKind::X86PackedFunnelShift {
+            amount: 128,
+            width: VecWidth::V128,
+            ..
+        }
     ));
 }
 #[test]

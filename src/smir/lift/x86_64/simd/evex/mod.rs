@@ -8,6 +8,8 @@ mod fp;
 pub use fp::*;
 mod fp16_arithmetic;
 pub use fp16_arithmetic::*;
+mod funnel_shift;
+pub use funnel_shift::*;
 mod mem;
 pub use mem::*;
 mod misc;
