@@ -76,6 +76,8 @@ mod evex_broadcast_interleave_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_broadcast_logic_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_fixup_imm_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_fma3_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_fp16_arithmetic_memory_source;

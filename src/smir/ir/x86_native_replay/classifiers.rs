@@ -5,6 +5,7 @@ mod cmpccxadd;
 mod evex_bf16_memory;
 mod evex_broadcast_interleave_memory;
 mod evex_broadcast_logic_memory;
+mod evex_fixup_imm_memory;
 mod evex_fma3_memory;
 mod evex_fp16_arithmetic_memory;
 mod evex_fp_arithmetic_memory;
@@ -106,6 +107,9 @@ pub(crate) use evex_bf16_memory::{
 };
 pub(crate) use evex_broadcast_interleave_memory::X86EvexBroadcastInterleaveMemoryEncoding;
 pub(crate) use evex_broadcast_logic_memory::X86EvexBroadcastLogicMemoryEncoding;
+pub(crate) use evex_fixup_imm_memory::{
+    X86EvexFixupImmMemoryEncoding, X86EvexFixupImmMemoryReplay,
+};
 pub(crate) use evex_fma3_memory::{
     X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay, X86EvexScalarFma3MemoryEncoding,
 };

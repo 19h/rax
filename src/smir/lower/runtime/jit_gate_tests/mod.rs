@@ -48,6 +48,8 @@ mod evex_chunk_insert_replay;
 #[cfg(test)]
 mod evex_chunk_shuffle_replay;
 #[cfg(test)]
+mod evex_fixup_imm_memory_source;
+#[cfg(test)]
 mod evex_fma3_packed_fp16_memory_source;
 #[cfg(test)]
 mod evex_fma3_packed_memory_source;

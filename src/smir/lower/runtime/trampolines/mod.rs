@@ -14,6 +14,7 @@ mod cmpxchg;
 mod evex_bf16_memory_source;
 mod evex_broadcast_interleave_memory_source;
 mod evex_broadcast_logic_memory_source;
+mod evex_fixup_imm_memory_source;
 mod evex_fma3_memory_source;
 mod evex_fp16_arithmetic_memory_source;
 mod evex_fp_arithmetic_memory_source;
@@ -122,6 +123,7 @@ use crate::smir::lower::{
 pub(crate) use evex_bf16_memory_source::*;
 pub(crate) use evex_broadcast_interleave_memory_source::*;
 pub(crate) use evex_broadcast_logic_memory_source::*;
+pub(crate) use evex_fixup_imm_memory_source::*;
 pub(crate) use evex_fma3_memory_source::*;
 pub(crate) use evex_fp_arithmetic_memory_source::*;
 pub(crate) use evex_fp16_arithmetic_memory_source::*;

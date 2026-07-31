@@ -45,6 +45,7 @@ impl X86_64Lowerer {
         try_replay!(try_lower_jit_evex_broadcast_logic_memory_source);
         try_replay!(try_lower_jit_evex_packed_fp16_arithmetic_memory_source);
         try_replay!(try_lower_jit_evex_packed_fp_arithmetic_memory_source);
+        try_replay!(try_lower_jit_evex_fixup_imm_memory_source);
         try_replay!(try_lower_jit_evex_packed_funnel_shift_memory_source);
         try_replay!(try_lower_jit_evex_packed_rotate_memory_source);
         try_replay!(try_lower_jit_evex_vector_align_memory_source);

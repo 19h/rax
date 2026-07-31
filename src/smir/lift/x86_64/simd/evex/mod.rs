@@ -8,6 +8,8 @@ mod crypto;
 pub use crypto::*;
 mod fp;
 pub use fp::*;
+mod fixup_imm;
+pub use fixup_imm::*;
 mod fp16_arithmetic;
 pub use fp16_arithmetic::*;
 mod funnel_shift;
