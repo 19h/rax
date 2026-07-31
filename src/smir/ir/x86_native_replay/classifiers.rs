@@ -399,9 +399,9 @@ impl X86InstructionBytes {
 
     /// Validate register-only EVEX packed binary32/binary64 fused
     /// multiply-add/subtract operations and return whether the vector length
-    /// requires AVX-512VL. Memory and EVEX.b embedded-rounding forms are
-    /// intentionally excluded so replay remains register-only and uses the
-    /// guest MXCSR rounding mode.
+    /// requires AVX-512VL. Register-source `EVEX.b=1` selects 512-bit
+    /// embedded rounding with implied SAE and therefore does not require
+    /// AVX-512VL. Memory forms remain excluded.
     pub fn evex_register_packed_fma_needs_vl(&self) -> Option<bool> {
         let bytes = self.as_slice();
         if bytes.len() != 6 || bytes[0] != 0x62 {
@@ -437,8 +437,11 @@ impl X86InstructionBytes {
         let ll = (p2 >> 5) & 0x03;
         let embedded_control = p2 & 0x10 != 0;
         let mask = p2 & 0x07;
-        if embedded_control || (zeroing && mask == 0) {
+        if zeroing && mask == 0 {
             return None;
+        }
+        if embedded_control {
+            return Some(false);
         }
         match ll {
             0 | 1 => Some(true),
@@ -449,9 +452,9 @@ impl X86InstructionBytes {
 
     /// Validate register-only EVEX scalar binary32/binary64 fused
     /// multiply-add/subtract operations. Scalar AVX-512 FMA forms use
-    /// AVX-512F without AVX-512VL. Memory and EVEX.b embedded-rounding forms
-    /// are intentionally excluded so replay uses the guest MXCSR rounding
-    /// mode, and LLIG is admitted only in its canonical L'L=0 encoding.
+    /// AVX-512F without AVX-512VL. Register-source `EVEX.b=1` selects
+    /// embedded rounding with implied SAE. Without embedded rounding, all
+    /// four LLIG values are ignored. Memory forms remain excluded.
     pub fn evex_register_scalar_fma_needs_vl(&self) -> Option<bool> {
         let bytes = self.as_slice();
         if bytes.len() != 6 || bytes[0] != 0x62 {
@@ -473,10 +476,8 @@ impl X86InstructionBytes {
         }
 
         let zeroing = p2 & 0x80 != 0;
-        let ll = (p2 >> 5) & 0x03;
-        let embedded_control = p2 & 0x10 != 0;
         let mask = p2 & 0x07;
-        if embedded_control || ll != 0 || (zeroing && mask == 0) {
+        if zeroing && mask == 0 {
             return None;
         }
         Some(false)
@@ -485,9 +486,9 @@ impl X86InstructionBytes {
     /// Validate register-only EVEX packed binary16 fused
     /// multiply-add/subtract operations and return whether the vector length
     /// requires AVX-512VL. Every admitted instruction additionally requires
-    /// AVX-512-FP16. Memory and EVEX.b embedded-rounding forms are
-    /// intentionally excluded so replay remains register-only and uses the
-    /// guest MXCSR rounding mode.
+    /// AVX-512-FP16. Register-source `EVEX.b=1` selects 512-bit embedded
+    /// rounding with implied SAE and therefore does not require AVX-512VL.
+    /// Memory forms remain excluded.
     pub fn evex_register_packed_fp16_fma_needs_vl(&self) -> Option<bool> {
         let bytes = self.as_slice();
         if bytes.len() != 6 || bytes[0] != 0x62 {
@@ -523,8 +524,11 @@ impl X86InstructionBytes {
         let ll = (p2 >> 5) & 0x03;
         let embedded_control = p2 & 0x10 != 0;
         let mask = p2 & 0x07;
-        if embedded_control || (zeroing && mask == 0) {
+        if zeroing && mask == 0 {
             return None;
+        }
+        if embedded_control {
+            return Some(false);
         }
         match ll {
             0 | 1 => Some(true),
@@ -535,9 +539,9 @@ impl X86InstructionBytes {
 
     /// Validate register-only EVEX scalar binary16 fused
     /// multiply-add/subtract operations. Scalar AVX-512-FP16 forms do not
-    /// require AVX-512VL. Memory and EVEX.b embedded-rounding forms are
-    /// intentionally excluded so replay uses the guest MXCSR rounding mode,
-    /// and LLIG is admitted only in its canonical L'L=0 encoding.
+    /// require AVX-512VL. Register-source `EVEX.b=1` selects embedded
+    /// rounding with implied SAE. Without embedded rounding, all four LLIG
+    /// values are ignored. Memory forms remain excluded.
     pub fn evex_register_scalar_fp16_fma_needs_vl(&self) -> Option<bool> {
         let bytes = self.as_slice();
         if bytes.len() != 6 || bytes[0] != 0x62 {
@@ -559,10 +563,8 @@ impl X86InstructionBytes {
         }
 
         let zeroing = p2 & 0x80 != 0;
-        let ll = (p2 >> 5) & 0x03;
-        let embedded_control = p2 & 0x10 != 0;
         let mask = p2 & 0x07;
-        if embedded_control || ll != 0 || (zeroing && mask == 0) {
+        if zeroing && mask == 0 {
             return None;
         }
         Some(false)
