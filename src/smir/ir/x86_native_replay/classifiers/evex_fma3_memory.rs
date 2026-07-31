@@ -18,6 +18,12 @@ pub(crate) enum X86EvexPackedFma3MemoryReplay {
     Broadcast {
         stack_instruction: X86InstructionBytes,
     },
+    /// Per-active-lane scalar helper loads accumulated in a nonarchitectural
+    /// stack vector, followed by the original writemasked packed operation
+    /// rewritten to consume that vector from `[rsp]`.
+    MaskedVector {
+        stack_instruction: X86InstructionBytes,
+    },
 }
 
 /// Exact EVEX packed FMA3 memory encoding and its byte-validated native replay
@@ -173,12 +179,14 @@ impl X86InstructionBytes {
     /// Intel SDM Vol. 2 assigns binary32/binary64 to map 0F38 with W selecting
     /// the element width, and binary16 to MAP6.W0. All use mandatory prefix
     /// 66H, opcode low nibbles 6H, 7H, 8H, AH, CH, or EH, and L'L to select
-    /// 128/256/512 bits. With `EVEX.b=0`, the admitted subset has `aaa=000`
-    /// and `z=0`; a complete vector helper load is replayed through a low
-    /// scratch register. With `EVEX.b=1`, merge/zero writemasking is retained:
-    /// the helper performs at most one scalar 2/4/8-byte load and the
-    /// broadcast memory form is rewritten to consume `[rsp]` with the exact
-    /// original opmask controls. Both retain MXCSR rounding.
+    /// 128/256/512 bits. With `EVEX.b=0`, an unmasked complete vector helper
+    /// load is replayed through a low scratch register, while a writemasked
+    /// vector is accumulated from per-active-lane 2/4/8-byte helper loads in a
+    /// nonarchitectural stack payload. With `EVEX.b=1`, merge/zero
+    /// writemasking is retained: the helper performs at most one scalar
+    /// 2/4/8-byte load and the broadcast memory form is rewritten to consume
+    /// `[rsp]` with the exact original opmask controls. Every replay retains
+    /// MXCSR rounding.
     /// Segment/address-size prefixes and APX extended memory address bits are
     /// consumed only by the helper-computed guest address and are therefore
     /// removed from either rewrite.
@@ -211,7 +219,6 @@ impl X86InstructionBytes {
         let broadcast = p2 & 0x10 != 0;
         if p1 & 0x03 != 1
             || (zeroing && writemask.is_none())
-            || (!broadcast && (writemask.is_some() || zeroing))
             || p2 & 0x60 == 0x60
             || modrm >> 6 == 3
             || !matches!(
@@ -251,8 +258,8 @@ impl X86InstructionBytes {
             (u8::from(p0 & 0x80 == 0) << 3) | (u8::from(p0 & 0x10 == 0) << 4) | ((modrm >> 3) & 7);
         let source1 = ((!p1 >> 3) & 0x0F) | (u8::from(p2 & 0x08 == 0) << 4);
         let needs_avx512vl = width != VecWidth::V512;
-        let replay = if broadcast {
-            let stack_bytes = [
+        let stack_instruction = || {
+            X86InstructionBytes::new(&[
                 0x62,
                 // Preserve R/R' and the map, select unextended SIB
                 // index/base, and clear APX B4 because the rewritten base is
@@ -265,9 +272,38 @@ impl X86InstructionBytes {
                 opcode,
                 (modrm & 0x38) | 0x04,
                 0x24,
-            ];
+            ])
+            .unwrap()
+        };
+        let replay = if broadcast {
             X86EvexPackedFma3MemoryReplay::Broadcast {
-                stack_instruction: X86InstructionBytes::new(&stack_bytes).unwrap(),
+                stack_instruction: stack_instruction(),
+            }
+        } else if writemask.is_some() {
+            // Validate every non-address semantic field through the
+            // independent register-form classifier before retaining the exact
+            // opmask controls on the stack-memory rewrite.
+            let register_probe = X86InstructionBytes::new(&[
+                0x62,
+                (p0 & 0x97) | 0x60,
+                p1 | 0x04,
+                p2,
+                opcode,
+                0xC0 | (modrm & 0x38),
+            ])
+            .unwrap();
+            let rewritten_needs_vl = match elem {
+                VecElementType::F16 => register_probe.evex_register_packed_fp16_fma_needs_vl(),
+                VecElementType::F32 | VecElementType::F64 => {
+                    register_probe.evex_register_packed_fma_needs_vl()
+                }
+                _ => unreachable!("validated EVEX packed FMA3 element"),
+            };
+            if rewritten_needs_vl != Some(needs_avx512vl) {
+                return None;
+            }
+            X86EvexPackedFma3MemoryReplay::MaskedVector {
+                stack_instruction: stack_instruction(),
             }
         } else {
             let scratch = (0..16u8)

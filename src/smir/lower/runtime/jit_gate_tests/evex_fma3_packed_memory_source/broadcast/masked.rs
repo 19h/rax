@@ -310,7 +310,7 @@ fn masked_broadcast_classifier_exhaustively_rewrites_23_224_320_operands() {
     for format in BroadcastFormat::ALL {
         for ll in 0..=2u8 {
             let base_p2 = (ll << 5) | 0x08;
-            for p2 in [base_p2 | 1, base_p2 | 0x81, base_p2 | 0x90] {
+            for p2 in [base_p2 | 1, base_p2 | 0x81] {
                 let bytes = [
                     0x62,
                     0xF0 | format.map(),
@@ -320,14 +320,36 @@ fn masked_broadcast_classifier_exhaustively_rewrites_23_224_320_operands() {
                     0x43,
                     DISP8,
                 ];
+                let encoding = X86InstructionBytes::new(&bytes)
+                    .unwrap()
+                    .evex_packed_fma3_memory_encoding()
+                    .unwrap_or_else(|| panic!("{bytes:02X?}: masked vector rejected"));
                 assert!(
-                    X86InstructionBytes::new(&bytes)
-                        .unwrap()
-                        .evex_packed_fma3_memory_encoding()
-                        .is_none(),
-                    "{bytes:02X?}: masked non-broadcast or z-without-aaa"
+                    matches!(
+                        encoding.replay,
+                        X86EvexPackedFma3MemoryReplay::MaskedVector { .. }
+                    ),
+                    "{bytes:02X?}: masked vector selected non-vector replay"
                 );
             }
+
+            let p2 = base_p2 | 0x90;
+            let bytes = [
+                0x62,
+                0xF0 | format.map(),
+                (u8::from(format.w()) << 7) | 0x75,
+                p2,
+                0x98,
+                0x43,
+                DISP8,
+            ];
+            assert!(
+                X86InstructionBytes::new(&bytes)
+                    .unwrap()
+                    .evex_packed_fma3_memory_encoding()
+                    .is_none(),
+                "{bytes:02X?}: z-without-aaa"
+            );
         }
     }
 }

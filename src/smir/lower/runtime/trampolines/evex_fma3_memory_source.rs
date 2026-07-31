@@ -14,8 +14,9 @@ use crate::smir::ir::{
 };
 
 use super::evex_memory_source_common::{
-    exact_evex_vector_mask_result, exact_nonzero_mask_predicate, exact_virtual_definition_use,
-    single_definition_single_use, vector_index,
+    exact_evex_vector_mask_result, exact_lane_address, exact_lane_predicate,
+    exact_nonzero_mask_predicate, exact_virtual_definition_use, single_definition_single_use,
+    vector_index,
 };
 use super::vector_memory_source::{vex_fma3_kind, vex_fma3_order};
 use super::x86_jit_mem_address_shape_valid;
@@ -234,12 +235,254 @@ fn x86_jit_masked_evex_packed_fma3_broadcast_sequence(
     })
 }
 
+fn x86_jit_masked_evex_packed_fma3_vector_sequence(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    encoding: X86EvexPackedFma3MemoryEncoding,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<X86JitEvexPackedFma3MemorySequence> {
+    if !matches!(
+        encoding.replay,
+        X86EvexPackedFma3MemoryReplay::MaskedVector { .. }
+    ) {
+        return None;
+    }
+    let mask = VReg::Arch(ArchReg::X86(X86Reg::K(encoding.writemask?)));
+    let width = encoding.width;
+    let elem = encoding.elem;
+    let lanes = width.lanes(elem) as u8;
+    let first = block.ops.get(index)?;
+    let guest_pc = first.guest_pc;
+    let zero = match first.kind {
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Imm(0),
+            width: OpWidth::W64,
+        } if first.x86_hint.is_none() => dst,
+        _ => return None,
+    };
+    if !exact_virtual_definition_use(zero, 1, 1, virtual_definitions, virtual_uses) {
+        return None;
+    }
+
+    let broadcast = block.ops.get(index + 1)?;
+    let loaded = match broadcast.kind {
+        OpKind::VBroadcast {
+            dst,
+            scalar,
+            elem: broadcast_elem,
+            lanes: broadcast_lanes,
+        } if broadcast.x86_hint.is_none()
+            && scalar == zero
+            && broadcast_elem == elem
+            && broadcast_lanes == lanes =>
+        {
+            dst
+        }
+        _ => return None,
+    };
+    if broadcast.guest_pc != guest_pc
+        || !exact_virtual_definition_use(
+            loaded,
+            usize::from(lanes) + 1,
+            usize::from(lanes) + 1,
+            virtual_definitions,
+            virtual_uses,
+        )
+    {
+        return None;
+    }
+
+    let memory_offset = 2usize;
+    let lea = block.ops.get(index + memory_offset)?;
+    let (base, original_address) = match &lea.kind {
+        OpKind::Lea {
+            dst: base @ VReg::Virtual(_),
+            addr,
+        } if lea.x86_hint.is_none() && x86_jit_mem_address_shape_valid(addr) => (*base, addr),
+        _ => return None,
+    };
+    if lea.guest_pc != guest_pc
+        || !exact_virtual_definition_use(
+            base,
+            1,
+            usize::from(lanes),
+            virtual_definitions,
+            virtual_uses,
+        )
+        || !original_address.is_x86_state_backed_shape()
+    {
+        return None;
+    }
+
+    let memory_width = match elem {
+        VecElementType::F16 => MemWidth::B2,
+        VecElementType::F32 => MemWidth::B4,
+        VecElementType::F64 => MemWidth::B8,
+        _ => return None,
+    };
+    let lane_bytes = i64::from(elem.bytes());
+    let mut offset = memory_offset + 1;
+    for lane in 0..lanes {
+        let condition = exact_lane_predicate(
+            block,
+            index,
+            &mut offset,
+            guest_pc,
+            mask,
+            lane,
+            virtual_definitions,
+            virtual_uses,
+        )?;
+        let seed = block.ops.get(index + offset)?;
+        let scalar = match seed.kind {
+            OpKind::Mov {
+                dst,
+                src: SrcOperand::Imm(0),
+                width: OpWidth::W64,
+            } if seed.x86_hint.is_none() => dst,
+            _ => return None,
+        };
+        if seed.guest_pc != guest_pc
+            || !exact_virtual_definition_use(scalar, 2, 1, virtual_definitions, virtual_uses)
+        {
+            return None;
+        }
+        offset += 1;
+
+        let load = block.ops.get(index + offset)?;
+        if !matches!(
+            &load.kind,
+            OpKind::PredLoad {
+                dst,
+                cond,
+                addr,
+                width: actual_width,
+                signed: SignExtend::Zero,
+            } if load.x86_hint.is_none()
+                && *dst == scalar
+                && *cond == condition
+                && *actual_width == memory_width
+                && exact_lane_address(addr, base, i64::from(lane) * lane_bytes)
+        ) || load.guest_pc != guest_pc
+        {
+            return None;
+        }
+        offset += 1;
+
+        let insert = block.ops.get(index + offset)?;
+        if insert.x86_hint.is_some()
+            || insert.guest_pc != guest_pc
+            || !matches!(
+                insert.kind,
+                OpKind::VInsertLane {
+                    dst,
+                    vec,
+                    scalar: actual_scalar,
+                    lane: actual_lane,
+                    elem: insert_elem,
+                } if dst == loaded
+                    && vec == loaded
+                    && actual_scalar == scalar
+                    && actual_lane == lane
+                    && insert_elem == elem
+            )
+        {
+            return None;
+        }
+        offset += 1;
+    }
+
+    let fma = block.ops.get(index + offset)?;
+    let (raw, src1, src2, src3, fma_mask, kind, order, round, fma_lanes) = match &fma.kind {
+        OpKind::X86Fma(fma_op) if elem != VecElementType::F16 && fma_op.elem == elem => (
+            fma_op.dst,
+            fma_op.src1,
+            fma_op.src2,
+            fma_op.src3,
+            fma_op.mask,
+            fma_op.kind,
+            fma_op.order,
+            fma_op.round,
+            fma_op.lanes,
+        ),
+        OpKind::X86FP16Fma {
+            dst,
+            src1,
+            src2,
+            src3,
+            mask,
+            kind,
+            order,
+            round,
+            lanes,
+        } if elem == VecElementType::F16 => (
+            *dst, *src1, *src2, *src3, *mask, *kind, *order, *round, *lanes,
+        ),
+        _ => return None,
+    };
+    if fma.guest_pc != guest_pc
+        || vector_index(&src1, width) != Some(encoding.destination)
+        || vector_index(&src2, width) != Some(encoding.source1)
+        || src3 != loaded
+        || fma_mask != Some(mask)
+        || kind != vex_fma3_kind(encoding.opcode)?
+        || order != vex_fma3_order(encoding.opcode)?
+        || round != FpRoundMode::Dynamic
+        || fma_lanes != lanes
+        || fma.x86_hint
+            != Some(X86OpHint::EvexOp {
+                map: if elem == VecElementType::F16 {
+                    X86VecMap::Map6
+                } else {
+                    X86VecMap::Map0F38
+                },
+                pp: X86SsePrefix::OpSize,
+                opcode: encoding.opcode,
+                width,
+                w: encoding.w,
+            })
+    {
+        return None;
+    }
+    offset += 1;
+    exact_evex_vector_mask_result(
+        block,
+        index,
+        &mut offset,
+        guest_pc,
+        raw,
+        mask,
+        width,
+        elem,
+        encoding.destination,
+        encoding.zeroing,
+        virtual_definitions,
+        virtual_uses,
+    )?;
+    if block
+        .ops
+        .get(index + offset)
+        .is_some_and(|op| op.guest_pc == guest_pc)
+    {
+        return None;
+    }
+    Some(X86JitEvexPackedFma3MemorySequence {
+        consumed: offset,
+        memory_offset,
+        memory_size: width.bytes(),
+        encoding,
+    })
+}
+
 /// Validate the complete decomposition emitted for one EVEX packed FMA3
 /// memory source. Exact instruction provenance binds vector width, element
 /// type, architectural operands, opcode semantics, writemasking, and the
 /// selected native rewrite. Unmasked vector and broadcast sources use constant
-/// three/four-op graphs. Masked broadcasts additionally validate the
-/// aggregate fault predicate and every merge/zero result-lane reconstruction.
+/// three/four-op graphs. Masked broadcasts validate the aggregate fault
+/// predicate; masked vectors validate every source-lane predicate/load/insert.
+/// Both validate every merge/zero result-lane reconstruction.
 ///
 /// Classification is O(L) time and O(1) auxiliary space for L destination
 /// lanes (L <= 32). Callers build the global definition/use maps once in O(N)
@@ -260,13 +503,27 @@ pub(crate) fn x86_jit_evex_packed_fma3_memory_sequence(
         .get(&(block.id, load.guest_pc))?
         .evex_packed_fma3_memory_encoding()?;
     if encoding.writemask.is_some() {
-        return x86_jit_masked_evex_packed_fma3_broadcast_sequence(
-            block,
-            index,
-            encoding,
-            virtual_definitions,
-            virtual_uses,
-        );
+        return match encoding.replay {
+            X86EvexPackedFma3MemoryReplay::Broadcast { .. } => {
+                x86_jit_masked_evex_packed_fma3_broadcast_sequence(
+                    block,
+                    index,
+                    encoding,
+                    virtual_definitions,
+                    virtual_uses,
+                )
+            }
+            X86EvexPackedFma3MemoryReplay::MaskedVector { .. } => {
+                x86_jit_masked_evex_packed_fma3_vector_sequence(
+                    block,
+                    index,
+                    encoding,
+                    virtual_definitions,
+                    virtual_uses,
+                )
+            }
+            X86EvexPackedFma3MemoryReplay::Vector { .. } => None,
+        };
     }
     if encoding.zeroing {
         return None;
@@ -341,6 +598,7 @@ pub(crate) fn x86_jit_evex_packed_fma3_memory_sequence(
             }
             (vector, 2, memory_width.bytes())
         }
+        X86EvexPackedFma3MemoryReplay::MaskedVector { .. } => return None,
     };
 
     let fma = block.ops.get(index + fma_offset)?;

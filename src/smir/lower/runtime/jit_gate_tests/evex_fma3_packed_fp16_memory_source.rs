@@ -462,6 +462,9 @@ fn packed_evex_fp16_fma3_memory_byte_classifier_exhaustively_rewrites_55_296_ope
                         X86EvexPackedFma3MemoryReplay::Broadcast { .. } => {
                             panic!("{bytes:02X?}: non-broadcast source selected broadcast replay")
                         }
+                        X86EvexPackedFma3MemoryReplay::MaskedVector { .. } => {
+                            panic!("{bytes:02X?}: unmasked source selected masked replay")
+                        }
                     };
                     assert_eq!(actual_scratch, scratch, "{bytes:02X?}");
                     assert_eq!(encoding.opcode, opcode, "{bytes:02X?}");
@@ -655,8 +658,7 @@ fn packed_evex_fp16_fma3_memory_classifier_rejects_reserved_and_non_owned_encodi
         (1, 0x01), // MAP6 -> MAP7
         (2, 0x01), // mandatory 66H -> no mandatory prefix
         (2, 0x80), // MAP6.W1 is reserved for packed FP16 FMA3
-        (3, 0x80), // zero masking
-        (3, 0x01), // nonzero opmask
+        (3, 0x80), // zeroing without a nonzero opmask
     ] {
         let mut bytes = valid.clone();
         bytes[evex + byte_index] ^= mask;

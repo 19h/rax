@@ -25,6 +25,7 @@ use crate::smir::lower::x86_64::X86_64Lowerer;
 use crate::smir::optimize::OptLevel;
 
 mod broadcast;
+mod masked_vector;
 
 const PC: u64 = 0xE3F0;
 const DISP8: u8 = 1;
@@ -484,6 +485,9 @@ fn packed_evex_fma3_memory_byte_classifier_exhaustively_rewrites_110_592_operand
                                     "{bytes:02X?}: non-broadcast source selected broadcast replay"
                                 )
                             }
+                            X86EvexPackedFma3MemoryReplay::MaskedVector { .. } => {
+                                panic!("{bytes:02X?}: unmasked source selected masked replay")
+                            }
                         };
                         assert_eq!(actual_scratch, scratch, "{bytes:02X?}");
                         assert_eq!(encoding.opcode, opcode, "{bytes:02X?}");
@@ -737,7 +741,7 @@ fn packed_evex_fma3_memory_classifiers_reject_reserved_and_non_owned_encodings()
     register[evex + 5] |= 0xC0;
     register.truncate(6);
     malformed.push(register);
-    for (byte_index, mask) in [(1, 0x01), (2, 0x01), (3, 0x80), (3, 0x01)] {
+    for (byte_index, mask) in [(1, 0x01), (2, 0x01), (3, 0x80)] {
         let mut bytes = valid.clone();
         bytes[evex + byte_index] ^= mask;
         malformed.push(bytes);
