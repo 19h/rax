@@ -5,7 +5,7 @@ use crate::smir::interpret::tests::*;
 use crate::smir::interpret::*;
 
 #[test]
-fn lifted_saturating_packs_execute_lane_groups_masks_and_fault_suppression() {
+fn lifted_saturating_packs_execute_lane_groups_masks_and_fault_boundaries() {
     fn seeded(bytes: &[u8], fill: u64) -> VecValue {
         let mut value = [fill; 16];
         for (index, chunk) in bytes.chunks_exact(8).enumerate() {
@@ -276,61 +276,11 @@ fn lifted_saturating_packs_execute_lane_groups_masks_and_fault_suppression() {
         }
     }
 
-    // Only second-half output lanes in each 128-bit group consume the r/m
-    // source. First-half-only masks suppress an invalid address; selecting
-    // a second-half lane exposes the read fault before destination commit.
-    let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
-    let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
-    ctx.write_vreg(rax, 0x1000);
-    for (insn, first_half_bit, second_half_bit) in [
-        (
-            &[0x62, 0xF1, 0x75, 0x49, 0x63, 0x00][..],
-            1u64 << 0,
-            1u64 << 8,
-        ),
-        (
-            &[0x62, 0xF1, 0x75, 0x49, 0x6B, 0x00][..],
-            1u64 << 0,
-            1u64 << 4,
-        ),
-        (
-            &[0x62, 0xF1, 0x75, 0x59, 0x6B, 0x00][..],
-            1u64 << 0,
-            1u64 << 4,
-        ),
-    ] {
-        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
-            x86.xmm[0] = sentinel;
-            x86.xmm[1] = seeded(&dwords1_bytes, 0);
-        }
-        ctx.write_vreg(k1, first_half_bit);
-        let suppressed = execute_lifted_x86(insn, &mut ctx, &mut memory);
-        assert!(!matches!(
-            suppressed,
-            BlockResult::Exit(ExitReason::MemoryFault { .. })
-        ));
-
-        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
-            x86.xmm[0] = sentinel;
-        }
-        ctx.write_vreg(k1, second_half_bit);
-        let exposed = execute_lifted_x86(insn, &mut ctx, &mut memory);
-        assert!(
-            matches!(
-                exposed,
-                BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
-            ),
-            "second-source mask must expose memory fault for {insn:02X?}, got {exposed:?}"
-        );
-        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
-            assert_eq!(x86.xmm[0], sentinel);
-        }
-    }
-
     ctx.flags.materialize_all();
     assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
 
     // Non-EVEX memory forms retain their full-width all-or-fault boundary.
+    let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
         x86.xmm[0] = sentinel;
     }

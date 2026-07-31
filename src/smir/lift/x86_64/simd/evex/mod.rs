@@ -12,6 +12,8 @@ mod fp16_arithmetic;
 pub use fp16_arithmetic::*;
 mod funnel_shift;
 pub use funnel_shift::*;
+mod integer_pack;
+pub use integer_pack::*;
 mod mask_blend;
 pub use mask_blend::*;
 mod mem;

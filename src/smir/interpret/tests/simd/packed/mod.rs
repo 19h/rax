@@ -17,3 +17,5 @@ mod part2;
 mod part3;
 #[cfg(test)]
 mod part4;
+#[cfg(test)]
+mod saturating_pack_faults;

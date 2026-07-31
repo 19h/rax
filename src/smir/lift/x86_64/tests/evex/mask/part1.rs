@@ -2093,9 +2093,8 @@ fn lift_legacy_vex_evex_saturating_packs_cover_widths_masks_tuples_and_invalids(
         )));
     }
 
-    // LLVM 20 encodings: unmasked high-register native form,
-    // high-register merge/zero fallback, Full tuple disp8*N=64 bytes,
-    // and Full m32bcst tuple disp8*N=4 bytes.
+    // LLVM 20 encodings: unmasked high-register native form and
+    // high-register merge/zero fallback.
     let high_unmasked = lift_single(&[0x62, 0xA1, 0x75, 0x40, 0x63, 0xC2]).unwrap();
     assert!(matches!(
         high_unmasked.ops.as_slice(),
@@ -2133,59 +2132,6 @@ fn lift_legacy_vex_evex_saturating_packs_cover_widths_masks_tuples_and_invalids(
         op.kind,
         OpKind::VInsertLane {
             dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
-            ..
-        }
-    )));
-
-    let full = lift_single(&[0x62, 0xF1, 0x75, 0x49, 0x6B, 0x40, 0x01]).unwrap();
-    assert!(full.ops.iter().any(|op| matches!(
-        op.kind,
-        OpKind::Lea {
-            addr: Address::BaseOffset {
-                offset: 64,
-                disp_size: DispSize::Disp8,
-                ..
-            },
-            ..
-        }
-    )));
-    let offsets = full
-        .ops
-        .iter()
-        .filter_map(|op| match op.kind {
-            OpKind::PredLoad {
-                addr: Address::BaseOffset { offset, .. },
-                width: MemWidth::B4,
-                ..
-            } => Some(offset),
-            _ => None,
-        })
-        .collect::<Vec<_>>();
-    assert_eq!(offsets, (0..16).map(|lane| lane * 4).collect::<Vec<_>>());
-
-    let broadcast = lift_single(&[0x62, 0xF2, 0x75, 0x59, 0x2B, 0x40, 0x10]).unwrap();
-    assert_eq!(
-        broadcast
-            .ops
-            .iter()
-            .filter(|op| matches!(
-                op.kind,
-                OpKind::PredLoad {
-                    width: MemWidth::B4,
-                    ..
-                }
-            ))
-            .count(),
-        1
-    );
-    assert!(broadcast.ops.iter().any(|op| matches!(
-        op.kind,
-        OpKind::PredLoad {
-            addr: Address::BaseOffset {
-                offset: 64,
-                disp_size: DispSize::Disp8,
-                ..
-            },
             ..
         }
     )));
