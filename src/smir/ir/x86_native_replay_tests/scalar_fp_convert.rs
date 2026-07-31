@@ -205,12 +205,8 @@ impl Conversion {
         }
     }
 
-    fn has_embedded_rounding(self) -> bool {
-        matches!(self, Self::F64ToF32 | Self::F64ToF16 | Self::F32ToF16)
-    }
-
     fn valid_control(self, ll: u8, embedded_control: bool) -> bool {
-        ll != 3 || (embedded_control && self.has_embedded_rounding())
+        ll != 3 || embedded_control
     }
 }
 
@@ -256,7 +252,7 @@ fn encoding(
 }
 
 #[test]
-fn classifier_accepts_exactly_19_500_sampled_legal_register_encodings() {
+fn classifier_accepts_exactly_21_000_sampled_legal_register_encodings() {
     let registers = [0u8, 8, 16, 24, 31];
     let masks = [(0u8, false), (1, false), (1, true), (7, true)];
     let mut classified = 0usize;
@@ -295,7 +291,7 @@ fn classifier_accepts_exactly_19_500_sampled_legal_register_encodings() {
             }
         }
     }
-    assert_eq!(classified, 19_500);
+    assert_eq!(classified, 21_000);
 
     // Independently assembled by LLVM 21.1.8. Collectively these cover all
     // six mnemonics, high destination/merge/source registers, k1/k7,

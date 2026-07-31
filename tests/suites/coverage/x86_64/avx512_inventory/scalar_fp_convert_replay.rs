@@ -79,14 +79,7 @@ fn register_evex_scalar_fp_convert_replay_closes_24_generated_lift_lower_gaps() 
             EvexW::WIg => &[false, true],
         };
         for &w in widths {
-            expected_shapes.insert((
-                row.key.map,
-                row.key.opcode,
-                row.key.pp,
-                w,
-                row.key.map != 1,
-                row.operands.contains("{er}"),
-            ));
+            expected_shapes.insert((row.key.map, row.key.opcode, row.key.pp, w, row.key.map != 1));
         }
 
         for variant in evex_case_variants_for_row(&row) {
@@ -193,17 +186,9 @@ fn register_evex_scalar_fp_convert_replay_closes_24_generated_lift_lower_gaps() 
                                         bytes.push(0xA5);
                                     }
                                     let expected = expected_shapes.iter().find_map(
-                                        |(
-                                            shape_map,
-                                            shape_opcode,
-                                            shape_pp,
-                                            shape_w,
-                                            fp16,
-                                            embedded_rounding,
-                                        )| {
+                                        |(shape_map, shape_opcode, shape_pp, shape_w, fp16)| {
                                             (!trailing
-                                                && (ll != 3
-                                                    || (embedded_control && *embedded_rounding))
+                                                && (ll != 3 || embedded_control)
                                                 && (*shape_map, *shape_opcode, *shape_pp, *shape_w)
                                                     == (map, opcode, pp, w))
                                                 .then_some(*fp16)
@@ -228,7 +213,7 @@ fn register_evex_scalar_fp_convert_replay_closes_24_generated_lift_lower_gaps() 
     // Exhaust every architectural destination, merge, and source vector
     // register for every Intel shape and representative mask modes.
     let mut register_encodings = 0usize;
-    for &(map, opcode, pp, w, fp16, embedded_rounding) in &expected_shapes {
+    for &(map, opcode, pp, w, fp16) in &expected_shapes {
         for destination in 0u8..32 {
             for merge in 0u8..32 {
                 for source in 0u8..32 {
@@ -238,7 +223,7 @@ fn register_evex_scalar_fp_convert_replay_closes_24_generated_lift_lower_gaps() 
                             pp,
                             opcode,
                             w,
-                            if embedded_rounding { 3 } else { 2 },
+                            3,
                             true,
                             destination,
                             merge,

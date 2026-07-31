@@ -137,8 +137,9 @@ impl X86InstructionBytes {
     /// 256-bit source forms require AVX-512VL. `VCVTPD2PH` and `VCVTPS2PHX`
     /// use all four `L'L` values as embedded rounding control when
     /// register-source `EVEX.b=1` implies a 512-bit source. `VCVTPS2PH` uses
-    /// its immediate for rounding and admits the canonical `EVEX.b=1,L'L=00`
-    /// 512-bit SAE form. The legacy-map `VCVTPS2PH` requires AVX-512F;
+    /// its immediate for rounding; register-source `EVEX.b=1` implies a
+    /// 512-bit source with SAE and makes all four L'L bit images defined. The
+    /// legacy-map `VCVTPS2PH` requires AVX-512F;
     /// `VCVTPD2PH` and `VCVTPS2PHX` require AVX-512-FP16. Memory forms and
     /// every reserved EVEX field fail closed.
     pub fn evex_register_fp16_narrow_requirements(&self) -> Option<(bool, bool)> {
@@ -179,9 +180,9 @@ impl X86InstructionBytes {
         let embedded_control = p2 & 0x10 != 0;
         if embedded_control {
             if has_immediate {
-                // SAE does not consume L'L as rounding control. LLVM emits
-                // the canonical width-implied L'L=00 representation.
-                return (ll == 0).then_some((false, false));
+                // The immediate retains rounding control while EVEX.b fixes
+                // the source width at 512 bits and supplies SAE.
+                return Some((false, false));
             }
             // L'L encodes RN/RD/RU/RZ for the 512-bit ER forms.
             return Some((false, true));

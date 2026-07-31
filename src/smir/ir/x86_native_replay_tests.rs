@@ -177,16 +177,14 @@ const SCALAR_FP16_ARITHMETIC_OPCODES: [u8; 7] = [0x51, 0x58, 0x59, 0x5C, 0x5D, 0
 #[test]
 fn scalar_fp16_arithmetic_replay_classifier_is_exact_and_fail_closed() {
     for opcode in SCALAR_FP16_ARITHMETIC_OPCODES {
-        // LLIG admits the three defined vector-length encodings. EVEX.b
-        // repurposes L'L as embedded rounding for arithmetic/square-root, but
-        // selects SAE without repurposing L'L for minimum/maximum.
+        // LLIG admits the three defined vector-length encodings. Register-
+        // source EVEX.b supplies ER or SAE and makes all four L'L bit images
+        // defined, including the SAE-only minimum/maximum forms.
         for p2 in [0x09, 0x29, 0x49, 0x69, 0x19, 0x39, 0x59, 0x79] {
             let bytes = [0x62, 0xF5, 0x7E, p2, opcode, 0xC8];
             let ll = (p2 >> 5) & 3;
             let embedded_control = p2 & 0x10 != 0;
-            let has_embedded_rounding = !matches!(opcode, 0x5D | 0x5F);
-            let expected =
-                (ll != 3 || (embedded_control && has_embedded_rounding)).then_some(false);
+            let expected = (ll != 3 || embedded_control).then_some(false);
             assert_eq!(
                 X86InstructionBytes::new(&bytes)
                     .unwrap()

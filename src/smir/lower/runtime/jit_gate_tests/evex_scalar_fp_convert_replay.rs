@@ -41,7 +41,7 @@ impl Conversion {
     }
 
     fn valid_control(self, ll: u8, embedded_control: bool) -> bool {
-        ll != 3 || (embedded_control && self.has_embedded_rounding())
+        ll != 3 || embedded_control
     }
 
     #[cfg(target_arch = "x86_64")]
@@ -236,7 +236,7 @@ fn replay_feature_aggregation_requires_fp16_only_for_fp16_conversions() {
 }
 
 #[test]
-fn replay_admits_and_emits_312_o0_o2_mask_control_shapes_and_fails_closed() {
+fn replay_admits_and_emits_336_o0_o2_mask_control_shapes_and_fails_closed() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -321,7 +321,7 @@ fn replay_admits_and_emits_312_o0_o2_mask_control_shapes_and_fails_closed() {
             }
         }
     }
-    assert_eq!(lowered, 312);
+    assert_eq!(lowered, 336);
 
     let replay_only = encoding(Conversion::F64ToF16, 3, true, 31, 30, 29, 7, true);
     let mut missing = function(&replay_only);
@@ -617,10 +617,9 @@ fn native_cases() -> Vec<NativeCase> {
         }
     }
 
-    // The exact F32-to-F64 boundary corpus has 25 values, while the legal
-    // three-value LLIG matrix supplies 24 active O0/O2 mask/control slots.
-    // Append any uncovered source values through a canonical legal control so
-    // fail-closed admission does not reduce semantic boundary coverage.
+    // Append any source values not already covered by the complete legal
+    // control matrix through a canonical encoding so future corpus growth
+    // cannot silently reduce semantic boundary coverage.
     for conversion in Conversion::ALL {
         if conversion.fields().4 && !has_fp16 {
             continue;
@@ -657,7 +656,7 @@ fn native_cases() -> Vec<NativeCase> {
             "{conversion:?} active source-pattern coverage"
         );
     }
-    assert_eq!(cases.len(), if has_fp16 { 313 } else { 105 });
+    assert_eq!(cases.len(), if has_fp16 { 336 } else { 112 });
     cases
 }
 

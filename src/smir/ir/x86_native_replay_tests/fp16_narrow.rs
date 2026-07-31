@@ -258,19 +258,16 @@ fn encoding(
     bytes
 }
 
-fn controls(kind: NarrowKind) -> &'static [(u8, bool)] {
-    match kind {
-        NarrowKind::F32ToF16Immediate => &[(0, false), (1, false), (2, false), (0, true)],
-        NarrowKind::F64ToF16 | NarrowKind::F32ToF16X => &[
-            (0, false),
-            (1, false),
-            (2, false),
-            (0, true),
-            (1, true),
-            (2, true),
-            (3, true),
-        ],
-    }
+fn controls(_kind: NarrowKind) -> &'static [(u8, bool)] {
+    &[
+        (0, false),
+        (1, false),
+        (2, false),
+        (0, true),
+        (1, true),
+        (2, true),
+        (3, true),
+    ]
 }
 
 fn requirements(kind: NarrowKind, ll: u8, embedded_control: bool) -> (bool, bool) {
@@ -278,7 +275,7 @@ fn requirements(kind: NarrowKind, ll: u8, embedded_control: bool) -> (bool, bool
 }
 
 #[test]
-fn classifier_accepts_exactly_1_800_sampled_legal_register_encodings() {
+fn classifier_accepts_exactly_2_100_sampled_legal_register_encodings() {
     let registers = [0u8, 7, 8, 16, 31];
     let masks = [(0u8, false), (1, false), (2, true), (7, true)];
     let mut classified = 0usize;
@@ -316,10 +313,12 @@ fn classifier_accepts_exactly_1_800_sampled_legal_register_encodings() {
             }
         }
     }
-    assert_eq!(classified, 1_800);
+    assert_eq!(classified, 2_100);
 
-    // Independently assembled by LLVM 21.1.8. These include both ModR/M
-    // directions, EGPR extension channels, all ER modes, masking, and imm8.
+    // Canonical samples were independently assembled by LLVM 21.1.8. The
+    // three noncanonical VCVTPS2PH SAE aliases were independently decoded by
+    // iced-x86 1.21.0. Together they include both ModR/M directions, EGPR
+    // extension channels, all ER/SAE L'L images, masking, and imm8.
     for (bytes, expected) in [
         (&[0x62, 0xF5, 0xFD, 0x08, 0x5A, 0xCA][..], (true, true)),
         (&[0x62, 0x55, 0xFD, 0x28, 0x5A, 0xCA], (true, true)),
@@ -332,6 +331,9 @@ fn classifier_accepts_exactly_1_800_sampled_legal_register_encodings() {
         (&[0x62, 0x53, 0x7D, 0xAA, 0x1D, 0xD1, 0x04], (true, false)),
         (&[0x62, 0xA3, 0x7D, 0x48, 0x1D, 0xD1, 0xFF], (false, false)),
         (&[0x62, 0x03, 0x7D, 0x99, 0x1D, 0xF5, 0x03], (false, false)),
+        (&[0x62, 0xF3, 0x7D, 0x39, 0x1D, 0xC8, 0xA5], (false, false)),
+        (&[0x62, 0xF3, 0x7D, 0x59, 0x1D, 0xC8, 0xA5], (false, false)),
+        (&[0x62, 0xF3, 0x7D, 0x79, 0x1D, 0xC8, 0xA5], (false, false)),
         (&[0x62, 0xF5, 0x7D, 0x08, 0x1D, 0xCA], (true, true)),
         (&[0x62, 0x55, 0x7D, 0x28, 0x1D, 0xCA], (true, true)),
         (&[0x62, 0xA5, 0x7D, 0x48, 0x1D, 0xCA], (false, true)),
@@ -381,9 +383,6 @@ fn classifier_rejects_every_reserved_or_unsafe_frontier() {
 
     for kind in NarrowKind::ALL {
         invalid.push(encoding(kind, 3, false, 1, 2, 0, false, 0).to_vec());
-    }
-    for ll in 1..=3 {
-        invalid.push(encoding(NarrowKind::F32ToF16Immediate, ll, true, 1, 2, 0, false, 0).to_vec());
     }
     // Presence of the immediate byte is instruction-specific.
     let mut missing_immediate = encoding(

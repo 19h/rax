@@ -24,19 +24,16 @@ impl NarrowKind {
     }
 }
 
-fn controls(kind: NarrowKind) -> &'static [(u8, bool)] {
-    match kind {
-        NarrowKind::F32ToF16Immediate => &[(0, false), (1, false), (2, false), (0, true)],
-        NarrowKind::F64ToF16 | NarrowKind::F32ToF16X => &[
-            (0, false),
-            (1, false),
-            (2, false),
-            (0, true),
-            (1, true),
-            (2, true),
-            (3, true),
-        ],
-    }
+fn controls(_kind: NarrowKind) -> &'static [(u8, bool)] {
+    &[
+        (0, false),
+        (1, false),
+        (2, false),
+        (0, true),
+        (1, true),
+        (2, true),
+        (3, true),
+    ]
 }
 
 fn requirements(kind: NarrowKind, ll: u8, embedded_control: bool) -> (bool, bool) {
@@ -147,7 +144,7 @@ fn replay_feature_aggregation_requires_bw_and_exact_vl_fp16_features() {
 }
 
 #[test]
-fn replay_admits_and_emits_270_optimized_legal_encodings_and_fails_closed() {
+fn replay_admits_and_emits_315_optimized_legal_encodings_and_fails_closed() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -246,7 +243,7 @@ fn replay_admits_and_emits_270_optimized_legal_encodings_and_fails_closed() {
     }
 
     assert!(missing_provenance_checked && memory_metadata_checked);
-    assert_eq!(admitted, 270);
+    assert_eq!(admitted, 315);
 }
 
 #[cfg(target_arch = "x86_64")]

@@ -30,7 +30,7 @@ fn scalar_fp16_function(bytes: &[u8; 6]) -> crate::smir::ir::SmirFunction {
 }
 
 #[test]
-fn scalar_fp16_arithmetic_replay_admits_54_legal_opcode_control_extension_shapes() {
+fn scalar_fp16_arithmetic_replay_admits_56_legal_opcode_control_extension_shapes() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -58,9 +58,7 @@ fn scalar_fp16_arithmetic_replay_admits_54_legal_opcode_control_extension_shapes
             [0x62, 0xF5, 0x7E, 0x59, opcode, 0xC8],
             [0x62, 0xA5, 0x6E, 0x81, opcode, 0xCB],
         ];
-        if !matches!(opcode, 0x5D | 0x5F) {
-            encodings.push([0x62, 0xF5, 0x7E, 0x79, opcode, 0xC8]);
-        }
+        encodings.push([0x62, 0xF5, 0x7E, 0x79, opcode, 0xC8]);
 
         for bytes in &encodings {
             let mut function = scalar_fp16_function(bytes);
@@ -116,7 +114,7 @@ fn scalar_fp16_arithmetic_replay_admits_54_legal_opcode_control_extension_shapes
             "opcode={opcode:#04x}"
         );
     }
-    assert_eq!(admitted, 54);
+    assert_eq!(admitted, 56);
 }
 
 #[cfg(target_arch = "x86_64")]
@@ -287,7 +285,7 @@ fn scalar_fp16_arithmetic_replay_matches_interpreter_masks_rounding_sae_and_uppe
     let mut sae = initial.clone();
     sae.src2[0] = (sae.src2[0] & !0xFFFF) | 0x7C01;
     let result =
-        assert_scalar_fp16_native_matches_interpreter(&[0x62, 0xA5, 0x6E, 0x91, 0x5F, 0xCB], &sae);
+        assert_scalar_fp16_native_matches_interpreter(&[0x62, 0xA5, 0x6E, 0xF1, 0x5F, 0xCB], &sae);
     assert_eq!(result.dst[0] & 0xFFFF, 0x7C01);
     assert_eq!(result.mxcsr, sae.mxcsr);
 }

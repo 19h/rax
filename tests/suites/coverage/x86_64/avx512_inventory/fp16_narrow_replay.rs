@@ -104,7 +104,7 @@ fn register_evex_fp16_narrow_replay_closes_36_generated_lift_lower_gaps() {
     // Exhaust map/opcode/pp/W/L'L/b/length and every R/X/B/R' combination
     // against the independently parsed Intel rows. VCVTPD2PH and VCVTPS2PHX
     // consume all L'L values as ER when b=1; immediate-controlled VCVTPS2PH
-    // admits only the canonical b=1,L'L=00 SAE encoding.
+    // retains imm8 rounding while b=1 makes all four L'L bit images defined.
     for extensions in 0u8..=15 {
         for map in 0u8..=7 {
             for opcode in u8::MIN..=u8::MAX {
@@ -139,11 +139,8 @@ fn register_evex_fp16_narrow_replay_closes_36_generated_lift_lower_gaps() {
                                     );
                                     let expected = shape.and_then(
                                         |(_, _, _, _, _, has_immediate, needs_fp16)| {
-                                            let control_valid = if embedded_control {
-                                                !*has_immediate || ll == 0
-                                            } else {
-                                                ll != 3
-                                            };
+                                            let control_valid =
+                                                if embedded_control { true } else { ll != 3 };
                                             let length_valid =
                                                 suffix_len == if *has_immediate { 1 } else { 0 };
                                             (control_valid && length_valid).then_some((
@@ -169,16 +166,33 @@ fn register_evex_fp16_narrow_replay_closes_36_generated_lift_lower_gaps() {
     }
 
     // All 256 immediate values are structural encodings; only bits 2:0 have
-    // architectural rounding meaning and bits 7:3 are ignored.
+    // architectural rounding meaning and bits 7:3 are ignored. Each is also
+    // admitted through all four register-source SAE L'L aliases.
     for immediate in u8::MIN..=u8::MAX {
-        let bytes = [0x62, 0xF3, 0x7D, 0x09, 0x1D, 0xC8, immediate];
-        assert_eq!(
-            X86InstructionBytes::new(&bytes)
-                .unwrap()
-                .evex_register_fp16_narrow_requirements(),
-            Some((true, false)),
-            "{bytes:02X?}"
-        );
+        for (ll, embedded_control, expected) in [
+            (0, false, (true, false)),
+            (0, true, (false, false)),
+            (1, true, (false, false)),
+            (2, true, (false, false)),
+            (3, true, (false, false)),
+        ] {
+            let bytes = [
+                0x62,
+                0xF3,
+                0x7D,
+                (ll << 5) | if embedded_control { 0x19 } else { 0x09 },
+                0x1D,
+                0xC8,
+                immediate,
+            ];
+            assert_eq!(
+                X86InstructionBytes::new(&bytes)
+                    .unwrap()
+                    .evex_register_fp16_narrow_requirements(),
+                Some(expected),
+                "{bytes:02X?}"
+            );
+        }
     }
 
     let register = [0x62, 0xF5, 0x7D, 0x09, 0x1D, 0xC8];

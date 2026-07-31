@@ -125,8 +125,8 @@ fn encoding(
     ]
 }
 
-fn valid_control(truncate: bool, ll: u8, embedded_control: bool) -> bool {
-    ll != 3 || (embedded_control && !truncate)
+fn valid_control(ll: u8, embedded_control: bool) -> bool {
+    ll != 3 || embedded_control
 }
 
 fn function(bytes: &[u8]) -> crate::smir::ir::SmirFunction {
@@ -183,7 +183,7 @@ fn replay_feature_aggregation_requires_fp16_only_for_binary16_sources() {
 }
 
 #[test]
-fn replay_admits_and_emits_312_o0_o2_safe_semantic_shapes_and_fails_closed() {
+fn replay_admits_and_emits_336_o0_o2_safe_semantic_shapes_and_fails_closed() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -200,7 +200,7 @@ fn replay_admits_and_emits_312_o0_o2_safe_semantic_shapes_and_fails_closed() {
                     for w in [false, true] {
                         for ll in 0..=3 {
                             for embedded_control in [false, true] {
-                                if !valid_control(truncate, ll, embedded_control) {
+                                if !valid_control(ll, embedded_control) {
                                     continue;
                                 }
                                 let destination = destinations[lowered % destinations.len()];
@@ -264,7 +264,7 @@ fn replay_admits_and_emits_312_o0_o2_safe_semantic_shapes_and_fails_closed() {
             }
         }
     }
-    assert_eq!(lowered, 312);
+    assert_eq!(lowered, 336);
 
     let replay_only = encoding(SourceFormat::F16, false, true, true, 2, true, 15, 31);
     let mut missing = function(&replay_only);
@@ -493,7 +493,7 @@ fn native_cases() -> Vec<NativeCase> {
                     for w in [false, true] {
                         for ll in 0..=3 {
                             for embedded_control in [false, true] {
-                                if !valid_control(truncate, ll, embedded_control) {
+                                if !valid_control(ll, embedded_control) {
                                     continue;
                                 }
                                 for sample in 0..2usize {
@@ -543,7 +543,7 @@ fn native_cases() -> Vec<NativeCase> {
             );
         }
     }
-    let expected = if has_fp16 { 624 } else { 416 };
+    let expected = if has_fp16 { 672 } else { 448 };
     assert_eq!(cases.len(), expected);
     cases
 }

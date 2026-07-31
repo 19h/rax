@@ -59,12 +59,12 @@ fn encoding(
     ]
 }
 
-fn valid_control(truncate: bool, ll: u8, embedded_control: bool) -> bool {
-    ll != 3 || (embedded_control && !truncate)
+fn valid_control(ll: u8, embedded_control: bool) -> bool {
+    ll != 3 || embedded_control
 }
 
 #[test]
-fn classifier_accepts_exactly_3_120_sampled_legal_register_encodings() {
+fn classifier_accepts_exactly_3_360_sampled_legal_register_encodings() {
     let destinations = [0u8, 3, 8, 12, 15];
     let sources = [0u8, 8, 16, 31];
     let mut classified = 0usize;
@@ -87,7 +87,7 @@ fn classifier_accepts_exactly_3_120_sampled_legal_register_encodings() {
                                         destination,
                                         source,
                                     );
-                                    let expected = valid_control(truncate, ll, embedded_control)
+                                    let expected = valid_control(ll, embedded_control)
                                         .then_some(format.fields().2);
                                     assert_eq!(
                                         X86InstructionBytes::new(&bytes)
@@ -105,7 +105,7 @@ fn classifier_accepts_exactly_3_120_sampled_legal_register_encodings() {
             }
         }
     }
-    assert_eq!(classified, 3_120);
+    assert_eq!(classified, 3_360);
 
     // Independently assembled by LLVM 21.1.8. Collectively these exercise all
     // 12 mnemonics, W0/W1, dynamic/embedded controls, high GPRs, and XMM16-31.
@@ -240,7 +240,7 @@ fn replay_spans_expose_exact_fp16_requirements() {
                             let instruction = X86InstructionBytes::new(&bytes).unwrap();
                             let provenance =
                                 std::collections::HashMap::from([((BlockId(79), pc), instruction)]);
-                            let valid = valid_control(truncate, ll, embedded_control);
+                            let valid = valid_control(ll, embedded_control);
                             for spans in [
                                 x86_evex_scalar_fp_to_int_replay_spans(&block, &provenance),
                                 x86_evex_native_replay_spans(&block, &provenance),

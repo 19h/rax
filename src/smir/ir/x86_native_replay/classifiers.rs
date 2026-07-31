@@ -575,8 +575,8 @@ impl X86InstructionBytes {
     /// VSQRTSH require AVX-512-FP16 but not AVX-512VL. Without embedded
     /// rounding their L'L field is LLIG and accepts the three defined EVEX
     /// vector-length encodings. Register-source EVEX.b supplies embedded
-    /// rounding for arithmetic/square-root or SAE for minimum/maximum; only
-    /// embedded rounding repurposes L'L and makes all four values valid.
+    /// rounding for arithmetic/square-root or SAE for minimum/maximum. Both
+    /// register-source controls make all four L'L bit images defined.
     /// Memory forms and malformed zeroing-with-k0 encodings fail closed.
     pub fn evex_register_scalar_fp16_arithmetic_needs_vl(&self) -> Option<bool> {
         let bytes = self.as_slice();
@@ -601,8 +601,7 @@ impl X86InstructionBytes {
         let ll = (p2 >> 5) & 0x03;
         let embedded_control = p2 & 0x10 != 0;
         let mask = p2 & 0x07;
-        let has_embedded_rounding = !matches!(opcode, 0x5D | 0x5F);
-        if (zeroing && mask == 0) || (ll == 3 && !(embedded_control && has_embedded_rounding)) {
+        if (zeroing && mask == 0) || (ll == 3 && !embedded_control) {
             return None;
         }
         Some(false)

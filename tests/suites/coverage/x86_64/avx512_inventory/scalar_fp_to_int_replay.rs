@@ -146,9 +146,10 @@ fn register_evex_scalar_fp_to_int_replay_closes_80_generated_lift_lower_gaps() {
 
     // Exhaust map/opcode/pp/W/L'L/b/length and all four P0 extension channels
     // against the independently parsed Intel rows. L'L is ignored with b=0,
-    // selects ER for non-truncating b=1 forms, and remains ignored by the
-    // truncating SAE forms. EVEX.R' must remain encoded one because the GPR
-    // destination has no architectural bit 4.
+    // selects ER for non-truncating b=1 forms, and accompanies SAE for
+    // truncating forms. Register-source b=1 makes all four L'L bit images
+    // defined. EVEX.R' must remain encoded one because the GPR destination
+    // has no architectural bit 4.
     for extensions in 0u8..=15 {
         for map in 0u8..=7 {
             for opcode in u8::MIN..=u8::MAX {
@@ -175,11 +176,11 @@ fn register_evex_scalar_fp_to_int_replay_closes_80_generated_lift_lower_gaps() {
                                             shape_pp,
                                             shape_w,
                                             fp16,
-                                            truncating,
+                                            _truncating,
                                         )| {
                                             (!trailing
                                                 && extensions & 1 != 0
-                                                && (ll != 3 || (embedded_control && !*truncating))
+                                                && (ll != 3 || embedded_control)
                                                 && (*shape_map, *shape_opcode, *shape_pp, *shape_w)
                                                     == (map, opcode, pp, w))
                                                 .then_some(*fp16)

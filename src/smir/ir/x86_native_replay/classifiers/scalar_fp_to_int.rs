@@ -69,9 +69,9 @@ impl X86InstructionBytes {
     /// truncating `VCVTT*` forms, for 32-bit and 64-bit integer destinations.
     /// Map-1 binary32/binary64 forms require AVX-512F; map-5 binary16 forms
     /// require AVX-512-FP16. `L'L` is ignored when `EVEX.b=0`, selects embedded
-    /// rounding for non-truncating `EVEX.b=1` forms, and remains LLIG for the
-    /// truncating SAE forms. Consequently `L'L=11` is valid only for the
-    /// non-truncating embedded-rounding form.
+    /// rounding for non-truncating `EVEX.b=1` forms, and accompanies SAE for
+    /// truncating forms. The register-source control makes all four L'L bit
+    /// images defined.
     ///
     /// Memory sources, reserved vvvv/V'/mask/zeroing fields, fabricated GPR bit
     /// 4, and RSP/RBP destinations fail closed. RSP/RBP are unsafe because raw
@@ -111,8 +111,7 @@ impl X86InstructionBytes {
 
         let ll = (p2 >> 5) & 0x03;
         let embedded_control = p2 & 0x10 != 0;
-        let truncating = matches!(opcode, 0x2C | 0x78);
-        if ll == 3 && !(embedded_control && !truncating) {
+        if ll == 3 && !embedded_control {
             return None;
         }
 
