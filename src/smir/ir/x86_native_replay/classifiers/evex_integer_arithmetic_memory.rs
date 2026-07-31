@@ -1,4 +1,4 @@
-//! EVEX packed integer add/subtract memory-source classification.
+//! EVEX packed integer add/subtract/average memory-source classification.
 
 use super::X86InstructionBytes;
 use super::evex_memory::{memory_operand_end, vector_legacy_prefix_len};
@@ -27,7 +27,7 @@ pub(crate) enum X86EvexIntegerArithmeticMemoryReplay {
     },
 }
 
-/// Exact EVEX packed integer add/subtract memory encoding and its
+/// Exact EVEX packed integer add/subtract/average memory encoding and its
 /// byte-validated native replay.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct X86EvexIntegerArithmeticMemoryEncoding {
@@ -47,19 +47,29 @@ fn integer_arithmetic_elem(opcode: u8, w: bool) -> Option<VecElementType> {
     match opcode {
         0xD8 | 0xDC | 0xE8 | 0xEC | 0xF8 | 0xFC => Some(VecElementType::I8),
         0xD9 | 0xDD | 0xE9 | 0xED | 0xF9 | 0xFD => Some(VecElementType::I16),
+        0xE0 => Some(VecElementType::I8),
+        0xE3 => Some(VecElementType::I16),
         0xFA | 0xFE if !w => Some(VecElementType::I32),
         0xD4 | 0xFB if w => Some(VecElementType::I64),
         _ => None,
     }
 }
 
+fn register_arithmetic_needs_vl(instruction: &X86InstructionBytes) -> Option<bool> {
+    instruction
+        .evex_register_integer_arithmetic_needs_vl()
+        .or_else(|| instruction.evex_register_packed_average_needs_vl())
+}
+
 impl X86InstructionBytes {
-    /// Validate one EVEX packed wrapping/saturating integer add/subtract
-    /// memory source and select an exact helper-backed native replay.
+    /// Validate one EVEX packed wrapping/saturating integer add/subtract or
+    /// rounded unsigned average memory source and select an exact
+    /// helper-backed native replay.
     ///
-    /// The 16-instruction family uses Type E4/E4.nb exception semantics:
+    /// The 18-instruction family uses Type E4/E4.nb exception semantics:
     /// inactive writemask lanes suppress their corresponding 1/2/4/8-byte
-    /// access. VPADDD/Q and VPSUBD/Q additionally accept m32bcst/m64bcst.
+    /// access. VPADDD/Q and VPSUBD/Q additionally accept m32bcst/m64bcst;
+    /// VPAVGB/W use only full-vector memory sources.
     /// Segment/address-size prefixes and APX B4/X4 address extensions remain
     /// confined to helper address evaluation.
     pub(crate) fn evex_integer_arithmetic_memory_encoding(
@@ -134,7 +144,7 @@ impl X86InstructionBytes {
             0xC0 | (modrm & 0x38),
         ])
         .unwrap();
-        if register_probe.evex_register_integer_arithmetic_needs_vl() != Some(needs_avx512vl) {
+        if register_arithmetic_needs_vl(&register_probe) != Some(needs_avx512vl) {
             return None;
         }
 
@@ -161,9 +171,7 @@ impl X86InstructionBytes {
                 0xC0 | (modrm & 0x38) | (scratch & 7),
             ])
             .unwrap();
-            if register_instruction.evex_register_integer_arithmetic_needs_vl()
-                != Some(needs_avx512vl)
-            {
+            if register_arithmetic_needs_vl(&register_instruction) != Some(needs_avx512vl) {
                 return None;
             }
             X86EvexIntegerArithmeticMemoryReplay::Vector {

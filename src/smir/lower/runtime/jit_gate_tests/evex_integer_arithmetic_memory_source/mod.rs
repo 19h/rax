@@ -1,12 +1,12 @@
-//! Exact helper-backed EVEX packed integer add/subtract memory coverage.
+//! Exact helper-backed EVEX packed integer arithmetic memory coverage.
 
 use std::collections::HashMap;
 
 use super::*;
 use crate::smir::ir::ops::{OpKind, SmirOp};
 use crate::smir::ir::types::{
-    Address, ArchReg, BlockId, DispSize, FunctionId, MemWidth, OpId, SourceArch, SrcOperand, VReg,
-    VecElementType, VecWidth, VirtualId, X86Reg,
+    Address, ArchReg, BlockId, DispSize, FunctionId, MemWidth, OpId, SourceArch, SrcOperand,
+    VLaneOp, VReg, VecElementType, VecWidth, VirtualId, X86Reg,
 };
 use crate::smir::ir::{
     SmirBlock, SmirFunction, Terminator, X86EvexIntegerArithmeticMemoryReplay, X86InstructionBytes,
@@ -49,10 +49,12 @@ enum ArithmeticKind {
     SubSignedSaturatingWord,
     SubUnsignedSaturatingByte,
     SubUnsignedSaturatingWord,
+    AverageByte,
+    AverageWord,
 }
 
 impl ArithmeticKind {
-    const ALL: [Self; 16] = [
+    const ALL: [Self; 18] = [
         Self::AddWrappingByte,
         Self::AddWrappingWord,
         Self::AddWrappingDword,
@@ -69,6 +71,8 @@ impl ArithmeticKind {
         Self::SubSignedSaturatingWord,
         Self::SubUnsignedSaturatingByte,
         Self::SubUnsignedSaturatingWord,
+        Self::AverageByte,
+        Self::AverageWord,
     ];
 
     const fn opcode(self) -> u8 {
@@ -89,6 +93,8 @@ impl ArithmeticKind {
             Self::SubSignedSaturatingWord => 0xE9,
             Self::SubUnsignedSaturatingByte => 0xD8,
             Self::SubUnsignedSaturatingWord => 0xD9,
+            Self::AverageByte => 0xE0,
+            Self::AverageWord => 0xE3,
         }
     }
 
@@ -99,13 +105,15 @@ impl ArithmeticKind {
             | Self::AddUnsignedSaturatingByte
             | Self::SubWrappingByte
             | Self::SubSignedSaturatingByte
-            | Self::SubUnsignedSaturatingByte => VecElementType::I8,
+            | Self::SubUnsignedSaturatingByte
+            | Self::AverageByte => VecElementType::I8,
             Self::AddWrappingWord
             | Self::AddSignedSaturatingWord
             | Self::AddUnsignedSaturatingWord
             | Self::SubWrappingWord
             | Self::SubSignedSaturatingWord
-            | Self::SubUnsignedSaturatingWord => VecElementType::I16,
+            | Self::SubUnsignedSaturatingWord
+            | Self::AverageWord => VecElementType::I16,
             Self::AddWrappingDword | Self::SubWrappingDword => VecElementType::I32,
             Self::AddWrappingQword | Self::SubWrappingQword => VecElementType::I64,
         }
@@ -117,6 +125,10 @@ impl ArithmeticKind {
 
     const fn allows_broadcast(self) -> bool {
         matches!(self.elem(), VecElementType::I32 | VecElementType::I64)
+    }
+
+    const fn is_average(self) -> bool {
+        matches!(self, Self::AverageByte | Self::AverageWord)
     }
 }
 
@@ -455,7 +467,7 @@ fn all_cases() -> Vec<IntegerArithmeticMemoryCase> {
 }
 
 #[test]
-fn integer_arithmetic_rewrites_match_six_independent_llvm_23_anchors() {
+fn integer_arithmetic_rewrites_match_eight_independent_llvm_23_anchors() {
     let anchors: &[(&[u8], &[u8])] = &[
         (
             &[0x62, 0xE1, 0x6D, 0x00, 0xFC, 0x0A],
@@ -481,6 +493,14 @@ fn integer_arithmetic_rewrites_match_six_independent_llvm_23_anchors() {
             &[0x62, 0xF1, 0x6D, 0x4C, 0xD8, 0x0A],
             &[0x62, 0xF1, 0x6D, 0x4C, 0xD8, 0x0C, 0x24],
         ),
+        (
+            &[0x62, 0xE1, 0x6D, 0x00, 0xE0, 0x0A],
+            &[0x62, 0xE1, 0x6D, 0x00, 0xE0, 0xC8],
+        ),
+        (
+            &[0x62, 0x71, 0x2D, 0x2B, 0xE3, 0x0A],
+            &[0x62, 0x71, 0x2D, 0x2B, 0xE3, 0x0C, 0x24],
+        ),
     ];
     for (memory, llvm) in anchors {
         let encoding = X86InstructionBytes::new(memory)
@@ -502,7 +522,7 @@ fn integer_arithmetic_rewrites_match_six_independent_llvm_23_anchors() {
 }
 
 #[test]
-fn integer_arithmetic_classifier_exhausts_5_898_240_operand_control_wig_and_apx_cells() {
+fn integer_arithmetic_classifier_exhausts_6_635_520_operand_control_wig_and_apx_cells() {
     let mut accepted = 0usize;
     for kind in ArithmeticKind::ALL {
         for wig_w in [false, true] {
@@ -586,9 +606,15 @@ fn integer_arithmetic_classifier_exhausts_5_898_240_operand_control_wig_and_apx_
                                                         "{bytes:02X?}"
                                                     );
                                                     assert_ne!(scratch, source1, "{bytes:02X?}");
-                                                    assert_eq!(
+                                                    let register_needs_vl = if kind.is_average() {
                                                         register_instruction
-                                                            .evex_register_integer_arithmetic_needs_vl(),
+                                                            .evex_register_packed_average_needs_vl()
+                                                    } else {
+                                                        register_instruction
+                                                            .evex_register_integer_arithmetic_needs_vl()
+                                                    };
+                                                    assert_eq!(
+                                                        register_needs_vl,
                                                         Some(width != VecWidth::V512),
                                                         "{bytes:02X?}"
                                                     );
@@ -616,7 +642,7 @@ fn integer_arithmetic_classifier_exhausts_5_898_240_operand_control_wig_and_apx_
             }
         }
     }
-    assert_eq!(accepted, 5_898_240);
+    assert_eq!(accepted, 6_635_520);
 }
 
 #[test]
@@ -712,9 +738,9 @@ fn integer_arithmetic_classifier_rejects_reserved_non_owned_and_trailing_shapes(
 }
 
 #[test]
-fn all_864_integer_arithmetic_memory_cells_optimize_admit_and_lower_exactly() {
+fn all_972_integer_arithmetic_memory_cells_optimize_admit_and_lower_exactly() {
     let cases = all_cases();
-    assert_eq!(cases.len(), 864);
+    assert_eq!(cases.len(), 972);
     let mut lowerings = 0usize;
     for case in cases {
         for level in LEVELS {
@@ -753,7 +779,7 @@ fn all_864_integer_arithmetic_memory_cells_optimize_admit_and_lower_exactly() {
             lowerings += 1;
         }
     }
-    assert_eq!(lowerings, 864 * LEVELS.len());
+    assert_eq!(lowerings, 972 * LEVELS.len());
 }
 
 #[test]
@@ -816,6 +842,15 @@ fn integer_arithmetic_sequence_fails_closed_for_provenance_and_graph_mutations()
             form: SourceForm::Broadcast,
             control: MaskControl::Zero,
             wig_w: false,
+        },
+        IntegerArithmeticMemoryCase {
+            kind: ArithmeticKind::AverageWord,
+            width: VecWidth::V512,
+            destination: 17,
+            source1: 18,
+            form: SourceForm::Vector,
+            control: MaskControl::Merge,
+            wig_w: true,
         },
     ] {
         let function = optimize(lift_case(case), OptLevel::O2);
@@ -887,6 +922,40 @@ fn integer_arithmetic_sequence_fails_closed_for_provenance_and_graph_mutations()
         ));
         assert_rejected("same-PC tail", &tail);
     }
+}
+
+#[test]
+fn packed_average_unmasked_load_compute_and_commit_fail_closed_independently() {
+    let case = IntegerArithmeticMemoryCase {
+        kind: ArithmeticKind::AverageByte,
+        width: VecWidth::V512,
+        destination: 17,
+        source1: 18,
+        form: SourceForm::Vector,
+        control: MaskControl::None,
+        wig_w: true,
+    };
+    let function = optimize(lift_case(case), OptLevel::O2);
+    assert!(sequence(&function, true).is_some());
+    assert_eq!(function.blocks[0].ops.len(), 3);
+
+    let mut wrong_load_hint = function.clone();
+    wrong_load_hint.blocks[0].ops[0].x86_hint = None;
+    assert_rejected("average load hint", &wrong_load_hint);
+
+    let mut wrong_average = function.clone();
+    let OpKind::VLane { op, .. } = &mut wrong_average.blocks[0].ops[1].kind else {
+        panic!("average compute graph changed")
+    };
+    *op = VLaneOp::Avg;
+    assert_rejected("truncating average", &wrong_average);
+
+    let mut wrong_commit = function;
+    let OpKind::VMov { src, .. } = &mut wrong_commit.blocks[0].ops[2].kind else {
+        panic!("average commit graph changed")
+    };
+    *src = VReg::Virtual(VirtualId(0x7FFF));
+    assert_rejected("average commit source", &wrong_commit);
 }
 
 #[test]

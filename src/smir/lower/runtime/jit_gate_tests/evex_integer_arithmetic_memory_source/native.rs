@@ -86,7 +86,7 @@ fn assert_architectural_state(
     assert_eq!(actual.mxcsr, expected.mxcsr, "{level:?} {case:?}: MXCSR");
 }
 
-fn selected_cases() -> [IntegerArithmeticMemoryCase; 16] {
+fn selected_cases() -> [IntegerArithmeticMemoryCase; 18] {
     [
         IntegerArithmeticMemoryCase {
             kind: ArithmeticKind::AddWrappingByte,
@@ -231,6 +231,24 @@ fn selected_cases() -> [IntegerArithmeticMemoryCase; 16] {
             form: SourceForm::Vector,
             control: MaskControl::None,
             wig_w: true,
+        },
+        IntegerArithmeticMemoryCase {
+            kind: ArithmeticKind::AverageByte,
+            width: VecWidth::V512,
+            destination: 17,
+            source1: 18,
+            form: SourceForm::Vector,
+            control: MaskControl::Merge,
+            wig_w: true,
+        },
+        IntegerArithmeticMemoryCase {
+            kind: ArithmeticKind::AverageWord,
+            width: VecWidth::V256,
+            destination: 9,
+            source1: 10,
+            form: SourceForm::Vector,
+            control: MaskControl::Zero,
+            wig_w: false,
         },
     ]
 }

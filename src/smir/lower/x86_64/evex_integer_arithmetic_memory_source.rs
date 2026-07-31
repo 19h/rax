@@ -1,4 +1,4 @@
-//! Helper-backed EVEX packed integer add/subtract memory lowering.
+//! Helper-backed EVEX packed integer arithmetic memory lowering.
 
 use std::collections::HashMap;
 
@@ -196,8 +196,8 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-    /// Fuse one exact EVEX packed wrapping/saturating integer add/subtract
-    /// memory decomposition.
+    /// Fuse one exact EVEX packed wrapping/saturating integer add/subtract or
+    /// rounded unsigned average memory decomposition.
     ///
     /// Unmasked vectors use the reserved vector transfer slot. Broadcasts
     /// issue at most one scalar helper access. Writemasked full vectors issue

@@ -164,6 +164,7 @@ fn arithmetic_lane(kind: ArithmeticKind, source1: u64, source2: u64) -> u64 {
             };
             (result.clamp(minimum, maximum) as u64) & mask
         }
+        ArithmeticKind::AverageByte | ArithmeticKind::AverageWord => (source1 + source2 + 1) >> 1,
     }
 }
 
@@ -254,9 +255,9 @@ pub(super) fn interpret(
 }
 
 #[test]
-fn all_864_integer_arithmetic_cells_match_manual_semantics_at_o0_o1_o2() {
+fn all_972_integer_arithmetic_cells_match_manual_semantics_at_o0_o1_o2() {
     let cases = all_cases();
-    assert_eq!(cases.len(), 864);
+    assert_eq!(cases.len(), 972);
     let mut comparisons = 0usize;
     for (ordinal, case) in cases.into_iter().enumerate() {
         let initial = initial_state(case, ordinal);
@@ -269,7 +270,7 @@ fn all_864_integer_arithmetic_cells_match_manual_semantics_at_o0_o1_o2() {
             comparisons += 1;
         }
     }
-    assert_eq!(comparisons, 864 * LEVELS.len());
+    assert_eq!(comparisons, 972 * LEVELS.len());
 }
 
 #[test]
@@ -292,6 +293,15 @@ fn empty_masks_suppress_type_e4_accesses_and_faults_do_not_commit() {
             form: SourceForm::Broadcast,
             control: MaskControl::Zero,
             wig_w: false,
+        },
+        IntegerArithmeticMemoryCase {
+            kind: ArithmeticKind::AverageWord,
+            width: VecWidth::V512,
+            destination: 17,
+            source1: 18,
+            form: SourceForm::Vector,
+            control: MaskControl::Merge,
+            wig_w: true,
         },
     ] {
         for level in LEVELS {

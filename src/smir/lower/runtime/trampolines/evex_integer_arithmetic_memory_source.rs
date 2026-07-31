@@ -1,11 +1,11 @@
-//! Fail-closed helper-backed EVEX packed integer add/subtract memory admission.
+//! Fail-closed helper-backed EVEX packed integer arithmetic memory admission.
 
 use std::collections::HashMap;
 
 use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix, X86VecMap};
 use crate::smir::ir::types::{
-    ArchReg, BlockId, GuestAddr, MemWidth, OpWidth, SignExtend, SrcOperand, VReg, VecElementType,
-    X86Reg,
+    ArchReg, BlockId, GuestAddr, MemWidth, OpWidth, SignExtend, SrcOperand, VLaneOp, VReg,
+    VecElementType, X86Reg,
 };
 use crate::smir::ir::{
     X86EvexIntegerArithmeticMemoryEncoding, X86EvexIntegerArithmeticMemoryReplay,
@@ -13,8 +13,9 @@ use crate::smir::ir::{
 };
 
 use super::evex_memory_source_common::{
-    exact_lane_address, exact_lane_predicate, exact_nonzero_mask_predicate,
-    exact_virtual_definition_use, single_definition_single_use, vector_index,
+    exact_evex_vector_mask_result, exact_lane_address, exact_lane_predicate,
+    exact_nonzero_mask_predicate, exact_virtual_definition_use, single_definition_single_use,
+    vector_index,
 };
 use super::x86_jit_mem_address_shape_valid;
 
@@ -35,6 +36,7 @@ pub(super) struct X86EvexIntegerMemoryShape {
     pub(super) destination: u8,
     pub(super) writemask: Option<u8>,
     pub(super) zeroing: bool,
+    pub(super) vector_load_hint: Option<X86OpHint>,
 }
 
 impl From<X86EvexIntegerArithmeticMemoryEncoding> for X86EvexIntegerMemoryShape {
@@ -45,6 +47,9 @@ impl From<X86EvexIntegerArithmeticMemoryEncoding> for X86EvexIntegerMemoryShape 
             destination: encoding.destination,
             writemask: encoding.writemask,
             zeroing: encoding.zeroing,
+            vector_load_hint: matches!(encoding.opcode, 0xE0 | 0xE3).then_some(
+                X86OpHint::VecAlign(crate::smir::ir::ops::X86VecAlign::Unaligned),
+            ),
         }
     }
 }
@@ -57,6 +62,7 @@ impl From<X86EvexIntegerMinMaxMemoryEncoding> for X86EvexIntegerMemoryShape {
             destination: encoding.destination,
             writemask: encoding.writemask,
             zeroing: encoding.zeroing,
+            vector_load_hint: None,
         }
     }
 }
@@ -112,7 +118,7 @@ fn unconditional_vector_source(
     let load = block.ops.get(index)?;
     let loaded = match &load.kind {
         OpKind::VLoad { dst, addr, width }
-            if load.x86_hint.is_none()
+            if load.x86_hint == encoding.vector_load_hint
                 && *width == encoding.width
                 && x86_jit_mem_address_shape_valid(addr) =>
         {
@@ -560,12 +566,45 @@ fn exact_arithmetic(
             );
             (dst, src1, src2, elem, lanes, exact)
         }
+        OpKind::VLane {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            op: VLaneOp::AvgRnd,
+            signed: false,
+            set_ovf: false,
+        } => (
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            matches!(
+                (encoding.opcode, elem),
+                (0xE0, VecElementType::I8) | (0xE3, VecElementType::I16)
+            ),
+        ),
         _ => return None,
     };
-    let expected_destination = if encoding.writemask.is_some() {
+    let deferred_unmasked_commit =
+        encoding.writemask.is_none() && matches!(encoding.opcode, 0xE0 | 0xE3);
+    let expected_destination = if encoding.writemask.is_some() || deferred_unmasked_commit {
         matches!(dst, VReg::Virtual(_))
     } else {
         vector_index(&dst, encoding.width) == Some(encoding.destination)
+    };
+    let expected_hint = if matches!(encoding.opcode, 0xE0 | 0xE3) {
+        None
+    } else {
+        Some(X86OpHint::EvexOp {
+            map: X86VecMap::Map0F,
+            pp: X86SsePrefix::OpSize,
+            opcode: encoding.opcode,
+            width: encoding.width,
+            w: encoding.w,
+        })
     };
     if !exact_kind
         || !expected_destination
@@ -573,18 +612,41 @@ fn exact_arithmetic(
         || src2 != loaded
         || elem != encoding.elem
         || actual_lanes != lanes
-        || op.x86_hint
-            != Some(X86OpHint::EvexOp {
-                map: X86VecMap::Map0F,
-                pp: X86SsePrefix::OpSize,
-                opcode: encoding.opcode,
-                width: encoding.width,
-                w: encoding.w,
-            })
+        || op.x86_hint != expected_hint
     {
         return None;
     }
     Some(dst)
+}
+
+fn exact_unmasked_result_tail(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    offset: &mut usize,
+    guest_pc: GuestAddr,
+    raw: VReg,
+    encoding: X86EvexIntegerMemoryShape,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<()> {
+    if !exact_virtual_definition_use(raw, 1, 1, virtual_definitions, virtual_uses) {
+        return None;
+    }
+    let commit = block.ops.get(index + *offset)?;
+    if commit.x86_hint.is_some()
+        || commit.guest_pc != guest_pc
+        || !matches!(
+            commit.kind,
+            OpKind::VMov { dst, src, width }
+                if vector_index(&dst, encoding.width) == Some(encoding.destination)
+                    && src == raw
+                    && width == encoding.width
+        )
+    {
+        return None;
+    }
+    *offset += 1;
+    Some(())
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -808,7 +870,7 @@ pub(super) fn matched_integer_memory_source(
 }
 
 /// Validate the complete O0/O1/O2 decomposition emitted for one EVEX packed
-/// integer wrapping/saturating add/subtract memory source.
+/// integer wrapping/saturating add/subtract or rounded-average memory source.
 ///
 /// Exact provenance binds the opcode, W/WIG interpretation, vector/element
 /// width, architectural operands, mask policy, tuple kind, address, every
@@ -843,41 +905,78 @@ pub(crate) fn x86_jit_evex_integer_arithmetic_memory_sequence(
     )?;
 
     let mut offset = source.offset;
-    let old = if encoding.writemask.is_some() {
-        exact_old_destination(
-            block,
-            index,
-            &mut offset,
-            guest_pc,
-            shape,
-            virtual_definitions,
-            virtual_uses,
-        )?
+    let average = matches!(encoding.opcode, 0xE0 | 0xE3);
+    if average {
+        let arithmetic = block.ops.get(index + offset)?;
+        let raw = exact_arithmetic(arithmetic, source.loaded, encoding)?;
+        if arithmetic.guest_pc != guest_pc {
+            return None;
+        }
+        offset += 1;
+        if let Some(mask) = encoding.writemask {
+            exact_evex_vector_mask_result(
+                block,
+                index,
+                &mut offset,
+                guest_pc,
+                raw,
+                VReg::Arch(ArchReg::X86(X86Reg::K(mask))),
+                encoding.width,
+                encoding.elem,
+                encoding.destination,
+                encoding.zeroing,
+                virtual_definitions,
+                virtual_uses,
+            )?;
+        } else {
+            exact_unmasked_result_tail(
+                block,
+                index,
+                &mut offset,
+                guest_pc,
+                raw,
+                shape,
+                virtual_definitions,
+                virtual_uses,
+            )?;
+        }
     } else {
-        None
-    };
-    if encoding.writemask.is_some() && !encoding.zeroing && old.is_none() {
-        return None;
-    }
+        let old = if encoding.writemask.is_some() {
+            exact_old_destination(
+                block,
+                index,
+                &mut offset,
+                guest_pc,
+                shape,
+                virtual_definitions,
+                virtual_uses,
+            )?
+        } else {
+            None
+        };
+        if encoding.writemask.is_some() && !encoding.zeroing && old.is_none() {
+            return None;
+        }
 
-    let arithmetic = block.ops.get(index + offset)?;
-    let raw = exact_arithmetic(arithmetic, source.loaded, encoding)?;
-    if arithmetic.guest_pc != guest_pc {
-        return None;
-    }
-    offset += 1;
-    if encoding.writemask.is_some() {
-        exact_mask_result_tail(
-            block,
-            index,
-            &mut offset,
-            guest_pc,
-            raw,
-            old,
-            shape,
-            virtual_definitions,
-            virtual_uses,
-        )?;
+        let arithmetic = block.ops.get(index + offset)?;
+        let raw = exact_arithmetic(arithmetic, source.loaded, encoding)?;
+        if arithmetic.guest_pc != guest_pc {
+            return None;
+        }
+        offset += 1;
+        if encoding.writemask.is_some() {
+            exact_mask_result_tail(
+                block,
+                index,
+                &mut offset,
+                guest_pc,
+                raw,
+                old,
+                shape,
+                virtual_definitions,
+                virtual_uses,
+            )?;
+        }
     }
     if block
         .ops

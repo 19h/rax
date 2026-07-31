@@ -68,6 +68,9 @@ mod mask_blend_replay;
 mod mask_broadcast_replay;
 #[path = "avx512_inventory/mask_to_vector_replay.rs"]
 mod mask_to_vector_replay;
+#[cfg(feature = "smir-jit")]
+#[path = "avx512_inventory/packed_average_memory_replay.rs"]
+mod packed_average_memory_replay;
 #[path = "avx512_inventory/packed_compare_replay.rs"]
 mod packed_compare_replay;
 #[path = "avx512_inventory/packed_extend_replay.rs"]
