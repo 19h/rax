@@ -105,6 +105,7 @@ pub(crate) use classifiers::{
     X86EvexPackedFunnelShiftMemoryEncoding, X86EvexPackedFunnelShiftMemoryReplay,
     X86EvexPackedRotateMemoryEncoding, X86EvexPackedRotateMemoryReplay,
     X86EvexScalarFma3MemoryEncoding, X86EvexVariablePermuteMemoryEncoding,
+    X86EvexVectorAlignMemoryEncoding, X86EvexVectorAlignMemoryReplay,
     X86VexChunkExtractMemoryEncoding, X86VexCrossLane128MemoryEncoding, X86VexFma4MemoryEncoding,
     X86VexFp16NarrowMemoryEncoding, X86VexHalfMoveMemoryEncoding, X86VexHalfMoveStoreEncoding,
     X86VexImmediateBlendMemoryFields, X86VexImmediatePermuteMemoryEncoding,

@@ -123,6 +123,8 @@ mod evex_scalar_lane_transfer_replay;
 mod evex_scalar_move_replay;
 mod evex_variable_permute_memory_source;
 #[cfg(test)]
+mod evex_vector_align_memory_source;
+#[cfg(test)]
 mod evex_vector_align_replay;
 #[cfg(test)]
 mod evex_vector_to_mask_replay;

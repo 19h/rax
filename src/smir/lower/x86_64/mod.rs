@@ -89,6 +89,8 @@ mod evex_packed_funnel_shift_memory_source;
 mod evex_packed_rotate_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_variable_permute_memory_source;
+#[cfg(feature = "smir-jit")]
+mod evex_vector_align_memory_source;
 mod invlpg;
 #[cfg(feature = "smir-jit")]
 mod jit_vector_memory_replay;

@@ -118,15 +118,8 @@ pub(super) fn exact_lane_predicate(
     Some(condition)
 }
 
-/// Match the complete merge/zero lane reconstruction emitted after one
-/// writemasked EVEX vector operation. `raw` must be a nonarchitectural full
-/// result; this routine validates its exact use by all active lanes and the
-/// single architectural destination reconstruction.
-///
-/// Advances `offset` past O0/O1/O2-equivalent graphs. Runtime is O(L) and
-/// auxiliary space is O(1) for L destination lanes.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn exact_evex_vector_mask_result(
+fn exact_evex_vector_mask_result_with_raw_counts(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
     offset: &mut usize,
@@ -137,14 +130,16 @@ pub(super) fn exact_evex_vector_mask_result(
     elem: VecElementType,
     destination: u8,
     zeroing: bool,
+    raw_definitions: usize,
+    raw_uses: usize,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
 ) -> Option<()> {
     let lanes = width.lanes(elem) as u8;
     if !exact_virtual_definition_use(
         raw,
-        1,
-        usize::from(lanes),
+        raw_definitions,
+        raw_uses,
         virtual_definitions,
         virtual_uses,
     ) {
@@ -224,9 +219,10 @@ pub(super) fn exact_evex_vector_mask_result(
     *offset += 1;
 
     let lane_width = match elem {
-        VecElementType::F16 => OpWidth::W16,
-        VecElementType::F32 => OpWidth::W32,
-        VecElementType::F64 => OpWidth::W64,
+        VecElementType::I8 => OpWidth::W8,
+        VecElementType::I16 | VecElementType::F16 => OpWidth::W16,
+        VecElementType::I32 | VecElementType::F32 => OpWidth::W32,
+        VecElementType::I64 | VecElementType::F64 => OpWidth::W64,
         _ => return None,
     };
     for lane in 0..lanes {
@@ -342,6 +338,84 @@ pub(super) fn exact_evex_vector_mask_result(
         *offset += 1;
     }
     Some(())
+}
+
+/// Match the complete merge/zero lane reconstruction emitted after one
+/// writemasked EVEX vector operation. `raw` must have exactly one definition
+/// and one use by each destination lane.
+///
+/// Advances `offset` past O0/O1/O2-equivalent graphs. Runtime is O(L) and
+/// auxiliary space is O(1) for L destination lanes.
+#[allow(clippy::too_many_arguments)]
+pub(super) fn exact_evex_vector_mask_result(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    offset: &mut usize,
+    guest_pc: GuestAddr,
+    raw: VReg,
+    mask: VReg,
+    width: VecWidth,
+    elem: VecElementType,
+    destination: u8,
+    zeroing: bool,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<()> {
+    exact_evex_vector_mask_result_with_raw_counts(
+        block,
+        index,
+        offset,
+        guest_pc,
+        raw,
+        mask,
+        width,
+        elem,
+        destination,
+        zeroing,
+        1,
+        width.lanes(elem) as usize,
+        virtual_definitions,
+        virtual_uses,
+    )
+}
+
+/// Match the merge/zero reconstruction after a `raw` vector that was built by
+/// one zero broadcast and one in-place insert per destination lane.
+///
+/// Such a vector has L + 1 definitions. It is used once by each insert and
+/// once per mask lane, for 2L total uses.
+#[allow(clippy::too_many_arguments)]
+pub(super) fn exact_evex_reconstructed_vector_mask_result(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    offset: &mut usize,
+    guest_pc: GuestAddr,
+    raw: VReg,
+    mask: VReg,
+    width: VecWidth,
+    elem: VecElementType,
+    destination: u8,
+    zeroing: bool,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<()> {
+    let lanes = width.lanes(elem) as usize;
+    exact_evex_vector_mask_result_with_raw_counts(
+        block,
+        index,
+        offset,
+        guest_pc,
+        raw,
+        mask,
+        width,
+        elem,
+        destination,
+        zeroing,
+        lanes + 1,
+        2 * lanes,
+        virtual_definitions,
+        virtual_uses,
+    )
 }
 
 /// Match the flag-neutral `((x | -x) >> 63)` normalization used to convert

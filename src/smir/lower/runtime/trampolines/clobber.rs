@@ -387,6 +387,17 @@ pub(crate) fn block_is_clobber_safe(
             i += sequence.consumed;
             continue;
         }
+        if let Some(sequence) = x86_jit_evex_vector_align_memory_sequence(
+            block,
+            i,
+            allow_mem,
+            x86_instruction_bytes,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += sequence.consumed;
+            continue;
+        }
         if let Some(sequence) = x86_jit_evex_scalar_fma3_memory_sequence(
             block,
             i,

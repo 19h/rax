@@ -12,6 +12,7 @@ mod evex_memory;
 mod evex_packed_funnel_shift_memory;
 mod evex_packed_rotate_memory;
 mod evex_variable_permute_memory;
+mod evex_vector_align_memory;
 mod fp16_narrow;
 mod fp16_widen;
 mod fp32_fp64_convert;
@@ -116,6 +117,9 @@ pub(crate) use evex_packed_rotate_memory::{
     X86EvexPackedRotateMemoryEncoding, X86EvexPackedRotateMemoryReplay,
 };
 pub(crate) use evex_variable_permute_memory::X86EvexVariablePermuteMemoryEncoding;
+pub(crate) use evex_vector_align_memory::{
+    X86EvexVectorAlignMemoryEncoding, X86EvexVectorAlignMemoryReplay,
+};
 pub(crate) use fp_round::X86VexRoundMemoryEncoding;
 pub(crate) use fp16_narrow::X86VexFp16NarrowMemoryEncoding;
 pub(crate) use scalar_convert_memory::{

@@ -1,5 +1,7 @@
 //! EVEX-encoded AVX-512 / AVX10 lifting
 
+mod align;
+pub use align::*;
 mod compare;
 pub use compare::*;
 mod crypto;
