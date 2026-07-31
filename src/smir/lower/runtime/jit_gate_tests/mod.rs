@@ -68,6 +68,8 @@ mod evex_fp32_fp64_convert_replay;
 #[cfg(test)]
 mod evex_fp32_fp64_flag_compare_replay;
 #[cfg(test)]
+mod evex_fp_arithmetic_memory_source;
+#[cfg(test)]
 mod evex_fp_class_replay;
 #[cfg(test)]
 mod evex_fp_compare_replay;

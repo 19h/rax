@@ -14,8 +14,8 @@ use crate::smir::ir::{
 };
 
 use super::evex_memory_source_common::{
-    exact_nonzero_mask_predicate, exact_virtual_definition_use, single_definition_single_use,
-    vector_index,
+    exact_evex_vector_mask_result, exact_nonzero_mask_predicate, exact_virtual_definition_use,
+    single_definition_single_use, vector_index,
 };
 use super::vector_memory_source::{vex_fma3_kind, vex_fma3_order};
 use super::x86_jit_mem_address_shape_valid;
@@ -180,13 +180,6 @@ fn x86_jit_masked_evex_packed_fma3_broadcast_sequence(
         _ => return None,
     };
     if !same_pc(offset)
-        || !exact_virtual_definition_use(
-            raw,
-            1,
-            usize::from(lanes),
-            virtual_definitions,
-            virtual_uses,
-        )
         || vector_index(&src1, width) != Some(encoding.destination)
         || vector_index(&src2, width) != Some(encoding.source1)
         || src3 != loaded
@@ -211,247 +204,20 @@ fn x86_jit_masked_evex_packed_fma3_broadcast_sequence(
         return None;
     }
     offset += 1;
-    let old = if encoding.zeroing {
-        None
-    } else {
-        let old_op = block.ops.get(index + offset)?;
-        let old = match &old_op.kind {
-            OpKind::VMov {
-                dst,
-                src,
-                width: old_width,
-            } if old_op.x86_hint.is_none()
-                && vector_index(src, width) == Some(encoding.destination)
-                && *old_width == width =>
-            {
-                *dst
-            }
-            _ => return None,
-        };
-        if !same_pc(offset)
-            || !exact_virtual_definition_use(
-                old,
-                1,
-                usize::from(lanes),
-                virtual_definitions,
-                virtual_uses,
-            )
-        {
-            return None;
-        }
-        offset += 1;
-        Some(old)
-    };
-
-    let zero_op = block.ops.get(index + offset)?;
-    let zero = match &zero_op.kind {
-        OpKind::Mov {
-            dst,
-            src: SrcOperand::Imm(0),
-            width: OpWidth::W64,
-        } if zero_op.x86_hint.is_none() => *dst,
-        _ => return None,
-    };
-    let zero_uses = if encoding.zeroing {
-        usize::from(lanes) + 1
-    } else {
-        1
-    };
-    if !same_pc(offset)
-        || !exact_virtual_definition_use(zero, 1, zero_uses, virtual_definitions, virtual_uses)
-    {
-        return None;
-    }
-    offset += 1;
-
-    let result_base_op = block.ops.get(index + offset)?;
-    let result_base = match &result_base_op.kind {
-        OpKind::VBroadcast {
-            dst,
-            scalar,
-            elem: broadcast_elem,
-            lanes: broadcast_lanes,
-        } if result_base_op.x86_hint.is_none()
-            && *scalar == zero
-            && *broadcast_elem == elem
-            && *broadcast_lanes == lanes =>
-        {
-            *dst
-        }
-        _ => return None,
-    };
-    if !same_pc(offset)
-        || !single_definition_single_use(result_base, virtual_definitions, virtual_uses)
-    {
-        return None;
-    }
-    offset += 1;
-
-    let lane_width = match elem {
-        VecElementType::F16 => OpWidth::W16,
-        VecElementType::F32 => OpWidth::W32,
-        VecElementType::F64 => OpWidth::W64,
-        _ => unreachable!("validated packed FMA3 element"),
-    };
-    for lane in 0..lanes {
-        let first_lane_op = block.ops.get(index + offset)?;
-        let direct_lane_zero = lane == 0
-            && matches!(
-                &first_lane_op.kind,
-                OpKind::And {
-                    src1,
-                    src2: SrcOperand::Imm(1),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                    ..
-                } if first_lane_op.x86_hint.is_none() && *src1 == mask
-            );
-        let lane_condition = if direct_lane_zero {
-            match &first_lane_op.kind {
-                OpKind::And { dst, .. } => *dst,
-                _ => unreachable!("direct lane-zero predicate matched And"),
-            }
-        } else {
-            let shifted = match &first_lane_op.kind {
-                OpKind::Shr {
-                    dst,
-                    src,
-                    amount: SrcOperand::Imm(amount),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                } if first_lane_op.x86_hint.is_none()
-                    && *src == mask
-                    && *amount == i64::from(lane) =>
-                {
-                    *dst
-                }
-                _ => return None,
-            };
-            if !same_pc(offset)
-                || !single_definition_single_use(shifted, virtual_definitions, virtual_uses)
-            {
-                return None;
-            }
-            offset += 1;
-            let lane_condition_op = block.ops.get(index + offset)?;
-            match &lane_condition_op.kind {
-                OpKind::And {
-                    dst,
-                    src1,
-                    src2: SrcOperand::Imm(1),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                } if lane_condition_op.x86_hint.is_none() && *src1 == shifted => *dst,
-                _ => return None,
-            }
-        };
-        if !same_pc(offset)
-            || !single_definition_single_use(lane_condition, virtual_definitions, virtual_uses)
-        {
-            return None;
-        }
-        offset += 1;
-
-        let active_op = block.ops.get(index + offset)?;
-        let active = match &active_op.kind {
-            OpKind::VExtractLane {
-                dst,
-                vec,
-                lane: active_lane,
-                elem: active_elem,
-                sign: SignExtend::Zero,
-            } if active_op.x86_hint.is_none()
-                && *vec == raw
-                && *active_lane == lane
-                && *active_elem == elem =>
-            {
-                *dst
-            }
-            _ => return None,
-        };
-        if !same_pc(offset)
-            || !single_definition_single_use(active, virtual_definitions, virtual_uses)
-        {
-            return None;
-        }
-        offset += 1;
-
-        let inactive = if let Some(old) = old {
-            let inactive_op = block.ops.get(index + offset)?;
-            let inactive = match &inactive_op.kind {
-                OpKind::VExtractLane {
-                    dst,
-                    vec,
-                    lane: inactive_lane,
-                    elem: inactive_elem,
-                    sign: SignExtend::Zero,
-                } if inactive_op.x86_hint.is_none()
-                    && *vec == old
-                    && *inactive_lane == lane
-                    && *inactive_elem == elem =>
-                {
-                    *dst
-                }
-                _ => return None,
-            };
-            if !same_pc(offset)
-                || !single_definition_single_use(inactive, virtual_definitions, virtual_uses)
-            {
-                return None;
-            }
-            offset += 1;
-            inactive
-        } else {
-            zero
-        };
-
-        let select_op = block.ops.get(index + offset)?;
-        let selected = match &select_op.kind {
-            OpKind::Select {
-                dst,
-                cond,
-                src_true,
-                src_false,
-                width: select_width,
-            } if select_op.x86_hint.is_none()
-                && *cond == lane_condition
-                && *src_true == active
-                && *src_false == inactive
-                && *select_width == lane_width =>
-            {
-                *dst
-            }
-            _ => return None,
-        };
-        if !same_pc(offset)
-            || !single_definition_single_use(selected, virtual_definitions, virtual_uses)
-        {
-            return None;
-        }
-        offset += 1;
-
-        let insert_op = block.ops.get(index + offset)?;
-        if insert_op.x86_hint.is_some()
-            || !matches!(
-                &insert_op.kind,
-                OpKind::VInsertLane {
-                    dst,
-                    vec,
-                    scalar,
-                    lane: insert_lane,
-                    elem: insert_elem,
-                } if vector_index(dst, width) == Some(encoding.destination)
-                    && *vec == if lane == 0 { result_base } else { *dst }
-                    && *scalar == selected
-                    && *insert_lane == lane
-                    && *insert_elem == elem
-            )
-            || !same_pc(offset)
-        {
-            return None;
-        }
-        offset += 1;
-    }
+    exact_evex_vector_mask_result(
+        block,
+        index,
+        &mut offset,
+        guest_pc,
+        raw,
+        mask,
+        width,
+        elem,
+        encoding.destination,
+        encoding.zeroing,
+        virtual_definitions,
+        virtual_uses,
+    )?;
 
     if block
         .ops
