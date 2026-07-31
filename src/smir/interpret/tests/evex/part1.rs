@@ -2219,7 +2219,7 @@ fn lifted_evex_packed_fp_convert_suppresses_masked_memory_faults_per_lane() {
     assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
 }
 #[test]
-fn executes_evex_two_table_permute_overwrite_masks_and_selected_memory_faults() {
+fn executes_evex_two_table_permute_overwrite_masks_and_complete_memory_faults() {
     fn vec_u32(values: &[u32]) -> VecValue {
         vec_from_bytes(
             &values
@@ -2265,14 +2265,18 @@ fn executes_evex_two_table_permute_overwrite_masks_and_selected_memory_faults() 
     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
         x86.xmm[0] = vec_u32(&[0, 0, 0, 0]);
         x86.xmm[1] = vec_u32(&[0xAA, 0xBB, 0xCC, 0xDD]);
-        x86.k[1] = 1;
+        x86.k[1] = 0;
     }
+    let before = match &ctx.arch_regs {
+        ArchRegState::X86_64(x86) => x86.xmm[0],
+        _ => unreachable!(),
+    };
     assert!(matches!(
         execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x89, 0x76, 0x00], &mut ctx, &mut memory),
-        BlockResult::Exit(ExitReason::Halt)
+        BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
     ));
     if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
-        assert_eq!(x86.xmm[0], vec_u32(&[0xAA, 0, 0, 0]));
+        assert_eq!(x86.xmm[0], before, "empty mask suppressed E4NF read");
     }
 
     memory.write(0x3FC, &0x1234_5678u32.to_le_bytes()).unwrap();
@@ -2281,12 +2285,19 @@ fn executes_evex_two_table_permute_overwrite_masks_and_selected_memory_faults() 
         x86.xmm[0] = vec_u32(&[4, 0, 0, 0]);
         x86.k[1] = 1;
     }
+    let before = match &ctx.arch_regs {
+        ArchRegState::X86_64(x86) => x86.xmm[0],
+        _ => unreachable!(),
+    };
     assert!(matches!(
         execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x89, 0x76, 0x00], &mut ctx, &mut memory),
-        BlockResult::Exit(ExitReason::Halt)
+        BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
     ));
     if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
-        assert_eq!(x86.xmm[0], vec_u32(&[0x1234_5678, 0, 0, 0]));
+        assert_eq!(
+            x86.xmm[0], before,
+            "partial Full Mem tuple committed destination"
+        );
     }
 
     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {

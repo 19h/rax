@@ -40,6 +40,7 @@ impl X86_64Lowerer {
         try_replay!(try_lower_jit_evex_integer_minmax_memory_source);
         try_replay!(try_lower_jit_evex_logic_memory_source);
         try_replay!(try_lower_jit_evex_masked_logic_memory_source);
+        try_replay!(try_lower_jit_evex_two_table_permute_memory_source);
         try_replay!(try_lower_jit_evex_variable_permute_memory_source);
         try_replay!(try_lower_jit_evex_broadcast_interleave_memory_source);
         try_replay!(try_lower_jit_evex_broadcast_logic_memory_source);

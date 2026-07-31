@@ -18,6 +18,7 @@ mod evex_mask_blend_memory;
 mod evex_memory;
 mod evex_packed_funnel_shift_memory;
 mod evex_packed_rotate_memory;
+mod evex_two_table_permute_memory;
 mod evex_variable_permute_memory;
 mod evex_vector_align_memory;
 mod fp16_narrow;
@@ -137,6 +138,9 @@ pub(crate) use evex_packed_funnel_shift_memory::{
 };
 pub(crate) use evex_packed_rotate_memory::{
     X86EvexPackedRotateMemoryEncoding, X86EvexPackedRotateMemoryReplay,
+};
+pub(crate) use evex_two_table_permute_memory::{
+    X86EvexTwoTablePermuteMemoryEncoding, X86EvexTwoTablePermuteMemoryReplay,
 };
 pub(crate) use evex_variable_permute_memory::X86EvexVariablePermuteMemoryEncoding;
 pub(crate) use evex_vector_align_memory::{

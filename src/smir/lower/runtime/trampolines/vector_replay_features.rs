@@ -31,6 +31,7 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_avx512dq: bool,
     pub(crate) needs_avx512fp16: bool,
     pub(crate) needs_avx512cd: bool,
+    pub(crate) needs_avx512vbmi: bool,
     pub(crate) needs_avx512vbmi2: bool,
     pub(crate) needs_gfni: bool,
     pub(crate) needs_avx512vp2intersect: bool,
@@ -243,6 +244,7 @@ impl X86NativeReplayFeatureRequirements {
             && (!self.needs_xop || x86_host_has_xop())
             && (!self.needs_sm3 || std::is_x86_feature_detected!("sm3"))
             && (!self.needs_sm4 || std::is_x86_feature_detected!("sm4"))
+            && (!self.needs_avx512vbmi || std::is_x86_feature_detected!("avx512vbmi"))
             && (!self.needs_avx512vbmi2 || std::is_x86_feature_detected!("avx512vbmi2"))
             && (!self.needs_gfni || std::is_x86_feature_detected!("gfni"))
             && (!self.needs_avx512vp2intersect
@@ -591,6 +593,24 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.needs_avx512bw = true;
                 requirements.needs_avx512dq |= sequence.encoding.needs_avx512dq;
                 requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+                all_spans_support_avx_ymm16 = false;
+                index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_evex_two_table_permute_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                // The full-width vector/opmask bridge requires AVX-512BW.
+                // Byte permutations additionally require AVX-512VBMI;
+                // word forms require BW, and D/Q/PS/PD forms require F.
+                requirements.needs_avx512bw = true;
+                requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+                requirements.needs_avx512vbmi |= sequence.encoding.needs_avx512vbmi;
                 all_spans_support_avx_ymm16 = false;
                 index += sequence.consumed;
             } else if let Some(sequence) = super::x86_jit_evex_variable_permute_memory_sequence(

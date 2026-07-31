@@ -5983,7 +5983,7 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut any = replay.any;
     let mut needs_bw = replay.needs_avx512bw;
     let mut needs_vl = replay.needs_avx512vl;
-    let mut needs_vbmi = false;
+    let mut needs_vbmi = replay.needs_avx512vbmi;
     let mut needs_vbmi2 = false;
     let mut needs_bitalg = false;
     let mut needs_vpopcntdq = false;

@@ -186,10 +186,8 @@ impl X86_64Lifter {
         };
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let broadcast_allowed = matches!(
@@ -235,19 +233,41 @@ impl X86_64Lifter {
                 ctx,
             );
             ops.extend(pre_ops);
-            self.append_two_table_permute_memory_result(
-                table1,
-                addr,
-                indices,
-                prefix.width,
-                elem,
-                broadcast,
-                mask,
-                overwrite_table,
+            // Intel classifies every VPERMI2*/VPERMT2* memory form as E4NF
+            // (or E4NF.nb for byte/word elements). The complete Full Mem
+            // tuple, or the complete scalar broadcast tuple, is therefore
+            // read unconditionally before the destination writemask is
+            // applied. Index selection never suppresses the memory access.
+            let table2 = if broadcast {
+                self.append_broadcast_memory_source(addr, elem, prefix.width, pc, ctx, &mut ops)
+            } else {
+                let loaded = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VLoad {
+                        dst: loaded,
+                        addr,
+                        width: prefix.width,
+                    },
+                ));
+                loaded
+            };
+            let raw = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
                 pc,
-                ctx,
-                &mut ops,
-            )
+                OpKind::VPermute {
+                    dst: raw,
+                    src1: table1,
+                    src2: Some(table2),
+                    indices,
+                    elem,
+                    width: prefix.width,
+                    overwrite_table,
+                },
+            ));
+            raw
         } else {
             let table2 = self.vec_reg(modrm.rm + if prefix.rm_high { 16 } else { 0 }, prefix.width);
             let raw = if direct_vbmi { dst } else { ctx.alloc_vreg() };
@@ -283,7 +303,11 @@ impl X86_64Lifter {
         if !direct_vbmi {
             self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
         }
-        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+        Ok(self.retain_evex_memory_apx_requirement(
+            &modrm,
+            pc,
+            LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed),
+        ))
     }
 
     pub(crate) fn lift_evex_vpconflict(

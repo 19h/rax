@@ -174,19 +174,54 @@ fn lift_evex_two_table_permute_covers_overwrite_direction_shapes_and_memory() {
             .iter()
             .filter(|op| matches!(
                 op.kind,
-                OpKind::PredLoad {
-                    width: MemWidth::B4,
+                OpKind::VLoad {
+                    width: VecWidth::V128,
                     ..
                 }
             ))
             .count(),
-        4
+        1
     );
     assert!(
         !memory
             .ops
             .iter()
-            .any(|op| matches!(op.kind, OpKind::VLoad { .. }))
+            .any(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+    );
+    let broadcast = lift_single(&[0x62, 0xF2, 0x75, 0x99, 0x76, 0x00]).unwrap();
+    let loaded_scalar = broadcast
+        .ops
+        .iter()
+        .find_map(|op| match op.kind {
+            OpKind::Load {
+                dst,
+                width: MemWidth::B4,
+                ..
+            } => Some(dst),
+            _ => None,
+        })
+        .expect("broadcast tuple scalar load");
+    assert_eq!(
+        broadcast
+            .ops
+            .iter()
+            .filter(|op| matches!(
+                op.kind,
+                OpKind::VBroadcast {
+                    scalar,
+                    elem: VecElementType::I32,
+                    lanes: 4,
+                    ..
+                } if scalar == loaded_scalar
+            ))
+            .count(),
+        1
+    );
+    assert!(
+        !broadcast
+            .ops
+            .iter()
+            .any(|op| matches!(op.kind, OpKind::PredLoad { .. }))
     );
 
     for bytes in [

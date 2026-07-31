@@ -137,6 +137,7 @@ mod evex_scalar_integer_move_replay;
 mod evex_scalar_lane_transfer_replay;
 #[cfg(test)]
 mod evex_scalar_move_replay;
+mod evex_two_table_permute_memory_source;
 mod evex_variable_permute_memory_source;
 #[cfg(test)]
 mod evex_vector_align_memory_source;
