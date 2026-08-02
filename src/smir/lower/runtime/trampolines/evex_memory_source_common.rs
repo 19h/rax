@@ -541,7 +541,7 @@ fn evex_e4_memory_width(elem: VecElementType) -> Option<MemWidth> {
     }
 }
 
-fn no_following_same_pc(
+pub(super) fn no_following_same_pc(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
     consumed: usize,
@@ -553,7 +553,7 @@ fn no_following_same_pc(
         .is_some_and(|op| op.guest_pc == guest_pc)
 }
 
-fn exact_e4_sequence_frontier(
+pub(super) fn exact_evex_memory_sequence_frontier(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
     guest_pc: GuestAddr,
@@ -585,9 +585,9 @@ fn apx_extended_gpr(register: VReg) -> bool {
     )
 }
 
-fn evex_e4_address_requires_apx(address: &Address) -> bool {
+fn evex_address_requires_apx(address: &Address) -> bool {
     match address {
-        Address::X86Addr32(inner) => evex_e4_address_requires_apx(inner),
+        Address::X86Addr32(inner) => evex_address_requires_apx(inner),
         Address::Direct(register) => apx_extended_gpr(*register),
         Address::BaseOffset { base, .. } => apx_extended_gpr(*base),
         Address::BaseIndexScale { base, index, .. } => {
@@ -607,7 +607,7 @@ fn evex_e4_address_requires_apx(address: &Address) -> bool {
     }
 }
 
-fn exact_e4_apx_frontier(
+pub(super) fn exact_evex_memory_apx_frontier(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
     guest_pc: GuestAddr,
@@ -620,7 +620,7 @@ fn exact_e4_apx_frontier(
                 && matches!(previous.kind, OpKind::X86RequireApx)
         })
     });
-    evex_e4_address_requires_apx(address) == has_guard
+    evex_address_requires_apx(address) == has_guard
 }
 
 fn evex_e4_match_address(
@@ -1052,7 +1052,7 @@ where
     F: Fn(&crate::smir::ir::ops::SmirOp, VReg) -> bool,
 {
     let guest_pc = block.ops.get(index)?.guest_pc;
-    if !exact_e4_sequence_frontier(block, index, guest_pc) {
+    if !exact_evex_memory_sequence_frontier(block, index, guest_pc) {
         return None;
     }
     let exact = match (shape.form, shape.writemask) {
@@ -1091,5 +1091,5 @@ where
         _ => None,
     }?;
     let address = evex_e4_match_address(block, index, exact)?;
-    exact_e4_apx_frontier(block, index, guest_pc, address).then_some(exact)
+    exact_evex_memory_apx_frontier(block, index, guest_pc, address).then_some(exact)
 }

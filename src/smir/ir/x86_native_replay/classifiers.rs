@@ -21,6 +21,7 @@ mod evex_multishift_memory;
 mod evex_packed_funnel_shift_memory;
 mod evex_packed_rotate_memory;
 mod evex_packed_variable_shift_memory;
+mod evex_shared_count_shift_memory;
 mod evex_two_table_permute_memory;
 mod evex_variable_permute_memory;
 mod evex_vector_align_memory;
@@ -151,6 +152,7 @@ pub(crate) use evex_packed_rotate_memory::{
 pub(crate) use evex_packed_variable_shift_memory::{
     X86EvexPackedVariableShiftMemoryEncoding, X86EvexPackedVariableShiftMemoryReplay,
 };
+pub(crate) use evex_shared_count_shift_memory::X86EvexSharedCountShiftMemoryEncoding;
 pub(crate) use evex_two_table_permute_memory::{
     X86EvexTwoTablePermuteMemoryEncoding, X86EvexTwoTablePermuteMemoryReplay,
 };
@@ -287,41 +289,8 @@ impl X86InstructionBytes {
     /// Word forms use AVX-512BW and doubleword/quadword forms use AVX-512F;
     /// both are already required by the native vector-state trampoline.
     pub fn evex_register_shared_count_shift_needs_vl(&self) -> Option<bool> {
-        let bytes = self.as_slice();
-        if bytes.len() != 6 || bytes[0] != 0x62 {
-            return None;
-        }
-        let p0 = bytes[1];
-        let p1 = bytes[2];
-        let p2 = bytes[3];
-        let opcode = bytes[4];
-        let modrm = bytes[5];
-        if p0 & 0x0f != 1 || p1 & 0x04 == 0 || modrm >> 6 != 3 || p1 & 0x03 != 1 {
-            return None;
-        }
-
-        let w = p1 & 0x80 != 0;
-        match opcode {
-            // Word shifts are WIG; E2 selects VPSRAD/VPSRAQ by W.
-            0xD1 | 0xE1 | 0xE2 | 0xF1 => {}
-            // Doubleword shifts are W0; quadword shifts are W1.
-            0xD2 | 0xF2 if !w => {}
-            0xD3 | 0xF3 if w => {}
-            _ => return None,
-        }
-
-        let zeroing = p2 & 0x80 != 0;
-        let ll = (p2 >> 5) & 0x03;
-        let embedded_control = p2 & 0x10 != 0;
-        let mask = p2 & 0x07;
-        if embedded_control || (zeroing && mask == 0) {
-            return None;
-        }
-        match ll {
-            0 | 1 => Some(true),
-            2 => Some(false),
-            _ => None,
-        }
+        self.evex_register_shared_count_shift_fields()
+            .map(|fields| fields.width != crate::smir::ir::types::VecWidth::V512)
     }
 
     /// Validate register-only EVEX packed shifts with an immediate count and

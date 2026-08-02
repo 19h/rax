@@ -1186,13 +1186,7 @@ impl X86_64Lifter {
             });
         }
         let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
-        };
-        let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
+        let modrm = decode_modrm(&bytes[cursor..], &prefix.modrm_prefix(cursor), pc)?;
         let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();
         let count_vec = if modrm.is_memory {
@@ -1262,7 +1256,12 @@ impl X86_64Lifter {
         if evex && prefix.aaa != 0 {
             self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
         }
-        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+        let result = LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed);
+        Ok(if evex {
+            self.retain_evex_memory_apx_requirement(&modrm, pc, result)
+        } else {
+            result
+        })
     }
 
     pub(crate) fn lift_vec_packed_shift_variable(
