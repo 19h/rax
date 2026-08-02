@@ -1302,14 +1302,7 @@ impl X86_64Lifter {
             }
         };
         let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
-        };
-        let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
+        let modrm = decode_modrm(&bytes[cursor..], &prefix.modrm_prefix(cursor), pc)?;
         let broadcast = evex
             && prefix.b
             && modrm.is_memory
@@ -1335,7 +1328,17 @@ impl X86_64Lifter {
                 ctx,
             );
             ops.extend(pre_ops);
-            if evex && prefix.aaa != 0 {
+            if evex && prefix.aaa != 0 && broadcast {
+                self.append_masked_broadcast_memory_source(
+                    addr,
+                    elem,
+                    prefix.width,
+                    VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))),
+                    pc,
+                    ctx,
+                    &mut ops,
+                )
+            } else if evex && prefix.aaa != 0 {
                 self.append_evex_masked_vector_source(
                     addr,
                     elem,
@@ -1390,7 +1393,8 @@ impl X86_64Lifter {
                 zeroing: evex && prefix.zeroing,
             },
         ));
-        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+        let result = LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed);
+        Ok(self.retain_evex_memory_apx_requirement(&modrm, pc, result))
     }
 
     pub(crate) fn lift_vec_packed_shift_imm(

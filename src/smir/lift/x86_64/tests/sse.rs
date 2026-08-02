@@ -2052,8 +2052,18 @@ fn lift_packed_variable_shifts_cover_encodings_elements_masks_memory_and_invalid
                 }
             ))
             .count(),
-        16
+        1
     );
+    assert!(memory.ops.iter().any(|op| matches!(
+        op.kind,
+        OpKind::And {
+            src1: VReg::Arch(ArchReg::X86(X86Reg::K(7))),
+            src2: SrcOperand::Imm(0xFFFF),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+            ..
+        }
+    )));
     for bytes in [
         &[0xC4, 0xE2, 0xED, 0x10, 0xCB][..],       // word form EVEX-only
         &[0x62, 0xF2, 0x6D, 0x08, 0x10, 0xCB][..], // word form W=1

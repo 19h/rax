@@ -2,11 +2,12 @@
 
 use std::collections::HashMap;
 
+use super::x86_jit_mem_address_shape_valid;
 use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::OpKind;
 use crate::smir::ir::types::{
-    Address, ArchReg, DispSize, GuestAddr, OpWidth, SignExtend, SrcOperand, VReg, VecElementType,
-    VecWidth, X86Reg,
+    Address, ArchReg, DispSize, GuestAddr, MemWidth, OpWidth, SignExtend, SrcOperand, VReg,
+    VecElementType, VecWidth, X86Reg,
 };
 
 pub(super) fn vector_index(reg: &VReg, width: VecWidth) -> Option<u8> {
@@ -502,4 +503,593 @@ pub(super) fn exact_nonzero_mask_predicate(
     }
     *offset += 1;
     Some(predicate)
+}
+
+/// Memory materialization selected by an EVEX E4-class native replay.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum X86EvexE4MemoryReplayForm {
+    Vector,
+    Broadcast,
+    MaskedVector,
+}
+
+/// Architectural fields shared by exact EVEX E4-class source sequences.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) struct X86EvexE4MemoryShape {
+    pub(super) width: VecWidth,
+    pub(super) elem: VecElementType,
+    pub(super) writemask: Option<u8>,
+    pub(super) zeroing: bool,
+    pub(super) form: X86EvexE4MemoryReplayForm,
+}
+
+/// Structural extent of one exact EVEX E4-class source decomposition.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) struct X86EvexE4MemoryMatch {
+    pub(super) consumed: usize,
+    pub(super) address_offset: usize,
+    pub(super) memory_size: u32,
+}
+
+fn evex_e4_memory_width(elem: VecElementType) -> Option<MemWidth> {
+    match elem {
+        VecElementType::I8 => Some(MemWidth::B1),
+        VecElementType::I16 | VecElementType::F16 => Some(MemWidth::B2),
+        VecElementType::I32 | VecElementType::F32 => Some(MemWidth::B4),
+        VecElementType::I64 | VecElementType::F64 => Some(MemWidth::B8),
+        _ => None,
+    }
+}
+
+fn no_following_same_pc(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    consumed: usize,
+    guest_pc: GuestAddr,
+) -> bool {
+    !block
+        .ops
+        .get(index + consumed)
+        .is_some_and(|op| op.guest_pc == guest_pc)
+}
+
+fn exact_e4_sequence_frontier(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    guest_pc: GuestAddr,
+) -> bool {
+    let Some(previous_index) = index.checked_sub(1) else {
+        return true;
+    };
+    let Some(previous) = block.ops.get(previous_index) else {
+        return false;
+    };
+    if previous.guest_pc != guest_pc {
+        return true;
+    }
+    if previous.x86_hint.is_some() || !matches!(previous.kind, OpKind::X86RequireApx) {
+        return false;
+    }
+    previous_index == 0
+        || block
+            .ops
+            .get(previous_index - 1)
+            .is_some_and(|op| op.guest_pc != guest_pc)
+}
+
+fn apx_extended_gpr(register: VReg) -> bool {
+    matches!(
+        register,
+        VReg::Arch(ArchReg::X86(register))
+            if register.gpr_index().is_some_and(|index| index >= 16)
+    )
+}
+
+fn evex_e4_address_requires_apx(address: &Address) -> bool {
+    match address {
+        Address::X86Addr32(inner) => evex_e4_address_requires_apx(inner),
+        Address::Direct(register) => apx_extended_gpr(*register),
+        Address::BaseOffset { base, .. } => apx_extended_gpr(*base),
+        Address::BaseIndexScale { base, index, .. } => {
+            base.is_some_and(apx_extended_gpr) || apx_extended_gpr(*index)
+        }
+        Address::SegmentRel {
+            segment,
+            base,
+            index,
+            ..
+        } => {
+            apx_extended_gpr(*segment)
+                || base.is_some_and(apx_extended_gpr)
+                || index.is_some_and(apx_extended_gpr)
+        }
+        Address::PcRel { .. } | Address::GpRel { .. } | Address::Absolute(_) => false,
+    }
+}
+
+fn exact_e4_apx_frontier(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    guest_pc: GuestAddr,
+    address: &Address,
+) -> bool {
+    let has_guard = index.checked_sub(1).is_some_and(|previous_index| {
+        block.ops.get(previous_index).is_some_and(|previous| {
+            previous.guest_pc == guest_pc
+                && previous.x86_hint.is_none()
+                && matches!(previous.kind, OpKind::X86RequireApx)
+        })
+    });
+    evex_e4_address_requires_apx(address) == has_guard
+}
+
+fn evex_e4_match_address(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    exact: X86EvexE4MemoryMatch,
+) -> Option<&Address> {
+    match &block.ops.get(index + exact.address_offset)?.kind {
+        OpKind::VLoad { addr, .. }
+        | OpKind::Load { addr, .. }
+        | OpKind::PredLoad { addr, .. }
+        | OpKind::Lea { addr, .. } => Some(addr),
+        _ => None,
+    }
+}
+
+fn exact_unmasked_e4_vector<F>(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    shape: X86EvexE4MemoryShape,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+    exact_consumer: &F,
+) -> Option<X86EvexE4MemoryMatch>
+where
+    F: Fn(&crate::smir::ir::ops::SmirOp, VReg) -> bool,
+{
+    if shape.form != X86EvexE4MemoryReplayForm::Vector || shape.writemask.is_some() || shape.zeroing
+    {
+        return None;
+    }
+    let load = block.ops.get(index)?;
+    let loaded = match &load.kind {
+        OpKind::VLoad { dst, addr, width }
+            if load.x86_hint.is_none()
+                && *width == shape.width
+                && x86_jit_mem_address_shape_valid(addr) =>
+        {
+            *dst
+        }
+        _ => return None,
+    };
+    if !single_definition_single_use(loaded, virtual_definitions, virtual_uses) {
+        return None;
+    }
+    let consumer = block.ops.get(index + 1)?;
+    let consumed = 2;
+    if consumer.guest_pc != load.guest_pc
+        || !exact_consumer(consumer, loaded)
+        || !no_following_same_pc(block, index, consumed, load.guest_pc)
+    {
+        return None;
+    }
+    Some(X86EvexE4MemoryMatch {
+        consumed,
+        address_offset: 0,
+        memory_size: shape.width.bytes(),
+    })
+}
+
+fn exact_unmasked_e4_broadcast<F>(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    shape: X86EvexE4MemoryShape,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+    exact_consumer: &F,
+) -> Option<X86EvexE4MemoryMatch>
+where
+    F: Fn(&crate::smir::ir::ops::SmirOp, VReg) -> bool,
+{
+    if shape.form != X86EvexE4MemoryReplayForm::Broadcast
+        || shape.writemask.is_some()
+        || shape.zeroing
+    {
+        return None;
+    }
+    let expected_width = evex_e4_memory_width(shape.elem)?;
+    let load = block.ops.get(index)?;
+    let scalar = match &load.kind {
+        OpKind::Load {
+            dst,
+            addr,
+            width,
+            sign: SignExtend::Zero,
+        } if load.x86_hint.is_none()
+            && *width == expected_width
+            && x86_jit_mem_address_shape_valid(addr) =>
+        {
+            *dst
+        }
+        _ => return None,
+    };
+    if !single_definition_single_use(scalar, virtual_definitions, virtual_uses) {
+        return None;
+    }
+    let broadcast = block.ops.get(index + 1)?;
+    let loaded = match broadcast.kind {
+        OpKind::VBroadcast {
+            dst,
+            scalar: actual_scalar,
+            elem,
+            lanes,
+        } if broadcast.x86_hint.is_none()
+            && actual_scalar == scalar
+            && elem == shape.elem
+            && lanes == shape.width.lanes(shape.elem) as u8 =>
+        {
+            dst
+        }
+        _ => return None,
+    };
+    if broadcast.guest_pc != load.guest_pc
+        || !single_definition_single_use(loaded, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+    let consumer = block.ops.get(index + 2)?;
+    let consumed = 3;
+    if consumer.guest_pc != load.guest_pc
+        || !exact_consumer(consumer, loaded)
+        || !no_following_same_pc(block, index, consumed, load.guest_pc)
+    {
+        return None;
+    }
+    Some(X86EvexE4MemoryMatch {
+        consumed,
+        address_offset: 0,
+        memory_size: expected_width.bytes(),
+    })
+}
+
+fn exact_masked_e4_broadcast<F>(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    shape: X86EvexE4MemoryShape,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+    exact_consumer: &F,
+) -> Option<X86EvexE4MemoryMatch>
+where
+    F: Fn(&crate::smir::ir::ops::SmirOp, VReg) -> bool,
+{
+    if shape.form != X86EvexE4MemoryReplayForm::Broadcast {
+        return None;
+    }
+    let mask = VReg::Arch(ArchReg::X86(X86Reg::K(shape.writemask?)));
+    let lanes = shape.width.lanes(shape.elem) as u8;
+    let applicable_bits = if lanes == 64 {
+        u64::MAX
+    } else {
+        (1u64 << lanes) - 1
+    };
+    let first = block.ops.get(index)?;
+    let guest_pc = first.guest_pc;
+    let mut offset = 0usize;
+    let condition = exact_nonzero_mask_predicate(
+        block,
+        index,
+        &mut offset,
+        guest_pc,
+        mask,
+        applicable_bits,
+        virtual_definitions,
+        virtual_uses,
+    )?;
+
+    let seed = block.ops.get(index + offset)?;
+    let scalar = match seed.kind {
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Imm(0),
+            width: OpWidth::W64,
+        } if seed.x86_hint.is_none() => dst,
+        _ => return None,
+    };
+    if seed.guest_pc != guest_pc
+        || !exact_virtual_definition_use(scalar, 2, 1, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+    offset += 1;
+
+    let address_offset = offset;
+    let expected_width = evex_e4_memory_width(shape.elem)?;
+    let load = block.ops.get(index + offset)?;
+    if !matches!(
+        &load.kind,
+        OpKind::PredLoad {
+            dst,
+            cond,
+            addr,
+            width,
+            signed: SignExtend::Zero,
+        } if load.x86_hint.is_none()
+            && *dst == scalar
+            && *cond == condition
+            && *width == expected_width
+            && x86_jit_mem_address_shape_valid(addr)
+    ) || load.guest_pc != guest_pc
+    {
+        return None;
+    }
+    offset += 1;
+
+    let broadcast = block.ops.get(index + offset)?;
+    let loaded = match broadcast.kind {
+        OpKind::VBroadcast {
+            dst,
+            scalar: actual_scalar,
+            elem,
+            lanes: actual_lanes,
+        } if broadcast.x86_hint.is_none()
+            && actual_scalar == scalar
+            && elem == shape.elem
+            && actual_lanes == lanes =>
+        {
+            dst
+        }
+        _ => return None,
+    };
+    if broadcast.guest_pc != guest_pc
+        || !single_definition_single_use(loaded, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+    offset += 1;
+
+    let consumer = block.ops.get(index + offset)?;
+    if consumer.guest_pc != guest_pc || !exact_consumer(consumer, loaded) {
+        return None;
+    }
+    offset += 1;
+    if !no_following_same_pc(block, index, offset, guest_pc) {
+        return None;
+    }
+    Some(X86EvexE4MemoryMatch {
+        consumed: offset,
+        address_offset,
+        memory_size: expected_width.bytes(),
+    })
+}
+
+fn exact_masked_e4_vector<F>(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    shape: X86EvexE4MemoryShape,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+    exact_consumer: &F,
+) -> Option<X86EvexE4MemoryMatch>
+where
+    F: Fn(&crate::smir::ir::ops::SmirOp, VReg) -> bool,
+{
+    if shape.form != X86EvexE4MemoryReplayForm::MaskedVector {
+        return None;
+    }
+    let mask = VReg::Arch(ArchReg::X86(X86Reg::K(shape.writemask?)));
+    let lanes = shape.width.lanes(shape.elem) as u8;
+    let first = block.ops.get(index)?;
+    let guest_pc = first.guest_pc;
+    let zero = match first.kind {
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Imm(0),
+            width: OpWidth::W64,
+        } if first.x86_hint.is_none() => dst,
+        _ => return None,
+    };
+    if !exact_virtual_definition_use(zero, 1, 1, virtual_definitions, virtual_uses) {
+        return None;
+    }
+
+    let broadcast = block.ops.get(index + 1)?;
+    let loaded = match broadcast.kind {
+        OpKind::VBroadcast {
+            dst,
+            scalar,
+            elem,
+            lanes: actual_lanes,
+        } if broadcast.x86_hint.is_none()
+            && scalar == zero
+            && elem == shape.elem
+            && actual_lanes == lanes =>
+        {
+            dst
+        }
+        _ => return None,
+    };
+    if broadcast.guest_pc != guest_pc
+        || !exact_virtual_definition_use(
+            loaded,
+            usize::from(lanes) + 1,
+            usize::from(lanes) + 1,
+            virtual_definitions,
+            virtual_uses,
+        )
+    {
+        return None;
+    }
+
+    let address_offset = 2usize;
+    let lea = block.ops.get(index + address_offset)?;
+    let base = match &lea.kind {
+        OpKind::Lea {
+            dst: base @ VReg::Virtual(_),
+            addr,
+        } if lea.x86_hint.is_none() && x86_jit_mem_address_shape_valid(addr) => *base,
+        _ => return None,
+    };
+    if lea.guest_pc != guest_pc
+        || !exact_virtual_definition_use(
+            base,
+            1,
+            usize::from(lanes),
+            virtual_definitions,
+            virtual_uses,
+        )
+    {
+        return None;
+    }
+
+    let expected_width = evex_e4_memory_width(shape.elem)?;
+    let mut offset = address_offset + 1;
+    for lane in 0..lanes {
+        let condition = exact_lane_predicate(
+            block,
+            index,
+            &mut offset,
+            guest_pc,
+            mask,
+            lane,
+            virtual_definitions,
+            virtual_uses,
+        )?;
+        let seed = block.ops.get(index + offset)?;
+        let scalar = match seed.kind {
+            OpKind::Mov {
+                dst,
+                src: SrcOperand::Imm(0),
+                width: OpWidth::W64,
+            } if seed.x86_hint.is_none() => dst,
+            _ => return None,
+        };
+        if seed.guest_pc != guest_pc
+            || !exact_virtual_definition_use(scalar, 2, 1, virtual_definitions, virtual_uses)
+        {
+            return None;
+        }
+        offset += 1;
+
+        let load = block.ops.get(index + offset)?;
+        if !matches!(
+            &load.kind,
+            OpKind::PredLoad {
+                dst,
+                cond,
+                addr,
+                width,
+                signed: SignExtend::Zero,
+            } if load.x86_hint.is_none()
+                && *dst == scalar
+                && *cond == condition
+                && *width == expected_width
+                && exact_lane_address(
+                    addr,
+                    base,
+                    i64::from(lane) * i64::from(shape.elem.bytes()),
+                )
+        ) || load.guest_pc != guest_pc
+        {
+            return None;
+        }
+        offset += 1;
+
+        let insert = block.ops.get(index + offset)?;
+        if insert.guest_pc != guest_pc
+            || !matches!(
+                insert.kind,
+                OpKind::VInsertLane {
+                    dst,
+                    vec,
+                    scalar: actual_scalar,
+                    lane: actual_lane,
+                    elem,
+                } if insert.x86_hint.is_none()
+                    && dst == loaded
+                    && vec == loaded
+                    && actual_scalar == scalar
+                    && actual_lane == lane
+                    && elem == shape.elem
+            )
+        {
+            return None;
+        }
+        offset += 1;
+    }
+
+    let consumer = block.ops.get(index + offset)?;
+    if consumer.guest_pc != guest_pc || !exact_consumer(consumer, loaded) {
+        return None;
+    }
+    offset += 1;
+    if !no_following_same_pc(block, index, offset, guest_pc) {
+        return None;
+    }
+    Some(X86EvexE4MemoryMatch {
+        consumed: offset,
+        address_offset,
+        memory_size: shape.width.bytes(),
+    })
+}
+
+/// Match an exact O0/O1/O2 EVEX E4-class memory-source decomposition.
+///
+/// The operation-specific callback binds the reconstructed memory value to
+/// its sole semantic consumer. Classification is O(L) time and O(1)
+/// auxiliary space for L vector lanes; definition/use maps are built once by
+/// the caller in O(N) time and O(V) space.
+pub(super) fn exact_evex_e4_memory_sequence<F>(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    shape: X86EvexE4MemoryShape,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+    exact_consumer: F,
+) -> Option<X86EvexE4MemoryMatch>
+where
+    F: Fn(&crate::smir::ir::ops::SmirOp, VReg) -> bool,
+{
+    let guest_pc = block.ops.get(index)?.guest_pc;
+    if !exact_e4_sequence_frontier(block, index, guest_pc) {
+        return None;
+    }
+    let exact = match (shape.form, shape.writemask) {
+        (X86EvexE4MemoryReplayForm::Vector, None) => exact_unmasked_e4_vector(
+            block,
+            index,
+            shape,
+            virtual_definitions,
+            virtual_uses,
+            &exact_consumer,
+        ),
+        (X86EvexE4MemoryReplayForm::Broadcast, None) => exact_unmasked_e4_broadcast(
+            block,
+            index,
+            shape,
+            virtual_definitions,
+            virtual_uses,
+            &exact_consumer,
+        ),
+        (X86EvexE4MemoryReplayForm::Broadcast, Some(_)) => exact_masked_e4_broadcast(
+            block,
+            index,
+            shape,
+            virtual_definitions,
+            virtual_uses,
+            &exact_consumer,
+        ),
+        (X86EvexE4MemoryReplayForm::MaskedVector, Some(_)) => exact_masked_e4_vector(
+            block,
+            index,
+            shape,
+            virtual_definitions,
+            virtual_uses,
+            &exact_consumer,
+        ),
+        _ => None,
+    }?;
+    let address = evex_e4_match_address(block, index, exact)?;
+    exact_e4_apx_frontier(block, index, guest_pc, address).then_some(exact)
 }
