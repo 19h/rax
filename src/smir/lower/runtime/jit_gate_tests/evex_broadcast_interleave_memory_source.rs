@@ -487,11 +487,7 @@ fn all_540_evex_broadcast_interleave_shapes_optimize_admit_and_lower_exactly() {
                         for level in LEVELS {
                             let function = optimize(lift_case(case), level);
                             let sequence = sequence(&function);
-                            assert_eq!(
-                                sequence.memory_offset,
-                                if mask == 0 { 0 } else { 5 },
-                                "{level:?} {case:?}"
-                            );
+                            assert_eq!(sequence.memory_offset, 0, "{level:?} {case:?}");
                             assert_eq!(sequence.encoding.destination, case.destination());
                             assert_eq!(sequence.encoding.source1, case.source1());
                             assert_eq!(sequence.encoding.elem, kind.elem);
@@ -524,7 +520,7 @@ fn all_540_evex_broadcast_interleave_shapes_optimize_admit_and_lower_exactly() {
 }
 
 #[test]
-fn masked_evex_broadcast_interleave_lowering_has_exact_live_k_guard() {
+fn masked_evex_broadcast_interleave_lowering_keeps_e4nf_access_unconditional() {
     let case = InterleaveCase {
         kind: KINDS[0],
         width: VecWidth::V512,
@@ -533,39 +529,29 @@ fn masked_evex_broadcast_interleave_lowering_has_exact_live_k_guard() {
         zeroing: true,
     };
     let function = optimize(lift_case(case), OptLevel::O2);
+    assert!(matches!(
+        function.blocks[0].ops.first().map(|op| &op.kind),
+        Some(OpKind::Load { .. })
+    ));
+    assert!(
+        !function.blocks[0]
+            .ops
+            .iter()
+            .any(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+    );
     let (code, _) = lower(&function, case);
-    let lane_mask = 0xFFFFu32.to_le_bytes();
-    let guard = [
-        0x9C,
-        0x50,
-        0xC4,
-        0xE1,
-        0xFB,
-        0x93,
-        0xC0 | case.mask,
-        0xF7,
-        0xC0,
-        lane_mask[0],
-        lane_mask[1],
-        lane_mask[2],
-        lane_mask[3],
-        0x0F,
-        0x84,
-    ];
-    let guard_at = code
-        .windows(guard.len())
-        .position(|window| window == guard)
-        .expect("complete live-K applicable-lane guard");
-    let jz_disp = guard_at + guard.len();
-    assert_eq!(&code[jz_disp + 4..jz_disp + 6], &[0x58, 0x9D]);
-    let inactive = (jz_disp + 4) as i64
-        + i64::from(i32::from_le_bytes(
-            code[jz_disp..jz_disp + 4].try_into().unwrap(),
-        ));
-    let inactive = usize::try_from(inactive).expect("forward inactive target");
-    assert_eq!(&code[inactive..inactive + 2], &[0x58, 0x9D]);
+    let kmov_mask_to_rax = [0xC4, 0xE1, 0xFB, 0x93, 0xC0 | case.mask];
+    assert!(
+        !code
+            .windows(kmov_mask_to_rax.len())
+            .any(|window| window == kmov_mask_to_rax),
+        "E4NF replay must not branch around the helper from live K state"
+    );
     let replay = case.stack_instruction();
-    assert_eq!(&code[inactive + 2..inactive + 2 + replay.len()], &replay);
+    assert!(
+        code.windows(replay.len()).any(|window| window == replay),
+        "missing byte-validated broadcast replay"
+    );
 
     let mut avx_only = X86_64Lowerer::new();
     avx_only.set_mem_helpers(true);
@@ -644,16 +630,10 @@ fn evex_broadcast_interleave_sequence_fails_closed_for_provenance_and_graph_muta
         .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
     mutations.push(("metadata source", metadata_source));
 
-    let mut predicate_mask = base.clone();
-    if let OpKind::And { src2, .. } = &mut predicate_mask.blocks[0].ops[0].kind {
-        *src2 = crate::smir::ir::types::SrcOperand::Imm(3);
-    }
-    mutations.push(("aggregate predicate mask", predicate_mask));
-
     let load_index = base.blocks[0]
         .ops
         .iter()
-        .position(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+        .position(|op| matches!(op.kind, OpKind::Load { .. }))
         .unwrap();
     let broadcast_index = base.blocks[0]
         .ops
@@ -667,13 +647,13 @@ fn evex_broadcast_interleave_sequence_fails_closed_for_provenance_and_graph_muta
         .unwrap();
 
     let mut load_width = base.clone();
-    if let OpKind::PredLoad { width, .. } = &mut load_width.blocks[0].ops[load_index].kind {
+    if let OpKind::Load { width, .. } = &mut load_width.blocks[0].ops[load_index].kind {
         *width = MemWidth::B8;
     }
     mutations.push(("load width", load_width));
 
     let mut load_address = base.clone();
-    if let OpKind::PredLoad { addr, .. } = &mut load_address.blocks[0].ops[load_index].kind {
+    if let OpKind::Load { addr, .. } = &mut load_address.blocks[0].ops[load_index].kind {
         *addr = Address::Direct(VReg::Virtual(VirtualId(0xFFFF)));
     }
     mutations.push(("virtual load address", load_address));
@@ -953,6 +933,62 @@ fn interpreter_o0_o1_o2_matches_block_local_model_for_masks_aliases_and_upper_ze
     assert_eq!(executions, KINDS.len() * 3 * 3 * masks.len() * LEVELS.len());
 }
 
+#[test]
+fn interpreter_e4nf_all_zero_mask_faults_before_destination_commit() {
+    let case = InterleaveCase {
+        kind: KINDS[3],
+        width: VecWidth::V512,
+        form: RegisterForm::DestinationSourceAlias,
+        mask: 3,
+        zeroing: false,
+    };
+    let mut initial = initial_registers(case, 0x41);
+    initial.k[usize::from(case.mask)] = 0;
+    let expected_address = memory_address(case, &initial);
+
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let function = optimize(lift_case(case), level);
+        let mut context = SmirContext::new_x86_64();
+        let before = {
+            let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
+                unreachable!()
+            };
+            x86.gpr = initial.gpr;
+            for (index, value) in initial.zmm.iter().enumerate() {
+                x86.xmm[index][..8].copy_from_slice(value);
+            }
+            x86.k = initial.k;
+            x86.rflags = initial.rflags;
+            x86.clone()
+        };
+        context.flags.materialized = MaterializedFlags::from_rflags(initial.rflags);
+        context.flags.lazy = None;
+
+        let result = SmirInterpreter::new().execute_block(
+            &mut context,
+            &mut FlatMemory::new(0x100),
+            &function.blocks[0],
+        );
+        assert!(
+            matches!(
+                result,
+                BlockResult::Exit(ExitReason::MemoryFault {
+                    addr,
+                    write: false,
+                }) if addr == expected_address
+            ),
+            "{level:?}: {result:?}"
+        );
+        let ArchRegState::X86_64(x86) = &context.arch_regs else {
+            unreachable!()
+        };
+        assert_eq!(x86.gpr, before.gpr, "{level:?}");
+        assert_eq!(x86.xmm, before.xmm, "{level:?}");
+        assert_eq!(x86.k, before.k, "{level:?}");
+        assert_eq!(x86.rflags, before.rflags, "{level:?}");
+    }
+}
+
 #[cfg(target_arch = "x86_64")]
 #[repr(C)]
 struct LoadResult {
@@ -991,7 +1027,7 @@ extern "C" fn scalar_load_helper(
 
 #[cfg(target_arch = "x86_64")]
 #[test]
-fn native_evex_broadcast_interleave_matches_interpretation_faults_and_mask_suppression() {
+fn native_evex_broadcast_interleave_matches_interpretation_and_e4nf_faults() {
     use crate::smir::lower::runtime::ExecMem;
 
     if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
@@ -1001,7 +1037,6 @@ fn native_evex_broadcast_interleave_matches_interpretation_faults_and_mask_suppr
     let has_vl = std::is_x86_feature_detected!("avx512vl");
     let mut successes = 0usize;
     let mut faults = 0usize;
-    let mut suppressed = 0usize;
     for (ordinal, (kind, width, mask, zeroing)) in [
         (KINDS[0], VecWidth::V128, 1, false),
         (KINDS[1], VecWidth::V256, 3, true),
@@ -1063,7 +1098,9 @@ fn native_evex_broadcast_interleave_matches_interpretation_faults_and_mask_suppr
             };
             let mut fault_registers = initial_registers(case, ordinal ^ 0x55);
             if mask != 0 {
-                fault_registers.k[usize::from(mask)] = 1;
+                // E4NF does not suppress the memory access even when every
+                // applicable destination lane is inactive.
+                fault_registers.k[usize::from(mask)] = 0;
             }
             let fault_address = memory_address(case, &fault_registers);
             fault_registers.ctx = (&mut fault_context as *mut ScalarMemoryContext) as u64;
@@ -1080,39 +1117,8 @@ fn native_evex_broadcast_interleave_matches_interpretation_faults_and_mask_suppr
             assert_eq!(fault_context.calls, 1, "{level:?} {case:?}");
             assert_eq!(fault_context.last_addr, fault_address, "{level:?} {case:?}");
             faults += 1;
-
-            if mask != 0 {
-                let mut suppressed_context = ScalarMemoryContext {
-                    value: scalar ^ 0xFFFF,
-                    ok: 0,
-                    ..ScalarMemoryContext::default()
-                };
-                let mut suppressed_registers = initial_registers(case, ordinal ^ 0xAA);
-                suppressed_registers.k[usize::from(mask)] = 1u64 << 63;
-                let suppressed_address = memory_address(case, &suppressed_registers);
-                suppressed_registers.ctx =
-                    (&mut suppressed_context as *mut ScalarMemoryContext) as u64;
-                suppressed_registers.load_fn = scalar_load_helper as usize as u64;
-                let mut suppressed_expected = interpreter_success(
-                    &function,
-                    &suppressed_registers,
-                    0,
-                    suppressed_address,
-                    case,
-                );
-
-                exec.run(entry, &mut suppressed_registers);
-                suppressed_expected.host_mxcsr = suppressed_registers.host_mxcsr;
-                assert_eq!(
-                    suppressed_registers, suppressed_expected,
-                    "{level:?} {case:?}: suppressed access"
-                );
-                assert_eq!(suppressed_context.calls, 0, "{level:?} {case:?}");
-                suppressed += 1;
-            }
         }
     }
     assert!(successes >= 2);
     assert_eq!(faults, successes);
-    assert!(suppressed >= 2);
 }

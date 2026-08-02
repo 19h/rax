@@ -2,10 +2,10 @@
 
 use std::collections::HashMap;
 
-use super::{X86_64Lowerer, X86Cond, X86Emitter};
+use super::{X86_64Lowerer, X86Emitter};
 use crate::smir::ir::SmirBlock;
 use crate::smir::ir::ops::OpKind;
-use crate::smir::ir::types::{OpWidth, SignExtend, VReg};
+use crate::smir::ir::types::{SignExtend, VReg};
 use crate::smir::lower::LowerError;
 use crate::smir::lower::regalloc::PhysReg;
 
@@ -13,8 +13,8 @@ impl X86_64Lowerer {
     /// Fuse one exact EVEX VPUNPCKLDQ/LQDQ/HDQ/HQDQ scalar-broadcast memory
     /// decomposition. The scalar MMU helper stages 4/8 bytes in a 16-byte
     /// nonarchitectural stack slot, and a byte-validated rewrite consumes
-    /// `[rsp]{1toN}`. For writemasking, a live applicable-lane test bypasses
-    /// the helper when the memory access is architecturally suppressed.
+    /// `[rsp]{1toN}`. E4NF writemasking controls only the destination; the
+    /// helper access is unconditional and completes before any commit.
     pub(crate) fn try_lower_jit_evex_broadcast_interleave_memory_source(
         &mut self,
         block: &SmirBlock,
@@ -48,12 +48,6 @@ impl X86_64Lowerer {
                 width,
                 sign: SignExtend::Zero,
                 ..
-            }
-            | OpKind::PredLoad {
-                addr,
-                width,
-                signed: SignExtend::Zero,
-                ..
             } if *width == sequence.encoding.memory_width => addr,
             _ => unreachable!("validated EVEX broadcast interleave sequence owns its scalar load"),
         };
@@ -61,26 +55,6 @@ impl X86_64Lowerer {
         {
             let mut emitter = X86Emitter::new(&mut self.code);
             emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -16);
-        }
-        let inactive = if let Some(mask) = sequence.encoding.writemask {
-            let lanes = sequence.encoding.width.lanes(sequence.encoding.elem);
-            debug_assert!(lanes <= 16, "EVEX broadcast interleave opmask width");
-            let lane_mask = (1u64 << lanes) - 1;
-            self.code.emit_u8(0x9C); // pushfq
-            self.code.emit_u8(0x50); // push guest RAX
-            self.emit_opmask_mask_to_rax64(mask);
-            {
-                let mut emitter = X86Emitter::new(&mut self.code);
-                emitter.emit_test_ri(PhysReg::Rax, lane_mask as i64, OpWidth::W32);
-            }
-            Some(self.emit_jcc_placeholder(X86Cond::E))
-        } else {
-            None
-        };
-
-        if inactive.is_some() {
-            self.code.emit_u8(0x58); // pop guest RAX
-            self.code.emit_u8(0x9D); // restore exact pre-guard flags
         }
         self.emit_jit_mem_op(
             block.ops[index].guest_pc,
@@ -95,15 +69,6 @@ impl X86_64Lowerer {
             SignExtend::Zero,
             16,
         )?;
-        if let Some(inactive) = inactive {
-            self.code.emit_u8(0xE9);
-            let execute = self.code.position();
-            self.code.emit_u32(0);
-            self.patch_rel32_to_current(inactive)?;
-            self.code.emit_u8(0x58); // pop guest RAX
-            self.code.emit_u8(0x9D); // restore exact pre-guard flags
-            self.patch_rel32_to_current(execute)?;
-        }
         self.code
             .emit_bytes(sequence.encoding.stack_instruction.as_slice());
         {

@@ -1161,19 +1161,10 @@ impl X86_64Lifter {
             );
             ops.extend(pre_ops);
             if broadcast {
-                if let Some(mask) = mask {
-                    self.append_masked_broadcast_memory_source(
-                        addr,
-                        elem,
-                        prefix.width,
-                        mask,
-                        pc,
-                        ctx,
-                        &mut ops,
-                    )
-                } else {
-                    self.append_broadcast_memory_source(addr, elem, prefix.width, pc, ctx, &mut ops)
-                }
+                // VPUNPCK* uses exception class E4NF/E4NF.nb. Its opmask
+                // controls only the destination update; it never suppresses
+                // the scalar broadcast memory access.
+                self.append_broadcast_memory_source(addr, elem, prefix.width, pc, ctx, &mut ops)
             } else {
                 let loaded = ctx.alloc_vreg();
                 ops.push(SmirOp::new(

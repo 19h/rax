@@ -129,7 +129,7 @@ fn lift_evex_broadcast_integer_interleave_matches_independent_llvm_23_encodings(
                 .iter()
                 .filter(|op| matches!(
                     op.kind,
-                    OpKind::Load { width, .. } | OpKind::PredLoad { width, .. }
+                    OpKind::Load { width, .. }
                         if width == memory_width
                 ))
                 .count(),
@@ -176,7 +176,7 @@ fn lift_evex_broadcast_integer_interleave_matches_independent_llvm_23_encodings(
                 .ops
                 .iter()
                 .any(|op| matches!(op.kind, OpKind::PredLoad { .. })),
-            mask != 0,
+            false,
             "{bytes:02X?}"
         );
         assert_eq!(zeroing, bytes[3] & 0x80 != 0);
@@ -210,14 +210,18 @@ fn lift_evex_broadcast_integer_interleave_covers_2_880_shapes() {
                                 lifted
                                     .ops
                                     .iter()
-                                    .filter(|op| matches!(
-                                        op.kind,
-                                        OpKind::Load { .. } | OpKind::PredLoad { .. }
-                                    ))
+                                    .filter(|op| matches!(op.kind, OpKind::Load { .. }))
                                     .count(),
                                 1,
                                 "{bytes:02X?}: {:#?}",
                                 lifted.ops
+                            );
+                            assert!(
+                                !lifted
+                                    .ops
+                                    .iter()
+                                    .any(|op| matches!(op.kind, OpKind::PredLoad { .. })),
+                                "{bytes:02X?}: E4NF memory access was predicated"
                             );
                             assert!(lifted.ops.iter().any(|op| matches!(
                                 op.kind,
@@ -249,7 +253,7 @@ fn lift_evex_broadcast_integer_interleave_scales_disp8_by_scalar_tuple() {
         let expected_offset = -2 * i64::from(kind.elem.bytes());
         assert!(lifted.ops.iter().any(|op| matches!(
             op.kind,
-            OpKind::PredLoad {
+            OpKind::Load {
                 addr: Address::BaseOffset {
                     base: VReg::Arch(ArchReg::X86(X86Reg::Rbx)),
                     offset,
