@@ -328,10 +328,8 @@ impl X86_64Lifter {
         }
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         if compress && modrm.is_memory && prefix.zeroing {
@@ -593,11 +591,7 @@ impl X86_64Lifter {
             });
         }
         let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            cursor,
-            ..X86Prefix::default()
-        };
+        let modrm_prefix = prefix.modrm_prefix(cursor);
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         if modrm.is_memory || (!mask_to_vector && (modrm.reg >= 8 || prefix.reg_high)) {
             return Err(LiftError::InvalidEncoding {
@@ -776,12 +770,8 @@ impl X86_64Lifter {
 
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         if !modrm.is_memory {
@@ -1026,12 +1016,8 @@ impl X86_64Lifter {
         };
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let embedded_sae = prefix.b && !modrm.is_memory;
@@ -1127,12 +1113,8 @@ impl X86_64Lifter {
 
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: prefix.pp == X86SsePrefix::OpSize,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let imm_offset = cursor + modrm.bytes_consumed;
@@ -1231,12 +1213,8 @@ impl X86_64Lifter {
 
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: prefix.pp == X86SsePrefix::OpSize,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let imm_offset = cursor + modrm.bytes_consumed;
@@ -1330,12 +1308,8 @@ impl X86_64Lifter {
         };
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let embedded_rounding = prefix.b && !modrm.is_memory;
@@ -1433,12 +1407,8 @@ impl X86_64Lifter {
         };
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let imm_offset = cursor + modrm.bytes_consumed;
@@ -1538,12 +1508,8 @@ impl X86_64Lifter {
         };
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let embedded_sae = prefix.b && !modrm.is_memory;
@@ -1619,12 +1585,8 @@ impl X86_64Lifter {
         };
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         // EVEX.b selects scalar memory broadcast for packed forms. Register
@@ -1712,12 +1674,8 @@ impl X86_64Lifter {
 
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         // Packed memory forms use EVEX.b for m16 broadcast. Register sources
@@ -1819,12 +1777,8 @@ impl X86_64Lifter {
         };
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         // Packed register EVEX.b is SAE and makes L'L ignored; packed memory
@@ -1917,12 +1871,8 @@ impl X86_64Lifter {
 
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let embedded_rounding = prefix.b && !modrm.is_memory;
@@ -2139,12 +2089,8 @@ impl X86_64Lifter {
         let lanes = if scalar { 1 } else { width.lanes(elem) as u8 };
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         if modrm.reg >= 8 || prefix.reg_high || (prefix.b && !modrm.is_memory) {
@@ -2329,13 +2275,7 @@ impl X86_64Lifter {
         }
 
         let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
-        };
+        let modrm_prefix = prefix.modrm_prefix(cursor);
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         if prefix.b && modrm.is_memory {
             return Err(LiftError::InvalidEncoding {
@@ -2423,13 +2363,7 @@ impl X86_64Lifter {
         }
 
         let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
-        };
+        let modrm_prefix = prefix.modrm_prefix(cursor);
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         if (prefix.b && modrm.is_memory) || (!modrm.is_memory && prefix.rm_high) {
             return Err(LiftError::InvalidEncoding {
@@ -2522,13 +2456,7 @@ impl X86_64Lifter {
         }
 
         let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
-        };
+        let modrm_prefix = prefix.modrm_prefix(cursor);
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
         let reg_index = modrm.reg + if prefix.reg_high { 16 } else { 0 };
@@ -2715,13 +2643,7 @@ impl X86_64Lifter {
             _ => unreachable!("MAP5 scalar FP16 arithmetic dispatch filtered opcode"),
         };
         let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
-        };
+        let modrm_prefix = prefix.modrm_prefix(cursor);
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         if prefix.b && modrm.is_memory {
             return Err(LiftError::InvalidEncoding {
@@ -2951,13 +2873,7 @@ impl X86_64Lifter {
         }
 
         let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
-        };
+        let modrm_prefix = prefix.modrm_prefix(cursor);
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let embedded_rounding = prefix.b && !modrm.is_memory;
         if (scalar && prefix.b && modrm.is_memory)
@@ -3284,13 +3200,7 @@ impl X86_64Lifter {
         }
 
         let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
-        };
+        let modrm_prefix = prefix.modrm_prefix(cursor);
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let embedded_rounding = prefix.b && !modrm.is_memory;
         if !embedded_rounding && prefix.l_bits == 3 {
@@ -3432,13 +3342,7 @@ impl X86_64Lifter {
         }
 
         let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
-        };
+        let modrm_prefix = prefix.modrm_prefix(cursor);
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let embedded_control = prefix.b && !modrm.is_memory;
         if !embedded_control && prefix.l_bits == 3 {

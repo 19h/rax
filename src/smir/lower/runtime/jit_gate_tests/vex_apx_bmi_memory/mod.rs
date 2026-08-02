@@ -329,6 +329,7 @@ fn lower(function: &SmirFunction) -> (Vec<u8>, usize) {
 
     let mut lowerer = X86_64Lowerer::new();
     lowerer.set_mem_helpers(true);
+    lowerer.set_jit_fault_deopt_guards(true);
     let result = lowerer
         .lower_function(function)
         .unwrap_or_else(|error| panic!("helper-backed BMI lowering failed: {error:?}"));
@@ -477,7 +478,17 @@ fn representative_apx_memory_forms_enter_the_same_exact_pair_lowerer() {
 
     for (name, bytes) in forms {
         let function = lift_raw(bytes);
-        assert_eq!(function.blocks[0].ops.len(), 2, "{name}");
+        assert!(
+            matches!(
+                function.blocks[0].ops.first(),
+                Some(SmirOp {
+                    kind: OpKind::X86RequireApx,
+                    ..
+                })
+            ),
+            "{name}"
+        );
+        assert_eq!(function.blocks[0].ops.len(), 3, "{name}");
         for level in LEVELS {
             let function = optimize(function.clone(), level);
             assert!(

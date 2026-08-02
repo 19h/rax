@@ -77,15 +77,16 @@ fn lift_apx_bmi1_accepts_nf0_and_nf1_with_exact_operands_and_flags() {
             let result = lift_single(&bytes)
                 .unwrap_or_else(|error| panic!("{name} NF={}: {error:?}", u8::from(nf)));
             assert_eq!(result.bytes_consumed, 6, "{name} NF={}", u8::from(nf));
-            assert_eq!(result.ops.len(), 1, "{name} NF={}", u8::from(nf));
+            let payload = assert_apx_guarded_payload(&result, name);
+            assert_eq!(payload.len(), 1, "{name} NF={}", u8::from(nf));
             assert_eq!(
-                bmi_flags(&result.ops[0].kind),
+                bmi_flags(&payload[0].kind),
                 if nf { FlagUpdate::None } else { expected_flags },
                 "{name} NF={}",
                 u8::from(nf)
             );
 
-            match (&result.ops[0].kind, name) {
+            match (&payload[0].kind, name) {
                 (
                     OpKind::AndNot {
                         dst,
@@ -148,8 +149,9 @@ fn lift_apx_bmi1_accepts_nf0_and_nf1_with_exact_operands_and_flags() {
 fn lift_apx_bmi1_covers_w32_memory_alias_and_x4_address_forms() {
     // W=0 selects 32-bit operation and architectural zero-extension.
     let w32 = lift_single(&[0x62, 0x72, 0x7C, 0x08, 0xF2, 0xC3]).unwrap();
+    let w32_payload = assert_apx_guarded_payload(&w32, "W32 ANDN");
     assert!(matches!(
-        w32.ops.as_slice(),
+        w32_payload,
         [SmirOp {
             kind: OpKind::AndNot {
                 dst,
@@ -164,8 +166,9 @@ fn lift_apx_bmi1_covers_w32_memory_alias_and_x4_address_forms() {
 
     // Destination/source aliasing must retain both inputs before committing.
     let alias = lift_single(&[0x62, 0xF2, 0xE4, 0x08, 0xF2, 0xC0]).unwrap();
+    let alias_payload = assert_apx_guarded_payload(&alias, "aliased ANDN");
     assert!(matches!(
-        alias.ops.as_slice(),
+        alias_payload,
         [SmirOp {
             kind: OpKind::AndNot {
                 dst,
@@ -194,9 +197,10 @@ fn lift_apx_bmi1_covers_w32_memory_alias_and_x4_address_forms() {
     ] {
         let result = lift_single(bytes).unwrap_or_else(|error| panic!("{name}: {error:?}"));
         assert_eq!(result.bytes_consumed, bytes.len(), "{name}");
-        assert_eq!(result.ops.len(), 2, "{name}");
+        let payload = assert_apx_guarded_payload(&result, name);
+        assert_eq!(payload.len(), 2, "{name}");
         assert!(matches!(
-            result.ops[0].kind,
+            payload[0].kind,
             OpKind::Load {
                 addr: Address::Direct(base),
                 width: MemWidth::B8,
@@ -210,8 +214,9 @@ fn lift_apx_bmi1_covers_w32_memory_alias_and_x4_address_forms() {
     // it selects an EGPR index; setting it keeps the low 16-register bank.
     for (p1, expected_index) in [(0xF0, x86_gpr(17)), (0xF4, x86_gpr(1))] {
         let result = lift_single(&[0x62, 0xF2, p1, 0x08, 0xF7, 0x04, 0x4B]).unwrap();
+        let payload = assert_apx_guarded_payload(&result, "BEXTR indexed memory");
         assert!(matches!(
-            &result.ops[0].kind,
+            &payload[0].kind,
             OpKind::Load {
                 addr: Address::BaseIndexScale {
                     base: Some(base),
@@ -228,8 +233,9 @@ fn lift_apx_bmi1_covers_w32_memory_alias_and_x4_address_forms() {
 #[test]
 fn lift_apx_bmi2_register_and_memory_forms_match_llvm_encodings() {
     let pdep = lift_single(&[0x62, 0xE2, 0xE7, 0x00, 0xF5, 0xE3]).unwrap();
+    let pdep_payload = assert_apx_guarded_payload(&pdep, "PDEP");
     assert!(matches!(
-        pdep.ops.as_slice(),
+        pdep_payload,
         [SmirOp {
             kind: OpKind::Pdep {
                 dst,
@@ -242,8 +248,9 @@ fn lift_apx_bmi2_register_and_memory_forms_match_llvm_encodings() {
     ));
 
     let pext = lift_single(&[0x62, 0xE2, 0xE6, 0x00, 0xF5, 0xE3]).unwrap();
+    let pext_payload = assert_apx_guarded_payload(&pext, "PEXT");
     assert!(matches!(
-        pext.ops.as_slice(),
+        pext_payload,
         [SmirOp {
             kind: OpKind::Pext {
                 dst,
@@ -256,9 +263,10 @@ fn lift_apx_bmi2_register_and_memory_forms_match_llvm_encodings() {
     ));
 
     let mulx = lift_single(&[0x62, 0xE2, 0xE7, 0x00, 0xF6, 0xE3]).unwrap();
-    assert_eq!(mulx.ops[0].x86_hint, Some(X86OpHint::Mulx));
+    let mulx_payload = assert_apx_guarded_payload(&mulx, "MULX");
+    assert_eq!(mulx_payload[0].x86_hint, Some(X86OpHint::Mulx));
     assert!(matches!(
-        mulx.ops.as_slice(),
+        mulx_payload,
         [SmirOp {
             kind: OpKind::MulU {
                 dst_lo,
@@ -297,7 +305,8 @@ fn lift_apx_bmi2_register_and_memory_forms_match_llvm_encodings() {
 
     let rorx = lift_single(&[0x62, 0xE3, 0xFF, 0x08, 0xF0, 0xE3, 0x0D]).unwrap();
     assert_eq!(rorx.bytes_consumed, 7);
-    assert_vex_rorx_op(&rorx.ops, 0, x86_gpr(20), x86_gpr(3), 13, OpWidth::W64);
+    let rorx_payload = assert_apx_guarded_payload(&rorx, "RORX");
+    assert_vex_rorx_op(rorx_payload, 0, x86_gpr(20), x86_gpr(3), 13, OpWidth::W64);
 
     for (bytes, name) in [
         (
@@ -315,9 +324,10 @@ fn lift_apx_bmi2_register_and_memory_forms_match_llvm_encodings() {
     ] {
         let result = lift_single(bytes).unwrap_or_else(|error| panic!("{name}: {error:?}"));
         assert_eq!(result.bytes_consumed, 8, "{name}");
-        assert_eq!(result.ops.len(), 2, "{name}");
-        let loaded = assert_apx_bmi2_memory_load(&result.ops[0], name);
-        match (&result.ops[1].kind, name) {
+        let payload = assert_apx_guarded_payload(&result, name);
+        assert_eq!(payload.len(), 2, "{name}");
+        let loaded = assert_apx_bmi2_memory_load(&payload[0], name);
+        match (&payload[1].kind, name) {
             (OpKind::Pdep { mask, .. }, "pdep") | (OpKind::Pext { mask, .. }, "pext") => {
                 assert_eq!(*mask, loaded, "{name}");
             }
@@ -347,9 +357,10 @@ fn lift_apx_bmi2_register_and_memory_forms_match_llvm_encodings() {
         ),
     ] {
         let result = lift_single(bytes).unwrap_or_else(|error| panic!("{name}: {error:?}"));
-        let loaded = assert_apx_bmi2_memory_load(&result.ops[0], name);
+        let payload = assert_apx_guarded_payload(&result, name);
+        let loaded = assert_apx_bmi2_memory_load(&payload[0], name);
         assert_apx_bmi2_shift_ops(
-            &result.ops,
+            payload,
             1,
             name,
             x86_gpr(20),
@@ -360,8 +371,9 @@ fn lift_apx_bmi2_register_and_memory_forms_match_llvm_encodings() {
     }
 
     let rorx_mem = lift_single(&[0x62, 0xEB, 0xFB, 0x08, 0xF0, 0x64, 0x91, 0x20, 0x0D]).unwrap();
-    let loaded = assert_apx_bmi2_memory_load(&rorx_mem.ops[0], "rorx");
-    assert_vex_rorx_op(&rorx_mem.ops, 1, x86_gpr(20), loaded, 13, OpWidth::W64);
+    let rorx_payload = assert_apx_guarded_payload(&rorx_mem, "RORX memory");
+    let loaded = assert_apx_bmi2_memory_load(&rorx_payload[0], "rorx");
+    assert_vex_rorx_op(rorx_payload, 1, x86_gpr(20), loaded, 13, OpWidth::W64);
 }
 
 #[test]

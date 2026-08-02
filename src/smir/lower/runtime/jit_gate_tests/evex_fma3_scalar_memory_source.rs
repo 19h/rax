@@ -475,6 +475,7 @@ fn lower(function: &SmirFunction, case: ScalarFmaCase) -> (Vec<u8>, usize) {
     lowerer.set_mem_helpers(true);
     lowerer.set_preserve_vector_mem_helpers(true);
     lowerer.set_avx_ymm16_vector_state(false);
+    lowerer.set_jit_fault_deopt_guards(true);
     let result = lowerer
         .lower_function(function)
         .unwrap_or_else(|error| panic!("{case:?}: helper-backed scalar EVEX FMA3: {error:?}"));
@@ -1159,6 +1160,7 @@ fn interpreter_success(
         x86.mxcsr = initial.mxcsr;
         x86.fs_base = initial.fs_base;
         x86.gs_base = initial.gs_base;
+        x86.apx_enabled = true;
     }
     context.flags.materialized = MaterializedFlags::from_rflags(initial.rflags);
     context.flags.lazy = None;

@@ -328,9 +328,16 @@ fn virtual_counts(function: &SmirFunction) -> (HashMap<VReg, usize>, HashMap<VRe
 
 fn sequence(function: &SmirFunction, allow_mem: bool) -> Option<X86JitEvexFixupImmMemorySequence> {
     let (definitions, uses) = virtual_counts(function);
+    let index = usize::from(matches!(
+        function.blocks[0].ops.first(),
+        Some(SmirOp {
+            kind: OpKind::X86RequireApx,
+            ..
+        })
+    ));
     x86_jit_evex_fixup_imm_memory_sequence(
         &function.blocks[0],
-        0,
+        index,
         allow_mem,
         &function.x86_instruction_bytes,
         &definitions,
@@ -383,6 +390,7 @@ fn lower(function: &SmirFunction, case: FixupMemoryCase) -> (Vec<u8>, usize) {
     lowerer.set_mem_helpers(true);
     lowerer.set_preserve_vector_mem_helpers(true);
     lowerer.set_avx_ymm16_vector_state(false);
+    lowerer.set_jit_fault_deopt_guards(true);
     let result = lowerer
         .lower_function(function)
         .unwrap_or_else(|error| panic!("{case:?}: VFIXUPIMM memory lowering: {error:?}"));
@@ -826,8 +834,8 @@ fn fixup_apx_r16_r17_sib_address_lifts_admits_and_lowers_exactly() {
     for level in LEVELS {
         let function = optimize(base.clone(), level);
         assert!(
-            matches!(
-                function.blocks[0].ops[2].kind,
+            function.blocks[0].ops.iter().any(|op| matches!(
+                op.kind,
                 OpKind::Lea {
                     addr: Address::BaseIndexScale {
                         base: Some(VReg::Arch(ArchReg::X86(X86Reg::R16))),
@@ -838,7 +846,7 @@ fn fixup_apx_r16_r17_sib_address_lifts_admits_and_lowers_exactly() {
                     },
                     ..
                 }
-            ),
+            )),
             "{level:?}: {:#?}",
             function.blocks[0].ops
         );

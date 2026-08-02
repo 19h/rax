@@ -31,15 +31,7 @@ impl X86_64Lifter {
         }
 
         let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            evex_mem_base_high: prefix.mem_base_high,
-            evex_mem_index_high: prefix.mem_index_high,
-            cursor,
-            ..X86Prefix::default()
-        };
+        let modrm_prefix = prefix.modrm_prefix(cursor);
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         if prefix.b && (modrm.is_memory || prefix.l_bits != 0) {
             return Err(LiftError::InvalidEncoding {
@@ -200,13 +192,7 @@ impl X86_64Lifter {
         }
 
         let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
-        };
+        let modrm_prefix = prefix.modrm_prefix(cursor);
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let embedded_control = prefix.b && !modrm.is_memory;
         if (fp_format == X86SatFpFormat::BF16 && embedded_control)

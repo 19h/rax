@@ -263,7 +263,22 @@ fn optimize(mut function: SmirFunction, level: OptLevel) -> SmirFunction {
     function
 }
 
+fn guarded_payload<'a>(ops: &'a [SmirOp], case: &impl std::fmt::Debug) -> &'a [SmirOp] {
+    assert!(
+        matches!(
+            ops.first(),
+            Some(SmirOp {
+                kind: OpKind::X86RequireApx,
+                ..
+            })
+        ),
+        "{case:?}: missing leading APX requirement: {ops:?}"
+    );
+    &ops[1..]
+}
+
 fn assert_register_shape(ops: &[SmirOp], case: RegisterCase) {
+    let ops = guarded_payload(ops, &case);
     let [op] = ops else {
         panic!("{case:?}: expected one canonical shift, got {ops:?}")
     };
@@ -320,6 +335,7 @@ fn assert_register_shape(ops: &[SmirOp], case: RegisterCase) {
 }
 
 fn assert_memory_shape(ops: &[SmirOp], case: MemoryCase, expected_addr: &Address) {
+    let ops = guarded_payload(ops, &case);
     let [load, shift] = ops else {
         panic!("{case:?}: expected canonical Load + shift, got {ops:?}")
     };
@@ -410,6 +426,7 @@ fn lower_register(case: RegisterCase, level: OptLevel) -> (Vec<u8>, usize) {
         "{level:?} {case:?}: lowering uses baseline classic shifts, not host APX/BMI2"
     );
     let mut lowerer = X86_64Lowerer::new();
+    lowerer.set_jit_fault_deopt_guards(true);
     let lowered = lowerer
         .lower_function(&function)
         .unwrap_or_else(|error| panic!("{level:?} {case:?}: {error:?}"));
@@ -459,6 +476,7 @@ fn lower_memory_function(function: &SmirFunction) -> (Vec<u8>, usize) {
 
     let mut lowerer = X86_64Lowerer::new();
     lowerer.set_mem_helpers(true);
+    lowerer.set_jit_fault_deopt_guards(true);
     let lowered = lowerer
         .lower_function(function)
         .unwrap_or_else(|error| panic!("APX memory shift lowering: {error:?}"));
@@ -526,6 +544,7 @@ fn interpret_register(case: RegisterCase, initial: &ShiftState, level: OptLevel)
     };
     x86.gpr = initial.gpr;
     x86.rflags = initial.rflags;
+    x86.apx_enabled = true;
     context.flags.materialized = MaterializedFlags::from_rflags(initial.rflags);
     context.flags.lazy = None;
     let result = SmirInterpreter::new().execute_block(
@@ -678,6 +697,71 @@ fn apx_bmi2_shift_interpreter_matches_primary_spec_at_count_alias_and_egpr_bound
         cases,
         ShiftKind::ALL.len() * 2 * REGISTER_TUPLES.len() * SOURCES.len() * COUNTS.len()
     );
+}
+
+#[test]
+fn apx_bmi2_shift_guard_is_dynamic_precise_and_noncommitting() {
+    use crate::smir::interpret::{BlockResult, SmirInterpreter};
+    use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext};
+    use crate::smir::ir::flags::MaterializedFlags;
+    use crate::smir::ir::memory::FlatMemory;
+
+    let case = RegisterCase {
+        kind: ShiftKind::Shlx,
+        width: OpWidth::W64,
+        destination: 0,
+        source: 3,
+        count: 1,
+    };
+    let initial = initial_state(case, 0x0123_4567_89AB_CDEF, 17, 0);
+    let expected = expected_register(case, &initial);
+
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let function = optimized_register(case, level, true);
+        assert!(matches!(
+            function.blocks[0].ops.first(),
+            Some(SmirOp {
+                kind: OpKind::X86RequireApx,
+                ..
+            })
+        ));
+
+        for enabled in [false, true] {
+            let mut context = SmirContext::new_x86_64();
+            let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
+                unreachable!()
+            };
+            x86.gpr = initial.gpr;
+            x86.rflags = initial.rflags;
+            x86.apx_enabled = enabled;
+            context.flags.materialized = MaterializedFlags::from_rflags(initial.rflags);
+            context.flags.lazy = None;
+
+            let execution = SmirInterpreter::new().execute_block(
+                &mut context,
+                &mut FlatMemory::new(1),
+                &function.blocks[0],
+            );
+            let ArchRegState::X86_64(x86) = &context.arch_regs else {
+                unreachable!()
+            };
+            if enabled {
+                assert!(matches!(execution, BlockResult::Exit(ExitReason::Halt)));
+                assert_eq!(x86.gpr, expected.gpr, "{level:?}");
+                assert_eq!(x86.rflags, expected.rflags, "{level:?}");
+            } else {
+                assert!(matches!(
+                    execution,
+                    BlockResult::Exit(ExitReason::Undefined {
+                        addr: PC,
+                        opcode: 0,
+                    })
+                ));
+                assert_eq!(x86.gpr, initial.gpr, "{level:?}");
+                assert_eq!(x86.rflags, initial.rflags, "{level:?}");
+            }
+        }
+    }
 }
 
 #[test]
@@ -848,6 +932,7 @@ fn full_guest_regs(ordinal: usize) -> crate::smir::lower::runtime::GuestRegs {
         exit_pc: 0xAAAA_BBBB_CCCC_DDDD,
         mxcsr: 0x1F80 | ((ordinal as u32) & 0x3F),
         ac_flag: (ordinal & 1) as u64,
+        apx_enabled: 1,
         k: core::array::from_fn(|index| 0x0102_0304_0506_0708u64.rotate_left(index as u32)),
         ..GuestRegs::default()
     };
@@ -913,6 +998,45 @@ fn apx_bmi2_shift_native_registers_match_spec_and_preserve_complete_guest_state(
             * SOURCES.len()
             * COUNTS.len()
     );
+}
+
+#[cfg(target_arch = "x86_64")]
+#[test]
+fn apx_bmi2_shift_native_guard_is_dynamic_and_noncommitting() {
+    use crate::smir::lower::runtime::ExecMem;
+
+    const SENTINEL_PC: u64 = 0xAAAA_BBBB_CCCC_DDDD;
+    let case = RegisterCase {
+        kind: ShiftKind::Shlx,
+        width: OpWidth::W64,
+        destination: 0,
+        source: 3,
+        count: 1,
+    };
+    let (code, entry) = lower_register(case, OptLevel::O2);
+    let executable = ExecMem::new(&code).expect("APX BMI2 shift executable");
+    let initial = initial_state(case, 0x0123_4567_89AB_CDEF, 17, 0);
+    let expected = expected_register(case, &initial);
+
+    for enabled in [false, true] {
+        let mut registers = full_guest_regs(0);
+        registers.gpr = initial.gpr;
+        registers.rflags = initial.rflags;
+        registers.apx_enabled = u64::from(enabled);
+        registers.exit_pc = SENTINEL_PC;
+        let before = registers;
+
+        executable.run(entry, &mut registers);
+        if enabled {
+            assert_eq!(registers.gpr, expected.gpr);
+            assert_eq!(registers.rflags & 0x8D5, expected.rflags & 0x8D5);
+            assert_eq!(registers.exit_pc, SENTINEL_PC);
+        } else {
+            assert_eq!(registers.gpr, before.gpr);
+            assert_eq!(registers.rflags & 0x8D5, before.rflags & 0x8D5);
+            assert_eq!(registers.exit_pc, PC);
+        }
+    }
 }
 
 #[cfg(target_arch = "aarch64")]

@@ -585,6 +585,21 @@ fn assert_vex_rorx_op(
     }
 }
 
+fn assert_apx_guarded_payload<'a>(result: &'a LiftResult, expected: &str) -> &'a [SmirOp] {
+    assert!(
+        matches!(
+            result.ops.first(),
+            Some(SmirOp {
+                kind: OpKind::X86RequireApx,
+                ..
+            })
+        ),
+        "{expected}: missing leading APX requirement: {:?}",
+        result.ops
+    );
+    &result.ops[1..]
+}
+
 fn assert_apx_bmi2_shift(
     bytes: &[u8],
     expected_op: &str,
@@ -595,8 +610,9 @@ fn assert_apx_bmi2_shift(
 ) {
     let result = lift_single(bytes).unwrap();
     assert_eq!(result.bytes_consumed, bytes.len(), "{expected_op}");
-    assert_eq!(result.ops.len(), 1, "{expected_op}");
-    assert_apx_bmi2_shift_ops(&result.ops, 0, expected_op, dst, src, count, width);
+    let payload = assert_apx_guarded_payload(&result, expected_op);
+    assert_eq!(payload.len(), 1, "{expected_op}");
+    assert_apx_bmi2_shift_ops(payload, 0, expected_op, dst, src, count, width);
 }
 
 fn assert_apx_bmi2_shift_ops(

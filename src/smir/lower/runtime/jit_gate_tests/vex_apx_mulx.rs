@@ -187,6 +187,34 @@ fn optimized_function(case: MulxCase, level: OptLevel, halt: bool) -> SmirFuncti
 }
 
 fn assert_exact_mulx(ops: &[SmirOp], case: MulxCase) {
+    let ops = match case.encoding {
+        EncodingKind::Vex => {
+            assert!(
+                !matches!(
+                    ops.first(),
+                    Some(SmirOp {
+                        kind: OpKind::X86RequireApx,
+                        ..
+                    })
+                ),
+                "{case:?}: VEX form has an APX requirement"
+            );
+            ops
+        }
+        EncodingKind::Apx => {
+            assert!(
+                matches!(
+                    ops.first(),
+                    Some(SmirOp {
+                        kind: OpKind::X86RequireApx,
+                        ..
+                    })
+                ),
+                "{case:?}: APX form lacks its dynamic requirement"
+            );
+            &ops[1..]
+        }
+    };
     let [op] = ops else {
         panic!("{case:?}: expected one MULX operation, got {ops:?}")
     };
@@ -274,6 +302,7 @@ fn interpret(case: MulxCase, initial: &MulxState, level: OptLevel) -> MulxState 
     };
     x86.gpr = initial.gpr;
     x86.rflags = initial.rflags;
+    x86.apx_enabled = case.encoding == EncodingKind::Apx;
     context.flags.materialized = MaterializedFlags::from_rflags(initial.rflags);
     context.flags.lazy = None;
     let result = SmirInterpreter::new().execute_block(
@@ -298,6 +327,7 @@ fn lower_x86(case: MulxCase, level: OptLevel) -> (Vec<u8>, usize) {
         "{level:?} {case:?}: x86-64 admission"
     );
     let mut lowerer = X86_64Lowerer::new();
+    lowerer.set_jit_fault_deopt_guards(true);
     let lowered = lowerer
         .lower_function(&function)
         .unwrap_or_else(|error| panic!("{level:?} {case:?}: {error:?}"));
@@ -556,7 +586,22 @@ fn vex_apx_mulx_reserved_forms_fail_closed_and_memory_stays_x86_host_only() {
         ),
     ] {
         let result = lift(&bytes);
-        assert_eq!(result.ops.len(), 2, "{name}");
+        assert_eq!(
+            result.ops.len(),
+            if name == "APX memory source" { 3 } else { 2 },
+            "{name}"
+        );
+        assert_eq!(
+            matches!(
+                result.ops.first(),
+                Some(SmirOp {
+                    kind: OpKind::X86RequireApx,
+                    ..
+                })
+            ),
+            name == "APX memory source",
+            "{name}"
+        );
         let function = function_from_ops(result.ops, false);
         assert!(
             is_native_clobber_safe_excluding(&function, &std::collections::HashMap::new(), true,),
@@ -564,6 +609,7 @@ fn vex_apx_mulx_reserved_forms_fail_closed_and_memory_stays_x86_host_only() {
         );
         let mut lowerer = X86_64Lowerer::new();
         lowerer.set_mem_helpers(true);
+        lowerer.set_jit_fault_deopt_guards(true);
         lowerer
             .lower_function(&function)
             .unwrap_or_else(|error| panic!("{name}: x86-64 lowering failed: {error:?}"));
@@ -766,6 +812,7 @@ fn vex_apx_mulx_native_matches_primary_spec_and_preserves_complete_guest_state()
                             gpr: initial.gpr,
                             rflags: initial.rflags,
                             mxcsr: 0x1F80 | ((ordinal as u32) & 0x3F),
+                            apx_enabled: u64::from(case.encoding == EncodingKind::Apx),
                             k: core::array::from_fn(|index| {
                                 0x0102_0304_0506_0708u64.rotate_left(index as u32)
                             }),
@@ -835,6 +882,7 @@ fn vex_apx_mulx_aarch64_native_matches_primary_spec_and_preserves_complete_guest
                             nzcv: ((ordinal as u64) & 0xF) << 28,
                             fpcr: 0x0040_0000,
                             fpsr: 0x0000_009F,
+                            x86_apx_enabled: u64::from(case.encoding == EncodingKind::Apx),
                             v: core::array::from_fn(|index| {
                                 0x1122_3344_5566_7788u64.wrapping_add(index as u64)
                             }),

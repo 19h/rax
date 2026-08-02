@@ -20,6 +20,27 @@ fn first_memory_address(bytes: &[u8]) -> Address {
         .unwrap_or_else(|| panic!("{bytes:02X?}: no memory address in {:#?}", lifted.ops))
 }
 
+fn assert_single_leading_apx_guard(bytes: &[u8]) {
+    let lifted = lift_single(bytes).unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
+    assert!(
+        matches!(
+            lifted.ops.first().map(|op| &op.kind),
+            Some(OpKind::X86RequireApx)
+        ),
+        "{bytes:02X?}: {:#?}",
+        lifted.ops
+    );
+    assert_eq!(
+        lifted
+            .ops
+            .iter()
+            .filter(|op| matches!(op.kind, OpKind::X86RequireApx))
+            .count(),
+        1,
+        "{bytes:02X?}"
+    );
+}
+
 fn sib_with_disp_size(
     base: X86Reg,
     index: X86Reg,
@@ -62,6 +83,7 @@ fn immediate_packed_rotate_preserves_apx_b4_x4_memory_address_bits() {
             sib8(X86Reg::R16, X86Reg::R17, 4, 16),
         ),
     ] {
+        assert_single_leading_apx_guard(bytes);
         assert_eq!(first_memory_address(bytes), expected, "{bytes:02X?}");
     }
 }
@@ -89,6 +111,7 @@ fn variable_packed_rotate_preserves_apx_b4_x4_memory_address_bits() {
             sib32(X86Reg::R20, X86Reg::R21, 8, 48),
         ),
     ] {
+        assert_single_leading_apx_guard(bytes);
         assert_eq!(first_memory_address(bytes), expected, "{bytes:02X?}");
     }
 }
@@ -139,6 +162,7 @@ fn variable_rotate_broadcast_preserves_apx_address_and_tuple_scaling() {
     // VPROLVQ zmm27{k5}{z},zmm26,[r24+r25*4+64]{1to8}. The encoded
     // disp8=8 is scaled by the 8-byte broadcast tuple.
     let bytes = [0x62, 0x0A, 0xA9, 0xD5, 0x15, 0x5C, 0x88, 0x08];
+    assert_single_leading_apx_guard(&bytes);
     assert_eq!(
         first_memory_address(&bytes),
         sib8(X86Reg::R24, X86Reg::R25, 4, 64)
@@ -150,6 +174,7 @@ fn variable_rotate_preserves_segment_and_address_size_overrides() {
     let fs_rotate = [
         0x64, 0x62, 0xEA, 0x49, 0x20, 0x14, 0xBC, 0xEC, 0x30, 0x00, 0x00, 0x00,
     ];
+    assert_single_leading_apx_guard(&fs_rotate);
     assert_eq!(
         first_memory_address(&fs_rotate),
         Address::SegmentRel {

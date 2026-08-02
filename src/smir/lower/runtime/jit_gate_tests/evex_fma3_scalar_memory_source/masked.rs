@@ -811,6 +811,7 @@ fn interpreter_inactive_mask_suppresses_an_unmapped_scalar_source() {
             x86.mxcsr = initial.mxcsr;
             x86.fs_base = initial.fs_base;
             x86.gs_base = initial.gs_base;
+            x86.apx_enabled = true;
         }
         context.flags.materialized = MaterializedFlags::from_rflags(initial.rflags);
         context.flags.lazy = None;

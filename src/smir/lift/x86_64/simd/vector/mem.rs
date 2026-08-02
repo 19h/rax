@@ -218,10 +218,8 @@ impl X86_64Lifter {
         }
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: prefix.pp == X86SsePrefix::OpSize,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         if !modrm.is_memory {
@@ -292,13 +290,7 @@ impl X86_64Lifter {
         }
 
         let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
-        };
+        let modrm_prefix = prefix.modrm_prefix(cursor);
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         if !modrm.is_memory || modrm.byte & 7 != 4 || bytes.len() <= cursor + 1 {
             return Err(LiftError::InvalidEncoding {
@@ -659,10 +651,8 @@ impl X86_64Lifter {
         }
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         if !modrm.is_memory {
@@ -907,10 +897,8 @@ impl X86_64Lifter {
 
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         // Intel SDM Table 2-41 defines EVEX.X as ignored when ModR/M.r/m is a
@@ -1143,12 +1131,8 @@ impl X86_64Lifter {
         let opcode = bytes[prefix.bytes];
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let register_sae = prefix.encoding == VecEncodingKind::Evex && prefix.b && !modrm.is_memory;

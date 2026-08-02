@@ -13,8 +13,10 @@ use crate::smir::ir::{
 };
 
 use super::evex_memory_source_common::{
-    exact_lane_address, exact_lane_predicate, exact_nonzero_mask_predicate,
-    exact_virtual_definition_use, single_definition_single_use, vector_index,
+    exact_evex_memory_apx_frontier, exact_evex_memory_sequence_address,
+    exact_evex_memory_sequence_frontier, exact_lane_address, exact_lane_predicate,
+    exact_nonzero_mask_predicate, exact_virtual_definition_use, no_following_same_pc,
+    single_definition_single_use, vector_index,
 };
 use super::x86_jit_mem_address_shape_valid;
 
@@ -80,18 +82,6 @@ fn exact_funnel(
         _ => false,
     };
     exact && op.x86_hint.is_none()
-}
-
-fn no_following_same_pc(
-    block: &crate::smir::ir::SmirBlock,
-    index: usize,
-    consumed: usize,
-    guest_pc: GuestAddr,
-) -> bool {
-    !block
-        .ops
-        .get(index + consumed)
-        .is_some_and(|op| op.guest_pc == guest_pc)
 }
 
 fn unmasked_vector_sequence(
@@ -507,10 +497,13 @@ pub(crate) fn x86_jit_evex_packed_funnel_shift_memory_sequence(
         return None;
     }
     let first = block.ops.get(index)?;
+    if !exact_evex_memory_sequence_frontier(block, index, first.guest_pc) {
+        return None;
+    }
     let encoding = instruction_bytes
         .get(&(block.id, first.guest_pc))?
         .evex_packed_funnel_shift_memory_encoding()?;
-    match encoding.replay {
+    let exact = match encoding.replay {
         X86EvexPackedFunnelShiftMemoryReplay::Vector { .. } => {
             unmasked_vector_sequence(block, index, encoding, virtual_definitions, virtual_uses)
         }
@@ -523,5 +516,7 @@ pub(crate) fn x86_jit_evex_packed_funnel_shift_memory_sequence(
         X86EvexPackedFunnelShiftMemoryReplay::MaskedVector { .. } => {
             masked_vector_sequence(block, index, encoding, virtual_definitions, virtual_uses)
         }
-    }
+    }?;
+    let address = exact_evex_memory_sequence_address(block, index, exact.address_offset)?;
+    exact_evex_memory_apx_frontier(block, index, first.guest_pc, address).then_some(exact)
 }

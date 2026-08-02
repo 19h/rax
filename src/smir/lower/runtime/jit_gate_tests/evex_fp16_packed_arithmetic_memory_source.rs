@@ -296,9 +296,16 @@ fn sequence(
     allow_mem: bool,
 ) -> Option<X86JitEvexPackedFp16ArithmeticMemorySequence> {
     let (definitions, uses) = virtual_counts(function);
+    let index = usize::from(matches!(
+        function.blocks[0].ops.first(),
+        Some(SmirOp {
+            kind: OpKind::X86RequireApx,
+            ..
+        })
+    ));
     x86_jit_evex_packed_fp16_arithmetic_memory_sequence(
         &function.blocks[0],
-        0,
+        index,
         allow_mem,
         &function.x86_instruction_bytes,
         &definitions,
@@ -352,6 +359,7 @@ fn lower(function: &SmirFunction, case: Fp16MemoryCase) -> (Vec<u8>, usize) {
     lowerer.set_mem_helpers(true);
     lowerer.set_preserve_vector_mem_helpers(true);
     lowerer.set_avx_ymm16_vector_state(false);
+    lowerer.set_jit_fault_deopt_guards(true);
     let result = lowerer
         .lower_function(function)
         .unwrap_or_else(|error| panic!("{case:?}: packed FP16 memory lowering: {error:?}"));
@@ -648,8 +656,8 @@ fn packed_fp16_apx_r16_r17_sib_address_lifts_admits_and_lowers_exactly() {
     for level in LEVELS {
         let function = optimize(base.clone(), level);
         assert!(
-            matches!(
-                function.blocks[0].ops[2].kind,
+            function.blocks[0].ops.iter().any(|op| matches!(
+                op.kind,
                 OpKind::Lea {
                     addr: Address::BaseIndexScale {
                         base: Some(VReg::Arch(ArchReg::X86(X86Reg::R16))),
@@ -660,7 +668,7 @@ fn packed_fp16_apx_r16_r17_sib_address_lifts_admits_and_lowers_exactly() {
                     },
                     ..
                 }
-            ),
+            )),
             "{level:?}: {:#?}",
             function.blocks[0].ops
         );
@@ -1006,6 +1014,7 @@ fn interpreter_success(
         x86.k = initial.k;
         x86.rflags = initial.rflags;
         x86.mxcsr = initial.mxcsr;
+        x86.apx_enabled = true;
     }
     context.flags.materialized = MaterializedFlags::from_rflags(initial.rflags);
     context.flags.lazy = None;

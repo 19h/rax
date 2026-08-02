@@ -262,9 +262,16 @@ fn sequence(
     allow_mem: bool,
 ) -> Option<X86JitEvexVectorAlignMemorySequence> {
     let (definitions, uses) = virtual_counts(function);
+    let index = usize::from(matches!(
+        function.blocks[0].ops.first(),
+        Some(SmirOp {
+            kind: OpKind::X86RequireApx,
+            ..
+        })
+    ));
     x86_jit_evex_vector_align_memory_sequence(
         &function.blocks[0],
-        0,
+        index,
         allow_mem,
         &function.x86_instruction_bytes,
         &definitions,
@@ -316,6 +323,7 @@ fn lower(function: &SmirFunction, case: AlignMemoryCase) -> (Vec<u8>, usize) {
     lowerer.set_mem_helpers(true);
     lowerer.set_preserve_vector_mem_helpers(true);
     lowerer.set_avx_ymm16_vector_state(false);
+    lowerer.set_jit_fault_deopt_guards(true);
     let result = lowerer
         .lower_function(function)
         .unwrap_or_else(|error| panic!("{case:?}: VALIGN memory lowering: {error:?}"));

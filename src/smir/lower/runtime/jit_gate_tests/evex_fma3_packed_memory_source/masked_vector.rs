@@ -214,9 +214,16 @@ fn sequence(
     allow_mem: bool,
 ) -> Option<X86JitEvexPackedFma3MemorySequence> {
     let (definitions, uses) = virtual_counts(function);
+    let index = usize::from(matches!(
+        function.blocks[0].ops.first(),
+        Some(SmirOp {
+            kind: OpKind::X86RequireApx,
+            ..
+        })
+    ));
     x86_jit_evex_packed_fma3_memory_sequence(
         &function.blocks[0],
-        0,
+        index,
         allow_mem,
         &function.x86_instruction_bytes,
         &definitions,
@@ -273,6 +280,7 @@ fn lower(function: &SmirFunction, case: MaskedVectorCase) -> (Vec<u8>, usize) {
     lowerer.set_mem_helpers(true);
     lowerer.set_preserve_vector_mem_helpers(true);
     lowerer.set_avx_ymm16_vector_state(false);
+    lowerer.set_jit_fault_deopt_guards(true);
     let result = lowerer
         .lower_function(function)
         .unwrap_or_else(|error| panic!("{case:?}: masked packed EVEX FMA3 lowering: {error:?}"));
@@ -371,7 +379,10 @@ fn assert_exact_graph(function: &SmirFunction, case: MaskedVectorCase) {
         "{case:?}: one destination merge/zero selection per lane"
     );
 
-    let lea = &ops[2];
+    let lea = ops
+        .iter()
+        .find(|op| matches!(op.kind, OpKind::Lea { .. }))
+        .expect("masked packed FMA3 memory address");
     assert!(
         matches!(
             lea.kind,
@@ -561,7 +572,14 @@ fn all_1_296_opcode_format_width_alias_and_mask_shapes_lift_optimize_and_admit()
             let sequence = sequence(&function, true)
                 .unwrap_or_else(|| panic!("{level:?} {case:?}: sequence rejected"));
             assert_eq!(
-                sequence.consumed,
+                sequence.consumed
+                    + usize::from(matches!(
+                        function.blocks[0].ops.first(),
+                        Some(SmirOp {
+                            kind: OpKind::X86RequireApx,
+                            ..
+                        })
+                    )),
                 function.blocks[0].ops.len(),
                 "{level:?} {case:?}"
             );
@@ -634,7 +652,14 @@ fn all_252_segment_addr32_rip_and_apx_address_cells_admit_and_lower() {
                         let sequence = sequence(&function, true)
                             .unwrap_or_else(|| panic!("{level:?} {form:?} {case:?}"));
                         assert_eq!(
-                            sequence.consumed,
+                            sequence.consumed
+                                + usize::from(matches!(
+                                    function.blocks[0].ops.first(),
+                                    Some(SmirOp {
+                                        kind: OpKind::X86RequireApx,
+                                        ..
+                                    })
+                                )),
                             function.blocks[0].ops.len(),
                             "{level:?} {form:?} {case:?}"
                         );

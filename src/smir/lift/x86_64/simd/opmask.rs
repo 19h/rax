@@ -289,11 +289,7 @@ impl X86_64Lifter {
 
     fn opmask_modrm_prefix(prefix: VecPrefix, cursor: usize) -> X86Prefix {
         X86Prefix {
-            rex: prefix.rex,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         }
     }
 

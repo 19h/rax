@@ -116,13 +116,7 @@ impl X86_64Lifter {
         }
         let width = if scalar { VecWidth::V128 } else { prefix.width };
         let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
-        };
+        let modrm_prefix = prefix.modrm_prefix(cursor);
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();
@@ -242,13 +236,7 @@ impl X86_64Lifter {
             VecElementType::F64
         };
         let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
-        };
+        let modrm_prefix = prefix.modrm_prefix(cursor);
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();
@@ -319,10 +307,8 @@ impl X86_64Lifter {
         }
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: elem == VecElementType::F64,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let broadcast = prefix.encoding == VecEncodingKind::Evex && prefix.b && modrm.is_memory;
@@ -499,15 +485,13 @@ impl X86_64Lifter {
         }
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: prefix.pp == X86SsePrefix::OpSize,
             rep_prefix: match prefix.pp {
                 X86SsePrefix::Rep => Some(0xF3),
                 X86SsePrefix::Repne => Some(0xF2),
                 _ => None,
             },
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let imm_offset = cursor + modrm.bytes_consumed;
@@ -1103,17 +1087,13 @@ impl X86_64Lifter {
         let opcode = bytes[prefix.bytes];
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: matches!(prefix.pp, X86SsePrefix::OpSize),
             rep_prefix: match prefix.pp {
                 X86SsePrefix::Rep => Some(0xF3),
                 X86SsePrefix::Repne => Some(0xF2),
                 _ => None,
             },
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         if prefix.encoding == VecEncodingKind::Evex && prefix.b && modrm.is_memory {
@@ -1268,17 +1248,13 @@ impl X86_64Lifter {
         let opcode = bytes[prefix.bytes];
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: matches!(prefix.pp, X86SsePrefix::OpSize),
             rep_prefix: match prefix.pp {
                 X86SsePrefix::Rep => Some(0xF3),
                 X86SsePrefix::Repne => Some(0xF2),
                 _ => None,
             },
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let register_sae_or_er =
@@ -1719,17 +1695,13 @@ impl X86_64Lifter {
 
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: matches!(prefix.pp, X86SsePrefix::OpSize),
             rep_prefix: match prefix.pp {
                 X86SsePrefix::Rep => Some(0xF3),
                 X86SsePrefix::Repne => Some(0xF2),
                 _ => None,
             },
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let register_b = prefix.encoding == VecEncodingKind::Evex && prefix.b && !modrm.is_memory;

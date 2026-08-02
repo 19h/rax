@@ -18,15 +18,13 @@ impl X86_64Lifter {
         let cursor = prefix.bytes + 1;
         let after_opcode = &bytes[cursor..];
         let prefix_modrm = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: matches!(prefix.pp, X86SsePrefix::OpSize),
             rep_prefix: match prefix.pp {
                 X86SsePrefix::Rep => Some(0xF3),
                 X86SsePrefix::Repne => Some(0xF2),
                 _ => None,
             },
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
 
         if prefix.vvvv != 0
@@ -159,13 +157,7 @@ impl X86_64Lifter {
         }
 
         let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
-        };
+        let modrm_prefix = prefix.modrm_prefix(cursor);
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         if prefix.b && modrm.is_memory {
             return Err(LiftError::InvalidEncoding {

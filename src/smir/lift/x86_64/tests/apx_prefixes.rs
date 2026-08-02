@@ -143,24 +143,27 @@ fn apx_promoted_bmi_maps_preserve_prefixes_and_egpr_address_extensions() {
     let bextr = lift_single(&[0x67, 0x62, 0x72, 0xF4, 0x0C, 0xF7, 0x03])
         .expect("APX NF BEXTR R8D,[EBX],ECX with addr32");
     assert_eq!(bextr.bytes_consumed, 7);
-    let OpKind::Load { addr, .. } = &bextr.ops[0].kind else {
-        panic!("expected APX BEXTR load, got {:?}", bextr.ops[0]);
+    let bextr_payload = assert_apx_guarded_payload(&bextr, "APX BEXTR");
+    let OpKind::Load { addr, .. } = &bextr_payload[0].kind else {
+        panic!("expected APX BEXTR load, got {:?}", bextr_payload[0]);
     };
     assert_addr32_direct(addr, x86_gpr(3));
 
     let pdep = lift_single(&[0x64, 0x62, 0xEA, 0xE3, 0x00, 0xF5, 0x24, 0x91])
         .expect("APX PDEP R20,R19,FS:[R17+R18*4]");
     assert_eq!(pdep.bytes_consumed, 8);
-    let OpKind::Load { addr, .. } = &pdep.ops[0].kind else {
-        panic!("expected APX PDEP load, got {:?}", pdep.ops[0]);
+    let pdep_payload = assert_apx_guarded_payload(&pdep, "APX PDEP");
+    let OpKind::Load { addr, .. } = &pdep_payload[0].kind else {
+        panic!("expected APX PDEP load, got {:?}", pdep_payload[0]);
     };
     assert_segment_sib(addr, X86Reg::FsBase, x86_gpr(17), x86_gpr(18), 4, 0, false);
 
     let rorx = lift_single(&[0x65, 0x62, 0xEB, 0xFB, 0x08, 0xF0, 0x64, 0x91, 0x20, 0x0D])
         .expect("APX RORX R20,GS:[R17+R18*4+32],13");
     assert_eq!(rorx.bytes_consumed, 10);
-    let OpKind::Load { addr, .. } = &rorx.ops[0].kind else {
-        panic!("expected APX RORX load, got {:?}", rorx.ops[0]);
+    let rorx_payload = assert_apx_guarded_payload(&rorx, "APX RORX");
+    let OpKind::Load { addr, .. } = &rorx_payload[0].kind else {
+        panic!("expected APX RORX load, got {:?}", rorx_payload[0]);
     };
     assert_segment_sib(
         addr,

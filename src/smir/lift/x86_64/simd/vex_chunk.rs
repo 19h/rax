@@ -28,12 +28,8 @@ impl X86_64Lifter {
     ) -> Result<ModRm, LiftError> {
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         decode_modrm(&bytes[cursor.min(bytes.len())..], &modrm_prefix, pc).map_err(|error| {
             match error {

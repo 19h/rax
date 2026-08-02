@@ -35,13 +35,7 @@ impl X86_64Lifter {
 
     fn vex_bmi_modrm(&self, prefix: VecPrefix, bytes: &[u8], pc: u64) -> Result<ModRm, LiftError> {
         let modrm_offset = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor: modrm_offset,
-            ..X86Prefix::default()
-        };
+        let modrm_prefix = prefix.modrm_prefix(modrm_offset);
         decode_modrm(&bytes[modrm_offset.min(bytes.len())..], &modrm_prefix, pc).map_err(|error| {
             match error {
                 LiftError::Incomplete { addr, have, need } => LiftError::Incomplete {

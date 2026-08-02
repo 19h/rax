@@ -22,10 +22,8 @@ impl X86_64Lifter {
         let cursor = prefix.bytes + 1;
         let after_opcode = &bytes[cursor..];
         let prefix_modrm = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: matches!(prefix.pp, X86SsePrefix::OpSize),
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
 
         if prefix.vvvv != 0

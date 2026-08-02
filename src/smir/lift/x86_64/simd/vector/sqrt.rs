@@ -39,17 +39,13 @@ impl X86_64Lifter {
         let opcode = bytes[prefix.bytes];
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: prefix.pp == X86SsePrefix::OpSize,
             rep_prefix: match prefix.pp {
                 X86SsePrefix::Rep => Some(0xF3),
                 X86SsePrefix::Repne => Some(0xF2),
                 _ => None,
             },
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;

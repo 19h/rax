@@ -221,13 +221,7 @@ impl X86_64Lifter {
             });
         }
         let cursor = prefix.bytes + 1;
-        let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
-            address_size_override: prefix.address_size_override,
-            segment_override: prefix.segment_override,
-            cursor,
-            ..X86Prefix::default()
-        };
+        let modrm_prefix = prefix.modrm_prefix(cursor);
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         if !modrm.is_memory || modrm.byte & 7 != 4 || bytes.len() <= cursor + 1 {
             return Err(LiftError::InvalidEncoding {
@@ -396,10 +390,8 @@ impl X86_64Lifter {
         }
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             rep_prefix: Some(0xF3),
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         // Intel SDM Table 2-41 defines EVEX.X/B as ignored when ModR/M.r/m

@@ -510,6 +510,7 @@ fn assert_masked_rejected(name: &str, case: MaskedBroadcastCase, function: &Smir
     lowerer.set_mem_helpers(true);
     lowerer.set_preserve_vector_mem_helpers(true);
     lowerer.set_avx_ymm16_vector_state(false);
+    lowerer.set_jit_fault_deopt_guards(true);
     assert!(
         lowerer.lower_function(function).is_err(),
         "{name} {case:?}: lowerer accepted malformed masked broadcast"
@@ -841,6 +842,7 @@ fn interpreter_ignores_high_mask_bits_and_suppresses_unmapped_broadcast_sources(
                 x86.mxcsr = initial.mxcsr;
                 x86.fs_base = initial.fs_base;
                 x86.gs_base = initial.gs_base;
+                x86.apx_enabled = true;
             }
             context.flags.materialized = MaterializedFlags::from_rflags(initial.rflags);
             context.flags.lazy = None;

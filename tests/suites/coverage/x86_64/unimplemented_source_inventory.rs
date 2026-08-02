@@ -243,3 +243,41 @@ fn x86_64_unimplemented_source_diagnostics_are_inventoried() {
         count_failures.join("\n")
     );
 }
+
+#[test]
+fn x86_64_vector_modrm_prefixes_use_canonical_address_projection() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let mut files = Vec::new();
+    rust_files(&root.join(SMIR_LIFT_ROOT), &mut files);
+    files.sort();
+
+    let mut violations = Vec::new();
+    for file in files {
+        let relative = file
+            .strip_prefix(root)
+            .unwrap()
+            .to_string_lossy()
+            .replace('\\', "/");
+        let vector_dispatch = relative.starts_with("src/smir/lift/x86_64/dispatch/vector");
+        let vector_semantics = relative.starts_with("src/smir/lift/x86_64/simd/")
+            && relative != "src/smir/lift/x86_64/simd/xop.rs";
+        if !vector_dispatch && !vector_semantics {
+            continue;
+        }
+
+        let text = fs::read_to_string(&file)
+            .unwrap_or_else(|error| panic!("failed to read {}: {error}", file.display()));
+        for (line, source) in text.lines().enumerate() {
+            if source.contains("X86Prefix::default()") {
+                violations.push(format!("{relative}:{}: {}", line + 1, source.trim()));
+            }
+        }
+    }
+
+    assert!(
+        violations.is_empty(),
+        "vector ModR/M decoding must project VecPrefix through modrm_prefix() so 67H, FS/GS, \
+         EVEX.B4, and EVEX.X4 cannot be dropped:\n{}",
+        violations.join("\n")
+    );
+}

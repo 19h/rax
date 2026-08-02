@@ -199,6 +199,7 @@ fn lower(function: &SmirFunction) -> (Vec<u8>, usize) {
 
     let mut lowerer = X86_64Lowerer::new();
     lowerer.set_mem_helpers(true);
+    lowerer.set_jit_fault_deopt_guards(true);
     let result = lowerer
         .lower_function(function)
         .unwrap_or_else(|error| panic!("helper-backed BMI2 shift lowering failed: {error:?}"));
@@ -626,7 +627,25 @@ fn malformed_memory_bmi2_shift_pairs_fail_closed_and_apx_shape_is_admitted() {
             &mut context,
         )
         .expect("lift APX memory SHLX");
-    assert_eq!(apx.ops.len(), 2, "APX uses canonical Load + shift shape");
+    assert_eq!(
+        apx.ops.len(),
+        3,
+        "APX uses canonical requirement + Load + shift shape"
+    );
+    assert!(
+        matches!(apx.ops[0].kind, OpKind::X86RequireApx),
+        "APX requirement must precede the memory operation"
+    );
+    assert_exact_pair(
+        &apx.ops[1..],
+        MemoryShiftCase {
+            kind: ShiftKind::Shlx,
+            width: OpWidth::W64,
+            destination: 0,
+            count: 1,
+        },
+        &Address::Direct(x86(3)),
+    );
     let mut block = SmirBlock::new(BlockId(0), PC);
     block.ops = apx.ops;
     block.set_terminator(Terminator::Return { values: Vec::new() });

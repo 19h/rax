@@ -28,6 +28,16 @@ impl ApxBmi0f38Kind {
 }
 
 impl X86_64Lifter {
+    fn retain_apx_bmi_requirement(pc: u64, mut result: LiftResult) -> LiftResult {
+        result
+            .ops
+            .insert(0, SmirOp::new(OpId(0), pc, OpKind::X86RequireApx));
+        for (index, op) in result.ops.iter_mut().enumerate() {
+            op.id = OpId(index as u16);
+        }
+        result
+    }
+
     fn apx_bmi_payload_is_valid(prefix: ApxEvexPrefix, bytes: &[u8], supports_nf: bool) -> bool {
         // Intel APX revision 5.0 Figure 3.4 permits only V4, L, and NF in
         // payload byte 2, while exception class APX-EVEX-BMI separately makes
@@ -265,9 +275,9 @@ impl X86_64Lifter {
             }
         }
 
-        Ok(LiftResult::fallthrough(
-            ops,
-            prefix.bytes + 1 + modrm.bytes_consumed,
+        Ok(Self::retain_apx_bmi_requirement(
+            pc,
+            LiftResult::fallthrough(ops, prefix.bytes + 1 + modrm.bytes_consumed),
         ))
     }
 
@@ -339,9 +349,9 @@ impl X86_64Lifter {
             },
         ));
 
-        Ok(LiftResult::fallthrough(
-            ops,
-            prefix.bytes + 1 + modrm.bytes_consumed + 1,
+        Ok(Self::retain_apx_bmi_requirement(
+            pc,
+            LiftResult::fallthrough(ops, prefix.bytes + 1 + modrm.bytes_consumed + 1),
         ))
     }
 }

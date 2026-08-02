@@ -392,10 +392,16 @@ fn sequence(
     function: &SmirFunction,
     allow_mem: bool,
 ) -> Option<X86JitEvexPackedRotateMemorySequence> {
+    let index = usize::from(
+        function.blocks[0]
+            .ops
+            .first()
+            .is_some_and(|op| matches!(op.kind, OpKind::X86RequireApx)),
+    );
     let (definitions, uses) = virtual_counts(function);
     x86_jit_evex_packed_rotate_memory_sequence(
         &function.blocks[0],
-        0,
+        index,
         allow_mem,
         &function.x86_instruction_bytes,
         &definitions,
@@ -447,6 +453,7 @@ fn lower(function: &SmirFunction, case: RotateMemoryCase) -> (Vec<u8>, usize) {
     lowerer.set_mem_helpers(true);
     lowerer.set_preserve_vector_mem_helpers(true);
     lowerer.set_avx_ymm16_vector_state(false);
+    lowerer.set_jit_fault_deopt_guards(true);
     let result = lowerer
         .lower_function(function)
         .unwrap_or_else(|error| panic!("{case:?}: packed rotate memory lowering: {error:?}"));
@@ -1102,8 +1109,32 @@ fn packed_rotate_apx_r16_r17_addresses_admit_and_lower_at_every_level() {
         base.x86_instruction_bytes
             .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
 
+        let mut missing_guard = base.clone();
+        assert!(matches!(
+            missing_guard.blocks[0].ops.remove(0).kind,
+            OpKind::X86RequireApx
+        ));
+        assert_rejected("APX address without guard", &missing_guard);
+
         for level in LEVELS {
             let function = optimize(base.clone(), level);
+            assert!(
+                matches!(
+                    function.blocks[0].ops.first().map(|op| &op.kind),
+                    Some(OpKind::X86RequireApx)
+                ),
+                "{level:?} {bytes:02X?}: {:#?}",
+                function.blocks[0].ops
+            );
+            assert_eq!(
+                function.blocks[0]
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(op.kind, OpKind::X86RequireApx))
+                    .count(),
+                1,
+                "{level:?} {bytes:02X?}"
+            );
             assert!(
                 function.blocks[0].ops.iter().any(|op| match &op.kind {
                     OpKind::VLoad { addr, .. } => addr == &expected_address,
@@ -1150,6 +1181,24 @@ fn packed_rotate_apx_r16_r17_addresses_admit_and_lower_at_every_level() {
             );
         }
     }
+}
+
+#[test]
+fn packed_rotate_memory_sequence_rejects_spurious_apx_guard() {
+    let mut function = lift_case(RotateMemoryCase {
+        kind: RotateKind::ImmediateRight,
+        elem: VecElementType::I32,
+        width: VecWidth::V128,
+        destination: 1,
+        source: None,
+        form: SourceForm::Vector,
+        control: MaskControl::None,
+        amount: 7,
+    });
+    function.blocks[0]
+        .ops
+        .insert(0, SmirOp::new(OpId(0xFFFE), PC, OpKind::X86RequireApx));
+    assert_rejected("low address with APX guard", &function);
 }
 
 #[test]

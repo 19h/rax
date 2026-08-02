@@ -396,6 +396,7 @@ fn lower(function: &SmirFunction, case: FmaMemoryCase) -> (Vec<u8>, usize) {
     lowerer.set_mem_helpers(true);
     lowerer.set_preserve_vector_mem_helpers(true);
     lowerer.set_avx_ymm16_vector_state(false);
+    lowerer.set_jit_fault_deopt_guards(true);
     let result = lowerer
         .lower_function(function)
         .unwrap_or_else(|error| panic!("{case:?}: helper-backed EVEX FMA3 lowering: {error:?}"));

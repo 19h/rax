@@ -113,6 +113,34 @@ fn lift_bytes(case: MemoryMulxCase, bytes: &[u8], expected_addr: &Address) -> Sm
 }
 
 fn assert_exact_pair(ops: &[SmirOp], case: MemoryMulxCase, expected_addr: &Address) {
+    let ops = match case.encoding {
+        EncodingKind::Vex => {
+            assert!(
+                !matches!(
+                    ops.first(),
+                    Some(SmirOp {
+                        kind: OpKind::X86RequireApx,
+                        ..
+                    })
+                ),
+                "{case:?}: VEX form has an APX requirement"
+            );
+            ops
+        }
+        EncodingKind::Apx => {
+            assert!(
+                matches!(
+                    ops.first(),
+                    Some(SmirOp {
+                        kind: OpKind::X86RequireApx,
+                        ..
+                    })
+                ),
+                "{case:?}: APX form lacks its dynamic requirement"
+            );
+            &ops[1..]
+        }
+    };
     let [load, consumer] = ops else {
         panic!("{case:?}: expected Load + MULX, got {ops:?}")
     };
@@ -179,6 +207,7 @@ fn lower(function: &SmirFunction) -> (Vec<u8>, usize) {
 
     let mut lowerer = X86_64Lowerer::new();
     lowerer.set_mem_helpers(true);
+    lowerer.set_jit_fault_deopt_guards(true);
     let result = lowerer
         .lower_function(function)
         .unwrap_or_else(|error| panic!("helper-backed MULX lowering failed: {error:?}"));

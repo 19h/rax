@@ -76,6 +76,41 @@ impl X86_64Lifter {
         result
     }
 
+    /// Preserve the dynamic APX requirement at the common VEX/EVEX dispatch
+    /// boundary. Current semantic EVEX forms with bytes beyond their opcode
+    /// have a ModR/M byte at this cursor; terminal static-invalid results and
+    /// current no-ModR/M forms retain their original decode frontier.
+    pub(crate) fn retain_vec_memory_apx_requirement(
+        &self,
+        prefix: VecPrefix,
+        bytes: &[u8],
+        pc: u64,
+        result: LiftResult,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.encoding != VecEncodingKind::Evex
+            || (!prefix.mem_base_high && !prefix.mem_index_high)
+            || matches!(
+                result.control_flow,
+                ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode
+                }
+            )
+        {
+            return Ok(result);
+        }
+
+        let cursor = prefix.bytes + 1;
+        if result.bytes_consumed <= cursor {
+            return Ok(result);
+        }
+        let modrm = decode_modrm(&bytes[cursor..], &prefix.modrm_prefix(cursor), pc)?;
+        if cursor + modrm.bytes_consumed > result.bytes_consumed {
+            return Ok(result);
+        }
+
+        Ok(self.retain_evex_memory_apx_requirement(&modrm, pc, result))
+    }
+
     /// Preserve the dynamic APX requirement for every successful REX2 lift.
     /// Dedicated fault-precise system operations retain the requirement in
     /// their first operation; all generic instruction decompositions receive

@@ -830,10 +830,8 @@ impl X86_64Lifter {
         let source_width = Self::packed_extend_source_width(source_bytes);
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
@@ -930,10 +928,8 @@ impl X86_64Lifter {
         let evex = evex_mpsadbw || vdbpsadbw;
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let imm_offset = cursor + modrm.bytes_consumed;
@@ -1066,10 +1062,8 @@ impl X86_64Lifter {
         }
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
@@ -1717,10 +1711,8 @@ impl X86_64Lifter {
         };
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: true,
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;

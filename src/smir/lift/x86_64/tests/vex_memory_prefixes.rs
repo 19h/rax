@@ -103,6 +103,21 @@ const EVEX_DOT_MUL_APX_CASES: &[EvexApxMemoryCase] = &[
     ),
 ];
 
+const EVEX_SCALAR_MOVE_APX_CASES: &[EvexApxMemoryCase] = &[
+    (
+        "VMOVSS",
+        &[0x62, 0xF1, 0x7E, 0x08, 0x10, 0x00],
+        &[0x62, 0xF9, 0x7E, 0x08, 0x10, 0x00],
+        &[0x62, 0xF1, 0x7A, 0x08, 0x10, 0x04, 0x20],
+    ),
+    (
+        "VMOVSD",
+        &[0x62, 0xF1, 0xFF, 0x08, 0x10, 0x00],
+        &[0x62, 0xF9, 0xFF, 0x08, 0x10, 0x00],
+        &[0x62, 0xF1, 0xFB, 0x08, 0x10, 0x04, 0x20],
+    ),
+];
+
 fn with_legacy_prefixes(prefixes: &[u8], instruction: &[u8]) -> Vec<u8> {
     let mut bytes = Vec::with_capacity(prefixes.len() + instruction.len());
     bytes.extend_from_slice(prefixes);
@@ -278,6 +293,67 @@ fn assert_evex_apx_memory_extensions(cases: &[EvexApxMemoryCase]) {
             },
             "{name}: [rax+r20]"
         );
+    }
+}
+
+#[test]
+fn evex_scalar_moves_preserve_and_guard_apx_base_and_index_extensions() {
+    assert_evex_apx_memory_extensions(EVEX_SCALAR_MOVE_APX_CASES);
+}
+
+#[test]
+fn evex_vsib_ignores_x4_for_vector_index_but_still_requires_apx() {
+    // Intel APX Table 3.3 keeps VIDX in EVEX.V4:X3:SIB.index. X4 is
+    // ignored for VSIB addressing, but its non-reserved encoding remains
+    // dynamically gated by APX_F.
+    for (name, opcode) in [("VGATHERDPS", 0x92), ("VSCATTERDPS", 0xA2)] {
+        for (p0, expected_base) in [(0xF2, x86_gpr(0)), (0xFA, x86_gpr(16))] {
+            let bytes = [0x62, p0, 0x79, 0x09, opcode, 0x04, 0x08];
+            let result = lift_single(&bytes)
+                .unwrap_or_else(|error| panic!("{name} {bytes:02X?}: {error:?}"));
+            assert_eq!(result.bytes_consumed, bytes.len(), "{name} {bytes:02X?}");
+            assert!(
+                matches!(
+                    result.ops.first().map(|op| &op.kind),
+                    Some(OpKind::X86RequireApx)
+                ),
+                "{name} {bytes:02X?}: {:#?}",
+                result.ops
+            );
+            assert_eq!(
+                result
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(op.kind, OpKind::X86RequireApx))
+                    .count(),
+                1,
+                "{name} {bytes:02X?}"
+            );
+
+            let sources = result
+                .ops
+                .iter()
+                .flat_map(|op| op.kind.source_vregs())
+                .collect::<Vec<_>>();
+            assert!(
+                sources.contains(&expected_base),
+                "{name} {bytes:02X?}: {sources:?}"
+            );
+            assert!(
+                sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::Xmm(1)))),
+                "{name} {bytes:02X?}: VSIB index {sources:?}"
+            );
+            assert!(
+                !sources.iter().any(|register| {
+                    matches!(
+                        register,
+                        VReg::Arch(ArchReg::X86(register))
+                            if register.gpr_index() == Some(17)
+                    )
+                }),
+                "{name} {bytes:02X?}: X4 incorrectly extended VIDX"
+            );
+        }
     }
 }
 

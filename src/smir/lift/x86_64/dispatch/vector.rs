@@ -41,21 +41,19 @@ impl X86_64Lifter {
         let after_opcode = &bytes[prefix.bytes + 1..];
         let cursor = prefix.bytes + 1;
         let prefix_modrm = X86Prefix {
-            rex: prefix.rex,
             operand_size_override: matches!(prefix.pp, X86SsePrefix::OpSize),
             rep_prefix: match prefix.pp {
                 X86SsePrefix::Rep => Some(0xF3),
                 X86SsePrefix::Repne => Some(0xF2),
                 _ => None,
             },
-            cursor,
-            ..X86Prefix::default()
+            ..prefix.modrm_prefix(cursor)
         };
 
         let mut ops = Vec::new();
         let hint = self.vec_hint(prefix, opcode);
 
-        match prefix.map {
+        let result = match prefix.map {
             X86VecMap::Map0F => match opcode {
                 0x41 | 0x42 | 0x44..=0x47 | 0x4A | 0x4B | 0x90..=0x93 | 0x98 | 0x99
                     if prefix.encoding == VecEncodingKind::Vex =>
@@ -692,7 +690,7 @@ impl X86_64Lifter {
                 // VEX VMOVUPS/VMOVUPD and scalar VMOVSS/VMOVSD. Scalar register
                 // forms merge XMM lanes from vvvv; scalar memory forms reserve
                 // vvvv and zero everything above the loaded lane.
-                0x10 | 0x11 => {
+                0x10 | 0x11 => 'vector_move: {
                     let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
                     let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
                     let scalar_elem = match prefix.pp {
@@ -892,7 +890,8 @@ impl X86_64Lifter {
                                 &mut ops,
                             );
                         }
-                        return Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed));
+                        let consumed = cursor + modrm.bytes_consumed;
+                        break 'vector_move Ok(LiftResult::fallthrough(ops, consumed));
                     }
 
                     let elem = if prefix.pp == X86SsePrefix::OpSize {
@@ -1974,6 +1973,7 @@ impl X86_64Lifter {
                 }
                 _ => self.unsupported_evex_map_opcode(prefix.map, opcode, pc),
             },
-        }
+        };
+        self.retain_vec_memory_apx_requirement(prefix, bytes, pc, result?)
     }
 }

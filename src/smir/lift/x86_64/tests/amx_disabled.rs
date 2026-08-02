@@ -103,6 +103,13 @@ fn disabled_amx_preserves_outer_prefix_and_complete_operand_boundaries() {
     let result = lift_single(&prefixed).expect("prefixed TILELOADD");
     assert_invalid_opcode_trap(&result, prefixed.len());
 
+    // A terminal profile #UD must not be rewritten into a dynamic APX guard,
+    // even when B4/X4 would name R16/R17 for a semantic memory instruction.
+    let extended_evex = [0x62, 0xFA, 0x69, 0x48, 0x4A, 0x04, 0x08];
+    let result = lift_single(&extended_evex).expect("disabled EVEX AMX with B4/X4");
+    assert_invalid_opcode_trap(&result, extended_evex.len());
+    assert!(result.ops.is_empty(), "{:#?}", result.ops);
+
     assert_incomplete(&[0xC4, 0xE2, 0x79, 0x48], 5);
     assert_incomplete(&[0xC4, 0xE2, 0x7B, 0x4B, 0x04], 6);
     assert_incomplete(&[0xC4, 0xE2, 0x7B, 0x4B, 0x44, 0x20], 7);

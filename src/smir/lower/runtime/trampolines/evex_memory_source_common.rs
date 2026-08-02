@@ -623,12 +623,12 @@ pub(super) fn exact_evex_memory_apx_frontier(
     evex_address_requires_apx(address) == has_guard
 }
 
-fn evex_e4_match_address(
+pub(super) fn exact_evex_memory_sequence_address(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
-    exact: X86EvexE4MemoryMatch,
+    address_offset: usize,
 ) -> Option<&Address> {
-    match &block.ops.get(index + exact.address_offset)?.kind {
+    match &block.ops.get(index + address_offset)?.kind {
         OpKind::VLoad { addr, .. }
         | OpKind::Load { addr, .. }
         | OpKind::PredLoad { addr, .. }
@@ -1090,6 +1090,6 @@ where
         ),
         _ => None,
     }?;
-    let address = evex_e4_match_address(block, index, exact)?;
+    let address = exact_evex_memory_sequence_address(block, index, exact.address_offset)?;
     exact_evex_memory_apx_frontier(block, index, guest_pc, address).then_some(exact)
 }
