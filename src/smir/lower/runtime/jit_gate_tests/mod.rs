@@ -83,6 +83,8 @@ mod evex_fp_class_replay;
 #[cfg(test)]
 mod evex_fp_compare_replay;
 #[cfg(test)]
+mod evex_fp_interleave_memory_source;
+#[cfg(test)]
 mod evex_fp_sqrt_replay;
 mod evex_gfni_affine_memory_source;
 #[cfg(test)]

@@ -1190,7 +1190,7 @@ impl X86_64Lifter {
         } else {
             ctx.alloc_vreg()
         };
-        self.append_integer_interleave(
+        self.append_vector_interleave(
             raw,
             self.vec_reg(
                 prefix.vvvv + if prefix.v_high { 16 } else { 0 },

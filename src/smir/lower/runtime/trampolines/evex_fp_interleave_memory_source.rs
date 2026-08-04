@@ -1,0 +1,198 @@
+//! Fail-closed helper-backed EVEX VUNPCKL/HPS/PD memory admission.
+
+use std::collections::HashMap;
+
+use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix, X86VecAlign, X86VecMap};
+use crate::smir::ir::types::{
+    ArchReg, BlockId, GuestAddr, SignExtend, VReg, VecElementType, X86Reg,
+};
+use crate::smir::ir::{
+    X86EvexFpInterleaveMemoryEncoding, X86EvexFpInterleaveMemoryReplay, X86InstructionBytes,
+};
+
+use super::evex_memory_source_common::{
+    exact_evex_memory_apx_frontier, exact_evex_memory_sequence_address,
+    exact_evex_memory_sequence_frontier, exact_evex_vector_mask_result, no_following_same_pc,
+    single_definition_single_use, vector_index,
+};
+use super::x86_jit_mem_address_shape_valid;
+
+/// Exact contiguous decomposition consumed by the helper-backed x86-64 EVEX
+/// floating-point interleave memory lowerer.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86JitEvexFpInterleaveMemorySequence {
+    pub(crate) consumed: usize,
+    pub(crate) address_offset: usize,
+    pub(crate) encoding: X86EvexFpInterleaveMemoryEncoding,
+}
+
+fn exact_memory_source(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    encoding: X86EvexFpInterleaveMemoryEncoding,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<(VReg, usize)> {
+    let guest_pc = block.ops.get(index)?.guest_pc;
+    match encoding.replay {
+        X86EvexFpInterleaveMemoryReplay::Vector { .. } => {
+            let load = block.ops.get(index)?;
+            let loaded = match &load.kind {
+                OpKind::VLoad { dst, addr, width }
+                    if load.x86_hint == Some(X86OpHint::VecAlign(X86VecAlign::Unaligned))
+                        && *width == encoding.width
+                        && x86_jit_mem_address_shape_valid(addr) =>
+                {
+                    *dst
+                }
+                _ => return None,
+            };
+            single_definition_single_use(loaded, virtual_definitions, virtual_uses)
+                .then_some((loaded, 1))
+        }
+        X86EvexFpInterleaveMemoryReplay::Broadcast { memory_width, .. } => {
+            let load = block.ops.get(index)?;
+            let scalar = match &load.kind {
+                OpKind::Load {
+                    dst,
+                    addr,
+                    width,
+                    sign: SignExtend::Zero,
+                } if load.x86_hint.is_none()
+                    && *width == memory_width
+                    && x86_jit_mem_address_shape_valid(addr) =>
+                {
+                    *dst
+                }
+                _ => return None,
+            };
+            if !single_definition_single_use(scalar, virtual_definitions, virtual_uses) {
+                return None;
+            }
+
+            let broadcast = block.ops.get(index + 1)?;
+            let loaded = match broadcast.kind {
+                OpKind::VBroadcast {
+                    dst,
+                    scalar: actual_scalar,
+                    elem,
+                    lanes,
+                } if broadcast.x86_hint.is_none()
+                    && actual_scalar == scalar
+                    && elem == encoding.elem
+                    && u32::from(lanes) == encoding.width.lanes(encoding.elem) =>
+                {
+                    dst
+                }
+                _ => return None,
+            };
+            if broadcast.guest_pc != guest_pc
+                || !single_definition_single_use(loaded, virtual_definitions, virtual_uses)
+            {
+                return None;
+            }
+            Some((loaded, 2))
+        }
+    }
+}
+
+/// Validate the complete O0/O1/O2 decomposition emitted for one EVEX
+/// VUNPCKLPS/LPD/HPS/HPD memory source.
+///
+/// Exact provenance binds opcode, W/pp, vector and element widths, low/high
+/// half selection, operands, destination mask policy, one unconditional E4NF
+/// tuple read, every merge/zero lane, the APX address guard, and the guest-PC
+/// frontier. Runtime is O(L) and auxiliary space is O(1) for L <= 16 lanes;
+/// callers construct definition/use maps once in O(N) time and O(V) space.
+pub(crate) fn x86_jit_evex_fp_interleave_memory_sequence(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<X86JitEvexFpInterleaveMemorySequence> {
+    if !allow_mem {
+        return None;
+    }
+    let first = block.ops.get(index)?;
+    let guest_pc = first.guest_pc;
+    if !exact_evex_memory_sequence_frontier(block, index, guest_pc) {
+        return None;
+    }
+    let encoding = instruction_bytes
+        .get(&(block.id, guest_pc))?
+        .evex_fp_interleave_memory_encoding()?;
+    let (loaded, mut offset) =
+        exact_memory_source(block, index, encoding, virtual_definitions, virtual_uses)?;
+    let address = exact_evex_memory_sequence_address(block, index, 0)?;
+    if !exact_evex_memory_apx_frontier(block, index, guest_pc, address) {
+        return None;
+    }
+
+    let interleave = block.ops.get(index + offset)?;
+    let raw = match interleave.kind {
+        OpKind::VInterleave {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            block_lanes,
+            high,
+        } if vector_index(&src1, encoding.width) == Some(encoding.source1)
+            && src2 == loaded
+            && elem == encoding.elem
+            && u32::from(lanes) == encoding.width.lanes(encoding.elem)
+            && u32::from(block_lanes) == 16 / encoding.elem.bytes()
+            && high == encoding.high
+            && interleave.x86_hint
+                == Some(X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: if encoding.elem == VecElementType::F32 {
+                        X86SsePrefix::None
+                    } else {
+                        X86SsePrefix::OpSize
+                    },
+                    opcode: encoding.opcode,
+                    width: encoding.width,
+                    w: encoding.elem == VecElementType::F64,
+                }) =>
+        {
+            dst
+        }
+        _ => return None,
+    };
+    if interleave.guest_pc != guest_pc {
+        return None;
+    }
+    offset += 1;
+
+    if let Some(mask) = encoding.writemask {
+        exact_evex_vector_mask_result(
+            block,
+            index,
+            &mut offset,
+            guest_pc,
+            raw,
+            VReg::Arch(ArchReg::X86(X86Reg::K(mask))),
+            encoding.width,
+            encoding.elem,
+            encoding.destination,
+            encoding.zeroing,
+            virtual_definitions,
+            virtual_uses,
+        )?;
+    } else if encoding.zeroing || vector_index(&raw, encoding.width) != Some(encoding.destination) {
+        return None;
+    }
+
+    if !no_following_same_pc(block, index, offset, guest_pc) {
+        return None;
+    }
+    Some(X86JitEvexFpInterleaveMemorySequence {
+        consumed: offset,
+        address_offset: 0,
+        encoding,
+    })
+}

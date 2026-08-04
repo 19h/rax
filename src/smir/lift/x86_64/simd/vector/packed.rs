@@ -773,7 +773,7 @@ impl X86_64Lifter {
         }
     }
 
-    pub(crate) fn append_integer_interleave(
+    pub(crate) fn append_vector_interleave(
         &self,
         dst: VReg,
         src1: VReg,

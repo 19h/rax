@@ -1,11 +1,11 @@
-//! Exact EVEX integer memory-replay sequence dispatch for the clobber gate.
+//! Exact EVEX vector memory-replay sequence dispatch for the clobber gate.
 
 use super::*;
 use crate::smir::ir::types::{BlockId, GuestAddr, VReg};
 use crate::smir::ir::{SmirBlock, X86InstructionBytes};
 use std::collections::HashMap;
 
-/// Return the semantic-op count consumed by one exact EVEX integer
+/// Return the semantic-op count consumed by one exact EVEX vector
 /// memory-source replay sequence.
 ///
 /// Each family performs its own byte, graph, provenance, address, and virtual
@@ -13,7 +13,7 @@ use std::collections::HashMap;
 /// implemented family from being admitted by feature discovery and lowering
 /// while remaining invisible to the clobber gate. The fixed family list makes
 /// this O(1) time and O(1) space per candidate.
-pub(crate) fn x86_jit_evex_integer_memory_replay_sequence_len(
+pub(crate) fn x86_jit_evex_memory_replay_sequence_len(
     block: &SmirBlock,
     index: usize,
     allow_mem: bool,
@@ -22,6 +22,16 @@ pub(crate) fn x86_jit_evex_integer_memory_replay_sequence_len(
     virtual_uses: &HashMap<VReg, usize>,
 ) -> Option<usize> {
     if let Some(sequence) = x86_jit_evex_bw_shuffle_madd_memory_sequence(
+        block,
+        index,
+        allow_mem,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence.consumed);
+    }
+    if let Some(sequence) = x86_jit_evex_fp_interleave_memory_sequence(
         block,
         index,
         allow_mem,

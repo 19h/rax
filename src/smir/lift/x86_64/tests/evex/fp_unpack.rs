@@ -69,13 +69,22 @@ fn lift_legacy_vex_evex_fp_unpack_family() {
     let evex = lift_single(&[0x62, 0xA1, 0xED, 0x83, 0x15, 0xCB]).unwrap();
     assert!(evex.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::VShuffle {
+        OpKind::VInterleave {
             src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(18))),
-            src2: Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(19)))),
+            src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(19))),
             elem: VecElementType::F64,
+            lanes: 2,
+            block_lanes: 2,
+            high: true,
             ..
         }
     )));
+    assert!(
+        !evex
+            .ops
+            .iter()
+            .any(|op| matches!(op.kind, OpKind::VShuffle { .. }))
+    );
 
     let broadcast = lift_single(&[0x62, 0xE1, 0x6C, 0x53, 0x14, 0x48, 0x10]).unwrap();
     assert!(broadcast.ops.iter().any(|op| matches!(
@@ -92,6 +101,16 @@ fn lift_legacy_vex_evex_fp_unpack_family() {
             .iter()
             .any(|op| matches!(op.kind, OpKind::PredLoad { .. }))
     );
+    assert!(broadcast.ops.iter().any(|op| matches!(
+        op.kind,
+        OpKind::VInterleave {
+            elem: VecElementType::F32,
+            lanes: 16,
+            block_lanes: 4,
+            high: false,
+            ..
+        }
+    )));
 
     for bytes in [
         &[0xF3, 0x0F, 0x14, 0xC1][..],

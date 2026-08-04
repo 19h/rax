@@ -529,7 +529,7 @@ impl X86_64Lifter {
         } else {
             self.vec_reg(modrm.rm, prefix.width)
         };
-        self.append_integer_interleave(
+        self.append_vector_interleave(
             self.vec_reg(modrm.reg, prefix.width),
             self.vec_reg(prefix.vvvv, prefix.width),
             src2,

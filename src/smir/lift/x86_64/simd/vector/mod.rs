@@ -8,6 +8,8 @@ mod crypto;
 pub use crypto::*;
 mod fp;
 pub use fp::*;
+mod fp_interleave;
+pub use fp_interleave::*;
 mod fma4;
 pub use fma4::*;
 mod integer_minmax;

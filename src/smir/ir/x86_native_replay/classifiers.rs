@@ -11,6 +11,7 @@ mod evex_fixup_imm_memory;
 mod evex_fma3_memory;
 mod evex_fp16_arithmetic_memory;
 mod evex_fp_arithmetic_memory;
+mod evex_fp_interleave_memory;
 mod evex_integer_arithmetic_memory;
 mod evex_integer_interleave_memory;
 mod evex_integer_minmax_memory;
@@ -126,6 +127,9 @@ pub(crate) use evex_fma3_memory::{
 };
 pub(crate) use evex_fp_arithmetic_memory::{
     X86EvexPackedFpArithmeticMemoryEncoding, X86EvexPackedFpArithmeticMemoryReplay,
+};
+pub(crate) use evex_fp_interleave_memory::{
+    X86EvexFpInterleaveMemoryEncoding, X86EvexFpInterleaveMemoryReplay,
 };
 pub(crate) use evex_fp16_arithmetic_memory::{
     X86EvexPackedFp16ArithmeticMemoryEncoding, X86EvexPackedFp16ArithmeticMemoryReplay,

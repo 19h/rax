@@ -1,21 +1,23 @@
-//! Exact helper-backed EVEX VPUNPCK* Full Mem coverage.
+//! Exact helper-backed EVEX VUNPCKL/HPS/PD memory coverage.
 
 use std::collections::HashMap;
 
 use super::*;
 use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86SsePrefix, X86VecMap};
 use crate::smir::ir::types::{
-    Address, ArchReg, BlockId, DispSize, FunctionId, OpId, OpWidth, SourceArch, SrcOperand, VReg,
-    VecElementType, VecWidth, VirtualId, X86Reg,
+    Address, ArchReg, BlockId, DispSize, FunctionId, MemWidth, OpId, OpWidth, SignExtend,
+    SourceArch, SrcOperand, VReg, VecElementType, VecWidth, VirtualId, X86Reg,
 };
-use crate::smir::ir::{SmirBlock, SmirFunction, Terminator, X86InstructionBytes};
+use crate::smir::ir::{
+    SmirBlock, SmirFunction, Terminator, X86EvexFpInterleaveMemoryReplay, X86InstructionBytes,
+};
 use crate::smir::lift::x86_64::X86_64Lifter;
 use crate::smir::lift::{ControlFlow, LiftContext, SmirLifter};
 use crate::smir::lower::SmirLowerer;
 use crate::smir::lower::runtime::{
-    X86JitEvexIntegerInterleaveMemorySequence, is_native_clobber_safe_excluding,
+    X86JitEvexFpInterleaveMemorySequence, is_native_clobber_safe_excluding,
     is_x86_aarch64_native_clobber_safe_excluding, uses_x86_native_vectors_excluding,
-    x86_jit_evex_integer_interleave_memory_sequence, x86_native_replay_feature_requirements,
+    x86_jit_evex_fp_interleave_memory_sequence, x86_native_replay_feature_requirements,
     x86_native_vector_features_supported_excluding,
     x86_native_vector_uses_avx_ymm16_only_excluding,
 };
@@ -26,7 +28,7 @@ use crate::smir::optimize::OptLevel;
 mod native;
 mod semantics;
 
-const PC: u64 = 0x7E60;
+const PC: u64 = 0x7F20;
 const LEVELS: [OptLevel; 3] = [OptLevel::O0, OptLevel::O1, OptLevel::O2];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -38,15 +40,11 @@ struct InterleaveKind {
 }
 
 impl InterleaveKind {
-    const ALL: [Self; 8] = [
-        Self::new("VPUNPCKLBW", 0x60, VecElementType::I8, false),
-        Self::new("VPUNPCKLWD", 0x61, VecElementType::I16, false),
-        Self::new("VPUNPCKLDQ", 0x62, VecElementType::I32, false),
-        Self::new("VPUNPCKLQDQ", 0x6C, VecElementType::I64, false),
-        Self::new("VPUNPCKHBW", 0x68, VecElementType::I8, true),
-        Self::new("VPUNPCKHWD", 0x69, VecElementType::I16, true),
-        Self::new("VPUNPCKHDQ", 0x6A, VecElementType::I32, true),
-        Self::new("VPUNPCKHQDQ", 0x6D, VecElementType::I64, true),
+    const ALL: [Self; 4] = [
+        Self::new("VUNPCKLPS", 0x14, VecElementType::F32, false),
+        Self::new("VUNPCKLPD", 0x14, VecElementType::F64, false),
+        Self::new("VUNPCKHPS", 0x15, VecElementType::F32, true),
+        Self::new("VUNPCKHPD", 0x15, VecElementType::F64, true),
     ];
 
     const fn new(name: &'static str, opcode: u8, elem: VecElementType, high: bool) -> Self {
@@ -58,17 +56,38 @@ impl InterleaveKind {
         }
     }
 
-    const fn is_wig(self) -> bool {
-        matches!(self.elem, VecElementType::I8 | VecElementType::I16)
-    }
-
-    const fn w(self, wig_w: bool) -> bool {
+    const fn pp(self) -> u8 {
         match self.elem {
-            VecElementType::I8 | VecElementType::I16 => wig_w,
-            VecElementType::I32 => false,
-            VecElementType::I64 => true,
+            VecElementType::F32 => 0,
+            VecElementType::F64 => 1,
             _ => unreachable!(),
         }
+    }
+
+    const fn w(self) -> bool {
+        matches!(self.elem, VecElementType::F64)
+    }
+
+    const fn memory_width(self) -> MemWidth {
+        match self.elem {
+            VecElementType::F32 => MemWidth::B4,
+            VecElementType::F64 => MemWidth::B8,
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum TupleKind {
+    Full,
+    Broadcast,
+}
+
+impl TupleKind {
+    const ALL: [Self; 2] = [Self::Full, Self::Broadcast];
+
+    const fn is_broadcast(self) -> bool {
+        matches!(self, Self::Broadcast)
     }
 }
 
@@ -92,17 +111,16 @@ impl MaskControl {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-struct IntegerInterleaveMemoryCase {
+struct FpInterleaveMemoryCase {
     kind: InterleaveKind,
     width: VecWidth,
     destination: u8,
     source1: u8,
     control: MaskControl,
-    /// Raw EVEX.W for byte/word WIG encodings.
-    wig_w: bool,
+    tuple: TupleKind,
 }
 
-impl IntegerInterleaveMemoryCase {
+impl FpInterleaveMemoryCase {
     const fn ll(self) -> u8 {
         match self.width {
             VecWidth::V128 => 0,
@@ -120,10 +138,6 @@ impl IntegerInterleaveMemoryCase {
         self.control.fields().1
     }
 
-    const fn w(self) -> bool {
-        self.kind.w(self.wig_w)
-    }
-
     fn bytes(self) -> Vec<u8> {
         memory_encoding(self, false)
     }
@@ -134,20 +148,34 @@ impl IntegerInterleaveMemoryCase {
             .expect("two operands leave a low vector scratch")
     }
 
+    const fn memory_size(self) -> u32 {
+        if self.tuple.is_broadcast() {
+            self.kind.memory_width().bytes()
+        } else {
+            self.width.bytes()
+        }
+    }
+
     fn expected_replay(self) -> Vec<u8> {
-        register_encoding(self, self.scratch())
+        if self.tuple.is_broadcast() {
+            stack_encoding(self)
+        } else {
+            register_encoding(self, self.scratch())
+        }
     }
 }
 
-fn memory_encoding(case: IntegerInterleaveMemoryCase, sib: bool) -> Vec<u8> {
+fn memory_encoding(case: FpInterleaveMemoryCase, sib: bool) -> Vec<u8> {
     assert!(case.destination < 32 && case.source1 < 32);
     assert!(case.mask() < 8 && (!case.zeroing() || case.mask() != 0));
     let p0 = 0x61
         | if case.destination & 8 == 0 { 0x80 } else { 0 }
         | if case.destination & 16 == 0 { 0x10 } else { 0 };
-    let p1 = (u8::from(case.w()) << 7) | (((!case.source1) & 0x0F) << 3) | 0x05;
+    let p1 =
+        (u8::from(case.kind.w()) << 7) | (((!case.source1) & 0x0F) << 3) | 0x04 | case.kind.pp();
     let p2 = (u8::from(case.zeroing()) << 7)
         | (case.ll() << 5)
+        | (u8::from(case.tuple.is_broadcast()) << 4)
         | if case.source1 & 16 == 0 { 0x08 } else { 0 }
         | case.mask();
     let mut bytes = vec![
@@ -165,13 +193,14 @@ fn memory_encoding(case: IntegerInterleaveMemoryCase, sib: bool) -> Vec<u8> {
     bytes
 }
 
-fn register_encoding(case: IntegerInterleaveMemoryCase, scratch: u8) -> Vec<u8> {
+fn register_encoding(case: FpInterleaveMemoryCase, scratch: u8) -> Vec<u8> {
     assert!(scratch < 16);
     let p0 = 0x41
         | if case.destination & 8 == 0 { 0x80 } else { 0 }
         | if case.destination & 16 == 0 { 0x10 } else { 0 }
         | if scratch & 8 == 0 { 0x20 } else { 0 };
-    let p1 = (u8::from(case.w()) << 7) | (((!case.source1) & 0x0F) << 3) | 0x05;
+    let p1 =
+        (u8::from(case.kind.w()) << 7) | (((!case.source1) & 0x0F) << 3) | 0x04 | case.kind.pp();
     let p2 = (u8::from(case.zeroing()) << 7)
         | (case.ll() << 5)
         | if case.source1 & 16 == 0 { 0x08 } else { 0 }
@@ -184,6 +213,15 @@ fn register_encoding(case: IntegerInterleaveMemoryCase, scratch: u8) -> Vec<u8> 
         case.kind.opcode,
         0xC0 | ((case.destination & 7) << 3) | (scratch & 7),
     ]
+}
+
+fn stack_encoding(case: FpInterleaveMemoryCase) -> Vec<u8> {
+    let mut bytes = memory_encoding(case, false);
+    bytes[1] = (bytes[1] & 0x97) | 0x60;
+    bytes[2] |= 0x04;
+    bytes[5] = (bytes[5] & 0x38) | 0x04;
+    bytes.push(0x24);
+    bytes
 }
 
 fn lift_bytes(bytes: &[u8]) -> SmirFunction {
@@ -202,12 +240,12 @@ fn lift_bytes(bytes: &[u8]) -> SmirFunction {
     function.add_block(block);
     function.x86_instruction_bytes.insert(
         (BlockId(0), PC),
-        X86InstructionBytes::new(bytes).expect("EVEX integer-interleave provenance"),
+        X86InstructionBytes::new(bytes).expect("EVEX floating interleave provenance"),
     );
     function
 }
 
-fn lift_case(case: IntegerInterleaveMemoryCase) -> SmirFunction {
+fn lift_case(case: FpInterleaveMemoryCase) -> SmirFunction {
     lift_bytes(&case.bytes())
 }
 
@@ -237,13 +275,13 @@ fn virtual_counts(function: &SmirFunction) -> (HashMap<VReg, usize>, HashMap<VRe
 fn sequence(
     function: &SmirFunction,
     allow_mem: bool,
-) -> Option<X86JitEvexIntegerInterleaveMemorySequence> {
+) -> Option<X86JitEvexFpInterleaveMemorySequence> {
     let (definitions, uses) = virtual_counts(function);
     let index = usize::from(matches!(
         function.blocks[0].ops.first().map(|op| &op.kind),
         Some(OpKind::X86RequireApx)
     ));
-    x86_jit_evex_integer_interleave_memory_sequence(
+    x86_jit_evex_fp_interleave_memory_sequence(
         &function.blocks[0],
         index,
         allow_mem,
@@ -253,7 +291,7 @@ fn sequence(
     )
 }
 
-fn lower(function: &SmirFunction, case: IntegerInterleaveMemoryCase) -> (Vec<u8>, usize) {
+fn lower(function: &SmirFunction, case: FpInterleaveMemoryCase) -> (Vec<u8>, usize) {
     let excluded = HashMap::new();
     assert!(is_native_clobber_safe_excluding(function, &excluded, true));
     assert!(!is_native_clobber_safe_excluding(
@@ -300,33 +338,30 @@ fn lower(function: &SmirFunction, case: IntegerInterleaveMemoryCase) -> (Vec<u8>
     lowerer.set_jit_fault_deopt_guards(true);
     let result = lowerer
         .lower_function(function)
-        .unwrap_or_else(|error| panic!("{case:?}: EVEX integer-interleave lowering: {error:?}"));
+        .unwrap_or_else(|error| panic!("{case:?}: EVEX floating interleave lowering: {error:?}"));
     assert!(result.relocations.is_empty(), "{case:?}");
     (
         lowerer
             .finalize()
-            .expect("finalize helper-backed EVEX integer interleave"),
+            .expect("finalize helper-backed EVEX floating interleave"),
         result.entry_offset,
     )
 }
 
-fn all_cases() -> Vec<IntegerInterleaveMemoryCase> {
+fn all_cases() -> Vec<FpInterleaveMemoryCase> {
     let mut cases = Vec::new();
     for kind in InterleaveKind::ALL {
-        for wig_w in [false, true] {
-            if !kind.is_wig() && wig_w {
-                continue;
-            }
-            for width in [VecWidth::V128, VecWidth::V256, VecWidth::V512] {
-                for (destination, source1) in [(0, 0), (9, 10), (17, 17)] {
-                    for control in MaskControl::ALL {
-                        cases.push(IntegerInterleaveMemoryCase {
+        for width in [VecWidth::V128, VecWidth::V256, VecWidth::V512] {
+            for (destination, source1) in [(0, 0), (9, 10), (17, 17)] {
+                for control in MaskControl::ALL {
+                    for tuple in TupleKind::ALL {
+                        cases.push(FpInterleaveMemoryCase {
                             kind,
                             width,
                             destination,
                             source1,
                             control,
-                            wig_w,
+                            tuple,
                         });
                     }
                 }
@@ -340,74 +375,76 @@ fn all_cases() -> Vec<IntegerInterleaveMemoryCase> {
 fn interleave_rewrites_match_eight_independent_llvm_23_anchors() {
     let anchors: &[(&[u8], &[u8])] = &[
         (
-            &[0x62, 0xF1, 0x6D, 0x8A, 0x60, 0x0A],
-            &[0x62, 0xF1, 0x6D, 0x8A, 0x60, 0xC8],
+            &[0x62, 0xF1, 0x6C, 0x8A, 0x14, 0x0A],
+            &[0x62, 0xF1, 0x6C, 0x8A, 0x14, 0xC8],
         ),
         (
-            &[0x62, 0x71, 0x2D, 0x2B, 0x61, 0x0A],
-            &[0x62, 0x71, 0x2D, 0x2B, 0x61, 0xC8],
+            &[0x62, 0x71, 0x2C, 0x3B, 0x14, 0x0A],
+            &[0x62, 0x71, 0x2C, 0x3B, 0x14, 0x0C, 0x24],
         ),
         (
-            &[0x62, 0xE1, 0x6D, 0xC1, 0x62, 0x0A],
-            &[0x62, 0xE1, 0x6D, 0xC1, 0x62, 0xC8],
+            &[0x62, 0xE1, 0x6C, 0xC1, 0x15, 0x0A],
+            &[0x62, 0xE1, 0x6C, 0xC1, 0x15, 0xC8],
         ),
         (
-            &[0x62, 0x61, 0xAD, 0x47, 0x6C, 0x0A],
-            &[0x62, 0x61, 0xAD, 0x47, 0x6C, 0xC8],
+            &[0x62, 0x61, 0x2C, 0x15, 0x15, 0x0A],
+            &[0x62, 0x61, 0x2C, 0x15, 0x15, 0x0C, 0x24],
         ),
         (
-            &[0x62, 0xF1, 0x6D, 0x8A, 0x68, 0x0A],
-            &[0x62, 0xF1, 0x6D, 0x8A, 0x68, 0xC8],
+            &[0x62, 0xF1, 0xED, 0xAA, 0x14, 0x0A],
+            &[0x62, 0xF1, 0xED, 0xAA, 0x14, 0xC8],
         ),
         (
-            &[0x62, 0x71, 0x2D, 0x29, 0x69, 0x0A],
-            &[0x62, 0x71, 0x2D, 0x29, 0x69, 0xC8],
+            &[0x62, 0x71, 0xAD, 0x5B, 0x14, 0x0A],
+            &[0x62, 0x71, 0xAD, 0x5B, 0x14, 0x0C, 0x24],
         ),
         (
-            &[0x62, 0xE1, 0x6D, 0x44, 0x6A, 0x0A],
-            &[0x62, 0xE1, 0x6D, 0x44, 0x6A, 0xC8],
+            &[0x62, 0xE1, 0xED, 0x81, 0x15, 0x0A],
+            &[0x62, 0xE1, 0xED, 0x81, 0x15, 0xC8],
         ),
         (
-            &[0x62, 0x61, 0xAD, 0xC5, 0x6D, 0x0A],
-            &[0x62, 0x61, 0xAD, 0xC5, 0x6D, 0xC8],
+            &[0x62, 0x61, 0xAD, 0x55, 0x15, 0x0A],
+            &[0x62, 0x61, 0xAD, 0x55, 0x15, 0x0C, 0x24],
         ),
     ];
-    for (memory, register) in anchors {
+    for (memory, replay) in anchors {
         let encoding = X86InstructionBytes::new(memory)
             .unwrap()
-            .evex_integer_interleave_memory_encoding()
+            .evex_fp_interleave_memory_encoding()
             .unwrap_or_else(|| panic!("{memory:02X?}"));
-        assert_eq!(
-            encoding.register_instruction.as_slice(),
-            *register,
-            "{memory:02X?}"
-        );
+        let actual = match encoding.replay {
+            X86EvexFpInterleaveMemoryReplay::Vector {
+                register_instruction,
+                ..
+            } => register_instruction,
+            X86EvexFpInterleaveMemoryReplay::Broadcast {
+                stack_instruction, ..
+            } => stack_instruction,
+        };
+        assert_eq!(actual.as_slice(), *replay, "{memory:02X?}");
     }
 }
 
 #[test]
-fn interleave_classifier_exhausts_2_211_840_operand_control_wig_and_apx_cells() {
+fn interleave_classifier_exhausts_1_474_560_operand_control_tuple_and_apx_cells() {
     let mut accepted = 0usize;
     for kind in InterleaveKind::ALL {
-        for wig_w in [false, true] {
-            if !kind.is_wig() && wig_w {
-                continue;
-            }
-            for width in [VecWidth::V128, VecWidth::V256, VecWidth::V512] {
-                for destination in 0..32u8 {
-                    for source1 in 0..32u8 {
-                        for mask in 0..8u8 {
-                            for zeroing in [false, true] {
-                                if zeroing && mask == 0 {
-                                    continue;
-                                }
-                                let case = IntegerInterleaveMemoryCase {
+        for width in [VecWidth::V128, VecWidth::V256, VecWidth::V512] {
+            for destination in 0..32u8 {
+                for source1 in 0..32u8 {
+                    for mask in 0..8u8 {
+                        for zeroing in [false, true] {
+                            if zeroing && mask == 0 {
+                                continue;
+                            }
+                            for tuple in TupleKind::ALL {
+                                let case = FpInterleaveMemoryCase {
                                     kind,
                                     width,
                                     destination,
                                     source1,
                                     control: MaskControl::None,
-                                    wig_w,
+                                    tuple,
                                 };
                                 let mut canonical = memory_encoding(case, true);
                                 canonical[3] =
@@ -421,13 +458,12 @@ fn interleave_classifier_exhausts_2_211_840_operand_control_wig_and_apx_cells() 
                                         }
                                         let encoding = X86InstructionBytes::new(&bytes)
                                             .unwrap()
-                                            .evex_integer_interleave_memory_encoding()
+                                            .evex_fp_interleave_memory_encoding()
                                             .unwrap_or_else(|| panic!("{bytes:02X?}"));
                                         assert_eq!(encoding.width, width, "{bytes:02X?}");
                                         assert_eq!(encoding.elem, kind.elem, "{bytes:02X?}");
                                         assert_eq!(encoding.high, kind.high, "{bytes:02X?}");
                                         assert_eq!(encoding.opcode, kind.opcode, "{bytes:02X?}");
-                                        assert_eq!(encoding.w, kind.w(wig_w), "{bytes:02X?}");
                                         assert_eq!(
                                             encoding.destination, destination,
                                             "{bytes:02X?}"
@@ -439,20 +475,47 @@ fn interleave_classifier_exhausts_2_211_840_operand_control_wig_and_apx_cells() 
                                             "{bytes:02X?}"
                                         );
                                         assert_eq!(encoding.zeroing, zeroing, "{bytes:02X?}");
-                                        assert_eq!(encoding.memory_size, width.bytes());
+                                        assert_eq!(encoding.memory_size, case.memory_size());
                                         assert_eq!(
                                             encoding.needs_avx512vl,
                                             width != VecWidth::V512
                                         );
-                                        assert_ne!(encoding.scratch, destination);
-                                        assert_ne!(encoding.scratch, source1);
-                                        assert_eq!(
-                                            encoding
-                                                .register_instruction
-                                                .evex_register_integer_interleave_needs_vl(),
-                                            Some(width != VecWidth::V512),
-                                            "{bytes:02X?}"
-                                        );
+
+                                        let mut expected = case.expected_replay();
+                                        expected[3] =
+                                            (expected[3] & !0x87) | mask | (u8::from(zeroing) << 7);
+                                        match encoding.replay {
+                                            X86EvexFpInterleaveMemoryReplay::Vector {
+                                                scratch,
+                                                register_instruction,
+                                            } => {
+                                                assert_eq!(tuple, TupleKind::Full);
+                                                assert_ne!(scratch, destination);
+                                                assert_ne!(scratch, source1);
+                                                assert_eq!(
+                                                    register_instruction.as_slice(),
+                                                    expected,
+                                                    "{bytes:02X?}"
+                                                );
+                                                assert_eq!(
+                                                    register_instruction
+                                                        .evex_register_fp_shuffle_needs_vl(),
+                                                    Some(width != VecWidth::V512)
+                                                );
+                                            }
+                                            X86EvexFpInterleaveMemoryReplay::Broadcast {
+                                                memory_width,
+                                                stack_instruction,
+                                            } => {
+                                                assert_eq!(tuple, TupleKind::Broadcast);
+                                                assert_eq!(memory_width, kind.memory_width());
+                                                assert_eq!(
+                                                    stack_instruction.as_slice(),
+                                                    expected,
+                                                    "{bytes:02X?}"
+                                                );
+                                            }
+                                        }
                                         accepted += 1;
                                     }
                                 }
@@ -463,20 +526,20 @@ fn interleave_classifier_exhausts_2_211_840_operand_control_wig_and_apx_cells() 
             }
         }
     }
-    assert_eq!(accepted, 2_211_840);
+    assert_eq!(accepted, 1_474_560);
 }
 
 #[test]
 fn interleave_classifier_rejects_reserved_non_owned_and_trailing_shapes() {
-    let case = IntegerInterleaveMemoryCase {
-        kind: InterleaveKind::ALL[2],
+    let ps = FpInterleaveMemoryCase {
+        kind: InterleaveKind::ALL[0],
         width: VecWidth::V128,
         destination: 1,
         source1: 2,
         control: MaskControl::Merge,
-        wig_w: false,
+        tuple: TupleKind::Full,
     };
-    let valid = case.bytes();
+    let valid = ps.bytes();
     let mut malformed = vec![valid[..valid.len() - 1].to_vec()];
     let mut trailing = valid.clone();
     trailing.push(0);
@@ -486,8 +549,8 @@ fn interleave_classifier_rejects_reserved_non_owned_and_trailing_shapes() {
     malformed.push(register);
     for (index, mask) in [
         (1, 0x02), // map
-        (2, 0x01), // mandatory prefix
-        (3, 0x10), // broadcast
+        (2, 0x01), // PS with 66
+        (2, 0x80), // PS with W1
         (4, 0x04), // non-owned opcode
     ] {
         let mut bytes = valid.clone();
@@ -500,16 +563,17 @@ fn interleave_classifier_rejects_reserved_non_owned_and_trailing_shapes() {
     let mut zero_k0 = valid.clone();
     zero_k0[3] = (zero_k0[3] & !7) | 0x80;
     malformed.push(zero_k0);
-    let mut dword_w1 = valid.clone();
-    dword_w1[2] |= 0x80;
-    malformed.push(dword_w1);
-    let mut qword_w0 = IntegerInterleaveMemoryCase {
-        kind: InterleaveKind::ALL[3],
-        ..case
+    let pd = FpInterleaveMemoryCase {
+        kind: InterleaveKind::ALL[1],
+        ..ps
     }
     .bytes();
-    qword_w0[2] &= !0x80;
-    malformed.push(qword_w0);
+    let mut pd_w0 = pd.clone();
+    pd_w0[2] &= !0x80;
+    malformed.push(pd_w0);
+    let mut pd_no_66 = pd;
+    pd_no_66[2] &= !1;
+    malformed.push(pd_no_66);
     let mut forbidden_legacy = valid.clone();
     forbidden_legacy.insert(0, 0x66);
     malformed.push(forbidden_legacy);
@@ -518,46 +582,29 @@ fn interleave_classifier_rejects_reserved_non_owned_and_trailing_shapes() {
         assert!(
             X86InstructionBytes::new(&bytes)
                 .unwrap()
-                .evex_integer_interleave_memory_encoding()
+                .evex_fp_interleave_memory_encoding()
                 .is_none(),
             "{bytes:02X?}"
         );
     }
 
-    let mut prefixed = vec![0x64, 0x67];
-    prefixed.extend_from_slice(&valid);
-    assert!(
-        X86InstructionBytes::new(&prefixed)
-            .unwrap()
-            .evex_integer_interleave_memory_encoding()
-            .is_some(),
-        "FS/address-size prefixes belong to helper address evaluation"
-    );
-
-    for kind in [InterleaveKind::ALL[0], InterleaveKind::ALL[1]] {
-        for wig_w in [false, true] {
-            let bytes = IntegerInterleaveMemoryCase {
-                kind,
-                wig_w,
-                ..case
-            }
-            .bytes();
-            assert!(
-                X86InstructionBytes::new(&bytes)
-                    .unwrap()
-                    .evex_integer_interleave_memory_encoding()
-                    .is_some(),
-                "{} rejected W={wig_w}: {bytes:02X?}",
-                kind.name
-            );
-        }
+    for tuple in TupleKind::ALL {
+        let mut prefixed = vec![0x64, 0x67];
+        prefixed.extend_from_slice(&FpInterleaveMemoryCase { tuple, ..ps }.bytes());
+        assert!(
+            X86InstructionBytes::new(&prefixed)
+                .unwrap()
+                .evex_fp_interleave_memory_encoding()
+                .is_some(),
+            "FS/address-size prefixes belong to helper address evaluation"
+        );
     }
 }
 
 #[test]
-fn all_324_interleave_memory_cells_optimize_admit_and_lower_exactly() {
+fn all_216_interleave_memory_cells_optimize_admit_and_lower_exactly() {
     let cases = all_cases();
-    assert_eq!(cases.len(), 324);
+    assert_eq!(cases.len(), 216);
     let mut lowerings = 0usize;
     for case in cases {
         for level in LEVELS {
@@ -568,7 +615,6 @@ fn all_324_interleave_memory_cells_optimize_admit_and_lower_exactly() {
             assert_eq!(exact.encoding.elem, case.kind.elem);
             assert_eq!(exact.encoding.high, case.kind.high);
             assert_eq!(exact.encoding.opcode, case.kind.opcode);
-            assert_eq!(exact.encoding.w, case.w());
             assert_eq!(exact.encoding.destination, case.destination);
             assert_eq!(exact.encoding.source1, case.source1);
             assert_eq!(
@@ -576,8 +622,24 @@ fn all_324_interleave_memory_cells_optimize_admit_and_lower_exactly() {
                 (case.mask() != 0).then_some(case.mask())
             );
             assert_eq!(exact.encoding.zeroing, case.zeroing());
-            assert_eq!(exact.memory_size, case.width.bytes());
+            assert_eq!(exact.encoding.memory_size, case.memory_size());
             assert_eq!(exact.consumed, function.blocks[0].ops.len());
+            assert_eq!(
+                function.blocks[0]
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(op.kind, OpKind::VInterleave { .. }))
+                    .count(),
+                1,
+                "{level:?} {case:?}"
+            );
+            assert!(
+                !function.blocks[0]
+                    .ops
+                    .iter()
+                    .any(|op| matches!(op.kind, OpKind::VShuffle { .. })),
+                "{level:?} {case:?}: legacy selector graph survived canonical lift"
+            );
 
             let (code, _) = lower(&function, case);
             let expected = case.expected_replay();
@@ -590,14 +652,28 @@ fn all_324_interleave_memory_cells_optimize_admit_and_lower_exactly() {
             lowerings += 1;
         }
     }
-    assert_eq!(lowerings, 324 * LEVELS.len());
+    assert_eq!(lowerings, 216 * LEVELS.len());
 }
 
 #[test]
-fn type_e4nf_interleave_graphs_always_preserve_one_complete_access() {
+fn type_e4nf_interleave_graphs_always_preserve_one_exact_tuple_access() {
     for case in all_cases() {
         for level in LEVELS {
             let function = optimize(lift_case(case), level);
+            let scalar_loads = function.blocks[0]
+                .ops
+                .iter()
+                .filter(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::Load {
+                            width,
+                            sign: SignExtend::Zero,
+                            ..
+                        } if width == case.kind.memory_width()
+                    )
+                })
+                .count();
             let vector_loads = function.blocks[0]
                 .ops
                 .iter()
@@ -608,7 +684,16 @@ fn type_e4nf_interleave_graphs_always_preserve_one_complete_access() {
                 .iter()
                 .filter(|op| matches!(op.kind, OpKind::PredLoad { .. }))
                 .count();
-            assert_eq!((vector_loads, pred_loads), (1, 0), "{level:?} {case:?}");
+            let expected = if case.tuple.is_broadcast() {
+                (1, 0, 0)
+            } else {
+                (0, 1, 0)
+            };
+            assert_eq!(
+                (scalar_loads, vector_loads, pred_loads),
+                expected,
+                "{level:?} {case:?}"
+            );
         }
     }
 }
@@ -633,14 +718,14 @@ fn assert_rejected(name: &str, function: &SmirFunction) {
 }
 
 #[test]
-fn interleave_sequence_fails_closed_for_provenance_and_graph_mutations() {
-    let case = IntegerInterleaveMemoryCase {
-        kind: InterleaveKind::ALL[5],
+fn interleave_sequence_fails_closed_for_provenance_tuple_graph_and_ssa_mutations() {
+    let case = FpInterleaveMemoryCase {
+        kind: InterleaveKind::ALL[3],
         width: VecWidth::V256,
         destination: 9,
         source1: 10,
         control: MaskControl::Zero,
-        wig_w: true,
+        tuple: TupleKind::Broadcast,
     };
     let function = optimize(lift_case(case), OptLevel::O2);
     assert!(sequence(&function, false).is_none());
@@ -650,18 +735,29 @@ fn interleave_sequence_fails_closed_for_provenance_and_graph_mutations() {
     missing_provenance.x86_instruction_bytes.clear();
     mutations.push(("missing provenance", missing_provenance));
 
-    let mut wrong_provenance = function.clone();
+    let mut spurious_apx_guard = function.clone();
+    spurious_apx_guard.blocks[0]
+        .ops
+        .insert(0, SmirOp::new(OpId(0xFFFD), PC, OpKind::X86RequireApx));
+    mutations.push(("spurious APX guard", spurious_apx_guard));
+
+    let mut wrong_tuple = function.clone();
     let mut bytes = case.bytes();
-    bytes[4] = 0x61;
-    wrong_provenance
+    bytes[3] &= !0x10;
+    wrong_tuple
         .x86_instruction_bytes
         .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
-    mutations.push(("wrong opcode provenance", wrong_provenance));
+    mutations.push(("full-tuple provenance over broadcast graph", wrong_tuple));
 
     let load_index = function.blocks[0]
         .ops
         .iter()
-        .position(|op| matches!(op.kind, OpKind::VLoad { .. }))
+        .position(|op| matches!(op.kind, OpKind::Load { .. }))
+        .unwrap();
+    let broadcast_index = function.blocks[0]
+        .ops
+        .iter()
+        .position(|op| matches!(op.kind, OpKind::VBroadcast { .. }))
         .unwrap();
     let interleave_index = function.blocks[0]
         .ops
@@ -670,16 +766,25 @@ fn interleave_sequence_fails_closed_for_provenance_and_graph_mutations() {
         .unwrap();
 
     let mut wrong_address = function.clone();
-    if let OpKind::VLoad { addr, .. } = &mut wrong_address.blocks[0].ops[load_index].kind {
+    if let OpKind::Load { addr, .. } = &mut wrong_address.blocks[0].ops[load_index].kind {
         *addr = Address::Direct(VReg::Virtual(VirtualId(0x7FFF)));
     }
     mutations.push(("virtual address", wrong_address));
 
     let mut wrong_width = function.clone();
-    if let OpKind::VLoad { width, .. } = &mut wrong_width.blocks[0].ops[load_index].kind {
-        *width = VecWidth::V128;
+    if let OpKind::Load { width, .. } = &mut wrong_width.blocks[0].ops[load_index].kind {
+        *width = MemWidth::B4;
     }
-    mutations.push(("load width", wrong_width));
+    mutations.push(("broadcast load width", wrong_width));
+
+    let mut wrong_broadcast = function.clone();
+    if let OpKind::VBroadcast { elem, lanes, .. } =
+        &mut wrong_broadcast.blocks[0].ops[broadcast_index].kind
+    {
+        *elem = VecElementType::F32;
+        *lanes = lanes.wrapping_sub(1);
+    }
+    mutations.push(("broadcast contract", wrong_broadcast));
 
     let mut wrong_interleave = function.clone();
     if let OpKind::VInterleave {
@@ -691,7 +796,7 @@ fn interleave_sequence_fails_closed_for_provenance_and_graph_mutations() {
     } = &mut wrong_interleave.blocks[0].ops[interleave_index].kind
     {
         *src1 = VReg::Arch(ArchReg::X86(X86Reg::Ymm(11)));
-        *elem = VecElementType::I8;
+        *elem = VecElementType::F32;
         *high = false;
         *block_lanes = block_lanes.wrapping_add(1);
     }
@@ -706,6 +811,22 @@ fn interleave_sequence_fails_closed_for_provenance_and_graph_mutations() {
         w: false,
     });
     mutations.push(("interleave hint", wrong_hint));
+
+    let mut reused_load = function.clone();
+    let scalar = match reused_load.blocks[0].ops[load_index].kind {
+        OpKind::Load { dst, .. } => dst,
+        _ => unreachable!(),
+    };
+    reused_load.blocks[0].ops.push(SmirOp::new(
+        OpId(0xFFFE),
+        PC + 1,
+        OpKind::Mov {
+            dst: VReg::Virtual(VirtualId(0xFFFE)),
+            src: SrcOperand::Reg(scalar),
+            width: OpWidth::W64,
+        },
+    ));
+    mutations.push(("escaped scalar load", reused_load));
 
     let mut wrong_lane = function.clone();
     let extract = wrong_lane.blocks[0]
@@ -737,37 +858,106 @@ fn interleave_sequence_fails_closed_for_provenance_and_graph_mutations() {
 }
 
 #[test]
-fn interleave_segment_addr32_rip_disp8_and_apx_addresses_admit_and_lower() {
-    let x86 = |register| VReg::Arch(ArchReg::X86(register));
-    let case = IntegerInterleaveMemoryCase {
-        kind: InterleaveKind::ALL[6],
+fn interleave_full_tuple_sequence_fails_closed_for_load_and_ssa_mutations() {
+    let case = FpInterleaveMemoryCase {
+        kind: InterleaveKind::ALL[0],
         width: VecWidth::V512,
         destination: 17,
         source1: 18,
         control: MaskControl::Merge,
-        wig_w: false,
+        tuple: TupleKind::Full,
+    };
+    let function = optimize(lift_case(case), OptLevel::O2);
+    let load_index = function.blocks[0]
+        .ops
+        .iter()
+        .position(|op| matches!(op.kind, OpKind::VLoad { .. }))
+        .unwrap();
+    let loaded = match function.blocks[0].ops[load_index].kind {
+        OpKind::VLoad { dst, .. } => dst,
+        _ => unreachable!(),
     };
 
-    let mut rip = case.bytes();
+    let mut mutations = Vec::<(&str, SmirFunction)>::new();
+    let mut broadcast_provenance = function.clone();
+    let mut bytes = case.bytes();
+    bytes[3] |= 0x10;
+    broadcast_provenance
+        .x86_instruction_bytes
+        .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
+    mutations.push((
+        "broadcast provenance over full-tuple graph",
+        broadcast_provenance,
+    ));
+
+    let mut missing_alignment_hint = function.clone();
+    missing_alignment_hint.blocks[0].ops[load_index].x86_hint = None;
+    mutations.push(("full-tuple alignment hint", missing_alignment_hint));
+
+    let mut wrong_width = function.clone();
+    if let OpKind::VLoad { width, .. } = &mut wrong_width.blocks[0].ops[load_index].kind {
+        *width = VecWidth::V256;
+    }
+    mutations.push(("full-tuple load width", wrong_width));
+
+    let mut escaped_load = function.clone();
+    escaped_load.blocks[0].ops.push(SmirOp::new(
+        OpId(0xFFFC),
+        PC + 1,
+        OpKind::VMov {
+            dst: VReg::Virtual(VirtualId(0xFFFC)),
+            src: loaded,
+            width: case.width,
+        },
+    ));
+    mutations.push(("escaped full-tuple load", escaped_load));
+
+    for (name, mutated) in mutations {
+        assert_rejected(name, &mutated);
+    }
+}
+
+#[test]
+fn interleave_segment_addr32_rip_disp8_and_apx_addresses_admit_and_lower() {
+    let x86 = |register| VReg::Arch(ArchReg::X86(register));
+    let full = FpInterleaveMemoryCase {
+        kind: InterleaveKind::ALL[2],
+        width: VecWidth::V512,
+        destination: 17,
+        source1: 18,
+        control: MaskControl::Merge,
+        tuple: TupleKind::Full,
+    };
+    let broadcast = FpInterleaveMemoryCase {
+        kind: InterleaveKind::ALL[3],
+        tuple: TupleKind::Broadcast,
+        ..full
+    };
+
+    let mut rip = full.bytes();
     rip[5] = (rip[5] & 0x38) | 5;
     rip.extend_from_slice(&0x20i32.to_le_bytes());
-    let mut addr32 = case.bytes();
+    let mut addr32 = full.bytes();
     addr32.insert(0, 0x67);
-    let mut fs = case.bytes();
+    let mut fs = broadcast.bytes();
     fs.insert(0, 0x64);
-    let mut gs_addr32 = memory_encoding(case, true);
+    let mut gs_addr32 = memory_encoding(broadcast, true);
     gs_addr32[5] = (gs_addr32[5] & 0x38) | 0x44;
     gs_addr32[6] = 0x8B;
     gs_addr32.push(2);
     gs_addr32.insert(0, 0x67);
     gs_addr32.insert(0, 0x65);
-    let mut disp8 = case.bytes();
-    disp8[5] = (disp8[5] & 0x38) | 0x43;
-    disp8.push(0xFE);
+    let mut full_disp8 = full.bytes();
+    full_disp8[5] = (full_disp8[5] & 0x38) | 0x43;
+    full_disp8.push(0xFE);
+    let mut broadcast_disp8 = broadcast.bytes();
+    broadcast_disp8[5] = (broadcast_disp8[5] & 0x38) | 0x43;
+    broadcast_disp8.push(3);
 
     let address_cases = [
         (
-            "RIP+disp32",
+            "RIP+disp32 full",
+            full,
             rip,
             Address::PcRel {
                 offset: 0x20,
@@ -776,12 +966,14 @@ fn interleave_segment_addr32_rip_disp8_and_apx_addresses_admit_and_lower() {
             },
         ),
         (
-            "addr32 base",
+            "addr32 full",
+            full,
             addr32,
             Address::X86Addr32(Box::new(Address::Direct(x86(X86Reg::Rdx)))),
         ),
         (
-            "FS base",
+            "FS broadcast",
+            broadcast,
             fs,
             Address::SegmentRel {
                 segment: x86(X86Reg::FsBase),
@@ -792,37 +984,49 @@ fn interleave_segment_addr32_rip_disp8_and_apx_addresses_admit_and_lower() {
             },
         ),
         (
-            "GS addr32 SIB",
+            "GS addr32 SIB broadcast",
+            broadcast,
             gs_addr32,
             Address::X86Addr32(Box::new(Address::SegmentRel {
                 segment: x86(X86Reg::GsBase),
                 base: Some(x86(X86Reg::Rbx)),
                 index: Some(x86(X86Reg::Rcx)),
                 scale: 4,
-                disp: 2 * i64::from(case.width.bytes()),
+                disp: 2 * i64::from(broadcast.kind.memory_width().bytes()),
             })),
         ),
         (
-            "compressed disp8",
-            disp8,
+            "compressed disp8 full",
+            full,
+            full_disp8,
             Address::BaseOffset {
                 base: x86(X86Reg::Rbx),
-                offset: -2 * i64::from(case.width.bytes()),
+                offset: -2 * i64::from(full.width.bytes()),
+                disp_size: DispSize::Disp8,
+            },
+        ),
+        (
+            "compressed disp8 broadcast",
+            broadcast,
+            broadcast_disp8,
+            Address::BaseOffset {
+                base: x86(X86Reg::Rbx),
+                offset: 3 * i64::from(broadcast.kind.memory_width().bytes()),
                 disp_size: DispSize::Disp8,
             },
         ),
     ];
 
-    for (name, bytes, expected_address) in address_cases {
+    for (name, case, bytes, expected_address) in address_cases {
         let base = lift_bytes(&bytes);
         for level in LEVELS {
             let function = optimize(base.clone(), level);
             assert!(
-                function.blocks[0].ops.iter().any(|op| matches!(
-                    &op.kind,
-                    OpKind::VLoad { addr, width, .. }
-                        if addr == &expected_address && *width == case.width
-                )),
+                function.blocks[0].ops.iter().any(|op| match &op.kind {
+                    OpKind::VLoad { addr, .. } | OpKind::Load { addr, .. } =>
+                        addr == &expected_address,
+                    _ => false,
+                }),
                 "{name} {level:?}: {:#?}",
                 function.blocks[0].ops
             );
@@ -832,70 +1036,74 @@ fn interleave_segment_addr32_rip_disp8_and_apx_addresses_admit_and_lower() {
         }
     }
 
-    let apx_case = IntegerInterleaveMemoryCase {
-        kind: InterleaveKind::ALL[1],
-        width: VecWidth::V512,
-        destination: 25,
-        source1: 26,
-        control: MaskControl::Zero,
-        wig_w: true,
-    };
-    let mut apx = memory_encoding(apx_case, true);
-    apx[1] |= 0x08;
-    apx[2] &= !0x04;
-    let expected_address = Address::BaseIndexScale {
-        base: Some(x86(X86Reg::R16)),
-        index: x86(X86Reg::R17),
-        scale: 2,
-        disp: 0,
-        disp_size: DispSize::Auto,
-    };
-    let base = lift_bytes(&apx);
-    for level in LEVELS {
-        let function = optimize(base.clone(), level);
-        assert!(
-            matches!(
-                function.blocks[0].ops.first().map(|op| &op.kind),
-                Some(OpKind::X86RequireApx)
-            ),
-            "{level:?} {apx:02X?}: APX address lost its dynamic guard"
-        );
-        assert!(function.blocks[0].ops.iter().any(|op| matches!(
-            &op.kind,
-            OpKind::VLoad { addr, .. } if addr == &expected_address
-        )));
-        sequence(&function, true).unwrap_or_else(|| panic!("{level:?} {apx:02X?}"));
-        lower(&function, apx_case);
+    for tuple in TupleKind::ALL {
+        let case = FpInterleaveMemoryCase {
+            kind: InterleaveKind::ALL[if tuple.is_broadcast() { 1 } else { 0 }],
+            width: VecWidth::V512,
+            destination: 25,
+            source1: 26,
+            control: MaskControl::Zero,
+            tuple,
+        };
+        let mut apx = memory_encoding(case, true);
+        apx[1] |= 0x08;
+        apx[2] &= !0x04;
+        let expected_address = Address::BaseIndexScale {
+            base: Some(x86(X86Reg::R16)),
+            index: x86(X86Reg::R17),
+            scale: 2,
+            disp: 0,
+            disp_size: DispSize::Auto,
+        };
+        let base = lift_bytes(&apx);
+        for level in LEVELS {
+            let function = optimize(base.clone(), level);
+            assert!(
+                matches!(
+                    function.blocks[0].ops.first().map(|op| &op.kind),
+                    Some(OpKind::X86RequireApx)
+                ),
+                "{level:?} {apx:02X?}: APX address lost its dynamic guard"
+            );
+            assert!(function.blocks[0].ops.iter().any(|op| match &op.kind {
+                OpKind::VLoad { addr, .. } | OpKind::Load { addr, .. } => addr == &expected_address,
+                _ => false,
+            }));
+            sequence(&function, true).unwrap_or_else(|| panic!("{level:?} {apx:02X?}"));
+            lower(&function, case);
+        }
+        let mut missing_guard = optimize(base, OptLevel::O2);
+        assert!(matches!(
+            missing_guard.blocks[0].ops.first().map(|op| &op.kind),
+            Some(OpKind::X86RequireApx)
+        ));
+        missing_guard.blocks[0].ops.remove(0);
+        assert_rejected("APX address without its dynamic guard", &missing_guard);
     }
-    let mut missing_guard = optimize(base, OptLevel::O2);
-    assert!(matches!(
-        missing_guard.blocks[0].ops.first().map(|op| &op.kind),
-        Some(OpKind::X86RequireApx)
-    ));
-    missing_guard.blocks[0].ops.remove(0);
-    assert_rejected("APX address without its dynamic guard", &missing_guard);
 }
 
 #[test]
 fn interleave_rejects_the_avx_only_state_bridge() {
-    let case = IntegerInterleaveMemoryCase {
-        kind: InterleaveKind::ALL[4],
-        width: VecWidth::V512,
-        destination: 17,
-        source1: 18,
-        control: MaskControl::Zero,
-        wig_w: true,
-    };
-    let function = optimize(lift_case(case), OptLevel::O2);
-    let mut lowerer = X86_64Lowerer::new();
-    lowerer.set_mem_helpers(true);
-    lowerer.set_preserve_vector_mem_helpers(true);
-    lowerer.set_avx_ymm16_vector_state(true);
-    let error = lowerer
-        .lower_function(&function)
-        .expect_err("AVX-only state bridge must reject EVEX integer interleaves");
-    assert!(
-        format!("{error:?}").contains("AVX-only vector bridge"),
-        "{error:?}"
-    );
+    for tuple in TupleKind::ALL {
+        let case = FpInterleaveMemoryCase {
+            kind: InterleaveKind::ALL[2],
+            width: VecWidth::V512,
+            destination: 17,
+            source1: 18,
+            control: MaskControl::Zero,
+            tuple,
+        };
+        let function = optimize(lift_case(case), OptLevel::O2);
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer.set_mem_helpers(true);
+        lowerer.set_preserve_vector_mem_helpers(true);
+        lowerer.set_avx_ymm16_vector_state(true);
+        let error = lowerer
+            .lower_function(&function)
+            .expect_err("AVX-only state bridge must reject EVEX floating interleaves");
+        assert!(
+            format!("{error:?}").contains("AVX-only vector bridge"),
+            "{tuple:?}: {error:?}"
+        );
+    }
 }

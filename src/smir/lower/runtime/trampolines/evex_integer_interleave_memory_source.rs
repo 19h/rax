@@ -7,7 +7,9 @@ use crate::smir::ir::types::{ArchReg, BlockId, GuestAddr, VReg, X86Reg};
 use crate::smir::ir::{X86EvexIntegerInterleaveMemoryEncoding, X86InstructionBytes};
 
 use super::evex_memory_source_common::{
-    exact_evex_vector_mask_result, no_following_same_pc, single_definition_single_use, vector_index,
+    exact_evex_memory_apx_frontier, exact_evex_memory_sequence_frontier,
+    exact_evex_vector_mask_result, no_following_same_pc, single_definition_single_use,
+    vector_index,
 };
 use super::x86_jit_mem_address_shape_valid;
 
@@ -26,9 +28,10 @@ pub(crate) struct X86JitEvexIntegerInterleaveMemorySequence {
 ///
 /// Exact provenance binds opcode, W/WIG, vector and element widths, low/high
 /// half selection, operands, destination mask policy, one unconditional E4NF
-/// complete-tuple read, every merge/zero lane, and the guest-PC frontier.
-/// Runtime is O(L) and auxiliary space is O(1) for L <= 64 lanes; callers
-/// construct definition/use maps once in O(N) time and O(V) space.
+/// complete-tuple read, every merge/zero lane, the APX address guard, and the
+/// guest-PC frontier. Runtime is O(L) and auxiliary space is O(1) for L <= 64
+/// lanes; callers construct definition/use maps once in O(N) time and O(V)
+/// space.
 pub(crate) fn x86_jit_evex_integer_interleave_memory_sequence(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
@@ -42,20 +45,25 @@ pub(crate) fn x86_jit_evex_integer_interleave_memory_sequence(
     }
     let load = block.ops.get(index)?;
     let guest_pc = load.guest_pc;
+    if !exact_evex_memory_sequence_frontier(block, index, guest_pc) {
+        return None;
+    }
     let encoding = instruction_bytes
         .get(&(block.id, guest_pc))?
         .evex_integer_interleave_memory_encoding()?;
-    let loaded = match &load.kind {
+    let (loaded, address) = match &load.kind {
         OpKind::VLoad { dst, addr, width }
             if load.x86_hint.is_none()
                 && *width == encoding.width
                 && x86_jit_mem_address_shape_valid(addr) =>
         {
-            *dst
+            (*dst, addr)
         }
         _ => return None,
     };
-    if !single_definition_single_use(loaded, virtual_definitions, virtual_uses) {
+    if !single_definition_single_use(loaded, virtual_definitions, virtual_uses)
+        || !exact_evex_memory_apx_frontier(block, index, guest_pc, address)
+    {
         return None;
     }
 

@@ -299,7 +299,7 @@ pub(crate) fn block_is_clobber_safe(
             i += sequence.consumed;
             continue;
         }
-        if let Some(consumed) = x86_jit_evex_integer_memory_replay_sequence_len(
+        if let Some(consumed) = x86_jit_evex_memory_replay_sequence_len(
             block,
             i,
             allow_mem,

@@ -456,7 +456,7 @@ impl X86_64Lifter {
         } else {
             dst
         };
-        self.append_integer_interleave(
+        self.append_vector_interleave(
             result,
             dst,
             src2,
