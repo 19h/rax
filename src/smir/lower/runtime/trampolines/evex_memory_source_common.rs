@@ -39,6 +39,157 @@ pub(super) fn exact_virtual_definition_use(
         && virtual_uses.get(&register).copied().unwrap_or(0) == uses
 }
 
+/// Match the exact selector-vector graph emitted for one two-source packed
+/// floating-point shuffle with an imm8 control byte. Advances `offset` past
+/// the zero seed, every lane selector, and the final `VShuffle`, and returns
+/// its raw virtual result.
+///
+/// Runtime is O(L) and auxiliary space is O(1), where L is the architectural
+/// lane count (at most 16). Global definition/use maps are supplied by the
+/// caller and bind every internal virtual value to this graph.
+#[allow(clippy::too_many_arguments)]
+pub(super) fn exact_two_source_fp_shuffle_imm_graph(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    offset: &mut usize,
+    guest_pc: GuestAddr,
+    source1: VReg,
+    source2: VReg,
+    width: VecWidth,
+    elem: VecElementType,
+    immediate: u8,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<VReg> {
+    let lanes = width.lanes(elem) as u8;
+    let block_lanes = match elem {
+        VecElementType::F32 => 4,
+        VecElementType::F64 => 2,
+        _ => return None,
+    };
+
+    let zero_op = block.ops.get(index + *offset)?;
+    let zero = match zero_op.kind {
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Imm(0),
+            width: OpWidth::W64,
+        } if zero_op.x86_hint.is_none() => dst,
+        _ => return None,
+    };
+    if zero_op.guest_pc != guest_pc
+        || !exact_virtual_definition_use(zero, 1, 1, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+    *offset += 1;
+
+    let indices_op = block.ops.get(index + *offset)?;
+    let indices = match indices_op.kind {
+        OpKind::VBroadcast {
+            dst,
+            scalar,
+            elem: actual_elem,
+            lanes: actual_lanes,
+        } if indices_op.x86_hint.is_none()
+            && scalar == zero
+            && actual_elem == elem
+            && actual_lanes == lanes =>
+        {
+            dst
+        }
+        _ => return None,
+    };
+    if indices_op.guest_pc != guest_pc
+        || !exact_virtual_definition_use(
+            indices,
+            usize::from(lanes) + 1,
+            usize::from(lanes) + 1,
+            virtual_definitions,
+            virtual_uses,
+        )
+    {
+        return None;
+    }
+    *offset += 1;
+
+    for lane in 0..lanes {
+        let within = lane % block_lanes;
+        let block_lane = lane - within;
+        let (from_second, control) = if elem == VecElementType::F32 {
+            (within >= 2, (immediate >> (within * 2)) & 3)
+        } else {
+            (within == 1, (immediate >> lane) & 1)
+        };
+        let selector = block_lane + control + if from_second { lanes } else { 0 };
+
+        let selector_op = block.ops.get(index + *offset)?;
+        let selector_reg = match selector_op.kind {
+            OpKind::Mov {
+                dst,
+                src: SrcOperand::Imm(actual_selector),
+                width: OpWidth::W64,
+            } if selector_op.x86_hint.is_none() && actual_selector == i64::from(selector) => dst,
+            _ => return None,
+        };
+        if selector_op.guest_pc != guest_pc
+            || !single_definition_single_use(selector_reg, virtual_definitions, virtual_uses)
+        {
+            return None;
+        }
+        *offset += 1;
+
+        let insert_op = block.ops.get(index + *offset)?;
+        if insert_op.guest_pc != guest_pc
+            || insert_op.x86_hint.is_some()
+            || !matches!(
+                insert_op.kind,
+                OpKind::VInsertLane {
+                    dst,
+                    vec,
+                    scalar,
+                    lane: actual_lane,
+                    elem: actual_elem,
+                } if dst == indices
+                    && vec == indices
+                    && scalar == selector_reg
+                    && actual_lane == lane
+                    && actual_elem == elem
+            )
+        {
+            return None;
+        }
+        *offset += 1;
+    }
+
+    let shuffle_op = block.ops.get(index + *offset)?;
+    let raw = match shuffle_op.kind {
+        OpKind::VShuffle {
+            dst,
+            src1: actual_source1,
+            src2: Some(actual_source2),
+            indices: actual_indices,
+            elem: actual_elem,
+            lanes: actual_lanes,
+        } if shuffle_op.x86_hint.is_none()
+            && actual_source1 == source1
+            && actual_source2 == source2
+            && actual_indices == indices
+            && actual_elem == elem
+            && actual_lanes == lanes
+            && matches!(dst, VReg::Virtual(_)) =>
+        {
+            dst
+        }
+        _ => return None,
+    };
+    if shuffle_op.guest_pc != guest_pc {
+        return None;
+    }
+    *offset += 1;
+    Some(raw)
+}
+
 pub(super) fn exact_lane_address(address: &Address, base: VReg, offset: i64) -> bool {
     matches!(
         address,
