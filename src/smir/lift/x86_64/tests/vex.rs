@@ -2035,17 +2035,19 @@ fn lift_legacy_and_vex_packed_integer_compares_cover_all_fixed_predicates() {
         )));
     }
 
-    // Masked broadcast uses scalar disp8*N (N=4) and one predicated access
-    // per dword lane; inactive lanes are fault-suppressed.
+    // Masked broadcast uses scalar disp8*N (N=4), aggregates the 16
+    // applicable mask bits, and performs at most one predicated scalar read.
+    // An all-zero applicable mask suppresses the architectural access.
     let broadcast = lift_single(&[0x62, 0xF1, 0x75, 0x59, 0x76, 0x50, 0x10]).unwrap();
     assert!(broadcast.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::Lea {
+        OpKind::PredLoad {
             addr: Address::BaseOffset {
                 offset: 64,
                 disp_size: DispSize::Disp8,
                 ..
             },
+            width: MemWidth::B4,
             ..
         }
     )));
@@ -2061,8 +2063,16 @@ fn lift_legacy_and_vex_packed_integer_compares_cover_all_fixed_predicates() {
                 }
             ))
             .count(),
-        16
+        1
     );
+    assert!(broadcast.ops.iter().any(|op| matches!(
+        op.kind,
+        OpKind::VBroadcast {
+            elem: VecElementType::I32,
+            lanes: 16,
+            ..
+        }
+    )));
 
     for bytes in [
         &[0xF0, 0x66, 0x0F, 0x74, 0xC1][..],       // LOCK

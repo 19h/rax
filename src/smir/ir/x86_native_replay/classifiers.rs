@@ -17,6 +17,7 @@ mod evex_fp_shuffle_memory;
 mod evex_full_permute_memory;
 mod evex_integer_arithmetic_memory;
 mod evex_integer_interleave_memory;
+mod evex_integer_mask_memory;
 mod evex_integer_minmax_memory;
 mod evex_integer_pack_memory;
 mod evex_logic_memory;
@@ -153,6 +154,10 @@ pub(crate) use evex_integer_arithmetic_memory::{
     X86EvexIntegerArithmeticMemoryEncoding, X86EvexIntegerArithmeticMemoryReplay,
 };
 pub(crate) use evex_integer_interleave_memory::X86EvexIntegerInterleaveMemoryEncoding;
+pub(crate) use evex_integer_mask_memory::{
+    X86EvexPackedIntegerMaskMemoryEncoding, X86EvexPackedIntegerMaskMemoryReplay,
+    X86EvexPackedIntegerMaskOperation,
+};
 pub(crate) use evex_integer_minmax_memory::X86EvexIntegerMinMaxMemoryEncoding;
 pub(crate) use evex_integer_pack_memory::X86EvexIntegerPackMemoryEncoding;
 pub(crate) use evex_logic_memory::{
@@ -860,94 +865,6 @@ impl X86InstructionBytes {
         let embedded_control = p2 & 0x10 != 0;
         let mask = p2 & 0x07;
         if embedded_control || (zeroing && mask == 0) {
-            return None;
-        }
-        match ll {
-            0 | 1 => Some(true),
-            2 => Some(false),
-            _ => None,
-        }
-    }
-
-    /// Validate register-only EVEX packed integer bit tests that write an
-    /// opmask destination and return whether the vector length requires
-    /// AVX-512VL. Byte/word forms use AVX-512BW and doubleword/quadword forms
-    /// use AVX-512F. The destination is restricted to canonical K0-K7
-    /// encoding; EVEX.z is reserved because inactive destination bits are
-    /// unconditionally zeroed by these instructions.
-    pub fn evex_register_packed_test_needs_vl(&self) -> Option<bool> {
-        let bytes = self.as_slice();
-        if bytes.len() != 6 || bytes[0] != 0x62 {
-            return None;
-        }
-        let p0 = bytes[1];
-        let p1 = bytes[2];
-        let p2 = bytes[3];
-        let opcode = bytes[4];
-        let modrm = bytes[5];
-        let pp = p1 & 0x03;
-        if p0 & 0x0f != 2
-            || p0 & 0x90 != 0x90
-            || p1 & 0x04 == 0
-            || !matches!(pp, 1 | 2)
-            || !matches!(opcode, 0x26 | 0x27)
-            || modrm >> 6 != 3
-        {
-            return None;
-        }
-
-        let zeroing = p2 & 0x80 != 0;
-        let ll = (p2 >> 5) & 0x03;
-        let embedded_control = p2 & 0x10 != 0;
-        if zeroing || embedded_control {
-            return None;
-        }
-        match ll {
-            0 | 1 => Some(true),
-            2 => Some(false),
-            _ => None,
-        }
-    }
-
-    /// Validate register-only EVEX fixed-predicate and immediate-predicate
-    /// signed/unsigned packed integer compares that write an opmask
-    /// destination, and return whether the vector length requires AVX-512VL.
-    /// Byte/word forms use AVX-512BW and doubleword/quadword forms use
-    /// AVX-512F. The destination is restricted to canonical K0-K7 encoding,
-    /// fixed-W and WIG forms are distinguished exactly, and EVEX.z is reserved
-    /// because masked-off comparison-result bits are unconditionally zeroed.
-    pub fn evex_register_packed_compare_needs_vl(&self) -> Option<bool> {
-        let bytes = self.as_slice();
-        if !matches!(bytes.len(), 6 | 7) || bytes[0] != 0x62 {
-            return None;
-        }
-        let p0 = bytes[1];
-        let p1 = bytes[2];
-        let p2 = bytes[3];
-        let opcode = bytes[4];
-        let modrm = bytes[5];
-        if p0 & 0x90 != 0x90 || p1 & 0x04 == 0 || p1 & 0x03 != 1 || modrm >> 6 != 3 {
-            return None;
-        }
-
-        let map = p0 & 0x0f;
-        let w = p1 & 0x80 != 0;
-        match (bytes.len(), map, opcode, w) {
-            // VPCMP[U]D/Q/B/W imm8 families.
-            (7, 3, 0x1E | 0x1F | 0x3E | 0x3F, _) => {}
-            // VPCMPEQB/W and VPCMPGTB/W are WIG.
-            (6, 1, 0x64 | 0x65 | 0x74 | 0x75, _) => {}
-            // VPCMPEQD and VPCMPGTD require W0.
-            (6, 1, 0x66 | 0x76, false) => {}
-            // VPCMPEQQ and VPCMPGTQ require W1.
-            (6, 2, 0x29 | 0x37, true) => {}
-            _ => return None,
-        }
-
-        let zeroing = p2 & 0x80 != 0;
-        let ll = (p2 >> 5) & 0x03;
-        let embedded_control = p2 & 0x10 != 0;
-        if zeroing || embedded_control {
             return None;
         }
         match ll {

@@ -676,6 +676,11 @@ pub(super) struct X86EvexE4MemoryShape {
     pub(super) zeroing: bool,
     pub(super) vector_load_hint: Option<X86OpHint>,
     pub(super) form: X86EvexE4MemoryReplayForm,
+    /// Exact number of source-operand occurrences contributed by the
+    /// operation-specific semantic tail. This is normally one; a constant
+    /// packed-compare predicate deliberately compares the loaded value with
+    /// itself and therefore contributes two uses.
+    pub(super) memory_source_uses: usize,
 }
 
 /// Structural extent of one exact EVEX E2/E3/E4-compatible source decomposition.
@@ -792,16 +797,39 @@ pub(super) fn exact_evex_memory_sequence_address(
     }
 }
 
+fn exact_e4_semantic_tail<F>(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    guest_pc: GuestAddr,
+    memory_source: VReg,
+    exact_tail: &F,
+) -> Option<usize>
+where
+    F: Fn(&crate::smir::ir::SmirBlock, usize, VReg) -> Option<usize>,
+{
+    let consumed = exact_tail(block, index, memory_source)?;
+    let end = index.checked_add(consumed)?;
+    if consumed == 0
+        || end > block.ops.len()
+        || block.ops[index..end]
+            .iter()
+            .any(|op| op.guest_pc != guest_pc)
+    {
+        return None;
+    }
+    Some(consumed)
+}
+
 fn exact_unmasked_e4_vector<F>(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
     shape: X86EvexE4MemoryShape,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
-    exact_consumer: &F,
+    exact_tail: &F,
 ) -> Option<X86EvexE4MemoryMatch>
 where
-    F: Fn(&crate::smir::ir::ops::SmirOp, VReg) -> bool,
+    F: Fn(&crate::smir::ir::SmirBlock, usize, VReg) -> Option<usize>,
 {
     if shape.form != X86EvexE4MemoryReplayForm::Vector || shape.writemask.is_some() || shape.zeroing
     {
@@ -818,15 +846,19 @@ where
         }
         _ => return None,
     };
-    if !single_definition_single_use(loaded, virtual_definitions, virtual_uses) {
+    if !exact_virtual_definition_use(
+        loaded,
+        1,
+        shape.memory_source_uses,
+        virtual_definitions,
+        virtual_uses,
+    ) {
         return None;
     }
-    let consumer = block.ops.get(index + 1)?;
-    let consumed = 2;
-    if consumer.guest_pc != load.guest_pc
-        || !exact_consumer(consumer, loaded)
-        || !no_following_same_pc(block, index, consumed, load.guest_pc)
-    {
+    let tail_consumed =
+        exact_e4_semantic_tail(block, index + 1, load.guest_pc, loaded, exact_tail)?;
+    let consumed = 1usize.checked_add(tail_consumed)?;
+    if !no_following_same_pc(block, index, consumed, load.guest_pc) {
         return None;
     }
     Some(X86EvexE4MemoryMatch {
@@ -842,10 +874,10 @@ fn exact_unmasked_e4_broadcast<F>(
     shape: X86EvexE4MemoryShape,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
-    exact_consumer: &F,
+    exact_tail: &F,
 ) -> Option<X86EvexE4MemoryMatch>
 where
-    F: Fn(&crate::smir::ir::ops::SmirOp, VReg) -> bool,
+    F: Fn(&crate::smir::ir::SmirBlock, usize, VReg) -> Option<usize>,
 {
     if shape.form != X86EvexE4MemoryReplayForm::Broadcast
         || shape.writemask.is_some()
@@ -889,16 +921,20 @@ where
         _ => return None,
     };
     if broadcast.guest_pc != load.guest_pc
-        || !single_definition_single_use(loaded, virtual_definitions, virtual_uses)
+        || !exact_virtual_definition_use(
+            loaded,
+            1,
+            shape.memory_source_uses,
+            virtual_definitions,
+            virtual_uses,
+        )
     {
         return None;
     }
-    let consumer = block.ops.get(index + 2)?;
-    let consumed = 3;
-    if consumer.guest_pc != load.guest_pc
-        || !exact_consumer(consumer, loaded)
-        || !no_following_same_pc(block, index, consumed, load.guest_pc)
-    {
+    let tail_consumed =
+        exact_e4_semantic_tail(block, index + 2, load.guest_pc, loaded, exact_tail)?;
+    let consumed = 2usize.checked_add(tail_consumed)?;
+    if !no_following_same_pc(block, index, consumed, load.guest_pc) {
         return None;
     }
     Some(X86EvexE4MemoryMatch {
@@ -914,10 +950,10 @@ fn exact_masked_e4_broadcast<F>(
     shape: X86EvexE4MemoryShape,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
-    exact_consumer: &F,
+    exact_tail: &F,
 ) -> Option<X86EvexE4MemoryMatch>
 where
-    F: Fn(&crate::smir::ir::ops::SmirOp, VReg) -> bool,
+    F: Fn(&crate::smir::ir::SmirBlock, usize, VReg) -> Option<usize>,
 {
     if shape.form != X86EvexE4MemoryReplayForm::Broadcast {
         return None;
@@ -998,17 +1034,19 @@ where
         _ => return None,
     };
     if broadcast.guest_pc != guest_pc
-        || !single_definition_single_use(loaded, virtual_definitions, virtual_uses)
+        || !exact_virtual_definition_use(
+            loaded,
+            1,
+            shape.memory_source_uses,
+            virtual_definitions,
+            virtual_uses,
+        )
     {
         return None;
     }
     offset += 1;
 
-    let consumer = block.ops.get(index + offset)?;
-    if consumer.guest_pc != guest_pc || !exact_consumer(consumer, loaded) {
-        return None;
-    }
-    offset += 1;
+    offset += exact_e4_semantic_tail(block, index + offset, guest_pc, loaded, exact_tail)?;
     if !no_following_same_pc(block, index, offset, guest_pc) {
         return None;
     }
@@ -1025,10 +1063,10 @@ fn exact_masked_e4_vector<F>(
     shape: X86EvexE4MemoryShape,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
-    exact_consumer: &F,
+    exact_tail: &F,
 ) -> Option<X86EvexE4MemoryMatch>
 where
-    F: Fn(&crate::smir::ir::ops::SmirOp, VReg) -> bool,
+    F: Fn(&crate::smir::ir::SmirBlock, usize, VReg) -> Option<usize>,
 {
     if shape.form != X86EvexE4MemoryReplayForm::MaskedVector {
         return None;
@@ -1069,7 +1107,7 @@ where
         || !exact_virtual_definition_use(
             loaded,
             usize::from(lanes) + 1,
-            usize::from(lanes) + 1,
+            usize::from(lanes) + shape.memory_source_uses,
             virtual_definitions,
             virtual_uses,
         )
@@ -1174,11 +1212,7 @@ where
         offset += 1;
     }
 
-    let consumer = block.ops.get(index + offset)?;
-    if consumer.guest_pc != guest_pc || !exact_consumer(consumer, loaded) {
-        return None;
-    }
-    offset += 1;
+    offset += exact_e4_semantic_tail(block, index + offset, guest_pc, loaded, exact_tail)?;
     if !no_following_same_pc(block, index, offset, guest_pc) {
         return None;
     }
@@ -1195,10 +1229,10 @@ fn exact_scalar_e3_memory<F>(
     shape: X86EvexE4MemoryShape,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
-    exact_consumer: &F,
+    exact_tail: &F,
 ) -> Option<X86EvexE4MemoryMatch>
 where
-    F: Fn(&crate::smir::ir::ops::SmirOp, VReg) -> bool,
+    F: Fn(&crate::smir::ir::SmirBlock, usize, VReg) -> Option<usize>,
 {
     if shape.form != X86EvexE4MemoryReplayForm::Scalar || shape.width != VecWidth::V128 {
         return None;
@@ -1285,17 +1319,19 @@ where
         _ => return None,
     };
     if broadcast.guest_pc != guest_pc
-        || !single_definition_single_use(loaded, virtual_definitions, virtual_uses)
+        || !exact_virtual_definition_use(
+            loaded,
+            1,
+            shape.memory_source_uses,
+            virtual_definitions,
+            virtual_uses,
+        )
     {
         return None;
     }
     offset += 1;
 
-    let consumer = block.ops.get(index + offset)?;
-    if consumer.guest_pc != guest_pc || !exact_consumer(consumer, loaded) {
-        return None;
-    }
-    offset += 1;
+    offset += exact_e4_semantic_tail(block, index + offset, guest_pc, loaded, exact_tail)?;
     if !no_following_same_pc(block, index, offset, guest_pc) {
         return None;
     }
@@ -1307,22 +1343,25 @@ where
 }
 
 /// Match an exact O0/O1/O2 EVEX E2/E3/E4-compatible memory-source
-/// decomposition.
+/// decomposition whose operation-specific semantic tail may contain multiple
+/// operations.
 ///
-/// The operation-specific callback binds the reconstructed memory value to
-/// its sole semantic consumer. Classification is O(L) time and O(1)
-/// auxiliary space for L vector lanes; definition/use maps are built once by
-/// the caller in O(N) time and O(V) space.
-pub(super) fn exact_evex_e4_memory_sequence<F>(
+/// The callback binds the reconstructed memory value to the exact tail at
+/// `tail_index` and returns that tail's nonzero operation count. This common
+/// matcher independently verifies same-PC contiguity and the terminal guest
+/// frontier. Classification is O(L + T) time and O(1) auxiliary space for L
+/// vector lanes and T semantic-tail operations; definition/use maps are built
+/// once by the caller in O(N) time and O(V) space.
+pub(super) fn exact_evex_e4_memory_sequence_tail<F>(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
     shape: X86EvexE4MemoryShape,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
-    exact_consumer: F,
+    exact_tail: F,
 ) -> Option<X86EvexE4MemoryMatch>
 where
-    F: Fn(&crate::smir::ir::ops::SmirOp, VReg) -> bool,
+    F: Fn(&crate::smir::ir::SmirBlock, usize, VReg) -> Option<usize>,
 {
     let guest_pc = block.ops.get(index)?.guest_pc;
     if !exact_evex_memory_sequence_frontier(block, index, guest_pc) {
@@ -1335,7 +1374,7 @@ where
             shape,
             virtual_definitions,
             virtual_uses,
-            &exact_consumer,
+            &exact_tail,
         ),
         (X86EvexE4MemoryReplayForm::Broadcast, None) => exact_unmasked_e4_broadcast(
             block,
@@ -1343,7 +1382,7 @@ where
             shape,
             virtual_definitions,
             virtual_uses,
-            &exact_consumer,
+            &exact_tail,
         ),
         (X86EvexE4MemoryReplayForm::Broadcast, Some(_)) => exact_masked_e4_broadcast(
             block,
@@ -1351,7 +1390,7 @@ where
             shape,
             virtual_definitions,
             virtual_uses,
-            &exact_consumer,
+            &exact_tail,
         ),
         (X86EvexE4MemoryReplayForm::MaskedVector, Some(_)) => exact_masked_e4_vector(
             block,
@@ -1359,7 +1398,7 @@ where
             shape,
             virtual_definitions,
             virtual_uses,
-            &exact_consumer,
+            &exact_tail,
         ),
         (X86EvexE4MemoryReplayForm::Scalar, _) => exact_scalar_e3_memory(
             block,
@@ -1367,10 +1406,38 @@ where
             shape,
             virtual_definitions,
             virtual_uses,
-            &exact_consumer,
+            &exact_tail,
         ),
         _ => None,
     }?;
     let address = exact_evex_memory_sequence_address(block, index, exact.address_offset)?;
     exact_evex_memory_apx_frontier(block, index, guest_pc, address).then_some(exact)
+}
+
+/// Compatibility matcher for E2/E3/E4 decompositions with exactly one
+/// operation-specific consumer.
+pub(super) fn exact_evex_e4_memory_sequence<F>(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    shape: X86EvexE4MemoryShape,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+    exact_consumer: F,
+) -> Option<X86EvexE4MemoryMatch>
+where
+    F: Fn(&crate::smir::ir::ops::SmirOp, VReg) -> bool,
+{
+    if shape.memory_source_uses != 1 {
+        return None;
+    }
+    exact_evex_e4_memory_sequence_tail(
+        block,
+        index,
+        shape,
+        virtual_definitions,
+        virtual_uses,
+        |block, tail_index, memory_source| {
+            exact_consumer(block.ops.get(tail_index)?, memory_source).then_some(1)
+        },
+    )
 }

@@ -102,6 +102,8 @@ mod evex_integer_arithmetic_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_integer_interleave_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_integer_mask_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_integer_minmax_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_integer_pack_memory_source;

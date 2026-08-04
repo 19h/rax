@@ -1198,25 +1198,23 @@ fn lift_evex_immediate_integer_compares_cover_predicates_elements_masks_and_faul
                         && u32::from(lanes) == VecWidth::V128.lanes(elem)
                 )));
             } else {
-                let lanes = VecWidth::V128.lanes(elem);
                 let expected = if predicate == 3 {
-                    0
+                    VecCmpCond::Ne
                 } else {
-                    ((1u64 << lanes) - 1) as i64
+                    VecCmpCond::Eq
                 };
-                assert!(
-                    !result
-                        .ops
-                        .iter()
-                        .any(|op| matches!(op.kind, OpKind::VCmp { .. }))
-                );
                 assert!(result.ops.iter().any(|op| matches!(
                     op.kind,
-                    OpKind::Mov {
-                        src: SrcOperand::Imm(actual),
-                        width: OpWidth::W64,
+                    OpKind::VCmp {
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                        cond,
+                        elem: actual_elem,
+                        lanes,
                         ..
-                    } if actual == expected
+                    } if cond == expected
+                        && actual_elem == elem
+                        && u32::from(lanes) == VecWidth::V128.lanes(elem)
                 )));
             }
         }
@@ -1259,23 +1257,36 @@ fn lift_evex_immediate_integer_compares_cover_predicates_elements_masks_and_faul
     // Full-vector and broadcast disp8 tuples use N=64 and N=4,
     // respectively. Constant predicates retain every active predicated
     // memory access so TRUE/FALSE cannot suppress architectural faults.
-    for (bytes, offset, predicate) in [
-        (&[0x62, 0xF3, 0x75, 0x4C, 0x1F, 0x58, 0x01, 0x07][..], 64, 7),
-        (&[0x62, 0xF3, 0x75, 0x5C, 0x1F, 0x58, 0x01, 0x03][..], 4, 3),
+    for (bytes, offset, predicate, expected_loads) in [
+        (
+            &[0x62, 0xF3, 0x75, 0x4C, 0x1F, 0x58, 0x01, 0x07][..],
+            64,
+            7,
+            16,
+        ),
+        (
+            &[0x62, 0xF3, 0x75, 0x5C, 0x1F, 0x58, 0x01, 0x03][..],
+            4,
+            3,
+            1,
+        ),
     ] {
         let result = lift_single(bytes).unwrap();
         assert_eq!(result.bytes_consumed, bytes.len());
-        assert!(result.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::Lea {
-                addr: Address::BaseOffset {
+        assert!(result.ops.iter().any(|op| {
+            let address = match &op.kind {
+                OpKind::Lea { addr, .. } | OpKind::PredLoad { addr, .. } => addr,
+                _ => return false,
+            };
+            matches!(
+                address,
+                Address::BaseOffset {
                     offset: actual,
                     disp_size: DispSize::Disp8,
                     ..
-                },
-                ..
-            } if actual == offset
-        )));
+                } if *actual == offset
+            )
+        }));
         assert_eq!(
             result
                 .ops
@@ -1288,7 +1299,7 @@ fn lift_evex_immediate_integer_compares_cover_predicates_elements_masks_and_faul
                     }
                 ))
                 .count(),
-            16,
+            expected_loads,
             "predicate {predicate} must retain active memory accesses",
         );
     }
@@ -1314,9 +1325,21 @@ fn lift_evex_immediate_integer_compares_cover_predicates_elements_masks_and_faul
     let all_bytes = lift_single(&[0x62, 0xF3, 0x75, 0x48, 0x3F, 0xDA, 0x07]).unwrap();
     assert!(all_bytes.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::Mov {
-            src: SrcOperand::Imm(-1),
-            width: OpWidth::W64,
+        OpKind::VCmp {
+            src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+            src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+            cond: VecCmpCond::Eq,
+            elem: VecElementType::I8,
+            lanes: 64,
+            ..
+        }
+    )));
+    assert!(all_bytes.ops.iter().any(|op| matches!(
+        op.kind,
+        OpKind::X86MovMask {
+            elem: VecElementType::I8,
+            lanes: 64,
+            dst_width: OpWidth::W64,
             ..
         }
     )));

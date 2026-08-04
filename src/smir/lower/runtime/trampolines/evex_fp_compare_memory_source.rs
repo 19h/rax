@@ -108,6 +108,7 @@ pub(crate) fn x86_jit_evex_packed_fp_compare_memory_sequence(
         zeroing: false,
         vector_load_hint: Some(X86OpHint::VecAlign(X86VecAlign::Unaligned)),
         form,
+        memory_source_uses: 1,
     };
     let exact = exact_evex_e4_memory_sequence(
         block,

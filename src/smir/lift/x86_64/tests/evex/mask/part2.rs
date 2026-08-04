@@ -563,7 +563,8 @@ fn lift_evex_integer_test_masks_cover_elements_polarities_e4_memory_and_invalids
                 }
             ))
             .count(),
-        16
+        1,
+        "one broadcast memory operand must issue at most one scalar read"
     );
 
     for bytes in [

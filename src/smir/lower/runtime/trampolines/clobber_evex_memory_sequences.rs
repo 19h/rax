@@ -81,6 +81,16 @@ pub(crate) fn x86_jit_evex_memory_replay_sequence_len(
     ) {
         return Some(sequence.consumed);
     }
+    if let Some(sequence) = x86_jit_evex_packed_integer_mask_memory_sequence(
+        block,
+        index,
+        allow_mem,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(sequence.consumed);
+    }
     if let Some(sequence) = x86_jit_evex_integer_minmax_memory_sequence(
         block,
         index,

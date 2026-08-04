@@ -113,6 +113,7 @@ pub(crate) fn x86_jit_evex_scale_f_memory_sequence(
         zeroing: encoding.zeroing,
         vector_load_hint: None,
         form,
+        memory_source_uses: 1,
     };
     let exact = exact_evex_e4_memory_sequence(
         block,

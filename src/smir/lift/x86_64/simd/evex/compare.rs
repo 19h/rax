@@ -458,16 +458,28 @@ impl X86_64Lifter {
             );
             ops.extend(pre_ops);
             if let Some(mask) = writemask {
-                self.append_evex_masked_vector_source(
-                    addr,
-                    elem,
-                    prefix.width,
-                    broadcast,
-                    mask,
-                    pc,
-                    ctx,
-                    &mut ops,
-                )
+                if broadcast {
+                    self.append_masked_broadcast_memory_source(
+                        addr,
+                        elem,
+                        prefix.width,
+                        mask,
+                        pc,
+                        ctx,
+                        &mut ops,
+                    )
+                } else {
+                    self.append_evex_masked_vector_source(
+                        addr,
+                        elem,
+                        prefix.width,
+                        false,
+                        mask,
+                        pc,
+                        ctx,
+                        &mut ops,
+                    )
+                }
             } else if broadcast {
                 self.append_broadcast_memory_source(addr, elem, prefix.width, pc, ctx, &mut ops)
             } else {
@@ -519,16 +531,17 @@ impl X86_64Lifter {
             },
         ));
         let raw_mask = ctx.alloc_vreg();
-        self.append_sse_movmask(
-            raw_mask,
-            compared,
-            elem,
-            lanes,
-            OpWidth::W64,
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
             pc,
-            ctx,
-            &mut ops,
-        );
+            OpKind::X86MovMask {
+                dst: raw_mask,
+                src: compared,
+                elem,
+                lanes,
+                dst_width: OpWidth::W64,
+            },
+        ));
         let dst = VReg::Arch(ArchReg::X86(X86Reg::K(modrm.reg)));
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
@@ -725,134 +738,33 @@ impl X86_64Lifter {
                 ctx,
             );
             ops.extend(pre_ops);
-            let loaded = ctx.alloc_vreg();
             if let Some(mask_reg) = mask {
-                let zero = ctx.alloc_vreg();
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Mov {
-                        dst: zero,
-                        src: SrcOperand::Imm(0),
-                        width: OpWidth::W64,
-                    },
-                ));
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::VBroadcast {
-                        dst: loaded,
-                        scalar: zero,
+                if broadcast {
+                    self.append_masked_broadcast_memory_source(
+                        addr,
                         elem,
-                        lanes,
-                    },
-                ));
-                let base = ctx.alloc_vreg();
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Lea { dst: base, addr },
-                ));
-                let mem_width = match elem {
-                    VecElementType::I8 => MemWidth::B1,
-                    VecElementType::I16 => MemWidth::B2,
-                    VecElementType::I32 => MemWidth::B4,
-                    VecElementType::I64 => MemWidth::B8,
-                    _ => unreachable!(),
-                };
-                for lane in 0..lanes {
-                    let shifted = ctx.alloc_vreg();
-                    let active = ctx.alloc_vreg();
-                    let scalar = ctx.alloc_vreg();
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
+                        prefix.width,
+                        mask_reg,
                         pc,
-                        OpKind::Shr {
-                            dst: shifted,
-                            src: mask_reg,
-                            amount: SrcOperand::Imm(i64::from(lane)),
-                            width: OpWidth::W64,
-                            flags: FlagUpdate::None,
-                        },
-                    ));
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
+                        ctx,
+                        &mut ops,
+                    )
+                } else {
+                    self.append_evex_masked_vector_source(
+                        addr,
+                        elem,
+                        prefix.width,
+                        false,
+                        mask_reg,
                         pc,
-                        OpKind::And {
-                            dst: active,
-                            src1: shifted,
-                            src2: SrcOperand::Imm(1),
-                            width: OpWidth::W64,
-                            flags: FlagUpdate::None,
-                        },
-                    ));
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::Mov {
-                            dst: scalar,
-                            src: SrcOperand::Imm(0),
-                            width: OpWidth::W64,
-                        },
-                    ));
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::PredLoad {
-                            dst: scalar,
-                            cond: active,
-                            addr: Address::base_off(
-                                base,
-                                if broadcast {
-                                    0
-                                } else {
-                                    i64::from(lane) * i64::from(elem.bytes())
-                                },
-                            ),
-                            width: mem_width,
-                            signed: SignExtend::Zero,
-                        },
-                    ));
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::VInsertLane {
-                            dst: loaded,
-                            vec: loaded,
-                            scalar,
-                            lane,
-                            elem,
-                        },
-                    ));
+                        ctx,
+                        &mut ops,
+                    )
                 }
             } else if broadcast {
-                let scalar = ctx.alloc_vreg();
-                let mem_width = if elem == VecElementType::I32 {
-                    MemWidth::B4
-                } else {
-                    MemWidth::B8
-                };
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Load {
-                        dst: scalar,
-                        addr,
-                        width: mem_width,
-                        sign: SignExtend::Zero,
-                    },
-                ));
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::VBroadcast {
-                        dst: loaded,
-                        scalar,
-                        elem,
-                        lanes,
-                    },
-                ));
+                self.append_broadcast_memory_source(addr, elem, prefix.width, pc, ctx, &mut ops)
             } else {
+                let loaded = ctx.alloc_vreg();
                 ops.push(SmirOp::new(
                     OpId(ops.len() as u16),
                     pc,
@@ -862,59 +774,54 @@ impl X86_64Lifter {
                         width: prefix.width,
                     },
                 ));
+                loaded
             }
-            loaded
         } else {
             self.vec_reg(modrm.rm + if prefix.rm_high { 16 } else { 0 }, prefix.width)
         };
-        let raw_mask = ctx.alloc_vreg();
-        if let Some(cond) = cond {
-            let compared = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::VCmp {
-                    dst: compared,
-                    src1: self.vec_reg(
-                        prefix.vvvv + if prefix.v_high { 16 } else { 0 },
-                        prefix.width,
-                    ),
-                    src2,
-                    cond,
-                    elem,
-                    lanes,
+        let compared = ctx.alloc_vreg();
+        let (compare_src1, compare_cond) = if let Some(cond) = cond {
+            (
+                self.vec_reg(
+                    prefix.vvvv + if prefix.v_high { 16 } else { 0 },
+                    prefix.width,
+                ),
+                cond,
+            )
+        } else {
+            (
+                src2,
+                if constant.expect("immediate compare has a condition or constant") {
+                    VecCmpCond::Eq
+                } else {
+                    VecCmpCond::Ne
                 },
-            ));
-            self.append_sse_movmask(
-                raw_mask,
-                compared,
+            )
+        };
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::VCmp {
+                dst: compared,
+                src1: compare_src1,
+                src2,
+                cond: compare_cond,
                 elem,
                 lanes,
-                OpWidth::W64,
-                pc,
-                ctx,
-                &mut ops,
-            );
-        } else {
-            let all_lanes = if constant.unwrap() {
-                if lanes == 64 {
-                    -1
-                } else {
-                    ((1u64 << lanes) - 1) as i64
-                }
-            } else {
-                0
-            };
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Mov {
-                    dst: raw_mask,
-                    src: SrcOperand::Imm(all_lanes),
-                    width: OpWidth::W64,
-                },
-            ));
-        }
+            },
+        ));
+        let raw_mask = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86MovMask {
+                dst: raw_mask,
+                src: compared,
+                elem,
+                lanes,
+                dst_width: OpWidth::W64,
+            },
+        ));
         let dst = VReg::Arch(ArchReg::X86(X86Reg::K(modrm.reg)));
         if let Some(mask_reg) = mask {
             ops.push(SmirOp::new(
