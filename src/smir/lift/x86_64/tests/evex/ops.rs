@@ -424,12 +424,13 @@ fn lift_evex_ternary_logic_covers_widths_high_regs_e4_memory_and_invalids() {
                 }
             ))
             .count(),
-        16
+        1
     );
     assert!(broadcast.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::Lea {
+        OpKind::PredLoad {
             addr: Address::BaseOffset { offset: 508, .. },
+            width: MemWidth::B4,
             ..
         }
     )));

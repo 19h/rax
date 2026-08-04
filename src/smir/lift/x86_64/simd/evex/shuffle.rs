@@ -558,12 +558,22 @@ impl X86_64Lifter {
                 ctx,
             );
             ops.extend(pre_ops);
-            if prefix.aaa != 0 {
+            if prefix.aaa != 0 && broadcast {
+                self.append_masked_broadcast_memory_source(
+                    addr,
+                    elem,
+                    prefix.width,
+                    VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))),
+                    pc,
+                    ctx,
+                    &mut ops,
+                )
+            } else if prefix.aaa != 0 {
                 self.append_evex_masked_vector_source(
                     addr,
                     elem,
                     prefix.width,
-                    broadcast,
+                    false,
                     VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))),
                     pc,
                     ctx,
