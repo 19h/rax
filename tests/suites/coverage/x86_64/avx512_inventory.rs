@@ -1108,7 +1108,7 @@ fn evex_reduce_closes_generated_lift_and_register_lower_gap() {
 }
 
 #[test]
-fn evex_scale_f_closes_generated_lift_and_register_lower_gap() {
+fn evex_scale_f_closes_generated_lift_and_lower_gap() {
     let expected_mnemonics = set_from_slice(&[
         "vscalefpd",
         "vscalefph",
@@ -1147,27 +1147,30 @@ fn evex_scale_f_closes_generated_lift_and_register_lower_gap() {
                     .any(|op| matches!(op.kind, OpKind::X86ScaleF { .. }))
             );
 
+            let mut block = SmirBlock::new(BlockId(0), 0x1000);
+            block.ops = result.ops;
+            block.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = SmirFunction::new(FunctionId(0), BlockId(0), 0x1000);
+            function.add_block(block);
+            function
+                .x86_instruction_bytes
+                .insert((BlockId(0), 0x1000), instruction);
+            let mut lowerer = X86_64Lowerer::new();
+            lowerer.set_mem_helpers(true);
+            lowerer.set_preserve_vector_mem_helpers(true);
+            lowerer.set_jit_fault_deopt_guards(true);
+            lowerer.lower_function(&function).unwrap_or_else(|error| {
+                panic!(
+                    "{}: VSCALEF form failed to lower: {error:?}",
+                    spec_case_variant_id(&row, variant)
+                )
+            });
+            let code = lowerer.finalize().expect("finalize VSCALEF form");
             if variant.mode == EvexAsmMode::Register {
-                let mut block = SmirBlock::new(BlockId(0), 0x1000);
-                block.ops = result.ops;
-                block.set_terminator(Terminator::Return { values: vec![] });
-                let mut function = SmirFunction::new(FunctionId(0), BlockId(0), 0x1000);
-                function.add_block(block);
-                function
-                    .x86_instruction_bytes
-                    .insert((BlockId(0), 0x1000), instruction);
-                let mut lowerer = X86_64Lowerer::new();
-                lowerer.lower_function(&function).unwrap_or_else(|error| {
-                    panic!(
-                        "{}: register VSCALEF form failed to lower: {error:?}",
-                        spec_case_variant_id(&row, variant)
-                    )
-                });
-                let code = lowerer.finalize().expect("finalize register VSCALEF form");
                 assert!(code.windows(bytes.len()).any(|window| window == bytes));
-                lowered_mnemonics.insert(row.key.mnemonic.clone());
-                lowered_forms += 1;
             }
+            lowered_mnemonics.insert(row.key.mnemonic.clone());
+            lowered_forms += 1;
 
             covered_mnemonics.insert(row.key.mnemonic.clone());
             covered_forms += 1;
@@ -1177,7 +1180,7 @@ fn evex_scale_f_closes_generated_lift_and_register_lower_gap() {
     assert_eq!(covered_mnemonics, expected_mnemonics);
     assert_eq!(lowered_mnemonics, expected_mnemonics);
     assert_eq!(covered_forms, 60);
-    assert_eq!(lowered_forms, 48);
+    assert_eq!(lowered_forms, 60);
 }
 
 #[test]

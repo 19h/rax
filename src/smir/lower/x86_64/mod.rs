@@ -118,6 +118,8 @@ mod evex_packed_variable_shift_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_range_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_scale_f_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_shared_count_shift_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_ternary_logic_memory_source;
