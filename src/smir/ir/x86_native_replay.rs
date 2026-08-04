@@ -117,6 +117,7 @@ pub(crate) use classifiers::{
     X86EvexMultiShiftMemoryEncoding, X86EvexMultiShiftMemoryReplay,
     X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay,
     X86EvexPackedFp16ArithmeticMemoryEncoding, X86EvexPackedFp16ArithmeticMemoryReplay,
+    X86EvexPackedFp16ComplexMemoryEncoding, X86EvexPackedFp16ComplexMemoryReplay,
     X86EvexPackedFpArithmeticMemoryEncoding, X86EvexPackedFpArithmeticMemoryReplay,
     X86EvexPackedFpCompareMemoryEncoding, X86EvexPackedFpCompareMemoryReplay,
     X86EvexPackedFunnelShiftMemoryEncoding, X86EvexPackedFunnelShiftMemoryReplay,

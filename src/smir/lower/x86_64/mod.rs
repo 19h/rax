@@ -90,6 +90,8 @@ mod evex_fma3_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_fp16_arithmetic_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_fp16_complex_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_fp_arithmetic_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_fp_compare_memory_source;

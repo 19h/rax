@@ -12,6 +12,7 @@ mod evex_dbpsadbw_memory;
 mod evex_fixup_imm_memory;
 mod evex_fma3_memory;
 mod evex_fp16_arithmetic_memory;
+mod evex_fp16_complex_memory;
 mod evex_fp_arithmetic_memory;
 mod evex_fp_compare_memory;
 mod evex_fp_interleave_memory;
@@ -153,6 +154,9 @@ pub(crate) use evex_fp_shuffle_memory::{
 };
 pub(crate) use evex_fp16_arithmetic_memory::{
     X86EvexPackedFp16ArithmeticMemoryEncoding, X86EvexPackedFp16ArithmeticMemoryReplay,
+};
+pub(crate) use evex_fp16_complex_memory::{
+    X86EvexPackedFp16ComplexMemoryEncoding, X86EvexPackedFp16ComplexMemoryReplay,
 };
 pub(crate) use evex_full_permute_memory::{
     X86EvexFullPermuteControl, X86EvexFullPermuteMemoryEncoding, X86EvexFullPermuteMemoryReplay,

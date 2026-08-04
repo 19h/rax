@@ -696,6 +696,23 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.needs_avx512fp16 = true;
                 all_spans_support_avx_ymm16 = false;
                 index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_evex_packed_fp16_complex_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                // The full-width vector/opmask bridge requires AVX-512BW;
+                // packed complex arithmetic itself requires AVX-512-FP16.
+                requirements.needs_avx512bw = true;
+                requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+                requirements.needs_avx512fp16 = true;
+                all_spans_support_avx_ymm16 = false;
+                index += sequence.consumed;
             } else if let Some(sequence) = super::x86_jit_evex_packed_fp_arithmetic_memory_sequence(
                 block,
                 index,
