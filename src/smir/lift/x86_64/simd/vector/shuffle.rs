@@ -152,128 +152,6 @@ impl X86_64Lifter {
         indices
     }
 
-    pub(crate) fn append_masked_permute_memory_result(
-        &self,
-        addr: Address,
-        indices: VReg,
-        width: VecWidth,
-        elem: VecElementType,
-        broadcast: bool,
-        mask: VReg,
-        pc: u64,
-        ctx: &mut LiftContext,
-        ops: &mut Vec<SmirOp>,
-    ) -> VReg {
-        let result = self.append_zero_vector(width, elem, pc, ctx, ops);
-        let lanes = width.lanes(elem) as u8;
-        let base = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Lea { dst: base, addr },
-        ));
-        let mem_width = match elem {
-            VecElementType::I8 => MemWidth::B1,
-            VecElementType::I16 => MemWidth::B2,
-            VecElementType::I32 | VecElementType::F32 => MemWidth::B4,
-            VecElementType::I64 | VecElementType::F64 => MemWidth::B8,
-            _ => unreachable!(),
-        };
-        for lane in 0..lanes {
-            let shifted_mask = ctx.alloc_vreg();
-            let active = ctx.alloc_vreg();
-            let selected = ctx.alloc_vreg();
-            let bounded = ctx.alloc_vreg();
-            let scalar = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Shr {
-                    dst: shifted_mask,
-                    src: mask,
-                    amount: SrcOperand::Imm(i64::from(lane)),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::And {
-                    dst: active,
-                    src1: shifted_mask,
-                    src2: SrcOperand::Imm(1),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::VExtractLane {
-                    dst: selected,
-                    vec: indices,
-                    lane,
-                    elem,
-                    sign: SignExtend::Zero,
-                },
-            ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::And {
-                    dst: bounded,
-                    src1: selected,
-                    src2: SrcOperand::Imm(i64::from(lanes - 1)),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Mov {
-                    dst: scalar,
-                    src: SrcOperand::Imm(0),
-                    width: OpWidth::W64,
-                },
-            ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::PredLoad {
-                    dst: scalar,
-                    cond: active,
-                    addr: if broadcast {
-                        Address::Direct(base)
-                    } else {
-                        Address::BaseIndexScale {
-                            base: Some(base),
-                            index: bounded,
-                            scale: elem.bytes() as u8,
-                            disp: 0,
-                            disp_size: DispSize::Auto,
-                        }
-                    },
-                    width: mem_width,
-                    signed: SignExtend::Zero,
-                },
-            ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::VInsertLane {
-                    dst: result,
-                    vec: result,
-                    scalar,
-                    lane,
-                    elem,
-                },
-            ));
-        }
-        result
-    }
-
     pub(crate) fn append_packed_shuffle_imm(
         &self,
         dst: VReg,
@@ -1070,21 +948,7 @@ impl X86_64Lifter {
         let table = if permil {
             Some(vvvv)
         } else if let Some(addr) = memory_addr {
-            if let Some(mask) = mask {
-                let raw = self.append_masked_permute_memory_result(
-                    addr,
-                    indices,
-                    prefix.width,
-                    elem,
-                    broadcast,
-                    mask,
-                    pc,
-                    ctx,
-                    &mut ops,
-                );
-                self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
-                return Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed));
-            }
+            // E4NF/E4NF.nb VPERM* reads the complete tuple before applying its writemask.
             if broadcast {
                 Some(self.append_broadcast_memory_source(
                     addr,
@@ -1266,21 +1130,8 @@ impl X86_64Lifter {
                 ctx,
             );
             ops.extend(pre_ops);
-            if let Some(mask) = mask {
-                let raw = self.append_masked_permute_memory_result(
-                    addr,
-                    indices,
-                    prefix.width,
-                    elem,
-                    broadcast,
-                    mask,
-                    pc,
-                    ctx,
-                    &mut ops,
-                );
-                self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
-                return Ok(LiftResult::fallthrough(ops, imm_offset + 1));
-            }
+            // Every EVEX immediate-control permute here is E4NF: its complete
+            // tuple read is unconditional and masking governs only the result.
             if broadcast {
                 self.append_broadcast_memory_source(addr, elem, prefix.width, pc, ctx, &mut ops)
             } else {

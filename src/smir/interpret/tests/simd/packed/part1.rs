@@ -1464,7 +1464,7 @@ fn interprets_vpermute_single_and_two_table_domains() {
     }
 }
 #[test]
-fn executes_avx_permute_domains_masks_aliases_and_fault_suppression() {
+fn executes_avx_permute_domains_masks_aliases_and_e4nf_fault_precision() {
     fn vec_u32(values: &[u32]) -> VecValue {
         vec_from_bytes(
             &values
@@ -1582,8 +1582,10 @@ fn executes_avx_permute_domains_masks_aliases_and_fault_suppression() {
         }
     }
 
-    memory.write(0x3FC, &0xA1B2_C3D4u32.to_le_bytes()).unwrap();
-    ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x3FC);
+    let mut full_tuple = [0u8; 64];
+    full_tuple[..4].copy_from_slice(&0xA1B2_C3D4u32.to_le_bytes());
+    memory.write(0x300, &full_tuple).unwrap();
+    ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x300);
     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
         x86.xmm[20] = [0xCCCC_CCCC_CCCC_CCCC; 16];
         x86.xmm[21] = vec_u32(&[
@@ -1603,9 +1605,24 @@ fn executes_avx_permute_domains_masks_aliases_and_fault_suppression() {
     }
 
     let sentinel = [0x5A5A_5A5A_5A5A_5A5A; 16];
+    memory.write(0x3FC, &0xA1B2_C3D4u32.to_le_bytes()).unwrap();
+    ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x3FC);
     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
         x86.xmm[20] = sentinel;
-        x86.k[5] = 2;
+        // Even though the only selected lane names the mapped first dword,
+        // Type E4NF requires the complete 64-byte tuple to be read.
+        x86.k[5] = 1;
+    }
+    assert!(matches!(
+        execute_lifted_x86(&[0x62, 0xE2, 0x55, 0xC5, 0x36, 0x20], &mut ctx, &mut memory),
+        BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+    ));
+    if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+        assert_eq!(x86.xmm[20], sentinel);
+    }
+
+    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+        x86.k[5] = 0;
     }
     assert!(matches!(
         execute_lifted_x86(&[0x62, 0xE2, 0x55, 0xC5, 0x36, 0x20], &mut ctx, &mut memory),

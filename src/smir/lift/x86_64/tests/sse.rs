@@ -1583,19 +1583,20 @@ fn lift_avx_permute_family_covers_domains_widths_masks_memory_and_invalids() {
             .iter()
             .filter(|op| matches!(
                 op.kind,
-                OpKind::PredLoad {
-                    width: MemWidth::B4,
+                OpKind::VLoad {
+                    width: VecWidth::V512,
                     ..
                 }
             ))
             .count(),
-        16
+        1
     );
     assert!(
         !masked_memory
             .ops
             .iter()
-            .any(|op| matches!(op.kind, OpKind::VLoad { .. }))
+            .any(|op| matches!(op.kind, OpKind::PredLoad { .. })),
+        "class-E4NF VPERMD source memory cannot be fault-suppressed"
     );
 
     let broadcast_controls = lift_single(&[0x62, 0xE2, 0x6D, 0xD3, 0x0C, 0x08]).unwrap();
