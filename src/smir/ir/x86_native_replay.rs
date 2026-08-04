@@ -116,6 +116,7 @@ pub(crate) use classifiers::{
     X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay,
     X86EvexPackedFp16ArithmeticMemoryEncoding, X86EvexPackedFp16ArithmeticMemoryReplay,
     X86EvexPackedFpArithmeticMemoryEncoding, X86EvexPackedFpArithmeticMemoryReplay,
+    X86EvexPackedFpCompareMemoryEncoding, X86EvexPackedFpCompareMemoryReplay,
     X86EvexPackedFunnelShiftMemoryEncoding, X86EvexPackedFunnelShiftMemoryReplay,
     X86EvexPackedRotateMemoryEncoding, X86EvexPackedRotateMemoryReplay,
     X86EvexPackedVariableShiftMemoryEncoding, X86EvexPackedVariableShiftMemoryReplay,
@@ -1208,9 +1209,9 @@ pub fn x86_evex_fp_class_replay_spans(
 
 /// Identify valid register-only EVEX floating-point comparison replay groups
 /// in `block` in O(N) time and O(P) space for N operations and P unique guest
-/// PCs. Register-source `VCMPPS/PD/SS/SD/PH/SH`,
-/// `VCOMISS/SD/SH`, and `VUCOMISS/SD/SH` forms are admitted; every memory form
-/// remains at the precise SMIR interpreter boundary.
+/// PCs. Register-source `VCMPPS/PD/SS/SD/PH/SH`, `VCOMISS/SD/SH`, and
+/// `VUCOMISS/SD/SH` forms are admitted here. Packed EVEX memory forms are
+/// admitted separately only as exact helper-backed Type-E2 sequences.
 pub fn x86_evex_fp_compare_replay_spans(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,

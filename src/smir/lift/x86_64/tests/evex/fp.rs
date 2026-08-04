@@ -2515,6 +2515,8 @@ fn lift_legacy_vex_evex_fp_compare_family() {
     ));
 
     let fp16_broadcast = lift_single(&[0x62, 0xF3, 0x7C, 0x19, 0xC2, 0x08, 0x03]).unwrap();
+    // Type E2 broadcast has one architectural m16 operand. Aggregate the
+    // eight lane mask bits before issuing exactly one predicated scalar read.
     assert_eq!(
         fp16_broadcast
             .ops
@@ -2527,7 +2529,7 @@ fn lift_legacy_vex_evex_fp_compare_family() {
                 }
             ))
             .count(),
-        8
+        1
     );
     assert!(matches!(
         fp16_broadcast.ops.last().unwrap().kind,
@@ -2556,24 +2558,20 @@ fn lift_legacy_vex_evex_fp_compare_family() {
     }
 
     let masked_broadcast = lift_single(&[0x62, 0xF1, 0x6C, 0x52, 0xC2, 0x58, 0x10, 0x03]).unwrap();
+    // The 16 active-lane predicates guard one m32 broadcast operand, rather
+    // than duplicating that scalar access once per lane.
     assert_eq!(
         masked_broadcast
             .ops
             .iter()
             .filter(|op| matches!(op.kind, OpKind::PredLoad { .. }))
             .count(),
-        16
+        1
     );
     assert!(masked_broadcast.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::Lea {
-            addr: Address::BaseOffset { offset: 64, .. },
-            ..
-        }
-    )));
-    assert!(masked_broadcast.ops.iter().any(|op| matches!(
-        op.kind,
         OpKind::PredLoad {
+            addr: Address::BaseOffset { offset: 64, .. },
             width: MemWidth::B4,
             ..
         }

@@ -580,6 +580,8 @@ fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
 
     let fp16_compare = optimized(&[0x62, 0xF3, 0x6C, 0x1A, 0xC2, 0x18, 0]);
     let ops = &fp16_compare.blocks[0].ops;
+    // Type E2 broadcast owns one architectural m16 operand. Its aggregate
+    // nonzero-mask predicate and sole scalar read must survive optimization.
     assert_eq!(
         ops.iter()
             .filter(|op| matches!(
@@ -590,8 +592,8 @@ fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
                 }
             ))
             .count(),
-        8,
-        "VCMPPH broadcast PredLoads must survive optimization",
+        1,
+        "VCMPPH aggregate broadcast PredLoad must survive optimization",
     );
     let last_load = ops
         .iter()

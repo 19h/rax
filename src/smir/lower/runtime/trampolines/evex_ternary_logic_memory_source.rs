@@ -88,6 +88,7 @@ pub(crate) fn x86_jit_evex_ternary_logic_memory_sequence(
         elem: encoding.elem,
         writemask: encoding.writemask,
         zeroing: encoding.zeroing,
+        vector_load_hint: None,
         form,
     };
     let exact = exact_evex_e4_memory_sequence(

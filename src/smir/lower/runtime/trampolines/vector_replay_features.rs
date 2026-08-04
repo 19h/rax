@@ -646,6 +646,23 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
                 all_spans_support_avx_ymm16 = false;
                 index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_evex_packed_fp_compare_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                // The full-width vector/opmask bridge requires AVX-512BW;
+                // packed comparison itself requires F or FP16.
+                requirements.needs_avx512bw = true;
+                requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+                requirements.needs_avx512fp16 |= sequence.encoding.needs_avx512fp16;
+                all_spans_support_avx_ymm16 = false;
+                index += sequence.consumed;
             } else if let Some(sequence) = super::x86_jit_evex_gfni_affine_memory_sequence(
                 block,
                 index,

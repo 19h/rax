@@ -8,6 +8,8 @@ mod crypto;
 pub use crypto::*;
 mod fp;
 pub use fp::*;
+mod fp_compare;
+pub use fp_compare::*;
 mod fp_interleave;
 pub use fp_interleave::*;
 mod fma4;

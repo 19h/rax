@@ -90,6 +90,7 @@ pub(crate) fn x86_jit_evex_packed_variable_shift_memory_sequence(
         elem: encoding.elem,
         writemask: encoding.writemask,
         zeroing: encoding.zeroing,
+        vector_load_hint: None,
         form,
     };
     let exact = exact_evex_e4_memory_sequence(

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use super::x86_jit_mem_address_shape_valid;
 use crate::smir::ir::flags::FlagUpdate;
-use crate::smir::ir::ops::OpKind;
+use crate::smir::ir::ops::{OpKind, X86OpHint};
 use crate::smir::ir::types::{
     Address, ArchReg, DispSize, GuestAddr, MemWidth, OpWidth, SignExtend, SrcOperand, VReg,
     VecElementType, VecWidth, X86Reg,
@@ -674,6 +674,7 @@ pub(super) struct X86EvexE4MemoryShape {
     pub(super) elem: VecElementType,
     pub(super) writemask: Option<u8>,
     pub(super) zeroing: bool,
+    pub(super) vector_load_hint: Option<X86OpHint>,
     pub(super) form: X86EvexE4MemoryReplayForm,
 }
 
@@ -809,7 +810,7 @@ where
     let load = block.ops.get(index)?;
     let loaded = match &load.kind {
         OpKind::VLoad { dst, addr, width }
-            if load.x86_hint.is_none()
+            if load.x86_hint == shape.vector_load_hint
                 && *width == shape.width
                 && x86_jit_mem_address_shape_valid(addr) =>
         {

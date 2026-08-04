@@ -88,6 +88,8 @@ mod evex_fp16_arithmetic_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_fp_arithmetic_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_fp_compare_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_fp_interleave_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_fp_shuffle_memory_source;
