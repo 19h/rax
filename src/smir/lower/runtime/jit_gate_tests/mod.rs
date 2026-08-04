@@ -156,6 +156,8 @@ mod evex_permute_replay;
 #[cfg(test)]
 mod evex_range_memory_source;
 #[cfg(test)]
+mod evex_scalar_fp_arithmetic_memory_source;
+#[cfg(test)]
 mod evex_scalar_fp_convert_replay;
 #[cfg(test)]
 mod evex_scalar_fp_to_int_replay;
