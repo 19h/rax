@@ -102,6 +102,8 @@ mod evex_full_permute_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_gfni_affine_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_gfni_multiply_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_integer_arithmetic_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_integer_interleave_memory_source;

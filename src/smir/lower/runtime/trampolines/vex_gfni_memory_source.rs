@@ -185,12 +185,27 @@ pub(super) fn x86_jit_gfni_expansion_sequence(
     if immediate.is_some() == (kind == X86VexGfniMemoryKind::Multiply) {
         return None;
     }
-    for expected in expected_profiles(kind) {
+    'profiles: for expected in expected_profiles(kind) {
         let core_len = expected.total().checked_sub(2)?;
         let Some(sequence) = block.ops.get(index..index.checked_add(core_len)?) else {
             continue;
         };
-        let Some(raw) = sequence.last().and_then(|op| match op.kind {
+        // At O0, the final multiply round retains six dead updates to the
+        // multiplicand and multiplier after producing the architectural
+        // result. O1/O2 remove those updates. Affine expansions finish at
+        // their result XOR in every supported profile.
+        let raw_index = if kind == X86VexGfniMemoryKind::Multiply && *expected == GFNI_MULTIPLY_O0 {
+            let Some(index) = core_len.checked_sub(7) else {
+                continue;
+            };
+            index
+        } else {
+            let Some(index) = core_len.checked_sub(1) else {
+                continue;
+            };
+            index
+        };
+        let Some(raw) = sequence.get(raw_index).and_then(|op| match op.kind {
             OpKind::VXor {
                 dst,
                 width: op_width,
@@ -333,35 +348,60 @@ pub(super) fn x86_jit_gfni_expansion_sequence(
             expected_immediates.extend([0, 1, 0, 1, 2, 3, 4, 5, 6, 7]);
             expected_immediates.push(i64::from(immediate));
             for amount in [4usize, 2, 1] {
-                right_shifts[amount] = right_shifts[amount]
+                let Some(adjusted) = right_shifts[amount]
                     .checked_sub(8)
-                    .filter(|_| kind != X86VexGfniMemoryKind::Multiply)?;
+                    .filter(|_| kind != X86VexGfniMemoryKind::Multiply)
+                else {
+                    continue 'profiles;
+                };
+                right_shifts[amount] = adjusted;
             }
             for amount in 1usize..=7 {
-                left_shifts[amount] = left_shifts[amount]
+                let Some(adjusted) = left_shifts[amount]
                     .checked_sub(1)
-                    .filter(|_| kind != X86VexGfniMemoryKind::Multiply)?;
+                    .filter(|_| kind != X86VexGfniMemoryKind::Multiply)
+                else {
+                    continue 'profiles;
+                };
+                left_shifts[amount] = adjusted;
             }
         }
         let expected_multiply_shifts = multiply_count * multiply_iterations;
         if multiply_count != 0 {
-            right_shifts[7] = right_shifts[7].checked_sub(expected_multiply_shifts)?;
-            right_shifts[1] = right_shifts[1].checked_sub(expected_multiply_shifts)?;
-            left_shifts[1] = left_shifts[1].checked_sub(expected_multiply_shifts)?;
+            let Some(adjusted_right_seven) = right_shifts[7].checked_sub(expected_multiply_shifts)
+            else {
+                continue 'profiles;
+            };
+            let Some(adjusted_right_one) = right_shifts[1].checked_sub(expected_multiply_shifts)
+            else {
+                continue 'profiles;
+            };
+            let Some(adjusted_left_one) = left_shifts[1].checked_sub(expected_multiply_shifts)
+            else {
+                continue 'profiles;
+            };
+            right_shifts[7] = adjusted_right_seven;
+            right_shifts[1] = adjusted_right_one;
+            left_shifts[1] = adjusted_left_one;
         }
         mov_immediates.sort_unstable();
         expected_immediates.sort_unstable();
+        let expected_loaded_uses = if kind == X86VexGfniMemoryKind::Multiply {
+            2
+        } else {
+            8
+        };
+        let actual_loaded_uses = sequence
+            .iter()
+            .flat_map(|op| op.kind.source_vregs())
+            .filter(|reg| *reg == loaded)
+            .count();
         if valid
             && profile == *expected
             && mov_immediates == expected_immediates
             && left_shifts == [0; 8]
             && right_shifts == [0; 8]
-            && sequence
-                .iter()
-                .flat_map(|op| op.kind.source_vregs())
-                .filter(|reg| *reg == loaded)
-                .count()
-                == 8
+            && actual_loaded_uses == expected_loaded_uses
         {
             return Some((raw, core_len));
         }

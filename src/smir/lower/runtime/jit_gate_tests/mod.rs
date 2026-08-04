@@ -96,6 +96,7 @@ mod evex_fp_shuffle_memory_source;
 mod evex_fp_sqrt_replay;
 mod evex_full_permute_memory_source;
 mod evex_gfni_affine_memory_source;
+mod evex_gfni_multiply_memory_source;
 #[cfg(test)]
 mod evex_gfni_replay;
 #[cfg(test)]
