@@ -656,15 +656,18 @@ pub(super) fn exact_nonzero_mask_predicate(
     Some(predicate)
 }
 
-/// Memory materialization selected by an EVEX E4-class native replay.
+/// Memory materialization selected by an EVEX E2/E3/E4-compatible native replay.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum X86EvexE4MemoryReplayForm {
     Vector,
     Broadcast,
     MaskedVector,
+    /// Scalar E3-class load+op graph; structurally identical to the scalar
+    /// staging used by helper-backed replay families.
+    Scalar,
 }
 
-/// Architectural fields shared by exact EVEX E4-class source sequences.
+/// Architectural fields shared by exact EVEX E2/E3/E4-compatible source sequences.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) struct X86EvexE4MemoryShape {
     pub(super) width: VecWidth,
@@ -674,7 +677,7 @@ pub(super) struct X86EvexE4MemoryShape {
     pub(super) form: X86EvexE4MemoryReplayForm,
 }
 
-/// Structural extent of one exact EVEX E4-class source decomposition.
+/// Structural extent of one exact EVEX E2/E3/E4-compatible source decomposition.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) struct X86EvexE4MemoryMatch {
     pub(super) consumed: usize,
@@ -1185,7 +1188,125 @@ where
     })
 }
 
-/// Match an exact O0/O1/O2 EVEX E4-class memory-source decomposition.
+fn exact_scalar_e3_memory<F>(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    shape: X86EvexE4MemoryShape,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+    exact_consumer: &F,
+) -> Option<X86EvexE4MemoryMatch>
+where
+    F: Fn(&crate::smir::ir::ops::SmirOp, VReg) -> bool,
+{
+    if shape.form != X86EvexE4MemoryReplayForm::Scalar || shape.width != VecWidth::V128 {
+        return None;
+    }
+    let first = block.ops.get(index)?;
+    let guest_pc = first.guest_pc;
+    let scalar = match first.kind {
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Imm(0),
+            width: OpWidth::W64,
+        } if first.x86_hint.is_none() => dst,
+        _ => return None,
+    };
+    if !exact_virtual_definition_use(scalar, 2, 1, virtual_definitions, virtual_uses) {
+        return None;
+    }
+
+    let mut offset = 1usize;
+    let condition = if let Some(mask_index) = shape.writemask {
+        Some(exact_lane_predicate(
+            block,
+            index,
+            &mut offset,
+            guest_pc,
+            VReg::Arch(ArchReg::X86(X86Reg::K(mask_index))),
+            0,
+            virtual_definitions,
+            virtual_uses,
+        )?)
+    } else {
+        None
+    };
+
+    let address_offset = offset;
+    let expected_width = evex_e4_memory_width(shape.elem)?;
+    let load = block.ops.get(index + offset)?;
+    let exact_load = match (&load.kind, condition) {
+        (
+            OpKind::Load {
+                dst,
+                addr,
+                width,
+                sign: SignExtend::Zero,
+            },
+            None,
+        ) => {
+            *dst == scalar
+                && *width == expected_width
+                && load.x86_hint.is_none()
+                && x86_jit_mem_address_shape_valid(addr)
+        }
+        (
+            OpKind::PredLoad {
+                dst,
+                cond,
+                addr,
+                width,
+                signed: SignExtend::Zero,
+            },
+            Some(expected_condition),
+        ) => {
+            *dst == scalar
+                && *cond == expected_condition
+                && *width == expected_width
+                && load.x86_hint.is_none()
+                && x86_jit_mem_address_shape_valid(addr)
+        }
+        _ => false,
+    };
+    if !exact_load || load.guest_pc != guest_pc {
+        return None;
+    }
+    offset += 1;
+
+    let broadcast = block.ops.get(index + offset)?;
+    let loaded = match broadcast.kind {
+        OpKind::VBroadcast {
+            dst,
+            scalar: actual_scalar,
+            elem,
+            lanes: 1,
+        } if broadcast.x86_hint.is_none() && actual_scalar == scalar && elem == shape.elem => dst,
+        _ => return None,
+    };
+    if broadcast.guest_pc != guest_pc
+        || !single_definition_single_use(loaded, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+    offset += 1;
+
+    let consumer = block.ops.get(index + offset)?;
+    if consumer.guest_pc != guest_pc || !exact_consumer(consumer, loaded) {
+        return None;
+    }
+    offset += 1;
+    if !no_following_same_pc(block, index, offset, guest_pc) {
+        return None;
+    }
+    Some(X86EvexE4MemoryMatch {
+        consumed: offset,
+        address_offset,
+        memory_size: expected_width.bytes(),
+    })
+}
+
+/// Match an exact O0/O1/O2 EVEX E2/E3/E4-compatible memory-source
+/// decomposition.
 ///
 /// The operation-specific callback binds the reconstructed memory value to
 /// its sole semantic consumer. Classification is O(L) time and O(1)
@@ -1232,6 +1353,14 @@ where
             &exact_consumer,
         ),
         (X86EvexE4MemoryReplayForm::MaskedVector, Some(_)) => exact_masked_e4_vector(
+            block,
+            index,
+            shape,
+            virtual_definitions,
+            virtual_uses,
+            &exact_consumer,
+        ),
+        (X86EvexE4MemoryReplayForm::Scalar, _) => exact_scalar_e3_memory(
             block,
             index,
             shape,

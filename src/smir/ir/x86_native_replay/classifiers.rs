@@ -24,6 +24,7 @@ mod evex_multishift_memory;
 mod evex_packed_funnel_shift_memory;
 mod evex_packed_rotate_memory;
 mod evex_packed_variable_shift_memory;
+mod evex_range_memory;
 mod evex_shared_count_shift_memory;
 mod evex_ternary_logic_memory;
 mod evex_two_table_permute_memory;
@@ -163,6 +164,7 @@ pub(crate) use evex_packed_rotate_memory::{
 pub(crate) use evex_packed_variable_shift_memory::{
     X86EvexPackedVariableShiftMemoryEncoding, X86EvexPackedVariableShiftMemoryReplay,
 };
+pub(crate) use evex_range_memory::{X86EvexRangeMemoryEncoding, X86EvexRangeMemoryReplay};
 pub(crate) use evex_shared_count_shift_memory::X86EvexSharedCountShiftMemoryEncoding;
 pub(crate) use evex_ternary_logic_memory::{
     X86EvexTernaryLogicMemoryEncoding, X86EvexTernaryLogicMemoryReplay,

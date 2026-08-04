@@ -1,115 +1,22 @@
-//! Helper-backed EVEX packed doubleword/quadword rotate memory lowering.
+//! Helper-backed EVEX VRANGEPD/PS/SD/SS memory lowering.
 
 use std::collections::HashMap;
 
+use super::evex_packed_rotate_memory_source::EVEX_E4_MASKED_VECTOR_FRAME_SIZE;
 use super::{X86_64Lowerer, X86Cond, X86Emitter};
 use crate::smir::ir::SmirBlock;
-use crate::smir::ir::X86EvexPackedRotateMemoryReplay;
+use crate::smir::ir::X86EvexRangeMemoryReplay;
 use crate::smir::ir::ops::OpKind;
-use crate::smir::ir::types::{
-    Address, MemWidth, OpWidth, SignExtend, VReg, VecElementType, VecWidth,
-};
+use crate::smir::ir::types::{OpWidth, SignExtend, VReg};
 use crate::smir::lower::regalloc::PhysReg;
 use crate::smir::lower::{LowerError, X86_JIT_VECTOR_SCRATCH_INDEX};
 
-// Full-vector writemasking stages 64 payload bytes plus one 8-byte scalar
-// helper result. An 80-byte frame preserves the trampoline's 16-byte call
-// alignment while keeping the two regions disjoint.
-pub(super) const EVEX_E4_MASKED_VECTOR_FRAME_SIZE: i32 = 80;
-pub(super) const EVEX_E4_MASKED_VECTOR_STAGING_OFFSET: i32 = 64;
-
 impl X86_64Lowerer {
-    pub(super) fn evex_e4_memory_phys_reg(index: u8, width: VecWidth) -> PhysReg {
-        match width {
-            VecWidth::V128 => PhysReg::Xmm(index),
-            VecWidth::V256 => PhysReg::Ymm(index),
-            VecWidth::V512 => PhysReg::Zmm(index),
-            _ => unreachable!("validated EVEX E4 packed width"),
-        }
-    }
-
-    pub(super) fn evex_e4_memory_element_widths(
-        elem: VecElementType,
-    ) -> Result<(MemWidth, OpWidth, i32), LowerError> {
-        match elem {
-            VecElementType::I16 => Ok((MemWidth::B2, OpWidth::W16, 2)),
-            VecElementType::I32 | VecElementType::F32 => Ok((MemWidth::B4, OpWidth::W32, 4)),
-            VecElementType::I64 | VecElementType::F64 => Ok((MemWidth::B8, OpWidth::W64, 8)),
-            _ => Err(LowerError::InvalidOperand {
-                op: "EVEX helper-backed memory source".to_string(),
-                operand: format!("unsupported element type {elem:?}"),
-            }),
-        }
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub(super) fn emit_evex_masked_e4_memory_lane_helper(
-        &mut self,
-        guest_pc: u64,
-        address: &Address,
-        mask: u8,
-        lane: usize,
-        memory_width: MemWidth,
-        copy_width: OpWidth,
-        lane_bytes: i32,
-    ) -> Result<(), LowerError> {
-        self.code.emit_u8(0x9C); // pushfq
-        self.code.emit_u8(0x50); // push guest RAX
-        self.emit_opmask_mask_to_rax64(mask);
-        {
-            let mut emitter = X86Emitter::new(&mut self.code);
-            emitter.emit_test_ri(PhysReg::Rax, 1i64 << lane, OpWidth::W32);
-        }
-        let inactive = self.emit_jcc_placeholder(X86Cond::E);
-        self.code.emit_u8(0x58); // pop guest RAX
-        self.code.emit_u8(0x9D); // restore exact pre-guard flags
-
-        let lane_offset = i32::try_from(lane).expect("at most 32 E4 vector lanes") * lane_bytes;
-        self.emit_jit_mem_op_linear_offset(
-            guest_pc,
-            true,
-            None,
-            Some(16 + EVEX_E4_MASKED_VECTOR_STAGING_OFFSET),
-            None,
-            None,
-            None,
-            address,
-            memory_width,
-            SignExtend::Zero,
-            EVEX_E4_MASKED_VECTOR_FRAME_SIZE,
-            lane_offset,
-        )?;
-
-        // The scalar helper ABI stages a complete 8-byte return. Copy exactly
-        // one 2/4/8-byte architectural lane into the vector payload.
-        self.code.emit_u8(0x50); // push guest RAX
-        {
-            let mut emitter = X86Emitter::new(&mut self.code);
-            emitter.emit_mov_rm(
-                PhysReg::Rax,
-                PhysReg::Rsp,
-                8 + EVEX_E4_MASKED_VECTOR_STAGING_OFFSET,
-                copy_width,
-            );
-            emitter.emit_mov_mr(PhysReg::Rsp, 8 + lane_offset, PhysReg::Rax, copy_width);
-        }
-        self.code.emit_u8(0x58); // pop guest RAX
-        self.code.emit_u8(0xE9);
-        let done = self.code.position();
-        self.code.emit_u32(0);
-
-        self.patch_rel32_to_current(inactive)?;
-        self.code.emit_u8(0x58); // pop guest RAX
-        self.code.emit_u8(0x9D); // restore exact pre-guard flags
-        self.patch_rel32_to_current(done)?;
-        Ok(())
-    }
-
-    fn emit_evex_packed_rotate_broadcast_replay(
+    fn emit_evex_range_stack_replay(
         &mut self,
         block: &SmirBlock,
         index: usize,
-        sequence: crate::smir::lower::runtime::X86JitEvexPackedRotateMemorySequence,
+        sequence: crate::smir::lower::runtime::X86JitEvexRangeMemorySequence,
         stack_instruction: crate::smir::ir::X86InstructionBytes,
     ) -> Result<(), LowerError> {
         let (memory_width, _, _) = Self::evex_e4_memory_element_widths(sequence.encoding.elem)?;
@@ -127,7 +34,7 @@ impl X86_64Lowerer {
                 signed: SignExtend::Zero,
                 ..
             } if *width == memory_width => addr,
-            _ => unreachable!("validated rotate broadcast owns its scalar memory op"),
+            _ => unreachable!("validated VRANGE stack replay owns its scalar memory op"),
         };
         {
             let mut emitter = X86Emitter::new(&mut self.code);
@@ -135,7 +42,11 @@ impl X86_64Lowerer {
         }
 
         let inactive = if let Some(mask) = sequence.encoding.writemask {
-            let lanes = sequence.encoding.width.lanes(sequence.encoding.elem);
+            let lanes = if sequence.encoding.scalar {
+                1
+            } else {
+                sequence.encoding.width.lanes(sequence.encoding.elem)
+            };
             let lane_mask = (1u64 << lanes) - 1;
             self.code.emit_u8(0x9C); // pushfq
             self.code.emit_u8(0x50); // push guest RAX
@@ -183,48 +94,48 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-    /// Fuse one exact packed AVX-512 doubleword/quadword rotate memory
-    /// decomposition.
+    /// Fuse one exact packed or scalar AVX-512 VRANGE memory decomposition.
     ///
-    /// Unmasked vectors use the reserved nonarchitectural vector transfer
-    /// slot and a byte-validated register rewrite. Broadcasts issue at most
-    /// one scalar helper access and replay an exact `[rsp]{1toN}` form.
-    /// Writemasked vectors issue ascending 4/8-byte helper loads only for
-    /// active lanes and commit the destination only after every load succeeds.
-    pub(crate) fn try_lower_jit_evex_packed_rotate_memory_source(
+    /// Unmasked packed vectors use the reserved nonarchitectural vector
+    /// transfer slot and a byte-validated register rewrite. Broadcasts and
+    /// scalar forms issue at most one scalar helper access and replay an exact
+    /// `[rsp]` memory form. Writemasked packed vectors issue ascending 4/8-byte
+    /// helper loads only for active lanes. Every helper completes before the
+    /// native VRANGE executes, so a fault exits at the source guest PC without
+    /// changing the destination or MXCSR; successful replay retains native
+    /// sticky invalid/denormal reporting.
+    pub(crate) fn try_lower_jit_evex_range_memory_source(
         &mut self,
         block: &SmirBlock,
         index: usize,
         virtual_definitions: &HashMap<VReg, usize>,
         virtual_uses: &HashMap<VReg, usize>,
     ) -> Result<Option<usize>, LowerError> {
-        let Some(sequence) =
-            crate::smir::lower::runtime::x86_jit_evex_packed_rotate_memory_sequence(
-                block,
-                index,
-                true,
-                &self.x86_instruction_bytes,
-                virtual_definitions,
-                virtual_uses,
-            )
-        else {
+        let Some(sequence) = crate::smir::lower::runtime::x86_jit_evex_range_memory_sequence(
+            block,
+            index,
+            true,
+            &self.x86_instruction_bytes,
+            virtual_definitions,
+            virtual_uses,
+        ) else {
             return Ok(None);
         };
         if self.avx_ymm16_vector_state {
             return Err(LowerError::InvalidOperand {
-                op: "EVEX packed rotate memory source".to_string(),
-                operand: "AVX-only vector bridge cannot carry AVX-512 rotates".to_string(),
+                op: "EVEX VRANGE memory source".to_string(),
+                operand: "AVX-only vector bridge cannot carry AVX-512 VRANGE".to_string(),
             });
         }
 
         match sequence.encoding.replay {
-            X86EvexPackedRotateMemoryReplay::Vector {
+            X86EvexRangeMemoryReplay::Vector {
                 scratch,
                 register_instruction,
             } => {
                 let address = match &block.ops[index + sequence.address_offset].kind {
                     OpKind::VLoad { addr, .. } => addr,
-                    _ => unreachable!("validated rotate vector sequence starts with VLoad"),
+                    _ => unreachable!("validated VRANGE vector sequence starts with VLoad"),
                 };
                 self.emit_jit_vector_mem_helper(
                     block.ops[index].guest_pc,
@@ -243,18 +154,14 @@ impl X86_64Lowerer {
                 self.emit_jit_vector_scratch_restore(scratch);
                 self.code.emit_u8(0x58); // pop guest RAX
             }
-            X86EvexPackedRotateMemoryReplay::Broadcast { stack_instruction } => {
-                self.emit_evex_packed_rotate_broadcast_replay(
-                    block,
-                    index,
-                    sequence,
-                    stack_instruction,
-                )?;
+            X86EvexRangeMemoryReplay::Broadcast { stack_instruction }
+            | X86EvexRangeMemoryReplay::Scalar { stack_instruction } => {
+                self.emit_evex_range_stack_replay(block, index, sequence, stack_instruction)?;
             }
-            X86EvexPackedRotateMemoryReplay::MaskedVector { stack_instruction } => {
+            X86EvexRangeMemoryReplay::MaskedVector { stack_instruction } => {
                 let address = match &block.ops[index + sequence.address_offset].kind {
                     OpKind::Lea { addr, .. } => addr,
-                    _ => unreachable!("validated masked rotate vector sequence owns its LEA"),
+                    _ => unreachable!("validated masked VRANGE vector sequence owns its LEA"),
                 };
                 {
                     let mut emitter = X86Emitter::new(&mut self.code);
@@ -277,7 +184,7 @@ impl X86_64Lowerer {
                 let mask = sequence
                     .encoding
                     .writemask
-                    .expect("validated masked-vector replay");
+                    .expect("validated masked-vector VRANGE replay");
                 let (memory_width, copy_width, lane_bytes) =
                     Self::evex_e4_memory_element_widths(sequence.encoding.elem)?;
                 for lane in 0..lanes {
