@@ -134,6 +134,8 @@ mod evex_packed_extend_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_packed_fp16_convert_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_packed_fp_unary_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_packed_funnel_shift_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_packed_rotate_memory_source;

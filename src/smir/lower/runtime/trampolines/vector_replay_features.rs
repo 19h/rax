@@ -669,6 +669,30 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
                 all_spans_support_avx_ymm16 = false;
                 index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_evex_packed_fp_unary_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                let uses_k16_opmasks = matches!(
+                    sequence.encoding.kind,
+                    crate::smir::ir::X86EvexPackedFpUnaryMemoryKind::Recip14
+                        | crate::smir::ir::X86EvexPackedFpUnaryMemoryKind::Rsqrt14
+                );
+                // VGETEXP and binary16 approximations use the full
+                // vector/opmask bridge. AVX-512F reciprocal estimates observe
+                // at most K[15:0] and can use the existing KMOVW bridge.
+                requirements.needs_avx512bw |= !uses_k16_opmasks;
+                requirements.has_k16_opmask_span |= uses_k16_opmasks;
+                requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+                requirements.needs_avx512fp16 |= sequence.encoding.needs_avx512fp16;
+                all_spans_support_avx_ymm16 = false;
+                index += sequence.consumed;
             } else if let Some(sequence) = super::x86_jit_evex_logic_memory_sequence(
                 block,
                 index,
