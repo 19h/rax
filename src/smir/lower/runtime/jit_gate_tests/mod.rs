@@ -149,6 +149,8 @@ mod evex_packed_convert_memory_source;
 #[cfg(test)]
 mod evex_packed_extend_replay;
 #[cfg(test)]
+mod evex_packed_fp16_convert_memory_source;
+#[cfg(test)]
 mod evex_packed_funnel_shift_memory_source;
 #[cfg(test)]
 mod evex_packed_rotate_memory_source;

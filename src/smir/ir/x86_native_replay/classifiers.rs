@@ -31,6 +31,7 @@ mod evex_memory;
 mod evex_multishift_memory;
 mod evex_packed_abs_memory;
 mod evex_packed_convert_memory;
+mod evex_packed_fp16_convert_memory;
 mod evex_packed_funnel_shift_memory;
 mod evex_packed_rotate_memory;
 mod evex_packed_variable_shift_memory;
@@ -196,6 +197,10 @@ pub(crate) use evex_packed_abs_memory::X86EvexPackedAbsMemoryEncoding;
 pub(crate) use evex_packed_convert_memory::{
     X86EvexPackedConvertMemoryEncoding, X86EvexPackedConvertMemoryKind,
     X86EvexPackedConvertMemoryReplay,
+};
+pub(crate) use evex_packed_fp16_convert_memory::{
+    X86EvexPackedFp16ConvertMemoryEncoding, X86EvexPackedFp16ConvertMemoryKind,
+    X86EvexPackedFp16ConvertMemoryReplay,
 };
 pub(crate) use evex_packed_funnel_shift_memory::{
     X86EvexPackedFunnelShiftMemoryEncoding, X86EvexPackedFunnelShiftMemoryReplay,
