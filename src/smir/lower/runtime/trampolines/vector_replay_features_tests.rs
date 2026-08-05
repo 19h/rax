@@ -1,8 +1,9 @@
 //! Unit tests for architectural CPUID feature probes.
 
 use super::{
-    cpuid_enumerates_fma4, cpuid_enumerates_leaf7_subleaf1_eax_feature,
-    cpuid_enumerates_leaf7_subleaf1_edx_feature, cpuid_enumerates_xop,
+    cpuid_enumerates_fma4, cpuid_enumerates_leaf7_subleaf0_edx_feature,
+    cpuid_enumerates_leaf7_subleaf1_eax_feature, cpuid_enumerates_leaf7_subleaf1_edx_feature,
+    cpuid_enumerates_xop,
 };
 
 #[test]
@@ -19,6 +20,19 @@ fn xop_cpuid_bit_requires_the_extended_feature_leaf() {
     assert!(!cpuid_enumerates_xop(0x8000_0001, 0));
     assert!(cpuid_enumerates_xop(0x8000_0001, 1 << 11));
     assert!(cpuid_enumerates_xop(u32::MAX, u32::MAX));
+}
+
+#[test]
+fn avx512_4fmaps_cpuid_bit_requires_basic_leaf_7() {
+    let bit = 1 << 3;
+    assert!(!cpuid_enumerates_leaf7_subleaf0_edx_feature(6, bit, bit));
+    assert!(!cpuid_enumerates_leaf7_subleaf0_edx_feature(7, 0, bit));
+    assert!(cpuid_enumerates_leaf7_subleaf0_edx_feature(7, bit, bit));
+    assert!(cpuid_enumerates_leaf7_subleaf0_edx_feature(
+        u32::MAX,
+        u32::MAX,
+        bit
+    ));
 }
 
 #[test]

@@ -8,6 +8,14 @@ pub(crate) fn cpuid_enumerates_xop(max_extended_leaf: u32, extended_features_ecx
     max_extended_leaf >= 0x8000_0001 && extended_features_ecx & (1 << 11) != 0
 }
 
+pub(crate) fn cpuid_enumerates_leaf7_subleaf0_edx_feature(
+    max_basic_leaf: u32,
+    subleaf0_edx: u32,
+    feature_mask: u32,
+) -> bool {
+    max_basic_leaf >= 7 && subleaf0_edx & feature_mask != 0
+}
+
 pub(crate) fn cpuid_enumerates_leaf7_subleaf1_edx_feature(
     max_basic_leaf: u32,
     max_structured_subleaf: u32,
@@ -59,6 +67,24 @@ pub(crate) fn x86_host_has_xop() -> bool {
             0
         };
         cpuid_enumerates_xop(max_extended_leaf, extended_features_ecx)
+    }
+}
+
+/// Intel SDM Volume 2 defines AVX512_4FMAPS at CPUID.07H.00H:EDX[3].
+/// Stable Rust does not expose this Xeon Phi feature through
+/// `is_x86_feature_detected!`, so query the architectural bit directly.
+#[cfg(target_arch = "x86_64")]
+pub(crate) fn x86_host_has_avx5124fmaps() -> bool {
+    // SAFETY: CPUID is architecturally available in x86-64 mode. The maximum
+    // basic leaf is checked before querying CPUID.07H.00H.
+    unsafe {
+        let max_basic_leaf = std::arch::x86_64::__cpuid(0).eax;
+        let subleaf0_edx = if max_basic_leaf >= 7 {
+            std::arch::x86_64::__cpuid_count(7, 0).edx
+        } else {
+            0
+        };
+        cpuid_enumerates_leaf7_subleaf0_edx_feature(max_basic_leaf, subleaf0_edx, 1 << 3)
     }
 }
 

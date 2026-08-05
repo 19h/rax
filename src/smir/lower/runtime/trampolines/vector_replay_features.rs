@@ -36,6 +36,7 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_avx512vbmi2: bool,
     pub(crate) needs_gfni: bool,
     pub(crate) needs_avx512vp2intersect: bool,
+    pub(crate) needs_avx5124fmaps: bool,
     /// At least one exact replay span observes no opmask bit above K[15].
     /// This permits the AVX512F KMOVW helper bridge when every other vector
     /// operation satisfies the same bound.
@@ -102,6 +103,7 @@ impl X86NativeReplayFeatureRequirements {
             && (!self.needs_gfni || std::is_x86_feature_detected!("gfni"))
             && (!self.needs_avx512vp2intersect
                 || std::is_x86_feature_detected!("avx512vp2intersect"))
+            && (!self.needs_avx5124fmaps || x86_host_has_avx5124fmaps())
             && (!self.needs_aes || std::is_x86_feature_detected!("aes"))
             && (!self.needs_vaes || std::is_x86_feature_detected!("vaes"))
             && (!self.needs_pclmulqdq || std::is_x86_feature_detected!("pclmulqdq"))
@@ -349,7 +351,23 @@ pub(crate) fn x86_native_replay_feature_requirements(
         }
         let mut index = 0usize;
         while index < block.ops.len() {
-            if let Some(sequence) = super::x86_jit_evex_bf16_memory_sequence(
+            if let Some(sequence) = super::x86_jit_evex_four_fma_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                requirements.needs_avx5124fmaps = true;
+                // Packed 4FMAPS observes K[15:0]; scalar 4FMAPS observes only
+                // K[0]. Both can use AVX512F KMOVW without AVX512BW.
+                requirements.has_k16_opmask_span = true;
+                all_spans_support_avx_ymm16 = false;
+                index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_evex_bf16_memory_sequence(
                 block,
                 index,
                 true,

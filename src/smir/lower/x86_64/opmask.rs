@@ -340,6 +340,14 @@ impl X86_64Lowerer {
         self.emit_opmask_mask_to_gpr_rr(src, 0, OpWidth::W64);
     }
 
+    /// Zero-extend K[15:0] into EAX using AVX512F `KMOVW`. Unlike `KMOVQ`,
+    /// this form does not require AVX512BW and is therefore valid for narrow
+    /// opmask guards on AVX512ER/4FMAPS-class hosts.
+    pub(crate) fn emit_opmask_mask_to_rax16(&mut self, src: u8) {
+        debug_assert!(src <= 7, "architectural opmask index");
+        self.emit_opmask_mask_to_gpr_rr(src, 0, OpWidth::W16);
+    }
+
     fn emit_opmask_mask_to_gpr_rr(&mut self, src: u8, dst: u8, width: OpWidth) {
         self.emit_opmask_vex_prefix(
             X86VecMap::Map0F,
