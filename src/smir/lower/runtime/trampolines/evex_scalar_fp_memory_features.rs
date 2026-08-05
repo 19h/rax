@@ -8,11 +8,12 @@ use crate::smir::ir::{SmirBlock, X86InstructionBytes};
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) struct X86JitEvexScalarFpMemoryFeatureSpan {
     pub(super) consumed: usize,
+    pub(super) needs_avx512dq: bool,
     pub(super) needs_avx512fp16: bool,
 }
 
-/// Recognize either exact scalar floating-point arithmetic or precision-
-/// conversion memory replay and return their common feature contract.
+/// Recognize an exact scalar floating-point memory replay and return its
+/// common feature contract.
 #[allow(clippy::too_many_arguments)]
 pub(super) fn x86_jit_evex_scalar_fp_memory_feature_span(
     block: &SmirBlock,
@@ -31,10 +32,25 @@ pub(super) fn x86_jit_evex_scalar_fp_memory_feature_span(
     ) {
         return Some(X86JitEvexScalarFpMemoryFeatureSpan {
             consumed: sequence.consumed,
+            needs_avx512dq: false,
             needs_avx512fp16: sequence.encoding.needs_avx512fp16,
         });
     }
-    let sequence = super::x86_jit_evex_scalar_fp_convert_memory_sequence(
+    if let Some(sequence) = super::x86_jit_evex_scalar_fp_convert_memory_sequence(
+        block,
+        index,
+        true,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(X86JitEvexScalarFpMemoryFeatureSpan {
+            consumed: sequence.consumed,
+            needs_avx512dq: false,
+            needs_avx512fp16: sequence.encoding.needs_avx512fp16,
+        });
+    }
+    let sequence = super::x86_jit_evex_scalar_fp_unary_memory_sequence(
         block,
         index,
         true,
@@ -44,6 +60,7 @@ pub(super) fn x86_jit_evex_scalar_fp_memory_feature_span(
     )?;
     Some(X86JitEvexScalarFpMemoryFeatureSpan {
         consumed: sequence.consumed,
+        needs_avx512dq: sequence.encoding.needs_avx512dq,
         needs_avx512fp16: sequence.encoding.needs_avx512fp16,
     })
 }

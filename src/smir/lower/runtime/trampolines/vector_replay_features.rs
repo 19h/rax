@@ -724,10 +724,10 @@ pub(crate) fn x86_native_replay_feature_requirements(
             {
                 requirements.any = true;
                 requirements.needs_avx = true;
-                // The full-width vector/opmask bridge requires AVX-512BW;
-                // Scalar binary32/binary64 arithmetic and conversion require
-                // F, while binary16 involvement additionally requires FP16.
+                // The vector/opmask bridge requires BW. Scalar binary16
+                // additionally needs FP16; binary32/64 VREDUCE needs DQ.
                 requirements.needs_avx512bw = true;
+                requirements.needs_avx512dq |= span.needs_avx512dq;
                 requirements.needs_avx512fp16 |= span.needs_avx512fp16;
                 all_spans_support_avx_ymm16 = false;
                 index += span.consumed;

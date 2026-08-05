@@ -33,6 +33,7 @@ mod evex_packed_rotate_memory;
 mod evex_packed_variable_shift_memory;
 mod evex_range_memory;
 mod evex_scalar_fp_arithmetic_memory;
+mod evex_scalar_fp_unary_memory;
 mod evex_scale_f_memory;
 mod evex_shared_count_shift_memory;
 mod evex_ternary_logic_memory;
@@ -195,6 +196,9 @@ pub(crate) use evex_packed_variable_shift_memory::{
 };
 pub(crate) use evex_range_memory::{X86EvexRangeMemoryEncoding, X86EvexRangeMemoryReplay};
 pub(crate) use evex_scalar_fp_arithmetic_memory::X86EvexScalarFpArithmeticMemoryEncoding;
+pub(crate) use evex_scalar_fp_unary_memory::{
+    X86EvexScalarFpUnaryMemoryEncoding, X86EvexScalarFpUnaryMemoryKind,
+};
 pub(crate) use evex_scale_f_memory::{X86EvexScaleFMemoryEncoding, X86EvexScaleFMemoryReplay};
 pub(crate) use evex_shared_count_shift_memory::X86EvexSharedCountShiftMemoryEncoding;
 pub(crate) use evex_ternary_logic_memory::{
