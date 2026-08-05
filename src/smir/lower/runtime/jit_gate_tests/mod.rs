@@ -211,6 +211,8 @@ mod evex_vector_align_replay;
 #[cfg(test)]
 mod evex_vector_to_mask_replay;
 #[cfg(test)]
+mod evex_vp2intersect_memory_source;
+#[cfg(test)]
 mod evex_vp2intersect_replay;
 #[cfg(test)]
 mod evex_vpclmulqdq_replay;

@@ -287,6 +287,7 @@ pub(crate) use vex_sm3_sm4::{X86VexSm3Sm4MemoryEncoding, X86VexSm3Sm4MemoryKind}
 pub(crate) use vex_variable_blend::X86VexVariableBlendMemoryEncoding;
 pub(crate) use vex_variable_permute::X86VexVariablePermuteMemoryEncoding;
 pub(crate) use vex_vpermil2::X86VexVpermil2MemoryEncoding;
+pub(crate) use vp2intersect::{X86EvexVp2IntersectMemoryEncoding, X86EvexVp2IntersectMemoryReplay};
 
 impl X86InstructionBytes {
     /// Validate register-only EVEX packed logical operations and return

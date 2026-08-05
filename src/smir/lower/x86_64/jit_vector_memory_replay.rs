@@ -42,6 +42,7 @@ impl X86_64Lowerer {
         try_replay!(try_lower_jit_evex_chunk_shuffle_memory_source);
         try_replay!(try_lower_jit_evex_dbpsadbw_memory_source);
         try_replay!(try_lower_jit_evex_psadbw_memory_source);
+        try_replay!(try_lower_jit_evex_vp2intersect_memory_source);
         try_replay!(try_lower_jit_evex_gfni_multiply_memory_source);
         try_replay!(try_lower_jit_evex_bw_shuffle_madd_memory_source);
         try_replay!(try_lower_jit_evex_integer_arithmetic_memory_source);

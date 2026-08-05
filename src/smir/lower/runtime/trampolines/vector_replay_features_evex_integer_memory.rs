@@ -7,7 +7,7 @@ use crate::smir::ir::{SmirBlock, SmirFunction};
 
 use super::X86NativeReplayFeatureRequirements;
 
-/// Accumulate one exact unary-integer or `VPSADBW` memory replay.
+/// Accumulate one exact unary-integer, `VPSADBW`, or `VP2INTERSECT` memory replay.
 ///
 /// Both families require the full AVX-512 vector-state bridge and therefore
 /// cannot use the AVX YMM0-YMM15 bridge. Matching is O(L), where L is at most
@@ -45,7 +45,24 @@ pub(super) fn accumulate_evex_integer_memory_replay_requirements(
         return Some(sequence.consumed);
     }
 
-    let sequence = super::super::x86_jit_evex_psadbw_memory_sequence(
+    if let Some(sequence) = super::super::x86_jit_evex_psadbw_memory_sequence(
+        block,
+        index,
+        true,
+        &func.x86_instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        requirements.any = true;
+        requirements.needs_avx = true;
+        // VPSADBW and the full-width vector-state bridge require AVX-512BW.
+        requirements.needs_avx512bw = true;
+        requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+        *all_spans_support_avx_ymm16 = false;
+        return Some(sequence.consumed);
+    }
+
+    let sequence = super::super::x86_jit_evex_vp2intersect_memory_sequence(
         block,
         index,
         true,
@@ -55,9 +72,11 @@ pub(super) fn accumulate_evex_integer_memory_replay_requirements(
     )?;
     requirements.any = true;
     requirements.needs_avx = true;
-    // VPSADBW and the full-width vector-state bridge require AVX-512BW.
+    // VP2INTERSECT requires its dedicated extension; the full K0-K7/vector
+    // helper bridge additionally uses AVX-512BW instructions.
     requirements.needs_avx512bw = true;
     requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+    requirements.needs_avx512vp2intersect = true;
     *all_spans_support_avx_ymm16 = false;
     Some(sequence.consumed)
 }
