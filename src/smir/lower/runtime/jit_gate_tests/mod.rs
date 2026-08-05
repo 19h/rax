@@ -160,6 +160,8 @@ mod evex_range_memory_source;
 #[cfg(test)]
 mod evex_scalar_fp_arithmetic_memory_source;
 #[cfg(test)]
+mod evex_scalar_fp_compare_memory_source;
+#[cfg(test)]
 mod evex_scalar_fp_convert_memory_source;
 #[cfg(test)]
 mod evex_scalar_fp_convert_replay;
