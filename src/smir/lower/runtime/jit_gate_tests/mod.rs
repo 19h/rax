@@ -140,6 +140,8 @@ mod evex_move_replay;
 #[cfg(test)]
 mod evex_multishift_memory_source;
 #[cfg(test)]
+mod evex_packed_abs_memory_source;
+#[cfg(test)]
 mod evex_packed_compare_replay;
 #[cfg(test)]
 mod evex_packed_extend_replay;

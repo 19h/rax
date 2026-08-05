@@ -28,6 +28,7 @@ mod evex_logic_memory;
 mod evex_mask_blend_memory;
 mod evex_memory;
 mod evex_multishift_memory;
+mod evex_packed_abs_memory;
 mod evex_packed_funnel_shift_memory;
 mod evex_packed_rotate_memory;
 mod evex_packed_variable_shift_memory;
@@ -185,6 +186,7 @@ pub(crate) use evex_mask_blend_memory::{
 pub(crate) use evex_multishift_memory::{
     X86EvexMultiShiftMemoryEncoding, X86EvexMultiShiftMemoryReplay,
 };
+pub(crate) use evex_packed_abs_memory::X86EvexPackedAbsMemoryEncoding;
 pub(crate) use evex_packed_funnel_shift_memory::{
     X86EvexPackedFunnelShiftMemoryEncoding, X86EvexPackedFunnelShiftMemoryReplay,
 };
