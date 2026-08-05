@@ -261,6 +261,7 @@ pub(crate) use evex_vector_align_memory::{
 pub(crate) use evex_vpshufbitqmb_memory::{
     X86EvexVpshufbitqmbMemoryEncoding, X86EvexVpshufbitqmbMemoryReplay,
 };
+pub(crate) use fp_class::{X86EvexFpClassMemoryEncoding, X86EvexFpClassMemoryReplay};
 pub(crate) use fp_round::X86VexRoundMemoryEncoding;
 pub(crate) use fp16_narrow::X86VexFp16NarrowMemoryEncoding;
 pub(crate) use gfni::{X86EvexGfniAffineMemoryEncoding, X86EvexGfniAffineMemoryReplay};

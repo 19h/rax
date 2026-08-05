@@ -1,6 +1,7 @@
 //! Exact source-byte replay classification for EVEX VFPCLASS*.
 
 use super::*;
+use crate::smir::ir::types::{MemWidth, VecElementType};
 
 type FpClassShape = (u8, u8, bool, u8);
 
@@ -158,5 +159,230 @@ fn replay_spans_encode_vl_dq_and_fp16_requirements() {
             assert_eq!(span.needs_avx512dq, expected.1, "{bytes:02X?}");
             assert_eq!(span.needs_avx512fp16, expected.2, "{bytes:02X?}");
         }
+    }
+}
+
+fn memory_encoding(
+    shape: FpClassShape,
+    destination: u8,
+    mask: u8,
+    broadcast: bool,
+    immediate: u8,
+    apx_base: bool,
+    apx_index: bool,
+) -> Vec<u8> {
+    let (opcode, pp, w, ll) = shape;
+    assert!(destination < 8 && mask < 8);
+    assert!(!broadcast || opcode == 0x66);
+    let p0 = 0xF3 | (u8::from(apx_base) << 3);
+    let mut p1 = 0x7C | pp | if w { 0x80 } else { 0 };
+    if apx_index {
+        p1 &= !0x04;
+    }
+    vec![
+        0x64,
+        0x67,
+        0x62,
+        p0,
+        p1,
+        (ll << 5) | 0x08 | (u8::from(broadcast) << 4) | mask,
+        opcode,
+        (destination << 3) | 0x04,
+        0x08,
+        immediate,
+    ]
+}
+
+fn memory_shapes() -> Vec<FpClassShape> {
+    shapes()
+}
+
+#[test]
+fn memory_classifier_exhausts_1_966_080_semantic_apx_and_immediate_cells() {
+    let mut classified = 0usize;
+    for shape in memory_shapes() {
+        let (opcode, pp, _, ll) = shape;
+        let elem = match pp {
+            0 => VecElementType::F16,
+            1 if shape.2 => VecElementType::F64,
+            1 => VecElementType::F32,
+            _ => unreachable!(),
+        };
+        let scalar = opcode == 0x67;
+        let width = match (scalar, ll) {
+            (true, _) | (false, 0) => VecWidth::V128,
+            (false, 1) => VecWidth::V256,
+            (false, 2) => VecWidth::V512,
+            _ => unreachable!(),
+        };
+        let expected_memory_width = match elem {
+            VecElementType::F16 => MemWidth::B2,
+            VecElementType::F32 => MemWidth::B4,
+            VecElementType::F64 => MemWidth::B8,
+            _ => unreachable!(),
+        };
+        for destination in 0u8..8 {
+            for mask in 0u8..8 {
+                for broadcast in [false, true] {
+                    if scalar && broadcast {
+                        continue;
+                    }
+                    for immediate in u8::MIN..=u8::MAX {
+                        for apx_base in [false, true] {
+                            for apx_index in [false, true] {
+                                let bytes = memory_encoding(
+                                    shape,
+                                    destination,
+                                    mask,
+                                    broadcast,
+                                    immediate,
+                                    apx_base,
+                                    apx_index,
+                                );
+                                let encoded = X86InstructionBytes::new(&bytes)
+                                    .unwrap()
+                                    .evex_fp_class_memory_encoding()
+                                    .unwrap_or_else(|| panic!("{bytes:02X?}"));
+                                assert_eq!(encoded.width, width, "{bytes:02X?}");
+                                assert_eq!(encoded.elem, elem, "{bytes:02X?}");
+                                assert_eq!(encoded.destination, destination, "{bytes:02X?}");
+                                assert_eq!(
+                                    encoded.writemask,
+                                    (mask != 0).then_some(mask),
+                                    "{bytes:02X?}"
+                                );
+                                assert_eq!(encoded.immediate, immediate, "{bytes:02X?}");
+                                assert_eq!(encoded.scalar, scalar, "{bytes:02X?}");
+                                assert_eq!(
+                                    encoded.memory_width, expected_memory_width,
+                                    "{bytes:02X?}"
+                                );
+                                assert_eq!(
+                                    encoded.needs_avx512vl,
+                                    !scalar && width != VecWidth::V512,
+                                    "{bytes:02X?}"
+                                );
+                                assert_eq!(
+                                    encoded.needs_avx512dq,
+                                    elem != VecElementType::F16,
+                                    "{bytes:02X?}"
+                                );
+                                assert_eq!(
+                                    encoded.needs_avx512fp16,
+                                    elem == VecElementType::F16,
+                                    "{bytes:02X?}"
+                                );
+
+                                let p1 = 0x7C | pp | if shape.2 { 0x80 } else { 0 };
+                                let p2 = (ll << 5) | 0x08 | (u8::from(broadcast) << 4) | mask;
+                                let stack = [
+                                    0x62,
+                                    0xF3,
+                                    p1,
+                                    p2,
+                                    opcode,
+                                    (destination << 3) | 0x04,
+                                    0x24,
+                                    immediate,
+                                ];
+                                match encoded.replay {
+                                    X86EvexFpClassMemoryReplay::Scalar { stack_instruction } => {
+                                        assert!(scalar, "{bytes:02X?}");
+                                        assert_eq!(stack_instruction.as_slice(), stack);
+                                    }
+                                    X86EvexFpClassMemoryReplay::Broadcast { stack_instruction } => {
+                                        assert!(!scalar && broadcast, "{bytes:02X?}");
+                                        assert_eq!(stack_instruction.as_slice(), stack);
+                                    }
+                                    X86EvexFpClassMemoryReplay::MaskedVector {
+                                        stack_instruction,
+                                    } => {
+                                        assert!(!scalar && !broadcast && mask != 0, "{bytes:02X?}");
+                                        assert_eq!(stack_instruction.as_slice(), stack);
+                                    }
+                                    X86EvexFpClassMemoryReplay::Vector {
+                                        scratch,
+                                        register_instruction,
+                                    } => {
+                                        assert!(!scalar && !broadcast && mask == 0, "{bytes:02X?}");
+                                        assert_eq!(scratch, 0);
+                                        assert_eq!(
+                                            register_instruction.as_slice(),
+                                            [
+                                                0x62,
+                                                0xF3,
+                                                p1,
+                                                p2,
+                                                opcode,
+                                                0xC0 | (destination << 3),
+                                                immediate,
+                                            ],
+                                            "{bytes:02X?}"
+                                        );
+                                    }
+                                }
+                                classified += 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    assert_eq!(classified, 1_966_080);
+}
+
+#[test]
+fn memory_classifier_rejects_reserved_nonmemory_and_trailing_frontiers() {
+    let valid = memory_encoding((0x66, 1, true, 2), 7, 3, true, 0xA5, false, false);
+    let evex = 2usize;
+    let mut invalids = Vec::<(&str, Vec<u8>)>::new();
+    let mut bytes = valid.clone();
+    bytes[evex] = 0x61;
+    invalids.push(("not EVEX", bytes));
+    let mut bytes = valid.clone();
+    bytes[evex + 1] = (bytes[evex + 1] & !7) | 2;
+    invalids.push(("wrong map", bytes));
+    let mut bytes = valid.clone();
+    bytes[evex + 1] &= !0x80;
+    invalids.push(("extended K destination R", bytes));
+    let mut bytes = valid.clone();
+    bytes[evex + 1] &= !0x10;
+    invalids.push(("extended K destination R prime", bytes));
+    let mut bytes = valid.clone();
+    bytes[evex + 2] &= !0x08;
+    invalids.push(("reserved vvvv", bytes));
+    let mut bytes = valid.clone();
+    bytes[evex + 3] &= !0x08;
+    invalids.push(("reserved V prime", bytes));
+    let mut bytes = valid.clone();
+    bytes[evex + 3] |= 0x80;
+    invalids.push(("reserved zeroing", bytes));
+    let mut bytes = valid.clone();
+    bytes[evex + 3] = (bytes[evex + 3] & !0x60) | 0x60;
+    invalids.push(("packed L'L=3", bytes));
+    let mut bytes = valid.clone();
+    bytes[evex + 5] |= 0xC0;
+    invalids.push(("register source", bytes));
+    let mut bytes = valid.clone();
+    bytes.pop();
+    invalids.push(("missing immediate", bytes));
+    let mut bytes = valid.clone();
+    bytes.push(0);
+    invalids.push(("trailing byte", bytes));
+
+    let scalar = memory_encoding((0x67, 0, false, 3), 2, 1, false, 0xFF, true, true);
+    let mut bytes = scalar;
+    bytes[evex + 3] |= 0x10;
+    invalids.push(("scalar EVEX.b", bytes));
+
+    for (name, bytes) in invalids {
+        assert!(
+            X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .evex_fp_class_memory_encoding()
+                .is_none(),
+            "{name}: {bytes:02X?}"
+        );
     }
 }
