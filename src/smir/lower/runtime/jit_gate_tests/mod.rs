@@ -217,6 +217,8 @@ mod evex_vp2intersect_replay;
 #[cfg(test)]
 mod evex_vpclmulqdq_replay;
 #[cfg(test)]
+mod evex_vpshufbitqmb_memory_source;
+#[cfg(test)]
 mod far_call;
 #[cfg(test)]
 mod far_jump;

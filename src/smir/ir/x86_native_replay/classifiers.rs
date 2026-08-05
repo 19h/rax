@@ -52,6 +52,7 @@ mod evex_ternary_logic_memory;
 mod evex_two_table_permute_memory;
 mod evex_variable_permute_memory;
 mod evex_vector_align_memory;
+mod evex_vpshufbitqmb_memory;
 mod fp16_narrow;
 mod fp16_widen;
 mod fp32_fp64_convert;
@@ -248,6 +249,9 @@ pub(crate) use evex_two_table_permute_memory::{
 pub(crate) use evex_variable_permute_memory::X86EvexVariablePermuteMemoryEncoding;
 pub(crate) use evex_vector_align_memory::{
     X86EvexVectorAlignMemoryEncoding, X86EvexVectorAlignMemoryReplay,
+};
+pub(crate) use evex_vpshufbitqmb_memory::{
+    X86EvexVpshufbitqmbMemoryEncoding, X86EvexVpshufbitqmbMemoryReplay,
 };
 pub(crate) use fp_round::X86VexRoundMemoryEncoding;
 pub(crate) use fp16_narrow::X86VexFp16NarrowMemoryEncoding;

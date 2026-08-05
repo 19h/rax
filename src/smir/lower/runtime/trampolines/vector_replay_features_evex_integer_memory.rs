@@ -7,11 +7,12 @@ use crate::smir::ir::{SmirBlock, SmirFunction};
 
 use super::X86NativeReplayFeatureRequirements;
 
-/// Accumulate one exact unary-integer, `VPSADBW`, or `VP2INTERSECT` memory replay.
+/// Accumulate one exact unary-integer, `VPSADBW`, `VPSHUFBITQMB`, or
+/// `VP2INTERSECT` memory replay.
 ///
-/// Both families require the full AVX-512 vector-state bridge and therefore
+/// These families require the full AVX-512 vector-state bridge and therefore
 /// cannot use the AVX YMM0-YMM15 bridge. Matching is O(L), where L is at most
-/// 64 packed lanes for the unary family, and uses O(1) auxiliary space.
+/// 64 packed lanes, and uses O(1) auxiliary space.
 #[allow(clippy::too_many_arguments)]
 pub(super) fn accumulate_evex_integer_memory_replay_requirements(
     block: &SmirBlock,
@@ -58,6 +59,25 @@ pub(super) fn accumulate_evex_integer_memory_replay_requirements(
         // VPSADBW and the full-width vector-state bridge require AVX-512BW.
         requirements.needs_avx512bw = true;
         requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+        *all_spans_support_avx_ymm16 = false;
+        return Some(sequence.consumed);
+    }
+
+    if let Some(sequence) = super::super::x86_jit_evex_vpshufbitqmb_memory_sequence(
+        block,
+        index,
+        true,
+        &func.x86_instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        requirements.any = true;
+        requirements.needs_avx = true;
+        // VPSHUFBITQMB requires AVX-512 BITALG; the full K0-K7/vector helper
+        // bridge additionally uses AVX-512BW instructions.
+        requirements.needs_avx512bw = true;
+        requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+        requirements.needs_avx512bitalg = true;
         *all_spans_support_avx_ymm16 = false;
         return Some(sequence.consumed);
     }
