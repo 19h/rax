@@ -27,6 +27,7 @@ use crate::smir::lower::runtime::{
 use crate::smir::lower::x86_64::X86_64Lowerer;
 use crate::smir::optimize::OptLevel;
 
+mod approximation;
 mod classification;
 #[cfg(target_arch = "x86_64")]
 mod native;
@@ -372,6 +373,7 @@ fn lower(function: &SmirFunction, case: ScalarUnaryMemoryCase) -> (Vec<u8>, usiz
     assert!(requirements.needs_avx512bw, "{case:?}");
     assert!(!requirements.needs_avx512vl, "{case:?}");
     assert_eq!(requirements.needs_avx512dq, case.needs_dq(), "{case:?}");
+    assert!(!requirements.needs_avx512er, "{case:?}");
     assert!(!requirements.needs_fma, "{case:?}");
     assert_eq!(
         requirements.needs_avx512fp16,

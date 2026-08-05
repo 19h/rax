@@ -3869,36 +3869,16 @@ fn lift_evex_recip28_covers_packed_scalar_masks_sae_broadcast_and_reserved_field
         1
     );
 
-    // For scalar VRCP28, EVEX.b is SAE for a memory source rather than
-    // broadcast. EVEX.L'L is ignored and the load remains one element.
-    let scalar_memory_sae = lift_single(&[0x62, 0xF2, 0x6D, 0x78, 0xCB, 0x48, 0x01]).unwrap();
-    assert!(scalar_memory_sae.ops.iter().any(|op| matches!(
-        op.kind,
-        OpKind::Load {
-            addr: Address::BaseOffset { offset: 4, .. },
-            width: MemWidth::B4,
-            ..
-        }
-    )));
-    assert!(matches!(
-        scalar_memory_sae.ops.last().map(|op| &op.kind),
-        Some(OpKind::X86Recip28 {
-            src: VReg::Virtual(_),
-            scalar: true,
-            suppress_exceptions: true,
-            ..
-        })
-    ));
-
     for invalid in [
-        &[0x62, 0xF2, 0x7C, 0x48, 0xCA, 0xCB][..], // pp != 66
-        &[0x62, 0xF2, 0x75, 0x48, 0xCA, 0xCB][..], // packed reserved vvvv
-        &[0x62, 0xF2, 0x7D, 0x40, 0xCA, 0xCB][..], // packed reserved V'
-        &[0x62, 0xF2, 0x7D, 0x08, 0xCA, 0xCB][..], // packed non-SAE VL128
-        &[0x62, 0xF2, 0x7D, 0x28, 0xCA, 0xCB][..], // packed non-SAE VL256
-        &[0x62, 0xF2, 0x7D, 0x68, 0xCA, 0xCB][..], // packed non-SAE L'L=3
-        &[0x62, 0xF2, 0x7D, 0x19, 0xCA, 0x08][..], // packed broadcast VL128
-        &[0x62, 0xF2, 0x7D, 0xC8, 0xCA, 0xCB][..], // {z} with k0
+        &[0x62, 0xF2, 0x7C, 0x48, 0xCA, 0xCB][..],       // pp != 66
+        &[0x62, 0xF2, 0x75, 0x48, 0xCA, 0xCB][..],       // packed reserved vvvv
+        &[0x62, 0xF2, 0x7D, 0x40, 0xCA, 0xCB][..],       // packed reserved V'
+        &[0x62, 0xF2, 0x7D, 0x08, 0xCA, 0xCB][..],       // packed non-SAE VL128
+        &[0x62, 0xF2, 0x7D, 0x28, 0xCA, 0xCB][..],       // packed non-SAE VL256
+        &[0x62, 0xF2, 0x7D, 0x68, 0xCA, 0xCB][..],       // packed non-SAE L'L=3
+        &[0x62, 0xF2, 0x7D, 0x19, 0xCA, 0x08][..],       // packed broadcast VL128
+        &[0x62, 0xF2, 0x6D, 0x78, 0xCB, 0x48, 0x01][..], // scalar memory EVEX.b
+        &[0x62, 0xF2, 0x7D, 0xC8, 0xCA, 0xCB][..],       // {z} with k0
     ] {
         assert!(lift_single(invalid).is_err(), "accepted {invalid:02X?}");
     }
@@ -4042,36 +4022,16 @@ fn lift_evex_rsqrt28_covers_packed_scalar_masks_sae_broadcast_and_reserved_field
         1
     );
 
-    // For scalar VRSQRT28, EVEX.b is SAE for a memory source rather than
-    // broadcast. EVEX.L'L is ignored and the load remains one element.
-    let scalar_memory_sae = lift_single(&[0x62, 0xF2, 0x6D, 0x78, 0xCD, 0x48, 0x01]).unwrap();
-    assert!(scalar_memory_sae.ops.iter().any(|op| matches!(
-        op.kind,
-        OpKind::Load {
-            addr: Address::BaseOffset { offset: 4, .. },
-            width: MemWidth::B4,
-            ..
-        }
-    )));
-    assert!(matches!(
-        scalar_memory_sae.ops.last().map(|op| &op.kind),
-        Some(OpKind::X86Rsqrt28 {
-            src: VReg::Virtual(_),
-            scalar: true,
-            suppress_exceptions: true,
-            ..
-        })
-    ));
-
     for invalid in [
-        &[0x62, 0xF2, 0x7C, 0x48, 0xCC, 0xCB][..], // pp != 66
-        &[0x62, 0xF2, 0x75, 0x48, 0xCC, 0xCB][..], // packed reserved vvvv
-        &[0x62, 0xF2, 0x7D, 0x40, 0xCC, 0xCB][..], // packed reserved V'
-        &[0x62, 0xF2, 0x7D, 0x08, 0xCC, 0xCB][..], // packed non-SAE VL128
-        &[0x62, 0xF2, 0x7D, 0x28, 0xCC, 0xCB][..], // packed non-SAE VL256
-        &[0x62, 0xF2, 0x7D, 0x68, 0xCC, 0xCB][..], // packed non-SAE L'L=3
-        &[0x62, 0xF2, 0x7D, 0x19, 0xCC, 0x08][..], // packed broadcast VL128
-        &[0x62, 0xF2, 0x7D, 0xC8, 0xCC, 0xCB][..], // {z} with k0
+        &[0x62, 0xF2, 0x7C, 0x48, 0xCC, 0xCB][..],       // pp != 66
+        &[0x62, 0xF2, 0x75, 0x48, 0xCC, 0xCB][..],       // packed reserved vvvv
+        &[0x62, 0xF2, 0x7D, 0x40, 0xCC, 0xCB][..],       // packed reserved V'
+        &[0x62, 0xF2, 0x7D, 0x08, 0xCC, 0xCB][..],       // packed non-SAE VL128
+        &[0x62, 0xF2, 0x7D, 0x28, 0xCC, 0xCB][..],       // packed non-SAE VL256
+        &[0x62, 0xF2, 0x7D, 0x68, 0xCC, 0xCB][..],       // packed non-SAE L'L=3
+        &[0x62, 0xF2, 0x7D, 0x19, 0xCC, 0x08][..],       // packed broadcast VL128
+        &[0x62, 0xF2, 0x6D, 0x78, 0xCD, 0x48, 0x01][..], // scalar memory EVEX.b
+        &[0x62, 0xF2, 0x7D, 0xC8, 0xCC, 0xCB][..],       // {z} with k0
     ] {
         assert!(lift_single(invalid).is_err(), "accepted {invalid:02X?}");
     }

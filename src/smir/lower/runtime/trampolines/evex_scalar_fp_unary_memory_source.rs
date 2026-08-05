@@ -17,8 +17,8 @@ use super::evex_memory_source_common::{
 };
 use super::x86_jit_mem_address_shape_valid;
 
-/// Exact contiguous scalar `VGETEXP`, `VGETMANT`, `VRNDSCALE`, or `VREDUCE`
-/// memory decomposition consumed by the helper-backed x86-64 lowerer.
+/// Exact contiguous scalar special or approximate floating-point memory
+/// decomposition consumed by the helper-backed x86-64 lowerer.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct X86JitEvexScalarFpUnaryMemorySequence {
     pub(crate) consumed: usize,
@@ -235,13 +235,169 @@ fn exact_semantic(
                 suppress_exceptions,
             )
         }
+        OpKind::X86Recip14 {
+            dst,
+            merge,
+            src,
+            mask,
+            elem,
+            width,
+            lanes,
+            scalar,
+            mask_zeroing,
+        } if encoding.kind == X86EvexScalarFpUnaryMemoryKind::Recip14
+            && encoding.immediate.is_none() =>
+        {
+            common(
+                dst,
+                merge,
+                src,
+                mask,
+                elem,
+                width,
+                lanes,
+                scalar,
+                mask_zeroing,
+                false,
+            )
+        }
+        OpKind::X86Rsqrt14 {
+            dst,
+            merge,
+            src,
+            mask,
+            elem,
+            width,
+            lanes,
+            scalar,
+            mask_zeroing,
+        } if encoding.kind == X86EvexScalarFpUnaryMemoryKind::Rsqrt14
+            && encoding.immediate.is_none() =>
+        {
+            common(
+                dst,
+                merge,
+                src,
+                mask,
+                elem,
+                width,
+                lanes,
+                scalar,
+                mask_zeroing,
+                false,
+            )
+        }
+        OpKind::X86RecipFp16 {
+            dst,
+            merge,
+            src,
+            mask,
+            width,
+            lanes,
+            scalar,
+            mask_zeroing,
+        } if encoding.kind == X86EvexScalarFpUnaryMemoryKind::RecipFp16
+            && encoding.immediate.is_none() =>
+        {
+            common(
+                dst,
+                merge,
+                src,
+                mask,
+                VecElementType::F16,
+                width,
+                lanes,
+                scalar,
+                mask_zeroing,
+                false,
+            )
+        }
+        OpKind::X86RsqrtFp16 {
+            dst,
+            merge,
+            src,
+            mask,
+            width,
+            lanes,
+            scalar,
+            mask_zeroing,
+        } if encoding.kind == X86EvexScalarFpUnaryMemoryKind::RsqrtFp16
+            && encoding.immediate.is_none() =>
+        {
+            common(
+                dst,
+                merge,
+                src,
+                mask,
+                VecElementType::F16,
+                width,
+                lanes,
+                scalar,
+                mask_zeroing,
+                false,
+            )
+        }
+        OpKind::X86Recip28 {
+            dst,
+            merge,
+            src,
+            mask,
+            elem,
+            width,
+            lanes,
+            scalar,
+            mask_zeroing,
+            suppress_exceptions,
+        } if encoding.kind == X86EvexScalarFpUnaryMemoryKind::Recip28
+            && encoding.immediate.is_none() =>
+        {
+            common(
+                dst,
+                merge,
+                src,
+                mask,
+                elem,
+                width,
+                lanes,
+                scalar,
+                mask_zeroing,
+                suppress_exceptions,
+            )
+        }
+        OpKind::X86Rsqrt28 {
+            dst,
+            merge,
+            src,
+            mask,
+            elem,
+            width,
+            lanes,
+            scalar,
+            mask_zeroing,
+            suppress_exceptions,
+        } if encoding.kind == X86EvexScalarFpUnaryMemoryKind::Rsqrt28
+            && encoding.immediate.is_none() =>
+        {
+            common(
+                dst,
+                merge,
+                src,
+                mask,
+                elem,
+                width,
+                lanes,
+                scalar,
+                mask_zeroing,
+                suppress_exceptions,
+            )
+        }
         _ => false,
     };
     shape && op.x86_hint == expected_hint(encoding)
 }
 
 /// Validate the complete O0/O1/O2 decomposition emitted for one scalar
-/// `VGETEXP*`, `VGETMANT*`, `VRNDSCALE*`, or `VREDUCE*` memory source.
+/// special or approximate floating-point memory source.
 ///
 /// Exact provenance binds the family, element type, destination and merge
 /// registers, LLIG image, imm8, writemask policy, helper address, exception

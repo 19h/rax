@@ -29,12 +29,17 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_avx512bw: bool,
     pub(crate) needs_avx512vl: bool,
     pub(crate) needs_avx512dq: bool,
+    pub(crate) needs_avx512er: bool,
     pub(crate) needs_avx512fp16: bool,
     pub(crate) needs_avx512cd: bool,
     pub(crate) needs_avx512vbmi: bool,
     pub(crate) needs_avx512vbmi2: bool,
     pub(crate) needs_gfni: bool,
     pub(crate) needs_avx512vp2intersect: bool,
+    /// At least one exact replay span observes no opmask bit above K[15].
+    /// This permits the AVX512F KMOVW helper bridge when every other vector
+    /// operation satisfies the same bound.
+    pub(crate) has_k16_opmask_span: bool,
     pub(crate) needs_aes: bool,
     pub(crate) needs_vaes: bool,
     pub(crate) needs_pclmulqdq: bool,
@@ -724,11 +729,14 @@ pub(crate) fn x86_native_replay_feature_requirements(
             {
                 requirements.any = true;
                 requirements.needs_avx = true;
-                // The vector/opmask bridge requires BW. Scalar binary16
-                // additionally needs FP16; binary32/64 VREDUCE needs DQ.
-                requirements.needs_avx512bw = true;
+                // Most scalar spans need the full KMOVQ bridge. The classic
+                // reciprocal approximations use the existing low-16 KMOVW
+                // bridge, allowing AVX512ER-only hosts without AVX512BW.
+                requirements.needs_avx512bw |= span.needs_avx512bw;
                 requirements.needs_avx512dq |= span.needs_avx512dq;
+                requirements.needs_avx512er |= span.needs_avx512er;
                 requirements.needs_avx512fp16 |= span.needs_avx512fp16;
+                requirements.has_k16_opmask_span |= span.uses_k16_opmasks;
                 all_spans_support_avx_ymm16 = false;
                 index += span.consumed;
             } else if let Some(sequence) = super::x86_jit_evex_packed_fp_arithmetic_memory_sequence(

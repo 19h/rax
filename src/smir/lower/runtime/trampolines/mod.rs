@@ -188,6 +188,8 @@ pub(crate) use evex_two_table_permute_memory_source::*;
 pub(crate) use evex_variable_permute_memory_source::*;
 pub(crate) use evex_vector_align_memory_source::*;
 pub use vector::*;
+mod vector_k16;
+pub use vector_k16::*;
 pub(crate) use vector_memory_source::*;
 pub(crate) use vector_replay_features::*;
 pub(crate) use vector_rotate::*;

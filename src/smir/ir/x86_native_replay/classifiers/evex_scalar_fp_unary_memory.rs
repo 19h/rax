@@ -11,6 +11,12 @@ pub(crate) enum X86EvexScalarFpUnaryMemoryKind {
     GetMantissa,
     RoundScale,
     Reduce,
+    Recip14,
+    Rsqrt14,
+    RecipFp16,
+    RsqrtFp16,
+    Recip28,
+    Rsqrt28,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -30,8 +36,8 @@ struct ScalarFpUnaryMemoryFields {
     memory_width: MemWidth,
 }
 
-/// Exact scalar `VGETEXP`, `VGETMANT`, `VRNDSCALE`, or `VREDUCE` memory
-/// encoding and its byte-validated host-stack replay.
+/// Exact scalar special or approximate floating-point memory encoding and its
+/// byte-validated host-stack replay.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct X86EvexScalarFpUnaryMemoryEncoding {
     pub(crate) kind: X86EvexScalarFpUnaryMemoryKind,
@@ -49,6 +55,7 @@ pub(crate) struct X86EvexScalarFpUnaryMemoryEncoding {
     pub(crate) memory_width: MemWidth,
     pub(crate) stack_instruction: X86InstructionBytes,
     pub(crate) needs_avx512dq: bool,
+    pub(crate) needs_avx512er: bool,
     pub(crate) needs_avx512fp16: bool,
 }
 
@@ -131,6 +138,56 @@ fn scalar_fp_unary_memory_fields(
             VecElementType::F64,
             true,
         ),
+        (2, 0x4D, 1, false) => (
+            X86EvexScalarFpUnaryMemoryKind::Recip14,
+            VecElementType::F32,
+            false,
+        ),
+        (2, 0x4D, 1, true) => (
+            X86EvexScalarFpUnaryMemoryKind::Recip14,
+            VecElementType::F64,
+            false,
+        ),
+        (2, 0x4F, 1, false) => (
+            X86EvexScalarFpUnaryMemoryKind::Rsqrt14,
+            VecElementType::F32,
+            false,
+        ),
+        (2, 0x4F, 1, true) => (
+            X86EvexScalarFpUnaryMemoryKind::Rsqrt14,
+            VecElementType::F64,
+            false,
+        ),
+        (6, 0x4D, 1, false) => (
+            X86EvexScalarFpUnaryMemoryKind::RecipFp16,
+            VecElementType::F16,
+            false,
+        ),
+        (6, 0x4F, 1, false) => (
+            X86EvexScalarFpUnaryMemoryKind::RsqrtFp16,
+            VecElementType::F16,
+            false,
+        ),
+        (2, 0xCB, 1, false) => (
+            X86EvexScalarFpUnaryMemoryKind::Recip28,
+            VecElementType::F32,
+            false,
+        ),
+        (2, 0xCB, 1, true) => (
+            X86EvexScalarFpUnaryMemoryKind::Recip28,
+            VecElementType::F64,
+            false,
+        ),
+        (2, 0xCD, 1, false) => (
+            X86EvexScalarFpUnaryMemoryKind::Rsqrt28,
+            VecElementType::F32,
+            false,
+        ),
+        (2, 0xCD, 1, true) => (
+            X86EvexScalarFpUnaryMemoryKind::Rsqrt28,
+            VecElementType::F64,
+            false,
+        ),
         _ => return None,
     };
     let mask = p2 & 0x07;
@@ -179,13 +236,15 @@ fn scalar_fp_unary_memory_fields(
 }
 
 impl X86InstructionBytes {
-    /// Validate one scalar `VGETEXP*`, `VGETMANT*`, `VRNDSCALE*`, or
-    /// `VREDUCE*` memory source and synthesize its exact `[rsp]` replay.
+    /// Validate one scalar special or approximate floating-point memory
+    /// source and synthesize its exact `[rsp]` replay.
     ///
-    /// Intel assigns all twelve forms a Tuple1 Scalar operand and Type E3
-    /// exceptions. Only writemask bit 0 controls the exact 2/4/8-byte access.
+    /// Intel assigns every owned form a Tuple1 Scalar operand. Only writemask
+    /// bit 0 controls the exact 2/4/8-byte access; exception classes remain
+    /// instruction-specific and are preserved by replaying the original opcode.
     /// Memory-source `EVEX.b=1` and `L'L=11B` are reserved; the other three
-    /// LLIG images are retained exactly and do not require AVX-512VL.
+    /// LLIG images are retained exactly and do not require AVX-512VL. SAE for
+    /// VRCP28/VRSQRT28 is register-register only under the common EVEX rules.
     /// Segment/address-size prefixes and APX B4/X4 address extensions remain
     /// exclusively in helper address evaluation. The unconstrained immediate
     /// is preserved for the nine immediate-control forms.
@@ -235,6 +294,10 @@ impl X86InstructionBytes {
             stack_instruction,
             needs_avx512dq: fields.kind == X86EvexScalarFpUnaryMemoryKind::Reduce
                 && fields.elem != VecElementType::F16,
+            needs_avx512er: matches!(
+                fields.kind,
+                X86EvexScalarFpUnaryMemoryKind::Recip28 | X86EvexScalarFpUnaryMemoryKind::Rsqrt28
+            ),
             needs_avx512fp16: fields.elem == VecElementType::F16,
         })
     }

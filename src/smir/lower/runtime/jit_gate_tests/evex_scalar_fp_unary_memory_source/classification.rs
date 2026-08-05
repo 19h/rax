@@ -67,6 +67,7 @@ fn scalar_unary_classifier_exhaustively_rewrites_2_211_840_control_and_apx_cells
                                                 && format != ScalarFormat::F16,
                                             "{bytes:02X?}"
                                         );
+                                        assert!(!encoding.needs_avx512er, "{bytes:02X?}");
                                         assert_eq!(
                                             encoding.needs_avx512fp16,
                                             format == ScalarFormat::F16,
@@ -111,12 +112,13 @@ fn selector(map: u8, opcode: u8, pp: u8, w: bool) -> Option<bool> {
         | (3, 0x57, 0, false)
         | (3, 0x57, 1, false)
         | (3, 0x57, 1, true) => true,
+        (2, 0x4D | 0x4F | 0xCB | 0xCD, 1, false | true) | (6, 0x4D | 0x4F, 1, false) => false,
         _ => return None,
     })
 }
 
 #[test]
-fn scalar_unary_classifier_owns_exactly_twelve_map_opcode_pp_w_length_selectors() {
+fn scalar_unary_classifier_owns_exactly_twenty_two_map_opcode_pp_w_length_selectors() {
     let template = memory_encoding(
         UnaryOperation::GetExponent,
         ScalarFormat::F32,
@@ -153,7 +155,7 @@ fn scalar_unary_classifier_owns_exactly_twelve_map_opcode_pp_w_length_selectors(
             }
         }
     }
-    assert_eq!(accepted, 12);
+    assert_eq!(accepted, 22);
 }
 
 #[test]

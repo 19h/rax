@@ -8,6 +8,8 @@ mod crypto;
 pub use crypto::*;
 mod fp;
 pub use fp::*;
+mod fp_approx;
+pub use fp_approx::*;
 mod fixup_imm;
 pub use fixup_imm::*;
 mod fp16_arithmetic;

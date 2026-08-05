@@ -9,8 +9,8 @@ use crate::smir::ir::types::{SignExtend, VReg};
 use crate::smir::lower::LowerError;
 
 impl X86_64Lowerer {
-    /// Fuse one exact scalar `VGETEXP*`, `VGETMANT*`, `VRNDSCALE*`, or
-    /// `VREDUCE*` memory-source decomposition.
+    /// Fuse one exact scalar special or approximate floating-point
+    /// memory-source decomposition.
     ///
     /// The scalar helper stages the complete 2/4/8-byte source before a
     /// byte-validated `[rsp]` replay. A live K bit-0 guard suppresses the
