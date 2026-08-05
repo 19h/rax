@@ -26,6 +26,7 @@ mod evex_integer_interleave_memory;
 mod evex_integer_mask_memory;
 mod evex_integer_minmax_memory;
 mod evex_integer_pack_memory;
+mod evex_integer_unary_memory;
 mod evex_logic_memory;
 mod evex_mask_blend_memory;
 mod evex_memory;
@@ -188,6 +189,10 @@ pub(crate) use evex_integer_mask_memory::{
 };
 pub(crate) use evex_integer_minmax_memory::X86EvexIntegerMinMaxMemoryEncoding;
 pub(crate) use evex_integer_pack_memory::X86EvexIntegerPackMemoryEncoding;
+pub(crate) use evex_integer_unary_memory::{
+    X86EvexIntegerUnaryMemoryEncoding, X86EvexIntegerUnaryMemoryKind,
+    X86EvexIntegerUnaryMemoryReplay,
+};
 pub(crate) use evex_logic_memory::{
     X86EvexLogicMemoryEncoding, X86EvexLogicMemoryKind, X86EvexMaskedLogicMemoryEncoding,
 };

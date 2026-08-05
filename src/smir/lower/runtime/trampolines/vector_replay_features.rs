@@ -32,6 +32,8 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_avx512er: bool,
     pub(crate) needs_avx512fp16: bool,
     pub(crate) needs_avx512cd: bool,
+    pub(crate) needs_avx512bitalg: bool,
+    pub(crate) needs_avx512vpopcntdq: bool,
     pub(crate) needs_avx512vbmi: bool,
     pub(crate) needs_avx512vbmi2: bool,
     pub(crate) needs_gfni: bool,
@@ -98,6 +100,8 @@ impl X86NativeReplayFeatureRequirements {
             && (!self.needs_xop || x86_host_has_xop())
             && (!self.needs_sm3 || std::is_x86_feature_detected!("sm3"))
             && (!self.needs_sm4 || std::is_x86_feature_detected!("sm4"))
+            && (!self.needs_avx512bitalg || std::is_x86_feature_detected!("avx512bitalg"))
+            && (!self.needs_avx512vpopcntdq || std::is_x86_feature_detected!("avx512vpopcntdq"))
             && (!self.needs_avx512vbmi || std::is_x86_feature_detected!("avx512vbmi"))
             && (!self.needs_avx512vbmi2 || std::is_x86_feature_detected!("avx512vbmi2"))
             && (!self.needs_gfni || std::is_x86_feature_detected!("gfni"))
@@ -684,6 +688,27 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 // dword/quadword forms require only AVX-512F.
                 requirements.needs_avx512bw = true;
                 requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+                all_spans_support_avx_ymm16 = false;
+                index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_evex_integer_unary_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                let lanes = sequence.encoding.width.lanes(sequence.encoding.elem);
+                // KMOVW is exact when the operation cannot observe K[63:16].
+                // Wider byte/word forms use the full KMOVQ bridge.
+                requirements.needs_avx512bw |= lanes > 16;
+                requirements.has_k16_opmask_span |= lanes <= 16;
+                requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+                requirements.needs_avx512cd |= sequence.encoding.needs_avx512cd;
+                requirements.needs_avx512bitalg |= sequence.encoding.needs_avx512bitalg;
+                requirements.needs_avx512vpopcntdq |= sequence.encoding.needs_avx512vpopcntdq;
                 all_spans_support_avx_ymm16 = false;
                 index += sequence.consumed;
             } else if let Some(sequence) = super::x86_jit_evex_packed_fp_unary_memory_sequence(
