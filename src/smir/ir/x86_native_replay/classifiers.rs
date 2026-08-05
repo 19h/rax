@@ -213,6 +213,7 @@ pub(crate) use gfni::{X86EvexGfniAffineMemoryEncoding, X86EvexGfniAffineMemoryRe
 pub(crate) use scalar_convert_memory::{
     X86VexScalarConvertMemoryEncoding, X86VexScalarConvertMemoryKind,
 };
+pub(crate) use scalar_fp_convert::X86EvexScalarFpConvertMemoryEncoding;
 pub(crate) use vex_cross_lane_128::X86VexCrossLane128MemoryEncoding;
 pub(crate) use vex_extract_memory::{
     X86VexChunkExtractMemoryEncoding, X86VexScalarExtractMemoryEncoding,

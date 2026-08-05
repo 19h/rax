@@ -2,18 +2,50 @@
 
 use std::collections::HashMap;
 
+use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::OpKind;
 use crate::smir::ir::types::{
     ArchReg, GuestAddr, OpWidth, SignExtend, SrcOperand, VReg, VecElementType, VecWidth, X86Reg,
 };
 
-use super::evex_memory_source_common::single_definition_single_use;
+use super::evex_memory_source_common::{
+    exact_virtual_definition_use, single_definition_single_use,
+};
 
 pub(super) fn xmm_index(reg: &VReg) -> Option<u8> {
     match reg {
         VReg::Arch(ArchReg::X86(X86Reg::Xmm(index @ 0..=31))) => Some(*index),
         _ => None,
     }
+}
+
+/// Match the exact `K[0]` condition used to predicate one EVEX scalar memory
+/// access. The caller supplies the complete expected use count so any hidden
+/// consumer or optimizer rewrite fails closed.
+#[allow(clippy::too_many_arguments)]
+pub(super) fn exact_evex_scalar_mask_condition(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    guest_pc: GuestAddr,
+    mask: u8,
+    uses: usize,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<VReg> {
+    let op = block.ops.get(index)?;
+    let condition = match op.kind {
+        OpKind::And {
+            dst,
+            src1,
+            src2: SrcOperand::Imm(1),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } if op.x86_hint.is_none() && src1 == VReg::Arch(ArchReg::X86(X86Reg::K(mask))) => dst,
+        _ => return None,
+    };
+    (op.guest_pc == guest_pc
+        && exact_virtual_definition_use(condition, 1, uses, virtual_definitions, virtual_uses))
+    .then_some(condition)
 }
 
 /// Match the exact scalar result reconstruction shared by EVEX scalar

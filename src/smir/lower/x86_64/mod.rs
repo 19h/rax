@@ -134,6 +134,10 @@ mod evex_range_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_scalar_fp_arithmetic_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_scalar_fp_convert_memory_source;
+#[cfg(feature = "smir-jit")]
+mod evex_scalar_memory_source_common;
+#[cfg(feature = "smir-jit")]
 mod evex_scale_f_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_shared_count_shift_memory_source;

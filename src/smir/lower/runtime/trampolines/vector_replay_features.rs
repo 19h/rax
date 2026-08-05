@@ -713,23 +713,24 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.needs_avx512fp16 = true;
                 all_spans_support_avx_ymm16 = false;
                 index += sequence.consumed;
-            } else if let Some(sequence) = super::x86_jit_evex_scalar_fp_arithmetic_memory_sequence(
-                block,
-                index,
-                true,
-                &func.x86_instruction_bytes,
-                &virtual_definitions,
-                &virtual_uses,
-            ) {
+            } else if let Some(span) =
+                super::evex_scalar_fp_memory_features::x86_jit_evex_scalar_fp_memory_feature_span(
+                    block,
+                    index,
+                    &func.x86_instruction_bytes,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )
+            {
                 requirements.any = true;
                 requirements.needs_avx = true;
                 // The full-width vector/opmask bridge requires AVX-512BW;
-                // scalar binary32/binary64 arithmetic requires F, while
-                // binary16 arithmetic additionally requires AVX-512-FP16.
+                // Scalar binary32/binary64 arithmetic and conversion require
+                // F, while binary16 involvement additionally requires FP16.
                 requirements.needs_avx512bw = true;
-                requirements.needs_avx512fp16 |= sequence.encoding.needs_avx512fp16;
+                requirements.needs_avx512fp16 |= span.needs_avx512fp16;
                 all_spans_support_avx_ymm16 = false;
-                index += sequence.consumed;
+                index += span.consumed;
             } else if let Some(sequence) = super::x86_jit_evex_packed_fp_arithmetic_memory_sequence(
                 block,
                 index,

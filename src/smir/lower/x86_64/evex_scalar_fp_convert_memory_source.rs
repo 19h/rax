@@ -1,4 +1,4 @@
-//! Helper-backed EVEX scalar floating-point arithmetic memory lowering.
+//! Helper-backed EVEX scalar floating-point conversion memory lowering.
 
 use std::collections::HashMap;
 
@@ -10,16 +10,14 @@ use crate::smir::lower::LowerError;
 
 impl X86_64Lowerer {
     /// Fuse the exact scalar memory-source decomposition emitted for one
-    /// unmasked or writemasked EVEX arithmetic/square-root instruction.
+    /// unmasked or writemasked EVEX floating-point precision conversion.
     ///
-    /// The scalar MMU helper stages the complete 2/4/8-byte source in a
-    /// 16-byte nonarchitectural host-stack slot. For a writemasked source, a
-    /// live-host-K bit-0 test bypasses the helper completely when the access is
-    /// architecturally suppressed. A byte-validated rewrite of the original
-    /// instruction then consumes `[rsp]`, preserving dynamic MXCSR, merge/zero
-    /// masking, destination-lane, and upper-zeroing behavior without borrowing
-    /// an architectural vector register.
-    pub(crate) fn try_lower_jit_evex_scalar_fp_arithmetic_memory_source(
+    /// The scalar helper stages the complete 2/4/8-byte source before a
+    /// byte-validated `[rsp]` replay. A live K bit-0 guard suppresses the helper
+    /// for inactive writemasks. The native instruction therefore retains the
+    /// ISA-defined dynamic MXCSR behavior, merge/zero masking, source-1 upper
+    /// lanes, and destination upper-zeroing without borrowing a guest vector.
+    pub(crate) fn try_lower_jit_evex_scalar_fp_convert_memory_source(
         &mut self,
         block: &SmirBlock,
         index: usize,
@@ -27,7 +25,7 @@ impl X86_64Lowerer {
         virtual_uses: &HashMap<VReg, usize>,
     ) -> Result<Option<usize>, LowerError> {
         let Some(sequence) =
-            crate::smir::lower::runtime::x86_jit_evex_scalar_fp_arithmetic_memory_sequence(
+            crate::smir::lower::runtime::x86_jit_evex_scalar_fp_convert_memory_sequence(
                 block,
                 index,
                 true,
@@ -40,8 +38,8 @@ impl X86_64Lowerer {
         };
         if self.avx_ymm16_vector_state {
             return Err(LowerError::InvalidOperand {
-                op: "EVEX scalar floating-point arithmetic memory source".to_string(),
-                operand: "AVX-only vector bridge cannot carry EVEX scalar arithmetic".to_string(),
+                op: "EVEX scalar floating-point conversion memory source".to_string(),
+                operand: "AVX-only vector bridge cannot carry EVEX scalar conversion".to_string(),
             });
         }
         let load_index = index + sequence.load_offset;
@@ -58,11 +56,8 @@ impl X86_64Lowerer {
                 signed: SignExtend::Zero,
                 ..
             } if *width == sequence.encoding.memory_width => addr,
-            _ => {
-                unreachable!("validated EVEX scalar arithmetic sequence owns its scalar memory op")
-            }
+            _ => unreachable!("validated EVEX scalar conversion owns its scalar memory op"),
         };
-
         self.emit_evex_scalar_memory_stack_replay(
             block.ops[index].guest_pc,
             address,
@@ -70,7 +65,6 @@ impl X86_64Lowerer {
             sequence.encoding.writemask,
             sequence.encoding.stack_instruction,
         )?;
-
         Ok(Some(sequence.consumed))
     }
 }

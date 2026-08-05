@@ -2,7 +2,6 @@
 
 use std::collections::HashMap;
 
-use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix, X86VecMap};
 use crate::smir::ir::types::{
     ArchReg, Avx10FP16Op, BlockId, FpRoundMode, GuestAddr, MemWidth, OpWidth, SignExtend,
@@ -14,7 +13,9 @@ use super::evex_memory_source_common::{
     exact_evex_memory_apx_frontier, exact_evex_memory_sequence_frontier,
     exact_virtual_definition_use, single_definition_single_use,
 };
-use super::evex_scalar_memory_source_common::{exact_evex_scalar_result_tail, xmm_index};
+use super::evex_scalar_memory_source_common::{
+    exact_evex_scalar_mask_condition, exact_evex_scalar_result_tail, xmm_index,
+};
 use super::x86_jit_mem_address_shape_valid;
 
 /// Exact contiguous EVEX scalar arithmetic/square-root memory decomposition
@@ -66,31 +67,6 @@ fn expected_prefix(elem: VecElementType) -> Option<X86SsePrefix> {
         VecElementType::F64 => Some(X86SsePrefix::Repne),
         _ => None,
     }
-}
-
-fn exact_mask_condition(
-    block: &crate::smir::ir::SmirBlock,
-    index: usize,
-    guest_pc: GuestAddr,
-    mask: u8,
-    uses: usize,
-    virtual_definitions: &HashMap<VReg, usize>,
-    virtual_uses: &HashMap<VReg, usize>,
-) -> Option<VReg> {
-    let op = block.ops.get(index)?;
-    let condition = match op.kind {
-        OpKind::And {
-            dst,
-            src1,
-            src2: SrcOperand::Imm(1),
-            width: OpWidth::W64,
-            flags: FlagUpdate::None,
-        } if op.x86_hint.is_none() && src1 == VReg::Arch(ArchReg::X86(X86Reg::K(mask))) => dst,
-        _ => return None,
-    };
-    (op.guest_pc == guest_pc
-        && exact_virtual_definition_use(condition, 1, uses, virtual_definitions, virtual_uses))
-    .then_some(condition)
 }
 
 fn exact_load(op: &crate::smir::ir::ops::SmirOp, expected_width: MemWidth) -> Option<VReg> {
@@ -459,7 +435,7 @@ fn exact_masked_sequence(
     let mask = encoding.writemask?;
     let guest_pc = block.ops.get(index)?.guest_pc;
     let condition_uses = if encoding.opcode != 0x51 { 3 } else { 2 };
-    let condition = exact_mask_condition(
+    let condition = exact_evex_scalar_mask_condition(
         block,
         index,
         guest_pc,
