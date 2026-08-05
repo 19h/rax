@@ -2772,52 +2772,15 @@ impl X86_64Lifter {
             ops.extend(pre_ops);
             if let Some(mask) = mask {
                 if broadcast {
-                    let lanes = width.lanes(VecElementType::F16) as u8;
-                    let active = ctx.alloc_vreg();
-                    let scalar = ctx.alloc_vreg();
-                    let source = ctx.alloc_vreg();
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
+                    self.append_masked_broadcast_memory_source(
+                        addr,
+                        VecElementType::F16,
+                        width,
+                        mask,
                         pc,
-                        OpKind::And {
-                            dst: active,
-                            src1: mask,
-                            src2: SrcOperand::Imm((1i64 << lanes) - 1),
-                            width: OpWidth::W64,
-                            flags: FlagUpdate::None,
-                        },
-                    ));
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::Mov {
-                            dst: scalar,
-                            src: SrcOperand::Imm(0),
-                            width: OpWidth::W16,
-                        },
-                    ));
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::PredLoad {
-                            dst: scalar,
-                            cond: active,
-                            addr,
-                            width: MemWidth::B2,
-                            signed: SignExtend::Zero,
-                        },
-                    ));
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::VBroadcast {
-                            dst: source,
-                            scalar,
-                            elem: VecElementType::F16,
-                            lanes,
-                        },
-                    ));
-                    source
+                        ctx,
+                        &mut ops,
+                    )
                 } else {
                     self.append_evex_masked_vector_source(
                         addr,

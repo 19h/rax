@@ -3,18 +3,21 @@
 use std::collections::HashMap;
 
 use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix, X86VecMap};
-use crate::smir::ir::types::{ArchReg, BlockId, GuestAddr, VReg, VecElementType, X86Reg};
+use crate::smir::ir::types::{
+    ArchReg, Avx10FP16Op, BlockId, FpRoundMode, GuestAddr, VReg, VecElementType, X86Reg,
+};
 use crate::smir::ir::{
     X86EvexPackedFpUnaryMemoryEncoding, X86EvexPackedFpUnaryMemoryKind,
     X86EvexPackedFpUnaryMemoryReplay, X86InstructionBytes,
 };
 
 use super::evex_memory_source_common::{
-    X86EvexE4MemoryReplayForm, X86EvexE4MemoryShape, exact_evex_e4_memory_sequence, vector_index,
+    X86EvexE4MemoryReplayForm, X86EvexE4MemoryShape, exact_evex_e4_memory_sequence_tail,
+    exact_evex_vector_mask_result, vector_index,
 };
 
 /// Exact contiguous decomposition consumed by the helper-backed x86-64
-/// packed special/approximate unary floating-point memory lowerer.
+/// packed unary floating-point memory lowerer.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct X86JitEvexPackedFpUnaryMemorySequence {
     pub(crate) consumed: usize,
@@ -145,8 +148,104 @@ fn exact_packed_fp_unary(
     }
 }
 
+fn exact_packed_sqrt_tail(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    memory_source: VReg,
+    encoding: X86EvexPackedFpUnaryMemoryEncoding,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<usize> {
+    if encoding.kind != X86EvexPackedFpUnaryMemoryKind::Sqrt {
+        return None;
+    }
+    let op = block.ops.get(index)?;
+    let lanes = encoding.width.lanes(encoding.elem) as u8;
+    if encoding.elem == VecElementType::F16 {
+        let expected_mask = encoding
+            .writemask
+            .map(|mask| VReg::Arch(ArchReg::X86(X86Reg::K(mask))));
+        return matches!(
+            op.kind,
+            OpKind::VFP16Arith {
+                dst,
+                src1,
+                src2,
+                mask,
+                op: Avx10FP16Op::Sqrt,
+                round: FpRoundMode::Dynamic,
+                width,
+                lanes: actual_lanes,
+                zeroing,
+            } if op.x86_hint.is_none()
+                && vector_index(&dst, encoding.width) == Some(encoding.destination)
+                && src1 == memory_source
+                && src2 == memory_source
+                && mask == expected_mask
+                && width == encoding.width
+                && actual_lanes == lanes
+                && zeroing == encoding.zeroing
+        )
+        .then_some(1);
+    }
+
+    let expected_prefix = match encoding.elem {
+        VecElementType::F32 => X86SsePrefix::None,
+        VecElementType::F64 => X86SsePrefix::OpSize,
+        _ => return None,
+    };
+    let raw = match op.kind {
+        OpKind::X86Sqrt {
+            dst,
+            src,
+            elem,
+            lanes: actual_lanes,
+            round: FpRoundMode::Dynamic,
+            suppress_exceptions: false,
+        } if op.x86_hint
+            == Some(X86OpHint::EvexOp {
+                map: X86VecMap::Map0F,
+                pp: expected_prefix,
+                opcode: 0x51,
+                width: encoding.width,
+                w: encoding.w,
+            })
+            && src == memory_source
+            && elem == encoding.elem
+            && actual_lanes == lanes =>
+        {
+            dst
+        }
+        _ => return None,
+    };
+
+    let Some(mask_index) = encoding.writemask else {
+        return (!encoding.zeroing
+            && vector_index(&raw, encoding.width) == Some(encoding.destination))
+        .then_some(1);
+    };
+    let mask = VReg::Arch(ArchReg::X86(X86Reg::K(mask_index)));
+    let mut offset = 1usize;
+    exact_evex_vector_mask_result(
+        block,
+        index,
+        &mut offset,
+        op.guest_pc,
+        raw,
+        mask,
+        encoding.width,
+        encoding.elem,
+        encoding.destination,
+        encoding.zeroing,
+        virtual_definitions,
+        virtual_uses,
+    )?;
+    Some(offset)
+}
+
 /// Validate the complete O0/O1/O2 decomposition emitted for one packed
-/// `VGETEXP*`, `VRCP14*`, `VRSQRT14*`, `VRCPPH`, or `VRSQRTPH` memory source.
+/// `VSQRT*`, `VGETEXP*`, `VRCP14*`, `VRSQRT14*`, `VRCPPH`, or `VRSQRTPH`
+/// memory source.
 ///
 /// Exact provenance binds the operation, precision, vector width,
 /// architectural destination and writemask, merge/zero policy,
@@ -183,15 +282,32 @@ pub(crate) fn x86_jit_evex_packed_fp_unary_memory_sequence(
         zeroing: encoding.zeroing,
         vector_load_hint: None,
         form,
-        memory_source_uses: 1,
+        memory_source_uses: usize::from(
+            encoding.kind == X86EvexPackedFpUnaryMemoryKind::Sqrt
+                && encoding.elem == VecElementType::F16,
+        ) + 1,
     };
-    let exact = exact_evex_e4_memory_sequence(
+    let exact = exact_evex_e4_memory_sequence_tail(
         block,
         index,
         shape,
         virtual_definitions,
         virtual_uses,
-        |op, memory_source| exact_packed_fp_unary(op, memory_source, encoding),
+        |block, tail_index, memory_source| {
+            if encoding.kind == X86EvexPackedFpUnaryMemoryKind::Sqrt {
+                exact_packed_sqrt_tail(
+                    block,
+                    tail_index,
+                    memory_source,
+                    encoding,
+                    virtual_definitions,
+                    virtual_uses,
+                )
+            } else {
+                exact_packed_fp_unary(block.ops.get(tail_index)?, memory_source, encoding)
+                    .then_some(1)
+            }
+        },
     )?;
     Some(X86JitEvexPackedFpUnaryMemorySequence {
         consumed: exact.consumed,

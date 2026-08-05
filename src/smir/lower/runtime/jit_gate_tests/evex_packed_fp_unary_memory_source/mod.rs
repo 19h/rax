@@ -3,10 +3,10 @@
 use std::collections::HashMap;
 
 use super::*;
-use crate::smir::ir::ops::{OpKind, SmirOp};
+use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86SsePrefix, X86VecMap};
 use crate::smir::ir::types::{
-    Address, ArchReg, BlockId, DispSize, FunctionId, MemWidth, OpId, SourceArch, SrcOperand, VReg,
-    VecElementType, VecWidth, VirtualId, X86Reg,
+    Address, ArchReg, Avx10FP16Op, BlockId, DispSize, FpRoundMode, FunctionId, MemWidth, OpId,
+    SourceArch, SrcOperand, VReg, VecElementType, VecWidth, VirtualId, X86Reg,
 };
 use crate::smir::ir::{
     SmirBlock, SmirFunction, Terminator, X86EvexPackedFpUnaryMemoryKind,
@@ -34,6 +34,9 @@ const LEVELS: [OptLevel; 3] = [OptLevel::O0, OptLevel::O1, OptLevel::O2];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum PackedUnaryOperation {
+    SqrtF16,
+    SqrtF32,
+    SqrtF64,
     GetExpF16,
     GetExpF32,
     GetExpF64,
@@ -46,7 +49,10 @@ pub(super) enum PackedUnaryOperation {
 }
 
 impl PackedUnaryOperation {
-    const ALL: [Self; 9] = [
+    const ALL: [Self; 12] = [
+        Self::SqrtF16,
+        Self::SqrtF32,
+        Self::SqrtF64,
         Self::GetExpF16,
         Self::GetExpF32,
         Self::GetExpF64,
@@ -60,6 +66,7 @@ impl PackedUnaryOperation {
 
     const fn kind(self) -> X86EvexPackedFpUnaryMemoryKind {
         match self {
+            Self::SqrtF16 | Self::SqrtF32 | Self::SqrtF64 => X86EvexPackedFpUnaryMemoryKind::Sqrt,
             Self::GetExpF16 | Self::GetExpF32 | Self::GetExpF64 => {
                 X86EvexPackedFpUnaryMemoryKind::GetExponent
             }
@@ -72,22 +79,42 @@ impl PackedUnaryOperation {
 
     const fn elem(self) -> VecElementType {
         match self {
-            Self::GetExpF16 | Self::RecipFp16 | Self::RsqrtFp16 => VecElementType::F16,
-            Self::GetExpF32 | Self::Recip14F32 | Self::Rsqrt14F32 => VecElementType::F32,
-            Self::GetExpF64 | Self::Recip14F64 | Self::Rsqrt14F64 => VecElementType::F64,
+            Self::SqrtF16 | Self::GetExpF16 | Self::RecipFp16 | Self::RsqrtFp16 => {
+                VecElementType::F16
+            }
+            Self::SqrtF32 | Self::GetExpF32 | Self::Recip14F32 | Self::Rsqrt14F32 => {
+                VecElementType::F32
+            }
+            Self::SqrtF64 | Self::GetExpF64 | Self::Recip14F64 | Self::Rsqrt14F64 => {
+                VecElementType::F64
+            }
         }
     }
 
     const fn map(self) -> u8 {
-        match self.elem() {
-            VecElementType::F16 => 6,
-            VecElementType::F32 | VecElementType::F64 => 2,
-            _ => unreachable!(),
+        match self {
+            Self::SqrtF16 => 5,
+            Self::SqrtF32 | Self::SqrtF64 => 1,
+            Self::GetExpF16 | Self::RecipFp16 | Self::RsqrtFp16 => 6,
+            Self::GetExpF32
+            | Self::GetExpF64
+            | Self::Recip14F32
+            | Self::Recip14F64
+            | Self::Rsqrt14F32
+            | Self::Rsqrt14F64 => 2,
+        }
+    }
+
+    const fn pp(self) -> u8 {
+        match self {
+            Self::SqrtF16 | Self::SqrtF32 => 0,
+            _ => 1,
         }
     }
 
     const fn opcode(self) -> u8 {
         match self {
+            Self::SqrtF16 | Self::SqrtF32 | Self::SqrtF64 => 0x51,
             Self::GetExpF16 | Self::GetExpF32 | Self::GetExpF64 => 0x42,
             Self::Recip14F32 | Self::Recip14F64 | Self::RecipFp16 => 0x4C,
             Self::Rsqrt14F32 | Self::Rsqrt14F64 | Self::RsqrtFp16 => 0x4E,
@@ -95,17 +122,28 @@ impl PackedUnaryOperation {
     }
 
     const fn w(self) -> bool {
-        matches!(self, Self::GetExpF64 | Self::Recip14F64 | Self::Rsqrt14F64)
+        matches!(
+            self,
+            Self::SqrtF64 | Self::GetExpF64 | Self::Recip14F64 | Self::Rsqrt14F64
+        )
     }
 
     const fn needs_fp16(self) -> bool {
-        matches!(self, Self::GetExpF16 | Self::RecipFp16 | Self::RsqrtFp16)
+        matches!(
+            self,
+            Self::SqrtF16 | Self::GetExpF16 | Self::RecipFp16 | Self::RsqrtFp16
+        )
     }
 
     const fn uses_k16_opmasks(self) -> bool {
         matches!(
             self,
-            Self::Recip14F32 | Self::Recip14F64 | Self::Rsqrt14F32 | Self::Rsqrt14F64
+            Self::SqrtF32
+                | Self::SqrtF64
+                | Self::Recip14F32
+                | Self::Recip14F64
+                | Self::Rsqrt14F32
+                | Self::Rsqrt14F64
         )
     }
 }
@@ -213,7 +251,7 @@ fn memory_encoding(case: PackedUnaryMemoryCase, sib: bool) -> Vec<u8> {
         | if case.destination & 8 == 0 { 0x80 } else { 0 }
         | if case.destination & 16 == 0 { 0x10 } else { 0 }
         | case.operation.map();
-    let p1 = (u8::from(case.operation.w()) << 7) | 0x7D;
+    let p1 = (u8::from(case.operation.w()) << 7) | 0x7C | case.operation.pp();
     let p2 = (u8::from(case.zeroing()) << 7)
         | (case.ll() << 5)
         | (u8::from(case.broadcast()) << 4)
@@ -250,7 +288,7 @@ pub(super) fn register_encoding(case: PackedUnaryMemoryCase, source: u8) -> Vec<
     vec![
         0x62,
         p0,
-        (u8::from(case.operation.w()) << 7) | 0x7D,
+        (u8::from(case.operation.w()) << 7) | 0x7C | case.operation.pp(),
         (u8::from(case.zeroing()) << 7) | (case.ll() << 5) | 0x08 | case.mask(),
         case.operation.opcode(),
         0xC0 | ((case.destination & 7) << 3) | (source & 7),
@@ -412,8 +450,20 @@ pub(super) fn all_cases() -> Vec<PackedUnaryMemoryCase> {
 }
 
 #[test]
-fn packed_unary_rewrites_match_nine_independent_llvm_23_anchors() {
+fn packed_unary_rewrites_match_twelve_independent_llvm_23_anchors() {
     let anchors: &[(&[u8], &[u8])] = &[
+        (
+            &[0x62, 0xE1, 0x7C, 0x08, 0x51, 0x0B],
+            &[0x62, 0xE1, 0x7C, 0x08, 0x51, 0xC8],
+        ),
+        (
+            &[0x62, 0x71, 0xFD, 0x3B, 0x51, 0x0C, 0x24],
+            &[0x62, 0x71, 0xFD, 0x3B, 0x51, 0x0C, 0x24],
+        ),
+        (
+            &[0x62, 0xE5, 0x7C, 0xCB, 0x51, 0x08],
+            &[0x62, 0xE5, 0x7C, 0xCB, 0x51, 0x0C, 0x24],
+        ),
         (
             &[0x62, 0xF2, 0x7D, 0x08, 0x42, 0x0B],
             &[0x62, 0xF2, 0x7D, 0x08, 0x42, 0xC8],
@@ -495,13 +545,21 @@ fn packed_unary_classifier_exhausts_all_16_384_selector_cells() {
             }
         }
     }
-    assert_eq!(accepted.len(), 9, "{accepted:#?}");
+    assert_eq!(accepted.len(), 12, "{accepted:#?}");
+    assert_eq!(
+        accepted
+            .iter()
+            .filter(|(_, _, _, _, kind, _)| *kind == X86EvexPackedFpUnaryMemoryKind::Sqrt)
+            .count(),
+        3,
+        "{accepted:#?}"
+    );
     for operation in PackedUnaryOperation::ALL {
         assert!(
             accepted.contains(&(
                 operation.map(),
                 operation.opcode(),
-                1,
+                operation.pp(),
                 operation.w(),
                 operation.kind(),
                 operation.elem(),
@@ -512,8 +570,9 @@ fn packed_unary_classifier_exhausts_all_16_384_selector_cells() {
 }
 
 #[test]
-fn packed_unary_classifier_exhausts_103_680_operand_mask_and_apx_cells() {
+fn packed_unary_classifier_exhausts_138_240_operand_mask_and_apx_cells() {
     let mut accepted = 0usize;
+    let mut sqrt_accepted = 0usize;
     for operation in PackedUnaryOperation::ALL {
         for width in [VecWidth::V128, VecWidth::V256, VecWidth::V512] {
             for form in [SourceForm::Vector, SourceForm::Broadcast] {
@@ -589,6 +648,9 @@ fn packed_unary_classifier_exhausts_103_680_operand_mask_and_apx_cells() {
                                         }
                                     }
                                     accepted += 1;
+                                    sqrt_accepted += usize::from(
+                                        encoding.kind == X86EvexPackedFpUnaryMemoryKind::Sqrt,
+                                    );
                                 }
                             }
                         }
@@ -597,7 +659,8 @@ fn packed_unary_classifier_exhausts_103_680_operand_mask_and_apx_cells() {
             }
         }
     }
-    assert_eq!(accepted, 103_680);
+    assert_eq!(accepted, 138_240);
+    assert_eq!(sqrt_accepted, 34_560);
 }
 
 #[test]
@@ -666,10 +729,18 @@ fn packed_unary_classifier_rejects_reserved_non_owned_and_trailing_shapes() {
 }
 
 #[test]
-fn all_162_packed_unary_memory_cells_optimize_admit_and_lower_exactly() {
+fn all_216_packed_unary_memory_cells_optimize_admit_and_lower_exactly() {
     let cases = all_cases();
-    assert_eq!(cases.len(), 162);
+    assert_eq!(cases.len(), 216);
+    assert_eq!(
+        cases
+            .iter()
+            .filter(|case| case.operation.kind() == X86EvexPackedFpUnaryMemoryKind::Sqrt)
+            .count(),
+        54
+    );
     let mut lowerings = 0usize;
+    let mut sqrt_lowerings = 0usize;
     for case in cases {
         for level in LEVELS {
             let function = optimize(lift_case(case), level);
@@ -706,9 +777,12 @@ fn all_162_packed_unary_memory_cells_optimize_admit_and_lower_exactly() {
                 code.len()
             );
             lowerings += 1;
+            sqrt_lowerings +=
+                usize::from(case.operation.kind() == X86EvexPackedFpUnaryMemoryKind::Sqrt);
         }
     }
-    assert_eq!(lowerings, 162 * LEVELS.len());
+    assert_eq!(lowerings, 216 * LEVELS.len());
+    assert_eq!(sqrt_lowerings, 54 * LEVELS.len());
 }
 
 #[test]
@@ -989,6 +1063,115 @@ fn packed_unary_sequence_fails_closed_for_provenance_graph_and_frontier_mutation
                 SmirOp::new(OpId(u16::MAX - 2), PC, OpKind::X86RequireApx),
             );
             assert_rejected("spurious APX address guard", &spurious_apx);
+        }
+    }
+}
+
+#[test]
+fn packed_sqrt_sequence_fails_closed_for_semantic_hint_and_mask_tail_mutations() {
+    for case in [
+        PackedUnaryMemoryCase {
+            operation: PackedUnaryOperation::SqrtF16,
+            width: VecWidth::V512,
+            destination: 17,
+            form: SourceForm::Broadcast,
+            control: MaskControl::Merge,
+        },
+        PackedUnaryMemoryCase {
+            operation: PackedUnaryOperation::SqrtF32,
+            width: VecWidth::V128,
+            destination: 9,
+            form: SourceForm::Vector,
+            control: MaskControl::Merge,
+        },
+        PackedUnaryMemoryCase {
+            operation: PackedUnaryOperation::SqrtF64,
+            width: VecWidth::V256,
+            destination: 17,
+            form: SourceForm::Broadcast,
+            control: MaskControl::Zero,
+        },
+    ] {
+        for level in LEVELS {
+            let canonical = optimize(lift_case(case), level);
+            assert!(sequence(&canonical, true).is_some(), "{level:?} {case:?}");
+            let semantic_index = canonical.blocks[0]
+                .ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::X86Sqrt { .. }
+                            | OpKind::VFP16Arith {
+                                op: Avx10FP16Op::Sqrt,
+                                ..
+                            }
+                    )
+                })
+                .expect("packed sqrt semantic operation");
+
+            let mut provenance = canonical.clone();
+            let other_destination = (case.destination + 1) & 31;
+            provenance.x86_instruction_bytes.insert(
+                (BlockId(0), PC),
+                X86InstructionBytes::new(
+                    &PackedUnaryMemoryCase {
+                        destination: other_destination,
+                        ..case
+                    }
+                    .bytes(),
+                )
+                .unwrap(),
+            );
+            assert_rejected("packed sqrt destination provenance", &provenance);
+
+            let mut wrong_round = canonical.clone();
+            match &mut wrong_round.blocks[0].ops[semantic_index].kind {
+                OpKind::X86Sqrt { round, .. } | OpKind::VFP16Arith { round, .. } => {
+                    *round = FpRoundMode::RoundNearest;
+                }
+                _ => unreachable!(),
+            }
+            assert_rejected("packed sqrt static rounding", &wrong_round);
+
+            let mut wrong_source = canonical.clone();
+            match &mut wrong_source.blocks[0].ops[semantic_index].kind {
+                OpKind::X86Sqrt { src, .. } => {
+                    *src = vector(other_destination, case.width);
+                }
+                OpKind::VFP16Arith { src2, .. } => {
+                    *src2 = vector(other_destination, case.width);
+                }
+                _ => unreachable!(),
+            }
+            assert_rejected("packed sqrt source provenance", &wrong_source);
+
+            let mut wrong_hint = canonical.clone();
+            if case.elem() == VecElementType::F16 {
+                wrong_hint.blocks[0].ops[semantic_index].x86_hint = Some(X86OpHint::EvexOp {
+                    map: X86VecMap::Map5,
+                    pp: X86SsePrefix::None,
+                    opcode: 0x51,
+                    width: case.width,
+                    w: false,
+                });
+            } else {
+                wrong_hint.blocks[0].ops[semantic_index].x86_hint = None;
+            }
+            assert_rejected("packed sqrt semantic hint", &wrong_hint);
+
+            if case.elem() != VecElementType::F16 {
+                let mut wrong_tail = canonical.clone();
+                let lane = wrong_tail.blocks[0].ops[semantic_index + 1..]
+                    .iter_mut()
+                    .find_map(|op| match &mut op.kind {
+                        OpKind::VExtractLane { lane, .. } => Some(lane),
+                        _ => None,
+                    })
+                    .expect("masked packed sqrt result has an extract tail");
+                *lane ^= 1;
+                assert_rejected("packed sqrt merge/zero tail", &wrong_tail);
+            }
         }
     }
 }

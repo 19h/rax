@@ -1,4 +1,4 @@
-//! EVEX packed special and approximate floating-point memory classification.
+//! EVEX packed unary floating-point memory classification.
 
 use super::X86InstructionBytes;
 use super::evex_memory::{memory_operand_end, vector_legacy_prefix_len};
@@ -7,6 +7,7 @@ use crate::smir::ir::types::{VecElementType, VecWidth};
 /// Packed unary floating-point operation carried by one exact native replay.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum X86EvexPackedFpUnaryMemoryKind {
+    Sqrt,
     GetExponent,
     Recip14,
     Rsqrt14,
@@ -42,13 +43,14 @@ struct PackedFpUnaryMemoryFields {
     writemask: Option<u8>,
     zeroing: bool,
     map: u8,
+    pp: u8,
     w: bool,
     opcode: u8,
     broadcast: bool,
 }
 
-/// Exact EVEX packed special or approximate floating-point memory encoding
-/// and its byte-validated helper-backed replay.
+/// Exact EVEX packed unary floating-point memory encoding and its
+/// byte-validated helper-backed replay.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct X86EvexPackedFpUnaryMemoryEncoding {
     pub(crate) kind: X86EvexPackedFpUnaryMemoryKind,
@@ -67,31 +69,35 @@ pub(crate) struct X86EvexPackedFpUnaryMemoryEncoding {
 
 fn operation(
     map: u8,
+    pp: u8,
     opcode: u8,
     w: bool,
 ) -> Option<(X86EvexPackedFpUnaryMemoryKind, VecElementType)> {
-    Some(match (map, opcode, w) {
-        (2, 0x42, false) => (
+    Some(match (map, pp, opcode, w) {
+        (1, 0, 0x51, false) => (X86EvexPackedFpUnaryMemoryKind::Sqrt, VecElementType::F32),
+        (1, 1, 0x51, true) => (X86EvexPackedFpUnaryMemoryKind::Sqrt, VecElementType::F64),
+        (5, 0, 0x51, false) => (X86EvexPackedFpUnaryMemoryKind::Sqrt, VecElementType::F16),
+        (2, 1, 0x42, false) => (
             X86EvexPackedFpUnaryMemoryKind::GetExponent,
             VecElementType::F32,
         ),
-        (2, 0x42, true) => (
+        (2, 1, 0x42, true) => (
             X86EvexPackedFpUnaryMemoryKind::GetExponent,
             VecElementType::F64,
         ),
-        (6, 0x42, false) => (
+        (6, 1, 0x42, false) => (
             X86EvexPackedFpUnaryMemoryKind::GetExponent,
             VecElementType::F16,
         ),
-        (2, 0x4C, false) => (X86EvexPackedFpUnaryMemoryKind::Recip14, VecElementType::F32),
-        (2, 0x4C, true) => (X86EvexPackedFpUnaryMemoryKind::Recip14, VecElementType::F64),
-        (2, 0x4E, false) => (X86EvexPackedFpUnaryMemoryKind::Rsqrt14, VecElementType::F32),
-        (2, 0x4E, true) => (X86EvexPackedFpUnaryMemoryKind::Rsqrt14, VecElementType::F64),
-        (6, 0x4C, false) => (
+        (2, 1, 0x4C, false) => (X86EvexPackedFpUnaryMemoryKind::Recip14, VecElementType::F32),
+        (2, 1, 0x4C, true) => (X86EvexPackedFpUnaryMemoryKind::Recip14, VecElementType::F64),
+        (2, 1, 0x4E, false) => (X86EvexPackedFpUnaryMemoryKind::Rsqrt14, VecElementType::F32),
+        (2, 1, 0x4E, true) => (X86EvexPackedFpUnaryMemoryKind::Rsqrt14, VecElementType::F64),
+        (6, 1, 0x4C, false) => (
             X86EvexPackedFpUnaryMemoryKind::RecipFp16,
             VecElementType::F16,
         ),
-        (6, 0x4E, false) => (
+        (6, 1, 0x4E, false) => (
             X86EvexPackedFpUnaryMemoryKind::RsqrtFp16,
             VecElementType::F16,
         ),
@@ -113,13 +119,13 @@ fn packed_fp_unary_memory_fields(
     let modrm_index = start + 5;
     let modrm = *bytes.get(modrm_index)?;
     let map = p0 & 0x07;
+    let pp = p1 & 0x03;
     let w = p1 & 0x80 != 0;
-    let (kind, elem) = operation(map, opcode, w)?;
+    let (kind, elem) = operation(map, pp, opcode, w)?;
     let mask = p2 & 0x07;
     let zeroing = p2 & 0x80 != 0;
     let ll = (p2 >> 5) & 3;
     if p1 & 0x78 != 0x78
-        || p1 & 0x03 != 1
         || p2 & 0x08 == 0
         || ll == 3
         || modrm >> 6 == 3
@@ -149,6 +155,7 @@ fn packed_fp_unary_memory_fields(
             writemask: (mask != 0).then_some(mask),
             zeroing,
             map,
+            pp,
             w,
             opcode,
             broadcast: p2 & 0x10 != 0,
@@ -165,8 +172,9 @@ fn register_rewrite_matches(
         return false;
     };
     let map = p0 & 0x07;
+    let pp = p1 & 0x03;
     let w = p1 & 0x80 != 0;
-    let Some((kind, elem)) = operation(map, *opcode, w) else {
+    let Some((kind, elem)) = operation(map, pp, *opcode, w) else {
         return false;
     };
     let ll = (p2 >> 5) & 3;
@@ -185,7 +193,7 @@ fn register_rewrite_matches(
         && destination == expected.destination
         && source == scratch
         && p1 & 0x78 == 0x78
-        && p1 & 0x03 == 1
+        && pp == expected.pp
         && p2 & 0x08 != 0
         && p2 & 0x10 == 0
         && p2 & 0x87 == (u8::from(expected.zeroing) << 7) | expected.writemask.unwrap_or(0)
@@ -193,11 +201,17 @@ fn register_rewrite_matches(
         && w == expected.w
         && *opcode == expected.opcode
         && modrm >> 6 == 3
+        && (expected.kind != X86EvexPackedFpUnaryMemoryKind::Sqrt
+            || instruction.evex_register_fp_sqrt_requirements()
+                == Some((
+                    expected.width != VecWidth::V512,
+                    expected.elem == VecElementType::F16,
+                )))
 }
 
 impl X86InstructionBytes {
-    /// Validate one EVEX packed `VGETEXP`, `VRCP14`, `VRSQRT14`, `VRCPPH`,
-    /// or `VRSQRTPH` memory source and select an exact native replay.
+    /// Validate one EVEX packed `VSQRT`, `VGETEXP`, `VRCP14`, `VRSQRT14`,
+    /// `VRCPPH`, or `VRSQRTPH` memory source and select an exact native replay.
     ///
     /// Intel SDM Vol. 2 assigns every owned encoding a Full tuple. Inactive
     /// writemask lanes suppress their corresponding 2/4/8-byte accesses;

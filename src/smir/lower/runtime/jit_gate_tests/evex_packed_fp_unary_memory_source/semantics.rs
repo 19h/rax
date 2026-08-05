@@ -225,9 +225,9 @@ fn reference_state(
 }
 
 #[test]
-fn all_162_packed_unary_memory_cells_match_register_semantics_at_o0_o1_o2() {
+fn all_216_packed_unary_memory_cells_match_register_semantics_at_o0_o1_o2() {
     let cases = all_cases();
-    assert_eq!(cases.len(), 162);
+    assert_eq!(cases.len(), 216);
     let mut comparisons = 0usize;
     for (ordinal, case) in cases.into_iter().enumerate() {
         let bytes = source_bytes(case, ordinal);
@@ -240,7 +240,7 @@ fn all_162_packed_unary_memory_cells_match_register_semantics_at_o0_o1_o2() {
             comparisons += 1;
         }
     }
-    assert_eq!(comparisons, 162 * LEVELS.len());
+    assert_eq!(comparisons, 216 * LEVELS.len());
 }
 
 #[test]
@@ -249,7 +249,7 @@ fn empty_masks_suppress_every_e2_e4_memory_access_and_active_faults_do_not_commi
         .into_iter()
         .filter(|case| case.control != MaskControl::None)
         .collect();
-    assert_eq!(cases.len(), 108);
+    assert_eq!(cases.len(), 144);
     let mut suppressions = 0usize;
     let mut faults = 0usize;
     for (ordinal, case) in cases.into_iter().enumerate() {
@@ -282,13 +282,59 @@ fn empty_masks_suppress_every_e2_e4_memory_access_and_active_faults_do_not_commi
             faults += 1;
         }
     }
-    assert_eq!(suppressions, 108 * LEVELS.len());
+    assert_eq!(suppressions, 144 * LEVELS.len());
     assert_eq!(faults, suppressions);
+}
+
+#[test]
+fn fp16_sqrt_broadcast_normalizes_any_active_lane_to_predicate_bit_zero() {
+    let mut executions = 0usize;
+    for width in [VecWidth::V128, VecWidth::V256, VecWidth::V512] {
+        for control in [MaskControl::Merge, MaskControl::Zero] {
+            let case = PackedUnaryMemoryCase {
+                operation: PackedUnaryOperation::SqrtF16,
+                width,
+                destination: 17,
+                form: SourceForm::Broadcast,
+                control,
+            };
+            let bytes = source_bytes(case, 12);
+            for level in LEVELS {
+                let function = optimize(lift_case(case), level);
+                let mut initial = initial_state(case, 12, &bytes);
+                // Lane 0 is inactive while lane 1 is active. PredLoad observes
+                // only predicate bit 0, so the aggregate must first normalize
+                // this nonzero architectural mask to exactly 1.
+                initial.masks[usize::from(case.mask())] = 1 << 1;
+                let expected = reference_state(case, level, &initial);
+                let actual = interpret_mapped(&function, &initial, &bytes, case);
+                assert_eq!(actual, expected, "{level:?} {case:?}");
+
+                let (result, faulted) = execute(&function, &initial, FlatMemory::new(0x1000));
+                assert!(
+                    matches!(
+                        result,
+                        BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+                    ),
+                    "{level:?} {case:?}: {result:?}"
+                );
+                assert_eq!(
+                    faulted, initial,
+                    "{level:?} {case:?}: fault committed state"
+                );
+                executions += 1;
+            }
+        }
+    }
+    assert_eq!(executions, 18);
 }
 
 #[test]
 fn inactive_cross_boundary_lanes_suppress_faults_and_later_active_faults_are_noncommitting() {
     for (ordinal, operation) in [
+        PackedUnaryOperation::SqrtF16,
+        PackedUnaryOperation::SqrtF32,
+        PackedUnaryOperation::SqrtF64,
         PackedUnaryOperation::GetExpF16,
         PackedUnaryOperation::Recip14F32,
         PackedUnaryOperation::Rsqrt14F64,
@@ -350,6 +396,128 @@ fn inactive_cross_boundary_lanes_suppress_faults_and_later_active_faults_are_non
             );
         }
     }
+}
+
+#[test]
+fn packed_sqrt_memory_matches_register_for_all_mxcsr_rounding_modes() {
+    let mut comparisons = 0usize;
+    for operation in [
+        PackedUnaryOperation::SqrtF16,
+        PackedUnaryOperation::SqrtF32,
+        PackedUnaryOperation::SqrtF64,
+    ] {
+        for form in [SourceForm::Vector, SourceForm::Broadcast] {
+            for control in MaskControl::ALL {
+                let case = PackedUnaryMemoryCase {
+                    operation,
+                    width: VecWidth::V512,
+                    destination: 17,
+                    form,
+                    control,
+                };
+                // Lane 0 is +2.0 in every precision, so round-down and
+                // round-up differ by one ULP for its inexact square root.
+                let bytes = source_bytes(case, 12);
+                let mut outputs = [0u64; 4];
+                for rounding_control in 0..4u32 {
+                    let mut initial = initial_state(case, 12, &bytes);
+                    if case.mask() != 0 {
+                        initial.masks[usize::from(case.mask())] = 1;
+                    }
+                    initial.mxcsr = (0x1F80 & !(0x3F | (3 << 13))) | (rounding_control << 13);
+                    for level in LEVELS {
+                        let function = optimize(lift_case(case), level);
+                        let expected = reference_state(case, level, &initial);
+                        let actual = interpret_mapped(&function, &initial, &bytes, case);
+                        assert_eq!(actual, expected, "{level:?} RC={rounding_control} {case:?}");
+                        assert_ne!(
+                            actual.mxcsr & (1 << 5),
+                            0,
+                            "{level:?} RC={rounding_control} {case:?}: missing precision status"
+                        );
+                        if level == OptLevel::O2 {
+                            outputs[rounding_control as usize] = get_lane(
+                                &actual.vectors[usize::from(case.destination)],
+                                0,
+                                case.elem(),
+                            );
+                        }
+                        comparisons += 1;
+                    }
+                }
+                assert_ne!(
+                    outputs[1], outputs[2],
+                    "{case:?}: RC did not affect sqrt(+2)"
+                );
+            }
+        }
+    }
+    assert_eq!(comparisons, 216);
+}
+
+#[test]
+fn packed_sqrt_memory_unmasked_invalid_is_precise_and_noncommitting() {
+    let mut traps = 0usize;
+    for operation in [
+        PackedUnaryOperation::SqrtF16,
+        PackedUnaryOperation::SqrtF32,
+        PackedUnaryOperation::SqrtF64,
+    ] {
+        for form in [SourceForm::Vector, SourceForm::Broadcast] {
+            for control in [MaskControl::None, MaskControl::Merge] {
+                let case = PackedUnaryMemoryCase {
+                    operation,
+                    width: VecWidth::V128,
+                    destination: 0,
+                    form,
+                    control,
+                };
+                let (positive, negative) = match case.elem() {
+                    VecElementType::F16 => (0x4400u64, 0xBC00u64),
+                    VecElementType::F32 => (0x4080_0000, 0xBF80_0000),
+                    VecElementType::F64 => (0x4010_0000_0000_0000, 0xBFF0_0000_0000_0000),
+                    _ => unreachable!(),
+                };
+                let mut bytes = [0u8; 64];
+                let lane_bytes = case.elem().bytes() as usize;
+                for lane in 0..case.width.lanes(case.elem()) as usize {
+                    let offset = lane * lane_bytes;
+                    bytes[offset..offset + lane_bytes]
+                        .copy_from_slice(&positive.to_le_bytes()[..lane_bytes]);
+                }
+                bytes[..lane_bytes].copy_from_slice(&negative.to_le_bytes()[..lane_bytes]);
+
+                for level in LEVELS {
+                    let function = optimize(lift_case(case), level);
+                    let mut initial = initial_state(case, 31, &bytes);
+                    if case.mask() != 0 {
+                        initial.masks[usize::from(case.mask())] = 1;
+                    }
+                    initial.mxcsr = (0x1F80 & !(1 << 7)) & !0x3F;
+                    let mut memory = FlatMemory::new(0x4000);
+                    let size = if case.broadcast() {
+                        case.memory_width().bytes()
+                    } else {
+                        case.width.bytes()
+                    } as usize;
+                    memory.load(MEMORY_ADDRESS as usize, &bytes[..size]);
+                    let (result, actual) = execute(&function, &initial, memory);
+                    assert!(
+                        matches!(
+                            result,
+                            BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+                        ),
+                        "{level:?} {case:?}: {result:?}"
+                    );
+                    let mut expected = initial.clone();
+                    expected.mxcsr |= 1;
+                    assert_eq!(actual, expected, "{level:?} {case:?}: #XM committed state");
+                    traps += 1;
+                }
+            }
+        }
+    }
+    assert_eq!(traps, 36);
 }
 
 #[test]
