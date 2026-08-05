@@ -351,7 +351,25 @@ pub(crate) fn x86_native_replay_feature_requirements(
         }
         let mut index = 0usize;
         while index < block.ops.len() {
-            if let Some(sequence) = super::x86_jit_evex_packed_fp16_convert_memory_sequence(
+            if let Some(sequence) = super::x86_jit_evex_packed_extend_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                // The full-width vector/opmask bridge requires AVX-512BW.
+                // Architecturally, opcode 20H/30H also requires BW while the
+                // remaining widening moves require only AVX-512F.
+                requirements.needs_avx512bw = true;
+                requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+                requirements.has_k16_opmask_span |= sequence.encoding.writemask.is_some();
+                all_spans_support_avx_ymm16 = false;
+                index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_evex_packed_fp16_convert_memory_sequence(
                 block,
                 index,
                 true,
