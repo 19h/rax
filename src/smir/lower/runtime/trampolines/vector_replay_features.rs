@@ -351,7 +351,24 @@ pub(crate) fn x86_native_replay_feature_requirements(
         }
         let mut index = 0usize;
         while index < block.ops.len() {
-            if let Some(sequence) = super::x86_jit_evex_scalar_int_to_fp_memory_sequence(
+            if let Some(sequence) = super::x86_jit_evex_scalar_fp_to_int_memory_sequence(
+                block,
+                index,
+                true,
+                &func.x86_instruction_bytes,
+                &virtual_definitions,
+                &virtual_uses,
+            ) {
+                requirements.any = true;
+                requirements.needs_avx = true;
+                // The full-width native vector-state bridge requires
+                // AVX-512BW. Binary16 conversion additionally requires
+                // AVX-512FP16; binary32/binary64 use AVX-512F.
+                requirements.needs_avx512bw = true;
+                requirements.needs_avx512fp16 |= sequence.encoding.needs_avx512fp16;
+                all_spans_support_avx_ymm16 = false;
+                index += sequence.consumed;
+            } else if let Some(sequence) = super::x86_jit_evex_scalar_int_to_fp_memory_sequence(
                 block,
                 index,
                 true,

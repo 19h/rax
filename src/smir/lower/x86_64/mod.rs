@@ -142,6 +142,8 @@ mod evex_scalar_fp_compare_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_scalar_fp_convert_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_scalar_fp_to_int_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_scalar_fp_unary_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_scalar_int_to_fp_memory_source;
