@@ -78,6 +78,7 @@ impl X86_64Lowerer {
         try_replay!(try_lower_jit_evex_alignr_memory_source);
         try_replay!(try_lower_jit_evex_vector_align_memory_source);
         try_replay!(try_lower_jit_evex_mask_blend_memory_source);
+        try_replay!(try_lower_jit_evex_scalar_move_memory_source);
         try_replay!(try_lower_jit_evex_scalar_fp_arithmetic_memory_source);
         try_replay!(try_lower_jit_evex_scalar_fp_compare_memory_source);
         try_replay!(try_lower_jit_evex_scalar_fp_convert_memory_source);

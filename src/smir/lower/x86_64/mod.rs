@@ -166,6 +166,8 @@ mod evex_scalar_int_to_fp_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_scalar_memory_source_common;
 #[cfg(feature = "smir-jit")]
+mod evex_scalar_move_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_scale_f_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_shared_count_shift_memory_source;

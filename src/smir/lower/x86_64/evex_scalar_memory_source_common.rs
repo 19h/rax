@@ -72,4 +72,72 @@ impl X86_64Lowerer {
         }
         Ok(())
     }
+
+    /// Execute one byte-validated EVEX scalar store into a 16-byte
+    /// nonarchitectural stack slot, then commit exactly 2/4/8 bytes through
+    /// the guest MMU helper.
+    ///
+    /// A writemask is tested from the live host K register before either the
+    /// native stack store or the guest helper. An inactive K[0] therefore
+    /// suppresses the complete access. The stack transfer precedes the helper
+    /// but cannot modify architectural guest state; a helper fault removes the
+    /// reserved slot and exits at `guest_pc` without committing registers.
+    pub(super) fn emit_evex_scalar_memory_stack_store(
+        &mut self,
+        guest_pc: GuestAddr,
+        address: &Address,
+        memory_width: MemWidth,
+        writemask: Option<u8>,
+        stack_instruction: X86InstructionBytes,
+    ) -> Result<(), LowerError> {
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -16);
+        }
+        let inactive = if let Some(mask) = writemask {
+            self.code.emit_u8(0x9C); // pushfq
+            self.code.emit_u8(0x50); // push guest RAX
+            self.emit_opmask_mask_to_rax64(mask);
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_test_ri(PhysReg::Rax, 1, OpWidth::W64);
+            }
+            Some(self.emit_jcc_placeholder(X86Cond::E))
+        } else {
+            None
+        };
+
+        if inactive.is_some() {
+            self.code.emit_u8(0x58); // pop guest RAX
+            self.code.emit_u8(0x9D); // restore exact pre-guard flags
+        }
+        self.code.emit_bytes(stack_instruction.as_slice());
+        self.emit_jit_mem_op(
+            guest_pc,
+            false,
+            None,
+            None,
+            None,
+            None,
+            Some(16),
+            address,
+            memory_width,
+            SignExtend::Zero,
+            16,
+        )?;
+        if let Some(inactive) = inactive {
+            self.code.emit_u8(0xE9);
+            let cleanup = self.code.position();
+            self.code.emit_u32(0);
+            self.patch_rel32_to_current(inactive)?;
+            self.code.emit_u8(0x58); // pop guest RAX
+            self.code.emit_u8(0x9D); // restore exact pre-guard flags
+            self.patch_rel32_to_current(cleanup)?;
+        }
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
+        }
+        Ok(())
+    }
 }

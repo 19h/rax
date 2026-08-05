@@ -197,6 +197,8 @@ mod evex_scalar_integer_move_replay;
 #[cfg(test)]
 mod evex_scalar_lane_transfer_replay;
 #[cfg(test)]
+mod evex_scalar_move_memory_source;
+#[cfg(test)]
 mod evex_scalar_move_replay;
 #[cfg(test)]
 mod evex_scale_f_memory_source;

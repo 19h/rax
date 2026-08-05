@@ -139,7 +139,8 @@ pub(crate) use classifiers::{
     X86EvexScalarFpCompareMemoryEncoding, X86EvexScalarFpConvertMemoryEncoding,
     X86EvexScalarFpToIntMemoryEncoding, X86EvexScalarFpUnaryMemoryEncoding,
     X86EvexScalarFpUnaryMemoryKind, X86EvexScalarIntToFpMemoryEncoding,
-    X86EvexScaleFMemoryEncoding, X86EvexScaleFMemoryReplay, X86EvexSharedCountShiftMemoryEncoding,
+    X86EvexScalarMoveMemoryEncoding, X86EvexScalarMoveMemoryKind, X86EvexScaleFMemoryEncoding,
+    X86EvexScaleFMemoryReplay, X86EvexSharedCountShiftMemoryEncoding,
     X86EvexTernaryLogicMemoryEncoding, X86EvexTernaryLogicMemoryReplay,
     X86EvexTwoTablePermuteMemoryEncoding, X86EvexTwoTablePermuteMemoryReplay,
     X86EvexVariablePermuteMemoryEncoding, X86EvexVectorAlignMemoryEncoding,
@@ -1373,8 +1374,8 @@ pub fn x86_legacy_vex_fp_sqrt_replay_spans(
 
 /// Identify valid register-only EVEX scalar-move replay groups in `block` in
 /// O(N) time and O(P) space for N operations and P unique guest PCs.
-/// `VMOVSH/SS/SD` register forms in both opcode directions are admitted; every
-/// memory form remains at the precise SMIR interpreter boundary.
+/// `VMOVSH/SS/SD` register forms in both opcode directions are admitted;
+/// memory forms use their separate exact helper-backed path.
 pub fn x86_evex_scalar_move_replay_spans(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
