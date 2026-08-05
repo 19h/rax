@@ -46,9 +46,15 @@ impl X86_64Lifter {
         };
 
         // Packed register EVEX.b is SAE and fixes the vector length at 512
-        // bits. Packed memory EVEX.b is broadcast. Scalar EVEX.b is SAE for
-        // both register and scalar-memory encodings.
-        let embedded_sae = prefix.b && (scalar || !modrm.is_memory);
+        // bits. Packed memory EVEX.b is broadcast. Scalar EVEX.b is SAE only
+        // for a register source; scalar instructions do not support broadcast.
+        if scalar && prefix.b && modrm.is_memory {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        let embedded_sae = prefix.b && !modrm.is_memory;
         if !scalar && !embedded_sae && prefix.l_bits == 3 {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,

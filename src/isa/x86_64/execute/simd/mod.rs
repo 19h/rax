@@ -83,6 +83,8 @@ mod avx512_fp16_widen_tests;
 #[cfg(test)]
 mod avx512_fp_compare_tests;
 #[cfg(test)]
+mod avx512_fp_special_tests;
+#[cfg(test)]
 mod avx512_int_to_fp_tests;
 #[cfg(test)]
 mod avx512_nt_tests;

@@ -35,7 +35,7 @@ const LEVELS: [OptLevel; 3] = [OptLevel::O0, OptLevel::O1, OptLevel::O2];
 enum SourceForm {
     Vector,
     Broadcast,
-    Scalar { ll: u8, sae: bool },
+    Scalar { ll: u8 },
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -80,13 +80,9 @@ impl FixupMemoryCase {
         matches!(self.form, SourceForm::Broadcast)
     }
 
-    const fn suppress_exceptions(self) -> bool {
-        matches!(self.form, SourceForm::Scalar { sae: true, .. })
-    }
-
     const fn ll(self) -> u8 {
         match self.form {
-            SourceForm::Scalar { ll, .. } => ll,
+            SourceForm::Scalar { ll } => ll,
             SourceForm::Vector | SourceForm::Broadcast => match self.width {
                 VecWidth::V128 => 0,
                 VecWidth::V256 => 1,
@@ -125,7 +121,7 @@ impl FixupMemoryCase {
             self.ll(),
             self.mask(),
             self.zeroing(),
-            self.broadcast() || self.suppress_exceptions(),
+            self.broadcast(),
             3,
             self.immediate,
         )
@@ -147,7 +143,7 @@ impl FixupMemoryCase {
                 self.ll(),
                 self.mask(),
                 self.zeroing(),
-                self.broadcast() || self.suppress_exceptions(),
+                self.broadcast(),
                 self.immediate,
             )
             .to_vec()
@@ -283,12 +279,16 @@ fn register_encoding(
 
 fn lift_case(case: FixupMemoryCase) -> SmirFunction {
     let bytes = case.bytes();
+    lift_bytes(&bytes)
+}
+
+fn lift_bytes(bytes: &[u8]) -> SmirFunction {
     let mut lifter = X86_64Lifter::strict();
     let mut context = LiftContext::new(SourceArch::X86_64);
     let result = lifter
-        .lift_insn(PC, &bytes, &mut context)
-        .unwrap_or_else(|error| panic!("{case:?} {bytes:02X?}: {error:?}"));
-    assert_eq!(result.bytes_consumed, bytes.len(), "{case:?} {bytes:02X?}");
+        .lift_insn(PC, bytes, &mut context)
+        .unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
+    assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
     assert!(matches!(result.control_flow, ControlFlow::Fallthrough));
 
     let mut block = SmirBlock::new(BlockId(0), PC);
@@ -298,7 +298,7 @@ fn lift_case(case: FixupMemoryCase) -> SmirFunction {
     function.add_block(block);
     function.x86_instruction_bytes.insert(
         (BlockId(0), PC),
-        X86InstructionBytes::new(&bytes).expect("VFIXUPIMM memory provenance"),
+        X86InstructionBytes::new(bytes).expect("VFIXUPIMM provenance"),
     );
     function
 }
@@ -424,17 +424,15 @@ fn all_cases() -> Vec<FixupMemoryCase> {
         }
         for ll in 0..4 {
             for source1 in [0, 1, 17] {
-                for sae in [false, true] {
-                    for control in MaskControl::ALL {
-                        cases.push(FixupMemoryCase {
-                            elem,
-                            width: VecWidth::V128,
-                            source1,
-                            form: SourceForm::Scalar { ll, sae },
-                            control,
-                            immediate: 0x5A ^ source1 ^ ll ^ u8::from(sae),
-                        });
-                    }
+                for control in MaskControl::ALL {
+                    cases.push(FixupMemoryCase {
+                        elem,
+                        width: VecWidth::V128,
+                        source1,
+                        form: SourceForm::Scalar { ll },
+                        control,
+                        immediate: 0x5A ^ source1 ^ ll,
+                    });
                 }
             }
         }
@@ -443,8 +441,9 @@ fn all_cases() -> Vec<FixupMemoryCase> {
 }
 
 #[test]
-fn fixup_memory_classifier_exhaustively_rewrites_2_457_600_control_and_apx_address_cells() {
+fn fixup_memory_classifier_exhaustively_partitions_1_720_320_control_and_apx_address_cells() {
     let mut accepted = 0usize;
+    let mut rejected = 0usize;
     for elem in [VecElementType::F32, VecElementType::F64] {
         for scalar in [false, true] {
             let ll_values: &[u8] = if scalar { &[0, 1, 2, 3] } else { &[0, 1, 2] };
@@ -478,9 +477,15 @@ fn fixup_memory_classifier_exhaustively_rewrites_2_457_600_control_and_apx_addre
                                             if index_high {
                                                 bytes[2] &= !0x04;
                                             }
-                                            let encoding = X86InstructionBytes::new(&bytes)
+                                            let classified = X86InstructionBytes::new(&bytes)
                                                 .unwrap()
-                                                .evex_fixup_imm_memory_encoding()
+                                                .evex_fixup_imm_memory_encoding();
+                                            if scalar && b {
+                                                assert!(classified.is_none(), "{bytes:02X?}");
+                                                rejected += 1;
+                                                continue;
+                                            }
+                                            let encoding = classified
                                                 .unwrap_or_else(|| panic!("{bytes:02X?}"));
                                             let width = if scalar {
                                                 VecWidth::V128
@@ -506,11 +511,7 @@ fn fixup_memory_classifier_exhaustively_rewrites_2_457_600_control_and_apx_addre
                                                 "{bytes:02X?}"
                                             );
                                             assert_eq!(encoding.scalar, scalar, "{bytes:02X?}");
-                                            assert_eq!(
-                                                encoding.suppress_exceptions,
-                                                scalar && b,
-                                                "{bytes:02X?}"
-                                            );
+                                            assert!(!encoding.suppress_exceptions, "{bytes:02X?}");
                                             assert_eq!(
                                                 encoding.needs_avx512vl,
                                                 !scalar && ll != 2,
@@ -609,10 +610,8 @@ fn fixup_memory_classifier_exhaustively_rewrites_2_457_600_control_and_apx_addre
             }
         }
     }
-    assert_eq!(
-        accepted,
-        (2 * 3 * 32 * 32 * 2 * 15 * 4) + (2 * 4 * 32 * 32 * 2 * 15 * 4)
-    );
+    assert_eq!(accepted, 1_228_800);
+    assert_eq!(rejected, 491_520);
 
     for immediate in 0..=u8::MAX {
         let bytes = memory_encoding(
@@ -696,50 +695,62 @@ fn fixup_encodings_match_four_independent_llvm_23_anchors() {
 }
 
 #[test]
-fn scalar_fixup_llig_accepts_all_four_values_and_preserves_sae() {
+fn scalar_fixup_llig_accepts_all_four_values_and_reserves_memory_sae() {
     for ll in 0..4 {
+        let bytes = memory_encoding(
+            VecElementType::F32,
+            true,
+            17,
+            18,
+            ll,
+            2,
+            false,
+            false,
+            3,
+            0xFF,
+        );
+        let encoding = X86InstructionBytes::new(&bytes)
+            .unwrap()
+            .evex_fixup_imm_memory_encoding()
+            .unwrap_or_else(|| panic!("{bytes:02X?}"));
+        assert!(encoding.scalar);
+        assert_eq!(encoding.width, VecWidth::V128);
+        assert!(!encoding.suppress_exceptions);
+        assert!(!encoding.needs_avx512vl);
+        let X86EvexFixupImmMemoryReplay::Scalar { stack_instruction } = encoding.replay else {
+            panic!("{bytes:02X?}: scalar selected non-scalar replay")
+        };
+        assert_eq!(stack_instruction.as_slice()[3], bytes[3]);
+
+        let mut reserved_memory_sae = bytes;
+        reserved_memory_sae[3] |= 0x10;
+        assert!(
+            X86InstructionBytes::new(&reserved_memory_sae)
+                .unwrap()
+                .evex_fixup_imm_memory_encoding()
+                .is_none(),
+            "{reserved_memory_sae:02X?}"
+        );
+
         for sae in [false, true] {
-            let bytes = memory_encoding(
+            let register = register_encoding(
                 VecElementType::F32,
                 true,
                 17,
                 18,
+                3,
                 ll,
                 2,
                 false,
                 sae,
-                3,
                 0xFF,
             );
-            let encoding = X86InstructionBytes::new(&bytes)
-                .unwrap()
-                .evex_fixup_imm_memory_encoding()
-                .unwrap_or_else(|| panic!("{bytes:02X?}"));
-            assert!(encoding.scalar);
-            assert_eq!(encoding.width, VecWidth::V128);
-            assert_eq!(encoding.suppress_exceptions, sae);
-            assert!(!encoding.needs_avx512vl);
-            let X86EvexFixupImmMemoryReplay::Scalar { stack_instruction } = encoding.replay else {
-                panic!("{bytes:02X?}: scalar selected non-scalar replay")
-            };
-            assert_eq!(stack_instruction.as_slice()[3], bytes[3]);
             assert_eq!(
-                X86InstructionBytes::new(&register_encoding(
-                    VecElementType::F32,
-                    true,
-                    17,
-                    18,
-                    3,
-                    ll,
-                    2,
-                    false,
-                    sae,
-                    0xFF,
-                ))
-                .unwrap()
-                .evex_register_fixup_imm_needs_vl(),
+                X86InstructionBytes::new(&register)
+                    .unwrap()
+                    .evex_register_fixup_imm_needs_vl(),
                 Some(false),
-                "{bytes:02X?}"
+                "{register:02X?}"
             );
         }
     }
@@ -879,9 +890,9 @@ fn fixup_apx_r16_r17_sib_address_lifts_admits_and_lowers_exactly() {
 }
 
 #[test]
-fn all_252_fixup_memory_cells_optimize_admit_and_lower_exactly() {
+fn all_180_fixup_memory_cells_optimize_admit_and_lower_exactly() {
     let cases = all_cases();
-    assert_eq!(cases.len(), 252);
+    assert_eq!(cases.len(), 180);
     let mut lowerings = 0usize;
     for case in cases {
         for level in LEVELS {
@@ -918,11 +929,7 @@ fn all_252_fixup_memory_cells_optimize_admit_and_lower_exactly() {
                 case.scalar(),
                 "{level:?} {case:?}"
             );
-            assert_eq!(
-                sequence.encoding.suppress_exceptions,
-                case.suppress_exceptions(),
-                "{level:?} {case:?}"
-            );
+            assert!(!sequence.encoding.suppress_exceptions, "{level:?} {case:?}");
             assert_eq!(
                 sequence.memory_size,
                 if case.scalar() || case.broadcast() {
@@ -973,7 +980,7 @@ fn all_252_fixup_memory_cells_optimize_admit_and_lower_exactly() {
             lowerings += 1;
         }
     }
-    assert_eq!(lowerings, 252 * LEVELS.len());
+    assert_eq!(lowerings, 180 * LEVELS.len());
 }
 
 #[test]
@@ -1108,7 +1115,7 @@ fn fixup_memory_sequence_fails_closed_for_provenance_and_graph_mutations() {
             elem: VecElementType::F64,
             width: VecWidth::V128,
             source1: 17,
-            form: SourceForm::Scalar { ll: 3, sae: true },
+            form: SourceForm::Scalar { ll: 3 },
             control: MaskControl::Merge,
             immediate: 0x5A,
         },

@@ -98,13 +98,14 @@ impl X86InstructionBytes {
     /// opcode 54H is packed and opcode 55H is scalar. W0/W1 select binary32
     /// and binary64. Packed L'L selects 128/256/512 bits and memory EVEX.b
     /// selects m32bcst/m64bcst. Scalar L'L is ignored, including 11B, while
-    /// EVEX.b selects SAE even for a memory source. Every form carries an
-    /// unconstrained imm8 response/reporting control.
+    /// scalar memory EVEX.b is reserved because scalar instructions do not
+    /// support broadcast and SAE applies only to register sources. Every form
+    /// carries an unconstrained imm8 response/reporting control.
     ///
     /// Segment/address-size prefixes and APX B4/X4 extensions remain confined
     /// to helper address evaluation. Rewrites therefore remove those address
     /// controls while preserving every architectural vector operand, opmask,
-    /// zeroing, scalar SAE, vector-length, and immediate field.
+    /// zeroing, vector-length, and immediate field.
     pub(crate) fn evex_fixup_imm_memory_encoding(&self) -> Option<X86EvexFixupImmMemoryEncoding> {
         let bytes = self.as_slice();
         let start = vector_legacy_prefix_len(bytes);
@@ -128,6 +129,7 @@ impl X86InstructionBytes {
             || p1 & 0x03 != 1
             || !matches!(opcode, 0x54 | 0x55)
             || (zeroing && mask == 0)
+            || (scalar && p2 & 0x10 != 0)
             || (!scalar && ll == 3)
             || operand_end + 1 != bytes.len()
         {
@@ -153,7 +155,7 @@ impl X86InstructionBytes {
             (u8::from(p0 & 0x80 == 0) << 3) | (u8::from(p0 & 0x10 == 0) << 4) | (modrm >> 3) & 7;
         let source1 = ((!p1 >> 3) & 0x0F) | (u8::from(p2 & 0x08 == 0) << 4);
         let writemask = (mask != 0).then_some(mask);
-        let suppress_exceptions = scalar && p2 & 0x10 != 0;
+        let suppress_exceptions = false;
         let needs_avx512vl = !scalar && width != VecWidth::V512;
 
         // Convert the memory source to an arbitrary low register and validate

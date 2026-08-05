@@ -3121,25 +3121,32 @@ fn lift_evex_fixup_imm_covers_formats_exceptions_masks_sae_and_memory() {
         1
     );
 
-    // Scalar EVEX.b is SAE even for a memory table; it is not broadcast.
-    let scalar_memory_sae = lift_single(&[0x62, 0xF3, 0x6D, 0x18, 0x55, 0x48, 0x01, 0x77]).unwrap();
-    assert!(scalar_memory_sae.ops.iter().any(|op| matches!(
-        op.kind,
-        OpKind::Load {
-            addr: Address::BaseOffset { offset: 4, .. },
-            width: MemWidth::B4,
-            ..
+    for (mut bytes, elem) in [
+        (
+            [0x62, 0xF3, 0x6D, 0x08, 0x55, 0xCB, 0x77],
+            VecElementType::F32,
+        ),
+        (
+            [0x62, 0xF3, 0xED, 0x08, 0x55, 0xCB, 0x77],
+            VecElementType::F64,
+        ),
+    ] {
+        for evex_b in [false, true] {
+            for ll in 0..4 {
+                bytes[3] = 0x08 | (u8::from(evex_b) << 4) | (ll << 5);
+                let scalar = lift_single(&bytes).unwrap();
+                assert!(matches!(
+                    scalar.ops.last().map(|op| &op.kind),
+                    Some(OpKind::X86FixupImm {
+                        elem: actual_elem,
+                        scalar: true,
+                        suppress_exceptions,
+                        ..
+                    }) if *actual_elem == elem && *suppress_exceptions == evex_b
+                ));
+            }
         }
-    )));
-    assert!(matches!(
-        scalar_memory_sae.ops.last().map(|op| &op.kind),
-        Some(OpKind::X86FixupImm {
-            src2: VReg::Virtual(_),
-            scalar: true,
-            suppress_exceptions: true,
-            ..
-        })
-    ));
+    }
 
     for invalid in [
         &[0x62, 0xF3, 0x6E, 0x08, 0x54, 0xCB, 0x33][..], // pp=F3
@@ -3147,6 +3154,18 @@ fn lift_evex_fixup_imm_covers_formats_exceptions_masks_sae_and_memory() {
         &[0x62, 0xF3, 0x6D, 0x88, 0x55, 0xCB, 0x33][..], // {z} with k0
     ] {
         assert!(lift_single(invalid).is_err(), "accepted {invalid:02X?}");
+    }
+    for mut invalid in [
+        [0x62, 0xF3, 0x6D, 0x18, 0x55, 0x48, 0x01, 0x77],
+        [0x62, 0xF3, 0xED, 0x18, 0x55, 0x48, 0x01, 0x77],
+    ] {
+        for ll in 0..4 {
+            invalid[3] = 0x18 | (ll << 5);
+            assert!(
+                lift_single(&invalid).is_err(),
+                "accepted scalar memory EVEX.b=1: {invalid:02X?}"
+            );
+        }
     }
     assert!(matches!(
         lift_single(&[0x62, 0xF3, 0x6D, 0x08, 0x54, 0xCB]),

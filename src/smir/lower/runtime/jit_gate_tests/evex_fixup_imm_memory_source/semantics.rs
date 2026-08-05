@@ -183,16 +183,16 @@ fn fixup_memory_o0_o1_o2_interpretation_is_exactly_equivalent() {
             comparisons += 1;
         }
     }
-    assert_eq!(comparisons, 252 * LEVELS.len());
+    assert_eq!(comparisons, 180 * LEVELS.len());
 }
 
 #[test]
-fn scalar_fixup_sae_suppresses_ie_ze_while_dynamic_form_sets_both_sticky_flags() {
+fn scalar_register_sae_suppresses_ie_ze_while_memory_dynamic_sets_both_sticky_flags() {
     let base = FixupMemoryCase {
         elem: VecElementType::F32,
         width: VecWidth::V128,
         source1: 1,
-        form: SourceForm::Scalar { ll: 3, sae: false },
+        form: SourceForm::Scalar { ll: 3 },
         control: MaskControl::None,
         // ZERO token: bit 0 requests ZE and bit 1 requests IE.
         immediate: 0x03,
@@ -201,15 +201,27 @@ fn scalar_fixup_sae_suppresses_ie_ze_while_dynamic_form_sets_both_sticky_flags()
     let mut initial = initial_registers(base, 0);
     initial.mxcsr = 0x1F80;
     set_lane(&mut initial.zmm[usize::from(base.source1)], base.elem, 0, 0);
+    let register_table = 2u8;
+    initial.zmm[usize::from(register_table)] = memory;
     let dynamic = interpreter_success(&lift_case(base), &initial, memory, base);
     assert_eq!(dynamic.mxcsr & 0x3F, 0x05);
 
-    let sae = FixupMemoryCase {
-        form: SourceForm::Scalar { ll: 3, sae: true },
-        ..base
-    };
-    let suppressed = interpreter_success(&lift_case(sae), &initial, memory, sae);
+    let register_sae = lift_bytes(&register_encoding(
+        base.elem,
+        true,
+        base.destination(),
+        base.source1,
+        register_table,
+        base.ll(),
+        base.mask(),
+        base.zeroing(),
+        true,
+        base.immediate,
+    ));
+    let suppressed = interpreter_success(&register_sae, &initial, memory, base);
     assert_eq!(suppressed.mxcsr, initial.mxcsr);
+    let destination = usize::from(base.destination());
+    assert_eq!(suppressed.zmm[destination], dynamic.zmm[destination]);
 }
 
 fn execute_with_unmapped_source(case: FixupMemoryCase) -> (BlockResult, SmirContext) {
@@ -241,7 +253,7 @@ fn masked_fixup_empty_applicable_mask_suppresses_unmapped_scalar_broadcast_and_v
             elem: VecElementType::F32,
             width: VecWidth::V128,
             source1: 1,
-            form: SourceForm::Scalar { ll: 3, sae: true },
+            form: SourceForm::Scalar { ll: 3 },
             control: MaskControl::Merge,
             immediate: 0xFF,
         },

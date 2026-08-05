@@ -2651,28 +2651,6 @@ fn lifted_x86_fixup_imm_preserves_old_dst_masks_upper_lanes_and_masked_reporting
         ),
         BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
     ));
-
-    // Scalar memory EVEX.b is SAE. A valid active load still occurs, but
-    // its enabled zero reports do not update MXCSR.
-    memory.write(0x80, &0xA00u32.to_le_bytes()).unwrap();
-    ctx.write_vreg(rax, 0x80);
-    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
-        x86.xmm[1][0] = 0xAAAA_AAAA_DEAD_BEEF;
-        x86.xmm[2][0] = 0x1111_1111_0000_0000;
-        x86.mxcsr = 0;
-    }
-    assert!(matches!(
-        execute_lifted_x86(
-            &[0x62, 0xF3, 0x6D, 0x19, 0x55, 0x08, 0x03],
-            &mut ctx,
-            &mut memory,
-        ),
-        BlockResult::Exit(ExitReason::Halt)
-    ));
-    if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
-        assert_eq!(x86.xmm[1][0], 0x1111_1111_3F80_0000);
-        assert_eq!(x86.mxcsr & 0x3F, 0);
-    }
 }
 #[test]
 fn x86_fp16_approx_exhaustively_satisfies_special_cases_and_error_bound() {

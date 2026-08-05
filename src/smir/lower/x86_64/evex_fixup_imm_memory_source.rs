@@ -196,7 +196,7 @@ impl X86_64Lowerer {
     /// 4/8-byte helper loads only for active lanes. Every helper completes
     /// before the native VFIXUPIMM executes, so a fault exits at the source
     /// guest PC without changing the destination or MXCSR. Successful replay
-    /// retains native sticky IE/ZE reporting and scalar SAE.
+    /// retains native sticky IE/ZE reporting; no memory form encodes SAE.
     pub(crate) fn try_lower_jit_evex_fixup_imm_memory_source(
         &mut self,
         block: &SmirBlock,
