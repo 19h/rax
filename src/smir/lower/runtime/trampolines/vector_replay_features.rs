@@ -49,6 +49,8 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_vpclmulqdq: bool,
 }
 
+#[path = "vector_replay_features_evex_integer_memory.rs"]
+mod evex_integer_memory;
 #[path = "vector_replay_feature_probes.rs"]
 mod feature_probes;
 
@@ -690,27 +692,18 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
                 all_spans_support_avx_ymm16 = false;
                 index += sequence.consumed;
-            } else if let Some(sequence) = super::x86_jit_evex_integer_unary_memory_sequence(
-                block,
-                index,
-                true,
-                &func.x86_instruction_bytes,
-                &virtual_definitions,
-                &virtual_uses,
-            ) {
-                requirements.any = true;
-                requirements.needs_avx = true;
-                let lanes = sequence.encoding.width.lanes(sequence.encoding.elem);
-                // KMOVW is exact when the operation cannot observe K[63:16].
-                // Wider byte/word forms use the full KMOVQ bridge.
-                requirements.needs_avx512bw |= lanes > 16;
-                requirements.has_k16_opmask_span |= lanes <= 16;
-                requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
-                requirements.needs_avx512cd |= sequence.encoding.needs_avx512cd;
-                requirements.needs_avx512bitalg |= sequence.encoding.needs_avx512bitalg;
-                requirements.needs_avx512vpopcntdq |= sequence.encoding.needs_avx512vpopcntdq;
-                all_spans_support_avx_ymm16 = false;
-                index += sequence.consumed;
+            } else if let Some(consumed) =
+                evex_integer_memory::accumulate_evex_integer_memory_replay_requirements(
+                    block,
+                    index,
+                    func,
+                    &virtual_definitions,
+                    &virtual_uses,
+                    &mut requirements,
+                    &mut all_spans_support_avx_ymm16,
+                )
+            {
+                index += consumed;
             } else if let Some(sequence) = super::x86_jit_evex_packed_fp_unary_memory_sequence(
                 block,
                 index,

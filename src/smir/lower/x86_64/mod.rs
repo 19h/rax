@@ -146,6 +146,8 @@ mod evex_packed_rotate_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_packed_variable_shift_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_psadbw_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_range_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_scalar_fp_arithmetic_memory_source;
