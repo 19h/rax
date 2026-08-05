@@ -1,4 +1,4 @@
-//! Fail-closed helper-backed EVEX packed binary16-complex memory admission.
+//! Fail-closed helper-backed EVEX packed/scalar binary16-complex memory admission.
 
 use std::collections::HashMap;
 
@@ -19,7 +19,7 @@ use super::evex_memory_source_common::{
 use super::x86_jit_mem_address_shape_valid;
 
 /// Exact contiguous decomposition consumed by the helper-backed x86-64
-/// packed binary16-complex memory lowerer.
+/// packed/scalar binary16-complex memory lowerer.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct X86JitEvexPackedFp16ComplexMemorySequence {
     pub(crate) consumed: usize,
@@ -41,7 +41,12 @@ fn exact_complex(
     } else {
         X86SsePrefix::Rep
     };
-    let expected_opcode = if encoding.accumulate { 0x56 } else { 0xD6 };
+    let expected_opcode = match (encoding.accumulate, encoding.scalar) {
+        (true, false) => 0x56,
+        (true, true) => 0x57,
+        (false, false) => 0xD6,
+        (false, true) => 0xD7,
+    };
     matches!(
         &op.kind,
         OpKind::X86FP16Complex {
@@ -61,8 +66,8 @@ fn exact_complex(
             && *src2 == source2
             && *mask == expected_mask
             && *width == encoding.width
-            && *pairs == (encoding.width.bytes() / 4) as u8
-            && !*scalar
+            && *pairs == if encoding.scalar { 1 } else { (encoding.width.bytes() / 4) as u8 }
+            && *scalar == encoding.scalar
             && *mask_zeroing == encoding.zeroing
             && *accumulate == encoding.accumulate
             && *conjugate == encoding.conjugate
@@ -103,6 +108,7 @@ fn unmasked_vector_sequence(
         X86EvexPackedFp16ComplexMemoryReplay::Vector { .. }
     ) || encoding.writemask.is_some()
         || encoding.zeroing
+        || encoding.scalar
     {
         return None;
     }
@@ -148,6 +154,7 @@ fn unmasked_broadcast_sequence(
         X86EvexPackedFp16ComplexMemoryReplay::Broadcast { .. }
     ) || encoding.writemask.is_some()
         || encoding.zeroing
+        || encoding.scalar
     {
         return None;
     }
@@ -200,6 +207,147 @@ fn unmasked_broadcast_sequence(
     })
 }
 
+fn scalar_sequence(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    encoding: X86EvexPackedFp16ComplexMemoryEncoding,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<X86JitEvexPackedFp16ComplexMemorySequence> {
+    if !encoding.scalar
+        || encoding.width != VecWidth::V128
+        || !matches!(
+            encoding.replay,
+            X86EvexPackedFp16ComplexMemoryReplay::Broadcast { .. }
+        )
+    {
+        return None;
+    }
+    let first = block.ops.get(index)?;
+    let guest_pc = first.guest_pc;
+    let mut offset = 0usize;
+
+    let (seeded_scalar, condition) = if let Some(mask_index) = encoding.writemask {
+        let seed = block.ops.get(index + offset)?;
+        let scalar = match seed.kind {
+            OpKind::Mov {
+                dst,
+                src: SrcOperand::Imm(0),
+                width: OpWidth::W64,
+            } if seed.x86_hint.is_none() => dst,
+            _ => return None,
+        };
+        if seed.guest_pc != guest_pc
+            || !exact_virtual_definition_use(scalar, 2, 1, virtual_definitions, virtual_uses)
+        {
+            return None;
+        }
+        offset += 1;
+        let condition = exact_lane_predicate(
+            block,
+            index,
+            &mut offset,
+            guest_pc,
+            VReg::Arch(ArchReg::X86(X86Reg::K(mask_index))),
+            0,
+            virtual_definitions,
+            virtual_uses,
+        )?;
+        (Some(scalar), Some(condition))
+    } else {
+        let leading_seed = match first.kind {
+            OpKind::Mov {
+                dst,
+                src: SrcOperand::Imm(0),
+                width: OpWidth::W64,
+            } if first.x86_hint.is_none() => Some(dst),
+            _ => None,
+        };
+        if leading_seed.is_some() {
+            offset += 1;
+        }
+        (leading_seed, None)
+    };
+
+    let address_offset = offset;
+    let load = block.ops.get(index + offset)?;
+    let loaded = match (&load.kind, condition) {
+        (
+            OpKind::PredLoad {
+                dst,
+                cond,
+                addr,
+                width: MemWidth::B4,
+                signed: SignExtend::Zero,
+            },
+            Some(expected_condition),
+        ) if load.x86_hint.is_none()
+            && seeded_scalar == Some(*dst)
+            && *cond == expected_condition
+            && x86_jit_mem_address_shape_valid(addr) =>
+        {
+            *dst
+        }
+        (
+            OpKind::Load {
+                dst,
+                addr,
+                width: MemWidth::B4,
+                sign: SignExtend::Zero,
+            },
+            None,
+        ) if load.x86_hint.is_none()
+            && x86_jit_mem_address_shape_valid(addr)
+            && seeded_scalar.is_none_or(|scalar| *dst == scalar) =>
+        {
+            *dst
+        }
+        _ => return None,
+    };
+    if load.guest_pc != guest_pc
+        || if seeded_scalar == Some(loaded) {
+            !exact_virtual_definition_use(loaded, 2, 1, virtual_definitions, virtual_uses)
+        } else {
+            !single_definition_single_use(loaded, virtual_definitions, virtual_uses)
+        }
+    {
+        return None;
+    }
+    offset += 1;
+
+    let broadcast = block.ops.get(index + offset)?;
+    let source2 = match broadcast.kind {
+        OpKind::VBroadcast {
+            dst,
+            scalar: actual_scalar,
+            elem: VecElementType::I32,
+            lanes: 1,
+        } if broadcast.x86_hint.is_none() && actual_scalar == loaded => dst,
+        _ => return None,
+    };
+    if broadcast.guest_pc != guest_pc
+        || !single_definition_single_use(source2, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+    offset += 1;
+
+    let complex = block.ops.get(index + offset)?;
+    if complex.guest_pc != guest_pc || !exact_complex(complex, source2, encoding) {
+        return None;
+    }
+    offset += 1;
+    if !no_following_same_pc(block, index, offset, guest_pc) {
+        return None;
+    }
+    Some(X86JitEvexPackedFp16ComplexMemorySequence {
+        consumed: offset,
+        address_offset,
+        memory_size: MemWidth::B4.bytes(),
+        encoding,
+    })
+}
+
 fn masked_broadcast_sequence(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
@@ -210,7 +358,8 @@ fn masked_broadcast_sequence(
     if !matches!(
         encoding.replay,
         X86EvexPackedFp16ComplexMemoryReplay::Broadcast { .. }
-    ) {
+    ) || encoding.scalar
+    {
         return None;
     }
     let mask_index = encoding.writemask?;
@@ -312,7 +461,8 @@ fn masked_vector_sequence(
     if !matches!(
         encoding.replay,
         X86EvexPackedFp16ComplexMemoryReplay::MaskedVector { .. }
-    ) {
+    ) || encoding.scalar
+    {
         return None;
     }
     let mask_index = encoding.writemask?;
@@ -461,8 +611,8 @@ fn masked_vector_sequence(
     })
 }
 
-/// Validate the complete O0/O1/O2 decomposition emitted for one packed
-/// AVX-512-FP16 complex memory source.
+/// Validate the complete O0/O1/O2 decomposition emitted for one packed or
+/// scalar AVX-512-FP16 complex memory source.
 ///
 /// Exact provenance binds MAP/opcode, vector width, architectural operands,
 /// writemask policy, broadcast/full-vector tuple, helper address, and the
@@ -485,6 +635,9 @@ pub(crate) fn x86_jit_evex_packed_fp16_complex_memory_sequence(
         .get(&(block.id, first.guest_pc))?
         .evex_packed_fp16_complex_memory_encoding()?;
     match encoding.replay {
+        X86EvexPackedFp16ComplexMemoryReplay::Broadcast { .. } if encoding.scalar => {
+            scalar_sequence(block, index, encoding, virtual_definitions, virtual_uses)
+        }
         X86EvexPackedFp16ComplexMemoryReplay::Vector { .. } => {
             unmasked_vector_sequence(block, index, encoding, virtual_definitions, virtual_uses)
         }

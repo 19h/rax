@@ -1,4 +1,4 @@
-//! Helper-backed EVEX packed binary16-complex memory-source lowering.
+//! Helper-backed EVEX packed/scalar binary16-complex memory-source lowering.
 
 use std::collections::HashMap;
 
@@ -116,7 +116,11 @@ impl X86_64Lowerer {
         }
 
         let inactive = if let Some(mask) = sequence.encoding.writemask {
-            let lanes = sequence.encoding.width.bytes() / 4;
+            let lanes = if sequence.encoding.scalar {
+                1
+            } else {
+                sequence.encoding.width.bytes() / 4
+            };
             let lane_mask = (1u64 << lanes) - 1;
             self.code.emit_u8(0x9C); // pushfq
             self.code.emit_u8(0x50); // push guest RAX
@@ -166,11 +170,13 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-    /// Fuse one exact packed AVX-512-FP16 complex memory decomposition.
+    /// Fuse one exact packed or scalar AVX-512-FP16 complex memory
+    /// decomposition.
     ///
     /// Unmasked vectors use the reserved nonarchitectural vector transfer
-    /// slot and a byte-validated register rewrite. Broadcasts use at most one
-    /// scalar helper access and a byte-validated `[rsp]{1toN}` rewrite.
+    /// slot and a byte-validated register rewrite. Broadcasts and scalar forms
+    /// use at most one scalar helper access and a byte-validated `[rsp]`
+    /// rewrite.
     /// Writemasked vectors issue ascending 4-byte helper loads only for active
     /// complex pairs, accumulate them outside architectural state, and commit the
     /// destination once every active load succeeds. Any helper fault exits at
@@ -196,7 +202,7 @@ impl X86_64Lowerer {
         };
         if self.avx_ymm16_vector_state {
             return Err(LowerError::InvalidOperand {
-                op: "EVEX packed FP16 complex memory source".to_string(),
+                op: "EVEX FP16 complex memory source".to_string(),
                 operand: "AVX-only vector bridge cannot carry AVX-512-FP16".to_string(),
             });
         }

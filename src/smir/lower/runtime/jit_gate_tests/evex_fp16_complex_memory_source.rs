@@ -1,4 +1,4 @@
-//! Exact helper-backed packed EVEX FP16 complex memory-source coverage.
+//! Exact helper-backed packed/scalar EVEX FP16 complex memory-source coverage.
 
 use std::collections::HashMap;
 
@@ -30,6 +30,8 @@ use crate::smir::optimize::OptLevel;
 
 const PC: u64 = 0xF1C0;
 const LEVELS: [OptLevel; 3] = [OptLevel::O0, OptLevel::O1, OptLevel::O2];
+
+mod scalar_memory;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum ComplexOperation {
@@ -586,7 +588,7 @@ fn packed_fp16_complex_memory_classifier_exhaustively_rewrites_1_428_480_control
                 .unwrap()
                 .evex_packed_fp16_complex_memory_encoding()
                 .is_some(),
-            matches!(opcode, 0x56 | 0xD6),
+            matches!(opcode, 0x56 | 0x57 | 0xD6 | 0xD7),
             "{bytes:02X?}"
         );
     }
@@ -657,7 +659,7 @@ fn packed_fp16_complex_memory_classifier_rejects_reserved_non_owned_and_trailing
         (1, 0x01), // map
         (2, 0x80), // W
         (2, 0x02), // F2/F3 selector changed to an unowned pp
-        (4, 0x01), // non-owned opcode
+        (4, 0x02), // non-owned opcode
     ] {
         let mut bytes = valid.clone();
         bytes[index] ^= mask;
