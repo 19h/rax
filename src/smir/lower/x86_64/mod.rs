@@ -80,6 +80,8 @@ mod evex_broadcast_logic_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_bw_shuffle_madd_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_chunk_insert_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_chunk_shuffle_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_dbpsadbw_memory_source;

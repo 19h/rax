@@ -47,6 +47,8 @@ mod evex_bw_shuffle_madd_replay;
 #[cfg(test)]
 mod evex_chunk_extract_replay;
 #[cfg(test)]
+mod evex_chunk_insert_memory_source;
+#[cfg(test)]
 mod evex_chunk_insert_replay;
 #[cfg(test)]
 mod evex_chunk_shuffle_memory_source;

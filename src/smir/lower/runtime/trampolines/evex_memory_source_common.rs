@@ -275,7 +275,7 @@ pub(super) fn exact_lane_predicate(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn exact_evex_vector_mask_result_with_raw_counts(
+pub(super) fn exact_evex_vector_mask_result_with_raw_counts(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
     offset: &mut usize,
