@@ -916,24 +916,18 @@ impl X86_64Lifter {
 
         let memory_condition =
             if prefix.encoding == VecEncodingKind::Evex && prefix.aaa != 0 && modrm.is_memory {
-                let cond = ctx.alloc_vreg();
                 let lane_mask = if destination_lanes == 64 {
                     u64::MAX
                 } else {
                     (1u64 << destination_lanes) - 1
                 };
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
+                Some(self.append_nonzero_mask_predicate(
+                    VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))),
+                    lane_mask,
                     pc,
-                    OpKind::And {
-                        dst: cond,
-                        src1: VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))),
-                        src2: SrcOperand::Imm(lane_mask as i64),
-                        width: OpWidth::W64,
-                        flags: FlagUpdate::None,
-                    },
-                ));
-                Some(cond)
+                    ctx,
+                    &mut ops,
+                ))
             } else {
                 None
             };

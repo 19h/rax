@@ -8,48 +8,12 @@ use super::{
     exact_virtual_definition_use, no_following_same_pc, single_definition_single_use,
     x86_jit_mem_address_shape_valid,
 };
-use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::OpKind;
 use crate::smir::ir::types::{ArchReg, GuestAddr, OpWidth, SignExtend, SrcOperand, VReg, X86Reg};
 
-/// Match the optimizer's direct `mask & applicable_bits` PredLoad condition.
-/// PredLoad treats every nonzero value as true, so normalizing the value to
-/// bit 0 is not semantically required.
-#[allow(clippy::too_many_arguments)]
-pub(super) fn exact_masked_value_predicate(
-    block: &crate::smir::ir::SmirBlock,
-    index: usize,
-    offset: &mut usize,
-    guest_pc: GuestAddr,
-    mask: VReg,
-    applicable_bits: u64,
-    virtual_definitions: &HashMap<VReg, usize>,
-    virtual_uses: &HashMap<VReg, usize>,
-) -> Option<VReg> {
-    let and = block.ops.get(index + *offset)?;
-    let predicate = match and.kind {
-        OpKind::And {
-            dst,
-            src1,
-            src2: SrcOperand::Imm(actual_bits),
-            width: OpWidth::W64,
-            flags: FlagUpdate::None,
-        } if and.x86_hint.is_none() && src1 == mask && actual_bits == applicable_bits as i64 => dst,
-        _ => return None,
-    };
-    if and.guest_pc != guest_pc
-        || !single_definition_single_use(predicate, virtual_definitions, virtual_uses)
-    {
-        return None;
-    }
-    *offset += 1;
-    Some(predicate)
-}
-
 /// Match the aggregate-gated scalar load and broadcast graph. The lifters may
-/// emit either a normalized bit-0 predicate or the optimizer's direct nonzero
-/// masked value, and may place the scalar zero seed on either side of the
-/// predicate graph.
+/// place the scalar zero seed on either side of the exact normalized bit-0
+/// predicate graph required by PredLoad.
 pub(super) fn exact_masked_e4_broadcast<F>(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
@@ -82,8 +46,7 @@ where
         _ => None,
     };
     let mut offset = usize::from(leading_scalar.is_some());
-    let predicate_offset = offset;
-    let condition = match exact_nonzero_mask_predicate(
+    let condition = exact_nonzero_mask_predicate(
         block,
         index,
         &mut offset,
@@ -92,22 +55,7 @@ where
         applicable_bits,
         virtual_definitions,
         virtual_uses,
-    ) {
-        Some(condition) => condition,
-        None => {
-            offset = predicate_offset;
-            exact_masked_value_predicate(
-                block,
-                index,
-                &mut offset,
-                guest_pc,
-                mask,
-                applicable_bits,
-                virtual_definitions,
-                virtual_uses,
-            )?
-        }
-    };
+    )?;
 
     let scalar = if let Some(scalar) = leading_scalar {
         scalar

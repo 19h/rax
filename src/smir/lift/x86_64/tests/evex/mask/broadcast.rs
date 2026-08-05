@@ -1,8 +1,13 @@
 //! EVEX scalar, tuple, GPR, and opmask broadcast tests.
 
 use super::*;
+use crate::smir::interpret::{BlockResult, SmirInterpreter};
+use crate::smir::ir::FunctionBuilder;
+use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext};
+use crate::smir::ir::memory::FlatMemory;
 use crate::smir::lift::x86_64::tests::*;
 use crate::smir::lift::x86_64::*;
+use crate::smir::optimize::{OptLevel, optimize_function};
 
 #[test]
 fn lift_load_broadcasts_cover_scalar_tuple_gpr_masks_compressed_disp_and_invalids() {
@@ -194,6 +199,120 @@ fn lift_load_broadcasts_cover_scalar_tuple_gpr_masks_compressed_disp_and_invalid
             "accepted reserved broadcast encoding {bytes:02X?}"
         );
     }
+}
+
+const BROADCAST_MEMORY_ADDRESS: u64 = 0x2000;
+const BROADCAST_LEVELS: [OptLevel; 3] = [OptLevel::O0, OptLevel::O1, OptLevel::O2];
+
+fn masked_memory_broadcast_encoding(opcode: u8, w: bool, ll: u8, zeroing: bool) -> [u8; 6] {
+    [
+        0x62,
+        0xF2,
+        0x7D | (u8::from(w) << 7),
+        (u8::from(zeroing) << 7) | (ll << 5) | 0x09,
+        opcode,
+        0x08,
+    ]
+}
+
+fn execute_masked_memory_broadcast(
+    bytes: &[u8],
+    level: OptLevel,
+    mask: u64,
+) -> (BlockResult, SmirContext) {
+    let lifted = lift_single(bytes).expect("strict EVEX load-and-broadcast lift");
+    let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+    builder.set_terminator(Terminator::Trap {
+        kind: TrapKind::Halt,
+    });
+    let mut function = builder.finish();
+    function.blocks[0].ops = lifted.ops;
+    optimize_function(&mut function, level);
+
+    let mut context = SmirContext::new_x86_64();
+    context.pc = 0x1000;
+    let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
+        unreachable!()
+    };
+    x86.gpr[0] = BROADCAST_MEMORY_ADDRESS;
+    x86.k[1] = mask;
+    x86.xmm[1] =
+        std::array::from_fn(|word| 0xF0E1_D2C3_B4A5_9687u64.rotate_left((word * 7) as u32));
+    let result = SmirInterpreter::new().execute_block(
+        &mut context,
+        &mut FlatMemory::new(BROADCAST_MEMORY_ADDRESS as usize),
+        &function.blocks[0],
+    );
+    (result, context)
+}
+
+#[test]
+fn every_evex_masked_memory_broadcast_uses_any_applicable_mask_bit_for_fault_suppression() {
+    let shapes: &[(u8, bool, &[u8])] = &[
+        (0x18, false, &[0, 1, 2]),
+        (0x19, false, &[1, 2]),
+        (0x19, true, &[1, 2]),
+        (0x1A, false, &[1, 2]),
+        (0x1A, true, &[1, 2]),
+        (0x1B, false, &[2]),
+        (0x1B, true, &[2]),
+        (0x58, false, &[0, 1, 2]),
+        (0x59, false, &[0, 1, 2]),
+        (0x59, true, &[0, 1, 2]),
+        (0x5A, false, &[1, 2]),
+        (0x5A, true, &[1, 2]),
+        (0x5B, false, &[2]),
+        (0x5B, true, &[2]),
+        (0x78, false, &[0, 1, 2]),
+        (0x79, false, &[0, 1, 2]),
+    ];
+    let initial_destination: [u64; 16] =
+        std::array::from_fn(|word| 0xF0E1_D2C3_B4A5_9687u64.rotate_left((word * 7) as u32));
+    let mut enabled_checks = 0usize;
+    let mut suppressed_checks = 0usize;
+
+    for &(opcode, w, lls) in shapes {
+        for &ll in lls {
+            for zeroing in [false, true] {
+                let bytes = masked_memory_broadcast_encoding(opcode, w, ll, zeroing);
+                for level in BROADCAST_LEVELS {
+                    let (suppressed, _) = execute_masked_memory_broadcast(&bytes, level, 0);
+                    assert!(
+                        !matches!(
+                            suppressed,
+                            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+                        ),
+                        "{level:?} {bytes:02X?}: k1=0 did not suppress the complete memory tuple",
+                    );
+                    suppressed_checks += 1;
+
+                    let (enabled, context) = execute_masked_memory_broadcast(&bytes, level, 2);
+                    assert!(
+                        matches!(
+                            enabled,
+                            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+                        ),
+                        "{level:?} {bytes:02X?}: k1[1] did not enable the complete memory tuple: {enabled:?}",
+                    );
+                    let ArchRegState::X86_64(x86) = &context.arch_regs else {
+                        unreachable!()
+                    };
+                    assert_eq!(
+                        x86.gpr[0], BROADCAST_MEMORY_ADDRESS,
+                        "{level:?} {bytes:02X?}"
+                    );
+                    assert_eq!(x86.k[1], 2, "{level:?} {bytes:02X?}");
+                    assert_eq!(
+                        x86.xmm[1], initial_destination,
+                        "{level:?} {bytes:02X?}: enabled memory fault committed destination state",
+                    );
+                    enabled_checks += 1;
+                }
+            }
+        }
+    }
+    assert_eq!(enabled_checks, 34 * 2 * BROADCAST_LEVELS.len());
+    assert_eq!(suppressed_checks, enabled_checks);
 }
 
 fn gpr_broadcast_encoding(

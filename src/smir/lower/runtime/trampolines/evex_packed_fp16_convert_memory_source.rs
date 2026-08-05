@@ -2,7 +2,6 @@
 
 use std::collections::HashMap;
 
-use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix};
 use crate::smir::ir::types::{
     ArchReg, BlockId, GuestAddr, MemWidth, OpWidth, SignExtend, SrcOperand, VReg, VecElementType,
@@ -16,7 +15,8 @@ use crate::smir::ir::{
 use super::evex_memory_source_common::{
     exact_evex_memory_apx_frontier, exact_evex_memory_sequence_address,
     exact_evex_memory_sequence_frontier, exact_lane_address, exact_lane_predicate,
-    exact_virtual_definition_use, no_following_same_pc, single_definition_single_use,
+    exact_nonzero_mask_predicate, exact_virtual_definition_use, no_following_same_pc,
+    single_definition_single_use,
 };
 use super::x86_jit_mem_address_shape_valid;
 
@@ -525,32 +525,6 @@ fn exact_reconstructed_vector(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn exact_mask_value_predicate(
-    block: &crate::smir::ir::SmirBlock,
-    index: usize,
-    guest_pc: GuestAddr,
-    mask: VReg,
-    applicable_bits: u64,
-    virtual_definitions: &HashMap<VReg, usize>,
-    virtual_uses: &HashMap<VReg, usize>,
-) -> Option<VReg> {
-    let and = block.ops.get(index)?;
-    let predicate = match and.kind {
-        OpKind::And {
-            dst,
-            src1,
-            src2: SrcOperand::Imm(actual_bits),
-            width: OpWidth::W64,
-            flags: FlagUpdate::None,
-        } if and.x86_hint.is_none() && src1 == mask && actual_bits == applicable_bits as i64 => dst,
-        _ => return None,
-    };
-    (and.guest_pc == guest_pc
-        && single_definition_single_use(predicate, virtual_definitions, virtual_uses))
-    .then_some(predicate)
-}
-
-#[allow(clippy::too_many_arguments)]
 fn exact_aggregate_broadcast(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
@@ -602,28 +576,28 @@ fn exact_aggregate_broadcast(
                 virtual_uses,
             )?;
             offset += 1;
-            let condition = exact_mask_value_predicate(
+            let condition = exact_nonzero_mask_predicate(
                 block,
-                index + offset,
+                index,
+                &mut offset,
                 guest_pc,
                 mask,
                 applicable_bits,
                 virtual_definitions,
                 virtual_uses,
             )?;
-            offset += 1;
             (scalar, Some(condition), true)
         } else {
-            let condition = exact_mask_value_predicate(
+            let condition = exact_nonzero_mask_predicate(
                 block,
-                index + offset,
+                index,
+                &mut offset,
                 guest_pc,
                 mask,
                 applicable_bits,
                 virtual_definitions,
                 virtual_uses,
             )?;
-            offset += 1;
             let scalar = exact_zero_scalar(
                 block,
                 index + offset,

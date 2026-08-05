@@ -469,6 +469,58 @@ fn sequence_fails_closed_for_provenance_semantic_ssa_address_and_frontier_mutati
     assert_rejected("missing APX guard", &missing_apx);
 }
 
+fn collapse_normalized_broadcast_predicate_to_raw(mut function: SmirFunction) -> SmirFunction {
+    let block = &mut function.blocks[0];
+    let (and_index, raw_condition) = block
+        .ops
+        .iter()
+        .enumerate()
+        .find_map(|(index, op)| match op.kind {
+            OpKind::And {
+                dst,
+                src2: SrcOperand::Imm(bits),
+                width: OpWidth::W64,
+                ..
+            } if bits > 1 => Some((index, dst)),
+            _ => None,
+        })
+        .expect("aggregate opmask AND");
+    let pred_index = block
+        .ops
+        .iter()
+        .enumerate()
+        .skip(and_index + 1)
+        .find_map(|(index, op)| matches!(op.kind, OpKind::PredLoad { .. }).then_some(index))
+        .expect("aggregate predicated load");
+    let current_condition = match block.ops[pred_index].kind {
+        OpKind::PredLoad { cond, .. } => cond,
+        _ => unreachable!(),
+    };
+    if current_condition != raw_condition {
+        let OpKind::PredLoad { cond, .. } = &mut block.ops[pred_index].kind else {
+            unreachable!()
+        };
+        *cond = raw_condition;
+        block.ops.drain(and_index + 1..pred_index);
+    }
+    function
+}
+
+#[test]
+fn raw_multibit_aggregate_predload_predicate_fails_closed() {
+    let function = optimize(
+        lift_case(case(
+            SPECS[10],
+            2,
+            SourceForm::Broadcast,
+            MaskControl::Merge,
+        )),
+        OptLevel::O0,
+    );
+    let raw = collapse_normalized_broadcast_predicate_to_raw(function);
+    assert_rejected("raw multi-bit aggregate predicate", &raw);
+}
+
 #[test]
 fn lowerer_rejects_the_avx_only_vector_bridge() {
     let instruction = ConvertCase {

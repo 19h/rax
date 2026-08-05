@@ -120,18 +120,13 @@ impl X86_64Lifter {
                     },
                 ));
                 if let Some(mask_reg) = mask {
-                    let cond = ctx.alloc_vreg();
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
+                    let cond = self.append_nonzero_mask_predicate(
+                        mask_reg,
+                        (1u64 << lanes) - 1,
                         pc,
-                        OpKind::And {
-                            dst: cond,
-                            src1: mask_reg,
-                            src2: SrcOperand::Imm((1i64 << lanes) - 1),
-                            width: OpWidth::W64,
-                            flags: FlagUpdate::None,
-                        },
-                    ));
+                        ctx,
+                        &mut ops,
+                    );
                     ops.push(SmirOp::new(
                         OpId(ops.len() as u16),
                         pc,

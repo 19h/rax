@@ -484,6 +484,73 @@ fn masks_merge_zero_and_suppress_inactive_memory_and_fp_exceptions() {
 }
 
 #[test]
+fn every_masked_broadcast_reads_when_an_applicable_bit_above_bit_zero_is_set() {
+    let mut semantic_checks = 0usize;
+    let mut fault_checks = 0usize;
+    for spec in SPECS {
+        for ll in 0..=2 {
+            for control in [MaskControl::Merge, MaskControl::Zero] {
+                let case = ConvertCase {
+                    spec,
+                    ll,
+                    destination: 17,
+                    form: SourceForm::Broadcast,
+                    control,
+                };
+                let active_lane = usize::from(case.lanes() - 1);
+                let active_mask = 1u64 << active_lane;
+                let memory = memory_bytes(case, 3);
+                let initial = initial_registers(case, 3, 0x1F80, active_mask);
+                let lane_zero_initial = initial_registers(case, 3, 0x1F80, 1);
+
+                for level in LEVELS {
+                    let function = optimize(lift_case(case), level);
+                    let actual = interpret_success(&function, &initial, &memory, case);
+                    let lane_zero = interpret_success(&function, &lane_zero_initial, &memory, case);
+                    let actual_destination =
+                        words_to_bytes(actual.zmm[usize::from(case.destination)]);
+                    let lane_zero_destination =
+                        words_to_bytes(lane_zero.zmm[usize::from(case.destination)]);
+                    assert_eq!(
+                        get_element(&actual_destination, spec.destination_elem(), active_lane,),
+                        get_element(&lane_zero_destination, spec.destination_elem(), 0),
+                        "{level:?} {case:?}: broadcast source was not read for k1[{active_lane}]",
+                    );
+                    assert_eq!(
+                        actual.mxcsr, lane_zero.mxcsr,
+                        "{level:?} {case:?}: one active broadcast lane must have identical FP status",
+                    );
+                    semantic_checks += 1;
+
+                    let mut context = interpreter_context(&initial);
+                    let mut unmapped = FlatMemory::new(MEMORY_ADDRESS as usize);
+                    let result = SmirInterpreter::new().execute_block(
+                        &mut context,
+                        &mut unmapped,
+                        &function.blocks[0],
+                    );
+                    assert!(
+                        matches!(
+                            result,
+                            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+                        ),
+                        "{level:?} {case:?}: k1[{active_lane}] did not enable the broadcast read: {result:?}",
+                    );
+                    assert_eq!(
+                        interpreter_registers(&context, &initial),
+                        initial,
+                        "{level:?} {case:?}: enabled broadcast fault committed state",
+                    );
+                    fault_checks += 1;
+                }
+            }
+        }
+    }
+    assert_eq!(semantic_checks, 22 * 3 * 2 * LEVELS.len());
+    assert_eq!(fault_checks, semantic_checks);
+}
+
+#[test]
 fn every_replay_source_shape_faults_before_destination_mxcsr_mask_or_flags_commit() {
     let cases = [
         ConvertCase {
