@@ -127,6 +127,8 @@ mod evex_integer_pack_memory_source;
 #[cfg(test)]
 mod evex_integer_unary_memory_source;
 #[cfg(test)]
+mod evex_lane_shuffle_memory_source;
+#[cfg(test)]
 mod evex_lane_shuffle_replay;
 #[cfg(test)]
 mod evex_logic_memory_source;

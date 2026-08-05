@@ -7,8 +7,8 @@ use crate::smir::ir::{SmirBlock, SmirFunction};
 
 use super::X86NativeReplayFeatureRequirements;
 
-/// Accumulate one exact unary-integer, `VPSADBW`, `VPSHUFBITQMB`, or
-/// `VP2INTERSECT` memory replay.
+/// Accumulate one exact unary-integer, packed lane-shuffle, `VPSADBW`,
+/// `VPSHUFBITQMB`, or `VP2INTERSECT` memory replay.
 ///
 /// These families require the full AVX-512 vector-state bridge and therefore
 /// cannot use the AVX YMM0-YMM15 bridge. Matching is O(L), where L is at most
@@ -59,6 +59,30 @@ pub(super) fn accumulate_evex_integer_memory_replay_requirements(
         // VPSADBW and the full-width vector-state bridge require AVX-512BW.
         requirements.needs_avx512bw = true;
         requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+        *all_spans_support_avx_ymm16 = false;
+        return Some(sequence.consumed);
+    }
+
+    if let Some(sequence) = super::super::x86_jit_evex_lane_shuffle_memory_sequence(
+        block,
+        index,
+        true,
+        &func.x86_instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        requirements.any = true;
+        requirements.needs_avx = true;
+        // VPSHUFHW/LW require AVX-512BW architecturally. VPSHUFD requires
+        // AVX-512F, while the full vector/opmask bridge additionally requires
+        // AVX-512BW for every form in this replay family.
+        requirements.needs_avx512bw = true;
+        requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+        let lanes = sequence
+            .encoding
+            .width
+            .lanes(sequence.encoding.kind.element());
+        requirements.has_k16_opmask_span |= sequence.encoding.writemask.is_some() && lanes <= 16;
         *all_spans_support_avx_ymm16 = false;
         return Some(sequence.consumed);
     }
