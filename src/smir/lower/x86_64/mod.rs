@@ -128,6 +128,8 @@ mod evex_multishift_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_packed_abs_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_packed_convert_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_packed_funnel_shift_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_packed_rotate_memory_source;

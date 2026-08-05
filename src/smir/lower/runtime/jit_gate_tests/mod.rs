@@ -145,6 +145,8 @@ mod evex_packed_abs_memory_source;
 #[cfg(test)]
 mod evex_packed_compare_replay;
 #[cfg(test)]
+mod evex_packed_convert_memory_source;
+#[cfg(test)]
 mod evex_packed_extend_replay;
 #[cfg(test)]
 mod evex_packed_funnel_shift_memory_source;
