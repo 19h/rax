@@ -115,6 +115,7 @@ fn selected_cases() -> Vec<PackedUnaryMemoryCase> {
 fn host_supports(case: PackedUnaryMemoryCase) -> bool {
     (!case.operation.needs_fp16() || std::is_x86_feature_detected!("avx512fp16"))
         && (case.operation.uses_k16_opmasks() || std::is_x86_feature_detected!("avx512bw"))
+        && (!case.operation.needs_dq() || std::is_x86_feature_detected!("avx512dq"))
         && (case.width == VecWidth::V512 || std::is_x86_feature_detected!("avx512vl"))
 }
 

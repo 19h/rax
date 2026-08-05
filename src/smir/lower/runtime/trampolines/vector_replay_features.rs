@@ -679,21 +679,15 @@ pub(crate) fn x86_native_replay_feature_requirements(
             ) {
                 requirements.any = true;
                 requirements.needs_avx = true;
-                let uses_k16_opmasks = match sequence.encoding.kind {
-                    crate::smir::ir::X86EvexPackedFpUnaryMemoryKind::Recip14
-                    | crate::smir::ir::X86EvexPackedFpUnaryMemoryKind::Rsqrt14 => true,
-                    crate::smir::ir::X86EvexPackedFpUnaryMemoryKind::Sqrt => {
-                        sequence.encoding.elem != crate::smir::ir::types::VecElementType::F16
-                    }
-                    _ => false,
-                };
-                // VGETEXP and binary16 operations use the full vector/opmask
-                // bridge. AVX-512F reciprocal estimates and packed F32/F64
-                // square roots observe at most K[15:0] and can use the
-                // existing KMOVW bridge.
+                let uses_k16_opmasks =
+                    sequence.encoding.elem != crate::smir::ir::types::VecElementType::F16;
+                // Binary16 operations can observe K[31:0] and use the full
+                // opmask bridge. Every packed F32/F64 unary operation observes
+                // at most K[15:0] and can use the existing KMOVW bridge.
                 requirements.needs_avx512bw |= !uses_k16_opmasks;
                 requirements.has_k16_opmask_span |= uses_k16_opmasks;
                 requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+                requirements.needs_avx512dq |= sequence.encoding.needs_avx512dq;
                 requirements.needs_avx512fp16 |= sequence.encoding.needs_avx512fp16;
                 all_spans_support_avx_ymm16 = false;
                 index += sequence.consumed;

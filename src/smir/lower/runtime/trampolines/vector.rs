@@ -5925,9 +5925,9 @@ pub(crate) fn x86_native_vector_uses_avx_ymm16_only_excluding(
 
 /// Verify that this host can execute every admitted vector opcode in `func`.
 /// General vector regions require AVX512F for 512-bit VMOVDQU64/KMOVW and
-/// AVX512BW for full-width KMOVQ; AVX512ER-only regions use the fail-closed
-/// low-16 opmask state mode instead. Replay-only AVX-YMM16-safe regions use a
-/// separate AVX bridge and therefore require no AVX-512 feature.
+/// AVX512BW for full-width KMOVQ; spans proven to observe at most K[15:0] use
+/// the fail-closed low-16 opmask state mode instead. Replay-only AVX-YMM16-safe
+/// regions use a separate AVX bridge and therefore require no AVX-512 feature.
 pub fn x86_native_vector_features_supported_excluding(
     func: &crate::smir::ir::SmirFunction,
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,

@@ -40,6 +40,15 @@ pub(super) enum PackedUnaryOperation {
     GetExpF16,
     GetExpF32,
     GetExpF64,
+    GetMantF16,
+    GetMantF32,
+    GetMantF64,
+    RoundScaleF16,
+    RoundScaleF32,
+    RoundScaleF64,
+    ReduceF16,
+    ReduceF32,
+    ReduceF64,
     Recip14F32,
     Recip14F64,
     Rsqrt14F32,
@@ -49,13 +58,22 @@ pub(super) enum PackedUnaryOperation {
 }
 
 impl PackedUnaryOperation {
-    const ALL: [Self; 12] = [
+    const ALL: [Self; 21] = [
         Self::SqrtF16,
         Self::SqrtF32,
         Self::SqrtF64,
         Self::GetExpF16,
         Self::GetExpF32,
         Self::GetExpF64,
+        Self::GetMantF16,
+        Self::GetMantF32,
+        Self::GetMantF64,
+        Self::RoundScaleF16,
+        Self::RoundScaleF32,
+        Self::RoundScaleF64,
+        Self::ReduceF16,
+        Self::ReduceF32,
+        Self::ReduceF64,
         Self::Recip14F32,
         Self::Recip14F64,
         Self::Rsqrt14F32,
@@ -70,6 +88,15 @@ impl PackedUnaryOperation {
             Self::GetExpF16 | Self::GetExpF32 | Self::GetExpF64 => {
                 X86EvexPackedFpUnaryMemoryKind::GetExponent
             }
+            Self::GetMantF16 | Self::GetMantF32 | Self::GetMantF64 => {
+                X86EvexPackedFpUnaryMemoryKind::GetMantissa
+            }
+            Self::RoundScaleF16 | Self::RoundScaleF32 | Self::RoundScaleF64 => {
+                X86EvexPackedFpUnaryMemoryKind::RoundScale
+            }
+            Self::ReduceF16 | Self::ReduceF32 | Self::ReduceF64 => {
+                X86EvexPackedFpUnaryMemoryKind::Reduce
+            }
             Self::Recip14F32 | Self::Recip14F64 => X86EvexPackedFpUnaryMemoryKind::Recip14,
             Self::Rsqrt14F32 | Self::Rsqrt14F64 => X86EvexPackedFpUnaryMemoryKind::Rsqrt14,
             Self::RecipFp16 => X86EvexPackedFpUnaryMemoryKind::RecipFp16,
@@ -79,15 +106,27 @@ impl PackedUnaryOperation {
 
     const fn elem(self) -> VecElementType {
         match self {
-            Self::SqrtF16 | Self::GetExpF16 | Self::RecipFp16 | Self::RsqrtFp16 => {
-                VecElementType::F16
-            }
-            Self::SqrtF32 | Self::GetExpF32 | Self::Recip14F32 | Self::Rsqrt14F32 => {
-                VecElementType::F32
-            }
-            Self::SqrtF64 | Self::GetExpF64 | Self::Recip14F64 | Self::Rsqrt14F64 => {
-                VecElementType::F64
-            }
+            Self::SqrtF16
+            | Self::GetExpF16
+            | Self::GetMantF16
+            | Self::RoundScaleF16
+            | Self::ReduceF16
+            | Self::RecipFp16
+            | Self::RsqrtFp16 => VecElementType::F16,
+            Self::SqrtF32
+            | Self::GetExpF32
+            | Self::GetMantF32
+            | Self::RoundScaleF32
+            | Self::ReduceF32
+            | Self::Recip14F32
+            | Self::Rsqrt14F32 => VecElementType::F32,
+            Self::SqrtF64
+            | Self::GetExpF64
+            | Self::GetMantF64
+            | Self::RoundScaleF64
+            | Self::ReduceF64
+            | Self::Recip14F64
+            | Self::Rsqrt14F64 => VecElementType::F64,
         }
     }
 
@@ -95,6 +134,15 @@ impl PackedUnaryOperation {
         match self {
             Self::SqrtF16 => 5,
             Self::SqrtF32 | Self::SqrtF64 => 1,
+            Self::GetMantF16
+            | Self::GetMantF32
+            | Self::GetMantF64
+            | Self::RoundScaleF16
+            | Self::RoundScaleF32
+            | Self::RoundScaleF64
+            | Self::ReduceF16
+            | Self::ReduceF32
+            | Self::ReduceF64 => 3,
             Self::GetExpF16 | Self::RecipFp16 | Self::RsqrtFp16 => 6,
             Self::GetExpF32
             | Self::GetExpF64
@@ -107,7 +155,11 @@ impl PackedUnaryOperation {
 
     const fn pp(self) -> u8 {
         match self {
-            Self::SqrtF16 | Self::SqrtF32 => 0,
+            Self::SqrtF16
+            | Self::SqrtF32
+            | Self::GetMantF16
+            | Self::RoundScaleF16
+            | Self::ReduceF16 => 0,
             _ => 1,
         }
     }
@@ -116,6 +168,10 @@ impl PackedUnaryOperation {
         match self {
             Self::SqrtF16 | Self::SqrtF32 | Self::SqrtF64 => 0x51,
             Self::GetExpF16 | Self::GetExpF32 | Self::GetExpF64 => 0x42,
+            Self::GetMantF16 | Self::GetMantF32 | Self::GetMantF64 => 0x26,
+            Self::RoundScaleF16 | Self::RoundScaleF32 => 0x08,
+            Self::RoundScaleF64 => 0x09,
+            Self::ReduceF16 | Self::ReduceF32 | Self::ReduceF64 => 0x56,
             Self::Recip14F32 | Self::Recip14F64 | Self::RecipFp16 => 0x4C,
             Self::Rsqrt14F32 | Self::Rsqrt14F64 | Self::RsqrtFp16 => 0x4E,
         }
@@ -124,27 +180,44 @@ impl PackedUnaryOperation {
     const fn w(self) -> bool {
         matches!(
             self,
-            Self::SqrtF64 | Self::GetExpF64 | Self::Recip14F64 | Self::Rsqrt14F64
+            Self::SqrtF64
+                | Self::GetExpF64
+                | Self::GetMantF64
+                | Self::RoundScaleF64
+                | Self::ReduceF64
+                | Self::Recip14F64
+                | Self::Rsqrt14F64
         )
+    }
+
+    const fn immediate(self) -> Option<u8> {
+        match self {
+            Self::GetMantF16 | Self::GetMantF32 | Self::GetMantF64 => Some(0x0D),
+            Self::RoundScaleF16 | Self::RoundScaleF32 | Self::RoundScaleF64 => Some(0xB6),
+            Self::ReduceF16 | Self::ReduceF32 | Self::ReduceF64 => Some(0xA9),
+            _ => None,
+        }
     }
 
     const fn needs_fp16(self) -> bool {
         matches!(
             self,
-            Self::SqrtF16 | Self::GetExpF16 | Self::RecipFp16 | Self::RsqrtFp16
+            Self::SqrtF16
+                | Self::GetExpF16
+                | Self::GetMantF16
+                | Self::RoundScaleF16
+                | Self::ReduceF16
+                | Self::RecipFp16
+                | Self::RsqrtFp16
         )
     }
 
     const fn uses_k16_opmasks(self) -> bool {
-        matches!(
-            self,
-            Self::SqrtF32
-                | Self::SqrtF64
-                | Self::Recip14F32
-                | Self::Recip14F64
-                | Self::Rsqrt14F32
-                | Self::Rsqrt14F64
-        )
+        !matches!(self.elem(), VecElementType::F16)
+    }
+
+    const fn needs_dq(self) -> bool {
+        matches!(self, Self::ReduceF32 | Self::ReduceF64)
     }
 }
 
@@ -246,6 +319,15 @@ fn vector(index: u8, width: VecWidth) -> VReg {
 }
 
 fn memory_encoding(case: PackedUnaryMemoryCase, sib: bool) -> Vec<u8> {
+    memory_encoding_with_immediate(case, sib, case.operation.immediate())
+}
+
+fn memory_encoding_with_immediate(
+    case: PackedUnaryMemoryCase,
+    sib: bool,
+    immediate: Option<u8>,
+) -> Vec<u8> {
+    assert_eq!(immediate.is_some(), case.operation.immediate().is_some());
     assert!(case.destination < 32 && (!case.zeroing() || case.mask() != 0));
     let p0 = 0x60
         | if case.destination & 8 == 0 { 0x80 } else { 0 }
@@ -269,12 +351,15 @@ fn memory_encoding(case: PackedUnaryMemoryCase, sib: bool) -> Vec<u8> {
         // [RAX + RCX*2]; APX B4/X4 are injected independently by tests.
         bytes.push(0x48);
     }
+    if let Some(immediate) = immediate {
+        bytes.push(immediate);
+    }
     bytes
 }
 
 fn stack_encoding(case: PackedUnaryMemoryCase) -> Vec<u8> {
     let mut bytes = memory_encoding(case, true);
-    *bytes.last_mut().expect("SIB byte") = 0x24;
+    bytes[6] = 0x24;
     bytes
 }
 
@@ -285,14 +370,18 @@ pub(super) fn register_encoding(case: PackedUnaryMemoryCase, source: u8) -> Vec<
         | if case.destination & 8 == 0 { 0x80 } else { 0 }
         | if case.destination & 16 == 0 { 0x10 } else { 0 }
         | case.operation.map();
-    vec![
+    let mut bytes = vec![
         0x62,
         p0,
         (u8::from(case.operation.w()) << 7) | 0x7C | case.operation.pp(),
         (u8::from(case.zeroing()) << 7) | (case.ll() << 5) | 0x08 | case.mask(),
         case.operation.opcode(),
         0xC0 | ((case.destination & 7) << 3) | (source & 7),
-    ]
+    ];
+    if let Some(immediate) = case.operation.immediate() {
+        bytes.push(immediate);
+    }
+    bytes
 }
 
 pub(super) fn lift_bytes(bytes: &[u8]) -> SmirFunction {
@@ -397,7 +486,7 @@ pub(super) fn lower(function: &SmirFunction, case: PackedUnaryMemoryCase) -> (Ve
         case.width != VecWidth::V512,
         "{case:?}"
     );
-    assert!(!requirements.needs_avx512dq, "{case:?}");
+    assert_eq!(requirements.needs_avx512dq, case.operation.needs_dq());
     assert_eq!(
         requirements.needs_avx512fp16,
         case.operation.needs_fp16(),
@@ -450,7 +539,7 @@ pub(super) fn all_cases() -> Vec<PackedUnaryMemoryCase> {
 }
 
 #[test]
-fn packed_unary_rewrites_match_twelve_independent_llvm_23_anchors() {
+fn packed_unary_rewrites_match_twenty_one_independent_llvm_23_anchors() {
     let anchors: &[(&[u8], &[u8])] = &[
         (
             &[0x62, 0xE1, 0x7C, 0x08, 0x51, 0x0B],
@@ -500,6 +589,42 @@ fn packed_unary_rewrites_match_twelve_independent_llvm_23_anchors() {
             &[0x62, 0xE6, 0x7D, 0x5B, 0x4E, 0x0C, 0x24],
             &[0x62, 0xE6, 0x7D, 0x5B, 0x4E, 0x0C, 0x24],
         ),
+        (
+            &[0x62, 0xF3, 0x7C, 0x08, 0x26, 0x0B, 0x0D],
+            &[0x62, 0xF3, 0x7C, 0x08, 0x26, 0xC8, 0x0D],
+        ),
+        (
+            &[0x62, 0x73, 0x7D, 0x3B, 0x26, 0x0C, 0x24, 0x07],
+            &[0x62, 0x73, 0x7D, 0x3B, 0x26, 0x0C, 0x24, 0x07],
+        ),
+        (
+            &[0x62, 0xE3, 0xFD, 0xCB, 0x26, 0x08, 0x05],
+            &[0x62, 0xE3, 0xFD, 0xCB, 0x26, 0x0C, 0x24, 0x05],
+        ),
+        (
+            &[0x62, 0xF3, 0x7C, 0x18, 0x08, 0x0B, 0xB6],
+            &[0x62, 0xF3, 0x7C, 0x18, 0x08, 0x0C, 0x24, 0xB6],
+        ),
+        (
+            &[0x62, 0x73, 0x7D, 0xAB, 0x08, 0x0C, 0x24, 0xA5],
+            &[0x62, 0x73, 0x7D, 0xAB, 0x08, 0x0C, 0x24, 0xA5],
+        ),
+        (
+            &[0x62, 0xE3, 0xFD, 0x58, 0x09, 0x08, 0x93],
+            &[0x62, 0xE3, 0xFD, 0x58, 0x09, 0x0C, 0x24, 0x93],
+        ),
+        (
+            &[0x62, 0xF3, 0x7C, 0x0B, 0x56, 0x0B, 0x29],
+            &[0x62, 0xF3, 0x7C, 0x0B, 0x56, 0x0C, 0x24, 0x29],
+        ),
+        (
+            &[0x62, 0x73, 0x7D, 0x38, 0x56, 0x0C, 0x24, 0x7E],
+            &[0x62, 0x73, 0x7D, 0x38, 0x56, 0x0C, 0x24, 0x7E],
+        ),
+        (
+            &[0x62, 0xE3, 0xFD, 0xCB, 0x56, 0x08, 0xC3],
+            &[0x62, 0xE3, 0xFD, 0xCB, 0x56, 0x0C, 0x24, 0xC3],
+        ),
     ];
     for (memory, llvm) in anchors {
         let encoding = X86InstructionBytes::new(memory)
@@ -521,35 +646,48 @@ fn packed_unary_rewrites_match_twelve_independent_llvm_23_anchors() {
 }
 
 #[test]
-fn packed_unary_classifier_exhausts_all_16_384_selector_cells() {
+fn packed_unary_classifier_exhausts_all_32_768_selector_and_length_cells() {
     let mut accepted = Vec::new();
     for map in 0..8u8 {
         for opcode in 0..=u8::MAX {
             for pp in 0..4u8 {
                 for w in [false, true] {
-                    let bytes = [
-                        0x62,
-                        0xF0 | map,
-                        (u8::from(w) << 7) | 0x7C | pp,
-                        0x08,
-                        opcode,
-                        0x0B,
-                    ];
-                    if let Some(encoding) = X86InstructionBytes::new(&bytes)
-                        .unwrap()
-                        .evex_packed_fp_unary_memory_encoding()
-                    {
-                        accepted.push((map, opcode, pp, w, encoding.kind, encoding.elem));
+                    for immediate in [None, Some(0xD7)] {
+                        let mut bytes = vec![
+                            0x62,
+                            0xF0 | map,
+                            (u8::from(w) << 7) | 0x7C | pp,
+                            0x08,
+                            opcode,
+                            0x0B,
+                        ];
+                        if let Some(immediate) = immediate {
+                            bytes.push(immediate);
+                        }
+                        if let Some(encoding) = X86InstructionBytes::new(&bytes)
+                            .unwrap()
+                            .evex_packed_fp_unary_memory_encoding()
+                        {
+                            accepted.push((
+                                map,
+                                opcode,
+                                pp,
+                                w,
+                                encoding.kind,
+                                encoding.elem,
+                                encoding.immediate,
+                            ));
+                        }
                     }
                 }
             }
         }
     }
-    assert_eq!(accepted.len(), 12, "{accepted:#?}");
+    assert_eq!(accepted.len(), 21, "{accepted:#?}");
     assert_eq!(
         accepted
             .iter()
-            .filter(|(_, _, _, _, kind, _)| *kind == X86EvexPackedFpUnaryMemoryKind::Sqrt)
+            .filter(|(_, _, _, _, kind, _, _)| *kind == X86EvexPackedFpUnaryMemoryKind::Sqrt)
             .count(),
         3,
         "{accepted:#?}"
@@ -563,6 +701,7 @@ fn packed_unary_classifier_exhausts_all_16_384_selector_cells() {
                 operation.w(),
                 operation.kind(),
                 operation.elem(),
+                operation.immediate().map(|_| 0xD7),
             )),
             "{operation:?}: {accepted:#?}"
         );
@@ -570,7 +709,7 @@ fn packed_unary_classifier_exhausts_all_16_384_selector_cells() {
 }
 
 #[test]
-fn packed_unary_classifier_exhausts_138_240_operand_mask_and_apx_cells() {
+fn packed_unary_classifier_exhausts_241_920_operand_mask_and_apx_cells() {
     let mut accepted = 0usize;
     let mut sqrt_accepted = 0usize;
     for operation in PackedUnaryOperation::ALL {
@@ -616,11 +755,22 @@ fn packed_unary_classifier_exhausts_138_240_operand_mask_and_apx_cells() {
                                     assert_eq!(encoding.writemask, (mask != 0).then_some(mask));
                                     assert_eq!(encoding.zeroing, zeroing, "{bytes:02X?}");
                                     assert_eq!(encoding.map, operation.map(), "{bytes:02X?}");
+                                    assert_eq!(encoding.pp, operation.pp(), "{bytes:02X?}");
                                     assert_eq!(encoding.w, operation.w(), "{bytes:02X?}");
                                     assert_eq!(encoding.opcode, operation.opcode(), "{bytes:02X?}");
                                     assert_eq!(
+                                        encoding.immediate,
+                                        operation.immediate(),
+                                        "{bytes:02X?}"
+                                    );
+                                    assert_eq!(
                                         encoding.needs_avx512vl,
                                         width != VecWidth::V512,
+                                        "{bytes:02X?}"
+                                    );
+                                    assert_eq!(
+                                        encoding.needs_avx512dq,
+                                        operation.needs_dq(),
                                         "{bytes:02X?}"
                                     );
                                     assert_eq!(
@@ -659,8 +809,60 @@ fn packed_unary_classifier_exhausts_138_240_operand_mask_and_apx_cells() {
             }
         }
     }
-    assert_eq!(accepted, 138_240);
+    assert_eq!(accepted, 241_920);
     assert_eq!(sqrt_accepted, 34_560);
+}
+
+#[test]
+fn all_6_912_immediate_replays_preserve_every_byte_exactly() {
+    let operations = [
+        PackedUnaryOperation::GetMantF16,
+        PackedUnaryOperation::GetMantF32,
+        PackedUnaryOperation::GetMantF64,
+        PackedUnaryOperation::RoundScaleF16,
+        PackedUnaryOperation::RoundScaleF32,
+        PackedUnaryOperation::RoundScaleF64,
+        PackedUnaryOperation::ReduceF16,
+        PackedUnaryOperation::ReduceF32,
+        PackedUnaryOperation::ReduceF64,
+    ];
+    let mut checks = 0usize;
+    for operation in operations {
+        for (form, control) in [
+            (SourceForm::Vector, MaskControl::None),
+            (SourceForm::Broadcast, MaskControl::None),
+            (SourceForm::Vector, MaskControl::Merge),
+        ] {
+            let case = PackedUnaryMemoryCase {
+                operation,
+                width: VecWidth::V512,
+                destination: 17,
+                form,
+                control,
+            };
+            for immediate in 0..=u8::MAX {
+                let bytes = memory_encoding_with_immediate(case, true, Some(immediate));
+                let encoding = X86InstructionBytes::new(&bytes)
+                    .unwrap()
+                    .evex_packed_fp_unary_memory_encoding()
+                    .unwrap_or_else(|| panic!("{bytes:02X?}"));
+                assert_eq!(encoding.immediate, Some(immediate), "{bytes:02X?}");
+                let replay = match encoding.replay {
+                    X86EvexPackedFpUnaryMemoryReplay::Vector {
+                        register_instruction,
+                        ..
+                    } => register_instruction,
+                    X86EvexPackedFpUnaryMemoryReplay::Broadcast { stack_instruction }
+                    | X86EvexPackedFpUnaryMemoryReplay::MaskedVector { stack_instruction } => {
+                        stack_instruction
+                    }
+                };
+                assert_eq!(replay.as_slice().last(), Some(&immediate), "{bytes:02X?}");
+                checks += 1;
+            }
+        }
+    }
+    assert_eq!(checks, 9 * 3 * 256);
 }
 
 #[test]
@@ -729,9 +931,9 @@ fn packed_unary_classifier_rejects_reserved_non_owned_and_trailing_shapes() {
 }
 
 #[test]
-fn all_216_packed_unary_memory_cells_optimize_admit_and_lower_exactly() {
+fn all_378_packed_unary_memory_cells_optimize_admit_and_lower_exactly() {
     let cases = all_cases();
-    assert_eq!(cases.len(), 216);
+    assert_eq!(cases.len(), 378);
     assert_eq!(
         cases
             .iter()
@@ -757,6 +959,7 @@ fn all_216_packed_unary_memory_cells_optimize_admit_and_lower_exactly() {
             );
             assert_eq!(exact.encoding.zeroing, case.zeroing());
             assert_eq!(exact.encoding.opcode, case.operation.opcode());
+            assert_eq!(exact.encoding.immediate, case.operation.immediate());
             assert_eq!(exact.encoding.w, case.operation.w());
             assert_eq!(
                 exact.memory_size,
@@ -781,7 +984,7 @@ fn all_216_packed_unary_memory_cells_optimize_admit_and_lower_exactly() {
                 usize::from(case.operation.kind() == X86EvexPackedFpUnaryMemoryKind::Sqrt);
         }
     }
-    assert_eq!(lowerings, 216 * LEVELS.len());
+    assert_eq!(lowerings, 378 * LEVELS.len());
     assert_eq!(sqrt_lowerings, 54 * LEVELS.len());
 }
 
@@ -982,6 +1185,9 @@ fn is_packed_unary(kind: &OpKind) -> bool {
     matches!(
         kind,
         OpKind::X86GetExponent { .. }
+            | OpKind::X86GetMantissa { .. }
+            | OpKind::X86RoundScale { .. }
+            | OpKind::X86Reduce { .. }
             | OpKind::X86Recip14 { .. }
             | OpKind::X86Rsqrt14 { .. }
             | OpKind::X86RecipFp16 { .. }
@@ -1005,6 +1211,13 @@ fn packed_unary_sequence_fails_closed_for_provenance_graph_and_frontier_mutation
             destination: 9,
             form: SourceForm::Broadcast,
             control: MaskControl::Zero,
+        },
+        PackedUnaryMemoryCase {
+            operation: PackedUnaryOperation::RoundScaleF32,
+            width: VecWidth::V128,
+            destination: 1,
+            form: SourceForm::Vector,
+            control: MaskControl::None,
         },
     ] {
         for level in LEVELS {
@@ -1035,6 +1248,9 @@ fn packed_unary_sequence_fails_closed_for_provenance_graph_and_frontier_mutation
                 .expect("packed unary semantic");
             match &mut unary.kind {
                 OpKind::X86GetExponent { src, .. }
+                | OpKind::X86GetMantissa { src, .. }
+                | OpKind::X86RoundScale { src, .. }
+                | OpKind::X86Reduce { src, .. }
                 | OpKind::X86Recip14 { src, .. }
                 | OpKind::X86Rsqrt14 { src, .. }
                 | OpKind::X86RecipFp16 { src, .. }
@@ -1044,6 +1260,22 @@ fn packed_unary_sequence_fails_closed_for_provenance_graph_and_frontier_mutation
                 _ => unreachable!(),
             }
             assert_rejected("wrong memory consumer", &semantic);
+
+            if case.operation.immediate().is_some() {
+                let mut immediate = canonical.clone();
+                let unary = immediate.blocks[0]
+                    .ops
+                    .iter_mut()
+                    .find(|op| is_packed_unary(&op.kind))
+                    .expect("packed immediate unary semantic");
+                match &mut unary.kind {
+                    OpKind::X86GetMantissa { imm, .. }
+                    | OpKind::X86RoundScale { imm, .. }
+                    | OpKind::X86Reduce { imm, .. } => *imm ^= 1,
+                    _ => unreachable!(),
+                }
+                assert_rejected("wrong immediate", &immediate);
+            }
 
             let mut frontier = canonical.clone();
             frontier.blocks[0].ops.push(SmirOp::new(

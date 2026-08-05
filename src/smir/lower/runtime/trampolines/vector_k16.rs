@@ -3,21 +3,20 @@
 use super::*;
 use crate::smir::lower::runtime::*;
 
-/// Whether every admitted native vector operation in executable blocks is a
-/// VEXP2/VRCP14/VRSQRT14/VRCP28/VRSQRT28 operation whose opmask width is at
-/// most 16 bits. Such a region can marshal K0-K7 with AVX512F KMOVW: each
-/// instruction observes only the low 8/16 bits, and the trampoline leaves
-/// every upper architectural bit intact in `GuestRegs`. Any additional vector
-/// operation fails closed to full KMOVQ.
+/// Whether every admitted native vector operation in executable blocks is
+/// explicitly classified as observing at most K[15:0]. Such a region can
+/// marshal K0-K7 with AVX512F KMOVW: each instruction observes only the low
+/// 8/16 bits, and the trampoline leaves every upper architectural bit intact
+/// in `GuestRegs`. Any additional vector operation fails closed to full KMOVQ.
 pub fn x86_native_vector_uses_k16_opmasks_excluding(
     func: &crate::smir::ir::SmirFunction,
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
 ) -> bool {
     let replay = x86_native_replay_feature_requirements(func, excluded);
     // Any replay span requiring the full KMOVQ bridge may observe K[63:16].
-    // The exact scalar approximation spans are instead represented by the
-    // explicit K16 capability bit because their decomposed semantic op has a
-    // virtual memory source and is deliberately not directly admissible.
+    // Exact replay spans are represented by the explicit K16 capability bit
+    // because their decomposed semantic operation has a virtual memory source
+    // and is deliberately not directly admissible.
     if replay.needs_avx512bw {
         return false;
     }
