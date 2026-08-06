@@ -17,6 +17,7 @@ mod evex_expand_memory;
 mod evex_extract_memory;
 mod evex_fixup_imm_memory;
 mod evex_fma3_memory;
+mod evex_four_dot_product_memory;
 mod evex_four_fma_memory;
 mod evex_fp16_arithmetic_memory;
 mod evex_fp16_complex_memory;
@@ -172,6 +173,7 @@ pub(crate) use evex_fixup_imm_memory::{
 pub(crate) use evex_fma3_memory::{
     X86EvexPackedFma3MemoryEncoding, X86EvexPackedFma3MemoryReplay, X86EvexScalarFma3MemoryEncoding,
 };
+pub(crate) use evex_four_dot_product_memory::X86EvexFourDotProductMemoryEncoding;
 pub(crate) use evex_four_fma_memory::X86EvexFourFmaMemoryEncoding;
 pub(crate) use evex_fp_arithmetic_memory::{
     X86EvexPackedFpArithmeticMemoryEncoding, X86EvexPackedFpArithmeticMemoryReplay,

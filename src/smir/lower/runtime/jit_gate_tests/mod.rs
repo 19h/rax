@@ -75,6 +75,7 @@ mod evex_fma3_packed_memory_source;
 mod evex_fma3_register_replay;
 #[cfg(test)]
 mod evex_fma3_scalar_memory_source;
+mod evex_four_dot_product_memory_source;
 mod evex_four_fma_memory_source;
 #[cfg(test)]
 mod evex_fp16_complex_memory_source;

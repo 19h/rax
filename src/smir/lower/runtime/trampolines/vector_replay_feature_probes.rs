@@ -88,6 +88,24 @@ pub(crate) fn x86_host_has_avx5124fmaps() -> bool {
     }
 }
 
+/// Intel SDM Volume 2 defines AVX512_4VNNIW at CPUID.07H.00H:EDX[2].
+/// Stable Rust does not expose this Xeon Phi feature through
+/// `is_x86_feature_detected!`, so query the architectural bit directly.
+#[cfg(target_arch = "x86_64")]
+pub(crate) fn x86_host_has_avx5124vnniw() -> bool {
+    // SAFETY: CPUID is architecturally available in x86-64 mode. The maximum
+    // basic leaf is checked before querying CPUID.07H.00H.
+    unsafe {
+        let max_basic_leaf = std::arch::x86_64::__cpuid(0).eax;
+        let subleaf0_edx = if max_basic_leaf >= 7 {
+            std::arch::x86_64::__cpuid_count(7, 0).edx
+        } else {
+            0
+        };
+        cpuid_enumerates_leaf7_subleaf0_edx_feature(max_basic_leaf, subleaf0_edx, 1 << 2)
+    }
+}
+
 /// Intel SDM Volume 1 defines AVX_VNNI at CPUID.07H.01H:EAX[4]. Stable Rust
 /// does not expose an `is_x86_feature_detected!` probe for this feature, so
 /// query the structured extended-feature leaf directly.

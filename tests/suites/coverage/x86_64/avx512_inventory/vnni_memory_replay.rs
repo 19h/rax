@@ -3,6 +3,10 @@
 use super::*;
 use rax::smir::VecElementType;
 
+#[cfg(feature = "smir-jit")]
+#[path = "four_dot_product_memory_source.rs"]
+mod four_dot_product_memory_source;
+
 fn function(bytes: &[u8]) -> SmirFunction {
     let mut lifter = X86_64Lifter::strict();
     let mut context = LiftContext::new(SourceArch::X86_64);

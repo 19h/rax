@@ -38,6 +38,7 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_avx512vbmi2: bool,
     pub(crate) needs_gfni: bool,
     pub(crate) needs_avx512vp2intersect: bool,
+    pub(crate) needs_avx5124vnniw: bool,
     pub(crate) needs_avx5124fmaps: bool,
     /// At least one exact replay span observes no opmask bit above K[15].
     /// This permits the AVX512F KMOVW helper bridge when every other vector
@@ -113,6 +114,7 @@ impl X86NativeReplayFeatureRequirements {
             && (!self.needs_gfni || std::is_x86_feature_detected!("gfni"))
             && (!self.needs_avx512vp2intersect
                 || std::is_x86_feature_detected!("avx512vp2intersect"))
+            && (!self.needs_avx5124vnniw || x86_host_has_avx5124vnniw())
             && (!self.needs_avx5124fmaps || x86_host_has_avx5124fmaps())
             && (!self.needs_aes || std::is_x86_feature_detected!("aes"))
             && (!self.needs_vaes || std::is_x86_feature_detected!("vaes"))
