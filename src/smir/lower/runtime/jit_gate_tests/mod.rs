@@ -64,6 +64,7 @@ mod evex_dbpsadbw_memory_source;
 mod evex_duplicate_move_memory_source;
 #[cfg(test)]
 mod evex_expand_memory_source;
+mod evex_extract_memory_destination;
 #[cfg(test)]
 mod evex_fixup_imm_memory_source;
 #[cfg(test)]

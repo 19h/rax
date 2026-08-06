@@ -2,6 +2,10 @@
 
 use super::*;
 
+#[cfg(feature = "smir-jit")]
+#[path = "extract_memory_destination.rs"]
+mod extract_memory_destination;
+
 #[test]
 fn register_evex_chunk_extract_replay_closes_48_generated_lift_lower_gaps() {
     let expected_mnemonics = set_from_slice(&[

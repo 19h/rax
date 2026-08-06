@@ -49,6 +49,8 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_vpclmulqdq: bool,
 }
 
+#[path = "vector_replay_features_evex_extract_memory.rs"]
+mod evex_extract_memory;
 #[path = "vector_replay_features_evex_integer_memory.rs"]
 mod evex_integer_memory;
 #[path = "vector_replay_feature_probes.rs"]
@@ -739,6 +741,18 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
                 all_spans_support_avx_ymm16 = false;
                 index += sequence.consumed;
+            } else if let Some(consumed) =
+                evex_extract_memory::accumulate_evex_extract_memory_replay_requirements(
+                    block,
+                    index,
+                    func,
+                    &virtual_definitions,
+                    &virtual_uses,
+                    &mut requirements,
+                    &mut all_spans_support_avx_ymm16,
+                )
+            {
+                index += consumed;
             } else if let Some(consumed) =
                 evex_integer_memory::accumulate_evex_integer_memory_replay_requirements(
                     block,
