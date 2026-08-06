@@ -71,7 +71,7 @@ impl X86_64Lowerer {
             needs_avx512dq: false,
             needs_avx512fp16: sequence.encoding.needs_avx512fp16,
             preserve_mxcsr_de: false,
-        });
+        })?;
         self.code.emit_u8(0x58); // pop guest RAX
         Ok(Some(sequence.consumed))
     }

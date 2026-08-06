@@ -94,23 +94,26 @@ impl X86_64Lowerer {
 
     /// Emit one exact source instruction, applying any host-compatibility
     /// status fixup requested by its byte-validated replay classifier.
-    pub(crate) fn emit_native_replay_span(&mut self, span: &X86NativeReplaySpan) {
-        if self.try_emit_legacy_high_byte_cmpxchg_replay(span) {
-            return;
+    pub(crate) fn emit_native_replay_span(
+        &mut self,
+        span: &X86NativeReplaySpan,
+    ) -> Result<(), LowerError> {
+        if self.try_emit_legacy_high_byte_replay(span)? {
+            return Ok(());
         }
         if let Some(returns_mask) = span.instruction.vex_register_packed_string_returns_mask() {
             self.code.emit_bytes(span.instruction.as_slice());
             if returns_mask && self.avx_ymm16_vector_state {
                 self.emit_avx_ymm16_state_backed_upper_clear(0);
             }
-            return;
+            return Ok(());
         }
         if span.instruction.vex_zeroes_all_register_bits().is_some() {
             self.code.emit_bytes(span.instruction.as_slice());
             if self.avx_ymm16_vector_state {
                 self.emit_avx_ymm16_state_backed_all_upper_clear();
             }
-            return;
+            return Ok(());
         }
         if let Some(destination) = span.instruction.vex_scalar_extract_destination_index()
             && matches!(destination, 4 | 5)
@@ -120,7 +123,7 @@ impl X86_64Lowerer {
                 .vex_scalar_extract_with_destination(0)
                 .expect("validated VEX scalar extract must rewrite to RAX");
             self.emit_state_backed_gpr_replay(&rewritten, destination);
-            return;
+            return Ok(());
         }
         if let Some(destination) = span.instruction.vex_mov_mask_stack_destination_index() {
             let rewritten = span
@@ -128,7 +131,7 @@ impl X86_64Lowerer {
                 .vex_mov_mask_stack_destination_with_destination(0)
                 .expect("validated VEX MOVMSK stack destination must rewrite to EAX");
             self.emit_state_backed_gpr_replay(&rewritten, destination);
-            return;
+            return Ok(());
         }
         if let Some(destination) = span.instruction.vex_scalar_fp_to_int_destination_index() {
             if matches!(destination, 4 | 5) {
@@ -140,7 +143,7 @@ impl X86_64Lowerer {
             } else {
                 self.code.emit_bytes(span.instruction.as_slice());
             }
-            return;
+            return Ok(());
         }
         if let Some(source) = span.instruction.vex_scalar_int_to_fp_source_index()
             && matches!(source, 4 | 5)
@@ -157,7 +160,7 @@ impl X86_64Lowerer {
             if self.avx_ymm16_vector_state {
                 self.emit_avx_ymm16_state_backed_upper_clear(destination);
             }
-            return;
+            return Ok(());
         }
         if let Some(destination) = span
             .instruction
@@ -206,16 +209,16 @@ impl X86_64Lowerer {
             if self.avx_ymm16_vector_state {
                 self.emit_avx_ymm16_state_backed_upper_clear(destination);
             }
-            return;
+            return Ok(());
         }
         if span.instruction.is_vex_register_ptest() {
             self.code.emit_bytes(span.instruction.as_slice());
             self.emit_vex_ptest_defined_flag_canonicalization();
-            return;
+            return Ok(());
         }
         if !span.preserve_mxcsr_de {
             self.code.emit_bytes(span.instruction.as_slice());
-            return;
+            return Ok(());
         }
 
         // Register-source VCVTPH2PSX must preserve the pre-instruction value
@@ -236,6 +239,7 @@ impl X86_64Lowerer {
         self.code.emit_bytes(&[0x0F, 0xAE, 0x54, 0x24, 0x04]); // ldmxcsr [rsp+4]
         self.code.emit_bytes(&[0x48, 0x83, 0xC4, 0x10]); // add rsp, 16
         self.code.emit_bytes(&[0x9D]); // popfq
+        Ok(())
     }
 
     /// Emit function prologue
@@ -1165,7 +1169,7 @@ impl X86_64Lowerer {
         while idx < end_idx {
             self.regalloc.set_current_idx(idx);
             if let Some(span) = native_replay_spans.get(&idx) {
-                self.emit_native_replay_span(span);
+                self.emit_native_replay_span(span)?;
                 idx = span.end;
                 continue;
             }

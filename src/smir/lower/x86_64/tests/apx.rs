@@ -621,6 +621,19 @@ fn lower_apx_ndd_single_shift_cl_alias_covers_all_groups_widths_and_nf() {
         ),
     ] {
         let code = lower_single_op(op);
+        if matches!(digit, 2 | 3) {
+            let expected = [0x48, 0xD3, 0xC2 | (digit << 3)];
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "missing deterministic CL-alias {name} {expected:02X?}: {code:02X?}"
+            );
+            assert_eq!(
+                code.iter().filter(|byte| **byte == 0x9C).count(),
+                2,
+                "CL-alias {name} must save incoming and native RFLAGS: {code:02X?}"
+            );
+            continue;
+        }
         let expected = [
             0x51,
             0x48,

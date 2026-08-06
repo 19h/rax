@@ -4,8 +4,9 @@ use super::*;
 
 /// Identify baseline scalar register instructions that name AH, CH, DH, or BH
 /// and therefore require exact source-byte replay rather than virtual-register
-/// materialization under the x86 identity map. Construction is O(N) time and
-/// O(P) space for N operations and P unique guest PCs.
+/// materialization under the x86 identity map. Documented Group 2 forms carry
+/// a deterministic undefined-status wrapper at lowering. Construction is O(N)
+/// time and O(P) space for N operations and P unique guest PCs.
 pub fn x86_legacy_high_byte_replay_spans(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,

@@ -2,6 +2,33 @@
 
 use super::X86InstructionBytes;
 
+/// Documented legacy Group 2 operation selected by a byte-validated
+/// AH/CH/DH/BH register encoding.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum X86LegacyHighByteGroup2Kind {
+    Rol,
+    Ror,
+    Rcl,
+    Rcr,
+    Shl,
+    Shr,
+    Sar,
+}
+
+/// Replay metadata for one documented register-only legacy Group 2 operation.
+/// `raw_count == None` denotes the CL-count form; otherwise it is the complete
+/// encoded count before the architectural 5-bit mask is applied.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86LegacyHighByteGroup2Replay {
+    pub(crate) kind: X86LegacyHighByteGroup2Kind,
+    /// Architectural parent GPR index: RAX=0, RCX=1, RDX=2, RBX=3.
+    pub(crate) parent: u8,
+    pub(crate) raw_count: Option<u8>,
+    /// Prefix-free encoding used for native replay. Every admitted legacy
+    /// prefix is semantically inert for a register-only byte Group 2 form.
+    pub(crate) canonical_instruction: X86InstructionBytes,
+}
+
 fn legacy_prefix_len(bytes: &[u8]) -> Option<usize> {
     let mut prefix_groups = 0u8;
     let mut start = 0usize;
@@ -33,13 +60,17 @@ impl X86InstructionBytes {
     /// between each high byte and its full-width parent.
     ///
     /// The admitted set contains MOV, binary ALU, TEST, XCHG, Group 1
-    /// immediate, NOT, NEG, INC, DEC, SETcc, CMPXCHG, and XADD register forms.
-    /// LOCK, REX, memory, Group 2 shifts/rotates, Group 3 `/1`, multiply, and
-    /// divide forms fail closed. Group 2 needs a separate deterministic flag
-    /// merge because RAX preserves architecturally undefined AF/OF while the
-    /// host instruction may change them. At most one legacy prefix from each
-    /// prefix group is accepted; none changes an 8-bit register operand.
+    /// immediate, NOT, NEG, INC, DEC, SETcc, CMPXCHG, XADD, and documented
+    /// Group 2 rotate/shift register forms. LOCK, REX, memory, undocumented
+    /// Group 2 `/6`, Group 3 `/1`, multiply, and divide forms fail closed.
+    /// Group 2 replay uses a deterministic status wrapper because RAX
+    /// preserves architecturally undefined AF/OF while the host instruction
+    /// may change them. At most one legacy prefix from each prefix group is
+    /// accepted; none changes an 8-bit register operand.
     pub fn is_legacy_high_byte_register_replay(&self) -> bool {
+        if self.legacy_high_byte_group2_replay().is_some() {
+            return true;
+        }
         let bytes = self.as_slice();
         let Some(start) = legacy_prefix_len(bytes) else {
             return false;
@@ -98,6 +129,40 @@ impl X86InstructionBytes {
             }
             _ => false,
         }
+    }
+
+    /// Decode one documented register-only legacy Group 2 operation whose
+    /// destination is AH, CH, DH, or BH. The undocumented `/6` alias remains
+    /// rejected because its deterministic undefined-AF contract differs from
+    /// the architectural `/4` SHL/SAL encoding.
+    pub(crate) fn legacy_high_byte_group2_replay(&self) -> Option<X86LegacyHighByteGroup2Replay> {
+        let bytes = self.as_slice();
+        let start = legacy_prefix_len(bytes)?;
+        let (modrm, raw_count) = match &bytes[start..] {
+            [0xC0, modrm, immediate] => (*modrm, Some(*immediate)),
+            [0xD0, modrm] => (*modrm, Some(1)),
+            [0xD2, modrm] => (*modrm, None),
+            _ => return None,
+        };
+        if modrm >> 6 != 3 || modrm & 7 < 4 {
+            return None;
+        }
+        let kind = match (modrm >> 3) & 7 {
+            0 => X86LegacyHighByteGroup2Kind::Rol,
+            1 => X86LegacyHighByteGroup2Kind::Ror,
+            2 => X86LegacyHighByteGroup2Kind::Rcl,
+            3 => X86LegacyHighByteGroup2Kind::Rcr,
+            4 => X86LegacyHighByteGroup2Kind::Shl,
+            5 => X86LegacyHighByteGroup2Kind::Shr,
+            7 => X86LegacyHighByteGroup2Kind::Sar,
+            _ => return None,
+        };
+        Some(X86LegacyHighByteGroup2Replay {
+            kind,
+            parent: (modrm & 7) - 4,
+            raw_count,
+            canonical_instruction: X86InstructionBytes::new(&bytes[start..])?,
+        })
     }
 
     /// Return the ModR/M destination index for an admitted high-byte
@@ -235,8 +300,33 @@ mod tests {
                     accepted += usize::from(expected);
                 }
             }
+
+            for opcode in [0xC0, 0xD0, 0xD2] {
+                for extension in 0u8..8 {
+                    for rm in 0u8..8 {
+                        let mut bytes = prefix.to_vec();
+                        bytes.extend([opcode, 0xC0 | (extension << 3) | rm]);
+                        if opcode == 0xC0 {
+                            bytes.push(0xA5);
+                        }
+                        let expected = extension != 6 && rm >= 4;
+                        let instruction = X86InstructionBytes::new(&bytes).unwrap();
+                        assert_eq!(
+                            instruction.is_legacy_high_byte_register_replay(),
+                            expected,
+                            "{bytes:02X?}"
+                        );
+                        assert_eq!(
+                            instruction.legacy_high_byte_group2_replay().is_some(),
+                            expected,
+                            "{bytes:02X?}"
+                        );
+                        accepted += usize::from(expected);
+                    }
+                }
+            }
         }
-        assert_eq!(accepted, 7_056);
+        assert_eq!(accepted, 7_560);
     }
 
     #[test]
@@ -250,12 +340,86 @@ mod tests {
             &[0x0F, 0x96, 0xC4][..],                   // setbe ah
             &[0x0F, 0xB0, 0xF5][..],                   // cmpxchg ch,dh
             &[0x0F, 0xC0, 0xFC][..],                   // xadd ah,bh
+            &[0xC0, 0xC4, 0x00][..],                   // rol ah,0
+            &[0xD0, 0xD5][..],                         // rcl ch,1
+            &[0xD2, 0xDF][..],                         // rcr bh,cl
+            &[0xC0, 0xE6, 0x08][..],                   // shl dh,8
+            &[0xD2, 0xEF][..],                         // shr bh,cl
+            &[0xC0, 0xFC, 0x1F][..],                   // sar ah,31
             &[0x65, 0x66, 0x67, 0xF3, 0x00, 0xEC][..], // add ah,ch
         ] {
             assert!(
                 X86InstructionBytes::new(bytes)
                     .unwrap()
                     .is_legacy_high_byte_register_replay(),
+                "{bytes:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn classifier_reports_exact_group2_operation_parent_and_count_source() {
+        for (bytes, kind, parent, raw_count, canonical_instruction) in [
+            (
+                &[0xC0, 0xC4, 0xA5][..],
+                X86LegacyHighByteGroup2Kind::Rol,
+                0,
+                Some(0xA5),
+                &[0xC0, 0xC4, 0xA5][..],
+            ),
+            (
+                &[0xD0, 0xCD][..],
+                X86LegacyHighByteGroup2Kind::Ror,
+                1,
+                Some(1),
+                &[0xD0, 0xCD][..],
+            ),
+            (
+                &[0xD2, 0xD6][..],
+                X86LegacyHighByteGroup2Kind::Rcl,
+                2,
+                None,
+                &[0xD2, 0xD6][..],
+            ),
+            (
+                &[0xD2, 0xDF][..],
+                X86LegacyHighByteGroup2Kind::Rcr,
+                3,
+                None,
+                &[0xD2, 0xDF][..],
+            ),
+            (
+                &[0x65, 0x66, 0x67, 0xF3, 0xC0, 0xE4, 0x08][..],
+                X86LegacyHighByteGroup2Kind::Shl,
+                0,
+                Some(8),
+                &[0xC0, 0xE4, 0x08][..],
+            ),
+            (
+                &[0xC0, 0xED, 0x09][..],
+                X86LegacyHighByteGroup2Kind::Shr,
+                1,
+                Some(9),
+                &[0xC0, 0xED, 0x09][..],
+            ),
+            (
+                &[0xC0, 0xFE, 0x1F][..],
+                X86LegacyHighByteGroup2Kind::Sar,
+                2,
+                Some(31),
+                &[0xC0, 0xFE, 0x1F][..],
+            ),
+        ] {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .legacy_high_byte_group2_replay(),
+                Some(X86LegacyHighByteGroup2Replay {
+                    kind,
+                    parent,
+                    raw_count,
+                    canonical_instruction: X86InstructionBytes::new(canonical_instruction).unwrap(),
+                }),
                 "{bytes:02X?}"
             );
         }
@@ -270,9 +434,11 @@ mod tests {
             &[0xF0, 0x00, 0xC4][..],       // LOCK register form is #UD
             &[0xF2, 0xF3, 0x00, 0xC4][..], // duplicate prefix group
             &[0x66, 0x66, 0x00, 0xC4][..], // duplicate prefix group
-            &[0xD0, 0xC4][..],             // Group 2 needs exact flag merging
-            &[0xD2, 0xED][..],             // dynamic Group 2 count
-            &[0xC0, 0xFF, 0x03][..],       // immediate Group 2 count
+            &[0xC0, 0xF4, 0x03][..],       // undocumented Group 2 /6 alias
+            &[0xD0, 0xF5][..],             // undocumented Group 2 /6 alias
+            &[0xD2, 0xF6][..],             // undocumented Group 2 /6 alias
+            &[0xC0, 0x04, 0x03][..],       // Group 2 memory form
+            &[0x40, 0xC0, 0xC4, 0x03][..], // REX selects SPL, not AH
             &[0xF6, 0xCC, 0x01][..],       // Group 3 /1 compatibility alias
             &[0xF6, 0xE4][..],             // mul ah: undefined flags
             &[0xF6, 0xEC][..],             // imul ah: undefined flags

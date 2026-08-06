@@ -99,7 +99,6 @@ mod family_spans;
 
 pub use family_spans::*;
 
-pub(crate) use classifiers::X86EvexMovntdqaMemoryEncoding;
 pub(crate) use classifiers::{
     X86EvexAlignrMemoryEncoding, X86EvexBf16MemoryEncoding, X86EvexBf16MemoryKind,
     X86EvexBf16MemoryReplay, X86EvexBroadcastInterleaveMemoryEncoding,
@@ -167,6 +166,9 @@ pub(crate) use classifiers::{
     X86VexScalarIntegerMemoryEncoding, X86VexScalarIntegerMemoryKind, X86VexSm3Sm4MemoryEncoding,
     X86VexSm3Sm4MemoryKind, X86VexVariableBlendMemoryEncoding, X86VexVariablePermuteMemoryEncoding,
     X86VexVpermil2MemoryEncoding,
+};
+pub(crate) use classifiers::{
+    X86EvexMovntdqaMemoryEncoding, X86LegacyHighByteGroup2Kind, X86LegacyHighByteGroup2Replay,
 };
 
 pub use aggregate::{

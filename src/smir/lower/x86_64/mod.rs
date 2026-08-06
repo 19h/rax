@@ -732,6 +732,8 @@ pub(crate) fn x86_state_backed_gpr_shift_valid(op: &SmirOp) -> bool {
 
 pub(crate) fn x86_state_backed_gpr_carry_rotate_candidate(op: &SmirOp) -> bool {
     let state_amount = |amount: &SrcOperand| matches!(amount, SrcOperand::Reg(reg) if x86_state_backed_arch_gpr(reg));
+    let arch_gpr =
+        |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some());
 
     matches!(
         &op.kind,
@@ -743,6 +745,10 @@ pub(crate) fn x86_state_backed_gpr_carry_rotate_candidate(op: &SmirOp) -> bool {
         } if x86_state_backed_arch_gpr(dst)
             || x86_state_backed_arch_gpr(src)
             || state_amount(amount)
+            // The identity-map fast path is exact only for the literal
+            // count-one shape. Route every other architectural-GPR form
+            // through the existing deterministic CF/OF state-backed merge.
+            || (arch_gpr(dst) && arch_gpr(src) && !matches!(amount, SrcOperand::Imm(1)))
     )
 }
 

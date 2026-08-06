@@ -70,7 +70,7 @@ impl X86_64Lowerer {
             needs_avx512dq: false,
             needs_avx512fp16: sequence.encoding.needs_avx512fp16,
             preserve_mxcsr_de: false,
-        });
+        })?;
 
         // RAX may itself hold the conversion result. Preserve its live value
         // while borrowing it as the state base for the XMM0 restoration.

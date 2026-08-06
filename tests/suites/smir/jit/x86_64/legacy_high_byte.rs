@@ -23,11 +23,14 @@ fn legacy_gprs(registers: &Registers) -> [u64; 16] {
     ]
 }
 
-fn seed(vcpu: &mut X86_64Vcpu, rax: u64) {
+const DEFAULT_RCX: u64 = 0x1357_9BDF_2468_0305;
+const DEFAULT_RFLAGS: u64 = 0x2 | 0x8D5;
+
+fn seed(vcpu: &mut X86_64Vcpu, rax: u64, rcx: u64, rflags: u64) {
     let mut registers = vcpu.get_regs().unwrap();
     registers.rax = rax;
     registers.rbx = 0xFEDC_BA98_7654_3210;
-    registers.rcx = 0x1357_9BDF_2468_0305;
+    registers.rcx = rcx;
     registers.rdx = 0x0F1E_2D3C_4B5A_6978;
     registers.rsi = 0x1111_2222_3333_4444;
     registers.rdi = 0x5555_6666_7777_8888;
@@ -40,16 +43,20 @@ fn seed(vcpu: &mut X86_64Vcpu, rax: u64) {
     registers.r13 = 0x1515_1616_1717_1818;
     registers.r14 = 0x1919_1A1A_1B1B_1C1C;
     registers.r15 = 0x1D1D_1E1E_1F1F_2020;
-    registers.rflags = 0x2 | 0x8D5;
+    registers.rflags = rflags;
     vcpu.set_regs(&registers).unwrap();
 }
 
 fn compare_direct_and_jit(name: &str, instruction: &[u8], rax: u64) {
+    compare_direct_and_jit_state(name, instruction, rax, DEFAULT_RCX, DEFAULT_RFLAGS);
+}
+
+fn compare_direct_and_jit_state(name: &str, instruction: &[u8], rax: u64, rcx: u64, rflags: u64) {
     let mut code = instruction.to_vec();
     code.push(0xF4);
 
     let (mut direct, _) = make_vcpu_mem(&code);
-    seed(&mut direct, rax);
+    seed(&mut direct, rax, rcx, rflags);
     assert!(
         direct
             .step()
@@ -60,7 +67,7 @@ fn compare_direct_and_jit(name: &str, instruction: &[u8], rax: u64) {
     let expected = direct.get_regs().unwrap();
 
     let (mut jit, _) = make_vcpu_mem(&code);
-    seed(&mut jit, rax);
+    seed(&mut jit, rax, rcx, rflags);
     jit.set_jit_call(false);
     jit.set_jit_mem(false);
     assert!(
@@ -110,6 +117,18 @@ fn jit_legacy_high_byte_replay_matches_direct_for_aliases_flags_and_prefixes() {
             (common_rax & !0xFF) | 0x03,
         ),
         ("xadd ah,bh", &[0x0F, 0xC0, 0xFC], common_rax),
+        ("rol ah,0", &[0xC0, 0xC4, 0x00], common_rax),
+        ("ror ch,1", &[0xD0, 0xCD], common_rax),
+        ("rcl dh,2", &[0xC0, 0xD6, 0x02], common_rax),
+        ("rcr bh,cl", &[0xD2, 0xDF], common_rax),
+        ("shl ah,8", &[0xC0, 0xE4, 0x08], common_rax),
+        ("shr ch,9", &[0xC0, 0xED, 0x09], common_rax),
+        ("sar dh,31", &[0xC0, 0xFE, 0x1F], common_rax),
+        (
+            "prefixed shl ah,8",
+            &[0x65, 0x66, 0x67, 0xF3, 0xC0, 0xE4, 0x08],
+            common_rax,
+        ),
         (
             "prefixed add ah,ch",
             &[0x65, 0x66, 0x67, 0xF3, 0x00, 0xEC],
@@ -119,6 +138,40 @@ fn jit_legacy_high_byte_replay_matches_direct_for_aliases_flags_and_prefixes() {
 
     for (name, instruction, rax) in cases {
         compare_direct_and_jit(name, instruction, *rax);
+    }
+
+    for (name, instruction) in [
+        ("rcl ah,1 with CF clear", &[0xD0, 0xD4][..]),
+        ("rcr ch,2 with CF clear", &[0xC0, 0xDD, 0x02][..]),
+        ("rcl dh,cl with CF clear", &[0xD2, 0xD6][..]),
+    ] {
+        compare_direct_and_jit_state(name, instruction, common_rax, DEFAULT_RCX, 0x2);
+    }
+
+    for (name, instruction, rcx) in [
+        (
+            "rol ah,2 with status clear",
+            &[0xC0, 0xC4, 0x02][..],
+            DEFAULT_RCX,
+        ),
+        (
+            "ror ch,0x20 masked zero",
+            &[0xC0, 0xCD, 0x20][..],
+            DEFAULT_RCX,
+        ),
+        (
+            "rcl dh,0xa1 masked one",
+            &[0xC0, 0xD6, 0xA1][..],
+            DEFAULT_RCX,
+        ),
+        (
+            "shl ah,0x28 masked boundary",
+            &[0xC0, 0xE4, 0x28][..],
+            DEFAULT_RCX,
+        ),
+        ("sar bh,cl oversized", &[0xD2, 0xFF][..], 0xFF),
+    ] {
+        compare_direct_and_jit_state(name, instruction, common_rax, rcx, 0x2);
     }
 }
 
@@ -180,5 +233,57 @@ fn jit_legacy_high_byte_replay_matches_direct_for_every_admitted_register_cell()
         }
     }
 
-    assert_eq!(cases, 1_176);
+    for extension in [0u8, 1, 2, 3, 4, 5, 7] {
+        for rm in 4u8..8 {
+            let bytes = [0xD0, 0xC0 | (extension << 3) | rm];
+            compare_direct_and_jit(&format!("{bytes:02X?}"), &bytes, rax);
+            cases += 1;
+
+            for count in 0u8..32 {
+                let bytes = [0xC0, 0xC0 | (extension << 3) | rm, count];
+                compare_direct_and_jit(&format!("{bytes:02X?}"), &bytes, rax);
+                cases += 1;
+
+                let bytes = [0xD2, 0xC0 | (extension << 3) | rm];
+                let rcx = (DEFAULT_RCX & !0xFF) | u64::from(count);
+                compare_direct_and_jit_state(
+                    &format!("{bytes:02X?} CL={count}"),
+                    &bytes,
+                    rax,
+                    rcx,
+                    DEFAULT_RFLAGS,
+                );
+                cases += 1;
+            }
+        }
+    }
+
+    assert_eq!(cases, 2_996);
+}
+
+#[test]
+fn jit_legacy_carry_rotate_nonunit_counts_match_direct_via_state_backed_lowering() {
+    let rax = 0x8123_4567_89AB_CDEF;
+    for (name, instruction, rcx, rflags) in [
+        ("rcl al,0", &[0xC0, 0xD0, 0x00][..], DEFAULT_RCX, 0x8D7),
+        ("rcr al,2", &[0xC0, 0xD8, 0x02][..], DEFAULT_RCX, 0x2),
+        ("rcl eax,cl", &[0xD3, 0xD0][..], 5, 0x8D7),
+        ("rcl ecx,cl alias", &[0xD3, 0xD1][..], 9, 0x2),
+        (
+            "rcr ax,17",
+            &[0x66, 0xC1, 0xD8, 0x11][..],
+            DEFAULT_RCX,
+            0x8D7,
+        ),
+        ("rcl eax,32", &[0xC1, 0xD0, 0x20][..], DEFAULT_RCX, 0x2),
+        (
+            "rcl rax,64",
+            &[0x48, 0xC1, 0xD0, 0x40][..],
+            DEFAULT_RCX,
+            0x8D7,
+        ),
+        ("rcl rsp,2", &[0x48, 0xC1, 0xD4, 0x02][..], DEFAULT_RCX, 0x2),
+    ] {
+        compare_direct_and_jit_state(name, instruction, rax, rcx, rflags);
+    }
 }

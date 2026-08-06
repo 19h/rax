@@ -54,17 +54,24 @@ fn legacy_high_byte_replay_admits_and_emits_each_documented_family_at_o0_o1_o2()
         ("setbe ah", &[0x0F, 0x96, 0xC4]),
         ("cmpxchg ch,dh", &[0x0F, 0xB0, 0xF5]),
         ("xadd ah,bh", &[0x0F, 0xC0, 0xFC]),
+        ("rol ah,0", &[0xC0, 0xC4, 0x00]),
+        ("ror ch,1", &[0xD0, 0xCD]),
+        ("rcl dh,2", &[0xC0, 0xD6, 0x02]),
+        ("rcr bh,cl", &[0xD2, 0xDF]),
+        ("shl ah,8", &[0xC0, 0xE4, 0x08]),
+        ("shr ch,9", &[0xC0, 0xED, 0x09]),
+        ("sar dh,31", &[0xC0, 0xFE, 0x1F]),
+        (
+            "prefixed shl ah,8",
+            &[0x65, 0x66, 0x67, 0xF3, 0xC0, 0xE4, 0x08],
+        ),
         ("prefixed add ah,ch", &[0x65, 0x66, 0x67, 0xF3, 0x00, 0xEC]),
     ];
 
     let mut lowered = 0usize;
     for (name, bytes) in cases {
-        assert!(
-            X86InstructionBytes::new(bytes)
-                .unwrap()
-                .is_legacy_high_byte_register_replay(),
-            "{name}"
-        );
+        let instruction = X86InstructionBytes::new(bytes).unwrap();
+        assert!(instruction.is_legacy_high_byte_register_replay(), "{name}");
         for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
             let mut function = function(bytes);
             optimize_function(&mut function, level);
@@ -114,14 +121,17 @@ fn legacy_high_byte_replay_admits_and_emits_each_documented_family_at_o0_o1_o2()
             let code = lowerer
                 .finalize()
                 .unwrap_or_else(|error| panic!("{name} {level:?}: {error:?}"));
+            let replay_instruction = instruction
+                .legacy_high_byte_group2_replay()
+                .map(|replay| replay.canonical_instruction)
+                .unwrap_or(instruction);
+            let replay_bytes = replay_instruction.as_slice();
             assert!(
-                code.windows(bytes.len()).any(|window| window == *bytes),
-                "{name} {level:?}: exact source bytes absent from {code:02X?}"
+                code.windows(replay_bytes.len())
+                    .any(|window| window == replay_bytes),
+                "{name} {level:?}: validated replay bytes absent from {code:02X?}"
             );
-            if let Some(destination) = X86InstructionBytes::new(bytes)
-                .unwrap()
-                .legacy_high_byte_cmpxchg_destination_index()
-            {
+            if let Some(destination) = instruction.legacy_high_byte_cmpxchg_destination_index() {
                 let expected = [0x3A, 0xC0 | destination, 0x9C, 0x0F, 0xB0];
                 assert!(
                     code.windows(expected.len())
@@ -138,6 +148,40 @@ fn legacy_high_byte_replay_admits_and_emits_each_documented_family_at_o0_o1_o2()
         }
     }
     assert_eq!(lowered, cases.len() * 3);
+}
+
+#[test]
+fn legacy_carry_rotate_nonunit_counts_use_deterministic_state_backed_lowering() {
+    let cases: &[(&str, &[u8])] = &[
+        ("rcl al,0", &[0xC0, 0xD0, 0x00]),
+        ("rcr al,2", &[0xC0, 0xD8, 0x02]),
+        ("rcl eax,cl", &[0xD3, 0xD0]),
+        ("rcr ax,17", &[0x66, 0xC1, 0xD8, 0x11]),
+        ("rcl rax,64", &[0x48, 0xC1, 0xD0, 0x40]),
+    ];
+
+    for (name, bytes) in cases {
+        assert!(
+            X86InstructionBytes::new(bytes)
+                .unwrap()
+                .legacy_high_byte_group2_replay()
+                .is_none(),
+            "{name}: ordinary low/full-width form must not use high-byte replay"
+        );
+        for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+            let mut function = function(bytes);
+            optimize_function(&mut function, level);
+            assert!(is_native_clobber_safe(&function), "{name} {level:?}");
+
+            let mut lowerer = X86_64Lowerer::new();
+            lowerer
+                .lower_function(&function)
+                .unwrap_or_else(|error| panic!("{name} {level:?}: {error:?}"));
+            lowerer
+                .finalize()
+                .unwrap_or_else(|error| panic!("{name} {level:?}: {error:?}"));
+        }
+    }
 }
 
 #[test]
@@ -162,6 +206,9 @@ fn legacy_high_byte_replay_requires_exact_provenance_and_contiguous_ir() {
         X86InstructionBytes::new(&[0x40, 0x00, 0xC4]).unwrap(),
     );
     assert!(!is_native_clobber_safe(&rex));
+
+    let undocumented_group6 = function(&[0xC0, 0xF4, 0x02]);
+    assert!(!is_native_clobber_safe(&undocumented_group6));
 
     let mut noncontiguous = base;
     let mut split = noncontiguous.blocks[0].ops[0].clone();

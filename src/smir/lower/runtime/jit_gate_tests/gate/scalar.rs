@@ -918,7 +918,7 @@ fn scalar_count_gate_tracks_features_and_rejects_malformed_shapes() {
     }
 }
 #[test]
-fn carry_rotate_gate_admits_only_defined_immediate_one_forms() {
+fn carry_rotate_gate_admits_defined_and_deterministic_forms() {
     let flags = FlagUpdate::Specific(FlagSet::CF.union(FlagSet::OF));
     for (name, op) in [
         (
@@ -971,14 +971,8 @@ fn carry_rotate_gate_admits_only_defined_immediate_one_forms() {
                 flags,
             },
         ),
-    ] {
-        assert!(op.is_jit_safe(), "{name} must be class-whitelisted");
-        assert!(x86_gate(op), "{name} must enter native lowering");
-    }
-
-    for (name, op) in [
         (
-            "multi-bit undefined OF",
+            "RCL multi-bit deterministic OF",
             OpKind::Rcl {
                 dst: x86(X86Reg::Rax),
                 src: x86(X86Reg::Rax),
@@ -988,7 +982,7 @@ fn carry_rotate_gate_admits_only_defined_immediate_one_forms() {
             },
         ),
         (
-            "variable count",
+            "RCR variable deterministic OF",
             OpKind::Rcr {
                 dst: x86(X86Reg::Rax),
                 src: x86(X86Reg::Rax),
@@ -997,6 +991,22 @@ fn carry_rotate_gate_admits_only_defined_immediate_one_forms() {
                 flags,
             },
         ),
+        (
+            "RCL NDD destination-count alias deterministic OF",
+            OpKind::Rcl {
+                dst: x86(X86Reg::Rcx),
+                src: x86(X86Reg::Rax),
+                amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                width: OpWidth::W64,
+                flags,
+            },
+        ),
+    ] {
+        assert!(op.is_jit_safe(), "{name} must be class-whitelisted");
+        assert!(x86_gate(op), "{name} must enter native lowering");
+    }
+
+    for (name, op) in [
         (
             "suppressed flags",
             OpKind::Rcl {
