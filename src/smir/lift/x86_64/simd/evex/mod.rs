@@ -4,6 +4,8 @@ mod align;
 pub use align::*;
 mod compare;
 pub use compare::*;
+mod compress_expand;
+pub use compress_expand::*;
 mod crypto;
 pub use crypto::*;
 mod fp;

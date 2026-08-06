@@ -89,6 +89,7 @@ impl X86_64Lowerer {
         try_replay!(try_lower_jit_evex_packed_extend_memory_source);
         try_replay!(try_lower_jit_evex_packed_fp16_convert_memory_source);
         try_replay!(try_lower_jit_evex_packed_convert_memory_source);
+        try_replay!(try_lower_jit_evex_expand_memory_source);
         try_replay!(try_lower_jit_evex_scalar_fp_to_int_memory_source);
         try_replay!(try_lower_jit_evex_scalar_fp_unary_memory_source);
         try_replay!(try_lower_jit_evex_scalar_int_to_fp_memory_source);

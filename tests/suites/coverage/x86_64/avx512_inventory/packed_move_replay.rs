@@ -2,6 +2,10 @@
 
 use super::*;
 
+#[cfg(feature = "smir-jit")]
+#[path = "expand_memory_replay.rs"]
+mod expand_memory_replay;
+
 #[test]
 fn register_evex_packed_move_replay_closes_240_generated_lift_lower_gaps() {
     let expected_mnemonics = set_from_slice(&[
