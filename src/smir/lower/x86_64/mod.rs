@@ -106,6 +106,8 @@ mod evex_fp16_arithmetic_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_fp16_complex_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_fp16_narrow_memory_destination;
+#[cfg(feature = "smir-jit")]
 mod evex_fp_arithmetic_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_fp_class_memory_source;

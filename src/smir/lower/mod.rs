@@ -243,8 +243,17 @@ pub const X86_GUEST_CPUID_XOP_OFFSET: i32 = X86_GUEST_CPUID_TBM_OFFSET + 8;
 pub const X86_GUEST_CMPCCXADD_FN_OFFSET: i32 = X86_GUEST_CPUID_XOP_OFFSET + 8;
 /// Internal `vec_load_fn` destination namespace for
 /// [`runtime::GuestRegs::vector_scratch`]. Architectural ZMM indices remain
-/// exactly 0..=31; every value above this singleton tag is invalid.
+/// exactly 0..=31. For `vec_store_fn`, this tag names an unmasked scratch
+/// store and the following seven tags select K1..K7 for sparse 2-byte-lane
+/// scratch stores. `vec_load_fn` continues to reject every value above 32.
 pub(crate) const X86_JIT_VECTOR_SCRATCH_INDEX: u32 = 32;
+/// First `vec_store_fn` tag in the masked-word scratch namespace. Adding a
+/// nonzero architectural mask index selects K1..K7 without extending the
+/// append-only helper ABI.
+pub(crate) const X86_JIT_VECTOR_MASKED_WORD_SCRATCH_BASE: u32 = X86_JIT_VECTOR_SCRATCH_INDEX;
+/// Last valid `vec_store_fn` tag in the masked-word scratch namespace.
+pub(crate) const X86_JIT_VECTOR_MASKED_WORD_SCRATCH_LAST: u32 =
+    X86_JIT_VECTOR_MASKED_WORD_SCRATCH_BASE + 7;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

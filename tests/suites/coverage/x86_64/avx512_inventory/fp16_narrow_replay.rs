@@ -2,6 +2,10 @@
 
 use super::*;
 
+#[cfg(feature = "smir-jit")]
+#[path = "fp16_narrow_replay/memory_destination.rs"]
+mod memory_destination;
+
 #[test]
 fn register_evex_fp16_narrow_replay_closes_36_generated_lift_lower_gaps() {
     let expected_mnemonics = set_from_slice(&["vcvtpd2ph", "vcvtps2ph", "vcvtps2phx"]);

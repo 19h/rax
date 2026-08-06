@@ -15,7 +15,7 @@ use crate::smir::lower::{
 const POST_CONVERSION_MXCSR_OFFSET: i32 = X86_GUEST_VECTOR_SCRATCH_OFFSET + 60;
 
 impl X86_64Lowerer {
-    fn emit_fp16_narrow_mxcsr_transfer(&mut self, offset: i32, store: bool) {
+    pub(crate) fn emit_fp16_narrow_mxcsr_transfer(&mut self, offset: i32, store: bool) {
         self.code.emit_bytes(&[0x0F, 0xAE]);
         let mut emitter = X86Emitter::new(&mut self.code);
         emitter.emit_modrm_mem_disp(

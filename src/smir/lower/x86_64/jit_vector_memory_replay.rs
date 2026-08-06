@@ -60,6 +60,11 @@ impl X86_64Lowerer {
         try_replay!(try_lower_jit_evex_packed_integer_mask_memory_source);
         try_replay!(try_lower_jit_evex_integer_minmax_memory_source);
         try_replay!(try_lower_jit_evex_integer_narrow_memory_destination);
+        if let Some(consumed) =
+            self.try_lower_jit_evex_fp16_narrow_memory_destination(block, index)?
+        {
+            return Ok(Some(consumed));
+        }
         try_replay!(try_lower_jit_evex_logic_memory_source);
         try_replay!(try_lower_jit_evex_masked_logic_memory_source);
         try_replay!(try_lower_jit_evex_multishift_memory_source);

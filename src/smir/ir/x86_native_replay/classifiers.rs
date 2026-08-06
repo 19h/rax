@@ -287,7 +287,7 @@ pub(crate) use evex_vpshufbitqmb_memory::{
 };
 pub(crate) use fp_class::{X86EvexFpClassMemoryEncoding, X86EvexFpClassMemoryReplay};
 pub(crate) use fp_round::X86VexRoundMemoryEncoding;
-pub(crate) use fp16_narrow::X86VexFp16NarrowMemoryEncoding;
+pub(crate) use fp16_narrow::{X86EvexFp16NarrowMemoryEncoding, X86VexFp16NarrowMemoryEncoding};
 pub(crate) use gfni::{X86EvexGfniAffineMemoryEncoding, X86EvexGfniAffineMemoryReplay};
 pub(crate) use packed_move::{X86EvexPackedMoveMemoryEncoding, X86EvexPackedMoveMemoryKind};
 pub(crate) use scalar_convert_memory::{

@@ -81,6 +81,11 @@ pub(crate) fn x86_jit_evex_memory_replay_sequence_len(
     ) {
         return Some(sequence.consumed);
     }
+    if let Some(sequence) =
+        x86_jit_evex_fp16_narrow_memory_sequence(block, index, allow_mem, instruction_bytes)
+    {
+        return Some(sequence.consumed);
+    }
     if let Some(sequence) = x86_jit_evex_packed_extend_memory_sequence(
         block,
         index,

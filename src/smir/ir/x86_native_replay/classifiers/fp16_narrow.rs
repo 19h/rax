@@ -1,7 +1,25 @@
 //! VEX/EVEX binary16 narrowing-conversion replay classification.
 
 use super::X86InstructionBytes;
+use super::evex_memory::{memory_operand_end, vector_legacy_prefix_len};
 use crate::smir::ir::types::{FpRoundMode, VecWidth};
+
+/// One complete EVEX `VCVTPS2PH` memory-destination encoding rewritten to
+/// target a borrowed vector register while retaining its architectural mask.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86EvexFp16NarrowMemoryEncoding {
+    pub(crate) source: u8,
+    pub(crate) scratch: u8,
+    pub(crate) source_width: VecWidth,
+    pub(crate) result_width: VecWidth,
+    pub(crate) lanes: u8,
+    pub(crate) memory_size: u32,
+    pub(crate) writemask: Option<u8>,
+    pub(crate) round: FpRoundMode,
+    pub(crate) immediate: u8,
+    pub(crate) register_instruction: X86InstructionBytes,
+    pub(crate) needs_avx512vl: bool,
+}
 
 /// One complete F16C VEX `VCVTPS2PH` memory-destination encoding rewritten
 /// to target a borrowed low XMM register.
@@ -127,6 +145,99 @@ impl X86InstructionBytes {
             round,
             immediate,
             register_instruction,
+        })
+    }
+
+    /// Validate and rewrite one EVEX `VCVTPS2PH` memory destination.
+    ///
+    /// Intel defines EVEX.128/256/512.66.0F3A.W0 1D /r ib with a Half-Mem
+    /// 8-/16-/32-byte destination. EVEX.vvvv/V', EVEX.b, EVEX.z, and L'L=3
+    /// are reserved for a memory destination; K1-K7 suppress individual
+    /// 2-byte destination accesses. The rewritten register form preserves the
+    /// source, vector length, writemask, and complete immediate while replacing
+    /// only ModR/M.r/m with a borrowed low vector register. Segment,
+    /// address-size, and APX B4/X4 state remain confined to helper address
+    /// evaluation. Classification is O(1) time and O(1) space.
+    pub(crate) fn evex_fp16_narrow_memory_encoding(
+        &self,
+    ) -> Option<X86EvexFp16NarrowMemoryEncoding> {
+        let bytes = self.as_slice();
+        let start = vector_legacy_prefix_len(bytes);
+        if bytes.get(start) != Some(&0x62) {
+            return None;
+        }
+        let p0 = *bytes.get(start + 1)?;
+        let p1 = *bytes.get(start + 2)?;
+        let p2 = *bytes.get(start + 3)?;
+        let opcode = *bytes.get(start + 4)?;
+        let modrm_index = start + 5;
+        let modrm = *bytes.get(modrm_index)?;
+        let operand_end = memory_operand_end(bytes, modrm_index)?;
+        if operand_end.checked_add(1)? != bytes.len()
+            || p0 & 7 != 3
+            || p1 & 0x83 != 0x01
+            || p1 & 0x78 != 0x78
+            || p2 & 0x98 != 0x08
+            || opcode != 0x1D
+        {
+            return None;
+        }
+
+        let ll = (p2 >> 5) & 3;
+        let (source_width, result_width, lanes, memory_size) = match ll {
+            0 => (VecWidth::V128, VecWidth::V128, 4, 8),
+            1 => (VecWidth::V256, VecWidth::V128, 8, 16),
+            2 => (VecWidth::V512, VecWidth::V256, 16, 32),
+            _ => return None,
+        };
+        let source =
+            (u8::from(p0 & 0x80 == 0) << 3) | (u8::from(p0 & 0x10 == 0) << 4) | ((modrm >> 3) & 7);
+        let scratch = (0..32u8)
+            .find(|candidate| *candidate != source)
+            .expect("one EVEX source leaves thirty-one scratch registers");
+        let immediate = bytes[operand_end];
+        let round = if immediate & 4 != 0 {
+            FpRoundMode::Dynamic
+        } else {
+            match immediate & 3 {
+                0 => FpRoundMode::RoundNearest,
+                1 => FpRoundMode::RoundDown,
+                2 => FpRoundMode::RoundUp,
+                _ => FpRoundMode::RoundTowardZero,
+            }
+        };
+        let register_instruction = X86InstructionBytes::new(&[
+            0x62,
+            // Preserve R/R' and map 0F3A, select an unextended register
+            // destination, and clear memory-only APX B4/X4 state.
+            (p0 & 0x97) | 0x60,
+            // Preserve W/vvvv/pp and restore ordinary EVEX.U after removing
+            // APX X4 state from the helper-owned address.
+            p1 | 0x04,
+            p2,
+            opcode,
+            0xC0 | (modrm & 0x38) | (scratch & 7),
+            immediate,
+        ])?;
+        let needs_avx512vl = source_width != VecWidth::V512;
+        if register_instruction.evex_register_fp16_narrow_requirements()
+            != Some((needs_avx512vl, false))
+        {
+            return None;
+        }
+
+        Some(X86EvexFp16NarrowMemoryEncoding {
+            source,
+            scratch,
+            source_width,
+            result_width,
+            lanes,
+            memory_size,
+            writemask: (p2 & 7 != 0).then_some(p2 & 7),
+            round,
+            immediate,
+            register_instruction,
+            needs_avx512vl,
         })
     }
 
