@@ -74,6 +74,7 @@ impl X86_64Lowerer {
         try_replay!(try_lower_jit_evex_packed_fp16_complex_memory_source);
         try_replay!(try_lower_jit_evex_packed_fp_arithmetic_memory_source);
         try_replay!(try_lower_jit_evex_packed_fp_compare_memory_source);
+        try_replay!(try_lower_jit_evex_fp_flag_compare_memory_source);
         try_replay!(try_lower_jit_evex_fp_class_memory_source);
         try_replay!(try_lower_jit_evex_duplicate_move_memory_source);
         try_replay!(try_lower_jit_evex_fixup_imm_memory_source);

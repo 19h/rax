@@ -1,4 +1,4 @@
-//! Intel-inventory coverage for register-only EVEX VCOMISH/VUCOMISH.
+//! Intel-inventory coverage for register-form EVEX VCOMISH/VUCOMISH.
 
 use super::*;
 
@@ -76,7 +76,7 @@ fn register_evex_fp16_flag_compare_replay_closes_8_generated_lift_lower_gaps() {
                     assert_eq!(
                         classified,
                         None,
-                        "memory replay must fail closed: {} ({bytes:02X?})",
+                        "register classifier must exclude the separately inventoried memory form: {} ({bytes:02X?})",
                         spec_case_variant_id(&row, variant)
                     );
                     memory_forms += 1;
@@ -88,7 +88,8 @@ fn register_evex_fp16_flag_compare_replay_closes_8_generated_lift_lower_gaps() {
     assert_eq!(seen_mnemonics, expected_mnemonics);
     assert_eq!(seen_shapes, expected_shapes);
     // Each Intel row expands across four vector r/m extension buckets and one
-    // memory form. Only the eight register forms are replay-safe.
+    // memory form. This test owns the eight register-classifier forms; the
+    // FP32/FP64 inventory's child module owns all six memory mnemonics.
     assert_eq!(register_forms, 8);
     assert_eq!(memory_forms, 2);
 

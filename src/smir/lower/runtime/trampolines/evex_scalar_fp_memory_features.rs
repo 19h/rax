@@ -60,6 +60,24 @@ pub(super) fn x86_jit_evex_scalar_fp_memory_feature_span(
             uses_k16_opmasks: false,
         });
     }
+    if let Some(sequence) = super::x86_jit_evex_fp_flag_compare_memory_sequence(
+        block,
+        index,
+        true,
+        instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        return Some(X86JitEvexScalarFpMemoryFeatureSpan {
+            consumed: sequence.consumed,
+            // The full XMM0-XMM31 state bridge uses KMOVQ for K0-K7.
+            needs_avx512bw: true,
+            needs_avx512dq: false,
+            needs_avx512er: false,
+            needs_avx512fp16: sequence.encoding.needs_avx512fp16,
+            uses_k16_opmasks: false,
+        });
+    }
     if let Some(sequence) = super::x86_jit_evex_scalar_fp_compare_memory_sequence(
         block,
         index,

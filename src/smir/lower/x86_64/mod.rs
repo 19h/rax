@@ -112,6 +112,8 @@ mod evex_fp_class_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_fp_compare_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_fp_flag_compare_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_fp_interleave_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_fp_shuffle_memory_source;

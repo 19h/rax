@@ -23,6 +23,7 @@ mod evex_fp16_arithmetic_memory;
 mod evex_fp16_complex_memory;
 mod evex_fp_arithmetic_memory;
 mod evex_fp_compare_memory;
+mod evex_fp_flag_compare_memory;
 mod evex_fp_interleave_memory;
 mod evex_fp_shuffle_memory;
 mod evex_full_permute_memory;
@@ -182,6 +183,7 @@ pub(crate) use evex_fp_arithmetic_memory::{
 pub(crate) use evex_fp_compare_memory::{
     X86EvexPackedFpCompareMemoryEncoding, X86EvexPackedFpCompareMemoryReplay,
 };
+pub(crate) use evex_fp_flag_compare_memory::X86EvexFpFlagCompareMemoryEncoding;
 pub(crate) use evex_fp_interleave_memory::{
     X86EvexFpInterleaveMemoryEncoding, X86EvexFpInterleaveMemoryReplay,
 };

@@ -106,6 +106,8 @@ mod evex_fp_compare_memory_source;
 #[cfg(test)]
 mod evex_fp_compare_replay;
 #[cfg(test)]
+mod evex_fp_flag_compare_memory_source;
+#[cfg(test)]
 mod evex_fp_interleave_memory_source;
 #[cfg(test)]
 mod evex_fp_shuffle_memory_source;

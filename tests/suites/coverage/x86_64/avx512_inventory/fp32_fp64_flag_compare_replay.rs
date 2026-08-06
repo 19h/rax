@@ -1,6 +1,10 @@
-//! Intel-inventory coverage for register-only EVEX FP32/FP64 flag compares.
+//! Intel-inventory coverage for EVEX FP32/FP64 flag compares.
 
 use super::*;
+
+#[cfg(feature = "smir-jit")]
+#[path = "fp_flag_compare_replay/memory_source.rs"]
+mod memory_source;
 
 #[test]
 fn register_evex_fp32_fp64_flag_compare_replay_closes_16_runtime_gate_gaps() {
@@ -94,7 +98,7 @@ fn register_evex_fp32_fp64_flag_compare_replay_closes_16_runtime_gate_gaps() {
                     assert_eq!(
                         classified,
                         None,
-                        "memory replay must fail closed: {} ({bytes:02X?})",
+                        "register classifier must exclude the separately inventoried memory form: {} ({bytes:02X?})",
                         spec_case_variant_id(&row, variant)
                     );
                     memory_forms += 1;
@@ -106,7 +110,8 @@ fn register_evex_fp32_fp64_flag_compare_replay_closes_16_runtime_gate_gaps() {
     assert_eq!(seen_mnemonics, expected_mnemonics);
     assert_eq!(seen_shapes, expected_shapes);
     // Each Intel row expands across four vector r/m extension buckets and one
-    // memory form. Only the 16 register forms are replay-safe.
+    // memory form. This test owns the 16 register-classifier forms; the child
+    // inventory owns memory admission and lowering.
     assert_eq!(register_forms, 16);
     assert_eq!(memory_forms, 4);
 
