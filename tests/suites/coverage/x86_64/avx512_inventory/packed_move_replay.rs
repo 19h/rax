@@ -3,6 +3,10 @@
 use super::*;
 
 #[cfg(feature = "smir-jit")]
+#[path = "compress_memory_replay.rs"]
+mod compress_memory_replay;
+
+#[cfg(feature = "smir-jit")]
 #[path = "expand_memory_replay.rs"]
 mod expand_memory_replay;
 

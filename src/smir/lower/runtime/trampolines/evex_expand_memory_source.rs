@@ -33,7 +33,7 @@ fn destination(index: u8, width: VecWidth) -> VReg {
     }))
 }
 
-fn memory_width(elem: VecElementType) -> Option<MemWidth> {
+pub(super) fn memory_width(elem: VecElementType) -> Option<MemWidth> {
     match elem {
         VecElementType::I8 => Some(MemWidth::B1),
         VecElementType::I16 => Some(MemWidth::B2),
@@ -43,11 +43,11 @@ fn memory_width(elem: VecElementType) -> Option<MemWidth> {
     }
 }
 
-fn insert_fresh(owned: &mut HashSet<VReg>, register: VReg) -> bool {
+pub(super) fn insert_fresh(owned: &mut HashSet<VReg>, register: VReg) -> bool {
     matches!(register, VReg::Virtual(_)) && owned.insert(register)
 }
 
-fn exact_local_virtual_counts(
+pub(super) fn exact_local_virtual_counts(
     ops: &[crate::smir::ir::ops::SmirOp],
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
@@ -74,7 +74,7 @@ fn exact_local_virtual_counts(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn exact_mask_condition(
+pub(super) fn exact_mask_condition(
     block: &SmirBlock,
     index: usize,
     offset: &mut usize,
@@ -163,7 +163,7 @@ fn exact_mask_condition(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn exact_count_update(
+pub(super) fn exact_count_update(
     block: &SmirBlock,
     index: usize,
     offset: &mut usize,

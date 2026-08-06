@@ -7,8 +7,8 @@ use crate::smir::ir::{SmirBlock, SmirFunction};
 
 use super::X86NativeReplayFeatureRequirements;
 
-/// Accumulate one exact packed expand, unary-integer, packed lane-shuffle,
-/// `VPSADBW`, `VPSHUFBITQMB`, or `VP2INTERSECT` memory replay.
+/// Accumulate one exact packed compress/expand, unary-integer, packed
+/// lane-shuffle, `VPSADBW`, `VPSHUFBITQMB`, or `VP2INTERSECT` memory replay.
 ///
 /// These families require the full AVX-512 vector-state bridge and therefore
 /// cannot use the AVX YMM0-YMM15 bridge. Matching is O(L), where L is at most
@@ -23,6 +23,27 @@ pub(super) fn accumulate_evex_integer_memory_replay_requirements(
     requirements: &mut X86NativeReplayFeatureRequirements,
     all_spans_support_avx_ymm16: &mut bool,
 ) -> Option<usize> {
+    if let Some(sequence) = super::super::x86_jit_evex_compress_memory_sequence(
+        block,
+        index,
+        true,
+        &func.x86_instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        requirements.any = true;
+        requirements.needs_avx = true;
+        // The current full ZMM/K helper bridge uses AVX-512BW even when the
+        // architectural F32/F64/I32/I64 compress itself requires only F.
+        requirements.needs_avx512bw = true;
+        requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+        requirements.needs_avx512vbmi2 |= sequence.encoding.needs_avx512vbmi2;
+        requirements.has_k16_opmask_span |= sequence.encoding.writemask.is_some()
+            && sequence.encoding.width.lanes(sequence.encoding.elem) <= 16;
+        *all_spans_support_avx_ymm16 = false;
+        return Some(sequence.consumed);
+    }
+
     if let Some(sequence) = super::super::x86_jit_evex_expand_memory_sequence(
         block,
         index,

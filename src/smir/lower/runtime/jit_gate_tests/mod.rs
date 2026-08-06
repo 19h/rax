@@ -57,6 +57,8 @@ mod evex_chunk_shuffle_memory_source;
 #[cfg(test)]
 mod evex_chunk_shuffle_replay;
 #[cfg(test)]
+mod evex_compress_memory_destination;
+#[cfg(test)]
 mod evex_dbpsadbw_memory_source;
 #[cfg(test)]
 mod evex_duplicate_move_memory_source;

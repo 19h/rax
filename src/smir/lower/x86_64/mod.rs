@@ -86,6 +86,8 @@ mod evex_chunk_insert_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_chunk_shuffle_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_compress_memory_destination;
+#[cfg(feature = "smir-jit")]
 mod evex_dbpsadbw_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_duplicate_move_memory_source;

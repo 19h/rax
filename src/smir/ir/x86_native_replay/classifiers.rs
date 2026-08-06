@@ -10,6 +10,7 @@ mod evex_broadcast_memory;
 mod evex_bw_shuffle_madd_memory;
 mod evex_chunk_insert_memory;
 mod evex_chunk_shuffle_memory;
+mod evex_compress_memory;
 mod evex_dbpsadbw_memory;
 mod evex_duplicate_move_memory;
 mod evex_expand_memory;
@@ -155,6 +156,7 @@ pub(crate) use evex_chunk_insert_memory::X86EvexChunkInsertMemoryEncoding;
 pub(crate) use evex_chunk_shuffle_memory::{
     X86EvexChunkShuffleMemoryEncoding, X86EvexChunkShuffleMemoryReplay,
 };
+pub(crate) use evex_compress_memory::X86EvexCompressMemoryEncoding;
 pub(crate) use evex_dbpsadbw_memory::X86EvexDbpsadbwMemoryEncoding;
 pub(crate) use evex_duplicate_move_memory::X86EvexDuplicateMoveMemoryEncoding;
 pub(crate) use evex_expand_memory::{X86EvexExpandMemoryEncoding, X86EvexExpandMemoryReplay};
