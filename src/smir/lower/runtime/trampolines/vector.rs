@@ -2700,34 +2700,8 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
         }
     }
 
-    if let OpKind::X86MovdQ {
-        dst,
-        src,
-        width,
-        zero_upper,
-    } = &op.kind
-    {
-        let safe_gpr = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index <= 15 && !matches!(index, 4 | 5)));
-        let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
-        let (expected_opcode, exact_registers) = if mm(dst) {
-            (0x6E, safe_gpr(src))
-        } else if mm(src) {
-            (0x7E, safe_gpr(dst))
-        } else {
-            (0, false)
-        };
-        if mm(dst) || mm(src) {
-            return exact_registers
-                && matches!(width, OpWidth::W32 | OpWidth::W64)
-                && !*zero_upper
-                && matches!(
-                    op.x86_hint,
-                    Some(X86OpHint::SseOp {
-                        prefix: X86SsePrefix::None,
-                        opcode,
-                    }) if opcode == expected_opcode
-                );
-        }
+    if matches!(op.kind, OpKind::X86MovdQ { .. }) {
+        return crate::smir::lower::x86_64::x86_native_mmx_movd_q_shape_valid(op);
     }
 
     if let OpKind::X86MovMask {

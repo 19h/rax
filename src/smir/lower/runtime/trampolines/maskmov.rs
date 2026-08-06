@@ -273,6 +273,12 @@ pub(crate) fn uses_x86_xmm_state_excluding(
             .iter()
             .filter(|block| !excluded.contains_key(&block.id))
             .flat_map(|block| &block.ops)
+            .any(crate::smir::lower::x86_64::x86_mmx_xmm_transfer_shape_valid)
+        || function
+            .blocks
+            .iter()
+            .filter(|block| !excluded.contains_key(&block.id))
+            .flat_map(|block| &block.ops)
             .any(|op| {
                 crate::smir::lower::x86_64::x86_sse4a_bitfield_shape_valid(op)
                     || crate::smir::lower::x86_64::x86_sse4a_movnt_store_shape_valid(op)

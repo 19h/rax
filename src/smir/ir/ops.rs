@@ -3605,12 +3605,11 @@ pub enum OpKind {
         dst_width: OpWidth,
     },
 
-    /// Scalar integer transfer between a general-purpose register and an MMX
-    /// register or the low doubleword/quadword of an XMM register. An MMX
-    /// MOVD destination is zero-extended to 64 bits. An XMM destination clears
-    /// bits 127:width; `zero_upper` additionally clears the shared backing
-    /// state above bit 127 for VEX/EVEX encodings.
-    /// MOVD, MOVQ, VMOVD, VMOVQ register forms (0F 6E/7E and 66 0F 6E/7E).
+    /// Scalar integer transfer between GPR, MMX, and low-XMM register files.
+    /// An MMX MOVD destination is zero-extended to 64 bits. An XMM destination
+    /// clears bits 127:width; `zero_upper` additionally clears the shared
+    /// backing state above bit 127 for VEX/EVEX encodings.
+    /// MOVD, MOVQ, VMOVD, VMOVQ, MOVQ2DQ, and MOVDQ2Q register forms.
     X86MovdQ {
         dst: VReg,
         src: VReg,

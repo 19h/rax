@@ -98,6 +98,8 @@ mod lmsw;
 #[cfg(test)]
 mod mmx_convert;
 #[cfg(test)]
+mod mmx_xmm_transfer;
+#[cfg(test)]
 mod monitor_mwait;
 #[cfg(test)]
 mod movdir64b;

@@ -230,6 +230,8 @@ mod fast_system_transfer;
 pub use fast_system_transfer::*;
 mod monitor_mwait;
 pub use monitor_mwait::*;
+mod mmx_movd_q;
+pub use mmx_movd_q::*;
 mod mxcsr;
 pub use mxcsr::*;
 mod opmask;

@@ -729,6 +729,9 @@ impl X86_64Lifter {
             0x7E if prefix2.rep_prefix == Some(0xF3) => {
                 self.lift_sse_movq_vec(opcode2, after_opcode, &prefix2, pc, ctx)
             }
+            0xD6 if matches!(prefix2.rep_prefix, Some(0xF2 | 0xF3)) => {
+                self.lift_sse_mmx_xmm_transfer(after_opcode, &prefix2, pc, ctx)
+            }
             0xD6 if prefix2.operand_size_override => {
                 self.lift_sse_movq_vec(opcode2, after_opcode, &prefix2, pc, ctx)
             }

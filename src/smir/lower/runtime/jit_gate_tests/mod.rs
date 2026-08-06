@@ -299,6 +299,8 @@ mod mmx_memory;
 #[cfg(test)]
 mod mmx_memory_source;
 #[cfg(test)]
+mod mmx_xmm_transfer;
+#[cfg(test)]
 mod monitor_mwait;
 #[cfg(test)]
 mod movbe;

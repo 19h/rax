@@ -8,6 +8,8 @@ mod fp;
 pub use fp::*;
 mod mem;
 pub use mem::*;
+mod mmx_xmm_transfer;
+pub use mmx_xmm_transfer::*;
 mod misc;
 pub use misc::*;
 mod mul;

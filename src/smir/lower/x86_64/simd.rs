@@ -231,49 +231,9 @@ impl X86_64Lowerer {
             }
         }
 
-        if let OpKind::X86MovdQ {
-            dst,
-            src,
-            width,
-            zero_upper,
-        } = &op.kind
-        {
-            let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
-            if is_mm(dst) || is_mm(src) {
-                let safe_gpr = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index <= 15 && !matches!(index, 4 | 5)));
-                let (mm_vreg, gpr_vreg, expected_opcode) = if is_mm(dst) && safe_gpr(src) {
-                    (*dst, *src, 0x6E)
-                } else if is_mm(src) && safe_gpr(dst) {
-                    (*src, *dst, 0x7E)
-                } else {
-                    return Err(LowerError::InvalidOperand {
-                        op: "MMX MOVD/MOVQ".to_string(),
-                        operand: "requires exactly one MM register and one safe legacy GPR"
-                            .to_string(),
-                    });
-                };
-                let encoding_valid = matches!(width, OpWidth::W32 | OpWidth::W64)
-                    && !*zero_upper
-                    && matches!(
-                        op.x86_hint,
-                        Some(X86OpHint::SseOp {
-                            prefix: X86SsePrefix::None,
-                            opcode,
-                        }) if opcode == expected_opcode
-                    );
-                if !encoding_valid {
-                    return Err(LowerError::InvalidOperand {
-                        op: "MMX MOVD/MOVQ".to_string(),
-                        operand: "requires exact direction, width, and prefix-free opcode"
-                            .to_string(),
-                    });
-                }
-                let mm_reg = self.get_reg(mm_vreg)?;
-                let gpr_reg = self.get_reg(gpr_vreg)?;
-                let mut emitter = X86Emitter::new(&mut self.code);
-                emitter.emit_mmx_movd_q_rr(expected_opcode, mm_reg, gpr_reg, *width);
-                return Ok(true);
-            }
+        if x86_native_mmx_movd_q_candidate(op) {
+            self.lower_native_mmx_movd_q(op)?;
+            return Ok(true);
         }
 
         if let OpKind::X86MovMask {

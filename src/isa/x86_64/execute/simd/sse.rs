@@ -2214,37 +2214,6 @@ fn packuswb_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     Ok(None)
 }
 
-// =============================================================================
-// MOVQ2DQ/MOVDQ2Q - MMX/XMM conversion (F3/F2 0F D6)
-// =============================================================================
-
-/// MOVQ2DQ xmm, mm (F3 0F D6) - Move quadword from MMX to XMM
-pub fn movq2dq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    let (reg, rm, is_memory, _, _) = vcpu.decode_modrm(ctx)?;
-    if is_memory {
-        return vcpu.inject_undefined_instruction();
-    }
-    let xmm_dst = reg as usize;
-    let mm_src = (rm & 0x7) as usize;
-    vcpu.regs.xmm[xmm_dst][0] = vcpu.regs.mm[mm_src];
-    vcpu.regs.xmm[xmm_dst][1] = 0;
-    vcpu.regs.rip += ctx.cursor as u64;
-    Ok(None)
-}
-
-/// MOVDQ2Q mm, xmm (F2 0F D6) - Move low quadword from XMM to MMX
-pub fn movdq2q(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    let (reg, rm, is_memory, _, _) = vcpu.decode_modrm(ctx)?;
-    if is_memory {
-        return vcpu.inject_undefined_instruction();
-    }
-    let mm_dst = (reg & 0x7) as usize;
-    let xmm_src = rm as usize;
-    vcpu.regs.mm[mm_dst] = vcpu.regs.xmm[xmm_src][0];
-    vcpu.regs.rip += ctx.cursor as u64;
-    Ok(None)
-}
-
 /// Packed integer shift by XMM count
 /// PSRLW/D/Q, PSRAW/D, PSLLW/D/Q xmm, xmm/m128
 /// Shift count is taken from low 64 bits of xmm/m128
