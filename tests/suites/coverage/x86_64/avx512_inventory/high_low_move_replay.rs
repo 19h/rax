@@ -3,6 +3,9 @@
 use super::*;
 
 #[cfg(feature = "smir-jit")]
+#[path = "high_low_move_replay/memory_destination.rs"]
+mod memory_destination;
+#[cfg(feature = "smir-jit")]
 #[path = "high_low_move_replay/memory_source.rs"]
 mod memory_source;
 

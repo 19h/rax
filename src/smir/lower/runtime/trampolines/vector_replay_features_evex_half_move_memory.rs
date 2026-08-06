@@ -7,7 +7,7 @@ use crate::smir::ir::{SmirBlock, SmirFunction};
 
 use super::X86NativeReplayFeatureRequirements;
 
-/// Accumulate one exact Type-E9NF EVEX.128 high/low half-move memory source.
+/// Accumulate one exact Type-E9NF EVEX.128 high/low half-move memory transfer.
 ///
 /// The instruction itself requires AVX-512F and not AVX-512VL. XMM16-XMM31
 /// operands require the full ZMM/K state bridge, whose implementation also
@@ -22,17 +22,29 @@ pub(super) fn accumulate_evex_half_move_memory_replay_requirements(
     requirements: &mut X86NativeReplayFeatureRequirements,
     all_spans_support_avx_ymm16: &mut bool,
 ) -> Option<usize> {
-    let sequence = super::super::x86_jit_evex_half_move_memory_sequence(
+    let consumed = if let Some(sequence) = super::super::x86_jit_evex_half_move_memory_sequence(
         block,
         index,
         true,
         &func.x86_instruction_bytes,
         virtual_definitions,
         virtual_uses,
-    )?;
+    ) {
+        sequence.consumed
+    } else {
+        super::super::x86_jit_evex_half_move_store_sequence(
+            block,
+            index,
+            true,
+            &func.x86_instruction_bytes,
+            virtual_definitions,
+            virtual_uses,
+        )?
+        .consumed
+    };
     requirements.any = true;
     requirements.needs_avx = true;
     requirements.needs_avx512bw = true;
     *all_spans_support_avx_ymm16 = false;
-    Some(sequence.consumed)
+    Some(consumed)
 }

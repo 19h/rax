@@ -1,4 +1,4 @@
-//! Fail-closed helper-backed EVEX high/low 64-bit lane load admission.
+//! Fail-closed helper-backed EVEX high/low 64-bit lane memory admission.
 
 use std::collections::HashMap;
 
@@ -7,7 +7,9 @@ use crate::smir::ir::types::{
     ArchReg, BlockId, GuestAddr, MemWidth, OpWidth, SignExtend, SrcOperand, VReg, VecElementType,
     X86Reg,
 };
-use crate::smir::ir::{X86EvexHalfMoveMemoryEncoding, X86InstructionBytes};
+use crate::smir::ir::{
+    X86EvexHalfMoveMemoryEncoding, X86EvexHalfMoveStoreEncoding, X86InstructionBytes,
+};
 
 use super::evex_memory_source_common::{
     exact_evex_memory_apx_frontier, exact_evex_memory_sequence_frontier, no_following_same_pc,
@@ -22,6 +24,15 @@ pub(crate) struct X86JitEvexHalfMoveMemorySequence {
     pub(crate) consumed: usize,
     pub(crate) address_offset: usize,
     pub(crate) encoding: X86EvexHalfMoveMemoryEncoding,
+}
+
+/// Exact two-op decomposition consumed for one EVEX.128 64-bit high/low lane
+/// memory store.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86JitEvexHalfMoveStoreSequence {
+    pub(crate) consumed: usize,
+    pub(crate) address_offset: usize,
+    pub(crate) encoding: X86EvexHalfMoveStoreEncoding,
 }
 
 fn xmm(index: u8) -> VReg {
@@ -167,6 +178,83 @@ pub(crate) fn x86_jit_evex_half_move_memory_sequence(
     Some(X86JitEvexHalfMoveMemorySequence {
         consumed,
         address_offset,
+        encoding,
+    })
+}
+
+/// Validate the exact O0/O1/O2 two-op decomposition for one EVEX.128
+/// `VMOVLPS`, `VMOVLPD`, `VMOVHPS`, or `VMOVHPD` memory destination.
+///
+/// Complete source-byte provenance binds map, mandatory prefix, fixed W,
+/// L'L=0, reserved EVEX.vvvv/V', opcode, source register, selected qword, and
+/// the unconditional 8-byte Type-E9NF access. The accepted architectural
+/// address must agree exactly with any APX guard, and the extracted virtual
+/// has one global definition and one global use. Classification is O(1);
+/// callers build definition/use maps once in O(N) time and O(V) space.
+pub(crate) fn x86_jit_evex_half_move_store_sequence(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<X86JitEvexHalfMoveStoreSequence> {
+    if !allow_mem {
+        return None;
+    }
+    let first = block.ops.get(index)?;
+    let guest_pc = first.guest_pc;
+    if !exact_evex_memory_sequence_frontier(block, index, guest_pc) {
+        return None;
+    }
+    let encoding = instruction_bytes
+        .get(&(block.id, guest_pc))?
+        .evex_half_move_store_encoding()?;
+
+    let extracted = match first.kind {
+        OpKind::VExtractLane {
+            dst,
+            vec,
+            lane,
+            elem: VecElementType::I64,
+            sign: SignExtend::Zero,
+        } if first.x86_hint.is_none()
+            && vec == xmm(encoding.source)
+            && lane == encoding.memory_lane =>
+        {
+            dst
+        }
+        _ => return None,
+    };
+    let store = block.ops.get(index + 1)?;
+    let address = match &store.kind {
+        OpKind::Store {
+            src,
+            addr,
+            width: MemWidth::B8,
+        } if store.x86_hint.is_none()
+            && *src == extracted
+            && x86_jit_mem_address_shape_valid(addr) =>
+        {
+            addr
+        }
+        _ => return None,
+    };
+
+    let consumed = 2;
+    if block.ops[index..index + consumed]
+        .iter()
+        .any(|op| op.guest_pc != guest_pc)
+        || !exact_evex_memory_apx_frontier(block, index, guest_pc, address)
+        || !no_following_same_pc(block, index, consumed, guest_pc)
+        || !single_definition_single_use(extracted, virtual_definitions, virtual_uses)
+    {
+        return None;
+    }
+
+    Some(X86JitEvexHalfMoveStoreSequence {
+        consumed,
+        address_offset: 1,
         encoding,
     })
 }

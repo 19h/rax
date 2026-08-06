@@ -200,7 +200,9 @@ pub(crate) use evex_full_permute_memory::{
 pub(crate) use evex_gfni_multiply_memory::{
     X86EvexGfniMultiplyMemoryEncoding, X86EvexGfniMultiplyMemoryReplay,
 };
-pub(crate) use evex_half_move_memory::X86EvexHalfMoveMemoryEncoding;
+pub(crate) use evex_half_move_memory::{
+    X86EvexHalfMoveMemoryEncoding, X86EvexHalfMoveStoreEncoding,
+};
 pub(crate) use evex_integer_arithmetic_memory::{
     X86EvexIntegerArithmeticMemoryEncoding, X86EvexIntegerArithmeticMemoryReplay,
 };

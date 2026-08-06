@@ -27,6 +27,7 @@ mod classification;
 #[cfg(target_arch = "x86_64")]
 mod native;
 mod semantics;
+mod store;
 
 const PC: u64 = 0xE9_1216;
 const MEMORY_ADDRESS: u64 = 0x3000;

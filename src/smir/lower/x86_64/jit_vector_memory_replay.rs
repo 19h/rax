@@ -37,6 +37,7 @@ impl X86_64Lowerer {
         try_replay!(try_lower_jit_xop_memory_source);
         try_replay!(try_lower_jit_evex_four_fma_memory_source);
         try_replay!(try_lower_jit_evex_half_move_memory_source);
+        try_replay!(try_lower_jit_evex_half_move_memory_store);
         try_replay!(try_lower_jit_evex_four_dot_product_memory_source);
         try_replay!(try_lower_jit_evex_bf16_memory_source);
         try_replay!(try_lower_jit_evex_fp_interleave_memory_source);
