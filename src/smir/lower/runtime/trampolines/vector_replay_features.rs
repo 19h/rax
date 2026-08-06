@@ -52,6 +52,8 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
 
 #[path = "vector_replay_features_evex_extract_memory.rs"]
 mod evex_extract_memory;
+#[path = "vector_replay_features_evex_half_move_memory.rs"]
+mod evex_half_move_memory;
 #[path = "vector_replay_features_evex_integer_memory.rs"]
 mod evex_integer_memory;
 #[path = "vector_replay_features_evex_scalar_insert_memory.rs"]
@@ -483,6 +485,16 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.needs_avx512fp16 |= sequence.encoding.needs_avx512fp16;
                 all_spans_support_avx_ymm16 = false;
                 index += sequence.consumed;
+            } else if let Some(consumed) = evex_half_move_memory::accumulate_evex_half_move_memory_replay_requirements(
+                block,
+                index,
+                func,
+                &virtual_definitions,
+                &virtual_uses,
+                &mut requirements,
+                &mut all_spans_support_avx_ymm16,
+            ) {
+                index += consumed;
             } else if let Some(sequence) = super::x86_jit_evex_four_fma_memory_sequence(
                 block,
                 index,

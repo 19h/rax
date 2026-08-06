@@ -2,6 +2,10 @@
 
 use super::*;
 
+#[cfg(feature = "smir-jit")]
+#[path = "high_low_move_replay/memory_source.rs"]
+mod memory_source;
+
 #[test]
 fn register_evex_high_low_move_replay_closes_8_generated_lift_lower_gaps() {
     let expected_mnemonics = set_from_slice(&["vmovhlps", "vmovlhps"]);

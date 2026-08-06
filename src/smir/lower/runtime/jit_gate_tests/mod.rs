@@ -119,6 +119,8 @@ mod evex_gfni_replay;
 #[cfg(test)]
 mod evex_gpr_broadcast_replay;
 #[cfg(test)]
+mod evex_half_move_memory_source;
+#[cfg(test)]
 mod evex_high_low_move_replay;
 #[cfg(test)]
 mod evex_ifma52_memory_source;
