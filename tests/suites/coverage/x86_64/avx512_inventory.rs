@@ -42,6 +42,9 @@ mod chunk_extract_replay;
 mod chunk_insert_replay;
 #[path = "avx512_inventory/chunk_shuffle_replay.rs"]
 mod chunk_shuffle_replay;
+#[cfg(feature = "smir-jit")]
+#[path = "avx512_inventory/duplicate_move_memory_replay.rs"]
+mod duplicate_move_memory_replay;
 #[path = "avx512_inventory/fp16_flag_compare_replay.rs"]
 mod fp16_flag_compare_replay;
 #[path = "avx512_inventory/fp16_narrow_replay.rs"]
