@@ -7,6 +7,8 @@ use crate::smir::lower::x86_64::*;
 mod ac;
 #[cfg(test)]
 mod addr32_memory;
+#[cfg(all(test, feature = "smir-jit"))]
+mod ah_flags;
 #[cfg(test)]
 mod alu;
 #[cfg(test)]

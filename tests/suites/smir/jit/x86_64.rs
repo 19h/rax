@@ -15,6 +15,8 @@ use rax::vm::vcpu::{Registers, SystemRegisters, VCpu, VcpuExit};
 const LOAD_ADDR: u64 = 0x10_0000;
 const MEM_SIZE: u64 = 16 * 1024 * 1024;
 
+#[path = "x86_64/ah_flags.rs"]
+mod ah_flags;
 #[path = "x86_64/amx_disabled.rs"]
 mod amx_disabled;
 #[path = "x86_64/apx_bmi.rs"]

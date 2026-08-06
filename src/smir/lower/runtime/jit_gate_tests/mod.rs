@@ -12,6 +12,8 @@ mod addr32_memory;
 #[cfg(test)]
 mod aes_memory_source;
 #[cfg(test)]
+mod ah_flags;
+#[cfg(test)]
 mod apx_bmi2_shift;
 #[cfg(test)]
 mod atomic_rmw;

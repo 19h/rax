@@ -1285,6 +1285,13 @@ impl X86_64Lowerer {
                 // both success/fault paths leave through exact exit stubs.
                 return Ok(());
             }
+            #[cfg(feature = "smir-jit")]
+            if let Some(consumed) =
+                self.try_lower_jit_ah_flags(block, idx, &virtual_definitions, &virtual_uses)?
+            {
+                idx += consumed;
+                continue;
+            }
             // The memory-fusion peepholes emit direct host-pointer accesses,
             // which are invalid under the JIT's MMU helper-call mode. In that
             // mode each Load/Store is lowered individually via the helper path

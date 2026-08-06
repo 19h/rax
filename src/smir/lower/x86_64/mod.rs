@@ -38,6 +38,8 @@ use super::{
 // ---- module tree (auto-split) ----
 mod ac;
 pub use ac::*;
+#[cfg(feature = "smir-jit")]
+mod ah_flags;
 mod alignment_ac;
 pub use alignment_ac::*;
 #[cfg(feature = "smir-jit")]

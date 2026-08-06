@@ -3,6 +3,8 @@
 // ---- split submodules ----
 mod aarch64;
 pub use aarch64::*;
+mod ah_flags;
+pub(crate) use ah_flags::*;
 mod atomic;
 pub use atomic::*;
 mod bit_offset;
