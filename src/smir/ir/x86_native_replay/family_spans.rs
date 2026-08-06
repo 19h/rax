@@ -2,6 +2,21 @@
 
 use super::*;
 
+/// Identify baseline scalar register instructions that name AH, CH, DH, or BH
+/// and therefore require exact source-byte replay rather than virtual-register
+/// materialization under the x86 identity map. Construction is O(N) time and
+/// O(P) space for N operations and P unique guest PCs.
+pub fn x86_legacy_high_byte_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .is_legacy_high_byte_register_replay()
+            .then_some((false, false, false))
+    })
+}
+
 /// Identify valid register-only EVEX GFNI replay groups in `block` in O(N)
 /// time and O(P) space for N operations and P unique guest PCs.
 pub fn x86_evex_gfni_replay_spans(

@@ -82,6 +82,7 @@ mod fp_sqrt;
 mod gfni;
 mod high_low_move;
 mod integer_compare;
+mod legacy_high_byte;
 mod packed_extend;
 mod packed_move;
 mod scalar_convert_memory;

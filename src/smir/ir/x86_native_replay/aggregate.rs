@@ -15,6 +15,9 @@ pub fn x86_native_replay_spans(
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
 ) -> HashMap<usize, X86NativeReplaySpan> {
     x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        if instruction.is_legacy_high_byte_register_replay() {
+            return Some((false, false, false));
+        }
         if let Some(needs_vl) = instruction.evex_register_fp_arithmetic_needs_vl() {
             return Some((needs_vl, false, false));
         }

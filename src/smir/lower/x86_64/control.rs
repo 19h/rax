@@ -95,6 +95,9 @@ impl X86_64Lowerer {
     /// Emit one exact source instruction, applying any host-compatibility
     /// status fixup requested by its byte-validated replay classifier.
     pub(crate) fn emit_native_replay_span(&mut self, span: &X86NativeReplaySpan) {
+        if self.try_emit_legacy_high_byte_cmpxchg_replay(span) {
+            return;
+        }
         if let Some(returns_mask) = span.instruction.vex_register_packed_string_returns_mask() {
             self.code.emit_bytes(span.instruction.as_slice());
             if returns_mask && self.avx_ymm16_vector_state {

@@ -269,6 +269,8 @@ mod invlpg;
 #[cfg(test)]
 mod invpcid;
 #[cfg(test)]
+mod legacy_high_byte_replay;
+#[cfg(test)]
 mod legacy_vex_fp_compare_replay;
 #[cfg(test)]
 mod legacy_vex_fp_estimate_replay;

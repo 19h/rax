@@ -52,6 +52,7 @@ pub use common::*;
 mod control;
 pub use control::*;
 mod clts;
+mod legacy_high_byte_replay;
 pub use clts::*;
 mod cli;
 pub use cli::*;

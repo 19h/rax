@@ -1,0 +1,184 @@
+//! End-to-end native replay coverage for legacy AH/CH/DH/BH operations.
+
+use super::*;
+
+fn legacy_gprs(registers: &Registers) -> [u64; 16] {
+    [
+        registers.rax,
+        registers.rcx,
+        registers.rdx,
+        registers.rbx,
+        registers.rsp,
+        registers.rbp,
+        registers.rsi,
+        registers.rdi,
+        registers.r8,
+        registers.r9,
+        registers.r10,
+        registers.r11,
+        registers.r12,
+        registers.r13,
+        registers.r14,
+        registers.r15,
+    ]
+}
+
+fn seed(vcpu: &mut X86_64Vcpu, rax: u64) {
+    let mut registers = vcpu.get_regs().unwrap();
+    registers.rax = rax;
+    registers.rbx = 0xFEDC_BA98_7654_3210;
+    registers.rcx = 0x1357_9BDF_2468_0305;
+    registers.rdx = 0x0F1E_2D3C_4B5A_6978;
+    registers.rsi = 0x1111_2222_3333_4444;
+    registers.rdi = 0x5555_6666_7777_8888;
+    registers.rbp = 0x9999_AAAA_BBBB_CCCC;
+    registers.r8 = 0x0101_0202_0303_0404;
+    registers.r9 = 0x0505_0606_0707_0808;
+    registers.r10 = 0x0909_0A0A_0B0B_0C0C;
+    registers.r11 = 0x0D0D_0E0E_0F0F_1010;
+    registers.r12 = 0x1111_1212_1313_1414;
+    registers.r13 = 0x1515_1616_1717_1818;
+    registers.r14 = 0x1919_1A1A_1B1B_1C1C;
+    registers.r15 = 0x1D1D_1E1E_1F1F_2020;
+    registers.rflags = 0x2 | 0x8D5;
+    vcpu.set_regs(&registers).unwrap();
+}
+
+fn compare_direct_and_jit(name: &str, instruction: &[u8], rax: u64) {
+    let mut code = instruction.to_vec();
+    code.push(0xF4);
+
+    let (mut direct, _) = make_vcpu_mem(&code);
+    seed(&mut direct, rax);
+    assert!(
+        direct
+            .step()
+            .unwrap_or_else(|error| panic!("{name}: {error:?}"))
+            .is_none(),
+        "{name}: direct instruction must fall through"
+    );
+    let expected = direct.get_regs().unwrap();
+
+    let (mut jit, _) = make_vcpu_mem(&code);
+    seed(&mut jit, rax);
+    jit.set_jit_call(false);
+    jit.set_jit_mem(false);
+    assert!(
+        jit.jit_try_block()
+            .unwrap_or_else(|error| panic!("{name}: {error:?}")),
+        "{name}: high-byte register instruction must enter the native tier:\n{}",
+        jit.jit_dump_region(LOAD_ADDR)
+    );
+    let actual = jit.get_regs().unwrap();
+
+    assert_eq!(legacy_gprs(&actual), legacy_gprs(&expected), "{name}: GPRs");
+    assert_eq!(actual.rflags, expected.rflags, "{name}: RFLAGS");
+    assert_eq!(actual.rip, expected.rip, "{name}: RIP");
+    assert_eq!(actual.xmm, expected.xmm, "{name}: XMM state");
+    assert_eq!(actual.mm, expected.mm, "{name}: MMX state");
+}
+
+#[test]
+fn jit_legacy_high_byte_replay_matches_direct_for_aliases_flags_and_prefixes() {
+    let common_rax = 0x0123_4567_89AB_CDEF;
+    let cases: &[(&str, &[u8], u64)] = &[
+        ("add ah,al", &[0x00, 0xC4], common_rax),
+        ("or ah,al", &[0x0A, 0xE0], common_rax),
+        ("adc ch,bh", &[0x10, 0xFD], common_rax),
+        ("sbb bh,dh", &[0x1A, 0xFE], common_rax),
+        ("and ah,bl", &[0x20, 0xDC], common_rax),
+        ("sub ah,al", &[0x2A, 0xE0], common_rax),
+        ("xor bh,dh", &[0x30, 0xF7], common_rax),
+        ("cmp ah,al", &[0x3A, 0xE0], common_rax),
+        ("test al,ah", &[0x84, 0xE0], common_rax),
+        ("xchg al,ah", &[0x86, 0xE0], common_rax),
+        ("mov ah,bl", &[0x88, 0xDC], common_rax),
+        ("mov al,ah", &[0x8A, 0xC4], common_rax),
+        ("sub ah,0x81", &[0x80, 0xEC, 0x81], common_rax),
+        ("mov bh,0x5a", &[0xC6, 0xC7, 0x5A], common_rax),
+        ("test ch,0xa5", &[0xF6, 0xC5, 0xA5], common_rax),
+        ("not dh", &[0xF6, 0xD6], common_rax),
+        ("neg bh", &[0xF6, 0xDF], common_rax),
+        ("inc dh", &[0xFE, 0xC6], common_rax),
+        ("dec bh", &[0xFE, 0xCF], common_rax),
+        ("setbe ah", &[0x0F, 0x96, 0xC4], common_rax),
+        ("cmpxchg al,ah failure", &[0x0F, 0xB0, 0xE0], common_rax),
+        ("cmpxchg ch,dh failure", &[0x0F, 0xB0, 0xF5], common_rax),
+        (
+            "cmpxchg ch,dh success",
+            &[0x0F, 0xB0, 0xF5],
+            (common_rax & !0xFF) | 0x03,
+        ),
+        ("xadd ah,bh", &[0x0F, 0xC0, 0xFC], common_rax),
+        (
+            "prefixed add ah,ch",
+            &[0x65, 0x66, 0x67, 0xF3, 0x00, 0xEC],
+            common_rax,
+        ),
+    ];
+
+    for (name, instruction, rax) in cases {
+        compare_direct_and_jit(name, instruction, *rax);
+    }
+}
+
+#[test]
+fn jit_legacy_high_byte_replay_matches_direct_for_every_admitted_register_cell() {
+    let rax = 0x0123_4567_89AB_CDEF;
+    let mut cases = 0usize;
+
+    for opcode in [
+        0x00, 0x02, 0x08, 0x0A, 0x10, 0x12, 0x18, 0x1A, 0x20, 0x22, 0x28, 0x2A, 0x30, 0x32, 0x38,
+        0x3A, 0x84, 0x86, 0x88, 0x8A,
+    ] {
+        for fields in 0u8..=0x3F {
+            if fields & 7 >= 4 || (fields >> 3) & 7 >= 4 {
+                let bytes = [opcode, 0xC0 | fields];
+                compare_direct_and_jit(&format!("{bytes:02X?}"), &bytes, rax);
+                cases += 1;
+            }
+        }
+    }
+
+    for (opcode, extensions, immediate) in [
+        (0xFE, 0b0000_0011u8, None),
+        (0x80, 0b1111_1111, Some(0xA5)),
+        (0xC6, 0b0000_0001, Some(0x5A)),
+        (0xF6, 0b0000_0001, Some(0xA5)),
+        (0xF6, 0b0000_1100, None),
+    ] {
+        for extension in 0u8..8 {
+            if extensions & (1 << extension) == 0 {
+                continue;
+            }
+            for rm in 4u8..8 {
+                let mut bytes = vec![opcode, 0xC0 | (extension << 3) | rm];
+                if let Some(immediate) = immediate {
+                    bytes.push(immediate);
+                }
+                compare_direct_and_jit(&format!("{bytes:02X?}"), &bytes, rax);
+                cases += 1;
+            }
+        }
+    }
+
+    for opcode in 0x90u8..=0x9F {
+        for rm in 4u8..8 {
+            let bytes = [0x0F, opcode, 0xC0 | rm];
+            compare_direct_and_jit(&format!("{bytes:02X?}"), &bytes, rax);
+            cases += 1;
+        }
+    }
+
+    for opcode in [0xB0, 0xC0] {
+        for fields in 0u8..=0x3F {
+            if fields & 7 >= 4 || (fields >> 3) & 7 >= 4 {
+                let bytes = [0x0F, opcode, 0xC0 | fields];
+                compare_direct_and_jit(&format!("{bytes:02X?}"), &bytes, rax);
+                cases += 1;
+            }
+        }
+    }
+
+    assert_eq!(cases, 1_176);
+}

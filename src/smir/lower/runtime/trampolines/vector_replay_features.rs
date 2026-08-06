@@ -145,6 +145,12 @@ pub(crate) fn x86_native_replay_feature_requirements(
         for span in crate::smir::ir::x86_native_replay_spans(block, &func.x86_instruction_bytes)
             .into_values()
         {
+            // Baseline scalar high-byte replay touches only RAX-RBX and
+            // RFLAGS. It requires neither vector-state marshalling nor a host
+            // feature beyond the x86-64 execution baseline.
+            if span.instruction.is_legacy_high_byte_register_replay() {
+                continue;
+            }
             let is_fma4 = span.instruction.is_vex_register_fma4();
             let is_vpermil2 = span.instruction.is_vex_register_vpermil2();
             let vex_fp_dot_product_ymm = span.instruction.vex_register_fp_dot_product_uses_ymm();
