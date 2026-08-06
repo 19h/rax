@@ -86,7 +86,7 @@ extern "C" fn vector_load_helper(
     1
 }
 
-fn selected_cases() -> [ConvertCase; 8] {
+fn selected_cases() -> [ConvertCase; 11] {
     [
         ConvertCase {
             spec: SPECS[0],
@@ -143,6 +143,27 @@ fn selected_cases() -> [ConvertCase; 8] {
             destination: 17,
             form: SourceForm::Broadcast,
             control: MaskControl::Merge,
+        },
+        ConvertCase {
+            spec: FP16_WIDEN_SPEC,
+            ll: 2,
+            destination: 17,
+            form: SourceForm::Vector,
+            control: MaskControl::None,
+        },
+        ConvertCase {
+            spec: FP16_WIDEN_SPEC,
+            ll: 2,
+            destination: 17,
+            form: SourceForm::Vector,
+            control: MaskControl::Merge,
+        },
+        ConvertCase {
+            spec: FP16_WIDEN_SPEC,
+            ll: 2,
+            destination: 17,
+            form: SourceForm::Vector,
+            control: MaskControl::Zero,
         },
     ]
 }

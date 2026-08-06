@@ -2,6 +2,10 @@
 
 use super::*;
 
+#[cfg(feature = "smir-jit")]
+#[path = "fp16_widen_memory_replay.rs"]
+mod fp16_widen_memory_replay;
+
 #[test]
 fn register_evex_fp16_widen_replay_closes_36_generated_lift_lower_gaps() {
     let expected_mnemonics = set_from_slice(&["vcvtph2pd", "vcvtph2ps", "vcvtph2psx"]);

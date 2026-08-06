@@ -34,6 +34,9 @@ fn get_element(bytes: &[u8; 64], elem: VecElementType, lane: usize) -> u64 {
 }
 
 pub(super) fn memory_bytes(case: ConvertCase, seed: usize) -> [u8; 64] {
+    const F16_VALUES: [u64; 8] = [
+        0x0000, 0x8000, 0x3C00, 0xC000, 0x0001, 0x03FF, 0x0400, 0x7BFF,
+    ];
     const F32_VALUES: [u64; 8] = [
         0x0000_0000,
         0x8000_0000,
@@ -76,6 +79,7 @@ pub(super) fn memory_bytes(case: ConvertCase, seed: usize) -> [u8; 64] {
     ];
 
     let values = match case.spec.source_elem() {
+        VecElementType::F16 => F16_VALUES,
         VecElementType::F32 => F32_VALUES,
         VecElementType::F64 => F64_VALUES,
         VecElementType::I32 => I32_VALUES,
@@ -207,6 +211,51 @@ fn assert_only_destination_and_mxcsr_changed(
     assert_eq!(actual.rflags, initial.rflags, "{case:?}: RFLAGS");
 }
 
+const FP16_EDGE_VALUES: [u16; 16] = [
+    0x0000, // +0
+    0x8000, // -0
+    0x0001, // minimum subnormal
+    0x7D55, // signaling NaN
+    0x03FF, // maximum subnormal
+    0x0400, // minimum normal
+    0x7E55, // quiet NaN with payload
+    0x7C00, // +infinity
+    0xFC00, // -infinity
+    0x7BFF, // maximum finite
+    0x3C00, // +1
+    0xC000, // -2
+    0x3555, 0xB555, 0x0401, 0xFBFF,
+];
+
+/// Exact IEEE 754 binary16-to-binary32 widening, including payload placement
+/// and signaling-NaN quieting. Every finite binary16 value is exactly
+/// representable as binary32, so no rounding operation is required.
+fn f16_to_f32_bits_oracle(bits: u16) -> u32 {
+    let sign = u32::from(bits & 0x8000) << 16;
+    let exponent = (bits >> 10) & 0x1F;
+    let fraction = u32::from(bits & 0x03FF);
+    match exponent {
+        0 if fraction == 0 => sign,
+        0 => {
+            let mut significand = fraction;
+            let mut unbiased_exponent = -14i32;
+            while significand & 0x0400 == 0 {
+                significand <<= 1;
+                unbiased_exponent -= 1;
+            }
+            significand &= 0x03FF;
+            sign | (((unbiased_exponent + 127) as u32) << 23) | (significand << 13)
+        }
+        0x1F if fraction == 0 => sign | 0x7F80_0000,
+        0x1F => sign | 0x7FC0_0000 | (fraction << 13),
+        _ => sign | (u32::from(exponent + 112) << 23) | (fraction << 13),
+    }
+}
+
+fn f16_is_signaling_nan(bits: u16) -> bool {
+    bits & 0x7C00 == 0x7C00 && bits & 0x03FF != 0 && bits & 0x0200 == 0
+}
+
 #[test]
 fn all_468_encodings_preserve_raw_o0_o1_o2_interpreter_equivalence() {
     let mut encodings = 0usize;
@@ -248,6 +297,232 @@ fn all_468_encodings_preserve_raw_o0_o1_o2_interpreter_equivalence() {
     }
     assert_eq!(encodings, 468);
     assert_eq!(comparisons, encodings * LEVELS.len());
+}
+
+#[test]
+fn all_9_fp16_widen_memory_encodings_are_exact_and_ignore_daz_ftz_and_rounding() {
+    let controls = [
+        (0u32, false, false),
+        (1, true, false),
+        (2, false, true),
+        (3, true, true),
+    ];
+    let mut comparisons = 0usize;
+    for ll in 0..=2 {
+        for control in MaskControl::ALL {
+            let case = ConvertCase {
+                spec: FP16_WIDEN_SPEC,
+                ll,
+                destination: 17,
+                form: SourceForm::Vector,
+                control,
+            };
+            let mut memory = [0u8; 64];
+            for (lane, value) in FP16_EDGE_VALUES
+                .into_iter()
+                .take(usize::from(case.lanes()))
+                .enumerate()
+            {
+                put_element(&mut memory, VecElementType::F16, lane, u64::from(value));
+            }
+
+            for (config_index, (round, daz, ftz)) in controls.into_iter().enumerate() {
+                let lane_mask = (1u64 << case.lanes()) - 1;
+                let mask = if config_index & 1 == 0 {
+                    0xA5A5 & lane_mask
+                } else {
+                    0x5A5A & lane_mask
+                };
+                let mxcsr = (0x1F80 & !(3 << 13))
+                    | (round << 13)
+                    | (u32::from(daz) << 6)
+                    | (u32::from(ftz) << 15);
+                let initial = initial_registers(case, config_index, mxcsr, mask);
+                let initial_destination = words_to_bytes(initial.zmm[17]);
+                for level in LEVELS {
+                    let function = optimize(lift_case(case), level);
+                    let actual = interpret_success(&function, &initial, &memory, case);
+                    assert_only_destination_and_mxcsr_changed(case, &initial, &actual);
+                    let destination = words_to_bytes(actual.zmm[17]);
+                    let mut invalid = false;
+                    for lane in 0..usize::from(case.lanes()) {
+                        let active = control == MaskControl::None || mask & (1u64 << lane) != 0;
+                        let expected = if active {
+                            let source = FP16_EDGE_VALUES[lane];
+                            invalid |= f16_is_signaling_nan(source);
+                            u64::from(f16_to_f32_bits_oracle(source))
+                        } else if control == MaskControl::Zero {
+                            0
+                        } else {
+                            get_element(&initial_destination, VecElementType::F32, lane)
+                        };
+                        assert_eq!(
+                            get_element(&destination, VecElementType::F32, lane),
+                            expected,
+                            "{level:?} {case:?} RC={round} DAZ={daz} FTZ={ftz} lane={lane}"
+                        );
+                    }
+                    assert!(
+                        destination[case.operation_width().bytes() as usize..]
+                            .iter()
+                            .all(|byte| *byte == 0),
+                        "{level:?} {case:?}: EVEX upper-lane clearing"
+                    );
+                    assert_eq!(actual.mxcsr & 0x3F, u32::from(invalid));
+                    assert_eq!(actual.mxcsr & !0x3F, initial.mxcsr & !0x3F);
+                    assert_eq!(actual.mxcsr & (1 << 1), 0, "FP16 denormal status");
+                    comparisons += 1;
+                }
+            }
+        }
+    }
+    assert_eq!(comparisons, 9 * controls.len() * LEVELS.len());
+}
+
+#[test]
+fn fp16_type_e11_masks_suppress_each_inactive_two_byte_lane_fault() {
+    for ll in [0, 2] {
+        for control in [MaskControl::Merge, MaskControl::Zero] {
+            let case = ConvertCase {
+                spec: FP16_WIDEN_SPEC,
+                ll,
+                destination: 17,
+                form: SourceForm::Vector,
+                control,
+            };
+            for mask in [0, 1u64 << 63] {
+                let initial = initial_registers(case, usize::from(ll), 0x1F80, mask);
+                let initial_destination = words_to_bytes(initial.zmm[17]);
+                for level in LEVELS {
+                    let function = optimize(lift_case(case), level);
+                    let mut context = interpreter_context(&initial);
+                    let mut unmapped = FlatMemory::new(MEMORY_ADDRESS as usize);
+                    let result = SmirInterpreter::new().execute_block(
+                        &mut context,
+                        &mut unmapped,
+                        &function.blocks[0],
+                    );
+                    assert!(
+                        matches!(result, BlockResult::Exit(ExitReason::Return { .. })),
+                        "{level:?} {case:?} mask={mask:#018X}: {result:?}"
+                    );
+                    let actual = interpreter_registers(&context, &initial);
+                    let destination = words_to_bytes(actual.zmm[17]);
+                    let active_bytes = case.operation_width().bytes() as usize;
+                    if control == MaskControl::Merge {
+                        assert_eq!(
+                            &destination[..active_bytes],
+                            &initial_destination[..active_bytes]
+                        );
+                    } else {
+                        assert!(destination[..active_bytes].iter().all(|byte| *byte == 0));
+                    }
+                    assert!(destination[active_bytes..].iter().all(|byte| *byte == 0));
+                    assert_eq!(actual.mxcsr, initial.mxcsr);
+                }
+            }
+        }
+    }
+
+    let case = ConvertCase {
+        spec: FP16_WIDEN_SPEC,
+        ll: 2,
+        destination: 17,
+        form: SourceForm::Vector,
+        control: MaskControl::Merge,
+    };
+    let bytes = memory_bytes(case, 2);
+    for level in LEVELS {
+        let function = optimize(lift_case(case), level);
+
+        // Lane zero alone is mapped and active; all later unmapped lanes are
+        // inactive and therefore cannot fault.
+        let initial = initial_registers(case, 2, 0x1F80, 1);
+        let mut context = interpreter_context(&initial);
+        let mut lane_zero_only = FlatMemory::new(MEMORY_ADDRESS as usize + 2);
+        lane_zero_only.load(MEMORY_ADDRESS as usize, &bytes[..2]);
+        let result = SmirInterpreter::new().execute_block(
+            &mut context,
+            &mut lane_zero_only,
+            &function.blocks[0],
+        );
+        assert!(
+            matches!(result, BlockResult::Exit(ExitReason::Return { .. })),
+            "{level:?}: inactive later lane faulted: {result:?}"
+        );
+
+        // Lanes zero and three are active, but memory ends immediately before
+        // lane three's two-byte element. Earlier helper reads cannot commit.
+        let initial = initial_registers(case, 3, 0x1F80, 0b1001);
+        let mut context = interpreter_context(&initial);
+        let mut partial = FlatMemory::new(MEMORY_ADDRESS as usize + 6);
+        partial.load(MEMORY_ADDRESS as usize, &bytes[..6]);
+        let result =
+            SmirInterpreter::new().execute_block(&mut context, &mut partial, &function.blocks[0]);
+        assert!(
+            matches!(
+                result,
+                BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+            ),
+            "{level:?}: active lane three did not fault: {result:?}"
+        );
+        assert_eq!(interpreter_registers(&context, &initial), initial);
+
+        // A tuple ending exactly at the memory boundary is valid.
+        let initial = initial_registers(case, 4, 0x1F80, 0xFFFF);
+        let mut context = interpreter_context(&initial);
+        let size = case.memory_size() as usize;
+        let mut exact = FlatMemory::new(MEMORY_ADDRESS as usize + size);
+        exact.load(MEMORY_ADDRESS as usize, &bytes[..size]);
+        let result =
+            SmirInterpreter::new().execute_block(&mut context, &mut exact, &function.blocks[0]);
+        assert!(
+            matches!(result, BlockResult::Exit(ExitReason::Return { .. })),
+            "{level:?}: exact tuple boundary: {result:?}"
+        );
+    }
+}
+
+#[test]
+fn fp16_unmasked_signaling_nan_exception_is_precise_and_noncommitting() {
+    let case = ConvertCase {
+        spec: FP16_WIDEN_SPEC,
+        ll: 0,
+        destination: 17,
+        form: SourceForm::Vector,
+        control: MaskControl::None,
+    };
+    let mut bytes = [0u8; 64];
+    for (lane, value) in [0x7D55u16, 0x3C00, 0x0001, 0x7E55].into_iter().enumerate() {
+        put_element(&mut bytes, VecElementType::F16, lane, u64::from(value));
+    }
+    for level in LEVELS {
+        let function = optimize(lift_case(case), level);
+        let mut initial = initial_registers(case, level as usize, 0x1F80, u64::MAX);
+        initial.mxcsr &= !(1 << 7);
+        let mut context = interpreter_context(&initial);
+        let mut memory = FlatMemory::new(0x3000);
+        memory.load(
+            MEMORY_ADDRESS as usize,
+            &bytes[..case.memory_size() as usize],
+        );
+        let result =
+            SmirInterpreter::new().execute_block(&mut context, &mut memory, &function.blocks[0]);
+        assert!(
+            matches!(
+                result,
+                BlockResult::Exit(ExitReason::SimdFloatingPoint { addr: PC })
+            ),
+            "{level:?}: {result:?}"
+        );
+        let actual = interpreter_registers(&context, &initial);
+        assert_eq!(actual.gpr, initial.gpr, "{level:?}");
+        assert_eq!(actual.zmm, initial.zmm, "{level:?}");
+        assert_eq!(actual.k, initial.k, "{level:?}");
+        assert_eq!(actual.rflags, initial.rflags, "{level:?}");
+        assert_eq!(actual.mxcsr, initial.mxcsr | 1, "{level:?}");
+        assert_eq!(actual.mxcsr & (1 << 1), 0, "{level:?}: no FP16 denormal")
+    }
 }
 
 #[test]
@@ -659,6 +934,13 @@ fn every_replay_form_faults_before_destination_mxcsr_mask_or_flags_commit() {
             destination: 17,
             form: SourceForm::Broadcast,
             control: MaskControl::Merge,
+        },
+        ConvertCase {
+            spec: FP16_WIDEN_SPEC,
+            ll: 2,
+            destination: 17,
+            form: SourceForm::Vector,
+            control: MaskControl::None,
         },
     ];
     for (ordinal, case) in cases.into_iter().enumerate() {

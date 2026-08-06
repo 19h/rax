@@ -1,4 +1,4 @@
-//! Helper-backed EVEX packed non-binary16 conversion memory lowering.
+//! Helper-backed EVEX packed conversion memory lowering.
 
 use std::collections::HashMap;
 
@@ -91,11 +91,11 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-    /// Fuse one exact EVEX packed F32/F64/I32/I64 conversion memory source.
+    /// Fuse one exact EVEX packed F16/F32/F64/I32/I64 conversion memory source.
     ///
     /// Unmasked vectors use the nonarchitectural vector transfer slot and a
     /// byte-validated register rewrite. Broadcasts issue at most one scalar
-    /// helper access. Writemasked vectors issue ascending 4-/8-byte helper
+    /// helper access. Writemasked vectors issue ascending 2-/4-/8-byte helper
     /// reads only for active lanes, so no destination or MXCSR state commits
     /// before every architecturally required memory access succeeds.
     pub(crate) fn try_lower_jit_evex_packed_convert_memory_source(

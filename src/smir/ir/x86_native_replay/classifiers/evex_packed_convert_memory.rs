@@ -1,7 +1,8 @@
-//! EVEX packed non-binary16 conversion memory-source classification.
+//! EVEX packed conversion memory-source classification.
 
 use super::X86InstructionBytes;
 use super::evex_memory::{memory_operand_end, vector_legacy_prefix_len};
+use crate::smir::ir::ops::X86VecMap;
 use crate::smir::ir::types::{FpRoundMode, VecElementType, VecWidth};
 
 /// Semantic operation selected by one exact packed conversion encoding.
@@ -77,6 +78,7 @@ pub(crate) enum X86EvexPackedConvertMemoryReplay {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct X86EvexPackedConvertMemoryEncoding {
     pub(crate) kind: X86EvexPackedConvertMemoryKind,
+    pub(crate) map: X86VecMap,
     pub(crate) operation_width: VecWidth,
     pub(crate) source_width: VecWidth,
     pub(crate) destination_width: VecWidth,
@@ -105,6 +107,7 @@ impl X86EvexPackedConvertMemoryEncoding {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct PackedConvertFields {
     kind: X86EvexPackedConvertMemoryKind,
+    map: X86VecMap,
     operation_width: VecWidth,
     source_width: VecWidth,
     destination_width: VecWidth,
@@ -119,153 +122,165 @@ struct PackedConvertFields {
     needs_avx512dq: bool,
 }
 
-fn conversion_kind(opcode: u8, pp: u8, w: bool) -> Option<X86EvexPackedConvertMemoryKind> {
-    use VecElementType::{F32, F64, I32, I64};
+fn conversion_kind(
+    map: u8,
+    opcode: u8,
+    pp: u8,
+    w: bool,
+) -> Option<(X86VecMap, X86EvexPackedConvertMemoryKind)> {
+    use VecElementType::{F16, F32, F64, I32, I64};
     use X86EvexPackedConvertMemoryKind::{FpPrecision, FpToInt, IntToFp};
 
-    match (opcode, pp, w) {
-        (0x5A, 0, false) => Some(FpPrecision { from: F32, to: F64 }),
-        (0x5A, 1, true) => Some(FpPrecision { from: F64, to: F32 }),
+    let kind = match (map, opcode, pp, w) {
+        (2, 0x13, 1, false) => FpPrecision { from: F16, to: F32 },
+        (1, 0x5A, 0, false) => FpPrecision { from: F32, to: F64 },
+        (1, 0x5A, 1, true) => FpPrecision { from: F64, to: F32 },
 
-        (0x5B, 0, false) => Some(IntToFp {
+        (1, 0x5B, 0, false) => IntToFp {
             int_elem: I32,
             fp_elem: F32,
             signed: true,
-        }),
-        (0x5B, 0, true) => Some(IntToFp {
+        },
+        (1, 0x5B, 0, true) => IntToFp {
             int_elem: I64,
             fp_elem: F32,
             signed: true,
-        }),
-        (0xE6, 2, false) => Some(IntToFp {
+        },
+        (1, 0xE6, 2, false) => IntToFp {
             int_elem: I32,
             fp_elem: F64,
             signed: true,
-        }),
-        (0xE6, 2, true) => Some(IntToFp {
+        },
+        (1, 0xE6, 2, true) => IntToFp {
             int_elem: I64,
             fp_elem: F64,
             signed: true,
-        }),
-        (0x7A, 3, false) => Some(IntToFp {
+        },
+        (1, 0x7A, 3, false) => IntToFp {
             int_elem: I32,
             fp_elem: F32,
             signed: false,
-        }),
-        (0x7A, 3, true) => Some(IntToFp {
+        },
+        (1, 0x7A, 3, true) => IntToFp {
             int_elem: I64,
             fp_elem: F32,
             signed: false,
-        }),
-        (0x7A, 2, false) => Some(IntToFp {
+        },
+        (1, 0x7A, 2, false) => IntToFp {
             int_elem: I32,
             fp_elem: F64,
             signed: false,
-        }),
-        (0x7A, 2, true) => Some(IntToFp {
+        },
+        (1, 0x7A, 2, true) => IntToFp {
             int_elem: I64,
             fp_elem: F64,
             signed: false,
-        }),
+        },
 
-        (0x5B, 1, false) => Some(FpToInt {
+        (1, 0x5B, 1, false) => FpToInt {
             fp_elem: F32,
             int_elem: I32,
             signed: true,
             truncate: false,
-        }),
-        (0x5B, 2, false) => Some(FpToInt {
+        },
+        (1, 0x5B, 2, false) => FpToInt {
             fp_elem: F32,
             int_elem: I32,
             signed: true,
             truncate: true,
-        }),
-        (0xE6, 3, true) => Some(FpToInt {
+        },
+        (1, 0xE6, 3, true) => FpToInt {
             fp_elem: F64,
             int_elem: I32,
             signed: true,
             truncate: false,
-        }),
-        (0xE6, 1, true) => Some(FpToInt {
+        },
+        (1, 0xE6, 1, true) => FpToInt {
             fp_elem: F64,
             int_elem: I32,
             signed: true,
             truncate: true,
-        }),
-        (0x7B, 1, false) => Some(FpToInt {
+        },
+        (1, 0x7B, 1, false) => FpToInt {
             fp_elem: F32,
             int_elem: I64,
             signed: true,
             truncate: false,
-        }),
-        (0x7A, 1, false) => Some(FpToInt {
+        },
+        (1, 0x7A, 1, false) => FpToInt {
             fp_elem: F32,
             int_elem: I64,
             signed: true,
             truncate: true,
-        }),
-        (0x7B, 1, true) => Some(FpToInt {
+        },
+        (1, 0x7B, 1, true) => FpToInt {
             fp_elem: F64,
             int_elem: I64,
             signed: true,
             truncate: false,
-        }),
-        (0x7A, 1, true) => Some(FpToInt {
+        },
+        (1, 0x7A, 1, true) => FpToInt {
             fp_elem: F64,
             int_elem: I64,
             signed: true,
             truncate: true,
-        }),
-        (0x79, 0, false) => Some(FpToInt {
+        },
+        (1, 0x79, 0, false) => FpToInt {
             fp_elem: F32,
             int_elem: I32,
             signed: false,
             truncate: false,
-        }),
-        (0x78, 0, false) => Some(FpToInt {
+        },
+        (1, 0x78, 0, false) => FpToInt {
             fp_elem: F32,
             int_elem: I32,
             signed: false,
             truncate: true,
-        }),
-        (0x79, 0, true) => Some(FpToInt {
+        },
+        (1, 0x79, 0, true) => FpToInt {
             fp_elem: F64,
             int_elem: I32,
             signed: false,
             truncate: false,
-        }),
-        (0x78, 0, true) => Some(FpToInt {
+        },
+        (1, 0x78, 0, true) => FpToInt {
             fp_elem: F64,
             int_elem: I32,
             signed: false,
             truncate: true,
-        }),
-        (0x79, 1, false) => Some(FpToInt {
+        },
+        (1, 0x79, 1, false) => FpToInt {
             fp_elem: F32,
             int_elem: I64,
             signed: false,
             truncate: false,
-        }),
-        (0x78, 1, false) => Some(FpToInt {
+        },
+        (1, 0x78, 1, false) => FpToInt {
             fp_elem: F32,
             int_elem: I64,
             signed: false,
             truncate: true,
-        }),
-        (0x79, 1, true) => Some(FpToInt {
+        },
+        (1, 0x79, 1, true) => FpToInt {
             fp_elem: F64,
             int_elem: I64,
             signed: false,
             truncate: false,
-        }),
-        (0x78, 1, true) => Some(FpToInt {
+        },
+        (1, 0x78, 1, true) => FpToInt {
             fp_elem: F64,
             int_elem: I64,
             signed: false,
             truncate: true,
-        }),
-        _ => None,
-    }
+        },
+        _ => return None,
+    };
+    let map = match map {
+        1 => X86VecMap::Map0F,
+        2 => X86VecMap::Map0F38,
+        _ => return None,
+    };
+    Some((map, kind))
 }
 
 fn exact_width(bytes: u32) -> VecWidth {
@@ -292,13 +307,25 @@ fn packed_convert_fields(
     opcode: u8,
     modrm: u8,
 ) -> Option<PackedConvertFields> {
+    let map_bits = p0 & 7;
     let pp = p1 & 3;
     let w = p1 & 0x80 != 0;
-    let kind = conversion_kind(opcode, pp, w)?;
+    let (map, kind) = conversion_kind(map_bits, opcode, pp, w)?;
     let ll = (p2 >> 5) & 3;
     let mask = p2 & 7;
     let zeroing = p2 & 0x80 != 0;
-    if p0 & 7 != 1 || p1 & 0x78 != 0x78 || p2 & 8 == 0 || ll == 3 || (zeroing && mask == 0) {
+    if p1 & 0x78 != 0x78
+        || p2 & 8 == 0
+        || ll == 3
+        || (zeroing && mask == 0)
+        || (matches!(
+            kind,
+            X86EvexPackedConvertMemoryKind::FpPrecision {
+                from: VecElementType::F16,
+                to: VecElementType::F32
+            }
+        ) && p2 & 0x10 != 0)
+    {
         return None;
     }
 
@@ -324,6 +351,7 @@ fn packed_convert_fields(
         };
     Some(PackedConvertFields {
         kind,
+        map,
         operation_width,
         source_width: exact_width(source_bytes),
         destination_width: register_width(destination_bytes),
@@ -352,14 +380,16 @@ fn register_packed_convert_fields(bytes: &[u8]) -> Option<PackedConvertFields> {
 }
 
 impl X86InstructionBytes {
-    /// Validate an EVEX memory source for the 26 packed F32/F64/I32/I64
+    /// Validate an EVEX memory source for 27 packed F16/F32/F64/I32/I64
     /// precision and integer-conversion mnemonics and synthesize an exact
-    /// helper-backed replay.
+    /// helper-backed replay. Map-0F38 `VCVTPH2PS` uses the Type-E11 half-memory
+    /// tuple and rejects memory-source `EVEX.b`; the other conversions use
+    /// map 0F and their instruction-defined E2/E4/E5 tuple forms.
     ///
-    /// Intel SDM revision 092 specifies 128-/256-/512-bit Type E2/E4/E5
-    /// memory forms with optional scalar broadcast and writemask fault
-    /// suppression. `vvvv/V'` are reserved. Segment/address-size prefixes and
-    /// APX B4/X4 address channels remain confined to helper address evaluation.
+    /// Intel SDM revision 092 specifies 128-/256-/512-bit Type E11/E2/E4/E5
+    /// memory forms with writemask fault suppression and, where defined, scalar
+    /// broadcast. `vvvv/V'` are reserved. Segment/address-size prefixes and APX
+    /// B4/X4 address channels remain confined to helper address evaluation.
     pub(crate) fn evex_packed_convert_memory_encoding(
         &self,
     ) -> Option<X86EvexPackedConvertMemoryEncoding> {
@@ -427,6 +457,7 @@ impl X86InstructionBytes {
 
         Some(X86EvexPackedConvertMemoryEncoding {
             kind: fields.kind,
+            map: fields.map,
             operation_width: fields.operation_width,
             source_width: fields.source_width,
             destination_width: fields.destination_width,

@@ -1,4 +1,4 @@
-//! Exact helper-backed EVEX packed F32/F64/I32/I64 conversion memory coverage.
+//! Exact helper-backed EVEX packed F16/F32/F64/I32/I64 conversion memory coverage.
 
 use std::collections::HashMap;
 
@@ -33,6 +33,7 @@ pub(super) const LEVELS: [OptLevel; 3] = [OptLevel::O0, OptLevel::O1, OptLevel::
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) struct ConvertSpec {
     pub(super) name: &'static str,
+    pub(super) map: u8,
     pub(super) pp: u8,
     pub(super) w: bool,
     pub(super) opcode: u8,
@@ -49,11 +50,17 @@ impl ConvertSpec {
     ) -> Self {
         Self {
             name,
+            map: 1,
             pp,
             w,
             opcode,
             kind,
         }
+    }
+
+    const fn with_map(mut self, map: u8) -> Self {
+        self.map = map;
+        self
     }
 
     pub(super) const fn source_elem(self) -> VecElementType {
@@ -90,8 +97,17 @@ impl ConvertSpec {
     }
 }
 
-use VecElementType::{F32, F64, I32, I64};
+use VecElementType::{F16, F32, F64, I32, I64};
 use X86EvexPackedConvertMemoryKind::{FpPrecision, FpToInt, IntToFp};
+
+pub(super) const FP16_WIDEN_SPEC: ConvertSpec = ConvertSpec::new(
+    "VCVTPH2PS",
+    1,
+    false,
+    0x13,
+    FpPrecision { from: F16, to: F32 },
+)
+.with_map(2);
 
 pub(super) const SPECS: [ConvertSpec; 26] = [
     ConvertSpec::new(
@@ -485,8 +501,8 @@ impl ConvertCase {
     }
 
     pub(super) fn bytes(self) -> Vec<u8> {
-        assert!(self.ll < 3 && self.destination < 32);
-        let p0 = 1
+        assert!(self.ll < 3 && self.destination < 32 && matches!(self.spec.map, 1 | 2));
+        let p0 = self.spec.map
             | if self.destination & 8 == 0 { 0x80 } else { 0 }
             | if self.destination & 16 == 0 { 0x10 } else { 0 }
             | 0x60;
