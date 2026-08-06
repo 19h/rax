@@ -11,7 +11,7 @@ use crate::smir::lower::x86_64::{
     x86_far_call_terminal_shape_valid, x86_far_jump_shape_valid, x86_far_jump_terminal_shape_valid,
     x86_far_return_shape_valid, x86_far_return_terminal_shape_valid,
     x86_fast_system_transfer_shape_valid, x86_fast_system_transfer_terminal_shape_valid,
-    x86_invlpg_shape_valid, x86_invpcid_shape_valid, x86_lmsw_shape_valid,
+    x86_invlpg_shape_valid, x86_invpcid_shape_valid, x86_io_encoding, x86_lmsw_shape_valid,
     x86_load_mxcsr_shape_valid, x86_read_control_shape_valid, x86_read_debug_shape_valid,
     x86_selector_query_shape_valid, x86_selector_verify_shape_valid, x86_smsw_shape_valid,
     x86_sti_shape_valid, x86_store_mxcsr_shape_valid, x86_system_selector_load_shape_valid,
@@ -53,13 +53,8 @@ pub(crate) fn x86_jit_scalar_mem_shape_valid(op: &crate::smir::ir::ops::OpKind) 
 /// Decide whether a lifted function is safe to execute through the native tier
 /// under the 1:1 identity register map.
 ///
-/// The identity map (guest GPR `N` ⇒ host GPR `N`) is what makes native
-/// execution marshal-free, but it leaves *every* host GPR holding live guest
-/// state — there is no free scratch register. So any value the block writes to a
-/// `VReg::Virtual` (a non-architectural temporary the lifter introduced) would
-/// be allocated onto a guest-occupied host register and silently corrupt guest
-/// state on write-back. Such a block must NOT be promoted; the interpreter runs
-/// it instead.
+/// The identity map leaves every host GPR holding live guest state. A materialized
+/// `VReg::Virtual` would therefore alias guest state and makes a block ineligible.
 ///
 /// Exemptions are virtual values that the lowerer proves it never materializes:
 /// a trailing `TestCondition` whose `dst` feeds the block's `CondBranch`, and
@@ -68,10 +63,8 @@ pub(crate) fn x86_jit_scalar_mem_shape_valid(op: &crate::smir::ir::ops::OpKind) 
 /// The former folds to a direct `Jcc`; the memory forms fold to exact
 /// helper-backed operations.
 ///
-/// Pure architectural-register blocks (counter/pointer loops, ALU chains,
-/// guest-conditional branches) pass — which is the bulk of hot code. Validated
-/// Validated MOV/ADD/SUB forms involving guest RSP/RBP use their state-backed
-/// slots rather than the corresponding host stack/frame registers.
+/// Validated RSP/RBP forms use state-backed slots rather than host stack/frame
+/// registers.
 pub fn is_native_clobber_safe(func: &crate::smir::ir::SmirFunction) -> bool {
     is_native_clobber_safe_excluding(func, &std::collections::HashMap::new(), false)
 }
@@ -1213,6 +1206,7 @@ pub(crate) fn block_is_clobber_safe(
             continue;
         }
         let op = &block.ops[i];
+        let io_ok = x86_io_encoding(block, i, x86_instruction_bytes).is_some();
         if i + 1 == n {
             if let (Terminator::CondBranch { cond, .. }, OpKind::TestCondition { dst, .. }) =
                 (&block.terminator, &op.kind)
@@ -1223,14 +1217,7 @@ pub(crate) fn block_is_clobber_safe(
                 }
             }
         }
-        // (1) fail-safe whitelist: any non-whitelisted op (div, general FP/SIMD,
-        // syscall, unvalidated) makes the whole region ineligible. When memory
-        // JIT is enabled, register-destination Load/Store are additionally
-        // allowed (they lower to MMU helper calls with fault-bail); RMW forms
-        // still bail via the virtual-temp check below, and RSP/RBP-based
-        // addresses via check (3). Explicitly admitted x86 scalar/vector
-        // families receive exact shape checks below and, where needed, separate
-        // host-feature gates before execution.
+        // Fail closed outside generic whitelists and exact helper/replay shapes.
         let cldemote_ok = matches!(
             &op.kind,
             OpKind::X86CacheControl {
@@ -1596,6 +1583,7 @@ pub(crate) fn block_is_clobber_safe(
                 | OpKind::X86Adx { .. }
                 | OpKind::X86XTest
         ) || guarded_div_ok
+            || io_ok
             || crate::smir::lower::x86_64::x86_flag_control_shape_valid(op);
         let vector_ok = if matches!(op.kind, OpKind::X86Opmask(_)) {
             opmask_ok
@@ -1811,6 +1799,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86Cli { .. }) && !cli_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::IoIn { .. } | OpKind::IoOut { .. }) && !io_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86Sti { .. }) && !sti_ok {

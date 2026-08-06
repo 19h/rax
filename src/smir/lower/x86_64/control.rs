@@ -1173,6 +1173,10 @@ impl X86_64Lowerer {
                 idx = span.end;
                 continue;
             }
+            #[cfg(feature = "smir-jit")]
+            if self.emit_x86_io_if_present(block, idx)? {
+                return Ok(());
+            }
             if matches!(block.ops[idx].kind, OpKind::X86XSetBv { .. }) {
                 let resume_pc = block.ops[idx + 1..]
                     .iter()
@@ -1188,26 +1192,22 @@ impl X86_64Lowerer {
             }
             if matches!(block.ops[idx].kind, OpKind::X86WriteControl { .. }) {
                 self.emit_x86_write_control(&block.ops[idx])?;
-                // Both success and fault paths return through exact exit stubs.
-                // Control-state changes must not execute a later native op.
+                // Control-state changes terminate native execution.
                 return Ok(());
             }
             if matches!(block.ops[idx].kind, OpKind::X86DescriptorTableLoad(..)) {
                 self.emit_x86_descriptor_table_load(&block.ops[idx])?;
-                // Both success and fault paths leave through exact exit stubs.
-                // Descriptor state must be visible before any later guest op.
+                // Descriptor-state changes terminate native execution.
                 return Ok(());
             }
             if matches!(block.ops[idx].kind, OpKind::X86Invlpg(..)) {
                 self.emit_x86_invlpg(&block.ops[idx])?;
-                // Translation invalidation is a serializing exact frontier;
-                // no later operation may execute using the old mapping.
+                // Translation invalidation is a serializing frontier.
                 return Ok(());
             }
             if matches!(block.ops[idx].kind, OpKind::X86Invpcid(..)) {
                 self.emit_x86_invpcid(&block.ops[idx])?;
-                // Process-context invalidation is an exact translation-cache
-                // frontier; no later native operation may use the old mapping.
+                // Process-context invalidation is a serializing frontier.
                 return Ok(());
             }
             if matches!(block.ops[idx].kind, OpKind::X86SystemSelectorLoad(..)) {

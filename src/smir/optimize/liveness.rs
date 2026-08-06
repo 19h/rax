@@ -112,6 +112,8 @@ pub(super) fn op_has_precise_deopt_edge(kind: &OpKind) -> bool {
             | OpKind::X86RequireSse4a
             | OpKind::X86RequireTbm
             | OpKind::X86RequireXop
+            | OpKind::IoIn { .. }
+            | OpKind::IoOut { .. }
     )
 }
 

@@ -956,6 +956,20 @@ impl Mmu {
         self.range_is_plain_ram(vaddr, len, AccessType::Read, sregs)
     }
 
+    /// Supervisor-read wrapper for speculative implicit-system accesses such
+    /// as the current TSS I/O-permission bitmap.
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    pub(super) fn read_supervisor_range_is_plain_ram(
+        &mut self,
+        vaddr: u64,
+        len: usize,
+        sregs: &SystemRegisters,
+    ) -> bool {
+        let mut supervisor_sregs = sregs.clone();
+        supervisor_sregs.cs.selector &= !3;
+        self.range_is_plain_ram(vaddr, len, AccessType::Read, &supervisor_sregs)
+    }
+
     /// Write-specific wrapper for native speculative-access admission. This
     /// checks translation permissions as well as excluding MMIO.
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]

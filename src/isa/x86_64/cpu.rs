@@ -3757,6 +3757,12 @@ mod jit_cmpccxadd;
 use jit_cmpccxadd::rax_jit_cmpccxadd;
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_io.rs"]
+mod jit_io;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use jit_io::rax_jit_io;
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_vector_memory.rs"]
 mod jit_vector_memory;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -4795,6 +4801,8 @@ impl X86_64Vcpu {
                     )
                 });
             #[cfg(target_arch = "x86_64")]
+            let uses_io = JitRegion::uses_io_excluding(&func, &exits);
+            #[cfg(target_arch = "x86_64")]
             if uses_mmx && !x86_native_mmx_features_supported_excluding(&func, &exits) {
                 if jit_bail_log() {
                     eprintln!("[JIT-BAIL] host-mmx-features @ {entry:#x} (call={cm})");
@@ -4927,6 +4935,8 @@ impl X86_64Vcpu {
                 #[cfg(target_arch = "x86_64")]
                 uses_timestamp,
                 #[cfg(target_arch = "x86_64")]
+                uses_io,
+                #[cfg(target_arch = "x86_64")]
                 yielded_backward_exit_pcs,
                 #[cfg(target_arch = "x86_64")]
                 callout_boundaries,
@@ -5023,6 +5033,7 @@ impl X86_64Vcpu {
         gr.pair_load_fn = rax_jit_pair_load as usize as u64;
         gr.pair_store_fn = rax_jit_pair_store as usize as u64;
         gr.cmpccxadd_fn = rax_jit_cmpccxadd as usize as u64;
+        gr.io_fn = rax_jit_io as usize as u64;
         // Lift-through-calls channel (RAX_JIT_CALL): a guest CALL in the region
         // calls out here to run its callee in the interpreter, then resumes.
         gr.call_fn = rax_jit_call as usize as u64;
@@ -5291,6 +5302,7 @@ impl X86_64Vcpu {
             ..Default::default()
         };
         self.jit_leave_region();
+        self.complete_jit_io_request(&mut gr);
     }
 
     /// Execute x86-lifted scalar SMIR as AArch64 identity-mapped code. Legacy
@@ -5350,7 +5362,7 @@ impl X86_64Vcpu {
         // can influence arbitrary later data/control flow in the same region.
         // Execute these regions normally; dedicated deterministic helper tests
         // validate their native semantics without producing false divergences.
-        if region.uses_timestamp {
+        if region.uses_timestamp || region.uses_io {
             self.jit_run_region_native(region);
             return;
         }
@@ -6508,6 +6520,10 @@ mod jit_invpcid_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_string_io_tests.rs"]
 mod jit_string_io_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_io_tests.rs"]
+mod jit_io_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_read_control_tests.rs"]

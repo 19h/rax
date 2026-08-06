@@ -90,6 +90,10 @@ pub(super) struct JitRegion {
     /// interpreter replay necessarily observes a later clock value.
     #[cfg(target_arch = "x86_64")]
     pub(super) uses_timestamp: bool,
+    /// Whether the region terminates in helper-backed external port I/O.
+    /// Verification cannot replay an unserviced external input/output exit.
+    #[cfg(target_arch = "x86_64")]
+    pub(super) uses_io: bool,
     /// Guest PCs used as resume targets by synthesized backward-edge exits.
     /// Verification must observe the actual backward transition to one of
     /// these PCs, rather than stopping at an earlier forward arrival at the
@@ -105,6 +109,24 @@ pub(super) struct JitRegion {
 }
 
 impl JitRegion {
+    #[cfg(target_arch = "x86_64")]
+    pub(super) fn uses_io_excluding(
+        func: &SmirFunction,
+        excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
+    ) -> bool {
+        func.blocks
+            .iter()
+            .filter(|block| !excluded.contains_key(&block.id))
+            .flat_map(|block| &block.ops)
+            .any(|op| {
+                matches!(
+                    op.kind,
+                    crate::smir::ir::ops::OpKind::IoIn { .. }
+                        | crate::smir::ir::ops::OpKind::IoOut { .. }
+                )
+            })
+    }
+
     /// Derive the exact source-page set from pre-optimization instruction
     /// provenance. Returning `None` fails closed for an empty region or an
     /// instruction whose inclusive end overflows the linear-address space. For
@@ -279,6 +301,7 @@ mod tests {
             uses_mmx: false,
             uses_x87_tag_state: false,
             uses_timestamp: false,
+            uses_io: false,
             yielded_backward_exit_pcs: Vec::new(),
             callout_boundaries: Vec::new(),
         };

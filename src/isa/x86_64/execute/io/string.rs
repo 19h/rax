@@ -29,6 +29,8 @@ fn ins_common(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, size: u8) -> Result<
         return Ok(None);
     }
 
+    vcpu.check_io_permission(port, size)?;
+
     // `rep ins` is emulated one element per VM exit: each iteration performs the
     // port input into ES:[RDI], advances RDI by the operand size (honoring DF),
     // and decrements RCX. The instruction is only retired (RIP advanced) once
@@ -154,6 +156,9 @@ fn outs_common(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, size: u8) -> Result
         vcpu.regs.rip += ctx.cursor as u64;
         return Ok(None);
     }
+
+    // I/O permission precedes the source-memory read architecturally.
+    vcpu.check_io_permission(port, size)?;
 
     // Read data from DS:RSI; FS/GS segment overrides provide nonzero bases in
     // long mode, while other segment bases are handled for legacy modes.

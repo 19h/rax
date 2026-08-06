@@ -218,6 +218,10 @@ mod jit_vector_memory_replay;
 pub use invlpg::*;
 mod invpcid;
 pub use invpcid::*;
+#[cfg(feature = "smir-jit")]
+mod io;
+#[cfg(feature = "smir-jit")]
+pub(crate) use io::*;
 mod dispatch;
 pub use dispatch::*;
 mod emitter;

@@ -1357,7 +1357,7 @@ impl X86_64Lifter {
                         need: 1,
                     });
                 }
-                (VReg::Imm(bytes[0] as i8 as i64), MemWidth::B1, 1)
+                (VReg::Imm(i64::from(bytes[0])), MemWidth::B1, 1)
             }
             0xE5 => {
                 if bytes.is_empty() {
@@ -1367,16 +1367,16 @@ impl X86_64Lifter {
                         need: 1,
                     });
                 }
-                let width = if prefix.operand_size_override {
+                let width = if prefix.operand_size_override && !prefix.rex_w() {
                     MemWidth::B2
                 } else {
                     MemWidth::B4
                 };
-                (VReg::Imm(bytes[0] as i8 as i64), width, 1)
+                (VReg::Imm(i64::from(bytes[0])), width, 1)
             }
             0xEC => (self.gpr(2), MemWidth::B1, 0),
             0xED => {
-                let width = if prefix.operand_size_override {
+                let width = if prefix.operand_size_override && !prefix.rex_w() {
                     MemWidth::B2
                 } else {
                     MemWidth::B4
@@ -1421,7 +1421,7 @@ impl X86_64Lifter {
                         need: 1,
                     });
                 }
-                (VReg::Imm(bytes[0] as i8 as i64), MemWidth::B1, 1)
+                (VReg::Imm(i64::from(bytes[0])), MemWidth::B1, 1)
             }
             0xE7 => {
                 if bytes.is_empty() {
@@ -1431,16 +1431,16 @@ impl X86_64Lifter {
                         need: 1,
                     });
                 }
-                let width = if prefix.operand_size_override {
+                let width = if prefix.operand_size_override && !prefix.rex_w() {
                     MemWidth::B2
                 } else {
                     MemWidth::B4
                 };
-                (VReg::Imm(bytes[0] as i8 as i64), width, 1)
+                (VReg::Imm(i64::from(bytes[0])), width, 1)
             }
             0xEE => (self.gpr(2), MemWidth::B1, 0),
             0xEF => {
-                let width = if prefix.operand_size_override {
+                let width = if prefix.operand_size_override && !prefix.rex_w() {
                     MemWidth::B2
                 } else {
                     MemWidth::B4
