@@ -32,6 +32,11 @@ fn function(bytes: &[u8]) -> SmirFunction {
 #[test]
 fn legacy_high_byte_replay_admits_and_emits_each_documented_family_at_o0_o1_o2() {
     let cases: &[(&str, &[u8])] = &[
+        ("mov ah,0xa5", &[0xB4, 0xA5]),
+        (
+            "prefixed mov bh,0x5a",
+            &[0x65, 0x66, 0x67, 0xF3, 0xB7, 0x5A],
+        ),
         ("add ah,al", &[0x00, 0xC4]),
         ("or ah,al", &[0x0A, 0xE0]),
         ("adc ch,bh", &[0x10, 0xFD]),
@@ -148,6 +153,71 @@ fn legacy_high_byte_replay_admits_and_emits_each_documented_family_at_o0_o1_o2()
         }
     }
     assert_eq!(lowered, cases.len() * 3);
+}
+
+#[test]
+fn all_7168_scanner_high_byte_mov_immediates_admit_at_every_opt_level() {
+    const PREFIXES: &[&[u8]] = &[&[], &[0x66], &[0xF2], &[0xF3], &[0x67], &[0x64], &[0x65]];
+
+    let mut encodings = 0usize;
+    let mut optimization_profiles = 0usize;
+    for prefix in PREFIXES {
+        for opcode in 0xB4u8..=0xB7 {
+            for immediate in u8::MIN..=u8::MAX {
+                let mut bytes = prefix.to_vec();
+                bytes.extend([opcode, immediate]);
+                let instruction = X86InstructionBytes::new(&bytes).unwrap();
+                assert!(
+                    instruction.is_legacy_high_byte_register_replay(),
+                    "{bytes:02X?}"
+                );
+
+                for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+                    let mut function = function(&bytes);
+                    optimize_function(&mut function, level);
+                    assert_eq!(function.blocks[0].ops.len(), 5, "{bytes:02X?}, {level:?}");
+
+                    for spans in [
+                        crate::smir::ir::x86_legacy_high_byte_replay_spans(
+                            &function.blocks[0],
+                            &function.x86_instruction_bytes,
+                        ),
+                        crate::smir::ir::x86_native_replay_spans(
+                            &function.blocks[0],
+                            &function.x86_instruction_bytes,
+                        ),
+                    ] {
+                        assert_eq!(
+                            spans.get(&0),
+                            Some(&crate::smir::ir::X86NativeReplaySpan {
+                                end: 5,
+                                instruction,
+                                needs_avx512vl: false,
+                                needs_avx512dq: false,
+                                needs_avx512fp16: false,
+                                preserve_mxcsr_de: false,
+                            }),
+                            "{bytes:02X?}, {level:?}"
+                        );
+                    }
+
+                    assert!(is_native_clobber_safe(&function), "{bytes:02X?}, {level:?}");
+                    assert!(
+                        !is_x86_aarch64_native_clobber_safe_excluding(
+                            &function,
+                            &std::collections::HashMap::new(),
+                        ),
+                        "{bytes:02X?}, {level:?}: AArch64 host must retain fallback"
+                    );
+                    optimization_profiles += 1;
+                }
+                encodings += 1;
+            }
+        }
+    }
+
+    assert_eq!(encodings, 7_168);
+    assert_eq!(optimization_profiles, 21_504);
 }
 
 #[test]

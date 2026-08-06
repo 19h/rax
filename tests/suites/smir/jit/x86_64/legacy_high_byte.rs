@@ -2,7 +2,7 @@
 
 use super::*;
 
-fn legacy_gprs(registers: &Registers) -> [u64; 16] {
+fn legacy_gprs(registers: &Registers) -> [u64; 32] {
     [
         registers.rax,
         registers.rcx,
@@ -20,13 +20,29 @@ fn legacy_gprs(registers: &Registers) -> [u64; 16] {
         registers.r13,
         registers.r14,
         registers.r15,
+        registers.r16,
+        registers.r17,
+        registers.r18,
+        registers.r19,
+        registers.r20,
+        registers.r21,
+        registers.r22,
+        registers.r23,
+        registers.r24,
+        registers.r25,
+        registers.r26,
+        registers.r27,
+        registers.r28,
+        registers.r29,
+        registers.r30,
+        registers.r31,
     ]
 }
 
 const DEFAULT_RCX: u64 = 0x1357_9BDF_2468_0305;
 const DEFAULT_RFLAGS: u64 = 0x2 | 0x8D5;
 
-fn seed(vcpu: &mut X86_64Vcpu, rax: u64, rcx: u64, rflags: u64) {
+fn seed(vcpu: &mut X86_64Vcpu, rax: u64, rcx: u64, rflags: u64) -> Registers {
     let mut registers = vcpu.get_regs().unwrap();
     registers.rax = rax;
     registers.rbx = 0xFEDC_BA98_7654_3210;
@@ -43,8 +59,25 @@ fn seed(vcpu: &mut X86_64Vcpu, rax: u64, rcx: u64, rflags: u64) {
     registers.r13 = 0x1515_1616_1717_1818;
     registers.r14 = 0x1919_1A1A_1B1B_1C1C;
     registers.r15 = 0x1D1D_1E1E_1F1F_2020;
+    registers.r16 = 0x2121_2222_2323_2424;
+    registers.r17 = 0x2525_2626_2727_2828;
+    registers.r18 = 0x2929_2A2A_2B2B_2C2C;
+    registers.r19 = 0x2D2D_2E2E_2F2F_3030;
+    registers.r20 = 0x3131_3232_3333_3434;
+    registers.r21 = 0x3535_3636_3737_3838;
+    registers.r22 = 0x3939_3A3A_3B3B_3C3C;
+    registers.r23 = 0x3D3D_3E3E_3F3F_4040;
+    registers.r24 = 0x4141_4242_4343_4444;
+    registers.r25 = 0x4545_4646_4747_4848;
+    registers.r26 = 0x4949_4A4A_4B4B_4C4C;
+    registers.r27 = 0x4D4D_4E4E_4F4F_5050;
+    registers.r28 = 0x5151_5252_5353_5454;
+    registers.r29 = 0x5555_5656_5757_5858;
+    registers.r30 = 0x5959_5A5A_5B5B_5C5C;
+    registers.r31 = 0x5D5D_5E5E_5F5F_6060;
     registers.rflags = rflags;
     vcpu.set_regs(&registers).unwrap();
+    registers
 }
 
 fn compare_direct_and_jit(name: &str, instruction: &[u8], rax: u64) {
@@ -83,6 +116,89 @@ fn compare_direct_and_jit_state(name: &str, instruction: &[u8], rax: u64, rcx: u
     assert_eq!(actual.rip, expected.rip, "{name}: RIP");
     assert_eq!(actual.xmm, expected.xmm, "{name}: XMM state");
     assert_eq!(actual.mm, expected.mm, "{name}: MMX state");
+}
+
+#[test]
+fn jit_legacy_high_byte_mov_immediate_exhausts_all_7168_scanner_images() {
+    const PREFIXES: &[&[u8]] = &[&[], &[0x66], &[0xF2], &[0xF3], &[0x67], &[0x64], &[0x65]];
+    const PRESERVED_FLAGS: u64 =
+        DEFAULT_RFLAGS | (1 << 9) | (1 << 10) | (3 << 12) | (1 << 18) | (1 << 21);
+
+    let mut cases = 0usize;
+    for prefix in PREFIXES {
+        for opcode in 0xB4u8..=0xB7 {
+            for immediate in u8::MIN..=u8::MAX {
+                let mut instruction = prefix.to_vec();
+                instruction.extend([opcode, immediate]);
+                let mut code = instruction.clone();
+                code.push(0xF4);
+
+                let mut direct = make_vcpu_code(&code);
+                let initial = seed(
+                    &mut direct,
+                    0x0123_4567_89AB_CDEF,
+                    DEFAULT_RCX,
+                    PRESERVED_FLAGS,
+                );
+                assert!(
+                    direct.step().unwrap().is_none(),
+                    "direct {instruction:02X?}"
+                );
+                let direct_regs = direct.get_regs().unwrap();
+
+                let mut manual = initial.clone();
+                let parent = match opcode {
+                    0xB4 => &mut manual.rax,
+                    0xB5 => &mut manual.rcx,
+                    0xB6 => &mut manual.rdx,
+                    0xB7 => &mut manual.rbx,
+                    _ => unreachable!(),
+                };
+                *parent = (*parent & !0xFF00) | (u64::from(immediate) << 8);
+                manual.rip = LOAD_ADDR + instruction.len() as u64;
+                assert_eq!(
+                    legacy_gprs(&direct_regs),
+                    legacy_gprs(&manual),
+                    "manual GPRs {instruction:02X?}"
+                );
+                assert_eq!(
+                    direct_regs.rflags, manual.rflags,
+                    "manual RFLAGS {instruction:02X?}"
+                );
+                assert_eq!(direct_regs.rip, manual.rip, "manual RIP {instruction:02X?}");
+
+                let mut jit = make_vcpu_code(&code);
+                seed(
+                    &mut jit,
+                    0x0123_4567_89AB_CDEF,
+                    DEFAULT_RCX,
+                    PRESERVED_FLAGS,
+                );
+                jit.set_jit_call(false);
+                jit.set_jit_mem(false);
+                assert!(
+                    jit.jit_try_block().unwrap(),
+                    "native admission {instruction:02X?}:\n{}",
+                    jit.jit_dump_region(LOAD_ADDR)
+                );
+                let actual = jit.get_regs().unwrap();
+                assert_eq!(
+                    legacy_gprs(&actual),
+                    legacy_gprs(&manual),
+                    "JIT GPRs {instruction:02X?}"
+                );
+                assert_eq!(
+                    actual.rflags, manual.rflags,
+                    "JIT RFLAGS {instruction:02X?}"
+                );
+                assert_eq!(actual.rip, manual.rip, "JIT RIP {instruction:02X?}");
+                assert_eq!(actual.xmm, direct_regs.xmm, "JIT XMM {instruction:02X?}");
+                assert_eq!(actual.mm, direct_regs.mm, "JIT MMX {instruction:02X?}");
+                cases += 1;
+            }
+        }
+    }
+    assert_eq!(cases, 7_168);
 }
 
 #[test]

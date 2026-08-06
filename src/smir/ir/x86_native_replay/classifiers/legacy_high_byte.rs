@@ -59,10 +59,11 @@ impl X86InstructionBytes {
     /// graph, while replaying the exact source instruction preserves aliasing
     /// between each high byte and its full-width parent.
     ///
-    /// The admitted set contains MOV, binary ALU, TEST, XCHG, Group 1
-    /// immediate, NOT, NEG, INC, DEC, SETcc, CMPXCHG, XADD, and documented
-    /// Group 2 rotate/shift register forms. LOCK, REX, memory, undocumented
-    /// Group 2 `/6`, Group 3 `/1`, multiply, and divide forms fail closed.
+    /// The admitted set contains MOV (including the B4-B7 immediate forms),
+    /// binary ALU, TEST, XCHG, Group 1 immediate, NOT, NEG, INC, DEC, SETcc,
+    /// CMPXCHG, XADD, and documented Group 2 rotate/shift register forms. LOCK,
+    /// REX, memory, undocumented Group 2 `/6`, Group 3 `/1`, multiply, and
+    /// divide forms fail closed.
     /// Group 2 replay uses a deterministic status wrapper because RAX
     /// preserves architecturally undefined AF/OF while the host instruction
     /// may change them. At most one legacy prefix from each prefix group is
@@ -111,6 +112,7 @@ impl X86InstructionBytes {
                 register_fields(*modrm).is_some_and(|(extension, rm)| extension <= 1 && is_high(rm))
             }
             [0x80, modrm, _] => register_fields(*modrm).is_some_and(|(_, rm)| is_high(rm)),
+            [0xB4..=0xB7, _] => true,
             [0xC6, modrm, _] => {
                 register_fields(*modrm).is_some_and(|(extension, rm)| extension == 0 && is_high(rm))
             }
@@ -238,6 +240,22 @@ mod tests {
                 }
             }
 
+            for opcode in 0xB0u8..=0xB7 {
+                for immediate in u8::MIN..=u8::MAX {
+                    let mut bytes = prefix.to_vec();
+                    bytes.extend([opcode, immediate]);
+                    let expected = opcode >= 0xB4;
+                    assert_eq!(
+                        X86InstructionBytes::new(&bytes)
+                            .unwrap()
+                            .is_legacy_high_byte_register_replay(),
+                        expected,
+                        "{bytes:02X?}"
+                    );
+                    accepted += usize::from(expected);
+                }
+            }
+
             for (opcode, valid_extensions, has_immediate) in [
                 (0xC6, 0b0000_0001u8, true),
                 (0xF6, 0b0000_0001u8, true),
@@ -326,7 +344,7 @@ mod tests {
                 }
             }
         }
-        assert_eq!(accepted, 7_560);
+        assert_eq!(accepted, 13_704);
     }
 
     #[test]
@@ -334,6 +352,8 @@ mod tests {
         for bytes in [
             &[0x80, 0xC4, 0x81][..],                   // add ah,0x81
             &[0xC6, 0xC7, 0x5A][..],                   // mov bh,0x5a
+            &[0xB4, 0xA5][..],                         // mov ah,0xa5
+            &[0x65, 0x66, 0x67, 0xF3, 0xB7, 0x5A][..], // mov bh,0x5a
             &[0xF6, 0xC5, 0xA5][..],                   // test ch,0xa5
             &[0xF6, 0xD6][..],                         // not dh
             &[0xF6, 0xDF][..],                         // neg bh
@@ -445,6 +465,10 @@ mod tests {
             &[0xF6, 0xF4][..],             // div ah can raise #DE
             &[0xF6, 0xFC][..],             // idiv ah can raise #DE
             &[0xC6, 0xCC, 0x01][..],       // MOV requires /0
+            &[0xB0, 0x01][..],             // MOV AL,imm8 needs no replay
+            &[0x40, 0xB4, 0x01][..],       // REX selects SPL, not AH
+            &[0xF0, 0xB4, 0x01][..],       // LOCK is #UD
+            &[0xB4, 0x01, 0x00][..],       // trailing byte
             &[0x0F, 0x96, 0xCC][..],       // SETcc requires /0
             &[0x0F, 0xB0, 0x35][..],       // CMPXCHG memory form
             &[0x0F, 0xC0, 0xFC, 0x00][..], // trailing byte
