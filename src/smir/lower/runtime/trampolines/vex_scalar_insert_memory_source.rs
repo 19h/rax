@@ -8,7 +8,7 @@ use crate::smir::ir::types::{
     VecWidth, X86Reg,
 };
 use crate::smir::ir::{
-    X86InstructionBytes, X86VexScalarInsertMemoryFields, X86VexScalarInsertMemoryKind,
+    X86InstructionBytes, X86ScalarInsertMemoryKind, X86VexScalarInsertMemoryFields,
 };
 
 use super::x86_jit_mem_address_shape_valid;
@@ -20,6 +20,24 @@ pub(crate) struct X86JitVexScalarInsertMemorySequence {
     pub(crate) consumed: usize,
     pub(crate) memory_size: u32,
     pub(crate) encoding: X86VexScalarInsertMemoryFields,
+}
+
+/// Encoding fields shared by the architecturally equivalent VEX and EVEX
+/// scalar-insert semantic graphs.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) struct X86ScalarInsertGraphEncoding {
+    pub(super) destination: u8,
+    pub(super) source1: u8,
+    pub(super) kind: X86ScalarInsertMemoryKind,
+    pub(super) immediate: u8,
+}
+
+/// Canonical semantic span after byte provenance and encoding-generation
+/// frontier checks have been performed by the caller.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) struct X86JitScalarInsertMemoryGraphSequence {
+    pub(super) consumed: usize,
+    pub(super) memory_size: u32,
 }
 
 fn xmm(index: u8) -> VReg {
@@ -108,7 +126,7 @@ fn match_pinsr_graph(
     ops: &[crate::smir::ir::ops::SmirOp],
     cursor: &mut usize,
     loaded: VReg,
-    encoding: X86VexScalarInsertMemoryFields,
+    encoding: X86ScalarInsertGraphEncoding,
     seen: &mut HashSet<VReg>,
 ) -> Option<VReg> {
     let element = encoding.kind.element();
@@ -169,7 +187,7 @@ fn match_insertps_graph(
     ops: &[crate::smir::ir::ops::SmirOp],
     cursor: &mut usize,
     loaded: VReg,
-    encoding: X86VexScalarInsertMemoryFields,
+    encoding: X86ScalarInsertGraphEncoding,
     seen: &mut HashSet<VReg>,
 ) -> Option<VReg> {
     let destination_lane = encoding.kind.destination_lane(encoding.immediate);
@@ -241,29 +259,26 @@ fn match_insertps_graph(
     Some(output)
 }
 
-/// Validate the complete 7- through 35-op canonical decomposition for a VEX
-/// scalar-insert memory source.
+/// Validate the complete 7- through 35-op canonical scalar-insert memory
+/// decomposition shared by VEX and EVEX encodings.
 ///
-/// Source-byte provenance binds the destination, merge source, operation kind,
-/// immediate, W/WIG value, exact scalar memory width, and every extraction and
-/// insertion edge. The memory load is retained even when VINSERTPS zeroing
+/// The caller supplies fields from an exact byte classifier and owns the
+/// encoding-generation frontier. This matcher binds destination, merge source,
+/// operation kind, immediate, exact scalar memory width, and every extraction
+/// and insertion edge. The memory load is retained even when VINSERTPS zeroing
 /// discards its value, preserving the architectural fault. No virtual defined
 /// by the sequence may escape it.
 ///
 /// The architectural maximum of 16 byte lanes bounds classification to O(1)
 /// time and O(1) auxiliary space. Callers build global definition/use maps once
 /// in O(N) time and O(V) space for N operations and V virtual registers.
-pub(crate) fn x86_jit_vex_scalar_insert_memory_sequence(
+pub(super) fn x86_jit_scalar_insert_memory_graph_sequence(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
-    allow_mem: bool,
-    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+    encoding: X86ScalarInsertGraphEncoding,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
-) -> Option<X86JitVexScalarInsertMemorySequence> {
-    if !allow_mem {
-        return None;
-    }
+) -> Option<X86JitScalarInsertMemoryGraphSequence> {
     let load = block.ops.get(index)?;
     let (loaded, memory_width) = match &load.kind {
         OpKind::Load {
@@ -283,12 +298,6 @@ pub(crate) fn x86_jit_vex_scalar_insert_memory_sequence(
         }
         _ => return None,
     };
-    if index != 0 && block.ops[index - 1].guest_pc == load.guest_pc {
-        return None;
-    }
-
-    let instruction = instruction_bytes.get(&(block.id, load.guest_pc))?;
-    let encoding = instruction.vex_memory_scalar_insert_fields()?;
     if encoding.kind.memory_width() != memory_width {
         return None;
     }
@@ -297,13 +306,13 @@ pub(crate) fn x86_jit_vex_scalar_insert_memory_sequence(
     unique_virtual(loaded, &mut seen)?;
     let mut cursor = index + 1;
     let output = match encoding.kind {
-        X86VexScalarInsertMemoryKind::Vinsertps => {
+        X86ScalarInsertMemoryKind::Vinsertps => {
             match_insertps_graph(&block.ops, &mut cursor, loaded, encoding, &mut seen)?
         }
-        X86VexScalarInsertMemoryKind::Vpinsrb
-        | X86VexScalarInsertMemoryKind::Vpinsrw
-        | X86VexScalarInsertMemoryKind::Vpinsrd
-        | X86VexScalarInsertMemoryKind::Vpinsrq => {
+        X86ScalarInsertMemoryKind::Vpinsrb
+        | X86ScalarInsertMemoryKind::Vpinsrw
+        | X86ScalarInsertMemoryKind::Vpinsrd
+        | X86ScalarInsertMemoryKind::Vpinsrq => {
             match_pinsr_graph(&block.ops, &mut cursor, loaded, encoding, &mut seen)?
         }
     };
@@ -335,9 +344,51 @@ pub(crate) fn x86_jit_vex_scalar_insert_memory_sequence(
         return None;
     }
 
-    Some(X86JitVexScalarInsertMemorySequence {
+    Some(X86JitScalarInsertMemoryGraphSequence {
         consumed: cursor - index,
         memory_size: memory_width.bytes(),
+    })
+}
+
+/// Validate one exact VEX scalar-insert memory decomposition.
+///
+/// VEX has no APX guard prefix operation, so any same-PC predecessor rejects
+/// the span. Byte provenance additionally retains the exact W/WIG bit for the
+/// register replay. Classification remains O(1) after O(N) global virtual-use
+/// maps are built by the caller.
+pub(crate) fn x86_jit_vex_scalar_insert_memory_sequence(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<X86JitVexScalarInsertMemorySequence> {
+    if !allow_mem {
+        return None;
+    }
+    let load = block.ops.get(index)?;
+    if index != 0 && block.ops[index - 1].guest_pc == load.guest_pc {
+        return None;
+    }
+    let encoding = instruction_bytes
+        .get(&(block.id, load.guest_pc))?
+        .vex_memory_scalar_insert_fields()?;
+    let graph = x86_jit_scalar_insert_memory_graph_sequence(
+        block,
+        index,
+        X86ScalarInsertGraphEncoding {
+            destination: encoding.destination,
+            source1: encoding.source1,
+            kind: encoding.kind,
+            immediate: encoding.immediate,
+        },
+        virtual_definitions,
+        virtual_uses,
+    )?;
+    Some(X86JitVexScalarInsertMemorySequence {
+        consumed: graph.consumed,
+        memory_size: graph.memory_size,
         encoding,
     })
 }

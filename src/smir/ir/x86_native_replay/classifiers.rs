@@ -52,6 +52,7 @@ mod evex_scalar_fp_arithmetic_memory;
 mod evex_scalar_fp_compare_memory;
 mod evex_scalar_fp_to_int_memory;
 mod evex_scalar_fp_unary_memory;
+mod evex_scalar_insert_memory;
 mod evex_scalar_int_to_fp_memory;
 mod evex_scalar_move_memory;
 mod evex_scale_f_memory;
@@ -256,6 +257,7 @@ pub(crate) use evex_scalar_fp_to_int_memory::X86EvexScalarFpToIntMemoryEncoding;
 pub(crate) use evex_scalar_fp_unary_memory::{
     X86EvexScalarFpUnaryMemoryEncoding, X86EvexScalarFpUnaryMemoryKind,
 };
+pub(crate) use evex_scalar_insert_memory::X86EvexScalarInsertMemoryEncoding;
 pub(crate) use evex_scalar_int_to_fp_memory::X86EvexScalarIntToFpMemoryEncoding;
 pub(crate) use evex_scalar_move_memory::{
     X86EvexScalarMoveMemoryEncoding, X86EvexScalarMoveMemoryKind,
@@ -306,7 +308,7 @@ pub(crate) use vex_phminposuw::X86VexPhminposuwMemoryEncoding;
 pub(crate) use vex_ptest::X86VexPtestMemoryEncoding;
 pub(crate) use vex_scalar_fp_memory::{X86VexScalarFpMemoryEncoding, X86VexScalarFpMemoryKind};
 pub(crate) use vex_scalar_insert_memory::{
-    X86VexScalarInsertMemoryFields, X86VexScalarInsertMemoryKind,
+    X86ScalarInsertMemoryKind, X86VexScalarInsertMemoryFields, X86VexScalarInsertMemoryKind,
 };
 pub(crate) use vex_scalar_integer_memory::{
     X86VexScalarIntegerMemoryEncoding, X86VexScalarIntegerMemoryKind,

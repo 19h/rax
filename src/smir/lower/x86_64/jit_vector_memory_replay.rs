@@ -43,6 +43,7 @@ impl X86_64Lowerer {
         try_replay!(try_lower_jit_evex_chunk_insert_memory_source);
         try_replay!(try_lower_jit_evex_chunk_shuffle_memory_source);
         try_replay!(try_lower_jit_evex_extract_memory_destination);
+        try_replay!(try_lower_jit_evex_scalar_insert_memory_source);
         try_replay!(try_lower_jit_evex_dbpsadbw_memory_source);
         try_replay!(try_lower_jit_evex_psadbw_memory_source);
         try_replay!(try_lower_jit_evex_vpshufbitqmb_memory_source);

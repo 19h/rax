@@ -3,9 +3,9 @@
 use super::X86InstructionBytes;
 use crate::smir::ir::types::{MemWidth, VecElementType};
 
-/// Exact scalar-insert operation selected by VEX map, opcode, and W.
+/// Exact scalar-insert operation selected by VEX/EVEX map, opcode, and W.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum X86VexScalarInsertMemoryKind {
+pub(crate) enum X86ScalarInsertMemoryKind {
     Vpinsrb,
     Vpinsrw,
     Vpinsrd,
@@ -13,7 +13,7 @@ pub(crate) enum X86VexScalarInsertMemoryKind {
     Vinsertps,
 }
 
-impl X86VexScalarInsertMemoryKind {
+impl X86ScalarInsertMemoryKind {
     /// Width of the precise scalar memory access.
     pub(crate) const fn memory_width(self) -> MemWidth {
         match self {
@@ -45,6 +45,9 @@ impl X86VexScalarInsertMemoryKind {
         }
     }
 }
+
+/// Compatibility name retained for the VEX classifier and its callers.
+pub(crate) type X86VexScalarInsertMemoryKind = X86ScalarInsertMemoryKind;
 
 /// Byte-validated fields for one VEX.128 scalar-insert memory source.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

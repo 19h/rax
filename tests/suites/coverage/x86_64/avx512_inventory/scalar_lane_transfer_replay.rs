@@ -2,6 +2,10 @@
 
 use super::*;
 
+#[cfg(feature = "smir-jit")]
+#[path = "scalar_insert_memory_source.rs"]
+mod scalar_insert_memory_source;
+
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 enum GprField {
     None,

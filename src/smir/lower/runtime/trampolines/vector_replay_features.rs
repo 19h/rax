@@ -53,6 +53,8 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
 mod evex_extract_memory;
 #[path = "vector_replay_features_evex_integer_memory.rs"]
 mod evex_integer_memory;
+#[path = "vector_replay_features_evex_scalar_insert_memory.rs"]
+mod evex_scalar_insert_memory;
 #[path = "vector_replay_feature_probes.rs"]
 mod feature_probes;
 
@@ -752,6 +754,16 @@ pub(crate) fn x86_native_replay_feature_requirements(
                     &mut all_spans_support_avx_ymm16,
                 )
             {
+                index += consumed;
+            } else if let Some(consumed) = evex_scalar_insert_memory::accumulate_evex_scalar_insert_memory_replay_requirements(
+                block,
+                index,
+                func,
+                &virtual_definitions,
+                &virtual_uses,
+                &mut requirements,
+                &mut all_spans_support_avx_ymm16,
+            ) {
                 index += consumed;
             } else if let Some(consumed) =
                 evex_integer_memory::accumulate_evex_integer_memory_replay_requirements(
