@@ -389,6 +389,16 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 &mut all_spans_support_avx_ymm16,
             ) {
                 index += consumed;
+            } else if let Some(consumed) = super::evex_movntdqa_memory_features::accumulate_evex_movntdqa_memory_requirements(
+                block,
+                index,
+                func,
+                &virtual_definitions,
+                &virtual_uses,
+                &mut requirements,
+                &mut all_spans_support_avx_ymm16,
+            ) {
+                index += consumed;
             } else if let Some(consumed) = super::evex_packed_move_memory_features::accumulate_evex_packed_move_memory_requirements(
                 block,
                 index,

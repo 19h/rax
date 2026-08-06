@@ -16,7 +16,13 @@ pub fn evex_nt_load(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
         Error::Emulator("EVEX non-temporal load requires EVEX prefix".to_string())
     })?;
 
-    if evex.aaa != 0 || evex.z || evex.broadcast || evex.vvvv != 0xF {
+    if evex.aaa != 0
+        || evex.z
+        || evex.broadcast
+        || evex.vvvv != 0xF
+        || !evex.v_prime
+        || evex.ll == 3
+    {
         return vcpu.inject_undefined_instruction();
     }
 

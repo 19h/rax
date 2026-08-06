@@ -40,6 +40,7 @@ mod evex_lane_shuffle_memory;
 mod evex_logic_memory;
 mod evex_mask_blend_memory;
 mod evex_memory;
+mod evex_movntdqa_memory;
 mod evex_multishift_memory;
 mod evex_packed_abs_memory;
 mod evex_packed_convert_memory;
@@ -229,6 +230,7 @@ pub(crate) use evex_logic_memory::{
 pub(crate) use evex_mask_blend_memory::{
     X86EvexMaskBlendMemoryEncoding, X86EvexMaskBlendMemoryReplay,
 };
+pub(crate) use evex_movntdqa_memory::X86EvexMovntdqaMemoryEncoding;
 pub(crate) use evex_multishift_memory::{
     X86EvexMultiShiftMemoryEncoding, X86EvexMultiShiftMemoryReplay,
 };

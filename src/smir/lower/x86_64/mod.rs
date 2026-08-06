@@ -150,6 +150,8 @@ mod evex_mask_blend_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_masked_logic_memory_source;
 #[cfg(feature = "smir-jit")]
+mod evex_movntdqa_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_multishift_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_packed_abs_memory_source;

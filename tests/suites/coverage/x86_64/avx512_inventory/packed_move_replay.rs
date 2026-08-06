@@ -14,6 +14,10 @@ mod expand_memory_replay;
 #[path = "integer_narrow_memory_replay.rs"]
 mod integer_narrow_memory_replay;
 
+#[cfg(feature = "smir-jit")]
+#[path = "movntdqa_memory_replay.rs"]
+mod movntdqa_memory_replay;
+
 #[test]
 fn register_evex_packed_move_replay_closes_240_generated_lift_lower_gaps() {
     let expected_mnemonics = set_from_slice(&[

@@ -109,6 +109,9 @@ mod gpr_broadcast_tests;
 mod mask_broadcast_tests;
 
 #[cfg(test)]
+mod nt_load_tests;
+
+#[cfg(test)]
 mod pair_intersect_tests;
 
 #[cfg(test)]

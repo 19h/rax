@@ -12,6 +12,7 @@ use crate::smir::lower::SmirLowerer;
 use crate::smir::lower::runtime::{
     GuestRegs, X86_VECTOR_STATE_YMM16, is_native_clobber_safe_excluding,
     is_x86_aarch64_native_clobber_safe_excluding, uses_x86_native_vectors_excluding,
+    x86_jit_evex_movntdqa_memory_sequence, x86_jit_vex_movntdqa_memory_sequence,
     x86_native_replay_feature_requirements, x86_native_vector_uses_avx_ymm16_only_excluding,
 };
 use crate::smir::lower::x86_64::X86_64Lowerer;
@@ -598,11 +599,60 @@ fn classifier_and_lowerer_fail_closed_for_every_graph_and_provenance_invariant()
         ("byte width mismatch", byte_width_mismatch),
         ("register-form provenance", register_bytes),
         ("legacy provenance", legacy_bytes),
-        ("EVEX provenance", evex_bytes),
     ];
     for (name, function) in malformed {
         assert_rejected(name, &function);
     }
+
+    // This graph is also the canonical EVEX.128 VMOVNTDQA decomposition. The
+    // VEX family classifier must reject the EVEX bytes, while the complete
+    // dispatcher must now route them through the EVEX family rather than
+    // treating valid alternate-family provenance as malformed.
+    let virtual_definitions = std::collections::HashMap::from([(temporary, 1usize)]);
+    let virtual_uses = std::collections::HashMap::from([(temporary, 1usize)]);
+    assert!(
+        x86_jit_vex_movntdqa_memory_sequence(
+            &evex_bytes.blocks[0],
+            0,
+            true,
+            &evex_bytes.x86_instruction_bytes,
+            &virtual_definitions,
+            &virtual_uses,
+        )
+        .is_none()
+    );
+    assert!(
+        x86_jit_evex_movntdqa_memory_sequence(
+            &evex_bytes.blocks[0],
+            0,
+            true,
+            &evex_bytes.x86_instruction_bytes,
+            &virtual_definitions,
+            &virtual_uses,
+        )
+        .is_some()
+    );
+    let excluded = std::collections::HashMap::new();
+    assert!(is_native_clobber_safe_excluding(
+        &evex_bytes,
+        &excluded,
+        true
+    ));
+    let requirements = x86_native_replay_feature_requirements(&evex_bytes, &excluded);
+    assert!(requirements.any);
+    assert!(requirements.needs_avx && requirements.needs_avx512vl);
+    assert!(requirements.has_k16_opmask_span);
+
+    let mut evex_lowerer = X86_64Lowerer::new();
+    evex_lowerer.set_mem_helpers(true);
+    evex_lowerer.set_preserve_vector_mem_helpers(true);
+    evex_lowerer.set_native_vector_state_active(true);
+    evex_lowerer.set_narrow_vector_opmask_helpers(true);
+    evex_lowerer.set_avx_ymm16_vector_state(false);
+    evex_lowerer.set_jit_fault_deopt_guards(true);
+    evex_lowerer
+        .lower_function(&evex_bytes)
+        .expect("valid EVEX provenance routes through EVEX VMOVNTDQA lowering");
 
     let mut alternate_wig = base;
     alternate_wig.x86_instruction_bytes.insert(
