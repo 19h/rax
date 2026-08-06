@@ -102,7 +102,7 @@ pub use family_spans::*;
 pub(crate) use classifiers::{
     X86EvexAlignrMemoryEncoding, X86EvexBf16MemoryEncoding, X86EvexBf16MemoryKind,
     X86EvexBf16MemoryReplay, X86EvexBroadcastInterleaveMemoryEncoding,
-    X86EvexBroadcastLogicMemoryEncoding, X86EvexBwShuffleMaddKind,
+    X86EvexBroadcastLogicMemoryEncoding, X86EvexBroadcastMemoryEncoding, X86EvexBwShuffleMaddKind,
     X86EvexBwShuffleMaddMemoryEncoding, X86EvexChunkInsertMemoryEncoding,
     X86EvexChunkShuffleMemoryEncoding, X86EvexChunkShuffleMemoryReplay,
     X86EvexDbpsadbwMemoryEncoding, X86EvexFixupImmMemoryEncoding, X86EvexFixupImmMemoryReplay,

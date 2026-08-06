@@ -357,7 +357,19 @@ pub(crate) fn x86_native_replay_feature_requirements(
         }
         let mut index = 0usize;
         while index < block.ops.len() {
-            if let Some(sequence) = super::x86_jit_evex_packed_extend_memory_sequence(
+            if let Some(consumed) =
+                super::evex_broadcast_memory_features::accumulate_evex_broadcast_memory_requirements(
+                    block,
+                    index,
+                    func,
+                    &virtual_definitions,
+                    &virtual_uses,
+                    &mut requirements,
+                    &mut all_spans_support_avx_ymm16,
+                )
+            {
+                index += consumed;
+            } else if let Some(sequence) = super::x86_jit_evex_packed_extend_memory_sequence(
                 block,
                 index,
                 true,

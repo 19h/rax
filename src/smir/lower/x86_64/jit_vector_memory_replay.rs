@@ -31,6 +31,7 @@ impl X86_64Lowerer {
             };
         }
 
+        try_replay!(try_lower_jit_evex_broadcast_memory_source);
         try_replay!(try_lower_jit_vpcom_memory_source);
         try_replay!(try_lower_jit_vbit_select_memory_source);
         try_replay!(try_lower_jit_xop_memory_source);

@@ -148,6 +148,34 @@ impl X86_64Lowerer {
         self.code.emit_u8(0x58); // pop guest RAX
     }
 
+    /// Copy the low 32 helper-produced bytes into a reserved stack slot while
+    /// preserving guest RAX, RFLAGS, and the complete architectural ZMM0.
+    /// The caller owns `[rsp, rsp + 32)`; the temporary push places that slot
+    /// at `[rsp + 8]` during the unaligned store.
+    pub(crate) fn emit_jit_vector_scratch_stack_store_256(&mut self) {
+        let scratch = PhysReg::Ymm(0);
+        self.code.emit_u8(0x50); // push guest RAX
+        self.emit_load_state_ptr_rax();
+        self.emit_jit_vector_scratch_load(scratch, VecWidth::V256);
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_vex_prefix(
+                X86VecMap::Map0F,
+                X86SsePrefix::Rep,
+                VecWidth::V256,
+                false,
+                scratch.vec_ext(),
+                0,
+                PhysReg::Rsp.vec_ext(),
+                0,
+            );
+            emitter.code.emit_u8(0x7F); // VMOVDQU [rsp+8],ymm0
+            emitter.emit_modrm_mem_disp(scratch, PhysReg::Rsp, 8, DispSize::Disp8);
+        }
+        self.emit_jit_vector_scratch_restore(0);
+        self.code.emit_u8(0x58); // pop guest RAX
+    }
+
     /// Copy the low 1/2/4/8 bytes of RAX into the nonarchitectural helper
     /// transfer slot. RCX must contain the state pointer. The emitted MOV
     /// preserves RFLAGS.

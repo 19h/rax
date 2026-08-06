@@ -576,34 +576,40 @@ pub(super) fn exact_evex_reconstructed_vector_mask_result(
 
 /// Match the flag-neutral `((x | -x) >> 63)` normalization used to convert
 /// `mask & applicable_bits` into the exact bit-0 predicate required by
-/// PredLoad. Advances `offset` past the four-op graph.
-pub(super) fn exact_nonzero_mask_predicate(
+/// PredLoad. Advances `offset` past the four-op graph, or the exact three-op
+/// O2 form where `applicable_bits == u64::MAX` makes the leading AND an
+/// identity and the optimizer removes it.
+pub(super) fn exact_nonzero_mask_predicate_with_uses(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
     offset: &mut usize,
     guest_pc: GuestAddr,
     mask: VReg,
     applicable_bits: u64,
+    predicate_uses: usize,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
 ) -> Option<VReg> {
-    let and = block.ops.get(index + *offset)?;
-    let active_mask = match and.kind {
+    let first = block.ops.get(index + *offset)?;
+    let active_mask = match first.kind {
         OpKind::And {
             dst,
             src1,
             src2: SrcOperand::Imm(actual_bits),
             width: OpWidth::W64,
             flags: FlagUpdate::None,
-        } if and.x86_hint.is_none() && src1 == mask && actual_bits == applicable_bits as i64 => dst,
+        } if first.x86_hint.is_none() && src1 == mask && actual_bits == applicable_bits as i64 => {
+            if first.guest_pc != guest_pc
+                || !exact_virtual_definition_use(dst, 1, 2, virtual_definitions, virtual_uses)
+            {
+                return None;
+            }
+            *offset += 1;
+            dst
+        }
+        _ if applicable_bits == u64::MAX => mask,
         _ => return None,
     };
-    if and.guest_pc != guest_pc
-        || !exact_virtual_definition_use(active_mask, 1, 2, virtual_definitions, virtual_uses)
-    {
-        return None;
-    }
-    *offset += 1;
 
     let neg = block.ops.get(index + *offset)?;
     let negated = match neg.kind {
@@ -652,12 +658,41 @@ pub(super) fn exact_nonzero_mask_predicate(
         _ => return None,
     };
     if shr.guest_pc != guest_pc
-        || !single_definition_single_use(predicate, virtual_definitions, virtual_uses)
+        || !exact_virtual_definition_use(
+            predicate,
+            1,
+            predicate_uses,
+            virtual_definitions,
+            virtual_uses,
+        )
     {
         return None;
     }
     *offset += 1;
     Some(predicate)
+}
+
+pub(super) fn exact_nonzero_mask_predicate(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    offset: &mut usize,
+    guest_pc: GuestAddr,
+    mask: VReg,
+    applicable_bits: u64,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<VReg> {
+    exact_nonzero_mask_predicate_with_uses(
+        block,
+        index,
+        offset,
+        guest_pc,
+        mask,
+        applicable_bits,
+        1,
+        virtual_definitions,
+        virtual_uses,
+    )
 }
 
 /// Memory materialization selected by an EVEX E2/E3/E4-compatible native replay.

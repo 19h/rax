@@ -5,9 +5,9 @@ use crate::smir::lower::X86_JIT_VECTOR_SCRATCH_INDEX;
 use crate::smir::lower::runtime::GuestRegs;
 
 /// Read one complete vector operand before modifying an architectural ZMM slot,
-/// or a 4/8/16/32/64-byte fusion operand into the reserved nonarchitectural
-/// scratch. Architectural indices are 0..=31; index 32 names only
-/// `GuestRegs::vector_scratch`.
+/// or a 1/2/4/8/16/32/64-byte fusion operand into the reserved
+/// nonarchitectural scratch. Architectural indices are 0..=31; index 32 names
+/// only `GuestRegs::vector_scratch`.
 pub(super) unsafe extern "C" fn rax_jit_vec_load(
     state: *mut GuestRegs,
     addr: u64,
@@ -17,7 +17,7 @@ pub(super) unsafe extern "C" fn rax_jit_vec_load(
 ) -> u64 {
     let scratch = dst_idx == X86_JIT_VECTOR_SCRATCH_INDEX;
     let size_valid = if scratch {
-        matches!(size, 4 | 8 | 16 | 32 | 64)
+        matches!(size, 1 | 2 | 4 | 8 | 16 | 32 | 64)
     } else {
         matches!(size, 16 | 32 | 64)
     };
@@ -171,7 +171,7 @@ mod tests {
         );
         assert_eq!(state.vector_scratch[2..], [0; 6]);
 
-        for size in [4, 8] {
+        for size in [1, 2, 4, 8] {
             state.vector_scratch = [u64::MAX; 8];
             assert_eq!(
                 unsafe {
@@ -208,6 +208,10 @@ mod tests {
             0
         );
         assert_eq!(unsafe { rax_jit_vec_load(&mut state, 0x2000, 3, 8, 0) }, 0);
+        assert_eq!(
+            unsafe { rax_jit_vec_load(&mut state, 0x2000, X86_JIT_VECTOR_SCRATCH_INDEX, 3, 1) },
+            0
+        );
 
         state.zmm[31] = [
             0x0706_0504_0302_0100,

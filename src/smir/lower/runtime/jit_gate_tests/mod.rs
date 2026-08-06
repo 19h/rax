@@ -39,6 +39,8 @@ mod evex_broadcast_interleave_memory_source;
 #[cfg(test)]
 mod evex_broadcast_logic_memory_source;
 #[cfg(test)]
+mod evex_broadcast_memory_source;
+#[cfg(test)]
 mod evex_bw_immediate_replay;
 #[cfg(test)]
 mod evex_bw_shuffle_madd_memory_source;

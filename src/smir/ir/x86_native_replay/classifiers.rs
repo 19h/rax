@@ -6,6 +6,7 @@ mod evex_alignr_memory;
 mod evex_bf16_memory;
 mod evex_broadcast_interleave_memory;
 mod evex_broadcast_logic_memory;
+mod evex_broadcast_memory;
 mod evex_bw_shuffle_madd_memory;
 mod evex_chunk_insert_memory;
 mod evex_chunk_shuffle_memory;
@@ -144,6 +145,7 @@ pub(crate) use evex_bf16_memory::{
 };
 pub(crate) use evex_broadcast_interleave_memory::X86EvexBroadcastInterleaveMemoryEncoding;
 pub(crate) use evex_broadcast_logic_memory::X86EvexBroadcastLogicMemoryEncoding;
+pub(crate) use evex_broadcast_memory::X86EvexBroadcastMemoryEncoding;
 pub(crate) use evex_bw_shuffle_madd_memory::{
     X86EvexBwShuffleMaddKind, X86EvexBwShuffleMaddMemoryEncoding,
 };
