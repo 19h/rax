@@ -267,6 +267,7 @@ pub(crate) use fp_class::{X86EvexFpClassMemoryEncoding, X86EvexFpClassMemoryRepl
 pub(crate) use fp_round::X86VexRoundMemoryEncoding;
 pub(crate) use fp16_narrow::X86VexFp16NarrowMemoryEncoding;
 pub(crate) use gfni::{X86EvexGfniAffineMemoryEncoding, X86EvexGfniAffineMemoryReplay};
+pub(crate) use packed_move::{X86EvexPackedMoveMemoryEncoding, X86EvexPackedMoveMemoryKind};
 pub(crate) use scalar_convert_memory::{
     X86VexScalarConvertMemoryEncoding, X86VexScalarConvertMemoryKind,
 };
@@ -1299,60 +1300,6 @@ impl X86InstructionBytes {
             return None;
         }
         Some(ll != 2)
-    }
-
-    /// Validate register-only EVEX packed moves and return whether the vector
-    /// length requires AVX-512VL. This covers VMOVUPS/UPD, VMOVAPS/APD,
-    /// VMOVDQA32/64, and VMOVDQU8/16/32/64 in both opcode directions. Exact
-    /// mandatory-prefix and W combinations distinguish all ten mnemonics.
-    /// Reserved EVEX.vvvv/V', EVEX.b, vector length, masking, and memory forms
-    /// fail closed; aligned forms are safe because no memory operand is
-    /// admitted.
-    pub fn evex_register_packed_move_needs_vl(&self) -> Option<bool> {
-        let bytes = self.as_slice();
-        if bytes.len() != 6 || bytes[0] != 0x62 {
-            return None;
-        }
-        let p0 = bytes[1];
-        let p1 = bytes[2];
-        let p2 = bytes[3];
-        let opcode = bytes[4];
-        let modrm = bytes[5];
-
-        // Every admitted form uses map 0F, reserved EVEX.vvvv=1111b and
-        // EVEX.V'=1, and a register ModR/M operand.
-        if p0 & 0x0f != 1
-            || p1 & 0x04 == 0
-            || p1 & 0x78 != 0x78
-            || p2 & 0x08 == 0
-            || modrm >> 6 != 3
-        {
-            return None;
-        }
-
-        let pp = p1 & 0x03;
-        let w = p1 & 0x80 != 0;
-        match (opcode, pp, w) {
-            // VMOVUPS/APS and VMOVUPD/APD, load and store opcode directions.
-            (0x10 | 0x11 | 0x28 | 0x29, 0, false)
-            | (0x10 | 0x11 | 0x28 | 0x29, 1, true)
-            // VMOVDQA32/64 and VMOVDQU8/16/32/64, both directions.
-            | (0x6f | 0x7f, 1..=3, _) => {}
-            _ => return None,
-        }
-
-        let zeroing = p2 & 0x80 != 0;
-        let ll = (p2 >> 5) & 0x03;
-        let embedded_control = p2 & 0x10 != 0;
-        let mask = p2 & 0x07;
-        if embedded_control || (zeroing && mask == 0) {
-            return None;
-        }
-        match ll {
-            0 | 1 => Some(true),
-            2 => Some(false),
-            _ => None,
-        }
     }
 
     /// Validate register-source EVEX broadcasts whose repeated element or

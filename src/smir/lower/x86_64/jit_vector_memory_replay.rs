@@ -71,6 +71,7 @@ impl X86_64Lowerer {
         try_replay!(try_lower_jit_evex_fp_class_memory_source);
         try_replay!(try_lower_jit_evex_fixup_imm_memory_source);
         try_replay!(try_lower_jit_evex_packed_funnel_shift_memory_source);
+        try_replay!(try_lower_jit_evex_packed_move_memory_source);
         try_replay!(try_lower_jit_evex_packed_rotate_memory_source);
         try_replay!(try_lower_jit_evex_packed_variable_shift_memory_source);
         try_replay!(try_lower_jit_evex_range_memory_source);

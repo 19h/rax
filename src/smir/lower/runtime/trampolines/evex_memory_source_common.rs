@@ -1310,14 +1310,48 @@ pub(super) fn exact_evex_e4_memory_sequence_tail<F>(
 where
     F: Fn(&crate::smir::ir::SmirBlock, usize, VReg) -> Option<usize>,
 {
+    exact_evex_e4_memory_sequence_tail_after_prefix(
+        block,
+        index,
+        0,
+        shape,
+        virtual_definitions,
+        virtual_uses,
+        exact_tail,
+    )
+}
+
+/// As [`exact_evex_e4_memory_sequence_tail`], after a caller-validated
+/// same-instruction prefix such as the unconditional Type-E1 alignment guard.
+/// The returned offsets and consumed count remain relative to `index`.
+pub(super) fn exact_evex_e4_memory_sequence_tail_after_prefix<F>(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    prefix_ops: usize,
+    shape: X86EvexE4MemoryShape,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+    exact_tail: F,
+) -> Option<X86EvexE4MemoryMatch>
+where
+    F: Fn(&crate::smir::ir::SmirBlock, usize, VReg) -> Option<usize>,
+{
     let guest_pc = block.ops.get(index)?.guest_pc;
     if !exact_evex_memory_sequence_frontier(block, index, guest_pc) {
         return None;
     }
-    let exact = match (shape.form, shape.writemask) {
+    let source_index = index.checked_add(prefix_ops)?;
+    if block.ops.get(source_index)?.guest_pc != guest_pc
+        || block.ops[index..source_index]
+            .iter()
+            .any(|op| op.guest_pc != guest_pc)
+    {
+        return None;
+    }
+    let mut exact = match (shape.form, shape.writemask) {
         (X86EvexE4MemoryReplayForm::Vector, None) => exact_unmasked_e4_vector(
             block,
-            index,
+            source_index,
             shape,
             virtual_definitions,
             virtual_uses,
@@ -1325,7 +1359,7 @@ where
         ),
         (X86EvexE4MemoryReplayForm::Broadcast, None) => exact_unmasked_e4_broadcast(
             block,
-            index,
+            source_index,
             shape,
             virtual_definitions,
             virtual_uses,
@@ -1333,7 +1367,7 @@ where
         ),
         (X86EvexE4MemoryReplayForm::Broadcast, Some(_)) => exact_masked_e4_broadcast(
             block,
-            index,
+            source_index,
             shape,
             virtual_definitions,
             virtual_uses,
@@ -1342,7 +1376,7 @@ where
         .or_else(|| {
             exact_masked_e4_reconstructed_broadcast(
                 block,
-                index,
+                source_index,
                 shape,
                 virtual_definitions,
                 virtual_uses,
@@ -1351,7 +1385,7 @@ where
         }),
         (X86EvexE4MemoryReplayForm::MaskedVector, Some(_)) => exact_masked_e4_vector(
             block,
-            index,
+            source_index,
             shape,
             virtual_definitions,
             virtual_uses,
@@ -1359,7 +1393,7 @@ where
         ),
         (X86EvexE4MemoryReplayForm::Scalar, _) => exact_scalar_e3_memory(
             block,
-            index,
+            source_index,
             shape,
             virtual_definitions,
             virtual_uses,
@@ -1367,7 +1401,9 @@ where
         ),
         _ => None,
     }?;
-    let address = exact_evex_memory_sequence_address(block, index, exact.address_offset)?;
+    let address = exact_evex_memory_sequence_address(block, source_index, exact.address_offset)?;
+    exact.consumed = exact.consumed.checked_add(prefix_ops)?;
+    exact.address_offset = exact.address_offset.checked_add(prefix_ops)?;
     exact_evex_memory_apx_frontier(block, index, guest_pc, address).then_some(exact)
 }
 
