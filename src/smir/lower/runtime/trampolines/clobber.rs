@@ -1589,7 +1589,8 @@ pub(crate) fn block_is_clobber_safe(
                 | OpKind::X86Tbm { .. }
                 | OpKind::X86Adx { .. }
                 | OpKind::X86XTest
-        ) || guarded_div_ok;
+        ) || guarded_div_ok
+            || crate::smir::lower::x86_64::x86_flag_control_shape_valid(op);
         let vector_ok = if matches!(op.kind, OpKind::X86Opmask(_)) {
             opmask_ok
         } else {

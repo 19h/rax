@@ -95,6 +95,18 @@ impl X86_64Lifter {
         let opcode = opcode_bytes[0];
         let after_opcode = &opcode_bytes[1..];
 
+        let lift_flag_control = |kind| {
+            if prefix.lock {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes[..(prefix.cursor + 1).min(bytes.len())].to_vec(),
+                });
+            }
+            let mut ops = self.rex2_apx_guard_ops(&prefix, pc);
+            ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
+            Ok(LiftResult::fallthrough(ops, prefix.cursor + 1))
+        };
+
         let result = match opcode {
             // XCHG rax, r64 / NOP / PAUSE (with REP prefix)
             0x90..=0x97 => {
@@ -130,18 +142,9 @@ impl X86_64Lifter {
             }
 
             // CMC/CLC/STC
-            0xF5 => Ok(LiftResult::fallthrough(
-                vec![SmirOp::new(OpId(0), pc, OpKind::CmcCF)],
-                prefix.cursor + 1,
-            )),
-            0xF8 => Ok(LiftResult::fallthrough(
-                vec![SmirOp::new(OpId(0), pc, OpKind::SetCF { value: false })],
-                prefix.cursor + 1,
-            )),
-            0xF9 => Ok(LiftResult::fallthrough(
-                vec![SmirOp::new(OpId(0), pc, OpKind::SetCF { value: true })],
-                prefix.cursor + 1,
-            )),
+            0xF5 => lift_flag_control(OpKind::CmcCF),
+            0xF8 => lift_flag_control(OpKind::SetCF { value: false }),
+            0xF9 => lift_flag_control(OpKind::SetCF { value: true }),
             0xFA if prefix.lock => Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes[..(prefix.cursor + 1).min(bytes.len())].to_vec(),
@@ -178,14 +181,8 @@ impl X86_64Lifter {
                     bytes_consumed,
                 ))
             }
-            0xFC => Ok(LiftResult::fallthrough(
-                vec![SmirOp::new(OpId(0), pc, OpKind::SetDF { value: false })],
-                prefix.cursor + 1,
-            )),
-            0xFD => Ok(LiftResult::fallthrough(
-                vec![SmirOp::new(OpId(0), pc, OpKind::SetDF { value: true })],
-                prefix.cursor + 1,
-            )),
+            0xFC => lift_flag_control(OpKind::SetDF { value: false }),
+            0xFD => lift_flag_control(OpKind::SetDF { value: true }),
             // INT1/ICEBP raises trap-class #DB without modifying DR6. Unlike
             // INT n/INT3, gate-DPL checks do not apply. Keep it terminal so a
             // native region hands the instruction to the direct interpreter

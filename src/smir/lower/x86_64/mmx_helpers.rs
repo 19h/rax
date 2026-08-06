@@ -59,6 +59,10 @@ impl X86_64Lowerer {
             if preserve_vectors {
                 self.emit_helper_vector_state(base, true);
             }
+            // Every caller saves guest RFLAGS before publishing helper state.
+            // Clear host DF only after that snapshot: the platform ABI requires
+            // DF=0 at Rust call boundaries, and the caller restores guest DF.
+            self.code.emit_u8(0xFC);
         } else {
             if preserve_vectors {
                 self.emit_helper_vector_state(base, false);

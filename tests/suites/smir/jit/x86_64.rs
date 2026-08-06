@@ -31,6 +31,8 @@ mod apx_push2_pop2;
 mod apx_reserved;
 #[path = "x86_64/cmpccxadd.rs"]
 mod cmpccxadd;
+#[path = "x86_64/flag_control.rs"]
+mod flag_control;
 #[path = "x86_64/group3_alias.rs"]
 mod group3_alias;
 #[path = "x86_64/legacy_0f38_terminal.rs"]

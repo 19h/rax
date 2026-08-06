@@ -14,6 +14,37 @@ pub(super) fn jit_mxcsr_masks_all_exceptions(mxcsr: u32) -> bool {
     mxcsr & X86_MXCSR_EXCEPTION_MASKS == X86_MXCSR_EXCEPTION_MASKS
 }
 
+/// RFLAGS fields owned by native execution. Arithmetic operations materialize
+/// the six status flags, while CLD/STD commit DF through the GuestRegs shadow.
+#[cfg(target_arch = "x86_64")]
+const X86_NATIVE_RFLAGS_MASK: u64 = crate::isa::x86_64::flags::bits::CF
+    | crate::isa::x86_64::flags::bits::PF
+    | crate::isa::x86_64::flags::bits::AF
+    | crate::isa::x86_64::flags::bits::ZF
+    | crate::isa::x86_64::flags::bits::SF
+    | crate::isa::x86_64::flags::bits::OF
+    | crate::isa::x86_64::flags::bits::DF;
+
+/// Merge host-safe native RFLAGS, the AC shadow, and virtualized interrupt
+/// controls without importing any other host-process flag state.
+#[cfg(target_arch = "x86_64")]
+pub(super) fn merge_native_rflags(
+    prior: u64,
+    native: u64,
+    ac_flag: bool,
+    interrupt_flags: u64,
+) -> u64 {
+    let interrupt_control = crate::isa::x86_64::execute::system::X86_INTERRUPT_CONTROL_RFLAGS_MASK;
+    (prior & !(X86_NATIVE_RFLAGS_MASK | crate::isa::x86_64::flags::bits::AC | interrupt_control))
+        | (native & X86_NATIVE_RFLAGS_MASK)
+        | (interrupt_flags & interrupt_control)
+        | if ac_flag {
+            crate::isa::x86_64::flags::bits::AC
+        } else {
+            0
+        }
+}
+
 /// A compiled native hot-block region. The lowered code is register-state
 /// independent (it marshals guest state in/out per run), so one `JitRegion` is
 /// cached by (RIP, mode_tag) and re-run for every later entry to that RIP until
@@ -144,6 +175,7 @@ impl X86_64Vcpu {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::isa::x86_64::flags;
     use crate::smir::ir::X86InstructionBytes;
     use crate::smir::ir::types::{BlockId, FunctionId};
     use std::sync::Arc;
@@ -175,6 +207,44 @@ mod tests {
                 ),
                 "MXCSR exception mask bit {bit}"
             );
+        }
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn native_rflags_merge_commits_status_and_df_without_host_control_leakage() {
+        let interrupt_control =
+            crate::isa::x86_64::execute::system::X86_INTERRUPT_CONTROL_RFLAGS_MASK;
+        let preserved = 0x2 | flags::bits::TF | flags::bits::NT | flags::bits::RF;
+        let prior = preserved | X86_NATIVE_RFLAGS_MASK | flags::bits::AC | interrupt_control;
+        let native_bits = [
+            flags::bits::CF,
+            flags::bits::PF,
+            flags::bits::AF,
+            flags::bits::ZF,
+            flags::bits::SF,
+            flags::bits::OF,
+            flags::bits::DF,
+        ];
+
+        for pattern in 0u64..128 {
+            let native = native_bits.into_iter().enumerate().fold(
+                flags::bits::ID | flags::bits::AC | flags::bits::VM,
+                |value, (index, bit)| value | (((pattern >> index) & 1) * bit),
+            );
+            for ac_flag in [false, true] {
+                for interrupt_flags in [0, interrupt_control] {
+                    let expected = preserved
+                        | (native & X86_NATIVE_RFLAGS_MASK)
+                        | interrupt_flags
+                        | if ac_flag { flags::bits::AC } else { 0 };
+                    assert_eq!(
+                        merge_native_rflags(prior, native, ac_flag, interrupt_flags),
+                        expected,
+                        "pattern={pattern:#04X}, AC={ac_flag}, interrupt={interrupt_flags:#08X}"
+                    );
+                }
+            }
         }
     }
 

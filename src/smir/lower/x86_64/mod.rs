@@ -227,6 +227,8 @@ mod far_call;
 pub use far_call::*;
 mod far_return;
 pub use far_return::*;
+mod flag_control;
+pub(crate) use flag_control::*;
 mod fast_system_transfer;
 pub use fast_system_transfer::*;
 mod monitor_mwait;

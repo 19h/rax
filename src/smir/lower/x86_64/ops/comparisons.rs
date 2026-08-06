@@ -2417,12 +2417,7 @@ impl X86_64Lowerer {
             }
 
             OpKind::SetDF { value } => {
-                let mut emitter = X86Emitter::new(&mut self.code);
-                if *value {
-                    emitter.emit_std();
-                } else {
-                    emitter.emit_cld();
-                }
+                self.emit_x86_set_df(*value);
             }
 
             OpKind::SetAC { .. } => self.emit_x86_set_ac(op)?,

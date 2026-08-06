@@ -3742,7 +3742,7 @@ mod jit_state;
 ))]
 use jit_state::JitRegion;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-use jit_state::jit_mxcsr_masks_all_exceptions;
+use jit_state::{jit_mxcsr_masks_all_exceptions, merge_native_rflags};
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_mem_load.rs"]
@@ -5004,9 +5004,9 @@ impl X86_64Vcpu {
         // architectural RFLAGS (the region's entry may read CF/etc., and the
         // trampoline `popfq`s `gr.rflags`).
         self.materialize_flags();
-        // Guest RFLAGS before the region — every bit EXCEPT the six status flags
-        // (CF/PF/AF/ZF/SF/OF) must be preserved across the native region: the
-        // whitelisted ops only ever touch the status flags, and the trampoline's
+        // Guest RFLAGS before the region — every bit except the six status flags
+        // and DF must be preserved across the native region: admitted operations
+        // can change only those fields, and the trampoline's
         // user-mode `popfq`/`pushfq` does NOT round-trip IF/IOPL/etc. (`pushfq`
         // returns the HOST's IF=1), so taking those bits from the native result
         // would spuriously ENABLE guest interrupts mid-boot and crash the kernel.
@@ -5274,22 +5274,11 @@ impl X86_64Vcpu {
         if region.uses_x87_tag_state {
             self.fpu.tag_word = gr.x87_tag_word as u16;
         }
-        // Merge status flags from the host result, AC and virtualized interrupt
-        // control fields from their dedicated guest shadows, and preserve every
-        // other bit (DF, NT, reserved, …) from the pre-region value. Host AC is
-        // deliberately always clear.
-        const STATUS: u64 = flags::bits::CF
-            | flags::bits::PF
-            | flags::bits::AF
-            | flags::bits::ZF
-            | flags::bits::SF
-            | flags::bits::OF;
-        const INTERRUPT_CONTROL: u64 =
-            crate::isa::x86_64::execute::system::X86_INTERRUPT_CONTROL_RFLAGS_MASK;
-        self.regs.rflags = (pre_rflags & !(STATUS | flags::bits::AC | INTERRUPT_CONTROL))
-            | (gr.rflags & STATUS)
-            | (gr.interrupt_flags & INTERRUPT_CONTROL)
-            | if gr.ac_flag != 0 { flags::bits::AC } else { 0 };
+        // Merge status flags and DF from the host-safe native image, AC and
+        // virtualized interrupt controls from their dedicated shadows, and
+        // preserve every other architectural bit from the pre-region value.
+        self.regs.rflags =
+            merge_native_rflags(pre_rflags, gr.rflags, gr.ac_flag != 0, gr.interrupt_flags);
         self.interrupt_inhibit = gr.interrupt_inhibit != 0;
         self.regs.rip = gr.exit_pc;
         // The native region produced fully-materialized RFLAGS. Mark the lazy
