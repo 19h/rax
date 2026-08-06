@@ -1,4 +1,4 @@
-//! EVEX `VMOVSH`/`VMOVSS`/`VMOVSD` scalar memory classification.
+//! EVEX scalar floating-point and integer move memory classification.
 
 use super::X86InstructionBytes;
 use super::evex_memory::{memory_operand_end, vector_legacy_prefix_len};
@@ -60,24 +60,35 @@ fn scalar_move_memory_fields(bytes: &[u8]) -> Option<(u8, u8, u8, u8, ScalarMove
     let map = p0 & 0x07;
     let pp = p1 & 0x03;
     let w = p1 & 0x80 != 0;
-    let elem = match (map, pp, w) {
-        (1, 2, false) => VecElementType::F32,
-        (1, 3, true) => VecElementType::F64,
-        (5, 2, false) => VecElementType::F16,
-        _ => return None,
-    };
-    let kind = match opcode {
-        0x10 => X86EvexScalarMoveMemoryKind::Load,
-        0x11 => X86EvexScalarMoveMemoryKind::Store,
+    let (kind, elem) = match (map, pp, w, opcode) {
+        (1, 2, false, 0x10) => (X86EvexScalarMoveMemoryKind::Load, VecElementType::F32),
+        (1, 2, false, 0x11) => (X86EvexScalarMoveMemoryKind::Store, VecElementType::F32),
+        (1, 3, true, 0x10) => (X86EvexScalarMoveMemoryKind::Load, VecElementType::F64),
+        (1, 3, true, 0x11) => (X86EvexScalarMoveMemoryKind::Store, VecElementType::F64),
+        (5, 2, false, 0x10) => (X86EvexScalarMoveMemoryKind::Load, VecElementType::F16),
+        (5, 2, false, 0x11) => (X86EvexScalarMoveMemoryKind::Store, VecElementType::F16),
+        (1, 1, false, 0x6E) => (X86EvexScalarMoveMemoryKind::Load, VecElementType::I32),
+        (1, 1, false, 0x7E) => (X86EvexScalarMoveMemoryKind::Store, VecElementType::I32),
+        (1, 1, true, 0x6E) => (X86EvexScalarMoveMemoryKind::Load, VecElementType::I64),
+        (1, 1, true, 0x7E) => (X86EvexScalarMoveMemoryKind::Store, VecElementType::I64),
+        (1, 2, true, 0x7E) => (X86EvexScalarMoveMemoryKind::Load, VecElementType::I64),
+        (1, 1, true, 0xD6) => (X86EvexScalarMoveMemoryKind::Store, VecElementType::I64),
+        (5, 1, _, 0x6E) => (X86EvexScalarMoveMemoryKind::Load, VecElementType::I16),
+        (5, 1, _, 0x7E) => (X86EvexScalarMoveMemoryKind::Store, VecElementType::I16),
         _ => return None,
     };
     let mask = p2 & 0x07;
     let zeroing = p2 & 0x80 != 0;
     let ll = (p2 >> 5) & 3;
+    let integer = matches!(
+        elem,
+        VecElementType::I16 | VecElementType::I32 | VecElementType::I64
+    );
     if p1 & 0x78 != 0x78
         || p2 & 0x08 == 0
         || p2 & 0x10 != 0
         || ll == 3
+        || (integer && (ll != 0 || mask != 0 || zeroing))
         || modrm >> 6 == 3
         || (zeroing && mask == 0)
         || (kind == X86EvexScalarMoveMemoryKind::Store && zeroing)
@@ -89,9 +100,9 @@ fn scalar_move_memory_fields(bytes: &[u8]) -> Option<(u8, u8, u8, u8, ScalarMove
     let vector =
         (u8::from(p0 & 0x80 == 0) << 3) | (u8::from(p0 & 0x10 == 0) << 4) | ((modrm >> 3) & 7);
     let memory_width = match elem {
-        VecElementType::F16 => MemWidth::B2,
-        VecElementType::F32 => MemWidth::B4,
-        VecElementType::F64 => MemWidth::B8,
+        VecElementType::F16 | VecElementType::I16 => MemWidth::B2,
+        VecElementType::F32 | VecElementType::I32 => MemWidth::B4,
+        VecElementType::F64 | VecElementType::I64 => MemWidth::B8,
         _ => unreachable!("validated scalar move element"),
     };
     Some((
@@ -116,17 +127,21 @@ fn scalar_move_memory_fields(bytes: &[u8]) -> Option<(u8, u8, u8, u8, ScalarMove
 }
 
 impl X86InstructionBytes {
-    /// Validate one EVEX `VMOVSH`, `VMOVSS`, or `VMOVSD` memory form and
-    /// synthesize its exact `[rsp]` replay.
+    /// Validate one supported EVEX scalar move memory form and synthesize its
+    /// exact `[rsp]` replay.
     ///
-    /// Intel specifies a Tuple1 Scalar 2/4/8-byte transfer. For loads, only
+    /// Intel specifies a Tuple1 Scalar 2/4/8-byte transfer. `VMOVSH`,
+    /// `VMOVSS`, and `VMOVSD` may use a writemask; for their loads, only
     /// writemask bit 0 controls the access and an inactive lane merges or
     /// zeroes the low scalar while every destination bit above it is cleared.
-    /// For stores, an inactive bit 0 suppresses the complete memory access;
-    /// zeroing is not encoded for a memory destination. EVEX.vvvv/V' and
-    /// EVEX.b are reserved. All three defined LLIG images are retained exactly
-    /// and do not require AVX-512VL. Segment/address-size prefixes and APX
-    /// B4/X4 extensions remain confined to helper address evaluation.
+    /// For their stores, an inactive bit 0 suppresses the complete memory
+    /// access; zeroing is not encoded for a memory destination. `VMOVD`, both
+    /// `VMOVQ` aliases, and `VMOVW` are unmasked and fixed at EVEX.128; their
+    /// loads zero every destination bit above the transferred integer.
+    /// EVEX.vvvv/V' and EVEX.b are reserved throughout. The three defined LLIG
+    /// images are retained only for the floating-point forms and do not
+    /// require AVX-512VL. Segment/address-size prefixes and APX B4/X4
+    /// extensions remain confined to helper address evaluation.
     ///
     /// Classification is O(1) time and O(1) space because x86 instructions
     /// are bounded to 15 bytes.
@@ -166,7 +181,7 @@ impl X86InstructionBytes {
             opcode: fields.opcode,
             memory_width: fields.memory_width,
             stack_instruction,
-            needs_avx512fp16: fields.elem == VecElementType::F16,
+            needs_avx512fp16: fields.map == 5,
         })
     }
 }

@@ -2,6 +2,10 @@
 
 use super::*;
 
+#[cfg(feature = "smir-jit")]
+#[path = "scalar_integer_move_replay/memory_source.rs"]
+mod memory_source;
+
 #[test]
 fn register_evex_scalar_integer_move_replay_closes_12_generated_lift_lower_gaps() {
     let expected_mnemonics = set_from_slice(&["vmovq", "vmovw"]);

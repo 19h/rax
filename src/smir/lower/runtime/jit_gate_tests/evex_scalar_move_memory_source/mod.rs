@@ -23,6 +23,7 @@ use crate::smir::lower::x86_64::X86_64Lowerer;
 use crate::smir::optimize::OptLevel;
 
 mod classification;
+mod integer;
 #[cfg(target_arch = "x86_64")]
 mod native;
 mod semantics;

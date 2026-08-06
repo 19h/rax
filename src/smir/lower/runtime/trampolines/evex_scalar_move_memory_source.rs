@@ -33,9 +33,9 @@ fn xmm(index: u8) -> VReg {
 
 fn op_width(elem: VecElementType) -> Option<OpWidth> {
     match elem {
-        VecElementType::F16 => Some(OpWidth::W16),
-        VecElementType::F32 => Some(OpWidth::W32),
-        VecElementType::F64 => Some(OpWidth::W64),
+        VecElementType::F16 | VecElementType::I16 => Some(OpWidth::W16),
+        VecElementType::F32 | VecElementType::I32 => Some(OpWidth::W32),
+        VecElementType::F64 | VecElementType::I64 => Some(OpWidth::W64),
         _ => None,
     }
 }
@@ -44,7 +44,10 @@ fn exact_terminal_hint(
     op: &crate::smir::ir::ops::SmirOp,
     encoding: X86EvexScalarMoveMemoryEncoding,
 ) -> bool {
-    if encoding.elem == VecElementType::F16 {
+    if matches!(
+        encoding.elem,
+        VecElementType::F16 | VecElementType::I16 | VecElementType::I32 | VecElementType::I64
+    ) {
         return op.x86_hint.is_none();
     }
     let pp = match encoding.pp {
@@ -76,7 +79,13 @@ fn exact_unmasked_load(
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
 ) -> Option<(usize, usize)> {
-    if encoding.writemask.is_some() || encoding.zeroing {
+    if encoding.writemask.is_some()
+        || encoding.zeroing
+        || !matches!(
+            encoding.elem,
+            VecElementType::F16 | VecElementType::F32 | VecElementType::F64
+        )
+    {
         return None;
     }
     let load = block.ops.get(index)?;
@@ -111,6 +120,87 @@ fn exact_unmasked_load(
         return None;
     }
     Some((2, 0))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn exact_integer_load(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    encoding: X86EvexScalarMoveMemoryEncoding,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<(usize, usize)> {
+    if encoding.writemask.is_some()
+        || encoding.zeroing
+        || !matches!(
+            encoding.elem,
+            VecElementType::I16 | VecElementType::I32 | VecElementType::I64
+        )
+    {
+        return None;
+    }
+    let load = block.ops.get(index)?;
+    let loaded = match &load.kind {
+        OpKind::Load {
+            dst,
+            addr,
+            width,
+            sign: SignExtend::Zero,
+        } if load.x86_hint.is_none()
+            && *width == encoding.memory_width
+            && x86_jit_mem_address_shape_valid(addr) =>
+        {
+            *dst
+        }
+        _ => return None,
+    };
+    if !exact_virtual_definition_use(loaded, 1, 1, virtual_definitions, virtual_uses) {
+        return None;
+    }
+
+    let initialize = block.ops.get(index + 1)?;
+    let zero = match initialize.kind {
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Imm(0),
+            width: OpWidth::W64,
+        } if initialize.x86_hint.is_none() => dst,
+        _ => return None,
+    };
+    if !exact_virtual_definition_use(zero, 1, 1, virtual_definitions, virtual_uses) {
+        return None;
+    }
+
+    let dst = xmm(encoding.vector);
+    let broadcast = block.ops.get(index + 2)?;
+    if !matches!(
+        broadcast.kind,
+        OpKind::VBroadcast {
+            dst: actual_dst,
+            scalar,
+            elem,
+            lanes: 1,
+        } if actual_dst == dst && scalar == zero && elem == encoding.elem
+    ) || broadcast.x86_hint.is_some()
+    {
+        return None;
+    }
+
+    let insert = block.ops.get(index + 3)?;
+    if !matches!(
+        insert.kind,
+        OpKind::VInsertLane {
+            dst: actual_dst,
+            vec,
+            scalar,
+            lane: 0,
+            elem,
+        } if actual_dst == dst && vec == dst && scalar == loaded && elem == encoding.elem
+    ) || !exact_terminal_hint(insert, encoding)
+    {
+        return None;
+    }
+    Some((4, 0))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -332,9 +422,13 @@ pub(crate) fn x86_jit_evex_scalar_move_memory_sequence(
         .evex_scalar_move_memory_encoding()?;
     let (consumed, address_offset) = match encoding.kind {
         X86EvexScalarMoveMemoryKind::Load => {
-            exact_unmasked_load(block, index, encoding, virtual_definitions, virtual_uses).or_else(
-                || exact_masked_load(block, index, encoding, virtual_definitions, virtual_uses),
-            )?
+            exact_integer_load(block, index, encoding, virtual_definitions, virtual_uses)
+                .or_else(|| {
+                    exact_unmasked_load(block, index, encoding, virtual_definitions, virtual_uses)
+                })
+                .or_else(|| {
+                    exact_masked_load(block, index, encoding, virtual_definitions, virtual_uses)
+                })?
         }
         X86EvexScalarMoveMemoryKind::Store => {
             exact_store(block, index, encoding, virtual_definitions, virtual_uses)?

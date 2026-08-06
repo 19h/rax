@@ -225,6 +225,19 @@ impl X86_64Lifter {
                                 0
                             },
                     );
+                    let memory_address = if modrm.is_memory {
+                        let (addr, pre_ops) = self.vec_disp8_addr_to_smir(
+                            prefix,
+                            modrm.addr.as_ref().unwrap(),
+                            next_pc,
+                            8,
+                            ctx,
+                        );
+                        ops.extend(pre_ops);
+                        Some(addr)
+                    } else {
+                        None
+                    };
                     let scalar = ctx.alloc_vreg();
                     ops.push(SmirOp::new(
                         OpId(ops.len() as u16),
@@ -237,15 +250,7 @@ impl X86_64Lifter {
                             sign: SignExtend::Zero,
                         },
                     ));
-                    if modrm.is_memory {
-                        let (addr, pre_ops) = self.vec_disp8_addr_to_smir(
-                            prefix,
-                            modrm.addr.as_ref().unwrap(),
-                            next_pc,
-                            8,
-                            ctx,
-                        );
-                        ops.extend(pre_ops);
+                    if let Some(addr) = memory_address {
                         ops.push(SmirOp::new(
                             OpId(ops.len() as u16),
                             pc,
@@ -363,6 +368,14 @@ impl X86_64Lifter {
                             xmm, scalar, elem, true, pc, ctx, &mut ops,
                         );
                     } else {
+                        let (addr, pre_ops) = self.vec_disp8_addr_to_smir(
+                            prefix,
+                            modrm.addr.as_ref().unwrap(),
+                            next_pc,
+                            mem_width.bytes(),
+                            ctx,
+                        );
+                        ops.extend(pre_ops);
                         let scalar = ctx.alloc_vreg();
                         ops.push(SmirOp::new(
                             OpId(ops.len() as u16),
@@ -375,14 +388,6 @@ impl X86_64Lifter {
                                 sign: SignExtend::Zero,
                             },
                         ));
-                        let (addr, pre_ops) = self.vec_disp8_addr_to_smir(
-                            prefix,
-                            modrm.addr.as_ref().unwrap(),
-                            next_pc,
-                            mem_width.bytes(),
-                            ctx,
-                        );
-                        ops.extend(pre_ops);
                         ops.push(SmirOp::new(
                             OpId(ops.len() as u16),
                             pc,
