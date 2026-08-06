@@ -133,6 +133,8 @@ mod evex_integer_minmax_memory_source;
 #[cfg(test)]
 mod evex_integer_multiply_memory_source;
 #[cfg(test)]
+mod evex_integer_narrow_memory_destination;
+#[cfg(test)]
 mod evex_integer_pack_memory_source;
 #[cfg(test)]
 mod evex_integer_unary_memory_source;

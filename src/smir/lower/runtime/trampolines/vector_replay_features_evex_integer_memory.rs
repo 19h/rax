@@ -23,6 +23,26 @@ pub(super) fn accumulate_evex_integer_memory_replay_requirements(
     requirements: &mut X86NativeReplayFeatureRequirements,
     all_spans_support_avx_ymm16: &mut bool,
 ) -> Option<usize> {
+    if let Some(sequence) = super::super::x86_jit_evex_integer_narrow_memory_sequence(
+        block,
+        index,
+        true,
+        &func.x86_instruction_bytes,
+        virtual_definitions,
+        virtual_uses,
+    ) {
+        requirements.any = true;
+        requirements.needs_avx = true;
+        // The full ZMM/K helper bridge uses AVX-512BW even when the
+        // architectural D/Q narrowing operation itself requires only F.
+        requirements.needs_avx512bw = true;
+        requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
+        let lanes = sequence.encoding.width.lanes(sequence.encoding.src_elem);
+        requirements.has_k16_opmask_span |= sequence.encoding.writemask.is_some() && lanes <= 16;
+        *all_spans_support_avx_ymm16 = false;
+        return Some(sequence.consumed);
+    }
+
     if let Some(sequence) = super::super::x86_jit_evex_compress_memory_sequence(
         block,
         index,

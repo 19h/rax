@@ -13,7 +13,7 @@ use crate::smir::lower::regalloc::PhysReg;
 
 impl X86_64Lowerer {
     #[allow(clippy::too_many_arguments)]
-    fn emit_evex_packed_move_store_lane_helper(
+    pub(super) fn emit_evex_packed_move_store_lane_helper(
         &mut self,
         guest_pc: u64,
         address: &Address,

@@ -1260,7 +1260,7 @@ pub enum X86NarrowMode {
     Truncate,
     /// Interpret the source as signed and clamp to the signed destination range.
     SignedSaturate,
-    /// Interpret the source as signed and clamp to the unsigned destination range.
+    /// Interpret the source as unsigned and clamp to the unsigned destination range.
     UnsignedSaturate,
 }
 
