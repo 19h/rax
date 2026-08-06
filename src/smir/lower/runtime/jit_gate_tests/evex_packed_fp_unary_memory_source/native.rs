@@ -103,8 +103,12 @@ fn selected_cases() -> Vec<PackedUnaryMemoryCase> {
         });
         cases.push(PackedUnaryMemoryCase {
             operation,
-            width: VecWidth::V256,
-            destination: 9,
+            width: if operation.needs_er() {
+                VecWidth::V512
+            } else {
+                VecWidth::V256
+            },
+            destination: if operation.needs_er() { 17 } else { 9 },
             form: SourceForm::Broadcast,
             control: MaskControl::Zero,
         });
@@ -116,6 +120,7 @@ fn host_supports(case: PackedUnaryMemoryCase) -> bool {
     (!case.operation.needs_fp16() || std::is_x86_feature_detected!("avx512fp16"))
         && (case.operation.uses_k16_opmasks() || std::is_x86_feature_detected!("avx512bw"))
         && (!case.operation.needs_dq() || std::is_x86_feature_detected!("avx512dq"))
+        && (!case.operation.needs_er() || crate::smir::lower::runtime::x86_host_has_avx512er())
         && (case.width == VecWidth::V512 || std::is_x86_feature_detected!("avx512vl"))
 }
 

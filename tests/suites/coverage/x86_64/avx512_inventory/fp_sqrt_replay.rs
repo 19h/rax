@@ -2,6 +2,10 @@
 
 use super::*;
 
+#[cfg(feature = "smir-jit")]
+#[path = "packed_er_memory_source.rs"]
+mod packed_er_memory_source;
+
 #[test]
 fn register_evex_fp_sqrt_replay_closes_44_generated_lift_lower_gaps() {
     let expected_mnemonics =

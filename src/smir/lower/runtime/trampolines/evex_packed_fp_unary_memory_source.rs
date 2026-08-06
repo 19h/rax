@@ -80,6 +80,25 @@ fn exact_packed_fp_unary(
                 && actual_lanes == lanes
                 && mask_zeroing == encoding.zeroing
         }
+        OpKind::X86Exp2 {
+            dst,
+            src,
+            mask,
+            elem,
+            width,
+            lanes: actual_lanes,
+            mask_zeroing,
+            suppress_exceptions: false,
+        } => {
+            encoding.kind == X86EvexPackedFpUnaryMemoryKind::Exp2
+                && vector_index(&dst, encoding.width) == Some(encoding.destination)
+                && src == memory_source
+                && mask == expected_mask
+                && elem == encoding.elem
+                && width == encoding.width
+                && actual_lanes == lanes
+                && mask_zeroing == encoding.zeroing
+        }
         OpKind::X86GetMantissa {
             dst,
             merge: None,
@@ -161,6 +180,44 @@ fn exact_packed_fp_unary(
                 X86EvexPackedFpUnaryMemoryKind::Rsqrt14
             } else {
                 X86EvexPackedFpUnaryMemoryKind::Recip14
+            };
+            encoding.kind == actual_kind
+                && vector_index(&dst, encoding.width) == Some(encoding.destination)
+                && src == memory_source
+                && mask == expected_mask
+                && elem == encoding.elem
+                && width == encoding.width
+                && actual_lanes == lanes
+                && mask_zeroing == encoding.zeroing
+        }
+        OpKind::X86Recip28 {
+            dst,
+            merge: None,
+            src,
+            mask,
+            elem,
+            width,
+            lanes: actual_lanes,
+            scalar: false,
+            mask_zeroing,
+            suppress_exceptions: false,
+        }
+        | OpKind::X86Rsqrt28 {
+            dst,
+            merge: None,
+            src,
+            mask,
+            elem,
+            width,
+            lanes: actual_lanes,
+            scalar: false,
+            mask_zeroing,
+            suppress_exceptions: false,
+        } => {
+            let actual_kind = if matches!(op.kind, OpKind::X86Rsqrt28 { .. }) {
+                X86EvexPackedFpUnaryMemoryKind::Rsqrt28
+            } else {
+                X86EvexPackedFpUnaryMemoryKind::Recip28
             };
             encoding.kind == actual_kind
                 && vector_index(&dst, encoding.width) == Some(encoding.destination)
@@ -305,8 +362,9 @@ fn exact_packed_sqrt_tail(
 }
 
 /// Validate the complete O0/O1/O2 decomposition emitted for one packed
-/// `VSQRT*`, `VGETEXP*`, `VGETMANT*`, `VRNDSCALE*`, `VREDUCE*`, `VRCP14*`,
-/// `VRSQRT14*`, `VRCPPH`, or `VRSQRTPH` memory source.
+/// `VSQRT*`, `VGETEXP*`, `VGETMANT*`, `VRNDSCALE*`, `VREDUCE*`, `VEXP2*`,
+/// `VRCP14*`, `VRSQRT14*`, `VRCP28*`, `VRSQRT28*`, `VRCPPH`, or `VRSQRTPH`
+/// memory source.
 ///
 /// Exact provenance binds the operation, precision, vector width,
 /// architectural destination and writemask, merge/zero policy,

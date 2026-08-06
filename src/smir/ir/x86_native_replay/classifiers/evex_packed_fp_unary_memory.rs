@@ -12,10 +12,19 @@ pub(crate) enum X86EvexPackedFpUnaryMemoryKind {
     GetMantissa,
     RoundScale,
     Reduce,
+    Exp2,
     Recip14,
     Rsqrt14,
+    Recip28,
+    Rsqrt28,
     RecipFp16,
     RsqrtFp16,
+}
+
+impl X86EvexPackedFpUnaryMemoryKind {
+    const fn needs_avx512er(self) -> bool {
+        matches!(self, Self::Exp2 | Self::Recip28 | Self::Rsqrt28)
+    }
 }
 
 /// Native replay strategy for one exact packed unary floating-point memory
@@ -71,6 +80,7 @@ pub(crate) struct X86EvexPackedFpUnaryMemoryEncoding {
     pub(crate) replay: X86EvexPackedFpUnaryMemoryReplay,
     pub(crate) needs_avx512vl: bool,
     pub(crate) needs_avx512dq: bool,
+    pub(crate) needs_avx512er: bool,
     pub(crate) needs_avx512fp16: bool,
 }
 
@@ -109,6 +119,16 @@ fn operation(
         (6, 1, 0x42, false) => (
             X86EvexPackedFpUnaryMemoryKind::GetExponent,
             VecElementType::F16,
+            false,
+        ),
+        (2, 1, 0xC8, false) => (
+            X86EvexPackedFpUnaryMemoryKind::Exp2,
+            VecElementType::F32,
+            false,
+        ),
+        (2, 1, 0xC8, true) => (
+            X86EvexPackedFpUnaryMemoryKind::Exp2,
+            VecElementType::F64,
             false,
         ),
         (3, 0, 0x26, false) => (
@@ -176,6 +196,26 @@ fn operation(
             VecElementType::F64,
             false,
         ),
+        (2, 1, 0xCA, false) => (
+            X86EvexPackedFpUnaryMemoryKind::Recip28,
+            VecElementType::F32,
+            false,
+        ),
+        (2, 1, 0xCA, true) => (
+            X86EvexPackedFpUnaryMemoryKind::Recip28,
+            VecElementType::F64,
+            false,
+        ),
+        (2, 1, 0xCC, false) => (
+            X86EvexPackedFpUnaryMemoryKind::Rsqrt28,
+            VecElementType::F32,
+            false,
+        ),
+        (2, 1, 0xCC, true) => (
+            X86EvexPackedFpUnaryMemoryKind::Rsqrt28,
+            VecElementType::F64,
+            false,
+        ),
         (6, 1, 0x4C, false) => (
             X86EvexPackedFpUnaryMemoryKind::RecipFp16,
             VecElementType::F16,
@@ -214,6 +254,7 @@ fn packed_fp_unary_memory_fields(
     if p1 & 0x78 != 0x78
         || p2 & 0x08 == 0
         || ll == 3
+        || (kind.needs_avx512er() && ll != 2)
         || modrm >> 6 == 3
         || (zeroing && mask == 0)
         || operand_end + usize::from(has_immediate) != bytes.len()
@@ -305,8 +346,8 @@ fn register_rewrite_matches(
 
 impl X86InstructionBytes {
     /// Validate one EVEX packed `VSQRT`, `VGETEXP`, `VGETMANT`, `VRNDSCALE`,
-    /// `VREDUCE`, `VRCP14`, `VRSQRT14`, `VRCPPH`, or `VRSQRTPH` memory source
-    /// and select an exact native replay.
+    /// `VREDUCE`, `VEXP2`, `VRCP14`, `VRSQRT14`, `VRCP28`, `VRSQRT28`,
+    /// `VRCPPH`, or `VRSQRTPH` memory source and select an exact native replay.
     ///
     /// Intel SDM Vol. 2 assigns every owned encoding a Full tuple. Inactive
     /// writemask lanes suppress their corresponding 2/4/8-byte accesses;
@@ -393,6 +434,7 @@ impl X86InstructionBytes {
             needs_avx512vl,
             needs_avx512dq: fields.kind == X86EvexPackedFpUnaryMemoryKind::Reduce
                 && fields.elem != VecElementType::F16,
+            needs_avx512er: fields.kind.needs_avx512er(),
             needs_avx512fp16: fields.elem == VecElementType::F16,
         })
     }

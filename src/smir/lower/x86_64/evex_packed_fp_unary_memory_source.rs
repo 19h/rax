@@ -93,8 +93,8 @@ impl X86_64Lowerer {
     }
 
     /// Fuse one exact packed `VSQRT*`, `VGETEXP*`, `VGETMANT*`, `VRNDSCALE*`,
-    /// `VREDUCE*`, `VRCP14*`, `VRSQRT14*`, `VRCPPH`, or `VRSQRTPH` memory
-    /// decomposition.
+    /// `VREDUCE*`, `VEXP2*`, `VRCP14*`, `VRSQRT14*`, `VRCP28*`, `VRSQRT28*`,
+    /// `VRCPPH`, or `VRSQRTPH` memory decomposition.
     ///
     /// Unmasked vectors use the reserved vector-transfer slot. Broadcasts
     /// issue at most one scalar helper access. Writemasked full vectors issue

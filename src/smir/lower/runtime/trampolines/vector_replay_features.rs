@@ -796,6 +796,7 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.has_k16_opmask_span |= uses_k16_opmasks;
                 requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
                 requirements.needs_avx512dq |= sequence.encoding.needs_avx512dq;
+                requirements.needs_avx512er |= sequence.encoding.needs_avx512er;
                 requirements.needs_avx512fp16 |= sequence.encoding.needs_avx512fp16;
                 all_spans_support_avx_ymm16 = false;
                 index += sequence.consumed;

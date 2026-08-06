@@ -225,9 +225,9 @@ fn reference_state(
 }
 
 #[test]
-fn all_378_packed_unary_memory_cells_match_register_semantics_at_o0_o1_o2() {
+fn all_414_packed_unary_memory_cells_match_register_semantics_at_o0_o1_o2() {
     let cases = all_cases();
-    assert_eq!(cases.len(), 378);
+    assert_eq!(cases.len(), 414);
     let mut comparisons = 0usize;
     for (ordinal, case) in cases.into_iter().enumerate() {
         let bytes = source_bytes(case, ordinal);
@@ -240,7 +240,7 @@ fn all_378_packed_unary_memory_cells_match_register_semantics_at_o0_o1_o2() {
             comparisons += 1;
         }
     }
-    assert_eq!(comparisons, 378 * LEVELS.len());
+    assert_eq!(comparisons, 414 * LEVELS.len());
 }
 
 #[test]
@@ -249,7 +249,7 @@ fn empty_masks_suppress_every_e2_e4_memory_access_and_active_faults_do_not_commi
         .into_iter()
         .filter(|case| case.control != MaskControl::None)
         .collect();
-    assert_eq!(cases.len(), 252);
+    assert_eq!(cases.len(), 276);
     let mut suppressions = 0usize;
     let mut faults = 0usize;
     for (ordinal, case) in cases.into_iter().enumerate() {
@@ -282,7 +282,7 @@ fn empty_masks_suppress_every_e2_e4_memory_access_and_active_faults_do_not_commi
             faults += 1;
         }
     }
-    assert_eq!(suppressions, 252 * LEVELS.len());
+    assert_eq!(suppressions, 276 * LEVELS.len());
     assert_eq!(faults, suppressions);
 }
 
