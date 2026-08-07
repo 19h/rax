@@ -6,9 +6,9 @@ use std::collections::{HashMap, HashSet};
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
-    X86GprOperand, X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind,
-    X86VecAlign, X86VecMap, X86X87ArithmeticDestination, X86X87ArithmeticSource,
+    OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CmpxchgOp,
+    X86CountKind, X86GprOperand, X86OpHint, X86RepMode, X86SsePrefix, X86StringKind,
+    X86ThreeDNowKind, X86VecAlign, X86VecMap, X86X87ArithmeticDestination, X86X87ArithmeticSource,
     X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth,
     X86X87FloatWidth, X86X87IntWidth, X86XSaveKind, X86XaddOp,
 };
@@ -774,6 +774,36 @@ impl X86_64Lifter {
         let width = self.size_to_width(op_size);
         let mem_width = self.size_to_memwidth(op_size);
         let modrm = decode_modrm(bytes, prefix, pc)?;
+
+        if !modrm.is_memory {
+            if prefix.lock {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes[..modrm.bytes_consumed].to_vec(),
+                });
+            }
+            let operand = |reg| {
+                if is_byte {
+                    self.x86_gpr_operand(reg, prefix)
+                } else {
+                    X86GprOperand::low(X86Reg::gpr(reg & 0x1F))
+                }
+            };
+            return Ok(LiftResult::fallthrough(
+                vec![SmirOp::new(
+                    OpId(0),
+                    pc,
+                    OpKind::X86Cmpxchg(X86CmpxchgOp {
+                        dst: operand(modrm.rm),
+                        src: operand(modrm.reg),
+                        width,
+                        flags: FlagUpdate::All,
+                    }),
+                )],
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
+
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();
 
@@ -806,43 +836,21 @@ impl X86_64Lifter {
             },
         ));
 
-        let mut dst_high_base = None;
-        let (old_dst, dst_reg, dst_addr) = if modrm.is_memory {
-            let x86_addr = modrm.addr.as_ref().unwrap();
-            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
-            ops.extend(pre_ops);
+        let x86_addr = modrm.addr.as_ref().unwrap();
+        let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+        ops.extend(pre_ops);
 
-            let tmp = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Load {
-                    dst: tmp,
-                    addr: addr.clone(),
-                    width: mem_width,
-                    sign: SignExtend::Zero,
-                },
-            ));
-            (tmp, None, Some(addr))
-        } else {
-            let dst = if is_byte {
-                dst_high_base = self.high_byte_base(modrm.rm, prefix);
-                self.read_byte_reg(modrm.rm, prefix, pc, ctx, &mut ops)
-            } else {
-                self.gpr(modrm.rm)
-            };
-            let tmp = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Mov {
-                    dst: tmp,
-                    src: SrcOperand::Reg(dst),
-                    width,
-                },
-            ));
-            (tmp, Some(self.gpr(modrm.rm)), None)
-        };
+        let old_dst = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Load {
+                dst: old_dst,
+                addr: addr.clone(),
+                width: mem_width,
+                sign: SignExtend::Zero,
+            },
+        ));
 
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
@@ -865,105 +873,42 @@ impl X86_64Lifter {
             },
         ));
 
-        if let Some(addr) = dst_addr {
-            let new_dst = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Select {
-                    dst: new_dst,
-                    cond: matched,
-                    src_true: saved_src,
-                    src_false: old_dst,
-                    width,
-                },
-            ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::PredStore {
-                    src: SrcOperand::Reg(new_dst),
-                    cond: matched,
-                    addr,
-                    width: mem_width,
-                },
-            ));
-            // On a mismatch the accumulator takes the old destination value; on a
-            // match it must be left UNCHANGED. The previous unconditional Select
-            // wrote `saved_acc` back on the match path, and for a 32-bit CMPXCHG a
-            // W32 write zero-extends — clearing RAX's upper half. A predicated
-            // CMove only writes on the mismatch path (ZF=0 → Ne), preserving the
-            // high bits on the no-op (match) path. The flags were set by the Cmp
-            // above. (#21)
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::CMove {
-                    dst: acc,
-                    src: old_dst,
-                    cond: Condition::Ne,
-                    width,
-                },
-            ));
-        } else if let Some(base) = dst_high_base {
-            let new_dst = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Select {
-                    dst: new_dst,
-                    cond: matched,
-                    src_true: saved_src,
-                    src_false: old_dst,
-                    width,
-                },
-            ));
-            self.merge_high_byte(base, new_dst, pc, ctx, &mut ops);
-
-            // AH/CH/DH/BH are distinct from AL even when AH aliases RAX.
-            // On mismatch, AL receives the old high-byte destination.
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::CMove {
-                    dst: acc,
-                    src: old_dst,
-                    cond: Condition::Ne,
-                    width,
-                },
-            ));
-        } else if let Some(dst) = dst_reg {
-            // On a match the destination register takes the source; on a mismatch
-            // it must be UNCHANGED. CMove writes only on the match path (Eq),
-            // preserving the high bits on the no-op (mismatch) path — the old
-            // Select's W32 write zero-extended and cleared the destination's upper
-            // half. (#21)
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::CMove {
-                    dst,
-                    src: saved_src,
-                    cond: Condition::Eq,
-                    width,
-                },
-            ));
-
-            if dst != acc {
-                // On a mismatch the accumulator takes the old destination; on a
-                // match it is UNCHANGED (see the memory path above). (#21)
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::CMove {
-                        dst: acc,
-                        src: old_dst,
-                        cond: Condition::Ne,
-                        width,
-                    },
-                ));
-            }
-        }
+        let new_dst = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Select {
+                dst: new_dst,
+                cond: matched,
+                src_true: saved_src,
+                src_false: old_dst,
+                width,
+            },
+        ));
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::PredStore {
+                src: SrcOperand::Reg(new_dst),
+                cond: matched,
+                addr,
+                width: mem_width,
+            },
+        ));
+        // On a mismatch the accumulator takes the old destination value; on a
+        // match it must be left UNCHANGED. A predicated CMove writes only on the
+        // mismatch path (ZF=0 → Ne), preserving the high bits on the no-op
+        // (match) path. The flags were set by the Cmp above. (#21)
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::CMove {
+                dst: acc,
+                src: old_dst,
+                cond: Condition::Ne,
+                width,
+            },
+        ));
 
         Ok(LiftResult::fallthrough(
             ops,

@@ -1,7 +1,7 @@
 //! tests::scalar tests
 
 use super::*;
-use crate::smir::ir::ops::X86GprOperand;
+use crate::smir::ir::ops::{X86CmpxchgOp, X86GprOperand};
 use crate::smir::lift::x86_64::*;
 
 /// LEA computes the segment OFFSET and must IGNORE a segment override —
@@ -149,7 +149,7 @@ fn lift_movx_legacy_high_byte_sources_without_virtual_capture() {
     }
 }
 #[test]
-fn lift_cmpxchg_accumulator_destination_alias_keeps_single_final_write() {
+fn lift_cmpxchg_accumulator_destination_alias_is_one_exact_operation() {
     let mut lifter = X86_64Lifter::strict();
     let mut ctx = LiftContext::new(SourceArch::X86_64);
 
@@ -158,51 +158,28 @@ fn lift_cmpxchg_accumulator_destination_alias_keeps_single_final_write() {
         .lift_insn(0x1000, &[0x48, 0x0F, 0xB1, 0xC8], &mut ctx)
         .unwrap();
     assert_eq!(result.bytes_consumed, 4);
-    assert_eq!(result.ops.len(), 6);
-
-    let saved_src = match &result.ops[0].kind {
-        OpKind::Mov {
-            dst,
-            src: SrcOperand::Reg(src),
-            width: OpWidth::W64,
-        } => {
-            assert_eq!(*src, x86_gpr(1));
-            *dst
-        }
-        other => panic!("expected alias CMPXCHG source snapshot, got {other:?}"),
+    assert_eq!(result.ops.len(), 1);
+    let OpKind::X86Cmpxchg(cmpxchg) = &result.ops[0].kind else {
+        panic!("expected dedicated CMPXCHG, got {:?}", result.ops[0].kind);
     };
-    match &result.ops[2].kind {
-        OpKind::Mov {
-            src: SrcOperand::Reg(src),
-            width: OpWidth::W64,
-            ..
-        } => {
-            assert_eq!(*src, x86_gpr(0));
-        }
-        other => panic!("expected alias CMPXCHG destination snapshot, got {other:?}"),
-    }
-    match &result.ops[4].kind {
-        OpKind::SetCC {
-            cond: Condition::Eq,
-            width: OpWidth::W8,
-            ..
-        } => {}
-        other => panic!("expected alias CMPXCHG equality condition, got {other:?}"),
-    }
-    // When the destination aliases the accumulator (CMPXCHG RAX, r) the compare
-    // always matches, so a single CMove writes the source; on a (here
-    // impossible) mismatch the register would be preserved. (#21)
-    match &result.ops[5].kind {
-        OpKind::CMove {
-            dst,
-            src,
-            cond: Condition::Eq,
-            width: OpWidth::W64,
-        } => {
-            assert_eq!(*dst, x86_gpr(0));
-            assert_eq!(*src, saved_src);
-        }
-        other => panic!("expected one final alias CMPXCHG cmove, got {other:?}"),
+    assert_eq!(cmpxchg.dst, X86GprOperand::low(X86Reg::Rax));
+    assert_eq!(cmpxchg.src, X86GprOperand::low(X86Reg::Rcx));
+    assert_eq!(cmpxchg.width, OpWidth::W64);
+    assert_eq!(cmpxchg.flags, FlagUpdate::All);
+}
+
+#[test]
+fn lift_lock_cmpxchg_register_rejected_like_spec() {
+    let mut lifter = X86_64Lifter::strict();
+    let mut ctx = LiftContext::new(SourceArch::X86_64);
+
+    // Intel CMPXCHG specifies #UD when LOCK is used without a memory destination.
+    for bytes in [
+        &[0xF0, 0x48, 0x0F, 0xB1, 0xC8][..],
+        &[0xF0, 0xD5, 0xD8, 0xB1, 0xC8][..],
+    ] {
+        let err = lifter.lift_insn(0x1000, bytes, &mut ctx).unwrap_err();
+        assert!(matches!(err, LiftError::InvalidEncoding { .. }), "{err:?}");
     }
 }
 #[test]

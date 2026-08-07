@@ -1008,6 +1008,9 @@ pub enum OpKind {
     /// Register-only x86 XADD, including legacy high-byte and APX EGPR forms.
     X86Xadd(X86XaddOp),
 
+    /// Register-only x86 CMPXCHG, including legacy high-byte and APX EGPR forms.
+    X86Cmpxchg(X86CmpxchgOp),
+
     // ========================================================================
     // MEMORY OPERATIONS
     // ========================================================================
@@ -5244,6 +5247,9 @@ impl OpKind {
 
             OpKind::Xchg { reg1, reg2, .. } => vec![*reg1, *reg2],
             OpKind::X86Xadd(xadd) => vec![xadd.dst.vreg(), xadd.src.vreg()],
+            OpKind::X86Cmpxchg(cmpxchg) => {
+                vec![cmpxchg.dst.vreg(), VReg::Arch(ArchReg::X86(X86Reg::Rax))]
+            }
 
             // No destination
             OpKind::Cmp { .. }

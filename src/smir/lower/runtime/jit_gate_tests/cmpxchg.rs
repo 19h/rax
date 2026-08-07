@@ -1,7 +1,18 @@
-//! Native admission for memory-destination `CMPXCHG`.
+//! Native admission for memory- and register-destination `CMPXCHG`.
+
+use std::collections::{HashMap, HashSet};
 
 use super::*;
+use crate::smir::ir::flags::{FlagSet, FlagUpdate};
+use crate::smir::ir::ops::{SmirOp, X86CmpxchgOp, X86GprOperand, X86OpHint};
+use crate::smir::ir::types::{BlockId, FunctionId, OpId, OpWidth, SourceArch, X86Reg};
+use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
+use crate::smir::lift::x86_64::X86_64Lifter;
+use crate::smir::lift::{ControlFlow, LiftContext, SmirLifter};
+use crate::smir::lower::SmirLowerer;
 use crate::smir::lower::runtime::x86_jit_cmpxchg_sequence_len;
+use crate::smir::lower::x86_64::{X86_64Lowerer, x86_cmpxchg_shape_valid};
+use crate::smir::optimize::{OptLevel, optimize_function};
 
 fn x86(reg: X86Reg) -> VReg {
     VReg::Arch(ArchReg::X86(reg))
@@ -251,4 +262,206 @@ fn a_lifted_cmpxchg_region_survives_o2_and_stays_admitted() {
         &std::collections::HashMap::new(),
         true,
     ));
+}
+
+const REGISTER_PREFIXES: &[&[u8]] = &[
+    &[],
+    &[0x66],
+    &[0xF2],
+    &[0xF3],
+    &[0x67],
+    &[0x64],
+    &[0x65],
+    &[0x48],
+    &[0x44],
+    &[0x41],
+    &[0x4D],
+    &[0x66, 0x48],
+    &[0xF2, 0x48],
+    &[0xF3, 0x48],
+];
+
+fn register_cmpxchg(dst: X86GprOperand, src: X86GprOperand, width: OpWidth) -> OpKind {
+    OpKind::X86Cmpxchg(X86CmpxchgOp {
+        dst,
+        src,
+        width,
+        flags: FlagUpdate::All,
+    })
+}
+
+fn register_function(op: SmirOp, source: Option<&[u8]>) -> SmirFunction {
+    let mut block = SmirBlock::new(BlockId(0), PC);
+    block.ops.push(op);
+    block.set_terminator(Terminator::Return { values: Vec::new() });
+    let mut function = SmirFunction::new(FunctionId(0), block.id, PC);
+    function.add_block(block);
+    if let Some(source) = source {
+        function.x86_instruction_bytes.insert(
+            (BlockId(0), PC),
+            X86InstructionBytes::new(source).expect("complete CMPXCHG source"),
+        );
+    }
+    function
+}
+
+#[test]
+fn register_cmpxchg_shape_is_target_specific_and_fails_closed() {
+    for valid in [
+        register_cmpxchg(
+            X86GprOperand::low(X86Reg::Rdx),
+            X86GprOperand::low(X86Reg::R15),
+            OpWidth::W64,
+        ),
+        register_cmpxchg(
+            X86GprOperand::high(X86Reg::Rax),
+            X86GprOperand::high(X86Reg::Rbx),
+            OpWidth::W8,
+        ),
+        register_cmpxchg(
+            X86GprOperand::low(X86Reg::Rsp),
+            X86GprOperand::low(X86Reg::Rbp),
+            OpWidth::W16,
+        ),
+        register_cmpxchg(
+            X86GprOperand::low(X86Reg::R16),
+            X86GprOperand::low(X86Reg::R31),
+            OpWidth::W32,
+        ),
+    ] {
+        let op = SmirOp::new(OpId(0), PC, valid);
+        assert!(!op.is_jit_safe(), "CMPXCHG is x86-target-specific");
+        assert!(x86_cmpxchg_shape_valid(&op));
+        let function = register_function(op, None);
+        assert!(is_native_clobber_safe(&function));
+        assert!(!is_x86_aarch64_native_clobber_safe_excluding(
+            &function,
+            &HashMap::new(),
+        ));
+    }
+
+    let malformed = [
+        register_cmpxchg(
+            X86GprOperand::low(X86Reg::Xmm(0)),
+            X86GprOperand::low(X86Reg::Rax),
+            OpWidth::W64,
+        ),
+        register_cmpxchg(
+            X86GprOperand::high(X86Reg::Rsi),
+            X86GprOperand::low(X86Reg::Rax),
+            OpWidth::W8,
+        ),
+        register_cmpxchg(
+            X86GprOperand::high(X86Reg::Rax),
+            X86GprOperand::low(X86Reg::R8),
+            OpWidth::W8,
+        ),
+        register_cmpxchg(
+            X86GprOperand::high(X86Reg::Rax),
+            X86GprOperand::high(X86Reg::Rbx),
+            OpWidth::W16,
+        ),
+        OpKind::X86Cmpxchg(X86CmpxchgOp {
+            dst: X86GprOperand::low(X86Reg::Rdx),
+            src: X86GprOperand::low(X86Reg::Rbx),
+            width: OpWidth::W64,
+            flags: FlagUpdate::Specific(FlagSet::ZF),
+        }),
+    ];
+    for kind in malformed {
+        let op = SmirOp::new(OpId(0), PC, kind);
+        assert!(!x86_cmpxchg_shape_valid(&op));
+        assert!(!is_native_clobber_safe(&register_function(op, None)));
+    }
+
+    let mut hinted = SmirOp::new(
+        OpId(0),
+        PC,
+        register_cmpxchg(
+            X86GprOperand::low(X86Reg::Rdx),
+            X86GprOperand::low(X86Reg::Rbx),
+            OpWidth::W64,
+        ),
+    );
+    hinted.x86_hint = Some(X86OpHint::RexByteReg);
+    assert!(!x86_cmpxchg_shape_valid(&hinted));
+    assert!(!is_native_clobber_safe(&register_function(hinted, None)));
+}
+
+#[test]
+fn every_scanner_register_cmpxchg_cell_survives_o2_and_lowers() {
+    let mut seen = HashSet::<Vec<u8>>::new();
+    for prefix in REGISTER_PREFIXES {
+        for opcode in [0xB0, 0xB1] {
+            for modrm in 0xC0..=0xFF {
+                let mut bytes = prefix.to_vec();
+                bytes.extend_from_slice(&[0x0F, opcode, modrm]);
+                assert!(seen.insert(bytes.clone()), "duplicate source {bytes:02X?}");
+
+                let result = X86_64Lifter::strict()
+                    .lift_insn(PC, &bytes, &mut LiftContext::new(SourceArch::X86_64))
+                    .unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
+                assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
+                assert!(
+                    matches!(
+                        result.control_flow,
+                        ControlFlow::Fallthrough | ControlFlow::NextInsn
+                    ),
+                    "{bytes:02X?}"
+                );
+
+                let mut block = SmirBlock::new(BlockId(0), PC);
+                block.ops = result.ops;
+                block.set_terminator(Terminator::Return { values: Vec::new() });
+                let mut function = SmirFunction::new(FunctionId(0), block.id, PC);
+                function.add_block(block);
+                function
+                    .x86_instruction_bytes
+                    .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
+                optimize_function(&mut function, OptLevel::O2);
+
+                assert!(
+                    is_native_clobber_safe_excluding(&function, &HashMap::new(), true),
+                    "O2 gate rejected {bytes:02X?}: {:?}",
+                    function.blocks[0].ops
+                );
+                let mut lowerer = X86_64Lowerer::new();
+                lowerer.set_jit_fault_deopt_guards(true);
+                lowerer
+                    .lower_function(&function)
+                    .unwrap_or_else(|error| panic!("lower {bytes:02X?}: {error:?}"));
+                lowerer
+                    .finalize()
+                    .unwrap_or_else(|error| panic!("finalize {bytes:02X?}: {error:?}"));
+            }
+        }
+    }
+    assert_eq!(seen.len(), 1_792);
+}
+
+#[test]
+fn rex2_register_cmpxchg_guard_and_state_lowering_stay_admitted() {
+    let bytes = [0xD5, 0xD8, 0xB1, 0xC8]; // CMPXCHG R16,R17
+    let result = X86_64Lifter::strict()
+        .lift_insn(PC, &bytes, &mut LiftContext::new(SourceArch::X86_64))
+        .unwrap();
+    let mut block = SmirBlock::new(BlockId(0), PC);
+    block.ops = result.ops;
+    block.set_terminator(Terminator::Return { values: Vec::new() });
+    let mut function = SmirFunction::new(FunctionId(0), block.id, PC);
+    function.add_block(block);
+    function
+        .x86_instruction_bytes
+        .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
+    optimize_function(&mut function, OptLevel::O2);
+    assert!(is_native_clobber_safe(&function));
+    assert!(!is_x86_aarch64_native_clobber_safe_excluding(
+        &function,
+        &HashMap::new(),
+    ));
+
+    let mut lowerer = X86_64Lowerer::new();
+    lowerer.set_jit_fault_deopt_guards(true);
+    lowerer.lower_function(&function).unwrap();
+    lowerer.finalize().unwrap();
 }

@@ -1312,6 +1312,7 @@ pub(crate) fn block_is_clobber_safe(
         let state_bswap_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_bswap_valid(op);
         let state_xchg_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_xchg_valid(op);
         let xadd_ok = crate::smir::lower::x86_64::x86_xadd_shape_valid(op);
+        let cmpxchg_ok = crate::smir::lower::x86_64::x86_cmpxchg_shape_valid(op);
         let fsgsbase_ok = crate::smir::lower::x86_64::x86_fsgsbase_shape_valid(&op.kind);
         let read_control_ok = x86_read_control_shape_valid(&op.kind);
         let smsw_ok = match &op.kind {
@@ -1485,6 +1486,7 @@ pub(crate) fn block_is_clobber_safe(
             || state_bswap_ok
             || state_xchg_ok
             || xadd_ok
+            || cmpxchg_ok
             || mxcsr_store_ok
             || mxcsr_load_ok
             || waitpkg_ok
@@ -1592,6 +1594,7 @@ pub(crate) fn block_is_clobber_safe(
                 | OpKind::X86Adx { .. }
                 | OpKind::X86XTest
         ) || xadd_ok
+            || cmpxchg_ok
             || guarded_div_ok
             || io_ok
             || crate::smir::lower::x86_64::x86_flag_control_shape_valid(op);
@@ -1937,6 +1940,9 @@ pub(crate) fn block_is_clobber_safe(
         if matches!(op.kind, OpKind::X86Xadd(..)) && !xadd_ok {
             return false;
         }
+        if matches!(op.kind, OpKind::X86Cmpxchg(..)) && !cmpxchg_ok {
+            return false;
+        }
         if matches!(op.kind, OpKind::X86NddDoubleShift { .. })
             && !x86_ndd_double_shift_shape_valid(&op.kind)
             && !state_double_shift_ok
@@ -1957,7 +1963,8 @@ pub(crate) fn block_is_clobber_safe(
         }
         // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/INC/DEC/
         // ROL/ROR/RCL/RCR/SHL/SHR/SAR/SHLD/SHRD (including APX NDD)/count/
-        // bit-scan/bit-test/CRC32/BMI/ADX/PDEP/PEXT/MULX/BSWAP/XCHG/XADD/ADD/SUB
+        // bit-scan/bit-test/CRC32/BMI/ADX/PDEP/PEXT/MULX/BSWAP/XCHG/XADD/
+        // CMPXCHG/ADD/SUB
         // reads/writes are state-backed.
         // Other writes are not modeled and bail. A read is additionally valid
         // as an operand of a mem-JIT Load/Store (an address base/index, or a stored value): the MMU

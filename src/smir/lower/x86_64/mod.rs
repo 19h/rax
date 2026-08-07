@@ -58,9 +58,7 @@ mod legacy_high_byte_replay;
 pub use clts::*;
 mod cli;
 pub use cli::*;
-#[cfg(feature = "smir-jit")]
 mod cmpxchg;
-#[cfg(feature = "smir-jit")]
 pub use cmpxchg::*;
 #[cfg(feature = "smir-jit")]
 mod cmpccxadd;

@@ -76,6 +76,42 @@ impl SmirInterpreter {
                 }
             }
 
+            OpKind::X86Cmpxchg(cmpxchg) => {
+                let read = |operand: X86GprOperand| {
+                    let value = ctx.read_vreg(operand.vreg());
+                    if operand.high_byte {
+                        (value >> 8) & 0xFF
+                    } else {
+                        value & cmpxchg.width.mask()
+                    }
+                };
+                let accumulator = X86GprOperand::low(X86Reg::Rax);
+                let old_accumulator = read(accumulator);
+                let old_dst = read(cmpxchg.dst);
+                let old_src = read(cmpxchg.src);
+                let difference = old_accumulator.wrapping_sub(old_dst) & cmpxchg.width.mask();
+                let write = |ctx: &mut SmirContext, operand: X86GprOperand, value: u64| {
+                    if operand.high_byte {
+                        let old_parent = ctx.read_vreg(operand.vreg());
+                        ctx.write_vreg(
+                            operand.vreg(),
+                            (old_parent & !0xFF00) | ((value & 0xFF) << 8),
+                        );
+                    } else {
+                        Self::write_x86_partial(ctx, operand.vreg(), value, cmpxchg.width);
+                    }
+                };
+                if old_accumulator == old_dst {
+                    write(ctx, cmpxchg.dst, old_src);
+                } else {
+                    write(ctx, accumulator, old_dst);
+                }
+                if cmpxchg.flags.updates_any() {
+                    ctx.flags
+                        .set_lazy_sub(old_accumulator, old_dst, difference, cmpxchg.width);
+                }
+            }
+
             OpKind::Sub {
                 dst,
                 src1,

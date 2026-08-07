@@ -22,6 +22,7 @@ use crate::smir::ir::ops::HexFpRecipKind;
 use crate::smir::ir::ops::X86AdxKind;
 use crate::smir::ir::ops::X86BlsKind;
 use crate::smir::ir::ops::X86CacheControlKind;
+use crate::smir::ir::ops::X86CmpxchgOp;
 use crate::smir::ir::ops::X86ControlReg;
 use crate::smir::ir::ops::X86CountKind;
 use crate::smir::ir::ops::X86DebugReg;
@@ -1854,6 +1855,12 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             width,
             flags,
         }) => op_json!("x86_xadd", dst, src, width, flags),
+        OpKind::X86Cmpxchg(X86CmpxchgOp {
+            dst,
+            src,
+            width,
+            flags,
+        }) => op_json!("x86_cmpxchg", dst, src, width, flags),
         OpKind::Load {
             dst,
             addr,

@@ -1,7 +1,7 @@
 //! tests::dead_code tests
 
 use super::*;
-use crate::smir::ir::ops::{X86GprOperand, X86ReadTscOp, X86XaddOp};
+use crate::smir::ir::ops::{X86CmpxchgOp, X86GprOperand, X86ReadTscOp, X86XaddOp};
 use crate::smir::optimize::*;
 
 #[test]
@@ -44,6 +44,49 @@ fn xadd_metadata_tracks_both_commits_partial_lanes_and_dead_flags() {
         flags: FlagUpdate::All,
     });
     assert!(!op_fully_defines(&high));
+}
+
+#[test]
+fn cmpxchg_metadata_tracks_conditional_commits_reads_and_dead_flags() {
+    let dst = X86GprOperand::low(X86Reg::Rbp);
+    let src = X86GprOperand::low(X86Reg::R16);
+    let accumulator = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+    let cmpxchg = OpKind::X86Cmpxchg(X86CmpxchgOp {
+        dst,
+        src,
+        width: OpWidth::W64,
+        flags: FlagUpdate::All,
+    });
+    assert_eq!(cmpxchg.dests(), vec![dst.vreg(), accumulator]);
+    assert_eq!(
+        cmpxchg.source_vregs(),
+        vec![dst.vreg(), src.vreg(), accumulator]
+    );
+    assert_eq!(cmpxchg.flags_written(), FlagSet::ALL_X86);
+    assert_eq!(cmpxchg.flags_must_write(), FlagSet::ALL_X86);
+    assert_eq!(op_out_width(&cmpxchg), None);
+    assert!(
+        !op_fully_defines(&cmpxchg),
+        "either destination may remain unchanged"
+    );
+
+    for live in [dst.vreg(), accumulator] {
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(0, cmpxchg.clone()));
+        block.set_terminator(Terminator::Return { values: vec![] });
+        assert_eq!(dead_flag_elimination(&mut block), 1);
+        assert!(matches!(
+            block.ops[0].kind,
+            OpKind::X86Cmpxchg(X86CmpxchgOp {
+                flags: FlagUpdate::None,
+                ..
+            })
+        ));
+        assert_eq!(
+            dead_code_elimination_with(&mut block, &HashSet::from([live])),
+            0
+        );
+    }
 }
 
 #[test]

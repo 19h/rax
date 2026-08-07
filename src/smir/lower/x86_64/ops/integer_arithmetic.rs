@@ -81,6 +81,7 @@ impl X86_64Lowerer {
             // Integer Arithmetic
             // ================================================================
             OpKind::X86Xadd(..) => return self.lower_x86_xadd(op),
+            OpKind::X86Cmpxchg(..) => return self.lower_x86_cmpxchg(op),
             OpKind::Add {
                 dst,
                 src1,

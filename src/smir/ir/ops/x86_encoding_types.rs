@@ -3,7 +3,7 @@
 use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::types::{ArchReg, OpWidth, VReg, VecWidth, X86Reg};
 
-/// One architectural register operand of register-form XADD.
+/// One architectural scalar x86 GPR operand with explicit byte-lane identity.
 ///
 /// `high_byte` selects AH/CH/DH/BH within the RAX/RCX/RDX/RBX parent. Keeping
 /// the byte lane explicit is necessary because those aliases cannot be
@@ -60,6 +60,39 @@ pub struct X86XaddOp {
 }
 
 impl X86XaddOp {
+    pub fn is_valid(self) -> bool {
+        let operands_encodable = if self.dst.high_byte || self.src.high_byte {
+            self.dst.gpr_index().is_some_and(|index| index < 4)
+                && self.src.gpr_index().is_some_and(|index| index < 4)
+        } else {
+            true
+        };
+        matches!(
+            self.width,
+            OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+        ) && matches!(self.flags, FlagUpdate::None | FlagUpdate::All)
+            && self.dst.is_valid_for(self.width)
+            && self.src.is_valid_for(self.width)
+            && operands_encodable
+    }
+}
+
+/// Exact register-only `CMPXCHG r/m, r` semantics.
+///
+/// The implicit accumulator is AL/AX/EAX/RAX at `width`. Both explicit
+/// operands and the accumulator are snapshotted before any write. On a match,
+/// `dst` receives the old `src`; on a mismatch, the accumulator receives the
+/// old `dst`. The subtraction `accumulator - dst` defines all arithmetic flags
+/// when `flags` is `All`; dead-flag elimination may change it to `None`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct X86CmpxchgOp {
+    pub dst: X86GprOperand,
+    pub src: X86GprOperand,
+    pub width: OpWidth,
+    pub flags: FlagUpdate,
+}
+
+impl X86CmpxchgOp {
     pub fn is_valid(self) -> bool {
         let operands_encodable = if self.dst.high_byte || self.src.high_byte {
             self.dst.gpr_index().is_some_and(|index| index < 4)

@@ -1,8 +1,10 @@
-//! Fused native lowering for memory-destination `CMPXCHG`.
+//! Native lowering for register- and memory-destination `CMPXCHG`.
 
 use super::*;
+use crate::smir::ir::ops::{X86CmpxchgOp, X86GprOperand, X86OpHint};
 use crate::smir::ir::types::Condition;
 use crate::smir::lower::SmirLowerer;
+use crate::smir::lower::x86_64::x86_cmpxchg_shape_valid;
 
 fn x86(reg: X86Reg) -> VReg {
     VReg::Arch(ArchReg::X86(reg))
@@ -261,4 +263,437 @@ fn native_cmpxchg_matches_the_architectural_match_and_mismatch_paths() {
     assert_eq!(regs.gpr, initial);
     assert!(regs.rflags & ZF != 0);
     assert_eq!(regs.exit_pc, PC);
+}
+
+fn register_cmpxchg(
+    dst: X86GprOperand,
+    src: X86GprOperand,
+    width: OpWidth,
+    flags: FlagUpdate,
+) -> OpKind {
+    OpKind::X86Cmpxchg(X86CmpxchgOp {
+        dst,
+        src,
+        width,
+        flags,
+    })
+}
+
+#[test]
+fn register_cmpxchg_emits_direct_high_byte_and_state_backed_sequences() {
+    let rdx_rcx = lower_single_op(register_cmpxchg(
+        X86GprOperand::low(X86Reg::Rdx),
+        X86GprOperand::low(X86Reg::Rcx),
+        OpWidth::W64,
+        FlagUpdate::All,
+    ));
+    assert!(
+        rdx_rcx
+            .windows(4)
+            .any(|bytes| bytes == [0x48, 0x0F, 0xB1, 0xCA]),
+        "CMPXCHG RDX,RCX: {rdx_rcx:02X?}"
+    );
+
+    let ch_dh = lower_single_op(register_cmpxchg(
+        X86GprOperand::high(X86Reg::Rcx),
+        X86GprOperand::high(X86Reg::Rdx),
+        OpWidth::W8,
+        FlagUpdate::All,
+    ));
+    assert!(
+        ch_dh
+            .windows(7)
+            .any(|bytes| bytes == [0x3A, 0xC5, 0x9C, 0x0F, 0xB0, 0xF5, 0x9D]),
+        "high-byte flag wrapper: {ch_dh:02X?}"
+    );
+
+    let spl_bpl = lower_single_op(register_cmpxchg(
+        X86GprOperand::low(X86Reg::Rsp),
+        X86GprOperand::low(X86Reg::Rbp),
+        OpWidth::W8,
+        FlagUpdate::All,
+    ));
+    assert!(
+        spl_bpl
+            .windows(4)
+            .any(|bytes| bytes == [0x40, 0x0F, 0xB0, 0xFA]),
+        "state-backed scratch CMPXCHG: {spl_bpl:02X?}"
+    );
+    assert!(
+        spl_bpl.windows(2).any(|bytes| bytes == [0x0F, 0x85]),
+        "state-backed mismatch branch: {spl_bpl:02X?}"
+    );
+    assert!(
+        spl_bpl.windows(3).any(|bytes| bytes == [0x88, 0x51, 0x20]),
+        "SPL match-path commit: {spl_bpl:02X?}"
+    );
+
+    let egpr = lower_single_op(register_cmpxchg(
+        X86GprOperand::low(X86Reg::R16),
+        X86GprOperand::low(X86Reg::R31),
+        OpWidth::W32,
+        FlagUpdate::None,
+    ));
+    assert!(
+        egpr.windows(4)
+            .any(|bytes| bytes == [0x0F, 0xB1, 0xFA, 0x0F]),
+        "flagless scratch CMPXCHG followed by JNE: {egpr:02X?}"
+    );
+    assert!(
+        egpr.iter().filter(|byte| **byte == 0x9C).count() >= 1
+            && egpr.iter().filter(|byte| **byte == 0x9D).count() >= 1,
+        "flagless state path must save and restore RFLAGS: {egpr:02X?}"
+    );
+}
+
+#[test]
+fn register_cmpxchg_lowering_rejects_unencodable_shapes_and_hints() {
+    for malformed in [
+        register_cmpxchg(
+            X86GprOperand::low(X86Reg::Xmm(0)),
+            X86GprOperand::low(X86Reg::Rax),
+            OpWidth::W64,
+            FlagUpdate::All,
+        ),
+        register_cmpxchg(
+            X86GprOperand::high(X86Reg::Rsi),
+            X86GprOperand::low(X86Reg::Rax),
+            OpWidth::W8,
+            FlagUpdate::All,
+        ),
+        register_cmpxchg(
+            X86GprOperand::high(X86Reg::Rax),
+            X86GprOperand::low(X86Reg::R8),
+            OpWidth::W8,
+            FlagUpdate::All,
+        ),
+        register_cmpxchg(
+            X86GprOperand::high(X86Reg::Rax),
+            X86GprOperand::high(X86Reg::Rbx),
+            OpWidth::W16,
+            FlagUpdate::All,
+        ),
+        register_cmpxchg(
+            X86GprOperand::low(X86Reg::Rdx),
+            X86GprOperand::low(X86Reg::Rbx),
+            OpWidth::W64,
+            FlagUpdate::Specific(FlagSet::ZF),
+        ),
+    ] {
+        assert!(matches!(
+            lower_single_op_err(malformed),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    let exact = register_cmpxchg(
+        X86GprOperand::low(X86Reg::Rdx),
+        X86GprOperand::low(X86Reg::Rbx),
+        OpWidth::W64,
+        FlagUpdate::All,
+    );
+    assert!(matches!(
+        lower_single_hinted_op_err(exact, X86OpHint::RexByteReg),
+        LowerError::InvalidOperand { .. }
+    ));
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[test]
+fn native_register_cmpxchg_matches_subtraction_oracle_for_aliases_and_state_slots() {
+    use crate::isa::x86_64::flags;
+    use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+    const ARITHMETIC_FLAGS: u64 = 0x8D5;
+    #[derive(Clone, Copy)]
+    struct Case {
+        name: &'static str,
+        dst: X86GprOperand,
+        src: X86GprOperand,
+        width: OpWidth,
+        matched: bool,
+        update_flags: bool,
+    }
+    let low = X86GprOperand::low;
+    let high = X86GprOperand::high;
+    let cases = [
+        Case {
+            name: "CMPXCHG RDX,RCX direct match",
+            dst: low(X86Reg::Rdx),
+            src: low(X86Reg::Rcx),
+            width: OpWidth::W64,
+            matched: true,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG RDX,RCX direct mismatch",
+            dst: low(X86Reg::Rdx),
+            src: low(X86Reg::Rcx),
+            width: OpWidth::W64,
+            matched: false,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG DX,CX direct partial mismatch",
+            dst: low(X86Reg::Rdx),
+            src: low(X86Reg::Rcx),
+            width: OpWidth::W16,
+            matched: false,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG R8D,R9D direct match and zero extension",
+            dst: low(X86Reg::R8),
+            src: low(X86Reg::R9),
+            width: OpWidth::W32,
+            matched: true,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG DL,CL direct byte mismatch",
+            dst: low(X86Reg::Rdx),
+            src: low(X86Reg::Rcx),
+            width: OpWidth::W8,
+            matched: false,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG RAX,RCX accumulator destination",
+            dst: low(X86Reg::Rax),
+            src: low(X86Reg::Rcx),
+            width: OpWidth::W64,
+            matched: true,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG R8D,R8D explicit self alias",
+            dst: low(X86Reg::R8),
+            src: low(X86Reg::R8),
+            width: OpWidth::W32,
+            matched: false,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG R8D,R8D self match and zero extension",
+            dst: low(X86Reg::R8),
+            src: low(X86Reg::R8),
+            width: OpWidth::W32,
+            matched: true,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG RDX,RAX source accumulator match",
+            dst: low(X86Reg::Rdx),
+            src: low(X86Reg::Rax),
+            width: OpWidth::W64,
+            matched: true,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG RDX,RAX source accumulator mismatch",
+            dst: low(X86Reg::Rdx),
+            src: low(X86Reg::Rax),
+            width: OpWidth::W64,
+            matched: false,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG AH,BH high-byte match",
+            dst: high(X86Reg::Rax),
+            src: high(X86Reg::Rbx),
+            width: OpWidth::W8,
+            matched: true,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG AH,BH high-byte mismatch",
+            dst: high(X86Reg::Rax),
+            src: high(X86Reg::Rbx),
+            width: OpWidth::W8,
+            matched: false,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG AL,AH parent alias",
+            dst: low(X86Reg::Rax),
+            src: high(X86Reg::Rax),
+            width: OpWidth::W8,
+            matched: true,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG AH,AL source-accumulator mismatch",
+            dst: high(X86Reg::Rax),
+            src: low(X86Reg::Rax),
+            width: OpWidth::W8,
+            matched: false,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG AH,AH high-byte self match",
+            dst: high(X86Reg::Rax),
+            src: high(X86Reg::Rax),
+            width: OpWidth::W8,
+            matched: true,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG AH,AH high-byte self mismatch",
+            dst: high(X86Reg::Rax),
+            src: high(X86Reg::Rax),
+            width: OpWidth::W8,
+            matched: false,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG SPL,BPL state match",
+            dst: low(X86Reg::Rsp),
+            src: low(X86Reg::Rbp),
+            width: OpWidth::W8,
+            matched: true,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG BP,R16W state match and saved-RBP synchronization",
+            dst: low(X86Reg::Rbp),
+            src: low(X86Reg::R16),
+            width: OpWidth::W16,
+            matched: true,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG R16D,R31D EGPR match",
+            dst: low(X86Reg::R16),
+            src: low(X86Reg::R31),
+            width: OpWidth::W32,
+            matched: true,
+            update_flags: true,
+        },
+        Case {
+            name: "CMPXCHG RSP,RSP state self mismatch",
+            dst: low(X86Reg::Rsp),
+            src: low(X86Reg::Rsp),
+            width: OpWidth::W64,
+            matched: false,
+            update_flags: true,
+        },
+        Case {
+            name: "flagless CMPXCHG R16,RAX mismatch",
+            dst: low(X86Reg::R16),
+            src: low(X86Reg::Rax),
+            width: OpWidth::W64,
+            matched: false,
+            update_flags: false,
+        },
+        Case {
+            name: "flagless CMPXCHG RDX,RCX direct match",
+            dst: low(X86Reg::Rdx),
+            src: low(X86Reg::Rcx),
+            width: OpWidth::W64,
+            matched: true,
+            update_flags: false,
+        },
+    ];
+
+    let read = |gpr: &[u64; 32], operand: X86GprOperand, width: OpWidth| {
+        let value = gpr[operand.gpr_index().unwrap() as usize];
+        if operand.high_byte {
+            (value >> 8) & 0xFF
+        } else {
+            value & width.mask()
+        }
+    };
+    let write = |gpr: &mut [u64; 32], operand: X86GprOperand, width: OpWidth, value: u64| {
+        let slot = &mut gpr[operand.gpr_index().unwrap() as usize];
+        if operand.high_byte {
+            *slot = (*slot & !0xFF00) | ((value & 0xFF) << 8);
+        } else {
+            *slot = match width {
+                OpWidth::W8 => (*slot & !0xFF) | (value & 0xFF),
+                OpWidth::W16 => (*slot & !0xFFFF) | (value & 0xFFFF),
+                OpWidth::W32 => value & 0xFFFF_FFFF,
+                OpWidth::W64 => value,
+                _ => unreachable!(),
+            };
+        }
+    };
+    let accumulator = low(X86Reg::Rax);
+
+    for case in cases {
+        let mut builder = FunctionBuilder::new(FunctionId(0), PC);
+        builder.push_op(
+            PC,
+            register_cmpxchg(
+                case.dst,
+                case.src,
+                case.width,
+                if case.update_flags {
+                    FlagUpdate::All
+                } else {
+                    FlagUpdate::None
+                },
+            ),
+        );
+        builder.set_terminator(Terminator::Return { values: Vec::new() });
+        let function = builder.finish();
+        assert!(x86_cmpxchg_shape_valid(&function.blocks[0].ops[0]));
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&function)
+            .unwrap_or_else(|error| panic!("{} lower: {error:?}", case.name));
+        let code = lowerer
+            .finalize()
+            .unwrap_or_else(|error| panic!("{} finalize: {error:?}", case.name));
+        let exec = ExecMem::new(&code)
+            .unwrap_or_else(|error| panic!("{} executable mapping: {error:?}", case.name));
+
+        let mut regs = GuestRegs::default();
+        for (index, value) in regs.gpr.iter_mut().enumerate() {
+            *value = 0x8123_4567_89AB_00F1u64
+                .wrapping_add((index as u64).wrapping_mul(0x0101_1111_2222_0137));
+        }
+        let old_dst = read(&regs.gpr, case.dst, case.width);
+        write(
+            &mut regs.gpr,
+            accumulator,
+            case.width,
+            if case.matched { old_dst } else { old_dst ^ 1 },
+        );
+        assert_eq!(
+            read(&regs.gpr, accumulator, case.width) == read(&regs.gpr, case.dst, case.width),
+            case.matched,
+            "{} path setup",
+            case.name
+        );
+        regs.rflags = ARITHMETIC_FLAGS;
+
+        let mut expected = regs;
+        let old_accumulator = read(&expected.gpr, accumulator, case.width);
+        let old_dst = read(&expected.gpr, case.dst, case.width);
+        let old_src = read(&expected.gpr, case.src, case.width);
+        let difference = old_accumulator.wrapping_sub(old_dst) & case.width.mask();
+        if old_accumulator == old_dst {
+            write(&mut expected.gpr, case.dst, case.width, old_src);
+        } else {
+            write(&mut expected.gpr, accumulator, case.width, old_dst);
+        }
+        if case.update_flags {
+            flags::update_flags_sub(
+                &mut expected.rflags,
+                old_accumulator,
+                old_dst,
+                difference,
+                (case.width.bits() / 8) as u8,
+            );
+        }
+
+        exec.run(lowered.entry_offset, &mut regs);
+        assert_eq!(regs.gpr, expected.gpr, "{} GPR file", case.name);
+        assert_eq!(
+            regs.rflags & ARITHMETIC_FLAGS,
+            expected.rflags & ARITHMETIC_FLAGS,
+            "{} arithmetic flags",
+            case.name
+        );
+    }
 }

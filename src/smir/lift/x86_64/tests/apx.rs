@@ -1,6 +1,7 @@
 //! tests::apx tests
 
 use super::*;
+use crate::smir::ir::ops::{X86CmpxchgOp, X86GprOperand};
 use crate::smir::lift::x86_64::*;
 
 #[test]
@@ -475,87 +476,14 @@ fn lift_rex2_cmpxchg_registers_like_llvm() {
         .lift_insn(0x1000, &[0xD5, 0xD8, 0xB1, 0xC8], &mut ctx)
         .unwrap();
     assert_eq!(result.bytes_consumed, 4);
-    let ops = assert_rex2_guarded_ops(&result, 7);
-
-    let saved_src = match &ops[0].kind {
-        OpKind::Mov {
-            dst,
-            src: SrcOperand::Reg(src),
-            width: OpWidth::W64,
-        } => {
-            assert_eq!(*src, x86_gpr(17));
-            *dst
-        }
-        other => panic!("expected CMPXCHG source snapshot, got {other:?}"),
+    let ops = assert_rex2_guarded_ops(&result, 1);
+    let OpKind::X86Cmpxchg(cmpxchg) = &ops[0].kind else {
+        panic!("expected dedicated CMPXCHG, got {:?}", ops[0].kind);
     };
-    let saved_acc = match &ops[1].kind {
-        OpKind::Mov {
-            dst,
-            src: SrcOperand::Reg(src),
-            width: OpWidth::W64,
-        } => {
-            assert_eq!(*src, x86_gpr(0));
-            *dst
-        }
-        other => panic!("expected CMPXCHG accumulator snapshot, got {other:?}"),
-    };
-    let old_dst = match &ops[2].kind {
-        OpKind::Mov {
-            dst,
-            src: SrcOperand::Reg(src),
-            width: OpWidth::W64,
-        } => {
-            assert_eq!(*src, x86_gpr(16));
-            *dst
-        }
-        other => panic!("expected CMPXCHG destination snapshot, got {other:?}"),
-    };
-    match &ops[3].kind {
-        OpKind::Cmp {
-            src1,
-            src2: SrcOperand::Reg(src2),
-            width: OpWidth::W64,
-        } => {
-            assert_eq!(*src1, saved_acc);
-            assert_eq!(*src2, old_dst);
-        }
-        other => panic!("expected CMPXCHG compare, got {other:?}"),
-    }
-    match &ops[4].kind {
-        OpKind::SetCC {
-            cond: Condition::Eq,
-            width: OpWidth::W8,
-            ..
-        } => {}
-        other => panic!("expected CMPXCHG equality condition, got {other:?}"),
-    }
-    // The destination/accumulator writes use CMove, which preserves the
-    // register on the no-op path instead of an unconditional Select that would
-    // zero-extend a sub-64-bit write and clear the upper bits. (#21)
-    match &ops[5].kind {
-        OpKind::CMove {
-            dst,
-            src,
-            cond: Condition::Eq,
-            width: OpWidth::W64,
-        } => {
-            assert_eq!(*dst, x86_gpr(16));
-            assert_eq!(*src, saved_src);
-        }
-        other => panic!("expected CMPXCHG destination cmove, got {other:?}"),
-    }
-    match &ops[6].kind {
-        OpKind::CMove {
-            dst,
-            src,
-            cond: Condition::Ne,
-            width: OpWidth::W64,
-        } => {
-            assert_eq!(*dst, x86_gpr(0));
-            assert_eq!(*src, old_dst);
-        }
-        other => panic!("expected CMPXCHG accumulator cmove, got {other:?}"),
-    }
+    assert_eq!(cmpxchg.dst, X86GprOperand::low(X86Reg::R16));
+    assert_eq!(cmpxchg.src, X86GprOperand::low(X86Reg::R17));
+    assert_eq!(cmpxchg.width, OpWidth::W64);
+    assert_eq!(cmpxchg.flags, FlagUpdate::All);
 }
 #[test]
 fn lift_rex2_cmpxchg_memory_egpr_sib_like_llvm() {

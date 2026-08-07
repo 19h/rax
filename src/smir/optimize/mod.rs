@@ -1784,6 +1784,7 @@ impl OpKind {
         match self {
             OpKind::Add { flags, .. }
             | OpKind::X86Xadd(crate::smir::ir::ops::X86XaddOp { flags, .. })
+            | OpKind::X86Cmpxchg(crate::smir::ir::ops::X86CmpxchgOp { flags, .. })
             | OpKind::Sub { flags, .. }
             | OpKind::Adc { flags, .. }
             | OpKind::Sbb { flags, .. }
@@ -1825,6 +1826,7 @@ impl OpKind {
         match self {
             OpKind::Add { flags, .. }
             | OpKind::X86Xadd(crate::smir::ir::ops::X86XaddOp { flags, .. })
+            | OpKind::X86Cmpxchg(crate::smir::ir::ops::X86CmpxchgOp { flags, .. })
             | OpKind::Sub { flags, .. }
             | OpKind::Adc { flags, .. }
             | OpKind::Sbb { flags, .. }
@@ -2262,6 +2264,12 @@ impl OpKind {
             OpKind::X86Xadd(xadd) => {
                 result.push(xadd.dst.vreg());
                 result.push(xadd.src.vreg());
+            }
+
+            OpKind::X86Cmpxchg(cmpxchg) => {
+                result.push(cmpxchg.dst.vreg());
+                result.push(cmpxchg.src.vreg());
+                result.push(VReg::Arch(ArchReg::X86(X86Reg::Rax)));
             }
 
             OpKind::Load { addr, .. }

@@ -507,7 +507,10 @@ fn lifted_setcc_writes_legacy_high_bytes_and_rex_low_bytes() {
 fn lifted_cmpxchg_xadd_handle_legacy_high_bytes_and_aliases() {
     let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
     let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+    let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+    let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
     let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+    let rbp = VReg::Arch(ArchReg::X86(X86Reg::Rbp));
     let mut memory = FlatMemory::new(0x1000);
     let mut ctx = SmirContext::new_x86_64();
 
@@ -526,6 +529,38 @@ fn lifted_cmpxchg_xadd_handle_legacy_high_bytes_and_aliases() {
     assert_eq!(ctx.read_vreg(rbx), 0xAABB_CCDD_EEFF_0955);
     ctx.flags.materialize_all();
     assert!(!ctx.flags.materialized.zf);
+
+    ctx.write_vreg(rax, 0x1122_3344_5566_0201);
+    execute_lifted_x86(&[0x0F, 0xB0, 0xE0], &mut ctx, &mut memory); // CMPXCHG AL,AH
+    assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_0202);
+
+    ctx.write_vreg(rax, 0xFFFF_AAAA_1234_5678);
+    ctx.write_vreg(rcx, 0xBBBB_CCCC_89AB_CDEF);
+    ctx.write_vreg(rdx, 0xDDDD_EEEE_1234_5678);
+    execute_lifted_x86(&[0x0F, 0xB1, 0xCA], &mut ctx, &mut memory); // CMPXCHG EDX,ECX
+    assert_eq!(
+        ctx.read_vreg(rax),
+        0xFFFF_AAAA_1234_5678,
+        "matching EAX must leave full RAX unchanged"
+    );
+    assert_eq!(ctx.read_vreg(rdx), 0x89AB_CDEF, "matching EDX zero-extends");
+
+    ctx.write_vreg(rax, 0xFFFF_AAAA_1111_2222);
+    ctx.write_vreg(rdx, 0xDDDD_EEEE_3333_4444);
+    execute_lifted_x86(&[0x0F, 0xB1, 0xCA], &mut ctx, &mut memory); // mismatch
+    assert_eq!(ctx.read_vreg(rax), 0x3333_4444, "mismatch zero-extends EAX");
+    assert_eq!(
+        ctx.read_vreg(rdx),
+        0xDDDD_EEEE_3333_4444,
+        "mismatch leaves the destination entirely unchanged"
+    );
+
+    ctx.write_vreg(rax, 0x7F);
+    ctx.write_vreg(rsp, 0x1234_5678_9ABC_DE7F);
+    ctx.write_vreg(rbp, 0xAABB_CCDD_EEFF_0055);
+    execute_lifted_x86(&[0x40, 0x0F, 0xB0, 0xEC], &mut ctx, &mut memory); // CMPXCHG SPL,BPL
+    assert_eq!(ctx.read_vreg(rsp), 0x1234_5678_9ABC_DE55);
+    assert_eq!(ctx.read_vreg(rbp), 0xAABB_CCDD_EEFF_0055);
 
     ctx.write_vreg(rax, 0x1122_3344_5566_0201);
     ctx.write_vreg(rbx, 0xAABB_CCDD_EEFF_0355);
