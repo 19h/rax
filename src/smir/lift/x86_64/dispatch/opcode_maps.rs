@@ -70,6 +70,20 @@ impl X86_64Lifter {
             0x41 => self.lift_sse_phminposuw(after_opcode, &prefix3, pc, ctx),
             0xC8..=0xCD => self.lift_sse_sha32(opcode3, after_opcode, &prefix3, false, pc, ctx),
             0xCF => self.lift_sse_gfni(opcode3, after_opcode, &prefix3, false, pc, ctx),
+            // F3 selects Intel Key Locker at these map cells, even with a
+            // redundant 66 prefix. The fixed guest profile clears
+            // CPUID.07H:ECX.KL[23], making #UD decisive at the opcode frontier
+            // before ModR/M decode or operand observation.
+            0xD8 | 0xDC..=0xDF | 0xFA | 0xFB if prefix3.rep_prefix == Some(0xF3) => {
+                Ok(LiftResult {
+                    ops: Vec::new(),
+                    bytes_consumed: prefix3.cursor,
+                    control_flow: ControlFlow::Trap {
+                        kind: TrapKind::InvalidOpcode,
+                    },
+                    branch_targets: Vec::new(),
+                })
+            }
             0xDB..=0xDF => self.lift_sse_aes_round(opcode3, after_opcode, &prefix3, pc, ctx),
             0x8A | 0x8B => self.lift_movrs_0f38(opcode3, after_opcode, &prefix3, pc, ctx),
             0x82 => self.lift_invpcid_0f38(after_opcode, &prefix3, pc, ctx),

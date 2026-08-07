@@ -70,3 +70,49 @@ fn legacy_0f38_terminal_matches_the_fixed_profile_and_absolute_frontiers() {
         })
     ));
 }
+
+#[test]
+fn every_profile_disabled_key_locker_opcode_and_modrm_byte_is_terminal() {
+    const KEY_LOCKER_OPCODES: [u8; 7] = [0xD8, 0xDC, 0xDD, 0xDE, 0xDF, 0xFA, 0xFB];
+    const PREFIXES: [&[u8]; 2] = [&[0xF3, 0x0F, 0x38], &[0xF3, 0x48, 0x0F, 0x38]];
+
+    let mut checks = 0usize;
+    for prefix in PREFIXES {
+        for opcode in KEY_LOCKER_OPCODES {
+            for modrm in u8::MIN..=u8::MAX {
+                let mut bytes = prefix.to_vec();
+                bytes.extend_from_slice(&[opcode, modrm]);
+                let result = lift_single(&bytes).unwrap_or_else(|error| {
+                    panic!("profile-disabled Key Locker {bytes:02X?}: {error:?}")
+                });
+                assert_invalid_opcode_trap(&result, prefix.len() + 1);
+                checks += 1;
+            }
+        }
+    }
+    assert_eq!(checks, 2 * 7 * 256);
+}
+
+#[test]
+fn key_locker_mandatory_f3_dominates_redundant_66_without_hiding_aes() {
+    for bytes in [
+        &[0x66, 0xF3, 0x0F, 0x38, 0xDC, 0xC0][..],
+        &[0xF3, 0x66, 0x0F, 0x38, 0xDC, 0xC0],
+        &[0x66, 0xF3, 0x0F, 0x38, 0xDD, 0x00],
+        &[0xF3, 0x66, 0x0F, 0x38, 0xDE, 0x00],
+    ] {
+        let result = lift_single(bytes)
+            .unwrap_or_else(|error| panic!("redundant-prefix Key Locker {bytes:02X?}: {error:?}"));
+        assert_invalid_opcode_trap(&result, 5);
+    }
+
+    let aesenc = lift_single(&[0x66, 0x0F, 0x38, 0xDC, 0xC0]).expect("ordinary AESENC");
+    assert_eq!(aesenc.bytes_consumed, 5);
+    assert!(matches!(aesenc.control_flow, ControlFlow::Fallthrough));
+    assert!(
+        aesenc
+            .ops
+            .iter()
+            .any(|op| matches!(op.kind, OpKind::X86Aes { .. }))
+    );
+}

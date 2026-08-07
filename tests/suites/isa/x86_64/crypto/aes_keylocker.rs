@@ -556,3 +556,58 @@ fn test_kl_256bit_workflow() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
+
+#[test]
+fn disabled_key_locker_faults_before_operand_observation_on_both_decode_paths() {
+    let cases: &[(&str, &[u8])] = &[
+        ("AESENCWIDE128KL", &[0xF3, 0x0F, 0x38, 0xD8, 0x00]),
+        ("AESDECWIDE128KL", &[0xF3, 0x0F, 0x38, 0xD8, 0x08]),
+        ("AESENCWIDE256KL", &[0xF3, 0x0F, 0x38, 0xD8, 0x10]),
+        ("AESDECWIDE256KL", &[0xF3, 0x0F, 0x38, 0xD8, 0x18]),
+        ("LOADIWKEY", &[0xF3, 0x0F, 0x38, 0xDC, 0xC1]),
+        ("AESENC128KL", &[0xF3, 0x0F, 0x38, 0xDC, 0x00]),
+        ("AESDEC128KL", &[0xF3, 0x0F, 0x38, 0xDD, 0x00]),
+        ("AESENC256KL", &[0xF3, 0x0F, 0x38, 0xDE, 0x00]),
+        ("AESDEC256KL", &[0xF3, 0x0F, 0x38, 0xDF, 0x00]),
+        ("ENCODEKEY128", &[0xF3, 0x0F, 0x38, 0xFA, 0xC1]),
+        ("ENCODEKEY256", &[0xF3, 0x0F, 0x38, 0xFB, 0xC1]),
+        (
+            "66 before F3 LOADIWKEY",
+            &[0x66, 0xF3, 0x0F, 0x38, 0xDC, 0xC1],
+        ),
+        (
+            "66 after F3 LOADIWKEY",
+            &[0xF3, 0x66, 0x0F, 0x38, 0xDC, 0xC1],
+        ),
+        ("REX.W LOADIWKEY", &[0xF3, 0x48, 0x0F, 0x38, 0xDC, 0xC1]),
+    ];
+
+    for &(name, instruction) in cases {
+        let mut initial = Registers::default();
+        initial.rax = u64::MAX;
+        initial.rbx = 0x0123_4567_89AB_CDEF;
+        initial.rflags = 0x0CD7;
+        initial.xmm[0] = [0x1111_2222_3333_4444, 0x5555_6666_7777_8888];
+        initial.xmm[1] = [0x9999_AAAA_BBBB_CCCC, 0xDDDD_EEEE_FFFF_0000];
+        initial.ymm_high[0] = [0x1020_3040_5060_7080, 0x90A0_B0C0_D0E0_F000];
+        initial.zmm_high[0] = [1, 2, 3, 4];
+        let (mut vcpu, _) = setup_vm_no_idt(instruction, Some(initial));
+
+        for path in ["cold decode", "decode-cache hit"] {
+            let before =
+                serde_json::to_value((vcpu.get_regs().unwrap(), vcpu.get_sregs().unwrap()))
+                    .unwrap();
+            let error = match vcpu.step() {
+                Err(error) => error,
+                Ok(exit) => panic!("{name} ({path}) unexpectedly retired: {exit:?}"),
+            };
+            assert!(
+                error.to_string().contains("IDT entry 6 not present"),
+                "{name} ({path}): {error}"
+            );
+            let after = serde_json::to_value((vcpu.get_regs().unwrap(), vcpu.get_sregs().unwrap()))
+                .unwrap();
+            assert_eq!(after, before, "{name} ({path}) must not commit state");
+        }
+    }
+}

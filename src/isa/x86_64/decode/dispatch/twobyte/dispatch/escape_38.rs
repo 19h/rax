@@ -26,6 +26,11 @@ fn is_legacy_0f38_simd_opcode(opcode: u8) -> bool {
     )
 }
 
+#[inline]
+fn is_profile_disabled_key_locker(ctx: &InsnContext, opcode: u8) -> bool {
+    ctx.rep_prefix == Some(0xF3) && matches!(opcode, 0xD8 | 0xDC..=0xDF | 0xFA | 0xFB)
+}
+
 impl X86_64Vcpu {
     #[inline(always)]
     pub(in crate::isa::x86_64) fn execute_0f38(
@@ -42,6 +47,14 @@ impl X86_64Vcpu {
         crate::observability::profiling::set_current_opcode_key(
             crate::observability::profiling::OpcodeKey::ThreeByte38(opcode3),
         );
+
+        // F3 selects the Intel Key Locker family at these legacy 0F38 map
+        // cells, including when a redundant 66 prefix is also present. RAX's
+        // fixed CPUID profile clears CPUID.07H:ECX.KL[23], so every form raises
+        // #UD before observing ModR/M, memory, or architectural operands.
+        if is_profile_disabled_key_locker(ctx, opcode3) {
+            return self.inject_undefined_instruction();
+        }
 
         match opcode3 {
             // ===== SSSE3 Instructions (0x00-0x0B, 0x1C-0x1E) =====
