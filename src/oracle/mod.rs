@@ -28,6 +28,7 @@ use crate::smir::ir::ops::X86DebugReg;
 use crate::smir::ir::ops::X86DescriptorTable;
 use crate::smir::ir::ops::X86DescriptorTableLoadOp;
 use crate::smir::ir::ops::X86DescriptorTableStoreOp;
+use crate::smir::ir::ops::X86GprOperand;
 use crate::smir::ir::ops::X86InvlpgOp;
 use crate::smir::ir::ops::X86InvpcidOp;
 use crate::smir::ir::ops::X86LmswOp;
@@ -64,6 +65,7 @@ use crate::smir::ir::ops::X86X87EnvWidth;
 use crate::smir::ir::ops::X86X87FloatWidth;
 use crate::smir::ir::ops::X86X87IntWidth;
 use crate::smir::ir::ops::X86XSaveKind;
+use crate::smir::ir::ops::X86XaddOp;
 use crate::smir::ir::ops::X86XopPackedBitKind;
 use crate::smir::ir::ops::{
     X86FarCallOp, X86FarJumpOp, X86FarReturnOp, X86FastSystemTransferKind, X86FastSystemTransferOp,
@@ -1405,6 +1407,15 @@ impl OracleJson for VReg {
     }
 }
 
+impl OracleJson for X86GprOperand {
+    fn oracle_json(&self) -> Value {
+        json!({
+            "reg": self.vreg().oracle_json(),
+            "high_byte": self.high_byte,
+        })
+    }
+}
+
 impl OracleJson for SrcOperand {
     fn oracle_json(&self) -> Value {
         match self {
@@ -1837,6 +1848,12 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::Lea { dst, addr } => op_json!("lea", dst, addr),
         OpKind::X86Lea { dst, addr, width } => op_json!("x86_lea", dst, addr, width),
         OpKind::Xchg { reg1, reg2, width } => op_json!("xchg", reg1, reg2, width),
+        OpKind::X86Xadd(X86XaddOp {
+            dst,
+            src,
+            width,
+            flags,
+        }) => op_json!("x86_xadd", dst, src, width, flags),
         OpKind::Load {
             dst,
             addr,

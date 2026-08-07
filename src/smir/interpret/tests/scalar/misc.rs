@@ -533,6 +533,18 @@ fn lifted_cmpxchg_xadd_handle_legacy_high_bytes_and_aliases() {
     assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_0501);
     assert_eq!(ctx.read_vreg(rbx), 0xAABB_CCDD_EEFF_0255);
 
+    ctx.write_vreg(rax, 0x1122_3344_5566_0201);
+    execute_lifted_x86(&[0x0F, 0xC0, 0xE0], &mut ctx, &mut memory); // XADD AL,AH
+    assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_0103);
+
+    ctx.write_vreg(rax, 0x1122_3344_5566_0080);
+    execute_lifted_x86(&[0x0F, 0xC0, 0xC0], &mut ctx, &mut memory); // XADD AL,AL
+    assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_0000);
+    ctx.flags.materialize_all();
+    assert!(ctx.flags.materialized.cf);
+    assert!(ctx.flags.materialized.of);
+    assert!(ctx.flags.materialized.zf);
+
     ctx.write_vreg(rax, 0x1122_3344_5566_03AA);
     ctx.write_vreg(rbx, 0x200);
     memory.write(0x200, &[4]).unwrap();

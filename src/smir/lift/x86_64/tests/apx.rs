@@ -738,7 +738,7 @@ fn lift_rex2_xadd_registers_like_llvm() {
         //   `xadd r24, r31`   => d5 dd c1 f8
         let result = lifter.lift_insn(0x1000, bytes, &mut ctx).unwrap();
         assert_eq!(result.bytes_consumed, *bytes_consumed, "{name}");
-        assert_rex2_guarded_ops(&result, 5);
+        assert_rex2_guarded_ops(&result, 1);
         assert_xadd_register_ops(&result, name, *dst_reg, *src_reg, *width);
     }
 }

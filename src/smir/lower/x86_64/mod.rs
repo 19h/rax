@@ -70,7 +70,9 @@ mod sti;
 pub use sti::*;
 mod cpuid;
 mod state_backed_replay;
+mod xadd;
 pub use cpuid::*;
+pub(crate) use xadd::*;
 mod descriptor_table;
 pub use descriptor_table::*;
 #[cfg(feature = "smir-jit")]

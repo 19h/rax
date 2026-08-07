@@ -7,10 +7,10 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
-    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign, X86VecMap,
-    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
-    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
-    X86XSaveKind,
+    X86GprOperand, X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind,
+    X86VecAlign, X86VecMap, X86X87ArithmeticDestination, X86X87ArithmeticSource,
+    X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth,
+    X86X87FloatWidth, X86X87IntWidth, X86XSaveKind, X86XaddOp,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{
@@ -985,6 +985,36 @@ impl X86_64Lifter {
         let width = self.size_to_width(op_size);
         let mem_width = self.size_to_memwidth(op_size);
         let modrm = decode_modrm(bytes, prefix, pc)?;
+
+        if !modrm.is_memory {
+            if prefix.lock {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes[..modrm.bytes_consumed].to_vec(),
+                });
+            }
+            let operand = |reg| {
+                if is_byte {
+                    self.x86_gpr_operand(reg, prefix)
+                } else {
+                    X86GprOperand::low(X86Reg::gpr(reg & 0x1F))
+                }
+            };
+            return Ok(LiftResult::fallthrough(
+                vec![SmirOp::new(
+                    OpId(0),
+                    pc,
+                    OpKind::X86Xadd(X86XaddOp {
+                        dst: operand(modrm.rm),
+                        src: operand(modrm.reg),
+                        width,
+                        flags: FlagUpdate::All,
+                    }),
+                )],
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
+
         let src_reg = self.gpr(modrm.reg);
         let mut ops = Vec::new();
         let src_value = if is_byte {
@@ -1004,137 +1034,45 @@ impl X86_64Lifter {
             },
         ));
 
-        if modrm.is_memory {
-            let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
-            let x86_addr = modrm.addr.as_ref().unwrap();
-            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
-            ops.extend(pre_ops);
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let x86_addr = modrm.addr.as_ref().unwrap();
+        let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+        ops.extend(pre_ops);
 
-            let old_dst = ctx.alloc_vreg();
-            if prefix.lock {
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::AtomicRmw {
-                        dst: old_dst,
-                        addr: addr.clone(),
-                        src: saved_src,
-                        op: AtomicOp::Add,
-                        width: mem_width,
-                        order: MemoryOrder::SeqCst,
-                    },
-                ));
-            } else {
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Load {
-                        dst: old_dst,
-                        addr: addr.clone(),
-                        width: mem_width,
-                        sign: SignExtend::Zero,
-                    },
-                ));
-            }
-
-            // A non-LOCK memory XADD does a *separate* store that can fault (e.g.
-            // a read-only page). Architecturally a faulting XADD must leave both
-            // the flags and the source register unchanged, so the flag update must
-            // not be committed before the store retires. Compute the sum WITHOUT
-            // flags here; the flags are emitted after the store/writeback below.
-            // A LOCK XADD instead uses the AtomicRmw above, which has already
-            // committed the memory update, so its flags are computed here. (#23)
-            let sum = ctx.alloc_vreg();
+        let old_dst = ctx.alloc_vreg();
+        if prefix.lock {
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
                 pc,
-                OpKind::Add {
-                    dst: sum,
-                    src1: old_dst,
-                    src2: SrcOperand::Reg(saved_src),
-                    width,
-                    flags: if prefix.lock {
-                        FlagUpdate::All
-                    } else {
-                        FlagUpdate::None
-                    },
+                OpKind::AtomicRmw {
+                    dst: old_dst,
+                    addr: addr.clone(),
+                    src: saved_src,
+                    op: AtomicOp::Add,
+                    width: mem_width,
+                    order: MemoryOrder::SeqCst,
                 },
             ));
-
-            if !prefix.lock {
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Store {
-                        src: sum,
-                        addr,
-                        width: mem_width,
-                    },
-                ));
-            }
-
-            if is_byte {
-                self.write_byte_reg(modrm.reg, prefix, old_dst, pc, ctx, &mut ops);
-            } else {
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Mov {
-                        dst: src_reg,
-                        src: SrcOperand::Reg(old_dst),
-                        width,
-                    },
-                ));
-            }
-
-            if !prefix.lock {
-                // Now that the store has retired, commit the arithmetic flags. If
-                // the store faulted, none of these ops execute, so a faulting XADD
-                // leaves flags and the source register unchanged. (#23)
-                let flag_tmp = ctx.alloc_vreg();
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Add {
-                        dst: flag_tmp,
-                        src1: old_dst,
-                        src2: SrcOperand::Reg(saved_src),
-                        width,
-                        flags: FlagUpdate::All,
-                    },
-                ));
-            }
-
-            return Ok(LiftResult::fallthrough(
-                ops,
-                prefix.cursor + modrm.bytes_consumed,
+        } else {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Load {
+                    dst: old_dst,
+                    addr: addr.clone(),
+                    width: mem_width,
+                    sign: SignExtend::Zero,
+                },
             ));
         }
 
-        if prefix.lock {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: bytes[..modrm.bytes_consumed].to_vec(),
-            });
-        }
-
-        let dst_reg = self.gpr(modrm.rm);
-        let dst_value = if is_byte {
-            self.read_byte_reg(modrm.rm, prefix, pc, ctx, &mut ops)
-        } else {
-            dst_reg
-        };
-        let old_dst = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Mov {
-                dst: old_dst,
-                src: SrcOperand::Reg(dst_value),
-                width,
-            },
-        ));
-
+        // A non-LOCK memory XADD does a *separate* store that can fault (e.g.
+        // a read-only page). Architecturally a faulting XADD must leave both
+        // the flags and the source register unchanged, so the flag update must
+        // not be committed before the store retires. Compute the sum WITHOUT
+        // flags here; the flags are emitted after the store/writeback below.
+        // A LOCK XADD instead uses the AtomicRmw above, which has already
+        // committed the memory update, so its flags are computed here. (#23)
         let sum = ctx.alloc_vreg();
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
@@ -1144,13 +1082,28 @@ impl X86_64Lifter {
                 src1: old_dst,
                 src2: SrcOperand::Reg(saved_src),
                 width,
-                flags: FlagUpdate::All,
+                flags: if prefix.lock {
+                    FlagUpdate::All
+                } else {
+                    FlagUpdate::None
+                },
             },
         ));
 
+        if !prefix.lock {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Store {
+                    src: sum,
+                    addr,
+                    width: mem_width,
+                },
+            ));
+        }
+
         if is_byte {
             self.write_byte_reg(modrm.reg, prefix, old_dst, pc, ctx, &mut ops);
-            self.write_byte_reg(modrm.rm, prefix, sum, pc, ctx, &mut ops);
         } else {
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
@@ -1161,13 +1114,22 @@ impl X86_64Lifter {
                     width,
                 },
             ));
+        }
+
+        if !prefix.lock {
+            // Now that the store has retired, commit the arithmetic flags. If
+            // the store faulted, none of these ops execute, so a faulting XADD
+            // leaves flags and the source register unchanged. (#23)
+            let flag_tmp = ctx.alloc_vreg();
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
                 pc,
-                OpKind::Mov {
-                    dst: dst_reg,
-                    src: SrcOperand::Reg(sum),
+                OpKind::Add {
+                    dst: flag_tmp,
+                    src1: old_dst,
+                    src2: SrcOperand::Reg(saved_src),
                     width,
+                    flags: FlagUpdate::All,
                 },
             ));
         }

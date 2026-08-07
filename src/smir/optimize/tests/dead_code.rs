@@ -1,8 +1,50 @@
 //! tests::dead_code tests
 
 use super::*;
-use crate::smir::ir::ops::X86ReadTscOp;
+use crate::smir::ir::ops::{X86GprOperand, X86ReadTscOp, X86XaddOp};
 use crate::smir::optimize::*;
+
+#[test]
+fn xadd_metadata_tracks_both_commits_partial_lanes_and_dead_flags() {
+    let dst = X86GprOperand::low(X86Reg::Rax);
+    let src = X86GprOperand::low(X86Reg::Rbp);
+    let xadd = OpKind::X86Xadd(X86XaddOp {
+        dst,
+        src,
+        width: OpWidth::W32,
+        flags: FlagUpdate::All,
+    });
+    assert_eq!(xadd.dests(), vec![dst.vreg(), src.vreg()]);
+    assert_eq!(xadd.source_vregs(), vec![dst.vreg(), src.vreg()]);
+    assert_eq!(xadd.flags_written(), FlagSet::ALL_X86);
+    assert_eq!(xadd.flags_must_write(), FlagSet::ALL_X86);
+    assert_eq!(op_out_width(&xadd), Some(OpWidth::W32));
+    assert!(op_fully_defines(&xadd));
+
+    let mut block = SmirBlock::new(BlockId(0), 0x1000);
+    block.push_op(make_op(0, xadd));
+    block.set_terminator(Terminator::Return { values: vec![] });
+    assert_eq!(dead_flag_elimination(&mut block), 1);
+    assert!(matches!(
+        block.ops[0].kind,
+        OpKind::X86Xadd(X86XaddOp {
+            flags: FlagUpdate::None,
+            ..
+        })
+    ));
+    assert_eq!(
+        dead_code_elimination_with(&mut block, &HashSet::from([dst.vreg()])),
+        0
+    );
+
+    let high = OpKind::X86Xadd(X86XaddOp {
+        dst: X86GprOperand::high(X86Reg::Rax),
+        src: X86GprOperand::high(X86Reg::Rbx),
+        width: OpWidth::W8,
+        flags: FlagUpdate::All,
+    });
+    assert!(!op_fully_defines(&high));
+}
 
 #[test]
 fn x86_count_metadata_tracks_results_sources_and_dead_flags() {

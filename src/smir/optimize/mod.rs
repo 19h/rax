@@ -1783,6 +1783,7 @@ impl OpKind {
     pub fn flags_written_mut(&mut self) -> Option<&mut FlagUpdate> {
         match self {
             OpKind::Add { flags, .. }
+            | OpKind::X86Xadd(crate::smir::ir::ops::X86XaddOp { flags, .. })
             | OpKind::Sub { flags, .. }
             | OpKind::Adc { flags, .. }
             | OpKind::Sbb { flags, .. }
@@ -1823,6 +1824,7 @@ impl OpKind {
     pub fn flags_written(&self) -> FlagSet {
         match self {
             OpKind::Add { flags, .. }
+            | OpKind::X86Xadd(crate::smir::ir::ops::X86XaddOp { flags, .. })
             | OpKind::Sub { flags, .. }
             | OpKind::Adc { flags, .. }
             | OpKind::Sbb { flags, .. }
@@ -2255,6 +2257,11 @@ impl OpKind {
             OpKind::Xchg { reg1, reg2, .. } => {
                 result.push(*reg1);
                 result.push(*reg2);
+            }
+
+            OpKind::X86Xadd(xadd) => {
+                result.push(xadd.dst.vreg());
+                result.push(xadd.src.vreg());
             }
 
             OpKind::Load { addr, .. }

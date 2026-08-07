@@ -8,10 +8,10 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
-    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign, X86VecMap,
-    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
-    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
-    X86XSaveKind,
+    X86GprOperand, X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind,
+    X86VecAlign, X86VecMap, X86X87ArithmeticDestination, X86X87ArithmeticSource,
+    X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth,
+    X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{
@@ -190,6 +190,16 @@ impl X86_64Lifter {
     /// Get x86 register by number
     pub(crate) fn gpr(&self, reg: u8) -> VReg {
         self.x86_gpr(reg & 0x1F)
+    }
+
+    /// Decode one register operand while retaining the legacy high-byte lane
+    /// that has no standalone architectural-register identity in SMIR.
+    pub(crate) fn x86_gpr_operand(&self, reg: u8, prefix: &X86Prefix) -> X86GprOperand {
+        if !prefix.has_rex() && (4..=7).contains(&(reg & 7)) {
+            X86GprOperand::high(X86Reg::gpr((reg & 7) - 4))
+        } else {
+            X86GprOperand::low(X86Reg::gpr(reg & 0x1F))
+        }
     }
 
     /// Decode an 8-bit register source, extracting AH/CH/DH/BH when no REX

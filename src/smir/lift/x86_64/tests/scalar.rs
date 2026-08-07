@@ -1,6 +1,7 @@
 //! tests::scalar tests
 
 use super::*;
+use crate::smir::ir::ops::X86GprOperand;
 use crate::smir::lift::x86_64::*;
 
 /// LEA computes the segment OFFSET and must IGNORE a segment override —
@@ -221,6 +222,42 @@ fn lift_xadd_same_register_writes_sum_last_like_llvm() {
         x86_gpr(0),
         OpWidth::W64,
     );
+}
+
+#[test]
+fn lift_xadd_retains_legacy_high_byte_and_rex_low_byte_lanes() {
+    let mut lifter = X86_64Lifter::strict();
+    let mut ctx = LiftContext::new(SourceArch::X86_64);
+    let cases = [
+        (
+            &[0x0F, 0xC0, 0xFC][..],
+            X86GprOperand::high(X86Reg::Rax),
+            X86GprOperand::high(X86Reg::Rbx),
+        ), // XADD AH,BH
+        (
+            &[0x0F, 0xC0, 0xE0][..],
+            X86GprOperand::low(X86Reg::Rax),
+            X86GprOperand::high(X86Reg::Rax),
+        ), // XADD AL,AH
+        (
+            &[0x40, 0x0F, 0xC0, 0xEC][..],
+            X86GprOperand::low(X86Reg::Rsp),
+            X86GprOperand::low(X86Reg::Rbp),
+        ), // XADD SPL,BPL
+    ];
+
+    for (bytes, expected_dst, expected_src) in cases {
+        let result = lifter.lift_insn(0x1000, bytes, &mut ctx).unwrap();
+        assert_eq!(result.bytes_consumed, bytes.len());
+        assert_eq!(result.ops.len(), 1);
+        let OpKind::X86Xadd(xadd) = &result.ops[0].kind else {
+            panic!("expected dedicated XADD for {bytes:02X?}");
+        };
+        assert_eq!(xadd.dst, expected_dst);
+        assert_eq!(xadd.src, expected_src);
+        assert_eq!(xadd.width, OpWidth::W8);
+        assert_eq!(xadd.flags, FlagUpdate::All);
+    }
 }
 #[test]
 fn lift_lock_xadd_register_rejected_like_spec() {

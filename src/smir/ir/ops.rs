@@ -1005,6 +1005,9 @@ pub enum OpKind {
         width: OpWidth,
     },
 
+    /// Register-only x86 XADD, including legacy high-byte and APX EGPR forms.
+    X86Xadd(X86XaddOp),
+
     // ========================================================================
     // MEMORY OPERATIONS
     // ========================================================================
@@ -5240,6 +5243,7 @@ impl OpKind {
             OpKind::StoreExclusive { status, .. } => vec![*status],
 
             OpKind::Xchg { reg1, reg2, .. } => vec![*reg1, *reg2],
+            OpKind::X86Xadd(xadd) => vec![xadd.dst.vreg(), xadd.src.vreg()],
 
             // No destination
             OpKind::Cmp { .. }

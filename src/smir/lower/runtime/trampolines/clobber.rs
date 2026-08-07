@@ -19,6 +19,10 @@ use crate::smir::lower::x86_64::{
     x86_write_debug_shape_valid,
 };
 
+#[path = "clobber/flags.rs"]
+mod flags;
+pub(crate) use flags::x86_native_op_would_clobber_preserved_flags;
+
 /// Admit only scalar MMU-helper transfers that the x86-64 state-backed
 /// lowerer can reconstruct without allocator-owned values. The subsequent
 /// generic clobber checks reject RSP/RBP destinations; those registers remain
@@ -1307,6 +1311,7 @@ pub(crate) fn block_is_clobber_safe(
         let state_mulx_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_mulx_valid(op);
         let state_bswap_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_bswap_valid(op);
         let state_xchg_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_xchg_valid(op);
+        let xadd_ok = crate::smir::lower::x86_64::x86_xadd_shape_valid(op);
         let fsgsbase_ok = crate::smir::lower::x86_64::x86_fsgsbase_shape_valid(&op.kind);
         let read_control_ok = x86_read_control_shape_valid(&op.kind);
         let smsw_ok = match &op.kind {
@@ -1479,6 +1484,7 @@ pub(crate) fn block_is_clobber_safe(
             || state_mulx_ok
             || state_bswap_ok
             || state_xchg_ok
+            || xadd_ok
             || mxcsr_store_ok
             || mxcsr_load_ok
             || waitpkg_ok
@@ -1585,7 +1591,8 @@ pub(crate) fn block_is_clobber_safe(
                 | OpKind::X86Tbm { .. }
                 | OpKind::X86Adx { .. }
                 | OpKind::X86XTest
-        ) || guarded_div_ok
+        ) || xadd_ok
+            || guarded_div_ok
             || io_ok
             || crate::smir::lower::x86_64::x86_flag_control_shape_valid(op);
         let vector_ok = if matches!(op.kind, OpKind::X86Opmask(_)) {
@@ -1927,6 +1934,9 @@ pub(crate) fn block_is_clobber_safe(
         {
             return false;
         }
+        if matches!(op.kind, OpKind::X86Xadd(..)) && !xadd_ok {
+            return false;
+        }
         if matches!(op.kind, OpKind::X86NddDoubleShift { .. })
             && !x86_ndd_double_shift_shape_valid(&op.kind)
             && !state_double_shift_ok
@@ -1947,7 +1957,7 @@ pub(crate) fn block_is_clobber_safe(
         }
         // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/INC/DEC/
         // ROL/ROR/RCL/RCR/SHL/SHR/SAR/SHLD/SHRD (including APX NDD)/count/
-        // bit-scan/bit-test/CRC32/BMI/ADX/PDEP/PEXT/MULX/BSWAP/XCHG/ADD/SUB
+        // bit-scan/bit-test/CRC32/BMI/ADX/PDEP/PEXT/MULX/BSWAP/XCHG/XADD/ADD/SUB
         // reads/writes are state-backed.
         // Other writes are not modeled and bail. A read is additionally valid
         // as an operand of a mem-JIT Load/Store (an address base/index, or a stored value): the MMU
@@ -1970,27 +1980,4 @@ pub(crate) fn block_is_clobber_safe(
         i += 1;
     }
     true
-}
-pub(crate) fn x86_native_op_would_clobber_preserved_flags(
-    op: &crate::smir::ir::ops::OpKind,
-) -> bool {
-    use crate::smir::ir::flags::FlagUpdate;
-    use crate::smir::ir::ops::OpKind;
-
-    matches!(
-        op,
-        OpKind::Adc {
-            flags: FlagUpdate::None,
-            ..
-        } | OpKind::Sbb {
-            flags: FlagUpdate::None,
-            ..
-        } | OpKind::Shld {
-            flags: FlagUpdate::None,
-            ..
-        } | OpKind::Shrd {
-            flags: FlagUpdate::None,
-            ..
-        }
-    )
 }

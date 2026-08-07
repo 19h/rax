@@ -857,69 +857,17 @@ fn assert_xadd_register_ops(
     } else {
         result.ops.as_slice()
     };
-    assert_eq!(ops.len(), 5, "{name}");
-    let saved_src = match &ops[0].kind {
-        OpKind::Mov {
-            dst,
-            src: SrcOperand::Reg(src),
-            width: got_width,
-        } => {
-            assert_eq!(*src, src_reg, "{name}");
-            assert_eq!(*got_width, width, "{name}");
-            *dst
+    assert_eq!(ops.len(), 1, "{name}");
+    match &ops[0].kind {
+        OpKind::X86Xadd(xadd) => {
+            assert_eq!(xadd.dst.vreg(), dst_reg, "{name}");
+            assert_eq!(xadd.src.vreg(), src_reg, "{name}");
+            assert!(!xadd.dst.high_byte, "{name}");
+            assert!(!xadd.src.high_byte, "{name}");
+            assert_eq!(xadd.width, width, "{name}");
+            assert_eq!(xadd.flags, FlagUpdate::All, "{name}");
         }
-        other => panic!("expected {name} source snapshot, got {other:?}"),
-    };
-    let old_dst = match &ops[1].kind {
-        OpKind::Mov {
-            dst,
-            src: SrcOperand::Reg(src),
-            width: got_width,
-        } => {
-            assert_eq!(*src, dst_reg, "{name}");
-            assert_eq!(*got_width, width, "{name}");
-            *dst
-        }
-        other => panic!("expected {name} destination snapshot, got {other:?}"),
-    };
-    let sum = match &ops[2].kind {
-        OpKind::Add {
-            dst,
-            src1,
-            src2: SrcOperand::Reg(src2),
-            width: got_width,
-            flags: FlagUpdate::All,
-        } => {
-            assert_eq!(*src1, old_dst, "{name}");
-            assert_eq!(*src2, saved_src, "{name}");
-            assert_eq!(*got_width, width, "{name}");
-            *dst
-        }
-        other => panic!("expected {name} flagged add, got {other:?}"),
-    };
-    match &ops[3].kind {
-        OpKind::Mov {
-            dst,
-            src: SrcOperand::Reg(src),
-            width: got_width,
-        } => {
-            assert_eq!(*dst, src_reg, "{name}");
-            assert_eq!(*src, old_dst, "{name}");
-            assert_eq!(*got_width, width, "{name}");
-        }
-        other => panic!("expected {name} source writeback, got {other:?}"),
-    }
-    match &ops[4].kind {
-        OpKind::Mov {
-            dst,
-            src: SrcOperand::Reg(src),
-            width: got_width,
-        } => {
-            assert_eq!(*dst, dst_reg, "{name}");
-            assert_eq!(*src, sum, "{name}");
-            assert_eq!(*got_width, width, "{name}");
-        }
-        other => panic!("expected {name} destination writeback, got {other:?}"),
+        other => panic!("expected {name} dedicated XADD, got {other:?}"),
     }
 }
 

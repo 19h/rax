@@ -6,9 +6,10 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate, LazyFlagOp, LazyFlags};
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
-    X86CacheControlKind, X86CountKind, X86OpHint, X86ThreeDNowKind, X86X87ArithmeticDestination,
-    X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind,
-    X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
+    X86CacheControlKind, X86CountKind, X86GprOperand, X86OpHint, X86ThreeDNowKind,
+    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
+    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
+    X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -42,6 +43,36 @@ impl SmirInterpreter {
 
                 if flags.updates_any() {
                     ctx.flags.set_lazy_add(a, b, result, *width);
+                }
+            }
+
+            OpKind::X86Xadd(xadd) => {
+                let read = |operand: X86GprOperand| {
+                    let value = ctx.read_vreg(operand.vreg());
+                    if operand.high_byte {
+                        (value >> 8) & 0xFF
+                    } else {
+                        value & xadd.width.mask()
+                    }
+                };
+                let old_dst = read(xadd.dst);
+                let old_src = read(xadd.src);
+                let sum = old_dst.wrapping_add(old_src) & xadd.width.mask();
+                let write = |ctx: &mut SmirContext, operand: X86GprOperand, value: u64| {
+                    if operand.high_byte {
+                        let old_parent = ctx.read_vreg(operand.vreg());
+                        ctx.write_vreg(
+                            operand.vreg(),
+                            (old_parent & !0xFF00) | ((value & 0xFF) << 8),
+                        );
+                    } else {
+                        Self::write_x86_partial(ctx, operand.vreg(), value, xadd.width);
+                    }
+                };
+                write(ctx, xadd.src, old_dst);
+                write(ctx, xadd.dst, sum);
+                if xadd.flags.updates_any() {
+                    ctx.flags.set_lazy_add(old_dst, old_src, sum, xadd.width);
                 }
             }
 

@@ -14,6 +14,7 @@ pub(super) fn op_out_width(kind: &OpKind) -> Option<OpWidth> {
     match kind {
         OpKind::ArmDpRegShift { .. } => Some(OpWidth::W32),
         OpKind::Add { width, .. }
+        | OpKind::X86Xadd(crate::smir::ir::ops::X86XaddOp { width, .. })
         | OpKind::Sub { width, .. }
         | OpKind::Adc { width, .. }
         | OpKind::Sbb { width, .. }

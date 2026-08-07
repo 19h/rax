@@ -1,6 +1,81 @@
 //! x86 encoding provenance retained by otherwise architecture-neutral SMIR operations.
 
-use crate::smir::ir::types::VecWidth;
+use crate::smir::ir::flags::FlagUpdate;
+use crate::smir::ir::types::{ArchReg, OpWidth, VReg, VecWidth, X86Reg};
+
+/// One architectural register operand of register-form XADD.
+///
+/// `high_byte` selects AH/CH/DH/BH within the RAX/RCX/RDX/RBX parent. Keeping
+/// the byte lane explicit is necessary because those aliases cannot be
+/// represented by a standalone [`X86Reg`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct X86GprOperand {
+    pub reg: X86Reg,
+    pub high_byte: bool,
+}
+
+impl X86GprOperand {
+    pub const fn low(reg: X86Reg) -> Self {
+        Self {
+            reg,
+            high_byte: false,
+        }
+    }
+
+    pub const fn high(reg: X86Reg) -> Self {
+        Self {
+            reg,
+            high_byte: true,
+        }
+    }
+
+    pub fn vreg(self) -> VReg {
+        VReg::Arch(ArchReg::X86(self.reg))
+    }
+
+    pub fn gpr_index(self) -> Option<u8> {
+        self.reg.gpr_index()
+    }
+
+    pub fn is_valid_for(self, width: OpWidth) -> bool {
+        let Some(index) = self.gpr_index() else {
+            return false;
+        };
+        !self.high_byte || (width == OpWidth::W8 && index < 4)
+    }
+}
+
+/// Exact register-only `XADD r/m, r` semantics.
+///
+/// Both operands are read before either destination is committed. `src`
+/// receives the old `dst`; `dst` receives their wrapping sum. Equal operands
+/// therefore end with twice the original value. `flags` is `All` in freshly
+/// lifted code and may become `None` after dead-flag elimination.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct X86XaddOp {
+    pub dst: X86GprOperand,
+    pub src: X86GprOperand,
+    pub width: OpWidth,
+    pub flags: FlagUpdate,
+}
+
+impl X86XaddOp {
+    pub fn is_valid(self) -> bool {
+        let operands_encodable = if self.dst.high_byte || self.src.high_byte {
+            self.dst.gpr_index().is_some_and(|index| index < 4)
+                && self.src.gpr_index().is_some_and(|index| index < 4)
+        } else {
+            true
+        };
+        matches!(
+            self.width,
+            OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+        ) && matches!(self.flags, FlagUpdate::None | FlagUpdate::All)
+            && self.dst.is_valid_for(self.width)
+            && self.src.is_valid_for(self.width)
+            && operands_encodable
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum X86AluEncoding {
