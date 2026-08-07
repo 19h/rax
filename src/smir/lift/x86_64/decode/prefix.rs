@@ -312,6 +312,19 @@ impl X86Prefix {
         }
     }
 
+    /// Compute the operand size of an ordinary stack PUSH/POP in 64-bit mode.
+    ///
+    /// These instructions default to 64 bits rather than the generic 32-bit
+    /// operand size. An effective REX.W or REX2.W takes precedence over 66H.
+    #[inline]
+    pub(crate) fn stack_op_size(&self) -> u8 {
+        if self.operand_size_override && !self.rex_w() {
+            2
+        } else {
+            8
+        }
+    }
+
     /// Compute operand width for SMIR
     #[inline]
     pub fn op_width(&self) -> OpWidth {

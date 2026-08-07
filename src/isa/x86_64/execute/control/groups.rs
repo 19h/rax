@@ -6,6 +6,7 @@ use crate::vm::vcpu::VcpuExit;
 use super::call::{near_branch_op_size, validate_far_selector};
 use super::{X86FarCallLoadFault, X86FarJumpLoadFault};
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
+use crate::isa::x86_64::execute::data::stack_op_size;
 use crate::isa::x86_64::execute::system::X86SystemDescriptorFault;
 use crate::smir::ir::types::OpWidth;
 
@@ -290,15 +291,7 @@ fn group5_push(
     modrm: u8,
     rm: u8,
 ) -> Result<Option<VcpuExit>> {
-    let in_long_mode = (vcpu.sregs.efer & 0x400) != 0;
-    let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
-    let op_size = if in_64bit_mode {
-        if ctx.operand_size_override { 2 } else { 8 }
-    } else {
-        let default_16bit = !vcpu.sregs.cs.db;
-        let is_16bit = default_16bit ^ ctx.operand_size_override;
-        if is_16bit { 2 } else { 4 }
-    };
+    let op_size = stack_op_size(vcpu, ctx);
 
     let val = if modrm >> 6 == 3 {
         vcpu.get_reg(rm, op_size)

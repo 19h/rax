@@ -2550,9 +2550,11 @@ fn lift_pop_rm_orders_rsp_update_before_memory_destination() {
     ));
 
     let pop16 = lift_single(&[0x66, 0x8F, 0xC0]).unwrap();
+    assert_eq!(pop16.ops.len(), 2);
     assert!(matches!(
         pop16.ops[0].kind,
         OpKind::Load {
+            dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
             width: MemWidth::B2,
             ..
         }
@@ -2561,13 +2563,6 @@ fn lift_pop_rm_orders_rsp_update_before_memory_destination() {
         pop16.ops[1].kind,
         OpKind::Add {
             src2: SrcOperand::Imm(2),
-            ..
-        }
-    ));
-    assert!(matches!(
-        pop16.ops[3].kind,
-        OpKind::Mov {
-            width: OpWidth::W16,
             ..
         }
     ));

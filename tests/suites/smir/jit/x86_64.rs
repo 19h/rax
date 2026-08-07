@@ -49,6 +49,8 @@ mod legacy_high_byte;
 mod mmx_xmm_transfer;
 #[path = "x86_64/multiply_register.rs"]
 mod multiply_register;
+#[path = "x86_64/ordinary_stack.rs"]
+mod ordinary_stack;
 #[path = "x86_64/rdpid.rs"]
 mod rdpid;
 #[path = "x86_64/smc.rs"]

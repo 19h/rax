@@ -12,15 +12,18 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        let op_size = prefix.op_size();
-        let width = self.size_to_width(op_size);
-        let mem_width = self.size_to_memwidth(op_size);
-
         let modrm = decode_modrm(bytes, prefix, pc)?;
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();
 
         let group = (modrm.byte >> 3) & 0x07;
+        let op_size = if group == 6 {
+            prefix.stack_op_size()
+        } else {
+            prefix.op_size()
+        };
+        let width = self.size_to_width(op_size);
+        let mem_width = self.size_to_memwidth(op_size);
 
         if prefix.lock {
             if !modrm.is_memory || (group != 0 && group != 1) {
@@ -328,13 +331,28 @@ impl X86_64Lifter {
                 branch_targets: vec![],
             }),
             6 => {
+                let source = if addr.is_none() && operand == self.rsp() {
+                    let old_rsp = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::Mov {
+                            dst: old_rsp,
+                            src: SrcOperand::Reg(self.rsp()),
+                            width,
+                        },
+                    ));
+                    old_rsp
+                } else {
+                    operand
+                };
                 ops.push(SmirOp::new(
                     OpId(ops.len() as u16),
                     pc,
                     OpKind::Sub {
                         dst: self.rsp(),
                         src1: self.rsp(),
-                        src2: SrcOperand::Imm(8),
+                        src2: SrcOperand::Imm(i64::from(op_size)),
                         width: OpWidth::W64,
                         flags: FlagUpdate::None,
                     },
@@ -343,9 +361,9 @@ impl X86_64Lifter {
                     OpId(ops.len() as u16),
                     pc,
                     OpKind::Store {
-                        src: operand,
+                        src: source,
                         addr: Address::Direct(self.rsp()),
-                        width: MemWidth::B8,
+                        width: mem_width,
                     },
                 ));
                 Ok(LiftResult::fallthrough(

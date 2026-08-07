@@ -112,6 +112,8 @@ mod msr_extensions;
 #[cfg(test)]
 mod opmask;
 #[cfg(test)]
+mod ordinary_stack;
+#[cfg(test)]
 mod packed_string;
 #[cfg(test)]
 mod pconfig;

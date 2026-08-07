@@ -319,6 +319,8 @@ mod mxcsr_store;
 #[cfg(test)]
 mod opmask;
 #[cfg(test)]
+mod ordinary_stack;
+#[cfg(test)]
 mod pkru;
 #[cfg(test)]
 mod pmc;

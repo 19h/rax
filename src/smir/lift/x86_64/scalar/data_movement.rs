@@ -278,11 +278,93 @@ impl X86_64Lifter {
             });
         }
 
-        let (stack_bytes, width, mem_width) = if prefix.operand_size_override {
+        let (stack_bytes, width, mem_width) = if prefix.stack_op_size() == 2 {
             (2, OpWidth::W16, MemWidth::B2)
         } else {
             (8, OpWidth::W64, MemWidth::B8)
         };
+
+        if !modrm.is_memory {
+            let destination = self.gpr(modrm.rm);
+            let mut ops = Vec::new();
+            if destination != self.rsp() {
+                // Use the canonical register-POP graph shared with 58+rd. The
+                // helper-backed native fusion commits the load only on success,
+                // then performs the architectural stack increment.
+                ops.push(SmirOp::new(
+                    OpId(0),
+                    pc,
+                    OpKind::Load {
+                        dst: destination,
+                        addr: Address::Direct(self.rsp()),
+                        width: mem_width,
+                        sign: SignExtend::Zero,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(1),
+                    pc,
+                    OpKind::Add {
+                        dst: self.rsp(),
+                        src1: self.rsp(),
+                        src2: SrcOperand::Imm(stack_bytes),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+            } else {
+                let popped = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(0),
+                    pc,
+                    OpKind::Load {
+                        dst: popped,
+                        addr: Address::Direct(self.rsp()),
+                        width: mem_width,
+                        sign: SignExtend::Zero,
+                    },
+                ));
+                if width == OpWidth::W16 {
+                    let incremented_rsp = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        OpId(1),
+                        pc,
+                        OpKind::Add {
+                            dst: incremented_rsp,
+                            src1: self.rsp(),
+                            src2: SrcOperand::Imm(stack_bytes),
+                            width: OpWidth::W64,
+                            flags: FlagUpdate::None,
+                        },
+                    ));
+                    ops.push(SmirOp::new(
+                        OpId(2),
+                        pc,
+                        OpKind::Mov {
+                            dst: self.rsp(),
+                            src: SrcOperand::Reg(incremented_rsp),
+                            width: OpWidth::W64,
+                        },
+                    ));
+                }
+                // POP RSP discards the otherwise implicit increment. POP SP
+                // first retains its carry, then replaces only the low 16 bits.
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Mov {
+                        dst: self.rsp(),
+                        src: SrcOperand::Reg(popped),
+                        width,
+                    },
+                ));
+            }
+            return Ok(LiftResult::fallthrough(
+                ops,
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
+
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();
         let popped = ctx.alloc_vreg();
@@ -312,87 +394,46 @@ impl X86_64Lifter {
             },
         ));
 
-        if modrm.is_memory {
-            let x86_addr = modrm.addr.as_ref().unwrap();
-            let address_uses_materialized_addr32 = x86_addr.address_width == OpWidth::W32;
-            let (addr, mut post_ops) = if address_uses_materialized_addr32 {
-                // POP evaluates an ESP-based memory destination after the
-                // architectural stack increment. Substitute the incremented
-                // value before materializing the modulo-2^32 address.
-                self.x86_addr32_to_smir(x86_addr, next_pc, ctx, Some((4, incremented_rsp)))
-            } else {
-                self.x86_addr_to_smir(x86_addr, next_pc, ctx)
-            };
-            for op in &mut post_ops {
-                op.id = OpId(ops.len() as u16);
-                ops.push(op.clone());
-            }
-            let addr = if address_uses_materialized_addr32 {
-                addr
-            } else {
-                Self::replace_address_reg(addr, self.rsp(), incremented_rsp)
-            };
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Store {
-                    src: popped,
-                    addr,
-                    width: mem_width,
-                },
-            ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Mov {
-                    dst: self.rsp(),
-                    src: SrcOperand::Reg(incremented_rsp),
-                    width: OpWidth::W64,
-                },
-            ));
+        let x86_addr = modrm
+            .addr
+            .as_ref()
+            .expect("register POP returned before memory destination lowering");
+        let address_uses_materialized_addr32 = x86_addr.address_width == OpWidth::W32;
+        let (addr, mut post_ops) = if address_uses_materialized_addr32 {
+            // POP evaluates an ESP-based memory destination after the
+            // architectural stack increment. Substitute the incremented
+            // value before materializing the modulo-2^32 address.
+            self.x86_addr32_to_smir(x86_addr, next_pc, ctx, Some((4, incremented_rsp)))
         } else {
-            if self.gpr(modrm.rm) == self.rsp() {
-                if width == OpWidth::W16 {
-                    ops.push(SmirOp::new(
-                        OpId(2),
-                        pc,
-                        OpKind::Mov {
-                            dst: self.rsp(),
-                            src: SrcOperand::Reg(incremented_rsp),
-                            width: OpWidth::W64,
-                        },
-                    ));
-                }
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Mov {
-                        dst: self.rsp(),
-                        src: SrcOperand::Reg(popped),
-                        width,
-                    },
-                ));
-            } else {
-                ops.push(SmirOp::new(
-                    OpId(2),
-                    pc,
-                    OpKind::Mov {
-                        dst: self.rsp(),
-                        src: SrcOperand::Reg(incremented_rsp),
-                        width: OpWidth::W64,
-                    },
-                ));
-                ops.push(SmirOp::new(
-                    OpId(3),
-                    pc,
-                    OpKind::Mov {
-                        dst: self.gpr(modrm.rm),
-                        src: SrcOperand::Reg(popped),
-                        width,
-                    },
-                ));
-            }
+            self.x86_addr_to_smir(x86_addr, next_pc, ctx)
+        };
+        for op in &mut post_ops {
+            op.id = OpId(ops.len() as u16);
+            ops.push(op.clone());
         }
+        let addr = if address_uses_materialized_addr32 {
+            addr
+        } else {
+            Self::replace_address_reg(addr, self.rsp(), incremented_rsp)
+        };
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Store {
+                src: popped,
+                addr,
+                width: mem_width,
+            },
+        ));
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Mov {
+                dst: self.rsp(),
+                src: SrcOperand::Reg(incremented_rsp),
+                width: OpWidth::W64,
+            },
+        ));
 
         Ok(LiftResult::fallthrough(
             ops,
@@ -609,7 +650,7 @@ impl X86_64Lifter {
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
         let reg = (opcode & 0x07) | prefix.rex_b();
-        let (width, mem_width, stack_bytes) = if prefix.operand_size_override {
+        let (width, mem_width, stack_bytes) = if prefix.stack_op_size() == 2 {
             (OpWidth::W16, MemWidth::B2, 2)
         } else {
             (OpWidth::W64, MemWidth::B8, 8)
@@ -671,7 +712,7 @@ impl X86_64Lifter {
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
         let reg = (opcode & 0x07) | prefix.rex_b();
-        let (width, mem_width, stack_bytes) = if prefix.operand_size_override {
+        let (width, mem_width, stack_bytes) = if prefix.stack_op_size() == 2 {
             (OpWidth::W16, MemWidth::B2, 2)
         } else {
             (OpWidth::W64, MemWidth::B8, 8)
@@ -823,9 +864,10 @@ impl X86_64Lifter {
         prefix: &X86Prefix,
         pc: u64,
     ) -> Result<LiftResult, LiftError> {
+        let stack_bytes = prefix.stack_op_size();
         let imm_size = if opcode == 0x6A {
             1
-        } else if prefix.operand_size_override {
+        } else if stack_bytes == 2 {
             2
         } else {
             4
@@ -851,10 +893,10 @@ impl X86_64Lifter {
             4 => X86OpHint::PushImm32,
             _ => unreachable!(),
         };
-        let (stack_bytes, mem_width) = if prefix.operand_size_override {
-            (2, MemWidth::B2)
+        let mem_width = if stack_bytes == 2 {
+            MemWidth::B2
         } else {
-            (8, MemWidth::B8)
+            MemWidth::B8
         };
 
         let mut ops = Vec::new();
@@ -864,7 +906,7 @@ impl X86_64Lifter {
             OpKind::Sub {
                 dst: self.rsp(),
                 src1: self.rsp(),
-                src2: SrcOperand::Imm(stack_bytes),
+                src2: SrcOperand::Imm(i64::from(stack_bytes)),
                 width: OpWidth::W64,
                 flags: FlagUpdate::None,
             },
