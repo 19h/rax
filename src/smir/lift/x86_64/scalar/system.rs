@@ -7,8 +7,8 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
-    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign, X86VecMap,
-    X86XSaveKind,
+    X86OpHint, X86RepMode, X86SsePrefix, X86StackFlagsKind, X86StackFlagsOp, X86StringKind,
+    X86ThreeDNowKind, X86VecAlign, X86VecMap, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{
@@ -1044,7 +1044,7 @@ impl X86_64Lifter {
         opcode: u8,
         prefix: &X86Prefix,
         pc: u64,
-        ctx: &mut LiftContext,
+        _ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
         if prefix.lock {
             return Err(LiftError::InvalidEncoding {
@@ -1052,142 +1052,35 @@ impl X86_64Lifter {
                 bytes: vec![opcode],
             });
         }
-        let (stack_bytes, mem_width) = if prefix.operand_size_override {
-            (2, MemWidth::B2)
+        let width = if prefix.operand_size_override && !prefix.rex_w() {
+            OpWidth::W16
         } else {
-            (8, MemWidth::B8)
+            OpWidth::W64
         };
-        let mut ops = Vec::new();
-
-        match opcode {
-            0x9C => {
-                let flags = ctx.alloc_vreg();
-                ops.push(SmirOp::new(OpId(0), pc, OpKind::ReadFlags { dst: flags }));
-                ops.push(SmirOp::new(
-                    OpId(1),
-                    pc,
-                    OpKind::Sub {
-                        dst: self.rsp(),
-                        src1: self.rsp(),
-                        src2: SrcOperand::Imm(stack_bytes),
-                        width: OpWidth::W64,
-                        flags: FlagUpdate::None,
-                    },
-                ));
-                ops.push(SmirOp::new(
-                    OpId(2),
-                    pc,
-                    OpKind::Store {
-                        src: flags,
-                        addr: Address::Direct(self.rsp()),
-                        width: mem_width,
-                    },
-                ));
-            }
-            0x9D => {
-                let popped = ctx.alloc_vreg();
-                ops.push(SmirOp::new(
-                    OpId(0),
-                    pc,
-                    OpKind::Load {
-                        dst: popped,
-                        addr: Address::Direct(self.rsp()),
-                        width: mem_width,
-                        sign: SignExtend::Zero,
-                    },
-                ));
-                ops.push(SmirOp::new(
-                    OpId(1),
-                    pc,
-                    OpKind::Add {
-                        dst: self.rsp(),
-                        src1: self.rsp(),
-                        src2: SrcOperand::Imm(stack_bytes),
-                        width: OpWidth::W64,
-                        flags: FlagUpdate::None,
-                    },
-                ));
-
-                // SMIR models CF/PF/AF/ZF/SF/DF/OF/AC. Apply POPF's
-                // reserved/control-bit filtering to that representable subset
-                // and force bit 1 set.
-                const SMIR_RFLAGS_MASK: i64 = 0x4_0CD5;
-                let masked = ctx.alloc_vreg();
-                ops.push(SmirOp::new(
-                    OpId(2),
-                    pc,
-                    OpKind::And {
-                        dst: masked,
-                        src1: popped,
-                        src2: SrcOperand::Imm(SMIR_RFLAGS_MASK),
-                        width: OpWidth::W64,
-                        flags: FlagUpdate::None,
-                    },
-                ));
-
-                let new_flags = if prefix.operand_size_override {
-                    let old_flags = ctx.alloc_vreg();
-                    let preserved = ctx.alloc_vreg();
-                    let merged = ctx.alloc_vreg();
-                    ops.push(SmirOp::new(
-                        OpId(3),
-                        pc,
-                        OpKind::ReadFlags { dst: old_flags },
-                    ));
-                    ops.push(SmirOp::new(
-                        OpId(4),
-                        pc,
-                        OpKind::And {
-                            dst: preserved,
-                            src1: old_flags,
-                            src2: SrcOperand::Imm(!0xFFFF),
-                            width: OpWidth::W64,
-                            flags: FlagUpdate::None,
-                        },
-                    ));
-                    ops.push(SmirOp::new(
-                        OpId(5),
-                        pc,
-                        OpKind::Or {
-                            dst: merged,
-                            src1: preserved,
-                            src2: SrcOperand::Reg(masked),
-                            width: OpWidth::W64,
-                            flags: FlagUpdate::None,
-                        },
-                    ));
-                    merged
-                } else {
-                    masked
-                };
-
-                let with_reserved = ctx.alloc_vreg();
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Or {
-                        dst: with_reserved,
-                        src1: new_flags,
-                        src2: SrcOperand::Imm(2),
-                        width: OpWidth::W64,
-                        flags: FlagUpdate::None,
-                    },
-                ));
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::WriteFlags { src: with_reserved },
-                ));
-            }
+        let kind = match opcode {
+            0x9C => X86StackFlagsKind::Push,
+            0x9D => X86StackFlagsKind::Pop,
             _ => {
                 return Err(LiftError::InvalidEncoding {
                     addr: pc,
                     bytes: vec![opcode],
                 });
             }
-        }
-
-        Ok(LiftResult::fallthrough(ops, prefix.cursor))
+        };
+        let next_pc = pc + prefix.cursor as u64;
+        Ok(LiftResult::fallthrough(
+            vec![SmirOp::new(
+                OpId(0),
+                pc,
+                OpKind::X86StackFlags(X86StackFlagsOp {
+                    kind,
+                    width,
+                    requires_apx: prefix.rex2.is_some(),
+                    next_pc,
+                }),
+            )],
+            prefix.cursor,
+        ))
     }
 
     /// Lift SAHF (9E) and LAHF (9F).

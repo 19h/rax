@@ -50,6 +50,7 @@ use crate::smir::ir::ops::X86Sha32Op;
 use crate::smir::ir::ops::X86SmswOp;
 use crate::smir::ir::ops::X86SmswTarget;
 use crate::smir::ir::ops::X86Sse4aBitfieldKind;
+use crate::smir::ir::ops::X86StackFlagsKind;
 use crate::smir::ir::ops::X86SystemSelector;
 use crate::smir::ir::ops::X86SystemSelectorLoadOp;
 use crate::smir::ir::ops::X86SystemSelectorSource;
@@ -1303,6 +1304,7 @@ debug_name_json!(
     X86SystemSelector,
     X86SelectorQueryKind,
     X86SelectorVerifyKind,
+    X86StackFlagsKind,
     OpWidth,
     MemWidth,
     SignExtend,
@@ -3871,6 +3873,12 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             requires_apx,
             next_pc
         ),
+        OpKind::X86StackFlags(crate::smir::ir::ops::X86StackFlagsOp {
+            kind,
+            width,
+            requires_apx,
+            next_pc,
+        }) => op_json!("x86_stack_flags", kind, width, requires_apx, next_pc),
         OpKind::Leave => op_json!("leave"),
         OpKind::IoIn { dst, port, width } => op_json!("io_in", dst, port, width),
         OpKind::IoOut { port, value, width } => op_json!("io_out", port, value, width),

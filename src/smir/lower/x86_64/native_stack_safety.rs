@@ -73,11 +73,16 @@ impl X86_64Lowerer {
             || x86_lmsw_shape_valid(op)
             || x86_read_debug_shape_valid(&op.kind)
             || x86_write_debug_shape_valid(&op.kind)
-            // Dedicated fast-system-transfer and ENTER lowering never maps
+            // Dedicated fast-system-transfer, ENTER, and PUSHF/POPF lowering never maps
             // architectural RSP/RBP onto host RSP/RBP. Their exact
             // shape/ownership validators run before state-backed commits in
             // `lower_block`.
-            || matches!(op.kind, OpKind::X86FastSystemTransfer(..) | OpKind::X86Enter(..))
+            || matches!(
+                op.kind,
+                OpKind::X86FastSystemTransfer(..)
+                    | OpKind::X86Enter(..)
+                    | OpKind::X86StackFlags(..)
+            )
         {
             return Ok(());
         }

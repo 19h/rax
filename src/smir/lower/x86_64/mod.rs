@@ -66,6 +66,10 @@ mod cmpccxadd;
 pub use cmpccxadd::*;
 mod sti;
 pub use sti::*;
+#[cfg(feature = "smir-jit")]
+mod stack_flags;
+#[cfg(feature = "smir-jit")]
+pub(crate) use stack_flags::*;
 mod cpuid;
 mod state_backed_replay;
 mod xadd;

@@ -284,6 +284,16 @@ pub struct GuestRegs {
     /// transaction. This field is append-only so established offsets remain
     /// stable.
     pub enter_fn: u64,
+    /// Address of `extern "C" fn(state, kind, width, requires_apx,
+    /// native_rflags) -> ok`, implementing one complete long-mode PUSHF/POPF
+    /// transaction. `kind` is zero for push and one for pop.
+    pub stack_flags_fn: u64,
+    /// Complete architectural post-POPF RFLAGS. This separate channel is
+    /// required because host user-mode POPFQ cannot import guest IF/IOPL/TF/AC.
+    pub stack_flags_rflags: u64,
+    /// Exactly one after a successful POPF transaction; zero for every other
+    /// native exit. The CPU marshal uses the complete image above only then.
+    pub stack_flags_rflags_valid: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -379,6 +389,9 @@ impl Default for GuestRegs {
             io_fn: 0,
             io_request: 0,
             enter_fn: 0,
+            stack_flags_fn: 0,
+            stack_flags_rflags: 0,
+            stack_flags_rflags_valid: 0,
         }
     }
 }

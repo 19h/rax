@@ -14,45 +14,18 @@ use crate::smir::lower::x86_64::{
     x86_invlpg_shape_valid, x86_invpcid_shape_valid, x86_io_encoding, x86_lmsw_shape_valid,
     x86_load_mxcsr_shape_valid, x86_rdpid_shape_valid, x86_read_control_shape_valid,
     x86_read_debug_shape_valid, x86_selector_query_shape_valid, x86_selector_verify_shape_valid,
-    x86_smsw_shape_valid, x86_sti_shape_valid, x86_store_mxcsr_shape_valid,
-    x86_system_selector_load_shape_valid, x86_system_selector_store_shape_valid,
-    x86_waitpkg_shape_valid, x86_write_control_shape_valid, x86_write_debug_shape_valid,
+    x86_smsw_shape_valid, x86_stack_flags_encoding, x86_sti_shape_valid,
+    x86_store_mxcsr_shape_valid, x86_system_selector_load_shape_valid,
+    x86_system_selector_store_shape_valid, x86_waitpkg_shape_valid, x86_write_control_shape_valid,
+    x86_write_debug_shape_valid,
 };
 
 #[path = "clobber/flags.rs"]
 mod flags;
 pub(crate) use flags::x86_native_op_would_clobber_preserved_flags;
-
-/// Admit only scalar MMU-helper transfers that the x86-64 state-backed
-/// lowerer can reconstruct without allocator-owned values. The subsequent
-/// generic clobber checks reject RSP/RBP destinations; those registers remain
-/// valid address components and store sources because helpers read them from
-/// `GuestRegs` rather than the host stack/frame registers.
-pub(crate) fn x86_jit_scalar_mem_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
-    use crate::smir::ir::ops::OpKind;
-    use crate::smir::ir::types::{ArchReg, MemWidth, VReg};
-
-    let state_gpr =
-        |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some());
-    let scalar_width = |width: &MemWidth| {
-        matches!(
-            width,
-            MemWidth::B1 | MemWidth::B2 | MemWidth::B4 | MemWidth::B8
-        )
-    };
-
-    match op {
-        OpKind::Load {
-            dst, addr, width, ..
-        } => state_gpr(dst) && scalar_width(width) && x86_jit_mem_address_shape_valid(addr),
-        OpKind::Store { src, addr, width } => {
-            (state_gpr(src) || matches!(src, VReg::Imm(_)))
-                && scalar_width(width)
-                && x86_jit_mem_address_shape_valid(addr)
-        }
-        _ => false,
-    }
-}
+#[path = "clobber/scalar_memory.rs"]
+mod scalar_memory;
+pub(crate) use scalar_memory::x86_jit_scalar_mem_shape_valid;
 
 /// Decide whether a lifted function is safe to execute through the native tier
 /// under the 1:1 identity register map.
@@ -1212,6 +1185,8 @@ pub(crate) fn block_is_clobber_safe(
         let op = &block.ops[i];
         let io_ok = x86_io_encoding(block, i, x86_instruction_bytes).is_some();
         let enter_ok = allow_mem && x86_enter_encoding(block, i, x86_instruction_bytes).is_some();
+        let stack_flags_ok =
+            allow_mem && x86_stack_flags_encoding(block, i, x86_instruction_bytes).is_some();
         if i + 1 == n {
             if let (Terminator::CondBranch { cond, .. }, OpKind::TestCondition { dst, .. }) =
                 (&block.terminator, &op.kind)
@@ -1510,7 +1485,8 @@ pub(crate) fn block_is_clobber_safe(
             || rdpid_ok
             || write_control_ok
             || write_debug_ok
-            || enter_ok;
+            || enter_ok
+            || stack_flags_ok;
         if (crate::smir::lower::x86_64::x86_state_backed_gpr_lea_candidate(op) && !state_lea_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_stack_group1_candidate(op)
                 && !stack_group1_ok)
@@ -1581,6 +1557,7 @@ pub(crate) fn block_is_clobber_safe(
             || selector_verify_ok
             || selector_query_ok
             || enter_ok
+            || stack_flags_ok
             || matches!(
                 &op.kind,
                 OpKind::X86SystemSelectorStore(store)
@@ -1823,6 +1800,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86Enter(..)) && !enter_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86StackFlags(..)) && !stack_flags_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86Sti { .. }) && !sti_ok {

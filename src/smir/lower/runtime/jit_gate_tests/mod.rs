@@ -347,6 +347,8 @@ mod sqrt;
 #[cfg(test)]
 mod sse4a;
 #[cfg(test)]
+mod stack_flags;
+#[cfg(test)]
 mod state_alu;
 #[cfg(test)]
 mod state_lea;

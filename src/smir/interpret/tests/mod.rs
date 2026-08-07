@@ -20,6 +20,8 @@ mod simd;
 #[cfg(test)]
 mod sse4a;
 #[cfg(test)]
+mod stack_flags;
+#[cfg(test)]
 mod string;
 #[cfg(test)]
 mod tbm;

@@ -224,11 +224,12 @@ fn sse4a_state_detection_layout_and_o2_retention_are_exact() {
         std::mem::offset_of!(GuestRegs, cpuid_xop),
         std::mem::offset_of!(GuestRegs, cpuid_tbm) + std::mem::size_of::<u64>()
     );
-    let field_end = std::mem::offset_of!(GuestRegs, cpuid_xop) + std::mem::size_of::<u64>();
+    let field_end =
+        std::mem::offset_of!(GuestRegs, stack_flags_rflags_valid) + std::mem::size_of::<u64>();
     assert!(field_end <= std::mem::size_of::<GuestRegs>());
     assert!(
         std::mem::size_of::<GuestRegs>() - field_end < std::mem::align_of::<GuestRegs>(),
-        "only trailing repr(C) alignment padding may follow append-only XOP state"
+        "only trailing repr(C) alignment padding may follow append-only stack-flags state"
     );
 
     let mut function = function_with(bitfield(

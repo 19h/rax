@@ -3189,6 +3189,10 @@ pub enum OpKind {
     /// Create an x86 procedure stack frame as one fault-precise transaction.
     X86Enter(X86EnterOp),
 
+    /// Push or pop the architectural FLAGS image as one fault-precise x86
+    /// stack transaction, including privilege and virtual-8086 filtering.
+    X86StackFlags(X86StackFlagsOp),
+
     /// Leave stack frame (x86 LEAVE)
     Leave,
 
@@ -4982,6 +4986,10 @@ impl OpKind {
                 VReg::Arch(ArchReg::X86(X86Reg::Rbp)),
             ],
 
+            OpKind::X86StackFlags(..) => {
+                vec![VReg::Arch(ArchReg::X86(X86Reg::Rsp))]
+            }
+
             OpKind::VWidenMul { dst_lo, dst_hi, .. }
             | OpKind::VWidenExt { dst_lo, dst_hi, .. }
             | OpKind::VWidenAddSub { dst_lo, dst_hi, .. }
@@ -5364,6 +5372,7 @@ impl OpKind {
                     | OpKind::IoIn { .. }
                     | OpKind::IoOut { .. }
                     | OpKind::X86Enter(..)
+                    | OpKind::X86StackFlags(..)
                     | OpKind::Leave
                     | OpKind::ClearExclusive
                     | OpKind::Fence { .. }
@@ -5559,6 +5568,10 @@ impl OpKind {
                 }
                 | OpKind::RvVector { .. }
                 | OpKind::X86Enter(..)
+                | OpKind::X86StackFlags(X86StackFlagsOp {
+                    kind: X86StackFlagsKind::Pop,
+                    ..
+                })
                 | OpKind::Leave
         ) || matches!(self, OpKind::X86Opmask(op) if op.reads_memory())
     }
@@ -5639,6 +5652,10 @@ impl OpKind {
                 | OpKind::X86FarReturn(..)
                 | OpKind::X86DescriptorTableStore(..)
                 | OpKind::X86Enter(..)
+                | OpKind::X86StackFlags(X86StackFlagsOp {
+                    kind: X86StackFlagsKind::Push,
+                    ..
+                })
                 | OpKind::RvVector { .. }
         ) || matches!(self, OpKind::X86Opmask(op) if op.writes_memory())
     }

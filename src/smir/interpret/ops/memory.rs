@@ -505,7 +505,7 @@ impl SmirInterpreter {
                 memory.fence(*kind);
             }
 
-            _ => return self.execute_op_x86_enter(ctx, memory, op),
+            _ => return self.execute_op_x86_stack_flags(ctx, memory, op),
         }
 
         Ok(())

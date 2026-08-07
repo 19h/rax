@@ -170,6 +170,8 @@ mod sse4a;
 #[cfg(test)]
 mod sse_packed_minmax;
 #[cfg(test)]
+mod stack_flags;
+#[cfg(test)]
 mod sti;
 #[cfg(test)]
 mod string_io;

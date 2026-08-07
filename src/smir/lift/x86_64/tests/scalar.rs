@@ -2348,56 +2348,30 @@ fn lift_group9_cmpxchg_random_seed_and_rdpid_encodings() {
     ));
 }
 #[test]
-fn lift_pushf_popf_stack_widths_and_flag_masking() {
-    for (bytes, delta, mem_width) in [
-        (&[0x9C][..], 8, MemWidth::B8),
-        (&[0x66, 0x9C][..], 2, MemWidth::B2),
-    ] {
-        let result = lift_single(bytes).unwrap();
-        assert_eq!(result.bytes_consumed, bytes.len());
-        assert!(matches!(result.ops[0].kind, OpKind::ReadFlags { .. }));
-        assert!(matches!(
-            result.ops[1].kind,
-            OpKind::Sub {
-                src2: SrcOperand::Imm(got),
-                flags: FlagUpdate::None,
-                ..
-            } if got == delta
-        ));
-        assert!(matches!(
-            result.ops[2].kind,
-            OpKind::Store { width, .. } if width == mem_width
-        ));
-    }
+fn lift_pushf_popf_owns_each_fault_precise_stack_transaction() {
+    use crate::smir::ir::ops::{X86StackFlagsKind, X86StackFlagsOp};
 
-    for (bytes, delta, mem_width) in [
-        (&[0x9D][..], 8, MemWidth::B8),
-        (&[0x66, 0x9D][..], 2, MemWidth::B2),
+    for (bytes, kind, width) in [
+        (&[0x9C][..], X86StackFlagsKind::Push, OpWidth::W64),
+        (&[0x66, 0x9C][..], X86StackFlagsKind::Push, OpWidth::W16),
+        (&[0x9D][..], X86StackFlagsKind::Pop, OpWidth::W64),
+        (&[0x66, 0x9D][..], X86StackFlagsKind::Pop, OpWidth::W16),
     ] {
         let result = lift_single(bytes).unwrap();
         assert_eq!(result.bytes_consumed, bytes.len());
         assert!(matches!(
-            result.ops[0].kind,
-            OpKind::Load { width, .. } if width == mem_width
-        ));
-        assert!(matches!(
-            result.ops[1].kind,
-            OpKind::Add {
-                src2: SrcOperand::Imm(got),
-                flags: FlagUpdate::None,
+            result.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::X86StackFlags(X86StackFlagsOp {
+                    kind: got_kind,
+                    width: got_width,
+                    requires_apx: false,
+                    next_pc,
+                }),
                 ..
-            } if got == delta
-        ));
-        assert!(result.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::And {
-                src2: SrcOperand::Imm(0x4_0CD5),
-                ..
-            }
-        )));
-        assert!(matches!(
-            result.ops.last().unwrap().kind,
-            OpKind::WriteFlags { .. }
+            }] if *got_kind == kind
+                && *got_width == width
+                && *next_pc == 0x1000 + bytes.len() as u64
         ));
     }
 }

@@ -1136,6 +1136,18 @@ impl X86_64Lowerer {
                 idx += 1;
                 continue;
             }
+            #[cfg(feature = "smir-jit")]
+            if matches!(block.ops[idx].kind, OpKind::X86StackFlags(..)) {
+                if self.emit_x86_stack_flags(block, idx)? {
+                    // POPF supplies a complete RFLAGS override to the runtime
+                    // bridge, so its successful path leaves at `next_pc`.
+                    return Ok(());
+                }
+                // PUSHF preserves flags and commits guest RSP through state, so
+                // successful execution can continue inside the native region.
+                idx += 1;
+                continue;
+            }
             if matches!(block.ops[idx].kind, OpKind::X86XSetBv { .. }) {
                 let resume_pc = block.ops[idx + 1..]
                     .iter()

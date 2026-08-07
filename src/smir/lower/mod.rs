@@ -247,6 +247,12 @@ pub const X86_GUEST_IO_FN_OFFSET: i32 = X86_GUEST_CMPCCXADD_FN_OFFSET + 8;
 pub const X86_GUEST_IO_REQUEST_OFFSET: i32 = X86_GUEST_IO_FN_OFFSET + 8;
 /// Offset of the append-only helper-backed x86 ENTER transaction.
 pub const X86_GUEST_ENTER_FN_OFFSET: i32 = X86_GUEST_IO_REQUEST_OFFSET + 8;
+/// Offset of the append-only helper-backed PUSHF/POPF transaction.
+pub const X86_GUEST_STACK_FLAGS_FN_OFFSET: i32 = X86_GUEST_ENTER_FN_OFFSET + 8;
+/// Offset of the complete post-POPF architectural RFLAGS image.
+pub const X86_GUEST_STACK_FLAGS_RFLAGS_OFFSET: i32 = X86_GUEST_STACK_FLAGS_FN_OFFSET + 8;
+/// Offset of the post-POPF complete-RFLAGS override-valid marker.
+pub const X86_GUEST_STACK_FLAGS_RFLAGS_VALID_OFFSET: i32 = X86_GUEST_STACK_FLAGS_RFLAGS_OFFSET + 8;
 /// Internal `vec_load_fn` destination namespace for
 /// [`runtime::GuestRegs::vector_scratch`]. Architectural ZMM indices remain
 /// exactly 0..=31. For `vec_store_fn`, this tag names an unmasked scratch

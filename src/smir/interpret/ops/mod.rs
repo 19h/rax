@@ -26,4 +26,5 @@ mod vector_compare;
 mod x86_alignment;
 mod x86_enter;
 mod x86_invpcid;
+mod x86_stack_flags;
 mod xop;

@@ -259,26 +259,6 @@ fn lifted_lahf_sahf_execute_status_flag_transfers() {
     assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7, "SAHF");
 }
 #[test]
-fn lifted_pushf_popf_execute_stack_and_representable_flags() {
-    let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
-    let mut memory = FlatMemory::new(0x400);
-    let mut ctx = SmirContext::new_x86_64();
-    ctx.write_vreg(rsp, 0x200);
-    ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
-    ctx.flags.lazy = None;
-    execute_lifted_x86(&[0x9C], &mut ctx, &mut memory);
-    assert_eq!(ctx.read_vreg(rsp), 0x1F8);
-    let mut pushed = [0u8; 8];
-    memory.read(0x1F8, &mut pushed).unwrap();
-    assert_eq!(u64::from_le_bytes(pushed), 0xCD7);
-
-    memory.write(0x1F8, &0x8D7u64.to_le_bytes()).unwrap();
-    execute_lifted_x86(&[0x9D], &mut ctx, &mut memory);
-    assert_eq!(ctx.read_vreg(rsp), 0x200);
-    ctx.flags.materialize_all();
-    assert_eq!(ctx.flags.materialized.to_rflags(), 0x8D7);
-}
-#[test]
 fn lifted_group4_legacy_high_bytes_and_rex_low_bytes_are_distinct() {
     let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
     let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));

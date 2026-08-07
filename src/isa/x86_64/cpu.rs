@@ -3769,6 +3769,12 @@ mod jit_enter;
 use jit_enter::rax_jit_enter;
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_stack_flags.rs"]
+mod jit_stack_flags;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use jit_stack_flags::rax_jit_stack_flags;
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_vector_memory.rs"]
 mod jit_vector_memory;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -4742,6 +4748,7 @@ impl X86_64Vcpu {
                                 | OpKind::X86FarCall(..)
                                 | OpKind::X86FarReturn(..)
                                 | OpKind::X86Enter(..)
+                                | OpKind::X86StackFlags(..)
                                 | OpKind::X86FastSystemTransfer(..)
                                 | OpKind::X86WriteControl { .. }
                                 | OpKind::X86ReadDebug { .. }
@@ -5042,6 +5049,7 @@ impl X86_64Vcpu {
         gr.cmpccxadd_fn = rax_jit_cmpccxadd as usize as u64;
         gr.io_fn = rax_jit_io as usize as u64;
         gr.enter_fn = rax_jit_enter as usize as u64;
+        gr.stack_flags_fn = rax_jit_stack_flags as usize as u64;
         // Lift-through-calls channel (RAX_JIT_CALL): a guest CALL in the region
         // calls out here to run its callee in the interpreter, then resumes.
         gr.call_fn = rax_jit_call as usize as u64;
@@ -5296,8 +5304,11 @@ impl X86_64Vcpu {
         // Merge status flags and DF from the host-safe native image, AC and
         // virtualized interrupt controls from their dedicated shadows, and
         // preserve every other architectural bit from the pre-region value.
-        self.regs.rflags =
-            merge_native_rflags(pre_rflags, gr.rflags, gr.ac_flag != 0, gr.interrupt_flags);
+        self.regs.rflags = if gr.stack_flags_rflags_valid == 1 {
+            gr.stack_flags_rflags
+        } else {
+            merge_native_rflags(pre_rflags, gr.rflags, gr.ac_flag != 0, gr.interrupt_flags)
+        };
         self.interrupt_inhibit = gr.interrupt_inhibit != 0;
         self.regs.rip = gr.exit_pc;
         // The native region produced fully-materialized RFLAGS. Mark the lazy
@@ -6392,6 +6403,10 @@ mod enter_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_enter_tests.rs"]
 mod jit_enter_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_stack_flags_tests.rs"]
+mod jit_stack_flags_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_opmask_tests.rs"]

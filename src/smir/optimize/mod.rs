@@ -1888,6 +1888,11 @@ impl OpKind {
                 FlagSet::ALL_X86
             }
 
+            OpKind::X86StackFlags(crate::smir::ir::ops::X86StackFlagsOp {
+                kind: crate::smir::ir::ops::X86StackFlagsKind::Pop,
+                ..
+            }) => FlagSet::ALL_X86,
+
             OpKind::X86XTest => FlagSet::ALL_X86,
 
             OpKind::X86X87Data {
@@ -1941,6 +1946,13 @@ impl OpKind {
                 rep,
                 ..
             } if *rep != X86RepMode::None => FlagSet::EMPTY,
+            // POPF can fault before or after its stack read. Incoming flags
+            // remain architectural on either exit, so it cannot kill their
+            // liveness even though every successful form writes status flags.
+            OpKind::X86StackFlags(crate::smir::ir::ops::X86StackFlagsOp {
+                kind: crate::smir::ir::ops::X86StackFlagsKind::Pop,
+                ..
+            }) => FlagSet::EMPTY,
             OpKind::X86X87Data {
                 kind: X86X87DataKind::Compare { eflags: true, .. },
                 ..
@@ -2007,6 +2019,10 @@ impl OpKind {
 
             // ReadFlags reads all flags
             OpKind::ReadFlags { .. } => FlagSet::ALL_X86,
+
+            // PUSHF consumes the current image. POPF also consumes it for its
+            // precise pre/post-memory fault state and privilege-preserved bits.
+            OpKind::X86StackFlags(..) => FlagSet::ALL_X86,
 
             _ => FlagSet::EMPTY,
         }
@@ -2161,6 +2177,10 @@ impl OpKind {
             OpKind::X86Enter(..) => {
                 result.push(VReg::Arch(ArchReg::X86(X86Reg::Rsp)));
                 result.push(VReg::Arch(ArchReg::X86(X86Reg::Rbp)));
+            }
+
+            OpKind::X86StackFlags(..) => {
+                result.push(VReg::Arch(ArchReg::X86(X86Reg::Rsp)));
             }
 
             OpKind::Leave => {

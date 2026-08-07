@@ -16,6 +16,25 @@ pub struct X86EnterOp {
     pub next_pc: u64,
 }
 
+/// Direction of one implicit x86 FLAGS stack transaction.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86StackFlagsKind {
+    Push,
+    Pop,
+}
+
+/// PUSHF/PUSHFQ and POPF/POPFQ own their complete implicit stack transaction.
+/// A single operation is required because POPF privilege filtering can fault
+/// after the memory read while leaving both RSP and RFLAGS uncommitted.
+#[derive(Clone, Debug)]
+pub struct X86StackFlagsOp {
+    pub kind: X86StackFlagsKind,
+    pub width: OpWidth,
+    pub requires_apx: bool,
+    /// Exact end of the source instruction, retained for native shape checks.
+    pub next_pc: u64,
+}
+
 /// Architecturally readable x86 control registers accepted by `MOV r64, CRn`
 /// in 64-bit mode. Reserved control-register numbers are represented as an
 /// explicit invalid-opcode trap by the lifter and never reach this enum.
