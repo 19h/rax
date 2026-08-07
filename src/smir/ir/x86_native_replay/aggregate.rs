@@ -18,6 +18,9 @@ pub fn x86_native_replay_spans(
         if instruction.legacy_register_aes_replay().is_some() {
             return Some((false, false, false));
         }
+        if instruction.legacy_register_blend_replay().is_some() {
+            return Some((false, false, false));
+        }
         if instruction.legacy_register_sha_replay().is_some() {
             return Some((false, false, false));
         }

@@ -19,6 +19,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             continue;
         }
         let legacy_aes = span.instruction.legacy_register_aes_replay().is_some();
+        let legacy_blend = span.instruction.legacy_register_blend_replay().is_some();
         let legacy_sha = span.instruction.legacy_register_sha_replay().is_some();
         let is_fma4 = span.instruction.is_vex_register_fma4();
         let is_vpermil2 = span.instruction.is_vex_register_vpermil2();
@@ -79,8 +80,10 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
         let vex_packed_string = span.instruction.is_vex_register_packed_string_compare();
         requirements.any = true;
         requirements.needs_sse3 |= fp_horizontal_addsub_avx == Some(false);
+        requirements.needs_sse41 |= legacy_blend;
         requirements.needs_vex_unaligned_packed_fp_move |= vex_unaligned_packed_fp_move;
         *all_spans_support_avx_ymm16 &= legacy_aes
+            || legacy_blend
             || legacy_sha
             || is_fma4
             || is_vpermil2
@@ -121,6 +124,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || vex_zero
             || vex_packed_string;
         requirements.needs_avx |= legacy_aes
+            || legacy_blend
             || legacy_sha
             || vex_packed_string
             || span.instruction.is_vex_register_fma3()

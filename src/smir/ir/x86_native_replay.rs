@@ -170,9 +170,9 @@ pub(crate) use classifiers::{
     X86VexVpermil2MemoryEncoding,
 };
 pub(crate) use classifiers::{
-    X86EvexMovntdqaMemoryEncoding, X86LegacyAesReplay, X86LegacyHighByteCrc32Replay,
-    X86LegacyHighByteGroup2Kind, X86LegacyHighByteGroup2Replay, X86LegacyHighByteMultiplyKind,
-    X86LegacyHighByteMultiplyReplay, X86LegacyShaReplay,
+    X86EvexMovntdqaMemoryEncoding, X86LegacyAesReplay, X86LegacyBlendReplay,
+    X86LegacyHighByteCrc32Replay, X86LegacyHighByteGroup2Kind, X86LegacyHighByteGroup2Replay,
+    X86LegacyHighByteMultiplyKind, X86LegacyHighByteMultiplyReplay, X86LegacyShaReplay,
 };
 
 pub use aggregate::{
@@ -680,6 +680,21 @@ pub fn x86_vex_immediate_blend_replay_spans(
     x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
         instruction
             .vex_register_immediate_blend_needs_avx2()
+            .map(|_| (false, false, false))
+    })
+}
+
+/// Identify exact register-only legacy SSE4.1 immediate- and variable-blend
+/// replay groups in `block` in O(N) time and O(P + V) space for N operations,
+/// P unique guest PCs, and V virtual registers. Memory and reserved-prefix
+/// forms remain at the precise SMIR interpreter boundary.
+pub fn x86_legacy_blend_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .legacy_register_blend_replay()
             .map(|_| (false, false, false))
     })
 }
