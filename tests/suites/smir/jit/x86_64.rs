@@ -39,6 +39,8 @@ mod cmpxchg_register;
 mod flag_control;
 #[path = "x86_64/group3_alias.rs"]
 mod group3_alias;
+#[path = "x86_64/imul_register.rs"]
+mod imul_register;
 #[path = "x86_64/legacy_0f38_terminal.rs"]
 mod legacy_0f38_terminal;
 #[path = "x86_64/legacy_0f3a_reserved.rs"]

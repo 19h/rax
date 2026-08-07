@@ -1,6 +1,9 @@
 //! Legacy AH/CH/DH/BH register replay classification.
 
 use super::X86InstructionBytes;
+use crate::smir::ir::flags::FlagUpdate;
+use crate::smir::ir::ops::{OpKind, SmirOp};
+use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg, X86Reg};
 
 /// Documented legacy Group 2 operation selected by a byte-validated
 /// AH/CH/DH/BH register encoding.
@@ -49,6 +52,42 @@ fn legacy_prefix_len(bytes: &[u8]) -> Option<usize> {
     Some(start)
 }
 
+/// Validate the exact extract-plus-implicit-IMUL graph emitted for an
+/// AH/CH/DH/BH source and return its virtual extract temporary. The caller
+/// must additionally prove that the temporary has exactly this definition and
+/// use across the complete block.
+pub(crate) fn x86_legacy_high_byte_imul_shape_temporary(
+    ops: &[SmirOp],
+    parent: u8,
+) -> Option<VReg> {
+    let [extract, multiply] = ops else {
+        return None;
+    };
+    let temporary = match &extract.kind {
+        OpKind::Shr {
+            dst: temporary @ VReg::Virtual(_),
+            src: VReg::Arch(ArchReg::X86(source)),
+            amount: SrcOperand::Imm(8),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } if extract.x86_hint.is_none() && source.gpr_index() == Some(parent) => *temporary,
+        _ => return None,
+    };
+    (multiply.x86_hint.is_none()
+        && matches!(
+            &multiply.kind,
+            OpKind::MulS {
+                dst_lo: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                dst_hi: None,
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                src2: SrcOperand::Reg(source),
+                width: OpWidth::W8,
+                flags: FlagUpdate::All,
+            } if *source == temporary
+        ))
+    .then_some(temporary)
+}
+
 impl X86InstructionBytes {
     /// Validate one baseline scalar instruction whose register-only byte
     /// encoding names AH, CH, DH, or BH.
@@ -61,15 +100,17 @@ impl X86InstructionBytes {
     ///
     /// The admitted set contains MOV (including the B4-B7 immediate forms),
     /// binary ALU, TEST, XCHG, Group 1 immediate, NOT, NEG, INC, DEC, SETcc,
-    /// CMPXCHG, XADD, and documented Group 2 rotate/shift register forms. LOCK,
-    /// REX, memory, undocumented Group 2 `/6`, Group 3 `/1`, multiply, and
-    /// divide forms fail closed.
+    /// CMPXCHG, XADD, signed implicit IMUL, and documented Group 2 rotate/shift
+    /// register forms. LOCK, REX, memory, undocumented Group 2 `/6`, Group 3
+    /// `/1`, unsigned multiply, and divide forms fail closed.
     /// Group 2 replay uses a deterministic status wrapper because RAX
     /// preserves architecturally undefined AF/OF while the host instruction
     /// may change them. At most one legacy prefix from each prefix group is
     /// accepted; none changes an 8-bit register operand.
     pub fn is_legacy_high_byte_register_replay(&self) -> bool {
-        if self.legacy_high_byte_group2_replay().is_some() {
+        if self.legacy_high_byte_group2_replay().is_some()
+            || self.legacy_high_byte_imul_parent_index().is_some()
+        {
             return true;
         }
         let bytes = self.as_slice();
@@ -131,6 +172,30 @@ impl X86InstructionBytes {
             }
             _ => false,
         }
+    }
+
+    /// Return the AH/CH/DH/BH parent GPR selected by a byte-validated implicit
+    /// signed multiply (`F6 /5`).
+    pub(crate) fn legacy_high_byte_imul_parent_index(&self) -> Option<u8> {
+        let bytes = self.as_slice();
+        let start = legacy_prefix_len(bytes)?;
+        match &bytes[start..] {
+            [0xF6, modrm] if modrm >> 6 == 3 && (modrm >> 3) & 7 == 5 && modrm & 7 >= 4 => {
+                Some((modrm & 7) - 4)
+            }
+            _ => None,
+        }
+    }
+
+    /// Return the prefix-free native encoding for an admitted high-byte IMUL.
+    /// Legacy size, repeat, segment, and address-size prefixes do not alter a
+    /// register-only byte operation; removing them also avoids host translators
+    /// that reject an otherwise architecturally equivalent redundant prefix.
+    pub(crate) fn legacy_high_byte_imul_replay_instruction(&self) -> Option<Self> {
+        self.legacy_high_byte_imul_parent_index()?;
+        let bytes = self.as_slice();
+        let start = legacy_prefix_len(bytes)?;
+        X86InstructionBytes::new(&bytes[start..])
     }
 
     /// Decode one documented register-only legacy Group 2 operation whose
@@ -259,7 +324,7 @@ mod tests {
             for (opcode, valid_extensions, has_immediate) in [
                 (0xC6, 0b0000_0001u8, true),
                 (0xF6, 0b0000_0001u8, true),
-                (0xF6, 0b0000_1100u8, false),
+                (0xF6, 0b0010_1100u8, false),
             ] {
                 for extension in 0u8..8 {
                     for rm in 0u8..8 {
@@ -344,7 +409,7 @@ mod tests {
                 }
             }
         }
-        assert_eq!(accepted, 13_704);
+        assert_eq!(accepted, 13_728);
     }
 
     #[test]
@@ -357,6 +422,7 @@ mod tests {
             &[0xF6, 0xC5, 0xA5][..],                   // test ch,0xa5
             &[0xF6, 0xD6][..],                         // not dh
             &[0xF6, 0xDF][..],                         // neg bh
+            &[0xF6, 0xEC][..],                         // imul ah
             &[0x0F, 0x96, 0xC4][..],                   // setbe ah
             &[0x0F, 0xB0, 0xF5][..],                   // cmpxchg ch,dh
             &[0x0F, 0xC0, 0xFC][..],                   // xadd ah,bh
@@ -446,6 +512,32 @@ mod tests {
     }
 
     #[test]
+    fn classifier_reports_exact_high_byte_imul_parent() {
+        for (bytes, parent) in [
+            (&[0xF6, 0xEC][..], 0),
+            (&[0x66, 0xF6, 0xED][..], 1),
+            (&[0xF2, 0xF6, 0xEE][..], 2),
+            (&[0x65, 0x67, 0xF3, 0xF6, 0xEF][..], 3),
+        ] {
+            let instruction = X86InstructionBytes::new(bytes).unwrap();
+            assert_eq!(
+                instruction.legacy_high_byte_imul_parent_index(),
+                Some(parent),
+                "{bytes:02X?}"
+            );
+            assert_eq!(
+                instruction
+                    .legacy_high_byte_imul_replay_instruction()
+                    .unwrap()
+                    .as_slice(),
+                &[0xF6, 0xEC + parent],
+                "{bytes:02X?}"
+            );
+            assert!(instruction.is_legacy_high_byte_register_replay());
+        }
+    }
+
+    #[test]
     fn classifier_rejects_every_unsafe_or_undocumented_frontier() {
         for bytes in [
             &[0x00, 0xC3][..],             // add bl,al: no high byte
@@ -460,8 +552,7 @@ mod tests {
             &[0xC0, 0x04, 0x03][..],       // Group 2 memory form
             &[0x40, 0xC0, 0xC4, 0x03][..], // REX selects SPL, not AH
             &[0xF6, 0xCC, 0x01][..],       // Group 3 /1 compatibility alias
-            &[0xF6, 0xE4][..],             // mul ah: undefined flags
-            &[0xF6, 0xEC][..],             // imul ah: undefined flags
+            &[0xF6, 0xE4][..],             // unsigned MUL remains unadmitted
             &[0xF6, 0xF4][..],             // div ah can raise #DE
             &[0xF6, 0xFC][..],             // idiv ah can raise #DE
             &[0xC6, 0xCC, 0x01][..],       // MOV requires /0

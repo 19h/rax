@@ -29,6 +29,16 @@ fn function(bytes: &[u8]) -> SmirFunction {
     function
 }
 
+fn high_byte_imul_temporary(function: &SmirFunction) -> VReg {
+    match function.blocks[0].ops[0].kind {
+        OpKind::Shr {
+            dst: temporary @ VReg::Virtual(_),
+            ..
+        } => temporary,
+        _ => unreachable!("high-byte IMUL starts with a virtual SHR destination"),
+    }
+}
+
 #[test]
 fn legacy_high_byte_replay_admits_and_emits_each_documented_family_at_o0_o1_o2() {
     let cases: &[(&str, &[u8])] = &[
@@ -54,6 +64,8 @@ fn legacy_high_byte_replay_admits_and_emits_each_documented_family_at_o0_o1_o2()
         ("test ch,0xa5", &[0xF6, 0xC5, 0xA5]),
         ("not dh", &[0xF6, 0xD6]),
         ("neg bh", &[0xF6, 0xDF]),
+        ("imul ah", &[0xF6, 0xEC]),
+        ("prefixed imul bh", &[0x65, 0x66, 0x67, 0xF3, 0xF6, 0xEF]),
         ("inc dh", &[0xFE, 0xC6]),
         ("dec bh", &[0xFE, 0xCF]),
         ("setbe ah", &[0x0F, 0x96, 0xC4]),
@@ -95,7 +107,10 @@ fn legacy_high_byte_replay_admits_and_emits_each_documented_family_at_o0_o1_o2()
                     .get(&0)
                     .unwrap_or_else(|| panic!("{name} {level:?}: missing replay span"));
                 assert_eq!(span.end, function.blocks[0].ops.len(), "{name} {level:?}");
-                assert_eq!(span.instruction.as_slice(), *bytes, "{name} {level:?}");
+                let expected_instruction = instruction
+                    .legacy_high_byte_imul_replay_instruction()
+                    .unwrap_or(instruction);
+                assert_eq!(span.instruction, expected_instruction, "{name} {level:?}");
             }
 
             assert!(is_native_clobber_safe(&function), "{name} {level:?}");
@@ -129,6 +144,7 @@ fn legacy_high_byte_replay_admits_and_emits_each_documented_family_at_o0_o1_o2()
             let replay_instruction = instruction
                 .legacy_high_byte_group2_replay()
                 .map(|replay| replay.canonical_instruction)
+                .or_else(|| instruction.legacy_high_byte_imul_replay_instruction())
                 .unwrap_or(instruction);
             let replay_bytes = replay_instruction.as_slice();
             assert!(
@@ -153,6 +169,52 @@ fn legacy_high_byte_replay_admits_and_emits_each_documented_family_at_o0_o1_o2()
         }
     }
     assert_eq!(lowered, cases.len() * 3);
+}
+
+#[test]
+fn all_28_scanner_high_byte_imul_cells_admit_at_every_opt_level() {
+    const PREFIXES: &[&[u8]] = &[&[], &[0x66], &[0xF2], &[0xF3], &[0x67], &[0x64], &[0x65]];
+
+    let mut encodings = 0usize;
+    let mut profiles = 0usize;
+    for prefix in PREFIXES {
+        for rm in 4u8..8 {
+            let mut bytes = prefix.to_vec();
+            bytes.extend([0xF6, 0xE8 | rm]);
+            let instruction = X86InstructionBytes::new(&bytes).unwrap();
+            assert!(instruction.is_legacy_high_byte_register_replay());
+            let canonical = instruction
+                .legacy_high_byte_imul_replay_instruction()
+                .unwrap();
+
+            for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+                let mut function = function(&bytes);
+                optimize_function(&mut function, level);
+                assert_eq!(function.blocks[0].ops.len(), 2, "{bytes:02X?} {level:?}");
+                let spans = crate::smir::ir::x86_legacy_high_byte_replay_spans(
+                    &function.blocks[0],
+                    &function.x86_instruction_bytes,
+                );
+                assert_eq!(spans.get(&0).map(|span| span.end), Some(2));
+                assert!(is_native_clobber_safe(&function), "{bytes:02X?} {level:?}");
+
+                let mut lowerer = X86_64Lowerer::new();
+                lowerer
+                    .lower_function(&function)
+                    .unwrap_or_else(|error| panic!("{bytes:02X?} {level:?}: {error:?}"));
+                let code = lowerer.finalize().unwrap();
+                assert!(
+                    code.windows(canonical.as_slice().len())
+                        .any(|window| window == canonical.as_slice()),
+                    "exact IMUL replay absent for {bytes:02X?} {level:?}: {code:02X?}"
+                );
+                profiles += 1;
+            }
+            encodings += 1;
+        }
+    }
+    assert_eq!(encodings, 28);
+    assert_eq!(profiles, 84);
 }
 
 #[test]
@@ -255,7 +317,7 @@ fn legacy_carry_rotate_nonunit_counts_use_deterministic_state_backed_lowering() 
 }
 
 #[test]
-fn legacy_high_byte_replay_requires_exact_provenance_and_contiguous_ir() {
+fn legacy_high_byte_replay_requires_exact_provenance_contiguity_and_ssa_confinement() {
     let bytes = [0x00, 0xC4];
     let base = function(&bytes);
 
@@ -279,6 +341,89 @@ fn legacy_high_byte_replay_requires_exact_provenance_and_contiguous_ir() {
 
     let undocumented_group6 = function(&[0xC0, 0xF4, 0x02]);
     assert!(!is_native_clobber_safe(&undocumented_group6));
+
+    let mut malformed_imul = function(&[0xF6, 0xEC]);
+    let crate::smir::ir::ops::OpKind::Shr { amount, .. } =
+        &mut malformed_imul.blocks[0].ops[0].kind
+    else {
+        unreachable!("high-byte IMUL starts with SHR")
+    };
+    *amount = SrcOperand::Imm(7);
+    assert!(
+        crate::smir::ir::x86_native_replay_spans(
+            &malformed_imul.blocks[0],
+            &malformed_imul.x86_instruction_bytes,
+        )
+        .is_empty()
+    );
+    assert!(!is_native_clobber_safe(&malformed_imul));
+
+    let mut escaped_use = function(&[0xF6, 0xEC]);
+    let temporary = high_byte_imul_temporary(&escaped_use);
+    let mut escape = escaped_use.blocks[0].ops[0].clone();
+    escape.guest_pc = PC + 2;
+    escape.kind = OpKind::Mov {
+        dst: x86(X86Reg::Rbx),
+        src: SrcOperand::Reg(temporary),
+        width: OpWidth::W64,
+    };
+    escaped_use.blocks[0].ops.push(escape);
+    assert!(
+        crate::smir::ir::x86_native_replay_spans(
+            &escaped_use.blocks[0],
+            &escaped_use.x86_instruction_bytes,
+        )
+        .is_empty()
+    );
+    assert!(!is_native_clobber_safe(&escaped_use));
+
+    let mut redefined = function(&[0xF6, 0xEC]);
+    let temporary = high_byte_imul_temporary(&redefined);
+    let mut redefine = redefined.blocks[0].ops[0].clone();
+    redefine.guest_pc = PC + 2;
+    redefine.kind = OpKind::Mov {
+        dst: temporary,
+        src: SrcOperand::Imm(0),
+        width: OpWidth::W64,
+    };
+    redefined.blocks[0].ops.push(redefine);
+    assert!(
+        crate::smir::ir::x86_native_replay_spans(
+            &redefined.blocks[0],
+            &redefined.x86_instruction_bytes,
+        )
+        .is_empty()
+    );
+    assert!(!is_native_clobber_safe(&redefined));
+
+    let mut returned = function(&[0xF6, 0xEC]);
+    let temporary = high_byte_imul_temporary(&returned);
+    returned.blocks[0].terminator = Terminator::Return {
+        values: vec![temporary],
+    };
+    assert!(
+        crate::smir::ir::x86_native_replay_spans(
+            &returned.blocks[0],
+            &returned.x86_instruction_bytes,
+        )
+        .is_empty()
+    );
+    assert!(!is_native_clobber_safe(&returned));
+
+    let mut phi_redefined = function(&[0xF6, 0xEC]);
+    let temporary = high_byte_imul_temporary(&phi_redefined);
+    phi_redefined.blocks[0].phis.push(PhiNode {
+        dst: temporary,
+        sources: Vec::new(),
+    });
+    assert!(
+        crate::smir::ir::x86_native_replay_spans(
+            &phi_redefined.blocks[0],
+            &phi_redefined.x86_instruction_bytes,
+        )
+        .is_empty()
+    );
+    assert!(!is_native_clobber_safe(&phi_redefined));
 
     let mut noncontiguous = base;
     let mut split = noncontiguous.blocks[0].ops[0].clone();

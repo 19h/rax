@@ -1309,6 +1309,7 @@ pub(crate) fn block_is_clobber_safe(
         let state_pdep_pext_ok =
             crate::smir::lower::x86_64::x86_state_backed_gpr_pdep_pext_valid(op);
         let state_mulx_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_mulx_valid(op);
+        let state_imul_ok = crate::smir::lower::x86_64::x86_state_imul_valid(op);
         let state_bswap_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_bswap_valid(op);
         let state_xchg_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_xchg_valid(op);
         let xadd_ok = crate::smir::lower::x86_64::x86_xadd_shape_valid(op);
@@ -1483,6 +1484,7 @@ pub(crate) fn block_is_clobber_safe(
             || state_adx_ok
             || state_pdep_pext_ok
             || state_mulx_ok
+            || state_imul_ok
             || state_bswap_ok
             || state_xchg_ok
             || xadd_ok
@@ -1547,6 +1549,7 @@ pub(crate) fn block_is_clobber_safe(
                 && !state_pdep_pext_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_mulx_candidate(op)
                 && !state_mulx_ok)
+            || (crate::smir::lower::x86_64::x86_state_imul_candidate(op) && !state_imul_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_bswap_candidate(op)
                 && !state_bswap_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_xchg_candidate(op)
@@ -1641,6 +1644,7 @@ pub(crate) fn block_is_clobber_safe(
                 ..
             }
         ) && !x86_byte_full_mul_shape_valid(&op.kind)
+            && !state_imul_ok
         {
             return false;
         }
@@ -1656,6 +1660,7 @@ pub(crate) fn block_is_clobber_safe(
                 ..
             }
         ) && !x86_word_full_mul_shape_valid(&op.kind, true)
+            && !state_imul_ok
         {
             return false;
         }

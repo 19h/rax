@@ -7,9 +7,9 @@
 
 use std::collections::HashMap;
 
-use super::SmirBlock;
 use super::ops::OpKind;
-use super::types::{BlockId, GuestAddr};
+use super::types::{BlockId, GuestAddr, VReg};
+use super::{SmirBlock, Terminator};
 
 /// Exact bytes of one x86 instruction. Architectural x86 instructions are at
 /// most 15 bytes; keeping a fixed-size value makes function provenance cheap to
@@ -183,8 +183,8 @@ pub struct X86NativeReplaySpan {
     /// Exclusive semantic-op end index.
     pub end: usize,
     /// Exact instruction to emit. This is normally the source instruction;
-    /// documented generation-dependent scalar VEX.L=1 sources carry the
-    /// deterministic VEX.L=0 encoding selected by RAX.
+    /// documented generation-dependent scalar VEX.L=1 sources and inert-
+    /// prefixed high-byte IMUL sources carry deterministic canonical encodings.
     pub instruction: X86InstructionBytes,
     /// Whether native execution requires AVX-512VL.
     pub needs_avx512vl: bool,
@@ -200,11 +200,69 @@ pub struct X86NativeReplaySpan {
 /// Compatibility name for the first replay family.
 pub type X86EvexFpReplaySpan = X86NativeReplaySpan;
 
+fn count_virtual(map: &mut HashMap<VReg, usize>, reg: VReg) {
+    if matches!(reg, VReg::Virtual(_)) {
+        *map.entry(reg).or_insert(0) += 1;
+    }
+}
+
+/// Count every virtual definition and use visible to this basic block. Replay
+/// classifiers use these counts to prove that an elided temporary cannot
+/// escape its exact semantic group through another operation, a phi, or the
+/// terminator. Construction is O(N + P + T) time and O(V) space for N
+/// operations, P phi operands, T terminator operands, and V virtual registers.
+fn block_virtual_definition_use_counts(
+    block: &SmirBlock,
+) -> (HashMap<VReg, usize>, HashMap<VReg, usize>) {
+    let mut definitions = HashMap::new();
+    let mut uses = HashMap::new();
+    for phi in &block.phis {
+        count_virtual(&mut definitions, phi.dst);
+        for (_, source) in &phi.sources {
+            count_virtual(&mut uses, *source);
+        }
+    }
+    for op in &block.ops {
+        for destination in op.kind.dests() {
+            count_virtual(&mut definitions, destination);
+        }
+        for source in op.kind.source_vregs() {
+            count_virtual(&mut uses, source);
+        }
+    }
+    match &block.terminator {
+        Terminator::CondBranch { cond, .. } => count_virtual(&mut uses, *cond),
+        Terminator::Switch { index, .. } => count_virtual(&mut uses, *index),
+        Terminator::IndirectBranch { target, .. } => count_virtual(&mut uses, *target),
+        Terminator::IndirectBranchMem { addr, .. } => {
+            for reg in addr.regs() {
+                count_virtual(&mut uses, reg);
+            }
+        }
+        Terminator::Return { values } => {
+            for value in values {
+                count_virtual(&mut uses, *value);
+            }
+        }
+        Terminator::Call { target, args, .. } | Terminator::TailCall { target, args } => {
+            for reg in target.regs() {
+                count_virtual(&mut uses, reg);
+            }
+            for argument in args {
+                count_virtual(&mut uses, *argument);
+            }
+        }
+        Terminator::Branch { .. } | Terminator::Trap { .. } | Terminator::Unreachable => {}
+    }
+    (definitions, uses)
+}
+
 fn x86_native_replay_spans_where(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
     classify: impl Fn(&X86InstructionBytes) -> Option<(bool, bool, bool)>,
 ) -> HashMap<usize, X86NativeReplaySpan> {
+    let virtual_counts = std::cell::OnceCell::new();
     let mut groups = HashMap::<GuestAddr, (usize, usize, bool)>::new();
     for (index, op) in block.ops.iter().enumerate() {
         groups
@@ -239,14 +297,30 @@ fn x86_native_replay_spans_where(
                 return None;
             }
             let source_instruction = *instruction_bytes.get(&(block.id, guest_pc))?;
+            let replay_source = source_instruction
+                .legacy_high_byte_imul_replay_instruction()
+                .unwrap_or(source_instruction);
             let (instruction, (needs_avx512vl, needs_avx512dq, needs_avx512fp16)) =
-                if let Some(requirements) = classify(&source_instruction) {
-                    (source_instruction, requirements)
+                if let Some(requirements) = classify(&replay_source) {
+                    (replay_source, requirements)
                 } else {
-                    let canonical = source_instruction.vex_scalar_l1_canonical_l0()?;
+                    let canonical = replay_source.vex_scalar_l1_canonical_l0()?;
                     let requirements = classify(&canonical)?;
                     (canonical, requirements)
                 };
+            if let Some(parent) = source_instruction.legacy_high_byte_imul_parent_index() {
+                let temporary = classifiers::x86_legacy_high_byte_imul_shape_temporary(
+                    &block.ops[start..end],
+                    parent,
+                )?;
+                let (virtual_definitions, virtual_uses) =
+                    virtual_counts.get_or_init(|| block_virtual_definition_use_counts(block));
+                if virtual_definitions.get(&temporary) != Some(&1)
+                    || virtual_uses.get(&temporary) != Some(&1)
+                {
+                    return None;
+                }
+            }
             // VPERMIL2 is VEX encoded but belongs to AMD's XOP feature
             // subset. Its dynamic guest-state guard must remain independently
             // lowered before exact register replay replaces the remaining

@@ -85,6 +85,28 @@ fn compare_direct_and_jit(name: &str, instruction: &[u8], rax: u64) {
 }
 
 fn compare_direct_and_jit_state(name: &str, instruction: &[u8], rax: u64, rcx: u64, rflags: u64) {
+    compare_direct_and_jit_state_flags(name, instruction, rax, rcx, rflags, None);
+}
+
+fn compare_direct_and_jit_defined_flags(name: &str, instruction: &[u8], rax: u64, mask: u64) {
+    compare_direct_and_jit_state_flags(
+        name,
+        instruction,
+        rax,
+        DEFAULT_RCX,
+        DEFAULT_RFLAGS,
+        Some(mask),
+    );
+}
+
+fn compare_direct_and_jit_state_flags(
+    name: &str,
+    instruction: &[u8],
+    rax: u64,
+    rcx: u64,
+    rflags: u64,
+    flag_mask: Option<u64>,
+) {
     let mut code = instruction.to_vec();
     code.push(0xF4);
 
@@ -112,10 +134,40 @@ fn compare_direct_and_jit_state(name: &str, instruction: &[u8], rax: u64, rcx: u
     let actual = jit.get_regs().unwrap();
 
     assert_eq!(legacy_gprs(&actual), legacy_gprs(&expected), "{name}: GPRs");
-    assert_eq!(actual.rflags, expected.rflags, "{name}: RFLAGS");
+    if let Some(mask) = flag_mask {
+        assert_eq!(
+            actual.rflags & mask,
+            expected.rflags & mask,
+            "{name}: defined RFLAGS"
+        );
+    } else {
+        assert_eq!(actual.rflags, expected.rflags, "{name}: RFLAGS");
+    }
     assert_eq!(actual.rip, expected.rip, "{name}: RIP");
     assert_eq!(actual.xmm, expected.xmm, "{name}: XMM state");
     assert_eq!(actual.mm, expected.mm, "{name}: MMX state");
+}
+
+#[test]
+fn jit_high_byte_imul_matches_direct_for_all_28_scanner_cells() {
+    const PREFIXES: &[&[u8]] = &[&[], &[0x66], &[0xF2], &[0xF3], &[0x67], &[0x64], &[0x65]];
+    const DEFINED_FLAGS: u64 = (1 << 0) | (1 << 11); // CF | OF
+
+    let mut cases = 0usize;
+    for prefix in PREFIXES {
+        for rm in 4u8..8 {
+            let mut instruction = prefix.to_vec();
+            instruction.extend([0xF6, 0xE8 | rm]);
+            compare_direct_and_jit_defined_flags(
+                &format!("{instruction:02X?}"),
+                &instruction,
+                0x8123_4567_89AB_CDEF,
+                DEFINED_FLAGS,
+            );
+            cases += 1;
+        }
+    }
+    assert_eq!(cases, 28);
 }
 
 #[test]
@@ -314,7 +366,7 @@ fn jit_legacy_high_byte_replay_matches_direct_for_every_admitted_register_cell()
         (0x80, 0b1111_1111, Some(0xA5)),
         (0xC6, 0b0000_0001, Some(0x5A)),
         (0xF6, 0b0000_0001, Some(0xA5)),
-        (0xF6, 0b0000_1100, None),
+        (0xF6, 0b0010_1100, None),
     ] {
         for extension in 0u8..8 {
             if extensions & (1 << extension) == 0 {
@@ -325,7 +377,16 @@ fn jit_legacy_high_byte_replay_matches_direct_for_every_admitted_register_cell()
                 if let Some(immediate) = immediate {
                     bytes.push(immediate);
                 }
-                compare_direct_and_jit(&format!("{bytes:02X?}"), &bytes, rax);
+                if opcode == 0xF6 && extension == 5 {
+                    compare_direct_and_jit_defined_flags(
+                        &format!("{bytes:02X?}"),
+                        &bytes,
+                        rax,
+                        (1 << 0) | (1 << 11),
+                    );
+                } else {
+                    compare_direct_and_jit(&format!("{bytes:02X?}"), &bytes, rax);
+                }
                 cases += 1;
             }
         }
@@ -374,7 +435,7 @@ fn jit_legacy_high_byte_replay_matches_direct_for_every_admitted_register_cell()
         }
     }
 
-    assert_eq!(cases, 2_996);
+    assert_eq!(cases, 3_000);
 }
 
 #[test]
