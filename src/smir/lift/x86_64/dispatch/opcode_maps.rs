@@ -87,6 +87,20 @@ impl X86_64Lifter {
             0xDB..=0xDF => self.lift_sse_aes_round(opcode3, after_opcode, &prefix3, pc, ctx),
             0x8A | 0x8B => self.lift_movrs_0f38(opcode3, after_opcode, &prefix3, pc, ctx),
             0x82 => self.lift_invpcid_0f38(after_opcode, &prefix3, pc, ctx),
+            // Without a mandatory F3 or 66 prefix, this map cell selects
+            // WRSSD/WRSSQ rather than ADX. The fixed guest profile clears
+            // CPUID.07H:ECX.CET_SS[7], making #UD decisive at the opcode
+            // frontier before ModR/M decode or operand observation.
+            0xF6 if prefix3.rep_prefix.is_none() && !prefix3.operand_size_override => {
+                Ok(LiftResult {
+                    ops: Vec::new(),
+                    bytes_consumed: prefix3.cursor,
+                    control_flow: ControlFlow::Trap {
+                        kind: TrapKind::InvalidOpcode,
+                    },
+                    branch_targets: Vec::new(),
+                })
+            }
             0xF6 => self.lift_adx_0f38(after_opcode, &prefix3, pc, ctx),
             0xF0 | 0xF1 if prefix3.rep_prefix == Some(0xF2) => {
                 self.lift_crc32_0f38(opcode3, after_opcode, &prefix3, pc, ctx)

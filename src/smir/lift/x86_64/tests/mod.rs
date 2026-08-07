@@ -12,6 +12,8 @@ mod amx_disabled;
 #[cfg(test)]
 mod apx;
 #[cfg(test)]
+mod apx_adx;
+#[cfg(test)]
 mod apx_alu;
 #[cfg(test)]
 mod apx_bmi;

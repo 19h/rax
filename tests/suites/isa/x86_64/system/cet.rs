@@ -9,6 +9,8 @@
 //! - RSTORSSP - Restore Saved Shadow Stack Pointer
 //! - SAVEPREVSSP - Save Previous Shadow Stack Pointer
 //! - SETSSBSY - Set Shadow Stack Busy Flag
+//! - WRSSD - Write to Shadow Stack (32-bit)
+//! - WRSSQ - Write to Shadow Stack (64-bit)
 //! - WRUSSD - Write to User Shadow Stack (32-bit)
 //! - WRUSSQ - Write to User Shadow Stack (64-bit)
 //! - CLAC - Clear AC Flag (Supervisor Mode Access Prevention)
@@ -369,6 +371,54 @@ fn test_setssbsy_multiple() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
+}
+
+// ============================================================================
+// WRSSD/WRSSQ Profile-Disabled Tests
+// ============================================================================
+
+#[test]
+fn disabled_legacy_wrss_faults_before_operand_observation_on_both_decode_paths() {
+    let cases: &[(&str, &[u8])] = &[
+        ("WRSSD", &[0x0F, 0x38, 0xF6, 0x00]),
+        ("address-size WRSSD", &[0x67, 0x0F, 0x38, 0xF6, 0x00]),
+        ("FS WRSSD", &[0x64, 0x0F, 0x38, 0xF6, 0x00]),
+        ("GS WRSSD", &[0x65, 0x0F, 0x38, 0xF6, 0x00]),
+        ("REX.R WRSSD", &[0x44, 0x0F, 0x38, 0xF6, 0x00]),
+        ("REX.B WRSSD", &[0x41, 0x0F, 0x38, 0xF6, 0x00]),
+        ("WRSSQ", &[0x48, 0x0F, 0x38, 0xF6, 0x00]),
+        ("REX.WRB WRSSQ", &[0x4D, 0x0F, 0x38, 0xF6, 0x00]),
+        (
+            "F2 plus 66 is not ADCX",
+            &[0xF2, 0x66, 0x0F, 0x38, 0xF6, 0xC3],
+        ),
+    ];
+
+    for &(name, instruction) in cases {
+        let mut initial = Registers::default();
+        initial.rax = 0x0000_8000_0000_0000;
+        initial.r8 = 0x0000_8000_0000_1000;
+        initial.rbx = 0x0123_4567_89AB_CDEF;
+        initial.rflags = 0x0CD7;
+        let (mut vcpu, _) = setup_vm_no_idt(instruction, Some(initial));
+
+        for path in ["cold decode", "decode-cache hit"] {
+            let before =
+                serde_json::to_value((vcpu.get_regs().unwrap(), vcpu.get_sregs().unwrap()))
+                    .unwrap();
+            let error = match vcpu.step() {
+                Err(error) => error,
+                Ok(exit) => panic!("{name} ({path}) unexpectedly retired: {exit:?}"),
+            };
+            assert!(
+                error.to_string().contains("IDT entry 6 not present"),
+                "{name} ({path}): {error}"
+            );
+            let after = serde_json::to_value((vcpu.get_regs().unwrap(), vcpu.get_sregs().unwrap()))
+                .unwrap();
+            assert_eq!(after, before, "{name} ({path}) must not commit state");
+        }
+    }
 }
 
 // ============================================================================

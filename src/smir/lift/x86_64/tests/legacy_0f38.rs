@@ -40,6 +40,8 @@ fn legacy_0f38_terminal_matches_the_fixed_profile_and_absolute_frontiers() {
             4,
         ),
         ("disabled CET WRUSS", &[0x66, 0x0F, 0x38, 0xF5, 0xC0][..], 4),
+        ("disabled CET WRSSD", &[0x0F, 0x38, 0xF6, 0x00][..], 3),
+        ("disabled CET WRSSQ", &[0x48, 0x0F, 0x38, 0xF6, 0x00][..], 4),
         (
             "disabled Key Locker ENCODEKEY128",
             &[0xF3, 0x0F, 0x38, 0xFA, 0xC0][..],
@@ -91,6 +93,34 @@ fn every_profile_disabled_key_locker_opcode_and_modrm_byte_is_terminal() {
         }
     }
     assert_eq!(checks, 2 * 7 * 256);
+}
+
+#[test]
+fn every_profile_disabled_legacy_wrss_prefix_class_and_modrm_byte_is_terminal() {
+    const PREFIXES: [&[u8]; 8] = [
+        &[0x0F, 0x38],
+        &[0x67, 0x0F, 0x38],
+        &[0x64, 0x0F, 0x38],
+        &[0x65, 0x0F, 0x38],
+        &[0x44, 0x0F, 0x38],
+        &[0x41, 0x0F, 0x38],
+        &[0x48, 0x0F, 0x38],
+        &[0x4D, 0x0F, 0x38],
+    ];
+
+    let mut checks = 0usize;
+    for prefix in PREFIXES {
+        for modrm in u8::MIN..=u8::MAX {
+            let mut bytes = prefix.to_vec();
+            bytes.extend_from_slice(&[0xF6, modrm]);
+            let result = lift_single(&bytes).unwrap_or_else(|error| {
+                panic!("profile-disabled legacy WRSS {bytes:02X?}: {error:?}")
+            });
+            assert_invalid_opcode_trap(&result, prefix.len() + 1);
+            checks += 1;
+        }
+    }
+    assert_eq!(checks, 8 * 256);
 }
 
 #[test]

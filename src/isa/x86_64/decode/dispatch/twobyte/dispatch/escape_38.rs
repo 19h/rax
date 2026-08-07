@@ -439,11 +439,14 @@ impl X86_64Vcpu {
                     Ok(None)
                 }
             }
-            // ADCX/ADOX (0xF6) - ADX instructions with mandatory prefixes
+            // WRSSD/WRSSQ share this opcode with ADCX/ADOX. The fixed guest
+            // profile clears CPUID.07H:ECX.CET_SS[7], so the no-mandatory-
+            // prefix forms raise #UD before ModR/M decode. F3 selects ADOX;
+            // 66 selects ADCX only when no F2/F3 prefix is present.
             0xF6 => {
                 if ctx.rep_prefix == Some(0xF3) {
                     execute::arith::adox_r_rm(self, ctx)
-                } else if ctx.operand_size_override {
+                } else if ctx.rep_prefix.is_none() && ctx.operand_size_override {
                     execute::arith::adcx_r_rm(self, ctx)
                 } else {
                     self.inject_undefined_instruction()
