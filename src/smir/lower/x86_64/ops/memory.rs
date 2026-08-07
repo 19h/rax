@@ -3535,6 +3535,12 @@ impl X86_64Lowerer {
                 });
             }
 
+            OpKind::X86Enter(..) => {
+                return Err(LowerError::UnsupportedOp {
+                    op: "ENTER requires exact helper-backed block lowering".to_string(),
+                });
+            }
+
             _ => return self.lower_op_extensions(op),
         }
 

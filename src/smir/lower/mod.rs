@@ -245,6 +245,8 @@ pub const X86_GUEST_CMPCCXADD_FN_OFFSET: i32 = X86_GUEST_CPUID_XOP_OFFSET + 8;
 pub const X86_GUEST_IO_FN_OFFSET: i32 = X86_GUEST_CMPCCXADD_FN_OFFSET + 8;
 /// Offset of the append-only packed port-I/O request/result channel.
 pub const X86_GUEST_IO_REQUEST_OFFSET: i32 = X86_GUEST_IO_FN_OFFSET + 8;
+/// Offset of the append-only helper-backed x86 ENTER transaction.
+pub const X86_GUEST_ENTER_FN_OFFSET: i32 = X86_GUEST_IO_REQUEST_OFFSET + 8;
 /// Internal `vec_load_fn` destination namespace for
 /// [`runtime::GuestRegs::vector_scratch`]. Architectural ZMM indices remain
 /// exactly 0..=31. For `vec_store_fn`, this tag names an unmasked scratch

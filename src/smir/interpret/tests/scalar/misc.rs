@@ -590,6 +590,11 @@ fn lifted_enter_executes_all_frame_phases_and_fault_ordering() {
     let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
     let mut memory = FlatMemory::new(0x1000);
     let mut ctx = SmirContext::new_x86_64();
+    let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+        unreachable!()
+    };
+    x86.efer = 1 << 10;
+    x86.cs_l = true;
 
     ctx.write_vreg(rbp, 0x600);
     ctx.write_vreg(rsp, 0x800);
@@ -614,15 +619,66 @@ fn lifted_enter_executes_all_frame_phases_and_fault_ordering() {
     memory.read(0x8FA, &mut word).unwrap();
     assert_eq!(u16::from_le_bytes(word), 0x8FE);
 
-    let mut fault_memory = FlatMemory::new(0x7FF);
+    let mut fault_memory = FlatMemory::with_base(0x700, 0x100);
     ctx.write_vreg(rbp, 0x600);
     ctx.write_vreg(rsp, 0x800);
-    let exit = execute_lifted_x86(&[0xC8, 0, 0, 0], &mut ctx, &mut fault_memory);
+    let exit = execute_lifted_x86(&[0xC8, 0, 1, 0], &mut ctx, &mut fault_memory);
     assert!(matches!(
         exit,
         BlockResult::Exit(ExitReason::MemoryFault { .. })
     ));
-    assert_eq!(ctx.read_vreg(rsp), 0x7F8);
+    assert_eq!(ctx.read_vreg(rsp), 0x800);
+    assert_eq!(ctx.read_vreg(rbp), 0x600);
+    fault_memory.read(0x7F8, &mut qword).unwrap();
+    assert_eq!(u64::from_le_bytes(qword), 0x600);
+
+    let mut late_read_fault = FlatMemory::with_base(0x700, 0x100);
+    ctx.write_vreg(rbp, 0x600);
+    ctx.write_vreg(rsp, 0x800);
+    let exit = execute_lifted_x86(&[0xC8, 0, 0, 2], &mut ctx, &mut late_read_fault);
+    assert!(matches!(
+        exit,
+        BlockResult::Exit(ExitReason::MemoryFault { .. })
+    ));
+    assert_eq!(ctx.read_vreg(rsp), 0x800);
+    assert_eq!(ctx.read_vreg(rbp), 0x600);
+    late_read_fault.read(0x7F8, &mut qword).unwrap();
+    assert_eq!(
+        u64::from_le_bytes(qword),
+        0x600,
+        "the earlier display store precedes a later parent-read fault"
+    );
+
+    let mut canonicality_memory = FlatMemory::new(0x1000);
+    let noncanonical_rsp = 0x0000_8000_0000_0008;
+    ctx.write_vreg(rbp, 0x600);
+    ctx.write_vreg(rsp, noncanonical_rsp);
+    let exit = execute_lifted_x86(&[0xC8, 0, 0, 0], &mut ctx, &mut canonicality_memory);
+    assert!(matches!(
+        exit,
+        BlockResult::Exit(ExitReason::StackSegment {
+            addr: 0x1000,
+            error_code: 0
+        })
+    ));
+    assert_eq!(ctx.read_vreg(rsp), noncanonical_rsp);
+    assert_eq!(ctx.read_vreg(rbp), 0x600);
+
+    ctx.write_vreg(rsp, 0x800);
+    let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+        unreachable!()
+    };
+    x86.apx_enabled = false;
+    let exit = execute_lifted_x86(
+        &[0xD5, 0x00, 0xC8, 0, 0, 0],
+        &mut ctx,
+        &mut canonicality_memory,
+    );
+    assert!(matches!(
+        exit,
+        BlockResult::Exit(ExitReason::Undefined { addr: 0x1000, .. })
+    ));
+    assert_eq!(ctx.read_vreg(rsp), 0x800);
     assert_eq!(ctx.read_vreg(rbp), 0x600);
 }
 #[test]

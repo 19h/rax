@@ -4294,6 +4294,9 @@ impl Aarch64Lowerer {
             OpKind::RepMovs { .. } => Err(LowerError::UnsupportedOp {
                 op: "AArch64 native RepMovs depends on the x86 direction flag".into(),
             }),
+            OpKind::X86Enter(..) => Err(LowerError::UnsupportedOp {
+                op: "AArch64 native x86 ENTER requires a fault-precise stack helper".into(),
+            }),
             OpKind::Leave => self.lower_leave(),
             OpKind::IoIn { dst, width, .. } => self.lower_io_in(*dst, *width),
             OpKind::IoOut { width, .. } => self.lower_io_out(*width),

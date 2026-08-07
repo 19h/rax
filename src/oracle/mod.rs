@@ -3833,6 +3833,20 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             width,
         } => op_json!("pred_vload", dst, cond, addr, width),
         OpKind::VStore { src, addr, width } => op_json!("vstore", src, addr, width),
+        OpKind::X86Enter(crate::smir::ir::ops::X86EnterOp {
+            allocation_size,
+            nesting_level,
+            width,
+            requires_apx,
+            next_pc,
+        }) => op_json!(
+            "x86_enter",
+            allocation_size,
+            nesting_level,
+            width,
+            requires_apx,
+            next_pc
+        ),
         OpKind::Leave => op_json!("leave"),
         OpKind::IoIn { dst, port, width } => op_json!("io_in", dst, port, width),
         OpKind::IoOut { port, value, width } => op_json!("io_out", port, value, width),

@@ -23,6 +23,7 @@ fn result_retains_apx_requirement(result: &LiftResult) -> bool {
         OpKind::X86FarJump(op) => op.requires_apx,
         OpKind::X86FarCall(op) => op.requires_apx,
         OpKind::X86FarReturn(op) => op.requires_apx,
+        OpKind::X86Enter(op) => op.requires_apx,
         OpKind::X86Lmsw(op) => op.requires_apx,
         OpKind::X86DescriptorTableStore(op) => op.requires_apx,
         OpKind::X86DescriptorTableLoad(op) => op.requires_apx,

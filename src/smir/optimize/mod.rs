@@ -2154,6 +2154,11 @@ impl OpKind {
                 result.push(*src);
             }
 
+            OpKind::X86Enter(..) => {
+                result.push(VReg::Arch(ArchReg::X86(X86Reg::Rsp)));
+                result.push(VReg::Arch(ArchReg::X86(X86Reg::Rbp)));
+            }
+
             OpKind::Leave => {
                 result.push(VReg::Arch(ArchReg::X86(X86Reg::Rbp)));
             }

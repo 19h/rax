@@ -32,6 +32,8 @@ mod cpuid;
 #[cfg(test)]
 mod descriptor_table;
 #[cfg(test)]
+mod enter;
+#[cfg(test)]
 mod evex;
 mod evex_alignr_memory_source;
 #[cfg(test)]

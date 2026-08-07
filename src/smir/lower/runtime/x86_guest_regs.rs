@@ -279,6 +279,11 @@ pub struct GuestRegs {
     /// 23:16 the byte width, bit 24 the output direction, and bits 63:32 the
     /// zero-extended output value. Zero denotes no request.
     pub io_request: u64,
+    /// Address of `extern "C" fn(state, allocation, nesting, width,
+    /// requires_apx) -> ok`, implementing one complete long-mode ENTER stack
+    /// transaction. This field is append-only so established offsets remain
+    /// stable.
+    pub enter_fn: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -373,6 +378,7 @@ impl Default for GuestRegs {
             cmpccxadd_fn: 0,
             io_fn: 0,
             io_request: 0,
+            enter_fn: 0,
         }
     }
 }

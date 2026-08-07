@@ -2,6 +2,20 @@
 
 use crate::smir::ir::types::{Address, MemWidth, OpWidth, VReg};
 
+/// `ENTER imm16, imm8` owns the complete implicit stack transaction. Keeping
+/// the instruction as one operation is required for precise RSP/RBP commit and
+/// for Intel's final-stack write-permission probe, which performs no data
+/// write. `nesting_level` is the architecturally masked value in 0..=31.
+#[derive(Clone, Debug)]
+pub struct X86EnterOp {
+    pub allocation_size: u16,
+    pub nesting_level: u8,
+    pub width: OpWidth,
+    pub requires_apx: bool,
+    /// Exact end of the source instruction, retained for native shape checks.
+    pub next_pc: u64,
+}
+
 /// Architecturally readable x86 control registers accepted by `MOV r64, CRn`
 /// in 64-bit mode. Reserved control-register numbers are represented as an
 /// explicit invalid-opcode trap by the lifter and never reach this enum.

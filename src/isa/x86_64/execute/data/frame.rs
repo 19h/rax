@@ -4,13 +4,18 @@ use crate::error::Result;
 use crate::vm::vcpu::VcpuExit;
 
 use crate::isa::x86_64::cpu::{EvexPrefix, InsnContext, X86_64Vcpu};
+use crate::isa::x86_64::execute::system::is_canonical_48;
 
 fn frame_op_size(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u8 {
     let in_long_mode = (vcpu.sregs.efer & 0x400) != 0;
     let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
 
     if in_64bit_mode {
-        if ctx.operand_size_override { 2 } else { 8 }
+        if ctx.any_rex_w() || !ctx.operand_size_override {
+            8
+        } else {
+            2
+        }
     } else {
         let default_16bit = !vcpu.sregs.cs.db;
         let is_16bit = default_16bit ^ ctx.operand_size_override;
@@ -18,38 +23,100 @@ fn frame_op_size(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u8 {
     }
 }
 
-fn push_frame(vcpu: &mut X86_64Vcpu, value: u64, op_size: u8) -> Result<()> {
-    match op_size {
-        2 => vcpu.push16(value as u16),
-        4 => vcpu.push32(value as u32),
-        8 => vcpu.push64(value),
-        _ => unreachable!(),
+fn wrapping_stack_sub(value: u64, delta: u64, address_size: u8) -> u64 {
+    match address_size {
+        2 => u64::from((value as u16).wrapping_sub(delta as u16)),
+        4 => u64::from((value as u32).wrapping_sub(delta as u32)),
+        8 => value.wrapping_sub(delta),
+        _ => unreachable!("validated x86 stack-address size"),
     }
+}
+
+fn stack_linear_address(vcpu: &X86_64Vcpu, offset: u64) -> u64 {
+    if vcpu.sregs.cs.l {
+        offset
+    } else {
+        vcpu.sregs.ss.base.wrapping_add(offset)
+    }
+}
+
+fn long_mode_stack_range_is_canonical(vcpu: &X86_64Vcpu, address: u64, size: u8) -> bool {
+    !vcpu.sregs.cs.l
+        || address
+            .checked_add(u64::from(size) - 1)
+            .is_some_and(|last| is_canonical_48(address) && is_canonical_48(last))
 }
 
 /// ENTER imm16, imm8 (0xC8) - Create stack frame
 pub fn enter(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let alloc_size = ctx.consume_u16()? as u64;
-    let nesting_level = (ctx.consume_u8()? & 0x1F) as u64;
+    let nesting_level = ctx.consume_u8()? & 0x1F;
     let op_size = frame_op_size(vcpu, ctx);
     let delta = op_size as u64;
+    let stack_address_size = if vcpu.sregs.cs.l {
+        8
+    } else if vcpu.sregs.ss.db {
+        4
+    } else {
+        2
+    };
+    let old_rbp = vcpu.regs.rbp;
+    let old_bp = vcpu.get_reg(5, op_size);
+    let mut stack_pointer =
+        wrapping_stack_sub(vcpu.stack_pointer_offset(), delta, stack_address_size);
+    let mut stack_address = stack_linear_address(vcpu, stack_pointer);
+    if !long_mode_stack_range_is_canonical(vcpu, stack_address, op_size) {
+        vcpu.inject_exception(12, Some(0))?;
+        return Ok(None);
+    }
+    vcpu.write_mem(stack_address, old_bp, op_size)?;
+    let frame_ptr = stack_pointer;
 
-    push_frame(vcpu, vcpu.get_reg(5, op_size), op_size)?;
-    let frame_ptr = vcpu.stack_pointer_offset();
-
-    if nesting_level > 0 {
-        for _ in 1..nesting_level {
-            let next = vcpu.get_reg(5, op_size).wrapping_sub(delta);
-            vcpu.set_reg(5, next, op_size);
-            let ptr = vcpu.read_mem(vcpu.regs.rbp, op_size)?;
-            push_frame(vcpu, ptr, op_size)?;
+    let mut parent_offset = match stack_address_size {
+        2 => old_rbp & 0xFFFF,
+        4 => old_rbp & 0xFFFF_FFFF,
+        8 => old_rbp,
+        _ => unreachable!("validated x86 stack-address size"),
+    };
+    for _ in 1..nesting_level {
+        parent_offset = wrapping_stack_sub(parent_offset, delta, stack_address_size);
+        let parent_address = stack_linear_address(vcpu, parent_offset);
+        if !long_mode_stack_range_is_canonical(vcpu, parent_address, op_size) {
+            vcpu.inject_exception(12, Some(0))?;
+            return Ok(None);
         }
-        push_frame(vcpu, frame_ptr, op_size)?;
+        let parent = vcpu.read_mem(parent_address, op_size)?;
+        stack_pointer = wrapping_stack_sub(stack_pointer, delta, stack_address_size);
+        stack_address = stack_linear_address(vcpu, stack_pointer);
+        if !long_mode_stack_range_is_canonical(vcpu, stack_address, op_size) {
+            vcpu.inject_exception(12, Some(0))?;
+            return Ok(None);
+        }
+        vcpu.write_mem(stack_address, parent, op_size)?;
+    }
+    if nesting_level != 0 {
+        stack_pointer = wrapping_stack_sub(stack_pointer, delta, stack_address_size);
+        stack_address = stack_linear_address(vcpu, stack_pointer);
+        if !long_mode_stack_range_is_canonical(vcpu, stack_address, op_size) {
+            vcpu.inject_exception(12, Some(0))?;
+            return Ok(None);
+        }
+        vcpu.write_mem(stack_address, frame_ptr, op_size)?;
     }
 
+    let final_sp = wrapping_stack_sub(stack_pointer, alloc_size, stack_address_size);
+    let final_address = stack_linear_address(vcpu, final_sp);
+    if !long_mode_stack_range_is_canonical(vcpu, final_address, 1) {
+        vcpu.inject_exception(12, Some(0))?;
+        return Ok(None);
+    }
+    // Intel SDM Vol. 3C §31.4.4 specifies a write check for the byte at the
+    // final stack pointer without an actual data write.
+    vcpu.mmu
+        .preflight_write_range(final_address, 1, &vcpu.sregs)?;
+
     vcpu.set_reg(5, frame_ptr, op_size);
-    let new_sp = vcpu.stack_pointer_wrapping_sub(alloc_size);
-    vcpu.set_stack_pointer_offset(new_sp);
+    vcpu.set_stack_pointer_offset(final_sp);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

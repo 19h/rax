@@ -1,6 +1,7 @@
 //! tests::decode tests
 
 use super::*;
+use crate::smir::ir::ops::X86EnterOp;
 use crate::smir::lift::x86_64::*;
 
 #[test]
@@ -860,40 +861,69 @@ fn lift_ud0_is_an_explicit_two_byte_trap_without_operand_fetch() {
 fn lift_enter_decodes_width_nesting_mask_and_invalid_forms() {
     let enter64 = lift_single(&[0xC8, 0x20, 0, 0]).unwrap();
     assert_eq!(enter64.bytes_consumed, 4);
-    assert!(matches!(
-        enter64.ops[1].kind,
-        OpKind::Sub {
-            src2: SrcOperand::Imm(8),
-            width: OpWidth::W64,
-            flags: FlagUpdate::None,
-            ..
-        }
-    ));
-    assert!(matches!(
-        enter64.ops[2].kind,
-        OpKind::Store {
-            width: MemWidth::B8,
-            ..
-        }
-    ));
+    assert!(
+        matches!(
+            enter64.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::X86Enter(X86EnterOp {
+                    allocation_size: 0x20,
+                    nesting_level: 0,
+                    width: OpWidth::W64,
+                    requires_apx: false,
+                    next_pc: 0x1004,
+                }),
+                ..
+            }]
+        ),
+        "{:?}",
+        enter64.ops
+    );
 
     let enter16_nested = lift_single(&[0x66, 0xC8, 0x10, 0, 0x22]).unwrap();
     assert_eq!(enter16_nested.bytes_consumed, 5);
-    assert_eq!(
-        enter16_nested
-            .ops
-            .iter()
-            .filter(|op| matches!(
-                op.kind,
-                OpKind::Load {
-                    width: MemWidth::B2,
-                    ..
-                }
-            ))
-            .count(),
-        1,
-        "nesting immediate must be masked to five bits (0x22 -> 2)",
-    );
+    assert!(matches!(
+        enter16_nested.ops.as_slice(),
+        [SmirOp {
+            kind: OpKind::X86Enter(X86EnterOp {
+                allocation_size: 0x10,
+                nesting_level: 2,
+                width: OpWidth::W16,
+                requires_apx: false,
+                next_pc: 0x1005,
+            }),
+            ..
+        }]
+    ));
+
+    let rex_w_wins = lift_single(&[0x66, 0x48, 0xC8, 0, 0, 0]).unwrap();
+    assert!(matches!(
+        rex_w_wins.ops[0].kind,
+        OpKind::X86Enter(X86EnterOp {
+            width: OpWidth::W64,
+            ..
+        })
+    ));
+    let legacy_after_rex = lift_single(&[0x48, 0x66, 0xC8, 0, 0, 0]).unwrap();
+    assert!(matches!(
+        legacy_after_rex.ops[0].kind,
+        OpKind::X86Enter(X86EnterOp {
+            width: OpWidth::W16,
+            ..
+        })
+    ));
+
+    let rex2 = lift_single(&[0xD5, 0x00, 0xC8, 0, 0, 0]).unwrap();
+    assert!(matches!(
+        rex2.ops.as_slice(),
+        [SmirOp {
+            kind: OpKind::X86Enter(X86EnterOp {
+                requires_apx: true,
+                next_pc: 0x1006,
+                ..
+            }),
+            ..
+        }]
+    ));
     assert!(matches!(
         lift_single(&[0xF0, 0xC8, 0, 0, 0]),
         Err(LiftError::InvalidEncoding { .. })

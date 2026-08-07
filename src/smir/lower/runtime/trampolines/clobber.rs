@@ -7,7 +7,7 @@ use crate::smir::ir::ops::{
 };
 use crate::smir::lower::runtime::*;
 use crate::smir::lower::x86_64::{
-    x86_cli_shape_valid, x86_clts_shape_valid, x86_far_call_shape_valid,
+    x86_cli_shape_valid, x86_clts_shape_valid, x86_enter_encoding, x86_far_call_shape_valid,
     x86_far_call_terminal_shape_valid, x86_far_jump_shape_valid, x86_far_jump_terminal_shape_valid,
     x86_far_return_shape_valid, x86_far_return_terminal_shape_valid,
     x86_fast_system_transfer_shape_valid, x86_fast_system_transfer_terminal_shape_valid,
@@ -1207,6 +1207,7 @@ pub(crate) fn block_is_clobber_safe(
         }
         let op = &block.ops[i];
         let io_ok = x86_io_encoding(block, i, x86_instruction_bytes).is_some();
+        let enter_ok = allow_mem && x86_enter_encoding(block, i, x86_instruction_bytes).is_some();
         if i + 1 == n {
             if let (Terminator::CondBranch { cond, .. }, OpKind::TestCondition { dst, .. }) =
                 (&block.terminator, &op.kind)
@@ -1496,7 +1497,8 @@ pub(crate) fn block_is_clobber_safe(
             || fast_system_transfer_ok
             || read_debug_ok
             || write_control_ok
-            || write_debug_ok;
+            || write_debug_ok
+            || enter_ok;
         if (crate::smir::lower::x86_64::x86_state_backed_gpr_lea_candidate(op) && !state_lea_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_stack_group1_candidate(op)
                 && !stack_group1_ok)
@@ -1565,6 +1567,7 @@ pub(crate) fn block_is_clobber_safe(
             || selector_load_ok
             || selector_verify_ok
             || selector_query_ok
+            || enter_ok
             || matches!(
                 &op.kind,
                 OpKind::X86SystemSelectorStore(store)
@@ -1802,6 +1805,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::IoIn { .. } | OpKind::IoOut { .. }) && !io_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86Enter(..)) && !enter_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86Sti { .. }) && !sti_ok {

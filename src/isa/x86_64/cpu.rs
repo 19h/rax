@@ -3763,6 +3763,12 @@ mod jit_io;
 use jit_io::rax_jit_io;
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_enter.rs"]
+mod jit_enter;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use jit_enter::rax_jit_enter;
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_vector_memory.rs"]
 mod jit_vector_memory;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -4735,6 +4741,7 @@ impl X86_64Vcpu {
                                 | OpKind::X86FarJump(..)
                                 | OpKind::X86FarCall(..)
                                 | OpKind::X86FarReturn(..)
+                                | OpKind::X86Enter(..)
                                 | OpKind::X86FastSystemTransfer(..)
                                 | OpKind::X86WriteControl { .. }
                                 | OpKind::X86ReadDebug { .. }
@@ -5034,6 +5041,7 @@ impl X86_64Vcpu {
         gr.pair_store_fn = rax_jit_pair_store as usize as u64;
         gr.cmpccxadd_fn = rax_jit_cmpccxadd as usize as u64;
         gr.io_fn = rax_jit_io as usize as u64;
+        gr.enter_fn = rax_jit_enter as usize as u64;
         // Lift-through-calls channel (RAX_JIT_CALL): a guest CALL in the region
         // calls out here to run its callee in the interpreter, then resumes.
         gr.call_fn = rax_jit_call as usize as u64;
@@ -6376,6 +6384,14 @@ mod jit_mmx_tests;
 #[cfg(test)]
 #[path = "cpu_mmx_xmm_transfer_tests.rs"]
 mod mmx_xmm_transfer_tests;
+
+#[cfg(test)]
+#[path = "cpu_enter_tests.rs"]
+mod enter_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_enter_tests.rs"]
+mod jit_enter_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_opmask_tests.rs"]

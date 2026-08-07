@@ -151,6 +151,7 @@ impl X86_64Lifter {
             OpKind::X86FarJump(op) => op.requires_apx,
             OpKind::X86FarCall(op) => op.requires_apx,
             OpKind::X86FarReturn(op) => op.requires_apx,
+            OpKind::X86Enter(op) => op.requires_apx,
             OpKind::X86Lmsw(op) => op.requires_apx,
             OpKind::X86Invlpg(op) => op.requires_apx,
             OpKind::X86Invpcid(op) => op.requires_apx,

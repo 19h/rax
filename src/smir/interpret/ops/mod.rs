@@ -24,5 +24,6 @@ mod system_selector;
 mod unary;
 mod vector_compare;
 mod x86_alignment;
+mod x86_enter;
 mod x86_invpcid;
 mod xop;

@@ -3180,6 +3180,9 @@ pub enum OpKind {
         width: VecWidth,
     },
 
+    /// Create an x86 procedure stack frame as one fault-precise transaction.
+    X86Enter(X86EnterOp),
+
     /// Leave stack frame (x86 LEAVE)
     Leave,
 
@@ -4968,7 +4971,7 @@ impl OpKind {
                 ..
             } => vec![VReg::Arch(ArchReg::X86(X86Reg::Rax))],
 
-            OpKind::Leave => vec![
+            OpKind::X86Enter(..) | OpKind::Leave => vec![
                 VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
                 VReg::Arch(ArchReg::X86(X86Reg::Rbp)),
             ],
@@ -5317,6 +5320,7 @@ impl OpKind {
             | OpKind::IoOut { .. }
             | OpKind::Swi { .. }
             | OpKind::WriteSysReg { .. }
+            | OpKind::X86Enter(..)
             | OpKind::Leave
             | OpKind::Nop
             | OpKind::Undefined { .. }
@@ -5349,6 +5353,7 @@ impl OpKind {
                     | OpKind::RvVector { .. }
                     | OpKind::IoIn { .. }
                     | OpKind::IoOut { .. }
+                    | OpKind::X86Enter(..)
                     | OpKind::Leave
                     | OpKind::ClearExclusive
                     | OpKind::Fence { .. }
@@ -5543,6 +5548,7 @@ impl OpKind {
                     ..
                 }
                 | OpKind::RvVector { .. }
+                | OpKind::X86Enter(..)
                 | OpKind::Leave
         ) || matches!(self, OpKind::X86Opmask(op) if op.reads_memory())
     }
@@ -5622,6 +5628,7 @@ impl OpKind {
                 | OpKind::X86FarCall(..)
                 | OpKind::X86FarReturn(..)
                 | OpKind::X86DescriptorTableStore(..)
+                | OpKind::X86Enter(..)
                 | OpKind::RvVector { .. }
         ) || matches!(self, OpKind::X86Opmask(op) if op.writes_memory())
     }

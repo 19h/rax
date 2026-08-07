@@ -32,52 +32,6 @@ use crate::smir::lower::{
 };
 
 impl X86_64Lowerer {
-    /// Execute an exact vector-to-GPR replay whose architectural destination
-    /// is guest RSP or RBP without exposing the host stack/frame register.
-    ///
-    /// `rewritten` must target RAX. Preserved host RAX and RCX provide the
-    /// result and state-pointer temporaries, and the exact 64-bit result is
-    /// committed directly to `GuestRegs::gpr`. Guest RBP additionally updates
-    /// the prologue's saved-RBP word because the outer trampoline exports that
-    /// restored physical register after return. PUSH/POP and MOV do not alter
-    /// RFLAGS, so the O(1)-time, O(1)-space wrapper preserves the admitted
-    /// instructions' flag-neutral contracts.
-    fn emit_state_backed_gpr_replay(&mut self, rewritten: &X86InstructionBytes, destination: u8) {
-        debug_assert!(matches!(destination, 4 | 5));
-
-        self.code.emit_u8(0x50); // push rax
-        self.code.emit_u8(0x51); // push rcx
-        self.code.emit_bytes(rewritten.as_slice());
-        self.code.emit_bytes(&[0x48, 0x8B, 0x4D]);
-        self.code.emit_u8(X86_STATE_PTR_AT_RBP as u8); // mov rcx,[rbp+state]
-        self.code.emit_bytes(&[0x48, 0x89, 0x41]);
-        self.code.emit_u8(destination * 8); // mov [rcx+gpr[destination]],rax
-        if destination == 5 {
-            self.code.emit_bytes(&[0x48, 0x89, 0x45, 0x00]); // mov [rbp],rax
-        }
-        self.code.emit_u8(0x59); // pop rcx
-        self.code.emit_u8(0x58); // pop rax
-    }
-
-    /// Execute an exact GPR-to-vector replay whose architectural source is
-    /// guest RSP or RBP without exposing the host stack/frame register.
-    ///
-    /// `rewritten` must read RAX. Guest RSP/RBP are continuously materialized
-    /// in `GuestRegs::gpr`; load the selected 64-bit slot into a push/pop-saved
-    /// RAX and execute the instruction. W0 naturally reads EAX. PUSH/POP and
-    /// MOV do not alter RFLAGS, so the O(1)-time, O(1)-space wrapper preserves
-    /// the admitted conversions' flag-neutral contract.
-    fn emit_state_backed_gpr_source_replay(&mut self, rewritten: &X86InstructionBytes, source: u8) {
-        debug_assert!(matches!(source, 4 | 5));
-
-        self.code.emit_u8(0x50); // push rax
-        self.code.emit_bytes(&[0x48, 0x8B, 0x45]);
-        self.code.emit_u8(X86_STATE_PTR_AT_RBP as u8); // mov rax,[rbp+state]
-        self.code.emit_bytes(&[0x48, 0x8B, 0x40, source * 8]); // mov rax,[rax+gpr]
-        self.code.emit_bytes(rewritten.as_slice());
-        self.code.emit_u8(0x58); // pop rax
-    }
-
     /// Clear the four status flags that Intel defines as zero after
     /// `VPTEST`, `VTESTPS`, and `VTESTPD`, preserving CF, ZF, and every
     /// unaffected flag.
@@ -1176,6 +1130,11 @@ impl X86_64Lowerer {
             #[cfg(feature = "smir-jit")]
             if self.emit_x86_io_if_present(block, idx)? {
                 return Ok(());
+            }
+            #[cfg(feature = "smir-jit")]
+            if self.emit_x86_enter_if_present(block, idx)? {
+                idx += 1;
+                continue;
             }
             if matches!(block.ops[idx].kind, OpKind::X86XSetBv { .. }) {
                 let resume_pc = block.ops[idx + 1..]

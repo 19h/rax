@@ -69,9 +69,14 @@ pub use cmpccxadd::*;
 mod sti;
 pub use sti::*;
 mod cpuid;
+mod state_backed_replay;
 pub use cpuid::*;
 mod descriptor_table;
 pub use descriptor_table::*;
+#[cfg(feature = "smir-jit")]
+mod enter;
+#[cfg(feature = "smir-jit")]
+pub(crate) use enter::*;
 #[cfg(feature = "smir-jit")]
 mod evex_alignr_memory_source;
 #[cfg(feature = "smir-jit")]

@@ -7,10 +7,10 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
-    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign, X86VecMap,
-    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
-    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
-    X86XSaveKind,
+    X86EnterOp, X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign,
+    X86VecMap, X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource,
+    X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth,
+    X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{
@@ -890,14 +890,14 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, prefix.cursor))
     }
 
-    /// Lift ENTER imm16, imm8 (C8), including all 32 architectural nesting
-    /// levels. Stack stores are emitted in retirement order.
+    /// Lift ENTER imm16, imm8 (C8) as one fault-precise implicit stack
+    /// transaction, including all 32 architectural nesting levels.
     pub(crate) fn lift_enter(
         &self,
         bytes: &[u8],
         prefix: &X86Prefix,
         pc: u64,
-        ctx: &mut LiftContext,
+        _ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
         if prefix.lock {
             return Err(LiftError::InvalidEncoding {
@@ -913,149 +913,28 @@ impl X86_64Lifter {
             });
         }
 
-        let alloc_size = u16::from_le_bytes([bytes[0], bytes[1]]) as i64;
+        let allocation_size = u16::from_le_bytes([bytes[0], bytes[1]]);
         let nesting = bytes[2] & 0x1F;
-        let (width, mem_width, delta) = if prefix.operand_size_override {
-            (OpWidth::W16, MemWidth::B2, 2)
+        let width = if prefix.operand_size_override && !prefix.rex_w() {
+            OpWidth::W16
         } else {
-            (OpWidth::W64, MemWidth::B8, 8)
+            OpWidth::W64
         };
-        let rbp = self.gpr(5);
-        let rsp = self.rsp();
-        let mut ops = Vec::new();
-
-        let old_bp = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Mov {
-                dst: old_bp,
-                src: SrcOperand::Reg(rbp),
-                width,
-            },
-        ));
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Sub {
-                dst: rsp,
-                src1: rsp,
-                src2: SrcOperand::Imm(delta),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            },
-        ));
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Store {
-                src: old_bp,
-                addr: Address::Direct(rsp),
-                width: mem_width,
-            },
-        ));
-
-        let frame_ptr = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Mov {
-                dst: frame_ptr,
-                src: SrcOperand::Reg(rsp),
-                width: OpWidth::W64,
-            },
-        ));
-
-        for _ in 1..nesting {
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
+        let next_pc = pc + prefix.cursor as u64 + 3;
+        Ok(LiftResult::fallthrough(
+            vec![SmirOp::new(
+                OpId(0),
                 pc,
-                OpKind::Sub {
-                    dst: rbp,
-                    src1: rbp,
-                    src2: SrcOperand::Imm(delta),
+                OpKind::X86Enter(X86EnterOp {
+                    allocation_size,
+                    nesting_level: nesting,
                     width,
-                    flags: FlagUpdate::None,
-                },
-            ));
-            let parent = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Load {
-                    dst: parent,
-                    addr: Address::Direct(rbp),
-                    width: mem_width,
-                    sign: SignExtend::Zero,
-                },
-            ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Sub {
-                    dst: rsp,
-                    src1: rsp,
-                    src2: SrcOperand::Imm(delta),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Store {
-                    src: parent,
-                    addr: Address::Direct(rsp),
-                    width: mem_width,
-                },
-            ));
-        }
-
-        if nesting != 0 {
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Sub {
-                    dst: rsp,
-                    src1: rsp,
-                    src2: SrcOperand::Imm(delta),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Store {
-                    src: frame_ptr,
-                    addr: Address::Direct(rsp),
-                    width: mem_width,
-                },
-            ));
-        }
-
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Mov {
-                dst: rbp,
-                src: SrcOperand::Reg(frame_ptr),
-                width,
-            },
-        ));
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Sub {
-                dst: rsp,
-                src1: rsp,
-                src2: SrcOperand::Imm(alloc_size),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            },
-        ));
-
-        Ok(LiftResult::fallthrough(ops, prefix.cursor + 3))
+                    requires_apx: prefix.rex2.is_some(),
+                    next_pc,
+                }),
+            )],
+            prefix.cursor + 3,
+        ))
     }
 
     /// Lift LEA (8D)
