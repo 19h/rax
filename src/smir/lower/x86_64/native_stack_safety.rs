@@ -65,6 +65,7 @@ impl X86_64Lowerer {
             || x86_xadd_shape_valid(op)
             || x86_fsgsbase_shape_valid(&op.kind)
             || x86_read_control_shape_valid(&op.kind)
+            || x86_rdpid_shape_valid(&op.kind)
             || x86_smsw_shape_valid(&op.kind)
             || x86_system_selector_store_shape_valid(op)
             || x86_system_selector_load_shape_valid(op)

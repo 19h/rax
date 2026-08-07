@@ -12,11 +12,11 @@ use crate::smir::lower::x86_64::{
     x86_far_return_shape_valid, x86_far_return_terminal_shape_valid,
     x86_fast_system_transfer_shape_valid, x86_fast_system_transfer_terminal_shape_valid,
     x86_invlpg_shape_valid, x86_invpcid_shape_valid, x86_io_encoding, x86_lmsw_shape_valid,
-    x86_load_mxcsr_shape_valid, x86_read_control_shape_valid, x86_read_debug_shape_valid,
-    x86_selector_query_shape_valid, x86_selector_verify_shape_valid, x86_smsw_shape_valid,
-    x86_sti_shape_valid, x86_store_mxcsr_shape_valid, x86_system_selector_load_shape_valid,
-    x86_system_selector_store_shape_valid, x86_waitpkg_shape_valid, x86_write_control_shape_valid,
-    x86_write_debug_shape_valid,
+    x86_load_mxcsr_shape_valid, x86_rdpid_shape_valid, x86_read_control_shape_valid,
+    x86_read_debug_shape_valid, x86_selector_query_shape_valid, x86_selector_verify_shape_valid,
+    x86_smsw_shape_valid, x86_sti_shape_valid, x86_store_mxcsr_shape_valid,
+    x86_system_selector_load_shape_valid, x86_system_selector_store_shape_valid,
+    x86_waitpkg_shape_valid, x86_write_control_shape_valid, x86_write_debug_shape_valid,
 };
 
 #[path = "clobber/flags.rs"]
@@ -1432,6 +1432,7 @@ pub(crate) fn block_is_clobber_safe(
         let far_return_ok = allow_mem && x86_far_return_shape_valid(op);
         let fast_system_transfer_ok = x86_fast_system_transfer_shape_valid(op);
         let read_debug_ok = x86_read_debug_shape_valid(&op.kind);
+        let rdpid_ok = x86_rdpid_shape_valid(&op.kind);
         let write_control_ok = x86_write_control_shape_valid(op);
         let write_debug_ok = x86_write_debug_shape_valid(&op.kind);
         let cli_ok = x86_cli_shape_valid(op);
@@ -1506,6 +1507,7 @@ pub(crate) fn block_is_clobber_safe(
             || invpcid_ok
             || fast_system_transfer_ok
             || read_debug_ok
+            || rdpid_ok
             || write_control_ok
             || write_debug_ok
             || enter_ok;
@@ -1676,10 +1678,8 @@ pub(crate) fn block_is_clobber_safe(
         {
             return false;
         }
-        if let OpKind::X86ReadPid { dst } = &op.kind {
-            if !x86_native_rdpid_gpr(dst) {
-                return false;
-            }
+        if matches!(op.kind, OpKind::X86ReadPid { .. }) && !rdpid_ok {
+            return false;
         }
         if matches!(op.kind, OpKind::X86Random { .. }) && !x86_random_shape_valid(&op.kind) {
             return false;
@@ -1969,7 +1969,7 @@ pub(crate) fn block_is_clobber_safe(
         // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/INC/DEC/
         // ROL/ROR/RCL/RCR/SHL/SHR/SAR/SHLD/SHRD (including APX NDD)/count/
         // bit-scan/bit-test/CRC32/BMI/ADX/PDEP/PEXT/MULX/BSWAP/XCHG/XADD/
-        // CMPXCHG/ADD/SUB
+        // CMPXCHG/RDPID/ADD/SUB
         // reads/writes are state-backed.
         // Other writes are not modeled and bail. A read is additionally valid
         // as an operand of a mem-JIT Load/Store (an address base/index, or a stored value): the MMU

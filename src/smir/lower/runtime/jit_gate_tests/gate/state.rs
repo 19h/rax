@@ -3,6 +3,7 @@
 use super::*;
 use crate::smir::lower::runtime::jit_gate_tests::*;
 use crate::smir::lower::runtime::*;
+use crate::smir::lower::x86_64::x86_rdpid_shape_valid;
 
 #[test]
 fn x86_movd_q_gate_validates_direction_width_upper_state_and_encoding() {
@@ -695,27 +696,41 @@ fn x86_stack_arithmetic_gate_admits_only_exact_state_backed_shapes() {
     }
 }
 #[test]
-fn x86_rdpid_gate_admits_physical_and_state_backed_destinations() {
-    let valid = OpKind::X86ReadPid {
-        dst: x86(X86Reg::R9),
-    };
-    assert!(valid.is_jit_safe(), "RDPID must be class-whitelisted");
-    assert!(x86_gate(valid), "state-backed RDPID must enter native tier");
+fn x86_rdpid_gate_admits_all_32_gprs_and_rejects_non_gprs_and_cross_host_execution() {
+    for index in 0u8..32 {
+        let op = OpKind::X86ReadPid {
+            dst: x86(X86Reg::gpr(index)),
+        };
+        assert!(op.is_jit_safe(), "RDPID must be class-whitelisted");
+        assert!(x86_rdpid_shape_valid(&op), "GPR {index}");
+        assert!(x86_gate(op), "GPR {index} must enter the x86 native tier");
+    }
 
     for (name, dst) in [
-        ("host stack", x86(X86Reg::Rsp)),
-        ("frame pointer", x86(X86Reg::Rbp)),
         ("virtual", VReg::Virtual(VirtualId(1))),
+        ("SIMD", x86(X86Reg::Xmm(0))),
+        ("instruction pointer", x86(X86Reg::Rip)),
     ] {
         let op = OpKind::X86ReadPid { dst };
         assert!(op.is_jit_safe(), "{name} remains class-whitelisted");
+        assert!(!x86_rdpid_shape_valid(&op), "{name}");
         assert!(!x86_gate(op), "malformed {name} RDPID must deopt");
     }
+
+    let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+    builder.push_op(
+        0x1000,
+        OpKind::X86ReadPid {
+            dst: x86(X86Reg::Rsp),
+        },
+    );
+    builder.set_terminator(Terminator::Return { values: vec![] });
     assert!(
-        x86_gate(OpKind::X86ReadPid {
-            dst: x86(X86Reg::R16),
-        }),
-        "APX RDPID must update the state-backed EGPR slot"
+        !is_x86_aarch64_native_clobber_safe_excluding(
+            &builder.finish(),
+            &std::collections::HashMap::new(),
+        ),
+        "x86 RDPID must remain interpreter-only on an AArch64 host"
     );
 }
 #[test]

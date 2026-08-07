@@ -3375,57 +3375,7 @@ impl X86_64Lowerer {
                 emitter.emit_x86_random(dst, *width, *seed);
             }
 
-            OpKind::X86ReadPid { dst } => {
-                let index =
-                    Self::x86_gpr_index(*dst).ok_or_else(|| LowerError::InvalidOperand {
-                        op: "X86ReadPid".to_string(),
-                        operand: "destination must be an architectural x86 GPR".to_string(),
-                    })?;
-                if matches!(index, 4 | 5) || index > 31 {
-                    return Err(LowerError::InvalidOperand {
-                        op: "X86ReadPid".to_string(),
-                        operand: "RSP/RBP cannot be an RDPID destination in native code"
-                            .to_string(),
-                    });
-                }
-                if index <= 15 {
-                    let dst = self.get_dst_reg(*dst)?;
-                    Self::ensure_flag_stack_operands_safe("X86ReadPid", &[dst])?;
-                    let mut emitter = X86Emitter::new(&mut self.code);
-                    // RDPID reports guest IA32_TSC_AUX, not the host thread's
-                    // TSC_AUX. The destination is architecturally overwritten,
-                    // so it is also the flag-neutral state-pointer scratch.
-                    emitter.emit_mov_rm(dst, PhysReg::Rbp, X86_STATE_PTR_AT_RBP, OpWidth::W64);
-                    emitter.emit_mov_rm(dst, dst, X86_GUEST_TSC_AUX_OFFSET, OpWidth::W32);
-                } else {
-                    // APX EGPRs have no physical host counterpart. Preserve two
-                    // legacy scratches, zero-extend TSC_AUX through ECX, and
-                    // commit it directly to GuestRegs.gpr[index].
-                    let mut emitter = X86Emitter::new(&mut self.code);
-                    emitter.emit_push(PhysReg::Rax);
-                    emitter.emit_push(PhysReg::Rcx);
-                    emitter.emit_mov_rm(
-                        PhysReg::Rax,
-                        PhysReg::Rbp,
-                        X86_STATE_PTR_AT_RBP,
-                        OpWidth::W64,
-                    );
-                    emitter.emit_mov_rm(
-                        PhysReg::Rcx,
-                        PhysReg::Rax,
-                        X86_GUEST_TSC_AUX_OFFSET,
-                        OpWidth::W32,
-                    );
-                    emitter.emit_mov_mr(
-                        PhysReg::Rax,
-                        i32::from(index) * 8,
-                        PhysReg::Rcx,
-                        OpWidth::W64,
-                    );
-                    emitter.emit_pop(PhysReg::Rcx);
-                    emitter.emit_pop(PhysReg::Rax);
-                }
-            }
+            OpKind::X86ReadPid { dst } => self.lower_x86_read_pid(*dst)?,
 
             OpKind::X86XGetBv {
                 dst_low,

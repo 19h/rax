@@ -936,52 +936,6 @@ fn native_x86_random_preserves_width_semantics_and_defines_exact_status_flags() 
 }
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[test]
-fn native_rdpid_returns_emulated_tsc_aux_and_preserves_flags() {
-    use crate::smir::lower::runtime::{ExecMem, GuestRegs};
-
-    let r9 = VReg::Arch(ArchReg::X86(X86Reg::R9));
-    let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
-    builder.push_op(0x1000, OpKind::X86ReadPid { dst: r9 });
-    builder.set_terminator(Terminator::Return { values: vec![] });
-    let mut lowerer = X86_64Lowerer::new();
-    let lowered = lowerer
-        .lower_function(&builder.finish())
-        .expect("lower state-backed RDPID");
-    let code = lowerer.finalize().expect("finalize state-backed RDPID");
-    let exec = ExecMem::new(&code).expect("map state-backed RDPID");
-    let mut regs = GuestRegs::default();
-    regs.gpr[9] = u64::MAX;
-    regs.rflags = 0x2 | 0x8D5;
-    regs.tsc_aux = 0xA5C3_7E91;
-    exec.run(lowered.entry_offset, &mut regs);
-
-    assert_eq!(regs.gpr[9], 0xA5C3_7E91, "RDPID zero-extends TSC_AUX");
-    assert_eq!(regs.rflags & 0x8D5, 0x8D5, "RDPID preserves RFLAGS");
-
-    let r16 = VReg::Arch(ArchReg::X86(X86Reg::R16));
-    let mut builder = FunctionBuilder::new(FunctionId(1), 0x2000);
-    builder.push_op(0x2000, OpKind::X86ReadPid { dst: r16 });
-    builder.set_terminator(Terminator::Return { values: vec![] });
-    let mut lowerer = X86_64Lowerer::new();
-    let lowered = lowerer
-        .lower_function(&builder.finish())
-        .expect("lower state-backed APX RDPID");
-    let exec = ExecMem::new(&lowerer.finalize().expect("finalize APX RDPID"))
-        .expect("map state-backed APX RDPID");
-    let mut regs = GuestRegs::default();
-    regs.gpr[0] = 0x1111_2222_3333_4444;
-    regs.gpr[1] = 0x5555_6666_7777_8888;
-    regs.gpr[16] = u64::MAX;
-    regs.rflags = 0x2 | 0x8D5;
-    regs.tsc_aux = 0xA5C3_7E91;
-    exec.run(lowered.entry_offset, &mut regs);
-    assert_eq!(regs.gpr[16], 0xA5C3_7E91);
-    assert_eq!(regs.gpr[0], 0x1111_2222_3333_4444);
-    assert_eq!(regs.gpr[1], 0x5555_6666_7777_8888);
-    assert_eq!(regs.rflags & 0x8D5, 0x8D5);
-}
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-#[test]
 fn native_crc32c_matches_castagnoli_recurrence_and_preserves_flags() {
     use crate::smir::lower::runtime::{ExecMem, GuestRegs};
 

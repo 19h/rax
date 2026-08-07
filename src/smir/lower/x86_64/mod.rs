@@ -268,6 +268,8 @@ mod read_control;
 pub use read_control::*;
 mod read_debug;
 pub use read_debug::*;
+mod rdpid;
+pub(crate) use rdpid::*;
 mod write_debug;
 pub use write_debug::*;
 mod write_control;

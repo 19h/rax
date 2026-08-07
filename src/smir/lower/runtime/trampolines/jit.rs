@@ -501,11 +501,6 @@ pub(crate) fn x86_jit_scalar_alu_immediate_valid(op: &crate::smir::ir::ops::OpKi
         _ => true,
     }
 }
-pub(crate) fn x86_native_rdpid_gpr(reg: &crate::smir::ir::types::VReg) -> bool {
-    use crate::smir::ir::types::{ArchReg, VReg};
-
-    matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index <= 31 && !matches!(index, 4 | 5)))
-}
 pub(crate) fn x86_xgetbv_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::{ArchReg, VReg, X86Reg};

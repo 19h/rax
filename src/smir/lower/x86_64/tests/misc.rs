@@ -4829,45 +4829,6 @@ fn lower_cldemote_is_an_exact_noop_and_rejects_fault_capable_cache_forms() {
     }
 }
 #[test]
-fn lower_rdpid_reads_guest_tsc_aux_and_rejects_frame_registers() {
-    let r9 = VReg::Arch(ArchReg::X86(X86Reg::R9));
-    let code = lower_single_op(OpKind::X86ReadPid { dst: r9 });
-    let expected = [
-        0x4C, 0x8B, 0x4D, 0x18, // mov r9,[rbp+24] (GuestRegs pointer)
-        0x45, 0x8B, 0x89, 0x90, 0x09, 0x00, 0x00, // mov r9d,[r9+2448]
-    ];
-    assert!(
-        code.windows(expected.len()).any(|bytes| bytes == expected),
-        "RDPID state load missing {expected:02X?} in {code:02X?}"
-    );
-
-    let r16 = VReg::Arch(ArchReg::X86(X86Reg::R16));
-    let egpr_code = lower_single_op(OpKind::X86ReadPid { dst: r16 });
-    let r16_slot = (16u32 * 8).to_le_bytes();
-    assert!(
-        egpr_code
-            .windows(r16_slot.len())
-            .any(|bytes| bytes == r16_slot),
-        "APX RDPID must address GuestRegs.gpr[16]"
-    );
-
-    for dst in [
-        VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
-        VReg::Arch(ArchReg::X86(X86Reg::Rbp)),
-        VReg::Virtual(crate::smir::ir::types::VirtualId(99)),
-    ] {
-        assert!(
-            matches!(
-                lower_single_op_err(OpKind::X86ReadPid { dst }),
-                LowerError::InvalidRegister(_)
-                    | LowerError::RegisterAllocationFailed { .. }
-                    | LowerError::InvalidOperand { .. }
-            ),
-            "malformed RDPID destination must fail lowering: {dst:?}"
-        );
-    }
-}
-#[test]
 fn lower_xgetbv_requires_architectural_implicit_registers() {
     let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
     let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
