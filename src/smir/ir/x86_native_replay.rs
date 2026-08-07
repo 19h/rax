@@ -172,7 +172,7 @@ pub(crate) use classifiers::{
 pub(crate) use classifiers::{
     X86EvexMovntdqaMemoryEncoding, X86LegacyAesReplay, X86LegacyHighByteCrc32Replay,
     X86LegacyHighByteGroup2Kind, X86LegacyHighByteGroup2Replay, X86LegacyHighByteMultiplyKind,
-    X86LegacyHighByteMultiplyReplay,
+    X86LegacyHighByteMultiplyReplay, X86LegacyShaReplay,
 };
 
 pub use aggregate::{

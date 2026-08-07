@@ -19,6 +19,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             continue;
         }
         let legacy_aes = span.instruction.legacy_register_aes_replay().is_some();
+        let legacy_sha = span.instruction.legacy_register_sha_replay().is_some();
         let is_fma4 = span.instruction.is_vex_register_fma4();
         let is_vpermil2 = span.instruction.is_vex_register_vpermil2();
         let vex_fp_dot_product_ymm = span.instruction.vex_register_fp_dot_product_uses_ymm();
@@ -80,6 +81,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
         requirements.needs_sse3 |= fp_horizontal_addsub_avx == Some(false);
         requirements.needs_vex_unaligned_packed_fp_move |= vex_unaligned_packed_fp_move;
         *all_spans_support_avx_ymm16 &= legacy_aes
+            || legacy_sha
             || is_fma4
             || is_vpermil2
             || vex_fp_dot_product_ymm.is_some()
@@ -119,6 +121,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || vex_zero
             || vex_packed_string;
         requirements.needs_avx |= legacy_aes
+            || legacy_sha
             || vex_packed_string
             || span.instruction.is_vex_register_fma3()
             || is_fma4
@@ -196,6 +199,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
         requirements.needs_fma4 |= is_fma4;
         requirements.needs_xop |= is_vpermil2;
         requirements.needs_aes |= legacy_aes;
+        requirements.needs_sha |= legacy_sha;
         // Assume the full-width K0-K7 helper boundary while accumulating
         // replay families. A set containing only AVX-YMM16-safe spans is
         // relaxed after the scan.

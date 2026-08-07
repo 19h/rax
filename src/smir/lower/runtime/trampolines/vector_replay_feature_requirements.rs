@@ -45,6 +45,7 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     /// operation satisfies the same bound.
     pub(crate) has_k16_opmask_span: bool,
     pub(crate) needs_aes: bool,
+    pub(crate) needs_sha: bool,
     pub(crate) needs_vaes: bool,
     pub(crate) needs_pclmulqdq: bool,
     pub(crate) needs_vpclmulqdq: bool,
@@ -107,6 +108,7 @@ impl X86NativeReplayFeatureRequirements {
             && (!self.needs_avx5124vnniw || super::x86_host_has_avx5124vnniw())
             && (!self.needs_avx5124fmaps || super::x86_host_has_avx5124fmaps())
             && (!self.needs_aes || std::is_x86_feature_detected!("aes"))
+            && (!self.needs_sha || std::is_x86_feature_detected!("sha"))
             && (!self.needs_vaes || std::is_x86_feature_detected!("vaes"))
             && (!self.needs_pclmulqdq || std::is_x86_feature_detected!("pclmulqdq"))
             && (!self.needs_vpclmulqdq || std::is_x86_feature_detected!("vpclmulqdq"))

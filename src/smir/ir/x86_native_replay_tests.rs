@@ -79,6 +79,9 @@ mod legacy_vex_scalar_move;
 #[path = "x86_native_replay_tests/legacy_aes.rs"]
 mod legacy_aes;
 
+#[path = "x86_native_replay_tests/legacy_sha.rs"]
+mod legacy_sha;
+
 #[path = "x86_native_replay_tests/packed_extend.rs"]
 mod packed_extend;
 

@@ -84,6 +84,7 @@ mod high_low_move;
 mod integer_compare;
 mod legacy_aes;
 mod legacy_high_byte;
+mod legacy_sha;
 mod packed_extend;
 mod packed_move;
 mod scalar_convert_memory;
@@ -299,6 +300,7 @@ pub(crate) use legacy_high_byte::{
     X86LegacyHighByteMultiplyKind, X86LegacyHighByteMultiplyReplay,
     x86_legacy_high_byte_crc32_shape_temporary, x86_legacy_high_byte_multiply_shape_temporary,
 };
+pub(crate) use legacy_sha::{X86LegacyShaReplay, x86_legacy_sha_shape_virtual_requirements};
 pub(crate) use packed_move::{X86EvexPackedMoveMemoryEncoding, X86EvexPackedMoveMemoryKind};
 pub(crate) use scalar_convert_memory::{
     X86VexScalarConvertMemoryEncoding, X86VexScalarConvertMemoryKind,
