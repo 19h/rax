@@ -545,16 +545,40 @@ fn virtualization_public_state(vcpu: &X86_64Vcpu) -> serde_json::Value {
 }
 
 #[test]
-fn test_disabled_vmx_controls_raise_ud_before_privilege_or_state_commit() {
+fn test_disabled_vmx_instructions_raise_ud_before_operand_privilege_or_state_commit() {
     for (name, bytes, apx, cpl) in [
         ("VMLAUNCH", &[0x0F, 0x01, 0xC2][..], false, 0),
         ("VMRESUME", &[0x0F, 0x01, 0xC3][..], false, 3),
         ("VMXOFF", &[0x0F, 0x01, 0xC4][..], false, 0),
         ("VMFUNC", &[0x0F, 0x01, 0xD4][..], false, 3),
+        ("VMPTRLD", &[0x0F, 0xC7, 0x30][..], false, 3),
+        ("VMPTRST", &[0x0F, 0xC7, 0x38][..], false, 0),
+        ("VMCLEAR", &[0x66, 0x0F, 0xC7, 0x30][..], false, 3),
+        ("VMXON", &[0xF3, 0x0F, 0xC7, 0x30][..], false, 0),
+        (
+            "redundant-66 VMXON",
+            &[0x66, 0xF3, 0x0F, 0xC7, 0x30][..],
+            false,
+            3,
+        ),
         ("REX2 VMLAUNCH", &[0xD5, 0x80, 0x01, 0xC2][..], true, 3),
         ("REX2 VMRESUME", &[0xD5, 0x80, 0x01, 0xC3][..], true, 0),
         ("REX2 VMXOFF", &[0xD5, 0x80, 0x01, 0xC4][..], true, 3),
         ("REX2 VMFUNC", &[0xD5, 0x80, 0x01, 0xD4][..], true, 0),
+        ("REX2 VMPTRLD [r16]", &[0xD5, 0x90, 0xC7, 0x30][..], true, 0),
+        ("REX2 VMPTRST [r16]", &[0xD5, 0x90, 0xC7, 0x38][..], true, 3),
+        (
+            "REX2 VMCLEAR [r16]",
+            &[0x66, 0xD5, 0x90, 0xC7, 0x30][..],
+            true,
+            0,
+        ),
+        (
+            "REX2 VMXON [r16]",
+            &[0xF3, 0xD5, 0x90, 0xC7, 0x30][..],
+            true,
+            3,
+        ),
     ] {
         let initial = virtualization_fault_registers();
         let (mut vcpu, _) = if apx {
@@ -565,7 +589,7 @@ fn test_disabled_vmx_controls_raise_ud_before_privilege_or_state_commit() {
         let before = seed_virtualization_fault_state(&mut vcpu, cpl);
         let error = vcpu
             .step()
-            .expect_err("disabled VMX control must inject #UD");
+            .expect_err("disabled VMX instruction must inject #UD");
         assert!(
             error.to_string().contains("IDT entry 6 not present"),
             "{name}: expected #UD delivery failure, got {error}"

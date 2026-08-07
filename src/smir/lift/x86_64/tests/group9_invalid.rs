@@ -69,6 +69,87 @@ fn every_reserved_group9_form_and_prefix_class_is_terminal_ud() {
 }
 
 #[test]
+fn every_scanner_profile_disabled_vmx_form_is_terminal_ud() {
+    const FORMS: [(&str, &[u8], u8); 20] = [
+        ("VMCLEAR 66", &[0x66, 0x0F, 0xC7], 6),
+        ("VMCLEAR 66+REX.W", &[0x66, 0x48, 0x0F, 0xC7], 6),
+        ("VMPTRLD NP", &[0x0F, 0xC7], 6),
+        ("VMPTRLD 67", &[0x67, 0x0F, 0xC7], 6),
+        ("VMPTRLD FS", &[0x64, 0x0F, 0xC7], 6),
+        ("VMPTRLD GS", &[0x65, 0x0F, 0xC7], 6),
+        ("VMPTRLD REX.W", &[0x48, 0x0F, 0xC7], 6),
+        ("VMPTRLD REX.R", &[0x44, 0x0F, 0xC7], 6),
+        ("VMPTRLD REX.B", &[0x41, 0x0F, 0xC7], 6),
+        ("VMPTRLD REX.WRB", &[0x4D, 0x0F, 0xC7], 6),
+        ("VMPTRST NP", &[0x0F, 0xC7], 7),
+        ("VMPTRST 67", &[0x67, 0x0F, 0xC7], 7),
+        ("VMPTRST FS", &[0x64, 0x0F, 0xC7], 7),
+        ("VMPTRST GS", &[0x65, 0x0F, 0xC7], 7),
+        ("VMPTRST REX.W", &[0x48, 0x0F, 0xC7], 7),
+        ("VMPTRST REX.R", &[0x44, 0x0F, 0xC7], 7),
+        ("VMPTRST REX.B", &[0x41, 0x0F, 0xC7], 7),
+        ("VMPTRST REX.WRB", &[0x4D, 0x0F, 0xC7], 7),
+        ("VMXON F3", &[0xF3, 0x0F, 0xC7], 6),
+        ("VMXON F3+REX.W", &[0xF3, 0x48, 0x0F, 0xC7], 6),
+    ];
+
+    let mut checks = 0usize;
+    for (name, leader, group) in FORMS {
+        for mode in 0_u8..=2 {
+            for rm in 0_u8..8 {
+                let modrm = (mode << 6) | (group << 3) | rm;
+                let bytes = complete_modrm_form(leader, modrm);
+                let result = lift_single(&bytes)
+                    .unwrap_or_else(|error| panic!("{name} {bytes:02X?}: {error:?}"));
+                assert_invalid_opcode_trap(&result, bytes.len());
+                checks += 1;
+            }
+        }
+    }
+    assert_eq!(checks, 20 * 3 * 8);
+}
+
+#[test]
+fn every_rex2_profile_disabled_vmx_memory_address_form_is_terminal_ud() {
+    let mut checks = 0usize;
+    for payload in 0x80_u8..=0xFF {
+        for (mandatory_prefix, group) in [
+            (&[][..], 6_u8),
+            (&[0x66][..], 6),
+            (&[0xF3][..], 6),
+            (&[][..], 7),
+        ] {
+            let mut leader = mandatory_prefix.to_vec();
+            leader.extend_from_slice(&[0xD5, payload, 0xC7]);
+            for mode in 0_u8..=2 {
+                for rm in 0_u8..8 {
+                    let modrm = (mode << 6) | (group << 3) | rm;
+                    assert_ud(&complete_modrm_form(&leader, modrm));
+                    checks += 1;
+                }
+            }
+        }
+    }
+    assert_eq!(checks, 128 * 4 * 3 * 8);
+}
+
+#[test]
+fn redundant_66_prefix_does_not_override_profile_disabled_vmxon() {
+    for leader in [
+        &[0x66, 0xF3, 0x0F, 0xC7][..],
+        &[0xF3, 0x66, 0x0F, 0xC7],
+        &[0x66, 0xF3, 0xD5, 0x90, 0xC7],
+        &[0xF3, 0x66, 0xD5, 0x90, 0xC7],
+    ] {
+        for mode in 0_u8..=2 {
+            for rm in 0_u8..8 {
+                assert_ud(&complete_modrm_form(leader, (mode << 6) | (6 << 3) | rm));
+            }
+        }
+    }
+}
+
+#[test]
 fn every_complete_group9_modrm_and_prefix_class_avoids_interpreter_fallback() {
     for leader in OPCODE_LEADERS {
         for modrm in u8::MIN..=u8::MAX {

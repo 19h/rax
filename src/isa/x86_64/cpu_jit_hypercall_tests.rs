@@ -156,23 +156,50 @@ fn vmgexit_and_rex2_vmmcall_aliases_are_precise_ud_without_commit() {
 }
 
 #[test]
-fn jit_disabled_vmx_controls_exit_at_the_exact_faulting_frontier() {
-    for (name, modrm) in [
-        ("VMLAUNCH", 0xC2),
-        ("VMRESUME", 0xC3),
-        ("VMXOFF", 0xC4),
-        ("VMFUNC", 0xD4),
+fn jit_disabled_vmx_instructions_exit_at_the_exact_faulting_frontier() {
+    for (name, instruction, apx) in [
+        ("VMLAUNCH", &[0x0F, 0x01, 0xC2][..], false),
+        ("VMRESUME", &[0x0F, 0x01, 0xC3][..], false),
+        ("VMXOFF", &[0x0F, 0x01, 0xC4][..], false),
+        ("VMFUNC", &[0x0F, 0x01, 0xD4][..], false),
+        ("VMPTRLD", &[0x0F, 0xC7, 0x37][..], false),
+        ("VMPTRST", &[0x0F, 0xC7, 0x3F][..], false),
+        ("VMCLEAR", &[0x66, 0x0F, 0xC7, 0x37][..], false),
+        ("VMXON", &[0xF3, 0x0F, 0xC7, 0x37][..], false),
+        (
+            "redundant-66 VMXON",
+            &[0x66, 0xF3, 0x0F, 0xC7, 0x37][..],
+            false,
+        ),
+        (
+            "REX2 VMPTRLD [r16], APX disabled",
+            &[0xD5, 0x90, 0xC7, 0x30][..],
+            false,
+        ),
+        (
+            "REX2 VMPTRLD [r16], APX enabled",
+            &[0xD5, 0x90, 0xC7, 0x30][..],
+            true,
+        ),
+        (
+            "REX2 VMXON [r16]",
+            &[0xF3, 0xD5, 0x90, 0xC7, 0x30][..],
+            true,
+        ),
     ] {
-        let memory = memory_with_code(&[
+        let mut code = vec![
             0xB8, 0x78, 0x56, 0x34, 0x12, // mov eax,12345678h
             0xEB, 0x02, // jmp disabled VMX control
             0x90, 0x90, // unreachable padding
-            0x0F, 0x01, modrm,
-        ]);
-        let mut vcpu = test_vcpu(memory);
+        ];
+        code.extend_from_slice(instruction);
+        let mut vcpu = test_vcpu(memory_with_code(&code));
+        vcpu.set_apx_enabled(apx);
+        vcpu.regs.rdi = 0x0000_8000_0000_0000;
+        vcpu.regs.r16 = 0x0000_8000_0000_1000;
         let region = vcpu
             .jit_compile_region()
-            .expect("compile region ending at disabled VMX control")
+            .expect("compile region ending at disabled VMX instruction")
             .expect("supported prefix must remain native before VMX frontier");
 
         vcpu.jit_run_region_native(&region);

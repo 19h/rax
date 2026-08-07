@@ -182,6 +182,28 @@ impl X86_64Lifter {
     ) -> Result<LiftResult, LiftError> {
         let modrm = decode_modrm(bytes, prefix, pc)?;
         let group = (modrm.byte >> 3) & 7;
+        let profile_disabled_vmx = modrm.is_memory
+            && match group {
+                // NP selects VMPTRLD, 66 selects VMCLEAR, and F3 selects
+                // VMXON. A redundant 66 does not override F3.
+                6 => prefix.rep_prefix.is_none() || prefix.rep_prefix == Some(0xF3),
+                // NP selects VMPTRST; 66/F2/F3 memory /7 forms are invalid.
+                7 => prefix.rep_prefix.is_none() && !prefix.operand_size_override,
+                _ => false,
+            };
+        if profile_disabled_vmx {
+            // CPUID.01H:ECX.VMX[5] is clear in the fixed guest profile, so
+            // VMX operation is unreachable and these instructions raise #UD
+            // before evaluating or accessing their 64-bit memory operand.
+            return Ok(LiftResult {
+                ops: Vec::new(),
+                bytes_consumed: prefix.cursor + modrm.bytes_consumed,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: Vec::new(),
+            });
+        }
         match group {
             1 => {
                 if !modrm.is_memory {
