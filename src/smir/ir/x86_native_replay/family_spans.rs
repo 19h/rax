@@ -34,6 +34,22 @@ pub fn x86_legacy_sha_replay_spans(
     })
 }
 
+/// Identify exact register-only legacy `COMISS`, `UCOMISS`, `COMISD`, and
+/// `UCOMISD` semantic groups. The source instruction preserves vector state,
+/// so validated replay uses the AVX YMM0-YMM15 state bridge without requiring
+/// AVX-512 state. Construction is O(N) time and O(P) space for N operations
+/// and P unique guest PCs.
+pub fn x86_legacy_fp_flag_compare_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .legacy_register_fp_flag_compare_replay()
+            .map(|_| (false, false, false))
+    })
+}
+
 /// Identify baseline scalar register instructions that name AH, CH, DH, or BH
 /// and therefore require exact source-byte replay rather than virtual-register
 /// materialization under the x86 identity map. Documented Group 2 forms carry
