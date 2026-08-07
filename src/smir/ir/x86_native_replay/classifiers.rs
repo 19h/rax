@@ -82,6 +82,7 @@ mod fp_sqrt;
 mod gfni;
 mod high_low_move;
 mod integer_compare;
+mod legacy_aes;
 mod legacy_high_byte;
 mod packed_extend;
 mod packed_move;
@@ -292,6 +293,7 @@ pub(crate) use fp_class::{X86EvexFpClassMemoryEncoding, X86EvexFpClassMemoryRepl
 pub(crate) use fp_round::X86VexRoundMemoryEncoding;
 pub(crate) use fp16_narrow::{X86EvexFp16NarrowMemoryEncoding, X86VexFp16NarrowMemoryEncoding};
 pub(crate) use gfni::{X86EvexGfniAffineMemoryEncoding, X86EvexGfniAffineMemoryReplay};
+pub(crate) use legacy_aes::{X86LegacyAesReplay, x86_legacy_aes_shape_virtual_requirements};
 pub(crate) use legacy_high_byte::{
     X86LegacyHighByteCrc32Replay, X86LegacyHighByteGroup2Kind, X86LegacyHighByteGroup2Replay,
     X86LegacyHighByteMultiplyKind, X86LegacyHighByteMultiplyReplay,

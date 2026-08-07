@@ -1,0 +1,227 @@
+//! Feature accumulation for exact register-only native-replay spans.
+
+use super::X86NativeReplayFeatureRequirements;
+use crate::smir::ir::SmirBlock;
+use crate::smir::ir::X86InstructionBytes;
+use crate::smir::ir::types::{BlockId, GuestAddr};
+
+pub(super) fn accumulate_x86_native_replay_span_requirements(
+    block: &SmirBlock,
+    instruction_bytes: &std::collections::HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+    requirements: &mut X86NativeReplayFeatureRequirements,
+    all_spans_support_avx_ymm16: &mut bool,
+) {
+    for span in crate::smir::ir::x86_native_replay_spans(block, instruction_bytes).into_values() {
+        // Scalar high-byte replay needs no vector-state marshalling. CRC32's
+        // SSE4.2 requirement remains enforced by the scalar host-feature gate,
+        // including state-backed ESP/EBP forms.
+        if span.instruction.is_legacy_high_byte_register_replay() {
+            continue;
+        }
+        let legacy_aes = span.instruction.legacy_register_aes_replay().is_some();
+        let is_fma4 = span.instruction.is_vex_register_fma4();
+        let is_vpermil2 = span.instruction.is_vex_register_vpermil2();
+        let vex_fp_dot_product_ymm = span.instruction.vex_register_fp_dot_product_uses_ymm();
+        let vex_integer_dot = span.instruction.vex_register_integer_dot_fields().is_some();
+        let vex_ifma52 = span.instruction.vex_register_ifma52_fields().is_some();
+        let vex_ne_convert = span.instruction.vex_register_ne_convert_fields().is_some();
+        let vex_integer_dot_ext_int16 = span.instruction.vex_register_integer_dot_ext_is_int16();
+        let immediate_blend_avx2 = span.instruction.vex_register_immediate_blend_needs_avx2();
+        let immediate_permute_avx2 = span.instruction.vex_register_immediate_permute_needs_avx2();
+        let chunk_extract_avx2 = span.instruction.vex_register_chunk_extract_needs_avx2();
+        let scalar_extract_avx = span.instruction.is_vex_register_scalar_extract();
+        let mov_mask_stack_avx2 = span.instruction.vex_mov_mask_stack_destination_needs_avx2();
+        let vex_ptest = span.instruction.is_vex_register_ptest();
+        let variable_blend_avx2 = span.instruction.vex_register_variable_blend_needs_avx2();
+        let variable_permute_avx2 = span.instruction.vex_register_variable_permute_needs_avx2();
+        let alignr_avx2 = span.instruction.vex_register_alignr_needs_avx2();
+        let cross_lane_128_avx2 = span.instruction.vex_register_cross_lane_128_needs_avx2();
+        let scalar_insert_avx = span.instruction.is_vex_register_scalar_insert();
+        let vex_gfni_ymm = span.instruction.vex_register_gfni_uses_ymm();
+        let vex_vpclmulqdq_ymm = span.instruction.vex_register_vpclmulqdq_uses_ymm();
+        let fp_horizontal_addsub_avx = span
+            .instruction
+            .legacy_vex_register_fp_horizontal_addsub_needs_avx();
+        let fp_estimate_avx = span.instruction.legacy_vex_register_fp_estimate_needs_avx();
+        let widening_dword_multiply_avx2 = span
+            .instruction
+            .vex_register_widening_dword_multiply_needs_avx2();
+        let vex_packed_extend_avx2 = span.instruction.vex_register_packed_extend_needs_avx2();
+        let vex_aligned_packed_fp_move = span.instruction.is_vex_register_aligned_packed_fp_move();
+        let vex_unaligned_packed_fp_move =
+            span.instruction.is_vex_register_unaligned_packed_fp_move();
+        let vex_packed_integer_move = span.instruction.is_vex_register_packed_integer_move();
+        let vex_scalar_vmovq = span.instruction.is_vex_register_scalar_vmovq();
+        let vex_register_broadcast = span
+            .instruction
+            .vex_register_broadcast_element_bits()
+            .is_some();
+        let vex_lane_shuffle_avx2 = span.instruction.vex_register_lane_shuffle_needs_avx2();
+        let vex_fp32_fp64_convert = span.instruction.is_vex_register_fp32_fp64_convert();
+        let vex_fp16_widen = span.instruction.is_vex_register_fp16_widen();
+        let vex_fp16_narrow = span.instruction.is_vex_register_fp16_narrow();
+        let vex_fp_flag_compare = span.instruction.is_vex_register_fp_flag_compare();
+        let vex_round = span.instruction.vex_round_destination_index().is_some();
+        let vex_scalar_fp_convert = span
+            .instruction
+            .vex_scalar_fp_convert_destination_index()
+            .is_some();
+        let vex_scalar_fp_to_int = span
+            .instruction
+            .vex_scalar_fp_to_int_destination_index()
+            .is_some();
+        let vex_scalar_int_to_fp = span
+            .instruction
+            .vex_scalar_int_to_fp_destination_index()
+            .is_some();
+        let vex_zero = span.instruction.vex_zeroes_all_register_bits().is_some();
+        let vex_packed_string = span.instruction.is_vex_register_packed_string_compare();
+        requirements.any = true;
+        requirements.needs_sse3 |= fp_horizontal_addsub_avx == Some(false);
+        requirements.needs_vex_unaligned_packed_fp_move |= vex_unaligned_packed_fp_move;
+        *all_spans_support_avx_ymm16 &= legacy_aes
+            || is_fma4
+            || is_vpermil2
+            || vex_fp_dot_product_ymm.is_some()
+            || vex_integer_dot
+            || vex_ifma52
+            || vex_ne_convert
+            || vex_integer_dot_ext_int16.is_some()
+            || fp_estimate_avx.is_some()
+            || immediate_blend_avx2.is_some()
+            || immediate_permute_avx2.is_some()
+            || chunk_extract_avx2.is_some()
+            || scalar_extract_avx
+            || mov_mask_stack_avx2.is_some()
+            || vex_ptest
+            || variable_blend_avx2.is_some()
+            || variable_permute_avx2.is_some()
+            || alignr_avx2.is_some()
+            || cross_lane_128_avx2.is_some()
+            || scalar_insert_avx
+            || vex_gfni_ymm.is_some()
+            || vex_vpclmulqdq_ymm.is_some()
+            || vex_packed_extend_avx2.is_some()
+            || vex_aligned_packed_fp_move
+            || vex_unaligned_packed_fp_move
+            || vex_packed_integer_move
+            || vex_scalar_vmovq
+            || vex_register_broadcast
+            || vex_lane_shuffle_avx2.is_some()
+            || vex_fp32_fp64_convert
+            || vex_fp16_widen
+            || vex_fp16_narrow
+            || vex_fp_flag_compare
+            || vex_round
+            || vex_scalar_fp_convert
+            || vex_scalar_fp_to_int
+            || vex_scalar_int_to_fp
+            || vex_zero
+            || vex_packed_string;
+        requirements.needs_avx |= legacy_aes
+            || vex_packed_string
+            || span.instruction.is_vex_register_fma3()
+            || is_fma4
+            || is_vpermil2
+            || vex_fp_dot_product_ymm.is_some()
+            || vex_integer_dot
+            || vex_ifma52
+            || vex_ne_convert
+            || vex_integer_dot_ext_int16.is_some()
+            || immediate_blend_avx2.is_some()
+            || immediate_permute_avx2.is_some()
+            || chunk_extract_avx2.is_some()
+            || scalar_extract_avx
+            || mov_mask_stack_avx2.is_some()
+            || vex_ptest
+            || variable_blend_avx2.is_some()
+            || variable_permute_avx2.is_some()
+            || alignr_avx2.is_some()
+            || cross_lane_128_avx2.is_some()
+            || scalar_insert_avx
+            || vex_gfni_ymm.is_some()
+            || vex_vpclmulqdq_ymm.is_some()
+            || span.instruction.is_vex_register_fp_logic()
+            || fp_horizontal_addsub_avx == Some(true)
+            || widening_dword_multiply_avx2.is_some()
+            || vex_packed_extend_avx2.is_some()
+            || span
+                .instruction
+                .legacy_vex_register_fp_arithmetic_needs_avx()
+                == Some(true)
+            || span.instruction.legacy_vex_register_fp_compare_needs_avx() == Some(true)
+            || fp_estimate_avx == Some(true)
+            || span.instruction.legacy_vex_register_fp_shuffle_needs_avx() == Some(true)
+            || span
+                .instruction
+                .legacy_vex_register_high_low_move_needs_avx()
+                == Some(true)
+            || span.instruction.legacy_vex_register_scalar_move_needs_avx() == Some(true)
+            || span.instruction.legacy_vex_register_fp_sqrt_needs_avx() == Some(true)
+            || vex_aligned_packed_fp_move
+            || vex_unaligned_packed_fp_move
+            || vex_packed_integer_move
+            || vex_scalar_vmovq
+            || vex_register_broadcast
+            || vex_lane_shuffle_avx2.is_some()
+            || vex_fp32_fp64_convert
+            || vex_fp16_widen
+            || vex_fp16_narrow
+            || vex_fp_flag_compare
+            || vex_round
+            || vex_scalar_fp_convert
+            || vex_scalar_fp_to_int
+            || vex_scalar_int_to_fp
+            || vex_zero;
+        requirements.needs_avx_vnni |= vex_integer_dot;
+        requirements.needs_avx_ifma |= vex_ifma52;
+        requirements.needs_avx_ne_convert |= vex_ne_convert;
+        requirements.needs_avx2 |= widening_dword_multiply_avx2 == Some(true)
+            || immediate_blend_avx2 == Some(true)
+            || immediate_permute_avx2 == Some(true)
+            || chunk_extract_avx2 == Some(true)
+            || mov_mask_stack_avx2 == Some(true)
+            || variable_blend_avx2 == Some(true)
+            || variable_permute_avx2 == Some(true)
+            || alignr_avx2 == Some(true)
+            || cross_lane_128_avx2 == Some(true)
+            || vex_packed_extend_avx2 == Some(true)
+            || vex_register_broadcast
+            || vex_lane_shuffle_avx2 == Some(true);
+        requirements.needs_avx_vnni_int8 |= vex_integer_dot_ext_int16 == Some(false);
+        requirements.needs_avx_vnni_int16 |= vex_integer_dot_ext_int16 == Some(true);
+        requirements.needs_fma |= span.instruction.is_vex_register_fma3();
+        requirements.needs_f16c |= vex_fp16_widen || vex_fp16_narrow;
+        requirements.needs_vex_fp16_narrow |= vex_fp16_narrow;
+        requirements.needs_fma4 |= is_fma4;
+        requirements.needs_xop |= is_vpermil2;
+        requirements.needs_aes |= legacy_aes;
+        // Assume the full-width K0-K7 helper boundary while accumulating
+        // replay families. A set containing only AVX-YMM16-safe spans is
+        // relaxed after the scan.
+        requirements.needs_avx512bw = true;
+        requirements.needs_avx512vl |= span.needs_avx512vl;
+        requirements.needs_avx512dq |= span.needs_avx512dq;
+        requirements.needs_avx512fp16 |= span.needs_avx512fp16;
+        requirements.needs_avx512cd |= span
+            .instruction
+            .evex_register_mask_broadcast_needs_vl()
+            .is_some();
+        requirements.needs_avx512vbmi2 |= span
+            .instruction
+            .evex_register_packed_funnel_shift_needs_vl()
+            .is_some();
+        requirements.needs_gfni |=
+            span.instruction.evex_register_gfni_needs_vl().is_some() || vex_gfni_ymm.is_some();
+        requirements.needs_avx512vp2intersect |= span
+            .instruction
+            .evex_register_vp2intersect_needs_vl()
+            .is_some();
+        requirements.needs_pclmulqdq |= vex_vpclmulqdq_ymm == Some(false);
+        requirements.needs_vpclmulqdq |= span
+            .instruction
+            .evex_register_vpclmulqdq_needs_vl()
+            .is_some()
+            || vex_vpclmulqdq_ymm == Some(true);
+    }
+}

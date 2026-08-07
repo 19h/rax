@@ -15,6 +15,9 @@ pub fn x86_native_replay_spans(
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
 ) -> HashMap<usize, X86NativeReplaySpan> {
     x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        if instruction.legacy_register_aes_replay().is_some() {
+            return Some((false, false, false));
+        }
         if instruction.is_legacy_high_byte_register_replay() {
             return Some((false, false, false));
         }
