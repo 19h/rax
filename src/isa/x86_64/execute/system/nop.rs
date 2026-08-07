@@ -21,7 +21,7 @@ pub fn endbr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     Ok(None)
 }
 
-/// ModR/M-consuming NOP and reserved-NOP forms (0F 19/1A/1B/1F).
+/// ModR/M-consuming NOP and reserved-NOP forms (0F 19/1A/1B/1D/1F).
 pub fn nop_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;

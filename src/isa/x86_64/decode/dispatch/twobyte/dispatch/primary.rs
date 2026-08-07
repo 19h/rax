@@ -165,7 +165,7 @@ impl X86_64Vcpu {
             0xAD => execute::shift::shrd_cl(self, ctx),
 
             // Reserved NOP variants
-            0x19 | 0x1A | 0x1B => execute::system::nop_rm(self, ctx),
+            0x19 | 0x1A | 0x1B | 0x1D => execute::system::nop_rm(self, ctx),
             0x1C => execute::system::cldemote(self, ctx),
             0x1E => execute::system::endbr(self, ctx),
             0x1F => execute::system::nop_rm(self, ctx),

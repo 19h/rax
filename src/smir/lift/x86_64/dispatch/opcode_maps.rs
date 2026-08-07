@@ -489,7 +489,7 @@ impl X86_64Lifter {
 
             // NOP/cache/prefetch hint encodings still consume a complete
             // ModR/M addressing form even though they have no state effect.
-            0x0D | 0x18 | 0x19 | 0x1A | 0x1B | 0x1E | 0x1F => {
+            0x0D | 0x18 | 0x19 | 0x1A | 0x1B | 0x1D | 0x1E | 0x1F => {
                 // LOCK is invalid for every hint/NOP encoding in this branch.
                 // Expose #UD without requiring an otherwise-unused ModR/M or
                 // address byte, matching the direct decoder's prefix-legality

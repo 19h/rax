@@ -335,6 +335,8 @@ mod read_debug;
 #[cfg(test)]
 mod require_apx;
 #[cfg(test)]
+mod reserved_nop;
+#[cfg(test)]
 mod selector;
 #[cfg(test)]
 mod selector_query;

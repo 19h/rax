@@ -5,6 +5,41 @@ use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext};
 use crate::smir::ir::memory::FlatMemory;
 use crate::smir::optimize::{OptLevel, optimize_function};
 
+const LEGACY_SCANNER_PREFIXES: &[&[u8]] = &[
+    &[],
+    &[0x66],
+    &[0xF2],
+    &[0xF3],
+    &[0x67],
+    &[0x64],
+    &[0x65],
+    &[0x48],
+    &[0x44],
+    &[0x41],
+    &[0x4D],
+    &[0x66, 0x48],
+    &[0xF2, 0x48],
+    &[0xF3, 0x48],
+];
+
+fn reserved_nop_0f1d_image(prefix: &[u8], modrm: u8) -> Vec<u8> {
+    let mut bytes = prefix.to_vec();
+    bytes.extend_from_slice(&[0x0F, 0x1D, modrm]);
+
+    let mode = modrm >> 6;
+    let rm = modrm & 7;
+    if mode != 3 && rm == 4 {
+        bytes.push(0x00);
+    }
+    match mode {
+        0 if rm == 5 => bytes.extend_from_slice(&[0; 4]),
+        1 => bytes.push(0),
+        2 => bytes.extend_from_slice(&[0; 4]),
+        _ => {}
+    }
+    bytes
+}
+
 fn assert_reserved_nop_result(result: &LiftResult, bytes: &[u8], requires_apx: bool) {
     assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
     if requires_apx {
@@ -38,6 +73,21 @@ fn reserved_nop_0f19_strictly_lifts_every_modrm_register_form() {
             lift_single(&bytes).unwrap_or_else(|error| panic!("0F 19 {modrm:02X}: {error:?}"));
         assert_reserved_nop_result(&result, &bytes, false);
     }
+}
+
+#[test]
+fn reserved_nop_0f1d_strictly_lifts_all_3584_scanner_images() {
+    let mut images = 0usize;
+    for prefix in LEGACY_SCANNER_PREFIXES {
+        for modrm in u8::MIN..=u8::MAX {
+            let bytes = reserved_nop_0f1d_image(prefix, modrm);
+            let result = lift_single(&bytes)
+                .unwrap_or_else(|error| panic!("reserved NOP {bytes:02X?}: {error:?}"));
+            assert_reserved_nop_result(&result, &bytes, false);
+            images += 1;
+        }
+    }
+    assert_eq!(images, 14 * 256);
 }
 
 #[test]
@@ -79,7 +129,7 @@ fn reserved_nop_0f19_consumes_prefixes_rex2_and_complete_address_forms() {
 
 #[test]
 fn every_rex2_empty_hint_form_gets_one_dynamic_apx_guard() {
-    for opcode in [0x0D, 0x18, 0x19, 0x1A, 0x1B, 0x1E, 0x1F] {
+    for opcode in [0x0D, 0x18, 0x19, 0x1A, 0x1B, 0x1D, 0x1E, 0x1F] {
         for payload in 0x80_u8..=0xFF {
             for modrm in 0xC0_u8..=0xFF {
                 let bytes = [0xD5, payload, opcode, modrm];
@@ -92,13 +142,18 @@ fn every_rex2_empty_hint_form_gets_one_dynamic_apx_guard() {
 }
 
 #[test]
-fn reserved_nop_0f19_reports_exact_incomplete_address_boundaries() {
+fn reserved_nop_reports_exact_incomplete_address_boundaries() {
     for (bytes, have, need) in [
         (&[0x0F, 0x19][..], 0, 1),
         (&[0x0F, 0x19, 0x04][..], 1, 2),
         (&[0x0F, 0x19, 0x04, 0x25][..], 2, 6),
         (&[0x0F, 0x19, 0x80, 0x78, 0x56][..], 3, 5),
+        (&[0x0F, 0x1D][..], 0, 1),
+        (&[0x0F, 0x1D, 0x04][..], 1, 2),
+        (&[0x0F, 0x1D, 0x04, 0x25][..], 2, 6),
+        (&[0x0F, 0x1D, 0x80, 0x78, 0x56][..], 3, 5),
         (&[0xD5, 0x80, 0x19][..], 0, 1),
+        (&[0xD5, 0x80, 0x1D][..], 0, 1),
     ] {
         assert!(
             matches!(
@@ -136,7 +191,7 @@ fn lock_reserved_nop_0f19_is_an_explicit_ud_without_operand_fetch() {
 
 #[test]
 fn lock_every_empty_hint_form_is_an_explicit_ud_without_operand_fetch() {
-    for opcode in [0x0D, 0x18, 0x19, 0x1A, 0x1B, 0x1E, 0x1F] {
+    for opcode in [0x0D, 0x18, 0x19, 0x1A, 0x1B, 0x1D, 0x1E, 0x1F] {
         for bytes in [vec![0xF0, 0x0F, opcode], vec![0xF0, 0xD5, 0x80, opcode]] {
             let result = lift_single(&bytes)
                 .unwrap_or_else(|error| panic!("LOCK empty hint {bytes:02X?}: {error:?}"));
@@ -157,10 +212,10 @@ fn lock_every_empty_hint_form_is_an_explicit_ud_without_operand_fetch() {
 }
 
 #[test]
-fn reserved_nop_0f19_keeps_the_following_instruction_in_the_strict_function() {
+fn reserved_nop_0f1d_keeps_the_following_instruction_in_the_strict_function() {
     // Reserved NOP with a SIB+disp32 form; ADD RAX,1; RET.
     let code = vec![
-        0x0F, 0x19, 0x04, 0x25, 0x78, 0x56, 0x34, 0x12, 0x48, 0x83, 0xC0, 0x01, 0xC3,
+        0x0F, 0x1D, 0x04, 0x25, 0x78, 0x56, 0x34, 0x12, 0x48, 0x83, 0xC0, 0x01, 0xC3,
     ];
     let mut lifter = X86_64Lifter::strict();
     let mut context = LiftContext::new(SourceArch::X86_64);

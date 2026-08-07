@@ -508,10 +508,43 @@ fn test_all_nop_lengths_sequence() {
     );
 }
 
-fn assert_reserved_nop_0f19(instruction: &[u8], apx_enabled: bool) {
-    let mut code = instruction.to_vec();
-    code.push(0xF4);
-    let initial = Registers {
+const RESERVED_NOP_SCANNER_PREFIXES: &[&[u8]] = &[
+    &[],
+    &[0x66],
+    &[0xF2],
+    &[0xF3],
+    &[0x67],
+    &[0x64],
+    &[0x65],
+    &[0x48],
+    &[0x44],
+    &[0x41],
+    &[0x4D],
+    &[0x66, 0x48],
+    &[0xF2, 0x48],
+    &[0xF3, 0x48],
+];
+
+fn reserved_nop_0f1d_image(prefix: &[u8], modrm: u8) -> Vec<u8> {
+    let mut bytes = prefix.to_vec();
+    bytes.extend_from_slice(&[0x0F, 0x1D, modrm]);
+
+    let mode = modrm >> 6;
+    let rm = modrm & 7;
+    if mode != 3 && rm == 4 {
+        bytes.push(0x00);
+    }
+    match mode {
+        0 if rm == 5 => bytes.extend_from_slice(&[0; 4]),
+        1 => bytes.push(0),
+        2 => bytes.extend_from_slice(&[0; 4]),
+        _ => {}
+    }
+    bytes
+}
+
+fn reserved_nop_initial_registers() -> Registers {
+    Registers {
         rax: 0x0000_8000_0000_0000,
         rbx: 0x1111_2222_3333_4444,
         rcx: 0x5555_6666_7777_8888,
@@ -525,7 +558,13 @@ fn assert_reserved_nop_0f19(instruction: &[u8], apx_enabled: bool) {
         rflags: 0x0CD7,
         xmm: [[0x0123_4567_89AB_CDEF, 0xFEDC_BA98_7654_3210]; 16],
         ..Registers::default()
-    };
+    }
+}
+
+fn assert_reserved_nop(instruction: &[u8], apx_enabled: bool) {
+    let mut code = instruction.to_vec();
+    code.push(0xF4);
+    let initial = reserved_nop_initial_registers();
     let (mut vcpu, _) = setup_vm(&code, Some(initial));
     vcpu.set_apx_enabled(apx_enabled);
 
@@ -554,12 +593,58 @@ fn assert_reserved_nop_0f19(instruction: &[u8], apx_enabled: bool) {
 #[test]
 fn test_reserved_nop_0f19_executes_every_modrm_register_form() {
     for modrm in 0xC0..=0xFF {
-        assert_reserved_nop_0f19(&[0x0F, 0x19, modrm], false);
+        assert_reserved_nop(&[0x0F, 0x19, modrm], false);
     }
 }
 
 #[test]
-fn test_reserved_nop_0f19_prefix_address_and_rex2_forms_are_non_accessing() {
+fn test_reserved_nop_0f1d_executes_all_3584_scanner_images_without_observing_addresses() {
+    let mut code = Vec::new();
+    let mut lengths = Vec::new();
+    for prefix in RESERVED_NOP_SCANNER_PREFIXES {
+        for modrm in u8::MIN..=u8::MAX {
+            let instruction = reserved_nop_0f1d_image(prefix, modrm);
+            lengths.push(instruction.len());
+            code.extend_from_slice(&instruction);
+        }
+    }
+    code.push(0xF4);
+    assert_eq!(lengths.len(), 14 * 256);
+
+    let (mut vcpu, _) = setup_vm(&code, Some(reserved_nop_initial_registers()));
+    for path in ["cold decode", "decode-cache hit"] {
+        let mut before = vcpu.get_regs().unwrap();
+        before.rip = CODE_ADDR;
+        vcpu.set_regs(&before).unwrap();
+        let before_sregs = vcpu.get_sregs().unwrap();
+        let mut expected_rip = CODE_ADDR;
+
+        for (image, length) in lengths.iter().enumerate() {
+            assert!(
+                vcpu.step()
+                    .unwrap_or_else(|error| panic!("image {image} ({path}): {error}"))
+                    .is_none(),
+                "image {image} ({path})"
+            );
+            expected_rip += *length as u64;
+            assert_eq!(
+                vcpu.get_regs().unwrap().rip,
+                expected_rip,
+                "image {image} ({path})"
+            );
+        }
+
+        let mut expected = before;
+        expected.rip = expected_rip;
+        let actual =
+            serde_json::to_value((vcpu.get_regs().unwrap(), vcpu.get_sregs().unwrap())).unwrap();
+        let expected = serde_json::to_value((expected, before_sregs)).unwrap();
+        assert_eq!(actual, expected, "all scanner images ({path})");
+    }
+}
+
+#[test]
+fn test_reserved_nop_prefix_address_and_rex2_forms_are_non_accessing() {
     for (instruction, apx_enabled) in [
         (&[0x66, 0x0F, 0x19, 0xC0][..], false),
         (&[0x67, 0x0F, 0x19, 0xC0][..], false),
@@ -586,16 +671,24 @@ fn test_reserved_nop_0f19_prefix_address_and_rex2_forms_are_non_accessing() {
             true,
         ),
         (&[0x66, 0x67, 0xF3, 0x2E, 0xD5, 0x80, 0x19, 0xC0][..], true),
+        (&[0xD5, 0x80, 0x1D, 0xC0][..], true),
+        (
+            &[0xD5, 0xFF, 0x1D, 0x84, 0x7F, 0x78, 0x56, 0x34, 0x12][..],
+            true,
+        ),
+        (&[0x66, 0x67, 0xF3, 0x2E, 0xD5, 0x80, 0x1D, 0xC0][..], true),
     ] {
-        assert_reserved_nop_0f19(instruction, apx_enabled);
+        assert_reserved_nop(instruction, apx_enabled);
     }
 }
 
 #[test]
-fn test_lock_reserved_nop_0f19_faults_before_state_commit_on_both_decode_paths() {
+fn test_lock_reserved_nop_faults_before_state_commit_on_both_decode_paths() {
     for (instruction, apx_enabled) in [
         (&[0xF0, 0x0F, 0x19, 0xC0][..], false),
         (&[0xF0, 0xD5, 0x80, 0x19, 0xC0][..], true),
+        (&[0xF0, 0x0F, 0x1D, 0xC0][..], false),
+        (&[0xF0, 0xD5, 0x80, 0x1D, 0xC0][..], true),
     ] {
         let (mut vcpu, _) = setup_vm_no_idt(instruction, None);
         vcpu.set_apx_enabled(apx_enabled);
