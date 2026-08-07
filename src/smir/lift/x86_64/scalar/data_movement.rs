@@ -816,7 +816,12 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, prefix.cursor))
     }
 
-    /// Lift BSWAP r32/r64 (0F C8+rd)
+    /// Lift BSWAP r16/r32/r64 (0F C8+rd).
+    ///
+    /// Intel and AMD define the r16 result as undefined. The direct engine's
+    /// deterministic profile preserves the complete destination register, so
+    /// represent that form as an empty fallthrough rather than lowering a
+    /// byte swap with observably different semantics.
     pub(crate) fn lift_bswap_opcode(
         &self,
         opcode: u8,
@@ -831,10 +836,7 @@ impl X86_64Lifter {
         }
 
         if prefix.operand_size_override && !prefix.rex_w() {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: vec![opcode],
-            });
+            return Ok(LiftResult::fallthrough(Vec::new(), prefix.cursor));
         }
 
         let reg = (opcode & 0x07) | prefix.rex_b();

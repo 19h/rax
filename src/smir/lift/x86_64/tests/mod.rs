@@ -38,6 +38,8 @@ mod apx_push2_pop2;
 #[cfg(test)]
 mod apx_shift;
 #[cfg(test)]
+mod bswap;
+#[cfg(test)]
 mod callout;
 #[cfg(test)]
 mod clac_stac;

@@ -142,14 +142,17 @@ fn test_rex2_m1_basic() {
 
 #[test]
 fn test_rex2_m1_bswap() {
-    // BSWAP R16 using REX2 with M=1
+    // BSWAP R16 using REX2.M=1, B4=1, and W=1.
+    let mut regs = Registers::default();
+    regs.r16 = 0x0102_0304_0506_0708;
     let code = [
-        0xD5, 0x89, // REX2: M=1 W=1 B4=1
+        0xD5, 0x98, // REX2: M=1 B4=1 W=1
         0xC8, // BSWAP r64 (0F C8+rd) - rd=0 with B4 -> R16
         0xF4,
     ];
-    let (mut vcpu, _) = setup_apx_vm(&code, None);
-    let _ = run_until_hlt(&mut vcpu);
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.r16, 0x0807_0605_0403_0201);
 }
 
 #[test]

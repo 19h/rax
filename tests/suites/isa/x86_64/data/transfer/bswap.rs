@@ -6,7 +6,8 @@ use rax::vm::vcpu::Registers;
 // Reverses the byte order of a 32-bit or 64-bit register.
 // For 32-bit: bytes 0,1,2,3 become 3,2,1,0
 // For 64-bit: bytes 0-7 become 7-0
-// 16-bit operands are undefined (typically zero the register or leave it unchanged).
+// 16-bit results are architecturally undefined. RAX's deterministic profile
+// preserves the complete destination register.
 //
 // Opcodes:
 // 0F C8+rd    BSWAP r32    - Reverse byte order of r32
@@ -897,4 +898,195 @@ fn test_strict_bswap_r32_round_trip() {
         regs.rbx, 0x0000_0000_ABCD_1234,
         "double BSWAP is identity (32-bit)"
     );
+}
+
+fn undefined_bswap_initial_registers() -> Registers {
+    Registers {
+        rax: 0xA000_0000_0000_1001,
+        rbx: 0xA001_0000_0000_1002,
+        rcx: 0xA002_0000_0000_1003,
+        rdx: 0xA003_0000_0000_1004,
+        rsi: 0xA004_0000_0000_1005,
+        rdi: 0xA005_0000_0000_1006,
+        rsp: 0x0000_0000_0000_8000,
+        rbp: 0xA007_0000_0000_1008,
+        r8: 0xA008_0000_0000_1009,
+        r9: 0xA009_0000_0000_100A,
+        r10: 0xA00A_0000_0000_100B,
+        r11: 0xA00B_0000_0000_100C,
+        r12: 0xA00C_0000_0000_100D,
+        r13: 0xA00D_0000_0000_100E,
+        r14: 0xA00E_0000_0000_100F,
+        r15: 0xA00F_0000_0000_1010,
+        r16: 0xA010_0000_0000_1011,
+        r17: 0xA011_0000_0000_1012,
+        r18: 0xA012_0000_0000_1013,
+        r19: 0xA013_0000_0000_1014,
+        r20: 0xA014_0000_0000_1015,
+        r21: 0xA015_0000_0000_1016,
+        r22: 0xA016_0000_0000_1017,
+        r23: 0xA017_0000_0000_1018,
+        r24: 0xA018_0000_0000_1019,
+        r25: 0xA019_0000_0000_101A,
+        r26: 0xA01A_0000_0000_101B,
+        r27: 0xA01B_0000_0000_101C,
+        r28: 0xA01C_0000_0000_101D,
+        r29: 0xA01D_0000_0000_101E,
+        r30: 0xA01E_0000_0000_101F,
+        r31: 0xA01F_0000_0000_1020,
+        rflags: 0x0CD7,
+        ..Registers::default()
+    }
+}
+
+#[test]
+fn test_undefined_bswap_r16_preserves_all_32_gprs_flags_and_cache_paths() {
+    let mut code = Vec::new();
+    let mut lengths = Vec::new();
+    for leader in [
+        &[0x66, 0x0F][..],
+        &[0x66, 0x41, 0x0F][..],
+        &[0x66, 0xD5, 0x90][..],
+        &[0x66, 0xD5, 0x91][..],
+    ] {
+        for opcode in 0xC8_u8..=0xCF {
+            code.extend_from_slice(leader);
+            code.push(opcode);
+            lengths.push(leader.len() + 1);
+        }
+    }
+    code.push(0xF4);
+    assert_eq!(lengths.len(), 32);
+
+    let (mut vcpu, _) = setup_vm(&code, Some(undefined_bswap_initial_registers()));
+    vcpu.set_apx_enabled(true);
+    for path in ["cold decode", "decode-cache hit"] {
+        let mut before = vcpu.get_regs().unwrap();
+        before.rip = CODE_ADDR;
+        vcpu.set_regs(&before).unwrap();
+        let before_sregs = vcpu.get_sregs().unwrap();
+        let mut expected_rip = CODE_ADDR;
+
+        for (index, length) in lengths.iter().enumerate() {
+            assert!(
+                vcpu.step()
+                    .unwrap_or_else(|error| panic!("BSWAP r16 {index} ({path}): {error}"))
+                    .is_none(),
+                "BSWAP r16 {index} ({path})"
+            );
+            expected_rip += *length as u64;
+            assert_eq!(
+                vcpu.get_regs().unwrap().rip,
+                expected_rip,
+                "{index} ({path})"
+            );
+        }
+
+        let mut expected = before;
+        expected.rip = expected_rip;
+        let actual =
+            serde_json::to_value((vcpu.get_regs().unwrap(), vcpu.get_sregs().unwrap())).unwrap();
+        let expected = serde_json::to_value((expected, before_sregs)).unwrap();
+        assert_eq!(actual, expected, "all 32 BSWAP r16 registers ({path})");
+    }
+}
+
+#[test]
+fn test_bswap_operand_size_prefix_order_and_rex2_w_precedence() {
+    for (instruction, apx_enabled, expected) in [
+        (&[0x66, 0x48, 0x0F, 0xC8][..], false, 0x0807_0605_0403_0201),
+        (&[0x48, 0x66, 0x0F, 0xC8][..], false, 0x0102_0304_0506_0708),
+        (&[0x66, 0xD5, 0x98, 0xC8][..], true, 0x0102_0304_0506_0708),
+    ] {
+        let mut code = instruction.to_vec();
+        code.push(0xF4);
+        let mut regs = Registers::default();
+        regs.rax = 0x0102_0304_0506_0708;
+        regs.r16 = 0x0807_0605_0403_0201;
+        let (mut vcpu, _) = setup_vm(&code, Some(regs));
+        vcpu.set_apx_enabled(apx_enabled);
+        for path in ["cold decode", "decode-cache hit"] {
+            let mut before = vcpu.get_regs().unwrap();
+            before.rip = CODE_ADDR;
+            before.rax = 0x0102_0304_0506_0708;
+            before.r16 = 0x0807_0605_0403_0201;
+            before.rflags = 0x0CD7;
+            vcpu.set_regs(&before).unwrap();
+
+            assert!(
+                vcpu.step()
+                    .unwrap_or_else(|error| panic!("{instruction:02X?} ({path}): {error}"))
+                    .is_none()
+            );
+            let final_regs = vcpu.get_regs().unwrap();
+            let (actual, other) = if apx_enabled {
+                (final_regs.r16, final_regs.rax)
+            } else {
+                (final_regs.rax, final_regs.r16)
+            };
+            assert_eq!(actual, expected, "{instruction:02X?} ({path})");
+            assert_eq!(
+                other,
+                if apx_enabled {
+                    0x0102_0304_0506_0708
+                } else {
+                    0x0807_0605_0403_0201
+                },
+                "non-destination {instruction:02X?} ({path})"
+            );
+            assert_eq!(
+                final_regs.rflags, before.rflags,
+                "{instruction:02X?} ({path})"
+            );
+            assert_eq!(
+                final_regs.rip,
+                CODE_ADDR + instruction.len() as u64,
+                "{instruction:02X?} ({path})"
+            );
+        }
+    }
+}
+
+#[test]
+fn test_lock_bswap_r16_faults_without_commit_on_both_decode_paths() {
+    for (instruction, apx_enabled) in [
+        (&[0xF0, 0x66, 0x0F, 0xC8][..], false),
+        (&[0xF0, 0x66, 0xD5, 0x90, 0xC8][..], true),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(instruction, Some(undefined_bswap_initial_registers()));
+        vcpu.set_apx_enabled(apx_enabled);
+        for path in ["cold decode", "decode-cache hit"] {
+            let before =
+                serde_json::to_value((vcpu.get_regs().unwrap(), vcpu.get_sregs().unwrap()))
+                    .unwrap();
+            let error = vcpu.step().expect_err("LOCK BSWAP r16 must inject #UD");
+            assert!(
+                error.to_string().contains("IDT entry 6 not present"),
+                "{instruction:02X?} ({path}): {error}"
+            );
+            let after = serde_json::to_value((vcpu.get_regs().unwrap(), vcpu.get_sregs().unwrap()))
+                .unwrap();
+            assert_eq!(after, before, "{instruction:02X?} ({path})");
+        }
+    }
+}
+
+#[test]
+fn test_rex2_bswap_r16_requires_apx_without_commit_on_both_decode_paths() {
+    let instruction = [0x66, 0xD5, 0x90, 0xC8];
+    let (mut vcpu, _) = setup_vm_no_idt(&instruction, Some(undefined_bswap_initial_registers()));
+    vcpu.set_apx_enabled(false);
+
+    for path in ["cold decode", "decode-cache hit"] {
+        let before =
+            serde_json::to_value((vcpu.get_regs().unwrap(), vcpu.get_sregs().unwrap())).unwrap();
+        let error = vcpu.step().expect_err("REX2 BSWAP r16 must require APX");
+        assert!(
+            error.to_string().contains("IDT entry 6 not present"),
+            "{instruction:02X?} ({path}): {error}"
+        );
+        let after =
+            serde_json::to_value((vcpu.get_regs().unwrap(), vcpu.get_sregs().unwrap())).unwrap();
+        assert_eq!(after, before, "{instruction:02X?} ({path})");
+    }
 }

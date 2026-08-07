@@ -20,6 +20,8 @@ mod atomic_rmw;
 #[cfg(test)]
 mod bit_offset;
 #[cfg(test)]
+mod bswap_undefined;
+#[cfg(test)]
 mod cli;
 #[cfg(test)]
 mod clts;
