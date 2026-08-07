@@ -2,7 +2,8 @@
 
 use super::*;
 use crate::smir::ir::{
-    X86LegacyHighByteGroup2Kind, X86LegacyHighByteGroup2Replay, X86NativeReplaySpan,
+    X86LegacyHighByteCrc32Replay, X86LegacyHighByteGroup2Kind, X86LegacyHighByteGroup2Replay,
+    X86NativeReplaySpan,
 };
 
 const X86_STATUS_RFLAGS: i64 = 0x08D5;
@@ -12,6 +13,48 @@ const AF: i64 = 1 << 4;
 const OF: i64 = 1 << 11;
 
 impl X86_64Lowerer {
+    /// Execute CRC32 with an AH/CH/DH/BH source and a guest ESP/EBP destination.
+    /// The destination is loaded into ESI and committed through `GuestRegs`,
+    /// keeping native RSP/RBP inaccessible while preserving every guest GPR and
+    /// RFLAGS. Identity-mapped destinations bypass this wrapper and replay exactly.
+    fn emit_legacy_high_byte_crc32_replay(&mut self, replay: X86LegacyHighByteCrc32Replay) {
+        debug_assert!(matches!(replay.destination, 4 | 5));
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_push(PhysReg::Rsi);
+            emitter.emit_push(PhysReg::Rdi);
+            emitter.emit_mov_rm(
+                PhysReg::Rdi,
+                PhysReg::Rbp,
+                X86_STATE_PTR_AT_RBP,
+                OpWidth::W64,
+            );
+            emitter.emit_mov_rm(
+                PhysReg::Rsi,
+                PhysReg::Rdi,
+                i32::from(replay.destination) * 8,
+                OpWidth::W32,
+            );
+        }
+        self.code
+            .emit_bytes(replay.state_backed_instruction.as_slice());
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(
+                PhysReg::Rdi,
+                i32::from(replay.destination) * 8,
+                PhysReg::Rsi,
+                OpWidth::W64,
+            );
+            if replay.destination == 5 {
+                emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rsi, OpWidth::W64);
+            }
+            emitter.emit_pop(PhysReg::Rdi);
+            emitter.emit_pop(PhysReg::Rsi);
+        }
+    }
+
     /// Merge selected incoming status bits into the saved native image, clear
     /// deterministic outputs, optionally reconstruct CF from the original
     /// high byte, and restore the guest-visible image. The active stack layout
@@ -245,6 +288,15 @@ impl X86_64Lowerer {
         &mut self,
         span: &X86NativeReplaySpan,
     ) -> Result<bool, LowerError> {
+        if let Some(replay) = span.instruction.legacy_high_byte_crc32_replay() {
+            if matches!(replay.destination, 4 | 5) {
+                self.emit_legacy_high_byte_crc32_replay(replay);
+            } else {
+                self.code.emit_bytes(span.instruction.as_slice());
+            }
+            return Ok(true);
+        }
+
         if let Some(destination) = span
             .instruction
             .legacy_high_byte_cmpxchg_destination_index()

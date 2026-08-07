@@ -51,6 +51,19 @@ pub(crate) struct X86LegacyHighByteMultiplyReplay {
     pub(crate) canonical_instruction: X86InstructionBytes,
 }
 
+/// Replay metadata for one `CRC32 r32,r/m8` whose source is AH/CH/DH/BH.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86LegacyHighByteCrc32Replay {
+    /// Architectural 32-bit destination GPR index.
+    pub(crate) destination: u8,
+    /// Architectural source-parent GPR index: RAX=0, RCX=1, RDX=2, RBX=3.
+    pub(crate) parent: u8,
+    /// Equivalent instruction rewritten to use ESI as its accumulator. Guest
+    /// ESP/EBP destinations use this form inside a state-backed wrapper so the
+    /// native host stack and frame pointers are never exposed.
+    pub(crate) state_backed_instruction: X86InstructionBytes,
+}
+
 fn legacy_prefix_len(bytes: &[u8]) -> Option<usize> {
     let mut prefix_groups = 0u8;
     let mut start = 0usize;
@@ -119,6 +132,41 @@ pub(crate) fn x86_legacy_high_byte_multiply_shape_temporary(
     (multiply.x86_hint.is_none() && shape_matches).then_some(temporary)
 }
 
+/// Validate the exact extract-plus-CRC32C graph emitted for an AH/CH/DH/BH
+/// source and return its virtual extract temporary. The caller must
+/// additionally prove that the temporary has exactly this definition and use
+/// across the complete block.
+pub(crate) fn x86_legacy_high_byte_crc32_shape_temporary(
+    ops: &[SmirOp],
+    replay: X86LegacyHighByteCrc32Replay,
+) -> Option<VReg> {
+    let [extract, crc32] = ops else {
+        return None;
+    };
+    let temporary = match &extract.kind {
+        OpKind::Shr {
+            dst: temporary @ VReg::Virtual(_),
+            src: VReg::Arch(ArchReg::X86(source)),
+            amount: SrcOperand::Imm(8),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } if extract.x86_hint.is_none() && source.gpr_index() == Some(replay.parent) => *temporary,
+        _ => return None,
+    };
+    let shape_matches = matches!(
+        &crc32.kind,
+        OpKind::Crc32C {
+            dst: VReg::Arch(ArchReg::X86(destination)),
+            crc: VReg::Arch(ArchReg::X86(accumulator)),
+            data,
+            data_width: OpWidth::W8,
+        } if destination.gpr_index() == Some(replay.destination)
+            && accumulator.gpr_index() == Some(replay.destination)
+            && *data == temporary
+    );
+    (crc32.x86_hint.is_none() && shape_matches).then_some(temporary)
+}
+
 impl X86InstructionBytes {
     /// Validate one baseline scalar instruction whose register-only byte
     /// encoding names AH, CH, DH, or BH.
@@ -131,9 +179,9 @@ impl X86InstructionBytes {
     ///
     /// The admitted set contains MOV (including the B4-B7 immediate forms),
     /// binary ALU, TEST, XCHG, Group 1 immediate, NOT, NEG, INC, DEC, SETcc,
-    /// CMPXCHG, XADD, implicit MUL/IMUL, and documented Group 2 rotate/shift
-    /// register forms. LOCK, REX, memory, undocumented Group 2 `/6`, Group 3
-    /// `/1`, and divide forms fail closed.
+    /// CMPXCHG, XADD, implicit MUL/IMUL, CRC32 r32,r/m8, and documented Group
+    /// 2 rotate/shift register forms. LOCK, REX, memory, undocumented Group 2
+    /// `/6`, Group 3 `/1`, and divide forms fail closed.
     /// Group 2 replay uses a deterministic status wrapper because RAX
     /// preserves architecturally undefined AF/OF while the host instruction
     /// may change them. At most one legacy prefix from each prefix group is
@@ -141,6 +189,7 @@ impl X86InstructionBytes {
     pub fn is_legacy_high_byte_register_replay(&self) -> bool {
         if self.legacy_high_byte_group2_replay().is_some()
             || self.legacy_high_byte_multiply_replay().is_some()
+            || self.legacy_high_byte_crc32_replay().is_some()
         {
             return true;
         }
@@ -227,6 +276,30 @@ impl X86InstructionBytes {
             kind,
             parent: (modrm & 7) - 4,
             canonical_instruction: X86InstructionBytes::new(&bytes[start..])?,
+        })
+    }
+
+    /// Decode the canonical `F2 0F 38 F0 /r` register encoding of
+    /// `CRC32 r32,r/m8` when the source is AH/CH/DH/BH. A REX prefix changes
+    /// byte-register codes 4..7 to SPL/BPL/SIL/DIL, so no REX form is admitted.
+    pub(crate) fn legacy_high_byte_crc32_replay(&self) -> Option<X86LegacyHighByteCrc32Replay> {
+        let [0xF2, 0x0F, 0x38, 0xF0, modrm] = self.as_slice() else {
+            return None;
+        };
+        if modrm >> 6 != 3 || modrm & 7 < 4 {
+            return None;
+        }
+        let state_backed_modrm = 0xC0 | (6 << 3) | (modrm & 7);
+        Some(X86LegacyHighByteCrc32Replay {
+            destination: (modrm >> 3) & 7,
+            parent: (modrm & 7) - 4,
+            state_backed_instruction: X86InstructionBytes::new(&[
+                0xF2,
+                0x0F,
+                0x38,
+                0xF0,
+                state_backed_modrm,
+            ])?,
         })
     }
 
@@ -459,6 +532,7 @@ mod tests {
             &[0x0F, 0x96, 0xC4][..],                   // setbe ah
             &[0x0F, 0xB0, 0xF5][..],                   // cmpxchg ch,dh
             &[0x0F, 0xC0, 0xFC][..],                   // xadd ah,bh
+            &[0xF2, 0x0F, 0x38, 0xF0, 0xC4][..],       // crc32 eax,ah
             &[0xC0, 0xC4, 0x00][..],                   // rol ah,0
             &[0xD0, 0xD5][..],                         // rcl ch,1
             &[0xD2, 0xDF][..],                         // rcr bh,cl
@@ -587,30 +661,70 @@ mod tests {
     }
 
     #[test]
+    fn classifier_exhausts_all_32_high_byte_crc32_register_cells() {
+        let mut accepted = 0usize;
+        for fields in 0u8..=0x3F {
+            let modrm = 0xC0 | fields;
+            let bytes = [0xF2, 0x0F, 0x38, 0xF0, modrm];
+            let instruction = X86InstructionBytes::new(&bytes).unwrap();
+            let expected = fields & 7 >= 4;
+            assert_eq!(
+                instruction.is_legacy_high_byte_register_replay(),
+                expected,
+                "{bytes:02X?}"
+            );
+            assert_eq!(
+                instruction.legacy_high_byte_crc32_replay(),
+                expected.then(|| X86LegacyHighByteCrc32Replay {
+                    destination: (fields >> 3) & 7,
+                    parent: (fields & 7) - 4,
+                    state_backed_instruction: X86InstructionBytes::new(&[
+                        0xF2,
+                        0x0F,
+                        0x38,
+                        0xF0,
+                        0xF0 | (fields & 7),
+                    ])
+                    .unwrap(),
+                }),
+                "{bytes:02X?}"
+            );
+            accepted += usize::from(expected);
+        }
+        assert_eq!(accepted, 32);
+    }
+
+    #[test]
     fn classifier_rejects_every_unsafe_or_undocumented_frontier() {
         for bytes in [
-            &[0x00, 0xC3][..],             // add bl,al: no high byte
-            &[0x00, 0x04][..],             // memory destination
-            &[0x40, 0x00, 0xC4][..],       // REX selects SPL, not AH
-            &[0xF0, 0x00, 0xC4][..],       // LOCK register form is #UD
-            &[0xF2, 0xF3, 0x00, 0xC4][..], // duplicate prefix group
-            &[0x66, 0x66, 0x00, 0xC4][..], // duplicate prefix group
-            &[0xC0, 0xF4, 0x03][..],       // undocumented Group 2 /6 alias
-            &[0xD0, 0xF5][..],             // undocumented Group 2 /6 alias
-            &[0xD2, 0xF6][..],             // undocumented Group 2 /6 alias
-            &[0xC0, 0x04, 0x03][..],       // Group 2 memory form
-            &[0x40, 0xC0, 0xC4, 0x03][..], // REX selects SPL, not AH
-            &[0xF6, 0xCC, 0x01][..],       // Group 3 /1 compatibility alias
-            &[0xF6, 0xF4][..],             // div ah can raise #DE
-            &[0xF6, 0xFC][..],             // idiv ah can raise #DE
-            &[0xC6, 0xCC, 0x01][..],       // MOV requires /0
-            &[0xB0, 0x01][..],             // MOV AL,imm8 needs no replay
-            &[0x40, 0xB4, 0x01][..],       // REX selects SPL, not AH
-            &[0xF0, 0xB4, 0x01][..],       // LOCK is #UD
-            &[0xB4, 0x01, 0x00][..],       // trailing byte
-            &[0x0F, 0x96, 0xCC][..],       // SETcc requires /0
-            &[0x0F, 0xB0, 0x35][..],       // CMPXCHG memory form
-            &[0x0F, 0xC0, 0xFC, 0x00][..], // trailing byte
+            &[0x00, 0xC3][..],                         // add bl,al: no high byte
+            &[0x00, 0x04][..],                         // memory destination
+            &[0x40, 0x00, 0xC4][..],                   // REX selects SPL, not AH
+            &[0xF0, 0x00, 0xC4][..],                   // LOCK register form is #UD
+            &[0xF2, 0xF3, 0x00, 0xC4][..],             // duplicate prefix group
+            &[0x66, 0x66, 0x00, 0xC4][..],             // duplicate prefix group
+            &[0xC0, 0xF4, 0x03][..],                   // undocumented Group 2 /6 alias
+            &[0xD0, 0xF5][..],                         // undocumented Group 2 /6 alias
+            &[0xD2, 0xF6][..],                         // undocumented Group 2 /6 alias
+            &[0xC0, 0x04, 0x03][..],                   // Group 2 memory form
+            &[0x40, 0xC0, 0xC4, 0x03][..],             // REX selects SPL, not AH
+            &[0xF6, 0xCC, 0x01][..],                   // Group 3 /1 compatibility alias
+            &[0xF6, 0xF4][..],                         // div ah can raise #DE
+            &[0xF6, 0xFC][..],                         // idiv ah can raise #DE
+            &[0xC6, 0xCC, 0x01][..],                   // MOV requires /0
+            &[0xB0, 0x01][..],                         // MOV AL,imm8 needs no replay
+            &[0x40, 0xB4, 0x01][..],                   // REX selects SPL, not AH
+            &[0xF0, 0xB4, 0x01][..],                   // LOCK is #UD
+            &[0xB4, 0x01, 0x00][..],                   // trailing byte
+            &[0x0F, 0x96, 0xCC][..],                   // SETcc requires /0
+            &[0x0F, 0xB0, 0x35][..],                   // CMPXCHG memory form
+            &[0x0F, 0xC0, 0xFC, 0x00][..],             // trailing byte
+            &[0x0F, 0x38, 0xF0, 0xC4][..],             // CRC32 mandatory F2 absent
+            &[0xF3, 0x0F, 0x38, 0xF0, 0xC4][..],       // wrong mandatory prefix
+            &[0xF2, 0x0F, 0x38, 0xF0, 0x04][..],       // CRC32 memory form
+            &[0xF2, 0x40, 0x0F, 0x38, 0xF0, 0xC4][..], // REX selects SPL
+            &[0xF2, 0x0F, 0x38, 0xF1, 0xC4][..],       // different source-width opcode
+            &[0xF2, 0x0F, 0x38, 0xF0, 0xC4, 0x00][..], // trailing byte
         ] {
             assert!(
                 !X86InstructionBytes::new(bytes)

@@ -145,9 +145,9 @@ pub(crate) fn x86_native_replay_feature_requirements(
         for span in crate::smir::ir::x86_native_replay_spans(block, &func.x86_instruction_bytes)
             .into_values()
         {
-            // Baseline scalar high-byte replay touches only RAX-RBX and
-            // RFLAGS. It requires neither vector-state marshalling nor a host
-            // feature beyond the x86-64 execution baseline.
+            // Scalar high-byte replay needs no vector-state marshalling. CRC32's SSE4.2
+            // requirement remains enforced by the scalar host-feature gate, including
+            // state-backed ESP/EBP forms.
             if span.instruction.is_legacy_high_byte_register_replay() {
                 continue;
             }

@@ -29,13 +29,13 @@ fn function(bytes: &[u8]) -> SmirFunction {
     function
 }
 
-fn high_byte_multiply_temporary(function: &SmirFunction) -> VReg {
+fn high_byte_temporary(function: &SmirFunction) -> VReg {
     match function.blocks[0].ops[0].kind {
         OpKind::Shr {
             dst: temporary @ VReg::Virtual(_),
             ..
         } => temporary,
-        _ => unreachable!("high-byte multiply starts with a virtual SHR destination"),
+        _ => unreachable!("high-byte replay starts with a virtual SHR destination"),
     }
 }
 
@@ -73,6 +73,7 @@ fn legacy_high_byte_replay_admits_and_emits_each_documented_family_at_o0_o1_o2()
         ("setbe ah", &[0x0F, 0x96, 0xC4]),
         ("cmpxchg ch,dh", &[0x0F, 0xB0, 0xF5]),
         ("xadd ah,bh", &[0x0F, 0xC0, 0xFC]),
+        ("crc32 eax,ah", &[0xF2, 0x0F, 0x38, 0xF0, 0xC4]),
         ("rol ah,0", &[0xC0, 0xC4, 0x00]),
         ("ror ch,1", &[0xD0, 0xCD]),
         ("rcl dh,2", &[0xC0, 0xD6, 0x02]),
@@ -225,6 +226,216 @@ fn all_56_scanner_high_byte_multiply_cells_admit_at_every_opt_level() {
     }
     assert_eq!(encodings, 56);
     assert_eq!(profiles, 168);
+}
+
+#[test]
+fn all_32_scanner_high_byte_crc32_cells_admit_and_emit_at_every_opt_level() {
+    let mut encodings = 0usize;
+    let mut profiles = 0usize;
+    for destination in 0u8..8 {
+        for rm in 4u8..8 {
+            let bytes = [0xF2, 0x0F, 0x38, 0xF0, 0xC0 | (destination << 3) | rm];
+            let instruction = X86InstructionBytes::new(&bytes).unwrap();
+            let replay = instruction.legacy_high_byte_crc32_replay().unwrap();
+            assert_eq!(replay.destination, destination);
+            assert_eq!(replay.parent, rm - 4);
+
+            for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+                let mut function = function(&bytes);
+                optimize_function(&mut function, level);
+                assert_eq!(function.blocks[0].ops.len(), 2, "{bytes:02X?} {level:?}");
+                for spans in [
+                    crate::smir::ir::x86_legacy_high_byte_replay_spans(
+                        &function.blocks[0],
+                        &function.x86_instruction_bytes,
+                    ),
+                    crate::smir::ir::x86_native_replay_spans(
+                        &function.blocks[0],
+                        &function.x86_instruction_bytes,
+                    ),
+                ] {
+                    assert_eq!(
+                        spans.get(&0),
+                        Some(&crate::smir::ir::X86NativeReplaySpan {
+                            end: 2,
+                            instruction,
+                            needs_avx512vl: false,
+                            needs_avx512dq: false,
+                            needs_avx512fp16: false,
+                            preserve_mxcsr_de: false,
+                        }),
+                        "{bytes:02X?} {level:?}"
+                    );
+                }
+                assert!(is_native_clobber_safe(&function), "{bytes:02X?} {level:?}");
+                assert!(
+                    !is_x86_aarch64_native_clobber_safe_excluding(
+                        &function,
+                        &std::collections::HashMap::new(),
+                    ),
+                    "{bytes:02X?} {level:?}: AArch64 host must retain fallback"
+                );
+                #[cfg(target_arch = "x86_64")]
+                assert_eq!(
+                    x86_native_scalar_features_supported_excluding(
+                        &function,
+                        &std::collections::HashMap::new(),
+                    ),
+                    std::is_x86_feature_detected!("sse4.2"),
+                    "{bytes:02X?} {level:?}"
+                );
+                #[cfg(not(target_arch = "x86_64"))]
+                assert!(!x86_native_scalar_features_supported_excluding(
+                    &function,
+                    &std::collections::HashMap::new(),
+                ));
+
+                let mut lowerer = X86_64Lowerer::new();
+                lowerer
+                    .lower_function(&function)
+                    .unwrap_or_else(|error| panic!("{bytes:02X?} {level:?}: {error:?}"));
+                let code = lowerer.finalize().unwrap();
+                if matches!(destination, 4 | 5) {
+                    let mut expected = vec![
+                        0x56,
+                        0x57,
+                        0x48,
+                        0x8B,
+                        0x7D,
+                        X86_STATE_PTR_AT_RBP as u8,
+                        0x8B,
+                        0x77,
+                        destination * 8,
+                    ];
+                    expected.extend_from_slice(replay.state_backed_instruction.as_slice());
+                    expected.extend_from_slice(&[0x48, 0x89, 0x77, destination * 8]);
+                    if destination == 5 {
+                        expected.extend_from_slice(&[0x48, 0x89, 0x75, 0x00]);
+                    }
+                    expected.extend_from_slice(&[0x5F, 0x5E]);
+                    assert!(
+                        code.windows(expected.len())
+                            .any(|window| window == expected),
+                        "state-backed replay absent for {bytes:02X?} {level:?}: expected={expected:02X?} code={code:02X?}"
+                    );
+                } else {
+                    assert!(
+                        code.windows(bytes.len()).any(|window| window == bytes),
+                        "exact replay absent for {bytes:02X?} {level:?}: {code:02X?}"
+                    );
+                }
+                profiles += 1;
+            }
+            encodings += 1;
+        }
+    }
+    assert_eq!(encodings, 32);
+    assert_eq!(profiles, 96);
+}
+
+#[test]
+fn high_byte_crc32_replay_requires_exact_graph_provenance_and_ssa_confinement() {
+    let base = function(&[0xF2, 0x0F, 0x38, 0xF0, 0xC4]); // crc32 eax,ah
+    let temporary = high_byte_temporary(&base);
+    let assert_rejected = |name: &str, function: &SmirFunction| {
+        assert!(
+            crate::smir::ir::x86_native_replay_spans(
+                &function.blocks[0],
+                &function.x86_instruction_bytes,
+            )
+            .is_empty(),
+            "{name}"
+        );
+        assert!(!is_native_clobber_safe(function), "{name}");
+    };
+
+    let mut wrong_extract_shift = base.clone();
+    let OpKind::Shr { amount, .. } = &mut wrong_extract_shift.blocks[0].ops[0].kind else {
+        unreachable!()
+    };
+    *amount = SrcOperand::Imm(7);
+    assert_rejected("wrong extract shift", &wrong_extract_shift);
+
+    let mut wrong_extract_width = base.clone();
+    let OpKind::Shr { width, .. } = &mut wrong_extract_width.blocks[0].ops[0].kind else {
+        unreachable!()
+    };
+    *width = OpWidth::W32;
+    assert_rejected("wrong extract width", &wrong_extract_width);
+
+    let mut wrong_extract_flags = base.clone();
+    let OpKind::Shr { flags, .. } = &mut wrong_extract_flags.blocks[0].ops[0].kind else {
+        unreachable!()
+    };
+    *flags = FlagUpdate::All;
+    assert_rejected("wrong extract flags", &wrong_extract_flags);
+
+    let mut hinted_extract = base.clone();
+    hinted_extract.blocks[0].ops[0].x86_hint = Some(X86OpHint::Mulx);
+    assert_rejected("unexpected extract hint", &hinted_extract);
+
+    let mut wrong_extract_parent = base.clone();
+    let OpKind::Shr { src, .. } = &mut wrong_extract_parent.blocks[0].ops[0].kind else {
+        unreachable!()
+    };
+    *src = x86(X86Reg::Rbx);
+    assert_rejected("wrong extract parent", &wrong_extract_parent);
+
+    let mut wrong_accumulator = base.clone();
+    let OpKind::Crc32C { crc, .. } = &mut wrong_accumulator.blocks[0].ops[1].kind else {
+        unreachable!()
+    };
+    *crc = x86(X86Reg::Rcx);
+    assert_rejected("wrong CRC accumulator", &wrong_accumulator);
+
+    let mut wrong_destination = base.clone();
+    let OpKind::Crc32C { dst, .. } = &mut wrong_destination.blocks[0].ops[1].kind else {
+        unreachable!()
+    };
+    *dst = x86(X86Reg::Rcx);
+    assert_rejected("wrong CRC destination", &wrong_destination);
+
+    let mut wrong_data = base.clone();
+    let OpKind::Crc32C { data, .. } = &mut wrong_data.blocks[0].ops[1].kind else {
+        unreachable!()
+    };
+    *data = x86(X86Reg::Rdx);
+    assert_rejected("wrong CRC data", &wrong_data);
+
+    let mut wrong_width = base.clone();
+    let OpKind::Crc32C { data_width, .. } = &mut wrong_width.blocks[0].ops[1].kind else {
+        unreachable!()
+    };
+    *data_width = OpWidth::W16;
+    assert_rejected("wrong CRC width", &wrong_width);
+
+    let mut hinted = base.clone();
+    hinted.blocks[0].ops[1].x86_hint = Some(X86OpHint::Mulx);
+    assert_rejected("unexpected CRC hint", &hinted);
+
+    let mut mismatched_metadata = base.clone();
+    mismatched_metadata.x86_instruction_bytes.insert(
+        (BlockId(0), PC),
+        X86InstructionBytes::new(&[0xF2, 0x0F, 0x38, 0xF0, 0xCC]).unwrap(),
+    );
+    assert_rejected("mismatched destination metadata", &mismatched_metadata);
+
+    let mut escaped_use = base.clone();
+    let mut escape = escaped_use.blocks[0].ops[0].clone();
+    escape.guest_pc = PC + 5;
+    escape.kind = OpKind::Mov {
+        dst: x86(X86Reg::Rbx),
+        src: SrcOperand::Reg(temporary),
+        width: OpWidth::W64,
+    };
+    escaped_use.blocks[0].ops.push(escape);
+    assert_rejected("CRC extract temporary escaped", &escaped_use);
+
+    let mut returned = base;
+    returned.blocks[0].terminator = Terminator::Return {
+        values: vec![temporary],
+    };
+    assert_rejected("CRC extract temporary returned", &returned);
 }
 
 #[test]
@@ -398,7 +609,7 @@ fn legacy_high_byte_replay_requires_exact_provenance_contiguity_and_ssa_confinem
     assert!(!is_native_clobber_safe(&mismatched_signedness));
 
     let mut escaped_use = function(&[0xF6, 0xEC]);
-    let temporary = high_byte_multiply_temporary(&escaped_use);
+    let temporary = high_byte_temporary(&escaped_use);
     let mut escape = escaped_use.blocks[0].ops[0].clone();
     escape.guest_pc = PC + 2;
     escape.kind = OpKind::Mov {
@@ -417,7 +628,7 @@ fn legacy_high_byte_replay_requires_exact_provenance_contiguity_and_ssa_confinem
     assert!(!is_native_clobber_safe(&escaped_use));
 
     let mut redefined = function(&[0xF6, 0xEC]);
-    let temporary = high_byte_multiply_temporary(&redefined);
+    let temporary = high_byte_temporary(&redefined);
     let mut redefine = redefined.blocks[0].ops[0].clone();
     redefine.guest_pc = PC + 2;
     redefine.kind = OpKind::Mov {
@@ -436,7 +647,7 @@ fn legacy_high_byte_replay_requires_exact_provenance_contiguity_and_ssa_confinem
     assert!(!is_native_clobber_safe(&redefined));
 
     let mut returned = function(&[0xF6, 0xEC]);
-    let temporary = high_byte_multiply_temporary(&returned);
+    let temporary = high_byte_temporary(&returned);
     returned.blocks[0].terminator = Terminator::Return {
         values: vec![temporary],
     };
@@ -450,7 +661,7 @@ fn legacy_high_byte_replay_requires_exact_provenance_contiguity_and_ssa_confinem
     assert!(!is_native_clobber_safe(&returned));
 
     let mut phi_redefined = function(&[0xF6, 0xEC]);
-    let temporary = high_byte_multiply_temporary(&phi_redefined);
+    let temporary = high_byte_temporary(&phi_redefined);
     phi_redefined.blocks[0].phis.push(PhiNode {
         dst: temporary,
         sources: Vec::new(),

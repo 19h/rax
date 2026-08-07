@@ -148,6 +148,14 @@ fn compare_direct_and_jit_state_flags(
     assert_eq!(actual.mm, expected.mm, "{name}: MMX state");
 }
 
+fn crc32c_byte(mut crc: u32, byte: u8) -> u32 {
+    crc ^= u32::from(byte);
+    for _ in 0..8 {
+        crc = (crc >> 1) ^ (0x82F6_3B78 & 0u32.wrapping_sub(crc & 1));
+    }
+    crc
+}
+
 #[test]
 fn jit_high_byte_multiply_matches_direct_for_all_56_scanner_cells() {
     const PREFIXES: &[&[u8]] = &[&[], &[0x66], &[0xF2], &[0xF3], &[0x67], &[0x64], &[0x65]];
@@ -170,6 +178,82 @@ fn jit_high_byte_multiply_matches_direct_for_all_56_scanner_cells() {
         }
     }
     assert_eq!(cases, 56);
+}
+
+#[test]
+fn jit_high_byte_crc32c_matches_castagnoli_oracle_for_all_32_scanner_cells() {
+    if !std::is_x86_feature_detected!("sse4.2") {
+        return;
+    }
+
+    const RSP_SEED: u64 = 0x7777_8888_9999_AAAA;
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut registers = seed(vcpu, 0x0123_4567_89AB_CDEF, DEFAULT_RCX, DEFAULT_RFLAGS);
+        registers.rsp = RSP_SEED;
+        vcpu.set_regs(&registers).unwrap();
+        registers
+    };
+
+    let mut cases = 0usize;
+    for destination in 0usize..8 {
+        for rm in 4u8..8 {
+            let instruction = [
+                0xF2,
+                0x0F,
+                0x38,
+                0xF0,
+                0xC0 | ((destination as u8) << 3) | rm,
+            ];
+            let mut code = instruction.to_vec();
+            code.push(0xF4);
+
+            let mut direct = make_vcpu_code(&code);
+            let initial = setup(&mut direct);
+            let mut oracle_gprs = legacy_gprs(&initial);
+            let source = (oracle_gprs[usize::from(rm - 4)] >> 8) as u8;
+            oracle_gprs[destination] =
+                u64::from(crc32c_byte(oracle_gprs[destination] as u32, source));
+            assert!(
+                direct.step().unwrap().is_none(),
+                "direct {instruction:02X?}"
+            );
+            let direct_regs = direct.get_regs().unwrap();
+            assert_eq!(
+                legacy_gprs(&direct_regs),
+                oracle_gprs,
+                "direct Castagnoli result {instruction:02X?}"
+            );
+            assert_eq!(
+                direct_regs.rflags, initial.rflags,
+                "direct RFLAGS {instruction:02X?}"
+            );
+
+            let mut jit = make_vcpu_code(&code);
+            setup(&mut jit);
+            jit.set_jit_call(false);
+            jit.set_jit_mem(false);
+            assert!(
+                jit.jit_try_block().unwrap(),
+                "native admission {instruction:02X?}:\n{}",
+                jit.jit_dump_region(LOAD_ADDR)
+            );
+            let actual = jit.get_regs().unwrap();
+            assert_eq!(
+                legacy_gprs(&actual),
+                oracle_gprs,
+                "JIT Castagnoli result {instruction:02X?}"
+            );
+            assert_eq!(
+                actual.rflags, initial.rflags,
+                "JIT RFLAGS {instruction:02X?}"
+            );
+            assert_eq!(actual.rip, direct_regs.rip, "JIT RIP {instruction:02X?}");
+            assert_eq!(actual.xmm, direct_regs.xmm, "JIT XMM {instruction:02X?}");
+            assert_eq!(actual.mm, direct_regs.mm, "JIT MMX {instruction:02X?}");
+            cases += 1;
+        }
+    }
+    assert_eq!(cases, 32);
 }
 
 #[test]
