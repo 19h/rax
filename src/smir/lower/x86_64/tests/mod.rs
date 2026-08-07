@@ -114,11 +114,11 @@ mod state;
 #[cfg(test)]
 mod state_alu;
 #[cfg(test)]
-mod state_imul;
-#[cfg(test)]
 mod state_lea;
 #[cfg(test)]
 mod state_mem_load;
+#[cfg(test)]
+mod state_multiply;
 #[cfg(test)]
 mod sti;
 #[cfg(test)]

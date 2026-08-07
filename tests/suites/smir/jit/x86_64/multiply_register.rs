@@ -1,4 +1,4 @@
-//! End-to-end native-JIT coverage for state-backed and APX register IMUL.
+//! End-to-end native-JIT coverage for state-backed and APX register MUL/IMUL.
 
 use super::*;
 
@@ -80,7 +80,7 @@ fn seed(vcpu: &mut X86_64Vcpu, small: bool) -> Registers {
 }
 
 #[test]
-fn jit_register_imul_matches_direct_for_stack_implicit_immediate_and_apx_forms() {
+fn jit_register_multiply_matches_direct_for_stack_implicit_immediate_and_apx_forms() {
     const CF_OF: u64 = (1 << 0) | (1 << 11);
 
     for (name, instruction, apx, suppress_flags) in [
@@ -103,6 +103,30 @@ fn jit_register_imul_matches_direct_for_stack_implicit_immediate_and_apx_forms()
         ("IMUL BP", &[0x66, 0xF7, 0xED][..], false, false),
         ("IMUL ESP", &[0xF7, 0xEC][..], false, false),
         ("IMUL RBP", &[0x48, 0xF7, 0xED][..], false, false),
+        ("MUL SPL", &[0x40, 0xF6, 0xE4][..], false, false),
+        ("MUL BP", &[0x66, 0xF7, 0xE5][..], false, false),
+        ("MUL ESP", &[0xF7, 0xE4][..], false, false),
+        ("MUL RBP", &[0x48, 0xF7, 0xE5][..], false, false),
+        ("REX2 MUL R16", &[0xD5, 0x18, 0xF7, 0xE0][..], true, false),
+        ("REX2 MUL R16B", &[0xD5, 0x10, 0xF6, 0xE0][..], true, false),
+        (
+            "APX MUL R16",
+            &[0x62, 0xFC, 0xFC, 0x08, 0xF7, 0xE0][..],
+            true,
+            false,
+        ),
+        (
+            "APX MUL RBP",
+            &[0x62, 0xF4, 0xFC, 0x08, 0xF7, 0xE5][..],
+            true,
+            false,
+        ),
+        (
+            "APX NF MUL RBP",
+            &[0x62, 0xF4, 0xFC, 0x0C, 0xF7, 0xE5][..],
+            true,
+            true,
+        ),
         (
             "REX2 IMUL R16,R17",
             &[0xD5, 0xD8, 0xAF, 0xC1][..],
@@ -152,7 +176,7 @@ fn jit_register_imul_matches_direct_for_stack_implicit_immediate_and_apx_forms()
             assert!(
                 jit.jit_try_block()
                     .unwrap_or_else(|error| panic!("{name}: JIT: {error}")),
-                "{name}: register IMUL must enter the native tier:\n{}",
+                "{name}: register multiply must enter the native tier:\n{}",
                 jit.jit_dump_region(LOAD_ADDR)
             );
             let actual = jit.get_regs().unwrap();

@@ -149,25 +149,27 @@ fn compare_direct_and_jit_state_flags(
 }
 
 #[test]
-fn jit_high_byte_imul_matches_direct_for_all_28_scanner_cells() {
+fn jit_high_byte_multiply_matches_direct_for_all_56_scanner_cells() {
     const PREFIXES: &[&[u8]] = &[&[], &[0x66], &[0xF2], &[0xF3], &[0x67], &[0x64], &[0x65]];
     const DEFINED_FLAGS: u64 = (1 << 0) | (1 << 11); // CF | OF
 
     let mut cases = 0usize;
     for prefix in PREFIXES {
-        for rm in 4u8..8 {
-            let mut instruction = prefix.to_vec();
-            instruction.extend([0xF6, 0xE8 | rm]);
-            compare_direct_and_jit_defined_flags(
-                &format!("{instruction:02X?}"),
-                &instruction,
-                0x8123_4567_89AB_CDEF,
-                DEFINED_FLAGS,
-            );
-            cases += 1;
+        for extension in [4u8, 5] {
+            for rm in 4u8..8 {
+                let mut instruction = prefix.to_vec();
+                instruction.extend([0xF6, 0xC0 | (extension << 3) | rm]);
+                compare_direct_and_jit_defined_flags(
+                    &format!("{instruction:02X?}"),
+                    &instruction,
+                    0x8123_4567_89AB_CDEF,
+                    DEFINED_FLAGS,
+                );
+                cases += 1;
+            }
         }
     }
-    assert_eq!(cases, 28);
+    assert_eq!(cases, 56);
 }
 
 #[test]
@@ -366,7 +368,7 @@ fn jit_legacy_high_byte_replay_matches_direct_for_every_admitted_register_cell()
         (0x80, 0b1111_1111, Some(0xA5)),
         (0xC6, 0b0000_0001, Some(0x5A)),
         (0xF6, 0b0000_0001, Some(0xA5)),
-        (0xF6, 0b0010_1100, None),
+        (0xF6, 0b0011_1100, None),
     ] {
         for extension in 0u8..8 {
             if extensions & (1 << extension) == 0 {
@@ -377,7 +379,7 @@ fn jit_legacy_high_byte_replay_matches_direct_for_every_admitted_register_cell()
                 if let Some(immediate) = immediate {
                     bytes.push(immediate);
                 }
-                if opcode == 0xF6 && extension == 5 {
+                if opcode == 0xF6 && matches!(extension, 4 | 5) {
                     compare_direct_and_jit_defined_flags(
                         &format!("{bytes:02X?}"),
                         &bytes,
@@ -435,7 +437,7 @@ fn jit_legacy_high_byte_replay_matches_direct_for_every_admitted_register_cell()
         }
     }
 
-    assert_eq!(cases, 3_000);
+    assert_eq!(cases, 3_004);
 }
 
 #[test]

@@ -14,9 +14,9 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
     let op = (modrm >> 3) & 0x07;
-    let rm = (modrm & 0x07) | ctx.rex_b();
+    let rm = (modrm & 0x07) | ctx.any_rex_b();
 
-    let has_rex = ctx.rex.is_some();
+    let has_rex = ctx.has_any_rex();
     match op {
         0 | 1 => {
             // TEST r/m8, imm8
@@ -167,7 +167,7 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
     let op = (modrm >> 3) & 0x07;
-    let rm = (modrm & 0x07) | ctx.rex_b();
+    let rm = (modrm & 0x07) | ctx.any_rex_b();
 
     match op {
         0 | 1 => {

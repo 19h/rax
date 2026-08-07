@@ -5,17 +5,18 @@ use super::*;
 /// A `MULX` needs the state bridge when any explicit operand cannot use the
 /// native identity GPR map. The implicit multiplicand is always guest RDX.
 pub(crate) fn x86_state_backed_gpr_mulx_candidate(op: &SmirOp) -> bool {
-    matches!(
-        &op.kind,
-        OpKind::MulU {
-            dst_lo,
-            dst_hi,
-            src2: SrcOperand::Reg(src2),
-            ..
-        } if x86_state_backed_arch_gpr(dst_lo)
-            || dst_hi.as_ref().is_some_and(x86_state_backed_arch_gpr)
-            || x86_state_backed_arch_gpr(src2)
-    )
+    matches!(op.x86_hint, Some(X86OpHint::Mulx))
+        && matches!(
+            &op.kind,
+            OpKind::MulU {
+                dst_lo,
+                dst_hi,
+                src2: SrcOperand::Reg(src2),
+                ..
+            } if x86_state_backed_arch_gpr(dst_lo)
+                || dst_hi.as_ref().is_some_and(x86_state_backed_arch_gpr)
+                || x86_state_backed_arch_gpr(src2)
+        )
 }
 
 /// Validate the exact state-backed form emitted by the VEX and APX `MULX`

@@ -39,8 +39,6 @@ mod cmpxchg_register;
 mod flag_control;
 #[path = "x86_64/group3_alias.rs"]
 mod group3_alias;
-#[path = "x86_64/imul_register.rs"]
-mod imul_register;
 #[path = "x86_64/legacy_0f38_terminal.rs"]
 mod legacy_0f38_terminal;
 #[path = "x86_64/legacy_0f3a_reserved.rs"]
@@ -49,6 +47,8 @@ mod legacy_0f3a_reserved;
 mod legacy_high_byte;
 #[path = "x86_64/mmx_xmm_transfer.rs"]
 mod mmx_xmm_transfer;
+#[path = "x86_64/multiply_register.rs"]
+mod multiply_register;
 #[path = "x86_64/smc.rs"]
 mod smc;
 #[path = "x86_64/sse4a_bitfield.rs"]

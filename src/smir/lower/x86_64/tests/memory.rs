@@ -369,12 +369,12 @@ fn emit_bit_test_memory_immediate_encodes_all_actions_and_widths() {
     );
 }
 #[test]
-fn lower_nf_implicit_group3_rejects_native_stack_operands() {
+fn lower_nf_implicit_group3_admits_state_multiply_but_rejects_stack_divide() {
     let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
     let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
     let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
 
-    for (name, kind) in [
+    for (name, kind, supported) in [
         (
             "mul rsp",
             OpKind::MulU {
@@ -385,6 +385,7 @@ fn lower_nf_implicit_group3_rejects_native_stack_operands() {
                 width: OpWidth::W64,
                 flags: FlagUpdate::None,
             },
+            true,
         ),
         (
             "div rsp",
@@ -396,6 +397,7 @@ fn lower_nf_implicit_group3_rejects_native_stack_operands() {
                 width: OpWidth::W64,
                 flags: FlagUpdate::None,
             },
+            false,
         ),
     ] {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
@@ -403,7 +405,7 @@ fn lower_nf_implicit_group3_rejects_native_stack_operands() {
         builder.set_terminator(Terminator::Return { values: vec![] });
         let func = builder.finish();
         let mut lowerer = X86_64Lowerer::new();
-        assert!(lowerer.lower_function(&func).is_err(), "{name}");
+        assert_eq!(lowerer.lower_function(&func).is_ok(), supported, "{name}");
     }
 }
 #[test]

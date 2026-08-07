@@ -1,4 +1,4 @@
-//! State-backed register IMUL admission and fail-closed coverage.
+//! State-backed register MUL/IMUL admission and fail-closed coverage.
 
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint};
@@ -7,7 +7,7 @@ use crate::smir::ir::types::{
 };
 use crate::smir::ir::{SmirBlock, SmirFunction, Terminator};
 use crate::smir::lower::runtime::is_native_clobber_safe;
-use crate::smir::lower::x86_64::{x86_state_imul_candidate, x86_state_imul_valid};
+use crate::smir::lower::x86_64::{x86_state_multiply_candidate, x86_state_multiply_valid};
 
 const PC: u64 = 0x494D_554C;
 
@@ -29,7 +29,7 @@ fn function(op: SmirOp) -> SmirFunction {
 }
 
 #[test]
-fn state_imul_validator_exhausts_architectural_register_products() {
+fn state_multiply_validator_exhausts_architectural_register_products() {
     let mut truncated = 0usize;
     for width in [OpWidth::W16, OpWidth::W32, OpWidth::W64] {
         for flags in [FlagUpdate::None, FlagUpdate::All] {
@@ -50,8 +50,8 @@ fn state_imul_validator_exhausts_architectural_register_products() {
                         );
                         let expected =
                             state_backed(dst) || state_backed(src1) || state_backed(src2);
-                        assert_eq!(x86_state_imul_candidate(&op), expected);
-                        assert_eq!(x86_state_imul_valid(&op), expected);
+                        assert_eq!(x86_state_multiply_candidate(&op), expected);
+                        assert_eq!(x86_state_multiply_valid(&op), expected);
                         truncated += usize::from(expected);
                     }
                 }
@@ -61,29 +61,47 @@ fn state_imul_validator_exhausts_architectural_register_products() {
     assert_eq!(truncated, 180_144);
 
     let mut implicit = 0usize;
-    for width in [OpWidth::W8, OpWidth::W16, OpWidth::W32, OpWidth::W64] {
-        for flags in [FlagUpdate::None, FlagUpdate::All] {
-            for source in 0u8..32 {
-                let op = SmirOp::new(
-                    OpId(0),
-                    PC,
-                    OpKind::MulS {
-                        dst_lo: gpr(0),
-                        dst_hi: (width != OpWidth::W8).then_some(gpr(2)),
-                        src1: gpr(0),
-                        src2: SrcOperand::Reg(gpr(source)),
+    for signed in [false, true] {
+        for width in [OpWidth::W8, OpWidth::W16, OpWidth::W32, OpWidth::W64] {
+            for flags in [FlagUpdate::None, FlagUpdate::All] {
+                for source in 0u8..32 {
+                    let args = (
+                        gpr(0),
+                        (width != OpWidth::W8).then_some(gpr(2)),
+                        gpr(0),
+                        SrcOperand::Reg(gpr(source)),
                         width,
                         flags,
-                    },
-                );
-                let expected = state_backed(source);
-                assert_eq!(x86_state_imul_candidate(&op), expected);
-                assert_eq!(x86_state_imul_valid(&op), expected);
-                implicit += usize::from(expected);
+                    );
+                    let kind = if signed {
+                        OpKind::MulS {
+                            dst_lo: args.0,
+                            dst_hi: args.1,
+                            src1: args.2,
+                            src2: args.3,
+                            width: args.4,
+                            flags: args.5,
+                        }
+                    } else {
+                        OpKind::MulU {
+                            dst_lo: args.0,
+                            dst_hi: args.1,
+                            src1: args.2,
+                            src2: args.3,
+                            width: args.4,
+                            flags: args.5,
+                        }
+                    };
+                    let op = SmirOp::new(OpId(0), PC, kind);
+                    let expected = state_backed(source);
+                    assert_eq!(x86_state_multiply_candidate(&op), expected);
+                    assert_eq!(x86_state_multiply_valid(&op), expected);
+                    implicit += usize::from(expected);
+                }
             }
         }
     }
-    assert_eq!(implicit, 144);
+    assert_eq!(implicit, 288);
 }
 
 #[test]
@@ -114,8 +132,8 @@ fn state_imul_immediate_validator_exhausts_destination_source_aliases() {
                     );
                     op.x86_hint = Some(hint);
                     let expected = state_backed(dst) || state_backed(src1);
-                    assert_eq!(x86_state_imul_candidate(&op), expected);
-                    assert_eq!(x86_state_imul_valid(&op), expected);
+                    assert_eq!(x86_state_multiply_candidate(&op), expected);
+                    assert_eq!(x86_state_multiply_valid(&op), expected);
                     admitted += usize::from(expected);
                 }
             }
@@ -125,49 +143,73 @@ fn state_imul_immediate_validator_exhausts_destination_source_aliases() {
 }
 
 #[test]
-fn state_imul_gate_admits_valid_and_rejects_malformed_candidates() {
+fn state_multiply_gate_admits_valid_and_rejects_malformed_candidates() {
     let valid = [
-        SmirOp::new(
-            OpId(0),
-            PC,
-            OpKind::MulS {
-                dst_lo: gpr(4),
-                dst_hi: None,
-                src1: gpr(5),
-                src2: SrcOperand::Reg(gpr(16)),
-                width: OpWidth::W64,
-                flags: FlagUpdate::All,
-            },
+        (
+            "truncated signed",
+            SmirOp::new(
+                OpId(0),
+                PC,
+                OpKind::MulS {
+                    dst_lo: gpr(4),
+                    dst_hi: None,
+                    src1: gpr(5),
+                    src2: SrcOperand::Reg(gpr(16)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
         ),
-        SmirOp::new(
-            OpId(0),
-            PC,
-            OpKind::MulS {
-                dst_lo: gpr(0),
-                dst_hi: None,
-                src1: gpr(0),
-                src2: SrcOperand::Reg(gpr(4)),
-                width: OpWidth::W8,
-                flags: FlagUpdate::All,
-            },
+        (
+            "implicit signed byte",
+            SmirOp::new(
+                OpId(0),
+                PC,
+                OpKind::MulS {
+                    dst_lo: gpr(0),
+                    dst_hi: None,
+                    src1: gpr(0),
+                    src2: SrcOperand::Reg(gpr(4)),
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::All,
+                },
+            ),
         ),
-        SmirOp::new(
-            OpId(0),
-            PC,
-            OpKind::MulS {
-                dst_lo: gpr(0),
-                dst_hi: Some(gpr(2)),
-                src1: gpr(0),
-                src2: SrcOperand::Reg(gpr(5)),
-                width: OpWidth::W16,
-                flags: FlagUpdate::None,
-            },
+        (
+            "implicit signed word NF",
+            SmirOp::new(
+                OpId(0),
+                PC,
+                OpKind::MulS {
+                    dst_lo: gpr(0),
+                    dst_hi: Some(gpr(2)),
+                    src1: gpr(0),
+                    src2: SrcOperand::Reg(gpr(5)),
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::None,
+                },
+            ),
+        ),
+        (
+            "implicit unsigned qword",
+            SmirOp::new(
+                OpId(0),
+                PC,
+                OpKind::MulU {
+                    dst_lo: gpr(0),
+                    dst_hi: Some(gpr(2)),
+                    src1: gpr(0),
+                    src2: SrcOperand::Reg(gpr(4)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
         ),
     ];
-    for op in valid {
-        assert!(x86_state_imul_valid(&op));
+    for (name, op) in valid {
+        assert!(x86_state_multiply_valid(&op), "{name}");
         let function = function(op);
-        assert!(is_native_clobber_safe(&function));
+        assert!(is_native_clobber_safe(&function), "{name}");
     }
 
     let virtual_reg = VReg::Virtual(crate::smir::ir::types::VirtualId(0));
@@ -251,12 +293,59 @@ fn state_imul_gate_admits_valid_and_rejects_malformed_candidates() {
                 },
             ),
         ),
+        (
+            "unsigned wrong implicit high destination",
+            SmirOp::new(
+                OpId(0),
+                PC,
+                OpKind::MulU {
+                    dst_lo: gpr(0),
+                    dst_hi: Some(gpr(4)),
+                    src1: gpr(0),
+                    src2: SrcOperand::Reg(gpr(5)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
+        ),
+        (
+            "unsigned truncated shape",
+            SmirOp::new(
+                OpId(0),
+                PC,
+                OpKind::MulU {
+                    dst_lo: gpr(4),
+                    dst_hi: None,
+                    src1: gpr(5),
+                    src2: SrcOperand::Reg(gpr(6)),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::All,
+                },
+            ),
+        ),
     ];
     for (name, op) in malformed {
-        assert!(x86_state_imul_candidate(&op), "{name}");
-        assert!(!x86_state_imul_valid(&op), "{name}");
+        assert!(x86_state_multiply_candidate(&op), "{name}");
+        assert!(!x86_state_multiply_valid(&op), "{name}");
         assert!(!is_native_clobber_safe(&function(op)), "{name}");
     }
+
+    let mut mulx = SmirOp::new(
+        OpId(0),
+        PC,
+        OpKind::MulU {
+            dst_lo: gpr(4),
+            dst_hi: Some(gpr(5)),
+            src1: gpr(2),
+            src2: SrcOperand::Reg(gpr(16)),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        },
+    );
+    mulx.x86_hint = Some(X86OpHint::Mulx);
+    assert!(!x86_state_multiply_candidate(&mulx));
+    assert!(!x86_state_multiply_valid(&mulx));
+    assert!(is_native_clobber_safe(&function(mulx)));
 
     for (name, width, hint, immediate) in [
         ("missing immediate hint", OpWidth::W64, None, 7),
@@ -292,8 +381,8 @@ fn state_imul_gate_admits_valid_and_rejects_malformed_candidates() {
             },
         );
         op.x86_hint = hint;
-        assert!(x86_state_imul_candidate(&op), "{name}");
-        assert!(!x86_state_imul_valid(&op), "{name}");
+        assert!(x86_state_multiply_candidate(&op), "{name}");
+        assert!(!x86_state_multiply_valid(&op), "{name}");
         assert!(!is_native_clobber_safe(&function(op)), "{name}");
     }
 }

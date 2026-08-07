@@ -462,14 +462,14 @@ impl X86_64Lowerer {
                 width,
                 flags,
             } => {
-                if x86_state_imul_candidate(op) {
-                    if !x86_state_imul_valid(op) {
+                if x86_state_multiply_candidate(op) {
+                    if !x86_state_multiply_valid(op) {
                         return Err(LowerError::InvalidOperand {
-                            op: "state-backed IMUL".to_string(),
+                            op: "state-backed multiply".to_string(),
                             operand: format!("invalid state-backed signed multiply {width:?}"),
                         });
                     }
-                    return self.lower_state_imul(op);
+                    return self.lower_state_multiply(op);
                 }
                 let preserve_flags = !flags.updates_any();
                 let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
@@ -645,6 +645,15 @@ impl X86_64Lowerer {
                 width,
                 flags,
             } => {
+                if x86_state_multiply_candidate(op) {
+                    if !x86_state_multiply_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed multiply".to_string(),
+                            operand: format!("invalid state-backed unsigned multiply {width:?}"),
+                        });
+                    }
+                    return self.lower_state_multiply(op);
+                }
                 if matches!(op.x86_hint, Some(X86OpHint::Mulx)) {
                     if !matches!(width, OpWidth::W32 | OpWidth::W64)
                         || *flags != FlagUpdate::None

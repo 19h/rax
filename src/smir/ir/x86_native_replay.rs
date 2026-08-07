@@ -169,6 +169,7 @@ pub(crate) use classifiers::{
 };
 pub(crate) use classifiers::{
     X86EvexMovntdqaMemoryEncoding, X86LegacyHighByteGroup2Kind, X86LegacyHighByteGroup2Replay,
+    X86LegacyHighByteMultiplyKind, X86LegacyHighByteMultiplyReplay,
 };
 
 pub use aggregate::{
@@ -184,7 +185,7 @@ pub struct X86NativeReplaySpan {
     pub end: usize,
     /// Exact instruction to emit. This is normally the source instruction;
     /// documented generation-dependent scalar VEX.L=1 sources and inert-
-    /// prefixed high-byte IMUL sources carry deterministic canonical encodings.
+    /// prefixed high-byte MUL/IMUL sources carry deterministic canonical encodings.
     pub instruction: X86InstructionBytes,
     /// Whether native execution requires AVX-512VL.
     pub needs_avx512vl: bool,
@@ -297,8 +298,9 @@ fn x86_native_replay_spans_where(
                 return None;
             }
             let source_instruction = *instruction_bytes.get(&(block.id, guest_pc))?;
-            let replay_source = source_instruction
-                .legacy_high_byte_imul_replay_instruction()
+            let high_byte_multiply = source_instruction.legacy_high_byte_multiply_replay();
+            let replay_source = high_byte_multiply
+                .map(|replay| replay.canonical_instruction)
                 .unwrap_or(source_instruction);
             let (instruction, (needs_avx512vl, needs_avx512dq, needs_avx512fp16)) =
                 if let Some(requirements) = classify(&replay_source) {
@@ -308,10 +310,10 @@ fn x86_native_replay_spans_where(
                     let requirements = classify(&canonical)?;
                     (canonical, requirements)
                 };
-            if let Some(parent) = source_instruction.legacy_high_byte_imul_parent_index() {
-                let temporary = classifiers::x86_legacy_high_byte_imul_shape_temporary(
+            if let Some(replay) = high_byte_multiply {
+                let temporary = classifiers::x86_legacy_high_byte_multiply_shape_temporary(
                     &block.ops[start..end],
-                    parent,
+                    replay,
                 )?;
                 let (virtual_definitions, virtual_uses) =
                     virtual_counts.get_or_init(|| block_virtual_definition_use_counts(block));

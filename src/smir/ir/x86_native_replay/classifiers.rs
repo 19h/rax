@@ -293,8 +293,8 @@ pub(crate) use fp_round::X86VexRoundMemoryEncoding;
 pub(crate) use fp16_narrow::{X86EvexFp16NarrowMemoryEncoding, X86VexFp16NarrowMemoryEncoding};
 pub(crate) use gfni::{X86EvexGfniAffineMemoryEncoding, X86EvexGfniAffineMemoryReplay};
 pub(crate) use legacy_high_byte::{
-    X86LegacyHighByteGroup2Kind, X86LegacyHighByteGroup2Replay,
-    x86_legacy_high_byte_imul_shape_temporary,
+    X86LegacyHighByteGroup2Kind, X86LegacyHighByteGroup2Replay, X86LegacyHighByteMultiplyKind,
+    X86LegacyHighByteMultiplyReplay, x86_legacy_high_byte_multiply_shape_temporary,
 };
 pub(crate) use packed_move::{X86EvexPackedMoveMemoryEncoding, X86EvexPackedMoveMemoryKind};
 pub(crate) use scalar_convert_memory::{

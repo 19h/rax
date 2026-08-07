@@ -1,4 +1,4 @@
-//! State-backed register IMUL lowering coverage.
+//! State-backed register MUL/IMUL lowering coverage.
 
 use super::*;
 use crate::smir::OpId;
@@ -25,8 +25,19 @@ fn muls(
     }
 }
 
+fn mulu(source: u8, width: OpWidth, flags: FlagUpdate) -> OpKind {
+    OpKind::MulU {
+        dst_lo: gpr(0),
+        dst_hi: (width != OpWidth::W8).then_some(gpr(2)),
+        src1: gpr(0),
+        src2: SrcOperand::Reg(gpr(source)),
+        width,
+        flags,
+    }
+}
+
 #[test]
-fn state_imul_reads_all_sources_before_committing_results() {
+fn state_multiply_reads_all_sources_before_committing_results() {
     let register = lower_single_op(muls(
         4,
         None,
@@ -111,60 +122,77 @@ fn state_imul_reads_all_sources_before_committing_results() {
 }
 
 #[test]
-fn state_implicit_imul_emits_every_architectural_width() {
-    for (width, expected) in [
-        (OpWidth::W8, &[0x40, 0xF6, 0xEF][..]),
-        (OpWidth::W16, &[0x66, 0xF7, 0xEF][..]),
-        (OpWidth::W32, &[0xF7, 0xEF][..]),
-        (OpWidth::W64, &[0x48, 0xF7, 0xEF][..]),
-    ] {
-        let bytes = lower_single_op(muls(
-            0,
-            (width != OpWidth::W8).then_some(2),
-            0,
-            SrcOperand::Reg(gpr(4)),
-            width,
-            FlagUpdate::All,
-        ));
-        assert!(
-            bytes
-                .windows(expected.len())
-                .any(|window| window == expected),
-            "implicit {width:?} IMUL is absent: {bytes:02X?}"
-        );
-        assert!(
-            bytes
-                .windows(4)
-                .any(|window| window == [0x48, 0x8B, 0x78, 0x20])
-                || bytes.windows(3).any(|window| window == [0x8B, 0x78, 0x20])
-                || bytes
+fn state_implicit_multiply_emits_every_architectural_width_and_signedness() {
+    for (signed, digit) in [(false, 4u8), (true, 5u8)] {
+        for (width, prefix) in [
+            (OpWidth::W8, &[0x40, 0xF6][..]),
+            (OpWidth::W16, &[0x66, 0xF7][..]),
+            (OpWidth::W32, &[0xF7][..]),
+            (OpWidth::W64, &[0x48, 0xF7][..]),
+        ] {
+            let kind = if signed {
+                muls(
+                    0,
+                    (width != OpWidth::W8).then_some(2),
+                    0,
+                    SrcOperand::Reg(gpr(4)),
+                    width,
+                    FlagUpdate::All,
+                )
+            } else {
+                mulu(4, width, FlagUpdate::All)
+            };
+            let bytes = lower_single_op(kind);
+            let mut expected = prefix.to_vec();
+            expected.push(0xC7 | (digit << 3));
+            assert!(
+                bytes
+                    .windows(expected.len())
+                    .any(|window| window == expected),
+                "implicit {width:?} signed={signed} multiply is absent: {bytes:02X?}"
+            );
+            assert!(
+                bytes
                     .windows(4)
-                    .any(|window| window == [0x66, 0x8B, 0x78, 0x20])
-                || bytes
-                    .windows(4)
-                    .any(|window| window == [0x40, 0x8A, 0x78, 0x20]),
-            "implicit {width:?} IMUL must source guest RSP state: {bytes:02X?}"
-        );
+                    .any(|window| window == [0x48, 0x8B, 0x78, 0x20])
+                    || bytes.windows(3).any(|window| window == [0x8B, 0x78, 0x20])
+                    || bytes
+                        .windows(4)
+                        .any(|window| window == [0x66, 0x8B, 0x78, 0x20])
+                    || bytes
+                        .windows(4)
+                        .any(|window| window == [0x40, 0x8A, 0x78, 0x20]),
+                "implicit {width:?} multiply must source guest RSP state: {bytes:02X?}"
+            );
+        }
     }
 
-    let nf = lower_single_op(muls(
-        0,
-        Some(2),
-        0,
-        SrcOperand::Reg(gpr(5)),
-        OpWidth::W64,
-        FlagUpdate::None,
-    ));
-    let group3 = nf
-        .windows(3)
-        .position(|bytes| bytes == [0x48, 0xF7, 0xEF])
-        .expect("flag-suppressed implicit IMUL");
-    assert!(nf[..group3].contains(&0x9C), "missing PUSHFQ: {nf:02X?}");
-    assert!(nf[group3 + 3..].contains(&0x9D), "missing POPFQ: {nf:02X?}");
+    for (kind, expected) in [
+        (mulu(5, OpWidth::W64, FlagUpdate::None), [0x48, 0xF7, 0xE7]),
+        (
+            muls(
+                0,
+                Some(2),
+                0,
+                SrcOperand::Reg(gpr(5)),
+                OpWidth::W64,
+                FlagUpdate::None,
+            ),
+            [0x48, 0xF7, 0xEF],
+        ),
+    ] {
+        let nf = lower_single_op(kind);
+        let group3 = nf
+            .windows(3)
+            .position(|bytes| bytes == expected)
+            .expect("flag-suppressed implicit multiply");
+        assert!(nf[..group3].contains(&0x9C), "missing PUSHFQ: {nf:02X?}");
+        assert!(nf[group3 + 3..].contains(&0x9D), "missing POPFQ: {nf:02X?}");
+    }
 }
 
 #[test]
-fn state_imul_lowering_rejects_malformed_candidates() {
+fn state_multiply_lowering_rejects_malformed_candidates() {
     let malformed = [
         muls(
             4,
@@ -190,11 +218,27 @@ fn state_imul_lowering_rejects_malformed_candidates() {
             OpWidth::W64,
             FlagUpdate::All,
         ),
+        OpKind::MulU {
+            dst_lo: gpr(0),
+            dst_hi: Some(gpr(4)),
+            src1: gpr(0),
+            src2: SrcOperand::Reg(gpr(5)),
+            width: OpWidth::W64,
+            flags: FlagUpdate::All,
+        },
+        OpKind::MulU {
+            dst_lo: gpr(4),
+            dst_hi: None,
+            src1: gpr(5),
+            src2: SrcOperand::Reg(gpr(6)),
+            width: OpWidth::W32,
+            flags: FlagUpdate::All,
+        },
     ];
     for kind in malformed {
         let op = SmirOp::new(OpId(0), 0x1000, kind.clone());
-        assert!(x86_state_imul_candidate(&op));
-        assert!(!x86_state_imul_valid(&op));
+        assert!(x86_state_multiply_candidate(&op));
+        assert!(!x86_state_multiply_valid(&op));
         assert!(matches!(
             lower_single_op_err(kind),
             LowerError::InvalidOperand { .. } | LowerError::InvalidRegister(_)
@@ -204,7 +248,7 @@ fn state_imul_lowering_rejects_malformed_candidates() {
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[test]
-fn native_state_imul_matches_independent_signed_product_oracle() {
+fn native_state_multiply_matches_independent_product_oracle() {
     use crate::smir::lower::runtime::{ExecMem, GuestRegs};
 
     const CF: u64 = 1 << 0;
@@ -238,31 +282,42 @@ fn native_state_imul_matches_independent_signed_product_oracle() {
     }
 
     fn oracle(kind: &OpKind, entry: &[u64; 32]) -> ([u64; 32], bool) {
-        let OpKind::MulS {
-            dst_lo,
-            dst_hi,
-            src1,
-            src2,
-            width,
-            ..
-        } = kind
-        else {
-            unreachable!()
-        };
-        let left = signed(entry[index(*src1)], *width);
-        let right = match src2 {
-            SrcOperand::Reg(reg) => signed(entry[index(*reg)], *width),
-            SrcOperand::Imm(value) => signed(*value as u64, *width),
+        let (signed_product, dst_lo, dst_hi, src1, src2, width) = match kind {
+            OpKind::MulS {
+                dst_lo,
+                dst_hi,
+                src1,
+                src2,
+                width,
+                ..
+            } => (true, dst_lo, dst_hi, src1, src2, width),
+            OpKind::MulU {
+                dst_lo,
+                dst_hi,
+                src1,
+                src2,
+                width,
+                ..
+            } => (false, dst_lo, dst_hi, src1, src2, width),
             _ => unreachable!(),
         };
-        let product = left * right;
         let bits = width.bits() as u32;
         let mask = (1u128 << bits) - 1;
-        let encoded = product as u128;
+        let right_bits = match src2 {
+            SrcOperand::Reg(reg) => u128::from(entry[index(*reg)]) & mask,
+            SrcOperand::Imm(value) => (*value as u128) & mask,
+            _ => unreachable!(),
+        };
+        let (encoded, overflow) = if signed_product {
+            let product = signed(entry[index(*src1)], *width) * signed(right_bits as u64, *width);
+            let low = (product as u128 & mask) as u64;
+            (product as u128, signed(low, *width) != product)
+        } else {
+            let product = (u128::from(entry[index(*src1)]) & mask) * right_bits;
+            (product, product > mask)
+        };
         let low = (encoded & mask) as u64;
         let high = ((encoded >> bits) & mask) as u64;
-        let truncated = signed(low, *width);
-        let overflow = truncated != product;
 
         let mut expected = *entry;
         if *width == OpWidth::W8 && dst_hi.is_none() {
@@ -398,6 +453,31 @@ fn native_state_imul_matches_independent_signed_product_oracle() {
             ),
             None,
         ),
+        (
+            "unsigned implicit byte stack",
+            mulu(4, OpWidth::W8, FlagUpdate::All),
+            None,
+        ),
+        (
+            "unsigned implicit word stack",
+            mulu(5, OpWidth::W16, FlagUpdate::All),
+            None,
+        ),
+        (
+            "unsigned implicit dword EGPR",
+            mulu(16, OpWidth::W32, FlagUpdate::All),
+            None,
+        ),
+        (
+            "unsigned implicit qword stack",
+            mulu(4, OpWidth::W64, FlagUpdate::All),
+            None,
+        ),
+        (
+            "unsigned APX NF preserves flags",
+            mulu(5, OpWidth::W64, FlagUpdate::None),
+            None,
+        ),
     ];
 
     for (name, kind, hint) in cases {
@@ -434,6 +514,9 @@ fn native_state_imul_matches_independent_signed_product_oracle() {
             if matches!(
                 kind,
                 OpKind::MulS {
+                    flags: FlagUpdate::None,
+                    ..
+                } | OpKind::MulU {
                     flags: FlagUpdate::None,
                     ..
                 }
