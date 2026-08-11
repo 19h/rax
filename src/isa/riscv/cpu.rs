@@ -4187,6 +4187,40 @@ mod tests {
         assert_eq!(c.csr_read(0x344).unwrap() & MIP_MEIP, 0);
     }
 
+    #[cfg(all(
+        feature = "smir-jit",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    ))]
+    #[test]
+    fn jit_does_not_admit_illegal_compressed_encoding() {
+        use crate::smir::optimize::OptLevel;
+
+        // C.LUI with rd=x0 is reserved and must raise an illegal-instruction
+        // trap instead of becoming an empty native block.
+        let reserved = 0x6005u16;
+        let mut interpreter = cpu();
+        assert!(matches!(
+            run_half(&mut interpreter, reserved),
+            RiscVExit::Trap(Trap {
+                cause: cause::ILLEGAL_INSTR,
+                ..
+            })
+        ));
+
+        let mut jit = cpu();
+        jit.write_memory(jit.pc(), &reserved.to_le_bytes()).unwrap();
+        assert!(matches!(
+            jit.step_jit(OptLevel::O0),
+            RiscVExit::Trap(Trap {
+                cause: cause::ILLEGAL_INSTR,
+                ..
+            })
+        ));
+        let stats = jit.jit_stats();
+        assert_eq!(stats.native_executions, 0);
+        assert_eq!(stats.interpreter_fallbacks, 1);
+    }
+
     #[test]
     fn fcsr_subfields() {
         let mut c = cpu();

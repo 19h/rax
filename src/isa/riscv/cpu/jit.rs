@@ -369,6 +369,13 @@ impl RiscVCpu {
 }
 
 fn decoded_native_boundary(cfg: RiscVConfig, insn: &Insn) -> bool {
+    // The interpreter owns illegal-instruction trap delivery.  Keep decoder
+    // legality separate from the hand-written lifter so an invalid encoding
+    // cannot become an empty or partial native block.
+    if insn.is_illegal() {
+        return false;
+    }
+
     // Control-flow instruction-alignment traps without C are currently an
     // interpreter-only boundary: the scalar lifter represents only the target.
     if !cfg.isa.c
