@@ -55,24 +55,25 @@ impl RiscVLifter {
         };
 
         let mut ops = Vec::new();
-
-        if let Some(dst) = self.def_x_reg(rd, ctx) {
-            let address = Address::BaseOffset {
-                base: rs1,
-                offset: imm,
-                disp_size: DispSize::Auto,
-            };
-            ops.push(SmirOp::new(
-                ctx.next_op_id(),
-                addr,
-                OpKind::Load {
-                    dst,
-                    addr: address,
-                    width,
-                    sign,
-                },
-            ));
-        }
+        // x0 suppresses only the architectural register write. The memory
+        // access must remain observable and faulting, so discard its value into
+        // a temporary virtual register.
+        let dst = self.def_x_reg(rd, ctx).unwrap_or_else(|| ctx.alloc_vreg());
+        let address = Address::BaseOffset {
+            base: rs1,
+            offset: imm,
+            disp_size: DispSize::Auto,
+        };
+        ops.push(SmirOp::new(
+            ctx.next_op_id(),
+            addr,
+            OpKind::Load {
+                dst,
+                addr: address,
+                width,
+                sign,
+            },
+        ));
 
         Ok((ops, ControlFlow::NextInsn))
     }
