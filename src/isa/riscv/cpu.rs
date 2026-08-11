@@ -16,6 +16,7 @@ use super::memory::{MemError, Memory};
 use super::{Isa, Xlen};
 
 mod csr_ops;
+mod execution;
 #[cfg(all(
     feature = "smir-jit",
     any(target_arch = "x86_64", target_arch = "aarch64")
@@ -555,55 +556,6 @@ impl RiscVCpu {
         } else {
             v as i64
         }
-    }
-
-    // ---------------------------------------------------------------
-    // Execution loop.
-    // ---------------------------------------------------------------
-
-    /// Fetch, decode and execute one instruction.
-    pub fn step(&mut self) -> RiscVExit {
-        if let Some(trap) = self.pending_machine_interrupt() {
-            self.deliver_trap(trap, self.pc);
-            return RiscVExit::Continue;
-        }
-
-        let pc = self.pc;
-        let insn = match decode_at(self.mem.as_ref(), pc, self.cfg.xlen, &self.cfg.isa) {
-            Ok(i) => i,
-            Err(DecodeError::Fetch(_)) => {
-                let trap = Trap {
-                    cause: cause::INSTR_ACCESS_FAULT,
-                    tval: pc,
-                };
-                self.deliver_trap(trap, pc);
-                return RiscVExit::Trap(trap);
-            }
-        };
-        self.cycle = self.cycle.wrapping_add(1);
-        match self.execute(&insn, pc) {
-            Ok(exit) => {
-                self.instret = self.instret.wrapping_add(1);
-                exit
-            }
-            Err(trap) => {
-                self.deliver_trap(trap, pc);
-                RiscVExit::Trap(trap)
-            }
-        }
-    }
-
-    /// Run until a non-`Continue` exit or `max_insns` instructions retire.
-    /// Returns the exit that stopped the loop (`Continue` only if the budget
-    /// was exhausted).
-    pub fn run(&mut self, max_insns: u64) -> RiscVExit {
-        for _ in 0..max_insns {
-            match self.step() {
-                RiscVExit::Continue => {}
-                other => return other,
-            }
-        }
-        RiscVExit::Continue
     }
 
     /// Deliver a trap to M-mode.
