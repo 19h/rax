@@ -1856,6 +1856,12 @@ impl RiscVCpu {
                 }
             }
             Op::Vid => {
+                // vid.v is a VMUNARY0 instruction; the vs2 field is reserved
+                // and must be v0 (RVV §11.14), otherwise the encoding is
+                // reserved.
+                if vs2 != 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 // vd[i] = i (element index); source vs2 ignored.
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);

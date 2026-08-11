@@ -4535,6 +4535,29 @@ mod tests {
     }
 
     #[test]
+    fn vid_rejects_nonzero_vs2() {
+        // vid.v is a VMUNARY0 instruction whose vs2 field is reserved and
+        // must be v0 (RVV §11.14); any other vs2 is a reserved encoding.
+        for w in [
+            op_v(0b010100, 1, 16, 0b10001, 0b010, 1), // vid.v v1, v16
+            op_v(0b010100, 0, 3, 0b10001, 0b010, 1),  // vid.v v1, v3 (vm=0)
+        ] {
+            assert!(matches!(
+                run_one(&mut cpu_e8m1(), w),
+                RiscVExit::Trap(Trap {
+                    cause: cause::ILLEGAL_INSTR,
+                    ..
+                })
+            ));
+        }
+        // vid.v v1, v0 is legal.
+        assert!(matches!(
+            run_one(&mut cpu_e8m1(), op_v(0b010100, 1, 0, 0b10001, 0b010, 1)),
+            RiscVExit::Continue
+        ));
+    }
+
+    #[test]
     fn vrgather_rejects_overlapping_operands() {
         // vrgather.vv (funct6 001100, vv) with vd overlapping vs2 is reserved.
         assert!(matches!(
