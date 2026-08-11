@@ -66,7 +66,8 @@ impl RiscVLifter {
     ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
         let count = match decoded.rd {
             4 => 1,
-            5 | 6 => 3,
+            5 => 2,
+            6 => 3,
             7..=14 => usize::from(decoded.rd - 3),
             15 => 13,
             _ => {

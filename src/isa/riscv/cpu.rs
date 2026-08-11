@@ -4529,7 +4529,8 @@ fn acc_fault(store: bool, addr: u64) -> Trap {
 fn zcmp_reg_count(rlist: u8) -> Option<usize> {
     match rlist {
         4 => Some(1),
-        5 | 6 => Some(3),
+        5 => Some(2),
+        6 => Some(3),
         7..=14 => Some((rlist - 3) as usize),
         15 => Some(13),
         _ => None,
@@ -5779,10 +5780,9 @@ mod tests {
 
         let cm_push = ((0b101 << 13) | (0x18 << 8) | (5 << 4) | 0b10) as u16;
         run_half(&mut c, cm_push);
-        assert_eq!(c.x(2), 0x7fe0);
-        assert_eq!(c.mem_read_u64(0x7ff8).unwrap(), 0x9999);
-        assert_eq!(c.mem_read_u64(0x7ff0).unwrap(), 0x8888);
-        assert_eq!(c.mem_read_u64(0x7fe8).unwrap(), 0x1235);
+        assert_eq!(c.x(2), 0x7ff0);
+        assert_eq!(c.mem_read_u64(0x7ff8).unwrap(), 0x8888);
+        assert_eq!(c.mem_read_u64(0x7ff0).unwrap(), 0x1235);
 
         c.set_x(1, 0);
         c.set_x(8, 0);
@@ -5793,7 +5793,7 @@ mod tests {
         assert_eq!(c.x(2), 0x8000);
         assert_eq!(c.x(1), 0x1235);
         assert_eq!(c.x(8), 0x8888);
-        assert_eq!(c.x(9), 0x9999);
+        assert_eq!(c.x(9), 0);
         assert_eq!(c.x(10), 0);
         assert_eq!(c.pc(), 0x1234);
     }

@@ -1035,7 +1035,8 @@ impl fmt::Display for Insn {
 fn zcmp_rlist(rlist: u8) -> String {
     let Some(last) = (match rlist {
         4 => Some("ra"),
-        5 | 6 => Some("s1"),
+        5 => Some("s0"),
+        6 => Some("s1"),
         7 => Some("s2"),
         8 => Some("s3"),
         9 => Some("s4"),
@@ -1051,6 +1052,8 @@ fn zcmp_rlist(rlist: u8) -> String {
     };
     if rlist == 4 {
         "{ra}".to_string()
+    } else if rlist == 5 {
+        "{ra,s0}".to_string()
     } else {
         format!("{{ra,s0-{last}}}")
     }
@@ -1329,7 +1332,7 @@ mod tests {
         let cm_push = ((0b101 << 13) | (0x18 << 8) | (5 << 4) | (1 << 2) | 0b10) as u16;
         assert_eq!(
             decode_compressed(cm_push, Xlen::Rv64, &isa).to_string(),
-            "cm.push {ra,s0-s1}, -48"
+            "cm.push {ra,s0}, -32"
         );
 
         let cm_jalt = ((0b101 << 13) | (32 << 2) | 0b10) as u16;
