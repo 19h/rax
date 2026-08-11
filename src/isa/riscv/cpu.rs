@@ -2060,7 +2060,7 @@ impl RiscVCpu {
             Csr::Mtvec => self.mtvec = value,
             Csr::Mcounteren => self.mcounteren = value,
             Csr::Mscratch => self.mscratch = value,
-            Csr::Mepc => self.mepc = value & !1,
+            Csr::Mepc => self.mepc = value & if self.cfg.isa.c { !1 } else { !3 },
             Csr::Mcause => self.mcause = value,
             Csr::Mtval => self.mtval = value,
             Csr::Mip => self.mip = value,
@@ -4532,6 +4532,31 @@ mod tests {
             run_one(&mut c, op_v(0b010010, 1, 2, 0b10100, 0b001, 1)),
             RiscVExit::Trap(_)
         ));
+    }
+
+    #[test]
+    fn mepc_ialign_respects_c_extension() {
+        // mepc write clears only bit 0 with C; without C (IALIGN=32) it
+        // clears bits 0-1 (WARL).
+        let mut c = cpu();
+        c.set_x(5, 0x1003);
+        run_one(&mut c, csr(0x341, 5, 0b001, 0)); // csrw mepc, x5
+        run_one(&mut c, csr(0x341, 0, 0b010, 6)); // csrr x6, mepc
+        assert_eq!(c.x(6), 0x1002);
+        let mut c = RiscVCpu::new(
+            RiscVConfig {
+                xlen: Xlen::Rv64,
+                isa: Isa {
+                    zicsr: true,
+                    ..Isa::rv_i()
+                },
+            },
+            Box::new(FlatMemory::new(0, 0x1_0000)),
+        );
+        c.set_x(5, 0x1003);
+        run_one(&mut c, csr(0x341, 5, 0b001, 0)); // csrw mepc, x5
+        run_one(&mut c, csr(0x341, 0, 0b010, 6)); // csrr x6, mepc
+        assert_eq!(c.x(6), 0x1000);
     }
 
     #[test]
