@@ -142,6 +142,39 @@ fn lifted_rv_vector_reserved_encodings_fail_closed_transactionally() {
                 ..initial
             },
         ),
+        // vmv.v.v shares vmerge's encoding but reserves vs2 to v0.
+        (
+            (0b010111 << 26) | (1 << 25) | (3 << 20) | (4 << 15) | (0b000 << 12) | (2 << 7) | 0x57,
+            RiscVGuestRegs {
+                vtype: 0, // e8,m1
+                ..initial
+            },
+        ),
+        // vadd.vv v1,v2,v4 under m2 has a misaligned destination group.
+        (
+            (1 << 25) | (2 << 20) | (4 << 15) | (0b000 << 12) | (1 << 7) | 0x57,
+            RiscVGuestRegs {
+                vtype: 0x11, // e32,m2
+                ..initial
+            },
+        ),
+        // Reductions are non-restartable and reject a nonzero vstart.
+        (
+            (1 << 25) | (2 << 20) | (3 << 15) | (0b010 << 12) | (1 << 7) | 0x57,
+            RiscVGuestRegs {
+                vstart: 1,
+                vtype: 0x11, // e32,m2
+                ..initial
+            },
+        ),
+        // Ordinary vector arithmetic depends on vtype and traps under vill.
+        (
+            (1 << 25) | (2 << 20) | (4 << 15) | (0b000 << 12) | (2 << 7) | 0x57,
+            RiscVGuestRegs {
+                vtype: 1u64 << 63,
+                ..initial
+            },
+        ),
     ];
 
     for (instruction, state) in cases {
@@ -182,4 +215,55 @@ fn lifted_vfncvt_fp16_to_integer8_matches_direct_at_o0_and_o2() {
             | 0x57;
         run_vector_case(instruction, initial, [0xa5; MEMORY_LEN], false);
     }
+}
+
+#[test]
+fn lifted_followup_rvv_controls_match_direct_at_o0_and_o2() {
+    let mut initial = RiscVGuestRegs {
+        vl: 4,
+        vtype: 0,
+        ..Default::default()
+    };
+    initial.v[4] = [3; 16];
+
+    // Legal vmv.v.v with the reserved vs2 field set to v0.
+    run_vector_case(
+        (0b010111 << 26) | (1 << 25) | (4 << 15) | (0b000 << 12) | (2 << 7) | 0x57,
+        initial,
+        [0xa5; MEMORY_LEN],
+        false,
+    );
+
+    // Aligned vadd.vv groups under LMUL=2.
+    run_vector_case(
+        (1 << 25) | (2 << 20) | (4 << 15) | (0b000 << 12) | 0x57,
+        RiscVGuestRegs {
+            vtype: 0x11,
+            ..initial
+        },
+        [0xa5; MEMORY_LEN],
+        false,
+    );
+
+    // Reduction with vstart=0 remains legal.
+    run_vector_case(
+        (1 << 25) | (2 << 20) | (3 << 15) | (0b010 << 12) | (1 << 7) | 0x57,
+        RiscVGuestRegs {
+            vtype: 0x11,
+            ..initial
+        },
+        [0xa5; MEMORY_LEN],
+        false,
+    );
+
+    // vsetvli clears a guest-supplied nonzero vstart.
+    run_vector_case(
+        (7 << 12) | (1 << 7) | 0x57,
+        RiscVGuestRegs {
+            vstart: 7,
+            ..initial
+        },
+        [0xa5; MEMORY_LEN],
+        false,
+    );
 }

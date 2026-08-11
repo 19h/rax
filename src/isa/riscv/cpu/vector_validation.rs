@@ -199,6 +199,26 @@ fn validate_reduction_source_group(cpu: &RiscVCpu, insn: &Insn) -> Result<(), Tr
     Ok(())
 }
 
+fn validate_reduction(cpu: &RiscVCpu, insn: &Insn) -> Result<(), Trap> {
+    // Reductions are architecturally non-restartable. Their traps are always
+    // reported at element zero, so a guest-supplied nonzero vstart is illegal.
+    if cpu.vstart != 0 {
+        return Err(illegal(insn));
+    }
+    validate_reduction_source_group(cpu, insn)
+}
+
+fn validate_same_width_integer_alu(cpu: &RiscVCpu, insn: &Insn) -> Result<(), Trap> {
+    // Every same-width vector operand names the LMUL-sized register group.
+    // Scalar/immediate forms retain only vd and vs2 as vector groups.
+    same_width_group(cpu, insn, insn.rd)?;
+    same_width_group(cpu, insn, insn.rs2)?;
+    if insn.funct3 == 0b000 {
+        same_width_group(cpu, insn, insn.rs1)?;
+    }
+    Ok(())
+}
+
 fn is_vector_fp_encoding(insn: &Insn) -> bool {
     // OPFVV and OPFVF are the complete floating-point classes under OP-V.
     // Classifying the encoding, rather than maintaining an operation whitelist,
@@ -236,6 +256,13 @@ pub(super) fn validate(cpu: &RiscVCpu, insn: &Insn, vm: bool) -> Result<(), Trap
     }
 
     match insn.op {
+        Op::Vmerge if vm => {
+            // vmv.v.v/vx/vi share the vmerge encoding. The vm=1 move forms
+            // reserve vs2 and require that field to encode v0.
+            if insn.rs2 != 0 {
+                return Err(illegal(insn));
+            }
+        }
         Op::Vmsbf | Op::Vmsif | Op::Vmsof => {
             if cpu.vstart != 0 || insn.rd == insn.rs2 || (!vm && insn.rd == 0) {
                 return Err(illegal(insn));
@@ -256,6 +283,19 @@ pub(super) fn validate(cpu: &RiscVCpu, insn: &Insn, vm: bool) -> Result<(), Trap
         Op::Vslideup | Op::Vslide1up | Op::Vfslide1up => {
             validate_slide_up(cpu, insn)?;
         }
+        Op::Vadd
+        | Op::Vsub
+        | Op::Vrsub
+        | Op::Vand
+        | Op::Vor
+        | Op::Vxor
+        | Op::Vminu
+        | Op::Vmin
+        | Op::Vmaxu
+        | Op::Vmax
+        | Op::Vsll
+        | Op::Vsrl
+        | Op::Vsra => validate_same_width_integer_alu(cpu, insn)?,
         Op::Vnsrl
         | Op::Vnsra
         | Op::Vnclipu
@@ -306,9 +346,22 @@ pub(super) fn validate(cpu: &RiscVCpu, insn: &Insn, vm: bool) -> Result<(), Trap
         Op::VzextVf2 | Op::VsextVf2 => validate_extension(cpu, insn, 2)?,
         Op::VzextVf4 | Op::VsextVf4 => validate_extension(cpu, insn, 4)?,
         Op::VzextVf8 | Op::VsextVf8 => validate_extension(cpu, insn, 8)?,
-        Op::Vwredsumu | Op::Vwredsum | Op::Vfwredusum | Op::Vfwredosum => {
-            validate_reduction_source_group(cpu, insn)?;
-        }
+        Op::Vredsum
+        | Op::Vredand
+        | Op::Vredor
+        | Op::Vredxor
+        | Op::Vredminu
+        | Op::Vredmin
+        | Op::Vredmaxu
+        | Op::Vredmax
+        | Op::Vfredusum
+        | Op::Vfredosum
+        | Op::Vfredmin
+        | Op::Vfredmax
+        | Op::Vwredsumu
+        | Op::Vwredsum
+        | Op::Vfwredusum
+        | Op::Vfwredosum => validate_reduction(cpu, insn)?,
         _ => {}
     }
 
@@ -428,6 +481,28 @@ mod tests {
         assert_illegal(vid(0, 3), E8_M1, 4, 0, 0);
         assert_legal(vid(1, 0), E8_M1, 4, 0, 0);
         assert_legal(vid(0, 0), E8_M1, 4, 0, 0);
+    }
+
+    #[test]
+    fn vmv_forms_require_reserved_vs2_field_to_name_v0() {
+        for funct3 in [0b000, 0b100, 0b011] {
+            assert_illegal(op_v(0b010111, 1, 7, 4, funct3, 2), E8_M1, 4, 0, 0);
+            assert_legal(op_v(0b010111, 1, 0, 4, funct3, 2), E8_M1, 4, 0, 0);
+        }
+    }
+
+    #[test]
+    fn same_width_integer_groups_must_be_aligned() {
+        // e32,m2 makes vd, vs2, and the vv-form vs1 two-register groups.
+        let vadd = |vd, vs2, src, funct3| op_v(0b000000, 1, vs2, src, funct3, vd);
+        assert_illegal(vadd(1, 2, 4, 0b000), E32_M2, 2, 0, 0);
+        assert_illegal(vadd(0, 3, 4, 0b000), E32_M2, 2, 0, 0);
+        assert_illegal(vadd(0, 2, 5, 0b000), E32_M2, 2, 0, 0);
+        assert_legal(vadd(0, 2, 4, 0b000), E32_M2, 2, 0, 0);
+
+        // Scalar and immediate fields are not vector groups.
+        assert_legal(vadd(0, 2, 5, 0b100), E32_M2, 2, 0, 0);
+        assert_legal(vadd(0, 2, 5, 0b011), E32_M2, 2, 0, 0);
     }
 
     #[test]
@@ -714,6 +789,24 @@ mod tests {
 
             // vs2 itself remains an LMUL-sized vector group.
             assert_illegal(op_v(funct6, 1, 1, 3, funct3, 4), E32_M2, 1, 0, 0);
+        }
+    }
+
+    #[test]
+    fn every_reduction_rejects_nonzero_vstart_and_validates_vector_source() {
+        let forms = [
+            (0b000000, 0b010), // vredsum.vs
+            (0b000001, 0b001), // vfredusum.vs
+            (0b110000, 0b000), // vwredsumu.vs
+            (0b110001, 0b001), // vfwredusum.vs
+        ];
+        for (funct6, funct3) in forms {
+            let legal = op_v(funct6, 1, 2, 3, funct3, 1);
+            assert_illegal(legal, E32_M2, 2, 1, 0);
+            assert_legal(legal, E32_M2, 2, 0, 0);
+
+            let misaligned_vs2 = op_v(funct6, 1, 1, 3, funct3, 1);
+            assert_illegal(misaligned_vs2, E32_M2, 2, 0, 0);
         }
     }
 

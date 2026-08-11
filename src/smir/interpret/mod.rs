@@ -1327,10 +1327,10 @@ fn forward_rv_vector_scalar_state(ctx: &mut SmirContext, state: &RvVectorState) 
 /// into a transient `RiscVCpu` (over a bridge to the SMIR memory), running the
 /// qemu-verified vector engine, and reading the full result state back. RVV
 /// element width/count are runtime `vtype`/`vl` state, so this opaque delegation
-/// is the only faithful lift. On a trap, scalar/vector results are not committed
-/// and the interpreter exits at the instruction PC. The direct memory bridge
-/// retains any lane writes performed by the vector engine before a fault;
-/// detailed partial-completion and `vstart` reporting remain a dispatcher gap.
+/// is the only faithful lift. The interpreter exits at the instruction PC on a
+/// trap. Precise vector-memory traps publish the faulting element in `vstart`
+/// and retain completed load elements; illegal encodings remain fully
+/// transactional.
 fn exec_rv_vector(
     ctx: &mut SmirContext,
     memory: &mut dyn SmirMemory,
@@ -1386,13 +1386,38 @@ fn exec_rv_vector(
 
     let isa = crate::isa::riscv::Isa::rv64gc();
     let d = crate::isa::riscv::decode(insn, decode_xlen, &isa);
-    if d.is_illegal()
-        || !matches!(
-            cpu.execute_insn(&d, pc),
-            Ok(crate::isa::riscv::RiscVExit::Continue)
-        )
-    {
+    if d.is_illegal() {
         forward_rv_vector_scalar_state(ctx, state);
+        ctx.request_exit(ExitReason::Undefined {
+            addr: guest_pc,
+            opcode: insn,
+        });
+        return;
+    }
+
+    let execution = cpu.execute_insn(&d, pc);
+    if !matches!(execution, Ok(crate::isa::riscv::RiscVExit::Continue)) {
+        forward_rv_vector_scalar_state(ctx, state);
+
+        if let Err(trap) = execution
+            && matches!(
+                trap.cause,
+                crate::isa::riscv::cpu::cause::LOAD_MISALIGNED
+                    | crate::isa::riscv::cpu::cause::LOAD_ACCESS_FAULT
+                    | crate::isa::riscv::cpu::cause::STORE_MISALIGNED
+                    | crate::isa::riscv::cpu::cause::STORE_ACCESS_FAULT
+            )
+        {
+            let vstart_out = cpu.vstart();
+            ctx.write_vreg(state.vstart_dst, vstart_out);
+            if let ArchRegState::RiscV(rv) = &mut ctx.arch_regs {
+                for register in 0..32u8 {
+                    rv.v[register as usize] = cpu.vreg(register);
+                }
+                rv.vstart = vstart_out;
+            }
+        }
+
         ctx.request_exit(ExitReason::Undefined {
             addr: guest_pc,
             opcode: insn,
