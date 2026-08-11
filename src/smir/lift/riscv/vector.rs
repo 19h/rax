@@ -1,7 +1,7 @@
 //! vector.rs
 
 use crate::isa::riscv::{
-    Isa as RvIsa, Op as RvOp, Xlen as RvXlen, decode as rv_decode, rvc::decode_rvc as rv_decode_rvc,
+    Op as RvOp, Xlen as RvXlen, decode as rv_decode, rvc::decode_rvc as rv_decode_rvc,
 };
 use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, RvVectorState, SmirOp};
@@ -28,7 +28,7 @@ impl RiscVLifter {
         } else {
             RvXlen::Rv32
         };
-        let d = rv_decode(insn, xl, &RvIsa::rv64gc());
+        let d = rv_decode(insn, xl, &self.decoder_isa());
         if d.is_illegal() {
             return Err(LiftError::InvalidEncoding {
                 addr,

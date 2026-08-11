@@ -566,6 +566,43 @@ mod tests {
     }
 
     #[test]
+    fn fp_and_vector_helpers_decode_with_the_configured_profile() {
+        let fld = i_type(0, 1, 0b011, 1, 0x07);
+        let fadd_d = r_type(0b0000001, 2, 1, 0, 3, 0x53);
+        let fmadd_d = (3 << 27) | (0b01 << 25) | (2 << 20) | (1 << 15) | (4 << 7) | 0x43;
+        let vadd = 0x0221_80d7; // vadd.vv v1,v2,v3
+
+        // Keep F enabled so each double-precision encoding reaches its helper;
+        // disabling F at the outer dispatcher would not exercise the decoder.
+        let single_only = RiscVExtensions {
+            f: true,
+            d: false,
+            ..RiscVExtensions::rv64imac()
+        };
+        for word in [fld, fadd_d, fmadd_d] {
+            assert_invalid_lift(RiscVLifter::new_rv64(single_only), word);
+        }
+
+        let no_vector = RiscVExtensions {
+            v: false,
+            ..RiscVExtensions::rv64gc()
+        };
+        assert_invalid_lift(RiscVLifter::new_rv64(no_vector), vadd);
+
+        // Controls establish that the same encodings lift when their required
+        // profile bits are enabled.
+        for word in [fld, fadd_d, fmadd_d, vadd] {
+            let mut lifter = RiscVLifter::rv64gc();
+            let mut ctx = test_ctx();
+            assert!(
+                lifter
+                    .lift_insn(0x1000, &word.to_le_bytes(), &mut ctx)
+                    .is_ok()
+            );
+        }
+    }
+
+    #[test]
     fn rv32_pack_uses_16_bit_halves_and_32_bit_result() {
         let pack = r_type(0b0000100, 2, 1, 0b100, 3, 0x33);
         let mut lifter = RiscVLifter::new_rv32(RiscVExtensions {
