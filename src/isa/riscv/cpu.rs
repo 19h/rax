@@ -2116,6 +2116,12 @@ impl RiscVCpu {
         if isa.c {
             bits |= 1 << 2;
         }
+        if isa.h {
+            bits |= 1 << 7;
+        }
+        if isa.v {
+            bits |= 1 << 21;
+        }
         (mxl << shift) | bits
     }
 
@@ -4083,6 +4089,24 @@ mod tests {
             run_one(&mut c, csr(0xC00, 4, 1, 5)),
             RiscVExit::Trap(_)
         ));
+    }
+
+    #[test]
+    fn misa_reports_enabled_h_and_v() {
+        // Default rv64gc enables both H and V; the MISA bitmap must show them.
+        let c = cpu();
+        let misa = c.csr_read(0x301).unwrap();
+        assert_ne!(misa & (1 << 7), 0); // H
+        assert_ne!(misa & (1 << 21), 0); // V
+
+        // A profile without H/V must not report them.
+        let mut cfg = RiscVConfig::rv64gc();
+        cfg.isa.h = false;
+        cfg.isa.v = false;
+        let c = RiscVCpu::new(cfg, Box::new(FlatMemory::new(0, 0x1_0000)));
+        let misa = c.csr_read(0x301).unwrap();
+        assert_eq!(misa & (1 << 7), 0);
+        assert_eq!(misa & (1 << 21), 0);
     }
 
     #[test]
