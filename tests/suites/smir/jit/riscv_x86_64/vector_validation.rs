@@ -128,11 +128,37 @@ fn lifted_rv_vector_reserved_encodings_fail_closed_transactionally() {
                 ..initial
             },
         ),
+        // vid.v reserves vs2 and requires it to encode v0.
+        (
+            (0b010100 << 26)
+                | (1 << 25)
+                | (3 << 20)
+                | (0b10001 << 15)
+                | (0b010 << 12)
+                | (1 << 7)
+                | 0x57,
+            RiscVGuestRegs {
+                vtype: 0, // e8,m1
+                ..initial
+            },
+        ),
     ];
 
     for (instruction, state) in cases {
         run_invalid_vector_case(instruction, state);
     }
+}
+
+#[test]
+fn lifted_vid_with_vs2_v0_remains_legal_at_o0_and_o2() {
+    let instruction =
+        (0b010100 << 26) | (1 << 25) | (0b10001 << 15) | (0b010 << 12) | (1 << 7) | 0x57;
+    let initial = RiscVGuestRegs {
+        vl: 4,
+        vtype: 0, // e8,m1
+        ..Default::default()
+    };
+    run_vector_case(instruction, initial, [0xa5; MEMORY_LEN], false);
 }
 
 #[test]

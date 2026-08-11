@@ -241,6 +241,13 @@ pub(super) fn validate(cpu: &RiscVCpu, insn: &Insn, vm: bool) -> Result<(), Trap
                 return Err(illegal(insn));
             }
         }
+        Op::Vid => {
+            // VMUNARY0 reserves the source field for vid.v and requires it to
+            // encode v0 even though the operation does not consume a source.
+            if insn.rs2 != 0 {
+                return Err(illegal(insn));
+            }
+        }
         Op::Vadc | Op::Vsbc => {
             if vm || insn.rd == 0 {
                 return Err(illegal(insn));
@@ -411,6 +418,16 @@ mod tests {
             assert_legal(op_v(0b010100, 1, 2, selector, 0b010, 1), E8_M1, 8, 0, 0);
             assert_legal(op_v(0b010100, 0, 2, selector, 0b010, 1), E8_M1, 8, 0, 0);
         }
+    }
+
+    #[test]
+    fn vid_requires_reserved_vs2_field_to_name_v0() {
+        let vid = |vm, vs2| op_v(0b010100, vm, vs2, 0b10001, 0b010, 1);
+
+        assert_illegal(vid(1, 16), E8_M1, 4, 0, 0);
+        assert_illegal(vid(0, 3), E8_M1, 4, 0, 0);
+        assert_legal(vid(1, 0), E8_M1, 4, 0, 0);
+        assert_legal(vid(0, 0), E8_M1, 4, 0, 0);
     }
 
     #[test]

@@ -62,6 +62,21 @@ fn diff_v_reserved_encoding_validation() {
         ));
     }
 
+    // vid.v is VMUNARY0: vs2 is reserved and must encode v0 in both masked
+    // and unmasked forms.
+    for (name, vm, vs2) in [
+        ("vid.v.vs2-v16", 1, 16),
+        ("vid.v.masked-vs2-v3", 0, 3),
+        ("vid.v.control", 1, 0),
+        ("vid.v.masked-control", 0, 0),
+    ] {
+        batch.push((
+            name.into(),
+            op_iv(0b010100, vm, vs2, 0b10001, 0b010, 1),
+            state(E8_M1, 8),
+        ));
+    }
+
     // vadc/vsbc consume v0 as carry/borrow-in, so vm=1 and vd=v0 are reserved
     // for every defined vv/vx/vi form.
     for (name, funct6, funct3) in [

@@ -231,6 +231,54 @@ fn rv_vector_reserved_encoding_exits_without_committing_state() {
 }
 
 #[test]
+fn rv_vector_vid_reserved_vs2_exits_without_committing_state() {
+    let mut ctx = SmirContext::new_riscv();
+    let mut memory = FlatMemory::new(0x2000);
+    let x10 = VReg::Arch(ArchReg::RiscV(RiscVReg::X(10)));
+    let vl = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc20)));
+    let vtype = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc21)));
+    ctx.write_vreg(vl, 4);
+    ctx.write_vreg(vtype, 0); // e8,m1
+
+    let before = [0xa5; 16];
+    let ArchRegState::RiscV(rv) = &mut ctx.arch_regs else {
+        panic!("expected RISC-V context");
+    };
+    rv.v[1] = before;
+
+    // vid.v v1 with reserved vs2=v3 must trap before filling lane indices.
+    let insn = (0b010100 << 26)
+        | (1 << 25)
+        | (3 << 20)
+        | (0b10001 << 15)
+        | (0b010 << 12)
+        | (1 << 7)
+        | 0x57;
+    exec_rv_vector(
+        &mut ctx,
+        &mut memory,
+        insn,
+        64,
+        0x1090,
+        &rv_vector_test_state(x10),
+    );
+
+    assert!(matches!(
+        ctx.exit_reason,
+        Some(ExitReason::Undefined {
+            addr: 0x1090,
+            opcode
+        }) if opcode == insn
+    ));
+    let ArchRegState::RiscV(rv) = &ctx.arch_regs else {
+        panic!("expected RISC-V context");
+    };
+    assert_eq!(rv.v[1], before);
+    assert_eq!(ctx.read_vreg(vl), 4);
+    assert_eq!(ctx.read_vreg(vtype), 0);
+}
+
+#[test]
 fn rv_vector_widening_overlap_exits_without_committing_state() {
     let mut ctx = SmirContext::new_riscv();
     let mut memory = FlatMemory::new(0x2000);
