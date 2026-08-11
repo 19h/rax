@@ -320,7 +320,9 @@ impl RiscVCpu {
         self.cycle = self.cycle.wrapping_add(1);
         match self.execute(insn, pc) {
             Ok(exit) => {
-                self.instret = self.instret.wrapping_add(1);
+                if matches!(exit, RiscVExit::Continue | RiscVExit::Wfi) {
+                    self.instret = self.instret.wrapping_add(1);
+                }
                 exit
             }
             Err(trap) => {

@@ -579,7 +579,9 @@ impl RiscVCpu {
         self.cycle = self.cycle.wrapping_add(1);
         match self.execute(&insn, pc) {
             Ok(exit) => {
-                self.instret = self.instret.wrapping_add(1);
+                if matches!(exit, RiscVExit::Continue | RiscVExit::Wfi) {
+                    self.instret = self.instret.wrapping_add(1);
+                }
                 exit
             }
             Err(trap) => {
@@ -4083,6 +4085,21 @@ mod tests {
             run_one(&mut c, csr(0xC00, 4, 1, 5)),
             RiscVExit::Trap(_)
         ));
+    }
+
+    #[test]
+    fn ecall_ebreak_do_not_increment_instret() {
+        let mut c = cpu();
+        assert_eq!(c.instret(), 0);
+        // A normally retired instruction counts.
+        run_one(&mut c, (0 << 20) | (0 << 15) | (3 << 7) | 0x13); // addi x3, x0, 0
+        assert_eq!(c.instret(), 1);
+        // ecall exits without retiring.
+        assert_eq!(run_one(&mut c, 0x0000_0073), RiscVExit::Ecall);
+        assert_eq!(c.instret(), 1);
+        // ebreak exits without retiring.
+        assert_eq!(run_one(&mut c, 0x0010_0073), RiscVExit::Ebreak);
+        assert_eq!(c.instret(), 1);
     }
 
     #[test]
