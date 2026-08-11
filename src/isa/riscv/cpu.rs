@@ -4606,6 +4606,41 @@ mod tests {
     }
 
     #[test]
+    #[test]
+    fn vadc_vsbc_reject_vd_eq_v0() {
+        // vadc/vsbc read the carry/borrow-in from v0, so vd == v0 is reserved
+        // in every implemented form (vv, vxm, vim; vsbc has no immediate
+        // form).
+        for w in [
+            op_v(0b010000, 0, 1, 2, 0b000, 0), // vadc.vv v0,v1,v2
+            op_v(0b010000, 0, 1, 2, 0b100, 0), // vadc.vxm v0,v1,x2
+            op_v(0b010000, 0, 1, 5, 0b011, 0), // vadc.vim v0,v1,5
+            op_v(0b010010, 0, 1, 2, 0b000, 0), // vsbc.vv v0,v1,v2
+            op_v(0b010010, 0, 1, 2, 0b100, 0), // vsbc.vxm v0,v1,x2
+        ] {
+            assert!(matches!(
+                run_one(&mut cpu_e8m1(), w),
+                RiscVExit::Trap(Trap {
+                    cause: cause::ILLEGAL_INSTR,
+                    ..
+                })
+            ));
+        }
+        // Non-overlapping legal forms still execute.
+        for w in [
+            op_v(0b010000, 0, 1, 2, 0b000, 3), // vadc.vv v3,v1,v2
+            op_v(0b010000, 0, 1, 2, 0b100, 3), // vadc.vxm v3,v1,x2
+            op_v(0b010000, 0, 1, 5, 0b011, 3), // vadc.vim v3,v1,5
+            op_v(0b010010, 0, 1, 2, 0b100, 3), // vsbc.vxm v3,v1,x2
+        ] {
+            assert!(matches!(
+                run_one(&mut cpu_e8m1(), w),
+                RiscVExit::Continue
+            ));
+        }
+    }
+
+    #[test]
     fn vcompress_rejects_reserved_states() {
         // vcompress.vm (funct6 010111, OPMVV) must be unmasked, vstart==0, and
         // its destination must not overlap vs2 or the vs1 mask source.

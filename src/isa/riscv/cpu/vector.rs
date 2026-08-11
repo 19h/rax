@@ -1581,6 +1581,10 @@ impl RiscVCpu {
                 if vm {
                     return Err(Trap::illegal(insn.raw));
                 }
+                // The carry/borrow-in is read from v0, so vd must not alias v0.
+                if vd == 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
                 let scalar = match insn.funct3 {
