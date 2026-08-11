@@ -118,6 +118,9 @@ fn decode_q0(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
         }
         0b001 => {
             // C.FLD -> fld rd', off(rs1')  (RV32 & RV64; double)
+            if !isa.d {
+                return ill(h);
+            }
             let off = (bits(h, 12, 10) << 3) | (bits(h, 6, 5) << 6);
             mk(Op::Fld, rd_, rs1_, 0, off as i64, h)
         }
@@ -144,6 +147,9 @@ fn decode_q0(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
         }
         0b101 => {
             // C.FSD -> fsd rs2', off(rs1')
+            if !isa.d {
+                return ill(h);
+            }
             let off = (bits(h, 12, 10) << 3) | (bits(h, 6, 5) << 6);
             mk(Op::Fsd, 0, rs1_, rvc_reg(bits(h, 4, 2)), off as i64, h)
         }
@@ -348,6 +354,9 @@ fn decode_q2(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
         }
         0b001 => {
             // C.FLDSP -> fld rd, off(x2)
+            if !isa.d {
+                return ill(h);
+            }
             let off = (bit(h, 12) << 5) | (bits(h, 6, 5) << 3) | (bits(h, 4, 2) << 6);
             mk(Op::Fld, rd, 2, 0, off as i64, h)
         }
@@ -420,6 +429,9 @@ fn decode_q2(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
                 return decode_zcmp_zcmt(h, rv64, isa);
             }
             // C.FSDSP -> fsd rs2, off(x2)
+            if !isa.d {
+                return ill(h);
+            }
             let off = (bits(h, 12, 10) << 3) | (bits(h, 9, 7) << 6);
             mk(Op::Fsd, 0, 2, bits(h, 6, 2) as u8, off as i64, h)
         }
@@ -606,6 +618,19 @@ mod tests {
             decode_rvc(c_zextw, Xlen::Rv32, &Isa::rv64gc()).op,
             Op::Illegal
         );
+    }
+
+    #[test]
+    fn c_float_mem_rejected_without_d() {
+        // C.FLD (Q0, funct3=001), C.FLDSP (Q2, funct3=001),
+        // C.FSD (Q0, funct3=101), C.FSDSP (Q2, funct3=101).
+        let encodings = [0x2000u16, 0x2002, 0xa000, 0xa002];
+        let mut no_d = Isa::rv64gc();
+        no_d.d = false;
+        for h in encodings {
+            assert_ne!(decode_rvc(h, Xlen::Rv64, &Isa::rv64gc()).op, Op::Illegal);
+            assert_eq!(decode_rvc(h, Xlen::Rv64, &no_d).op, Op::Illegal);
+        }
     }
 
     #[test]
