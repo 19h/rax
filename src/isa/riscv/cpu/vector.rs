@@ -92,6 +92,79 @@ impl RiscVCpu {
         let vs2 = insn.rs2;
         let vstart = self.vstart as usize;
         let vl = self.vl as usize;
+        // Widening integer instructions (vwadd/vwsub/vwmul/vwmacc families)
+        // write a 2*LMUL destination and must obey the §5.2 register-group
+        // overlap constraints.  Only an overlap in the highest-numbered part
+        // of the destination group (source group ends where the destination
+        // ends) is legal; any other overlap is a reserved encoding.  The `.w`
+        // forms read a wide (2*LMUL) vs2 whose EEW equals the destination
+        // EEW, so a fully-aliased vs2 (same start register) is legal there.
+        // With fractional LMUL the source EMUL is below one register, so both
+        // source and destination occupy a single register.
+        if matches!(
+            insn.op,
+            Op::Vwaddu
+                | Op::Vwadd
+                | Op::Vwsubu
+                | Op::Vwsub
+                | Op::VwadduW
+                | Op::VwaddW
+                | Op::VwsubuW
+                | Op::VwsubW
+                | Op::Vwmulu
+                | Op::Vwmul
+                | Op::Vwmulsu
+                | Op::Vwmaccu
+                | Op::Vwmacc
+                | Op::Vwmaccsu
+                | Op::Vwmaccus
+        ) && (insn.funct3 == 0b010 || insn.funct3 == 0b110)
+        {
+            // vlmul[2:0]: 0b000=m1, 0b001=m2, 0b010=m4, 0b011=m8,
+            // 0b101=mf8, 0b110=mf4, 0b111=mf2 (fractional => 1 register).
+            let (src_regs, dest_regs) = match self.vtype & 0x7 {
+                0b001 => (2, 4),  // m2
+                0b010 => (4, 8),  // m4
+                0b011 => (8, 16), // m8: 2*LMUL exceeds the 8-register group
+                _ => (
+                    1,
+                    if self.vtype & 0x7 == 0b000 { 2 } else { 1 }, // m1 / fractional
+                ),
+            };
+            if dest_regs > 8 {
+                return Err(Trap::illegal(insn.raw));
+            }
+            let vd_n = usize::from(vd);
+            if vd_n % dest_regs != 0 {
+                return Err(Trap::illegal(insn.raw));
+            }
+            let wide_vs2 = matches!(
+                insn.op,
+                Op::VwadduW | Op::VwaddW | Op::VwsubuW | Op::VwsubW
+            );
+            let vs2_regs = if wide_vs2 { dest_regs } else { src_regs };
+            let vs2_n = usize::from(vs2);
+            if vs2_n % vs2_regs != 0 {
+                return Err(Trap::illegal(insn.raw));
+            }
+            // Only the vv form (funct3=0b010) reads a vector vs1; the vx
+            // form's rs1 field is a scalar x register.
+            let vec_vs1 = insn.funct3 == 0b010;
+            let vs1_n = usize::from(insn.rs1);
+            if vec_vs1 && src_regs > 1 && vs1_n % src_regs != 0 {
+                return Err(Trap::illegal(insn.raw));
+            }
+            let overlap_is_illegal = |source: usize, source_regs: usize| {
+                let vd_end = vd_n + dest_regs;
+                let source_end = source + source_regs;
+                vd_n < source_end && source < vd_end && vd_end != source_end
+            };
+            if overlap_is_illegal(vs2_n, vs2_regs)
+                || (vec_vs1 && overlap_is_illegal(vs1_n, src_regs))
+            {
+                return Err(Trap::illegal(insn.raw));
+            }
+        }
 
         match insn.op {
             Op::Vle | Op::Vse => {

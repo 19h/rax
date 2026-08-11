@@ -4535,6 +4535,75 @@ mod tests {
     }
 
     #[test]
+    fn widening_rejects_illegal_vd_vs2_overlap() {
+        let mut c = cpu();
+        run_one(&mut c, ((0b010 << 3 | 0b000) << 20) | (7 << 12) | (1 << 7) | 0x57); // e32,m1
+        // Legal: high-part overlap (source ends where the destination ends).
+        assert!(matches!(
+            run_one(&mut c, op_v(0b110000, 1, 1, 2, 0b010, 0)), // vwadd.vv v0,v1,v2
+            RiscVExit::Continue
+        ));
+        // Legal: disjoint groups.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b110000, 1, 2, 3, 0b010, 0)), // vwadd.vv v0,v2,v3
+            RiscVExit::Continue
+        ));
+        // Reserved: source overlaps the low part of the destination.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b110000, 1, 0, 1, 0b010, 0)), // vwadd.vv v0,v0,v1
+            RiscVExit::Trap(Trap {
+                cause: cause::ILLEGAL_INSTR,
+                ..
+            })
+        ));
+        // Reserved: misaligned (odd) destination under m1.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b110000, 1, 1, 2, 0b010, 1)), // vwadd.vv v1,v1,v2
+            RiscVExit::Trap(Trap {
+                cause: cause::ILLEGAL_INSTR,
+                ..
+            })
+        ));
+        // vx form: vwmulu.vx v0,v1,x2 legal, v0,v0,x2 reserved.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b111000, 1, 1, 2, 0b110, 0)), // vwmulu.vx v0,v1,x2
+            RiscVExit::Continue
+        ));
+        assert!(matches!(
+            run_one(&mut c, op_v(0b111000, 1, 0, 2, 0b110, 0)), // vwmulu.vx v0,v0,x2
+            RiscVExit::Trap(Trap {
+                cause: cause::ILLEGAL_INSTR,
+                ..
+            })
+        ));
+        // e32,mf2: single-register source and destination groups, so full
+        // overlap and any disjoint pair are legal.
+        run_one(&mut c, ((0b010 << 3 | 0b111) << 20) | (7 << 12) | (1 << 7) | 0x57); // e32,mf2
+        assert!(matches!(
+            run_one(&mut c, op_v(0b110000, 1, 1, 2, 0b010, 1)), // vwadd.vv v1,v1,v2
+            RiscVExit::Continue
+        ));
+        assert!(matches!(
+            run_one(&mut c, op_v(0b110000, 1, 3, 2, 0b010, 1)), // vwadd.vv v1,v3,v2
+            RiscVExit::Continue
+        ));
+        // e32,m2: 4-register destination; high-part overlap legal, low-part
+        // overlap reserved.
+        run_one(&mut c, ((0b010 << 3 | 0b001) << 20) | (7 << 12) | (1 << 7) | 0x57); // e32,m2
+        assert!(matches!(
+            run_one(&mut c, op_v(0b110000, 1, 2, 4, 0b010, 0)), // vwadd.vv v0,v2,v4
+            RiscVExit::Continue
+        ));
+        assert!(matches!(
+            run_one(&mut c, op_v(0b110000, 1, 0, 4, 0b010, 0)), // vwadd.vv v0,v0,v4
+            RiscVExit::Trap(Trap {
+                cause: cause::ILLEGAL_INSTR,
+                ..
+            })
+        ));
+    }
+
+    #[test]
     fn vrgather_rejects_overlapping_operands() {
         // vrgather.vv (funct6 001100, vv) with vd overlapping vs2 is reserved.
         assert!(matches!(
