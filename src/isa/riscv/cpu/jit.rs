@@ -1067,8 +1067,7 @@ unsafe fn jit_store_exclusive_impl(
     } else {
         // A failed RISC-V SC generates no store, but it must still pass the
         // store address's memory-permission check before reporting failure.
-        let mut probe = [0; 8];
-        unsafe { context.memory() }.read(addr, &mut probe[..size as usize])
+        unsafe { context.memory() }.probe(addr, size as usize, true)
     };
     if access.is_err() {
         context.record_fault(cause::STORE_ACCESS_FAULT, addr);

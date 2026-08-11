@@ -33,6 +33,9 @@ pub enum MemError {
 ///
 /// Implementors only need to provide [`read`](Memory::read) and
 /// [`write`](Memory::write); the little-endian width helpers are derived.
+/// Implementors with asymmetric permissions or read side effects should also
+/// override [`probe`](Memory::probe) so failed store-conditionals can validate
+/// a store access without performing it.
 /// The `Send` bound lets a [`RiscVCpu`](crate::isa::riscv::RiscVCpu) be moved across
 /// threads (required by the VMM's `VCpu` interface).
 pub trait Memory: Debug + Send {
@@ -41,6 +44,16 @@ pub trait Memory: Debug + Send {
 
     /// Write `data` starting at `addr`.
     fn write(&mut self, addr: u64, data: &[u8]) -> MemResult<()>;
+
+    /// Validate an address range without performing an architectural access.
+    ///
+    /// The default preserves compatibility for simple memory implementations
+    /// by issuing a discarded read. Backends with MMIO or distinct read/write
+    /// permissions should override this hook.
+    fn probe(&self, addr: u64, size: usize, _write: bool) -> MemResult<()> {
+        let mut discarded = vec![0; size];
+        self.read(addr, &mut discarded)
+    }
 
     /// Read an unsigned byte.
     #[inline]
@@ -163,6 +176,11 @@ impl FlatMemory {
 }
 
 impl Memory for FlatMemory {
+    #[inline]
+    fn probe(&self, addr: u64, size: usize, _write: bool) -> MemResult<()> {
+        self.offset(addr, size).map(|_| ())
+    }
+
     #[inline]
     fn read(&self, addr: u64, buf: &mut [u8]) -> MemResult<()> {
         let off = self.offset(addr, buf.len())?;

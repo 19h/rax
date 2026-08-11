@@ -62,7 +62,11 @@ impl RiscVCpu {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::isa::riscv::FlatMemory;
+    use crate::isa::riscv::{FlatMemory, MemResult, Memory};
+    use std::sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    };
 
     const CODE: u64 = 0x100;
 
@@ -88,6 +92,54 @@ mod tests {
 
     fn sc(funct3: u32) -> u32 {
         (0b00011 << 27) | (2 << 20) | (1 << 15) | (funct3 << 12) | (3 << 7) | 0x2f
+    }
+
+    #[derive(Debug)]
+    struct WriteDeniedMemory {
+        inner: FlatMemory,
+        denied: u64,
+        denied_reads: Arc<AtomicUsize>,
+    }
+
+    impl Memory for WriteDeniedMemory {
+        fn probe(&self, addr: u64, size: usize, write: bool) -> MemResult<()> {
+            if write && addr == self.denied {
+                Err(MemError::OutOfBounds { addr, size })
+            } else {
+                self.inner.probe(addr, size, write)
+            }
+        }
+
+        fn read(&self, addr: u64, buf: &mut [u8]) -> MemResult<()> {
+            if addr == self.denied {
+                self.denied_reads.fetch_add(1, Ordering::SeqCst);
+            }
+            self.inner.read(addr, buf)
+        }
+
+        fn write(&mut self, addr: u64, data: &[u8]) -> MemResult<()> {
+            if addr == self.denied {
+                Err(MemError::OutOfBounds {
+                    addr,
+                    size: data.len(),
+                })
+            } else {
+                self.inner.write(addr, data)
+            }
+        }
+    }
+
+    fn cpu_with_write_denied(addr: u64) -> (RiscVCpu, Arc<AtomicUsize>) {
+        let denied_reads = Arc::new(AtomicUsize::new(0));
+        let memory = WriteDeniedMemory {
+            inner: FlatMemory::new(0, 0x1000),
+            denied: addr,
+            denied_reads: Arc::clone(&denied_reads),
+        };
+        (
+            RiscVCpu::new(RiscVConfig::rv64gc(), Box::new(memory)),
+            denied_reads,
+        )
     }
 
     #[test]
@@ -214,6 +266,60 @@ mod tests {
                     1,
                     "{level:?} {name}"
                 );
+            }
+        }
+    }
+
+    #[test]
+    fn failed_store_conditionals_use_write_probe_without_mmio_read() {
+        const DENIED: u64 = 0x200;
+
+        for (funct3, name) in [(0b010, "SC.W"), (0b011, "SC.D")] {
+            let word = sc(funct3);
+            let (mut direct, direct_reads) = cpu_with_write_denied(DENIED);
+            direct.set_x(1, DENIED);
+            direct.set_x(3, 0xfeed_face);
+            direct.reservation = Some(DENIED + 8);
+            assert_eq!(
+                run_word(&mut direct, word),
+                RiscVExit::Trap(Trap {
+                    cause: cause::STORE_ACCESS_FAULT,
+                    tval: DENIED,
+                }),
+                "direct {name}"
+            );
+            assert_eq!(direct.x(3), 0xfeed_face, "direct {name}");
+            assert_eq!(direct.instret(), 0, "direct {name}");
+            assert_eq!(direct.reservation, None, "direct {name}");
+            assert_eq!(direct_reads.load(Ordering::SeqCst), 0, "direct {name}");
+
+            #[cfg(all(
+                feature = "smir-jit",
+                any(target_arch = "x86_64", target_arch = "aarch64")
+            ))]
+            for level in [
+                crate::smir::optimize::OptLevel::O0,
+                crate::smir::optimize::OptLevel::O2,
+            ] {
+                let (mut jit, jit_reads) = cpu_with_write_denied(DENIED);
+                jit.write_memory(CODE, &word.to_le_bytes()).unwrap();
+                jit.set_pc(CODE);
+                jit.set_x(1, DENIED);
+                jit.set_x(3, 0xfeed_face);
+                jit.reservation = Some(DENIED + 8);
+                assert_eq!(
+                    jit.step_jit(level),
+                    RiscVExit::Trap(Trap {
+                        cause: cause::STORE_ACCESS_FAULT,
+                        tval: DENIED,
+                    }),
+                    "{level:?} {name}"
+                );
+                assert_eq!(jit.x(3), 0xfeed_face, "{level:?} {name}");
+                assert_eq!(jit.instret(), 0, "{level:?} {name}");
+                assert_eq!(jit.reservation, None, "{level:?} {name}");
+                assert_eq!(jit_reads.load(Ordering::SeqCst), 0, "{level:?} {name}");
+                assert_eq!(jit.jit_stats().native_executions, 1, "{level:?} {name}");
             }
         }
     }
