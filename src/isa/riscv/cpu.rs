@@ -1659,22 +1659,25 @@ impl RiscVCpu {
                 self.reservation = Some(addr);
                 self.set_x(insn.rd, v);
             }
-            Op::ScW => {
+            Op::ScW | Op::ScD => {
                 let ok = self.reservation == Some(addr);
                 self.reservation = None;
                 if ok {
+                    if is_d {
+                        self.mem
+                            .write_u64(addr, self.x(insn.rs2))
+                            .map_err(|_| acc_fault(true, addr))?;
+                    } else {
+                        self.mem
+                            .write_u32(addr, self.x(insn.rs2) as u32)
+                            .map_err(|_| acc_fault(true, addr))?;
+                    }
+                } else {
+                    // A failed SC generates no store operation, but it still
+                    // must pass the addressed range's memory-permission check.
+                    let mut probe = [0; 8];
                     self.mem
-                        .write_u32(addr, self.x(insn.rs2) as u32)
-                        .map_err(|_| acc_fault(true, addr))?;
-                }
-                self.set_x(insn.rd, if ok { 0 } else { 1 });
-            }
-            Op::ScD => {
-                let ok = self.reservation == Some(addr);
-                self.reservation = None;
-                if ok {
-                    self.mem
-                        .write_u64(addr, self.x(insn.rs2))
+                        .read(addr, &mut probe[..size])
                         .map_err(|_| acc_fault(true, addr))?;
                 }
                 self.set_x(insn.rd, if ok { 0 } else { 1 });
