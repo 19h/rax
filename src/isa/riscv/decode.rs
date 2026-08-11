@@ -985,6 +985,85 @@ impl Op {
                 | FltqH
         )
     }
+
+    /// `true` if this is a vector floating-point operation: the RVV rule
+    /// that a reserved `frm` (101-111) is illegal applies uniformly to this
+    /// class, including operations that do not round (e.g. `vfslide1up`).
+    pub fn is_vector_fp(self) -> bool {
+        use Op::*;
+        matches!(
+            self,
+            Vfadd
+                | Vfsub
+                | Vfrsub
+                | Vfmul
+                | Vfdiv
+                | Vfrdiv
+                | Vfsqrt
+                | Vfmin
+                | Vfmax
+                | Vfsgnj
+                | Vfsgnjn
+                | Vfsgnjx
+                | Vmfeq
+                | Vmfne
+                | Vmflt
+                | Vmfle
+                | Vmfgt
+                | Vmfge
+                | Vfmacc
+                | Vfnmacc
+                | Vfmsac
+                | Vfnmsac
+                | Vfmadd
+                | Vfnmadd
+                | Vfmsub
+                | Vfnmsub
+                | Vfredusum
+                | Vfredosum
+                | Vfredmin
+                | Vfredmax
+                | VfmvFS
+                | VfmvSF
+                | VfcvtXuF
+                | VfcvtXF
+                | VfcvtFXu
+                | VfcvtFX
+                | VfcvtRtzXuF
+                | VfcvtRtzXF
+                | VfwcvtXuF
+                | VfwcvtXF
+                | VfwcvtFXu
+                | VfwcvtFX
+                | VfwcvtFF
+                | VfwcvtRtzXuF
+                | VfwcvtRtzXF
+                | VfncvtXuF
+                | VfncvtXF
+                | VfncvtFXu
+                | VfncvtFX
+                | VfncvtFF
+                | VfncvtRodFF
+                | VfncvtRtzXuF
+                | VfncvtRtzXF
+                | Vfwadd
+                | Vfwsub
+                | Vfwmul
+                | VfwaddW
+                | VfwsubW
+                | Vfwmacc
+                | Vfwnmacc
+                | Vfwmsac
+                | Vfwnmsac
+                | Vfwredusum
+                | Vfwredosum
+                | Vfclass
+                | Vfrsqrt7
+                | Vfrec7
+                | Vfslide1up
+                | Vfslide1down
+        )
+    }
 }
 
 /// A fully decoded instruction with all operand fields resolved.

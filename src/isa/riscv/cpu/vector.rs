@@ -88,6 +88,13 @@ impl RiscVCpu {
             return Err(Trap::illegal(insn.raw));
         }
         let vm = (insn.raw >> 25) & 1 != 0; // 1 = unmasked
+        // Vector floating-point instructions take their rounding mode from
+        // frm, and RVV does not support the dynamic mode, so frm encodings
+        // 101-111 are all reserved: the instruction is illegal (including
+        // operations that do not round and vl=0 / vstart>=vl).
+        if self.frm() > 4 && insn.op.is_vector_fp() {
+            return Err(Trap::illegal(insn.raw));
+        }
         let vd = insn.rd;
         let vs2 = insn.rs2;
         let vstart = self.vstart as usize;

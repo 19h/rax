@@ -4535,6 +4535,73 @@ mod tests {
     }
 
     #[test]
+    fn vector_fp_rejects_reserved_frm() {
+        // Reserved frm encodings (101, 110, 111) make every vector FP
+        // instruction illegal, including vfslide1up/vfslide1down (which do
+        // not round) and vl=0 / vstart>=vl cases.
+        let mut c = cpu();
+        run_one(&mut c, ((0b010 << 3 | 0b000) << 20) | (7 << 12) | (1 << 7) | 0x57); // e32,m1
+        for frm in [5u32, 6, 7] {
+            c.set_fcsr(frm << 5);
+            assert!(matches!(
+                run_one(&mut c, op_v(0b000000, 1, 2, 3, 0b001, 1)), // vfadd.vv v1,v2,v3
+                RiscVExit::Trap(Trap {
+                    cause: cause::ILLEGAL_INSTR,
+                    ..
+                })
+            ));
+            assert!(matches!(
+                run_one(&mut c, op_v(0b001110, 1, 2, 0, 0b101, 1)), // vfslide1up.vf v1,v2,fa0
+                RiscVExit::Trap(Trap {
+                    cause: cause::ILLEGAL_INSTR,
+                    ..
+                })
+            ));
+            assert!(matches!(
+                run_one(&mut c, op_v(0b001111, 1, 2, 0, 0b101, 1)), // vfslide1down.vf v1,v2,fa0
+                RiscVExit::Trap(Trap {
+                    cause: cause::ILLEGAL_INSTR,
+                    ..
+                })
+            ));
+        }
+        // A legal frm executes the same instructions.
+        c.set_fcsr(0); // RNE
+        assert!(matches!(
+            run_one(&mut c, op_v(0b000000, 1, 2, 3, 0b001, 1)),
+            RiscVExit::Continue
+        ));
+        assert!(matches!(
+            run_one(&mut c, op_v(0b001110, 1, 2, 0, 0b101, 1)),
+            RiscVExit::Continue
+        ));
+        assert!(matches!(
+            run_one(&mut c, op_v(0b001111, 1, 2, 0, 0b101, 1)),
+            RiscVExit::Continue
+        ));
+        // vl=0: the reserved frm still makes the instruction illegal.
+        c.set_vl_vtype(0, 0x10); // vl=0, e32,m1
+        c.set_fcsr(5 << 5);
+        assert!(matches!(
+            run_one(&mut c, op_v(0b000000, 1, 2, 3, 0b001, 1)),
+            RiscVExit::Trap(Trap {
+                cause: cause::ILLEGAL_INSTR,
+                ..
+            })
+        ));
+        // vstart >= vl: still illegal under a reserved frm.
+        c.set_vl_vtype(2, 0x10); // vl=2, e32,m1
+        c.set_vstart(2); // vstart == vl
+        assert!(matches!(
+            run_one(&mut c, op_v(0b000000, 1, 2, 3, 0b001, 1)),
+            RiscVExit::Trap(Trap {
+                cause: cause::ILLEGAL_INSTR,
+                ..
+            })
+        ));
+    }
+
+    #[test]
     fn vrgather_rejects_overlapping_operands() {
         // vrgather.vv (funct6 001100, vv) with vd overlapping vs2 is reserved.
         assert!(matches!(
