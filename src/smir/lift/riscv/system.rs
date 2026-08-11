@@ -36,7 +36,7 @@ impl RiscVLifter {
                     },
                 ));
             }
-            0b001 => {
+            0b001 if self.extensions.zifencei => {
                 // FENCE.I (instruction fence)
                 ops.push(SmirOp::new(
                     ctx.next_op_id(),
@@ -150,6 +150,15 @@ impl RiscVLifter {
             // the new value; the mask is applied in-IR because the vreg writeback
             // bypasses write_arch_reg's masking.
             0b001 | 0b010 | 0b011 | 0b101 | 0b110 | 0b111 => {
+                if !self.extensions.zicsr
+                    || (matches!(csr, 0x001..=0x003) && !self.extensions.f)
+                    || (matches!(csr, 0xc20..=0xc22) && !self.extensions.v)
+                {
+                    return Err(LiftError::InvalidEncoding {
+                        addr,
+                        bytes: insn.to_le_bytes().to_vec(),
+                    });
+                }
                 let is_imm = funct3 & 0b100 != 0;
                 let op = funct3 & 0b011; // 1=rw, 2=rs, 3=rc
                 let zimm = rs1_reg as i64; // 5-bit immediate (csrr*i forms)

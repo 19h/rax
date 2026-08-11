@@ -18,6 +18,8 @@ mod bitmanip;
 pub(crate) use bitmanip::*;
 mod compressed;
 pub(crate) use compressed::*;
+mod control_flow;
+pub(crate) use control_flow::*;
 mod fp;
 pub(crate) use fp::*;
 mod memory;
@@ -471,6 +473,28 @@ mod tests {
         ((imm12 & 0xfff) << 20) | (rs1 << 15) | (funct3 << 12) | (rd << 7) | opcode
     }
 
+    fn b_type(imm: i32, rs2: u32, rs1: u32, funct3: u32) -> u32 {
+        let imm = (imm as u32) & 0x1fff;
+        ((imm >> 12) << 31)
+            | (((imm >> 5) & 0x3f) << 25)
+            | (rs2 << 20)
+            | (rs1 << 15)
+            | (funct3 << 12)
+            | (((imm >> 1) & 0xf) << 8)
+            | (((imm >> 11) & 1) << 7)
+            | 0x63
+    }
+
+    fn j_type(imm: i32, rd: u32) -> u32 {
+        let imm = (imm as u32) & 0x1f_ffff;
+        ((imm >> 20) << 31)
+            | (((imm >> 1) & 0x3ff) << 21)
+            | (((imm >> 11) & 1) << 20)
+            | (((imm >> 12) & 0xff) << 12)
+            | (rd << 7)
+            | 0x6f
+    }
+
     #[track_caller]
     fn assert_invalid_lift(mut lifter: RiscVLifter, word: u32) {
         let mut ctx = test_ctx();
@@ -481,6 +505,19 @@ mod tests {
         assert!(
             matches!(err, LiftError::InvalidEncoding { .. }),
             "expected InvalidEncoding for {word:#010x}, got {err:?}"
+        );
+    }
+
+    #[track_caller]
+    fn assert_unsupported_lift(mut lifter: RiscVLifter, word: u32) {
+        let mut ctx = test_ctx();
+        let err = match lifter.lift_insn(0x1000, &word.to_le_bytes(), &mut ctx) {
+            Err(err) => err,
+            Ok(_) => panic!("instruction {word:#010x} requires interpreter fallback"),
+        };
+        assert!(
+            matches!(err, LiftError::Unsupported { .. }),
+            "expected Unsupported for {word:#010x}, got {err:?}"
         );
     }
 
@@ -524,6 +561,139 @@ mod tests {
 
         let final_reg = lift_ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::X(rd)));
         ctx.read_vreg(final_reg)
+    }
+
+    #[test]
+    fn no_c_control_flow_falls_back_only_when_alignment_needs_runtime_handling() {
+        let no_c = RiscVExtensions {
+            c: false,
+            ..RiscVExtensions::rv64gc()
+        };
+
+        for word in [j_type(2, 1), b_type(2, 0, 0, 0)] {
+            assert_unsupported_lift(RiscVLifter::new_rv64(no_c), word);
+        }
+        assert_unsupported_lift(RiscVLifter::new_rv64(no_c), i_type(0, 1, 0, 1, 0x67));
+
+        for word in [j_type(8, 1), b_type(8, 0, 0, 0)] {
+            let mut lifter = RiscVLifter::new_rv64(no_c);
+            let mut ctx = test_ctx();
+            lifter
+                .lift_insn(0x1000, &word.to_le_bytes(), &mut ctx)
+                .expect("statically aligned no-C control flow should lift");
+        }
+
+        for word in [j_type(2, 1), b_type(2, 0, 0, 0), i_type(0, 1, 0, 1, 0x67)] {
+            let mut lifter = RiscVLifter::rv64gc();
+            let mut ctx = test_ctx();
+            lifter
+                .lift_insn(0x1000, &word.to_le_bytes(), &mut ctx)
+                .expect("C-enabled control flow permits 16-bit-aligned targets");
+        }
+    }
+
+    #[test]
+    fn jalr_requires_the_standard_zero_funct3() {
+        let mut lifter = RiscVLifter::rv64gc();
+        let mut ctx = test_ctx();
+        lifter
+            .lift_insn(0x1000, &i_type(0, 1, 0, 1, 0x67).to_le_bytes(), &mut ctx)
+            .expect("standard JALR should lift");
+
+        for funct3 in 1..=7 {
+            assert_invalid_lift(RiscVLifter::rv64gc(), i_type(0, 1, funct3, 1, 0x67));
+        }
+    }
+
+    #[test]
+    fn fence_and_csr_lifts_honor_independent_extension_profiles() {
+        let fence_i = 0x0000_100fu32;
+        let read_fcsr = i_type(0x003, 0, 0b010, 1, 0x73);
+        let read_vl = i_type(0xc20, 0, 0b010, 1, 0x73);
+
+        assert_invalid_lift(RiscVLifter::new_rv64(RiscVExtensions::rv64i()), fence_i);
+        let mut lifter = RiscVLifter::new_rv64(RiscVExtensions {
+            zifencei: true,
+            ..RiscVExtensions::rv64i()
+        });
+        lifter
+            .lift_insn(0x1000, &fence_i.to_le_bytes(), &mut test_ctx())
+            .expect("Zifencei should enable FENCE.I");
+
+        assert_invalid_lift(
+            RiscVLifter::new_rv64(RiscVExtensions {
+                f: true,
+                ..RiscVExtensions::rv64i()
+            }),
+            read_fcsr,
+        );
+        assert_invalid_lift(
+            RiscVLifter::new_rv64(RiscVExtensions {
+                zicsr: true,
+                ..RiscVExtensions::rv64i()
+            }),
+            read_fcsr,
+        );
+        let mut lifter = RiscVLifter::new_rv64(RiscVExtensions {
+            f: true,
+            zicsr: true,
+            ..RiscVExtensions::rv64i()
+        });
+        lifter
+            .lift_insn(0x1000, &read_fcsr.to_le_bytes(), &mut test_ctx())
+            .expect("F and Zicsr should enable fcsr access");
+
+        assert_invalid_lift(
+            RiscVLifter::new_rv64(RiscVExtensions {
+                zicsr: true,
+                ..RiscVExtensions::rv64i()
+            }),
+            read_vl,
+        );
+        let mut lifter = RiscVLifter::new_rv64(RiscVExtensions {
+            v: true,
+            zicsr: true,
+            ..RiscVExtensions::rv64i()
+        });
+        lifter
+            .lift_insn(0x1000, &read_vl.to_le_bytes(), &mut test_ctx())
+            .expect("V and Zicsr should enable vector CSR reads");
+    }
+
+    #[test]
+    fn scalar_loads_to_x0_keep_the_memory_operation_for_every_width() {
+        let cases = [
+            (0, MemWidth::B1, SignExtend::Sign),
+            (1, MemWidth::B2, SignExtend::Sign),
+            (2, MemWidth::B4, SignExtend::Sign),
+            (3, MemWidth::B8, SignExtend::Zero),
+            (4, MemWidth::B1, SignExtend::Zero),
+            (5, MemWidth::B2, SignExtend::Zero),
+            (6, MemWidth::B4, SignExtend::Zero),
+        ];
+
+        for (funct3, expected_width, expected_sign) in cases {
+            let word = i_type(0, 1, funct3, 0, 0x03);
+            let mut lifter = RiscVLifter::rv64gc();
+            let mut ctx = test_ctx();
+            let result = lifter
+                .lift_insn(0x1000, &word.to_le_bytes(), &mut ctx)
+                .expect("load to x0 should lift");
+            assert_eq!(result.ops.len(), 1, "funct3={funct3:#05b}");
+            assert!(
+                matches!(
+                    result.ops[0].kind,
+                    OpKind::Load {
+                        dst: VReg::Virtual(_),
+                        width,
+                        sign,
+                        ..
+                    } if width == expected_width && sign == expected_sign
+                ),
+                "load to x0 lost its memory operation for funct3={funct3:#05b}: {:?}",
+                result.ops
+            );
+        }
     }
 
     #[test]

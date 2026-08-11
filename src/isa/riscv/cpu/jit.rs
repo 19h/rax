@@ -1244,3 +1244,114 @@ define_jit_abi!(jit_clear_exclusive, jit_clear_exclusive_impl, (ctx: u64) -> ())
 define_jit_abi!(jit_int_crypto, jit_int_crypto_impl, (op_code: u64, src1: u64, src2: u64, imm: u64, xlen: u64) -> u64);
 define_jit_abi!(jit_scalar_fp, jit_scalar_fp_impl, (op_code: u64, rm_field: u64, fcsr: u64, a: u64, b: u64, c: u64) -> RiscVFpResult);
 define_jit_abi!(jit_vector, jit_vector_impl, (state: *mut RiscVGuestRegs, insn: u64, xlen: u64) -> u64);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::isa::riscv::{MemError, Memory};
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    const CODE: u64 = 0x1000;
+    const DATA: u64 = 0x2000;
+    const MEMORY_LEN: usize = 0x4000;
+
+    #[derive(Debug)]
+    struct CountingMemory {
+        bytes: Vec<u8>,
+        watched_addr: u64,
+        watched_reads: Arc<AtomicUsize>,
+    }
+
+    impl CountingMemory {
+        fn new(watched_addr: u64, watched_reads: Arc<AtomicUsize>) -> Self {
+            Self {
+                bytes: vec![0; MEMORY_LEN],
+                watched_addr,
+                watched_reads,
+            }
+        }
+
+        fn range(&self, addr: u64, size: usize) -> Result<std::ops::Range<usize>, MemError> {
+            let start = usize::try_from(addr).map_err(|_| MemError::OutOfBounds { addr, size })?;
+            let end = start
+                .checked_add(size)
+                .filter(|end| *end <= self.bytes.len())
+                .ok_or(MemError::OutOfBounds { addr, size })?;
+            Ok(start..end)
+        }
+    }
+
+    impl Memory for CountingMemory {
+        fn read(&self, addr: u64, buf: &mut [u8]) -> Result<(), MemError> {
+            if addr == self.watched_addr {
+                self.watched_reads.fetch_add(1, Ordering::SeqCst);
+            }
+            let range = self.range(addr, buf.len())?;
+            buf.copy_from_slice(&self.bytes[range]);
+            Ok(())
+        }
+
+        fn write(&mut self, addr: u64, data: &[u8]) -> Result<(), MemError> {
+            let range = self.range(addr, data.len())?;
+            self.bytes[range].copy_from_slice(data);
+            Ok(())
+        }
+    }
+
+    fn cpu_with_counted_memory(watched_addr: u64) -> (RiscVCpu, Arc<AtomicUsize>) {
+        let reads = Arc::new(AtomicUsize::new(0));
+        let memory = CountingMemory::new(watched_addr, Arc::clone(&reads));
+        (
+            RiscVCpu::new(RiscVConfig::rv64gc(), Box::new(memory)),
+            reads,
+        )
+    }
+
+    fn lw_x0_from_x1() -> u32 {
+        (1 << 15) | (0b010 << 12) | 0x03
+    }
+
+    #[test]
+    fn production_jit_keeps_successful_load_to_x0_side_effects_at_o0_and_o2() {
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let (mut cpu, reads) = cpu_with_counted_memory(DATA);
+            cpu.write_memory(CODE, &lw_x0_from_x1().to_le_bytes())
+                .expect("write test instruction");
+            cpu.write_memory(DATA, &0x1234_5678u32.to_le_bytes())
+                .expect("write test data");
+            cpu.set_pc(CODE);
+            cpu.set_x(1, DATA);
+
+            assert_eq!(cpu.step_jit(level), RiscVExit::Continue);
+            assert_eq!(cpu.x(0), 0);
+            assert_eq!(reads.load(Ordering::SeqCst), 1, "{level:?}");
+            assert_eq!(cpu.jit_stats().native_executions, 1, "{level:?}");
+            assert_eq!(cpu.jit_stats().interpreter_fallbacks, 0, "{level:?}");
+        }
+    }
+
+    #[test]
+    fn production_jit_keeps_faulting_load_to_x0_at_o0_and_o2() {
+        let fault_addr = MEMORY_LEN as u64;
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let (mut cpu, reads) = cpu_with_counted_memory(fault_addr);
+            cpu.write_memory(CODE, &lw_x0_from_x1().to_le_bytes())
+                .expect("write test instruction");
+            cpu.set_pc(CODE);
+            cpu.set_x(1, fault_addr);
+
+            assert_eq!(
+                cpu.step_jit(level),
+                RiscVExit::Trap(Trap {
+                    cause: cause::LOAD_ACCESS_FAULT,
+                    tval: fault_addr,
+                }),
+                "{level:?}"
+            );
+            assert_eq!(cpu.x(0), 0);
+            assert_eq!(reads.load(Ordering::SeqCst), 1, "{level:?}");
+            assert_eq!(cpu.jit_stats().native_executions, 1, "{level:?}");
+            assert_eq!(cpu.jit_stats().interpreter_fallbacks, 0, "{level:?}");
+        }
+    }
+}
