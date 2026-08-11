@@ -1062,11 +1062,15 @@ unsafe fn jit_store_exclusive_impl(
         return RiscVAtomicResult::default();
     }
     let succeeds = unsafe { context.reservation().take() == Some(addr) };
-    if succeeds
-        && unsafe { context.memory() }
-            .write(addr, &value.to_le_bytes()[..size as usize])
-            .is_err()
-    {
+    let access = if succeeds {
+        unsafe { context.memory() }.write(addr, &value.to_le_bytes()[..size as usize])
+    } else {
+        // A failed RISC-V SC generates no store, but it must still pass the
+        // store address's memory-permission check before reporting failure.
+        let mut probe = [0; 8];
+        unsafe { context.memory() }.read(addr, &mut probe[..size as usize])
+    };
+    if access.is_err() {
         context.record_fault(cause::STORE_ACCESS_FAULT, addr);
         return RiscVAtomicResult::default();
     }
