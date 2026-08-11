@@ -49,6 +49,9 @@ impl RiscVCpu {
                 return Err(Trap::illegal(0));
             }
         };
+        if !self.csr_available(csr) {
+            return Err(Trap::illegal(0));
+        }
         let v = match csr {
             Csr::Fflags => (self.fcsr & 0x1f) as u64,
             Csr::Frm => ((self.fcsr >> 5) & 0x7) as u64,
@@ -100,6 +103,9 @@ impl RiscVCpu {
                 return Err(Trap::illegal(0));
             }
         };
+        if !self.csr_available(csr) {
+            return Err(Trap::illegal(0));
+        }
         match csr {
             Csr::Fflags => self.fcsr = (self.fcsr & !0x1f) | (value as u32 & 0x1f),
             Csr::Frm => self.fcsr = (self.fcsr & !0xe0) | (((value as u32) & 0x7) << 5),
@@ -144,6 +150,25 @@ impl RiscVCpu {
             _ => {}
         }
         Ok(())
+    }
+
+    /// Whether a recognized CSR exists in the configured architectural
+    /// profile. Zicsr controls the CSR instructions themselves; this gate
+    /// covers the XLEN- and extension-dependent register families.
+    fn csr_available(&self, csr: Csr) -> bool {
+        match csr {
+            Csr::Fflags | Csr::Frm | Csr::Fcsr => self.cfg.isa.f,
+            Csr::Jvt => self.cfg.isa.zcmt,
+            Csr::CycleH | Csr::TimeH | Csr::InstretH => self.rv32(),
+            Csr::Vstart
+            | Csr::Vxsat
+            | Csr::Vxrm
+            | Csr::Vcsr
+            | Csr::Vl
+            | Csr::Vtype
+            | Csr::Vlenb => self.cfg.isa.v,
+            _ => true,
+        }
     }
 
     fn sstatus_mask(&self) -> u64 {
@@ -213,14 +238,15 @@ mod tests {
     use super::super::*;
     use crate::isa::riscv::FlatMemory;
 
-    fn cpu(isa: Isa) -> RiscVCpu {
+    fn cpu_with_xlen(xlen: Xlen, isa: Isa) -> RiscVCpu {
         RiscVCpu::new(
-            RiscVConfig {
-                xlen: Xlen::Rv64,
-                isa,
-            },
+            RiscVConfig { xlen, isa },
             Box::new(FlatMemory::new(0, 0x2000)),
         )
+    }
+
+    fn cpu(isa: Isa) -> RiscVCpu {
+        cpu_with_xlen(Xlen::Rv64, isa)
     }
 
     #[test]
@@ -266,6 +292,48 @@ mod tests {
                 Ok(0x1000 | expected_mode),
                 "MODE={mode}"
             );
+        }
+    }
+
+    #[test]
+    fn csr_availability_tracks_xlen_and_declaring_extensions() {
+        let mut unavailable = cpu(Isa::rv_i());
+        for addr in [
+            0x001, 0x002, 0x003, // F
+            0x017, // Zcmt
+            0x008, 0x009, 0x00A, 0x00F, 0xC20, 0xC21, 0xC22, // V
+            0xC80, 0xC81, 0xC82, // RV32-only counter high halves
+        ] {
+            assert_eq!(
+                unavailable.csr_read(addr),
+                Err(Trap::illegal(0)),
+                "read {addr:#05x}"
+            );
+            assert_eq!(
+                unavailable.csr_write(addr, u64::MAX),
+                Err(Trap::illegal(0)),
+                "write {addr:#05x}"
+            );
+        }
+
+        let mut available = cpu(Isa {
+            f: true,
+            v: true,
+            zcmt: true,
+            ..Isa::rv_i()
+        });
+        for addr in [0x001, 0x002, 0x003, 0x017, 0x008, 0x009, 0x00A, 0x00F] {
+            assert!(available.csr_write(addr, 0).is_ok(), "write {addr:#05x}");
+        }
+        for addr in [
+            0x001, 0x002, 0x003, 0x017, 0x008, 0x009, 0x00A, 0x00F, 0xC20, 0xC21, 0xC22,
+        ] {
+            assert!(available.csr_read(addr).is_ok(), "read {addr:#05x}");
+        }
+
+        let rv32 = cpu_with_xlen(Xlen::Rv32, Isa::rv_i());
+        for addr in [0xC80, 0xC81, 0xC82] {
+            assert!(rv32.csr_read(addr).is_ok(), "RV32 read {addr:#05x}");
         }
     }
 }

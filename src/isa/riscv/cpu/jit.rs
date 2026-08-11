@@ -320,7 +320,7 @@ impl RiscVCpu {
         self.cycle = self.cycle.wrapping_add(1);
         match self.execute(insn, pc) {
             Ok(exit) => {
-                self.instret = self.instret.wrapping_add(1);
+                self.account_retired_exit(exit);
                 exit
             }
             Err(trap) => {
@@ -1248,7 +1248,7 @@ define_jit_abi!(jit_vector, jit_vector_impl, (state: *mut RiscVGuestRegs, insn: 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::isa::riscv::{MemError, Memory};
+    use crate::isa::riscv::{FlatMemory, MemError, Memory};
     use std::sync::atomic::{AtomicUsize, Ordering};
 
     const CODE: u64 = 0x1000;
@@ -1309,6 +1309,51 @@ mod tests {
 
     fn lw_x0_from_x1() -> u32 {
         (1 << 15) | (0b010 << 12) | 0x03
+    }
+
+    fn cpu_with_word(word: u32) -> RiscVCpu {
+        let mut cpu = RiscVCpu::new(
+            RiscVConfig::rv64gc(),
+            Box::new(FlatMemory::new(0, MEMORY_LEN)),
+        );
+        cpu.write_memory(CODE, &word.to_le_bytes()).unwrap();
+        cpu.set_pc(CODE);
+        cpu
+    }
+
+    #[test]
+    fn jit_fallback_counts_only_normally_completed_instructions_as_retired() {
+        for level in [OptLevel::O0, OptLevel::O2] {
+            for (word, expected_exit, expected_instret) in [
+                (0x1050_0073, RiscVExit::Wfi, 1),
+                (0x0000_0073, RiscVExit::Ecall, 0),
+                (0x0010_0073, RiscVExit::Ebreak, 0),
+            ] {
+                let mut cpu = cpu_with_word(word);
+                assert_eq!(cpu.step_jit(level), expected_exit, "{level:?}");
+                assert_eq!(cpu.cycle, 1, "{level:?}, word={word:#010x}");
+                assert_eq!(
+                    cpu.instret(),
+                    expected_instret,
+                    "{level:?}, word={word:#010x}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn jit_fallback_rejects_rv32_only_counter_high_csrs_on_rv64() {
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let mut cpu = cpu_with_word(0xC800_20F3); // csrr x1, cycleh
+            cpu.set_x(1, 0xfeed_face);
+            assert_eq!(
+                cpu.step_jit(level),
+                RiscVExit::Trap(Trap::illegal(0)),
+                "{level:?}"
+            );
+            assert_eq!(cpu.x(1), 0xfeed_face, "{level:?}");
+            assert_eq!(cpu.instret(), 0, "{level:?}");
+        }
     }
 
     #[test]
