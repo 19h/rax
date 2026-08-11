@@ -20,6 +20,7 @@ use super::{Isa, Xlen};
     any(target_arch = "x86_64", target_arch = "aarch64")
 ))]
 mod jit;
+mod vector_validation;
 
 /// Privilege level of the hart.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -2215,6 +2216,7 @@ impl RiscVCpu {
             return Err(Trap::illegal(insn.raw));
         }
         let vm = (insn.raw >> 25) & 1 != 0; // 1 = unmasked
+        vector_validation::validate(self, insn, vm)?;
         let vd = insn.rd;
         let vs2 = insn.rs2;
         let vstart = self.vstart as usize;
@@ -3704,10 +3706,7 @@ impl RiscVCpu {
             Op::Vadc | Op::Vsbc => {
                 // vd[i] = vs2[i] +/- op[i] +/- v0.mask[i]; every body lane written.
                 // These consume the v0 carry/borrow-in and are only defined in
-                // the masked (vm=0) form; the unmasked vm=1 encoding is reserved.
-                if vm {
-                    return Err(Trap::illegal(insn.raw));
-                }
+                // the masked (vm=0) form with a non-v0 destination.
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
                 let scalar = match insn.funct3 {
@@ -3940,10 +3939,8 @@ impl RiscVCpu {
             }
             Op::Vmsbf | Op::Vmsif | Op::Vmsof => {
                 // Set-before / set-including / set-only the first active set bit.
-                // These prefix ops are not restartable: non-zero vstart traps.
-                if vstart != 0 {
-                    return Err(Trap::illegal(insn.raw));
-                }
+                // Their non-restartable and register-overlap constraints are
+                // checked before any vector state can be modified.
                 let mut found = false;
                 for e in vstart..vl {
                     if !vm && !self.vmask_bit(e) {

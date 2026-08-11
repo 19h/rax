@@ -132,3 +132,50 @@ fn rv_vector_load_uses_current_scalar_vreg_address() {
     assert_eq!(&rv.v[1][0..4], &current_lane);
     assert_ne!(&rv.v[1][0..4], &stale_lane);
 }
+
+#[test]
+fn rv_vector_reserved_encoding_exits_without_committing_state() {
+    let mut ctx = SmirContext::new_riscv();
+    let mut memory = FlatMemory::new(0x2000);
+    let x10 = VReg::Arch(ArchReg::RiscV(RiscVReg::X(10)));
+    let fcsr = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x003)));
+    let vl = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc20)));
+    let vtype = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc21)));
+    ctx.write_vreg(fcsr, 7 << 5); // reserved frm=111
+    ctx.write_vreg(vl, 0); // must not suppress frm validation
+    ctx.write_vreg(vtype, 0x10); // e32,m1
+
+    let before = [0xa5; 16];
+    let ArchRegState::RiscV(rv) = &mut ctx.arch_regs else {
+        panic!("expected RISC-V context");
+    };
+    rv.v[1] = before;
+
+    // vfsgnj.vv v1,v2,v3 is exact, but every OPFVV/OPFVF instruction still
+    // requires frm to hold an architecturally valid encoding.
+    let insn =
+        (0b001000 << 26) | (1 << 25) | (2 << 20) | (3 << 15) | (0b001 << 12) | (1 << 7) | 0x57;
+    exec_rv_vector(
+        &mut ctx,
+        &mut memory,
+        insn,
+        64,
+        0x1000,
+        &rv_vector_test_state(x10),
+    );
+
+    assert!(matches!(
+        ctx.exit_reason,
+        Some(ExitReason::Undefined {
+            addr: 0x1000,
+            opcode
+        }) if opcode == insn
+    ));
+    let ArchRegState::RiscV(rv) = &ctx.arch_regs else {
+        panic!("expected RISC-V context");
+    };
+    assert_eq!(rv.v[1], before);
+    assert_eq!(ctx.read_vreg(fcsr), 7 << 5);
+    assert_eq!(ctx.read_vreg(vl), 0);
+    assert_eq!(ctx.read_vreg(vtype), 0x10);
+}
