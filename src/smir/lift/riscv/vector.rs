@@ -28,7 +28,7 @@ impl RiscVLifter {
         } else {
             RvXlen::Rv32
         };
-        let d = rv_decode(insn, xl, &RvIsa::rv64gc());
+        let d = rv_decode(insn, xl, &self.decoder_isa());
         if d.is_illegal() {
             return Err(LiftError::InvalidEncoding {
                 addr,

@@ -27,7 +27,7 @@ impl RiscVLifter {
         } else {
             RvXlen::Rv32
         };
-        let d = rv_decode(insn, xl, &RvIsa::rv64gc());
+        let d = rv_decode(insn, xl, &self.decoder_isa());
         let mut ops = Vec::new();
         let mk = |ctx: &mut LiftContext, k: OpKind| SmirOp::new(ctx.next_op_id(), addr, k);
         let base = self.get_x_reg(d.rs1, ctx);
@@ -118,7 +118,7 @@ impl RiscVLifter {
         } else {
             RvXlen::Rv32
         };
-        let d = rv_decode(insn, xl, &RvIsa::rv64gc());
+        let d = rv_decode(insn, xl, &self.decoder_isa());
         let mut ops = Vec::new();
         let mk = |ctx: &mut LiftContext, k: OpKind| SmirOp::new(ctx.next_op_id(), addr, k);
         let w = OpWidth::W64;
@@ -544,7 +544,7 @@ impl RiscVLifter {
         } else {
             RvXlen::Rv32
         };
-        let d = rv_decode(insn, xl, &RvIsa::rv64gc());
+        let d = rv_decode(insn, xl, &self.decoder_isa());
         if d.is_illegal() {
             return Err(LiftError::InvalidEncoding {
                 addr,

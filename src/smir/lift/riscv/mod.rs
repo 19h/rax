@@ -566,6 +566,23 @@ mod tests {
     }
 
     #[test]
+    fn fp_vector_lift_respects_profile_decoder() {
+        // RV64IMAC (no F/D/V): the FP and vector lifters must decode with the
+        // configured profile, not a fixed RV64GC decoder.
+        let fld = i_type(0, 1, 0b011, 1, 0x07); // fld x1, 0(x1)
+        let vadd = 0x0221_80d7; // vadd.vv v1, v2, v4
+        assert_invalid_lift(RiscVLifter::new_rv64(RiscVExtensions::rv64imac()), fld);
+        assert_invalid_lift(RiscVLifter::new_rv64(RiscVExtensions::rv64imac()), vadd);
+        // The same words lift under the full profile (controls).
+        let mut g = RiscVLifter::rv64gc();
+        let mut ctx = test_ctx();
+        assert!(g.lift_insn(0x1000, &fld.to_le_bytes(), &mut ctx).is_ok());
+        let mut g = RiscVLifter::rv64gc();
+        let mut ctx = test_ctx();
+        assert!(g.lift_insn(0x1000, &vadd.to_le_bytes(), &mut ctx).is_ok());
+    }
+
+    #[test]
     fn rv32_pack_uses_16_bit_halves_and_32_bit_result() {
         let pack = r_type(0b0000100, 2, 1, 0b100, 3, 0x33);
         let mut lifter = RiscVLifter::new_rv32(RiscVExtensions {
