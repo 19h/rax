@@ -750,6 +750,8 @@ pub fn ftoi<F: Sf>(x: F, signed: bool, width: u32, mode: RoundingMode, flags: &m
     if x.is_nan() {
         *flags |= fflags::NV;
         return match (signed, width) {
+            (true, 8) => i8::MAX as u64,
+            (false, 8) => u8::MAX as u64,
             (true, 16) => i16::MAX as u64,
             (false, 16) => u16::MAX as u64,
             (true, 32) => i32::MAX as i64 as u64,
@@ -773,6 +775,28 @@ pub fn ftoi<F: Sf>(x: F, signed: bool, width: u32, mode: RoundingMode, flags: &m
     }
 
     match (signed, width) {
+        (true, 8) => {
+            if v < i8::MIN as i128 {
+                *flags |= fflags::NV;
+                i8::MIN as u64
+            } else if v > i8::MAX as i128 {
+                *flags |= fflags::NV;
+                i8::MAX as u64
+            } else {
+                finish!(v as i8 as u64)
+            }
+        }
+        (false, 8) => {
+            if v < 0 {
+                *flags |= fflags::NV;
+                0
+            } else if v > u8::MAX as i128 {
+                *flags |= fflags::NV;
+                u8::MAX as u64
+            } else {
+                finish!(v as u8 as u64)
+            }
+        }
         (true, 16) => {
             if v < i16::MIN as i128 {
                 *flags |= fflags::NV;

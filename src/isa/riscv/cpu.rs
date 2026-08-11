@@ -4535,6 +4535,51 @@ mod tests {
     }
 
     #[test]
+    fn vfncvt_fp_to_int_legal_at_sew8() {
+        // vfncvt.xu.f.w v1, v2: FP-to-integer narrowing from a 16-bit FP
+        // source is legal at SEW=8; the result is a u8 per lane.
+        let mut c = cpu();
+        c.set_vl_vtype(1, 0); // e8,m1, vl=1
+        c.set_vreg(2, &[0x00, 0x3e, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]); // 1.5f16
+        assert_eq!(
+            run_one(&mut c, op_v(0b010010, 1, 2, 0b10000, 0b001, 1)), // vfncvt.xu.f.w
+            RiscVExit::Continue
+        );
+        assert_eq!(c.vreg(1)[0], 2); // RNE: 1.5 -> 2
+
+        // Signed variant vfncvt.x.f.w with -1.5f16 (0xBE00) rounds to -2.
+        let mut c = cpu();
+        c.set_vl_vtype(1, 0);
+        c.set_vreg(2, &[0x00, 0xbe, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]); // -1.5f16
+        assert_eq!(
+            run_one(&mut c, op_v(0b010010, 1, 2, 0b10001, 0b001, 1)), // vfncvt.x.f.w
+            RiscVExit::Continue
+        );
+        assert_eq!(c.vreg(1)[0] as i8, -2);
+
+        // NaN saturates to u8::MAX for the unsigned variant.
+        let mut c = cpu();
+        c.set_vl_vtype(1, 0);
+        c.set_vreg(2, &[0x00, 0x7e, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]); // NaN
+        assert_eq!(
+            run_one(&mut c, op_v(0b010010, 1, 2, 0b10000, 0b001, 1)), // vfncvt.xu.f.w
+            RiscVExit::Continue
+        );
+        assert_eq!(c.vreg(1)[0], 255);
+
+        // The int-to-FP variant at SEW=8 stays reserved.
+        let mut c = cpu();
+        c.set_vl_vtype(1, 0);
+        assert!(matches!(
+            run_one(&mut c, op_v(0b010010, 1, 2, 0b10010, 0b001, 1)), // vfncvt.f.xu.w
+            RiscVExit::Trap(Trap {
+                cause: cause::ILLEGAL_INSTR,
+                ..
+            })
+        ));
+    }
+
+    #[test]
     fn vrgather_rejects_overlapping_operands() {
         // vrgather.vv (funct6 001100, vv) with vd overlapping vs2 is reserved.
         assert!(matches!(

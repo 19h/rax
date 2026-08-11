@@ -932,12 +932,22 @@ impl RiscVCpu {
             | Op::VfncvtRodFF
             | Op::VfncvtRtzXuF
             | Op::VfncvtRtzXF => {
-                // Narrowing conversions: 2*SEW source vs2 -> SEW result. Only
-                // SEW in {16,32} (eb 2/4) is supported: SEW=8 would imply an
-                // FP8 format / 8-bit float-to-int width that has no defined
-                // conversion here, so reject eb outside {2,4}.
+                // Narrowing conversions: 2*SEW source vs2 -> SEW result. The
+                // FP-to-integer variants convert a 2*SEW FP value to an SEW
+                // integer and are legal for every SEW (16-bit FP -> 8/16/32
+                // bit integer).  The integer-to-FP and FP-to-FP variants
+                // produce an SEW FP value, so SEW=8 is reserved there (no
+                // FP8 format); SEW=64 (2*SEW=128 > ELEN) is reserved for all
+                // variants.
                 let eb = self.sew_bytes();
-                if !(2..=4).contains(&eb) {
+                let to_int = matches!(
+                    insn.op,
+                    Op::VfncvtXuF
+                        | Op::VfncvtXF
+                        | Op::VfncvtRtzXuF
+                        | Op::VfncvtRtzXF
+                );
+                if eb > 4 || (eb == 1 && !to_int) {
                     return Err(Trap::illegal(insn.raw));
                 }
                 let web = eb * 2;
@@ -958,6 +968,13 @@ impl RiscVCpu {
                                 frm
                             };
                             match web {
+                                2 => crate::isa::riscv::float::ftoi(
+                                    crate::isa::riscv::float::h_widen(aw as u16),
+                                    signed,
+                                    (eb * 8) as u32,
+                                    rm,
+                                    &mut flags,
+                                ),
                                 4 => crate::isa::riscv::float::ftoi(
                                     f32::from_bits(aw as u32),
                                     signed,
