@@ -369,6 +369,13 @@ impl RiscVCpu {
 }
 
 fn decoded_native_boundary(cfg: RiscVConfig, insn: &Insn) -> bool {
+    // The shared decoder has already applied reserved-field, XLEN, and
+    // extension-profile checks. Never let a hand-written lifter reinterpret a
+    // parcel that the architectural decoder classified as illegal.
+    if insn.is_illegal() {
+        return false;
+    }
+
     // Control-flow instruction-alignment traps without C are currently an
     // interpreter-only boundary: the scalar lifter represents only the target.
     if !cfg.isa.c
@@ -1321,6 +1328,17 @@ mod tests {
         cpu
     }
 
+    fn cpu_with_half(config: RiscVConfig, half: u16) -> RiscVCpu {
+        let mut cpu = RiscVCpu::new(config, Box::new(FlatMemory::new(0, MEMORY_LEN)));
+        cpu.write_memory(CODE, &half.to_le_bytes()).unwrap();
+        cpu.set_pc(CODE);
+        cpu
+    }
+
+    fn config(xlen: Xlen, isa: Isa) -> RiscVConfig {
+        RiscVConfig { xlen, isa }
+    }
+
     #[test]
     fn jit_fallback_counts_only_normally_completed_instructions_as_retired() {
         for level in [OptLevel::O0, OptLevel::O2] {
@@ -1353,6 +1371,56 @@ mod tests {
             );
             assert_eq!(cpu.x(1), 0xfeed_face, "{level:?}");
             assert_eq!(cpu.instret(), 0, "{level:?}");
+        }
+    }
+
+    #[test]
+    fn jit_boundary_rejects_every_predecoded_illegal_compressed_encoding() {
+        let full = Isa::rv64gc();
+        let cases = [
+            ("C.LUI rd=x0", config(Xlen::Rv64, full), 0x6005),
+            ("C.ADDIW rd=x0", config(Xlen::Rv64, full), 0x2005),
+            ("RV32 C.SLLI shamt[5]=1", config(Xlen::Rv32, full), 0x1402),
+            (
+                "C.MUL without M",
+                config(Xlen::Rv64, Isa { m: false, ..full }),
+                0x9C45,
+            ),
+            (
+                "C.SEXT.B without Zbb",
+                config(Xlen::Rv64, Isa { zbb: false, ..full }),
+                0x9C65,
+            ),
+            (
+                "C.ZEXT.W without Zba",
+                config(Xlen::Rv64, Isa { zba: false, ..full }),
+                0x9C71,
+            ),
+            (
+                "C.FLD without D",
+                config(Xlen::Rv64, Isa { d: false, ..full }),
+                0x2000,
+            ),
+        ];
+
+        for level in [OptLevel::O0, OptLevel::O2] {
+            for (name, config, half) in cases {
+                let expected = RiscVExit::Trap(Trap::illegal(half.into()));
+
+                let mut direct = cpu_with_half(config, half);
+                assert_eq!(direct.step(), expected, "direct: {name}");
+                assert_eq!(direct.instret(), 0, "direct: {name}");
+
+                let mut jit = cpu_with_half(config, half);
+                assert_eq!(jit.step_jit(level), expected, "{level:?}: {name}");
+                assert_eq!(jit.instret(), 0, "{level:?}: {name}");
+                assert_eq!(jit.jit_stats().native_executions, 0, "{level:?}: {name}");
+                assert_eq!(
+                    jit.jit_stats().interpreter_fallbacks,
+                    1,
+                    "{level:?}: {name}"
+                );
+            }
         }
     }
 
