@@ -4535,6 +4535,36 @@ mod tests {
     }
 
     #[test]
+    fn vector_fp_rejects_sew8() {
+        // SEW=8 is reserved for every vector FP op class.
+        for w in [
+            op_v(0b000000, 1, 2, 3, 0b001, 1), // vfadd.vv v1,v2,v3
+            op_v(0b001110, 1, 2, 0, 0b101, 1), // vfslide1up.vf v1,v2,fa0
+            op_v(0b110000, 1, 2, 3, 0b001, 1), // vfwadd.vv v1,v2,v3
+        ] {
+            assert!(matches!(
+                run_one(&mut cpu_e8m1(), w),
+                RiscVExit::Trap(Trap {
+                    cause: cause::ILLEGAL_INSTR,
+                    ..
+                })
+            ));
+        }
+        // Integer ops at SEW=8 remain legal.
+        assert!(matches!(
+            run_one(&mut cpu_e8m1(), op_v(0b000000, 1, 2, 3, 0b000, 1)), // vadd.vv v1,v2,v3
+            RiscVExit::Continue
+        ));
+        // Legal SEW: the same FP ops execute at e32.
+        let mut c = cpu();
+        run_one(&mut c, ((0b010 << 3 | 0b000) << 20) | (7 << 12) | (1 << 7) | 0x57); // e32,m1
+        assert!(matches!(
+            run_one(&mut c, op_v(0b000000, 1, 2, 3, 0b001, 1)), // vfadd.vv
+            RiscVExit::Continue
+        ));
+    }
+
+    #[test]
     fn vrgather_rejects_overlapping_operands() {
         // vrgather.vv (funct6 001100, vv) with vd overlapping vs2 is reserved.
         assert!(matches!(

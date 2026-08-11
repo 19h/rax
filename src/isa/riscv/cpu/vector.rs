@@ -87,6 +87,81 @@ impl RiscVCpu {
         if self.vtype >> (self.xbits() - 1) & 1 != 0 {
             return Err(Trap::illegal(insn.raw));
         }
+        // Vector floating-point operations are only defined for SEW in
+        // {16,32,64}; with SEW=8 the encodings are reserved and must raise an
+        // illegal-instruction exception (RVV 1.0, verified against QEMU and
+        // native RISC-V hardware for every FP op class).  The narrowing FP
+        // conversions (Vfncvt*) are governed by a separate rule: the
+        // FP-to-integer variants are legal at SEW=8.  The integer
+        // vadd.vv/vmv.v.v forms remain legal at SEW=8.
+        if self.sew_bytes() == 1
+            && matches!(
+                insn.op,
+                Op::Vfadd
+                    | Op::Vfsub
+                    | Op::Vfrsub
+                    | Op::Vfmul
+                    | Op::Vfdiv
+                    | Op::Vfrdiv
+                    | Op::Vfsqrt
+                    | Op::Vfmin
+                    | Op::Vfmax
+                    | Op::Vfsgnj
+                    | Op::Vfsgnjn
+                    | Op::Vfsgnjx
+                    | Op::Vmfeq
+                    | Op::Vmfne
+                    | Op::Vmflt
+                    | Op::Vmfle
+                    | Op::Vmfgt
+                    | Op::Vmfge
+                    | Op::Vfmacc
+                    | Op::Vfnmacc
+                    | Op::Vfmsac
+                    | Op::Vfnmsac
+                    | Op::Vfmadd
+                    | Op::Vfnmadd
+                    | Op::Vfmsub
+                    | Op::Vfnmsub
+                    | Op::Vfredusum
+                    | Op::Vfredosum
+                    | Op::Vfredmin
+                    | Op::Vfredmax
+                    | Op::VfmvFS
+                    | Op::VfmvSF
+                    | Op::VfcvtXuF
+                    | Op::VfcvtXF
+                    | Op::VfcvtFXu
+                    | Op::VfcvtFX
+                    | Op::VfcvtRtzXuF
+                    | Op::VfcvtRtzXF
+                    | Op::VfwcvtXuF
+                    | Op::VfwcvtXF
+                    | Op::VfwcvtFXu
+                    | Op::VfwcvtFX
+                    | Op::VfwcvtFF
+                    | Op::VfwcvtRtzXuF
+                    | Op::VfwcvtRtzXF
+                    | Op::Vfwadd
+                    | Op::Vfwsub
+                    | Op::Vfwmul
+                    | Op::VfwaddW
+                    | Op::VfwsubW
+                    | Op::Vfwmacc
+                    | Op::Vfwnmacc
+                    | Op::Vfwmsac
+                    | Op::Vfwnmsac
+                    | Op::Vfwredusum
+                    | Op::Vfwredosum
+                    | Op::Vfclass
+                    | Op::Vfrsqrt7
+                    | Op::Vfrec7
+                    | Op::Vfslide1up
+                    | Op::Vfslide1down
+            )
+        {
+            return Err(Trap::illegal(insn.raw));
+        }
         let vm = (insn.raw >> 25) & 1 != 0; // 1 = unmasked
         let vd = insn.rd;
         let vs2 = insn.rs2;
