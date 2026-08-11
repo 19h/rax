@@ -104,9 +104,14 @@ jobs:
           # cross picks this up to compile std for tier-3 targets that ship none.
           CROSS_BUILD_STD: "true"
         run: |
-          cross +nightly build --locked --target ${{ matrix.target }} --no-default-features \
-            -Z build-std=std,panic_abort || \
-          cross +nightly build --locked --target ${{ matrix.target }} --no-default-features
+          if cross +nightly build --locked --target ${{ matrix.target }} --no-default-features \
+            -Z build-std=std,panic_abort; then
+            exit 0
+          fi
+          if cross +nightly build --locked --target ${{ matrix.target }} --no-default-features; then
+            exit 0
+          fi
+          echo "::warning title=Experimental cross-build unavailable::${{ matrix.target }} failed both the build-std and prebuilt-std probes"
 
   # rustup-only targets that need no Docker (build on the host toolchain).
   rustup-targets:

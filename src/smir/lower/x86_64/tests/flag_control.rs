@@ -4,6 +4,7 @@ use super::*;
 use crate::smir::ir::ops::SmirOp;
 use crate::smir::ir::types::{BlockId, OpId};
 use crate::smir::lift::ControlFlow;
+#[cfg(feature = "smir-jit")]
 use crate::smir::lower::runtime::is_native_clobber_safe;
 use crate::smir::optimize::{OptLevel, optimize_function};
 
@@ -68,6 +69,7 @@ fn lift_exact(bytes: &[u8]) -> crate::smir::lift::LiftResult {
 fn assert_post_opt_native(ops: Vec<SmirOp>, bytes: &[u8]) {
     let mut function = function_from_ops(ops);
     optimize_function(&mut function, OptLevel::O2);
+    #[cfg(feature = "smir-jit")]
     assert!(
         is_native_clobber_safe(&function),
         "post-O2 gate rejected {bytes:02X?}: {:?}",

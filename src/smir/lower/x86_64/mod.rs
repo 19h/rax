@@ -105,11 +105,13 @@ mod evex_dbpsadbw_memory_source;
 mod evex_duplicate_move_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_expand_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_extract_memory_destination;
 #[cfg(feature = "smir-jit")]
 mod evex_fixup_imm_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_fma3_memory_source;
+#[cfg(feature = "smir-jit")]
 mod evex_four_dot_product_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_four_fma_memory_source;
