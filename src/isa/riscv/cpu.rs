@@ -2057,7 +2057,10 @@ impl RiscVCpu {
                 let mask = self.supervisor_interrupt_mask();
                 self.mie = (self.mie & !mask) | (value & mask);
             }
-            Csr::Mtvec => self.mtvec = value,
+            Csr::Mtvec => {
+                let mode = if value & 0b11 == 1 { 1 } else { 0 };
+                self.mtvec = (value & !0b11 | mode) & self.xmask();
+            }
             Csr::Mcounteren => self.mcounteren = value,
             Csr::Mscratch => self.mscratch = value,
             Csr::Mepc => self.mepc = value & !1,
@@ -4083,6 +4086,19 @@ mod tests {
             run_one(&mut c, csr(0xC00, 4, 1, 5)),
             RiscVExit::Trap(_)
         ));
+    }
+
+    #[test]
+    fn mtvec_warl_canonicalizes_reserved_modes() {
+        let mut c = cpu();
+        // BASE=0x1000 with reserved MODE=2/3 canonicalizes to Direct.
+        c.csr_write(0x305, 0x1002).unwrap();
+        assert_eq!(c.csr_read(0x305).unwrap(), 0x1000);
+        c.csr_write(0x305, 0x1003).unwrap();
+        assert_eq!(c.csr_read(0x305).unwrap(), 0x1000);
+        // MODE=1 (Vectored) is preserved.
+        c.csr_write(0x305, 0x1001).unwrap();
+        assert_eq!(c.csr_read(0x305).unwrap(), 0x1001);
     }
 
     #[test]
