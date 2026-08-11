@@ -118,6 +118,9 @@ fn decode_q0(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
         }
         0b001 => {
             // C.FLD -> fld rd', off(rs1')  (RV32 & RV64; double)
+            if !isa.d {
+                return ill(h);
+            }
             let off = (bits(h, 12, 10) << 3) | (bits(h, 6, 5) << 6);
             mk(Op::Fld, rd_, rs1_, 0, off as i64, h)
         }
@@ -144,6 +147,9 @@ fn decode_q0(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
         }
         0b101 => {
             // C.FSD -> fsd rs2', off(rs1')
+            if !isa.d {
+                return ill(h);
+            }
             let off = (bits(h, 12, 10) << 3) | (bits(h, 6, 5) << 6);
             mk(Op::Fsd, 0, rs1_, rvc_reg(bits(h, 4, 2)), off as i64, h)
         }
@@ -348,6 +354,9 @@ fn decode_q2(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
         }
         0b001 => {
             // C.FLDSP -> fld rd, off(x2)
+            if !isa.d {
+                return ill(h);
+            }
             let off = (bit(h, 12) << 5) | (bits(h, 6, 5) << 3) | (bits(h, 4, 2) << 6);
             mk(Op::Fld, rd, 2, 0, off as i64, h)
         }
@@ -420,6 +429,9 @@ fn decode_q2(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
                 return decode_zcmp_zcmt(h, rv64, isa);
             }
             // C.FSDSP -> fsd rs2, off(x2)
+            if !isa.d {
+                return ill(h);
+            }
             let off = (bits(h, 12, 10) << 3) | (bits(h, 9, 7) << 6);
             mk(Op::Fsd, 0, 2, bits(h, 6, 2) as u8, off as i64, h)
         }
@@ -536,6 +548,43 @@ mod tests {
         assert_eq!(i.rs1, 8);
         assert_eq!(i.imm, 1);
         assert_eq!(i.len, 2);
+    }
+
+    #[test]
+    fn compressed_double_memory_encodings_require_d() {
+        let cases = [
+            (0x2000, Op::Fld), // C.FLD
+            (0x2002, Op::Fld), // C.FLDSP
+            (0xA000, Op::Fsd), // C.FSD
+            (0xA002, Op::Fsd), // C.FSDSP
+        ];
+        let with_d = Isa::rv64gc();
+        let no_d = Isa { d: false, ..with_d };
+
+        for xlen in [Xlen::Rv32, Xlen::Rv64] {
+            for (half, expected) in cases {
+                assert_eq!(
+                    decode_rvc(half, xlen, &with_d).op,
+                    expected,
+                    "{xlen:?}, half={half:#06x}, D enabled"
+                );
+                assert_eq!(
+                    decode_rvc(half, xlen, &no_d).op,
+                    Op::Illegal,
+                    "{xlen:?}, half={half:#06x}, D disabled"
+                );
+            }
+        }
+
+        // The Q2/FUNCT3=101 slot belongs to Zcmp/Zcmt when either extension is
+        // enabled; a D gate must not hide a valid compressed macro encoding.
+        let mut zcmp_without_d = no_d;
+        zcmp_without_d.zcmp = true;
+        let cm_push = ((0b101 << 13) | (0x18 << 8) | (5 << 4) | (1 << 2) | 0b10) as u16;
+        assert_eq!(
+            decode_rvc(cm_push, Xlen::Rv64, &zcmp_without_d).op,
+            Op::CmPush
+        );
     }
 
     #[test]
