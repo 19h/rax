@@ -1813,7 +1813,16 @@ impl RiscVCpu {
             }
             Op::Vmsbf | Op::Vmsif | Op::Vmsof => {
                 // Set-before / set-including / set-only the first active set bit.
-                // These prefix ops are not restartable: non-zero vstart traps.
+                // These prefix ops are not restartable (non-zero vstart
+                // traps), the destination must not alias the vs2 source
+                // register, and in the masked form the destination must not
+                // be the mask register v0.
+                if vd == vs2 {
+                    return Err(Trap::illegal(insn.raw));
+                }
+                if !vm && vd == 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 if vstart != 0 {
                     return Err(Trap::illegal(insn.raw));
                 }

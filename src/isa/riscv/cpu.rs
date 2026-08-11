@@ -4606,6 +4606,41 @@ mod tests {
     }
 
     #[test]
+    #[test]
+    fn prefix_mask_ops_reject_vd_eq_vs2_and_masked_vd_eq_v0() {
+        // vmsbf/vmsif/vmsof write vd while reading vs2; vd == vs2 is
+        // reserved, and in the masked form the destination must not be the
+        // mask register v0.  The variant is selected by vs1 (1=vmsbf,
+        // 2=vmsof, 3=vmsif) with funct3=0b010.
+        for w in [
+            op_v(0b010100, 1, 2, 0b00001, 0b010, 2), // vmsbf.vv v2,v2
+            op_v(0b010100, 1, 2, 0b00010, 0b010, 2), // vmsof.vv v2,v2
+            op_v(0b010100, 1, 2, 0b00011, 0b010, 2), // vmsif.vv v2,v2
+            op_v(0b010100, 0, 2, 0b00001, 0b010, 0), // vmsbf.m v0,v2,v0.t
+            op_v(0b010100, 0, 2, 0b00010, 0b010, 0), // vmsof.m v0,v2,v0.t
+            op_v(0b010100, 0, 2, 0b00011, 0b010, 0), // vmsif.m v0,v2,v0.t
+        ] {
+            assert!(matches!(
+                run_one(&mut cpu_e8m1(), w),
+                RiscVExit::Trap(Trap {
+                    cause: cause::ILLEGAL_INSTR,
+                    ..
+                })
+            ));
+        }
+        // Non-overlapping legal forms still execute: unmasked and masked.
+        for w in [
+            op_v(0b010100, 1, 2, 0b00001, 0b010, 1), // vmsbf.vv v1,v2
+            op_v(0b010100, 0, 2, 0b00001, 0b010, 1), // vmsbf.m v1,v2,v0.t
+        ] {
+            assert!(matches!(
+                run_one(&mut cpu_e8m1(), w),
+                RiscVExit::Continue
+            ));
+        }
+    }
+
+    #[test]
     fn vcompress_rejects_reserved_states() {
         // vcompress.vm (funct6 010111, OPMVV) must be unmasked, vstart==0, and
         // its destination must not overlap vs2 or the vs1 mask source.
