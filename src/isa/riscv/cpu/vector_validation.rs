@@ -41,6 +41,14 @@ impl Emul {
     fn widen(self) -> Self {
         Self::new(self.numerator * 2, self.denominator)
     }
+
+    fn narrow(self, factor: u8) -> Self {
+        Self::new(self.numerator, self.denominator * factor)
+    }
+
+    fn is_at_least_one(self) -> bool {
+        self.numerator >= self.denominator
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -52,8 +60,11 @@ struct RegisterGroup {
 impl RegisterGroup {
     fn for_emul(first: u8, emul: Emul) -> Option<Self> {
         // RVV reserves any instruction whose effective register group is larger
-        // than eight vector registers.
-        if emul.numerator > 8 * emul.denominator {
+        // than eight vector registers or smaller than the minimum fractional
+        // LMUL supported by this ELEN=64 implementation (1/8).
+        if u16::from(emul.numerator) > 8 * u16::from(emul.denominator)
+            || u16::from(emul.denominator) > 8 * u16::from(emul.numerator)
+        {
             return None;
         }
 
@@ -77,6 +88,10 @@ impl RegisterGroup {
         let self_end = self.first + self.count;
         let other_end = other.first + other.count;
         self.first < other_end && other.first < self_end
+    }
+
+    fn last(self) -> u8 {
+        self.first + self.count - 1
     }
 }
 
@@ -115,6 +130,75 @@ fn validate_narrowing(cpu: &RiscVCpu, insn: &Insn) -> Result<(), Trap> {
     Ok(())
 }
 
+fn validate_wider_destination_overlap(
+    insn: &Insn,
+    destination: RegisterGroup,
+    source: RegisterGroup,
+    source_emul: Emul,
+) -> Result<(), Trap> {
+    // For a wider destination, overlap is legal only when the narrow source
+    // has EMUL >= 1 and occupies the highest-numbered part of the destination.
+    if destination.overlaps(source)
+        && (!source_emul.is_at_least_one() || destination.last() != source.last())
+    {
+        return Err(illegal(insn));
+    }
+    Ok(())
+}
+
+fn validate_widening_data(
+    cpu: &RiscVCpu,
+    insn: &Insn,
+    wide_vs2: bool,
+    vector_vs1: bool,
+    destination_is_source: bool,
+) -> Result<(), Trap> {
+    let narrow_emul = current_lmul(cpu, insn)?;
+    let wide_emul = narrow_emul.widen();
+    let destination = RegisterGroup::for_emul(insn.rd, wide_emul).ok_or_else(|| illegal(insn))?;
+
+    let vs2_emul = if wide_vs2 { wide_emul } else { narrow_emul };
+    let vs2 = RegisterGroup::for_emul(insn.rs2, vs2_emul).ok_or_else(|| illegal(insn))?;
+    if !wide_vs2 {
+        if destination_is_source && destination.overlaps(vs2) {
+            // A destructive widening accumulate would otherwise read the same
+            // register at both the wide destination EEW and the narrow source
+            // EEW, which is a reserved source-operand combination.
+            return Err(illegal(insn));
+        }
+        validate_wider_destination_overlap(insn, destination, vs2, vs2_emul)?;
+    }
+
+    if vector_vs1 {
+        let vs1 = RegisterGroup::for_emul(insn.rs1, narrow_emul).ok_or_else(|| illegal(insn))?;
+        if (destination_is_source && destination.overlaps(vs1)) || (wide_vs2 && vs2.overlaps(vs1)) {
+            // The first case is the other destructive-accumulate source. The
+            // second would read a shared register through wide vs2 and narrow
+            // vs1 in a `.w` form. Both use two EEWs for one source register.
+            return Err(illegal(insn));
+        }
+        validate_wider_destination_overlap(insn, destination, vs1, narrow_emul)?;
+    }
+    Ok(())
+}
+
+fn validate_extension(cpu: &RiscVCpu, insn: &Insn, factor: u8) -> Result<(), Trap> {
+    let destination_emul = current_lmul(cpu, insn)?;
+    let source_emul = destination_emul.narrow(factor);
+    let destination =
+        RegisterGroup::for_emul(insn.rd, destination_emul).ok_or_else(|| illegal(insn))?;
+    let source = RegisterGroup::for_emul(insn.rs2, source_emul).ok_or_else(|| illegal(insn))?;
+    validate_wider_destination_overlap(insn, destination, source, source_emul)
+}
+
+fn validate_reduction_source_group(cpu: &RiscVCpu, insn: &Insn) -> Result<(), Trap> {
+    // Reduction scalar operands in vd/vs1 may use any register regardless of
+    // LMUL. The vector source in vs2 remains an LMUL-sized group and must be
+    // aligned, in bounds, and no larger than eight registers.
+    RegisterGroup::for_emul(insn.rs2, current_lmul(cpu, insn)?).ok_or_else(|| illegal(insn))?;
+    Ok(())
+}
+
 fn is_vector_fp_encoding(insn: &Insn) -> bool {
     // OPFVV and OPFVF are the complete floating-point classes under OP-V.
     // Classifying the encoding, rather than maintaining an operation whitelist,
@@ -122,12 +206,32 @@ fn is_vector_fp_encoding(insn: &Insn) -> bool {
     insn.raw & 0x7f == 0x57 && matches!(insn.funct3, 0b001 | 0b101)
 }
 
+fn fp_operands_supported_at_sew8(insn: &Insn) -> bool {
+    // Zvfh defines these conversions at SEW=8 because their only floating-
+    // point operand is the double-width, 16-bit side. Every other decoded
+    // OPFVV/OPFVF instruction would consume or produce an unsupported FP8
+    // operand and is reserved.
+    matches!(
+        insn.op,
+        Op::VfwcvtFXu
+            | Op::VfwcvtFX
+            | Op::VfncvtXuF
+            | Op::VfncvtXF
+            | Op::VfncvtRtzXuF
+            | Op::VfncvtRtzXF
+    )
+}
+
 pub(super) fn validate(cpu: &RiscVCpu, insn: &Insn, vm: bool) -> Result<(), Trap> {
     // All vector floating-point instructions consult frm, including operations
     // whose numeric result is independent of rounding and instructions with a
     // fixed RTZ/ROD behavior. Architectural frm encodings 5, 6, and 7 are
     // reserved; frm=7 is not a second level of dynamic selection.
-    if is_vector_fp_encoding(insn) && cpu.frm() > 4 {
+    let vector_fp = is_vector_fp_encoding(insn);
+    if vector_fp && cpu.frm() > 4 {
+        return Err(illegal(insn));
+    }
+    if vector_fp && cpu.sew_bytes() == 1 && !fp_operands_supported_at_sew8(insn) {
         return Err(illegal(insn));
     }
 
@@ -157,6 +261,47 @@ pub(super) fn validate(cpu: &RiscVCpu, insn: &Insn, vm: bool) -> Result<(), Trap
         | Op::VfncvtRodFF
         | Op::VfncvtRtzXuF
         | Op::VfncvtRtzXF => validate_narrowing(cpu, insn)?,
+        Op::Vwaddu | Op::Vwadd | Op::Vwsubu | Op::Vwsub => {
+            validate_widening_data(cpu, insn, false, insn.funct3 == 0b010, false)?;
+        }
+        Op::VwadduW | Op::VwaddW | Op::VwsubuW | Op::VwsubW => {
+            validate_widening_data(cpu, insn, true, insn.funct3 == 0b010, false)?;
+        }
+        Op::Vwmulu
+        | Op::Vwmulsu
+        | Op::Vwmul
+        | Op::Vwmaccu
+        | Op::Vwmacc
+        | Op::Vwmaccsu
+        | Op::Vwmaccus => {
+            let accumulate = matches!(
+                insn.op,
+                Op::Vwmaccu | Op::Vwmacc | Op::Vwmaccsu | Op::Vwmaccus
+            );
+            validate_widening_data(cpu, insn, false, insn.funct3 == 0b010, accumulate)?;
+        }
+        Op::Vfwadd | Op::Vfwsub | Op::Vfwmul => {
+            validate_widening_data(cpu, insn, false, insn.funct3 == 0b001, false)?;
+        }
+        Op::VfwaddW | Op::VfwsubW => {
+            validate_widening_data(cpu, insn, true, insn.funct3 == 0b001, false)?;
+        }
+        Op::Vfwmacc | Op::Vfwnmacc | Op::Vfwmsac | Op::Vfwnmsac => {
+            validate_widening_data(cpu, insn, false, insn.funct3 == 0b001, true)?;
+        }
+        Op::VfwcvtXuF
+        | Op::VfwcvtXF
+        | Op::VfwcvtFXu
+        | Op::VfwcvtFX
+        | Op::VfwcvtFF
+        | Op::VfwcvtRtzXuF
+        | Op::VfwcvtRtzXF => validate_widening_data(cpu, insn, false, false, false)?,
+        Op::VzextVf2 | Op::VsextVf2 => validate_extension(cpu, insn, 2)?,
+        Op::VzextVf4 | Op::VsextVf4 => validate_extension(cpu, insn, 4)?,
+        Op::VzextVf8 | Op::VsextVf8 => validate_extension(cpu, insn, 8)?,
+        Op::Vwredsumu | Op::Vwredsum | Op::Vfwredusum | Op::Vfwredosum => {
+            validate_reduction_source_group(cpu, insn)?;
+        }
         _ => {}
     }
 
@@ -169,7 +314,15 @@ mod tests {
     use crate::isa::riscv::{FlatMemory, Isa, RiscVConfig, RiscVExit, Xlen, decode};
 
     const E8_M1: u64 = 0x00;
+    const E16_MF8: u64 = 0x0d;
     const E32_M1: u64 = 0x10;
+    const E32_M2: u64 = 0x11;
+    const E32_M4: u64 = 0x12;
+    const E32_M8: u64 = 0x13;
+    const E32_MF4: u64 = 0x16;
+    const E32_MF2: u64 = 0x17;
+    const E64_M8: u64 = 0x1b;
+    const E64_MF2: u64 = 0x1f;
 
     fn op_v(funct6: u32, vm: u32, vs2: u32, src: u32, funct3: u32, vd: u32) -> u32 {
         (funct6 << 26) | (vm << 25) | (vs2 << 20) | (src << 15) | (funct3 << 12) | (vd << 7) | 0x57
@@ -280,21 +433,26 @@ mod tests {
     fn slide_up_rejects_overlap_and_misaligned_groups_but_down_allows_overlap() {
         const E8_M2: u64 = 0x01;
         let up_forms = [
-            (0b001110, 0b100), // vslideup.vx
-            (0b001110, 0b011), // vslideup.vi
-            (0b001110, 0b110), // vslide1up.vx
-            (0b001110, 0b101), // vfslide1up.vf
+            (0b001110, 0b100, E8_M2),  // vslideup.vx
+            (0b001110, 0b011, E8_M2),  // vslideup.vi
+            (0b001110, 0b110, E8_M2),  // vslide1up.vx
+            (0b001110, 0b101, E32_M2), // vfslide1up.vf
         ];
-        for (funct6, funct3) in up_forms {
-            assert_illegal(op_v(funct6, 1, 2, 3, funct3, 2), E8_M2, 4, 0, 0);
-            assert_illegal(op_v(funct6, 1, 4, 3, funct3, 1), E8_M2, 4, 0, 0);
-            assert_illegal(op_v(funct6, 1, 3, 3, funct3, 4), E8_M2, 4, 0, 0);
-            assert_legal(op_v(funct6, 1, 4, 3, funct3, 2), E8_M2, 4, 0, 0);
+        for (funct6, funct3, vtype) in up_forms {
+            assert_illegal(op_v(funct6, 1, 2, 3, funct3, 2), vtype, 4, 0, 0);
+            assert_illegal(op_v(funct6, 1, 4, 3, funct3, 1), vtype, 4, 0, 0);
+            assert_illegal(op_v(funct6, 1, 3, 3, funct3, 4), vtype, 4, 0, 0);
+            assert_legal(op_v(funct6, 1, 4, 3, funct3, 2), vtype, 4, 0, 0);
         }
 
         // Downward slides explicitly permit source/destination overlap.
-        for funct3 in [0b100, 0b011, 0b110, 0b101] {
-            assert_legal(op_v(0b001111, 1, 2, 3, funct3, 2), E8_M2, 4, 0, 0);
+        for (funct3, vtype) in [
+            (0b100, E8_M2),
+            (0b011, E8_M2),
+            (0b110, E8_M2),
+            (0b101, E32_M2),
+        ] {
+            assert_legal(op_v(0b001111, 1, 2, 3, funct3, 2), vtype, 4, 0, 0);
         }
     }
 
@@ -349,6 +507,230 @@ mod tests {
     }
 
     #[test]
+    fn widening_rejects_low_part_and_fractional_source_overlap() {
+        // e32,m1: vd=v0 is a two-register wide destination. A narrow source
+        // in v1 overlaps its high part and is legal; a source in v0 overlaps
+        // its low part and is reserved.
+        assert_legal(op_v(0b110000, 1, 1, 2, 0b010, 0), E32_M1, 1, 0, 0);
+        assert_illegal(op_v(0b110000, 1, 0, 2, 0b010, 0), E32_M1, 1, 0, 0);
+
+        // e32,mf2: the narrow source has EMUL=1/2. Although both operands
+        // name v1, widening overlap is forbidden when source EMUL is below 1.
+        assert_illegal(op_v(0b110000, 1, 1, 2, 0b010, 1), E32_MF2, 1, 0, 0);
+    }
+
+    #[test]
+    fn widening_arithmetic_covers_integer_fp_and_conversion_families() {
+        let narrow_binary = [
+            // Integer widening add/subtract and multiply.
+            (0b110000, 0b010),
+            (0b110001, 0b010),
+            (0b110010, 0b010),
+            (0b110011, 0b010),
+            (0b111000, 0b010),
+            (0b111010, 0b010),
+            (0b111011, 0b010),
+            // Floating-point widening add/subtract and multiply.
+            (0b110000, 0b001),
+            (0b110010, 0b001),
+            (0b111000, 0b001),
+        ];
+        for (funct6, funct3) in narrow_binary {
+            // vd=v0 occupies {v0,v1}. Both narrow vector sources are subject
+            // to the same low-part/high-part overlap rule.
+            assert_illegal(op_v(funct6, 1, 0, 2, funct3, 0), E32_M1, 1, 0, 0);
+            assert_illegal(op_v(funct6, 1, 2, 0, funct3, 0), E32_M1, 1, 0, 0);
+            assert_legal(op_v(funct6, 1, 1, 1, funct3, 0), E32_M1, 1, 0, 0);
+        }
+
+        for (funct6, funct3) in [
+            (0b110000, 0b110),
+            (0b110001, 0b110),
+            (0b110010, 0b110),
+            (0b110011, 0b110),
+            (0b111000, 0b110),
+            (0b111010, 0b110),
+            (0b111011, 0b110),
+            (0b110000, 0b101),
+            (0b110010, 0b101),
+            (0b111000, 0b101),
+        ] {
+            // Scalar rs1 is not a vector operand; only the narrow vs2 group
+            // participates in overlap validation.
+            assert_illegal(op_v(funct6, 1, 0, 0, funct3, 0), E32_M1, 1, 0, 0);
+            assert_legal(op_v(funct6, 1, 1, 0, funct3, 0), E32_M1, 1, 0, 0);
+        }
+
+        // Destructive widening MAC/FMA instructions also read vd at the wide
+        // EEW. Any overlap with a narrow vector source would therefore read
+        // the same register at two EEWs and is reserved, including high-part
+        // overlap that is legal for non-destructive widening operations.
+        for (funct6, funct3) in [
+            (0b111100, 0b010),
+            (0b111101, 0b010),
+            (0b111111, 0b010),
+            (0b111100, 0b001),
+            (0b111101, 0b001),
+            (0b111110, 0b001),
+            (0b111111, 0b001),
+        ] {
+            assert_illegal(op_v(funct6, 1, 0, 2, funct3, 0), E32_M1, 1, 0, 0);
+            assert_illegal(op_v(funct6, 1, 1, 2, funct3, 0), E32_M1, 1, 0, 0);
+            assert_illegal(op_v(funct6, 1, 2, 1, funct3, 0), E32_M1, 1, 0, 0);
+            assert_legal(op_v(funct6, 1, 2, 3, funct3, 0), E32_M1, 1, 0, 0);
+        }
+
+        for (funct6, funct3) in [
+            (0b111100, 0b110),
+            (0b111101, 0b110),
+            (0b111111, 0b110),
+            (0b111100, 0b101),
+            (0b111101, 0b101),
+            (0b111110, 0b101),
+            (0b111111, 0b101),
+        ] {
+            assert_illegal(op_v(funct6, 1, 1, 0, funct3, 0), E32_M1, 1, 0, 0);
+            assert_legal(op_v(funct6, 1, 2, 0, funct3, 0), E32_M1, 1, 0, 0);
+        }
+
+        // The vx-only vwmaccus form validates vs2 but must not treat scalar
+        // rs1 as a vector-register operand. Its wide accumulator still makes
+        // every destination/vs2 overlap reserved.
+        assert_illegal(op_v(0b111110, 1, 0, 0, 0b110, 0), E32_M1, 1, 0, 0);
+        assert_illegal(op_v(0b111110, 1, 1, 0, 0b110, 0), E32_M1, 1, 0, 0);
+        assert_legal(op_v(0b111110, 1, 2, 0, 0b110, 0), E32_M1, 1, 0, 0);
+
+        // Every widening FP/integer conversion is unary and validates its
+        // narrow vs2 source before the element loop.
+        for selector in 0b01000..=0b01111 {
+            if selector == 0b01101 {
+                continue; // reserved VFUNARY0 selector
+            }
+            assert_illegal(op_v(0b010010, 1, 0, selector, 0b001, 0), E32_M1, 1, 0, 0);
+            assert_legal(op_v(0b010010, 1, 1, selector, 0b001, 0), E32_M1, 1, 0, 0);
+        }
+    }
+
+    #[test]
+    fn widening_wide_source_forms_allow_same_width_alias() {
+        for (funct6, funct3) in [
+            (0b110100, 0b010),
+            (0b110101, 0b010),
+            (0b110110, 0b010),
+            (0b110111, 0b010),
+            (0b110100, 0b001),
+            (0b110110, 0b001),
+        ] {
+            // Wide vs2 may fully alias the wide destination. The narrow vv
+            // source must be disjoint from that wide source because a source
+            // register cannot be read at both wide and narrow EEWs.
+            assert_legal(op_v(funct6, 1, 0, 2, funct3, 0), E32_M1, 1, 0, 0);
+            assert_illegal(op_v(funct6, 1, 0, 0, funct3, 0), E32_M1, 1, 0, 0);
+            assert_illegal(op_v(funct6, 1, 0, 1, funct3, 0), E32_M1, 1, 0, 0);
+
+            // With wide vs2 disjoint, narrow vs1 may use the destination's
+            // high part under the normal widening overlap rule.
+            assert_legal(op_v(funct6, 1, 4, 1, funct3, 0), E32_M1, 1, 0, 0);
+        }
+
+        // Scalar .wx/.wf forms have no vector vs1 operand.
+        assert_legal(op_v(0b110100, 1, 0, 0, 0b110, 0), E32_M1, 1, 0, 0);
+        assert_legal(op_v(0b110100, 1, 0, 0, 0b101, 0), E32_M1, 1, 0, 0);
+    }
+
+    #[test]
+    fn widening_group_boundaries_use_exact_rational_emul() {
+        let vwadd_vv = |vd, vs2| op_v(0b110000, 1, vs2, 8, 0b010, vd);
+
+        for (vtype, high_source) in [(E32_M1, 1), (E32_M2, 2), (E32_M4, 4)] {
+            assert_legal(vwadd_vv(0, high_source), vtype, 1, 0, 0);
+            assert_illegal(vwadd_vv(0, 0), vtype, 1, 0, 0);
+        }
+
+        // A widening result at LMUL=8 would require the reserved EMUL=16.
+        assert_illegal(vwadd_vv(0, 8), E32_M8, 1, 0, 0);
+
+        // Fractional narrow sources have EMUL below 1, so any named-register
+        // overlap is reserved even though each operand occupies one register.
+        for vtype in [E16_MF8, E32_MF4, E32_MF2] {
+            assert_illegal(vwadd_vv(1, 1), vtype, 1, 0, 0);
+            assert_legal(vwadd_vv(1, 2), vtype, 1, 0, 0);
+        }
+
+        // Destination and source group alignment is validated independently.
+        assert_illegal(vwadd_vv(1, 2), E32_M1, 1, 0, 0);
+        assert_illegal(vwadd_vv(4, 1), E32_M2, 1, 0, 0);
+    }
+
+    #[test]
+    fn vector_extensions_validate_scaled_source_emul() {
+        let extension = |selector, vd, vs2| op_v(0b010010, 1, vs2, selector, 0b010, vd);
+        for (selector, vtype, high_source) in [
+            (0b00110, E32_M2, 1), // vzext.vf2: source EMUL=1
+            (0b00111, E32_M2, 1), // vsext.vf2
+            (0b00100, E32_M4, 3), // vzext.vf4: source EMUL=1
+            (0b00101, E32_M4, 3), // vsext.vf4
+            (0b00010, E64_M8, 7), // vzext.vf8: source EMUL=1
+            (0b00011, E64_M8, 7), // vsext.vf8
+        ] {
+            assert_legal(extension(selector, 0, high_source), vtype, 1, 0, 0);
+            assert_illegal(extension(selector, 0, 0), vtype, 1, 0, 0);
+        }
+
+        // mf2 divided by the vf8 factor produces source EMUL=1/16,
+        // below this ELEN=64 implementation's minimum legal group of 1/8.
+        assert_illegal(extension(0b00010, 0, 1), E64_MF2, 1, 0, 0);
+    }
+
+    #[test]
+    fn widening_reductions_allow_any_scalar_destination_register() {
+        for (funct6, funct3) in [
+            (0b110000, 0b000),
+            (0b110001, 0b000),
+            (0b110001, 0b001),
+            (0b110011, 0b001),
+        ] {
+            // Reduction scalar sources and destinations are not LMUL groups;
+            // any vector register may hold them even when it lies within vs2.
+            assert_legal(op_v(funct6, 1, 0, 3, funct3, 1), E32_M2, 1, 0, 0);
+            assert_legal(op_v(funct6, 1, 0, 3, funct3, 0), E32_M2, 1, 0, 0);
+
+            // vs2 itself remains an LMUL-sized vector group.
+            assert_illegal(op_v(funct6, 1, 1, 3, funct3, 4), E32_M2, 1, 0, 0);
+        }
+    }
+
+    #[test]
+    fn vector_fp_validation_rejects_unsupported_eew8_without_overrejecting_conversions() {
+        // Single-width and widening arithmetic would consume 8-bit floating-
+        // point operands, for which RAX exposes no supported IEEE format.
+        assert_illegal(op_v(0b000000, 1, 2, 3, 0b001, 1), E8_M1, 1, 0, 0);
+        assert_illegal(op_v(0b110000, 1, 2, 3, 0b001, 0), E8_M1, 1, 0, 0);
+
+        // At SEW=8, Zvfh defines the integer-to-FP widening conversions and
+        // FP-to-integer narrowing conversions because their FP operand is
+        // 16 bits. The inverse directions still use an FP8 operand and trap.
+        for selector in [0b01010, 0b01011] {
+            assert_legal(op_v(0b010010, 1, 2, selector, 0b001, 0), E8_M1, 1, 0, 0);
+        }
+        for selector in [0b01000, 0b01001, 0b01100, 0b01110, 0b01111] {
+            assert_illegal(op_v(0b010010, 1, 2, selector, 0b001, 0), E8_M1, 1, 0, 0);
+        }
+        // The entry validator must not preempt the separately owned narrowing
+        // semantic path for its defined FP16-to-integer8 variants.
+        for selector in [0b10000, 0b10001, 0b10110, 0b10111] {
+            let insn = decoded(op_v(0b010010, 1, 2, selector, 0b001, 1));
+            assert_eq!(validate(&cpu(E8_M1, 1, 0, 0), &insn, true), Ok(()));
+        }
+        for selector in [0b10010, 0b10011, 0b10100, 0b10101] {
+            assert_illegal(op_v(0b010010, 1, 2, selector, 0b001, 1), E8_M1, 1, 0, 0);
+        }
+
+        // Integer data paths remain legal at SEW=8.
+        assert_legal(op_v(0b000000, 1, 2, 3, 0b000, 1), E8_M1, 1, 0, 0);
+    }
+
+    #[test]
     fn narrowing_rejects_misaligned_groups_and_reserved_lmul() {
         // e32,m2 has a two-register destination and a four-register wide source.
         for raw in narrowing_encodings(1, 4, 16) {
@@ -369,7 +751,10 @@ mod tests {
         for funct6 in 0..64 {
             for funct3 in [0b001, 0b101] {
                 for src in 0..32 {
-                    let raw = op_v(funct6, 1, 2, src, funct3, 1);
+                    // Keep vd/vs2 disjoint and aligned for widening/narrowing
+                    // groups. The src field is still exhaustively enumerated
+                    // because it is either an operand or a unary selector.
+                    let raw = op_v(funct6, 1, 12, src, funct3, 8);
                     let insn = decode(raw, Xlen::Rv64, &isa);
                     if insn.op != Op::Illegal {
                         encodings.push(insn);
@@ -378,7 +763,7 @@ mod tests {
             }
         }
         // vfmv.s.f uses vs2=0 as an additional encoding constraint.
-        encodings.push(decoded(op_v(0b010000, 1, 0, 3, 0b101, 1)));
+        encodings.push(decoded(op_v(0b010000, 1, 0, 3, 0b101, 8)));
         encodings
     }
 
@@ -390,18 +775,23 @@ mod tests {
             "decoder enumeration unexpectedly found too few FP encodings"
         );
 
+        let mut decoded_ops = Vec::new();
+        let mut otherwise_legal_ops = Vec::new();
+
         for insn in encodings {
             assert!(is_vector_fp_encoding(&insn), "missed {:?}", insn.op);
-            for frm in 0..=4 {
-                let cpu = cpu(E32_M1, 4, 0, frm);
-                assert_eq!(
-                    validate(&cpu, &insn, true),
-                    Ok(()),
-                    "legal frm={frm} rejected for {:?} ({:08x})",
-                    insn.op,
-                    insn.raw
-                );
+            if !decoded_ops.contains(&insn.op) {
+                decoded_ops.push(insn.op);
             }
+
+            let legal_for_all_frm = (0..=4).all(|frm| {
+                let cpu = cpu(E32_M1, 4, 0, frm);
+                validate(&cpu, &insn, true) == Ok(())
+            });
+            if legal_for_all_frm && !otherwise_legal_ops.contains(&insn.op) {
+                otherwise_legal_ops.push(insn.op);
+            }
+
             for frm in 5..=7 {
                 let cpu = cpu(E32_M1, 0, 8, frm);
                 assert_eq!(
@@ -412,6 +802,13 @@ mod tests {
                     insn.raw
                 );
             }
+        }
+
+        for op in decoded_ops {
+            assert!(
+                otherwise_legal_ops.contains(&op),
+                "decoder enumeration found no register-valid encoding for {op:?}"
+            );
         }
 
         let vector_load = decoded((1 << 25) | (10 << 15) | (6 << 12) | (1 << 7) | 0x07);

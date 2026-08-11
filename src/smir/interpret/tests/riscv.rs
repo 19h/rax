@@ -179,3 +179,94 @@ fn rv_vector_reserved_encoding_exits_without_committing_state() {
     assert_eq!(ctx.read_vreg(vl), 0);
     assert_eq!(ctx.read_vreg(vtype), 0x10);
 }
+
+#[test]
+fn rv_vector_widening_overlap_exits_without_committing_state() {
+    let mut ctx = SmirContext::new_riscv();
+    let mut memory = FlatMemory::new(0x2000);
+    let x10 = VReg::Arch(ArchReg::RiscV(RiscVReg::X(10)));
+    let vl = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc20)));
+    let vtype = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc21)));
+    ctx.write_vreg(vl, 1);
+    ctx.write_vreg(vtype, 0x10); // e32,m1
+
+    let before_v0 = [0x5a; 16];
+    let before_v1 = [0xa5; 16];
+    let ArchRegState::RiscV(rv) = &mut ctx.arch_regs else {
+        panic!("expected RISC-V context");
+    };
+    rv.v[0] = before_v0;
+    rv.v[1] = before_v1;
+
+    // vwadd.vv v0,v0,v2: wide vd={v0,v1}, while narrow vs2=v0 overlaps
+    // its low part. The trap must occur before either destination register is
+    // committed through the opaque RVV interpreter bridge.
+    let insn = (0b110000 << 26) | (1 << 25) | (2 << 15) | (0b010 << 12) | 0x57;
+    exec_rv_vector(
+        &mut ctx,
+        &mut memory,
+        insn,
+        64,
+        0x1100,
+        &rv_vector_test_state(x10),
+    );
+
+    assert!(matches!(
+        ctx.exit_reason,
+        Some(ExitReason::Undefined {
+            addr: 0x1100,
+            opcode
+        }) if opcode == insn
+    ));
+    let ArchRegState::RiscV(rv) = &ctx.arch_regs else {
+        panic!("expected RISC-V context");
+    };
+    assert_eq!(rv.v[0], before_v0);
+    assert_eq!(rv.v[1], before_v1);
+    assert_eq!(ctx.read_vreg(vl), 1);
+    assert_eq!(ctx.read_vreg(vtype), 0x10);
+}
+
+#[test]
+fn rv_vector_fp_sew8_exits_without_committing_state() {
+    let mut ctx = SmirContext::new_riscv();
+    let mut memory = FlatMemory::new(0x2000);
+    let x10 = VReg::Arch(ArchReg::RiscV(RiscVReg::X(10)));
+    let vl = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc20)));
+    let vtype = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc21)));
+    ctx.write_vreg(vl, 1);
+    ctx.write_vreg(vtype, 0x00); // e8,m1
+
+    let before_v1 = [0x5a; 16];
+    let ArchRegState::RiscV(rv) = &mut ctx.arch_regs else {
+        panic!("expected RISC-V context");
+    };
+    rv.v[1] = before_v1;
+
+    // vfadd.vv v1,v2,v3 would consume unsupported FP8 operands. The opaque
+    // RVV bridge must reject it at the instruction frontier before committing
+    // any destination state.
+    let insn = (1 << 25) | (2 << 20) | (3 << 15) | (0b001 << 12) | (1 << 7) | 0x57;
+    exec_rv_vector(
+        &mut ctx,
+        &mut memory,
+        insn,
+        64,
+        0x1200,
+        &rv_vector_test_state(x10),
+    );
+
+    assert!(matches!(
+        ctx.exit_reason,
+        Some(ExitReason::Undefined {
+            addr: 0x1200,
+            opcode
+        }) if opcode == insn
+    ));
+    let ArchRegState::RiscV(rv) = &ctx.arch_regs else {
+        panic!("expected RISC-V context");
+    };
+    assert_eq!(rv.v[1], before_v1);
+    assert_eq!(ctx.read_vreg(vl), 1);
+    assert_eq!(ctx.read_vreg(vtype), 0x00);
+}
