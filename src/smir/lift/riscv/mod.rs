@@ -566,6 +566,24 @@ mod tests {
     }
 
     #[test]
+    #[test]
+    fn load_to_x0_keeps_memory_access() {
+        // lw x0, 0(x1): the register write is suppressed but the memory read
+        // must stay in the lifted ops (faults and MMIO side effects).
+        let lw = i_type(0, 1, 0b010, 0, 0x03); // lw x0, 0(x1)
+        let mut lifter = RiscVLifter::rv64gc();
+        let mut ctx = test_ctx();
+        let result = lifter
+            .lift_insn(0x1000, &lw.to_le_bytes(), &mut ctx)
+            .expect("lw should lift");
+        assert!(
+            result.ops.iter().any(|op| matches!(op.kind, OpKind::Load { .. })),
+            "load to x0 must keep the memory access: {:?}",
+            result.ops
+        );
+    }
+
+    #[test]
     fn rv32_pack_uses_16_bit_halves_and_32_bit_result() {
         let pack = r_type(0b0000100, 2, 1, 0b100, 3, 0x33);
         let mut lifter = RiscVLifter::new_rv32(RiscVExtensions {
