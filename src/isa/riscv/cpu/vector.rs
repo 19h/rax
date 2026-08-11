@@ -92,6 +92,54 @@ impl RiscVCpu {
         let vs2 = insn.rs2;
         let vstart = self.vstart as usize;
         let vl = self.vl as usize;
+        // Narrowing instructions read a 2*LMUL vs2 and write an LMUL vd (the
+        // FP narrowing conversions Vfncvt* follow the same rule).  The
+        // destination may overlap the source group only in its
+        // lowest-numbered part, i.e. vd == vs2 (RVV §5.2); a partial overlap
+        // is a reserved encoding.  With fractional LMUL the source EMUL is
+        // still below one register, so the source group occupies a single
+        // register and every vs2 is aligned.
+        if matches!(
+            insn.op,
+            Op::Vnsrl
+                | Op::Vnsra
+                | Op::Vnclipu
+                | Op::Vnclip
+                | Op::VfncvtXuF
+                | Op::VfncvtXF
+                | Op::VfncvtFXu
+                | Op::VfncvtFX
+                | Op::VfncvtFF
+                | Op::VfncvtRodFF
+                | Op::VfncvtRtzXuF
+                | Op::VfncvtRtzXF
+        ) {
+            // vlmul[2:0]: 0b000=m1, 0b001=m2, 0b010=m4, 0b011=m8,
+            // 0b101=mf8, 0b110=mf4, 0b111=mf2 (fractional => 1 register).
+            let (vd_regs, src_regs) = match self.vtype & 0x7 {
+                0b001 => (2, 4),  // m2
+                0b010 => (4, 8),  // m4
+                0b011 => (8, 16), // m8: 2*LMUL exceeds the 8-register group
+                _ => (
+                    1,
+                    if self.vtype & 0x7 == 0b000 { 2 } else { 1 }, // m1 / fractional
+                ),
+            };
+            if src_regs > 8 {
+                return Err(Trap::illegal(insn.raw));
+            }
+            let vd_n = usize::from(vd);
+            let vs2_n = usize::from(vs2);
+            if vd_n % vd_regs != 0 {
+                return Err(Trap::illegal(insn.raw));
+            }
+            if vs2_n % src_regs != 0 {
+                return Err(Trap::illegal(insn.raw));
+            }
+            if vd_n != vs2_n && vd_n < vs2_n + src_regs && vs2_n < vd_n + vd_regs {
+                return Err(Trap::illegal(insn.raw));
+            }
+        }
 
         match insn.op {
             Op::Vle | Op::Vse => {

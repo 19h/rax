@@ -4535,6 +4535,69 @@ mod tests {
     }
 
     #[test]
+    fn narrowing_accepts_fractional_lmul_and_rejects_partial_overlap() {
+        // vsetvli x1, x0, zimm: zimm = (vsew << 3) | vlmul.
+        let mut c = cpu();
+        // e32,mf2 (vlmul=0b111): the narrowing source EMUL = 2*mf2 = 1
+        // register, so every vs2 is aligned and odd registers are legal.
+        run_one(&mut c, ((0b010 << 3 | 0b111) << 20) | (7 << 12) | (1 << 7) | 0x57);
+        // vnsrl.wv v1,v1,v2 fully overlapped (odd register) is legal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b101100, 1, 1, 2, 0b000, 1)),
+            RiscVExit::Continue
+        ));
+        // Odd disjoint vs2 is legal as well.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b101100, 1, 3, 2, 0b000, 1)),
+            RiscVExit::Continue
+        ));
+        // e32,m1: the source group is 2 registers.
+        run_one(&mut c, ((0b010 << 3 | 0b000) << 20) | (7 << 12) | (1 << 7) | 0x57);
+        // Full overlap vd == vs2 == 0 is the legal lowest-part overlap (vs2
+        // must still be even under m1 because the source group is 2 regs).
+        assert!(matches!(
+            run_one(&mut c, op_v(0b101100, 1, 0, 2, 0b000, 0)),
+            RiscVExit::Continue
+        ));
+        // Disjoint groups are legal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b101100, 1, 2, 1, 0b000, 1)),
+            RiscVExit::Continue
+        ));
+        // Misaligned (odd) vs2 under m1 is a reserved encoding.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b101100, 1, 3, 4, 0b000, 1)),
+            RiscVExit::Trap(Trap {
+                cause: cause::ILLEGAL_INSTR,
+                ..
+            })
+        ));
+        // e32,m2: partial overlap (vd=v6 inside the vs2=v4..v8 group) traps.
+        run_one(&mut c, ((0b010 << 3 | 0b001) << 20) | (7 << 12) | (1 << 7) | 0x57);
+        assert!(matches!(
+            run_one(&mut c, op_v(0b101100, 1, 4, 2, 0b000, 6)),
+            RiscVExit::Trap(Trap {
+                cause: cause::ILLEGAL_INSTR,
+                ..
+            })
+        ));
+        // Misaligned vd under m2 traps.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b101100, 1, 4, 2, 0b000, 3)),
+            RiscVExit::Trap(Trap {
+                cause: cause::ILLEGAL_INSTR,
+                ..
+            })
+        ));
+        // Full overlap under m2 (vs2 group is 4 registers, so v4 is the
+        // lowest legal member) is legal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b101100, 1, 4, 3, 0b000, 4)),
+            RiscVExit::Continue
+        ));
+    }
+
+    #[test]
     fn vrgather_rejects_overlapping_operands() {
         // vrgather.vv (funct6 001100, vv) with vd overlapping vs2 is reserved.
         assert!(matches!(
