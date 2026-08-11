@@ -2474,7 +2474,7 @@ fn production_jit_executes_zcmp_stack_macros_natively() {
     let mut isa = RvIsa::rv64gc();
     isa.zcmp = true;
     let stack = |funct5: u16| (0b101 << 13) | (funct5 << 8) | (5 << 4) | (0 << 2) | 0b10;
-    let push = stack(0x18); // cm.push {ra,s0-s1},-32/-16
+    let push = stack(0x18); // cm.push {ra,s0},-16
     let popretz = stack(0x1c);
 
     for config in [
@@ -2521,7 +2521,7 @@ fn production_jit_executes_zcmp_stack_macros_natively() {
                 u64::MAX
             };
             assert_eq!(actual.x(8), 0x1111_2222_3333_4444 & mask);
-            assert_eq!(actual.x(9), 0x5555_6666_7777_8888 & mask);
+            assert_eq!(actual.x(9), 3, "{:?} {level:?}", config.xlen);
             let stats = actual.jit_stats();
             assert_eq!(stats.native_executions, 2, "{:?} {level:?}", config.xlen);
             assert_eq!(

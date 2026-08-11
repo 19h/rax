@@ -649,7 +649,7 @@ fn production_zcmp_stack_partial_faults_match_interpreter() {
         isa,
     };
 
-    let push = cm_zcmp_stack(0x18, 5, 0); // ra,s0-s1; 32-byte adjustment
+    let push = cm_zcmp_stack(0x18, 6, 0); // ra,s0-s1; 32-byte adjustment
     let mut expected = make_cpu(config);
     let mut actual = make_cpu(config);
     for cpu in [&mut expected, &mut actual] {
@@ -679,7 +679,7 @@ fn production_zcmp_stack_partial_faults_match_interpreter() {
     assert_eq!(actual.jit_stats().native_executions, 1);
     assert_eq!(actual.jit_stats().interpreter_fallbacks, 0);
 
-    let pop = cm_zcmp_stack(0x1a, 5, 0);
+    let pop = cm_zcmp_stack(0x1a, 6, 0);
     let mut expected = make_cpu(config);
     let mut actual = make_cpu(config);
     for cpu in [&mut expected, &mut actual] {
