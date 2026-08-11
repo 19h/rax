@@ -479,6 +479,26 @@ fn isa_impl(h: &mut Harness) {
 fn isa_impl(h: &mut Harness) {
     use core::arch::asm;
 
+    // Exercise every address residue modulo 4. Regardless of the stack
+    // allocation's base alignment, these four offsets cover every possible
+    // alignment accepted by the Arm Run-time ABI helper.
+    let unaligned_bytes = [0x78u8, 0x56, 0x34, 0x12, 0xEF, 0xCD, 0xAB];
+    for (name, offset, expected) in [
+        ("aeabi_uread4_0", 0, 0x1234_5678),
+        ("aeabi_uread4_1", 1, 0xEF12_3456),
+        ("aeabi_uread4_2", 2, 0xCDEF_1234),
+        ("aeabi_uread4_3", 3, 0xABCD_EF12),
+    ] {
+        // SAFETY: `offset` is in 0..=3 and `unaligned_bytes` has 7 initialized
+        // bytes, so the helper can read exactly bytes offset..offset+4. The
+        // shared immutable array outlives the call, the helper creates no
+        // reference or mutable alias, follows the AAPCS C ABI, and cannot
+        // unwind because it is a leaf assembly routine.
+        let value =
+            unsafe { crate::arm_eabi::__aeabi_uread4(unaligned_bytes.as_ptr().add(offset)) };
+        h.eq_u32(name, value, expected);
+    }
+
     // Data processing with barrel shifter: r = a + (b << 4).
     let (a, b) = (0x1000u32, 0x23u32);
     let mut r: u32;

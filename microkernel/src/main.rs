@@ -19,6 +19,8 @@
 #[macro_use]
 mod serial;
 mod arch;
+#[cfg(all(not(feature = "usermode"), target_arch = "arm"))]
+mod arm_eabi;
 mod fixed;
 mod harness;
 mod mem;

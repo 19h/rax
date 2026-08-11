@@ -90,6 +90,34 @@ fn scheduled_kvm_keeps_host_dependent_differentials_informational() {
 }
 
 #[test]
+fn experimental_cross_builds_report_failures_without_red_checks() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let workflow = root.join(".github/workflows/cross.yml");
+    let contents = fs::read_to_string(&workflow)
+        .unwrap_or_else(|err| panic!("failed to read {}: {err}", workflow.display()));
+
+    let marker = "  cross-experimental:\n";
+    let start = contents
+        .find(marker)
+        .expect("cross workflow is missing its experimental job");
+    let section = contents[start + marker.len()..]
+        .lines()
+        .take_while(|line| line.trim().is_empty() || line.starts_with("    "))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    assert!(
+        section.contains("continue-on-error: true"),
+        "experimental targets must remain explicitly non-gating"
+    );
+    assert!(
+        section.contains("if cross +nightly build")
+            && section.contains("Experimental cross-build unavailable"),
+        "experimental target failures must become visible warnings, not red checks"
+    );
+}
+
+#[test]
 fn push_ci_runs_host_specific_scalar_and_evex_jit_regressions() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let workflow = root.join(".github/workflows/ci.yml");
