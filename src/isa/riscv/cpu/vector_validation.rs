@@ -719,8 +719,7 @@ mod tests {
         // The entry validator must not preempt the separately owned narrowing
         // semantic path for its defined FP16-to-integer8 variants.
         for selector in [0b10000, 0b10001, 0b10110, 0b10111] {
-            let insn = decoded(op_v(0b010010, 1, 2, selector, 0b001, 1));
-            assert_eq!(validate(&cpu(E8_M1, 1, 0, 0), &insn, true), Ok(()));
+            assert_legal(op_v(0b010010, 1, 2, selector, 0b001, 1), E8_M1, 1, 0, 0);
         }
         for selector in [0b10010, 0b10011, 0b10100, 0b10101] {
             assert_illegal(op_v(0b010010, 1, 2, selector, 0b001, 1), E8_M1, 1, 0, 0);
@@ -728,6 +727,27 @@ mod tests {
 
         // Integer data paths remain legal at SEW=8.
         assert_legal(op_v(0b000000, 1, 2, 3, 0b000, 1), E8_M1, 1, 0, 0);
+    }
+
+    #[test]
+    fn vfncvt_fp16_to_unsigned_integer8_rounds_saturates_and_accrues_flags() {
+        let raw = op_v(0b010010, 1, 2, 0b10000, 0b001, 1); // vfncvt.xu.f.w v1,v2
+        let insn = decoded(raw);
+        let mut cpu = cpu(E8_M1, 4, 0, 0);
+        let mut source = [0u8; 16];
+        for (lane, bits) in [0x3e00u16, 0xbc00, 0x5c00, 0x7e00].into_iter().enumerate() {
+            source[lane * 2..lane * 2 + 2].copy_from_slice(&bits.to_le_bytes());
+        }
+        cpu.set_vreg(2, &source);
+
+        assert_eq!(cpu.execute_insn(&insn, 0x1000), Ok(RiscVExit::Continue));
+
+        assert_eq!(&cpu.vreg(1)[0..4], &[2, 0, u8::MAX, u8::MAX]);
+        assert_eq!(
+            cpu.fcsr(),
+            crate::isa::riscv::float::fflags::NX | crate::isa::riscv::float::fflags::NV
+        );
+        assert_eq!(cpu.vstart(), 0);
     }
 
     #[test]

@@ -741,15 +741,17 @@ pub fn fcvtmod_w_d(x: f64, flags: &mut u32) -> u64 {
 // Conversions: float -> integer, integer -> float, and f64 <-> f32.
 // ---------------------------------------------------------------------------
 
-/// Convert a float to an integer. `signed`/`width` (32 or 64) select the
-/// destination type; 32-bit results are sign-extended to 64 bits per the RISC-V
-/// convention (including unsigned forms). Out-of-range and NaN inputs saturate
-/// and raise NV; in-range inexact results raise NX.
+/// Convert a float to an integer. `signed`/`width` (8, 16, 32, or 64) select
+/// the destination type; 32-bit scalar results are sign-extended to 64 bits per
+/// the RISC-V convention (including unsigned forms). Out-of-range and NaN
+/// inputs saturate and raise NV; in-range inexact results raise NX.
 pub fn ftoi<F: Sf>(x: F, signed: bool, width: u32, mode: RoundingMode, flags: &mut u32) -> u64 {
     // NaN saturates to the maximum of the destination type.
     if x.is_nan() {
         *flags |= fflags::NV;
         return match (signed, width) {
+            (true, 8) => i8::MAX as u64,
+            (false, 8) => u8::MAX as u64,
             (true, 16) => i16::MAX as u64,
             (false, 16) => u16::MAX as u64,
             (true, 32) => i32::MAX as i64 as u64,
@@ -773,6 +775,28 @@ pub fn ftoi<F: Sf>(x: F, signed: bool, width: u32, mode: RoundingMode, flags: &m
     }
 
     match (signed, width) {
+        (true, 8) => {
+            if v < i8::MIN as i128 {
+                *flags |= fflags::NV;
+                i8::MIN as u64
+            } else if v > i8::MAX as i128 {
+                *flags |= fflags::NV;
+                i8::MAX as u64
+            } else {
+                finish!(v as i8 as u64)
+            }
+        }
+        (false, 8) => {
+            if v < 0 {
+                *flags |= fflags::NV;
+                0
+            } else if v > u8::MAX as i128 {
+                *flags |= fflags::NV;
+                u8::MAX as u64
+            } else {
+                finish!(v as u8 as u64)
+            }
+        }
         (true, 16) => {
             if v < i16::MIN as i128 {
                 *flags |= fflags::NV;
@@ -2221,6 +2245,62 @@ pub fn eval_scalar_fp(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn ftoi8(value: f32, signed: bool, mode: RoundingMode) -> (u64, u32) {
+        let mut flags = 0;
+        let result = ftoi(value, signed, 8, mode, &mut flags);
+        (result, flags)
+    }
+
+    #[test]
+    fn ftoi8_rounding_saturation_and_flags_are_exact() {
+        assert_eq!(ftoi8(1.5, false, RoundingMode::Rne), (2, fflags::NX));
+        assert_eq!(ftoi8(2.5, false, RoundingMode::Rne), (2, fflags::NX));
+        assert_eq!(
+            ftoi8(-1.5, true, RoundingMode::Rne),
+            ((-2i8) as u64, fflags::NX)
+        );
+        assert_eq!(ftoi8(1.9, false, RoundingMode::Rtz), (1, fflags::NX));
+        assert_eq!(
+            ftoi8(-1.1, true, RoundingMode::Rdn),
+            ((-2i8) as u64, fflags::NX)
+        );
+        assert_eq!(ftoi8(1.1, false, RoundingMode::Rup), (2, fflags::NX));
+
+        assert_eq!(ftoi8(-128.0, true, RoundingMode::Rne), (i8::MIN as u64, 0));
+        assert_eq!(ftoi8(127.0, true, RoundingMode::Rne), (i8::MAX as u64, 0));
+        assert_eq!(
+            ftoi8(-129.0, true, RoundingMode::Rne),
+            (i8::MIN as u64, fflags::NV)
+        );
+        assert_eq!(
+            ftoi8(128.0, true, RoundingMode::Rne),
+            (i8::MAX as u64, fflags::NV)
+        );
+        assert_eq!(ftoi8(255.0, false, RoundingMode::Rne), (u8::MAX as u64, 0));
+        assert_eq!(
+            ftoi8(256.0, false, RoundingMode::Rne),
+            (u8::MAX as u64, fflags::NV)
+        );
+        assert_eq!(ftoi8(-1.0, false, RoundingMode::Rne), (0, fflags::NV));
+
+        assert_eq!(
+            ftoi8(f32::NAN, true, RoundingMode::Rne),
+            (i8::MAX as u64, fflags::NV)
+        );
+        assert_eq!(
+            ftoi8(f32::NAN, false, RoundingMode::Rne),
+            (u8::MAX as u64, fflags::NV)
+        );
+        assert_eq!(
+            ftoi8(f32::INFINITY, true, RoundingMode::Rne),
+            (i8::MAX as u64, fflags::NV)
+        );
+        assert_eq!(
+            ftoi8(f32::NEG_INFINITY, true, RoundingMode::Rne),
+            (i8::MIN as u64, fflags::NV)
+        );
+    }
 
     #[test]
     fn bits_u64_copy_respects_bits_width() {

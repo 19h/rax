@@ -325,8 +325,9 @@ fn diff_v_reserved_encoding_validation() {
     }
 
     // FP operands with EEW=8 are unsupported. Zvfh still defines the
-    // integer-to-FP widening direction at SEW=8 because its FP result is
-    // double-width (16 bits); integer instructions remain unaffected.
+    // integer-to-FP widening and FP-to-integer narrowing directions at SEW=8
+    // because their FP operand is 16 bits; integer instructions remain
+    // unaffected.
     for (name, instruction) in [
         ("vfadd.vv.e8", op_iv(0b000000, 1, 2, 3, 0b001, 1)),
         ("vfslide1up.vf.e8", op_iv(0b001110, 1, 2, 3, 0b101, 1)),
@@ -336,6 +337,22 @@ fn diff_v_reserved_encoding_validation() {
         (
             "vfwcvt.f.xu.v.e8.control",
             op_iv(0b010010, 1, 2, 0b01010, 0b001, 0),
+        ),
+        (
+            "vfncvt.xu.f.w.e8.control",
+            op_iv(0b010010, 1, 2, 0b10000, 0b001, 1),
+        ),
+        (
+            "vfncvt.x.f.w.e8.control",
+            op_iv(0b010010, 1, 2, 0b10001, 0b001, 1),
+        ),
+        (
+            "vfncvt.rtz.xu.f.w.e8.control",
+            op_iv(0b010010, 1, 2, 0b10110, 0b001, 1),
+        ),
+        (
+            "vfncvt.rtz.x.f.w.e8.control",
+            op_iv(0b010010, 1, 2, 0b10111, 0b001, 1),
         ),
         ("vadd.vv.e8.control", op_iv(0b000000, 1, 2, 3, 0b000, 1)),
     ] {

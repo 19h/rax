@@ -134,3 +134,26 @@ fn lifted_rv_vector_reserved_encodings_fail_closed_transactionally() {
         run_invalid_vector_case(instruction, state);
     }
 }
+
+#[test]
+fn lifted_vfncvt_fp16_to_integer8_matches_direct_at_o0_and_o2() {
+    let mut initial = RiscVGuestRegs {
+        vl: 4,
+        vtype: 0, // e8,m1
+        ..Default::default()
+    };
+    for (lane, bits) in [0x3e00u16, 0xbe00, 0x5c00, 0x7e00].into_iter().enumerate() {
+        initial.v[2][lane * 2..lane * 2 + 2].copy_from_slice(&bits.to_le_bytes());
+    }
+
+    for selector in [0b10000, 0b10001, 0b10110, 0b10111] {
+        let instruction = (0b010010 << 26)
+            | (1 << 25)
+            | (2 << 20)
+            | (selector << 15)
+            | (0b001 << 12)
+            | (1 << 7)
+            | 0x57;
+        run_vector_case(instruction, initial, [0xa5; MEMORY_LEN], false);
+    }
+}
