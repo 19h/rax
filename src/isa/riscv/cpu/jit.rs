@@ -1055,6 +1055,18 @@ unsafe fn jit_store_exclusive_impl(
         return RiscVAtomicResult::default();
     }
     let succeeds = unsafe { context.reservation().take() == Some(addr) };
+    if !succeeds {
+        // A failed SC still has to pass the store address checks.  Probe the
+        // mapped range without modifying a valid location.
+        let mut bytes = [0u8; 8];
+        if unsafe { context.memory() }
+            .read(addr, &mut bytes[..size as usize])
+            .is_err()
+        {
+            context.record_fault(cause::STORE_ACCESS_FAULT, addr);
+            return RiscVAtomicResult::default();
+        }
+    }
     if succeeds
         && unsafe { context.memory() }
             .write(addr, &value.to_le_bytes()[..size as usize])

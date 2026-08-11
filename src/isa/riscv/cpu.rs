@@ -1710,6 +1710,13 @@ impl RiscVCpu {
                     self.mem
                         .write_u32(addr, self.x(insn.rs2) as u32)
                         .map_err(|_| acc_fault(true, addr))?;
+                } else {
+                    // A failed SC still has to pass the store address checks;
+                    // use the flat memory contract's access probe without
+                    // modifying a valid location.
+                    self.mem
+                        .read_u32(addr)
+                        .map_err(|_| acc_fault(true, addr))?;
                 }
                 self.set_x(insn.rd, if ok { 0 } else { 1 });
             }
@@ -1719,6 +1726,10 @@ impl RiscVCpu {
                 if ok {
                     self.mem
                         .write_u64(addr, self.x(insn.rs2))
+                        .map_err(|_| acc_fault(true, addr))?;
+                } else {
+                    self.mem
+                        .read_u64(addr)
                         .map_err(|_| acc_fault(true, addr))?;
                 }
                 self.set_x(insn.rd, if ok { 0 } else { 1 });
@@ -4185,6 +4196,51 @@ mod tests {
 
         c.set_interrupt_pending(MIP_MEIP, false);
         assert_eq!(c.csr_read(0x344).unwrap() & MIP_MEIP, 0);
+    }
+
+    #[cfg(all(
+        feature = "smir-jit",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    ))]
+    #[test]
+    fn production_jit_preserves_failed_store_conditional_access_faults() {
+        use crate::smir::optimize::OptLevel;
+
+        // sc.w x3, x2, (x1) with no reservation, x1 = 0x4000 (unmapped).
+        let sc_w = (0b00011u32 << 27) | (2 << 20) | (1 << 15) | (0b010 << 12) | (3 << 7) | 0x2F;
+
+        // Interpreter path.
+        let mut interp = RiscVCpu::new(
+            RiscVConfig::rv64gc(),
+            Box::new(FlatMemory::new(0, 0x4000)),
+        );
+        interp.set_x(1, 0x4000);
+        interp.set_x(2, 0);
+        assert!(matches!(
+            run_one(&mut interp, sc_w),
+            RiscVExit::Trap(Trap {
+                cause: cause::STORE_ACCESS_FAULT,
+                tval: 0x4000,
+                ..
+            })
+        ));
+
+        // JIT path.
+        let mut jit = RiscVCpu::new(
+            RiscVConfig::rv64gc(),
+            Box::new(FlatMemory::new(0, 0x4000)),
+        );
+        jit.set_x(1, 0x4000);
+        jit.set_x(2, 0);
+        jit.write_memory(jit.pc(), &sc_w.to_le_bytes()).unwrap();
+        assert!(matches!(
+            jit.step_jit(OptLevel::O0),
+            RiscVExit::Trap(Trap {
+                cause: cause::STORE_ACCESS_FAULT,
+                tval: 0x4000,
+                ..
+            })
+        ));
     }
 
     #[test]
