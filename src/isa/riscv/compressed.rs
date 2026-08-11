@@ -65,7 +65,7 @@ fn zcmp_sreg(r: u32) -> u8 {
 fn zcmp_reg_count(rlist: u32) -> Option<u32> {
     match rlist {
         4 => Some(1),              // ra
-        5 => Some(3),              // ra, s0-s1
+        5 => Some(2),              // ra, s0
         6 => Some(3),              // alternate encoding for ra, s0-s1
         7..=14 => Some(rlist - 3), // ra, s0-s1, s2..s(rlist-6)
         15 => Some(13),            // ra, s0-s1, s2-s11
@@ -676,12 +676,12 @@ mod tests {
         let i = decode_rvc(cm_push, Xlen::Rv64, &isa);
         assert_eq!(i.op, Op::CmPush);
         assert_eq!(i.rd, 5);
-        assert_eq!(i.imm, 48);
+        assert_eq!(i.imm, 32); // rlist=5 pushes {ra,s0}: 2*8 = 16 + spimm*16
 
         let cm_popretz = ((0b101 << 13) | (0x1c << 8) | (5 << 4) | 0b10) as u16;
         let i = decode_rvc(cm_popretz, Xlen::Rv64, &isa);
         assert_eq!(i.op, Op::CmPopRetz);
-        assert_eq!(i.imm, 32);
+        assert_eq!(i.imm, 16);
 
         let cm_mvsa01 =
             ((0b101 << 13) | (0b011 << 10) | (0 << 7) | (0b01 << 5) | (2 << 2) | 0b10) as u16;
