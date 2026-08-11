@@ -5,10 +5,14 @@ use super::*;
 #[test]
 fn diff_v_reserved_encoding_validation() {
     const E8_M1: u64 = 0x00;
+    const E16_MF8: u64 = 0x0d;
     const E32_M1: u64 = 0x10;
     const E32_M2: u64 = 0x11;
+    const E32_M4: u64 = 0x12;
     const E32_M8: u64 = 0x13;
+    const E32_MF4: u64 = 0x16;
     const E32_MF2: u64 = 0x17;
+    const E64_M8: u64 = 0x1b;
 
     fn state(vtype: u64, vl: u64) -> VState {
         let mut rng = Rng::new(0x7EC_19_201);
@@ -167,6 +171,175 @@ fn diff_v_reserved_encoding_validation() {
             op_iv(funct6, 1, 0, src, funct3, 0),
             state(E32_M8, 1),
         ));
+    }
+
+    // Widening destinations may overlap a narrow source only in their
+    // highest-numbered part, and only when source EMUL is at least one.
+    // Exercise integer, FP, conversion, and multiply-accumulate families.
+    for (name, funct6, funct3, src) in [
+        ("vwadd.vv", 0b110000, 0b010, 2),
+        ("vwadd.vx", 0b110000, 0b110, 5),
+        ("vwmulu.vv", 0b111000, 0b010, 2),
+        ("vfwadd.vv", 0b110000, 0b001, 2),
+        ("vfwadd.vf", 0b110000, 0b101, 5),
+        ("vfwmul.vv", 0b111000, 0b001, 2),
+        ("vfwcvt.xu.f.v", 0b010010, 0b001, 0b01000),
+    ] {
+        batch.push((
+            format!("{name}.low-overlap"),
+            op_iv(funct6, 1, 0, src, funct3, 0),
+            state(E32_M1, 2),
+        ));
+        batch.push((
+            format!("{name}.high-overlap-control"),
+            op_iv(funct6, 1, 1, src, funct3, 0),
+            state(E32_M1, 2),
+        ));
+    }
+
+    // Widening MAC/FMA instructions read the wide destination as an addend.
+    // A narrow source cannot overlap it at either the low or high part because
+    // that would read one register at two EEWs in the same instruction.
+    for (name, funct6, funct3, src) in [
+        ("vwmacc.vv", 0b111101, 0b010, 3),
+        ("vwmaccus.vx", 0b111110, 0b110, 5),
+        ("vfwmacc.vv", 0b111100, 0b001, 3),
+    ] {
+        batch.push((
+            format!("{name}.low-overlap"),
+            op_iv(funct6, 1, 0, src, funct3, 0),
+            state(E32_M1, 2),
+        ));
+        batch.push((
+            format!("{name}.high-overlap"),
+            op_iv(funct6, 1, 1, src, funct3, 0),
+            state(E32_M1, 2),
+        ));
+        batch.push((
+            format!("{name}.disjoint-control"),
+            op_iv(funct6, 1, 2, src, funct3, 0),
+            state(E32_M1, 2),
+        ));
+    }
+
+    // .w forms read a same-width wide vs2, which may alias vd. A narrow vector
+    // vs1 must not overlap wide vs2, and otherwise follows the high-part rule
+    // when it overlaps vd.
+    for (name, funct6, funct3) in [
+        ("vwadd.wv", 0b110100, 0b010),
+        ("vfwadd.wv", 0b110100, 0b001),
+    ] {
+        batch.push((
+            format!("{name}.wide-alias-control"),
+            op_iv(funct6, 1, 0, 2, funct3, 0),
+            state(E32_M1, 2),
+        ));
+        batch.push((
+            format!("{name}.narrow-low-overlap"),
+            op_iv(funct6, 1, 0, 0, funct3, 0),
+            state(E32_M1, 2),
+        ));
+        batch.push((
+            format!("{name}.narrow-high-source-conflict"),
+            op_iv(funct6, 1, 0, 1, funct3, 0),
+            state(E32_M1, 2),
+        ));
+        batch.push((
+            format!("{name}.destination-high-overlap-control"),
+            op_iv(funct6, 1, 4, 1, funct3, 0),
+            state(E32_M1, 2),
+        ));
+    }
+
+    // Integer LMUL frontiers: m2/m4 retain the legal high-part case, m8
+    // would require a reserved EMUL=16 destination, and fractional narrow
+    // sources cannot overlap the destination at all.
+    for (vtype, high_source, label) in [(E32_M2, 2, "m2"), (E32_M4, 4, "m4")] {
+        batch.push((
+            format!("vwadd.vv.{label}.high-overlap-control"),
+            op_iv(0b110000, 1, high_source, 8, 0b010, 0),
+            state(vtype, 2),
+        ));
+        batch.push((
+            format!("vwadd.vv.{label}.low-overlap"),
+            op_iv(0b110000, 1, 0, 8, 0b010, 0),
+            state(vtype, 2),
+        ));
+    }
+    batch.push((
+        "vwadd.vv.m8.emul-16".into(),
+        op_iv(0b110000, 1, 8, 16, 0b010, 0),
+        state(E32_M8, 1),
+    ));
+    for (vtype, label) in [(E16_MF8, "mf8"), (E32_MF4, "mf4"), (E32_MF2, "mf2")] {
+        batch.push((
+            format!("vwadd.vv.{label}.same-register-overlap"),
+            op_iv(0b110000, 1, 1, 2, 0b010, 1),
+            state(vtype, 1),
+        ));
+        batch.push((
+            format!("vwadd.vv.{label}.disjoint-control"),
+            op_iv(0b110000, 1, 2, 3, 0b010, 1),
+            state(vtype, 1),
+        ));
+    }
+
+    // Integer extension source EMUL is LMUL divided by vf2/vf4/vf8.
+    for (name, selector, vtype, high_source) in [
+        ("vzext.vf2", 0b00110, E32_M2, 1),
+        ("vzext.vf4", 0b00100, E32_M4, 3),
+        ("vzext.vf8", 0b00010, E64_M8, 7),
+    ] {
+        batch.push((
+            format!("{name}.high-overlap-control"),
+            op_iv(0b010010, 1, high_source, selector, 0b010, 0),
+            state(vtype, 1),
+        ));
+        batch.push((
+            format!("{name}.low-overlap"),
+            op_iv(0b010010, 1, 0, selector, 0b010, 0),
+            state(vtype, 1),
+        ));
+    }
+    // Widening reductions use scalar EMUL=1 for vd/vs1 but current LMUL for
+    // their narrow vs2 group.
+    for (name, funct6, funct3) in [
+        ("vwredsumu.vs", 0b110000, 0b000),
+        ("vfwredusum.vs", 0b110001, 0b001),
+    ] {
+        batch.push((
+            format!("{name}.high-overlap-control"),
+            op_iv(funct6, 1, 0, 3, funct3, 1),
+            state(E32_M2, 2),
+        ));
+        batch.push((
+            format!("{name}.low-overlap-control"),
+            op_iv(funct6, 1, 0, 3, funct3, 0),
+            state(E32_M2, 2),
+        ));
+        batch.push((
+            format!("{name}.misaligned-vs2"),
+            op_iv(funct6, 1, 1, 3, funct3, 4),
+            state(E32_M2, 2),
+        ));
+    }
+
+    // FP operands with EEW=8 are unsupported. Zvfh still defines the
+    // integer-to-FP widening direction at SEW=8 because its FP result is
+    // double-width (16 bits); integer instructions remain unaffected.
+    for (name, instruction) in [
+        ("vfadd.vv.e8", op_iv(0b000000, 1, 2, 3, 0b001, 1)),
+        ("vfslide1up.vf.e8", op_iv(0b001110, 1, 2, 3, 0b101, 1)),
+        ("vfwadd.vv.e8", op_iv(0b110000, 1, 2, 3, 0b001, 0)),
+        ("vfwcvt.xu.f.v.e8", op_iv(0b010010, 1, 2, 0b01000, 0b001, 0)),
+        ("vfncvt.f.xu.w.e8", op_iv(0b010010, 1, 2, 0b10010, 0b001, 1)),
+        (
+            "vfwcvt.f.xu.v.e8.control",
+            op_iv(0b010010, 1, 2, 0b01010, 0b001, 0),
+        ),
+        ("vadd.vv.e8.control", op_iv(0b000000, 1, 2, 3, 0b000, 1)),
+    ] {
+        batch.push((name.into(), instruction, state(E8_M1, 2)));
     }
 
     // Every OPFVV/OPFVF instruction must reject reserved frm=5/6/7 before

@@ -84,6 +84,41 @@ fn lifted_rv_vector_reserved_encodings_fail_closed_transactionally() {
             (0b101100 << 26) | (1 << 25) | (2 << 20) | (4 << 15) | (3 << 7) | 0x57,
             initial,
         ),
+        // vwadd.vv v0,v0,v2: narrow vs2 overlaps the low part of wide vd.
+        (
+            (0b110000 << 26) | (1 << 25) | (2 << 15) | (0b010 << 12) | 0x57,
+            initial,
+        ),
+        // vwadd.vv v1,v1,v2 under mf2: source EMUL is below one, so even
+        // same-register overlap is reserved.
+        (
+            (0b110000 << 26) | (1 << 25) | (1 << 20) | (2 << 15) | (0b010 << 12) | (1 << 7) | 0x57,
+            RiscVGuestRegs {
+                vtype: 0x17, // e32,mf2
+                ..initial
+            },
+        ),
+        // vfwadd.vv v0,v0,v2: FP widening uses the same group rule.
+        (
+            (0b110000 << 26) | (1 << 25) | (2 << 15) | (0b001 << 12) | 0x57,
+            initial,
+        ),
+        // vzext.vf2 v0,v0 under m2: source overlaps the low part of vd.
+        (
+            (0b010010 << 26) | (1 << 25) | (0b00110 << 15) | (0b010 << 12) | 0x57,
+            RiscVGuestRegs {
+                vtype: 0x11, // e32,m2
+                ..initial
+            },
+        ),
+        // vfadd.vv at SEW=8 would consume unsupported FP8 operands.
+        (
+            (1 << 25) | (2 << 20) | (3 << 15) | (0b001 << 12) | (1 << 7) | 0x57,
+            RiscVGuestRegs {
+                vtype: 0x00, // e8,m1
+                ..initial
+            },
+        ),
         // vfsgnj.vv with frm=7 and vl=0 must still reject before execution.
         (
             (0b001000 << 26) | (1 << 25) | (2 << 20) | (3 << 15) | (0b001 << 12) | (1 << 7) | 0x57,
