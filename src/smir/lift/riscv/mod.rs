@@ -566,6 +566,37 @@ mod tests {
     }
 
     #[test]
+    #[test]
+    fn noc_control_flow_rejects_misaligned_targets() {
+        // Without C, IALIGN=32: JAL/JALR/branch must not emit translated
+        // branches that bypass the architectural alignment trap.
+        let jal: u32 = 0x0020_00ef; // jal x1, +2 (target 0x1002, misaligned)
+        let jalr: u32 = 0x0000_80e7; // jalr x1, 0(x1)
+        let beq: u32 = 0x0020_8163; // beq x1, x2, +2 (target misaligned)
+        for (w, m) in [(jal, "JAL"), (jalr, "JALR"), (beq, "branch")] {
+            let mut lifter = RiscVLifter::new_rv64(RiscVExtensions::rv64i()); // no C
+            let mut ctx = test_ctx();
+            let err = match lifter.lift_insn(0x1000, &w.to_le_bytes(), &mut ctx) {
+                Err(e) => e,
+                Ok(_) => panic!("{m} must not lift without C"),
+            };
+            assert!(
+                matches!(err, LiftError::Unsupported { .. }),
+                "{m} expected Unsupported, got {err:?}"
+            );
+        }
+        // With C the same words lift.
+        for w in [jal, jalr, beq] {
+            let mut lifter = RiscVLifter::rv64gc();
+            let mut ctx = test_ctx();
+            assert!(
+                lifter.lift_insn(0x1000, &w.to_le_bytes(), &mut ctx).is_ok(),
+                "word {w:#010x} should lift with C"
+            );
+        }
+    }
+
+    #[test]
     fn rv32_pack_uses_16_bit_halves_and_32_bit_result() {
         let pack = r_type(0b0000100, 2, 1, 0b100, 3, 0x33);
         let mut lifter = RiscVLifter::new_rv32(RiscVExtensions {

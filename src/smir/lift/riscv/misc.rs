@@ -310,6 +310,12 @@ impl RiscVLifter {
         let rd = Self::rd(insn);
         let imm = Self::imm_j(insn);
         let target = (addr as i64).wrapping_add(imm) as u64;
+        if !self.extensions.c && target & 0x3 != 0 {
+            return Err(LiftError::Unsupported {
+                addr,
+                mnemonic: "JAL target is misaligned without C".to_string(),
+            });
+        }
         let return_addr = addr + 4;
 
         let mut ops = Vec::new();
@@ -340,6 +346,12 @@ impl RiscVLifter {
         let rd = Self::rd(insn);
         let rs1_reg = Self::rs1(insn);
         let imm = Self::imm_i(insn);
+        if !self.extensions.c {
+            return Err(LiftError::Unsupported {
+                addr,
+                mnemonic: "JALR target alignment without C".to_string(),
+            });
+        }
         let return_addr = addr + 4;
 
         let mut ops = Vec::new();
@@ -419,6 +431,12 @@ impl RiscVLifter {
         let funct3 = Self::funct3(insn);
         let imm = Self::imm_b(insn);
         let target = (addr as i64).wrapping_add(imm) as u64;
+        if !self.extensions.c && target & 0x3 != 0 {
+            return Err(LiftError::Unsupported {
+                addr,
+                mnemonic: "branch target is misaligned without C".to_string(),
+            });
+        }
         let fallthrough = addr + 4;
 
         let rs1 = self.get_x_reg(rs1_reg, ctx);
