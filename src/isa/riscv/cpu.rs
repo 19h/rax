@@ -20,6 +20,7 @@ use super::{Isa, Xlen};
     any(target_arch = "x86_64", target_arch = "aarch64")
 ))]
 mod jit;
+mod vector_conversion;
 mod vector_validation;
 
 /// Privilege level of the hart.
@@ -3060,76 +3061,7 @@ impl RiscVCpu {
             | Op::VfncvtFF
             | Op::VfncvtRodFF
             | Op::VfncvtRtzXuF
-            | Op::VfncvtRtzXF => {
-                // Narrowing conversions: 2*SEW source vs2 -> SEW result. Only
-                // SEW in {16,32} (eb 2/4) is supported: SEW=8 would imply an
-                // FP8 format / 8-bit float-to-int width that has no defined
-                // conversion here, so reject eb outside {2,4}.
-                let eb = self.sew_bytes();
-                if !(2..=4).contains(&eb) {
-                    return Err(Trap::illegal(insn.raw));
-                }
-                let web = eb * 2;
-                let mask = Self::sew_mask(eb);
-                let frm = RoundingMode::from_bits(self.frm()).unwrap_or(RoundingMode::Rne);
-                let mut flags = 0u32;
-                for e in vstart..vl {
-                    if !vm && !self.vmask_bit(e) {
-                        continue;
-                    }
-                    let aw = self.velem(vs2, e, web);
-                    let r = match insn.op {
-                        Op::VfncvtXuF | Op::VfncvtXF | Op::VfncvtRtzXuF | Op::VfncvtRtzXF => {
-                            let signed = matches!(insn.op, Op::VfncvtXF | Op::VfncvtRtzXF);
-                            let rm = if matches!(insn.op, Op::VfncvtRtzXuF | Op::VfncvtRtzXF) {
-                                RoundingMode::Rtz
-                            } else {
-                                frm
-                            };
-                            match web {
-                                4 => super::float::ftoi(
-                                    f32::from_bits(aw as u32),
-                                    signed,
-                                    (eb * 8) as u32,
-                                    rm,
-                                    &mut flags,
-                                ),
-                                _ => super::float::ftoi(
-                                    f64::from_bits(aw),
-                                    signed,
-                                    (eb * 8) as u32,
-                                    rm,
-                                    &mut flags,
-                                ),
-                            }
-                        }
-                        Op::VfncvtFXu | Op::VfncvtFX => {
-                            let v: i128 = if insn.op == Op::VfncvtFX {
-                                sext_sew(aw, web) as i128
-                            } else {
-                                aw as i128
-                            };
-                            super::float::itof_fmt(fmt_eb(eb), v, frm, &mut flags)
-                        }
-                        Op::VfncvtRodFF => {
-                            // Round-to-odd: truncate, then force the LSB on inexact.
-                            let mut t = 0u32;
-                            let r = super::float::fcvt_round(
-                                fmt_eb(web),
-                                fmt_eb(eb),
-                                aw,
-                                RoundingMode::Rtz,
-                                &mut t,
-                            );
-                            flags |= t;
-                            if t & 1 != 0 { r | 1 } else { r } // NX is fflags bit 0
-                        }
-                        _ => super::float::fcvt_round(fmt_eb(web), fmt_eb(eb), aw, frm, &mut flags),
-                    };
-                    self.set_velem(vd, e, eb, r & mask);
-                }
-                self.accrue(flags);
-            }
+            | Op::VfncvtRtzXF => self.exec_vector_narrow_conversion(insn, vm)?,
             Op::Vmfeq | Op::Vmfne | Op::Vmflt | Op::Vmfle | Op::Vmfgt | Op::Vmfge => {
                 let eb = self.sew_bytes();
                 let is_vv = insn.funct3 == 0b001;
@@ -6463,9 +6395,9 @@ mod tests {
     }
 
     #[test]
-    fn vfncvt_rejects_sew8() {
+    fn vfncvt_fp8_result_rejects_sew8() {
         // vfncvt.f.f.w (funct6 010010, OPFV, vs1=10100) under SEW=8 has no
-        // defined narrowing (no FP8 / 8-bit float-to-int width) and must trap.
+        // defined FP8 result format and must trap.
         let mut c = cpu_e8m1(); // e8 -> SEW=8
         assert!(matches!(
             run_one(&mut c, op_v(0b010010, 1, 2, 0b10100, 0b001, 1)),

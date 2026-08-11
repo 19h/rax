@@ -134,6 +134,56 @@ fn rv_vector_load_uses_current_scalar_vreg_address() {
 }
 
 #[test]
+fn rv_vector_vfncvt_fp16_to_integer8_commits_values_and_flags() {
+    let mut ctx = SmirContext::new_riscv();
+    let mut memory = FlatMemory::new(0x1000);
+    let x10 = VReg::Arch(ArchReg::RiscV(RiscVReg::X(10)));
+    let fcsr = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x003)));
+    let vl = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc20)));
+    let vtype = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc21)));
+    ctx.write_vreg(fcsr, 0);
+    ctx.write_vreg(vl, 4);
+    ctx.write_vreg(vtype, 0); // e8,m1
+
+    let ArchRegState::RiscV(rv) = &mut ctx.arch_regs else {
+        panic!("expected RISC-V context");
+    };
+    rv.v[1] = [0xa5; 16];
+    for (lane, bits) in [0x3e00u16, 0xbc00, 0x5c00, 0x7e00].into_iter().enumerate() {
+        rv.v[2][lane * 2..lane * 2 + 2].copy_from_slice(&bits.to_le_bytes());
+    }
+
+    // vfncvt.xu.f.w v1,v2: {1.5, -1, 256, qNaN} -> {2, 0, 255, 255}.
+    let insn = (0b010010 << 26)
+        | (1 << 25)
+        | (2 << 20)
+        | (0b10000 << 15)
+        | (0b001 << 12)
+        | (1 << 7)
+        | 0x57;
+    exec_rv_vector(
+        &mut ctx,
+        &mut memory,
+        insn,
+        64,
+        0x1080,
+        &rv_vector_test_state(x10),
+    );
+
+    assert!(ctx.exit_reason.is_none());
+    let ArchRegState::RiscV(rv) = &ctx.arch_regs else {
+        panic!("expected RISC-V context");
+    };
+    assert_eq!(&rv.v[1][0..4], &[2, 0, u8::MAX, u8::MAX]);
+    assert_eq!(
+        ctx.read_vreg(fcsr),
+        u64::from(crate::isa::riscv::float::fflags::NX | crate::isa::riscv::float::fflags::NV)
+    );
+    assert_eq!(ctx.read_vreg(vl), 4);
+    assert_eq!(ctx.read_vreg(vtype), 0);
+}
+
+#[test]
 fn rv_vector_reserved_encoding_exits_without_committing_state() {
     let mut ctx = SmirContext::new_riscv();
     let mut memory = FlatMemory::new(0x2000);
