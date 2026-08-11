@@ -566,6 +566,18 @@ mod tests {
     }
 
     #[test]
+    #[test]
+    fn jalr_rejects_reserved_funct3() {
+        // JALR's funct3 field is reserved and must be 0.
+        let jalr: u32 = 0x0000_80e7; // jalr x1, 0(x1), funct3=000
+        let jalr_f3: u32 = 0x0000_90e7; // funct3=001 (reserved)
+        assert_invalid_lift(RiscVLifter::rv64gc(), jalr_f3);
+        let mut lifter = RiscVLifter::rv64gc();
+        let mut ctx = test_ctx();
+        assert!(lifter.lift_insn(0x1000, &jalr.to_le_bytes(), &mut ctx).is_ok());
+    }
+
+    #[test]
     fn rv32_pack_uses_16_bit_halves_and_32_bit_result() {
         let pack = r_type(0b0000100, 2, 1, 0b100, 3, 0x33);
         let mut lifter = RiscVLifter::new_rv32(RiscVExtensions {

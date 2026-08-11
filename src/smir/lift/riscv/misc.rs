@@ -340,6 +340,12 @@ impl RiscVLifter {
         let rd = Self::rd(insn);
         let rs1_reg = Self::rs1(insn);
         let imm = Self::imm_i(insn);
+        if Self::funct3(insn) != 0 {
+            return Err(LiftError::InvalidEncoding {
+                addr,
+                bytes: insn.to_le_bytes().to_vec(),
+            });
+        }
         let return_addr = addr + 4;
 
         let mut ops = Vec::new();
