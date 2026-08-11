@@ -1974,6 +1974,9 @@ impl RiscVCpu {
 
     /// Read a CSR value (XLEN-wide).
     pub fn csr_read(&self, addr: u16) -> Result<u64, Trap> {
+        if !self.csr_available(addr) {
+            return Err(Trap::illegal(0));
+        }
         let csr = match Csr::from_addr(addr) {
             Some(c) => c,
             None => {
@@ -2026,6 +2029,9 @@ impl RiscVCpu {
 
     /// Write a CSR value (XLEN-wide).
     pub fn csr_write(&mut self, addr: u16, value: u64) -> Result<(), Trap> {
+        if !self.csr_available(addr) {
+            return Err(Trap::illegal(0));
+        }
         let csr = match Csr::from_addr(addr) {
             Some(c) => c,
             None => {
@@ -2079,6 +2085,14 @@ impl RiscVCpu {
             _ => {}
         }
         Ok(())
+    }
+
+    fn csr_available(&self, addr: u16) -> bool {
+        let addr = addr & 0xfff;
+        (self.rv32() || !matches!(addr, 0xC80..=0xC82))
+            && (self.cfg.isa.f || !matches!(addr, 0x001..=0x003))
+            && (self.cfg.isa.zcmt || addr != 0x017)
+            && (self.cfg.isa.v || !matches!(addr, 0x008..=0x00F | 0xC20..=0xC22))
     }
 
     fn sstatus_mask(&self) -> u64 {
@@ -4083,6 +4097,45 @@ mod tests {
             run_one(&mut c, csr(0xC00, 4, 1, 5)),
             RiscVExit::Trap(_)
         ));
+    }
+
+    #[test]
+    fn csr_availability_gates_counter_high_and_disabled_extensions() {
+        // RV64: counter-high CSRs are RV32-only shadows and must trap.
+        let mut c = cpu();
+        assert!(matches!(
+            c.csr_read(0xC80),
+            Err(Trap {
+                cause: cause::ILLEGAL_INSTR,
+                ..
+            })
+        ));
+        assert!(c.csr_write(0xC80, 0).is_err());
+
+        // RV32: the same addresses are legal.
+        let c = rv32();
+        assert!(c.csr_read(0xC80).is_ok());
+
+        // Disabled F: fflags/frm/fcsr trap; enabled on the default profile.
+        let mut cfg = RiscVConfig::rv64gc();
+        cfg.isa.f = false;
+        let c = RiscVCpu::new(cfg, Box::new(FlatMemory::new(0, 0x1_0000)));
+        assert!(c.csr_read(0x001).is_err());
+        let c = cpu();
+        assert!(c.csr_read(0x001).is_ok());
+
+        // Disabled V: vector CSRs trap; enabled on the default profile.
+        let mut cfg = RiscVConfig::rv64gc();
+        cfg.isa.v = false;
+        let c = RiscVCpu::new(cfg, Box::new(FlatMemory::new(0, 0x1_0000)));
+        assert!(c.csr_read(0x008).is_err());
+        assert!(c.csr_read(0xC20).is_err());
+        let c = cpu();
+        assert!(c.csr_read(0x008).is_ok());
+
+        // Zcmt is off in the default profile, so jvt traps there.
+        let c = cpu();
+        assert!(c.csr_read(0x017).is_err());
     }
 
     #[test]
