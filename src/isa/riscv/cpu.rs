@@ -1675,9 +1675,8 @@ impl RiscVCpu {
                 } else {
                     // A failed SC generates no store operation, but it still
                     // must pass the addressed range's memory-permission check.
-                    let mut probe = [0; 8];
                     self.mem
-                        .read(addr, &mut probe[..size])
+                        .probe(addr, size, true)
                         .map_err(|_| acc_fault(true, addr))?;
                 }
                 self.set_x(insn.rd, if ok { 0 } else { 1 });

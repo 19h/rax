@@ -12,7 +12,7 @@
 
 use std::sync::{Arc, Mutex};
 
-use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
+use vm_memory::{Bytes, GuestAddress, GuestMemory, GuestMemoryMmap};
 
 use crate::error::{Error, Result};
 use crate::isa::riscv::{MemError, MemResult, Memory, RiscVConfig, RiscVCpu, RiscVExit};
@@ -53,6 +53,14 @@ fn in_uart(addr: u64) -> bool {
 }
 
 impl Memory for GuestBridge {
+    fn probe(&self, addr: u64, size: usize, _write: bool) -> MemResult<()> {
+        if in_uart(addr) || self.mem.check_range(GuestAddress(addr), size) {
+            Ok(())
+        } else {
+            Err(MemError::OutOfBounds { addr, size })
+        }
+    }
+
     fn read(&self, addr: u64, buf: &mut [u8]) -> MemResult<()> {
         if in_uart(addr) {
             for (i, b) in buf.iter_mut().enumerate() {

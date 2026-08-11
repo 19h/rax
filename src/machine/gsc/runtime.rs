@@ -81,7 +81,7 @@ use std::io::Write;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
-use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
+use vm_memory::{Bytes, GuestAddress, GuestMemory, GuestMemoryMmap};
 
 use crate::error::{Error, Result};
 use crate::isa::riscv::{Isa, MemError, MemResult, Memory, RiscVConfig, RiscVCpu, RiscVExit};
@@ -1177,6 +1177,14 @@ impl GscBridge {
 }
 
 impl Memory for GscBridge {
+    fn probe(&self, addr: u64, size: usize, _write: bool) -> MemResult<()> {
+        if in_core_local(addr) || in_mmio(addr) || self.mem.check_range(GuestAddress(addr), size) {
+            Ok(())
+        } else {
+            Err(MemError::OutOfBounds { addr, size })
+        }
+    }
+
     fn read(&self, addr: u64, buf: &mut [u8]) -> MemResult<()> {
         if in_core_local(addr) {
             let v = if addr == CORE_IRQ_CLAIM {
