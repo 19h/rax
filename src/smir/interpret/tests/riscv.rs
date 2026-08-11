@@ -134,6 +134,94 @@ fn rv_vector_load_uses_current_scalar_vreg_address() {
 }
 
 #[test]
+fn rv_vector_load_fault_commits_completed_elements_and_faulting_vstart() {
+    let mut ctx = SmirContext::new_riscv();
+    let mut memory = FlatMemory::new(0x10a);
+    let x10 = VReg::Arch(ArchReg::RiscV(RiscVReg::X(10)));
+    let vl = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc20)));
+    let vtype = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc21)));
+    let vstart = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x008)));
+    ctx.write_vreg(x10, 0x100);
+    ctx.write_vreg(vl, 4);
+    ctx.write_vreg(vtype, 0x10); // e32,m1
+    ctx.write_vreg(vstart, 0);
+    memory.write(0x100, &[1, 2, 3, 4, 5, 6, 7, 8]).unwrap();
+
+    let ArchRegState::RiscV(rv) = &mut ctx.arch_regs else {
+        panic!("expected RISC-V context");
+    };
+    rv.v[1] = [0xaa; 16];
+
+    // The third vle32 element at 0x108 crosses the end of memory.
+    let insn = (1 << 25) | (10 << 15) | (6 << 12) | (1 << 7) | 0x07;
+    exec_rv_vector(
+        &mut ctx,
+        &mut memory,
+        insn,
+        64,
+        0x1040,
+        &rv_vector_test_state(x10),
+    );
+
+    assert!(matches!(
+        ctx.exit_reason,
+        Some(ExitReason::Undefined {
+            addr: 0x1040,
+            opcode
+        }) if opcode == insn
+    ));
+    let ArchRegState::RiscV(rv) = &ctx.arch_regs else {
+        panic!("expected RISC-V context");
+    };
+    assert_eq!(&rv.v[1][..8], &[1, 2, 3, 4, 5, 6, 7, 8]);
+    assert_eq!(&rv.v[1][8..], &[0xaa; 8]);
+    assert_eq!(rv.vstart, 2);
+    assert_eq!(ctx.read_vreg(vstart), 2);
+}
+
+#[test]
+fn rv_whole_register_load_ignores_vill_and_uses_encoded_eew_vstart() {
+    let mut ctx = SmirContext::new_riscv();
+    let mut memory = FlatMemory::new(0x200);
+    let x10 = VReg::Arch(ArchReg::RiscV(RiscVReg::X(10)));
+    let vl = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc20)));
+    let vtype = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc21)));
+    let vstart = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x008)));
+    ctx.write_vreg(x10, 0x100);
+    ctx.write_vreg(vl, 0);
+    ctx.write_vreg(vtype, 1u64 << 63);
+    ctx.write_vreg(vstart, 1); // one e32 element = four bytes
+    let bytes: Vec<u8> = (0..16).collect();
+    memory.write(0x100, &bytes).unwrap();
+
+    let ArchRegState::RiscV(rv) = &mut ctx.arch_regs else {
+        panic!("expected RISC-V context");
+    };
+    rv.v[2] = [0xaa; 16];
+
+    // vl1re32.v v2,(a0)
+    let insn = (1 << 25) | (0b01000 << 20) | (10 << 15) | (6 << 12) | (2 << 7) | 0x07;
+    exec_rv_vector(
+        &mut ctx,
+        &mut memory,
+        insn,
+        64,
+        0x1050,
+        &rv_vector_test_state(x10),
+    );
+
+    assert!(ctx.exit_reason.is_none());
+    let ArchRegState::RiscV(rv) = &ctx.arch_regs else {
+        panic!("expected RISC-V context");
+    };
+    assert_eq!(&rv.v[2][..4], &[0xaa; 4]);
+    assert_eq!(&rv.v[2][4..], &bytes[4..]);
+    assert_eq!(rv.vstart, 0);
+    assert_eq!(ctx.read_vreg(vstart), 0);
+    assert_eq!(ctx.read_vreg(vtype), 1u64 << 63);
+}
+
+#[test]
 fn rv_vector_vfncvt_fp16_to_integer8_commits_values_and_flags() {
     let mut ctx = SmirContext::new_riscv();
     let mut memory = FlatMemory::new(0x1000);

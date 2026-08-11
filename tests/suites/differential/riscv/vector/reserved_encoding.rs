@@ -339,6 +339,68 @@ fn diff_v_reserved_encoding_validation() {
         ));
     }
 
+    // vmv.v.v/vx/vi reserve vs2 and require it to encode v0.
+    for (name, funct3, src) in [
+        ("vmv.v.v", 0b000, 4),
+        ("vmv.v.x", 0b100, 5),
+        ("vmv.v.i", 0b011, 4),
+    ] {
+        batch.push((
+            format!("{name}.reserved-vs2"),
+            op_iv(0b010111, 1, 7, src, funct3, 2),
+            state(E8_M1, 4),
+        ));
+        batch.push((
+            format!("{name}.vs2-v0-control"),
+            op_iv(0b010111, 1, 0, src, funct3, 2),
+            state(E8_M1, 4),
+        ));
+    }
+
+    // Same-width ALU operands name complete LMUL-sized register groups.
+    for (name, vd, vs2, vs1) in [
+        ("vadd.vv.misaligned-vd", 1, 2, 4),
+        ("vadd.vv.misaligned-vs2", 0, 3, 4),
+        ("vadd.vv.misaligned-vs1", 0, 2, 5),
+        ("vadd.vv.aligned-control", 0, 2, 4),
+    ] {
+        batch.push((
+            name.into(),
+            op_iv(0b000000, 1, vs2, vs1, 0b000, vd),
+            state(E32_M2, 2),
+        ));
+    }
+
+    // Every integer/FP, single-width/widening reduction is non-restartable.
+    for (name, funct6, funct3) in [
+        ("vredsum.vs", 0b000000, 0b010),
+        ("vfredusum.vs", 0b000001, 0b001),
+        ("vwredsumu.vs", 0b110000, 0b000),
+        ("vfwredusum.vs", 0b110001, 0b001),
+    ] {
+        let mut nonrestartable = state(E32_M2, 2);
+        nonrestartable.vstart = 1;
+        batch.push((
+            format!("{name}.nonzero-vstart"),
+            op_iv(funct6, 1, 2, 3, funct3, 1),
+            nonrestartable,
+        ));
+        batch.push((
+            format!("{name}.vstart-zero-control"),
+            op_iv(funct6, 1, 2, 3, funct3, 1),
+            state(E32_M2, 2),
+        ));
+    }
+
+    // All vsetvl forms reset vstart on successful completion.
+    let mut configured = state(E8_M1, 4);
+    configured.vstart = 7;
+    batch.push((
+        "vsetvli.resets-vstart".into(),
+        (7 << 12) | (1 << 7) | 0x57,
+        configured,
+    ));
+
     // FP operands with EEW=8 are unsupported. Zvfh still defines the
     // integer-to-FP widening and FP-to-integer narrowing directions at SEW=8
     // because their FP operand is 16 bits; integer instructions remain
