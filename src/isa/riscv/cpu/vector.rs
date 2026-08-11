@@ -1135,6 +1135,11 @@ impl RiscVCpu {
             }
             Op::Vslide1up | Op::Vfslide1up => {
                 // vd[0] = scalar; vd[i] = vs2[i-1] for i >= 1.
+                // The destination must not alias the vs2 source register
+                // (vslide1down/vfslide1down permit the overlap).
+                if vd == vs2 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
                 let scalar = if insn.op == Op::Vfslide1up {

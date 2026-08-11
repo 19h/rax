@@ -4524,6 +4524,38 @@ mod tests {
     }
 
     #[test]
+    fn vslide1up_rejects_vd_eq_vs2() {
+        // vslide1up/vfslide1up write vd while reading vs2; vd == vs2 is
+        // reserved, but vslide1down/vfslide1down permit the overlap.
+        for w in [
+            op_v(0b001110, 1, 1, 2, 0b110, 1), // vslide1up.vx v1,v1,x2
+            op_v(0b001110, 1, 1, 0, 0b101, 1), // vfslide1up.vf v1,v1,fa0
+        ] {
+            assert!(matches!(
+                run_one(&mut cpu_e8m1(), w),
+                RiscVExit::Trap(Trap {
+                    cause: cause::ILLEGAL_INSTR,
+                    ..
+                })
+            ));
+        }
+        // The slide1down forms permit the same overlap.
+        assert!(matches!(
+            run_one(&mut cpu_e8m1(), op_v(0b001111, 1, 1, 2, 0b110, 1)), // vslide1down.vx v1,v1,x2
+            RiscVExit::Continue
+        ));
+        assert!(matches!(
+            run_one(&mut cpu_e8m1(), op_v(0b001111, 1, 1, 0, 0b101, 1)), // vfslide1down.vf v1,v1,fa0
+            RiscVExit::Continue
+        ));
+        // Non-overlapping legal form still executes.
+        assert!(matches!(
+            run_one(&mut cpu_e8m1(), op_v(0b001110, 1, 2, 2, 0b110, 1)), // vslide1up.vx v1,v2,x2
+            RiscVExit::Continue
+        ));
+    }
+
+    #[test]
     fn vfncvt_rejects_sew8() {
         // vfncvt.f.f.w (funct6 010010, OPFV, vs1=10100) under SEW=8 has no
         // defined narrowing (no FP8 / 8-bit float-to-int width) and must trap.
