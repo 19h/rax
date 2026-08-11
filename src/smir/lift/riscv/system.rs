@@ -36,7 +36,7 @@ impl RiscVLifter {
                     },
                 ));
             }
-            0b001 => {
+            0b001 if self.extensions.zifencei => {
                 // FENCE.I (instruction fence)
                 ops.push(SmirOp::new(
                     ctx.next_op_id(),
@@ -150,6 +150,15 @@ impl RiscVLifter {
             // the new value; the mask is applied in-IR because the vreg writeback
             // bypasses write_arch_reg's masking.
             0b001 | 0b010 | 0b011 | 0b101 | 0b110 | 0b111 => {
+                if !self.extensions.zicsr
+                    || (!self.extensions.f && matches!(csr, 0x001..=0x003))
+                    || (!self.extensions.v && matches!(csr, 0x008..=0x00F | 0xC20..=0xC22))
+                {
+                    return Err(LiftError::InvalidEncoding {
+                        addr,
+                        bytes: insn.to_le_bytes().to_vec(),
+                    });
+                }
                 let is_imm = funct3 & 0b100 != 0;
                 let op = funct3 & 0b011; // 1=rw, 2=rs, 3=rc
                 let zimm = rs1_reg as i64; // 5-bit immediate (csrr*i forms)
@@ -172,7 +181,7 @@ impl RiscVLifter {
                     _ => None,
                 };
                 let modeled_jvt = csr == 0x017 && self.extensions.zcmt;
-                let modeled_ro = matches!(csr, 0xc20 | 0xc21 | 0xc22);
+                let modeled_ro = self.extensions.v && matches!(csr, 0xc20 | 0xc21 | 0xc22);
                 let w = self.op_width();
                 let mk = |ctx: &mut LiftContext, k: OpKind| SmirOp::new(ctx.next_op_id(), addr, k);
                 if let Some((shift, mask)) = fcsr_field {

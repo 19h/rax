@@ -566,6 +566,27 @@ mod tests {
     }
 
     #[test]
+    #[test]
+    fn system_lift_respects_extension_gates() {
+        let fence_i: u32 = 0x0000_100f; // fence.i
+        let csr_fcsr: u32 = 0x0030_20f3; // csrr x1, fcsr
+        let csr_vl: u32 = 0xc200_20f3; // csrr x1, vl
+        // Minimal profile (no Zifencei/Zicsr/F/V): all three are rejected.
+        assert_invalid_lift(RiscVLifter::new_rv64(RiscVExtensions::rv64i()), fence_i);
+        assert_invalid_lift(RiscVLifter::new_rv64(RiscVExtensions::rv64i()), csr_fcsr);
+        assert_invalid_lift(RiscVLifter::new_rv64(RiscVExtensions::rv64i()), csr_vl);
+        // Full profile: they lift.
+        for w in [fence_i, csr_fcsr, csr_vl] {
+            let mut lifter = RiscVLifter::rv64gc();
+            let mut ctx = test_ctx();
+            assert!(
+                lifter.lift_insn(0x1000, &w.to_le_bytes(), &mut ctx).is_ok(),
+                "word {w:#010x} should lift under rv64gc"
+            );
+        }
+    }
+
+    #[test]
     fn rv32_pack_uses_16_bit_halves_and_32_bit_result() {
         let pack = r_type(0b0000100, 2, 1, 0b100, 3, 0x33);
         let mut lifter = RiscVLifter::new_rv32(RiscVExtensions {
