@@ -1,0 +1,204 @@
+//! Reserved-encoding and architectural-constraint differential coverage.
+
+use super::*;
+
+#[test]
+fn diff_v_reserved_encoding_validation() {
+    const E8_M1: u64 = 0x00;
+    const E32_M1: u64 = 0x10;
+    const E32_M2: u64 = 0x11;
+    const E32_M8: u64 = 0x13;
+    const E32_MF2: u64 = 0x17;
+
+    fn state(vtype: u64, vl: u64) -> VState {
+        let mut rng = Rng::new(0x7EC_19_201);
+        let mut st = VState::zeroed();
+        for value in &mut st.x[1..] {
+            *value = rng.next();
+        }
+        for value in &mut st.f {
+            *value = 0xffff_ffff_0000_0000 | (rng.next() as u32 as u64);
+        }
+        for value in &mut st.v {
+            *value = rng.next();
+        }
+        for value in &mut st.scratch {
+            *value = rng.next();
+        }
+        st.vtype = vtype;
+        st.vl = vl;
+        st
+    }
+
+    let mut batch = Vec::new();
+
+    // vmsbf.m/vmsof.m/vmsif.m: vd must not overlap vs2, masked forms cannot
+    // target v0, and the operations are not restartable.
+    for (name, selector) in [
+        ("vmsbf.m", 0b00001),
+        ("vmsof.m", 0b00010),
+        ("vmsif.m", 0b00011),
+    ] {
+        batch.push((
+            format!("{name}.vd-vs2-overlap"),
+            op_iv(0b010100, 1, 2, selector, 0b010, 2),
+            state(E8_M1, 8),
+        ));
+        batch.push((
+            format!("{name}.masked-vd-v0"),
+            op_iv(0b010100, 0, 2, selector, 0b010, 0),
+            state(E8_M1, 8),
+        ));
+        let mut nonrestartable = state(E8_M1, 8);
+        nonrestartable.vstart = 1;
+        batch.push((
+            format!("{name}.vstart"),
+            op_iv(0b010100, 1, 2, selector, 0b010, 1),
+            nonrestartable,
+        ));
+    }
+
+    // vadc/vsbc consume v0 as carry/borrow-in, so vm=1 and vd=v0 are reserved
+    // for every defined vv/vx/vi form.
+    for (name, funct6, funct3) in [
+        ("vadc.vvm", 0b010000, 0b000),
+        ("vadc.vxm", 0b010000, 0b100),
+        ("vadc.vim", 0b010000, 0b011),
+        ("vsbc.vvm", 0b010010, 0b000),
+        ("vsbc.vxm", 0b010010, 0b100),
+    ] {
+        batch.push((
+            format!("{name}.vm-one"),
+            op_iv(funct6, 1, 2, 3, funct3, 1),
+            state(E8_M1, 8),
+        ));
+        batch.push((
+            format!("{name}.vd-v0"),
+            op_iv(funct6, 0, 2, 3, funct3, 0),
+            state(E8_M1, 8),
+        ));
+    }
+
+    // Upward slides prohibit any source/destination group overlap. The exact
+    // slide-by-one encodings use OPMVX/OPFVF funct3 values 110/101. Downward
+    // forms allow overlap and serve as differential controls.
+    for (name, funct3) in [
+        ("vslideup.vx", 0b100),
+        ("vslideup.vi", 0b011),
+        ("vslide1up.vx", 0b110),
+        ("vfslide1up.vf", 0b101),
+    ] {
+        let src = if matches!(funct3, 0b100 | 0b110) {
+            5
+        } else {
+            3
+        };
+        batch.push((
+            format!("{name}.overlap"),
+            op_iv(0b001110, 1, 2, src, funct3, 2),
+            state(E32_M2, 4),
+        ));
+    }
+    for (name, funct3) in [
+        ("vslidedown.vx", 0b100),
+        ("vslidedown.vi", 0b011),
+        ("vslide1down.vx", 0b110),
+        ("vfslide1down.vf", 0b101),
+    ] {
+        let src = if matches!(funct3, 0b100 | 0b110) {
+            5
+        } else {
+            3
+        };
+        batch.push((
+            format!("{name}.overlap-control"),
+            op_iv(0b001111, 1, 2, src, funct3, 2),
+            state(E32_M2, 4),
+        ));
+    }
+
+    let narrowing: Vec<(&str, u32, u32)> = [
+        ("vnsrl.wv", 0b101100, 0),
+        ("vnsra.wv", 0b101101, 0),
+        ("vnclipu.wv", 0b101110, 0),
+        ("vnclip.wv", 0b101111, 0),
+    ]
+    .into_iter()
+    .chain(
+        [
+            "vfncvt.xu.f.w",
+            "vfncvt.x.f.w",
+            "vfncvt.f.xu.w",
+            "vfncvt.f.x.w",
+            "vfncvt.f.f.w",
+            "vfncvt.rod.f.f.w",
+            "vfncvt.rtz.xu.f.w",
+            "vfncvt.rtz.x.f.w",
+        ]
+        .into_iter()
+        .enumerate()
+        .map(|(index, name)| (name, 0b010010, 0b10000 + index as u32)),
+    )
+    .collect();
+    for (name, funct6, selector) in narrowing {
+        let funct3 = if funct6 == 0b010010 && selector >= 0b10000 {
+            0b001
+        } else {
+            0b000
+        };
+        let src = if funct3 == 0b001 { selector } else { 4 };
+        batch.push((
+            format!("{name}.upper-overlap"),
+            op_iv(funct6, 1, 2, src, funct3, 3),
+            state(E32_M1, 2),
+        ));
+        batch.push((
+            format!("{name}.same-lowest-control"),
+            op_iv(funct6, 1, 2, src, funct3, 2),
+            state(E32_M1, 2),
+        ));
+        batch.push((
+            format!("{name}.fractional-odd-control"),
+            op_iv(funct6, 1, 1, src, funct3, 1),
+            state(E32_MF2, 2),
+        ));
+        batch.push((
+            format!("{name}.emul-16"),
+            op_iv(funct6, 1, 0, src, funct3, 0),
+            state(E32_M8, 1),
+        ));
+    }
+
+    // Every OPFVV/OPFVF instruction must reject reserved frm=5/6/7 before
+    // either vl=0 or vstart>=vl could suppress its element loop.
+    let fp_representatives = [
+        ("vfadd.vv", op_iv(0b000000, 1, 2, 3, 0b001, 1)),
+        ("vfmin.vv", op_iv(0b000100, 1, 2, 3, 0b001, 1)),
+        ("vfsgnj.vv", op_iv(0b001000, 1, 2, 3, 0b001, 1)),
+        ("vmfeq.vv", op_iv(0b011000, 1, 2, 3, 0b001, 1)),
+        ("vfclass.v", op_iv(0b010011, 1, 2, 0b10000, 0b001, 1)),
+        ("vfmv.f.s", op_iv(0b010000, 1, 2, 0, 0b001, 1)),
+        ("vfmv.s.f", op_iv(0b010000, 1, 0, 3, 0b101, 1)),
+        ("vfrsqrt7.v", op_iv(0b010011, 1, 2, 0b00100, 0b001, 1)),
+        ("vfrec7.v", op_iv(0b010011, 1, 2, 0b00101, 0b001, 1)),
+        ("vfcvt.rtz.xu.f.v", op_iv(0b010010, 1, 2, 0b00110, 0b001, 1)),
+        ("vfslide1up.vf", op_iv(0b001110, 1, 2, 3, 0b101, 1)),
+        ("vfslide1down.vf", op_iv(0b001111, 1, 2, 3, 0b101, 1)),
+        ("vfredusum.vs", op_iv(0b000001, 1, 2, 3, 0b001, 1)),
+        ("vfwadd.vv", op_iv(0b110000, 1, 2, 3, 0b001, 1)),
+    ];
+    for (name, insn) in fp_representatives {
+        for frm in 5..=7u64 {
+            let mut vl_zero = state(E32_M1, 0);
+            vl_zero.fcsr = frm << 5;
+            batch.push((format!("{name}.frm-{frm}.vl-zero"), insn, vl_zero));
+
+            let mut completed = state(E32_M1, 4);
+            completed.fcsr = frm << 5;
+            completed.vstart = 4;
+            batch.push((format!("{name}.frm-{frm}.vstart-at-vl"), insn, completed));
+        }
+    }
+
+    run_batch(&batch);
+}

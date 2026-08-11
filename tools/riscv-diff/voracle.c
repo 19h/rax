@@ -4,8 +4,8 @@
  * A sibling of oracle.c dedicated to the V extension. Built as a static RV64
  * ELF and run under qemu-riscv64 (default cpu, which implements RVV). The
  * generated prologue installs the integer/FP registers, loads v0..v31 from a
- * MAP_FIXED block, sets the test vtype/vl, runs ONE vector instruction, then
- * EBREAK. The SIGTRAP handler captures the integer/FP frame plus the vector
+ * MAP_FIXED block, sets the test vtype/vl/vstart, runs ONE vector instruction,
+ * then EBREAK. The SIGTRAP handler captures the integer/FP frame plus the vector
  * state (vl/vtype/vstart and the VLEN-bit register file) parsed from the
  * signal-frame V context.
  *
@@ -30,7 +30,7 @@
 
 #define SCRATCH_ADDR 0x200000ull
 #define SCRATCH_SIZE 4096
-#define INPUT_ADDR 0x210000ull /* x/f/fcsr/vtype/vl block */
+#define INPUT_ADDR 0x210000ull /* scalar and vector-CSR input block */
 #define VIN_ADDR 0x220000ull   /* 512-byte v0..v31 input data */
 #define BLOCK_SIZE 4096
 
@@ -40,6 +40,7 @@
 #define IN_VTYPE_OFF (65 * 8)
 #define IN_VL_OFF (66 * 8)
 #define IN_VCSR_OFF (67 * 8)
+#define IN_VSTART_OFF (68 * 8)
 
 typedef struct {
     uint64_t x[32];
@@ -212,6 +213,9 @@ int main(void) {
     code[n++] = enc_ld(6, 31, IN_VTYPE_OFF);
     code[n++] = enc_ld(7, 31, IN_VL_OFF);
     code[n++] = enc_vsetvl(0, 7, 6);
+    /* vstart is written after vsetvl, which resets it to zero. */
+    code[n++] = enc_ld(28, 31, IN_VSTART_OFF);
+    code[n++] = enc_csrw(0x008u, 28);
     /* int regs x1,x2,x5..x30 (skip gp/tp), x31 last */
     for (int i = 1; i <= 30; i++) {
         if (i == 3 || i == 4) continue;
@@ -257,6 +261,7 @@ int main(void) {
         memcpy((char *)INPUT_ADDR + IN_VTYPE_OFF, &ic->st.vtype, 8);
         memcpy((char *)INPUT_ADDR + IN_VL_OFF, &ic->st.vl, 8);
         memcpy((char *)INPUT_ADDR + IN_VCSR_OFF, &ic->st.vcsr, 8);
+        memcpy((char *)INPUT_ADDR + IN_VSTART_OFF, &ic->st.vstart, 8);
         memcpy((void *)VIN_ADDR, ic->st.v, 32 * VLENB);
         memcpy((void *)SCRATCH_ADDR, ic->st.scratch, sizeof(ic->st.scratch));
 

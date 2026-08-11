@@ -185,6 +185,7 @@ fn run_vrax(insn: u32, input: &VState) -> Option<VState> {
     cpu.set_fcsr(input.fcsr as u32);
     cpu.set_vcsr(input.vcsr);
     cpu.set_vl_vtype(input.vl, input.vtype);
+    cpu.set_vstart(input.vstart);
     for r in 0..32usize {
         cpu.set_vreg(r as u8, &input.vreg_bytes(r));
     }
@@ -210,6 +211,7 @@ fn run_vrax(insn: u32, input: &VState) -> Option<VState> {
     out.vcsr = cpu.vcsr();
     out.vl = cpu.vl();
     out.vtype = cpu.vtype();
+    out.vstart = cpu.vstart();
     for r in 0..32usize {
         out.set_vreg_bytes(r, &cpu.vreg(r as u8));
     }
@@ -267,6 +269,12 @@ fn compare(label: &str, insn: u32, input: &VState, oracle: &VOutCase, ms: &mut V
         d.push(format!(
             "vtype: rax={:#x} hw={:#x}",
             rax.vtype, oracle.st.vtype
+        ));
+    }
+    if rax.vstart != oracle.st.vstart {
+        d.push(format!(
+            "vstart: rax={} hw={}",
+            rax.vstart, oracle.st.vstart
         ));
     }
     if rax.fcsr != oracle.st.fcsr {
@@ -381,6 +389,9 @@ const XPOOL: [u32; 5] = [1, 5, 6, 7, 10];
 fn op_iv(funct6: u32, vm: u32, vs2: u32, src: u32, funct3: u32, vd: u32) -> u32 {
     (funct6 << 26) | (vm << 25) | (vs2 << 20) | (src << 15) | (funct3 << 12) | (vd << 7) | 0x57
 }
+
+#[path = "vector/reserved_encoding.rs"]
+mod reserved_encoding;
 
 #[test]
 fn diff_v_arith() {

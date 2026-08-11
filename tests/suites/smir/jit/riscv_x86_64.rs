@@ -27,6 +27,9 @@ const CODE: u64 = 0x1000;
 const DATA: u64 = 0x2000;
 const MEMORY_LEN: usize = 0x4000;
 
+#[path = "riscv_x86_64/vector_validation.rs"]
+mod vector_validation;
+
 #[repr(C)]
 struct TestMemory {
     bytes: [u8; MEMORY_LEN],
