@@ -175,6 +175,36 @@ fn lifted_rv_vector_reserved_encodings_fail_closed_transactionally() {
                 ..initial
             },
         ),
+        // Masked scalar move encodings are reserved.
+        (
+            (0b010000 << 26) | (2 << 20) | (0b010 << 12) | (1 << 7) | 0x57,
+            initial,
+        ),
+        // vrgatherei16.vv under e8,m2 gives the index an EMUL of four;
+        // v6 is therefore a misaligned index-group base.
+        (
+            (0b001110 << 26) | (1 << 25) | (2 << 20) | (6 << 15) | (0b000 << 12) | 0x57,
+            RiscVGuestRegs {
+                vtype: 0x01, // e8,m2
+                ..initial
+            },
+        ),
+        // vaadd.vv v1,v2,v4 has a misaligned destination under LMUL=2.
+        (
+            (0b001001 << 26) | (1 << 25) | (2 << 20) | (4 << 15) | (0b010 << 12) | (1 << 7) | 0x57,
+            RiscVGuestRegs {
+                vtype: 0x11, // e32,m2
+                ..initial
+            },
+        ),
+        // Masked viota.m cannot write the mask register v0.
+        (
+            (0b010100 << 26) | (2 << 20) | (0b10000 << 15) | (0b010 << 12) | 0x57,
+            RiscVGuestRegs {
+                vtype: 0, // e8,m1
+                ..initial
+            },
+        ),
     ];
 
     for (instruction, state) in cases {
@@ -252,6 +282,44 @@ fn lifted_followup_rvv_controls_match_direct_at_o0_and_o2() {
             vtype: 0x11,
             ..initial
         },
+        [0xa5; MEMORY_LEN],
+        false,
+    );
+
+    // Unmasked vmv.x.s remains legal.
+    run_vector_case(
+        (0b010000 << 26) | (1 << 25) | (2 << 20) | (0b010 << 12) | (1 << 7) | 0x57,
+        initial,
+        [0xa5; MEMORY_LEN],
+        false,
+    );
+
+    // vrgatherei16.vv with an aligned four-register index group at e8,m2.
+    run_vector_case(
+        (0b001110 << 26) | (1 << 25) | (2 << 20) | (8 << 15) | 0x57,
+        RiscVGuestRegs {
+            vtype: 0x01,
+            ..initial
+        },
+        [0xa5; MEMORY_LEN],
+        false,
+    );
+
+    // Aligned vaadd.vv groups under LMUL=2.
+    run_vector_case(
+        (0b001001 << 26) | (1 << 25) | (2 << 20) | (4 << 15) | (0b010 << 12) | 0x57,
+        RiscVGuestRegs {
+            vtype: 0x11,
+            ..initial
+        },
+        [0xa5; MEMORY_LEN],
+        false,
+    );
+
+    // Masked viota.m remains legal when vd is disjoint from v0 and vs2.
+    run_vector_case(
+        (0b010100 << 26) | (4 << 20) | (0b10000 << 15) | (0b010 << 12) | (2 << 7) | 0x57,
+        initial,
         [0xa5; MEMORY_LEN],
         false,
     );

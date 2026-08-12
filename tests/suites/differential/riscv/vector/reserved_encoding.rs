@@ -5,6 +5,7 @@ use super::*;
 #[test]
 fn diff_v_reserved_encoding_validation() {
     const E8_M1: u64 = 0x00;
+    const E8_M2: u64 = 0x01;
     const E16_MF8: u64 = 0x0d;
     const E32_M1: u64 = 0x10;
     const E32_M2: u64 = 0x11;
@@ -74,6 +75,97 @@ fn diff_v_reserved_encoding_validation() {
             name.into(),
             op_iv(0b010100, vm, vs2, 0b10001, 0b010, 1),
             state(E8_M1, 8),
+        ));
+    }
+
+    // Vector/scalar moves reserve every masked encoding in both directions.
+    for (name, funct3, vs2, src, vd) in [
+        ("vmv.x.s", 0b010, 2, 0, 1),
+        ("vmv.s.x", 0b110, 0, 5, 2),
+        ("vfmv.f.s", 0b001, 2, 0, 1),
+        ("vfmv.s.f", 0b101, 0, 5, 2),
+    ] {
+        batch.push((
+            format!("{name}.masked-reserved"),
+            op_iv(0b010000, 0, vs2, src, funct3, vd),
+            state(E32_M1, 4),
+        ));
+        batch.push((
+            format!("{name}.unmasked-control"),
+            op_iv(0b010000, 1, vs2, src, funct3, vd),
+            state(E32_M1, 4),
+        ));
+    }
+
+    // vrgatherei16.vv derives index EMUL=(16/SEW)*LMUL. At e8,m2 the
+    // index occupies four registers and must start at a multiple of four.
+    for (name, index) in [("misaligned-index", 6), ("aligned-index-control", 8)] {
+        batch.push((
+            format!("vrgatherei16.vv.{name}"),
+            op_iv(0b001110, 1, 2, index, 0b000, 0),
+            state(E8_M2, 4),
+        ));
+    }
+    batch.push((
+        "vrgatherei16.vv.mixed-eew-source-alias".into(),
+        op_iv(0b001110, 1, 2, 2, 0b000, 0),
+        state(E8_M1, 4),
+    ));
+    batch.push((
+        "vrgatherei16.vv.same-eew-source-alias-control".into(),
+        op_iv(0b001110, 1, 2, 2, 0b000, 0),
+        state(0x09, 4), // e16,m2
+    ));
+
+    // Averaging add/subtract forms use complete LMUL-sized groups for every
+    // vector operand; vx forms retain scalar rs1.
+    for (name, funct6) in [
+        ("vaaddu", 0b001000),
+        ("vaadd", 0b001001),
+        ("vasubu", 0b001010),
+        ("vasub", 0b001011),
+    ] {
+        batch.push((
+            format!("{name}.vv.misaligned-vd"),
+            op_iv(funct6, 1, 2, 4, 0b010, 1),
+            state(E32_M2, 2),
+        ));
+        batch.push((
+            format!("{name}.vv.misaligned-vs1"),
+            op_iv(funct6, 1, 2, 5, 0b010, 0),
+            state(E32_M2, 2),
+        ));
+        batch.push((
+            format!("{name}.vx.scalar-rs1-control"),
+            op_iv(funct6, 1, 2, 5, 0b110, 0),
+            state(E32_M2, 2),
+        ));
+    }
+
+    // viota.m is nonrestartable; vd may overlap neither vs2 nor the masked
+    // execution register v0.
+    batch.push((
+        "viota.m.masked-vd-v0".into(),
+        op_iv(0b010100, 0, 2, 0b10000, 0b010, 0),
+        state(E8_M1, 4),
+    ));
+    batch.push((
+        "viota.m.vd-vs2-overlap".into(),
+        op_iv(0b010100, 1, 2, 0b10000, 0b010, 2),
+        state(E8_M1, 4),
+    ));
+    let mut iota_nonrestartable = state(E8_M1, 4);
+    iota_nonrestartable.vstart = 1;
+    batch.push((
+        "viota.m.nonzero-vstart".into(),
+        op_iv(0b010100, 1, 4, 0b10000, 0b010, 2),
+        iota_nonrestartable,
+    ));
+    for (name, vm) in [("masked-control", 0), ("unmasked-control", 1)] {
+        batch.push((
+            format!("viota.m.{name}"),
+            op_iv(0b010100, vm, 4, 0b10000, 0b010, 2),
+            state(E8_M1, 4),
         ));
     }
 
