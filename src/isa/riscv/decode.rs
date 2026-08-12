@@ -2151,6 +2151,10 @@ fn decode_shift_left_imm(w: u32, rv64: bool, isa: &Isa) -> Insn {
     let funct7 = funct7(w);
     let shamt = ((w >> 20) & if rv64 { 0x3f } else { 0x1f }) as i64;
     let rs2f = rs2(w);
+    // RV32 encodes a 5-bit shamt; bit25 (shamt[5]) is reserved.
+    if !rv64 && ((w >> 25) & 1) != 0 {
+        return Insn::illegal(w, 4);
+    }
     // SHA / SM3 message-schedule transforms (funct7 = 0b0001000).
     if funct7 == 0b0001000 {
         match rs2f {
@@ -2216,6 +2220,10 @@ fn decode_shift_right_imm(w: u32, rv64: bool, isa: &Isa) -> Insn {
     let funct7 = funct7(w);
     let rs2f = rs2(w);
     let shamt = ((w >> 20) & if rv64 { 0x3f } else { 0x1f }) as i64;
+    // RV32 encodes a 5-bit shamt; bit25 (shamt[5]) is reserved.
+    if !rv64 && ((w >> 25) & 1) != 0 {
+        return Insn::illegal(w, 4);
+    }
     if isa.zbb {
         // ORC.B: funct7=0b0010100, rs2=0b00111.
         if funct7 == 0b0010100 && rs2f == 0b00111 {
@@ -3592,5 +3600,22 @@ mod tests {
             decode(enc(0, 0, 0, 0b000, 2, 0x0b), Xlen::Rv32, &isa).op,
             Op::NdsLbgp
         );
+    }
+
+    #[test]
+    fn rv32_shift_imm_reserved_bit25_is_illegal() {
+        // RV32 OP-IMM shifts encode a 5-bit shamt; bit25 (shamt[5]) is
+        // reserved, so srli/srai with bit25=1 must be illegal (RV64 keeps
+        // the 6-bit shamt).  The Zb* overlays share the same shamt field.
+        let srli_bit25 = (1u32 << 25) | (6 << 20) | (5 << 15) | (5 << 12) | (6 << 7) | 0x13;
+        assert!(decode(srli_bit25, Xlen::Rv32, &Isa::rv_i()).is_illegal());
+        let srai_bit25 = (1u32 << 25) | (0b0100000 << 25) | (6 << 20) | (5 << 15) | (5 << 12) | (6 << 7) | 0x13;
+        assert!(decode(srai_bit25, Xlen::Rv32, &Isa::rv_i()).is_illegal());
+        // RV64: bit25 is part of the 6-bit shamt, still legal.
+        let srli_rv64 = (1u32 << 25) | (6 << 20) | (5 << 15) | (5 << 12) | (6 << 7) | 0x13;
+        assert_eq!(decode(srli_rv64, Xlen::Rv64, &Isa::rv64gc()).op, Op::Srli);
+        // Aligned RV32 controls decode normally.
+        let srli_ok = (6u32 << 20) | (5 << 15) | (5 << 12) | (6 << 7) | 0x13;
+        assert_eq!(decode(srli_ok, Xlen::Rv32, &Isa::rv_i()).op, Op::Srli);
     }
 }
