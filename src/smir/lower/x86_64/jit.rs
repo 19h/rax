@@ -3377,6 +3377,7 @@ impl X86_64Lowerer {
             false,
             None,
             0,
+            false,
         )
     }
 
@@ -3416,6 +3417,7 @@ impl X86_64Lowerer {
             false,
             None,
             linear_offset,
+            false,
         )
     }
 
@@ -3456,6 +3458,7 @@ impl X86_64Lowerer {
             false,
             Some(bit_offset),
             0,
+            false,
         )
     }
 
@@ -3492,10 +3495,11 @@ impl X86_64Lowerer {
             true,
             None,
             0,
+            false,
         )
     }
 
-    fn emit_jit_mem_op_inner(
+    pub(super) fn emit_jit_mem_op_inner(
         &mut self,
         guest_pc: u64,
         is_load: bool,
@@ -3511,6 +3515,7 @@ impl X86_64Lowerer {
         address_size_32: bool,
         bit_offset: Option<crate::smir::lower::X86JitBitOffsetTerm>,
         linear_offset: i32,
+        zero_extend_stack_store: bool,
     ) -> Result<(), LowerError> {
         let size: i32 = match mem_width {
             MemWidth::B1 => 1,
@@ -3595,8 +3600,12 @@ impl X86_64Lowerer {
             self.code.emit_u32(signed as u32);
         } else {
             if let Some(stack_off) = store_stack_src {
-                let mut emitter = X86Emitter::new(&mut self.code);
-                emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rsp, stack_off, OpWidth::W64);
+                if zero_extend_stack_store {
+                    self.emit_jit_stack_store_value_argument(stack_off, mem_width);
+                } else {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rsp, stack_off, OpWidth::W64);
+                }
             } else if let Some(imm) = store_src_imm {
                 self.emit_movabs(2, imm as u64); // movabs rdx, imm (value)
             } else if let Some(senc) = store_src_enc {

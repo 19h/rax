@@ -305,6 +305,7 @@ fn lower(function: &SmirFunction, case: Bf16MemoryCase) -> (Vec<u8>, usize) {
     assert!(!requirements.all_spans_support_avx_ymm16, "{case:?}");
     assert!(requirements.needs_avx, "{case:?}");
     assert!(requirements.needs_avx512bw, "{case:?}");
+    assert!(requirements.needs_avx512bf16, "{case:?}");
     assert_eq!(
         requirements.needs_avx512vl,
         case.width != VecWidth::V512,

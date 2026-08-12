@@ -240,6 +240,16 @@ fn sequence(function: &SmirFunction, allow_mem: bool) -> Option<X86JitEvexCompre
     )
 }
 
+fn first_stack_value_load(case: CompressMemoryCase) -> &'static [u8] {
+    match case.lane_bytes() {
+        1 => &[0x48, 0x0F, 0xB6, 0x54, 0x24, 0x10], // movzx rdx, byte [rsp+16]
+        2 => &[0x48, 0x0F, 0xB7, 0x54, 0x24, 0x10], // movzx rdx, word [rsp+16]
+        4 => &[0x8B, 0x54, 0x24, 0x10],             // mov edx, dword [rsp+16]
+        8 => &[0x48, 0x8B, 0x54, 0x24, 0x10],       // mov rdx, qword [rsp+16]
+        _ => unreachable!("packed compress scalar lane width"),
+    }
+}
+
 pub(super) fn lower(function: &SmirFunction, case: CompressMemoryCase) -> (Vec<u8>, usize) {
     let excluded = HashMap::new();
     assert!(is_native_clobber_safe_excluding(function, &excluded, true));
@@ -496,6 +506,12 @@ fn all_36_compress_memory_cells_optimize_admit_and_lower_exactly() {
                 code.windows(replay.len()).any(|window| window == replay),
                 "{level:?} {case:?}: missing {replay:02X?} in {} bytes",
                 code.len()
+            );
+            let value_load = first_stack_value_load(case);
+            assert!(
+                code.windows(value_load.len())
+                    .any(|window| window == value_load),
+                "{level:?} {case:?}: missing zero-extended helper value load {value_load:02X?}"
             );
             lowerings += 1;
         }

@@ -28,6 +28,7 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_sm3: bool,
     pub(crate) needs_sm4: bool,
     pub(crate) needs_avx512bw: bool,
+    pub(crate) needs_avx512bf16: bool,
     pub(crate) needs_avx512vl: bool,
     pub(crate) needs_avx512dq: bool,
     pub(crate) needs_avx512er: bool,

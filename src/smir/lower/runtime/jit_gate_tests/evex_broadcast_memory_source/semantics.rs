@@ -5,7 +5,7 @@ use crate::smir::interpret::{BlockResult, SmirInterpreter};
 use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext};
 use crate::smir::ir::flags::MaterializedFlags;
 use crate::smir::ir::memory::FlatMemory;
-use crate::smir::lower::runtime::{GuestRegs, X86_VECTOR_STATE_K64};
+use crate::smir::lower::runtime::{GuestRegs, X86_VECTOR_STATE_K16, X86_VECTOR_STATE_K64};
 
 pub(super) fn words_to_bytes(words: [u64; 8]) -> [u8; 64] {
     let mut bytes = [0; 64];
@@ -74,7 +74,11 @@ pub(super) fn initial_registers(case: BroadcastMemoryCase, seed: usize, mask: u6
         }),
         rflags: 0x2 | (((seed as u64).wrapping_mul(0x145)) & 0x8D5),
         k: std::array::from_fn(|index| 0x0102_0304_0506_0708u64.rotate_left((index * 7) as u32)),
-        vector_active: X86_VECTOR_STATE_K64,
+        vector_active: if !case.shape.needs_avx512bw && case.shape.destination_lanes() <= 16 {
+            X86_VECTOR_STATE_K16
+        } else {
+            X86_VECTOR_STATE_K64
+        },
         mxcsr: 0x1F80 | (((seed as u32) & 3) << 13),
         exit_pc: 0xAAAA_BBBB_CCCC_DDDD,
         vector_scratch: [0xCCDD_EEFF_0011_2233; 8],
@@ -207,6 +211,15 @@ fn all_102_shapes_match_independent_bit_broadcast_oracles_at_o0_o1_o2() {
             ((0xA5A5_A5A5_A5A5_A5A5u64.rotate_left(encodings as u32)) | 1) & lane_mask(case)
         };
         let initial = initial_registers(case, encodings, mask);
+        assert_eq!(
+            initial.vector_active,
+            if !case.shape.needs_avx512bw && case.shape.destination_lanes() <= 16 {
+                X86_VECTOR_STATE_K16
+            } else {
+                X86_VECTOR_STATE_K64
+            },
+            "native opmask bridge mode for {case:?}"
+        );
         let memory = memory_bytes(case, encodings);
         let expected = expected_destination(case, &initial, &memory);
         let baseline = interpret_success(

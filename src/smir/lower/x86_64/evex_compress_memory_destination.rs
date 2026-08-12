@@ -6,7 +6,7 @@ use super::evex_packed_rotate_memory_source::EVEX_E4_MASKED_VECTOR_FRAME_SIZE;
 use super::{X86_64Lowerer, X86Cond, X86Emitter};
 use crate::smir::ir::SmirBlock;
 use crate::smir::ir::ops::OpKind;
-use crate::smir::ir::types::{Address, MemWidth, OpWidth, SignExtend, VReg};
+use crate::smir::ir::types::{Address, MemWidth, OpWidth, VReg};
 use crate::smir::lower::LowerError;
 use crate::smir::lower::regalloc::PhysReg;
 
@@ -54,17 +54,11 @@ impl X86_64Lowerer {
 
         let slot_offset =
             i32::try_from(slot).expect("at most 64 packed compress lanes") * lane_bytes;
-        self.emit_jit_mem_op_linear_offset(
+        self.emit_jit_mem_op_linear_offset_packed_stack_store(
             guest_pc,
-            false,
-            None,
-            None,
-            None,
-            None,
-            Some(16 + slot_offset),
+            16 + slot_offset,
             address,
             memory_width,
-            SignExtend::Zero,
             EVEX_E4_MASKED_VECTOR_FRAME_SIZE,
             slot_offset,
         )?;

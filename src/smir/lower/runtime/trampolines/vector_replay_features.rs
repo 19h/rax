@@ -225,8 +225,10 @@ pub(crate) fn x86_native_replay_feature_requirements(
                 requirements.any = true;
                 requirements.needs_avx = true;
                 // The full-width vector/opmask bridge requires AVX-512BW;
-                // the final directly lowered operation contributes BF16.
+                // the fused span consumes the directly lowered BF16 operation,
+                // so its architectural feature must be retained here too.
                 requirements.needs_avx512bw = true;
+                requirements.needs_avx512bf16 = true;
                 requirements.needs_avx512vl |= sequence.encoding.needs_avx512vl;
                 all_spans_support_avx_ymm16 = false;
                 index += sequence.consumed;

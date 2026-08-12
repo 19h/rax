@@ -5,7 +5,7 @@ use crate::smir::interpret::{BlockResult, SmirInterpreter};
 use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext};
 use crate::smir::ir::flags::MaterializedFlags;
 use crate::smir::ir::memory::FlatMemory;
-use crate::smir::lower::runtime::GuestRegs;
+use crate::smir::lower::runtime::{GuestRegs, X86_VECTOR_STATE_K64};
 
 fn set_lane(words: &mut [u64; 8], elem: VecElementType, lane: usize, value: u64) {
     match elem {
@@ -79,6 +79,7 @@ pub(super) fn initial_registers(case: FixupMemoryCase, ordinal: usize) -> GuestR
         }),
         rflags: 0x8D5,
         mxcsr: 0x1F80 | (u32::from(ordinal & 1 != 0) << 6),
+        vector_active: X86_VECTOR_STATE_K64,
         ..GuestRegs::default()
     };
     registers.gpr[3] = 0x2000;
@@ -174,6 +175,10 @@ fn fixup_memory_o0_o1_o2_interpretation_is_exactly_equivalent() {
     let mut comparisons = 0usize;
     for (ordinal, case) in cases.into_iter().enumerate() {
         let initial = initial_registers(case, ordinal);
+        assert_eq!(
+            initial.vector_active, X86_VECTOR_STATE_K64,
+            "native vector bridge mode for {case:?}"
+        );
         let memory = memory_value(case, ordinal);
         let expected = interpreter_success(&lift_case(case), &initial, memory, case);
         for level in LEVELS {

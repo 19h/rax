@@ -316,6 +316,7 @@ mod jit_call;
 pub use jit_call::*;
 mod jit_memory_address;
 pub use jit_memory_address::*;
+mod jit_memory_value;
 mod lmsw;
 pub use lmsw::*;
 mod mem_state_compare;
