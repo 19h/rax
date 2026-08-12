@@ -3325,7 +3325,8 @@ impl RiscVCpu {
                 let ei16 = insn.op == Op::Vrgatherei16;
                 let is_vv = insn.funct3 == 0b000;
                 // The destination group must not overlap the source vs2 group,
-                // nor (for vv/ei16) the index vector group; such encodings are
+                // nor (for vv/ei16) the index vector group; the index group
+                // must also be aligned to its EMUL. Such encodings are
                 // reserved and must trap rather than gather in place.
                 let data_emul: u8 = match self.vtype & 0x7 {
                     1 => 2,
@@ -3346,6 +3347,9 @@ impl RiscVCpu {
                     } else {
                         data_emul
                     };
+                    if insn.rs1 % idx_regs != 0 {
+                        return Err(Trap::illegal(insn.raw));
+                    }
                     if overlaps(vd, data_emul, insn.rs1, idx_regs) {
                         return Err(Trap::illegal(insn.raw));
                     }
@@ -5993,6 +5997,37 @@ mod tests {
         // Valid form (distinct vd/vs2/vs1, vm=1, vstart=0) executes.
         assert!(matches!(
             run_one(&mut cpu_e8m1(), op_v(0b010111, 1, 2, 3, 0b010, 1)),
+            RiscVExit::Continue
+        ));
+    }
+
+    #[test]
+    fn vrgatherei16_rejects_misaligned_index_group() {
+        // vrgatherei16.vv (funct6 001110, vv) uses EEW=16 indices whose
+        // EMUL = ceil(LMUL*16/SEW); the vs1 group must be aligned to that
+        // EMUL, otherwise the encoding is reserved (RVV 6.3).
+        // SEW=32, LMUL=4 -> index EMUL=2, so vs1=1 is misaligned.
+        let mut c = cpu();
+        c.set_vl_vtype(16, 0b010 | (0b010 << 3)); // e32,m4
+        assert!(matches!(
+            run_one(&mut c, op_v(0b001110, 1, 8, 1, 0b000, 16)),
+            RiscVExit::Trap(_)
+        ));
+        // Control: vs1=2 (aligned, index EMUL=2) executes.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b001110, 1, 8, 2, 0b000, 16)),
+            RiscVExit::Continue
+        ));
+        // SEW=32, LMUL=8 -> index EMUL=4, so vs1=2 is misaligned.
+        let mut c8 = cpu();
+        c8.set_vl_vtype(32, 0b011 | (0b010 << 3)); // e32,m8
+        assert!(matches!(
+            run_one(&mut c8, op_v(0b001110, 1, 8, 2, 0b000, 16)),
+            RiscVExit::Trap(_)
+        ));
+        // Control: vs1=4 (aligned) executes.
+        assert!(matches!(
+            run_one(&mut c8, op_v(0b001110, 1, 8, 4, 0b000, 16)),
             RiscVExit::Continue
         ));
     }
