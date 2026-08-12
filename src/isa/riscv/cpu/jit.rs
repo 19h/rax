@@ -1322,10 +1322,11 @@ mod tests {
     }
 
     fn cpu_with_word(word: u32) -> RiscVCpu {
-        let mut cpu = RiscVCpu::new(
-            RiscVConfig::rv64gc(),
-            Box::new(FlatMemory::new(0, MEMORY_LEN)),
-        );
+        cpu_with_config_word(RiscVConfig::rv64gc(), word)
+    }
+
+    fn cpu_with_config_word(config: RiscVConfig, word: u32) -> RiscVCpu {
+        let mut cpu = RiscVCpu::new(config, Box::new(FlatMemory::new(0, MEMORY_LEN)));
         cpu.write_memory(CODE, &word.to_le_bytes()).unwrap();
         cpu.set_pc(CODE);
         cpu
@@ -1422,6 +1423,48 @@ mod tests {
                     jit.jit_stats().interpreter_fallbacks,
                     1,
                     "{level:?}: {name}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn jit_boundary_rejects_reserved_rv32_shift_immediates() {
+        let shift_imm = |funct6: u32, funct3: u32| {
+            (funct6 << 26) | (0b10_0000 << 20) | (2 << 15) | (funct3 << 12) | (1 << 7) | 0x13
+        };
+        let words = [
+            shift_imm(0b000000, 0b001), // slli
+            shift_imm(0b001010, 0b001), // bseti
+            shift_imm(0b010010, 0b001), // bclri
+            shift_imm(0b011010, 0b001), // binvi
+            shift_imm(0b000000, 0b101), // srli
+            shift_imm(0b010000, 0b101), // srai
+            shift_imm(0b011000, 0b101), // rori
+            shift_imm(0b010010, 0b101), // bexti
+        ];
+        let config = RiscVConfig::rv32(Isa::rv64gc());
+
+        for level in [OptLevel::O0, OptLevel::O2] {
+            for word in words {
+                let expected = RiscVExit::Trap(Trap::illegal(word));
+
+                let mut direct = cpu_with_config_word(config, word);
+                assert_eq!(direct.step(), expected, "direct: {word:#010x}");
+                assert_eq!(direct.instret(), 0, "direct: {word:#010x}");
+
+                let mut jit = cpu_with_config_word(config, word);
+                assert_eq!(jit.step_jit(level), expected, "{level:?}: {word:#010x}");
+                assert_eq!(jit.instret(), 0, "{level:?}: {word:#010x}");
+                assert_eq!(
+                    jit.jit_stats().native_executions,
+                    0,
+                    "{level:?}: {word:#010x}"
+                );
+                assert_eq!(
+                    jit.jit_stats().interpreter_fallbacks,
+                    1,
+                    "{level:?}: {word:#010x}"
                 );
             }
         }

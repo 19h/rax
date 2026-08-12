@@ -736,6 +736,35 @@ mod tests {
     }
 
     #[test]
+    fn rv32_shift_immediates_with_shamt_bit_five_fail_at_decode_frontier() {
+        let shift_imm = |funct6: u32, funct3: u32| {
+            (funct6 << 26) | (0b10_0000 << 20) | (2 << 15) | (funct3 << 12) | (1 << 7) | 0x13
+        };
+        let words = [
+            shift_imm(0b000000, 0b001),
+            shift_imm(0b001010, 0b001),
+            shift_imm(0b010010, 0b001),
+            shift_imm(0b011010, 0b001),
+            shift_imm(0b000000, 0b101),
+            shift_imm(0b010000, 0b101),
+            shift_imm(0b011000, 0b101),
+            shift_imm(0b010010, 0b101),
+        ];
+
+        for word in words {
+            let mut lifter = RiscVLifter::new_rv32(RiscVExtensions::rv64gc());
+            let mut context = LiftContext::new(SourceArch::RiscV32);
+            assert!(
+                matches!(
+                    lifter.lift_insn(0x1000, &word.to_le_bytes(), &mut context),
+                    Err(LiftError::InvalidEncoding { .. })
+                ),
+                "reserved RV32 shift {word:#010x} passed the lift frontier"
+            );
+        }
+    }
+
+    #[test]
     fn fp_and_vector_helpers_decode_with_the_configured_profile() {
         let fld = i_type(0, 1, 0b011, 1, 0x07);
         let fadd_d = r_type(0b0000001, 2, 1, 0, 3, 0x53);

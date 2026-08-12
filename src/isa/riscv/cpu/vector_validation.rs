@@ -208,13 +208,65 @@ fn validate_reduction(cpu: &RiscVCpu, insn: &Insn) -> Result<(), Trap> {
     validate_reduction_source_group(cpu, insn)
 }
 
-fn validate_same_width_integer_alu(cpu: &RiscVCpu, insn: &Insn) -> Result<(), Trap> {
+fn validate_same_width_integer_alu(
+    cpu: &RiscVCpu,
+    insn: &Insn,
+    vector_vector_funct3: u8,
+) -> Result<(), Trap> {
     // Every same-width vector operand names the LMUL-sized register group.
     // Scalar/immediate forms retain only vd and vs2 as vector groups.
     same_width_group(cpu, insn, insn.rd)?;
     same_width_group(cpu, insn, insn.rs2)?;
-    if insn.funct3 == 0b000 {
+    if insn.funct3 == vector_vector_funct3 {
         same_width_group(cpu, insn, insn.rs1)?;
+    }
+    Ok(())
+}
+
+fn validate_gather(cpu: &RiscVCpu, insn: &Insn) -> Result<(), Trap> {
+    let destination = same_width_group(cpu, insn, insn.rd)?;
+    let data = same_width_group(cpu, insn, insn.rs2)?;
+    if destination.overlaps(data) {
+        return Err(illegal(insn));
+    }
+
+    let index = match insn.op {
+        Op::Vrgatherei16 => {
+            let index_emul = match cpu.sew_bytes() {
+                1 => current_lmul(cpu, insn)?.widen(),
+                2 => current_lmul(cpu, insn)?,
+                4 => current_lmul(cpu, insn)?.narrow(2),
+                8 => current_lmul(cpu, insn)?.narrow(4),
+                _ => return Err(illegal(insn)),
+            };
+            RegisterGroup::for_emul(insn.rs1, index_emul).ok_or_else(|| illegal(insn))?
+        }
+        Op::Vrgather if insn.funct3 == 0b000 => same_width_group(cpu, insn, insn.rs1)?,
+        Op::Vrgather => return Ok(()),
+        _ => unreachable!("gather validator called for non-gather operation"),
+    };
+
+    if destination.overlaps(index)
+        || (matches!(insn.op, Op::Vrgatherei16) && cpu.sew_bytes() != 2 && data.overlaps(index))
+    {
+        return Err(illegal(insn));
+    }
+    Ok(())
+}
+
+fn validate_iota(cpu: &RiscVCpu, insn: &Insn, vm: bool) -> Result<(), Trap> {
+    if cpu.vstart != 0 {
+        return Err(illegal(insn));
+    }
+
+    let destination = same_width_group(cpu, insn, insn.rd)?;
+    let source_mask = RegisterGroup {
+        first: insn.rs2,
+        count: 1,
+    };
+    let execution_mask = RegisterGroup { first: 0, count: 1 };
+    if destination.overlaps(source_mask) || (!vm && destination.overlaps(execution_mask)) {
+        return Err(illegal(insn));
     }
     Ok(())
 }
@@ -256,6 +308,9 @@ pub(super) fn validate(cpu: &RiscVCpu, insn: &Insn, vm: bool) -> Result<(), Trap
     }
 
     match insn.op {
+        Op::VmvXS | Op::VmvSX | Op::VfmvFS | Op::VfmvSF if !vm => {
+            return Err(illegal(insn));
+        }
         Op::Vmerge if vm => {
             // vmv.v.v/vx/vi share the vmerge encoding. The vm=1 move forms
             // reserve vs2 and require that field to encode v0.
@@ -275,6 +330,7 @@ pub(super) fn validate(cpu: &RiscVCpu, insn: &Insn, vm: bool) -> Result<(), Trap
                 return Err(illegal(insn));
             }
         }
+        Op::Viota => validate_iota(cpu, insn, vm)?,
         Op::Vadc | Op::Vsbc => {
             if vm || insn.rd == 0 {
                 return Err(illegal(insn));
@@ -283,6 +339,7 @@ pub(super) fn validate(cpu: &RiscVCpu, insn: &Insn, vm: bool) -> Result<(), Trap
         Op::Vslideup | Op::Vslide1up | Op::Vfslide1up => {
             validate_slide_up(cpu, insn)?;
         }
+        Op::Vrgather | Op::Vrgatherei16 => validate_gather(cpu, insn)?,
         Op::Vadd
         | Op::Vsub
         | Op::Vrsub
@@ -295,7 +352,10 @@ pub(super) fn validate(cpu: &RiscVCpu, insn: &Insn, vm: bool) -> Result<(), Trap
         | Op::Vmax
         | Op::Vsll
         | Op::Vsrl
-        | Op::Vsra => validate_same_width_integer_alu(cpu, insn)?,
+        | Op::Vsra => validate_same_width_integer_alu(cpu, insn, 0b000)?,
+        Op::Vaaddu | Op::Vaadd | Op::Vasubu | Op::Vasub => {
+            validate_same_width_integer_alu(cpu, insn, 0b010)?;
+        }
         Op::Vnsrl
         | Op::Vnsra
         | Op::Vnclipu
@@ -489,6 +549,66 @@ mod tests {
             assert_illegal(op_v(0b010111, 1, 7, 4, funct3, 2), E8_M1, 4, 0, 0);
             assert_legal(op_v(0b010111, 1, 0, 4, funct3, 2), E8_M1, 4, 0, 0);
         }
+    }
+
+    #[test]
+    fn scalar_move_forms_reserve_masked_encodings() {
+        let forms = [
+            (0b010, 2, 0, 1), // vmv.x.s x1,v2
+            (0b110, 0, 3, 2), // vmv.s.x v2,x3
+            (0b001, 2, 0, 1), // vfmv.f.s f1,v2
+            (0b101, 0, 3, 2), // vfmv.s.f v2,f3
+        ];
+        for (funct3, vs2, src, vd) in forms {
+            assert_illegal(op_v(0b010000, 0, vs2, src, funct3, vd), E32_M1, 4, 0, 0);
+            assert_legal(op_v(0b010000, 1, vs2, src, funct3, vd), E32_M1, 4, 0, 0);
+        }
+    }
+
+    #[test]
+    fn vrgatherei16_validates_exact_index_emul_and_source_aliasing() {
+        let gather = |vd, data, index| op_v(0b001110, 1, data, index, 0b000, vd);
+
+        // At SEW=8, LMUL=2, the 16-bit index operand has EMUL=4. Its
+        // register group must start at a multiple of four and remain in v0-v31.
+        assert_illegal(gather(0, 2, 6), 0x01, 4, 0, 0);
+        assert_legal(gather(0, 2, 8), 0x01, 4, 0, 0);
+        assert_legal(gather(0, 8, 28), 0x01, 4, 0, 0);
+        assert_illegal(gather(0, 8, 30), 0x01, 4, 0, 0);
+
+        // A source register cannot be read through both the 8-bit data group
+        // and the 16-bit index group. At SEW=16 their EEWs match, so an exact
+        // group alias remains legal.
+        assert_illegal(gather(0, 2, 2), E8_M1, 4, 0, 0);
+        assert_legal(gather(0, 2, 2), 0x09, 4, 0, 0); // e16,m2
+    }
+
+    #[test]
+    fn averaging_integer_groups_must_be_aligned() {
+        for funct6 in [0b001000, 0b001001, 0b001010, 0b001011] {
+            let form = |vd, vs2, src, funct3| op_v(funct6, 1, vs2, src, funct3, vd);
+
+            assert_illegal(form(1, 2, 4, 0b010), E32_M2, 2, 0, 0);
+            assert_illegal(form(0, 3, 4, 0b010), E32_M2, 2, 0, 0);
+            assert_illegal(form(0, 2, 5, 0b010), E32_M2, 2, 0, 0);
+            assert_legal(form(0, 2, 4, 0b010), E32_M2, 2, 0, 0);
+
+            // The vx form's rs1 field names a scalar integer register.
+            assert_legal(form(0, 2, 5, 0b110), E32_M2, 2, 0, 0);
+        }
+    }
+
+    #[test]
+    fn viota_enforces_nonrestartable_and_operand_overlap_rules() {
+        let iota = |vm, vd, source| op_v(0b010100, vm, source, 0b10000, 0b010, vd);
+
+        assert_illegal(iota(0, 0, 2), E8_M1, 4, 0, 0);
+        assert_illegal(iota(1, 2, 2), E8_M1, 4, 0, 0);
+        // Under LMUL=2, vd=v2 occupies v2-v3 and therefore overlaps source v3.
+        assert_illegal(iota(1, 2, 3), E32_M2, 4, 0, 0);
+        assert_illegal(iota(1, 2, 4), E8_M1, 4, 1, 0);
+        assert_legal(iota(0, 2, 4), E8_M1, 4, 0, 0);
+        assert_legal(iota(1, 2, 4), E8_M1, 4, 0, 0);
     }
 
     #[test]
