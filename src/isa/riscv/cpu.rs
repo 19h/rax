@@ -3429,7 +3429,12 @@ impl RiscVCpu {
             }
             Op::Viota => {
                 // vd[i] = count of active set bits in vs2 strictly before i.
-                // This prefix scan is not restartable: non-zero vstart traps.
+                // This prefix scan is not restartable: non-zero vstart traps,
+                // and a masked (vm=0) encoding must not write the v0 mask
+                // register it reads from (RVV §5.3; QEMU require_vm).
+                if !vm && vd == 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 if vstart != 0 {
                     return Err(Trap::illegal(insn.raw));
                 }
@@ -6022,6 +6027,30 @@ mod tests {
                 "funct6={funct6:06b} vs1={vs1:05b} with vstart!=0 must trap"
             );
         }
+    }
+
+    #[test]
+    fn viota_rejects_masked_vd_v0() {
+        // viota in masked form (vm=0) reads the mask from v0, so a
+        // destination of v0 is a reserved encoding (RVV §5.3; QEMU
+        // trans_viota_m -> require_vm: `vm != 0 || v != 0`).
+        // e8,m1 -> single register.  vs1 field for viota.m = 10000.
+        let mut c = cpu_e8m1();
+        // viota.m v0, v2, v0.t (vs1=10000) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b010100, 0, 2, 0b10000, 0b010, 0)),
+            RiscVExit::Trap(_)
+        ));
+        // Controls: masked viota.m v2, v2 (vd!=v0) runs; unmasked
+        // viota.v v0, v2 (vm=1) runs.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b010100, 0, 2, 0b10000, 0b010, 2)),
+            RiscVExit::Continue
+        ));
+        assert!(matches!(
+            run_one(&mut c, op_v(0b010100, 1, 2, 0b10000, 0b010, 0)),
+            RiscVExit::Continue
+        ));
     }
 
     #[test]
