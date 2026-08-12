@@ -3458,12 +3458,24 @@ impl RiscVCpu {
                 }
             }
             Op::VmvXS => {
+                // The masked (vm=0) encoding of vmv.x.s is reserved
+                // (RVV §16.2): vmv.x.s is a whole-register move that never
+                // uses the mask register, so vm must be 1.
+                if !vm {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 // x[rd] = sign-extended lane 0 of vs2 (ignores vl/vstart).
                 let eb = self.sew_bytes();
                 let v = sext_sew(self.velem(vs2, 0, eb), eb) as u64;
                 self.set_x(insn.rd, v);
             }
             Op::VfmvFS => {
+                // The masked (vm=0) encoding of vfmv.f.s is reserved
+                // (RVV §16.3): vfmv.f.s is a whole-register move that never
+                // uses the mask register, so vm must be 1.
+                if !vm {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 // f[rd] = NaN-boxed lane 0 of vs2 (ignores vl/vstart).
                 let eb = self.sew_bytes();
                 let v = self.velem(vs2, 0, eb);
