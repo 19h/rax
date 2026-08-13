@@ -5,28 +5,43 @@ use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86SsePrefix, X86X87Contro
 use crate::smir::ir::types::{ArchReg, FpRoundMode, VReg, VecElementType, VecWidth, X86Reg};
 
 /// Exact legacy packed conversion selected by opcodes 0F 2A, 0F 2C, 0F 2D,
-/// or 0F 5A without a mandatory prefix.
+/// or 0F 5A, either without a mandatory prefix or with mandatory 66.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum X86LegacyPackedFpConvertKind {
     Cvtpi2ps,
     Cvttps2pi,
     Cvtps2pi,
     Cvtps2pd,
+    Cvtpi2pd,
+    Cvttpd2pi,
+    Cvtpd2pi,
+    Cvtpd2ps,
 }
 
 impl X86LegacyPackedFpConvertKind {
     /// Whether this instruction consumes or produces MM0-MM7 and therefore
     /// must retain the lifter's precise trailing `EnterMmx` state commit.
     pub(crate) fn touches_mmx(self) -> bool {
-        self != Self::Cvtps2pd
+        !matches!(self, Self::Cvtps2pd | Self::Cvtpd2ps)
+    }
+
+    fn mandatory_prefix(self) -> X86SsePrefix {
+        match self {
+            Self::Cvtpi2ps | Self::Cvttps2pi | Self::Cvtps2pi | Self::Cvtps2pd => {
+                X86SsePrefix::None
+            }
+            Self::Cvtpi2pd | Self::Cvttpd2pi | Self::Cvtpd2pi | Self::Cvtpd2ps => {
+                X86SsePrefix::OpSize
+            }
+        }
     }
 
     fn opcode(self) -> u8 {
         match self {
-            Self::Cvtpi2ps => 0x2A,
-            Self::Cvttps2pi => 0x2C,
-            Self::Cvtps2pi => 0x2D,
-            Self::Cvtps2pd => 0x5A,
+            Self::Cvtpi2ps | Self::Cvtpi2pd => 0x2A,
+            Self::Cvttps2pi | Self::Cvttpd2pi => 0x2C,
+            Self::Cvtps2pi | Self::Cvtpd2pi => 0x2D,
+            Self::Cvtps2pd | Self::Cvtpd2ps => 0x5A,
         }
     }
 }
@@ -48,11 +63,11 @@ fn mm(index: u8) -> VReg {
     VReg::Arch(ArchReg::X86(X86Reg::Mm(index)))
 }
 
-fn exact_sse_hint(op: &SmirOp, opcode: u8) -> bool {
+fn exact_sse_hint(op: &SmirOp, kind: X86LegacyPackedFpConvertKind) -> bool {
     op.x86_hint
         == Some(X86OpHint::SseOp {
-            prefix: X86SsePrefix::None,
-            opcode,
+            prefix: kind.mandatory_prefix(),
+            opcode: kind.opcode(),
         })
 }
 
@@ -65,7 +80,7 @@ pub(crate) fn x86_legacy_packed_fp_convert_shape_matches(
     replay: X86LegacyPackedFpConvertReplay,
 ) -> bool {
     let expected_len = if replay.kind.touches_mmx() { 2 } else { 1 };
-    if ops.len() != expected_len || !exact_sse_hint(&ops[0], replay.kind.opcode()) {
+    if ops.len() != expected_len || !exact_sse_hint(&ops[0], replay.kind) {
         return false;
     }
 
@@ -135,6 +150,71 @@ pub(crate) fn x86_legacy_packed_fp_convert_shape_matches(
                 report_fp16_denormal: false,
             } if *dst == xmm(replay.destination) && *src == xmm(replay.source)
         ),
+        X86LegacyPackedFpConvertKind::Cvtpi2pd => matches!(
+            &ops[0].kind,
+            OpKind::X86PackedIntToFp {
+                dst,
+                src,
+                mask: None,
+                int_elem: VecElementType::I32,
+                fp_elem: VecElementType::F64,
+                signed: true,
+                lanes: 2,
+                src_width: VecWidth::V64,
+                dst_width: VecWidth::V128,
+                mask_zeroing: false,
+                zero_upper: false,
+                round: FpRoundMode::Dynamic,
+                suppress_exceptions: false,
+            } if *dst == xmm(replay.destination) && *src == mm(replay.source)
+        ),
+        X86LegacyPackedFpConvertKind::Cvttpd2pi | X86LegacyPackedFpConvertKind::Cvtpd2pi => {
+            let truncate = replay.kind == X86LegacyPackedFpConvertKind::Cvttpd2pi;
+            let round = if truncate {
+                FpRoundMode::RoundTowardZero
+            } else {
+                FpRoundMode::Dynamic
+            };
+            matches!(
+                &ops[0].kind,
+                OpKind::X86PackedFpToInt {
+                    dst,
+                    src,
+                    mask: None,
+                    fp_elem: VecElementType::F64,
+                    int_elem: VecElementType::I32,
+                    signed: true,
+                    truncate: actual_truncate,
+                    lanes: 2,
+                    src_width: VecWidth::V128,
+                    dst_width: VecWidth::V64,
+                    mask_zeroing: false,
+                    zero_upper: false,
+                    round: actual_round,
+                    suppress_exceptions: false,
+                } if *dst == mm(replay.destination)
+                    && *src == xmm(replay.source)
+                    && *actual_truncate == truncate
+                    && *actual_round == round
+            )
+        }
+        X86LegacyPackedFpConvertKind::Cvtpd2ps => matches!(
+            &ops[0].kind,
+            OpKind::X86PackedFpConvert {
+                dst,
+                src,
+                mask: None,
+                from: VecElementType::F64,
+                to: VecElementType::F32,
+                lanes: 2,
+                dst_width: VecWidth::V128,
+                mask_zeroing: false,
+                zero_upper: false,
+                round: FpRoundMode::Dynamic,
+                suppress_exceptions: false,
+                report_fp16_denormal: false,
+            } if *dst == xmm(replay.destination) && *src == xmm(replay.source)
+        ),
     };
     operation_matches
         && (!replay.kind.touches_mmx()
@@ -149,23 +229,33 @@ pub(crate) fn x86_legacy_packed_fp_convert_shape_matches(
 
 impl X86InstructionBytes {
     /// Decode one exact canonical register-only legacy packed conversion.
-    /// Only an optional final REX prefix is accepted. REX.R extends an XMM
-    /// ModR/M.reg operand, REX.B extends an XMM ModR/M.r/m operand, and every
-    /// extension bit naming an MMX operand is ignored. REX.W/X are ignored.
-    /// Mandatory, segment/address-size, repeat/lock, REX2, VEX/EVEX, memory,
-    /// truncated, and trailing-byte forms fail closed.
+    /// The no-prefix quartet accepts only an optional final REX; the SSE2
+    /// quartet requires 66 followed by an optional final REX. REX.R extends
+    /// an XMM ModR/M.reg operand, REX.B extends an XMM ModR/M.r/m operand, and
+    /// every extension bit naming an MMX operand is ignored. REX.W/X are
+    /// ignored. Segment/address-size, repeat/lock, non-final or duplicate REX,
+    /// REX2, VEX/EVEX, memory, truncated, and trailing-byte forms fail closed.
     pub(crate) fn legacy_register_packed_fp_convert_replay(
         &self,
     ) -> Option<X86LegacyPackedFpConvertReplay> {
-        let (rex, tail) = match self.as_slice() {
-            [rex @ 0x40..=0x4F, tail @ ..] => (Some(*rex), tail),
-            tail => (None, tail),
+        let (prefix, rex, tail) = match self.as_slice() {
+            [0x66, rex @ 0x40..=0x4F, tail @ ..] => (X86SsePrefix::OpSize, Some(*rex), tail),
+            [0x66, tail @ ..] => (X86SsePrefix::OpSize, None, tail),
+            [rex @ 0x40..=0x4F, tail @ ..] => (X86SsePrefix::None, Some(*rex), tail),
+            tail => (X86SsePrefix::None, None, tail),
         };
-        let (kind, modrm) = match tail {
-            [0x0F, 0x2A, modrm] => (X86LegacyPackedFpConvertKind::Cvtpi2ps, *modrm),
-            [0x0F, 0x2C, modrm] => (X86LegacyPackedFpConvertKind::Cvttps2pi, *modrm),
-            [0x0F, 0x2D, modrm] => (X86LegacyPackedFpConvertKind::Cvtps2pi, *modrm),
-            [0x0F, 0x5A, modrm] => (X86LegacyPackedFpConvertKind::Cvtps2pd, *modrm),
+        let [0x0F, opcode, modrm] = tail else {
+            return None;
+        };
+        let kind = match (prefix, *opcode) {
+            (X86SsePrefix::None, 0x2A) => X86LegacyPackedFpConvertKind::Cvtpi2ps,
+            (X86SsePrefix::None, 0x2C) => X86LegacyPackedFpConvertKind::Cvttps2pi,
+            (X86SsePrefix::None, 0x2D) => X86LegacyPackedFpConvertKind::Cvtps2pi,
+            (X86SsePrefix::None, 0x5A) => X86LegacyPackedFpConvertKind::Cvtps2pd,
+            (X86SsePrefix::OpSize, 0x2A) => X86LegacyPackedFpConvertKind::Cvtpi2pd,
+            (X86SsePrefix::OpSize, 0x2C) => X86LegacyPackedFpConvertKind::Cvttpd2pi,
+            (X86SsePrefix::OpSize, 0x2D) => X86LegacyPackedFpConvertKind::Cvtpd2pi,
+            (X86SsePrefix::OpSize, 0x5A) => X86LegacyPackedFpConvertKind::Cvtpd2ps,
             _ => return None,
         };
         if modrm >> 6 != 3 {
@@ -178,11 +268,16 @@ impl X86InstructionBytes {
         let rex_r = (rex & 0x04) << 1;
         let rex_b = (rex & 0x01) << 3;
         let (destination, source) = match kind {
-            X86LegacyPackedFpConvertKind::Cvtpi2ps => (reg | rex_r, rm),
-            X86LegacyPackedFpConvertKind::Cvttps2pi | X86LegacyPackedFpConvertKind::Cvtps2pi => {
-                (reg, rm | rex_b)
+            X86LegacyPackedFpConvertKind::Cvtpi2ps | X86LegacyPackedFpConvertKind::Cvtpi2pd => {
+                (reg | rex_r, rm)
             }
-            X86LegacyPackedFpConvertKind::Cvtps2pd => (reg | rex_r, rm | rex_b),
+            X86LegacyPackedFpConvertKind::Cvttps2pi
+            | X86LegacyPackedFpConvertKind::Cvtps2pi
+            | X86LegacyPackedFpConvertKind::Cvttpd2pi
+            | X86LegacyPackedFpConvertKind::Cvtpd2pi => (reg, rm | rex_b),
+            X86LegacyPackedFpConvertKind::Cvtps2pd | X86LegacyPackedFpConvertKind::Cvtpd2ps => {
+                (reg | rex_r, rm | rex_b)
+            }
         };
         Some(X86LegacyPackedFpConvertReplay {
             kind,

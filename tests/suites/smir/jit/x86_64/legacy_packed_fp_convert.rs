@@ -9,38 +9,54 @@ enum Kind {
     Cvttps2pi,
     Cvtps2pi,
     Cvtps2pd,
+    Cvtpi2pd,
+    Cvttpd2pi,
+    Cvtpd2pi,
+    Cvtpd2ps,
 }
 
 impl Kind {
-    const ALL: [Self; 4] = [
+    const FP32: [Self; 4] = [
         Self::Cvtpi2ps,
         Self::Cvttps2pi,
         Self::Cvtps2pi,
         Self::Cvtps2pd,
     ];
 
+    const FP64: [Self; 4] = [
+        Self::Cvtpi2pd,
+        Self::Cvttpd2pi,
+        Self::Cvtpd2pi,
+        Self::Cvtpd2ps,
+    ];
+
     fn opcode(self) -> u8 {
         match self {
-            Self::Cvtpi2ps => 0x2A,
-            Self::Cvttps2pi => 0x2C,
-            Self::Cvtps2pi => 0x2D,
-            Self::Cvtps2pd => 0x5A,
+            Self::Cvtpi2ps | Self::Cvtpi2pd => 0x2A,
+            Self::Cvttps2pi | Self::Cvttpd2pi => 0x2C,
+            Self::Cvtps2pi | Self::Cvtpd2pi => 0x2D,
+            Self::Cvtps2pd | Self::Cvtpd2ps => 0x5A,
         }
     }
 }
 
-const PREFIXES: [&[u8]; 5] = [&[], &[0x48], &[0x44], &[0x41], &[0x4D]];
+const FP32_PREFIXES: [&[u8]; 5] = [&[], &[0x48], &[0x44], &[0x41], &[0x4D]];
+const FP64_PREFIXES: [&[u8]; 2] = [&[0x66], &[0x66, 0x48]];
 
 fn rex(prefix: &[u8]) -> u8 {
-    prefix.first().copied().unwrap_or(0)
+    prefix
+        .iter()
+        .copied()
+        .find(|byte| (0x40..=0x4F).contains(byte))
+        .unwrap_or(0)
 }
 
 fn destination(kind: Kind, prefix: &[u8], modrm: u8) -> usize {
     let reg = (modrm >> 3) & 7;
     let rex_r = (rex(prefix) & 0x04) << 1;
     usize::from(match kind {
-        Kind::Cvtpi2ps | Kind::Cvtps2pd => reg | rex_r,
-        Kind::Cvttps2pi | Kind::Cvtps2pi => reg,
+        Kind::Cvtpi2ps | Kind::Cvtps2pd | Kind::Cvtpi2pd | Kind::Cvtpd2ps => reg | rex_r,
+        Kind::Cvttps2pi | Kind::Cvtps2pi | Kind::Cvttpd2pi | Kind::Cvtpd2pi => reg,
     })
 }
 
@@ -48,8 +64,13 @@ fn source(kind: Kind, prefix: &[u8], modrm: u8) -> usize {
     let rm = modrm & 7;
     let rex_b = (rex(prefix) & 0x01) << 3;
     usize::from(match kind {
-        Kind::Cvtpi2ps => rm,
-        Kind::Cvttps2pi | Kind::Cvtps2pi | Kind::Cvtps2pd => rm | rex_b,
+        Kind::Cvtpi2ps | Kind::Cvtpi2pd => rm,
+        Kind::Cvttps2pi
+        | Kind::Cvtps2pi
+        | Kind::Cvtps2pd
+        | Kind::Cvttpd2pi
+        | Kind::Cvtpd2pi
+        | Kind::Cvtpd2ps => rm | rex_b,
     })
 }
 
@@ -74,6 +95,28 @@ fn apply(xmm: &mut [[u64; 2]; 16], mm: &mut [u64; 8], kind: Kind, prefix: &[u8],
             xmm[destination] = [
                 f64::from(f32::from_bits(input as u32)).to_bits(),
                 f64::from(f32::from_bits((input >> 32) as u32)).to_bits(),
+            ];
+        }
+        Kind::Cvtpi2pd => {
+            let input = mm[source];
+            xmm[destination] = [
+                (input as u32 as i32 as f64).to_bits(),
+                ((input >> 32) as u32 as i32 as f64).to_bits(),
+            ];
+        }
+        Kind::Cvttpd2pi | Kind::Cvtpd2pi => {
+            let input = xmm[source];
+            let low = f64::from_bits(input[0]) as i32 as u32;
+            let high = f64::from_bits(input[1]) as i32 as u32;
+            mm[destination] = u64::from(low) | (u64::from(high) << 32);
+        }
+        Kind::Cvtpd2ps => {
+            let input = xmm[source];
+            let low = f64::from_bits(input[0]) as f32;
+            let high = f64::from_bits(input[1]) as f32;
+            xmm[destination] = [
+                u64::from(low.to_bits()) | (u64::from(high.to_bits()) << 32),
+                0,
             ];
         }
     }
@@ -184,6 +227,17 @@ fn setup(vcpu: &mut X86_64Vcpu, profile: usize) -> Registers {
     registers
 }
 
+fn setup_f64(vcpu: &mut X86_64Vcpu, profile: usize) -> Registers {
+    let mut registers = setup(vcpu, profile);
+    for index in 0..16 {
+        let low = (index as i32 * 5) - 31 + (profile % 3) as i32;
+        let high = 47 - index as i32 * 7 - (profile % 5) as i32;
+        registers.xmm[index] = [(low as f64).to_bits(), (high as f64).to_bits()];
+    }
+    vcpu.set_regs(&registers).unwrap();
+    registers
+}
+
 fn assert_full_state(actual: &Registers, expected: &Registers, label: &str) {
     assert_eq!(gprs(actual), gprs(expected), "{label}: GPR state");
     assert_eq!(actual.xmm, expected.xmm, "{label}: XMM");
@@ -196,18 +250,14 @@ fn assert_full_state(actual: &Registers, expected: &Registers, label: &str) {
     assert_eq!(actual.rip, expected.rip, "{label}: RIP");
 }
 
-/// The independent scanner reports five canonical prefix images for each
-/// no-mandatory-prefix opcode: no REX plus representative `REX.W`, `REX.R`,
-/// `REX.B`, and `REX.WRB`. Every image has 64 register ModR/M cells.
-///
-/// Total: 4 opcodes × 5 prefix images × 64 register cells = 1,280 cells.
-#[test]
-fn jit_all_1280_scanner_legacy_packed_fp_convert_gaps_match_direct_and_ieee_equations() {
-    assert!(std::is_x86_feature_detected!("avx"));
-
+fn verify_scanner_cells(
+    kinds: &[Kind],
+    prefixes: &[&[u8]],
+    setup_case: fn(&mut X86_64Vcpu, usize) -> Registers,
+) -> usize {
     let mut cases = 0usize;
-    for (kind_index, kind) in Kind::ALL.into_iter().enumerate() {
-        for (prefix_index, prefix) in PREFIXES.into_iter().enumerate() {
+    for (kind_index, kind) in kinds.iter().copied().enumerate() {
+        for (prefix_index, prefix) in prefixes.iter().copied().enumerate() {
             let mut code = Vec::new();
             for modrm in 0xC0..=0xFF {
                 code.extend_from_slice(prefix);
@@ -215,11 +265,11 @@ fn jit_all_1280_scanner_legacy_packed_fp_convert_gaps_match_direct_and_ieee_equa
                 cases += 1;
             }
             code.push(0xF4);
-            let profile = kind_index * PREFIXES.len() + prefix_index;
+            let profile = kind_index * prefixes.len() + prefix_index;
             let label = format!("{kind:?} {prefix:02X?}");
 
             let mut direct = make_vcpu_code(&code);
-            let initial = setup(&mut direct, profile);
+            let initial = setup_case(&mut direct, profile);
             let mut manual_xmm = initial.xmm;
             let mut manual_mm = initial.mm;
             for modrm in 0xC0..=0xFF {
@@ -237,7 +287,7 @@ fn jit_all_1280_scanner_legacy_packed_fp_convert_gaps_match_direct_and_ieee_equa
             assert_eq!(expected.rflags, initial.rflags, "{label}: flags");
 
             let mut jit = make_vcpu_code(&code);
-            setup(&mut jit, profile);
+            setup_case(&mut jit, profile);
             jit.set_jit_call(false);
             jit.set_jit_mem(false);
             assert!(
@@ -255,5 +305,32 @@ fn jit_all_1280_scanner_legacy_packed_fp_convert_gaps_match_direct_and_ieee_equa
             assert_full_state(&jit.get_regs().unwrap(), &expected, &label);
         }
     }
-    assert_eq!(cases, 4 * 5 * 64);
+    cases
+}
+
+/// The independent scanner reports five canonical prefix images for each
+/// no-mandatory-prefix opcode: no REX plus representative `REX.W`, `REX.R`,
+/// `REX.B`, and `REX.WRB`. Every image has 64 register ModR/M cells.
+///
+/// Total: 4 opcodes × 5 prefix images × 64 register cells = 1,280 cells.
+#[test]
+fn jit_all_1280_scanner_legacy_packed_fp_convert_gaps_match_direct_and_ieee_equations() {
+    assert!(std::is_x86_feature_detected!("avx"));
+    assert_eq!(
+        verify_scanner_cells(&Kind::FP32, &FP32_PREFIXES, setup),
+        4 * 5 * 64
+    );
+}
+
+/// The independent scanner reports mandatory 66 and mandatory 66 plus REX.W
+/// for each packed-double opcode. Each image has 64 register ModR/M cells.
+///
+/// Total: 4 opcodes × 2 prefix images × 64 register cells = 512 cells.
+#[test]
+fn jit_all_512_scanner_legacy_packed_f64_convert_gaps_match_direct_and_ieee_equations() {
+    assert!(std::is_x86_feature_detected!("avx"));
+    assert_eq!(
+        verify_scanner_cells(&Kind::FP64, &FP64_PREFIXES, setup_f64),
+        4 * 2 * 64
+    );
 }

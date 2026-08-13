@@ -1,5 +1,9 @@
 //! Native replay coverage for register-only legacy MMX/SSE packed floating-
 //! point conversions.
+//! Architectural equations, destination preservation, rounding, and SIMD
+//! exceptions follow Intel SDM Order No. 325383-092US (June 2026), Vol. 2A,
+//! `CVTPD2PI` through `CVTPS2PI` (pp. 3-217--3-231) and `CVTTPD2PI` through
+//! `CVTTPS2PI` (pp. 3-247--3-252).
 
 use super::*;
 use crate::smir::ir::types::{FunctionId, SourceArch};
@@ -24,33 +28,99 @@ enum Kind {
     Cvttps2pi,
     Cvtps2pi,
     Cvtps2pd,
+    Cvtpi2pd,
+    Cvttpd2pi,
+    Cvtpd2pi,
+    Cvtpd2ps,
 }
 
 impl Kind {
-    const ALL: [Self; 4] = [
+    const ALL: [Self; 8] = [
         Self::Cvtpi2ps,
         Self::Cvttps2pi,
         Self::Cvtps2pi,
         Self::Cvtps2pd,
+        Self::Cvtpi2pd,
+        Self::Cvttpd2pi,
+        Self::Cvtpd2pi,
+        Self::Cvtpd2ps,
     ];
 
     fn opcode(self) -> u8 {
         match self {
-            Self::Cvtpi2ps => 0x2A,
-            Self::Cvttps2pi => 0x2C,
-            Self::Cvtps2pi => 0x2D,
-            Self::Cvtps2pd => 0x5A,
+            Self::Cvtpi2ps | Self::Cvtpi2pd => 0x2A,
+            Self::Cvttps2pi | Self::Cvttpd2pi => 0x2C,
+            Self::Cvtps2pi | Self::Cvtpd2pi => 0x2D,
+            Self::Cvtps2pd | Self::Cvtpd2ps => 0x5A,
         }
     }
 
+    fn has_operand_size_prefix(self) -> bool {
+        matches!(
+            self,
+            Self::Cvtpi2pd | Self::Cvttpd2pi | Self::Cvtpd2pi | Self::Cvtpd2ps
+        )
+    }
+
+    fn has_integer_source(self) -> bool {
+        matches!(self, Self::Cvtpi2ps | Self::Cvtpi2pd)
+    }
+
+    fn has_f64_source(self) -> bool {
+        matches!(self, Self::Cvttpd2pi | Self::Cvtpd2pi | Self::Cvtpd2ps)
+    }
+
+    fn has_f32_source(self) -> bool {
+        matches!(self, Self::Cvttps2pi | Self::Cvtps2pi | Self::Cvtps2pd)
+    }
+
     fn touches_mmx(self) -> bool {
-        self != Self::Cvtps2pd
+        !matches!(self, Self::Cvtps2pd | Self::Cvtpd2ps)
+    }
+
+    fn destination_uses_xmm(self) -> bool {
+        matches!(
+            self,
+            Self::Cvtpi2ps | Self::Cvtps2pd | Self::Cvtpi2pd | Self::Cvtpd2ps
+        )
+    }
+
+    fn source_uses_xmm(self) -> bool {
+        !matches!(self, Self::Cvtpi2ps | Self::Cvtpi2pd)
+    }
+
+    fn assert_source_classification(self) {
+        let classes = usize::from(self.has_integer_source())
+            + usize::from(self.has_f32_source())
+            + usize::from(self.has_f64_source());
+        assert_eq!(classes, 1, "{self:?}");
+    }
+
+    fn expected_destination(self, rex: u8, modrm: u8) -> usize {
+        let reg = (modrm >> 3) & 7;
+        usize::from(if self.destination_uses_xmm() {
+            reg | ((rex & 0x04) << 1)
+        } else {
+            reg
+        })
+    }
+
+    fn expected_source(self, rex: u8, modrm: u8) -> usize {
+        let rm = modrm & 7;
+        usize::from(if self.source_uses_xmm() {
+            rm | ((rex & 0x01) << 3)
+        } else {
+            rm
+        })
     }
 }
 
 fn encoding(kind: Kind, rex: Option<u8>, modrm: u8) -> Vec<u8> {
     assert!(rex.is_none_or(|byte| (0x40..=0x4F).contains(&byte)));
     let mut bytes = Vec::new();
+    if kind.has_operand_size_prefix() {
+        bytes.push(0x66);
+    }
     bytes.extend(rex);
     bytes.extend([0x0F, kind.opcode(), modrm]);
     bytes
@@ -145,7 +215,7 @@ fn feature_requirements_select_vector_mxcsr_and_independent_mmx_state() {
 }
 
 #[test]
-fn all_13056_o0_o1_o2_rex_register_graphs_admit_and_emit_exact_source_bytes() {
+fn all_26112_o0_o1_o2_rex_register_graphs_admit_and_emit_exact_source_bytes() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -203,8 +273,11 @@ fn admission_fails_closed_for_missing_mismatched_memory_and_reserved_provenance(
         assert!(!is_native_clobber_safe(&missing), "{kind:?} missing");
 
         let mismatch = encoding(Kind::ALL[(index + 1) % Kind::ALL.len()], Some(0x45), 0xCA);
+        let opposite_precision =
+            encoding(Kind::ALL[(index + 4) % Kind::ALL.len()], Some(0x45), 0xCA);
         for metadata in [
             mismatch,
+            opposite_precision,
             encoding(kind, Some(0x45), 0xD2),
             encoding(kind, Some(0x45), 0xC9),
             encoding(kind, Some(0x45), 0x0A),
@@ -238,20 +311,12 @@ struct ConvertCase {
 impl ConvertCase {
     fn destination(self) -> usize {
         let rex = self.rex.unwrap_or(0);
-        let reg = (self.modrm >> 3) & 7;
-        usize::from(match self.kind {
-            Kind::Cvtpi2ps | Kind::Cvtps2pd => reg | ((rex & 0x04) << 1),
-            Kind::Cvttps2pi | Kind::Cvtps2pi => reg,
-        })
+        self.kind.expected_destination(rex, self.modrm)
     }
 
     fn source(self) -> usize {
         let rex = self.rex.unwrap_or(0);
-        let rm = self.modrm & 7;
-        usize::from(match self.kind {
-            Kind::Cvtpi2ps => rm,
-            Kind::Cvttps2pi | Kind::Cvtps2pi | Kind::Cvtps2pd => rm | ((rex & 0x01) << 3),
-        })
+        self.kind.expected_source(rex, self.modrm)
     }
 
     fn bytes(self) -> Vec<u8> {
@@ -278,6 +343,41 @@ fn cases() -> Vec<ConvertCase> {
         }
     }
     cases
+}
+
+#[test]
+fn semantic_matrix_covers_every_input_rex_operand_and_mxcsr_mode_per_kind() {
+    let cases = cases();
+    for kind in Kind::ALL {
+        let mut input_pairs = std::collections::BTreeSet::new();
+        let mut rexes = std::collections::BTreeSet::new();
+        let mut operands = std::collections::BTreeSet::new();
+        let mut mxcsr_modes = std::collections::BTreeSet::new();
+        let mut prior_statuses = std::collections::BTreeSet::new();
+        let pair_count = if kind.has_integer_source() {
+            INTEGER_PAIRS.len()
+        } else if kind.has_f32_source() {
+            F32_PAIRS.len()
+        } else {
+            F64_PAIRS.len()
+        };
+        for case in cases.iter().copied().filter(|case| case.kind == kind) {
+            input_pairs.insert((case.source() + case.profile) % pair_count);
+            rexes.insert(case.rex);
+            operands.insert(case.modrm);
+            mxcsr_modes.insert((
+                case.profile & 3,
+                case.profile >> 2 & 1,
+                case.profile >> 3 & 1,
+            ));
+            prior_statuses.insert(case.profile >> 4 & 3);
+        }
+        assert_eq!(input_pairs.len(), pair_count, "{kind:?}: input corpus");
+        assert_eq!(rexes.len(), 17, "{kind:?}: REX images");
+        assert_eq!(operands.len(), 3, "{kind:?}: operand relations");
+        assert_eq!(mxcsr_modes.len(), 16, "{kind:?}: RC/DAZ/FTZ modes");
+        assert_eq!(prior_statuses.len(), 4, "{kind:?}: prior status profiles");
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -316,7 +416,27 @@ const F32_PAIRS: [(u32, u32); 10] = [
     (0x3F80_0000, 0xC040_0000), // +1, -3
 ];
 
+const F64_PAIRS: [(u64, u64); 16] = [
+    (0x3FF8_0000_0000_0000, 0xBFF8_0000_0000_0000), // +1.5, -1.5
+    (0x4004_0000_0000_0000, 0xC004_0000_0000_0000), // +2.5, -2.5
+    (0x0000_0000_0000_0000, 0x8000_0000_0000_0000), // +0, -0
+    (0x41DF_FFFF_FFC0_0000, 0xC1E0_0000_0000_0000), // 2^31-1, -2^31
+    (0x41E0_0000_0000_0000, 0xC1E0_0000_0020_0000), // integer overflow
+    (0x7FF0_0000_0000_0000, 0xFFF0_0000_0000_0000), // infinities
+    (0x7FF8_2468_ACE0_0000, 0xFFF8_2468_ACE0_0000), // quiet NaNs
+    (0x7FF0_2468_ACE0_0000, 0xFFF0_2468_ACE0_0000), // signaling NaNs
+    (0x0000_0000_0000_0001, 0x8000_0000_0000_0001), // minimum F64 subnormals
+    (0x3FF0_0000_0000_0000, 0xC008_0000_0000_0000), // +1, -3
+    (0x3FF0_0000_1000_0000, 0xBFF0_0000_1000_0000), // F32 half-way ties
+    (0x3810_0000_0000_0000, 0xB810_0000_0000_0000), // minimum normal F32
+    (0x36A0_0000_0000_0000, 0xB6A0_0000_0000_0000), // minimum subnormal F32
+    (0x3690_0000_0000_0000, 0xB690_0000_0000_0000), // half minimum F32 subnormal
+    (0x47EF_FFFF_E000_0000, 0xC7EF_FFFF_E000_0000), // maximum finite F32
+    (0x7FEF_FFFF_FFFF_FFFF, 0xFFEF_FFFF_FFFF_FFFF), // maximum finite F64
+];
+
 fn initial_state(case: ConvertCase, ordinal: usize) -> ConvertState {
+    case.kind.assert_source_classification();
     let mut vectors = std::array::from_fn(|register| {
         std::array::from_fn(|word| {
             0x0123_4567_89AB_CDEFu64.rotate_left((register * 9 + word * 13) as u32)
@@ -329,15 +449,21 @@ fn initial_state(case: ConvertCase, ordinal: usize) -> ConvertState {
         0x8000_0001_FFFF_FFFFu64.rotate_left((register * 7 + case.profile * 11) as u32)
             ^ (ordinal as u64).wrapping_mul(0x0102_0408_1020_4081)
     });
-    if case.kind == Kind::Cvtpi2ps {
+    if case.kind.has_integer_source() {
         for (register, value) in mm.iter_mut().enumerate() {
             let (low, high) = INTEGER_PAIRS[(register + case.profile) % INTEGER_PAIRS.len()];
             *value = u64::from(low as u32) | (u64::from(high as u32) << 32);
         }
-    } else {
+    } else if case.kind.has_f32_source() {
         for (register, value) in vectors.iter_mut().enumerate() {
             let (low, high) = F32_PAIRS[(register + case.profile) % F32_PAIRS.len()];
             value[0] = u64::from(low) | (u64::from(high) << 32);
+        }
+    } else {
+        for (register, value) in vectors.iter_mut().enumerate() {
+            let (low, high) = F64_PAIRS[(register + case.profile) % F64_PAIRS.len()];
+            value[0] = low;
+            value[1] = high;
         }
     }
     let rc = (case.profile & 3) as u32;
@@ -415,6 +541,36 @@ fn oracle_f32_to_i32(raw: u32, truncate: bool, mxcsr: u32) -> (u32, u32) {
     (rounded as i32 as u32, status)
 }
 
+fn oracle_f64_to_i32(raw: u64, truncate: bool, mxcsr: u32) -> (u32, u32) {
+    let sign = raw & 0x8000_0000_0000_0000;
+    let exponent = raw >> 52 & 0x7FF;
+    let fraction = raw & 0x000F_FFFF_FFFF_FFFF;
+    let denormal = exponent == 0 && fraction != 0;
+    let adjusted = if denormal && mxcsr & (1 << 6) != 0 {
+        sign
+    } else {
+        raw
+    };
+    let value = f64::from_bits(adjusted);
+    let rc = (mxcsr >> 13) & 3;
+    let rounded = if truncate {
+        value.trunc()
+    } else {
+        match rc {
+            0 => value.round_ties_even(),
+            1 => value.floor(),
+            2 => value.ceil(),
+            3 => value.trunc(),
+            _ => unreachable!(),
+        }
+    };
+    if !value.is_finite() || rounded < f64::from(i32::MIN) || rounded > f64::from(i32::MAX) {
+        return (0x8000_0000, 1);
+    }
+    let status = if rounded != value { 1 << 5 } else { 0 };
+    (rounded as i32 as u32, status)
+}
+
 fn oracle_f32_to_f64(raw: u32, mxcsr: u32) -> (u64, u32) {
     let sign32 = raw & 0x8000_0000;
     let exponent = raw >> 23 & 0xFF;
@@ -435,6 +591,119 @@ fn oracle_f32_to_f64(raw: u32, mxcsr: u32) -> (u64, u32) {
         f64::from(f32::from_bits(raw)).to_bits(),
         if denormal { 1 << 1 } else { 0 },
     )
+}
+
+fn oracle_next_up_f32(value: f32) -> f32 {
+    if value == f32::INFINITY {
+        return value;
+    }
+    if value == 0.0 {
+        return f32::from_bits(1);
+    }
+    let bits = value.to_bits();
+    f32::from_bits(if value.is_sign_negative() {
+        bits - 1
+    } else {
+        bits + 1
+    })
+}
+
+fn oracle_next_down_f32(value: f32) -> f32 {
+    if value == f32::NEG_INFINITY {
+        return value;
+    }
+    if value == 0.0 {
+        return f32::from_bits(0x8000_0001);
+    }
+    let bits = value.to_bits();
+    f32::from_bits(if value.is_sign_negative() {
+        bits + 1
+    } else {
+        bits - 1
+    })
+}
+
+/// Exact binary64-to-binary32 oracle derived from the IEEE 754 encoding and
+/// Intel MXCSR rules. Rust supplies only the round-to-nearest-even anchor;
+/// adjacent representable binary32 values select the three directed modes.
+fn oracle_f64_to_f32(raw: u64, mxcsr: u32) -> (u32, u32) {
+    const INVALID: u32 = 1 << 0;
+    const DENORMAL: u32 = 1 << 1;
+    const OVERFLOW: u32 = 1 << 3;
+    const UNDERFLOW: u32 = 1 << 4;
+    const PRECISION: u32 = 1 << 5;
+
+    let sign = ((raw >> 32) as u32) & 0x8000_0000;
+    let exponent = ((raw >> 52) & 0x7FF) as i32;
+    let fraction = raw & 0x000F_FFFF_FFFF_FFFF;
+    let denormal = exponent == 0 && fraction != 0;
+    if denormal && mxcsr & (1 << 6) != 0 {
+        return (sign, 0);
+    }
+    let mut status = if denormal { DENORMAL } else { 0 };
+
+    if exponent == 0x7FF {
+        if fraction == 0 {
+            return (sign | 0x7F80_0000, status);
+        }
+        let signaling = fraction & (1 << 51) == 0;
+        let payload = ((fraction >> 29) as u32) & 0x007F_FFFF;
+        return (
+            sign | 0x7F80_0000 | payload | 0x0040_0000,
+            status | if signaling { INVALID } else { 0 },
+        );
+    }
+    if exponent == 0 && fraction == 0 {
+        return (sign, status);
+    }
+
+    let value = f64::from_bits(raw);
+    let nearest = value as f32;
+    let exact = nearest.is_finite() && f64::from(nearest) == value;
+    let (lower, upper) = if exact {
+        (nearest, nearest)
+    } else if nearest == f32::INFINITY {
+        (f32::MAX, f32::INFINITY)
+    } else if nearest == f32::NEG_INFINITY {
+        (f32::NEG_INFINITY, -f32::MAX)
+    } else if f64::from(nearest) < value {
+        (nearest, oracle_next_up_f32(nearest))
+    } else {
+        (oracle_next_down_f32(nearest), nearest)
+    };
+    let rc = (mxcsr >> 13) & 3;
+    let rounded = match rc {
+        0 => nearest,
+        1 => lower,
+        2 => upper,
+        3 if value.is_sign_negative() => upper,
+        3 => lower,
+        _ => unreachable!(),
+    };
+    let rounded_bits = rounded.to_bits();
+    let inexact = !exact;
+    let unbiased = if exponent == 0 {
+        -1022
+    } else {
+        exponent - 1023
+    };
+    let overflow = unbiased > 127 || (unbiased == 127 && rounded.is_infinite());
+    let tiny = rounded.is_finite() && rounded_bits & 0x7FFF_FFFF < 0x0080_0000;
+
+    if overflow {
+        status |= OVERFLOW | PRECISION;
+    } else {
+        if inexact {
+            status |= PRECISION;
+        }
+        if tiny && (mxcsr & (1 << 11) == 0 || inexact) {
+            status |= UNDERFLOW;
+        }
+    }
+    if tiny && mxcsr & (1 << 15) != 0 && mxcsr & (1 << 11) != 0 {
+        return (sign, status | UNDERFLOW | PRECISION);
+    }
+    (rounded_bits, status)
 }
 
 fn architectural_expected(case: ConvertCase, initial: &ConvertState) -> ConvertState {
@@ -468,6 +737,28 @@ fn architectural_expected(case: ConvertCase, initial: &ConvertState) -> ConvertS
             let (high, high_status) = oracle_f32_to_f64((input >> 32) as u32, initial.mxcsr);
             expected.vectors[destination][0] = low;
             expected.vectors[destination][1] = high;
+            expected.mxcsr |= low_status | high_status;
+        }
+        Kind::Cvtpi2pd => {
+            let input = initial.mm[source];
+            expected.vectors[destination][0] = (input as u32 as i32 as f64).to_bits();
+            expected.vectors[destination][1] = ((input >> 32) as u32 as i32 as f64).to_bits();
+        }
+        Kind::Cvttpd2pi | Kind::Cvtpd2pi => {
+            let low_input = initial.vectors[source][0];
+            let high_input = initial.vectors[source][1];
+            let (low, low_status) =
+                oracle_f64_to_i32(low_input, case.kind == Kind::Cvttpd2pi, initial.mxcsr);
+            let (high, high_status) =
+                oracle_f64_to_i32(high_input, case.kind == Kind::Cvttpd2pi, initial.mxcsr);
+            expected.mm[destination] = u64::from(low) | (u64::from(high) << 32);
+            expected.mxcsr |= low_status | high_status;
+        }
+        Kind::Cvtpd2ps => {
+            let (low, low_status) = oracle_f64_to_f32(initial.vectors[source][0], initial.mxcsr);
+            let (high, high_status) = oracle_f64_to_f32(initial.vectors[source][1], initial.mxcsr);
+            expected.vectors[destination][0] = u64::from(low) | (u64::from(high) << 32);
+            expected.vectors[destination][1] = 0;
             expected.mxcsr |= low_status | high_status;
         }
     }

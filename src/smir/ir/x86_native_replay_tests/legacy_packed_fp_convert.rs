@@ -9,25 +9,42 @@ use crate::smir::lift::{LiftContext, SmirLifter};
 use crate::smir::optimize::OptLevel;
 
 const PC: u64 = 0xD6D0;
-const KINDS: [X86LegacyPackedFpConvertKind; 4] = [
+const KINDS: [X86LegacyPackedFpConvertKind; 8] = [
     X86LegacyPackedFpConvertKind::Cvtpi2ps,
     X86LegacyPackedFpConvertKind::Cvttps2pi,
     X86LegacyPackedFpConvertKind::Cvtps2pi,
     X86LegacyPackedFpConvertKind::Cvtps2pd,
+    X86LegacyPackedFpConvertKind::Cvtpi2pd,
+    X86LegacyPackedFpConvertKind::Cvttpd2pi,
+    X86LegacyPackedFpConvertKind::Cvtpd2pi,
+    X86LegacyPackedFpConvertKind::Cvtpd2ps,
 ];
 
 fn opcode(kind: X86LegacyPackedFpConvertKind) -> u8 {
     match kind {
-        X86LegacyPackedFpConvertKind::Cvtpi2ps => 0x2A,
-        X86LegacyPackedFpConvertKind::Cvttps2pi => 0x2C,
-        X86LegacyPackedFpConvertKind::Cvtps2pi => 0x2D,
-        X86LegacyPackedFpConvertKind::Cvtps2pd => 0x5A,
+        X86LegacyPackedFpConvertKind::Cvtpi2ps | X86LegacyPackedFpConvertKind::Cvtpi2pd => 0x2A,
+        X86LegacyPackedFpConvertKind::Cvttps2pi | X86LegacyPackedFpConvertKind::Cvttpd2pi => 0x2C,
+        X86LegacyPackedFpConvertKind::Cvtps2pi | X86LegacyPackedFpConvertKind::Cvtpd2pi => 0x2D,
+        X86LegacyPackedFpConvertKind::Cvtps2pd | X86LegacyPackedFpConvertKind::Cvtpd2ps => 0x5A,
     }
+}
+
+fn has_operand_size_prefix(kind: X86LegacyPackedFpConvertKind) -> bool {
+    matches!(
+        kind,
+        X86LegacyPackedFpConvertKind::Cvtpi2pd
+            | X86LegacyPackedFpConvertKind::Cvttpd2pi
+            | X86LegacyPackedFpConvertKind::Cvtpd2pi
+            | X86LegacyPackedFpConvertKind::Cvtpd2ps
+    )
 }
 
 fn encoding(kind: X86LegacyPackedFpConvertKind, rex: Option<u8>, modrm: u8) -> Vec<u8> {
     assert!(rex.is_none_or(|byte| (0x40..=0x4F).contains(&byte)));
     let mut bytes = Vec::new();
+    if has_operand_size_prefix(kind) {
+        bytes.push(0x66);
+    }
     bytes.extend(rex);
     bytes.extend([0x0F, opcode(kind), modrm]);
     bytes
@@ -44,11 +61,16 @@ fn expected(
     let rex_r = (rex & 0x04) << 1;
     let rex_b = (rex & 0x01) << 3;
     let (destination, source) = match kind {
-        X86LegacyPackedFpConvertKind::Cvtpi2ps => (reg | rex_r, rm),
-        X86LegacyPackedFpConvertKind::Cvttps2pi | X86LegacyPackedFpConvertKind::Cvtps2pi => {
-            (reg, rm | rex_b)
+        X86LegacyPackedFpConvertKind::Cvtpi2ps | X86LegacyPackedFpConvertKind::Cvtpi2pd => {
+            (reg | rex_r, rm)
         }
-        X86LegacyPackedFpConvertKind::Cvtps2pd => (reg | rex_r, rm | rex_b),
+        X86LegacyPackedFpConvertKind::Cvttps2pi
+        | X86LegacyPackedFpConvertKind::Cvtps2pi
+        | X86LegacyPackedFpConvertKind::Cvttpd2pi
+        | X86LegacyPackedFpConvertKind::Cvtpd2pi => (reg, rm | rex_b),
+        X86LegacyPackedFpConvertKind::Cvtps2pd | X86LegacyPackedFpConvertKind::Cvtpd2ps => {
+            (reg | rex_r, rm | rex_b)
+        }
     };
     X86LegacyPackedFpConvertReplay {
         kind,
@@ -58,7 +80,7 @@ fn expected(
 }
 
 #[test]
-fn classifier_covers_all_4352_canonical_rex_register_encodings() {
+fn classifier_covers_all_8704_canonical_rex_register_encodings() {
     let mut classified = 0usize;
     for kind in KINDS {
         for rex in [None].into_iter().chain((0x40..=0x4F).map(Some)) {
@@ -80,23 +102,30 @@ fn classifier_covers_all_4352_canonical_rex_register_encodings() {
 
 #[test]
 fn classifier_exhausts_opcode_modrm_and_canonical_prefix_frontiers() {
-    for candidate_opcode in u8::MIN..=u8::MAX {
-        for modrm in u8::MIN..=u8::MAX {
-            let bytes = [0x4F, 0x0F, candidate_opcode, modrm];
-            assert_eq!(
-                X86InstructionBytes::new(&bytes)
-                    .unwrap()
-                    .legacy_register_packed_fp_convert_replay()
-                    .is_some(),
-                matches!(candidate_opcode, 0x2A | 0x2C | 0x2D | 0x5A) && modrm >> 6 == 3,
-                "{bytes:02X?}"
-            );
+    for mandatory_prefix in [false, true] {
+        for candidate_opcode in u8::MIN..=u8::MAX {
+            for modrm in u8::MIN..=u8::MAX {
+                let mut bytes = Vec::new();
+                if mandatory_prefix {
+                    bytes.push(0x66);
+                }
+                bytes.extend([0x4F, 0x0F, candidate_opcode, modrm]);
+                assert_eq!(
+                    X86InstructionBytes::new(&bytes)
+                        .unwrap()
+                        .legacy_register_packed_fp_convert_replay()
+                        .is_some(),
+                    matches!(candidate_opcode, 0x2A | 0x2C | 0x2D | 0x5A) && modrm >> 6 == 3,
+                    "{bytes:02X?}"
+                );
+            }
         }
     }
 
-    // LLVM 23.0.0 independently decodes all 16 REX images with R extending
-    // only XMM ModR/M.reg operands, B extending only XMM ModR/M.r/m operands,
-    // and W/X plus every MMX-side extension bit ignored.
+    // LLVM 23.0.0 independently decodes all 16 REX images for all eight
+    // instructions with R extending only XMM ModR/M.reg operands, B extending
+    // only XMM ModR/M.r/m operands, and W/X plus every MMX-side extension bit
+    // ignored.
     for rex in 0x40..=0x4F {
         for kind in KINDS {
             let bytes = encoding(kind, Some(rex), 0xCA);
@@ -111,10 +140,6 @@ fn classifier_exhausts_opcode_modrm_and_canonical_prefix_frontiers() {
     }
 
     let invalid: &[&[u8]] = &[
-        &[0x66, 0x0F, 0x2A, 0xCA],             // CVTPI2PD, not CVTPI2PS
-        &[0x66, 0x0F, 0x2C, 0xCA],             // CVTTPD2PI, not CVTTPS2PI
-        &[0x66, 0x0F, 0x2D, 0xCA],             // CVTPD2PI, not CVTPS2PI
-        &[0x66, 0x0F, 0x5A, 0xCA],             // CVTPD2PS, not CVTPS2PD
         &[0xF2, 0x0F, 0x2D, 0xCA],             // scalar CVTSD2SI
         &[0xF3, 0x0F, 0x2A, 0xCA],             // scalar CVTSI2SS
         &[0xF0, 0x0F, 0x5A, 0xCA],             // lock prefix
@@ -123,10 +148,16 @@ fn classifier_exhausts_opcode_modrm_and_canonical_prefix_frontiers() {
         &[0x65, 0x0F, 0x5A, 0xCA],             // GS override
         &[0x48, 0x67, 0x0F, 0x2A, 0xCA],       // REX not final
         &[0x48, 0x49, 0x0F, 0x2A, 0xCA],       // duplicate REX
+        &[0x48, 0x66, 0x0F, 0x2A, 0xCA],       // REX before mandatory prefix
+        &[0x66, 0x48, 0x49, 0x0F, 0x2A, 0xCA], // duplicate REX after 66
+        &[0x66, 0x67, 0x0F, 0x2C, 0xCA],       // address size after 66
         &[0xD5, 0x00, 0x0F, 0x2A, 0xCA],       // REX2
         &[0x0F, 0x2A, 0x0A],                   // memory source
+        &[0x66, 0x0F, 0x5A, 0x0A],             // mandatory-66 memory source
         &[0x0F, 0x2A],                         // missing ModR/M
+        &[0x66, 0x0F, 0x2A],                   // missing ModR/M after 66
         &[0x0F, 0x5A, 0xCA, 0x00],             // trailing byte
+        &[0x66, 0x0F, 0x5A, 0xCA, 0x00],       // trailing byte after 66
         &[0xC5, 0xF8, 0x5A, 0xCA],             // VEX
         &[0x62, 0xF1, 0x7C, 0x08, 0x5A, 0xCA], // EVEX
     ];
@@ -245,8 +276,13 @@ fn graph_validator_rejects_mismatched_missing_memory_and_reserved_provenance() {
         assert_rejected(&missing, &format!("{kind:?} missing provenance"));
 
         let next_kind = KINDS[(index + 1) % KINDS.len()];
+        let opposite_precision = KINDS[(index + 4) % KINDS.len()];
         for (label, metadata) in [
             ("mismatched kind", encoding(next_kind, Some(0x45), 0xCA)),
+            (
+                "mismatched mandatory prefix",
+                encoding(opposite_precision, Some(0x45), 0xCA),
+            ),
             ("wrong destination", encoding(kind, Some(0x45), 0xD2)),
             ("wrong source", encoding(kind, Some(0x45), 0xC9)),
             ("memory provenance", encoding(kind, Some(0x45), 0x0A)),
