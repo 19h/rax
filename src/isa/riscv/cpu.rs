@@ -3023,6 +3023,23 @@ impl RiscVCpu {
             }
             Op::Vsmul => {
                 // Signed fractional multiply: (a*b) >> (SEW-1), rounded + saturated.
+                // vd, vs2 (and vs1 for the vv form) must name the
+                // lowest-numbered register of their LMUL group (RVV 3.4.2;
+                // QEMU opivv_check -> vext_check_sss / opivx_check ->
+                // vext_check_ss).  The vx form reads a scalar from rs1.
+                let emul: u8 = match self.vtype & 0x7 {
+                    1 => 2,
+                    2 => 4,
+                    3 => 8,
+                    _ => 1,
+                };
+                let is_vv = insn.funct3 == 0b000;
+                if vd % emul != 0 || vs2 % emul != 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
+                if is_vv && insn.rs1 % emul != 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
                 let bits = (eb * 8) as u32;
@@ -6074,6 +6091,47 @@ mod tests {
             RiscVExit::Continue
         ));
         assert_eq!(c.vreg(8), pat);
+    }
+
+    #[test]
+    fn vsmul_rejects_misaligned_register_groups() {
+        // vsmul.vv/vx: vd, vs2 (and vs1 for the vv form) must name the
+        // lowest-numbered register of their LMUL group (RVV 3.4.2; QEMU
+        // opivv_check -> vext_check_sss / opivx_check -> vext_check_ss).
+        // e32,m2 -> EMUL=2, so v1 is misaligned while v2/v4 are aligned.
+        // The vx form reads a scalar from rs1 and never checks rs1.
+        let mut c = cpu_e8m1();
+        c.set_vl_vtype(4, 0b010_001); // e32, m2
+        // vsmul.vv v2, v1, v2  (vs2=v1 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b100111, 1, 1, 2, 0b000, 2)),
+            RiscVExit::Trap(_)
+        ));
+        // vsmul.vv v1, v2, v2  (vd=v1 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b100111, 1, 2, 2, 0b000, 1)),
+            RiscVExit::Trap(_)
+        ));
+        // vsmul.vv v2, v2, v1  (vs1=v1 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b100111, 1, 2, 1, 0b000, 2)),
+            RiscVExit::Trap(_)
+        ));
+        // vsmul.vv v2, v2, v2  (all aligned) -> runs.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b100111, 1, 2, 2, 0b000, 2)),
+            RiscVExit::Continue
+        ));
+        // vsmul.vx v2, v1, x5  (vs2 misaligned; rs1 scalar unchecked) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b100111, 1, 1, 5, 0b100, 2)),
+            RiscVExit::Trap(_)
+        ));
+        // vsmul.vx v2, v2, x5  (aligned) -> runs.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b100111, 1, 2, 5, 0b100, 2)),
+            RiscVExit::Continue
+        ));
     }
 
     #[test]
