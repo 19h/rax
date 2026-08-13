@@ -202,7 +202,10 @@ fn memory_encoding(
 }
 
 fn stack_encoding(case: ScaleFMemoryCase, mask: u8, zeroing: bool) -> Vec<u8> {
-    let (p0, p1, p2) = evex_fields(case, mask, zeroing);
+    let (p0, p1, mut p2) = evex_fields(case, mask, zeroing);
+    if case.scalar() {
+        p2 &= !0x60;
+    }
     vec![
         0x62,
         p0,
@@ -212,6 +215,33 @@ fn stack_encoding(case: ScaleFMemoryCase, mask: u8, zeroing: bool) -> Vec<u8> {
         ((case.destination & 7) << 3) | 0x04,
         0x24,
     ]
+}
+
+#[test]
+fn scalar_llig_is_accepted_and_canonicalized_for_host_replay() {
+    for elem in [
+        VecElementType::F16,
+        VecElementType::F32,
+        VecElementType::F64,
+    ] {
+        for ll in 0..4 {
+            let case = ScaleFMemoryCase {
+                elem,
+                width: VecWidth::V128,
+                destination: 17,
+                source1: 18,
+                form: SourceForm::Scalar { ll },
+                control: MaskControl::Merge,
+            };
+            let guest = case.bytes();
+            assert_eq!((guest[3] >> 5) & 3, ll);
+            let replay = X86InstructionBytes::new(&guest)
+                .unwrap()
+                .evex_scale_f_memory_encoding()
+                .expect("scalar VSCALEF LLIG image");
+            assert_eq!(replay_instruction(replay)[3] & 0x60, 0);
+        }
+    }
 }
 
 fn register_encoding(case: ScaleFMemoryCase, source2: u8) -> Vec<u8> {
