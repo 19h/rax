@@ -1971,6 +1971,38 @@ impl RiscVCpu {
         if self.vtype >> (self.xbits() - 1) & 1 != 0 && !matches!(insn.op, Op::Vlre | Op::Vsre) {
             return Err(Trap::illegal(insn.raw));
         }
+        // vmadc/vmsbc write a mask result (single register, EEW=1). The
+        // destination may overlap a source group only when it names the
+        // lowest-numbered register of that group (RVV §5.2); the mask-result
+        // register itself is not subject to LMUL alignment (§3.4.2).  Only
+        // the vv form treats rs1 as a vector register group: the vx form
+        // reads a scalar from rs1 and the vi form reads a 5-bit immediate,
+        // so rs1 must not be overlap-/alignment-checked there.
+        if matches!(insn.op, Op::Vmadc | Op::Vmsbc) {
+            let group_regs = match self.vtype & 0x7 {
+                1 => 2,
+                2 => 4,
+                3 => 8,
+                _ => 1,
+            };
+            let overlaps = |a: u8, an: usize, b: u8, bn: usize| {
+                let (a, b) = (usize::from(a), usize::from(b));
+                a < b + bn && b < a + an
+            };
+            let is_vv = insn.funct3 == 0b000;
+            if insn.rs2 != insn.rd && overlaps(insn.rd, 1, insn.rs2, group_regs) {
+                return Err(Trap::illegal(insn.raw));
+            }
+            if is_vv && insn.rs1 != insn.rd && overlaps(insn.rd, 1, insn.rs1, group_regs) {
+                return Err(Trap::illegal(insn.raw));
+            }
+            if group_regs > 1
+                && (usize::from(insn.rs2) % group_regs != 0
+                    || (is_vv && usize::from(insn.rs1) % group_regs != 0))
+            {
+                return Err(Trap::illegal(insn.raw));
+            }
+        }
         let vm = (insn.raw >> 25) & 1 != 0; // 1 = unmasked
         vector_validation::validate(self, insn, vm)?;
         let vd = insn.rd;
@@ -6022,6 +6054,47 @@ mod tests {
                 "funct6={funct6:06b} vs1={vs1:05b} with vstart!=0 must trap"
             );
         }
+    }
+
+    #[test]
+    fn vmadc_vmsbc_mask_result_overlap_is_illegal() {
+        // vmadc/vmsbc write a single-register mask result (EEW=1) whose
+        // register may not overlap a source group unless it names the
+        // group lowest-numbered register (RVV 5.2; QEMU trans_rvv.c.inc
+        // mask-result overlap checks). With LMUL=2, vmadc.vv v1, v0, v2
+        // writes v1 which lies inside the vs2 group {v0,v1}: reserved.
+        let mut c = cpu_e8m1();
+        c.set_vl_vtype(4, 0b010_001); // e32, m2
+        // vmadc.vv v1, v0, v2 (vm=1, funct3=0b000) -> vs2 group {v0,v1}
+        // overlaps destination v1 -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b010001, 1, 0, 2, 0b000, 1)),
+            RiscVExit::Trap(_)
+        ));
+        // vmadc.vv v0, v0, v2 -> vd names the lowest register of the
+        // group; legal.
+        let mut c2 = cpu_e8m1();
+        c2.set_vl_vtype(4, 0b010_001);
+        assert!(matches!(
+            run_one(&mut c2, op_v(0b010001, 1, 0, 2, 0b000, 0)),
+            RiscVExit::Continue
+        ));
+        // vmsbc.vv v1, v2, v3 -> vs2 group {v2,v3}, vs1 group {v3}
+        // (LMUL=2, vs1=3 is misaligned) -> illegal via the rs1 alignment
+        // check.
+        let mut c3 = cpu_e8m1();
+        c3.set_vl_vtype(4, 0b010_001);
+        assert!(matches!(
+            run_one(&mut c3, op_v(0b010011, 1, 2, 3, 0b000, 1)),
+            RiscVExit::Trap(_)
+        ));
+        // vmsbc.vv v6, v2, v4 -> all groups aligned and disjoint -> legal.
+        let mut c4 = cpu_e8m1();
+        c4.set_vl_vtype(4, 0b010_001);
+        assert!(matches!(
+            run_one(&mut c4, op_v(0b010011, 1, 2, 4, 0b000, 6)),
+            RiscVExit::Continue
+        ));
     }
 
     #[test]
