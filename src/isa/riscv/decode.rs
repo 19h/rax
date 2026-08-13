@@ -2375,7 +2375,7 @@ fn decode_fence(w: u32, isa: &Isa) -> Insn {
         }
         0 => base(Op::Fence, w),
         1 if isa.zifencei => base(Op::FenceI, w),
-        2 if rd(w) == 0 && ((w >> 27) & 0x1f) == 0 => match rs2(w) {
+        2 if rd(w) == 0 && funct7(w) == 0 => match rs2(w) {
             0 if isa.zicbom => base(Op::CboInval, w),
             1 if isa.zicbom => base(Op::CboClean, w),
             2 if isa.zicbom => base(Op::CboFlush, w),
@@ -2892,6 +2892,26 @@ mod tests {
         let reserved_high_funct12 = cbo_zero | (1 << 31);
         assert_eq!((reserved_high_funct12 >> 20) & 0x1f, 4);
         assert!(decode(reserved_high_funct12, Xlen::Rv64, &Isa::rv64gc()).is_illegal());
+    }
+
+    #[test]
+    fn cbo_reserved_funct7_is_illegal() {
+        // cbo.inval/cbo.clean/cbo.flush/cbo.zero require funct7 == 0b0000000
+        // (full 7 bits). An encoding with nonzero funct7[1:0] (e.g. the
+        // 0x0605200f shape, funct7 = 0b0000011) is reserved and must be
+        // illegal, even though its top five funct7 bits are zero.
+        let reserved = (0x03u32 << 25) | (0u32 << 20) | (10 << 15) | (2 << 12) | 0x0f;
+        assert_eq!((reserved >> 25) & 0x7f, 0b0000011);
+        assert!(decode(reserved, Xlen::Rv64, &Isa::rv64gc()).is_illegal());
+        // The valid forms still decode.
+        assert_eq!(
+            dec((0u32 << 20) | (10 << 15) | (2 << 12) | 0x0f).op,
+            Op::CboInval
+        );
+        assert_eq!(
+            dec((4u32 << 20) | (10 << 15) | (2 << 12) | 0x0f).op,
+            Op::CboZero
+        );
     }
 
     #[test]
