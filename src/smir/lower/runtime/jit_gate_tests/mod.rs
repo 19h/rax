@@ -285,6 +285,8 @@ mod legacy_blend_replay;
 #[cfg(test)]
 mod legacy_fp_flag_compare_replay;
 #[cfg(test)]
+mod legacy_fp_round_replay;
+#[cfg(test)]
 mod legacy_high_byte_replay;
 #[cfg(test)]
 mod legacy_packed_extend_replay;

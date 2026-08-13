@@ -1,5 +1,69 @@
 use super::X86InstructionBytes;
-use crate::smir::ir::types::{FpRoundMode, VecElementType, VecWidth};
+use crate::smir::ir::ops::{OpKind, SmirOp};
+use crate::smir::ir::types::{ArchReg, FpRoundMode, VReg, VecElementType, VecWidth, X86Reg};
+
+/// Decoded architectural operands and controls of one exact register-only
+/// legacy SSE4.1 `ROUNDPS`, `ROUNDPD`, `ROUNDSS`, or `ROUNDSD` instruction.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86LegacyRoundReplay {
+    pub(crate) destination: u8,
+    pub(crate) source: u8,
+    pub(crate) elem: VecElementType,
+    pub(crate) lanes: u8,
+    pub(crate) scalar_source: bool,
+    pub(crate) mode: FpRoundMode,
+    pub(crate) suppress_precision: bool,
+}
+
+fn round_mode(immediate: u8) -> FpRoundMode {
+    if immediate & 4 != 0 {
+        FpRoundMode::Dynamic
+    } else {
+        match immediate & 3 {
+            0 => FpRoundMode::RoundNearest,
+            1 => FpRoundMode::RoundDown,
+            2 => FpRoundMode::RoundUp,
+            _ => FpRoundMode::RoundTowardZero,
+        }
+    }
+}
+
+fn xmm(index: u8) -> VReg {
+    VReg::Arch(ArchReg::X86(X86Reg::Xmm(index)))
+}
+
+/// Validate the complete one-operation graph emitted for a register-only
+/// legacy SSE4.1 ROUND instruction. Replay is admitted only when operands,
+/// element width, scalar merge semantics, rounding controls, exception
+/// suppression, and legacy upper-lane preservation match the source bytes.
+pub(crate) fn x86_legacy_round_shape_matches(ops: &[SmirOp], replay: X86LegacyRoundReplay) -> bool {
+    let [operation] = ops else {
+        return false;
+    };
+    operation.x86_hint.is_none()
+        && matches!(
+            &operation.kind,
+            OpKind::X86Round {
+                dst,
+                merge,
+                src,
+                elem,
+                width: VecWidth::V128,
+                lanes,
+                scalar_source,
+                zero_upper: false,
+                mode,
+                suppress_precision,
+            } if *dst == xmm(replay.destination)
+                && *merge == *dst
+                && *src == xmm(replay.source)
+                && *elem == replay.elem
+                && *lanes == replay.lanes
+                && *scalar_source == replay.scalar_source
+                && *mode == replay.mode
+                && *suppress_precision == replay.suppress_precision
+        )
+}
 
 /// One complete VEX floating-point round memory encoding rewritten to consume
 /// the helper-loaded r/m source from a nonarchitectural low vector register.
@@ -17,16 +81,7 @@ pub(crate) struct X86VexRoundMemoryEncoding {
 
 impl X86VexRoundMemoryEncoding {
     pub(crate) fn mode(self) -> FpRoundMode {
-        if self.immediate & 4 != 0 {
-            FpRoundMode::Dynamic
-        } else {
-            match self.immediate & 3 {
-                0 => FpRoundMode::RoundNearest,
-                1 => FpRoundMode::RoundDown,
-                2 => FpRoundMode::RoundUp,
-                _ => FpRoundMode::RoundTowardZero,
-            }
-        }
+        round_mode(self.immediate)
     }
 
     pub(crate) fn suppress_precision(self) -> bool {
@@ -35,6 +90,50 @@ impl X86VexRoundMemoryEncoding {
 }
 
 impl X86InstructionBytes {
+    /// Decode one exact register-only legacy SSE4.1 floating-point ROUND.
+    ///
+    /// All four forms require mandatory 66H followed by an optional final REX
+    /// prefix, map 0F3A, a register ModR/M source, and an imm8. REX.R/B extend
+    /// the two XMM operands; REX.W/X and imm8[7:4] do not affect the specified
+    /// operation but remain retained in the exact replay bytes. Memory, other
+    /// or reordered prefixes, non-final or duplicate REX, REX2/VEX/EVEX,
+    /// truncated, and trailing-byte forms fail closed.
+    pub(crate) fn legacy_register_round_replay(&self) -> Option<X86LegacyRoundReplay> {
+        let (rex, opcode, modrm, immediate) = match self.as_slice() {
+            [
+                0x66,
+                rex @ 0x40..=0x4F,
+                0x0F,
+                0x3A,
+                opcode,
+                modrm,
+                immediate,
+            ] => (Some(*rex), *opcode, *modrm, *immediate),
+            [0x66, 0x0F, 0x3A, opcode, modrm, immediate] => (None, *opcode, *modrm, *immediate),
+            _ => return None,
+        };
+        if modrm >> 6 != 3 {
+            return None;
+        }
+        let (elem, lanes, scalar_source) = match opcode {
+            0x08 => (VecElementType::F32, 4, false),
+            0x09 => (VecElementType::F64, 2, false),
+            0x0A => (VecElementType::F32, 1, true),
+            0x0B => (VecElementType::F64, 1, true),
+            _ => return None,
+        };
+        let rex = rex.unwrap_or(0);
+        Some(X86LegacyRoundReplay {
+            destination: ((modrm >> 3) & 7) | ((rex & 0x04) << 1),
+            source: (modrm & 7) | ((rex & 0x01) << 3),
+            elem,
+            lanes,
+            scalar_source,
+            mode: round_mode(immediate),
+            suppress_precision: immediate & 8 != 0,
+        })
+    }
+
     /// Validate one register-only AVX VEX `VROUNDPS`, `VROUNDPD`, `VROUNDSS`,
     /// or `VROUNDSD` instruction and return its architectural destination.
     ///

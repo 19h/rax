@@ -207,6 +207,11 @@ pub(super) fn x86_native_replay_spans_where(
             {
                 return None;
             }
+            if let Some(replay) = source_instruction.legacy_register_round_replay()
+                && !classifiers::x86_legacy_round_shape_matches(&block.ops[start..end], replay)
+            {
+                return None;
+            }
             if let Some(replay) = source_instruction.legacy_register_packed_extend_replay() {
                 let requirements =
                     classifiers::x86_legacy_packed_extend_shape_virtual_requirements(

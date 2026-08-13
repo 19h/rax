@@ -43,6 +43,8 @@ mod group3_alias;
 mod legacy_0f38_terminal;
 #[path = "x86_64/legacy_0f3a_reserved.rs"]
 mod legacy_0f3a_reserved;
+#[path = "x86_64/legacy_fp_round.rs"]
+mod legacy_fp_round;
 #[path = "x86_64/legacy_high_byte.rs"]
 mod legacy_high_byte;
 #[path = "x86_64/legacy_packed_extend.rs"]
