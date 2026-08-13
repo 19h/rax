@@ -10,6 +10,9 @@ pub(crate) use super::legacy_blend::{
 pub(crate) use super::legacy_dot_product::{
     X86LegacyDotProductReplay, x86_legacy_dot_product_shape_virtual_requirements,
 };
+pub(crate) use super::legacy_gfni::{
+    X86LegacyGfniReplay, x86_legacy_gfni_shape_virtual_requirements,
+};
 pub(crate) use super::legacy_high_byte::{
     X86LegacyHighByteCrc32Replay, X86LegacyHighByteGroup2Kind, X86LegacyHighByteGroup2Replay,
     X86LegacyHighByteMultiplyKind, X86LegacyHighByteMultiplyReplay, X86LegacyHighByteSetccReplay,

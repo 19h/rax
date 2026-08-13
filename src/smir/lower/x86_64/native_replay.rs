@@ -99,6 +99,12 @@ impl X86_64Lowerer {
             self.code.emit_bytes(span.instruction.as_slice());
             return Ok(());
         }
+        if span.instruction.legacy_register_gfni_replay().is_some() {
+            // Legacy GFNI updates only the low 128 destination bits and
+            // preserves the shared YMM/ZMM state above bit 127.
+            self.code.emit_bytes(span.instruction.as_slice());
+            return Ok(());
+        }
         if span.instruction.legacy_register_round_replay().is_some() {
             // Legacy ROUND preserves every destination bit above bit 127;
             // unlike VROUND, it must not receive a VEX upper-clear postlude.

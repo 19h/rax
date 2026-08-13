@@ -291,6 +291,8 @@ mod legacy_fp_flag_compare_replay;
 #[cfg(test)]
 mod legacy_fp_round_replay;
 #[cfg(test)]
+mod legacy_gfni_replay;
+#[cfg(test)]
 mod legacy_high_byte_replay;
 #[cfg(test)]
 mod legacy_insertps_replay;

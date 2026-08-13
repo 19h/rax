@@ -171,15 +171,15 @@ pub(crate) use classifiers::{
 };
 pub(crate) use classifiers::{
     X86EvexMovntdqaMemoryEncoding, X86LegacyAesReplay, X86LegacyAlignrReplay, X86LegacyBlendReplay,
-    X86LegacyDotProductReplay, X86LegacyHighByteCrc32Replay, X86LegacyHighByteGroup2Kind,
-    X86LegacyHighByteGroup2Replay, X86LegacyHighByteMultiplyKind, X86LegacyHighByteMultiplyReplay,
-    X86LegacyInsertpsReplay, X86LegacyLaneShuffleKind, X86LegacyLaneShuffleReplay,
-    X86LegacyPackedExtendReplay, X86LegacyPackedFpConvertKind, X86LegacyPackedFpConvertReplay,
-    X86LegacyPackedShiftCount, X86LegacyPackedShiftReplay, X86LegacyPclmulqdqReplay,
-    X86LegacyPtestReplay, X86LegacyRoundReplay, X86LegacyScalarExtractKind,
-    X86LegacyScalarExtractReplay, X86LegacyScalarFpConvertKind, X86LegacyScalarFpConvertReplay,
-    X86LegacyScalarInsertKind, X86LegacyScalarInsertReplay, X86LegacyShaReplay,
-    X86LegacyWideningDwordMultiplyReplay,
+    X86LegacyDotProductReplay, X86LegacyGfniReplay, X86LegacyHighByteCrc32Replay,
+    X86LegacyHighByteGroup2Kind, X86LegacyHighByteGroup2Replay, X86LegacyHighByteMultiplyKind,
+    X86LegacyHighByteMultiplyReplay, X86LegacyInsertpsReplay, X86LegacyLaneShuffleKind,
+    X86LegacyLaneShuffleReplay, X86LegacyPackedExtendReplay, X86LegacyPackedFpConvertKind,
+    X86LegacyPackedFpConvertReplay, X86LegacyPackedShiftCount, X86LegacyPackedShiftReplay,
+    X86LegacyPclmulqdqReplay, X86LegacyPtestReplay, X86LegacyRoundReplay,
+    X86LegacyScalarExtractKind, X86LegacyScalarExtractReplay, X86LegacyScalarFpConvertKind,
+    X86LegacyScalarFpConvertReplay, X86LegacyScalarInsertKind, X86LegacyScalarInsertReplay,
+    X86LegacyShaReplay, X86LegacyWideningDwordMultiplyReplay,
 };
 
 pub use aggregate::{

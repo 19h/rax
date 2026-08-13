@@ -25,6 +25,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
         let legacy_scalar_insert = span.instruction.legacy_register_scalar_insert_replay();
         let legacy_lane_shuffle = span.instruction.legacy_register_lane_shuffle_replay();
         let legacy_alignr = span.instruction.legacy_register_alignr_replay().is_some();
+        let legacy_gfni = span.instruction.legacy_register_gfni_replay().is_some();
         // The MMX form has an independent architectural state bridge. It must
         // not make an MMX-only region require AVX vector-state marshalling.
         if legacy_widening_dword_multiply.is_some_and(|replay| replay.mmx)
@@ -146,6 +147,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || legacy_scalar_insert.is_some()
             || legacy_lane_shuffle.is_some()
             || legacy_alignr
+            || legacy_gfni
             || legacy_round
             || legacy_dot_product
             || legacy_insertps
@@ -202,6 +204,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || legacy_scalar_insert.is_some()
             || legacy_lane_shuffle.is_some()
             || legacy_alignr
+            || legacy_gfni
             || legacy_round
             || legacy_dot_product
             || legacy_insertps
@@ -305,8 +308,9 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             .instruction
             .evex_register_packed_funnel_shift_needs_vl()
             .is_some();
-        requirements.needs_gfni |=
-            span.instruction.evex_register_gfni_needs_vl().is_some() || vex_gfni_ymm.is_some();
+        requirements.needs_gfni |= legacy_gfni
+            || span.instruction.evex_register_gfni_needs_vl().is_some()
+            || vex_gfni_ymm.is_some();
         requirements.needs_avx512vp2intersect |= span
             .instruction
             .evex_register_vp2intersect_needs_vl()

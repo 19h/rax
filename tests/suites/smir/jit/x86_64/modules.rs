@@ -38,6 +38,8 @@ mod legacy_high_byte;
 mod legacy_insertps;
 #[path = "legacy_alignr.rs"]
 mod legacy_alignr;
+#[path = "legacy_gfni.rs"]
+mod legacy_gfni;
 #[path = "legacy_lane_shuffle.rs"]
 mod legacy_lane_shuffle;
 #[path = "legacy_pclmulqdq.rs"]
