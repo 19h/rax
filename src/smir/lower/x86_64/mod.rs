@@ -55,6 +55,7 @@ mod control;
 pub use control::*;
 mod clts;
 mod legacy_high_byte_replay;
+mod native_replay;
 pub use clts::*;
 mod cli;
 pub use cli::*;

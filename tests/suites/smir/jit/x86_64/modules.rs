@@ -38,6 +38,8 @@ mod legacy_high_byte;
 mod legacy_insertps;
 #[path = "legacy_pclmulqdq.rs"]
 mod legacy_pclmulqdq;
+#[path = "legacy_ptest.rs"]
+mod legacy_ptest;
 #[path = "legacy_packed_extend.rs"]
 mod legacy_packed_extend;
 #[path = "legacy_packed_fp_convert.rs"]

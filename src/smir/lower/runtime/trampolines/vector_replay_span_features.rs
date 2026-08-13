@@ -46,6 +46,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             .instruction
             .legacy_register_pclmulqdq_replay()
             .is_some();
+        let legacy_ptest = span.instruction.legacy_register_ptest_replay().is_some();
         let legacy_packed_extend = span
             .instruction
             .legacy_register_packed_extend_replay()
@@ -119,6 +120,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || legacy_round
             || legacy_dot_product
             || legacy_insertps
+            || legacy_ptest
             || legacy_widening_dword_multiply.is_some_and(|replay| replay.signed);
         requirements.needs_vex_unaligned_packed_fp_move |= vex_unaligned_packed_fp_move;
         *all_spans_support_avx_ymm16 &= legacy_aes
@@ -129,6 +131,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || legacy_dot_product
             || legacy_insertps
             || legacy_pclmulqdq
+            || legacy_ptest
             || legacy_packed_extend
             || legacy_widening_dword_multiply.is_some()
             || legacy_fp_flag_compare
@@ -179,6 +182,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || legacy_dot_product
             || legacy_insertps
             || legacy_pclmulqdq
+            || legacy_ptest
             || legacy_packed_extend
             || legacy_widening_dword_multiply.is_some()
             || legacy_fp_flag_compare

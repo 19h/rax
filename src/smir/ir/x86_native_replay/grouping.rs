@@ -258,6 +258,21 @@ pub(super) fn x86_native_replay_spans_where(
                     }
                 }
             }
+            if let Some(replay) = source_instruction.legacy_register_ptest_replay() {
+                let requirements = classifiers::x86_legacy_ptest_shape_virtual_requirements(
+                    &block.ops[start..end],
+                    replay,
+                )?;
+                let (virtual_definitions, virtual_uses) =
+                    virtual_counts.get_or_init(|| block_virtual_definition_use_counts(block));
+                for (temporary, expected_definitions, expected_uses) in requirements {
+                    if virtual_definitions.get(&temporary) != Some(&expected_definitions)
+                        || virtual_uses.get(&temporary) != Some(&expected_uses)
+                    {
+                        return None;
+                    }
+                }
+            }
             if let Some(replay) = source_instruction.legacy_register_packed_extend_replay() {
                 let requirements =
                     classifiers::x86_legacy_packed_extend_shape_virtual_requirements(

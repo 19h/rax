@@ -63,7 +63,7 @@ impl X86_64Lowerer {
         self.emit_jit_vector_scratch_load(scratch, encoding.width);
         self.code
             .emit_bytes(encoding.register_instruction.as_slice());
-        self.emit_vex_ptest_defined_flag_canonicalization();
+        self.emit_ptest_defined_flag_canonicalization();
         self.emit_jit_vector_scratch_restore(encoding.scratch);
         self.code.emit_u8(0x58); // pop guest RAX without modifying test flags
 

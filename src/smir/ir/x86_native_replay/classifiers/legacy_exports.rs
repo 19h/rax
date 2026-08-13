@@ -20,6 +20,9 @@ pub(crate) use super::legacy_packed_fp_convert::{
 pub(crate) use super::legacy_pclmulqdq::{
     X86LegacyPclmulqdqReplay, x86_legacy_pclmulqdq_shape_virtual_requirements,
 };
+pub(crate) use super::legacy_ptest::{
+    X86LegacyPtestReplay, x86_legacy_ptest_shape_virtual_requirements,
+};
 pub(crate) use super::legacy_scalar_fp_convert::{
     X86LegacyScalarFpConvertKind, X86LegacyScalarFpConvertReplay,
     x86_legacy_scalar_fp_convert_shape_matches,

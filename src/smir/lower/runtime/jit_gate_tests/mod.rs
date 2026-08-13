@@ -299,6 +299,8 @@ mod legacy_packed_fp_convert_replay;
 #[cfg(test)]
 mod legacy_pclmulqdq_replay;
 #[cfg(test)]
+mod legacy_ptest_replay;
+#[cfg(test)]
 mod legacy_scalar_fp_convert_replay;
 #[cfg(test)]
 mod legacy_sha_replay;
