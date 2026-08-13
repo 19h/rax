@@ -2383,6 +2383,18 @@ impl RiscVCpu {
                 if eb > 4 {
                     return Err(Trap::illegal(insn.raw));
                 }
+                // The scalar seed vs1 (a single register) must not overlap the
+                // vs2 register group (RVV §5.2; QEMU reduction_widen_check:
+                // !is_overlapped(rs1, 1, rs2, 1 << max(lmul, 0))).
+                let emul: u8 = match self.vtype & 0x7 {
+                    1 => 2,
+                    2 => 4,
+                    3 => 8,
+                    _ => 1,
+                };
+                if insn.rs1 >= vs2 && insn.rs1 < vs2 + emul {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 let web = eb * 2;
                 let wmask = Self::sew_mask(web);
                 let signed = insn.op == Op::Vwredsum;
@@ -6621,6 +6633,36 @@ mod tests {
             (0x13 << 25) | (2 << 20) | (1 << 15) | (6 << 7) | 0x5b,
         );
         assert_eq!(c.x(6), 1);
+    }
+
+    #[test]
+    fn vwredsum_rejects_overlapping_vs1() {
+        // vwredsumu/vwredsum read a scalar seed from vs1 (a single register)
+        // and a vector group from vs2.  The vs1 register must not overlap the
+        // vs2 group (RVV §5.2; QEMU reduction_widen_check:
+        // !is_overlapped(rs1, 1, rs2, 1 << max(lmul, 0))).
+        let mut c = cpu_e8m1();
+        c.set_vl_vtype(4, 0b010_001); // e32, m2 -> EMUL=2
+        // vwredsumu.vs v4, v0, v0  (vs1=v0 inside vs2 group {v0,v1}) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b110000, 1, 0, 0, 0b000, 4)),
+            RiscVExit::Trap(_)
+        ));
+        // vwredsum.vs v4, v0, v0  (signed, same overlap) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b110001, 1, 0, 0, 0b000, 4)),
+            RiscVExit::Trap(_)
+        ));
+        // vwredsumu.vs v4, v2, v0  (vs1=v0 outside vs2 group {v2,v3}) -> runs.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b110000, 1, 2, 0, 0b000, 4)),
+            RiscVExit::Continue
+        ));
+        // vwredsum.vs v4, v2, v0  (signed, no overlap) -> runs.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b110001, 1, 2, 0, 0b000, 4)),
+            RiscVExit::Continue
+        ));
     }
 
     #[test]
