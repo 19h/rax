@@ -141,6 +141,9 @@ fn decode_q0(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
                 mk(Op::LdPair, rd_, rs1_, 0, off_d as i64, h)
             } else {
                 // C.FLW -> flw rd', off(rs1')
+                if !isa.f {
+                    return ill(h);
+                }
                 let off = (bits(h, 12, 10) << 3) | (bit(h, 6) << 2) | (bit(h, 5) << 6);
                 mk(Op::Flw, rd_, rs1_, 0, off as i64, h)
             }
@@ -171,6 +174,9 @@ fn decode_q0(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
                 mk(Op::SdPair, 0, rs1_, rs2_, off_d as i64, h)
             } else {
                 // C.FSW -> fsw rs2', off(rs1')
+                if !isa.f {
+                    return ill(h);
+                }
                 let off = (bits(h, 12, 10) << 3) | (bit(h, 6) << 2) | (bit(h, 5) << 6);
                 mk(Op::Fsw, 0, rs1_, rvc_reg(bits(h, 4, 2)), off as i64, h)
             }
@@ -384,6 +390,9 @@ fn decode_q2(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
                 mk(Op::LdPair, rd, 2, 0, off as i64, h)
             } else {
                 // C.FLWSP -> flw rd, off(x2)
+                if !isa.f {
+                    return ill(h);
+                }
                 let off = (bit(h, 12) << 5) | (bits(h, 6, 4) << 2) | (bits(h, 3, 2) << 6);
                 mk(Op::Flw, rd, 2, 0, off as i64, h)
             }
@@ -454,6 +463,9 @@ fn decode_q2(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
                 mk(Op::SdPair, 0, 2, rs2, off as i64, h)
             } else {
                 // C.FSWSP -> fsw rs2, off(x2)
+                if !isa.f {
+                    return ill(h);
+                }
                 let off = (bits(h, 12, 9) << 2) | (bits(h, 8, 7) << 6);
                 mk(Op::Fsw, 0, 2, bits(h, 6, 2) as u8, off as i64, h)
             }
@@ -768,6 +780,53 @@ mod tests {
         isa.zcmp = false;
         isa.zcmt = false;
         assert_eq!(decode_rvc(cm_push, Xlen::Rv64, &isa).op, Op::Fsd);
+    }
+
+    #[test]
+    fn rv32c_flw_fsw_require_f_extension() {
+        // C.FLW/C.FSW (Q0, funct3=011/111, RV32) and C.FLWSP/C.FSWSP
+        // (Q2, funct3=011/111) are Zcf instructions and require F.
+        // Without F the encodings are reserved and must be illegal;
+        // with F they decode normally.
+        let loads = [
+            (0x6000u16, "C.FLW"),   // Q0 funct3=011, rd'=x8
+            (0x6086u16, "C.FLWSP"), // Q2 funct3=011, rd=x1
+        ];
+        let stores = [
+            (0xE000u16, "C.FSW"),   // Q0 funct3=111, rs2'=x8
+            (0xE006u16, "C.FSWSP"), // Q2 funct3=111, rs2=x3
+        ];
+        let with_f = Isa::rv64gc();
+        let no_f = Isa { f: false, ..with_f };
+        for (half, name) in loads {
+            // RV32: Zcf slot is active, F gates it.
+            assert_eq!(
+                decode_rvc(half, Xlen::Rv32, &with_f).op,
+                Op::Flw,
+                "{name}: F enabled"
+            );
+            assert!(
+                decode_rvc(half, Xlen::Rv32, &no_f).is_illegal(),
+                "{name}: F disabled"
+            );
+        }
+        for (half, name) in stores {
+            assert_eq!(
+                decode_rvc(half, Xlen::Rv32, &with_f).op,
+                Op::Fsw,
+                "{name}: F enabled"
+            );
+            assert!(
+                decode_rvc(half, Xlen::Rv32, &no_f).is_illegal(),
+                "{name}: F disabled"
+            );
+        }
+        // On RV64 these slots are C.LD/C.SD (or C.LDSP/C.SDSP) and are
+        // unrelated to F; the F gate must not affect them.
+        assert_eq!(decode_rvc(0x6000, Xlen::Rv64, &with_f).op, Op::Ld);
+        assert_eq!(decode_rvc(0xE000, Xlen::Rv64, &with_f).op, Op::Sd);
+        assert_eq!(decode_rvc(0x6086, Xlen::Rv64, &with_f).op, Op::Ld);
+        assert_eq!(decode_rvc(0xE006, Xlen::Rv64, &with_f).op, Op::Sd);
     }
 
     #[test]
