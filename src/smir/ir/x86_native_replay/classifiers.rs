@@ -84,6 +84,7 @@ mod high_low_move;
 mod integer_compare;
 mod legacy_aes;
 mod legacy_blend;
+mod legacy_dot_product;
 mod legacy_high_byte;
 mod legacy_packed_fp_convert;
 mod legacy_scalar_fp_convert;
@@ -305,6 +306,9 @@ pub(crate) use fp16_narrow::{X86EvexFp16NarrowMemoryEncoding, X86VexFp16NarrowMe
 pub(crate) use gfni::{X86EvexGfniAffineMemoryEncoding, X86EvexGfniAffineMemoryReplay};
 pub(crate) use legacy_aes::{X86LegacyAesReplay, x86_legacy_aes_shape_virtual_requirements};
 pub(crate) use legacy_blend::{X86LegacyBlendReplay, x86_legacy_blend_shape_virtual_requirements};
+pub(crate) use legacy_dot_product::{
+    X86LegacyDotProductReplay, x86_legacy_dot_product_shape_virtual_requirements,
+};
 pub(crate) use legacy_high_byte::{
     X86LegacyHighByteCrc32Replay, X86LegacyHighByteGroup2Kind, X86LegacyHighByteGroup2Replay,
     X86LegacyHighByteMultiplyKind, X86LegacyHighByteMultiplyReplay, X86LegacyHighByteSetccReplay,

@@ -283,6 +283,8 @@ mod legacy_aes_replay;
 #[cfg(test)]
 mod legacy_blend_replay;
 #[cfg(test)]
+mod legacy_dot_product_replay;
+#[cfg(test)]
 mod legacy_fp_flag_compare_replay;
 #[cfg(test)]
 mod legacy_fp_round_replay;
