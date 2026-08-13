@@ -93,7 +93,6 @@ impl Op {
             WrsNto => "wrs.nto",
             WrsSto => "wrs.sto",
             Uret => "uret",
-            SfenceVm => "sfence.vm",
             SfenceVma => "sfence.vma",
             SinvalVma => "sinval.vma",
             SfenceWInval => "sfence.w.inval",
@@ -772,7 +771,6 @@ impl Op {
             Fence | FenceI | Pause | NtlP1 | NtlPall | NtlS1 | NtlAll | Ecall | Ebreak | Mret
             | Sret | Wfi | WrsNto | WrsSto | Uret | SfenceWInval | SfenceInvalIr | H3Block
             | H3Unblock => Class::Bare,
-            SfenceVm => Class::PrivFenceVm,
             SfenceVma | HfenceVvma | HfenceGvma => Class::PrivFence,
             SinvalVma | HinvalVvma | HinvalGvma => Class::PrivFence2,
             HlvB | HlvH | HlvW | HlvD | HlvBu | HlvHu | HlvWu | HlvxHu | HlvxWu => Class::HLoad,
@@ -860,7 +858,6 @@ enum Class {
     RArith,
     Unary,
     Bare,
-    PrivFenceVm,
     PrivFence,
     PrivFence2,
     HLoad,
@@ -932,13 +929,6 @@ impl fmt::Display for Insn {
             Class::RArith => write!(f, "{m} {rd}, {rs1}, {rs2}"),
             Class::Unary => write!(f, "{m} {rd}, {rs1}"),
             Class::Bare => write!(f, "{m}"),
-            Class::PrivFenceVm => {
-                if self.rs1 == 0 {
-                    write!(f, "{m}")
-                } else {
-                    write!(f, "{m} {rs1}")
-                }
-            }
             Class::PrivFence => {
                 if self.rs2 == 0 {
                     if self.rs1 == 0 {
@@ -1358,10 +1348,8 @@ mod tests {
             decode(sys(0x00, 0x02, 0), Xlen::Rv64, &Isa::rv64gc()).to_string(),
             "uret"
         );
-        assert_eq!(
-            decode(sys(0x08, 0x04, 10), Xlen::Rv64, &Isa::rv64gc()).to_string(),
-            "sfence.vm a0"
-        );
+        // 0x08/0x04 was the obsolete sfence.vm encoding; it is now illegal.
+        assert!(decode(sys(0x08, 0x04, 10), Xlen::Rv64, &Isa::rv64gc()).is_illegal());
         assert_eq!(
             decode(sys(0x09, 0, 0), Xlen::Rv64, &Isa::rv64gc()).to_string(),
             "sfence.vma"

@@ -105,7 +105,6 @@ pub enum Op {
     WrsNto,
     WrsSto,
     Uret,
-    SfenceVm,
     SfenceVma,
     SinvalVma,
     SfenceWInval,
@@ -2402,7 +2401,6 @@ fn decode_system(w: u32, rv64: bool, isa: &Isa) -> Insn {
                 0x1d if isa.zawrs => base(Op::WrsSto, w),
                 _ => Insn::illegal(w, 4),
             },
-            0x08 if rs2(w) == 0x04 => base(Op::SfenceVm, w),
             0x08 if rs1(w) == 0 && rs2(w) == 0x02 => base(Op::Sret, w),
             0x08 if rs1(w) == 0 && rs2(w) == 0x05 => base(Op::Wfi, w),
             0x09 => base(Op::SfenceVma, w),
@@ -3092,10 +3090,8 @@ mod tests {
             decode(sys(0x00, 0x02, 0), Xlen::Rv64, &Isa::rv64gc()).op,
             Op::Uret
         );
-        assert_eq!(
-            decode(sys(0x08, 0x04, 10), Xlen::Rv64, &Isa::rv64gc()).op,
-            Op::SfenceVm
-        );
+        // 0x08/0x04 was the obsolete sfence.vm encoding; must be illegal.
+        assert!(decode(sys(0x08, 0x04, 10), Xlen::Rv64, &Isa::rv64gc()).is_illegal());
         assert_eq!(
             decode(sys(0x09, 11, 10), Xlen::Rv64, &Isa::rv64gc()).op,
             Op::SfenceVma

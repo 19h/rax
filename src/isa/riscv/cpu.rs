@@ -733,7 +733,6 @@ impl RiscVCpu {
             | Op::PrefetchI
             | Op::PrefetchR
             | Op::PrefetchW
-            | Op::SfenceVm
             | Op::SfenceVma
             | Op::SinvalVma
             | Op::SfenceWInval
@@ -5254,21 +5253,20 @@ mod tests {
         let sys =
             |funct7: u32, rs2: u32, rs1: u32| (funct7 << 25) | (rs2 << 20) | (rs1 << 15) | 0x73;
         for w in [
-            sys(0x08, 0x04, 10), // sfence.vm a0
-            sys(0x09, 11, 10),   // sfence.vma a0, a1
-            sys(0x0b, 11, 10),   // sinval.vma a0, a1
-            sys(0x0c, 0, 0),     // sfence.w.inval
-            sys(0x0c, 1, 0),     // sfence.inval.ir
-            sys(0x11, 11, 10),   // hfence.vvma a0, a1
-            sys(0x13, 11, 10),   // hinval.vvma a0, a1
-            sys(0x31, 11, 10),   // hfence.gvma a0, a1
-            sys(0x33, 11, 10),   // hinval.gvma a0, a1
+            sys(0x09, 11, 10), // sfence.vma a0, a1
+            sys(0x0b, 11, 10), // sinval.vma a0, a1
+            sys(0x0c, 0, 0),   // sfence.w.inval
+            sys(0x0c, 1, 0),   // sfence.inval.ir
+            sys(0x11, 11, 10), // hfence.vvma a0, a1
+            sys(0x13, 11, 10), // hinval.vvma a0, a1
+            sys(0x31, 11, 10), // hfence.gvma a0, a1
+            sys(0x33, 11, 10), // hinval.gvma a0, a1
         ] {
             assert_eq!(run_one(&mut c, w), RiscVExit::Continue);
         }
         assert_eq!(c.x(10), 0x4000);
         assert_eq!(c.x(11), 0x22);
-        assert_eq!(c.pc(), 0x300 + 9 * 4);
+        assert_eq!(c.pc(), 0x300 + 8 * 4);
     }
 
     #[test]
