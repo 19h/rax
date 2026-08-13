@@ -2191,6 +2191,34 @@ impl RiscVCpu {
             | Op::Vmsle
             | Op::Vmsgtu
             | Op::Vmsgt => {
+                // The comparison instructions write a single mask register
+                // (vd is not group-aligned), but the source groups must be
+                // LMUL-aligned and vd must not overlap a source group
+                // (RVV 5.2; QEMU vext_check_mss for the vv form and
+                // vext_check_ms for the vx form).  vd == vs2 (or vd == vs1)
+                // is exempt because the source is read element-wise.
+                let emul: u8 = match self.vtype & 0x7 {
+                    1 => 2,
+                    2 => 4,
+                    3 => 8,
+                    _ => 1,
+                };
+                let is_vv = insn.funct3 == 0b000;
+                if vs2 % emul != 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
+                let overlaps = |a: u8, an: u8, b: u8, bn: u8| a < b + bn && b < a + an;
+                if vd != vs2 && overlaps(vd, 1, vs2, emul) {
+                    return Err(Trap::illegal(insn.raw));
+                }
+                if is_vv {
+                    if insn.rs1 % emul != 0 {
+                        return Err(Trap::illegal(insn.raw));
+                    }
+                    if vd != insn.rs1 && overlaps(vd, 1, insn.rs1, emul) {
+                        return Err(Trap::illegal(insn.raw));
+                    }
+                }
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
                 let scalar = match insn.funct3 {
@@ -6022,6 +6050,61 @@ mod tests {
                 "funct6={funct6:06b} vs1={vs1:05b} with vstart!=0 must trap"
             );
         }
+    }
+
+    #[test]
+    fn vmseq_rejects_misaligned_sources_and_overlapping_dest() {
+        // vmseq/vmsne/vmsltu/vmslt/vmsleu/vmsle/vmsgtu/vmsgt write a single
+        // mask register, so vd is not group-aligned, but each source group
+        // must be LMUL-aligned and vd must not overlap a source group
+        // (RVV 5.2; QEMU vext_check_mss / vext_check_ms).  e32,m2 -> EMUL=2.
+        let mut c = cpu_e8m1();
+        c.set_vl_vtype(4, 0b010_001); // e32, m2
+        // vmseq.vv v2, v3, v4  (vs2=v3 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b011000, 1, 3, 4, 0b000, 2)),
+            RiscVExit::Trap(_)
+        ));
+        // vmseq.vv v2, v4, v3  (vs1=v3 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b011000, 1, 4, 3, 0b000, 2)),
+            RiscVExit::Trap(_)
+        ));
+        // vmseq.vv v2, v4, v4  (aligned sources, mask dest) -> runs.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b011000, 1, 4, 4, 0b000, 2)),
+            RiscVExit::Continue
+        ));
+        // vmseq.vv v5, v4, v4  (vd=v5 inside vs2 group v4..v5) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b011000, 1, 4, 4, 0b000, 5)),
+            RiscVExit::Trap(_)
+        ));
+        // vmseq.vx v2, v3, x5  (vs2=v3 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b011000, 1, 3, 5, 0b100, 2)),
+            RiscVExit::Trap(_)
+        ));
+        // vmseq.vx v2, v4, x5  (aligned) -> runs.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b011000, 1, 4, 5, 0b100, 2)),
+            RiscVExit::Continue
+        ));
+        // vmsgt.vv v2, v3, v4  (vs2 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b011111, 1, 3, 5, 0b100, 2)),
+            RiscVExit::Trap(_)
+        ));
+        // vmsltu.vv v2, v3, v4  (vs2 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b011010, 1, 3, 4, 0b000, 2)),
+            RiscVExit::Trap(_)
+        ));
+        // vmsle.vv v2, v4, v4  (aligned) -> runs.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b011101, 1, 4, 4, 0b000, 2)),
+            RiscVExit::Continue
+        ));
     }
 
     #[test]
