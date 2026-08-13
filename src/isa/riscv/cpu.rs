@@ -3104,6 +3104,24 @@ impl RiscVCpu {
             }
             Op::Vsaddu | Op::Vsadd | Op::Vssubu | Op::Vssub => {
                 // Saturating fixed-point add/subtract; sets vxsat on clamp.
+                // vd, vs2 (and vs1 for the vv form) must name the
+                // lowest-numbered register of their LMUL group (RVV 3.4.2;
+                // QEMU opivv_check -> vext_check_sss / opivx_check ->
+                // vext_check_ss).  The vx form reads a scalar from rs1,
+                // which is not subject to vector-register-group alignment.
+                let emul: u8 = match self.vtype & 0x7 {
+                    1 => 2,
+                    2 => 4,
+                    3 => 8,
+                    _ => 1,
+                };
+                let is_vv = insn.funct3 == 0b000;
+                if vd % emul != 0 || vs2 % emul != 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
+                if is_vv && insn.rs1 % emul != 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
                 let bits = (eb * 8) as u32;
@@ -3114,7 +3132,6 @@ impl RiscVCpu {
                     0b011 => sext5(insn.rs1) & mask,
                     _ => 0,
                 };
-                let is_vv = insn.funct3 == 0b000;
                 let mut sat = false;
                 for e in vstart..vl {
                     if !vm && !self.vmask_bit(e) {
@@ -6022,6 +6039,65 @@ mod tests {
                 "funct6={funct6:06b} vs1={vs1:05b} with vstart!=0 must trap"
             );
         }
+    }
+
+    #[test]
+    fn vsaddu_rejects_misaligned_vs2_vd_and_vv_vs1() {
+        // vsaddu/vsadd/vssubu/vssub must reject register numbers that are not
+        // aligned to the LMUL group (RVV 3.4.2; QEMU opivv_check ->
+        // vext_check_sss / opivx_check -> vext_check_ss).  e32,m2 -> EMUL=2.
+        let mut c = cpu_e8m1();
+        c.set_vl_vtype(4, 0b010_001); // e32, m2
+        // vsaddu.vv v2, v1, v2  (vs2=v1 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b100000, 1, 1, 2, 0b000, 2)),
+            RiscVExit::Trap(_)
+        ));
+        // vsaddu.vv v1, v2, v2  (vd=v1 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b100000, 1, 2, 2, 0b000, 1)),
+            RiscVExit::Trap(_)
+        ));
+        // vsaddu.vv v2, v2, v1  (vs1=v1 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b100000, 1, 2, 1, 0b000, 2)),
+            RiscVExit::Trap(_)
+        ));
+        // vsaddu.vv v2, v2, v2  (all aligned) -> runs.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b100000, 1, 2, 2, 0b000, 2)),
+            RiscVExit::Continue
+        ));
+        // vsaddu.vx v2, v1, x5  (vs2 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b100000, 1, 1, 5, 0b100, 2)),
+            RiscVExit::Trap(_)
+        ));
+        // vsaddu.vx v1, v2, x5  (vd misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b100000, 1, 2, 5, 0b100, 1)),
+            RiscVExit::Trap(_)
+        ));
+        // vsaddu.vx v2, v2, x5  (aligned) -> runs.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b100000, 1, 2, 5, 0b100, 2)),
+            RiscVExit::Continue
+        ));
+        // vsadd.vv v2, v1, v2  (vs2 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b100001, 1, 1, 2, 0b000, 2)),
+            RiscVExit::Trap(_)
+        ));
+        // vssubu.vv v2, v1, v2  (vs2 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b100010, 1, 1, 2, 0b000, 2)),
+            RiscVExit::Trap(_)
+        ));
+        // vssub.vv v2, v2, v2  (aligned) -> runs.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b100011, 1, 2, 2, 0b000, 2)),
+            RiscVExit::Continue
+        ));
     }
 
     #[test]
