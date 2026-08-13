@@ -42,6 +42,8 @@ mod apx_shift;
 #[cfg(test)]
 mod bswap;
 #[cfg(test)]
+mod byte_xchg;
+#[cfg(test)]
 mod callout;
 #[cfg(test)]
 mod clac_stac;

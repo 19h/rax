@@ -8,17 +8,18 @@ use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 /// XCHG r8, r/m8 (0x86)
 pub fn xchg_r8_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let has_rex = ctx.has_any_rex();
 
     if is_memory {
-        let reg_val = vcpu.get_reg8(reg, ctx.rex.is_some());
+        let reg_val = vcpu.get_reg8(reg, has_rex);
         let mem_val = vcpu.read_mem(addr, 1)?;
-        vcpu.set_reg8(reg, mem_val, ctx.rex.is_some());
+        vcpu.set_reg8(reg, mem_val, has_rex);
         vcpu.write_mem(addr, reg_val, 1)?;
     } else {
-        let reg_val = vcpu.get_reg8(reg, ctx.rex.is_some());
-        let rm_val = vcpu.get_reg8(rm, ctx.rex.is_some());
-        vcpu.set_reg8(reg, rm_val, ctx.rex.is_some());
-        vcpu.set_reg8(rm, reg_val, ctx.rex.is_some());
+        let reg_val = vcpu.get_reg8(reg, has_rex);
+        let rm_val = vcpu.get_reg8(rm, has_rex);
+        vcpu.set_reg8(reg, rm_val, has_rex);
+        vcpu.set_reg8(rm, reg_val, has_rex);
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)

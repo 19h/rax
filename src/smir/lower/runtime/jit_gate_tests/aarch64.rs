@@ -1079,6 +1079,11 @@ fn x86_aarch64_gate_accepts_representable_bls_adx_bit_tests_and_nf_alu() {
         OpKind::Xchg {
             reg1: x86(X86Reg::Rsi),
             reg2: x86(X86Reg::Rdi),
+            width: OpWidth::W8,
+        },
+        OpKind::Xchg {
+            reg1: x86(X86Reg::Rsi),
+            reg2: x86(X86Reg::Rdi),
             width: OpWidth::W16,
         },
         OpKind::Bt {
@@ -1101,6 +1106,46 @@ fn x86_aarch64_gate_accepts_representable_bls_adx_bit_tests_and_nf_alu() {
         OpKind::SetCF { value: true },
         OpKind::CmcCF,
     ]));
+}
+#[test]
+fn x86_aarch64_gate_accepts_every_identity_mapped_low_byte_xchg_pair() {
+    let registers = [
+        X86Reg::Rax,
+        X86Reg::Rcx,
+        X86Reg::Rdx,
+        X86Reg::Rbx,
+        X86Reg::Rsi,
+        X86Reg::Rdi,
+        X86Reg::R8,
+        X86Reg::R9,
+        X86Reg::R10,
+        X86Reg::R11,
+        X86Reg::R12,
+        X86Reg::R13,
+        X86Reg::R14,
+        X86Reg::R15,
+    ];
+    let mut pairs = 0usize;
+    for reg1 in registers {
+        for reg2 in registers {
+            assert!(x86_aarch64_gate(vec![OpKind::Xchg {
+                reg1: x86(reg1),
+                reg2: x86(reg2),
+                width: OpWidth::W8,
+            }]));
+            pairs += 1;
+        }
+    }
+    assert_eq!(pairs, 14 * 14);
+
+    // Guest RSP/RBP and APX EGPRs have no AArch64 runtime identity mapping.
+    for reg in [X86Reg::Rsp, X86Reg::Rbp, X86Reg::R16, X86Reg::R31] {
+        assert!(!x86_aarch64_gate(vec![OpKind::Xchg {
+            reg1: x86(X86Reg::Rax),
+            reg2: x86(reg),
+            width: OpWidth::W8,
+        }]));
+    }
 }
 #[test]
 fn x86_aarch64_gate_accepts_no_flag_sbb_complete_width_matrix() {

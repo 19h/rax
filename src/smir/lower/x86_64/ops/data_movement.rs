@@ -248,7 +248,10 @@ impl X86_64Lowerer {
                     }
                     return self.lower_state_backed_gpr_xchg(*reg1, *reg2, *width);
                 }
-                if !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64) {
+                if !matches!(
+                    width,
+                    OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+                ) {
                     return Err(LowerError::InvalidOperand {
                         op: "Xchg".to_string(),
                         operand: format!("unsupported width {width:?}"),

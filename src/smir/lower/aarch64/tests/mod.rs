@@ -33,6 +33,8 @@ mod shift;
 mod tbm;
 #[cfg(test)]
 mod vector;
+#[cfg(test)]
+mod xchg;
 use crate::isa::arm::aarch64::{AArch64Config, AArch64Cpu};
 use crate::isa::arm::cpu_trait::{ArmCpu, CpuExit};
 use crate::isa::arm::memory::FlatMemory;

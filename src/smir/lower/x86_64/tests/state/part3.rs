@@ -168,6 +168,21 @@ fn native_state_backed_gpr_bswap_preserves_widths_flags_and_host_stack() {
 #[test]
 fn lower_state_backed_gpr_xchg_emits_slot_commits_and_rejects_malformed_shapes() {
     let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+    let byte = lower_single_op(OpKind::Xchg {
+        reg1: x86(X86Reg::Rbp),
+        reg2: x86(X86Reg::R17),
+        width: OpWidth::W8,
+    });
+    assert!(
+        byte.windows(3).any(|bytes| bytes == [0x88, 0x55, 0x00]),
+        "byte Xchg must partially synchronize saved guest RBP: {byte:02X?}"
+    );
+    assert!(
+        byte.windows(7)
+            .any(|bytes| bytes == [0x40, 0x88, 0xB8, 0x88, 0x00, 0x00, 0x00]),
+        "byte Xchg must partially commit GuestRegs.gpr[17]: {byte:02X?}"
+    );
+
     let word = lower_single_op(OpKind::Xchg {
         reg1: x86(X86Reg::Rsp),
         reg2: x86(X86Reg::R16),
@@ -200,7 +215,7 @@ fn lower_state_backed_gpr_xchg_emits_slot_commits_and_rejects_malformed_shapes()
         OpKind::Xchg {
             reg1: x86(X86Reg::R16),
             reg2: x86(X86Reg::Rax),
-            width: OpWidth::W8,
+            width: OpWidth::W128,
         },
         OpKind::Xchg {
             reg1: x86(X86Reg::R16),
@@ -242,6 +257,30 @@ fn native_state_backed_gpr_xchg_preserves_widths_flags_and_host_stack() {
     }
 
     let cases = [
+        Case {
+            name: "XCHG AL,R16B partial exchange",
+            reg1: X86Reg::Rax,
+            reg2: X86Reg::R16,
+            width: OpWidth::W8,
+        },
+        Case {
+            name: "XCHG BPL,R17B partial exchange and saved-frame commit",
+            reg1: X86Reg::Rbp,
+            reg2: X86Reg::R17,
+            width: OpWidth::W8,
+        },
+        Case {
+            name: "XCHG SPL,BPL partial state-to-state exchange",
+            reg1: X86Reg::Rsp,
+            reg2: X86Reg::Rbp,
+            width: OpWidth::W8,
+        },
+        Case {
+            name: "XCHG R16B,R16B partial self exchange",
+            reg1: X86Reg::R16,
+            reg2: X86Reg::R16,
+            width: OpWidth::W8,
+        },
         Case {
             name: "XCHG AX,R16W partial exchange",
             reg1: X86Reg::Rax,
@@ -309,6 +348,10 @@ fn native_state_backed_gpr_xchg_preserves_widths_flags_and_host_stack() {
         let old_reg1 = regs.gpr[reg1_idx];
         let old_reg2 = regs.gpr[reg2_idx];
         match case.width {
+            OpWidth::W8 => {
+                expected.gpr[reg1_idx] = (old_reg1 & !0xFF) | (old_reg2 & 0xFF);
+                expected.gpr[reg2_idx] = (old_reg2 & !0xFF) | (old_reg1 & 0xFF);
+            }
             OpWidth::W16 => {
                 expected.gpr[reg1_idx] = (old_reg1 & !0xFFFF) | (old_reg2 & 0xFFFF);
                 expected.gpr[reg2_idx] = (old_reg2 & !0xFFFF) | (old_reg1 & 0xFFFF);

@@ -239,6 +239,7 @@ fn lower_xchg_covers_partial_full_and_eax_self_exchange_encodings() {
     let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
 
     for (width, expected) in [
+        (OpWidth::W8, &[0x41, 0x86, 0xC0][..]),
         (OpWidth::W16, &[0x66, 0x41, 0x90][..]),
         (OpWidth::W32, &[0x41, 0x90][..]),
         (OpWidth::W64, &[0x49, 0x90][..]),
@@ -264,11 +265,21 @@ fn lower_xchg_covers_partial_full_and_eax_self_exchange_encodings() {
         "EAX self-exchange must retain its zero-extending write: {eax_self:02X?}"
     );
 
+    let al_self = lower_single_op(OpKind::Xchg {
+        reg1: rax,
+        reg2: rax,
+        width: OpWidth::W8,
+    });
+    assert!(
+        al_self.windows(2).any(|bytes| bytes == [0x86, 0xC0]),
+        "AL self-exchange must retain its partial byte write: {al_self:02X?}"
+    );
+
     assert!(matches!(
         lower_single_op_err(OpKind::Xchg {
             reg1: rax,
             reg2: r8,
-            width: OpWidth::W8,
+            width: OpWidth::W128,
         }),
         LowerError::InvalidOperand { .. }
     ));

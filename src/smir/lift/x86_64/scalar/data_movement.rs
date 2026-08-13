@@ -36,6 +36,12 @@ impl X86_64Lifter {
         let width = self.size_to_width(op_size);
         let mem_width = self.size_to_memwidth(op_size);
         let modrm = decode_modrm(bytes, prefix, pc)?;
+        if prefix.lock && !modrm.is_memory {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
+            });
+        }
         if modrm.is_memory {
             let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
             let x86_addr = modrm.addr.as_ref().unwrap();
@@ -79,6 +85,28 @@ impl X86_64Lifter {
         }
 
         if is_byte {
+            // AH/CH/DH/BH have no standalone architectural-register identity
+            // in SMIR and must retain the explicit extract/merge graph below.
+            // Every other register form is an exact low-byte exchange and can
+            // use the canonical operation directly, including SPL/BPL/SIL/DIL,
+            // R8B-R15B, and REX2-addressed APX EGPR bytes.
+            if self.high_byte_base(modrm.rm, prefix).is_none()
+                && self.high_byte_base(modrm.reg, prefix).is_none()
+            {
+                return Ok(LiftResult::fallthrough(
+                    vec![SmirOp::new(
+                        OpId(0),
+                        pc,
+                        OpKind::Xchg {
+                            reg1: self.gpr(modrm.rm),
+                            reg2: self.gpr(modrm.reg),
+                            width: OpWidth::W8,
+                        },
+                    )],
+                    prefix.cursor + modrm.bytes_consumed,
+                ));
+            }
+
             let mut ops = Vec::new();
             let rm = self.read_byte_reg(modrm.rm, prefix, pc, ctx, &mut ops);
             let reg = self.read_byte_reg(modrm.reg, prefix, pc, ctx, &mut ops);

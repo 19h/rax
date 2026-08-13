@@ -1461,6 +1461,11 @@ fn xchg_gate_accepts_native_and_state_backed_register_shapes_and_rejects_unsafe_
         OpKind::Xchg {
             reg1: x86(X86Reg::Rax),
             reg2: x86(X86Reg::R8),
+            width: OpWidth::W8,
+        },
+        OpKind::Xchg {
+            reg1: x86(X86Reg::Rax),
+            reg2: x86(X86Reg::R8),
             width: OpWidth::W16,
         },
         OpKind::Xchg {
@@ -1472,6 +1477,11 @@ fn xchg_gate_accepts_native_and_state_backed_register_shapes_and_rejects_unsafe_
             reg1: x86(X86Reg::R15),
             reg2: x86(X86Reg::R14),
             width: OpWidth::W64,
+        },
+        OpKind::Xchg {
+            reg1: x86(X86Reg::Rax),
+            reg2: x86(X86Reg::Rsp),
+            width: OpWidth::W8,
         },
         OpKind::Xchg {
             reg1: x86(X86Reg::Rax),
@@ -1495,11 +1505,11 @@ fn xchg_gate_accepts_native_and_state_backed_register_shapes_and_rejects_unsafe_
 
     for (name, op) in [
         (
-            "byte width",
+            "vector width",
             OpKind::Xchg {
                 reg1: x86(X86Reg::Rax),
                 reg2: x86(X86Reg::Rcx),
-                width: OpWidth::W8,
+                width: OpWidth::W128,
             },
         ),
         (

@@ -127,6 +127,8 @@ mod vector_compare;
 pub use vector_compare::*;
 mod xop;
 pub use xop::*;
+mod xchg;
+pub(crate) use xchg::*;
 mod mmx;
 pub use mmx::*;
 mod mmx_memory;

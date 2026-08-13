@@ -532,7 +532,7 @@ pub(crate) fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) 
         }
         OpKind::Xchg { reg1, reg2, width } => {
             full_gpr_write(width)
-                || (matches!(width, OpWidth::W16)
+                || (matches!(width, OpWidth::W8 | OpWidth::W16)
                     && x86_aarch64_legacy_gpr(reg1)
                     && x86_aarch64_legacy_gpr(reg2))
         }

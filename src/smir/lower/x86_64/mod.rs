@@ -353,6 +353,7 @@ pub use xop::*;
 mod state;
 pub use state::*;
 mod state_tbm;
+mod state_xchg;
 pub use state_tbm::*;
 mod state_alu;
 pub use state_alu::*;
@@ -1322,7 +1323,7 @@ pub(crate) fn x86_state_backed_gpr_xchg_valid(op: &SmirOp) -> bool {
         OpKind::Xchg {
             reg1: VReg::Arch(ArchReg::X86(reg1)),
             reg2: VReg::Arch(ArchReg::X86(reg2)),
-            width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+            width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
         } if x86_state_backed_gpr_xchg_candidate(op)
             && op.x86_hint.is_none()
             && reg1.gpr_index().is_some()
