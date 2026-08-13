@@ -1978,6 +1978,28 @@ impl RiscVCpu {
         let vstart = self.vstart as usize;
         let vl = self.vl as usize;
 
+        // A masked vector instruction (vm=0) reads the mask from v0, so a
+        // destination group starting at v0 is a reserved encoding (RVV §5.3).
+        // Instructions that read v0 as a real operand (vadc/vsbc/vmadc/vmsbc,
+        // vcompress) are validated separately below.
+        if !vm
+            && vd == 0
+            && !matches!(
+                insn.op,
+                Op::Vadc
+                    | Op::Vsbc
+                    | Op::Vmadc
+                    | Op::Vmsbc
+                    | Op::Vcompress
+                    | Op::Viota
+                    | Op::Vmsbf
+                    | Op::Vmsif
+                    | Op::Vmsof
+            )
+        {
+            return Err(Trap::illegal(insn.raw));
+        }
+
         match insn.op {
             Op::Vle
             | Op::Vse
@@ -5890,6 +5912,28 @@ mod tests {
         assert!(matches!(
             run_one(&mut c, op_v(0b010010, 1, 2, 0b10100, 0b001, 1)),
             RiscVExit::Trap(_)
+        ));
+    }
+
+    #[test]
+    fn masked_vd_v0_is_illegal() {
+        // RVV §5.3: a masked (vm=0) vector instruction whose destination
+        // group overlaps the mask register v0 is a reserved encoding,
+        // because the mask is read from v0 while vd is being written.
+        // vadd.vv v0, v1, v2, v0.t (vm=0, vd=0) must trap...
+        assert!(matches!(
+            run_one(&mut cpu_e8m1(), op_v(0b000000, 0, 2, 1, 0b000, 0)),
+            RiscVExit::Trap(_)
+        ));
+        // ...while the unmasked form (vm=1) and a masked form with vd != v0
+        // both execute normally.
+        assert!(matches!(
+            run_one(&mut cpu_e8m1(), op_v(0b000000, 1, 2, 1, 0b000, 0)),
+            RiscVExit::Continue
+        ));
+        assert!(matches!(
+            run_one(&mut cpu_e8m1(), op_v(0b000000, 0, 2, 1, 0b000, 1)),
+            RiscVExit::Continue
         ));
     }
 
