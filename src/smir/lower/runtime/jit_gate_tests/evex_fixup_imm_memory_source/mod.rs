@@ -228,6 +228,9 @@ fn stack_encoding(
         immediate,
     );
     encoding[1] |= 0x20;
+    if scalar {
+        encoding[3] &= !0x60;
+    }
     [
         encoding[0],
         encoding[1],
@@ -720,7 +723,11 @@ fn scalar_fixup_llig_accepts_all_four_values_and_reserves_memory_sae() {
         let X86EvexFixupImmMemoryReplay::Scalar { stack_instruction } = encoding.replay else {
             panic!("{bytes:02X?}: scalar selected non-scalar replay")
         };
-        assert_eq!(stack_instruction.as_slice()[3], bytes[3]);
+        assert_eq!(
+            stack_instruction.as_slice()[3],
+            bytes[3] & !0x60,
+            "guest LLIG must be accepted but canonicalized for hosted replay"
+        );
 
         let mut reserved_memory_sae = bytes;
         reserved_memory_sae[3] |= 0x10;

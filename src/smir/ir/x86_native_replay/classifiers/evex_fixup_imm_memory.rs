@@ -99,8 +99,11 @@ impl X86InstructionBytes {
     /// and binary64. Packed L'L selects 128/256/512 bits and memory EVEX.b
     /// selects m32bcst/m64bcst. Scalar L'L is ignored, including 11B, while
     /// scalar memory EVEX.b is reserved because scalar instructions do not
-    /// support broadcast and SAE applies only to register sources. Every form
-    /// carries an unconstrained imm8 response/reporting control.
+    /// support broadcast and SAE applies only to register sources. Scalar
+    /// helper replay canonicalizes LLIG to L'L=00B: this preserves the guest
+    /// semantics while avoiding processor-specific #UD behavior for ignored
+    /// values in a newly emitted hosted instruction. Every form carries an
+    /// unconstrained imm8 response/reporting control.
     ///
     /// Segment/address-size prefixes and APX B4/X4 extensions remain confined
     /// to helper address evaluation. Rewrites therefore remove those address
@@ -184,8 +187,10 @@ impl X86InstructionBytes {
                 (p0 & 0x97) | 0x60,
                 // Preserve W/vvvv/pp and restore the ordinary EVEX.U bit.
                 p1 | 0x04,
-                // Preserve z, L'L, b, V', and aaa exactly.
-                p2,
+                // Preserve every meaningful control. Scalar L'L is ignored by
+                // the guest ISA, so canonicalize it for hosted replay; packed
+                // L'L still selects the architectural vector width.
+                if scalar { p2 & !0x60 } else { p2 },
                 opcode,
                 (modrm & 0x38) | 0x04,
                 0x24,
