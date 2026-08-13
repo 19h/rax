@@ -302,8 +302,9 @@ pub(crate) use legacy_aes::{X86LegacyAesReplay, x86_legacy_aes_shape_virtual_req
 pub(crate) use legacy_blend::{X86LegacyBlendReplay, x86_legacy_blend_shape_virtual_requirements};
 pub(crate) use legacy_high_byte::{
     X86LegacyHighByteCrc32Replay, X86LegacyHighByteGroup2Kind, X86LegacyHighByteGroup2Replay,
-    X86LegacyHighByteMultiplyKind, X86LegacyHighByteMultiplyReplay,
+    X86LegacyHighByteMultiplyKind, X86LegacyHighByteMultiplyReplay, X86LegacyHighByteSetccReplay,
     x86_legacy_high_byte_crc32_shape_temporary, x86_legacy_high_byte_multiply_shape_temporary,
+    x86_legacy_high_byte_setcc_shape_virtual_requirements,
 };
 pub(crate) use legacy_sha::{X86LegacyShaReplay, x86_legacy_sha_shape_virtual_requirements};
 pub(crate) use packed_move::{X86EvexPackedMoveMemoryEncoding, X86EvexPackedMoveMemoryKind};

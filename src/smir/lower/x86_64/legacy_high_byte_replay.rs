@@ -288,6 +288,16 @@ impl X86_64Lowerer {
         &mut self,
         span: &X86NativeReplaySpan,
     ) -> Result<bool, LowerError> {
+        if let Some(replay) = span.instruction.legacy_high_byte_setcc_replay() {
+            // Intel defines ModR/M.reg as ignored and the operand as fixed at
+            // 8 bits. Use the validated prefix-free /0 equivalent because
+            // some translated x86-64 hosts raise #UD for redundant prefixes
+            // or nonzero reg images even though they are architecturally valid.
+            self.code
+                .emit_bytes(replay.canonical_instruction.as_slice());
+            return Ok(true);
+        }
+
         if let Some(replay) = span.instruction.legacy_high_byte_crc32_replay() {
             if matches!(replay.destination, 4 | 5) {
                 self.emit_legacy_high_byte_crc32_replay(replay);

@@ -179,6 +179,194 @@ fn legacy_high_byte_replay_admits_and_emits_each_documented_family_at_o0_o1_o2()
     assert_eq!(lowered, cases.len() * 3);
 }
 
+const SETCC_SCANNER_PREFIXES: &[&[u8]] =
+    &[&[], &[0x66], &[0xF2], &[0xF3], &[0x67], &[0x64], &[0x65]];
+
+#[test]
+fn all_10752_high_byte_setcc_scanner_graphs_admit_and_emit_at_every_opt_level() {
+    let mut encodings = 0usize;
+    let mut profiles = 0usize;
+    for prefix in SETCC_SCANNER_PREFIXES {
+        for opcode in 0x90u8..=0x9F {
+            for ignored_reg in 0u8..8 {
+                for rm in 4u8..8 {
+                    let mut bytes = prefix.to_vec();
+                    bytes.extend([0x0F, opcode, 0xC0 | (ignored_reg << 3) | rm]);
+                    let instruction = X86InstructionBytes::new(&bytes).unwrap();
+                    let replay = instruction
+                        .legacy_high_byte_setcc_replay()
+                        .unwrap_or_else(|| panic!("{bytes:02X?}"));
+                    assert_eq!(replay.parent, rm - 4, "{bytes:02X?}");
+                    let canonical = [0x0F, opcode, 0xC0 | rm];
+                    assert_eq!(
+                        replay.canonical_instruction.as_slice(),
+                        canonical,
+                        "{bytes:02X?}"
+                    );
+
+                    for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+                        let mut function = function(&bytes);
+                        optimize_function(&mut function, level);
+                        assert_eq!(function.blocks[0].ops.len(), 5, "{bytes:02X?} {level:?}");
+                        for spans in [
+                            crate::smir::ir::x86_legacy_high_byte_replay_spans(
+                                &function.blocks[0],
+                                &function.x86_instruction_bytes,
+                            ),
+                            crate::smir::ir::x86_native_replay_spans(
+                                &function.blocks[0],
+                                &function.x86_instruction_bytes,
+                            ),
+                        ] {
+                            let span = spans
+                                .get(&0)
+                                .unwrap_or_else(|| panic!("{bytes:02X?} {level:?}"));
+                            assert_eq!(span.end, 5, "{bytes:02X?} {level:?}");
+                            assert_eq!(span.instruction, instruction, "{bytes:02X?} {level:?}");
+                        }
+                        assert!(is_native_clobber_safe(&function), "{bytes:02X?} {level:?}");
+
+                        let mut lowerer = X86_64Lowerer::new();
+                        lowerer
+                            .lower_function(&function)
+                            .unwrap_or_else(|error| panic!("{bytes:02X?} {level:?}: {error:?}"));
+                        let code = lowerer.finalize().unwrap();
+                        assert!(
+                            code.windows(canonical.len())
+                                .any(|window| window == canonical),
+                            "canonical SETcc replay absent for {bytes:02X?} {level:?}: {code:02X?}"
+                        );
+                        profiles += 1;
+                    }
+                    encodings += 1;
+                }
+            }
+        }
+    }
+    assert_eq!(encodings, 7 * 16 * 8 * 4);
+    assert_eq!(profiles, 3 * 7 * 16 * 8 * 4);
+}
+
+fn assert_high_byte_setcc_rejected(function: &SmirFunction, label: &str) {
+    assert!(
+        crate::smir::ir::x86_legacy_high_byte_replay_spans(
+            &function.blocks[0],
+            &function.x86_instruction_bytes,
+        )
+        .is_empty(),
+        "family selector admitted {label}"
+    );
+    assert!(
+        crate::smir::ir::x86_native_replay_spans(
+            &function.blocks[0],
+            &function.x86_instruction_bytes,
+        )
+        .is_empty(),
+        "aggregate selector admitted {label}"
+    );
+    assert!(!is_native_clobber_safe(function), "gate admitted {label}");
+}
+
+#[test]
+fn high_byte_setcc_replay_rejects_graph_provenance_and_ssa_mutations() {
+    let base = function(&[0x0F, 0x96, 0xCC]); // ignored reg=1, SETBE AH
+    assert_eq!(base.blocks[0].ops.len(), 5);
+
+    let mut condition = base.clone();
+    let OpKind::SetCC { cond, .. } = &mut condition.blocks[0].ops[0].kind else {
+        unreachable!()
+    };
+    *cond = Condition::Sgt;
+    assert_high_byte_setcc_rejected(&condition, "condition");
+
+    let mut set_width = base.clone();
+    let OpKind::SetCC { width, .. } = &mut set_width.blocks[0].ops[0].kind else {
+        unreachable!()
+    };
+    *width = OpWidth::W64;
+    assert_high_byte_setcc_rejected(&set_width, "SETcc width");
+
+    let mut set_hint = base.clone();
+    set_hint.blocks[0].ops[0].x86_hint = Some(X86OpHint::Mulx);
+    assert_high_byte_setcc_rejected(&set_hint, "SETcc hint");
+
+    let mut byte_mask = base.clone();
+    let OpKind::And { src2, .. } = &mut byte_mask.blocks[0].ops[1].kind else {
+        unreachable!()
+    };
+    *src2 = SrcOperand::Imm(0x7F);
+    assert_high_byte_setcc_rejected(&byte_mask, "byte mask");
+
+    let mut byte_flags = base.clone();
+    let OpKind::And { flags, .. } = &mut byte_flags.blocks[0].ops[1].kind else {
+        unreachable!()
+    };
+    *flags = FlagUpdate::All;
+    assert_high_byte_setcc_rejected(&byte_flags, "byte-mask flags");
+
+    let mut shift = base.clone();
+    let OpKind::Shl { amount, .. } = &mut shift.blocks[0].ops[2].kind else {
+        unreachable!()
+    };
+    *amount = SrcOperand::Imm(7);
+    assert_high_byte_setcc_rejected(&shift, "high-byte shift");
+
+    let mut parent = base.clone();
+    let OpKind::And { src1, .. } = &mut parent.blocks[0].ops[3].kind else {
+        unreachable!()
+    };
+    *src1 = x86(X86Reg::Rcx);
+    assert_high_byte_setcc_rejected(&parent, "preserved parent");
+
+    let mut parent_mask = base.clone();
+    let OpKind::And { src2, .. } = &mut parent_mask.blocks[0].ops[3].kind else {
+        unreachable!()
+    };
+    *src2 = SrcOperand::Imm(!0xFFFFu64 as i64);
+    assert_high_byte_setcc_rejected(&parent_mask, "parent mask");
+
+    let mut merge = base.clone();
+    let OpKind::Or { dst, .. } = &mut merge.blocks[0].ops[4].kind else {
+        unreachable!()
+    };
+    *dst = x86(X86Reg::Rcx);
+    assert_high_byte_setcc_rejected(&merge, "merge destination");
+
+    let mut extra = base.clone();
+    let mut op = extra.blocks[0].ops[4].clone();
+    op.id = crate::smir::ir::types::OpId(5);
+    extra.blocks[0].ops.push(op);
+    assert_high_byte_setcc_rejected(&extra, "extra same-PC operation");
+
+    let mut wrong_opcode = base.clone();
+    wrong_opcode.x86_instruction_bytes.insert(
+        (BlockId(0), PC),
+        X86InstructionBytes::new(&[0x0F, 0x9F, 0xCC]).unwrap(),
+    );
+    assert_high_byte_setcc_rejected(&wrong_opcode, "condition provenance");
+
+    let mut wrong_parent = base.clone();
+    wrong_parent.x86_instruction_bytes.insert(
+        (BlockId(0), PC),
+        X86InstructionBytes::new(&[0x0F, 0x96, 0xCD]).unwrap(),
+    );
+    assert_high_byte_setcc_rejected(&wrong_parent, "parent provenance");
+
+    let mut missing = base.clone();
+    missing.x86_instruction_bytes.clear();
+    assert_high_byte_setcc_rejected(&missing, "missing provenance");
+
+    let condition_value = match base.blocks[0].ops[0].kind {
+        OpKind::SetCC { dst, .. } => dst,
+        _ => unreachable!(),
+    };
+    let mut escaped = base;
+    escaped.blocks[0].terminator = Terminator::Return {
+        values: vec![condition_value],
+    };
+    assert_high_byte_setcc_rejected(&escaped, "escaped SETcc temporary");
+}
+
 #[test]
 fn all_56_scanner_high_byte_multiply_cells_admit_at_every_opt_level() {
     const PREFIXES: &[&[u8]] = &[&[], &[0x66], &[0xF2], &[0xF3], &[0x67], &[0x64], &[0x65]];

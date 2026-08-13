@@ -429,6 +429,126 @@ fn jit_legacy_high_byte_replay_matches_direct_for_aliases_flags_and_prefixes() {
     }
 }
 
+fn setcc_condition_holds(opcode: u8, rflags: u64) -> bool {
+    let cf = rflags & (1 << 0) != 0;
+    let pf = rflags & (1 << 2) != 0;
+    let zf = rflags & (1 << 6) != 0;
+    let sf = rflags & (1 << 7) != 0;
+    let of = rflags & (1 << 11) != 0;
+    match opcode {
+        0x90 => of,
+        0x91 => !of,
+        0x92 => cf,
+        0x93 => !cf,
+        0x94 => zf,
+        0x95 => !zf,
+        0x96 => cf || zf,
+        0x97 => !cf && !zf,
+        0x98 => sf,
+        0x99 => !sf,
+        0x9A => pf,
+        0x9B => !pf,
+        0x9C => sf != of,
+        0x9D => sf == of,
+        0x9E => zf || sf != of,
+        0x9F => !zf && sf == of,
+        _ => unreachable!("not a SETcc opcode: {opcode:02X}"),
+    }
+}
+
+fn status_image(selector: usize) -> u64 {
+    [0u8, 2, 4, 6, 7, 11]
+        .into_iter()
+        .enumerate()
+        .fold(0, |flags, (index, bit)| {
+            flags | (((selector >> index) & 1) as u64) << bit
+        })
+}
+
+#[test]
+fn jit_high_byte_setcc_exhausts_all_3584_scanner_images_and_status_truth_table() {
+    const PREFIXES: &[&[u8]] = &[&[], &[0x66], &[0xF2], &[0xF3], &[0x67], &[0x64], &[0x65]];
+    let mut cases = 0usize;
+    let mut newly_admitted = 0usize;
+
+    for (prefix_index, prefix) in PREFIXES.iter().enumerate() {
+        for opcode in 0x90u8..=0x9F {
+            for ignored_reg in 0u8..8 {
+                for rm in 4u8..8 {
+                    let mut instruction = prefix.to_vec();
+                    instruction.extend([0x0F, opcode, 0xC0 | (ignored_reg << 3) | rm]);
+                    let selector =
+                        prefix_index * 32 + usize::from(ignored_reg) * 4 + usize::from(rm - 4);
+                    let rflags =
+                        0x2 | (1 << 10) | ((selector as u64 & 1) << 18) | status_image(selector);
+                    let mut code = instruction.clone();
+                    code.push(0xF4);
+
+                    let (mut direct, _) = make_vcpu_mem(&code);
+                    let initial = seed(
+                        &mut direct,
+                        0x0123_4567_89AB_CDEF,
+                        0x1357_9BDF_2468_ACE0,
+                        rflags,
+                    );
+                    assert!(
+                        direct.step().unwrap().is_none(),
+                        "direct {instruction:02X?} flags={rflags:04X}"
+                    );
+                    let direct_regs = direct.get_regs().unwrap();
+
+                    let mut expected_gprs = legacy_gprs(&initial);
+                    let parent = usize::from(rm - 4);
+                    expected_gprs[parent] = (expected_gprs[parent] & !0xFF00)
+                        | (u64::from(setcc_condition_holds(opcode, rflags)) << 8);
+                    assert_eq!(
+                        legacy_gprs(&direct_regs),
+                        expected_gprs,
+                        "direct/manual {instruction:02X?} flags={rflags:04X}"
+                    );
+                    assert_eq!(
+                        direct_regs.rflags, initial.rflags,
+                        "direct flags {instruction:02X?}"
+                    );
+
+                    let (mut jit, _) = make_vcpu_mem(&code);
+                    seed(
+                        &mut jit,
+                        0x0123_4567_89AB_CDEF,
+                        0x1357_9BDF_2468_ACE0,
+                        rflags,
+                    );
+                    jit.set_jit_call(false);
+                    jit.set_jit_mem(false);
+                    assert!(
+                        jit.jit_try_block().unwrap(),
+                        "native admission {instruction:02X?}:\n{}",
+                        jit.jit_dump_region(LOAD_ADDR)
+                    );
+                    let actual = jit.get_regs().unwrap();
+                    assert_eq!(
+                        legacy_gprs(&actual),
+                        expected_gprs,
+                        "JIT/manual {instruction:02X?} flags={rflags:04X}"
+                    );
+                    assert_eq!(
+                        actual.rflags, initial.rflags,
+                        "JIT flags {instruction:02X?}"
+                    );
+                    assert_eq!(actual.rip, direct_regs.rip, "JIT RIP {instruction:02X?}");
+                    assert_eq!(actual.xmm, direct_regs.xmm, "JIT XMM {instruction:02X?}");
+                    assert_eq!(actual.mm, direct_regs.mm, "JIT MMX {instruction:02X?}");
+                    cases += 1;
+                    newly_admitted += usize::from(ignored_reg != 0);
+                }
+            }
+        }
+    }
+
+    assert_eq!(cases, 7 * 16 * 8 * 4);
+    assert_eq!(newly_admitted, 7 * 16 * 7 * 4);
+}
+
 #[test]
 fn jit_legacy_high_byte_replay_matches_direct_for_every_admitted_register_cell() {
     let rax = 0x0123_4567_89AB_CDEF;
@@ -479,10 +599,12 @@ fn jit_legacy_high_byte_replay_matches_direct_for_every_admitted_register_cell()
     }
 
     for opcode in 0x90u8..=0x9F {
-        for rm in 4u8..8 {
-            let bytes = [0x0F, opcode, 0xC0 | rm];
-            compare_direct_and_jit(&format!("{bytes:02X?}"), &bytes, rax);
-            cases += 1;
+        for ignored_reg in 0u8..8 {
+            for rm in 4u8..8 {
+                let bytes = [0x0F, opcode, 0xC0 | (ignored_reg << 3) | rm];
+                compare_direct_and_jit(&format!("{bytes:02X?}"), &bytes, rax);
+                cases += 1;
+            }
         }
     }
 
@@ -521,7 +643,7 @@ fn jit_legacy_high_byte_replay_matches_direct_for_every_admitted_register_cell()
         }
     }
 
-    assert_eq!(cases, 3_004);
+    assert_eq!(cases, 3_452);
 }
 
 #[test]

@@ -3,7 +3,7 @@
 use super::X86InstructionBytes;
 use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, SmirOp};
-use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg, X86Reg};
+use crate::smir::ir::types::{ArchReg, Condition, OpWidth, SrcOperand, VReg, X86Reg};
 
 /// Documented legacy Group 2 operation selected by a byte-validated
 /// AH/CH/DH/BH register encoding.
@@ -62,6 +62,22 @@ pub(crate) struct X86LegacyHighByteCrc32Replay {
     /// ESP/EBP destinations use this form inside a state-backed wrapper so the
     /// native host stack and frame pointers are never exposed.
     pub(crate) state_backed_instruction: X86InstructionBytes,
+}
+
+/// Semantic identity of one register-only legacy `SETcc` whose destination is
+/// AH, CH, DH, or BH. Intel specifies the ModR/M.reg field as unused and
+/// ignored, so it is deliberately absent from the semantic metadata.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86LegacyHighByteSetccReplay {
+    pub(crate) condition: Condition,
+    /// Architectural destination-parent GPR index: RAX=0, RCX=1, RDX=2,
+    /// RBX=3.
+    pub(crate) parent: u8,
+    /// Semantically equivalent prefix-free source image with the ignored
+    /// ModR/M.reg field canonicalized to zero. Some translated x86-64 hosts
+    /// raise #UD for architecturally valid redundant-prefix or nonzero-reg
+    /// images.
+    pub(crate) canonical_instruction: X86InstructionBytes,
 }
 
 fn legacy_prefix_len(bytes: &[u8]) -> Option<usize> {
@@ -167,6 +183,101 @@ pub(crate) fn x86_legacy_high_byte_crc32_shape_temporary(
     (crc32.x86_hint.is_none() && shape_matches).then_some(temporary)
 }
 
+/// Validate the exact SETcc-plus-high-byte-merge graph emitted for an
+/// AH/CH/DH/BH destination. The returned virtuals must each have one
+/// definition and one use across the complete block before exact source replay
+/// is safe.
+pub(crate) fn x86_legacy_high_byte_setcc_shape_virtual_requirements(
+    ops: &[SmirOp],
+    replay: X86LegacyHighByteSetccReplay,
+) -> Option<[(VReg, usize); 4]> {
+    let [setcc, mask_byte, shift_byte, preserve_parent, merge] = ops else {
+        return None;
+    };
+    if ops.iter().any(|op| op.x86_hint.is_some()) {
+        return None;
+    }
+
+    let condition_value = match &setcc.kind {
+        OpKind::SetCC {
+            dst: temporary @ VReg::Virtual(_),
+            cond,
+            width: OpWidth::W8,
+        } if *cond == replay.condition => *temporary,
+        _ => return None,
+    };
+    let byte = match &mask_byte.kind {
+        OpKind::And {
+            dst: temporary @ VReg::Virtual(_),
+            src1,
+            src2: SrcOperand::Imm(0xFF),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } if *src1 == condition_value => *temporary,
+        _ => return None,
+    };
+    let shifted = match &shift_byte.kind {
+        OpKind::Shl {
+            dst: temporary @ VReg::Virtual(_),
+            src,
+            amount: SrcOperand::Imm(8),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } if *src == byte => *temporary,
+        _ => return None,
+    };
+    let preserved = match &preserve_parent.kind {
+        OpKind::And {
+            dst: temporary @ VReg::Virtual(_),
+            src1: VReg::Arch(ArchReg::X86(parent)),
+            src2: SrcOperand::Imm(mask),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } if parent.gpr_index() == Some(replay.parent) && *mask == !0xFF00u64 as i64 => *temporary,
+        _ => return None,
+    };
+    let shape_matches = matches!(
+        &merge.kind,
+        OpKind::Or {
+            dst: VReg::Arch(ArchReg::X86(destination)),
+            src1,
+            src2: SrcOperand::Reg(source),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } if destination.gpr_index() == Some(replay.parent)
+            && *src1 == preserved
+            && *source == shifted
+    );
+    shape_matches.then_some([
+        (condition_value, 1),
+        (byte, 1),
+        (shifted, 1),
+        (preserved, 1),
+    ])
+}
+
+fn setcc_condition(opcode: u8) -> Option<Condition> {
+    Some(match opcode {
+        0x90 => Condition::Overflow,
+        0x91 => Condition::NoOverflow,
+        0x92 => Condition::Ult,
+        0x93 => Condition::Uge,
+        0x94 => Condition::Eq,
+        0x95 => Condition::Ne,
+        0x96 => Condition::Ule,
+        0x97 => Condition::Ugt,
+        0x98 => Condition::Negative,
+        0x99 => Condition::Positive,
+        0x9A => Condition::Parity,
+        0x9B => Condition::NoParity,
+        0x9C => Condition::Slt,
+        0x9D => Condition::Sge,
+        0x9E => Condition::Sle,
+        0x9F => Condition::Sgt,
+        _ => return None,
+    })
+}
+
 impl X86InstructionBytes {
     /// Validate one baseline scalar instruction whose register-only byte
     /// encoding names AH, CH, DH, or BH.
@@ -190,6 +301,7 @@ impl X86InstructionBytes {
         if self.legacy_high_byte_group2_replay().is_some()
             || self.legacy_high_byte_multiply_replay().is_some()
             || self.legacy_high_byte_crc32_replay().is_some()
+            || self.legacy_high_byte_setcc_replay().is_some()
         {
             return true;
         }
@@ -246,12 +358,27 @@ impl X86InstructionBytes {
                 let _ = opcode;
                 register_fields(*modrm).is_some_and(|(reg, rm)| is_high(reg) || is_high(rm))
             }
-            [0x0F, opcode @ 0x90..=0x9F, modrm] => {
-                let _ = opcode;
-                register_fields(*modrm).is_some_and(|(extension, rm)| extension == 0 && is_high(rm))
-            }
             _ => false,
         }
+    }
+
+    /// Decode one register-only legacy `SETcc` whose destination is AH, CH,
+    /// DH, or BH. The ModR/M.reg bits are intentionally not constrained: Intel
+    /// defines them as unused and ignored for all 16 condition opcodes.
+    pub(crate) fn legacy_high_byte_setcc_replay(&self) -> Option<X86LegacyHighByteSetccReplay> {
+        let bytes = self.as_slice();
+        let start = legacy_prefix_len(bytes)?;
+        let [0x0F, opcode, modrm] = &bytes[start..] else {
+            return None;
+        };
+        if modrm >> 6 != 3 || modrm & 7 < 4 {
+            return None;
+        }
+        Some(X86LegacyHighByteSetccReplay {
+            condition: setcc_condition(*opcode)?,
+            parent: (modrm & 7) - 4,
+            canonical_instruction: X86InstructionBytes::new(&[0x0F, *opcode, 0xC0 | (modrm & 7)])?,
+        })
     }
 
     /// Decode one byte-validated implicit unsigned or signed multiply (`F6 /4`
@@ -456,7 +583,7 @@ mod tests {
                     for rm in 0u8..8 {
                         let mut bytes = prefix.to_vec();
                         bytes.extend([0x0F, opcode, 0xC0 | (extension << 3) | rm]);
-                        let expected = extension == 0 && rm >= 4;
+                        let expected = rm >= 4;
                         assert_eq!(
                             X86InstructionBytes::new(&bytes)
                                 .unwrap()
@@ -514,7 +641,69 @@ mod tests {
                 }
             }
         }
-        assert_eq!(accepted, 13_752);
+        assert_eq!(accepted, 16_440);
+    }
+
+    #[test]
+    fn setcc_classifier_exhausts_conditions_ignored_reg_bits_prefixes_and_high_bytes() {
+        const PREFIXES: &[&[u8]] = &[&[], &[0x66], &[0xF2], &[0xF3], &[0x67], &[0x64], &[0x65]];
+        const CONDITIONS: [Condition; 16] = [
+            Condition::Overflow,
+            Condition::NoOverflow,
+            Condition::Ult,
+            Condition::Uge,
+            Condition::Eq,
+            Condition::Ne,
+            Condition::Ule,
+            Condition::Ugt,
+            Condition::Negative,
+            Condition::Positive,
+            Condition::Parity,
+            Condition::NoParity,
+            Condition::Slt,
+            Condition::Sge,
+            Condition::Sle,
+            Condition::Sgt,
+        ];
+
+        let mut admitted = 0usize;
+        for prefix in PREFIXES {
+            for (condition_code, condition) in CONDITIONS.into_iter().enumerate() {
+                for ignored_reg in 0u8..8 {
+                    for rm in 0u8..8 {
+                        let mut bytes = prefix.to_vec();
+                        bytes.extend([
+                            0x0F,
+                            0x90 | condition_code as u8,
+                            0xC0 | (ignored_reg << 3) | rm,
+                        ]);
+                        let instruction = X86InstructionBytes::new(&bytes).unwrap();
+                        let expected = (rm >= 4).then(|| X86LegacyHighByteSetccReplay {
+                            condition,
+                            parent: rm - 4,
+                            canonical_instruction: X86InstructionBytes::new(&[
+                                0x0F,
+                                0x90 | condition_code as u8,
+                                0xC0 | rm,
+                            ])
+                            .unwrap(),
+                        });
+                        assert_eq!(
+                            instruction.legacy_high_byte_setcc_replay(),
+                            expected,
+                            "{bytes:02X?}"
+                        );
+                        assert_eq!(
+                            instruction.is_legacy_high_byte_register_replay(),
+                            expected.is_some(),
+                            "{bytes:02X?}"
+                        );
+                        admitted += usize::from(expected.is_some());
+                    }
+                }
+            }
+        }
+        assert_eq!(admitted, 7 * 16 * 8 * 4);
     }
 
     #[test]
@@ -716,7 +905,11 @@ mod tests {
             &[0x40, 0xB4, 0x01][..],                   // REX selects SPL, not AH
             &[0xF0, 0xB4, 0x01][..],                   // LOCK is #UD
             &[0xB4, 0x01, 0x00][..],                   // trailing byte
-            &[0x0F, 0x96, 0xCC][..],                   // SETcc requires /0
+            &[0x0F, 0x96][..],                         // truncated SETcc
+            &[0x0F, 0x96, 0x04][..],                   // SETcc memory form
+            &[0x40, 0x0F, 0x96, 0xC4][..],             // REX selects SPL
+            &[0xF0, 0x0F, 0x96, 0xC4][..],             // LOCK is #UD
+            &[0x0F, 0x96, 0xC4, 0x00][..],             // trailing byte
             &[0x0F, 0xB0, 0x35][..],                   // CMPXCHG memory form
             &[0x0F, 0xC0, 0xFC, 0x00][..],             // trailing byte
             &[0x0F, 0x38, 0xF0, 0xC4][..],             // CRC32 mandatory F2 absent

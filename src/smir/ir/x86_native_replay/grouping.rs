@@ -107,6 +107,7 @@ pub(super) fn x86_native_replay_spans_where(
             let source_instruction = *instruction_bytes.get(&(block.id, guest_pc))?;
             let high_byte_multiply = source_instruction.legacy_high_byte_multiply_replay();
             let high_byte_crc32 = source_instruction.legacy_high_byte_crc32_replay();
+            let high_byte_setcc = source_instruction.legacy_high_byte_setcc_replay();
             let replay_source = high_byte_multiply
                 .map(|replay| replay.canonical_instruction)
                 .unwrap_or(source_instruction);
@@ -142,6 +143,22 @@ pub(super) fn x86_native_replay_spans_where(
                     || virtual_uses.get(&temporary) != Some(&1)
                 {
                     return None;
+                }
+            }
+            if let Some(replay) = high_byte_setcc {
+                let requirements =
+                    classifiers::x86_legacy_high_byte_setcc_shape_virtual_requirements(
+                        &block.ops[start..end],
+                        replay,
+                    )?;
+                let (virtual_definitions, virtual_uses) =
+                    virtual_counts.get_or_init(|| block_virtual_definition_use_counts(block));
+                for (temporary, expected_uses) in requirements {
+                    if virtual_definitions.get(&temporary) != Some(&1)
+                        || virtual_uses.get(&temporary) != Some(&expected_uses)
+                    {
+                        return None;
+                    }
                 }
             }
             if let Some(replay) = source_instruction.legacy_register_aes_replay() {
