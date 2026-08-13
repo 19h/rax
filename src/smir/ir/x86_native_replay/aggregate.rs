@@ -28,6 +28,12 @@ pub fn x86_native_replay_spans(
         {
             return Some((false, false, false));
         }
+        if instruction
+            .legacy_register_scalar_fp_convert_replay()
+            .is_some()
+        {
+            return Some((false, false, false));
+        }
         if instruction.legacy_register_packed_extend_replay().is_some() {
             return Some((false, false, false));
         }

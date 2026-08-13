@@ -51,6 +51,23 @@ pub fn x86_legacy_packed_fp_convert_replay_spans(
     })
 }
 
+/// Identify exact register-only legacy SSE/SSE2 scalar conversion semantic
+/// groups: `CVTSI2SS`, `CVTSI2SD`, `CVTSS2SI`, `CVTSD2SI`, `CVTTSS2SI`,
+/// `CVTTSD2SI`, `CVTSS2SD`, and `CVTSD2SS`, including both integer widths.
+/// Every form observes XMM state and therefore uses the AVX YMM0-YMM15 bridge.
+/// Construction is O(N) time and O(P) space for N operations and P unique
+/// guest PCs.
+pub fn x86_legacy_scalar_fp_convert_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .legacy_register_scalar_fp_convert_replay()
+            .map(|_| (false, false, false))
+    })
+}
+
 /// Identify exact register-only legacy SSE4.1 packed sign/zero-extension
 /// semantic groups. Legacy PMOVSX*/PMOVZX* preserve shared vector state above
 /// bit 127, so replay uses the AVX YMM0-YMM15 state bridge without requiring

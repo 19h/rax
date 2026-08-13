@@ -69,6 +69,24 @@ impl X86_64Lowerer {
             }
             return Ok(());
         }
+        if let Some(replay) = span.instruction.legacy_register_scalar_fp_convert_replay() {
+            if let Some(destination @ (4 | 5)) = replay.gpr_destination() {
+                let rewritten = span
+                    .instruction
+                    .legacy_scalar_fp_to_int_with_destination_rax()
+                    .expect("validated legacy scalar FP-to-integer must rewrite to RAX");
+                self.emit_state_backed_gpr_replay(&rewritten, destination);
+            } else if let Some(source @ (4 | 5)) = replay.gpr_source() {
+                let rewritten = span
+                    .instruction
+                    .legacy_scalar_int_to_fp_with_source_rax()
+                    .expect("validated legacy scalar integer-to-FP must rewrite to RAX");
+                self.emit_state_backed_gpr_source_replay(&rewritten, source);
+            } else {
+                self.code.emit_bytes(span.instruction.as_slice());
+            }
+            return Ok(());
+        }
         if let Some(destination) = span.instruction.vex_scalar_extract_destination_index()
             && matches!(destination, 4 | 5)
         {

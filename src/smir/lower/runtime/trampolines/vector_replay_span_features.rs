@@ -32,6 +32,10 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             .instruction
             .legacy_register_packed_fp_convert_replay()
             .is_some();
+        let legacy_scalar_fp_convert = span
+            .instruction
+            .legacy_register_scalar_fp_convert_replay()
+            .is_some();
         let legacy_packed_extend = span
             .instruction
             .legacy_register_packed_extend_replay()
@@ -107,6 +111,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
         *all_spans_support_avx_ymm16 &= legacy_aes
             || legacy_blend
             || legacy_packed_fp_convert
+            || legacy_scalar_fp_convert
             || legacy_packed_extend
             || legacy_widening_dword_multiply.is_some()
             || legacy_fp_flag_compare
@@ -152,6 +157,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
         requirements.needs_avx |= legacy_aes
             || legacy_blend
             || legacy_packed_fp_convert
+            || legacy_scalar_fp_convert
             || legacy_packed_extend
             || legacy_widening_dword_multiply.is_some()
             || legacy_fp_flag_compare

@@ -82,6 +82,9 @@ mod legacy_aes;
 #[path = "x86_native_replay_tests/legacy_packed_fp_convert.rs"]
 mod legacy_packed_fp_convert;
 
+#[path = "x86_native_replay_tests/legacy_scalar_fp_convert.rs"]
+mod legacy_scalar_fp_convert;
+
 #[path = "x86_native_replay_tests/legacy_widening_dword_multiply.rs"]
 mod legacy_widening_dword_multiply;
 
