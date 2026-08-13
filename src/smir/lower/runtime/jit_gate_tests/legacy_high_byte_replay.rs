@@ -39,6 +39,16 @@ fn high_byte_temporary(function: &SmirFunction) -> VReg {
     }
 }
 
+fn grouped_replay_instruction(instruction: X86InstructionBytes) -> X86InstructionBytes {
+    let instruction = instruction
+        .legacy_high_byte_multiply_replay()
+        .map(|replay| replay.canonical_instruction)
+        .unwrap_or(instruction);
+    instruction
+        .non_memory_prefix_canonical()
+        .unwrap_or(instruction)
+}
+
 #[test]
 fn legacy_high_byte_replay_admits_and_emits_each_supported_family_at_o0_o1_o2() {
     let cases: &[(&str, &[u8])] = &[
@@ -112,10 +122,7 @@ fn legacy_high_byte_replay_admits_and_emits_each_supported_family_at_o0_o1_o2() 
                     .get(&0)
                     .unwrap_or_else(|| panic!("{name} {level:?}: missing replay span"));
                 assert_eq!(span.end, function.blocks[0].ops.len(), "{name} {level:?}");
-                let expected_instruction = instruction
-                    .legacy_high_byte_multiply_replay()
-                    .map(|replay| replay.canonical_instruction)
-                    .unwrap_or(instruction);
+                let expected_instruction = grouped_replay_instruction(instruction);
                 assert_eq!(span.instruction, expected_instruction, "{name} {level:?}");
             }
 
@@ -147,15 +154,15 @@ fn legacy_high_byte_replay_admits_and_emits_each_supported_family_at_o0_o1_o2() 
             let code = lowerer
                 .finalize()
                 .unwrap_or_else(|error| panic!("{name} {level:?}: {error:?}"));
-            let replay_instruction = instruction
+            let replay_instruction = grouped_replay_instruction(instruction)
                 .legacy_high_byte_group2_replay()
                 .map(|replay| replay.canonical_instruction)
                 .or_else(|| {
-                    instruction
+                    grouped_replay_instruction(instruction)
                         .legacy_high_byte_multiply_replay()
                         .map(|replay| replay.canonical_instruction)
                 })
-                .unwrap_or(instruction);
+                .unwrap_or_else(|| grouped_replay_instruction(instruction));
             let replay_bytes = replay_instruction.as_slice();
             assert!(
                 code.windows(replay_bytes.len())
@@ -195,6 +202,7 @@ fn all_10752_high_byte_setcc_scanner_graphs_admit_and_emit_at_every_opt_level() 
                     let mut bytes = prefix.to_vec();
                     bytes.extend([0x0F, opcode, 0xC0 | (ignored_reg << 3) | rm]);
                     let instruction = X86InstructionBytes::new(&bytes).unwrap();
+                    let grouped_instruction = grouped_replay_instruction(instruction);
                     let replay = instruction
                         .legacy_high_byte_setcc_replay()
                         .unwrap_or_else(|| panic!("{bytes:02X?}"));
@@ -224,7 +232,10 @@ fn all_10752_high_byte_setcc_scanner_graphs_admit_and_emit_at_every_opt_level() 
                                 .get(&0)
                                 .unwrap_or_else(|| panic!("{bytes:02X?} {level:?}"));
                             assert_eq!(span.end, 5, "{bytes:02X?} {level:?}");
-                            assert_eq!(span.instruction, instruction, "{bytes:02X?} {level:?}");
+                            assert_eq!(
+                                span.instruction, grouped_instruction,
+                                "{bytes:02X?} {level:?}"
+                            );
                         }
                         assert!(is_native_clobber_safe(&function), "{bytes:02X?} {level:?}");
 
@@ -640,6 +651,7 @@ fn all_7168_scanner_high_byte_mov_immediates_admit_at_every_opt_level() {
                 let mut bytes = prefix.to_vec();
                 bytes.extend([opcode, immediate]);
                 let instruction = X86InstructionBytes::new(&bytes).unwrap();
+                let grouped_instruction = grouped_replay_instruction(instruction);
                 assert!(
                     instruction.is_legacy_high_byte_register_replay(),
                     "{bytes:02X?}"
@@ -664,7 +676,7 @@ fn all_7168_scanner_high_byte_mov_immediates_admit_at_every_opt_level() {
                             spans.get(&0),
                             Some(&crate::smir::ir::X86NativeReplaySpan {
                                 end: 5,
-                                instruction,
+                                instruction: grouped_instruction,
                                 needs_avx512vl: false,
                                 needs_avx512dq: false,
                                 needs_avx512fp16: false,

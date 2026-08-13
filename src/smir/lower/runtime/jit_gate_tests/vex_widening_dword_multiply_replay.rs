@@ -209,12 +209,11 @@ fn replay_features_distinguish_avx_128_from_avx2_256() {
         let requirements =
             x86_native_replay_feature_requirements(&function, &std::collections::HashMap::new());
         assert!(requirements.any, "{case:?} {bytes:02X?}");
+        assert!(requirements.all_spans_support_avx_ymm16, "{case:?}");
         assert!(requirements.needs_avx, "{case:?}");
         assert_eq!(requirements.needs_avx2, expected_avx2, "{case:?}");
         assert!(!requirements.needs_fma, "{case:?}");
-        // The shared vector-state boundary uses ZMM and KMOVQ even when the
-        // replayed instruction itself needs only AVX or AVX2.
-        assert!(requirements.needs_avx512bw, "{case:?}");
+        assert!(!requirements.needs_avx512bw, "{case:?}");
         assert!(!requirements.needs_avx512vl, "{case:?}");
         assert!(!requirements.needs_avx512dq, "{case:?}");
         assert!(!requirements.needs_avx512fp16, "{case:?}");
@@ -467,6 +466,7 @@ fn execute_native(
 
     let function = optimized_function(bytes, level, false);
     let mut lowerer = X86_64Lowerer::new();
+    lowerer.set_avx_ymm16_vector_state(true);
     let lowered = lowerer
         .lower_function(&function)
         .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
@@ -478,7 +478,7 @@ fn execute_native(
     let mut registers = GuestRegs {
         gpr: initial.gprs,
         rflags: initial.rflags,
-        vector_active: 1,
+        vector_active: X86_VECTOR_STATE_YMM16,
         k: initial.masks,
         mxcsr: initial.mxcsr,
         ..GuestRegs::default()
@@ -597,14 +597,8 @@ fn run_isolated_native_differential(test_name: &str) {
 #[cfg(target_arch = "x86_64")]
 #[test]
 fn replay_matches_intel_o0_o2_equations_boundaries_aliases_and_upper_lanes() {
-    if !std::is_x86_feature_detected!("avx2")
-        || !std::is_x86_feature_detected!("avx512f")
-        || !std::is_x86_feature_detected!("avx512bw")
-    {
-        eprintln!(
-            "skipping native VEX widening-dword-multiply differential: \
-             host lacks AVX2/AVX-512F/BW"
-        );
+    if !std::is_x86_feature_detected!("avx2") {
+        eprintln!("skipping native VEX widening-dword-multiply differential: host lacks AVX2");
         return;
     }
     run_isolated_native_differential(

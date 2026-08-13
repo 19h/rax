@@ -129,7 +129,7 @@ fn feature_requirements_select_sha_avx_and_the_ymm16_bridge_only() {
 }
 
 #[test]
-fn all_60_928_o0_o2_inert_rex_register_graphs_lower_to_exact_source_instruction() {
+fn all_60_928_o0_o2_inert_rex_register_graphs_lower_to_canonical_instruction() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -138,6 +138,7 @@ fn all_60_928_o0_o2_inert_rex_register_graphs_lower_to_exact_source_instruction(
         for rex in [None].into_iter().chain((0x40..=0x4F).map(Some)) {
             for (_, map, opcode, has_immediate) in OPERATIONS {
                 for modrm in 0xC0..=0xFF {
+                    let immediate = modrm ^ rex.unwrap_or(0) ^ inert_prefix.unwrap_or(0);
                     let bytes = encoding(
                         map,
                         opcode,
@@ -145,8 +146,10 @@ fn all_60_928_o0_o2_inert_rex_register_graphs_lower_to_exact_source_instruction(
                         inert_prefix,
                         rex,
                         modrm,
-                        modrm ^ rex.unwrap_or(0) ^ inert_prefix.unwrap_or(0),
+                        immediate,
                     );
+                    let replay_bytes =
+                        encoding(map, opcode, has_immediate, None, rex, modrm, immediate);
                     for level in [OptLevel::O0, OptLevel::O2] {
                         let function = function(&bytes, level, false);
                         assert!(is_native_clobber_safe(&function), "{level:?} {bytes:02X?}");
@@ -159,7 +162,8 @@ fn all_60_928_o0_o2_inert_rex_register_graphs_lower_to_exact_source_instruction(
                             .finalize()
                             .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
                         assert!(
-                            code.windows(bytes.len()).any(|window| window == bytes),
+                            code.windows(replay_bytes.len())
+                                .any(|window| window == replay_bytes),
                             "{level:?} {bytes:02X?}"
                         );
                         lowered += 1;

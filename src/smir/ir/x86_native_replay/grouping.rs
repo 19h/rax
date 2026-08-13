@@ -105,20 +105,23 @@ pub(super) fn x86_native_replay_spans_where(
                 return None;
             }
             let source_instruction = *instruction_bytes.get(&(block.id, guest_pc))?;
-            let high_byte_multiply = source_instruction.legacy_high_byte_multiply_replay();
-            let high_byte_crc32 = source_instruction.legacy_high_byte_crc32_replay();
-            let high_byte_setcc = source_instruction.legacy_high_byte_setcc_replay();
-            let replay_source = high_byte_multiply
+            let replay_source = source_instruction
+                .legacy_high_byte_multiply_replay()
                 .map(|replay| replay.canonical_instruction)
                 .unwrap_or(source_instruction);
+            let replay_source = replay_source
+                .non_memory_prefix_canonical()
+                .unwrap_or(replay_source);
             let (instruction, (needs_avx512vl, needs_avx512dq, needs_avx512fp16)) =
-                if let Some(requirements) = classify(&replay_source) {
-                    (replay_source, requirements)
-                } else {
-                    let canonical = replay_source.vex_scalar_l1_canonical_l0()?;
-                    let requirements = classify(&canonical)?;
-                    (canonical, requirements)
-                };
+                classify(&replay_source)
+                    .map(|requirements| (replay_source, requirements))
+                    .or_else(|| {
+                        let canonical = replay_source.vex_scalar_l1_canonical_l0()?;
+                        classify(&canonical).map(|requirements| (canonical, requirements))
+                    })?;
+            let high_byte_multiply = instruction.legacy_high_byte_multiply_replay();
+            let high_byte_crc32 = instruction.legacy_high_byte_crc32_replay();
+            let high_byte_setcc = instruction.legacy_high_byte_setcc_replay();
             if let Some(replay) = high_byte_multiply {
                 let temporary = classifiers::x86_legacy_high_byte_multiply_shape_temporary(
                     &block.ops[start..end],
@@ -161,7 +164,7 @@ pub(super) fn x86_native_replay_spans_where(
                     }
                 }
             }
-            if let Some(replay) = source_instruction.legacy_register_aes_replay() {
+            if let Some(replay) = instruction.legacy_register_aes_replay() {
                 let requirements = classifiers::x86_legacy_aes_shape_virtual_requirements(
                     &block.ops[start..end],
                     replay,
@@ -176,7 +179,7 @@ pub(super) fn x86_native_replay_spans_where(
                     }
                 }
             }
-            if let Some(replay) = source_instruction.legacy_register_blend_replay() {
+            if let Some(replay) = instruction.legacy_register_blend_replay() {
                 let requirements = classifiers::x86_legacy_blend_shape_virtual_requirements(
                     &block.ops[start..end],
                     replay,
@@ -191,7 +194,7 @@ pub(super) fn x86_native_replay_spans_where(
                     }
                 }
             }
-            if let Some(replay) = source_instruction.legacy_register_packed_fp_convert_replay()
+            if let Some(replay) = instruction.legacy_register_packed_fp_convert_replay()
                 && !classifiers::x86_legacy_packed_fp_convert_shape_matches(
                     &block.ops[start..end],
                     replay,
@@ -199,7 +202,7 @@ pub(super) fn x86_native_replay_spans_where(
             {
                 return None;
             }
-            if let Some(replay) = source_instruction.legacy_register_scalar_fp_convert_replay()
+            if let Some(replay) = instruction.legacy_register_scalar_fp_convert_replay()
                 && !classifiers::x86_legacy_scalar_fp_convert_shape_matches(
                     &block.ops[start..end],
                     replay,
@@ -207,7 +210,7 @@ pub(super) fn x86_native_replay_spans_where(
             {
                 return None;
             }
-            if let Some(replay) = source_instruction.legacy_register_scalar_extract_replay() {
+            if let Some(replay) = instruction.legacy_register_scalar_extract_replay() {
                 let requirements =
                     classifiers::x86_legacy_scalar_extract_shape_virtual_requirements(
                         &block.ops[start..end],
@@ -223,7 +226,7 @@ pub(super) fn x86_native_replay_spans_where(
                     }
                 }
             }
-            if let Some(replay) = source_instruction.legacy_register_scalar_insert_replay() {
+            if let Some(replay) = instruction.legacy_register_scalar_insert_replay() {
                 let requirements =
                     classifiers::x86_legacy_scalar_insert_shape_virtual_requirements(
                         &block.ops[start..end],
@@ -239,7 +242,7 @@ pub(super) fn x86_native_replay_spans_where(
                     }
                 }
             }
-            if let Some(replay) = source_instruction.legacy_register_lane_shuffle_replay() {
+            if let Some(replay) = instruction.legacy_register_lane_shuffle_replay() {
                 let requirements = classifiers::x86_legacy_lane_shuffle_shape_virtual_requirements(
                     &block.ops[start..end],
                     replay,
@@ -254,7 +257,7 @@ pub(super) fn x86_native_replay_spans_where(
                     }
                 }
             }
-            if let Some(replay) = source_instruction.legacy_register_alignr_replay() {
+            if let Some(replay) = instruction.legacy_register_alignr_replay() {
                 let requirements = classifiers::x86_legacy_alignr_shape_virtual_requirements(
                     &block.ops[start..end],
                     replay,
@@ -269,7 +272,7 @@ pub(super) fn x86_native_replay_spans_where(
                     }
                 }
             }
-            if let Some(replay) = source_instruction.legacy_register_gfni_replay() {
+            if let Some(replay) = instruction.legacy_register_gfni_replay() {
                 let requirements = classifiers::x86_legacy_gfni_shape_virtual_requirements(
                     &block.ops[start..end],
                     replay,
@@ -284,12 +287,12 @@ pub(super) fn x86_native_replay_spans_where(
                     }
                 }
             }
-            if let Some(replay) = source_instruction.legacy_register_round_replay()
+            if let Some(replay) = instruction.legacy_register_round_replay()
                 && !classifiers::x86_legacy_round_shape_matches(&block.ops[start..end], replay)
             {
                 return None;
             }
-            if let Some(replay) = source_instruction.legacy_register_dot_product_replay() {
+            if let Some(replay) = instruction.legacy_register_dot_product_replay() {
                 let requirements = classifiers::x86_legacy_dot_product_shape_virtual_requirements(
                     &block.ops[start..end],
                     replay,
@@ -304,7 +307,7 @@ pub(super) fn x86_native_replay_spans_where(
                     }
                 }
             }
-            if let Some(replay) = source_instruction.legacy_register_insertps_replay() {
+            if let Some(replay) = instruction.legacy_register_insertps_replay() {
                 let requirements = classifiers::x86_legacy_insertps_shape_virtual_requirements(
                     &block.ops[start..end],
                     replay,
@@ -320,7 +323,7 @@ pub(super) fn x86_native_replay_spans_where(
                     }
                 }
             }
-            if let Some(replay) = source_instruction.legacy_register_pclmulqdq_replay() {
+            if let Some(replay) = instruction.legacy_register_pclmulqdq_replay() {
                 let requirements = classifiers::x86_legacy_pclmulqdq_shape_virtual_requirements(
                     &block.ops[start..end],
                     replay,
@@ -335,7 +338,7 @@ pub(super) fn x86_native_replay_spans_where(
                     }
                 }
             }
-            if let Some(replay) = source_instruction.legacy_register_ptest_replay() {
+            if let Some(replay) = instruction.legacy_register_ptest_replay() {
                 let requirements = classifiers::x86_legacy_ptest_shape_virtual_requirements(
                     &block.ops[start..end],
                     replay,
@@ -350,7 +353,7 @@ pub(super) fn x86_native_replay_spans_where(
                     }
                 }
             }
-            if let Some(replay) = source_instruction.legacy_register_packed_extend_replay() {
+            if let Some(replay) = instruction.legacy_register_packed_extend_replay() {
                 let requirements =
                     classifiers::x86_legacy_packed_extend_shape_virtual_requirements(
                         &block.ops[start..end],
@@ -366,7 +369,7 @@ pub(super) fn x86_native_replay_spans_where(
                     }
                 }
             }
-            if let Some(replay) = source_instruction.legacy_register_packed_shift_replay() {
+            if let Some(replay) = instruction.legacy_register_packed_shift_replay() {
                 let requirements = classifiers::x86_legacy_packed_shift_shape_virtual_requirements(
                     &block.ops[start..end],
                     replay,
@@ -381,9 +384,7 @@ pub(super) fn x86_native_replay_spans_where(
                     }
                 }
             }
-            if let Some(replay) =
-                source_instruction.legacy_register_widening_dword_multiply_replay()
-            {
+            if let Some(replay) = instruction.legacy_register_widening_dword_multiply_replay() {
                 let requirements =
                     classifiers::x86_legacy_widening_dword_multiply_shape_virtual_requirements(
                         &block.ops[start..end],
@@ -399,7 +400,7 @@ pub(super) fn x86_native_replay_spans_where(
                     }
                 }
             }
-            if let Some(replay) = source_instruction.legacy_register_fp_flag_compare_replay()
+            if let Some(replay) = instruction.legacy_register_fp_flag_compare_replay()
                 && !classifiers::x86_legacy_fp_flag_compare_shape_matches(
                     &block.ops[start..end],
                     replay,
@@ -407,7 +408,7 @@ pub(super) fn x86_native_replay_spans_where(
             {
                 return None;
             }
-            if let Some(replay) = source_instruction.legacy_register_sha_replay() {
+            if let Some(replay) = instruction.legacy_register_sha_replay() {
                 let requirements = classifiers::x86_legacy_sha_shape_virtual_requirements(
                     &block.ops[start..end],
                     replay,
@@ -426,10 +427,10 @@ pub(super) fn x86_native_replay_spans_where(
             // subset. Its dynamic guest-state guard must remain independently
             // lowered before exact register replay replaces the remaining
             // semantic graph.
-            let leading_mmx_marker = source_instruction
+            let leading_mmx_marker = instruction
                 .legacy_register_scalar_extract_replay()
                 .is_some_and(|replay| replay.kind.touches_mmx())
-                || source_instruction
+                || instruction
                     .legacy_register_scalar_insert_replay()
                     .is_some_and(|replay| replay.kind.touches_mmx());
             let replay_start = if instruction.is_vex_register_vpermil2() {
@@ -458,10 +459,10 @@ pub(super) fn x86_native_replay_spans_where(
             // expansion, but its final EnterMmx operation must remain
             // independently lowered so the guest x87 tag word commits at this
             // instruction.
-            let leaves_mmx_marker = source_instruction
+            let leaves_mmx_marker = instruction
                 .legacy_register_packed_fp_convert_replay()
                 .is_some_and(|replay| replay.kind.touches_mmx())
-                || source_instruction
+                || instruction
                     .legacy_register_widening_dword_multiply_replay()
                     .is_some_and(|replay| replay.mmx);
             let replay_end = if leaves_mmx_marker {

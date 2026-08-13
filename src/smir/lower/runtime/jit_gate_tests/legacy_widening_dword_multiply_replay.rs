@@ -189,7 +189,7 @@ fn all_9792_o0_o1_o2_rex_register_graphs_admit_and_emit_exact_source_bytes() {
 }
 
 #[test]
-fn admission_fails_closed_for_missing_mismatched_memory_and_reserved_provenance() {
+fn admission_rejects_malformed_provenance_and_accepts_canonicalized_non_memory_prefixes() {
     for shape in SHAPES {
         let bytes = encoding(shape, Some(0x45), 0xCA);
         let baseline = function(&bytes, OptLevel::O0, false);
@@ -209,9 +209,9 @@ fn admission_fails_closed_for_missing_mismatched_memory_and_reserved_provenance(
             encoding(shape, Some(0x45), 0xC9),
             encoding(shape, Some(0x45), 0x0A),
             {
-                let mut reserved = vec![0x67];
-                reserved.extend(encoding(shape, None, 0xCA));
-                reserved
+                let mut duplicate = vec![0x67, 0x67];
+                duplicate.extend(&bytes);
+                duplicate
             },
         ] {
             let mut malformed = baseline.clone();
@@ -224,6 +224,16 @@ fn admission_fails_closed_for_missing_mismatched_memory_and_reserved_provenance(
                 "{shape:?} {metadata:02X?}"
             );
         }
+
+        let mut prefixed = vec![0x67];
+        prefixed.extend(&bytes);
+        let canonicalized = function(&prefixed, OptLevel::O0, false);
+        assert!(is_native_clobber_safe(&canonicalized), "{shape:?}");
+        assert_eq!(
+            x86_native_replay_feature_requirements(&canonicalized, &Default::default()).any,
+            shape != Shape::MmxUnsigned,
+            "{shape:?}"
+        );
     }
 }
 

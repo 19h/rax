@@ -359,6 +359,8 @@ mod msr;
 #[cfg(test)]
 mod mxcsr_store;
 #[cfg(test)]
+mod non_memory_prefix_replay;
+#[cfg(test)]
 mod opmask;
 #[cfg(test)]
 mod ordinary_stack;

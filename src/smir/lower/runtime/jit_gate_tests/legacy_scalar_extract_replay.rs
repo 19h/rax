@@ -297,7 +297,7 @@ fn all_19584_o0_o1_o2_rex_register_graphs_admit_and_emit_exact_replay() {
 }
 
 #[test]
-fn admission_fails_closed_for_missing_mismatched_memory_and_reserved_provenance() {
+fn admission_rejects_malformed_provenance_and_accepts_canonicalized_non_memory_prefixes() {
     for (index, family) in Family::ALL.into_iter().enumerate() {
         let rex = if family == Family::PextrQ {
             Some(0x48)
@@ -327,9 +327,9 @@ fn admission_fails_closed_for_missing_mismatched_memory_and_reserved_provenance(
             encoding(family, rex, modrm, 0xA6),
             encoding(family, rex, 0x0A, 0xA5),
             {
-                let mut reserved = vec![0x67];
-                reserved.extend(encoding(family, None, modrm, 0xA5));
-                reserved
+                let mut duplicate = vec![0x67, 0x67];
+                duplicate.extend(&bytes);
+                duplicate
             },
         ] {
             let mut malformed = baseline.clone();
@@ -342,6 +342,16 @@ fn admission_fails_closed_for_missing_mismatched_memory_and_reserved_provenance(
                 "{family:?} {metadata:02X?}"
             );
         }
+
+        let mut prefixed = vec![0x67];
+        prefixed.extend(&bytes);
+        let canonicalized = function(&prefixed, OptLevel::O0, false);
+        assert!(is_native_clobber_safe(&canonicalized), "{family:?}");
+        assert_eq!(
+            x86_native_replay_feature_requirements(&canonicalized, &Default::default()).any,
+            !family.mmx(),
+            "{family:?}"
+        );
     }
 }
 

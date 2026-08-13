@@ -275,21 +275,34 @@ fn function(bytes: &[u8], level: OptLevel) -> SmirFunction {
     function
 }
 
-fn assert_exact_span(function: &SmirFunction, bytes: &[u8], level: OptLevel) {
-    assert_eq!(function.blocks[0].ops.len(), 9, "{level:?} {bytes:02X?}");
+fn assert_exact_span(
+    function: &SmirFunction,
+    source_bytes: &[u8],
+    replay_bytes: &[u8],
+    level: OptLevel,
+) {
+    assert_eq!(
+        function.blocks[0].ops.len(),
+        9,
+        "{level:?} {source_bytes:02X?}"
+    );
     for spans in [
         x86_legacy_sha_replay_spans(&function.blocks[0], &function.x86_instruction_bytes),
         x86_native_replay_spans(&function.blocks[0], &function.x86_instruction_bytes),
     ] {
         let span = spans
             .get(&0)
-            .unwrap_or_else(|| panic!("{level:?} {bytes:02X?}"));
-        assert_eq!(span.end, 9, "{level:?} {bytes:02X?}");
-        assert_eq!(span.instruction.as_slice(), bytes, "{level:?} {bytes:02X?}");
-        assert!(!span.needs_avx512vl, "{level:?} {bytes:02X?}");
-        assert!(!span.needs_avx512dq, "{level:?} {bytes:02X?}");
-        assert!(!span.needs_avx512fp16, "{level:?} {bytes:02X?}");
-        assert!(!span.preserve_mxcsr_de, "{level:?} {bytes:02X?}");
+            .unwrap_or_else(|| panic!("{level:?} {source_bytes:02X?}"));
+        assert_eq!(span.end, 9, "{level:?} {source_bytes:02X?}");
+        assert_eq!(
+            span.instruction.as_slice(),
+            replay_bytes,
+            "{level:?} {source_bytes:02X?}"
+        );
+        assert!(!span.needs_avx512vl, "{level:?} {source_bytes:02X?}");
+        assert!(!span.needs_avx512dq, "{level:?} {source_bytes:02X?}");
+        assert!(!span.needs_avx512fp16, "{level:?} {source_bytes:02X?}");
+        assert!(!span.preserve_mxcsr_de, "{level:?} {source_bytes:02X?}");
     }
 }
 
@@ -309,9 +322,11 @@ fn lifted_o0_o2_graphs_admit_all_60_928_inert_rex_register_cases_and_immediates(
                         modrm,
                         modrm ^ 0xA5,
                     );
+                    let replay_bytes =
+                        encoding(map, opcode, has_immediate, None, rex, modrm, modrm ^ 0xA5);
                     for level in [OptLevel::O0, OptLevel::O2] {
                         let function = function(&bytes, level);
-                        assert_exact_span(&function, &bytes, level);
+                        assert_exact_span(&function, &bytes, &replay_bytes, level);
                         admitted += 1;
                     }
                 }
@@ -323,7 +338,7 @@ fn lifted_o0_o2_graphs_admit_all_60_928_inert_rex_register_cases_and_immediates(
     for immediate in u8::MIN..=u8::MAX {
         let bytes = encoding(0x3A, 0xCC, true, None, Some(0x45), 0xE5, immediate);
         for level in [OptLevel::O0, OptLevel::O2] {
-            assert_exact_span(&function(&bytes, level), &bytes, level);
+            assert_exact_span(&function(&bytes, level), &bytes, &bytes, level);
         }
     }
 }
@@ -343,8 +358,9 @@ fn assert_rejected(function: &SmirFunction, label: &str) {
 #[test]
 fn semantic_graph_validator_rejects_each_field_hint_order_and_virtual_escape_frontier() {
     let bytes = encoding(0x38, 0xCB, false, Some(0x67), Some(0x45), 0xCB, 0);
+    let replay_bytes = encoding(0x38, 0xCB, false, None, Some(0x45), 0xCB, 0);
     let baseline = function(&bytes, OptLevel::O0);
-    assert_exact_span(&baseline, &bytes, OptLevel::O0);
+    assert_exact_span(&baseline, &bytes, &replay_bytes, OptLevel::O0);
 
     for index in 0..9 {
         let mut malformed = baseline.clone();

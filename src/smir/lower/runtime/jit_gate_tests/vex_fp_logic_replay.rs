@@ -89,17 +89,16 @@ fn function(bytes: &[u8]) -> crate::smir::ir::SmirFunction {
 }
 
 #[test]
-fn replay_feature_aggregation_requires_avx_and_full_vector_state_boundary() {
+fn replay_feature_aggregation_uses_avx_ymm16_boundary() {
     let bytes = encoding(EncodingForm::C4W1IgnoredX, 0x57, 1, true, 15, 14, 13);
     let function = function(&bytes);
     let requirements =
         x86_native_replay_feature_requirements(&function, &std::collections::HashMap::new());
     assert!(requirements.any);
+    assert!(requirements.all_spans_support_avx_ymm16);
     assert!(requirements.needs_avx);
     assert!(!requirements.needs_fma);
-    // The current native vector-state trampoline uses ZMM loads and KMOVQ even
-    // though these VEX instructions themselves require only AVX.
-    assert!(requirements.needs_avx512bw);
+    assert!(!requirements.needs_avx512bw);
     assert!(!requirements.needs_avx512vl);
     assert!(!requirements.needs_avx512dq);
     assert!(!requirements.needs_avx512fp16);
@@ -120,8 +119,6 @@ fn replay_feature_aggregation_requires_avx_and_full_vector_state_boundary() {
                 &std::collections::HashMap::new()
             ),
             std::is_x86_feature_detected!("avx")
-                && std::is_x86_feature_detected!("avx512f")
-                && std::is_x86_feature_detected!("avx512bw")
         );
     }
 
@@ -365,6 +362,7 @@ fn execute_native(
 
     let function = optimized_function(bytes, level, false);
     let mut lowerer = X86_64Lowerer::new();
+    lowerer.set_avx_ymm16_vector_state(true);
     let lowered = lowerer
         .lower_function(&function)
         .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
@@ -376,7 +374,7 @@ fn execute_native(
     let mut registers = GuestRegs {
         gpr: initial.gprs,
         rflags: initial.rflags,
-        vector_active: 1,
+        vector_active: X86_VECTOR_STATE_YMM16,
         k: initial.masks,
         mxcsr: initial.mxcsr,
         ..GuestRegs::default()
@@ -557,11 +555,8 @@ fn run_isolated_native_differential(test_name: &str) {
 #[cfg(target_arch = "x86_64")]
 #[test]
 fn replay_matches_o0_o2_interpretation_for_c4_c5_widths_aliases_and_full_state() {
-    if !std::is_x86_feature_detected!("avx")
-        || !std::is_x86_feature_detected!("avx512f")
-        || !std::is_x86_feature_detected!("avx512bw")
-    {
-        eprintln!("skipping native VEX floating logic differential: host lacks AVX/AVX-512F/BW");
+    if !std::is_x86_feature_detected!("avx") {
+        eprintln!("skipping native VEX floating logic differential: host lacks AVX");
         return;
     }
     run_isolated_native_differential(

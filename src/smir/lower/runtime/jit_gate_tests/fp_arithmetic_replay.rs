@@ -301,7 +301,8 @@ fn replay_features_distinguish_legacy_vex_and_evex_vector_lengths() {
                 src1: 9,
                 src2: 11,
             }),
-            false,
+            true,
+            true,
             false,
         ),
         (
@@ -314,6 +315,7 @@ fn replay_features_distinguish_legacy_vex_and_evex_vector_lengths() {
                 src1: 10,
                 src2: 11,
             }),
+            true,
             true,
             false,
         ),
@@ -330,6 +332,7 @@ fn replay_features_distinguish_legacy_vex_and_evex_vector_lengths() {
                 zeroing: true,
             })
             .to_vec(),
+            false,
             false,
             true,
         ),
@@ -348,16 +351,21 @@ fn replay_features_distinguish_legacy_vex_and_evex_vector_lengths() {
             .to_vec(),
             false,
             false,
+            false,
         ),
     ];
 
-    for (bytes, needs_avx, needs_vl) in representatives {
+    for (bytes, needs_avx, avx_ymm16, needs_vl) in representatives {
         let function = function(&bytes);
         let actual =
             x86_native_replay_feature_requirements(&function, &std::collections::HashMap::new());
         assert!(actual.any, "{bytes:02X?}");
+        assert_eq!(
+            actual.all_spans_support_avx_ymm16, avx_ymm16,
+            "{bytes:02X?}"
+        );
         assert_eq!(actual.needs_avx, needs_avx, "{bytes:02X?}");
-        assert!(actual.needs_avx512bw, "{bytes:02X?}");
+        assert_eq!(actual.needs_avx512bw, !avx_ymm16, "{bytes:02X?}");
         assert_eq!(actual.needs_avx512vl, needs_vl, "{bytes:02X?}");
         assert!(!actual.needs_fma);
         assert!(!actual.needs_avx512dq);
@@ -697,6 +705,29 @@ fn initial_state(case: NativeCase, ordinal: usize) -> ArithmeticState {
     }
 }
 
+#[cfg(target_arch = "x86_64")]
+fn finite_normal_vector(kind: FpKind, register: usize, ordinal: usize) -> [u64; 8] {
+    let seed = |lane: usize| register * 17 + ordinal * 11 + lane * 5;
+    match kind.elem_bytes() {
+        4 => std::array::from_fn(|word| {
+            let bits = |lane| {
+                let value = seed(lane);
+                let sign = u32::from(value & 1 != 0) << 31;
+                let exponent = (124 + ((value >> 1) % 7)) as u32;
+                sign | (exponent << 23)
+            };
+            u64::from(bits(word * 2)) | (u64::from(bits(word * 2 + 1)) << 32)
+        }),
+        8 => std::array::from_fn(|word| {
+            let value = seed(word);
+            let sign = u64::from(value & 1 != 0) << 63;
+            let exponent = (1020 + ((value >> 1) % 7)) as u64;
+            sign | (exponent << 52)
+        }),
+        _ => unreachable!("validated binary floating-point element width"),
+    }
+}
+
 fn optimized_function(
     bytes: &[u8],
     level: crate::smir::optimize::OptLevel,
@@ -979,6 +1010,50 @@ fn native_divps_zero_divide_precedence_matches_interpreter_without_requiring_avx
         assert_eq!(native, interpreted, "{level:?} {case:?} {bytes:02X?}");
         assert_eq!(native.mxcsr & 0x3F, (1 << 2) | (1 << 5));
     }
+}
+
+#[cfg(target_arch = "x86_64")]
+#[test]
+fn native_all_1_056_non_evex_exact_normal_cases_use_avx_ymm16_and_match_interpreter() {
+    if !std::is_x86_feature_detected!("avx") {
+        eprintln!("skipping native non-EVEX FP arithmetic differential: host lacks AVX");
+        return;
+    }
+
+    let cases = non_evex_cases();
+    assert_eq!(cases.len(), 528);
+    let mut executions = 0usize;
+    for (ordinal, case) in cases.into_iter().enumerate() {
+        let native_case = NativeCase::NonEvex(case);
+        let bytes = native_case.bytes();
+        let requirements = x86_native_replay_feature_requirements(
+            &function(&bytes),
+            &std::collections::HashMap::new(),
+        );
+        assert!(requirements.any, "{case:?} {bytes:02X?}");
+        assert!(
+            requirements.all_spans_support_avx_ymm16,
+            "{case:?} {bytes:02X?}"
+        );
+        assert!(requirements.needs_avx, "{case:?} {bytes:02X?}");
+        assert!(!requirements.needs_avx512bw, "{case:?} {bytes:02X?}");
+
+        let mut initial = initial_state(native_case, ordinal);
+        initial.vectors =
+            std::array::from_fn(|register| finite_normal_vector(case.kind, register, ordinal));
+        for level in [
+            crate::smir::optimize::OptLevel::O0,
+            crate::smir::optimize::OptLevel::O2,
+        ] {
+            assert_eq!(
+                execute_native(&bytes, &initial, level, true),
+                interpret(&bytes, &initial, level),
+                "{level:?} {case:?} {bytes:02X?}"
+            );
+            executions += 1;
+        }
+    }
+    assert_eq!(executions, 1_056);
 }
 
 #[cfg(target_arch = "x86_64")]

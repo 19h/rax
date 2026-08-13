@@ -44,6 +44,8 @@ mod legacy_alignr;
 mod legacy_gfni;
 #[path = "legacy_lane_shuffle.rs"]
 mod legacy_lane_shuffle;
+#[path = "legacy_non_memory_prefix.rs"]
+mod legacy_non_memory_prefix;
 #[path = "legacy_pclmulqdq.rs"]
 mod legacy_pclmulqdq;
 #[path = "legacy_ptest.rs"]

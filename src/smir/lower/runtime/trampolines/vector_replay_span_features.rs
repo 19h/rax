@@ -68,6 +68,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             .legacy_register_fp_flag_compare_replay()
             .is_some();
         let legacy_sha = span.instruction.legacy_register_sha_replay().is_some();
+        let is_fma3 = span.instruction.is_vex_register_fma3();
         let is_fma4 = span.instruction.is_vex_register_fma4();
         let is_vpermil2 = span.instruction.is_vex_register_vpermil2();
         let vex_fp_dot_product_ymm = span.instruction.vex_register_fp_dot_product_uses_ymm();
@@ -92,6 +93,16 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             .instruction
             .legacy_vex_register_fp_horizontal_addsub_needs_avx();
         let fp_estimate_avx = span.instruction.legacy_vex_register_fp_estimate_needs_avx();
+        let fp_arithmetic_avx = span
+            .instruction
+            .legacy_vex_register_fp_arithmetic_needs_avx();
+        let fp_compare_avx = span.instruction.legacy_vex_register_fp_compare_needs_avx();
+        let fp_shuffle_avx = span.instruction.legacy_vex_register_fp_shuffle_needs_avx();
+        let high_low_move_avx = span
+            .instruction
+            .legacy_vex_register_high_low_move_needs_avx();
+        let scalar_move_avx = span.instruction.legacy_vex_register_scalar_move_needs_avx();
+        let fp_sqrt_avx = span.instruction.legacy_vex_register_fp_sqrt_needs_avx();
         let widening_dword_multiply_avx2 = span
             .instruction
             .vex_register_widening_dword_multiply_needs_avx2();
@@ -125,6 +136,10 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             .is_some();
         let vex_zero = span.instruction.vex_zeroes_all_register_bits().is_some();
         let vex_packed_string = span.instruction.is_vex_register_packed_string_compare();
+        let vex_fp_logic = span.instruction.is_vex_register_fp_logic();
+        let vex_new_ymm16_upper_clear_destination = span
+            .instruction
+            .vex_avx_ymm16_upper_clear_destination_index();
         requirements.any = true;
         requirements.needs_sse3 |= fp_horizontal_addsub_avx == Some(false)
             || legacy_lane_shuffle.is_some_and(|replay| replay.kind.requires_sse3());
@@ -165,7 +180,14 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || vex_ifma52
             || vex_ne_convert
             || vex_integer_dot_ext_int16.is_some()
+            || fp_horizontal_addsub_avx == Some(false)
             || fp_estimate_avx.is_some()
+            || fp_arithmetic_avx == Some(false)
+            || fp_shuffle_avx == Some(false)
+            || high_low_move_avx == Some(false)
+            || scalar_move_avx == Some(false)
+            || fp_sqrt_avx == Some(false)
+            || vex_new_ymm16_upper_clear_destination.is_some()
             || immediate_blend_avx2.is_some()
             || immediate_permute_avx2.is_some()
             || chunk_extract_avx2.is_some()
@@ -216,7 +238,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || legacy_fp_flag_compare
             || legacy_sha
             || vex_packed_string
-            || span.instruction.is_vex_register_fma3()
+            || is_fma3
             || is_fma4
             || is_vpermil2
             || vex_fp_dot_product_ymm.is_some()
@@ -237,23 +259,17 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || scalar_insert_avx
             || vex_gfni_ymm.is_some()
             || vex_vpclmulqdq_ymm.is_some()
-            || span.instruction.is_vex_register_fp_logic()
+            || vex_fp_logic
             || fp_horizontal_addsub_avx == Some(true)
             || widening_dword_multiply_avx2.is_some()
             || vex_packed_extend_avx2.is_some()
-            || span
-                .instruction
-                .legacy_vex_register_fp_arithmetic_needs_avx()
-                == Some(true)
-            || span.instruction.legacy_vex_register_fp_compare_needs_avx() == Some(true)
+            || fp_arithmetic_avx == Some(true)
+            || fp_compare_avx == Some(true)
             || fp_estimate_avx == Some(true)
-            || span.instruction.legacy_vex_register_fp_shuffle_needs_avx() == Some(true)
-            || span
-                .instruction
-                .legacy_vex_register_high_low_move_needs_avx()
-                == Some(true)
-            || span.instruction.legacy_vex_register_scalar_move_needs_avx() == Some(true)
-            || span.instruction.legacy_vex_register_fp_sqrt_needs_avx() == Some(true)
+            || fp_shuffle_avx == Some(true)
+            || high_low_move_avx == Some(true)
+            || scalar_move_avx == Some(true)
+            || fp_sqrt_avx == Some(true)
             || vex_aligned_packed_fp_move
             || vex_unaligned_packed_fp_move
             || vex_packed_integer_move
@@ -286,7 +302,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || vex_lane_shuffle_avx2 == Some(true);
         requirements.needs_avx_vnni_int8 |= vex_integer_dot_ext_int16 == Some(false);
         requirements.needs_avx_vnni_int16 |= vex_integer_dot_ext_int16 == Some(true);
-        requirements.needs_fma |= span.instruction.is_vex_register_fma3();
+        requirements.needs_fma |= is_fma3;
         requirements.needs_f16c |= vex_fp16_widen || vex_fp16_narrow;
         requirements.needs_vex_fp16_narrow |= vex_fp16_narrow;
         requirements.needs_fma4 |= is_fma4;

@@ -174,8 +174,10 @@ fn classifier_matches_llvm23_anchors_and_rejects_noncanonical_frontiers() {
     }
 
     // Intel SDM 325383-092, Vol. 2A, classifies address-size and segment
-    // prefixes on register-only MMX forms as reserved/unpredictable. The same
-    // exact-source policy rejects them for every scalar-insert form.
+    // prefixes on register-only MMX forms as reserved/unpredictable. This raw
+    // family classifier therefore rejects them. The replay grouper may strip
+    // one such prefix only after independently proving an exact non-memory
+    // semantic group, and then emits the canonical unprefixed instruction.
     let invalid: &[&[u8]] = &[
         &[0x67, 0x0F, 0xC4, 0xCA, 0x03],
         &[0x64, 0x0F, 0xC4, 0xCA, 0x03],
@@ -484,7 +486,7 @@ fn graph_validator_rejects_every_operation_field_hint_and_virtual_escape() {
 }
 
 #[test]
-fn graph_validator_rejects_missing_mismatched_memory_and_reserved_provenance() {
+fn graph_validator_rejects_mismatched_memory_and_canonicalizes_non_memory_prefixes() {
     for (index, family) in Family::ALL.into_iter().enumerate() {
         let rex = if family == Family::PinsQ {
             Some(0x48)
@@ -512,10 +514,10 @@ fn graph_validator_rejects_missing_mismatched_memory_and_reserved_provenance() {
             ("destination/source", encoding(family, rex, 0xD3, 0xA5)),
             ("lane", encoding(family, rex, 0xCA, 0xA6)),
             ("memory", encoding(family, rex, 0x0A, 0xA5)),
-            ("reserved prefix", {
-                let mut reserved = vec![0x67];
-                reserved.extend(encoding(family, None, 0xCA, 0xA5));
-                reserved
+            ("duplicate non-memory prefix", {
+                let mut duplicate = vec![0x67, 0x67];
+                duplicate.extend(&bytes);
+                duplicate
             }),
         ] {
             let mut malformed = baseline.clone();
@@ -525,5 +527,9 @@ fn graph_validator_rejects_missing_mismatched_memory_and_reserved_provenance() {
             );
             assert_rejected(&malformed, &format!("{family:?} {label}"));
         }
+
+        let mut prefixed = vec![0x67];
+        prefixed.extend(&bytes);
+        assert_span(&function(&prefixed, OptLevel::O0), &bytes, family);
     }
 }

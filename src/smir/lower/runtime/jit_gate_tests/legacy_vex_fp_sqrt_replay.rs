@@ -188,21 +188,17 @@ fn cases() -> Vec<(EncodingForm, SqrtKind, bool, u8, u8, u8)> {
 }
 
 #[test]
-fn replay_features_distinguish_legacy_sse_from_avx_vex() {
-    for (form, expected_avx) in [
-        (EncodingForm::LegacyRex, false),
-        (EncodingForm::VexC4W1IgnoredX, true),
-    ] {
+fn replay_features_use_avx_ymm16_boundary_for_legacy_and_vex() {
+    for form in [EncodingForm::LegacyRex, EncodingForm::VexC4W1IgnoredX] {
         let bytes = encoding(form, SqrtKind::ScalarF64, false, 9, 10, 11);
         let function = function(&bytes);
         let requirements =
             x86_native_replay_feature_requirements(&function, &std::collections::HashMap::new());
         assert!(requirements.any);
-        assert_eq!(requirements.needs_avx, expected_avx);
+        assert!(requirements.all_spans_support_avx_ymm16);
+        assert!(requirements.needs_avx);
         assert!(!requirements.needs_fma);
-        // The shared vector-state boundary currently uses ZMM and KMOVQ even
-        // when the replayed instruction itself needs only SSE/SSE2 or AVX.
-        assert!(requirements.needs_avx512bw);
+        assert!(!requirements.needs_avx512bw);
         assert!(!requirements.needs_avx512vl);
         assert!(!requirements.needs_avx512dq);
         assert!(!requirements.needs_avx512fp16);
@@ -210,7 +206,7 @@ fn replay_features_distinguish_legacy_sse_from_avx_vex() {
         #[cfg(target_arch = "x86_64")]
         assert_eq!(
             requirements.x86_host_supported(),
-            !expected_avx || std::is_x86_feature_detected!("avx")
+            std::is_x86_feature_detected!("avx")
         );
     }
 }
@@ -463,6 +459,7 @@ fn execute_native(
 
     let function = optimized_function(bytes, level, false);
     let mut lowerer = X86_64Lowerer::new();
+    lowerer.set_avx_ymm16_vector_state(true);
     let lowered = lowerer
         .lower_function(&function)
         .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
@@ -474,7 +471,7 @@ fn execute_native(
     let mut registers = GuestRegs {
         gpr: initial.gprs,
         rflags: initial.rflags,
-        vector_active: 1,
+        vector_active: X86_VECTOR_STATE_YMM16,
         k: initial.masks,
         mxcsr: initial.mxcsr,
         ..GuestRegs::default()
@@ -591,13 +588,8 @@ fn run_isolated_native_differential(test_name: &str) {
 #[cfg(target_arch = "x86_64")]
 #[test]
 fn replay_matches_o0_o2_interpretation_for_legacy_vex_widths_aliases_and_mxcsr() {
-    if !std::is_x86_feature_detected!("avx")
-        || !std::is_x86_feature_detected!("avx512f")
-        || !std::is_x86_feature_detected!("avx512bw")
-    {
-        eprintln!(
-            "skipping native legacy/VEX square-root differential: host lacks AVX/AVX-512F/BW"
-        );
+    if !std::is_x86_feature_detected!("avx") {
+        eprintln!("skipping native legacy/VEX square-root differential: host lacks AVX");
         return;
     }
     run_isolated_native_differential(

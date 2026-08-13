@@ -200,6 +200,10 @@ impl X86_64Lowerer {
             .or_else(|| span.instruction.vex_scalar_fp_convert_destination_index())
             .or_else(|| span.instruction.vex_fp_estimate_destination_index())
             .or_else(|| span.instruction.vex_scalar_int_to_fp_destination_index())
+            .or_else(|| {
+                span.instruction
+                    .vex_avx_ymm16_upper_clear_destination_index()
+            })
         {
             self.code.emit_bytes(span.instruction.as_slice());
             if self.avx_ymm16_vector_state {

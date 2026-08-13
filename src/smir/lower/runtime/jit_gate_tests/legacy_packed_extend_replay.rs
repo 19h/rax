@@ -233,7 +233,7 @@ fn all_39_168_o0_o1_o2_rex_register_graphs_admit_and_emit_exact_source_bytes() {
 }
 
 #[test]
-fn admission_fails_closed_for_missing_mismatched_memory_and_reserved_provenance() {
+fn admission_rejects_malformed_provenance_and_accepts_canonicalized_non_memory_prefix() {
     let bytes = canonical_encoding(OPERATIONS[0], 9, 10, 0, false);
     let baseline = function(&bytes, OptLevel::O0, false);
 
@@ -246,7 +246,7 @@ fn admission_fails_closed_for_missing_mismatched_memory_and_reserved_provenance(
         encoding(0x20, Some(0x41), 0xCA),
         encoding(0x20, Some(0x44), 0xCA),
         encoding(0x20, Some(0x45), 0x0A),
-        vec![0x67, 0x66, 0x45, 0x0F, 0x38, 0x20, 0xCA],
+        vec![0x67, 0x67, 0x66, 0x45, 0x0F, 0x38, 0x20, 0xCA],
     ] {
         let mut malformed = baseline.clone();
         malformed.x86_instruction_bytes.insert(
@@ -255,6 +255,12 @@ fn admission_fails_closed_for_missing_mismatched_memory_and_reserved_provenance(
         );
         assert!(!is_native_clobber_safe(&malformed), "{metadata:02X?}");
     }
+
+    let mut prefixed = vec![0x67];
+    prefixed.extend(&bytes);
+    let canonicalized = function(&prefixed, OptLevel::O0, false);
+    assert!(is_native_clobber_safe(&canonicalized));
+    assert!(x86_native_replay_feature_requirements(&canonicalized, &Default::default()).any);
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
