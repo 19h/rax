@@ -86,6 +86,7 @@ mod legacy_aes;
 mod legacy_blend;
 mod legacy_high_byte;
 mod legacy_sha;
+mod legacy_widening_dword_multiply;
 mod packed_extend;
 mod packed_move;
 mod scalar_convert_memory;
@@ -307,6 +308,10 @@ pub(crate) use legacy_high_byte::{
     x86_legacy_high_byte_setcc_shape_virtual_requirements,
 };
 pub(crate) use legacy_sha::{X86LegacyShaReplay, x86_legacy_sha_shape_virtual_requirements};
+pub(crate) use legacy_widening_dword_multiply::{
+    X86LegacyWideningDwordMultiplyReplay,
+    x86_legacy_widening_dword_multiply_shape_virtual_requirements,
+};
 pub(crate) use packed_extend::{
     X86LegacyPackedExtendReplay, x86_legacy_packed_extend_shape_virtual_requirements,
 };

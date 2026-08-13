@@ -50,6 +50,22 @@ pub fn x86_legacy_packed_extend_replay_spans(
     })
 }
 
+/// Identify exact register-only legacy MMX/SSE `PMULUDQ` and SSE4.1
+/// `PMULDQ` semantic groups. The XMM forms preserve shared vector state above
+/// bit 127 and therefore use the AVX YMM0-YMM15 bridge. The MMX form uses the
+/// independent MMX/x87-tag bridge. Construction is O(N) time and O(P + V)
+/// space for N operations, P unique guest PCs, and V virtual registers.
+pub fn x86_legacy_widening_dword_multiply_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .legacy_register_widening_dword_multiply_replay()
+            .map(|_| (false, false, false))
+    })
+}
+
 /// Identify exact register-only legacy `COMISS`, `UCOMISS`, `COMISD`, and
 /// `UCOMISD` semantic groups. The source instruction preserves vector state,
 /// so validated replay uses the AVX YMM0-YMM15 state bridge without requiring

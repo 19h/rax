@@ -788,6 +788,8 @@ pub fn x86_native_mmx_pairs_valid_excluding(
         .iter()
         .filter(|block| !excluded.contains_key(&block.id))
         .all(|block| {
+            let native_replay_spans =
+                crate::smir::ir::x86_native_replay_spans(block, &func.x86_instruction_bytes);
             let mut virtual_definitions = HashMap::new();
             let mut virtual_uses = HashMap::new();
             for op in &block.ops {
@@ -824,6 +826,21 @@ pub fn x86_native_mmx_pairs_valid_excluding(
             }
             let mut index = 0;
             while index < block.ops.len() {
+                if let Some(span) = native_replay_spans.get(&index)
+                    && span
+                        .instruction
+                        .legacy_register_widening_dword_multiply_replay()
+                        .is_some_and(|replay| replay.mmx)
+                {
+                    let Some(marker) = block.ops.get(span.end) else {
+                        return false;
+                    };
+                    if marker.guest_pc != block.ops[index].guest_pc || !is_enter(marker) {
+                        return false;
+                    }
+                    index = span.end + 1;
+                    continue;
+                }
                 if let Some(consumed) = x86_jit_mmx_maskmovq_sequence_len(
                     block,
                     index,

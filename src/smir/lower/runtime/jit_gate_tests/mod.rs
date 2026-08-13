@@ -305,6 +305,8 @@ mod legacy_vex_high_low_move_replay;
 #[cfg(test)]
 mod legacy_vex_scalar_move_replay;
 #[cfg(test)]
+mod legacy_widening_dword_multiply_replay;
+#[cfg(test)]
 mod lmsw;
 #[cfg(test)]
 mod maskmovdqu;

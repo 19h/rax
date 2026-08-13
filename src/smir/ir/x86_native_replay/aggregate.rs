@@ -26,6 +26,12 @@ pub fn x86_native_replay_spans(
             return Some((false, false, false));
         }
         if instruction
+            .legacy_register_widening_dword_multiply_replay()
+            .is_some()
+        {
+            return Some((false, false, false));
+        }
+        if instruction
             .legacy_register_fp_flag_compare_replay()
             .is_some()
         {
