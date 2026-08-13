@@ -23,6 +23,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             .legacy_register_widening_dword_multiply_replay();
         let legacy_scalar_extract = span.instruction.legacy_register_scalar_extract_replay();
         let legacy_scalar_insert = span.instruction.legacy_register_scalar_insert_replay();
+        let legacy_lane_shuffle = span.instruction.legacy_register_lane_shuffle_replay();
         // The MMX form has an independent architectural state bridge. It must
         // not make an MMX-only region require AVX vector-state marshalling.
         if legacy_widening_dword_multiply.is_some_and(|replay| replay.mmx)
@@ -123,7 +124,8 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
         let vex_zero = span.instruction.vex_zeroes_all_register_bits().is_some();
         let vex_packed_string = span.instruction.is_vex_register_packed_string_compare();
         requirements.any = true;
-        requirements.needs_sse3 |= fp_horizontal_addsub_avx == Some(false);
+        requirements.needs_sse3 |= fp_horizontal_addsub_avx == Some(false)
+            || legacy_lane_shuffle.is_some_and(|replay| replay.kind.requires_sse3());
         requirements.needs_sse41 |= legacy_blend
             || legacy_packed_extend
             || legacy_round
@@ -140,6 +142,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || legacy_scalar_fp_convert
             || legacy_scalar_extract.is_some()
             || legacy_scalar_insert.is_some()
+            || legacy_lane_shuffle.is_some()
             || legacy_round
             || legacy_dot_product
             || legacy_insertps
@@ -194,6 +197,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || legacy_scalar_fp_convert
             || legacy_scalar_extract.is_some()
             || legacy_scalar_insert.is_some()
+            || legacy_lane_shuffle.is_some()
             || legacy_round
             || legacy_dot_product
             || legacy_insertps

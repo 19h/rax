@@ -109,6 +109,9 @@ mod legacy_scalar_extract;
 #[path = "x86_native_replay_tests/legacy_scalar_insert.rs"]
 mod legacy_scalar_insert;
 
+#[path = "x86_native_replay_tests/legacy_lane_shuffle.rs"]
+mod legacy_lane_shuffle;
+
 #[path = "x86_native_replay_tests/legacy_widening_dword_multiply.rs"]
 mod legacy_widening_dword_multiply;
 

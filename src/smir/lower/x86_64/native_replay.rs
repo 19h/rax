@@ -83,6 +83,16 @@ impl X86_64Lowerer {
             }
             return Ok(());
         }
+        if span
+            .instruction
+            .legacy_register_lane_shuffle_replay()
+            .is_some()
+        {
+            // Legacy lane shuffles preserve every destination bit above bit
+            // 127, so exact replay must not receive a VEX upper-clear postlude.
+            self.code.emit_bytes(span.instruction.as_slice());
+            return Ok(());
+        }
         if span.instruction.legacy_register_round_replay().is_some() {
             // Legacy ROUND preserves every destination bit above bit 127;
             // unlike VROUND, it must not receive a VEX upper-clear postlude.

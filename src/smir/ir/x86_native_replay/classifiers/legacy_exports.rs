@@ -13,6 +13,10 @@ pub(crate) use super::legacy_high_byte::{
     x86_legacy_high_byte_crc32_shape_temporary, x86_legacy_high_byte_multiply_shape_temporary,
     x86_legacy_high_byte_setcc_shape_virtual_requirements,
 };
+pub(crate) use super::legacy_lane_shuffle::{
+    X86LegacyLaneShuffleKind, X86LegacyLaneShuffleReplay,
+    x86_legacy_lane_shuffle_shape_virtual_requirements,
+};
 pub(crate) use super::legacy_packed_fp_convert::{
     X86LegacyPackedFpConvertKind, X86LegacyPackedFpConvertReplay,
     x86_legacy_packed_fp_convert_shape_matches,

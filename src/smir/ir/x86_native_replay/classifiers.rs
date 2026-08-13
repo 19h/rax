@@ -87,6 +87,7 @@ mod legacy_blend;
 mod legacy_dot_product;
 mod legacy_exports;
 mod legacy_high_byte;
+mod legacy_lane_shuffle;
 mod legacy_packed_fp_convert;
 mod legacy_packed_shift;
 mod legacy_pclmulqdq;

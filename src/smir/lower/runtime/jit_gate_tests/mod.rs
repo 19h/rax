@@ -293,6 +293,8 @@ mod legacy_high_byte_replay;
 #[cfg(test)]
 mod legacy_insertps_replay;
 #[cfg(test)]
+mod legacy_lane_shuffle_replay;
+#[cfg(test)]
 mod legacy_packed_extend_replay;
 #[cfg(test)]
 mod legacy_packed_fp_convert_replay;
