@@ -35,6 +35,10 @@ pub(crate) use super::legacy_scalar_fp_convert::{
     X86LegacyScalarFpConvertKind, X86LegacyScalarFpConvertReplay,
     x86_legacy_scalar_fp_convert_shape_matches,
 };
+pub(crate) use super::legacy_scalar_insert::{
+    X86LegacyScalarInsertKind, X86LegacyScalarInsertReplay,
+    x86_legacy_scalar_insert_shape_virtual_requirements,
+};
 pub(crate) use super::legacy_sha::{X86LegacyShaReplay, x86_legacy_sha_shape_virtual_requirements};
 pub(crate) use super::legacy_widening_dword_multiply::{
     X86LegacyWideningDwordMultiplyReplay,

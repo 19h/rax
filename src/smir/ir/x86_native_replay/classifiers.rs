@@ -93,6 +93,7 @@ mod legacy_pclmulqdq;
 mod legacy_ptest;
 mod legacy_scalar_extract;
 mod legacy_scalar_fp_convert;
+mod legacy_scalar_insert;
 mod legacy_sha;
 mod legacy_widening_dword_multiply;
 mod packed_extend;

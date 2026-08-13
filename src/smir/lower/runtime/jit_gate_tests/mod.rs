@@ -307,6 +307,8 @@ mod legacy_scalar_extract_replay;
 #[cfg(test)]
 mod legacy_scalar_fp_convert_replay;
 #[cfg(test)]
+mod legacy_scalar_insert_replay;
+#[cfg(test)]
 mod legacy_sha_replay;
 #[cfg(test)]
 mod legacy_vex_fp_compare_replay;

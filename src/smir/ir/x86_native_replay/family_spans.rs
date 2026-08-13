@@ -84,6 +84,22 @@ pub fn x86_legacy_scalar_extract_replay_spans(
     })
 }
 
+/// Identify exact register-source legacy MMX/SSE scalar-insert groups:
+/// `PINSRB/D/Q/W`. XMM forms use the AVX YMM0-YMM15 state bridge; MMX
+/// `PINSRW` uses the independent MMX/x87-tag bridge and retains its leading
+/// `EnterMmx` marker. Construction is O(N) time and O(P + V) space for N
+/// operations, P unique guest PCs, and V virtual registers.
+pub fn x86_legacy_scalar_insert_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .legacy_register_scalar_insert_replay()
+            .map(|_| (false, false, false))
+    })
+}
+
 /// Identify exact register-only legacy SSE4.1 `ROUNDPS`, `ROUNDPD`,
 /// `ROUNDSS`, and `ROUNDSD` semantic groups. Legacy ROUND preserves shared
 /// vector state above bit 127, so replay uses the AVX YMM0-YMM15 bridge and
