@@ -3429,7 +3429,11 @@ impl RiscVCpu {
             }
             Op::Viota => {
                 // vd[i] = count of active set bits in vs2 strictly before i.
-                // This prefix scan is not restartable: non-zero vstart traps.
+                // This prefix scan is not restartable (non-zero vstart traps)
+                // and the destination must not alias the vs2 source register.
+                if vd == vs2 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 if vstart != 0 {
                     return Err(Trap::illegal(insn.raw));
                 }
@@ -6022,6 +6026,27 @@ mod tests {
                 "funct6={funct6:06b} vs1={vs1:05b} with vstart!=0 must trap"
             );
         }
+    }
+
+    #[test]
+    fn viota_dest_overlap_is_illegal() {
+        // viota.m (funct6=0b010100, vs1=0b10000, OPMVV) writes the prefix
+        // count into vd; the destination must not alias the vs2 source
+        // register (RVV iota section; QEMU trans_viota_m requires
+        // !is_overlapped(vd, vs2)). viota.m v2, v2 must trap.
+        let mut c = cpu_e8m1();
+        // viota.m v2, v2 (vm=1, vs2=2, vs1=0b10000, funct3=0b010).
+        assert!(matches!(
+            run_one(&mut c, op_v(0b010100, 1, 2, 0b10000, 0b010, 2)),
+            RiscVExit::Trap(_)
+        ));
+        // Distinct destination (vd=1) executes.
+        let mut c2 = cpu_e8m1();
+        c2.set_vreg(2, &[0xFF; VLENB as usize]);
+        assert!(matches!(
+            run_one(&mut c2, op_v(0b010100, 1, 2, 0b10000, 0b010, 1)),
+            RiscVExit::Continue
+        ));
     }
 
     #[test]
