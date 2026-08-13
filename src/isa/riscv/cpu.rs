@@ -3447,7 +3447,18 @@ impl RiscVCpu {
                 }
             }
             Op::Vid => {
-                // vd[i] = i (element index); source vs2 ignored.
+                // vd[i] = i (element index).  The destination group must be
+                // aligned to LMUL (RVV §3.4.2; QEMU trans_vid_v:
+                // require_align(a->rd, s->lmul)).
+                let emul: u8 = match self.vtype & 0x7 {
+                    1 => 2,
+                    2 => 4,
+                    3 => 8,
+                    _ => 1,
+                };
+                if vd % emul != 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
                 for e in vstart..vl {
@@ -6074,6 +6085,34 @@ mod tests {
             RiscVExit::Continue
         ));
         assert_eq!(c.vreg(8), pat);
+    }
+
+    #[test]
+    fn vid_rejects_misaligned_vd() {
+        // vid.v writes a full SEW-width group, so vd must be aligned to LMUL
+        // (RVV §3.4.2; QEMU trans_vid_v require_align(a->rd, s->lmul)).
+        // e8,m2 -> EMUL=2, so vd=v1 is misaligned while vd=v2 is legal.
+        let mut c = cpu_e8m1();
+        c.set_vl_vtype(4, 0b010_001); // e8, m2
+        // vid.v v1 (vd misaligned, vm=1) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b010100, 1, 0, 0b10001, 0b010, 1)),
+            RiscVExit::Trap(_)
+        ));
+        // vid.v v1 (vd misaligned, vm=0) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b010100, 0, 0, 0b10001, 0b010, 1)),
+            RiscVExit::Trap(_)
+        ));
+        // Controls: vid.v v2 (aligned, vm=1 and vm=0) runs.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b010100, 1, 0, 0b10001, 0b010, 2)),
+            RiscVExit::Continue
+        ));
+        assert!(matches!(
+            run_one(&mut c, op_v(0b010100, 0, 0, 0b10001, 0b010, 2)),
+            RiscVExit::Continue
+        ));
     }
 
     #[test]
