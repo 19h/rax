@@ -123,7 +123,9 @@ impl RiscVCpu {
             Op::Vlseg | Op::Vsseg => {
                 let nf = ((insn.raw >> 29) & 7) as usize + 1;
                 let mop = (insn.raw >> 26) & 3;
+                let lumop = (insn.raw >> 20) & 0x1f;
                 let is_load = insn.op == Op::Vlseg;
+                let is_ff = is_load && lumop == 0b10000;
                 let width = encoded_width(insn)?;
                 let indexed = mop == 0b01 || mop == 0b11;
                 let eb = if indexed { self.sew_bytes() } else { width };
@@ -151,6 +153,7 @@ impl RiscVCpu {
 
                 let base = self.x(insn.rs1) & self.xmask();
                 let stride = self.x(insn.rs2) as i64;
+                let mut new_vl = vl;
                 for e in vstart..vl {
                     if !vm && !self.vmask_bit(e) {
                         continue;
@@ -165,13 +168,26 @@ impl RiscVCpu {
                         let reg = (vd as usize + f * emul_regs) as u8;
                         if is_load {
                             let mut buf = [0u8; 8];
-                            self.vector_read(e, addr, &mut buf[..eb])?;
-                            self.set_velem(reg, e, eb, u64::from_le_bytes(buf));
+                            match self.mem.read(addr, &mut buf[..eb]) {
+                                Ok(()) => self.set_velem(reg, e, eb, u64::from_le_bytes(buf)),
+                                Err(_) if is_ff && e > 0 => {
+                                    new_vl = e;
+                                    break;
+                                }
+                                Err(_) => {
+                                    self.vstart = e as u64;
+                                    return Err(acc_fault(false, addr));
+                                }
+                            }
                         } else {
                             let val = self.velem(reg, e, eb);
                             self.vector_write(e, addr, &val.to_le_bytes()[..eb])?;
                         }
                     }
+                }
+                if is_ff {
+                    self.vl = new_vl as u64;
+                    self.vstart = 0;
                 }
             }
             Op::Vlm | Op::Vsm => {
@@ -368,5 +384,27 @@ mod tests {
         let whole_trap = execute(&mut whole_cpu, load(1, 0, 0b01000, 10, 6, 2)).unwrap_err();
         assert_eq!(whole_trap, acc_fault(false, 0x108));
         assert_eq!(whole_cpu.vstart(), 2);
+    }
+
+    #[test]
+    fn vlsegff_is_fault_only_first() {
+        // vlseg<nf>e<eew>ff (lumop=0b10000, nf!=0) is the segment
+        // fault-only-first form; it must decode to Vlseg (not Illegal)
+        // and stop at the first faulting element with vl trimmed.
+        // 16 bytes of memory at 0x100; SEW=8, LMUL=1, e16 -> EMUL=2.
+        // vlseg2e16ff.v v2, (x10): 2 fields x 2 regs, vl=8 elements
+        // needs 32 bytes; memory holds 16 -> element 4 faults.
+        let mut c = cpu(FlatMemory::with_data(0x100, vec![0u8; 16]), 8, 0);
+        c.set_x(10, 0x100);
+        let raw = load(1, 1, 0b10000, 10, 5, 2); // vlseg2e16ff.v v2
+        let insn = decode(raw, Xlen::Rv64, &Isa::rv64gc());
+        assert_eq!(insn.op, Op::Vlseg, "vlsegff must decode as Vlseg");
+        assert_eq!(
+            execute(&mut c, raw),
+            Ok(RiscVExit::Continue),
+            "fault-only-first load must not trap on late fault"
+        );
+        assert!(c.vl() < 8, "vl must be trimmed to the faulting element");
+        assert_eq!(c.vstart(), 0, "fault-only-first resets vstart");
     }
 }

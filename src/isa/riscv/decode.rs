@@ -2516,6 +2516,7 @@ fn decode_load_fp(w: u32, isa: &Isa) -> Insn {
                 0b01000 => base(Op::Vlre, w),  // whole register (nf+1 regs)
                 0b01011 if nf == 0 => base(Op::Vlm, w),
                 0b10000 if nf == 0 => base(Op::Vleff, w), // fault-only-first
+                0b10000 => base(Op::Vlseg, w),            // segment fault-only-first
                 _ => Insn::illegal(w, 4),
             },
             0b10 if nf == 0 => base(Op::Vlse, w), // strided
