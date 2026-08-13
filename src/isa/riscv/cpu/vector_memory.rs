@@ -41,6 +41,25 @@ impl RiscVCpu {
         match insn.op {
             Op::Vle | Op::Vse => {
                 let eb = encoded_width(insn)?;
+                // The data register group must be EMUL-aligned, EMUL being
+                // EEW/SEW * LMUL registers (RVV 3.4.2; QEMU vext_check_load/
+                // vext_check_store).
+                let sew_bits = 8u32 << ((self.vtype >> 3) & 0x7);
+                let eew_bits = (eb as u32) * 8;
+                let (lmul_n, lmul_d): (u32, u32) = match self.vtype & 0x7 {
+                    0 => (1, 1),
+                    1 => (2, 1),
+                    2 => (4, 1),
+                    3 => (8, 1),
+                    5 => (1, 8),
+                    6 => (1, 4),
+                    7 => (1, 2),
+                    _ => (1, 1),
+                };
+                let emul_regs = ((eew_bits * lmul_n) / (sew_bits * lmul_d)).max(1) as usize;
+                if vd as usize % emul_regs != 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 let base = self.x(insn.rs1) & self.xmask();
                 for e in vstart..vl {
                     if !vm && !self.vmask_bit(e) {
@@ -59,6 +78,23 @@ impl RiscVCpu {
             }
             Op::Vlse | Op::Vsse => {
                 let eb = encoded_width(insn)?;
+                // Same EMUL alignment rule as the unit-stride forms.
+                let sew_bits = 8u32 << ((self.vtype >> 3) & 0x7);
+                let eew_bits = (eb as u32) * 8;
+                let (lmul_n, lmul_d): (u32, u32) = match self.vtype & 0x7 {
+                    0 => (1, 1),
+                    1 => (2, 1),
+                    2 => (4, 1),
+                    3 => (8, 1),
+                    5 => (1, 8),
+                    6 => (1, 4),
+                    7 => (1, 2),
+                    _ => (1, 1),
+                };
+                let emul_regs = ((eew_bits * lmul_n) / (sew_bits * lmul_d)).max(1) as usize;
+                if vd as usize % emul_regs != 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 let base = self.x(insn.rs1) & self.xmask();
                 let stride = self.x(insn.rs2) as i64;
                 for e in vstart..vl {
@@ -80,6 +116,23 @@ impl RiscVCpu {
             Op::Vlxei | Op::Vsxei => {
                 let ieb = encoded_width(insn)?;
                 let eb = self.sew_bytes();
+                // The data register group must be LMUL-aligned; the index
+                // group (vs2) is checked elsewhere (RVV 3.4.2; QEMU
+                // vext_check_ld_index / vext_check_st_index).
+                let (lmul_n, lmul_d): (u32, u32) = match self.vtype & 0x7 {
+                    0 => (1, 1),
+                    1 => (2, 1),
+                    2 => (4, 1),
+                    3 => (8, 1),
+                    5 => (1, 8),
+                    6 => (1, 4),
+                    7 => (1, 2),
+                    _ => (1, 1),
+                };
+                let emul_regs = ((lmul_n) / (lmul_d)).max(1) as usize;
+                if vd as usize % emul_regs != 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 let base = self.x(insn.rs1) & self.xmask();
                 for e in vstart..vl {
                     if !vm && !self.vmask_bit(e) {
@@ -368,5 +421,30 @@ mod tests {
         let whole_trap = execute(&mut whole_cpu, load(1, 0, 0b01000, 10, 6, 2)).unwrap_err();
         assert_eq!(whole_trap, acc_fault(false, 0x108));
         assert_eq!(whole_cpu.vstart(), 2);
+    }
+
+    #[test]
+    fn vle32_rejects_misaligned_vd() {
+        // Unit-stride load/store require the data register group to be
+        // EMUL-aligned, EMUL = EEW/SEW * LMUL (RVV 3.4.2; QEMU
+        // vext_check_load/vext_check_store). e32,m2 -> EMUL=2, so an odd vd
+        // must trap.
+        let mut c = cpu(
+            FlatMemory::with_data(
+                0x8000,
+                vec![1u8, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+            ),
+            4,
+            0b010_001,
+        );
+        c.set_x(5, 0x8000);
+        // vle32.v vd, (x5): opcode 0x07, funct6=0, vm=1, lumop=0, width=0b110.
+        let vle32 = |vd: u32| -> u32 { (1 << 25) | (5 << 15) | (0b110 << 12) | (vd << 7) | 0x07 };
+        assert_eq!(execute(&mut c, vle32(3)), Err(Trap::illegal(vle32(3))));
+        assert!(matches!(execute(&mut c, vle32(4)), Ok(RiscVExit::Continue)));
+        // vse32.v vd, (x5): opcode 0x27, funct6=0, vm=1, sumop=0, width=0b110.
+        let vse32 = |vd: u32| -> u32 { (1 << 25) | (5 << 15) | (0b110 << 12) | (vd << 7) | 0x27 };
+        assert_eq!(execute(&mut c, vse32(3)), Err(Trap::illegal(vse32(3))));
+        assert!(matches!(execute(&mut c, vse32(4)), Ok(RiscVExit::Continue)));
     }
 }
