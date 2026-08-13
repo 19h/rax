@@ -903,12 +903,23 @@ impl Pl192 {
         is_daisy
     }
 
+    /// Mask the downstream controller when its parent acknowledges a daisy IRQ.
+    ///
+    /// The devos50 PL192 model does not acknowledge the child's highest source
+    /// here. It only pushes a child priority frame while leaving `current` at
+    /// `PL192_NO_IRQ`; the guest then disables the source and finishes the child
+    /// with its own VECTADDR write. Preserve that two-step ordering rather than
+    /// turning the daisy acknowledge into a direct child-source acknowledge.
     pub fn acknowledge_daisy_child(&mut self) {
         if !self.priority_mode {
             return;
         }
-        self.current = self.current_highest;
-        self.mask_current_priority();
+        if self.stack_i + 1 < self.priority_stack.len() {
+            self.stack_i += 1;
+            self.priority = PL192_NO_IRQ;
+            self.priority_stack[self.stack_i] = self.priority;
+            self.irq_stack[self.stack_i] = self.current;
+        }
         self.irq_line = false;
         self.update();
     }
@@ -2888,10 +2899,18 @@ mod pl192_tests {
         assert_eq!(addr, 0x2222_0000);
         assert!(is_daisy);
         child.acknowledge_daisy_child();
+        assert_eq!(child.current, PL192_NO_IRQ);
+        assert_eq!(child.current_highest, 5);
+        assert_eq!(child.priority, PL192_NO_IRQ);
+        assert_eq!(child.stack_i, 1);
         refresh_parent_daisy(&mut parent, &child);
         assert!(!parent.irq_asserted());
 
-        child.set_line(5, false);
+        // The guest masks the raw child source before writing VECTADDR. This is
+        // the exact ADM completion ordering observed under the QEMU oracle.
+        child.write(0x14, 1 << 5);
+        assert_eq!(child.current_highest, PL192_NO_IRQ);
+        assert_eq!(child.stack_i, 1);
         refresh_parent_daisy(&mut parent, &child);
         assert!(parent.finish_irq());
         child.finish_daisy_child();

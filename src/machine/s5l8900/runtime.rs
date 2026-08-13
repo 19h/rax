@@ -33,6 +33,8 @@ use crate::vm::vcpu::{
     Aarch32CpuState, Aarch32Registers, Aarch32SystemRegisters, CpuState, VCpu, VcpuExit,
 };
 
+mod crypto;
+
 // Device MMIO base addresses (see the QEMU iPod Touch 1G reference).
 const CLOCK0_BASE: u32 = 0x3810_0000;
 const CLOCK1_BASE: u32 = 0x3C50_0000;
@@ -79,6 +81,8 @@ const ARM_MOV_PC_R9: u32 = 0xe1a0_f009;
 
 const IBOOT_BASE: u32 = 0x1800_0000;
 const LLB_BASE: u32 = 0x2200_0000;
+/// The S5L8900 maps its 128 MiB DRAM window at 0x0800_0000, not at address zero.
+const S5L_RAM_BASE: u64 = 0x0800_0000;
 const S5L_8900_HEADER_LEN: usize = 2048;
 const S5L_8900_IMAGE_KEY: [u8; 16] = [
     0x18, 0x84, 0x58, 0xA6, 0xD1, 0x50, 0x34, 0xDF, 0xE3, 0x86, 0xF2, 0x3B, 0x61, 0xD4, 0x37, 0x74,
@@ -459,27 +463,35 @@ fn nand_dir() -> Option<std::path::PathBuf> {
 }
 
 /// True when the guest-physical range `[addr, addr + len)` lies entirely within
-/// guest RAM, where `mem_end` is the first address past the end of RAM
-/// (`mem.last_addr() + 1`). Guest-controlled DMA sizes (AES `insize`, the 8900
-/// header's `data_len`) are validated against this *before* any
-/// `vec![0u8; len]`, so a malicious size cannot drive a multi-GB host
-/// allocation. (issues #43, #50)
-fn dma_range_in_bounds(mem_end: u64, addr: u32, len: usize) -> bool {
-    (addr as u64).saturating_add(len as u64) <= mem_end
+/// the half-open guest RAM range `[mem_start, mem_end)`. Guest-controlled DMA
+/// sizes (AES `insize`, the 8900 header's `data_len`) are validated against this
+/// *before* any `vec![0u8; len]`, so a malicious size cannot drive a multi-GB
+/// host allocation. (issues #43, #50)
+fn dma_range_in_bounds(mem_start: u64, mem_end: u64, addr: u32, len: usize) -> bool {
+    let start = addr as u64;
+    start >= mem_start
+        && start
+            .checked_add(len as u64)
+            .is_some_and(|end| end <= mem_end)
 }
 
-/// Convert the padded `GuestMemoryMmap` end back to the end of real guest RAM.
+/// Recover the S5L8900 DRAM range from the padded `GuestMemoryMmap` end.
 ///
 /// S5L gets only the mmap, not `GuestMemoryWrapper::size()`. The mmap created
 /// by the VMM includes `GUEST_MEMORY_PADDING` after the memory reported to the
-/// guest; DMA bounds must reject transfers beyond reported RAM, not merely
-/// beyond that padded host allocation. Small unpadded test mappings keep their
-/// full size.
-fn dma_ram_end_from_mmap_end(mmap_end: u64) -> u64 {
-    mmap_end
+/// guest. The reported byte count is the length of the S5L DRAM window, whose
+/// physical base is [`S5L_RAM_BASE`], rather than an address-zero upper bound.
+/// Small unpadded test mappings continue to cover `[0, mmap_end)`.
+fn dma_ram_bounds_from_mmap_end(mmap_end: u64) -> (u64, u64) {
+    if let Some(reported_size) = mmap_end
         .checked_sub(crate::vm::memory::GUEST_MEMORY_PADDING)
-        .filter(|&end| end > 0)
-        .unwrap_or(mmap_end)
+        .filter(|&size| size > 0)
+    {
+        let end = S5L_RAM_BASE.saturating_add(reported_size);
+        (S5L_RAM_BASE, end)
+    } else {
+        (0, mmap_end)
+    }
 }
 
 /// Last memory fault recorded by the bridge (for DFSR/DFAR reporting).
@@ -846,6 +858,24 @@ impl BridgeInner {
             self.vic1.address
         };
         self.vic0.update();
+    }
+
+    /// Propagate the ADM completion level through VIC1 and its VIC0 daisy
+    /// parent immediately. The reference QEMU model raises/lowers this line
+    /// synchronously inside the ADM_CTRL2 MMIO write; deferring it until the
+    /// next global IRQ resample can let the equal-priority DMAC0 completion win.
+    fn set_adm_irq(&mut self, level: bool) {
+        let was_raw = (self.vic1.rawintr & (1 << ADM_VIC1_LINE)) != 0;
+        self.adm_irq = level;
+        self.vic1.set_line(ADM_VIC1_LINE, level);
+        if level && !was_raw {
+            self.vic1_adm_daisy_latched = true;
+            self.vic1_adm_daisy_in_service = false;
+        } else if !level {
+            self.vic1_adm_daisy_latched = false;
+            self.vic1_adm_daisy_in_service = false;
+        }
+        self.refresh_vic_daisy();
     }
 
     /// Device-window read at a PHYSICAL address. Returns None when the address
@@ -2026,15 +2056,7 @@ impl S5L8900Vcpu {
         inner.vic0.set_line(I2C0_IRQ, i2c0_lvl);
         inner.vic0.set_line(I2C1_IRQ, i2c1_lvl);
         inner.vic1.set_line(NAND_ECC_VIC1_LINE, nand_ecc_lvl);
-        let adm_was_raw = (inner.vic1.rawintr & (1 << ADM_VIC1_LINE)) != 0;
-        inner.vic1.set_line(ADM_VIC1_LINE, adm_lvl);
-        if adm_lvl && !adm_was_raw {
-            inner.vic1_adm_daisy_latched = true;
-            inner.vic1_adm_daisy_in_service = false;
-        } else if !adm_lvl {
-            inner.vic1_adm_daisy_latched = false;
-            inner.vic1_adm_daisy_in_service = false;
-        }
+        inner.set_adm_irq(adm_lvl);
         for (group, &global_irq) in GPIO_GROUP_IRQS.iter().enumerate() {
             // The QEMU reference raises a SYSIC GPIO group line whenever a
             // device sets that group's status bit, and lowers it on the
@@ -2458,10 +2480,7 @@ impl S5L8900Vcpu {
         // (mirrors qemu_irq_lower when (value & 0x2) == 0).
         if value & 0x2 == 0 {
             let mut inner = self.bridge.inner.borrow_mut();
-            inner.adm_irq = false;
-            inner.vic1_adm_daisy_latched = false;
-            inner.vic1_adm_daisy_in_service = false;
-            inner.refresh_vic_daisy();
+            inner.set_adm_irq(false);
             if std::env::var("RAX_S5L_ADM_TRACE").is_ok() {
                 debug!(value = format!("{value:#x}"), "adm_irq_clear");
             }
@@ -2694,7 +2713,7 @@ impl S5L8900Vcpu {
             );
         }
         let mut inner = self.bridge.inner.borrow_mut();
-        inner.adm_irq = true;
+        inner.set_adm_irq(true);
         if std::env::var_os("RAX_S5L_ADMIRQ_TRACE").is_some()
             && inner.kernel_started
             && self.insn_count >= self.adm_irq_trace_start_insn
@@ -5617,193 +5636,6 @@ impl VCpu for S5L8900Vcpu {
     }
 }
 
-impl S5L8900Vcpu {
-    /// Service an 8900-engine in-place AES-CBC decryption request. `addr` is
-    /// the physical address of the 8900 image header; the body that follows
-    /// is decrypted in place. This mirrors the devos50 QEMU reference hook for
-    /// the missing fused bootrom decrypt routine at 0x22000000.
-    fn decrypt_8900(&mut self, addr: u32) {
-        info!(
-            addr = format!("{addr:#x}"),
-            len = S5L_8900_HEADER_LEN,
-            "Reading 8900 header"
-        );
-
-        let mut header = [0u8; S5L_8900_HEADER_LEN];
-        if self
-            .bridge
-            .mem
-            .read_slice(&mut header, GuestAddress(addr as u64))
-            .is_err()
-        {
-            debug!(addr = format!("{addr:#x}"), "8900 header read failed");
-            return;
-        }
-
-        if &header[..4] != b"8900" {
-            info!(addr = format!("{addr:#x}"), "Bad 8900 magic");
-            return;
-        }
-
-        let encrypted = header[7];
-        let data_len = u32::from_le_bytes(header[12..16].try_into().unwrap()) as usize;
-        info!(
-            addr = format!("{addr:#x}"),
-            len = data_len,
-            encrypted = format!("{encrypted:#x}"),
-            "Will decrypt 8900 image"
-        );
-
-        if encrypted != 0x03 {
-            return;
-        }
-        if data_len == 0 || data_len % 16 != 0 {
-            debug!(len = data_len, "invalid 8900 data length");
-            return;
-        }
-
-        let Some(body_addr) = addr.checked_add(S5L_8900_HEADER_LEN as u32) else {
-            return;
-        };
-        // Bound the guest-controlled data_len against actual guest RAM before
-        // allocating. The length comes from the guest-supplied 8900 header, so an
-        // unbounded `vec![0u8; data_len]` could be forced to multi-GB (host
-        // OOM/DoS) before `read_slice` ever rejects an out-of-range body. (issue #50)
-        let mem_end =
-            dma_ram_end_from_mmap_end(self.bridge.mem.last_addr().raw_value().saturating_add(1));
-        if !dma_range_in_bounds(mem_end, body_addr, data_len) {
-            debug!(len = data_len, "8900 data length exceeds guest memory");
-            return;
-        }
-        let mut body = vec![0u8; data_len];
-        if self
-            .bridge
-            .mem
-            .read_slice(&mut body, GuestAddress(body_addr as u64))
-            .is_err()
-        {
-            debug!(
-                addr = format!("{body_addr:#x}"),
-                len = data_len,
-                "8900 body read failed"
-            );
-            return;
-        }
-
-        if let Some(key) = AesKey::new(&S5L_8900_IMAGE_KEY) {
-            let iv = [0u8; 16];
-            aes_cbc_decrypt(&key, &iv, &mut body);
-            let _ = self
-                .bridge
-                .mem
-                .write_slice(&body, GuestAddress(body_addr as u64));
-            if let Ok(path) = std::env::var("RAX_S5L_DUMP_8900") {
-                if std::fs::write(&path, &body).is_ok() {
-                    info!(path, len = body.len(), "dumped decrypted 8900 body");
-                }
-            }
-        }
-    }
-
-    /// Service an AES-engine `AES_GO`: DMA `insize` bytes from `inaddr`, AES-CBC
-    /// decrypt them with the selected key, and write the plaintext to `outaddr`
-    /// (in guest physical memory). The GID key, which is not in the QEMU
-    /// reference, may be supplied as 16/24/32 hex bytes via `RAX_S5L_GID_KEY`.
-    fn service_aes(&mut self) {
-        let (inaddr, outaddr, insize, keytype, custkey, ivec) = {
-            let inner = self.bridge.inner.borrow();
-            let a = &inner.aes;
-            (a.inaddr, a.outaddr, a.insize, a.keytype, a.custkey, a.ivec)
-        };
-
-        // Resolve the decryption key.
-        let key_bytes: Option<Vec<u8>> = match keytype {
-            AesKeyType::Uid => Some(AES_UID_KEY.to_vec()),
-            AesKeyType::Custom => {
-                // Custom key length follows the AES key-length register; default
-                // to AES-256 (the engine's widest) using all 32 bytes.
-                Some(custkey.to_vec())
-            }
-            AesKeyType::Gid => std::env::var("RAX_S5L_GID_KEY").ok().and_then(|h| {
-                let h = h.trim().trim_start_matches("0x");
-                if h.len() % 2 != 0 {
-                    return None;
-                }
-                (0..h.len())
-                    .step_by(2)
-                    .map(|i| u8::from_str_radix(&h[i..i + 2], 16).ok())
-                    .collect::<Option<Vec<u8>>>()
-            }),
-        };
-
-        let len = insize as usize;
-        let mut ok = false;
-        // Bound the guest-controlled AES size against actual guest RAM before
-        // allocating. `insize` comes straight from a guest MMIO register, so an
-        // unbounded `vec![0u8; len]` could be forced up to ~4 GiB (host OOM/DoS)
-        // before `read_slice` ever validates the source range. Require both the
-        // source (`inaddr`) and destination (`outaddr`) DMA ranges to fit in
-        // guest memory. (issue #43)
-        let mem_end =
-            dma_ram_end_from_mmap_end(self.bridge.mem.last_addr().raw_value().saturating_add(1));
-        let in_bounds =
-            dma_range_in_bounds(mem_end, inaddr, len) && dma_range_in_bounds(mem_end, outaddr, len);
-        if let Some(kb) = key_bytes {
-            if let Some(key) = AesKey::new(&kb) {
-                if len > 0 && len % 16 == 0 && in_bounds {
-                    let mut buf = vec![0u8; len];
-                    if self
-                        .bridge
-                        .mem
-                        .read_slice(&mut buf, GuestAddress(inaddr as u64))
-                        .is_ok()
-                    {
-                        aes_cbc_decrypt(&key, &ivec, &mut buf);
-                        ok = self
-                            .bridge
-                            .mem
-                            .write_slice(&buf, GuestAddress(outaddr as u64))
-                            .is_ok();
-                    }
-                }
-            }
-        }
-
-        if self.fault_log_budget > 0 {
-            self.fault_log_budget -= 1;
-            debug!(
-                inaddr = format!("{inaddr:#x}"),
-                outaddr = format!("{outaddr:#x}"),
-                insize = len,
-                keytype = match keytype {
-                    AesKeyType::Uid => "uid",
-                    AesKeyType::Gid => "gid",
-                    AesKeyType::Custom => "custom",
-                },
-                ok,
-                "aes engine decrypt"
-            );
-        }
-
-        let mut inner = self.bridge.inner.borrow_mut();
-        inner.aes.pending_go = false;
-        inner.aes.outsize = insize;
-        inner.aes.finish();
-    }
-
-    /// Compute the SHA-1 digest of a guest physical region (for the SHA engine
-    /// / image-hash verification path). Returns the 20-byte digest.
-    #[allow(dead_code)]
-    fn sha1_region(&self, addr: u32, len: u32) -> Option<[u8; 20]> {
-        let mut buf = vec![0u8; len as usize];
-        self.bridge
-            .mem
-            .read_slice(&mut buf, GuestAddress(addr as u64))
-            .ok()?;
-        Some(sha1(&buf))
-    }
-}
-
 #[cfg(test)]
 mod dos_bounds_tests {
     use super::*;
@@ -5843,32 +5675,50 @@ mod dos_bounds_tests {
     // multi-GB host allocation.
     #[test]
     fn dma_range_in_bounds_rejects_oversized_sizes() {
-        // 16 KiB of guest RAM.
-        let mem_end = 0x4000;
+        // 16 KiB of guest RAM at address zero.
+        let (mem_start, mem_end) = (0, 0x4000);
 
         // Valid ranges within RAM are accepted (the bound must not over-reject).
-        assert!(dma_range_in_bounds(mem_end, 0, 0x1000));
-        assert!(dma_range_in_bounds(mem_end, 0x3000, 0x1000)); // exactly fills RAM
-        assert!(dma_range_in_bounds(mem_end, 0, 0)); // empty
+        assert!(dma_range_in_bounds(mem_start, mem_end, 0, 0x1000));
+        assert!(dma_range_in_bounds(mem_start, mem_end, 0x3000, 0x1000)); // exactly fills RAM
+        assert!(dma_range_in_bounds(mem_start, mem_end, 0, 0)); // empty
 
         // Out-of-range / oversized requests are rejected (no allocation).
-        assert!(!dma_range_in_bounds(mem_end, 0x3001, 0x1000)); // one byte over
-        assert!(!dma_range_in_bounds(mem_end, 0, 0x8000_0000)); // ~2 GiB (issue #43)
-        assert!(!dma_range_in_bounds(mem_end, 0, 0xFFFF_FFF0)); // ~4 GiB (issue #50)
-        assert!(!dma_range_in_bounds(mem_end, u32::MAX, 16)); // base near top, no wrap
+        assert!(!dma_range_in_bounds(mem_start, mem_end, 0x3001, 0x1000)); // one byte over
+        assert!(!dma_range_in_bounds(mem_start, mem_end, 0, 0x8000_0000)); // ~2 GiB (issue #43)
+        assert!(!dma_range_in_bounds(mem_start, mem_end, 0, 0xFFFF_FFF0)); // ~4 GiB (issue #50)
+        assert!(!dma_range_in_bounds(mem_start, mem_end, u32::MAX, 16)); // base near top, no wrap
     }
 
     #[test]
-    fn dma_bound_uses_reported_ram_not_padded_mmap() {
+    fn dma_bound_uses_s5l_ram_base_and_excludes_padding() {
         let reported = 0x0800_0000u64; // 128 MiB
         let padded_end = reported + crate::vm::memory::GUEST_MEMORY_PADDING;
-        let mem_end = dma_ram_end_from_mmap_end(padded_end);
+        let (mem_start, mem_end) = dma_ram_bounds_from_mmap_end(padded_end);
 
-        assert_eq!(mem_end, reported);
-        assert!(!dma_range_in_bounds(mem_end, 0, 0x1000_0000)); // 256 MiB
-        assert!(!dma_range_in_bounds(mem_end, 0, 0xFFFF_FFF0)); // ~4 GiB
-        assert!(dma_range_in_bounds(mem_end, 0, 0x0010_0000)); // 1 MiB
-        assert_eq!(dma_ram_end_from_mmap_end(0x4000), 0x4000);
+        assert_eq!((mem_start, mem_end), (0x0800_0000, 0x1000_0000));
+        // iBoot's real kernelcache buffer must fit in 128 MiB S5L DRAM. This
+        // regresses the address-zero bound that incorrectly rejected 0x0b000000.
+        assert!(dma_range_in_bounds(
+            mem_start,
+            mem_end,
+            0x0b00_0800,
+            3_319_392,
+        ));
+        assert!(!dma_range_in_bounds(mem_start, mem_end, 0, 0x1000)); // below S5L DRAM
+        assert!(!dma_range_in_bounds(
+            mem_start,
+            mem_end,
+            0x0fff_f000,
+            0x2000,
+        )); // one page over
+        assert!(!dma_range_in_bounds(
+            mem_start,
+            mem_end,
+            S5L_RAM_BASE as u32,
+            0xFFFF_FFF0,
+        )); // ~4 GiB
+        assert_eq!(dma_ram_bounds_from_mmap_end(0x4000), (0, 0x4000));
     }
 
     // issue #50: a crafted 8900 header advertising a huge data_len must be
@@ -5911,5 +5761,36 @@ mod dos_bounds_tests {
             !vcpu.bridge.inner.borrow().aes.pending_go,
             "service_aes should consume the GO request",
         );
+    }
+
+    #[test]
+    fn adm_irq_propagates_to_daisy_synchronously() {
+        let (vcpu, _mem) = small_vcpu();
+        let mut inner = vcpu.bridge.inner.borrow_mut();
+        let adm_mask = 1 << ADM_VIC1_LINE;
+        let adm_vector = 0x8000_0025;
+
+        inner.vic0.set_priority_mode(true);
+        inner.vic1.set_priority_mode(true);
+        inner.vic1.write(0x100 + ADM_VIC1_LINE * 4, adm_vector);
+        inner.vic1.write(0x10, adm_mask);
+
+        // QEMU propagates qemu_irq_raise() through both PL192s before the ADM
+        // control-register write returns. No sync_irqs() call may be required.
+        inner.set_adm_irq(true);
+        assert!(inner.adm_irq);
+        assert_eq!(inner.vic1.rawintr & adm_mask, adm_mask);
+        assert_eq!(inner.vic1.irq_status & adm_mask, adm_mask);
+        assert!(inner.vic0.daisy_input);
+        assert_eq!(inner.vic0.debug_priority_state().1, 32);
+        assert_eq!(inner.vic0.address, adm_vector);
+        assert!(inner.vic0.irq_asserted());
+
+        inner.set_adm_irq(false);
+        assert!(!inner.adm_irq);
+        assert_eq!(inner.vic1.rawintr & adm_mask, 0);
+        assert_eq!(inner.vic1.irq_status & adm_mask, 0);
+        assert!(!inner.vic0.daisy_input);
+        assert!(!inner.vic0.irq_asserted());
     }
 }
