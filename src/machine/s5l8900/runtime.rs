@@ -299,16 +299,26 @@ const UART0_IRQ: u32 = 24;
 const BATCH: u32 = 65_536;
 const S5L_DMADUMP_DEFAULT_LIMIT: u64 = 16 * 1024 * 1024;
 
-/// Default guest-time speedup for the µs timer: firmware delays elapse this
-/// many times faster than real wall-clock time (keeps multi-second boot waits
-/// short). Overridable with RAX_S5L_TIMER_SPEEDUP. Stability of the guest's
-/// atomic counter read is unaffected — that depends only on the update cadence
-/// (every 256 instructions), not the magnitude of each step.
+/// Guest-time scale for the µs timer. Keep the default at reference pace:
+/// accelerating guest time can let timeout callouts run before their device
+/// interrupt workloops, which races ADM completion during XNU boot. Explicit
+/// diagnostic runs may still override the scale with RAX_S5L_TIMER_SPEEDUP.
+fn parse_timer_speedup(value: Option<&str>) -> u64 {
+    value
+        .and_then(|value| value.parse().ok())
+        .filter(|&scale| scale > 0)
+        .unwrap_or(1)
+}
+
 fn timer_speedup() -> u64 {
-    std::env::var("RAX_S5L_TIMER_SPEEDUP")
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(256)
+    let value = std::env::var("RAX_S5L_TIMER_SPEEDUP").ok();
+    parse_timer_speedup(value.as_deref())
+}
+
+/// Instructions per guest microsecond. Instruction pacing keeps XNU device
+/// timeouts independent of how slowly the interpreter runs on the host.
+fn parse_det_timer(value: Option<&str>) -> u64 {
+    value.and_then(|value| value.parse().ok()).unwrap_or(32)
 }
 
 fn trace_budget_env(name: &str, default_when_present: u32) -> u32 {
@@ -1664,9 +1674,10 @@ pub struct S5L8900Vcpu {
     last_heartbeat: std::time::Instant,
     boot_instant: std::time::Instant,
     timer_speedup: u64,
-    /// When set, derive guest µs from the instruction count instead of the
-    /// host clock so that boots are fully deterministic (reproducible for
-    /// debugging). `det_timer` holds the instructions-per-µs divisor.
+    /// Derive guest µs from the instruction count so timeouts do not outrun
+    /// device work while the interpreter executes below the guest CPU's speed.
+    /// Holds the instructions-per-µs divisor; zero explicitly selects the host
+    /// clock for timing diagnostics.
     det_timer: u64,
     /// Multiplier on the µs counter — iBoot treats the timer as a 12 MHz tick
     /// counter (it reads freq=12000000 and computes elapsed = ticks*1e6/freq),
@@ -1912,10 +1923,10 @@ impl S5L8900Vcpu {
                 .and_then(|v| v.parse().ok())
                 .filter(|&n| n > 0)
                 .unwrap_or(1),
-            det_timer: std::env::var("RAX_S5L_DET_TIMER")
-                .ok()
-                .map(|v| v.parse().ok().filter(|&n| n > 0).unwrap_or(32))
-                .unwrap_or(0),
+            det_timer: {
+                let value = std::env::var("RAX_S5L_DET_TIMER").ok();
+                parse_det_timer(value.as_deref())
+            },
             input_seeded,
             security_state_seeded: false,
             input_payload,
@@ -2791,10 +2802,11 @@ impl S5L8900Vcpu {
             // scheduler. tick_irq self-gates on the timer's `started` flag, so
             // it only fires once iBoot has armed TIMER_4 (i.e. the scheduler is
             // up). This is what wakes tasks blocked in task_sleep.
-            // Update the µs timer from the host clock periodically (not every
-            // instruction) so it tracks real time but stays stable across a
-            // guest atomic counter read. The speedup factor makes firmware
-            // delays elapse in a fraction of real time.
+            // Pace the µs timer from retired instructions by default. The
+            // interpreter runs much slower than the real S5L8900 CPU, so using
+            // host wall time lets XNU timeout callouts overtake interrupt and
+            // configuration work. The explicit zero diagnostic mode below
+            // retains the coarsely updated host-clock implementation.
             if self.det_timer != 0 {
                 inner
                     .timer
@@ -5654,6 +5666,27 @@ mod dos_bounds_tests {
             .unwrap()
             .as_nanos();
         std::env::temp_dir().join(format!("rax-{name}-{}-{now}", std::process::id()))
+    }
+
+    #[test]
+    fn timer_speedup_defaults_to_reference_pace() {
+        assert_eq!(parse_timer_speedup(None), 1);
+        assert_eq!(parse_timer_speedup(Some("")), 1);
+        assert_eq!(parse_timer_speedup(Some("invalid")), 1);
+        assert_eq!(parse_timer_speedup(Some("0")), 1);
+    }
+
+    #[test]
+    fn timer_speedup_allows_explicit_diagnostic_override() {
+        assert_eq!(parse_timer_speedup(Some("256")), 256);
+    }
+
+    #[test]
+    fn deterministic_timer_is_the_default() {
+        assert_eq!(parse_det_timer(None), 32);
+        assert_eq!(parse_det_timer(Some("invalid")), 32);
+        assert_eq!(parse_det_timer(Some("128")), 128);
+        assert_eq!(parse_det_timer(Some("0")), 0);
     }
 
     #[test]
