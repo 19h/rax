@@ -909,7 +909,25 @@ impl RiscVCpu {
                 let mask = (1u64 << nbits) - 1;
                 self.set_x(rd, (a >> (rs2 as u64)) & mask);
             }
-            Op::Wfi => return Ok(RiscVExit::Wfi),
+            Op::Wfi => {
+                // norm:wfi_mepc_val: wfi must take the trap immediately when
+                // an enabled interrupt is pending (no stall). The wfi wake
+                // condition does not require the global MIE bit.
+                let pending = self.mip & self.mie & !self.mideleg & M_INTERRUPT_MASK & self.xmask();
+                let cause = if pending & MIP_MEIP != 0 {
+                    cause::INT_M_EXTERNAL
+                } else if pending & MIP_MSIP != 0 {
+                    cause::INT_M_SOFTWARE
+                } else if pending & MIP_MTIP != 0 {
+                    cause::INT_M_TIMER
+                } else {
+                    return Ok(RiscVExit::Wfi);
+                };
+                return Err(Trap {
+                    cause: self.interrupt_cause_bit() | cause,
+                    tval: 0,
+                });
+            }
             Op::WrsNto | Op::WrsSto => {}
             Op::Mret => self.mret(),
             Op::Sret | Op::Uret => self.mret(), // single-mode model: same restore path
@@ -5460,6 +5478,21 @@ mod tests {
         c.csr_write(0x300, 0).unwrap();
         c.csr_write(0x100, 0b11 << 11).unwrap();
         assert_eq!(c.csr_read(0x300).unwrap() & (0b11 << 11), 0);
+    }
+
+    #[test]
+    fn wfi_traps_when_an_enabled_interrupt_is_pending() {
+        // norm:wfi: wfi must take the trap immediately when an enabled
+        // interrupt is pending (the wake condition does not require the
+        // global MIE bit). MEIP pending + MEIE enabled -> trap; nothing
+        // pending -> Wfi exit.
+        let mut c = cpu();
+        c.mip = MIP_MEIP; // pending machine external interrupt
+        c.mie = MIP_MEIP; // enabled in MIE
+        c.mideleg = 0;
+        assert!(matches!(run_one(&mut c, 0x1050_0073), RiscVExit::Trap(_)));
+        let mut c2 = cpu();
+        assert_eq!(run_one(&mut c2, 0x1050_0073), RiscVExit::Wfi);
     }
 
     #[test]
