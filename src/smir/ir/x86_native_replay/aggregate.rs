@@ -43,6 +43,9 @@ pub fn x86_native_replay_spans(
         if instruction.legacy_register_insertps_replay().is_some() {
             return Some((false, false, false));
         }
+        if instruction.legacy_register_pclmulqdq_replay().is_some() {
+            return Some((false, false, false));
+        }
         if instruction.legacy_register_packed_extend_replay().is_some() {
             return Some((false, false, false));
         }

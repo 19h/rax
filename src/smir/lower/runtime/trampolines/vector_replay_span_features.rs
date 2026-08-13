@@ -42,6 +42,10 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             .legacy_register_dot_product_replay()
             .is_some();
         let legacy_insertps = span.instruction.legacy_register_insertps_replay().is_some();
+        let legacy_pclmulqdq = span
+            .instruction
+            .legacy_register_pclmulqdq_replay()
+            .is_some();
         let legacy_packed_extend = span
             .instruction
             .legacy_register_packed_extend_replay()
@@ -124,6 +128,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || legacy_round
             || legacy_dot_product
             || legacy_insertps
+            || legacy_pclmulqdq
             || legacy_packed_extend
             || legacy_widening_dword_multiply.is_some()
             || legacy_fp_flag_compare
@@ -173,6 +178,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || legacy_round
             || legacy_dot_product
             || legacy_insertps
+            || legacy_pclmulqdq
             || legacy_packed_extend
             || legacy_widening_dword_multiply.is_some()
             || legacy_fp_flag_compare
@@ -276,7 +282,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             .instruction
             .evex_register_vp2intersect_needs_vl()
             .is_some();
-        requirements.needs_pclmulqdq |= vex_vpclmulqdq_ymm == Some(false);
+        requirements.needs_pclmulqdq |= legacy_pclmulqdq || vex_vpclmulqdq_ymm == Some(false);
         requirements.needs_vpclmulqdq |= span
             .instruction
             .evex_register_vpclmulqdq_needs_vl()
