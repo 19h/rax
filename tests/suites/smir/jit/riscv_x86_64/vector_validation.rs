@@ -205,6 +205,77 @@ fn lifted_rv_vector_reserved_encodings_fail_closed_transactionally() {
                 ..initial
             },
         ),
+        // A masked non-mask result cannot write the v0 source mask.
+        (
+            (2 << 20) | (4 << 15) | (0 << 7) | 0x57,
+            RiscVGuestRegs {
+                vtype: 0x11, // e32,m2
+                ..initial
+            },
+        ),
+        // vmul.vv requires aligned LMUL-sized destination and source groups.
+        (
+            (0b100101 << 26) | (1 << 25) | (2 << 20) | (4 << 15) | (0b010 << 12) | (1 << 7) | 0x57,
+            RiscVGuestRegs {
+                vtype: 0x11,
+                ..initial
+            },
+        ),
+        // A mask result may overlap only the lowest register of a data source.
+        (
+            (0b011000 << 26) | (1 << 25) | (2 << 20) | (4 << 15) | (3 << 7) | 0x57,
+            RiscVGuestRegs {
+                vtype: 0x11,
+                ..initial
+            },
+        ),
+        // vid.v still writes a complete LMUL-sized destination group.
+        (
+            (0b010100 << 26) | (1 << 25) | (0b10001 << 15) | (0b010 << 12) | (1 << 7) | 0x57,
+            RiscVGuestRegs {
+                vtype: 0x11,
+                ..initial
+            },
+        ),
+        // Downward slide overlap is legal, but each group must be aligned.
+        (
+            (0b001111 << 26) | (1 << 25) | (3 << 20) | (5 << 15) | (0b110 << 12) | (2 << 7) | 0x57,
+            RiscVGuestRegs {
+                vtype: 0x11,
+                ..initial
+            },
+        ),
+        // Non-segment and segment memory destinations use their derived EMUL.
+        (
+            (1 << 25) | (10 << 15) | (0b110 << 12) | (1 << 7) | 0x07,
+            RiscVGuestRegs {
+                vtype: 0x11,
+                ..initial
+            },
+        ),
+        (
+            (1 << 29) | (1 << 25) | (10 << 15) | (0b110 << 12) | (1 << 7) | 0x07,
+            RiscVGuestRegs {
+                vtype: 0x11,
+                ..initial
+            },
+        ),
+        // Indexed segment loads prohibit every destination/index overlap,
+        // including same-EEW overlap that ordinary indexed loads can allow.
+        (
+            (1 << 29)
+                | (0b01 << 26)
+                | (1 << 25)
+                | (4 << 20)
+                | (10 << 15)
+                | (0b110 << 12)
+                | (4 << 7)
+                | 0x07,
+            RiscVGuestRegs {
+                vtype: 0x11,
+                ..initial
+            },
+        ),
     ];
 
     for (instruction, state) in cases {
@@ -316,6 +387,22 @@ fn lifted_followup_rvv_controls_match_direct_at_o0_and_o2() {
         false,
     );
 
+    // Aligned multiply groups and lowest-register mask-result overlap remain legal.
+    for instruction in [
+        (0b100101 << 26) | (1 << 25) | (2 << 20) | (4 << 15) | (0b010 << 12) | 0x57,
+        (0b011000 << 26) | (1 << 25) | (2 << 20) | (4 << 15) | (2 << 7) | 0x57,
+    ] {
+        run_vector_case(
+            instruction,
+            RiscVGuestRegs {
+                vtype: 0x11,
+                ..initial
+            },
+            [0xa5; MEMORY_LEN],
+            false,
+        );
+    }
+
     // Masked viota.m remains legal when vd is disjoint from v0 and vs2.
     run_vector_case(
         (0b010100 << 26) | (4 << 20) | (0b10000 << 15) | (0b010 << 12) | (2 << 7) | 0x57,
@@ -331,6 +418,28 @@ fn lifted_followup_rvv_controls_match_direct_at_o0_and_o2() {
             vstart: 7,
             ..initial
         },
+        [0xa5; MEMORY_LEN],
+        false,
+    );
+
+    // vmv2r.v resumes at vstart in SEW-sized effective elements.
+    run_vector_case(
+        (0b100111 << 26) | (1 << 25) | (2 << 20) | (1 << 15) | (0b011 << 12) | (4 << 7) | 0x57,
+        RiscVGuestRegs {
+            vtype: 0x10, // e32,m1
+            vstart: 2,
+            ..initial
+        },
+        [0xa5; MEMORY_LEN],
+        false,
+    );
+
+    // Segment fault-only-first encodings share the transactional vector helper.
+    let mut fof = initial;
+    fof.x[10] = DATA;
+    run_vector_case(
+        (1 << 29) | (1 << 25) | (0b10000 << 20) | (10 << 15) | (1 << 7) | 0x07,
+        fof,
         [0xa5; MEMORY_LEN],
         false,
     );

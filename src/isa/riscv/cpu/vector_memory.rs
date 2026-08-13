@@ -81,11 +81,19 @@ impl RiscVCpu {
                 let ieb = encoded_width(insn)?;
                 let eb = self.sew_bytes();
                 let base = self.x(insn.rs1) & self.xmask();
+                // A non-segment indexed load may legally overlap its index
+                // group under the general mixed-EEW rules. Preserve the
+                // original indices before destination writes begin.
+                let indices = (insn.op == Op::Vlxei).then(|| self.vector_snapshot());
                 for e in vstart..vl {
                     if !vm && !self.vmask_bit(e) {
                         continue;
                     }
-                    let addr = base.wrapping_add(self.velem(insn.rs2, e, ieb)) & self.xmask();
+                    let index = indices.as_ref().map_or_else(
+                        || self.velem(insn.rs2, e, ieb),
+                        |snapshot| Self::snapshot_velem(snapshot, insn.rs2, e, ieb),
+                    );
+                    let addr = base.wrapping_add(index) & self.xmask();
                     if insn.op == Op::Vlxei {
                         let mut buf = [0u8; 8];
                         self.vector_read(e, addr, &mut buf[..eb])?;
@@ -126,6 +134,8 @@ impl RiscVCpu {
                 let is_load = insn.op == Op::Vlseg;
                 let width = encoded_width(insn)?;
                 let indexed = mop == 0b01 || mop == 0b11;
+                let fault_only_first =
+                    is_load && mop == 0b00 && ((insn.raw >> 20) & 0x1f) == 0b10000;
                 let eb = if indexed { self.sew_bytes() } else { width };
 
                 let sew_bits = 8u32 << ((self.vtype >> 3) & 0x7);
@@ -151,7 +161,8 @@ impl RiscVCpu {
 
                 let base = self.x(insn.rs1) & self.xmask();
                 let stride = self.x(insn.rs2) as i64;
-                for e in vstart..vl {
+                let mut new_vl = vl;
+                'elements: for e in vstart..vl {
                     if !vm && !self.vmask_bit(e) {
                         continue;
                     }
@@ -165,13 +176,27 @@ impl RiscVCpu {
                         let reg = (vd as usize + f * emul_regs) as u8;
                         if is_load {
                             let mut buf = [0u8; 8];
-                            self.vector_read(e, addr, &mut buf[..eb])?;
+                            if fault_only_first {
+                                if self.mem.read(addr, &mut buf[..eb]).is_err() {
+                                    if e == 0 {
+                                        self.vstart = 0;
+                                        return Err(acc_fault(false, addr));
+                                    }
+                                    new_vl = e;
+                                    break 'elements;
+                                }
+                            } else {
+                                self.vector_read(e, addr, &mut buf[..eb])?;
+                            }
                             self.set_velem(reg, e, eb, u64::from_le_bytes(buf));
                         } else {
                             let val = self.velem(reg, e, eb);
                             self.vector_write(e, addr, &val.to_le_bytes()[..eb])?;
                         }
                     }
+                }
+                if fault_only_first {
+                    self.vl = new_vl as u64;
                 }
             }
             Op::Vlm | Op::Vsm => {
@@ -249,6 +274,26 @@ mod tests {
 
     fn store(vm: u32, nf: u32, sumop: u32, rs1: u32, width: u32, vs3: u32) -> u32 {
         (nf << 29) | (vm << 25) | (sumop << 20) | (rs1 << 15) | (width << 12) | (vs3 << 7) | 0x27
+    }
+
+    fn memory_op(
+        opcode: u32,
+        vm: u32,
+        nf: u32,
+        mop: u32,
+        field: u32,
+        rs1: u32,
+        width: u32,
+        vd: u32,
+    ) -> u32 {
+        (nf << 29)
+            | (mop << 26)
+            | (vm << 25)
+            | (field << 20)
+            | (rs1 << 15)
+            | (width << 12)
+            | (vd << 7)
+            | opcode
     }
 
     #[test]
@@ -353,6 +398,81 @@ mod tests {
         assert_eq!(cpu.vstart(), 2);
         assert_eq!(&cpu.vreg(1)[..8], &[1, 2, 3, 4, 5, 6, 7, 8]);
         assert_eq!(&cpu.vreg(1)[8..], &[0xaa; 8]);
+    }
+
+    #[test]
+    fn memory_operands_validate_data_index_and_segment_groups() {
+        let mut cpu = cpu(FlatMemory::new(0x100, 0x100), 2, 0x11); // e32,m2
+        cpu.set_x(10, 0x100);
+
+        let misaligned_unit = memory_op(0x07, 1, 0, 0, 0, 10, 6, 1);
+        assert_eq!(
+            execute(&mut cpu, misaligned_unit),
+            Err(Trap::illegal(misaligned_unit))
+        );
+        let misaligned_unit_store = memory_op(0x27, 1, 0, 0, 0, 10, 6, 1);
+        assert_eq!(
+            execute(&mut cpu, misaligned_unit_store),
+            Err(Trap::illegal(misaligned_unit_store))
+        );
+
+        let misaligned_index_data = memory_op(0x07, 1, 0, 1, 2, 10, 6, 1);
+        assert_eq!(
+            execute(&mut cpu, misaligned_index_data),
+            Err(Trap::illegal(misaligned_index_data))
+        );
+
+        // EI64 at SEW=32, LMUL=2 gives the index operand EMUL=4, so v2 is
+        // misaligned even though the data group v4-v5 is valid.
+        let misaligned_index = memory_op(0x07, 1, 0, 1, 2, 10, 7, 4);
+        assert_eq!(
+            execute(&mut cpu, misaligned_index),
+            Err(Trap::illegal(misaligned_index))
+        );
+
+        let misaligned_segment = memory_op(0x07, 1, 1, 0, 0, 10, 6, 1);
+        assert_eq!(
+            execute(&mut cpu, misaligned_segment),
+            Err(Trap::illegal(misaligned_segment))
+        );
+        let misaligned_segment_store = memory_op(0x27, 1, 1, 0, 0, 10, 6, 1);
+        assert_eq!(
+            execute(&mut cpu, misaligned_segment_store),
+            Err(Trap::illegal(misaligned_segment_store))
+        );
+
+        let aligned_segment = memory_op(0x07, 1, 1, 0, 0, 10, 6, 2);
+        assert_eq!(execute(&mut cpu, aligned_segment), Ok(RiscVExit::Continue));
+
+        // Unlike an ordinary indexed load, an indexed segment load cannot
+        // overlap its index group even when the data and index EEWs match.
+        let overlapping_indexed_segment = memory_op(0x07, 1, 1, 1, 4, 10, 6, 4);
+        assert_eq!(
+            execute(&mut cpu, overlapping_indexed_segment),
+            Err(Trap::illegal(overlapping_indexed_segment))
+        );
+    }
+
+    #[test]
+    fn segment_fault_only_first_traps_at_zero_and_trims_later_faults() {
+        let raw = memory_op(0x07, 1, 1, 0, 0b10000, 10, 0, 1);
+
+        let mut later = cpu(FlatMemory::with_data(0x100, vec![0x10, 0x20, 0x30]), 3, 0);
+        later.set_x(10, 0x100);
+        later.set_vreg(1, &[0xaa; 16]);
+        later.set_vreg(2, &[0xbb; 16]);
+        assert_eq!(execute(&mut later, raw), Ok(RiscVExit::Continue));
+        assert_eq!(later.vl(), 1);
+        assert_eq!(later.vstart(), 0);
+        assert_eq!(later.vreg(1)[0], 0x10);
+        assert_eq!(later.vreg(2)[0], 0x20);
+        assert_eq!(later.vreg(1)[1], 0x30); // partial faulting segment is allowed
+
+        let mut first = cpu(FlatMemory::with_data(0x100, vec![0x10]), 3, 0);
+        first.set_x(10, 0x100);
+        assert_eq!(execute(&mut first, raw), Err(acc_fault(false, 0x101)));
+        assert_eq!(first.vl(), 3);
+        assert_eq!(first.vstart(), 0);
     }
 
     #[test]

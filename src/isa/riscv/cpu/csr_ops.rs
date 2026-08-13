@@ -70,6 +70,7 @@ impl RiscVCpu {
             Csr::Mideleg => self.mideleg,
             Csr::Mie => self.mie,
             Csr::Sie => self.mie & self.supervisor_interrupt_mask(),
+            Csr::Sepc => self.sepc_read_value(),
             Csr::Mtvec => self.mtvec,
             Csr::Mcounteren => self.mcounteren,
             Csr::Mscratch => self.mscratch,
@@ -125,6 +126,7 @@ impl RiscVCpu {
                 let mask = self.supervisor_interrupt_mask();
                 self.mie = (self.mie & !mask) | (value & mask);
             }
+            Csr::Sepc => self.sepc = value & self.epc_alignment_mask() & self.xmask(),
             Csr::Mtvec => {
                 let base = value & !0b11 & self.xmask();
                 let mode = u64::from(value & 0b11 == 1);
@@ -132,7 +134,7 @@ impl RiscVCpu {
             }
             Csr::Mcounteren => self.mcounteren = value,
             Csr::Mscratch => self.mscratch = value,
-            Csr::Mepc => self.mepc = value & self.mepc_alignment_mask() & self.xmask(),
+            Csr::Mepc => self.mepc = value & self.epc_alignment_mask() & self.xmask(),
             Csr::Mcause => self.mcause = value,
             Csr::Mtval => self.mtval = value,
             Csr::Mip => self.mip = value,
@@ -207,13 +209,18 @@ impl RiscVCpu {
     }
 
     #[inline]
-    fn mepc_alignment_mask(&self) -> u64 {
+    fn epc_alignment_mask(&self) -> u64 {
         if self.cfg.isa.c { !1 } else { !3 }
     }
 
     #[inline]
     fn mepc_read_value(&self) -> u64 {
-        self.mepc & self.mepc_alignment_mask() & self.xmask()
+        self.mepc & self.epc_alignment_mask() & self.xmask()
+    }
+
+    #[inline]
+    fn sepc_read_value(&self) -> u64 {
+        self.sepc & self.epc_alignment_mask() & self.xmask()
     }
 
     pub(super) fn mret(&mut self) {
@@ -231,12 +238,39 @@ impl RiscVCpu {
         };
         self.mstatus &= !(0b11 << 11);
     }
+
+    pub(super) fn sret(&mut self, insn: &Insn) -> Result<(), Trap> {
+        const MSTATUS_SIE: u64 = 1 << 1;
+        const MSTATUS_SPIE: u64 = 1 << 5;
+        const MSTATUS_SPP: u64 = 1 << 8;
+        const MSTATUS_MPRV: u64 = 1 << 17;
+        const MSTATUS_TSR: u64 = 1 << 22;
+
+        if self.priv_ < Priv::Supervisor
+            || (self.priv_ == Priv::Supervisor && self.mstatus & MSTATUS_TSR != 0)
+        {
+            return Err(Trap::illegal(insn.raw));
+        }
+
+        self.pc = self.sepc_read_value();
+        let spie = self.mstatus & MSTATUS_SPIE != 0;
+        self.mstatus &= !MSTATUS_SIE;
+        self.mstatus |= u64::from(spie) * MSTATUS_SIE;
+        self.mstatus |= MSTATUS_SPIE;
+        self.priv_ = if self.mstatus & MSTATUS_SPP != 0 {
+            Priv::Supervisor
+        } else {
+            Priv::User
+        };
+        self.mstatus &= !(MSTATUS_SPP | MSTATUS_MPRV);
+        Ok(())
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::super::*;
-    use crate::isa::riscv::FlatMemory;
+    use crate::isa::riscv::{FlatMemory, decode};
 
     fn cpu_with_xlen(xlen: Xlen, isa: Isa) -> RiscVCpu {
         RiscVCpu::new(
@@ -265,6 +299,50 @@ mod tests {
         assert_eq!(with_c.csr_read(0x341), Ok(0x1002));
         with_c.mret();
         assert_eq!(with_c.pc(), 0x1002);
+    }
+
+    #[test]
+    fn sepc_masks_ialign_and_sret_restores_only_supervisor_stack() {
+        let mut hart = cpu(Isa::rv64gc());
+        let sret = decode(0x1020_0073, Xlen::Rv64, &Isa::rv64gc());
+        let machine_stack = (0b11 << 11) | (1 << 7) | (1 << 3);
+        hart.mstatus = machine_stack | (1 << 17) | (1 << 8) | (1 << 5);
+        hart.sepc = 0x2003;
+        hart.priv_ = Priv::Supervisor;
+
+        assert_eq!(hart.execute_insn(&sret, 0x1000), Ok(RiscVExit::Continue));
+        assert_eq!(hart.pc(), 0x2002);
+        assert_eq!(hart.privilege(), Priv::Supervisor);
+        assert_eq!(hart.mstatus & machine_stack, machine_stack);
+        assert_ne!(hart.mstatus & (1 << 1), 0, "SIE <- SPIE");
+        assert_ne!(hart.mstatus & (1 << 5), 0, "SPIE <- 1");
+        assert_eq!(hart.mstatus & (1 << 8), 0, "SPP <- U");
+        assert_eq!(hart.mstatus & (1 << 17), 0, "MPRV clears below M-mode");
+
+        let mut no_c = cpu(Isa::rv_i());
+        no_c.csr_write(0x141, 0x3003).unwrap();
+        assert_eq!(no_c.csr_read(0x141), Ok(0x3000));
+        no_c.priv_ = Priv::Supervisor;
+        assert_eq!(no_c.sret(&sret), Ok(()));
+        assert_eq!(no_c.pc(), 0x3000);
+        assert_eq!(no_c.privilege(), Priv::User);
+        assert_eq!(no_c.mstatus & (1 << 1), 0);
+        assert_ne!(no_c.mstatus & (1 << 5), 0);
+    }
+
+    #[test]
+    fn sret_privilege_and_tsr_failures_do_not_commit_state() {
+        let sret = decode(0x1020_0073, Xlen::Rv64, &Isa::rv64gc());
+        for (privilege, status) in [(Priv::User, 0), (Priv::Supervisor, 1 << 22)] {
+            let mut cpu = cpu(Isa::rv64gc());
+            cpu.priv_ = privilege;
+            cpu.mstatus = status | (1 << 5) | (1 << 8);
+            cpu.sepc = 0x2000;
+            cpu.pc = 0x1000;
+            let before = (cpu.pc, cpu.priv_, cpu.mstatus, cpu.sepc);
+            assert_eq!(cpu.sret(&sret), Err(Trap::illegal(sret.raw)));
+            assert_eq!((cpu.pc, cpu.priv_, cpu.mstatus, cpu.sepc), before);
+        }
     }
 
     #[test]

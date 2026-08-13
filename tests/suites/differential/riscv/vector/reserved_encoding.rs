@@ -189,6 +189,11 @@ fn diff_v_reserved_encoding_validation() {
             state(E8_M1, 8),
         ));
     }
+    batch.push((
+        "vmul.vv.aligned-control".into(),
+        op_iv(0b100101, 1, 2, 4, 0b010, 0),
+        state(E32_M2, 2),
+    ));
 
     // Upward slides prohibit any source/destination group overlap. The exact
     // slide-by-one encodings use OPMVX/OPFVF funct3 values 110/101. Downward
@@ -227,6 +232,119 @@ fn diff_v_reserved_encoding_validation() {
             state(E32_M2, 4),
         ));
     }
+
+    // Complete same-width groups, mask-result overlap, and the generic masked
+    // destination rule are all checked before any architectural state changes.
+    for (name, funct6, funct3) in [
+        ("vmul.vv", 0b100101, 0b010),
+        ("vdivu.vv", 0b100000, 0b010),
+        ("vsaddu.vv", 0b100000, 0b000),
+        ("vssrl.vv", 0b101010, 0b000),
+        ("vsmul.vv", 0b100111, 0b000),
+    ] {
+        batch.push((
+            format!("{name}.misaligned-vd"),
+            op_iv(funct6, 1, 2, 4, funct3, 1),
+            state(E32_M2, 2),
+        ));
+    }
+    batch.push((
+        "vslide1down.vx.misaligned-vs2".into(),
+        op_iv(0b001111, 1, 3, 5, 0b110, 2),
+        state(E32_M2, 2),
+    ));
+    batch.push((
+        "vid.v.misaligned-vd".into(),
+        op_iv(0b010100, 1, 0, 0b10001, 0b010, 1),
+        state(E32_M2, 2),
+    ));
+    batch.push((
+        "vmseq.vv.nonlowest-source-overlap".into(),
+        op_iv(0b011000, 1, 2, 4, 0b000, 3),
+        state(E32_M2, 2),
+    ));
+    batch.push((
+        "vmadc.vv.nonlowest-source-overlap".into(),
+        op_iv(0b010001, 1, 2, 4, 0b000, 3),
+        state(E32_M2, 2),
+    ));
+    for (name, funct6) in [("vmseq.vv", 0b011000), ("vmadc.vv", 0b010001)] {
+        batch.push((
+            format!("{name}.lowest-source-overlap-control"),
+            op_iv(funct6, 1, 2, 4, 0b000, 2),
+            state(E32_M2, 2),
+        ));
+    }
+    batch.push((
+        "vadd.vv.masked-vd-v0".into(),
+        op_iv(0b000000, 0, 2, 4, 0b000, 0),
+        state(E32_M2, 2),
+    ));
+    batch.push((
+        "vmseq.vv.masked-vd-v0-control".into(),
+        op_iv(0b011000, 0, 2, 4, 0b000, 0),
+        state(E32_M2, 2),
+    ));
+
+    // Vector memory operands use data or index EMUL as selected by the
+    // addressing mode; segment fields each start at an aligned group.
+    let vle32_misaligned = (1 << 25) | (10 << 15) | (0b110 << 12) | (1 << 7) | 0x07;
+    batch.push((
+        "vle32.v.misaligned-vd".into(),
+        vle32_misaligned,
+        state(E32_M2, 2),
+    ));
+    let vluxei64_misaligned_index =
+        (0b01 << 26) | (1 << 25) | (2 << 20) | (10 << 15) | (0b111 << 12) | (4 << 7) | 0x07;
+    batch.push((
+        "vluxei64.v.misaligned-index".into(),
+        vluxei64_misaligned_index,
+        state(E32_M2, 2),
+    ));
+    let vlseg2e32_misaligned = (1 << 29) | (1 << 25) | (10 << 15) | (0b110 << 12) | (1 << 7) | 0x07;
+    batch.push((
+        "vlseg2e32.v.misaligned-vd".into(),
+        vlseg2e32_misaligned,
+        state(E32_M2, 2),
+    ));
+    batch.push((
+        "vlseg2e32.v.aligned-control".into(),
+        (1 << 29) | (1 << 25) | (10 << 15) | (0b110 << 12) | (2 << 7) | 0x07,
+        {
+            let mut control = state(E32_M2, 2);
+            control.x[10] = SCRATCH_BASE;
+            control
+        },
+    ));
+    batch.push((
+        "vluxseg2ei32.v.destination-index-overlap".into(),
+        (1 << 29)
+            | (0b01 << 26)
+            | (1 << 25)
+            | (4 << 20)
+            | (10 << 15)
+            | (0b110 << 12)
+            | (4 << 7)
+            | 0x07,
+        state(E32_M2, 2),
+    ));
+
+    // Whole-register moves resume in SEW-sized effective elements. Segment
+    // fault-only-first loads with nf>0 are legal unit-stride encodings.
+    let mut vmvr_resume = state(E32_M1, 0);
+    vmvr_resume.vstart = 2;
+    batch.push((
+        "vmv2r.v.vstart-two".into(),
+        op_iv(0b100111, 1, 2, 1, 0b011, 4),
+        vmvr_resume,
+    ));
+    let mut segment_fof = state(E8_M1, 2);
+    segment_fof.x[10] = SCRATCH_BASE;
+    batch.push((
+        "vlseg2e8ff.v.control".into(),
+        (1 << 29) | (1 << 25) | (0b10000 << 20) | (10 << 15) | (1 << 7) | 0x07,
+        segment_fof,
+    ));
 
     let narrowing: Vec<(&str, u32, u32)> = [
         ("vnsrl.wv", 0b101100, 0),
