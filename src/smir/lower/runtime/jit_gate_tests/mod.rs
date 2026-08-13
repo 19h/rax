@@ -387,6 +387,8 @@ mod selector_verify;
 #[cfg(test)]
 mod serialize;
 #[cfg(test)]
+mod shift_group6;
+#[cfg(test)]
 mod smsw;
 #[cfg(test)]
 mod sqrt;

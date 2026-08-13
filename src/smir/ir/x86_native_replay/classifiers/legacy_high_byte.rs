@@ -5,8 +5,8 @@ use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, SmirOp};
 use crate::smir::ir::types::{ArchReg, Condition, OpWidth, SrcOperand, VReg, X86Reg};
 
-/// Documented legacy Group 2 operation selected by a byte-validated
-/// AH/CH/DH/BH register encoding.
+/// Legacy Group 2 operation selected by a byte-validated AH/CH/DH/BH register
+/// encoding, including the `/6` SAL alias implemented by the direct decoder.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum X86LegacyHighByteGroup2Kind {
     Rol,
@@ -14,6 +14,7 @@ pub(crate) enum X86LegacyHighByteGroup2Kind {
     Rcl,
     Rcr,
     Shl,
+    Sal,
     Shr,
     Sar,
 }
@@ -290,9 +291,9 @@ impl X86InstructionBytes {
     ///
     /// The admitted set contains MOV (including the B4-B7 immediate forms),
     /// binary ALU, TEST, XCHG, Group 1 immediate, NOT, NEG, INC, DEC, SETcc,
-    /// CMPXCHG, XADD, implicit MUL/IMUL, CRC32 r32,r/m8, and documented Group
-    /// 2 rotate/shift register forms. LOCK, REX, memory, undocumented Group 2
-    /// `/6`, Group 3 `/1`, and divide forms fail closed.
+    /// CMPXCHG, XADD, implicit MUL/IMUL, CRC32 r32,r/m8, and Group 2
+    /// rotate/shift register forms including `/6` SAL. LOCK, REX, memory,
+    /// Group 3 `/1`, and divide forms fail closed.
     /// Group 2 replay uses a deterministic status wrapper because RAX
     /// preserves architecturally undefined AF/OF while the host instruction
     /// may change them. At most one legacy prefix from each prefix group is
@@ -430,10 +431,9 @@ impl X86InstructionBytes {
         })
     }
 
-    /// Decode one documented register-only legacy Group 2 operation whose
-    /// destination is AH, CH, DH, or BH. The undocumented `/6` alias remains
-    /// rejected because its deterministic undefined-AF contract differs from
-    /// the architectural `/4` SHL/SAL encoding.
+    /// Decode one register-only legacy Group 2 operation whose destination is
+    /// AH, CH, DH, or BH. `/6` is replayed as canonical `/4` SHL while the
+    /// lowering wrapper supplies its distinct deterministic undefined-AF policy.
     pub(crate) fn legacy_high_byte_group2_replay(&self) -> Option<X86LegacyHighByteGroup2Replay> {
         let bytes = self.as_slice();
         let start = legacy_prefix_len(bytes)?;
@@ -453,14 +453,21 @@ impl X86InstructionBytes {
             3 => X86LegacyHighByteGroup2Kind::Rcr,
             4 => X86LegacyHighByteGroup2Kind::Shl,
             5 => X86LegacyHighByteGroup2Kind::Shr,
+            6 => X86LegacyHighByteGroup2Kind::Sal,
             7 => X86LegacyHighByteGroup2Kind::Sar,
-            _ => return None,
+            _ => unreachable!(),
         };
+        let suffix = &bytes[start..];
+        let mut canonical = [0u8; 3];
+        canonical[..suffix.len()].copy_from_slice(suffix);
+        if kind == X86LegacyHighByteGroup2Kind::Sal {
+            canonical[1] = (canonical[1] & !0x38) | (4 << 3);
+        }
         Some(X86LegacyHighByteGroup2Replay {
             kind,
             parent: (modrm & 7) - 4,
             raw_count,
-            canonical_instruction: X86InstructionBytes::new(&bytes[start..])?,
+            canonical_instruction: X86InstructionBytes::new(&canonical[..suffix.len()])?,
         })
     }
 
@@ -485,7 +492,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn classifier_exhaustively_accepts_documented_register_cells() {
+    fn classifier_exhaustively_accepts_supported_register_cells() {
         let mut accepted = 0usize;
         for prefix in [
             &[][..],
@@ -624,7 +631,7 @@ mod tests {
                         if opcode == 0xC0 {
                             bytes.push(0xA5);
                         }
-                        let expected = extension != 6 && rm >= 4;
+                        let expected = rm >= 4;
                         let instruction = X86InstructionBytes::new(&bytes).unwrap();
                         assert_eq!(
                             instruction.is_legacy_high_byte_register_replay(),
@@ -641,7 +648,7 @@ mod tests {
                 }
             }
         }
-        assert_eq!(accepted, 16_440);
+        assert_eq!(accepted, 16_512);
     }
 
     #[test]
@@ -785,6 +792,13 @@ mod tests {
                 &[0xC0, 0xED, 0x09][..],
             ),
             (
+                &[0x65, 0xC0, 0xF5, 0xA5][..],
+                X86LegacyHighByteGroup2Kind::Sal,
+                1,
+                Some(0xA5),
+                &[0xC0, 0xE5, 0xA5][..],
+            ),
+            (
                 &[0xC0, 0xFE, 0x1F][..],
                 X86LegacyHighByteGroup2Kind::Sar,
                 2,
@@ -884,7 +898,7 @@ mod tests {
     }
 
     #[test]
-    fn classifier_rejects_every_unsafe_or_undocumented_frontier() {
+    fn classifier_rejects_every_unsafe_or_unsupported_frontier() {
         for bytes in [
             &[0x00, 0xC3][..],                         // add bl,al: no high byte
             &[0x00, 0x04][..],                         // memory destination
@@ -892,9 +906,6 @@ mod tests {
             &[0xF0, 0x00, 0xC4][..],                   // LOCK register form is #UD
             &[0xF2, 0xF3, 0x00, 0xC4][..],             // duplicate prefix group
             &[0x66, 0x66, 0x00, 0xC4][..],             // duplicate prefix group
-            &[0xC0, 0xF4, 0x03][..],                   // undocumented Group 2 /6 alias
-            &[0xD0, 0xF5][..],                         // undocumented Group 2 /6 alias
-            &[0xD2, 0xF6][..],                         // undocumented Group 2 /6 alias
             &[0xC0, 0x04, 0x03][..],                   // Group 2 memory form
             &[0x40, 0xC0, 0xC4, 0x03][..],             // REX selects SPL, not AH
             &[0xF6, 0xCC, 0x01][..],                   // Group 3 /1 compatibility alias

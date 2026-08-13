@@ -149,6 +149,12 @@ impl X86_64Lowerer {
                     None,
                 );
             }
+            X86LegacyHighByteGroup2Kind::Sal if count == 8 => {
+                self.emit_finish_legacy_high_byte_group2_status(0, AF | OF, Some(0));
+            }
+            X86LegacyHighByteGroup2Kind::Sal if count > 8 => {
+                self.emit_finish_legacy_high_byte_group2_status(0, AF | CF | OF, None);
+            }
             X86LegacyHighByteGroup2Kind::Shl | X86LegacyHighByteGroup2Kind::Shr if count == 8 => {
                 let bit = if kind == X86LegacyHighByteGroup2Kind::Shl {
                     0
@@ -169,6 +175,13 @@ impl X86_64Lowerer {
                 self.emit_finish_legacy_high_byte_group2_status(
                     AF,
                     if count == 1 { 0 } else { OF },
+                    None,
+                );
+            }
+            X86LegacyHighByteGroup2Kind::Sal => {
+                self.emit_finish_legacy_high_byte_group2_status(
+                    0,
+                    AF | if count == 1 { 0 } else { OF },
                     None,
                 );
             }
@@ -202,6 +215,7 @@ impl X86_64Lowerer {
         let is_shift = matches!(
             kind,
             X86LegacyHighByteGroup2Kind::Shl
+                | X86LegacyHighByteGroup2Kind::Sal
                 | X86LegacyHighByteGroup2Kind::Shr
                 | X86LegacyHighByteGroup2Kind::Sar
         );

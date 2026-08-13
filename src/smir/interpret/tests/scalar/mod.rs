@@ -14,6 +14,8 @@ mod memory;
 #[cfg(test)]
 mod misc;
 #[cfg(test)]
+mod shift_group6;
+#[cfg(test)]
 mod tsx;
 use crate::smir::interpret::*;
 use crate::smir::ir::FunctionBuilder;

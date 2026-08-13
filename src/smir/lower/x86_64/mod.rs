@@ -285,6 +285,8 @@ mod serialize;
 pub use serialize::*;
 mod selector;
 pub use selector::*;
+mod shift_group6;
+pub(crate) use shift_group6::*;
 mod smsw;
 pub use smsw::*;
 mod swapgs;

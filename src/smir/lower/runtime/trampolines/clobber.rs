@@ -1264,6 +1264,7 @@ pub(crate) fn block_is_clobber_safe(
         let state_inc_dec_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_inc_dec_valid(op);
         let state_rotate_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_rotate_valid(op);
         let state_shift_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_shift_valid(op);
+        let shift_group6_ok = crate::smir::lower::x86_64::x86_shift_group6_shape_valid(op);
         let state_carry_rotate_ok =
             crate::smir::lower::x86_64::x86_state_backed_gpr_carry_rotate_valid(op);
         let state_double_shift_ok =
@@ -1447,6 +1448,7 @@ pub(crate) fn block_is_clobber_safe(
             || state_inc_dec_ok
             || state_rotate_ok
             || state_shift_ok
+            || shift_group6_ok
             || state_carry_rotate_ok
             || state_double_shift_ok
             || state_count_ok
@@ -1503,7 +1505,8 @@ pub(crate) fn block_is_clobber_safe(
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_rotate_candidate(op)
                 && !state_rotate_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_shift_candidate(op)
-                && !state_shift_ok)
+                && !state_shift_ok
+                && !shift_group6_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_carry_rotate_candidate(op)
                 && !state_carry_rotate_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_double_shift_candidate(op)
@@ -1579,6 +1582,7 @@ pub(crate) fn block_is_clobber_safe(
             || cmpxchg_ok
             || guarded_div_ok
             || io_ok
+            || shift_group6_ok
             || crate::smir::lower::x86_64::x86_flag_control_shape_valid(op);
         let vector_ok = if matches!(op.kind, OpKind::X86Opmask(_)) {
             opmask_ok

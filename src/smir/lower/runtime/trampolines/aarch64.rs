@@ -180,6 +180,11 @@ pub(crate) fn x86_aarch64_block_is_clobber_safe(
         if matches!(op.x86_hint, Some(X86OpHint::LegacyHighByteReg)) {
             return false;
         }
+        // `/6` SAL carries an x86-only deterministic undefined-AF policy.
+        // The AArch64 flag bridge cannot represent that distinction.
+        if matches!(op.x86_hint, Some(X86OpHint::ShiftGroup6)) {
+            return false;
+        }
         if matches!(op.x86_hint, Some(X86OpHint::Mulx)) && !x86_mulx_arch_shape_valid(op) {
             return false;
         }

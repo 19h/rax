@@ -34,6 +34,13 @@ use crate::smir::lower::{
 impl X86_64Lowerer {
     /// Lower a single operation
     pub(crate) fn lower_op(&mut self, op: &crate::smir::ir::ops::SmirOp) -> Result<(), LowerError> {
+        if matches!(op.x86_hint, Some(X86OpHint::ShiftGroup6)) && !x86_shift_group6_shape_valid(op)
+        {
+            return Err(LowerError::InvalidOperand {
+                op: "legacy Group-2 /6 SAL".to_string(),
+                operand: format!("invalid hinted SMIR shape: {:?}", op.kind),
+            });
+        }
         if self.lower_opmask(op)? {
             return Ok(());
         }

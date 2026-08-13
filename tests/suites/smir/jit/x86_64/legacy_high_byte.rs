@@ -376,6 +376,8 @@ fn jit_legacy_high_byte_replay_matches_direct_for_aliases_flags_and_prefixes() {
         ("rcl dh,2", &[0xC0, 0xD6, 0x02], common_rax),
         ("rcr bh,cl", &[0xD2, 0xDF], common_rax),
         ("shl ah,8", &[0xC0, 0xE4, 0x08], common_rax),
+        ("sal ah,8", &[0xC0, 0xF4, 0x08], common_rax),
+        ("sal bh,cl", &[0xD2, 0xF7], common_rax),
         ("shr ch,9", &[0xC0, 0xED, 0x09], common_rax),
         ("sar dh,31", &[0xC0, 0xFE, 0x1F], common_rax),
         (
@@ -618,7 +620,7 @@ fn jit_legacy_high_byte_replay_matches_direct_for_every_admitted_register_cell()
         }
     }
 
-    for extension in [0u8, 1, 2, 3, 4, 5, 7] {
+    for extension in 0u8..8 {
         for rm in 4u8..8 {
             let bytes = [0xD0, 0xC0 | (extension << 3) | rm];
             compare_direct_and_jit(&format!("{bytes:02X?}"), &bytes, rax);
@@ -643,7 +645,7 @@ fn jit_legacy_high_byte_replay_matches_direct_for_every_admitted_register_cell()
         }
     }
 
-    assert_eq!(cases, 3_452);
+    assert_eq!(cases, 3_712);
 }
 
 #[test]

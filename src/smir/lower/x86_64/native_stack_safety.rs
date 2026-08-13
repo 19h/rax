@@ -45,6 +45,7 @@ impl X86_64Lowerer {
             || x86_state_backed_gpr_inc_dec_valid(op)
             || x86_state_backed_gpr_rotate_valid(op)
             || x86_state_backed_gpr_shift_valid(op)
+            || x86_shift_group6_shape_valid(op)
             || x86_state_backed_gpr_carry_rotate_valid(op)
             || x86_state_backed_gpr_double_shift_valid(op)
             || x86_state_backed_gpr_count_valid(op)

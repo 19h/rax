@@ -40,7 +40,7 @@ fn high_byte_temporary(function: &SmirFunction) -> VReg {
 }
 
 #[test]
-fn legacy_high_byte_replay_admits_and_emits_each_documented_family_at_o0_o1_o2() {
+fn legacy_high_byte_replay_admits_and_emits_each_supported_family_at_o0_o1_o2() {
     let cases: &[(&str, &[u8])] = &[
         ("mov ah,0xa5", &[0xB4, 0xA5]),
         (
@@ -79,6 +79,8 @@ fn legacy_high_byte_replay_admits_and_emits_each_documented_family_at_o0_o1_o2()
         ("rcl dh,2", &[0xC0, 0xD6, 0x02]),
         ("rcr bh,cl", &[0xD2, 0xDF]),
         ("shl ah,8", &[0xC0, 0xE4, 0x08]),
+        ("sal ah,8", &[0xC0, 0xF4, 0x08]),
+        ("sal bh,cl", &[0xD2, 0xF7]),
         ("shr ch,9", &[0xC0, 0xED, 0x09]),
         ("sar dh,31", &[0xC0, 0xFE, 0x1F]),
         (
@@ -748,8 +750,12 @@ fn legacy_high_byte_replay_requires_exact_provenance_contiguity_and_ssa_confinem
     );
     assert!(!is_native_clobber_safe(&rex));
 
-    let undocumented_group6 = function(&[0xC0, 0xF4, 0x02]);
-    assert!(!is_native_clobber_safe(&undocumented_group6));
+    let group6 = function(&[0xC0, 0xF4, 0x02]);
+    assert!(is_native_clobber_safe(&group6));
+
+    let mut group6_without_provenance = group6;
+    group6_without_provenance.x86_instruction_bytes.clear();
+    assert!(!is_native_clobber_safe(&group6_without_provenance));
 
     let mut malformed_imul = function(&[0xF6, 0xEC]);
     let crate::smir::ir::ops::OpKind::Shr { amount, .. } =

@@ -57,6 +57,14 @@ impl SmirInterpreter {
                         },
                         *flags,
                     );
+                    // RAX assigns the architecturally undefined `/6` SAL AF
+                    // output deterministically: every nonzero masked count
+                    // clears it, while count zero leaves all flags unchanged.
+                    if matches!(x86_hint, Some(X86OpHint::ShiftGroup6))
+                        && flags.as_set().contains(FlagSet::AF)
+                    {
+                        ctx.flags.materialized.af = false;
+                    }
                 }
             }
 

@@ -87,6 +87,9 @@ impl X86_64Lowerer {
                 width,
                 flags,
             } => {
+                if matches!(op.x86_hint, Some(X86OpHint::ShiftGroup6)) {
+                    return self.lower_x86_shift_group6(op);
+                }
                 if x86_state_backed_gpr_shift_candidate(op) {
                     if !x86_state_backed_gpr_shift_valid(op) {
                         return Err(LowerError::InvalidOperand {

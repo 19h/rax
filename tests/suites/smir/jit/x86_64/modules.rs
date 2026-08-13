@@ -22,6 +22,8 @@ mod cmpccxadd;
 mod cmpxchg_register;
 #[path = "flag_control.rs"]
 mod flag_control;
+#[path = "group2_sal.rs"]
+mod group2_sal;
 #[path = "group3_alias.rs"]
 mod group3_alias;
 #[path = "legacy_0f38_terminal.rs"]
