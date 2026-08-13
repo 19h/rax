@@ -74,6 +74,7 @@ impl RiscVCpu {
             Csr::Mcounteren => self.mcounteren,
             Csr::Mscratch => self.mscratch,
             Csr::Mepc => self.mepc_read_value(),
+            Csr::Sepc => self.sepc & self.xmask(),
             Csr::Mcause => self.mcause,
             Csr::Mtval => self.mtval,
             Csr::Mip => self.mip,
@@ -133,6 +134,7 @@ impl RiscVCpu {
             Csr::Mcounteren => self.mcounteren = value,
             Csr::Mscratch => self.mscratch = value,
             Csr::Mepc => self.mepc = value & self.mepc_alignment_mask() & self.xmask(),
+            Csr::Sepc => self.sepc = value & self.mepc_alignment_mask() & self.xmask(),
             Csr::Mcause => self.mcause = value,
             Csr::Mtval => self.mtval = value,
             Csr::Mip => self.mip = value,
@@ -230,6 +232,31 @@ impl RiscVCpu {
             _ => Priv::User,
         };
         self.mstatus &= !(0b11 << 11);
+    }
+
+    pub(super) fn sret(&mut self) -> Result<(), Trap> {
+        // sret in U-mode is illegal; with TSR=1 an S-mode sret is illegal.
+        if self.priv_ == Priv::User {
+            return Err(Trap::illegal(0));
+        }
+        if self.priv_ == Priv::Supervisor && self.mstatus & (1 << 22) != 0 {
+            return Err(Trap::illegal(0));
+        }
+        // pc <- sepc; SIE <- SPIE; SPIE <- 1; priv <- SPP; SPP <- U.
+        // Must not touch M-mode bits (MPP/MPIE/MIE) nor MEPC.
+        self.pc = self.sepc & self.xmask();
+        let spie = (self.mstatus >> 5) & 1;
+        self.mstatus &= !(1 << 1); // SIE = 0
+        self.mstatus |= spie << 1; // SIE = SPIE
+        self.mstatus |= 1 << 5; // SPIE = 1
+        let spp = (self.mstatus >> 8) & 1;
+        self.priv_ = if spp == 1 {
+            Priv::Supervisor
+        } else {
+            Priv::User
+        };
+        self.mstatus &= !(1 << 8); // SPP = 0
+        Ok(())
     }
 }
 

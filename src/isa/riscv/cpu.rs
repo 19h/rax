@@ -187,6 +187,7 @@ pub struct RiscVCpu {
     mstatus: u64,
     mtvec: u64,
     mepc: u64,
+    sepc: u64,
     mcause: u64,
     mtval: u64,
     mscratch: u64,
@@ -266,6 +267,7 @@ impl RiscVCpu {
             mstatus: 0,
             mtvec: 0,
             mepc: 0,
+            sepc: 0,
             mcause: 0,
             mtval: 0,
             mscratch: 0,
@@ -310,6 +312,7 @@ impl RiscVCpu {
         self.mstatus = 0;
         self.mtvec = 0;
         self.mepc = 0;
+        self.sepc = 0;
         self.mcause = 0;
         self.mtval = 0;
         self.mscratch = 0;
@@ -741,7 +744,13 @@ impl RiscVCpu {
             | Op::HfenceVvma
             | Op::HfenceGvma
             | Op::HinvalVvma
-            | Op::HinvalGvma => {}
+            | Op::HinvalGvma => {
+                // priv 1.12: privileged instructions executed in U-mode
+                // raise illegal-instruction.
+                if self.priv_ == Priv::User {
+                    return Err(Trap::illegal(0));
+                }
+            }
             Op::CboZero => {
                 let base = a & !0x3f;
                 self.mem.write(base, &[0; 64]).map_err(|_| Trap {
@@ -912,7 +921,7 @@ impl RiscVCpu {
             Op::Wfi => return Ok(RiscVExit::Wfi),
             Op::WrsNto | Op::WrsSto => {}
             Op::Mret => self.mret(),
-            Op::Sret | Op::Uret => self.mret(), // single-mode model: same restore path
+            Op::Sret | Op::Uret => self.sret()?,
 
             // ---- Zicsr ----
             Op::Csrrw | Op::Csrrs | Op::Csrrc | Op::Csrrwi | Op::Csrrsi | Op::Csrrci => {
@@ -5460,6 +5469,39 @@ mod tests {
         c.csr_write(0x300, 0).unwrap();
         c.csr_write(0x100, 0b11 << 11).unwrap();
         assert_eq!(c.csr_read(0x300).unwrap() & (0b11 << 11), 0);
+    }
+
+    #[test]
+    fn sret_restores_sepc_and_s_status_without_touching_m_mode() {
+        // sret must use sepc (not mepc) and update SIE/SPIE/SPP only;
+        // M-mode state (MPP/MPIE/MIE/MEPC) must stay untouched.
+        let mut c = cpu();
+        c.priv_ = Priv::Supervisor;
+        c.sepc = 0x40;
+        c.mepc = 0x400;
+        c.mstatus = (1 << 8) | (0b11 << 11); // SPP=1 (S-mode), MPP=3 garbage
+        c.set_pc(0x100);
+        assert_eq!(run_one(&mut c, 0x1020_0073), RiscVExit::Continue); // sret
+        assert_eq!(c.pc(), 0x40, "pc must come from sepc");
+        assert_eq!(c.priv_, Priv::Supervisor, "SPP=1 restores S-mode");
+        // M-mode bits untouched: MPP/MPIE still hold their written values.
+        assert_eq!(c.mstatus & (0b11 << 11), 0b11 << 11, "MPP untouched");
+        assert_eq!(c.mepc, 0x400, "MEPC untouched");
+    }
+
+    #[test]
+    fn sret_in_user_mode_is_illegal() {
+        let mut c = cpu();
+        c.priv_ = Priv::User;
+        c.set_pc(0x100);
+        assert!(matches!(run_one(&mut c, 0x1020_0073), RiscVExit::Trap(_)));
+    }
+
+    #[test]
+    fn sepc_csr_is_readable_and_writable() {
+        let mut c = cpu();
+        c.csr_write(0x141, 0x1234).unwrap();
+        assert_eq!(c.csr_read(0x141).unwrap(), 0x1234);
     }
 
     #[test]

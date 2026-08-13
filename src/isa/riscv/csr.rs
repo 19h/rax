@@ -59,6 +59,8 @@ pub enum Csr {
     Mip = 0x344,
     /// Supervisor interrupt-pending.
     Sip = 0x144,
+    /// Supervisor exception program counter.
+    Sepc = 0x141,
     /// Vendor ID.
     Mvendorid = 0xF11,
     /// Architecture ID.
@@ -112,6 +114,7 @@ impl Csr {
             0x343 => Csr::Mtval,
             0x344 => Csr::Mip,
             0x144 => Csr::Sip,
+            0x141 => Csr::Sepc,
             0xF11 => Csr::Mvendorid,
             0xF12 => Csr::Marchid,
             0xF13 => Csr::Mimpid,
