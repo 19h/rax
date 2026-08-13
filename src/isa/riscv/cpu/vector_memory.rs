@@ -145,7 +145,15 @@ impl RiscVCpu {
                     _ => (1, 1),
                 };
                 let emul_regs = ((eew_bits * lmul_n) / (sew_bits * lmul_d)).max(1) as usize;
-                if emul_regs > 8 || nf * emul_regs > 8 || vd as usize + nf * emul_regs > 32 {
+                // The destination (load) / source (store) register groups
+                // start at vd and each field occupies EMUL registers; vd must
+                // name the lowest-numbered register of the first field group
+                // (RVV §7.8, Sail `valid_segment_group_without_overflow`).
+                if emul_regs > 8
+                    || nf * emul_regs > 8
+                    || vd as usize % emul_regs != 0
+                    || vd as usize + nf * emul_regs > 32
+                {
                     return Err(Trap::illegal(insn.raw));
                 }
 
@@ -368,5 +376,23 @@ mod tests {
         let whole_trap = execute(&mut whole_cpu, load(1, 0, 0b01000, 10, 6, 2)).unwrap_err();
         assert_eq!(whole_trap, acc_fault(false, 0x108));
         assert_eq!(whole_cpu.vstart(), 2);
+    }
+
+    #[test]
+    fn vlseg_vd_must_be_emul_aligned() {
+        // vlseg2e16.v with SEW=8, LMUL=1 -> EMUL=2; vd must be even.
+        // vd=3 is a reserved encoding and must trap; vd=2 is legal.
+        let mut bad = cpu(FlatMemory::with_data(0x100, vec![0; 64]), 8, 0); // e8, m1
+        bad.set_x(10, 0x100);
+        let bad_insn = load(1, 1, 0, 10, 5, 3); // vlseg2e16.v v3
+        let bad_trap = execute(&mut bad, bad_insn).unwrap_err();
+        assert_eq!(bad_trap, Trap::illegal(bad_insn));
+
+        let mut good = cpu(FlatMemory::with_data(0x100, vec![0; 64]), 8, 0);
+        good.set_x(10, 0x100);
+        assert_eq!(
+            execute(&mut good, load(1, 1, 0, 10, 5, 2)).unwrap(), // vlseg2e16.v v2
+            RiscVExit::Continue
+        );
     }
 }
