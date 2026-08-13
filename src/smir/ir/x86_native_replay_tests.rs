@@ -79,6 +79,9 @@ mod legacy_vex_scalar_move;
 #[path = "x86_native_replay_tests/legacy_aes.rs"]
 mod legacy_aes;
 
+#[path = "x86_native_replay_tests/legacy_packed_fp_convert.rs"]
+mod legacy_packed_fp_convert;
+
 #[path = "x86_native_replay_tests/legacy_widening_dword_multiply.rs"]
 mod legacy_widening_dword_multiply;
 

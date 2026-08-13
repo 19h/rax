@@ -289,6 +289,8 @@ mod legacy_high_byte_replay;
 #[cfg(test)]
 mod legacy_packed_extend_replay;
 #[cfg(test)]
+mod legacy_packed_fp_convert_replay;
+#[cfg(test)]
 mod legacy_sha_replay;
 #[cfg(test)]
 mod legacy_vex_fp_compare_replay;

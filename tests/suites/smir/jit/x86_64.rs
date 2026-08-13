@@ -47,6 +47,8 @@ mod legacy_0f3a_reserved;
 mod legacy_high_byte;
 #[path = "x86_64/legacy_packed_extend.rs"]
 mod legacy_packed_extend;
+#[path = "x86_64/legacy_packed_fp_convert.rs"]
+mod legacy_packed_fp_convert;
 #[path = "x86_64/legacy_widening_dword_multiply.rs"]
 mod legacy_widening_dword_multiply;
 #[path = "x86_64/mmx_xmm_transfer.rs"]

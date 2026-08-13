@@ -85,6 +85,7 @@ mod integer_compare;
 mod legacy_aes;
 mod legacy_blend;
 mod legacy_high_byte;
+mod legacy_packed_fp_convert;
 mod legacy_sha;
 mod legacy_widening_dword_multiply;
 mod packed_extend;
@@ -306,6 +307,10 @@ pub(crate) use legacy_high_byte::{
     X86LegacyHighByteMultiplyKind, X86LegacyHighByteMultiplyReplay, X86LegacyHighByteSetccReplay,
     x86_legacy_high_byte_crc32_shape_temporary, x86_legacy_high_byte_multiply_shape_temporary,
     x86_legacy_high_byte_setcc_shape_virtual_requirements,
+};
+pub(crate) use legacy_packed_fp_convert::{
+    X86LegacyPackedFpConvertKind, X86LegacyPackedFpConvertReplay,
+    x86_legacy_packed_fp_convert_shape_matches,
 };
 pub(crate) use legacy_sha::{X86LegacyShaReplay, x86_legacy_sha_shape_virtual_requirements};
 pub(crate) use legacy_widening_dword_multiply::{

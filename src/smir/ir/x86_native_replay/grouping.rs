@@ -191,6 +191,14 @@ pub(super) fn x86_native_replay_spans_where(
                     }
                 }
             }
+            if let Some(replay) = source_instruction.legacy_register_packed_fp_convert_replay()
+                && !classifiers::x86_legacy_packed_fp_convert_shape_matches(
+                    &block.ops[start..end],
+                    replay,
+                )
+            {
+                return None;
+            }
             if let Some(replay) = source_instruction.legacy_register_packed_extend_replay() {
                 let requirements =
                     classifiers::x86_legacy_packed_extend_shape_virtual_requirements(
@@ -262,13 +270,17 @@ pub(super) fn x86_native_replay_spans_where(
             } else {
                 start
             };
-            // Legacy MMX widening multiply replays the arithmetic expansion,
-            // but its final EnterMmx operation must remain independently
-            // lowered so the guest x87 tag word commits at this instruction.
-            let replay_end = if source_instruction
-                .legacy_register_widening_dword_multiply_replay()
-                .is_some_and(|replay| replay.mmx)
-            {
+            // An exact MMX source replay replaces the arithmetic/conversion
+            // expansion, but its final EnterMmx operation must remain
+            // independently lowered so the guest x87 tag word commits at this
+            // instruction.
+            let leaves_mmx_marker = source_instruction
+                .legacy_register_packed_fp_convert_replay()
+                .is_some_and(|replay| replay.kind.touches_mmx())
+                || source_instruction
+                    .legacy_register_widening_dword_multiply_replay()
+                    .is_some_and(|replay| replay.mmx);
+            let replay_end = if leaves_mmx_marker {
                 end.checked_sub(1)
                     .filter(|candidate| *candidate > replay_start)?
             } else {

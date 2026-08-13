@@ -827,10 +827,14 @@ pub fn x86_native_mmx_pairs_valid_excluding(
             let mut index = 0;
             while index < block.ops.len() {
                 if let Some(span) = native_replay_spans.get(&index)
-                    && span
+                    && (span
                         .instruction
-                        .legacy_register_widening_dword_multiply_replay()
-                        .is_some_and(|replay| replay.mmx)
+                        .legacy_register_packed_fp_convert_replay()
+                        .is_some_and(|replay| replay.kind.touches_mmx())
+                        || span
+                            .instruction
+                            .legacy_register_widening_dword_multiply_replay()
+                            .is_some_and(|replay| replay.mmx))
                 {
                     let Some(marker) = block.ops.get(span.end) else {
                         return false;
