@@ -14,6 +14,24 @@ use crate::vm::vcpu::SystemRegisters;
 #[cfg(feature = "profiling")]
 use crate::observability::profiling;
 
+/// One message for a failed guest-memory access, naming the address once.
+///
+/// `vm_memory`'s `InvalidGuestAddress` prints the address it was given, in
+/// decimal, inside its own `Display`. Wrapping that in a format string that
+/// also prints the address yields the same number twice in two bases — which is
+/// what a caller sees, and what makes the useful half of the message hard to
+/// find. That one variant is therefore described here, in hex, in the same
+/// words the unmapped-range check above already uses; every other variant
+/// carries no address of its own and keeps its full text.
+fn guest_access_error(op: &str, paddr: u64, source: vm_memory::GuestMemoryError) -> String {
+    match source {
+        vm_memory::GuestMemoryError::InvalidGuestAddress(_) => {
+            format!("failed to {op} at {paddr:#x}: physical range is unmapped")
+        }
+        other => format!("failed to {op} at {paddr:#x}: {other}"),
+    }
+}
+
 // LAPIC constants
 const LAPIC_BASE: u64 = 0xFEE00000;
 const LAPIC_SIZE: u64 = 0x1000;
@@ -1301,7 +1319,7 @@ impl Mmu {
 
         self.memory
             .read_slice(buf, GuestAddress(paddr))
-            .map_err(|e| Error::Emulator(format!("failed to read at {:#x}: {}", paddr, e)))
+            .map_err(|source| Error::Emulator(guest_access_error("read", paddr, source)))
     }
 
     /// Write bytes to guest memory (physical address).
@@ -1369,7 +1387,7 @@ impl Mmu {
 
         self.memory
             .write_slice(buf, GuestAddress(paddr))
-            .map_err(|e| Error::Emulator(format!("failed to write at {:#x}: {}", paddr, e)))
+            .map_err(|source| Error::Emulator(guest_access_error("write", paddr, source)))
     }
 
     /// Read bytes from guest memory (virtual address).
