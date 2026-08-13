@@ -52,6 +52,7 @@ mod evex_packed_rotate_memory;
 mod evex_packed_variable_shift_memory;
 mod evex_psadbw_memory;
 mod evex_range_memory;
+mod evex_scalar_fma_llig;
 mod evex_scalar_fp_arithmetic_memory;
 mod evex_scalar_fp_compare_memory;
 mod evex_scalar_fp_to_int_memory;

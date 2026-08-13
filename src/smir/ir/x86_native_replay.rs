@@ -194,10 +194,10 @@ pub struct X86NativeReplaySpan {
     /// Exclusive semantic-op end index.
     pub end: usize,
     /// Exact instruction to emit. This is normally the source instruction;
-    /// documented generation-dependent scalar VEX.L=1 sources, non-memory
-    /// address/segment-prefixed sources, prefixed high-byte MUL/IMUL sources,
-    /// and the high-byte Group 3 `/1` TEST alias carry deterministic canonical
-    /// encodings.
+    /// documented generation-dependent scalar VEX.L=1 sources, scalar EVEX
+    /// FMA3 LLIG sources, non-memory address/segment-prefixed sources, prefixed
+    /// high-byte MUL/IMUL sources, and the high-byte Group 3 `/1` TEST alias
+    /// carry deterministic canonical encodings.
     pub instruction: X86InstructionBytes,
     /// Whether native execution requires AVX-512VL.
     pub needs_avx512vl: bool,

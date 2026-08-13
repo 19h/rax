@@ -554,6 +554,10 @@ fn lift_graphs_preserve_rounding_width_mask_and_fp_format() {
 
 fn assert_admits_and_lowers(case: FmaCase) -> usize {
     let bytes = case.bytes();
+    let mut replay = bytes;
+    if case.scalar && !case.embedded_rounding {
+        replay[3] &= !0x60;
+    }
     let mut lowered = 0usize;
     for level in LEVELS {
         let function = optimized_function(&bytes, level);
@@ -562,7 +566,7 @@ fn assert_admits_and_lowers(case: FmaCase) -> usize {
             .get(&0)
             .unwrap_or_else(|| panic!("{level:?} {case:?}: {:#?}", function.blocks[0].ops));
         assert_eq!(span.end, function.blocks[0].ops.len(), "{level:?} {case:?}");
-        assert_eq!(span.instruction.as_slice(), bytes, "{level:?} {case:?}");
+        assert_eq!(span.instruction.as_slice(), replay, "{level:?} {case:?}");
         assert!(!span.needs_avx512vl, "{level:?} {case:?}");
         assert_eq!(
             span.needs_avx512fp16,
@@ -583,7 +587,7 @@ fn assert_admits_and_lowers(case: FmaCase) -> usize {
             .finalize()
             .unwrap_or_else(|error| panic!("{level:?} {case:?}: {error:?}"));
         assert!(
-            code.windows(bytes.len()).any(|window| window == bytes),
+            code.windows(replay.len()).any(|window| window == replay),
             "{level:?} {case:?}"
         );
         lowered += 1;
@@ -892,8 +896,11 @@ fn execute_native(case: FmaCase, initial: &FmaState, level: OptLevel) -> FmaStat
     let code = lowerer
         .finalize()
         .unwrap_or_else(|error| panic!("{level:?} {case:?}: {error:?}"));
-    let bytes = case.bytes();
-    assert!(code.windows(bytes.len()).any(|window| window == bytes));
+    let mut replay = case.bytes();
+    if case.scalar && !case.embedded_rounding {
+        replay[3] &= !0x60;
+    }
+    assert!(code.windows(replay.len()).any(|window| window == replay));
     let executable = ExecMem::new(&code).expect("map EVEX FMA3 register replay");
 
     let mut registers = GuestRegs {
