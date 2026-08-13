@@ -24,7 +24,9 @@ mod execution;
 mod jit;
 mod vector_config;
 mod vector_conversion;
+mod vector_mask;
 mod vector_memory;
+mod vector_permute;
 mod vector_validation;
 
 /// Privilege level of the hart.
@@ -187,6 +189,7 @@ pub struct RiscVCpu {
     mstatus: u64,
     mtvec: u64,
     mepc: u64,
+    sepc: u64,
     mcause: u64,
     mtval: u64,
     mscratch: u64,
@@ -266,6 +269,7 @@ impl RiscVCpu {
             mstatus: 0,
             mtvec: 0,
             mepc: 0,
+            sepc: 0,
             mcause: 0,
             mtval: 0,
             mscratch: 0,
@@ -310,6 +314,7 @@ impl RiscVCpu {
         self.mstatus = 0;
         self.mtvec = 0;
         self.mepc = 0;
+        self.sepc = 0;
         self.mcause = 0;
         self.mtval = 0;
         self.mscratch = 0;
@@ -733,7 +738,6 @@ impl RiscVCpu {
             | Op::PrefetchI
             | Op::PrefetchR
             | Op::PrefetchW
-            | Op::SfenceVm
             | Op::SfenceVma
             | Op::SinvalVma
             | Op::SfenceWInval
@@ -909,10 +913,17 @@ impl RiscVCpu {
                 let mask = (1u64 << nbits) - 1;
                 self.set_x(rd, (a >> (rs2 as u64)) & mask);
             }
-            Op::Wfi => return Ok(RiscVExit::Wfi),
+            Op::Wfi => {
+                return Ok(if self.locally_enabled_interrupt_pending() {
+                    RiscVExit::Continue
+                } else {
+                    RiscVExit::Wfi
+                });
+            }
             Op::WrsNto | Op::WrsSto => {}
+            Op::Uret | Op::SfenceVm => return Err(Trap::illegal(insn.raw)),
             Op::Mret => self.mret(),
-            Op::Sret | Op::Uret => self.mret(), // single-mode model: same restore path
+            Op::Sret => self.sret(insn)?,
 
             // ---- Zicsr ----
             Op::Csrrw | Op::Csrrs | Op::Csrrc | Op::Csrrwi | Op::Csrrsi | Op::Csrrci => {
@@ -2193,18 +2204,19 @@ impl RiscVCpu {
             | Op::Vmsgt => {
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
+                let source = self.vector_snapshot();
                 let scalar = match insn.funct3 {
                     0b100 => self.x(insn.rs1) & mask,
                     0b011 => sext5(insn.rs1) & mask,
                     _ => 0,
                 };
                 for e in vstart..vl {
-                    if !vm && !self.vmask_bit(e) {
+                    if !vm && !Self::snapshot_mask_bit(&source, e) {
                         continue; // masked-off: undisturbed
                     }
-                    let a = self.velem(vs2, e, eb);
+                    let a = Self::snapshot_velem(&source, vs2, e, eb);
                     let b = if insn.funct3 == 0b000 {
-                        self.velem(insn.rs1, e, eb)
+                        Self::snapshot_velem(&source, insn.rs1, e, eb)
                     } else {
                         scalar
                     };
@@ -2600,6 +2612,7 @@ impl RiscVCpu {
             Op::Vmfeq | Op::Vmfne | Op::Vmflt | Op::Vmfle | Op::Vmfgt | Op::Vmfge => {
                 let eb = self.sew_bytes();
                 let is_vv = insn.funct3 == 0b001;
+                let source = self.vector_snapshot();
                 let scalar = match eb {
                     2 => self.h(insn.rs1),
                     4 => self.s32(insn.rs1),
@@ -2607,12 +2620,12 @@ impl RiscVCpu {
                 };
                 let mut flags = 0u32;
                 for e in vstart..vl {
-                    if !vm && !self.vmask_bit(e) {
+                    if !vm && !Self::snapshot_mask_bit(&source, e) {
                         continue;
                     }
-                    let a = self.velem(vs2, e, eb);
+                    let a = Self::snapshot_velem(&source, vs2, e, eb);
                     let b = if is_vv {
-                        self.velem(insn.rs1, e, eb)
+                        Self::snapshot_velem(&source, insn.rs1, e, eb)
                     } else {
                         scalar
                     };
@@ -3202,6 +3215,7 @@ impl RiscVCpu {
                 // vd.mask[i] = carry/borrow-out; carry-in from v0 only when vm == 0.
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb) as u128;
+                let source = self.vector_snapshot();
                 let scalar = match insn.funct3 {
                     0b100 => self.x(insn.rs1) & Self::sew_mask(eb),
                     0b011 => sext5(insn.rs1) & Self::sew_mask(eb),
@@ -3210,14 +3224,14 @@ impl RiscVCpu {
                 let is_vv = insn.funct3 == 0b000;
                 let use_cin = !vm;
                 for e in vstart..vl {
-                    let a = self.velem(vs2, e, eb) as u128;
+                    let a = Self::snapshot_velem(&source, vs2, e, eb) as u128;
                     let b = if is_vv {
-                        self.velem(insn.rs1, e, eb)
+                        Self::snapshot_velem(&source, insn.rs1, e, eb)
                     } else {
                         scalar
                     } as u128;
                     let cin = if use_cin {
-                        self.vmask_bit(e) as u128
+                        Self::snapshot_mask_bit(&source, e) as u128
                     } else {
                         0
                     };
@@ -3262,25 +3276,7 @@ impl RiscVCpu {
                 }
             }
             Op::Vmvr => {
-                // vmv<nr>r.v whole-register move: only nr in {1,2,4,8} (simm
-                // 0/1/3/7) is defined, the encoding must be unmasked, and both
-                // vd and vs2 must be aligned to the nr-register group. Reserved
-                // simm values, masked encodings, or misaligned groups trap.
-                let nreg = match insn.rs1 {
-                    0 => 1u8,
-                    1 => 2,
-                    3 => 4,
-                    7 => 8,
-                    _ => return Err(Trap::illegal(insn.raw)),
-                };
-                if !vm || vd % nreg != 0 || vs2 % nreg != 0 {
-                    return Err(Trap::illegal(insn.raw));
-                }
-                let total = nreg as usize * VLENB as usize;
-                for i in 0..total {
-                    let b = self.velem(vs2, i, 1);
-                    self.set_velem(vd, i, 1, b);
-                }
+                self.exec_whole_register_move(insn, vm)?;
             }
             Op::Vcompress => {
                 // vcompress.vm is unmasked (vm=1), is not restartable (vstart
@@ -5254,21 +5250,20 @@ mod tests {
         let sys =
             |funct7: u32, rs2: u32, rs1: u32| (funct7 << 25) | (rs2 << 20) | (rs1 << 15) | 0x73;
         for w in [
-            sys(0x08, 0x04, 10), // sfence.vm a0
-            sys(0x09, 11, 10),   // sfence.vma a0, a1
-            sys(0x0b, 11, 10),   // sinval.vma a0, a1
-            sys(0x0c, 0, 0),     // sfence.w.inval
-            sys(0x0c, 1, 0),     // sfence.inval.ir
-            sys(0x11, 11, 10),   // hfence.vvma a0, a1
-            sys(0x13, 11, 10),   // hinval.vvma a0, a1
-            sys(0x31, 11, 10),   // hfence.gvma a0, a1
-            sys(0x33, 11, 10),   // hinval.gvma a0, a1
+            sys(0x09, 11, 10), // sfence.vma a0, a1
+            sys(0x0b, 11, 10), // sinval.vma a0, a1
+            sys(0x0c, 0, 0),   // sfence.w.inval
+            sys(0x0c, 1, 0),   // sfence.inval.ir
+            sys(0x11, 11, 10), // hfence.vvma a0, a1
+            sys(0x13, 11, 10), // hinval.vvma a0, a1
+            sys(0x31, 11, 10), // hfence.gvma a0, a1
+            sys(0x33, 11, 10), // hinval.gvma a0, a1
         ] {
             assert_eq!(run_one(&mut c, w), RiscVExit::Continue);
         }
         assert_eq!(c.x(10), 0x4000);
         assert_eq!(c.x(11), 0x22);
-        assert_eq!(c.pc(), 0x300 + 9 * 4);
+        assert_eq!(c.pc(), 0x300 + 8 * 4);
     }
 
     #[test]

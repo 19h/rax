@@ -141,6 +141,9 @@ fn decode_q0(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
                 mk(Op::LdPair, rd_, rs1_, 0, off_d as i64, h)
             } else {
                 // C.FLW -> flw rd', off(rs1')
+                if !isa.f {
+                    return ill(h);
+                }
                 let off = (bits(h, 12, 10) << 3) | (bit(h, 6) << 2) | (bit(h, 5) << 6);
                 mk(Op::Flw, rd_, rs1_, 0, off as i64, h)
             }
@@ -171,6 +174,9 @@ fn decode_q0(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
                 mk(Op::SdPair, 0, rs1_, rs2_, off_d as i64, h)
             } else {
                 // C.FSW -> fsw rs2', off(rs1')
+                if !isa.f {
+                    return ill(h);
+                }
                 let off = (bits(h, 12, 10) << 3) | (bit(h, 6) << 2) | (bit(h, 5) << 6);
                 mk(Op::Fsw, 0, rs1_, rvc_reg(bits(h, 4, 2)), off as i64, h)
             }
@@ -384,6 +390,9 @@ fn decode_q2(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
                 mk(Op::LdPair, rd, 2, 0, off as i64, h)
             } else {
                 // C.FLWSP -> flw rd, off(x2)
+                if !isa.f {
+                    return ill(h);
+                }
                 let off = (bit(h, 12) << 5) | (bits(h, 6, 4) << 2) | (bits(h, 3, 2) << 6);
                 mk(Op::Flw, rd, 2, 0, off as i64, h)
             }
@@ -454,6 +463,9 @@ fn decode_q2(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
                 mk(Op::SdPair, 0, 2, rs2, off as i64, h)
             } else {
                 // C.FSWSP -> fsw rs2, off(x2)
+                if !isa.f {
+                    return ill(h);
+                }
                 let off = (bits(h, 12, 9) << 2) | (bits(h, 8, 7) << 6);
                 mk(Op::Fsw, 0, 2, bits(h, 6, 2) as u8, off as i64, h)
             }
@@ -713,6 +725,29 @@ mod tests {
         isa.zclsd = false;
         assert_eq!(decode_rvc(c_ld, Xlen::Rv32, &isa).op, Op::Flw);
         assert_eq!(decode_rvc(c_sd, Xlen::Rv32, &isa).op, Op::Fsw);
+    }
+
+    #[test]
+    fn rv32_compressed_single_precision_memory_requires_f() {
+        let encodings = [
+            ((0b011 << 13) | (2 << 7) | 0b00, Op::Flw),
+            ((0b111 << 13) | (2 << 7) | 0b00, Op::Fsw),
+            ((0b011 << 13) | (8 << 7) | 0b10, Op::Flw),
+            ((0b111 << 13) | (8 << 2) | 0b10, Op::Fsw),
+        ];
+
+        let enabled = Isa::rv64gc();
+        let mut disabled = enabled;
+        disabled.f = false;
+        disabled.d = false;
+        disabled.zclsd = false;
+        for (raw, expected) in encodings {
+            assert_eq!(decode_rvc(raw as u16, Xlen::Rv32, &enabled).op, expected);
+            assert_eq!(
+                decode_rvc(raw as u16, Xlen::Rv32, &disabled).op,
+                Op::Illegal
+            );
+        }
     }
 
     #[test]

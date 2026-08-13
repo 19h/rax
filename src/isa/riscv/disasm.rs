@@ -1356,11 +1356,11 @@ mod tests {
             |funct7: u32, rs2: u32, rs1: u32| (funct7 << 25) | (rs2 << 20) | (rs1 << 15) | 0x73;
         assert_eq!(
             decode(sys(0x00, 0x02, 0), Xlen::Rv64, &Isa::rv64gc()).to_string(),
-            "uret"
+            "illegal"
         );
         assert_eq!(
             decode(sys(0x08, 0x04, 10), Xlen::Rv64, &Isa::rv64gc()).to_string(),
-            "sfence.vm a0"
+            "illegal"
         );
         assert_eq!(
             decode(sys(0x09, 0, 0), Xlen::Rv64, &Isa::rv64gc()).to_string(),

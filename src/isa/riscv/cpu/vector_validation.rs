@@ -46,6 +46,10 @@ impl Emul {
         Self::new(self.numerator, self.denominator * factor)
     }
 
+    fn scale(self, numerator: u8, denominator: u8) -> Self {
+        Self::new(self.numerator * numerator, self.denominator * denominator)
+    }
+
     fn is_at_least_one(self) -> bool {
         self.numerator >= self.denominator
     }
@@ -223,6 +227,222 @@ fn validate_same_width_integer_alu(
     Ok(())
 }
 
+fn validate_same_width_unary(cpu: &RiscVCpu, insn: &Insn) -> Result<(), Trap> {
+    same_width_group(cpu, insn, insn.rd)?;
+    same_width_group(cpu, insn, insn.rs2)?;
+    Ok(())
+}
+
+fn validate_mask_result(cpu: &RiscVCpu, insn: &Insn, vector_vector_funct3: u8) -> Result<(), Trap> {
+    let destination = RegisterGroup {
+        first: insn.rd,
+        count: 1,
+    };
+    let vs2 = same_width_group(cpu, insn, insn.rs2)?;
+    if destination.overlaps(vs2) && destination.first != vs2.first {
+        return Err(illegal(insn));
+    }
+
+    if insn.funct3 == vector_vector_funct3 {
+        let vs1 = same_width_group(cpu, insn, insn.rs1)?;
+        if destination.overlaps(vs1) && destination.first != vs1.first {
+            return Err(illegal(insn));
+        }
+    }
+    Ok(())
+}
+
+fn encoded_memory_width(insn: &Insn) -> Result<u8, Trap> {
+    match insn.funct3 {
+        0 => Ok(1),
+        5 => Ok(2),
+        6 => Ok(4),
+        7 => Ok(8),
+        _ => Err(illegal(insn)),
+    }
+}
+
+fn memory_emul(cpu: &RiscVCpu, insn: &Insn) -> Result<Emul, Trap> {
+    let sew = u8::try_from(cpu.sew_bytes()).map_err(|_| illegal(insn))?;
+    if !matches!(sew, 1 | 2 | 4 | 8) {
+        return Err(illegal(insn));
+    }
+    Ok(current_lmul(cpu, insn)?.scale(encoded_memory_width(insn)?, sew))
+}
+
+fn validate_segment_data_groups(
+    insn: &Insn,
+    emul: Emul,
+    fields: u8,
+) -> Result<Vec<RegisterGroup>, Trap> {
+    if u16::from(emul.numerator) * u16::from(fields) > 8 * u16::from(emul.denominator) {
+        return Err(illegal(insn));
+    }
+
+    let first = RegisterGroup::for_emul(insn.rd, emul).ok_or_else(|| illegal(insn))?;
+    let mut groups = Vec::with_capacity(usize::from(fields));
+    for field in 0..fields {
+        let register = insn
+            .rd
+            .checked_add(field.saturating_mul(first.count))
+            .ok_or_else(|| illegal(insn))?;
+        groups.push(RegisterGroup::for_emul(register, emul).ok_or_else(|| illegal(insn))?);
+    }
+    Ok(groups)
+}
+
+fn validate_indexed_memory_overlap(
+    insn: &Insn,
+    data_groups: &[RegisterGroup],
+    data_emul: Emul,
+    index: RegisterGroup,
+    index_emul: Emul,
+    is_load: bool,
+) -> Result<(), Trap> {
+    let same_eew = data_emul.numerator * index_emul.denominator
+        == index_emul.numerator * data_emul.denominator;
+    for data in data_groups {
+        if !data.overlaps(index) || same_eew {
+            continue;
+        }
+
+        // An indexed store reads both groups, so sharing a register at two
+        // EEWs is always reserved. Loads use the ordinary destination/source
+        // overlap rules for the data destination and index source.
+        if !is_load {
+            return Err(illegal(insn));
+        }
+        let data_is_narrower = data_emul.numerator * index_emul.denominator
+            < index_emul.numerator * data_emul.denominator;
+        let legal = if data_is_narrower {
+            data.first == index.first
+        } else {
+            index_emul.is_at_least_one() && data.last() == index.last()
+        };
+        if !legal {
+            return Err(illegal(insn));
+        }
+    }
+    Ok(())
+}
+
+fn validate_vector_memory(cpu: &RiscVCpu, insn: &Insn) -> Result<(), Trap> {
+    match insn.op {
+        Op::Vle | Op::Vse | Op::Vlse | Op::Vsse | Op::Vleff => {
+            RegisterGroup::for_emul(insn.rd, memory_emul(cpu, insn)?)
+                .ok_or_else(|| illegal(insn))?;
+        }
+        Op::Vlxei | Op::Vsxei => {
+            let data_emul = current_lmul(cpu, insn)?;
+            let data = same_width_group(cpu, insn, insn.rd)?;
+            let index_emul = memory_emul(cpu, insn)?;
+            let index =
+                RegisterGroup::for_emul(insn.rs2, index_emul).ok_or_else(|| illegal(insn))?;
+            validate_indexed_memory_overlap(
+                insn,
+                &[data],
+                data_emul,
+                index,
+                index_emul,
+                insn.op == Op::Vlxei,
+            )?;
+        }
+        Op::Vlseg | Op::Vsseg => {
+            let fields = ((insn.raw >> 29) & 7) as u8 + 1;
+            let indexed = (insn.raw >> 26) & 3 & 1 != 0;
+            let data_emul = if indexed {
+                current_lmul(cpu, insn)?
+            } else {
+                memory_emul(cpu, insn)?
+            };
+            let data = validate_segment_data_groups(insn, data_emul, fields)?;
+            if indexed {
+                let index_emul = memory_emul(cpu, insn)?;
+                let index =
+                    RegisterGroup::for_emul(insn.rs2, index_emul).ok_or_else(|| illegal(insn))?;
+                if insn.op == Op::Vlseg && data.iter().any(|group| group.overlaps(index)) {
+                    // Indexed segment loads prohibit every destination/index
+                    // overlap so a fault can be restarted without having
+                    // overwritten an index needed by a later segment.
+                    return Err(illegal(insn));
+                }
+                validate_indexed_memory_overlap(
+                    insn,
+                    &data,
+                    data_emul,
+                    index,
+                    index_emul,
+                    insn.op == Op::Vlseg,
+                )?;
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
+fn writes_nonmask_vector_destination(op: Op) -> bool {
+    !matches!(
+        op,
+        // Stores and scalar-result operations do not write a vector group.
+        Op::Vse
+            | Op::Vsse
+            | Op::Vsxei
+            | Op::Vsseg
+            | Op::Vsm
+            | Op::Vsre
+            | Op::VmvXS
+            | Op::VfmvFS
+            | Op::Vcpop
+            | Op::Vfirst
+            // These operations deliberately produce a single mask register.
+            | Op::Vmseq
+            | Op::Vmsne
+            | Op::Vmsltu
+            | Op::Vmslt
+            | Op::Vmsleu
+            | Op::Vmsle
+            | Op::Vmsgtu
+            | Op::Vmsgt
+            | Op::Vmfeq
+            | Op::Vmfne
+            | Op::Vmflt
+            | Op::Vmfle
+            | Op::Vmfgt
+            | Op::Vmfge
+            | Op::Vmand
+            | Op::Vmnand
+            | Op::Vmandn
+            | Op::Vmxor
+            | Op::Vmor
+            | Op::Vmnor
+            | Op::Vmorn
+            | Op::Vmxnor
+            | Op::Vmsbf
+            | Op::Vmsof
+            | Op::Vmsif
+            | Op::Vmadc
+            | Op::Vmsbc
+            // Reduction results are scalar values held in one vector register.
+            | Op::Vredsum
+            | Op::Vredand
+            | Op::Vredor
+            | Op::Vredxor
+            | Op::Vredminu
+            | Op::Vredmin
+            | Op::Vredmaxu
+            | Op::Vredmax
+            | Op::Vfredusum
+            | Op::Vfredosum
+            | Op::Vfredmin
+            | Op::Vfredmax
+            | Op::Vwredsumu
+            | Op::Vwredsum
+            | Op::Vfwredusum
+            | Op::Vfwredosum
+    )
+}
+
 fn validate_gather(cpu: &RiscVCpu, insn: &Insn) -> Result<(), Trap> {
     let destination = same_width_group(cpu, insn, insn.rd)?;
     let data = same_width_group(cpu, insn, insn.rs2)?;
@@ -306,6 +526,11 @@ pub(super) fn validate(cpu: &RiscVCpu, insn: &Insn, vm: bool) -> Result<(), Trap
     if vector_fp && cpu.sew_bytes() == 1 && !fp_operands_supported_at_sew8(insn) {
         return Err(illegal(insn));
     }
+    if !vm && insn.rd == 0 && writes_nonmask_vector_destination(insn.op) {
+        return Err(illegal(insn));
+    }
+
+    validate_vector_memory(cpu, insn)?;
 
     match insn.op {
         Op::VmvXS | Op::VmvSX | Op::VfmvFS | Op::VfmvSF if !vm => {
@@ -329,15 +554,21 @@ pub(super) fn validate(cpu: &RiscVCpu, insn: &Insn, vm: bool) -> Result<(), Trap
             if insn.rs2 != 0 {
                 return Err(illegal(insn));
             }
+            same_width_group(cpu, insn, insn.rd)?;
         }
         Op::Viota => validate_iota(cpu, insn, vm)?,
         Op::Vadc | Op::Vsbc => {
             if vm || insn.rd == 0 {
                 return Err(illegal(insn));
             }
+            validate_same_width_integer_alu(cpu, insn, 0b000)?;
         }
+        Op::Vmadc | Op::Vmsbc => validate_mask_result(cpu, insn, 0b000)?,
         Op::Vslideup | Op::Vslide1up | Op::Vfslide1up => {
             validate_slide_up(cpu, insn)?;
+        }
+        Op::Vslidedown | Op::Vslide1down | Op::Vfslide1down => {
+            validate_same_width_unary(cpu, insn)?;
         }
         Op::Vrgather | Op::Vrgatherei16 => validate_gather(cpu, insn)?,
         Op::Vadd
@@ -352,10 +583,66 @@ pub(super) fn validate(cpu: &RiscVCpu, insn: &Insn, vm: bool) -> Result<(), Trap
         | Op::Vmax
         | Op::Vsll
         | Op::Vsrl
-        | Op::Vsra => validate_same_width_integer_alu(cpu, insn, 0b000)?,
+        | Op::Vsra
+        | Op::Vmerge
+        | Op::Vsaddu
+        | Op::Vsadd
+        | Op::Vssubu
+        | Op::Vssub
+        | Op::Vssrl
+        | Op::Vssra
+        | Op::Vsmul => validate_same_width_integer_alu(cpu, insn, 0b000)?,
+        Op::Vmul
+        | Op::Vmulh
+        | Op::Vmulhu
+        | Op::Vmulhsu
+        | Op::Vdivu
+        | Op::Vdiv
+        | Op::Vremu
+        | Op::Vrem => validate_same_width_integer_alu(cpu, insn, 0b010)?,
         Op::Vaaddu | Op::Vaadd | Op::Vasubu | Op::Vasub => {
             validate_same_width_integer_alu(cpu, insn, 0b010)?;
         }
+        Op::Vmseq
+        | Op::Vmsne
+        | Op::Vmsltu
+        | Op::Vmslt
+        | Op::Vmsleu
+        | Op::Vmsle
+        | Op::Vmsgtu
+        | Op::Vmsgt => validate_mask_result(cpu, insn, 0b000)?,
+        Op::Vmfeq | Op::Vmfne | Op::Vmflt | Op::Vmfle | Op::Vmfgt | Op::Vmfge => {
+            validate_mask_result(cpu, insn, 0b001)?;
+        }
+        Op::Vfadd
+        | Op::Vfsub
+        | Op::Vfmul
+        | Op::Vfdiv
+        | Op::Vfmin
+        | Op::Vfmax
+        | Op::Vfsgnj
+        | Op::Vfsgnjn
+        | Op::Vfsgnjx
+        | Op::Vfmacc
+        | Op::Vfnmacc
+        | Op::Vfmsac
+        | Op::Vfnmsac
+        | Op::Vfmadd
+        | Op::Vfnmadd
+        | Op::Vfmsub
+        | Op::Vfnmsub => validate_same_width_integer_alu(cpu, insn, 0b001)?,
+        Op::Vfrsub
+        | Op::Vfrdiv
+        | Op::Vfsqrt
+        | Op::Vfclass
+        | Op::Vfrsqrt7
+        | Op::Vfrec7
+        | Op::VfcvtXuF
+        | Op::VfcvtXF
+        | Op::VfcvtFXu
+        | Op::VfcvtFX
+        | Op::VfcvtRtzXuF
+        | Op::VfcvtRtzXF => validate_same_width_unary(cpu, insn)?,
         Op::Vnsrl
         | Op::Vnsra
         | Op::Vnclipu
@@ -541,6 +828,10 @@ mod tests {
         assert_illegal(vid(0, 3), E8_M1, 4, 0, 0);
         assert_legal(vid(1, 0), E8_M1, 4, 0, 0);
         assert_legal(vid(0, 0), E8_M1, 4, 0, 0);
+
+        // vid writes a normal LMUL-sized data group even though it has no
+        // vector data source.
+        assert_illegal(vid(1, 0) | (1 << 7), E32_M2, 4, 0, 0);
     }
 
     #[test]
@@ -623,6 +914,53 @@ mod tests {
         // Scalar and immediate fields are not vector groups.
         assert_legal(vadd(0, 2, 5, 0b100), E32_M2, 2, 0, 0);
         assert_legal(vadd(0, 2, 5, 0b011), E32_M2, 2, 0, 0);
+    }
+
+    #[test]
+    fn remaining_same_width_families_validate_every_vector_group() {
+        for (funct6, funct3) in [
+            (0b100101, 0b010), // vmul.vv
+            (0b100000, 0b010), // vdivu.vv
+            (0b100000, 0b000), // vsaddu.vv
+            (0b101010, 0b000), // vssrl.vv
+            (0b100111, 0b000), // vsmul.vv
+            (0b000000, 0b001), // vfadd.vv
+        ] {
+            assert_illegal(op_v(funct6, 1, 2, 4, funct3, 1), E32_M2, 2, 0, 0);
+            assert_illegal(op_v(funct6, 1, 3, 4, funct3, 0), E32_M2, 2, 0, 0);
+            assert_illegal(op_v(funct6, 1, 2, 5, funct3, 0), E32_M2, 2, 0, 0);
+            assert_legal(op_v(funct6, 1, 2, 4, funct3, 0), E32_M2, 2, 0, 0);
+        }
+
+        for funct3 in [0b100, 0b110, 0b101] {
+            assert_illegal(op_v(0b001111, 1, 2, 3, funct3, 1), E32_M2, 2, 0, 0);
+            assert_illegal(op_v(0b001111, 1, 3, 3, funct3, 2), E32_M2, 2, 0, 0);
+            assert_legal(op_v(0b001111, 1, 2, 3, funct3, 2), E32_M2, 2, 0, 0);
+        }
+    }
+
+    #[test]
+    fn mask_results_validate_sources_and_lowest_register_overlap() {
+        for (funct6, funct3) in [
+            (0b011000, 0b000), // vmseq.vv
+            (0b010001, 0b000), // vmadc.vv
+            (0b011000, 0b001), // vmfeq.vv
+        ] {
+            assert_illegal(op_v(funct6, 1, 2, 4, funct3, 3), E32_M2, 2, 0, 0);
+            assert_illegal(op_v(funct6, 1, 2, 5, funct3, 0), E32_M2, 2, 0, 0);
+            assert_legal(op_v(funct6, 1, 2, 4, funct3, 2), E32_M2, 2, 0, 0);
+        }
+    }
+
+    #[test]
+    fn masked_nonmask_destinations_cannot_overlap_v0() {
+        assert_illegal(op_v(0b000000, 0, 2, 4, 0b000, 0), E32_M2, 2, 0, 0);
+        assert_illegal(op_v(0b000000, 0, 2, 4, 0b001, 0), E32_M2, 2, 0, 0);
+
+        // Mask-producing comparisons and scalar reductions are the explicit
+        // architectural exceptions to the masked-destination rule.
+        assert_legal(op_v(0b011000, 0, 2, 4, 0b000, 0), E32_M2, 2, 0, 0);
+        assert_legal(op_v(0b000000, 0, 2, 3, 0b010, 0), E32_M2, 2, 0, 0);
     }
 
     #[test]

@@ -104,7 +104,9 @@ pub enum Op {
     Wfi,
     WrsNto,
     WrsSto,
+    /// Legacy user trap-return encoding; reserved by the current privileged ISA.
     Uret,
+    /// Legacy supervisor fence encoding; reserved by the current privileged ISA.
     SfenceVm,
     SfenceVma,
     SinvalVma,
@@ -1173,8 +1175,8 @@ pub fn decode(w: u32, xlen: Xlen, isa: &Isa) -> Insn {
         0x0f => decode_fence(w, isa),
         0x73 => decode_system(w, rv64, isa),
         0x2f if isa.a || isa.zacas => decode_amo(w, rv64, isa),
-        0x07 if isa.f => decode_load_fp(w, isa),
-        0x27 if isa.f => decode_store_fp(w, isa),
+        0x07 if isa.f || isa.v => decode_load_fp(w, isa),
+        0x27 if isa.f || isa.v => decode_store_fp(w, isa),
         0x53 if isa.f => decode_op_fp(w, rv64, isa),
         0x43 if isa.f => decode_fma(Op::FmaddS, Op::FmaddD, Op::FmaddH, Op::FmaddQ, w, isa),
         0x47 if isa.f => decode_fma(Op::FmsubS, Op::FmsubD, Op::FmsubH, Op::FmsubQ, w, isa),
@@ -2375,7 +2377,7 @@ fn decode_fence(w: u32, isa: &Isa) -> Insn {
         }
         0 => base(Op::Fence, w),
         1 if isa.zifencei => base(Op::FenceI, w),
-        2 if rd(w) == 0 && ((w >> 27) & 0x1f) == 0 => match rs2(w) {
+        2 if rd(w) == 0 && funct7(w) == 0 => match rs2(w) {
             0 if isa.zicbom => base(Op::CboInval, w),
             1 if isa.zicbom => base(Op::CboClean, w),
             2 if isa.zicbom => base(Op::CboFlush, w),
@@ -2397,12 +2399,10 @@ fn decode_system(w: u32, rv64: bool, isa: &Isa) -> Insn {
             0x00 if rs1(w) == 0 => match rs2(w) {
                 0x00 => base(Op::Ecall, w),
                 0x01 => base(Op::Ebreak, w),
-                0x02 => base(Op::Uret, w),
                 0x0d if isa.zawrs => base(Op::WrsNto, w),
                 0x1d if isa.zawrs => base(Op::WrsSto, w),
                 _ => Insn::illegal(w, 4),
             },
-            0x08 if rs2(w) == 0x04 => base(Op::SfenceVm, w),
             0x08 if rs1(w) == 0 && rs2(w) == 0x02 => base(Op::Sret, w),
             0x08 if rs1(w) == 0 && rs2(w) == 0x05 => base(Op::Wfi, w),
             0x09 => base(Op::SfenceVma, w),
@@ -2516,6 +2516,7 @@ fn decode_load_fp(w: u32, isa: &Isa) -> Insn {
                 0b01000 => base(Op::Vlre, w),  // whole register (nf+1 regs)
                 0b01011 if nf == 0 => base(Op::Vlm, w),
                 0b10000 if nf == 0 => base(Op::Vleff, w), // fault-only-first
+                0b10000 => base(Op::Vlseg, w),            // segment fault-only-first
                 _ => Insn::illegal(w, 4),
             },
             0b10 if nf == 0 => base(Op::Vlse, w), // strided
@@ -2526,10 +2527,10 @@ fn decode_load_fp(w: u32, isa: &Isa) -> Insn {
         };
     }
     let op = match f3 {
-        1 if isa.zfh => Op::Flh,
-        2 => Op::Flw,
-        3 if isa.d => Op::Fld,
-        4 if isa.q => Op::Flq,
+        1 if isa.f && isa.zfh => Op::Flh,
+        2 if isa.f => Op::Flw,
+        3 if isa.f && isa.d => Op::Fld,
+        4 if isa.f && isa.q => Op::Flq,
         _ => return Insn::illegal(w, 4),
     };
     with_imm(op, w, imm_i(w))
@@ -2558,10 +2559,10 @@ fn decode_store_fp(w: u32, isa: &Isa) -> Insn {
         };
     }
     let op = match f3 {
-        1 if isa.zfh => Op::Fsh,
-        2 => Op::Fsw,
-        3 if isa.d => Op::Fsd,
-        4 if isa.q => Op::Fsq,
+        1 if isa.f && isa.zfh => Op::Fsh,
+        2 if isa.f => Op::Fsw,
+        3 if isa.f && isa.d => Op::Fsd,
+        4 if isa.f && isa.q => Op::Fsq,
         _ => return Insn::illegal(w, 4),
     };
     with_imm(op, w, imm_s(w))
@@ -2892,6 +2893,11 @@ mod tests {
         let reserved_high_funct12 = cbo_zero | (1 << 31);
         assert_eq!((reserved_high_funct12 >> 20) & 0x1f, 4);
         assert!(decode(reserved_high_funct12, Xlen::Rv64, &Isa::rv64gc()).is_illegal());
+        for reserved_funct7_bit in [1 << 25, 1 << 26] {
+            assert!(
+                decode(cbo_zero | reserved_funct7_bit, Xlen::Rv64, &Isa::rv64gc()).is_illegal()
+            );
+        }
     }
 
     #[test]
@@ -2901,6 +2907,11 @@ mod tests {
         assert_eq!(dec(cbo(1)).op, Op::CboClean);
         assert_eq!(dec(cbo(2)).op, Op::CboFlush);
         assert_eq!(dec(cbo(4)).op, Op::CboZero);
+        for operation in [0, 1, 2, 4] {
+            for reserved_funct7_bit in [1 << 25, 1 << 26] {
+                assert!(dec(cbo(operation) | reserved_funct7_bit).is_illegal());
+            }
+        }
 
         let prefetch =
             |kind: u32, off: u32| (off << 25) | (kind << 20) | (10 << 15) | (6 << 12) | 0x13;
@@ -2909,6 +2920,22 @@ mod tests {
         assert_eq!(i.imm, -32);
         assert_eq!(dec(prefetch(1, 0)).op, Op::PrefetchR);
         assert_eq!(dec(prefetch(3, 0)).op, Op::PrefetchW);
+    }
+
+    #[test]
+    fn vector_memory_decode_is_independent_of_f_and_accepts_segment_fof() {
+        let mut vector_only = Isa::rv_i();
+        vector_only.v = true;
+
+        let vle8 = (1 << 25) | (10 << 15) | (1 << 7) | 0x07;
+        let vse8 = (1 << 25) | (10 << 15) | (1 << 7) | 0x27;
+        let vlseg2e8ff = 0x2305_0007;
+        assert_eq!(decode(vle8, Xlen::Rv64, &vector_only).op, Op::Vle);
+        assert_eq!(decode(vse8, Xlen::Rv64, &vector_only).op, Op::Vse);
+        assert_eq!(decode(vlseg2e8ff, Xlen::Rv64, &vector_only).op, Op::Vlseg);
+
+        let flw = (10 << 15) | (2 << 12) | (1 << 7) | 0x07;
+        assert!(decode(flw, Xlen::Rv64, &vector_only).is_illegal());
     }
 
     #[test]
@@ -3088,14 +3115,13 @@ mod tests {
     #[test]
     fn decode_privileged_fence_and_hypervisor_tables() {
         let sys = |funct7: u32, rs2: u32, rs1: u32| enc(funct7, rs2, rs1, 0, 0, 0x73);
+        assert!(decode(sys(0x00, 0x02, 0), Xlen::Rv64, &Isa::rv64gc()).is_illegal());
         assert_eq!(
-            decode(sys(0x00, 0x02, 0), Xlen::Rv64, &Isa::rv64gc()).op,
-            Op::Uret
+            decode(sys(0x08, 0x02, 0), Xlen::Rv64, &Isa::rv64gc()).op,
+            Op::Sret
         );
-        assert_eq!(
-            decode(sys(0x08, 0x04, 10), Xlen::Rv64, &Isa::rv64gc()).op,
-            Op::SfenceVm
-        );
+        assert!(decode(0x1040_0073, Xlen::Rv64, &Isa::rv64gc()).is_illegal());
+        assert!(decode(sys(0x08, 0x04, 10), Xlen::Rv64, &Isa::rv64gc()).is_illegal());
         assert_eq!(
             decode(sys(0x09, 11, 10), Xlen::Rv64, &Isa::rv64gc()).op,
             Op::SfenceVma

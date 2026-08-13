@@ -3,6 +3,10 @@
 use super::*;
 
 impl RiscVCpu {
+    pub(super) fn locally_enabled_interrupt_pending(&self) -> bool {
+        self.mip & self.mie & (M_INTERRUPT_MASK | S_INTERRUPT_MASK) & self.xmask() != 0
+    }
+
     /// Fetch, decode and execute one instruction.
     pub fn step(&mut self) -> RiscVExit {
         if let Some(trap) = self.pending_machine_interrupt() {
@@ -62,7 +66,7 @@ impl RiscVCpu {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::isa::riscv::{FlatMemory, MemResult, Memory};
+    use crate::isa::riscv::{FlatMemory, MemResult, Memory, decode};
     use std::sync::{
         Arc,
         atomic::{AtomicUsize, Ordering},
@@ -155,6 +159,26 @@ mod tests {
             assert_eq!(cpu.cycle, 1, "word={word:#010x}");
             assert_eq!(cpu.instret(), expected_instret, "word={word:#010x}");
         }
+    }
+
+    #[test]
+    fn wfi_does_not_stall_for_a_locally_enabled_pending_interrupt() {
+        let meip = 1 << cause::INT_M_EXTERNAL;
+
+        let mut pending = cpu(Isa::rv64gc());
+        pending.csr_write(0x304, meip).unwrap();
+        pending.csr_write(0x303, meip).unwrap(); // WFI wake ignores delegation.
+        pending.set_interrupt_pending(meip, true);
+        let wfi = decode(0x1050_0073, Xlen::Rv64, &Isa::rv64gc());
+        assert_eq!(pending.execute_insn(&wfi, CODE), Ok(RiscVExit::Continue));
+        assert_eq!(pending.pc(), CODE + 4);
+
+        let mut individually_disabled = cpu(Isa::rv64gc());
+        individually_disabled.set_interrupt_pending(meip, true);
+        assert_eq!(
+            individually_disabled.execute_insn(&wfi, CODE),
+            Ok(RiscVExit::Wfi)
+        );
     }
 
     #[test]
