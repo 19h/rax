@@ -3277,7 +3277,9 @@ impl RiscVCpu {
                     return Err(Trap::illegal(insn.raw));
                 }
                 let total = nreg as usize * VLENB as usize;
-                for i in 0..total {
+                // Whole-register moves follow the same vstart rule as every
+                // other vector instruction: earlier bytes stay undisturbed.
+                for i in vstart.min(total)..total {
                     let b = self.velem(vs2, i, 1);
                     self.set_velem(vd, i, 1, b);
                 }
@@ -6074,6 +6076,56 @@ mod tests {
             RiscVExit::Continue
         ));
         assert_eq!(c.vreg(8), pat);
+    }
+
+    #[test]
+    fn vmvr_resumes_from_vstart() {
+        // vmv<nr>r.v is not exempt from norm:vstart_op: the copy begins at
+        // the element number in vstart and earlier destination bytes stay
+        // undisturbed (QEMU's gen_helper_vmvr_v resumes from the vstart
+        // byte). vmv1r.v v8, v16 with vstart=1 must keep v8[0].
+        let op_mvr = |vs2: u32, vd: u32| -> u32 {
+            (0b100111u32 << 26)
+                | (1 << 25)
+                | (vs2 << 20)
+                | (0 << 15)
+                | (0b011 << 12)
+                | (vd << 7)
+                | 0x57
+        };
+        let mut c = cpu();
+        // vsetvli x1, x0, e8, m1 -> valid (non-vill) vtype.
+        run_one(
+            &mut c,
+            (0u32 << 20) | (0 << 15) | (7 << 12) | (1 << 7) | 0x57,
+        );
+        let src: [u8; VLENB as usize] = core::array::from_fn(|i| (i as u8).wrapping_add(0x10));
+        let mut dst = [0xAAu8; VLENB as usize];
+        c.set_vreg(16, &src);
+        c.set_vreg(8, &dst);
+
+        // vstart=1: v8[0] (0xAA) must survive; bytes 1..16 come from v16.
+        c.set_vstart(1);
+        assert!(matches!(
+            run_one(&mut c, op_mvr(16, 8)),
+            RiscVExit::Continue
+        ));
+        assert_eq!(c.vreg(8)[0], 0xAA);
+        assert_eq!(c.vreg(8)[1], src[1]);
+
+        // vstart=0: full copy, v8[0] overwritten.
+        let mut c2 = cpu();
+        run_one(
+            &mut c2,
+            (0u32 << 20) | (0 << 15) | (7 << 12) | (1 << 7) | 0x57,
+        );
+        c2.set_vreg(16, &src);
+        c2.set_vreg(8, &dst);
+        assert!(matches!(
+            run_one(&mut c2, op_mvr(16, 8)),
+            RiscVExit::Continue
+        ));
+        assert_eq!(c2.vreg(8)[0], src[0]);
     }
 
     #[test]
