@@ -2990,6 +2990,23 @@ impl RiscVCpu {
             }
             Op::Vssrl | Op::Vssra => {
                 // Scaling shift right by (amount & (SEW-1)), rounded per vxrm.
+                // vd, vs2 (and vs1 for the vv form) must name the
+                // lowest-numbered register of their LMUL group (RVV 3.4.2;
+                // QEMU opivv_check -> vext_check_sss / opivx_check ->
+                // vext_check_ss).  The vx form reads a scalar from rs1.
+                let emul: u8 = match self.vtype & 0x7 {
+                    1 => 2,
+                    2 => 4,
+                    3 => 8,
+                    _ => 1,
+                };
+                let is_vv = insn.funct3 == 0b000;
+                if vd % emul != 0 || vs2 % emul != 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
+                if is_vv && insn.rs1 % emul != 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
                 let bits = (eb * 8) as u32;
@@ -3000,7 +3017,6 @@ impl RiscVCpu {
                     0b011 => insn.rs1 as u64, // unsigned 5-bit shift immediate
                     _ => 0,
                 };
-                let is_vv = insn.funct3 == 0b000;
                 for e in vstart..vl {
                     if !vm && !self.vmask_bit(e) {
                         continue;
@@ -3029,8 +3045,8 @@ impl RiscVCpu {
                 let smax = (1i128 << (bits - 1)) - 1;
                 let smin = -(1i128 << (bits - 1));
                 let vxrm = self.vxrm;
-                let is_vv = insn.funct3 == 0b000;
                 let scalar = self.x(insn.rs1) & mask;
+                let is_vv = insn.funct3 == 0b000;
                 let mut sat = false;
                 for e in vstart..vl {
                     if !vm && !self.vmask_bit(e) {
@@ -6022,6 +6038,50 @@ mod tests {
                 "funct6={funct6:06b} vs1={vs1:05b} with vstart!=0 must trap"
             );
         }
+    }
+
+    #[test]
+    fn vssrl_reject_misaligned_vs2_vd_and_vv_vs1() {
+        // vssrl/vssra must reject register numbers that are not aligned
+        // to the LMUL group (RVV 3.4.2; QEMU opivv_check -> vext_check_sss /
+        // opivx_check -> vext_check_ss).  e32,m2 -> EMUL=2.
+        let mut c = cpu_e8m1();
+        c.set_vl_vtype(4, 0b010_001); // e32, m2
+        // vssrl.vv v2, v1, v2  (vs2=v1 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b101010, 1, 1, 2, 0b000, 2)),
+            RiscVExit::Trap(_)
+        ));
+        // vssrl.vv v1, v2, v2  (vd=v1 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b101010, 1, 2, 2, 0b000, 1)),
+            RiscVExit::Trap(_)
+        ));
+        // vssrl.vv v2, v2, v1  (vs1=v1 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b101010, 1, 2, 1, 0b000, 2)),
+            RiscVExit::Trap(_)
+        ));
+        // vssrl.vv v2, v2, v2  (all aligned) -> runs.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b101010, 1, 2, 2, 0b000, 2)),
+            RiscVExit::Continue
+        ));
+        // vssrl.vx v2, v1, x5  (vs2 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b101010, 1, 1, 5, 0b100, 2)),
+            RiscVExit::Trap(_)
+        ));
+        // vssrl.vx v2, v2, x5  (aligned) -> runs.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b101010, 1, 2, 5, 0b100, 2)),
+            RiscVExit::Continue
+        ));
+        // vssra.vv v2, v1, v2  (vs2 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b101011, 1, 1, 2, 0b000, 2)),
+            RiscVExit::Trap(_)
+        ));
     }
 
     #[test]
