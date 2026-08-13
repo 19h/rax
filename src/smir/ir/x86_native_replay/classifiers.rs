@@ -91,6 +91,7 @@ mod legacy_packed_fp_convert;
 mod legacy_packed_shift;
 mod legacy_pclmulqdq;
 mod legacy_ptest;
+mod legacy_scalar_extract;
 mod legacy_scalar_fp_convert;
 mod legacy_sha;
 mod legacy_widening_dword_multiply;

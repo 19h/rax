@@ -27,6 +27,10 @@ pub(crate) use super::legacy_pclmulqdq::{
 pub(crate) use super::legacy_ptest::{
     X86LegacyPtestReplay, x86_legacy_ptest_shape_virtual_requirements,
 };
+pub(crate) use super::legacy_scalar_extract::{
+    X86LegacyScalarExtractKind, X86LegacyScalarExtractReplay,
+    x86_legacy_scalar_extract_shape_virtual_requirements,
+};
 pub(crate) use super::legacy_scalar_fp_convert::{
     X86LegacyScalarFpConvertKind, X86LegacyScalarFpConvertReplay,
     x86_legacy_scalar_fp_convert_shape_matches,

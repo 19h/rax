@@ -48,6 +48,8 @@ mod legacy_packed_shift;
 mod legacy_packed_fp_convert;
 #[path = "legacy_scalar_fp_convert.rs"]
 mod legacy_scalar_fp_convert;
+#[path = "legacy_scalar_extract.rs"]
+mod legacy_scalar_extract;
 #[path = "legacy_widening_dword_multiply.rs"]
 mod legacy_widening_dword_multiply;
 #[path = "mmx_xmm_transfer.rs"]

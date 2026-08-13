@@ -21,9 +21,12 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
         let legacy_widening_dword_multiply = span
             .instruction
             .legacy_register_widening_dword_multiply_replay();
+        let legacy_scalar_extract = span.instruction.legacy_register_scalar_extract_replay();
         // The MMX form has an independent architectural state bridge. It must
         // not make an MMX-only region require AVX vector-state marshalling.
-        if legacy_widening_dword_multiply.is_some_and(|replay| replay.mmx) {
+        if legacy_widening_dword_multiply.is_some_and(|replay| replay.mmx)
+            || legacy_scalar_extract.is_some_and(|replay| replay.kind.touches_mmx())
+        {
             continue;
         }
         let legacy_aes = span.instruction.legacy_register_aes_replay().is_some();
@@ -125,12 +128,14 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || legacy_dot_product
             || legacy_insertps
             || legacy_ptest
+            || legacy_scalar_extract.is_some_and(|replay| replay.kind.requires_sse41())
             || legacy_widening_dword_multiply.is_some_and(|replay| replay.signed);
         requirements.needs_vex_unaligned_packed_fp_move |= vex_unaligned_packed_fp_move;
         *all_spans_support_avx_ymm16 &= legacy_aes
             || legacy_blend
             || legacy_packed_fp_convert
             || legacy_scalar_fp_convert
+            || legacy_scalar_extract.is_some()
             || legacy_round
             || legacy_dot_product
             || legacy_insertps
@@ -183,6 +188,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || legacy_blend
             || legacy_packed_fp_convert
             || legacy_scalar_fp_convert
+            || legacy_scalar_extract.is_some()
             || legacy_round
             || legacy_dot_product
             || legacy_insertps

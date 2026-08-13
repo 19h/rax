@@ -176,8 +176,8 @@ pub(crate) use classifiers::{
     X86LegacyInsertpsReplay, X86LegacyPackedExtendReplay, X86LegacyPackedFpConvertKind,
     X86LegacyPackedFpConvertReplay, X86LegacyPackedShiftCount, X86LegacyPackedShiftReplay,
     X86LegacyPclmulqdqReplay, X86LegacyPtestReplay, X86LegacyRoundReplay,
-    X86LegacyScalarFpConvertKind, X86LegacyScalarFpConvertReplay, X86LegacyShaReplay,
-    X86LegacyWideningDwordMultiplyReplay,
+    X86LegacyScalarExtractKind, X86LegacyScalarExtractReplay, X86LegacyScalarFpConvertKind,
+    X86LegacyScalarFpConvertReplay, X86LegacyShaReplay, X86LegacyWideningDwordMultiplyReplay,
 };
 
 pub use aggregate::{

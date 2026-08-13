@@ -59,6 +59,18 @@ impl X86_64Lowerer {
             }
             return Ok(());
         }
+        if let Some(replay) = span.instruction.legacy_register_scalar_extract_replay() {
+            if matches!(replay.destination, 4 | 5) {
+                let rewritten = span
+                    .instruction
+                    .legacy_scalar_extract_with_destination_rax()
+                    .expect("validated legacy scalar extract must rewrite to RAX");
+                self.emit_state_backed_gpr_replay(&rewritten, replay.destination);
+            } else {
+                self.code.emit_bytes(span.instruction.as_slice());
+            }
+            return Ok(());
+        }
         if span.instruction.legacy_register_round_replay().is_some() {
             // Legacy ROUND preserves every destination bit above bit 127;
             // unlike VROUND, it must not receive a VEX upper-clear postlude.
