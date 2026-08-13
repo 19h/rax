@@ -45,6 +45,8 @@ mod legacy_0f38_terminal;
 mod legacy_0f3a_reserved;
 #[path = "x86_64/legacy_high_byte.rs"]
 mod legacy_high_byte;
+#[path = "x86_64/legacy_packed_extend.rs"]
+mod legacy_packed_extend;
 #[path = "x86_64/mmx_xmm_transfer.rs"]
 mod mmx_xmm_transfer;
 #[path = "x86_64/multiply_register.rs"]

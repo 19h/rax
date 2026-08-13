@@ -7,7 +7,8 @@ use crate::smir::ir::SmirBlock;
 use crate::smir::ir::types::{BlockId, GuestAddr};
 
 /// Identify every validated native x86 source-replay group in one O(N)-time,
-/// O(P)-space block pass. Classifiers are intentionally disjoint and ordered
+/// O(P + V)-space block pass for N operations, P source instruction addresses,
+/// and V virtual registers. Classifiers are intentionally disjoint and ordered
 /// explicitly so adding a replay family does not add another scan of the SMIR
 /// operation stream.
 pub fn x86_native_replay_spans(
@@ -19,6 +20,9 @@ pub fn x86_native_replay_spans(
             return Some((false, false, false));
         }
         if instruction.legacy_register_blend_replay().is_some() {
+            return Some((false, false, false));
+        }
+        if instruction.legacy_register_packed_extend_replay().is_some() {
             return Some((false, false, false));
         }
         if instruction

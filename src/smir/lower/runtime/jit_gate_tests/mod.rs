@@ -287,6 +287,8 @@ mod legacy_fp_flag_compare_replay;
 #[cfg(test)]
 mod legacy_high_byte_replay;
 #[cfg(test)]
+mod legacy_packed_extend_replay;
+#[cfg(test)]
 mod legacy_sha_replay;
 #[cfg(test)]
 mod legacy_vex_fp_compare_replay;

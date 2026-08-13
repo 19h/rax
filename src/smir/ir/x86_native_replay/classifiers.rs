@@ -307,6 +307,9 @@ pub(crate) use legacy_high_byte::{
     x86_legacy_high_byte_setcc_shape_virtual_requirements,
 };
 pub(crate) use legacy_sha::{X86LegacyShaReplay, x86_legacy_sha_shape_virtual_requirements};
+pub(crate) use packed_extend::{
+    X86LegacyPackedExtendReplay, x86_legacy_packed_extend_shape_virtual_requirements,
+};
 pub(crate) use packed_move::{X86EvexPackedMoveMemoryEncoding, X86EvexPackedMoveMemoryKind};
 pub(crate) use scalar_convert_memory::{
     X86VexScalarConvertMemoryEncoding, X86VexScalarConvertMemoryKind,

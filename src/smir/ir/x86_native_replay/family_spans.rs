@@ -34,6 +34,22 @@ pub fn x86_legacy_sha_replay_spans(
     })
 }
 
+/// Identify exact register-only legacy SSE4.1 packed sign/zero-extension
+/// semantic groups. Legacy PMOVSX*/PMOVZX* preserve shared vector state above
+/// bit 127, so replay uses the AVX YMM0-YMM15 state bridge without requiring
+/// AVX-512 state. Construction is O(N) time and O(P + V) space for N
+/// operations, P unique guest PCs, and V virtual registers.
+pub fn x86_legacy_packed_extend_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .legacy_register_packed_extend_replay()
+            .map(|_| (false, false, false))
+    })
+}
+
 /// Identify exact register-only legacy `COMISS`, `UCOMISS`, `COMISD`, and
 /// `UCOMISD` semantic groups. The source instruction preserves vector state,
 /// so validated replay uses the AVX YMM0-YMM15 state bridge without requiring

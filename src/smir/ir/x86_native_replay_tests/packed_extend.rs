@@ -3,6 +3,235 @@
 use super::*;
 use crate::smir::ir::types::VecElementType;
 
+fn legacy_encoding(opcode: u8, rex: Option<u8>, modrm: u8) -> Vec<u8> {
+    assert!(rex.is_none_or(|byte| (0x40..=0x4F).contains(&byte)));
+    let mut bytes = vec![0x66];
+    bytes.extend(rex);
+    bytes.extend([0x0F, 0x38, opcode, modrm]);
+    bytes
+}
+
+fn legacy_shape(opcode: u8) -> (VecElementType, VecElementType, bool) {
+    let (source, destination) = match opcode & 0x0F {
+        0x00 => (VecElementType::I8, VecElementType::I16),
+        0x01 => (VecElementType::I8, VecElementType::I32),
+        0x02 => (VecElementType::I8, VecElementType::I64),
+        0x03 => (VecElementType::I16, VecElementType::I32),
+        0x04 => (VecElementType::I16, VecElementType::I64),
+        0x05 => (VecElementType::I32, VecElementType::I64),
+        _ => unreachable!(),
+    };
+    (source, destination, opcode < 0x30)
+}
+
+#[test]
+fn legacy_classifier_covers_all_13_056_canonical_rex_register_encodings() {
+    let mut classified = 0usize;
+    for rex in [None].into_iter().chain((0x40..=0x4F).map(Some)) {
+        for opcode in (0x20..=0x25).chain(0x30..=0x35) {
+            let (source_element, destination_element, signed) = legacy_shape(opcode);
+            for modrm in 0xC0..=0xFF {
+                let bytes = legacy_encoding(opcode, rex, modrm);
+                let extension = rex.unwrap_or(0);
+                assert_eq!(
+                    X86InstructionBytes::new(&bytes)
+                        .unwrap()
+                        .legacy_register_packed_extend_replay(),
+                    Some(X86LegacyPackedExtendReplay {
+                        destination: ((modrm >> 3) & 7) | ((extension & 0x04) << 1),
+                        source: (modrm & 7) | ((extension & 0x01) << 3),
+                        source_element,
+                        destination_element,
+                        signed,
+                    }),
+                    "{bytes:02X?}"
+                );
+                classified += 1;
+            }
+        }
+    }
+    assert_eq!(classified, 12 * 17 * 64);
+}
+
+#[test]
+fn legacy_classifier_exhausts_opcode_modrm_and_canonical_prefix_frontiers() {
+    for opcode in u8::MIN..=u8::MAX {
+        for modrm in u8::MIN..=u8::MAX {
+            let bytes = legacy_encoding(opcode, Some(0x4F), modrm);
+            let actual = X86InstructionBytes::new(&bytes)
+                .unwrap()
+                .legacy_register_packed_extend_replay();
+            assert_eq!(
+                actual.is_some(),
+                matches!(opcode, 0x20..=0x25 | 0x30..=0x35) && modrm >> 6 == 3,
+                "{bytes:02X?}"
+            );
+        }
+    }
+
+    // LLVM 23.0.0 independently decodes these W/X-ignored and R/B-extended
+    // samples to the same legacy SSE4.1 mnemonics and operands.
+    for (bytes, destination, source) in [
+        (&[0x66, 0x0F, 0x38, 0x20, 0xCA][..], 1, 2),
+        (&[0x66, 0x48, 0x0F, 0x38, 0x20, 0xCA], 1, 2),
+        (&[0x66, 0x45, 0x0F, 0x38, 0x20, 0xCA], 9, 10),
+        (&[0x66, 0x4F, 0x0F, 0x38, 0x35, 0xCA], 9, 10),
+    ] {
+        let replay = X86InstructionBytes::new(bytes)
+            .unwrap()
+            .legacy_register_packed_extend_replay()
+            .unwrap_or_else(|| panic!("{bytes:02X?}"));
+        assert_eq!((replay.destination, replay.source), (destination, source));
+    }
+
+    let invalid: &[&[u8]] = &[
+        &[0x0F, 0x38, 0x20, 0xCA],                   // missing mandatory 66
+        &[0x48, 0x66, 0x0F, 0x38, 0x20, 0xCA],       // REX not final
+        &[0x66, 0x66, 0x0F, 0x38, 0x20, 0xCA],       // duplicate mandatory prefix
+        &[0x67, 0x66, 0x0F, 0x38, 0x20, 0xCA],       // reserved register-form 67
+        &[0x64, 0x66, 0x0F, 0x38, 0x20, 0xCA],       // segment override
+        &[0xF3, 0x66, 0x0F, 0x38, 0x20, 0xCA],       // reserved repeat prefix
+        &[0x66, 0xD5, 0x00, 0x0F, 0x38, 0x20, 0xCA], // REX2
+        &[0x66, 0x0F, 0x38, 0x20, 0x0A],             // memory source
+        &[0x66, 0x0F, 0x38, 0x1F, 0xCA],             // neighboring opcode
+        &[0x66, 0x0F, 0x38, 0x26, 0xCA],             // neighboring opcode
+        &[0x66, 0x0F, 0x38, 0x2F, 0xCA],             // gap between families
+        &[0x66, 0x0F, 0x38, 0x36, 0xCA],             // neighboring opcode
+        &[0x66, 0x0F, 0x38, 0x20],                   // missing ModR/M
+        &[0x66, 0x0F, 0x38, 0x20, 0xCA, 0x00],       // trailing byte
+        &[0xC4, 0xE2, 0x79, 0x20, 0xCA],             // VEX
+        &[0x62, 0xF2, 0x7D, 0x08, 0x20, 0xCA],       // EVEX
+    ];
+    for bytes in invalid {
+        assert_eq!(
+            X86InstructionBytes::new(bytes)
+                .unwrap()
+                .legacy_register_packed_extend_replay(),
+            None,
+            "{bytes:02X?}"
+        );
+    }
+}
+
+fn legacy_function(
+    bytes: &[u8],
+    level: crate::smir::optimize::OptLevel,
+) -> crate::smir::ir::SmirFunction {
+    use crate::smir::ir::types::{FunctionId, SourceArch};
+    use crate::smir::ir::{SmirFunction, Terminator};
+    use crate::smir::lift::x86_64::X86_64Lifter;
+    use crate::smir::lift::{LiftContext, SmirLifter};
+
+    const PC: u64 = 0xC4E0;
+    let mut lifter = X86_64Lifter::strict();
+    let mut context = LiftContext::new(SourceArch::X86_64);
+    let result = lifter
+        .lift_insn(PC, bytes, &mut context)
+        .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
+    assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
+    let mut block = SmirBlock::new(BlockId(0), PC);
+    block.ops = result.ops;
+    block.set_terminator(Terminator::Return { values: Vec::new() });
+    let mut function = SmirFunction::new(FunctionId(0), block.id, PC);
+    function.add_block(block);
+    function.x86_instruction_bytes.insert(
+        (BlockId(0), PC),
+        X86InstructionBytes::new(bytes).expect("legacy packed-extension provenance"),
+    );
+    crate::smir::optimize::optimize_function(&mut function, level);
+    function
+}
+
+fn assert_legacy_span(function: &crate::smir::ir::SmirFunction, bytes: &[u8]) {
+    for spans in [
+        x86_legacy_packed_extend_replay_spans(&function.blocks[0], &function.x86_instruction_bytes),
+        x86_native_replay_spans(&function.blocks[0], &function.x86_instruction_bytes),
+    ] {
+        let span = spans.get(&0).unwrap_or_else(|| panic!("{bytes:02X?}"));
+        assert_eq!(span.end, function.blocks[0].ops.len(), "{bytes:02X?}");
+        assert_eq!(span.instruction.as_slice(), bytes, "{bytes:02X?}");
+        assert!(!span.needs_avx512vl, "{bytes:02X?}");
+        assert!(!span.needs_avx512dq, "{bytes:02X?}");
+        assert!(!span.needs_avx512fp16, "{bytes:02X?}");
+        assert!(!span.preserve_mxcsr_de, "{bytes:02X?}");
+    }
+}
+
+fn assert_legacy_rejected(function: &crate::smir::ir::SmirFunction, label: &str) {
+    assert!(
+        x86_legacy_packed_extend_replay_spans(
+            &function.blocks[0],
+            &function.x86_instruction_bytes,
+        )
+        .is_empty(),
+        "dedicated span admitted {label}"
+    );
+    assert!(
+        x86_native_replay_spans(&function.blocks[0], &function.x86_instruction_bytes).is_empty(),
+        "aggregate span admitted {label}"
+    );
+}
+
+#[test]
+fn legacy_exact_graph_validator_covers_all_shapes_and_rejects_every_op_mutation() {
+    use crate::smir::ir::Terminator;
+    use crate::smir::ir::ops::X86OpHint;
+    use crate::smir::optimize::OptLevel;
+
+    for opcode in (0x20..=0x25).chain(0x30..=0x35) {
+        let (_, destination_element, _) = legacy_shape(opcode);
+        let lanes = VecWidth::V128.lanes(destination_element) as usize;
+        let bytes = legacy_encoding(opcode, Some(0x45), 0xCA);
+        for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+            let function = legacy_function(&bytes, level);
+            assert_eq!(function.blocks[0].ops.len(), 4 * lanes + 2);
+            assert_legacy_span(&function, &bytes);
+        }
+
+        let baseline = legacy_function(&bytes, OptLevel::O0);
+        for index in 0..baseline.blocks[0].ops.len() {
+            let mut mutated = baseline.clone();
+            mutated.blocks[0].ops[index].kind = OpKind::Nop;
+            assert_legacy_rejected(&mutated, &format!("opcode {opcode:02X} op {index}"));
+
+            let mut hinted = baseline.clone();
+            hinted.blocks[0].ops[index].x86_hint = Some(X86OpHint::RexByteReg);
+            assert_legacy_rejected(&hinted, &format!("opcode {opcode:02X} hinted op {index}"));
+        }
+
+        let temporary = baseline.blocks[0]
+            .ops
+            .iter()
+            .flat_map(|op| op.kind.dests())
+            .find(|register| matches!(register, VReg::Virtual(_)))
+            .expect("legacy packed-extension temporary");
+        let mut escaped = baseline.clone();
+        escaped.blocks[0].set_terminator(Terminator::Return {
+            values: vec![temporary],
+        });
+        assert_legacy_rejected(&escaped, &format!("opcode {opcode:02X} escaped temporary"));
+    }
+
+    let source = legacy_encoding(0x20, Some(0x45), 0xCA);
+    let baseline = legacy_function(&source, OptLevel::O0);
+    for (label, metadata) in [
+        (
+            "wrong element shape",
+            legacy_encoding(0x21, Some(0x45), 0xCA),
+        ),
+        ("wrong destination", legacy_encoding(0x20, Some(0x41), 0xCA)),
+        ("wrong source", legacy_encoding(0x20, Some(0x44), 0xCA)),
+        ("memory provenance", legacy_encoding(0x20, Some(0x45), 0x0A)),
+    ] {
+        let mut malformed = baseline.clone();
+        malformed.x86_instruction_bytes.insert(
+            (BlockId(0), 0xC4E0),
+            X86InstructionBytes::new(&metadata).unwrap(),
+        );
+        assert_legacy_rejected(&malformed, label);
+    }
+}
+
 fn vex_encoding(p0: u8, p1: u8, opcode: u8, modrm: u8) -> [u8; 5] {
     [0xC4, p0, p1, opcode, modrm]
 }
