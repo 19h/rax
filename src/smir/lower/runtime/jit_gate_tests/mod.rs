@@ -297,6 +297,8 @@ mod legacy_packed_extend_replay;
 #[cfg(test)]
 mod legacy_packed_fp_convert_replay;
 #[cfg(test)]
+mod legacy_packed_shift_replay;
+#[cfg(test)]
 mod legacy_pclmulqdq_replay;
 #[cfg(test)]
 mod legacy_ptest_replay;

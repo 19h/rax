@@ -42,6 +42,8 @@ mod legacy_pclmulqdq;
 mod legacy_ptest;
 #[path = "legacy_packed_extend.rs"]
 mod legacy_packed_extend;
+#[path = "legacy_packed_shift.rs"]
+mod legacy_packed_shift;
 #[path = "legacy_packed_fp_convert.rs"]
 mod legacy_packed_fp_convert;
 #[path = "legacy_scalar_fp_convert.rs"]

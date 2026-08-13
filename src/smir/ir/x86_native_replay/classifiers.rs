@@ -88,6 +88,7 @@ mod legacy_dot_product;
 mod legacy_exports;
 mod legacy_high_byte;
 mod legacy_packed_fp_convert;
+mod legacy_packed_shift;
 mod legacy_pclmulqdq;
 mod legacy_ptest;
 mod legacy_scalar_fp_convert;

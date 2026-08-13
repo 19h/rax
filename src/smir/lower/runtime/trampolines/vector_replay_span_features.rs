@@ -51,6 +51,10 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             .instruction
             .legacy_register_packed_extend_replay()
             .is_some();
+        let legacy_packed_shift = span
+            .instruction
+            .legacy_register_packed_shift_replay()
+            .is_some();
         let legacy_fp_flag_compare = span
             .instruction
             .legacy_register_fp_flag_compare_replay()
@@ -133,6 +137,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || legacy_pclmulqdq
             || legacy_ptest
             || legacy_packed_extend
+            || legacy_packed_shift
             || legacy_widening_dword_multiply.is_some()
             || legacy_fp_flag_compare
             || legacy_sha
@@ -184,6 +189,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || legacy_pclmulqdq
             || legacy_ptest
             || legacy_packed_extend
+            || legacy_packed_shift
             || legacy_widening_dword_multiply.is_some()
             || legacy_fp_flag_compare
             || legacy_sha

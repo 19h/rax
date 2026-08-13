@@ -17,6 +17,10 @@ pub(crate) use super::legacy_packed_fp_convert::{
     X86LegacyPackedFpConvertKind, X86LegacyPackedFpConvertReplay,
     x86_legacy_packed_fp_convert_shape_matches,
 };
+pub(crate) use super::legacy_packed_shift::{
+    X86LegacyPackedShiftCount, X86LegacyPackedShiftReplay,
+    x86_legacy_packed_shift_shape_virtual_requirements,
+};
 pub(crate) use super::legacy_pclmulqdq::{
     X86LegacyPclmulqdqReplay, x86_legacy_pclmulqdq_shape_virtual_requirements,
 };

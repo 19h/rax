@@ -91,6 +91,9 @@ mod legacy_insertps;
 #[path = "x86_native_replay_tests/legacy_pclmulqdq.rs"]
 mod legacy_pclmulqdq;
 
+#[path = "x86_native_replay_tests/legacy_packed_shift.rs"]
+mod legacy_packed_shift;
+
 #[path = "x86_native_replay_tests/legacy_ptest.rs"]
 mod legacy_ptest;
 
