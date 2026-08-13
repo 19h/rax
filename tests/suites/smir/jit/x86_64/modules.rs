@@ -36,6 +36,8 @@ mod legacy_fp_round;
 mod legacy_high_byte;
 #[path = "legacy_insertps.rs"]
 mod legacy_insertps;
+#[path = "legacy_alignr.rs"]
+mod legacy_alignr;
 #[path = "legacy_lane_shuffle.rs"]
 mod legacy_lane_shuffle;
 #[path = "legacy_pclmulqdq.rs"]

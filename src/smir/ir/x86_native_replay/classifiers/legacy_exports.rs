@@ -1,6 +1,9 @@
 //! Re-exports for exact legacy instruction replay classifiers.
 
 pub(crate) use super::legacy_aes::{X86LegacyAesReplay, x86_legacy_aes_shape_virtual_requirements};
+pub(crate) use super::legacy_alignr::{
+    X86LegacyAlignrReplay, x86_legacy_alignr_shape_virtual_requirements,
+};
 pub(crate) use super::legacy_blend::{
     X86LegacyBlendReplay, x86_legacy_blend_shape_virtual_requirements,
 };

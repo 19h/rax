@@ -93,6 +93,12 @@ impl X86_64Lowerer {
             self.code.emit_bytes(span.instruction.as_slice());
             return Ok(());
         }
+        if span.instruction.legacy_register_alignr_replay().is_some() {
+            // Legacy PALIGNR preserves every destination bit above bit 127,
+            // so exact replay must not receive a VEX upper-clear postlude.
+            self.code.emit_bytes(span.instruction.as_slice());
+            return Ok(());
+        }
         if span.instruction.legacy_register_round_replay().is_some() {
             // Legacy ROUND preserves every destination bit above bit 127;
             // unlike VROUND, it must not receive a VEX upper-clear postlude.

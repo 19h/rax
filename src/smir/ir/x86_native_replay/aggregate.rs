@@ -46,6 +46,9 @@ pub fn x86_native_replay_spans(
         if instruction.legacy_register_lane_shuffle_replay().is_some() {
             return Some((false, false, false));
         }
+        if instruction.legacy_register_alignr_replay().is_some() {
+            return Some((false, false, false));
+        }
         if instruction.legacy_register_round_replay().is_some() {
             return Some((false, false, false));
         }

@@ -116,6 +116,22 @@ pub fn x86_legacy_lane_shuffle_replay_spans(
     })
 }
 
+/// Identify exact register-only legacy SSSE3 XMM `PALIGNR` semantic groups.
+/// This instruction preserves shared vector state above bit 127, so replay
+/// uses the AVX YMM0-YMM15 state bridge. Construction is O(N) time and
+/// O(P + V) space for N operations, P unique guest PCs, and V virtual
+/// registers.
+pub fn x86_legacy_alignr_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .legacy_register_alignr_replay()
+            .map(|_| (false, false, false))
+    })
+}
+
 /// Identify exact register-only legacy SSE4.1 `ROUNDPS`, `ROUNDPD`,
 /// `ROUNDSS`, and `ROUNDSD` semantic groups. Legacy ROUND preserves shared
 /// vector state above bit 127, so replay uses the AVX YMM0-YMM15 bridge and

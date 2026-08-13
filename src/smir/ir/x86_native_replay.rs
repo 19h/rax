@@ -170,7 +170,7 @@ pub(crate) use classifiers::{
     X86VexVpermil2MemoryEncoding,
 };
 pub(crate) use classifiers::{
-    X86EvexMovntdqaMemoryEncoding, X86LegacyAesReplay, X86LegacyBlendReplay,
+    X86EvexMovntdqaMemoryEncoding, X86LegacyAesReplay, X86LegacyAlignrReplay, X86LegacyBlendReplay,
     X86LegacyDotProductReplay, X86LegacyHighByteCrc32Replay, X86LegacyHighByteGroup2Kind,
     X86LegacyHighByteGroup2Replay, X86LegacyHighByteMultiplyKind, X86LegacyHighByteMultiplyReplay,
     X86LegacyInsertpsReplay, X86LegacyLaneShuffleKind, X86LegacyLaneShuffleReplay,

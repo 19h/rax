@@ -83,6 +83,7 @@ mod gfni;
 mod high_low_move;
 mod integer_compare;
 mod legacy_aes;
+mod legacy_alignr;
 mod legacy_blend;
 mod legacy_dot_product;
 mod legacy_exports;

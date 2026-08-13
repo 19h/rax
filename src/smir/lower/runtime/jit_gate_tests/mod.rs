@@ -281,6 +281,8 @@ mod io;
 #[cfg(test)]
 mod legacy_aes_replay;
 #[cfg(test)]
+mod legacy_alignr_replay;
+#[cfg(test)]
 mod legacy_blend_replay;
 #[cfg(test)]
 mod legacy_dot_product_replay;
