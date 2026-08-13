@@ -2756,6 +2756,18 @@ impl RiscVCpu {
             }
             Op::Vslide1down | Op::Vfslide1down => {
                 // vd[i] = vs2[i+1] for i < vl-1; vd[vl-1] = scalar.
+                // Both register groups must be LMUL-aligned; the downward
+                // slide permits vd == vs2 (RVV 16.3.4; QEMU vext_check_slide
+                // with is_over=false).
+                let emul: u8 = match self.vtype & 0x7 {
+                    1 => 2,
+                    2 => 4,
+                    3 => 8,
+                    _ => 1,
+                };
+                if vd % emul != 0 || vs2 % emul != 0 {
+                    return Err(Trap::illegal(insn.raw));
+                }
                 let eb = self.sew_bytes();
                 let mask = Self::sew_mask(eb);
                 let scalar = if insn.op == Op::Vfslide1down {
@@ -6022,6 +6034,36 @@ mod tests {
                 "funct6={funct6:06b} vs1={vs1:05b} with vstart!=0 must trap"
             );
         }
+    }
+
+    #[test]
+    fn vslide1down_rejects_misaligned_groups() {
+        // vslide1down.vx/vfslide1down.vf require both the vd and vs2 groups
+        // to be LMUL-aligned; vd == vs2 is legal (RVV 16.3.4; QEMU
+        // vext_check_slide with is_over=false).  e32,m2 -> EMUL=2.
+        let mut c = cpu_e8m1();
+        c.set_vl_vtype(4, 0b010_001); // e32, m2
+        c.set_x(5, 1);
+        // vslide1down.vx v0, v1, x5  (vs2=v1 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b001111, 1, 1, 5, 0b110, 0)),
+            RiscVExit::Trap(_)
+        ));
+        // vslide1down.vx v3, v4, x5  (vd=v3 misaligned) -> illegal.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b001111, 1, 4, 5, 0b110, 3)),
+            RiscVExit::Trap(_)
+        ));
+        // vslide1down.vx v4, v4, x5  (aligned, vd == vs2) -> runs.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b001111, 1, 4, 5, 0b110, 4)),
+            RiscVExit::Continue
+        ));
+        // vslide1down.vx v0, v2, x5  (aligned) -> runs.
+        assert!(matches!(
+            run_one(&mut c, op_v(0b001111, 1, 2, 5, 0b110, 0)),
+            RiscVExit::Continue
+        ));
     }
 
     #[test]
