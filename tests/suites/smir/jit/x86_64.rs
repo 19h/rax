@@ -15,72 +15,7 @@ use rax::vm::vcpu::{Registers, SystemRegisters, VCpu, VcpuExit};
 const LOAD_ADDR: u64 = 0x10_0000;
 const MEM_SIZE: u64 = 16 * 1024 * 1024;
 
-#[path = "x86_64/ah_flags.rs"]
-mod ah_flags;
-#[path = "x86_64/amx_disabled.rs"]
-mod amx_disabled;
-#[path = "x86_64/apx_bmi.rs"]
-mod apx_bmi;
-#[path = "x86_64/apx_cet.rs"]
-mod apx_cet;
-#[path = "x86_64/apx_movrs.rs"]
-mod apx_movrs;
-#[path = "x86_64/apx_nf_reserved.rs"]
-mod apx_nf_reserved;
-#[path = "x86_64/apx_push2_pop2.rs"]
-mod apx_push2_pop2;
-#[path = "x86_64/apx_reserved.rs"]
-mod apx_reserved;
-#[path = "x86_64/cmpccxadd.rs"]
-mod cmpccxadd;
-#[path = "x86_64/cmpxchg_register.rs"]
-mod cmpxchg_register;
-#[path = "x86_64/flag_control.rs"]
-mod flag_control;
-#[path = "x86_64/group3_alias.rs"]
-mod group3_alias;
-#[path = "x86_64/legacy_0f38_terminal.rs"]
-mod legacy_0f38_terminal;
-#[path = "x86_64/legacy_0f3a_reserved.rs"]
-mod legacy_0f3a_reserved;
-#[path = "x86_64/legacy_dot_product.rs"]
-mod legacy_dot_product;
-#[path = "x86_64/legacy_fp_round.rs"]
-mod legacy_fp_round;
-#[path = "x86_64/legacy_high_byte.rs"]
-mod legacy_high_byte;
-#[path = "x86_64/legacy_packed_extend.rs"]
-mod legacy_packed_extend;
-#[path = "x86_64/legacy_packed_fp_convert.rs"]
-mod legacy_packed_fp_convert;
-#[path = "x86_64/legacy_scalar_fp_convert.rs"]
-mod legacy_scalar_fp_convert;
-#[path = "x86_64/legacy_widening_dword_multiply.rs"]
-mod legacy_widening_dword_multiply;
-#[path = "x86_64/mmx_xmm_transfer.rs"]
-mod mmx_xmm_transfer;
-#[path = "x86_64/multiply_register.rs"]
-mod multiply_register;
-#[path = "x86_64/ordinary_stack.rs"]
-mod ordinary_stack;
-#[path = "x86_64/rdpid.rs"]
-mod rdpid;
-#[path = "x86_64/smc.rs"]
-mod smc;
-#[path = "x86_64/sse4a_bitfield.rs"]
-mod sse4a_bitfield;
-#[path = "x86_64/tbm.rs"]
-mod tbm;
-#[path = "x86_64/three_dnow_reserved.rs"]
-mod three_dnow_reserved;
-#[path = "x86_64/vector_legacy_prefix_reserved.rs"]
-mod vector_legacy_prefix_reserved;
-#[path = "x86_64/vector_prefix_reserved.rs"]
-mod vector_prefix_reserved;
-#[path = "x86_64/vex_bmi_reserved.rs"]
-mod vex_bmi_reserved;
-#[path = "x86_64/xchg_register.rs"]
-mod xchg_register;
+include!("x86_64/modules.rs");
 
 /// Build a vcpu loaded with the `bench_loop` hot loop for `iters` iterations.
 //   xor eax,eax ; mov ecx,iters ; loop: add eax,3 ; xor edx,edx ; sub eax,1 ;

@@ -85,6 +85,9 @@ mod legacy_packed_fp_convert;
 #[path = "x86_native_replay_tests/legacy_dot_product.rs"]
 mod legacy_dot_product;
 
+#[path = "x86_native_replay_tests/legacy_insertps.rs"]
+mod legacy_insertps;
+
 #[path = "x86_native_replay_tests/legacy_fp_round.rs"]
 mod legacy_fp_round;
 
