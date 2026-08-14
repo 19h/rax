@@ -514,19 +514,6 @@ pub(crate) fn x86_xgetbv_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool 
         }
     )
 }
-pub(crate) fn x86_xsetbv_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
-    use crate::smir::ir::ops::OpKind;
-    use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
-
-    matches!(
-        op,
-        OpKind::X86XSetBv {
-            selector: VReg::Arch(ArchReg::X86(X86Reg::Rcx)),
-            src_low: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
-            src_high: VReg::Arch(ArchReg::X86(X86Reg::Rdx)),
-        }
-    )
-}
 pub(crate) fn x86_crc32_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::OpWidth;

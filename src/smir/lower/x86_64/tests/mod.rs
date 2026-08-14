@@ -149,6 +149,8 @@ mod write_debug;
 mod xadd;
 #[cfg(test)]
 mod xop;
+#[cfg(test)]
+mod xsetbv;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::types::{

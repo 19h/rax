@@ -19,4 +19,6 @@ mod scalar;
 mod state;
 #[cfg(test)]
 mod tsx;
+#[cfg(test)]
+mod xsetbv;
 use crate::smir::lower::runtime::*;

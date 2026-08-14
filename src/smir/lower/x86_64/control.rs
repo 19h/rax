@@ -981,15 +981,7 @@ impl X86_64Lowerer {
                 idx += 1;
                 continue;
             }
-            if matches!(block.ops[idx].kind, OpKind::X86XSetBv { .. }) {
-                let resume_pc = block.ops[idx + 1..]
-                    .iter()
-                    .find(|next| next.guest_pc != block.ops[idx].guest_pc)
-                    .map(|next| next.guest_pc)
-                    .ok_or_else(|| LowerError::UnsupportedOp {
-                        op: "X86XSetBv without a next-instruction handoff PC".to_string(),
-                    })?;
-                self.emit_xsetbv(&block.ops[idx], resume_pc)?;
+            if self.emit_xsetbv_if_present(block, idx)? {
                 // Both success and fault paths return through an exit stub.
                 // No following op or terminator in this block is reachable.
                 return Ok(());

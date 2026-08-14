@@ -465,6 +465,8 @@ mod vex_vpermil2_memory_source;
 mod vpclmulqdq_memory_source;
 #[cfg(feature = "smir-jit")]
 mod xop_memory_source;
+mod xsetbv;
+pub(crate) use xsetbv::*;
 
 fn x86_state_backed_arch_gpr(reg: &VReg) -> bool {
     matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index >= 16 || matches!(index, 4 | 5)))

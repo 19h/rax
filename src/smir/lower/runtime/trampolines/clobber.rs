@@ -26,6 +26,9 @@ pub(crate) use flags::x86_native_op_would_clobber_preserved_flags;
 #[path = "clobber/scalar_memory.rs"]
 mod scalar_memory;
 pub(crate) use scalar_memory::x86_jit_scalar_mem_shape_valid;
+#[path = "clobber/xsetbv.rs"]
+mod xsetbv;
+use xsetbv::x86_xsetbv_reachable_prefix;
 
 /// Decide whether a lifted function is safe to execute through the native tier
 /// under the 1:1 identity register map.
@@ -88,6 +91,17 @@ pub(crate) fn block_is_clobber_safe(
     use crate::smir::ir::Terminator;
     use crate::smir::ir::ops::{OpKind, X86OpHint};
     use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
+
+    let xsetbv_prefix = match x86_xsetbv_reachable_prefix(block, x86_instruction_bytes) {
+        Ok(prefix) => prefix,
+        Err(()) => return false,
+    };
+    let block = xsetbv_prefix.as_ref().unwrap_or(block);
+    let flags_live_out = if xsetbv_prefix.is_some() {
+        crate::smir::ir::flags::FlagSet::ALL_X86
+    } else {
+        flags_live_out
+    };
 
     // A native host trap cannot stand in for a guest architectural exception:
     // it would signal the emulator process rather than producing an exact
@@ -1845,15 +1859,6 @@ pub(crate) fn block_is_clobber_safe(
         }
         if matches!(op.kind, OpKind::X86Pkru { .. }) && !pkru_ok {
             return false;
-        }
-        if matches!(op.kind, OpKind::X86XSetBv { .. }) {
-            if !x86_xsetbv_shape_valid(&op.kind)
-                || !block.ops[i + 1..]
-                    .iter()
-                    .any(|next| next.guest_pc != op.guest_pc)
-            {
-                return false;
-            }
         }
         if let OpKind::Fence { kind } = &op.kind {
             if !matches!(
