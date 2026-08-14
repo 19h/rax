@@ -111,6 +111,14 @@ impl X86_64Lowerer {
             self.code.emit_bytes(span.instruction.as_slice());
             return Ok(());
         }
+        if let Some(destination) = span.instruction.legacy_mov_mask_stack_destination_index() {
+            let rewritten = span
+                .instruction
+                .legacy_mov_mask_stack_destination_with_destination_rax()
+                .expect("validated legacy MOVMSK stack destination must rewrite to RAX");
+            self.emit_state_backed_gpr_replay(&rewritten, destination);
+            return Ok(());
+        }
         if let Some(destination) = span.instruction.vex_scalar_extract_destination_index()
             && matches!(destination, 4 | 5)
         {

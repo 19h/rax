@@ -423,6 +423,13 @@ pub(super) fn x86_native_replay_spans_where(
                     }
                 }
             }
+            if let Some(replay) = instruction
+                .legacy_mov_mask_stack_destination_replay()
+                .or_else(|| instruction.vex_mov_mask_stack_destination_replay())
+                && !classifiers::x86_mov_mask_stack_shape_matches(&block.ops[start..end], replay)
+            {
+                return None;
+            }
             // VPERMIL2 is VEX encoded but belongs to AMD's XOP feature
             // subset. Its dynamic guest-state guard must remain independently
             // lowered before exact register replay replaces the remaining

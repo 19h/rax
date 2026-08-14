@@ -1,26 +1,24 @@
-//! Native replay coverage for VEX vector sign-mask extracts targeting guest
-//! RSP or RBP.
+//! Native replay coverage for legacy MOVMSKPS/MOVMSKPD targeting guest RSP or
+//! RBP.
 
 use super::*;
 use crate::smir::lower::runtime::*;
 
-const PC: u64 = 0xD750;
+const PC: u64 = 0x5050;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum MaskKind {
-    Vmovmskps,
-    Vmovmskpd,
-    Vpmovmskb,
+    Movmskps,
+    Movmskpd,
 }
 
 impl MaskKind {
-    const ALL: [Self; 3] = [Self::Vmovmskps, Self::Vmovmskpd, Self::Vpmovmskb];
+    const ALL: [Self; 2] = [Self::Movmskps, Self::Movmskpd];
 
-    fn fields(self) -> (u8, u8, usize) {
+    fn element_bytes(self) -> usize {
         match self {
-            Self::Vmovmskps => (0, 0x50, 4),
-            Self::Vmovmskpd => (1, 0x50, 8),
-            Self::Vpmovmskb => (1, 0xD7, 1),
+            Self::Movmskps => 4,
+            Self::Movmskpd => 8,
         }
     }
 }
@@ -28,89 +26,58 @@ impl MaskKind {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct MaskCase {
     kind: MaskKind,
-    w: bool,
-    wide: bool,
-    ignored_x: bool,
+    rex: Option<u8>,
     destination: u8,
-    source: u8,
-    compact: bool,
+    rm: u8,
 }
 
 impl MaskCase {
-    fn needs_avx2(self) -> bool {
-        self.kind == MaskKind::Vpmovmskb && self.wide
+    fn source(self) -> u8 {
+        (self.rex.unwrap_or(0) & 1) << 3 | self.rm
     }
 }
 
 fn encoding(case: MaskCase) -> Vec<u8> {
     assert!(matches!(case.destination, 4 | 5));
-    let (pp, opcode, _) = case.kind.fields();
-    if case.compact {
-        assert!(!case.w && !case.ignored_x && case.source < 8);
-        return vec![
-            0xC5,
-            0xF8 | (u8::from(case.wide) << 2) | pp,
-            opcode,
-            0xC0 | (case.destination << 3) | case.source,
-        ];
+    assert!(case.rm < 8);
+    let mut bytes = Vec::with_capacity(5);
+    if case.kind == MaskKind::Movmskpd {
+        bytes.push(0x66);
     }
-
-    assert!(case.source < 16);
-    let mut p0 = 0xE1;
-    if case.ignored_x {
-        p0 &= !0x40;
+    if let Some(rex) = case.rex {
+        bytes.push(rex);
     }
-    if case.source >= 8 {
-        p0 &= !0x20;
-    }
-    vec![
-        0xC4,
-        p0,
-        (u8::from(case.w) << 7) | 0x78 | (u8::from(case.wide) << 2) | pp,
-        opcode,
-        0xC0 | (case.destination << 3) | (case.source & 7),
-    ]
+    bytes.extend_from_slice(&[0x0F, 0x50, 0xC0 | (case.destination << 3) | case.rm]);
+    bytes
 }
 
 fn exhaustive_cases() -> Vec<MaskCase> {
-    let mut cases = Vec::with_capacity(864);
+    let mut cases = Vec::with_capacity(288);
     for kind in MaskKind::ALL {
-        for w in [false, true] {
-            for wide in [false, true] {
-                for ignored_x in [false, true] {
-                    for destination in [4, 5] {
-                        for source in 0..16 {
-                            cases.push(MaskCase {
-                                kind,
-                                w,
-                                wide,
-                                ignored_x,
-                                destination,
-                                source,
-                                compact: false,
-                            });
-                        }
-                    }
-                }
+        for destination in [4, 5] {
+            for rm in 0..8 {
+                cases.push(MaskCase {
+                    kind,
+                    rex: None,
+                    destination,
+                    rm,
+                });
             }
         }
-        for wide in [false, true] {
+        for rex in [0x40, 0x41, 0x42, 0x43, 0x48, 0x49, 0x4A, 0x4B] {
             for destination in [4, 5] {
-                for source in 0..8 {
+                for rm in 0..8 {
                     cases.push(MaskCase {
                         kind,
-                        w: false,
-                        wide,
-                        ignored_x: false,
+                        rex: Some(rex),
                         destination,
-                        source,
-                        compact: true,
+                        rm,
                     });
                 }
             }
         }
     }
-    assert_eq!(cases.len(), 864);
+    assert_eq!(cases.len(), 288);
     cases
 }
 
@@ -139,9 +106,7 @@ fn function(bytes: &[u8]) -> crate::smir::ir::SmirFunction {
 
 fn expected_replay_bytes(case: MaskCase, bytes: &[u8]) -> Vec<u8> {
     let mut rewritten = bytes.to_vec();
-    rewritten[1] |= 0x80;
-    let modrm_index = rewritten.len() - 1;
-    rewritten[modrm_index] &= !0x38;
+    *rewritten.last_mut().unwrap() &= !0x38;
 
     let mut expected = vec![0x50, 0x51];
     expected.extend_from_slice(&rewritten);
@@ -172,7 +137,7 @@ fn assert_replay_emitted(code: &[u8], case: MaskCase, bytes: &[u8]) {
 }
 
 #[test]
-fn replay_features_select_exact_avx_avx2_requirements_and_ymm16_bridge() {
+fn replay_features_select_avx_ymm16_bridge_without_avx512() {
     for case in exhaustive_cases() {
         let bytes = encoding(case);
         let function = function(&bytes);
@@ -181,10 +146,10 @@ fn replay_features_select_exact_avx_avx2_requirements_and_ymm16_bridge() {
         assert!(requirements.any, "{case:?}");
         assert!(requirements.all_spans_support_avx_ymm16, "{case:?}");
         assert!(requirements.needs_avx, "{case:?}");
-        assert_eq!(requirements.needs_avx2, case.needs_avx2(), "{case:?}");
+        assert!(!requirements.needs_avx2, "{case:?}");
         assert!(!requirements.needs_sse3, "{case:?}");
-        assert!(!requirements.needs_fma, "{case:?}");
-        assert!(!requirements.needs_fma4, "{case:?}");
+        assert!(!requirements.needs_ssse3, "{case:?}");
+        assert!(!requirements.needs_sse41, "{case:?}");
         assert!(!requirements.needs_avx512bw, "{case:?}");
         assert!(!requirements.needs_avx512vl, "{case:?}");
         assert!(!requirements.needs_avx512dq, "{case:?}");
@@ -196,15 +161,14 @@ fn replay_features_select_exact_avx_avx2_requirements_and_ymm16_bridge() {
         #[cfg(target_arch = "x86_64")]
         assert_eq!(
             requirements.x86_host_supported(),
-            std::is_x86_feature_detected!("avx")
-                && (!case.needs_avx2() || std::is_x86_feature_detected!("avx2")),
+            std::is_x86_feature_detected!("avx"),
             "{case:?}"
         );
     }
 }
 
 #[test]
-fn replay_emits_exact_flag_neutral_state_commits_for_all_2592_o0_o1_o2_cases() {
+fn replay_emits_exact_flag_neutral_state_commits_for_all_864_optimized_cases() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -234,19 +198,16 @@ fn replay_emits_exact_flag_neutral_state_commits_for_all_2592_o0_o1_o2_cases() {
             lowered += 1;
         }
     }
-    assert_eq!(lowered, 2_592);
+    assert_eq!(lowered, 864);
 }
 
 #[test]
-fn replay_fails_closed_without_exact_stack_destination_provenance() {
+fn replay_fails_closed_without_matching_bytes_and_semantic_graph() {
     let case = MaskCase {
-        kind: MaskKind::Vmovmskps,
-        w: true,
-        wide: true,
-        ignored_x: true,
-        destination: 4,
-        source: 15,
-        compact: false,
+        kind: MaskKind::Movmskpd,
+        rex: Some(0x4B),
+        destination: 5,
+        rm: 7,
     };
     let bytes = encoding(case);
     let base = function(&bytes);
@@ -254,44 +215,34 @@ fn replay_fails_closed_without_exact_stack_destination_provenance() {
     let mut missing = base.clone();
     missing.x86_instruction_bytes.clear();
 
-    let mut ordinary_destination = bytes.clone();
-    let modrm_index = ordinary_destination.len() - 1;
-    ordinary_destination[modrm_index] &= !0x38;
+    let mut ordinary_bytes = bytes.clone();
+    *ordinary_bytes.last_mut().unwrap() &= !0x38;
     let mut ordinary_metadata = base.clone();
     ordinary_metadata.x86_instruction_bytes.insert(
         (BlockId(0), PC),
-        crate::smir::ir::X86InstructionBytes::new(&ordinary_destination).unwrap(),
+        crate::smir::ir::X86InstructionBytes::new(&ordinary_bytes).unwrap(),
     );
 
-    let mut nonreserved_vvvv = bytes.clone();
-    nonreserved_vvvv[2] &= !0x08;
-    let mut vvvv_metadata = base.clone();
-    vvvv_metadata.x86_instruction_bytes.insert(
-        (BlockId(0), PC),
-        crate::smir::ir::X86InstructionBytes::new(&nonreserved_vvvv).unwrap(),
-    );
-
-    let mut memory = bytes;
-    memory[modrm_index] &= 0x3F;
-    let mut memory_metadata = base;
+    let mut memory_bytes = bytes;
+    *memory_bytes.last_mut().unwrap() &= 0x3F;
+    let mut memory_metadata = base.clone();
     memory_metadata.x86_instruction_bytes.insert(
         (BlockId(0), PC),
-        crate::smir::ir::X86InstructionBytes::new(&memory).unwrap(),
+        crate::smir::ir::X86InstructionBytes::new(&memory_bytes).unwrap(),
     );
 
-    let mut wrong_lanes = function(&encoding(case));
+    let mut wrong_lanes = base.clone();
     let OpKind::X86MovMask { lanes, .. } = &mut wrong_lanes.blocks[0].ops[0].kind else {
         unreachable!()
     };
-    *lanes = lanes.saturating_sub(1);
+    *lanes = 3;
 
-    let mut missing_hint = function(&encoding(case));
+    let mut missing_hint = base;
     missing_hint.blocks[0].ops[0].x86_hint = None;
 
     for nonmatching in [
         missing,
         ordinary_metadata,
-        vvvv_metadata,
         memory_metadata,
         wrong_lanes,
         missing_hint,
@@ -361,10 +312,9 @@ fn vector_bytes(vector: [u64; 8]) -> [u8; 64] {
 }
 
 fn architectural_expected(case: MaskCase, initial: &MaskState) -> MaskState {
-    let source = vector_bytes(initial.vectors[usize::from(case.source)]);
-    let (_, _, element_bytes) = case.kind.fields();
-    let vector_bytes = if case.wide { 32 } else { 16 };
-    let lanes = vector_bytes / element_bytes;
+    let source = vector_bytes(initial.vectors[usize::from(case.source())]);
+    let element_bytes = case.kind.element_bytes();
+    let lanes = 16 / element_bytes;
     let mut result = 0u64;
     for lane in 0..lanes {
         let sign = source[lane * element_bytes + element_bytes - 1] >> 7;
@@ -438,7 +388,7 @@ fn interpret(
 }
 
 #[test]
-fn interpreter_matches_intel_o0_o1_o2_all_864_encodings_and_full_state() {
+fn interpreter_matches_intel_o0_o1_o2_all_288_encodings_and_full_state() {
     for (ordinal, case) in exhaustive_cases().into_iter().enumerate() {
         let bytes = encoding(case);
         let initial = initial_state(ordinal);
@@ -477,7 +427,7 @@ fn execute_native(
         .finalize()
         .unwrap_or_else(|error| panic!("{level:?} {bytes:02X?}: {error:?}"));
     assert_replay_emitted(&code, case, bytes);
-    let exec = ExecMem::new(&code).expect("map VEX MOVMSK stack-destination replay");
+    let exec = ExecMem::new(&code).expect("map legacy MOVMSK stack-destination replay");
     let mut registers = GuestRegs {
         gpr: initial.gprs,
         rflags: initial.rflags,
@@ -505,7 +455,7 @@ fn execute_native(
 }
 
 #[cfg(target_arch = "x86_64")]
-const CHILD_RANGE_ENV: &str = "RAX_VEX_MOV_MASK_STACK_CHILD_RANGE";
+const CHILD_RANGE_ENV: &str = "RAX_LEGACY_MOV_MASK_STACK_CHILD_RANGE";
 
 #[cfg(target_arch = "x86_64")]
 fn child_range() -> Option<std::ops::Range<usize>> {
@@ -557,7 +507,7 @@ fn run_child_range(test_name: &str, range: std::ops::Range<usize>) -> std::proce
         .arg("--nocapture")
         .env(CHILD_RANGE_ENV, format!("{}:{}", range.start, range.end))
         .output()
-        .expect("run isolated native VEX MOVMSK stack-destination differential")
+        .expect("run isolated native legacy MOVMSK stack-destination differential")
 }
 
 #[cfg(target_arch = "x86_64")]
@@ -586,7 +536,7 @@ fn run_isolated_native_differential(test_name: &str) {
     let case = cases[start];
     let bytes = encoding(case);
     panic!(
-        "isolated native VEX MOVMSK stack-destination failure at case {start}/{}: \
+        "isolated native legacy MOVMSK stack-destination failure at case {start}/{}: \
          {case:?} {bytes:02X?}; whole status {}; singleton status {}; \
          singleton stdout: {}; singleton stderr: {}",
         cases.len(),
@@ -599,13 +549,13 @@ fn run_isolated_native_differential(test_name: &str) {
 
 #[cfg(target_arch = "x86_64")]
 #[test]
-fn replay_matches_intel_o0_o1_o2_all_864_encodings_and_full_state() {
-    if !std::is_x86_feature_detected!("avx2") {
-        eprintln!("skipping native VEX MOVMSK stack differential: host lacks AVX2");
+fn replay_matches_intel_o0_o1_o2_all_288_encodings_and_full_state() {
+    if !std::is_x86_feature_detected!("avx") {
+        eprintln!("skipping native legacy MOVMSK stack differential: host lacks AVX bridge");
         return;
     }
     run_isolated_native_differential(
-        "smir::lower::runtime::jit_gate_tests::vex_mov_mask_stack_destination_replay::\
-         replay_matches_intel_o0_o1_o2_all_864_encodings_and_full_state",
+        "smir::lower::runtime::jit_gate_tests::legacy_mov_mask_stack_destination_replay::\
+         replay_matches_intel_o0_o1_o2_all_288_encodings_and_full_state",
     );
 }

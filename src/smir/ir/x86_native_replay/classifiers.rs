@@ -333,6 +333,7 @@ pub(crate) use vex_integer_dot::X86VexIntegerDotMemoryFields;
 pub(crate) use vex_integer_dot_ext::X86VexIntegerDotExtMemoryFields;
 pub(crate) use vex_masked_memory::X86VexMaskedMemoryEncoding;
 pub(crate) use vex_memory_broadcast::X86VexMemoryBroadcastFields;
+pub(crate) use vex_mov_mask::{X86MovMaskStackReplay, x86_mov_mask_stack_shape_matches};
 pub(crate) use vex_movntdqa::X86VexMovntdqaMemoryEncoding;
 pub(crate) use vex_ne_convert::{X86VexNeConvertKind, X86VexNeConvertMemoryEncoding};
 pub(crate) use vex_packed_convert_memory::{

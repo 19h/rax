@@ -257,8 +257,6 @@ fn destination_rewrite_changes_only_vex_r_and_modrm_reg() {
 #[test]
 fn llvm_samples_and_replay_spans_preserve_exact_stack_destination_bytes() {
     let pc = 0x10D7;
-    let mut block = SmirBlock::new(BlockId(57), pc);
-    block.push_op(SmirOp::new(OpId(0), pc, OpKind::Nop));
 
     // LLVM 23.0.0 independently assembled these compact and extended samples.
     for (bytes, destination, needs_avx2) in [
@@ -271,8 +269,17 @@ fn llvm_samples_and_replay_spans_preserve_exact_stack_destination_bytes() {
         (&[0xC5, 0xF9, 0xD7, 0xE3][..], 4, false),
         (&[0xC5, 0xFD, 0xD7, 0xEC][..], 5, true),
     ] {
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+
         let instruction = X86InstructionBytes::new(bytes).unwrap();
         assert_classified(bytes, destination, needs_avx2);
+        let mut lifter = X86_64Lifter::strict();
+        let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
+        let result = lifter.lift_insn(pc, bytes, &mut context).unwrap();
+        assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
+        let mut block = SmirBlock::new(BlockId(57), pc);
+        block.ops = result.ops;
         let provenance = HashMap::from([((BlockId(57), pc), instruction)]);
         for spans in [
             x86_vex_mov_mask_stack_destination_replay_spans(&block, &provenance),
@@ -291,6 +298,8 @@ fn llvm_samples_and_replay_spans_preserve_exact_stack_destination_bytes() {
                 "{bytes:02X?}"
             );
         }
+        assert!(
+            x86_vex_mov_mask_stack_destination_replay_spans(&block, &HashMap::new()).is_empty()
+        );
     }
-    assert!(x86_vex_mov_mask_stack_destination_replay_spans(&block, &HashMap::new()).is_empty());
 }

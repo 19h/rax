@@ -88,6 +88,12 @@ pub fn x86_native_replay_spans(
         if instruction.legacy_register_sha_replay().is_some() {
             return Some((false, false, false));
         }
+        if instruction
+            .legacy_mov_mask_stack_destination_replay()
+            .is_some()
+        {
+            return Some((false, false, false));
+        }
         if instruction.is_legacy_high_byte_register_replay() {
             return Some((false, false, false));
         }

@@ -80,6 +80,10 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
         let immediate_permute_avx2 = span.instruction.vex_register_immediate_permute_needs_avx2();
         let chunk_extract_avx2 = span.instruction.vex_register_chunk_extract_needs_avx2();
         let scalar_extract_avx = span.instruction.is_vex_register_scalar_extract();
+        let legacy_mov_mask_stack = span
+            .instruction
+            .legacy_mov_mask_stack_destination_replay()
+            .is_some();
         let mov_mask_stack_avx2 = span.instruction.vex_mov_mask_stack_destination_needs_avx2();
         let vex_ptest = span.instruction.is_vex_register_ptest();
         let variable_blend_avx2 = span.instruction.vex_register_variable_blend_needs_avx2();
@@ -192,6 +196,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || immediate_permute_avx2.is_some()
             || chunk_extract_avx2.is_some()
             || scalar_extract_avx
+            || legacy_mov_mask_stack
             || mov_mask_stack_avx2.is_some()
             || vex_ptest
             || variable_blend_avx2.is_some()

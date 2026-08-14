@@ -202,6 +202,9 @@ mod vex_scalar_l1;
 #[path = "x86_native_replay_tests/vex_mov_mask.rs"]
 mod vex_mov_mask;
 
+#[path = "x86_native_replay_tests/legacy_mov_mask.rs"]
+mod legacy_mov_mask;
+
 #[path = "x86_native_replay_tests/vex_ptest.rs"]
 mod vex_ptest;
 
