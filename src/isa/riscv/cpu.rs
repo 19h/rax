@@ -5497,7 +5497,8 @@ mod tests {
         );
         assert_eq!(c.csr_read(0x104).unwrap(), ssip | stip);
 
-        c.csr_write(0x344, msip | mtip | ssip | stip).unwrap(); // mip
+        c.csr_write(0x344, msip | mtip).unwrap(); // mip (WARL: M-mode bits only)
+        c.set_interrupt_pending(ssip | stip, true); // supervisor bits are externally pending
         assert_eq!(c.csr_read(0x144).unwrap(), ssip | stip);
         c.csr_write(0x144, 0).unwrap();
         assert_eq!(c.csr_read(0x344).unwrap() & ssip, 0);

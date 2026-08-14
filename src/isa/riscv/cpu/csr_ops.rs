@@ -113,13 +113,27 @@ impl RiscVCpu {
             // Jump-table mode zero is the only currently defined/implemented
             // WARL mode; BASE is consequently always 64-byte aligned.
             Csr::Jvt => self.jvt = value & !0x3f & self.xmask(),
-            Csr::Mstatus => self.mstatus = value,
+            Csr::Mstatus => {
+                // norm:mstatus: MPP is WARL; the 0b10 encoding is reserved
+                // and must canonicalize to a legal value (0b00 here).
+                let mut v = value;
+                if (v >> 11) & 0b11 == 0b10 {
+                    v &= !(0b11 << 11);
+                }
+                self.mstatus = v;
+            }
             Csr::Sstatus => {
                 let mask = self.sstatus_mask();
                 self.mstatus = (self.mstatus & !mask) | (value & mask);
             }
-            Csr::Medeleg => self.medeleg = value,
-            Csr::Mideleg => self.mideleg = value,
+            Csr::Medeleg => {
+                // norm:medeleg: only the delegable exception causes are
+                // writable (bits 1,3,4,6,7,8,9); reserved bits are zero.
+                let delegable =
+                    (1 << 1) | (1 << 3) | (1 << 4) | (1 << 6) | (1 << 7) | (1 << 8) | (1 << 9);
+                self.medeleg = value & delegable & self.xmask();
+            }
+            Csr::Mideleg => self.mideleg = value & S_INTERRUPT_MASK & self.xmask(),
             Csr::Mie => self.mie = value,
             Csr::Sie => {
                 let mask = self.supervisor_interrupt_mask();
@@ -135,7 +149,7 @@ impl RiscVCpu {
             Csr::Mepc => self.mepc = value & self.mepc_alignment_mask() & self.xmask(),
             Csr::Mcause => self.mcause = value,
             Csr::Mtval => self.mtval = value,
-            Csr::Mip => self.mip = value,
+            Csr::Mip => self.mip = value & M_INTERRUPT_MASK & self.xmask(),
             Csr::Sip => {
                 let mask = self.supervisor_software_interrupt_mask();
                 self.mip = (self.mip & !mask) | (value & mask);
@@ -293,6 +307,71 @@ mod tests {
                 "MODE={mode}"
             );
         }
+    }
+
+    #[test]
+    fn mstatus_mpp_reserved_encoding_is_warl_normalized() {
+        let mut cpu = cpu(Isa::rv_i());
+        // 0b10 is reserved: write must canonicalize to a supported encoding.
+        cpu.csr_write(0x300, 0b10 << 11).unwrap();
+        assert_eq!(
+            (cpu.csr_read(0x300).unwrap() >> 11) & 0b11,
+            0b00,
+            "reserved MPP=0b10 must read back as 0b00"
+        );
+        // Legal encodings are stored verbatim.
+        for mpp in [0b00, 0b01, 0b11] {
+            cpu.csr_write(0x300, mpp << 11).unwrap();
+            assert_eq!(
+                (cpu.csr_read(0x300).unwrap() >> 11) & 0b11,
+                mpp,
+                "legal MPP={mpp:#04b} must be preserved"
+            );
+        }
+    }
+
+    #[test]
+    fn mip_warl_masks_reserved_bit0() {
+        let mut cpu = cpu(Isa::rv_i());
+        // mip[0] is reserved and must stay zero.
+        cpu.csr_write(0x344, 1).unwrap();
+        assert_eq!(cpu.csr_read(0x344).unwrap() & 1, 0, "mip bit0 must stay 0");
+        // All implemented interrupt-pending bits remain writable.
+        let legal = (1 << 3) | (1 << 7) | (1 << 11); // MSIP, MTIP, MEIP
+        cpu.csr_write(0x344, legal).unwrap();
+        assert_eq!(cpu.csr_read(0x344).unwrap() & legal, legal);
+    }
+
+    #[test]
+    fn mideleg_warl_masks_reserved_bit0() {
+        let mut cpu = cpu(Isa::rv_i());
+        // mideleg[0] is reserved and must stay zero.
+        cpu.csr_write(0x303, 1).unwrap();
+        assert_eq!(
+            cpu.csr_read(0x303).unwrap() & 1,
+            0,
+            "mideleg bit0 must stay 0"
+        );
+        // The delegable supervisor interrupts remain writable.
+        let legal = (1 << 1) | (1 << 5) | (1 << 9); // SSIP, STIP, SEIP
+        cpu.csr_write(0x303, legal).unwrap();
+        assert_eq!(cpu.csr_read(0x303).unwrap() & legal, legal);
+    }
+
+    #[test]
+    fn medeleg_warl_masks_reserved_bit10() {
+        let mut cpu = cpu(Isa::rv_i());
+        // Exception cause 10 is reserved and must stay zero.
+        cpu.csr_write(0x302, 1 << 10).unwrap();
+        assert_eq!(
+            cpu.csr_read(0x302).unwrap() & (1 << 10),
+            0,
+            "medeleg bit10 must stay 0"
+        );
+        // The delegable exception causes remain writable.
+        let legal = (1 << 1) | (1 << 3) | (1 << 4) | (1 << 6) | (1 << 7) | (1 << 8) | (1 << 9);
+        cpu.csr_write(0x302, legal).unwrap();
+        assert_eq!(cpu.csr_read(0x302).unwrap() & legal, legal);
     }
 
     #[test]
