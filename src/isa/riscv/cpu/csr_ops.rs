@@ -5,6 +5,13 @@ use super::*;
 impl RiscVCpu {
     pub(super) fn exec_csr(&mut self, insn: &Insn) -> Result<(), Trap> {
         let addr = insn.csr;
+        // U-mode accesses to machine-level CSRs (address bits 9:8 == 0b11)
+        // must raise an illegal-instruction exception (priv spec v1.12
+        // 3.1.9 / CSR address map). RAX previously allowed them for any
+        // privilege level.
+        if self.priv_ == Priv::User && (addr >> 8) & 0b11 == 0b11 {
+            return Err(Trap::illegal(insn.raw));
+        }
         let is_imm = matches!(insn.op, Op::Csrrwi | Op::Csrrsi | Op::Csrrci);
         let src = if is_imm {
             insn.rs1 as u64
@@ -236,7 +243,7 @@ impl RiscVCpu {
 #[cfg(test)]
 mod tests {
     use super::super::*;
-    use crate::isa::riscv::FlatMemory;
+    use crate::isa::riscv::{FlatMemory, Isa, Xlen, decode};
 
     fn cpu_with_xlen(xlen: Xlen, isa: Isa) -> RiscVCpu {
         RiscVCpu::new(
@@ -293,6 +300,47 @@ mod tests {
                 "MODE={mode}"
             );
         }
+    }
+
+    fn run_word(c: &mut RiscVCpu, word: u32) -> Result<RiscVExit, Trap> {
+        let insn = decode(word, Xlen::Rv64, &Isa::rv64gc());
+        assert_ne!(insn.op, Op::Illegal, "encoding {word:08x} must decode");
+        c.execute_insn(&insn, 0x1000)
+    }
+
+    #[test]
+    fn u_mode_machine_csr_access_traps() {
+        // Machine-level CSRs (address bits 9:8 == 0b11) must raise an
+        // illegal-instruction exception when accessed from U-mode (priv spec
+        // v1.12 3.1.9).  User-level CSRs (bits 9:8 == 0b00) stay readable.
+        let words: [(u32, &str); 3] = [
+            (0x3051_10f3, "csrrw x1, mtvec, x2"),
+            (0x3010_d0f3, "csrrs x1, misa, x1"),
+            (0xf140_20f3, "csrr x1, mhartid"),
+        ];
+        for (w, name) in words {
+            let mut c = cpu(Isa::rv64gc());
+            c.set_privilege(Priv::User);
+            c.set_x(2, 0x777);
+            assert!(
+                matches!(run_word(&mut c, w), Err(Trap { .. })),
+                "{name} must trap in U-mode"
+            );
+            // Same access is allowed in M-mode (default).
+            let mut m = cpu(Isa::rv64gc());
+            m.set_x(2, 0x777);
+            assert!(
+                matches!(run_word(&mut m, w), Ok(RiscVExit::Continue)),
+                "{name} must still retire in M-mode"
+            );
+        }
+        // U-level CSR control: cycle (0xC00) is still readable in U-mode.
+        let mut c = cpu(Isa::rv64gc());
+        c.set_privilege(Priv::User);
+        assert!(matches!(
+            run_word(&mut c, 0xc000_20f3), // csrr x1, cycle
+            Ok(RiscVExit::Continue)
+        ));
     }
 
     #[test]
