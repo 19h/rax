@@ -702,29 +702,6 @@ fn rejects_rep_movs_in_native_lowerer() {
     }
 }
 #[test]
-fn lowers_leave_runtime() {
-    let code = lower_single_op(OpKind::Leave);
-    let frame = 0x9040;
-    let saved_rbp = 0x1234_5678_9abc_def0;
-    let old_nzcv = 0b1011;
-    let regs = [
-        (4, 0x4444_4444_4444_4444),
-        (5, frame),
-        (16, 0x1616_1616_1616_1616),
-        (17, 0x1717_1717_1717_1717),
-    ];
-    let (out, out_nzcv, sp, mem) =
-        run_aarch64_code_with_memory(&code, &regs, old_nzcv, frame, saved_rbp, MemWidth::B8);
-
-    assert_eq!(out[4], frame + 8);
-    assert_eq!(out[5], saved_rbp);
-    assert_eq!(out[16], 0x1616_1616_1616_1616);
-    assert_eq!(out[17], 0x1717_1717_1717_1717);
-    assert_eq!(out_nzcv, old_nzcv);
-    assert_eq!(sp, 0x8000);
-    assert_eq!(mem, saved_rbp);
-}
-#[test]
 fn fuses_signed_load_w_zero_extend_sequence() {
     let tmp = VReg::virt(0);
     let mut builder = FunctionBuilder::new(FunctionId(0), 0);

@@ -279,6 +279,8 @@ mod invpcid;
 #[cfg(test)]
 mod io;
 #[cfg(test)]
+mod leave;
+#[cfg(test)]
 mod legacy_aes_replay;
 #[cfg(test)]
 mod legacy_alignr_replay;

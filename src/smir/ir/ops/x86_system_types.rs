@@ -16,6 +16,42 @@ pub struct X86EnterOp {
     pub next_pc: u64,
 }
 
+/// Operand width of x86 `LEAVE` in 64-bit mode. The architecture permits only
+/// the default 64-bit form and the `66H`-selected 16-bit form; a 32-bit form is
+/// not encodable.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86LeaveWidth {
+    W16,
+    W64,
+}
+
+impl X86LeaveWidth {
+    pub const fn bytes(self) -> u8 {
+        match self {
+            Self::W16 => 2,
+            Self::W64 => 8,
+        }
+    }
+
+    pub const fn mem_width(self) -> MemWidth {
+        match self {
+            Self::W16 => MemWidth::B2,
+            Self::W64 => MemWidth::B8,
+        }
+    }
+}
+
+/// Complete long-mode x86 `LEAVE` transaction. The frame-pointer load and both
+/// architectural register writes form one faulting instruction: #SS, #PF, and
+/// #AC leave RSP and RBP unmodified. `next_pc` retains the exact source end for
+/// native admission; REX2 forms additionally require dynamic APX support.
+#[derive(Clone, Debug)]
+pub struct X86LeaveOp {
+    pub width: X86LeaveWidth,
+    pub requires_apx: bool,
+    pub next_pc: u64,
+}
+
 /// Direction of one implicit x86 FLAGS stack transaction.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum X86StackFlagsKind {

@@ -970,6 +970,11 @@ impl X86_64Lowerer {
                 continue;
             }
             #[cfg(feature = "smir-jit")]
+            if self.emit_x86_leave_if_present(block, idx)? {
+                idx += 1;
+                continue;
+            }
+            #[cfg(feature = "smir-jit")]
             if matches!(block.ops[idx].kind, OpKind::X86StackFlags(..)) {
                 if self.emit_x86_stack_flags(block, idx)? {
                     // POPF supplies a complete RFLAGS override to the runtime

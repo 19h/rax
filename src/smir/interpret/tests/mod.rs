@@ -10,6 +10,8 @@ mod arm;
 #[cfg(test)]
 mod evex;
 #[cfg(test)]
+mod leave;
+#[cfg(test)]
 mod opmask;
 #[cfg(test)]
 mod riscv;

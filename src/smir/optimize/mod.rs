@@ -2183,7 +2183,7 @@ impl OpKind {
                 result.push(VReg::Arch(ArchReg::X86(X86Reg::Rsp)));
             }
 
-            OpKind::Leave => {
+            OpKind::X86Leave(..) => {
                 result.push(VReg::Arch(ArchReg::X86(X86Reg::Rbp)));
             }
 

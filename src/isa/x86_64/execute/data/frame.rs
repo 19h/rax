@@ -5,6 +5,9 @@ use crate::vm::vcpu::VcpuExit;
 
 use crate::isa::x86_64::cpu::{EvexPrefix, InsnContext, X86_64Vcpu};
 use crate::isa::x86_64::execute::system::is_canonical_48;
+use crate::isa::x86_64::flags;
+
+const CR0_AM: u64 = 1 << 18;
 
 fn frame_op_size(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u8 {
     let in_long_mode = (vcpu.sregs.efer & 0x400) != 0;
@@ -124,12 +127,36 @@ pub fn enter(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
 /// LEAVE (0xC9)
 pub fn leave(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = frame_op_size(vcpu, ctx);
+    let old_rsp = vcpu.regs.rsp;
     vcpu.set_stack_pointer_offset(vcpu.regs.rbp);
-    let value = match op_size {
-        2 => vcpu.pop16()? as u64,
-        4 => vcpu.pop32()? as u64,
-        8 => vcpu.pop64()?,
+    let address = vcpu.stack_pointer_offset();
+    if !long_mode_stack_range_is_canonical(vcpu, address, op_size) {
+        vcpu.regs.rsp = old_rsp;
+        vcpu.inject_exception(12, Some(0))?;
+        return Ok(None);
+    }
+    if vcpu.sregs.cs.l
+        && address & (u64::from(op_size) - 1) != 0
+        && vcpu.sregs.cr0 & CR0_AM != 0
+        && vcpu.regs.rflags & flags::bits::AC != 0
+        && vcpu.sregs.cs.selector & 3 == 3
+    {
+        vcpu.regs.rsp = old_rsp;
+        vcpu.inject_exception(17, Some(0))?;
+        return Ok(None);
+    }
+    let popped = match op_size {
+        2 => vcpu.pop16().map(u64::from),
+        4 => vcpu.pop32().map(u64::from),
+        8 => vcpu.pop64(),
         _ => unreachable!(),
+    };
+    let value = match popped {
+        Ok(value) => value,
+        Err(error) => {
+            vcpu.regs.rsp = old_rsp;
+            return Err(error);
+        }
     };
     vcpu.set_reg(5, value, op_size);
     vcpu.regs.rip += ctx.cursor as u64;

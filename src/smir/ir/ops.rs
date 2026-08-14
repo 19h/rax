@@ -3193,8 +3193,8 @@ pub enum OpKind {
     /// stack transaction, including privilege and virtual-8086 filtering.
     X86StackFlags(X86StackFlagsOp),
 
-    /// Leave stack frame (x86 LEAVE)
-    Leave,
+    /// Leave an x86 stack frame as one ordered implicit transaction.
+    X86Leave(X86LeaveOp),
 
     /// I/O port input
     IoIn {
@@ -4981,7 +4981,7 @@ impl OpKind {
                 ..
             } => vec![VReg::Arch(ArchReg::X86(X86Reg::Rax))],
 
-            OpKind::X86Enter(..) | OpKind::Leave => vec![
+            OpKind::X86Enter(..) | OpKind::X86Leave(..) => vec![
                 VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
                 VReg::Arch(ArchReg::X86(X86Reg::Rbp)),
             ],
@@ -5339,7 +5339,7 @@ impl OpKind {
             | OpKind::Swi { .. }
             | OpKind::WriteSysReg { .. }
             | OpKind::X86Enter(..)
-            | OpKind::Leave
+            | OpKind::X86Leave(..)
             | OpKind::Nop
             | OpKind::Undefined { .. }
             | OpKind::Breakpoint => vec![],
@@ -5373,7 +5373,7 @@ impl OpKind {
                     | OpKind::IoOut { .. }
                     | OpKind::X86Enter(..)
                     | OpKind::X86StackFlags(..)
-                    | OpKind::Leave
+                    | OpKind::X86Leave(..)
                     | OpKind::ClearExclusive
                     | OpKind::Fence { .. }
                     | OpKind::VStore { .. }
@@ -5572,7 +5572,7 @@ impl OpKind {
                     kind: X86StackFlagsKind::Pop,
                     ..
                 })
-                | OpKind::Leave
+                | OpKind::X86Leave(..)
         ) || matches!(self, OpKind::X86Opmask(op) if op.reads_memory())
     }
 

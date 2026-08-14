@@ -83,6 +83,10 @@ mod enter;
 #[cfg(feature = "smir-jit")]
 pub(crate) use enter::*;
 #[cfg(feature = "smir-jit")]
+mod leave;
+#[cfg(feature = "smir-jit")]
+pub(crate) use leave::*;
+#[cfg(feature = "smir-jit")]
 mod evex_alignr_memory_source;
 #[cfg(feature = "smir-jit")]
 mod evex_bf16_memory_source;

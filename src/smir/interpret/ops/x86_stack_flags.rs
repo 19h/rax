@@ -48,7 +48,7 @@ impl SmirInterpreter {
         op: &SmirOp,
     ) -> Result<(), MemoryError> {
         let OpKind::X86StackFlags(stack) = &op.kind else {
-            return self.execute_op_x86_enter(ctx, memory, op);
+            return self.execute_op_x86_leave(ctx, memory, op);
         };
 
         let minimum_len = if stack.requires_apx { 3 } else { 1 };

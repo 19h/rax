@@ -96,6 +96,8 @@ mod invlpg;
 #[cfg(test)]
 mod invpcid;
 #[cfg(test)]
+mod leave;
+#[cfg(test)]
 mod legacy_0f;
 #[cfg(test)]
 mod legacy_0f38;

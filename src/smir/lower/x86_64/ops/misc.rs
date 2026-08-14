@@ -110,8 +110,10 @@ impl X86_64Lowerer {
                 emitter.emit_int3();
             }
 
-            OpKind::Leave => {
-                self.code.emit_u8(0xC9);
+            OpKind::X86Leave(..) => {
+                return Err(LowerError::UnsupportedOp {
+                    op: "x86 LEAVE requires exact helper-backed lowering".into(),
+                });
             }
 
             OpKind::X86XTest => {

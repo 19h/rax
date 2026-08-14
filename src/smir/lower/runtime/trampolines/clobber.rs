@@ -11,11 +11,11 @@ use crate::smir::lower::x86_64::{
     x86_far_call_terminal_shape_valid, x86_far_jump_shape_valid, x86_far_jump_terminal_shape_valid,
     x86_far_return_shape_valid, x86_far_return_terminal_shape_valid,
     x86_fast_system_transfer_shape_valid, x86_fast_system_transfer_terminal_shape_valid,
-    x86_invlpg_shape_valid, x86_invpcid_shape_valid, x86_io_encoding, x86_lmsw_shape_valid,
-    x86_load_mxcsr_shape_valid, x86_rdpid_shape_valid, x86_read_control_shape_valid,
-    x86_read_debug_shape_valid, x86_selector_query_shape_valid, x86_selector_verify_shape_valid,
-    x86_smsw_shape_valid, x86_stack_flags_encoding, x86_sti_shape_valid,
-    x86_store_mxcsr_shape_valid, x86_system_selector_load_shape_valid,
+    x86_invlpg_shape_valid, x86_invpcid_shape_valid, x86_io_encoding, x86_leave_encoding,
+    x86_lmsw_shape_valid, x86_load_mxcsr_shape_valid, x86_rdpid_shape_valid,
+    x86_read_control_shape_valid, x86_read_debug_shape_valid, x86_selector_query_shape_valid,
+    x86_selector_verify_shape_valid, x86_smsw_shape_valid, x86_stack_flags_encoding,
+    x86_sti_shape_valid, x86_store_mxcsr_shape_valid, x86_system_selector_load_shape_valid,
     x86_system_selector_store_shape_valid, x86_waitpkg_shape_valid, x86_write_control_shape_valid,
     x86_write_debug_shape_valid,
 };
@@ -1199,6 +1199,7 @@ pub(crate) fn block_is_clobber_safe(
         let op = &block.ops[i];
         let io_ok = x86_io_encoding(block, i, x86_instruction_bytes).is_some();
         let enter_ok = allow_mem && x86_enter_encoding(block, i, x86_instruction_bytes).is_some();
+        let leave_ok = allow_mem && x86_leave_encoding(block, i, x86_instruction_bytes).is_some();
         let stack_flags_ok =
             allow_mem && x86_stack_flags_encoding(block, i, x86_instruction_bytes).is_some();
         if i + 1 == n {
@@ -1505,6 +1506,7 @@ pub(crate) fn block_is_clobber_safe(
             || write_control_ok
             || write_debug_ok
             || enter_ok
+            || leave_ok
             || stack_flags_ok;
         if (crate::smir::lower::x86_64::x86_state_backed_gpr_lea_candidate(op) && !state_lea_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_stack_group1_candidate(op)
@@ -1578,6 +1580,7 @@ pub(crate) fn block_is_clobber_safe(
             || selector_verify_ok
             || selector_query_ok
             || enter_ok
+            || leave_ok
             || stack_flags_ok
             || matches!(
                 &op.kind,
@@ -1822,6 +1825,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86Enter(..)) && !enter_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86Leave(..)) && !leave_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86StackFlags(..)) && !stack_flags_ok {

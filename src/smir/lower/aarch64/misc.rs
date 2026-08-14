@@ -4297,7 +4297,9 @@ impl Aarch64Lowerer {
             OpKind::X86Enter(..) => Err(LowerError::UnsupportedOp {
                 op: "AArch64 native x86 ENTER requires a fault-precise stack helper".into(),
             }),
-            OpKind::Leave => self.lower_leave(),
+            OpKind::X86Leave(..) => Err(LowerError::UnsupportedOp {
+                op: "AArch64 native x86 LEAVE requires a fault-precise stack helper".into(),
+            }),
             OpKind::IoIn { dst, width, .. } => self.lower_io_in(*dst, *width),
             OpKind::IoOut { width, .. } => self.lower_io_out(*width),
             OpKind::AtomicLoad {

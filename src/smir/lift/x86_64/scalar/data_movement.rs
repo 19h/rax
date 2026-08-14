@@ -7,10 +7,10 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
-    X86EnterOp, X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign,
-    X86VecMap, X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource,
-    X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth,
-    X86X87IntWidth, X86XSaveKind,
+    X86EnterOp, X86LeaveOp, X86LeaveWidth, X86OpHint, X86RepMode, X86SsePrefix, X86StringKind,
+    X86ThreeDNowKind, X86VecAlign, X86VecMap, X86X87ArithmeticDestination, X86X87ArithmeticSource,
+    X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth,
+    X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{
@@ -956,9 +956,34 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, prefix.cursor + imm_size))
     }
 
-    /// Lift LEAVE (C9)
+    /// Lift long-mode LEAVE (C9) with its exact operand width and APX state.
     pub(crate) fn lift_leave(&self, prefix: &X86Prefix, pc: u64) -> Result<LiftResult, LiftError> {
-        let ops = vec![SmirOp::new(OpId(0), pc, OpKind::Leave)];
+        if prefix.lock || prefix.cursor > 15 {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![0xC9],
+            });
+        }
+        let next_pc =
+            pc.checked_add(prefix.cursor as u64)
+                .ok_or_else(|| LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: vec![0xC9],
+                })?;
+        let width = if prefix.operand_size_override && !prefix.rex_w() {
+            X86LeaveWidth::W16
+        } else {
+            X86LeaveWidth::W64
+        };
+        let ops = vec![SmirOp::new(
+            OpId(0),
+            pc,
+            OpKind::X86Leave(X86LeaveOp {
+                width,
+                requires_apx: prefix.rex2.is_some(),
+                next_pc,
+            }),
+        )];
         Ok(LiftResult::fallthrough(ops, prefix.cursor))
     }
 

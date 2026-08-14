@@ -731,17 +731,6 @@ impl Aarch64Lowerer {
         self.lower_mem_access(rt, addr, size, 0b00)
     }
 
-    pub(crate) fn lower_leave(&mut self) -> Result<(), LowerError> {
-        const X86_RSP_INDEX: u8 = 4;
-        const X86_RBP_INDEX: u8 = 5;
-
-        let size = Self::mem_size(MemWidth::B8)?;
-        let opc = Self::load_opc(MemWidth::B8, SignExtend::Zero)?;
-        self.emit_addsub_imm(X86_RSP_INDEX, X86_RBP_INDEX, 8, false, false, OpWidth::W64)?;
-        self.emit_ldst_unsigned(X86_RBP_INDEX, X86_RBP_INDEX, size, opc, 0);
-        Ok(())
-    }
-
     pub(crate) fn pred_store_src_to_vreg(src: &SrcOperand) -> Result<VReg, LowerError> {
         match src {
             SrcOperand::Reg(reg) => Ok(*reg),

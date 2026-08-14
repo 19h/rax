@@ -3,6 +3,7 @@
 mod address;
 mod call_target;
 mod x86_fma;
+mod x86_frame;
 mod x86_opmask;
 
 use call_target::call_target_json;
@@ -3859,27 +3860,9 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             width,
         } => op_json!("pred_vload", dst, cond, addr, width),
         OpKind::VStore { src, addr, width } => op_json!("vstore", src, addr, width),
-        OpKind::X86Enter(crate::smir::ir::ops::X86EnterOp {
-            allocation_size,
-            nesting_level,
-            width,
-            requires_apx,
-            next_pc,
-        }) => op_json!(
-            "x86_enter",
-            allocation_size,
-            nesting_level,
-            width,
-            requires_apx,
-            next_pc
-        ),
-        OpKind::X86StackFlags(crate::smir::ir::ops::X86StackFlagsOp {
-            kind,
-            width,
-            requires_apx,
-            next_pc,
-        }) => op_json!("x86_stack_flags", kind, width, requires_apx, next_pc),
-        OpKind::Leave => op_json!("leave"),
+        OpKind::X86Enter(op) => x86_frame::enter_json(op),
+        OpKind::X86StackFlags(op) => x86_frame::stack_flags_json(op),
+        OpKind::X86Leave(op) => x86_frame::leave_json(op),
         OpKind::IoIn { dst, port, width } => op_json!("io_in", dst, port, width),
         OpKind::IoOut { port, value, width } => op_json!("io_out", port, value, width),
         OpKind::VBroadcast {

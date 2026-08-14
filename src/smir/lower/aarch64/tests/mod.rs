@@ -18,6 +18,8 @@ mod flags;
 #[cfg(test)]
 mod fp;
 #[cfg(test)]
+mod leave;
+#[cfg(test)]
 mod logic;
 #[cfg(test)]
 mod memory;

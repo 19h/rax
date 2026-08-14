@@ -4748,6 +4748,7 @@ impl X86_64Vcpu {
                                 | OpKind::X86FarCall(..)
                                 | OpKind::X86FarReturn(..)
                                 | OpKind::X86Enter(..)
+                                | OpKind::X86Leave(..)
                                 | OpKind::X86StackFlags(..)
                                 | OpKind::X86FastSystemTransfer(..)
                                 | OpKind::X86WriteControl { .. }
@@ -6400,9 +6401,17 @@ mod mmx_xmm_transfer_tests;
 #[path = "cpu_enter_tests.rs"]
 mod enter_tests;
 
+#[cfg(test)]
+#[path = "cpu_leave_tests.rs"]
+mod leave_tests;
+
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_enter_tests.rs"]
 mod jit_enter_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_leave_tests.rs"]
+mod jit_leave_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_stack_flags_tests.rs"]

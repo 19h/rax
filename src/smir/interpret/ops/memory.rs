@@ -274,15 +274,6 @@ impl SmirInterpreter {
                 }
             }
 
-            OpKind::Leave => {
-                let rbp = VReg::Arch(ArchReg::X86(X86Reg::Rbp));
-                let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
-                let frame = ctx.read_vreg(rbp);
-                let val = self.load_memory(memory, frame, MemWidth::B8, SignExtend::Zero)?;
-                ctx.write_vreg(rsp, frame.wrapping_add(8));
-                ctx.write_vreg(rbp, val);
-            }
-
             OpKind::IoIn { dst, .. } => {
                 ctx.write_vreg(*dst, 0);
             }
