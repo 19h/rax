@@ -57,12 +57,36 @@ impl RiscVCpu {
             Csr::Frm => ((self.fcsr >> 5) & 0x7) as u64,
             Csr::Fcsr => (self.fcsr & 0xff) as u64,
             Csr::Jvt => self.jvt,
-            Csr::Cycle => self.cycle & self.xmask(),
-            Csr::Time => self.time & self.xmask(),
-            Csr::Instret => self.instret & self.xmask(),
-            Csr::CycleH => (self.cycle >> 32) & 0xffff_ffff,
-            Csr::TimeH => (self.time >> 32) & 0xffff_ffff,
-            Csr::InstretH => (self.instret >> 32) & 0xffff_ffff,
+            Csr::Cycle | Csr::CycleH => {
+                if self.priv_ < Priv::Machine && self.mcounteren & 1 == 0 {
+                    return Err(Trap::illegal(0));
+                }
+                if matches!(csr, Csr::CycleH) {
+                    (self.cycle >> 32) & 0xffff_ffff
+                } else {
+                    self.cycle & self.xmask()
+                }
+            }
+            Csr::Time | Csr::TimeH => {
+                if self.priv_ < Priv::Machine && self.mcounteren & (1 << 1) == 0 {
+                    return Err(Trap::illegal(0));
+                }
+                if matches!(csr, Csr::TimeH) {
+                    (self.time >> 32) & 0xffff_ffff
+                } else {
+                    self.time & self.xmask()
+                }
+            }
+            Csr::Instret | Csr::InstretH => {
+                if self.priv_ < Priv::Machine && self.mcounteren & (1 << 2) == 0 {
+                    return Err(Trap::illegal(0));
+                }
+                if matches!(csr, Csr::InstretH) {
+                    (self.instret >> 32) & 0xffff_ffff
+                } else {
+                    self.instret & self.xmask()
+                }
+            }
             Csr::Mstatus => self.mstatus,
             Csr::Sstatus => self.mstatus & self.sstatus_mask(),
             Csr::Misa => self.misa(),
@@ -130,7 +154,7 @@ impl RiscVCpu {
                 let mode = u64::from(value & 0b11 == 1);
                 self.mtvec = base | mode;
             }
-            Csr::Mcounteren => self.mcounteren = value,
+            Csr::Mcounteren => self.mcounteren = value & 0xffff_ffff,
             Csr::Mscratch => self.mscratch = value,
             Csr::Mepc => self.mepc = value & self.mepc_alignment_mask() & self.xmask(),
             Csr::Mcause => self.mcause = value,
@@ -293,6 +317,32 @@ mod tests {
                 "MODE={mode}"
             );
         }
+    }
+
+    #[test]
+    fn mcounteren_is_32bit_and_gates_counter_reads() {
+        let mut cpu = cpu(Isa::rv_i());
+        // Bits above 31 are not architected (32-bit register).
+        cpu.csr_write(0x306, 1u64 << 33).unwrap();
+        assert_eq!(
+            cpu.csr_read(0x306).unwrap() & (1u64 << 33),
+            0,
+            "mcounteren bit33 must be masked"
+        );
+        // U-mode cycle read traps when CY=0.
+        cpu.set_privilege(Priv::User);
+        assert_eq!(cpu.csr_read(0xC00), Err(Trap::illegal(0)));
+        assert_eq!(cpu.csr_read(0xC01), Err(Trap::illegal(0))); // time
+        assert_eq!(cpu.csr_read(0xC02), Err(Trap::illegal(0))); // instret
+        // Enabling the counter in mcounteren allows U-mode reads.
+        cpu.csr_write(0x306, 0b111).unwrap();
+        assert!(cpu.csr_read(0xC00).is_ok());
+        assert!(cpu.csr_read(0xC01).is_ok());
+        assert!(cpu.csr_read(0xC02).is_ok());
+        // M-mode reads are never gated.
+        cpu.set_privilege(Priv::Machine);
+        cpu.csr_write(0x306, 0).unwrap();
+        assert!(cpu.csr_read(0xC00).is_ok());
     }
 
     #[test]
