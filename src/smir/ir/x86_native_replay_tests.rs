@@ -130,6 +130,9 @@ mod legacy_widening_dword_multiply;
 #[path = "x86_native_replay_tests/legacy_sha.rs"]
 mod legacy_sha;
 
+#[path = "x86_native_replay_tests/legacy_packed_string.rs"]
+mod legacy_packed_string;
+
 #[path = "x86_native_replay_tests/packed_extend.rs"]
 mod packed_extend;
 

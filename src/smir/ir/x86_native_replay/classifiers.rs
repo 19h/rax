@@ -345,6 +345,7 @@ pub(crate) use vex_packed_convert_memory::{
     X86VexPackedConvertMemoryEncoding, X86VexPackedConvertMemoryKind,
 };
 pub(crate) use vex_packed_string::X86VexPackedStringMemoryEncoding;
+pub(crate) use vex_packed_string::x86_register_packed_string_shape_matches;
 pub(crate) use vex_phminposuw::X86VexPhminposuwMemoryEncoding;
 pub(crate) use vex_ptest::X86VexPtestMemoryEncoding;
 pub(crate) use vex_scalar_fp_memory::{X86VexScalarFpMemoryEncoding, X86VexScalarFpMemoryKind};

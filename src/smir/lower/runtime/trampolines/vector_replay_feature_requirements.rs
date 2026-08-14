@@ -13,6 +13,7 @@ pub(crate) struct X86NativeReplayFeatureRequirements {
     pub(crate) needs_sse3: bool,
     pub(crate) needs_ssse3: bool,
     pub(crate) needs_sse41: bool,
+    pub(crate) needs_sse42: bool,
     pub(crate) needs_avx: bool,
     pub(crate) needs_avx2: bool,
     pub(crate) needs_avx_vnni: bool,
@@ -87,6 +88,7 @@ impl X86NativeReplayFeatureRequirements {
         (!self.needs_sse3 || std::is_x86_feature_detected!("sse3"))
             && (!self.needs_ssse3 || std::is_x86_feature_detected!("ssse3"))
             && (!self.needs_sse41 || std::is_x86_feature_detected!("sse4.1"))
+            && (!self.needs_sse42 || std::is_x86_feature_detected!("sse4.2"))
             && (!self.needs_avx || std::is_x86_feature_detected!("avx"))
             && (!self.needs_avx2 || std::is_x86_feature_detected!("avx2"))
             && (!self.needs_avx_vnni || super::x86_host_has_avx_vnni())

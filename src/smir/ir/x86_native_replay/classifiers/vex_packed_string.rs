@@ -1,8 +1,8 @@
-//! Register-only AVX VEX packed-string comparison replay.
+//! Register-only legacy SSE4.2 and AVX VEX packed-string comparison replay.
 
 use super::X86InstructionBytes;
-use crate::smir::ir::ops::X86PackedStringKind;
-use crate::smir::ir::types::OpWidth;
+use crate::smir::ir::ops::{OpKind, SmirOp, X86PackedStringKind};
+use crate::smir::ir::types::{ArchReg, OpWidth, VReg, X86Reg};
 
 /// One complete VEX packed-string memory encoding rewritten to consume a
 /// helper-loaded value from a nonarchitectural low XMM register.
@@ -18,16 +18,52 @@ pub(crate) struct X86VexPackedStringMemoryEncoding {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-struct X86VexPackedStringRegisterEncoding {
+struct X86PackedStringRegisterEncoding {
     kind: X86PackedStringKind,
     source1: u8,
     source2: u8,
     immediate: u8,
     length_width: OpWidth,
+    zero_upper: bool,
 }
 
 impl X86InstructionBytes {
-    fn vex_register_packed_string_encoding(&self) -> Option<X86VexPackedStringRegisterEncoding> {
+    fn legacy_register_packed_string_encoding(&self) -> Option<X86PackedStringRegisterEncoding> {
+        let bytes = self.as_slice();
+        let (rex, suffix) = match bytes {
+            [0x66, 0x0F, 0x3A, ..] if bytes.len() == 6 => (0, &bytes[1..]),
+            [0x66, rex @ 0x40..=0x4F, 0x0F, 0x3A, ..] if bytes.len() == 7 => (*rex, &bytes[2..]),
+            _ => return None,
+        };
+        let [0x0F, 0x3A, opcode, modrm, immediate] = suffix else {
+            return None;
+        };
+        let (opcode, modrm, immediate) = (*opcode, *modrm, *immediate);
+        if modrm >> 6 != 3 {
+            return None;
+        }
+        let kind = match opcode {
+            0x60 => X86PackedStringKind::ExplicitMask,
+            0x61 => X86PackedStringKind::ExplicitIndex,
+            0x62 => X86PackedStringKind::ImplicitMask,
+            0x63 => X86PackedStringKind::ImplicitIndex,
+            _ => return None,
+        };
+        Some(X86PackedStringRegisterEncoding {
+            kind,
+            source1: ((modrm >> 3) & 7) | ((rex & 4) << 1),
+            source2: (modrm & 7) | ((rex & 1) << 3),
+            immediate,
+            length_width: if kind.is_explicit() && rex & 8 != 0 {
+                OpWidth::W64
+            } else {
+                OpWidth::W32
+            },
+            zero_upper: false,
+        })
+    }
+
+    fn vex_register_packed_string_encoding(&self) -> Option<X86PackedStringRegisterEncoding> {
         let bytes = self.as_slice();
         if bytes.len() != 6 || bytes[0] != 0xC4 {
             return None;
@@ -46,7 +82,7 @@ impl X86InstructionBytes {
             0x63 => X86PackedStringKind::ImplicitIndex,
             _ => return None,
         };
-        Some(X86VexPackedStringRegisterEncoding {
+        Some(X86PackedStringRegisterEncoding {
             kind,
             source1: (u8::from(p0 & 0x80 == 0) << 3) | ((modrm >> 3) & 7),
             source2: (u8::from(p0 & 0x20 == 0) << 3) | (modrm & 7),
@@ -56,7 +92,19 @@ impl X86InstructionBytes {
             } else {
                 OpWidth::W32
             },
+            zero_upper: kind.returns_mask(),
         })
+    }
+
+    /// Validate one register-only legacy SSE4.2 `PCMPxSTRx` instruction.
+    ///
+    /// Intel SDM Vol. 2B assigns opcodes 60H through 63H in map 0F3A with
+    /// mandatory 66H. A final REX prefix may select XMM0 through XMM15; REX.W
+    /// selects 64-bit explicit lengths and is ignored by implicit-length
+    /// forms. REX.X is ignored for a register ModR/M operand. Memory forms
+    /// remain excluded so native replay cannot bypass guest-memory faults.
+    pub fn is_legacy_register_packed_string_compare(&self) -> bool {
+        self.legacy_register_packed_string_encoding().is_some()
     }
 
     /// Validate one register-only VEX.128 `VPCMPxSTRx` instruction.
@@ -150,4 +198,65 @@ impl X86InstructionBytes {
             register_instruction,
         })
     }
+}
+
+fn xmm(index: u8) -> VReg {
+    VReg::Arch(ArchReg::X86(X86Reg::Xmm(index)))
+}
+
+fn gpr(register: X86Reg) -> VReg {
+    VReg::Arch(ArchReg::X86(register))
+}
+
+/// Validate the complete canonical SMIR graph for one register-only legacy or
+/// VEX packed-string comparison. Source bytes alone are insufficient: exact
+/// replay must fail closed if optimizer or provenance corruption changes any
+/// operand, output form, length width, immediate, or upper-state policy.
+pub(crate) fn x86_register_packed_string_shape_matches(
+    ops: &[SmirOp],
+    instruction: &X86InstructionBytes,
+) -> bool {
+    let Some(encoding) = instruction
+        .legacy_register_packed_string_encoding()
+        .or_else(|| instruction.vex_register_packed_string_encoding())
+    else {
+        return false;
+    };
+    let [operation] = ops else {
+        return false;
+    };
+    if operation.x86_hint.is_some() {
+        return false;
+    }
+    let expected_destination = if encoding.kind.returns_mask() {
+        xmm(0)
+    } else {
+        gpr(X86Reg::Rcx)
+    };
+    let expected_lengths = if encoding.kind.is_explicit() {
+        (Some(gpr(X86Reg::Rax)), Some(gpr(X86Reg::Rdx)))
+    } else {
+        (None, None)
+    };
+    matches!(
+        operation.kind,
+        OpKind::X86PackedStringCompare {
+            dst,
+            src1,
+            src2,
+            len1,
+            len2,
+            length_width,
+            kind,
+            imm,
+            zero_upper,
+        } if dst == expected_destination
+            && src1 == xmm(encoding.source1)
+            && src2 == xmm(encoding.source2)
+            && (len1, len2) == expected_lengths
+            && length_width == encoding.length_width
+            && kind == encoding.kind
+            && imm == encoding.immediate
+            && zero_upper == encoding.zero_upper
+    )
 }

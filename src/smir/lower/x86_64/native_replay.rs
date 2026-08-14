@@ -27,6 +27,12 @@ impl X86_64Lowerer {
         if self.try_emit_legacy_high_byte_replay(span)? {
             return Ok(());
         }
+        if span.instruction.is_legacy_register_packed_string_compare() {
+            // Legacy PCMPxSTRx writes at most XMM0 bits 127:0 and preserves
+            // shared vector state above bit 127. Index forms write ECX only.
+            self.code.emit_bytes(span.instruction.as_slice());
+            return Ok(());
+        }
         if let Some(returns_mask) = span.instruction.vex_register_packed_string_returns_mask() {
             self.code.emit_bytes(span.instruction.as_slice());
             if returns_mask && self.avx_ymm16_vector_state {

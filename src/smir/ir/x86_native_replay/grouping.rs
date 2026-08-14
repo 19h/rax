@@ -473,6 +473,15 @@ pub(super) fn x86_native_replay_spans_where(
             {
                 return None;
             }
+            if (instruction.is_legacy_register_packed_string_compare()
+                || instruction.is_vex_register_packed_string_compare())
+                && !classifiers::x86_register_packed_string_shape_matches(
+                    &block.ops[start..end],
+                    &instruction,
+                )
+            {
+                return None;
+            }
             // VPERMIL2 is VEX encoded but belongs to AMD's XOP feature
             // subset. Its dynamic guest-state guard must remain independently
             // lowered before exact register replay replaces the remaining

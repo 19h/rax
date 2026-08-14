@@ -73,6 +73,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             .legacy_register_fp_flag_compare_replay()
             .is_some();
         let legacy_sha = span.instruction.legacy_register_sha_replay().is_some();
+        let legacy_packed_string = span.instruction.is_legacy_register_packed_string_compare();
         let is_fma3 = span.instruction.is_vex_register_fma3();
         let is_fma4 = span.instruction.is_vex_register_fma4();
         let is_vpermil2 = span.instruction.is_vex_register_vpermil2();
@@ -160,6 +161,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || legacy_scalar_extract.is_some_and(|replay| replay.kind.requires_sse41())
             || legacy_scalar_insert.is_some_and(|replay| replay.kind.requires_sse41())
             || legacy_widening_dword_multiply.is_some_and(|replay| replay.signed);
+        requirements.needs_sse42 |= legacy_packed_string;
         requirements.needs_vex_unaligned_packed_fp_move |= vex_unaligned_packed_fp_move;
         *all_spans_support_avx_ymm16 &= legacy_aes
             || legacy_blend
@@ -181,6 +183,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || legacy_widening_dword_multiply.is_some()
             || legacy_fp_flag_compare
             || legacy_sha
+            || legacy_packed_string
             || is_fma4
             || is_vpermil2
             || vex_fp_dot_product_ymm.is_some()
@@ -248,6 +251,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || legacy_widening_dword_multiply.is_some()
             || legacy_fp_flag_compare
             || legacy_sha
+            || legacy_packed_string
             || vex_packed_string
             || is_fma3
             || is_fma4

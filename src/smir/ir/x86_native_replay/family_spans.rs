@@ -508,3 +508,20 @@ pub fn x86_vex_packed_string_replay_spans(
             .then_some((false, false, false))
     })
 }
+
+/// Identify exact register-only legacy SSE4.2 packed-string comparison groups.
+/// The source instruction writes either ECX or XMM0 bits 127:0, updates all
+/// six status flags, and preserves shared vector state above bit 127. Replay
+/// therefore uses the AVX YMM0-YMM15 state bridge and requires SSE4.2 host
+/// support. Construction is O(N) time and O(P) space for N operations and P
+/// unique guest PCs.
+pub fn x86_legacy_packed_string_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .is_legacy_register_packed_string_compare()
+            .then_some((false, false, false))
+    })
+}

@@ -57,6 +57,7 @@ fn replay_feature_aggregation_requires_only_the_avx_ymm16_state_boundary() {
         x86_native_replay_feature_requirements(&function, &std::collections::HashMap::new());
     assert!(requirements.any);
     assert!(requirements.needs_avx);
+    assert!(!requirements.needs_sse42);
     assert!(!requirements.needs_fma);
     assert!(requirements.all_spans_support_avx_ymm16);
     assert!(!requirements.needs_avx512bw);
