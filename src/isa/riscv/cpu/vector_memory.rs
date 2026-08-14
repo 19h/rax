@@ -126,14 +126,13 @@ impl RiscVCpu {
                 let is_load = insn.op == Op::Vlseg;
                 let width = encoded_width(insn)?;
                 let indexed = mop == 0b01 || mop == 0b11;
-                let eb = if indexed { self.sew_bytes() } else { width };
+                // Indexed loads/stores use the index EEW for element/field
+                // spacing, not SEW (EEW == SEW for non-indexed forms).
+                let eb = width;
 
                 let sew_bits = 8u32 << ((self.vtype >> 3) & 0x7);
-                let eew_bits = if indexed {
-                    sew_bits
-                } else {
-                    (width as u32) * 8
-                };
+                // EEW = encoded element width for indexed forms too.
+                let eew_bits = (width as u32) * 8;
                 let (lmul_n, lmul_d): (u32, u32) = match self.vtype & 0x7 {
                     0 => (1, 1),
                     1 => (2, 1),
@@ -368,5 +367,78 @@ mod tests {
         let whole_trap = execute(&mut whole_cpu, load(1, 0, 0b01000, 10, 6, 2)).unwrap_err();
         assert_eq!(whole_trap, acc_fault(false, 0x108));
         assert_eq!(whole_cpu.vstart(), 2);
+    }
+
+    // Indexed segment loads/stores use the index EEW (encoded width) for
+    // element/field spacing, not SEW. vluxseg2ei8.v with SEW=32 must read
+    // field 1 at base+index+1 (one byte), not base+index+4.
+    #[test]
+    fn vluxseg_indexed_segment_field_spacing_uses_index_eew() {
+        // nf=2, mop=01 (indexed), vm=1, rs1=x10, width=0 (ei8), vd=v4.
+        let raw = (1 << 29)
+            | (0b01 << 26)
+            | (1 << 25)
+            | (2 << 20)
+            | (10 << 15)
+            | (0 << 12)
+            | (4 << 7)
+            | 0x07;
+        // Index vector (ei8): e0 -> +0, e1 -> +2. Memory at +4 holds the
+        // defect signature (SEW=32 spacing would read field 1 from +4).
+        let mut idx = [0u8; 16];
+        idx[1] = 2;
+        let mut load_cpu = cpu(
+            FlatMemory::with_data(0x100, vec![0x11, 0x22, 0x33, 0x00, 0x44]),
+            2,
+            0x10,
+        );
+        load_cpu.set_x(10, 0x100);
+        load_cpu.set_vreg(2, &idx);
+        load_cpu.set_vreg(4, &[0xaa; 16]); // field 0, prefill
+        load_cpu.set_vreg(5, &[0xaa; 16]); // field 1, prefill
+        assert_eq!(execute(&mut load_cpu, raw), Ok(RiscVExit::Continue));
+        // Field spacing must be 1 byte (index EEW), so field 1 comes from +1.
+        assert_eq!(load_cpu.vreg(4)[0], 0x11);
+        assert_eq!(load_cpu.vreg(5)[0], 0x22);
+        assert_eq!(load_cpu.vreg(4)[1], 0x33);
+        assert_eq!(load_cpu.vreg(5)[1], 0x00);
+        let _ = (load_cpu.vreg(2), load_cpu.vreg(4), load_cpu.vreg(5));
+
+        // vsuxseg2ei8.v: field 1 must be written one byte after field 0.
+        let mut store_cpu = cpu(FlatMemory::with_data(0x100, vec![0xee; 8]), 2, 0x10);
+        store_cpu.set_x(10, 0x100);
+        store_cpu.set_vreg(2, &idx);
+        let mut f0 = [0xaa; 16];
+        f0[0] = 0x11;
+        f0[1] = 0x33;
+        let mut f1 = [0xaa; 16];
+        f1[0] = 0x22;
+        f1[1] = 0x44;
+        store_cpu.set_vreg(4, &f0);
+        store_cpu.set_vreg(5, &f1);
+        let raw_store = (1 << 29)
+            | (0b01 << 26)
+            | (1 << 25)
+            | (2 << 20)
+            | (10 << 15)
+            | (0 << 12)
+            | (4 << 7)
+            | 0x27;
+        assert_eq!(execute(&mut store_cpu, raw_store), Ok(RiscVExit::Continue));
+        let mut stored = [0u8; 8];
+        store_cpu.read_memory(0x100, &mut stored).unwrap();
+        assert_eq!(&stored[..4], &[0x11, 0x22, 0x33, 0x44]);
+
+        // Non-indexed control: vse32.v (width=6, SEW=32) keeps SEW spacing.
+        let mut ctrl = cpu(FlatMemory::with_data(0x100, vec![0xee; 16]), 2, 0x10);
+        ctrl.set_x(10, 0x100);
+        ctrl.set_vreg(4, &f0);
+        let raw_ctrl = (1 << 25) | (10 << 15) | (6 << 12) | (4 << 7) | 0x27;
+        assert_eq!(execute(&mut ctrl, raw_ctrl), Ok(RiscVExit::Continue));
+        let mut ctrl_stored = [0u8; 8];
+        ctrl.read_memory(0x100, &mut ctrl_stored).unwrap();
+        // SEW=32 elements stay 4 bytes apart; the whole 4-byte element
+        // (f0[0..4] = [0x11, 0x33, 0xaa, 0xaa]) lands at +0.
+        assert_eq!(&ctrl_stored[..4], &[0x11, 0x33, 0xaa, 0xaa]);
     }
 }
