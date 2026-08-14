@@ -43,6 +43,11 @@ fn grouped_replay_instruction(instruction: X86InstructionBytes) -> X86Instructio
     let instruction = instruction
         .legacy_high_byte_multiply_replay()
         .map(|replay| replay.canonical_instruction)
+        .or_else(|| {
+            instruction
+                .legacy_high_byte_group3_test_replay()
+                .map(|replay| replay.canonical_instruction)
+        })
         .unwrap_or(instruction);
     instruction
         .non_memory_prefix_canonical()
@@ -72,6 +77,10 @@ fn legacy_high_byte_replay_admits_and_emits_each_supported_family_at_o0_o1_o2() 
         ("sub ah,0x81", &[0x80, 0xEC, 0x81]),
         ("mov bh,0x5a", &[0xC6, 0xC7, 0x5A]),
         ("test ch,0xa5", &[0xF6, 0xC5, 0xA5]),
+        (
+            "prefixed group3 /1 test ch,0xa5",
+            &[0x65, 0x66, 0x67, 0xF3, 0xF6, 0xCD, 0xA5],
+        ),
         ("not dh", &[0xF6, 0xD6]),
         ("neg bh", &[0xF6, 0xDF]),
         ("mul ah", &[0xF6, 0xE4]),
@@ -703,6 +712,239 @@ fn all_7168_scanner_high_byte_mov_immediates_admit_at_every_opt_level() {
 
     assert_eq!(encodings, 7_168);
     assert_eq!(optimization_profiles, 21_504);
+}
+
+#[test]
+fn all_high_byte_group3_test_scanner_graphs_admit_and_emit_at_every_opt_level() {
+    const PREFIXES: &[&[u8]] = &[&[], &[0x66], &[0xF2], &[0xF3], &[0x67], &[0x64], &[0x65]];
+
+    let mut encodings = 0usize;
+    let mut optimization_profiles = 0usize;
+    for prefix in PREFIXES {
+        for extension in [0u8, 1] {
+            for rm in 4u8..8 {
+                for immediate in u8::MIN..=u8::MAX {
+                    let mut bytes = prefix.to_vec();
+                    bytes.extend([0xF6, 0xC0 | (extension << 3) | rm, immediate]);
+                    let instruction = X86InstructionBytes::new(&bytes).unwrap();
+                    let canonical =
+                        X86InstructionBytes::new(&[0xF6, 0xC0 | rm, immediate]).unwrap();
+                    let replay = instruction
+                        .legacy_high_byte_group3_test_replay()
+                        .unwrap_or_else(|| panic!("{bytes:02X?}"));
+                    assert_eq!(replay.parent, rm - 4, "{bytes:02X?}");
+                    assert_eq!(replay.immediate, immediate, "{bytes:02X?}");
+                    assert_eq!(replay.canonical_instruction, canonical, "{bytes:02X?}");
+                    assert_eq!(
+                        grouped_replay_instruction(instruction),
+                        canonical,
+                        "{bytes:02X?}"
+                    );
+
+                    for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+                        let mut function = function(&bytes);
+                        optimize_function(&mut function, level);
+                        assert_eq!(function.blocks[0].ops.len(), 2, "{bytes:02X?} {level:?}");
+
+                        for spans in [
+                            crate::smir::ir::x86_legacy_high_byte_replay_spans(
+                                &function.blocks[0],
+                                &function.x86_instruction_bytes,
+                            ),
+                            crate::smir::ir::x86_native_replay_spans(
+                                &function.blocks[0],
+                                &function.x86_instruction_bytes,
+                            ),
+                        ] {
+                            assert_eq!(
+                                spans.get(&0),
+                                Some(&crate::smir::ir::X86NativeReplaySpan {
+                                    end: 2,
+                                    instruction: canonical,
+                                    needs_avx512vl: false,
+                                    needs_avx512dq: false,
+                                    needs_avx512fp16: false,
+                                    preserve_mxcsr_de: false,
+                                }),
+                                "{bytes:02X?} {level:?}"
+                            );
+                        }
+
+                        assert!(is_native_clobber_safe(&function), "{bytes:02X?} {level:?}");
+                        assert!(
+                            !is_x86_aarch64_native_clobber_safe_excluding(
+                                &function,
+                                &std::collections::HashMap::new(),
+                            ),
+                            "{bytes:02X?} {level:?}: AArch64 host must retain fallback"
+                        );
+                        assert_eq!(
+                            x86_native_replay_feature_requirements(
+                                &function,
+                                &std::collections::HashMap::new(),
+                            ),
+                            X86NativeReplayFeatureRequirements::default(),
+                            "{bytes:02X?} {level:?}"
+                        );
+                        assert!(
+                            !uses_x86_native_vectors_excluding(
+                                &function,
+                                &std::collections::HashMap::new(),
+                            ),
+                            "{bytes:02X?} {level:?}"
+                        );
+
+                        let mut lowerer = X86_64Lowerer::new();
+                        lowerer
+                            .lower_function(&function)
+                            .unwrap_or_else(|error| panic!("{bytes:02X?} {level:?}: {error:?}"));
+                        let code = lowerer.finalize().unwrap();
+                        assert!(
+                            code.windows(canonical.as_slice().len())
+                                .any(|window| window == canonical.as_slice()),
+                            "canonical /0 replay absent for {bytes:02X?} {level:?}: {code:02X?}"
+                        );
+                        optimization_profiles += 1;
+                    }
+                    encodings += 1;
+                }
+            }
+        }
+    }
+
+    assert_eq!(encodings, 14_336);
+    assert_eq!(optimization_profiles, 43_008);
+}
+
+fn assert_high_byte_group3_test_rejected(function: &SmirFunction, label: &str) {
+    assert!(
+        crate::smir::ir::x86_legacy_high_byte_replay_spans(
+            &function.blocks[0],
+            &function.x86_instruction_bytes,
+        )
+        .is_empty(),
+        "family selector admitted {label}"
+    );
+    assert!(
+        crate::smir::ir::x86_native_replay_spans(
+            &function.blocks[0],
+            &function.x86_instruction_bytes,
+        )
+        .is_empty(),
+        "aggregate selector admitted {label}"
+    );
+    assert!(!is_native_clobber_safe(function), "gate admitted {label}");
+}
+
+#[test]
+fn high_byte_group3_test_replay_rejects_graph_provenance_and_ssa_mutations() {
+    let base = function(&[0xF6, 0xCC, 0xA5]); // TEST AH,0xa5 through the /1 alias.
+    assert_eq!(base.blocks[0].ops.len(), 2);
+    let temporary = high_byte_temporary(&base);
+
+    let mut missing_provenance = base.clone();
+    missing_provenance.x86_instruction_bytes.clear();
+    assert_high_byte_group3_test_rejected(&missing_provenance, "missing provenance");
+
+    let mut wrong_immediate_provenance = base.clone();
+    wrong_immediate_provenance.x86_instruction_bytes.insert(
+        (BlockId(0), PC),
+        X86InstructionBytes::new(&[0xF6, 0xCC, 0xA4]).unwrap(),
+    );
+    assert_high_byte_group3_test_rejected(
+        &wrong_immediate_provenance,
+        "mismatched immediate provenance",
+    );
+
+    let mut wrong_parent_provenance = base.clone();
+    wrong_parent_provenance.x86_instruction_bytes.insert(
+        (BlockId(0), PC),
+        X86InstructionBytes::new(&[0xF6, 0xCD, 0xA5]).unwrap(),
+    );
+    assert_high_byte_group3_test_rejected(&wrong_parent_provenance, "mismatched parent provenance");
+
+    let mut wrong_extract_parent = base.clone();
+    let OpKind::Shr { src, .. } = &mut wrong_extract_parent.blocks[0].ops[0].kind else {
+        unreachable!()
+    };
+    *src = x86(X86Reg::Rcx);
+    assert_high_byte_group3_test_rejected(&wrong_extract_parent, "extract parent");
+
+    let mut wrong_extract_amount = base.clone();
+    let OpKind::Shr { amount, .. } = &mut wrong_extract_amount.blocks[0].ops[0].kind else {
+        unreachable!()
+    };
+    *amount = SrcOperand::Imm(7);
+    assert_high_byte_group3_test_rejected(&wrong_extract_amount, "extract amount");
+
+    let mut wrong_extract_width = base.clone();
+    let OpKind::Shr { width, .. } = &mut wrong_extract_width.blocks[0].ops[0].kind else {
+        unreachable!()
+    };
+    *width = OpWidth::W32;
+    assert_high_byte_group3_test_rejected(&wrong_extract_width, "extract width");
+
+    let mut wrong_extract_flags = base.clone();
+    let OpKind::Shr { flags, .. } = &mut wrong_extract_flags.blocks[0].ops[0].kind else {
+        unreachable!()
+    };
+    *flags = FlagUpdate::All;
+    assert_high_byte_group3_test_rejected(&wrong_extract_flags, "extract flags");
+
+    let mut wrong_test_source = base.clone();
+    let OpKind::Test { src1, .. } = &mut wrong_test_source.blocks[0].ops[1].kind else {
+        unreachable!()
+    };
+    *src1 = x86(X86Reg::Rax);
+    assert_high_byte_group3_test_rejected(&wrong_test_source, "TEST source");
+
+    let mut wrong_test_immediate = base.clone();
+    let OpKind::Test { src2, .. } = &mut wrong_test_immediate.blocks[0].ops[1].kind else {
+        unreachable!()
+    };
+    *src2 = SrcOperand::Imm(-92);
+    assert_high_byte_group3_test_rejected(&wrong_test_immediate, "TEST immediate");
+
+    let mut wrong_test_width = base.clone();
+    let OpKind::Test { width, .. } = &mut wrong_test_width.blocks[0].ops[1].kind else {
+        unreachable!()
+    };
+    *width = OpWidth::W16;
+    assert_high_byte_group3_test_rejected(&wrong_test_width, "TEST width");
+
+    let mut escaped_use = base.clone();
+    let mut escape = escaped_use.blocks[0].ops[0].clone();
+    escape.guest_pc = PC + 3;
+    escape.kind = OpKind::Mov {
+        dst: x86(X86Reg::Rbx),
+        src: SrcOperand::Reg(temporary),
+        width: OpWidth::W64,
+    };
+    escaped_use.blocks[0].ops.push(escape);
+    assert_high_byte_group3_test_rejected(&escaped_use, "escaped extract temporary");
+
+    let mut redefined = base.clone();
+    let mut redefine = redefined.blocks[0].ops[0].clone();
+    redefine.guest_pc = PC + 3;
+    redefine.kind = OpKind::Mov {
+        dst: temporary,
+        src: SrcOperand::Imm(0),
+        width: OpWidth::W64,
+    };
+    redefined.blocks[0].ops.push(redefine);
+    assert_high_byte_group3_test_rejected(&redefined, "redefined extract temporary");
+
+    let mut returned = base.clone();
+    returned.blocks[0].terminator = Terminator::Return {
+        values: vec![temporary],
+    };
+    assert_high_byte_group3_test_rejected(&returned, "returned extract temporary");
+
+    let mut noncontiguous = base;
+    let mut split = noncontiguous.blocks[0].ops[0].clone();
+    split.guest_pc = PC + 3;
+    noncontiguous.blocks[0].ops.insert(1, split);
+    assert_high_byte_group3_test_rejected(&noncontiguous, "noncontiguous semantic group");
 }
 
 #[test]

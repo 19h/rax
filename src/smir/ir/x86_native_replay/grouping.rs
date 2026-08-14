@@ -108,6 +108,11 @@ pub(super) fn x86_native_replay_spans_where(
             let replay_source = source_instruction
                 .legacy_high_byte_multiply_replay()
                 .map(|replay| replay.canonical_instruction)
+                .or_else(|| {
+                    source_instruction
+                        .legacy_high_byte_group3_test_replay()
+                        .map(|replay| replay.canonical_instruction)
+                })
                 .unwrap_or(source_instruction);
             let replay_source = replay_source
                 .non_memory_prefix_canonical()
@@ -120,8 +125,22 @@ pub(super) fn x86_native_replay_spans_where(
                         classify(&canonical).map(|requirements| (canonical, requirements))
                     })?;
             let high_byte_multiply = instruction.legacy_high_byte_multiply_replay();
+            let high_byte_group3_test = instruction.legacy_high_byte_group3_test_replay();
             let high_byte_crc32 = instruction.legacy_high_byte_crc32_replay();
             let high_byte_setcc = instruction.legacy_high_byte_setcc_replay();
+            if let Some(replay) = high_byte_group3_test {
+                let temporary = classifiers::x86_legacy_high_byte_group3_test_shape_temporary(
+                    &block.ops[start..end],
+                    replay,
+                )?;
+                let (virtual_definitions, virtual_uses) =
+                    virtual_counts.get_or_init(|| block_virtual_definition_use_counts(block));
+                if virtual_definitions.get(&temporary) != Some(&1)
+                    || virtual_uses.get(&temporary) != Some(&1)
+                {
+                    return None;
+                }
+            }
             if let Some(replay) = high_byte_multiply {
                 let temporary = classifiers::x86_legacy_high_byte_multiply_shape_temporary(
                     &block.ops[start..end],

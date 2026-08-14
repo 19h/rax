@@ -33,6 +33,18 @@ pub(crate) struct X86LegacyHighByteGroup2Replay {
     pub(crate) canonical_instruction: X86InstructionBytes,
 }
 
+/// Replay metadata for one register-only byte Group 3 `TEST` using AH, CH,
+/// DH, or BH. Intel SDM Vol. 3B, Section 24.15 defines `/1` as behaviorally
+/// identical to `/0`; native replay always uses the documented `/0` image so
+/// the result does not depend on how the host treats a reserved encoding.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86LegacyHighByteGroup3TestReplay {
+    /// Architectural source-parent GPR index: RAX=0, RCX=1, RDX=2, RBX=3.
+    pub(crate) parent: u8,
+    pub(crate) immediate: u8,
+    pub(crate) canonical_instruction: X86InstructionBytes,
+}
+
 /// Signedness selected by a byte-validated legacy Group 3 multiply encoding.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum X86LegacyHighByteMultiplyKind {
@@ -147,6 +159,41 @@ pub(crate) fn x86_legacy_high_byte_multiply_shape_temporary(
         ),
     };
     (multiply.x86_hint.is_none() && shape_matches).then_some(temporary)
+}
+
+/// Validate the exact extract-plus-`TEST` graph emitted for `F6 /0` and its
+/// compatibility `/1` alias with an AH/CH/DH/BH source. The caller must also
+/// prove that the extract temporary has exactly one definition and one use in
+/// the complete block before replacing the graph with canonical source replay.
+pub(crate) fn x86_legacy_high_byte_group3_test_shape_temporary(
+    ops: &[SmirOp],
+    replay: X86LegacyHighByteGroup3TestReplay,
+) -> Option<VReg> {
+    let [extract, test] = ops else {
+        return None;
+    };
+    if extract.x86_hint.is_some() || test.x86_hint.is_some() {
+        return None;
+    }
+    let temporary = match &extract.kind {
+        OpKind::Shr {
+            dst: temporary @ VReg::Virtual(_),
+            src: VReg::Arch(ArchReg::X86(source)),
+            amount: SrcOperand::Imm(8),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } if source.gpr_index() == Some(replay.parent) => *temporary,
+        _ => return None,
+    };
+    matches!(
+        &test.kind,
+        OpKind::Test {
+            src1,
+            src2: SrcOperand::Imm(immediate),
+            width: OpWidth::W8,
+        } if *src1 == temporary && *immediate == i64::from(replay.immediate as i8)
+    )
+    .then_some(temporary)
 }
 
 /// Validate the exact extract-plus-CRC32C graph emitted for an AH/CH/DH/BH
@@ -291,15 +338,16 @@ impl X86InstructionBytes {
     ///
     /// The admitted set contains MOV (including the B4-B7 immediate forms),
     /// binary ALU, TEST, XCHG, Group 1 immediate, NOT, NEG, INC, DEC, SETcc,
-    /// CMPXCHG, XADD, implicit MUL/IMUL, CRC32 r32,r/m8, and Group 2
-    /// rotate/shift register forms including `/6` SAL. LOCK, REX, memory,
-    /// Group 3 `/1`, and divide forms fail closed.
+    /// CMPXCHG, XADD, implicit MUL/IMUL, CRC32 r32,r/m8, Group 3 `/0` TEST and
+    /// its `/1` compatibility alias, and Group 2 rotate/shift register forms
+    /// including `/6` SAL. LOCK, REX, memory, and divide forms fail closed.
     /// Group 2 replay uses a deterministic status wrapper because RAX
     /// preserves architecturally undefined AF/OF while the host instruction
     /// may change them. At most one legacy prefix from each prefix group is
     /// accepted; none changes an 8-bit register operand.
     pub fn is_legacy_high_byte_register_replay(&self) -> bool {
-        if self.legacy_high_byte_group2_replay().is_some()
+        if self.legacy_high_byte_group3_test_replay().is_some()
+            || self.legacy_high_byte_group2_replay().is_some()
             || self.legacy_high_byte_multiply_replay().is_some()
             || self.legacy_high_byte_crc32_replay().is_some()
             || self.legacy_high_byte_setcc_replay().is_some()
@@ -350,9 +398,6 @@ impl X86InstructionBytes {
             [0xC6, modrm, _] => {
                 register_fields(*modrm).is_some_and(|(extension, rm)| extension == 0 && is_high(rm))
             }
-            [0xF6, modrm, _] => {
-                register_fields(*modrm).is_some_and(|(extension, rm)| extension == 0 && is_high(rm))
-            }
             [0xF6, modrm] => register_fields(*modrm)
                 .is_some_and(|(extension, rm)| matches!(extension, 2 | 3) && is_high(rm)),
             [0x0F, opcode @ (0xB0 | 0xC0), modrm] => {
@@ -361,6 +406,29 @@ impl X86InstructionBytes {
             }
             _ => false,
         }
+    }
+
+    /// Decode register-only byte Group 3 `TEST` using AH/CH/DH/BH. Both the
+    /// documented `/0` form and Intel's compatibility `/1` alias are returned
+    /// as the same prefix-free `/0` instruction for portable native replay.
+    pub(crate) fn legacy_high_byte_group3_test_replay(
+        &self,
+    ) -> Option<X86LegacyHighByteGroup3TestReplay> {
+        let bytes = self.as_slice();
+        let start = legacy_prefix_len(bytes)?;
+        let [0xF6, modrm, immediate] = &bytes[start..] else {
+            return None;
+        };
+        let extension = (modrm >> 3) & 7;
+        if modrm >> 6 != 3 || modrm & 7 < 4 || !matches!(extension, 0 | 1) {
+            return None;
+        }
+        let canonical_modrm = 0xC0 | (modrm & 7);
+        Some(X86LegacyHighByteGroup3TestReplay {
+            parent: (modrm & 7) - 4,
+            immediate: *immediate,
+            canonical_instruction: X86InstructionBytes::new(&[0xF6, canonical_modrm, *immediate])?,
+        })
     }
 
     /// Decode one register-only legacy `SETcc` whose destination is AH, CH,
@@ -562,7 +630,7 @@ mod tests {
 
             for (opcode, valid_extensions, has_immediate) in [
                 (0xC6, 0b0000_0001u8, true),
-                (0xF6, 0b0000_0001u8, true),
+                (0xF6, 0b0000_0011u8, true),
                 (0xF6, 0b0011_1100u8, false),
             ] {
                 for extension in 0u8..8 {
@@ -648,7 +716,49 @@ mod tests {
                 }
             }
         }
-        assert_eq!(accepted, 16_512);
+        assert_eq!(accepted, 16_536);
+    }
+
+    #[test]
+    fn group3_test_classifier_exhausts_prefixes_extensions_high_bytes_and_immediates() {
+        const PREFIXES: &[&[u8]] = &[&[], &[0x66], &[0xF2], &[0xF3], &[0x67], &[0x64], &[0x65]];
+
+        let mut accepted = 0usize;
+        for prefix in PREFIXES {
+            for extension in 0u8..8 {
+                for rm in 0u8..8 {
+                    for immediate in u8::MIN..=u8::MAX {
+                        let mut bytes = prefix.to_vec();
+                        bytes.extend([0xF6, 0xC0 | (extension << 3) | rm, immediate]);
+                        let instruction = X86InstructionBytes::new(&bytes).unwrap();
+                        let expected = (matches!(extension, 0 | 1) && rm >= 4).then(|| {
+                            X86LegacyHighByteGroup3TestReplay {
+                                parent: rm - 4,
+                                immediate,
+                                canonical_instruction: X86InstructionBytes::new(&[
+                                    0xF6,
+                                    0xC0 | rm,
+                                    immediate,
+                                ])
+                                .unwrap(),
+                            }
+                        });
+                        assert_eq!(
+                            instruction.legacy_high_byte_group3_test_replay(),
+                            expected,
+                            "{bytes:02X?}"
+                        );
+                        assert_eq!(
+                            instruction.is_legacy_high_byte_register_replay(),
+                            expected.is_some(),
+                            "{bytes:02X?}"
+                        );
+                        accepted += usize::from(expected.is_some());
+                    }
+                }
+            }
+        }
+        assert_eq!(accepted, 7 * 2 * 4 * 256);
     }
 
     #[test]
@@ -908,7 +1018,7 @@ mod tests {
             &[0x66, 0x66, 0x00, 0xC4][..],             // duplicate prefix group
             &[0xC0, 0x04, 0x03][..],                   // Group 2 memory form
             &[0x40, 0xC0, 0xC4, 0x03][..],             // REX selects SPL, not AH
-            &[0xF6, 0xCC, 0x01][..],                   // Group 3 /1 compatibility alias
+            &[0xF6, 0xD4, 0x01][..],                   // Group 3 /2 has no immediate
             &[0xF6, 0xF4][..],                         // div ah can raise #DE
             &[0xF6, 0xFC][..],                         // idiv ah can raise #DE
             &[0xC6, 0xCC, 0x01][..],                   // MOV requires /0

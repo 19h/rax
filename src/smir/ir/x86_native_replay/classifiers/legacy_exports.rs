@@ -16,7 +16,8 @@ pub(crate) use super::legacy_gfni::{
 pub(crate) use super::legacy_high_byte::{
     X86LegacyHighByteCrc32Replay, X86LegacyHighByteGroup2Kind, X86LegacyHighByteGroup2Replay,
     X86LegacyHighByteMultiplyKind, X86LegacyHighByteMultiplyReplay, X86LegacyHighByteSetccReplay,
-    x86_legacy_high_byte_crc32_shape_temporary, x86_legacy_high_byte_multiply_shape_temporary,
+    x86_legacy_high_byte_crc32_shape_temporary, x86_legacy_high_byte_group3_test_shape_temporary,
+    x86_legacy_high_byte_multiply_shape_temporary,
     x86_legacy_high_byte_setcc_shape_virtual_requirements,
 };
 pub(crate) use super::legacy_lane_shuffle::{
