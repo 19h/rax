@@ -195,6 +195,7 @@ pub struct RiscVCpu {
     medeleg: u64,
     mideleg: u64,
     mcounteren: u64,
+    scounteren: u64,
     mhartid: u64,
     jvt: u64,
 
@@ -274,6 +275,7 @@ impl RiscVCpu {
             medeleg: 0,
             mideleg: 0,
             mcounteren: 0,
+            scounteren: 0,
             mhartid: 0,
             jvt: 0,
             cycle: 0,
@@ -318,6 +320,7 @@ impl RiscVCpu {
         self.medeleg = 0;
         self.mideleg = 0;
         self.mcounteren = 0;
+        self.scounteren = 0;
         self.jvt = 0;
         self.vl = 0;
         self.vtype = 0;

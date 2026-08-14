@@ -57,12 +57,51 @@ impl RiscVCpu {
             Csr::Frm => ((self.fcsr >> 5) & 0x7) as u64,
             Csr::Fcsr => (self.fcsr & 0xff) as u64,
             Csr::Jvt => self.jvt,
-            Csr::Cycle => self.cycle & self.xmask(),
-            Csr::Time => self.time & self.xmask(),
-            Csr::Instret => self.instret & self.xmask(),
-            Csr::CycleH => (self.cycle >> 32) & 0xffff_ffff,
-            Csr::TimeH => (self.time >> 32) & 0xffff_ffff,
-            Csr::InstretH => (self.instret >> 32) & 0xffff_ffff,
+            Csr::Cycle | Csr::CycleH => {
+                // norm:mcounteren_clr_ill_inst_exc: mcounteren gates S/U-mode
+                // reads; scounteren additionally gates U-mode (priv 1.12
+                // scounteren: "scounteren controls U-mode access").
+                let gate = 1u64;
+                if self.priv_ != Priv::Machine
+                    && (self.mcounteren & gate == 0
+                        || (self.priv_ == Priv::User && self.scounteren & gate == 0))
+                {
+                    return Err(Trap::illegal(0));
+                }
+                if matches!(csr, Csr::CycleH) {
+                    (self.cycle >> 32) & 0xffff_ffff
+                } else {
+                    self.cycle & self.xmask()
+                }
+            }
+            Csr::Time | Csr::TimeH => {
+                let gate = 1u64 << 1;
+                if self.priv_ != Priv::Machine
+                    && (self.mcounteren & gate == 0
+                        || (self.priv_ == Priv::User && self.scounteren & gate == 0))
+                {
+                    return Err(Trap::illegal(0));
+                }
+                if matches!(csr, Csr::TimeH) {
+                    (self.time >> 32) & 0xffff_ffff
+                } else {
+                    self.time & self.xmask()
+                }
+            }
+            Csr::Instret | Csr::InstretH => {
+                let gate = 1u64 << 2;
+                if self.priv_ != Priv::Machine
+                    && (self.mcounteren & gate == 0
+                        || (self.priv_ == Priv::User && self.scounteren & gate == 0))
+                {
+                    return Err(Trap::illegal(0));
+                }
+                if matches!(csr, Csr::InstretH) {
+                    (self.instret >> 32) & 0xffff_ffff
+                } else {
+                    self.instret & self.xmask()
+                }
+            }
             Csr::Mstatus => self.mstatus,
             Csr::Sstatus => self.mstatus & self.sstatus_mask(),
             Csr::Misa => self.misa(),
@@ -72,6 +111,7 @@ impl RiscVCpu {
             Csr::Sie => self.mie & self.supervisor_interrupt_mask(),
             Csr::Mtvec => self.mtvec,
             Csr::Mcounteren => self.mcounteren,
+            Csr::Scounteren => self.scounteren,
             Csr::Mscratch => self.mscratch,
             Csr::Mepc => self.mepc_read_value(),
             Csr::Mcause => self.mcause,
@@ -131,6 +171,7 @@ impl RiscVCpu {
                 self.mtvec = base | mode;
             }
             Csr::Mcounteren => self.mcounteren = value,
+            Csr::Scounteren => self.scounteren = value,
             Csr::Mscratch => self.mscratch = value,
             Csr::Mepc => self.mepc = value & self.mepc_alignment_mask() & self.xmask(),
             Csr::Mcause => self.mcause = value,
@@ -293,6 +334,26 @@ mod tests {
                 "MODE={mode}"
             );
         }
+    }
+
+    #[test]
+    fn scounteren_exists_and_gates_u_mode_counter_reads() {
+        let mut cpu = cpu(Isa::rv_i());
+        // scounteren (0x106) is a defined CSR when S-mode is implemented.
+        assert!(cpu.csr_read(0x106).is_ok(), "scounteren must exist");
+        // U-mode cycle read with mcounteren.CY=1 but scounteren.CY=0 traps.
+        cpu.csr_write(0x306, 1).unwrap(); // mcounteren.CY
+        cpu.set_privilege(Priv::User);
+        assert_eq!(cpu.csr_read(0xC00), Err(Trap::illegal(0)));
+        // Setting scounteren.CY allows U-mode reads.
+        cpu.csr_write(0x106, 1).unwrap();
+        assert!(cpu.csr_read(0xC00).is_ok());
+        // S-mode is gated by mcounteren only.
+        cpu.set_privilege(Priv::Supervisor);
+        cpu.csr_write(0x106, 0).unwrap();
+        assert!(cpu.csr_read(0xC00).is_ok());
+        cpu.csr_write(0x306, 0).unwrap();
+        assert_eq!(cpu.csr_read(0xC00), Err(Trap::illegal(0)));
     }
 
     #[test]
