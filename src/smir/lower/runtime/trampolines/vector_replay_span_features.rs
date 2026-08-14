@@ -40,6 +40,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
         }
         let legacy_aes = span.instruction.legacy_register_aes_replay().is_some();
         let legacy_blend = span.instruction.legacy_register_blend_replay().is_some();
+        let legacy_scalar_xmm_movq = span.instruction.legacy_scalar_xmm_movq_replay().is_some();
         let legacy_packed_fp_convert = span
             .instruction
             .legacy_register_packed_fp_convert_replay()
@@ -162,6 +163,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
         requirements.needs_vex_unaligned_packed_fp_move |= vex_unaligned_packed_fp_move;
         *all_spans_support_avx_ymm16 &= legacy_aes
             || legacy_blend
+            || legacy_scalar_xmm_movq
             || legacy_packed_fp_convert
             || legacy_scalar_fp_convert
             || legacy_scalar_extract.is_some()
@@ -228,6 +230,7 @@ pub(super) fn accumulate_x86_native_replay_span_requirements(
             || vex_packed_string;
         requirements.needs_avx |= legacy_aes
             || legacy_blend
+            || legacy_scalar_xmm_movq
             || legacy_packed_fp_convert
             || legacy_scalar_fp_convert
             || legacy_scalar_extract.is_some()

@@ -22,6 +22,9 @@ pub fn x86_native_replay_spans(
         if instruction.legacy_register_blend_replay().is_some() {
             return Some((false, false, false));
         }
+        if instruction.legacy_scalar_xmm_movq_replay().is_some() {
+            return Some((false, false, false));
+        }
         if instruction
             .legacy_register_packed_fp_convert_replay()
             .is_some()

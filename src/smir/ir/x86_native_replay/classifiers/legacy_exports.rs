@@ -49,6 +49,9 @@ pub(crate) use super::legacy_scalar_insert::{
     X86LegacyScalarInsertKind, X86LegacyScalarInsertReplay,
     x86_legacy_scalar_insert_shape_virtual_requirements,
 };
+pub(crate) use super::legacy_scalar_xmm_movq::{
+    X86LegacyScalarXmmMovqReplay, x86_legacy_scalar_xmm_movq_shape_virtual_requirements,
+};
 pub(crate) use super::legacy_sha::{X86LegacyShaReplay, x86_legacy_sha_shape_virtual_requirements};
 pub(crate) use super::legacy_widening_dword_multiply::{
     X86LegacyWideningDwordMultiplyReplay,

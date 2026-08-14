@@ -98,6 +98,7 @@ mod legacy_ptest;
 mod legacy_scalar_extract;
 mod legacy_scalar_fp_convert;
 mod legacy_scalar_insert;
+mod legacy_scalar_xmm_movq;
 mod legacy_sha;
 mod legacy_widening_dword_multiply;
 mod non_memory_prefix;

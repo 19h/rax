@@ -316,6 +316,7 @@ mod legacy_scalar_extract_replay;
 mod legacy_scalar_fp_convert_replay;
 #[cfg(test)]
 mod legacy_scalar_insert_replay;
+mod legacy_scalar_xmm_movq_replay;
 #[cfg(test)]
 mod legacy_sha_replay;
 #[cfg(test)]
