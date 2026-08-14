@@ -439,7 +439,10 @@ pub(super) fn x86_native_replay_spans_where(
                 .is_some_and(|replay| replay.kind.touches_mmx())
                 || instruction
                     .legacy_register_scalar_insert_replay()
-                    .is_some_and(|replay| replay.kind.touches_mmx());
+                    .is_some_and(|replay| replay.kind.touches_mmx())
+                || instruction
+                    .legacy_mov_mask_stack_destination_replay()
+                    .is_some_and(|replay| replay.touches_mmx());
             let replay_start = if instruction.is_vex_register_vpermil2() {
                 if !matches!(block.ops[start].kind, OpKind::X86RequireXop)
                     || block.ops[start].x86_hint.is_some()

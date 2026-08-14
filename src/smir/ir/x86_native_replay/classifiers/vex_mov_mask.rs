@@ -1,11 +1,12 @@
-//! Guest-stack-destination legacy SSE and AVX VEX vector sign-mask extracts.
+//! Guest-stack-destination legacy MMX/SSE and AVX VEX vector sign-mask
+//! extracts.
 
 use super::X86InstructionBytes;
 use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86SsePrefix, X86VecMap};
 use crate::smir::ir::types::{ArchReg, OpWidth, VReg, VecElementType, VecWidth, X86Reg};
 
 /// Architectural fields that must agree between exact MOVMSK source bytes and
-/// the stable one-operation SMIR graph replaced by native replay.
+/// the stable SMIR graph replaced by native replay.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct X86MovMaskStackReplay {
     pub(crate) destination: u8,
@@ -18,30 +19,58 @@ pub(crate) struct X86MovMaskStackReplay {
     pub(crate) needs_avx2: bool,
 }
 
+impl X86MovMaskStackReplay {
+    /// Whether the exact source operand uses the architectural MMX/x87 state
+    /// plane instead of the XMM/YMM vector-state plane.
+    pub(crate) fn touches_mmx(self) -> bool {
+        self.vector_width == VecWidth::V64
+    }
+}
+
 fn gpr(index: u8) -> VReg {
     VReg::Arch(ArchReg::X86(X86Reg::gpr(index)))
 }
 
 fn vector(index: u8, width: VecWidth) -> VReg {
     VReg::Arch(ArchReg::X86(match width {
+        VecWidth::V64 => X86Reg::Mm(index),
         VecWidth::V128 => X86Reg::Xmm(index),
         VecWidth::V256 => X86Reg::Ymm(index),
-        VecWidth::V64 | VecWidth::V512 => {
-            unreachable!("MOVMSK replay accepts only XMM/YMM sources")
-        }
+        VecWidth::V512 => unreachable!("MOVMSK replay does not accept ZMM sources"),
     }))
 }
 
-/// Validate the complete stable one-operation graph emitted for an admitted
-/// legacy or VEX MOVMSK source instruction. Exact replay is rejected if byte
-/// provenance and semantic operands, widths, lane layout, or encoding hint do
-/// not agree.
+/// Validate the complete stable graph emitted for an admitted legacy or VEX
+/// MOVMSK source instruction. MMX `PMOVMSKB` has an exact leading `EnterMmx`
+/// marker; XMM/YMM forms contain only the mask operation. Exact replay is
+/// rejected if byte provenance, marker placement, semantic operands, widths,
+/// lane layout, or encoding hint do not agree.
 pub(crate) fn x86_mov_mask_stack_shape_matches(
     ops: &[SmirOp],
     replay: X86MovMaskStackReplay,
 ) -> bool {
-    let [operation] = ops else {
-        return false;
+    let operation = if replay.touches_mmx() {
+        let [marker, operation] = ops else {
+            return false;
+        };
+        if marker.guest_pc != operation.guest_pc
+            || marker.x86_hint.is_some()
+            || !matches!(
+                marker.kind,
+                OpKind::X86X87Control {
+                    kind: crate::smir::ir::ops::X86X87ControlKind::EnterMmx,
+                    addr: None,
+                }
+            )
+        {
+            return false;
+        }
+        operation
+    } else {
+        let [operation] = ops else {
+            return false;
+        };
+        operation
     };
     operation.x86_hint == Some(replay.hint)
         && matches!(
@@ -65,21 +94,30 @@ fn opcode_matches_prefix(p1: u8, opcode: u8) -> bool {
 }
 
 impl X86InstructionBytes {
-    /// Decode an exact canonical register-only legacy `MOVMSKPS` or
-    /// `MOVMSKPD` whose architectural destination is guest RSP or RBP.
+    /// Decode an exact canonical register-only legacy `MOVMSKPS`, `MOVMSKPD`,
+    /// or MMX/XMM `PMOVMSKB` whose architectural destination is guest RSP or
+    /// RBP.
     ///
     /// The optional REX prefix must be final, REX.R must select a low GPR,
-    /// REX.B may select XMM8-XMM15, REX.W selects the architectural r64 write,
-    /// and ignored REX.X is retained byte-for-byte. Segment and address-size
-    /// prefixes are removed by the shared non-memory canonicalizer before this
-    /// strict classifier runs. LOCK, repeat, reordered or duplicate prefixes,
-    /// memory forms, trailing bytes, REX2, VEX, and EVEX fail closed.
+    /// REX.B selects XMM8-XMM15 for XMM sources and is ignored for the
+    /// eight-register MMX source file. REX.W selects the architectural r64
+    /// write for MOVMSKPS/MOVMSKPD and MMX PMOVMSKB; XMM PMOVMSKB retains its
+    /// stable r32 SMIR form. REX.X and the MMX form's ignored REX.B bit are
+    /// retained byte-for-byte.
+    /// Segment and address-size prefixes are removed by the shared non-memory
+    /// canonicalizer before this strict classifier runs. LOCK, repeat,
+    /// reordered or duplicate prefixes, memory forms, trailing bytes, REX2,
+    /// VEX, and EVEX fail closed.
     pub(crate) fn legacy_mov_mask_stack_destination_replay(&self) -> Option<X86MovMaskStackReplay> {
-        let (operand_size, rex, modrm) = match self.as_slice() {
-            [0x0F, 0x50, modrm] => (false, None, *modrm),
-            [rex @ 0x40..=0x4F, 0x0F, 0x50, modrm] => (false, Some(*rex), *modrm),
-            [0x66, 0x0F, 0x50, modrm] => (true, None, *modrm),
-            [0x66, rex @ 0x40..=0x4F, 0x0F, 0x50, modrm] => (true, Some(*rex), *modrm),
+        let (operand_size, rex, opcode, modrm) = match self.as_slice() {
+            [0x0F, opcode @ (0x50 | 0xD7), modrm] => (false, None, *opcode, *modrm),
+            [rex @ 0x40..=0x4F, 0x0F, opcode @ (0x50 | 0xD7), modrm] => {
+                (false, Some(*rex), *opcode, *modrm)
+            }
+            [0x66, 0x0F, opcode @ (0x50 | 0xD7), modrm] => (true, None, *opcode, *modrm),
+            [0x66, rex @ 0x40..=0x4F, 0x0F, opcode @ (0x50 | 0xD7), modrm] => {
+                (true, Some(*rex), *opcode, *modrm)
+            }
             _ => return None,
         };
         if modrm >> 6 != 3 {
@@ -90,27 +128,31 @@ impl X86InstructionBytes {
         if !matches!(destination, 4 | 5) {
             return None;
         }
-        let source = ((rex & 1) << 3) | (modrm & 7);
-        let (elem, lanes, prefix) = if operand_size {
-            (VecElementType::F64, 2, X86SsePrefix::OpSize)
+        let mmx = opcode == 0xD7 && !operand_size;
+        let source = if mmx {
+            modrm & 7
         } else {
-            (VecElementType::F32, 4, X86SsePrefix::None)
+            ((rex & 1) << 3) | (modrm & 7)
+        };
+        let (elem, lanes, prefix, vector_width) = match (opcode, operand_size) {
+            (0x50, false) => (VecElementType::F32, 4, X86SsePrefix::None, VecWidth::V128),
+            (0x50, true) => (VecElementType::F64, 2, X86SsePrefix::OpSize, VecWidth::V128),
+            (0xD7, false) => (VecElementType::I8, 8, X86SsePrefix::None, VecWidth::V64),
+            (0xD7, true) => (VecElementType::I8, 16, X86SsePrefix::OpSize, VecWidth::V128),
+            _ => unreachable!("legacy MOVMSK opcode and prefix were matched exactly"),
         };
         Some(X86MovMaskStackReplay {
             destination,
             source,
             elem,
             lanes,
-            dst_width: if rex & 8 != 0 {
+            dst_width: if rex & 8 != 0 && (opcode == 0x50 || mmx) {
                 OpWidth::W64
             } else {
                 OpWidth::W32
             },
-            vector_width: VecWidth::V128,
-            hint: X86OpHint::SseOp {
-                prefix,
-                opcode: 0x50,
-            },
+            vector_width,
+            hint: X86OpHint::SseOp { prefix, opcode },
             needs_avx2: false,
         })
     }

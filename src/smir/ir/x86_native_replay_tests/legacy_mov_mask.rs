@@ -1,5 +1,5 @@
 //! Exact source-byte replay classification for guest-stack-destination legacy
-//! MOVMSKPS and MOVMSKPD.
+//! MMX/XMM PMOVMSKB, MOVMSKPS, and MOVMSKPD.
 
 use super::*;
 use crate::smir::ir::ops::{X86OpHint, X86SsePrefix};
@@ -9,16 +9,57 @@ use crate::smir::ir::types::{OpWidth, VecElementType, VecWidth};
 enum MaskKind {
     Movmskps,
     Movmskpd,
+    PmovmskbMmx,
+    PmovmskbXmm,
 }
 
 impl MaskKind {
-    const ALL: [Self; 2] = [Self::Movmskps, Self::Movmskpd];
+    const ALL: [Self; 4] = [
+        Self::Movmskps,
+        Self::Movmskpd,
+        Self::PmovmskbMmx,
+        Self::PmovmskbXmm,
+    ];
 
-    fn fields(self) -> (VecElementType, u8, X86SsePrefix) {
+    fn fields(self) -> (VecElementType, u8, X86SsePrefix, VecWidth, u8) {
         match self {
-            Self::Movmskps => (VecElementType::F32, 4, X86SsePrefix::None),
-            Self::Movmskpd => (VecElementType::F64, 2, X86SsePrefix::OpSize),
+            Self::Movmskps => (
+                VecElementType::F32,
+                4,
+                X86SsePrefix::None,
+                VecWidth::V128,
+                0x50,
+            ),
+            Self::Movmskpd => (
+                VecElementType::F64,
+                2,
+                X86SsePrefix::OpSize,
+                VecWidth::V128,
+                0x50,
+            ),
+            Self::PmovmskbMmx => (
+                VecElementType::I8,
+                8,
+                X86SsePrefix::None,
+                VecWidth::V64,
+                0xD7,
+            ),
+            Self::PmovmskbXmm => (
+                VecElementType::I8,
+                16,
+                X86SsePrefix::OpSize,
+                VecWidth::V128,
+                0xD7,
+            ),
         }
+    }
+
+    fn operand_size(self) -> bool {
+        matches!(self, Self::Movmskpd | Self::PmovmskbXmm)
+    }
+
+    fn mmx(self) -> bool {
+        self == Self::PmovmskbMmx
     }
 }
 
@@ -26,13 +67,13 @@ fn encoding(kind: MaskKind, rex: Option<u8>, destination: u8, rm: u8) -> Vec<u8>
     assert!(matches!(destination, 4 | 5));
     assert!(rm < 8);
     let mut bytes = Vec::with_capacity(5);
-    if kind == MaskKind::Movmskpd {
+    if kind.operand_size() {
         bytes.push(0x66);
     }
     if let Some(rex) = rex {
         bytes.push(rex);
     }
-    bytes.extend_from_slice(&[0x0F, 0x50, 0xC0 | (destination << 3) | rm]);
+    bytes.extend_from_slice(&[0x0F, kind.fields().4, 0xC0 | (destination << 3) | rm]);
     bytes
 }
 
@@ -47,19 +88,17 @@ fn assert_classified(
     let replay = instruction
         .legacy_mov_mask_stack_destination_replay()
         .unwrap_or_else(|| panic!("not classified: {bytes:02X?}"));
-    let (elem, lanes, prefix) = kind.fields();
+    let (elem, lanes, prefix, vector_width, opcode) = kind.fields();
     assert_eq!(replay.destination, destination, "{bytes:02X?}");
     assert_eq!(replay.source, source, "{bytes:02X?}");
     assert_eq!(replay.elem, elem, "{bytes:02X?}");
     assert_eq!(replay.lanes, lanes, "{bytes:02X?}");
     assert_eq!(replay.dst_width, dst_width, "{bytes:02X?}");
-    assert_eq!(replay.vector_width, VecWidth::V128, "{bytes:02X?}");
+    assert_eq!(replay.vector_width, vector_width, "{bytes:02X?}");
+    assert_eq!(replay.touches_mmx(), kind.mmx(), "{bytes:02X?}");
     assert_eq!(
         replay.hint,
-        X86OpHint::SseOp {
-            prefix,
-            opcode: 0x50,
-        },
+        X86OpHint::SseOp { prefix, opcode },
         "{bytes:02X?}"
     );
     assert!(!replay.needs_avx2, "{bytes:02X?}");
@@ -71,7 +110,7 @@ fn assert_classified(
 }
 
 #[test]
-fn classifier_covers_all_288_canonical_legacy_stack_destination_encodings() {
+fn classifier_covers_all_576_canonical_legacy_stack_destination_encodings() {
     let mut classified = 0usize;
     for kind in MaskKind::ALL {
         for destination in [4, 5] {
@@ -89,8 +128,12 @@ fn classifier_covers_all_288_canonical_legacy_stack_destination_encodings() {
                         &bytes,
                         kind,
                         destination,
-                        ((rex & 1) << 3) | rm,
-                        if rex & 8 == 0 {
+                        if kind.mmx() {
+                            rm
+                        } else {
+                            ((rex & 1) << 3) | rm
+                        },
+                        if rex & 8 == 0 || kind == MaskKind::PmovmskbXmm {
                             OpWidth::W32
                         } else {
                             OpWidth::W64
@@ -101,7 +144,7 @@ fn classifier_covers_all_288_canonical_legacy_stack_destination_encodings() {
             }
         }
     }
-    assert_eq!(classified, 288);
+    assert_eq!(classified, 576);
 }
 
 #[test]
@@ -114,8 +157,7 @@ fn classifier_exhausts_rex_opcode_modrm_and_exact_shape_frontiers() {
                     .unwrap()
                     .legacy_mov_mask_stack_destination_replay()
                     .is_some(),
-                matches!(lead, 0x40..=0x43 | 0x48..=0x4B)
-                    || (kind == MaskKind::Movmskps && lead == 0x66),
+                matches!(lead, 0x40..=0x43 | 0x48..=0x4B) || (!kind.operand_size() && lead == 0x66),
                 "{bytes:02X?}"
             );
         }
@@ -130,7 +172,7 @@ fn classifier_exhausts_rex_opcode_modrm_and_exact_shape_frontiers() {
                     .unwrap()
                     .legacy_mov_mask_stack_destination_replay()
                     .is_some(),
-                opcode == 0x50,
+                matches!(opcode, 0x50 | 0xD7),
                 "{bytes:02X?}"
             );
         }
@@ -224,19 +266,38 @@ fn llvm_samples_prefix_canonicalization_and_semantic_shape_are_fail_closed() {
             &[0x67, 0x65, 0x66, 0x49, 0x0F, 0x50, 0xEC][..],
             &[0x66, 0x49, 0x0F, 0x50, 0xEC][..],
         ),
+        (&[0x0F, 0xD7, 0xE0][..], &[0x0F, 0xD7, 0xE0][..]),
+        (&[0x0F, 0xD7, 0xEF][..], &[0x0F, 0xD7, 0xEF][..]),
+        (&[0x66, 0x0F, 0xD7, 0xE0][..], &[0x66, 0x0F, 0xD7, 0xE0][..]),
+        (
+            &[0x66, 0x41, 0x0F, 0xD7, 0xEF][..],
+            &[0x66, 0x41, 0x0F, 0xD7, 0xEF][..],
+        ),
+        (
+            &[0x64, 0x4B, 0x0F, 0xD7, 0xE2][..],
+            &[0x4B, 0x0F, 0xD7, 0xE2][..],
+        ),
+        (
+            &[0x67, 0x65, 0x66, 0x49, 0x0F, 0xD7, 0xEC][..],
+            &[0x66, 0x49, 0x0F, 0xD7, 0xEC][..],
+        ),
     ] {
         let block = lifted_block(source, PC);
         let provenance =
             HashMap::from([((block.id, PC), X86InstructionBytes::new(source).unwrap())]);
         let expected_instruction = X86InstructionBytes::new(canonical).unwrap();
+        let replay = expected_instruction
+            .legacy_mov_mask_stack_destination_replay()
+            .unwrap();
+        let start = usize::from(replay.touches_mmx());
         for spans in [
             x86_legacy_mov_mask_stack_destination_replay_spans(&block, &provenance),
             x86_native_replay_spans(&block, &provenance),
         ] {
             assert_eq!(
-                spans.get(&0),
+                spans.get(&start),
                 Some(&X86NativeReplaySpan {
-                    end: 1,
+                    end: block.ops.len(),
                     instruction: expected_instruction,
                     needs_avx512vl: false,
                     needs_avx512dq: false,
@@ -248,15 +309,29 @@ fn llvm_samples_prefix_canonicalization_and_semantic_shape_are_fail_closed() {
         }
 
         let mut malformed = block.clone();
-        let OpKind::X86MovMask { lanes, .. } = &mut malformed.ops[0].kind else {
+        let OpKind::X86MovMask { lanes, .. } = &mut malformed.ops.last_mut().unwrap().kind else {
             unreachable!()
         };
         *lanes = lanes.saturating_sub(1);
         assert!(x86_native_replay_spans(&malformed, &provenance).is_empty());
 
         let mut missing_hint = block.clone();
-        missing_hint.ops[0].x86_hint = None;
+        missing_hint.ops.last_mut().unwrap().x86_hint = None;
         assert!(x86_native_replay_spans(&missing_hint, &provenance).is_empty());
+
+        if replay.touches_mmx() {
+            let mut wrong_marker = block.clone();
+            wrong_marker.ops[0].kind = OpKind::Nop;
+            assert!(x86_native_replay_spans(&wrong_marker, &provenance).is_empty());
+
+            let mut hinted_marker = block.clone();
+            hinted_marker.ops[0].x86_hint = Some(replay.hint);
+            assert!(x86_native_replay_spans(&hinted_marker, &provenance).is_empty());
+
+            let mut missing_marker = block.clone();
+            missing_marker.ops.remove(0);
+            assert!(x86_native_replay_spans(&missing_marker, &provenance).is_empty());
+        }
 
         let mut extra = block.clone();
         extra.push_op(SmirOp::new(OpId(1), PC, OpKind::Nop));

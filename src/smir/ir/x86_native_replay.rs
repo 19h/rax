@@ -767,11 +767,11 @@ pub fn x86_vex_mov_mask_stack_destination_replay_spans(
     })
 }
 
-/// Identify exact legacy SSE/SSE2 `MOVMSKPS` and `MOVMSKPD` instructions whose
-/// r32/r64 destination is guest RSP or RBP. Other GPR destinations retain
-/// canonical semantic lowering. Segment/address-size-prefixed register forms
-/// replay the deterministic canonical instruction selected by the shared
-/// non-memory prefix policy.
+/// Identify exact legacy MMX/SSE/SSE2 `PMOVMSKB`, `MOVMSKPS`, and `MOVMSKPD`
+/// instructions whose r32/r64 destination is guest RSP or RBP. Other GPR
+/// destinations retain canonical semantic lowering. Segment/address-size-
+/// prefixed register forms replay the deterministic canonical instruction
+/// selected by the shared non-memory prefix policy.
 pub fn x86_legacy_mov_mask_stack_destination_replay_spans(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
