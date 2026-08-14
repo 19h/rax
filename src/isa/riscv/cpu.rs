@@ -5193,6 +5193,47 @@ mod tests {
     }
 
     #[test]
+    fn fetch_pc_alignment_traps_without_compressed_extension() {
+        let mut config = RiscVConfig::rv64gc();
+        config.isa.c = false;
+        let make_cpu = || RiscVCpu::new(config, Box::new(FlatMemory::new(0, 0x1_0000)));
+
+        for pc in [0x1001, 0x1002] {
+            let mut c = make_cpu();
+            c.set_pc(pc);
+            assert_eq!(
+                c.step(),
+                RiscVExit::Trap(Trap {
+                    cause: cause::INSTR_MISALIGNED,
+                    tval: pc,
+                })
+            );
+            // mepc is a WARL register: with IALIGN=32 the misaligned PC
+            // reads back aligned, while mtval keeps the exact PC.
+            assert_eq!(c.csr_read(0x341), Ok(pc & !3));
+            assert_eq!(c.csr_read(0x343), Ok(pc));
+        }
+
+        // 4-byte aligned PC still fetches and executes normally.
+        let mut aligned = make_cpu();
+        aligned.set_pc(0x1000);
+        assert_eq!(run_one(&mut aligned, 0x0010_0093), RiscVExit::Continue); // addi x1, x0, 1
+        assert_eq!(aligned.x(1), 1);
+        assert_eq!(aligned.pc(), 0x1004);
+    }
+
+    #[test]
+    fn fetch_pc_alignment_allows_halfwords_with_compressed_extension() {
+        // IALIGN=16 with C: both halfword-aligned PCs fetch a 16-bit parcel.
+        for pc in [0x1001, 0x1002] {
+            let mut c = cpu();
+            c.set_pc(pc);
+            assert_eq!(run_half(&mut c, 0x0001), RiscVExit::Continue); // c.nop
+            assert_eq!(c.pc(), pc + 2);
+        }
+    }
+
+    #[test]
     fn jal_jalr_link_and_target() {
         let mut c = cpu();
         c.set_pc(0x1000);

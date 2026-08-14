@@ -11,6 +11,14 @@ impl RiscVCpu {
         }
 
         let pc = self.pc;
+        if !self.cfg.isa.c && pc & 0b11 != 0 {
+            let trap = Trap {
+                cause: cause::INSTR_MISALIGNED,
+                tval: pc,
+            };
+            self.deliver_trap(trap, pc);
+            return RiscVExit::Trap(trap);
+        }
         let insn = match decode_at(self.mem.as_ref(), pc, self.cfg.xlen, &self.cfg.isa) {
             Ok(i) => i,
             Err(DecodeError::Fetch(_)) => {
