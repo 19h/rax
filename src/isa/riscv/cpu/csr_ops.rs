@@ -137,7 +137,9 @@ impl RiscVCpu {
             Csr::Mtval => self.mtval = value,
             Csr::Mip => self.mip = value,
             Csr::Sip => {
-                let mask = self.supervisor_software_interrupt_mask();
+                // norm:sip: SSIP (bit 1) is writable by software regardless
+                // of mideleg; mideleg only controls interrupt delegation.
+                let mask = (1 << 1) & self.xmask();
                 self.mip = (self.mip & !mask) | (value & mask);
             }
             Csr::Vstart => self.vstart = value,
@@ -293,6 +295,25 @@ mod tests {
                 "MODE={mode}"
             );
         }
+    }
+
+    #[test]
+    fn sip_ssip_writable_without_mideleg() {
+        let mut cpu = cpu(Isa::rv_i());
+        // mideleg=0: SSIP is still software-writable through sip.
+        cpu.csr_write(0x303, 0).unwrap();
+        cpu.csr_write(0x144, 1 << 1).unwrap();
+        assert_eq!(
+            cpu.csr_read(0x344).unwrap() & (1 << 1),
+            1 << 1,
+            "sip SSIP write must set mip.SSIP even when mideleg=0"
+        );
+        // Clearing through sip also works.
+        cpu.csr_write(0x144, 0).unwrap();
+        assert_eq!(cpu.csr_read(0x344).unwrap() & (1 << 1), 0);
+        // Non-SSIP bits of sip are not stored.
+        cpu.csr_write(0x144, 1 << 5).unwrap();
+        assert_eq!(cpu.csr_read(0x344).unwrap() & (1 << 5), 0);
     }
 
     #[test]
