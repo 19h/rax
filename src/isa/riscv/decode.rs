@@ -240,6 +240,8 @@ pub enum Op {
     FcvtDLu,
     FmvXD,
     FmvDX,
+    FmvhXD,
+    FmvpDX,
     // ---- Q (quad precision; decode/disassembly parity) ----
     Flq,
     Fsq,
@@ -896,6 +898,8 @@ impl Op {
                 | FcvtDLu
                 | FmvXD
                 | FmvDX
+                | FmvhXD
+                | FmvpDX
                 | Flq
                 | Fsq
                 | FmaddQ
@@ -2579,7 +2583,7 @@ fn decode_fma(single: Op, double: Op, half: Op, quad: Op, w: u32, isa: &Isa) -> 
 
 // OP-FP (0x53): selected by funct7, with funct3 reused as rm or sub-op.
 /// Zfa additional FP ops layered over the OP-FP encoding space.
-fn decode_zfa(f7: u32, f3: u8, rs2f: u8, isa: &Isa) -> Option<Op> {
+fn decode_zfa(f7: u32, f3: u8, rs2f: u8, rv64: bool, isa: &Isa) -> Option<Op> {
     Some(match (f7, f3, rs2f) {
         (0b0010100, 2, _) => Op::FminmS,
         (0b0010100, 3, _) => Op::FmaxmS,
@@ -2595,6 +2599,8 @@ fn decode_zfa(f7: u32, f3: u8, rs2f: u8, isa: &Isa) -> Option<Op> {
         (0b1010001, 5, _) if isa.d => Op::FltqD,
         (0b1111000, 0, 1) => Op::FliS,
         (0b1111001, 0, 1) if isa.d => Op::FliD,
+        (0b1110001, 0, 1) if isa.d && !rv64 => Op::FmvhXD,
+        (0b1011001, 0, _) if isa.d && !rv64 => Op::FmvpDX,
         (0b1100001, 1, 8) if isa.d => Op::FcvtmodWD,
         _ => return None,
     })
@@ -2650,7 +2656,7 @@ fn decode_op_fp(w: u32, rv64: bool, isa: &Isa) -> Insn {
     let rs2f = rs2(w);
     let d = isa.d;
     if isa.zfa {
-        if let Some(op) = decode_zfa(f7, f3, rs2f, isa) {
+        if let Some(op) = decode_zfa(f7, f3, rs2f, rv64, isa) {
             return base(op, w);
         }
     }
@@ -3420,5 +3426,31 @@ mod tests {
             decode(enc(0, 0, 0, 0b000, 2, 0x0b), Xlen::Rv32, &isa).op,
             Op::NdsLbgp
         );
+    }
+
+    #[test]
+    fn zfa_fmvh_x_d_and_fmvp_d_x_rv32_gated() {
+        // fmvh.x.d a1, fa0 : funct7=0b1110001, rs2=1, rs1=10, funct3=0, rd=11
+        let fmvh = (0b1110001u32 << 25) | (1 << 20) | (10 << 15) | (11 << 7) | 0x53;
+        // fmvp.d.x fa0, a1, a2 : funct7=0b1011001, rs2=12, rs1=11, funct3=0, rd=10
+        let fmvp = (0b1011001u32 << 25) | (12 << 20) | (11 << 15) | (10 << 7) | 0x53;
+        assert_eq!(decode(fmvh, Xlen::Rv32, &Isa::rv64gc()).op, Op::FmvhXD);
+        assert_eq!(decode(fmvp, Xlen::Rv32, &Isa::rv64gc()).op, Op::FmvpDX);
+
+        // RV64 rejects both (RV32-only Zfa forms).
+        assert!(decode(fmvh, Xlen::Rv64, &Isa::rv64gc()).is_illegal());
+        assert!(decode(fmvp, Xlen::Rv64, &Isa::rv64gc()).is_illegal());
+
+        // Without D, both stay illegal.
+        let mut no_d = Isa::rv64gc();
+        no_d.d = false;
+        assert!(decode(fmvh, Xlen::Rv32, &no_d).is_illegal());
+        assert!(decode(fmvp, Xlen::Rv32, &no_d).is_illegal());
+
+        // Without Zfa, both stay illegal.
+        let mut no_zfa = Isa::rv64gc();
+        no_zfa.zfa = false;
+        assert!(decode(fmvh, Xlen::Rv32, &no_zfa).is_illegal());
+        assert!(decode(fmvp, Xlen::Rv32, &no_zfa).is_illegal());
     }
 }

@@ -3902,6 +3902,12 @@ impl RiscVCpu {
             Op::FmvWX => self.wf32(rd, self.x(rs1) as u32),
             Op::FmvXD => self.set_x(rd, self.f(rs1)),
             Op::FmvDX => self.wf64(rd, self.x(rs1)),
+            Op::FmvhXD => self.set_x(rd, (self.f(rs1) >> 32) & 0xffff_ffff),
+            Op::FmvpDX => {
+                let lo = self.x(rs1) & 0xffff_ffff;
+                let hi = self.x(rs2) & 0xffff_ffff;
+                self.wf64(rd, (hi << 32) | lo);
+            }
 
             // ---- float -> integer conversions ----
             Op::FcvtWS => self.set_x(rd, ff::ftoi(self.rf32(rs1), true, 32, rm, &mut flags)),
@@ -6634,5 +6640,29 @@ mod tests {
         assert_eq!(c.x(5), 0);
         // Vendor scratch CSRs are cleared by reset.
         assert_eq!(c.csr_read(0x7c0).unwrap(), 0);
+    }
+
+    #[test]
+    fn zfa_fmvh_x_d_and_fmvp_d_x_rv32_exec() {
+        // RV32 + D + Zfa; fmvh.x.d / fmvp.d.x are RV32-only.
+        let cfg = RiscVConfig {
+            xlen: Xlen::Rv32,
+            isa: Isa::rv64gc(),
+        };
+        let mut c = RiscVCpu::new(cfg, Box::new(FlatMemory::new(0, 0x1_0000)));
+
+        // fmvh.x.d a1, fa0 : funct7=0b1110001, rs2=1, rs1=fa0(10), funct3=0, rd=a1(11)
+        let fmvh = r_type(0b1110001, 1, 10, 0, 11, 0x53);
+        c.set_f(10, 0x1122_3344_5566_7788);
+        run_one(&mut c, fmvh);
+        // Upper 32 bits land in x11; RV32 writes are zero-extended.
+        assert_eq!(c.x(11), 0x1122_3344);
+
+        // fmvp.d.x fa0, a1, a2 : funct7=0b1011001, rs2=a2(12), rs1=a1(11), funct3=0, rd=fa0(10)
+        let fmvp = r_type(0b1011001, 12, 11, 0, 10, 0x53);
+        c.set_x(11, 0x1122_3344_5566_7788); // low word (RV32 keeps low 32 bits)
+        c.set_x(12, 0x99aa_bbcc_ddee_ff00); // high word
+        run_one(&mut c, fmvp);
+        assert_eq!(c.f(10), 0xddee_ff00_5566_7788);
     }
 }

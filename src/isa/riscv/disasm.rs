@@ -221,6 +221,8 @@ impl Op {
             FcvtDLu => "fcvt.d.lu",
             FmvXD => "fmv.x.d",
             FmvDX => "fmv.d.x",
+            FmvhXD => "fmvh.x.d",
+            FmvpDX => "fmvp.d.x",
             Flq => "flq",
             Fsq => "fsq",
             FmaddQ => "fmadd.q",
@@ -827,11 +829,14 @@ impl Op {
             | FltH | FleH | FleqH | FltqH | FeqQ | FltQ | FleQ => Class::FCmp,
             FliS | FliD | FliH => Class::Fli,
             FcvtWS | FcvtWuS | FcvtLS | FcvtLuS | FmvXW | FclassS | FcvtWD | FcvtWuD | FcvtLD
-            | FcvtLuD | FmvXD | FclassD | FcvtmodWD | FcvtWH | FcvtWuH | FcvtLH | FcvtLuH
-            | FmvXH | FclassH | FcvtWQ | FcvtWuQ | FcvtLQ | FcvtLuQ | FclassQ => Class::FToX,
+            | FcvtLuD | FmvXD | FmvhXD | FclassD | FcvtmodWD | FcvtWH | FcvtWuH | FcvtLH
+            | FcvtLuH | FmvXH | FclassH | FcvtWQ | FcvtWuQ | FcvtLQ | FcvtLuQ | FclassQ => {
+                Class::FToX
+            }
             FcvtSW | FcvtSWu | FcvtSL | FcvtSLu | FmvWX | FcvtDW | FcvtDWu | FcvtDL | FcvtDLu
             | FmvDX | FcvtHW | FcvtHWu | FcvtHL | FcvtHLu | FmvHX | FcvtQW | FcvtQWu | FcvtQL
             | FcvtQLu => Class::XToF,
+            FmvpDX => Class::XToF2,
             FcvtSD | FcvtDS | FcvtSH | FcvtHS | FcvtDH | FcvtHD | FcvtSQ | FcvtQS | FcvtDQ
             | FcvtQD | FcvtHQ | FcvtQH => Class::FToF,
             Vsetvli | Vsetvl => Class::Vset,
@@ -881,6 +886,7 @@ enum Class {
     FCmp,
     FToX,
     XToF,
+    XToF2,
     FToF,
     Fli,
     Vset,
@@ -975,6 +981,7 @@ impl fmt::Display for Insn {
             Class::FCmp => write!(f, "{m} {rd}, {frs1}, {frs2}"),
             Class::FToX => write!(f, "{m} {rd}, {frs1}"),
             Class::XToF => write!(f, "{m} {frd}, {rs1}"),
+            Class::XToF2 => write!(f, "{m} {frd}, {rs1}, {rs2}"),
             Class::FToF => write!(f, "{m} {frd}, {frs1}"),
             Class::Fli => write!(f, "{m} {frd}, #{}", self.rs1),
             Class::Vset => write!(f, "{m} {rd}, {rs1}, {:#x}", self.imm),
