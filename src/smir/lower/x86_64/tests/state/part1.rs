@@ -50,20 +50,31 @@ fn lower_state_backed_gpr_extensions_emit_state_commits_and_reject_malformed_sha
         "MOVSX R16,BP must commit GuestRegs.gpr[16]: {r16:02X?}"
     );
 
-    for malformed in [
-        OpKind::ZeroExtend {
-            dst: x86(X86Reg::Rax),
-            src: x86(X86Reg::Rsp),
-            from_width: OpWidth::W8,
-            to_width: OpWidth::W64,
-        },
-        OpKind::SignExtend {
-            dst: x86(X86Reg::R16),
-            src: x86(X86Reg::Rbx),
-            from_width: OpWidth::W16,
-            to_width: OpWidth::W16,
-        },
-    ] {
+    let same_width = lower_single_op(OpKind::SignExtend {
+        dst: x86(X86Reg::R16),
+        src: x86(X86Reg::Rbx),
+        from_width: OpWidth::W16,
+        to_width: OpWidth::W16,
+    });
+    assert!(
+        same_width
+            .windows(4)
+            .any(|bytes| bytes == [0x66, 0x8B, 0x50, 0x18]),
+        "same-width MOVSX R16W,BX must use a documented word copy: {same_width:02X?}"
+    );
+    assert!(
+        !same_width
+            .windows(3)
+            .any(|bytes| bytes == [0x66, 0x0F, 0xBF]),
+        "same-width state lowering must not depend on 66 0F BF: {same_width:02X?}"
+    );
+
+    for malformed in [OpKind::ZeroExtend {
+        dst: x86(X86Reg::Rax),
+        src: x86(X86Reg::Rsp),
+        from_width: OpWidth::W8,
+        to_width: OpWidth::W64,
+    }] {
         assert!(
             matches!(
                 lower_single_op_err(malformed),

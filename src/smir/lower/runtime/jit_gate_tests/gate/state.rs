@@ -1393,6 +1393,16 @@ fn clobber_gate_admits_state_backed_gpr_extensions_and_fails_closed() {
             None,
         ),
         (
+            "MOVSX BP,BX same-width copy",
+            OpKind::SignExtend {
+                dst: x86(X86Reg::Rbp),
+                src: x86(X86Reg::Rbx),
+                from_width: OpWidth::W16,
+                to_width: OpWidth::W16,
+            },
+            None,
+        ),
+        (
             "MOVZX R16,EBP",
             OpKind::ZeroExtend {
                 dst: x86(X86Reg::R16),
@@ -1444,16 +1454,6 @@ fn clobber_gate_admits_state_backed_gpr_extensions_and_fails_closed() {
                 src: x86(X86Reg::Rsp),
                 from_width: OpWidth::W8,
                 to_width: OpWidth::W64,
-            },
-            None,
-        ),
-        (
-            "non-extending width pair",
-            OpKind::SignExtend {
-                dst: x86(X86Reg::Rbp),
-                src: x86(X86Reg::Rbx),
-                from_width: OpWidth::W16,
-                to_width: OpWidth::W16,
             },
             None,
         ),

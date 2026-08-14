@@ -311,6 +311,8 @@ mod legacy_pclmulqdq_replay;
 #[cfg(test)]
 mod legacy_ptest_replay;
 #[cfg(test)]
+mod legacy_same_width_movx;
+#[cfg(test)]
 mod legacy_scalar_extract_replay;
 #[cfg(test)]
 mod legacy_scalar_fp_convert_replay;

@@ -355,6 +355,8 @@ mod xop;
 pub use xop::*;
 mod state;
 pub use state::*;
+mod state_extend;
+pub(crate) use state_extend::*;
 mod state_tbm;
 mod state_xchg;
 pub use state_tbm::*;
@@ -464,67 +466,6 @@ mod xop_memory_source;
 
 fn x86_state_backed_arch_gpr(reg: &VReg) -> bool {
     matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index >= 16 || matches!(index, 4 | 5)))
-}
-
-pub(crate) fn x86_state_backed_gpr_extend_candidate(op: &SmirOp) -> bool {
-    matches!(
-        &op.kind,
-        OpKind::ZeroExtend { dst, src, .. } | OpKind::SignExtend { dst, src, .. }
-            if x86_state_backed_arch_gpr(dst) || x86_state_backed_arch_gpr(src)
-    )
-}
-
-pub(crate) fn x86_state_backed_gpr_extend_valid(op: &SmirOp) -> bool {
-    let gpr_index = |reg: &VReg| match reg {
-        VReg::Arch(ArchReg::X86(x86)) => x86.gpr_index(),
-        _ => None,
-    };
-    let state_backed = |index: u8| index >= 16 || matches!(index, 4 | 5);
-    let widths_valid = |from: OpWidth, to: OpWidth| {
-        matches!(
-            (from, to),
-            (OpWidth::W8, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
-                | (OpWidth::W16, OpWidth::W32 | OpWidth::W64)
-                | (OpWidth::W32, OpWidth::W64)
-        )
-    };
-
-    let (dst, src, from_width, to_width) = match &op.kind {
-        OpKind::ZeroExtend {
-            dst,
-            src,
-            from_width,
-            to_width,
-        }
-        | OpKind::SignExtend {
-            dst,
-            src,
-            from_width,
-            to_width,
-        } => (dst, src, *from_width, *to_width),
-        _ => return false,
-    };
-    let (Some(dst_index), Some(src_index)) = (gpr_index(dst), gpr_index(src)) else {
-        return false;
-    };
-    if !x86_state_backed_gpr_extend_candidate(op)
-        || !widths_valid(from_width, to_width)
-        || !(state_backed(dst_index) || state_backed(src_index))
-    {
-        return false;
-    }
-
-    match op.x86_hint {
-        None => !(from_width == OpWidth::W8 && matches!(src_index, 4..=7)),
-        Some(X86OpHint::RexByteReg) => from_width == OpWidth::W8,
-        Some(X86OpHint::LegacyHighByteReg) => {
-            src_index <= 3
-                && dst_index <= 7
-                && from_width == OpWidth::W8
-                && matches!(to_width, OpWidth::W16 | OpWidth::W32)
-        }
-        Some(_) => false,
-    }
 }
 
 pub(crate) fn x86_state_backed_gpr_cmove_candidate(op: &SmirOp) -> bool {
