@@ -783,6 +783,21 @@ pub fn x86_legacy_mov_mask_stack_destination_replay_spans(
     })
 }
 
+/// Identify exact legacy MMX/SSE2 MOVD/MOVQ register transfers whose GPR
+/// operand is guest RSP or RBP. The replay lowerer redirects that operand
+/// through the corresponding `GuestRegs` slot, while preserving MMX/x87 or
+/// XMM/YMM state through the applicable native bridge.
+pub fn x86_legacy_movd_q_stack_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_native_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .legacy_movd_q_stack_replay()
+            .map(|_| (false, false, false))
+    })
+}
+
 /// Identify valid register-only AVX VEX `VPTEST`, `VTESTPS`, and `VTESTPD`
 /// replay groups in `block` in O(N) time and O(P) space for N operations and P
 /// unique guest PCs. Exact memory decompositions are admitted separately by

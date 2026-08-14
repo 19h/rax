@@ -94,6 +94,9 @@ pub fn x86_native_replay_spans(
         {
             return Some((false, false, false));
         }
+        if instruction.legacy_movd_q_stack_replay().is_some() {
+            return Some((false, false, false));
+        }
         if instruction.is_legacy_high_byte_register_replay() {
             return Some((false, false, false));
         }

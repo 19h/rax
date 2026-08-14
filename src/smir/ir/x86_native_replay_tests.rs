@@ -112,6 +112,9 @@ mod legacy_scalar_insert;
 #[path = "x86_native_replay_tests/legacy_lane_shuffle.rs"]
 mod legacy_lane_shuffle;
 
+#[path = "x86_native_replay_tests/legacy_movd_q_stack.rs"]
+mod legacy_movd_q_stack;
+
 #[path = "x86_native_replay_tests/legacy_alignr.rs"]
 mod legacy_alignr;
 

@@ -904,12 +904,20 @@ pub fn x86_native_mmx_pairs_valid_excluding(
                                 .is_some_and(|replay| replay.touches_mmx())
                                 && span.end == index + 2
                         });
+                    let second_is_mmx_movd_q_stack_replay =
+                        native_replay_spans.get(&(index + 1)).is_some_and(|span| {
+                            span.instruction
+                                .legacy_movd_q_stack_replay()
+                                .is_some_and(|replay| replay.touches_mmx())
+                                && span.end == index + 2
+                        });
                     let paired = first.guest_pc == second.guest_pc
                         && ((is_enter(first)
                             && (second_is_native_mmx
                                 || second_is_mmx_scalar_extract_replay
                                 || second_is_mmx_scalar_insert_replay
-                                || second_is_mmx_mov_mask_replay))
+                                || second_is_mmx_mov_mask_replay
+                                || second_is_mmx_movd_q_stack_replay))
                             || ((first_is_native_mmx || first_is_mmx_memory) && is_enter(second)));
                     if !paired {
                         return false;

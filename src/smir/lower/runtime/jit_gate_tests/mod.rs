@@ -299,6 +299,7 @@ mod legacy_insertps_replay;
 #[cfg(test)]
 mod legacy_lane_shuffle_replay;
 mod legacy_mov_mask_stack_destination_replay;
+mod legacy_movd_q_stack_replay;
 #[cfg(test)]
 mod legacy_packed_extend_replay;
 #[cfg(test)]

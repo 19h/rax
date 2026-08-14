@@ -90,6 +90,7 @@ mod legacy_exports;
 mod legacy_gfni;
 mod legacy_high_byte;
 mod legacy_lane_shuffle;
+mod legacy_movd_q_stack;
 mod legacy_packed_fp_convert;
 mod legacy_packed_shift;
 mod legacy_pclmulqdq;
@@ -316,6 +317,9 @@ pub(crate) use fp_round::{
 pub(crate) use fp16_narrow::{X86EvexFp16NarrowMemoryEncoding, X86VexFp16NarrowMemoryEncoding};
 pub(crate) use gfni::{X86EvexGfniAffineMemoryEncoding, X86EvexGfniAffineMemoryReplay};
 pub(crate) use legacy_exports::*;
+pub(crate) use legacy_movd_q_stack::{
+    X86LegacyMovdQStackReplay, x86_legacy_movd_q_stack_shape_matches,
+};
 pub(crate) use packed_move::{X86EvexPackedMoveMemoryEncoding, X86EvexPackedMoveMemoryKind};
 pub(crate) use scalar_convert_memory::{
     X86VexScalarConvertMemoryEncoding, X86VexScalarConvertMemoryKind,

@@ -119,6 +119,18 @@ impl X86_64Lowerer {
             self.emit_state_backed_gpr_replay(&rewritten, destination);
             return Ok(());
         }
+        if let Some(replay) = span.instruction.legacy_movd_q_stack_replay() {
+            let rewritten = span
+                .instruction
+                .legacy_movd_q_stack_with_gpr_rax()
+                .expect("validated legacy MOVD/MOVQ stack operand must rewrite to RAX");
+            if replay.gpr_is_destination() {
+                self.emit_state_backed_gpr_replay(&rewritten, replay.gpr);
+            } else {
+                self.emit_state_backed_gpr_source_replay(&rewritten, replay.gpr);
+            }
+            return Ok(());
+        }
         if let Some(destination) = span.instruction.vex_scalar_extract_destination_index()
             && matches!(destination, 4 | 5)
         {
