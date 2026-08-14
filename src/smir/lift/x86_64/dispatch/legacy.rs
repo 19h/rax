@@ -208,6 +208,30 @@ impl X86_64Lifter {
                     branch_targets: vec![],
                 })
             }
+            // INT3 is a dedicated terminal #BP event, not an alias for INT 3:
+            // virtual-8086 IOPL/VME handling and FRED event typing differ.
+            // Delivery remains in the direct interpreter, while the exact
+            // fault/return PCs let a native prefix hand off without committing
+            // any part of the breakpoint instruction.
+            0xCC if prefix.lock => Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..(prefix.cursor + 1).min(bytes.len())].to_vec(),
+            }),
+            0xCC => {
+                let bytes_consumed = prefix.cursor + 1;
+                Ok(LiftResult {
+                    ops: vec![],
+                    bytes_consumed,
+                    control_flow: ControlFlow::Trap {
+                        kind: TrapKind::X86Breakpoint {
+                            fault_pc: pc,
+                            return_pc: pc.wrapping_add(bytes_consumed as u64),
+                            requires_apx: prefix.rex2.is_some(),
+                        },
+                    },
+                    branch_targets: vec![],
+                })
+            }
             // INT imm8 is terminal: IDT/IVT lookup, software-gate DPL checks,
             // privilege transitions, and frame construction remain in the
             // direct interpreter. Preserve the full encoding and trap payload
@@ -261,11 +285,6 @@ impl X86_64Lifter {
                 },
                 branch_targets: vec![],
             }),
-            0xCC => Ok(LiftResult::fallthrough(
-                vec![SmirOp::new(OpId(0), pc, OpKind::Breakpoint)],
-                prefix.cursor + 1,
-            )),
-
             // HLT
             0xF4 => Ok(LiftResult {
                 ops: vec![],

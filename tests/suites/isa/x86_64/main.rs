@@ -176,6 +176,8 @@ mod x86_64_control_flow_far_call;
 mod x86_64_control_flow_far_jmp;
 #[path = "control_flow/far_ret.rs"]
 mod x86_64_control_flow_far_ret;
+#[path = "control_flow/int3_prefix.rs"]
+mod x86_64_control_flow_int3_prefix;
 #[path = "control_flow/int_into_int3.rs"]
 mod x86_64_control_flow_int_into_int3;
 #[path = "control_flow/iret_iretd_iretq.rs"]

@@ -170,6 +170,9 @@ impl X86_64Lifter {
                     kind: TrapKind::X86Debug {
                         requires_apx: true,
                         ..
+                    } | TrapKind::X86Breakpoint {
+                        requires_apx: true,
+                        ..
                     } | TrapKind::X86SoftwareInterrupt {
                         requires_apx: true,
                         ..

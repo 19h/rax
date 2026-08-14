@@ -90,6 +90,8 @@ mod hypercall_hints;
 #[cfg(test)]
 mod icebp;
 #[cfg(test)]
+mod int3;
+#[cfg(test)]
 mod interrupt_return;
 #[cfg(test)]
 mod invlpg;

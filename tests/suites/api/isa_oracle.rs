@@ -6,6 +6,8 @@ use rax::oracle::{
 
 #[path = "isa_oracle_fma.rs"]
 mod fma;
+#[path = "isa_oracle_int3.rs"]
+mod int3;
 #[path = "isa_oracle_invpcid.rs"]
 mod invpcid;
 #[path = "isa_oracle_packed_string.rs"]

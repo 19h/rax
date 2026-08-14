@@ -26,6 +26,8 @@ mod flag_control;
 mod group2_sal;
 #[path = "group3_alias.rs"]
 mod group3_alias;
+#[path = "int3.rs"]
+mod int3;
 #[path = "legacy_0f38_terminal.rs"]
 mod legacy_0f38_terminal;
 #[path = "legacy_0f3a_reserved.rs"]

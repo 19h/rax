@@ -40,6 +40,9 @@ fn result_retains_apx_requirement(result: &LiftResult) -> bool {
                 kind: TrapKind::X86Debug {
                     requires_apx: true,
                     ..
+                } | TrapKind::X86Breakpoint {
+                    requires_apx: true,
+                    ..
                 } | TrapKind::X86SoftwareInterrupt {
                     requires_apx: true,
                     ..
