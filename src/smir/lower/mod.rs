@@ -253,6 +253,18 @@ pub const X86_GUEST_STACK_FLAGS_FN_OFFSET: i32 = X86_GUEST_ENTER_FN_OFFSET + 8;
 pub const X86_GUEST_STACK_FLAGS_RFLAGS_OFFSET: i32 = X86_GUEST_STACK_FLAGS_FN_OFFSET + 8;
 /// Offset of the post-POPF complete-RFLAGS override-valid marker.
 pub const X86_GUEST_STACK_FLAGS_RFLAGS_VALID_OFFSET: i32 = X86_GUEST_STACK_FLAGS_RFLAGS_OFFSET + 8;
+/// Offset of the append-only x87 control word state.
+pub const X86_GUEST_X87_CONTROL_WORD_OFFSET: i32 = X86_GUEST_STACK_FLAGS_RFLAGS_VALID_OFFSET + 8;
+/// Offset of the append-only x87 status word state.
+pub const X86_GUEST_X87_STATUS_WORD_OFFSET: i32 = X86_GUEST_X87_CONTROL_WORD_OFFSET + 8;
+/// Offset of the append-only last x87 data-operand pointer.
+pub const X86_GUEST_X87_DATA_PTR_OFFSET: i32 = X86_GUEST_X87_STATUS_WORD_OFFSET + 8;
+/// Offset of the append-only last x87 instruction pointer.
+pub const X86_GUEST_X87_INSTR_PTR_OFFSET: i32 = X86_GUEST_X87_DATA_PTR_OFFSET + 8;
+/// Offset of the append-only last x87 opcode.
+pub const X86_GUEST_X87_LAST_OPCODE_OFFSET: i32 = X86_GUEST_X87_INSTR_PTR_OFFSET + 8;
+/// Offset of the append-only x87 call-through synchronization marker.
+pub const X86_GUEST_X87_STATE_ACTIVE_OFFSET: i32 = X86_GUEST_X87_LAST_OPCODE_OFFSET + 8;
 /// Internal `vec_load_fn` destination namespace for
 /// [`runtime::GuestRegs::vector_scratch`]. Architectural ZMM indices remain
 /// exactly 0..=31. For `vec_store_fn`, this tag names an unmasked scratch

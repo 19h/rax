@@ -17,7 +17,7 @@ use crate::smir::lower::x86_64::{
     x86_selector_verify_shape_valid, x86_smsw_shape_valid, x86_stack_flags_encoding,
     x86_sti_shape_valid, x86_store_mxcsr_shape_valid, x86_system_selector_load_shape_valid,
     x86_system_selector_store_shape_valid, x86_waitpkg_shape_valid, x86_write_control_shape_valid,
-    x86_write_debug_shape_valid,
+    x86_write_debug_shape_valid, x86_x87_control_shape_valid,
 };
 
 #[path = "clobber/flags.rs"]
@@ -1711,6 +1711,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86LoadMxcsr { .. }) && !mxcsr_load_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86X87Control { .. }) && !x86_x87_control_shape_valid(op) {
             return false;
         }
         if matches!(op.kind, OpKind::X86XGetBv { .. }) && !x86_xgetbv_shape_valid(&op.kind) {

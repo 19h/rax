@@ -96,6 +96,7 @@ fn jit_callout_synchronizes_callee_vector_opmask_and_mmx_state() {
     gr.mm[0] = 0x00ff_7f80_0102_0304;
     gr.mm[1] = 0x0102_0304_0506_0708;
     gr.mmx_active = 1;
+    gr.x87_tag_word = 0x6996;
 
     let ok = unsafe { rax_jit_call(&mut gr, 0x100, 0x200, 0x80) };
     assert_eq!(ok, 1);
@@ -115,6 +116,10 @@ fn jit_callout_synchronizes_callee_vector_opmask_and_mmx_state() {
     assert_eq!(gr.mxcsr, 0x5f80, "callee MXCSR was not returned");
     assert_eq!(gr.mm[0], 0x0101_8284_0608_0A0C);
     assert_eq!(gr.mm[1], 0x0102_0304_0506_0708);
+    assert_eq!(
+        gr.x87_tag_word, 0x6996,
+        "legacy MMX tag-only channel was not preserved"
+    );
 
     // A successful callout can change XCR0 before native execution resumes.
     // Publish that control state into GuestRegs so a later lowered XGETBV

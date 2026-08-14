@@ -3781,6 +3781,10 @@ mod jit_vector_memory;
 use jit_vector_memory::{rax_jit_vec_load, rax_jit_vec_store};
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_x87_state.rs"]
+mod jit_x87_state;
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_call.rs"]
 mod jit_call;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -4452,9 +4456,10 @@ impl X86_64Vcpu {
         use crate::smir::lower::runtime::{
             is_native_clobber_safe_excluding, uses_x86_mxcsr_state_excluding,
             uses_x86_native_mmx_excluding, uses_x86_native_vectors_excluding,
-            uses_x86_x87_tag_state_excluding, uses_x86_xmm_state_excluding,
-            x86_jit_op_uses_mem_helper, x86_native_mmx_features_supported_excluding,
-            x86_native_mmx_pairs_valid_excluding, x86_native_scalar_features_supported_excluding,
+            uses_x86_x87_environment_state_excluding, uses_x86_x87_tag_state_excluding,
+            uses_x86_xmm_state_excluding, x86_jit_op_uses_mem_helper,
+            x86_native_mmx_features_supported_excluding, x86_native_mmx_pairs_valid_excluding,
+            x86_native_scalar_features_supported_excluding,
             x86_native_vector_features_supported_excluding,
             x86_native_vector_uses_avx_ymm16_only_excluding,
             x86_native_vector_uses_k16_opmasks_excluding,
@@ -4804,6 +4809,9 @@ impl X86_64Vcpu {
             #[cfg(target_arch = "x86_64")]
             let uses_x87_tag_state = uses_x86_x87_tag_state_excluding(&func, &exits);
             #[cfg(target_arch = "x86_64")]
+            let uses_x87_environment_state =
+                uses_x86_x87_environment_state_excluding(&func, &exits);
+            #[cfg(target_arch = "x86_64")]
             let uses_timestamp = func
                 .blocks
                 .iter()
@@ -4947,6 +4955,8 @@ impl X86_64Vcpu {
                 uses_mmx,
                 #[cfg(target_arch = "x86_64")]
                 uses_x87_tag_state,
+                #[cfg(target_arch = "x86_64")]
+                uses_x87_environment_state,
                 #[cfg(target_arch = "x86_64")]
                 uses_timestamp,
                 #[cfg(target_arch = "x86_64")]
@@ -5196,8 +5206,9 @@ impl X86_64Vcpu {
             gr.mm = self.regs.mm;
             gr.mmx_active = 1;
         }
-        if region.uses_x87_tag_state {
-            gr.x87_tag_word = u64::from(self.fpu.tag_word);
+        if region.uses_x87_tag_state || region.uses_x87_environment_state {
+            self.marshal_x87_environment_to_guest_regs(&mut gr);
+            gr.x87_state_active = 1;
         }
 
         region.exec.run(region.entry_offset, &mut gr);
@@ -5299,8 +5310,8 @@ impl X86_64Vcpu {
         if region.uses_mmx {
             self.regs.mm = gr.mm;
         }
-        if region.uses_x87_tag_state {
-            self.fpu.tag_word = gr.x87_tag_word as u16;
+        if region.uses_x87_tag_state || region.uses_x87_environment_state {
+            self.marshal_x87_environment_from_guest_regs(&gr);
         }
         // Merge status flags and DF from the host-safe native image, AC and
         // virtualized interrupt controls from their dedicated shadows, and
@@ -5726,12 +5737,7 @@ impl X86_64Vcpu {
                     ));
                 }
             }
-            if self.fpu.tag_word != jit_fpu.tag_word {
-                diffs.push(format!(
-                    "x87_tag_word: interp={:#x} jit={:#x}",
-                    self.fpu.tag_word, jit_fpu.tag_word
-                ));
-            }
+            self.fpu.append_jit_verify_diffs(&jit_fpu, &mut diffs);
             // A flags-ONLY divergence (registers + memory all match) is a benign
             // dead-flag artifact: the optimizer drops a flag update it proved
             // dead across the FULL lifted function, but the JIT region is
@@ -6464,6 +6470,10 @@ mod jit_fence_alias_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_x87_reserved_tests.rs"]
 mod jit_x87_reserved_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_x87_control_tests.rs"]
+mod jit_x87_control_tests;
 
 #[cfg(test)]
 #[path = "cpu_waitpkg_tests.rs"]

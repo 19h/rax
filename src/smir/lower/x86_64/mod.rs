@@ -299,6 +299,7 @@ mod timing;
 pub use timing::*;
 mod ops;
 pub use emitter::*;
+pub(crate) use ops::x86_x87_control_shape_valid;
 mod jit;
 pub use jit::*;
 #[cfg(feature = "smir-jit")]

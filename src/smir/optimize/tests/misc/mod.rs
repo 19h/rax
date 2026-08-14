@@ -21,4 +21,6 @@ mod scalar_fp_to_int;
 #[cfg(test)]
 mod scalar_int_to_fp;
 #[cfg(test)]
+mod x87_control;
+#[cfg(test)]
 mod x87_transcendental;

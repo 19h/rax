@@ -118,9 +118,15 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     if gr.vector_active != 0 || gr.mxcsr_state_active != 0 {
         vcpu.mxcsr = gr.mxcsr;
     }
+    if gr.x87_state_active != 0 {
+        vcpu.marshal_x87_environment_from_guest_regs(gr);
+    } else if gr.mmx_active != 0 {
+        // Preserve the pre-environment-ABI MMX helper contract for manually
+        // constructed call frames and fail-closed legacy regions.
+        vcpu.fpu.tag_word = gr.x87_tag_word as u16;
+    }
     if gr.mmx_active != 0 {
         vcpu.regs.mm = gr.mm;
-        vcpu.fpu.tag_word = gr.x87_tag_word as u16;
     }
 
     // The target operand, if memory-indirect, has already been read by the
@@ -217,6 +223,10 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     }
     if gr.mmx_active != 0 {
         gr.mm = vcpu.regs.mm;
+    }
+    if gr.x87_state_active != 0 {
+        vcpu.marshal_x87_environment_to_guest_regs(gr);
+    } else if gr.mmx_active != 0 {
         gr.x87_tag_word = u64::from(vcpu.fpu.tag_word);
     }
     gr.gpr[0] = vcpu.regs.rax;

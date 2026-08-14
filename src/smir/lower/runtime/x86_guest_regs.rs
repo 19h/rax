@@ -294,6 +294,18 @@ pub struct GuestRegs {
     /// Exactly one after a successful POPF transaction; zero for every other
     /// native exit. The CPU marshal uses the complete image above only then.
     pub stack_flags_rflags_valid: u64,
+    /// Exact x87 environment fields used by state-backed native controls. The
+    /// 80-bit physical register payloads remain owned by the vCPU and are not
+    /// admitted to native execution by this channel.
+    pub x87_control_word: u64,
+    pub x87_status_word: u64,
+    pub x87_data_ptr: u64,
+    pub x87_instr_ptr: u64,
+    pub x87_last_opcode: u64,
+    /// Non-zero when a native region reads or writes the x87 environment or
+    /// tag word. Interpreter callouts use it to synchronize the complete
+    /// environment without approximating the 80-bit register payloads.
+    pub x87_state_active: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -392,6 +404,12 @@ impl Default for GuestRegs {
             stack_flags_fn: 0,
             stack_flags_rflags: 0,
             stack_flags_rflags_valid: 0,
+            x87_control_word: 0x037F,
+            x87_status_word: 0,
+            x87_data_ptr: 0,
+            x87_instr_ptr: 0,
+            x87_last_opcode: 0,
+            x87_state_active: 0,
         }
     }
 }

@@ -112,6 +112,32 @@ pub enum X86X87EnvWidth {
     W32,
 }
 
+/// x87 environment/control operations that do not consume or produce an x87
+/// data-stack value.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86X87ControlKind {
+    Init,
+    ClearExceptions,
+    /// Enter MMX state by marking all eight aliased x87 data registers valid.
+    EnterMmx,
+    /// Leave MMX state by marking all eight aliased x87 data registers empty.
+    EmptyMmx,
+    StoreStatusAx,
+    LoadControlWord,
+    StoreControlWord,
+    StoreStatusWord,
+    /// `FLDENV m14byte/m28byte`.
+    LoadEnvironment(X86X87EnvWidth),
+    /// `FNSTENV m14byte/m28byte` (the waiting `FSTENV` spelling is FWAIT
+    /// followed by this instruction).
+    StoreEnvironment(X86X87EnvWidth),
+    /// `FRSTOR m94byte/m108byte`.
+    RestoreState(X86X87EnvWidth),
+    /// `FNSAVE m94byte/m108byte` (the waiting `FSAVE` spelling is FWAIT
+    /// followed by this instruction).
+    SaveState(X86X87EnvWidth),
+}
+
 /// x87 data-stack operations, explicit format conversions, and arithmetic.
 /// Each arithmetic family has a distinct variant because binary80 rounding and
 /// exception precedence differ from transfer/conversion responses.

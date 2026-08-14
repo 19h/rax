@@ -91,32 +91,6 @@ pub enum X86XSaveKind {
     XSaveS,
 }
 
-/// x87 environment/control operations that do not consume or produce an x87
-/// data-stack value.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum X86X87ControlKind {
-    Init,
-    ClearExceptions,
-    /// Enter MMX state by marking all eight aliased x87 data registers valid.
-    EnterMmx,
-    /// Leave MMX state by marking all eight aliased x87 data registers empty.
-    EmptyMmx,
-    StoreStatusAx,
-    LoadControlWord,
-    StoreControlWord,
-    StoreStatusWord,
-    /// `FLDENV m14byte/m28byte`.
-    LoadEnvironment(X86X87EnvWidth),
-    /// `FNSTENV m14byte/m28byte` (the waiting `FSTENV` spelling is FWAIT
-    /// followed by this instruction).
-    StoreEnvironment(X86X87EnvWidth),
-    /// `FRSTOR m94byte/m108byte`.
-    RestoreState(X86X87EnvWidth),
-    /// `FNSAVE m94byte/m108byte` (the waiting `FSAVE` spelling is FWAIT
-    /// followed by this instruction).
-    SaveState(X86X87EnvWidth),
-}
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum X86StringKind {
     Movs,
@@ -4742,7 +4716,12 @@ impl OpKind {
                 | OpKind::X86Cpuid { .. }
                 | OpKind::X86Count { .. }
                 | OpKind::X86X87Control {
-                    kind: X86X87ControlKind::EnterMmx | X86X87ControlKind::EmptyMmx,
+                    kind:
+                        X86X87ControlKind::Init
+                        | X86X87ControlKind::ClearExceptions
+                        | X86X87ControlKind::EnterMmx
+                        | X86X87ControlKind::EmptyMmx
+                        | X86X87ControlKind::StoreStatusAx,
                     addr: None,
                 }
                 | OpKind::Bswap { .. }
@@ -5864,6 +5843,15 @@ mod tests {
         };
         assert!(init.has_side_effects());
         assert!(init.dests().is_empty());
+        assert!(init.is_jit_safe());
+
+        let clear = OpKind::X86X87Control {
+            kind: X86X87ControlKind::ClearExceptions,
+            addr: None,
+        };
+        assert!(clear.has_side_effects());
+        assert!(clear.dests().is_empty());
+        assert!(clear.is_jit_safe());
 
         let enter_mmx = OpKind::X86X87Control {
             kind: X86X87ControlKind::EnterMmx,
@@ -5895,6 +5883,7 @@ mod tests {
         );
         assert!(!status_ax.reads_memory());
         assert!(!status_ax.writes_memory());
+        assert!(status_ax.is_jit_safe());
 
         let load = OpKind::X86X87Control {
             kind: X86X87ControlKind::LoadControlWord,

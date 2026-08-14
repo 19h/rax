@@ -322,6 +322,27 @@ impl SmirInterpreter {
                 memory.write(effective_addr, &value.to_le_bytes())?;
             }
 
+            OpKind::X86X87Control { kind, .. }
+                if matches!(
+                    kind,
+                    X86X87ControlKind::Init
+                        | X86X87ControlKind::ClearExceptions
+                        | X86X87ControlKind::StoreStatusAx
+                ) && matches!(
+                    &ctx.arch_regs,
+                    ArchRegState::X86_64(x86) if x86.cr0 & ((1 << 2) | (1 << 3)) != 0
+                ) =>
+            {
+                // The x86 integration replays this exact instruction on
+                // the direct path, which delivers #NM before any x87 state
+                // or AX commit. REX2/APX and LOCK #UD checks have already
+                // executed at an earlier SMIR frontier.
+                ctx.request_exit(ExitReason::Undefined {
+                    addr: op.guest_pc,
+                    opcode: 0,
+                });
+                return Ok(());
+            }
             OpKind::X86X87Control { kind, addr } => match kind {
                 X86X87ControlKind::Init => {
                     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {

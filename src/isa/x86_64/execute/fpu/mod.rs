@@ -22,3 +22,19 @@ pub use escape_df::escape_df;
 
 // Re-export public helper functions
 pub use helpers::{f64_to_f80_pub, f80_to_f64_pub};
+
+const CR0_EM: u64 = 1 << 2;
+const CR0_TS: u64 = 1 << 3;
+
+/// Deliver x87 device-not-available before a decoded instruction observes or
+/// commits architectural state. Encoding and LOCK/REX2 validity are resolved
+/// by the caller and common decoder first, preserving #UD priority.
+fn require_x87_available(
+    vcpu: &mut crate::isa::x86_64::cpu::X86_64Vcpu,
+) -> crate::error::Result<bool> {
+    if vcpu.sregs.cr0 & (CR0_EM | CR0_TS) != 0 {
+        vcpu.inject_exception(7, None)?;
+        return Ok(false);
+    }
+    Ok(true)
+}

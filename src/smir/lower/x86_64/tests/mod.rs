@@ -146,6 +146,8 @@ mod write_control;
 #[cfg(test)]
 mod write_debug;
 #[cfg(test)]
+mod x87_control;
+#[cfg(test)]
 mod xadd;
 #[cfg(test)]
 mod xop;

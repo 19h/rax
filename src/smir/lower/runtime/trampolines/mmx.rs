@@ -679,6 +679,30 @@ pub fn uses_x86_x87_tag_state_excluding(
         })
 }
 
+/// Whether an executable block reads or commits the state-backed x87
+/// environment. The exact 80-bit physical payloads remain interpreter-owned;
+/// only operations that do not consume or produce them are classified here.
+pub fn uses_x86_x87_environment_state_excluding(
+    func: &SmirFunction,
+    excluded: &HashMap<BlockId, u64>,
+) -> bool {
+    func.blocks
+        .iter()
+        .filter(|block| !excluded.contains_key(&block.id))
+        .flat_map(|block| &block.ops)
+        .any(|op| {
+            matches!(
+                op.kind,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::Init
+                        | X86X87ControlKind::ClearExceptions
+                        | X86X87ControlKind::StoreStatusAx,
+                    addr: None,
+                }
+            )
+        })
+}
+
 pub(crate) fn x86_native_mmx_op_requires_ssse3(op: &SmirOp) -> bool {
     matches!(
         op.kind,

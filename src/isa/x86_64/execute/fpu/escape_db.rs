@@ -89,10 +89,16 @@ pub fn escape_db(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
             }
             0xE2 => {
                 // FNCLEX - clear exceptions
+                if !super::require_x87_available(vcpu)? {
+                    return Ok(None);
+                }
                 vcpu.fpu.status_word &= !0x80FF; // Clear exception flags and ES
             }
             0xE3 => {
                 // FNINIT - initialize FPU
+                if !super::require_x87_available(vcpu)? {
+                    return Ok(None);
+                }
                 vcpu.fpu.init();
             }
             0xE0 | 0xE1 | 0xE4 => {

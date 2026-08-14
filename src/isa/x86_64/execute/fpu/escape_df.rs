@@ -79,6 +79,9 @@ pub fn escape_df(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
             }
             0xE0 => {
                 // FNSTSW AX
+                if !super::require_x87_available(vcpu)? {
+                    return Ok(None);
+                }
                 vcpu.regs.rax = (vcpu.regs.rax & !0xFFFF) | vcpu.fpu.status_word as u64;
             }
             0xE8..=0xEF => {

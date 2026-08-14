@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
-    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86VecAlign, X86VecMap, X86X87ControlKind,
+    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86VecAlign, X86VecMap,
 };
 use crate::smir::ir::types::{
     Address, ArchReg, BlockId, Condition, DispSize, FenceKind, FpRoundMode, GuestAddr, MemWidth,
@@ -27,8 +27,7 @@ use crate::smir::lower::{
     X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_PAIR_LOAD_FN_OFFSET,
     X86_GUEST_PAIR_STORE_FN_OFFSET, X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET,
     X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_VEC_LOAD_FN_OFFSET, X86_GUEST_VEC_STORE_FN_OFFSET,
-    X86_GUEST_X87_TAG_WORD_OFFSET, X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET,
-    X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
+    X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET,
 };
 
 impl X86_64Lowerer {
@@ -210,41 +209,7 @@ impl X86_64Lowerer {
                 }
             }
 
-            OpKind::X86X87Control { kind, addr }
-                if matches!(
-                    kind,
-                    X86X87ControlKind::EnterMmx | X86X87ControlKind::EmptyMmx
-                ) =>
-            {
-                let (name, tag_word) = match kind {
-                    X86X87ControlKind::EnterMmx => ("EnterMmx", 0),
-                    X86X87ControlKind::EmptyMmx => ("EmptyMmx", 0xFFFF),
-                    _ => unreachable!(),
-                };
-                if addr.is_some() {
-                    return Err(LowerError::InvalidOperand {
-                        op: format!("X86X87Control {name}"),
-                        operand: "must not have a memory address".to_string(),
-                    });
-                }
-                // Preserve architectural RAX and RFLAGS while committing the
-                // guest tag word at this exact post-instruction point.
-                self.code.emit_u8(0x50); // push rax
-                self.code.emit_bytes(&[
-                    0x48,
-                    0x8B,
-                    0x45,
-                    X86_STATE_PTR_AT_RBP as u8, // mov rax,[rbp+state]
-                    0x48,
-                    0xC7,
-                    0x80, // mov qword ptr [rax+disp32],imm32
-                ]);
-                self.code.emit_u32(X86_GUEST_X87_TAG_WORD_OFFSET as u32);
-                self.code.emit_u32(tag_word);
-                self.code.emit_u8(0x58); // pop rax
-            }
-
-            _ => return self.lower_op_misc(op),
+            _ => return self.lower_op_x87(op),
         }
 
         Ok(())

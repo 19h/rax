@@ -649,6 +649,8 @@ mod write_control;
 #[cfg(test)]
 mod write_debug;
 #[cfg(test)]
+mod x87_control;
+#[cfg(test)]
 mod x87_transcendental;
 #[cfg(test)]
 mod xadd;

@@ -85,6 +85,10 @@ pub(super) struct JitRegion {
     /// `EMMS` needs this channel without activating MM0-MM7 marshalling.
     #[cfg(target_arch = "x86_64")]
     pub(super) uses_x87_tag_state: bool,
+    /// Whether an operand-free native x87 control reads or commits the exact
+    /// environment while leaving all 80-bit physical payloads interpreter-owned.
+    #[cfg(target_arch = "x86_64")]
+    pub(super) uses_x87_environment_state: bool,
     /// Whether the region reads the real-time guest timestamp counter. Such a
     /// region cannot be replayed bit-for-bit by RAX_JIT_VERIFY because its
     /// interpreter replay necessarily observes a later clock value.
@@ -300,6 +304,7 @@ mod tests {
             narrow_vector_opmasks: false,
             uses_mmx: false,
             uses_x87_tag_state: false,
+            uses_x87_environment_state: false,
             uses_timestamp: false,
             uses_io: false,
             yielded_backward_exit_pcs: Vec::new(),
