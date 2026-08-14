@@ -63,7 +63,21 @@ impl RiscVCpu {
             Csr::CycleH => (self.cycle >> 32) & 0xffff_ffff,
             Csr::TimeH => (self.time >> 32) & 0xffff_ffff,
             Csr::InstretH => (self.instret >> 32) & 0xffff_ffff,
-            Csr::Mstatus => self.mstatus,
+            Csr::Mstatus => {
+                // priv spec v1.12: SD is a read-only aggregate bit:
+                // SD = (FS==Dirty || XS==Dirty || VS==Dirty). Stored writes
+                // to SD are ignored; reads recompute it.
+                let sd = 1u64 << (self.xbits() - 1);
+                let dirty = ((self.mstatus >> 13) & 0b11) == 0b11   // FS
+                    || ((self.mstatus >> 15) & 0b11) == 0b11   // XS
+                    || ((self.mstatus >> 9) & 0b11) == 0b11; // VS
+                let m = if dirty {
+                    self.mstatus | sd
+                } else {
+                    self.mstatus & !sd
+                };
+                m & self.xmask()
+            }
             Csr::Sstatus => self.mstatus & self.sstatus_mask(),
             Csr::Misa => self.misa(),
             Csr::Medeleg => self.medeleg,
@@ -113,7 +127,7 @@ impl RiscVCpu {
             // Jump-table mode zero is the only currently defined/implemented
             // WARL mode; BASE is consequently always 64-byte aligned.
             Csr::Jvt => self.jvt = value & !0x3f & self.xmask(),
-            Csr::Mstatus => self.mstatus = value,
+            Csr::Mstatus => self.mstatus = value & !(1u64 << (self.xbits() - 1)),
             Csr::Sstatus => {
                 let mask = self.sstatus_mask();
                 self.mstatus = (self.mstatus & !mask) | (value & mask);
@@ -293,6 +307,29 @@ mod tests {
                 "MODE={mode}"
             );
         }
+    }
+
+    #[test]
+    fn mstatus_sd_is_a_read_only_aggregate() {
+        let mut cpu = cpu(Isa::rv_i());
+        // FS=Dirty (0b11 at bits 14:13) must make SD read back 1.
+        cpu.csr_write(0x300, 0b11 << 13).unwrap();
+        let sd = 1u64 << (cpu.xbits() - 1);
+        assert_eq!(
+            cpu.csr_read(0x300).unwrap() & sd,
+            sd,
+            "SD must aggregate FS"
+        );
+        // Writing SD=1 with FS=Off is ignored: read back 0.
+        cpu.csr_write(0x300, sd).unwrap();
+        assert_eq!(
+            cpu.csr_read(0x300).unwrap() & sd,
+            0,
+            "SD write must be ignored"
+        );
+        // Clearing FS to Off removes SD.
+        cpu.csr_write(0x300, 0).unwrap();
+        assert_eq!(cpu.csr_read(0x300).unwrap() & sd, 0);
     }
 
     #[test]
