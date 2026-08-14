@@ -2444,7 +2444,9 @@ fn decode_hypervisor_mem(w: u32, rv64: bool) -> Insn {
         (0x32, 3, _) => Op::HlvxHu,
         (0x34, 0, _) => Op::HlvW,
         (0x34, 1, _) if rv64 => Op::HlvWu,
-        (0x34, 3, _) if rv64 => Op::HlvxWu,
+        // HLVX.WU is valid on RV32 as well as RV64 (unlike HLV.WU/HLV.D):
+        // it is the only hypervisor unsigned word load that RV32 provides.
+        (0x34, 3, _) => Op::HlvxWu,
         (0x36, 0, _) if rv64 => Op::HlvD,
         (0x31, _, 0) => Op::HsvB,
         (0x33, _, 0) => Op::HsvH,
@@ -3157,6 +3159,19 @@ mod tests {
         assert!(decode(sys(0x11, 11, 10), Xlen::Rv64, &no_h).is_illegal());
         assert!(decode(enc(0x30, 0, 10, 0b100, 5, 0x73), Xlen::Rv64, &no_h).is_illegal());
         assert!(decode(enc(0x34, 1, 10, 0b100, 5, 0x73), Xlen::Rv32, &Isa::rv64gc()).is_illegal());
+    }
+
+    #[test]
+    fn hlvx_wu_valid_on_rv32_with_h() {
+        // HLVX.WU (funct7=0x34, rs2=3) is valid on both RV32 and RV64 when H
+        // is enabled, unlike HLV.WU which remains RV64-only.
+        let hlvx_wu = enc(0x34, 3, 10, 0b100, 5, 0x73);
+        assert_eq!(decode(hlvx_wu, Xlen::Rv32, &Isa::rv64gc()).op, Op::HlvxWu);
+        assert_eq!(decode(hlvx_wu, Xlen::Rv64, &Isa::rv64gc()).op, Op::HlvxWu);
+
+        let mut no_h = Isa::rv64gc();
+        no_h.h = false;
+        assert!(decode(hlvx_wu, Xlen::Rv32, &no_h).is_illegal());
     }
 
     #[test]
