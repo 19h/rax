@@ -9,4 +9,4 @@ mod memory;
 mod misc;
 mod shifts;
 mod x87;
-pub(crate) use x87::x86_x87_control_shape_valid;
+pub(crate) use x87::x86_x87_state_shape_valid;

@@ -1,6 +1,7 @@
-//! Fail-closed admission and ABI tests for state-backed x87 controls.
+//! Fail-closed admission and ABI tests for state-backed x87 environment operations.
 
 use super::*;
+use crate::smir::ir::ops::X86X87DataKind;
 use crate::smir::lower::runtime::{
     GuestRegs, uses_x86_x87_environment_state_excluding, uses_x86_x87_tag_state_excluding,
 };
@@ -13,6 +14,41 @@ use crate::smir::lower::{
 
 fn control(kind: X86X87ControlKind) -> OpKind {
     OpKind::X86X87Control { kind, addr: None }
+}
+
+fn metadata(kind: X86X87DataKind, st: u8, fop: u16) -> OpKind {
+    OpKind::X86X87Data {
+        kind,
+        addr: None,
+        st,
+        fop,
+    }
+}
+
+fn stack_metadata_forms() -> Vec<OpKind> {
+    let mut forms = vec![
+        metadata(X86X87DataKind::DecrementTop, 6, 0x01F6),
+        metadata(X86X87DataKind::IncrementTop, 7, 0x01F7),
+    ];
+    for st in 0..8 {
+        forms.push(metadata(X86X87DataKind::Free, st, 0x05C0 + u16::from(st)));
+        forms.push(metadata(
+            X86X87DataKind::FreePop,
+            st,
+            0x07C0 + u16::from(st),
+        ));
+    }
+    forms
+}
+
+fn x86_aarch64_gate(op: OpKind) -> bool {
+    let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+    builder.push_op(0x1000, op);
+    builder.set_terminator(Terminator::Return { values: vec![] });
+    is_x86_aarch64_native_clobber_safe_excluding(
+        &builder.finish(),
+        &std::collections::HashMap::new(),
+    )
 }
 
 #[test]
@@ -47,6 +83,51 @@ fn x87_no_wait_environment_controls_are_narrowly_x86_native_safe() {
 }
 
 #[test]
+fn x87_stack_metadata_shapes_are_narrowly_x86_native_safe() {
+    for op in stack_metadata_forms() {
+        assert!(op.is_jit_safe(), "exact shape: {op:?}");
+        assert!(x86_gate(op.clone()), "x86-64 gate rejected {op:?}");
+        assert!(
+            !aarch64_gate(vec![op.clone()], false),
+            "AArch64 guest-state ABI admitted {op:?}"
+        );
+        assert!(
+            !x86_aarch64_gate(op.clone()),
+            "x86-on-AArch64 bridge admitted {op:?}"
+        );
+    }
+
+    let addressed_free = OpKind::X86X87Data {
+        kind: X86X87DataKind::Free,
+        addr: Some(Address::Direct(x86(X86Reg::Rax))),
+        st: 3,
+        fop: 0x05C3,
+    };
+    for op in [
+        metadata(X86X87DataKind::Free, 8, 0x05C8),
+        metadata(X86X87DataKind::Free, 3, 0x05C2),
+        metadata(X86X87DataKind::FreePop, 3, 0x07C2),
+        metadata(X86X87DataKind::DecrementTop, 0, 0x01F6),
+        metadata(X86X87DataKind::IncrementTop, 7, 0x01F6),
+        metadata(X86X87DataKind::LoadRegister, 0, 0x01C0),
+        addressed_free,
+    ] {
+        assert!(!op.is_jit_safe(), "malformed/unsupported shape: {op:?}");
+        assert!(!x86_gate(op.clone()), "x86-64 gate admitted {op:?}");
+        assert!(!aarch64_gate(vec![op.clone()], false));
+        assert!(!x86_aarch64_gate(op));
+    }
+
+    let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+    builder.push_op(0x1000, metadata(X86X87DataKind::FreePop, 3, 0x07C3));
+    builder.set_terminator(Terminator::Return { values: vec![] });
+    let mut hinted = builder.finish();
+    hinted.blocks[0].ops[0].x86_hint = Some(X86OpHint::RexByteReg);
+    assert!(!hinted.blocks[0].ops[0].is_jit_safe());
+    assert!(!is_native_clobber_safe(&hinted));
+}
+
+#[test]
 fn x87_environment_detector_honors_native_exit_exclusion() {
     for (index, kind) in [
         X86X87ControlKind::Init,
@@ -68,6 +149,24 @@ fn x87_environment_detector_honors_native_exit_exclusion() {
             &function,
             &std::collections::HashMap::new()
         ));
+        assert!(!uses_x86_x87_environment_state_excluding(
+            &function,
+            &std::collections::HashMap::from([(function.entry, 0x1002)])
+        ));
+    }
+}
+
+#[test]
+fn x87_stack_metadata_environment_detector_honors_native_exit_exclusion() {
+    for (index, op) in stack_metadata_forms().into_iter().enumerate() {
+        let mut builder = FunctionBuilder::new(FunctionId(index as u32), 0x1000);
+        builder.push_op(0x1000, op.clone());
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let function = builder.finish();
+        assert!(
+            uses_x86_x87_environment_state_excluding(&function, &std::collections::HashMap::new()),
+            "{op:?}"
+        );
         assert!(!uses_x86_x87_environment_state_excluding(
             &function,
             &std::collections::HashMap::from([(function.entry, 0x1002)])

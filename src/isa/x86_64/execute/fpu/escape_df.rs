@@ -64,6 +64,9 @@ pub fn escape_df(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
         match modrm {
             0xC0..=0xC7 => {
                 // FFREEP ST(i): free ST(i), then pop the x87 stack.
+                if !super::require_waiting_x87_available(vcpu)? {
+                    return Ok(None);
+                }
                 let target_tag_shift = (vcpu.fpu.st_index(rm) as u16) * 2;
                 let top_tag_shift = (vcpu.fpu.top as u16) * 2;
                 vcpu.fpu.tag_word |= 3 << target_tag_shift;
@@ -71,6 +74,7 @@ pub fn escape_df(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 vcpu.fpu.top = vcpu.fpu.top.wrapping_add(1) & 7;
                 vcpu.fpu.status_word =
                     (vcpu.fpu.status_word & !0x3800) | ((vcpu.fpu.top as u16) << 11);
+                super::record_x87_data_op(vcpu, 0x07C0 + u16::from(rm));
             }
             0xD0..=0xD7 => {
                 // Legacy FSTP ST(i) alias.

@@ -169,6 +169,10 @@ pub enum X86X87DataKind {
     Exchange,
     /// `FFREE ST(i)`.
     Free,
+    /// Compatibility opcode `FFREEP ST(i)`: free ST(i), then pop the x87
+    /// stack. Keeping this atomic preserves the waiting-exception frontier and
+    /// the instruction's single FIP/FOP update.
+    FreePop,
     /// `FCHS`.
     ChangeSign,
     /// `FABS`.
@@ -242,6 +246,48 @@ pub enum X86X87DataKind {
     StoreFloat { width: X86X87FloatWidth, pop: bool },
     /// `FBSTP m80bcd`.
     StoreBcd,
+}
+
+impl X86X87DataKind {
+    /// Operations whose complete architectural data effect is confined to the
+    /// x87 status/tag environment; no binary80 payload is read or written.
+    pub const fn is_stack_metadata(self) -> bool {
+        matches!(
+            self,
+            Self::Free | Self::FreePop | Self::DecrementTop | Self::IncrementTop
+        )
+    }
+}
+
+impl super::OpKind {
+    /// Exact operation-level x87 shapes eligible for the state-backed native
+    /// tier. [`super::SmirOp`] validation additionally rejects encoding hints.
+    pub(crate) fn x86_x87_state_jit_shape_valid(&self) -> bool {
+        match self {
+            Self::X86X87Control {
+                kind:
+                    X86X87ControlKind::Init
+                    | X86X87ControlKind::ClearExceptions
+                    | X86X87ControlKind::EnterMmx
+                    | X86X87ControlKind::EmptyMmx
+                    | X86X87ControlKind::StoreStatusAx,
+                addr: None,
+            } => true,
+            Self::X86X87Data {
+                kind,
+                addr: None,
+                st,
+                fop,
+            } => match kind {
+                X86X87DataKind::Free => *st < 8 && *fop == 0x05C0 + u16::from(*st),
+                X86X87DataKind::FreePop => *st < 8 && *fop == 0x07C0 + u16::from(*st),
+                X86X87DataKind::DecrementTop => *st == 6 && *fop == 0x01F6,
+                X86X87DataKind::IncrementTop => *st == 7 && *fop == 0x01F7,
+                _ => false,
+            },
+            _ => false,
+        }
+    }
 }
 
 /// x87 operations whose architecturally specified result is a transcendental

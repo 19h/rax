@@ -1,5 +1,6 @@
 //! x87 FPU instruction interpretation
 
+mod stack_metadata;
 mod transcendental;
 
 use crate::smir::interpret::*;
@@ -623,9 +624,10 @@ impl SmirInterpreter {
                 next.set_physical_tag(pi, tag0);
             }
             X86X87DataKind::Free => {
-                let physical = next.physical_index(st);
-                next.set_physical_tag(physical, 3);
-                // C0-C3 are undefined; deterministic SMIR preserves them.
+                stack_metadata::free(&mut next, st, false);
+            }
+            X86X87DataKind::FreePop => {
+                stack_metadata::free(&mut next, st, true);
             }
             X86X87DataKind::ChangeSign | X86X87DataKind::Absolute => {
                 let physical = original.physical_index(0);
@@ -1324,12 +1326,10 @@ impl SmirInterpreter {
                 }
             }
             X86X87DataKind::DecrementTop => {
-                next.status_word &= !0x0200;
-                next.set_top(next.top().wrapping_sub(1));
+                stack_metadata::rotate_top(&mut next, false);
             }
             X86X87DataKind::IncrementTop => {
-                next.status_word &= !0x0200;
-                next.set_top(next.top().wrapping_add(1));
+                stack_metadata::rotate_top(&mut next, true);
             }
             X86X87DataKind::ConditionalMove(_) => {
                 if conditional_move_taken.expect("FCMOV condition missing") {

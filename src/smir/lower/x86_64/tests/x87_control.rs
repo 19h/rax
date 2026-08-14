@@ -1,6 +1,7 @@
-//! State-backed native lowering tests for x87 no-wait controls.
+//! State-backed native lowering tests for x87 environment operations.
 
 use super::*;
+use crate::smir::ir::ops::X86X87DataKind;
 use crate::smir::lower::{
     X86_GUEST_CR0_OFFSET, X86_GUEST_X87_CONTROL_WORD_OFFSET, X86_GUEST_X87_STATUS_WORD_OFFSET,
     X86_GUEST_X87_TAG_WORD_OFFSET,
@@ -8,6 +9,15 @@ use crate::smir::lower::{
 
 fn control(kind: X86X87ControlKind) -> OpKind {
     OpKind::X86X87Control { kind, addr: None }
+}
+
+fn metadata(kind: X86X87DataKind, st: u8, fop: u16) -> OpKind {
+    OpKind::X86X87Data {
+        kind,
+        addr: None,
+        st,
+        fop,
+    }
 }
 
 fn lower(
@@ -100,14 +110,87 @@ fn lower_x87_controls_reject_non_lifter_shapes_fail_closed() {
     }
 }
 
+#[test]
+fn lower_x87_stack_metadata_requires_waiting_guards_and_exact_state_slots() {
+    for op in [
+        metadata(X86X87DataKind::DecrementTop, 6, 0x01F6),
+        metadata(X86X87DataKind::IncrementTop, 7, 0x01F7),
+        metadata(X86X87DataKind::Free, 3, 0x05C3),
+        metadata(X86X87DataKind::FreePop, 3, 0x07C3),
+    ] {
+        assert!(matches!(
+            lower(op.clone(), false, None),
+            Err(LowerError::UnsupportedOp { .. })
+        ));
+        let (code, _) = lower(op.clone(), true, None).expect("guarded x87 stack metadata");
+        for offset in [
+            X86_GUEST_CR0_OFFSET,
+            X86_GUEST_X87_STATUS_WORD_OFFSET,
+            crate::smir::lower::X86_GUEST_X87_INSTR_PTR_OFFSET,
+            crate::smir::lower::X86_GUEST_X87_LAST_OPCODE_OFFSET,
+        ] {
+            assert!(
+                code.windows(4)
+                    .any(|window| window == (offset as u32).to_le_bytes()),
+                "{op:?}: missing state offset {offset}: {code:02X?}"
+            );
+        }
+        if matches!(
+            op,
+            OpKind::X86X87Data {
+                kind: X86X87DataKind::Free | X86X87DataKind::FreePop,
+                ..
+            }
+        ) {
+            assert!(
+                code.windows(4).any(|window| {
+                    window == (X86_GUEST_X87_TAG_WORD_OFFSET as u32).to_le_bytes()
+                })
+            );
+        }
+    }
+}
+
+#[test]
+fn lower_x87_stack_metadata_rejects_every_malformed_shape() {
+    for op in [
+        metadata(X86X87DataKind::Free, 8, 0x05C8),
+        metadata(X86X87DataKind::Free, 3, 0x05C2),
+        metadata(X86X87DataKind::FreePop, 3, 0x07C2),
+        metadata(X86X87DataKind::DecrementTop, 0, 0x01F6),
+        metadata(X86X87DataKind::IncrementTop, 7, 0x01F6),
+    ] {
+        assert!(matches!(
+            lower(op, true, None),
+            Err(LowerError::InvalidOperand { .. })
+        ));
+    }
+    assert!(matches!(
+        lower(
+            metadata(X86X87DataKind::Free, 3, 0x05C3),
+            true,
+            Some(X86OpHint::RexByteReg),
+        ),
+        Err(LowerError::InvalidOperand { .. })
+    ));
+}
+
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn execute_native(
     kind: X86X87ControlKind,
     configure: impl FnOnce(&mut crate::smir::lower::runtime::GuestRegs),
 ) -> crate::smir::lower::runtime::GuestRegs {
+    execute_native_op(control(kind), configure)
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn execute_native_op(
+    op: OpKind,
+    configure: impl FnOnce(&mut crate::smir::lower::runtime::GuestRegs),
+) -> crate::smir::lower::runtime::GuestRegs {
     use crate::smir::lower::runtime::{ExecMem, GuestRegs};
 
-    let (code, entry) = lower(control(kind), true, None).expect("lower native x87 control");
+    let (code, entry) = lower(op, true, None).expect("lower native x87 state operation");
     let exec = ExecMem::new(&code).expect("map native x87 control");
     let mut regs = GuestRegs::default();
     regs.gpr = std::array::from_fn(|index| 0xA500_0000_0000_0000 | index as u64);
@@ -123,6 +206,54 @@ fn execute_native(
     configure(&mut regs);
     exec.run(entry, &mut regs);
     regs
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[test]
+fn native_x87_stack_metadata_commits_exact_environment_state() {
+    for (kind, st, fop, expected_top, expected_tag, clear_c1) in [
+        (X86X87DataKind::DecrementTop, 6, 0x01F6, 4, 0, true),
+        (X86X87DataKind::IncrementTop, 7, 0x01F7, 6, 0, true),
+        (X86X87DataKind::Free, 3, 0x05C3, 5, 3, false),
+        (X86X87DataKind::FreePop, 3, 0x07C3, 6, 0x0C03, false),
+    ] {
+        let result = execute_native_op(metadata(kind, st, fop), |regs| {
+            regs.x87_status_word = (5 << 11) | 0x4700 | 0x003F;
+            regs.x87_tag_word = 0;
+        });
+        assert_eq!((result.x87_status_word >> 11) & 7, expected_top, "{kind:?}");
+        assert_eq!(result.x87_tag_word, expected_tag, "{kind:?}");
+        assert_eq!(result.x87_status_word & 0x0200 == 0, clear_c1, "{kind:?}");
+        assert_eq!(result.x87_instr_ptr, 0x1000, "{kind:?}");
+        assert_eq!(result.x87_last_opcode, u64::from(fop), "{kind:?}");
+        assert_eq!(result.x87_data_ptr, 0x1122_3344_5566_7788, "{kind:?}");
+        assert_eq!(result.gpr[0], 0xA500_0000_0000_0000, "{kind:?}");
+        assert_eq!(result.rflags, 0x2 | 0x08D5 | (1 << 10), "{kind:?}");
+    }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[test]
+fn native_x87_stack_metadata_pending_error_guard_is_noncommitting() {
+    for (kind, st, fop) in [
+        (X86X87DataKind::DecrementTop, 6, 0x01F6),
+        (X86X87DataKind::IncrementTop, 7, 0x01F7),
+        (X86X87DataKind::Free, 3, 0x05C3),
+        (X86X87DataKind::FreePop, 3, 0x07C3),
+    ] {
+        let result = execute_native_op(metadata(kind, st, fop), |regs| {
+            regs.cr0 |= 1 << 5;
+            regs.x87_status_word = (5 << 11) | 0x8080 | 0x4700;
+            regs.x87_tag_word = 0x6996;
+        });
+        assert_eq!(result.exit_pc, 0x1000, "{kind:?}");
+        assert_eq!(result.x87_status_word, (5 << 11) | 0x8080 | 0x4700);
+        assert_eq!(result.x87_tag_word, 0x6996);
+        assert_eq!(result.x87_instr_ptr, 0x8877_6655_4433_2211);
+        assert_eq!(result.x87_last_opcode, 0x05A5);
+        assert_eq!(result.gpr[0], 0xA500_0000_0000_0000);
+        assert_eq!(result.rflags, 0x2 | 0x08D5 | (1 << 10));
+    }
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]

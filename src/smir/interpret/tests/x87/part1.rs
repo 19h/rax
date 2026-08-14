@@ -545,11 +545,15 @@ fn lifted_legacy_x87_register_forms_match_canonical_state_and_free_pop_exactly()
         let mut expected = before.clone();
         expected.set_physical_tag(before.physical_index(st), 3);
         expected.set_physical_tag(before.physical_index(0), 3);
-        expected.status_word &= !0x0200;
         expected.set_top(top.wrapping_add(1));
         expected.instr_ptr = 0x1000;
         expected.last_opcode = 0x07C0 + u16::from(st);
         assert_eq!(after, expected, "FFREEP ST({st}) with TOP={top}");
+        assert_eq!(
+            after.status_word & 0x4700,
+            before.status_word & 0x4700,
+            "FFREEP preserves its undefined C0-C3 deterministically"
+        );
 
         ctx.flags.materialize_all();
         assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
@@ -583,8 +587,11 @@ fn lifted_x87_exact_sign_and_top_rotation_operations_preserve_raw_state() {
         assert_eq!(x86.x87.last_opcode, 0x01E0);
     }
 
-    let (regs, tags) = match &ctx.arch_regs {
-        ArchRegState::X86_64(x86) => (x86.x87.regs, x86.x87.tag_word),
+    let (regs, tags) = match &mut ctx.arch_regs {
+        ArchRegState::X86_64(x86) => {
+            x86.x87.status_word |= 0x0200;
+            (x86.x87.regs, x86.x87.tag_word)
+        }
         _ => unreachable!(),
     };
     execute_lifted_x86(&[0xD9, 0xF6], &mut ctx, &mut memory); // FDECSTP
@@ -592,13 +599,18 @@ fn lifted_x87_exact_sign_and_top_rotation_operations_preserve_raw_state() {
         assert_eq!(x86.x87.top(), 6);
         assert_eq!(x86.x87.regs, regs);
         assert_eq!(x86.x87.tag_word, tags);
+        assert_eq!(x86.x87.status_word & 0x0200, 0);
         assert_eq!(x86.x87.last_opcode, 0x01F6);
+    }
+    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+        x86.x87.status_word |= 0x0200;
     }
     execute_lifted_x86(&[0xD9, 0xF7], &mut ctx, &mut memory); // FINCSTP
     if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
         assert_eq!(x86.x87.top(), 7);
         assert_eq!(x86.x87.regs, regs);
         assert_eq!(x86.x87.tag_word, tags);
+        assert_eq!(x86.x87.status_word & 0x0200, 0);
         assert_eq!(x86.x87.last_opcode, 0x01F7);
     }
 
@@ -626,6 +638,66 @@ fn lifted_x87_exact_sign_and_top_rotation_operations_preserve_raw_state() {
         assert_eq!(x86.x87.physical_tag(0), 3);
         assert_eq!(x86.x87.status_word & 0x80C1, 0x80C1);
     }
+}
+
+#[test]
+fn lifted_x87_stack_metadata_waiting_faults_exit_without_committing() {
+    for instruction in [
+        &[0xD9, 0xF6][..],
+        &[0xD9, 0xF7][..],
+        &[0xDD, 0xC3][..],
+        &[0xDF, 0xC3][..],
+    ] {
+        for (cr0_bits, pending) in [
+            (1 << 2, false),
+            (1 << 3, false),
+            ((1 << 2) | (1 << 3), true),
+            (0, true),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(0x100);
+            let before = if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.cr0 |= cr0_bits | (1 << 5);
+                x86.x87.status_word = (5 << 11) | 0x4700 | 0x003F;
+                if pending {
+                    x86.x87.status_word |= 0x8080;
+                }
+                x86.x87.tag_word = 0x6996;
+                x86.x87.instr_ptr = 0x1122_3344_5566_7788;
+                x86.x87.last_opcode = 0x05A5;
+                x86.x87.clone()
+            } else {
+                unreachable!()
+            };
+
+            assert!(matches!(
+                execute_lifted_x86(instruction, &mut ctx, &mut memory),
+                BlockResult::Exit(ExitReason::Undefined { addr: 0x1000, .. })
+            ));
+            let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+                unreachable!()
+            };
+            assert_eq!(x86.x87, before, "{instruction:02X?}, CR0={cr0_bits:#x}");
+        }
+    }
+
+    let mut legacy = SmirContext::new_x86_64();
+    let mut memory = FlatMemory::new(0x100);
+    if let ArchRegState::X86_64(x86) = &mut legacy.arch_regs {
+        x86.cr0 &= !(1 << 5);
+        x86.x87.status_word = (5 << 11) | 0x8080;
+        x86.x87.tag_word = 0;
+    }
+    assert!(matches!(
+        execute_lifted_x86(&[0xDD, 0xC3], &mut legacy, &mut memory),
+        BlockResult::Exit(ExitReason::Halt)
+    ));
+    let ArchRegState::X86_64(x86) = &legacy.arch_regs else {
+        unreachable!()
+    };
+    assert_eq!(x86.x87.physical_tag(x86.x87.physical_index(3)), 3);
+    assert_eq!(x86.x87.instr_ptr, 0x1000);
+    assert_eq!(x86.x87.last_opcode, 0x05C3);
 }
 #[test]
 fn lifted_x87_load_constants_match_all_fcw_rounding_modes_exactly() {

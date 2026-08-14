@@ -3,7 +3,9 @@
 use std::collections::HashMap;
 
 use crate::smir::ir::flags::FlagUpdate;
-use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86VecAlign, X86X87ControlKind};
+use crate::smir::ir::ops::{
+    OpKind, SmirOp, X86OpHint, X86VecAlign, X86X87ControlKind, X86X87DataKind,
+};
 use crate::smir::ir::types::{
     Address, ArchReg, BlockId, DispSize, MemWidth, OpWidth, SignExtend, SrcOperand, VLaneOp, VReg,
     VecElementType, VecUnaryOp, VecWidth, X86Reg,
@@ -698,6 +700,13 @@ pub fn uses_x86_x87_environment_state_excluding(
                         | X86X87ControlKind::ClearExceptions
                         | X86X87ControlKind::StoreStatusAx,
                     addr: None,
+                } | OpKind::X86X87Data {
+                    kind: X86X87DataKind::Free
+                        | X86X87DataKind::FreePop
+                        | X86X87DataKind::DecrementTop
+                        | X86X87DataKind::IncrementTop,
+                    addr: None,
+                    ..
                 }
             )
         })

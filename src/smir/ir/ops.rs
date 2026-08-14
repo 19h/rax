@@ -65,7 +65,9 @@ impl SmirOp {
     /// Fail-safe native-JIT eligibility for an operation, including encoding
     /// hints that affect lowering semantics.
     pub fn is_jit_safe(&self) -> bool {
-        !matches!(self.x86_hint, Some(X86OpHint::ShiftGroup6)) && self.kind.is_jit_safe()
+        !matches!(self.x86_hint, Some(X86OpHint::ShiftGroup6))
+            && !(self.x86_hint.is_some() && self.kind.x86_x87_state_jit_shape_valid())
+            && self.kind.is_jit_safe()
     }
 }
 
@@ -4625,9 +4627,10 @@ impl OpKind {
     /// (e.g. a booting kernel): an unknown or memory-touching op never executes
     /// natively.
     pub fn is_jit_safe(&self) -> bool {
-        matches!(
-            self,
-            OpKind::Add { .. }
+        self.x86_x87_state_jit_shape_valid()
+            || matches!(
+                self,
+                OpKind::Add { .. }
                 | OpKind::Sub { .. }
                 | OpKind::Adc { .. }
                 | OpKind::Sbb { .. }
@@ -4715,15 +4718,6 @@ impl OpKind {
                 | OpKind::X86Sti { .. }
                 | OpKind::X86Cpuid { .. }
                 | OpKind::X86Count { .. }
-                | OpKind::X86X87Control {
-                    kind:
-                        X86X87ControlKind::Init
-                        | X86X87ControlKind::ClearExceptions
-                        | X86X87ControlKind::EnterMmx
-                        | X86X87ControlKind::EmptyMmx
-                        | X86X87ControlKind::StoreStatusAx,
-                    addr: None,
-                }
                 | OpKind::Bswap { .. }
                 | OpKind::Xchg { .. }
                 // Register-only address arithmetic (no memory dereference).
@@ -4732,7 +4726,7 @@ impl OpKind {
                 | OpKind::Lea { .. }
                 | OpKind::X86Lea { .. }
                 | OpKind::Nop
-        )
+            )
     }
 
     /// Get destination register(s) if any
@@ -6065,6 +6059,7 @@ mod tests {
             X86X87DataKind::StorePopRegister,
             X86X87DataKind::Exchange,
             X86X87DataKind::Free,
+            X86X87DataKind::FreePop,
             X86X87DataKind::ChangeSign,
             X86X87DataKind::Absolute,
             X86X87DataKind::DecrementTop,

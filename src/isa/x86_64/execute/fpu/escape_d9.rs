@@ -186,15 +186,23 @@ pub fn escape_d9(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
             }
             0xF6 => {
                 // FDECSTP
+                if !super::require_waiting_x87_available(vcpu)? {
+                    return Ok(None);
+                }
                 vcpu.fpu.top = vcpu.fpu.top.wrapping_sub(1) & 7;
                 vcpu.fpu.status_word =
-                    (vcpu.fpu.status_word & !0x3800) | ((vcpu.fpu.top as u16) << 11);
+                    (vcpu.fpu.status_word & !0x3A00) | ((vcpu.fpu.top as u16) << 11);
+                super::record_x87_data_op(vcpu, 0x01F6);
             }
             0xF7 => {
                 // FINCSTP
+                if !super::require_waiting_x87_available(vcpu)? {
+                    return Ok(None);
+                }
                 vcpu.fpu.top = vcpu.fpu.top.wrapping_add(1) & 7;
                 vcpu.fpu.status_word =
-                    (vcpu.fpu.status_word & !0x3800) | ((vcpu.fpu.top as u16) << 11);
+                    (vcpu.fpu.status_word & !0x3A00) | ((vcpu.fpu.top as u16) << 11);
+                super::record_x87_data_op(vcpu, 0x01F7);
             }
             0xF8 => {
                 // FPREM

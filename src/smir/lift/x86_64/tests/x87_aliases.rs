@@ -25,30 +25,24 @@ fn assert_single_x87_alias(bytes: &[u8], expected: X86X87DataKind, st: u8, fop: 
     assert!(!result.ops[0].is_jit_safe(), "{bytes:02X?}");
 }
 
-fn assert_ffreep_sequence(ops: &[SmirOp], st: u8, guest_pc: u64) {
+fn assert_ffreep_op(ops: &[SmirOp], st: u8, guest_pc: u64) {
     let fop = 0x07C0 + u16::from(st);
-    let mut expected = vec![(X86X87DataKind::Free, st)];
-    if st != 0 {
-        expected.push((X86X87DataKind::Free, 0));
-    }
-    expected.push((X86X87DataKind::IncrementTop, 0));
-
-    assert_eq!(ops.len(), expected.len());
-    for (index, (op, (expected_kind, expected_st))) in ops.iter().zip(expected).enumerate() {
-        assert_eq!(op.id, OpId(index as u16));
-        assert_eq!(op.guest_pc, guest_pc);
-        assert!(matches!(
-            &op.kind,
-            OpKind::X86X87Data {
-                kind,
+    assert!(matches!(
+        ops,
+        [SmirOp {
+            id: OpId(0),
+            guest_pc: actual_pc,
+            kind: OpKind::X86X87Data {
+                kind: X86X87DataKind::FreePop,
                 addr: None,
-                st,
+                st: actual_st,
                 fop: actual_fop,
-            } if *kind == expected_kind && *st == expected_st && *actual_fop == fop
-        ));
-        assert!(!op.kind.is_jit_safe());
-        assert!(!op.is_jit_safe());
-    }
+            },
+            ..
+        }] if *actual_pc == guest_pc && *actual_st == st && *actual_fop == fop
+    ));
+    assert!(ops[0].kind.is_jit_safe());
+    assert!(ops[0].is_jit_safe());
 }
 
 #[test]
@@ -91,7 +85,7 @@ fn all_direct_accepted_legacy_x87_register_ranges_lift_exactly() {
         let ffreep = lift_single(&[0xDF, 0xC0 + st]).unwrap();
         assert_eq!(ffreep.bytes_consumed, 2);
         assert!(matches!(ffreep.control_flow, ControlFlow::Fallthrough));
-        assert_ffreep_sequence(&ffreep.ops, st, 0x1000);
+        assert_ffreep_op(&ffreep.ops, st, 0x1000);
     }
 }
 
@@ -126,7 +120,7 @@ fn legacy_x87_register_ranges_trap_on_lock_and_survive_o2_in_order() {
         .iter()
         .find(|block| block.guest_pc == 0x2000)
         .unwrap();
-    assert_eq!(entry.ops.len(), 8);
+    assert_eq!(entry.ops.len(), 6);
     for guest_pc in [0x2000, 0x2002, 0x2004, 0x2006, 0x200A] {
         assert_eq!(
             entry
@@ -144,5 +138,5 @@ fn legacy_x87_register_ranges_trap_on_lock_and_survive_o2_in_order() {
         .filter(|op| op.guest_pc == 0x2008)
         .cloned()
         .collect::<Vec<_>>();
-    assert_ffreep_sequence(&ffreep_ops, 3, 0x2008);
+    assert_ffreep_op(&ffreep_ops, 3, 0x2008);
 }

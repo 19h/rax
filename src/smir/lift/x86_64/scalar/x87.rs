@@ -42,35 +42,6 @@ impl X86_64Lifter {
         let st = modrm.byte & 7;
         let fop = (((opcode & 7) as u16) << 8) | modrm.byte as u16;
 
-        // FFREEP has no dedicated IR kind. Its two tag updates and TOP advance
-        // are individually non-faulting; composing them preserves every
-        // defined result. C0-C3 are undefined for FFREEP, so IncrementTop's
-        // deterministic C1=0 is within the architectural result domain.
-        if opcode == 0xDF && !modrm.is_memory && matches!(modrm.byte, 0xC0..=0xC7) {
-            let mut ops = Vec::with_capacity(3);
-            let mut push = |kind, st| {
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::X86X87Data {
-                        kind,
-                        addr: None,
-                        st,
-                        fop,
-                    },
-                ));
-            };
-            push(X86X87DataKind::Free, st);
-            if st != 0 {
-                push(X86X87DataKind::Free, 0);
-            }
-            push(X86X87DataKind::IncrementTop, 0);
-            return Ok(LiftResult::fallthrough(
-                ops,
-                prefix.cursor + modrm.bytes_consumed,
-            ));
-        }
-
         let data_kind = match (opcode, modrm.is_memory, group, modrm.byte) {
             (0xD8, true, 0, _) => Some(X86X87DataKind::AddSubtract {
                 source: X86X87ArithmeticSource::Single,
@@ -472,6 +443,7 @@ impl X86_64Lifter {
                 Some(X86X87DataKind::Exchange)
             }
             (0xDD, false, _, 0xC0..=0xC7) => Some(X86X87DataKind::Free),
+            (0xDF, false, _, 0xC0..=0xC7) => Some(X86X87DataKind::FreePop),
             (0xD9, false, _, 0xE0) => Some(X86X87DataKind::ChangeSign),
             (0xD9, false, _, 0xE1) => Some(X86X87DataKind::Absolute),
             (0xD9, false, _, 0xE4) => Some(X86X87DataKind::TestZero),

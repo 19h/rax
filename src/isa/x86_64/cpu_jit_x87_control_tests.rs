@@ -1,4 +1,4 @@
-//! Direct/native differentials for state-backed x87 no-wait controls.
+//! Direct/native differentials for state-backed x87 environment operations.
 
 use super::*;
 use crate::vm::vcpu::VCpu;
@@ -7,7 +7,7 @@ use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
 const STACK: u64 = 0x8000;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct FpuImage {
     control_word: u16,
     status_word: u16,
@@ -77,6 +77,79 @@ fn seed_fpu(vcpu: &mut X86_64Vcpu) {
         f64::from_bits(0x3FF0_0000_0000_0000 | ((index as u64) << 40) | index as u64)
     });
     vcpu.fpu.top = 5;
+}
+
+fn seed_stack_metadata_fpu(vcpu: &mut X86_64Vcpu) {
+    seed_fpu(vcpu);
+    vcpu.fpu.control_word = 0x027F;
+    vcpu.fpu.status_word = (5 << 11) | 0x4700 | 0x003F;
+    vcpu.fpu.tag_word = 0;
+    vcpu.fpu.top = 5;
+}
+
+#[derive(Clone, Copy, Debug)]
+enum StackMetadata {
+    DecrementTop,
+    IncrementTop,
+    Free(u8),
+    FreePop(u8),
+}
+
+impl StackMetadata {
+    fn encoding(self) -> [u8; 2] {
+        match self {
+            Self::DecrementTop => [0xD9, 0xF6],
+            Self::IncrementTop => [0xD9, 0xF7],
+            Self::Free(st) => [0xDD, 0xC0 + st],
+            Self::FreePop(st) => [0xDF, 0xC0 + st],
+        }
+    }
+
+    fn fop(self) -> u16 {
+        match self {
+            Self::DecrementTop => 0x01F6,
+            Self::IncrementTop => 0x01F7,
+            Self::Free(st) => 0x05C0 + u16::from(st),
+            Self::FreePop(st) => 0x07C0 + u16::from(st),
+        }
+    }
+
+    fn expected(self, mut before: FpuImage, guest_pc: u64) -> FpuImage {
+        let old_top = before.top;
+        match self {
+            Self::DecrementTop => {
+                before.top = old_top.wrapping_sub(1) & 7;
+                before.status_word = (before.status_word & !0x3A00) | (u16::from(before.top) << 11);
+            }
+            Self::IncrementTop => {
+                before.top = old_top.wrapping_add(1) & 7;
+                before.status_word = (before.status_word & !0x3A00) | (u16::from(before.top) << 11);
+            }
+            Self::Free(st) => {
+                let physical = old_top.wrapping_add(st) & 7;
+                before.tag_word |= 3 << (u16::from(physical) * 2);
+            }
+            Self::FreePop(st) => {
+                let physical = old_top.wrapping_add(st) & 7;
+                before.tag_word |= 3 << (u16::from(physical) * 2);
+                before.tag_word |= 3 << (u16::from(old_top) * 2);
+                before.top = old_top.wrapping_add(1) & 7;
+                before.status_word = (before.status_word & !0x3800) | (u16::from(before.top) << 11);
+            }
+        }
+        before.instr_ptr = guest_pc;
+        before.last_opcode = self.fop();
+        before
+    }
+}
+
+fn stack_metadata_forms() -> Vec<StackMetadata> {
+    let mut forms = vec![StackMetadata::DecrementTop, StackMetadata::IncrementTop];
+    for st in 0..8 {
+        forms.push(StackMetadata::Free(st));
+        forms.push(StackMetadata::FreePop(st));
+    }
+    forms
 }
 
 fn run_direct_to(vcpu: &mut X86_64Vcpu, target: u64) {
@@ -190,6 +263,10 @@ fn x87_encoding_faults_precede_cr0_device_not_available() {
         ("FNCLEX", &[0xDB, 0xE2][..]),
         ("FNINIT", &[0xDB, 0xE3][..]),
         ("FNSTSW AX", &[0xDF, 0xE0][..]),
+        ("FDECSTP", &[0xD9, 0xF6][..]),
+        ("FINCSTP", &[0xD9, 0xF7][..]),
+        ("FFREE ST(3)", &[0xDD, 0xC3][..]),
+        ("FFREEP ST(3)", &[0xDF, 0xC3][..]),
     ] {
         let mut locked = vec![0xF0];
         locked.extend_from_slice(instruction);
@@ -247,6 +324,155 @@ fn x87_encoding_faults_precede_cr0_device_not_available() {
             error.contains("IDT entry 7 not present"),
             "REX2 {name}: expected #NM with APX enabled, got {error}"
         );
+    }
+}
+
+#[test]
+fn jit_x87_stack_metadata_matches_direct_for_all_scanned_register_encodings() {
+    const PREFIXES: &[&[u8]] = &[
+        &[],
+        &[0x66],
+        &[0xF2],
+        &[0xF3],
+        &[0x67],
+        &[0x64],
+        &[0x65],
+        &[0x48],
+        &[0x44],
+        &[0x41],
+        &[0x4D],
+        &[0x66, 0x48],
+        &[0xF2, 0x48],
+        &[0xF3, 0x48],
+    ];
+
+    for form in stack_metadata_forms() {
+        for prefix in PREFIXES {
+            let encoded = prefix
+                .iter()
+                .copied()
+                .chain(form.encoding())
+                .collect::<Vec<_>>();
+            let mut code = encoded.clone();
+            code.extend_from_slice(&[0xEB, 0x00, 0xF4]);
+            let hlt_pc = encoded.len() as u64 + 2;
+            let mut direct = test_vcpu(memory_with_code(&code));
+            let mut native = test_vcpu(memory_with_code(&code));
+            seed_stack_metadata_fpu(&mut direct);
+            seed_stack_metadata_fpu(&mut native);
+            let expected = form.expected(fpu_image(&direct), 0);
+
+            run_direct_to(&mut direct, hlt_pc);
+            assert_eq!(fpu_image(&direct), expected, "{form:?}, {prefix:02X?}");
+
+            let region = native
+                .jit_compile_region()
+                .unwrap_or_else(|error| panic!("{form:?}, {prefix:02X?}: {error:?}"))
+                .unwrap_or_else(|| panic!("{form:?}, {prefix:02X?}: native gate"));
+            assert!(region.uses_x87_environment_state, "{form:?}, {prefix:02X?}");
+            assert!(!region.uses_mmx, "{form:?}, {prefix:02X?}");
+            native.jit_run_region_native(&region);
+
+            assert_eq!(
+                register_image(&native),
+                register_image(&direct),
+                "{form:?}, {prefix:02X?}: register state"
+            );
+            assert_eq!(
+                fpu_image(&native),
+                fpu_image(&direct),
+                "{form:?}, {prefix:02X?}: x87 state"
+            );
+            assert_eq!(native.regs.rip, hlt_pc, "{form:?}, {prefix:02X?}");
+        }
+    }
+}
+
+#[test]
+fn jit_x87_stack_metadata_waiting_guard_is_dynamic_precise_and_noncommitting() {
+    for form in [
+        StackMetadata::DecrementTop,
+        StackMetadata::IncrementTop,
+        StackMetadata::Free(3),
+        StackMetadata::FreePop(3),
+    ] {
+        for (fault_bits, expected_vector) in
+            [(0, 16), (1 << 2, 7), (1 << 3, 7), ((1 << 2) | (1 << 3), 7)]
+        {
+            let mut code = form.encoding().to_vec();
+            code.extend_from_slice(&[0xEB, 0x00, 0xF4]);
+            let mut native = test_vcpu(memory_with_code(&code));
+            seed_stack_metadata_fpu(&mut native);
+            let region = native
+                .jit_compile_region()
+                .unwrap_or_else(|error| panic!("{form:?}: {error:?}"))
+                .unwrap_or_else(|| panic!("{form:?}: guarded form must remain native"));
+
+            native.sregs.cr0 |= (1 << 5) | fault_bits;
+            native.fpu.status_word |= 0x8080;
+            let registers_before = register_image(&native);
+            let fpu_before = fpu_image(&native);
+            native.jit_run_region_native(&region);
+
+            assert_eq!(native.regs.rip, 0, "{form:?}, CR0={fault_bits:#x}");
+            assert_eq!(register_image(&native), registers_before, "{form:?}");
+            assert_eq!(fpu_image(&native), fpu_before, "{form:?}");
+            let error = exception_without_idt(&mut native);
+            assert!(
+                error.contains(&format!("IDT entry {expected_vector} not present")),
+                "{form:?}, CR0={fault_bits:#x}: {error}"
+            );
+            assert_eq!(register_image(&native), registers_before, "{form:?}");
+            assert_eq!(fpu_image(&native), fpu_before, "{form:?}");
+        }
+    }
+}
+
+#[test]
+fn jit_x87_stack_metadata_executes_when_no_native_error_is_pending() {
+    for form in [
+        StackMetadata::DecrementTop,
+        StackMetadata::IncrementTop,
+        StackMetadata::Free(3),
+        StackMetadata::FreePop(3),
+    ] {
+        for (profile, native_errors, status_bits) in [
+            ("legacy-error-mode", false, 0x8080),
+            ("summary-status-clear", true, 0x0001),
+        ] {
+            let mut code = form.encoding().to_vec();
+            code.extend_from_slice(&[0xEB, 0x00, 0xF4]);
+            let hlt_pc = 4;
+            let mut direct = test_vcpu(memory_with_code(&code));
+            let mut native = test_vcpu(memory_with_code(&code));
+            for vcpu in [&mut direct, &mut native] {
+                seed_stack_metadata_fpu(vcpu);
+                if native_errors {
+                    vcpu.sregs.cr0 |= 1 << 5;
+                } else {
+                    vcpu.sregs.cr0 &= !(1 << 5);
+                }
+                vcpu.fpu.status_word |= status_bits;
+            }
+
+            run_direct_to(&mut direct, hlt_pc);
+            let region = native
+                .jit_compile_region()
+                .unwrap_or_else(|error| panic!("{profile}: compile x87 metadata: {error:?}"))
+                .unwrap_or_else(|| panic!("{profile}: x87 metadata remains native"));
+            native.jit_run_region_native(&region);
+            assert_eq!(
+                register_image(&native),
+                register_image(&direct),
+                "{form:?}, {profile}"
+            );
+            assert_eq!(
+                fpu_image(&native),
+                fpu_image(&direct),
+                "{form:?}, {profile}"
+            );
+            assert_eq!(native.regs.rip, hlt_pc, "{form:?}, {profile}");
+        }
     }
 }
 

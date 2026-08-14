@@ -463,6 +463,26 @@ impl SmirInterpreter {
                 }
             },
 
+            OpKind::X86X87Data { kind, .. }
+                if kind.is_stack_metadata()
+                    && matches!(
+                        &ctx.arch_regs,
+                        ArchRegState::X86_64(x86)
+                            if x86.cr0 & ((1 << 2) | (1 << 3)) != 0
+                                || (x86.cr0 & (1 << 5) != 0
+                                    && x86.x87.status_word & 0x0080 != 0)
+                    ) =>
+            {
+                // These are waiting x87 operations. Replay the exact guest
+                // instruction so the direct path delivers #NM before #MF and
+                // neither fault commits TOP, tags, C1, FIP, or FOP.
+                ctx.request_exit(ExitReason::Undefined {
+                    addr: op.guest_pc,
+                    opcode: 0,
+                });
+                return Ok(());
+            }
+
             OpKind::X86X87Data {
                 kind,
                 addr,

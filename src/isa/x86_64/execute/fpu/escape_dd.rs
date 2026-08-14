@@ -57,8 +57,12 @@ pub fn escape_dd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
         match modrm {
             0xC0..=0xC7 => {
                 // FFREE ST(i)
+                if !super::require_waiting_x87_available(vcpu)? {
+                    return Ok(None);
+                }
                 let tag_shift = (vcpu.fpu.st_index(rm) as u16) * 2;
                 vcpu.fpu.tag_word |= 3 << tag_shift; // Mark as empty
+                super::record_x87_data_op(vcpu, 0x05C0 + u16::from(rm));
             }
             0xC8..=0xCF => {
                 // Legacy FXCH alias.
