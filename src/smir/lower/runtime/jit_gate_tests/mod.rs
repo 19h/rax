@@ -378,6 +378,8 @@ mod push_flags;
 #[cfg(test)]
 mod push_value;
 #[cfg(test)]
+mod random_state;
+#[cfg(test)]
 mod read_control;
 #[cfg(test)]
 mod read_debug;

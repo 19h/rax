@@ -357,6 +357,8 @@ mod state;
 pub use state::*;
 mod state_extend;
 pub(crate) use state_extend::*;
+mod random;
+pub(crate) use random::*;
 mod state_tbm;
 mod state_xchg;
 pub use state_tbm::*;

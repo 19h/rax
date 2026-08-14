@@ -12,19 +12,6 @@ pub(crate) fn x86_host_has_avx512er() -> bool {
         max_leaf >= 7 && std::arch::x86_64::__cpuid_count(7, 0).ebx & (1 << 27) != 0
     }
 }
-pub(crate) fn x86_random_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
-    use crate::smir::ir::ops::OpKind;
-    use crate::smir::ir::types::OpWidth;
-
-    matches!(
-        op,
-        OpKind::X86Random {
-            dst,
-            width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
-            ..
-        } if x86_native_identity_gpr(dst)
-    )
-}
 pub(crate) fn x86_cwd_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::{ArchReg, OpWidth, VReg, X86Reg};

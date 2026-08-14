@@ -3264,65 +3264,6 @@ fn x86_bit_test_gate_accepts_exact_register_shapes_and_rejects_unsafe_ir() {
     );
 }
 #[test]
-fn x86_random_gate_validates_width_destination_and_host_feature() {
-    for seed in [false, true] {
-        for width in [OpWidth::W16, OpWidth::W32, OpWidth::W64] {
-            let op = OpKind::X86Random {
-                dst: x86(X86Reg::R9),
-                width,
-                seed,
-            };
-            assert!(op.is_jit_safe());
-            assert!(x86_gate(op), "valid X86Random shape must enter the gate");
-        }
-
-        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
-        builder.push_op(
-            0x1000,
-            OpKind::X86Random {
-                dst: x86(X86Reg::R9),
-                width: OpWidth::W64,
-                seed,
-            },
-        );
-        builder.set_terminator(Terminator::Return { values: vec![] });
-        let function = builder.finish();
-        #[cfg(target_arch = "x86_64")]
-        assert_eq!(
-            x86_native_scalar_features_supported_excluding(
-                &function,
-                &std::collections::HashMap::new()
-            ),
-            if seed {
-                std::is_x86_feature_detected!("rdseed")
-            } else {
-                std::is_x86_feature_detected!("rdrand")
-            }
-        );
-        #[cfg(not(target_arch = "x86_64"))]
-        assert!(!x86_native_scalar_features_supported_excluding(
-            &function,
-            &std::collections::HashMap::new()
-        ));
-    }
-
-    for (dst, width) in [
-        (x86(X86Reg::Rsp), OpWidth::W64),
-        (x86(X86Reg::Rbp), OpWidth::W32),
-        (x86(X86Reg::R16), OpWidth::W16),
-        (VReg::Virtual(VirtualId(9)), OpWidth::W64),
-        (x86(X86Reg::R9), OpWidth::W8),
-    ] {
-        let malformed = OpKind::X86Random {
-            dst,
-            width,
-            seed: false,
-        };
-        assert!(malformed.is_jit_safe());
-        assert!(!x86_gate(malformed), "malformed X86Random must deopt");
-    }
-}
-#[test]
 fn x86_cldemote_gate_admits_only_the_ignorable_cache_hint() {
     for addr in [
         Address::Direct(x86(X86Reg::Rbx)),

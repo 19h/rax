@@ -3362,19 +3362,6 @@ impl X86_64Lowerer {
 
             OpKind::X86ReadPmc(..) => self.emit_x86_read_pmc(op)?,
 
-            OpKind::X86Random { dst, width, seed } => {
-                if !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64) {
-                    return Err(LowerError::InvalidOperand {
-                        op: "X86Random".to_string(),
-                        operand: format!("unsupported width {width:?}"),
-                    });
-                }
-                let dst = self.get_dst_reg(*dst)?;
-                Self::ensure_flag_stack_operands_safe("X86Random", &[dst])?;
-                let mut emitter = X86Emitter::new(&mut self.code);
-                emitter.emit_x86_random(dst, *width, *seed);
-            }
-
             OpKind::X86ReadPid { dst } => self.lower_x86_read_pid(*dst)?,
 
             OpKind::X86XGetBv {

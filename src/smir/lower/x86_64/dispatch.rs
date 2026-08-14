@@ -41,6 +41,10 @@ impl X86_64Lowerer {
                 operand: format!("invalid hinted SMIR shape: {:?}", op.kind),
             });
         }
+        if matches!(op.kind, OpKind::X86Random { .. }) {
+            self.lower_x86_random(op)?;
+            return Ok(());
+        }
         if self.lower_opmask(op)? {
             return Ok(());
         }

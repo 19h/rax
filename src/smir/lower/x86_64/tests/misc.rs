@@ -4758,51 +4758,6 @@ fn lower_x86_fences_emits_exact_baseline_encodings() {
     }
 }
 #[test]
-fn lower_x86_random_emits_all_widths_sources_and_rejects_malformed_shapes() {
-    let r9 = VReg::Arch(ArchReg::X86(X86Reg::R9));
-    for (seed, width, expected) in [
-        (false, OpWidth::W16, &[0x66, 0x41, 0x0F, 0xC7, 0xF1][..]),
-        (false, OpWidth::W32, &[0x41, 0x0F, 0xC7, 0xF1][..]),
-        (false, OpWidth::W64, &[0x49, 0x0F, 0xC7, 0xF1][..]),
-        (true, OpWidth::W16, &[0x66, 0x41, 0x0F, 0xC7, 0xF9][..]),
-        (true, OpWidth::W32, &[0x41, 0x0F, 0xC7, 0xF9][..]),
-        (true, OpWidth::W64, &[0x49, 0x0F, 0xC7, 0xF9][..]),
-    ] {
-        let code = lower_single_op(OpKind::X86Random {
-            dst: r9,
-            width,
-            seed,
-        });
-        assert!(
-            code.windows(expected.len()).any(|bytes| bytes == expected),
-            "missing native random encoding {expected:02X?} in {code:02X?}"
-        );
-    }
-
-    for (dst, width) in [
-        (VReg::Arch(ArchReg::X86(X86Reg::Rsp)), OpWidth::W64),
-        (VReg::Arch(ArchReg::X86(X86Reg::Rbp)), OpWidth::W32),
-        (VReg::Arch(ArchReg::X86(X86Reg::R16)), OpWidth::W16),
-        (r9, OpWidth::W8),
-    ] {
-        let error = lower_single_op_err(OpKind::X86Random {
-            dst,
-            width,
-            seed: false,
-        });
-        assert!(
-            matches!(
-                error,
-                LowerError::UnsupportedOp { .. }
-                    | LowerError::InvalidRegister(_)
-                    | LowerError::RegisterAllocationFailed { .. }
-                    | LowerError::InvalidOperand { .. }
-            ),
-            "malformed destination={dst:?} width={width:?}: {error:?}"
-        );
-    }
-}
-#[test]
 fn lower_cldemote_is_an_exact_noop_and_rejects_fault_capable_cache_forms() {
     let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
     let cldemote = lower_single_op(OpKind::X86CacheControl {

@@ -1286,6 +1286,8 @@ pub(crate) fn block_is_clobber_safe(
             crate::smir::lower::x86_64::x86_state_backed_gpr_pdep_pext_valid(op);
         let state_mulx_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_mulx_valid(op);
         let state_multiply_ok = crate::smir::lower::x86_64::x86_state_multiply_valid(op);
+        let random_ok = crate::smir::lower::x86_64::x86_random_shape_valid(op);
+        let state_random_ok = crate::smir::lower::x86_64::x86_state_random_valid(op);
         let state_bswap_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_bswap_valid(op);
         let state_xchg_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_xchg_valid(op);
         let xadd_ok = crate::smir::lower::x86_64::x86_xadd_shape_valid(op);
@@ -1463,6 +1465,7 @@ pub(crate) fn block_is_clobber_safe(
             || state_pdep_pext_ok
             || state_mulx_ok
             || state_multiply_ok
+            || state_random_ok
             || state_bswap_ok
             || state_xchg_ok
             || xadd_ok
@@ -1531,6 +1534,7 @@ pub(crate) fn block_is_clobber_safe(
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_mulx_candidate(op)
                 && !state_mulx_ok)
             || (crate::smir::lower::x86_64::x86_state_multiply_candidate(op) && !state_multiply_ok)
+            || (crate::smir::lower::x86_64::x86_state_random_candidate(op) && !state_random_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_bswap_candidate(op)
                 && !state_bswap_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_xchg_candidate(op)
@@ -1662,7 +1666,7 @@ pub(crate) fn block_is_clobber_safe(
         if matches!(op.kind, OpKind::X86ReadPid { .. }) && !rdpid_ok {
             return false;
         }
-        if matches!(op.kind, OpKind::X86Random { .. }) && !x86_random_shape_valid(&op.kind) {
+        if matches!(op.kind, OpKind::X86Random { .. }) && !random_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86CacheControl { .. }) && !cldemote_ok {
@@ -1953,7 +1957,7 @@ pub(crate) fn block_is_clobber_safe(
         // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/INC/DEC/
         // ROL/ROR/RCL/RCR/SHL/SHR/SAR/SHLD/SHRD (including APX NDD)/count/
         // bit-scan/bit-test/CRC32/BMI/ADX/PDEP/PEXT/MULX/BSWAP/XCHG/XADD/
-        // CMPXCHG/RDPID/ADD/SUB
+        // CMPXCHG/RDPID/RDRAND/RDSEED/ADD/SUB
         // reads/writes are state-backed.
         // Other writes are not modeled and bail. A read is additionally valid
         // as an operand of a mem-JIT Load/Store (an address base/index, or a stored value): the MMU

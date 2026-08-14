@@ -74,6 +74,8 @@ mod multiply_register;
 mod ordinary_stack;
 #[path = "rdpid.rs"]
 mod rdpid;
+#[path = "random_state.rs"]
+mod random_state;
 #[path = "smc.rs"]
 mod smc;
 #[path = "sse4a_bitfield.rs"]

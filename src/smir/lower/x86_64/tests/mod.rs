@@ -90,6 +90,8 @@ mod push_segment;
 #[cfg(all(test, feature = "smir-jit"))]
 mod push_value;
 #[cfg(test)]
+mod random;
+#[cfg(test)]
 mod rdpid;
 #[cfg(test)]
 mod read_control;
