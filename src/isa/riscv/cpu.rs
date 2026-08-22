@@ -648,6 +648,13 @@ impl RiscVCpu {
         self.pc = pc.wrapping_add(insn.len as u64) & self.xmask();
 
         if insn.op.is_fp() {
+            // priv spec v1.12 norm:mstatus_fs_op: with mstatus.FS=Off,
+            // attempts to execute FP instructions or access FP CSRs in
+            // S/U-mode raise an illegal-instruction exception. M-mode is
+            // never gated by FS.
+            if self.priv_ != Priv::Machine && (self.mstatus >> 13) & 0b11 == 0 {
+                return Err(Trap::illegal(insn.raw));
+            }
             return self.exec_fp(insn, pc);
         }
 
@@ -5527,6 +5534,40 @@ mod tests {
             c.csr_read(0x344).unwrap() & (msip | mtip | stip),
             msip | mtip | stip
         );
+    }
+
+    #[test]
+    fn fp_instructions_and_csrs_trap_when_fs_is_off() {
+        // priv spec v1.12 norm:mstatus_fs_op: FS=Off gates FP in S/U-mode.
+        // U-mode fadd.s with FS=Off (default 0) must trap.
+        let mut c = cpu();
+        c.write_memory(0x2000, &0x0031_00d3u32.to_le_bytes())
+            .unwrap(); // fadd.s f1, f2, f3
+        c.priv_ = Priv::User;
+        c.set_pc(0x2000);
+        let e = c.step();
+        assert!(
+            matches!(e, RiscVExit::Trap(_)),
+            "U-mode fadd.s with FS=Off must trap"
+        );
+        // U-mode fcsr read with FS=Off must trap.
+        let mut c2 = cpu();
+        c2.priv_ = Priv::User;
+        assert_eq!(c2.csr_read(0x003), Err(Trap::illegal(0)));
+        // M-mode control: FP stays legal regardless of FS.
+        let mut c3 = cpu();
+        c3.write_memory(0x2000, &0x0031_00d3u32.to_le_bytes())
+            .unwrap(); // fadd.s f1, f2, f3
+        c3.set_pc(0x2000);
+        assert_eq!(c3.step(), RiscVExit::Continue);
+        // FS=Initial (0b01) permits S/U-mode FP again.
+        let mut c4 = cpu();
+        c4.write_memory(0x2000, &0x0031_00d3u32.to_le_bytes())
+            .unwrap();
+        c4.csr_write(0x300, 0b01 << 13).unwrap();
+        c4.priv_ = Priv::User;
+        c4.set_pc(0x2000);
+        assert_eq!(c4.step(), RiscVExit::Continue);
     }
 
     #[test]

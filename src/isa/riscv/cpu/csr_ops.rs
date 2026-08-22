@@ -169,7 +169,11 @@ impl RiscVCpu {
     /// covers the XLEN- and extension-dependent register families.
     fn csr_available(&self, csr: Csr) -> bool {
         match csr {
-            Csr::Fflags | Csr::Frm | Csr::Fcsr => self.cfg.isa.f,
+            Csr::Fflags | Csr::Frm | Csr::Fcsr => {
+                // priv spec v1.12 norm:mstatus_fs_op: FP CSRs are gated on
+                // mstatus.FS != Off in S/U-mode (M-mode always allowed).
+                self.cfg.isa.f && (self.priv_ == Priv::Machine || (self.mstatus >> 13) & 0b11 != 0)
+            }
             Csr::Jvt => self.cfg.isa.zcmt,
             Csr::CycleH | Csr::TimeH | Csr::InstretH => self.rv32(),
             Csr::Vstart
