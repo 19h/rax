@@ -6052,7 +6052,13 @@ mod tests {
         // vcompress.vm vd, vs2, vs1: funct6=0b010111, vm=1, funct3=0b010.
         // vd is an LMUL-sized group and must be group-aligned (RVV 3.4.2).
         let op_vc = |vm: u32, vs2: u32, vs1: u32, vd: u32| -> u32 {
-            (0b010111u32 << 26) | (vm << 25) | (vs2 << 20) | (vs1 << 15) | (0b010 << 12) | (vd << 7) | 0x57
+            (0b010111u32 << 26)
+                | (vm << 25)
+                | (vs2 << 20)
+                | (vs1 << 15)
+                | (0b010 << 12)
+                | (vd << 7)
+                | 0x57
         };
         // e32,m2 (vtype=0x10): vd must be a multiple of 2.
         let mut c = cpu_e8m1();
