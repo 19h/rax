@@ -49,6 +49,8 @@ pub enum Csr {
     Mtvec = 0x305,
     /// Machine counter-enable.
     Mcounteren = 0x306,
+    /// Supervisor counter-enable.
+    Scounteren = 0x106,
     /// Machine scratch register.
     Mscratch = 0x340,
     /// Machine exception program counter.
@@ -109,6 +111,7 @@ impl Csr {
             0x141 => Csr::Sepc,
             0x305 => Csr::Mtvec,
             0x306 => Csr::Mcounteren,
+            0x106 => Csr::Scounteren,
             0x340 => Csr::Mscratch,
             0x341 => Csr::Mepc,
             0x342 => Csr::Mcause,

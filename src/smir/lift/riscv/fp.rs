@@ -357,6 +357,30 @@ impl RiscVLifter {
                     ));
                 }
             }
+            RvOp::FmvhXD => {
+                let fs = getf(d.rs1, ctx);
+                let high = ctx.alloc_vreg();
+                ops.push(mk(
+                    ctx,
+                    OpKind::Shr {
+                        dst: high,
+                        src: fs,
+                        amount: SrcOperand::Imm(32),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                if let Some(dst) = self.def_x_reg(d.rd, ctx) {
+                    ops.push(mk(
+                        ctx,
+                        OpKind::Mov {
+                            dst,
+                            src: SrcOperand::Reg(high),
+                            width: w,
+                        },
+                    ));
+                }
+            }
             // int -> FP bit moves (NaN-box narrow values).
             RvOp::FmvWX => {
                 let xs = self.get_x_reg(d.rs1, ctx);
@@ -417,6 +441,43 @@ impl RiscVLifter {
                         dst: fd,
                         src: SrcOperand::Reg(xs),
                         width: w,
+                    },
+                ));
+            }
+            RvOp::FmvpDX => {
+                let low_src = self.get_x_reg(d.rs1, ctx);
+                let high_src = self.get_x_reg(d.rs2, ctx);
+                let low = ctx.alloc_vreg();
+                ops.push(mk(
+                    ctx,
+                    OpKind::And {
+                        dst: low,
+                        src1: low_src,
+                        src2: SrcOperand::Imm(0xffff_ffff),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                let shifted = ctx.alloc_vreg();
+                ops.push(mk(
+                    ctx,
+                    OpKind::Shl {
+                        dst: shifted,
+                        src: high_src,
+                        amount: SrcOperand::Imm(32),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                let fd = VReg::Arch(ArchReg::RiscV(RiscVReg::F(d.rd)));
+                ops.push(mk(
+                    ctx,
+                    OpKind::Or {
+                        dst: fd,
+                        src1: low,
+                        src2: SrcOperand::Reg(shifted),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
                     },
                 ));
             }

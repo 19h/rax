@@ -221,6 +221,8 @@ impl Op {
             FcvtDLu => "fcvt.d.lu",
             FmvXD => "fmv.x.d",
             FmvDX => "fmv.d.x",
+            FmvhXD => "fmvh.x.d",
+            FmvpDX => "fmvp.d.x",
             Flq => "flq",
             Fsq => "fsq",
             FmaddQ => "fmadd.q",
@@ -827,11 +829,14 @@ impl Op {
             | FltH | FleH | FleqH | FltqH | FeqQ | FltQ | FleQ => Class::FCmp,
             FliS | FliD | FliH => Class::Fli,
             FcvtWS | FcvtWuS | FcvtLS | FcvtLuS | FmvXW | FclassS | FcvtWD | FcvtWuD | FcvtLD
-            | FcvtLuD | FmvXD | FclassD | FcvtmodWD | FcvtWH | FcvtWuH | FcvtLH | FcvtLuH
-            | FmvXH | FclassH | FcvtWQ | FcvtWuQ | FcvtLQ | FcvtLuQ | FclassQ => Class::FToX,
+            | FcvtLuD | FmvXD | FmvhXD | FclassD | FcvtmodWD | FcvtWH | FcvtWuH | FcvtLH
+            | FcvtLuH | FmvXH | FclassH | FcvtWQ | FcvtWuQ | FcvtLQ | FcvtLuQ | FclassQ => {
+                Class::FToX
+            }
             FcvtSW | FcvtSWu | FcvtSL | FcvtSLu | FmvWX | FcvtDW | FcvtDWu | FcvtDL | FcvtDLu
             | FmvDX | FcvtHW | FcvtHWu | FcvtHL | FcvtHLu | FmvHX | FcvtQW | FcvtQWu | FcvtQL
             | FcvtQLu => Class::XToF,
+            FmvpDX => Class::XPairToF,
             FcvtSD | FcvtDS | FcvtSH | FcvtHS | FcvtDH | FcvtHD | FcvtSQ | FcvtQS | FcvtDQ
             | FcvtQD | FcvtHQ | FcvtQH => Class::FToF,
             Vsetvli | Vsetvl => Class::Vset,
@@ -881,6 +886,7 @@ enum Class {
     FCmp,
     FToX,
     XToF,
+    XPairToF,
     FToF,
     Fli,
     Vset,
@@ -975,6 +981,7 @@ impl fmt::Display for Insn {
             Class::FCmp => write!(f, "{m} {rd}, {frs1}, {frs2}"),
             Class::FToX => write!(f, "{m} {rd}, {frs1}"),
             Class::XToF => write!(f, "{m} {frd}, {rs1}"),
+            Class::XPairToF => write!(f, "{m} {frd}, {rs1}, {rs2}"),
             Class::FToF => write!(f, "{m} {frd}, {frs1}"),
             Class::Fli => write!(f, "{m} {frd}, #{}", self.rs1),
             Class::Vset => write!(f, "{m} {rd}, {rs1}, {:#x}", self.imm),
@@ -1321,6 +1328,17 @@ mod tests {
             dis_q(enc(0b1110011, 0, 11, 1, 10, 0x53)),
             "fclass.q a0, fa1"
         );
+    }
+
+    #[test]
+    fn disasm_rv32_zfa_doubleword_moves_and_hlvx_wu() {
+        let fmvh_x_d = (0b1110001 << 25) | (1 << 20) | (10 << 15) | (11 << 7) | 0x53;
+        let fmvp_d_x = (0b1011001 << 25) | (12 << 20) | (11 << 15) | (10 << 7) | 0x53;
+        let hlvx_wu = (0x34 << 25) | (3 << 20) | (10 << 15) | (0b100 << 12) | (5 << 7) | 0x73;
+
+        assert_eq!(dis_rv32(fmvh_x_d), "fmvh.x.d a1, fa0");
+        assert_eq!(dis_rv32(fmvp_d_x), "fmvp.d.x fa0, a1, a2");
+        assert_eq!(dis_rv32(hlvx_wu), "hlvx.wu t0, (a0)");
     }
 
     #[test]

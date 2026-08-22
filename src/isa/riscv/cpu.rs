@@ -17,6 +17,7 @@ use super::{Isa, Xlen};
 
 mod csr_ops;
 mod execution;
+mod fp_moves;
 #[cfg(all(
     feature = "smir-jit",
     any(target_arch = "x86_64", target_arch = "aarch64")
@@ -80,6 +81,12 @@ pub mod cause {
     pub const INT_M_TIMER: u64 = 7;
     /// Machine external interrupt.
     pub const INT_M_EXTERNAL: u64 = 11;
+    /// Supervisor software interrupt.
+    pub const INT_S_SOFTWARE: u64 = 1;
+    /// Supervisor timer interrupt.
+    pub const INT_S_TIMER: u64 = 5;
+    /// Supervisor external interrupt.
+    pub const INT_S_EXTERNAL: u64 = 9;
 }
 
 /// A trap raised while executing an instruction or accepting an interrupt.
@@ -198,6 +205,7 @@ pub struct RiscVCpu {
     medeleg: u64,
     mideleg: u64,
     mcounteren: u64,
+    scounteren: u64,
     mhartid: u64,
     jvt: u64,
 
@@ -248,12 +256,27 @@ const SSTATUS_BASE_MASK: u64 = (1 << 1) // SIE
     | (0b11 << 15) // XS
     | (1 << 18) // SUM
     | (1 << 19); // MXR
-const S_INTERRUPT_MASK: u64 = (1 << 1) | (1 << 5) | (1 << 9); // SSIP, STIP, SEIP
+const S_INTERRUPT_MASK: u64 =
+    (1 << cause::INT_S_SOFTWARE) | (1 << cause::INT_S_TIMER) | (1 << cause::INT_S_EXTERNAL);
 const MSTATUS_MIE: u64 = 1 << 3;
 const MIP_MSIP: u64 = 1 << cause::INT_M_SOFTWARE;
 const MIP_MTIP: u64 = 1 << cause::INT_M_TIMER;
 const MIP_MEIP: u64 = 1 << cause::INT_M_EXTERNAL;
 const M_INTERRUPT_MASK: u64 = MIP_MSIP | MIP_MTIP | MIP_MEIP;
+const IMPLEMENTED_INTERRUPT_MASK: u64 = M_INTERRUPT_MASK | S_INTERRUPT_MASK;
+const DELEGATABLE_EXCEPTION_MASK: u64 = (1 << cause::INSTR_MISALIGNED)
+    | (1 << cause::INSTR_ACCESS_FAULT)
+    | (1 << cause::ILLEGAL_INSTR)
+    | (1 << cause::BREAKPOINT)
+    | (1 << cause::LOAD_MISALIGNED)
+    | (1 << cause::LOAD_ACCESS_FAULT)
+    | (1 << cause::STORE_MISALIGNED)
+    | (1 << cause::STORE_ACCESS_FAULT)
+    | (1 << cause::ECALL_U)
+    | (1 << cause::ECALL_S)
+    | (1 << 12) // instruction page fault
+    | (1 << 13) // load page fault
+    | (1 << 15); // store/AMO page fault
 
 impl RiscVCpu {
     /// Create a hart with the given configuration and memory.
@@ -278,6 +301,7 @@ impl RiscVCpu {
             medeleg: 0,
             mideleg: 0,
             mcounteren: 0,
+            scounteren: 0,
             mhartid: 0,
             jvt: 0,
             cycle: 0,
@@ -323,6 +347,7 @@ impl RiscVCpu {
         self.medeleg = 0;
         self.mideleg = 0;
         self.mcounteren = 0;
+        self.scounteren = 0;
         self.jvt = 0;
         self.vl = 0;
         self.vtype = 0;
@@ -472,7 +497,7 @@ impl RiscVCpu {
 
     /// Assert or deassert one or more pending interrupt bits in `mip`.
     pub fn set_interrupt_pending(&mut self, mask: u64, pending: bool) {
-        let mask = mask & self.xmask();
+        let mask = mask & IMPLEMENTED_INTERRUPT_MASK & self.xmask();
         if pending {
             self.mip |= mask;
         } else {
@@ -3639,7 +3664,7 @@ impl RiscVCpu {
                 | Op::FminS | Op::FmaxS | Op::FminD | Op::FmaxD
                 | Op::FeqS | Op::FltS | Op::FleS | Op::FeqD | Op::FltD | Op::FleD
                 | Op::FclassS | Op::FclassD
-                | Op::FmvXW | Op::FmvWX | Op::FmvXD | Op::FmvDX
+                | Op::FmvXW | Op::FmvWX | Op::FmvXD | Op::FmvDX | Op::FmvhXD | Op::FmvpDX
                 // Zfa sub-op encodings (funct3 selects the op, not a rounding mode)
                 | Op::FliS | Op::FliD
                 | Op::FminmS | Op::FmaxmS | Op::FminmD | Op::FmaxmD
@@ -3894,10 +3919,14 @@ impl RiscVCpu {
             Op::FclassD => self.set_x(rd, ff::fclass(self.rf64(rs1))),
 
             // ---- moves between FP and integer registers ----
-            Op::FmvXW => self.set_x(rd, self.f(rs1) as u32 as i32 as i64 as u64),
-            Op::FmvWX => self.wf32(rd, self.x(rs1) as u32),
-            Op::FmvXD => self.set_x(rd, self.f(rs1)),
-            Op::FmvDX => self.wf64(rd, self.x(rs1)),
+            Op::FmvXW
+            | Op::FmvWX
+            | Op::FmvXD
+            | Op::FmvDX
+            | Op::FmvhXD
+            | Op::FmvpDX
+            | Op::FmvXH
+            | Op::FmvHX => self.exec_fp_move(insn),
 
             // ---- float -> integer conversions ----
             Op::FcvtWS => self.set_x(rd, ff::ftoi(self.rf32(rs1), true, 32, rm, &mut flags)),
@@ -4199,8 +4228,6 @@ impl RiscVCpu {
                 let r = ff::itof_fmt(ff::F16, self.x(rs1) as i128, rm, &mut flags);
                 self.wf16(rd, r as u16);
             }
-            Op::FmvXH => self.set_x(rd, self.f(rs1) as u16 as i16 as i64 as u64),
-            Op::FmvHX => self.wf16(rd, self.x(rs1) as u16),
 
             _ => return Err(Trap::illegal(insn.raw)),
         }

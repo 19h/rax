@@ -186,6 +186,10 @@ impl RiscVCpu {
         }
 
         let pc = self.pc;
+        if let Some(trap) = self.instruction_fetch_alignment_trap(pc) {
+            self.deliver_trap(trap, pc);
+            return (RiscVExit::Trap(trap), 1);
+        }
         let insn = match decode_at(self.mem.as_ref(), pc, self.cfg.xlen, &self.cfg.isa) {
             Ok(insn) => insn,
             Err(DecodeError::Fetch(_)) => {
@@ -1375,6 +1379,90 @@ mod tests {
             );
             assert_eq!(cpu.x(1), 0xfeed_face, "{level:?}");
             assert_eq!(cpu.instret(), 0, "{level:?}");
+        }
+    }
+
+    #[test]
+    fn jit_fallback_preserves_csr_privilege_and_counter_traps() {
+        let cases = [
+            (0x3050_20f3, Trap::illegal(0x3050_20f3)), // csrr x1, mtvec
+            (0xc000_20f3, Trap::illegal(0)),           // csrr x1, cycle with CY=0
+        ];
+        for level in [OptLevel::O0, OptLevel::O2] {
+            for (word, trap) in cases {
+                let mut cpu = cpu_with_word(word);
+                cpu.set_privilege(Priv::User);
+                cpu.set_x(1, 0xfeed_face);
+                assert_eq!(cpu.step_jit(level), RiscVExit::Trap(trap), "{level:?}");
+                assert_eq!(cpu.x(1), 0xfeed_face, "{level:?}");
+                assert_eq!(cpu.instret(), 0, "{level:?}");
+                assert_eq!(cpu.jit_stats().native_executions, 0, "{level:?}");
+                assert_eq!(cpu.jit_stats().interpreter_fallbacks, 1, "{level:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn jit_checks_fetch_alignment_before_region_formation() {
+        let config = RiscVConfig::rv32(Isa {
+            c: false,
+            ..Isa::rv64gc()
+        });
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let mut cpu = RiscVCpu::new(config, Box::new(FlatMemory::new(0, MEMORY_LEN)));
+            cpu.write_memory(CODE + 2, &0x0000_0013u32.to_le_bytes())
+                .unwrap();
+            cpu.set_pc(CODE + 2);
+            assert_eq!(
+                cpu.step_jit(level),
+                RiscVExit::Trap(Trap {
+                    cause: cause::INSTR_MISALIGNED,
+                    tval: CODE + 2,
+                }),
+                "{level:?}"
+            );
+            assert_eq!(cpu.cycle, 0, "{level:?}");
+            assert_eq!(cpu.instret(), 0, "{level:?}");
+            assert_eq!(cpu.jit_stats().native_executions, 0, "{level:?}");
+            assert_eq!(cpu.jit_stats().interpreter_fallbacks, 0, "{level:?}");
+        }
+    }
+
+    #[test]
+    fn jit_executes_rv32_zfa_doubleword_moves_at_o0_and_o2() {
+        let config = RiscVConfig::rv32(Isa::rv64gc());
+        let fmvh_x_d = (0b1110001 << 25) | (1 << 20) | (10 << 15) | (11 << 7) | 0x53;
+        let fmvp_d_x = (0b1011001 << 25) | (12 << 20) | (11 << 15) | (10 << 7) | 0x53;
+
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let mut high = cpu_with_config_word(config, fmvh_x_d);
+            high.set_f(10, 0x89ab_cdef_0123_4567);
+            assert_eq!(high.step_jit(level), RiscVExit::Continue, "{level:?}");
+            assert_eq!(high.x(11), 0x89ab_cdef, "{level:?}");
+            assert_eq!(high.jit_stats().native_executions, 1, "{level:?}");
+
+            let mut pack = cpu_with_config_word(config, fmvp_d_x);
+            pack.set_x(11, 0x7654_3210);
+            pack.set_x(12, 0xfedc_ba98);
+            assert_eq!(pack.step_jit(level), RiscVExit::Continue, "{level:?}");
+            assert_eq!(pack.f(10), 0xfedc_ba98_7654_3210, "{level:?}");
+            assert_eq!(pack.jit_stats().native_executions, 1, "{level:?}");
+        }
+    }
+
+    #[test]
+    fn jit_executes_hlvx_wu_on_rv32_at_o0_and_o2() {
+        let config = RiscVConfig::rv32(Isa::rv64gc());
+        let hlvx_wu = (0x34 << 25) | (3 << 20) | (10 << 15) | (0b100 << 12) | (5 << 7) | 0x73;
+
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let mut cpu = cpu_with_config_word(config, hlvx_wu);
+            cpu.write_memory(DATA, &0xfedc_ba98u32.to_le_bytes())
+                .unwrap();
+            cpu.set_x(10, DATA);
+            assert_eq!(cpu.step_jit(level), RiscVExit::Continue, "{level:?}");
+            assert_eq!(cpu.x(5), 0xfedc_ba98, "{level:?}");
+            assert_eq!(cpu.jit_stats().native_executions, 1, "{level:?}");
         }
     }
 

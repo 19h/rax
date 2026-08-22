@@ -12,6 +12,10 @@
 //! NaN, signaling-NaN inputs and invalid operations raise NV, and single-
 //! precision values are NaN-boxed by the caller in [`crate::isa::riscv::cpu`].
 
+mod metadata;
+
+pub use metadata::{fp_requires_rv64, fp_uses_int_src1, fp_writes_int_dst};
+
 /// RISC-V floating-point rounding modes (`frm` field, also the instruction
 /// `rm` field; `Dyn` selects the CSR `frm`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1902,95 +1906,6 @@ fn add_wide(
 // ===========================================================================
 
 use crate::isa::riscv::Op as RvFpInsn;
-
-/// Does this OP-FP / FMA op write its result to an **integer** (x) register?
-/// (compares, fp->int conversions, `fclass`, `fcvtmod`, `fmv.x.*`). Everything
-/// else writes an f-register.
-pub fn fp_writes_int_dst(op: RvFpInsn) -> bool {
-    use RvFpInsn::*;
-    matches!(
-        op,
-        FeqS | FltS
-            | FleS
-            | FeqD
-            | FltD
-            | FleD
-            | FeqH
-            | FltH
-            | FleH
-            | FleqS
-            | FltqS
-            | FleqD
-            | FltqD
-            | FleqH
-            | FltqH
-            | FclassS
-            | FclassD
-            | FclassH
-            | FcvtWS
-            | FcvtWuS
-            | FcvtLS
-            | FcvtLuS
-            | FcvtWD
-            | FcvtWuD
-            | FcvtLD
-            | FcvtLuD
-            | FcvtWH
-            | FcvtWuH
-            | FcvtLH
-            | FcvtLuH
-            | FcvtmodWD
-            | FmvXW
-            | FmvXD
-            | FmvXH
-    )
-}
-
-/// Does this OP-FP op take its first source operand from an **integer** (x)
-/// register? (int->fp conversions and `fmv.*.x`). Everything else reads an
-/// f-register.
-pub fn fp_uses_int_src1(op: RvFpInsn) -> bool {
-    use RvFpInsn::*;
-    matches!(
-        op,
-        FcvtSW
-            | FcvtSWu
-            | FcvtSL
-            | FcvtSLu
-            | FcvtDW
-            | FcvtDWu
-            | FcvtDL
-            | FcvtDLu
-            | FcvtHW
-            | FcvtHWu
-            | FcvtHL
-            | FcvtHLu
-            | FmvWX
-            | FmvDX
-            | FmvHX
-    )
-}
-
-/// Whether this scalar FP operation consumes or produces a 64-bit integer and
-/// is therefore illegal when XLEN is 32.
-pub fn fp_requires_rv64(op: RvFpInsn) -> bool {
-    use RvFpInsn::*;
-    matches!(
-        op,
-        FcvtLS
-            | FcvtLuS
-            | FcvtLD
-            | FcvtLuD
-            | FcvtLH
-            | FcvtLuH
-            | FcvtSL
-            | FcvtSLu
-            | FcvtDL
-            | FcvtDLu
-            | FcvtHL
-            | FcvtHLu
-    )
-}
 
 /// Pure evaluation of a scalar OP-FP / FMA RISC-V instruction. `a`/`b`/`c` carry
 /// the raw 64-bit source register values — the raw f-register bits for
