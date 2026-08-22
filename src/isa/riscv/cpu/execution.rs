@@ -7,6 +7,14 @@ impl RiscVCpu {
         self.mip & self.mie & (M_INTERRUPT_MASK | S_INTERRUPT_MASK) & self.xmask() != 0
     }
 
+    pub(super) fn instruction_fetch_alignment_trap(&self, pc: u64) -> Option<Trap> {
+        let alignment_mask = if self.cfg.isa.c { 0b1 } else { 0b11 };
+        (pc & alignment_mask != 0).then_some(Trap {
+            cause: cause::INSTR_MISALIGNED,
+            tval: pc,
+        })
+    }
+
     /// Fetch, decode and execute one instruction.
     pub fn step(&mut self) -> RiscVExit {
         if let Some(trap) = self.pending_machine_interrupt() {
@@ -15,6 +23,10 @@ impl RiscVCpu {
         }
 
         let pc = self.pc;
+        if let Some(trap) = self.instruction_fetch_alignment_trap(pc) {
+            self.deliver_trap(trap, pc);
+            return RiscVExit::Trap(trap);
+        }
         let insn = match decode_at(self.mem.as_ref(), pc, self.cfg.xlen, &self.cfg.isa) {
             Ok(i) => i,
             Err(DecodeError::Fetch(_)) => {
@@ -88,6 +100,41 @@ mod tests {
         cpu.write_memory(CODE, &word.to_le_bytes()).unwrap();
         cpu.set_pc(CODE);
         cpu.step()
+    }
+
+    #[test]
+    fn instruction_fetch_enforces_the_configured_ialign() {
+        let mut without_c = cpu(Isa::rv_i());
+        without_c.set_pc(CODE + 2);
+        assert_eq!(
+            without_c.step(),
+            RiscVExit::Trap(Trap {
+                cause: cause::INSTR_MISALIGNED,
+                tval: CODE + 2,
+            })
+        );
+        assert_eq!(without_c.csr_read(0x341), Ok(CODE));
+        assert_eq!(without_c.csr_read(0x343), Ok(CODE + 2));
+
+        let mut with_c = cpu(Isa {
+            c: true,
+            ..Isa::rv_i()
+        });
+        with_c
+            .write_memory(CODE + 2, &0x0001u16.to_le_bytes()) // c.nop
+            .unwrap();
+        with_c.set_pc(CODE + 2);
+        assert_eq!(with_c.step(), RiscVExit::Continue);
+        assert_eq!(with_c.pc(), CODE + 4);
+
+        with_c.set_pc(CODE + 1);
+        assert_eq!(
+            with_c.step(),
+            RiscVExit::Trap(Trap {
+                cause: cause::INSTR_MISALIGNED,
+                tval: CODE + 1,
+            })
+        );
     }
 
     fn csrr(rd: u32, csr: u32) -> u32 {

@@ -14,6 +14,11 @@ impl RiscVCpu {
         let is_write = matches!(insn.op, Op::Csrrw | Op::Csrrwi);
         let writes = is_write || insn.rs1 != 0;
 
+        let minimum_privilege = ((addr >> 8) & 0b11) as u8;
+        if (self.priv_ as u8) < minimum_privilege {
+            return Err(Trap::illegal(insn.raw));
+        }
+
         if writes && Csr::is_read_only(addr) {
             return Err(Trap::illegal(insn.raw));
         }
@@ -52,6 +57,9 @@ impl RiscVCpu {
         if !self.csr_available(csr) {
             return Err(Trap::illegal(0));
         }
+        if !self.counter_read_allowed(csr) {
+            return Err(Trap::illegal(0));
+        }
         let v = match csr {
             Csr::Fflags => (self.fcsr & 0x1f) as u64,
             Csr::Frm => ((self.fcsr >> 5) & 0x7) as u64,
@@ -63,8 +71,8 @@ impl RiscVCpu {
             Csr::CycleH => (self.cycle >> 32) & 0xffff_ffff,
             Csr::TimeH => (self.time >> 32) & 0xffff_ffff,
             Csr::InstretH => (self.instret >> 32) & 0xffff_ffff,
-            Csr::Mstatus => self.mstatus,
-            Csr::Sstatus => self.mstatus & self.sstatus_mask(),
+            Csr::Mstatus => self.mstatus_read_value(),
+            Csr::Sstatus => self.mstatus_read_value() & self.sstatus_mask(),
             Csr::Misa => self.misa(),
             Csr::Medeleg => self.medeleg,
             Csr::Mideleg => self.mideleg,
@@ -73,6 +81,7 @@ impl RiscVCpu {
             Csr::Sepc => self.sepc_read_value(),
             Csr::Mtvec => self.mtvec,
             Csr::Mcounteren => self.mcounteren,
+            Csr::Scounteren => self.scounteren,
             Csr::Mscratch => self.mscratch,
             Csr::Mepc => self.mepc_read_value(),
             Csr::Mcause => self.mcause,
@@ -114,13 +123,13 @@ impl RiscVCpu {
             // Jump-table mode zero is the only currently defined/implemented
             // WARL mode; BASE is consequently always 64-byte aligned.
             Csr::Jvt => self.jvt = value & !0x3f & self.xmask(),
-            Csr::Mstatus => self.mstatus = value,
+            Csr::Mstatus => self.mstatus = self.mstatus_warl_value(value),
             Csr::Sstatus => {
-                let mask = self.sstatus_mask();
+                let mask = self.sstatus_write_mask();
                 self.mstatus = (self.mstatus & !mask) | (value & mask);
             }
-            Csr::Medeleg => self.medeleg = value,
-            Csr::Mideleg => self.mideleg = value,
+            Csr::Medeleg => self.medeleg = value & DELEGATABLE_EXCEPTION_MASK & self.xmask(),
+            Csr::Mideleg => self.mideleg = value & S_INTERRUPT_MASK & self.xmask(),
             Csr::Mie => self.mie = value,
             Csr::Sie => {
                 let mask = self.supervisor_interrupt_mask();
@@ -132,12 +141,13 @@ impl RiscVCpu {
                 let mode = u64::from(value & 0b11 == 1);
                 self.mtvec = base | mode;
             }
-            Csr::Mcounteren => self.mcounteren = value,
+            Csr::Mcounteren => self.mcounteren = value & 0xffff_ffff,
+            Csr::Scounteren => self.scounteren = value & 0xffff_ffff,
             Csr::Mscratch => self.mscratch = value,
             Csr::Mepc => self.mepc = value & self.epc_alignment_mask() & self.xmask(),
             Csr::Mcause => self.mcause = value,
             Csr::Mtval => self.mtval = value,
-            Csr::Mip => self.mip = value,
+            Csr::Mip => self.mip = value & IMPLEMENTED_INTERRUPT_MASK & self.xmask(),
             Csr::Sip => {
                 let mask = self.supervisor_software_interrupt_mask();
                 self.mip = (self.mip & !mask) | (value & mask);
@@ -179,12 +189,48 @@ impl RiscVCpu {
         (SSTATUS_BASE_MASK | uxl | sd) & self.xmask()
     }
 
+    fn sstatus_write_mask(&self) -> u64 {
+        let sd = 1u64 << (self.xbits() - 1);
+        self.sstatus_mask() & !sd
+    }
+
+    fn mstatus_read_value(&self) -> u64 {
+        let sd = 1u64 << (self.xbits() - 1);
+        let dirty = [9, 13, 15]
+            .into_iter()
+            .any(|shift| (self.mstatus >> shift) & 0b11 == 0b11);
+        (self.mstatus & !sd & self.xmask()) | if dirty { sd } else { 0 }
+    }
+
+    fn mstatus_warl_value(&self, value: u64) -> u64 {
+        let sd = 1u64 << (self.xbits() - 1);
+        let mut canonical = value & !sd & self.xmask();
+        if (canonical >> 11) & 0b11 == 0b10 {
+            canonical &= !(0b11 << 11);
+        }
+        canonical
+    }
+
+    fn counter_read_allowed(&self, csr: Csr) -> bool {
+        let bit = match csr {
+            Csr::Cycle | Csr::CycleH => 0,
+            Csr::Time | Csr::TimeH => 1,
+            Csr::Instret | Csr::InstretH => 2,
+            _ => return true,
+        };
+        match self.priv_ {
+            Priv::Machine => true,
+            Priv::Supervisor => self.mcounteren & (1 << bit) != 0,
+            Priv::User => self.mcounteren & self.scounteren & (1 << bit) != 0,
+        }
+    }
+
     fn supervisor_interrupt_mask(&self) -> u64 {
         self.mideleg & S_INTERRUPT_MASK & self.xmask()
     }
 
     fn supervisor_software_interrupt_mask(&self) -> u64 {
-        self.mideleg & (1 << 1) & self.xmask()
+        self.mideleg & (1 << cause::INT_S_SOFTWARE) & self.xmask()
     }
 
     fn misa(&self) -> u64 {
@@ -281,6 +327,103 @@ mod tests {
 
     fn cpu(isa: Isa) -> RiscVCpu {
         cpu_with_xlen(Xlen::Rv64, isa)
+    }
+
+    fn csr_insn(csr: u32, funct3: u32, rs1: u32, rd: u32) -> u32 {
+        (csr << 20) | (rs1 << 15) | (funct3 << 12) | (rd << 7) | 0x73
+    }
+
+    #[test]
+    fn csr_instructions_enforce_the_encoded_minimum_privilege() {
+        let mut hart = cpu(Isa::rv64gc());
+        hart.set_x(1, 0xfeed_face);
+        hart.set_x(2, 0x1234_5678);
+
+        for (privilege, csr) in [
+            (Priv::User, 0x100),       // sstatus: supervisor-level
+            (Priv::User, 0x305),       // mtvec: machine-level
+            (Priv::Supervisor, 0x305), // mtvec: machine-level
+        ] {
+            hart.priv_ = privilege;
+            let raw = csr_insn(csr, 0b001, 2, 1); // csrrw x1, csr, x2
+            let insn = decode(raw, Xlen::Rv64, &Isa::rv64gc());
+            assert_eq!(hart.execute_insn(&insn, 0x1000), Err(Trap::illegal(raw)));
+            assert_eq!(hart.x(1), 0xfeed_face);
+            assert_eq!(hart.mtvec, 0);
+        }
+
+        hart.priv_ = Priv::Supervisor;
+        let supervisor_raw = csr_insn(0x100, 0b010, 0, 1); // csrr x1, sstatus
+        let supervisor = decode(supervisor_raw, Xlen::Rv64, &Isa::rv64gc());
+        assert_eq!(
+            hart.execute_insn(&supervisor, 0x1000),
+            Ok(RiscVExit::Continue)
+        );
+    }
+
+    #[test]
+    fn counter_enable_csrs_are_32_bit_and_gate_lower_privilege_reads() {
+        let mut hart = cpu(Isa::rv64gc());
+        hart.csr_write(0x306, (1 << 33) | 0b111).unwrap();
+        hart.csr_write(0x106, (1 << 34) | 0b111).unwrap();
+        assert_eq!(hart.csr_read(0x306), Ok(0b111));
+        assert_eq!(hart.csr_read(0x106), Ok(0b111));
+
+        hart.csr_write(0x306, 0).unwrap();
+        hart.csr_write(0x106, 0).unwrap();
+        hart.priv_ = Priv::Supervisor;
+        assert_eq!(hart.csr_read(0xc00), Err(Trap::illegal(0)));
+        hart.priv_ = Priv::User;
+        assert_eq!(hart.csr_read(0xc00), Err(Trap::illegal(0)));
+
+        hart.priv_ = Priv::Machine;
+        hart.csr_write(0x306, 1).unwrap();
+        hart.priv_ = Priv::Supervisor;
+        assert!(hart.csr_read(0xc00).is_ok());
+        hart.priv_ = Priv::User;
+        assert_eq!(hart.csr_read(0xc00), Err(Trap::illegal(0)));
+
+        hart.priv_ = Priv::Machine;
+        hart.csr_write(0x106, 1).unwrap();
+        hart.priv_ = Priv::User;
+        assert!(hart.csr_read(0xc00).is_ok());
+    }
+
+    #[test]
+    fn status_interrupt_and_delegation_csrs_canonicalize_warl_fields() {
+        const MSTATUS_SD: u64 = 1 << 63;
+        const MSTATUS_FS_DIRTY: u64 = 0b11 << 13;
+        const MSTATUS_MPP_RESERVED: u64 = 0b10 << 11;
+        const SUPPORTED_INTERRUPTS: u64 =
+            (1 << 1) | (1 << 3) | (1 << 5) | (1 << 7) | (1 << 9) | (1 << 11);
+
+        let mut hart = cpu(Isa::rv64gc());
+        hart.csr_write(0x300, MSTATUS_SD | MSTATUS_FS_DIRTY | MSTATUS_MPP_RESERVED)
+            .unwrap();
+        let status = hart.csr_read(0x300).unwrap();
+        assert_eq!(status & (0b11 << 11), 0, "reserved MPP canonicalizes to U");
+        assert_ne!(status & MSTATUS_SD, 0, "SD summarizes dirty FS");
+
+        hart.csr_write(0x300, MSTATUS_SD).unwrap();
+        assert_eq!(
+            hart.csr_read(0x300).unwrap() & MSTATUS_SD,
+            0,
+            "SD is read-only"
+        );
+
+        hart.csr_write(0x344, u64::MAX).unwrap();
+        assert_eq!(hart.csr_read(0x344), Ok(SUPPORTED_INTERRUPTS));
+        hart.csr_write(0x303, u64::MAX).unwrap();
+        assert_eq!(hart.csr_read(0x303), Ok((1 << 1) | (1 << 5) | (1 << 9)));
+        hart.csr_write(0x302, (1 << 2) | (1 << 10)).unwrap();
+        assert_eq!(hart.csr_read(0x302), Ok(1 << 2));
+
+        let mut rv32 = cpu_with_xlen(Xlen::Rv32, Isa::rv64gc());
+        rv32.csr_write(0x300, 1 << 31).unwrap();
+        assert_eq!(rv32.csr_read(0x300).unwrap() & (1 << 31), 0);
+        rv32.csr_write(0x100, MSTATUS_FS_DIRTY | (1 << 31)).unwrap();
+        assert_ne!(rv32.csr_read(0x300).unwrap() & (1 << 31), 0);
+        assert_ne!(rv32.csr_read(0x100).unwrap() & (1 << 31), 0);
     }
 
     #[test]

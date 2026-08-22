@@ -454,6 +454,23 @@ mod tests {
     }
 
     #[test]
+    fn indexed_segment_fields_use_sew_while_indices_use_encoded_eew() {
+        // vluxseg2ei8.v v4, (a0), v2 with SEW=32. The encoded EI8 controls
+        // index decoding; each data field is still one SEW-wide (4-byte) word.
+        let raw = memory_op(0x07, 1, 1, 1, 2, 10, 0, 4);
+        let mut memory = vec![0u8; 16];
+        memory[0..4].copy_from_slice(&0x1122_3344u32.to_le_bytes());
+        memory[4..8].copy_from_slice(&0x5566_7788u32.to_le_bytes());
+        let mut hart = cpu(FlatMemory::with_data(0x100, memory), 1, 0x10); // e32,m1
+        hart.set_x(10, 0x100);
+        hart.set_vreg(2, &[0; 16]); // byte offset zero
+
+        assert_eq!(execute(&mut hart, raw), Ok(RiscVExit::Continue));
+        assert_eq!(&hart.vreg(4)[..4], &0x1122_3344u32.to_le_bytes());
+        assert_eq!(&hart.vreg(5)[..4], &0x5566_7788u32.to_le_bytes());
+    }
+
+    #[test]
     fn segment_fault_only_first_traps_at_zero_and_trims_later_faults() {
         let raw = memory_op(0x07, 1, 1, 0, 0b10000, 10, 0, 1);
 

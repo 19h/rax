@@ -12,8 +12,12 @@
 use super::memory::{MemError, Memory};
 use super::{Isa, Xlen};
 
+mod hypervisor;
 mod op_imm;
+mod zfa_moves;
+use hypervisor::decode_hypervisor_mem;
 use op_imm::{decode_op_imm, decode_op_imm32};
+use zfa_moves::decode_zfa_rv32_move;
 
 /// A decoded RISC-V operation. One variant per architectural operation across
 /// the I/M/A/F/D/C and Zb* extensions; operand fields live in [`Insn`].
@@ -242,6 +246,10 @@ pub enum Op {
     FcvtDLu,
     FmvXD,
     FmvDX,
+    /// Zfa RV32-only move of the high 32 bits of an f64 register to an x register.
+    FmvhXD,
+    /// Zfa RV32-only pack of two x registers into an f64 register.
+    FmvpDX,
     // ---- Q (quad precision; decode/disassembly parity) ----
     Flq,
     Fsq,
@@ -898,6 +906,8 @@ impl Op {
                 | FcvtDLu
                 | FmvXD
                 | FmvDX
+                | FmvhXD
+                | FmvpDX
                 | Flq
                 | Fsq
                 | FmaddQ
@@ -2435,26 +2445,6 @@ fn decode_system(w: u32, rv64: bool, isa: &Isa) -> Insn {
     base(op, w)
 }
 
-fn decode_hypervisor_mem(w: u32, rv64: bool) -> Insn {
-    let op = match (funct7(w), rs2(w), rd(w)) {
-        (0x30, 0, _) => Op::HlvB,
-        (0x30, 1, _) => Op::HlvBu,
-        (0x32, 0, _) => Op::HlvH,
-        (0x32, 1, _) => Op::HlvHu,
-        (0x32, 3, _) => Op::HlvxHu,
-        (0x34, 0, _) => Op::HlvW,
-        (0x34, 1, _) if rv64 => Op::HlvWu,
-        (0x34, 3, _) if rv64 => Op::HlvxWu,
-        (0x36, 0, _) if rv64 => Op::HlvD,
-        (0x31, _, 0) => Op::HsvB,
-        (0x33, _, 0) => Op::HsvH,
-        (0x35, _, 0) => Op::HsvW,
-        (0x37, _, 0) if rv64 => Op::HsvD,
-        _ => return Insn::illegal(w, 4),
-    };
-    base(op, w)
-}
-
 fn decode_amo(w: u32, rv64: bool, isa: &Isa) -> Insn {
     let f3 = funct3(w);
     let funct5 = (w >> 27) & 0x1f;
@@ -2651,6 +2641,9 @@ fn decode_op_fp(w: u32, rv64: bool, isa: &Isa) -> Insn {
     let rs2f = rs2(w);
     let d = isa.d;
     if isa.zfa {
+        if let Some(op) = decode_zfa_rv32_move(f7, f3, rs2f, rv64, isa) {
+            return base(op, w);
+        }
         if let Some(op) = decode_zfa(f7, f3, rs2f, isa) {
             return base(op, w);
         }
