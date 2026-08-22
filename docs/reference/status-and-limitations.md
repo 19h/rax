@@ -1,0 +1,281 @@
+[← Documentation home](../../README.md)
+
+# Status and limitations
+
+This page consolidates the current project boundary. It is intentionally conservative: source presence, a parser accepting a selector, a unit test, a differential corpus, a boot milestone, and production support are different statuses.
+
+## Status vocabulary
+
+| Term | Required evidence |
+|---|---|
+| **Present** | Source exists. No execution claim follows. |
+| **Constructible** | Public configuration can instantiate the path on an appropriate build. |
+| **Unit-tested** | A repository test directly exercises the behavior. |
+| **Differential-tested** | Selected cases compare defined state with a named external reference. |
+| **Machine-tested** | A registered test reaches a named machine/boot milestone. |
+| **Boot-demonstrated** | A named image/configuration reached a named guest milestone. |
+| **Benchmarked** | Host, compiler, features, workload, run method, and result are recorded. |
+| **Supported** | Maintainers intend users to rely on the documented combination and maintain its contract. |
+| **Complete** | Avoid unless a finite scope and exhaustive evidence are stated. |
+
+## High-level execution matrix
+
+| Guest | Software execution | Hardware backend | Machine-level result | Principal evidence | Current boundary |
+|---|---|---|---|---|---|
+| x86-64 | interpreter plus admitted SMIR native regions | KVM on Linux x86-64; HVF on appropriate Intel macOS path | direct Linux boot, legacy real-mode/ISO path, PC platform | direct ISA tests, KVM/QEMU differential targets, generated inventories, JIT equivalence tests, machine tests | one executing vCPU; software Linux and JIT coverage are narrower than the architecture as a whole |
+| AArch64 | interpreter plus native-lowering paths | HVF on Apple Silicon | AArch64 Linux virtual machine | native EL0 or QEMU differential tests, generated Arm data, machine boot, SMIR tests | advanced extension breadth is not equivalent to full system/profile conformance |
+| AArch32/Thumb | software cores and profile-specific machines | none documented as a general backend | machine-specific paths including Cortex-M and SoC work | direct ISA tests, QEMU/ASL-derived cases, microkernel | no general 32-bit Linux-to-shell result |
+| Hexagon | packet-aware software emulator | none | bare-metal ELF machine | scalar/control/float/memory/HVX differential targets plus bare-metal test | public ISA selector ends at `v69`; no general OS machine |
+| RV64 | software emulator plus selected SMIR/native paths | none | bare-metal ELF machine | scalar/vector QEMU differential tests, lift/JIT tests, boot test | no privileged/Sv39 Linux-capable machine |
+
+## x86-64 status
+
+### Established x86-64 surfaces
+
+- legacy, REX, VEX, EVEX, and REX2/APX-oriented decode structures are present;
+- broad integer, flag, control-flow, system, x87, SSE/AVX, AVX-512, AVX10, crypto, and state-management implementation exists;
+- the software machine has a serial-oriented PC platform and direct Linux loading;
+- KVM provides a hardware-backed x86 execution path on suitable Linux hosts;
+- the real-mode/El Torito/ATAPI route has a named TempleOS demonstration and a registered real-mode machine test;
+- x86-64-host and AArch64-host SMIR paths exist with different admission contracts.
+
+### Required x86-64 qualifications
+
+- No prose inventory is the authoritative instruction list. Decoder dispatch, execution source, generated manifests, and executable tests must agree.
+- KVM differential results apply only to cases that actually execute on the host CPU and to the compared state projection.
+- APX cannot be described as hardware-verified in this repository setup; encoding and semantic checks use LLVM/documentation-oriented evidence.
+- The software Linux path is known against constrained kernels and command lines; it is not equivalent to arbitrary KVM boot compatibility.
+- One vCPU executes.
+- VGA is not a generally usable wired console; serial is the maintained interface.
+- Optional PCI interrupts and guest-driver behavior remain narrower than a production PC hypervisor.
+
+## Arm status
+
+### Public Arm families and selectors
+
+CLI architecture families:
+
+```text
+aarch64
+armv7a
+armv8a32
+cortex-m
+cortex-r
+```
+
+TOML exposes profile selectors for AArch64, AArch32, Cortex-M, and Cortex-R. The selector names describe intended architectural profiles; they do not prove every optional feature named by an Arm revision is implemented.
+
+### Established Arm surfaces
+
+- AArch64 scalar/system, floating-point/AdvSIMD, SVE-family, crypto, and modern extension code is present;
+- AArch32 and Thumb execution is present across application, microcontroller, and real-time profiles;
+- the AArch64 virtual machine boots the checked-in Linux image through the software backend and can use HVF on Apple Silicon;
+- native AArch64 EL0 and QEMU user-mode differential paths exist;
+- generated architecture cases and SMIR lowerer tests provide additional coverage;
+- machine-specific S3C64xx/S3C6410 and S5L8900 work exists.
+
+### Required Arm qualifications
+
+- AArch64 Linux success does not imply AArch32 Linux success.
+- A selector such as `v9_4` is a configuration value, not proof of complete Armv9.4-A/SME2 system conformance.
+- QEMU or native EL0 user-mode comparisons do not exercise all privileged state, exception levels, MMU behavior, interrupts, or devices.
+- SVE/SVE2 implementation breadth must be stated with the tested vector lengths, operations, predicates, exception behavior, and reference.
+- SoC source and early boot progress must be described by exact image and milestone, not as general device/platform support.
+
+## Hexagon status
+
+### Established Hexagon surfaces
+
+- packet decode/execute state and `.new`-style packet dependencies are modeled;
+- scalar, control-flow, floating-point, memory, HVX, and HVX-memory test domains are separate registered targets;
+- a bare-metal ELF machine with UART/halt behavior exists;
+- Hexagon-to-SMIR lifting has a registered test target.
+
+### Required Hexagon qualifications
+
+- The public selector is `v4` through `v69`, with selected intermediate revisions and `v68` default. The older README’s `V73` claim conflicts with that interface and must not be repeated without implementation/interface changes.
+- “Every opcode” is not an acceptable unqualified status. A finite decoder manifest, generation source, revision, packet forms, HVX width, reference version, and number of executed cases would be required.
+- QEMU comparison inherits QEMU’s supported revision and semantics and can self-skip if the toolchain is unavailable.
+- No general-purpose operating-system machine is documented.
+
+## RISC-V status
+
+### Established RISC-V surfaces
+
+- RV64 scalar, compressed, atomic, floating-point, bit manipulation, crypto, and vector implementation exists;
+- a bare-metal `riscv64` machine loads programs and provides UART/halt integration;
+- scalar and vector QEMU differential targets are registered;
+- SMIR lift and host-specific native tests are registered.
+
+### Required RISC-V qualifications
+
+- Extension names in source or old prose do not replace an exact, generated, tested extension matrix.
+- The runnable machine does not provide a complete privileged architecture or Sv39 Linux platform.
+- Vector comparison must state VLEN/ELEN assumptions, tested LMUL/SEW combinations, masking/tail policy, exception behavior, and QEMU version when claiming breadth.
+- Native tests are host-specific and may self-gate.
+
+## SMIR and JIT status
+
+### Established SMIR/JIT surfaces
+
+- shared IR data structures, lifters, interpreter, optimizer, native lowerers, executable-memory runtime, cache, and hot-region integration exist;
+- the root `smir-jit` feature is enabled by default;
+- x86 guest on x86-64 host, x86 guest on AArch64 host, RISC-V host-native paths, and architecture-specific lift/lower tests are present;
+- unsupported regions are intended to remain interpreted rather than being compiled speculatively.
+
+### Required SMIR/JIT qualifications
+
+- JIT availability is not JIT admission.
+- Admission differs by host and guest. The x86-on-AArch64 route is materially narrower than x86-on-x86-64.
+- Register, flag, memory, calls, helper ABI, width, host feature, exceptions, and control flow are independent correctness obligations.
+- Interpreter/JIT equality tests apply to the state projection and regions exercised.
+- Runtime verification changes performance and does not replace independent oracle comparison.
+- Self-modifying code and cache invalidation require dedicated machine-level evidence.
+
+## Machines and devices
+
+### Current machine classes
+
+The source tree contains:
+
+- PC/x86 platform code;
+- AArch64 virtual machine and FDT construction;
+- S3C64xx/S3C6410 and S5L8900-oriented Arm work;
+- Cortex-M-related platform paths;
+- RISC-V bare-metal virtual machine;
+- Hexagon bare-metal machine;
+- microkernel-specific launch integration.
+
+### Device-status rule
+
+A device can be:
+
+1. implemented as a model;
+2. reachable through an I/O bus;
+3. attached by a machine;
+4. enabled only by `--pci-devices`;
+5. enumerated by a guest;
+6. driven successfully by a guest;
+7. included in checkpoint state;
+8. covered by machine tests.
+
+Do not collapse those stages into “supported.”
+
+### Current platform limitations
+
+- serial console is the maintained UI;
+- VGA is not a general wired display path;
+- optional e1000, AHCI, NVMe, AC'97, and UHCI attachment is aggregate and off by default;
+- PCI interrupt behavior is not equivalent to a production platform and has historically used polling-oriented integration;
+- device reset, DMA, interrupt, migration/checkpoint, and guest-driver behavior require separate evidence.
+
+## Observability and checkpoints
+
+- instruction tracing requires `trace` and a software path that emits the events;
+- GDB requires `debug`; stepping capability varies by engine/backend;
+- profiling requires `profiling` and counts the instrumented execution path;
+- whole-machine `.rxc` checkpoints include embedded configuration, CPU/memory/device/timing data according to the current snapshot contract;
+- `--resume` is a legacy restore-into-reconstructed-machine path and is not interchangeable with `--checkpoint`;
+- checkpoint compatibility across commits is not an unlimited stable serialization guarantee.
+
+## Build and host support
+
+- Rust edition 2024 is used;
+- root defaults are `kvm` and `smir-jit`;
+- KVM dependencies are Linux-target-gated;
+- Unix host code supplies terminal, signal, and executable-memory behavior;
+- dependency comments and patches aimed at Windows buildability do not establish a supported Windows runtime;
+- checked-in x86-64 Rust flags target x86-64-v3, excluding older CPUs unless overridden;
+- HVF requires macOS and code signing with the supplied entitlement;
+- the microkernel needs nightly Rust, `rust-src`, and object-copy tooling.
+
+## Testing and false-green risks
+
+External-oracle and host-specific tests can skip because of:
+
+- absent `/dev/kvm` or permission;
+- wrong host architecture or CPU feature;
+- missing QEMU user-mode binary;
+- missing cross-compiler/assembler/linker;
+- unsupported QEMU ISA revision;
+- missing LLVM/APX tooling;
+- filtered, ignored, or feature-elided targets.
+
+Therefore, report:
+
+```text
+command
+Cargo features
+target name
+running N tests
+passed/failed/ignored/skipped counts
+skip messages
+host and external-tool versions
+```
+
+A green process result without those facts is not a complete validation statement.
+
+## C/C++ embedding status
+
+The `rax-capi` workspace member exposes a stable hand-authored C header and C++17 wrapper. Its current documentation states:
+
+- arbitrary memory mapping and code/data loading;
+- register access;
+- run, bounded execution, and step on engines that advertise stepping;
+- code, block, interrupt, I/O, MMIO, invalid-instruction, and memory hooks;
+- context save/restore;
+- stateless decode/analysis;
+- panic containment as `RAX_ERR_INTERNAL`;
+- no global state or hidden threads;
+- one engine handle is not thread-safe, while distinct handles can run independently.
+
+The C API’s KVM feature is not yet exposed through the C backend selector according to its own README. The embedding interface should therefore not be advertised as identical to every root CLI backend.
+
+## Security posture
+
+`rax` executes untrusted guest-controlled instruction streams and parses executable/kernel/media formats. It is a research emulator, not a hardened sandbox or security boundary.
+
+Before security-sensitive deployment, independently evaluate:
+
+- decoder and loader memory safety;
+- guest-to-host bounds checks;
+- arithmetic overflow and allocation limits;
+- device DMA and MMIO validation;
+- executable-memory W^X transitions;
+- FFI argument validation and panic containment;
+- denial-of-service through infinite execution or pathological inputs;
+- checkpoint deserialization trust;
+- external debugger exposure;
+- supply-chain and dependency policy.
+
+The current repository root does not package a dedicated security policy in this documentation overlay. Do not interpret absence of a published vulnerability history as evidence of security.
+
+## Licensing boundary
+
+The project prose and C API README say MIT, but the audited root tree did not contain a root `LICENSE` file and the root package metadata did not declare `license = "MIT"`. Until those artifacts are added, the intended license statement is not a complete redistributable grant. This is a packaging/legal-documentation issue, not a conclusion that the maintainers intended another license.
+
+## Adoption checklist
+
+Before depending on a path, answer:
+
+- Is the architecture selector public and accepted?
+- Is the machine constructible from documented inputs?
+- Does the chosen backend run on the intended host?
+- Is the required image format documented?
+- Which exact milestone has been demonstrated?
+- Which tests execute on the intended host rather than skip?
+- What state does the oracle compare?
+- Which features and environment variables change behavior?
+- What happens on unsupported instructions, devices, and JIT regions?
+- Is checkpoint compatibility required?
+- Is untrusted guest input in scope?
+- Is the license grant packaged in the repository?
+
+## Related pages
+
+- [Architecture overview](../architecture/overview.md)
+- [Verification model](../development/verification.md)
+- [Test target map](../development/testing/README.md)
+- [Machines](../architecture/machines.md)
+- [Devices](../architecture/devices.md)
+- [Documentation policy](../documentation-policy.md)
