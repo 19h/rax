@@ -717,17 +717,19 @@ impl SmirInterpreter {
         }
 
         let grid = Self::x86_simd_round_scale(bits, format, mxcsr, imm);
-        // Both operands are same-format finite values and the reduction
-        // remainder is bounded by one selected grid interval. Disable DAZ and
-        // FTZ for this exact subtraction: REDUCE neither consumes a second
-        // architectural operand nor flushes a tiny nonzero result.
-        let mut remainder = Self::x86_simd_fp_add(
-            bits,
-            grid.bits ^ sign_mask,
-            format,
-            mode,
-            mxcsr & !((1 << 6) | (1 << 15)),
-        );
+        // The subtraction must not reinterpret its single architectural
+        // source through DAZ. MXCSR.FTZ still controls a tiny result; REDUCE
+        // then filters the helper's underflow status because its architectural
+        // exception set contains only invalid and precision.
+        let mut remainder =
+            Self::x86_simd_fp_add(bits, grid.bits ^ sign_mask, format, mode, mxcsr & !(1 << 6));
+        if format.total_bits != 16
+            && mxcsr & (1 << 15) != 0
+            && Self::x86_simd_fp_is_denormal(remainder.bits, format)
+        {
+            remainder.bits &= sign_mask;
+            remainder.status |= (1 << 4) | (1 << 5);
+        }
         let mut status = (grid.status | remainder.status) & ((1 << 0) | (1 << 5));
         if imm & 8 != 0 {
             status &= !(1 << 5);
@@ -1542,18 +1544,40 @@ impl SmirInterpreter {
         let (sign, exponent, _, _) = Self::x86_simd_fp_masks(format);
         let first_nan = Self::x86_simd_fp_is_nan(first_bits, format);
         let second_nan = Self::x86_simd_fp_is_nan(second_bits, format);
-        if first_nan || second_nan {
-            let bits = if first_nan {
-                Self::x86_simd_fp_quiet_nan(first_bits, format)
-            } else {
-                Self::x86_simd_fp_quiet_nan(second_bits, format)
-            };
+        let first_snan = first_nan && Self::x86_simd_fp_is_snan(first_bits, format);
+        let second_snan = second_nan && Self::x86_simd_fp_is_snan(second_bits, format);
+        if first_snan || (first_nan && second_snan) {
             return X86SimdFpResult {
-                bits,
-                status: u32::from(
-                    Self::x86_simd_fp_is_snan(first_bits, format)
-                        || Self::x86_simd_fp_is_snan(second_bits, format),
-                ),
+                bits: Self::x86_simd_fp_quiet_nan(first_bits, format),
+                status: 1,
+            };
+        }
+        if second_snan {
+            return X86SimdFpResult {
+                bits: Self::x86_simd_fp_quiet_nan(second_bits, format),
+                status: 1,
+            };
+        }
+
+        let second_infinite = Self::x86_simd_fp_is_infinite(second_bits, format);
+        let second_negative = second_bits & sign != 0;
+        // The VSCALEF special-case table treats a quiet NaN in SRC1 as
+        // transparent when SRC2 is infinite: +Inf selects +Inf and -Inf
+        // selects +0. Other quiet-NaN pairs retain operand priority.
+        if first_nan {
+            return X86SimdFpResult {
+                bits: if second_infinite {
+                    if second_negative { 0 } else { exponent }
+                } else {
+                    Self::x86_simd_fp_quiet_nan(first_bits, format)
+                },
+                status: 0,
+            };
+        }
+        if second_nan {
+            return X86SimdFpResult {
+                bits: Self::x86_simd_fp_quiet_nan(second_bits, format),
+                status: 0,
             };
         }
 

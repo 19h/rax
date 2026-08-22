@@ -10,6 +10,9 @@ use crate::isa::x86_64::execute::crypto::aes;
 #[path = "avx512_fp_special.rs"]
 mod fp_special;
 pub use fp_special::{evex_fixupimm, evex_fp_unary_math};
+#[path = "avx512_fp_ternary_math.rs"]
+mod fp_ternary_math;
+pub use fp_ternary_math::{FpTernaryMathOp, evex_fp_ternary_math};
 
 /// Helper to get ZMM register value (all 8 qwords)
 fn get_zmm(vcpu: &X86_64Vcpu, reg: u8) -> [u64; 8] {
@@ -3167,12 +3170,6 @@ pub enum FpUnaryMathOp {
     GetMant,
 }
 
-#[derive(Clone, Copy)]
-pub enum FpTernaryMathOp {
-    ScaleF,
-    Range,
-}
-
 fn fp_round_by_imm(value: f64, imm: u8, mxcsr: u32) -> f64 {
     let rounding = if imm & 0x04 != 0 {
         ((mxcsr >> 13) & 0x03) as u8
@@ -3404,139 +3401,6 @@ unsafe fn rsqrt14_f64_bits_native(bits: u64) -> u64 {
 
     let src = _mm_set_sd(f64::from_bits(bits));
     _mm_cvtsd_f64(_mm_rsqrt14_sd(_mm_setzero_pd(), src)).to_bits()
-}
-
-/// VRANGE on non-NaN operands (NaN cases are resolved at the bit level by the
-/// caller). `a` is SRC1, `b` is SRC2. imm[1:0] selects the compare (min / max /
-/// min-magnitude / max-magnitude); imm[3:2] selects the sign of the result.
-fn fp_range_result(a: f64, b: f64, imm: u8) -> f64 {
-    let result = match imm & 0x03 {
-        0 => a.min(b),
-        1 => a.max(b),
-        2 => {
-            if a.abs() <= b.abs() {
-                a
-            } else {
-                b
-            }
-        }
-        _ => {
-            if a.abs() >= b.abs() {
-                a
-            } else {
-                b
-            }
-        }
-    };
-
-    match (imm >> 2) & 0x03 {
-        0 => result.abs().copysign(a), // sign of SRC1
-        1 => result,                   // sign of the selected value
-        2 => result.abs(),             // force positive
-        _ => -(result.abs()),          // force negative
-    }
-}
-
-/// VRANGE element including NaN handling, on the raw element bits. An SNaN in
-/// either source forces a quieted NaN result (SRC1 priority); a QNaN is
-/// "transparent" and yields the other source (SRC1 priority when both QNaN).
-fn fp_range_bits(a_bits: u64, b_bits: u64, elem_size: usize, imm: u8) -> u64 {
-    let a_nan = fp_is_nan(a_bits, elem_size);
-    let b_nan = fp_is_nan(b_bits, elem_size);
-    if a_nan && !fp_is_quiet_nan(a_bits, elem_size) {
-        fp_quiet_nan(a_bits, elem_size)
-    } else if b_nan && !fp_is_quiet_nan(b_bits, elem_size) {
-        fp_quiet_nan(b_bits, elem_size)
-    } else if a_nan && b_nan {
-        fp_quiet_nan(a_bits, elem_size)
-    } else if a_nan {
-        b_bits
-    } else if b_nan {
-        a_bits
-    } else {
-        let a = fp_bits_to_f64(a_bits, elem_size);
-        let b = fp_bits_to_f64(b_bits, elem_size);
-        f64_to_fp_bits(fp_range_result(a, b, imm), elem_size)
-    }
-}
-
-fn fp_ternary_math_result(op: FpTernaryMathOp, a: f64, b: f64, imm: u8) -> f64 {
-    match op {
-        FpTernaryMathOp::ScaleF => a * 2.0f64.powf(b.floor()),
-        FpTernaryMathOp::Range => fp_range_result(a, b, imm),
-    }
-}
-
-/// EVEX FP ternary math helper for VSCALEF and VRANGE packed/scalar forms.
-pub fn evex_fp_ternary_math(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-    elem_size: usize,
-    op: FpTernaryMathOp,
-    scalar: bool,
-    has_imm: bool,
-) -> Result<Option<VcpuExit>> {
-    let evex = ctx
-        .evex
-        .ok_or_else(|| Error::Emulator("EVEX FP ternary math requires EVEX prefix".to_string()))?;
-    let modrm_start = ctx.cursor;
-    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let imm = if has_imm { ctx.consume_u8()? } else { 0 };
-
-    let (dest, src1, src2_reg) = evex_three_op(&evex, reg, rm);
-    let vl_bytes = if scalar { 16 } else { vl_bytes_of(evex.ll) };
-    let num_elems = if scalar { 1 } else { vl_bytes / elem_size };
-    let addr = if is_memory {
-        let scale = if evex.broadcast || scalar {
-            elem_size
-        } else {
-            vl_bytes
-        };
-        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
-    } else {
-        addr
-    };
-
-    let src1_bytes = read_reg_bytes(vcpu, src1, vl_bytes);
-    let src2_bytes = read_fma_src3(
-        vcpu, &evex, src2_reg, is_memory, addr, vl_bytes, elem_size, scalar,
-    )?;
-
-    let mut raw = if scalar { src1_bytes } else { [0u8; 64] };
-    for lane in 0..num_elems {
-        let a_bits = read_lane_u64(&src1_bytes, lane, elem_size);
-        let b_bits = read_lane_u64(&src2_bytes, lane, elem_size);
-        // VRANGE needs the raw bits (NaN sign/payload + SRC1-sign control); VSCALEF
-        // keeps the f64 path it already matches silicon on.
-        let out_bits = if matches!(op, FpTernaryMathOp::Range) {
-            fp_range_bits(a_bits, b_bits, elem_size, imm)
-        } else {
-            let a = fp_bits_to_f64(a_bits, elem_size);
-            let b = fp_bits_to_f64(b_bits, elem_size);
-            f64_to_fp_bits(fp_ternary_math_result(op, a, b, imm), elem_size)
-        };
-        write_lane_bits(&mut raw, lane, elem_size, out_bits);
-    }
-
-    let result = if scalar {
-        let mut result = raw;
-        let dest_old = read_reg_bytes(vcpu, dest, 16);
-        let active = (evex_mask(vcpu, evex.aaa, 1) & 1) != 0;
-        if !active {
-            if evex.z {
-                result[..elem_size].fill(0);
-            } else {
-                result[..elem_size].copy_from_slice(&dest_old[..elem_size]);
-            }
-        }
-        result
-    } else {
-        apply_evex_mask(vcpu, &evex, dest, vl_bytes, elem_size, &raw)
-    };
-
-    write_vec_vl(vcpu, dest, vl_bytes, &result);
-    vcpu.regs.rip += ctx.cursor as u64;
-    Ok(None)
 }
 
 struct EvexVsib {

@@ -4788,6 +4788,19 @@ fn lifted_reduce_executes_remainders_special_cases_exceptions_masks_and_faults()
         }
     }
     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+        x86.xmm[3] = vector_u32(&[1; 4], 0);
+        x86.mxcsr = 0x1F80 | FTZ;
+    }
+    execute_lifted_x86(
+        &[0x62, 0xF3, 0x7D, 0x08, 0x56, 0xCB, 0x08],
+        &mut ctx,
+        &mut memory,
+    );
+    if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+        assert_eq!(lanes_u32(&x86.xmm[1], 4), [0; 4]);
+        assert_eq!(x86.mxcsr & (UE | PE), 0);
+    }
+    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
         x86.xmm[3] = vector_u16(&[1; 8], 0);
         x86.mxcsr = 0x1F80 | DAZ | FTZ;
     }

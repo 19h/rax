@@ -3386,6 +3386,30 @@ fn x86_scale_f_exact_semantics_cover_floor_specials_daz_ftz_and_rounding() {
     assert_eq!(nan.bits, first_qnan);
     assert_eq!(nan.status, 1);
 
+    let qnan_positive_infinity = SmirInterpreter::x86_simd_scale_f(
+        first_qnan,
+        u64::from(f32::INFINITY.to_bits()),
+        X86_SIMD_F32,
+        FpRoundMode::RoundNearest,
+        0x1F80,
+        false,
+    );
+    assert_eq!(
+        qnan_positive_infinity.bits,
+        u64::from(f32::INFINITY.to_bits())
+    );
+    assert_eq!(qnan_positive_infinity.status, 0);
+    let qnan_negative_infinity = SmirInterpreter::x86_simd_scale_f(
+        first_qnan,
+        u64::from(f32::NEG_INFINITY.to_bits()),
+        X86_SIMD_F32,
+        FpRoundMode::RoundNearest,
+        0x1F80,
+        false,
+    );
+    assert_eq!(qnan_negative_infinity.bits, 0);
+    assert_eq!(qnan_negative_infinity.status, 0);
+
     let denormal_then_nan = SmirInterpreter::x86_simd_scale_f(
         1,
         second_snan,
