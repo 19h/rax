@@ -1097,6 +1097,9 @@ fn native_evex_variable_permil_matches_interpreter_and_faults_without_commit() {
             registers.ctx = (&mut context as *mut VectorMemoryContext) as u64;
             registers.vec_load_fn = vector_load_helper as usize as u64;
             let mut expected = interpreter_success(&function, &registers, &value, address);
+            expected.vector_scratch = std::array::from_fn(|word| {
+                u64::from_le_bytes(value[word * 8..word * 8 + 8].try_into().unwrap())
+            });
 
             exec.run(entry, &mut registers);
             expected.host_mxcsr = registers.host_mxcsr;

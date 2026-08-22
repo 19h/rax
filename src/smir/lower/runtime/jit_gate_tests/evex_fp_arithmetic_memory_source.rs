@@ -19,10 +19,10 @@ use crate::smir::lift::x86_64::X86_64Lifter;
 use crate::smir::lift::{ControlFlow, LiftContext, SmirLifter};
 use crate::smir::lower::SmirLowerer;
 use crate::smir::lower::runtime::{
-    GuestRegs, X86JitEvexPackedFpArithmeticMemorySequence, is_native_clobber_safe_excluding,
-    is_x86_aarch64_native_clobber_safe_excluding, uses_x86_native_vectors_excluding,
-    x86_jit_evex_packed_fp_arithmetic_memory_sequence, x86_native_replay_feature_requirements,
-    x86_native_vector_features_supported_excluding,
+    GuestRegs, X86_VECTOR_STATE_K64, X86JitEvexPackedFpArithmeticMemorySequence,
+    is_native_clobber_safe_excluding, is_x86_aarch64_native_clobber_safe_excluding,
+    uses_x86_native_vectors_excluding, x86_jit_evex_packed_fp_arithmetic_memory_sequence,
+    x86_native_replay_feature_requirements, x86_native_vector_features_supported_excluding,
     x86_native_vector_uses_avx_ymm16_only_excluding,
 };
 use crate::smir::lower::x86_64::X86_64Lowerer;
@@ -1051,6 +1051,7 @@ fn initial_registers(case: FpMemoryCase, ordinal: usize) -> GuestRegs {
             }
         }),
         rflags: 0x8D5,
+        vector_active: X86_VECTOR_STATE_K64,
         mxcsr: 0x1F80 | (((ordinal & 3) as u32) << 13),
         ..GuestRegs::default()
     };

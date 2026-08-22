@@ -198,7 +198,7 @@ fn native_packed_extensions_match_interpreter_helpers_faults_and_mask_suppressio
         let mask = if case.mask() == 0 {
             lane_mask
         } else {
-            (0xA5A5_A5A5 ^ ordinal as u64) & lane_mask
+            ((0xA5A5_A5A5 ^ ordinal as u64) | 1) & lane_mask
         };
         assert!(case.mask() == 0 || mask != 0);
         for level in [OptLevel::O0, OptLevel::O2] {

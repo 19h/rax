@@ -2,7 +2,7 @@
 
 use super::semantics::{SemanticState, initial_state, interpret, memory_bytes};
 use super::*;
-use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+use crate::smir::lower::runtime::{ExecMem, GuestRegs, X86_VECTOR_STATE_K16, X86_VECTOR_STATE_K64};
 
 #[repr(C)]
 struct LoadResult {
@@ -51,11 +51,15 @@ fn memory_words(bytes: &[u8; 64]) -> [u64; 8] {
     })
 }
 
-fn guest_regs(initial: &SemanticState) -> GuestRegs {
+fn guest_regs(initial: &SemanticState, case: IntegerUnaryMemoryCase) -> GuestRegs {
     let mut registers = GuestRegs {
         gpr: initial.gpr,
         rflags: initial.rflags,
-        vector_active: 1,
+        vector_active: if case.uses_k16_opmasks() {
+            X86_VECTOR_STATE_K16
+        } else {
+            X86_VECTOR_STATE_K64
+        },
         k: initial.masks,
         mxcsr: initial.mxcsr,
         ..GuestRegs::default()
@@ -231,7 +235,7 @@ fn native_integer_unary_matches_interpreter_helper_order_faults_and_suppression(
                     last_size: 0,
                     last_zero_upper: 0,
                 };
-                let mut registers = guest_regs(&initial);
+                let mut registers = guest_regs(&initial, case);
                 registers.ctx = (&mut context as *mut VectorMemoryContext) as u64;
                 registers.vec_load_fn = vector_load_helper as *const () as usize as u64;
                 exec.run(entry, &mut registers);
@@ -256,7 +260,7 @@ fn native_integer_unary_matches_interpreter_helper_order_faults_and_suppression(
                     last_size: 0,
                     last_zero_upper: 0,
                 };
-                let mut registers = guest_regs(&initial);
+                let mut registers = guest_regs(&initial, case);
                 registers.ctx = (&mut context as *mut VectorMemoryContext) as u64;
                 registers.vec_load_fn = vector_load_helper as *const () as usize as u64;
                 let mut expected_fault = registers;
@@ -284,7 +288,7 @@ fn native_integer_unary_matches_interpreter_helper_order_faults_and_suppression(
                 calls: 0,
                 addresses: [0; 64],
             };
-            let mut registers = guest_regs(&initial);
+            let mut registers = guest_regs(&initial, case);
             registers.ctx = (&mut context as *mut LaneMemoryContext) as u64;
             registers.load_fn = lane_load_helper as *const () as usize as u64;
             exec.run(entry, &mut registers);
@@ -305,7 +309,7 @@ fn native_integer_unary_matches_interpreter_helper_order_faults_and_suppression(
                 calls: 0,
                 addresses: [0; 64],
             };
-            let mut registers = guest_regs(&initial);
+            let mut registers = guest_regs(&initial, case);
             registers.ctx = (&mut context as *mut LaneMemoryContext) as u64;
             registers.load_fn = lane_load_helper as *const () as usize as u64;
             let mut expected_fault = registers;
@@ -337,7 +341,7 @@ fn native_integer_unary_matches_interpreter_helper_order_faults_and_suppression(
                     calls: 0,
                     addresses: [0; 64],
                 };
-                let mut registers = guest_regs(&suppressed_initial);
+                let mut registers = guest_regs(&suppressed_initial, case);
                 registers.ctx = (&mut context as *mut LaneMemoryContext) as u64;
                 registers.load_fn = lane_load_helper as *const () as usize as u64;
                 exec.run(entry, &mut registers);

@@ -2,7 +2,7 @@
 
 use super::semantics::{initial_state, manual_destination};
 use super::*;
-use crate::smir::lower::runtime::{ExecMem, GuestRegs, X86_VECTOR_STATE_K64};
+use crate::smir::lower::runtime::{ExecMem, GuestRegs, X86_VECTOR_STATE_K16};
 
 #[repr(C)]
 struct LoadResult {
@@ -44,7 +44,7 @@ fn guest_regs(case: HalfMoveCase, ordinal: usize) -> GuestRegs {
         rflags: initial.rflags,
         exit_pc: 0xDEAD_BEEF_CAFE_BABE,
         k: initial.masks,
-        vector_active: X86_VECTOR_STATE_K64,
+        vector_active: X86_VECTOR_STATE_K16,
         mxcsr: initial.mxcsr,
         vector_scratch: std::array::from_fn(|word| {
             0xCCDD_EEFF_0011_2233u64 ^ (word as u64).wrapping_mul(0x1111_2222_4444_8888)

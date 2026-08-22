@@ -1,7 +1,9 @@
 use super::*;
 use crate::smir::ir::ops::SmirOp;
 use crate::smir::ir::types::{OpId, SignExtend};
-use crate::smir::lower::runtime::x86_native_vector_uses_k16_opmasks_excluding;
+use crate::smir::lower::runtime::{
+    X86_VECTOR_STATE_K16, X86_VECTOR_STATE_K64, x86_native_vector_uses_k16_opmasks_excluding,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum ApproxOperation {
@@ -881,6 +883,11 @@ fn native_scalar_approx_memory_matches_interpretation_faults_and_mask_suppressio
                 ..ScalarMemoryContext::default()
             };
             let mut registers = initial_registers(bridge, ordinal, true);
+            registers.vector_active = if case.operation.uses_k16_opmasks() {
+                X86_VECTOR_STATE_K16
+            } else {
+                X86_VECTOR_STATE_K64
+            };
             registers.ctx = (&mut context as *mut ScalarMemoryContext) as u64;
             registers.load_fn = scalar_load_helper as usize as u64;
             let mut expected = interpreter_success(&function, &registers, source, bridge);
@@ -898,6 +905,11 @@ fn native_scalar_approx_memory_matches_interpretation_faults_and_mask_suppressio
                 ..ScalarMemoryContext::default()
             };
             let mut fault = initial_registers(bridge, ordinal ^ 0x55, true);
+            fault.vector_active = if case.operation.uses_k16_opmasks() {
+                X86_VECTOR_STATE_K16
+            } else {
+                X86_VECTOR_STATE_K64
+            };
             fault.ctx = (&mut fault_context as *mut ScalarMemoryContext) as u64;
             fault.load_fn = scalar_load_helper as usize as u64;
             let mut fault_expected = fault;
@@ -914,6 +926,11 @@ fn native_scalar_approx_memory_matches_interpretation_faults_and_mask_suppressio
                     ..ScalarMemoryContext::default()
                 };
                 let mut suppressed = initial_registers(bridge, ordinal ^ 0xAA, false);
+                suppressed.vector_active = if case.operation.uses_k16_opmasks() {
+                    X86_VECTOR_STATE_K16
+                } else {
+                    X86_VECTOR_STATE_K64
+                };
                 suppressed.ctx = (&mut suppressed_context as *mut ScalarMemoryContext) as u64;
                 suppressed.load_fn = scalar_load_helper as usize as u64;
                 let mut suppressed_expected =

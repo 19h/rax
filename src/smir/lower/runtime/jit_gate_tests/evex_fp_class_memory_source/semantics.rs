@@ -5,7 +5,7 @@ use crate::smir::interpret::{BlockResult, SmirInterpreter};
 use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext};
 use crate::smir::ir::flags::MaterializedFlags;
 use crate::smir::ir::memory::FlatMemory;
-use crate::smir::lower::runtime::GuestRegs;
+use crate::smir::lower::runtime::{GuestRegs, X86_VECTOR_STATE_K64};
 
 fn element_mask(elem: VecElementType) -> u64 {
     match elem {
@@ -143,6 +143,7 @@ pub(super) fn initial_registers(case: FpClassMemoryCase, ordinal: usize, daz: bo
             | (((ordinal as u32) & 3) << 13)
             | (u32::from(daz) << 6),
         exit_pc: 0xDEAD_BEEF_CAFE_BABE,
+        vector_active: X86_VECTOR_STATE_K64,
         ..GuestRegs::default()
     };
     registers.gpr[2] = MEMORY_ADDRESS;

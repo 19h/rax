@@ -47,7 +47,10 @@ fn native_cases() -> Vec<ScalarUnaryMemoryCase> {
                     merge: [1, 17, 30][ordinal % 3],
                     ll: (ordinal % 3) as u8,
                     control,
-                    immediate: 0xD7,
+                    // M=0 makes inexact REDUCE/RNDSCALE cases exercise the
+                    // unsuppressed precision path on native hardware. RC is
+                    // still selected dynamically from MXCSR.
+                    immediate: 0x04,
                 });
                 ordinal += 1;
             }

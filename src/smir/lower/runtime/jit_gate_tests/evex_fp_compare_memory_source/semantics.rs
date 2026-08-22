@@ -5,7 +5,7 @@ use crate::smir::interpret::{BlockResult, SmirInterpreter};
 use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext};
 use crate::smir::ir::flags::MaterializedFlags;
 use crate::smir::ir::memory::FlatMemory;
-use crate::smir::lower::runtime::GuestRegs;
+use crate::smir::lower::runtime::{GuestRegs, X86_VECTOR_STATE_K64};
 
 fn set_lane(words: &mut [u64; 8], elem: VecElementType, lane: usize, value: u64) {
     let bytes = elem.bytes() as usize;
@@ -107,6 +107,7 @@ pub(super) fn initial_registers(case: FpCompareMemoryCase, ordinal: usize) -> Gu
         rflags: 0x8D5,
         mxcsr: 0x1F80 | (((ordinal & 3) as u32) << 13),
         exit_pc: 0xDEAD_BEEF_CAFE_BABE,
+        vector_active: X86_VECTOR_STATE_K64,
         ..GuestRegs::default()
     };
     registers.gpr[3] = 0x2000;
