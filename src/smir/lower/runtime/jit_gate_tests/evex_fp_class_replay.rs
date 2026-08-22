@@ -12,9 +12,9 @@ fn shapes() -> Vec<FpClassShape> {
         for ll in 0u8..=2 {
             shapes.push((0x66, pp, w, ll));
         }
-        // One representative encoding is sufficient here; the exact
-        // classifier test exhausts all four scalar L'L values.
-        shapes.push((0x67, pp, w, 0));
+        for ll in 0u8..=3 {
+            shapes.push((0x67, pp, w, ll));
+        }
     }
     shapes
 }
@@ -47,6 +47,14 @@ fn encoding(shape: FpClassShape, destination: u8, source: u8, mask: u8, immediat
     ]
 }
 
+fn expected_replay(bytes: [u8; 7]) -> [u8; 7] {
+    let instruction = crate::smir::ir::X86InstructionBytes::new(&bytes).unwrap();
+    let replay = instruction
+        .evex_scalar_fp_class_llig_canonical_ll0()
+        .unwrap_or(instruction);
+    replay.as_slice().try_into().unwrap()
+}
+
 fn function(bytes: &[u8]) -> crate::smir::ir::SmirFunction {
     use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
     use crate::smir::lift::x86_64::X86_64Lifter;
@@ -71,7 +79,7 @@ fn function(bytes: &[u8]) -> crate::smir::ir::SmirFunction {
 }
 
 #[test]
-fn replay_admits_and_emits_432_legal_register_encodings() {
+fn replay_admits_and_emits_756_legal_register_encodings() {
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
@@ -141,9 +149,10 @@ fn replay_admits_and_emits_432_legal_register_encodings() {
                     let code = lowerer
                         .finalize()
                         .unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
+                    let replay = expected_replay(bytes);
                     assert!(
-                        code.windows(bytes.len()).any(|window| window == bytes),
-                        "{bytes:02X?}"
+                        code.windows(replay.len()).any(|window| window == replay),
+                        "guest={bytes:02X?} replay={replay:02X?}"
                     );
                     admitted += 1;
                 }
@@ -192,7 +201,7 @@ fn replay_admits_and_emits_432_legal_register_encodings() {
         }
     }
     assert!(missing_provenance_checked);
-    assert_eq!(admitted, 432);
+    assert_eq!(admitted, 756);
 }
 
 #[cfg(target_arch = "x86_64")]
@@ -309,7 +318,11 @@ fn execute_native(bytes: &[u8], initial: &FpClassState) -> FpClassState {
     let code = lowerer
         .finalize()
         .unwrap_or_else(|error| panic!("{bytes:02X?}: {error:?}"));
-    assert!(code.windows(bytes.len()).any(|window| window == bytes));
+    let replay = expected_replay(bytes.try_into().unwrap());
+    assert!(
+        code.windows(replay.len()).any(|window| window == replay),
+        "guest={bytes:02X?} replay={replay:02X?}"
+    );
     let exec = ExecMem::new(&code).expect("map EVEX FPCLASS replay");
     let mut registers = GuestRegs {
         gpr: initial.gprs,

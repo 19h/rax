@@ -4656,12 +4656,12 @@ fn lifted_reduce_executes_remainders_special_cases_exceptions_masks_and_faults()
         if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
             assert_eq!(lanes_u32(&x86.xmm[1], 4), expected.map(f32::to_bits));
             assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
-            assert_ne!(x86.mxcsr & PE, 0);
+            assert_eq!(x86.mxcsr & PE, 0);
         }
     }
 
     // imm[2] selects MXCSR.RC. Here round-up maps 1.25 to 2.0, leaving
-    // -0.75. imm[3] suppresses the otherwise unmasked precision event.
+    // -0.75. The internal round-to-grid step does not itself report precision.
     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
         x86.xmm[1] = sentinel;
         x86.xmm[3] = vector_u32(&[1.25f32.to_bits(); 4], 0);
@@ -4677,7 +4677,8 @@ fn lifted_reduce_executes_remainders_special_cases_exceptions_masks_and_faults()
     }
     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
         x86.xmm[1] = sentinel;
-        x86.mxcsr = 0x1F80 & !PM;
+        x86.xmm[3] = vector_u32(&[1; 4], 0);
+        x86.mxcsr = (0x1F80 | FTZ) & !PM;
     }
     let precision = execute_lifted_x86(
         &[0x62, 0xF3, 0x7D, 0x08, 0x56, 0xCB, 0x00],
@@ -4694,7 +4695,7 @@ fn lifted_reduce_executes_remainders_special_cases_exceptions_masks_and_faults()
     }
     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
         x86.xmm[1] = sentinel;
-        x86.mxcsr = 0x1F80 & !PM;
+        x86.mxcsr = (0x1F80 | FTZ) & !PM;
     }
     let precision_suppressed = execute_lifted_x86(
         &[0x62, 0xF3, 0x7D, 0x08, 0x56, 0xCB, 0x08],
@@ -4706,7 +4707,7 @@ fn lifted_reduce_executes_remainders_special_cases_exceptions_masks_and_faults()
         BlockResult::Exit(ExitReason::Halt)
     ));
     if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
-        assert_eq!(lanes_u32(&x86.xmm[1], 4), [0.25f32.to_bits(); 4]);
+        assert_eq!(lanes_u32(&x86.xmm[1], 4), [0; 4]);
         assert_eq!(x86.mxcsr & PE, 0);
     }
 
@@ -4770,9 +4771,9 @@ fn lifted_reduce_executes_remainders_special_cases_exceptions_masks_and_faults()
         assert_eq!(x86.mxcsr & 0x3F, 0);
     }
 
-    // FP32 DAZ consumes denormals as zero. FP16 ignores DAZ and FTZ, and
-    // a tiny nonzero remainder reports precision but never underflow.
-    for (mxcsr, expected, expected_status) in [(0x1F80, 1u32, PE), (0x1F80 | DAZ, 0u32, 0)] {
+    // FP32 DAZ consumes denormals as zero. An exact tiny remainder does not
+    // report precision unless FTZ flushes it. FP16 ignores DAZ and FTZ.
+    for (mxcsr, expected) in [(0x1F80, 1u32), (0x1F80 | DAZ, 0u32)] {
         if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
             x86.xmm[3] = vector_u32(&[1; 4], 0);
             x86.mxcsr = mxcsr;
@@ -4784,7 +4785,7 @@ fn lifted_reduce_executes_remainders_special_cases_exceptions_masks_and_faults()
         );
         if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
             assert_eq!(lanes_u32(&x86.xmm[1], 4), [expected; 4]);
-            assert_eq!(x86.mxcsr & (UE | PE), expected_status);
+            assert_eq!(x86.mxcsr & (UE | PE), 0);
         }
     }
     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
@@ -4811,7 +4812,7 @@ fn lifted_reduce_executes_remainders_special_cases_exceptions_masks_and_faults()
     );
     if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
         assert_eq!(lanes_u16(&x86.xmm[1], 8), [1; 8]);
-        assert_eq!(x86.mxcsr & (UE | PE), PE);
+        assert_eq!(x86.mxcsr & (UE | PE), 0);
     }
 
     // Scalar writemasking changes only the low element, sources upper XMM

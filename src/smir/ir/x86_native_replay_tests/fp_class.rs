@@ -23,6 +23,12 @@ fn requirements(shape: FpClassShape) -> (bool, bool, bool) {
     (opcode == 0x66 && ll != 2, pp == 1, pp == 0)
 }
 
+fn canonical_replay(instruction: X86InstructionBytes) -> X86InstructionBytes {
+    instruction
+        .evex_scalar_fp_class_llig_canonical_ll0()
+        .unwrap_or(instruction)
+}
+
 fn encoding(shape: FpClassShape, destination: u8, source: u8, mask: u8, immediate: u8) -> [u8; 7] {
     let (opcode, pp, w, ll) = shape;
     assert!(matches!(opcode, 0x66 | 0x67));
@@ -148,13 +154,14 @@ fn replay_spans_encode_vl_dq_and_fp16_requirements() {
         let instruction = X86InstructionBytes::new(&bytes).unwrap();
         let provenance = HashMap::from([((BlockId(23), pc), instruction)]);
         let expected = instruction.evex_register_fp_class_requirements().unwrap();
+        let expected_instruction = canonical_replay(instruction);
         for spans in [
             x86_evex_fp_class_replay_spans(&block, &provenance),
             x86_evex_native_replay_spans(&block, &provenance),
         ] {
             let span = spans.get(&0).unwrap_or_else(|| panic!("{bytes:02X?}"));
             assert_eq!(span.end, 1, "{bytes:02X?}");
-            assert_eq!(span.instruction, instruction, "{bytes:02X?}");
+            assert_eq!(span.instruction, expected_instruction, "{bytes:02X?}");
             assert_eq!(span.needs_avx512vl, expected.0, "{bytes:02X?}");
             assert_eq!(span.needs_avx512dq, expected.1, "{bytes:02X?}");
             assert_eq!(span.needs_avx512fp16, expected.2, "{bytes:02X?}");
@@ -275,11 +282,12 @@ fn memory_classifier_exhausts_1_966_080_semantic_apx_and_immediate_cells() {
 
                                 let p1 = 0x7C | pp | if shape.2 { 0x80 } else { 0 };
                                 let p2 = (ll << 5) | 0x08 | (u8::from(broadcast) << 4) | mask;
+                                let replay_p2 = if scalar { p2 & !0x60 } else { p2 };
                                 let stack = [
                                     0x62,
                                     0xF3,
                                     p1,
-                                    p2,
+                                    replay_p2,
                                     opcode,
                                     (destination << 3) | 0x04,
                                     0x24,

@@ -120,6 +120,9 @@ pub(super) fn x86_native_replay_spans_where(
             let replay_source = replay_source
                 .evex_scalar_fma_llig_canonical_ll0()
                 .unwrap_or(replay_source);
+            let replay_source = replay_source
+                .evex_scalar_fp_class_llig_canonical_ll0()
+                .unwrap_or(replay_source);
             let (instruction, (needs_avx512vl, needs_avx512dq, needs_avx512fp16)) =
                 classify(&replay_source)
                     .map(|requirements| (replay_source, requirements))

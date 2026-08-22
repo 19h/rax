@@ -730,7 +730,10 @@ impl SmirInterpreter {
             remainder.bits &= sign_mask;
             remainder.status |= (1 << 4) | (1 << 5);
         }
-        let mut status = (grid.status | remainder.status) & ((1 << 0) | (1 << 5));
+        // Intel hardware does not expose precision from the internal
+        // round-to-grid step. Only the final subtraction (including an FTZ
+        // flush above) contributes architectural precision status.
+        let mut status = remainder.status & ((1 << 0) | (1 << 5));
         if imm & 8 != 0 {
             status &= !(1 << 5);
         }

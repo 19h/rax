@@ -117,12 +117,17 @@ impl FpClassMemoryCase {
     }
 
     fn expected_replay(self) -> Vec<u8> {
+        let replay_p2 = if self.scalar() {
+            self.p2() & !0x60
+        } else {
+            self.p2()
+        };
         if !self.scalar() && !self.broadcast() && self.mask == 0 {
             vec![
                 0x62,
                 0xF3,
                 self.p1(),
-                self.p2(),
+                replay_p2,
                 self.opcode(),
                 0xC0 | (self.destination << 3),
                 self.immediate,
@@ -132,7 +137,7 @@ impl FpClassMemoryCase {
                 0x62,
                 0xF3,
                 self.p1(),
-                self.p2(),
+                replay_p2,
                 self.opcode(),
                 (self.destination << 3) | 0x04,
                 0x24,
@@ -384,7 +389,7 @@ fn byte_anchors_cover_all_six_mnemonics_and_replay_strategies() {
                 mask: 1,
                 immediate: 0xFF,
             },
-            &[0x62, 0xF3, 0x7C, 0x69, 0x67, 0x0C, 0x24, 0xFF],
+            &[0x62, 0xF3, 0x7C, 0x09, 0x67, 0x0C, 0x24, 0xFF],
         ),
         (
             FpClassMemoryCase {
@@ -406,7 +411,7 @@ fn byte_anchors_cover_all_six_mnemonics_and_replay_strategies() {
                 mask: 1,
                 immediate: 1,
             },
-            &[0x62, 0xF3, 0xFD, 0x49, 0x67, 0x0C, 0x24, 0x01],
+            &[0x62, 0xF3, 0xFD, 0x09, 0x67, 0x0C, 0x24, 0x01],
         ),
     ];
     for (case, expected) in anchors {

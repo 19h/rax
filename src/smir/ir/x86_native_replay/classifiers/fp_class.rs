@@ -136,6 +136,21 @@ impl X86InstructionBytes {
         ))
     }
 
+    /// Return the equivalent L'L=00 host image for a register-only scalar
+    /// `VFPCLASS*`. Although scalar L'L is architecturally ignored, some hosts
+    /// reject nonzero encodings during native execution.
+    pub(crate) fn evex_scalar_fp_class_llig_canonical_ll0(&self) -> Option<Self> {
+        let fields = self.evex_register_fp_class_fields()?;
+        if !fields.scalar {
+            return None;
+        }
+
+        let mut canonical = *self;
+        canonical.bytes[3] &= !0x60;
+        debug_assert_eq!(canonical.evex_register_fp_class_fields(), Some(fields));
+        Some(canonical)
+    }
+
     fn evex_fp_class_memory_fields(&self) -> Option<(u8, u8, u8, u8, MemoryFields)> {
         let bytes = self.as_slice();
         let start = vector_legacy_prefix_len(bytes);
@@ -199,8 +214,9 @@ impl X86InstructionBytes {
     /// 2/4/8-byte embedded broadcast, and scalar forms as Type E6/E10 Tuple1
     /// Scalar. `EVEX.z`, vvvv/V', extended K destinations, packed L'L=3, and
     /// scalar `EVEX.b` are rejected. Only active writemask lanes access memory;
-    /// scalar forms use bit 0. Segment/address-size prefixes and APX B4/X4
-    /// controls remain confined to helper address evaluation.
+    /// scalar forms use bit 0 and replay with the equivalent L'L=00 encoding.
+    /// Segment/address-size prefixes and APX B4/X4 controls remain confined to
+    /// helper address evaluation.
     pub(crate) fn evex_fp_class_memory_encoding(&self) -> Option<X86EvexFpClassMemoryEncoding> {
         let (p0, p1, p2, modrm, fields) = self.evex_fp_class_memory_fields()?;
         let opcode = if fields.scalar { 0x67 } else { 0x66 };
@@ -212,7 +228,7 @@ impl X86InstructionBytes {
                 (p0 & 0x97) | 0x60,
                 // Preserve W/vvvv/pp and remove APX X4 from the stack address.
                 p1 | 0x04,
-                p2,
+                if fields.scalar { p2 & !0x60 } else { p2 },
                 opcode,
                 (modrm & 0x38) | 0x04,
                 0x24,
