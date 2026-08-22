@@ -1097,13 +1097,11 @@ fn native_evex_variable_permil_matches_interpreter_and_faults_without_commit() {
             registers.ctx = (&mut context as *mut VectorMemoryContext) as u64;
             registers.vec_load_fn = vector_load_helper as usize as u64;
             let mut expected = interpreter_success(&function, &registers, &value, address);
-            let loaded_words = case.memory_size() as usize / 8;
+            let mut scratch = [0u8; 64];
+            let loaded_bytes = case.memory_size() as usize;
+            scratch[..loaded_bytes].copy_from_slice(&value[..loaded_bytes]);
             expected.vector_scratch = std::array::from_fn(|word| {
-                if word < loaded_words {
-                    u64::from_le_bytes(value[word * 8..word * 8 + 8].try_into().unwrap())
-                } else {
-                    0
-                }
+                u64::from_le_bytes(scratch[word * 8..word * 8 + 8].try_into().unwrap())
             });
 
             exec.run(entry, &mut registers);
