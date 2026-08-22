@@ -2038,11 +2038,13 @@ impl RiscVCpu {
                     0b011 => sext5(insn.rs1) & mask,
                     // OPFVF merge form: vfmv.v.f vd, rs1 splats the SEW-bit
                     // value of f[rs1] (RVV 11.2). Only vm=1/vs2=0 decodes.
-                    0b101 => (match eb {
-                        2 => self.h(insn.rs1),
-                        4 => self.s32(insn.rs1),
-                        _ => self.f(insn.rs1),
-                    }) & mask,
+                    0b101 => {
+                        (match eb {
+                            2 => self.h(insn.rs1),
+                            4 => self.s32(insn.rs1),
+                            _ => self.f(insn.rs1),
+                        }) & mask
+                    }
                     _ => 0,
                 };
                 for e in vstart..vl {
