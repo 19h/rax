@@ -292,6 +292,20 @@ fn case_bytes(case: NativeCase) -> Vec<u8> {
 }
 
 #[cfg(target_arch = "x86_64")]
+fn case_replay_bytes(case: NativeCase) -> Vec<u8> {
+    canonical_encoding(
+        case.map,
+        case.opcode,
+        case.has_immediate,
+        case.destination,
+        case.source,
+        case.immediate,
+        None,
+        case.ignored_rex_bits,
+    )
+}
+
+#[cfg(target_arch = "x86_64")]
 fn interpret(case: NativeCase, initial: &ShaState, level: OptLevel) -> ShaState {
     use crate::smir::interpret::{BlockResult, SmirInterpreter};
     use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext};
@@ -343,6 +357,7 @@ fn execute_native(case: NativeCase, initial: &ShaState, level: OptLevel) -> ShaS
     use crate::smir::lower::x86_64::X86_64Lowerer;
 
     let bytes = case_bytes(case);
+    let replay_bytes = case_replay_bytes(case);
     let function = function(&bytes, level, false);
     let mut lowerer = X86_64Lowerer::new();
     lowerer.set_avx_ymm16_vector_state(true);
@@ -352,7 +367,10 @@ fn execute_native(case: NativeCase, initial: &ShaState, level: OptLevel) -> ShaS
     let code = lowerer
         .finalize()
         .unwrap_or_else(|error| panic!("{level:?} {case:?} {bytes:02X?}: {error:?}"));
-    assert!(code.windows(bytes.len()).any(|window| window == bytes));
+    assert!(
+        code.windows(replay_bytes.len())
+            .any(|window| window == replay_bytes)
+    );
     let exec = ExecMem::new(&code).expect("map legacy SHA replay");
     let mut registers = GuestRegs {
         gpr: initial.gprs,
