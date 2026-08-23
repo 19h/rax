@@ -5548,6 +5548,20 @@ mod tests {
             }
             Ok(_) => panic!("cbo.zero at 0x2001 must fault"),
         }
+        // A block that starts in memory but crosses its end reports the same
+        // original rs1 value rather than the aligned block base.
+        let mut c_partial = RiscVCpu::new(
+            RiscVConfig::rv64gc(),
+            Box::new(FlatMemory::new(0, 0x2000)),
+        );
+        c_partial.set_x(10, 0x1fff);
+        assert_eq!(
+            c_partial.execute_insn(&d, 0x1000),
+            Err(Trap {
+                cause: cause::STORE_ACCESS_FAULT,
+                tval: 0x1fff,
+            })
+        );
         // Control: an aligned address inside memory executes cleanly.
         let mut c2 = RiscVCpu::new(RiscVConfig::rv64gc(), Box::new(FlatMemory::new(0, 0x2000)));
         c2.set_x(10, 0x1000);
