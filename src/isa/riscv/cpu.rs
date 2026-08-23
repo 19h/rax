@@ -3305,8 +3305,9 @@ impl RiscVCpu {
             }
             Op::Vcompress => {
                 // vcompress.vm is unmasked (vm=1), is not restartable (vstart
-                // must be 0), and its destination group must not overlap the
-                // source vs2 group or the single-register mask source vs1.
+                // must be 0), and its source/destination groups must be
+                // aligned and non-overlapping with the single-register mask
+                // source vs1.
                 let emul: u8 = match self.vtype & 0x7 {
                     1 => 2,
                     2 => 4,
@@ -3317,6 +3318,7 @@ impl RiscVCpu {
                 if !vm
                     || vstart != 0
                     || vd % emul != 0
+                    || vs2 % emul != 0
                     || overlaps(vd, emul, vs2, emul)
                     || overlaps(vd, emul, insn.rs1, 1)
                 {
@@ -6065,6 +6067,13 @@ mod tests {
         c.set_vl_vtype(4, 0x11); // e32, m2
         assert!(matches!(
             run_one(&mut c, op_vc(1, 4, 0, 1)), // vd=v1 misaligned
+            RiscVExit::Trap(_)
+        ));
+        // A source group has the same LMUL alignment requirement.
+        let mut c = cpu_e8m1();
+        c.set_vl_vtype(4, 0x11); // e32,m2
+        assert!(matches!(
+            run_one(&mut c, op_vc(1, 1, 0, 4)), // vs2=v1 misaligned
             RiscVExit::Trap(_)
         ));
         // Aligned control: vd=v4, vs2=v8.
