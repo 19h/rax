@@ -6001,6 +6001,7 @@ mod tests {
         // SEW-bit value of f[rs1] to every body element (RVV 11.2).
         let mut c = cpu_e8m1();
         c.set_vl_vtype(4, 0x10); // e32,m1, vl=4
+        c.csr_write(0x300, 0b01 << 13).unwrap(); // mstatus.FS=Initial
         c.set_f(2, 0xffff_ffff_0000_0000 | 0x3f80_0000); // f2 = 1.0f
         assert!(matches!(
             run_one(&mut c, op_v(0b010111, 1, 0, 2, 0b101, 1)),
@@ -6029,6 +6030,7 @@ mod tests {
         // at SEW=32 (SEW=8 has no IEEE type and is reserved).
         let mut c = cpu_e8m1();
         c.set_vl_vtype(4, 0x10); // e32,m1
+        c.csr_write(0x300, 0b01 << 13).unwrap(); // mstatus.FS=Initial
         assert!(matches!(
             run_one(&mut c, op_v(0b010000, 1, 2, 0, 0b001, 1)),
             RiscVExit::Continue
