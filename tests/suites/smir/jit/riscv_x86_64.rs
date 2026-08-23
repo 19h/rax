@@ -448,6 +448,8 @@ unsafe extern "sysv64" fn vector(state: *mut RiscVGuestRegs, insn: u64, xlen: u6
     rax::isa::riscv::Memory::write(&mut private_memory, 0, &memory.bytes)
         .expect("private vector memory has the fixed test extent");
     let mut cpu = RiscVCpu::new(config, Box::new(private_memory));
+    cpu.csr_write(0x300, 0b01 << 13)
+        .expect("vector helper FP state must be enabled");
     for register in 1..32u8 {
         cpu.set_x(register, state.x[register as usize]);
     }
