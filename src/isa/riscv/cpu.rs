@@ -5551,13 +5551,13 @@ mod tests {
         // A block that starts in memory but crosses its end reports the same
         // original rs1 value rather than the aligned block base.
         let mut c_partial =
-            RiscVCpu::new(RiscVConfig::rv64gc(), Box::new(FlatMemory::new(0, 0x2000)));
-        c_partial.set_x(10, 0x1fff);
+            RiscVCpu::new(RiscVConfig::rv64gc(), Box::new(FlatMemory::new(0, 0x1ff0)));
+        c_partial.set_x(10, 0x1fef);
         assert_eq!(
             c_partial.execute_insn(&d, 0x1000),
             Err(Trap {
                 cause: cause::STORE_ACCESS_FAULT,
-                tval: 0x1fff,
+                tval: 0x1fef,
             })
         );
         // Control: an aligned address inside memory executes cleanly.
