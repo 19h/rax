@@ -485,6 +485,11 @@ impl RiscVCpu {
         self.execute(insn, pc)
     }
 
+    #[inline]
+    fn mark_fp_state_dirty(&mut self) {
+        self.mstatus = (self.mstatus & !(0b11 << 13)) | (0b11 << 13);
+    }
+
     /// Current privilege level.
     pub fn privilege(&self) -> Priv {
         self.priv_
@@ -647,7 +652,8 @@ impl RiscVCpu {
         // Default fall-through PC; control-flow ops override.
         self.pc = pc.wrapping_add(insn.len as u64) & self.xmask();
 
-        if insn.op.is_fp() || vector_validation::is_vector_fp_encoding(insn) {
+        let vector_fp = vector_validation::is_vector_fp_encoding(insn);
+        if insn.op.is_fp() || vector_fp {
             // priv spec v1.12 norm:mstatus_fs_op: with mstatus.FS=Off,
             // attempts to execute instructions that access FP state raise an
             // illegal-instruction exception in every privilege mode.
@@ -656,7 +662,11 @@ impl RiscVCpu {
             }
         }
         if insn.op.is_fp() {
-            return self.exec_fp(insn, pc);
+            let result = self.exec_fp(insn, pc);
+            if result.is_ok() {
+                self.mark_fp_state_dirty();
+            }
+            return result;
         }
 
         let rd = insn.rd;
@@ -1342,6 +1352,9 @@ impl RiscVCpu {
 
             // FP handled above via exec_fp.
             _ => return Err(Trap::illegal(insn.raw)),
+        }
+        if vector_fp {
+            self.mark_fp_state_dirty();
         }
         Ok(RiscVExit::Continue)
     }

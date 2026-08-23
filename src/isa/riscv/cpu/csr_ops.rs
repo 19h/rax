@@ -38,6 +38,9 @@ impl RiscVCpu {
                 _ => unreachable!(),
             };
             self.csr_write(addr, new)?;
+            if matches!(addr, 0x001..=0x003) {
+                self.mark_fp_state_dirty();
+            }
         }
         self.set_x(insn.rd, old);
         Ok(())
