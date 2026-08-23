@@ -5579,6 +5579,33 @@ mod tests {
         c6.priv_ = Priv::User;
         c6.set_pc(0x2000);
         assert_eq!(c6.step(), RiscVExit::Continue);
+        assert_eq!(
+            (c6.csr_read(0x300).unwrap() >> 13) & 0b11,
+            0b11,
+            "successful scalar FP execution must set mstatus.FS=Dirty"
+        );
+
+        let mut c7 = cpu_e8m1();
+        c7.csr_write(0x300, 0b01 << 13).unwrap();
+        assert_eq!(
+            run_one(&mut c7, op_v(0b000000, 1, 2, 3, 0b001, 1)), // vfadd.vv
+            RiscVExit::Continue
+        );
+        assert_eq!(
+            (c7.csr_read(0x300).unwrap() >> 13) & 0b11,
+            0b11,
+            "successful vector FP execution must set mstatus.FS=Dirty"
+        );
+
+        let mut c8 = cpu();
+        c8.csr_write(0x300, 0b01 << 13).unwrap();
+        c8.set_x(1, 1);
+        assert_eq!(run_one(&mut c8, csr(0x003, 1, 1, 0)), RiscVExit::Continue);
+        assert_eq!(
+            (c8.csr_read(0x300).unwrap() >> 13) & 0b11,
+            0b11,
+            "successful FP CSR write must set mstatus.FS=Dirty"
+        );
     }
 
     #[test]
