@@ -1423,9 +1423,14 @@ mod tests {
         for level in [OptLevel::O0, OptLevel::O2] {
             for word in [fadd_s, read_fcsr] {
                 let mut cpu = cpu_with_word(word);
+                let expected = if word == read_fcsr {
+                    Trap::illegal(0)
+                } else {
+                    Trap::illegal(word.into())
+                };
                 assert_eq!(
                     cpu.step_jit(level),
-                    RiscVExit::Trap(Trap::illegal(word.into())),
+                    RiscVExit::Trap(expected),
                     "{level:?}: {word:#010x}"
                 );
                 assert_eq!(cpu.jit_stats().native_executions, 0, "{level:?}");
@@ -1473,24 +1478,28 @@ mod tests {
     }
 
     #[test]
-    fn jit_executes_rv32_zfa_doubleword_moves_at_o0_and_o2() {
+    fn jit_falls_back_for_rv32_zfa_doubleword_moves_at_o0_and_o2() {
         let config = RiscVConfig::rv32(Isa::rv64gc());
         let fmvh_x_d = (0b1110001 << 25) | (1 << 20) | (10 << 15) | (11 << 7) | 0x53;
         let fmvp_d_x = (0b1011001 << 25) | (12 << 20) | (11 << 15) | (10 << 7) | 0x53;
 
         for level in [OptLevel::O0, OptLevel::O2] {
             let mut high = cpu_with_config_word(config, fmvh_x_d);
+            high.csr_write(0x300, 0b01 << 13).unwrap(); // mstatus.FS=Initial
             high.set_f(10, 0x89ab_cdef_0123_4567);
             assert_eq!(high.step_jit(level), RiscVExit::Continue, "{level:?}");
             assert_eq!(high.x(11), 0x89ab_cdef, "{level:?}");
-            assert_eq!(high.jit_stats().native_executions, 1, "{level:?}");
+            assert_eq!(high.jit_stats().native_executions, 0, "{level:?}");
+            assert_eq!(high.jit_stats().interpreter_fallbacks, 1, "{level:?}");
 
             let mut pack = cpu_with_config_word(config, fmvp_d_x);
+            pack.csr_write(0x300, 0b01 << 13).unwrap(); // mstatus.FS=Initial
             pack.set_x(11, 0x7654_3210);
             pack.set_x(12, 0xfedc_ba98);
             assert_eq!(pack.step_jit(level), RiscVExit::Continue, "{level:?}");
             assert_eq!(pack.f(10), 0xfedc_ba98_7654_3210, "{level:?}");
-            assert_eq!(pack.jit_stats().native_executions, 1, "{level:?}");
+            assert_eq!(pack.jit_stats().native_executions, 0, "{level:?}");
+            assert_eq!(pack.jit_stats().interpreter_fallbacks, 1, "{level:?}");
         }
     }
 

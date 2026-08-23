@@ -743,6 +743,7 @@ mod tests {
 
     fn cpu(vtype: u64, vl: u64, vstart: u64, frm: u8) -> RiscVCpu {
         let mut cpu = RiscVCpu::new(RiscVConfig::rv64gc(), Box::new(FlatMemory::new(0, 0x2000)));
+        cpu.csr_write(0x300, 0b01 << 13).unwrap(); // mstatus.FS=Initial
         cpu.set_vl_vtype(vl, vtype);
         cpu.set_vstart(vstart);
         cpu.set_fcsr(u32::from(frm) << 5);
