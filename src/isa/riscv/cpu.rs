@@ -5598,7 +5598,8 @@ mod tests {
             "successful scalar FP execution must set mstatus.FS=Dirty"
         );
 
-        let mut c7 = cpu_e8m1();
+        let mut c7 = cpu();
+        c7.set_vl_vtype(4, 0x10); // e32,m1
         c7.csr_write(0x300, 0b01 << 13).unwrap();
         assert_eq!(
             run_one(&mut c7, op_v(0b000000, 1, 2, 3, 0b001, 1)), // vfadd.vv
