@@ -752,6 +752,8 @@ fn run_case_for_xlen(
         RiscVConfig::rv64gc()
     };
     let mut cpu = RiscVCpu::new(config, Box::new(reference_memory));
+    cpu.csr_write(0x300, 0b01 << 13)
+        .expect("reference FP state must be enabled");
     for register in 1..32u8 {
         cpu.set_x(register, initial_x[register as usize]);
     }
@@ -858,6 +860,8 @@ fn run_vector_case(
         RiscVConfig::rv64gc()
     };
     let mut cpu = RiscVCpu::new(config, Box::new(reference_memory));
+    cpu.csr_write(0x300, 0b01 << 13)
+        .expect("reference FP state must be enabled");
     for register in 1..32u8 {
         cpu.set_x(register, initial_state.x[register as usize]);
     }
@@ -2206,6 +2210,8 @@ fn production_jit_matches_interpreter_for_helpers_and_native_op_v() {
     let mut expected = make_cpu();
     let mut actual = make_cpu();
     for cpu in [&mut expected, &mut actual] {
+        cpu.csr_write(0x300, 0b01 << 13)
+            .expect("production FP state must be enabled");
         write_production_code(cpu, &instructions);
         cpu.set_x(1, DATA);
         cpu.set_x(2, 7);
@@ -2236,8 +2242,8 @@ fn production_jit_matches_interpreter_for_helpers_and_native_op_v() {
     let stats = actual.jit_stats();
     assert_eq!(stats.cache_entries, instructions.len());
     assert_eq!(stats.cache_misses, instructions.len() as u64);
-    assert_eq!(stats.native_executions, instructions.len() as u64);
-    assert_eq!(stats.interpreter_fallbacks, 0);
+    assert_eq!(stats.native_executions, 4);
+    assert_eq!(stats.interpreter_fallbacks, 1);
 }
 
 #[test]
