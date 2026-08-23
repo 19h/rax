@@ -581,6 +581,18 @@ fn function_for_region(
 }
 
 fn admit_lifted_instruction(insn: &Insn, lifted: &LiftResult) -> bool {
+    // The native FP ABI carries no privilege or mstatus.FS state. Keep scalar
+    // and vector FP instructions, plus the FP CSRs, on the architectural path
+    // so their FS=Off checks cannot be bypassed by native execution.
+    if insn.op.is_fp()
+        || super::vector_validation::is_vector_fp_encoding(insn)
+        || matches!(
+            insn.op,
+            Op::Csrrw | Op::Csrrs | Op::Csrrc | Op::Csrrwi | Op::Csrrsi | Op::Csrrci
+        ) && matches!(insn.csr, 0x001..=0x003)
+    {
+        return false;
+    }
     let mut memory_accesses = 0usize;
     for op in &lifted.ops {
         match op.kind {
@@ -1399,6 +1411,38 @@ mod tests {
                 assert_eq!(cpu.jit_stats().native_executions, 0, "{level:?}");
                 assert_eq!(cpu.jit_stats().interpreter_fallbacks, 1, "{level:?}");
             }
+        }
+    }
+
+    #[test]
+    fn jit_falls_back_for_fp_state_gates_at_o0_and_o2() {
+        let fadd_s = 0x0031_00d3; // fadd.s f1, f2, f3
+        let read_fcsr = 0x0030_20f3; // csrr x1, fcsr
+        let vector_fadd_vv = (1u32 << 25) | (2 << 20) | (0b001 << 12) | (1 << 7) | 0x57;
+
+        for level in [OptLevel::O0, OptLevel::O2] {
+            for word in [fadd_s, read_fcsr] {
+                let mut cpu = cpu_with_word(word);
+                assert_eq!(
+                    cpu.step_jit(level),
+                    RiscVExit::Trap(Trap::illegal(word.into())),
+                    "{level:?}: {word:#010x}"
+                );
+                assert_eq!(cpu.jit_stats().native_executions, 0, "{level:?}");
+                assert_eq!(cpu.jit_stats().interpreter_fallbacks, 1, "{level:?}");
+            }
+
+            let mut vector_config = RiscVConfig::rv64gc();
+            vector_config.isa.v = true;
+            let mut vector = cpu_with_config_word(vector_config, vector_fadd_vv);
+            vector.set_vl_vtype(4, 0x10); // e32,m1
+            assert_eq!(
+                vector.step_jit(level),
+                RiscVExit::Trap(Trap::illegal(vector_fadd_vv.into())),
+                "{level:?}: vector FP"
+            );
+            assert_eq!(vector.jit_stats().native_executions, 0, "{level:?}");
+            assert_eq!(vector.jit_stats().interpreter_fallbacks, 1, "{level:?}");
         }
     }
 
