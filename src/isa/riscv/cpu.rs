@@ -5550,10 +5550,8 @@ mod tests {
         }
         // A block that starts in memory but crosses its end reports the same
         // original rs1 value rather than the aligned block base.
-        let mut c_partial = RiscVCpu::new(
-            RiscVConfig::rv64gc(),
-            Box::new(FlatMemory::new(0, 0x2000)),
-        );
+        let mut c_partial =
+            RiscVCpu::new(RiscVConfig::rv64gc(), Box::new(FlatMemory::new(0, 0x2000)));
         c_partial.set_x(10, 0x1fff);
         assert_eq!(
             c_partial.execute_insn(&d, 0x1000),
