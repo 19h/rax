@@ -5624,6 +5624,7 @@ mod tests {
     #[test]
     fn fcsr_subfields() {
         let mut c = cpu();
+        c.csr_write(0x300, 0b01 << 13).unwrap(); // mstatus.FS=Initial
         c.set_fcsr(0xff);
         // frm (0x002) reads bits [7:5] = 0b111 = 7.
         run_one(&mut c, csr(0x002, 0, 2, 6));
