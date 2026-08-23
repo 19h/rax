@@ -647,14 +647,15 @@ impl RiscVCpu {
         // Default fall-through PC; control-flow ops override.
         self.pc = pc.wrapping_add(insn.len as u64) & self.xmask();
 
-        if insn.op.is_fp() {
+        if insn.op.is_fp() || vector_validation::is_vector_fp_encoding(insn) {
             // priv spec v1.12 norm:mstatus_fs_op: with mstatus.FS=Off,
-            // attempts to execute FP instructions or access FP CSRs in
-            // S/U-mode raise an illegal-instruction exception. M-mode is
-            // never gated by FS.
-            if self.priv_ != Priv::Machine && (self.mstatus >> 13) & 0b11 == 0 {
+            // attempts to execute instructions that access FP state raise an
+            // illegal-instruction exception in every privilege mode.
+            if (self.mstatus >> 13) & 0b11 == 0 {
                 return Err(Trap::illegal(insn.raw));
             }
+        }
+        if insn.op.is_fp() {
             return self.exec_fp(insn, pc);
         }
 
@@ -5538,8 +5539,8 @@ mod tests {
 
     #[test]
     fn fp_instructions_and_csrs_trap_when_fs_is_off() {
-        // priv spec v1.12 norm:mstatus_fs_op: FS=Off gates FP in S/U-mode.
-        // U-mode fadd.s with FS=Off (default 0) must trap.
+        // priv spec v1.12 norm:mstatus_fs_op: FS=Off gates FP state access in
+        // every privilege mode. U-mode fadd.s with FS=Off (default 0) traps.
         let mut c = cpu();
         c.write_memory(0x2000, &0x0031_00d3u32.to_le_bytes())
             .unwrap(); // fadd.s f1, f2, f3
@@ -5554,20 +5555,30 @@ mod tests {
         let mut c2 = cpu();
         c2.priv_ = Priv::User;
         assert_eq!(c2.csr_read(0x003), Err(Trap::illegal(0)));
-        // M-mode control: FP stays legal regardless of FS.
+        // M-mode fcsr access is gated by the same FS field.
         let mut c3 = cpu();
-        c3.write_memory(0x2000, &0x0031_00d3u32.to_le_bytes())
-            .unwrap(); // fadd.s f1, f2, f3
-        c3.set_pc(0x2000);
-        assert_eq!(c3.step(), RiscVExit::Continue);
-        // FS=Initial (0b01) permits S/U-mode FP again.
+        assert_eq!(c3.csr_read(0x003), Err(Trap::illegal(0)));
+        // M-mode fadd.s with FS=Off must also trap.
         let mut c4 = cpu();
         c4.write_memory(0x2000, &0x0031_00d3u32.to_le_bytes())
-            .unwrap();
-        c4.csr_write(0x300, 0b01 << 13).unwrap();
-        c4.priv_ = Priv::User;
+            .unwrap(); // fadd.s f1, f2, f3
         c4.set_pc(0x2000);
-        assert_eq!(c4.step(), RiscVExit::Continue);
+        assert!(matches!(c4.step(), RiscVExit::Trap(_)));
+        // Vector FP instructions use the same FS gate.
+        let mut c5 = cpu_e8m1();
+        c5.set_vl_vtype(4, 0x10); // e32,m1
+        assert!(matches!(
+            run_one(&mut c5, op_v(0b000000, 1, 2, 3, 0b001, 1)), // vfadd.vv
+            RiscVExit::Trap(_)
+        ));
+        // FS=Initial (0b01) permits S/U-mode FP again.
+        let mut c6 = cpu();
+        c6.write_memory(0x2000, &0x0031_00d3u32.to_le_bytes())
+            .unwrap();
+        c6.csr_write(0x300, 0b01 << 13).unwrap();
+        c6.priv_ = Priv::User;
+        c6.set_pc(0x2000);
+        assert_eq!(c6.step(), RiscVExit::Continue);
     }
 
     #[test]

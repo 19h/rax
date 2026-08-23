@@ -491,7 +491,7 @@ fn validate_iota(cpu: &RiscVCpu, insn: &Insn, vm: bool) -> Result<(), Trap> {
     Ok(())
 }
 
-fn is_vector_fp_encoding(insn: &Insn) -> bool {
+pub(super) fn is_vector_fp_encoding(insn: &Insn) -> bool {
     // OPFVV and OPFVF are the complete floating-point classes under OP-V.
     // Classifying the encoding, rather than maintaining an operation whitelist,
     // also covers exact operations and future decoded members of these classes.
