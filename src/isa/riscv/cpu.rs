@@ -5590,8 +5590,8 @@ mod tests {
         // RV32 only adds AMOCAS.D; the ordinary 64-bit AMO encodings remain
         // illegal because they have no register-pair form.
         for funct5 in [
-            0b00000, 0b00001, 0b00010, 0b00011, 0b00100, 0b01000, 0b01100,
-            0b10000, 0b10100, 0b11000, 0b11100,
+            0b00000, 0b00001, 0b00010, 0b00011, 0b00100, 0b01000, 0b01100, 0b10000, 0b10100,
+            0b11000, 0b11100,
         ] {
             let ordinary_d = (funct5 << 27) | (10 << 15) | (0b011 << 12) | (6 << 7) | 0x2f;
             assert!(
