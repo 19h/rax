@@ -5207,8 +5207,7 @@ impl X86_64Vcpu {
             gr.mmx_active = 1;
         }
         if region.uses_x87_tag_state || region.uses_x87_environment_state {
-            self.marshal_x87_environment_to_guest_regs(&mut gr);
-            gr.x87_state_active = 1;
+            self.marshal_x87_to_jit_entry(&mut gr);
         }
 
         region.exec.run(region.entry_offset, &mut gr);
@@ -5311,7 +5310,7 @@ impl X86_64Vcpu {
             self.regs.mm = gr.mm;
         }
         if region.uses_x87_tag_state || region.uses_x87_environment_state {
-            self.marshal_x87_environment_from_guest_regs(&gr);
+            self.marshal_x87_from_jit_exit(&gr);
         }
         // Merge status flags and DF from the host-safe native image, AC and
         // virtualized interrupt controls from their dedicated shadows, and

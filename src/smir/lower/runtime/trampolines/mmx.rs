@@ -682,8 +682,8 @@ pub fn uses_x86_x87_tag_state_excluding(
 }
 
 /// Whether an executable block reads or commits the state-backed x87
-/// environment. The exact 80-bit physical payloads remain interpreter-owned;
-/// only operations that do not consume or produce them are classified here.
+/// environment. Real compiled regions additionally marshal the direct engine's
+/// raw binary64 payload image through the append-only payload channel.
 pub fn uses_x86_x87_environment_state_excluding(
     func: &SmirFunction,
     excluded: &HashMap<BlockId, u64>,
@@ -703,6 +703,8 @@ pub fn uses_x86_x87_environment_state_excluding(
                 } | OpKind::X86X87Data {
                     kind: X86X87DataKind::Free
                         | X86X87DataKind::FreePop
+                        | X86X87DataKind::ChangeSign
+                        | X86X87DataKind::Absolute
                         | X86X87DataKind::DecrementTop
                         | X86X87DataKind::IncrementTop,
                     addr: None,

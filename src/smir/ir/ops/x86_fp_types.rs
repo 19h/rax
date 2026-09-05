@@ -281,6 +281,8 @@ impl super::OpKind {
             } => match kind {
                 X86X87DataKind::Free => *st < 8 && *fop == 0x05C0 + u16::from(*st),
                 X86X87DataKind::FreePop => *st < 8 && *fop == 0x07C0 + u16::from(*st),
+                X86X87DataKind::ChangeSign => *st == 0 && *fop == 0x01E0,
+                X86X87DataKind::Absolute => *st == 1 && *fop == 0x01E1,
                 X86X87DataKind::DecrementTop => *st == 6 && *fop == 0x01F6,
                 X86X87DataKind::IncrementTop => *st == 7 && *fop == 0x01F7,
                 _ => false,

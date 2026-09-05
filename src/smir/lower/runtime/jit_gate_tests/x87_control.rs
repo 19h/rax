@@ -8,7 +8,8 @@ use crate::smir::lower::runtime::{
 use crate::smir::lower::{
     X86_GUEST_STACK_FLAGS_RFLAGS_VALID_OFFSET, X86_GUEST_X87_CONTROL_WORD_OFFSET,
     X86_GUEST_X87_DATA_PTR_OFFSET, X86_GUEST_X87_INSTR_PTR_OFFSET,
-    X86_GUEST_X87_LAST_OPCODE_OFFSET, X86_GUEST_X87_STATE_ACTIVE_OFFSET,
+    X86_GUEST_X87_LAST_OPCODE_OFFSET, X86_GUEST_X87_PAYLOAD_ACTIVE_OFFSET,
+    X86_GUEST_X87_PAYLOAD_OFFSET, X86_GUEST_X87_STATE_ACTIVE_OFFSET,
     X86_GUEST_X87_STATUS_WORD_OFFSET,
 };
 
@@ -128,6 +129,37 @@ fn x87_stack_metadata_shapes_are_narrowly_x86_native_safe() {
 }
 
 #[test]
+fn x87_sign_payload_shapes_are_narrowly_x86_native_safe() {
+    for op in [
+        metadata(X86X87DataKind::ChangeSign, 0, 0x01E0),
+        metadata(X86X87DataKind::Absolute, 1, 0x01E1),
+    ] {
+        assert!(op.is_jit_safe(), "exact shape: {op:?}");
+        assert!(x86_gate(op.clone()), "x86-64 gate rejected {op:?}");
+        assert!(!aarch64_gate(vec![op.clone()], false));
+        assert!(!x86_aarch64_gate(op));
+    }
+
+    for op in [
+        metadata(X86X87DataKind::ChangeSign, 1, 0x01E0),
+        metadata(X86X87DataKind::ChangeSign, 0, 0x01E1),
+        metadata(X86X87DataKind::Absolute, 0, 0x01E1),
+        metadata(X86X87DataKind::Absolute, 1, 0x01E0),
+        OpKind::X86X87Data {
+            kind: X86X87DataKind::Absolute,
+            addr: Some(Address::Direct(x86(X86Reg::Rax))),
+            st: 1,
+            fop: 0x01E1,
+        },
+    ] {
+        assert!(!op.is_jit_safe(), "malformed shape: {op:?}");
+        assert!(!x86_gate(op.clone()));
+        assert!(!aarch64_gate(vec![op.clone()], false));
+        assert!(!x86_aarch64_gate(op));
+    }
+}
+
+#[test]
 fn x87_environment_detector_honors_native_exit_exclusion() {
     for (index, kind) in [
         X86X87ControlKind::Init,
@@ -175,7 +207,31 @@ fn x87_stack_metadata_environment_detector_honors_native_exit_exclusion() {
 }
 
 #[test]
-fn x87_environment_abi_is_append_only_and_exact() {
+fn x87_sign_payload_environment_detector_honors_native_exit_exclusion() {
+    for (index, op) in [
+        metadata(X86X87DataKind::ChangeSign, 0, 0x01E0),
+        metadata(X86X87DataKind::Absolute, 1, 0x01E1),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let mut builder = FunctionBuilder::new(FunctionId(index as u32), 0x1000);
+        builder.push_op(0x1000, op.clone());
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let function = builder.finish();
+        assert!(
+            uses_x86_x87_environment_state_excluding(&function, &std::collections::HashMap::new()),
+            "{op:?}"
+        );
+        assert!(!uses_x86_x87_environment_state_excluding(
+            &function,
+            &std::collections::HashMap::from([(function.entry, 0x1002)])
+        ));
+    }
+}
+
+#[test]
+fn x87_environment_and_payload_abi_is_append_only_and_exact() {
     for (actual, expected) in [
         (
             std::mem::offset_of!(GuestRegs, x87_control_word),
@@ -201,6 +257,14 @@ fn x87_environment_abi_is_append_only_and_exact() {
             std::mem::offset_of!(GuestRegs, x87_state_active),
             X86_GUEST_X87_STATE_ACTIVE_OFFSET as usize,
         ),
+        (
+            std::mem::offset_of!(GuestRegs, x87_payload),
+            X86_GUEST_X87_PAYLOAD_OFFSET as usize,
+        ),
+        (
+            std::mem::offset_of!(GuestRegs, x87_payload_active),
+            X86_GUEST_X87_PAYLOAD_ACTIVE_OFFSET as usize,
+        ),
     ] {
         assert_eq!(actual, expected);
     }
@@ -212,6 +276,14 @@ fn x87_environment_abi_is_append_only_and_exact() {
         X86_GUEST_X87_STATE_ACTIVE_OFFSET,
         X86_GUEST_X87_CONTROL_WORD_OFFSET + 5 * 8
     );
+    assert_eq!(
+        X86_GUEST_X87_PAYLOAD_OFFSET,
+        X86_GUEST_X87_STATE_ACTIVE_OFFSET + 8
+    );
+    assert_eq!(
+        X86_GUEST_X87_PAYLOAD_ACTIVE_OFFSET,
+        X86_GUEST_X87_PAYLOAD_OFFSET + 8 * 8
+    );
 
     let defaults = GuestRegs::default();
     assert_eq!(defaults.x87_control_word, 0x037F);
@@ -221,4 +293,6 @@ fn x87_environment_abi_is_append_only_and_exact() {
     assert_eq!(defaults.x87_instr_ptr, 0);
     assert_eq!(defaults.x87_last_opcode, 0);
     assert_eq!(defaults.x87_state_active, 0);
+    assert_eq!(defaults.x87_payload, [0; 8]);
+    assert_eq!(defaults.x87_payload_active, 0);
 }

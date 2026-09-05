@@ -265,6 +265,10 @@ pub const X86_GUEST_X87_INSTR_PTR_OFFSET: i32 = X86_GUEST_X87_DATA_PTR_OFFSET + 
 pub const X86_GUEST_X87_LAST_OPCODE_OFFSET: i32 = X86_GUEST_X87_INSTR_PTR_OFFSET + 8;
 /// Offset of the append-only x87 call-through synchronization marker.
 pub const X86_GUEST_X87_STATE_ACTIVE_OFFSET: i32 = X86_GUEST_X87_LAST_OPCODE_OFFSET + 8;
+/// Offset of the append-only direct-engine x87 physical payload image.
+pub const X86_GUEST_X87_PAYLOAD_OFFSET: i32 = X86_GUEST_X87_STATE_ACTIVE_OFFSET + 8;
+/// Offset of the append-only x87 payload call-through synchronization marker.
+pub const X86_GUEST_X87_PAYLOAD_ACTIVE_OFFSET: i32 = X86_GUEST_X87_PAYLOAD_OFFSET + 8 * 8;
 /// Internal `vec_load_fn` destination namespace for
 /// [`runtime::GuestRegs::vector_scratch`]. Architectural ZMM indices remain
 /// exactly 0..=31. For `vec_store_fn`, this tag names an unmasked scratch

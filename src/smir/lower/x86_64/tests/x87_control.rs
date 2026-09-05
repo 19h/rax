@@ -3,8 +3,8 @@
 use super::*;
 use crate::smir::ir::ops::X86X87DataKind;
 use crate::smir::lower::{
-    X86_GUEST_CR0_OFFSET, X86_GUEST_X87_CONTROL_WORD_OFFSET, X86_GUEST_X87_STATUS_WORD_OFFSET,
-    X86_GUEST_X87_TAG_WORD_OFFSET,
+    X86_GUEST_CR0_OFFSET, X86_GUEST_X87_CONTROL_WORD_OFFSET, X86_GUEST_X87_PAYLOAD_OFFSET,
+    X86_GUEST_X87_STATUS_WORD_OFFSET, X86_GUEST_X87_TAG_WORD_OFFSET,
 };
 
 fn control(kind: X86X87ControlKind) -> OpKind {
@@ -175,6 +175,57 @@ fn lower_x87_stack_metadata_rejects_every_malformed_shape() {
     ));
 }
 
+#[test]
+fn lower_x87_sign_payload_requires_waiting_guards_and_exact_state_slots() {
+    for op in [
+        metadata(X86X87DataKind::ChangeSign, 0, 0x01E0),
+        metadata(X86X87DataKind::Absolute, 1, 0x01E1),
+    ] {
+        assert!(matches!(
+            lower(op.clone(), false, None),
+            Err(LowerError::UnsupportedOp { .. })
+        ));
+        let (code, _) = lower(op.clone(), true, None).expect("guarded x87 sign operation");
+        for offset in [
+            X86_GUEST_CR0_OFFSET,
+            X86_GUEST_X87_STATUS_WORD_OFFSET,
+            X86_GUEST_X87_TAG_WORD_OFFSET,
+            X86_GUEST_X87_PAYLOAD_OFFSET,
+            crate::smir::lower::X86_GUEST_X87_INSTR_PTR_OFFSET,
+            crate::smir::lower::X86_GUEST_X87_LAST_OPCODE_OFFSET,
+        ] {
+            assert!(
+                code.windows(4)
+                    .any(|window| window == (offset as u32).to_le_bytes()),
+                "{op:?}: missing state offset {offset}: {code:02X?}"
+            );
+        }
+    }
+}
+
+#[test]
+fn lower_x87_sign_payload_rejects_every_malformed_shape() {
+    for op in [
+        metadata(X86X87DataKind::ChangeSign, 1, 0x01E0),
+        metadata(X86X87DataKind::ChangeSign, 0, 0x01E1),
+        metadata(X86X87DataKind::Absolute, 0, 0x01E1),
+        metadata(X86X87DataKind::Absolute, 1, 0x01E0),
+    ] {
+        assert!(matches!(
+            lower(op, true, None),
+            Err(LowerError::InvalidOperand { .. })
+        ));
+    }
+    assert!(matches!(
+        lower(
+            metadata(X86X87DataKind::Absolute, 1, 0x01E1),
+            true,
+            Some(X86OpHint::RexByteReg),
+        ),
+        Err(LowerError::InvalidOperand { .. })
+    ));
+}
+
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn execute_native(
     kind: X86X87ControlKind,
@@ -249,6 +300,99 @@ fn native_x87_stack_metadata_pending_error_guard_is_noncommitting() {
         assert_eq!(result.exit_pc, 0x1000, "{kind:?}");
         assert_eq!(result.x87_status_word, (5 << 11) | 0x8080 | 0x4700);
         assert_eq!(result.x87_tag_word, 0x6996);
+        assert_eq!(result.x87_instr_ptr, 0x8877_6655_4433_2211);
+        assert_eq!(result.x87_last_opcode, 0x05A5);
+        assert_eq!(result.gpr[0], 0xA500_0000_0000_0000);
+        assert_eq!(result.rflags, 0x2 | 0x08D5 | (1 << 10));
+    }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[test]
+fn native_x87_sign_payload_is_bit_exact_for_dynamic_top_and_special_values() {
+    for (kind, st, fop, input, expected) in [
+        (
+            X86X87DataKind::ChangeSign,
+            0,
+            0x01E0,
+            0x7FF8_A5A5_5A5A_1234,
+            0xFFF8_A5A5_5A5A_1234,
+        ),
+        (
+            X86X87DataKind::ChangeSign,
+            0,
+            0x01E0,
+            0x7FF0_A5A5_5A5A_1234,
+            0xFFF0_A5A5_5A5A_1234,
+        ),
+        (
+            X86X87DataKind::Absolute,
+            1,
+            0x01E1,
+            0xFFF0_A5A5_5A5A_1234,
+            0x7FF0_A5A5_5A5A_1234,
+        ),
+        (
+            X86X87DataKind::Absolute,
+            1,
+            0x01E1,
+            0x8000_0000_0000_0000,
+            0,
+        ),
+    ] {
+        for top in 0..8usize {
+            for tag in 0..3u64 {
+                let result = execute_native_op(metadata(kind, st, fop), |regs| {
+                    regs.x87_status_word = ((top as u64) << 11) | 0x4700 | 0x003F;
+                    regs.x87_tag_word = tag << (top * 2);
+                    regs.x87_payload =
+                        std::array::from_fn(|index| 0xA500_0000_0000_0000 | index as u64);
+                    regs.x87_payload[top] = input;
+                });
+                assert_eq!(
+                    result.x87_payload[top], expected,
+                    "{kind:?}, TOP={top}, tag={tag}"
+                );
+                for index in 0..8 {
+                    if index != top {
+                        assert_eq!(
+                            result.x87_payload[index],
+                            0xA500_0000_0000_0000 | index as u64,
+                            "{kind:?}, TOP={top}, tag={tag}, physical={index}"
+                        );
+                    }
+                }
+                assert_eq!(result.x87_status_word & 0x0200, 0);
+                assert_eq!(result.x87_status_word & 0x4500, 0x4500);
+                assert_eq!(result.x87_tag_word, tag << (top * 2));
+                assert_eq!(result.x87_instr_ptr, 0x1000);
+                assert_eq!(result.x87_last_opcode, u64::from(fop));
+                assert_eq!(result.gpr[0], 0xA500_0000_0000_0000);
+                assert_eq!(result.rflags, 0x2 | 0x08D5 | (1 << 10));
+            }
+        }
+    }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[test]
+fn native_x87_sign_payload_empty_stack_guard_is_noncommitting() {
+    for (kind, st, fop) in [
+        (X86X87DataKind::ChangeSign, 0, 0x01E0),
+        (X86X87DataKind::Absolute, 1, 0x01E1),
+    ] {
+        let result = execute_native_op(metadata(kind, st, fop), |regs| {
+            regs.x87_status_word = (5 << 11) | 0x4700 | 0x003F;
+            regs.x87_tag_word = 3 << (5 * 2);
+            regs.x87_payload = std::array::from_fn(|index| 0xA500_0000_0000_0000 | index as u64);
+        });
+        assert_eq!(result.exit_pc, 0x1000, "{kind:?}");
+        assert_eq!(result.x87_status_word, (5 << 11) | 0x4700 | 0x003F);
+        assert_eq!(result.x87_tag_word, 3 << (5 * 2));
+        assert_eq!(
+            result.x87_payload,
+            std::array::from_fn(|index| 0xA500_0000_0000_0000 | index as u64)
+        );
         assert_eq!(result.x87_instr_ptr, 0x8877_6655_4433_2211);
         assert_eq!(result.x87_last_opcode, 0x05A5);
         assert_eq!(result.gpr[0], 0xA500_0000_0000_0000);

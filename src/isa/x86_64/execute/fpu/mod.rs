@@ -27,6 +27,10 @@ const CR0_EM: u64 = 1 << 2;
 const CR0_NE: u64 = 1 << 5;
 const CR0_TS: u64 = 1 << 3;
 const FSW_ES: u16 = 1 << 7;
+const FSW_B: u16 = 1 << 15;
+const FSW_C1: u16 = 1 << 9;
+const FSW_IE: u16 = 1;
+const FSW_SF: u16 = 1 << 6;
 
 /// Deliver x87 device-not-available before a decoded instruction observes or
 /// commits architectural state. Encoding and LOCK/REX2 validity are resolved
@@ -61,4 +65,16 @@ fn require_waiting_x87_available(
 fn record_x87_data_op(vcpu: &mut crate::isa::x86_64::cpu::X86_64Vcpu, fop: u16) {
     vcpu.fpu.instr_ptr = vcpu.regs.rip;
     vcpu.fpu.last_opcode = fop & 0x07FF;
+}
+
+/// Record one x87 stack underflow and report whether FCW.IM selects the masked
+/// response. An unmasked response leaves the operand/tag untouched while B/ES
+/// become pending for precise delivery by a later waiting instruction.
+fn signal_x87_stack_underflow(vcpu: &mut crate::isa::x86_64::cpu::X86_64Vcpu) -> bool {
+    vcpu.fpu.status_word = (vcpu.fpu.status_word | FSW_IE | FSW_SF) & !FSW_C1;
+    let masked = vcpu.fpu.control_word & 1 != 0;
+    if !masked {
+        vcpu.fpu.status_word |= FSW_B | FSW_ES;
+    }
+    masked
 }

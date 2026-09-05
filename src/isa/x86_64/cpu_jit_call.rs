@@ -125,6 +125,9 @@ pub(super) unsafe extern "C" fn rax_jit_call(
         // constructed call frames and fail-closed legacy regions.
         vcpu.fpu.tag_word = gr.x87_tag_word as u16;
     }
+    if gr.x87_payload_active != 0 {
+        vcpu.marshal_x87_payload_from_guest_regs(gr);
+    }
     if gr.mmx_active != 0 {
         vcpu.regs.mm = gr.mm;
     }
@@ -228,6 +231,9 @@ pub(super) unsafe extern "C" fn rax_jit_call(
         vcpu.marshal_x87_environment_to_guest_regs(gr);
     } else if gr.mmx_active != 0 {
         gr.x87_tag_word = u64::from(vcpu.fpu.tag_word);
+    }
+    if gr.x87_payload_active != 0 {
+        vcpu.marshal_x87_payload_to_guest_regs(gr);
     }
     gr.gpr[0] = vcpu.regs.rax;
     gr.gpr[1] = vcpu.regs.rcx;

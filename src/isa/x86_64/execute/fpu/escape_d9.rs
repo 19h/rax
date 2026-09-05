@@ -71,13 +71,43 @@ pub fn escape_d9(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
             0xD0 => {} // FNOP
             0xE0 => {
                 // FCHS
-                let st0 = vcpu.fpu.get_st(0);
-                vcpu.fpu.set_st(0, -st0);
+                if !super::require_waiting_x87_available(vcpu)? {
+                    return Ok(None);
+                }
+                let physical = vcpu.fpu.st_index(0);
+                let tag_shift = (physical as u16) * 2;
+                if (vcpu.fpu.tag_word >> tag_shift) & 3 == 3 {
+                    if super::signal_x87_stack_underflow(vcpu) {
+                        vcpu.fpu.st[physical] = f64::from_bits(0xFFF8_0000_0000_0000);
+                        vcpu.fpu.tag_word =
+                            (vcpu.fpu.tag_word & !(3 << tag_shift)) | (2 << tag_shift);
+                    }
+                } else {
+                    vcpu.fpu.status_word &= !0x0200;
+                    vcpu.fpu.st[physical] =
+                        f64::from_bits(vcpu.fpu.st[physical].to_bits() ^ (1 << 63));
+                }
+                super::record_x87_data_op(vcpu, 0x01E0);
             }
             0xE1 => {
                 // FABS
-                let st0 = vcpu.fpu.get_st(0);
-                vcpu.fpu.set_st(0, st0.abs());
+                if !super::require_waiting_x87_available(vcpu)? {
+                    return Ok(None);
+                }
+                let physical = vcpu.fpu.st_index(0);
+                let tag_shift = (physical as u16) * 2;
+                if (vcpu.fpu.tag_word >> tag_shift) & 3 == 3 {
+                    if super::signal_x87_stack_underflow(vcpu) {
+                        vcpu.fpu.st[physical] = f64::from_bits(0xFFF8_0000_0000_0000);
+                        vcpu.fpu.tag_word =
+                            (vcpu.fpu.tag_word & !(3 << tag_shift)) | (2 << tag_shift);
+                    }
+                } else {
+                    vcpu.fpu.status_word &= !0x0200;
+                    vcpu.fpu.st[physical] =
+                        f64::from_bits(vcpu.fpu.st[physical].to_bits() & !(1 << 63));
+                }
+                super::record_x87_data_op(vcpu, 0x01E1);
             }
             0xE4 => {
                 // FTST

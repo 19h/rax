@@ -62,3 +62,34 @@ fn x87_no_wait_controls_request_exact_direct_replay_before_any_commit() {
         }
     }
 }
+
+#[test]
+fn x87_sign_operations_request_replay_before_payload_or_environment_commit() {
+    for bytes in [&[0xD9, 0xE0][..], &[0xD9, 0xE1][..]] {
+        for (cr0, pending) in [(4, false), (8, false), (0x2C, true), (0x20, true)] {
+            let mut ctx = SmirContext::new_x86_64();
+            seed(&mut ctx);
+            let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+                unreachable!()
+            };
+            x86.cr0 = cr0;
+            x86.x87.status_word &= !0x8080;
+            if pending {
+                x86.x87.status_word |= 0x8080;
+            }
+            let before = x86.x87.clone();
+            let result = execute_lifted_x86(bytes, &mut ctx, &mut FlatMemory::new(1));
+            assert!(
+                matches!(
+                    result,
+                    BlockResult::Exit(ExitReason::Undefined { addr: 0x1000, .. })
+                ),
+                "{bytes:02X?}, CR0={cr0:#x}: {result:?}"
+            );
+            let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+                unreachable!()
+            };
+            assert_eq!(x86.x87, before, "{bytes:02X?}, CR0={cr0:#x}");
+        }
+    }
+}

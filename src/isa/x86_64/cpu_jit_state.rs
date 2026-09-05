@@ -85,8 +85,9 @@ pub(super) struct JitRegion {
     /// `EMMS` needs this channel without activating MM0-MM7 marshalling.
     #[cfg(target_arch = "x86_64")]
     pub(super) uses_x87_tag_state: bool,
-    /// Whether an operand-free native x87 control reads or commits the exact
-    /// environment while leaving all 80-bit physical payloads interpreter-owned.
+    /// Whether a state-backed native x87 operation reads or commits the exact
+    /// environment. Real compiled regions also activate the append-only raw
+    /// direct-engine payload channel for callout and exit coherence.
     #[cfg(target_arch = "x86_64")]
     pub(super) uses_x87_environment_state: bool,
     /// Whether the region reads the real-time guest timestamp counter. Such a

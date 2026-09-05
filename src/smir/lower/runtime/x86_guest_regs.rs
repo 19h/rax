@@ -294,18 +294,26 @@ pub struct GuestRegs {
     /// Exactly one after a successful POPF transaction; zero for every other
     /// native exit. The CPU marshal uses the complete image above only then.
     pub stack_flags_rflags_valid: u64,
-    /// Exact x87 environment fields used by state-backed native controls. The
-    /// 80-bit physical register payloads remain owned by the vCPU and are not
-    /// admitted to native execution by this channel.
+    /// Exact x87 environment fields used by state-backed native operations.
     pub x87_control_word: u64,
     pub x87_status_word: u64,
     pub x87_data_ptr: u64,
     pub x87_instr_ptr: u64,
     pub x87_last_opcode: u64,
     /// Non-zero when a native region reads or writes the x87 environment or
-    /// tag word. Interpreter callouts use it to synchronize the complete
-    /// environment without approximating the 80-bit register payloads.
+    /// tag word. Interpreter callouts use it to synchronize the environment.
     pub x87_state_active: u64,
+    /// Raw IEEE 754 binary64 bits for the direct engine's eight physical x87
+    /// register slots. The direct engine currently projects binary80 payloads
+    /// to `f64`; retaining raw bits here makes sign-only native operations
+    /// preserve zeros, infinities, subnormals, and NaN payload/sign exactly
+    /// within that established representation.
+    pub x87_payload: [u64; 8],
+    /// Non-zero when `x87_payload` participates in native execution or an
+    /// interpreter callout. This separate append-only marker preserves the
+    /// behavior of legacy manually constructed call frames that carry only the
+    /// environment channel.
+    pub x87_payload_active: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -410,6 +418,8 @@ impl Default for GuestRegs {
             x87_instr_ptr: 0,
             x87_last_opcode: 0,
             x87_state_active: 0,
+            x87_payload: [0; 8],
+            x87_payload_active: 0,
         }
     }
 }

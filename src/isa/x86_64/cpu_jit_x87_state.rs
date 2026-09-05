@@ -22,6 +22,29 @@ impl X86_64Vcpu {
         self.fpu.last_opcode = gr.x87_last_opcode as u16;
         self.fpu.top = ((self.fpu.status_word >> 11) & 7) as u8;
     }
+
+    pub(super) fn marshal_x87_payload_to_guest_regs(&self, gr: &mut GuestRegs) {
+        gr.x87_payload = self.fpu.st.map(f64::to_bits);
+    }
+
+    pub(super) fn marshal_x87_payload_from_guest_regs(&mut self, gr: &GuestRegs) {
+        self.fpu.st = gr.x87_payload.map(f64::from_bits);
+    }
+
+    /// Publish every x87 state channel used by a real compiled region. The
+    /// payload marker stays separate so legacy manual call frames with only
+    /// `x87_state_active` retain their established environment-only contract.
+    pub(super) fn marshal_x87_to_jit_entry(&self, gr: &mut GuestRegs) {
+        self.marshal_x87_environment_to_guest_regs(gr);
+        self.marshal_x87_payload_to_guest_regs(gr);
+        gr.x87_state_active = 1;
+        gr.x87_payload_active = 1;
+    }
+
+    pub(super) fn marshal_x87_from_jit_exit(&mut self, gr: &GuestRegs) {
+        self.marshal_x87_environment_from_guest_regs(gr);
+        self.marshal_x87_payload_from_guest_regs(gr);
+    }
 }
 
 impl FpuState {

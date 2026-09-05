@@ -152,6 +152,53 @@ fn stack_metadata_forms() -> Vec<StackMetadata> {
     forms
 }
 
+#[derive(Clone, Copy, Debug)]
+enum SignOperation {
+    ChangeSign,
+    Absolute,
+}
+
+impl SignOperation {
+    fn encoding(self) -> [u8; 2] {
+        match self {
+            Self::ChangeSign => [0xD9, 0xE0],
+            Self::Absolute => [0xD9, 0xE1],
+        }
+    }
+
+    fn fop(self) -> u16 {
+        match self {
+            Self::ChangeSign => 0x01E0,
+            Self::Absolute => 0x01E1,
+        }
+    }
+
+    fn expected_bits(self, bits: u64) -> u64 {
+        match self {
+            Self::ChangeSign => bits ^ (1 << 63),
+            Self::Absolute => bits & !(1 << 63),
+        }
+    }
+}
+
+const SIGN_OPERATIONS: [SignOperation; 2] = [SignOperation::ChangeSign, SignOperation::Absolute];
+const LEGACY_X87_PREFIXES: [&[u8]; 14] = [
+    &[],
+    &[0x66],
+    &[0xF2],
+    &[0xF3],
+    &[0x67],
+    &[0x64],
+    &[0x65],
+    &[0x48],
+    &[0x44],
+    &[0x41],
+    &[0x4D],
+    &[0x66, 0x48],
+    &[0xF2, 0x48],
+    &[0xF3, 0x48],
+];
+
 fn run_direct_to(vcpu: &mut X86_64Vcpu, target: u64) {
     for _ in 0..16 {
         if vcpu.regs.rip == target {
@@ -267,6 +314,8 @@ fn x87_encoding_faults_precede_cr0_device_not_available() {
         ("FINCSTP", &[0xD9, 0xF7][..]),
         ("FFREE ST(3)", &[0xDD, 0xC3][..]),
         ("FFREEP ST(3)", &[0xDF, 0xC3][..]),
+        ("FCHS", &[0xD9, 0xE0][..]),
+        ("FABS", &[0xD9, 0xE1][..]),
     ] {
         let mut locked = vec![0xF0];
         locked.extend_from_slice(instruction);
@@ -329,25 +378,8 @@ fn x87_encoding_faults_precede_cr0_device_not_available() {
 
 #[test]
 fn jit_x87_stack_metadata_matches_direct_for_all_scanned_register_encodings() {
-    const PREFIXES: &[&[u8]] = &[
-        &[],
-        &[0x66],
-        &[0xF2],
-        &[0xF3],
-        &[0x67],
-        &[0x64],
-        &[0x65],
-        &[0x48],
-        &[0x44],
-        &[0x41],
-        &[0x4D],
-        &[0x66, 0x48],
-        &[0xF2, 0x48],
-        &[0xF3, 0x48],
-    ];
-
     for form in stack_metadata_forms() {
-        for prefix in PREFIXES {
+        for prefix in LEGACY_X87_PREFIXES {
             let encoded = prefix
                 .iter()
                 .copied()
@@ -477,6 +509,261 @@ fn jit_x87_stack_metadata_executes_when_no_native_error_is_pending() {
 }
 
 #[test]
+fn jit_x87_sign_payload_matches_direct_for_all_scanned_prefixes_and_value_classes() {
+    const INPUTS: [u64; 16] = [
+        0,
+        1 << 63,
+        0x0000_0000_0000_0001,
+        0x8000_0000_0000_0001,
+        f64::INFINITY.to_bits(),
+        f64::NEG_INFINITY.to_bits(),
+        0x7FF8_A5A5_5A5A_1234,
+        0xFFF8_A5A5_5A5A_1234,
+        0x7FF0_A5A5_5A5A_1234,
+        0xFFF0_A5A5_5A5A_1234,
+        0x000F_FFFF_FFFF_FFFF,
+        0x800F_FFFF_FFFF_FFFF,
+        0x0010_0000_0000_0000,
+        0x8010_0000_0000_0000,
+        0x7FEF_FFFF_FFFF_FFFF,
+        0xFFEF_FFFF_FFFF_FFFF,
+    ];
+
+    for form in SIGN_OPERATIONS {
+        for prefix in LEGACY_X87_PREFIXES {
+            for input in INPUTS {
+                let encoded = prefix
+                    .iter()
+                    .copied()
+                    .chain(form.encoding())
+                    .collect::<Vec<_>>();
+                let mut code = encoded.clone();
+                code.extend_from_slice(&[0xEB, 0x00, 0xF4]);
+                let hlt_pc = encoded.len() as u64 + 2;
+                let mut direct = test_vcpu(memory_with_code(&code));
+                let mut native = test_vcpu(memory_with_code(&code));
+                for vcpu in [&mut direct, &mut native] {
+                    seed_stack_metadata_fpu(vcpu);
+                    vcpu.fpu.st[5] = f64::from_bits(input);
+                }
+
+                run_direct_to(&mut direct, hlt_pc);
+                assert_eq!(
+                    direct.fpu.st[5].to_bits(),
+                    form.expected_bits(input),
+                    "{form:?}, {prefix:02X?}, {input:#018x}"
+                );
+                assert_eq!(direct.fpu.status_word & 0x0200, 0);
+                assert_eq!(direct.fpu.status_word & 0x4500, 0x4500);
+                assert_eq!(direct.fpu.instr_ptr, 0);
+                assert_eq!(direct.fpu.last_opcode, form.fop());
+
+                let region = native
+                    .jit_compile_region()
+                    .unwrap_or_else(|error| panic!("{form:?}, {prefix:02X?}: {error:?}"))
+                    .unwrap_or_else(|| panic!("{form:?}, {prefix:02X?}: native gate"));
+                assert!(region.uses_x87_environment_state);
+                assert!(!region.uses_mmx);
+                native.jit_run_region_native(&region);
+
+                assert_eq!(
+                    register_image(&native),
+                    register_image(&direct),
+                    "{form:?}, {prefix:02X?}, {input:#018x}: register state"
+                );
+                assert_eq!(
+                    fpu_image(&native),
+                    fpu_image(&direct),
+                    "{form:?}, {prefix:02X?}, {input:#018x}: x87 state"
+                );
+                assert_eq!(native.regs.rip, hlt_pc);
+            }
+        }
+    }
+}
+
+#[test]
+fn jit_verifier_accepts_multi_operation_x87_sign_payload_region() {
+    const CODE: &[u8] = &[
+        0xD9, 0xE0, // fchs
+        0xD9, 0xE1, // fabs
+        0xD9, 0xE0, // fchs
+        0xEB, 0x00, // jmp hlt
+        0xF4, // hlt
+    ];
+    let mut vcpu = test_vcpu(memory_with_code(CODE));
+    seed_stack_metadata_fpu(&mut vcpu);
+    vcpu.fpu.st[5] = f64::from_bits(0x7FF8_A5A5_5A5A_1234);
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile x87 verifier region")
+        .expect("x87 sign payload region must be native eligible");
+    vcpu.jit_run_region_verified(&region);
+
+    assert_eq!(vcpu.regs.rip, 8);
+    assert_eq!(vcpu.fpu.st[5].to_bits(), 0xFFF8_A5A5_5A5A_1234);
+    assert_eq!(vcpu.fpu.instr_ptr, 4);
+    assert_eq!(vcpu.fpu.last_opcode, 0x01E0);
+}
+
+#[test]
+fn jit_x87_sign_payload_empty_stack_deopts_for_exact_direct_underflow_response() {
+    for form in SIGN_OPERATIONS {
+        for masked in [true, false] {
+            let mut code = form.encoding().to_vec();
+            code.extend_from_slice(&[0xEB, 0x00, 0xF4]);
+            let mut native = test_vcpu(memory_with_code(&code));
+            seed_stack_metadata_fpu(&mut native);
+            native.fpu.control_word = if masked { 0x037F } else { 0x037E };
+            native.fpu.status_word = (5 << 11) | 0x4700;
+            native.fpu.tag_word = 3 << (5 * 2);
+            native.fpu.st[5] = f64::from_bits(0x7FF8_A5A5_5A5A_1234);
+
+            let region = native
+                .jit_compile_region()
+                .unwrap_or_else(|error| panic!("{form:?}: {error:?}"))
+                .unwrap_or_else(|| panic!("{form:?}: guarded form must remain native"));
+            let registers_before = register_image(&native);
+            let fpu_before = fpu_image(&native);
+            native.jit_run_region_native(&region);
+
+            assert_eq!(native.regs.rip, 0, "{form:?}, masked={masked}");
+            assert_eq!(register_image(&native), registers_before);
+            assert_eq!(fpu_image(&native), fpu_before);
+
+            assert!(
+                native
+                    .step()
+                    .expect("direct stack-underflow replay")
+                    .is_none()
+            );
+            assert_eq!(native.regs.rip, 2);
+            assert_eq!(native.fpu.status_word & 0x0241, 0x0041);
+            assert_eq!(native.fpu.status_word & 0x4500, 0x4500);
+            assert_eq!(native.fpu.instr_ptr, 0);
+            assert_eq!(native.fpu.last_opcode, form.fop());
+            if masked {
+                assert_eq!(native.fpu.status_word & 0x8080, 0);
+                assert_eq!((native.fpu.tag_word >> (5 * 2)) & 3, 2);
+                assert_eq!(native.fpu.st[5].to_bits(), 0xFFF8_0000_0000_0000);
+            } else {
+                assert_eq!(native.fpu.status_word & 0x8080, 0x8080);
+                assert_eq!((native.fpu.tag_word >> (5 * 2)) & 3, 3);
+                assert_eq!(native.fpu.st[5].to_bits(), 0x7FF8_A5A5_5A5A_1234);
+            }
+        }
+    }
+}
+
+#[test]
+fn jit_x87_sign_payload_waiting_guard_is_dynamic_precise_and_noncommitting() {
+    for form in SIGN_OPERATIONS {
+        for (fault_bits, pending, expected_vector) in [
+            (0, true, 16),
+            (1 << 2, true, 7),
+            (1 << 3, false, 7),
+            ((1 << 2) | (1 << 3), true, 7),
+        ] {
+            let mut code = form.encoding().to_vec();
+            code.extend_from_slice(&[0xEB, 0x00, 0xF4]);
+            let mut native = test_vcpu(memory_with_code(&code));
+            seed_stack_metadata_fpu(&mut native);
+            let region = native
+                .jit_compile_region()
+                .unwrap_or_else(|error| panic!("{form:?}: {error:?}"))
+                .unwrap_or_else(|| panic!("{form:?}: waiting guard must remain native"));
+            native.sregs.cr0 |= (1 << 5) | fault_bits;
+            if pending {
+                native.fpu.status_word |= 0x8080;
+            }
+            let registers_before = register_image(&native);
+            let fpu_before = fpu_image(&native);
+            native.jit_run_region_native(&region);
+
+            assert_eq!(native.regs.rip, 0, "{form:?}, CR0={fault_bits:#x}");
+            assert_eq!(register_image(&native), registers_before);
+            assert_eq!(fpu_image(&native), fpu_before);
+            let error = exception_without_idt(&mut native);
+            assert!(
+                error.contains(&format!("IDT entry {expected_vector} not present")),
+                "{form:?}, CR0={fault_bits:#x}: {error}"
+            );
+            assert_eq!(register_image(&native), registers_before);
+            assert_eq!(fpu_image(&native), fpu_before);
+        }
+    }
+}
+
+#[test]
+fn jit_x87_sign_payload_executes_in_legacy_error_mode_and_with_clear_summary_status() {
+    for form in SIGN_OPERATIONS {
+        for (native_errors, status_bits) in [(false, 0x8080), (true, 0x0001)] {
+            let mut code = form.encoding().to_vec();
+            code.extend_from_slice(&[0xEB, 0x00, 0xF4]);
+            let mut direct = test_vcpu(memory_with_code(&code));
+            let mut native = test_vcpu(memory_with_code(&code));
+            for vcpu in [&mut direct, &mut native] {
+                seed_stack_metadata_fpu(vcpu);
+                if native_errors {
+                    vcpu.sregs.cr0 |= 1 << 5;
+                } else {
+                    vcpu.sregs.cr0 &= !(1 << 5);
+                }
+                vcpu.fpu.status_word |= status_bits;
+                vcpu.fpu.st[5] = f64::from_bits(0xFFF8_A5A5_5A5A_1234);
+            }
+
+            run_direct_to(&mut direct, 4);
+            let region = native
+                .jit_compile_region()
+                .unwrap_or_else(|error| panic!("{form:?}: {error:?}"))
+                .unwrap_or_else(|| panic!("{form:?}: sign operation remains native"));
+            native.jit_run_region_native(&region);
+            assert_eq!(register_image(&native), register_image(&direct));
+            assert_eq!(fpu_image(&native), fpu_image(&direct));
+            assert_eq!(native.regs.rip, 4);
+        }
+    }
+}
+
+#[test]
+fn jit_callout_round_trips_x87_payload_changes_in_both_directions() {
+    const CODE: &[u8] = &[
+        0xD9, 0xE0, // fchs: native pre-call payload change
+        0xE8, 0x05, 0x00, 0x00, 0x00, // call callee at 0x0c
+        0xD9, 0xE0, // fchs: native post-call payload change
+        0xEB, 0x00, // jmp hlt
+        0xF4, // hlt
+        0xD9, 0xE1, // callee: fabs through the direct interpreter
+        0xC3, // ret
+    ];
+    let mut direct = test_vcpu(memory_with_code(CODE));
+    let mut native = test_vcpu(memory_with_code(CODE));
+    for vcpu in [&mut direct, &mut native] {
+        vcpu.set_jit_call(true);
+        seed_stack_metadata_fpu(vcpu);
+        vcpu.fpu.st[5] = f64::from_bits(0x7FF8_A5A5_5A5A_1234);
+    }
+
+    run_direct_to(&mut direct, 0x0B);
+    let region = native
+        .jit_compile_region()
+        .expect("compile x87 payload call-through region")
+        .expect("x87 sign operations around CALL must be native eligible");
+    assert!(region.uses_x87_environment_state);
+    assert_eq!(region.callout_boundaries, vec![(2, 7)]);
+    native.jit_run_region_native(&region);
+
+    assert_eq!(register_image(&native), register_image(&direct));
+    assert_eq!(fpu_image(&native), fpu_image(&direct));
+    assert_eq!(native.regs.rip, 0x0B);
+    assert_eq!(native.fpu.st[5].to_bits(), 0xFFF8_A5A5_5A5A_1234);
+    assert_eq!(native.fpu.instr_ptr, 7);
+    assert_eq!(native.fpu.last_opcode, 0x01E0);
+}
+
+#[test]
 fn jit_callout_round_trips_complete_x87_environment_and_payload_ownership() {
     const CODE: &[u8] = &[
         0xDB, 0xE2, // fnclex
@@ -515,4 +802,41 @@ fn jit_callout_round_trips_complete_x87_environment_and_payload_ownership() {
     assert_eq!(native.fpu.tag_word, 0x3FFF);
     assert_eq!(native.fpu.st[7].to_bits(), 1.0f64.to_bits());
     assert_eq!(native.regs.rax & 0xFFFF, 7 << 11);
+}
+
+#[test]
+fn jit_x87_callout_payload_marker_preserves_legacy_frames() {
+    use crate::smir::lower::runtime::GuestRegs;
+
+    for active in [false, true] {
+        let mut vcpu = test_vcpu(memory_with_code(&[0xD9, 0xE0, 0xC3]));
+        seed_stack_metadata_fpu(&mut vcpu);
+        let cpu_bits = 0x7FF8_A5A5_5A5A_1234u64;
+        let frame_bits = 0x8000_0000_0000_0000u64;
+        vcpu.fpu.st[5] = f64::from_bits(cpu_bits);
+        let mut gr = GuestRegs::default();
+        vcpu.marshal_x87_environment_to_guest_regs(&mut gr);
+        gr.x87_state_active = 1;
+        gr.x87_payload_active = u64::from(active);
+        gr.x87_payload = [frame_bits; 8];
+        gr.ctx = (&mut vcpu as *mut X86_64Vcpu) as u64;
+        gr.cr0 = vcpu.sregs.cr0;
+        gr.efer = vcpu.sregs.efer;
+        gr.gpr[4] = STACK;
+        gr.rflags = 2;
+
+        // SAFETY: the frame and owning vCPU remain live throughout the call.
+        let ok = unsafe { rax_jit_call(&mut gr, 0, 0x100, 0x80) };
+        assert_eq!(ok, 1, "payload marker={active}");
+        let input = if active { frame_bits } else { cpu_bits };
+        assert_eq!(vcpu.fpu.st[5].to_bits(), input ^ (1 << 63));
+        let expected_frame = if active {
+            input ^ (1 << 63)
+        } else {
+            frame_bits
+        };
+        assert_eq!(gr.x87_payload[5], expected_frame);
+        assert_eq!(gr.x87_instr_ptr, 0);
+        assert_eq!(gr.x87_last_opcode, 0x01E0);
+    }
 }

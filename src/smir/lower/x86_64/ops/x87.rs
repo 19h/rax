@@ -6,11 +6,11 @@ use crate::smir::lower::regalloc::PhysReg;
 use crate::smir::lower::{
     LowerError, X86_GUEST_CR0_OFFSET, X86_GUEST_X87_CONTROL_WORD_OFFSET,
     X86_GUEST_X87_DATA_PTR_OFFSET, X86_GUEST_X87_INSTR_PTR_OFFSET,
-    X86_GUEST_X87_LAST_OPCODE_OFFSET, X86_GUEST_X87_STATUS_WORD_OFFSET,
-    X86_GUEST_X87_TAG_WORD_OFFSET, X86_STATE_PTR_AT_RBP,
+    X86_GUEST_X87_LAST_OPCODE_OFFSET, X86_GUEST_X87_PAYLOAD_OFFSET,
+    X86_GUEST_X87_STATUS_WORD_OFFSET, X86_GUEST_X87_TAG_WORD_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 
-use crate::smir::lower::x86_64::{X86_64Lowerer, X86Cond, X86Emitter};
+use crate::smir::lower::x86_64::{BitTestRegOp, X86_64Lowerer, X86Cond, X86Emitter};
 
 const CR0_EM: i64 = 1 << 2;
 const CR0_NE: i64 = 1 << 5;
@@ -280,6 +280,92 @@ impl X86_64Lowerer {
         Ok(())
     }
 
+    /// Apply FCHS/FABS to the direct engine's raw physical payload slot. Empty
+    /// ST(0) deoptimizes before all state changes so direct replay can apply the
+    /// masked or unmasked #IS response without duplicating exception policy in
+    /// native code.
+    fn emit_x86_x87_sign_operation(
+        &mut self,
+        kind: X86X87DataKind,
+        fop: u16,
+        guest_pc: u64,
+    ) -> Result<(), LowerError> {
+        self.emit_x86_x87_available_guard(guest_pc, true)?;
+        self.code.emit_u8(0x9C); // pushfq
+        self.code.emit_u8(0x50); // push rax
+        self.code.emit_u8(0x51); // push rcx
+        self.code.emit_u8(0x52); // push rdx
+        self.emit_load_state_ptr_rax();
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(
+                PhysReg::Rcx,
+                PhysReg::Rax,
+                X86_GUEST_X87_STATUS_WORD_OFFSET,
+                OpWidth::W64,
+            );
+            emitter.emit_shr_ri(PhysReg::Rcx, 11, OpWidth::W64);
+            emitter.emit_and_ri(PhysReg::Rcx, 7, OpWidth::W64);
+            emitter.emit_mov_rm(
+                PhysReg::Rdx,
+                PhysReg::Rax,
+                X86_GUEST_X87_TAG_WORD_OFFSET,
+                OpWidth::W64,
+            );
+            emitter.emit_shl_ri(PhysReg::Rcx, 1, OpWidth::W64);
+            emitter.emit_shr_cl(PhysReg::Rdx, OpWidth::W64);
+            emitter.emit_and_ri(PhysReg::Rdx, 3, OpWidth::W64);
+            emitter.emit_cmp_ri(PhysReg::Rdx, 3, OpWidth::W64);
+        }
+        let nonempty = self.emit_jcc_placeholder(X86Cond::Ne);
+
+        self.code.emit_u8(0x5A); // pop rdx
+        self.code.emit_u8(0x59); // pop rcx
+        self.code.emit_u8(0x58); // pop rax
+        self.code.emit_u8(0x9D); // popfq
+        self.emit_native_exit(guest_pc);
+
+        self.patch_rel32_to_current(nonempty)?;
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_shr_ri(PhysReg::Rcx, 1, OpWidth::W64);
+            emitter.emit_alu_mi_disp(
+                4,
+                PhysReg::Rax,
+                X86_GUEST_X87_STATUS_WORD_OFFSET,
+                DispSize::Auto,
+                !0x0200,
+                OpWidth::W64,
+            );
+            emitter.emit_lea_sib(
+                PhysReg::Rdx,
+                Some(PhysReg::Rax),
+                PhysReg::Rcx,
+                8,
+                X86_GUEST_X87_PAYLOAD_OFFSET,
+            );
+            emitter.emit_bit_test_mi_disp(
+                if kind == X86X87DataKind::ChangeSign {
+                    BitTestRegOp::Complement
+                } else {
+                    BitTestRegOp::Reset
+                },
+                PhysReg::Rdx,
+                0,
+                63,
+                OpWidth::W64,
+            );
+        }
+        self.emit_x86_x87_record_data_op(guest_pc, fop);
+
+        self.code.emit_u8(0x5A); // pop rdx
+        self.code.emit_u8(0x59); // pop rcx
+        self.code.emit_u8(0x58); // pop rax
+        self.code.emit_u8(0x9D); // popfq
+        Ok(())
+    }
+
     pub(crate) fn lower_op_x87(&mut self, op: &SmirOp) -> Result<(), LowerError> {
         match &op.kind {
             OpKind::X86X87Control { kind, .. }
@@ -325,6 +411,19 @@ impl X86_64Lowerer {
                     });
                 }
                 self.emit_x86_x87_stack_metadata(*kind, *st, *fop, op.guest_pc)
+            }
+            OpKind::X86X87Data {
+                kind: kind @ (X86X87DataKind::ChangeSign | X86X87DataKind::Absolute),
+                fop,
+                ..
+            } => {
+                if !x86_x87_state_shape_valid(op) {
+                    return Err(LowerError::InvalidOperand {
+                        op: format!("X86X87Data {kind:?}"),
+                        operand: "requires an exact unhinted register encoding".to_string(),
+                    });
+                }
+                self.emit_x86_x87_sign_operation(*kind, *fop, op.guest_pc)
             }
             _ => self.lower_op_misc(op),
         }
