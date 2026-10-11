@@ -24,6 +24,15 @@ impl SmirInterpreter {
     ) -> Result<(), MemoryError> {
         let x86_hint = op.x86_hint;
         match &op.kind {
+            OpKind::ArmSimdSaturating(operation) => {
+                Self::execute_arm_simd_saturating(ctx, operation, op.guest_pc)
+            }
+            OpKind::ArmSimdLong(operation) => {
+                Self::execute_arm_simd_long(ctx, operation, op.guest_pc)
+            }
+            OpKind::ArmSimdNarrow(operation) => {
+                Self::execute_arm_simd_narrow(ctx, operation, op.guest_pc)
+            }
             // ==================================================================
             // SIMD / VECTOR (simplified)
             // ==================================================================

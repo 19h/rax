@@ -19,6 +19,7 @@ use crate::smir::lower::regalloc::PhysReg;
 use crate::smir::lower::x86_64::{X86Cond, X86Emitter};
 use crate::smir::lower::{CodeBuffer, LowerError, LowerResult, RelocKind, Relocation, SmirLowerer};
 
+mod comparisons;
 mod memory_address;
 
 const STATE: PhysReg = PhysReg::Rdi;
@@ -1441,22 +1442,13 @@ impl Aarch64X86_64Lowerer {
                 self.store_reg_to(*dst, ACC, *width)?;
             }
             OpKind::Cmp { src1, src2, width } => {
-                self.load_vreg_to(*src1, ACC, *width)?;
-                self.load_src_to(src2, RHS, *width)?;
-                {
-                    let mut e = X86Emitter::new(&mut self.code);
-                    e.emit_cmp_rr(ACC, RHS, *width);
-                }
-                self.emit_nzcv_from_flags(FlagForm::Sub);
+                self.lower_flag_only_comparison(*src1, src2, *width, FlagForm::Sub)?;
+            }
+            OpKind::Cmn { src1, src2, width } => {
+                self.lower_flag_only_comparison(*src1, src2, *width, FlagForm::Add)?;
             }
             OpKind::Test { src1, src2, width } => {
-                self.load_vreg_to(*src1, ACC, *width)?;
-                self.load_src_to(src2, RHS, *width)?;
-                {
-                    let mut e = X86Emitter::new(&mut self.code);
-                    e.emit_test_rr(ACC, RHS, *width);
-                }
-                self.emit_nzcv_from_flags(FlagForm::Logic);
+                self.lower_flag_only_comparison(*src1, src2, *width, FlagForm::Logic)?;
             }
             OpKind::Clz { dst, src, width } => self.lower_clz(*dst, *src, *width)?,
             OpKind::Bswap { dst, src, width } => self.lower_bswap(*dst, *src, *width)?,

@@ -1,6 +1,8 @@
 //! JSON oracle harness for ISA-specific decoders and SMIR lifters.
 
 mod address;
+mod arm_simd_resize;
+mod arm_simd_saturating;
 mod call_target;
 mod x86_fma;
 mod x86_frame;
@@ -1510,6 +1512,9 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
     }
 
     match kind {
+        OpKind::ArmSimdLong(operation) => arm_simd_resize::long_json(operation),
+        OpKind::ArmSimdNarrow(operation) => arm_simd_resize::narrow_json(operation),
+        OpKind::ArmSimdSaturating(operation) => arm_simd_saturating::operation_json(operation),
         OpKind::Add {
             dst,
             src1,
@@ -1557,6 +1562,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             flags,
         } => op_json!("dec", dst, src, width, flags),
         OpKind::Cmp { src1, src2, width } => op_json!("cmp", src1, src2, width),
+        OpKind::Cmn { src1, src2, width } => op_json!("cmn", src1, src2, width),
         OpKind::MulU {
             dst_lo,
             dst_hi,

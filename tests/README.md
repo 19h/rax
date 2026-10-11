@@ -27,6 +27,7 @@ listed below is declared explicitly with a `[[test]]` entry in the root
 
 | Cargo target | Source |
 |---|---|
+| `aarch64_smir_programs` | `suites/smir/jit/aarch64_programs.rs` |
 | `aarch64_smir_native` | `suites/smir/lower/aarch64_native.rs` |
 | `arm` | `suites/isa/arm/main.rs` |
 | `arm_diff` | `suites/differential/arm/aarch64.rs` |

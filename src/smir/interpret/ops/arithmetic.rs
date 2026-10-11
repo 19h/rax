@@ -36,7 +36,7 @@ impl SmirInterpreter {
                 flags,
             } => {
                 let a = ctx.read_vreg(*src1);
-                let b = self.read_src_operand(ctx, src2);
+                let b = self.read_src_operand_width(ctx, src2, *width);
                 let result = a.wrapping_add(b) & width.mask();
 
                 Self::write_gpr(ctx, *dst, result, *width);
@@ -120,7 +120,7 @@ impl SmirInterpreter {
                 flags,
             } => {
                 let a = ctx.read_vreg(*src1);
-                let b = self.read_src_operand(ctx, src2);
+                let b = self.read_src_operand_width(ctx, src2, *width);
                 let result = a.wrapping_sub(b) & width.mask();
 
                 Self::write_gpr(ctx, *dst, result, *width);
@@ -138,8 +138,12 @@ impl SmirInterpreter {
                 flags,
             } => {
                 let a = ctx.read_vreg(*src1);
-                let b = self.read_src_operand(ctx, src2);
-                let cf = if ctx.flags.get_cf() { 1u64 } else { 0 };
+                let b = self.read_src_operand_width(ctx, src2, *width);
+                let carry_in = match &ctx.arch_regs {
+                    ArchRegState::Aarch64(_) => !ctx.flags.get_cf(),
+                    _ => ctx.flags.get_cf(),
+                };
+                let cf = u64::from(carry_in);
                 let result = a.wrapping_add(b).wrapping_add(cf) & width.mask();
 
                 Self::write_gpr(ctx, *dst, result, *width);
@@ -159,7 +163,7 @@ impl SmirInterpreter {
                 flags,
             } => {
                 let a = ctx.read_vreg(*src1);
-                let b = self.read_src_operand(ctx, src2);
+                let b = self.read_src_operand_width(ctx, src2, *width);
                 let cf = if ctx.flags.get_cf() { 1u64 } else { 0 };
                 let result = a.wrapping_sub(b).wrapping_sub(cf) & width.mask();
 
@@ -225,10 +229,18 @@ impl SmirInterpreter {
 
             OpKind::Cmp { src1, src2, width } => {
                 let a = ctx.read_vreg(*src1);
-                let b = self.read_src_operand(ctx, src2);
+                let b = self.read_src_operand_width(ctx, src2, *width);
                 let result = a.wrapping_sub(b) & width.mask();
 
                 ctx.flags.set_lazy_sub(a, b, result, *width);
+            }
+
+            OpKind::Cmn { src1, src2, width } => {
+                let a = ctx.read_vreg(*src1);
+                let b = self.read_src_operand_width(ctx, src2, *width);
+                let result = a.wrapping_add(b) & width.mask();
+
+                ctx.flags.set_lazy_add(a, b, result, *width);
             }
 
             OpKind::MulU {
@@ -240,7 +252,7 @@ impl SmirInterpreter {
                 flags,
             } => {
                 let a = ctx.read_vreg(*src1) & width.mask();
-                let b = self.read_src_operand(ctx, src2) & width.mask();
+                let b = self.read_src_operand_width(ctx, src2, *width) & width.mask();
 
                 let (result_lo, result_hi) = match width {
                     OpWidth::W8 => {
@@ -298,7 +310,7 @@ impl SmirInterpreter {
                 flags,
             } => {
                 let a = self.sign_extend(ctx.read_vreg(*src1), *width);
-                let b = self.sign_extend(self.read_src_operand(ctx, src2), *width);
+                let b = self.sign_extend(self.read_src_operand_width(ctx, src2, *width), *width);
 
                 let (result_lo, result_hi) = match width {
                     OpWidth::W8 => {
@@ -386,7 +398,7 @@ impl SmirInterpreter {
                 ..
             } => {
                 let mask = width.mask();
-                let b = (self.read_src_operand(ctx, src2) & mask) as u128;
+                let b = (self.read_src_operand_width(ctx, src2, *width) & mask) as u128;
                 if b == 0 {
                     ctx.request_exit(ExitReason::Undefined {
                         addr: op.guest_pc,
@@ -440,7 +452,8 @@ impl SmirInterpreter {
             } => {
                 let mask = width.mask();
                 let bits = width.bits();
-                let b = self.sign_extend(self.read_src_operand(ctx, src2), *width) as i64 as i128;
+                let b = self.sign_extend(self.read_src_operand_width(ctx, src2, *width), *width)
+                    as i64 as i128;
                 if b == 0 {
                     ctx.request_exit(ExitReason::Undefined {
                         addr: op.guest_pc,

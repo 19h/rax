@@ -35,7 +35,7 @@ impl SmirInterpreter {
                 flags,
             } => {
                 let a = ctx.read_vreg(*src1);
-                let b = self.read_src_operand(ctx, src2);
+                let b = self.read_src_operand_width(ctx, src2, *width);
                 let result = (a & b) & width.mask();
 
                 Self::write_gpr(ctx, *dst, result, *width);
@@ -52,7 +52,7 @@ impl SmirInterpreter {
                 flags,
             } => {
                 let a = ctx.read_vreg(*src1);
-                let b = self.read_src_operand(ctx, src2);
+                let b = self.read_src_operand_width(ctx, src2, *width);
                 let result = (a | b) & width.mask();
 
                 Self::write_gpr(ctx, *dst, result, *width);
@@ -69,7 +69,7 @@ impl SmirInterpreter {
                 flags,
             } => {
                 let a = ctx.read_vreg(*src1);
-                let b = self.read_src_operand(ctx, src2);
+                let b = self.read_src_operand_width(ctx, src2, *width);
                 let result = (a ^ b) & width.mask();
 
                 Self::write_gpr(ctx, *dst, result, *width);
@@ -86,7 +86,7 @@ impl SmirInterpreter {
 
             OpKind::Test { src1, src2, width } => {
                 let a = ctx.read_vreg(*src1);
-                let b = self.read_src_operand(ctx, src2);
+                let b = self.read_src_operand_width(ctx, src2, *width);
                 let result = (a & b) & width.mask();
 
                 ctx.flags.set_lazy_logic(result, *width);
@@ -100,7 +100,7 @@ impl SmirInterpreter {
                 flags,
             } => {
                 let a = ctx.read_vreg(*src1);
-                let b = self.read_src_operand(ctx, src2);
+                let b = self.read_src_operand_width(ctx, src2, *width);
                 let result = (a & !b) & width.mask();
 
                 Self::write_gpr(ctx, *dst, result, *width);

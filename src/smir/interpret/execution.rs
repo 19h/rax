@@ -148,7 +148,12 @@ impl SmirInterpreter {
         memory: &mut dyn SmirMemory,
         op: &SmirOp,
     ) -> Result<(), MemoryError> {
-        self.execute_op_arithmetic(ctx, memory, op)
+        let arm_flags = Self::arm_alu_prior_flags(ctx, &op.kind);
+        self.execute_op_arithmetic(ctx, memory, op)?;
+        if let Some(prior) = arm_flags {
+            Self::commit_arm_alu_flags(ctx, &op.kind, prior);
+        }
+        Ok(())
     }
 
     /// Execute block terminator

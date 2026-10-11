@@ -1248,6 +1248,9 @@ pub fn is_aarch64_native_clobber_safe_excluding(
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
     allow_mem: bool,
 ) -> bool {
+    if !crate::smir::lower::aarch64::aarch64_neon_fusions_are_private(func) {
+        return false;
+    }
     let blocks = func.blocks.iter().filter(|b| !excluded.contains_key(&b.id));
     let mut uses_fp_trampoline = false;
     let mut uses_mem_helper = false;
@@ -1333,7 +1336,15 @@ pub(crate) fn aarch64_block_is_clobber_safe(
     };
 
     let n = block.ops.len();
+    let mut fusion_end = 0;
     for (i, op) in block.ops.iter().enumerate() {
+        if i < fusion_end {
+            continue;
+        }
+        if let Some(fusion) = crate::smir::lower::aarch64::aarch64_neon_fusion(&block.ops[i..]) {
+            fusion_end = i + fusion.consumed;
+            continue;
+        }
         if i + 1 == n {
             if let (Terminator::CondBranch { cond, .. }, OpKind::TestCondition { dst, .. }) =
                 (&block.terminator, &op.kind)
@@ -1342,6 +1353,9 @@ pub(crate) fn aarch64_block_is_clobber_safe(
                     continue;
                 }
             }
+        }
+        if !crate::smir::lower::aarch64::integer_scalar_provenance_valid(op) {
+            return false;
         }
         // These operations access x86-specific architectural state. The
         // AArch64 guest-state ABI has no corresponding fields or lowerers, so
@@ -1429,8 +1443,37 @@ pub(crate) fn aarch64_block_is_clobber_safe(
                 | OpKind::VOr { .. }
                 | OpKind::VXor { .. }
                 | OpKind::VFma { .. }
+                | OpKind::VLane {
+                    set_ovf: false,
+                    op: crate::smir::ir::types::VLaneOp::Avg
+                        | crate::smir::ir::types::VLaneOp::AvgRnd
+                        | crate::smir::ir::types::VLaneOp::Min
+                        | crate::smir::ir::types::VLaneOp::Max
+                        | crate::smir::ir::types::VLaneOp::AbsDiff,
+                    ..
+                }
+                | OpKind::VNavg { .. }
+                | OpKind::VShift { .. }
+                | OpKind::VShiftAcc { .. }
+                | OpKind::VMov { .. }
+                | OpKind::VBroadcast { .. }
+                | OpKind::VInsertLane { .. }
+                | OpKind::VExtractLane { .. }
         );
-        if !op.is_jit_safe() && !a64_ok && !mem_ok {
+        let a64_vcmp_ok = crate::smir::lower::aarch64::aarch64_vcmp_shape_valid(op);
+        let a64_lane_ok = crate::smir::lower::aarch64::aarch64_neon_lane_shape_valid(op);
+        let a64_cmn_ok = crate::smir::lower::aarch64::aarch64_cmn_shape_valid(op);
+        let a64_resize_ok = crate::smir::lower::aarch64::aarch64_resize_shape_valid(op);
+        let a64_saturating_ok = crate::smir::lower::aarch64::aarch64_saturating_shape_valid(op);
+        if !op.is_jit_safe()
+            && !a64_ok
+            && !a64_vcmp_ok
+            && !a64_lane_ok
+            && !a64_cmn_ok
+            && !a64_resize_ok
+            && !a64_saturating_ok
+            && !mem_ok
+        {
             return false;
         }
         if op

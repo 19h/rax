@@ -1,9 +1,9 @@
 //! Native AArch64 code generator for SMIR.
 //!
-//! This lowerer currently targets identity-mapped AArch64 scalar SMIR: architectural
-//! AArch64 X registers in SMIR are emitted as the same native X registers. It is
-//! intentionally small and strict; unsupported virtual-register and memory forms
-//! fail rather than silently changing semantics.
+//! Supported architectural AArch64 X and V registers map to the corresponding
+//! native registers, subject to the runtime's trampoline clobber checks. Private
+//! virtual temporaries may be eliminated by exact instruction fusions. Unsupported
+//! operations and operand forms return a lowering error for interpreter fallback.
 
 use std::collections::HashMap;
 
@@ -21,7 +21,10 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind}
 use super::{CodeBuffer, LowerError, LowerResult, Relocation, SmirLowerer};
 
 // ---- module tree (auto-split) ----
+mod advanced_simd;
+pub(crate) use advanced_simd::{aarch64_neon_fusion, aarch64_neon_fusions_are_private};
 mod arithmetic;
+mod arithmetic_simd;
 pub use arithmetic::*;
 mod atomic;
 pub use atomic::*;
@@ -29,10 +32,13 @@ mod bextr;
 pub use bextr::*;
 mod bit;
 pub use bit::*;
+mod blocks;
 mod branch;
 pub use branch::*;
 mod carry_rotate;
 pub use carry_rotate::*;
+mod comparisons;
+pub(crate) use comparisons::aarch64_cmn_shape_valid;
 mod fence;
 pub use fence::*;
 mod flags;
@@ -41,6 +47,8 @@ mod fp;
 pub use fp::*;
 mod jit;
 pub use jit::*;
+mod lanes;
+pub(crate) use lanes::{aarch64_neon_lane_shape_valid, aarch64_vcmp_shape_valid};
 mod logic;
 pub use logic::*;
 mod memory;
@@ -49,6 +57,13 @@ mod misc;
 pub use misc::*;
 mod mov;
 pub use mov::*;
+mod ops;
+mod resize;
+pub(crate) use resize::aarch64_resize_shape_valid;
+mod saturating;
+mod scalar_simd;
+pub(crate) use saturating::aarch64_saturating_shape_valid;
+pub(crate) use scalar_simd::integer_scalar_provenance_valid;
 mod require_apx;
 pub use require_apx::*;
 mod require_tbm;
@@ -270,6 +285,11 @@ impl SmirLowerer for Aarch64Lowerer {
     }
 
     fn lower_function(&mut self, func: &SmirFunction) -> Result<LowerResult, LowerError> {
+        if !aarch64_neon_fusions_are_private(func) {
+            return Err(LowerError::UnsupportedOp {
+                op: "escaping AdvSIMD temporary".to_string(),
+            });
+        }
         self.code.clear();
         self.block_offsets.clear();
         self.branch_fixups.clear();

@@ -1190,6 +1190,18 @@ pub enum VLaneOp {
     Sign,
     /// Absolute difference `|a - b|` (signed/unsigned per the `signed` flag).
     AbsDiff,
+    /// Bidirectional shift by the signed low byte of the second lane.
+    /// Positive counts shift left; negative counts shift right. The `signed`
+    /// flag selects arithmetic versus logical right shift. Counts are not
+    /// masked modulo the element width: oversized left shifts yield zero;
+    /// oversized right shifts yield zero or the replicated sign bit.
+    ShiftSigned8,
+    /// As `ShiftSigned8`, with a rounding bias for a negative count `-n`:
+    /// `(ext(a) + 2^(n-1)) >> n`. Evaluate before element-width truncation.
+    /// A signed right shift by the full width rounds to zero; an unsigned
+    /// full-width shift rounds to its original most significant bit. Larger
+    /// right counts yield zero for both signed and unsigned lanes.
+    ShiftSigned8Rnd,
 }
 
 // ============================================================================

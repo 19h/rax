@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="insn.css"/><meta name="generator" content="iform.xsl"/><title>SQXTUN, SQXTUN2 -- A64</title></head><body><table style="margin: 0 auto;"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="sveindex.html">SVE Instructions</a></div></td><td><div class="topbar"><a href="mortlachindex.html">SME Instructions</a></div></td><td><div class="topbar"><a href="encodingindex.html">Index by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><hr/><h2 class="instruction-section">SQXTUN, SQXTUN2</h2><p>Signed saturating extract unsigned narrow</p>
+      <p class="aml">This instruction reads each signed integer value in
+the vector of the source SIMD&amp;FP register,
+saturates the value to an unsigned integer value that is
+half the original width,
+places the result into a vector,
+and writes
+the vector to the
+lower or upper half of the destination SIMD&amp;FP
+register.
+The destination vector elements are half as long as the source vector elements.</p>
+      <p class="aml">If saturation occurs, the cumulative saturation bit
+FPSR.QC is set.</p>
+      <p class="aml">The <span class="asm-code">SQXTUN</span> instruction writes the vector
+to the lower half of the
+destination register and clears the upper half.
+The <span class="asm-code">SQXTUN2</span> instruction writes the vector
+to the upper half of the
+destination register without affecting the other bits of the register.</p>
+      <p class="aml">Depending on the settings in the CPACR_EL1,
+  CPTR_EL2, and CPTR_EL3 registers,
+  and the current Security state and Exception level,
+  an attempt to execute the instruction might be trapped.</p>
+    
+    <p class="desc">
+      It has encodings from 2 classes:
+      <a href="#iclass_scalar">Scalar</a>
+       and 
+      <a href="#iclass_vector">Vector</a>
+    </p>
+    <h3 class="classheading"><a id="iclass_scalar"/>Scalar<span style="font-size:smaller;"><br/>(FEAT_AdvSIMD)
+          </span></h3><div class="regdiagram-32"><table class="regdiagram"><thead><tr><td>31</td><td>30</td><td>29</td><td>28</td><td>27</td><td>26</td><td>25</td><td>24</td><td>23</td><td>22</td><td>21</td><td>20</td><td>19</td><td>18</td><td>17</td><td>16</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">0</td><td class="r">1</td><td class="lr">1</td><td class="lr">1</td><td class="l">1</td><td>1</td><td class="r">1</td><td class="lr">0</td><td colspan="2" class="lr">size</td><td class="l">1</td><td>0</td><td>0</td><td>0</td><td class="r">0</td><td class="l">1</td><td>0</td><td>0</td><td>1</td><td class="r">0</td><td class="l">1</td><td class="r">0</td><td colspan="5" class="lr">Rn</td><td colspan="5" class="lr">Rd</td></tr><tr class="secondrow"><td colspan="2"/><td class="droppedname">U</td><td/><td colspan="3"/><td/><td colspan="2"/><td colspan="5"/><td colspan="5" class="droppedname">opcode</td><td colspan="2"/><td colspan="5"/><td colspan="5"/></tr></tbody></table></div><div class="encoding"><h4 class="encoding">Encoding</h4><a id="SQXTUN_asisdmisc_N"/><p class="asm-code">SQXTUN  <a href="#Vb_option__3" title="Is the destination width specifier, ">&lt;Vb&gt;</a><a href="#d" title="Is the number of the SIMD&amp;FP destination register, encoded in the &quot;Rd&quot; field.">&lt;d&gt;</a>, <a href="#Va_option__3" title="Is the source width specifier, ">&lt;Va&gt;</a><a href="#n__3" title="Is the number of the SIMD&amp;FP source register, encoded in the &quot;Rn&quot; field.">&lt;n&gt;</a></p></div><h4>Decode for this encoding</h4><p class="pseudocode">if !IsFeatureImplemented(FEAT_AdvSIMD) then <a href="shared_pseudocode.html#func_EndOfDecode_1" title="">EndOfDecode</a>(<a href="shared_pseudocode.html#enum_Decode_UNDEF" title="">Decode_UNDEF</a>); end;
+if size == '11' then <a href="shared_pseudocode.html#func_EndOfDecode_1" title="">EndOfDecode</a>(<a href="shared_pseudocode.html#enum_Decode_UNDEF" title="">Decode_UNDEF</a>); end;
+let d : integer{} = UInt(Rd);
+let n : integer{} = UInt(Rn);
+
+let esize : integer{} = 8 &lt;&lt; UInt(size);
+let datasize : integer{} = esize;
+let part : integer = 0;
+let elements : integer = 1;</p>
+    <h3 class="classheading"><a id="iclass_vector"/>Vector<span style="font-size:smaller;"><br/>(FEAT_AdvSIMD)
+          </span></h3><div class="regdiagram-32"><table class="regdiagram"><thead><tr><td>31</td><td>30</td><td>29</td><td>28</td><td>27</td><td>26</td><td>25</td><td>24</td><td>23</td><td>22</td><td>21</td><td>20</td><td>19</td><td>18</td><td>17</td><td>16</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="lr">0</td><td class="lr">Q</td><td class="lr">1</td><td class="lr">0</td><td class="l">1</td><td>1</td><td class="r">1</td><td class="lr">0</td><td colspan="2" class="lr">size</td><td class="l">1</td><td>0</td><td>0</td><td>0</td><td class="r">0</td><td class="l">1</td><td>0</td><td>0</td><td>1</td><td class="r">0</td><td class="l">1</td><td class="r">0</td><td colspan="5" class="lr">Rn</td><td colspan="5" class="lr">Rd</td></tr><tr class="secondrow"><td/><td/><td class="droppedname">U</td><td/><td colspan="3"/><td/><td colspan="2"/><td colspan="5"/><td colspan="5" class="droppedname">opcode</td><td colspan="2"/><td colspan="5"/><td colspan="5"/></tr></tbody></table></div><div class="encoding"><h4 class="encoding">Encoding</h4><a id="SQXTUN_asimdmisc_N"/><p class="asm-code">SQXTUN{<a href="#s_2_option" title="Is the second and upper half specifier. If present it causes the operation to be performed on the upper 64 bits of the registers holding the narrower elements, and is ">2</a>}  <a href="#Vd" title="Is the name of the SIMD&amp;FP destination register, encoded in the &quot;Rd&quot; field.">&lt;Vd&gt;</a>.<a href="#Tb_option__3" title="Is an arrangement specifier, ">&lt;Tb&gt;</a>, <a href="#Vn" title="Is the name of the SIMD&amp;FP source register, encoded in the &quot;Rn&quot; field.">&lt;Vn&gt;</a>.<a href="#Ta_option__3" title="Is an arrangement specifier, ">&lt;Ta&gt;</a></p></div><h4>Decode for this encoding</h4><p class="pseudocode">if !IsFeatureImplemented(FEAT_AdvSIMD) then <a href="shared_pseudocode.html#func_EndOfDecode_1" title="">EndOfDecode</a>(<a href="shared_pseudocode.html#enum_Decode_UNDEF" title="">Decode_UNDEF</a>); end;
+if size == '11' then <a href="shared_pseudocode.html#func_EndOfDecode_1" title="">EndOfDecode</a>(<a href="shared_pseudocode.html#enum_Decode_UNDEF" title="">Decode_UNDEF</a>); end;
+let d : integer{} = UInt(Rd);
+let n : integer{} = UInt(Rn);
+
+let esize : integer{} = 8 &lt;&lt; UInt(size);
+let datasize : integer{} = 64;
+let part : integer = UInt(Q);
+let elements : integer = datasize DIV esize;</p>
+  <div class="encoding-notes"/><h3 class="explanations">Assembler Symbols</h3><div class="explanations"><table><col class="asyn-l"/><col class="asyn-r"/><tr><td>&lt;Vb&gt;</td><td><a id="Vb_option__3"/>
+        <p>Is the destination width specifier, 
+          encoded in
+          <q>size</q>:
+            </p>
+        <table class="valuetable">
+          
+            <thead>
+              <tr>
+                <th class="bitfield">size</th>
+                <th class="symbol">&lt;Vb&gt;</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="bitfield">00</td>
+                <td class="symbol">B</td>
+              </tr>
+              <tr>
+                <td class="bitfield">01</td>
+                <td class="symbol">H</td>
+              </tr>
+              <tr>
+                <td class="bitfield">10</td>
+                <td class="symbol">S</td>
+              </tr>
+              <tr>
+                <td class="bitfield">11</td>
+                <td class="symbol">RESERVED</td>
+              </tr>
+            </tbody>
+          
+        </table>
+      </td></tr></table><table><col class="asyn-l"/><col class="asyn-r"/><tr><td>&lt;d&gt;</td><td><a id="d"/>
+        
+          <p class="aml">Is the number of the SIMD&amp;FP destination register, encoded in the "Rd" field.</p>
+        
+      </td></tr></table><table><col class="asyn-l"/><col class="asyn-r"/><tr><td>&lt;Va&gt;</td><td><a id="Va_option__3"/>
+        <p>Is the source width specifier, 
+          encoded in
+          <q>size</q>:
+            </p>
+        <table class="valuetable">
+          
+            <thead>
+              <tr>
+                <th class="bitfield">size</th>
+                <th class="symbol">&lt;Va&gt;</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="bitfield">00</td>
+                <td class="symbol">H</td>
+              </tr>
+              <tr>
+                <td class="bitfield">01</td>
+                <td class="symbol">S</td>
+              </tr>
+              <tr>
+                <td class="bitfield">10</td>
+                <td class="symbol">D</td>
+              </tr>
+              <tr>
+                <td class="bitfield">11</td>
+                <td class="symbol">RESERVED</td>
+              </tr>
+            </tbody>
+          
+        </table>
+      </td></tr></table><table><col class="asyn-l"/><col class="asyn-r"/><tr><td>&lt;n&gt;</td><td><a id="n__3"/>
+        
+          <p class="aml">Is the number of the SIMD&amp;FP source register, encoded in the "Rn" field.</p>
+        
+      </td></tr></table><table><col class="asyn-l"/><col class="asyn-r"/><tr><td>2</td><td><a id="s_2_option"/>
+        <p>Is the second and upper half specifier. If present it causes the operation to be performed on the upper 64 bits of the registers holding the narrower elements, and is 
+          encoded in
+          <q>Q</q>:
+            </p>
+        <table class="valuetable">
+          
+            <thead>
+              <tr>
+                <th class="bitfield">Q</th>
+                <th class="symbol">2</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="bitfield">0</td>
+                <td class="symbol">[absent]</td>
+              </tr>
+              <tr>
+                <td class="bitfield">1</td>
+                <td class="symbol">[present]</td>
+              </tr>
+            </tbody>
+          
+        </table>
+      </td></tr></table><table><col class="asyn-l"/><col class="asyn-r"/><tr><td>&lt;Vd&gt;</td><td><a id="Vd"/>
+        
+          <p class="aml">Is the name of the SIMD&amp;FP destination register, encoded in the "Rd" field.</p>
+        
+      </td></tr></table><table><col class="asyn-l"/><col class="asyn-r"/><tr><td>&lt;Tb&gt;</td><td><a id="Tb_option__3"/>
+        <p>Is an arrangement specifier, 
+          encoded in
+          <q>(size :: Q)</q>:
+            </p>
+        <table class="valuetable">
+          
+            <thead>
+              <tr>
+                <th class="bitfield">size</th>
+                <th class="bitfield">Q</th>
+                <th class="symbol">&lt;Tb&gt;</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="bitfield">00</td>
+                <td class="bitfield">0</td>
+                <td class="symbol">8B</td>
+              </tr>
+              <tr>
+                <td class="bitfield">00</td>
+                <td class="bitfield">1</td>
+                <td class="symbol">16B</td>
+              </tr>
+              <tr>
+                <td class="bitfield">01</td>
+                <td class="bitfield">0</td>
+                <td class="symbol">4H</td>
+              </tr>
+              <tr>
+                <td class="bitfield">01</td>
+                <td class="bitfield">1</td>
+                <td class="symbol">8H</td>
+              </tr>
+              <tr>
+                <td class="bitfield">10</td>
+                <td class="bitfield">0</td>
+                <td class="symbol">2S</td>
+              </tr>
+              <tr>
+                <td class="bitfield">10</td>
+                <td class="bitfield">1</td>
+                <td class="symbol">4S</td>
+              </tr>
+              <tr>
+                <td class="bitfield">11</td>
+                <td class="bitfield">x</td>
+                <td class="symbol">RESERVED</td>
+              </tr>
+            </tbody>
+          
+        </table>
+      </td></tr></table><table><col class="asyn-l"/><col class="asyn-r"/><tr><td>&lt;Vn&gt;</td><td><a id="Vn"/>
+        
+          <p class="aml">Is the name of the SIMD&amp;FP source register, encoded in the "Rn" field.</p>
+        
+      </td></tr></table><table><col class="asyn-l"/><col class="asyn-r"/><tr><td>&lt;Ta&gt;</td><td><a id="Ta_option__3"/>
+        <p>Is an arrangement specifier, 
+          encoded in
+          <q>size</q>:
+            </p>
+        <table class="valuetable">
+          
+            <thead>
+              <tr>
+                <th class="bitfield">size</th>
+                <th class="symbol">&lt;Ta&gt;</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="bitfield">00</td>
+                <td class="symbol">8H</td>
+              </tr>
+              <tr>
+                <td class="bitfield">01</td>
+                <td class="symbol">4S</td>
+              </tr>
+              <tr>
+                <td class="bitfield">10</td>
+                <td class="symbol">2D</td>
+              </tr>
+              <tr>
+                <td class="bitfield">11</td>
+                <td class="symbol">RESERVED</td>
+              </tr>
+            </tbody>
+          
+        </table>
+      </td></tr></table></div><div class="syntax-notes"/>
+    <div class="ps"><a id=""/><h3 class="pseudocode">Operation</h3>
+      <p class="pseudocode"><a href="shared_pseudocode.html#func_AArch64_CheckFPAdvSIMDEnabled_0" title="">AArch64_CheckFPAdvSIMDEnabled</a>();
+let operand : bits(2*datasize) = V{}(n);
+var result : bits(datasize);
+var element : bits(2*esize);
+var sat : boolean;
+
+for e = 0 to elements-1 do
+    element = operand[e*:(2*esize)];
+    (result[e*:esize], sat) = <a href="shared_pseudocode.html#func_UnsignedSatQ_2" title="">UnsignedSatQ</a>{esize}(SInt(element));
+    if sat then FPSR().QC = '1'; end;
+end;
+
+<a href="shared_pseudocode.html#accessor_Vpart_3" title="">Vpart</a>{datasize}(d, part) = result;</p></div>
+  <hr/><table style="margin: 0 auto;"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="sveindex.html">SVE Instructions</a></div></td><td><div class="topbar"><a href="mortlachindex.html">SME Instructions</a></div></td><td><div class="topbar"><a href="encodingindex.html">Index by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><p class="versions">
+      2026-03_rel
+
+      2026-03-26 20:48:11
+    </p><p class="copyconf">
+      Copyright © 2010-2026 Arm Limited or its affiliates. All rights reserved.
+      This document is Non-Confidential.
+    </p></body></html>

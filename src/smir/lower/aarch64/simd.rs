@@ -551,16 +551,11 @@ impl Aarch64Lowerer {
                 });
             }
         };
-        let (q, size) = Self::simd_integer_shape(elem, lanes)?;
-        let bits = 8_u32 << size;
+        let shape = Self::simd_scalar_or_vector_integer_shape(elem, lanes)?;
+        let bits = 8_u32 << shape.size;
         let amount = (imm as u32) % bits;
         if amount == 0 {
-            let width = if q == 1 {
-                VecWidth::V128
-            } else {
-                VecWidth::V64
-            };
-            return self.emit_simd_logical(rd, rn, rn, width, SimdLogicOp::Or);
+            return self.emit_simd_logical(rd, rn, rn, shape.result_width(), SimdLogicOp::Or);
         }
 
         let (u, opcode, immhimmb) = match shift {
@@ -573,7 +568,7 @@ impl Aarch64Lowerer {
                 });
             }
         };
-        self.emit_simd_shift_imm(rd, rn, q, u, immhimmb >> 3, immhimmb & 0x7, opcode);
+        self.emit_integer_simd_shift_immediate(rd, rn, &shape, u, immhimmb, opcode);
         Ok(())
     }
 
@@ -839,6 +834,12 @@ impl Aarch64Lowerer {
         let rd = Self::fp_reg(dst)?;
         let rn = Self::fp_reg(src1)?;
         let rm = Self::fp_reg(src2)?;
+        if elem == VecElementType::I64 && lanes == 1 && matches!(opcode, 8 | 10) {
+            let shape = Self::simd_scalar_or_vector_integer_shape(elem, lanes)?;
+            let u = u32::from(!signed);
+            self.emit_integer_simd_three_same(rd, rn, rm, &shape, u, opcode);
+            return Ok(());
+        }
         let (q, size) = Self::simd_integer_shape(elem, lanes)?;
         if size == 3 && !allow_i64 {
             return Err(LowerError::UnsupportedOp {
@@ -921,6 +922,12 @@ impl Aarch64Lowerer {
             }),
             VLaneOp::AbsDiff => {
                 self.lower_vlane_three_same(dst, src1, src2, elem, lanes, signed, 0b01110, false)
+            }
+            VLaneOp::ShiftSigned8 => {
+                self.lower_vlane_three_same(dst, src1, src2, elem, lanes, signed, 0b01000, true)
+            }
+            VLaneOp::ShiftSigned8Rnd => {
+                self.lower_vlane_three_same(dst, src1, src2, elem, lanes, signed, 0b01010, true)
             }
         }
     }

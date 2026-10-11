@@ -22,6 +22,10 @@
 
 pub mod aarch32;
 pub mod aarch64;
+mod aarch64_simd;
+mod aarch64_simd_resize;
+mod aarch64_simd_saturating;
+mod aarch64_simd_scalar;
 pub mod operand;
 pub mod thumb;
 
@@ -1154,6 +1158,10 @@ pub enum Mnemonic {
     // =========================================================================
     UNKNOWN,
     UNDEFINED,
+
+    // A64 saturating accumulation with mixed source/destination signedness.
+    SUQADD,
+    USQADD,
 }
 
 impl Mnemonic {
@@ -1646,6 +1654,8 @@ impl Mnemonic {
             Mnemonic::VCLT => "vclt",
             Mnemonic::VACGT => "vacgt",
             Mnemonic::VACGE => "vacge",
+            Mnemonic::SUQADD => "suqadd",
+            Mnemonic::USQADD => "usqadd",
             Mnemonic::VQADD => "vqadd",
             Mnemonic::VQSUB => "vqsub",
             Mnemonic::VQDMULH => "vqdmulh",

@@ -44,6 +44,10 @@ name = "aarch64_smir_native"
 path = "tests/suites/smir/lower/aarch64_native.rs"
 
 [[test]]
+name = "aarch64_smir_programs"
+path = "tests/suites/smir/jit/aarch64_programs.rs"
+
+[[test]]
 name = "arm"
 path = "tests/suites/isa/arm/main.rs"
 

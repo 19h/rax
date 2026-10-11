@@ -18,13 +18,19 @@ use crate::smir::ir::{
 use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader};
 
 // ---- module tree (auto-split) ----
+mod advanced_simd;
 mod alu;
+mod comparisons;
 pub(crate) use alu::*;
 mod control;
 pub(crate) use control::*;
 mod dispatch;
 pub(crate) use dispatch::*;
+mod fp;
 mod memory;
+mod resize;
+mod saturating;
+mod scalar_simd;
 pub(crate) use memory::*;
 mod misc;
 pub(crate) use misc::*;

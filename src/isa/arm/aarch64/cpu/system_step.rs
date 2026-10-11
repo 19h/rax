@@ -65,8 +65,9 @@ impl AArch64Cpu {
         // is re-checked on the next step.
         #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
         if let Some(region) = self.jit_lookup(self.pc) {
-            self.jit_run_region(&region);
-            return Ok(CpuExit::Continue);
+            if self.jit_run_region(&region) {
+                return Ok(CpuExit::Continue);
+            }
         }
 
         self.pc_ring[self.pc_ring_idx] = self.pc;
@@ -247,14 +248,28 @@ impl AArch64Cpu {
         }
     }
 
-    /// Cache-key discriminator: the active translation regime (TTBR0 frame + EL
-    /// + MMU-enable). A region is only reused while these are unchanged, so a
-    /// context switch can never run a stale region.
+    /// CPACR_EL1.FPEN access policy used by the direct SIMD/FP and memory paths.
+    /// Keep denied native regions in the interpreter so it delivers the trap
+    /// at the first FP instruction after any preceding scalar instructions.
+    #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+    pub(crate) fn jit_fp_access_permitted(&self) -> bool {
+        let fpen = (self.sysregs.el1.cpacr >> 20) & 0x3;
+        match self.current_el {
+            0 => fpen == 0b11,
+            1 => fpen & 1 != 0,
+            _ => true,
+        }
+    }
+
+    /// Cache-key discriminator: TTBR0 frame, EL, MMU enable, and FPEN.
+    /// FPEN occupies two of the unused low frame bits; changing FP access
+    /// cannot reuse a region or ineligibility memo from a different policy.
     #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
     pub(crate) fn jit_mode_tag(&self) -> u64 {
         (self.sysregs.el1.ttbr0 & !0xFFF)
             | (self.current_el as u64)
             | (((self.sysregs.el1.sctlr & 1) as u64) << 2)
+            | (((self.sysregs.el1.cpacr >> 20) & 0x3) << 3)
     }
 
     /// Read up to `max` bytes of guest instruction stream from `entry`, stopping
@@ -322,7 +337,7 @@ impl AArch64Cpu {
         }
         let mt = self.jit_mode_tag();
         match self.jit.cache.get(&(pc, mt)) {
-            Some(Some(r)) => Some(r.clone()),
+            Some(Some(r)) if !r.uses_fp || self.jit_fp_access_permitted() => Some(r.clone()),
             _ => None,
         }
     }

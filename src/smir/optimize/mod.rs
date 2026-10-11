@@ -6,13 +6,12 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::smir::ir::flags::{FlagSet, FlagState, FlagUpdate};
+use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86AdxKind, X86LmswOp, X86LmswSource, X86MonitorMwaitOp, X86OpHint, X86RepMode,
+    OpKind, SmirOp, X86LmswOp, X86LmswSource, X86MonitorMwaitOp, X86OpHint, X86RepMode,
     X86SelectorQueryOp, X86SelectorQuerySource, X86SelectorVerifyOp, X86SelectorVerifySource,
     X86SmswOp, X86SmswTarget, X86StringKind, X86SystemSelectorLoadOp, X86SystemSelectorSource,
     X86SystemSelectorStoreOp, X86SystemSelectorTarget, X86ThreeDNowKind, X86WaitPkgOp,
-    X86X87DataKind,
 };
 use crate::smir::ir::types::{
     Address, ArchReg, ArmReg, BlockId, FpRoundMode, HexagonReg, MemWidth, OpWidth, ShiftOp,
@@ -22,16 +21,15 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
 
 // ---- module tree (auto-split) ----
 mod liveness;
+mod scalar_metadata;
+pub(crate) use liveness::terminator_reg_uses;
 #[cfg(test)]
 mod tests;
 mod vector_alignment;
 
 pub use vector_alignment::vector_alignment_inference;
 
-use liveness::{
-    compute_liveness, op_fully_defines, op_has_precise_deopt_edge, op_out_width,
-    terminator_reg_uses,
-};
+use liveness::{compute_liveness, op_fully_defines, op_has_precise_deopt_edge, op_out_width};
 
 // ============================================================================
 // Optimization Level
@@ -289,6 +287,7 @@ pub fn dead_flag_elimination_with(block: &mut SmirBlock, live_out: FlagSet) -> u
         if matches!(
             block.ops[i].kind,
             OpKind::Cmp { .. }
+                | OpKind::Cmn { .. }
                 | OpKind::Test { .. }
                 | OpKind::Bt { .. }
                 | OpKind::SetCF { .. }
@@ -1082,6 +1081,7 @@ fn rewrite_pure_src_vregs(kind: &mut OpKind, f: &dyn Fn(VReg) -> VReg) -> usize 
         | OpKind::Xor { src1, src2, .. }
         | OpKind::AndNot { src1, src2, .. }
         | OpKind::Cmp { src1, src2, .. }
+        | OpKind::Cmn { src1, src2, .. }
         | OpKind::Test { src1, src2, .. }
         | OpKind::MulU { src1, src2, .. }
         | OpKind::MulS { src1, src2, .. }
@@ -1545,255 +1545,6 @@ fn address_key(
 // ============================================================================
 
 impl OpKind {
-    /// Get mutable reference to flag update field
-    pub fn flags_written_mut(&mut self) -> Option<&mut FlagUpdate> {
-        match self {
-            OpKind::Add { flags, .. }
-            | OpKind::X86Xadd(crate::smir::ir::ops::X86XaddOp { flags, .. })
-            | OpKind::X86Cmpxchg(crate::smir::ir::ops::X86CmpxchgOp { flags, .. })
-            | OpKind::Sub { flags, .. }
-            | OpKind::Adc { flags, .. }
-            | OpKind::Sbb { flags, .. }
-            | OpKind::Neg { flags, .. }
-            | OpKind::Inc { flags, .. }
-            | OpKind::Dec { flags, .. }
-            | OpKind::And { flags, .. }
-            | OpKind::Or { flags, .. }
-            | OpKind::Xor { flags, .. }
-            | OpKind::AndNot { flags, .. }
-            | OpKind::Shl { flags, .. }
-            | OpKind::Shr { flags, .. }
-            | OpKind::Sar { flags, .. }
-            | OpKind::Shld { flags, .. }
-            | OpKind::Shrd { flags, .. }
-            | OpKind::X86NddDoubleShift { flags, .. }
-            | OpKind::Rol { flags, .. }
-            | OpKind::Ror { flags, .. }
-            | OpKind::ArmRegShift { flags, .. }
-            | OpKind::ArmDpRegShift { flags, .. }
-            | OpKind::Rcl { flags, .. }
-            | OpKind::Rcr { flags, .. }
-            | OpKind::Bsf { flags, .. }
-            | OpKind::Bsr { flags, .. }
-            | OpKind::X86Count { flags, .. }
-            | OpKind::Bextr { flags, .. }
-            | OpKind::Bzhi { flags, .. }
-            | OpKind::X86Bls { flags, .. }
-            | OpKind::X86Tbm { flags, .. }
-            | OpKind::X86Adx { flags, .. }
-            | OpKind::MulU { flags, .. }
-            | OpKind::MulS { flags, .. } => Some(flags),
-            _ => None,
-        }
-    }
-
-    /// Get the flags written by this operation (the flags it may define).
-    pub fn flags_written(&self) -> FlagSet {
-        match self {
-            OpKind::Add { flags, .. }
-            | OpKind::X86Xadd(crate::smir::ir::ops::X86XaddOp { flags, .. })
-            | OpKind::X86Cmpxchg(crate::smir::ir::ops::X86CmpxchgOp { flags, .. })
-            | OpKind::Sub { flags, .. }
-            | OpKind::Adc { flags, .. }
-            | OpKind::Sbb { flags, .. }
-            | OpKind::Neg { flags, .. }
-            | OpKind::And { flags, .. }
-            | OpKind::Or { flags, .. }
-            | OpKind::Xor { flags, .. }
-            | OpKind::AndNot { flags, .. }
-            | OpKind::Shl { flags, .. }
-            | OpKind::Shr { flags, .. }
-            | OpKind::Sar { flags, .. }
-            | OpKind::ArmRegShift { flags, .. }
-            | OpKind::ArmDpRegShift { flags, .. }
-            | OpKind::Shld { flags, .. }
-            | OpKind::Shrd { flags, .. }
-            | OpKind::X86NddDoubleShift { flags, .. }
-            | OpKind::Bsf { flags, .. }
-            | OpKind::Bsr { flags, .. }
-            | OpKind::X86Count { flags, .. }
-            | OpKind::Bextr { flags, .. }
-            | OpKind::Bzhi { flags, .. }
-            | OpKind::X86Bls { flags, .. }
-            | OpKind::X86Tbm { flags, .. }
-            | OpKind::X86Adx { flags, .. }
-            | OpKind::MulU { flags, .. }
-            | OpKind::MulS { flags, .. } => flags.as_set(),
-
-            OpKind::Rol { flags, .. }
-            | OpKind::Ror { flags, .. }
-            | OpKind::Rcl { flags, .. }
-            | OpKind::Rcr { flags, .. } => {
-                flags.as_set().intersection(FlagSet::CF.union(FlagSet::OF))
-            }
-
-            // INC/DEC update OF/SF/ZF/AF/PF but PRESERVE CF (their defining
-            // difference from ADD/SUB by 1). Never report CF as written.
-            OpKind::Inc { flags, .. } | OpKind::Dec { flags, .. } => {
-                flags.as_set().difference(FlagSet::CF)
-            }
-
-            // Cmp, Test, and CMPccXADD update all x86 arithmetic flags.
-            OpKind::Cmp { .. } | OpKind::Test { .. } | OpKind::AtomicCmpXadd { .. } => {
-                FlagSet::ALL_X86
-            }
-
-            OpKind::X86FpCompare { .. } => FlagSet::ALL_X86,
-
-            OpKind::X86PackedStringCompare { .. } => FlagSet::ALL_X86,
-
-            OpKind::X86Opmask(op) if op.is_test() => FlagSet::ALL_X86,
-
-            OpKind::X86Cmpxchg8b16b { .. } => FlagSet::ZF,
-
-            OpKind::X86SelectorVerify(..) | OpKind::X86SelectorQuery(..) => FlagSet::ZF,
-
-            OpKind::X86Random { .. } => FlagSet::ALL_X86,
-
-            OpKind::X86WaitPkg(X86WaitPkgOp::Umwait { .. } | X86WaitPkgOp::Tpause { .. }) => {
-                FlagSet::ALL_X86
-            }
-
-            OpKind::X86StackFlags(crate::smir::ir::ops::X86StackFlagsOp {
-                kind: crate::smir::ir::ops::X86StackFlagsKind::Pop,
-                ..
-            }) => FlagSet::ALL_X86,
-
-            OpKind::X86XTest => FlagSet::ALL_X86,
-
-            OpKind::X86X87Data {
-                kind: X86X87DataKind::Compare { eflags: true, .. },
-                ..
-            } => FlagSet::ALL_X86,
-
-            // Every register bit-test form updates CF.
-            OpKind::Bt { .. } | OpKind::Bts { .. } | OpKind::Btr { .. } | OpKind::Btc { .. } => {
-                FlagSet::CF
-            }
-
-            // SCAS and CMPS may update all arithmetic flags. With REP, an
-            // initial count of zero performs no comparison and preserves them.
-            OpKind::X86String {
-                kind: X86StringKind::Scas | X86StringKind::Cmps,
-                ..
-            } => FlagSet::ALL_X86,
-
-            OpKind::SetCF { .. } | OpKind::CmcCF => FlagSet::CF,
-
-            _ => FlagSet::EMPTY,
-        }
-    }
-
-    /// Flags this op DEFINITELY writes a defined value to, regardless of its
-    /// operands — the set safe to treat as "killed" (overwritten) in backward
-    /// flag-liveness. Conservatively smaller than `flags_written` for ops whose
-    /// flag effect is operand-conditional or partly undefined: a shift/rotate
-    /// by a variable count writes nothing when the count is 0, and MUL/IMUL and
-    /// BSF/BSR leave most flags undefined. Using a smaller must-write set can
-    /// only keep more upstream flags live (safe), never delete a needed one.
-    pub fn flags_must_write(&self) -> FlagSet {
-        match self {
-            OpKind::Shl { .. }
-            | OpKind::Shr { .. }
-            | OpKind::Sar { .. }
-            | OpKind::Shld { .. }
-            | OpKind::Shrd { .. }
-            | OpKind::X86NddDoubleShift { .. }
-            | OpKind::Rol { .. }
-            | OpKind::Ror { .. }
-            | OpKind::Rcl { .. }
-            | OpKind::Rcr { .. }
-            | OpKind::MulU { .. }
-            | OpKind::MulS { .. }
-            | OpKind::Bsf { .. }
-            | OpKind::Bsr { .. } => FlagSet::EMPTY,
-            OpKind::X86String {
-                kind: X86StringKind::Scas | X86StringKind::Cmps,
-                rep,
-                ..
-            } if *rep != X86RepMode::None => FlagSet::EMPTY,
-            // POPF can fault before or after its stack read. Incoming flags
-            // remain architectural on either exit, so it cannot kill their
-            // liveness even though every successful form writes status flags.
-            OpKind::X86StackFlags(crate::smir::ir::ops::X86StackFlagsOp {
-                kind: crate::smir::ir::ops::X86StackFlagsKind::Pop,
-                ..
-            }) => FlagSet::EMPTY,
-            OpKind::X86X87Data {
-                kind: X86X87DataKind::Compare { eflags: true, .. },
-                ..
-            } => FlagSet::OF.union(FlagSet::SF).union(FlagSet::AF),
-            _ => self.flags_written(),
-        }
-    }
-
-    /// Get the flags read by this operation
-    pub fn flags_read(&self) -> FlagSet {
-        match self {
-            // Add/Sub with carry read CF
-            OpKind::Adc { .. } | OpKind::Sbb { .. } | OpKind::Rcl { .. } | OpKind::Rcr { .. } => {
-                FlagSet::CF
-            }
-
-            // A zero low-byte count preserves C only when C is among the
-            // requested architectural outputs. Flagless T32 forms and
-            // dead-flag-eliminated shifts do not consume the incoming carry.
-            OpKind::ArmRegShift { flags, .. } => {
-                if flags.as_set().contains(FlagSet::CF) {
-                    FlagSet::CF
-                } else {
-                    FlagSet::EMPTY
-                }
-            }
-
-            OpKind::ArmDpRegShift { kind, flags, .. } => {
-                if kind.reads_carry() || (kind.is_logical() && flags.as_set().contains(FlagSet::CF))
-                {
-                    FlagSet::CF
-                } else {
-                    FlagSet::EMPTY
-                }
-            }
-
-            OpKind::X86Adx { kind, .. } => match kind {
-                X86AdxKind::Adcx => FlagSet::CF,
-                X86AdxKind::Adox => FlagSet::OF,
-            },
-
-            // Conditional move reads flags based on condition
-            OpKind::CMove { cond, .. } | OpKind::SetCC { cond, .. } => {
-                FlagState::required_flags(*cond)
-            }
-
-            // TestCondition reads flags
-            OpKind::TestCondition { cond, .. } => FlagState::required_flags(*cond),
-
-            OpKind::X86X87Data {
-                kind: X86X87DataKind::ConditionalMove(cond),
-                ..
-            } => FlagState::required_flags(*cond),
-
-            // AArch64 conditional-compare lifting materializes ArmReg::Nzcv
-            // from the immediately preceding flag-producing compare op.
-            OpKind::Mov {
-                src: SrcOperand::Reg(VReg::Arch(ArchReg::Arm(ArmReg::Nzcv))),
-                ..
-            } => FlagSet::NZCV,
-
-            // Complement carry reads CF
-            OpKind::CmcCF => FlagSet::CF,
-
-            // ReadFlags reads all flags
-            OpKind::ReadFlags { .. } => FlagSet::ALL_X86,
-
-            // PUSHF consumes the current image. POPF also consumes it for its
-            // precise pre/post-memory fault state and privilege-preserved bits.
-            OpKind::X86StackFlags(..) => FlagSet::ALL_X86,
-
-            _ => FlagSet::EMPTY,
-        }
-    }
-
     /// Get source registers used by this operation
     pub fn source_vregs(&self) -> Vec<VReg> {
         let mut result = Vec::new();
@@ -1810,11 +1561,9 @@ impl OpKind {
             | OpKind::Xor { src1, src2, .. }
             | OpKind::AndNot { src1, src2, .. }
             | OpKind::Cmp { src1, src2, .. }
+            | OpKind::Cmn { src1, src2, .. }
             | OpKind::Test { src1, src2, .. } => {
-                result.push(*src1);
-                if let SrcOperand::Reg(r) = src2 {
-                    result.push(*r);
-                }
+                result.extend(scalar_metadata::scalar_alu_sources(*src1, src2));
             }
 
             OpKind::Shld {
@@ -2628,6 +2377,10 @@ impl OpKind {
                 result.extend(mask.iter().copied());
                 result.extend(addr.regs());
             }
+
+            OpKind::ArmSimdLong(operation) => result.extend(operation.sources()),
+            OpKind::ArmSimdNarrow(operation) => result.extend(operation.sources()),
+            OpKind::ArmSimdSaturating(operation) => result.extend(operation.sources()),
 
             // Vector operations
             OpKind::VAdd { src1, src2, .. }

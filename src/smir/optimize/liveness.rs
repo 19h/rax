@@ -119,7 +119,7 @@ pub(super) fn op_has_precise_deopt_edge(kind: &OpKind) -> bool {
 }
 
 /// Registers read by a terminator (used at the block's exit point).
-pub(super) fn terminator_reg_uses(term: &Terminator) -> Vec<VReg> {
+pub(crate) fn terminator_reg_uses(term: &Terminator) -> Vec<VReg> {
     let mut v = Vec::new();
     match term {
         Terminator::CondBranch { cond, .. } => v.push(*cond),

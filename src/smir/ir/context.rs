@@ -4,7 +4,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::smir::ir::flags::FlagState;
+use crate::smir::ir::flags::{FlagState, MaterializedFlags};
 use crate::smir::ir::memory::{ExclusiveMonitor, SmirMemory};
 use crate::smir::ir::types::*;
 use crate::smir::ir::{X86Segment, X86StringIoKind};
@@ -915,7 +915,10 @@ impl SmirContext {
             source_arch: SourceArch::Aarch64,
             vregs: VRegFile::new(),
             arch_regs: ArchRegState::Aarch64(Aarch64RegState::new()),
-            flags: FlagState::new(),
+            flags: FlagState {
+                materialized: MaterializedFlags::from_nzcv(0),
+                ..FlagState::new()
+            },
             pc: 0,
             insn_count: 0,
             cycle_count: 0,
@@ -1044,7 +1047,11 @@ impl SmirContext {
                 ArmReg::X(n) => arm.set_x(n, value),
                 ArmReg::Sp => arm.sp = value,
                 ArmReg::Pc => arm.pc = value,
-                ArmReg::Nzcv => arm.nzcv = value as u32,
+                ArmReg::Nzcv => {
+                    arm.nzcv = value as u32;
+                    self.flags.lazy = None;
+                    self.flags.materialized = MaterializedFlags::from_nzcv(arm.nzcv);
+                }
                 ArmReg::Fpcr => arm.fpcr = value as u32,
                 ArmReg::Fpsr => arm.fpsr = value as u32,
                 ArmReg::V(n) => arm.v[n as usize][0] = value,

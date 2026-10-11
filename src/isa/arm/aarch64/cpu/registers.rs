@@ -861,8 +861,13 @@ impl AArch64Cpu {
 
     /// Run a compiled region over the current state. FP/SIMD regions take the
     /// V-register-marshaling trampoline; integer-only regions the cheaper one.
+    /// Return false without changing architectural state when FP access must
+    /// be interpreted. Callers then resume at the unchanged guest PC.
     #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
-    pub(crate) fn jit_run_region(&mut self, region: &JitRegion) {
+    pub(crate) fn jit_run_region(&mut self, region: &JitRegion) -> bool {
+        if region.uses_fp && !self.jit_fp_access_permitted() {
+            return false;
+        }
         let mut gr = self.jit_marshal_to();
         gr.ctx = self as *mut AArch64Cpu as u64; // mutable ctx for the store helper
         if region.uses_fp {
@@ -875,6 +880,7 @@ impl AArch64Cpu {
                 .run_aarch64_identity(region.entry_offset, &mut gr);
         }
         self.jit_marshal_from(&gr);
+        true
     }
 
     /// Lift+optimize+lower the region at the current PC. `None` if ineligible
@@ -951,6 +957,11 @@ impl AArch64Cpu {
             return None;
         }
 
+        let uses_fp = uses_aarch64_fp_trampoline(&func);
+        if uses_fp && !self.jit_fp_access_permitted() {
+            return None;
+        }
+
         let mut lowerer = Aarch64Lowerer::new();
         lowerer.set_native_exits(exits);
         lowerer.set_mem_helpers(allow_mem);
@@ -960,8 +971,6 @@ impl AArch64Cpu {
         }
         let code = lowerer.finalize().ok()?;
         let exec = ExecMem::new(&code).ok()?;
-
-        let uses_fp = uses_aarch64_fp_trampoline(&func);
 
         Some(JitRegion {
             exec,

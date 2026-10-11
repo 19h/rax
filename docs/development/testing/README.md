@@ -49,6 +49,7 @@ cargo test --release --test differential case_name -- --exact --nocapture
 | Cargo target | Source | Domain |
 |---|---|---|
 | `aarch64_smir_native` | `tests/suites/smir/lower/aarch64_native.rs` | SMIR native lowering |
+| `aarch64_smir_programs` | `tests/suites/smir/jit/aarch64_programs.rs` | A64 AdvSIMD, widening/narrowing, saturation/QC, scalar integer, comparison-zero, and scalar flag programs: direct, SMIR O0/O1/O2, native, and raw hardware |
 | `arm` | `tests/suites/isa/arm/main.rs` | Arm ISA aggregate |
 | `arm_diff` | `tests/suites/differential/arm/aarch64.rs` | AArch64 differential |
 | `arm_diff32` | `tests/suites/differential/arm/aarch32.rs` | AArch32 differential |

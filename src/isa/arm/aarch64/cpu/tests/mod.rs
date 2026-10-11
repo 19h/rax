@@ -7,6 +7,16 @@ use super::*;
 mod branch;
 #[cfg(test)]
 mod data;
+#[cfg(all(test, feature = "smir-jit", target_arch = "aarch64"))]
+mod jit_comparisons;
+#[cfg(all(test, feature = "smir-jit", target_arch = "aarch64"))]
+mod jit_permissions;
+#[cfg(all(test, feature = "smir-jit", target_arch = "aarch64"))]
+mod jit_resize;
+#[cfg(all(test, feature = "smir-jit", target_arch = "aarch64"))]
+mod jit_saturating;
+#[cfg(all(test, feature = "smir-jit", target_arch = "aarch64"))]
+mod jit_scalar_simd;
 #[cfg(test)]
 mod memory;
 #[cfg(test)]

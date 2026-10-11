@@ -7,6 +7,16 @@ impl OpKind {
     /// Return whether execution can update architectural floating-point status
     /// or request a floating-point exception independently of the data result.
     pub(super) fn has_fp_status_side_effects(&self) -> bool {
+        match self {
+            OpKind::ArmSimdSaturating(_) => return true,
+            OpKind::ArmSimdLong(operation) => {
+                return !operation.shape_valid() || operation.updates_qc();
+            }
+            OpKind::ArmSimdNarrow(operation) => {
+                return !operation.shape_valid() || operation.updates_qc();
+            }
+            _ => {}
+        }
         if let OpKind::X86Fma(fma) = self {
             // Malformed IR must remain observable so DCE cannot erase the
             // interpreter's fail-closed #UD boundary. Canonical embedded-

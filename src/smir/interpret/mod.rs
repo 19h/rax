@@ -19,9 +19,11 @@ use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
 
 // ---- module tree (auto-split) ----
+mod arm_flags;
 mod execution;
 pub use execution::*;
 mod hex_float;
+mod operands;
 mod ops;
 pub use hex_float::*;
 mod simd;

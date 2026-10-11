@@ -5,7 +5,15 @@
 use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::types::*;
 
+mod arm_simd_resize;
+mod arm_simd_saturating;
 mod fp_side_effects;
+pub(crate) use arm_simd_resize::ARM_FPSR_QC;
+pub use arm_simd_resize::{
+    ArmSimdLongKind, ArmSimdLongOp, ArmSimdNarrowKind, ArmSimdNarrowMode, ArmSimdNarrowOp,
+    ArmSimdPart,
+};
+pub use arm_simd_saturating::{ArmSimdSaturatingForm, ArmSimdSaturatingKind, ArmSimdSaturatingOp};
 mod x86_sat_convert_types;
 pub use x86_sat_convert_types::X86SatFpFormat;
 pub(crate) use x86_sat_convert_types::{x86_sat_fp_to_int_controls, x86_sat_fp_to_int_widths};
@@ -343,6 +351,18 @@ pub enum OpKind {
 
     /// Compare (subtract without storing): flags = src1 - src2
     Cmp {
+        src1: VReg,
+        src2: SrcOperand,
+        width: OpWidth,
+    },
+
+    /// Compare negative (addition without storing): flags = src1 + src2.
+    ///
+    /// Uses the same width, carry, overflow, and lazy-flag contract as Add with
+    /// FlagUpdate::All. No register result is produced. AArch64 CMN requires
+    /// addition flags even when src2 is zero or the minimum signed integer.
+    /// Native admission is target-specific; the generic whitelist stays closed.
+    Cmn {
         src1: VReg,
         src2: SrcOperand,
         width: OpWidth,
@@ -2063,9 +2083,10 @@ pub enum OpKind {
     /// register (up to 1024 bits), reading/writing via the arch-aware vector
     /// path so it works on Hexagon HVX V registers (and virtual regs). `op`
     /// selects the per-lane operation and `signed` its signedness where it
-    /// matters (min/max/avg/saturate/absdiff). This is the lift target for HVX
+    /// matters (min/max/avg/saturate/absdiff/right shift). This is the lift target for HVX
     /// integer elementwise instructions and compact x86 packed-integer
-    /// operations with identical lane semantics.
+    /// operations with identical lane semantics, including AArch64 signed-byte
+    /// register shifts. This operation does not change AArch64 FPSR.QC.
     VLane {
         dst: VReg,
         src1: VReg,
@@ -2081,6 +2102,15 @@ pub enum OpKind {
         /// bare `clamp` in their sem) leave this `false` and set no OVF.
         set_ovf: bool,
     },
+
+    /// AArch64 128-bit long arithmetic and cumulative saturation.
+    ArmSimdLong(ArmSimdLongOp),
+
+    /// AArch64 narrowing with explicit scalar/half selection and cumulative QC.
+    ArmSimdNarrow(ArmSimdNarrowOp),
+
+    /// A64 same-width saturation with implicit cumulative FPSR.QC effects.
+    ArmSimdSaturating(ArmSimdSaturatingOp),
 
     /// Widening elementwise multiply into a destination register pair.
     ///
@@ -4732,6 +4762,9 @@ impl OpKind {
     /// Get destination register(s) if any
     pub fn dests(&self) -> Vec<VReg> {
         match self {
+            OpKind::ArmSimdLong(operation) => operation.destinations(),
+            OpKind::ArmSimdNarrow(operation) => operation.destinations(),
+            OpKind::ArmSimdSaturating(operation) => operation.destinations(),
             OpKind::Add { dst, .. }
             | OpKind::Sub { dst, .. }
             | OpKind::Adc { dst, .. }
@@ -5234,6 +5267,7 @@ impl OpKind {
 
             // No destination
             OpKind::Cmp { .. }
+            | OpKind::Cmn { .. }
             | OpKind::Test { .. }
             | OpKind::Bt { .. }
             | OpKind::Store { .. }

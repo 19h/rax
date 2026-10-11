@@ -630,6 +630,205 @@ tree, first use `cargo fmt --all --check`; run mutating `cargo fmt --all` only
 when its resulting diff is confined to owned files. Otherwise format exact owned
 files with the repository edition and report unrelated formatting debt.
 
+### 9.3 Code style authority and preparation
+
+Readability and maintainability are implementation requirements for RAX. Write
+code that exposes architectural intent, validation, state changes, and failure
+paths directly. Review source structure separately from formatter output.
+
+Before writing or restructuring code:
+
+1. Read the nearest applicable instructions and the owning module.
+2. Read neighboring implementations of the same kind of operation, including
+   their operand parsing, helper use, errors, visibility, and tests.
+3. Follow those conventions in every added function and file. Use existing
+   types, semantic helpers, dispatch patterns, and canonical module paths.
+4. Resolve inconsistent legacy patterns by following the maintained code in
+   the owning semantic category and the rules below. Do not propagate unused
+   imports, stale comments, or compressed code from a mechanical split.
+
+The following files provide concrete examples; inspect the actual owning module
+as well:
+
+| Concern | Example |
+|---|---|
+| Typed operand parsing and explicit IR construction | `src/smir/lift/aarch64/alu.rs` |
+| Encoding helpers and architectural register names | `src/smir/lower/aarch64/mov.rs` |
+| Validation, errors, state guards, and native emission | `src/smir/lower/aarch64/require_tbm.rs` |
+| Explicit imports and architectural contract comments | `src/smir/ir/trap.rs` |
+| Differential harness structure and failure diagnostics | `tests/suites/smir/lift/riscv.rs` |
+
+### 9.4 Rust formatting and layout
+
+- The root and `capi` packages use Rust edition 2024 and stable `rustfmt`.
+  Standalone packages use their own manifests; the ASL parser currently uses
+  edition 2021. Verify the owning manifest before formatting. The repository
+  has no tracked `rustfmt.toml`, `.rustfmt.toml`, or `.editorconfig`; retain the
+  existing formatter configuration and toolchain policy.
+- The current formatter uses four spaces, no hard tabs, and a 100-column target
+  width. Let `rustfmt` lay out imports, parameters, calls, match arms, trailing
+  commas, and operator placement. Preserve the file's line-ending convention.
+- Put each statement on its own line. Nonempty function bodies, loop bodies,
+  and control-flow blocks span multiple lines. Simple match arms may return a
+  single expression. Keep short predicates and accessors readable without
+  introducing unnecessary scaffolding.
+- Use multiline field construction and destructuring when several operands,
+  widths, flags, or encoding attributes must be reviewed together. Preserve
+  their surrounding field order and use Rust field shorthand when the local
+  binding has the same meaning as the field.
+- Separate validation, operand extraction, computation, emission, and result
+  construction into readable paragraphs. Keep related statements together.
+- Do not compress nested loops, multiple bindings, error construction, or a
+  macro body onto one line. Do not add `#[rustfmt::skip]` to preserve compact
+  handwritten code.
+- Check workspace formatting with `cargo +stable fmt --all --check`. When
+  formatting exact owned files, pass their package's edition (`--edition 2024`
+  for root/workspace source); use `--config skip_children=true` when recursive
+  module traversal would touch unowned files. Section 3.4 governs every mutating
+  formatter invocation.
+
+### 9.5 Names, types, imports, and visibility
+
+- Use `snake_case` for functions, modules, and bindings; `UpperCamelCase` for
+  types and variants; and `SCREAMING_SNAKE_CASE` for constants. Preserve
+  existing public identifiers, including ISA mnemonics and ABI names.
+- Name values for their semantic role: `source_lane`, `entry_offset`,
+  `temporary_escapes`, or `reserved_index_bits`. Short names remain appropriate
+  for established architectural fields such as `rd`, `rn`, `rm`, `q`, `u`,
+  `imm5`, and `nzcv`, or a small local loop index. Keep such names confined to
+  code where their architecture or indexing role is explicit.
+- Use explicit fixed-width architectural types. Use `usize` for host buffer
+  lengths and indices. Make sign extension, truncation, wrapping, checked
+  arithmetic, and conversions visible at the point where they affect meaning.
+- Follow the owning module's import groups. Prefer explicit imports in new
+  semantic modules; keep standard-library, crate, and local imports in their
+  established groups, and let `rustfmt` sort within them. Existing wildcard
+  imports do not justify copying a large unused import list into a new file.
+- Use canonical ownership paths. Use `super` for local shared implementation
+  items where the module already does so. Introduce an import alias only to
+  resolve a collision or distinguish roles, such as ISA memory from SMIR memory.
+- Keep helpers private by default. For split sibling implementations, follow
+  the owning type's established `pub(super)` or `pub(crate)` convention. Use
+  `pub(crate)` for consumers elsewhere in the crate and `pub` only for an
+  intended public API. Preserve visibility when moving an existing method.
+  Re-export only to preserve or deliberately expose an interface; inspect
+  callers before widening visibility.
+
+### 9.6 Control flow, helpers, and abstractions
+
+- Parse operands with explicit `match` or `let ... else` patterns. Validate
+  register classes, widths, lane indices, reserved fields, and features before
+  arithmetic, indexing, emission, or architectural mutation depends on them.
+- Use early returns for invalid, unsupported, or unmatched cases. Return the
+  owning subsystem's error type with the operation and offending value when
+  useful. Use `?` for ordinary error propagation.
+- Give compound predicates a descriptive binding or helper when that exposes
+  the architectural rule. Keep match tables readable, with one logical case
+  per arm and comments for encoding classes or restrictions.
+- Factor helpers around a named semantic operation or a reused invariant.
+  Separate instruction families when their validation or state effects differ.
+  Keep dispatchers explicit and preserve their fallback contract.
+- Use iterator chains and closures for straightforward transformations whose
+  data flow is visible. Use loops and named intermediate values when there are
+  multiple validation steps, state changes, or failure paths.
+- Add a macro only when an existing module idiom or repeated structural pattern
+  warrants it. Format its body normally and keep validation and side effects
+  visible at call sites. Do not introduce a generic framework to shorten a few
+  instruction handlers.
+- Do not add unchecked indexing, `unwrap`, `expect`, `panic!`, or
+  `unreachable!` to a guest-controlled path without a locally established
+  invariant. Unsupported architectural behavior uses a deliberate error or
+  interpreter frontier. Test assertions and established invariant checks follow
+  the surrounding code's conventions.
+
+### 9.7 Encodings, comments, and documentation
+
+- Preserve the owning module's numeric conventions. Use hexadecimal for masks,
+  instruction words, and addresses; binary for opcode and field values where
+  the bit pattern explains the ISA encoding. Group longer literals with
+  underscores for review.
+- Give non-obvious masks, offsets, widths, or transforms a semantic name or a
+  nearby explanation. Keep native instruction construction over multiple lines
+  when it combines several fields; make each shift, mask, and register mapping
+  independently reviewable. Reuse existing emitters instead of duplicating
+  their encodings.
+- Comments explain architectural requirements, invariants, ordering, aliasing,
+  fault precision, or a necessary transformation. State why a step exists and
+  cite the exact specification class or revision when semantics depend on it.
+  Do not narrate obvious assignments or describe abandoned implementations.
+- Use `//!` for module purpose and `///` for item contracts where needed. Public
+  or shared interfaces document relevant widths, state effects, failure modes,
+  ownership, and unsafe preconditions. Keep prose precise and update it with
+  the behavior.
+- Keep comments, diagnostics, and tests consistent with implemented behavior.
+  A successful format check does not establish that an explanation is current.
+
+### 9.8 Test source conventions
+
+- Give tests and harness helpers names that identify the behavior or execution
+  plane. Keep encoding, initial-state construction, execution, and comparison
+  helpers separate when they have distinct contracts.
+- Lay out boundary-case matrices with readable tables and nested loops. Explain
+  architectural partitions and aliases. Include the instruction word, guest PC,
+  optimization level, initial state, and differing result as relevant in failure
+  diagnostics. Verify the execution result as well as final registers.
+- Follow section 11 for oracle independence, baseline failures, reachability,
+  and complete-target runs. Keep assertions explicit; do not hide a failed
+  execution or unsupported case behind a default result.
+
+### 9.9 Non-Rust source conventions
+
+- For non-Rust source, read the nearest maintained examples and follow the
+  owning language's existing indentation, naming, include or
+  import order, error handling, and quoting. Rust layout rules do not redefine
+  C/C++ public naming or ABI conventions. Do not add a new formatter or apply
+  an unrelated file-wide restyle.
+- In the C API headers, retain four-space member indentation, include guards,
+  fixed-width integer types, `rax_*` type/function names, and `RAX_*` constants.
+  Preserve the `extern "C"` boundary and section 8.12's ABI contracts. In the
+  C++ wrapper, retain namespace `rax`, `UpperCamelCase` types, existing
+  `camelCase` methods, same-line opening braces, and the established status,
+  exception, and RAII interfaces. Follow `capi/include/rax.h` and
+  `capi/include/rax.hpp`.
+- Python tools use four-space block indentation, `snake_case` functions and
+  bindings, and uppercase constants. Preserve the owning script's quote and
+  import conventions. Keep command-line parsing and the `__main__` entry point
+  separate from reusable helpers. Pass subprocess arguments as an argument
+  list where possible; inspect `tools/licensing/check.py` for an example.
+- Shell scripts retain their declared interpreter: POSIX `sh` scripts must
+  remain POSIX-compatible, and Bash-specific syntax belongs under a Bash
+  shebang or explicit workflow shell. Quote path and argument expansions,
+  preserve argument boundaries with `"$@"`, and make failure handling explicit.
+  Expand new conditional and loop bodies over multiple lines. Preserve the
+  owning script's indentation and use continuations for long commands.
+- TOML follows the owning manifest's key order, spaces around `=`, and blank
+  lines between table declarations. Put long arrays on separate indented lines
+  with trailing commas. Workflow YAML uses two-space structural indentation;
+  preserve the existing sequence style and use `run: |` for multiline shell
+  commands. Section 10.5 governs action and dependency pins.
+- CMake follows `capi/CMakeLists.txt`: lowercase commands, four-space nested
+  blocks, grouped multiline arguments, and the existing cache-variable and
+  target names. Quote path-valued arguments where their argument boundary must
+  be preserved. Keep platform branches and command argument lists explicit.
+- Makefiles require literal tabs for recipe prefixes; do not replace them with
+  Rust's space indentation. Preserve the owning file's variable-assignment
+  operators, target naming, shell selection, and Make-versus-shell escaping.
+  The root `Makefile` provides examples.
+- Assembly retains the owning file's ISA, assembler dialect, object-format
+  directives, symbol spelling, and platform guards. Keep instruction sequences
+  one instruction per line, with labels at the left margin and surrounding
+  instruction indentation. Document register clobbers, frame offsets, alignment,
+  and save/restore order when they define the ABI contract. Inspect the matching
+  architecture branch of `tests/fixtures/user/windows/crt_bootstrap/src/fp.S`
+  as a state-preservation example; section 8.5 governs native runtime contracts.
+- Generated and imported reference files remain governed by section 10. Change
+  a generator's output style through its owning generator when authorized;
+  preserve primary-source documents unchanged.
+
+Before delivery, review every added or changed function for readable naming,
+explicit state effects, appropriate helpers and visibility, accurate comments,
+and unnecessary complexity. Formatter and compiler success are separate checks.
+
 ## 10. Generated, derived, reference, and binary material
 
 Classify a file before editing it.
@@ -781,7 +980,7 @@ changes.
 | x86 AVX-512/AVX10/APX | `x86_64`, relevant SMIR tests | `x86_64_evex_qemu_diff`, `x86_64_apx_map4_qemu_diff`, `x86_64_avx512_kvm_diff` |
 | SMIR IR/interpreter/optimizer | library tests, affected ISA target | affected lift/JIT/roundtrip target and differential oracle |
 | x86-64 native JIT | `smir_jit_vcpu`, `smir_jit_evex_masking` | `differential`/verification mode on Linux x86-64 |
-| AArch64 host lowering | `aarch64_smir_native` | `smir_jit_x86_aarch64`, `smir_jit_aarch32_aarch64`, or `smir_jit_thumb_aarch64` on an AArch64 host |
+| AArch64 host lowering | `aarch64_smir_programs`, `aarch64_smir_native` as applicable | `smir_jit_x86_aarch64`, `smir_jit_aarch32_aarch64`, or `smir_jit_thumb_aarch64` on an AArch64 host |
 | AArch64/AArch32 semantics | `arm`, `arm_vfp_a32` as applicable | `arm_diff`, `arm_diff32` with native/QEMU oracle |
 | RISC-V | `riscv_smir_lift`, affected library tests | `riscv_diff`, `riscv_vector`, `riscv_smir_x86_jit`, `riscv_smir_aarch64_jit`, `riscv_boot` |
 | Hexagon | `hexagon_smir_lift`, affected library tests | `hexagon_diff`, `hexagon_cf_diff`, `hexagon_float_diff`, `hexagon_mem_diff`, `hexagon_hvx_diff`, `hexagon_hvx_mem_diff` |
@@ -795,6 +994,10 @@ changes.
 When a row names multiple alternatives, select those intersecting the actual
 change-surface map and document omissions. A target that is `cfg`-empty on the
 current host provides compilation evidence only.
+
+`aarch64_smir_native` runs only on Linux AArch64. `aarch64_smir_programs` runs
+portable AdvSIMD interpretation checks and additionally executes original and
+lowered instructions on an AArch64 host with `smir-jit`, including macOS.
 
 ## 12. Validation ladder
 
