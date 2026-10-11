@@ -1,0 +1,74 @@
+[
+  {
+    "family": "basic",
+    "profile": "arm64",
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-basic-probe-arm64\\native-worker-factory-basic-probe-arm64.exe",
+    "bytes": 157696,
+    "sha256": "d5c9e6e68ad52fd4d9ec8bf233557ff263e9e390bb45852f8fccc440e6a5eb44",
+    "machine": "0xaa64",
+    "LAA": true,
+    "PE-stack-reserve": 1048576,
+    "PE-stack-commit": 4096,
+    "source-sha256": "f84c99a8c4f9774cc67520b78db5ea46973ba1a431645810ba8131cbbea55d44"
+  },
+  {
+    "family": "basic",
+    "profile": "x64",
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-basic-probe-x64\\native-worker-factory-basic-probe-x64.exe",
+    "bytes": 157696,
+    "sha256": "301b713791f1ee9c18759a8c47f105f2d81800e01c36fd7bd088f79ff14e324d",
+    "machine": "0x8664",
+    "LAA": true,
+    "PE-stack-reserve": 1048576,
+    "PE-stack-commit": 4096,
+    "source-sha256": "f84c99a8c4f9774cc67520b78db5ea46973ba1a431645810ba8131cbbea55d44"
+  },
+  {
+    "family": "basic",
+    "profile": "x86",
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-basic-probe-x86\\native-worker-factory-basic-probe-x86.exe",
+    "bytes": 129536,
+    "sha256": "e96adcdb5fc226dddbed7bedd9c4b721f38339744f2ab5728c46916b656e9a43",
+    "machine": "0x14c",
+    "LAA": false,
+    "PE-stack-reserve": 1048576,
+    "PE-stack-commit": 4096,
+    "source-sha256": "f84c99a8c4f9774cc67520b78db5ea46973ba1a431645810ba8131cbbea55d44"
+  },
+  {
+    "family": "basic",
+    "profile": "x86-laa",
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-basic-probe-x86-laa\\native-worker-factory-basic-probe-x86-laa.exe",
+    "bytes": 129536,
+    "sha256": "041eb52d07b7acd22dea5b3d1e827cc5a5f5630cc449e064892c36f9492add4b",
+    "machine": "0x14c",
+    "LAA": true,
+    "PE-stack-reserve": 1048576,
+    "PE-stack-commit": 4096,
+    "source-sha256": "f84c99a8c4f9774cc67520b78db5ea46973ba1a431645810ba8131cbbea55d44"
+  },
+  {
+    "family": "default-stack",
+    "profile": "arm64",
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-default-stack-probe-arm64\\native-worker-factory-default-stack-probe-arm64.exe",
+    "bytes": 151040,
+    "sha256": "1b0d6b96aa8d3a8c0bf8fa83f748bf26ae7e822422eb622ba90afca234ece426",
+    "machine": "0xaa64",
+    "LAA": true,
+    "PE-stack-reserve": 2097152,
+    "PE-stack-commit": 32768,
+    "source-sha256": "af5cd4670ba8bdb500c90eac6e2b3a6c7d2f26a3375c5d7585a0000dcaa6cfad"
+  },
+  {
+    "family": "default-stack",
+    "profile": "x86",
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-default-stack-probe-x86\\native-worker-factory-default-stack-probe-x86.exe",
+    "bytes": 122880,
+    "sha256": "f11ceb11bf2393dffa66043105b7547589d7f70e3625940bedf4b786e09063f4",
+    "machine": "0x14c",
+    "LAA": false,
+    "PE-stack-reserve": 2097152,
+    "PE-stack-commit": 32768,
+    "source-sha256": "af5cd4670ba8bdb500c90eac6e2b3a6c7d2f26a3375c5d7585a0000dcaa6cfad"
+  }
+]

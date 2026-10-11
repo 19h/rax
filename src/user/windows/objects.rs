@@ -145,6 +145,26 @@ pub enum Object {
         /// Construction records it; completion dequeue must enforce it.
         concurrency: u32,
     },
+    /// A dormant NT thread-pool worker factory. Activation/packet scheduling
+    /// belongs to the worker-factory services, not to construction.
+    WorkerFactory {
+        /// Owned completion-port reference, independent of its caller handle.
+        port: ObjId,
+        /// Owned explicit process-object reference, if a real handle was used.
+        process: Option<ObjId>,
+        /// Target guest process identity; pseudo handles refer to this process.
+        pid: u32,
+        /// Worker entry address, not dereferenced by the constructor.
+        start: u64,
+        /// Worker entry parameter.
+        parameter: u64,
+        /// Unsigned maximum; zero is retained, not expanded to the CPU count.
+        maximum: u32,
+        /// Requested/default stack reserve in bytes, without creation rounding.
+        reserve: u64,
+        /// Requested/default stack commit in bytes.
+        commit: u64,
+    },
     /// A private immutable runtime registry key shared by opened handles.
     Key(std::sync::Arc<super::registry::Key>),
     /// An object this implementation only needs to name (tokens,
@@ -166,6 +186,7 @@ impl Object {
             Object::Mapping { .. } => "Section",
             Object::Pipe { .. } => "File",
             Object::CompletionPort { .. } => "IoCompletion",
+            Object::WorkerFactory { .. } => "TpWorkerFactory",
             Object::Key(_) => "Key",
             Object::Opaque(t) => t,
         }
@@ -214,6 +235,18 @@ impl Objects {
     /// Creates an unreferenced object, rejecting identifier exhaustion.
     pub fn try_create(&mut self, obj: Object) -> Option<ObjId> {
         let next = self.next.checked_add(1)?;
+        if let Object::WorkerFactory { port, process, .. } = &obj {
+            if !matches!(self.obj(*port), Some(Object::CompletionPort { .. }))
+                || process.is_some_and(|id| !matches!(self.obj(id), Some(Object::Process { .. })))
+            {
+                return None;
+            }
+            // At most two references: validate every count before changing
+            // either. Publication rollback and final close release them below.
+            let ids = [*port, process.unwrap_or(*port)];
+            self.retain_many(&ids[..if process.is_some() { 2 } else { 1 }])
+                .ok()?;
+        }
         self.objs.insert(
             next,
             Entry {
@@ -294,6 +327,14 @@ impl Objects {
         let e = self.objs.remove(&id)?;
         if let Some(n) = &e.name {
             self.names.remove(n);
+        }
+        if let Object::WorkerFactory { port, process, .. } = &e.obj {
+            // These dependencies are a CompletionPort and a Process, so this
+            // recursion has depth one and cannot form an object cycle.
+            self.release(*port);
+            if let Some(id) = process {
+                self.release(*id);
+            }
         }
         Some(e.obj)
     }
@@ -532,6 +573,49 @@ mod tests {
         assert!(o.set_flags(u64::from(h), 2, 2));
         assert!(o.close(u64::from(h)).is_err());
         assert_eq!(o.flags(u64::from(h)), Some(2));
+    }
+
+    #[test]
+    fn worker_factory_dependency_pins_are_transactional_on_capacity_and_type_failure() {
+        let mut o = Objects::default();
+        let port = o.create(Object::CompletionPort {
+            queue: Default::default(),
+            concurrency: 4,
+        });
+        let process = o.create(Object::Process {
+            pid: 1,
+            exit_code: None,
+        });
+        let factory = |port, process| Object::WorkerFactory {
+            port,
+            process: Some(process),
+            pid: 1,
+            start: 0,
+            parameter: 0,
+            maximum: 0,
+            reserve: 65536,
+            commit: 4096,
+        };
+        let next = o.next;
+        o.objs.get_mut(&process).unwrap().refs = u32::MAX;
+        assert_eq!(o.try_create(factory(port, process)), None);
+        assert_eq!(o.objs[&port].refs, 0);
+        assert_eq!(o.objs[&process].refs, u32::MAX);
+        assert_eq!(o.next, next);
+        o.objs.get_mut(&process).unwrap().refs = 0;
+        assert_eq!(o.try_create(factory(process, port)), None);
+        assert_eq!(o.objs[&port].refs, 0);
+        assert_eq!(o.objs[&process].refs, 0);
+        o.next = u32::MAX;
+        assert_eq!(o.try_create(factory(port, process)), None);
+        assert_eq!(o.objs[&port].refs, 0);
+        assert_eq!(o.objs[&process].refs, 0);
+        o.next = next;
+        let id = o.try_create(factory(port, process)).unwrap();
+        assert_eq!(o.objs[&port].refs, 1);
+        assert_eq!(o.objs[&process].refs, 1);
+        assert!(matches!(o.release(id), Some(Object::WorkerFactory { .. })));
+        assert_eq!(o.iter().count(), 0);
     }
 
     #[test]

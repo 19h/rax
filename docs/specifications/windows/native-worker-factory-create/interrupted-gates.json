@@ -1,0 +1,8 @@
+{
+  "reason": "Explicit pause interrupted host runners before full-suite completion; resumed handles missing, no matching cargo/test processes or task test container remain",
+  "gates": [
+    "macos-full",
+    "linux-full"
+  ],
+  "status": "incomplete; exit unknown"
+}

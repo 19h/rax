@@ -1,0 +1,42 @@
+[
+  {
+    "profile": "arm64",
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-basic-probe-arm64\\native-worker-factory-basic-probe-arm64.exe",
+    "bytes": 157696,
+    "sha256": "d5c9e6e68ad52fd4d9ec8bf233557ff263e9e390bb45852f8fccc440e6a5eb44",
+    "machine": "0xaa64",
+    "LAA": true,
+    "PE-stack-reserve": 1048576,
+    "PE-stack-commit": 4096
+  },
+  {
+    "profile": "x64",
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-basic-probe-x64\\native-worker-factory-basic-probe-x64.exe",
+    "bytes": 157696,
+    "sha256": "301b713791f1ee9c18759a8c47f105f2d81800e01c36fd7bd088f79ff14e324d",
+    "machine": "0x8664",
+    "LAA": true,
+    "PE-stack-reserve": 1048576,
+    "PE-stack-commit": 4096
+  },
+  {
+    "profile": "x86",
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-basic-probe-x86\\native-worker-factory-basic-probe-x86.exe",
+    "bytes": 129536,
+    "sha256": "e96adcdb5fc226dddbed7bedd9c4b721f38339744f2ab5728c46916b656e9a43",
+    "machine": "0x14c",
+    "LAA": false,
+    "PE-stack-reserve": 1048576,
+    "PE-stack-commit": 4096
+  },
+  {
+    "profile": "x86-laa",
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-basic-probe-x86-laa\\native-worker-factory-basic-probe-x86-laa.exe",
+    "bytes": 129536,
+    "sha256": "041eb52d07b7acd22dea5b3d1e827cc5a5f5630cc449e064892c36f9492add4b",
+    "machine": "0x14c",
+    "LAA": true,
+    "PE-stack-reserve": 1048576,
+    "PE-stack-commit": 4096
+  }
+]

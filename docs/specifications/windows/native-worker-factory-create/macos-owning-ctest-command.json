@@ -1,0 +1,8 @@
+[
+  "ctest",
+  "--test-dir",
+  "/Users/int/Library/Caches/assist-process-emulation/worker-factory-create-20261012/macos-owning-build",
+  "--output-on-failure",
+  "-R",
+  "^(assist_rust_archive_link_tests|assist_rax_process_tests|assist_process_tool_tests|assist_process_tool_unavailable_tests|assist_e14_rax_abi_drift_tests|assist_mcp_tool_manifest_tests|assist_mcp_manifest_runtime_test)$"
+]

@@ -1,0 +1,23 @@
+{
+  "before-sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e",
+  "after-sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e",
+  "before-turn": 42076,
+  "after-turn": 42165,
+  "scheduler-call-delta": 89,
+  "before-service": "NtCreateWorkerFactory",
+  "before-service-number": "0xD5",
+  "after-service": "NtCreateTimer2",
+  "after-service-number": "0xCC",
+  "after-PC": "0x180001D00",
+  "after-arguments": [
+    "0x1103310",
+    "0",
+    "0",
+    "8",
+    "0x100002"
+  ],
+  "ordinary-programs": 4,
+  "ordinary-stop-reason": 5,
+  "ordinary-exit-code": 0,
+  "ordinary-result": "internal failure; not guest exit"
+}

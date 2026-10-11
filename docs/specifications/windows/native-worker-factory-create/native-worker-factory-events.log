@@ -1,0 +1,37 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.22s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-tests\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 12 tests
+test user::linux::fsnotify::queue::tests::records_follow_copy_event_to_user ... ok
+test user::windows::dll::threading::tests::named_event_case_namespace_collision_and_existing_properties_all_abis ... ok
+test user::windows::dll::threading::tests::manual_event_stays_signaled_until_reset_and_name_boundaries_are_checked ... ok
+test user::windows::dll::crt::stdio::storage::tests::file_readonly_guard_and_stale_revision_prevent_metadata_overwrite ... ok
+test user::windows::process::sched::tests::services_tests::event_tests::native_event_interoperates_with_win32_waits_state_and_close_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::event_tests::native_event_creates_real_objects_and_closes_without_leaking_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::event_tests::native_event_rejects_unimplemented_security_and_names_without_publication_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::event_tests::native_event_output_and_attribute_fault_order_preserves_objects_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::event_tests::native_event_retains_boolean_byte_and_reuses_manual_auto_wait_semantics_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::event_tests::native_event_state_probes_before_type_and_access_without_mutation_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::event_tests::native_event_maps_created_handle_access_and_inherit_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::event_tests::installed_ntdll_event_leaves_create_modify_and_close_shared_objects ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 7009 filtered out; finished in 1.76s
+

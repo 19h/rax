@@ -1,0 +1,3 @@
+Curated owning-build completion and protected-text evidence.
+[273/448] Linking CXX executable assist-mcp; Checking that assist_mcp exports nothing; Checking protected plaintext in assist_mcp
+[447/448] Linking CXX executable assist-cli; Checking protected plaintext in assist_idalib_cli

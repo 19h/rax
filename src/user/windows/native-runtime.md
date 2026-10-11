@@ -1474,3 +1474,23 @@ applications remain full-goal requirements. The strict manifest,25 gates,
 primary/producer/source/archive provenance, assumptions, scope and positive/four
 negative validations are in
 [I/O completion evidence](../../../docs/specifications/windows/native-io-completion-create/README.md).
+
+## Native worker-factory construction (2026-10-12)
+
+NtCreateWorkerFactory now constructs a real TpWorkerFactory with transactional
+completion-port/process dependency ownership, measured ten-argument transports,
+native/WoW64 capture/probe/handle/access/alias/guard order and final-close release.
+ULONG maximum0 is retained; raw entry/parameter/nonzero stack values are stored;
+zero stack defaults65536 B/4096 B are independent of actual PE stack defaults.
+Four-profile captures plus changed-stack probes retain3622 observations, with
+1868 exact basic/order replays and112 explicit nested-policy/privilege exclusions.
+Portable5/5 and native6 constructor gates pass; full7618/0/2,7611/1/2,7014/5/2
+pass/fail/ignored preserve the existing Linux timeout and Windows lowering failures.
+C API168, all-target builds, integrations544/544/4 and five owning consumers per
+host pass; macOS CLI/MCP, seven CTests and protected-text scans pass. Native4673/260
+archive member walks bind22 source hashes and empty core features. The identical
+observer succeeds at42076 and stops at NtCreateTimer2 at42165,89 more scheduler
+calls. Four ordinary programs still report internal failure, not guest exit.
+Activation/waits/packets/security/APC and successful full applications remain
+full-goal requirements; provenance, assumptions, metadata correction and limits:
+[worker-factory evidence](../../../docs/specifications/windows/native-worker-factory-create/README.md).

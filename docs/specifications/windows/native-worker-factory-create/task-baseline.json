@@ -1,0 +1,38 @@
+{
+  "root-head": "f4ef0960705a2912de1621dc68c099d48ff43535",
+  "rax-head": "6255c2ed0863b48d83ac022eb6ab8bfeea9816ad",
+  "root-status": "",
+  "rax-status": "",
+  "potential-owned-paths": [
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/objects.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/sync.rs",
+    "src/user/windows/dll/native/object_create.rs",
+    "src/user/windows/dll/native/worker_factory.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_create_tests.rs",
+    "docs/specifications/windows/native-worker-factory-create/"
+  ],
+  "baseline-sources": [
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "sha256": "70711e96807db0a2da5fc480d2bfeaa0c0beec9dc12652f6d3942fd9b66f9774"
+    },
+    {
+      "path": "src/user/windows/objects.rs",
+      "sha256": "85f8f844535619de55523fc38a4961e283599f07588c32d5bc368bb6632d3714"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "sha256": "1b54b5d5464708f7dff60d3bef25690738b09035c33bb66630c99e25d037b963"
+    },
+    {
+      "path": "src/user/windows/sync.rs",
+      "sha256": "b40b645148f512e5fa2913710ffa71823394af6ed62f4da803055d4ac5c7f601"
+    },
+    {
+      "path": "src/user/windows/dll/native/object_create.rs",
+      "sha256": "789a8d82dfc517b9b8075446c8f2ea8eca15d3cbeb9a1fcd2c05c06f6980ec14"
+    }
+  ]
+}

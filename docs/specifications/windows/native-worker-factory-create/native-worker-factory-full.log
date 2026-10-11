@@ -1,0 +1,54 @@
+thread 'smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry' (6816) panicked at src\smir\lower\aarch64\tests\bit.rs:2528:5:
+assertion `left == right` failed
+  left: [224, 3, 1, 170, 31, 0, 0, 234, 240, 15, 31, 248, 16, 66, 59, 213, 16, 2, 3, 82, 16, 66, 27, 213, 240, 7, 65, 248, 192, 3, 95, 214]
+ right: [224, 3, 1, 170, 31, 0, 0, 234, 31, 64, 0, 213, 192, 3, 95, 214]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_with_flags_as_and_ands ... ok
+
+thread 'smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry' (3816) panicked at src\smir\lower\aarch64\tests\bit.rs:2501:5:
+assertion `left == right` failed
+  left: [0, 0, 128, 146, 31, 0, 0, 234, 240, 15, 31, 248, 16, 66, 59, 213, 16, 2, 3, 82, 16, 66, 27, 213, 240, 7, 65, 248, 192, 3, 95, 214]
+ right: [0, 0, 128, 146, 31, 0, 0, 234, 31, 64, 0, 213, 192, 3, 95, 214]
+test smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_as_movn ... ok
+
+thread 'smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry' (6504) panicked at src\smir\lower\aarch64\tests\bit.rs:2474:5:
+thread 'smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry' (6504) panicked at src\smir\lower\aarch64\tests\bit.rs:2474:5:
+assertion `left == right` failed
+  left: [32, 0, 128, 210, 31, 0, 0, 234, 240, 15, 31, 248, 16, 66, 59, 213, 16, 2, 3, 82, 16, 66, 27, 213, 240, 7, 65, 248, 192, 3, 95, 214]
+ right: [32, 0, 128, 210, 31, 0, 0, 234, 31, 64, 0, 213, 192, 3, 95, 214]
+test smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_as_movz_movk ... ok
+
+thread 'smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards' (1760) panicked at src\smir\lower\aarch64\tests\bit.rs:2219:5:
+thread 'smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards' (1760) panicked at src\smir\lower\aarch64\tests\bit.rs:2219:5:
+assertion `left == right` failed
+  left: [226, 0, 48, 55, 194, 0, 56, 55, 0, 0, 128, 146, 0, 32, 194, 154, 32, 0, 32, 138, 31, 0, 0, 234, 8, 0, 0, 20, 224, 3, 1, 170, 31, 0, 0, 234, 240, 15, 31, 248, 16, 66, 59, 213, 16, 2, 3, 82, 16, 66, 27, 213, 240, 7, 65, 248, 192, 3, 95, 214]
+ right: [226, 0, 48, 55, 194, 0, 56, 55, 0, 0, 128, 146, 0, 32, 194, 154, 32, 0, 32, 138, 31, 0, 0, 234, 4, 0, 0, 20, 224, 3, 1, 170, 31, 0, 0, 234, 31, 64, 0, 213, 192, 3, 95, 214]
+test smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards ... FAILED
+test smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry ... FAILED
+test smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry ... FAILED
+thread 'smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime' (4744) panicked at src\smir\lower\aarch64\tests\mod.rs:125:35:
+called `Result::unwrap()` on an `Err` value: UnsupportedOp { op: "AArch64 native FP16 vector arithmetic without host FEAT_FP16" }
+test smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime ... FAILED
+test smir::lower::aarch64::tests::vector::lowers_vector_i8_dot_product_encodings ... ok
+test smir::lower::aarch64::tests::vector::lowers_vector_i8_dot_product_ext_runtime ... ok
+test smir::lower::aarch64::tests::vector::lowers_vector_i8_dot_product_runtime ... ok
+test smir::lower::aarch64::tests::shift::lowers_t16_selective_nzcv_logic_multiply_and_immediate_shifts_exhaustively ... ok
+thread 'user::darwin::wait::tests::native_descriptors_cannot_enter_closed_waits' (1296) panicked at src\user\darwin\wait.rs:184:5:
+Darwin host descriptors require Unix
+ok
+test user::darwin::workq::priority::tests::encodes_classes_like_libpthread ... ok
+test user::darwin::workq::priority::tests::normalize_and_combine ... ok
+test user::darwin::workq::priority::tests::override_classes ... ok
+test user::darwin::workq::priority::tests::policy_validity ... ok
+failures:
+
+failures:
+    smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry
+    smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry
+    smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry
+    smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards
+    smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime
+
+test result: FAILED. 7014 passed; 5 failed; 2 ignored; 0 measured; 0 filtered out; finished in 223.62s
+
+error: test failed, to rerun pass `--lib`

@@ -1,0 +1,18 @@
+Curated full-suite failure/terminal evidence; original identity below.
+
+thread 'user::linux::tests::uring::timeout::a_multishot_timeout_reports_each_expiry' (6732) panicked at src/user/linux/tests/uring/timeout.rs:223:5:
+assertion `left == right` failed
+  left: [(1, -62, 2), (1, -62, 2)]
+ right: [(1, -62, 2)]
+test user::linux::tests::waits::pipes_poll_as_pipe_poll_reports ... ok
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test user::linux::tests::uring::timeout::a_timeout_expires_or_counts_completions ... ok
+test user::linux::tests::vectored::rwf_flags_are_refused_as_kiocb_set_rw_flags_refuses_them ... ok
+test user::linux::tests::uring::timeout::a_linked_timeout_bounds_the_request_before_it ... ok
+test user::linux::tests::waits::blocking_pipe_reads_are_interruptible ... ok
+test user::linux::tests::waits::ppoll_and_pselect_masks_are_temporary ... ok
+test user::linux::tests::waits::an_interrupted_poll_writes_zero_revents_and_restarts ... ok
+failures:
+    user::linux::tests::uring::timeout::a_multishot_timeout_reports_each_expiry
+test result: FAILED. 7611 passed; 1 failed; 2 ignored; 0 measured; 0 filtered out; finished in 122.75s
+error: test failed, to rerun pass `--lib`

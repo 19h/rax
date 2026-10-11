@@ -1,0 +1,27 @@
+[
+  {
+    "case": "positive",
+    "exit-code": 0,
+    "stdout": "PASS: 3622 original observations; 1868 replays/112 explicit exclusions; 22 source/archive identities\n"
+  },
+  {
+    "case": "manifest-omission",
+    "exit-code": 1,
+    "stderr-final-line": "ValueError: incomplete manifest file set"
+  },
+  {
+    "case": "raw-corruption",
+    "exit-code": 1,
+    "stderr-final-line": "ValueError: file identity: native-worker-factory-order-probe-arm64.log"
+  },
+  {
+    "case": "semantic-status",
+    "exit-code": 1,
+    "stderr-final-line": "ValueError: root/flag precedence"
+  },
+  {
+    "case": "optimized-python",
+    "exit-code": 1,
+    "stderr-final-line": "ValueError: optimized validation is rejected"
+  }
+]

@@ -15,6 +15,7 @@ mod query;
 mod registry;
 mod topology;
 mod virtual_memory;
+mod worker_factory;
 
 pub(super) static EXPORTS: &[Export] = &[
     Export::func("RtlNtStatusToDosError", Stdcall, &[I32], status_error),
@@ -85,6 +86,12 @@ pub(super) static EXPORTS: &[Export] = &[
         Stdcall,
         &[Ptr, I32, Ptr, I32],
         io_completion::create,
+    ),
+    Export::func(
+        "NtCreateWorkerFactory",
+        Stdcall,
+        &[Ptr, I32, Ptr, Ptr, Ptr, Ptr, Ptr, I32, Ptr, Ptr],
+        worker_factory::create,
     ),
     Export::func(
         "NtManageHotPatch",
