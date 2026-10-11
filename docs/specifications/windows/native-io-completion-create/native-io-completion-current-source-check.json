@@ -1,0 +1,17 @@
+{
+  "source-files": 3624,
+  "patches": 26,
+  "root-head": "319b66dfce6d5fe0f5c8d5dedeefbc6996e5403e",
+  "rax-parent": "521846286d71a612990d7e4477d111b25e9405be",
+  "environment-adapters": [
+    {
+      "repo": "rax",
+      "path": ".cargo/config.toml",
+      "bytes": 374,
+      "sha256": "9f80616d633d948feeba5b201bfa4fe98c8fd736f3f48469b6481279584d8f4c",
+      "canonical-sha256": "a198c84574684e95de13dbb1bdb7b6c918f90fdb490c649937f697fc9621f3cd",
+      "basis": "task-local offline source replacement only; ARM64 native target receives no changed codegen flags"
+    }
+  ],
+  "errors": []
+}

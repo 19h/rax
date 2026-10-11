@@ -1,0 +1,14 @@
+{
+  "before-terminal-scheduler-call": 42051,
+  "after-terminal-scheduler-call": 42076,
+  "additional-scheduler-calls": 25,
+  "units": "scheduler calls, not instructions",
+  "constructor-ntstatus": 0,
+  "next-service": "NtCreateWorkerFactory",
+  "next-service-number": "0xD5",
+  "next-service-address": "0x180001D90",
+  "ordinary-programs": 4,
+  "ordinary-reason": 5,
+  "ordinary-exit-code": 0,
+  "guest-process-completion": false
+}

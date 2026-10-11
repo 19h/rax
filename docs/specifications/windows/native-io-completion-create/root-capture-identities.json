@@ -1,0 +1,26 @@
+[
+  {
+    "profile": "arm64",
+    "bytes": 20268,
+    "sha256": "d888a89ae8f9ffe73541e5619cf33d9651686be48cd2b224f6286d180e70b528",
+    "cases": 21
+  },
+  {
+    "profile": "x64",
+    "bytes": 20268,
+    "sha256": "1b4c3a2e8b4505efdaa3f7bdac8306a7f0d3cc8e98856a1dc317ed2191dee993",
+    "cases": 21
+  },
+  {
+    "profile": "x86",
+    "bytes": 18977,
+    "sha256": "8c16b246080f5039e9b4fb7c0362a6159e78c4c539fcbd14d579deb0921098e9",
+    "cases": 21
+  },
+  {
+    "profile": "x86-laa",
+    "bytes": 18977,
+    "sha256": "0e3c654fdf2e23b5194196e379538ec061e07bd0e3e87cc9d63e4e8c00c20bb7",
+    "cases": 21
+  }
+]

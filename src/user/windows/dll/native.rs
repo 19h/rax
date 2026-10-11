@@ -7,7 +7,9 @@ use super::super::nt::status::*;
 mod allocate;
 mod events;
 mod hotpatch;
+mod io_completion;
 mod nls;
+mod object_create;
 mod process_query;
 mod query;
 mod registry;
@@ -78,6 +80,12 @@ pub(super) static EXPORTS: &[Export] = &[
     ),
     Export::func("NtSetEvent", Stdcall, &[Ptr, Ptr], events::set),
     Export::func("NtResetEvent", Stdcall, &[Ptr, Ptr], events::reset),
+    Export::func(
+        "NtCreateIoCompletion",
+        Stdcall,
+        &[Ptr, I32, Ptr, I32],
+        io_completion::create,
+    ),
     Export::func(
         "NtManageHotPatch",
         Stdcall,

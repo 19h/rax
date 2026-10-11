@@ -1433,3 +1433,44 @@ Primary captures, producer/machine identities, A1-A3 reconciled assumption
 register, full plane map,23 recorded gates, strict manifest/negative replay
 and exact ordinary observer pairing are in
 [NUMA-node evidence](../../../docs/specifications/windows/native-numa-node/README.md).
+
+## Native I/O completion construction (2026-10-11)
+
+NtCreateIoCompletion now constructs a real reference-counted guest IoCompletion
+object with empty queue, measured access/inheritance and effective unsigned
+concurrency. Zero projects to the guest CPU count1; every nonzero ULONG is
+retained. Constructor and close do not forward a host completion port or imply
+packet/dequeue/file-association/runnable-thread scheduling support. The observed
+port flag mask0x1EE2 rejects OBJ_PERMANENT, unlike event mask0x1EF2. Shared event
+capture/access/publication helpers retain event behavior and diagnostics.
+
+Native64 probes its full8 B byte-aligned output before aligned48 B attributes;
+WoW64 converts unaligned24 B attributes before its4 B output probe. Bad Length
+leaves output untouched; WoW64 kernel validation failures copy zero only after
+successful conversion/probing. Capture precedes output/attribute aliases, guard
+consumption follows measured order, and failures/final close preserve counts.
+Non-null name/security/QoS and ACCESS_SYSTEM_SECURITY remain explicit policy
+boundaries rather than guest authority inferred from the SYSTEM oracle.
+
+Four303-row constructor and four21-row RootDirectory captures retain1296 original
+observations;1184 exact replay rows and112 explicit policy/privilege exclusions
+are checked. Five portable tests pass on all hosts; Windows's sixth executes
+installed ARM64/WoW64 creation/close leaves and x86RET16 cleanup. Event regressions
+pass. Full macOS7613/0/2, Linux7606/1/2 and Windows7008/5/2 pass/fail/ignored remain
+separate from selected gates: Linux's multishot-timeout fails with two expiry
+records rather than one but passes alone; cause unknown. Windows retains four
+BZHI/one FP16 lowering failures. C API168, all-targets and integrations544/544/4
+pass; a concurrent Windows clean/doctest collision is recorded and recovered
+through separate test/owning targets. Five owning C++ consumers pass per host,
+with current-root macOS CLI/MCP, seven CTests and protected-text scans passing.
+
+Fresh native archives pass4673/260-member walks,18 source hashes and empty core
+feature selection. The identical10,919 B observer now gets NTSTATUS0 at42051 for
+NtCreateIoCompletion0xB2/PC0x180001B60 and stops at42076 for NtCreateWorkerFactory
+0xD5/PC0x180001D90:25 additional scheduler calls, not instructions. All four
+ordinary programs still report reason5/exit_code0/internal failure. Worker-factory
+threadpool semantics, wider NT/security/I/O/APC behavior and successful full
+applications remain full-goal requirements. The strict manifest,25 gates,
+primary/producer/source/archive provenance, assumptions, scope and positive/four
+negative validations are in
+[I/O completion evidence](../../../docs/specifications/windows/native-io-completion-create/README.md).

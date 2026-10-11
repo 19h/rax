@@ -408,7 +408,7 @@ fn signaled(p: &Proc, id: ObjId, tid: u32) -> bool {
         Some(Object::Thread { exit_code, .. }) | Some(Object::Process { exit_code, .. }) => {
             exit_code.is_some()
         }
-        Some(Object::CompletionPort { queue }) => !queue.is_empty(),
+        Some(Object::CompletionPort { queue, .. }) => !queue.is_empty(),
         // Files and console handles are signaled when no I/O is pending,
         // which is always here (I/O completes synchronously).
         Some(Object::File(_) | Object::Console(_) | Object::Null | Object::Pipe { .. }) => true,

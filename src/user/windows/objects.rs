@@ -141,6 +141,9 @@ pub enum Object {
     CompletionPort {
         /// Queued packets: (bytes, key, overlapped).
         queue: std::collections::VecDeque<(u32, u64, u64)>,
+        /// Effective runnable-thread limit; zero requests the guest CPU count.
+        /// Construction records it; completion dequeue must enforce it.
+        concurrency: u32,
     },
     /// A private immutable runtime registry key shared by opened handles.
     Key(std::sync::Arc<super::registry::Key>),

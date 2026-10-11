@@ -1,0 +1,3 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+running 7615 tests
+test result: ok. 7613 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 62.64s

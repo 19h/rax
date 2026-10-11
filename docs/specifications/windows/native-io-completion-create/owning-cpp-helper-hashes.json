@@ -1,0 +1,14 @@
+[
+  {
+    "path": "io-completion-owned-cpp-build.py",
+    "bytes": 1839,
+    "sha256": "9995e244e446791e41fc1d813aaf59db7ccb7b472c064785232f4e11f63d3608",
+    "native-path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\io-completion-owned-cpp-build.py"
+  },
+  {
+    "path": "native-process-probe.cpp",
+    "bytes": 2187,
+    "sha256": "f57571cc5961784ff841b84811bdff7626ccd582dda3a16a9be35c9aeedc5a31",
+    "native-path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\native-process-probe.cpp"
+  }
+]

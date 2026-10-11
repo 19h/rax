@@ -1,0 +1,518 @@
+[
+  {
+    "host": "macos",
+    "gate": "targeted",
+    "exit-code": 0,
+    "test-results": [
+      "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 7610 filtered out; finished in 0.16s"
+    ],
+    "original-path": "macos-targeted.log",
+    "original-bytes": 1260,
+    "original-sha256": "27c564a6e51f759276fb27a4614a1703a3f27c4a41c34ab285a09363fb604e38",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "io_completion",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "host": "macos",
+    "gate": "events",
+    "exit-code": 0,
+    "test-results": [
+      "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 7608 filtered out; finished in 0.22s"
+    ],
+    "original-path": "macos-events.log",
+    "original-bytes": 1329,
+    "original-sha256": "78b815421ee465fcd04a41f17ae34e19c94fa096259730dc6015fb5ff2976f1b",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "native_event",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "host": "macos",
+    "gate": "full",
+    "exit-code": 0,
+    "test-results": [
+      "test result: ok. 7613 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 62.64s"
+    ],
+    "original-path": "macos-full.log",
+    "original-bytes": 774554,
+    "original-sha256": "e1c4ea8eaad7187807e1f7468a558f26cccd1e9be332853bc4c5272c9beedb09",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "host": "macos",
+    "gate": "capi",
+    "exit-code": 0,
+    "test-results": [
+      "test result: ok. 168 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.04s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ],
+    "original-path": "macos-capi.log",
+    "original-bytes": 12788,
+    "original-sha256": "8e14dc1547f0910143958e5563260478441339927ce37a2e4a3aa770c387a53a",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "-p",
+      "rax-capi",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "host": "macos",
+    "gate": "all-targets",
+    "exit-code": 0,
+    "test-results": [],
+    "original-path": "macos-all-targets.log",
+    "original-bytes": 136,
+    "original-sha256": "f81c65dcd3e0f77ca17e28d59ce20a29a218f00442ff399db0bb563f8e69fa2f",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ]
+  },
+  {
+    "host": "macos",
+    "gate": "integration",
+    "exit-code": 0,
+    "test-results": [
+      "test result: ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.28s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ],
+    "original-path": "macos-integration.log",
+    "original-bytes": 35757,
+    "original-sha256": "f0cd127ace17f78c691abd8b4a30ea0f9d9c37ff71119aa21dba6ceba5e135de",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--test",
+      "user_windows",
+      "--test",
+      "user_windows_memory",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "host": "linux",
+    "gate": "targeted",
+    "exit-code": 0,
+    "test-results": [
+      "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 7604 filtered out; finished in 0.50s"
+    ],
+    "original-path": "linux-targeted.log",
+    "original-bytes": 1305,
+    "original-sha256": "cb2fa25cf6727d6c72083d330e9355403e0e5fc20972222f798b0f29b3abf828",
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "rust:1.95-bullseye",
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "io_completion",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "host": "linux",
+    "gate": "events",
+    "exit-code": 0,
+    "test-results": [
+      "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 7602 filtered out; finished in 0.94s"
+    ],
+    "original-path": "linux-events.log",
+    "original-bytes": 1330,
+    "original-sha256": "091334996c1dd6d366d3e4913ce0140137a100ecda73888c85cdfe17ca408cab",
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "rust:1.95-bullseye",
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "native_event",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "host": "linux",
+    "gate": "full",
+    "exit-code": 101,
+    "test-results": [
+      "test result: FAILED. 7606 passed; 1 failed; 2 ignored; 0 measured; 0 filtered out; finished in 113.53s"
+    ],
+    "original-path": "linux-full.log",
+    "original-bytes": 775248,
+    "original-sha256": "3fbb0a6be7e9f03370a02adfc7585f0f6fc8591bfaf998a58984d6491817ce0f",
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "rust:1.95-bullseye",
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "host": "linux",
+    "gate": "capi",
+    "exit-code": 0,
+    "test-results": [
+      "test result: ok. 168 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.72s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ],
+    "original-path": "linux-capi.log",
+    "original-bytes": 12880,
+    "original-sha256": "0538e6e581414338e3b59ec99911b70db1b30d5cfb082ca699ae58c7f15467b7",
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "rust:1.95-bullseye",
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "-p",
+      "rax-capi",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "host": "linux",
+    "gate": "all-targets",
+    "exit-code": 0,
+    "test-results": [],
+    "original-path": "linux-all-targets.log",
+    "original-bytes": 116,
+    "original-sha256": "c9f1029dce8b45e91682b4e883e04deed49c66473a28e375d985ada7a84ae19c",
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "rust:1.95-bullseye",
+      "cargo",
+      "build",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ]
+  },
+  {
+    "host": "linux",
+    "gate": "integration",
+    "exit-code": 0,
+    "test-results": [
+      "test result: ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 23.51s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ],
+    "original-path": "linux-integration.log",
+    "original-bytes": 35760,
+    "original-sha256": "0dfb75a08022af5418ea5f696b3be76149801103594a2c54c0998fd18ca3a3cd",
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "rust:1.95-bullseye",
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--test",
+      "user_windows",
+      "--test",
+      "user_windows_memory",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "host": "windows",
+    "gate": "targeted",
+    "exit-code": 0,
+    "test-results": [
+      "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 7009 filtered out; finished in 0.61s"
+    ],
+    "original-path": "native-io-completion-final-targeted.log",
+    "original-bytes": 2414,
+    "original-sha256": "8ee6ac325e64d0a7d3a78f0942a0da66b5f35adb509615430aaaaca6aedfd730",
+    "selection-driver": "native-io-completion-current-final.ps1"
+  },
+  {
+    "host": "windows",
+    "gate": "events",
+    "exit-code": 0,
+    "test-results": [
+      "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 7003 filtered out; finished in 0.64s"
+    ],
+    "original-path": "native-io-completion-final-events.log",
+    "original-bytes": 2816,
+    "original-sha256": "96363932ecd6d741b5556c8be428284166d5c182f4cb9f2eddcb0d9dbae50416",
+    "selection-driver": "native-io-completion-current-final.ps1"
+  },
+  {
+    "host": "windows",
+    "gate": "full",
+    "exit-code": 101,
+    "test-results": [
+      "test result: FAILED. 7008 passed; 5 failed; 2 ignored; 0 measured; 0 filtered out; finished in 74.77s"
+    ],
+    "original-path": "native-io-completion-final-full.log",
+    "original-bytes": 728776,
+    "original-sha256": "5c936870f6f802f3e65048dedc24288be7e3079a8aea8d653b5205ee92b39bac",
+    "selection-driver": "native-io-completion-current-final.ps1"
+  },
+  {
+    "host": "windows",
+    "gate": "capi",
+    "exit-code": 0,
+    "test-results": [
+      "test result: ok. 168 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.29s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ],
+    "original-path": "native-io-completion-isolated-capi.log",
+    "original-bytes": 16577,
+    "original-sha256": "1f1e41d90728875737aa9f71124b7e3c9924bfcd6834890a0fdef5b2c3cc08d4",
+    "selection-driver": "native-io-completion-isolated-gates.ps1"
+  },
+  {
+    "host": "windows",
+    "gate": "all-targets",
+    "exit-code": 0,
+    "test-results": [],
+    "original-path": "native-io-completion-isolated-all-targets.log",
+    "original-bytes": 986,
+    "original-sha256": "dc25c586e8e07f54efd429fb862434032037e08ab24f14ddc576dbb78a566b87",
+    "selection-driver": "native-io-completion-isolated-gates.ps1"
+  },
+  {
+    "host": "windows",
+    "gate": "integration",
+    "exit-code": 0,
+    "test-results": [
+      "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ],
+    "original-path": "native-io-completion-isolated-integration.log",
+    "original-bytes": 1515,
+    "original-sha256": "45e62c56e61bd847a821c50fe82060130cbff3a151d75d4a2f0aa31d41a81b1e",
+    "selection-driver": "native-io-completion-isolated-gates.ps1"
+  },
+  {
+    "host": "macos",
+    "gate": "macos-owning-build.log",
+    "exit-code": 0,
+    "test-results": [],
+    "original-path": "macos-owning-build.log",
+    "original-bytes": 480364,
+    "original-sha256": "db455a52994dda2d844fa0b4759f8c4c31b17575bd0cbaaa8d951f310e8aecbb"
+  },
+  {
+    "host": "macos",
+    "gate": "macos-owning-ctest-final.log",
+    "exit-code": 0,
+    "test-results": [],
+    "original-path": "macos-owning-ctest-final.log",
+    "original-bytes": 1264,
+    "original-sha256": "df2ae5146f7753ff6b1ccc5786d27cd39b0c06a558f3ba04cdd27924b9663c18"
+  },
+  {
+    "host": "linux",
+    "gate": "linux-owning-shipping.log",
+    "exit-code": 0,
+    "test-results": [],
+    "original-path": "linux-owning-shipping.log",
+    "original-bytes": 222,
+    "original-sha256": "d5a5f2abaf7fe0a7f207f1ea57704e3f0ab3841a5f3150752dcfecbc4705b959"
+  },
+  {
+    "host": "linux",
+    "gate": "linux-owning-cpp.log",
+    "exit-code": 0,
+    "test-results": [],
+    "original-path": "linux-owning-cpp.log",
+    "original-bytes": 1623,
+    "original-sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+  },
+  {
+    "host": "windows",
+    "gate": "assist-native-io-completion-owned-shipping.log",
+    "exit-code": 0,
+    "test-results": [],
+    "original-path": "assist-native-io-completion-owned-shipping.log",
+    "original-bytes": 5158,
+    "original-sha256": "8696b3be6a7b5934d966eece1805fad9300f8cb38b8c3d9faf0edf837f83c587"
+  },
+  {
+    "host": "windows",
+    "gate": "assist-native-io-completion-owned-cpp.log",
+    "exit-code": 0,
+    "test-results": [],
+    "original-path": "assist-native-io-completion-owned-cpp.log",
+    "original-bytes": 2946,
+    "original-sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+  },
+  {
+    "host": "linux",
+    "gate": "linux-timeout-isolated.log",
+    "exit-code": 0,
+    "test-results": [
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7608 filtered out; finished in 0.07s"
+    ],
+    "original-path": "linux-timeout-isolated.log",
+    "original-bytes": 352,
+    "original-sha256": "785ba01f007fb274b238f6a32d39cdc1df1ecf8c032d3dc1bf876213dbbfbab5"
+  }
+]

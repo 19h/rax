@@ -1,0 +1,7 @@
+{
+  "url": "https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-createiocompletionport",
+  "retrieved": "2026-10-11",
+  "bytes": 60875,
+  "sha256": "dba68193a3c57d4db9bf71c8b5cff549e923e84d99cef4d96ef4d9876568e095",
+  "repository-bounded-excerpt": "primary-contract.md"
+}

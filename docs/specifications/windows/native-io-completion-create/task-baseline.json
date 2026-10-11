@@ -1,0 +1,207 @@
+{
+  "root-head": "319b66dfce6d5fe0f5c8d5dedeefbc6996e5403e",
+  "rax-head": "521846286d71a612990d7e4477d111b25e9405be",
+  "owned-paths": [
+    "docs/specifications/windows/native-io-completion-create/capture-identities.json",
+    "docs/specifications/windows/native-io-completion-create/io-completion-producer-identities.json",
+    "docs/specifications/windows/native-io-completion-create/io-completion-producer-identities.py",
+    "docs/specifications/windows/native-io-completion-create/native-io-completion-create-probe-arm64.log",
+    "docs/specifications/windows/native-io-completion-create/native-io-completion-create-probe-arm64.ps1",
+    "docs/specifications/windows/native-io-completion-create/native-io-completion-create-probe-x64.log",
+    "docs/specifications/windows/native-io-completion-create/native-io-completion-create-probe-x64.ps1",
+    "docs/specifications/windows/native-io-completion-create/native-io-completion-create-probe-x86-laa.log",
+    "docs/specifications/windows/native-io-completion-create/native-io-completion-create-probe-x86-laa.ps1",
+    "docs/specifications/windows/native-io-completion-create/native-io-completion-create-probe-x86.log",
+    "docs/specifications/windows/native-io-completion-create/native-io-completion-create-probe-x86.ps1",
+    "docs/specifications/windows/native-io-completion-create/native-io-completion-create-probe.cpp",
+    "docs/specifications/windows/native-io-completion-create/native-io-completion-root-probe-arm64.log",
+    "docs/specifications/windows/native-io-completion-create/native-io-completion-root-probe-arm64.ps1",
+    "docs/specifications/windows/native-io-completion-create/native-io-completion-root-probe-x64.log",
+    "docs/specifications/windows/native-io-completion-create/native-io-completion-root-probe-x64.ps1",
+    "docs/specifications/windows/native-io-completion-create/native-io-completion-root-probe-x86-laa.log",
+    "docs/specifications/windows/native-io-completion-create/native-io-completion-root-probe-x86-laa.ps1",
+    "docs/specifications/windows/native-io-completion-create/native-io-completion-root-probe-x86.log",
+    "docs/specifications/windows/native-io-completion-create/native-io-completion-root-probe-x86.ps1",
+    "docs/specifications/windows/native-io-completion-create/native-io-completion-root-probe.cpp",
+    "docs/specifications/windows/native-io-completion-create/phnt-LICENSE",
+    "docs/specifications/windows/native-io-completion-create/phnt-ntioapi.h",
+    "docs/specifications/windows/native-io-completion-create/root-capture-identities.json",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/events.rs",
+    "src/user/windows/dll/native/io_completion.rs",
+    "src/user/windows/dll/native/object_create.rs",
+    "src/user/windows/objects.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/io_completion_create_leaf_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/io_completion_create_replay_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/io_completion_create_tests.rs",
+    "src/user/windows/sync.rs",
+    "docs/specifications/windows/native-io-completion-create/primary-contract.md",
+    "docs/specifications/windows/native-io-completion-create/check_native_io_completion.py"
+  ],
+  "recovered-native-capture-observations": 1296,
+  "lost-private-logs": "/tmp removed during environment restart; regenerate validation gates",
+  "baseline": [
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/capture-identities.json",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/io-completion-producer-identities.json",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/io-completion-producer-identities.py",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-create-probe-arm64.log",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-create-probe-arm64.ps1",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-create-probe-x64.log",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-create-probe-x64.ps1",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-create-probe-x86-laa.log",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-create-probe-x86-laa.ps1",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-create-probe-x86.log",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-create-probe-x86.ps1",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-create-probe.cpp",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-root-probe-arm64.log",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-root-probe-arm64.ps1",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-root-probe-x64.log",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-root-probe-x64.ps1",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-root-probe-x86-laa.log",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-root-probe-x86-laa.ps1",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-root-probe-x86.log",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-root-probe-x86.ps1",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-root-probe.cpp",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/phnt-LICENSE",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/phnt-ntioapi.h",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/root-capture-identities.json",
+      "exists": false
+    },
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "exists": true,
+      "bytes": 13908,
+      "sha256": "1ae5a46807c7034b9cd293a0cabaaf6fee0e6ee1034499bb47dd001fd5a5dfbe"
+    },
+    {
+      "path": "src/user/windows/dll/native/events.rs",
+      "exists": true,
+      "bytes": 7211,
+      "sha256": "86b3a41cb227da69768db48ec35d03bca800a8a20820688a3a8b75d2ee6676ae"
+    },
+    {
+      "path": "src/user/windows/dll/native/io_completion.rs",
+      "exists": false
+    },
+    {
+      "path": "src/user/windows/dll/native/object_create.rs",
+      "exists": false
+    },
+    {
+      "path": "src/user/windows/objects.rs",
+      "exists": true,
+      "bytes": 18013,
+      "sha256": "f73bca20f2adbe6fe6102c000ebbea4c32249f025922406f20b6770937c73d7e"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "exists": true,
+      "bytes": 45417,
+      "sha256": "5089f53ae34603f2305c9dfb59e246fa5a872ed072c9bc26a5cf9968aaa09144"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/io_completion_create_leaf_tests.rs",
+      "exists": false
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/io_completion_create_replay_tests.rs",
+      "exists": false
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/io_completion_create_tests.rs",
+      "exists": false
+    },
+    {
+      "path": "src/user/windows/sync.rs",
+      "exists": true,
+      "bytes": 35248,
+      "sha256": "f4e5fcd38f22e6bd9253922e4550ad2a0ec7c6ce549817860cc8192583e41298"
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/primary-contract.md",
+      "exists": false
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/check_native_io_completion.py",
+      "exists": false
+    }
+  ],
+  "current-root-head": "5a5457ed62176950bad3aeebfb2feb9260dddd04",
+  "preserved-concurrent-root-commit": "5a5457ed62176950bad3aeebfb2feb9260dddd04",
+  "preserved-concurrent-root-paths": [
+    "cmake/AssistMasking.cmake",
+    "test/codex-protocol/target.cmake"
+  ],
+  "reviewed-concurrent-root-scope": "masking-consumer auto-link skips existing explicit links; provider profile settings test declares assist_masking; current process/RAX source and Rust archive inputs unchanged"
+}

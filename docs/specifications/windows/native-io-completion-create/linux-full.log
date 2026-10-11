@@ -1,0 +1,7 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.35s
+running 7609 tests
+test user::linux::tests::uring::timeout::a_multishot_timeout_reports_each_expiry ... FAILED
+failures:
+failures:
+    user::linux::tests::uring::timeout::a_multishot_timeout_reports_each_expiry
+test result: FAILED. 7606 passed; 1 failed; 2 ignored; 0 measured; 0 filtered out; finished in 113.53s

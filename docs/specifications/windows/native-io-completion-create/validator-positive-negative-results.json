@@ -1,0 +1,27 @@
+[
+  {
+    "case": "positive",
+    "exit-code": 0,
+    "output": "PASS: 1296 original observations, 1184 modeled rows, 112 explicit policy exclusions\n"
+  },
+  {
+    "case": "missing-entry",
+    "exit-code": 1,
+    "output": "FAIL: manifest must cover the exact evidence set\n"
+  },
+  {
+    "case": "corrupted-raw",
+    "exit-code": 1,
+    "output": "FAIL: size mismatch: native-io-completion-root-probe-x64.log\n"
+  },
+  {
+    "case": "changed-status-updated-hashes",
+    "exit-code": 1,
+    "output": "FAIL: RootDirectory/flag precedence\n"
+  },
+  {
+    "case": "python-O",
+    "exit-code": 1,
+    "output": "FAIL: optimized validation is rejected\n"
+  }
+]

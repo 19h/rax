@@ -1,0 +1,90 @@
+[
+  {
+    "profile": "arm64",
+    "pe-machine": "0xaa64",
+    "large-address-aware": true,
+    "files": [
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\io-completion-probe-arm64\\native-io-completion-create-probe-arm64.exe",
+        "bytes": 152576,
+        "sha256": "e8204476ee6ceb6e11c0451e8346b61eeed25c23d41dfdd5789e151504fe5ff3"
+      },
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\io-completion-probe-arm64\\native-io-completion-create-probe.cpp",
+        "bytes": 9288,
+        "sha256": "f0556a19cf88cbf27fd3b91caa27c10d6bd053cb90ed5a1a498a9ac5ed899ab9"
+      },
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\io-completion-probe-arm64\\native-io-completion-create-probe-arm64.log",
+        "bytes": 264816,
+        "sha256": "6c6e6e379ca9d647587299ed31ed06fbfb90d64426dfea247879cadee23bae74"
+      }
+    ]
+  },
+  {
+    "profile": "x64",
+    "pe-machine": "0x8664",
+    "large-address-aware": true,
+    "files": [
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\io-completion-probe-x64\\native-io-completion-create-probe-x64.exe",
+        "bytes": 151552,
+        "sha256": "583b3b5570ef6b3a87b45725e0c0e83e0004eca0b50e550a9339e47fb0da0d92"
+      },
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\io-completion-probe-x64\\native-io-completion-create-probe.cpp",
+        "bytes": 9288,
+        "sha256": "f0556a19cf88cbf27fd3b91caa27c10d6bd053cb90ed5a1a498a9ac5ed899ab9"
+      },
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\io-completion-probe-x64\\native-io-completion-create-probe-x64.log",
+        "bytes": 264816,
+        "sha256": "975826be82237258dcdd16a015650071b85259f2faeae880517c5762f180b5ce"
+      }
+    ]
+  },
+  {
+    "profile": "x86",
+    "pe-machine": "0x14c",
+    "large-address-aware": false,
+    "files": [
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\io-completion-probe-x86\\native-io-completion-create-probe-x86.exe",
+        "bytes": 125440,
+        "sha256": "1f6e2e0f2c23fbeb2733f31c877db7b03a08b0e0c04b85746a7fda31e76e42c4"
+      },
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\io-completion-probe-x86\\native-io-completion-create-probe.cpp",
+        "bytes": 9288,
+        "sha256": "f0556a19cf88cbf27fd3b91caa27c10d6bd053cb90ed5a1a498a9ac5ed899ab9"
+      },
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\io-completion-probe-x86\\native-io-completion-create-probe-x86.log",
+        "bytes": 254615,
+        "sha256": "0b0d3ff1ff20f66b52908f23ef2f1bd200cbc89936f316fd3f55bc017d8c6134"
+      }
+    ]
+  },
+  {
+    "profile": "x86-laa",
+    "pe-machine": "0x14c",
+    "large-address-aware": true,
+    "files": [
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\io-completion-probe-x86-laa\\native-io-completion-create-probe-x86-laa.exe",
+        "bytes": 125440,
+        "sha256": "6030e3710de92563f7070076ae2d89ab27c20d4103e1795bfbadf626c81d7b17"
+      },
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\io-completion-probe-x86-laa\\native-io-completion-create-probe.cpp",
+        "bytes": 9288,
+        "sha256": "f0556a19cf88cbf27fd3b91caa27c10d6bd053cb90ed5a1a498a9ac5ed899ab9"
+      },
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\io-completion-probe-x86-laa\\native-io-completion-create-probe-x86-laa.log",
+        "bytes": 254615,
+        "sha256": "1b67e8eb329627762edf52451aa19f54a0b41e603e46cbf4c41eb96f79d241f9"
+      }
+    ]
+  }
+]

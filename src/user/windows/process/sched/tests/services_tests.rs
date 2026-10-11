@@ -25,6 +25,9 @@ mod numa_map_tests;
 #[path = "services_tests/event_tests.rs"]
 mod event_tests;
 
+#[path = "services_tests/io_completion_create_tests.rs"]
+mod io_completion_create_tests;
+
 #[path = "services_tests/hotpatch_tests.rs"]
 mod hotpatch_tests;
 

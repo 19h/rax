@@ -1,0 +1,18 @@
+warning: "stdcall" is not a supported ABI for the current target
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+warning: `vm-memory` (lib) generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+running 7015 tests
+test smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry ... FAILED
+test smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry ... FAILED
+test smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry ... FAILED
+test smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards ... FAILED
+test smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime ... FAILED
+failures:
+failures:
+    smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry
+    smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry
+    smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry
+    smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards
+    smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime
+test result: FAILED. 7008 passed; 5 failed; 2 ignored; 0 measured; 0 filtered out; finished in 74.77s
