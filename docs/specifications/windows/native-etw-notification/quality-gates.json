@@ -1,0 +1,11 @@
+{
+  "QG1": "pass: no ethical or normative judgment needed",
+  "QG2": "pass: A1 retained and explicit fresh compatibility unknown; A2 confirmed measured build",
+  "QG3": "pass for bounded function27 increment; full-process goal remains active at function15",
+  "QG4": "pass:4 B DWORD, six arguments, RET24+4 B=28 B,23160 complete cases plus3 excluded warmups,50306-50254=52 scheduler calls",
+  "QG5": "pass:21000 buffer rows,1920 handle/length rows,240 fresh sequences; guard/alias/close/overflow/drain; unrelated failures retained",
+  "QG6": "pass: pinned PHNT,15 actual PE producers, installed NTDLL hashes,61 code units, actual archives, native and consumer outputs",
+  "QG7": "pass: high incomplete ordinary process exit; medium compatibility/timing/lowering/product proof bounds recorded",
+  "RAX-QG8": "pass: focused all hosts and actual native/WoW64 leaves;51 actual gates and six controlled rejections",
+  "RAX-QG9": "pass: explicit reachable test modules, all-target builds, stable public ABI, exact owned paths and manifest"
+}

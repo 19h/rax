@@ -1,0 +1,10 @@
+[
+  {
+    "path": "capi/src/tests/process.rs",
+    "sha256": "cbb701e88f1b60b681fe1cc74d127389cb6767670a7b0361f826806db3df350e"
+  },
+  {
+    "path": "capi/src/tests/process/darwin.rs",
+    "sha256": "5ad2ee2dcb1b81079120196c3ec49eda84d222ae352a78aee55c1e105418490f"
+  }
+]

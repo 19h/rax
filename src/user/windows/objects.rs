@@ -15,6 +15,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 use std::time::Instant;
 
+mod etw;
 mod wait_packets;
 mod wnf;
 pub use wait_packets::CompletionPacket;
@@ -246,6 +247,8 @@ pub struct Objects {
     packets: wait_packets::PacketAssociations,
     /// One process-owned notification Event, independent of caller handles.
     wnf_event: Option<ObjId>,
+    /// ETW process notification registration is independent of WNF.
+    etw_event: Option<ObjId>,
     wnf_subscriptions: wnf::Subscriptions,
 }
 
@@ -517,6 +520,7 @@ impl Objects {
         self.names.clear();
         self.packets = Default::default();
         self.wnf_event = None;
+        self.etw_event = None;
         self.wnf_subscriptions.records.clear();
         self.objs.drain().map(|(_, entry)| entry.obj)
     }

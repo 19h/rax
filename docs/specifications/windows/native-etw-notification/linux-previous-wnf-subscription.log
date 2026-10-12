@@ -1,0 +1,21 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.73s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 14 tests
+test user::windows::wnf::tests::native_wnf_subscription_name_capture_replays_all_8192_domain_rows ... ok
+test user::windows::wnf::tests::native_wnf_subscription_catalog_rejects_unmodeled_security_and_malformed_values ... ok
+test user::windows::wnf::tests::native_wnf_subscription_catalog_access_matches_all_72_process_name_calls ... ok
+test user::windows::objects::wnf::tests::native_wnf_subscription_generation_exhaustion_and_owner_failure_are_transactional ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_pending_metadata_matches_128_native_queue_captures_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_requires_selection_and_preserves_fixed_64_bit_output_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_guard_consumption_and_denied_update_preserve_record_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_228_overlapping_output_cases ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_840_guard_and_readonly_copy_cases ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_256_mask_updates_with_stable_identity ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_2496_pointer_status_and_output_cases ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_17152_name_mask_calls ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_fresh_event_order_and_closed_caller_pin_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_288_fresh_process_names_and_metadata_all_abis ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 7664 filtered out; finished in 11.89s
+

@@ -1,0 +1,77 @@
+{
+  "native-cases": 23160,
+  "native-warmups-excluded": 3,
+  "tests": {
+    "full": {
+      "macos": {
+        "pass": 7681,
+        "fail": 1,
+        "ignored": 2
+      },
+      "linux": {
+        "pass": 7675,
+        "fail": 1,
+        "ignored": 2
+      },
+      "windows": {
+        "pass": 7087,
+        "fail": 5,
+        "ignored": 2
+      }
+    },
+    "targeted": {
+      "macos": 8,
+      "linux": 8,
+      "windows": 9
+    },
+    "failures": {
+      "macos": [
+        "user::linux::tests::uring::timeout::a_linked_timeout_bounds_the_request_before_it"
+      ],
+      "linux": [
+        "user::linux::tests::uring::timeout::a_timeout_is_removed_or_updated"
+      ],
+      "windows": [
+        "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+        "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+        "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+        "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+        "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+      ]
+    }
+  },
+  "frontier": {
+    "before-turn": 50254,
+    "after-turn": 50306,
+    "delta-scheduler-calls": 52,
+    "service": "NtTraceControl function 15",
+    "svc": "0x1d6",
+    "pc": "0x180002da0",
+    "thread": 8,
+    "arguments": [
+      "0xf",
+      "0xabe880",
+      "0xa0",
+      "0xabe880",
+      "0xa0",
+      "0xabe870"
+    ],
+    "guest-exit": "not reached"
+  },
+  "owning-archives": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\assist_rs.lib",
+      "bytes": 1119868104,
+      "sha256": "b79d8ee40c7d0f344919f5575789fdcda3eef5c4ccff825a45e9c4b98172ef87",
+      "members": 4673,
+      "structural-member-walk": "pass"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\librax-e6c413934cad3a8f.rlib",
+      "bytes": 732580332,
+      "sha256": "3767846951c353ce0d1dc4a933b37a35c3c5eb160bc95be2b222a5a06ac3e47f",
+      "members": 260,
+      "structural-member-walk": "pass"
+    }
+  ]
+}

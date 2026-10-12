@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/etw-notification-event-20261012/negative-cases-v3/compiled-source/check-evidence.py", line 145, in <module>
+    path=source_root/r['path'];require(path.is_file() and path.stat().st_size==r['bytes'] and sha(path)==r['sha256'],'current compiled source '+r['path'])
+                               ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/etw-notification-event-20261012/negative-cases-v3/compiled-source/check-evidence.py", line 6, in require
+    if not ok:raise ValueError(message)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: current compiled source src/user/windows/dll/native/trace.rs

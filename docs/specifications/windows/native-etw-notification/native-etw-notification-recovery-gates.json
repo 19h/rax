@@ -1,0 +1,20 @@
+﻿[
+    {
+        "gate":  "capi",
+        "command":  "cargo.exe test --locked --offline --no-default-features -p rax-capi -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "native-etw-notification-capi.log"
+    },
+    {
+        "gate":  "all-targets",
+        "command":  "cargo.exe build --locked --offline --no-default-features --all-targets",
+        "exit-code":  0,
+        "log":  "native-etw-notification-all-targets.log"
+    },
+    {
+        "gate":  "integration",
+        "command":  "cargo.exe test --locked --offline --no-default-features --test user_windows_memory -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-etw-notification-integration.log"
+    }
+]

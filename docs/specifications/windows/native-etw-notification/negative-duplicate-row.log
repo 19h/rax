@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/etw-notification-event-20261012/negative-cases-v3/duplicate-row/check-evidence.py", line 43, in <module>
+    require(len(observed)==480 and [num(r,'case',10) for r in observed]==list(range(480)) and [(num(r,'manual',10),num(r,'initial',10),num(r,'mode',10),num(r,'length',10)) for r in observed]==partition,'exact mature handle partitions')
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/etw-notification-event-20261012/negative-cases-v3/duplicate-row/check-evidence.py", line 6, in require
+    if not ok:raise ValueError(message)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: exact mature handle partitions

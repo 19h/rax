@@ -1,0 +1,22 @@
+[
+  {
+    "id": "A1",
+    "assumption": "Fresh x64 and WoW64 publication and caller-close lifetime follow the measured ARM64 kernel sequence.",
+    "basis": "All four mature profiles match 5250 buffer and 480 handle rows each; ARM64 fresh captures pre-RTL kernel entry and true return.",
+    "dependent_result": "Shared all-ABI first-registration transaction and persistent Event reference.",
+    "stress_test": "First invalid/readonly/guard/cross-page ReturnLength followed by valid repeat; close/reuse, alias outputs, restricted Event access.",
+    "falsification_probe": "Fresh x64/WoW64 debugger capture shows publication after a failed probe or a replacement admitted after caller close.",
+    "status": "retained",
+    "result": "All-ABI synthetic replays and installed ARM64/WoW64 leaves pass; fresh x64/WoW64 native publication/lifetime remains unknown."
+  },
+  {
+    "id": "A2",
+    "assumption": "Installed Windows build 10.0.29683.1000 is the supported measured contract for private ETW function27.",
+    "basis": "Pinned PHNT declaration plus checksummed native installed NTDLL probes.",
+    "dependent_result": "Exact DWORD input size and byte alignment, validation order, local registration semantics.",
+    "stress_test": "Lengths 0/1/2/3/4/5/7/8/9/16, all four caller profiles, unknown classes rejected.",
+    "falsification_probe": "A different selected installed NTDLL build gives a conflicting class27 matrix.",
+    "status": "confirmed",
+    "result": "All four measured caller matrices agree; other installed builds remain outside this measurement."
+  }
+]

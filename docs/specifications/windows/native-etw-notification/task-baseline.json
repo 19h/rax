@@ -1,0 +1,27 @@
+{
+  "root": "814518f775275820d2b6c177fcaacd7d584589d0",
+  "rax": "c22e6263c642adda508d2f3dd63b2d483b75c1e5",
+  "owned": [
+    "src/user/windows/objects.rs",
+    "src/user/windows/objects/etw.rs",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/trace.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/etw_notification_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/etw_notification_boundary_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/etw_notification_leaf_tests.rs",
+    "docs/architecture/user-mode/windows-services.md",
+    "docs/specifications/windows/native-etw-notification"
+  ],
+  "root_owned": [
+    "VENDORED_VERSIONS.md",
+    "src/emulation/native-process-emulation.md",
+    "vendor/rax"
+  ],
+  "baseline-source-sha256": {
+    "src/user/windows/objects.rs": "de3f52c295e2d1ef24c7e90da66fd544a91576cdb4ed5db4fe3d7c9a649f425c",
+    "src/user/windows/dll/native.rs": "f8ac6c8bad19cfbf23f1647edaf9a30a5c9666d45682e0d210445d8e91595db6",
+    "src/user/windows/process/sched/tests/services_tests.rs": "29ba3aaeb65a11035805e5ce349388c6cdc73fefc39cdf2e540e2f159540b622",
+    "docs/architecture/user-mode/windows-services.md": "da75bc3346108a6e3088195cacb092455b7554b4227170ab3d9b08fdd3f83222"
+  }
+}

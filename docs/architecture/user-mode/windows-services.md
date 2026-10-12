@@ -1,6 +1,27 @@
 # Windows handle/service integration
 
-Current native process-scoped well-known WNF subscriptions (2026-10-12):
+Current native ETW process notification Event registration (2026-10-12):
+`NtTraceControl` function27 (`EtwAddNotificationEvent`) consumes exactly4 B
+containing a zero-extended ULONG handle on native ARM64/x64 and WoW64.
+A nonempty non-NULL output receives a full write probe, then required4 B
+`ReturnLength` is write-probed, then exact input length and non-NULL input are
+validated before capture. Buffers accept byte alignment. NULL output is ignored
+regardless of length. Event type and modification right0x2 precede the once-only
+busy check. Success retains a separate private process Event reference and
+stores zero to `ReturnLength`; failures preserve bytes and do not pin another
+Event. Guard consumption follows the first reached probe. Input/return aliases
+observe the store after capture. Event type/signal remain unchanged; caller
+close/reuse cannot clear the registration, while object-table drain clears it.
+This uses no host ETW calls and leaves the public C API1.11.0/Assist ABI184
+unchanged. Native kernel evidence contains23160 complete cases, excluding3
+fresh debugger warmups. Four mature profiles agree on5730 cases each; fresh
+ARM64 first/lifetime, ReturnLength faults, and aliases supply240 sequences.
+Fresh x64/WoW64 publication/lifetime remains an explicit same-kernel assumption.
+Other TraceControl functions and host ETW delivery remain explicit unsupported
+frontiers. Ordinary full-process startup/exit is validated separately.
+See [ETW notification evidence](../../specifications/windows/native-etw-notification/README.md).
+
+Historical native process-scoped well-known WNF subscriptions (2026-10-12):
 `NtSubscribeWnfStateChange` captures an 8 B name, ULONG change stamp, ULONG event
 mask and optional 8 B opaque identifier. Native ARM64/x64 probe and clear the
 entire output before name capture. WoW64 first reads the output's 4 B prefix,

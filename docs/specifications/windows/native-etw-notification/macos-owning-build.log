@@ -1,0 +1,20 @@
+[0/2] Re-checking globbed directories...
+[0/10] Building assist-rs staticlib with embedded rax (aarch64-apple-darwin, debug, JIT/KVM/HVF off)
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/vendor/rax)
+   Compiling rax-capi v0.1.2 (/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/vendor/rax/capi)
+   Compiling assist-rs v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 38.38s
+[2/10] Linking CXX executable test/assist_mcp_tool_manifest_tests
+[3/10] Linking CXX executable test/assist_e14_rax_abi_drift_tests
+[4/10] Linking CXX executable test/assist_rax_process_tests
+[5/10] Linking CXX executable test/assist_rust_archive_link_tests
+[6/10] Linking CXX executable test/assist_process_tool_unavailable_tests
+[7/10] Linking CXX executable test/assist_process_tool_tests
+[8/10] Linking CXX executable assist-mcp; Checking that assist_mcp exports nothing; Checking protected plaintext in assist_mcp
+Static text scan: 1 artifacts, 0 failures
+[9/10] Linking CXX executable assist-cli; Checking protected plaintext in assist_idalib_cli
+ld: warning: building for macOS-11.0, but linking with dylib '@rpath/libidalib.dylib' which was built for newer version 12.0
+ld: warning: building for macOS-11.0, but linking with dylib '@rpath/libida.dylib' which was built for newer version 12.0
+ld: warning: building for macOS-11.0, but linking with dylib '@rpath/libida.dylib' which was built for newer version 15.0
+ld: warning: building for macOS-11.0, but linking with dylib '@rpath/libidalib.dylib' which was built for newer version 12.0
+Static text scan: 1 artifacts, 0 failures

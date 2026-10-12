@@ -1,0 +1,1 @@
+Initial prlctl exec returned255: PrlVm_TerminalConnect: PrlJob_Wait: PRL_ERR_IO_STOPPED. VM status then reported suspended; host had920 GiB available. VM resume follows prior authorized native validation.

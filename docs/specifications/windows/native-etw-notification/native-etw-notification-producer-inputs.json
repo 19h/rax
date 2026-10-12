@@ -1,0 +1,122 @@
+[
+  {
+    "profile": "native-etw-notification-alias-fresh-arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-notification-event-arm64",
+    "executable": "native-etw-notification-alias-fresh-arm64.exe",
+    "source": "native-etw-notification-alias-fresh.cpp",
+    "source-sha256": "20c7fdb23df05915622d94cb374121eab0b2d8e2a5019cac8440e59f565c314a",
+    "log": "native-etw-notification-alias-fresh-arm64.log"
+  },
+  {
+    "profile": "native-etw-notification-boundaries-arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-notification-event-arm64",
+    "executable": "native-etw-notification-boundaries-arm64.exe",
+    "source": "native-etw-notification-boundaries.cpp",
+    "source-sha256": "704c129fbdda1cb0fe0a39002452a13909eff83617888d871fc1f9d17af0a4e6",
+    "log": "native-etw-notification-boundaries-arm64.log"
+  },
+  {
+    "profile": "native-etw-notification-boundaries-x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-notification-event-x64",
+    "executable": "native-etw-notification-boundaries-x64.exe",
+    "source": "native-etw-notification-boundaries.cpp",
+    "source-sha256": "704c129fbdda1cb0fe0a39002452a13909eff83617888d871fc1f9d17af0a4e6",
+    "log": "native-etw-notification-boundaries-x64.log"
+  },
+  {
+    "profile": "native-etw-notification-boundaries-x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-notification-event-x86-laa",
+    "executable": "native-etw-notification-boundaries-x86-laa.exe",
+    "source": "native-etw-notification-boundaries.cpp",
+    "source-sha256": "704c129fbdda1cb0fe0a39002452a13909eff83617888d871fc1f9d17af0a4e6",
+    "log": "native-etw-notification-boundaries-x86-laa.log"
+  },
+  {
+    "profile": "native-etw-notification-boundaries-x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-notification-event-x86",
+    "executable": "native-etw-notification-boundaries-x86.exe",
+    "source": "native-etw-notification-boundaries.cpp",
+    "source-sha256": "704c129fbdda1cb0fe0a39002452a13909eff83617888d871fc1f9d17af0a4e6",
+    "log": "native-etw-notification-boundaries-x86.log"
+  },
+  {
+    "profile": "native-etw-notification-event-arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-notification-event-arm64",
+    "executable": "native-etw-notification-event-arm64.exe",
+    "source": "native-etw-notification-event.cpp",
+    "source-sha256": "dce1ed0c603479347233053a27046605b701f8567c3f82519c9a864310c0ce50",
+    "log": "native-etw-notification-event-arm64.log"
+  },
+  {
+    "profile": "native-etw-notification-event-fresh-arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-notification-event-arm64",
+    "executable": "native-etw-notification-event-fresh-arm64.exe",
+    "source": "native-etw-notification-event-fresh.cpp",
+    "source-sha256": "bda90369851759a633e1a57a919741549dc694a437c1140e7c9f291df6f1ae5b",
+    "log": "native-etw-notification-event-fresh-arm64.log"
+  },
+  {
+    "profile": "native-etw-notification-event-x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-notification-event-x64",
+    "executable": "native-etw-notification-event-x64.exe",
+    "source": "native-etw-notification-event.cpp",
+    "source-sha256": "dce1ed0c603479347233053a27046605b701f8567c3f82519c9a864310c0ce50",
+    "log": "native-etw-notification-event-x64.log"
+  },
+  {
+    "profile": "native-etw-notification-event-x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-notification-event-x86-laa",
+    "executable": "native-etw-notification-event-x86-laa.exe",
+    "source": "native-etw-notification-event.cpp",
+    "source-sha256": "dce1ed0c603479347233053a27046605b701f8567c3f82519c9a864310c0ce50",
+    "log": "native-etw-notification-event-x86-laa.log"
+  },
+  {
+    "profile": "native-etw-notification-event-x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-notification-event-x86",
+    "executable": "native-etw-notification-event-x86.exe",
+    "source": "native-etw-notification-event.cpp",
+    "source-sha256": "dce1ed0c603479347233053a27046605b701f8567c3f82519c9a864310c0ce50",
+    "log": "native-etw-notification-event-x86.log"
+  },
+  {
+    "profile": "native-etw-notification-output-readonly-arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-notification-event-arm64",
+    "executable": "native-etw-notification-output-readonly-arm64.exe",
+    "source": "native-etw-notification-output-readonly.cpp",
+    "source-sha256": "0df1b8f8c32d0b15b32b459c0345b8a86a5271bb14be78a0ab6c6314c8b1b9d0",
+    "log": "native-etw-notification-output-readonly-arm64.log"
+  },
+  {
+    "profile": "native-etw-notification-output-readonly-x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-notification-event-x64",
+    "executable": "native-etw-notification-output-readonly-x64.exe",
+    "source": "native-etw-notification-output-readonly.cpp",
+    "source-sha256": "0df1b8f8c32d0b15b32b459c0345b8a86a5271bb14be78a0ab6c6314c8b1b9d0",
+    "log": "native-etw-notification-output-readonly-x64.log"
+  },
+  {
+    "profile": "native-etw-notification-output-readonly-x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-notification-event-x86-laa",
+    "executable": "native-etw-notification-output-readonly-x86-laa.exe",
+    "source": "native-etw-notification-output-readonly.cpp",
+    "source-sha256": "0df1b8f8c32d0b15b32b459c0345b8a86a5271bb14be78a0ab6c6314c8b1b9d0",
+    "log": "native-etw-notification-output-readonly-x86-laa.log"
+  },
+  {
+    "profile": "native-etw-notification-output-readonly-x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-notification-event-x86",
+    "executable": "native-etw-notification-output-readonly-x86.exe",
+    "source": "native-etw-notification-output-readonly.cpp",
+    "source-sha256": "0df1b8f8c32d0b15b32b459c0345b8a86a5271bb14be78a0ab6c6314c8b1b9d0",
+    "log": "native-etw-notification-output-readonly-x86.log"
+  },
+  {
+    "profile": "native-etw-notification-return-fresh-arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-notification-event-arm64",
+    "executable": "native-etw-notification-return-fresh-arm64.exe",
+    "source": "native-etw-notification-return-fresh.cpp",
+    "source-sha256": "1672ac6d883dd71a2b4b69b5b52f4a88616f0eb96a5e50391a0192b2a0770153",
+    "log": "native-etw-notification-return-fresh-arm64.log"
+  }
+]

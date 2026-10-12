@@ -15,6 +15,7 @@ mod query;
 mod registry;
 mod timers;
 mod topology;
+mod trace;
 mod virtual_memory;
 mod wait_packet;
 mod wnf;
@@ -84,6 +85,12 @@ pub(super) static EXPORTS: &[Export] = &[
     ),
     Export::func("NtSetEvent", Stdcall, &[Ptr, Ptr], events::set),
     Export::func("NtResetEvent", Stdcall, &[Ptr, Ptr], events::reset),
+    Export::func(
+        "NtTraceControl",
+        Stdcall,
+        &[I32, Ptr, I32, Ptr, I32, Ptr],
+        trace::control,
+    ),
     Export::func(
         "NtSetWnfProcessNotificationEvent",
         Stdcall,

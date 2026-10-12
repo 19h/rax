@@ -1,0 +1,31 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-tests\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 5 tests
+test user::windows::process::sched::tests::services_tests::timer2_create_tests::native_timer2_create_constructs_real_object_and_closes_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::timer2_create_tests::native_timer2_create_privilege_policy_fails_without_output_or_object_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::timer2_create_tests::native_timer2_create_duplicate_retains_dormant_waitable_object_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::timer2_create_tests::leaf_tests::installed_timer2_create_leaf_constructs_closes_and_returns_all_caller_arguments ... ok
+Timer2 original replays=8288, privilege exclusions=104
+test user::windows::process::sched::tests::services_tests::timer2_create_tests::replay_tests::native_timer2_create_replays_original_capture_order_reduced_and_alias_observations ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 7089 filtered out; finished in 3.22s
+

@@ -1,0 +1,12 @@
+{
+  "native DLL services": "affected: six-argument signature, actual syscall/NTDLL leaf and all three ABIs",
+  "guest memory": "affected: ordered output and ULONG return write probes, fixed DWORD capture, guard consumption",
+  "object ownership": "affected: private ETW Event pin and drain independent of WNF",
+  "CPU/decode/SMIR/JIT": "unaffected: existing syscall interception and return path; no ISA or lowering changes",
+  "native host adapters": "unaffected: guest request performs no host calls; native libraries remain startup-selected",
+  "C API and Assist plugin/CLI/harness": "affected transitively: linked RAX archive changes; public CAPI1.11 and ABI184 unchanged; validate owning static archives and C++ consumers",
+  "Linux/macOS/Windows": "affected shared Rust source compiles on all three; Windows native kernel oracle and installed leafs run on Windows; Linux/macOS regression gates and archive consumption",
+  "root engineering records/gitlink": "affected: exact paired publication after validation",
+  "permission/UI/MCP/transport/persistence/update/SDK": "unaffected: no owning schema, UI, transport, settings, permission, release, or public ABI edit",
+  "tests/docs/evidence": "affected: native replay, fresh sequences, overflow/lifetime, actual leafs and strict reproducible corpus"
+}

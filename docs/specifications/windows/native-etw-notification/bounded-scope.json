@@ -1,0 +1,32 @@
+[
+  {
+    "impact": "high",
+    "item": "Complete ordinary Windows startup/exit remains blocked by NtTraceControl function15 and any later runtime boundary.",
+    "evidence": "native-etw-notification-after-production-trace-output.log: turn50306 function15; all four ordinary logs retain reason5.",
+    "blocks": "full goal; does not block function27 increment"
+  },
+  {
+    "impact": "medium",
+    "item": "Fresh x64/WoW64 publication and caller-close lifetime lack a fresh native debugger capture.",
+    "evidence": "ARM64 fresh oracles plus identical mature4-profile matrices; assumption A1.",
+    "blocks": "bounded claim only"
+  },
+  {
+    "impact": "medium",
+    "item": "Unchanged Linux-personality timeout assertions are sensitive to full-suite load on macOS/Linux; isolated exact tests pass.",
+    "evidence": "macos-full.log/linux-full.log; isolated-gates.json and unchanged timeout.rs hash.",
+    "blocks": "no ETW regression; broader timing behavior remains separate work"
+  },
+  {
+    "impact": "medium",
+    "item": "The previous four Windows BZHI and one FP16 lowering failures remain in the broad native suite.",
+    "evidence": "native-etw-notification-full.log:7087 passed/5 failed/2 ignored; exact failures equal parent native-wnf-subscribe-full.log.",
+    "blocks": "no changed lowering source"
+  },
+  {
+    "impact": "medium",
+    "item": "Physical x64 native host, full package matrix and live IDA/Qt execution are not established by this same-host ARM64 increment.",
+    "evidence": "native host identity and owning build commands explicitly select ARM64; C++/CLI/MCP consumers validate linked archives.",
+    "blocks": "limits broader product claims"
+  }
+]
