@@ -1,0 +1,5 @@
+{
+  "root-before": "b9ec60f882fcd673e1bd9442530b4ed03c0c6397",
+  "root-owning-snapshot": "6e49c78852ecf878f89bc16c0d2404dcdc12a3a3",
+  "change": "fast-forward over release-note-only commit; RAX dirty Timer2 implementation compiled through owned symlink"
+}

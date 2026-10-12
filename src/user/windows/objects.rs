@@ -119,6 +119,15 @@ pub enum Object {
         /// Period in milliseconds (0 = one-shot).
         period_ms: u32,
     },
+    /// A dormant extended NT timer, distinct from the legacy Timer object.
+    IrTimer {
+        /// Raw validated TIMER2 attributes, including notification/resolution.
+        attributes: u32,
+        /// Captured IR timer role, present only with TIMER2_ATTRIBUTE_IR_TIMER.
+        timer_id: Option<u32>,
+        /// Constructor starts unsignaled; arming belongs to timer services.
+        signaled: bool,
+    },
     /// A file mapping (section).
     Mapping {
         /// Backing file, if any.
@@ -183,6 +192,7 @@ impl Object {
             Object::Thread { .. } => "Thread",
             Object::Process { .. } => "Process",
             Object::Timer { .. } => "Timer",
+            Object::IrTimer { .. } => "IRTimer",
             Object::Mapping { .. } => "Section",
             Object::Pipe { .. } => "File",
             Object::CompletionPort { .. } => "IoCompletion",

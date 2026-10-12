@@ -1,0 +1,7 @@
+{
+  "operation": "first native owning runner launch",
+  "exit-code": 255,
+  "output": "PrlJob_GetResult: Invalid argument. An invalid argument was passed.",
+  "retry-basis": "no Timer2 owning logs present; same exact command retry started session30404",
+  "native-outcome": "no native result from failed host launch"
+}

@@ -1,0 +1,22 @@
+{
+  "before-sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e",
+  "after-sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e",
+  "before-turn": 42165,
+  "after-turn": 42172,
+  "scheduler-call-delta": 7,
+  "before-service": "NtCreateTimer2",
+  "before-service-number": "0xCC",
+  "after-service": "NtCreateWaitCompletionPacket",
+  "after-service-number": "0xD2",
+  "after-PC": "0x180001D60",
+  "after-arguments": [
+    "0x1103318",
+    "0x1",
+    "0"
+  ],
+  "baseline-basis": "published worker-factory post-change trace; no regenerated baseline or observer modification",
+  "ordinary-programs": 4,
+  "ordinary-stop-reason": 5,
+  "ordinary-exit-code": 0,
+  "ordinary-result": "internal failure; not guest exit"
+}

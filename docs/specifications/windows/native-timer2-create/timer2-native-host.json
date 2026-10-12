@@ -1,0 +1,7 @@
+﻿{
+    "powershellVersion":  "5.1.29683.1000",
+    "ntdllSha256":  "502D4678206C8FD564972A3F82BFE63FE1A451CB5A6804AC0A9823B65FCBB61F",
+    "OSVersion":  "10.0.29683.0",
+    "Architecture":  "ARM64",
+    "ntdllVersion":  "10.0.29683.1000 (WinBuild.160101.0800)"
+}

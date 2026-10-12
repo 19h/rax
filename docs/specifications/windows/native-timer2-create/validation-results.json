@@ -1,0 +1,32 @@
+[
+  {
+    "case": "positive",
+    "exit-code": 0,
+    "stdout": "PASS: 8392 original observations; 8288 exact replays/104 explicit exclusions; 27 source/archive identities\n"
+  },
+  {
+    "case": "manifest-omission",
+    "exit-code": 1,
+    "stderr-final-line": "ValueError: incomplete manifest file set"
+  },
+  {
+    "case": "raw-corruption",
+    "exit-code": 1,
+    "stderr-final-line": "ValueError: file identity: native-timer2-create-probe-arm64.log"
+  },
+  {
+    "case": "semantic-status",
+    "exit-code": 1,
+    "stderr-final-line": "ValueError: Attributes validation and WoW failure copy"
+  },
+  {
+    "case": "empty-filtered-gate",
+    "exit-code": 1,
+    "stderr-final-line": "ValueError: nonempty selected test count: windows/targeted"
+  },
+  {
+    "case": "optimized-python",
+    "exit-code": 1,
+    "stderr-final-line": "ValueError: optimized validation is rejected"
+  }
+]

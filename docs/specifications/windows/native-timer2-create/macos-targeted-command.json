@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "cargo",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "timer2_create",
+    "--",
+    "--nocapture"
+  ],
+  "cwd": "/Users/int/hexrays/kvasir/vendor/rax",
+  "target": "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/red-target"
+}

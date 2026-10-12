@@ -1494,3 +1494,6 @@ calls. Four ordinary programs still report internal failure, not guest exit.
 Activation/waits/packets/security/APC and successful full applications remain
 full-goal requirements; provenance, assumptions, metadata correction and limits:
 [worker-factory evidence](../../../docs/specifications/windows/native-worker-factory-create/README.md).
+
+Timer2 construction, native ID/alias order, dormant IRTimer and measured limits:
+[Timer2 evidence](../../../docs/specifications/windows/native-timer2-create/README.md).

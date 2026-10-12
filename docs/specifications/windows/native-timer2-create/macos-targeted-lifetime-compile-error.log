@@ -1,0 +1,16 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+error[E0597]: `captured_key` does not live long enough
+   --> src/user/windows/process/sched/tests/services_tests/timer2_create_replay_tests.rs:289:30
+    |
+288 |             let captured_key = format!("{name}-captured");
+    |                 ------------ binding `captured_key` declared here
+289 |             let captured = n(&captured_key, 10);
+    |                            - ^^^^^^^^^^^^^ borrowed value does not live long enough
+    |                            |
+    |                            borrow later used here
+...
+313 |         }
+    |         - `captured_key` dropped here while still borrowed
+
+For more information about this error, try `rustc --explain E0597`.
+error: could not compile `rax` (lib test) due to 1 previous error

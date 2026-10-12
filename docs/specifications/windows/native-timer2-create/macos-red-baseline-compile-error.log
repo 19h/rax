@@ -1,0 +1,14 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+error[E0599]: no method named `typename` found for reference `&windows::objects::Object` in the current scope
+  --> src/user/windows/process/sched/tests/services_tests/timer2_create_tests.rs:69:55
+   |
+69 |             assert_eq!(p.objects.get(handle).unwrap().typename(), "IRTimer");
+   |                                                       ^^^^^^^^
+   |
+help: there is a method `type_name` with a similar name
+   |
+69 |             assert_eq!(p.objects.get(handle).unwrap().type_name(), "IRTimer");
+   |                                                           +
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `rax` (lib test) due to 1 previous error

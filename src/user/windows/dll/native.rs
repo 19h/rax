@@ -13,6 +13,7 @@ mod object_create;
 mod process_query;
 mod query;
 mod registry;
+mod timers;
 mod topology;
 mod virtual_memory;
 mod worker_factory;
@@ -92,6 +93,12 @@ pub(super) static EXPORTS: &[Export] = &[
         Stdcall,
         &[Ptr, I32, Ptr, Ptr, Ptr, Ptr, Ptr, I32, Ptr, Ptr],
         worker_factory::create,
+    ),
+    Export::func(
+        "NtCreateTimer2",
+        Stdcall,
+        &[Ptr, Ptr, Ptr, I32, I32],
+        timers::create,
     ),
     Export::func(
         "NtManageHotPatch",

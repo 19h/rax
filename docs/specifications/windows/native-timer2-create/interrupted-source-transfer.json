@@ -1,0 +1,8 @@
+{
+  "original-session": 11646,
+  "original-exit-code": 255,
+  "action": "Stopped exact task-owned native Python PID1524 after command-line ownership check; no Cargo job started against partial source; same byte/hash overlay transferred as single archive",
+  "replacement-session": 18379,
+  "source-files": 16167,
+  "patches": 12499
+}

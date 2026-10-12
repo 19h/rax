@@ -1,0 +1,23 @@
+[
+  "cmake",
+  "-S",
+  "/Users/int/Library/Caches/assist-process-emulation/timer2-create-20261012/assist-root-current",
+  "-B",
+  "/Users/int/Library/Caches/assist-process-emulation/timer2-create-20261012/macos-owning-build",
+  "-G",
+  "Ninja",
+  "-DCMAKE_BUILD_TYPE=Debug",
+  "-DIDASDK=/Users/int/dev/ida-sdk",
+  "-DASSIST_IDADIR=/Applications/IDA Professional 9.4-sp1.app/Contents/MacOS",
+  "-DASSIST_BUILD_PLUGIN=OFF",
+  "-DASSIST_BUILD_IDALIB_CLI=ON",
+  "-DASSIST_BUILD_TESTS=ON",
+  "-DASSIST_BUILD_QT_HARNESS=OFF",
+  "-DASSIST_ENABLE_LTO=OFF",
+  "-DASSIST_ENABLE_Z3=OFF",
+  "-DASSIST_ENABLE_RAX=ON",
+  "-DASSIST_ENCRYPT_STATIC_TEXT=ON",
+  "-DASSIST_SQLITE_AMALGAMATION_DIR=/Users/int/hexrays/kvasir/vendor/Qt-6.8.0/src/qtbase/src/3rdparty/sqlite",
+  "-DFETCHCONTENT_SOURCE_DIR_JSON=/Users/int/Library/Caches/assist-process-emulation/worker-factory-create-20261012/macos-owning-build/_deps/json-src",
+  "-DFETCHCONTENT_SOURCE_DIR_MONOCYPHER=/Users/int/Library/Caches/assist-process-emulation/worker-factory-create-20261012/macos-owning-build/_deps/monocypher-src"
+]

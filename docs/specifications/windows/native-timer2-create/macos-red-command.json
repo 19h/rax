@@ -1,0 +1,11 @@
+[
+  "cargo",
+  "test",
+  "--locked",
+  "--offline",
+  "--no-default-features",
+  "--lib",
+  "native_timer2_create_constructs_real_object_and_closes_all_abis",
+  "--",
+  "--nocapture"
+]

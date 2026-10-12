@@ -403,6 +403,7 @@ fn signaled(p: &Proc, id: ObjId, tid: u32) -> bool {
     match p.objects.obj(id) {
         Some(Object::Event { signaled, .. }) => *signaled != 0,
         Some(Object::Timer { signaled, .. }) => *signaled,
+        Some(Object::IrTimer { signaled, .. }) => *signaled,
         Some(Object::Mutex { owner, .. }) => owner.is_none() || *owner == Some(tid),
         Some(Object::Semaphore { count, .. }) => *count > 0,
         Some(Object::Thread { exit_code, .. }) | Some(Object::Process { exit_code, .. }) => {
@@ -432,6 +433,10 @@ fn consume(p: &mut Proc, id: ObjId, tid: u32) -> bool {
         Some(Object::Timer {
             manual, signaled, ..
         }) if !*manual => {
+            *signaled = false;
+            false
+        }
+        Some(Object::IrTimer { attributes, signaled, .. }) if *attributes & 0x8000_0000 == 0 => {
             *signaled = false;
             false
         }
