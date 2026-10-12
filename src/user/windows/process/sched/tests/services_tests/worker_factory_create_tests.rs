@@ -184,6 +184,7 @@ fn native_worker_factory_create_owns_dependencies_through_duplicate_and_final_cl
             p.objects.get(u64::from(second)),
             Some(Object::WorkerFactory {
                 maximum: 0,
+                soft_maximum: None,
                 reserve: 65536,
                 commit: 4096,
                 ..

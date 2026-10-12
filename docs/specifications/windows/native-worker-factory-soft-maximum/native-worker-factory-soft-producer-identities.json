@@ -1,0 +1,164 @@
+﻿{
+    "producer":  [
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-soft-maximum-arm64\\native-worker-factory-soft-maximum-arm64.exe",
+                         "family":  "maximum",
+                         "bytes":  150528,
+                         "sha256":  "6FAF5D968D9521B8B44A812BDB69FCE6919CD8D8722B34DA84ECEFC206532F0F"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-soft-maximum-arm64\\native-worker-factory-soft-maximum-arm64.log",
+                         "family":  "maximum",
+                         "bytes":  260524,
+                         "sha256":  "E31B4264CC8E9FF143A2F7B78A5A346EB7D0DEEC844D9828269341BF23D0D780"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-soft-maximum-arm64\\native-worker-factory-soft-maximum-arm64-build.log",
+                         "family":  "maximum",
+                         "bytes":  40,
+                         "sha256":  "A670097DA75F2984544D2FC4EFDEED4C57EED2A692DC5E7AA7EE74FFD4F962CD"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-soft-maximum-x64\\native-worker-factory-soft-maximum-x64.exe",
+                         "family":  "maximum",
+                         "bytes":  147968,
+                         "sha256":  "AAB20B00B7EF4814A9331D4778B1DFB58349240212D2F5B355E3732751A664EC"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-soft-maximum-x64\\native-worker-factory-soft-maximum-x64.log",
+                         "family":  "maximum",
+                         "bytes":  260524,
+                         "sha256":  "06F4230D8F378551953DD161221C2324A165C960C3B0EDD341DCC4404F478522"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-soft-maximum-x64\\native-worker-factory-soft-maximum-x64-build.log",
+                         "family":  "maximum",
+                         "bytes":  40,
+                         "sha256":  "A670097DA75F2984544D2FC4EFDEED4C57EED2A692DC5E7AA7EE74FFD4F962CD"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-soft-maximum-x86\\native-worker-factory-soft-maximum-x86.exe",
+                         "family":  "maximum",
+                         "bytes":  122880,
+                         "sha256":  "5320571BCC8BF58A3B3B461328BF6DD3138D2520249930D007CFF7E1E74B1722"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-soft-maximum-x86\\native-worker-factory-soft-maximum-x86.log",
+                         "family":  "maximum",
+                         "bytes":  259926,
+                         "sha256":  "33B972B69034BBF87912FD54B148FBEB72789D89AC3AECBD6AAABDA0CC473904"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-soft-maximum-x86\\native-worker-factory-soft-maximum-x86-build.log",
+                         "family":  "maximum",
+                         "bytes":  40,
+                         "sha256":  "A670097DA75F2984544D2FC4EFDEED4C57EED2A692DC5E7AA7EE74FFD4F962CD"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-soft-maximum-x86-laa\\native-worker-factory-soft-maximum-x86-laa.exe",
+                         "family":  "maximum",
+                         "bytes":  122880,
+                         "sha256":  "9FD32FF59BBA776B4635B243A26A4B668E7D693DDCFD1EDD1876D1D93AD2D2E6"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-soft-maximum-x86-laa\\native-worker-factory-soft-maximum-x86-laa.log",
+                         "family":  "maximum",
+                         "bytes":  259926,
+                         "sha256":  "B7DD6592DD06D9973C5826AAFF1D43E73F04E4AA58F077BF6457027104FDB53B"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-soft-maximum-x86-laa\\native-worker-factory-soft-maximum-x86-laa-build.log",
+                         "family":  "maximum",
+                         "bytes":  40,
+                         "sha256":  "A670097DA75F2984544D2FC4EFDEED4C57EED2A692DC5E7AA7EE74FFD4F962CD"
+                     }
+                 ],
+    "sources":  [
+                    {
+                        "profile":  "arm64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-soft-maximum-arm64\\native-worker-factory-soft-maximum.cpp",
+                        "family":  "maximum",
+                        "bytes":  5804,
+                        "sha256":  "20BE8FD596D8C8F61A9AE010013650DAF61EDE3A2D5CD99EA459769EF87AC0A0"
+                    },
+                    {
+                        "profile":  "x64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-soft-maximum-x64\\native-worker-factory-soft-maximum.cpp",
+                        "family":  "maximum",
+                        "bytes":  5804,
+                        "sha256":  "20BE8FD596D8C8F61A9AE010013650DAF61EDE3A2D5CD99EA459769EF87AC0A0"
+                    },
+                    {
+                        "profile":  "x86",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-soft-maximum-x86\\native-worker-factory-soft-maximum.cpp",
+                        "family":  "maximum",
+                        "bytes":  5804,
+                        "sha256":  "20BE8FD596D8C8F61A9AE010013650DAF61EDE3A2D5CD99EA459769EF87AC0A0"
+                    },
+                    {
+                        "profile":  "x86-laa",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-soft-maximum-x86-laa\\native-worker-factory-soft-maximum.cpp",
+                        "family":  "maximum",
+                        "bytes":  5804,
+                        "sha256":  "20BE8FD596D8C8F61A9AE010013650DAF61EDE3A2D5CD99EA459769EF87AC0A0"
+                    }
+                ],
+    "processor":  "ARM64",
+    "utc":  "2026-10-12T03:55:05.9920813Z",
+    "images":  [
+                   {
+                       "profile":  "arm64",
+                       "family":  "maximum",
+                       "characteristics":  34,
+                       "machine":  43620
+                   },
+                   {
+                       "profile":  "x64",
+                       "family":  "maximum",
+                       "characteristics":  34,
+                       "machine":  34404
+                   },
+                   {
+                       "profile":  "x86",
+                       "family":  "maximum",
+                       "characteristics":  258,
+                       "machine":  332
+                   },
+                   {
+                       "profile":  "x86-laa",
+                       "family":  "maximum",
+                       "characteristics":  290,
+                       "machine":  332
+                   }
+               ],
+    "dlls":  [
+                 {
+                     "path":  "C:\\Windows\\System32\\ntdll.dll",
+                     "sha256":  "502D4678206C8FD564972A3F82BFE63FE1A451CB5A6804AC0A9823B65FCBB61F",
+                     "bytes":  4609312,
+                     "version":  "10.0.29683.1000 (WinBuild.160101.0800)"
+                 },
+                 {
+                     "path":  "C:\\Windows\\SysWOW64\\ntdll.dll",
+                     "sha256":  "FFD2B7FF39889C5599C8A8451EEF5C852ACEE9101DA5CE5A6DEF8B8E60A6627E",
+                     "bytes":  1849976,
+                     "version":  "10.0.29683.1000 (WinBuild.160101.0800)"
+                 }
+             ],
+    "principal":  {
+                      "sid":  "S-1-5-18",
+                      "name":  "NT AUTHORITY\\SYSTEM"
+                  }
+}

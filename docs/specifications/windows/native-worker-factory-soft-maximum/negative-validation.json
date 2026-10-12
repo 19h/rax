@@ -1,0 +1,75 @@
+[
+  {
+    "case": "manifest-omission",
+    "exit-code": 1,
+    "result": "rejected",
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-worker-factory-soft-maximum/check_native_worker_soft_maximum.py",
+      "/Users/int/Library/Caches/assist-process-emulation/worker-factory-soft-maximum-20261012/final-negative-manifest-omission",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ],
+    "error": "ValueError: exact evidence coverage"
+  },
+  {
+    "case": "raw-corruption",
+    "exit-code": 1,
+    "result": "rejected",
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-worker-factory-soft-maximum/check_native_worker_soft_maximum.py",
+      "/Users/int/Library/Caches/assist-process-emulation/worker-factory-soft-maximum-20261012/final-negative-raw-corruption",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ],
+    "error": "ValueError: evidence identity native-worker-factory-soft-maximum-arm64.log"
+  },
+  {
+    "case": "semantic-status",
+    "exit-code": 1,
+    "result": "rejected",
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-worker-factory-soft-maximum/check_native_worker_soft_maximum.py",
+      "/Users/int/Library/Caches/assist-process-emulation/worker-factory-soft-maximum-20261012/final-negative-semantic-status",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ],
+    "error": "ValueError: measured length/capture/type/access order"
+  },
+  {
+    "case": "empty-filter",
+    "exit-code": 1,
+    "result": "rejected",
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-worker-factory-soft-maximum/check_native_worker_soft_maximum.py",
+      "/Users/int/Library/Caches/assist-process-emulation/worker-factory-soft-maximum-20261012/final-negative-empty-filter",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ],
+    "error": "ValueError: nonempty targeted gate macos"
+  },
+  {
+    "case": "forged-summary",
+    "exit-code": 1,
+    "result": "rejected",
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-worker-factory-soft-maximum/check_native_worker_soft_maximum.py",
+      "/Users/int/Library/Caches/assist-process-emulation/worker-factory-soft-maximum-20261012/final-negative-forged-summary",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ],
+    "error": "ValueError: targeted stdout-bound summary"
+  },
+  {
+    "case": "optimized-python",
+    "exit-code": 1,
+    "result": "rejected",
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-O",
+      "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-worker-factory-soft-maximum/check_native_worker_soft_maximum.py",
+      "/Users/int/Library/Caches/assist-process-emulation/worker-factory-soft-maximum-20261012/final-negative-optimized-python",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ],
+    "error": "ValueError: optimized validation is rejected"
+  }
+]

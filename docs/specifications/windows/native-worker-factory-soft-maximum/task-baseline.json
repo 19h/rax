@@ -1,0 +1,17 @@
+{
+  "root": "dff8414a66a45adad880ae103efc02c62b56e271",
+  "rax": "f7a36679b7f3c6c2cfefbb2ad2fecdea1bc271ef",
+  "owned": [
+    "src/user/windows/objects.rs",
+    "src/user/windows/dll/native/worker_factory.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_set_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_soft_maximum_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_soft_maximum_leaf_tests.rs",
+    "docs/architecture/user-mode/windows-services.md",
+    "docs/specifications/windows/native-worker-factory-soft-maximum",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_create_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_create_replay_tests.rs"
+  ],
+  "status": "both clean before edits"
+}

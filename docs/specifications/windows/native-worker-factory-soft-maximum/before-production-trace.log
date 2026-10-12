@@ -1,0 +1,205 @@
+program C:\Windows\Temp\assist-native-rax-20261010\src\tests\fixtures\user\windows\bin\arm64\smoke.exe
+arch=arm64 PEB=0x7ffdf000 ProcessHeap=Ok(0) heaps=Heaps { heaps: {65536: Heap { flags: 0, align: 16, max: 0, segments: [(65536, 1048576)], free: {69184: 1044928}, by_size: {(1044928, 69184)}, used: {67056: (480, 470), 68384: (32, 26), 69104: (48, 34), 67984: (32, 20), 67536: (96, 88), 65792: (1104, 1096), 68816: (288, 288), 68304: (80, 66), 67008: (48, 40), 66896: (16, 8), 66912: (48, 34), 66960: (48, 34), 67632: (288, 288), 67920: (64, 60), 68016: (288, 288), 68416: (288, 288), 68704: (80, 70), 68784: (32, 30), 69152: (32, 20)} }}, align: 16 }
+module probe.exe base=0x140000000 size=0x3000 entry=0x140001048
+module ntdll.dll base=0x180000000 size=0x473000 entry=0x0
+module kernel32.dll base=0x150000 size=0x171000 entry=0x157460
+module KernelBase.dll base=0x2d0000 size=0x6e6000 entry=0x2dbf90
+kernel-before turn=36 service=0x36 PC=0x1800013a0 registers=[fa, 1803ca4c0, 10, abfb80, 0, 0]
+kernel-after turn=36 service=0x36 PC=0x1800013a4 X0=0x0
+kernel-before turn=141 service=0x48 PC=0x1800014c0 registers=[1803c9350, 1f0003, 0, 0, 0, 0]
+kernel-after turn=141 service=0x48 PC=0x1800014c4 X0=0x0
+kernel-before turn=160 service=0x119 PC=0x1800021d0 registers=[9, abfb48, 8, abfb40, 0, 0]
+hotpatch-before info=0xabfb48 bytes=Ok([01, 00, 00, 00, 00, 00, 00, 00]) returned=0xabfb40 bytes=Ok([00, 00, 00, 00])
+kernel-after turn=160 service=0x119 PC=0x1800021d4 X0=0xc00000bb
+hotpatch-after info=0xabfb48 bytes=Ok([01, 00, 00, 00, 00, 00, 00, 00]) returned=0xabfb40 bytes=Ok([00, 00, 00, 00])
+kernel-before turn=210 service=0xe PC=0x1800010e0 registers=[10, 0, 1488, abfb40, 0, 0]
+kernel-after turn=210 service=0xe PC=0x1800010e4 X0=0x0
+kernel-before turn=252 service=0x48 PC=0x1800014c0 registers=[1803c93a0, 1f0003, 0, 0, 0, 0]
+kernel-after turn=252 service=0x48 PC=0x1800014c4 X0=0x0
+kernel-before turn=298 service=0x36 PC=0x1800013a0 registers=[0, abfa70, 40, 0, 0, 0]
+kernel-after turn=298 service=0x36 PC=0x1800013a4 X0=0x0
+kernel-before turn=418 service=0x19 PC=0x1800011a0 registers=[ffffffffffffffff, 24, abea40, 4, 0, 0]
+kernel-after turn=418 service=0x19 PC=0x1800011a4 X0=0x0
+kernel-before turn=709 service=0x12 PC=0x180001130 registers=[abe8b8, 80000000, abe8f0, abe930, 0, 18034f740]
+NtOpenKey attributes=0xabe8f0 bytes=Ok([30, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, e0, e8, ab, 00, 00, 00, 00, 00, 40, 02, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00])
+NtOpenKey name struct=0xabe8e0 length=126 buffer=0x18034f6d0 bytes=Ok([5c, 00, 52, 00, 65, 00, 67, 00, 69, 00, 73, 00, 74, 00, 72, 00, 79, 00, 5c, 00, 4d, 00, 61, 00, 63, 00, 68, 00, 69, 00, 6e, 00, 65, 00, 5c, 00, 53, 00, 79, 00, 73, 00, 74, 00, 65, 00, 6d, 00, 5c, 00, 43, 00, 75, 00, 72, 00, 72, 00, 65, 00, 6e, 00, 74, 00, 43, 00, 6f, 00, 6e, 00, 74, 00, 72, 00, 6f, 00, 6c, 00, 53, 00, 65, 00, 74, 00, 5c, 00, 43, 00, 6f, 00, 6e, 00, 74, 00, 72, 00, 6f, 00, 6c, 00, 5c, 00, 4e, 00, 6c, 00, 73, 00, 5c, 00, 43, 00, 6f, 00, 64, 00, 65, 00, 50, 00, 61, 00, 67, 00, 65, 00])
+kernel-after turn=709 service=0x12 PC=0x180001134 X0=0x0
+NtOpenKey output handle bytes=Ok([18, 00, 00, 00, 00, 00, 00, 00])
+kernel-before turn=749 service=0x17 PC=0x180001180 registers=[18, abe8c0, 2, abe920, 24, abe8b0]
+NtQueryValueKey name length=6 bytes=Ok([41, 00, 43, 00, 50, 00])
+kernel-after turn=749 service=0x17 PC=0x180001184 X0=0x0
+NtQueryValueKey output=Ok([00, 00, 00, 00, 01, 00, 00, 00, 0a, 00, 00, 00, 31, 00, 32, 00, 35, 00, 32, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00]) ResultLength=Ok([16, 00, 00, 00])
+kernel-before turn=928 service=0x17 PC=0x180001180 registers=[18, abe8c0, 2, abe920, 24, abe8b0]
+NtQueryValueKey name length=10 bytes=Ok([4f, 00, 45, 00, 4d, 00, 43, 00, 50, 00])
+kernel-after turn=928 service=0x17 PC=0x180001184 X0=0x0
+NtQueryValueKey output=Ok([00, 00, 00, 00, 01, 00, 00, 00, 08, 00, 00, 00, 34, 00, 33, 00, 37, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00]) ResultLength=Ok([14, 00, 00, 00])
+kernel-before turn=1056 service=0xf PC=0x1800010f0 registers=[18, a, abe9a4, abe920, 24, abe92c]
+kernel-after turn=1056 service=0xf PC=0x1800010f4 X0=0x0
+kernel-before turn=1101 service=0x101 PC=0x180002050 registers=[b, 4e4, 0, 1803bdd00, 0, abe92c]
+kernel-after turn=1101 service=0x101 PC=0x180002054 X0=0x0
+NtGetNlsSectionPtr output=Ok(ac0000) size-pointer=0x0 size=Ok([]) view=Some(RegionInfo { base: 11272192, allocation_base: 11272192, allocation_protect: 2, size: 69632, state: 4096, protect: 2, kind: 262144 }) prefix=Some([0d, 00, e4, 04, 01, 00, 3f, 00, 3f, 00, 3f, 00, 3f, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 03, 01, 00, 00, 01, 00])
+kernel-before turn=1112 service=0x101 PC=0x180002050 registers=[b, 1b5, 0, 1803bdd08, 0, abe92c]
+kernel-after turn=1112 service=0x101 PC=0x180002054 X0=0x0
+NtGetNlsSectionPtr output=Ok(ae0000) size-pointer=0x0 size=Ok([]) view=Some(RegionInfo { base: 11403264, allocation_base: 11403264, allocation_protect: 2, size: 69632, state: 4096, protect: 2, kind: 262144 }) prefix=Some([0d, 00, b5, 01, 01, 00, 3f, 00, 3f, 00, 3f, 00, 3f, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 03, 02, 00, 00, 01, 00])
+kernel-before turn=2412 service=0x23 PC=0x180001240 registers=[ffffffffffffffff, 180000000, 6, abe980, 18, 0]
+kernel-after turn=2412 service=0x23 PC=0x180001244 X0=0x0
+NtQueryVirtualMemory address=0x180000000 output=0xabe980 supplied-bytes=24 record=Ok([00, 00, 00, 80, 01, 00, 00, 00, 00, 30, 47, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00]) length-pointer=0x0 length-bytes=Ok([])
+kernel-before turn=2778 service=0x23 PC=0x180001240 registers=[ffffffffffffffff, 0, 4, abf580, 50, 0]
+kernel-after turn=2778 service=0x23 PC=0x180001244 X0=0x0
+NtQueryVirtualMemory address=0x0 output=0xabf580 supplied-bytes=80 record=Ok([70, 13, 00, 80, 01, 00, 00, 00, 01, 02, 00, 05, 00, 00, 00, 00, e0, 14, 00, 80, 01, 00, 00, 00, 01, 02, 00, 05, 00, 00, 00, 00, 10, 14, 00, 80, 01, 00, 00, 00, 01, 02, 00, 05, 00, 00, 00, 00, b0, 13, 00, 80, 01, 00, 00, 00, 01, 02, 00, 05, 00, 00, 00, 00, a0, 12, 00, 80, 01, 00, 00, 00, 01, 02, 00, 05, 00, 00, 00, 00]) length-pointer=0x0 length-bytes=Ok([])
+kernel-before turn=3128 service=0x50 PC=0x180001540 registers=[ffffffffffffffff, abe940, abe938, 2, abe930, 0]
+kernel-after turn=3128 service=0x50 PC=0x180001544 X0=0x0
+kernel-before turn=3237 service=0x12 PC=0x180001130 registers=[abe688, 1, 180360e70, abea68, abea18, abe9e0]
+NtOpenKey attributes=0x180360e70 bytes=Ok([30, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 78, 0d, 36, 80, 01, 00, 00, 00, 40, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00])
+NtOpenKey name struct=0x180360d78 length=132 buffer=0x18035f100 bytes=Ok([5c, 00, 52, 00, 65, 00, 67, 00, 69, 00, 73, 00, 74, 00, 72, 00, 79, 00, 5c, 00, 4d, 00, 41, 00, 43, 00, 48, 00, 49, 00, 4e, 00, 45, 00, 5c, 00, 53, 00, 79, 00, 73, 00, 74, 00, 65, 00, 6d, 00, 5c, 00, 43, 00, 75, 00, 72, 00, 72, 00, 65, 00, 6e, 00, 74, 00, 43, 00, 6f, 00, 6e, 00, 74, 00, 72, 00, 6f, 00, 6c, 00, 53, 00, 65, 00, 74, 00, 5c, 00, 43, 00, 6f, 00, 6e, 00, 74, 00, 72, 00, 6f, 00, 6c, 00, 5c, 00, 53, 00, 65, 00, 73, 00, 73, 00, 69, 00, 6f, 00, 6e, 00, 20, 00, 4d, 00, 61, 00, 6e, 00, 61, 00, 67, 00, 65, 00, 72, 00])
+kernel-after turn=3237 service=0x12 PC=0x180001134 X0=0x0
+NtOpenKey output handle bytes=Ok([18, 00, 00, 00, 00, 00, 00, 00])
+kernel-before turn=3248 service=0x17 PC=0x180001180 registers=[18, 180360db8, 2, abe690, 50, abe680]
+NtQueryValueKey name length=64 bytes=Ok([52, 00, 61, 00, 69, 00, 73, 00, 65, 00, 45, 00, 78, 00, 63, 00, 65, 00, 70, 00, 74, 00, 69, 00, 6f, 00, 6e, 00, 4f, 00, 6e, 00, 50, 00, 6f, 00, 73, 00, 73, 00, 69, 00, 62, 00, 6c, 00, 65, 00, 44, 00, 65, 00, 61, 00, 64, 00, 6c, 00, 6f, 00, 63, 00, 6b, 00])
+kernel-after turn=3248 service=0x17 PC=0x180001184 X0=0xc0000034
+NtQueryValueKey output=Ok([00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00]) ResultLength=Ok([00, 00, 00, 00])
+kernel-before turn=3253 service=0xf PC=0x1800010f0 registers=[18, 180360db8, 2, abe690, 50, abe680]
+kernel-after turn=3253 service=0xf PC=0x1800010f4 X0=0x0
+kernel-before turn=3405 service=0x12 PC=0x180001130 registers=[abe5d0, 9, abe5d8, abe738, 50, abe680]
+NtOpenKey attributes=0xabe5d8 bytes=Ok([30, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 10, d0, 34, 80, 01, 00, 00, 00, 40, 02, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00])
+NtOpenKey name struct=0x18034d010 length=182 buffer=0x18034ce30 bytes=Ok([5c, 00, 52, 00, 65, 00, 67, 00, 69, 00, 73, 00, 74, 00, 72, 00, 79, 00, 5c, 00, 4d, 00, 61, 00, 63, 00, 68, 00, 69, 00, 6e, 00, 65, 00, 5c, 00, 53, 00, 6f, 00, 66, 00, 74, 00, 77, 00, 61, 00, 72, 00, 65, 00, 5c, 00, 4d, 00, 69, 00, 63, 00, 72, 00, 6f, 00, 73, 00, 6f, 00, 66, 00, 74, 00, 5c, 00, 57, 00, 69, 00, 6e, 00, 64, 00, 6f, 00, 77, 00, 73, 00, 20, 00, 4e, 00, 54, 00, 5c, 00, 43, 00, 75, 00, 72, 00, 72, 00, 65, 00, 6e, 00, 74, 00, 56, 00, 65, 00, 72, 00, 73, 00, 69, 00, 6f, 00, 6e, 00, 5c, 00, 49, 00, 6d, 00, 61, 00, 67, 00, 65, 00, 20, 00, 46, 00, 69, 00, 6c, 00, 65, 00, 20, 00, 45, 00, 78, 00, 65, 00, 63, 00, 75, 00, 74, 00, 69, 00, 6f, 00, 6e, 00, 20, 00, 4f, 00, 70, 00, 74, 00, 69, 00, 6f, 00, 6e, 00, 73, 00])
+kernel-after turn=3405 service=0x12 PC=0x180001134 X0=0x0
+NtOpenKey output handle bytes=Ok([18, 00, 00, 00, 00, 00, 00, 00])
+kernel-before turn=3438 service=0x12 PC=0x180001130 registers=[abe658, 9, abe6a0, abe738, 50, abe680]
+NtOpenKey attributes=0xabe6a0 bytes=Ok([30, 00, 00, 00, 00, 00, 00, 00, 18, 00, 00, 00, 00, 00, 00, 00, 90, e6, ab, 00, 00, 00, 00, 00, 40, 02, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00])
+NtOpenKey name struct=0xabe690 length=18 buffer=0x1056e bytes=Ok([70, 00, 72, 00, 6f, 00, 62, 00, 65, 00, 2e, 00, 65, 00, 78, 00, 65, 00])
+kernel-after turn=3438 service=0x12 PC=0x180001134 X0=0xc0000034
+NtOpenKey output handle bytes=Ok([00, 00, 00, 00, 00, 00, 00, 00])
+kernel-before turn=4462 service=0x12 PC=0x180001130 registers=[abe668, 1, abe670, 0, 0, abe680]
+NtOpenKey attributes=0xabe670 bytes=Ok([30, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 40, cb, 34, 80, 01, 00, 00, 00, 40, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00])
+NtOpenKey name struct=0x18034cb40 length=158 buffer=0x18034c5d0 bytes=Ok([5c, 00, 52, 00, 65, 00, 67, 00, 69, 00, 73, 00, 74, 00, 72, 00, 79, 00, 5c, 00, 4d, 00, 61, 00, 63, 00, 68, 00, 69, 00, 6e, 00, 65, 00, 5c, 00, 53, 00, 59, 00, 53, 00, 54, 00, 45, 00, 4d, 00, 5c, 00, 43, 00, 75, 00, 72, 00, 72, 00, 65, 00, 6e, 00, 74, 00, 43, 00, 6f, 00, 6e, 00, 74, 00, 72, 00, 6f, 00, 6c, 00, 53, 00, 65, 00, 74, 00, 5c, 00, 43, 00, 6f, 00, 6e, 00, 74, 00, 72, 00, 6f, 00, 6c, 00, 5c, 00, 53, 00, 65, 00, 73, 00, 73, 00, 69, 00, 6f, 00, 6e, 00, 20, 00, 4d, 00, 61, 00, 6e, 00, 61, 00, 67, 00, 65, 00, 72, 00, 5c, 00, 53, 00, 65, 00, 67, 00, 6d, 00, 65, 00, 6e, 00, 74, 00, 20, 00, 48, 00, 65, 00, 61, 00, 70, 00])
+kernel-after turn=4462 service=0x12 PC=0x180001134 X0=0xc0000034
+NtOpenKey output handle bytes=Ok([00, 00, 00, 00, 00, 00, 00, 00])
+kernel-before turn=5219 service=0x19 PC=0x1800011a0 registers=[ffffffffffffffff, 24, abe970, 4, 0, 4]
+kernel-after turn=5219 service=0x19 PC=0x1800011a4 X0=0x0
+kernel-before turn=6770 service=0x12 PC=0x180001130 registers=[abe908, 9, abe950, abeab8, 0, 4]
+NtOpenKey attributes=0xabe950 bytes=Ok([30, 00, 00, 00, 00, 00, 00, 00, 18, 00, 00, 00, 00, 00, 00, 00, 40, e9, ab, 00, 00, 00, 00, 00, 40, 02, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00])
+NtOpenKey name struct=0xabe940 length=18 buffer=0x1056e bytes=Ok([70, 00, 72, 00, 6f, 00, 62, 00, 65, 00, 2e, 00, 65, 00, 78, 00, 65, 00])
+kernel-after turn=6770 service=0x12 PC=0x180001134 X0=0xc0000034
+NtOpenKey output handle bytes=Ok([00, 00, 00, 00, 00, 00, 00, 00])
+kernel-before turn=6803 service=0x19 PC=0x1800011a0 registers=[ffffffffffffffff, 24, abe9b0, 4, 0, 4]
+kernel-after turn=6803 service=0x19 PC=0x1800011a4 X0=0x0
+kernel-before turn=7030 service=0x36 PC=0x1800013a0 registers=[0, abf4e0, 40, 0, 0, 4]
+kernel-after turn=7030 service=0x36 PC=0x1800013a4 X0=0x0
+kernel-before turn=11206 service=0x36 PC=0x1800013a0 registers=[3e, abf4a0, 40, 0, 0, 4]
+kernel-after turn=11206 service=0x36 PC=0x1800013a4 X0=0x0
+kernel-before turn=11315 service=0x78 PC=0x1800017c0 registers=[ffffffffffffffff, 1803c50d8, abe9a0, 102000, 4, abe930]
+NtAllocateVirtualMemoryEx base-pointer=0x1803c50d8 raw=Ok([00, 00, 00, 00, 00, 00, 00, 00]) size-pointer=0xabe9a0 raw=Ok([00, 10, 00, 02, 00, 00, 00, 00]) extended=0xabe930 count=1 raw=Ok([01, 00, 00, 00, 00, 00, 00, 00, 10, e9, ab, 00, 00, 00, 00, 00])
+address-requirements pointer=0xabe910 raw=Ok([00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00])
+kernel-after turn=11315 service=0x78 PC=0x1800017c4 X0=0x0
+kernel-before turn=11397 service=0x78 PC=0x1800017c0 registers=[ffffffffffffffff, 1803c50d0, abe9a8, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0x1803c50d0 raw=Ok([00, 00, fe, ff, ff, 7f, 00, 00]) size-pointer=0xabe9a8 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=11397 service=0x78 PC=0x1800017c4 X0=0x0
+kernel-before turn=11542 service=0x78 PC=0x1800017c0 registers=[ffffffffffffffff, 1803c5140, abe9a0, 102000, 4, abe930]
+NtAllocateVirtualMemoryEx base-pointer=0x1803c5140 raw=Ok([00, 00, 00, 00, 00, 00, 00, 00]) size-pointer=0xabe9a0 raw=Ok([00, 00, 02, 00, 01, 00, 00, 00]) extended=0xabe930 count=1 raw=Ok([01, 00, 00, 00, 00, 00, 00, 00, 10, e9, ab, 00, 00, 00, 00, 00])
+address-requirements pointer=0xabe910 raw=Ok([00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00])
+kernel-after turn=11542 service=0x78 PC=0x1800017c4 X0=0x0
+kernel-before turn=13286 service=0x16e PC=0x180002720 registers=[6b, abd8e0, 4, abd8e8, c50, 0]
+NtQuerySystemInformationEx class=0x6b input=0xabd8e0 input-bytes=4 raw=Ok([04, 00, 00, 00]) output=0xabd8e8 output-bytes=3152 returned=0x0
+kernel-after turn=13286 service=0x16e PC=0x180002724 X0=0x0
+kernel-before turn=13686 service=0x78 PC=0x1800017c0 registers=[ffffffffffffffff, abe3a0, abe3c8, 2000, 4, abe330]
+NtAllocateVirtualMemoryEx base-pointer=0xabe3a0 raw=Ok([00, 00, 00, 00, 00, 00, 00, 00]) size-pointer=0xabe3c8 raw=Ok([00, 00, 00, 01, 00, 00, 00, 00]) extended=0xabe330 count=1 raw=Ok([01, 00, 00, 00, 00, 00, 00, 00, 10, e3, ab, 00, 00, 00, 00, 00])
+address-requirements pointer=0xabe310 raw=Ok([00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 01, 00, 00, 00, 00])
+kernel-after turn=13686 service=0x78 PC=0x1800017c4 X0=0x0
+kernel-before turn=13828 service=0x78 PC=0x1800017c0 registers=[ffffffffffffffff, abe2d8, abe2d0, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0xabe2d8 raw=Ok([00, 00, fc, fd, ff, 7f, 00, 00]) size-pointer=0xabe2d0 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=13828 service=0x78 PC=0x1800017c4 X0=0x0
+kernel-before turn=13940 service=0x78 PC=0x1800017c0 registers=[ffffffffffffffff, abe2d8, abe2d0, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0xabe2d8 raw=Ok([00, 00, fc, fd, fe, 7f, 00, 00]) size-pointer=0xabe2d0 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=13940 service=0x78 PC=0x1800017c4 X0=0x0
+kernel-before turn=16335 service=0x78 PC=0x1800017c0 registers=[ffffffffffffffff, abe500, abe4a8, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0xabe500 raw=Ok([00, 00, 00, 01, 00, 00, 00, 00]) size-pointer=0xabe4a8 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=16335 service=0x78 PC=0x1800017c4 X0=0x0
+kernel-before turn=18683 service=0x78 PC=0x1800017c0 registers=[ffffffffffffffff, abe3b0, abe3c8, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0xabe3b0 raw=Ok([00, 00, 10, 01, 00, 00, 00, 00]) size-pointer=0xabe3c8 raw=Ok([00, 30, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=18683 service=0x78 PC=0x1800017c4 X0=0x0
+kernel-before turn=18886 service=0x78 PC=0x1800017c0 registers=[ffffffffffffffff, abe408, abe400, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0xabe408 raw=Ok([00, 00, fe, fd, ff, 7f, 00, 00]) size-pointer=0xabe400 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=18886 service=0x78 PC=0x1800017c4 X0=0x0
+kernel-before turn=23282 service=0x78 PC=0x1800017c0 registers=[ffffffffffffffff, abe590, abe538, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0xabe590 raw=Ok([00, 00, 20, 01, 00, 00, 00, 00]) size-pointer=0xabe538 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=23282 service=0x78 PC=0x1800017c4 X0=0x0
+kernel-before turn=25985 service=0x78 PC=0x1800017c0 registers=[ffffffffffffffff, abe450, abe468, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0xabe450 raw=Ok([00, 00, 30, 01, 00, 00, 00, 00]) size-pointer=0xabe468 raw=Ok([00, 20, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=25985 service=0x78 PC=0x1800017c4 X0=0x0
+kernel-before turn=28251 service=0x78 PC=0x1800017c0 registers=[ffffffffffffffff, abe4c0, abe4d8, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0xabe4c0 raw=Ok([00, 20, 30, 01, 00, 00, 00, 00]) size-pointer=0xabe4d8 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=28251 service=0x78 PC=0x1800017c4 X0=0x0
+kernel-before turn=32733 service=0x78 PC=0x1800017c0 registers=[ffffffffffffffff, abe5e0, abe5f8, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0xabe5e0 raw=Ok([00, 30, 10, 01, 00, 00, 00, 00]) size-pointer=0xabe5f8 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=32733 service=0x78 PC=0x1800017c4 X0=0x0
+kernel-before turn=33364 service=0x36 PC=0x1800013a0 registers=[c5, abeb58, 8, 0, 0, abe900]
+kernel-after turn=33364 service=0x36 PC=0x1800013a4 X0=0x0
+kernel-before turn=33566 service=0x36 PC=0x1800013a0 registers=[37, abef40, 408, abea04, 0, abe900]
+kernel-after turn=33566 service=0x36 PC=0x1800013a4 X0=0x0
+kernel-before turn=33588 service=0x16e PC=0x180002720 registers=[6b, abea08, 4, 0, 0, abe9dc]
+NtQuerySystemInformationEx class=0x6b input=0xabea08 input-bytes=4 raw=Ok([04, 00, 00, 00]) output=0x0 output-bytes=0 returned=0xabe9dc
+kernel-after turn=33588 service=0x16e PC=0x180002724 X0=0xc0000004
+kernel-before turn=34417 service=0x16e PC=0x180002720 registers=[6b, abea08, 4, 1103090, 50, abe9dc]
+NtQuerySystemInformationEx class=0x6b input=0xabea08 input-bytes=4 raw=Ok([04, 00, 00, 00]) output=0x1103090 output-bytes=80 returned=0xabe9dc
+kernel-after turn=34417 service=0x16e PC=0x180002724 X0=0x0
+kernel-before turn=40500 service=0x16e PC=0x180002720 registers=[6b, abe654, 4, 0, 0, abe650]
+NtQuerySystemInformationEx class=0x6b input=0xabe654 input-bytes=4 raw=Ok([06, 00, 00, 00]) output=0x0 output-bytes=0 returned=0xabe650
+kernel-after turn=40500 service=0x16e PC=0x180002724 X0=0xc0000004
+kernel-before turn=41325 service=0x16e PC=0x180002720 registers=[6b, abe654, 4, 1103510, 30, abe650]
+NtQuerySystemInformationEx class=0x6b input=0xabe654 input-bytes=4 raw=Ok([06, 00, 00, 00]) output=0x1103510 output-bytes=48 returned=0xabe650
+kernel-after turn=41325 service=0x16e PC=0x180002724 X0=0x0
+kernel-before turn=42051 service=0xb2 PC=0x180001b60 registers=[11032c0, 1f0003, 0, 4, 0, abe4c0]
+kernel-after turn=42051 service=0xb2 PC=0x180001b64 X0=0x0
+kernel-before turn=42076 service=0xd5 PC=0x180001d90 registers=[11032b8, f00ff, 0, 1c, ffffffffffffffff, 1800bfad0]
+NtCreateWorkerFactory ten-args regs=[11032b8, f00ff, 0, 1c, ffffffffffffffff, 1800bfad0, 1103280, 200] stack=Ok([00, 00, 10, 00, 00, 00, 00, 00, 00, 10, 00, 00, 00, 00, 00, 00])
+kernel-after turn=42076 service=0xd5 PC=0x180001d94 X0=0x0
+kernel-before turn=42165 service=0xcc PC=0x180001d00 registers=[1103310, 0, 0, 8, 100002, 1800bfad0]
+kernel-after turn=42165 service=0xcc PC=0x180001d04 X0=0x0
+kernel-before turn=42172 service=0xd2 PC=0x180001d60 registers=[1103318, 1, 0, 8, 100002, 1800bfad0]
+kernel-after turn=42172 service=0xd2 PC=0x180001d64 X0=0x0
+kernel-before turn=42185 service=0x92 PC=0x180001960 registers=[28, 1c, 24, 1103320, 11032f0, 0]
+kernel-after turn=42185 service=0x92 PC=0x180001964 X0=0x0
+kernel-before turn=42293 service=0xcc PC=0x180001d00 registers=[1103388, 0, 0, 8, 100002, 0]
+kernel-after turn=42293 service=0xcc PC=0x180001d04 X0=0x0
+kernel-before turn=42300 service=0xd2 PC=0x180001d60 registers=[1103390, 1, 0, 8, 100002, 0]
+kernel-after turn=42300 service=0xd2 PC=0x180001d64 X0=0x0
+kernel-before turn=42313 service=0x92 PC=0x180001960 registers=[30, 1c, 2c, 1103398, 11032f0, 0]
+kernel-after turn=42313 service=0x92 PC=0x180001964 X0=0x0
+kernel-before turn=42564 service=0x1b1 PC=0x180002b50 registers=[20, 5, abe720, 4, 11032f0, 0]
+kernel-after turn=42564 service=0x1b1 PC=0x180002b54 X0=0x0
+kernel-before turn=42609 service=0x1b1 PC=0x180002b50 registers=[20, e, abe730, 4, 11032f0, 0]
+kernel-after turn=42609 service=0x1b1 PC=0x180002b54 X0=0x20
+turn=42578 thread=8 PC=0x1800b8cb0 SP=0xabe740 bytes=Ok([ff, 23, 03, d5]) insn=Some("Ok(DecodedInsn { mnemonic: HINT, cond: None, operands: [Imm(Immediate { value: 31, shift: 0 })], sets_flags: false, raw: 3573752831, size: 4, state: Aarch64 })") registers=[0, 5, abe720, 4, 11032f0, 0, 0, abe640, 0, 8, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba23c]
+turn=42579 thread=8 PC=0x1800b8cb4 SP=0xabe740 bytes=Ok([c0, 03, 5f, d6]) insn=Some("Ok(DecodedInsn { mnemonic: RET, cond: None, operands: [Reg(Register { num: 30, is_64bit: true, is_sp: false, kind: Gpr })], sets_flags: false, raw: 3596551104, size: 4, state: Aarch64 })") registers=[0, 5, abe720, 4, 11032f0, 0, 0, abe640, 0, 8, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba23c]
+turn=42580 thread=8 PC=0x1800ba23c SP=0xabe740 bytes=Ok([48, 5b, 4a, b9]) insn=Some("Ok(DecodedInsn { mnemonic: LDR, cond: None, operands: [Reg(Register { num: 8, is_64bit: false, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 26, is_64bit: true, is_sp: false, kind: Gpr }, offset: Imm(2648), mode: Offset })], sets_flags: false, raw: 3108657992, size: 4, state: Aarch64 })") registers=[0, 5, abe720, 4, 11032f0, 0, 0, abe640, 0, 8, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba23c]
+turn=42581 thread=8 PC=0x1800ba240 SP=0xabe740 bytes=Ok([c8, 01, 00, 35]) insn=Some("Ok(DecodedInsn { mnemonic: CBNZ, cond: None, operands: [Reg(Register { num: 8, is_64bit: false, is_sp: false, kind: Gpr }), Label(56)], sets_flags: false, raw: 889192904, size: 4, state: Aarch64 })") registers=[0, 5, abe720, 4, 11032f0, 0, 0, abe640, 0, 8, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba23c]
+turn=42582 thread=8 PC=0x1800ba244 SP=0xabe740 bytes=Ok([79, 00, 00, b4]) insn=Some("Ok(DecodedInsn { mnemonic: CBZ, cond: None, operands: [Reg(Register { num: 25, is_64bit: true, is_sp: false, kind: Gpr }), Label(12)], sets_flags: false, raw: 3019899001, size: 4, state: Aarch64 })") registers=[0, 5, abe720, 4, 11032f0, 0, 0, abe640, 0, 8, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba23c]
+turn=42583 thread=8 PC=0x1800ba248 SP=0xabe740 bytes=Ok([28, bb, 41, b9]) insn=Some("Ok(DecodedInsn { mnemonic: LDR, cond: None, operands: [Reg(Register { num: 8, is_64bit: false, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 25, is_64bit: true, is_sp: false, kind: Gpr }, offset: Imm(440), mode: Offset })], sets_flags: false, raw: 3108092712, size: 4, state: Aarch64 })") registers=[0, 5, abe720, 4, 11032f0, 0, 0, abe640, 0, 8, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba23c]
+turn=42584 thread=8 PC=0x1800ba24c SP=0xabe740 bytes=Ok([88, 00, 00, 35]) insn=Some("Ok(DecodedInsn { mnemonic: CBNZ, cond: None, operands: [Reg(Register { num: 8, is_64bit: false, is_sp: false, kind: Gpr }), Label(16)], sets_flags: false, raw: 889192584, size: 4, state: Aarch64 })") registers=[0, 5, abe720, 4, 11032f0, 0, 0, abe640, 0, 8, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba23c]
+turn=42585 thread=8 PC=0x1800ba250 SP=0xabe740 bytes=Ok([c8, ff, af, d2]) insn=Some("Ok(DecodedInsn { mnemonic: MOVZ, cond: None, operands: [Reg(Register { num: 8, is_64bit: true, is_sp: false, kind: Gpr }), Imm(Immediate { value: 32766, shift: 16 })], sets_flags: false, raw: 3534749640, size: 4, state: Aarch64 })") registers=[0, 5, abe720, 4, 11032f0, 0, 0, abe640, 0, 8, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba23c]
+turn=42586 thread=8 PC=0x1800ba254 SP=0xabe740 bytes=Ok([08, 78, 80, f2]) insn=Some("Ok(DecodedInsn { mnemonic: MOVK, cond: None, operands: [Reg(Register { num: 8, is_64bit: true, is_sp: false, kind: Gpr }), Imm(Immediate { value: 960, shift: 0 })], sets_flags: false, raw: 4068505608, size: 4, state: Aarch64 })") registers=[0, 5, abe720, 4, 11032f0, 0, 0, abe640, 7ffe0000, 8, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba23c]
+turn=42587 thread=8 PC=0x1800ba258 SP=0xabe740 bytes=Ok([08, 01, 40, b9]) insn=Some("Ok(DecodedInsn { mnemonic: LDR, cond: None, operands: [Reg(Register { num: 8, is_64bit: false, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 8, is_64bit: true, is_sp: false, kind: Gpr }, offset: Imm(0), mode: Offset })], sets_flags: false, raw: 3107979528, size: 4, state: Aarch64 })") registers=[0, 5, abe720, 4, 11032f0, 0, 0, abe640, 7ffe03c0, 8, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba23c]
+turn=42588 thread=8 PC=0x1800ba25c SP=0xabe740 bytes=Ok([09, 75, 1e, 53]) insn=Some("Ok(DecodedInsn { mnemonic: LSL, cond: None, operands: [Reg(Register { num: 9, is_64bit: false, is_sp: false, kind: Gpr }), Reg(Register { num: 8, is_64bit: false, is_sp: false, kind: Gpr }), Imm(Immediate { value: 30, shift: 0 }), Imm(Immediate { value: 29, shift: 0 })], sets_flags: false, raw: 1394504969, size: 4, state: Aarch64 })") registers=[0, 5, abe720, 4, 11032f0, 0, 0, abe640, 1, 8, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba23c]
+turn=42589 thread=8 PC=0x1800ba260 SP=0xabe740 bytes=Ok([3f, 01, 06, 71]) insn=Some("Ok(DecodedInsn { mnemonic: CMP, cond: None, operands: [Reg(Register { num: 9, is_64bit: false, is_sp: false, kind: Gpr }), Imm(Immediate { value: 384, shift: 0 })], sets_flags: true, raw: 1896218943, size: 4, state: Aarch64 })") registers=[0, 5, abe720, 4, 11032f0, 0, 0, abe640, 1, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba23c]
+turn=42590 thread=8 PC=0x1800ba264 SP=0xabe740 bytes=Ok([08, 30, 80, 52]) insn=Some("Ok(DecodedInsn { mnemonic: MOVZ, cond: None, operands: [Reg(Register { num: 8, is_64bit: false, is_sp: false, kind: Gpr }), Imm(Immediate { value: 384, shift: 0 })], sets_flags: false, raw: 1384132616, size: 4, state: Aarch64 })") registers=[0, 5, abe720, 4, 11032f0, 0, 0, abe640, 1, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba23c]
+turn=42591 thread=8 PC=0x1800ba268 SP=0xabe740 bytes=Ok([21, 21, 88, 1a]) insn=Some("Ok(DecodedInsn { mnemonic: CSEL, cond: None, operands: [Reg(Register { num: 1, is_64bit: false, is_sp: false, kind: Gpr }), Reg(Register { num: 9, is_64bit: false, is_sp: false, kind: Gpr }), Reg(Register { num: 8, is_64bit: false, is_sp: false, kind: Gpr }), Cond(CS)], sets_flags: false, raw: 445128993, size: 4, state: Aarch64 })") registers=[0, 5, abe720, 4, 11032f0, 0, 0, abe640, 180, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba23c]
+turn=42592 thread=8 PC=0x1800ba26c SP=0xabe740 bytes=Ok([e0, 03, 19, aa]) insn=Some("Ok(DecodedInsn { mnemonic: MOV, cond: None, operands: [Reg(Register { num: 0, is_64bit: true, is_sp: false, kind: Gpr }), Reg(Register { num: 25, is_64bit: true, is_sp: false, kind: Gpr })], sets_flags: false, raw: 2853766112, size: 4, state: Aarch64 })") registers=[0, 180, abe720, 4, 11032f0, 0, 0, abe640, 180, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba23c]
+turn=42593 thread=8 PC=0x1800ba270 SP=0xabe740 bytes=Ok([ac, fa, ff, 97]) insn=Some("Ok(DecodedInsn { mnemonic: BL, cond: None, operands: [Label(-5456)], sets_flags: false, raw: 2550135468, size: 4, state: Aarch64 })") registers=[1103280, 180, abe720, 4, 11032f0, 0, 0, abe640, 180, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba23c]
+turn=42594 thread=8 PC=0x1800b8d20 SP=0xabe740 bytes=Ok([7f, 23, 03, d5]) insn=Some("Ok(DecodedInsn { mnemonic: HINT, cond: None, operands: [Imm(Immediate { value: 27, shift: 0 })], sets_flags: false, raw: 3573752703, size: 4, state: Aarch64 })") registers=[1103280, 180, abe720, 4, 11032f0, 0, 0, abe640, 180, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba274]
+turn=42595 thread=8 PC=0x1800b8d24 SP=0xabe740 bytes=Ok([fd, 7b, be, a9]) insn=Some("Ok(DecodedInsn { mnemonic: STP, cond: None, operands: [Reg(Register { num: 29, is_64bit: true, is_sp: false, kind: Gpr }), Reg(Register { num: 30, is_64bit: true, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 31, is_64bit: true, is_sp: true, kind: Sp }, offset: Imm(-32), mode: PreIndex })], sets_flags: false, raw: 2847833085, size: 4, state: Aarch64 })") registers=[1103280, 180, abe720, 4, 11032f0, 0, 0, abe640, 180, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba274]
+turn=42596 thread=8 PC=0x1800b8d28 SP=0xabe720 bytes=Ok([fd, 03, 00, 91]) insn=Some("Ok(DecodedInsn { mnemonic: MOV, cond: None, operands: [Reg(Register { num: 29, is_64bit: true, is_sp: false, kind: Gpr }), Reg(Register { num: 31, is_64bit: true, is_sp: true, kind: Sp })], sets_flags: false, raw: 2432697341, size: 4, state: Aarch64 })") registers=[1103280, 180, abe720, 4, 11032f0, 0, 0, abe640, 180, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe740, 1800ba274]
+turn=42597 thread=8 PC=0x1800b8d2c SP=0xabe720 bytes=Ok([e1, 13, 00, b9]) insn=Some("Ok(DecodedInsn { mnemonic: STR, cond: None, operands: [Reg(Register { num: 1, is_64bit: false, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 31, is_64bit: true, is_sp: true, kind: Sp }, offset: Imm(16), mode: Offset })], sets_flags: false, raw: 3103790049, size: 4, state: Aarch64 })") registers=[1103280, 180, abe720, 4, 11032f0, 0, 0, abe640, 180, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe720, 1800ba274]
+turn=42598 thread=8 PC=0x1800b8d30 SP=0xabe720 bytes=Ok([80, 01, 00, b4]) insn=Some("Ok(DecodedInsn { mnemonic: CBZ, cond: None, operands: [Reg(Register { num: 0, is_64bit: true, is_sp: false, kind: Gpr }), Label(48)], sets_flags: false, raw: 3019899264, size: 4, state: Aarch64 })") registers=[1103280, 180, abe720, 4, 11032f0, 0, 0, abe640, 180, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe720, 1800ba274]
+turn=42599 thread=8 PC=0x1800b8d34 SP=0xabe720 bytes=Ok([61, 01, f8, 37]) insn=Some("Ok(DecodedInsn { mnemonic: TBNZ, cond: None, operands: [Reg(Register { num: 1, is_64bit: false, is_sp: false, kind: Gpr }), Imm(Immediate { value: 31, shift: 0 }), Label(44)], sets_flags: false, raw: 939000161, size: 4, state: Aarch64 })") registers=[1103280, 180, abe720, 4, 11032f0, 0, 0, abe640, 180, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe720, 1800ba274]
+turn=42600 thread=8 PC=0x1800b8d38 SP=0xabe720 bytes=Ok([48, 32, 40, f9]) insn=Some("Ok(DecodedInsn { mnemonic: LDR, cond: None, operands: [Reg(Register { num: 8, is_64bit: true, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 18, is_64bit: true, is_sp: false, kind: Gpr }, offset: Imm(96), mode: Offset })], sets_flags: false, raw: 4181733960, size: 4, state: Aarch64 })") registers=[1103280, 180, abe720, 4, 11032f0, 0, 0, abe640, 180, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe720, 1800ba274]
+turn=42601 thread=8 PC=0x1800b8d3c SP=0xabe720 bytes=Ok([08, 0d, 40, f9]) insn=Some("Ok(DecodedInsn { mnemonic: LDR, cond: None, operands: [Reg(Register { num: 8, is_64bit: true, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 8, is_64bit: true, is_sp: false, kind: Gpr }, offset: Imm(24), mode: Offset })], sets_flags: false, raw: 4181724424, size: 4, state: Aarch64 })") registers=[1103280, 180, abe720, 4, 11032f0, 0, 0, abe640, 7ffdf000, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe720, 1800ba274]
+turn=42602 thread=8 PC=0x1800b8d40 SP=0xabe720 bytes=Ok([08, 21, 41, 39]) insn=Some("Ok(DecodedInsn { mnemonic: LDRB, cond: None, operands: [Reg(Register { num: 8, is_64bit: false, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 8, is_64bit: true, is_sp: false, kind: Gpr }, offset: Imm(72), mode: Offset })], sets_flags: false, raw: 960569608, size: 4, state: Aarch64 })") registers=[1103280, 180, abe720, 4, 11032f0, 0, 0, abe640, 1803c9280, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe720, 1800ba274]
+turn=42603 thread=8 PC=0x1800b8d44 SP=0xabe720 bytes=Ok([e8, 00, 00, 35]) insn=Some("Ok(DecodedInsn { mnemonic: CBNZ, cond: None, operands: [Reg(Register { num: 8, is_64bit: false, is_sp: false, kind: Gpr }), Label(28)], sets_flags: false, raw: 889192680, size: 4, state: Aarch64 })") registers=[1103280, 180, abe720, 4, 11032f0, 0, 0, abe640, 0, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe720, 1800ba274]
+turn=42604 thread=8 PC=0x1800b8d48 SP=0xabe720 bytes=Ok([00, 1c, 40, f9]) insn=Some("Ok(DecodedInsn { mnemonic: LDR, cond: None, operands: [Reg(Register { num: 0, is_64bit: true, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 0, is_64bit: true, is_sp: false, kind: Gpr }, offset: Imm(56), mode: Offset })], sets_flags: false, raw: 4181728256, size: 4, state: Aarch64 })") registers=[1103280, 180, abe720, 4, 11032f0, 0, 0, abe640, 0, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe720, 1800ba274]
+turn=42605 thread=8 PC=0x1800b8d4c SP=0xabe720 bytes=Ok([83, 00, 80, 52]) insn=Some("Ok(DecodedInsn { mnemonic: MOVZ, cond: None, operands: [Reg(Register { num: 3, is_64bit: false, is_sp: false, kind: Gpr }), Imm(Immediate { value: 4, shift: 0 })], sets_flags: false, raw: 1384120451, size: 4, state: Aarch64 })") registers=[20, 180, abe720, 4, 11032f0, 0, 0, abe640, 0, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe720, 1800ba274]
+turn=42606 thread=8 PC=0x1800b8d50 SP=0xabe720 bytes=Ok([e2, 43, 00, 91]) insn=Some("Ok(DecodedInsn { mnemonic: ADD, cond: None, operands: [Reg(Register { num: 2, is_64bit: true, is_sp: false, kind: Gpr }), Reg(Register { num: 31, is_64bit: true, is_sp: true, kind: Sp }), Imm(Immediate { value: 16, shift: 0 })], sets_flags: false, raw: 2432713698, size: 4, state: Aarch64 })") registers=[20, 180, abe720, 4, 11032f0, 0, 0, abe640, 0, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe720, 1800ba274]
+turn=42607 thread=8 PC=0x1800b8d54 SP=0xabe720 bytes=Ok([c1, 01, 80, 52]) insn=Some("Ok(DecodedInsn { mnemonic: MOVZ, cond: None, operands: [Reg(Register { num: 1, is_64bit: false, is_sp: false, kind: Gpr }), Imm(Immediate { value: 14, shift: 0 })], sets_flags: false, raw: 1384120769, size: 4, state: Aarch64 })") registers=[20, 180, abe730, 4, 11032f0, 0, 0, abe640, 0, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe720, 1800ba274]
+turn=42608 thread=8 PC=0x1800b8d58 SP=0xabe720 bytes=Ok([7e, 27, fd, 97]) insn=Some("Ok(DecodedInsn { mnemonic: BL, cond: None, operands: [Label(-745992)], sets_flags: false, raw: 2549950334, size: 4, state: Aarch64 })") registers=[20, e, abe730, 4, 11032f0, 0, 0, abe640, 0, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe720, 1800ba274]
+turn=42609 thread=8 PC=0x180002b50 SP=0xabe720 bytes=Ok([21, 36, 00, d4]) insn=Some("Ok(DecodedInsn { mnemonic: SVC, cond: None, operands: [Imm(Immediate { value: 433, shift: 0 })], sets_flags: false, raw: 3556783649, size: 4, state: Aarch64 })") registers=[20, e, abe730, 4, 11032f0, 0, 0, abe640, 0, 4, 0, 1, 11034f0, 0, 0, 11034f0, a8397b1dcdaf, 1000ad0, 7ffdd000, 1803c8a68, 1803c8a60, 1103190, 0, 11030d8, 1, 1103280, 1803c8000, 7ffdf000, abe9d0, abe720, 1800b8d5c]
+terminal turn=42609 Complete(Internal("native NTDLL service NtSetInformationWorkerFactory: Unimplemented(\"NtSetInformationWorkerFactory: NtSetInformationWorkerFactory class 14\")"))

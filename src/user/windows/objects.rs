@@ -178,6 +178,10 @@ pub enum Object {
         parameter: u64,
         /// Unsigned maximum; zero is retained, not expanded to the CPU count.
         maximum: u32,
+        /// Last successfully captured class14 soft-limit request. None means
+        /// no request has been recorded; the native constructor default is
+        /// unknown. This does not imply an effective active-worker limit.
+        soft_maximum: Option<u32>,
         /// Requested/default stack reserve in bytes, without creation rounding.
         reserve: u64,
         /// Requested/default stack commit in bytes.
@@ -628,6 +632,7 @@ mod tests {
             start: 0,
             parameter: 0,
             maximum: 0,
+            soft_maximum: None,
             reserve: 65536,
             commit: 4096,
         };

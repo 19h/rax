@@ -1,0 +1,196 @@
+[
+  {
+    "gate": "targeted",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "worker_factory_soft_maximum",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "gate": "hard-maximum",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "worker_factory_set_maximum",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "gate": "wait-packet-associate",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "wait_packet_associate",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "gate": "wait-packet-create",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "wait_packet_create",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "gate": "threading",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "dll::threading::tests",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "gate": "timer2",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "timer2_create",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "gate": "worker-factory",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "worker_factory_create",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "gate": "io-completion",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "io_completion",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "gate": "events",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "native_event",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "gate": "full",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "gate": "capi",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "-p",
+      "rax-capi",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ]
+  },
+  {
+    "gate": "all-targets",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ]
+  },
+  {
+    "gate": "integration",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--test",
+      "user_windows",
+      "--test",
+      "user_windows_memory",
+      "--",
+      "--nocapture"
+    ]
+  }
+]

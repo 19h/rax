@@ -1,0 +1,36 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 39.68s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/red-target/debug/deps/rax-754f4d2a527a4423)
+
+running 4 tests
+
+thread 'user::windows::process::sched::tests::services_tests::worker_factory_soft_maximum_tests::native_worker_factory_soft_maximum_replays_all_1196_native_rows' (1729828) panicked at src/user/windows/process/sched/tests/services_tests/worker_factory_soft_maximum_tests.rs:170:13:
+assertion `left == right` failed: arm64/{"exception": "00000000", "maximum-after": "00000200", "value": "00000000", "after": "00000000000000000000000000000000809C10D8FFFFFFFF000000010000000000000000000000000002000000000000000000000000000000000000000000000000000000000000B0140D47F67F000000000000000000000C1A000000000000000001000000000000100000000000000000000000000000A5A5A5A5A5A5A5A5", "total-before": "0", "case": "0", "returned-before": "120", "class": "14", "handle-mode": "0", "maximum-before": "00000200", "width": "8", "mode": "0", "query-before": "00000000", "label": "value", "handles-before": "52", "before": "00000000000000000000000000000000809C10D8FFFFFFFF000000010000000000000000000000000002000000000000000000000000000000000000000000000000000000000000B0140D47F67F000000000000000000000C1A000000000000000001000000000000100000000000000000000000000000A5A5A5A5A5A5A5A5", "returned-after": "120", "length": "00000004", "protection": "00000004", "query-after": "00000000", "handles-after": "52", "total-after": "0", "status": "00000000"}
+  left: Fail("native NTDLL service NtSetInformationWorkerFactory: Unimplemented(\"NtSetInformationWorkerFactory: NtSetInformationWorkerFactory class 14\")")
+ right: Continue
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'user::windows::process::sched::tests::services_tests::worker_factory_soft_maximum_tests::native_worker_factory_soft_maximum_consumes_one_guard_before_access_check_and_retry' (1729825) panicked at src/user/windows/process/sched/tests/services_tests/worker_factory_soft_maximum_tests.rs:238:13:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtSetInformationWorkerFactory: Unimplemented(\"NtSetInformationWorkerFactory: NtSetInformationWorkerFactory class 14\")")
+ right: Continue
+
+thread 'user::windows::process::sched::tests::services_tests::worker_factory_soft_maximum_tests::native_worker_factory_soft_maximum_dispatches_and_preserves_alias_references_all_abis' (1729826) panicked at src/user/windows/process/sched/tests/services_tests/worker_factory_soft_maximum_tests.rs:27:13:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtSetInformationWorkerFactory: Unimplemented(\"NtSetInformationWorkerFactory: NtSetInformationWorkerFactory class 14\")")
+ right: Continue
+test user::windows::process::sched::tests::services_tests::worker_factory_soft_maximum_tests::native_worker_factory_soft_maximum_dispatches_and_preserves_alias_references_all_abis ... FAILED
+test user::windows::process::sched::tests::services_tests::worker_factory_soft_maximum_tests::native_worker_factory_soft_maximum_consumes_one_guard_before_access_check_and_retry ... FAILED
+test user::windows::process::sched::tests::services_tests::worker_factory_soft_maximum_tests::native_worker_factory_soft_maximum_replays_all_1196_native_rows ... FAILED
+test user::windows::process::sched::tests::services_tests::worker_factory_soft_maximum_tests::native_worker_factory_soft_maximum_refuses_unmeasured_classes_without_state_mutation ... ok
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::worker_factory_soft_maximum_tests::native_worker_factory_soft_maximum_consumes_one_guard_before_access_check_and_retry
+    user::windows::process::sched::tests::services_tests::worker_factory_soft_maximum_tests::native_worker_factory_soft_maximum_dispatches_and_preserves_alias_references_all_abis
+    user::windows::process::sched::tests::services_tests::worker_factory_soft_maximum_tests::native_worker_factory_soft_maximum_replays_all_1196_native_rows
+
+test result: FAILED. 1 passed; 3 failed; 0 ignored; 0 measured; 7644 filtered out; finished in 0.02s
+
+error: test failed, to rerun pass `--lib`

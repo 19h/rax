@@ -261,6 +261,7 @@ fn replay(arch: WinArch, text: &str, expected_rows: usize) -> (usize, usize) {
                 start,
                 parameter,
                 maximum,
+                soft_maximum,
                 reserve,
                 commit,
             }) = p.objects.get(handle)
@@ -277,6 +278,10 @@ fn replay(arch: WinArch, text: &str, expected_rows: usize) -> (usize, usize) {
             assert_eq!(*start, number(&row, "start", 16));
             assert_eq!(*parameter, number(&row, "parameter", 16));
             assert_eq!(u64::from(*maximum), count);
+            assert_eq!(
+                *soft_maximum, None,
+                "constructor has no recorded soft request"
+            );
             let worker = bytes(row["worker"]);
             // Basic-information metadata is an independent constructor oracle;
             // the guest query API is not implemented by this group.

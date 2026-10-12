@@ -150,6 +150,7 @@ fn construct(c: &mut Ctx, r: &Request, attrs: Option<Attributes>) -> ApiResult {
             start: r.start,
             parameter: r.parameter,
             maximum: r.maximum,
+            soft_maximum: None,
             // Native constructor defaults are independent of the executable's PE
             // stack sizes. Nonzero requests are stored without rounding/probing.
             reserve: if r.reserve == 0 { 65536 } else { r.reserve },
@@ -159,13 +160,13 @@ fn construct(c: &mut Ctx, r: &Request, attrs: Option<Attributes>) -> ApiResult {
 }
 
 pub(super) fn set_information(c: &mut Ctx) -> ApiResult {
-    let result = set_maximum(c);
+    let result = set_limits(c);
     guard_result(c, result)
 }
 
-fn set_maximum(c: &mut Ctx) -> ApiResult {
+fn set_limits(c: &mut Ctx) -> ApiResult {
     let (handle, class, input, length) = (c.ptr(0)?, c.u32(1)?, c.ptr(2)?, c.u32(3)?);
-    if class != 5 {
+    if !matches!(class, 5 | 14) {
         return Err(c.unsupported(format!("NtSetInformationWorkerFactory class {class}")));
     }
     // The installed native/WoW64 entries check exact ULONG size and capture
@@ -186,9 +187,21 @@ fn set_maximum(c: &mut Ctx) -> ApiResult {
     if c.p.objects.access(handle).unwrap_or(0) & 4 == 0 {
         return Flow::ret(STATUS_ACCESS_DENIED.into());
     }
-    let Some(Object::WorkerFactory { maximum: value, .. }) = c.p.objects.obj_mut(id) else {
+    let Some(Object::WorkerFactory {
+        maximum: hard,
+        soft_maximum: soft,
+        ..
+    }) = c.p.objects.obj_mut(id)
+    else {
         unreachable!("validated worker factory")
     };
-    *value = maximum;
+    if class == 5 {
+        *hard = maximum;
+    } else {
+        // Native class14 accepts the unsigned request without changing the
+        // basic-query hard maximum. Record it independently; activation and
+        // the constructor's unqueried soft default are separate contracts.
+        *soft = Some(maximum);
+    }
     Flow::ret(0)
 }

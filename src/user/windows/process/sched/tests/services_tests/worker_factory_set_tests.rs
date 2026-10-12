@@ -8,7 +8,7 @@ use std::collections::HashMap;
 mod leaf_tests;
 
 const SERVICE: u32 = 0x78;
-fn call(p: &mut Proc, t: &mut Thread, args: [u64; 4]) -> Outcome {
+pub(super) fn call(p: &mut Proc, t: &mut Thread, args: [u64; 4]) -> Outcome {
     let sp = t.cpu.sp();
     t.cpu.set_pc(0x1234_0004);
     match p.arch {
@@ -48,7 +48,7 @@ fn call(p: &mut Proc, t: &mut Thread, args: [u64; 4]) -> Outcome {
     t.cpu.set_sp(sp);
     outcome
 }
-fn factory(p: &mut Proc) -> (u64, u64) {
+pub(super) fn factory(p: &mut Proc) -> (u64, u64) {
     let port = p.objects.insert(Object::CompletionPort {
         queue: Default::default(),
         concurrency: 4,
@@ -60,12 +60,13 @@ fn factory(p: &mut Proc) -> (u64, u64) {
         start: 0x12345678,
         parameter: 0x87654321,
         maximum: 512,
+        soft_maximum: None,
         reserve: 65536,
         commit: 4096,
     });
     (factory.into(), port.into())
 }
-fn maximum(p: &Proc, handle: u64) -> u32 {
+pub(super) fn maximum(p: &Proc, handle: u64) -> u32 {
     let Some(Object::WorkerFactory { maximum, .. }) = p.objects.get(handle) else {
         panic!("factory missing")
     };

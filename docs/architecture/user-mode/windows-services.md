@@ -1,6 +1,20 @@
 # Windows handle/service integration
 
-Current native worker-factory maximum setting (2026-10-12):
+Current native worker-factory soft-maximum requests (2026-10-12):
+NtSetInformationWorkerFactory class14 retains the last successful unsigned
+request independently from the hard maximum. Exact4 B length -> input capture
+-> typed handle -> right0x4 order and one-shot guard behavior replay all1196
+native rows. Five portable/six Windows tests pass; class5 regressions remain.
+Public Rust WorkerFactory gains soft_maximum:Option<u32>; None means no captured
+request, not a native default. The native default/stored effective soft limit
+and active-worker behavior remain unknown. C API1.11.0/Assist Rust ABI184 are
+unchanged. All host build/C API/owning selections pass; original Linux timeout
+and Windows lowering failures remain. The identical observer reaches class3
+at42802 from42609 (193 scheduler calls), and all four ordinary programs still
+fail before guest exit. See
+[soft-maximum evidence](../../specifications/windows/native-worker-factory-soft-maximum/README.md).
+
+Historical native worker-factory maximum setting (2026-10-12):
 NtSetInformationWorkerFactory class5 captures an exact4 B unsigned maximum
 before typed handle/right0x4 validation; guard faults are consumed once, with
 no partial mutation. All956 native rows replay across four caller profiles.

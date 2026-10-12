@@ -1,0 +1,80 @@
+{
+  "baseline-rax": "f7a36679b7f3c6c2cfefbb2ad2fecdea1bc271ef",
+  "compiled-root": "dff8414a66a45adad880ae103efc02c62b56e271",
+  "unix-owning-root": "e2fc5b483be7cad2dae17d889690cc398973c5e8",
+  "replays": 1196,
+  "tests": {
+    "targeted": {
+      "macos": 5,
+      "linux": 5,
+      "windows": 6
+    },
+    "full": {
+      "macos": {
+        "pass": 7647,
+        "fail": 0,
+        "ignored": 2
+      },
+      "linux": {
+        "pass": 7639,
+        "fail": 2,
+        "ignored": 2
+      },
+      "windows": {
+        "pass": 7048,
+        "fail": 5,
+        "ignored": 2
+      }
+    },
+    "capi": {
+      "macos": 168,
+      "linux": 168,
+      "windows": 168
+    },
+    "integration": {
+      "macos": 544,
+      "linux": 544,
+      "windows": 4
+    },
+    "owning-cpp": {
+      "macos": 5,
+      "linux": 5,
+      "windows": 5
+    },
+    "macos-ctest": 7
+  },
+  "frontier": {
+    "before-turn": 42609,
+    "after-turn": 42802,
+    "delta-scheduler-calls": 193,
+    "service": "NtSetInformationWorkerFactory",
+    "svc": "0x1b1",
+    "pc": "0x180002b50",
+    "thread": 8,
+    "class": 3,
+    "arguments": [
+      "0x20",
+      "0x3",
+      "0xabe8f0",
+      "0x4"
+    ],
+    "guest-exit": "not reached"
+  },
+  "source-overlay": {
+    "files": 16732,
+    "patches": 123,
+    "errors": 0,
+    "offline-adapter-bytes": 374
+  },
+  "native-owning": {
+    "source-hashes": 41,
+    "helper-hashes": 2,
+    "core-features": []
+  },
+  "limits": [
+    "Native soft constructor/default/effective active-worker state remains unknown; recorded Option is request history.",
+    "Class3/other classes, guest query, worker activation/completion and application exit remain unimplemented.",
+    "Compatibility profiles are not physical x64 Windows; Linux amd64 CPU is translated.",
+    "Original full-suite timeout and lowering failures remain; package/live IDA/Qt checks are not established."
+  ]
+}

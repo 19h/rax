@@ -34,6 +34,9 @@ mod worker_factory_create_tests;
 #[path = "services_tests/worker_factory_set_tests.rs"]
 mod worker_factory_set_tests;
 
+#[path = "services_tests/worker_factory_soft_maximum_tests.rs"]
+mod worker_factory_soft_maximum_tests;
+
 #[path = "services_tests/timer2_create_tests.rs"]
 mod timer2_create_tests;
 
