@@ -1,0 +1,39 @@
+{
+  "macos-portable": {
+    "exit-code": 0,
+    "session": 46868
+  },
+  "linux-portable": {
+    "exit-code": 0,
+    "full-exit": 101,
+    "session": 92048
+  },
+  "linux-isolated-timeout": {
+    "exit-code": 0,
+    "session": 58952
+  },
+  "macos-owning": {
+    "exit-code": 0,
+    "session": 25313
+  },
+  "windows-regressions": {
+    "session": 64465,
+    "exit-code": 0
+  },
+  "windows-owning": {
+    "session": 40723,
+    "exit-code": 0
+  },
+  "linux-owning": {
+    "session": 88035,
+    "exit-code": 0
+  },
+  "native-source-overlay": {
+    "exit-code": 0,
+    "session": 89298
+  },
+  "native-identities": {
+    "exit-code": 0,
+    "session": 32465
+  }
+}

@@ -1,6 +1,24 @@
 # Windows handle/service integration
 
-Current native wait-packet addition (2026-10-12):
+Current native wait-packet association/cancellation (2026-10-12):
+`NtAssociateWaitCompletionPacket` and `NtCancelWaitCompletionPacket` use owned
+guest object identities, measured access/validation precedence, optional BOOLEAN
+store-fault suppression, FIFO packet delivery and alias/final-close teardown.
+Native-width completion records preserve NTSTATUS and ULONG_PTR information.
+There are 996 exact native row replays across four installed-kernel caller
+profiles; nine portable and ten Windows tests pass, including actual
+ARM64/WoW64 leaves. The public Rust completion queue payload changes, while
+C ABI1.11.0 and Assist Rust ABI minor184 remain unchanged. macOS/Linux/Windows
+all-target, C API and owning gates pass. Original full-suite failures remain
+in the evidence: Linux io_uring timing and Windows BZHI/FP16 cases, plus the
+initial Windows thread-clock failure and its passing isolated run.
+The unchanged observer reaches NtSetInformationWorkerFactory0x1B1 at42564,
+379 scheduler calls after the prior association boundary42185. All four native
+ordinary programs still fail before guest exit. NtRemoveIoCompletion and worker
+mutation/activation remain separate services. See the
+[native association evidence](../../specifications/windows/native-wait-packet-associate/README.md).
+
+Native wait-packet construction evidence (2026-10-12):
 `NtCreateWaitCompletionPacket` creates a real process-local notification-signaled
 object with measured grants and final-close lifetime. Public single/multiple
 waits admit packets and dormant legacy/IR timers. Wait-any permits duplicate
@@ -9,8 +27,8 @@ consumption. Four installed-kernel caller profiles supply 1368 observations,
 with 1228 exact constructor replays and 40 explicit namespace/security/privilege
 exclusions. Seven portable tests and eight Windows tests pass, including installed
 ARM64/WoW64 leaves. These measurements supersede native-unknown claims below only
-for the measured behavior. Association/cancellation and full application exit
-remain separate work. See the [native evidence](../../specifications/windows/native-wait-packet-create/README.md).
+for the measured behavior. Association/cancellation is described above; full
+application exit remains separate work. See the [native evidence](../../specifications/windows/native-wait-packet-create/README.md).
 
 Baseline: 4312bb48ec169c48c67ea8ab55bbacda702e5e93, branch user-win.
 The baseline tracked tree/index was clean. Unrelated pre-existing untracked

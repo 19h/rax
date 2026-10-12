@@ -1,0 +1,15 @@
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+assist-native-wait-packet-associate-owned-shipping.log 64DB6F222FFD7A6CC67EEBD03CBBFC453BA5672C6B4CFB417831E3AC0A89DAF5
+assist-native-wait-packet-associate-owned-cpp.log B0F277678BC54485CF58C6295345A12235DF27C7D420C5085B93AB253E75E214
+validated rlib: C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-owned\debug\deps\librax-e6c413934cad3a8f.rlib
+native-process-probe.cpp
+rax_process.cpp
+Generating Code...
+native-wait-packet-associate-after-ordinary-processes.log 8CC7E771BFAC70F9DFB6A86871E363055C99BCA4C8F3E88CB062BAD8AF79B126
+native-wait-packet-associate-after-production-trace-output.log 716CBE21FBA2C280BF46311A144B4CBF9A98022B450736AB6AED4F519EA3373B
+native-wait-packet-associate-after-production-trace-build.log E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855
+native-wait-packet-associate-after-artifacts.jsonl AB6C90EDF2AD7FF5FA7E23D7BEE69AFC61F22D54A8047D8FF170D66C62BAB26B
+native-wait-packet-associate-after-artifacts-stderr.log 182E0273AB1D85020FEB801D5E48B162FE456A7158FFF856876F75864DF8BCB0

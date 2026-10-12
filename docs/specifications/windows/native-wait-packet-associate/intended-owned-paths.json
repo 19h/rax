@@ -1,0 +1,32 @@
+{
+  "rax-head": "c65086555cd2b65c8643df7a1f24c21d5fde458f",
+  "root-head": "4efcbc98fcda4418d1d6cb77e66ee913a754f4b4",
+  "paths": [
+    "src/user/windows/objects.rs",
+    "src/user/windows/objects/wait_packets.rs",
+    "src/user/windows/sync.rs",
+    "src/user/windows/process/sched.rs",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/wait_packet.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/wait_packet_associate_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/wait_packet_associate_replay_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/wait_packet_associate_leaf_tests.rs",
+    "docs/architecture/user-mode/windows-services.md",
+    "src/user/windows/sync/wait_packets.rs"
+  ],
+  "baseline": {
+    "src/user/windows/objects.rs": "e656adc0e541dea22b0947a048a9f6ce90552545f78136c2d219bbb1e6a4abb8",
+    "src/user/windows/objects/wait_packets.rs": null,
+    "src/user/windows/sync.rs": "a4965639fd617397fcce7c0f8146cbc48f310566e6b59cf70ee5527c29ee7ecf",
+    "src/user/windows/process/sched.rs": "7d293a4365d725166eea0b89698f409ed0483f0c7d62763a31bf641a694201c4",
+    "src/user/windows/dll/native.rs": "6749f693e4a16a0fdb434e2a4cab93333eb866ab180a8db3639f0cd3954f65b9",
+    "src/user/windows/dll/native/wait_packet.rs": "7d4fdb4c2e2d376707c6869f1b52dea7dcb7e3eb87defe2d03ab0f1c690992fd",
+    "src/user/windows/process/sched/tests/services_tests.rs": "6a37bfc8630ccc02a8fe0bbd8ad0a3ebfb5a02ec9168017951a444163c9fd29d",
+    "src/user/windows/process/sched/tests/services_tests/wait_packet_associate_tests.rs": null,
+    "src/user/windows/process/sched/tests/services_tests/wait_packet_associate_replay_tests.rs": null,
+    "src/user/windows/process/sched/tests/services_tests/wait_packet_associate_leaf_tests.rs": null,
+    "docs/architecture/user-mode/windows-services.md": "61ed45e2caa7f026795a9d342064cbbf13b216a7337dca7414ea1b08c4bf067d",
+    "src/user/windows/sync/wait_packets.rs": null
+  }
+}

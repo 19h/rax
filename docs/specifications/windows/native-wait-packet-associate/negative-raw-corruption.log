@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-wait-packet-associate/check_native_wait_packet_associate.py", line 21, in <module>
+    p=base/name;require(p.stat().st_size==item['bytes'] and sha(p)==item['sha256'],'evidence identity '+name)
+                ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-wait-packet-associate/check_native_wait_packet_associate.py", line 6, in require
+    if not ok: raise ValueError(message)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: evidence identity native-wait-packet-association-probe-arm64.log

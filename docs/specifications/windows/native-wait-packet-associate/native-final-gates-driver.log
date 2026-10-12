@@ -1,0 +1,15 @@
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+gate targeted exit=0
+gate wait-packet-create exit=0
+gate threading exit=0
+gate timer2 exit=0
+gate worker-factory exit=0
+gate events exit=0
+gate io-completion exit=0
+gate full exit=101
+gate capi exit=0
+gate all-targets exit=0
+gate integration exit=0

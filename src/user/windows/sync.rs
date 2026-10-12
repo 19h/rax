@@ -28,6 +28,9 @@ use super::nt::status::*;
 use super::objects::{ObjId, Object};
 use super::process::Proc;
 
+mod wait_packets;
+pub(crate) use wait_packets::pump_wait_packets;
+
 /// `WAIT_ABANDONED_0`.
 pub const WAIT_ABANDONED_0: u64 = 0x80;
 /// `WAIT_IO_COMPLETION` (`STATUS_USER_APC`).
@@ -505,6 +508,7 @@ pub fn try_objects(
     objs: &[ObjId],
     all: bool,
 ) -> Result<Option<u64>, SyncError> {
+    pump_wait_packets(p)?;
     validate_objects(p, objs, all)?;
     if all {
         if objs.iter().all(|&o| signaled(p, o, tid)) {

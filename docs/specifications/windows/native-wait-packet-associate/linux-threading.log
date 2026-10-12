@@ -1,0 +1,25 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.70s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 18 tests
+test user::windows::dll::threading::tests::queued_apcs_fifo_and_alertable_sleep_flow_all_abis ... ok
+test user::windows::dll::threading::tests::manual_event_stays_signaled_until_reset_and_name_boundaries_are_checked ... ok
+test user::windows::dll::threading::tests::named_open_access_checks_and_last_error_success_preservation ... ok
+test user::windows::dll::threading::tests::semaphore_release_limits_output_fault_and_existing_counts_all_abis ... ok
+test user::windows::dll::threading::tests::suspend_resume_boundaries_and_current_real_handle_all_abis ... ok
+test user::windows::dll::threading::tests::named_event_case_namespace_collision_and_existing_properties_all_abis ... ok
+test user::windows::dll::threading::tests::creation_rejects_hostile_flags_security_and_outputs_without_publication ... ok
+test user::windows::dll::threading::tests::multiple_waits_lowest_index_wait_all_atomicity_and_duplicate_rejection ... ok
+test user::windows::dll::threading::tests::create_thread_suspended_reservation_and_handle_grant_all_abis ... ok
+test user::windows::dll::threading::tests::termination_signals_thread_object_and_apcs_fail_while_terminating ... ok
+test user::windows::dll::threading::tests::object_names_security_and_string_faults_do_not_publish_handles ... ok
+test user::windows::dll::threading::tests::switch_to_thread_accounts_for_suspension_and_loader_serialization ... ok
+test user::windows::dll::threading::tests::recursive_mutex_release_owner_and_abandonment_all_abis ... ok
+test user::windows::dll::threading::tests::parked_wait_refs_survive_handle_close_and_release_on_cancel ... ok
+test user::windows::dll::threading::tests::exhausted_or_colliding_thread_ids_fail_before_resource_mutation ... ok
+test user::windows::dll::threading::tests::exit_thread_frees_owned_tls_expansion_without_trusting_forged_teb_pointer ... ok
+test user::windows::dll::threading::tests::thread_stack_reserve_arithmetic_is_checked_and_commit_requests_fit ... ok
+test user::windows::dll::threading::tests::wait_array_fault_and_later_invalid_handle_do_not_consume_first_object ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 7616 filtered out; finished in 3.95s
+

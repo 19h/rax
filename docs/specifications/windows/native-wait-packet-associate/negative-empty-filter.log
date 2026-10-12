@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-wait-packet-associate/check_native_wait_packet_associate.py", line 108, in <module>
+    require(statuses(prefix+'targeted.log')==[(expected_tests,0,0)],'nonempty targeted '+host)
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-wait-packet-associate/check_native_wait_packet_associate.py", line 6, in require
+    if not ok: raise ValueError(message)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: nonempty targeted macos

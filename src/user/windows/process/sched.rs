@@ -118,6 +118,10 @@ impl Scheduler {
 
             let now = Instant::now();
             tick_timers(p, now);
+            if let Err(error) = sync::pump_wait_packets(p) {
+                p.fail(format!("wait-packet notification failed: {error:?}"));
+                continue;
+            }
             // Extract each thread while invoking personality code so a guest
             // callback may create/modify other threads without borrow aliases.
             let tids: Vec<u32> = p.threads.keys().copied().collect();

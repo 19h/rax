@@ -15,6 +15,9 @@ use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 use std::time::Instant;
 
+mod wait_packets;
+pub use wait_packets::CompletionPacket;
+
 /// An object identifier.
 pub type ObjId = u32;
 
@@ -148,8 +151,8 @@ pub enum Object {
     },
     /// An I/O completion port.
     CompletionPort {
-        /// Queued packets: (bytes, key, overlapped).
-        queue: std::collections::VecDeque<(u32, u64, u64)>,
+        /// Native-width completion payloads, in delivery order.
+        queue: std::collections::VecDeque<CompletionPacket>,
         /// Effective runnable-thread limit; zero requests the guest CPU count.
         /// Construction records it; completion dequeue must enforce it.
         concurrency: u32,
@@ -232,6 +235,7 @@ pub struct Objects {
     next: ObjId,
     handles: BTreeMap<u32, HandleEntry>,
     names: HashMap<String, ObjId>,
+    packets: wait_packets::PacketAssociations,
 }
 
 fn name_key(name: &str) -> String {
@@ -353,6 +357,9 @@ impl Objects {
                 self.release(*id);
             }
         }
+        if matches!(e.obj, Object::WaitCompletionPacket { .. }) {
+            self.forget_wait_packet(id);
+        }
         Some(e.obj)
     }
 
@@ -438,6 +445,16 @@ impl Objects {
             return Err(());
         }
         self.handles.remove(&key);
+        if !self.handles.values().any(|handle| handle.obj == e.obj) {
+            match self.obj(e.obj) {
+                // An independent object wait can still pin the packet.
+                Some(Object::WaitCompletionPacket { .. }) => self.forget_wait_packet(e.obj),
+                // Closing the final port handle discards existing completions,
+                // but pending associations can deliver to the retained port.
+                Some(Object::CompletionPort { .. }) => self.discard_completion_queue(e.obj),
+                _ => {}
+            }
+        }
         Ok(self.release(e.obj))
     }
 
@@ -487,6 +504,7 @@ impl Objects {
     pub fn drain(&mut self) -> impl Iterator<Item = Object> + '_ {
         self.handles.clear();
         self.names.clear();
+        self.packets = Default::default();
         self.objs.drain().map(|(_, entry)| entry.obj)
     }
 

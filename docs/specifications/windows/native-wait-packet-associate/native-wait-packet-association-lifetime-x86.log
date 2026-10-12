@@ -1,0 +1,125 @@
+lifetime=0 closemode=0 width=4
+counts=before port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+state=associate width=4 status=00000000 exception=00000000 already=00 packet-wait=00000000
+counts=associated port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+counts=after-close-or-cancel port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+counts=after-signal port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+lifetime-remove=00000102 io-status=00000000 information=0
+counts=after-remove port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+lifetime-complete handles-before=79 handles-after=79
+lifetime=0 closemode=1 width=4
+counts=before port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+state=associate width=4 status=00000000 exception=00000000 already=00 packet-wait=00000000
+counts=associated port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+counts=after-close-or-cancel port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+counts=after-alias port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+counts=after-signal port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+lifetime-remove=00000102 io-status=00000000 information=0
+counts=after-remove port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+lifetime-complete handles-before=79 handles-after=79
+lifetime=0 closemode=2 width=4
+counts=before port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+state=associate width=4 status=00000000 exception=00000000 already=00 packet-wait=00000000
+counts=associated port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+counts=after-close-or-cancel port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+counts=after-signal port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+lifetime-remove=00000102 io-status=00000000 information=0
+counts=after-remove port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+lifetime-complete handles-before=79 handles-after=79
+lifetime=1 closemode=0 width=4
+counts=before port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+state=associate width=4 status=00000000 exception=00000000 already=01 packet-wait=00000000
+counts=associated port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+counts=after-close-or-cancel port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+counts=after-signal port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+lifetime-remove=00000102 io-status=00000000 information=0
+counts=after-remove port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+lifetime-complete handles-before=79 handles-after=79
+lifetime=1 closemode=1 width=4
+counts=before port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+state=associate width=4 status=00000000 exception=00000000 already=01 packet-wait=00000000
+counts=associated port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+counts=after-close-or-cancel port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+counts=after-alias port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+counts=after-signal port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+lifetime-remove=00000102 io-status=00000000 information=0
+counts=after-remove port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+lifetime-complete handles-before=79 handles-after=79
+lifetime=1 closemode=2 width=4
+counts=before port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+state=associate width=4 status=00000000 exception=00000000 already=01 packet-wait=00000000
+counts=associated port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+counts=after-close-or-cancel port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+counts=after-signal port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+lifetime-remove=00000102 io-status=00000000 information=0
+counts=after-remove port-status=C0000004 port-handles=0 port-pointers=0 target-status=C0000004 target-handles=0 target-pointers=0 length=0
+lifetime-complete handles-before=79 handles-after=79
+target-kind=0 width=4 status=00000000 exception=00000000 already=01 cancel=00000000 target-wait=00000000 handles-before=79 handles-after=79
+target-kind=1 width=4 status=00000000 exception=00000000 already=01 cancel=00000000 target-wait=00000102 handles-before=79 handles-after=79
+target-kind=2 width=4 status=00000000 exception=00000000 already=00 cancel=00000000 target-wait=00000102 handles-before=79 handles-after=79
+target-kind=3 width=4 status=00000000 exception=00000000 already=00 cancel=00000000 target-wait=00000102 handles-before=79 handles-after=79
+target-kind=4 width=4 status=C00000F1 exception=00000000 already=A5 cancel=C0000120 target-wait=00000000 handles-before=79 handles-after=79
+target-kind=5 width=4 status=00000000 exception=00000000 already=01 cancel=00000000 target-wait=00000102 handles-before=79 handles-after=79
+target-kind=6 width=4 status=00000000 exception=00000000 already=00 cancel=00000000 target-wait=00000102 handles-before=79 handles-after=79
+target-kind=7 width=4 status=00000000 exception=00000000 already=00 cancel=00000000 target-wait=00000102 handles-before=79 handles-after=79
+target-kind=8 width=4 status=00000000 exception=00000000 already=00 cancel=00000000 target-wait=00000102 handles-before=79 handles-after=79
+target-kind=9 width=4 status=C00000F1 exception=00000000 already=A5 cancel=C0000120 target-wait=00000000 handles-before=79 handles-after=79
+target-kind=10 width=4 status=C00000F1 exception=00000000 already=A5 cancel=C0000120 target-wait=00000102 handles-before=79 handles-after=79
+target-kind=11 width=4 status=00000000 exception=00000000 already=01 cancel=00000000 target-wait=00000000 handles-before=79 handles-after=79
+target-kind=12 width=4 status=C0000022 exception=00000000 already=A5 cancel=C0000120 target-wait=FFFFFFFF handles-before=79 handles-after=79
+cancel-mode=0 flag=0 width=4 status=C0000120 handles-before=79 handles-after=79
+cancel-mode=0 flag=1 width=4 status=C0000120 handles-before=79 handles-after=79
+cancel-mode=0 flag=2 width=4 status=C0000120 handles-before=79 handles-after=79
+cancel-mode=0 flag=128 width=4 status=C0000120 handles-before=79 handles-after=79
+cancel-mode=0 flag=255 width=4 status=C0000120 handles-before=79 handles-after=79
+cancel-mode=1 flag=0 width=4 status=C0000008 handles-before=79 handles-after=79
+cancel-mode=1 flag=1 width=4 status=C0000008 handles-before=79 handles-after=79
+cancel-mode=1 flag=2 width=4 status=C0000008 handles-before=79 handles-after=79
+cancel-mode=1 flag=128 width=4 status=C0000008 handles-before=79 handles-after=79
+cancel-mode=1 flag=255 width=4 status=C0000008 handles-before=79 handles-after=79
+cancel-mode=2 flag=0 width=4 status=C0000008 handles-before=79 handles-after=79
+cancel-mode=2 flag=1 width=4 status=C0000008 handles-before=79 handles-after=79
+cancel-mode=2 flag=2 width=4 status=C0000008 handles-before=79 handles-after=79
+cancel-mode=2 flag=128 width=4 status=C0000008 handles-before=79 handles-after=79
+cancel-mode=2 flag=255 width=4 status=C0000008 handles-before=79 handles-after=79
+cancel-mode=3 flag=0 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=3 flag=1 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=3 flag=2 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=3 flag=128 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=3 flag=255 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=4 flag=0 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=4 flag=1 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=4 flag=2 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=4 flag=128 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=4 flag=255 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=5 flag=0 width=4 status=C0000022 handles-before=79 handles-after=79
+cancel-mode=5 flag=1 width=4 status=C0000022 handles-before=79 handles-after=79
+cancel-mode=5 flag=2 width=4 status=C0000022 handles-before=79 handles-after=79
+cancel-mode=5 flag=128 width=4 status=C0000022 handles-before=79 handles-after=79
+cancel-mode=5 flag=255 width=4 status=C0000022 handles-before=79 handles-after=79
+cancel-mode=6 flag=0 width=4 status=C0000120 handles-before=79 handles-after=79
+cancel-mode=6 flag=1 width=4 status=C0000120 handles-before=79 handles-after=79
+cancel-mode=6 flag=2 width=4 status=C0000120 handles-before=79 handles-after=79
+cancel-mode=6 flag=128 width=4 status=C0000120 handles-before=79 handles-after=79
+cancel-mode=6 flag=255 width=4 status=C0000120 handles-before=79 handles-after=79
+cancel-mode=7 flag=0 width=4 status=C0000022 handles-before=79 handles-after=79
+cancel-mode=7 flag=1 width=4 status=C0000022 handles-before=79 handles-after=79
+cancel-mode=7 flag=2 width=4 status=C0000022 handles-before=79 handles-after=79
+cancel-mode=7 flag=128 width=4 status=C0000022 handles-before=79 handles-after=79
+cancel-mode=7 flag=255 width=4 status=C0000022 handles-before=79 handles-after=79
+cancel-mode=8 flag=0 width=4 status=C0000022 handles-before=79 handles-after=79
+cancel-mode=8 flag=1 width=4 status=C0000022 handles-before=79 handles-after=79
+cancel-mode=8 flag=2 width=4 status=C0000022 handles-before=79 handles-after=79
+cancel-mode=8 flag=128 width=4 status=C0000022 handles-before=79 handles-after=79
+cancel-mode=8 flag=255 width=4 status=C0000022 handles-before=79 handles-after=79
+cancel-mode=9 flag=0 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=9 flag=1 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=9 flag=2 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=9 flag=128 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=9 flag=255 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=10 flag=0 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=10 flag=1 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=10 flag=2 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=10 flag=128 width=4 status=C0000024 handles-before=79 handles-after=79
+cancel-mode=10 flag=255 width=4 status=C0000024 handles-before=79 handles-after=79
+complete lifetime=6 targets=13 cancel=55

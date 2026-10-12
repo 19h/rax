@@ -1,0 +1,12 @@
+queued-flag=0 boolean=0 width=8 associate=00000000 already=1 cancel=00000103 removed=00000000 cancel-again=C0000120 handles-before=55 handles-after=55
+queued-flag=1 boolean=1 width=8 associate=00000000 already=1 cancel=00000000 removed=00000102 cancel-again=C0000120 handles-before=55 handles-after=55
+queued-flag=2 boolean=2 width=8 associate=00000000 already=1 cancel=00000000 removed=00000102 cancel-again=C0000120 handles-before=55 handles-after=55
+queued-flag=127 boolean=127 width=8 associate=00000000 already=1 cancel=00000000 removed=00000102 cancel-again=C0000120 handles-before=55 handles-after=55
+queued-flag=128 boolean=128 width=8 associate=00000000 already=1 cancel=00000000 removed=00000102 cancel-again=C0000120 handles-before=55 handles-after=55
+queued-flag=255 boolean=255 width=8 associate=00000000 already=1 cancel=00000000 removed=00000102 cancel-again=C0000120 handles-before=55 handles-after=55
+queued-flag=256 boolean=0 width=8 associate=00000000 already=1 cancel=00000103 removed=00000000 cancel-again=C0000120 handles-before=55 handles-after=55
+dependency-close=0 initial=0 width=8 associate=00000000 already=0 close=00000000 signal=00000000 cancel-false=00000103 cancel-true=00000000 handles-before=55 handles-after=55
+dependency-close=1 initial=0 width=8 associate=00000000 already=0 close=00000000 signal=DEADBEEF cancel-false=00000000 cancel-true=C0000120 handles-before=55 handles-after=55
+dependency-close=0 initial=1 width=8 associate=00000000 already=1 close=00000000 signal=00000000 cancel-false=C0000120 cancel-true=C0000120 handles-before=55 handles-after=55
+dependency-close=1 initial=1 width=8 associate=00000000 already=1 close=00000000 signal=DEADBEEF cancel-false=00000103 cancel-true=00000000 handles-before=55 handles-after=55
+complete queued=7 dependencies=4

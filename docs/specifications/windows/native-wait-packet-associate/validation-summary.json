@@ -1,0 +1,103 @@
+{
+  "baseline-rax": "c65086555cd2b65c8643df7a1f24c21d5fde458f",
+  "compiled-root": "4efcbc98fcda4418d1d6cb77e66ee913a754f4b4",
+  "macos-linux-owning-root": "e2fc5b483be7cad2dae17d889690cc398973c5e8",
+  "owning-root-code-parity": "Only two engineering documents and the gitlink differ; no owning source/config/resource changes.",
+  "native-profile": "Windows 11 ARM64 10.0.29683.1000; x64/x86 compatibility profiles",
+  "replays": {
+    "validation": 540,
+    "transitions": 60,
+    "cancellation": 220,
+    "targets": 52,
+    "busy-order": 80,
+    "total": 996,
+    "queued-boundaries": 44
+  },
+  "tests": {
+    "targeted": {
+      "macos": 9,
+      "linux": 9,
+      "windows": 10
+    },
+    "full": {
+      "macos": {
+        "pass": 7638,
+        "fail": 0,
+        "ignored": 2
+      },
+      "linux": {
+        "pass": 7629,
+        "fail": 3,
+        "ignored": 2
+      },
+      "windows": {
+        "pass": 7037,
+        "fail": 5,
+        "ignored": 2
+      }
+    },
+    "capi": {
+      "macos": 168,
+      "linux": 168,
+      "windows": 168
+    },
+    "integration": {
+      "macos": 544,
+      "linux": 544,
+      "windows": 4
+    },
+    "owning-cpp": {
+      "macos": 5,
+      "linux": 5,
+      "windows": 5
+    },
+    "macos-ctest": 7
+  },
+  "frontier": {
+    "before": {
+      "turn": 42185,
+      "service": "NtAssociateWaitCompletionPacket",
+      "svc": "0x92",
+      "pc": "0x180001960"
+    },
+    "after": {
+      "turn": 42564,
+      "service": "NtSetInformationWorkerFactory",
+      "svc": "0x1b1",
+      "pc": "0x180002b50",
+      "arguments": [
+        "0x20",
+        "0x5",
+        "0xabe720",
+        "0x4"
+      ]
+    },
+    "delta-scheduler-calls": 379,
+    "observer-bytes": 11177,
+    "observer-sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e",
+    "ordinary-programs": 4,
+    "ordinary-reason": 5,
+    "ordinary-exit-field": 0,
+    "guest-exit": "not reached"
+  },
+  "source-overlay": {
+    "files": 16583,
+    "patches": 115,
+    "errors": 0,
+    "offline-adapter-bytes": 374
+  },
+  "native-owning": {
+    "source-hashes": 37,
+    "helper-hashes": 2,
+    "core-features": []
+  },
+  "limitations": [
+    "NtRemoveIoCompletion and worker-factory mutation/activation remain separate unimplemented services.",
+    "Linux full-suite timeout failures and initial-attempt failures are retained; all three unchanged isolated timeout cases pass.",
+    "Windows four BZHI and one FP16 lowering failures are retained; the initial thread-clock failure and its isolated passing run are also retained.",
+    "Cause of timing-result variation is unknown.",
+    "Mixed ordinary-wait/association fairness is not measured; Windows auto-reset event thread selection has no FIFO guarantee.",
+    "Native pointer counts vary; the cause and exact kernel reference ownership counts are unknown.",
+    "No physical Windows x64 execution proof; Linux amd64 execution uses CPU translation."
+  ]
+}

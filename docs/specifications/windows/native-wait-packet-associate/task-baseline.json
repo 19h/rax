@@ -1,0 +1,26 @@
+{
+  "root-head": "e2fc5b483be7cad2dae17d889690cc398973c5e8",
+  "rax-parent": "c65086555cd2b65c8643df7a1f24c21d5fde458f",
+  "ordinary-frontier": {
+    "turn": 42185,
+    "service": "NtAssociateWaitCompletionPacket",
+    "svc": "0x92",
+    "pc": "0x180001960",
+    "arguments": [
+      "0x28",
+      "0x1c",
+      "0x24",
+      "0x1103320",
+      "0x11032f0",
+      "0",
+      "1",
+      "0xabe640"
+    ]
+  },
+  "scope": "Independent native association/cancellation/lifetime/completion evidence before production edits.",
+  "published-root": "4efcbc98fcda4418d1d6cb77e66ee913a754f4b4",
+  "producer-source": {
+    "bytes": 4047,
+    "sha256": "d56496b17269ce832630c3f50e809d79ccbd4ecb64195c0a7d772a502ff659ab"
+  }
+}

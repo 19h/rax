@@ -102,6 +102,18 @@ pub(super) static EXPORTS: &[Export] = &[
         wait_packet::create,
     ),
     Export::func(
+        "NtAssociateWaitCompletionPacket",
+        Stdcall,
+        &[Ptr, Ptr, Ptr, Ptr, Ptr, I32, Ptr, Ptr],
+        wait_packet::associate,
+    ),
+    Export::func(
+        "NtCancelWaitCompletionPacket",
+        Stdcall,
+        &[Ptr, I32],
+        wait_packet::cancel,
+    ),
+    Export::func(
         "NtCreateTimer2",
         Stdcall,
         &[Ptr, Ptr, Ptr, I32, I32],

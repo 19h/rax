@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-wait-packet-associate/check_native_wait_packet_associate.py", line 142, in <module>
+    require(summary['tests']['targeted']=={'macos':9,'linux':9,'windows':10},'targeted stdout-bound summary')
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-wait-packet-associate/check_native_wait_packet_associate.py", line 6, in require
+    if not ok: raise ValueError(message)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: targeted stdout-bound summary

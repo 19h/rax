@@ -1,0 +1,27 @@
+order=0 busy=0 width=8 status=00000000 exception=00000000 already=00 handles-before=71 handles-after=71
+order=1 busy=0 width=8 status=C0000008 exception=00000000 already=A5 handles-before=71 handles-after=71
+order=2 busy=0 width=8 status=C0000024 exception=00000000 already=A5 handles-before=71 handles-after=71
+order=3 busy=0 width=8 status=C0000022 exception=00000000 already=A5 handles-before=71 handles-after=71
+order=4 busy=0 width=8 status=C0000008 exception=00000000 already=A5 handles-before=71 handles-after=71
+order=5 busy=0 width=8 status=C0000024 exception=00000000 already=A5 handles-before=71 handles-after=71
+order=6 busy=0 width=8 status=C0000022 exception=00000000 already=A5 handles-before=71 handles-after=71
+order=7 busy=0 width=8 status=C0000008 exception=00000000 already=A5 handles-before=71 handles-after=71
+order=8 busy=0 width=8 status=C0000022 exception=00000000 already=A5 handles-before=71 handles-after=71
+order=9 busy=0 width=8 status=C00000F1 exception=00000000 already=A5 handles-before=71 handles-after=71
+order=0 busy=1 width=8 status=C00000EF exception=00000000 already=A5 handles-before=71 handles-after=71
+order=1 busy=1 width=8 status=C0000008 exception=00000000 already=A5 handles-before=71 handles-after=71
+order=2 busy=1 width=8 status=C0000024 exception=00000000 already=A5 handles-before=71 handles-after=71
+order=3 busy=1 width=8 status=C0000022 exception=00000000 already=A5 handles-before=71 handles-after=71
+order=4 busy=1 width=8 status=C0000008 exception=00000000 already=A5 handles-before=71 handles-after=71
+order=5 busy=1 width=8 status=C0000024 exception=00000000 already=A5 handles-before=71 handles-after=71
+order=6 busy=1 width=8 status=C0000022 exception=00000000 already=A5 handles-before=71 handles-after=71
+order=7 busy=1 width=8 status=C0000008 exception=00000000 already=A5 handles-before=71 handles-after=71
+order=8 busy=1 width=8 status=C0000022 exception=00000000 already=A5 handles-before=71 handles-after=71
+order=9 busy=1 width=8 status=C00000F1 exception=00000000 already=A5 handles-before=71 handles-after=71
+fifo-kind=0 step=0 width=8 associate-second=00000000 associate-first=00000000 removed=00000000 key=2 information=2 target-wait=00000102
+fifo-kind=0 step=1 width=8 associate-second=00000000 associate-first=00000000 removed=00000000 key=1 information=1 target-wait=00000102
+fifo-complete=0 handles-before=71 handles-after=71
+fifo-kind=1 step=0 width=8 associate-second=00000000 associate-first=00000000 removed=00000000 key=2 information=2 target-wait=00000102
+fifo-kind=1 step=1 width=8 associate-second=00000000 associate-first=00000000 removed=00000000 key=1 information=1 target-wait=00000102
+fifo-complete=1 handles-before=71 handles-after=71
+complete order=20 fifo=4

@@ -1,0 +1,844 @@
+﻿{
+    "producer":  [
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-probe-arm64\\native-wait-packet-association-probe-arm64.exe",
+                         "family":  "probe",
+                         "bytes":  146432,
+                         "sha256":  "0BD61D8726B32C25E6053F421E71A07C1DA13C491F57E402E094DC8D3A602B11"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-probe-arm64\\native-wait-packet-association-probe-arm64.log",
+                         "family":  "probe",
+                         "bytes":  7304,
+                         "sha256":  "FEC95CD907DD137D3FC0B6289AC98E0F5F44B03AB86E7986CBC4F2C6EC0EF1B7"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-probe-arm64\\native-wait-packet-association-probe-arm64-build.log",
+                         "family":  "probe",
+                         "bytes":  42,
+                         "sha256":  "D098F45CEA606078CD0D943293CC1D81B56CEADC3F986FFA76A8ACAE60859A65"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-probe-x64\\native-wait-packet-association-probe-x64.exe",
+                         "family":  "probe",
+                         "bytes":  143872,
+                         "sha256":  "04D31277E6164922153D3B155AC8A7ADF2237CC6B10746D15621ABA2C84AAE2F"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-probe-x64\\native-wait-packet-association-probe-x64.log",
+                         "family":  "probe",
+                         "bytes":  7304,
+                         "sha256":  "DB320D454A06EE22188C960189E587E3926C5091A8E032F85FB6E9706A4EEECB"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-probe-x64\\native-wait-packet-association-probe-x64-build.log",
+                         "family":  "probe",
+                         "bytes":  42,
+                         "sha256":  "D098F45CEA606078CD0D943293CC1D81B56CEADC3F986FFA76A8ACAE60859A65"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-probe-x86\\native-wait-packet-association-probe-x86.exe",
+                         "family":  "probe",
+                         "bytes":  119296,
+                         "sha256":  "F350C7E2FFAF3ED24E480EB08F263AB7DEABC0F9A7CFE05BA5DAD38C8C33A828"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-probe-x86\\native-wait-packet-association-probe-x86.log",
+                         "family":  "probe",
+                         "bytes":  6944,
+                         "sha256":  "DD009917C0E629DC0A1386CD4680A70483975AE96701D0D148229F9C784B43DF"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-probe-x86\\native-wait-packet-association-probe-x86-build.log",
+                         "family":  "probe",
+                         "bytes":  42,
+                         "sha256":  "D098F45CEA606078CD0D943293CC1D81B56CEADC3F986FFA76A8ACAE60859A65"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-probe-x86-laa\\native-wait-packet-association-probe-x86-laa.exe",
+                         "family":  "probe",
+                         "bytes":  119296,
+                         "sha256":  "9866AD16E88887E2A4F65F21CBC6FC31EC4E2BC64398F923DD65E763BF44EE64"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-probe-x86-laa\\native-wait-packet-association-probe-x86-laa.log",
+                         "family":  "probe",
+                         "bytes":  6944,
+                         "sha256":  "DD009917C0E629DC0A1386CD4680A70483975AE96701D0D148229F9C784B43DF"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-probe-x86-laa\\native-wait-packet-association-probe-x86-laa-build.log",
+                         "family":  "probe",
+                         "bytes":  42,
+                         "sha256":  "D098F45CEA606078CD0D943293CC1D81B56CEADC3F986FFA76A8ACAE60859A65"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-validation-arm64\\native-wait-packet-association-validation-arm64.exe",
+                         "family":  "validation",
+                         "bytes":  148992,
+                         "sha256":  "24510C5A169AE705E5A09B67BD58C878A09E59C156033471A96A214A74B7EC2A"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-validation-arm64\\native-wait-packet-association-validation-arm64.log",
+                         "family":  "validation",
+                         "bytes":  30229,
+                         "sha256":  "CEE34C85DE9C2EF8BD4A15E08EE2BE9FB6DEB13DECD0D3D90FF83D2B2D751CA0"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-validation-arm64\\native-wait-packet-association-validation-arm64-build.log",
+                         "family":  "validation",
+                         "bytes":  47,
+                         "sha256":  "FEB87C64AAE9281FF792DDE1ED6FBF644D0222472DB470AC2448CCCDA2BF89BA"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-validation-x64\\native-wait-packet-association-validation-x64.exe",
+                         "family":  "validation",
+                         "bytes":  146944,
+                         "sha256":  "1EAFAC96C0DD33E284801F4F44BA4200D6380E944185DBEEC8BD39CAB2756F90"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-validation-x64\\native-wait-packet-association-validation-x64.log",
+                         "family":  "validation",
+                         "bytes":  30229,
+                         "sha256":  "15898D58D2FFEB06B5B585DC713D5BB9E57D9404F8533D24AE8A6E7A09A5A879"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-validation-x64\\native-wait-packet-association-validation-x64-build.log",
+                         "family":  "validation",
+                         "bytes":  47,
+                         "sha256":  "FEB87C64AAE9281FF792DDE1ED6FBF644D0222472DB470AC2448CCCDA2BF89BA"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-validation-x86\\native-wait-packet-association-validation-x86.exe",
+                         "family":  "validation",
+                         "bytes":  121344,
+                         "sha256":  "16689188A18785C26C39D1186F7683EEC2A397AFB2578D8DE303FE2089F0F8D4"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-validation-x86\\native-wait-packet-association-validation-x86.log",
+                         "family":  "validation",
+                         "bytes":  30181,
+                         "sha256":  "790C05796469CA78D468326E526C2B5216D8E0F8F27AC07C275CB2DCE34E0835"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-validation-x86\\native-wait-packet-association-validation-x86-build.log",
+                         "family":  "validation",
+                         "bytes":  47,
+                         "sha256":  "FEB87C64AAE9281FF792DDE1ED6FBF644D0222472DB470AC2448CCCDA2BF89BA"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-validation-x86-laa\\native-wait-packet-association-validation-x86-laa.exe",
+                         "family":  "validation",
+                         "bytes":  121344,
+                         "sha256":  "D8478E3692EA06B67E4E95B41584BF4654021C9C795D848D65F44A406892A3B8"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-validation-x86-laa\\native-wait-packet-association-validation-x86-laa.log",
+                         "family":  "validation",
+                         "bytes":  30181,
+                         "sha256":  "790C05796469CA78D468326E526C2B5216D8E0F8F27AC07C275CB2DCE34E0835"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-validation-x86-laa\\native-wait-packet-association-validation-x86-laa-build.log",
+                         "family":  "validation",
+                         "bytes":  47,
+                         "sha256":  "FEB87C64AAE9281FF792DDE1ED6FBF644D0222472DB470AC2448CCCDA2BF89BA"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-arm64\\native-wait-packet-association-lifetime-arm64.exe",
+                         "family":  "lifetime",
+                         "bytes":  150528,
+                         "sha256":  "29A0FE482F7936DDCAC41E6AE769A23C823123E41D500329DD30A1D7C18A4964"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-arm64\\native-wait-packet-association-lifetime-arm64.log",
+                         "family":  "lifetime",
+                         "bytes":  12288,
+                         "sha256":  "B03722338730565F45CE4F40E71A6F9AC643993D138B2DCBCD036649F8E4EE52"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-arm64\\native-wait-packet-association-lifetime-arm64-build.log",
+                         "family":  "lifetime",
+                         "bytes":  45,
+                         "sha256":  "E42521215CEBDD35E55F0BEFDBDBD7D32694442F08A90689306DB0A9738C99F3"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-x64\\native-wait-packet-association-lifetime-x64.exe",
+                         "family":  "lifetime",
+                         "bytes":  147456,
+                         "sha256":  "3466B8CBAEE40368EA8230177547B8BFB174159BAC87DF0F577B9E16DA1BDA66"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-x64\\native-wait-packet-association-lifetime-x64.log",
+                         "family":  "lifetime",
+                         "bytes":  12288,
+                         "sha256":  "AB0D52512DF3B7F660FABEC363E8DBAB576F83232B17C3AC396719E3247FB808"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-x64\\native-wait-packet-association-lifetime-x64-build.log",
+                         "family":  "lifetime",
+                         "bytes":  45,
+                         "sha256":  "E42521215CEBDD35E55F0BEFDBDBD7D32694442F08A90689306DB0A9738C99F3"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-x86\\native-wait-packet-association-lifetime-x86.exe",
+                         "family":  "lifetime",
+                         "bytes":  122368,
+                         "sha256":  "A760D8EDDF2F5F630F14264DF00EE207FBE001218F3A69039020AAD3D13150B9"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-x86\\native-wait-packet-association-lifetime-x86.log",
+                         "family":  "lifetime",
+                         "bytes":  12288,
+                         "sha256":  "3816E449014E2893D79E97FFA7C5E0A72C00216E1A7531B93545C0B426EA768C"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-x86\\native-wait-packet-association-lifetime-x86-build.log",
+                         "family":  "lifetime",
+                         "bytes":  45,
+                         "sha256":  "E42521215CEBDD35E55F0BEFDBDBD7D32694442F08A90689306DB0A9738C99F3"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-x86-laa\\native-wait-packet-association-lifetime-x86-laa.exe",
+                         "family":  "lifetime",
+                         "bytes":  122368,
+                         "sha256":  "AF81AC50F88284E5CCFC4BD756A5D35AA7D366CDCC1A8B2C2CEE6605A0038A41"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-x86-laa\\native-wait-packet-association-lifetime-x86-laa.log",
+                         "family":  "lifetime",
+                         "bytes":  12288,
+                         "sha256":  "3816E449014E2893D79E97FFA7C5E0A72C00216E1A7531B93545C0B426EA768C"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-x86-laa\\native-wait-packet-association-lifetime-x86-laa-build.log",
+                         "family":  "lifetime",
+                         "bytes":  45,
+                         "sha256":  "E42521215CEBDD35E55F0BEFDBDBD7D32694442F08A90689306DB0A9738C99F3"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-v2-arm64\\native-wait-packet-association-lifetime-v2-arm64.exe",
+                         "family":  "lifetime-v2",
+                         "bytes":  150528,
+                         "sha256":  "A5E688CE8A1DD3EF1588E92D5BFE11EB34365652C0EC9CAF9AC758D9575155D0"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-v2-arm64\\native-wait-packet-association-lifetime-v2-arm64.log",
+                         "family":  "lifetime-v2",
+                         "bytes":  12606,
+                         "sha256":  "4DBE43F53077C88AD12599EE5220B1B3986C250313D5055820EC3332F3392CFC"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-v2-arm64\\native-wait-packet-association-lifetime-v2-arm64-build.log",
+                         "family":  "lifetime-v2",
+                         "bytes":  48,
+                         "sha256":  "97BECAF760874565A1F6B22FCAB04BF7EEAB088386F41CB79A2B2EE077AAB354"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-v2-x64\\native-wait-packet-association-lifetime-v2-x64.exe",
+                         "family":  "lifetime-v2",
+                         "bytes":  147456,
+                         "sha256":  "4D3F64EE95C72164C1FD1F22B46F7E304E5C9E066482ECC31113143206B665E0"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-v2-x64\\native-wait-packet-association-lifetime-v2-x64.log",
+                         "family":  "lifetime-v2",
+                         "bytes":  12606,
+                         "sha256":  "5715097CD57A659E501CE8C718E49D71CF684C0463B2A7AC30DAE04E2155D0C5"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-v2-x64\\native-wait-packet-association-lifetime-v2-x64-build.log",
+                         "family":  "lifetime-v2",
+                         "bytes":  48,
+                         "sha256":  "97BECAF760874565A1F6B22FCAB04BF7EEAB088386F41CB79A2B2EE077AAB354"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-v2-x86\\native-wait-packet-association-lifetime-v2-x86.exe",
+                         "family":  "lifetime-v2",
+                         "bytes":  122368,
+                         "sha256":  "10079A9FA6DA064CA707BB17D84FB783D670BE7E88FDCDD8A9C9AA34536B6828"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-v2-x86\\native-wait-packet-association-lifetime-v2-x86.log",
+                         "family":  "lifetime-v2",
+                         "bytes":  12590,
+                         "sha256":  "919F6790A0476F9635ED69057C534C2227644C7FB8619A1E97FA49183A3601E5"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-v2-x86\\native-wait-packet-association-lifetime-v2-x86-build.log",
+                         "family":  "lifetime-v2",
+                         "bytes":  48,
+                         "sha256":  "97BECAF760874565A1F6B22FCAB04BF7EEAB088386F41CB79A2B2EE077AAB354"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-v2-x86-laa\\native-wait-packet-association-lifetime-v2-x86-laa.exe",
+                         "family":  "lifetime-v2",
+                         "bytes":  122368,
+                         "sha256":  "E17A8DA3451866186E454DDBC7A8144FFDAD3F357E1AD628D5CDC9EA901F208F"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-v2-x86-laa\\native-wait-packet-association-lifetime-v2-x86-laa.log",
+                         "family":  "lifetime-v2",
+                         "bytes":  12590,
+                         "sha256":  "919F6790A0476F9635ED69057C534C2227644C7FB8619A1E97FA49183A3601E5"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-v2-x86-laa\\native-wait-packet-association-lifetime-v2-x86-laa-build.log",
+                         "family":  "lifetime-v2",
+                         "bytes":  48,
+                         "sha256":  "97BECAF760874565A1F6B22FCAB04BF7EEAB088386F41CB79A2B2EE077AAB354"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-order-arm64\\native-wait-packet-association-order-arm64.exe",
+                         "family":  "order",
+                         "bytes":  148480,
+                         "sha256":  "81407FC3722A8CC967F7EF8E42FCDD29BF16C83842F1D480DC00DAB3DD423465"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-order-arm64\\native-wait-packet-association-order-arm64.log",
+                         "family":  "order",
+                         "bytes":  2778,
+                         "sha256":  "DA33F3038C7F93FE3DC0F28857F9928569CC206CF7271786384351D65425CA36"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-order-arm64\\native-wait-packet-association-order-arm64-build.log",
+                         "family":  "order",
+                         "bytes":  42,
+                         "sha256":  "E4E942464F8B332E39CDB8CC63A3DED414D16D42A60EA790794D7A40B4EAD2E0"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-order-x64\\native-wait-packet-association-order-x64.exe",
+                         "family":  "order",
+                         "bytes":  145408,
+                         "sha256":  "D875A9E5D91DB7026EDE45445FAACD796719477E6C166DAE9122A3197C055910"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-order-x64\\native-wait-packet-association-order-x64.log",
+                         "family":  "order",
+                         "bytes":  2778,
+                         "sha256":  "13F2A27A12896F43CCA366971058D6F0465D29E2F62D1DDA63E8EF1530C22724"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-order-x64\\native-wait-packet-association-order-x64-build.log",
+                         "family":  "order",
+                         "bytes":  42,
+                         "sha256":  "E4E942464F8B332E39CDB8CC63A3DED414D16D42A60EA790794D7A40B4EAD2E0"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-order-x86\\native-wait-packet-association-order-x86.exe",
+                         "family":  "order",
+                         "bytes":  120832,
+                         "sha256":  "EA7706F4F98AABA272515A0F0097A9C901C3AD9C7299943F8FC0A9CFD39FC87C"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-order-x86\\native-wait-packet-association-order-x86.log",
+                         "family":  "order",
+                         "bytes":  2778,
+                         "sha256":  "E833EC39E57245D56AB5F9DCBF5A338E65E70D916B1BC15732BBFA609684F54F"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-order-x86\\native-wait-packet-association-order-x86-build.log",
+                         "family":  "order",
+                         "bytes":  42,
+                         "sha256":  "E4E942464F8B332E39CDB8CC63A3DED414D16D42A60EA790794D7A40B4EAD2E0"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-order-x86-laa\\native-wait-packet-association-order-x86-laa.exe",
+                         "family":  "order",
+                         "bytes":  120832,
+                         "sha256":  "10A3FAC82A7A0B99E91AC569B93FA4FCFD9097E05D005B048EA216B15FFE6257"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-order-x86-laa\\native-wait-packet-association-order-x86-laa.log",
+                         "family":  "order",
+                         "bytes":  2778,
+                         "sha256":  "E833EC39E57245D56AB5F9DCBF5A338E65E70D916B1BC15732BBFA609684F54F"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-order-x86-laa\\native-wait-packet-association-order-x86-laa-build.log",
+                         "family":  "order",
+                         "bytes":  42,
+                         "sha256":  "E4E942464F8B332E39CDB8CC63A3DED414D16D42A60EA790794D7A40B4EAD2E0"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-boundaries-arm64\\native-wait-packet-association-boundaries-arm64.exe",
+                         "family":  "boundaries",
+                         "bytes":  147968,
+                         "sha256":  "BF12EF90B1167F70D4C74C4252ABB4D648E12FFD5261546B8FEC3F49946E3D5B"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-boundaries-arm64\\native-wait-packet-association-boundaries-arm64.log",
+                         "family":  "boundaries",
+                         "bytes":  1816,
+                         "sha256":  "53E659632E6E75366EA564A10E60BA31DB7F82D06020C911DEA5A4B68AC013A7"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-boundaries-arm64\\native-wait-packet-association-boundaries-arm64-build.log",
+                         "family":  "boundaries",
+                         "bytes":  47,
+                         "sha256":  "FDAEE74F270A11F329B1FAE20C7B305949B6EEC2AAA25111299E24F8A3FA5663"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-boundaries-x64\\native-wait-packet-association-boundaries-x64.exe",
+                         "family":  "boundaries",
+                         "bytes":  144896,
+                         "sha256":  "6334ADEEE45CDDE08EE1C94336F52AAD5744E32ED55A658161DF4F9900EB942E"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-boundaries-x64\\native-wait-packet-association-boundaries-x64.log",
+                         "family":  "boundaries",
+                         "bytes":  1816,
+                         "sha256":  "2992BBAA5F6B75EF46997A53E163A3A6E1F489FB729AE59219A70D74D54ACC59"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-boundaries-x64\\native-wait-packet-association-boundaries-x64-build.log",
+                         "family":  "boundaries",
+                         "bytes":  47,
+                         "sha256":  "FDAEE74F270A11F329B1FAE20C7B305949B6EEC2AAA25111299E24F8A3FA5663"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-boundaries-x86\\native-wait-packet-association-boundaries-x86.exe",
+                         "family":  "boundaries",
+                         "bytes":  119808,
+                         "sha256":  "DD8B36D6DDADDE1ABAAB42C61E13A71DCAFBF7B021269D5589FFD141EFAE064B"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-boundaries-x86\\native-wait-packet-association-boundaries-x86.log",
+                         "family":  "boundaries",
+                         "bytes":  1816,
+                         "sha256":  "C28D8BC8D96D6C5253F301C8EEA654113498C0EA6290F11189D3213A8F047396"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-boundaries-x86\\native-wait-packet-association-boundaries-x86-build.log",
+                         "family":  "boundaries",
+                         "bytes":  47,
+                         "sha256":  "FDAEE74F270A11F329B1FAE20C7B305949B6EEC2AAA25111299E24F8A3FA5663"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-boundaries-x86-laa\\native-wait-packet-association-boundaries-x86-laa.exe",
+                         "family":  "boundaries",
+                         "bytes":  119808,
+                         "sha256":  "464A88559B587B1CB9FF02C704EC5A4EB5F06F0DD19F1D90FA309740217FD541"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-boundaries-x86-laa\\native-wait-packet-association-boundaries-x86-laa.log",
+                         "family":  "boundaries",
+                         "bytes":  1816,
+                         "sha256":  "C28D8BC8D96D6C5253F301C8EEA654113498C0EA6290F11189D3213A8F047396"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-boundaries-x86-laa\\native-wait-packet-association-boundaries-x86-laa-build.log",
+                         "family":  "boundaries",
+                         "bytes":  47,
+                         "sha256":  "FDAEE74F270A11F329B1FAE20C7B305949B6EEC2AAA25111299E24F8A3FA5663"
+                     }
+                 ],
+    "sources":  [
+                    {
+                        "profile":  "arm64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-probe-arm64\\native-wait-packet-association-probe.cpp",
+                        "family":  "probe",
+                        "bytes":  4047,
+                        "sha256":  "D56496B17269CE832630C3F50E809D79CCBD4ECB64195C0A7D772A502FF659AB"
+                    },
+                    {
+                        "profile":  "x64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-probe-x64\\native-wait-packet-association-probe.cpp",
+                        "family":  "probe",
+                        "bytes":  4047,
+                        "sha256":  "D56496B17269CE832630C3F50E809D79CCBD4ECB64195C0A7D772A502FF659AB"
+                    },
+                    {
+                        "profile":  "x86",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-probe-x86\\native-wait-packet-association-probe.cpp",
+                        "family":  "probe",
+                        "bytes":  4047,
+                        "sha256":  "D56496B17269CE832630C3F50E809D79CCBD4ECB64195C0A7D772A502FF659AB"
+                    },
+                    {
+                        "profile":  "x86-laa",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-probe-x86-laa\\native-wait-packet-association-probe.cpp",
+                        "family":  "probe",
+                        "bytes":  4047,
+                        "sha256":  "D56496B17269CE832630C3F50E809D79CCBD4ECB64195C0A7D772A502FF659AB"
+                    },
+                    {
+                        "profile":  "arm64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-validation-arm64\\native-wait-packet-association-validation.cpp",
+                        "family":  "validation",
+                        "bytes":  8533,
+                        "sha256":  "A7B3AE9A1629BC78147FBB9CE55D2814330F4265F43F92994CB8E778D48FEC17"
+                    },
+                    {
+                        "profile":  "x64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-validation-x64\\native-wait-packet-association-validation.cpp",
+                        "family":  "validation",
+                        "bytes":  8533,
+                        "sha256":  "A7B3AE9A1629BC78147FBB9CE55D2814330F4265F43F92994CB8E778D48FEC17"
+                    },
+                    {
+                        "profile":  "x86",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-validation-x86\\native-wait-packet-association-validation.cpp",
+                        "family":  "validation",
+                        "bytes":  8533,
+                        "sha256":  "A7B3AE9A1629BC78147FBB9CE55D2814330F4265F43F92994CB8E778D48FEC17"
+                    },
+                    {
+                        "profile":  "x86-laa",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-validation-x86-laa\\native-wait-packet-association-validation.cpp",
+                        "family":  "validation",
+                        "bytes":  8533,
+                        "sha256":  "A7B3AE9A1629BC78147FBB9CE55D2814330F4265F43F92994CB8E778D48FEC17"
+                    },
+                    {
+                        "profile":  "arm64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-arm64\\native-wait-packet-association-lifetime.cpp",
+                        "family":  "lifetime",
+                        "bytes":  12667,
+                        "sha256":  "F87A26FE1FCD3F5B9329D8623BCCA43DEE372ACE65B516F7718B9761E9A85B58"
+                    },
+                    {
+                        "profile":  "x64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-x64\\native-wait-packet-association-lifetime.cpp",
+                        "family":  "lifetime",
+                        "bytes":  12667,
+                        "sha256":  "F87A26FE1FCD3F5B9329D8623BCCA43DEE372ACE65B516F7718B9761E9A85B58"
+                    },
+                    {
+                        "profile":  "x86",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-x86\\native-wait-packet-association-lifetime.cpp",
+                        "family":  "lifetime",
+                        "bytes":  12667,
+                        "sha256":  "F87A26FE1FCD3F5B9329D8623BCCA43DEE372ACE65B516F7718B9761E9A85B58"
+                    },
+                    {
+                        "profile":  "x86-laa",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-x86-laa\\native-wait-packet-association-lifetime.cpp",
+                        "family":  "lifetime",
+                        "bytes":  12667,
+                        "sha256":  "F87A26FE1FCD3F5B9329D8623BCCA43DEE372ACE65B516F7718B9761E9A85B58"
+                    },
+                    {
+                        "profile":  "arm64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-v2-arm64\\native-wait-packet-association-lifetime-v2.cpp",
+                        "family":  "lifetime-v2",
+                        "bytes":  12651,
+                        "sha256":  "EDD36EA094117C6D9E4CD8351F0AF141F43EE378A335433CA7138433086B3BE0"
+                    },
+                    {
+                        "profile":  "x64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-v2-x64\\native-wait-packet-association-lifetime-v2.cpp",
+                        "family":  "lifetime-v2",
+                        "bytes":  12651,
+                        "sha256":  "EDD36EA094117C6D9E4CD8351F0AF141F43EE378A335433CA7138433086B3BE0"
+                    },
+                    {
+                        "profile":  "x86",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-v2-x86\\native-wait-packet-association-lifetime-v2.cpp",
+                        "family":  "lifetime-v2",
+                        "bytes":  12651,
+                        "sha256":  "EDD36EA094117C6D9E4CD8351F0AF141F43EE378A335433CA7138433086B3BE0"
+                    },
+                    {
+                        "profile":  "x86-laa",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-lifetime-v2-x86-laa\\native-wait-packet-association-lifetime-v2.cpp",
+                        "family":  "lifetime-v2",
+                        "bytes":  12651,
+                        "sha256":  "EDD36EA094117C6D9E4CD8351F0AF141F43EE378A335433CA7138433086B3BE0"
+                    },
+                    {
+                        "profile":  "arm64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-order-arm64\\native-wait-packet-association-order.cpp",
+                        "family":  "order",
+                        "bytes":  10748,
+                        "sha256":  "49DDD4AFE72D49E29E2AA32C5E7042B0162BC90C23B73D363CC3490824E272EE"
+                    },
+                    {
+                        "profile":  "x64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-order-x64\\native-wait-packet-association-order.cpp",
+                        "family":  "order",
+                        "bytes":  10748,
+                        "sha256":  "49DDD4AFE72D49E29E2AA32C5E7042B0162BC90C23B73D363CC3490824E272EE"
+                    },
+                    {
+                        "profile":  "x86",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-order-x86\\native-wait-packet-association-order.cpp",
+                        "family":  "order",
+                        "bytes":  10748,
+                        "sha256":  "49DDD4AFE72D49E29E2AA32C5E7042B0162BC90C23B73D363CC3490824E272EE"
+                    },
+                    {
+                        "profile":  "x86-laa",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-order-x86-laa\\native-wait-packet-association-order.cpp",
+                        "family":  "order",
+                        "bytes":  10748,
+                        "sha256":  "49DDD4AFE72D49E29E2AA32C5E7042B0162BC90C23B73D363CC3490824E272EE"
+                    },
+                    {
+                        "profile":  "arm64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-boundaries-arm64\\native-wait-packet-association-boundaries.cpp",
+                        "family":  "boundaries",
+                        "bytes":  10310,
+                        "sha256":  "B0A8CB6FA5957D7762FEB74C9A1D7C78E6326BFFFCB6633F96D73229EEBB59AF"
+                    },
+                    {
+                        "profile":  "x64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-boundaries-x64\\native-wait-packet-association-boundaries.cpp",
+                        "family":  "boundaries",
+                        "bytes":  10310,
+                        "sha256":  "B0A8CB6FA5957D7762FEB74C9A1D7C78E6326BFFFCB6633F96D73229EEBB59AF"
+                    },
+                    {
+                        "profile":  "x86",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-boundaries-x86\\native-wait-packet-association-boundaries.cpp",
+                        "family":  "boundaries",
+                        "bytes":  10310,
+                        "sha256":  "B0A8CB6FA5957D7762FEB74C9A1D7C78E6326BFFFCB6633F96D73229EEBB59AF"
+                    },
+                    {
+                        "profile":  "x86-laa",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-packet-association-boundaries-x86-laa\\native-wait-packet-association-boundaries.cpp",
+                        "family":  "boundaries",
+                        "bytes":  10310,
+                        "sha256":  "B0A8CB6FA5957D7762FEB74C9A1D7C78E6326BFFFCB6633F96D73229EEBB59AF"
+                    }
+                ],
+    "processor":  "ARM64",
+    "utc":  "2026-10-12T02:38:37.5227839Z",
+    "images":  [
+                   {
+                       "profile":  "arm64",
+                       "family":  "probe",
+                       "characteristics":  34,
+                       "machine":  43620
+                   },
+                   {
+                       "profile":  "x64",
+                       "family":  "probe",
+                       "characteristics":  34,
+                       "machine":  34404
+                   },
+                   {
+                       "profile":  "x86",
+                       "family":  "probe",
+                       "characteristics":  258,
+                       "machine":  332
+                   },
+                   {
+                       "profile":  "x86-laa",
+                       "family":  "probe",
+                       "characteristics":  290,
+                       "machine":  332
+                   },
+                   {
+                       "profile":  "arm64",
+                       "family":  "validation",
+                       "characteristics":  34,
+                       "machine":  43620
+                   },
+                   {
+                       "profile":  "x64",
+                       "family":  "validation",
+                       "characteristics":  34,
+                       "machine":  34404
+                   },
+                   {
+                       "profile":  "x86",
+                       "family":  "validation",
+                       "characteristics":  258,
+                       "machine":  332
+                   },
+                   {
+                       "profile":  "x86-laa",
+                       "family":  "validation",
+                       "characteristics":  290,
+                       "machine":  332
+                   },
+                   {
+                       "profile":  "arm64",
+                       "family":  "lifetime",
+                       "characteristics":  34,
+                       "machine":  43620
+                   },
+                   {
+                       "profile":  "x64",
+                       "family":  "lifetime",
+                       "characteristics":  34,
+                       "machine":  34404
+                   },
+                   {
+                       "profile":  "x86",
+                       "family":  "lifetime",
+                       "characteristics":  258,
+                       "machine":  332
+                   },
+                   {
+                       "profile":  "x86-laa",
+                       "family":  "lifetime",
+                       "characteristics":  290,
+                       "machine":  332
+                   },
+                   {
+                       "profile":  "arm64",
+                       "family":  "lifetime-v2",
+                       "characteristics":  34,
+                       "machine":  43620
+                   },
+                   {
+                       "profile":  "x64",
+                       "family":  "lifetime-v2",
+                       "characteristics":  34,
+                       "machine":  34404
+                   },
+                   {
+                       "profile":  "x86",
+                       "family":  "lifetime-v2",
+                       "characteristics":  258,
+                       "machine":  332
+                   },
+                   {
+                       "profile":  "x86-laa",
+                       "family":  "lifetime-v2",
+                       "characteristics":  290,
+                       "machine":  332
+                   },
+                   {
+                       "profile":  "arm64",
+                       "family":  "order",
+                       "characteristics":  34,
+                       "machine":  43620
+                   },
+                   {
+                       "profile":  "x64",
+                       "family":  "order",
+                       "characteristics":  34,
+                       "machine":  34404
+                   },
+                   {
+                       "profile":  "x86",
+                       "family":  "order",
+                       "characteristics":  258,
+                       "machine":  332
+                   },
+                   {
+                       "profile":  "x86-laa",
+                       "family":  "order",
+                       "characteristics":  290,
+                       "machine":  332
+                   },
+                   {
+                       "profile":  "arm64",
+                       "family":  "boundaries",
+                       "characteristics":  34,
+                       "machine":  43620
+                   },
+                   {
+                       "profile":  "x64",
+                       "family":  "boundaries",
+                       "characteristics":  34,
+                       "machine":  34404
+                   },
+                   {
+                       "profile":  "x86",
+                       "family":  "boundaries",
+                       "characteristics":  258,
+                       "machine":  332
+                   },
+                   {
+                       "profile":  "x86-laa",
+                       "family":  "boundaries",
+                       "characteristics":  290,
+                       "machine":  332
+                   }
+               ],
+    "dlls":  [
+                 {
+                     "path":  "C:\\Windows\\System32\\ntdll.dll",
+                     "sha256":  "502D4678206C8FD564972A3F82BFE63FE1A451CB5A6804AC0A9823B65FCBB61F",
+                     "bytes":  4609312,
+                     "version":  "10.0.29683.1000 (WinBuild.160101.0800)"
+                 },
+                 {
+                     "path":  "C:\\Windows\\SysWOW64\\ntdll.dll",
+                     "sha256":  "FFD2B7FF39889C5599C8A8451EEF5C852ACEE9101DA5CE5A6DEF8B8E60A6627E",
+                     "bytes":  1849976,
+                     "version":  "10.0.29683.1000 (WinBuild.160101.0800)"
+                 }
+             ],
+    "principal":  {
+                      "sid":  "S-1-5-18",
+                      "name":  "NT AUTHORITY\\SYSTEM"
+                  }
+}

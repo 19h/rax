@@ -1,0 +1,7 @@
+{
+  "container": "2bbff02bf539",
+  "observed-completed": 58,
+  "native-threads": "blocked rt_mutex_schedule/futex_wait",
+  "cause": "unknown",
+  "action": "terminate only this task-owned container; rerun all selected integrations serially"
+}

@@ -1,0 +1,62 @@
+[
+  {
+    "path": "src/user/windows/objects.rs",
+    "bytes": 23238,
+    "sha256": "7bf8a39c8c2b1c46a67e74990800b509b1af6373bec95163e792a26c6b431a2e"
+  },
+  {
+    "path": "src/user/windows/objects/wait_packets.rs",
+    "bytes": 5943,
+    "sha256": "b816a0e9f826628c47dec78a9652cfb22bdea68ba9ce6bcf89de408f2c4d3223"
+  },
+  {
+    "path": "src/user/windows/sync.rs",
+    "bytes": 35809,
+    "sha256": "b5d250e83e0ef1871fa0b6380559749aad71ae272f8b8fe9db7692e2d05131e0"
+  },
+  {
+    "path": "src/user/windows/process/sched.rs",
+    "bytes": 61124,
+    "sha256": "440968269b4e6a180b92167d453edb04054d4744a942349ba07f39e949c18231"
+  },
+  {
+    "path": "src/user/windows/dll/native.rs",
+    "bytes": 14864,
+    "sha256": "6285dcdc267f4f1a2437b44cacd4defb3069ec23689205d8c7f42ea2203fc19f"
+  },
+  {
+    "path": "src/user/windows/dll/native/wait_packet.rs",
+    "bytes": 6846,
+    "sha256": "3642f3f8920ebdb092cedb703f72fb309a150948eb42154975933afc06fb0de6"
+  },
+  {
+    "path": "src/user/windows/process/sched/tests/services_tests.rs",
+    "bytes": 45853,
+    "sha256": "0e8a2b83888e8d18a054b0566ae40c31d3fb04884a15cf2ba9d2695dd6094b63"
+  },
+  {
+    "path": "src/user/windows/process/sched/tests/services_tests/wait_packet_associate_tests.rs",
+    "bytes": 13506,
+    "sha256": "afed444d2bc45e4641c7f0930fdcc0db866eac20da6f5f4c5608e297f7d6aad9"
+  },
+  {
+    "path": "src/user/windows/process/sched/tests/services_tests/wait_packet_associate_replay_tests.rs",
+    "bytes": 19155,
+    "sha256": "f1847b03e3051d0fb24e6e7312474abfbe5cfb64ed88bb5cc5c2b8d69aa04cf1"
+  },
+  {
+    "path": "src/user/windows/process/sched/tests/services_tests/wait_packet_associate_leaf_tests.rs",
+    "bytes": 5502,
+    "sha256": "d63911698d495e54d50e51800989f17c22af82039b1f60f2b4732267d5a248e4"
+  },
+  {
+    "path": "docs/architecture/user-mode/windows-services.md",
+    "bytes": 9865,
+    "sha256": "61ed45e2caa7f026795a9d342064cbbf13b216a7337dca7414ea1b08c4bf067d"
+  },
+  {
+    "path": "src/user/windows/sync/wait_packets.rs",
+    "bytes": 986,
+    "sha256": "54530d67dd4b46c34276dae82f006639d29bb56ff48e9bbc57c5653a84310911"
+  }
+]
