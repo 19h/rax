@@ -1,0 +1,858 @@
+{
+  "check-negative-evidence.py": {
+    "bytes": 4019,
+    "sha256": "5e8eab2a020da5ad7ab8cb678c4d1f6e8185e65908be1014301ba5c94b566dc5"
+  },
+  "wow64-object-name-preconversion-disassembly.txt": {
+    "bytes": 6467,
+    "sha256": "4fcdb4237c34545ae4db3b98705b8d7242a251b00bca9159421e073068c2f734"
+  },
+  "diagnostic-macos-directory-expanded-targeted.log": {
+    "bytes": 5473,
+    "sha256": "9a54cf67089e4116d5eb3769f4149c286f49cddebe83f93d010ff86b9133f585"
+  },
+  "wow64-redirect-object-name-disassembly.txt": {
+    "bytes": 8730,
+    "sha256": "54904404bb9b64dcc2aef03ce6837b9149f92202231498511e4011b73e2a776f"
+  },
+  "native-object-directory-open-format-x86.log": {
+    "bytes": 172714,
+    "sha256": "bc0c1afb0aae1a63028fa395f91ef58fdf055e4cfa95d264ac94af0e1adc207b"
+  },
+  "run-directory-portable.py": {
+    "bytes": 1552,
+    "sha256": "ae0edb8d226a3d43413e799fdf8d589d7384d64f034a1e2fc620aa40bcdf1260"
+  },
+  "native-object-directory-open-full.log": {
+    "bytes": 748986,
+    "sha256": "f25bf7711f2dbad5812d569abfee1a1d798a8f549dcfb817e751a46fd6294cdc"
+  },
+  "native-object-directory-open-duplicate-boundaries.cpp": {
+    "bytes": 4074,
+    "sha256": "ddea5f0064e11f0409269ceb7979ada9fa90ae311b9a9db307258b688e9ca9c9"
+  },
+  "macos-owning-build.log": {
+    "bytes": 1865,
+    "sha256": "93485f8563b96eb7cea3a65c0ef6e78d44bfeddf5be9d4c5ac6d2a67a2a43d41"
+  },
+  "native-object-directory-open-gates.ps1": {
+    "bytes": 1440,
+    "sha256": "772095009b55a69869cdb9c8fb35276ac7c2e358c9f28b872083c9ebce64dbf4"
+  },
+  "native-object-directory-open-privilege.ps1": {
+    "bytes": 1580,
+    "sha256": "3feee0186c4927510e354d835748b47fc0d659aa7c4b14fc596721c21a5ee407"
+  },
+  "run-owning-linux.py": {
+    "bytes": 1690,
+    "sha256": "a78aff00efcc6ab81899a7e6a5a2ecf9081075d905a4faa1eb5ee93af36b569b"
+  },
+  "native-object-directory-open-after-trace.rs": {
+    "bytes": 11177,
+    "sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e"
+  },
+  "native-object-directory-open-snapshot-x86.log": {
+    "bytes": 23156,
+    "sha256": "ef1d95d3ae64f15dc82a470f803dc18f485c52d82194044b994bc27f11f8514a"
+  },
+  "native-object-directory-open-matrix.ps1": {
+    "bytes": 1549,
+    "sha256": "1fd1065d665d49b6e187cf0349094973bec99699385aa51509c7c2db0dbbf38b"
+  },
+  "native-object-directory-open-all-targets.log": {
+    "bytes": 986,
+    "sha256": "961926c233d48f619b90ed04deef888470e6c1e8a18d9820a4b8c5f95a1d2b28"
+  },
+  "inspect-object-directory-open-owning-archives.py": {
+    "bytes": 15568,
+    "sha256": "527a01abc55f55d51a6568529dae10f6a6104fda3afa02972a614d29caeb0952"
+  },
+  "object-directory-open-owned-cpp-build.py": {
+    "bytes": 1839,
+    "sha256": "9995e244e446791e41fc1d813aaf59db7ccb7b472c064785232f4e11f63d3608"
+  },
+  "native-object-directory-open-format-x86-build.log": {
+    "bytes": 41,
+    "sha256": "fce98df5fe2efdc714862067917eff0966e58f186fedddef5c5a3e4cb4c5c481"
+  },
+  "linux-owning-gates.json": {
+    "bytes": 2360,
+    "sha256": "ae2e28a22a987c807e0ba0094dd9c07ce59ff55063dc243d580d41df5ba26fa7"
+  },
+  "native-object-directory-open-fresh-arm64.log": {
+    "bytes": 3468,
+    "sha256": "084d0636d09c83ffbff4f214eed13bc06deb6e0da21ad3a348521001322a2621"
+  },
+  "macos-owning-ctest.log": {
+    "bytes": 1273,
+    "sha256": "e73d4345dcfb413af08c69123b8cb0d7a330b4c28b9a19fda7ccd9d9791bc5e1"
+  },
+  "macos-capi.log": {
+    "bytes": 13013,
+    "sha256": "1bba8bf53b855429788486584342b0403e08ab75533187f95d73d027aa97d0fb"
+  },
+  "native-object-directory-open-name-probe-x86-laa.log": {
+    "bytes": 1490738,
+    "sha256": "4c93f010666169edc70aa1e02851cc63f3fa14b75e947141a06b4c55d2f3a8ae"
+  },
+  "native-object-directory-open-reference-x86-laa.log": {
+    "bytes": 405483,
+    "sha256": "aa08be45b784aadd99b59786c10b7e54e544a09efda843998c2a306f7afc34c1"
+  },
+  "native-object-directory-open-duplicate-boundaries-x64.log": {
+    "bytes": 31340,
+    "sha256": "a6a5b13c27c2937d4e648a5c87c2b57db023eb14e63aab7b0e5df2b9c8307305"
+  },
+  "native-object-directory-open-matrix-x86-build.log": {
+    "bytes": 41,
+    "sha256": "4acaabeac027c3d5b99986ee17692af80b63c311309e5d24ed6ff11a0a57e4c1"
+  },
+  "RtlPrefixUnicodeString-memcmp-implementation-disassembly.txt": {
+    "bytes": 4868,
+    "sha256": "c5d68a61a8b76bfb8f548a419f0307a2ceda7a3dda5ef4c347676762da6683bf"
+  },
+  "macos-owning-protected-assist-cli.log": {
+    "bytes": 42,
+    "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+  },
+  "native-object-directory-open-privilege-x86.log": {
+    "bytes": 10265,
+    "sha256": "d2bcf89ba22deb1cc198f0644bb81f808958f196cb2f72cf98b184c71f55896e"
+  },
+  "ordinary-results.json": {
+    "bytes": 1419,
+    "sha256": "6b99addaa652fc1fd2c18990a68a6b85a08f977e0708c2742cc12fce0347627b"
+  },
+  "native-object-directory-open-privilege-arm64-build.log": {
+    "bytes": 44,
+    "sha256": "48b31c91ed0b73423d1b4fddcb5cfc0f61741c195f9524ae867b4d3ba3c975c8"
+  },
+  "native-object-directory-open-privilege-x64-build.log": {
+    "bytes": 44,
+    "sha256": "48b31c91ed0b73423d1b4fddcb5cfc0f61741c195f9524ae867b4d3ba3c975c8"
+  },
+  "native-object-directory-open-duplicate-policy-x64.log": {
+    "bytes": 308391,
+    "sha256": "dfdcedff0e392a269b1fafdb4049fab1cd2f1b8cdf6b42d52e62181a80a69a7e"
+  },
+  "native-object-directory-open-reference-x86-build.log": {
+    "bytes": 44,
+    "sha256": "b642ac4b2e8abe582c1e8599b5534e5132e2a82286f3e74633f365050b074ea8"
+  },
+  "wow64-open-directory-caller-106b0-disassembly.txt": {
+    "bytes": 1089,
+    "sha256": "a17110cf329369faa80d24bc381bcdef3d7fdec80a0cef4e586fb8c438ce3d8c"
+  },
+  "linux-capi.log": {
+    "bytes": 12881,
+    "sha256": "d5df0ed39a3c1a793d68ef06936e61807c266b211f37349059f6b0b6dec07099"
+  },
+  "native-object-directory-open-boundaries-x64-build.log": {
+    "bytes": 45,
+    "sha256": "3e470bc0e4745c64ef0e7d589abd39d2d17cba43cd3eb32d70a180ec104919a7"
+  },
+  "native-object-directory-open-name-probe-x86-laa-build.log": {
+    "bytes": 45,
+    "sha256": "09c05bd5f14c439514a6b5dcfc00b758ec19a9cf2653c543f97ddd134ac86efd"
+  },
+  "native-object-directory-open-producer-identities.ps1": {
+    "bytes": 382,
+    "sha256": "8ce7246045c6df31230d4008e86f3d1349a05ca8c6ba4b6863fdadedbc9181c1"
+  },
+  "wow64-open-directory-caller-23d8-disassembly.txt": {
+    "bytes": 1932,
+    "sha256": "00cbcf1e0f0e8999d193e13133ddec5d7d892f89cd4c86434dc2a6637d4199b5"
+  },
+  "native-object-directory-open-duplicate-protected-boundaries-x64.log": {
+    "bytes": 47010,
+    "sha256": "6a2b9a9dca3e8d2ec30114cb65773520e70d0cae0dc3f7c888d91c24099d7ee2"
+  },
+  "native-object-directory-open-privilege-x86-build.log": {
+    "bytes": 44,
+    "sha256": "48b31c91ed0b73423d1b4fddcb5cfc0f61741c195f9524ae867b4d3ba3c975c8"
+  },
+  "macos-directory-capture-order-corrected.log": {
+    "bytes": 4104,
+    "sha256": "272905b568ee0437785180ca09031f3af0ee0703b775fc1f0a08259a088cdf84"
+  },
+  "native-object-directory-open-duplicate-protected-boundaries-arm64-build.log": {
+    "bytes": 65,
+    "sha256": "878699f0df5d62e01d724a51935e1aeb953d9691d447827ec893294bb4b62365"
+  },
+  "native-object-directory-open-reference-arm64.log": {
+    "bytes": 404475,
+    "sha256": "acba8e8a55653556a1fb18c5de4e018ac1b6deb4b8184b34c5439bd6f1a09b3d"
+  },
+  "native-object-directory-open-reference-x64-build.log": {
+    "bytes": 44,
+    "sha256": "b642ac4b2e8abe582c1e8599b5534e5132e2a82286f3e74633f365050b074ea8"
+  },
+  "linux-owning-shipping.log": {
+    "bytes": 222,
+    "sha256": "a4cb4a595b06696682e62a7acc9523f74d275c88d72351ea8173749536a70aa8"
+  },
+  "diagnostic-macos-directory-initial-targeted.log": {
+    "bytes": 3441,
+    "sha256": "70e75f0565df31b428621767381b9b916a76ed1c5c1b29a3cc593d89ab2a7795"
+  },
+  "windows-directory-targeted-exit.json": {
+    "bytes": 134,
+    "sha256": "a3ca5725a3cf0b9a43163f0fec23566d50f602cce54d2cf4fee728e89a0f3df4"
+  },
+  "native-object-directory-open-boundaries-x86-build.log": {
+    "bytes": 45,
+    "sha256": "3e470bc0e4745c64ef0e7d589abd39d2d17cba43cd3eb32d70a180ec104919a7"
+  },
+  "native-object-directory-open-fresh.cpp": {
+    "bytes": 7501,
+    "sha256": "6ea3e658113988360365754e0b2ceba292fbf4ee1a66deca0129071621fd698a"
+  },
+  "native-object-directory-open-privilege-x86-laa.log": {
+    "bytes": 10265,
+    "sha256": "d2bcf89ba22deb1cc198f0644bb81f808958f196cb2f72cf98b184c71f55896e"
+  },
+  "native-object-directory-open-fresh-arm64.ps1": {
+    "bytes": 1453,
+    "sha256": "bcdbb3eb4b408bcba368a221f134ab4ca4492221d7d34cf688f745de0de99e12"
+  },
+  "native-object-directory-open-flag-boundaries-x64.log": {
+    "bytes": 167312,
+    "sha256": "8ffd0031f8e32c59f77c21f6e4a5ec21c618350706414246c16b985fd9264913"
+  },
+  "assist-native-object-directory-open-owned.ps1": {
+    "bytes": 6448,
+    "sha256": "0a07458cc7165ca9d7bf524352a2989cdf60cbbc8f2e7d070aad40502a75b39e"
+  },
+  "native-object-directory-open-duplicate-boundaries-arm64.log": {
+    "bytes": 31340,
+    "sha256": "b0898e770dc17f61f9e002d493d5b0998d8846d192a657820a8ace25834d524e"
+  },
+  "native-object-directory-open-matrix-x64-build.log": {
+    "bytes": 41,
+    "sha256": "4acaabeac027c3d5b99986ee17692af80b63c311309e5d24ed6ff11a0a57e4c1"
+  },
+  "known-baseline-failures.json": {
+    "bytes": 709,
+    "sha256": "8d1f644433741d0d997bc8adb12efc994c93c5365d3ef4709920af43e18f8915"
+  },
+  "native-object-directory-open-flag-boundaries-arm64.log": {
+    "bytes": 167312,
+    "sha256": "73433f1458125ec176756cae89f396ccae4a566bb4e70f9b0104c348eb5d4fdf"
+  },
+  "macos-owning-configure.log": {
+    "bytes": 13294,
+    "sha256": "5b32a3011dab9ea235bf9d0fdc4d2814b90caca7edfd03c05e82aeca5a88d8cd"
+  },
+  "native-object-directory-open-matrix-x86.log": {
+    "bytes": 722660,
+    "sha256": "6eee8e2d04aaa08477a8478fd86000505a3647044efc5cb1a77babe4792e8b65"
+  },
+  "linux-directory-capture-order-corrected.log": {
+    "bytes": 4000,
+    "sha256": "8d8bc878265adac1f4196b00990279fa996fe49e3f76395016d3b38f6e397e74"
+  },
+  "native-object-directory-open-duplicate-policy-arm64.log": {
+    "bytes": 308391,
+    "sha256": "b14693cb0cd8fcb6eca9e68c7c7bf51fe54ca74c5c7f67ae608739bee7565447"
+  },
+  "owning-root-scope.json": {
+    "bytes": 9176,
+    "sha256": "8770d13d4574d88415416075d6a88f452f7eb5af719efe1c26c4029aa50679c0"
+  },
+  "windows-directory-targeted.log": {
+    "bytes": 4811,
+    "sha256": "bc1afe13910ed798aaf524929e81a06512fca887385c770fed12065999c820c8"
+  },
+  "native-object-directory-open-flag-boundaries-x86-laa-build.log": {
+    "bytes": 50,
+    "sha256": "7f959e2f26e6713098e45e90481f31b104090dace328607b1efd309a493f2539"
+  },
+  "native-object-directory-open-privilege.cpp": {
+    "bytes": 4849,
+    "sha256": "a633c269af696c140cfbfd1387fece41ee34ae257c643cb605a1721518f2b265"
+  },
+  "installed-image-investigation.json": {
+    "bytes": 1756,
+    "sha256": "0c4d2b3ee2ca37463ea5b05b715556489f6aa07fbd71919d3c45faf5a9e99450"
+  },
+  "native-object-directory-open-name-probe-arm64.log": {
+    "bytes": 1500637,
+    "sha256": "d9c18a9de0042a16047febd30d0f5bcf85d7c8108497770c27504fe272c7f98b"
+  },
+  "native-object-directory-open-duplicate-boundaries-x86-laa-build.log": {
+    "bytes": 55,
+    "sha256": "edef2264960a64feb6f90cba766aa141b9bc7e150cdb53e9bbe7f9d2b1b5b0d2"
+  },
+  "windows-owning-exit.json": {
+    "bytes": 16,
+    "sha256": "006d49cf156fcf14e54a5d291dae4deb937e8572e463dd515fc40127ed53d6bb"
+  },
+  "native-object-directory-open-duplicate-boundaries.ps1": {
+    "bytes": 1633,
+    "sha256": "256da03f5ea036d7fee5101a8e71c2051e93f7e1ee99017931582c789a8c71d5"
+  },
+  "native-object-directory-open-matrix.cpp": {
+    "bytes": 7612,
+    "sha256": "486dab35302caf83885384d7e28d409a21f782bb8d8b8c1f759e349ed45a0b59"
+  },
+  "architecture-doc-baseline.json": {
+    "bytes": 182,
+    "sha256": "af4d39fca1a1bb85dc97e7e676d78e49b757dd1e6333b68ba9e3e7900c506b5e"
+  },
+  "macos-owning-commands.json": {
+    "bytes": 3149,
+    "sha256": "46548b6b0b7539fee8f588ea5afac9ac25db2eb1cf8917f399e2578cdf94978b"
+  },
+  "native-object-directory-open-after-artifacts-stderr.log": {
+    "bytes": 72,
+    "sha256": "c2ccae29be8ebbd8973f3201e5f6646ec32bdad22fe9c3866ff8d1618ed74896"
+  },
+  "native-object-directory-open-boundaries-x64.log": {
+    "bytes": 1846423,
+    "sha256": "5c641fd20445b61a66e5e3e16e71706790cb169a0e9e52e58ba3eafa89db5ca8"
+  },
+  "native-object-directory-open-duplicate-boundaries-x86-laa.log": {
+    "bytes": 30838,
+    "sha256": "f0de8616290669b7081543b7ed84eed8c14870ce342a551ff35d0c03354ff12e"
+  },
+  "native-object-directory-open-reference-arm64-build.log": {
+    "bytes": 44,
+    "sha256": "b642ac4b2e8abe582c1e8599b5534e5132e2a82286f3e74633f365050b074ea8"
+  },
+  "native-object-directory-open-name-probe-x64.log": {
+    "bytes": 1500637,
+    "sha256": "af9f166b98107e54ddfd32cd26f047066dfa2b86528ddb487815d146f64b492c"
+  },
+  "wow64-open-directory-caller-3d68-disassembly.txt": {
+    "bytes": 2631,
+    "sha256": "a98c070755074b06976d3d4c00fb6325900bb09c8e42fbaba2d16664266b40d2"
+  },
+  "native-object-directory-open-format-x64-build.log": {
+    "bytes": 41,
+    "sha256": "fce98df5fe2efdc714862067917eff0966e58f186fedddef5c5a3e4cb4c5c481"
+  },
+  "RtlCompareUnicodeStrings-disassembly.txt": {
+    "bytes": 8386,
+    "sha256": "4c56eb36b24c085ad8ae2cfc93299003ad55c5b0b6d05e87b1ad05bdb819c2bd"
+  },
+  "native-object-directory-open-owning-archive-hashes.json": {
+    "bytes": 14216,
+    "sha256": "0f02ab43275908d4bea0290f23c15fa81d30f810eb7c8b8b498147c4d7c21972"
+  },
+  "native-object-directory-open-matrix-arm64-build.log": {
+    "bytes": 41,
+    "sha256": "4acaabeac027c3d5b99986ee17692af80b63c311309e5d24ed6ff11a0a57e4c1"
+  },
+  "native-object-directory-open-duplicate-boundaries-arm64-build.log": {
+    "bytes": 55,
+    "sha256": "edef2264960a64feb6f90cba766aa141b9bc7e150cdb53e9bbe7f9d2b1b5b0d2"
+  },
+  "diagnostic-macos-directory-corrected-targeted.log": {
+    "bytes": 1823,
+    "sha256": "b4200f5a0ac7c9f10bc9e49188c8c19ffa0ff8d2c4a484b368e7d44bdb2687e5"
+  },
+  "native-object-directory-open-matrix-x86-laa.log": {
+    "bytes": 722632,
+    "sha256": "1997beb2336e1670cf17d1a243b8282f251dc6f02271882fd5e67356ea6e7c92"
+  },
+  "native-object-directory-open-reference-x86.log": {
+    "bytes": 405483,
+    "sha256": "9a1b163b3591d94a91ca6ae9d508d2f0a1c274421e9d5cdcfea68a4bbab80b3b"
+  },
+  "native-object-directory-open-after-artifacts.jsonl": {
+    "bytes": 130191,
+    "sha256": "b74cbe1e2b5c0455604ee60732273c3d3f5b37b8c92d38d7017174b2b3bd9c54"
+  },
+  "native-object-directory-open-boundaries-x86-laa-build.log": {
+    "bytes": 45,
+    "sha256": "3e470bc0e4745c64ef0e7d589abd39d2d17cba43cd3eb32d70a180ec104919a7"
+  },
+  "native-object-directory-open-format-arm64-build.log": {
+    "bytes": 41,
+    "sha256": "fce98df5fe2efdc714862067917eff0966e58f186fedddef5c5a3e4cb4c5c481"
+  },
+  "native-object-directory-open-duplicate-protected-boundaries-x86-laa.log": {
+    "bytes": 46254,
+    "sha256": "d50d423b1fe277ccbe91b5c3ed5298007bcac639b5ff207f3a6fdac2969caad5"
+  },
+  "RtlPrefixUnicodeString-disassembly.txt": {
+    "bytes": 2069,
+    "sha256": "192787fc5c507a7c84d7c775b316c6cdc3af9e9e7cc954c0d5fb47b2c9440cbb"
+  },
+  "native-object-directory-open-integration.log": {
+    "bytes": 1792,
+    "sha256": "c87977c7f9039ba66bb7164a84c63eebfbdd5d8230e6ac52e9be0075acbf366b"
+  },
+  "native-object-directory-open-gates.json": {
+    "bytes": 996,
+    "sha256": "eaac0361211dc5404a970c473673225af57ce805f608b673483108e859a4f218"
+  },
+  "native-object-directory-open-fresh-arm64-build.log": {
+    "bytes": 40,
+    "sha256": "46f06b8ca57c258e85fe1db9a04f7f788e7885fbed6070b704950e33f1483171"
+  },
+  "native-object-directory-open-name-probe-x86-build.log": {
+    "bytes": 45,
+    "sha256": "09c05bd5f14c439514a6b5dcfc00b758ec19a9cf2653c543f97ddd134ac86efd"
+  },
+  "native-object-directory-open-snapshot.ps1": {
+    "bytes": 1561,
+    "sha256": "ad185f2ada1ec26b34ab81503807662c9c4625fb73f93192e1cc5b98651ec3e1"
+  },
+  "README.md": {
+    "bytes": 13262,
+    "sha256": "b4b2fa5fbff972ec563bab526230c0d4e2847e59b22fbd484cbdd24ceae4476f"
+  },
+  "native-object-directory-open-boundaries-x86-laa.log": {
+    "bytes": 1841647,
+    "sha256": "d9e281b4cb5ecfaccbdfbde94eb1cf6efee9dee98f0e85d0f065a955954cd8d7"
+  },
+  "rustfmt-owned-check.json": {
+    "bytes": 1395,
+    "sha256": "b0195a9ac0d2a77e652849faf91ee55874e74a388933bc943c66f94d0b6a0add"
+  },
+  "native-object-directory-open-format-arm64.log": {
+    "bytes": 172633,
+    "sha256": "fc0de880b4c5c5748afca8bbafa2709e4aa842c9af00fcd5917d3f8b7f3d93e0"
+  },
+  "change-surface-map.json": {
+    "bytes": 1567,
+    "sha256": "28ea446328c8dcc21b64208124bc0c1f5e1062c4e85d8033b72892f17ebd6f8b"
+  },
+  "native-object-directory-open-after-production-trace-output.log": {
+    "bytes": 43690,
+    "sha256": "fab209440a925739add7420c5e0dbc292186f917f4a49563a08b8382454548e8"
+  },
+  "native-object-directory-open-boundaries-arm64.log": {
+    "bytes": 1846423,
+    "sha256": "531e608578acb7f8cd0da98aa8f2fd32095aea2b91ce40098eb415b93fcb2ef0"
+  },
+  "linux-gates.json": {
+    "bytes": 2948,
+    "sha256": "ff5df0518bfa59894657fa9f753673707b3a4ab28f158200e6c6a7f479130520"
+  },
+  "native-object-directory-open-duplicate-boundaries-x86-build.log": {
+    "bytes": 55,
+    "sha256": "edef2264960a64feb6f90cba766aa141b9bc7e150cdb53e9bbe7f9d2b1b5b0d2"
+  },
+  "negative-forged-actual-pe-architecture.log": {
+    "bytes": 709,
+    "sha256": "bde6bf05f085fdc3ea88ed5defa3d665e5b570c62b353ec41f66abf8c2825113"
+  },
+  "investigation-baseline.json": {
+    "bytes": 1921,
+    "sha256": "e745fd62345d0c006e06fc5935df050fda345eaffbe92921de19970bf3ec45ed"
+  },
+  "negative-optimized-python.log": {
+    "bytes": 530,
+    "sha256": "e144fcbf8afbba715ce249b534855bc0b5e5676418fbf9659e197c953cc16c86"
+  },
+  "native-object-directory-open-boundaries.cpp": {
+    "bytes": 4616,
+    "sha256": "82441e1658e3830ec1e4cb284c1b76b0d53d1c14793f3647639c6d9e84268110"
+  },
+  "diagnostic-linux-directory-expanded-targeted.log": {
+    "bytes": 5365,
+    "sha256": "51a6b9b66f5a98c1a565f30466620f25f60ca7c961beb3aacbdf96995240c70c"
+  },
+  "native-object-directory-open-privilege-x86-laa-build.log": {
+    "bytes": 44,
+    "sha256": "48b31c91ed0b73423d1b4fddcb5cfc0f61741c195f9524ae867b4d3ba3c975c8"
+  },
+  "native-object-directory-open-name-probe-arm64-build.log": {
+    "bytes": 45,
+    "sha256": "09c05bd5f14c439514a6b5dcfc00b758ec19a9cf2653c543f97ddd134ac86efd"
+  },
+  "macos-all-targets.log": {
+    "bytes": 136,
+    "sha256": "08656b6060266856b9832dbc53736c7512c22964750e138bc1b46f95f470536a"
+  },
+  "native-object-directory-open-flag-boundaries-arm64-build.log": {
+    "bytes": 50,
+    "sha256": "7f959e2f26e6713098e45e90481f31b104090dace328607b1efd309a493f2539"
+  },
+  "native-object-directory-open-flag-boundaries-x86.log": {
+    "bytes": 166240,
+    "sha256": "ae11b13ea5e6f9a96aeff1450ab70d86fe3fc6195b9c8c46233f712b144df135"
+  },
+  "native-object-directory-open-reference.cpp": {
+    "bytes": 4400,
+    "sha256": "9feb7be5b489b95419b3c73f08353ac679b250fcd22f45e0830452c83388d78d"
+  },
+  "native-object-directory-open-producer-identities.py": {
+    "bytes": 1462,
+    "sha256": "c908ed9d06b0ce8390140ed8df4befc30d8c502069774e6a39f731e61a42e585"
+  },
+  "native-object-directory-open-after-production-trace-build.log": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "linux-owning-cpp.log": {
+    "bytes": 1623,
+    "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+  },
+  "negative-changed-current-compiled-source.log": {
+    "bytes": 774,
+    "sha256": "0a53ade9eecedb0d60f0baeb5f3ed6976cc7fdb8575aaff6a9c8e1e80eb5d1b8"
+  },
+  "acceptance-criteria.json": {
+    "bytes": 2579,
+    "sha256": "0340e324d899ffb2f9c4778fbc1e903d7768553e9859cc7f56df28b18d55c0a6"
+  },
+  "native-object-directory-open-format.ps1": {
+    "bytes": 1549,
+    "sha256": "3ab9f78eff1a2e81b2e9621fbd160756c515dbc61338268161a9fce36e97e5c2"
+  },
+  "implementation-baseline.json": {
+    "bytes": 3712,
+    "sha256": "e163e266a8100a05f6522eeed14f41f7ca5f2e88bb736552d886e45e93c20daf"
+  },
+  "macos-gates.json": {
+    "bytes": 966,
+    "sha256": "89123a858e8a12b9c7ea931f398703ff6117c39b079013f7710000c7f930cf4b"
+  },
+  "linux-integration.log": {
+    "bytes": 35761,
+    "sha256": "a3acf176bd69d6e78271c11b598be44370c9d3d8855b5957d7f012cd066d1685"
+  },
+  "wow64-convert-attributes-disassembly.txt": {
+    "bytes": 12395,
+    "sha256": "c3aaebdd4d91ddb0b172a4cf53e9be17839d3f9a58ff4b6107c2a7e77d879a98"
+  },
+  "diagnostic-macos-directory-teb-corrected-targeted.log": {
+    "bytes": 9017,
+    "sha256": "e0b3f2cfaa1aafab0e50e9dd62ed4b392b9bd0aeb100cfa157ced4c60a69eb36"
+  },
+  "native-object-directory-open-matrix-x64.log": {
+    "bytes": 858617,
+    "sha256": "e09d8a933faaf80799ae4df62a5fc34c5ee18e2675369654157641bf83641de7"
+  },
+  "native-object-directory-open-flag-boundaries.cpp": {
+    "bytes": 4979,
+    "sha256": "9f32dd08a3ca2669b693de9c7f18d5d2267cca0b4277f42fcb6aefdb6635a913"
+  },
+  "native-object-directory-open-name-probe.ps1": {
+    "bytes": 1821,
+    "sha256": "72b832978601f4870fbebdfffa62c8dd364ae25561038499251c908cf9078882"
+  },
+  "native-object-directory-open-duplicate-policy-x64-build.log": {
+    "bytes": 51,
+    "sha256": "954040af70e083f2145ea68276e33e80f94023f08b29947e86640a57833d393d"
+  },
+  "owning-source-hashes.json": {
+    "bytes": 15937,
+    "sha256": "a1fbd2a71492667a6daf68c1637f867f5f07da16d810d9535b8d78539d6b888a"
+  },
+  "native-object-directory-open-boundaries-x86.log": {
+    "bytes": 1841647,
+    "sha256": "f2b2e0cb14826e95e577c8b29523b1eca9b8715c37b15a89247cb4bf3ad6e999"
+  },
+  "native-object-directory-open-flag-boundaries-x64-build.log": {
+    "bytes": 50,
+    "sha256": "7f959e2f26e6713098e45e90481f31b104090dace328607b1efd309a493f2539"
+  },
+  "native-object-directory-open-name-probe-x86.log": {
+    "bytes": 1490712,
+    "sha256": "c0e1faf5ba3310232716652d543cd2dc60f83b146c86ac417dcc73116f739bff"
+  },
+  "native-object-directory-open-duplicate-policy.cpp": {
+    "bytes": 4617,
+    "sha256": "da20da30dd0d60002019df4a6b265480301b65872f081cb7be37d730a1225a0e"
+  },
+  "native-object-directory-open-duplicate-protected-boundaries.cpp": {
+    "bytes": 4198,
+    "sha256": "55ad7df5be68918d698839c550ff976433b3226c9db19cdd36fb26b3988fda18"
+  },
+  "native-object-directory-open-reference-x64.log": {
+    "bytes": 404475,
+    "sha256": "f816243fa91e1b0376c877ec8f6d2e6ba5926e1f81a25db6905be91dbbb62922"
+  },
+  "native-object-directory-open-privilege-arm64.log": {
+    "bytes": 10119,
+    "sha256": "3dd5e85db4a965628b54c1b6a0fffa4fb39c3d509f7370ec8f9a05798b553c6f"
+  },
+  "native-object-directory-open-duplicate-protected-boundaries-x64-build.log": {
+    "bytes": 65,
+    "sha256": "878699f0df5d62e01d724a51935e1aeb953d9691d447827ec893294bb4b62365"
+  },
+  "bounded-scope.json": {
+    "bytes": 1721,
+    "sha256": "388f182a2464a43a3fdbbc117b0454ee9f453f7440ca6e10414d832326e0ac5d"
+  },
+  "native-object-directory-open-snapshot-x86-build.log": {
+    "bytes": 43,
+    "sha256": "2a1845111e395bf978dd48ce656dbdabbad2fa0d30cb5ef9d60e4652be157dda"
+  },
+  "negative-changed-rehashed-input-partition.log": {
+    "bytes": 978,
+    "sha256": "8d95f9ba8a856346c460653b14c9e025429549d8127d32513a0e798f91fd641a"
+  },
+  "native-object-directory-open-duplicate-protected-boundaries.ps1": {
+    "bytes": 1693,
+    "sha256": "7e9c03ca07d566b5f3a5f4e465c187317299c444f9a17e433981e7d3617cd8c0"
+  },
+  "windows-directory-overlay-check.json": {
+    "bytes": 100,
+    "sha256": "31b9d145cd64f46fe5a7838b1d4a1eb4109a0760f422886b5b4eed21183332cf"
+  },
+  "native-object-directory-open-duplicate-policy.ps1": {
+    "bytes": 1609,
+    "sha256": "d7a7fd249fa7204bf93ddee4ec4766e09c7bffc0e1273d124674d29adae24c33"
+  },
+  "macos-owning-gates.json": {
+    "bytes": 3344,
+    "sha256": "907f2dff64cc1fc512698d950b89f972982c42ad239fcc6a60f895f646d7c092"
+  },
+  "RtlPrefixUnicodeString-memcmp-remainder-disassembly.txt": {
+    "bytes": 1329,
+    "sha256": "677222388fa71952e4f363954bcdcbaec0aa578ec444d71450dbd8b3aa51c8da"
+  },
+  "native-object-directory-open-duplicate-protected-boundaries-x86-build.log": {
+    "bytes": 65,
+    "sha256": "878699f0df5d62e01d724a51935e1aeb953d9691d447827ec893294bb4b62365"
+  },
+  "negative-missing-rehashed-native-case.log": {
+    "bytes": 921,
+    "sha256": "2a54511253d0990ebfa67929f1f91cd24541e1f7bc5524a570fdf9c6c87e23a4"
+  },
+  "native-object-directory-open-reference-x86-laa-build.log": {
+    "bytes": 44,
+    "sha256": "b642ac4b2e8abe582c1e8599b5534e5132e2a82286f3e74633f365050b074ea8"
+  },
+  "native-object-directory-open-duplicate-policy-x86-laa.log": {
+    "bytes": 309271,
+    "sha256": "ef0d7ea7548e88ee2cca1abc02d510f645445a8510b6beb2fb61c0d00705fcff"
+  },
+  "assist-native-object-directory-open-owned-cpp.log": {
+    "bytes": 2946,
+    "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+  },
+  "native-object-directory-open-format-x64.log": {
+    "bytes": 172633,
+    "sha256": "c56565605b50539899a68d0647aa0eba637526765938af1b897bc48ba6f1b054"
+  },
+  "native-object-directory-open-duplicate-policy-arm64-build.log": {
+    "bytes": 51,
+    "sha256": "954040af70e083f2145ea68276e33e80f94023f08b29947e86640a57833d393d"
+  },
+  "RtlGetNtSystemRoot-disassembly.txt": {
+    "bytes": 1998,
+    "sha256": "b29ea4a72f4e47c769cd891c39c005953d114837a7581f02dd82ce0231cec734"
+  },
+  "native-object-directory-open-format-x86-laa-build.log": {
+    "bytes": 41,
+    "sha256": "fce98df5fe2efdc714862067917eff0966e58f186fedddef5c5a3e4cb4c5c481"
+  },
+  "native-object-directory-open-flag-boundaries-x86-laa.log": {
+    "bytes": 166239,
+    "sha256": "763b9ad3542e4566adae7340862a70746fbe33c84b22de5bfa82b81e15860552"
+  },
+  "native-object-directory-open-snapshot-x64-build.log": {
+    "bytes": 43,
+    "sha256": "2a1845111e395bf978dd48ce656dbdabbad2fa0d30cb5ef9d60e4652be157dda"
+  },
+  "RtlPrefixUnicodeString-memcmp-disassembly.txt": {
+    "bytes": 3431,
+    "sha256": "47c630e657771513c4f67176263a3b993d3d714eb8e796c5c85270c988cd2b5c"
+  },
+  "native-object-directory-open-snapshot-x86-laa-build.log": {
+    "bytes": 43,
+    "sha256": "2a1845111e395bf978dd48ce656dbdabbad2fa0d30cb5ef9d60e4652be157dda"
+  },
+  "native-object-directory-open-producer-inputs.json": {
+    "bytes": 20759,
+    "sha256": "647f143def2f811c3303e7ad431cbd1264555df564fd8104b4500200dbd5add0"
+  },
+  "native-object-directory-open-after-ordinary-processes.log": {
+    "bytes": 7200,
+    "sha256": "453224bd1edf4f74d228c26ac8d6ff8490bb492b3dc13a418c785cbe4ea94e76"
+  },
+  "rustfmt-owned-check.log": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "native-object-directory-open-duplicate-policy-x86-build.log": {
+    "bytes": 51,
+    "sha256": "954040af70e083f2145ea68276e33e80f94023f08b29947e86640a57833d393d"
+  },
+  "native-object-directory-open-snapshot-x64.log": {
+    "bytes": 23156,
+    "sha256": "1656176360477dca8bbe69e2ce69f5a7c8e5022484254d32e4dd24d550b83f68"
+  },
+  "native-object-directory-open-duplicate-protected-boundaries-arm64.log": {
+    "bytes": 47010,
+    "sha256": "56c51980705415a3fb27b2889a62e7ee78f29d750dfa159901ff44300edde7b6"
+  },
+  "native-object-directory-open-name-probe.cpp": {
+    "bytes": 3929,
+    "sha256": "5441610abc158c4466bd5df2b441f8bda5c878a8454e501a61241ac7c80fc469"
+  },
+  "diagnostic-macos-directory-semantic-corrected-targeted.log": {
+    "bytes": 5178,
+    "sha256": "400b1788b60224ace29d9b1cd19e85fbd240e8ce898ff43fa10a41ac9a4ca0ff"
+  },
+  "native-object-directory-open-flag-boundaries-x86-build.log": {
+    "bytes": 50,
+    "sha256": "7f959e2f26e6713098e45e90481f31b104090dace328607b1efd309a493f2539"
+  },
+  "native-object-directory-open-producer-identities.json": {
+    "bytes": 66846,
+    "sha256": "913a164c6accef59cae62ef8f782fc73eb152c1e1cd011eaf5be6797ed58c521"
+  },
+  "macos-owning-protected-assist-mcp.log": {
+    "bytes": 42,
+    "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+  },
+  "native-object-directory-open-capi.log": {
+    "bytes": 13837,
+    "sha256": "6b796acd7f99c4dfe52d72a39cdadf160620f0f16d8c9fee796718664d2d3abc"
+  },
+  "native-object-directory-open-snapshot-x86-laa.log": {
+    "bytes": 23156,
+    "sha256": "ef1d95d3ae64f15dc82a470f803dc18f485c52d82194044b994bc27f11f8514a"
+  },
+  "native-object-directory-open-reference.ps1": {
+    "bytes": 1567,
+    "sha256": "c1fea4b599fb790344947415077f918ea629c0542e018c2dbdfa91d328f2343e"
+  },
+  "negative-validation.json": {
+    "bytes": 1024,
+    "sha256": "9b0aa4de0ac79b1955c8a250e415f8befa9b258ab2f5e57409138ed8da330e8b"
+  },
+  "native-object-directory-open-matrix-arm64.log": {
+    "bytes": 858617,
+    "sha256": "5d178c1f6205492906ea6af99e1dde7b78cf4900ef295f5424270f855a6d21f6"
+  },
+  "assist-native-object-directory-open-owned-shipping.log": {
+    "bytes": 1584,
+    "sha256": "f48c27b2d7deee5601378efe9574ac2844bd3294c5aea2b1c14a6334c6117a3b"
+  },
+  "macos-full.log": {
+    "bytes": 791730,
+    "sha256": "7d456551496cd18bfb91b51bb183c27bcc86e522e82560fb409b4266fbd097be"
+  },
+  "native-object-directory-open-duplicate-boundaries-x86.log": {
+    "bytes": 30838,
+    "sha256": "72e469f52ebf6f086dc57cb9865c3139de58b163fe45d3ef0656158005739c86"
+  },
+  "native-object-directory-open-format.cpp": {
+    "bytes": 3340,
+    "sha256": "7a76a82ee95daf2eb44a572a7f30facc2efa28567da60878b756b305f3a12fe8"
+  },
+  "native-object-directory-open-flag-boundaries.ps1": {
+    "bytes": 1603,
+    "sha256": "d16669b3ef49c41bb617c1c04c46886cb0affd60e6d044dabe6fcfc4f23debcf"
+  },
+  "native-object-directory-open-format-x86-laa.log": {
+    "bytes": 172744,
+    "sha256": "b05ddf0b44d386022e400a1b242c94d88ccf1a92d2676e699ebf575cfd201442"
+  },
+  "native-object-directory-open-matrix-x86-laa-build.log": {
+    "bytes": 41,
+    "sha256": "4acaabeac027c3d5b99986ee17692af80b63c311309e5d24ed6ff11a0a57e4c1"
+  },
+  "run-owning-macos.py": {
+    "bytes": 526,
+    "sha256": "fcdcb2a47418eac16a13d41cc89df4ab089d06b414bbf728708d63b2f1b99da1"
+  },
+  "native-object-directory-open-snapshot.cpp": {
+    "bytes": 4782,
+    "sha256": "5e43e1c6871d60219403e4df08863d6cb99ef9248bb0fdf2032de14d7956929a"
+  },
+  "macos-integration.log": {
+    "bytes": 35927,
+    "sha256": "d87b01456d8d71b823555bc4b03ae86c80bd064d5cfe73c2deab42cc0cd224fa"
+  },
+  "native-object-directory-open-privilege-x64.log": {
+    "bytes": 10263,
+    "sha256": "35e9387a3e22c417a18d1391f5427e565b39d0983efd76409eba00b8c36bb3cc"
+  },
+  "native-object-directory-open-snapshot-arm64-build.log": {
+    "bytes": 43,
+    "sha256": "2a1845111e395bf978dd48ce656dbdabbad2fa0d30cb5ef9d60e4652be157dda"
+  },
+  "native-object-directory-open-name-probe-x64-build.log": {
+    "bytes": 45,
+    "sha256": "09c05bd5f14c439514a6b5dcfc00b758ec19a9cf2653c543f97ddd134ac86efd"
+  },
+  "validation-summary.json": {
+    "bytes": 2207,
+    "sha256": "e102729f0aedb3e041c34f4f89d2ac20dbeb53031a607c7675b46360c0035617"
+  },
+  "native-object-directory-open-duplicate-policy-x86.log": {
+    "bytes": 309255,
+    "sha256": "331fb3157db584d8c89516a8452963e7db1e5ff3b0d8f798f95e7383d20cc442"
+  },
+  "check-evidence.py": {
+    "bytes": 19241,
+    "sha256": "3e4eb0b4dd53a23422db689a4fa108d804a6eebecfd822cbdc5b46251967bd1a"
+  },
+  "owning-linux-cpp-build.py": {
+    "bytes": 1522,
+    "sha256": "a0d9f75e831bd3585d3e009b94e8e3f2744b137e646c157c70a7ad7950373b56"
+  },
+  "native-object-directory-open-duplicate-boundaries-x64-build.log": {
+    "bytes": 55,
+    "sha256": "edef2264960a64feb6f90cba766aa141b9bc7e150cdb53e9bbe7f9d2b1b5b0d2"
+  },
+  "negative-changed-rehashed-native-status.log": {
+    "bytes": 598,
+    "sha256": "8a38ad552edb612f169337cc47d61d2cb861cc8527acd4541f8e13e577daea66"
+  },
+  "linux-full.log": {
+    "bytes": 792077,
+    "sha256": "4a632e8327ccaa8737371f1d4a17384c5e652c3faf5abf7c6ef23b777c25cef1"
+  },
+  "native-object-directory-open-duplicate-policy-x86-laa-build.log": {
+    "bytes": 51,
+    "sha256": "954040af70e083f2145ea68276e33e80f94023f08b29947e86640a57833d393d"
+  },
+  "assumption-register.json": {
+    "bytes": 4723,
+    "sha256": "944295ed9b36853cf43c05b73e56b27e4aeb3418092289f2de95bd98c8a6c80e"
+  },
+  "native-object-directory-open-duplicate-protected-boundaries-x86-laa-build.log": {
+    "bytes": 65,
+    "sha256": "878699f0df5d62e01d724a51935e1aeb953d9691d447827ec893294bb4b62365"
+  },
+  "linux-all-targets.log": {
+    "bytes": 116,
+    "sha256": "29b192bf72362227cb4252b2cd8c0d94743188cd48f3562f3f3779dbf1524364"
+  },
+  "native-object-directory-open-boundaries-arm64-build.log": {
+    "bytes": 45,
+    "sha256": "3e470bc0e4745c64ef0e7d589abd39d2d17cba43cd3eb32d70a180ec104919a7"
+  },
+  "native-object-directory-open-snapshot-arm64.log": {
+    "bytes": 23156,
+    "sha256": "3742f8986d3bb1ed1fe081f8822e488873994785599eb2d8dad1f6a54f8362fe"
+  },
+  "native-object-directory-open-boundaries.ps1": {
+    "bytes": 1573,
+    "sha256": "02cbb69cc089f7893e1398888d7be27afd40bc1ae646e478f5cb502003a41c04"
+  },
+  "native-object-directory-open-principal.csv": {
+    "bytes": 56,
+    "sha256": "fa338a5b80b0285ec80d54a12162763ad35537038f2c215f8e0e43cdb6f44bf6"
+  },
+  "native-object-directory-open-duplicate-protected-boundaries-x86.log": {
+    "bytes": 46244,
+    "sha256": "b9787c00c28ee159eaf1038ab4b85cc14dc941c0df3cf7cff876639cdf88d1f1"
+  },
+  "references/sources.json": {
+    "bytes": 882,
+    "sha256": "da556193cfeb3c0df5221cded77050836a00b33b6e584e9d356a9d2e7ad587ca"
+  },
+  "references/ZwOpenDirectoryObject.html": {
+    "bytes": 56385,
+    "sha256": "9fc33d4d66e2f3160f25cec4405cb978560827670d516884153464c49a3e5398"
+  },
+  "references/NtOpenDirectoryObject.html": {
+    "bytes": 52236,
+    "sha256": "296fe8345c049ac585abfd272263e171761213d75a3fed064de16c3e23650e1d"
+  },
+  "references/OBJECT_ATTRIBUTES.html": {
+    "bytes": 58583,
+    "sha256": "7b62721aa468163157d27a879bcd79d931cdef7689318800378455539f25d946"
+  }
+}

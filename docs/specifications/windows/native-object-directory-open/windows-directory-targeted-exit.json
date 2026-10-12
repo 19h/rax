@@ -1,0 +1,1 @@
+{"command":"cargo.exe test --locked --offline --no-default-features --lib directory_ -- --test-threads=1 --nocapture","exit-code":0}

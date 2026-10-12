@@ -113,6 +113,9 @@ impl Registry {
         }
         Ok(result)
     }
+    pub(crate) fn upcase_table(&self) -> Arc<[u16]> {
+        self.upcase.clone()
+    }
     pub(crate) fn codepages(&self) -> std::collections::BTreeSet<u32> {
         // Session Manager numeric names are not codepage declarations.
         let key = self.key(&NLS_KEY.encode_utf16().collect::<Vec<_>>());

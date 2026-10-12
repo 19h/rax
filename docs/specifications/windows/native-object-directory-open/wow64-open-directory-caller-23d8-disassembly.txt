@@ -1,0 +1,70 @@
+000023D8 pacibsp 
+000023DC stp x19, x20, [sp, #-0x30]!
+000023E0 stp x21, x22, [sp, #0x10]
+000023E4 str x23, [sp, #0x20]
+000023E8 stp x29, x30, [sp, #-0x70]!
+000023EC mov x29, sp
+000023F0 ldr w8, #0x1800024e0
+000023F4 movi v16.16b, #0
+000023F8 str xzr, [sp, #0x10]
+000023FC stp w8, wzr, [sp, #0x18]
+00002400 adrp x8, #0x18003e000
+00002404 add x8, x8, #0x788
+00002408 str x8, [sp, #0x20]
+0000240C add x8, sp, #0x18
+00002410 mov x19, #0x40
+00002414 str q16, [sp, #0x30]
+00002418 mov x20, #0x30
+0000241C stp xzr, xzr, [sp, #0x60]
+00002420 stp x8, x19, [sp, #0x50]
+00002424 mov x22, x0
+00002428 stp x20, xzr, [sp, #0x40]
+0000242C adrp x8, #0x18003b000
+00002430 ldr x8, [x8, #0x100]
+00002434 mov x21, x1
+00002438 add x2, sp, #0x40
+0000243C mov w1, #3
+00002440 add x0, sp, #0x10
+00002444 blr x8
+00002448 mov w23, w0
+0000244C tbnz w23, #0x1f, #0x1800024b0
+00002450 ldr x8, [sp, #0x10]
+00002454 cbnz x8, #0x180002460
+00002458 ldr w23, #0x1800024e4
+0000245C b #0x1800024c4
+00002460 adrp x8, #0x18003b000
+00002464 ldr x8, [x8, #0x108]
+00002468 mov x1, x22
+0000246C add x0, sp, #0x30
+00002470 blr x8
+00002474 mov w23, w0
+00002478 tbnz w23, #0x1f, #0x1800024b0
+0000247C ldr x9, [sp, #0x10]
+00002480 add x8, sp, #0x30
+00002484 str w20, [sp, #0x40]
+00002488 add x2, sp, #0x40
+0000248C str w19, [sp, #0x58]
+00002490 mov w1, #0xd
+00002494 stp xzr, xzr, [sp, #0x60]
+00002498 mov x0, x21
+0000249C stp x9, x8, [sp, #0x48]
+000024A0 adrp x8, #0x18003b000
+000024A4 ldr x8, [x8, #0x110]
+000024A8 blr x8
+000024AC mov w23, w0
+000024B0 ldr x0, [sp, #0x10]
+000024B4 cbz x0, #0x1800024c4
+000024B8 adrp x8, #0x18003b000
+000024BC ldr x8, [x8, #0xc0]
+000024C0 blr x8
+000024C4 mov w0, w23
+000024C8 ldp x29, x30, [sp], #0x70
+000024CC ldr x23, [sp, #0x20]
+000024D0 ldp x21, x22, [sp, #0x10]
+000024D4 ldp x19, x20, [sp], #0x30
+000024D8 autibsp 
+000024DC ret 
+000024E0 .byte 0x18, 0x00, 0x1a, 0x00
+000024E4 mov za0h.b[w12, 8], p0/m, z0.b
+000024E8 udf #0
+000024EC udf #0

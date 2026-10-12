@@ -1,0 +1,23 @@
+[
+  {
+    "path": "NtOpenDirectoryObject.html",
+    "url": "https://learn.microsoft.com/en-us/windows/win32/devnotes/ntopendirectoryobject",
+    "retrieved-utc-date": "2026-10-12",
+    "bytes": 52236,
+    "sha256": "296fe8345c049ac585abfd272263e171761213d75a3fed064de16c3e23650e1d"
+  },
+  {
+    "path": "ZwOpenDirectoryObject.html",
+    "url": "https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/nf-ntifs-zwopendirectoryobject",
+    "retrieved-utc-date": "2026-10-12",
+    "bytes": 56385,
+    "sha256": "9fc33d4d66e2f3160f25cec4405cb978560827670d516884153464c49a3e5398"
+  },
+  {
+    "path": "OBJECT_ATTRIBUTES.html",
+    "url": "https://learn.microsoft.com/en-us/windows/win32/api/ntdef/ns-ntdef-_object_attributes",
+    "retrieved-utc-date": "2026-10-12",
+    "bytes": 58583,
+    "sha256": "7b62721aa468163157d27a879bcd79d931cdef7689318800378455539f25d946"
+  }
+]

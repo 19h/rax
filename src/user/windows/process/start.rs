@@ -344,6 +344,10 @@ pub(super) fn spawn_image(mut config: WindowsConfig, bytes: Vec<u8>) -> Result<P
         .as_ref()
         .map(|r| r.registry.clone())
         .unwrap_or_default();
+    let object_namespace = native
+        .as_ref()
+        .map(|r| r.object_namespace.clone())
+        .unwrap_or_default();
     let nls = native.as_ref().and_then(|r| r.nls.clone());
     let mut objects = Objects::default();
     if let Some(runtime) = &native {
@@ -356,6 +360,7 @@ pub(super) fn spawn_image(mut config: WindowsConfig, bytes: Vec<u8>) -> Result<P
         cfg: Arc::new(config),
         native,
         registry,
+        object_namespace,
         nls,
         pid: 4,
         peb: layout::PEB_ADDRESS,

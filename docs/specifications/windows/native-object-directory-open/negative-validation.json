@@ -1,0 +1,38 @@
+[
+  {
+    "case": "changed-rehashed-native-status",
+    "exit-code": 1,
+    "required-reason": "same-width native semantic agreement",
+    "result": "rejected-for-intended-reason"
+  },
+  {
+    "case": "missing-rehashed-native-case",
+    "exit-code": 1,
+    "required-reason": "sequential cases",
+    "result": "rejected-for-intended-reason"
+  },
+  {
+    "case": "changed-rehashed-input-partition",
+    "exit-code": 1,
+    "required-reason": "independent input partition",
+    "result": "rejected-for-intended-reason"
+  },
+  {
+    "case": "forged-actual-pe-architecture",
+    "exit-code": 1,
+    "required-reason": "actual PE architecture",
+    "result": "rejected-for-intended-reason"
+  },
+  {
+    "case": "changed-current-compiled-source",
+    "exit-code": 1,
+    "required-reason": "current compiled source",
+    "result": "rejected-for-intended-reason"
+  },
+  {
+    "case": "optimized-python",
+    "exit-code": 1,
+    "required-reason": "optimized validation rejected",
+    "result": "rejected-for-intended-reason"
+  }
+]

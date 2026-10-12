@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-object-directory-open/check-evidence.py", line 173, in <module>
+    partition(observed, keysets[family], inputs, family + "/" + profile)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-object-directory-open/check-evidence.py", line 48, in partition
+    require([num(r, "case") for r in observed] == list(range(len(expected))),
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "sequential cases " + label)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-object-directory-open/check-evidence.py", line 17, in require
+    raise ValueError(message)
+ValueError: sequential cases matrix/arm64

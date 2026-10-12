@@ -1,0 +1,75 @@
+{
+  "mature-native-row-count": 69684,
+  "actual-native-producers": 45,
+  "hosts": {
+    "macos": {
+      "targeted": 27,
+      "full": [
+        7713,
+        0,
+        2
+      ],
+      "capi": 168,
+      "integration": 544,
+      "cpp-consumers": 5
+    },
+    "linux": {
+      "targeted": 27,
+      "full": [
+        7707,
+        0,
+        2
+      ],
+      "capi": 168,
+      "integration": 544,
+      "cpp-consumers": 5
+    },
+    "windows": {
+      "targeted": 25,
+      "full": [
+        7121,
+        5,
+        2
+      ],
+      "capi": 168,
+      "integration": 4,
+      "cpp-consumers": 5
+    }
+  },
+  "ordinary-results": {
+    "observer-sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e",
+    "previous-turn": 90924,
+    "current-turn": 91011,
+    "scheduler-calls-advanced": 87,
+    "next-service": "NtOpenSymbolicLinkObject",
+    "next-service-number": "0x138",
+    "next-service-pc": "0x1800023c0",
+    "programs": [
+      "C:/Windows/Temp/assist-native-rax-20261010/src/tests/fixtures/user/windows/bin/arm64/smoke.exe",
+      "C:/Windows/Temp/assist-native-rax-20261010/src/tests/fixtures/user/windows/crt_stdio/bin/arm64/msvcrt/streams.exe",
+      "C:/Windows/Temp/assist-native-rax-20261010/src/tests/fixtures/user/windows/crt_stdio/bin/arm64/ucrtbase/streams.exe",
+      "C:/Windows/System32/whoami.exe"
+    ],
+    "guest-exits": 0,
+    "stop-reason": 5,
+    "archives": [
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\assist_rs.lib",
+        "bytes": 1130815748,
+        "sha256": "ce1da8f95cd66bb511b15a8a182779f87d2995ace0ca3e30f5997f1b9f3f8dd2",
+        "members": 4673,
+        "structural-member-walk": "pass"
+      },
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\librax-e6c413934cad3a8f.rlib",
+        "bytes": 743232692,
+        "sha256": "06e455ef833a209b2411ac09380e83045b2f3de89451a5f11c88cc1db3a28c6f",
+        "members": 260,
+        "structural-member-walk": "pass"
+      }
+    ],
+    "core-features": [],
+    "source-units": 79
+  },
+  "scope": "directory group verified; full ordinary process goal remains incomplete"
+}

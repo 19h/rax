@@ -1,0 +1,39 @@
+{
+  "images": [
+    {
+      "cache-file": "object-directory-wow64.dll",
+      "bytes": 338656,
+      "sha256": "d76e8c7f2cbd744628a5cccda5bec0c346a1aca8f8a35408bd2c9d5ff87667bd",
+      "distribution": "task cache only; proprietary native image not committed"
+    },
+    {
+      "cache-file": "object-directory-wow64base.dll",
+      "bytes": 35456,
+      "sha256": "e47397a92e82c1b14f3f185cabe8a02a60e0dd4fb1c26f059e3606032a0cde90",
+      "distribution": "task cache only; proprietary native image not committed"
+    },
+    {
+      "cache-file": "object-directory-ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "distribution": "task cache only; proprietary native image not committed"
+    }
+  ],
+  "retained-disassemblies": [
+    "RtlCompareUnicodeStrings-disassembly.txt",
+    "RtlGetNtSystemRoot-disassembly.txt",
+    "RtlPrefixUnicodeString-disassembly.txt",
+    "RtlPrefixUnicodeString-memcmp-disassembly.txt",
+    "RtlPrefixUnicodeString-memcmp-implementation-disassembly.txt",
+    "RtlPrefixUnicodeString-memcmp-remainder-disassembly.txt",
+    "wow64-convert-attributes-disassembly.txt",
+    "wow64-object-name-preconversion-disassembly.txt",
+    "wow64-open-directory-caller-106b0-disassembly.txt",
+    "wow64-open-directory-caller-23d8-disassembly.txt",
+    "wow64-open-directory-caller-3d68-disassembly.txt",
+    "wow64-redirect-object-name-disassembly.txt"
+  ],
+  "measured-host": "Windows10.0.29683.1000 ARM64",
+  "scope": "raw installed image investigation; loaded ARM64X fixup/target equivalence unknown",
+  "authority": "native producer name-extent rows own observed loaded read extents; raw-image disassembly alone does not establish loaded-target equivalence"
+}

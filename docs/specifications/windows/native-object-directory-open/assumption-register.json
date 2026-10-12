@@ -1,0 +1,56 @@
+[
+  {
+    "id": "A1",
+    "assumption": "Native directory-open layouts, statuses and capture order are bounded to Windows10.0.29683.1000.",
+    "basis": "45 source/PE/stdout-verified native producers, two complete fresh ARM64 captures, 69684 syscall/duplication case rows, and the installed wow64/ntdll binary identities.",
+    "dependent-result": "Directory service mechanics and ABI adaptation.",
+    "stress-test": "Invalid lengths, roots, aliases, name encodings and simultaneous protected input/output buffers.",
+    "falsification-probe": "A different installed build or completed guard matrix differs.",
+    "status": "confirmed on measured Windows10.0.29683.1000; additional builds/native physical x64 unknown"
+  },
+  {
+    "id": "A2",
+    "assumption": "Immutable selected namespace metadata can represent read-only installed-runtime directory lookup without retaining host handles.",
+    "basis": "Four profiles capture identical151-entry names/types/order across the root, KnownDlls and KnownDlls32; runtime acquisition uses bounded repeated enumeration, captured grants and no retained native handles.",
+    "dependent-result": "Namespace snapshot and Directory guest resource design.",
+    "stress-test": "Changed host entries, symbolic links, case variants, missing children and typed mismatches.",
+    "falsification-probe": "A reached directory lookup depends on state absent from the snapshot.",
+    "status": "confirmed by native Windows snapshot and installed ARM64/x86 leaf test; later uncaptured namespace state remains explicitly unsupported"
+  },
+  {
+    "id": "A3",
+    "assumption": "The default native guest keeps the selected host principal and captured authorization context.",
+    "basis": "Actual native probe principal is NT AUTHORITY\\SYSTEM, SID S-1-5-18. No supported token/impersonation service exists in current source; directory grants are selected per host principal.",
+    "dependent-result": "Captured maximum-access policy for selected directories.",
+    "stress-test": "An isolated impersonation-token privilege enable/restore cycle, DACL versus privilege error priority, and supported guest impersonation after selection.",
+    "falsification-probe": "A supported reachable service changes the effective principal or DACL policy.",
+    "status": "retained; captured maximum and ACCESS_SYSTEM_SECURITY status implemented; 288 isolated-token native rows replayed on all three hosts and installed Windows adapter/leaf passed"
+  },
+  {
+    "id": "A4",
+    "assumption": "Fresh x64/WoW64 directory initialization follows the observed same-kernel mature contract.",
+    "basis": "All mature profiles agree on lookup and access; fresh debugger capture is ARM64 only.",
+    "dependent-result": "Compatibility startup first open.",
+    "stress-test": "Fresh original compatibility entry and true-return capture.",
+    "falsification-probe": "A fresh compatibility caller differs.",
+    "status": "retained; fresh compatibility capture unknown"
+  },
+  {
+    "id": "A5",
+    "assumption": "Forced case-insensitive NT directory lookup is a property of the selected host namespace, rather than only the guest OBJ_CASE_INSENSITIVE bit.",
+    "basis": "All four native format profiles accept the lowercase KnownDlls path with flags0; runtime acquisition compares original, inverted-case and explicit-fold probes.",
+    "dependent-result": "Directory name lookup policy.",
+    "stress-test": "Case-sensitive host policy, folded collisions and captured typed children.",
+    "falsification-probe": "Actual acquisition probes disagree or a reached mixed-case lookup differs from the host.",
+    "status": "confirmed on measured host; other host configurations selected dynamically"
+  },
+  {
+    "id": "A6",
+    "assumption": "Measured WoW64 redirection and prefix-read mechanics are bounded to the installed Windows10.0.29683.1000 profile.",
+    "basis": "Four6656-case name-extent profiles; 16-byte case-sensitive and per-WCHAR case-insensitive first-mismatch read extents. The raw installed image was inspected; complete loaded ARM64X fixup/target equivalence is not established.",
+    "dependent-result": "WoW64 directory attribute conversion, system-root prefix probes and caller-output copy ordering.",
+    "stress-test": "NULL output, first/later guard page, 13 byte-prefix extents, count0/odd/65532, pseudo root and flags0/40.",
+    "falsification-probe": "Native loaded thunk under another build/host or a matching system-path prefix produces a different result; matching redirection paths currently return explicit unsupported.",
+    "status": "confirmed for observed negative-prefix cases on measured host; other loaded profiles and matching-system-path redirection remain unknown"
+  }
+]

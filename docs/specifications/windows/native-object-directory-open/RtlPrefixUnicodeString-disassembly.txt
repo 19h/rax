@@ -1,0 +1,80 @@
+00035E40 pacibsp 
+00035E44 stp x29, x30, [sp, #-0x10]!
+00035E48 mov x29, sp
+00035E4C ldrh w9, [x0]
+00035E50 uxtb w10, w2
+00035E54 ldrh w8, [x1]
+00035E58 cmp w8, w9
+00035E5C b.lo #0x180035ed0
+00035E60 ldr x0, [x0, #8]
+00035E64 adrp x8, #0x1803bd000
+00035E68 ldr x2, [x8, #0xd28]
+00035E6C ldr x1, [x1, #8]
+00035E70 add x8, x0, w9, uxth
+00035E74 cbz w10, #0x180035f58
+00035E78 cmp x0, x8
+00035E7C b.hs #0x180035f48
+00035E80 ldrh w10, [x0], #2
+00035E84 ldrh w9, [x1], #2
+00035E88 cmp w10, w9
+00035E8C b.eq #0x180035e78
+00035E90 cmp w10, #0x61
+00035E94 b.lo #0x180035eac
+00035E98 cmp w10, #0x7a
+00035E9C b.hi #0x180035ee0
+00035EA0 mov w11, #0xffe0
+00035EA4 add w10, w10, w11
+00035EA8 uxth w10, w10
+00035EAC cmp w9, #0x61
+00035EB0 b.lo #0x180035ec8
+00035EB4 cmp w9, #0x7a
+00035EB8 b.hi #0x180035f14
+00035EBC mov w11, #0xffe0
+00035EC0 add w9, w9, w11
+00035EC4 uxth w9, w9
+00035EC8 cmp w10, w9
+00035ECC b.eq #0x180035e78
+00035ED0 mov w0, #0
+00035ED4 ldp x29, x30, [sp], #0x10
+00035ED8 autibsp 
+00035EDC ret 
+00035EE0 cmp w10, #0xc0
+00035EE4 ccmp x2, #0, #4, hs
+00035EE8 b.eq #0x180035eac
+00035EEC ubfx x11, x10, #8, #8
+00035EF0 ldrh w11, [x2, x11, lsl #1]
+00035EF4 ubfx w12, w10, #4, #4
+00035EF8 and w15, w10, #0xf
+00035EFC add w11, w11, w12
+00035F00 ldrh w11, [x2, w11, uxtw #1]
+00035F04 add w11, w11, w15
+00035F08 ldrh w11, [x2, w11, uxtw #1]
+00035F0C add w10, w11, w10, uxth
+00035F10 b #0x180035ea8
+00035F14 cmp w9, #0xc0
+00035F18 ccmp x2, #0, #4, hs
+00035F1C b.eq #0x180035ec8
+00035F20 ubfx x11, x9, #8, #8
+00035F24 ldrh w11, [x2, x11, lsl #1]
+00035F28 ubfx w12, w9, #4, #4
+00035F2C and w15, w9, #0xf
+00035F30 add w11, w11, w12
+00035F34 ldrh w11, [x2, w11, uxtw #1]
+00035F38 add w11, w11, w15
+00035F3C ldrh w11, [x2, w11, uxtw #1]
+00035F40 add w9, w11, w9, uxth
+00035F44 b #0x180035ec4
+00035F48 mov w0, #1
+00035F4C ldp x29, x30, [sp], #0x10
+00035F50 autibsp 
+00035F54 ret 
+00035F58 mov w2, w9
+00035F5C bl #0x1803390b0
+00035F60 cmp w0, #0
+00035F64 cset w0, eq
+00035F68 ldp x29, x30, [sp], #0x10
+00035F6C autibsp 
+00035F70 ret 
+00035F74 udf #0
+00035F78 udf #0
+00035F7C udf #0

@@ -1,4 +1,35 @@
-## Current increment: native provider traits (2026-10-12)
+## Current increment: native directory objects (2026-10-12)
+
+`NtOpenDirectoryObject` selects guest-owned immutable `Directory` resources from
+three bounded installed namespace catalogs: `\`, `\KnownDlls` and
+`\KnownDlls32`. Native acquisition uses fixed query-only host paths and closes
+its owned handles before guest execution. Guest pointers, desired access and
+handles are never forwarded to the host. Captured maximum grants, system-security
+status, NT case policy, entry types and KnownDllPath targets govern guest lookup.
+Uncaptured directory children, matching WoW64 system-path redirection and
+unselected security contexts remain explicit unsupported boundaries.
+
+Native64 output probing precedes input capture. WoW64 converts attributes and
+pointed-to names before flags/security/QoS tails, performs measured system-root
+prefix probes, uses a temporary output and then copies to the caller. Guard,
+alignment, alias and crossing behavior follows 69,684 native open/duplicate
+rows across ARM64, x64 compatibility, x86 WoW64 and x86 LAA profiles on Windows
+10.0.29683.1000 ARM64. Immutable Arc identity survives namespace drop; duplication,
+inheritance/protection, close-source policy, lowest-free handle reuse and final
+release match the retained independent native corpus. A protected WoW64 duplicate
+can remain unreturned after caller copy failure, matching measured object state.
+
+The installed ARM64/x86 NTDLL leaf tests pass, including x86 RET12 argument
+cleanup. All shared replay rows pass on macOS, Linux and Windows. Fresh original
+entry/true-LR evidence is ARM64 only; fresh compatibility and physical x64-kernel
+proof remain unknown. Public Rust `Object` gains `Directory`; the opaque C API
+1.11.0, Assist ABI, feature defaults and dependency pins are unchanged.
+The unchanged ordinary observer advances90924->91011 (87 scheduler calls) to
+NtOpenSymbolicLinkObject0x138; all four owning programs reach that boundary before
+guest exit. Full ordinary application execution remains an active incomplete goal.
+See [directory object evidence](../../specifications/windows/native-object-directory-open/README.md).
+
+## Previous increment: native provider traits (2026-10-12)
 
 NtTraceControl function30 captures provider traits once on a process-local
 EtwRegistration. Its24 B header contains a64-bit handle,64-bit buffer address,

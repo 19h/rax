@@ -67,6 +67,9 @@ mod hotpatch_tests;
 #[path = "services_tests/registry_tests.rs"]
 mod registry_tests;
 
+#[path = "services_tests/directory_open_tests.rs"]
+mod directory_open_tests;
+
 #[path = "services_tests/nls_tests.rs"]
 mod nls_tests;
 

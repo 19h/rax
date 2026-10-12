@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-object-directory-open/check-evidence.py", line 216, in <module>
+    require(a[key] == b[key], "same-width native semantic agreement " + family + "/" + key)
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-object-directory-open/check-evidence.py", line 17, in require
+    raise ValueError(message)
+ValueError: same-width native semantic agreement matrix/status

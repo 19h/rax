@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-object-directory-open/check-evidence.py", line 77, in <module>
+    require(executable["machine"] == {"arm64": 0xAA64, "x64": 0x8664,
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "x86": 0x14C, "x86-laa": 0x14C}[producer["profile"]], "actual PE architecture")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-object-directory-open/check-evidence.py", line 17, in require
+    raise ValueError(message)
+ValueError: actual PE architecture

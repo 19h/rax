@@ -1,0 +1,407 @@
+[
+  {
+    "family": "matrix",
+    "profile": "arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-matrix-arm64",
+    "source": "native-object-directory-open-matrix.cpp",
+    "source-sha256": "486dab35302caf83885384d7e28d409a21f782bb8d8b8c1f759e349ed45a0b59",
+    "executable": "native-object-directory-open-matrix-arm64.exe",
+    "log": "native-object-directory-open-matrix-arm64.log"
+  },
+  {
+    "family": "matrix",
+    "profile": "x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-matrix-x64",
+    "source": "native-object-directory-open-matrix.cpp",
+    "source-sha256": "486dab35302caf83885384d7e28d409a21f782bb8d8b8c1f759e349ed45a0b59",
+    "executable": "native-object-directory-open-matrix-x64.exe",
+    "log": "native-object-directory-open-matrix-x64.log"
+  },
+  {
+    "family": "matrix",
+    "profile": "x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-matrix-x86",
+    "source": "native-object-directory-open-matrix.cpp",
+    "source-sha256": "486dab35302caf83885384d7e28d409a21f782bb8d8b8c1f759e349ed45a0b59",
+    "executable": "native-object-directory-open-matrix-x86.exe",
+    "log": "native-object-directory-open-matrix-x86.log"
+  },
+  {
+    "family": "matrix",
+    "profile": "x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-matrix-x86-laa",
+    "source": "native-object-directory-open-matrix.cpp",
+    "source-sha256": "486dab35302caf83885384d7e28d409a21f782bb8d8b8c1f759e349ed45a0b59",
+    "executable": "native-object-directory-open-matrix-x86-laa.exe",
+    "log": "native-object-directory-open-matrix-x86-laa.log"
+  },
+  {
+    "family": "boundaries",
+    "profile": "arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-boundaries-arm64",
+    "source": "native-object-directory-open-boundaries.cpp",
+    "source-sha256": "82441e1658e3830ec1e4cb284c1b76b0d53d1c14793f3647639c6d9e84268110",
+    "executable": "native-object-directory-open-boundaries-arm64.exe",
+    "log": "native-object-directory-open-boundaries-arm64.log"
+  },
+  {
+    "family": "boundaries",
+    "profile": "x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-boundaries-x64",
+    "source": "native-object-directory-open-boundaries.cpp",
+    "source-sha256": "82441e1658e3830ec1e4cb284c1b76b0d53d1c14793f3647639c6d9e84268110",
+    "executable": "native-object-directory-open-boundaries-x64.exe",
+    "log": "native-object-directory-open-boundaries-x64.log"
+  },
+  {
+    "family": "boundaries",
+    "profile": "x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-boundaries-x86",
+    "source": "native-object-directory-open-boundaries.cpp",
+    "source-sha256": "82441e1658e3830ec1e4cb284c1b76b0d53d1c14793f3647639c6d9e84268110",
+    "executable": "native-object-directory-open-boundaries-x86.exe",
+    "log": "native-object-directory-open-boundaries-x86.log"
+  },
+  {
+    "family": "boundaries",
+    "profile": "x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-boundaries-x86-laa",
+    "source": "native-object-directory-open-boundaries.cpp",
+    "source-sha256": "82441e1658e3830ec1e4cb284c1b76b0d53d1c14793f3647639c6d9e84268110",
+    "executable": "native-object-directory-open-boundaries-x86-laa.exe",
+    "log": "native-object-directory-open-boundaries-x86-laa.log"
+  },
+  {
+    "family": "snapshot",
+    "profile": "arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-snapshot-arm64",
+    "source": "native-object-directory-open-snapshot.cpp",
+    "source-sha256": "5e43e1c6871d60219403e4df08863d6cb99ef9248bb0fdf2032de14d7956929a",
+    "executable": "native-object-directory-open-snapshot-arm64.exe",
+    "log": "native-object-directory-open-snapshot-arm64.log"
+  },
+  {
+    "family": "snapshot",
+    "profile": "x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-snapshot-x64",
+    "source": "native-object-directory-open-snapshot.cpp",
+    "source-sha256": "5e43e1c6871d60219403e4df08863d6cb99ef9248bb0fdf2032de14d7956929a",
+    "executable": "native-object-directory-open-snapshot-x64.exe",
+    "log": "native-object-directory-open-snapshot-x64.log"
+  },
+  {
+    "family": "snapshot",
+    "profile": "x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-snapshot-x86",
+    "source": "native-object-directory-open-snapshot.cpp",
+    "source-sha256": "5e43e1c6871d60219403e4df08863d6cb99ef9248bb0fdf2032de14d7956929a",
+    "executable": "native-object-directory-open-snapshot-x86.exe",
+    "log": "native-object-directory-open-snapshot-x86.log"
+  },
+  {
+    "family": "snapshot",
+    "profile": "x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-snapshot-x86-laa",
+    "source": "native-object-directory-open-snapshot.cpp",
+    "source-sha256": "5e43e1c6871d60219403e4df08863d6cb99ef9248bb0fdf2032de14d7956929a",
+    "executable": "native-object-directory-open-snapshot-x86-laa.exe",
+    "log": "native-object-directory-open-snapshot-x86-laa.log"
+  },
+  {
+    "family": "reference",
+    "profile": "arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-reference-arm64",
+    "source": "native-object-directory-open-reference.cpp",
+    "source-sha256": "9feb7be5b489b95419b3c73f08353ac679b250fcd22f45e0830452c83388d78d",
+    "executable": "native-object-directory-open-reference-arm64.exe",
+    "log": "native-object-directory-open-reference-arm64.log"
+  },
+  {
+    "family": "reference",
+    "profile": "x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-reference-x64",
+    "source": "native-object-directory-open-reference.cpp",
+    "source-sha256": "9feb7be5b489b95419b3c73f08353ac679b250fcd22f45e0830452c83388d78d",
+    "executable": "native-object-directory-open-reference-x64.exe",
+    "log": "native-object-directory-open-reference-x64.log"
+  },
+  {
+    "family": "reference",
+    "profile": "x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-reference-x86",
+    "source": "native-object-directory-open-reference.cpp",
+    "source-sha256": "9feb7be5b489b95419b3c73f08353ac679b250fcd22f45e0830452c83388d78d",
+    "executable": "native-object-directory-open-reference-x86.exe",
+    "log": "native-object-directory-open-reference-x86.log"
+  },
+  {
+    "family": "reference",
+    "profile": "x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-reference-x86-laa",
+    "source": "native-object-directory-open-reference.cpp",
+    "source-sha256": "9feb7be5b489b95419b3c73f08353ac679b250fcd22f45e0830452c83388d78d",
+    "executable": "native-object-directory-open-reference-x86-laa.exe",
+    "log": "native-object-directory-open-reference-x86-laa.log"
+  },
+  {
+    "family": "format",
+    "profile": "arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-format-arm64",
+    "source": "native-object-directory-open-format.cpp",
+    "source-sha256": "7a76a82ee95daf2eb44a572a7f30facc2efa28567da60878b756b305f3a12fe8",
+    "executable": "native-object-directory-open-format-arm64.exe",
+    "log": "native-object-directory-open-format-arm64.log"
+  },
+  {
+    "family": "format",
+    "profile": "x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-format-x64",
+    "source": "native-object-directory-open-format.cpp",
+    "source-sha256": "7a76a82ee95daf2eb44a572a7f30facc2efa28567da60878b756b305f3a12fe8",
+    "executable": "native-object-directory-open-format-x64.exe",
+    "log": "native-object-directory-open-format-x64.log"
+  },
+  {
+    "family": "format",
+    "profile": "x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-format-x86",
+    "source": "native-object-directory-open-format.cpp",
+    "source-sha256": "7a76a82ee95daf2eb44a572a7f30facc2efa28567da60878b756b305f3a12fe8",
+    "executable": "native-object-directory-open-format-x86.exe",
+    "log": "native-object-directory-open-format-x86.log"
+  },
+  {
+    "family": "format",
+    "profile": "x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-format-x86-laa",
+    "source": "native-object-directory-open-format.cpp",
+    "source-sha256": "7a76a82ee95daf2eb44a572a7f30facc2efa28567da60878b756b305f3a12fe8",
+    "executable": "native-object-directory-open-format-x86-laa.exe",
+    "log": "native-object-directory-open-format-x86-laa.log"
+  },
+  {
+    "family": "duplicate-boundaries",
+    "profile": "arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-duplicate-boundaries-arm64",
+    "source": "native-object-directory-open-duplicate-boundaries.cpp",
+    "source-sha256": "ddea5f0064e11f0409269ceb7979ada9fa90ae311b9a9db307258b688e9ca9c9",
+    "executable": "native-object-directory-open-duplicate-boundaries-arm64.exe",
+    "log": "native-object-directory-open-duplicate-boundaries-arm64.log"
+  },
+  {
+    "family": "duplicate-boundaries",
+    "profile": "x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-duplicate-boundaries-x64",
+    "source": "native-object-directory-open-duplicate-boundaries.cpp",
+    "source-sha256": "ddea5f0064e11f0409269ceb7979ada9fa90ae311b9a9db307258b688e9ca9c9",
+    "executable": "native-object-directory-open-duplicate-boundaries-x64.exe",
+    "log": "native-object-directory-open-duplicate-boundaries-x64.log"
+  },
+  {
+    "family": "duplicate-boundaries",
+    "profile": "x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-duplicate-boundaries-x86",
+    "source": "native-object-directory-open-duplicate-boundaries.cpp",
+    "source-sha256": "ddea5f0064e11f0409269ceb7979ada9fa90ae311b9a9db307258b688e9ca9c9",
+    "executable": "native-object-directory-open-duplicate-boundaries-x86.exe",
+    "log": "native-object-directory-open-duplicate-boundaries-x86.log"
+  },
+  {
+    "family": "duplicate-boundaries",
+    "profile": "x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-duplicate-boundaries-x86-laa",
+    "source": "native-object-directory-open-duplicate-boundaries.cpp",
+    "source-sha256": "ddea5f0064e11f0409269ceb7979ada9fa90ae311b9a9db307258b688e9ca9c9",
+    "executable": "native-object-directory-open-duplicate-boundaries-x86-laa.exe",
+    "log": "native-object-directory-open-duplicate-boundaries-x86-laa.log"
+  },
+  {
+    "family": "privilege",
+    "profile": "arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-privilege-arm64",
+    "source": "native-object-directory-open-privilege.cpp",
+    "source-sha256": "a633c269af696c140cfbfd1387fece41ee34ae257c643cb605a1721518f2b265",
+    "executable": "native-object-directory-open-privilege-arm64.exe",
+    "log": "native-object-directory-open-privilege-arm64.log"
+  },
+  {
+    "family": "privilege",
+    "profile": "x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-privilege-x64",
+    "source": "native-object-directory-open-privilege.cpp",
+    "source-sha256": "a633c269af696c140cfbfd1387fece41ee34ae257c643cb605a1721518f2b265",
+    "executable": "native-object-directory-open-privilege-x64.exe",
+    "log": "native-object-directory-open-privilege-x64.log"
+  },
+  {
+    "family": "privilege",
+    "profile": "x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-privilege-x86",
+    "source": "native-object-directory-open-privilege.cpp",
+    "source-sha256": "a633c269af696c140cfbfd1387fece41ee34ae257c643cb605a1721518f2b265",
+    "executable": "native-object-directory-open-privilege-x86.exe",
+    "log": "native-object-directory-open-privilege-x86.log"
+  },
+  {
+    "family": "privilege",
+    "profile": "x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-privilege-x86-laa",
+    "source": "native-object-directory-open-privilege.cpp",
+    "source-sha256": "a633c269af696c140cfbfd1387fece41ee34ae257c643cb605a1721518f2b265",
+    "executable": "native-object-directory-open-privilege-x86-laa.exe",
+    "log": "native-object-directory-open-privilege-x86-laa.log"
+  },
+  {
+    "family": "flag-boundaries",
+    "profile": "arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-flag-boundaries-arm64",
+    "source": "native-object-directory-open-flag-boundaries.cpp",
+    "source-sha256": "9f32dd08a3ca2669b693de9c7f18d5d2267cca0b4277f42fcb6aefdb6635a913",
+    "executable": "native-object-directory-open-flag-boundaries-arm64.exe",
+    "log": "native-object-directory-open-flag-boundaries-arm64.log"
+  },
+  {
+    "family": "flag-boundaries",
+    "profile": "x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-flag-boundaries-x64",
+    "source": "native-object-directory-open-flag-boundaries.cpp",
+    "source-sha256": "9f32dd08a3ca2669b693de9c7f18d5d2267cca0b4277f42fcb6aefdb6635a913",
+    "executable": "native-object-directory-open-flag-boundaries-x64.exe",
+    "log": "native-object-directory-open-flag-boundaries-x64.log"
+  },
+  {
+    "family": "flag-boundaries",
+    "profile": "x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-flag-boundaries-x86",
+    "source": "native-object-directory-open-flag-boundaries.cpp",
+    "source-sha256": "9f32dd08a3ca2669b693de9c7f18d5d2267cca0b4277f42fcb6aefdb6635a913",
+    "executable": "native-object-directory-open-flag-boundaries-x86.exe",
+    "log": "native-object-directory-open-flag-boundaries-x86.log"
+  },
+  {
+    "family": "flag-boundaries",
+    "profile": "x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-flag-boundaries-x86-laa",
+    "source": "native-object-directory-open-flag-boundaries.cpp",
+    "source-sha256": "9f32dd08a3ca2669b693de9c7f18d5d2267cca0b4277f42fcb6aefdb6635a913",
+    "executable": "native-object-directory-open-flag-boundaries-x86-laa.exe",
+    "log": "native-object-directory-open-flag-boundaries-x86-laa.log"
+  },
+  {
+    "family": "duplicate-policy",
+    "profile": "arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-duplicate-policy-arm64",
+    "source": "native-object-directory-open-duplicate-policy.cpp",
+    "source-sha256": "da20da30dd0d60002019df4a6b265480301b65872f081cb7be37d730a1225a0e",
+    "executable": "native-object-directory-open-duplicate-policy-arm64.exe",
+    "log": "native-object-directory-open-duplicate-policy-arm64.log"
+  },
+  {
+    "family": "duplicate-policy",
+    "profile": "x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-duplicate-policy-x64",
+    "source": "native-object-directory-open-duplicate-policy.cpp",
+    "source-sha256": "da20da30dd0d60002019df4a6b265480301b65872f081cb7be37d730a1225a0e",
+    "executable": "native-object-directory-open-duplicate-policy-x64.exe",
+    "log": "native-object-directory-open-duplicate-policy-x64.log"
+  },
+  {
+    "family": "duplicate-policy",
+    "profile": "x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-duplicate-policy-x86",
+    "source": "native-object-directory-open-duplicate-policy.cpp",
+    "source-sha256": "da20da30dd0d60002019df4a6b265480301b65872f081cb7be37d730a1225a0e",
+    "executable": "native-object-directory-open-duplicate-policy-x86.exe",
+    "log": "native-object-directory-open-duplicate-policy-x86.log"
+  },
+  {
+    "family": "duplicate-policy",
+    "profile": "x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-duplicate-policy-x86-laa",
+    "source": "native-object-directory-open-duplicate-policy.cpp",
+    "source-sha256": "da20da30dd0d60002019df4a6b265480301b65872f081cb7be37d730a1225a0e",
+    "executable": "native-object-directory-open-duplicate-policy-x86-laa.exe",
+    "log": "native-object-directory-open-duplicate-policy-x86-laa.log"
+  },
+  {
+    "family": "name-probe",
+    "profile": "arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-name-probe-arm64",
+    "source": "native-object-directory-open-name-probe.cpp",
+    "source-sha256": "5441610abc158c4466bd5df2b441f8bda5c878a8454e501a61241ac7c80fc469",
+    "executable": "native-object-directory-open-name-probe-arm64.exe",
+    "log": "native-object-directory-open-name-probe-arm64.log"
+  },
+  {
+    "family": "name-probe",
+    "profile": "x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-name-probe-x64",
+    "source": "native-object-directory-open-name-probe.cpp",
+    "source-sha256": "5441610abc158c4466bd5df2b441f8bda5c878a8454e501a61241ac7c80fc469",
+    "executable": "native-object-directory-open-name-probe-x64.exe",
+    "log": "native-object-directory-open-name-probe-x64.log"
+  },
+  {
+    "family": "name-probe",
+    "profile": "x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-name-probe-x86",
+    "source": "native-object-directory-open-name-probe.cpp",
+    "source-sha256": "5441610abc158c4466bd5df2b441f8bda5c878a8454e501a61241ac7c80fc469",
+    "executable": "native-object-directory-open-name-probe-x86.exe",
+    "log": "native-object-directory-open-name-probe-x86.log"
+  },
+  {
+    "family": "name-probe",
+    "profile": "x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-name-probe-x86-laa",
+    "source": "native-object-directory-open-name-probe.cpp",
+    "source-sha256": "5441610abc158c4466bd5df2b441f8bda5c878a8454e501a61241ac7c80fc469",
+    "executable": "native-object-directory-open-name-probe-x86-laa.exe",
+    "log": "native-object-directory-open-name-probe-x86-laa.log"
+  },
+  {
+    "family": "duplicate-protected-boundaries",
+    "profile": "arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-duplicate-protected-boundaries-arm64",
+    "source": "native-object-directory-open-duplicate-protected-boundaries.cpp",
+    "source-sha256": "55ad7df5be68918d698839c550ff976433b3226c9db19cdd36fb26b3988fda18",
+    "executable": "native-object-directory-open-duplicate-protected-boundaries-arm64.exe",
+    "log": "native-object-directory-open-duplicate-protected-boundaries-arm64.log"
+  },
+  {
+    "family": "duplicate-protected-boundaries",
+    "profile": "x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-duplicate-protected-boundaries-x64",
+    "source": "native-object-directory-open-duplicate-protected-boundaries.cpp",
+    "source-sha256": "55ad7df5be68918d698839c550ff976433b3226c9db19cdd36fb26b3988fda18",
+    "executable": "native-object-directory-open-duplicate-protected-boundaries-x64.exe",
+    "log": "native-object-directory-open-duplicate-protected-boundaries-x64.log"
+  },
+  {
+    "family": "duplicate-protected-boundaries",
+    "profile": "x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-duplicate-protected-boundaries-x86",
+    "source": "native-object-directory-open-duplicate-protected-boundaries.cpp",
+    "source-sha256": "55ad7df5be68918d698839c550ff976433b3226c9db19cdd36fb26b3988fda18",
+    "executable": "native-object-directory-open-duplicate-protected-boundaries-x86.exe",
+    "log": "native-object-directory-open-duplicate-protected-boundaries-x86.log"
+  },
+  {
+    "family": "duplicate-protected-boundaries",
+    "profile": "x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-duplicate-protected-boundaries-x86-laa",
+    "source": "native-object-directory-open-duplicate-protected-boundaries.cpp",
+    "source-sha256": "55ad7df5be68918d698839c550ff976433b3226c9db19cdd36fb26b3988fda18",
+    "executable": "native-object-directory-open-duplicate-protected-boundaries-x86-laa.exe",
+    "log": "native-object-directory-open-duplicate-protected-boundaries-x86-laa.log"
+  },
+  {
+    "family": "fresh",
+    "profile": "arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\object-directory-open-arm64",
+    "source": "native-object-directory-open-fresh.cpp",
+    "source-sha256": "6ea3e658113988360365754e0b2ceba292fbf4ee1a66deca0129071621fd698a",
+    "executable": "native-object-directory-open-fresh-arm64.exe",
+    "log": "native-object-directory-open-fresh-arm64.log"
+  }
+]

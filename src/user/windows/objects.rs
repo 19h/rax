@@ -15,6 +15,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 use std::time::Instant;
 
+mod directory;
 mod etw;
 mod wait_packets;
 mod wnf;
@@ -202,6 +203,8 @@ pub enum Object {
     },
     /// A private immutable runtime registry key shared by opened handles.
     Key(std::sync::Arc<super::registry::Key>),
+    /// A selected immutable NT object-manager directory, independent of files.
+    Directory(std::sync::Arc<super::object_namespace::Directory>),
     /// An object this implementation only needs to name (tokens,
     /// registry keys, window stations).
     Opaque(&'static str),
@@ -226,6 +229,7 @@ impl Object {
             Object::WorkerFactory { .. } => "TpWorkerFactory",
             Object::EtwRegistration { .. } => "EtwRegistration",
             Object::Key(_) => "Key",
+            Object::Directory(_) => "Directory",
             Object::Opaque(t) => t,
         }
     }

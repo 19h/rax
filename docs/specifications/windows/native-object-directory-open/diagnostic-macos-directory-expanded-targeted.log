@@ -1,0 +1,50 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 41.87s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/red-target/debug/deps/rax-754f4d2a527a4423)
+
+running 27 tests
+test devices::fw_cfg::tests::add_file_appears_in_directory_with_be_size_and_select ... ok
+test user::darwin::vfs::tests::supplied_paths_preserve_directory_checks_and_never_resolve_host_paths ... ok
+test user::image::pe::tests::audit::relocation_directory_cannot_silently_ignore_a_partial_block ... ok
+test user::image::pe::tests::audit::resource_directory_entries_cannot_escape_the_directory ... ok
+test user::image::pe::tests::tls_directory_and_callbacks ... ok
+test user::linux::fs::tests::directory_listing_includes_dot_entries ... ok
+test user::linux::tests::admin::chroot_looks_up_a_searchable_directory_before_the_capability ... ok
+test user::linux::tests::i386::files::compat_directory_inode_overflow_keeps_the_cursor_and_valid_prefix ... ok
+test user::supplied_fs::tests::supplied_keys_are_validated_and_inferred_directory_collisions_rejected ... ok
+test user::windows::dll::crt::startup::wildcard::tests::actual_mapped_directory_expansion_and_prefix_byte_encoding_all_abis ... ok
+test user::windows::dll::crt::startup::wildcard::tests::closed_process_does_not_expand_host_directory_entries_all_abis ... ok
+test user::windows::dll::crt::startup::wildcard::tests::unsupported_paths_and_missing_directory_are_distinct ... ok
+test user::windows::dll::files::tests::signed_seek_boundaries_security_attributes_and_directory_admission_all_abis ... ok
+test user::windows::object_namespace::tests::directory_catalog_bounds_collision_and_unselected_parent_are_explicit ... ok
+test user::windows::object_namespace::tests::directory_catalog_system_root_and_subject_capture_are_bounded ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::boundary::native_directory_open_replays_all_1680_flag_length_and_pointer_priority_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::boundary::native_directory_open_replays_all_20000_pointer_guard_alignment_and_crossing_rows ... FAILED
+test user::windows::process::sched::tests::services_tests::directory_open_tests::directory_handles_share_identity_preserve_metadata_after_catalog_drop_and_release ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::name_probe::native_directory_open_replays_all_26624_name_extent_root_and_null_output_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::native_directory_open_replays_all_288_captured_subject_privilege_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::native_directory_open_replays_all_3048_utf16_security_qos_and_reparse_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::native_directory_open_replays_all_3868_lengths_names_rights_roots_and_aliases ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_448_duplicate_pointer_guard_and_unreturned_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_4800_duplicate_grants_inheritance_and_close_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_4800_protected_and_same_attribute_policy_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_672_protected_duplicate_copy_fault_and_unreturned_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_open_replays_all_3456_relative_root_grant_and_tag_rows ... ok
+
+failures:
+
+---- user::windows::process::sched::tests::services_tests::directory_open_tests::boundary::native_directory_open_replays_all_20000_pointer_guard_alignment_and_crossing_rows stdout ----
+
+thread 'user::windows::process::sched::tests::services_tests::directory_open_tests::boundary::native_directory_open_replays_all_20000_pointer_guard_alignment_and_crossing_rows' (7333239) panicked at src/user/windows/process/sched/tests/services_tests/directory_open_boundary_tests.rs:125:13:
+assertion `left == right` failed: row={"buffer": "0", "case": "3031", "unicode-protect": "00000004", "attributes-protect": "00000004", "handles-before": "79", "close": "DEADBEEF", "output-protect": "00000004", "handles-after": "79", "exception": "00000000", "attributes-length": "24", "status": "80000001", "output": "0", "buffer-protect": "00000004", "attributes-upper-protect": "00000001", "output-after": "A5A5A5A5", "unicode": "3", "output-upper-protect": "00000004", "width": "4", "attributes": "6", "observed-output": "1"}
+  left: 3221225477
+ right: 2147483649
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    user::windows::process::sched::tests::services_tests::directory_open_tests::boundary::native_directory_open_replays_all_20000_pointer_guard_alignment_and_crossing_rows
+
+test result: FAILED. 26 passed; 1 failed; 0 ignored; 0 measured; 7688 filtered out; finished in 50.81s
+
+error: test failed, to rerun pass `--lib`

@@ -1,0 +1,14 @@
+{
+  "direct-decode": "unaffected: syscall instructions and registered guest ABI already exist",
+  "direct-execute/cpu-state": "unaffected: existing NT entry/resume path used without CPU changes",
+  "memory/mmu": "affected through existing checked guest reads/writes/probes and guard consumption; no MMU changes",
+  "SMIR/lifters/optimizer/native-lowering/JIT": "unaffected: kernel services are supplied by existing user-mode boundaries",
+  "backend/machine/device": "unaffected: no admission or device contract changes",
+  "oracle/analysis": "unaffected: instruction/output schema unchanged",
+  "C-ABI": "unaffected: no public C layout/signature/enum changed; all three owning archives/consumers still required",
+  "NT-service/object-lifecycle": "affected: directory open, aliases, shared identity, duplication and teardown",
+  "installed-runtime-selection": "affected: three selected readonly directory catalogs, grants, case policy and known path links",
+  "platforms": "Windows native host adapter and real installed NTDLL leaves; macOS/Linux compile and replay shared NT semantics; their native personalities unaffected; Windows native acquisition on non-Windows is explicitly Unsupported",
+  "Assist-integration": "updated submodule and exactly two engineering records after verification; preserve concurrent root work",
+  "tests/docs": "69684 native syscall/duplicate rows replayed across three hosts, 151 namespace entries/profile, fresh ARM64 evidence, lifetime/catalog tests, installed leaves, actual source/PE/stdout identities and strict corpus checker"
+}

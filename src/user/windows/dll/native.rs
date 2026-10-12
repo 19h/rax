@@ -5,6 +5,7 @@ use super::super::memory::Mem;
 use super::super::nt::status::*;
 
 mod allocate;
+mod directory;
 mod events;
 mod hotpatch;
 mod io_completion;
@@ -31,6 +32,12 @@ pub(super) static EXPORTS: &[Export] = &[
     ),
     Export::func("NtTerminateThread", Stdcall, &[Ptr, I32], terminate_thread),
     Export::func("NtClose", Stdcall, &[Ptr], close),
+    Export::func(
+        "NtOpenDirectoryObject",
+        Stdcall,
+        &[Ptr, I32, Ptr],
+        directory::open,
+    ),
     Export::func(
         "NtAllocateVirtualMemory",
         Stdcall,

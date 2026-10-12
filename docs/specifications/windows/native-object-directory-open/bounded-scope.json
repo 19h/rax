@@ -1,0 +1,28 @@
+[
+  {
+    "impact": "high",
+    "finding": "Native NtQueryObject and NtWaitForSingleObject remain unimplemented guest services. Native query/wait records currently validate directory metadata and access policy; they do not prove those APIs run in the guest.",
+    "blocks-directory-open-group": false,
+    "blocks-full-goal-if-reached": true,
+    "evidence": "dll/native.rs export list and process/services.rs dispatch"
+  },
+  {
+    "impact": "medium",
+    "finding": "Fresh compatibility startup and physical x64 kernel proof remain unknown; mature compatibility and installed x86 leaf validation are separate evidence.",
+    "blocks-directory-open-group": false,
+    "evidence": "fresh ARM64 capture versus x64/x86/x86-laa mature corpus"
+  },
+  {
+    "impact": "high",
+    "finding": "Concurrent root commits exist; owning Unix and Windows root embeddings use frozen source boundaries. Their process adapter/factory and five consumer sources match the current root; unrelated Cluster/MCP/public-launcher changes are excluded from these owning builds. Final publication preserves concurrent root commits.",
+    "blocks-implementation": false,
+    "evidence": "owning-root-scope.json with root HEAD 156e18eb33a6a07cc67e5ae4026a6ac5353a2f19"
+  },
+  {
+    "impact": "high",
+    "finding": "WoW64 matching system-path redirection and selected-but-uncaptured NT directory children remain explicit unsupported cases, rather than fabricated namespace absence. Full goal requires further implementation if a guest reaches them.",
+    "blocks-directory-open-group": false,
+    "blocks-full-goal-if-reached": true,
+    "evidence": "dll/native/directory.rs wow_redirect_probe and object_namespace.rs LookupError::Unselected"
+  }
+]

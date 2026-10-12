@@ -1,0 +1,15 @@
+{
+  "host": "Windows ARM64",
+  "scope": "pre-existing full-suite failures",
+  "count": 5,
+  "source-unchanged": true,
+  "names": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "baseline-evidence": "../native-etw-provider-traits/native-etw-provider-traits-full.log",
+  "source-check": []
+}

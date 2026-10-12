@@ -1,0 +1,35 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+error[E0609]: no field `last_error` on type `windows::process::thread::Thread`
+   --> src/user/windows/process/sched/tests/services_tests/directory_open_reference_tests.rs:157:15
+    |
+157 |             t.last_error = 0xBADC0DE;
+    |               ^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `tid`, `cpu`, `teb`, `stack_base`, `stack_limit` ... and 17 others
+
+error[E0609]: no field `last_error` on type `windows::process::thread::Thread`
+   --> src/user/windows/process/sched/tests/services_tests/directory_open_reference_tests.rs:169:26
+    |
+169 |             assert_eq!(t.last_error as u64, field(&r, "error", 10), "row={r:?}");
+    |                          ^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `tid`, `cpu`, `teb`, `stack_base`, `stack_limit` ... and 17 others
+
+error[E0609]: no field `last_error` on type `windows::process::thread::Thread`
+   --> src/user/windows/process/sched/tests/services_tests/directory_open_reference_tests.rs:235:15
+    |
+235 |             t.last_error = 0xBADC0DE;
+    |               ^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `tid`, `cpu`, `teb`, `stack_base`, `stack_limit` ... and 17 others
+
+error[E0609]: no field `last_error` on type `windows::process::thread::Thread`
+   --> src/user/windows/process/sched/tests/services_tests/directory_open_reference_tests.rs:253:26
+    |
+253 |             assert_eq!(t.last_error as u64, field(&r, "error", 10));
+    |                          ^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `tid`, `cpu`, `teb`, `stack_base`, `stack_limit` ... and 17 others
+
+For more information about this error, try `rustc --explain E0609`.
+error: could not compile `rax` (lib test) due to 4 previous errors

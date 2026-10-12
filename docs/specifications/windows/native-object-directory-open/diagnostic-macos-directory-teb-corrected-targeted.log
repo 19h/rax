@@ -1,0 +1,76 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 38s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/red-target/debug/deps/rax-754f4d2a527a4423)
+
+running 21 tests
+test devices::fw_cfg::tests::add_file_appears_in_directory_with_be_size_and_select ... ok
+test user::darwin::vfs::tests::supplied_paths_preserve_directory_checks_and_never_resolve_host_paths ... ok
+test user::image::pe::tests::audit::relocation_directory_cannot_silently_ignore_a_partial_block ... ok
+test user::image::pe::tests::audit::resource_directory_entries_cannot_escape_the_directory ... ok
+test user::image::pe::tests::tls_directory_and_callbacks ... ok
+test user::linux::fs::tests::directory_listing_includes_dot_entries ... ok
+test user::linux::tests::admin::chroot_looks_up_a_searchable_directory_before_the_capability ... ok
+test user::linux::tests::i386::files::compat_directory_inode_overflow_keeps_the_cursor_and_valid_prefix ... ok
+test user::supplied_fs::tests::supplied_keys_are_validated_and_inferred_directory_collisions_rejected ... ok
+test user::windows::dll::crt::startup::wildcard::tests::actual_mapped_directory_expansion_and_prefix_byte_encoding_all_abis ... ok
+test user::windows::dll::crt::startup::wildcard::tests::closed_process_does_not_expand_host_directory_entries_all_abis ... ok
+test user::windows::dll::crt::startup::wildcard::tests::unsupported_paths_and_missing_directory_are_distinct ... ok
+test user::windows::dll::files::tests::signed_seek_boundaries_security_attributes_and_directory_admission_all_abis ... ok
+test user::windows::object_namespace::tests::directory_catalog_bounds_collision_and_unselected_parent_are_explicit ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::boundary::native_directory_open_replays_all_20000_pointer_guard_alignment_and_crossing_rows ... FAILED
+test user::windows::process::sched::tests::services_tests::directory_open_tests::directory_handles_share_identity_preserve_metadata_after_catalog_drop_and_release ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::native_directory_open_replays_all_3048_utf16_security_qos_and_reparse_rows ... FAILED
+test user::windows::process::sched::tests::services_tests::directory_open_tests::native_directory_open_replays_all_3868_lengths_names_rights_roots_and_aliases ... FAILED
+test user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_448_duplicate_pointer_guard_and_unreturned_rows ... FAILED
+test user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_4800_duplicate_grants_inheritance_and_close_rows ... FAILED
+test user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_open_replays_all_3456_relative_root_grant_and_tag_rows ... ok
+
+failures:
+
+---- user::windows::process::sched::tests::services_tests::directory_open_tests::boundary::native_directory_open_replays_all_20000_pointer_guard_alignment_and_crossing_rows stdout ----
+
+thread 'user::windows::process::sched::tests::services_tests::directory_open_tests::boundary::native_directory_open_replays_all_20000_pointer_guard_alignment_and_crossing_rows' (6817684) panicked at src/user/windows/process/sched/tests/services_tests/directory_open_boundary_tests.rs:121:17:
+assertion `left == right` failed: buffer-protect row={"attributes-length": "24", "output-after": "0", "attributes": "0", "buffer": "3", "status": "C0000005", "output-protect": "00000004", "case": "107", "attributes-protect": "00000004", "output": "2", "close": "DEADBEEF", "attributes-upper-protect": "00000004", "handles-before": "79", "output-upper-protect": "00000004", "unicode-protect": "00000004", "width": "4", "exception": "00000000", "unicode": "0", "observed-output": "0", "buffer-protect": "00000004", "handles-after": "79"}
+  left: 260
+ right: 4
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- user::windows::process::sched::tests::services_tests::directory_open_tests::native_directory_open_replays_all_3048_utf16_security_qos_and_reparse_rows stdout ----
+
+thread 'user::windows::process::sched::tests::services_tests::directory_open_tests::native_directory_open_replays_all_3048_utf16_security_qos_and_reparse_rows' (6818336) panicked at src/user/windows/process/sched/tests/services_tests/directory_open_tests.rs:529:13:
+assertion `left == right` failed: row={"exception": "00000000", "family": "1", "security": "0", "access": "00000003", "width": "8", "path": "0", "status": "80000002", "buffer-offset": "1", "qos": "0", "output": "0", "case": "394", "flags": "00000040", "dos": "998", "length": "1", "handles-before": "52", "unicode-offset": "0", "handles-after": "52", "close": "DEADBEEF"}
+  left: 317
+ right: 998
+
+---- user::windows::process::sched::tests::services_tests::directory_open_tests::native_directory_open_replays_all_3868_lengths_names_rights_roots_and_aliases stdout ----
+
+thread 'user::windows::process::sched::tests::services_tests::directory_open_tests::native_directory_open_replays_all_3868_lengths_names_rights_roots_and_aliases' (6818343) panicked at src/user/windows/process/sched/tests/services_tests/directory_open_tests.rs:370:13:
+assertion `left == right` failed: row={"family": "1", "handle-flags": "0", "basic-data": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5", "width": "8", "name-data": "", "output": "0", "handles-after": "52", "name": "8", "unicode-after": "3C003E00000000004080123FA6000000", "root": "0", "attributes-length": "48", "attributes-after": "3000000000000000000000000000000090F5393EA6000000200000000000000000000000000000000000000000000000", "name-length": "60", "canary": "B6B6B6B6B6B6B6B6", "access": "00000003", "exception": "00000000", "wait": "DEADBEEF", "unicode-before": "3C003E00000000004080123FA6000000", "status": "C0000034", "mode": "0", "actual": "0", "flags": "00000020", "attributes-before": "3000000000000000000000000000000090F5393EA6000000200000000000000000000000000000000000000000000000", "handles-before": "52", "type": "DEADBEEF", "maximum": "62", "basic": "DEADBEEF", "close": "DEADBEEF", "case": "580", "type-bytes": "0", "object-name-bytes": "0", "basic-bytes": "0", "object-name": "DEADBEEF", "type-data": ""}
+  left: 3221225485
+ right: 3221225524
+
+---- user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_448_duplicate_pointer_guard_and_unreturned_rows stdout ----
+
+thread 'user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_448_duplicate_pointer_guard_and_unreturned_rows' (6818403) panicked at src/user/windows/process/sched/tests/services_tests/directory_open_reference_tests.rs:281:13:
+assertion `left == right` failed: row={"handles-after-operation": "53", "handles-after": "52", "exception": "00000000", "captured-before": "53", "captured-after": "53", "output-kind": "0", "output-after": "0", "options": "00000001", "observed-output": "1", "handles-before": "52", "source-live": "1", "width": "8", "ok": "0", "case": "91", "desired": "FFFFFFFF", "error": "5", "output-protect": "00000004"}
+  left: -1
+ right: 0
+
+---- user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_4800_duplicate_grants_inheritance_and_close_rows stdout ----
+
+thread 'user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_4800_duplicate_grants_inheritance_and_close_rows' (6818408) panicked at src/user/windows/process/sched/tests/services_tests/directory_open_reference_tests.rs:185:17:
+assertion `left == right` failed
+  left: Some(1)
+ right: Some(0)
+
+
+failures:
+    user::windows::process::sched::tests::services_tests::directory_open_tests::boundary::native_directory_open_replays_all_20000_pointer_guard_alignment_and_crossing_rows
+    user::windows::process::sched::tests::services_tests::directory_open_tests::native_directory_open_replays_all_3048_utf16_security_qos_and_reparse_rows
+    user::windows::process::sched::tests::services_tests::directory_open_tests::native_directory_open_replays_all_3868_lengths_names_rights_roots_and_aliases
+    user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_448_duplicate_pointer_guard_and_unreturned_rows
+    user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_4800_duplicate_grants_inheritance_and_close_rows
+
+test result: FAILED. 16 passed; 5 failed; 0 ignored; 0 measured; 7688 filtered out; finished in 3.20s
+
+error: test failed, to rerun pass `--lib`

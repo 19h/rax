@@ -1,0 +1,320 @@
+00034840 adrp x10, #0x1803bd000
+00034844 ldr x11, [x10, #0xd28]
+00034848 uxtb w8, w4
+0003484C cmp x1, x3
+00034850 csel x4, x3, x1, hi
+00034854 add x10, x0, x4, lsl #1
+00034858 cbnz w8, #0x18003491c
+0003485C lsl x10, x4, #1
+00034860 mov x15, x10
+00034864 cmp x10, #0x10
+00034868 mov x8, x0
+0003486C mov x11, x2
+00034870 b.lo #0x1800348a4
+00034874 ld1 {v6.16b}, [x11]
+00034878 ld1 {v7.16b}, [x8]
+0003487C cmeq v7.16b, v7.16b, v6.16b
+00034880 shrn v7.8b, v7.8h, #4
+00034884 fmov x9, d7
+00034888 mvn x9, x9
+0003488C cbnz x9, #0x180034904
+00034890 sub x10, x10, #0x10
+00034894 cmp x10, #0x10
+00034898 add x8, x8, #0x10
+0003489C add x11, x11, #0x10
+000348A0 b.hs #0x180034874
+000348A4 cmp x10, #8
+000348A8 b.lo #0x1800348d0
+000348AC ld1 {v7.8b}, [x8]
+000348B0 fmov x12, d7
+000348B4 ld1 {v7.8b}, [x11]
+000348B8 fmov x9, d7
+000348BC cmp x12, x9
+000348C0 b.ne #0x1800349e0
+000348C4 sub x10, x10, #8
+000348C8 add x8, x8, #8
+000348CC add x11, x11, #8
+000348D0 cbz x10, #0x1800348ec
+000348D4 ldrb w12, [x11], #1
+000348D8 ldrb w9, [x8], #1
+000348DC cmp w9, w12
+000348E0 b.ne #0x1800348ec
+000348E4 sub x10, x10, #1
+000348E8 cbnz x10, #0x1800348d4
+000348EC sub x10, x15, x10
+000348F0 lsr x10, x10, #1
+000348F4 cmp x10, x4
+000348F8 b.lo #0x1800349fc
+000348FC sub w0, w1, w3
+00034900 ret 
+00034904 rbit x11, x9
+00034908 clz x11, x11
+0003490C ubfx x11, x11, #2, #0x1e
+00034910 sub x10, x11, x10
+00034914 add x10, x10, x15
+00034918 b #0x1800348f0
+0003491C mov w15, #0xffe0
+00034920 cmp x0, x10
+00034924 b.hs #0x1800348fc
+00034928 ldrh w9, [x0], #2
+0003492C ldrh w8, [x2], #2
+00034930 cmp w9, w8
+00034934 b.eq #0x180034920
+00034938 cmp w9, #0x61
+0003493C b.lo #0x180034950
+00034940 cmp w9, #0x7a
+00034944 b.hi #0x180034978
+00034948 add w9, w9, w15
+0003494C uxth w9, w9
+00034950 cmp w8, #0x61
+00034954 b.lo #0x180034968
+00034958 cmp w8, #0x7a
+0003495C b.hi #0x1800349ac
+00034960 add w8, w8, w15
+00034964 uxth w8, w8
+00034968 cmp w9, w8
+0003496C b.eq #0x180034920
+00034970 sub w0, w9, w8, uxth
+00034974 ret 
+00034978 cmp w9, #0xc0
+0003497C ccmp x11, #0, #4, hs
+00034980 b.eq #0x180034950
+00034984 ubfx x12, x9, #8, #8
+00034988 ldrh w12, [x11, x12, lsl #1]
+0003498C ubfx w7, w9, #4, #4
+00034990 and w6, w9, #0xf
+00034994 add w12, w12, w7
+00034998 ldrh w12, [x11, w12, uxtw #1]
+0003499C add w12, w12, w6
+000349A0 ldrh w12, [x11, w12, uxtw #1]
+000349A4 add w9, w12, w9, uxth
+000349A8 b #0x18003494c
+000349AC cmp w8, #0xc0
+000349B0 ccmp x11, #0, #4, hs
+000349B4 b.eq #0x180034968
+000349B8 ubfx x12, x8, #8, #8
+000349BC ldrh w12, [x11, x12, lsl #1]
+000349C0 ubfx w7, w8, #4, #4
+000349C4 and w6, w8, #0xf
+000349C8 add w12, w12, w7
+000349CC ldrh w12, [x11, w12, uxtw #1]
+000349D0 add w12, w12, w6
+000349D4 ldrh w12, [x11, w12, uxtw #1]
+000349D8 add w8, w12, w8, uxth
+000349DC b #0x180034964
+000349E0 eor x11, x9, x12
+000349E4 rbit x11, x11
+000349E8 clz x11, x11
+000349EC ubfx x11, x11, #3, #0x1d
+000349F0 sub x10, x11, x10
+000349F4 add x10, x10, x15
+000349F8 b #0x1800348f0
+000349FC ldrh w11, [x2, x10, lsl #1]
+00034A00 ldrh w10, [x0, x10, lsl #1]
+00034A04 sub w0, w10, w11
+00034A08 ret 
+00034A0C udf #0
+00034A10 pacibsp 
+00034A14 sub sp, sp, #0x20
+00034A18 stp x29, x30, [sp, #-0x10]!
+00034A1C mov x29, sp
+00034A20 cbz x1, #0x180034a90
+00034A24 stp x19, x20, [sp, #0x10]
+00034A28 str x21, [sp, #0x20]
+00034A2C mov x19, x0
+00034A30 mov x8, x1
+00034A34 ldr x21, [x19, #8]
+00034A38 ldr x1, [x8, #8]
+00034A3C ldrh w9, [x8]
+00034A40 ldrh w8, [x19, #2]
+00034A44 cmp w9, w8
+00034A48 csel w20, w9, w8, ls
+00034A4C strh w20, [x19]
+00034A50 mov x2, x20
+00034A54 mov x0, x21
+00034A58 bl #0x1803390c0
+00034A5C ldrh w8, [x19]
+00034A60 add x9, x8, #2
+00034A64 ldrh w8, [x19, #2]
+00034A68 cmp x9, x8
+00034A6C b.hi #0x180034a78
+00034A70 ubfx x8, x20, #1, #0x1f
+00034A74 strh wzr, [x21, x8, lsl #1]
+00034A78 ldr x21, [sp, #0x20]
+00034A7C ldp x19, x20, [sp, #0x10]
+00034A80 ldp x29, x30, [sp], #0x10
+00034A84 add sp, sp, #0x20
+00034A88 autibsp 
+00034A8C ret 
+00034A90 strh wzr, [x0]
+00034A94 ldp x29, x30, [sp], #0x10
+00034A98 add sp, sp, #0x20
+00034A9C autibsp 
+00034AA0 ret 
+00034AA4 udf #0
+00034AA8 udf #0
+00034AAC udf #0
+00034AB0 pacibsp 
+00034AB4 stp x19, x20, [sp, #-0x20]!
+00034AB8 stp x21, x22, [sp, #0x10]
+00034ABC stp x29, x30, [sp, #-0x20]!
+00034AC0 mov x29, sp
+00034AC4 mov x22, x0
+00034AC8 str x22, [x29, #0x10]
+00034ACC mov x21, x1
+00034AD0 mov x0, x21
+00034AD4 bl #0x18017b580
+00034AD8 lsl w20, w0, #1
+00034ADC add w19, w20, #2
+00034AE0 sub w9, w19, #1
+00034AE4 mov w8, #0xfffd
+00034AE8 cmp w9, w8
+00034AEC b.hi #0x180034b00
+00034AF0 mov x0, x19
+00034AF4 bl #0x1800d5b90
+00034AF8 str x0, [x22, #8]
+00034AFC cbnz x0, #0x180034b18
+00034B00 mov w0, #0
+00034B04 ldp x29, x30, [sp], #0x20
+00034B08 ldp x21, x22, [sp, #0x10]
+00034B0C ldp x19, x20, [sp], #0x20
+00034B10 autibsp 
+00034B14 ret 
+00034B18 strh w19, [x22, #2]
+00034B1C mov x2, x19
+00034B20 mov x1, x21
+00034B24 bl #0x1803390c0
+00034B28 strh w20, [x22]
+00034B2C mov w0, #1
+00034B30 ldp x29, x30, [sp], #0x20
+00034B34 ldp x21, x22, [sp, #0x10]
+00034B38 ldp x19, x20, [sp], #0x20
+00034B3C autibsp 
+00034B40 ret 
+00034B44 udf #0
+00034B48 udf #0
+00034B4C udf #0
+00034B50 udf #0
+00034B54 udf #0
+00034B58 udf #0
+00034B5C udf #0
+00034B60 udf #0
+00034B64 udf #0
+00034B68 udf #0
+00034B6C udf #0
+00034B70 pacibsp 
+00034B74 stp x19, x20, [sp, #-0x20]!
+00034B78 stp x21, x22, [sp, #0x10]
+00034B7C stp x29, x30, [sp, #-0x20]!
+00034B80 mov x29, sp
+00034B84 mov x20, x0
+00034B88 str x20, [x29, #0x18]
+00034B8C mov x21, x1
+00034B90 uxtb w9, w2
+00034B94 strb w9, [x29, #0x10]
+00034B98 cbz w9, #0x180034ca0
+00034B9C adrp x8, #0x1803bd000
+00034BA0 ldr x19, [x8, #0xd30]
+00034BA4 ldrh w22, [x21]
+00034BA8 cbnz w9, #0x180034c5c
+00034BAC ldrh w8, [x20, #2]
+00034BB0 cmp w22, w8
+00034BB4 b.hi #0x180034c94
+00034BB8 ldr x8, [x20, #8]
+00034BBC cbz x8, #0x180034c94
+00034BC0 ldrh w9, [x21]
+00034BC4 mov w8, #0
+00034BC8 str wzr, [x29, #0x14]
+00034BCC cmp w8, w9, lsr #1
+00034BD0 b.hs #0x180034c3c
+00034BD4 ldr x10, [x21, #8]
+00034BD8 ldrh w10, [x10, w8, uxtw #1]
+00034BDC cmp w10, #0x41
+00034BE0 b.lo #0x180034c20
+00034BE4 cmp w10, #0x5a
+00034BE8 b.ls #0x180034c34
+00034BEC cmp w10, #0xc0
+00034BF0 ccmp x19, #0, #4, hs
+00034BF4 b.eq #0x180034c20
+00034BF8 and w15, w10, #0xf
+00034BFC ubfx w12, w10, #4, #4
+00034C00 mov w11, w10
+00034C04 lsr x11, x11, #8
+00034C08 ldrh w11, [x19, x11, lsl #1]
+00034C0C add w11, w11, w12
+00034C10 ldrh w11, [x19, w11, uxtw #1]
+00034C14 add w11, w11, w15
+00034C18 ldrh w11, [x19, w11, uxtw #1]
+00034C1C add w10, w11, w10, uxth
+00034C20 ldr x11, [x20, #8]
+00034C24 strh w10, [x11, w8, uxtw #1]
+00034C28 add w8, w8, #1
+00034C2C str w8, [x29, #0x14]
+00034C30 b #0x180034bcc
+00034C34 add w10, w10, #0x20
+00034C38 b #0x180034c20
+00034C3C ldrh w8, [x21]
+00034C40 strh w8, [x20]
+00034C44 mov w0, #0
+00034C48 ldp x29, x30, [sp], #0x20
+00034C4C ldp x21, x22, [sp, #0x10]
+00034C50 ldp x19, x20, [sp], #0x20
+00034C54 autibsp 
+00034C58 ret 
+00034C5C mov w0, w22
+00034C60 bl #0x1800d5b90
+00034C64 str x0, [x20, #8]
+00034C68 cbnz x0, #0x180034c8c
+00034C6C strh wzr, [x20, #2]
+00034C70 mov w0, #-0x40000000
+00034C74 movk w0, #0x17
+00034C78 ldp x29, x30, [sp], #0x20
+00034C7C ldp x21, x22, [sp, #0x10]
+00034C80 ldp x19, x20, [sp], #0x20
+00034C84 autibsp 
+00034C88 ret 
+00034C8C strh w22, [x20, #2]
+00034C90 b #0x180034bc0
+00034C94 mov w0, #-0x80000000
+00034C98 movk w0, #5
+00034C9C b #0x180034c48
+00034CA0 ldrh w8, [x21]
+00034CA4 cbnz w8, #0x180034b9c
+00034CA8 strh wzr, [x20]
+00034CAC b #0x180034c44
+00034CB0 udf #0
+00034CB4 udf #0
+00034CB8 udf #0
+00034CBC udf #0
+00034CC0 pacibsp 
+00034CC4 stp x19, x20, [sp, #-0x30]!
+00034CC8 stp x21, x22, [sp, #0x10]
+00034CCC stp x25, x26, [sp, #0x20]
+00034CD0 stp x29, x30, [sp, #-0x20]!
+00034CD4 mov x29, sp
+00034CD8 mov w25, w0
+00034CDC mov x22, x1
+00034CE0 mov x21, x2
+00034CE4 mov w20, #0
+00034CE8 mov x19, #0
+00034CEC str xzr, [x29, #0x18]
+00034CF0 tst w25, #0xfffffffc
+00034CF4 b.ne #0x180034de4
+00034CF8 cbz x21, #0x180034de4
+00034CFC tbnz w25, #1, #0x180034dec
+00034D00 mov w0, #0
+00034D04 str wzr, [x29, #0x14]
+00034D08 cbz x22, #0x180034d3c
+00034D0C ldrh w11, [x22]
+00034D10 tbnz w11, #0, #0x180034dac
+00034D14 ldrh w10, [x22, #2]
+00034D18 tst w10, #1
+00034D1C ccmp w11, w10, #0xa, eq
+00034D20 mov w9, #0xfffe
+00034D24 ccmp w10, w9, #0xa, ls
+00034D28 b.hi #0x180034dac
+00034D2C ldr x8, [x22, #8]
+00034D30 cbnz x8, #0x180034d3c
+00034D34 cbnz w11, #0x180034dac
+00034D38 cbnz w10, #0x180034dac
+00034D3C tbnz w0, #0x1f, #0x180034d60

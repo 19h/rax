@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-object-directory-open/check-evidence.py", line 235, in <module>
+    require((source / item["path"]).stat().st_size == item["bytes"] and
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            sha(source / item["path"]) == item["sha256"], "current compiled source " + item["path"])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-object-directory-open/check-evidence.py", line 17, in require
+    raise ValueError(message)
+ValueError: current compiled source src/user/windows/dll/native/directory.rs

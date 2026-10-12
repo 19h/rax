@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-object-directory-open/check-evidence.py", line 173, in <module>
+    partition(observed, keysets[family], inputs, family + "/" + profile)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-object-directory-open/check-evidence.py", line 50, in partition
+    require([tuple(num(r, k, radix) for k, radix in keys) for r in observed] == expected,
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "independent input partition " + label)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-object-directory-open/check-evidence.py", line 17, in require
+    raise ValueError(message)
+ValueError: independent input partition matrix/arm64

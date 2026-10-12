@@ -1,0 +1,56 @@
+0017A980 b.ne #0x18017a9e4
+0017A984 ldp x3, x10, [x0], #0x10
+0017A988 ldp x8, x9, [x1], #0x10
+0017A98C cmp x8, x3
+0017A990 b.ne #0x18017a9fc
+0017A994 cmp x10, x9
+0017A998 b.ne #0x18017a9e4
+0017A99C subs x2, x2, #0x20
+0017A9A0 b.ge #0x18017a96c
+0017A9A4 add x2, x2, #0x20
+0017A9A8 cmp x2, #0x10
+0017A9AC b.le #0x18017a654
+0017A9B0 sub x2, x2, #8
+0017A9B4 ldr x3, [x0], #8
+0017A9B8 ldr x8, [x1], #8
+0017A9BC cmp x8, x3
+0017A9C0 b.ne #0x18017a9fc
+0017A9C4 subs x2, x2, #8
+0017A9C8 b.gt #0x18017a9b4
+0017A9CC b.eq #0x18017a850
+0017A9D0 add x2, x2, #8
+0017A9D4 adr x3, #0x18017aa5c
+0017A9D8 ldrb w8, [x3, x2]
+0017A9DC sub x3, x3, x8, lsl #2
+0017A9E0 br x3
+0017A9E4 rev x10, x10
+0017A9E8 rev x9, x9
+0017A9EC subs x0, x10, x9
+0017A9F0 cset w0, ne
+0017A9F4 cneg w0, w0, lo
+0017A9F8 ret 
+0017A9FC rev x3, x3
+0017AA00 rev x8, x8
+0017AA04 subs x0, x3, x8
+0017AA08 cset w0, ne
+0017AA0C cneg w0, w0, lo
+0017AA10 ret 
+0017AA14 udf #0
+0017AA18 udf #0
+0017AA1C udf #0
+0017AA20 cbnz x2, #0x18017aa2c
+0017AA24 mov x0, #0
+0017AA28 ret 
+0017AA2C sub x2, x2, #1
+0017AA30 ldrb w3, [x0], #1
+0017AA34 ldrb w8, [x1], #1
+0017AA38 cmp w3, w8
+0017AA3C b.ne #0x18017aa4c
+0017AA40 cbnz x2, #0x18017aa2c
+0017AA44 mov x0, #0
+0017AA48 ret 
+0017AA4C subs w0, w3, w8
+0017AA50 cset w0, ne
+0017AA54 cneg w0, w0, lo
+0017AA58 ret 
+0017AA5C .byte 0x97, 0xdd, 0x9f, 0xc3

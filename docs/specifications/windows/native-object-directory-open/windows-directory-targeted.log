@@ -1,0 +1,51 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4m 31s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-tests\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 25 tests
+test devices::fw_cfg::tests::add_file_appears_in_directory_with_be_size_and_select ... ok
+test user::darwin::vfs::tests::supplied_paths_preserve_directory_checks_and_never_resolve_host_paths ... ok
+test user::image::pe::tests::audit::relocation_directory_cannot_silently_ignore_a_partial_block ... ok
+test user::image::pe::tests::audit::resource_directory_entries_cannot_escape_the_directory ... ok
+test user::image::pe::tests::tls_directory_and_callbacks ... ok
+test user::supplied_fs::tests::supplied_keys_are_validated_and_inferred_directory_collisions_rejected ... ok
+test user::windows::dll::crt::startup::wildcard::tests::actual_mapped_directory_expansion_and_prefix_byte_encoding_all_abis ... ok
+test user::windows::dll::crt::startup::wildcard::tests::closed_process_does_not_expand_host_directory_entries_all_abis ... ok
+test user::windows::dll::crt::startup::wildcard::tests::unsupported_paths_and_missing_directory_are_distinct ... ok
+test user::windows::dll::files::tests::signed_seek_boundaries_security_attributes_and_directory_admission_all_abis ... ok
+test user::windows::object_namespace::tests::directory_catalog_bounds_collision_and_unselected_parent_are_explicit ... ok
+test user::windows::object_namespace::tests::directory_catalog_system_root_and_subject_capture_are_bounded ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::boundary::native_directory_open_replays_all_1680_flag_length_and_pointer_priority_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::boundary::native_directory_open_replays_all_20000_pointer_guard_alignment_and_crossing_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::directory_handles_share_identity_preserve_metadata_after_catalog_drop_and_release ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::leaf::installed_directory_open_leaf_resolves_snapshot_and_ret12_cleanup ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::name_probe::native_directory_open_replays_all_26624_name_extent_root_and_null_output_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::native_directory_open_replays_all_288_captured_subject_privilege_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::native_directory_open_replays_all_3048_utf16_security_qos_and_reparse_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::native_directory_open_replays_all_3868_lengths_names_rights_roots_and_aliases ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_448_duplicate_pointer_guard_and_unreturned_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_4800_duplicate_grants_inheritance_and_close_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_4800_protected_and_same_attribute_policy_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_672_protected_duplicate_copy_fault_and_unreturned_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_open_replays_all_3456_relative_root_grant_and_tag_rows ... ok
+
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 7103 filtered out; finished in 119.84s
+

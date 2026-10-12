@@ -1,0 +1,80 @@
+0003ADD0 ldr x8, [x18, #0x60]
+0003ADD4 ldr x8, [x8, #0x90]
+0003ADD8 cbz x8, #0x18003ade4
+0003ADDC ldr w8, [x8]
+0003ADE0 cbnz w8, #0x18003adec
+0003ADE4 ldr x0, #0x18003ae00
+0003ADE8 ret 
+0003ADEC ldr x8, [x18, #0x60]
+0003ADF0 ldr x8, [x8, #0x90]
+0003ADF4 add x0, x8, #0x1e
+0003ADF8 b #0x18003ade8
+0003ADFC nop 
+0003AE00 .byte 0x30, 0x00, 0xfe, 0x7f
+0003AE04 udf #0
+0003AE08 udf #0
+0003AE0C udf #0
+0003AE10 ldr x8, [x18, #0x60]
+0003AE14 ldr x8, [x8, #0x90]
+0003AE18 cbz x8, #0x18003ae24
+0003AE1C ldr w8, [x8]
+0003AE20 cbnz w8, #0x18003ae34
+0003AE24 mov x8, #0x7ffe0000
+0003AE28 movk x8, #0x2d0
+0003AE2C ldr w0, [x8]
+0003AE30 ret 
+0003AE34 ldr x8, [x18, #0x60]
+0003AE38 ldr x8, [x8, #0x90]
+0003AE3C ldr w0, [x8, #0x14]
+0003AE40 ret 
+0003AE44 udf #0
+0003AE48 udf #0
+0003AE4C udf #0
+0003AE50 pacibsp 
+0003AE54 stp x29, x30, [sp, #-0x20]!
+0003AE58 mov x29, sp
+0003AE5C str x1, [sp, #0x18]
+0003AE60 cmp w0, #1
+0003AE64 b.ne #0x18003ae90
+0003AE68 cmp w2, #8
+0003AE6C b.ne #0x18003b1fc
+0003AE70 mov x8, #0x7ffe0000
+0003AE74 movk x8, #0x250
+0003AE78 ldr x8, [x8]
+0003AE7C mov w0, #0
+0003AE80 str x8, [x1]
+0003AE84 ldp x29, x30, [sp], #0x20
+0003AE88 autibsp 
+0003AE8C ret 
+0003AE90 sub w10, w0, #2
+0003AE94 cmp w10, #0x10
+0003AE98 b.hi #0x18003b000
+0003AE9C adr x9, #0x18003b210
+0003AEA0 ldrsw x8, [x9, w10, uxtw #2]
+0003AEA4 adr x9, #0x18003b0c8
+0003AEA8 add x8, x9, x8, lsl #2
+0003AEAC br x8
+0003AEB0 cmp w2, #4
+0003AEB4 b.ne #0x18003b1fc
+0003AEB8 ldr x8, [x18, #0x60]
+0003AEBC ldr x8, [x8, #0x90]
+0003AEC0 cbnz x8, #0x18003aee8
+0003AEC4 mov x8, #0x7ffe0000
+0003AEC8 movk x8, #0x240
+0003AECC ldr w9, [x8]
+0003AED0 mov w0, #0
+0003AED4 ldr x8, [sp, #0x18]
+0003AED8 str w9, [x8]
+0003AEDC ldp x29, x30, [sp], #0x20
+0003AEE0 autibsp 
+0003AEE4 ret 
+0003AEE8 ldr w8, [x8]
+0003AEEC cbz w8, #0x18003aec4
+0003AEF0 ldr x8, [x18, #0x60]
+0003AEF4 ldr x8, [x8, #0x90]
+0003AEF8 add x8, x8, #0x248
+0003AEFC b #0x18003aecc
+0003AF00 cmp w2, #8
+0003AF04 b.ne #0x18003b1fc
+0003AF08 bl #0x1801bd760
+0003AF0C cbz w0, #0x18003b1e0

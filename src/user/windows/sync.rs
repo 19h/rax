@@ -422,6 +422,7 @@ fn signaled(p: &Proc, id: ObjId, tid: u32) -> bool {
             | Object::WorkerFactory { .. }
             | Object::EtwRegistration { .. }
             | Object::Key(_)
+            | Object::Directory(_)
             | Object::Opaque(_),
         )
         | None => false,

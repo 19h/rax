@@ -1,0 +1,64 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+error: expected one of `)`, `,`, `.`, `?`, or an operator, found `u16`
+  --> src/user/windows/dll/native/directory.rs:40:230
+   |
+40 | ...rs.root,units.first()==Some(&(b'\\'as u16)))?)};
+   |                                         -^^^ expected one of `)`, `,`, `.`, `?`, or an operator
+   |                                         |
+   |                                         help: missing `,`
+
+error: expected one of `)`, `,`, `.`, `?`, or an operator, found `u16`
+  --> src/user/windows/object_namespace.rs:44:77
+   |
+44 | ...>MAX_UNITS||e.name.contains(&(b'\\'as u16))||e.name.contains(&0)||e.kind.is_empty()||e.kind.len()>255||e.kind.contains(&0)||e.tar...
+   |                                         -^^^ expected one of `)`, `,`, `.`, `?`, or an operator
+   |                                         |
+   |                                         help: missing `,`
+
+error: expected one of `)`, `,`, `.`, `?`, or an operator, found `u16`
+  --> src/user/windows/object_namespace.rs:62:77
+   |
+62 | ...=root{if name.first()==Some(&(b'\\'as u16)){return Err(LookupError::Status(STATUS_OBJECT_PATH_SYNTAX_BAD));}(root,name)}else{
+   |                                         -^^^ expected one of `)`, `,`, `.`, `?`, or an operator
+   |                                         |
+   |                                         help: missing `,`
+
+error: expected one of `)`, `,`, `.`, `?`, or an operator, found `u16`
+  --> src/user/windows/object_namespace.rs:63:36
+   |
+63 |    if name.first()!=Some(&(b'\\'as u16)){return Err(LookupError::Status(STATUS_OBJECT_PATH_SYNTAX_BAD));}
+   |                                   -^^^ expected one of `)`, `,`, `.`, `?`, or an operator
+   |                                   |
+   |                                   help: missing `,`
+
+error: expected one of `)`, `,`, `.`, `?`, or an operator, found `u16`
+  --> src/user/windows/object_namespace.rs:67:43
+   |
+67 |   let mut parts=path.split(|&u|u==b'\\'as u16).peekable();
+   |                                          -^^^ expected one of `)`, `,`, `.`, `?`, or an operator
+   |                                          |
+   |                                          help: missing `,`
+
+error: expected one of `)`, `,`, `.`, `?`, or an operator, found `u16`
+  --> src/user/windows/object_namespace.rs:77:50
+   |
+77 |     return Err(if target.first()!=Some(&(b'\\'as u16)){LookupError::Status(STATUS_OBJECT_NAME_INVALID)}else{LookupError::Unselected});
+   |                                                 -^^^ expected one of `)`, `,`, `.`, `?`, or an operator
+   |                                                 |
+   |                                                 help: missing `,`
+
+error: no rules expected `u16`
+  --> src/user/windows/object_namespace.rs:53:42
+   |
+53 |   let mut root=dirs.remove(&vec![b'\\'as u16]).ok_or_else(||invalid("NT directory root is not selected"))?;
+   |                                         -^^^ no rules expected this token in macro call
+   |                                         |
+   |                                         help: missing comma here
+   |
+note: while trying to match `;`
+  --> /Users/int/.rustup/toolchains/1.95.0-aarch64-apple-darwin/lib/rustlib/src/rust/library/alloc/src/macros.rs:46:16
+   |
+46 |     ($elem:expr; $n:expr) => (
+   |                ^
+
+error: could not compile `rax` (lib test) due to 7 previous errors

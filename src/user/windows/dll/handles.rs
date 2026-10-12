@@ -103,6 +103,9 @@ fn duplicate(c: &mut Ctx) -> ApiResult {
     if let Err(error) = process_handle(c, from) {
         return c.fail(error, 0);
     }
+    if matches!(c.p.objects.get(handle), Some(Object::Directory(_))) {
+        return duplicate_directory(c, handle, to, out, desired, inherit, options);
+    }
     if options & 1 != 0 && c.p.objects.flags(handle).is_some_and(|f| f & 2 != 0) {
         return Err(
             c.unsupported("DUPLICATE_CLOSE_SOURCE with protected handle; native behavior unknown")
@@ -247,6 +250,162 @@ fn duplicate_etw(
         return c.fail(error, 0);
     }
     c.fail(ERROR_NOT_SUPPORTED, 0)
+}
+
+/// Measured Directory wrapper: native64 probes before the kernel operation;
+/// WoW64 performs it before copy-out, including CLOSE_SOURCE on denied access.
+/// No duplicate retains or forwards a host handle or authorization callback.
+fn duplicate_directory(
+    c: &mut Ctx,
+    handle: u64,
+    to: u64,
+    out: u64,
+    desired: u32,
+    inherit: bool,
+    options: u32,
+) -> ApiResult {
+    let fault = if out == 0 {
+        None
+    } else {
+        probe(c, out, c.psize() as usize).err()
+    };
+    if c.psize() != 4 {
+        if let Some(f) = fault {
+            let guard = c.p.vm.take_guard(f.addr);
+            return c.fail(
+                if guard {
+                    super::super::nt::status::STATUS_GUARD_PAGE_VIOLATION
+                } else {
+                    ERROR_NOACCESS
+                },
+                0,
+            );
+        }
+        if out != 0 {
+            c.write_ptr(out, 0)?;
+        }
+    }
+    if to != 0 {
+        if let Err(e) = process_handle(c, to) {
+            return c.fail(e, 0);
+        }
+    }
+    // The measured kernel rejects unknown desired-access bits before honoring
+    // CLOSE_SOURCE. Authorization/privilege failures occur after that point.
+    if options & 2 == 0
+        && desired & !(0xF000_0000 | 0x0200_0000 | 0x0100_0000 | 0x0010_0000 | 0x000F_000F) != 0
+    {
+        if c.psize() == 4 {
+            if let Some(f) = fault {
+                let guard = c.p.vm.take_guard(f.addr);
+                return c.fail(
+                    if guard {
+                        super::super::nt::status::STATUS_GUARD_PAGE_VIOLATION
+                    } else {
+                        ERROR_NOACCESS
+                    },
+                    0,
+                );
+            }
+            if out != 0 {
+                c.write_ptr(out, 0)?;
+            }
+        }
+        return c.fail(ERROR_ACCESS_DENIED, 0);
+    }
+    let source_flags = c.p.objects.flags(handle).expect("selected directory flags");
+    let inherit = if options & 4 != 0 {
+        source_flags & 1 != 0
+    } else {
+        inherit
+    };
+    let id = c.p.objects.id(handle).expect("selected directory handle");
+    let original =
+        c.p.objects
+            .access(handle)
+            .expect("selected directory grant");
+    let Some(Object::Directory(directory)) = c.p.objects.obj(id) else {
+        unreachable!("selected directory object")
+    };
+    let grant = if options & 2 != 0 {
+        Ok(original)
+    } else {
+        directory.grant(desired, true)
+    };
+    // Protected native directory sources remain live, while duplication and
+    // SAME_ATTRIBUTES still succeed. The flag does not deny the operation.
+    let close = options & 1 != 0 && source_flags & 2 == 0;
+    // Pin before closing the source. Its numeric slot may be reused by the new
+    // handle, while the same directory object keeps its logical identity.
+    if grant.is_ok() && to != 0 {
+        if c.p.objects.retain_many(&[id]).is_err() {
+            return c.fail(ERROR_NOT_ENOUGH_MEMORY, 0);
+        }
+    }
+    if close {
+        if c.p.objects.close(handle).is_err() {
+            if grant.is_ok() && to != 0 {
+                c.p.objects.release(id);
+            }
+            return c.fail(ERROR_INVALID_HANDLE, 0);
+        }
+    }
+    let result = if to == 0 {
+        if close {
+            Ok(None)
+        } else {
+            Err(ERROR_INVALID_PARAMETER)
+        }
+    } else {
+        match grant {
+            Err(s) => Err(super::super::nt::status_to_error(s)),
+            Ok(grant) => {
+                let h = c.p.objects.open_access(id, inherit, grant);
+                if options & 4 != 0 {
+                    if let Some(h) = h {
+                        c.p.objects.set_flags(u64::from(h), 3, source_flags);
+                    }
+                }
+                c.p.objects.release(id);
+                h.map(Some).ok_or(ERROR_NOT_ENOUGH_MEMORY)
+            }
+        }
+    };
+    if c.psize() == 4 {
+        if let Some(f) = fault {
+            if let Ok(Some(h)) = &result {
+                // Native copy-out cleanup cannot close a protected duplicate.
+                // Its unreturned handle remains in the process-local table.
+                let _ = c.p.objects.close(u64::from(*h));
+            }
+            let guard = c.p.vm.take_guard(f.addr);
+            return c.fail(
+                if guard {
+                    super::super::nt::status::STATUS_GUARD_PAGE_VIOLATION
+                } else {
+                    ERROR_NOACCESS
+                },
+                0,
+            );
+        }
+        if out != 0 {
+            c.write_ptr(out, 0)?;
+        }
+    }
+    match result {
+        Err(e) => c.fail(e, 0),
+        Ok(h) => {
+            if out != 0 {
+                if let Some(h) = h {
+                    if let Err(e) = c.write_ptr(out, u64::from(h)) {
+                        let _ = c.p.objects.close(u64::from(h));
+                        return Err(e.into());
+                    }
+                }
+            }
+            Flow::bool(true)
+        }
+    }
 }
 
 fn get_information(c: &mut Ctx) -> ApiResult {

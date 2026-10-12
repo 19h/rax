@@ -16,6 +16,7 @@ pub mod memory;
 pub(crate) mod native;
 mod nls;
 pub mod nt;
+pub mod object_namespace;
 pub mod objects;
 pub mod process;
 pub mod registry;

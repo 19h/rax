@@ -1,0 +1,70 @@
+[
+  {
+    "id": "D1",
+    "criterion": "Installed namespace acquisition is bounded, host handles are released, and guest execution never forwards guest names/handles/access to host opens.",
+    "implementation": [
+      "src/user/windows/object_namespace.rs",
+      "src/user/windows/object_namespace/installed.rs",
+      "src/user/windows/native.rs"
+    ],
+    "evidence": [
+      "native-object-directory-open-snapshot-*.log",
+      "windows-directory-targeted.log"
+    ]
+  },
+  {
+    "id": "D2",
+    "criterion": "Native64 and WoW64 open ordering, status, guard consumption, UTF-16, roots, aliases and access match all completed observed rows.",
+    "implementation": [
+      "src/user/windows/dll/native/directory.rs",
+      "src/user/windows/dll/native.rs"
+    ],
+    "evidence": [
+      "69684 mature native syscall/duplicate rows",
+      "portable replay tests on all three hosts"
+    ]
+  },
+  {
+    "id": "D3",
+    "criterion": "Directory identity, grants, inheritance, protection, duplication, copy failure, close/reuse and drain match native resource behavior.",
+    "implementation": [
+      "src/user/windows/objects/directory.rs",
+      "src/user/windows/dll/handles.rs"
+    ],
+    "evidence": [
+      "reference/duplicate-policy/duplicate-boundaries/duplicate-protected-boundaries native producers",
+      "lifetime/catalog tests"
+    ]
+  },
+  {
+    "id": "D4",
+    "criterion": "All touched Rust and opaque C ABI owning embeddings compile and execute selected consumers on Windows, macOS and Linux.",
+    "evidence": [
+      "host full/C API/all-target/integration gates",
+      "owning archives and C++ consumers",
+      "installed Windows real leaf"
+    ]
+  },
+  {
+    "id": "D5",
+    "criterion": "The unchanged ordinary observer runs against the current verified owning artifact; advance and next frontier are retained without claiming guest exit.",
+    "evidence": [
+      "native-object-directory-open-after-trace.rs",
+      "native-object-directory-open-after-artifacts.jsonl",
+      "native-object-directory-open-after-production-trace-output.log",
+      "native-object-directory-open-after-ordinary-processes.log"
+    ]
+  },
+  {
+    "id": "D6",
+    "criterion": "Native source/PE/stdout identities, exact input partitions, negative controls, assumptions, scope limits and exact-file paired publication are verified.",
+    "evidence": [
+      "check-evidence.py",
+      "check-negative-evidence.py",
+      "evidence-manifest.json",
+      "assumption-register.json",
+      "bounded-scope.json",
+      "external publication verification records"
+    ]
+  }
+]

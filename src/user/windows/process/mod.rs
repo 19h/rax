@@ -274,6 +274,7 @@ pub struct Proc {
     pub cfg: Arc<WindowsConfig>,
     pub(crate) native: Option<super::native::NativeRuntime>,
     pub(crate) registry: super::registry::Registry,
+    pub(crate) object_namespace: super::object_namespace::Namespace,
     pub(crate) nls: Option<super::nls::Nls>,
     /// Process identifier.
     pub pid: u32,
