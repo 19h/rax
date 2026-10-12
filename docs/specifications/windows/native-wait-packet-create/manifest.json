@@ -1,0 +1,669 @@
+{
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 7750,
+      "sha256": "35de5f4d2103a6fecb4bd51f67783c3736e002fd51fee5c6672e3d7650819d62"
+    },
+    {
+      "path": "assist-native-wait-packet-owned-cpp.log",
+      "bytes": 2946,
+      "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+    },
+    {
+      "path": "assist-native-wait-packet-owned-shipping.log",
+      "bytes": 1584,
+      "sha256": "2360579ca1ba82762ecd705bd1226452a608d8578abf99d56c07970dca3aaadf"
+    },
+    {
+      "path": "assist-native-wait-packet-owned.ps1",
+      "bytes": 6118,
+      "sha256": "3c3d32c7c6c3baa7b45d6f9cc12d965f1c322512f21fc30c5810e27600d684d0"
+    },
+    {
+      "path": "baseline-command.json",
+      "bytes": 147,
+      "sha256": "6a7ae59b8a2e44383f9294042223234ed8e0200b6d5c64409d0642d4ccd733d8"
+    },
+    {
+      "path": "baseline-exit.json",
+      "bytes": 19,
+      "sha256": "7fb90ba96cac40fe269bc9486b1076782308b140f147a697136ba80858b62a2a"
+    },
+    {
+      "path": "check_native_wait_packet.py",
+      "bytes": 9147,
+      "sha256": "4b85505b992c2ab53629e3cd9e43a43ba9f531bf7ca8b52ac99880bd72d62e76"
+    },
+    {
+      "path": "concurrent-root-refresh.json",
+      "bytes": 332,
+      "sha256": "ca2e2b1dd759b07f8267c7ffdb1cc21eee2e462e008e28b22a730e0e8218dca2"
+    },
+    {
+      "path": "evidence-check-results.json",
+      "bytes": 3336,
+      "sha256": "2be6f005cfcc1d930396901656ac3ad33b0bc5d84ad26c0374ab871399f2ae59"
+    },
+    {
+      "path": "final-empty-filtered-gate.log",
+      "bytes": 1103,
+      "sha256": "5a2d4b4565e9986bdf73b863a655d83cd0acdd2b7faf7a94c8e70425f483eb77"
+    },
+    {
+      "path": "final-forged-summary.log",
+      "bytes": 991,
+      "sha256": "fa5dc8683c0fa7b00f05044214291f83a739ee4bbb1db477d8121731323baa7f"
+    },
+    {
+      "path": "final-manifest-omission.log",
+      "bytes": 928,
+      "sha256": "6824fec4ccde7c5b40268720073575d4dc35a6beccb8f480ca66c3b883059d13"
+    },
+    {
+      "path": "final-optimized-python.log",
+      "bytes": 889,
+      "sha256": "069d354439079727154a9634e3c26b633f07b1c2733a2e972c2967a36e83be0a"
+    },
+    {
+      "path": "final-positive-final.log",
+      "bytes": 112,
+      "sha256": "5b7c209bb64628b6a2c4ce4a5b71a6ee566acd1810d92c43fbeab888aee3e1b0"
+    },
+    {
+      "path": "final-raw-corruption.log",
+      "bytes": 992,
+      "sha256": "0e41683815cf3d0edd2819ad9d163456e1f17bb6a2dec9cca99f9b6d5fae54db"
+    },
+    {
+      "path": "final-semantic-status.log",
+      "bytes": 889,
+      "sha256": "5aa570e4b58f7988f7777a8febce52c4b6673d47917f39335dd737a1e96ed00f"
+    },
+    {
+      "path": "finalize-evidence.py",
+      "bytes": 2561,
+      "sha256": "ba607f2f1ea3a2af2b98e6ed9fc2ba1401ef1fb252bd557990edae7cf11cdef6"
+    },
+    {
+      "path": "gate-results.json",
+      "bytes": 27600,
+      "sha256": "fbb98bd31c7286cf7297328cdd661c41fe452018538eeb6a6942c4f37cae9be0"
+    },
+    {
+      "path": "initial-checker-count-failure.log",
+      "bytes": 1001,
+      "sha256": "2ae9b998c5df2792d05f0cf897692dd988790381137c7670b8f075d896d3aa25"
+    },
+    {
+      "path": "inspect-wait-packet-owning-archives.py",
+      "bytes": 7559,
+      "sha256": "bae24b567232c57ec35ceaebcca6a38e0547deea396f5d1166eefa15f33037b8"
+    },
+    {
+      "path": "linux-all-targets.log",
+      "bytes": 116,
+      "sha256": "db838a593f384189dcfd6bedccb4e500e1ab30a6dc79e5ff4bc55cd63011e135"
+    },
+    {
+      "path": "linux-capi-isolated.log",
+      "bytes": 345,
+      "sha256": "12a1f425aba65f3c669e967dec9a2f361b53320f3f8e03e29439f67e2167ab4b"
+    },
+    {
+      "path": "linux-capi-serial.log",
+      "bytes": 12784,
+      "sha256": "b025aaca8222ff9fd642de8e2a469413c354a9a82719af5c5e8ceb5308b9e392"
+    },
+    {
+      "path": "linux-capi.log",
+      "bytes": 13093,
+      "sha256": "9afdeb338d16fd8b261e920ec51c4e84d47910b418993ae40632f66fe10ec40d"
+    },
+    {
+      "path": "linux-events.log",
+      "bytes": 1330,
+      "sha256": "58a322f51de4e2eb76ed9c4706beb9402b2c8e9b84659028fbbda2a198c178ec"
+    },
+    {
+      "path": "linux-full.log",
+      "bytes": 778647,
+      "sha256": "8b874ffaf24f0db658b32b97d0db44195b1e2d10f6e8ffcb255955420a623b74"
+    },
+    {
+      "path": "linux-integration.log",
+      "bytes": 35760,
+      "sha256": "7324eca55691faa96d0335185fc3dab3f9200b02e549a5a8a1de714d0c72221f"
+    },
+    {
+      "path": "linux-io-completion.log",
+      "bytes": 1261,
+      "sha256": "d794528762605a6a902000c40f62f6271b1ecfbf2bfe8982869c542ba47f931e"
+    },
+    {
+      "path": "linux-owning-cpp.log",
+      "bytes": 1623,
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+    },
+    {
+      "path": "linux-owning-shipping.log",
+      "bytes": 222,
+      "sha256": "f2cb9a198c338e043c4199f53b41610bc03b05174dfafeb0f8c21e308a93c89a"
+    },
+    {
+      "path": "linux-targeted.log",
+      "bytes": 1624,
+      "sha256": "250adf61668c7800a6bd5206a12c34ab50628d50e44e8afdd52a5a38c70f7827"
+    },
+    {
+      "path": "linux-threading.log",
+      "bytes": 2337,
+      "sha256": "eb92b0e1ffe5f09d0b3c1512918099f97fe8a66e59adeb990c93befeb0e87b31"
+    },
+    {
+      "path": "linux-timer2.log",
+      "bytes": 979,
+      "sha256": "841eb32228f701652db37733d013125541beeb18e92f401e1e7c0c1acf2519c9"
+    },
+    {
+      "path": "linux-worker-factory.log",
+      "bytes": 1176,
+      "sha256": "d43b02b428b4649d148c9965519ec27aa964578b695068c60be685447bfa8e4e"
+    },
+    {
+      "path": "macos-all-targets.log",
+      "bytes": 136,
+      "sha256": "cdb16a7ebff60d1dedee5130aed1b0cabe15347baac1796f904b5c1aab0d4762"
+    },
+    {
+      "path": "macos-baseline.log",
+      "bytes": 2109,
+      "sha256": "de65de283b75be03a084862316a292254de2078e66d780a89bcb344ead4ccece"
+    },
+    {
+      "path": "macos-capi.log",
+      "bytes": 13013,
+      "sha256": "108e527ac50c2a11c366669a9e0f5d67f3b953108734e32b082c31dbf2ff04e4"
+    },
+    {
+      "path": "macos-events.log",
+      "bytes": 1414,
+      "sha256": "715103607e089a2f1636380f118a3d265d3f6f5fb1b49b7fabc543038f1e4316"
+    },
+    {
+      "path": "macos-full.log",
+      "bytes": 778361,
+      "sha256": "d4a6ac2d73b373b4426f7f788d59c03158ee26921a7ee9e2d47fdef3bd5a46cd"
+    },
+    {
+      "path": "macos-integration.log",
+      "bytes": 35928,
+      "sha256": "1f085037b06a62866da87672577fef1b4cb5280cf0178b805fa186fe72320d81"
+    },
+    {
+      "path": "macos-io-completion.log",
+      "bytes": 1345,
+      "sha256": "62cd796d13fe527020f3b67643e76fb7abde1325dd7a74e71d86f49f3e679f1c"
+    },
+    {
+      "path": "macos-isolated-native-runtime.log",
+      "bytes": 457,
+      "sha256": "a6b1dc7ba635ce36b3095524b23acd2326a543aa659cbdc4ff3cfd51826c4da5"
+    },
+    {
+      "path": "macos-owning-build.log",
+      "bytes": 488217,
+      "sha256": "18c152a86116d047973f80ee3bb55005f41659b9778946a0176b1cfa86db84ae"
+    },
+    {
+      "path": "macos-owning-commands.json",
+      "bytes": 3149,
+      "sha256": "46548b6b0b7539fee8f588ea5afac9ac25db2eb1cf8917f399e2578cdf94978b"
+    },
+    {
+      "path": "macos-owning-configure.log",
+      "bytes": 14482,
+      "sha256": "98f6aed3107ce722a985714992962cc016d38cb6bee5172bc072c025c6911797"
+    },
+    {
+      "path": "macos-owning-ctest.log",
+      "bytes": 1273,
+      "sha256": "07ef41a9f51e38b96744fbd395d745471e2b9e7a72d07a3cdf69bf59b6538d1c"
+    },
+    {
+      "path": "macos-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "macos-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "macos-targeted.log",
+      "bytes": 1728,
+      "sha256": "f68fb83a8c69d89bd5622f011d5330e743a235813599854dee8560285e2d40c7"
+    },
+    {
+      "path": "macos-threading.log",
+      "bytes": 2421,
+      "sha256": "eca276620b36ec41d33e48772b38dd8f1efb307f5e4c5231f204d20bd533c6ba"
+    },
+    {
+      "path": "macos-timer2.log",
+      "bytes": 1063,
+      "sha256": "e240e791c30697116542b31a8d7a0d7dcf47d52608951a017abc7fe520bde685"
+    },
+    {
+      "path": "macos-worker-factory.log",
+      "bytes": 1260,
+      "sha256": "8d340588f4577711c140a4a961bf486160ea44e011dcabd55fa923958a062e6a"
+    },
+    {
+      "path": "native-wait-packet-after-artifacts-stderr.log",
+      "bytes": 72,
+      "sha256": "f44cef9000df6c90960ea18f4738a725b9337b6b11ad1a73f6ea296725066df0"
+    },
+    {
+      "path": "native-wait-packet-after-artifacts.jsonl",
+      "bytes": 130191,
+      "sha256": "5ff74c2ebdaae3d1f00706cf86b915c930edf868249c74627423dde0f0303987"
+    },
+    {
+      "path": "native-wait-packet-after-ordinary-processes.log",
+      "bytes": 7097,
+      "sha256": "2269def7439aaa3ae456718ff17eee1aec024f89cfcd76134c2ca14e3b2b5a1e"
+    },
+    {
+      "path": "native-wait-packet-after-production-trace-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "native-wait-packet-after-production-trace-output.log",
+      "bytes": 38490,
+      "sha256": "658eaa5ba68477792bea9efd6c292cfb04767b08014dce5d11a3093a706c94a8"
+    },
+    {
+      "path": "native-wait-packet-after-trace.rs",
+      "bytes": 11177,
+      "sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e"
+    },
+    {
+      "path": "native-wait-packet-all-targets.log",
+      "bytes": 986,
+      "sha256": "54a4bafa048c6d16d7c845aa72458e3cc73ed36b0ae3d80fbd673728a0c79e03"
+    },
+    {
+      "path": "native-wait-packet-before-production-trace-output.log",
+      "bytes": 38878,
+      "sha256": "11bfb406e82412130a87d371f7baacfece03ada7be9e95a30d9b594cc9834ebc"
+    },
+    {
+      "path": "native-wait-packet-before-trace.rs",
+      "bytes": 11177,
+      "sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e"
+    },
+    {
+      "path": "native-wait-packet-capi.log",
+      "bytes": 13837,
+      "sha256": "efdcd49264c34e7d2e375dc0018647274972fa840ce8357ddfbfce6bd8e23532"
+    },
+    {
+      "path": "native-wait-packet-create-probe-arm64-build.log",
+      "bytes": 37,
+      "sha256": "00f1557383b430b68ede9cfec39be28ad49a9661752854c4a5bf652174c9149d"
+    },
+    {
+      "path": "native-wait-packet-create-probe-arm64.log",
+      "bytes": 292866,
+      "sha256": "36d237d6bbf63fbd3d6646f02fbc0f8497545f6a4ca63901ed8338a2c0c966ae"
+    },
+    {
+      "path": "native-wait-packet-create-probe-arm64.ps1",
+      "bytes": 1423,
+      "sha256": "1fccebc7bf58f46f2e75f51aaf0f44678e66896afbdc93dfba503fb5fad73ad9"
+    },
+    {
+      "path": "native-wait-packet-create-probe-x64-build.log",
+      "bytes": 37,
+      "sha256": "00f1557383b430b68ede9cfec39be28ad49a9661752854c4a5bf652174c9149d"
+    },
+    {
+      "path": "native-wait-packet-create-probe-x64.log",
+      "bytes": 292866,
+      "sha256": "bb04341d5748b46d795d8376013b78239a7dc905b069a25d2bfcb0a8c8894fa1"
+    },
+    {
+      "path": "native-wait-packet-create-probe-x64.ps1",
+      "bytes": 1407,
+      "sha256": "e0000d28e9a6465a80ac89f8f77dfc50acea765be0170e75ae8638af4e1aefeb"
+    },
+    {
+      "path": "native-wait-packet-create-probe-x86-build.log",
+      "bytes": 37,
+      "sha256": "00f1557383b430b68ede9cfec39be28ad49a9661752854c4a5bf652174c9149d"
+    },
+    {
+      "path": "native-wait-packet-create-probe-x86-laa-build.log",
+      "bytes": 37,
+      "sha256": "00f1557383b430b68ede9cfec39be28ad49a9661752854c4a5bf652174c9149d"
+    },
+    {
+      "path": "native-wait-packet-create-probe-x86-laa.log",
+      "bytes": 281473,
+      "sha256": "c3568c8572aa613c773d6bb03d0280feb62459171af8cf6270b217c46e5e0b0c"
+    },
+    {
+      "path": "native-wait-packet-create-probe-x86-laa.ps1",
+      "bytes": 1456,
+      "sha256": "a471af52dc9c54b1c772ec45c5565be9b93c971b917aba5d4ba984d9073c68f0"
+    },
+    {
+      "path": "native-wait-packet-create-probe-x86.log",
+      "bytes": 281371,
+      "sha256": "39a668ee3a926c6303026ee27dacf03697aa55cd74a6e5210f592dd3e36a2cc1"
+    },
+    {
+      "path": "native-wait-packet-create-probe-x86.ps1",
+      "bytes": 1405,
+      "sha256": "a69616f9926aa6e446a9ea5e76521319eebb5f0e4446019112f8815d21a01e67"
+    },
+    {
+      "path": "native-wait-packet-create-probe.cpp",
+      "bytes": 9791,
+      "sha256": "a384e05dc7b1a5ebeda70a1d24550793e9f22037939e3d0be2c68eb98743dd66"
+    },
+    {
+      "path": "native-wait-packet-current-overlay-bundle.py",
+      "bytes": 1554,
+      "sha256": "ecd5dc9a2a29692a0cee6f8eb2cf88ed1ea96d92967b7c61d9303ee52deb667a"
+    },
+    {
+      "path": "native-wait-packet-current-overlay-manifest.json",
+      "bytes": 3493496,
+      "sha256": "9943a989e587d0e114903216a6f026d65170c49cd46f0f040b1fc43859394961"
+    },
+    {
+      "path": "native-wait-packet-current-overlay.ps1",
+      "bytes": 232,
+      "sha256": "95ccb7d3f36d9541f30d744d49df05b72fcf72f1e6c37e15c626aa7dec3de8a1"
+    },
+    {
+      "path": "native-wait-packet-current-source-check.json",
+      "bytes": 613,
+      "sha256": "4a285c6118c919859e79473a0dce565aae2162df7dc0cb1c7e7b47a176528275"
+    },
+    {
+      "path": "native-wait-packet-events.log",
+      "bytes": 2998,
+      "sha256": "d72de00ce7824fa125cf36d4d78ac5ee74e70683e080fd4dab34e90af4a8fb9a"
+    },
+    {
+      "path": "native-wait-packet-full.log",
+      "bytes": 732617,
+      "sha256": "19254c04b578de38d332ebeaff1654dbbb6b40f34d6ff995c910e7692dd19ee3"
+    },
+    {
+      "path": "native-wait-packet-gates.ps1",
+      "bytes": 1621,
+      "sha256": "c0ed1366292021ec7dbca45e29e9636d680aa4ee7a5e19f38b054b87622e8c25"
+    },
+    {
+      "path": "native-wait-packet-integration.log",
+      "bytes": 1515,
+      "sha256": "74f6176df6e146055ae9555c26696e1f9d2c371847b93d111f0538a63658ad4f"
+    },
+    {
+      "path": "native-wait-packet-io-completion.log",
+      "bytes": 2361,
+      "sha256": "a6b3da5101fa718d21942555e7ba07cecc1989e38712f8d18f3eacb83f542323"
+    },
+    {
+      "path": "native-wait-packet-lifetime-probe-arm64-build.log",
+      "bytes": 39,
+      "sha256": "516e58f29a90e06c24f8d22434e495f4e0c7a5787058b1637647b903a4227618"
+    },
+    {
+      "path": "native-wait-packet-lifetime-probe-arm64.log",
+      "bytes": 6639,
+      "sha256": "0b9fa1e9f797b7c521943f4ccddc4ad0c92e669dff9124ab7dfae35e597144fc"
+    },
+    {
+      "path": "native-wait-packet-lifetime-probe-arm64.ps1",
+      "bytes": 1447,
+      "sha256": "3aa2f197eb75d36a14b960d91869b644305cba15b0f1f525a2df1bd6d1171f4c"
+    },
+    {
+      "path": "native-wait-packet-lifetime-probe-x64-build.log",
+      "bytes": 39,
+      "sha256": "516e58f29a90e06c24f8d22434e495f4e0c7a5787058b1637647b903a4227618"
+    },
+    {
+      "path": "native-wait-packet-lifetime-probe-x64.log",
+      "bytes": 6639,
+      "sha256": "23db771ea773be9ec7be47ea949bec7ae8cf0aeb9b8e577afe66501652512446"
+    },
+    {
+      "path": "native-wait-packet-lifetime-probe-x64.ps1",
+      "bytes": 1431,
+      "sha256": "5e17802f915086027b2dca40d2ff8157489a36135e1773b40479ab95525afe75"
+    },
+    {
+      "path": "native-wait-packet-lifetime-probe-x86-build.log",
+      "bytes": 39,
+      "sha256": "516e58f29a90e06c24f8d22434e495f4e0c7a5787058b1637647b903a4227618"
+    },
+    {
+      "path": "native-wait-packet-lifetime-probe-x86-laa-build.log",
+      "bytes": 39,
+      "sha256": "516e58f29a90e06c24f8d22434e495f4e0c7a5787058b1637647b903a4227618"
+    },
+    {
+      "path": "native-wait-packet-lifetime-probe-x86-laa.log",
+      "bytes": 6639,
+      "sha256": "c89ecc1e3425f653392901e960634ca58af9867615c5276f0261890eb29da325"
+    },
+    {
+      "path": "native-wait-packet-lifetime-probe-x86-laa.ps1",
+      "bytes": 1480,
+      "sha256": "946e5e7a40b1c052ec17b7d7887b952c9caf1f884eb5cc8218609b883f604ddf"
+    },
+    {
+      "path": "native-wait-packet-lifetime-probe-x86.log",
+      "bytes": 6639,
+      "sha256": "c89ecc1e3425f653392901e960634ca58af9867615c5276f0261890eb29da325"
+    },
+    {
+      "path": "native-wait-packet-lifetime-probe-x86.ps1",
+      "bytes": 1429,
+      "sha256": "8254da26455ceb7b863ffcd800f8cc82478ab70321a54bc21abd0ddee8c3f0f4"
+    },
+    {
+      "path": "native-wait-packet-lifetime-probe.cpp",
+      "bytes": 2835,
+      "sha256": "a07293c8be4e87cb643fe68c7a8f222f2eec0f39e464a9d07a041f0a38dfacb6"
+    },
+    {
+      "path": "native-wait-packet-owning-archive-hashes.json",
+      "bytes": 6217,
+      "sha256": "347710f92af91bab4ec95181e812b27b92645484f08338cf3ccfea6b558eb807"
+    },
+    {
+      "path": "native-wait-packet-targeted.log",
+      "bytes": 2749,
+      "sha256": "03fa22434c567ff8dc5c1b1a72ed3671f6b0b09356d2d16746132e1de8fa4a94"
+    },
+    {
+      "path": "native-wait-packet-threading.log",
+      "bytes": 3243,
+      "sha256": "11c43c91b50f26f5122dfa8ce1b927e196d6523beece5d120d385b4839c401cc"
+    },
+    {
+      "path": "native-wait-packet-timer2.log",
+      "bytes": 2064,
+      "sha256": "2435dd4cd0307b3d3e204bc4fdd11f20277e75e569396edc508ba83967e61fc2"
+    },
+    {
+      "path": "native-wait-packet-worker-factory.log",
+      "bytes": 2277,
+      "sha256": "4d2307837e1286af20fe8700655918641db4ae9cdc68b6f2b796e335ad19d415"
+    },
+    {
+      "path": "native-wait-parity-probe-arm64-build.log",
+      "bytes": 30,
+      "sha256": "68eb01bdb7e08e2420d5aeb201f36a56eaa6ff4298c5d57dda2d85ccb0306f25"
+    },
+    {
+      "path": "native-wait-parity-probe-arm64.log",
+      "bytes": 1085,
+      "sha256": "d11c67fa2ca794335c527e72c8408ca873d6e6af8b04a191815fd53985532e21"
+    },
+    {
+      "path": "native-wait-parity-probe-arm64.ps1",
+      "bytes": 1339,
+      "sha256": "7942b266464d5260d9815a94ea93bc65317b622d5385dfc1bf62046db420dc69"
+    },
+    {
+      "path": "native-wait-parity-probe-x64-build.log",
+      "bytes": 30,
+      "sha256": "68eb01bdb7e08e2420d5aeb201f36a56eaa6ff4298c5d57dda2d85ccb0306f25"
+    },
+    {
+      "path": "native-wait-parity-probe-x64.log",
+      "bytes": 1085,
+      "sha256": "fa14e87254fd5d540bbaca20b20aee64b48854af56e12908982feba01e454d3c"
+    },
+    {
+      "path": "native-wait-parity-probe-x64.ps1",
+      "bytes": 1323,
+      "sha256": "a316ae051677c013b45326fccff1575ee57be0889cb1a9bb6ae4c5367901be32"
+    },
+    {
+      "path": "native-wait-parity-probe-x86-build.log",
+      "bytes": 30,
+      "sha256": "68eb01bdb7e08e2420d5aeb201f36a56eaa6ff4298c5d57dda2d85ccb0306f25"
+    },
+    {
+      "path": "native-wait-parity-probe-x86-laa-build.log",
+      "bytes": 30,
+      "sha256": "68eb01bdb7e08e2420d5aeb201f36a56eaa6ff4298c5d57dda2d85ccb0306f25"
+    },
+    {
+      "path": "native-wait-parity-probe-x86-laa.log",
+      "bytes": 1085,
+      "sha256": "caeff7bfd065eea4efd5e452528631c97da4e247d1276cecc3c89f7781f8f1a9"
+    },
+    {
+      "path": "native-wait-parity-probe-x86-laa.ps1",
+      "bytes": 1372,
+      "sha256": "ca79f6a1b5c79941db58785ede465fc8f935ce2bcbe677135208330e679e9df4"
+    },
+    {
+      "path": "native-wait-parity-probe-x86.log",
+      "bytes": 1085,
+      "sha256": "caeff7bfd065eea4efd5e452528631c97da4e247d1276cecc3c89f7781f8f1a9"
+    },
+    {
+      "path": "native-wait-parity-probe-x86.ps1",
+      "bytes": 1321,
+      "sha256": "030f4a9f75078fb2a83a32e8511ccf78d883e1485600c6957c838f9a22c37dba"
+    },
+    {
+      "path": "native-wait-parity-probe.cpp",
+      "bytes": 2604,
+      "sha256": "bd833822c7915c5893d0557eb3688d6721f9b87cab2004687f9f56fa4e17f82e"
+    },
+    {
+      "path": "ordinary-observer-pair.json",
+      "bytes": 668,
+      "sha256": "1c4c40ae5d2c8ae676ab8f0248821af2a296e2c4c7de6e992c7568ec582feb01"
+    },
+    {
+      "path": "owning-linux-cpp-build.py",
+      "bytes": 1522,
+      "sha256": "a0d9f75e831bd3585d3e009b94e8e3f2744b137e646c157c70a7ad7950373b56"
+    },
+    {
+      "path": "phnt-LICENSE",
+      "bytes": 1092,
+      "sha256": "ad2ab542c56c606e4c19d66a7f3cdcd3ef83beffb638e7c3893b22c7a6a6c0df"
+    },
+    {
+      "path": "phnt-ntioapi.h",
+      "bytes": 169450,
+      "sha256": "6339b1de2654a285dca50ba386a4681953cc58448f888ca1c5f4bf3510bd108b"
+    },
+    {
+      "path": "primary-retrieval.json",
+      "bytes": 649,
+      "sha256": "5f7d86151827bc4a4884a621d4e550d56520ad9ff96de84680bcf992265084dc"
+    },
+    {
+      "path": "run-owning-linux.py",
+      "bytes": 1599,
+      "sha256": "11a943bacc825b4961837df5a361e31084d7870c981fa66de488c7bc48c7f9a1"
+    },
+    {
+      "path": "run-owning-macos.py",
+      "bytes": 526,
+      "sha256": "fcdcb2a47418eac16a13d41cc89df4ab089d06b414bbf728708d63b2f1b99da1"
+    },
+    {
+      "path": "run-portable.py",
+      "bytes": 1823,
+      "sha256": "64ae87822e8967193d82616f877f84e19c5b97fbf19d99126648edac2d96140e"
+    },
+    {
+      "path": "task-baseline.json",
+      "bytes": 548,
+      "sha256": "971cacb5593c8a9e9ad96be656e0aea20605850e8f414fb700f99306286e1674"
+    },
+    {
+      "path": "task-contract.md",
+      "bytes": 2660,
+      "sha256": "974f431f4e4f351beee3421f7a524ea2e2eab2e1d6ac7a95dfbd4fe6f6e9b306"
+    },
+    {
+      "path": "wait-packet-native-host.json",
+      "bytes": 272,
+      "sha256": "35d51018488335ef193176be665312fb8206d5248ca158c4b0759a07239d0993"
+    },
+    {
+      "path": "wait-packet-ntdll-identities.json",
+      "bytes": 180,
+      "sha256": "a3b3f588fc440d90e00d6f78e815bb2102ed2867804ae0edce058a0ce7ff43d7"
+    },
+    {
+      "path": "wait-packet-owned-cpp-build.py",
+      "bytes": 1839,
+      "sha256": "9995e244e446791e41fc1d813aaf59db7ccb7b472c064785232f4e11f63d3608"
+    },
+    {
+      "path": "wait-packet-principal-privileges.log",
+      "bytes": 1988,
+      "sha256": "c1a1b218447d2d6ea05ef860bc7ec1a3723ee15f6d263561221c0f8bc74d1244"
+    },
+    {
+      "path": "wait-packet-principal-user.log",
+      "bytes": 56,
+      "sha256": "fa338a5b80b0285ec80d54a12162763ad35537038f2c215f8e0e43cdb6f44bf6"
+    },
+    {
+      "path": "wait-packet-producer-identity.json",
+      "bytes": 8447,
+      "sha256": "5ba4377fda3d0812def73ea78da636d0cd948b9a7a60a99309d5aac06577ac35"
+    },
+    {
+      "path": "wait-packet-producer-identity.ps1",
+      "bytes": 652,
+      "sha256": "0cfc53a4646ac5cc8abc842b57af030925aa5c82af0596b7fa6146b3a1367304"
+    },
+    {
+      "path": "wait-packet-producer-identity.py",
+      "bytes": 1553,
+      "sha256": "af1a760bc00216ca409b0751adb736e41fd613070a4453303ad7102e443a83db"
+    }
+  ]
+}

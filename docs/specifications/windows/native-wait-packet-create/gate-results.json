@@ -1,0 +1,1009 @@
+[
+  {
+    "host": "macos",
+    "gate": "targeted",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "wait_packet_create",
+      "--",
+      "--nocapture"
+    ],
+    "original-path": "macos-targeted.log",
+    "test-results": [
+      "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 7624 filtered out; finished in 0.39s"
+    ]
+  },
+  {
+    "host": "macos",
+    "gate": "threading",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "dll::threading::tests",
+      "--",
+      "--nocapture"
+    ],
+    "original-path": "macos-threading.log",
+    "test-results": [
+      "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 7613 filtered out; finished in 0.10s"
+    ]
+  },
+  {
+    "host": "macos",
+    "gate": "timer2",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "timer2_create",
+      "--",
+      "--nocapture"
+    ],
+    "original-path": "macos-timer2.log",
+    "test-results": [
+      "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 7627 filtered out; finished in 2.77s"
+    ]
+  },
+  {
+    "host": "macos",
+    "gate": "worker-factory",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "worker_factory",
+      "--",
+      "--nocapture"
+    ],
+    "original-path": "macos-worker-factory.log",
+    "test-results": [
+      "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 7626 filtered out; finished in 0.75s"
+    ]
+  },
+  {
+    "host": "macos",
+    "gate": "io-completion",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "io_completion",
+      "--",
+      "--nocapture"
+    ],
+    "original-path": "macos-io-completion.log",
+    "test-results": [
+      "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 7626 filtered out; finished in 0.42s"
+    ]
+  },
+  {
+    "host": "macos",
+    "gate": "events",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "native_event",
+      "--",
+      "--nocapture"
+    ],
+    "original-path": "macos-events.log",
+    "test-results": [
+      "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 7624 filtered out; finished in 0.89s"
+    ]
+  },
+  {
+    "host": "macos",
+    "gate": "full",
+    "exit-code": 101,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "--",
+      "--nocapture"
+    ],
+    "original-path": "macos-full.log",
+    "test-results": [
+      "test result: FAILED. 7628 passed; 1 failed; 2 ignored; 0 measured; 0 filtered out; finished in 236.30s"
+    ]
+  },
+  {
+    "host": "macos",
+    "gate": "capi",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "-p",
+      "rax-capi",
+      "--",
+      "--nocapture"
+    ],
+    "original-path": "macos-capi.log",
+    "test-results": [
+      "test result: ok. 168 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 18.96s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "host": "macos",
+    "gate": "all-targets",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ],
+    "original-path": "macos-all-targets.log",
+    "test-results": []
+  },
+  {
+    "host": "macos",
+    "gate": "integration",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--test",
+      "user_windows",
+      "--test",
+      "user_windows_memory",
+      "--",
+      "--nocapture"
+    ],
+    "original-path": "macos-integration.log",
+    "test-results": [
+      "test result: ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 23.55s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "host": "linux",
+    "gate": "targeted",
+    "exit-code": 0,
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "rust:1.95-bullseye",
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "wait_packet_create",
+      "--",
+      "--nocapture"
+    ],
+    "original-path": "linux-targeted.log",
+    "test-results": [
+      "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 7618 filtered out; finished in 2.66s"
+    ]
+  },
+  {
+    "host": "linux",
+    "gate": "threading",
+    "exit-code": 0,
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "rust:1.95-bullseye",
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "dll::threading::tests",
+      "--",
+      "--nocapture"
+    ],
+    "original-path": "linux-threading.log",
+    "test-results": [
+      "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 7607 filtered out; finished in 4.74s"
+    ]
+  },
+  {
+    "host": "linux",
+    "gate": "timer2",
+    "exit-code": 0,
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "rust:1.95-bullseye",
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "timer2_create",
+      "--",
+      "--nocapture"
+    ],
+    "original-path": "linux-timer2.log",
+    "test-results": [
+      "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 7621 filtered out; finished in 4.95s"
+    ]
+  },
+  {
+    "host": "linux",
+    "gate": "worker-factory",
+    "exit-code": 0,
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "rust:1.95-bullseye",
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "worker_factory",
+      "--",
+      "--nocapture"
+    ],
+    "original-path": "linux-worker-factory.log",
+    "test-results": [
+      "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 7620 filtered out; finished in 2.04s"
+    ]
+  },
+  {
+    "host": "linux",
+    "gate": "io-completion",
+    "exit-code": 0,
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "rust:1.95-bullseye",
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "io_completion",
+      "--",
+      "--nocapture"
+    ],
+    "original-path": "linux-io-completion.log",
+    "test-results": [
+      "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 7620 filtered out; finished in 1.79s"
+    ]
+  },
+  {
+    "host": "linux",
+    "gate": "events",
+    "exit-code": 0,
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "rust:1.95-bullseye",
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "native_event",
+      "--",
+      "--nocapture"
+    ],
+    "original-path": "linux-events.log",
+    "test-results": [
+      "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 7618 filtered out; finished in 2.78s"
+    ]
+  },
+  {
+    "host": "linux",
+    "gate": "full",
+    "exit-code": 101,
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "rust:1.95-bullseye",
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "--",
+      "--nocapture"
+    ],
+    "original-path": "linux-full.log",
+    "test-results": [
+      "test result: FAILED. 7621 passed; 2 failed; 2 ignored; 0 measured; 0 filtered out; finished in 295.84s"
+    ]
+  },
+  {
+    "host": "linux",
+    "gate": "capi-parallel",
+    "exit-code": 101,
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "rust:1.95-bullseye",
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "-p",
+      "rax-capi",
+      "--",
+      "--nocapture"
+    ],
+    "original-path": "linux-capi.log",
+    "test-results": [
+      "test result: FAILED. 167 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 21.35s"
+    ]
+  },
+  {
+    "host": "linux",
+    "gate": "all-targets",
+    "exit-code": 0,
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "rust:1.95-bullseye",
+      "cargo",
+      "build",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ],
+    "original-path": "linux-all-targets.log",
+    "test-results": []
+  },
+  {
+    "host": "linux",
+    "gate": "integration",
+    "exit-code": 0,
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "rust:1.95-bullseye",
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--test",
+      "user_windows",
+      "--test",
+      "user_windows_memory",
+      "--",
+      "--nocapture"
+    ],
+    "original-path": "linux-integration.log",
+    "test-results": [
+      "test result: ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 43.75s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "host": "linux",
+    "gate": "capi-isolated",
+    "exit-code": 0,
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "rust:1.95-bullseye",
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "-p",
+      "rax-capi",
+      "process_personality_failure_has_a_terminal_diagnostic",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "original-path": "linux-capi-isolated.log",
+    "test-results": [
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 167 filtered out; finished in 0.24s"
+    ]
+  },
+  {
+    "host": "linux",
+    "gate": "capi",
+    "exit-code": 0,
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "rust:1.95-bullseye",
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "-p",
+      "rax-capi",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "original-path": "linux-capi-serial.log",
+    "test-results": [
+      "test result: ok. 168 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 26.60s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "host": "macos",
+    "gate": "isolated-native-runtime",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "native_runtime_executes_system_programs_in_a_closed_process",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "original-path": "macos-isolated-native-runtime.log",
+    "test-results": [
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7630 filtered out; finished in 24.40s"
+    ]
+  },
+  {
+    "host": "linux",
+    "gate": "owning-shipping",
+    "exit-code": 0,
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current:/work:ro",
+      "-v",
+      "/Users/int/hexrays/kvasir/vendor/rax:/Users/int/hexrays/kvasir/vendor/rax:ro",
+      "-v",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012:/validation",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "assist-native-linux-root-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/rust/assist-rs",
+      "rust:1.95-bullseye",
+      "cargo",
+      "build",
+      "--locked",
+      "--offline",
+      "--features",
+      "rax"
+    ],
+    "original-path": "linux-owning-shipping.log",
+    "test-results": []
+  },
+  {
+    "host": "linux",
+    "gate": "owning-cpp",
+    "exit-code": 0,
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current:/work:ro",
+      "-v",
+      "/Users/int/hexrays/kvasir/vendor/rax:/Users/int/hexrays/kvasir/vendor/rax:ro",
+      "-v",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012:/validation",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "assist-native-linux-root-target:/target",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-v",
+      "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/generated/static-text:/generated:ro",
+      "-v",
+      "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/_deps/monocypher-src/src:/monocypher:ro",
+      "-v",
+      "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/_deps/json-src/single_include:/json:ro",
+      "rust:1.95-bullseye",
+      "python3",
+      "/validation/owning-linux-cpp-build.py"
+    ],
+    "original-path": "linux-owning-cpp.log",
+    "test-results": []
+  },
+  {
+    "host": "macos",
+    "gate": "configure",
+    "exit-code": 0,
+    "command": [
+      "cmake",
+      "-S",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current",
+      "-B",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build",
+      "-G",
+      "Ninja",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DIDASDK=/Users/int/dev/ida-sdk",
+      "-DASSIST_IDADIR=/Applications/IDA Professional 9.4-sp1.app/Contents/MacOS",
+      "-DASSIST_BUILD_PLUGIN=OFF",
+      "-DASSIST_BUILD_IDALIB_CLI=ON",
+      "-DASSIST_BUILD_TESTS=ON",
+      "-DASSIST_BUILD_QT_HARNESS=OFF",
+      "-DASSIST_ENABLE_LTO=OFF",
+      "-DASSIST_ENABLE_Z3=OFF",
+      "-DASSIST_ENABLE_RAX=ON",
+      "-DASSIST_ENCRYPT_STATIC_TEXT=ON",
+      "-DASSIST_SQLITE_AMALGAMATION_DIR=/Users/int/hexrays/kvasir/vendor/Qt-6.8.0/src/qtbase/src/3rdparty/sqlite",
+      "-DFETCHCONTENT_SOURCE_DIR_JSON=/Users/int/Library/Caches/assist-process-emulation/worker-factory-create-20261012/macos-owning-build/_deps/json-src",
+      "-DFETCHCONTENT_SOURCE_DIR_MONOCYPHER=/Users/int/Library/Caches/assist-process-emulation/worker-factory-create-20261012/macos-owning-build/_deps/monocypher-src"
+    ],
+    "original-path": "macos-owning-configure.log",
+    "test-results": []
+  },
+  {
+    "host": "macos",
+    "gate": "owning-shipping",
+    "exit-code": 0,
+    "command": [
+      "cmake",
+      "--build",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build",
+      "--target",
+      "assist_idalib_cli",
+      "assist_mcp",
+      "assist_mcp_tool_manifest_tests",
+      "assist_rax_process_tests",
+      "assist_process_tool_tests",
+      "assist_process_tool_unavailable_tests",
+      "assist_e14_rax_abi_drift_tests",
+      "assist_rust_archive_link_tests",
+      "--parallel",
+      "8"
+    ],
+    "original-path": "macos-owning-build.log",
+    "test-results": []
+  },
+  {
+    "host": "macos",
+    "gate": "owning-cpp",
+    "exit-code": 0,
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build",
+      "--output-on-failure",
+      "-R",
+      "^(assist_rust_archive_link_tests|assist_rax_process_tests|assist_process_tool_tests|assist_process_tool_unavailable_tests|assist_e14_rax_abi_drift_tests|assist_mcp_tool_manifest_tests|assist_mcp_manifest_runtime_test)$"
+    ],
+    "original-path": "macos-owning-ctest.log",
+    "test-results": []
+  },
+  {
+    "host": "macos",
+    "gate": "protected-assist-cli",
+    "exit-code": 0,
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/scripts/static_text/verify.py",
+      "--root",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-cli"
+    ],
+    "original-path": "macos-owning-protected-assist-cli.log",
+    "test-results": []
+  },
+  {
+    "host": "macos",
+    "gate": "protected-assist-mcp",
+    "exit-code": 0,
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/scripts/static_text/verify.py",
+      "--root",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-mcp"
+    ],
+    "original-path": "macos-owning-protected-assist-mcp.log",
+    "test-results": []
+  },
+  {
+    "host": "windows",
+    "gate": "owning-shipping",
+    "exit-code": 0,
+    "command": [
+      "powershell.exe",
+      "-File",
+      "assist-native-wait-packet-owned.ps1"
+    ],
+    "original-path": "assist-native-wait-packet-owned-shipping.log",
+    "test-results": []
+  },
+  {
+    "host": "windows",
+    "gate": "owning-cpp",
+    "exit-code": 0,
+    "command": [
+      "powershell.exe",
+      "-File",
+      "assist-native-wait-packet-owned.ps1"
+    ],
+    "original-path": "assist-native-wait-packet-owned-cpp.log",
+    "test-results": []
+  },
+  {
+    "gate": "targeted",
+    "command": "cargo.exe test --locked --offline --no-default-features --lib wait_packet_create -- --nocapture",
+    "exit-code": 0,
+    "log": "native-wait-packet-targeted.log",
+    "host": "windows",
+    "original-path": "native-wait-packet-targeted.log",
+    "test-results": [
+      "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 7026 filtered out; finished in 4.63s"
+    ]
+  },
+  {
+    "gate": "threading",
+    "command": "cargo.exe test --locked --offline --no-default-features --lib dll::threading::tests -- --nocapture",
+    "exit-code": 0,
+    "log": "native-wait-packet-threading.log",
+    "host": "windows",
+    "original-path": "native-wait-packet-threading.log",
+    "test-results": [
+      "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 7016 filtered out; finished in 0.48s"
+    ]
+  },
+  {
+    "gate": "timer2",
+    "command": "cargo.exe test --locked --offline --no-default-features --lib timer2_create -- --nocapture",
+    "exit-code": 0,
+    "log": "native-wait-packet-timer2.log",
+    "host": "windows",
+    "original-path": "native-wait-packet-timer2.log",
+    "test-results": [
+      "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 7029 filtered out; finished in 4.56s"
+    ]
+  },
+  {
+    "gate": "worker-factory",
+    "command": "cargo.exe test --locked --offline --no-default-features --lib worker_factory -- --nocapture",
+    "exit-code": 0,
+    "log": "native-wait-packet-worker-factory.log",
+    "host": "windows",
+    "original-path": "native-wait-packet-worker-factory.log",
+    "test-results": [
+      "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 7028 filtered out; finished in 1.43s"
+    ]
+  },
+  {
+    "gate": "events",
+    "command": "cargo.exe test --locked --offline --no-default-features --lib event_ -- --nocapture",
+    "exit-code": 0,
+    "log": "native-wait-packet-events.log",
+    "host": "windows",
+    "original-path": "native-wait-packet-events.log",
+    "test-results": [
+      "test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 7021 filtered out; finished in 2.12s"
+    ]
+  },
+  {
+    "gate": "io-completion",
+    "command": "cargo.exe test --locked --offline --no-default-features --lib io_completion -- --nocapture",
+    "exit-code": 0,
+    "log": "native-wait-packet-io-completion.log",
+    "host": "windows",
+    "original-path": "native-wait-packet-io-completion.log",
+    "test-results": [
+      "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 7028 filtered out; finished in 26.41s"
+    ]
+  },
+  {
+    "gate": "full",
+    "command": "cargo.exe test --locked --offline --no-default-features --lib -- --nocapture",
+    "exit-code": 101,
+    "log": "native-wait-packet-full.log",
+    "host": "windows",
+    "original-path": "native-wait-packet-full.log",
+    "test-results": [
+      "test result: FAILED. 7027 passed; 5 failed; 2 ignored; 0 measured; 0 filtered out; finished in 210.34s"
+    ]
+  },
+  {
+    "gate": "capi",
+    "command": "cargo.exe test --locked --offline --no-default-features -p rax-capi -- --nocapture",
+    "exit-code": 0,
+    "log": "native-wait-packet-capi.log",
+    "host": "windows",
+    "original-path": "native-wait-packet-capi.log",
+    "test-results": [
+      "test result: ok. 168 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.51s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "gate": "all-targets",
+    "command": "cargo.exe build --locked --offline --no-default-features --all-targets",
+    "exit-code": 0,
+    "log": "native-wait-packet-all-targets.log",
+    "host": "windows",
+    "original-path": "native-wait-packet-all-targets.log",
+    "test-results": []
+  },
+  {
+    "gate": "integration",
+    "command": "cargo.exe test --locked --offline --no-default-features --test user_windows_memory -- --nocapture",
+    "exit-code": 0,
+    "log": "native-wait-packet-integration.log",
+    "host": "windows",
+    "original-path": "native-wait-packet-integration.log",
+    "test-results": [
+      "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ]
+  }
+]

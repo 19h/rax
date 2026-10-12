@@ -117,7 +117,10 @@ fn wait_object(c: &Ctx, handle: u64) -> Checked<ObjId> {
             | Object::Mutex { .. }
             | Object::Semaphore { .. }
             | Object::Thread { .. }
-            | Object::Process { .. },
+            | Object::Process { .. }
+            | Object::Timer { .. }
+            | Object::IrTimer { .. }
+            | Object::WaitCompletionPacket { .. },
         ) => Ok(id),
         Some(_) => Err(ServiceError::Win32(ERROR_NOT_SUPPORTED)),
         None => Err(ServiceError::Win32(ERROR_INVALID_HANDLE)),
@@ -186,10 +189,9 @@ fn wait_multiple(c: &mut Ctx, alertable: bool) -> ApiResult {
             Ok(id) => id,
             Err(error) => return failure(c, error, WAIT_FAILED),
         };
-        // Native duplicate aliases are not covered by the public duplicate
-        // handle prohibition. Reject them in this profile to avoid consuming
-        // a single semaphore/event twice in an atomic wait-all.
-        if !unique.insert(id) {
+        // Wait-any returns the first signaled index and consumes one object.
+        // Native wait-all rejects aliases before consuming any signal state.
+        if !unique.insert(id) && all {
             return c.fail(ERROR_INVALID_PARAMETER, WAIT_FAILED);
         }
         ids.push(id);

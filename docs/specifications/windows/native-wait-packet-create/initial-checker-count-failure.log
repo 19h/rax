@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-wait-packet-create/check_native_wait_packet.py", line 118, in <module>
+    validate(args.evidence_root, args.source_root)
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-wait-packet-create/check_native_wait_packet.py", line 103, in validate
+    require(r["test-results"] and re.search(rf"ok\. {expected} passed; 0 failed; 0 ignored;", r["test-results"][0]), "nonempty selected count: " + host + "/" + name)
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-wait-packet-create/check_native_wait_packet.py", line 9, in require
+    raise ValueError(message)
+ValueError: nonempty selected count: windows/events

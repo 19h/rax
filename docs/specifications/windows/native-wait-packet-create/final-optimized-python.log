@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-optimized-python/check_native_wait_packet.py", line 121, in <module>
+    validate(args.evidence_root, args.source_root)
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-optimized-python/check_native_wait_packet.py", line 26, in validate
+    require(not sys.flags.optimize, "optimized validation rejected")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-optimized-python/check_native_wait_packet.py", line 9, in require
+    raise ValueError(message)
+ValueError: optimized validation rejected

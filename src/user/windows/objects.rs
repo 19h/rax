@@ -154,6 +154,12 @@ pub enum Object {
         /// Construction records it; completion dequeue must enforce it.
         concurrency: u32,
     },
+    /// An NT wait packet. A new packet is notification-signaled: object waits
+    /// do not consume its state. Association services own later transitions.
+    WaitCompletionPacket {
+        /// Packet signal state, shared by every duplicate guest handle.
+        signaled: bool,
+    },
     /// A dormant NT thread-pool worker factory. Activation/packet scheduling
     /// belongs to the worker-factory services, not to construction.
     WorkerFactory {
@@ -196,6 +202,7 @@ impl Object {
             Object::Mapping { .. } => "Section",
             Object::Pipe { .. } => "File",
             Object::CompletionPort { .. } => "IoCompletion",
+            Object::WaitCompletionPacket { .. } => "WaitCompletionPacket",
             Object::WorkerFactory { .. } => "TpWorkerFactory",
             Object::Key(_) => "Key",
             Object::Opaque(t) => t,

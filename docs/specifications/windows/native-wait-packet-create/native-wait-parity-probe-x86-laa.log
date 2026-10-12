@@ -1,0 +1,8 @@
+case=0 kind=timer family=0 flag=00000000 width=4 status=00000000 first=00000102 error=0 second=00000102 second-error=0 close=1 before=82 after=82
+case=1 kind=timer family=0 flag=00000001 width=4 status=00000000 first=00000102 error=0 second=00000102 second-error=0 close=1 before=82 after=82
+case=2 kind=timer family=1 flag=00000000 width=4 status=00000000 first=00000102 error=0 second=00000102 second-error=0 close=1 before=82 after=82
+case=3 kind=timer family=1 flag=00000008 width=4 status=00000000 first=00000102 error=0 second=00000102 second-error=0 close=1 before=82 after=82
+case=4 kind=timer family=1 flag=80000008 width=4 status=00000000 first=00000102 error=0 second=00000102 second-error=0 close=1 before=82 after=82
+case=5 kind=event manual=0 width=4 all=FFFFFFFF all-error=87 any=00000000 any-error=0 single=00000102 single-error=0 first-close=1 second-close=1 before=82 after=82
+case=6 kind=event manual=1 width=4 all=FFFFFFFF all-error=87 any=00000000 any-error=0 single=00000000 single-error=0 first-close=1 second-close=1 before=82 after=82
+complete cases=7

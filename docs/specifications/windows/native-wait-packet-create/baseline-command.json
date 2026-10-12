@@ -1,0 +1,11 @@
+[
+  "cargo",
+  "test",
+  "--locked",
+  "--offline",
+  "--no-default-features",
+  "--lib",
+  "native_wait_packet_create",
+  "--",
+  "--nocapture"
+]

@@ -16,6 +16,7 @@ mod registry;
 mod timers;
 mod topology;
 mod virtual_memory;
+mod wait_packet;
 mod worker_factory;
 
 pub(super) static EXPORTS: &[Export] = &[
@@ -93,6 +94,12 @@ pub(super) static EXPORTS: &[Export] = &[
         Stdcall,
         &[Ptr, I32, Ptr, Ptr, Ptr, Ptr, Ptr, I32, Ptr, Ptr],
         worker_factory::create,
+    ),
+    Export::func(
+        "NtCreateWaitCompletionPacket",
+        Stdcall,
+        &[Ptr, I32, Ptr],
+        wait_packet::create,
     ),
     Export::func(
         "NtCreateTimer2",

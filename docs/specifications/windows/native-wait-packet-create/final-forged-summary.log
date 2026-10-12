@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-forged-summary/check_native_wait_packet.py", line 121, in <module>
+    validate(args.evidence_root, args.source_root)
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-forged-summary/check_native_wait_packet.py", line 98, in validate
+    require(record["test-results"] == re.findall(r"test result: [^\n]+", original), "gate summary/original log binding")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-forged-summary/check_native_wait_packet.py", line 9, in require
+    raise ValueError(message)
+ValueError: gate summary/original log binding

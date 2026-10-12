@@ -1,0 +1,13 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.81s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 5 tests
+test user::windows::process::sched::tests::services_tests::io_completion_create_tests::native_io_completion_create_preserves_unsigned_concurrency_and_guest_default_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::io_completion_create_tests::native_io_completion_create_maps_grants_and_inheritance_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::io_completion_create_tests::native_io_completion_create_constructs_real_object_and_closes_without_leak_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::io_completion_create_tests::native_io_completion_create_keeps_named_security_and_privilege_boundaries_explicit_all_abis ... ok
+native I/O completion captures: 1184 exact replays; 112 explicit nested-policy/privileged-grant exclusions
+test user::windows::process::sched::tests::services_tests::io_completion_create_tests::replay_tests::native_io_completion_create_replays_independent_constructor_and_root_captures ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 7620 filtered out; finished in 1.79s
+

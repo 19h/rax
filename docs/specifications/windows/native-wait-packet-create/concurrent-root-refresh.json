@@ -1,0 +1,8 @@
+{
+  "root-head": "d7427260f635728f18096f7aca84d6d33c2377e5",
+  "user-owned": {
+    "rust/assist-rs/src/history_store/storage_tests.rs": "a6609482ccb677a730a317761dc0f8524893d9405949a1474ccffe3f16c2062c",
+    "rust/assist-rs/src/host_files.rs": "df85a150fb70ba663da9442a507140dc8d74ddc0e6352fdb92845312710ac967"
+  },
+  "index": ""
+}

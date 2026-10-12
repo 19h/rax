@@ -1,0 +1,11 @@
+{
+  "root-head": "7e55629b44896e31934588d354ef478c23fe3fee",
+  "rax-parent": "640a7f0de97770afcf6d5c9389a4e5b5917644bf",
+  "root-status": "## master...origin/master\n M test/torture_message_history_tests.cpp",
+  "rax-status": "## master...origin/master",
+  "concurrent-owned-file": {
+    "path": "test/torture_message_history_tests.cpp",
+    "sha256": "fa12ff2b9b6e2e02c2439edc8946e992472b9f256cfbc2626911d6aac39535bd"
+  },
+  "previous-goal-turn": "progress: Timer2 implemented, verified, red-committed and published in all required master refs"
+}

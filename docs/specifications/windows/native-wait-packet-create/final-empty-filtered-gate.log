@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-empty-filtered-gate/check_native_wait_packet.py", line 121, in <module>
+    validate(args.evidence_root, args.source_root)
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-empty-filtered-gate/check_native_wait_packet.py", line 106, in validate
+    require(r["test-results"] and re.search(rf"ok\. {expected} passed; 0 failed; 0 ignored;", r["test-results"][0]), "nonempty selected count: " + host + "/" + name)
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-empty-filtered-gate/check_native_wait_packet.py", line 9, in require
+    raise ValueError(message)
+ValueError: nonempty selected count: macos/targeted

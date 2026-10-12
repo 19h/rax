@@ -186,8 +186,8 @@ pub fn on_block(p: &mut Proc, tid: u32, wait: &Wait) -> Result<(), SyncError> {
         return Err(SyncError::Invalid("thread already has a registered wait"));
     }
     match wait {
-        Wait::Objects { objs, .. } => {
-            validate_objects(p, objs)?;
+        Wait::Objects { objs, all, .. } => {
+            validate_objects(p, objs, *all)?;
             p.objects.retain_many(objs).map_err(SyncError::Invalid)?;
         }
         Wait::Address { key, .. } => {
@@ -404,6 +404,7 @@ fn signaled(p: &Proc, id: ObjId, tid: u32) -> bool {
         Some(Object::Event { signaled, .. }) => *signaled != 0,
         Some(Object::Timer { signaled, .. }) => *signaled,
         Some(Object::IrTimer { signaled, .. }) => *signaled,
+        Some(Object::WaitCompletionPacket { signaled }) => *signaled,
         Some(Object::Mutex { owner, .. }) => owner.is_none() || *owner == Some(tid),
         Some(Object::Semaphore { count, .. }) => *count > 0,
         Some(Object::Thread { exit_code, .. }) | Some(Object::Process { exit_code, .. }) => {
@@ -436,7 +437,11 @@ fn consume(p: &mut Proc, id: ObjId, tid: u32) -> bool {
             *signaled = false;
             false
         }
-        Some(Object::IrTimer { attributes, signaled, .. }) if *attributes & 0x8000_0000 == 0 => {
+        Some(Object::IrTimer {
+            attributes,
+            signaled,
+            ..
+        }) if *attributes & 0x8000_0000 == 0 => {
             *signaled = false;
             false
         }
@@ -458,14 +463,14 @@ fn consume(p: &mut Proc, id: ObjId, tid: u32) -> bool {
 }
 
 /// Checks the complete set before consuming anything. Public builders also
-/// validate handles/access rights; duplicate object aliases are unsupported.
-fn validate_objects(p: &Proc, objs: &[ObjId]) -> Result<(), SyncError> {
+/// validate handles/access rights. Only wait-all forbids duplicate aliases.
+fn validate_objects(p: &Proc, objs: &[ObjId], all: bool) -> Result<(), SyncError> {
     if objs.is_empty() || objs.len() > 64 {
         return Err(SyncError::Invalid("invalid object wait count"));
     }
     let mut distinct = HashSet::with_capacity(objs.len());
     for &id in objs {
-        if !distinct.insert(id) {
+        if !distinct.insert(id) && all {
             return Err(SyncError::Invalid("duplicate object in wait set"));
         }
         let object = p
@@ -500,7 +505,7 @@ pub fn try_objects(
     objs: &[ObjId],
     all: bool,
 ) -> Result<Option<u64>, SyncError> {
-    validate_objects(p, objs)?;
+    validate_objects(p, objs, all)?;
     if all {
         if objs.iter().all(|&o| signaled(p, o, tid)) {
             for &id in objs {

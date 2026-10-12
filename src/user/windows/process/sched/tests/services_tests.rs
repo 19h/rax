@@ -34,6 +34,9 @@ mod worker_factory_create_tests;
 #[path = "services_tests/timer2_create_tests.rs"]
 mod timer2_create_tests;
 
+#[path = "services_tests/wait_packet_create_tests.rs"]
+mod wait_packet_create_tests;
+
 #[path = "services_tests/hotpatch_tests.rs"]
 mod hotpatch_tests;
 

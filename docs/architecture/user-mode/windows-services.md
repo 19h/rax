@@ -1,5 +1,17 @@
 # Windows handle/service integration
 
+Current native wait-packet addition (2026-10-12):
+`NtCreateWaitCompletionPacket` creates a real process-local notification-signaled
+object with measured grants and final-close lifetime. Public single/multiple
+waits admit packets and dormant legacy/IR timers. Wait-any permits duplicate
+aliases and consumes one automatic-event signal; wait-all rejects aliases before
+consumption. Four installed-kernel caller profiles supply 1368 observations,
+with 1228 exact constructor replays and 40 explicit namespace/security/privilege
+exclusions. Seven portable tests and eight Windows tests pass, including installed
+ARM64/WoW64 leaves. These measurements supersede native-unknown claims below only
+for the measured behavior. Association/cancellation and full application exit
+remain separate work. See the [native evidence](../../specifications/windows/native-wait-packet-create/README.md).
+
 Baseline: 4312bb48ec169c48c67ea8ab55bbacda702e5e93, branch user-win.
 The baseline tracked tree/index was clean. Unrelated pre-existing untracked
 content is excluded. Owned source: dll/{files,handles,locks,threading}, registry/

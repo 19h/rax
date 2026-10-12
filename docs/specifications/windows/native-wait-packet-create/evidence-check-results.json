@@ -1,0 +1,87 @@
+[
+  {
+    "gate": "positive-final",
+    "exit-code": 0,
+    "command": [
+      "python3",
+      "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-wait-packet-create/check_native_wait_packet.py",
+      "--evidence-root",
+      "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-wait-packet-create",
+      "--source-root",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ]
+  },
+  {
+    "gate": "manifest-omission",
+    "exit-code": 1,
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-manifest-omission/check_native_wait_packet.py",
+      "--evidence-root",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-manifest-omission",
+      "--source-root",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ]
+  },
+  {
+    "gate": "raw-corruption",
+    "exit-code": 1,
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-raw-corruption/check_native_wait_packet.py",
+      "--evidence-root",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-raw-corruption",
+      "--source-root",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ]
+  },
+  {
+    "gate": "semantic-status",
+    "exit-code": 1,
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-semantic-status/check_native_wait_packet.py",
+      "--evidence-root",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-semantic-status",
+      "--source-root",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ]
+  },
+  {
+    "gate": "empty-filtered-gate",
+    "exit-code": 1,
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-empty-filtered-gate/check_native_wait_packet.py",
+      "--evidence-root",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-empty-filtered-gate",
+      "--source-root",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ]
+  },
+  {
+    "gate": "forged-summary",
+    "exit-code": 1,
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-forged-summary/check_native_wait_packet.py",
+      "--evidence-root",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-forged-summary",
+      "--source-root",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ]
+  },
+  {
+    "gate": "optimized-python",
+    "exit-code": 1,
+    "command": [
+      "python3",
+      "-O",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-optimized-python/check_native_wait_packet.py",
+      "--evidence-root",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/final-negative-optimized-python",
+      "--source-root",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ]
+  }
+]

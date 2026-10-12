@@ -1,0 +1,19 @@
+{
+  "before-turn": 42172,
+  "before-terminal": "Complete(Internal(\"native NTDLL service NtCreateWaitCompletionPacket (0xd2) at 0x180001d60 is not implemented\"))",
+  "after-turn": 42185,
+  "after-terminal": "Complete(Internal(\"native NTDLL service NtAssociateWaitCompletionPacket (0x92) at 0x180001960 is not implemented\"))",
+  "before-sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e",
+  "after-sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e",
+  "scheduler-call-delta": 13,
+  "after-arguments": [
+    "0x28",
+    "0x1c",
+    "0x24",
+    "0x1103320",
+    "0x11032f0",
+    "0x0",
+    "0x1",
+    "0xabe640"
+  ]
+}

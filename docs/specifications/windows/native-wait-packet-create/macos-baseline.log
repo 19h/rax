@@ -1,0 +1,28 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 18s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/red-target/debug/deps/rax-754f4d2a527a4423)
+
+running 2 tests
+
+thread 'user::windows::process::sched::tests::services_tests::wait_packet_create_tests::native_wait_packet_create_measured_grants_inheritance_and_repeated_wait_all_abis' (1069717) panicked at src/user/windows/process/sched/tests/services_tests/wait_packet_create_tests.rs:104:13:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtCreateWaitCompletionPacket (0x76) at 0x12340000 is not implemented")
+ right: Continue
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'user::windows::process::sched::tests::services_tests::wait_packet_create_tests::native_wait_packet_create_constructs_and_closes_without_resource_leak_all_abis' (1069716) panicked at src/user/windows/process/sched/tests/services_tests/wait_packet_create_tests.rs:86:9:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtCreateWaitCompletionPacket (0x76) at 0x12340000 is not implemented")
+ right: Continue
+test user::windows::process::sched::tests::services_tests::wait_packet_create_tests::native_wait_packet_create_measured_grants_inheritance_and_repeated_wait_all_abis ... FAILED
+test user::windows::process::sched::tests::services_tests::wait_packet_create_tests::native_wait_packet_create_constructs_and_closes_without_resource_leak_all_abis ... FAILED
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::wait_packet_create_tests::native_wait_packet_create_constructs_and_closes_without_resource_leak_all_abis
+    user::windows::process::sched::tests::services_tests::wait_packet_create_tests::native_wait_packet_create_measured_grants_inheritance_and_repeated_wait_all_abis
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 7624 filtered out; finished in 0.02s
+
+error: test failed, to rerun pass `--lib`
