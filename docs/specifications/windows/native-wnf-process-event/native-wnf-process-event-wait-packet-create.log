@@ -1,0 +1,34 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.25s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-tests\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 8 tests
+test user::windows::process::sched::tests::services_tests::wait_packet_create_tests::native_wait_packet_create_constructs_and_closes_without_resource_leak_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wait_packet_create_tests::native_wait_packet_create_public_timer_and_event_wait_parity_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wait_packet_create_tests::native_wait_packet_create_measured_grants_inheritance_and_repeated_wait_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wait_packet_create_tests::native_wait_packet_create_public_waits_access_aliases_and_final_close_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wait_packet_create_tests::native_wait_packet_create_wait_any_pins_aliases_until_exactly_once_cleanup_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wait_packet_create_tests::native_wait_packet_create_preserves_explicit_namespace_security_privilege_boundaries_all_abis ... ok
+native packet constructor captures: 1228 exact replays; 40 explicit nested-policy/privilege exclusions
+test user::windows::process::sched::tests::services_tests::wait_packet_create_tests::replay_tests::native_wait_packet_create_replays_independent_constructor_captures ... ok
+test user::windows::process::sched::tests::services_tests::wait_packet_create_tests::leaf_tests::installed_wait_packet_create_leaf_constructs_closes_and_returns_all_caller_arguments ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 7062 filtered out; finished in 1.07s
+

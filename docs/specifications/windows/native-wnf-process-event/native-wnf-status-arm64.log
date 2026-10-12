@@ -1,0 +1,6 @@
+case=0 width=8 status=00000000 error=0
+case=1 width=8 status=C0000008 error=6
+case=2 width=8 status=C0000024 error=6
+case=3 width=8 status=C0000022 error=5
+case=4 width=8 status=C0000718 error=1359
+complete cases=5

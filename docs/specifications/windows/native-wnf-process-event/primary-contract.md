@@ -1,0 +1,5 @@
+PHNT ntexapi.h pinned53fbbdc5b5d2b08761db1c7b26bfa8c820924356: NtSetWnfProcessNotificationEvent takes one HANDLE; registration permits WNF notifications to signal the Event. Actual build29683 measurements own status/once-only/lifetime profile. STATUS_ALREADY_REGISTERED0xC0000718 is retained in ../mingw-w64-headers/ntstatus.h. Microsoft debugger references below explain debug handle ownership and break instructions; original pages retrieved2026-10-12 with curl. DbgBreakPoint exported ARM64X x64 thunk is not an initial INT3. NtQueryObject PointerCount has observed handle-cache bias/variation and is not used as an exact pin count.
+ms-continue-debug-event.html https://learn.microsoft.com/en-us/windows/win32/api/debugapi/nf-debugapi-continuedebugevent
+ms-debugging-events.html https://learn.microsoft.com/en-us/windows/win32/debug/debugging-events
+ms-create-process-debug-info.html https://learn.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-create_process_debug_info
+ms-debugbreak.html https://learn.microsoft.com/en-us/cpp/intrinsics/debugbreak?view=msvc-170

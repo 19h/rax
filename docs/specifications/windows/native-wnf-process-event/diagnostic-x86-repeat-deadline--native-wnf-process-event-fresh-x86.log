@@ -1,0 +1,4 @@
+trap case=0 phase=entry exception=80000003 address=7789DC70
+object case=0 phase=before status=00000000 returned=56 handles=2 pointers=32769
+trap case=0 phase=return-0 exception=C000001D address=77865190
+failure=capture-deadline error=121

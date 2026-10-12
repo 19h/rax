@@ -1,0 +1,15 @@
+{
+  "scope": "only module declaration order and error constant documentation; service code and test bodies unchanged",
+  "files": [
+    {
+      "path": "src/user/windows/nt.rs",
+      "before-sha256": "aa6e3f674f61277f9d8ec0b53d6e8f1660c11bb16d2a144cd1868e72a6a59d52",
+      "after-sha256": "090ab62b157b361c6b4b6b35506401d1a6e8dcc3054648f15d3c6c3fd495bf33"
+    },
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "before-sha256": "ca8b32b1c23dcaf6b1027803eb8f607c9ca947c8b4642b7ddc98ec9267ebe13f",
+      "after-sha256": "f6d202f5ea5cc02a76baa170ad18fa0a7b346149b8296a1056c5cc09990c545f"
+    }
+  ]
+}

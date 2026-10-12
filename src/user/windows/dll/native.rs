@@ -17,6 +17,7 @@ mod timers;
 mod topology;
 mod virtual_memory;
 mod wait_packet;
+mod wnf;
 mod worker_factory;
 
 pub(super) static EXPORTS: &[Export] = &[
@@ -83,6 +84,12 @@ pub(super) static EXPORTS: &[Export] = &[
     ),
     Export::func("NtSetEvent", Stdcall, &[Ptr, Ptr], events::set),
     Export::func("NtResetEvent", Stdcall, &[Ptr, Ptr], events::reset),
+    Export::func(
+        "NtSetWnfProcessNotificationEvent",
+        Stdcall,
+        &[Ptr],
+        wnf::register_event,
+    ),
     Export::func(
         "NtCreateIoCompletion",
         Stdcall,

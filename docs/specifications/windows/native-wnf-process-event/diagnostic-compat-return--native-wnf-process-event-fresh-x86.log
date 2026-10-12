@@ -1,0 +1,3 @@
+object case=0 phase=before status=00000000 returned=56 handles=2 pointers=32769
+unexpected-exception=C000001D address=77865190 mode=12
+case=0 warmup=1 width=4 manual=0 initial=0 mode=12 child=2416 installed=1 entered=1 calls=0 entry=7789DC70 caller=77865190 original=F4 selected=F4 status=DEADBEEF repeat=DEADBEEF replacement=DEADBEEF replacement-repeat=DEADBEEF query-before=00000000 returned-before=8 type-before=1 state-before=0 query-after=DEADBEEF returned-after=0 type-after=0 state-after=0 exit=255 handles-before=79 handles-after=91

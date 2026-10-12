@@ -1,0 +1,25 @@
+--- src/user/windows/nt.rs before
++++ src/user/windows/nt.rs final
+@@ -161,8 +161,9 @@
+     pub const ERROR_BAD_NETPATH: u32 = 53;
+     pub const ERROR_FILE_EXISTS: u32 = 80;
+     pub const ERROR_INVALID_PARAMETER: u32 = 87;
++    /// System Error Codes (1300-1699); installed RTL profile.
++    pub const ERROR_INTERNAL_ERROR: u32 = 1359;
+     /// System Error Codes (1000–1299).
+-    pub const ERROR_INTERNAL_ERROR: u32 = 1359;
+     pub const ERROR_ALREADY_FIBER: u32 = 1280;
+     /// System Error Codes (1000–1299).
+     pub const ERROR_ALREADY_THREAD: u32 = 1281;
+--- src/user/windows/dll/native.rs before
++++ src/user/windows/dll/native.rs final
+@@ -17,8 +17,8 @@
+ mod topology;
+ mod virtual_memory;
+ mod wait_packet;
++mod wnf;
+ mod worker_factory;
+-mod wnf;
+ 
+ pub(super) static EXPORTS: &[Export] = &[
+     Export::func("RtlNtStatusToDosError", Stdcall, &[I32], status_error),

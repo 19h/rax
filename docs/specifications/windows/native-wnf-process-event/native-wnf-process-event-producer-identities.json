@@ -1,0 +1,232 @@
+﻿{
+    "producer":  [
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-arm64\\native-wnf-process-event-arm64.exe",
+                         "family":  "event",
+                         "bytes":  145920,
+                         "sha256":  "DBE5A5E97E7688AB7FCBD81C15A29506DA97CB8BF5928A539AC209BC20145A5C"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-arm64\\native-wnf-process-event-arm64.log",
+                         "family":  "event",
+                         "bytes":  13169,
+                         "sha256":  "B1261D5CF36C84A21F72A4D116F783C2142F48B932416DD2CCF423FC560F07D4"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-arm64\\native-wnf-process-event-arm64-build.log",
+                         "family":  "event",
+                         "bytes":  30,
+                         "sha256":  "D8F03DBB69E3FD34298220591E514B515D27B4B018A0089533FC8A569186C474"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-x64\\native-wnf-process-event-x64.exe",
+                         "family":  "event",
+                         "bytes":  143872,
+                         "sha256":  "3781026D686EB51F24C3E37AEE35C12BDEA753CE937D0FC6D8CFE2D4EE3DD843"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-x64\\native-wnf-process-event-x64.log",
+                         "family":  "event",
+                         "bytes":  13169,
+                         "sha256":  "FEB11EC869225EC890A0D179D3EFC66526F23660B2A2AA4C2FDC50758D692EF5"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-x64\\native-wnf-process-event-x64-build.log",
+                         "family":  "event",
+                         "bytes":  30,
+                         "sha256":  "D8F03DBB69E3FD34298220591E514B515D27B4B018A0089533FC8A569186C474"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-x86\\native-wnf-process-event-x86.exe",
+                         "family":  "event",
+                         "bytes":  119296,
+                         "sha256":  "AEDBE061ADC35DA4D4022755D7B3EF117E8CADE15B64A842E53871FE823DD3ED"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-x86\\native-wnf-process-event-x86.log",
+                         "family":  "event",
+                         "bytes":  13169,
+                         "sha256":  "3F76E09A367CCCE2F72AE674AB1519972D566FB02C877E3E8A78B8E89DE6270E"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-x86\\native-wnf-process-event-x86-build.log",
+                         "family":  "event",
+                         "bytes":  30,
+                         "sha256":  "D8F03DBB69E3FD34298220591E514B515D27B4B018A0089533FC8A569186C474"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-x86-laa\\native-wnf-process-event-x86-laa.exe",
+                         "family":  "event",
+                         "bytes":  119296,
+                         "sha256":  "988D8CBAE793F4D6DA6961440DD277A031F59DD6CE52C9A010B6B5B68C5F52F0"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-x86-laa\\native-wnf-process-event-x86-laa.log",
+                         "family":  "event",
+                         "bytes":  13169,
+                         "sha256":  "3F76E09A367CCCE2F72AE674AB1519972D566FB02C877E3E8A78B8E89DE6270E"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-x86-laa\\native-wnf-process-event-x86-laa-build.log",
+                         "family":  "event",
+                         "bytes":  30,
+                         "sha256":  "D8F03DBB69E3FD34298220591E514B515D27B4B018A0089533FC8A569186C474"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-fresh-arm64\\native-wnf-process-event-fresh-arm64.exe",
+                         "family":  "event-fresh",
+                         "bytes":  170496,
+                         "sha256":  "FCCA40B96036C264C54E2D777A13511FBA2FD5AD8973FE47E0151C04BFF94FA8"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-fresh-arm64\\native-wnf-process-event-fresh-arm64.log",
+                         "family":  "event-fresh",
+                         "bytes":  55821,
+                         "sha256":  "7A4BA01789F532BE6E2D44BF5DFE8C50BBE14EC4E8F8632E3EF53A5D6A85C961"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-fresh-arm64\\native-wnf-process-event-fresh-arm64-build.log",
+                         "family":  "event-fresh",
+                         "bytes":  36,
+                         "sha256":  "9F561C90C4006B9DDBE02C8489BEB61577047F846EDA4BBA82C4752981A797FA"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-status-arm64\\native-wnf-status-arm64.exe",
+                         "family":  "status",
+                         "bytes":  145920,
+                         "sha256":  "D4BD2275539B8EAF898148C6D1A7F17F75DE4E32CA8FB3A2FE9A905051B5A0D0"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-status-arm64\\native-wnf-status-arm64.log",
+                         "family":  "status",
+                         "bytes":  221,
+                         "sha256":  "F9FAFF32D34CB48588E393B1FA9D318E407A14FC48F53F434D36FF48A6689107"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-status-arm64\\native-wnf-status-arm64-build.log",
+                         "family":  "status",
+                         "bytes":  23,
+                         "sha256":  "113AE432B4AE72B99CEA7372FD4AAE7E50A7749B40D491AA4896C8FA084F888F"
+                     }
+                 ],
+    "sources":  [
+                    {
+                        "profile":  "arm64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-arm64\\native-wnf-process-event.cpp",
+                        "family":  "event",
+                        "bytes":  2427,
+                        "sha256":  "5E52E38D0D013D4B183AB8FCB0A64115091360A60840E511D4FDE4D81AF74BC2"
+                    },
+                    {
+                        "profile":  "x64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-x64\\native-wnf-process-event.cpp",
+                        "family":  "event",
+                        "bytes":  2427,
+                        "sha256":  "5E52E38D0D013D4B183AB8FCB0A64115091360A60840E511D4FDE4D81AF74BC2"
+                    },
+                    {
+                        "profile":  "x86",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-x86\\native-wnf-process-event.cpp",
+                        "family":  "event",
+                        "bytes":  2427,
+                        "sha256":  "5E52E38D0D013D4B183AB8FCB0A64115091360A60840E511D4FDE4D81AF74BC2"
+                    },
+                    {
+                        "profile":  "x86-laa",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-x86-laa\\native-wnf-process-event.cpp",
+                        "family":  "event",
+                        "bytes":  2427,
+                        "sha256":  "5E52E38D0D013D4B183AB8FCB0A64115091360A60840E511D4FDE4D81AF74BC2"
+                    },
+                    {
+                        "profile":  "arm64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-process-event-fresh-arm64\\native-wnf-process-event-fresh.cpp",
+                        "family":  "event-fresh",
+                        "bytes":  12879,
+                        "sha256":  "35E4B03588F86BA512A87D412603BCB9F701FCB886788052BBDB19E3162686E9"
+                    },
+                    {
+                        "profile":  "arm64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-status-arm64\\native-wnf-status.cpp",
+                        "family":  "status",
+                        "bytes":  486,
+                        "sha256":  "6B911B58E2314B2328187CA94C6866BA7F3CFD3E980C2928BAB9ADCCF15ECB3D"
+                    }
+                ],
+    "processor":  "ARM64",
+    "utc":  "2026-10-12T05:19:21.5890904Z",
+    "images":  [
+                   {
+                       "profile":  "arm64",
+                       "family":  "event",
+                       "characteristics":  34,
+                       "machine":  43620
+                   },
+                   {
+                       "profile":  "x64",
+                       "family":  "event",
+                       "characteristics":  34,
+                       "machine":  34404
+                   },
+                   {
+                       "profile":  "x86",
+                       "family":  "event",
+                       "characteristics":  258,
+                       "machine":  332
+                   },
+                   {
+                       "profile":  "x86-laa",
+                       "family":  "event",
+                       "characteristics":  290,
+                       "machine":  332
+                   },
+                   {
+                       "profile":  "arm64",
+                       "family":  "event-fresh",
+                       "characteristics":  34,
+                       "machine":  43620
+                   },
+                   {
+                       "profile":  "arm64",
+                       "family":  "status",
+                       "characteristics":  34,
+                       "machine":  43620
+                   }
+               ],
+    "dlls":  [
+                 {
+                     "path":  "C:\\Windows\\System32\\ntdll.dll",
+                     "sha256":  "502D4678206C8FD564972A3F82BFE63FE1A451CB5A6804AC0A9823B65FCBB61F",
+                     "bytes":  4609312,
+                     "version":  "10.0.29683.1000 (WinBuild.160101.0800)"
+                 },
+                 {
+                     "path":  "C:\\Windows\\SysWOW64\\ntdll.dll",
+                     "sha256":  "FFD2B7FF39889C5599C8A8451EEF5C852ACEE9101DA5CE5A6DEF8B8E60A6627E",
+                     "bytes":  1849976,
+                     "version":  "10.0.29683.1000 (WinBuild.160101.0800)"
+                 }
+             ],
+    "principal":  {
+                      "sid":  "S-1-5-18",
+                      "name":  "NT AUTHORITY\\SYSTEM"
+                  }
+}

@@ -1,0 +1,14 @@
+﻿[
+    {
+        "gate":  "targeted",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib wnf_process_event -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-wnf-process-event-final-targeted.log"
+    },
+    {
+        "gate":  "all-targets",
+        "command":  "cargo.exe build --locked --offline --no-default-features --all-targets",
+        "exit-code":  0,
+        "log":  "native-wnf-process-event-final-all-targets.log"
+    }
+]

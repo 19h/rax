@@ -1,0 +1,15 @@
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 27s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 7 tests
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::native_wnf_process_event_status_translation_matches_installed_rtl ... ok
+test user::windows::objects::wnf::tests::native_wnf_process_event_reference_overflow_is_transactional ... ok
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::native_wnf_process_event_first_registration_aliases_and_process_drain_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::native_wnf_process_event_type_and_access_errors_precede_busy_without_pins ... ok
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::native_wnf_process_event_isolated_processes_and_one_argument_never_probe_guest_memory ... ok
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::native_wnf_process_event_replays_all_48_fresh_native_sequences ... ok
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::native_wnf_process_event_replays_all_192_initialized_native_rows ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 7649 filtered out; finished in 2.41s
+

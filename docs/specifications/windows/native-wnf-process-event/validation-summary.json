@@ -1,0 +1,82 @@
+{
+  "baseline-rax": "a157e0ee78e70a27038db4c5214db27bdecc5b97",
+  "compiled-root": "77df475c0a4c002293d762aa076dffa10efb1edc",
+  "unix-owning-root": "e2fc5b483be7cad2dae17d889690cc398973c5e8",
+  "replays": 240,
+  "rtl-translation-observations": 5,
+  "tests": {
+    "targeted": {
+      "macos": 7,
+      "linux": 7,
+      "windows": 8
+    },
+    "full": {
+      "macos": {
+        "pass": 7660,
+        "fail": 0,
+        "ignored": 2
+      },
+      "linux": {
+        "pass": 7652,
+        "fail": 2,
+        "ignored": 2
+      },
+      "windows": {
+        "pass": 7063,
+        "fail": 5,
+        "ignored": 2
+      }
+    },
+    "capi": {
+      "macos": 168,
+      "linux": 168,
+      "windows": 168
+    },
+    "integration": {
+      "macos": 544,
+      "linux": 544,
+      "windows": 4
+    },
+    "owning-cpp": {
+      "macos": 5,
+      "linux": 5,
+      "windows": 5
+    },
+    "macos-ctest": 7
+  },
+  "frontier": {
+    "before-turn": 44258,
+    "after-turn": 46245,
+    "delta-scheduler-calls": 1987,
+    "service": "NtSubscribeWnfStateChange",
+    "svc": "0x1cd",
+    "pc": "0x180002d10",
+    "thread": 8,
+    "arguments": [
+      "0x11037c0",
+      "0x0",
+      "0x11",
+      "0xabe918"
+    ],
+    "guest-exit": "not reached"
+  },
+  "source-overlay": {
+    "files": 17118,
+    "patches": 91,
+    "initial-files": 17030,
+    "initial-patches": 181,
+    "errors": 0,
+    "offline-adapter-bytes": 374
+  },
+  "native-owning": {
+    "source-hashes": 47,
+    "helper-hashes": 2,
+    "core-features": []
+  },
+  "limits": [
+    "Fresh first/closed-handle matrix is ARM64 only; compatibility debugging failures are retained, with first-state extrapolation explicit.",
+    "Registration only; subscription/state-change notification delivery remain separate unsupported services.",
+    "Original Linux timing and Windows lowering failures remain; physical x64/package/live IDA/Qt are unproved.",
+    "Ordinary programs reach NtSubscribeWnfStateChange but do not reach guest exit."
+  ]
+}

@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-wnf-process-event/check_native_wnf_process_event.py", line 16, in <module>
+    for name,row in manifest.items():require((base/name).stat().st_size==row['bytes'] and sha(base/name)==row['sha256'],'evidence identity '+name)
+                                     ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-wnf-process-event/check_native_wnf_process_event.py", line 6, in require
+    if not ok:raise ValueError(message)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: evidence identity native-wnf-process-event-arm64.log

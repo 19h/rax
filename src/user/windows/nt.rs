@@ -101,6 +101,7 @@ pub mod status {
     pub const STATUS_NOT_A_DIRECTORY: u32 = 0xC000_0103;
     pub const STATUS_NAME_TOO_LONG: u32 = 0xC000_0106;
     pub const STATUS_PROCESS_IS_TERMINATING: u32 = 0xC000_010A;
+    pub const STATUS_ALREADY_REGISTERED: u32 = 0xC000_0718;
     pub const STATUS_CANCELLED: u32 = 0xC000_0120;
     pub const STATUS_CANNOT_DELETE: u32 = 0xC000_0121;
     pub const STATUS_COMMITMENT_LIMIT: u32 = 0xC000_012D;
@@ -160,6 +161,8 @@ pub mod error {
     pub const ERROR_BAD_NETPATH: u32 = 53;
     pub const ERROR_FILE_EXISTS: u32 = 80;
     pub const ERROR_INVALID_PARAMETER: u32 = 87;
+    /// System Error Codes (1300-1699); installed RTL profile.
+    pub const ERROR_INTERNAL_ERROR: u32 = 1359;
     /// System Error Codes (1000–1299).
     pub const ERROR_ALREADY_FIBER: u32 = 1280;
     /// System Error Codes (1000–1299).
@@ -257,6 +260,9 @@ pub fn status_to_error(status: u32) -> u32 {
         | STATUS_UNABLE_TO_FREE_VM
         | STATUS_UNABLE_TO_DELETE_SECTION
         | STATUS_INVALID_PAGE_PROTECTION => ERROR_INVALID_PARAMETER,
+        // Measured installed-build29683 RTL mapping; the similarly named
+        // ERROR_ALREADY_REGISTERED is not the native result for this status.
+        STATUS_ALREADY_REGISTERED => ERROR_INTERNAL_ERROR,
         STATUS_INFO_LENGTH_MISMATCH => ERROR_BAD_LENGTH,
         STATUS_ACCESS_VIOLATION => ERROR_NOACCESS,
         STATUS_INVALID_HANDLE | STATUS_OBJECT_TYPE_MISMATCH => ERROR_INVALID_HANDLE,

@@ -16,6 +16,7 @@ use std::path::PathBuf;
 use std::time::Instant;
 
 mod wait_packets;
+mod wnf;
 pub use wait_packets::CompletionPacket;
 
 /// An object identifier.
@@ -243,6 +244,8 @@ pub struct Objects {
     handles: BTreeMap<u32, HandleEntry>,
     names: HashMap<String, ObjId>,
     packets: wait_packets::PacketAssociations,
+    /// One process-owned notification Event, independent of caller handles.
+    wnf_event: Option<ObjId>,
 }
 
 fn name_key(name: &str) -> String {
@@ -512,6 +515,7 @@ impl Objects {
         self.handles.clear();
         self.names.clear();
         self.packets = Default::default();
+        self.wnf_event = None;
         self.objs.drain().map(|(_, entry)| entry.obj)
     }
 

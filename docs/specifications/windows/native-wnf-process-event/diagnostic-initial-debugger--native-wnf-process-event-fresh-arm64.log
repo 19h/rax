@@ -1,0 +1,1 @@
+case=0 width=8 mode=0 child=7632 installed=1 entered=1 calls=2 entry=7FF8DE2E2C90 caller=7FF8DE2E8724 original=38 selected=38 status=00000000 repeat=C0000718 query-before=00000000 returned-before=8 type-before=1 state-before=0 query-after=00000000 returned-after=8 type-after=1 state-after=0 exit=77 handles-before=52 handles-after=57

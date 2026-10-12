@@ -1,0 +1,92 @@
+﻿[
+    {
+        "gate":  "targeted",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib wnf_process_event -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-wnf-process-event-targeted.log"
+    },
+    {
+        "gate":  "binding",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib worker_factory_binding -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-wnf-process-event-binding.log"
+    },
+    {
+        "gate":  "soft-maximum",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib worker_factory_soft_maximum -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-wnf-process-event-soft-maximum.log"
+    },
+    {
+        "gate":  "hard-maximum",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib worker_factory_set_maximum -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-wnf-process-event-hard-maximum.log"
+    },
+    {
+        "gate":  "wait-packet-associate",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib wait_packet_associate -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-wnf-process-event-wait-packet-associate.log"
+    },
+    {
+        "gate":  "wait-packet-create",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib wait_packet_create -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-wnf-process-event-wait-packet-create.log"
+    },
+    {
+        "gate":  "threading",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib dll::threading::tests -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-wnf-process-event-threading.log"
+    },
+    {
+        "gate":  "timer2",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib timer2_create -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-wnf-process-event-timer2.log"
+    },
+    {
+        "gate":  "worker-factory",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib worker_factory_create -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-wnf-process-event-worker-factory.log"
+    },
+    {
+        "gate":  "events",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib event_ -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-wnf-process-event-events.log"
+    },
+    {
+        "gate":  "io-completion",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib io_completion -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-wnf-process-event-io-completion.log"
+    },
+    {
+        "gate":  "full",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib -- --nocapture",
+        "exit-code":  101,
+        "log":  "native-wnf-process-event-full.log"
+    },
+    {
+        "gate":  "capi",
+        "command":  "cargo.exe test --locked --offline --no-default-features -p rax-capi -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-wnf-process-event-capi.log"
+    },
+    {
+        "gate":  "all-targets",
+        "command":  "cargo.exe build --locked --offline --no-default-features --all-targets",
+        "exit-code":  0,
+        "log":  "native-wnf-process-event-all-targets.log"
+    },
+    {
+        "gate":  "integration",
+        "command":  "cargo.exe test --locked --offline --no-default-features --test user_windows_memory -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-wnf-process-event-integration.log"
+    }
+]

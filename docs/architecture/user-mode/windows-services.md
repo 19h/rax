@@ -1,6 +1,23 @@
 # Windows handle/service integration
 
-Current native worker-factory BindingCount updates (2026-10-12):
+Current native WNF process Event registration (2026-10-12):
+NtSetWnfProcessNotificationEvent consumes one HANDLE; type and right0x2 precede
+once-only registration. The first valid Event gains one process-owned reference,
+independent of aliases/caller handle reuse, without a signal/type change. Repeat
+valid calls returnC0000718; NULL cannot unregister. Object-table drain removes
+the pin. The measured RTL error mapping is1359 ERROR_INTERNAL_ERROR.
+There are192 mature native rows over four callers and48 complete fresh ARM64
+sequences, plus5 RTL translations. Seven portable/eight Windows tests pass,
+including actual installed native/WoW64 leaves and x86 RET4/8 B caller cleanup.
+Fresh compatibility debugger failures are retained as diagnostics; their first
+state is an explicit same-kernel extrapolation. Registration uses a new private Objects ledger; public Object/Proc variants
+and opaque C ABI contracts remain unchanged. Full-suite counts7660/0/2,7652/2/2,7063/5/2 preserve prior
+Linux/Windows failures. The identical observer advances44258->46245 (1987
+scheduler calls) to NtSubscribeWnfStateChange0x1CD; all four ordinary programs
+still fail before guest exit. State/subscription/delivery remain unsupported.
+See [WNF registration evidence](../../specifications/windows/native-wnf-process-event/README.md).
+
+Historical native worker-factory BindingCount updates (2026-10-12):
 Class3 uses exact4 B capture -> typed factory -> right0x4 validation. Zero sets
 0xFFFFFFFF; other ULONG bit patterns add signed32 deltas with saturation. Native
 basic-query bytes32..36 verify1196 validation rows plus104 repeated transitions.

@@ -1,0 +1,77 @@
+trap case=0 phase=entry exception=80000003 address=7FF8DE6048C0
+object case=0 phase=before status=00000000 returned=56 handles=2 pointers=32769
+trap case=0 phase=return-0 exception=80000003 address=7FF6E1D2162B
+result case=0 call=0 status=C0000718
+trap case=0 phase=return-1 exception=80000003 address=7FF6E1D2162B
+object case=0 phase=after-repeat status=00000000 returned=56 handles=2 pointers=65534
+object case=0 phase=after-close status=00000000 returned=56 handles=1 pointers=32766
+trap case=0 phase=return-2 exception=80000003 address=7FF6E1D2162B
+trap case=0 phase=return-3 exception=80000003 address=7FF6E1D2162B
+object case=0 phase=after-four status=00000000 returned=56 handles=1 pointers=32764
+case=0 warmup=1 width=8 manual=0 initial=0 mode=12 child=4316 installed=1 entered=1 calls=4 entry=7FF8DE6048C0 caller=7FF6E1D2162B original=FC selected=FC status=C0000718 repeat=C0000718 replacement=C0000718 replacement-repeat=C0000718 query-before=00000000 returned-before=8 type-before=1 state-before=0 query-after=00000000 returned-after=8 type-after=1 state-after=0 exit=77 handles-before=68 handles-after=76
+trap case=1 phase=entry exception=80000003 address=7FF8DE6048C0
+object case=1 phase=before status=00000000 returned=56 handles=2 pointers=32769
+trap case=1 phase=return-0 exception=80000003 address=7FF6E1D2162B
+result case=1 call=0 status=C0000718
+trap case=1 phase=return-1 exception=80000003 address=7FF6E1D2162B
+object case=1 phase=after-repeat status=00000000 returned=56 handles=2 pointers=65534
+object case=1 phase=after-close status=00000000 returned=56 handles=1 pointers=32766
+trap case=1 phase=return-2 exception=80000003 address=7FF6E1D2162B
+trap case=1 phase=return-3 exception=80000003 address=7FF6E1D2162B
+object case=1 phase=after-four status=00000000 returned=56 handles=1 pointers=32764
+case=1 warmup=0 width=8 manual=0 initial=0 mode=0 child=6604 installed=1 entered=1 calls=4 entry=7FF8DE6048C0 caller=7FF6E1D2162B original=F8 selected=14 status=C0000718 repeat=C0000718 replacement=C0000718 replacement-repeat=C0000718 query-before=00000000 returned-before=8 type-before=1 state-before=0 query-after=00000000 returned-after=8 type-after=1 state-after=0 exit=77 handles-before=76 handles-after=76
+trap case=2 phase=entry exception=80000003 address=7FF8DE6048C0
+object case=2 phase=before status=00000000 returned=56 handles=1 pointers=32768
+trap case=2 phase=return-0 exception=80000003 address=7FF6E1D2162B
+result case=2 call=0 status=C0000008
+trap case=2 phase=return-1 exception=80000003 address=7FF6E1D2162B
+object case=2 phase=after-repeat status=00000000 returned=56 handles=1 pointers=32767
+object case=2 phase=after-close status=00000000 returned=56 handles=1 pointers=32766
+trap case=2 phase=return-2 exception=80000003 address=7FF6E1D2162B
+trap case=2 phase=return-3 exception=80000003 address=7FF6E1D2162B
+object case=2 phase=after-four status=00000000 returned=56 handles=1 pointers=32764
+case=2 warmup=0 width=8 manual=0 initial=0 mode=1 child=4940 installed=1 entered=1 calls=4 entry=7FF8DE6048C0 caller=7FF6E1D2162B original=F4 selected=0 status=C0000008 repeat=C0000008 replacement=C0000718 replacement-repeat=C0000718 query-before=00000000 returned-before=8 type-before=1 state-before=0 query-after=00000000 returned-after=8 type-after=1 state-after=0 exit=77 handles-before=76 handles-after=76
+trap case=3 phase=entry exception=80000003 address=7FF8DE6048C0
+object case=3 phase=before status=00000000 returned=56 handles=1 pointers=32768
+trap case=3 phase=return-0 exception=80000003 address=7FF6E1D2162B
+result case=3 call=0 status=C0000008
+trap case=3 phase=return-1 exception=80000003 address=7FF6E1D2162B
+object case=3 phase=after-repeat status=00000000 returned=56 handles=1 pointers=32767
+object case=3 phase=after-close status=00000000 returned=56 handles=1 pointers=32766
+trap case=3 phase=return-2 exception=80000003 address=7FF6E1D2162B
+trap case=3 phase=return-3 exception=80000003 address=7FF6E1D2162B
+object case=3 phase=after-four status=00000000 returned=56 handles=1 pointers=32764
+case=3 warmup=0 width=8 manual=0 initial=0 mode=2 child=1304 installed=1 entered=1 calls=4 entry=7FF8DE6048C0 caller=7FF6E1D2162B original=A0 selected=13572468 status=C0000008 repeat=C0000008 replacement=C0000718 replacement-repeat=C0000718 query-before=00000000 returned-before=8 type-before=1 state-before=0 query-after=00000000 returned-after=8 type-after=1 state-after=0 exit=77 handles-before=76 handles-after=76
+trap case=4 phase=entry exception=80000003 address=7FF8DE6048C0
+object case=4 phase=before status=00000000 returned=56 handles=1 pointers=32768
+trap case=4 phase=return-0 exception=80000003 address=7FF6E1D2162B
+result case=4 call=0 status=C0000024
+trap case=4 phase=return-1 exception=80000003 address=7FF6E1D2162B
+object case=4 phase=after-repeat status=00000000 returned=56 handles=1 pointers=32767
+object case=4 phase=after-close status=00000000 returned=56 handles=1 pointers=32766
+trap case=4 phase=return-2 exception=80000003 address=7FF6E1D2162B
+trap case=4 phase=return-3 exception=80000003 address=7FF6E1D2162B
+object case=4 phase=after-four status=00000000 returned=56 handles=1 pointers=32764
+case=4 warmup=0 width=8 manual=0 initial=0 mode=3 child=3036 installed=1 entered=1 calls=4 entry=7FF8DE6048C0 caller=7FF6E1D2162B original=F4 selected=FFFFFFFFFFFFFFFF status=C0000024 repeat=C0000024 replacement=C0000718 replacement-repeat=C0000718 query-before=00000000 returned-before=8 type-before=1 state-before=0 query-after=00000000 returned-after=8 type-after=1 state-after=0 exit=77 handles-before=76 handles-after=76
+trap case=5 phase=entry exception=80000003 address=7FF8DE6048C0
+object case=5 phase=before status=00000000 returned=56 handles=1 pointers=32768
+trap case=5 phase=return-0 exception=80000003 address=7FF6E1D2162B
+result case=5 call=0 status=C0000024
+trap case=5 phase=return-1 exception=80000003 address=7FF6E1D2162B
+object case=5 phase=after-repeat status=00000000 returned=56 handles=1 pointers=32767
+object case=5 phase=after-close status=00000000 returned=56 handles=1 pointers=32766
+trap case=5 phase=return-2 exception=80000003 address=7FF6E1D2162B
+trap case=5 phase=return-3 exception=80000003 address=7FF6E1D2162B
+object case=5 phase=after-four status=00000000 returned=56 handles=1 pointers=32764
+case=5 warmup=0 width=8 manual=0 initial=0 mode=4 child=2432 installed=1 entered=1 calls=4 entry=7FF8DE6048C0 caller=7FF6E1D2162B original=F4 selected=FFFFFFFFFFFFFFFE status=C0000024 repeat=C0000024 replacement=C0000718 replacement-repeat=C0000718 query-before=00000000 returned-before=8 type-before=1 state-before=0 query-after=00000000 returned-after=8 type-after=1 state-after=0 exit=77 handles-before=76 handles-after=76
+trap case=6 phase=entry exception=80000003 address=7FF8DE6048C0
+object case=6 phase=before status=00000000 returned=56 handles=2 pointers=32769
+trap case=6 phase=return-0 exception=80000003 address=7FF6E1D2162B
+result case=6 call=0 status=C0000022
+trap case=6 phase=return-1 exception=80000003 address=7FF6E1D2162B
+object case=6 phase=after-repeat status=00000000 returned=56 handles=2 pointers=65534
+object case=6 phase=after-close status=00000000 returned=56 handles=1 pointers=32766
+trap case=6 phase=return-2 exception=80000003 address=7FF6E1D2162B
+trap case=6 phase=return-3 exception=80000003 address=7FF6E1D2162B
+object case=6 phase=after-four status=00000000 returned=56 handles=1 pointers=32764
+failure=capture-deadline error=5

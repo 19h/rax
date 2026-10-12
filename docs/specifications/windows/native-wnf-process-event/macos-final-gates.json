@@ -1,0 +1,29 @@
+[
+  {
+    "gate": "targeted",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "wnf_process_event",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "gate": "all-targets",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ]
+  }
+]

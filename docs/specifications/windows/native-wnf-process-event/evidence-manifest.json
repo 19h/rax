@@ -1,0 +1,730 @@
+{
+  "diagnostic-debugger-handles--native-wnf-process-event-fresh-arm64-build.log": {
+    "bytes": 36,
+    "sha256": "9f561c90c4006b9ddbe02c8489beb61577047f846eda4bba82c4752981a797fa"
+  },
+  "native-wnf-process-event-io-completion.log": {
+    "bytes": 2360,
+    "sha256": "b574043d1ac77e0ee133ecc2094937afeb3e7554079269e35e04bb89ba1cb704"
+  },
+  "linux-binding.log": {
+    "bytes": 1284,
+    "sha256": "b3f317068d34701341de818f73dd259d3261e029fc9a02de2899db1f772429ae"
+  },
+  "diagnostic-x64-break-instruction--native-wnf-process-event-fresh-x64.log": {
+    "bytes": 42,
+    "sha256": "f56ce79d028330059f17763ea3ff265ab93b7865cc964bcd3c20fe78b0c8209d"
+  },
+  "check-negative-evidence.py": {
+    "bytes": 2497,
+    "sha256": "264f69f953d121d047dd310de2af8ff6104df82cfe75e1d71a9b0edd8cdc8185"
+  },
+  "diagnostic-compat-return--native-wnf-process-event-fresh-x86.ps1": {
+    "bytes": 1393,
+    "sha256": "d6d9b92025a32db2d94f839f20ea71a9416a9cc012def09b8dbadaadf0eee6f8"
+  },
+  "diagnostic-x64-break-instruction--native-wnf-process-event-fresh.cpp": {
+    "bytes": 11698,
+    "sha256": "c65512bba0d451b972c94a4fa4b1f1af87867bc7923ac3c00494eb9671cb9737"
+  },
+  "diagnostic-compat-return--native-wnf-process-event-fresh-x64-build.log": {
+    "bytes": 72,
+    "sha256": "215f74b4aeef967a9f5705debb7da80e8e6e0db15048bc7ecadc97a1481be92d"
+  },
+  "native-wnf-process-event-all-targets.log": {
+    "bytes": 986,
+    "sha256": "9e77917778e2b7f54854de329e67b695bd132df992fd9e01ce1d48216139f9dc"
+  },
+  "native-wnf-process-event-wait-packet-create.log": {
+    "bytes": 2675,
+    "sha256": "a6980c0c009acf0e1319ef870e9ad8f456ad43961053905feb139b06c8835e3d"
+  },
+  "macos-wait-packet-create.log": {
+    "bytes": 1664,
+    "sha256": "515c00bedf8e8ee0afaa6fc175b1286e2d93df7d38593298462a126009fcd8ad"
+  },
+  "macos-binding.log": {
+    "bytes": 1368,
+    "sha256": "d95f4f275fd157cc54f9314f52b5b99dccb5874b7cf9cbdcf8fba0005027536f"
+  },
+  "negative-forged-summary.log": {
+    "bytes": 687,
+    "sha256": "abe72e71f831cd8b26a117d31529e6f1a62e139a6ef12ec1be86df22a029ff01"
+  },
+  "macos-soft-maximum.log": {
+    "bytes": 1261,
+    "sha256": "30bedb29e82004fbee222cc9472155a322fde32da91e2982202f1adce525e6c8"
+  },
+  "macos-owning-build.log": {
+    "bytes": 1865,
+    "sha256": "bdce6162a9a321d53308bf53e0d66b76a88e444422a16c901d2388606fe0d7c8"
+  },
+  "diagnostic-x64-final-no-entry--native-wnf-process-event-fresh-x64-build.log": {
+    "bytes": 36,
+    "sha256": "9f561c90c4006b9ddbe02c8489beb61577047f846eda4bba82c4752981a797fa"
+  },
+  "diagnostic-x86-repeat-deadline--native-wnf-process-event-fresh-x86.ps1": {
+    "bytes": 1393,
+    "sha256": "8b055d4fedffccfd2ce554505a2dace94bb2271d0c6bffa6a304d03700885f83"
+  },
+  "native-wnf-process-event-x86-build.log": {
+    "bytes": 30,
+    "sha256": "d8f03dbb69e3fd34298220591e514b515d27b4b018a0089533fc8a569186c474"
+  },
+  "run-owning-linux.py": {
+    "bytes": 1690,
+    "sha256": "a78aff00efcc6ab81899a7e6a5a2ecf9081075d905a4faa1eb5ee93af36b569b"
+  },
+  "macos-final-gates.json": {
+    "bytes": 449,
+    "sha256": "be958cc3e8f23559e1780f35b4668c76a78394480f42ec9e53a5cf474b998aee"
+  },
+  "macos-final-targeted.log": {
+    "bytes": 1501,
+    "sha256": "30bae019d4fc7d2698d899fed03b52129ca7c3bb7fdeedb3aee6e7936c27a624"
+  },
+  "before-production-trace.log": {
+    "bytes": 41049,
+    "sha256": "e51b11b39b67119d89e2b43b4066bd9ce57795291b8ccad1977e810d4d15cd03"
+  },
+  "native-wnf-process-event-current-source-check.json": {
+    "bytes": 612,
+    "sha256": "f46a6e84e8023c8aa96d1afd7b01fce764ae0d2921c896159256ba773735b430"
+  },
+  "native-wnf-process-event-x86.log": {
+    "bytes": 13169,
+    "sha256": "3f76e09a367ccce2f72ae674ab1519972d566fb02c877e3e8a78b8e89de6270e"
+  },
+  "linux-owning-gates.json": {
+    "bytes": 2352,
+    "sha256": "1c1cafd45ef3c2ae823e323a0cc06768168ec41b4b979ea169dd60b489a0eda5"
+  },
+  "macos-owning-ctest.log": {
+    "bytes": 1273,
+    "sha256": "cc2582a625a9a741e921522ab7495af63c85f52f350a179c3e0ed950c71b29d3"
+  },
+  "native-wnf-process-event-arm64-build.log": {
+    "bytes": 30,
+    "sha256": "d8f03dbb69e3fd34298220591e514b515d27b4b018a0089533fc8a569186c474"
+  },
+  "native-wnf-process-event-fresh.cpp": {
+    "bytes": 12879,
+    "sha256": "35e4b03588f86ba512a87d412603bcb9f701fcb886788052bbdb19e3162686e9"
+  },
+  "native-wnf-process-event-final-gates.json": {
+    "bytes": 496,
+    "sha256": "2d54c04c4e325bb9d9f4fe0bb1d79e009142157fdde274a591596da66954d7e6"
+  },
+  "diagnostic-x64-explicit-deadline--native-wnf-process-event-fresh-x64.log": {
+    "bytes": 7544,
+    "sha256": "0bda40dd7757ca4cc47d8c51546c3e5e4ac6229c4f65567455f245108b13d8da"
+  },
+  "macos-capi.log": {
+    "bytes": 13013,
+    "sha256": "ba919317270be617be61b388439ca3130086576d3bbf8421d41b7a48c973d456"
+  },
+  "native-wnf-process-event-threading.log": {
+    "bytes": 3243,
+    "sha256": "f7e5966ccb636994c0d56f2890e645445864a9f7d677c197d85f801fb928a423"
+  },
+  "native-wnf-process-event-soft-maximum.log": {
+    "bytes": 2281,
+    "sha256": "e3b591e6dc5e44f0054d3d99333de7f3590ac08353229f95d1e3e8dcd304a59b"
+  },
+  "native-wnf-process-event-binding.log": {
+    "bytes": 2563,
+    "sha256": "01d85a81f4aaf64f7138179c4c5bea00ba2e1e3917c84a68e6e115e660641b54"
+  },
+  "native-wnf-process-event-after-production-trace-output.log": {
+    "bytes": 41276,
+    "sha256": "c66393cbbf272cb12cee604921028660b99d3d5b225f69a089679bd9ba0abfa8"
+  },
+  "diagnostic-x86-repeat-deadline--native-wnf-process-event-fresh-x86-build.log": {
+    "bytes": 36,
+    "sha256": "9f561c90c4006b9ddbe02c8489beb61577047f846eda4bba82c4752981a797fa"
+  },
+  "wnf-process-event-owned-cpp-build.py": {
+    "bytes": 1839,
+    "sha256": "9995e244e446791e41fc1d813aaf59db7ccb7b472c064785232f4e11f63d3608"
+  },
+  "macos-owning-protected-assist-cli.log": {
+    "bytes": 42,
+    "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+  },
+  "native-wnf-process-event.cpp": {
+    "bytes": 2427,
+    "sha256": "5e52e38d0d013d4b183ab8fcb0a64115091360a60840e511d4fde4d81af74bc2"
+  },
+  "positive-validation.log": {
+    "bytes": 125,
+    "sha256": "611d9d39fa67317b3baad4a9266675d6c06f9ebdbf9823b9472b641b7ca81bc9"
+  },
+  "diagnostic-initial-debugger--native-wnf-process-event-fresh-arm64.ps1": {
+    "bytes": 1411,
+    "sha256": "2f203c78f88487cf387d132291df55080f13cba8a12c6c80c1badd9ccd641700"
+  },
+  "native-wnf-process-event-fresh-arm64.log": {
+    "bytes": 55821,
+    "sha256": "7a4ba01789f532be6e2d44bf5dfe8c50bbe14ec4e8f8632e3ef53a5d6a85c961"
+  },
+  "macos-io-completion.log": {
+    "bytes": 1345,
+    "sha256": "3ec804b394a61386f14b78c2591275f0ae5bc3d9207b7b85dae59ca4c12060d8"
+  },
+  "linux-soft-maximum.log": {
+    "bytes": 1177,
+    "sha256": "b252ac4ffeb30f2ae717484674263d77debf9e7c299c55632b538509f2ffcceb"
+  },
+  "linux-capi.log": {
+    "bytes": 12881,
+    "sha256": "6a2c1acda901ab471a1bd3f559e26c5396bd968bd628f31fd3e2279e568d83b0"
+  },
+  "native-wnf-process-event-x86-laa.ps1": {
+    "bytes": 1372,
+    "sha256": "3a3ae8b1b9824fda096bdf0ffbdfb87a5d184e8b55c18d0300d356b7043c4b53"
+  },
+  "native-wnf-process-event-run-final-validation.ps1": {
+    "bytes": 683,
+    "sha256": "9a59dbc6dbd1d61c15b662fdfa19b5cda0cacb973e14fcf2a7f2791989e8d675"
+  },
+  "macos-targeted.log": {
+    "bytes": 1501,
+    "sha256": "3981eaaa272ae06c14c73f9faec98286be51cb7c982d1337bbf3f0598343f1b1"
+  },
+  "diagnostic-x64-hybrid-dbg--native-wnf-process-event-fresh.cpp": {
+    "bytes": 11967,
+    "sha256": "3a6974af9b4bc6e2ae478e5575ef89f86c7701920cfdffaf1257d133d6d1e08d"
+  },
+  "native-wnf-process-event-final-all-targets.log": {
+    "bytes": 986,
+    "sha256": "fe7095b20effa31be8b4100aa03547a8ba61a195f076a2f0389cf287f4c7320a"
+  },
+  "negative-semantic-status.log": {
+    "bytes": 891,
+    "sha256": "cbd02c6e09625082d33f46f05a403774124693478abe235018e1d7da29d619e1"
+  },
+  "macos-final-all-targets.log": {
+    "bytes": 136,
+    "sha256": "b26fe99c7fb94f59eca9dde39a6c097145a69867f30e69ed7da42163717235a5"
+  },
+  "SCOPE.md": {
+    "bytes": 6357,
+    "sha256": "d7820ededfd391f9742c82d012e3896602dfea03d9ca6da8989f795aa602defd"
+  },
+  "linux-owning-shipping.log": {
+    "bytes": 222,
+    "sha256": "477ae5837f75899c366fe19a9424835543fdbd3e600bb9d79de06cba9d4fa44c"
+  },
+  "diagnostic-x64-explicit-deadline--native-wnf-process-event-fresh-x64.ps1": {
+    "bytes": 1395,
+    "sha256": "0df882be2181d82dcfea2957e22dc1ae619bcb9fc76f2821f0c787c8ee792609"
+  },
+  "run-portable.py": {
+    "bytes": 2308,
+    "sha256": "f960851a0301a28788a8d2871882a84daa4aea9ed71dc42e02197c74c1177571"
+  },
+  "native-wnf-process-event-x86.ps1": {
+    "bytes": 1321,
+    "sha256": "20bf36d217bd841bab9481030212286c93c38d75456959ef6da4694863b5e0ef"
+  },
+  "ms-create-process-debug-info.html": {
+    "bytes": 54582,
+    "sha256": "1b0e872fe3a7b70a1b921bad69d537de647f5504de8beb5a9a229629c56f6322"
+  },
+  "diagnostic-x64-explicit-deadline--native-wnf-process-event-fresh.cpp": {
+    "bytes": 12879,
+    "sha256": "35e4b03588f86ba512a87d412603bcb9f701fcb886788052bbdb19e3162686e9"
+  },
+  "native-wnf-process-event-fresh-arm64.ps1": {
+    "bytes": 1411,
+    "sha256": "e3d54223b2533f8c0a33276903d4737629f2f86f7f763244f46f4393d7fb270a"
+  },
+  "linux-wait-packet-create.log": {
+    "bytes": 1580,
+    "sha256": "9df2d594b97bb3f74029b313277548323c7f87d4643e20b05de2da5c3d0b5fe0"
+  },
+  "native-wnf-process-event-x86-laa.log": {
+    "bytes": 13169,
+    "sha256": "3f76e09a367ccce2f72ae674ab1519972d566fb02c877e3e8a78b8e89de6270e"
+  },
+  "native-wnf-process-event-targeted.log": {
+    "bytes": 2509,
+    "sha256": "a9da1d358fa433beb627f53792fd7a67e967e2ebed7b495b07f6e31138a909ea"
+  },
+  "assist-native-wnf-process-event-owned-cpp.log": {
+    "bytes": 2946,
+    "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+  },
+  "macos-owning-configure.log": {
+    "bytes": 13294,
+    "sha256": "ed877699213da698bbcf623f32e7f949c6dcfd4305f3092fa8295054ed71438d"
+  },
+  "native-wnf-process-event-capi.log": {
+    "bytes": 13836,
+    "sha256": "f30ef3c2a92f988fce4c3e8652078eecf1ae9b138d5e620e2fea4271a2253ae4"
+  },
+  "diagnostic-initial-debugger--native-wnf-process-event-fresh-arm64.log": {
+    "bytes": 336,
+    "sha256": "ad031e60f858869c4c15ccf69d409610af9f94e8168bd1a170510f7285c3f68e"
+  },
+  "ms-continue-debug-event.html": {
+    "bytes": 54182,
+    "sha256": "465751ac673fd4d130ac28e462f444b8a4e5961e5b6a2dec0f058eb0f0aae52f"
+  },
+  "baseline-command.json": {
+    "bytes": 176,
+    "sha256": "14259f0e39c2abd18b812c1a1243c7b9c84c8046bb8c2e634a629e193d2a254c"
+  },
+  "linux-worker-factory.log": {
+    "bytes": 1055,
+    "sha256": "9bb53d03ab9c51d0e4004e74258c5669a5db5105602684efa9b290b94ec54aa7"
+  },
+  "native-wnf-process-event-x86-laa-build.log": {
+    "bytes": 30,
+    "sha256": "d8f03dbb69e3fd34298220591e514b515d27b4b018a0089533fc8a569186c474"
+  },
+  "native-wnf-process-event-x64-build.log": {
+    "bytes": 30,
+    "sha256": "d8f03dbb69e3fd34298220591e514b515d27b4b018a0089533fc8a569186c474"
+  },
+  "final-source-formatting.patch": {
+    "bytes": 886,
+    "sha256": "cab480893e90f9f79f35b4bc76f0cd8f411795759016d66062c706724a17e399"
+  },
+  "diagnostic-compat-return--native-wnf-process-event-fresh.cpp": {
+    "bytes": 11867,
+    "sha256": "9cb8e150b470737d7481a0fcbdc52534367bffca8c33603ae9dcaedcdbc9d12c"
+  },
+  "macos-owning-commands.json": {
+    "bytes": 3149,
+    "sha256": "46548b6b0b7539fee8f588ea5afac9ac25db2eb1cf8917f399e2578cdf94978b"
+  },
+  "diagnostic-compat-return--native-wnf-process-event-fresh-x86.log": {
+    "bytes": 544,
+    "sha256": "270d45e89f8dabf0569e1f23189912c3f2c50f07c22bc186cc7ddb6ad01c899d"
+  },
+  "final-source-formatting-proof.json": {
+    "bytes": 583,
+    "sha256": "b8056edb39a4e01e2cfe9a44a05c64e420613d301669e3af68b20f285774df8a"
+  },
+  "native-wnf-process-event-integration.log": {
+    "bytes": 1515,
+    "sha256": "ca458861d00591948992a53292fe61d7661a9e774b88f7e0c8a2b8e527be3655"
+  },
+  "diagnostic-x64-break-instruction--native-wnf-process-event-fresh-x64.ps1": {
+    "bytes": 1395,
+    "sha256": "ee80b25dde2b27e0b24c329bcd3dc6fc979458de5a2bcc58df9e57d9239ac967"
+  },
+  "native-wnf-process-event-after-ordinary-processes.log": {
+    "bytes": 7189,
+    "sha256": "d880175fccb64b747a6da93005dea7b42858078f9b6467136ecdbbbb88c2e35c"
+  },
+  "before-ntdll-identities.json": {
+    "bytes": 180,
+    "sha256": "a3b3f588fc440d90e00d6f78e815bb2102ed2867804ae0edce058a0ce7ff43d7"
+  },
+  "assist-native-wnf-process-event-owned.ps1": {
+    "bytes": 6316,
+    "sha256": "9b3604124c3a29fcecf70a7c05c4bb12e3548e2ebd47515e82f335df4e6d79b8"
+  },
+  "phnt-LICENSE": {
+    "bytes": 1092,
+    "sha256": "ad2ab542c56c606e4c19d66a7f3cdcd3ef83beffb638e7c3893b22c7a6a6c0df"
+  },
+  "native-wnf-process-event-after-artifacts.jsonl": {
+    "bytes": 130191,
+    "sha256": "0924680ffd21d2ba40c25577b810cab91186e4d823fc8b27039f063aac924e1c"
+  },
+  "diagnostic-compat-return--native-wnf-process-event-fresh-x86-build.log": {
+    "bytes": 36,
+    "sha256": "9f561c90c4006b9ddbe02c8489beb61577047f846eda4bba82c4752981a797fa"
+  },
+  "native-wnf-process-event-final-targeted.log": {
+    "bytes": 2509,
+    "sha256": "e6b3246c5ed2672802e7791f46e3e796bf837cd69c4e08b144e6b47f16246726"
+  },
+  "diagnostic-x86-repeat-deadline--native-wnf-process-event-fresh-x86.log": {
+    "bytes": 242,
+    "sha256": "dac5cb785d7d67c71bd2bf3ee4f1caf075fe4cd3344c21bfc87bc6a22a1785ca"
+  },
+  "native-wnf-process-event-gates.ps1": {
+    "bytes": 1933,
+    "sha256": "e66dcadd93a066c4ec78d42db2f4f0529f6a8a301b80611e5efe5b3cd6d9c674"
+  },
+  "check_native_wnf_process_event.py": {
+    "bytes": 13860,
+    "sha256": "803c50c9e9d677a998a5cdf02af32bb874a0e07fa50c8d3f51c6516b580c27f2"
+  },
+  "native-wnf-process-event-fresh-arm64-build.log": {
+    "bytes": 36,
+    "sha256": "9f561c90c4006b9ddbe02c8489beb61577047f846eda4bba82c4752981a797fa"
+  },
+  "native-wnf-process-event-after-production-trace-build.log": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "diagnostic-x64-hybrid-dbg--native-wnf-process-event-fresh-x64.ps1": {
+    "bytes": 1395,
+    "sha256": "a76726900b13d10a0159d56c3471de3e64a667077ba3f94ac656631c2270a667"
+  },
+  "macos-events.log": {
+    "bytes": 1414,
+    "sha256": "faa8db9812cf157741a90623f7a734b0894e52a2a7fcd4a6d1fdba10938d648c"
+  },
+  "README.md": {
+    "bytes": 5653,
+    "sha256": "a2a21ea5998151595bee7665d0779a417afed32cc50792c6d0728461525e4b9f"
+  },
+  "macos-worker-factory.log": {
+    "bytes": 1139,
+    "sha256": "f86fdb10e93733bf8eddfc76e8e22f1f8a43a2e4cbcac879dca84fb97eb5ae92"
+  },
+  "native-wnf-process-event-current-overlay-manifest.json": {
+    "bytes": 3671758,
+    "sha256": "195afdc1686cc7b6bb9212d99ca51a0a4f64b25e04b3546fb88e56c3d28b8a6d"
+  },
+  "linux-gates.json": {
+    "bytes": 11108,
+    "sha256": "70c0410ab7e5aeb739e48de3d5d5fba8d90d7a6bdd83fc035578c20236a43677"
+  },
+  "diagnostic-x64-final-no-entry--native-wnf-process-event-fresh-x64.log": {
+    "bytes": 401,
+    "sha256": "373596c0594aa9dc4186603d5962613eef6d7f7fd766112323ba3e2838f9f6ac"
+  },
+  "macos-wait-packet-associate.log": {
+    "bytes": 1954,
+    "sha256": "8fdb6a3bb591ad85a9c3b89d3435698df23b28b2dfa67497982f62236106976f"
+  },
+  "negative-optimized-python.log": {
+    "bytes": 609,
+    "sha256": "3c982e51fdceb72baf9410c86a66e7d7546695bf5d1764670269010c755a4789"
+  },
+  "linux-threading.log": {
+    "bytes": 2337,
+    "sha256": "ad2bda68abc272628e7342b62d1f8cc62c1e75026fbfe9193ac8b4cd138ae120"
+  },
+  "native-wnf-process-event-x64.ps1": {
+    "bytes": 1323,
+    "sha256": "4bccfb2ab7b46c04d4bfa29c9d0e071f5af2181d16919210a08c5bd6a642a376"
+  },
+  "assist-native-wnf-process-event-owned-shipping.log": {
+    "bytes": 1584,
+    "sha256": "6043a22aeb96d035a0a1e85c0f8da476f993e990d8906c5b1e0e2c8a6f052bd3"
+  },
+  "macos-timer2.log": {
+    "bytes": 1063,
+    "sha256": "d10a4979ac7b549d6c96f84238137744663839e2dc52bffaa6401c18b660f2c8"
+  },
+  "linux-isolated-gates.json": {
+    "bytes": 1671,
+    "sha256": "a87b5392799abf64e9d21e0fd4fdd4d92fd483c97dfd6a365178862d12612c2e"
+  },
+  "macos-all-targets.log": {
+    "bytes": 136,
+    "sha256": "1fb60160414d5a465437a61f7c026e9e686d06a79a50fcae881001b9bff307a8"
+  },
+  "native-wnf-process-event-full.log": {
+    "bytes": 738694,
+    "sha256": "0833fab3203b0f961a5a5579e3a02bf25673021f0f76b56c8398c8ee71b0a1ee"
+  },
+  "diagnostic-initial-debugger--native-wnf-process-event-fresh.cpp": {
+    "bytes": 8839,
+    "sha256": "73a377731b5310995ab1014962c0917832e80439f1957e6cb16e4c61b8c1a6e9"
+  },
+  "linux-owning-cpp.log": {
+    "bytes": 1623,
+    "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+  },
+  "linux-events.log": {
+    "bytes": 1330,
+    "sha256": "e068e92b29d0921e7a20be8eeb78117ab36a5ddcf9bae5920e5f612e25797b33"
+  },
+  "negative-empty-filter.log": {
+    "bytes": 684,
+    "sha256": "43fbbadd070a4ee5844b8aaa8780ba560ad0b012e5592a9b6fd77c5979e0e0a4"
+  },
+  "macos-hard-maximum.log": {
+    "bytes": 1031,
+    "sha256": "79981c5f24ef918640f53fe1a69970975433261eb48e923bb437e054cab39fa7"
+  },
+  "linux-timer2.log": {
+    "bytes": 979,
+    "sha256": "9c7ff431a6f2628d69d098e22ea4d2f2b72f5ec1783e218939a071613277b7a0"
+  },
+  "primary-retrieval.json": {
+    "bytes": 511,
+    "sha256": "adfd0e9816012f4688e41e2ac8da3eb740bd9773a4fc2fb5f5f7c6f34c5496cc"
+  },
+  "native-wnf-process-event-final-gates.ps1": {
+    "bytes": 1310,
+    "sha256": "15528c635a6734950c156e1e79ba64540ab6c8368a5dcea7f6abee425081eacd"
+  },
+  "macos-gates.json": {
+    "bytes": 3745,
+    "sha256": "e57ea116fd697a03e4dd8e1ca7e39f13eeee737c600ac6cf18ef117f12ff97aa"
+  },
+  "linux-integration.log": {
+    "bytes": 35805,
+    "sha256": "48a3f0d3213523a30d66a2b20b59eec931d84bae6bcc94c3a28c4e3b427a591a"
+  },
+  "native-wnf-status-arm64.ps1": {
+    "bytes": 1255,
+    "sha256": "0ea8001ac5546f071b76cddc9d6f19f36d61c696ffd2e2bb02aa77df98dc6d7d"
+  },
+  "native-wnf-process-event-identities.ps1": {
+    "bytes": 2193,
+    "sha256": "f830f97f4afff8086d3a301104e41032eff07cd3d76413d5e3630e7321cd1065"
+  },
+  "native-wnf-process-event-hard-maximum.log": {
+    "bytes": 2040,
+    "sha256": "53197afd5fd6e5bca842785fe45bc2fca2ead6f6a01b6b5709381500caa17802"
+  },
+  "diagnostic-compat-return--native-wnf-process-event-fresh-x64.log": {
+    "bytes": 401,
+    "sha256": "c0695924ecbdeb3a5de63aa05ec18fe60053dfcebda6d903ae01190f312078d8"
+  },
+  "inspect-wnf-process-event-owning-archives.py": {
+    "bytes": 10263,
+    "sha256": "ccdeecdd74f68913cc9419515eb27f88a345a4b0cbc1811a8650c5f661f7bf1f"
+  },
+  "owning-source-hashes.json": {
+    "bytes": 9740,
+    "sha256": "1c2b95f537a17b8b0e6018efd46655915c7363ad9e1e35036049664127a616d0"
+  },
+  "native-wnf-process-event-producer-identities.json": {
+    "bytes": 12717,
+    "sha256": "4d67d1336e644ffa30e3df3ab56de0d57f3910bd5afa2b9dd89216947fbc7aa9"
+  },
+  "diagnostic-x64-hybrid-dbg--native-wnf-process-event-fresh-x64-build.log": {
+    "bytes": 36,
+    "sha256": "9f561c90c4006b9ddbe02c8489beb61577047f846eda4bba82c4752981a797fa"
+  },
+  "native-wnf-process-event-arm64.ps1": {
+    "bytes": 1339,
+    "sha256": "ea544bf4c36b68bb3c0c0b163c17e0241bdea5d4ac66111b86f80c1d1e457fe6"
+  },
+  "final-source-formatting.json": {
+    "bytes": 611,
+    "sha256": "76a4eaf9940c7d44f96281540dd6ecfa37b57a3fad1b4980b58d7b4de88008da"
+  },
+  "native-wnf-process-event-after-trace.rs": {
+    "bytes": 11177,
+    "sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e"
+  },
+  "diagnostic-debugger-handles--native-wnf-process-event-fresh-arm64.ps1": {
+    "bytes": 1411,
+    "sha256": "3cd0a674d8c275014d4800e89600957b03078e71819c44f5ae2d6d85b4c38ed2"
+  },
+  "diagnostic-x64-no-entry--native-wnf-process-event-fresh-x64.log": {
+    "bytes": 401,
+    "sha256": "4aec275391dd94d03aad50bbe74b136cc90af9e9debcc094506f82df48c8ae9c"
+  },
+  "native-wnf-status-arm64-build.log": {
+    "bytes": 23,
+    "sha256": "113ae432b4ae72b99cea7372fd4aae7e50a7749b40d491aa4896c8fa084f888f"
+  },
+  "diagnostic-x64-break-instruction--native-wnf-process-event-fresh-x64-build.log": {
+    "bytes": 36,
+    "sha256": "9f561c90c4006b9ddbe02c8489beb61577047f846eda4bba82c4752981a797fa"
+  },
+  "linux-hard-maximum.log": {
+    "bytes": 947,
+    "sha256": "4b8cc91d659a74af9ee9ae1d587c77677fc5c35288800a4f3755ec83e16d9794"
+  },
+  "native-wnf-status.cpp": {
+    "bytes": 486,
+    "sha256": "6b911b58e2314b2328187ca94c6866ba7f3cfd3e980c2928bab9adccf15ecb3d"
+  },
+  "diagnostic-x64-explicit-deadline--native-wnf-process-event-fresh-x64-build.log": {
+    "bytes": 36,
+    "sha256": "9f561c90c4006b9ddbe02c8489beb61577047f846eda4bba82c4752981a797fa"
+  },
+  "diagnostic-x64-final-no-entry--native-wnf-process-event-fresh.cpp": {
+    "bytes": 12540,
+    "sha256": "7ea4e7e2f514dc39d72108292d2c9bc9123763209e236d3174753c99211e1b49"
+  },
+  "diagnostic-debugger-handles--native-wnf-process-event-fresh.cpp": {
+    "bytes": 9645,
+    "sha256": "af9b112481693a779a0c3e4b341367f35e9817e8e8df36918f21d2016b26446c"
+  },
+  "native-wnf-process-event-arm64.log": {
+    "bytes": 13169,
+    "sha256": "b1261d5cf36c84a21f72a4d116f783c2142f48b932416dd2ccf423fc560f07d4"
+  },
+  "macos-owning-gates.json": {
+    "bytes": 3344,
+    "sha256": "907f2dff64cc1fc512698d950b89f972982c42ad239fcc6a60f895f646d7c092"
+  },
+  "diagnostic-compat-return--native-wnf-process-event-fresh-x64.ps1": {
+    "bytes": 1837,
+    "sha256": "9c23041824385e13c1e1f818163cad5a3f696dc9323720b58c383114509e9872"
+  },
+  "negative-manifest-omission.log": {
+    "bytes": 737,
+    "sha256": "d2c2a7f6839f34c7784fb543a26ae116d7c8fcd3efab64044f462f48c2604b5b"
+  },
+  "native-wnf-process-event-events.log": {
+    "bytes": 4262,
+    "sha256": "e0c60174f869b220b101623be3a4da563bf13d48eb1eb5fc09b5fd1ebed56ea4"
+  },
+  "diagnostic-initial-debugger--native-wnf-process-event-fresh-arm64-build.log": {
+    "bytes": 36,
+    "sha256": "9f561c90c4006b9ddbe02c8489beb61577047f846eda4bba82c4752981a797fa"
+  },
+  "diagnostic-x86-repeat-deadline--native-wnf-process-event-fresh.cpp": {
+    "bytes": 12540,
+    "sha256": "7ea4e7e2f514dc39d72108292d2c9bc9123763209e236d3174753c99211e1b49"
+  },
+  "native-wnf-process-event-timer2.log": {
+    "bytes": 2064,
+    "sha256": "5b8d3a5280520779a727ead487f45c1d213cbc3505ccd26dba111a62f9912f9a"
+  },
+  "ms-debugging-events.html": {
+    "bytes": 60450,
+    "sha256": "e93f83bbda6df02682670bbaf103cbff7521f07d18c61b04e7e1b7509a413772"
+  },
+  "native-wnf-status-arm64.log": {
+    "bytes": 221,
+    "sha256": "f9faff32d34cb48588e393b1fa9d318e407a14fc48f53f434d36ff48a6689107"
+  },
+  "prepare-final-overlay.py": {
+    "bytes": 3523,
+    "sha256": "676276f3830f3028580248543ff3899bc3d102111d27290cf37b0e3e0db7c29d"
+  },
+  "pre-format-source-hashes.json": {
+    "bytes": 9740,
+    "sha256": "ba438d109af2188fd6cf434f7de1f29a6d0c02b37e748d06dba93bd3128edfad"
+  },
+  "diagnostic-debugger-handles--native-wnf-process-event-fresh-arm64.log": {
+    "bytes": 23845,
+    "sha256": "26b47a78a396bf9f7778c8b4d584de74076958397dbe03e6a210abc7ad47203d"
+  },
+  "diagnostic-x64-no-entry--native-wnf-process-event-fresh-x64.ps1": {
+    "bytes": 1395,
+    "sha256": "af9608e36714ba9c88a6002d588a0479f4e319ada2fd0423a91eced91745f776"
+  },
+  "linux-io-completion.log": {
+    "bytes": 1261,
+    "sha256": "9913d3395764a3dcd0cc19a509237d3ea1fa561a15ebbf43fd7726ab3d8ddb31"
+  },
+  "native-wnf-process-event-gates.json": {
+    "bytes": 3754,
+    "sha256": "74bd7d8a0fe6f4c927803c5c24264a7c673b3aae7058875dd8194e85beffe533"
+  },
+  "native-wnf-process-event-wait-packet-associate.log": {
+    "bytes": 2956,
+    "sha256": "e7d40279cd7fd19a01ae06ffd03cfd4ad99276d7b5b13fddee47b689cc9b7efb"
+  },
+  "ms-debugbreak.html": {
+    "bytes": 48486,
+    "sha256": "0a28d328688902782f63691f676ebe2f0e5554c3fe46ebba15192b7d3e7e2426"
+  },
+  "negative-raw-corruption.log": {
+    "bytes": 782,
+    "sha256": "38c805ae9dd63722d0def48e2059e906487cfa4c9067f72ba543e5fb7ea3bbb7"
+  },
+  "macos-owning-protected-assist-mcp.log": {
+    "bytes": 42,
+    "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+  },
+  "negative-validation.json": {
+    "bytes": 3154,
+    "sha256": "7197445df224ca0d886e83262dcd5d5b42b1f35ec77be61200b16aff951b0970"
+  },
+  "native-wnf-process-event-x64.log": {
+    "bytes": 13169,
+    "sha256": "feb11ec869225ec890a0d179d3efc66526f23660b2a2aa4c2fdc50758d692ef5"
+  },
+  "native-wnf-process-event-worker-factory.log": {
+    "bytes": 2156,
+    "sha256": "2b6a7214e7dbfb1efa627e6108812f92aa1533e3daad8d712dce27d5f249a4d4"
+  },
+  "native-wnf-process-event-owning-archive-hashes.json": {
+    "bytes": 8915,
+    "sha256": "e3062fcffde294e57de91a2e1dc85f5ea8de75231d963bb85c91166c889b13d9"
+  },
+  "diagnostic-x64-no-entry--native-wnf-process-event-fresh-x64-build.log": {
+    "bytes": 36,
+    "sha256": "9f561c90c4006b9ddbe02c8489beb61577047f846eda4bba82c4752981a797fa"
+  },
+  "diagnostic-x64-final-no-entry--native-wnf-process-event-fresh-x64.ps1": {
+    "bytes": 1395,
+    "sha256": "e86b2527aca0d52e0fad8370756e5771236bc01338fb458d21bb211ba1bb97e8"
+  },
+  "macos-full.log": {
+    "bytes": 783049,
+    "sha256": "6d3685e0aa461274011546f6eb6a693c5aaae5f994075218f5c6709bb4753b20"
+  },
+  "linux-wait-packet-associate.log": {
+    "bytes": 1870,
+    "sha256": "e5921898aa7f2695b2ea26b9ba5a198535185bd1795f7d7e25f1d836c8f0251a"
+  },
+  "macos-baseline-red.log": {
+    "bytes": 4019,
+    "sha256": "ab51029bc55094fab875b07fa0bfe392446b322e766c8989b6bb649a5084a512"
+  },
+  "linux-isolated-a_multishot_timeout_reports_each_expiry.log": {
+    "bytes": 352,
+    "sha256": "b91bb892d9fc1839e0caae9b9fbc553d2af95e2b3cf9bfc66b0fa43a372b6248"
+  },
+  "root-owning-source-delta.txt": {
+    "bytes": 63,
+    "sha256": "ba9bedb9b5cf7c0c5c4866a64cf4d4266764e7d16d4ae6c71e7739844ac870a7"
+  },
+  "linux-targeted.log": {
+    "bytes": 1397,
+    "sha256": "e987d9a70fb6eb6ec4e27fe6ec1363742eacec282d9bc8491cf9a6dd21d73a5f"
+  },
+  "diagnostic-x64-hybrid-dbg--native-wnf-process-event-fresh-x64.log": {
+    "bytes": 289,
+    "sha256": "cb13ff60707cb124e9eaf069974923ca9ec03efb954634fc2440c7e788256350"
+  },
+  "run-owning-macos.py": {
+    "bytes": 526,
+    "sha256": "fcdcb2a47418eac16a13d41cc89df4ab089d06b414bbf728708d63b2f1b99da1"
+  },
+  "linux-isolated-a_timeout_is_removed_or_updated.log": {
+    "bytes": 401,
+    "sha256": "edc1a40843c9284052e9cad47379db5664c2f139fef4b990218bfde61ea8b3f2"
+  },
+  "macos-integration.log": {
+    "bytes": 35928,
+    "sha256": "0cd0c48a6d74767e063339435aaa971a19a05223c0f3cc96e993e28b17a16ca2"
+  },
+  "validation-summary.json": {
+    "bytes": 1983,
+    "sha256": "d97dc2b16a0e95c9644a311ce0e19744c533a55412d8eb0aec16ce3f8d4f4a2d"
+  },
+  "phnt-ntexapi.h": {
+    "bytes": 386368,
+    "sha256": "0510ac40fa1690cd73bed8afe3ed602aaa7bb6870ab95ea9aaba36ce1f4c3d53"
+  },
+  "owning-linux-cpp-build.py": {
+    "bytes": 1522,
+    "sha256": "a0d9f75e831bd3585d3e009b94e8e3f2744b137e646c157c70a7ad7950373b56"
+  },
+  "linux-full.log": {
+    "bytes": 783798,
+    "sha256": "cac132fe8ee4385279db00fcbcd7911a088d7e88aea1d1a830d05758ea416e9e"
+  },
+  "macos-threading.log": {
+    "bytes": 2421,
+    "sha256": "dcd12b134f6a9a4867ed7f3bb1198e70fd58f35fe331f676f8c405e96b8504b3"
+  },
+  "linux-all-targets.log": {
+    "bytes": 116,
+    "sha256": "0b055102b4a2aa9cd814df7e40b633b4d5e384ba2267d97e5f2a12c12ff5addd"
+  },
+  "primary-contract.md": {
+    "bytes": 1083,
+    "sha256": "1a0b542bed664183e5342f7a8002c5a0820f3d8cb0f390a778797c2d5f94015f"
+  },
+  "diagnostic-x64-no-entry--native-wnf-process-event-fresh.cpp": {
+    "bytes": 11730,
+    "sha256": "dff824d5bf7b9d12005f208682a36f1019c9a73d38c2ce3818ecd52336341fa9"
+  },
+  "native-wnf-process-event-after-artifacts-stderr.log": {
+    "bytes": 72,
+    "sha256": "dd621e9ff7c9eac161c730aa8a79332dd68698435a7a84d044d9ad39dfa1f5d2"
+  }
+}
