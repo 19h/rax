@@ -1,0 +1,17 @@
+{
+  "root": "3c707be344bfe09ca2c8798311b141537b03721f",
+  "rax": "ec8dace9d30ba4e627d28747b8949e21220fd556",
+  "owned": [
+    "src/user/windows/objects.rs",
+    "src/user/windows/dll/native/worker_factory.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_set_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_create_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_create_replay_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_binding_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_binding_leaf_tests.rs",
+    "docs/architecture/user-mode/windows-services.md",
+    "docs/specifications/windows/native-worker-factory-binding"
+  ],
+  "status": "both clean before edits"
+}

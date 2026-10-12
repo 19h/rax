@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-worker-factory-binding/check_native_worker_binding.py", line 64, in <module>
+    require(int(row['status'],16)==status and row['exception']=='00000000','native length/capture/type/access status')
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-worker-factory-binding/check_native_worker_binding.py", line 6, in require
+    if not ok:raise ValueError(message)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: native length/capture/type/access status

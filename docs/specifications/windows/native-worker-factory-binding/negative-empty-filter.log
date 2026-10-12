@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-worker-factory-binding/check_native_worker_binding.py", line 91, in <module>
+    require(results(stem+'targeted.log')==[(7 if host=='windows' else 6,0,0)],'nonempty targeted gate '+host)
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-worker-factory-binding/check_native_worker_binding.py", line 6, in require
+    if not ok:raise ValueError(message)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: nonempty targeted gate macos

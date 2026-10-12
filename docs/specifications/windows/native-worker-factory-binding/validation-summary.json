@@ -1,0 +1,75 @@
+{
+  "baseline-rax": "ec8dace9d30ba4e627d28747b8949e21220fd556",
+  "compiled-root": "3c707be344bfe09ca2c8798311b141537b03721f",
+  "unix-owning-root": "e2fc5b483be7cad2dae17d889690cc398973c5e8",
+  "replays": 1300,
+  "tests": {
+    "targeted": {
+      "macos": 6,
+      "linux": 6,
+      "windows": 7
+    },
+    "full": {
+      "macos": {
+        "pass": 7653,
+        "fail": 0,
+        "ignored": 2
+      },
+      "linux": {
+        "pass": 7645,
+        "fail": 2,
+        "ignored": 2
+      },
+      "windows": {
+        "pass": 7055,
+        "fail": 5,
+        "ignored": 2
+      }
+    },
+    "capi": {
+      "macos": 168,
+      "linux": 168,
+      "windows": 168
+    },
+    "integration": {
+      "macos": 544,
+      "linux": 544,
+      "windows": 4
+    },
+    "owning-cpp": {
+      "macos": 5,
+      "linux": 5,
+      "windows": 5
+    },
+    "macos-ctest": 7
+  },
+  "frontier": {
+    "before-turn": 42802,
+    "after-turn": 44258,
+    "delta-scheduler-calls": 1456,
+    "service": "NtSetWnfProcessNotificationEvent",
+    "svc": "0x1c5",
+    "pc": "0x180002c90",
+    "thread": 8,
+    "arguments": [
+      "0x34"
+    ],
+    "guest-exit": "not reached"
+  },
+  "source-overlay": {
+    "files": 16857,
+    "patches": 135,
+    "errors": 0,
+    "offline-adapter-bytes": 374
+  },
+  "native-owning": {
+    "source-hashes": 43,
+    "helper-hashes": 2,
+    "core-features": []
+  },
+  "limits": [
+    "Dormant binding-count only; active meaning/worker scheduling remain unknown.",
+    "WNF notification event is next explicit frontier; ordinary programs do not reach guest exit.",
+    "Original Linux timeout and Windows BZHI/FP16 failures, translated/compatibility hosts and package/live IDA/Qt limits remain."
+  ]
+}

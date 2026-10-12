@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-worker-factory-binding/check_native_worker_binding.py", line 7, in <module>
+    require(not sys.flags.optimize,'optimized validation is rejected')
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-worker-factory-binding/check_native_worker_binding.py", line 6, in require
+    if not ok:raise ValueError(message)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: optimized validation is rejected

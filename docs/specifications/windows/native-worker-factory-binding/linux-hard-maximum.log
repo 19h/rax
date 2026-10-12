@@ -1,0 +1,11 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.57s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 4 tests
+test user::windows::process::sched::tests::services_tests::worker_factory_set_tests::native_worker_factory_set_maximum_refuses_unmeasured_classes_without_state_mutation ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_set_tests::native_worker_factory_set_maximum_consumes_one_guard_before_access_check_and_retry ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_set_tests::native_worker_factory_set_maximum_dispatches_and_preserves_alias_references_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_set_tests::native_worker_factory_set_maximum_replays_all_956_native_rows ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 7645 filtered out; finished in 9.09s
+

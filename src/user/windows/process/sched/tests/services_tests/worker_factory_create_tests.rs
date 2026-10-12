@@ -185,6 +185,7 @@ fn native_worker_factory_create_owns_dependencies_through_duplicate_and_final_cl
             Some(Object::WorkerFactory {
                 maximum: 0,
                 soft_maximum: None,
+                binding_count: 0,
                 reserve: 65536,
                 commit: 4096,
                 ..

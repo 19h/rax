@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-worker-factory-binding/check_native_worker_binding.py", line 96, in <module>
+    require(summary['tests']['targeted'][host]==(7 if host=='windows' else 6),'targeted stdout-bound summary')
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-worker-factory-binding/check_native_worker_binding.py", line 6, in require
+    if not ok:raise ValueError(message)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: targeted stdout-bound summary

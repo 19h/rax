@@ -182,6 +182,9 @@ pub enum Object {
         /// no request has been recorded; the native constructor default is
         /// unknown. This does not imply an effective active-worker limit.
         soft_maximum: Option<u32>,
+        /// Measured class7 BindingCount, initially zero. Class3 zero requests
+        /// set all bits; nonzero requests add a signed delta with saturation.
+        binding_count: u32,
         /// Requested/default stack reserve in bytes, without creation rounding.
         reserve: u64,
         /// Requested/default stack commit in bytes.
@@ -633,6 +636,7 @@ mod tests {
             parameter: 0,
             maximum: 0,
             soft_maximum: None,
+            binding_count: 0,
             reserve: 65536,
             commit: 4096,
         };

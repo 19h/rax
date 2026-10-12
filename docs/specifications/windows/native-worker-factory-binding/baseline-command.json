@@ -1,0 +1,11 @@
+[
+  "cargo",
+  "test",
+  "--locked",
+  "--offline",
+  "--no-default-features",
+  "--lib",
+  "worker_factory_binding",
+  "--",
+  "--nocapture"
+]

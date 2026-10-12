@@ -1,0 +1,502 @@
+{
+  "native-worker-factory-binding-gates.ps1": {
+    "bytes": 1897,
+    "sha256": "d9adbd2801c713490bdd1abf660059d145dcad4fd333c6b0ab5d281711b65690"
+  },
+  "macos-wait-packet-create.log": {
+    "bytes": 1664,
+    "sha256": "b0775fc0a916a1751ee44b956bf11fa56e14f7d3584c2d468401fffafa1e167a"
+  },
+  "negative-forged-summary.log": {
+    "bytes": 691,
+    "sha256": "b93edaf957a194977cc4e4ebd3741c6cfe6a3492e890762f9393542f4888e2ae"
+  },
+  "macos-soft-maximum.log": {
+    "bytes": 1261,
+    "sha256": "0f9e95985f9ced284988bf7602964aea3c8a94847f3b7d63875394245a9d685d"
+  },
+  "native-worker-factory-binding-sequence-boundaries-arm64.log": {
+    "bytes": 20532,
+    "sha256": "570426bcdcfc261d88016857839f88b4cc86919383c1accf0965b42edca01089"
+  },
+  "native-worker-factory-binding-sequence-boundaries-x86-laa.log": {
+    "bytes": 20480,
+    "sha256": "a97ca2c46b4b26bf3fbc970a74f63eb7f5f21ec9dd2b4040936186da526b11a1"
+  },
+  "macos-owning-build.log": {
+    "bytes": 1865,
+    "sha256": "5e6a561ec25187d17df0f12b50eee5c598e93bf0e681f1493bcbe99c22520e28"
+  },
+  "run-owning-linux.py": {
+    "bytes": 1690,
+    "sha256": "a78aff00efcc6ab81899a7e6a5a2ecf9081075d905a4faa1eb5ee93af36b569b"
+  },
+  "native-worker-factory-binding-sequence-boundaries-x86.ps1": {
+    "bytes": 1621,
+    "sha256": "5c599aa8e9fc5146a5719a3c8c864da14ec81d2b14d0e101e233933ceef454e2"
+  },
+  "native-worker-factory-binding-after-production-trace-build.log": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "before-production-trace.log": {
+    "bytes": 39359,
+    "sha256": "73ceadde8c08f3f861b96aedb3e45f365f206dc9bed198684e9abb33e3d69540"
+  },
+  "native-worker-factory-binding-x86-laa-build.log": {
+    "bytes": 35,
+    "sha256": "4a6e45a910e2a5a741b34786aa0b1d39bdb37ccc90d84cd2a1c31e1d276921e8"
+  },
+  "native-worker-factory-binding-sequence-boundaries-arm64-build.log": {
+    "bytes": 55,
+    "sha256": "4ed774c276630090989f22c264efb64a0dc5f329322fe222af1704ada5a92822"
+  },
+  "worker-factory-binding-owned-cpp-build.py": {
+    "bytes": 1839,
+    "sha256": "9995e244e446791e41fc1d813aaf59db7ccb7b472c064785232f4e11f63d3608"
+  },
+  "linux-owning-gates.json": {
+    "bytes": 2362,
+    "sha256": "d531ef779789688b46d70e2afb2176e7b709ae44d372ece2b7a1f6892740e989"
+  },
+  "macos-owning-ctest.log": {
+    "bytes": 1273,
+    "sha256": "7353c2bb777eb2e229155b6587ec408cbc544e9541c1d5f5827cdd591ae7e64c"
+  },
+  "native-worker-factory-binding-worker-factory.log": {
+    "bytes": 2156,
+    "sha256": "b733a7564c6afaf0190651875d8a031857dbe0e902e9c0e1e8e25300df857581"
+  },
+  "macos-capi.log": {
+    "bytes": 13013,
+    "sha256": "78a21a7bb55dd26ac12fa9d8ff3b8713594eef2ac6500773efc6ebc7c4c96ce2"
+  },
+  "assist-native-worker-factory-binding-owned.ps1": {
+    "bytes": 6481,
+    "sha256": "ce2d4247102830fb93af6960853d0f88de9616691417049c147f7b00989d52fd"
+  },
+  "native-worker-factory-binding-integration.log": {
+    "bytes": 1515,
+    "sha256": "95c025c9e9ff791df64b1c2c9e04d68f121906a515be9b0057b2648db76ea192"
+  },
+  "macos-owning-protected-assist-cli.log": {
+    "bytes": 42,
+    "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+  },
+  "native-worker-factory-binding-soft-maximum.log": {
+    "bytes": 2281,
+    "sha256": "68837458a9bdea70956e520019c069a80835c5733dddd64c104baa73d51f2a65"
+  },
+  "macos-io-completion.log": {
+    "bytes": 1345,
+    "sha256": "df6dfff82b55a66bf5ecd63fd3ed605b67b7ff69e84bb44708c4899435f1f36d"
+  },
+  "native-worker-factory-binding-sequence-boundaries.cpp": {
+    "bytes": 2883,
+    "sha256": "1fcdbf7b2f65aa91603ef8da9ae31c941d90f94aea0ba304884deea2ccb8b386"
+  },
+  "linux-soft-maximum.log": {
+    "bytes": 1178,
+    "sha256": "6c53234e7eb091f7490d25a3992a2a1032ed1cdf151116b0d0eb8830fe47de7e"
+  },
+  "linux-capi.log": {
+    "bytes": 12881,
+    "sha256": "d546b7eb1a9c979d5041d206f87dabd23ae3b382bd96c7c87fcce4b9941c4448"
+  },
+  "native-worker-factory-binding-sequence-boundaries-x86-laa-build.log": {
+    "bytes": 55,
+    "sha256": "4ed774c276630090989f22c264efb64a0dc5f329322fe222af1704ada5a92822"
+  },
+  "native-worker-factory-binding-x64.ps1": {
+    "bytes": 1383,
+    "sha256": "916d36c85267e5167cc4a392782015c56a7100a67c47e203855072bcda2d89ba"
+  },
+  "native-worker-factory-binding-x64-build.log": {
+    "bytes": 35,
+    "sha256": "4a6e45a910e2a5a741b34786aa0b1d39bdb37ccc90d84cd2a1c31e1d276921e8"
+  },
+  "macos-targeted.log": {
+    "bytes": 1432,
+    "sha256": "ad3dee3bf50affd7265446f5ba589aeeac9ed61feaba8dbefffdf48ef504bdfc"
+  },
+  "negative-semantic-status.log": {
+    "bytes": 718,
+    "sha256": "b30d67521e2f610cc2138444ae559870e5228bb9672f0fdb7f2545548164b418"
+  },
+  "scope.md": {
+    "bytes": 4283,
+    "sha256": "f330e12b1ca5c39872afc244f31dc3529de973ab79f8b5869ef0b8fb484cfaee"
+  },
+  "linux-owning-shipping.log": {
+    "bytes": 222,
+    "sha256": "a4cb4a595b06696682e62a7acc9523f74d275c88d72351ea8173749536a70aa8"
+  },
+  "native-worker-factory-binding-x86-build.log": {
+    "bytes": 35,
+    "sha256": "4a6e45a910e2a5a741b34786aa0b1d39bdb37ccc90d84cd2a1c31e1d276921e8"
+  },
+  "assist-native-worker-factory-binding-owned-shipping.log": {
+    "bytes": 1584,
+    "sha256": "575eec3cd8ce1445507250dc0b504541a676ddaf5cb46c1b95dd98b8e22a7778"
+  },
+  "run-portable.py": {
+    "bytes": 2243,
+    "sha256": "d0f23ee3d60aa5e8b63715b2e82fb5f97847a7d32cd049305050d1de4f9dc312"
+  },
+  "native-worker-factory-binding-all-targets.log": {
+    "bytes": 986,
+    "sha256": "e126795d30c207a0afd39448d1ca17db819ec01559779db82d4c4d536df196b9"
+  },
+  "linux-wait-packet-create.log": {
+    "bytes": 1580,
+    "sha256": "b2dd22ac692e45aa3adb0002a13d44dc79cd0bec41cc06f2fd841299c8107c16"
+  },
+  "native-worker-factory-binding-x64.log": {
+    "bytes": 260225,
+    "sha256": "33873c75ae9e075ea4308e27745b47d89a44a48b2e361ede896b5bdc8e708e7f"
+  },
+  "native-worker-factory-binding-wait-packet-create.log": {
+    "bytes": 2675,
+    "sha256": "4334895912ba6fb0b0655f22bf565a9492010ebf41349feab64ea5cf73da2b1b"
+  },
+  "macos-owning-configure.log": {
+    "bytes": 13295,
+    "sha256": "032fb79931c64cfe5464c1e286eb8870ecadb79d66f417b5361bc8cb09c63e74"
+  },
+  "native-worker-factory-binding-identities.ps1": {
+    "bytes": 1974,
+    "sha256": "24e3a08943325cc23a4f9d27249444f5a40ba72373c4c35705dedc10e9cd7974"
+  },
+  "baseline-command.json": {
+    "bytes": 144,
+    "sha256": "bb4d873ca8932a5d4b0826ab1719d5fb6d936586721a440b87f18d8f1fe18b12"
+  },
+  "linux-worker-factory.log": {
+    "bytes": 1055,
+    "sha256": "12b7a35e73dc16f697752f97c4e568df98721e6a3116a4cd591471dac042bf66"
+  },
+  "inspect-worker-factory-binding-owning-archives.py": {
+    "bytes": 9623,
+    "sha256": "61c6244d1d7ae47d5287df91c983f583c4414618f2e6b74618558a4fd5bf3349"
+  },
+  "native-worker-factory-binding-arm64-build.log": {
+    "bytes": 35,
+    "sha256": "4a6e45a910e2a5a741b34786aa0b1d39bdb37ccc90d84cd2a1c31e1d276921e8"
+  },
+  "macos-owning-commands.json": {
+    "bytes": 3149,
+    "sha256": "46548b6b0b7539fee8f588ea5afac9ac25db2eb1cf8917f399e2578cdf94978b"
+  },
+  "native-worker-factory-binding-wait-packet-associate.log": {
+    "bytes": 2956,
+    "sha256": "f3365e2d5017cb6fa10073bf0836307afc5d0fc1eaf0aad7e4b4182ce73a28a6"
+  },
+  "native-worker-factory-binding-threading.log": {
+    "bytes": 3243,
+    "sha256": "e330ff71f296f17c4715e2cd1b8b1add973685ea388cf494a0c1f86cf9430345"
+  },
+  "before-ntdll-identities.json": {
+    "bytes": 180,
+    "sha256": "a3b3f588fc440d90e00d6f78e815bb2102ed2867804ae0edce058a0ce7ff43d7"
+  },
+  "native-worker-factory-binding-sequence-boundaries-x86.log": {
+    "bytes": 20480,
+    "sha256": "6b99d667544b16bca3cfa7f2840b6ab9e9c0df5865c6b9686b35e0cf1e294413"
+  },
+  "native-worker-factory-binding-full.log": {
+    "bytes": 737430,
+    "sha256": "0bf3d7fd36d5f7a096e9498a0347cc7a45a4a53266d5fe9a0db13e73c4796858"
+  },
+  "native-worker-factory-binding-after-trace.rs": {
+    "bytes": 11177,
+    "sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e"
+  },
+  "native-worker-factory-binding-io-completion.log": {
+    "bytes": 2360,
+    "sha256": "9ee0a88b30cd711919e144be394534e87d20f7be8d8ebbe87df658bfc27af037"
+  },
+  "native-worker-factory-binding-sequence-boundaries-arm64.ps1": {
+    "bytes": 1639,
+    "sha256": "9803de54287b16fd719b2ed668a22bf207b91d4bf935c576de2ba03b53561d25"
+  },
+  "native-worker-factory-binding-sequence-boundaries-x86-laa.ps1": {
+    "bytes": 1672,
+    "sha256": "a789cbc3c54b59e1df1d622ce89b8d66c10758b49be18f7525f69cc45274a429"
+  },
+  "macos-events.log": {
+    "bytes": 1414,
+    "sha256": "843f81fbe1b07c179cd36ce7abd85138852d971f887bb4fcb9c6bfde801a3fbe"
+  },
+  "README.md": {
+    "bytes": 5749,
+    "sha256": "101a7ebe97f00109f1cb4f491ee5f9e992ea843f4179735d664dc73458bd2162"
+  },
+  "task-baseline.json": {
+    "bytes": 897,
+    "sha256": "fd0f7852e6fdb88c9bb6138ce86fd972e009fb1af1ad1f1839bfa3bd51d70425"
+  },
+  "native-worker-factory-binding-events.log": {
+    "bytes": 2998,
+    "sha256": "13afa9d1171a8b1dd67af26c1780d87d9b13c3e3d2a18194fa0253ec10c92d5c"
+  },
+  "macos-worker-factory.log": {
+    "bytes": 1139,
+    "sha256": "9121b9a02112da1d72b653eff35065c4b76e8cf141c92d05f4249f0c4491dc63"
+  },
+  "linux-gates.json": {
+    "bytes": 10373,
+    "sha256": "4dc5e0be963856c6bbf098e98884738a507fe53881a2147c465d8be3e0d10a62"
+  },
+  "native-worker-factory-binding-timer2.log": {
+    "bytes": 2064,
+    "sha256": "61dd4477d806f51ce076f16afe953daeefe8c2fe4918596a6835c162f9b8b18c"
+  },
+  "macos-wait-packet-associate.log": {
+    "bytes": 1954,
+    "sha256": "8c50600abc51522a1dab2b3ff5128e5e87ade8ee1bab544031747a9cc4d29ff1"
+  },
+  "negative-optimized-python.log": {
+    "bytes": 613,
+    "sha256": "9715f0197e457e1d3b0968eabc909861dcfa9a887220f07daa876b95d638d884"
+  },
+  "linux-threading.log": {
+    "bytes": 2337,
+    "sha256": "8252ebdc630624daee629d8b9acf93b2bb0abae7171fae5ade9cd5f96f462697"
+  },
+  "macos-timer2.log": {
+    "bytes": 1063,
+    "sha256": "bb677c21950b2fa445d9faf3cb18447d32a1d70313389c9d0a9a59cd05a0782c"
+  },
+  "linux-isolated-gates.json": {
+    "bytes": 1671,
+    "sha256": "a87b5392799abf64e9d21e0fd4fdd4d92fd483c97dfd6a365178862d12612c2e"
+  },
+  "macos-all-targets.log": {
+    "bytes": 136,
+    "sha256": "a35e566e124626daa9d63c560480f32321c7043c12167b113ca75be3c0233929"
+  },
+  "linux-owning-cpp.log": {
+    "bytes": 1623,
+    "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+  },
+  "linux-events.log": {
+    "bytes": 1330,
+    "sha256": "1680c2a0166cfd58f4aa5a24c23b049b80bd1252d55204bdc5d22ca09c9fe5e0"
+  },
+  "negative-empty-filter.log": {
+    "bytes": 688,
+    "sha256": "c01180cb4c0f405cbdc653eaec061a8f7ea141054fa0e824fc66ae52e78152fd"
+  },
+  "native-worker-factory-binding-gates.json": {
+    "bytes": 3579,
+    "sha256": "953c0ce908319eb452621a207e60825f5c01138d0983492e2beb7f7f146ea73a"
+  },
+  "macos-hard-maximum.log": {
+    "bytes": 1031,
+    "sha256": "8de2258fa1747ae3e746cadeb090f71c89226106d2ea1361102ba7db5df3524f"
+  },
+  "native-worker-factory-binding-x86.log": {
+    "bytes": 259627,
+    "sha256": "1501353ed40b6b1b76848331c1ea43a1f46b2cd82181bf032290593644e298f9"
+  },
+  "linux-timer2.log": {
+    "bytes": 979,
+    "sha256": "5dd00cc34a677fd6ea4b6b0f2d73fb52298392973565775e402100daa97edc4e"
+  },
+  "macos-gates.json": {
+    "bytes": 3499,
+    "sha256": "5eb6d905180ab1dd1bf77f74bfe46251767d5b11b139d13e2f241ea6032ffa3c"
+  },
+  "linux-integration.log": {
+    "bytes": 35761,
+    "sha256": "afeee67c1d77e630868f20d5dce3a2ffbf441abcd964a2a3650d7e09ea29afd4"
+  },
+  "native-worker-factory-binding.cpp": {
+    "bytes": 5802,
+    "sha256": "6d39b9d619d35231fe2513446cebf5e9e32ed76034aa7f1e75c2aff7cc9dc22a"
+  },
+  "owning-source-hashes.json": {
+    "bytes": 8983,
+    "sha256": "a2f7e67f8a2352d750a24eb670ec70f768240851f2825d76e9e24fe196cd667a"
+  },
+  "native-worker-factory-binding-current-source-check.json": {
+    "bytes": 613,
+    "sha256": "a97aed04230f07ef403f37169316fe015f212dd6ba452e00d64f2ea32357fc87"
+  },
+  "prepare-overlay.py": {
+    "bytes": 3668,
+    "sha256": "5aa3ef52328cd652b799ee2c2ce57293956483c772ced3eeb094fbb7ba9ba5e4"
+  },
+  "native-worker-factory-binding-capi.log": {
+    "bytes": 13836,
+    "sha256": "cad4e177abaa489c2745480fb23941c8b65c1eab292cd025f7ab3158efd728f1"
+  },
+  "native-worker-factory-binding-sequence-boundaries-x64.log": {
+    "bytes": 20532,
+    "sha256": "31256e91f6c1f7a80c320e4a963bc85e10ea3ce0e60c3442a0982dc238252219"
+  },
+  "native-worker-factory-binding-hard-maximum.log": {
+    "bytes": 2041,
+    "sha256": "4e68119dc62911ae5e3487d61da97ffefd53b1093fa4805075b4a1a5bc99d74f"
+  },
+  "native-worker-factory-binding-x86-laa.log": {
+    "bytes": 259627,
+    "sha256": "5247dc444adb7adff39157e6299e13fc158dd98a017d9834697ff8c432f4d05f"
+  },
+  "linux-hard-maximum.log": {
+    "bytes": 947,
+    "sha256": "630cf068a985eab05051e05f509658886504ae14b899918bb16b5190d9dc0f46"
+  },
+  "native-worker-factory-binding-after-ordinary-processes.log": {
+    "bytes": 7076,
+    "sha256": "8cb7be25d0bf64f0175a502862b0c711c473984d29e21c273d9c9a9a39de19fe"
+  },
+  "native-worker-factory-binding-arm64.log": {
+    "bytes": 260225,
+    "sha256": "83c42e2a43d186e718220c83f79b999bd5666b6e1fa8178157f9b4c0e94994f7"
+  },
+  "native-worker-factory-binding-sequence-boundaries-x86-build.log": {
+    "bytes": 55,
+    "sha256": "4ed774c276630090989f22c264efb64a0dc5f329322fe222af1704ada5a92822"
+  },
+  "macos-owning-gates.json": {
+    "bytes": 3344,
+    "sha256": "907f2dff64cc1fc512698d950b89f972982c42ad239fcc6a60f895f646d7c092"
+  },
+  "check_native_worker_binding.py": {
+    "bytes": 13114,
+    "sha256": "5ad8f4d59150e1471ead9daa3dac1021da90d94f947a8203743b1c05448cd9e3"
+  },
+  "native-worker-factory-binding-after-artifacts.jsonl": {
+    "bytes": 130191,
+    "sha256": "711af8c7273f55832a93396d4f25dc3c3157364afef77cadc68b3d15b63224e5"
+  },
+  "negative-manifest-omission.log": {
+    "bytes": 741,
+    "sha256": "1d6d96679a81bc8a3d90c30cb45070bdc8158d9adaef52e5aa5ae2b813100248"
+  },
+  "native-worker-factory-binding-sequence-boundaries-x64-build.log": {
+    "bytes": 55,
+    "sha256": "4ed774c276630090989f22c264efb64a0dc5f329322fe222af1704ada5a92822"
+  },
+  "native-worker-factory-binding-arm64.ps1": {
+    "bytes": 1399,
+    "sha256": "66e9c7e6f9d10a299dcbbad327012ca6bc887312f942daeb89c28f635a26b244"
+  },
+  "native-worker-factory-binding-x86-laa.ps1": {
+    "bytes": 1432,
+    "sha256": "28067f9bafd7abb5293983c8735d72045a10e735c1547221623df54ab9d94955"
+  },
+  "linux-io-completion.log": {
+    "bytes": 1261,
+    "sha256": "ee89cd75f19901a0ee3e54768064111d0e66bc8fcc2f495783f58fc12ee82e1e"
+  },
+  "native-worker-factory-binding-sequence-boundaries-x64.ps1": {
+    "bytes": 1623,
+    "sha256": "23579e363ac15c2354b7363ca607aa05c03a13dba26aec99cf3ded8e85518354"
+  },
+  "negative-raw-corruption.log": {
+    "bytes": 791,
+    "sha256": "b1c50d1b048bb2c2b90f189a6ce5c481350bddd8ddca85c29813c03470905c48"
+  },
+  "macos-owning-protected-assist-mcp.log": {
+    "bytes": 42,
+    "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+  },
+  "native-worker-factory-binding-current-overlay.ps1": {
+    "bytes": 243,
+    "sha256": "834e5f4dc4ef8a7f258eb54865a589c2d15f3f902fb3bf3f604db681f021eab9"
+  },
+  "negative-validation.json": {
+    "bytes": 3190,
+    "sha256": "4c99ec68929ca3ce9ab9d9ec0a6f152888ff0d29433b3914d447bf31e487261d"
+  },
+  "native-worker-factory-binding-after-production-trace-output.log": {
+    "bytes": 41049,
+    "sha256": "e51b11b39b67119d89e2b43b4066bd9ce57795291b8ccad1977e810d4d15cd03"
+  },
+  "native-worker-factory-binding-current-overlay-bundle.py": {
+    "bytes": 1587,
+    "sha256": "26275ebbdbf27778d78f0c3e202eac646106266ab71e02a1ece73b87bf70217b"
+  },
+  "macos-full.log": {
+    "bytes": 781961,
+    "sha256": "30ea92dfc270a53899b62929b7126ff194f4c116e8c3d9afc55a95783f21efe8"
+  },
+  "linux-wait-packet-associate.log": {
+    "bytes": 1870,
+    "sha256": "b9d56fe239f103f40e1c17a6d8e7887231105ac4dc7ecf2f1ef3ea6731f46f4b"
+  },
+  "macos-baseline-red.log": {
+    "bytes": 4990,
+    "sha256": "6ad8e18b0c112498f3ccf0e0039e4bd6816f6d5a1340877a521b62dd53e2b7dc"
+  },
+  "linux-isolated-a_multishot_timeout_reports_each_expiry.log": {
+    "bytes": 352,
+    "sha256": "70aa30943203792fec0625d3fa5e66b5a9e86a9a95202acf641f181536b8d128"
+  },
+  "native-worker-factory-binding-after-artifacts-stderr.log": {
+    "bytes": 72,
+    "sha256": "45d8f7d972875790a6cec7ca48e9acc17c5af68372da1940633becec3b4cd60a"
+  },
+  "root-owning-source-delta.txt": {
+    "bytes": 63,
+    "sha256": "ba9bedb9b5cf7c0c5c4866a64cf4d4266764e7d16d4ae6c71e7739844ac870a7"
+  },
+  "linux-targeted.log": {
+    "bytes": 1328,
+    "sha256": "9be0f56e535019cf14d13e4e2006732b37a29c93cdada60d89e8c5956d1f8309"
+  },
+  "run-owning-macos.py": {
+    "bytes": 526,
+    "sha256": "fcdcb2a47418eac16a13d41cc89df4ab089d06b414bbf728708d63b2f1b99da1"
+  },
+  "linux-isolated-a_timeout_is_removed_or_updated.log": {
+    "bytes": 401,
+    "sha256": "cc1c44258ef0c2384866acfe2b78c4fc48576d3ded398a93afeb0571dccd459a"
+  },
+  "macos-integration.log": {
+    "bytes": 35928,
+    "sha256": "23c4d848bf00cc877e7814703985a3ca56a45b332b46f908df1a9efb8f6f611f"
+  },
+  "validation-summary.json": {
+    "bytes": 1710,
+    "sha256": "1046ee52cb5909b00c9bff8c6bbf827cb48a3b020db3b5ceb089981a1d7cea53"
+  },
+  "native-worker-factory-binding-producer-identities.json": {
+    "bytes": 18010,
+    "sha256": "12bd7a6a7f35f14876d8b0b490adc4be7bbd766465ec64bb1229d423dd52a93a"
+  },
+  "native-worker-factory-binding-owning-archive-hashes.json": {
+    "bytes": 8270,
+    "sha256": "c5946ff1e1e0f9f005e538990e5db40101c0a1aed68f90e1e23d9f0189f107a7"
+  },
+  "native-worker-factory-binding-x86.ps1": {
+    "bytes": 1381,
+    "sha256": "2adebd307c2ffdec452dade2a79397a454b977e6ddac64e3feca3fbb19cfb070"
+  },
+  "owning-linux-cpp-build.py": {
+    "bytes": 1522,
+    "sha256": "a0d9f75e831bd3585d3e009b94e8e3f2744b137e646c157c70a7ad7950373b56"
+  },
+  "linux-full.log": {
+    "bytes": 782710,
+    "sha256": "cf7f3fffcc93e7563f0681816679c6953d110ca7878a36afb6bc1b24d52913a7"
+  },
+  "macos-threading.log": {
+    "bytes": 2421,
+    "sha256": "9008439af3a6cec039efcec3e419e6d59a11076fa753787219e5da0d08ab8f83"
+  },
+  "native-worker-factory-binding-targeted.log": {
+    "bytes": 2452,
+    "sha256": "eac98f44e908ce6e8f730fc6afb6e8aedc202752e7ca8686f26b7991d900f081"
+  },
+  "linux-all-targets.log": {
+    "bytes": 116,
+    "sha256": "2ab20b351fd8f679f9c87e37afd824e21bfa0457ddf2674f028f726df0aca6be"
+  },
+  "assist-native-worker-factory-binding-owned-cpp.log": {
+    "bytes": 2946,
+    "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+  }
+}

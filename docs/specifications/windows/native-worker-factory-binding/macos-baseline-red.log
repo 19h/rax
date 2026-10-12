@@ -1,0 +1,43 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 38.73s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/red-target/debug/deps/rax-754f4d2a527a4423)
+
+running 5 tests
+
+thread 'user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_replays_104_native_transitions' (1798082) panicked at src/user/windows/process/sched/tests/services_tests/worker_factory_binding_tests.rs:279:13:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtSetInformationWorkerFactory: Unimplemented(\"NtSetInformationWorkerFactory: NtSetInformationWorkerFactory class 3\")")
+ right: Continue
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_dispatches_and_preserves_alias_references_all_abis' (1798080) panicked at src/user/windows/process/sched/tests/services_tests/worker_factory_binding_tests.rs:28:13:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtSetInformationWorkerFactory: Unimplemented(\"NtSetInformationWorkerFactory: NtSetInformationWorkerFactory class 3\")")
+ right: Continue
+
+thread 'user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_consumes_one_guard_before_access_check_and_retry' (1798079) panicked at src/user/windows/process/sched/tests/services_tests/worker_factory_binding_tests.rs:243:13:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtSetInformationWorkerFactory: Unimplemented(\"NtSetInformationWorkerFactory: NtSetInformationWorkerFactory class 3\")")
+ right: Continue
+
+thread 'user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_replays_all_1196_native_rows' (1798083) panicked at src/user/windows/process/sched/tests/services_tests/worker_factory_binding_tests.rs:174:13:
+assertion `left == right` failed: arm64/{"handles-after": "52", "after": "00000000000000000000000000000000809C10D8FFFFFFFF0000000100000000FFFFFFFF000000000002000000000000000000000000000000000000000000000000000000000000B014FA3AF67F000000000000000000008411000000000000000001000000000000100000000000000000000000000000A5A5A5A5A5A5A5A5", "before": "00000000000000000000000000000000809C10D8FFFFFFFF000000010000000000000000000000000002000000000000000000000000000000000000000000000000000000000000B014FA3AF67F000000000000000000008411000000000000000001000000000000100000000000000000000000000000A5A5A5A5A5A5A5A5", "length": "00000004", "mode": "0", "exception": "00000000", "handles-before": "52", "label": "value", "status": "00000000", "query-after": "00000000", "class": "3", "query-before": "00000000", "maximum-before": "00000200", "total-before": "0", "value": "00000000", "returned-before": "120", "maximum-after": "00000200", "width": "8", "handle-mode": "0", "protection": "00000004", "returned-after": "120", "case": "0", "total-after": "0"}
+  left: Fail("native NTDLL service NtSetInformationWorkerFactory: Unimplemented(\"NtSetInformationWorkerFactory: NtSetInformationWorkerFactory class 3\")")
+ right: Continue
+test user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_dispatches_and_preserves_alias_references_all_abis ... FAILED
+test user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_consumes_one_guard_before_access_check_and_retry ... FAILED
+test user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_replays_all_1196_native_rows ... FAILED
+test user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_replays_104_native_transitions ... FAILED
+test user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_refuses_unmeasured_classes_without_state_mutation ... ok
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_consumes_one_guard_before_access_check_and_retry
+    user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_dispatches_and_preserves_alias_references_all_abis
+    user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_replays_104_native_transitions
+    user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_replays_all_1196_native_rows
+
+test result: FAILED. 1 passed; 4 failed; 0 ignored; 0 measured; 7649 filtered out; finished in 0.02s
+
+error: test failed, to rerun pass `--lib`

@@ -1,0 +1,12 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/red-target/debug/deps/rax-754f4d2a527a4423)
+
+running 4 tests
+test user::windows::process::sched::tests::services_tests::timer2_create_tests::native_timer2_create_privilege_policy_fails_without_output_or_object_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::timer2_create_tests::native_timer2_create_constructs_real_object_and_closes_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::timer2_create_tests::native_timer2_create_duplicate_retains_dormant_waitable_object_all_abis ... ok
+Timer2 original replays=8288, privilege exclusions=104
+test user::windows::process::sched::tests::services_tests::timer2_create_tests::replay_tests::native_timer2_create_replays_original_capture_order_reduced_and_alias_observations ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 7651 filtered out; finished in 1.41s
+

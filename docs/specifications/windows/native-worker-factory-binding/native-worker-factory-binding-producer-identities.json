@@ -1,0 +1,300 @@
+﻿{
+    "producer":  [
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-arm64\\native-worker-factory-binding-arm64.exe",
+                         "family":  "binding",
+                         "bytes":  150528,
+                         "sha256":  "56076646D004CCDFE670F64CB024B08447A933BF1BA13D6DB64491E15FB3CB82"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-arm64\\native-worker-factory-binding-arm64.log",
+                         "family":  "binding",
+                         "bytes":  260225,
+                         "sha256":  "83C42E2A43D186E718220C83F79B999BD5666B6E1FA8178157F9B4C0E94994F7"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-arm64\\native-worker-factory-binding-arm64-build.log",
+                         "family":  "binding",
+                         "bytes":  35,
+                         "sha256":  "4A6E45A910E2A5A741B34786AA0B1D39BDB37CCC90D84CD2A1C31E1D276921E8"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-x64\\native-worker-factory-binding-x64.exe",
+                         "family":  "binding",
+                         "bytes":  147968,
+                         "sha256":  "473DB7576C80CB719609383F1D2F9CE2A9512656079B4B656056A7C25A2DF8ED"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-x64\\native-worker-factory-binding-x64.log",
+                         "family":  "binding",
+                         "bytes":  260225,
+                         "sha256":  "33873C75AE9E075EA4308E27745B47D89A44A48B2E361EDE896B5BDC8E708E7F"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-x64\\native-worker-factory-binding-x64-build.log",
+                         "family":  "binding",
+                         "bytes":  35,
+                         "sha256":  "4A6E45A910E2A5A741B34786AA0B1D39BDB37CCC90D84CD2A1C31E1D276921E8"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-x86\\native-worker-factory-binding-x86.exe",
+                         "family":  "binding",
+                         "bytes":  122880,
+                         "sha256":  "20669EBF59050E90BEEBF87E02A3526F0745AE93A07D238B0BBF0C69DC459C74"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-x86\\native-worker-factory-binding-x86.log",
+                         "family":  "binding",
+                         "bytes":  259627,
+                         "sha256":  "1501353ED40B6B1B76848331C1EA43A1F46B2CD82181BF032290593644E298F9"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-x86\\native-worker-factory-binding-x86-build.log",
+                         "family":  "binding",
+                         "bytes":  35,
+                         "sha256":  "4A6E45A910E2A5A741B34786AA0B1D39BDB37CCC90D84CD2A1C31E1D276921E8"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-x86-laa\\native-worker-factory-binding-x86-laa.exe",
+                         "family":  "binding",
+                         "bytes":  122880,
+                         "sha256":  "8BF207AC29EA0B138A152E275CEDC16EF3BFBAD36B89781D5B76D968253DA9C2"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-x86-laa\\native-worker-factory-binding-x86-laa.log",
+                         "family":  "binding",
+                         "bytes":  259627,
+                         "sha256":  "5247DC444ADB7ADFF39157E6299E13FC158DD98A017D9834697FF8C432F4D05F"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-x86-laa\\native-worker-factory-binding-x86-laa-build.log",
+                         "family":  "binding",
+                         "bytes":  35,
+                         "sha256":  "4A6E45A910E2A5A741B34786AA0B1D39BDB37CCC90D84CD2A1C31E1D276921E8"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-sequence-boundaries-arm64\\native-worker-factory-binding-sequence-boundaries-arm64.exe",
+                         "family":  "binding-sequence-boundaries",
+                         "bytes":  147456,
+                         "sha256":  "C65F52C47F6857FF7C70D44FE129793836B95F000716ED5F681EC6B0F422761F"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-sequence-boundaries-arm64\\native-worker-factory-binding-sequence-boundaries-arm64.log",
+                         "family":  "binding-sequence-boundaries",
+                         "bytes":  20532,
+                         "sha256":  "570426BCDCFC261D88016857839F88B4CC86919383C1ACCF0965B42EDCA01089"
+                     },
+                     {
+                         "profile":  "arm64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-sequence-boundaries-arm64\\native-worker-factory-binding-sequence-boundaries-arm64-build.log",
+                         "family":  "binding-sequence-boundaries",
+                         "bytes":  55,
+                         "sha256":  "4ED774C276630090989F22C264EFB64A0DC5F329322FE222AF1704ADA5A92822"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-sequence-boundaries-x64\\native-worker-factory-binding-sequence-boundaries-x64.exe",
+                         "family":  "binding-sequence-boundaries",
+                         "bytes":  145408,
+                         "sha256":  "C5E5D95DA0821834F07AE2DFEDDCD53B990377FC663540C2FBB3278377EA7B63"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-sequence-boundaries-x64\\native-worker-factory-binding-sequence-boundaries-x64.log",
+                         "family":  "binding-sequence-boundaries",
+                         "bytes":  20532,
+                         "sha256":  "31256E91F6C1F7A80C320E4A963BC85E10EA3CE0E60C3442A0982DC238252219"
+                     },
+                     {
+                         "profile":  "x64",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-sequence-boundaries-x64\\native-worker-factory-binding-sequence-boundaries-x64-build.log",
+                         "family":  "binding-sequence-boundaries",
+                         "bytes":  55,
+                         "sha256":  "4ED774C276630090989F22C264EFB64A0DC5F329322FE222AF1704ADA5A92822"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-sequence-boundaries-x86\\native-worker-factory-binding-sequence-boundaries-x86.exe",
+                         "family":  "binding-sequence-boundaries",
+                         "bytes":  120832,
+                         "sha256":  "B527B39D199245DE542D648704DE540DF4EBDA8592730166729A74F7BCCF12EB"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-sequence-boundaries-x86\\native-worker-factory-binding-sequence-boundaries-x86.log",
+                         "family":  "binding-sequence-boundaries",
+                         "bytes":  20480,
+                         "sha256":  "6B99D667544B16BCA3CFA7F2840B6AB9E9C0DF5865C6B9686B35E0CF1E294413"
+                     },
+                     {
+                         "profile":  "x86",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-sequence-boundaries-x86\\native-worker-factory-binding-sequence-boundaries-x86-build.log",
+                         "family":  "binding-sequence-boundaries",
+                         "bytes":  55,
+                         "sha256":  "4ED774C276630090989F22C264EFB64A0DC5F329322FE222AF1704ADA5A92822"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-sequence-boundaries-x86-laa\\native-worker-factory-binding-sequence-boundaries-x86-laa.exe",
+                         "family":  "binding-sequence-boundaries",
+                         "bytes":  120832,
+                         "sha256":  "40D18399BAD9CDC5F92FF5E4926FBC05CF67DCD508E2FB9C9ED14A53D2F38F30"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-sequence-boundaries-x86-laa\\native-worker-factory-binding-sequence-boundaries-x86-laa.log",
+                         "family":  "binding-sequence-boundaries",
+                         "bytes":  20480,
+                         "sha256":  "A97CA2C46B4B26BF3FBC970A74F63EB7F5F21EC9DD2B4040936186DA526B11A1"
+                     },
+                     {
+                         "profile":  "x86-laa",
+                         "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-sequence-boundaries-x86-laa\\native-worker-factory-binding-sequence-boundaries-x86-laa-build.log",
+                         "family":  "binding-sequence-boundaries",
+                         "bytes":  55,
+                         "sha256":  "4ED774C276630090989F22C264EFB64A0DC5F329322FE222AF1704ADA5A92822"
+                     }
+                 ],
+    "sources":  [
+                    {
+                        "profile":  "arm64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-arm64\\native-worker-factory-binding.cpp",
+                        "family":  "binding",
+                        "bytes":  5802,
+                        "sha256":  "6D39B9D619D35231FE2513446CEBF5E9E32ED76034AA7F1E75C2AFF7CC9DC22A"
+                    },
+                    {
+                        "profile":  "x64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-x64\\native-worker-factory-binding.cpp",
+                        "family":  "binding",
+                        "bytes":  5802,
+                        "sha256":  "6D39B9D619D35231FE2513446CEBF5E9E32ED76034AA7F1E75C2AFF7CC9DC22A"
+                    },
+                    {
+                        "profile":  "x86",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-x86\\native-worker-factory-binding.cpp",
+                        "family":  "binding",
+                        "bytes":  5802,
+                        "sha256":  "6D39B9D619D35231FE2513446CEBF5E9E32ED76034AA7F1E75C2AFF7CC9DC22A"
+                    },
+                    {
+                        "profile":  "x86-laa",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-x86-laa\\native-worker-factory-binding.cpp",
+                        "family":  "binding",
+                        "bytes":  5802,
+                        "sha256":  "6D39B9D619D35231FE2513446CEBF5E9E32ED76034AA7F1E75C2AFF7CC9DC22A"
+                    },
+                    {
+                        "profile":  "arm64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-sequence-boundaries-arm64\\native-worker-factory-binding-sequence-boundaries.cpp",
+                        "family":  "binding-sequence-boundaries",
+                        "bytes":  2883,
+                        "sha256":  "1FCDBF7B2F65AA91603EF8DA9AE31C941D90F94AEA0BA304884DEEA2CCB8B386"
+                    },
+                    {
+                        "profile":  "x64",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-sequence-boundaries-x64\\native-worker-factory-binding-sequence-boundaries.cpp",
+                        "family":  "binding-sequence-boundaries",
+                        "bytes":  2883,
+                        "sha256":  "1FCDBF7B2F65AA91603EF8DA9AE31C941D90F94AEA0BA304884DEEA2CCB8B386"
+                    },
+                    {
+                        "profile":  "x86",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-sequence-boundaries-x86\\native-worker-factory-binding-sequence-boundaries.cpp",
+                        "family":  "binding-sequence-boundaries",
+                        "bytes":  2883,
+                        "sha256":  "1FCDBF7B2F65AA91603EF8DA9AE31C941D90F94AEA0BA304884DEEA2CCB8B386"
+                    },
+                    {
+                        "profile":  "x86-laa",
+                        "path":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\worker-factory-binding-sequence-boundaries-x86-laa\\native-worker-factory-binding-sequence-boundaries.cpp",
+                        "family":  "binding-sequence-boundaries",
+                        "bytes":  2883,
+                        "sha256":  "1FCDBF7B2F65AA91603EF8DA9AE31C941D90F94AEA0BA304884DEEA2CCB8B386"
+                    }
+                ],
+    "processor":  "ARM64",
+    "utc":  "2026-10-12T04:14:39.6261423Z",
+    "images":  [
+                   {
+                       "profile":  "arm64",
+                       "family":  "binding",
+                       "characteristics":  34,
+                       "machine":  43620
+                   },
+                   {
+                       "profile":  "x64",
+                       "family":  "binding",
+                       "characteristics":  34,
+                       "machine":  34404
+                   },
+                   {
+                       "profile":  "x86",
+                       "family":  "binding",
+                       "characteristics":  258,
+                       "machine":  332
+                   },
+                   {
+                       "profile":  "x86-laa",
+                       "family":  "binding",
+                       "characteristics":  290,
+                       "machine":  332
+                   },
+                   {
+                       "profile":  "arm64",
+                       "family":  "binding-sequence-boundaries",
+                       "characteristics":  34,
+                       "machine":  43620
+                   },
+                   {
+                       "profile":  "x64",
+                       "family":  "binding-sequence-boundaries",
+                       "characteristics":  34,
+                       "machine":  34404
+                   },
+                   {
+                       "profile":  "x86",
+                       "family":  "binding-sequence-boundaries",
+                       "characteristics":  258,
+                       "machine":  332
+                   },
+                   {
+                       "profile":  "x86-laa",
+                       "family":  "binding-sequence-boundaries",
+                       "characteristics":  290,
+                       "machine":  332
+                   }
+               ],
+    "dlls":  [
+                 {
+                     "path":  "C:\\Windows\\System32\\ntdll.dll",
+                     "sha256":  "502D4678206C8FD564972A3F82BFE63FE1A451CB5A6804AC0A9823B65FCBB61F",
+                     "bytes":  4609312,
+                     "version":  "10.0.29683.1000 (WinBuild.160101.0800)"
+                 },
+                 {
+                     "path":  "C:\\Windows\\SysWOW64\\ntdll.dll",
+                     "sha256":  "FFD2B7FF39889C5599C8A8451EEF5C852ACEE9101DA5CE5A6DEF8B8E60A6627E",
+                     "bytes":  1849976,
+                     "version":  "10.0.29683.1000 (WinBuild.160101.0800)"
+                 }
+             ],
+    "principal":  {
+                      "sid":  "S-1-5-18",
+                      "name":  "NT AUTHORITY\\SYSTEM"
+                  }
+}

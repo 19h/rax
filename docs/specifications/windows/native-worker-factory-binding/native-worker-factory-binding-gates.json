@@ -1,0 +1,86 @@
+﻿[
+    {
+        "gate":  "targeted",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib worker_factory_binding -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-worker-factory-binding-targeted.log"
+    },
+    {
+        "gate":  "soft-maximum",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib worker_factory_soft_maximum -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-worker-factory-binding-soft-maximum.log"
+    },
+    {
+        "gate":  "hard-maximum",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib worker_factory_set_maximum -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-worker-factory-binding-hard-maximum.log"
+    },
+    {
+        "gate":  "wait-packet-associate",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib wait_packet_associate -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-worker-factory-binding-wait-packet-associate.log"
+    },
+    {
+        "gate":  "wait-packet-create",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib wait_packet_create -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-worker-factory-binding-wait-packet-create.log"
+    },
+    {
+        "gate":  "threading",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib dll::threading::tests -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-worker-factory-binding-threading.log"
+    },
+    {
+        "gate":  "timer2",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib timer2_create -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-worker-factory-binding-timer2.log"
+    },
+    {
+        "gate":  "worker-factory",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib worker_factory_create -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-worker-factory-binding-worker-factory.log"
+    },
+    {
+        "gate":  "events",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib event_ -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-worker-factory-binding-events.log"
+    },
+    {
+        "gate":  "io-completion",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib io_completion -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-worker-factory-binding-io-completion.log"
+    },
+    {
+        "gate":  "full",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib -- --nocapture",
+        "exit-code":  101,
+        "log":  "native-worker-factory-binding-full.log"
+    },
+    {
+        "gate":  "capi",
+        "command":  "cargo.exe test --locked --offline --no-default-features -p rax-capi -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-worker-factory-binding-capi.log"
+    },
+    {
+        "gate":  "all-targets",
+        "command":  "cargo.exe build --locked --offline --no-default-features --all-targets",
+        "exit-code":  0,
+        "log":  "native-worker-factory-binding-all-targets.log"
+    },
+    {
+        "gate":  "integration",
+        "command":  "cargo.exe test --locked --offline --no-default-features --test user_windows_memory -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-worker-factory-binding-integration.log"
+    }
+]

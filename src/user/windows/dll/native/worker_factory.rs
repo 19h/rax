@@ -151,6 +151,7 @@ fn construct(c: &mut Ctx, r: &Request, attrs: Option<Attributes>) -> ApiResult {
             parameter: r.parameter,
             maximum: r.maximum,
             soft_maximum: None,
+            binding_count: 0,
             // Native constructor defaults are independent of the executable's PE
             // stack sizes. Nonzero requests are stored without rounding/probing.
             reserve: if r.reserve == 0 { 65536 } else { r.reserve },
@@ -160,13 +161,13 @@ fn construct(c: &mut Ctx, r: &Request, attrs: Option<Attributes>) -> ApiResult {
 }
 
 pub(super) fn set_information(c: &mut Ctx) -> ApiResult {
-    let result = set_limits(c);
+    let result = set_properties(c);
     guard_result(c, result)
 }
 
-fn set_limits(c: &mut Ctx) -> ApiResult {
+fn set_properties(c: &mut Ctx) -> ApiResult {
     let (handle, class, input, length) = (c.ptr(0)?, c.u32(1)?, c.ptr(2)?, c.u32(3)?);
-    if !matches!(class, 5 | 14) {
+    if !matches!(class, 3 | 5 | 14) {
         return Err(c.unsupported(format!("NtSetInformationWorkerFactory class {class}")));
     }
     // The installed native/WoW64 entries check exact ULONG size and capture
@@ -174,7 +175,7 @@ fn set_limits(c: &mut Ctx) -> ApiResult {
     if length != 4 {
         return Flow::ret(STATUS_INFO_LENGTH_MISMATCH.into());
     }
-    let maximum = c.mem().u32(input)?;
+    let value = c.mem().u32(input)?;
     if handle == c.arch().ptr(u64::MAX) || handle == c.arch().ptr(u64::MAX - 1) {
         return Flow::ret(STATUS_OBJECT_TYPE_MISMATCH.into());
     }
@@ -190,18 +191,28 @@ fn set_limits(c: &mut Ctx) -> ApiResult {
     let Some(Object::WorkerFactory {
         maximum: hard,
         soft_maximum: soft,
+        binding_count: bindings,
         ..
     }) = c.p.objects.obj_mut(id)
     else {
         unreachable!("validated worker factory")
     };
-    if class == 5 {
-        *hard = maximum;
+    if class == 3 {
+        // The installed kernel treats zero as the all-bits count, while
+        // nonzero ULONG bit patterns are signed deltas. Do not wrap either
+        // bound, reinterpret this as overwrite, or infer activation policy.
+        *bindings = if value == 0 {
+            u32::MAX
+        } else {
+            bindings.saturating_add_signed(value as i32)
+        };
+    } else if class == 5 {
+        *hard = value;
     } else {
         // Native class14 accepts the unsigned request without changing the
         // basic-query hard maximum. Record it independently; activation and
         // the constructor's unqueried soft default are separate contracts.
-        *soft = Some(maximum);
+        *soft = Some(value);
     }
     Flow::ret(0)
 }

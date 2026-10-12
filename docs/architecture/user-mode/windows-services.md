@@ -1,6 +1,18 @@
 # Windows handle/service integration
 
-Current native worker-factory soft-maximum requests (2026-10-12):
+Current native worker-factory BindingCount updates (2026-10-12):
+Class3 uses exact4 B capture -> typed factory -> right0x4 validation. Zero sets
+0xFFFFFFFF; other ULONG bit patterns add signed32 deltas with saturation. Native
+basic-query bytes32..36 verify1196 validation rows plus104 repeated transitions.
+Six portable/seven Windows tests pass; hard/soft setters retain independent
+state. Public Rust WorkerFactory gains binding_count:u32, initially the measured
+zero; opaque C API1.11.0/Assist Rust ABI184 are unchanged. Original Linux timeout
+and Windows lowering failures remain. The identical observer reaches
+NtSetWnfProcessNotificationEvent at44258, from42802 (1456 scheduler calls).
+All four ordinary programs still fail before guest exit. See
+[binding-count evidence](../../specifications/windows/native-worker-factory-binding/README.md).
+
+Historical native worker-factory soft-maximum requests (2026-10-12):
 NtSetInformationWorkerFactory class14 retains the last successful unsigned
 request independently from the hard maximum. Exact4 B length -> input capture
 -> typed handle -> right0x4 order and one-shot guard behavior replay all1196

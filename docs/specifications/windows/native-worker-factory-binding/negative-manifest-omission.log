@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-worker-factory-binding/check_native_worker_binding.py", line 15, in <module>
+    require(set(manifest)=={p.name for p in base.iterdir() if p.is_file() and p.name!='evidence-manifest.json'},'exact evidence coverage')
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/hexrays/kvasir/vendor/rax/docs/specifications/windows/native-worker-factory-binding/check_native_worker_binding.py", line 6, in require
+    if not ok:raise ValueError(message)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: exact evidence coverage
