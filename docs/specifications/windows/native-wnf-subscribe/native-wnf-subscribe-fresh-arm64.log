@@ -1,0 +1,391 @@
+trap case=0 phase=entry address=7FF8DE2E2C90
+trap case=0 phase=0 address=7FF8DE2E8724
+trap case=0 phase=1 address=7FF8DE2E8724
+trap case=0 phase=2 address=7FF8DE2E8724
+trap case=0 phase=3 address=7FF8DE2E8724
+case=0 warmup=1 width=8 after=0 mask=00000000 calls=4 registered=00000000 status=00000000 id=000000000000A57B repeat=00000000 repeat-id=000000000000A57B end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=52 handles-after=57
+trap case=1 phase=entry address=7FF8DE2E2C90
+trap case=1 phase=0 address=7FF8DE2E8724
+trap case=1 phase=1 address=7FF8DE2E8724
+trap case=1 phase=2 address=7FF8DE2E8724
+trap case=1 phase=3 address=7FF8DE2E8724
+case=1 warmup=0 width=8 after=0 mask=00000000 calls=4 registered=00000000 status=00000000 id=000000000000A57C repeat=00000000 repeat-id=000000000000A57C end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=2 phase=entry address=7FF8DE2E2C90
+trap case=2 phase=0 address=7FF8DE2E8724
+trap case=2 phase=1 address=7FF8DE2E8724
+trap case=2 phase=2 address=7FF8DE2E8724
+trap case=2 phase=3 address=7FF8DE2E8724
+case=2 warmup=0 width=8 after=0 mask=00000001 calls=4 registered=00000000 status=00000000 id=000000000000A57D repeat=00000000 repeat-id=000000000000A57D end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=3 phase=entry address=7FF8DE2E2C90
+trap case=3 phase=0 address=7FF8DE2E8724
+trap case=3 phase=1 address=7FF8DE2E8724
+trap case=3 phase=2 address=7FF8DE2E8724
+trap case=3 phase=3 address=7FF8DE2E8724
+case=3 warmup=0 width=8 after=0 mask=00000002 calls=4 registered=00000000 status=00000000 id=000000000000A57E repeat=00000000 repeat-id=000000000000A57E end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=4 phase=entry address=7FF8DE2E2C90
+trap case=4 phase=0 address=7FF8DE2E8724
+trap case=4 phase=1 address=7FF8DE2E8724
+trap case=4 phase=2 address=7FF8DE2E8724
+trap case=4 phase=3 address=7FF8DE2E8724
+case=4 warmup=0 width=8 after=0 mask=00000003 calls=4 registered=00000000 status=00000000 id=000000000000A57F repeat=00000000 repeat-id=000000000000A57F end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=5 phase=entry address=7FF8DE2E2C90
+trap case=5 phase=0 address=7FF8DE2E8724
+trap case=5 phase=1 address=7FF8DE2E8724
+trap case=5 phase=2 address=7FF8DE2E8724
+trap case=5 phase=3 address=7FF8DE2E8724
+case=5 warmup=0 width=8 after=0 mask=00000004 calls=4 registered=00000000 status=00000000 id=000000000000A580 repeat=00000000 repeat-id=000000000000A580 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=6 phase=entry address=7FF8DE2E2C90
+trap case=6 phase=0 address=7FF8DE2E8724
+trap case=6 phase=1 address=7FF8DE2E8724
+trap case=6 phase=2 address=7FF8DE2E8724
+trap case=6 phase=3 address=7FF8DE2E8724
+case=6 warmup=0 width=8 after=0 mask=00000005 calls=4 registered=00000000 status=00000000 id=000000000000A581 repeat=00000000 repeat-id=000000000000A581 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=7 phase=entry address=7FF8DE2E2C90
+trap case=7 phase=0 address=7FF8DE2E8724
+trap case=7 phase=1 address=7FF8DE2E8724
+trap case=7 phase=2 address=7FF8DE2E8724
+trap case=7 phase=3 address=7FF8DE2E8724
+case=7 warmup=0 width=8 after=0 mask=00000006 calls=4 registered=00000000 status=00000000 id=000000000000A582 repeat=00000000 repeat-id=000000000000A582 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=8 phase=entry address=7FF8DE2E2C90
+trap case=8 phase=0 address=7FF8DE2E8724
+trap case=8 phase=1 address=7FF8DE2E8724
+trap case=8 phase=2 address=7FF8DE2E8724
+trap case=8 phase=3 address=7FF8DE2E8724
+case=8 warmup=0 width=8 after=0 mask=00000007 calls=4 registered=00000000 status=00000000 id=000000000000A583 repeat=00000000 repeat-id=000000000000A583 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=9 phase=entry address=7FF8DE2E2C90
+trap case=9 phase=0 address=7FF8DE2E8724
+trap case=9 phase=1 address=7FF8DE2E8724
+trap case=9 phase=2 address=7FF8DE2E8724
+trap case=9 phase=3 address=7FF8DE2E8724
+case=9 warmup=0 width=8 after=0 mask=00000008 calls=4 registered=00000000 status=00000000 id=000000000000A584 repeat=00000000 repeat-id=000000000000A584 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=10 phase=entry address=7FF8DE2E2C90
+trap case=10 phase=0 address=7FF8DE2E8724
+trap case=10 phase=1 address=7FF8DE2E8724
+trap case=10 phase=2 address=7FF8DE2E8724
+trap case=10 phase=3 address=7FF8DE2E8724
+case=10 warmup=0 width=8 after=0 mask=00000009 calls=4 registered=00000000 status=00000000 id=000000000000A585 repeat=00000000 repeat-id=000000000000A585 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=11 phase=entry address=7FF8DE2E2C90
+trap case=11 phase=0 address=7FF8DE2E8724
+trap case=11 phase=1 address=7FF8DE2E8724
+trap case=11 phase=2 address=7FF8DE2E8724
+trap case=11 phase=3 address=7FF8DE2E8724
+case=11 warmup=0 width=8 after=0 mask=0000000A calls=4 registered=00000000 status=00000000 id=000000000000A586 repeat=00000000 repeat-id=000000000000A586 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=12 phase=entry address=7FF8DE2E2C90
+trap case=12 phase=0 address=7FF8DE2E8724
+trap case=12 phase=1 address=7FF8DE2E8724
+trap case=12 phase=2 address=7FF8DE2E8724
+trap case=12 phase=3 address=7FF8DE2E8724
+case=12 warmup=0 width=8 after=0 mask=0000000B calls=4 registered=00000000 status=00000000 id=000000000000A587 repeat=00000000 repeat-id=000000000000A587 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=13 phase=entry address=7FF8DE2E2C90
+trap case=13 phase=0 address=7FF8DE2E8724
+trap case=13 phase=1 address=7FF8DE2E8724
+trap case=13 phase=2 address=7FF8DE2E8724
+trap case=13 phase=3 address=7FF8DE2E8724
+case=13 warmup=0 width=8 after=0 mask=0000000C calls=4 registered=00000000 status=00000000 id=000000000000A588 repeat=00000000 repeat-id=000000000000A588 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=14 phase=entry address=7FF8DE2E2C90
+trap case=14 phase=0 address=7FF8DE2E8724
+trap case=14 phase=1 address=7FF8DE2E8724
+trap case=14 phase=2 address=7FF8DE2E8724
+trap case=14 phase=3 address=7FF8DE2E8724
+case=14 warmup=0 width=8 after=0 mask=0000000D calls=4 registered=00000000 status=00000000 id=000000000000A589 repeat=00000000 repeat-id=000000000000A589 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=15 phase=entry address=7FF8DE2E2C90
+trap case=15 phase=0 address=7FF8DE2E8724
+trap case=15 phase=1 address=7FF8DE2E8724
+trap case=15 phase=2 address=7FF8DE2E8724
+trap case=15 phase=3 address=7FF8DE2E8724
+case=15 warmup=0 width=8 after=0 mask=0000000E calls=4 registered=00000000 status=00000000 id=000000000000A58A repeat=00000000 repeat-id=000000000000A58A end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=16 phase=entry address=7FF8DE2E2C90
+trap case=16 phase=0 address=7FF8DE2E8724
+trap case=16 phase=1 address=7FF8DE2E8724
+trap case=16 phase=2 address=7FF8DE2E8724
+trap case=16 phase=3 address=7FF8DE2E8724
+case=16 warmup=0 width=8 after=0 mask=0000000F calls=4 registered=00000000 status=00000000 id=000000000000A58B repeat=00000000 repeat-id=000000000000A58B end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=17 phase=entry address=7FF8DE2E2C90
+trap case=17 phase=0 address=7FF8DE2E8724
+trap case=17 phase=1 address=7FF8DE2E8724
+trap case=17 phase=2 address=7FF8DE2E8724
+trap case=17 phase=3 address=7FF8DE2E8724
+case=17 warmup=0 width=8 after=0 mask=00000010 calls=4 registered=00000000 status=00000000 id=000000000000A58C repeat=00000000 repeat-id=000000000000A58C end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=18 phase=entry address=7FF8DE2E2C90
+trap case=18 phase=0 address=7FF8DE2E8724
+trap case=18 phase=1 address=7FF8DE2E8724
+trap case=18 phase=2 address=7FF8DE2E8724
+trap case=18 phase=3 address=7FF8DE2E8724
+case=18 warmup=0 width=8 after=0 mask=00000011 calls=4 registered=00000000 status=00000000 id=000000000000A58D repeat=00000000 repeat-id=000000000000A58D end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=19 phase=entry address=7FF8DE2E2C90
+trap case=19 phase=0 address=7FF8DE2E8724
+trap case=19 phase=1 address=7FF8DE2E8724
+trap case=19 phase=2 address=7FF8DE2E8724
+trap case=19 phase=3 address=7FF8DE2E8724
+case=19 warmup=0 width=8 after=0 mask=00000012 calls=4 registered=00000000 status=00000000 id=000000000000A58E repeat=00000000 repeat-id=000000000000A58E end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=20 phase=entry address=7FF8DE2E2C90
+trap case=20 phase=0 address=7FF8DE2E8724
+trap case=20 phase=1 address=7FF8DE2E8724
+trap case=20 phase=2 address=7FF8DE2E8724
+trap case=20 phase=3 address=7FF8DE2E8724
+case=20 warmup=0 width=8 after=0 mask=00000013 calls=4 registered=00000000 status=00000000 id=000000000000A58F repeat=00000000 repeat-id=000000000000A58F end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=21 phase=entry address=7FF8DE2E2C90
+trap case=21 phase=0 address=7FF8DE2E8724
+trap case=21 phase=1 address=7FF8DE2E8724
+trap case=21 phase=2 address=7FF8DE2E8724
+trap case=21 phase=3 address=7FF8DE2E8724
+case=21 warmup=0 width=8 after=0 mask=00000014 calls=4 registered=00000000 status=00000000 id=000000000000A590 repeat=00000000 repeat-id=000000000000A590 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=22 phase=entry address=7FF8DE2E2C90
+trap case=22 phase=0 address=7FF8DE2E8724
+trap case=22 phase=1 address=7FF8DE2E8724
+trap case=22 phase=2 address=7FF8DE2E8724
+trap case=22 phase=3 address=7FF8DE2E8724
+case=22 warmup=0 width=8 after=0 mask=00000015 calls=4 registered=00000000 status=00000000 id=000000000000A591 repeat=00000000 repeat-id=000000000000A591 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=23 phase=entry address=7FF8DE2E2C90
+trap case=23 phase=0 address=7FF8DE2E8724
+trap case=23 phase=1 address=7FF8DE2E8724
+trap case=23 phase=2 address=7FF8DE2E8724
+trap case=23 phase=3 address=7FF8DE2E8724
+case=23 warmup=0 width=8 after=0 mask=00000016 calls=4 registered=00000000 status=00000000 id=000000000000A592 repeat=00000000 repeat-id=000000000000A592 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=24 phase=entry address=7FF8DE2E2C90
+trap case=24 phase=0 address=7FF8DE2E8724
+trap case=24 phase=1 address=7FF8DE2E8724
+trap case=24 phase=2 address=7FF8DE2E8724
+trap case=24 phase=3 address=7FF8DE2E8724
+case=24 warmup=0 width=8 after=0 mask=00000017 calls=4 registered=00000000 status=00000000 id=000000000000A593 repeat=00000000 repeat-id=000000000000A593 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=25 phase=entry address=7FF8DE2E2C90
+trap case=25 phase=0 address=7FF8DE2E8724
+trap case=25 phase=1 address=7FF8DE2E8724
+trap case=25 phase=2 address=7FF8DE2E8724
+trap case=25 phase=3 address=7FF8DE2E8724
+case=25 warmup=0 width=8 after=0 mask=00000018 calls=4 registered=00000000 status=00000000 id=000000000000A594 repeat=00000000 repeat-id=000000000000A594 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=26 phase=entry address=7FF8DE2E2C90
+trap case=26 phase=0 address=7FF8DE2E8724
+trap case=26 phase=1 address=7FF8DE2E8724
+trap case=26 phase=2 address=7FF8DE2E8724
+trap case=26 phase=3 address=7FF8DE2E8724
+case=26 warmup=0 width=8 after=0 mask=00000019 calls=4 registered=00000000 status=00000000 id=000000000000A595 repeat=00000000 repeat-id=000000000000A595 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=27 phase=entry address=7FF8DE2E2C90
+trap case=27 phase=0 address=7FF8DE2E8724
+trap case=27 phase=1 address=7FF8DE2E8724
+trap case=27 phase=2 address=7FF8DE2E8724
+trap case=27 phase=3 address=7FF8DE2E8724
+case=27 warmup=0 width=8 after=0 mask=0000001A calls=4 registered=00000000 status=00000000 id=000000000000A596 repeat=00000000 repeat-id=000000000000A596 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=28 phase=entry address=7FF8DE2E2C90
+trap case=28 phase=0 address=7FF8DE2E8724
+trap case=28 phase=1 address=7FF8DE2E8724
+trap case=28 phase=2 address=7FF8DE2E8724
+trap case=28 phase=3 address=7FF8DE2E8724
+case=28 warmup=0 width=8 after=0 mask=0000001B calls=4 registered=00000000 status=00000000 id=000000000000A597 repeat=00000000 repeat-id=000000000000A597 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=29 phase=entry address=7FF8DE2E2C90
+trap case=29 phase=0 address=7FF8DE2E8724
+trap case=29 phase=1 address=7FF8DE2E8724
+trap case=29 phase=2 address=7FF8DE2E8724
+trap case=29 phase=3 address=7FF8DE2E8724
+case=29 warmup=0 width=8 after=0 mask=0000001C calls=4 registered=00000000 status=00000000 id=000000000000A598 repeat=00000000 repeat-id=000000000000A598 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=30 phase=entry address=7FF8DE2E2C90
+trap case=30 phase=0 address=7FF8DE2E8724
+trap case=30 phase=1 address=7FF8DE2E8724
+trap case=30 phase=2 address=7FF8DE2E8724
+trap case=30 phase=3 address=7FF8DE2E8724
+case=30 warmup=0 width=8 after=0 mask=0000001D calls=4 registered=00000000 status=00000000 id=000000000000A599 repeat=00000000 repeat-id=000000000000A599 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=31 phase=entry address=7FF8DE2E2C90
+trap case=31 phase=0 address=7FF8DE2E8724
+trap case=31 phase=1 address=7FF8DE2E8724
+trap case=31 phase=2 address=7FF8DE2E8724
+trap case=31 phase=3 address=7FF8DE2E8724
+case=31 warmup=0 width=8 after=0 mask=0000001E calls=4 registered=00000000 status=00000000 id=000000000000A59A repeat=00000000 repeat-id=000000000000A59A end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=32 phase=entry address=7FF8DE2E2C90
+trap case=32 phase=0 address=7FF8DE2E8724
+trap case=32 phase=1 address=7FF8DE2E8724
+trap case=32 phase=2 address=7FF8DE2E8724
+trap case=32 phase=3 address=7FF8DE2E8724
+case=32 warmup=0 width=8 after=0 mask=0000001F calls=4 registered=00000000 status=00000000 id=000000000000A59B repeat=00000000 repeat-id=000000000000A59B end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=33 phase=entry address=7FF8DE2E2C90
+trap case=33 phase=0 address=7FF8DE2E8724
+trap case=33 phase=1 address=7FF8DE2E8724
+trap case=33 phase=2 address=7FF8DE2E8724
+trap case=33 phase=3 address=7FF8DE2E8724
+case=33 warmup=0 width=8 after=1 mask=00000000 calls=4 registered=00000000 status=00000000 id=000000000000A59C repeat=00000000 repeat-id=000000000000A59C end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=34 phase=entry address=7FF8DE2E2C90
+trap case=34 phase=0 address=7FF8DE2E8724
+trap case=34 phase=1 address=7FF8DE2E8724
+trap case=34 phase=2 address=7FF8DE2E8724
+trap case=34 phase=3 address=7FF8DE2E8724
+case=34 warmup=0 width=8 after=1 mask=00000001 calls=4 registered=00000000 status=00000000 id=000000000000A59D repeat=00000000 repeat-id=000000000000A59D end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=35 phase=entry address=7FF8DE2E2C90
+trap case=35 phase=0 address=7FF8DE2E8724
+trap case=35 phase=1 address=7FF8DE2E8724
+trap case=35 phase=2 address=7FF8DE2E8724
+trap case=35 phase=3 address=7FF8DE2E8724
+case=35 warmup=0 width=8 after=1 mask=00000002 calls=4 registered=00000000 status=00000000 id=000000000000A59E repeat=00000000 repeat-id=000000000000A59E end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=36 phase=entry address=7FF8DE2E2C90
+trap case=36 phase=0 address=7FF8DE2E8724
+trap case=36 phase=1 address=7FF8DE2E8724
+trap case=36 phase=2 address=7FF8DE2E8724
+trap case=36 phase=3 address=7FF8DE2E8724
+case=36 warmup=0 width=8 after=1 mask=00000003 calls=4 registered=00000000 status=00000000 id=000000000000A59F repeat=00000000 repeat-id=000000000000A59F end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=37 phase=entry address=7FF8DE2E2C90
+trap case=37 phase=0 address=7FF8DE2E8724
+trap case=37 phase=1 address=7FF8DE2E8724
+trap case=37 phase=2 address=7FF8DE2E8724
+trap case=37 phase=3 address=7FF8DE2E8724
+case=37 warmup=0 width=8 after=1 mask=00000004 calls=4 registered=00000000 status=00000000 id=000000000000A5A0 repeat=00000000 repeat-id=000000000000A5A0 end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=38 phase=entry address=7FF8DE2E2C90
+trap case=38 phase=0 address=7FF8DE2E8724
+trap case=38 phase=1 address=7FF8DE2E8724
+trap case=38 phase=2 address=7FF8DE2E8724
+trap case=38 phase=3 address=7FF8DE2E8724
+case=38 warmup=0 width=8 after=1 mask=00000005 calls=4 registered=00000000 status=00000000 id=000000000000A5A1 repeat=00000000 repeat-id=000000000000A5A1 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=39 phase=entry address=7FF8DE2E2C90
+trap case=39 phase=0 address=7FF8DE2E8724
+trap case=39 phase=1 address=7FF8DE2E8724
+trap case=39 phase=2 address=7FF8DE2E8724
+trap case=39 phase=3 address=7FF8DE2E8724
+case=39 warmup=0 width=8 after=1 mask=00000006 calls=4 registered=00000000 status=00000000 id=000000000000A5A2 repeat=00000000 repeat-id=000000000000A5A2 end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=40 phase=entry address=7FF8DE2E2C90
+trap case=40 phase=0 address=7FF8DE2E8724
+trap case=40 phase=1 address=7FF8DE2E8724
+trap case=40 phase=2 address=7FF8DE2E8724
+trap case=40 phase=3 address=7FF8DE2E8724
+case=40 warmup=0 width=8 after=1 mask=00000007 calls=4 registered=00000000 status=00000000 id=000000000000A5A3 repeat=00000000 repeat-id=000000000000A5A3 end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=41 phase=entry address=7FF8DE2E2C90
+trap case=41 phase=0 address=7FF8DE2E8724
+trap case=41 phase=1 address=7FF8DE2E8724
+trap case=41 phase=2 address=7FF8DE2E8724
+trap case=41 phase=3 address=7FF8DE2E8724
+case=41 warmup=0 width=8 after=1 mask=00000008 calls=4 registered=00000000 status=00000000 id=000000000000A5A4 repeat=00000000 repeat-id=000000000000A5A4 end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=42 phase=entry address=7FF8DE2E2C90
+trap case=42 phase=0 address=7FF8DE2E8724
+trap case=42 phase=1 address=7FF8DE2E8724
+trap case=42 phase=2 address=7FF8DE2E8724
+trap case=42 phase=3 address=7FF8DE2E8724
+case=42 warmup=0 width=8 after=1 mask=00000009 calls=4 registered=00000000 status=00000000 id=000000000000A5A5 repeat=00000000 repeat-id=000000000000A5A5 end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=43 phase=entry address=7FF8DE2E2C90
+trap case=43 phase=0 address=7FF8DE2E8724
+trap case=43 phase=1 address=7FF8DE2E8724
+trap case=43 phase=2 address=7FF8DE2E8724
+trap case=43 phase=3 address=7FF8DE2E8724
+case=43 warmup=0 width=8 after=1 mask=0000000A calls=4 registered=00000000 status=00000000 id=000000000000A5A6 repeat=00000000 repeat-id=000000000000A5A6 end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=44 phase=entry address=7FF8DE2E2C90
+trap case=44 phase=0 address=7FF8DE2E8724
+trap case=44 phase=1 address=7FF8DE2E8724
+trap case=44 phase=2 address=7FF8DE2E8724
+trap case=44 phase=3 address=7FF8DE2E8724
+case=44 warmup=0 width=8 after=1 mask=0000000B calls=4 registered=00000000 status=00000000 id=000000000000A5A7 repeat=00000000 repeat-id=000000000000A5A7 end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=45 phase=entry address=7FF8DE2E2C90
+trap case=45 phase=0 address=7FF8DE2E8724
+trap case=45 phase=1 address=7FF8DE2E8724
+trap case=45 phase=2 address=7FF8DE2E8724
+trap case=45 phase=3 address=7FF8DE2E8724
+case=45 warmup=0 width=8 after=1 mask=0000000C calls=4 registered=00000000 status=00000000 id=000000000000A5A8 repeat=00000000 repeat-id=000000000000A5A8 end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=46 phase=entry address=7FF8DE2E2C90
+trap case=46 phase=0 address=7FF8DE2E8724
+trap case=46 phase=1 address=7FF8DE2E8724
+trap case=46 phase=2 address=7FF8DE2E8724
+trap case=46 phase=3 address=7FF8DE2E8724
+case=46 warmup=0 width=8 after=1 mask=0000000D calls=4 registered=00000000 status=00000000 id=000000000000A5A9 repeat=00000000 repeat-id=000000000000A5A9 end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=47 phase=entry address=7FF8DE2E2C90
+trap case=47 phase=0 address=7FF8DE2E8724
+trap case=47 phase=1 address=7FF8DE2E8724
+trap case=47 phase=2 address=7FF8DE2E8724
+trap case=47 phase=3 address=7FF8DE2E8724
+case=47 warmup=0 width=8 after=1 mask=0000000E calls=4 registered=00000000 status=00000000 id=000000000000A5AA repeat=00000000 repeat-id=000000000000A5AA end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=48 phase=entry address=7FF8DE2E2C90
+trap case=48 phase=0 address=7FF8DE2E8724
+trap case=48 phase=1 address=7FF8DE2E8724
+trap case=48 phase=2 address=7FF8DE2E8724
+trap case=48 phase=3 address=7FF8DE2E8724
+case=48 warmup=0 width=8 after=1 mask=0000000F calls=4 registered=00000000 status=00000000 id=000000000000A5AB repeat=00000000 repeat-id=000000000000A5AB end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=49 phase=entry address=7FF8DE2E2C90
+trap case=49 phase=0 address=7FF8DE2E8724
+trap case=49 phase=1 address=7FF8DE2E8724
+trap case=49 phase=2 address=7FF8DE2E8724
+trap case=49 phase=3 address=7FF8DE2E8724
+case=49 warmup=0 width=8 after=1 mask=00000010 calls=4 registered=00000000 status=00000000 id=000000000000A5AC repeat=00000000 repeat-id=000000000000A5AC end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=50 phase=entry address=7FF8DE2E2C90
+trap case=50 phase=0 address=7FF8DE2E8724
+trap case=50 phase=1 address=7FF8DE2E8724
+trap case=50 phase=2 address=7FF8DE2E8724
+trap case=50 phase=3 address=7FF8DE2E8724
+case=50 warmup=0 width=8 after=1 mask=00000011 calls=4 registered=00000000 status=00000000 id=000000000000A5AD repeat=00000000 repeat-id=000000000000A5AD end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=51 phase=entry address=7FF8DE2E2C90
+trap case=51 phase=0 address=7FF8DE2E8724
+trap case=51 phase=1 address=7FF8DE2E8724
+trap case=51 phase=2 address=7FF8DE2E8724
+trap case=51 phase=3 address=7FF8DE2E8724
+case=51 warmup=0 width=8 after=1 mask=00000012 calls=4 registered=00000000 status=00000000 id=000000000000A5AE repeat=00000000 repeat-id=000000000000A5AE end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=52 phase=entry address=7FF8DE2E2C90
+trap case=52 phase=0 address=7FF8DE2E8724
+trap case=52 phase=1 address=7FF8DE2E8724
+trap case=52 phase=2 address=7FF8DE2E8724
+trap case=52 phase=3 address=7FF8DE2E8724
+case=52 warmup=0 width=8 after=1 mask=00000013 calls=4 registered=00000000 status=00000000 id=000000000000A5AF repeat=00000000 repeat-id=000000000000A5AF end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=53 phase=entry address=7FF8DE2E2C90
+trap case=53 phase=0 address=7FF8DE2E8724
+trap case=53 phase=1 address=7FF8DE2E8724
+trap case=53 phase=2 address=7FF8DE2E8724
+trap case=53 phase=3 address=7FF8DE2E8724
+case=53 warmup=0 width=8 after=1 mask=00000014 calls=4 registered=00000000 status=00000000 id=000000000000A5B0 repeat=00000000 repeat-id=000000000000A5B0 end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=54 phase=entry address=7FF8DE2E2C90
+trap case=54 phase=0 address=7FF8DE2E8724
+trap case=54 phase=1 address=7FF8DE2E8724
+trap case=54 phase=2 address=7FF8DE2E8724
+trap case=54 phase=3 address=7FF8DE2E8724
+case=54 warmup=0 width=8 after=1 mask=00000015 calls=4 registered=00000000 status=00000000 id=000000000000A5B1 repeat=00000000 repeat-id=000000000000A5B1 end=00000000 state0=0 state1=0 state2=0 state3=0 state4=0 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=55 phase=entry address=7FF8DE2E2C90
+trap case=55 phase=0 address=7FF8DE2E8724
+trap case=55 phase=1 address=7FF8DE2E8724
+trap case=55 phase=2 address=7FF8DE2E8724
+trap case=55 phase=3 address=7FF8DE2E8724
+case=55 warmup=0 width=8 after=1 mask=00000016 calls=4 registered=00000000 status=00000000 id=000000000000A5B2 repeat=00000000 repeat-id=000000000000A5B2 end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=56 phase=entry address=7FF8DE2E2C90
+trap case=56 phase=0 address=7FF8DE2E8724
+trap case=56 phase=1 address=7FF8DE2E8724
+trap case=56 phase=2 address=7FF8DE2E8724
+trap case=56 phase=3 address=7FF8DE2E8724
+case=56 warmup=0 width=8 after=1 mask=00000017 calls=4 registered=00000000 status=00000000 id=000000000000A5B3 repeat=00000000 repeat-id=000000000000A5B3 end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=57 phase=entry address=7FF8DE2E2C90
+trap case=57 phase=0 address=7FF8DE2E8724
+trap case=57 phase=1 address=7FF8DE2E8724
+trap case=57 phase=2 address=7FF8DE2E8724
+trap case=57 phase=3 address=7FF8DE2E8724
+case=57 warmup=0 width=8 after=1 mask=00000018 calls=4 registered=00000000 status=00000000 id=000000000000A5B4 repeat=00000000 repeat-id=000000000000A5B4 end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=58 phase=entry address=7FF8DE2E2C90
+trap case=58 phase=0 address=7FF8DE2E8724
+trap case=58 phase=1 address=7FF8DE2E8724
+trap case=58 phase=2 address=7FF8DE2E8724
+trap case=58 phase=3 address=7FF8DE2E8724
+case=58 warmup=0 width=8 after=1 mask=00000019 calls=4 registered=00000000 status=00000000 id=000000000000A5B5 repeat=00000000 repeat-id=000000000000A5B5 end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=59 phase=entry address=7FF8DE2E2C90
+trap case=59 phase=0 address=7FF8DE2E8724
+trap case=59 phase=1 address=7FF8DE2E8724
+trap case=59 phase=2 address=7FF8DE2E8724
+trap case=59 phase=3 address=7FF8DE2E8724
+case=59 warmup=0 width=8 after=1 mask=0000001A calls=4 registered=00000000 status=00000000 id=000000000000A5B6 repeat=00000000 repeat-id=000000000000A5B6 end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=60 phase=entry address=7FF8DE2E2C90
+trap case=60 phase=0 address=7FF8DE2E8724
+trap case=60 phase=1 address=7FF8DE2E8724
+trap case=60 phase=2 address=7FF8DE2E8724
+trap case=60 phase=3 address=7FF8DE2E8724
+case=60 warmup=0 width=8 after=1 mask=0000001B calls=4 registered=00000000 status=00000000 id=000000000000A5B7 repeat=00000000 repeat-id=000000000000A5B7 end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=61 phase=entry address=7FF8DE2E2C90
+trap case=61 phase=0 address=7FF8DE2E8724
+trap case=61 phase=1 address=7FF8DE2E8724
+trap case=61 phase=2 address=7FF8DE2E8724
+trap case=61 phase=3 address=7FF8DE2E8724
+case=61 warmup=0 width=8 after=1 mask=0000001C calls=4 registered=00000000 status=00000000 id=000000000000A5B8 repeat=00000000 repeat-id=000000000000A5B8 end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=62 phase=entry address=7FF8DE2E2C90
+trap case=62 phase=0 address=7FF8DE2E8724
+trap case=62 phase=1 address=7FF8DE2E8724
+trap case=62 phase=2 address=7FF8DE2E8724
+trap case=62 phase=3 address=7FF8DE2E8724
+case=62 warmup=0 width=8 after=1 mask=0000001D calls=4 registered=00000000 status=00000000 id=000000000000A5B9 repeat=00000000 repeat-id=000000000000A5B9 end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=63 phase=entry address=7FF8DE2E2C90
+trap case=63 phase=0 address=7FF8DE2E8724
+trap case=63 phase=1 address=7FF8DE2E8724
+trap case=63 phase=2 address=7FF8DE2E8724
+trap case=63 phase=3 address=7FF8DE2E8724
+case=63 warmup=0 width=8 after=1 mask=0000001E calls=4 registered=00000000 status=00000000 id=000000000000A5BA repeat=00000000 repeat-id=000000000000A5BA end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+trap case=64 phase=entry address=7FF8DE2E2C90
+trap case=64 phase=0 address=7FF8DE2E8724
+trap case=64 phase=1 address=7FF8DE2E8724
+trap case=64 phase=2 address=7FF8DE2E8724
+trap case=64 phase=3 address=7FF8DE2E8724
+case=64 warmup=0 width=8 after=1 mask=0000001F calls=4 registered=00000000 status=00000000 id=000000000000A5BB repeat=00000000 repeat-id=000000000000A5BB end=00000000 state0=0 state1=0 state2=1 state3=1 state4=1 type0=1 type1=1 type2=1 type3=1 type4=1 exit=77 handles-before=57 handles-after=57
+complete cases=64 warmup=1

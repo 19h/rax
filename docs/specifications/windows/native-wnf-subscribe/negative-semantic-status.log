@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-semantic-status/check-evidence.py", line 68, in <module>
+    for r in observed: require(num(r, 'status') == status(num(r, 'name'), 17), 'syntax admission status')
+                       ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-semantic-status/check-evidence.py", line 7, in require
+    raise ValueError(message)
+ValueError: syntax admission status

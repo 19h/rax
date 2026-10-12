@@ -21,6 +21,7 @@ pub(crate) struct NativeRuntime {
     pub(crate) apisets: ApiSetSchema,
     pub(crate) registry: super::registry::Registry,
     pub(crate) nls: Option<super::nls::Nls>,
+    pub(crate) wnf_catalog: super::wnf::Catalog,
     pub(crate) startup: Option<super::process::native_start::EntryPoints>,
 }
 
@@ -85,6 +86,7 @@ impl NativeRuntime {
             apisets,
             registry: Default::default(),
             nls: None,
+            wnf_catalog: Default::default(),
             startup: None,
         };
         let ntdll = PeImage::parse(read_image(
@@ -101,6 +103,7 @@ impl NativeRuntime {
         }
         runtime.registry = super::registry::snapshot()?;
         runtime.nls = Some(super::nls::snapshot(&runtime.registry, &schema_directory)?);
+        runtime.wnf_catalog = super::wnf::snapshot()?;
         Ok(runtime)
     }
 

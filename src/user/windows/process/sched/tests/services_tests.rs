@@ -43,6 +43,9 @@ mod worker_factory_binding_tests;
 #[path = "services_tests/wnf_process_event_tests.rs"]
 mod wnf_process_event_tests;
 
+#[path = "services_tests/wnf_subscription_tests.rs"]
+mod wnf_subscription_tests;
+
 #[path = "services_tests/timer2_create_tests.rs"]
 mod timer2_create_tests;
 

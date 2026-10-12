@@ -345,6 +345,10 @@ pub(super) fn spawn_image(mut config: WindowsConfig, bytes: Vec<u8>) -> Result<P
         .map(|r| r.registry.clone())
         .unwrap_or_default();
     let nls = native.as_ref().and_then(|r| r.nls.clone());
+    let mut objects = Objects::default();
+    if let Some(runtime) = &native {
+        objects.select_wnf_catalog(runtime.wnf_catalog.clone());
+    }
     let mut p = Proc {
         arch,
         space,
@@ -362,7 +366,7 @@ pub(super) fn spawn_image(mut config: WindowsConfig, bytes: Vec<u8>) -> Result<P
         loader: Default::default(),
         fibers: Default::default(),
         traps: Default::default(),
-        objects: Objects::default(),
+        objects,
         heaps: Heaps::new(if arch.is64() { 16 } else { 8 }),
         tls: Default::default(),
         seh: Default::default(),

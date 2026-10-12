@@ -51,6 +51,7 @@ fn runtime(entries: Option<EntryPoints>) -> NativeRuntime {
         apisets: ApiSetSchema::parse(&schema).unwrap(),
         registry: Default::default(),
         nls: None,
+        wnf_catalog: Default::default(),
         startup: entries,
     }
 }

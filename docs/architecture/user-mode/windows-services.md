@@ -1,6 +1,34 @@
 # Windows handle/service integration
 
-Current native WNF process Event registration (2026-10-12):
+Current native process-scoped well-known WNF subscriptions (2026-10-12):
+`NtSubscribeWnfStateChange` captures an 8 B name, ULONG change stamp, ULONG event
+mask and optional 8 B opaque identifier. Native ARM64/x64 probe and clear the
+entire output before name capture. WoW64 first reads the output's 4 B prefix,
+captures the name and runs with a private output, then copies the entire 8 B.
+Its final copy failure can override an input status or follow publication;
+no partial identifier bytes are written in the measured crossing cases.
+Installed-runtime selection snapshots the fixed Notifications registry key and
+creator primary-token SID/groups through query-only handles, released before
+execution. The captured build has1613 provisioned names, including9 process
+names. Only the measured process scope and bounded classic DACL forms are
+admitted; unknown scopes/descriptors, restricted tokens, AppContainers, matched
+generic rights and standalone publish-only grants remain explicit unsupported
+inputs. The catalog is metadata, not host WNF state or guest token authority.
+Private process-owned records retain opaque generations, requested stamps/masks
+and pending metadata. Repeated subscription preserves identity and replaces the
+request; unsubscribe removes the record. Arriving metadata signals the already
+registered Event; earlier metadata is not signaled retroactively, and unsubscribe
+does not reset its signal. No new guest handles or host subscriptions are used.
+The installed29683 corpus includes4-profile name/mask, pointer, alias, syntactic
+domain and840 guard/copy cases; fresh ARM64 probes constrain Event ordering and
+all9 process names across32 masks. Fresh x64/WoW64 Event effects remain a stated
+same-kernel extrapolation. State creation/update, data/name-information queries,
+subscription delivery/acknowledgement and nonprocess scopes remain unsupported.
+The opaque C API1.11.0 and Assist Rust ABI184 are unchanged. These subscriptions
+advance one startup service; complete ordinary guest execution remains separate
+work. See [subscription evidence](../../specifications/windows/native-wnf-subscribe/README.md).
+
+Historical native WNF process Event registration (2026-10-12):
 NtSetWnfProcessNotificationEvent consumes one HANDLE; type and right0x2 precede
 once-only registration. The first valid Event gains one process-owned reference,
 independent of aliases/caller handle reuse, without a signal/type change. Repeat
@@ -14,7 +42,7 @@ state is an explicit same-kernel extrapolation. Registration uses a new private 
 and opaque C ABI contracts remain unchanged. Full-suite counts7660/0/2,7652/2/2,7063/5/2 preserve prior
 Linux/Windows failures. The identical observer advances44258->46245 (1987
 scheduler calls) to NtSubscribeWnfStateChange0x1CD; all four ordinary programs
-still fail before guest exit. State/subscription/delivery remain unsupported.
+still fail before guest exit. State/subscription/delivery were unsupported at that boundary.
 See [WNF registration evidence](../../specifications/windows/native-wnf-process-event/README.md).
 
 Historical native worker-factory BindingCount updates (2026-10-12):

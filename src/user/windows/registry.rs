@@ -8,6 +8,8 @@ pub(crate) const NLS_KEY: &str =
     "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Nls\\CodePage";
 pub(crate) const SESSION_MANAGER_KEY: &str =
     "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Session Manager";
+pub(crate) const WNF_KEY: &str =
+    "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Notifications";
 pub(crate) const MAX_VALUES: usize = 4096;
 pub(crate) const MAX_NAME_UNITS: usize = 16_383;
 pub(crate) const MAX_VALUE_BYTES: usize = 1 << 20;
@@ -199,6 +201,8 @@ fn invalid(message: &str) -> io::Error {
 mod installed;
 #[cfg(windows)]
 pub(crate) use installed::snapshot;
+#[cfg(windows)]
+pub(crate) use installed::wnf_values;
 #[cfg(not(windows))]
 pub(crate) fn snapshot() -> io::Result<Registry> {
     Err(io::Error::new(

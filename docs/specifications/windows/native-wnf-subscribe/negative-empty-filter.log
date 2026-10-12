@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-empty-filter/check-evidence.py", line 217, in <module>
+    require(results(stem + 'targeted.log') == [(15 if host == 'windows' else 14, 0, 0)], 'nonempty focused subscription selection')
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-empty-filter/check-evidence.py", line 7, in require
+    raise ValueError(message)
+ValueError: nonempty focused subscription selection

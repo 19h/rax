@@ -1,0 +1,85 @@
+{
+  "root": "0c2144d93bf66997000d257788301341bad25fdd",
+  "rax": "6d5e438b9f39b8cb3297567f4215250a5a47a307",
+  "owned_rax": [
+    "src/user/windows/mod.rs",
+    "src/user/windows/wnf.rs",
+    "src/user/windows/wnf/catalog.rs",
+    "src/user/windows/wnf/installed.rs",
+    "src/user/windows/wnf/tests.rs",
+    "src/user/windows/registry.rs",
+    "src/user/windows/registry/installed.rs",
+    "src/user/windows/native.rs",
+    "src/user/windows/process/start.rs",
+    "src/user/windows/process/native_start/tests.rs",
+    "src/user/windows/objects.rs",
+    "src/user/windows/objects/wnf.rs",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/wnf.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/wnf_subscription_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/wnf_subscription_leaf_tests.rs",
+    "docs/architecture/user-mode/windows-services.md",
+    "src/user/windows/process/mod.rs"
+  ],
+  "owned_root": [
+    "VENDORED_VERSIONS.md",
+    "src/emulation/native-process-emulation.md",
+    "vendor/rax"
+  ],
+  "sources": {
+    "src/user/windows/mod.rs": {
+      "bytes": 670,
+      "sha256": "f413c02f213e82ebe24b61805aa1a8388fd8a09489c571aa13f8f4d7832aade1"
+    },
+    "src/user/windows/registry.rs": {
+      "bytes": 7045,
+      "sha256": "bdd4b5d578b655d318d19fbc56c93cd05ad89ec704fd2fe80f558645cb283964"
+    },
+    "src/user/windows/registry/installed.rs": {
+      "bytes": 8794,
+      "sha256": "ad8c4c50cf9701f9719ba9335c57534a187af57b10da19d2d7d5e036b104917d"
+    },
+    "src/user/windows/native.rs": {
+      "bytes": 15319,
+      "sha256": "196fc678e72a648277975ca17d25a9a0b5a4c327a1df4d08761bf669bb0fc5a6"
+    },
+    "src/user/windows/process/start.rs": {
+      "bytes": 21160,
+      "sha256": "594da70046fbed03123703d25414b7b5f1cb017f9c188414e2b16679f36aebb1"
+    },
+    "src/user/windows/process/native_start/tests.rs": {
+      "bytes": 12036,
+      "sha256": "d4528966026393c59be195167b7e80632b0f7a8379f87af9a9704f0d32ecca42"
+    },
+    "src/user/windows/objects.rs": {
+      "bytes": 24104,
+      "sha256": "0311264e2b27064356b2fa76bfc9fb46cf346086a82f24440bb87bc91cdb8dce"
+    },
+    "src/user/windows/objects/wnf.rs": {
+      "bytes": 1609,
+      "sha256": "f68f8728840a43d72912a4403ff01aa7fe1e474705fe1ed592f171c5b7dd8253"
+    },
+    "src/user/windows/dll/native.rs": {
+      "bytes": 15159,
+      "sha256": "f6d202f5ea5cc02a76baa170ad18fa0a7b346149b8296a1056c5cc09990c545f"
+    },
+    "src/user/windows/dll/native/wnf.rs": {
+      "bytes": 1196,
+      "sha256": "77cd7a9bad4d080d459904a07c5e983ee9cdcec872c10d579ae85a105306cca6"
+    },
+    "src/user/windows/process/sched/tests/services_tests.rs": {
+      "bytes": 46221,
+      "sha256": "621e9882bc17a73bdc98be1df7f45a9c858d25f6ee9d551d704bfeb92639c154"
+    },
+    "docs/architecture/user-mode/windows-services.md": {
+      "bytes": 14997,
+      "sha256": "263656f4d3561665279cd85399a1e8cad88e6a57d58be380a7e4c7fc544500bd"
+    },
+    "src/user/windows/process/mod.rs": {
+      "bytes": 15393,
+      "sha256": "32b80155df3fe6e09a17f14ac8fa3f4c72753692746990811ec7d5500a73e259"
+    }
+  },
+  "reconstruction": "Baseline identities restored from recorded unchanged parent commits after a cache variable error overwrote this JSON; diagnostic bytes retained."
+}

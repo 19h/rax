@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-forged-summary/check-evidence.py", line 215, in <module>
+    require(summary['tests']['full'][host] == dict(zip(['pass', 'fail', 'ignored'], EXPECTED_FULL[host])), 'full-suite summary identity')
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-forged-summary/check-evidence.py", line 7, in require
+    raise ValueError(message)
+ValueError: full-suite summary identity

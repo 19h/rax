@@ -246,6 +246,7 @@ pub struct Objects {
     packets: wait_packets::PacketAssociations,
     /// One process-owned notification Event, independent of caller handles.
     wnf_event: Option<ObjId>,
+    wnf_subscriptions: wnf::Subscriptions,
 }
 
 fn name_key(name: &str) -> String {
@@ -516,6 +517,7 @@ impl Objects {
         self.names.clear();
         self.packets = Default::default();
         self.wnf_event = None;
+        self.wnf_subscriptions.records.clear();
         self.objs.drain().map(|(_, entry)| entry.obj)
     }
 

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "A1",
+    "assumption": "Native build29683 subscription ABI remains valid for three caller ABIs.",
+    "basis": "Pinned PHNT and actual 4-profile native matrices.",
+    "dependent": "Argument capture, status/output order.",
+    "stress": "WoW64, x86 LAA, unaligned and inaccessible spans.",
+    "probe": "Any status/output mismatch in retained matrix.",
+    "status": "confirmed for measured build"
+  },
+  {
+    "id": "A2",
+    "assumption": "Subscription IDs are opaque generation identifiers rather than required host-global numerical values.",
+    "basis": "Fresh IDs vary across native processes; repeat preserves ID; unsubscribe/recreate changes it.",
+    "dependent": "Private guest-owned allocator.",
+    "stress": "Duplicate subscription, exhausted generation, separate processes.",
+    "probe": "Native consumer performs numerical comparison beyond equality/identity.",
+    "status": "retained"
+  },
+  {
+    "id": "A3",
+    "assumption": "Fresh ARM64 event effects also apply to x64 and WoW64 callers on this installed kernel.",
+    "basis": "Mature all-profile result equivalence; fresh compatibility debugging not yet demonstrated.",
+    "dependent": "Shared private subscription/event model.",
+    "stress": "Installed x64/WoW64 leaves and synthetic all-ABI regression.",
+    "probe": "Fresh compatibility oracle produces different notification or acknowledgement.",
+    "status": "retained; fresh native cross-ABI unknown"
+  },
+  {
+    "id": "A4",
+    "assumption": "Selected process-scoped well-known names begin with zero change stamp and empty payload.",
+    "basis": "288-case fresh native nine-name process oracle: successful descriptors have stamp=0 and size=0.",
+    "dependent": "Subscription initial state.",
+    "stress": "Every selected process-scoped provisioned name, repeated process creation.",
+    "probe": "A fresh process-scoped name returns nonzero data/stamp before guest update.",
+    "status": "confirmed for successful fresh native subscriptions; denied data remains unknown"
+  },
+  {
+    "id": "A5",
+    "assumption": "Native runtime acquisition selects the creator primary token identity for local WNF access.",
+    "basis": "Same-host filesystem and registry acquisition already use creator identity; query-only primary-token capture and native SYSTEM access matrix.",
+    "dependent": "Private immutable DACL grants, no host forwarding.",
+    "stress": "SID groups/deny-only/ACL order; primary-token changes; impersonating threads and AppContainers remain outside profile.",
+    "probe": "A primary-token-matched native WNF call disagrees with computed permissions.",
+    "status": "retained; narrower captured profile only"
+  },
+  {
+    "id": "A6",
+    "assumption": "For captured catalog grants 0,1,3, metadata masks need the extra publish grant; a standalone grant2 is unmeasured.",
+    "basis": "All72 mature and288 fresh process name calls. Temporary creation trials failed before subscription and do not prove grant2.",
+    "dependent": "Classic DACL evaluator; computed grant2 explicitly Unmodeled.",
+    "stress": "Publish-only ACL or matched generic rights.",
+    "probe": "A successful native creation/oracle with exact grant2 demonstrates required access.",
+    "status": "retained; grant2 excluded"
+  }
+]

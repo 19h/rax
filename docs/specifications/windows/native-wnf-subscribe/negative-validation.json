@@ -1,0 +1,69 @@
+[
+  {
+    "case": "raw-corruption",
+    "exit-code": 1,
+    "rejected": true,
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-raw-corruption/check-evidence.py",
+      "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-raw-corruption",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ]
+  },
+  {
+    "case": "semantic-status",
+    "exit-code": 1,
+    "rejected": true,
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-semantic-status/check-evidence.py",
+      "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-semantic-status",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ]
+  },
+  {
+    "case": "manifest-omission",
+    "exit-code": 1,
+    "rejected": true,
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-manifest-omission/check-evidence.py",
+      "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-manifest-omission",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ]
+  },
+  {
+    "case": "empty-filter",
+    "exit-code": 1,
+    "rejected": true,
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-empty-filter/check-evidence.py",
+      "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-empty-filter",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ]
+  },
+  {
+    "case": "forged-summary",
+    "exit-code": 1,
+    "rejected": true,
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-forged-summary/check-evidence.py",
+      "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-forged-summary",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ]
+  },
+  {
+    "case": "optimized-python",
+    "exit-code": 1,
+    "rejected": true,
+    "command": [
+      "python3",
+      "-O",
+      "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-optimized-python/check-evidence.py",
+      "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-optimized-python",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ]
+  }
+]

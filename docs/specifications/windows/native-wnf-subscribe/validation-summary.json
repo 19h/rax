@@ -1,0 +1,57 @@
+{
+  "native-cases": 30332,
+  "native-warmups-excluded": 5,
+  "native-producers": 27,
+  "tests": {
+    "targeted": {
+      "macos": 14,
+      "linux": 14,
+      "windows": 15
+    },
+    "full": {
+      "macos": {
+        "pass": 7674,
+        "fail": 0,
+        "ignored": 2
+      },
+      "linux": {
+        "pass": 7666,
+        "fail": 2,
+        "ignored": 2
+      },
+      "windows": {
+        "pass": 7078,
+        "fail": 5,
+        "ignored": 2
+      }
+    },
+    "capi": {
+      "macos": 168,
+      "linux": 168,
+      "windows": 168
+    },
+    "integration": {
+      "macos": 544,
+      "linux": 544,
+      "windows": 4
+    }
+  },
+  "frontier": {
+    "before-turn": 46245,
+    "after-turn": 50254,
+    "delta-scheduler-calls": 4009,
+    "service": "NtTraceControl",
+    "svc": "0x1d6",
+    "pc": "0x180002da0",
+    "thread": 8,
+    "arguments": [
+      "0x1b",
+      "0xabe800",
+      "0x4",
+      "0x0",
+      "0x0",
+      "0xabe804"
+    ],
+    "guest-exit": "not reached"
+  }
+}

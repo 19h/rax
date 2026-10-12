@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-raw-corruption/check-evidence.py", line 22, in <module>
+    require((base / name).stat().st_size == row['bytes'] and sha(base / name) == row['sha256'], 'evidence identity ' + name)
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-raw-corruption/check-evidence.py", line 7, in require
+    raise ValueError(message)
+ValueError: evidence identity native-wnf-subscribe-domain-arm64.log

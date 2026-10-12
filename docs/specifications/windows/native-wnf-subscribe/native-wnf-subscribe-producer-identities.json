@@ -1,0 +1,697 @@
+{
+  "windows-version": "10.0.29683",
+  "host-machine": "ARM64",
+  "producers": [
+    {
+      "profile": "native-wnf-subscribe-alias-arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64",
+      "executable": "native-wnf-subscribe-alias-arm64.exe",
+      "source": "native-wnf-subscribe-alias.cpp",
+      "source-sha256": "f0c5dafab13fc6937e690da7cea7d2089e7cd5817dd0734a5f4851860698dcb9",
+      "log": "native-wnf-subscribe-alias-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-alias.cpp",
+        "bytes": 2008,
+        "sha256": "f0c5dafab13fc6937e690da7cea7d2089e7cd5817dd0734a5f4851860698dcb9"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-alias-arm64.exe",
+        "bytes": 145408,
+        "sha256": "f37ba242292b28e15dbbfacac7e6e796eb6a7f7a7633f4050ae4efad3f7968d7",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-alias-arm64.log",
+        "bytes": 8201,
+        "sha256": "055ea164dde60de0f1514c70226774edf104c1834da601733c9a9c017a6a3343"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-alias-x64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x64",
+      "executable": "native-wnf-subscribe-alias-x64.exe",
+      "source": "native-wnf-subscribe-alias.cpp",
+      "source-sha256": "f0c5dafab13fc6937e690da7cea7d2089e7cd5817dd0734a5f4851860698dcb9",
+      "log": "native-wnf-subscribe-alias-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x64\\native-wnf-subscribe-alias.cpp",
+        "bytes": 2008,
+        "sha256": "f0c5dafab13fc6937e690da7cea7d2089e7cd5817dd0734a5f4851860698dcb9"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x64\\native-wnf-subscribe-alias-x64.exe",
+        "bytes": 142848,
+        "sha256": "9d2c485bdc6266c12e2a6f910f5f7604858e9c87acaa20999739e076c39efc70",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x64\\native-wnf-subscribe-alias-x64.log",
+        "bytes": 8201,
+        "sha256": "9755f94d3cf225827b80d3ca66a641739886b933994d00a49aca53439b23914a"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-alias-x86-laa",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86-laa",
+      "executable": "native-wnf-subscribe-alias-x86-laa.exe",
+      "source": "native-wnf-subscribe-alias.cpp",
+      "source-sha256": "f0c5dafab13fc6937e690da7cea7d2089e7cd5817dd0734a5f4851860698dcb9",
+      "log": "native-wnf-subscribe-alias-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86-laa\\native-wnf-subscribe-alias.cpp",
+        "bytes": 2008,
+        "sha256": "f0c5dafab13fc6937e690da7cea7d2089e7cd5817dd0734a5f4851860698dcb9"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86-laa\\native-wnf-subscribe-alias-x86-laa.exe",
+        "bytes": 119296,
+        "sha256": "0ea38a151527264b92831a7028e270f42d0d6d7c75e3d46b149b850134d9d2c2",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86-laa\\native-wnf-subscribe-alias-x86-laa.log",
+        "bytes": 8201,
+        "sha256": "c7cec76214d636452c6ff83e80e48e88519b72ded38fbd93289fe639c84fe181"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-alias-x86",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86",
+      "executable": "native-wnf-subscribe-alias-x86.exe",
+      "source": "native-wnf-subscribe-alias.cpp",
+      "source-sha256": "f0c5dafab13fc6937e690da7cea7d2089e7cd5817dd0734a5f4851860698dcb9",
+      "log": "native-wnf-subscribe-alias-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86\\native-wnf-subscribe-alias.cpp",
+        "bytes": 2008,
+        "sha256": "f0c5dafab13fc6937e690da7cea7d2089e7cd5817dd0734a5f4851860698dcb9"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86\\native-wnf-subscribe-alias-x86.exe",
+        "bytes": 119296,
+        "sha256": "58394d97eaca5ada42da3e31d47789230670d12b0e1b91c689c35cfb855a719f",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86\\native-wnf-subscribe-alias-x86.log",
+        "bytes": 8201,
+        "sha256": "02ee9f36482f12748319ee62e833977073d2f636ef6c1c9f74b9c19a73e99dc0"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64",
+      "executable": "native-wnf-subscribe-arm64.exe",
+      "source": "native-wnf-subscribe.cpp",
+      "source-sha256": "bbdaf77a58c9d8b3a288e02ab0c1ef64d17304d5f4b528d2e2be0cd30b3a94b8",
+      "log": "native-wnf-subscribe-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe.cpp",
+        "bytes": 2006,
+        "sha256": "bbdaf77a58c9d8b3a288e02ab0c1ef64d17304d5f4b528d2e2be0cd30b3a94b8"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-arm64.exe",
+        "bytes": 145408,
+        "sha256": "c39046d7745a53a1cfe892cfed4591923f1eac1e27fcf7004041647847589d5f",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-arm64.log",
+        "bytes": 27009,
+        "sha256": "60d9ff1d7c615d4255a9459d026d48f2a991ae9745506154d28c5b9b95a1d9e9"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-boundaries-arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-boundaries-arm64",
+      "executable": "native-wnf-subscribe-boundaries-arm64.exe",
+      "source": "native-wnf-subscribe-boundaries.cpp",
+      "source-sha256": "2c0919774fc794128cc675eed5c726ec7e2fd489ea59a952878eb6b4df7116ce",
+      "log": "native-wnf-subscribe-boundaries-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-boundaries-arm64\\native-wnf-subscribe-boundaries.cpp",
+        "bytes": 4280,
+        "sha256": "2c0919774fc794128cc675eed5c726ec7e2fd489ea59a952878eb6b4df7116ce"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-boundaries-arm64\\native-wnf-subscribe-boundaries-arm64.exe",
+        "bytes": 156160,
+        "sha256": "4fe4769e278b42aa629a34ad8d9efb40b2de3415dd4566c27f1c636f5a8a428a",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-boundaries-arm64\\native-wnf-subscribe-boundaries-arm64.log",
+        "bytes": 756263,
+        "sha256": "ace8ebc6fcb73c356c60b0b80666580caffcff860094e47745142d3f2838b0bd"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-boundaries-x64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-boundaries-x64",
+      "executable": "native-wnf-subscribe-boundaries-x64.exe",
+      "source": "native-wnf-subscribe-boundaries.cpp",
+      "source-sha256": "2c0919774fc794128cc675eed5c726ec7e2fd489ea59a952878eb6b4df7116ce",
+      "log": "native-wnf-subscribe-boundaries-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-boundaries-x64\\native-wnf-subscribe-boundaries.cpp",
+        "bytes": 4280,
+        "sha256": "2c0919774fc794128cc675eed5c726ec7e2fd489ea59a952878eb6b4df7116ce"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-boundaries-x64\\native-wnf-subscribe-boundaries-x64.exe",
+        "bytes": 155648,
+        "sha256": "7678f6cea182688714e94467b97a7391795842268f82f421ed09366d17b4166b",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-boundaries-x64\\native-wnf-subscribe-boundaries-x64.log",
+        "bytes": 756263,
+        "sha256": "68ca8758188c55f416d334b477fd4db28ffcf9bd8b64e5d6276767c70c7d94e8"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-boundaries-x86-laa",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-boundaries-x86-laa",
+      "executable": "native-wnf-subscribe-boundaries-x86-laa.exe",
+      "source": "native-wnf-subscribe-boundaries.cpp",
+      "source-sha256": "2c0919774fc794128cc675eed5c726ec7e2fd489ea59a952878eb6b4df7116ce",
+      "log": "native-wnf-subscribe-boundaries-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-boundaries-x86-laa\\native-wnf-subscribe-boundaries.cpp",
+        "bytes": 4280,
+        "sha256": "2c0919774fc794128cc675eed5c726ec7e2fd489ea59a952878eb6b4df7116ce"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-boundaries-x86-laa\\native-wnf-subscribe-boundaries-x86-laa.exe",
+        "bytes": 130560,
+        "sha256": "b01180de8a349bfea846135ccb4d47e4b383498998f46a5a050021170131756b",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-boundaries-x86-laa\\native-wnf-subscribe-boundaries-x86-laa.log",
+        "bytes": 756263,
+        "sha256": "b0b9a6b14ad06e42688a84529e2f242aa639a260dd0b8a71ef76211e45b440b0"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-boundaries-x86",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-boundaries-x86",
+      "executable": "native-wnf-subscribe-boundaries-x86.exe",
+      "source": "native-wnf-subscribe-boundaries.cpp",
+      "source-sha256": "2c0919774fc794128cc675eed5c726ec7e2fd489ea59a952878eb6b4df7116ce",
+      "log": "native-wnf-subscribe-boundaries-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-boundaries-x86\\native-wnf-subscribe-boundaries.cpp",
+        "bytes": 4280,
+        "sha256": "2c0919774fc794128cc675eed5c726ec7e2fd489ea59a952878eb6b4df7116ce"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-boundaries-x86\\native-wnf-subscribe-boundaries-x86.exe",
+        "bytes": 130560,
+        "sha256": "740dbf50cc9ed7bbba0a4e49b3c6ffd0cbaf2082afea57a32f7fe9de4e05658a",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-boundaries-x86\\native-wnf-subscribe-boundaries-x86.log",
+        "bytes": 756263,
+        "sha256": "104e9ecbe100507c636ff5dfa21cc22289f324eaf50ac66e60effeb0fdf93e4a"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-delivery-arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64",
+      "executable": "native-wnf-subscribe-delivery-arm64.exe",
+      "source": "native-wnf-subscribe-delivery.cpp",
+      "source-sha256": "384bcd40b3d10975986c4b808922b4e76f95ba007cae4c013f9c776f50dca236",
+      "log": "native-wnf-subscribe-delivery-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-delivery.cpp",
+        "bytes": 11311,
+        "sha256": "384bcd40b3d10975986c4b808922b4e76f95ba007cae4c013f9c776f50dca236"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-delivery-arm64.exe",
+        "bytes": 169984,
+        "sha256": "87d4b96a452a23b4678deef91a9cc08e9bc27ccd8d27de4e87d46ba186cbc51d",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-delivery-arm64.log",
+        "bytes": 120189,
+        "sha256": "5af649429a57319366ad3d6960827ebabb1a4ad50acb634af28aa56c0012d476"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-domain-arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64",
+      "executable": "native-wnf-subscribe-domain-arm64.exe",
+      "source": "native-wnf-subscribe-domain.cpp",
+      "source-sha256": "c34c13802cfdeacaf1c1f18592da4254822b559e94c01e0714a35a80811859b4",
+      "log": "native-wnf-subscribe-domain-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-domain.cpp",
+        "bytes": 1231,
+        "sha256": "c34c13802cfdeacaf1c1f18592da4254822b559e94c01e0714a35a80811859b4"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-domain-arm64.exe",
+        "bytes": 144384,
+        "sha256": "97c044e76bb35a12e63865cfb0484a6b0324737f07c8607367c9979a63c1d6a4",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-domain-arm64.log",
+        "bytes": 268735,
+        "sha256": "c2842a668260a016bad291d302747b0b8a73ce8662a0196aa8d48c5cd9d3a731"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-domain-x64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x64",
+      "executable": "native-wnf-subscribe-domain-x64.exe",
+      "source": "native-wnf-subscribe-domain.cpp",
+      "source-sha256": "c34c13802cfdeacaf1c1f18592da4254822b559e94c01e0714a35a80811859b4",
+      "log": "native-wnf-subscribe-domain-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x64\\native-wnf-subscribe-domain.cpp",
+        "bytes": 1231,
+        "sha256": "c34c13802cfdeacaf1c1f18592da4254822b559e94c01e0714a35a80811859b4"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x64\\native-wnf-subscribe-domain-x64.exe",
+        "bytes": 141824,
+        "sha256": "6efd685ef43cbec3d8cc46d590311ad34b1fb656e633f15a0c28a3e36b0189cf",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x64\\native-wnf-subscribe-domain-x64.log",
+        "bytes": 268735,
+        "sha256": "ea8080473b9a15f23a82b3a88daabff1342a481bd7a4cbf9187ba75e60b21c8f"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-domain-x86-laa",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86-laa",
+      "executable": "native-wnf-subscribe-domain-x86-laa.exe",
+      "source": "native-wnf-subscribe-domain.cpp",
+      "source-sha256": "c34c13802cfdeacaf1c1f18592da4254822b559e94c01e0714a35a80811859b4",
+      "log": "native-wnf-subscribe-domain-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86-laa\\native-wnf-subscribe-domain.cpp",
+        "bytes": 1231,
+        "sha256": "c34c13802cfdeacaf1c1f18592da4254822b559e94c01e0714a35a80811859b4"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86-laa\\native-wnf-subscribe-domain-x86-laa.exe",
+        "bytes": 117760,
+        "sha256": "65d7d097a08a7dc54e25af2567e0307618f5321b4612128dba33ae7986638462",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86-laa\\native-wnf-subscribe-domain-x86-laa.log",
+        "bytes": 268735,
+        "sha256": "657cf2cb1963c847c4842018e415d10a35b59089d747dce388a7d06cdec721fd"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-domain-x86",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86",
+      "executable": "native-wnf-subscribe-domain-x86.exe",
+      "source": "native-wnf-subscribe-domain.cpp",
+      "source-sha256": "c34c13802cfdeacaf1c1f18592da4254822b559e94c01e0714a35a80811859b4",
+      "log": "native-wnf-subscribe-domain-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86\\native-wnf-subscribe-domain.cpp",
+        "bytes": 1231,
+        "sha256": "c34c13802cfdeacaf1c1f18592da4254822b559e94c01e0714a35a80811859b4"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86\\native-wnf-subscribe-domain-x86.exe",
+        "bytes": 117760,
+        "sha256": "80d6929f444f5e8cfad6967c4f8c0920d4eb08babf63af3ec67c0250494e5153",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86\\native-wnf-subscribe-domain-x86.log",
+        "bytes": 268735,
+        "sha256": "943b3ab46db68a2fc5c2f0df33978ec069dbd5e1935bad646173facf3630d49f"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-fresh-arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64",
+      "executable": "native-wnf-subscribe-fresh-arm64.exe",
+      "source": "native-wnf-subscribe-fresh.cpp",
+      "source-sha256": "05a4e96735274aae33cef4d15d92489029daad189157bd610f43c622805a8445",
+      "log": "native-wnf-subscribe-fresh-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-fresh.cpp",
+        "bytes": 10175,
+        "sha256": "05a4e96735274aae33cef4d15d92489029daad189157bd610f43c622805a8445"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-fresh-arm64.exe",
+        "bytes": 167936,
+        "sha256": "1dbf81a7628a493f566f89c14c90c6e93ee558993429101a4786bdda38b0c727",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-fresh-arm64.log",
+        "bytes": 33443,
+        "sha256": "efe7fe9f44325cdf126807921bf32946979531665977fae40212aed0b56554de"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-guards-arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64",
+      "executable": "native-wnf-subscribe-guards-arm64.exe",
+      "source": "native-wnf-subscribe-guards.cpp",
+      "source-sha256": "1b25956756b44ef254cb7cbe062a185c8ac3a40f647ef82e6260de7bf8355721",
+      "log": "native-wnf-subscribe-guards-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-guards.cpp",
+        "bytes": 2325,
+        "sha256": "1b25956756b44ef254cb7cbe062a185c8ac3a40f647ef82e6260de7bf8355721"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-guards-arm64.exe",
+        "bytes": 145920,
+        "sha256": "79c7a660f3650029deb84e71f71e73136a8fc723bee8b7ada290a0d41e44116b",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-guards-arm64.log",
+        "bytes": 35880,
+        "sha256": "c4255f53e3dad2f8ed7db2350ac2e1db5f34790bccbdb89d88e48b40c6bea4e6"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-guards-x64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x64",
+      "executable": "native-wnf-subscribe-guards-x64.exe",
+      "source": "native-wnf-subscribe-guards.cpp",
+      "source-sha256": "1b25956756b44ef254cb7cbe062a185c8ac3a40f647ef82e6260de7bf8355721",
+      "log": "native-wnf-subscribe-guards-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x64\\native-wnf-subscribe-guards.cpp",
+        "bytes": 2325,
+        "sha256": "1b25956756b44ef254cb7cbe062a185c8ac3a40f647ef82e6260de7bf8355721"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x64\\native-wnf-subscribe-guards-x64.exe",
+        "bytes": 143360,
+        "sha256": "b893566862fbd3674a3a9bc942f3f3cac9ea1ba4685f55a6a21ac11bf18ad329",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x64\\native-wnf-subscribe-guards-x64.log",
+        "bytes": 35880,
+        "sha256": "c22f77fa80c39cbb0503a4323045df47ef364c4aa71cbef740aa36631d307ce9"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-guards-x86-laa",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86-laa",
+      "executable": "native-wnf-subscribe-guards-x86-laa.exe",
+      "source": "native-wnf-subscribe-guards.cpp",
+      "source-sha256": "1b25956756b44ef254cb7cbe062a185c8ac3a40f647ef82e6260de7bf8355721",
+      "log": "native-wnf-subscribe-guards-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86-laa\\native-wnf-subscribe-guards.cpp",
+        "bytes": 2325,
+        "sha256": "1b25956756b44ef254cb7cbe062a185c8ac3a40f647ef82e6260de7bf8355721"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86-laa\\native-wnf-subscribe-guards-x86-laa.exe",
+        "bytes": 119296,
+        "sha256": "e684c77a36e2251182f151827d00e465f4c6b416a3e46fdc1b23c811cf11a4d7",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86-laa\\native-wnf-subscribe-guards-x86-laa.log",
+        "bytes": 35880,
+        "sha256": "a291af8d656fcb6dda0668bb0bdc196d653b2613a58b5749bac59de444397dbe"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-guards-x86",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86",
+      "executable": "native-wnf-subscribe-guards-x86.exe",
+      "source": "native-wnf-subscribe-guards.cpp",
+      "source-sha256": "1b25956756b44ef254cb7cbe062a185c8ac3a40f647ef82e6260de7bf8355721",
+      "log": "native-wnf-subscribe-guards-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86\\native-wnf-subscribe-guards.cpp",
+        "bytes": 2325,
+        "sha256": "1b25956756b44ef254cb7cbe062a185c8ac3a40f647ef82e6260de7bf8355721"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86\\native-wnf-subscribe-guards-x86.exe",
+        "bytes": 119296,
+        "sha256": "fd9c9bb2731195fb1db43c8c7e50497c6c0740c8957ff40a32db24f352f63671",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86\\native-wnf-subscribe-guards-x86.log",
+        "bytes": 35880,
+        "sha256": "5c882078e6c4c9fc1c1f9bc99258b0e6370e23d558ad370696436ac0ff6a3563"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-pending-arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64",
+      "executable": "native-wnf-subscribe-pending-arm64.exe",
+      "source": "native-wnf-subscribe-pending.cpp",
+      "source-sha256": "72632a52482587bc7fce3c0c94b0c439ef4a97158d43b4675e30563b0ddb97ed",
+      "log": "native-wnf-subscribe-pending-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-pending.cpp",
+        "bytes": 11310,
+        "sha256": "72632a52482587bc7fce3c0c94b0c439ef4a97158d43b4675e30563b0ddb97ed"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-pending-arm64.exe",
+        "bytes": 169984,
+        "sha256": "79c25cd045b047ec1ebbdf8bb26b8b9f0ab8577b6b123fcc0733699607e75a89",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-pending-arm64.log",
+        "bytes": 120189,
+        "sha256": "753decf4080ec56247b8ba93c12bf0da0aca78cd4a8287d18032f3978e1f6497"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-process-fresh-arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64",
+      "executable": "native-wnf-subscribe-process-fresh-arm64.exe",
+      "source": "native-wnf-subscribe-process-fresh.cpp",
+      "source-sha256": "711aeb3d11eaa6e38df8e6674c6bed6945f9cfe833a93fba9c004c130eda7125",
+      "log": "native-wnf-subscribe-process-fresh-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-process-fresh.cpp",
+        "bytes": 11521,
+        "sha256": "711aeb3d11eaa6e38df8e6674c6bed6945f9cfe833a93fba9c004c130eda7125"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-process-fresh-arm64.exe",
+        "bytes": 169984,
+        "sha256": "011f1f9ed92e341fce2d59a5a906617787e44184e9e19c1c8a92f2b834b8e2b5",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-process-fresh-arm64.log",
+        "bytes": 276955,
+        "sha256": "38300bf85ee20422881a90cc2f50ca3df9ada4b023237dbb78c7151e42641306"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-process-names-arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64",
+      "executable": "native-wnf-subscribe-process-names-arm64.exe",
+      "source": "native-wnf-subscribe-process-names.cpp",
+      "source-sha256": "993acb2ad24c4c4c96edb95d34f428ce0ab2a87812bf827097011b0be31df354",
+      "log": "native-wnf-subscribe-process-names-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-process-names.cpp",
+        "bytes": 1694,
+        "sha256": "993acb2ad24c4c4c96edb95d34f428ce0ab2a87812bf827097011b0be31df354"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-process-names-arm64.exe",
+        "bytes": 144896,
+        "sha256": "82ffaac6c02d41702ed832963b7eab9ee46b51e60e8c9ed43becc70339414074",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-process-names-arm64.log",
+        "bytes": 13960,
+        "sha256": "fb2b91d8e70d9f343c9da7c614b53f47283c5dee39a5f3688ed00f9d39668ff4"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-subject-arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64",
+      "executable": "native-wnf-subscribe-subject-arm64.exe",
+      "source": "native-wnf-subscribe-subject.cpp",
+      "source-sha256": "ee3acc9f0865b6fe6a4b41c4aca9cf17bbd98b292bb5ce58c1d2da1e27734672",
+      "log": "native-wnf-subscribe-subject-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-subject.cpp",
+        "bytes": 1532,
+        "sha256": "ee3acc9f0865b6fe6a4b41c4aca9cf17bbd98b292bb5ce58c1d2da1e27734672"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-subject-arm64.exe",
+        "bytes": 150528,
+        "sha256": "a3ec577c8411bfebe5adecd0fbc577bc7c5ad6c06f67eb7528f741fd348c2857",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-subject-arm64.log",
+        "bytes": 541,
+        "sha256": "46cf3c5605d392a3dd0af73c49d2176b61a4bf38fc86d56dbebf9a29a450b6eb"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-update-arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64",
+      "executable": "native-wnf-subscribe-update-arm64.exe",
+      "source": "native-wnf-subscribe-update.cpp",
+      "source-sha256": "8e1abfc05951d9cf4f1941ba8d911d8c7da1b0291456c23a5296df50ac065410",
+      "log": "native-wnf-subscribe-update-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-update.cpp",
+        "bytes": 10344,
+        "sha256": "8e1abfc05951d9cf4f1941ba8d911d8c7da1b0291456c23a5296df50ac065410"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-update-arm64.exe",
+        "bytes": 168960,
+        "sha256": "322288448d27da3b01daaca9d0c97ceffb5c51a194a45c976714c4c5fb213689",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-arm64\\native-wnf-subscribe-update-arm64.log",
+        "bytes": 69029,
+        "sha256": "8deafee65843f18394ea518a185e2ba64fef4be15af2ab2c257e5c4efa78f57f"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-x64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x64",
+      "executable": "native-wnf-subscribe-x64.exe",
+      "source": "native-wnf-subscribe.cpp",
+      "source-sha256": "bbdaf77a58c9d8b3a288e02ab0c1ef64d17304d5f4b528d2e2be0cd30b3a94b8",
+      "log": "native-wnf-subscribe-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x64\\native-wnf-subscribe.cpp",
+        "bytes": 2006,
+        "sha256": "bbdaf77a58c9d8b3a288e02ab0c1ef64d17304d5f4b528d2e2be0cd30b3a94b8"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x64\\native-wnf-subscribe-x64.exe",
+        "bytes": 142848,
+        "sha256": "dcc14e2070286cfd45966b2af7bd72dc1ed856009fa1b1c4d1be8af0c2397a13",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x64\\native-wnf-subscribe-x64.log",
+        "bytes": 27009,
+        "sha256": "3c6316e4b61d4ec00f3d5d4fc599b84b534fda4d65bca560d2717e5ecee09c33"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-x86-laa",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86-laa",
+      "executable": "native-wnf-subscribe-x86-laa.exe",
+      "source": "native-wnf-subscribe.cpp",
+      "source-sha256": "bbdaf77a58c9d8b3a288e02ab0c1ef64d17304d5f4b528d2e2be0cd30b3a94b8",
+      "log": "native-wnf-subscribe-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86-laa\\native-wnf-subscribe.cpp",
+        "bytes": 2006,
+        "sha256": "bbdaf77a58c9d8b3a288e02ab0c1ef64d17304d5f4b528d2e2be0cd30b3a94b8"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86-laa\\native-wnf-subscribe-x86-laa.exe",
+        "bytes": 118784,
+        "sha256": "8cf34e8015bfed5684fb99625cfb1d146c18e54774d5d9b016639b0765831a0a",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86-laa\\native-wnf-subscribe-x86-laa.log",
+        "bytes": 27009,
+        "sha256": "9db97f13df1653924a5d657af7ce85f7c8bf76d2c64dfb1dcee3cb66b6b9f2da"
+      }
+    },
+    {
+      "profile": "native-wnf-subscribe-x86",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86",
+      "executable": "native-wnf-subscribe-x86.exe",
+      "source": "native-wnf-subscribe.cpp",
+      "source-sha256": "bbdaf77a58c9d8b3a288e02ab0c1ef64d17304d5f4b528d2e2be0cd30b3a94b8",
+      "log": "native-wnf-subscribe-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86\\native-wnf-subscribe.cpp",
+        "bytes": 2006,
+        "sha256": "bbdaf77a58c9d8b3a288e02ab0c1ef64d17304d5f4b528d2e2be0cd30b3a94b8"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86\\native-wnf-subscribe-x86.exe",
+        "bytes": 118784,
+        "sha256": "445a57cf20b3703e99c99457e077da384785625e3d0e2c555c6266bc1f78b78b",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-subscribe-x86\\native-wnf-subscribe-x86.log",
+        "bytes": 27009,
+        "sha256": "c0f153f5c76b858b97807881e675c81563ae93ed902d97f7980360150e8567ca"
+      }
+    }
+  ],
+  "native-libraries": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+      "machine": 332,
+      "characteristics": 8450
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+token class=1 bytes=28
+sid kind=user index=0 attributes=00000000 bytes=010100000000000512000000
+token class=2 bytes=124
+sid kind=group index=0 attributes=0000000E bytes=01020000000000052000000020020000
+sid kind=group index=1 attributes=00000007 bytes=010100000000000100000000
+sid kind=group index=2 attributes=00000007 bytes=01010000000000050B000000
+sid kind=group index=3 attributes=00000060 bytes=010100000000001000400000
+token class=11 bytes=8
+token class=29 bytes=4
+app-container=0
+complete handles-before=59 handles-after=59

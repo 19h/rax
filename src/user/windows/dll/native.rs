@@ -91,6 +91,18 @@ pub(super) static EXPORTS: &[Export] = &[
         wnf::register_event,
     ),
     Export::func(
+        "NtSubscribeWnfStateChange",
+        Stdcall,
+        &[Ptr, I32, I32, Ptr],
+        wnf::subscribe,
+    ),
+    Export::func(
+        "NtUnsubscribeWnfStateChange",
+        Stdcall,
+        &[Ptr],
+        wnf::unsubscribe,
+    ),
+    Export::func(
         "NtCreateIoCompletion",
         Stdcall,
         &[Ptr, I32, Ptr, I32],

@@ -23,6 +23,7 @@ pub mod seh;
 pub mod sync;
 pub mod tls;
 pub mod traps;
+mod wnf;
 
 pub use arch::WinArch;
 pub use process::{ExitStatus, SpawnError, WinVersion, WindowsConfig, WindowsProcess};

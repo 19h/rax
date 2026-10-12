@@ -86,7 +86,8 @@ pub struct WindowsConfig {
     /// Permit filesystem-backed executable, DLL, and guest file access.
     pub host_filesystem: bool,
     /// Select read-only installed DLLs, API-set redirects, and a private
-    /// snapshot of the fixed system NLS CodePage key on Windows.
+    /// snapshot of fixed NLS/WNF registry metadata and the creator primary
+    /// token subject on Windows.
     /// This does not permit general guest host-file access. Defaults to false.
     pub native_libraries: bool,
     /// Explicit console routing (host streams for the CLI by default).

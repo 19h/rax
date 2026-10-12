@@ -6,7 +6,7 @@ mod tree;
 use super::SEGMENT_HEAP_KEY;
 use super::{
     MAX_NAME_UNITS, MAX_VALUE_BYTES, MAX_VALUES, NLS_KEY, Registry, SESSION_MANAGER_KEY,
-    SelectedKey, Value, invalid,
+    SelectedKey, Value, WNF_KEY, invalid,
 };
 use std::ffi::c_void;
 use std::io;
@@ -165,7 +165,10 @@ fn capture(path: &'static str) -> io::Result<SelectedKey> {
     capture_values(path, open_fixed(path)?, MAX_VALUES, super::MAX_TOTAL_BYTES)
 }
 fn open_fixed(path: &'static str) -> io::Result<OwnedKey> {
-    if !matches!(path, NLS_KEY | SESSION_MANAGER_KEY | SEGMENT_HEAP_KEY) {
+    if !matches!(
+        path,
+        NLS_KEY | SESSION_MANAGER_KEY | SEGMENT_HEAP_KEY | WNF_KEY
+    ) {
         return Err(invalid("native registry path outside fixed selection"));
     }
     let host = path
@@ -228,6 +231,12 @@ fn capture_values(
 
 fn segment_heap(registry: &Registry) -> io::Result<Option<SelectedKey>> {
     segment_heap_with(registry, open_fixed)
+}
+
+/// Separate immutable WNF provisioning metadata; it does not expose another
+/// guest registry key or retain the query-only native HKEY.
+pub(crate) fn wnf_values() -> io::Result<Vec<Value>> {
+    Ok(capture(WNF_KEY)?.values)
 }
 fn segment_heap_with(
     registry: &Registry,

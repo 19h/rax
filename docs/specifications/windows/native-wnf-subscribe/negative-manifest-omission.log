@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-manifest-omission/check-evidence.py", line 20, in <module>
+    require(set(manifest) == {p.name for p in base.iterdir() if p.is_file() and p.name != 'evidence-manifest.json'}, 'exact evidence coverage')
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-manifest-omission/check-evidence.py", line 7, in require
+    raise ValueError(message)
+ValueError: exact evidence coverage

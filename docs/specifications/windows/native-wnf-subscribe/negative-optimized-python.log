@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-optimized-python/check-evidence.py", line 8, in <module>
+    require(not sys.flags.optimize, 'optimized validation is rejected')
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/wnf-subscribe-20261012/negative-optimized-python/check-evidence.py", line 7, in require
+    raise ValueError(message)
+ValueError: optimized validation is rejected
