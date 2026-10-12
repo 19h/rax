@@ -1,0 +1,858 @@
+{
+  "linux-binding.log": {
+    "bytes": 1284,
+    "sha256": "7eea49df297c6d2e536240ffed7d28d98c12b6ace0d51fb7ac98a762e9070e34"
+  },
+  "check-negative-evidence.py": {
+    "bytes": 3732,
+    "sha256": "6aa0966aa5f630ac814387a7b201526dd7f1b5d1cb1bf5904b8dbf70ab57c914"
+  },
+  "native-etw-register-guids-matrix.cpp": {
+    "bytes": 4974,
+    "sha256": "30e8825491f8244c690aa91b2b8bbd0b353029739efa7cf1b47c940c34a5e13b"
+  },
+  "negative-compiled-source.log": {
+    "bytes": 791,
+    "sha256": "c3781405158c113bcf3ebb6cb351efe6c3e96c0528f577bfdd5dd20be5a8db93"
+  },
+  "native-etw-register-guids-duplicate-buffers-x86-build.log": {
+    "bytes": 49,
+    "sha256": "aeade8f7128c489b0ce334a40f21702321b6476d2f840a667d320212b6bfeb1b"
+  },
+  "phnt-ntwmi.h": {
+    "bytes": 237808,
+    "sha256": "ea487f6366b9678ab31a2f8509b4fbc0be63d4deb83a86b123da83c66b21cf21"
+  },
+  "native-etw-register-guids-duplicate-x64-build.log": {
+    "bytes": 41,
+    "sha256": "a85f529ea8a0e89f320e30feef9bbc48e5b593e917cb6c5668bacbb41a683bb1"
+  },
+  "native-etw-register-guids-timer2.log": {
+    "bytes": 2064,
+    "sha256": "68fc35e4907e7a3712fb4ad62e742cebd1d910d70031eb1dad484408ba89dfbd"
+  },
+  "native-etw-register-guids-duplicate-buffers-x86.log": {
+    "bytes": 28486,
+    "sha256": "0cd8196d41e32eca2fcdae70ed08320ca1e17479e736760dc1dbb7e2bf3fc350"
+  },
+  "native-etw-register-guids-events.log": {
+    "bytes": 4580,
+    "sha256": "094d21318e195c01002316fd72bd1c370c5b681b2f30e67c263a8156279b8ceb"
+  },
+  "native-etw-register-guids-alias-duplicate-x64-build.log": {
+    "bytes": 47,
+    "sha256": "e951c54b73d91b91222f236b98afc22ea7ff8aff0183ba8364468286615b1b3a"
+  },
+  "etw-register-guids-owned-cpp-build.py": {
+    "bytes": 1839,
+    "sha256": "9995e244e446791e41fc1d813aaf59db7ccb7b472c064785232f4e11f63d3608"
+  },
+  "macos-wait-packet-create.log": {
+    "bytes": 1664,
+    "sha256": "c456dc70cd2023ab973fee8f18b5a7b462d801836202b2aa7a441fa7c34f015a"
+  },
+  "macos-binding.log": {
+    "bytes": 1368,
+    "sha256": "20c315c70855044c923f71cc1d1efa2a34c184567a71e456910944a7d2a62e70"
+  },
+  "duplicate-parsed.json": {
+    "bytes": 428845,
+    "sha256": "0870268971806c0ea03630ec9c3e3adc5169b7b260828526be0e4e1407bed869"
+  },
+  "inspect-etw-register-guids-owning-archives.py": {
+    "bytes": 13146,
+    "sha256": "3b146a5e881f693c37be72c3451f25f085e43f4ec2bf622ca1b3d9f0b51057e1"
+  },
+  "native-etw-register-guids-current-overlay.ps1": {
+    "bytes": 239,
+    "sha256": "002721fadfdca1ce01131bee77af71caf6d139faf66f76a07ded7b62fb27d14a"
+  },
+  "macos-soft-maximum.log": {
+    "bytes": 1261,
+    "sha256": "b36a6602d00b220623eca447d988e9dd9d4fce8c9014d2844f5bac834eb650e8"
+  },
+  "macos-owning-build.log": {
+    "bytes": 1865,
+    "sha256": "1b7e7dde044bca0683585c8ddcb79d9b263ad166c6f3340ba0189573a3dd8f2e"
+  },
+  "native-etw-register-guids-gates.json": {
+    "bytes": 4615,
+    "sha256": "6bc2a7231530cac0d08878f02a680e0acf27c3318819e8434b0f5f4b203abd94"
+  },
+  "run-owning-linux.py": {
+    "bytes": 1690,
+    "sha256": "a78aff00efcc6ab81899a7e6a5a2ecf9081075d905a4faa1eb5ee93af36b569b"
+  },
+  "native-etw-register-guids-fresh-arm64-build.log": {
+    "bytes": 37,
+    "sha256": "5e8b0468ee79da6f0e92f389689e7914274661fada7ed1828a6707cba5b49442"
+  },
+  "native-etw-register-guids-capi.log": {
+    "bytes": 13837,
+    "sha256": "14d2a6ab4e952bd448e2bfe6317b1c8bc4a1424c22778659781f7908da0b384e"
+  },
+  "native-etw-register-guids-alias-duplicate.ps1": {
+    "bytes": 1585,
+    "sha256": "3ef0548193556b683094b86fac3e52f2c9397133977de358bac144516022b1c4"
+  },
+  "native-etw-register-guids-after-trace.rs": {
+    "bytes": 11177,
+    "sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e"
+  },
+  "before-production-trace.log": {
+    "bytes": 41021,
+    "sha256": "9429118600fb4a392c66db1a02358d5605a94e58a2761476e52f7322c894052c"
+  },
+  "native-etw-register-guids-current-source-check.json": {
+    "bytes": 613,
+    "sha256": "61aa994c95cbca4d5f3b034140870b71e2a163b681b71bf6f5a3eccdcd77ab67"
+  },
+  "native-etw-register-guids-without-event-arm64.ps1": {
+    "bytes": 1505,
+    "sha256": "5cfb7a96f51615d5b3c21aec3b1dcf3e85fa7666343d0e7fe538e8a5f4cdb934"
+  },
+  "native-etw-register-guids-after-artifacts.jsonl": {
+    "bytes": 130191,
+    "sha256": "66fa23d4ac14d9c576d7825e7c4c2c9e204e9e12aa2a04635db8f6a21636cbb8"
+  },
+  "native-etw-register-guids-without-event.cpp": {
+    "bytes": 8267,
+    "sha256": "8fd9c28a8e8268c25f0a4f9e92b0ccda104e666801873b63d1d2b385f2429d48"
+  },
+  "native-etw-register-guids-duplicate-buffers-arm64.log": {
+    "bytes": 29510,
+    "sha256": "b8104ff414878601892ccd4ec10a50b742914136a3795ad6b3da18fc0eeee969"
+  },
+  "native-etw-register-guids-soft-maximum.log": {
+    "bytes": 2280,
+    "sha256": "e19439dfa4060c19288a4a408fd596d9b43a65d72a9572bf8ec0e4cd88b9731e"
+  },
+  "linux-owning-gates.json": {
+    "bytes": 2354,
+    "sha256": "3b7039effd9a222b603af344f5872fb4764c0a1db17ee00bd498626bba99d51f"
+  },
+  "native-etw-register-guids-gates.ps1": {
+    "bytes": 2169,
+    "sha256": "327fba3b531801f861dec6b9671d2e7bdb7ec36633979a47200933145be55191"
+  },
+  "native-etw-register-guids-boundaries-arm64.log": {
+    "bytes": 1520716,
+    "sha256": "646891ec09294521a0971744a91e0355989b52666f9598dfa735522b8a69869e"
+  },
+  "native-etw-register-guids-boundaries-x86-laa-build.log": {
+    "bytes": 42,
+    "sha256": "2ef091687c79245667448536570fc1002154c4ccc587bdde0a9308db886d108d"
+  },
+  "macos-owning-ctest.log": {
+    "bytes": 1273,
+    "sha256": "d37075d9b398da6bd137e5707ec514b9ef87d6e439e07e19204431dc89a5d4ba"
+  },
+  "diagnostic-initial-native-etw-register-guids-matrix-arm64-build.log": {
+    "bytes": 38,
+    "sha256": "f154177fb4ed7bf7ce66ab4e622edf0e13f44d960cf72cb1c8d0558efc7bc4c7"
+  },
+  "macos-capi.log": {
+    "bytes": 13013,
+    "sha256": "892eae169abff23e096b61ad7f720b9ada68a2de7f077c225ed77f3db5f9d6fc"
+  },
+  "native-etw-register-guids-after-production-trace-output.log": {
+    "bytes": 41952,
+    "sha256": "8a215e9c8716363e2b3a4c2f343aa59dfcf89e63f86545fc5d13ab3cefc5b29e"
+  },
+  "native-etw-register-guids-boundaries-arm64-build.log": {
+    "bytes": 42,
+    "sha256": "2ef091687c79245667448536570fc1002154c4ccc587bdde0a9308db886d108d"
+  },
+  "native-etw-register-guids-duplicate-buffers.ps1": {
+    "bytes": 1597,
+    "sha256": "af98b9199e933aa3560f489d6c42b2ebed77323db25307bb41c32164a38c1ccf"
+  },
+  "native-etw-register-guids-duplicate.cpp": {
+    "bytes": 3348,
+    "sha256": "92b881453ba63fcaac97ad0c91f4bc5308eaf3502f9708c1c90f597ba164ab5d"
+  },
+  "before-ordinary-processes.log": {
+    "bytes": 7208,
+    "sha256": "0d43b1f0189ceb8b320898e7d8bd3326306362e70568796c55fe34c6e549e061"
+  },
+  "native-etw-register-guids-duplicate-buffers-x86-laa-build.log": {
+    "bytes": 49,
+    "sha256": "aeade8f7128c489b0ce334a40f21702321b6476d2f840a667d320212b6bfeb1b"
+  },
+  "diagnostic-first-replay-linux-gates.json": {
+    "bytes": 740,
+    "sha256": "c260ba27fb254fc9780144b842d003436291457c5b4a0803a2d856f354cca0ec"
+  },
+  "native-etw-register-guids-input-trace.rs": {
+    "bytes": 11551,
+    "sha256": "e34c8c84bf9bfa08715bbaf9c79a547d59d0d7c3fcec89e8edcf17af8b875392"
+  },
+  "macos-owning-protected-assist-cli.log": {
+    "bytes": 42,
+    "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+  },
+  "negative-missing-entry.log": {
+    "bytes": 741,
+    "sha256": "8fb7979e275433dd26861c565261281979ba6f79d80d77214b08dacfe864b24a"
+  },
+  "diagnostic-initial-macos-targeted.log": {
+    "bytes": 2487,
+    "sha256": "8fd7ac2c2933880daaa435be7a9ed08cb589e0e425e85112e8790c82efa4398b"
+  },
+  "macos-io-completion.log": {
+    "bytes": 1345,
+    "sha256": "53136b22db8bb40b2a389620d9a9c308ef570b365a31b4fa281ec8e685f9e8ee"
+  },
+  "linux-soft-maximum.log": {
+    "bytes": 1177,
+    "sha256": "cab5ebad7cfb9cdd8478f1bf307c487519a7fd33c20e90b546daad41d84076f9"
+  },
+  "linux-capi.log": {
+    "bytes": 12881,
+    "sha256": "8fef3e1918cc339a1316d98124b2aa78ef1c2d7ea914334982615ae71ced804a"
+  },
+  "linux-previous-wnf-subscription.log": {
+    "bytes": 2380,
+    "sha256": "f67937e7c098785c7a075d0af872ac10781998884b7825da1bbb1b85b45d132c"
+  },
+  "diagnostic-first-replay-macos-gates.json": {
+    "bytes": 251,
+    "sha256": "dec9619bc022d02497280f0067f4327048af22d75d12f4f1d0b93735574e38cc"
+  },
+  "native-etw-register-guids-boundaries-x86-build.log": {
+    "bytes": 42,
+    "sha256": "2ef091687c79245667448536570fc1002154c4ccc587bdde0a9308db886d108d"
+  },
+  "macos-targeted.log": {
+    "bytes": 1867,
+    "sha256": "1c04225a23ca1d2b7b2c2c4f079273bddcc1b6eac9b4d92322de558fa7089eb0"
+  },
+  "native-etw-register-guids-alias-duplicate-x64.log": {
+    "bytes": 319173,
+    "sha256": "9ecda737c6022ff797b6c01db01132f05b91b64433d36f5d2b15e8aa49dc96d6"
+  },
+  "native-etw-register-guids-worker-factory.log": {
+    "bytes": 2156,
+    "sha256": "a16c2ec7a2ae020dbca123ce2a7e585ab08b9ccaa64ae28fd179dfe68fcd9a9e"
+  },
+  "negative-duplicate-row.log": {
+    "bytes": 1255,
+    "sha256": "ee08dee39f48f1f27540fa61d2e29b4e85d4996ff864c0321894dec35d9c677a"
+  },
+  "diagnostic-initial-native-etw-register-guids-matrix-arm64.log": {
+    "bytes": 107005,
+    "sha256": "ef10fe84ceb4bbdb6a04bddf85edec5b1518a2d2b9171a6616b6a01a20839426"
+  },
+  "linux-owning-shipping.log": {
+    "bytes": 222,
+    "sha256": "eae6f39bdcbfabc306cd21e958c7452d86972b095d92e9a849c34f7ec6d4888b"
+  },
+  "native-etw-register-guids-boundaries-x64-build.log": {
+    "bytes": 42,
+    "sha256": "2ef091687c79245667448536570fc1002154c4ccc587bdde0a9308db886d108d"
+  },
+  "macos-previous-etw-notification.log": {
+    "bytes": 1646,
+    "sha256": "6df3568e5805bff80cef9332175fecb38fec51a3bed09fa295d3c5fbaeeceed2"
+  },
+  "run-portable.py": {
+    "bytes": 2547,
+    "sha256": "e6c29c3da9505638a469b49fc1bde60d08988ffbec9cc03ddaddec724b4c0a3f"
+  },
+  "diagnostic-suspended-vm.txt": {
+    "bytes": 187,
+    "sha256": "5a75ba0fda150bd1855f3e69fe752fb717718cadfe715a7d4c80eaff36d3d7f2"
+  },
+  "native-etw-register-guids-matrix-x86.log": {
+    "bytes": 290634,
+    "sha256": "019a0291caf321bfe38a4bbfecd5033bc579896d3c5fc992dccbbbc29d4b63d5"
+  },
+  "native-etw-register-guids-current-overlay-bundle.py": {
+    "bytes": 1575,
+    "sha256": "33a19f3a93eff47e3ba92432a040813f839585f695bbf0911198b85a0ae7e314"
+  },
+  "native-etw-register-guids-targeted.log": {
+    "bytes": 2875,
+    "sha256": "29704bdaedd5ca42f1586da409ad271cae7ec0355745722223b163a6df59efb7"
+  },
+  "timeout-unchanged-source.json": {
+    "bytes": 211,
+    "sha256": "d7dcebe99de28408da50d75c27e6d170a73934ae22809115c2b54c7f94426bea"
+  },
+  "native-etw-register-guids-duplicate-buffers.cpp": {
+    "bytes": 2753,
+    "sha256": "bba0855aecfb1609d7faaedf99a360ea84cd473ef9eca89c80ca5f27d0621e2c"
+  },
+  "native-etw-register-guids-duplicate.ps1": {
+    "bytes": 1549,
+    "sha256": "f216d146db8adc9e7db8fd3a9a0c5643bfddd0788f8dfba0baa31e30776213dc"
+  },
+  "native-etw-register-guids-capacity-arm64.log": {
+    "bytes": 281303,
+    "sha256": "e93e903124a33bf39de1e5a6d50470de9e07eadb825be6dd2acdbaa6b1c00e02"
+  },
+  "windows-owning-driver.log": {
+    "bytes": 1267,
+    "sha256": "203a40db649c19da1ec6c8da09de80e2e9b502f0070b0cb901ee802bae9e959e"
+  },
+  "native-etw-register-guids-previous-wnf-event.log": {
+    "bytes": 2435,
+    "sha256": "5b229c26e706ffb70b40395ca982afc386e6e0928a8aa5fc79367ce325e2c6af"
+  },
+  "linux-wait-packet-create.log": {
+    "bytes": 1580,
+    "sha256": "4f431a2e9f03e8360a39dcd9e43ec05146a3b5edf72e34a8d35d9674e82d718b"
+  },
+  "macos-owning-configure.log": {
+    "bytes": 13294,
+    "sha256": "5d1f049c18f9ecf912cba21dfe0b22632b4032d0e5521ccdb2b8f190e9eb7926"
+  },
+  "linux-worker-factory.log": {
+    "bytes": 1055,
+    "sha256": "dcd12fdd0e3a34ccaafc54e92634afe581132c37cc515328146204602b1b8178"
+  },
+  "assist-native-etw-register-guids-owned-cpp.log": {
+    "bytes": 2946,
+    "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+  },
+  "windows-owning-exit.json": {
+    "bytes": 17,
+    "sha256": "29403780870810106334e43f749642499d343a792f1aedd6e0254b87c7016eb6"
+  },
+  "macos-owning-commands.json": {
+    "bytes": 3149,
+    "sha256": "46548b6b0b7539fee8f588ea5afac9ac25db2eb1cf8917f399e2578cdf94978b"
+  },
+  "native-etw-register-guids-producer-identities.ps1": {
+    "bytes": 236,
+    "sha256": "809ff2156252de8ce34e114214501c65c9baf5cbb0a5990ce23c5f6c0949e0b0"
+  },
+  "native-etw-register-guids-matrix-x86-laa.log": {
+    "bytes": 290685,
+    "sha256": "27d1ee82ec537cf8439251edfa3174680c66eb8682677b39d32174f3ed739f0d"
+  },
+  "native-etw-register-guids-alias-duplicate.cpp": {
+    "bytes": 4352,
+    "sha256": "aa9ccb45fdba8250421c4a514eed109e6ab3e73efe2f7de1189be73c5d6c0780"
+  },
+  "native-etw-register-guids-duplicate-arm64.log": {
+    "bytes": 55096,
+    "sha256": "b823d9c2c4c6487a14ae1463eeff67b4f4e82e2885031c77d14f5ba21b98b59e"
+  },
+  "native-etw-register-guids-io-completion.log": {
+    "bytes": 2360,
+    "sha256": "8ff8eb8bad92d9e877870a7217fec5b811ff492a6721b0da95c30c822f8e3f90"
+  },
+  "native-etw-register-guids-matrix.ps1": {
+    "bytes": 1531,
+    "sha256": "9226dca96d9c26e643d120d161857ed0ad683c8cc54794c284c0f912c7b743c4"
+  },
+  "native-etw-register-guids-capacity-x64.log": {
+    "bytes": 281223,
+    "sha256": "63098304dfac5214864b185c29a7b0fc31e1d0e2fa63639fa975a02d1da3e36f"
+  },
+  "native-etw-register-guids-boundaries-x64.log": {
+    "bytes": 1520716,
+    "sha256": "55cac1d09e8313b29e6a205e3e487f60fda0fbec1c010ebe29efe3c40a4bfcc5"
+  },
+  "native-etw-register-guids-duplicate-x64.log": {
+    "bytes": 55096,
+    "sha256": "b823d9c2c4c6487a14ae1463eeff67b4f4e82e2885031c77d14f5ba21b98b59e"
+  },
+  "native-etw-register-guids-without-event-arm64.log": {
+    "bytes": 6705,
+    "sha256": "2e82c2cba3a4c3be81f9034f2bef2234355774a8b023644f3afc781b9dea197c"
+  },
+  "native-etw-register-guids-producer-inputs.json": {
+    "bytes": 10997,
+    "sha256": "5c690351e740403844355e1ffb1388be91df7f451f1c59c96338aceb1ca994c3"
+  },
+  "native-etw-register-guids-matrix-arm64-build.log": {
+    "bytes": 38,
+    "sha256": "f154177fb4ed7bf7ce66ab4e622edf0e13f44d960cf72cb1c8d0558efc7bc4c7"
+  },
+  "diagnostic-initial-macos-gates.json": {
+    "bytes": 251,
+    "sha256": "dec9619bc022d02497280f0067f4327048af22d75d12f4f1d0b93735574e38cc"
+  },
+  "phnt-LICENSE": {
+    "bytes": 1092,
+    "sha256": "ad2ab542c56c606e4c19d66a7f3cdcd3ef83beffb638e7c3893b22c7a6a6c0df"
+  },
+  "native-etw-register-guids-duplicate-x86-build.log": {
+    "bytes": 41,
+    "sha256": "a85f529ea8a0e89f320e30feef9bbc48e5b593e917cb6c5668bacbb41a683bb1"
+  },
+  "native-etw-register-guids-duplicate-buffers-x64-build.log": {
+    "bytes": 49,
+    "sha256": "aeade8f7128c489b0ce334a40f21702321b6476d2f840a667d320212b6bfeb1b"
+  },
+  "native-etw-register-guids-threading.log": {
+    "bytes": 3243,
+    "sha256": "2dbc7a19708d0c8abb7b2da521b2b03515579101d6bbf633758c2bb9213475db"
+  },
+  "diagnostic-first-replay-macos-targeted.log": {
+    "bytes": 3561,
+    "sha256": "52be4ca1b9067c3d5e96f6b11c70cceca6c8da9b190645aae11b8f07e1928685"
+  },
+  "native-etw-register-guids-alias-duplicate-x86-build.log": {
+    "bytes": 47,
+    "sha256": "e951c54b73d91b91222f236b98afc22ea7ff8aff0183ba8364468286615b1b3a"
+  },
+  "native-etw-register-guids-previous-wnf-subscription.log": {
+    "bytes": 3469,
+    "sha256": "b8b66eb6446c19b3f2782392e4692cfd01c49a1f4e497448b03bf967e6318681"
+  },
+  "diagnostic-initial-native-etw-register-guids-matrix.cpp": {
+    "bytes": 4975,
+    "sha256": "22342adf7f726027420531c0ebe6981ead42cd99ac591f212ff2800811605d6c"
+  },
+  "before-ordinary-trace.rs": {
+    "bytes": 11177,
+    "sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e"
+  },
+  "native-etw-register-guids-alias-duplicate-arm64-build.log": {
+    "bytes": 47,
+    "sha256": "e951c54b73d91b91222f236b98afc22ea7ff8aff0183ba8364468286615b1b3a"
+  },
+  "negative-identity.log": {
+    "bytes": 718,
+    "sha256": "ebe40d1b6030b6edb429ca75a607f606fd0dcc9623f2426b8c9eeae63e39a354"
+  },
+  "native-etw-register-guids-fresh.cpp": {
+    "bytes": 7421,
+    "sha256": "824c32a32ee2ef57874f2d3b67c81f20bbe1740d95535ff47b622912bd79cbb5"
+  },
+  "assist-native-etw-register-guids-owned-shipping.log": {
+    "bytes": 1584,
+    "sha256": "cc913ffa2b4fedb830ec74688299e3cb8dce7beff2ed1f5b9dc4aec7f50c4dc2"
+  },
+  "native-etw-register-guids-duplicate-buffers-arm64-build.log": {
+    "bytes": 49,
+    "sha256": "aeade8f7128c489b0ce334a40f21702321b6476d2f840a667d320212b6bfeb1b"
+  },
+  "native-etw-register-guids-boundaries.cpp": {
+    "bytes": 3677,
+    "sha256": "9977d8978ad706ef6db8e81992af3650aabae0b4d9875d816885ced6af35fe7b"
+  },
+  "native-etw-register-guids-after-ordinary-processes.log": {
+    "bytes": 7216,
+    "sha256": "d00cf32eef458a984a0d757bb3066450e7c4ec0991e57bda4e39a3cb0a33f472"
+  },
+  "native-etw-register-guids-alias-duplicate-x86-laa-build.log": {
+    "bytes": 47,
+    "sha256": "e951c54b73d91b91222f236b98afc22ea7ff8aff0183ba8364468286615b1b3a"
+  },
+  "macos-events.log": {
+    "bytes": 1414,
+    "sha256": "646294cde35222bafe9feb351190512a2f4989280fe0c0dac40a17fbe13db7b1"
+  },
+  "README.md": {
+    "bytes": 8018,
+    "sha256": "55aefb1846e95e4e8f19fbcaf6380f9d199528d5c1c7f7aa6907114c19015a00"
+  },
+  "task-baseline.json": {
+    "bytes": 1696,
+    "sha256": "703c3c2c95ed576770973eb46489452436d51e89c766debd71d82c5465618d51"
+  },
+  "native-etw-register-guids-boundaries-x86-laa.log": {
+    "bytes": 1520721,
+    "sha256": "fab3c0eb40c9556aa7276622a8999d7b28b044059d30d18ccda43585f25bdfbb"
+  },
+  "macos-worker-factory.log": {
+    "bytes": 1139,
+    "sha256": "b7dbb50bd4c52a364ed873b0880a25922458000bfdcd8a65a4cf2a1a03aff6fd"
+  },
+  "native-etw-register-guids-capacity-arm64-build.log": {
+    "bytes": 40,
+    "sha256": "d7b2a04128f6f1a3b4a2e82bba007d5c89ff4906407a86ce0a2886d085595a9d"
+  },
+  "native-etw-register-guids-fresh-arm64.log": {
+    "bytes": 7047,
+    "sha256": "82d3248c4de33fb614a3015698aadb88e830bfcb7f808bdbce0fb9dc3b8100e7"
+  },
+  "native-etw-register-guids-duplicate-buffers-x86-laa.log": {
+    "bytes": 28486,
+    "sha256": "0cd8196d41e32eca2fcdae70ed08320ca1e17479e736760dc1dbb7e2bf3fc350"
+  },
+  "linux-gates.json": {
+    "bytes": 13357,
+    "sha256": "a51012d76727782af38aeeb069e5bd9bfb55dfa733e6b9d95ce359a31b8e62c5"
+  },
+  "capacity-parsed.json": {
+    "bytes": 2303233,
+    "sha256": "3a5bb50e2a490c341b911f2872376a43da713c8433801307d74eba3cb9fc46cf"
+  },
+  "native-etw-register-guids-without-event-arm64-build.log": {
+    "bytes": 45,
+    "sha256": "23ee49e1ebb1d316e61e7b1642b48f2a8a77d6505bc34472020ec3fbaed6d17e"
+  },
+  "diagnostic-windows-gates-sdk255.txt": {
+    "bytes": 153,
+    "sha256": "0710879ec4e20ad42bbef564679cafa423da86a4bfc7735687ecffe96bfec8b4"
+  },
+  "macos-wait-packet-associate.log": {
+    "bytes": 1954,
+    "sha256": "8ea074540262a264c79febb966907d39fbba858f6264ddc4f3f566178e555bc0"
+  },
+  "native-etw-register-guids-capacity-x86-laa-build.log": {
+    "bytes": 40,
+    "sha256": "d7b2a04128f6f1a3b4a2e82bba007d5c89ff4906407a86ce0a2886d085595a9d"
+  },
+  "linux-threading.log": {
+    "bytes": 2337,
+    "sha256": "84e4bb4f31a1d1acffb8864698d7959bc41adc64f583eceba8e222f66bb0b309"
+  },
+  "native-etw-register-guids-matrix-x86-build.log": {
+    "bytes": 38,
+    "sha256": "f154177fb4ed7bf7ce66ab4e622edf0e13f44d960cf72cb1c8d0558efc7bc4c7"
+  },
+  "macos-timer2.log": {
+    "bytes": 1063,
+    "sha256": "21ec088fdbf726d2098da144ddc7a8a937caccc4f5d2f6e531decbbf913704dc"
+  },
+  "isolated-gates.json": {
+    "bytes": 829,
+    "sha256": "1699ab89d4136ff5f86bbc1a18d512437f0102fbb6367871ca27408efb6fa383"
+  },
+  "macos-all-targets.log": {
+    "bytes": 136,
+    "sha256": "6b57b883374ad66ae4479729217dbebc854110734c1855897dccea59e3bd95b9"
+  },
+  "native-etw-register-guids-duplicate-arm64-build.log": {
+    "bytes": 41,
+    "sha256": "a85f529ea8a0e89f320e30feef9bbc48e5b593e917cb6c5668bacbb41a683bb1"
+  },
+  "native-etw-register-guids-matrix-x64.log": {
+    "bytes": 290615,
+    "sha256": "d7e3ab931ad222fe2b0f6d6d6cb9205624f752ece4f4c72bbf3fa47b136bb23e"
+  },
+  "native-etw-register-guids-capacity.ps1": {
+    "bytes": 1543,
+    "sha256": "b95bbe70413259f575e00f3636fd96b07e2bb182ca7fa66e94c27eda1be6fe51"
+  },
+  "native-etw-register-guids-producer-identities.py": {
+    "bytes": 1456,
+    "sha256": "959a78557d5e729d29996cf0e43511e104f5c4c9c47c4a44e5569036635a638b"
+  },
+  "linux-owning-cpp.log": {
+    "bytes": 1623,
+    "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+  },
+  "native-etw-register-guids-duplicate-x86-laa-build.log": {
+    "bytes": 41,
+    "sha256": "a85f529ea8a0e89f320e30feef9bbc48e5b593e917cb6c5668bacbb41a683bb1"
+  },
+  "linux-events.log": {
+    "bytes": 1330,
+    "sha256": "2d8b0f5715589a90fe8a408c4706107cb84a5fc28feef1a78435a90669cdb285"
+  },
+  "duplicate-buffers-parsed.json": {
+    "bytes": 230541,
+    "sha256": "d0fc59b8b472919dfd5eb28d4a79bf7b9adeb22dd80016f7180709303f451ac0"
+  },
+  "acceptance-criteria.json": {
+    "bytes": 789,
+    "sha256": "1b0b189a6b6f845848647bea61df3d1ffeac9426fc46b118fb3106cc9430d4ac"
+  },
+  "macos-hard-maximum.log": {
+    "bytes": 1031,
+    "sha256": "d6b34b18d72f403c6986b3896f4a74337f834ca5e5c4613c35ece44d3a6d1620"
+  },
+  "linux-timer2.log": {
+    "bytes": 979,
+    "sha256": "343c4f7ad4f33535926124c477cfb8efeff02bc237b4b0f1c5259e78fa072d41"
+  },
+  "native-etw-register-guids-previous-etw-notification.log": {
+    "bytes": 2647,
+    "sha256": "45429ef88fad65b90e8529d391c944efb4ae080e4340410f592091f27025365d"
+  },
+  "macos-gates.json": {
+    "bytes": 4527,
+    "sha256": "0c5d8e07d5de67679fadbaefc49a7fb9d32947a1930382505c900dc25686f3f5"
+  },
+  "linux-integration.log": {
+    "bytes": 35761,
+    "sha256": "b440706e780d2815c63241de258f4c3e756a6d8e886a41fb0366e5c8ef65cc64"
+  },
+  "native-etw-register-guids-matrix-x86-laa-build.log": {
+    "bytes": 38,
+    "sha256": "f154177fb4ed7bf7ce66ab4e622edf0e13f44d960cf72cb1c8d0558efc7bc4c7"
+  },
+  "native-etw-register-guids-owning-archive-hashes.json": {
+    "bytes": 11797,
+    "sha256": "d23ba6191767d453fc148cd787aa768f53e2d4f2682758c2b5745e10e45b809c"
+  },
+  "native-etw-register-guids-hard-maximum.log": {
+    "bytes": 2040,
+    "sha256": "3c871f2b1d4731392dc77d483c99096b844ed2fb6cbe4e50d9c1ef89ceb2200a"
+  },
+  "owning-source-hashes.json": {
+    "bytes": 13126,
+    "sha256": "1317751961d0c6b6166ec821a44f52dbd25d7070ed573395a624dcda1348490d"
+  },
+  "macos-previous-wnf-subscription.log": {
+    "bytes": 2463,
+    "sha256": "5b50d8b4fb49d0356c191de753e1b2988ee0eb56d2404d3dffe0dcc29e61655b"
+  },
+  "negative-rehashed-status.log": {
+    "bytes": 581,
+    "sha256": "e9dae8c5e15d0b92f81f80a82dc8841343f71c2bbdaef21e9f60edc393091ac0"
+  },
+  "native-etw-register-guids-capacity-x86-build.log": {
+    "bytes": 40,
+    "sha256": "d7b2a04128f6f1a3b4a2e82bba007d5c89ff4906407a86ce0a2886d085595a9d"
+  },
+  "native-etw-register-guids-input-trace.ps1": {
+    "bytes": 1868,
+    "sha256": "331d95773f7268e8ddfdb104236f897123c576fdfdd0476968fa5ce3dd57e9ba"
+  },
+  "native-etw-register-guids-producer-identities.json": {
+    "bytes": 37000,
+    "sha256": "6c5bdea2f95d46e95281c972df7862cd3d4c62f3a42be4a3922d06b5dd9d3aa5"
+  },
+  "diagnostic-first-replay-linux-targeted.log": {
+    "bytes": 3449,
+    "sha256": "20150cc2374153403a8e9a7fdec4d03cf7bac3590c5723e89ba7be9a9ed9fb65"
+  },
+  "native-etw-register-guids-boundaries-x86.log": {
+    "bytes": 1520721,
+    "sha256": "0a6267b695ec14950427721dd393967815ec885ab5b2c7804e92854f0f20a8b5"
+  },
+  "native-etw-register-guids-all-targets.log": {
+    "bytes": 986,
+    "sha256": "2da739a86f7ca263bf8aaf571ee24cdb1b87fd5bc55c73df2c2a3ebb9447a3fa"
+  },
+  "native-etw-register-guids-capacity-x86.log": {
+    "bytes": 281469,
+    "sha256": "f5144d11d2311a4f9b1f8f627a7eb1ef201fc54b143a6a0e690cfbf7d82d9ad0"
+  },
+  "native-etw-register-guids-duplicate-x86.log": {
+    "bytes": 55096,
+    "sha256": "0c130570d4c103fe38f7a032b4a5a26f4c1ed3b330df5f02fd880f03487cbb36"
+  },
+  "native-etw-register-guids-capacity-x86-laa.log": {
+    "bytes": 281469,
+    "sha256": "4033dcf96903e215984066cd1ffbfbc43662777055b7cc745e116bd36c9bdd84"
+  },
+  "macos-previous-wnf-event.log": {
+    "bytes": 1437,
+    "sha256": "962201fdb4d8c262906f2f42d05aa058334265266e4cc9d6d7fd5f44e9fdfd7d"
+  },
+  "native-etw-register-guids-matrix-arm64.log": {
+    "bytes": 290615,
+    "sha256": "aeb2fcda341972e143577fe85678a701f5073ac1ca74f34152d2ee6f9d9fa49f"
+  },
+  "native-etw-register-guids-input-trace-build.log": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "assist-native-etw-register-guids-owned.ps1": {
+    "bytes": 6349,
+    "sha256": "420d08cb4b7d900a0e01bb76340b31edd03d8d798922883d17587c8f0bd2d934"
+  },
+  "windows-gates-exit.json": {
+    "bytes": 17,
+    "sha256": "29403780870810106334e43f749642499d343a792f1aedd6e0254b87c7016eb6"
+  },
+  "bounded-scope.json": {
+    "bytes": 1524,
+    "sha256": "15145c691bc7c4c0693e1c911a6d752be7b5e5eca420dbb8b449af96da71fdbc"
+  },
+  "native-etw-register-guids-after-artifacts-stderr.log": {
+    "bytes": 72,
+    "sha256": "b2c020f27a01faabb96e5d55c11fd219cf7c484c9cf34b3342bfc8444d934c89"
+  },
+  "linux-hard-maximum.log": {
+    "bytes": 947,
+    "sha256": "32ec4bad6e845d03246779bfe54b2f89ee72061b25e4be0b1a5abaa4a058aa86"
+  },
+  "negative-producer-machine.log": {
+    "bytes": 706,
+    "sha256": "6adf565c5f80d2a5805e01fec2fe5b6f19cc632a3e7b272d127cb083a948babb"
+  },
+  "macos-owning-gates.json": {
+    "bytes": 3344,
+    "sha256": "907f2dff64cc1fc512698d950b89f972982c42ad239fcc6a60f895f646d7c092"
+  },
+  "native-etw-register-guids-input-trace.log": {
+    "bytes": 41926,
+    "sha256": "24d8fe797f628cd02d3dff0e8cba24e0c12f74bb9586ac47fb79087741b7f4e7"
+  },
+  "native-etw-register-guids-duplicate-buffers-x64.log": {
+    "bytes": 29510,
+    "sha256": "d92a37aeaf5129c239e5b51fb11631b768e783772862ab3d623974f39137c23a"
+  },
+  "native-etw-register-guids-binding.log": {
+    "bytes": 2378,
+    "sha256": "7ebccb62edcf7610c9a186b63ce9a2d710504d4b9bbdd620d3bd9cdf346f5c2f"
+  },
+  "change-surface.json": {
+    "bytes": 1229,
+    "sha256": "04ef51f39197adef033090df323460e8643f9164abfa73217b8cf8be96b63b0e"
+  },
+  "native-etw-register-guids-alias-duplicate-x86-laa.log": {
+    "bytes": 319314,
+    "sha256": "223a4ac0d2ba9efdd6e9c44e64d9c134a360fc2a74acbb8ee245e941fdfd5e53"
+  },
+  "matrix-parsed.json": {
+    "bytes": 1435594,
+    "sha256": "4bc412148be17f47a12d7e8b6104a8039fcf58bfd8704f67bb199a997afc9ea3"
+  },
+  "prepare-final-overlay.py": {
+    "bytes": 3628,
+    "sha256": "fa53c79e02ef9648d47e5121b26129864bf06420e4f115fda9f418b54855542f"
+  },
+  "native-etw-register-guids-integration.log": {
+    "bytes": 1515,
+    "sha256": "11d9e0bb020363aab6de7165e8181ffc7a9c676c8843c008992796a26fa96d58"
+  },
+  "native-etw-register-guids-alias-duplicate-arm64.log": {
+    "bytes": 319173,
+    "sha256": "a7a33f8630c85e42a3e6915985f60f8866d11f3657f5e563ae58809476f1cff6"
+  },
+  "alias-duplicate-parsed.json": {
+    "bytes": 1435601,
+    "sha256": "a1cae9604e042c44c2bb9edf68842069613e886301168b03bcd56f5b1b1ec5e6"
+  },
+  "windows-gates-driver.log": {
+    "bytes": 719,
+    "sha256": "084d7a77789001769656e456a6123f6e8f4b5c19f42cd27b20ca3a74f3eedbe5"
+  },
+  "linux-io-completion.log": {
+    "bytes": 1261,
+    "sha256": "fdd4e6dfcbdd2bf30d75e0887c352069b274a6040172a733c24a792dd977d80d"
+  },
+  "native-etw-register-guids-full.log": {
+    "bytes": 744094,
+    "sha256": "6d069e9d49abd129b0cb6c13d4fc34cbf02a3aab2d1578497e71b53da010a2d9"
+  },
+  "native-etw-register-guids-wait-packet-associate.log": {
+    "bytes": 2956,
+    "sha256": "1144241d12e96e44292eb887edf40ef7e7e7828b65f8cd8185be9345927be69d"
+  },
+  "linux-previous-etw-notification.log": {
+    "bytes": 1562,
+    "sha256": "b8bd8ecc48771760fa8de030b7bc61517de9bf3aa01ffce59981f9c106f232d1"
+  },
+  "native-etw-register-guids-capacity-x64-build.log": {
+    "bytes": 40,
+    "sha256": "d7b2a04128f6f1a3b4a2e82bba007d5c89ff4906407a86ce0a2886d085595a9d"
+  },
+  "macos-owning-protected-assist-mcp.log": {
+    "bytes": 42,
+    "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+  },
+  "linux-previous-wnf-event.log": {
+    "bytes": 1353,
+    "sha256": "7b1e337546d304abafce2a38e3368f5e326f7797c13d40f5dabd69078ef280af"
+  },
+  "native-etw-register-guids-wait-packet-create.log": {
+    "bytes": 2675,
+    "sha256": "f8827f88a19525f9d7c84f0e4b1d4e1b5bab376cadd930de69811345c129b73e"
+  },
+  "native-etw-register-guids-capacity.cpp": {
+    "bytes": 2006,
+    "sha256": "a0460e16a99be648ec223ec8e90045732be722109e0846d69d03238e0bdd41cd"
+  },
+  "boundaries-parsed.json": {
+    "bytes": 10630059,
+    "sha256": "f5a7ca2b7c546bffb2f265887816ad255197e0d7d0aec75787aec81a6189a0cd"
+  },
+  "negative-validation.json": {
+    "bytes": 2940,
+    "sha256": "a39663f5e1c7f6b7487a56920d2c800574a9ba8a770714516004410cff9e7a68"
+  },
+  "native-etw-register-guids-fresh-arm64.ps1": {
+    "bytes": 1417,
+    "sha256": "7d3b5e2c7de627753fa49e633cabe56ed5898fd2de32824b022e6f3fcfa2ef2d"
+  },
+  "native-process-probe.cpp": {
+    "bytes": 2187,
+    "sha256": "f57571cc5961784ff841b84811bdff7626ccd582dda3a16a9be35c9aeedc5a31"
+  },
+  "native-etw-register-guids-after-production-trace-build.log": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "macos-full.log": {
+    "bytes": 787912,
+    "sha256": "ceebc74bdb237ffe16d196c4e7ef7e51fd24c16d771ce5c1c403d09fecb3bad3"
+  },
+  "linux-wait-packet-associate.log": {
+    "bytes": 1870,
+    "sha256": "d98e51afa0039ec27b16c26abf161dcb9624c9d12aa1ed48a3de2c3792a96920"
+  },
+  "root-owning-source-delta.txt": {
+    "bytes": 427,
+    "sha256": "c99f5131555abab4ec5d6a3d71197f7140e3cc4c353d747ee203b6627504c90c"
+  },
+  "linux-targeted.log": {
+    "bytes": 1763,
+    "sha256": "afad31c1f458a2571643b51ac2db7ebe8f69f8be8a6365e3120ac2300b011e2b"
+  },
+  "windows-gates-start-proof.json": {
+    "bytes": 277,
+    "sha256": "34501d2ef89d10f1dd2d9daa4aed517c09a775f71de7270a265851bfc0efbb1a"
+  },
+  "run-owning-macos.py": {
+    "bytes": 526,
+    "sha256": "fcdcb2a47418eac16a13d41cc89df4ab089d06b414bbf728708d63b2f1b99da1"
+  },
+  "linux-isolated-a_timeout_is_removed_or_updated.log": {
+    "bytes": 344,
+    "sha256": "261c26e1477b2eb48b9dc2fdf192a6da4a908030116bc59ccc86487cb8609d21"
+  },
+  "macos-integration.log": {
+    "bytes": 35928,
+    "sha256": "b29e303a3a0906c0f3b9ede055923eaa372ae5f66dda427908be89e70923c82b"
+  },
+  "validation-summary.json": {
+    "bytes": 2126,
+    "sha256": "f1af8783b05a46fa53d310b4bd453276cf8d212fe5ecd4e0a628d6bd2c5d8a3b"
+  },
+  "native-etw-register-guids-boundaries.ps1": {
+    "bytes": 1555,
+    "sha256": "25064d8ae1a1c3e95dd620f876fddfc2b3a82a693d3621751df20cda75a9f6ac"
+  },
+  "check-evidence.py": {
+    "bytes": 18853,
+    "sha256": "95e57c391d82e0732cae395b88bcd0f93a8541b4ec5caf244a31b63759c06b76"
+  },
+  "owning-linux-cpp-build.py": {
+    "bytes": 1522,
+    "sha256": "a0d9f75e831bd3585d3e009b94e8e3f2744b137e646c157c70a7ad7950373b56"
+  },
+  "linux-full.log": {
+    "bytes": 788337,
+    "sha256": "ab8ca4f156963ef23a1d89580df01ad2c73611d7d67529f9e1034866c45824ae"
+  },
+  "native-etw-register-guids-duplicate-x86-laa.log": {
+    "bytes": 55096,
+    "sha256": "0c130570d4c103fe38f7a032b4a5a26f4c1ed3b330df5f02fd880f03487cbb36"
+  },
+  "assumption-register.json": {
+    "bytes": 1867,
+    "sha256": "9aaa556a4188e2e77de14da8895da398bad4d651e81c52c4807ce16bd8cb6ae6"
+  },
+  "macos-threading.log": {
+    "bytes": 2421,
+    "sha256": "cd37896228d0f35fd2969584f52c2ccfdef543f876386c627e60fb01e398cdd6"
+  },
+  "native-etw-register-guids-alias-duplicate-x86.log": {
+    "bytes": 319216,
+    "sha256": "fdff82158e8e792ecdbb7ca5cbf49015548ab3a35e8b93be3f8f9faa4a255e27"
+  },
+  "linux-all-targets.log": {
+    "bytes": 116,
+    "sha256": "0e04661c3eac359f4515cdd8c62b40de459e14ba28277e6e77e8e7aea5d6f384"
+  },
+  "native-etw-register-guids-matrix-x64-build.log": {
+    "bytes": 38,
+    "sha256": "f154177fb4ed7bf7ce66ab4e622edf0e13f44d960cf72cb1c8d0558efc7bc4c7"
+  },
+  "native-etw-register-guids-current-overlay-manifest.json": {
+    "bytes": 3854106,
+    "sha256": "67a989fa0008eee45dea29562c5182fa7555608dfaa2285d06586e1b1275a2fa"
+  }
+}

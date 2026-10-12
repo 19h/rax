@@ -1,0 +1,18 @@
+{
+  "affected": [
+    "NtTraceControl dispatch/validation/publication",
+    "process-local EtwRegistration object type/handle/lifetime/metadata",
+    "same-process DuplicateHandle for the new resource",
+    "native installed startup",
+    "Rust core/CAPI/owning C++ surfaces and reachable tests on Windows/macOS/Linux",
+    "Explicit nonsignaled synchronization case for new nonwaitable registration object"
+  ],
+  "unaffected-with-owning-reason": {
+    "UI/lane/context/permissions/IDA seam": "No modified owning source or new user-facing settings/tool contract.",
+    "Mesh/crypto/persistence/SDK": "No transport, persisted schema or public C ABI edits.",
+    "ISA/MMU/SMIR/JIT/other personalities": "Only Windows kernel-service/object adapters change.",
+    "native selection/installed metadata acquisition": "Current DLL selection contract unchanged; guest registration performs no host ETW operation.",
+    "defaults/dependency/package": "No new source file requiring CMake membership, public ABI, dependency or package-layout change."
+  },
+  "targets-platforms": "Shared portable Rust semantics compile and run via plugin/core archive/CAPI/CLI/owning consumers on all three OSs; installed leaf/native oracle on Windows."
+}

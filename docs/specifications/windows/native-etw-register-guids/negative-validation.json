@@ -1,0 +1,74 @@
+[
+  {
+    "case": "identity",
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/etw-register-guids-20261012/negative-cases/identity/check-evidence.py",
+      "/Users/int/Library/Caches/assist-process-emulation/etw-register-guids-20261012/negative-cases/identity",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ],
+    "exit-code": 1,
+    "rejected": true,
+    "reason": "ValueError: evidence identity phnt-ntwmi.h"
+  },
+  {
+    "case": "missing-entry",
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/etw-register-guids-20261012/negative-cases/missing-entry/check-evidence.py",
+      "/Users/int/Library/Caches/assist-process-emulation/etw-register-guids-20261012/negative-cases/missing-entry",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ],
+    "exit-code": 1,
+    "rejected": true,
+    "reason": "ValueError: exact evidence coverage"
+  },
+  {
+    "case": "duplicate-row",
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/etw-register-guids-20261012/negative-cases/duplicate-row/check-evidence.py",
+      "/Users/int/Library/Caches/assist-process-emulation/etw-register-guids-20261012/negative-cases/duplicate-row",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ],
+    "exit-code": 1,
+    "rejected": true,
+    "reason": "ValueError: exact mature partitions"
+  },
+  {
+    "case": "rehashed-status",
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/etw-register-guids-20261012/negative-cases/rehashed-status/check-evidence.py",
+      "/Users/int/Library/Caches/assist-process-emulation/etw-register-guids-20261012/negative-cases/rehashed-status",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ],
+    "exit-code": 1,
+    "rejected": true,
+    "reason": "ValueError: registration status"
+  },
+  {
+    "case": "producer-machine",
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/etw-register-guids-20261012/negative-cases/producer-machine/check-evidence.py",
+      "/Users/int/Library/Caches/assist-process-emulation/etw-register-guids-20261012/negative-cases/producer-machine",
+      "/Users/int/hexrays/kvasir/vendor/rax"
+    ],
+    "exit-code": 1,
+    "rejected": true,
+    "reason": "ValueError: actual PE architecture"
+  },
+  {
+    "case": "compiled-source",
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/etw-register-guids-20261012/negative-cases/compiled-source/check-evidence.py",
+      "/Users/int/Library/Caches/assist-process-emulation/etw-register-guids-20261012/negative-cases/compiled-source",
+      "/Users/int/Library/Caches/assist-process-emulation/etw-register-guids-20261012/negative-cases/altered-source"
+    ],
+    "exit-code": 1,
+    "rejected": true,
+    "reason": "ValueError: current compiled source src/user/windows/dll/native/trace.rs"
+  }
+]

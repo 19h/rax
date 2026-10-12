@@ -1,0 +1,35 @@
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 09s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 9 tests
+test user::windows::objects::etw::tests::native_etw_registration_identifier_exhaustion_preserves_objects_and_handles ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_independent_event_pin_and_complete_drain ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_unknown_classes_preserve_memory_and_objects ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_replays_all_640_duplicate_protection_guard_and_crossing_rows' (304) panicked at src/user/windows/process/sched/tests/services_tests/etw_registration_tests.rs:678:13:
+assertion `left == right` failed: lifetime row={"output": "0", "source-live": "1", "protect": "00000004", "ok": "0", "handles-after": "79", "handles-before": "79", "width": "4", "exception": "00000000", "grant": "FFFFFFFF", "case": "3", "error": "00000005", "kind": "0", "offset": "0", "options": "1"}
+  left: 0
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_replays_all_640_duplicate_protection_guard_and_crossing_rows ... FAILED
+
+thread 'user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_replays_all_1152_duplicate_access_close_and_output_rows' (302) panicked at src/user/windows/process/sched/tests/services_tests/etw_registration_tests.rs:508:13:
+assertion `left == right` failed: lifetime row={"output": "0", "ok": "0", "exception": "00000000", "width": "4", "error": "00000005", "case": "42", "close": "00000000", "grant": "FFFFFFFF", "output-mode": "0", "target-mode": "0", "flags": "0", "restored": "1", "options": "1", "source-live": "1", "extras": "0"}
+  left: 0
+ right: 1
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_replays_all_1152_duplicate_access_close_and_output_rows ... FAILED
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_replays_all_576_overlapping_header_and_returned_rows ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_replays_all_736_header_length_and_resource_rows ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_replays_all_8240_simultaneous_guid_and_drain_rows ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::boundary_tests::native_etw_registration_replays_all_22400_fault_guard_and_alignment_rows ... ok
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_replays_all_1152_duplicate_access_close_and_output_rows
+    user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_replays_all_640_duplicate_protection_guard_and_crossing_rows
+
+test result: FAILED. 7 passed; 2 failed; 0 ignored; 0 measured; 7678 filtered out; finished in 3.08s
+
+error: test failed, to rerun pass `--lib`

@@ -420,6 +420,7 @@ fn signaled(p: &Proc, id: ObjId, tid: u32) -> bool {
         Some(
             Object::Mapping { .. }
             | Object::WorkerFactory { .. }
+            | Object::EtwRegistration { .. }
             | Object::Key(_)
             | Object::Opaque(_),
         )

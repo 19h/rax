@@ -1,0 +1,17 @@
+[
+  {
+    "gate": "targeted",
+    "exit-code": 101,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "etw_registration",
+      "--",
+      "--nocapture"
+    ]
+  }
+]

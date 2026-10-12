@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/etw-register-guids-20261012/negative-cases/rehashed-status/check-evidence.py", line 54, in <module>
+    require(num(r,'status')==status,'registration status')
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/etw-register-guids-20261012/negative-cases/rehashed-status/check-evidence.py", line 6, in require
+    if not ok:raise ValueError(message)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: registration status

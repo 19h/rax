@@ -1,0 +1,29 @@
+[
+  {
+    "id": "A1",
+    "assumption": "Private function15 request/reply and validation are bounded to installed Windows10.0.29683.1000.",
+    "basis": "PHNT declaration plus native ARM64/x64/WoW64/x86-LAA probes.",
+    "dependent-result": "Measured registration semantics.",
+    "stress-test": "Lengths, permissions, guards, aliases, arbitrary header fields, close and duplication.",
+    "falsification-probe": "Native producer on another installed build yields a different matrix.",
+    "status": "confirmed for measured installed build only"
+  },
+  {
+    "id": "A2",
+    "assumption": "The zero native reply tail at112..160 B is reproduced for dormant guest registrations without guest tracing controllers; its private meaning is unknown.",
+    "basis": "Guest kernel objects are process-local; no host TraceControl forwarding.",
+    "dependent-result": "Preserve measured zero reply tail; no controller or callback-delivery claim.",
+    "stress-test": "Register after changing payload fields and own provider GUID; then issue guest tracing control.",
+    "falsification-probe": "Supported guest controller creates enabled state or callback delivery requiring nonzero reply.",
+    "status": "retained; guest controller operations explicitly unsupported"
+  },
+  {
+    "id": "A3",
+    "assumption": "Fresh same-kernel compatibility registration before notification Event follows ARM64.",
+    "basis": "Identical four-profile mature matrices; fresh ARM64 original/redirected entry and true-LR captures.",
+    "dependent-result": "First compatibility registration and dormant lifecycle.",
+    "stress-test": "Fresh x64/WoW64 registration before and after notification Event, caller close and aliases.",
+    "falsification-probe": "Native fresh compatibility capture rejects or copies differently.",
+    "status": "retained; fresh compatibility capture unknown"
+  }
+]

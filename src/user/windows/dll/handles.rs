@@ -108,6 +108,12 @@ fn duplicate(c: &mut Ctx) -> ApiResult {
             c.unsupported("DUPLICATE_CLOSE_SOURCE with protected handle; native behavior unknown")
         );
     }
+    if matches!(
+        c.p.objects.get(handle),
+        Some(Object::EtwRegistration { .. })
+    ) {
+        return duplicate_etw(c, handle, to, out, desired, options);
+    }
     let result = (|| {
         if options & !3 != 0 {
             return c.fail(ERROR_INVALID_PARAMETER, 0);
@@ -173,6 +179,74 @@ fn duplicate(c: &mut Ctx) -> ApiResult {
         }
     }
     result
+}
+
+/// Measured KernelBase wrapper plus EtwRegistration duplication semantics.
+/// Wrapper output initialization/fault handling precedes the kernel operation.
+/// Unsupported option bits are ignored by the installed wrapper. WoW64's
+/// output-copy failure may follow source close; native64 probes first.
+fn duplicate_etw(
+    c: &mut Ctx,
+    handle: u64,
+    to: u64,
+    out: u64,
+    desired: u32,
+    options: u32,
+) -> ApiResult {
+    let denied = options & 2 == 0 && desired & !0x804 != 0;
+    if out != 0 {
+        if let Err(fault) = probe(c, out, c.psize() as usize) {
+            let guard = c.p.vm.take_guard(fault.addr);
+            // The measured WoW64 path reaches CLOSE_SOURCE for admissible
+            // desired rights despite final wrapper output-copy failure.
+            if c.psize() == 4 && !denied && options & 1 != 0 {
+                match c.p.objects.close(handle) {
+                    Ok(object) => {
+                        if let Err(error) = super::files::finish_close(object) {
+                            return c.fail(error, 0);
+                        }
+                    }
+                    Err(()) => return c.fail(ERROR_INVALID_HANDLE, 0),
+                }
+            }
+            return c.fail(
+                if guard {
+                    super::super::nt::status::STATUS_GUARD_PAGE_VIOLATION
+                } else {
+                    ERROR_NOACCESS
+                },
+                0,
+            );
+        }
+        c.write_ptr(out, 0)?;
+    }
+    if denied {
+        return c.fail(ERROR_ACCESS_DENIED, 0);
+    }
+    // No handle is duplicated. CLOSE_SOURCE is nevertheless honored after
+    // a reached kernel operation, even when its result is an error.
+    let close_source = options & 1 != 0;
+    if close_source {
+        match c.p.objects.close(handle) {
+            Ok(object) => {
+                if let Err(error) = super::files::finish_close(object) {
+                    return c.fail(error, 0);
+                }
+            }
+            Err(()) => return c.fail(ERROR_INVALID_HANDLE, 0),
+        }
+    }
+    if to == 0 {
+        return if close_source {
+            Flow::bool(true)
+        } else {
+            c.fail(ERROR_INVALID_PARAMETER, 0)
+        };
+    }
+    if let Err(error) = process_handle(c, to) {
+        return c.fail(error, 0);
+    }
+    c.fail(ERROR_NOT_SUPPORTED, 0)
 }
 
 fn get_information(c: &mut Ctx) -> ApiResult {

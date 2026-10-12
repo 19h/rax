@@ -1,0 +1,15 @@
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+assist-native-etw-register-guids-owned-shipping.log CC913FFA2B4FEDB830EC74688299E3CB8DCE7BEFF2ED1F5B9DC4AEC7F50C4DC2
+assist-native-etw-register-guids-owned-cpp.log B0F277678BC54485CF58C6295345A12235DF27C7D420C5085B93AB253E75E214
+validated rlib: C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-owned\debug\deps\librax-e6c413934cad3a8f.rlib
+native-process-probe.cpp
+rax_process.cpp
+Generating Code...
+native-etw-register-guids-after-ordinary-processes.log D00CF32EEF458A984A0D757BB3066450E7C4EC0991E57BDA4E39A3CB0A33F472
+native-etw-register-guids-after-production-trace-output.log 8A215E9C8716363E2B3A4C2F343AA59DFCF89E63F86545FC5D13AB3CEFC5B29E
+native-etw-register-guids-after-production-trace-build.log E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855
+native-etw-register-guids-after-artifacts.jsonl 66FA23D4AC14D9C576D7825E7C4C2C9E204E9E12AA2A04635DB8F6A21636CBB8
+native-etw-register-guids-after-artifacts-stderr.log B2C020F27A01FAABB96E5D55C11FD219CF7C484C9CF34B3342BFC8444D934C89

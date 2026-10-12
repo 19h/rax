@@ -1,0 +1,32 @@
+{
+  "high": [
+    {
+      "item": "Complete ordinary Windows guest execution and subsequent kernel services",
+      "blocks-full-goal": true,
+      "evidence": "Unchanged before/after observer advances50306->50692 and now stops at NtTraceControl function30 before exit; all four ordinary programs retain reason5/internal failure."
+    },
+    {
+      "item": "Guest ETW controllers, enabled registration state and notification delivery",
+      "blocks-full-goal-if-reached": true,
+      "evidence": "TraceControl functions other than15/27 are explicitly unsupported; registration models dormant measured profile only."
+    }
+  ],
+  "medium": [
+    {
+      "item": "Fresh x64/WoW64 debugger capture and physical x64 native kernel proof",
+      "blocks-this-increment": false,
+      "evidence": "Four mature caller profiles/native ARM64 fresh captures/installed leaf tests; A3 retained."
+    },
+    {
+      "item": "Unchanged Linux io_uring timeout and Windows BZHI/FP16 full-suite failures",
+      "blocks-this-increment": false,
+      "evidence": "Original full suite logs; source identity and exact Linux isolate."
+    },
+    {
+      "item": "Entire package/live IDA/Qt runtime matrix and concurrent root masking changes",
+      "blocks-this-increment": false,
+      "evidence": "Owning selected targets/consumers run; frozen Unix root differs in two records plus nine unrelated masking files, recorded exact delta. Current root masking changes are not validated by these frozen owning CLI builds."
+    }
+  ],
+  "low": []
+}

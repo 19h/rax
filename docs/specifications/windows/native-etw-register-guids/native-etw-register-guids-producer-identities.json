@@ -1,0 +1,672 @@
+{
+  "windows-version": "10.0.29683",
+  "host-machine": "ARM64",
+  "producers": [
+    {
+      "profile": "matrix/arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-matrix-arm64",
+      "source": "native-etw-register-guids-matrix.cpp",
+      "source-sha256": "30e8825491f8244c690aa91b2b8bbd0b353029739efa7cf1b47c940c34a5e13b",
+      "executable": "native-etw-register-guids-matrix-arm64.exe",
+      "log": "native-etw-register-guids-matrix-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-matrix-arm64\\native-etw-register-guids-matrix.cpp",
+        "bytes": 4974,
+        "sha256": "30e8825491f8244c690aa91b2b8bbd0b353029739efa7cf1b47c940c34a5e13b"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-matrix-arm64\\native-etw-register-guids-matrix-arm64.exe",
+        "bytes": 150528,
+        "sha256": "29b6b3408f3c232e03b1233be2cf8dd54beb81a104aee77306b627fac6f96468",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-matrix-arm64\\native-etw-register-guids-matrix-arm64.log",
+        "bytes": 290615,
+        "sha256": "aeb2fcda341972e143577fe85678a701f5073ac1ca74f34152d2ee6f9d9fa49f"
+      }
+    },
+    {
+      "profile": "matrix/x64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-matrix-x64",
+      "source": "native-etw-register-guids-matrix.cpp",
+      "source-sha256": "30e8825491f8244c690aa91b2b8bbd0b353029739efa7cf1b47c940c34a5e13b",
+      "executable": "native-etw-register-guids-matrix-x64.exe",
+      "log": "native-etw-register-guids-matrix-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-matrix-x64\\native-etw-register-guids-matrix.cpp",
+        "bytes": 4974,
+        "sha256": "30e8825491f8244c690aa91b2b8bbd0b353029739efa7cf1b47c940c34a5e13b"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-matrix-x64\\native-etw-register-guids-matrix-x64.exe",
+        "bytes": 148480,
+        "sha256": "4a443420605f31691017b5801aad2cb12c3007b221af44f33aa28ef2e6fc0675",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-matrix-x64\\native-etw-register-guids-matrix-x64.log",
+        "bytes": 290615,
+        "sha256": "d7e3ab931ad222fe2b0f6d6d6cb9205624f752ece4f4c72bbf3fa47b136bb23e"
+      }
+    },
+    {
+      "profile": "matrix/x86",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-matrix-x86",
+      "source": "native-etw-register-guids-matrix.cpp",
+      "source-sha256": "30e8825491f8244c690aa91b2b8bbd0b353029739efa7cf1b47c940c34a5e13b",
+      "executable": "native-etw-register-guids-matrix-x86.exe",
+      "log": "native-etw-register-guids-matrix-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-matrix-x86\\native-etw-register-guids-matrix.cpp",
+        "bytes": 4974,
+        "sha256": "30e8825491f8244c690aa91b2b8bbd0b353029739efa7cf1b47c940c34a5e13b"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-matrix-x86\\native-etw-register-guids-matrix-x86.exe",
+        "bytes": 122880,
+        "sha256": "e9fd44b1e9b2257f63ec83526cdc7d1e6877034819a3073ffa6e5f6f7bc9df77",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-matrix-x86\\native-etw-register-guids-matrix-x86.log",
+        "bytes": 290634,
+        "sha256": "019a0291caf321bfe38a4bbfecd5033bc579896d3c5fc992dccbbbc29d4b63d5"
+      }
+    },
+    {
+      "profile": "matrix/x86-laa",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-matrix-x86-laa",
+      "source": "native-etw-register-guids-matrix.cpp",
+      "source-sha256": "30e8825491f8244c690aa91b2b8bbd0b353029739efa7cf1b47c940c34a5e13b",
+      "executable": "native-etw-register-guids-matrix-x86-laa.exe",
+      "log": "native-etw-register-guids-matrix-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-matrix-x86-laa\\native-etw-register-guids-matrix.cpp",
+        "bytes": 4974,
+        "sha256": "30e8825491f8244c690aa91b2b8bbd0b353029739efa7cf1b47c940c34a5e13b"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-matrix-x86-laa\\native-etw-register-guids-matrix-x86-laa.exe",
+        "bytes": 122880,
+        "sha256": "83bc010925efafb3280930b98fe06e03c9cf9692b1bb947484b4a9f7b658c408",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-matrix-x86-laa\\native-etw-register-guids-matrix-x86-laa.log",
+        "bytes": 290685,
+        "sha256": "27d1ee82ec537cf8439251edfa3174680c66eb8682677b39d32174f3ed739f0d"
+      }
+    },
+    {
+      "profile": "boundaries/arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-boundaries-arm64",
+      "source": "native-etw-register-guids-boundaries.cpp",
+      "source-sha256": "9977d8978ad706ef6db8e81992af3650aabae0b4d9875d816885ced6af35fe7b",
+      "executable": "native-etw-register-guids-boundaries-arm64.exe",
+      "log": "native-etw-register-guids-boundaries-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-boundaries-arm64\\native-etw-register-guids-boundaries.cpp",
+        "bytes": 3677,
+        "sha256": "9977d8978ad706ef6db8e81992af3650aabae0b4d9875d816885ced6af35fe7b"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-boundaries-arm64\\native-etw-register-guids-boundaries-arm64.exe",
+        "bytes": 146944,
+        "sha256": "299a8b25dafddf1caafd43da239c1f485a5a1f41dd94050f6fe993ffc45dd771",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-boundaries-arm64\\native-etw-register-guids-boundaries-arm64.log",
+        "bytes": 1520716,
+        "sha256": "646891ec09294521a0971744a91e0355989b52666f9598dfa735522b8a69869e"
+      }
+    },
+    {
+      "profile": "boundaries/x64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-boundaries-x64",
+      "source": "native-etw-register-guids-boundaries.cpp",
+      "source-sha256": "9977d8978ad706ef6db8e81992af3650aabae0b4d9875d816885ced6af35fe7b",
+      "executable": "native-etw-register-guids-boundaries-x64.exe",
+      "log": "native-etw-register-guids-boundaries-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-boundaries-x64\\native-etw-register-guids-boundaries.cpp",
+        "bytes": 3677,
+        "sha256": "9977d8978ad706ef6db8e81992af3650aabae0b4d9875d816885ced6af35fe7b"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-boundaries-x64\\native-etw-register-guids-boundaries-x64.exe",
+        "bytes": 144896,
+        "sha256": "6e9cf78c1394a337b3097a580c9cb4830ecf0ac5d1ecd3af6fb5b6ff062961b9",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-boundaries-x64\\native-etw-register-guids-boundaries-x64.log",
+        "bytes": 1520716,
+        "sha256": "55cac1d09e8313b29e6a205e3e487f60fda0fbec1c010ebe29efe3c40a4bfcc5"
+      }
+    },
+    {
+      "profile": "boundaries/x86",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-boundaries-x86",
+      "source": "native-etw-register-guids-boundaries.cpp",
+      "source-sha256": "9977d8978ad706ef6db8e81992af3650aabae0b4d9875d816885ced6af35fe7b",
+      "executable": "native-etw-register-guids-boundaries-x86.exe",
+      "log": "native-etw-register-guids-boundaries-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-boundaries-x86\\native-etw-register-guids-boundaries.cpp",
+        "bytes": 3677,
+        "sha256": "9977d8978ad706ef6db8e81992af3650aabae0b4d9875d816885ced6af35fe7b"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-boundaries-x86\\native-etw-register-guids-boundaries-x86.exe",
+        "bytes": 120832,
+        "sha256": "615536cd716baf66e3eb55e22a2d4a833a5acdc127302ab76097180ae533379a",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-boundaries-x86\\native-etw-register-guids-boundaries-x86.log",
+        "bytes": 1520721,
+        "sha256": "0a6267b695ec14950427721dd393967815ec885ab5b2c7804e92854f0f20a8b5"
+      }
+    },
+    {
+      "profile": "boundaries/x86-laa",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-boundaries-x86-laa",
+      "source": "native-etw-register-guids-boundaries.cpp",
+      "source-sha256": "9977d8978ad706ef6db8e81992af3650aabae0b4d9875d816885ced6af35fe7b",
+      "executable": "native-etw-register-guids-boundaries-x86-laa.exe",
+      "log": "native-etw-register-guids-boundaries-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-boundaries-x86-laa\\native-etw-register-guids-boundaries.cpp",
+        "bytes": 3677,
+        "sha256": "9977d8978ad706ef6db8e81992af3650aabae0b4d9875d816885ced6af35fe7b"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-boundaries-x86-laa\\native-etw-register-guids-boundaries-x86-laa.exe",
+        "bytes": 120832,
+        "sha256": "8a5736f680c66dd61b5f7fcc964d48425ba41aad62de29610c322d82da8e05ff",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-boundaries-x86-laa\\native-etw-register-guids-boundaries-x86-laa.log",
+        "bytes": 1520721,
+        "sha256": "fab3c0eb40c9556aa7276622a8999d7b28b044059d30d18ccda43585f25bdfbb"
+      }
+    },
+    {
+      "profile": "alias-duplicate/arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-alias-duplicate-arm64",
+      "source": "native-etw-register-guids-alias-duplicate.cpp",
+      "source-sha256": "aa9ccb45fdba8250421c4a514eed109e6ab3e73efe2f7de1189be73c5d6c0780",
+      "executable": "native-etw-register-guids-alias-duplicate-arm64.exe",
+      "log": "native-etw-register-guids-alias-duplicate-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-alias-duplicate-arm64\\native-etw-register-guids-alias-duplicate.cpp",
+        "bytes": 4352,
+        "sha256": "aa9ccb45fdba8250421c4a514eed109e6ab3e73efe2f7de1189be73c5d6c0780"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-alias-duplicate-arm64\\native-etw-register-guids-alias-duplicate-arm64.exe",
+        "bytes": 157184,
+        "sha256": "711e11d1eb8625cbd3b4321ffc2ee4400db77d6a63f7d85c90841631a57761b3",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-alias-duplicate-arm64\\native-etw-register-guids-alias-duplicate-arm64.log",
+        "bytes": 319173,
+        "sha256": "a7a33f8630c85e42a3e6915985f60f8866d11f3657f5e563ae58809476f1cff6"
+      }
+    },
+    {
+      "profile": "alias-duplicate/x64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-alias-duplicate-x64",
+      "source": "native-etw-register-guids-alias-duplicate.cpp",
+      "source-sha256": "aa9ccb45fdba8250421c4a514eed109e6ab3e73efe2f7de1189be73c5d6c0780",
+      "executable": "native-etw-register-guids-alias-duplicate-x64.exe",
+      "log": "native-etw-register-guids-alias-duplicate-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-alias-duplicate-x64\\native-etw-register-guids-alias-duplicate.cpp",
+        "bytes": 4352,
+        "sha256": "aa9ccb45fdba8250421c4a514eed109e6ab3e73efe2f7de1189be73c5d6c0780"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-alias-duplicate-x64\\native-etw-register-guids-alias-duplicate-x64.exe",
+        "bytes": 156160,
+        "sha256": "38153ba9984ff5169ddc2ca25d8508251d76c7d0cb4f5e10f9335c3a7ab6cc9c",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-alias-duplicate-x64\\native-etw-register-guids-alias-duplicate-x64.log",
+        "bytes": 319173,
+        "sha256": "9ecda737c6022ff797b6c01db01132f05b91b64433d36f5d2b15e8aa49dc96d6"
+      }
+    },
+    {
+      "profile": "alias-duplicate/x86",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-alias-duplicate-x86",
+      "source": "native-etw-register-guids-alias-duplicate.cpp",
+      "source-sha256": "aa9ccb45fdba8250421c4a514eed109e6ab3e73efe2f7de1189be73c5d6c0780",
+      "executable": "native-etw-register-guids-alias-duplicate-x86.exe",
+      "log": "native-etw-register-guids-alias-duplicate-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-alias-duplicate-x86\\native-etw-register-guids-alias-duplicate.cpp",
+        "bytes": 4352,
+        "sha256": "aa9ccb45fdba8250421c4a514eed109e6ab3e73efe2f7de1189be73c5d6c0780"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-alias-duplicate-x86\\native-etw-register-guids-alias-duplicate-x86.exe",
+        "bytes": 135680,
+        "sha256": "bdb5d277472c96093aea24fba739f0767e03025bdc24aea848e471dff516bbe7",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-alias-duplicate-x86\\native-etw-register-guids-alias-duplicate-x86.log",
+        "bytes": 319216,
+        "sha256": "fdff82158e8e792ecdbb7ca5cbf49015548ab3a35e8b93be3f8f9faa4a255e27"
+      }
+    },
+    {
+      "profile": "alias-duplicate/x86-laa",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-alias-duplicate-x86-laa",
+      "source": "native-etw-register-guids-alias-duplicate.cpp",
+      "source-sha256": "aa9ccb45fdba8250421c4a514eed109e6ab3e73efe2f7de1189be73c5d6c0780",
+      "executable": "native-etw-register-guids-alias-duplicate-x86-laa.exe",
+      "log": "native-etw-register-guids-alias-duplicate-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-alias-duplicate-x86-laa\\native-etw-register-guids-alias-duplicate.cpp",
+        "bytes": 4352,
+        "sha256": "aa9ccb45fdba8250421c4a514eed109e6ab3e73efe2f7de1189be73c5d6c0780"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-alias-duplicate-x86-laa\\native-etw-register-guids-alias-duplicate-x86-laa.exe",
+        "bytes": 135680,
+        "sha256": "4971d892310bca15b8d4f09356d33352259d09aea77f1f35b229ce6c884259c0",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-alias-duplicate-x86-laa\\native-etw-register-guids-alias-duplicate-x86-laa.log",
+        "bytes": 319314,
+        "sha256": "223a4ac0d2ba9efdd6e9c44e64d9c134a360fc2a74acbb8ee245e941fdfd5e53"
+      }
+    },
+    {
+      "profile": "capacity/arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-capacity-arm64",
+      "source": "native-etw-register-guids-capacity.cpp",
+      "source-sha256": "a0460e16a99be648ec223ec8e90045732be722109e0846d69d03238e0bdd41cd",
+      "executable": "native-etw-register-guids-capacity-arm64.exe",
+      "log": "native-etw-register-guids-capacity-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-capacity-arm64\\native-etw-register-guids-capacity.cpp",
+        "bytes": 2006,
+        "sha256": "a0460e16a99be648ec223ec8e90045732be722109e0846d69d03238e0bdd41cd"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-capacity-arm64\\native-etw-register-guids-capacity-arm64.exe",
+        "bytes": 152064,
+        "sha256": "4384699ba29fbf554f3c7cba86df778fa68e67e56361cfdbb921a1d3465c0ec4",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-capacity-arm64\\native-etw-register-guids-capacity-arm64.log",
+        "bytes": 281303,
+        "sha256": "e93e903124a33bf39de1e5a6d50470de9e07eadb825be6dd2acdbaa6b1c00e02"
+      }
+    },
+    {
+      "profile": "capacity/x64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-capacity-x64",
+      "source": "native-etw-register-guids-capacity.cpp",
+      "source-sha256": "a0460e16a99be648ec223ec8e90045732be722109e0846d69d03238e0bdd41cd",
+      "executable": "native-etw-register-guids-capacity-x64.exe",
+      "log": "native-etw-register-guids-capacity-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-capacity-x64\\native-etw-register-guids-capacity.cpp",
+        "bytes": 2006,
+        "sha256": "a0460e16a99be648ec223ec8e90045732be722109e0846d69d03238e0bdd41cd"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-capacity-x64\\native-etw-register-guids-capacity-x64.exe",
+        "bytes": 150528,
+        "sha256": "67ed950aa3888da207c2d8e023d1bfc1a10c832a9c1981c5aa85e9ec90564bd8",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-capacity-x64\\native-etw-register-guids-capacity-x64.log",
+        "bytes": 281223,
+        "sha256": "63098304dfac5214864b185c29a7b0fc31e1d0e2fa63639fa975a02d1da3e36f"
+      }
+    },
+    {
+      "profile": "capacity/x86",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-capacity-x86",
+      "source": "native-etw-register-guids-capacity.cpp",
+      "source-sha256": "a0460e16a99be648ec223ec8e90045732be722109e0846d69d03238e0bdd41cd",
+      "executable": "native-etw-register-guids-capacity-x86.exe",
+      "log": "native-etw-register-guids-capacity-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-capacity-x86\\native-etw-register-guids-capacity.cpp",
+        "bytes": 2006,
+        "sha256": "a0460e16a99be648ec223ec8e90045732be722109e0846d69d03238e0bdd41cd"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-capacity-x86\\native-etw-register-guids-capacity-x86.exe",
+        "bytes": 123904,
+        "sha256": "5f9b11493fa8ee66ad6103722b5231906a8d80e93abaa8273426d7d3d1863705",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-capacity-x86\\native-etw-register-guids-capacity-x86.log",
+        "bytes": 281469,
+        "sha256": "f5144d11d2311a4f9b1f8f627a7eb1ef201fc54b143a6a0e690cfbf7d82d9ad0"
+      }
+    },
+    {
+      "profile": "capacity/x86-laa",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-capacity-x86-laa",
+      "source": "native-etw-register-guids-capacity.cpp",
+      "source-sha256": "a0460e16a99be648ec223ec8e90045732be722109e0846d69d03238e0bdd41cd",
+      "executable": "native-etw-register-guids-capacity-x86-laa.exe",
+      "log": "native-etw-register-guids-capacity-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-capacity-x86-laa\\native-etw-register-guids-capacity.cpp",
+        "bytes": 2006,
+        "sha256": "a0460e16a99be648ec223ec8e90045732be722109e0846d69d03238e0bdd41cd"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-capacity-x86-laa\\native-etw-register-guids-capacity-x86-laa.exe",
+        "bytes": 123904,
+        "sha256": "ce8cc40ab7790027d545c8e7c4a7b9928bc6bf527080a9c474579f4a34bcb34a",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-capacity-x86-laa\\native-etw-register-guids-capacity-x86-laa.log",
+        "bytes": 281469,
+        "sha256": "4033dcf96903e215984066cd1ffbfbc43662777055b7cc745e116bd36c9bdd84"
+      }
+    },
+    {
+      "profile": "duplicate/arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-arm64",
+      "source": "native-etw-register-guids-duplicate.cpp",
+      "source-sha256": "92b881453ba63fcaac97ad0c91f4bc5308eaf3502f9708c1c90f597ba164ab5d",
+      "executable": "native-etw-register-guids-duplicate-arm64.exe",
+      "log": "native-etw-register-guids-duplicate-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-arm64\\native-etw-register-guids-duplicate.cpp",
+        "bytes": 3348,
+        "sha256": "92b881453ba63fcaac97ad0c91f4bc5308eaf3502f9708c1c90f597ba164ab5d"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-arm64\\native-etw-register-guids-duplicate-arm64.exe",
+        "bytes": 155136,
+        "sha256": "d938cfd7f64e50e2d33945c1ec1d64dd19c426e1bc52dccbea765fcc308bd014",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-arm64\\native-etw-register-guids-duplicate-arm64.log",
+        "bytes": 55096,
+        "sha256": "b823d9c2c4c6487a14ae1463eeff67b4f4e82e2885031c77d14f5ba21b98b59e"
+      }
+    },
+    {
+      "profile": "duplicate/x64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-x64",
+      "source": "native-etw-register-guids-duplicate.cpp",
+      "source-sha256": "92b881453ba63fcaac97ad0c91f4bc5308eaf3502f9708c1c90f597ba164ab5d",
+      "executable": "native-etw-register-guids-duplicate-x64.exe",
+      "log": "native-etw-register-guids-duplicate-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-x64\\native-etw-register-guids-duplicate.cpp",
+        "bytes": 3348,
+        "sha256": "92b881453ba63fcaac97ad0c91f4bc5308eaf3502f9708c1c90f597ba164ab5d"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-x64\\native-etw-register-guids-duplicate-x64.exe",
+        "bytes": 153600,
+        "sha256": "c650daa400b09922168817409b74ecad852fcef8696e4869e5e9da3694e246a0",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-x64\\native-etw-register-guids-duplicate-x64.log",
+        "bytes": 55096,
+        "sha256": "b823d9c2c4c6487a14ae1463eeff67b4f4e82e2885031c77d14f5ba21b98b59e"
+      }
+    },
+    {
+      "profile": "duplicate/x86",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-x86",
+      "source": "native-etw-register-guids-duplicate.cpp",
+      "source-sha256": "92b881453ba63fcaac97ad0c91f4bc5308eaf3502f9708c1c90f597ba164ab5d",
+      "executable": "native-etw-register-guids-duplicate-x86.exe",
+      "log": "native-etw-register-guids-duplicate-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-x86\\native-etw-register-guids-duplicate.cpp",
+        "bytes": 3348,
+        "sha256": "92b881453ba63fcaac97ad0c91f4bc5308eaf3502f9708c1c90f597ba164ab5d"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-x86\\native-etw-register-guids-duplicate-x86.exe",
+        "bytes": 133120,
+        "sha256": "a3cb3718fb853011888b70e9bd832874f43da2ba71b809181953fb7ba528452d",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-x86\\native-etw-register-guids-duplicate-x86.log",
+        "bytes": 55096,
+        "sha256": "0c130570d4c103fe38f7a032b4a5a26f4c1ed3b330df5f02fd880f03487cbb36"
+      }
+    },
+    {
+      "profile": "duplicate/x86-laa",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-x86-laa",
+      "source": "native-etw-register-guids-duplicate.cpp",
+      "source-sha256": "92b881453ba63fcaac97ad0c91f4bc5308eaf3502f9708c1c90f597ba164ab5d",
+      "executable": "native-etw-register-guids-duplicate-x86-laa.exe",
+      "log": "native-etw-register-guids-duplicate-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-x86-laa\\native-etw-register-guids-duplicate.cpp",
+        "bytes": 3348,
+        "sha256": "92b881453ba63fcaac97ad0c91f4bc5308eaf3502f9708c1c90f597ba164ab5d"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-x86-laa\\native-etw-register-guids-duplicate-x86-laa.exe",
+        "bytes": 133120,
+        "sha256": "a4d690a7fcdae856f330fb0dc9fec2a0c815a44889b6762d1d0ca57ddde939fc",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-x86-laa\\native-etw-register-guids-duplicate-x86-laa.log",
+        "bytes": 55096,
+        "sha256": "0c130570d4c103fe38f7a032b4a5a26f4c1ed3b330df5f02fd880f03487cbb36"
+      }
+    },
+    {
+      "profile": "duplicate-buffers/arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-buffers-arm64",
+      "source": "native-etw-register-guids-duplicate-buffers.cpp",
+      "source-sha256": "bba0855aecfb1609d7faaedf99a360ea84cd473ef9eca89c80ca5f27d0621e2c",
+      "executable": "native-etw-register-guids-duplicate-buffers-arm64.exe",
+      "log": "native-etw-register-guids-duplicate-buffers-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-buffers-arm64\\native-etw-register-guids-duplicate-buffers.cpp",
+        "bytes": 2753,
+        "sha256": "bba0855aecfb1609d7faaedf99a360ea84cd473ef9eca89c80ca5f27d0621e2c"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-buffers-arm64\\native-etw-register-guids-duplicate-buffers-arm64.exe",
+        "bytes": 145920,
+        "sha256": "6a87fca9cf66899c76dcc4209ddf53ed84e80a6199da08bc09d0dd553abaadf6",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-buffers-arm64\\native-etw-register-guids-duplicate-buffers-arm64.log",
+        "bytes": 29510,
+        "sha256": "b8104ff414878601892ccd4ec10a50b742914136a3795ad6b3da18fc0eeee969"
+      }
+    },
+    {
+      "profile": "duplicate-buffers/x64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-buffers-x64",
+      "source": "native-etw-register-guids-duplicate-buffers.cpp",
+      "source-sha256": "bba0855aecfb1609d7faaedf99a360ea84cd473ef9eca89c80ca5f27d0621e2c",
+      "executable": "native-etw-register-guids-duplicate-buffers-x64.exe",
+      "log": "native-etw-register-guids-duplicate-buffers-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-buffers-x64\\native-etw-register-guids-duplicate-buffers.cpp",
+        "bytes": 2753,
+        "sha256": "bba0855aecfb1609d7faaedf99a360ea84cd473ef9eca89c80ca5f27d0621e2c"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-buffers-x64\\native-etw-register-guids-duplicate-buffers-x64.exe",
+        "bytes": 144384,
+        "sha256": "0724356bdd2414b38017010f452fe3dbcbc9d8258735200c227fabb2c8b4214c",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-buffers-x64\\native-etw-register-guids-duplicate-buffers-x64.log",
+        "bytes": 29510,
+        "sha256": "d92a37aeaf5129c239e5b51fb11631b768e783772862ab3d623974f39137c23a"
+      }
+    },
+    {
+      "profile": "duplicate-buffers/x86",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-buffers-x86",
+      "source": "native-etw-register-guids-duplicate-buffers.cpp",
+      "source-sha256": "bba0855aecfb1609d7faaedf99a360ea84cd473ef9eca89c80ca5f27d0621e2c",
+      "executable": "native-etw-register-guids-duplicate-buffers-x86.exe",
+      "log": "native-etw-register-guids-duplicate-buffers-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-buffers-x86\\native-etw-register-guids-duplicate-buffers.cpp",
+        "bytes": 2753,
+        "sha256": "bba0855aecfb1609d7faaedf99a360ea84cd473ef9eca89c80ca5f27d0621e2c"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-buffers-x86\\native-etw-register-guids-duplicate-buffers-x86.exe",
+        "bytes": 119808,
+        "sha256": "b920782690111e1d2920837b36307be3fddf8bd2b4209a3732894e9e1ca4cca4",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-buffers-x86\\native-etw-register-guids-duplicate-buffers-x86.log",
+        "bytes": 28486,
+        "sha256": "0cd8196d41e32eca2fcdae70ed08320ca1e17479e736760dc1dbb7e2bf3fc350"
+      }
+    },
+    {
+      "profile": "duplicate-buffers/x86-laa",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-buffers-x86-laa",
+      "source": "native-etw-register-guids-duplicate-buffers.cpp",
+      "source-sha256": "bba0855aecfb1609d7faaedf99a360ea84cd473ef9eca89c80ca5f27d0621e2c",
+      "executable": "native-etw-register-guids-duplicate-buffers-x86-laa.exe",
+      "log": "native-etw-register-guids-duplicate-buffers-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-buffers-x86-laa\\native-etw-register-guids-duplicate-buffers.cpp",
+        "bytes": 2753,
+        "sha256": "bba0855aecfb1609d7faaedf99a360ea84cd473ef9eca89c80ca5f27d0621e2c"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-buffers-x86-laa\\native-etw-register-guids-duplicate-buffers-x86-laa.exe",
+        "bytes": 119808,
+        "sha256": "061cfc3b1c502d0c43ca2bd872c71dd262cb096b9692a8731b6a975bdfc3b8df",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-duplicate-buffers-x86-laa\\native-etw-register-guids-duplicate-buffers-x86-laa.log",
+        "bytes": 28486,
+        "sha256": "0cd8196d41e32eca2fcdae70ed08320ca1e17479e736760dc1dbb7e2bf3fc350"
+      }
+    },
+    {
+      "profile": "fresh/arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-arm64",
+      "source": "native-etw-register-guids-fresh.cpp",
+      "source-sha256": "824c32a32ee2ef57874f2d3b67c81f20bbe1740d95535ff47b622912bd79cbb5",
+      "executable": "native-etw-register-guids-fresh-arm64.exe",
+      "log": "native-etw-register-guids-fresh-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-arm64\\native-etw-register-guids-fresh.cpp",
+        "bytes": 7421,
+        "sha256": "824c32a32ee2ef57874f2d3b67c81f20bbe1740d95535ff47b622912bd79cbb5"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-arm64\\native-etw-register-guids-fresh-arm64.exe",
+        "bytes": 168448,
+        "sha256": "52bfa78bf195dbe15fc0aef001f271c1d633e2acee9c49a84071b6c689dc0406",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-arm64\\native-etw-register-guids-fresh-arm64.log",
+        "bytes": 7047,
+        "sha256": "82d3248c4de33fb614a3015698aadb88e830bfcb7f808bdbce0fb9dc3b8100e7"
+      }
+    },
+    {
+      "profile": "without-event/arm64",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-arm64",
+      "source": "native-etw-register-guids-without-event.cpp",
+      "source-sha256": "8fd9c28a8e8268c25f0a4f9e92b0ccda104e666801873b63d1d2b385f2429d48",
+      "executable": "native-etw-register-guids-without-event-arm64.exe",
+      "log": "native-etw-register-guids-without-event-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-arm64\\native-etw-register-guids-without-event.cpp",
+        "bytes": 8267,
+        "sha256": "8fd9c28a8e8268c25f0a4f9e92b0ccda104e666801873b63d1d2b385f2429d48"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-arm64\\native-etw-register-guids-without-event-arm64.exe",
+        "bytes": 168960,
+        "sha256": "ad1b316fb9f0f37307d63d13b05bd5ef4960fe5b631106837d7d53a76acb001f",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-register-guids-arm64\\native-etw-register-guids-without-event-arm64.log",
+        "bytes": 6705,
+        "sha256": "2e82c2cba3a4c3be81f9034f2bef2234355774a8b023644f3afc781b9dea197c"
+      }
+    }
+  ],
+  "native-libraries": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+      "machine": 332,
+      "characteristics": 8450
+    }
+  ]
+}

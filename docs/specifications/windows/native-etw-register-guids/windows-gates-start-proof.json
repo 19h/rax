@@ -1,0 +1,7 @@
+{
+  "initial-launch-exit": 255,
+  "authoritative-inspection-utc": "2026-10-12T12:55:19.9992726Z",
+  "matching-processes": 0,
+  "gate-logs-present": false,
+  "retry-basis": "Native Get-CimInstance process list and task directory logs prove initial gate driver did not start."
+}

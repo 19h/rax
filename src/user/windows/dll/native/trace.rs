@@ -1,8 +1,9 @@
-//! Measured build29683 NtTraceControl/EtwAddNotificationEvent (function27).
+//! Measured build29683 NtTraceControl provider/Event registration (15/27).
 //! This retains a guest Event; it does not create a host ETW registration.
 use super::query::{guard_result, probe_write};
+use crate::error::MemoryAccessKind;
 use crate::user::windows::hle::{ApiErr, ApiResult, Ctx, Flow};
-use crate::user::windows::memory::Mem;
+use crate::user::windows::memory::{Mem, MemFault};
 use crate::user::windows::nt::status::*;
 use crate::user::windows::objects::Object;
 
@@ -12,7 +13,7 @@ pub(super) fn control(c: &mut Ctx) -> ApiResult {
 }
 fn checked(c: &mut Ctx) -> ApiResult {
     let function = c.u32(0)?;
-    if function != 27 {
+    if function != 15 && function != 27 {
         return Err(c.unsupported(format!("NtTraceControl function {function}")));
     }
     let (input, input_bytes, output, output_bytes, returned) =
@@ -26,6 +27,9 @@ fn checked(c: &mut Ctx) -> ApiResult {
         return Flow::ret(STATUS_INVALID_PARAMETER.into());
     }
     probe_write(c, returned, 4)?;
+    if function == 15 {
+        return register_provider(c, input, input_bytes, output, output_bytes, returned);
+    }
     // The private input is exactly one ULONG in native64 as well as WoW64.
     // Length validation precedes capture; byte-aligned buffers are accepted.
     if input_bytes != 4 || input == 0 {
@@ -54,5 +58,50 @@ fn checked(c: &mut Ctx) -> ApiResult {
     // Capture and publication precede this store, so input/output aliases
     // observe the zero only after the original handle has been retained.
     c.mem().w32(returned, 0)?;
+    Flow::ret(STATUS_SUCCESS.into())
+}
+
+fn register_provider(
+    c: &mut Ctx,
+    input: u64,
+    input_bytes: u32,
+    output: u64,
+    output_bytes: u32,
+    returned: u64,
+) -> ApiResult {
+    // Unlike function27, generic function15 capture reaches a nonempty input
+    // span before class-specific size checks. NULL input is not read.
+    if input != 0 && input_bytes != 0 {
+        c.mem()
+            .probe(input, input_bytes as usize, MemoryAccessKind::Read)
+            .map_err(|fault| MemFault {
+                addr: fault.address,
+                write: false,
+            })?;
+    }
+    if input == 0 || input_bytes != 160 || output == 0 || output_bytes < 160 {
+        return Flow::ret(STATUS_INVALID_PARAMETER.into());
+    }
+    // Capture before any publication: output/ReturnLength may alias input.
+    let bytes = c.mem().bytes(input, 160)?;
+    let request: Box<[u8; 160]> = bytes
+        .into_boxed_slice()
+        .try_into()
+        .map_err(|_| ApiErr::Internal("ETW registration capture width".into()))?;
+    let mut reply = *request;
+    let Some(handle) = c.p.objects.register_etw_provider(request) else {
+        return Flow::ret(STATUS_NO_MEMORY.into());
+    };
+    reply[24..32].copy_from_slice(&u64::from(handle).to_le_bytes());
+    reply[44..48].copy_from_slice(&160u32.to_le_bytes());
+    // No guest tracing controller has enabled this dormant registration.
+    reply[112..160].fill(0);
+    // Full probes above guarantee stable writable spans. Preserve native copy
+    // order, including ReturnLength overwriting a reply handle when aliased.
+    if let Err(fault) = c.mem().wr(output, &reply) {
+        let _ = c.p.objects.close(u64::from(handle));
+        return Err(fault.into());
+    }
+    c.mem().w32(returned, 160)?;
     Flow::ret(STATUS_SUCCESS.into())
 }

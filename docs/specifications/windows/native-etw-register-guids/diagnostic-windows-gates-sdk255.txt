@@ -1,0 +1,1 @@
+2026-10-12 12:54:30 UTC: initial gate launch returned255: PrlJob_GetResult Invalid argument. Authoritative process/log inspection required before retry.

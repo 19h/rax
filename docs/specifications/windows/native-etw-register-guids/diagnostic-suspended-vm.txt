@@ -1,0 +1,1 @@
+2026-10-12 12:23 UTC: status/list authoritatively suspended. First matrix terminal connection returned255 PRL_ERR_IO_STOPPED, no producer started. Resuming existing VM with prlctl start.

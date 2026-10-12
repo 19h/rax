@@ -1,0 +1,34 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.28s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-tests\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 9 tests
+test user::windows::objects::etw::tests::native_etw_notification_reference_overflow_and_drain_are_transactional ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::native_etw_notification_unknown_functions_preserve_explicit_frontier_and_memory ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::native_etw_notification_close_reuse_drain_and_distinct_wnf_owner_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::native_etw_notification_replays_all_1920_mature_handle_and_length_rows ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::native_etw_notification_replays_all_48_fresh_lifetime_sequences ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::boundary_tests::native_etw_notification_replays_all_72_fresh_output_alias_sequences ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::leaf_tests::installed_etw_notification_leaf_checks_fault_before_commit_and_ret24_cleanup ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::boundary_tests::native_etw_notification_replays_all_120_fresh_return_fault_transactions ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::boundary_tests::native_etw_notification_replays_all_21000_buffer_status_and_guard_rows ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 7095 filtered out; finished in 2.32s
+

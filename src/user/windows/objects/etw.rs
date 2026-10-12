@@ -2,6 +2,20 @@
 use super::{ObjId, Object, Objects};
 
 impl Objects {
+    /// Opens a distinct dormant provider resource with the measured grant.
+    /// Repeated GUIDs are distinct resources; final close and drain own lifetime.
+    /// Expected O(1) object insertion, O(H) lowest-free handle selection and
+    /// O(1) retained state per registration (160 B request plus table entries).
+    pub(crate) fn register_etw_provider(&mut self, request: Box<[u8; 160]>) -> Option<u32> {
+        let id = self.try_create(Object::EtwRegistration { request })?;
+        match self.open_access(id, false, 0x804) {
+            Some(handle) => Some(handle),
+            None => {
+                self.release(id);
+                None
+            }
+        }
+    }
     /// Pins the first Event without changing its type or signal state.
     /// The caller validates handle/type/access before the busy check.
     /// Expected O(1) time and O(1) retained state, independent of WNF.
@@ -21,6 +35,30 @@ impl Objects {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn native_etw_registration_identifier_exhaustion_preserves_objects_and_handles() {
+        let mut objects = Objects::default();
+        let existing = objects.insert(Object::Event {
+            manual: true,
+            signaled: 1,
+        });
+        let baseline = (objects.handle_count(), objects.iter().count());
+        objects.next = u32::MAX;
+        assert_eq!(objects.register_etw_provider(Box::new([0xA5; 160])), None);
+        assert_eq!((objects.handle_count(), objects.iter().count()), baseline);
+        assert!(matches!(
+            objects.get(existing.into()),
+            Some(Object::Event {
+                manual: true,
+                signaled: 1
+            })
+        ));
+        assert_eq!(objects.next, u32::MAX);
+        objects.drain().for_each(drop);
+        assert_eq!(objects.handle_count(), 0);
+        assert_eq!(objects.iter().count(), 0);
+    }
+
     #[test]
     fn native_etw_notification_reference_overflow_and_drain_are_transactional() {
         let mut objects = Objects::default();

@@ -192,6 +192,12 @@ pub enum Object {
         /// Requested/default stack commit in bytes.
         commit: u64,
     },
+    /// A dormant process-local ETW provider registration. The private160 B
+    /// request is captured verbatim; later guest writes do not change it.
+    EtwRegistration {
+        /// Opaque measured kernel header, including GUID and user context.
+        request: Box<[u8; 160]>,
+    },
     /// A private immutable runtime registry key shared by opened handles.
     Key(std::sync::Arc<super::registry::Key>),
     /// An object this implementation only needs to name (tokens,
@@ -216,6 +222,7 @@ impl Object {
             Object::CompletionPort { .. } => "IoCompletion",
             Object::WaitCompletionPacket { .. } => "WaitCompletionPacket",
             Object::WorkerFactory { .. } => "TpWorkerFactory",
+            Object::EtwRegistration { .. } => "EtwRegistration",
             Object::Key(_) => "Key",
             Object::Opaque(t) => t,
         }

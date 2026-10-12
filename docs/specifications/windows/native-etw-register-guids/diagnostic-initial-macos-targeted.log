@@ -1,0 +1,56 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+error: cannot find macro `corpus` in this scope
+  --> src/user/windows/process/sched/tests/services_tests/etw_registration_boundary_tests.rs:20:13
+   |
+20 |             corpus!("native-etw-register-guids-boundaries-x86-laa.log"),
+   |             ^^^^^^
+   |
+   = help: have you added the `#[macro_use]` on the module/import?
+
+error: cannot find macro `corpus` in this scope
+  --> src/user/windows/process/sched/tests/services_tests/etw_registration_boundary_tests.rs:16:13
+   |
+16 |             corpus!("native-etw-register-guids-boundaries-x86.log"),
+   |             ^^^^^^
+   |
+   = help: have you added the `#[macro_use]` on the module/import?
+
+error: cannot find macro `corpus` in this scope
+  --> src/user/windows/process/sched/tests/services_tests/etw_registration_boundary_tests.rs:12:13
+   |
+12 |             corpus!("native-etw-register-guids-boundaries-x64.log"),
+   |             ^^^^^^
+   |
+   = help: have you added the `#[macro_use]` on the module/import?
+
+error: cannot find macro `corpus` in this scope
+ --> src/user/windows/process/sched/tests/services_tests/etw_registration_boundary_tests.rs:8:13
+  |
+8 |             corpus!("native-etw-register-guids-boundaries-arm64.log"),
+  |             ^^^^^^
+  |
+  = help: have you added the `#[macro_use]` on the module/import?
+
+error[E0004]: non-exhaustive patterns: `Some(&windows::objects::Object::EtwRegistration { .. })` not covered
+   --> src/user/windows/sync.rs:406:11
+    |
+406 |     match p.objects.obj(id) {
+    |           ^^^^^^^^^^^^^^^^^ pattern `Some(&windows::objects::Object::EtwRegistration { .. })` not covered
+    |
+note: `std::option::Option<&windows::objects::Object>` defined here
+   --> /Users/int/.rustup/toolchains/1.95.0-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs:600:1
+    |
+600 | pub enum Option<T> {
+    | ^^^^^^^^^^^^^^^^^^
+...
+608 |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+    |     ---- not covered
+    = note: the matched value is of type `std::option::Option<&windows::objects::Object>`
+help: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern or an explicit pattern as shown
+    |
+426 ~         | None => false,
+427 ~         Some(&windows::objects::Object::EtwRegistration { .. }) => todo!(),
+    |
+
+For more information about this error, try `rustc --explain E0004`.
+error: could not compile `rax` (lib test) due to 5 previous errors

@@ -1,0 +1,160 @@
+{
+  "core": {
+    "macos": [
+      [
+        7691,
+        0,
+        2,
+        0
+      ]
+    ],
+    "linux": [
+      [
+        7684,
+        1,
+        2,
+        0
+      ]
+    ],
+    "windows": [
+      [
+        7097,
+        5,
+        2,
+        0
+      ]
+    ]
+  },
+  "focused": {
+    "macos": [
+      [
+        9,
+        0,
+        0,
+        7684
+      ]
+    ],
+    "linux": [
+      [
+        9,
+        0,
+        0,
+        7678
+      ]
+    ],
+    "windows": [
+      [
+        10,
+        0,
+        0,
+        7094
+      ]
+    ]
+  },
+  "capi": {
+    "macos": [
+      [
+        168,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "linux": [
+      [
+        168,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "windows": [
+      [
+        168,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "integrations": {
+    "macos": [
+      [
+        544,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "linux": [
+      [
+        544,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "windows": [
+      [
+        4,
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "native-complete-cases": 34228,
+  "native-excluded-debugger-warmups": 2,
+  "native-verified-producers": 26,
+  "native-replayed-core-rows": 33744,
+  "replay-limit": "Four fresh debugger cases and480 repeated duplicate rows are independently checked in the evidence verifier; portable replay directly consumes33744 rows.",
+  "frontier": {
+    "before-turn": 50306,
+    "after-turn": 50692,
+    "delta-scheduler-calls": 386,
+    "function": 30,
+    "service": "0x1D6",
+    "pc": "0x180002DA0",
+    "thread": 8,
+    "args": [
+      "0x1E",
+      "0xABE8E0",
+      "0x18",
+      "0xABE900",
+      "0x78",
+      "0xABE8D0"
+    ],
+    "ordinary-programs": 4,
+    "ordinary-result": "reason5/exit field0/internal failure before guest exit"
+  }
+}

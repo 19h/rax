@@ -1,6 +1,43 @@
 # Windows handle/service integration
 
-Current native ETW process notification Event registration (2026-10-12):
+Current native ETW provider registration (2026-10-12):
+`NtTraceControl` function 15 (`EtwRegisterGuids`) captures a fixed 160 B private
+header and creates a distinct process-local `EtwRegistration` resource with
+access grant `0x804`. The object retains the captured request, including its GUID
+and opaque fields; caller memory changes do not alter that state.
+Repeated GUIDs produce distinct resources. Native probes admit 1,030 simultaneous
+registrations per tested group; the public `EventRegister` limit does not define
+this private syscall's capacity. Final close and process object-table drain
+release the resource. Registration requires no host ETW operation.
+
+Nonempty, non-NULL output receives a full write probe; required `ReturnLength`
+receives a 4 B write probe. A nonempty, non-NULL input span is then read-probed
+before checking the exact 160 B input length and minimum 160 B non-NULL output.
+This order differs from function 27's length-before-capture rule. Byte alignment
+is accepted. The reply preserves captured bytes except the zero-extended handle
+at offset 24 B, size 160 at offset 44 B, and zeroed reply tail 112..160 B.
+The complete reply copy precedes the 4 B `ReturnLength=160` store, even when that
+store overlaps the returned handle. Wrong lengths and faults preserve bytes and
+create no resource in the measured stable-mapping profile.
+
+The new resource cannot be duplicated. Its `DuplicateHandle` adapter preserves
+measured output-zeroing, raw guard error `0x80000001`, access-denial, target and
+close-source ordering. Native64 output-copy faults preserve the source; WoW64
+can close it after admissible desired rights. Access denial preserves the source
+on both ABIs. Wait admission fails for the measured nonsynchronizable grant.
+Other object types retain their existing duplication and wait behavior.
+
+Four mature native profiles establish header, length, pointer/protection/guard,
+alias, duplication and simultaneous-resource matrices. Fresh ARM64 entry/true-LR
+captures observe installed NTDLL's first registration and diagnostic registration
+before the process notification Event. Fresh compatibility capture remains
+unknown. The public C API 1.11.0 and Assist Rust ABI 184 remain unchanged; the
+internal Rust Object enum gains the registration variant. The private meaning of the reply tail is unknown. Guest tracing
+controllers, enabled-provider replies and notification delivery remain explicit
+unsupported boundaries, distinct from dormant provider registration.
+See [provider registration evidence](../../specifications/windows/native-etw-register-guids/README.md).
+
+Historical native ETW process notification Event registration (2026-10-12):
 `NtTraceControl` function27 (`EtwAddNotificationEvent`) consumes exactly4 B
 containing a zero-extended ULONG handle on native ARM64/x64 and WoW64.
 A nonempty non-NULL output receives a full write probe, then required4 B
