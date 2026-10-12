@@ -1,0 +1,29 @@
+{
+  "root": "f386ed2aeac29a701d32f28eb73c14003eb55f7a",
+  "rax": "0baeaa5d1c15ce69d2ef1f52107b7d7ccbc9948e",
+  "owned": [
+    "src/user/windows/dll/native/trace.rs",
+    "src/user/windows/objects.rs",
+    "src/user/windows/objects/etw.rs",
+    "src/user/windows/nt.rs",
+    "src/user/windows/process/sched/tests/services_tests/etw_registration_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/etw_provider_traits_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/etw_provider_traits_boundary_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/etw_provider_traits_leaf_tests.rs",
+    "docs/architecture/user-mode/windows-services.md",
+    "docs/specifications/windows/native-etw-provider-traits"
+  ],
+  "root_owned": [
+    "VENDORED_VERSIONS.md",
+    "src/emulation/native-process-emulation.md",
+    "vendor/rax"
+  ],
+  "baseline-source-sha256": {
+    "src/user/windows/dll/native/trace.rs": "cab8237e64cee244cf60b63372ea9b99f045db5defdc7c7546f32e651ae55e8c",
+    "src/user/windows/objects.rs": "6cfffeba76a6374a6061d2b3f63d89b98dba2d90415f6c36cc4d958ae2954d6e",
+    "src/user/windows/objects/etw.rs": "52f7c3d42ddfd760119927a13a717aa25888893003d34ed6c28e3f3c0c35199c",
+    "src/user/windows/nt.rs": "090ab62b157b361c6b4b6b35506401d1a6e8dcc3054648f15d3c6c3fd495bf33",
+    "src/user/windows/process/sched/tests/services_tests/etw_registration_tests.rs": "3c81ffce2001c156c3124c3c9f08f0a3206515efc56783ddb09266974698c6c3",
+    "docs/architecture/user-mode/windows-services.md": "dd9374564a070fc6329481a8f19f6cd6b0dafb7b1a3e51d66b48c307fd6c7110"
+  }
+}

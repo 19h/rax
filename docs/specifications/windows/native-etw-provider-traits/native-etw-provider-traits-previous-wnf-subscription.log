@@ -1,0 +1,40 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.26s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-tests\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 15 tests
+test user::windows::objects::wnf::tests::native_wnf_subscription_generation_exhaustion_and_owner_failure_are_transactional ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_guard_consumption_and_denied_update_preserve_record_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_pending_metadata_matches_128_native_queue_captures_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_228_overlapping_output_cases ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_requires_selection_and_preserves_fixed_64_bit_output_all_abis ... ok
+test user::windows::wnf::tests::native_wnf_subscription_catalog_access_matches_all_72_process_name_calls ... ok
+test user::windows::wnf::tests::native_wnf_subscription_catalog_rejects_unmodeled_security_and_malformed_values ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_840_guard_and_readonly_copy_cases ... ok
+test user::windows::wnf::tests::native_wnf_subscription_name_capture_replays_all_8192_domain_rows ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_256_mask_updates_with_stable_identity ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_2496_pointer_status_and_output_cases ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_17152_name_mask_calls ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::leaf_tests::installed_wnf_subscription_leaves_publish_update_and_remove_fixed_64_bit_identity ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_fresh_event_order_and_closed_caller_pin_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_288_fresh_process_names_and_metadata_all_abis ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 7098 filtered out; finished in 13.72s
+

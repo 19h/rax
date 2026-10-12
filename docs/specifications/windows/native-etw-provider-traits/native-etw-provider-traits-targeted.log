@@ -1,0 +1,36 @@
+    Blocking waiting for file lock on package cache
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 40s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-tests\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 9 tests
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_other_functions_stay_explicit_and_nonmutating ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_captured_state_survives_guest_writes_and_handle_reuse ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_replays_all_840_high_length_bits_as_measured_16_bit_captures ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_replays_all_2844_names_records_and_65535_byte_captures ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::boundary_tests::native_etw_provider_traits_replays_all_3960_referenced_faults_type_busy_and_status_translations ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_replays_all_4128_lengths_fields_handles_and_repeats ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::leaf_tests::installed_etw_provider_traits_leaf_captures_once_faults_and_ret24_cleanup ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::boundary_tests::native_etw_provider_traits_replays_all_3456_aliases_and_retains_pre_store_snapshot ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::boundary_tests::native_etw_provider_traits_replays_all_22400_base_fault_guard_and_alignment_rows ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 7104 filtered out; finished in 5.20s
+

@@ -1,0 +1,116 @@
+﻿[
+    {
+        "gate":  "targeted",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib etw_provider_traits -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-etw-provider-traits-targeted.log"
+    },
+    {
+        "gate":  "previous-etw-registration",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib etw_registration -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-etw-provider-traits-previous-etw-registration.log"
+    },
+    {
+        "gate":  "previous-etw-notification",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib etw_notification -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-etw-provider-traits-previous-etw-notification.log"
+    },
+    {
+        "gate":  "previous-wnf-subscription",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib wnf_subscription -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-etw-provider-traits-previous-wnf-subscription.log"
+    },
+    {
+        "gate":  "previous-wnf-event",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib wnf_process_event -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-etw-provider-traits-previous-wnf-event.log"
+    },
+    {
+        "gate":  "binding",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib worker_factory_binding -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-etw-provider-traits-binding.log"
+    },
+    {
+        "gate":  "soft-maximum",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib worker_factory_soft_maximum -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-etw-provider-traits-soft-maximum.log"
+    },
+    {
+        "gate":  "hard-maximum",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib worker_factory_set_maximum -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-etw-provider-traits-hard-maximum.log"
+    },
+    {
+        "gate":  "wait-packet-associate",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib wait_packet_associate -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-etw-provider-traits-wait-packet-associate.log"
+    },
+    {
+        "gate":  "wait-packet-create",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib wait_packet_create -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-etw-provider-traits-wait-packet-create.log"
+    },
+    {
+        "gate":  "threading",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib dll::threading::tests -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-etw-provider-traits-threading.log"
+    },
+    {
+        "gate":  "timer2",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib timer2_create -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-etw-provider-traits-timer2.log"
+    },
+    {
+        "gate":  "worker-factory",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib worker_factory_create -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-etw-provider-traits-worker-factory.log"
+    },
+    {
+        "gate":  "events",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib event_ -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-etw-provider-traits-events.log"
+    },
+    {
+        "gate":  "io-completion",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib io_completion -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-etw-provider-traits-io-completion.log"
+    },
+    {
+        "gate":  "full",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib -- --nocapture",
+        "exit-code":  101,
+        "log":  "native-etw-provider-traits-full.log"
+    },
+    {
+        "gate":  "capi",
+        "command":  "cargo.exe test --locked --offline --no-default-features -p rax-capi -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "native-etw-provider-traits-capi.log"
+    },
+    {
+        "gate":  "all-targets",
+        "command":  "cargo.exe build --locked --offline --no-default-features --all-targets",
+        "exit-code":  0,
+        "log":  "native-etw-provider-traits-all-targets.log"
+    },
+    {
+        "gate":  "integration",
+        "command":  "cargo.exe test --locked --offline --no-default-features --test user_windows_memory -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-etw-provider-traits-integration.log"
+    }
+]

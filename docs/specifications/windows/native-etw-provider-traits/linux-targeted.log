@@ -1,0 +1,16 @@
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 38.50s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 8 tests
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_other_functions_stay_explicit_and_nonmutating ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_captured_state_survives_guest_writes_and_handle_reuse ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_replays_all_840_high_length_bits_as_measured_16_bit_captures ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_replays_all_2844_names_records_and_65535_byte_captures ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::boundary_tests::native_etw_provider_traits_replays_all_3960_referenced_faults_type_busy_and_status_translations ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_replays_all_4128_lengths_fields_handles_and_repeats ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::boundary_tests::native_etw_provider_traits_replays_all_3456_aliases_and_retains_pre_store_snapshot ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::boundary_tests::native_etw_provider_traits_replays_all_22400_base_fault_guard_and_alignment_rows ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 7687 filtered out; finished in 2.93s
+

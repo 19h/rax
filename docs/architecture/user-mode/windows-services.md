@@ -1,3 +1,36 @@
+## Current increment: native provider traits (2026-10-12)
+
+NtTraceControl function30 captures provider traits once on a process-local
+EtwRegistration. Its24 B header contains a64-bit handle,64-bit buffer address,
+USHORT length and six ignored bytes on all measured caller profiles. Nonempty
+output write probing, required4 B ReturnLength write probing and full input read
+probing precede class-specific lengths. Input must be24 B and output at least120 B.
+Referenced pointer must be non-NULL and length1..65535 B before handle/type checks.
+Existing traits return STATUS_UNSUCCESSFUL before accessing the referenced buffer.
+The structural parser requires the matching16-bit total length, a bounded NUL
+name and exact exhaustion of records with size at least3 B. Unknown types and
+non-UTF-8 name bytes retain native acceptance. Malformed payloads return
+STATUS_FILE_CORRUPT_ERROR, mapped by measured RTL to ERROR_FILE_CORRUPT (1392).
+Measured RTL also preserves STATUS_GUARD_PAGE_VIOLATION verbatim.
+
+Successful capture retains immutable owned bytes and then stores zero ReturnLength;
+output has no reply bytes in the measured dormant profile. Failed probes/parser
+checks do not publish state. Close/reuse/drain release traits with the provider.
+Time is O(T), retained space O(T), auxiliary parser space O(1), T<=65535 B.
+No host ETW session/controller forwarding or delivery is introduced. Functions
+other than15/27/30 remain explicit unsupported boundaries. Public C layouts and
+selection defaults are unchanged; the public Rust Object variant gains traits.
+
+Native evidence has four complete mature profiles with9407 cases each, plus
+four completed ARM64 debugger captures and two excluded warmups. Fresh x64/WoW64
+startup capture and physical x64-kernel proof remain unknown. Ordinary execution
+advances from scheduler turn50692 to90924 (90924-50692=40232 calls), where
+NtOpenDirectoryObject service0x58 at PC0x1800015C0 remains unsupported. All four
+ordinary owning programs reach that boundary before guest exit.
+See [provider traits evidence](../../specifications/windows/native-etw-provider-traits/README.md).
+
+## Previous increment: native provider registration
+
 # Windows handle/service integration
 
 Current native ETW provider registration (2026-10-12):

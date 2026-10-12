@@ -1,0 +1,29 @@
+[
+  {
+    "id": "A1",
+    "assumption": "Private function30 validation and copy semantics are bounded to installed Windows10.0.29683.1000.",
+    "basis": "Pinned PHNT, four mature native profiles and ARM64 original entry/true-LR captures.",
+    "dependent-result": "Observed traits registration behavior.",
+    "stress-test": "Full lengths, records, guards, aliases, type and once-only matrices.",
+    "falsification-probe": "Another installed kernel build gives different output/status/guard behavior.",
+    "status": "confirmed for measured installed build only"
+  },
+  {
+    "id": "A2",
+    "assumption": "Traits are captured and retained for dormant guest registrations without external tracing controllers.",
+    "basis": "Process-local guest objects; all host controller services remain unsupported.",
+    "dependent-result": "Opaque byte retention, structural validation and once-only state.",
+    "stress-test": "Trait group payloads followed by supported guest controller enable/delivery.",
+    "falsification-probe": "Reached guest controller requires policy or delivery absent from retained state.",
+    "status": "retained; no controller/delivery claim"
+  },
+  {
+    "id": "A3",
+    "assumption": "Fresh same-kernel compatibility traits assignment follows ARM64.",
+    "basis": "Identical complete mature profiles; only fresh ARM64 is debug-captured.",
+    "dependent-result": "First x64/WoW64 ordinary startup assignment.",
+    "stress-test": "Fresh original compatibility entry and true-return capture.",
+    "falsification-probe": "Fresh compatibility native assignment differs.",
+    "status": "retained; fresh compatibility capture unknown"
+  }
+]

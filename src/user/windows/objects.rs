@@ -197,6 +197,8 @@ pub enum Object {
     EtwRegistration {
         /// Opaque measured kernel header, including GUID and user context.
         request: Box<[u8; 160]>,
+        /// Once-captured provider traits; caller writes cannot alter this blob.
+        traits: Option<Box<[u8]>>,
     },
     /// A private immutable runtime registry key shared by opened handles.
     Key(std::sync::Arc<super::registry::Key>),

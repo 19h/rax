@@ -1,0 +1,15 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.95s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 8 tests
+test user::windows::objects::etw::tests::native_etw_notification_reference_overflow_and_drain_are_transactional ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::native_etw_notification_unknown_functions_preserve_explicit_frontier_and_memory ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::native_etw_notification_close_reuse_drain_and_distinct_wnf_owner_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::native_etw_notification_replays_all_1920_mature_handle_and_length_rows ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::native_etw_notification_replays_all_48_fresh_lifetime_sequences ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::boundary_tests::native_etw_notification_replays_all_72_fresh_output_alias_sequences ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::boundary_tests::native_etw_notification_replays_all_120_fresh_return_fault_transactions ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::boundary_tests::native_etw_notification_replays_all_21000_buffer_status_and_guard_rows ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 7687 filtered out; finished in 2.19s
+

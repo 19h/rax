@@ -1,0 +1,210 @@
+[
+  {
+    "profile": "matrix/arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-matrix-arm64",
+    "source": "native-etw-provider-traits-matrix.cpp",
+    "source-sha256": "ac1b2ef87128a8474ba5ece11f952522860fb7183f3c8b504716a8624f86853c",
+    "executable": "native-etw-provider-traits-matrix-arm64.exe",
+    "log": "native-etw-provider-traits-matrix-arm64.log"
+  },
+  {
+    "profile": "matrix/x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-matrix-x64",
+    "source": "native-etw-provider-traits-matrix.cpp",
+    "source-sha256": "ac1b2ef87128a8474ba5ece11f952522860fb7183f3c8b504716a8624f86853c",
+    "executable": "native-etw-provider-traits-matrix-x64.exe",
+    "log": "native-etw-provider-traits-matrix-x64.log"
+  },
+  {
+    "profile": "matrix/x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-matrix-x86",
+    "source": "native-etw-provider-traits-matrix.cpp",
+    "source-sha256": "ac1b2ef87128a8474ba5ece11f952522860fb7183f3c8b504716a8624f86853c",
+    "executable": "native-etw-provider-traits-matrix-x86.exe",
+    "log": "native-etw-provider-traits-matrix-x86.log"
+  },
+  {
+    "profile": "matrix/x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-matrix-x86-laa",
+    "source": "native-etw-provider-traits-matrix.cpp",
+    "source-sha256": "ac1b2ef87128a8474ba5ece11f952522860fb7183f3c8b504716a8624f86853c",
+    "executable": "native-etw-provider-traits-matrix-x86-laa.exe",
+    "log": "native-etw-provider-traits-matrix-x86-laa.log"
+  },
+  {
+    "profile": "boundaries/arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-boundaries-arm64",
+    "source": "native-etw-provider-traits-boundaries.cpp",
+    "source-sha256": "fcb00d929aa634882db378f88ecc7b8806a4eb53e66d813b7f1a7897be21e468",
+    "executable": "native-etw-provider-traits-boundaries-arm64.exe",
+    "log": "native-etw-provider-traits-boundaries-arm64.log"
+  },
+  {
+    "profile": "boundaries/x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-boundaries-x64",
+    "source": "native-etw-provider-traits-boundaries.cpp",
+    "source-sha256": "fcb00d929aa634882db378f88ecc7b8806a4eb53e66d813b7f1a7897be21e468",
+    "executable": "native-etw-provider-traits-boundaries-x64.exe",
+    "log": "native-etw-provider-traits-boundaries-x64.log"
+  },
+  {
+    "profile": "boundaries/x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-boundaries-x86",
+    "source": "native-etw-provider-traits-boundaries.cpp",
+    "source-sha256": "fcb00d929aa634882db378f88ecc7b8806a4eb53e66d813b7f1a7897be21e468",
+    "executable": "native-etw-provider-traits-boundaries-x86.exe",
+    "log": "native-etw-provider-traits-boundaries-x86.log"
+  },
+  {
+    "profile": "boundaries/x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-boundaries-x86-laa",
+    "source": "native-etw-provider-traits-boundaries.cpp",
+    "source-sha256": "fcb00d929aa634882db378f88ecc7b8806a4eb53e66d813b7f1a7897be21e468",
+    "executable": "native-etw-provider-traits-boundaries-x86-laa.exe",
+    "log": "native-etw-provider-traits-boundaries-x86-laa.log"
+  },
+  {
+    "profile": "format/arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-format-arm64",
+    "source": "native-etw-provider-traits-format.cpp",
+    "source-sha256": "966e1fca643aa7bc6615d1bf808f6d67adad9ed29b2861c9446c3146ff7e1661",
+    "executable": "native-etw-provider-traits-format-arm64.exe",
+    "log": "native-etw-provider-traits-format-arm64.log"
+  },
+  {
+    "profile": "format/x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-format-x64",
+    "source": "native-etw-provider-traits-format.cpp",
+    "source-sha256": "966e1fca643aa7bc6615d1bf808f6d67adad9ed29b2861c9446c3146ff7e1661",
+    "executable": "native-etw-provider-traits-format-x64.exe",
+    "log": "native-etw-provider-traits-format-x64.log"
+  },
+  {
+    "profile": "format/x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-format-x86",
+    "source": "native-etw-provider-traits-format.cpp",
+    "source-sha256": "966e1fca643aa7bc6615d1bf808f6d67adad9ed29b2861c9446c3146ff7e1661",
+    "executable": "native-etw-provider-traits-format-x86.exe",
+    "log": "native-etw-provider-traits-format-x86.log"
+  },
+  {
+    "profile": "format/x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-format-x86-laa",
+    "source": "native-etw-provider-traits-format.cpp",
+    "source-sha256": "966e1fca643aa7bc6615d1bf808f6d67adad9ed29b2861c9446c3146ff7e1661",
+    "executable": "native-etw-provider-traits-format-x86-laa.exe",
+    "log": "native-etw-provider-traits-format-x86-laa.log"
+  },
+  {
+    "profile": "reference/arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-reference-arm64",
+    "source": "native-etw-provider-traits-reference.cpp",
+    "source-sha256": "a8b9d9e95c74ed93523fcbdc68403c24bc1d1fb6117e1e697473cd7ce2f5d455",
+    "executable": "native-etw-provider-traits-reference-arm64.exe",
+    "log": "native-etw-provider-traits-reference-arm64.log"
+  },
+  {
+    "profile": "reference/x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-reference-x64",
+    "source": "native-etw-provider-traits-reference.cpp",
+    "source-sha256": "a8b9d9e95c74ed93523fcbdc68403c24bc1d1fb6117e1e697473cd7ce2f5d455",
+    "executable": "native-etw-provider-traits-reference-x64.exe",
+    "log": "native-etw-provider-traits-reference-x64.log"
+  },
+  {
+    "profile": "reference/x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-reference-x86",
+    "source": "native-etw-provider-traits-reference.cpp",
+    "source-sha256": "a8b9d9e95c74ed93523fcbdc68403c24bc1d1fb6117e1e697473cd7ce2f5d455",
+    "executable": "native-etw-provider-traits-reference-x86.exe",
+    "log": "native-etw-provider-traits-reference-x86.log"
+  },
+  {
+    "profile": "reference/x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-reference-x86-laa",
+    "source": "native-etw-provider-traits-reference.cpp",
+    "source-sha256": "a8b9d9e95c74ed93523fcbdc68403c24bc1d1fb6117e1e697473cd7ce2f5d455",
+    "executable": "native-etw-provider-traits-reference-x86-laa.exe",
+    "log": "native-etw-provider-traits-reference-x86-laa.log"
+  },
+  {
+    "profile": "alias/arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-alias-arm64",
+    "source": "native-etw-provider-traits-alias.cpp",
+    "source-sha256": "22808b0738727515015cc57476bf428964030876560a9347e51c11f68a7ea769",
+    "executable": "native-etw-provider-traits-alias-arm64.exe",
+    "log": "native-etw-provider-traits-alias-arm64.log"
+  },
+  {
+    "profile": "alias/x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-alias-x64",
+    "source": "native-etw-provider-traits-alias.cpp",
+    "source-sha256": "22808b0738727515015cc57476bf428964030876560a9347e51c11f68a7ea769",
+    "executable": "native-etw-provider-traits-alias-x64.exe",
+    "log": "native-etw-provider-traits-alias-x64.log"
+  },
+  {
+    "profile": "alias/x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-alias-x86",
+    "source": "native-etw-provider-traits-alias.cpp",
+    "source-sha256": "22808b0738727515015cc57476bf428964030876560a9347e51c11f68a7ea769",
+    "executable": "native-etw-provider-traits-alias-x86.exe",
+    "log": "native-etw-provider-traits-alias-x86.log"
+  },
+  {
+    "profile": "alias/x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-alias-x86-laa",
+    "source": "native-etw-provider-traits-alias.cpp",
+    "source-sha256": "22808b0738727515015cc57476bf428964030876560a9347e51c11f68a7ea769",
+    "executable": "native-etw-provider-traits-alias-x86-laa.exe",
+    "log": "native-etw-provider-traits-alias-x86-laa.log"
+  },
+  {
+    "profile": "fresh/arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-arm64",
+    "source": "native-etw-provider-traits-fresh.cpp",
+    "source-sha256": "c42df323de15d4435210c45d0a683c78c5fb5cfa972f24cb091ca5404579450f",
+    "executable": "native-etw-provider-traits-fresh-arm64.exe",
+    "log": "native-etw-provider-traits-fresh-arm64.log"
+  },
+  {
+    "profile": "fresh-payload/arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-arm64",
+    "source": "native-etw-provider-traits-fresh-payload.cpp",
+    "source-sha256": "4c403ac95ed17caee4f94fb0b09a39086273e6e9c405beb868eafcd356c2a8d6",
+    "executable": "native-etw-provider-traits-fresh-payload-arm64.exe",
+    "log": "native-etw-provider-traits-fresh-payload-arm64.log"
+  },
+  {
+    "profile": "length-high/arm64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-length-high-arm64",
+    "source": "native-etw-provider-traits-length-high.cpp",
+    "source-sha256": "ccaca263a48bef2cf3bb1dc559037fb6087fa1a93efce588d6508189b5008d2d",
+    "executable": "native-etw-provider-traits-length-high-arm64.exe",
+    "log": "native-etw-provider-traits-length-high-arm64.log"
+  },
+  {
+    "profile": "length-high/x64",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-length-high-x64",
+    "source": "native-etw-provider-traits-length-high.cpp",
+    "source-sha256": "ccaca263a48bef2cf3bb1dc559037fb6087fa1a93efce588d6508189b5008d2d",
+    "executable": "native-etw-provider-traits-length-high-x64.exe",
+    "log": "native-etw-provider-traits-length-high-x64.log"
+  },
+  {
+    "profile": "length-high/x86",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-length-high-x86",
+    "source": "native-etw-provider-traits-length-high.cpp",
+    "source-sha256": "ccaca263a48bef2cf3bb1dc559037fb6087fa1a93efce588d6508189b5008d2d",
+    "executable": "native-etw-provider-traits-length-high-x86.exe",
+    "log": "native-etw-provider-traits-length-high-x86.log"
+  },
+  {
+    "profile": "length-high/x86-laa",
+    "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\etw-provider-traits-length-high-x86-laa",
+    "source": "native-etw-provider-traits-length-high.cpp",
+    "source-sha256": "ccaca263a48bef2cf3bb1dc559037fb6087fa1a93efce588d6508189b5008d2d",
+    "executable": "native-etw-provider-traits-length-high-x86-laa.exe",
+    "log": "native-etw-provider-traits-length-high-x86-laa.log"
+  }
+]

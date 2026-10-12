@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/etw-provider-traits-20261012/negative-cases/identity/check-evidence.py", line 21, in <module>
+    for n,r in manifest.items():require((base/n).stat().st_size==r['bytes'] and sha(base/n)==r['sha256'],'evidence identity '+n)
+                                ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/etw-provider-traits-20261012/negative-cases/identity/check-evidence.py", line 6, in require
+    if not ok:raise ValueError(message)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: evidence identity phnt-ntwmi.h

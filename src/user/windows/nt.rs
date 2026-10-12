@@ -98,6 +98,7 @@ pub mod status {
     pub const STATUS_INVALID_PARAMETER_4: u32 = 0xC000_00F2;
     pub const STATUS_STACK_OVERFLOW: u32 = 0xC000_00FD;
     pub const STATUS_DIRECTORY_NOT_EMPTY: u32 = 0xC000_0101;
+    pub const STATUS_FILE_CORRUPT_ERROR: u32 = 0xC000_0102;
     pub const STATUS_NOT_A_DIRECTORY: u32 = 0xC000_0103;
     pub const STATUS_NAME_TOO_LONG: u32 = 0xC000_0106;
     pub const STATUS_PROCESS_IS_TERMINATING: u32 = 0xC000_010A;
@@ -219,6 +220,7 @@ pub mod error {
     pub const ERROR_POSSIBLE_DEADLOCK: u32 = 1131;
     pub const ERROR_NOT_FOUND: u32 = 1168;
     pub const ERROR_PRIVILEGE_NOT_HELD: u32 = 1314;
+    pub const ERROR_FILE_CORRUPT: u32 = 1392;
     pub const ERROR_INVALID_WINDOW_HANDLE: u32 = 1400;
     pub const ERROR_INVALID_THREAD_ID: u32 = 1444;
     pub const ERROR_NO_SYSTEM_RESOURCES: u32 = 1450;
@@ -249,6 +251,8 @@ pub fn status_to_error(status: u32) -> u32 {
         STATUS_NO_MORE_FILES => ERROR_NO_MORE_FILES,
         STATUS_NO_MORE_ENTRIES => ERROR_NO_MORE_ITEMS,
         STATUS_UNSUCCESSFUL => ERROR_GEN_FAILURE,
+        // Installed build29683 RTL retains this warning status verbatim.
+        STATUS_GUARD_PAGE_VIOLATION => STATUS_GUARD_PAGE_VIOLATION,
         STATUS_NOT_IMPLEMENTED | STATUS_INVALID_DEVICE_REQUEST | STATUS_ILLEGAL_FUNCTION => {
             ERROR_INVALID_FUNCTION
         }
@@ -263,6 +267,7 @@ pub fn status_to_error(status: u32) -> u32 {
         // Measured installed-build29683 RTL mapping; the similarly named
         // ERROR_ALREADY_REGISTERED is not the native result for this status.
         STATUS_ALREADY_REGISTERED => ERROR_INTERNAL_ERROR,
+        STATUS_FILE_CORRUPT_ERROR => ERROR_FILE_CORRUPT,
         STATUS_INFO_LENGTH_MISMATCH => ERROR_BAD_LENGTH,
         STATUS_ACCESS_VIOLATION => ERROR_NOACCESS,
         STATUS_INVALID_HANDLE | STATUS_OBJECT_TYPE_MISMATCH => ERROR_INVALID_HANDLE,

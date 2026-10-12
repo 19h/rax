@@ -1,4 +1,4 @@
-//! Measured build29683 NtTraceControl provider/Event registration (15/27).
+//! Measured build29683 NtTraceControl provider/Event registration and traits.
 //! This retains a guest Event; it does not create a host ETW registration.
 use super::query::{guard_result, probe_write};
 use crate::error::MemoryAccessKind;
@@ -13,7 +13,7 @@ pub(super) fn control(c: &mut Ctx) -> ApiResult {
 }
 fn checked(c: &mut Ctx) -> ApiResult {
     let function = c.u32(0)?;
-    if function != 15 && function != 27 {
+    if !matches!(function, 15 | 27 | 30) {
         return Err(c.unsupported(format!("NtTraceControl function {function}")));
     }
     let (input, input_bytes, output, output_bytes, returned) =
@@ -29,6 +29,9 @@ fn checked(c: &mut Ctx) -> ApiResult {
     probe_write(c, returned, 4)?;
     if function == 15 {
         return register_provider(c, input, input_bytes, output, output_bytes, returned);
+    }
+    if function == 30 {
+        return provider_traits(c, input, input_bytes, output, output_bytes, returned);
     }
     // The private input is exactly one ULONG in native64 as well as WoW64.
     // Length validation precedes capture; byte-aligned buffers are accepted.
@@ -104,4 +107,96 @@ fn register_provider(
     }
     c.mem().w32(returned, 160)?;
     Flow::ret(STATUS_SUCCESS.into())
+}
+
+fn provider_traits(
+    c: &mut Ctx,
+    input: u64,
+    input_bytes: u32,
+    output: u64,
+    output_bytes: u32,
+    returned: u64,
+) -> ApiResult {
+    // Generic input capture follows destination probes, before class lengths.
+    if input != 0 && input_bytes != 0 {
+        c.mem()
+            .probe(input, input_bytes as usize, MemoryAccessKind::Read)
+            .map_err(|fault| MemFault {
+                addr: fault.address,
+                write: false,
+            })?;
+    }
+    if input == 0 || input_bytes != 24 || output == 0 || output_bytes < 120 {
+        return Flow::ret(STATUS_INVALID_PARAMETER.into());
+    }
+    // Both private handle and referenced pointer are 64-bit even in WoW64.
+    let mut header = [0; 24];
+    c.mem().rd(input, &mut header)?;
+    let handle = u64::from_le_bytes(header[..8].try_into().unwrap());
+    let pointer = u64::from_le_bytes(header[8..16].try_into().unwrap());
+    let length = u16::from_le_bytes(header[16..18].try_into().unwrap()) as usize;
+    // The six remaining header bytes are ignored by every measured profile.
+    if pointer == 0 || length == 0 {
+        return Flow::ret(STATUS_INVALID_PARAMETER.into());
+    }
+    match c.p.objects.get(handle) {
+        None => return Flow::ret(STATUS_INVALID_HANDLE.into()),
+        Some(Object::EtwRegistration {
+            traits: Some(_), ..
+        }) => {
+            return Flow::ret(STATUS_UNSUCCESSFUL.into());
+        }
+        Some(Object::EtwRegistration { traits: None, .. }) => {}
+        Some(_) => return Flow::ret(STATUS_OBJECT_TYPE_MISMATCH.into()),
+    }
+    // Type and once-only state precede referenced-buffer access/guard faults.
+    c.mem()
+        .probe(pointer, length, MemoryAccessKind::Read)
+        .map_err(|fault| MemFault {
+            addr: fault.address,
+            write: false,
+        })?;
+    let mut bytes = Vec::new();
+    if bytes.try_reserve_exact(length).is_err() {
+        return Flow::ret(STATUS_NO_MEMORY.into());
+    }
+    bytes.resize(length, 0);
+    c.mem().rd(pointer, &mut bytes)?;
+    if !valid_traits(&bytes) {
+        return Flow::ret(STATUS_FILE_CORRUPT_ERROR.into());
+    }
+    let Some(Object::EtwRegistration { traits, .. }) = c.p.objects.get_mut(handle) else {
+        return Err(ApiErr::Internal(
+            "ETW registration changed during capture".into(),
+        ));
+    };
+    // Capture before ReturnLength: it may alias the header or referenced blob.
+    *traits = Some(bytes.into_boxed_slice());
+    c.mem().w32(returned, 0)?;
+    // The output buffer is probed but has no reply bytes in this dormant profile.
+    Flow::ret(STATUS_SUCCESS.into())
+}
+
+/// Bounded native structural parser, O(T) time and O(1) auxiliary space.
+/// Names remain bytes: the installed kernel does not validate UTF-8 here.
+fn valid_traits(bytes: &[u8]) -> bool {
+    if bytes.len() < 3 || u16::from_le_bytes([bytes[0], bytes[1]]) as usize != bytes.len() {
+        return false;
+    }
+    let Some(name_end) = bytes[2..].iter().position(|&b| b == 0) else {
+        return false;
+    };
+    let mut at = name_end + 3;
+    while at < bytes.len() {
+        if bytes.len() - at < 3 {
+            return false;
+        }
+        let record = u16::from_le_bytes([bytes[at], bytes[at + 1]]) as usize;
+        if record < 3 || record > bytes.len() - at {
+            return false;
+        }
+        // Known and unknown record types retain their original bytes.
+        at += record;
+    }
+    true
 }

@@ -1,0 +1,11 @@
+VENDORED_VERSIONS.md
+docs/confidentiality-replacements.md
+docs/masking-implementation.md
+include/assist/core/anonymizer.hpp
+include/assist/core/masking_history.hpp
+include/assist/core/masking_json_bounds.hpp
+include/assist/core/masking_result.hpp
+src/assist/core/anonymizer/detail/implementation/config_and_mapping.inl
+src/core/masking_python_runtime.cpp
+src/emulation/native-process-emulation.md
+test/masking_result_tests.cpp

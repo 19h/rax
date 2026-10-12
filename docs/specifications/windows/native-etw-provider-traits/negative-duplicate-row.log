@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/etw-provider-traits-20261012/negative-cases/duplicate-row/check-evidence.py", line 71, in <module>
+    partition(rs,[(k,16 if k=='high' else 10) for k in ['family','input-length','output-length','mode','length','embedded','name','handle-mode','high']],expected,'exact mature partitions '+family)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/etw-provider-traits-20261012/negative-cases/duplicate-row/check-evidence.py", line 17, in partition
+    require([num(r,'case',10) for r in observed]==list(range(len(expected))) and [tuple(num(r,k,radix) for k,radix in keys) for r in observed]==expected,label)
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/etw-provider-traits-20261012/negative-cases/duplicate-row/check-evidence.py", line 6, in require
+    if not ok:raise ValueError(message)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: exact mature partitions matrix

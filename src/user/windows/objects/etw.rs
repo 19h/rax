@@ -7,7 +7,10 @@ impl Objects {
     /// Expected O(1) object insertion, O(H) lowest-free handle selection and
     /// O(1) retained state per registration (160 B request plus table entries).
     pub(crate) fn register_etw_provider(&mut self, request: Box<[u8; 160]>) -> Option<u32> {
-        let id = self.try_create(Object::EtwRegistration { request })?;
+        let id = self.try_create(Object::EtwRegistration {
+            request,
+            traits: None,
+        })?;
         match self.open_access(id, false, 0x804) {
             Some(handle) => Some(handle),
             None => {

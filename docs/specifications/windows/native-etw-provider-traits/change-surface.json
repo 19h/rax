@@ -1,0 +1,19 @@
+{
+  "affected": {
+    "agent-backend/optional-engine": "Windows native kernel-service adapter and process-local ETW state; no new backend selection.",
+    "transport/status": "Exact FILE_CORRUPT_ERROR and GUARD_PAGE_VIOLATION RTL translations are shared by Windows personality calls.",
+    "runtime/lifetime": "Once-captured traits follow registration close, handle reuse and table drain.",
+    "targets-platforms": "Same portable Rust kernel-service implementation compiles/runs on Windows/macOS/Linux, all empty-feature targets and static-CRT Assist owning archive; native installed leaves run on Windows.",
+    "tests/docs": "Three new test units are explicitly nested in the existing compiled services test tree; native corpus and engineering records describe measured limits."
+  },
+  "unaffected-with-owning-reason": {
+    "plugin-lifecycle/UI-state/conversation-lane": "No plugin/Qt/widget/conversation source or ownership change; guest registration lifetime remains inside the emulator object table.",
+    "prompt-context/tool-schema/permission-mutation/main-thread": "No source/schema/settings/manifest/capability/IDA main-thread changes; unchanged C API consumed by existing process tool.",
+    "Mesh-MCP/transport-crypto/persistence": "No host tracing endpoint, IPC, crypto, persisted format, settings or schema change; guest traits remain volatile process-local bytes.",
+    "SDK-ABI": "No public C API, Assist Rust ABI or C-layout edits. Public Rust Object::EtwRegistration gains the traits field, with all internal constructors/patterns compiled.",
+    "update-release/defaults-dependencies/packages": "No dependencies, pins, build defaults or archive layout change; no additional native library or resource to stage. New Rust test modules are in the existing Cargo target, with portable include_str evidence paths.",
+    "ISA-MMU-SMIR-JIT/Linux-macOS-personalities": "No decoder, lifter, memory, loader or other-personality source changes; shared Windows semantics are exercised on each host."
+  },
+  "native-proof-limits": "ARM64 kernel10.0.29683.1000; mature x64 compatibility/WoW64x86/WoW64x86LAA. Physical x64-kernel and fresh compatibility debugger captures unknown.",
+  "owning-proof-limits": "Selected owning targets/consumers only; no entire package/live IDA/Qt harness runtime claim. Frozen Unix root e2fc5b48 differs by the recorded11files and gitlink; it does not validate unrelated root masking changes."
+}

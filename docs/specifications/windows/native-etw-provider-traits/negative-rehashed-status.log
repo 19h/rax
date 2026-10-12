@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/etw-provider-traits-20261012/negative-cases/rehashed-status/check-evidence.py", line 79, in <module>
+    require(num(r,'status')==status,'traits status')
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/etw-provider-traits-20261012/negative-cases/rehashed-status/check-evidence.py", line 6, in require
+    if not ok:raise ValueError(message)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: traits status

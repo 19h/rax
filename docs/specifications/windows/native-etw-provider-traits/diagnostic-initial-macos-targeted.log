@@ -1,0 +1,27 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 43.48s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/red-target/debug/deps/rax-754f4d2a527a4423)
+
+running 7 tests
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_captured_state_survives_guest_writes_and_handle_reuse ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_other_functions_stay_explicit_and_nonmutating ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::boundary_tests::native_etw_provider_traits_replays_all_3960_referenced_faults_type_busy_and_status_translations' (3096876) panicked at src/user/windows/process/sched/tests/services_tests/etw_registration_tests.rs:88:5:
+assertion `left == right` failed: arm64 args=[1E, 235000, 18, 235080, 78, 235100]
+  left: 3221225485
+ right: 3221225730
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::boundary_tests::native_etw_provider_traits_replays_all_3960_referenced_faults_type_busy_and_status_translations ... FAILED
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_replays_all_2844_names_records_and_65535_byte_captures ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_replays_all_4128_lengths_fields_handles_and_repeats ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::boundary_tests::native_etw_provider_traits_replays_all_3456_aliases_and_retains_pre_store_snapshot ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::boundary_tests::native_etw_provider_traits_replays_all_22400_base_fault_guard_and_alignment_rows ... ok
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::boundary_tests::native_etw_provider_traits_replays_all_3960_referenced_faults_type_busy_and_status_translations
+
+test result: FAILED. 6 passed; 1 failed; 0 ignored; 0 measured; 7693 filtered out; finished in 2.12s
+
+error: test failed, to rerun pass `--lib`
