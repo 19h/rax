@@ -96,6 +96,12 @@ pub(super) static EXPORTS: &[Export] = &[
         worker_factory::create,
     ),
     Export::func(
+        "NtSetInformationWorkerFactory",
+        Stdcall,
+        &[Ptr, I32, Ptr, I32],
+        worker_factory::set_information,
+    ),
+    Export::func(
         "NtCreateWaitCompletionPacket",
         Stdcall,
         &[Ptr, I32, Ptr],

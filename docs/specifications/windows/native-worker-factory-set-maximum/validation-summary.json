@@ -1,0 +1,78 @@
+{
+  "baseline-rax": "40db4f057d5c40e7c59b1ddec9650f1711a9beca",
+  "compiled-root": "b760e6821a864588a1165fec37bd433f2c59b6c8",
+  "unix-owning-root": "e2fc5b483be7cad2dae17d889690cc398973c5e8",
+  "replays": 956,
+  "tests": {
+    "targeted": {
+      "macos": 4,
+      "linux": 4,
+      "windows": 5
+    },
+    "full": {
+      "macos": {
+        "pass": 7642,
+        "fail": 0,
+        "ignored": 2
+      },
+      "linux": {
+        "pass": 7634,
+        "fail": 2,
+        "ignored": 2
+      },
+      "windows": {
+        "pass": 7042,
+        "fail": 5,
+        "ignored": 2
+      }
+    },
+    "capi": {
+      "macos": 168,
+      "linux": 168,
+      "windows": 168
+    },
+    "integration": {
+      "macos": 544,
+      "linux": 544,
+      "windows": 4
+    },
+    "owning-cpp": {
+      "macos": 5,
+      "linux": 5,
+      "windows": 5
+    },
+    "macos-ctest": 7
+  },
+  "frontier": {
+    "before-turn": 42564,
+    "after-turn": 42609,
+    "delta-scheduler-calls": 45,
+    "service": "NtSetInformationWorkerFactory",
+    "svc": "0x1b1",
+    "pc": "0x180002b50",
+    "class": 14,
+    "arguments": [
+      "0x20",
+      "0xe",
+      "0xabe730",
+      "0x4"
+    ],
+    "guest-exit": "not reached"
+  },
+  "source-overlay": {
+    "files": 16618,
+    "patches": 100,
+    "errors": 0,
+    "offline-adapter-bytes": 374
+  },
+  "native-owning": {
+    "source-hashes": 39,
+    "helper-hashes": 2,
+    "core-features": []
+  },
+  "limits": [
+    "Class5 maximum only; other classes, query, worker activation, completion and application exit remain unimplemented.",
+    "Compatibility profiles do not prove physical x64 Windows; Linux amd64 CPU is translated.",
+    "Timing variation and existing lowering failures remain separate."
+  ]
+}

@@ -1,5 +1,15 @@
 # Windows handle/service integration
 
+Current native worker-factory maximum setting (2026-10-12):
+NtSetInformationWorkerFactory class5 captures an exact4 B unsigned maximum
+before typed handle/right0x4 validation; guard faults are consumed once, with
+no partial mutation. All956 native rows replay across four caller profiles.
+Four portable/five Windows tests pass, including actual RET16/20 B x86 caller
+cleanup. Object shape and C ABI1.11.0 remain unchanged. The identical observer
+advances42564->42609 (45 scheduler calls) and explicitly fails class14. All
+ordinary programs still fail before guest exit. See
+[maximum evidence](../../specifications/windows/native-worker-factory-set-maximum/README.md).
+
 Current native wait-packet association/cancellation (2026-10-12):
 `NtAssociateWaitCompletionPacket` and `NtCancelWaitCompletionPacket` use owned
 guest object identities, measured access/validation precedence, optional BOOLEAN

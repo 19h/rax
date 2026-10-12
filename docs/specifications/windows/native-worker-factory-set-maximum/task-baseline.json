@@ -1,0 +1,14 @@
+{
+  "root-head": "b760e6821a864588a1165fec37bd433f2c59b6c8",
+  "rax-head": "40db4f057d5c40e7c59b1ddec9650f1711a9beca",
+  "root-status": "## master...origin/master\n",
+  "rax-status": "## master...origin/master\n",
+  "previous-frontier": {
+    "turn": 42564,
+    "service": "NtSetInformationWorkerFactory",
+    "class": 5,
+    "pointer": "0xabe720",
+    "length-bytes": 4,
+    "input-value": "unknown; prior STR suggests 0x300, not yet directly observed"
+  }
+}

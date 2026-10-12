@@ -1,0 +1,15 @@
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+assist-native-worker-factory-set-maximum-owned-shipping.log 8B66DFF3B70788A1FF087F7705DC228F28B4884259B82C4AA9BE2C6C2B3BC8EC
+assist-native-worker-factory-set-maximum-owned-cpp.log B0F277678BC54485CF58C6295345A12235DF27C7D420C5085B93AB253E75E214
+validated rlib: C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-owned\debug\deps\librax-e6c413934cad3a8f.rlib
+native-process-probe.cpp
+rax_process.cpp
+Generating Code...
+native-worker-factory-set-maximum-after-ordinary-processes.log FEF1CCB564DB83674995446F2782302E2269A3BFE14A0DFFC37EBA8ACC3CE48B
+native-worker-factory-set-maximum-after-production-trace-output.log C1817133CF89B0BEDB629FB82B0FBD69156C52849D9D274C9B64B2238AFC36CA
+native-worker-factory-set-maximum-after-production-trace-build.log E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855
+native-worker-factory-set-maximum-after-artifacts.jsonl BB7EA1192F305A1E15DBC4A6E269C5C72842B17175C5FD8BBD03713EB2130508
+native-worker-factory-set-maximum-after-artifacts-stderr.log 3FB4C357E099CE4D60CDC4FE4308B22F751BB05485809F35137528350AF48811

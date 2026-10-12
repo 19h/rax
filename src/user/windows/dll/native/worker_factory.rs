@@ -4,6 +4,7 @@ use super::object_create::{self, Attributes};
 use super::query::{guard_result, probe_write};
 use crate::user::windows::arch::WinArch;
 use crate::user::windows::hle::{ApiErr, ApiResult, Ctx, Flow};
+use crate::user::windows::memory::Mem;
 use crate::user::windows::nt::status::*;
 use crate::user::windows::objects::{ObjId, Object};
 
@@ -155,4 +156,39 @@ fn construct(c: &mut Ctx, r: &Request, attrs: Option<Attributes>) -> ApiResult {
             commit: if r.commit == 0 { 4096 } else { r.commit },
         },
     )
+}
+
+pub(super) fn set_information(c: &mut Ctx) -> ApiResult {
+    let result = set_maximum(c);
+    guard_result(c, result)
+}
+
+fn set_maximum(c: &mut Ctx) -> ApiResult {
+    let (handle, class, input, length) = (c.ptr(0)?, c.u32(1)?, c.ptr(2)?, c.u32(3)?);
+    if class != 5 {
+        return Err(c.unsupported(format!("NtSetInformationWorkerFactory class {class}")));
+    }
+    // The installed native/WoW64 entries check exact ULONG size and capture
+    // the input before handle lookup. Unaligned and readonly inputs are valid.
+    if length != 4 {
+        return Flow::ret(STATUS_INFO_LENGTH_MISMATCH.into());
+    }
+    let maximum = c.mem().u32(input)?;
+    if handle == c.arch().ptr(u64::MAX) || handle == c.arch().ptr(u64::MAX - 1) {
+        return Flow::ret(STATUS_OBJECT_TYPE_MISMATCH.into());
+    }
+    let Some(id) = c.p.objects.id(handle) else {
+        return Flow::ret(STATUS_INVALID_HANDLE.into());
+    };
+    if !matches!(c.p.objects.obj(id), Some(Object::WorkerFactory { .. })) {
+        return Flow::ret(STATUS_OBJECT_TYPE_MISMATCH.into());
+    }
+    if c.p.objects.access(handle).unwrap_or(0) & 4 == 0 {
+        return Flow::ret(STATUS_ACCESS_DENIED.into());
+    }
+    let Some(Object::WorkerFactory { maximum: value, .. }) = c.p.objects.obj_mut(id) else {
+        unreachable!("validated worker factory")
+    };
+    *value = maximum;
+    Flow::ret(0)
 }

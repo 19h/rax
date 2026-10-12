@@ -1,0 +1,12 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.42s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 4 tests
+test user::windows::process::sched::tests::services_tests::worker_factory_create_tests::native_worker_factory_create_constructs_real_object_and_closes_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_create_tests::native_worker_factory_create_keeps_cross_process_policy_explicit_without_publication_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_create_tests::native_worker_factory_create_owns_dependencies_through_duplicate_and_final_close_all_abis ... ok
+worker factory original replays=1868, policy exclusions=112
+test user::windows::process::sched::tests::services_tests::worker_factory_create_tests::replay_tests::native_worker_factory_create_replays_independent_constructor_and_order_captures ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 7634 filtered out; finished in 0.92s
+
