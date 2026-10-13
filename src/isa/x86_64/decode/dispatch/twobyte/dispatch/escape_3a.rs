@@ -17,6 +17,9 @@ impl X86_64Vcpu {
         ctx: &mut InsnContext,
     ) -> Result<Option<VcpuExit>> {
         let opcode3 = ctx.consume_u8()?;
+        // Every 0F3A opcode ends in an imm8, which a RIP-relative operand
+        // counts.
+        ctx.rip_relative_offset = super::super::super::immediate_len(0x3, opcode3);
         if self.reject_rex2_for_legacy_simd(ctx)? {
             return Ok(None);
         }

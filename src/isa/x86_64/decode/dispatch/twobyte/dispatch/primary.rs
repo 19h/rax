@@ -29,6 +29,9 @@ impl X86_64Vcpu {
         ctx: &mut InsnContext,
     ) -> Result<Option<VcpuExit>> {
         let opcode2 = ctx.consume_u8()?;
+        // A RIP-relative operand is relative to the end of the instruction,
+        // after any imm8 (PSHUF*, CMP*, PINSRW, SHUFP*).
+        ctx.rip_relative_offset = super::super::super::immediate_len(0x1, opcode2);
         // Operand-free EMMS is valid with REX2. Other legacy SIMD forms remain
         // fail-closed until their vector-register and memory EGPR extensions
         // are decoded distinctly.
