@@ -273,14 +273,14 @@ fn run_interpreter_with_sregs(
     run_interpreter_traced(code, init, scratch_init, sregs, None)
 }
 
-/// As `run_interpreter_with_sregs`, also recording the address of every
-/// instruction it executes in `trace`.
+/// As `run_interpreter_with_sregs`, also recording every instruction it
+/// executes (address and the registers feature checks depend on) in `trace`.
 fn run_interpreter_traced(
     code: &[u8],
     init: &Registers,
     scratch_init: &[u8; 64],
     sregs: &SystemRegisters,
-    mut trace: Option<&mut Vec<u64>>,
+    mut trace: Option<&mut Vec<host_caps::Step>>,
 ) -> Result<FinalState, String> {
     let regions = vec![(GuestAddress(0), MEM_SIZE)];
     let mem =
@@ -318,7 +318,13 @@ fn run_interpreter_traced(
             return Err(format!("interpreter exceeded {MAX_ITERS} iterations"));
         }
         if let Some(trace) = trace.as_deref_mut() {
-            trace.push(vcpu.get_regs().map_err(|e| format!("get_regs: {e:?}"))?.rip);
+            let r = vcpu.get_regs().map_err(|e| format!("get_regs: {e:?}"))?;
+            trace.push(host_caps::Step {
+                rip: r.rip,
+                rax: r.rax,
+                rcx: r.rcx,
+                rdx: r.rdx,
+            });
         }
         match vcpu.step().map_err(|e| format!("step: {e:?}"))? {
             Some(VcpuExit::Hlt) => break,

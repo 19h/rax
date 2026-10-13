@@ -610,6 +610,40 @@ const OPS: &[ImmOp] = &[
     },
 ];
 
+/// `movdqu xmmN, [rip+disp32]` for N = 0..=15, each with its disp32 left
+/// zero: the XMM inputs are loaded by the guest itself, from a block placed
+/// after the HLT, so both backends start from the same registers whatever
+/// path KVM uses to load vector state. Returns the code and, per register,
+/// the offset of its disp32.
+fn xmm_load_prologue() -> (Vec<u8>, Vec<usize>) {
+    let mut code = Vec::new();
+    let mut disps = Vec::new();
+    for n in 0..16u8 {
+        code.push(0xF3);
+        if n >= 8 {
+            code.push(0x44); // REX.R
+        }
+        code.extend_from_slice(&[0x0F, 0x6F, ((n & 7) << 3) | 0b101]);
+        disps.push(code.len());
+        code.extend_from_slice(&[0; 4]);
+    }
+    (code, disps)
+}
+
+/// Appends the sixteen XMM inputs to `code` (after its HLT) and points the
+/// prologue's loads at them.
+fn patch_xmm_loads(code: &mut Vec<u8>, disps: &[usize], inputs: &[[u8; 16]]) {
+    let block = code.len();
+    for input in inputs {
+        code.extend_from_slice(input);
+    }
+    for (n, &at) in disps.iter().enumerate() {
+        let next = at + 4;
+        let disp = (block + 16 * n) as i64 - next as i64;
+        code[at..at + 4].copy_from_slice(&(disp as i32).to_le_bytes());
+    }
+}
+
 /// GPRs usable in ModR/M.reg: not rsp/rbp, nor the addressing registers.
 const FREE_GPRS: [u8; 4] = [0, 1, 2, 7];
 
@@ -654,13 +688,7 @@ fn fuzz_imm_rip_relative() {
         let idxv = h.rng.below(8);
 
         let mut r = Registers::default();
-        for xmm in r.xmm.iter_mut() {
-            let bytes = op.data.draw(&mut h.rng);
-            *xmm = [
-                u64::from_le_bytes(bytes[..8].try_into().unwrap()),
-                u64::from_le_bytes(bytes[8..].try_into().unwrap()),
-            ];
-        }
+        let xmm_inputs: Vec<[u8; 16]> = (0..16).map(|_| op.data.draw(&mut h.rng)).collect();
         // PCMPESTR* string lengths; IMUL/SHLD sources.
         set_reg(&mut r, 0, h.rng.below(33).wrapping_sub(16));
         set_reg(&mut r, 2, h.rng.below(33).wrapping_sub(16));
@@ -675,7 +703,8 @@ fn fuzz_imm_rip_relative() {
             Reg::Gpr => (*h.rng.pick(&FREE_GPRS), false),
             Reg::Digit(digit) => (digit, false),
         };
-        let mut code = op.prefix.to_vec();
+        let (mut code, xmm_loads) = xmm_load_prologue();
+        code.extend_from_slice(op.prefix);
         let rex = 0x40 | (u8::from(op.rex_w) << 3) | (u8::from(rex_r) << 2);
         if rex != 0x40 {
             code.push(rex);
@@ -687,6 +716,7 @@ fn fuzz_imm_rip_relative() {
         let imm = h.rng.next_u32() & op.imm_mask;
         code.extend_from_slice(&imm.to_le_bytes()[..op.imm_len]);
         code.push(HLT);
+        patch_xmm_loads(&mut code, &xmm_loads, &xmm_inputs);
 
         let mut scratch = [0u8; 64];
         for chunk in scratch.chunks_mut(16) {
@@ -708,6 +738,16 @@ fn fuzz_imm_rip_relative() {
         if !h.run_case("imm_rip_relative", &code, r, scratch, opts, inputs, &[]) {
             break;
         }
+    }
+    // `finish` lists the first divergences; show backend errors too, which
+    // would otherwise hide behind them.
+    for error in h
+        .mismatches
+        .iter()
+        .filter(|m| m.label.ends_with("backend error)"))
+        .take(5)
+    {
+        eprintln!("{}", error.render());
     }
     h.finish("imm_rip_relative");
 }
