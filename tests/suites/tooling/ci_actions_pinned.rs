@@ -205,27 +205,45 @@ fn scheduled_differential_separates_oracles_diagnostics_and_assembler_capabiliti
 }
 
 #[test]
-fn scheduled_kvm_keeps_host_dependent_differentials_informational() {
+fn kvm_differential_gates_while_the_avx512_corpus_stays_informational() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let workflow = root.join(".github/workflows/kvm.yml");
     let contents = fs::read_to_string(&workflow)
         .unwrap_or_else(|err| panic!("failed to read {}: {err}", workflow.display()));
-
-    for job in ["kvm-differential", "kvm-avx512"] {
+    let job_section = |job: &str| {
         let marker = format!("  {job}:\n");
         let start = contents
             .find(&marker)
             .unwrap_or_else(|| panic!("KVM workflow is missing {job}"));
-        let section = contents[start + marker.len()..]
+        contents[start + marker.len()..]
             .lines()
             .take_while(|line| line.trim().is_empty() || line.starts_with("    "))
             .collect::<Vec<_>>()
-            .join("\n");
-        assert!(
-            section.contains("continue-on-error: true"),
-            "host-dependent {job} must retain diagnostics without failing the workflow"
-        );
-    }
+            .join("\n")
+    };
+
+    // The interpreter/JIT-vs-silicon differential is a gate: host capability
+    // gaps are attributed per case and skipped with a logged reason, and
+    // every other divergence fails the run.
+    let differential = job_section("kvm-differential");
+    assert!(
+        !differential.contains("continue-on-error"),
+        "kvm-differential must fail the workflow on a divergence"
+    );
+    assert!(
+        differential.contains("--nocapture"),
+        "kvm-differential must log its [skip] reasons"
+    );
+    assert!(
+        contents.contains("\n  pull_request:\n"),
+        "kvm-differential must run on pull requests"
+    );
+
+    // The AVX-512 corpus depends on a host that exposes AVX-512 at all.
+    assert!(
+        job_section("kvm-avx512").contains("continue-on-error: true"),
+        "host-dependent kvm-avx512 must retain diagnostics without failing the workflow"
+    );
 }
 
 #[test]

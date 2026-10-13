@@ -210,6 +210,7 @@ impl X86_64Vcpu {
         } else {
             Self::apx_scalar_op_size(ctx)
         };
+        ctx.rip_relative_offset = Self::apx_immediate_len(opcode, op_size);
         let (_, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let rm = if is_memory {
             rm

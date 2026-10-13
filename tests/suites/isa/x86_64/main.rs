@@ -196,6 +196,8 @@ mod x86_64_control_flow_loop_loop;
 mod x86_64_control_flow_loop_loope;
 #[path = "control_flow/loop/loopne.rs"]
 mod x86_64_control_flow_loop_loopne;
+#[path = "control_flow/near_branch_operand_size.rs"]
+mod x86_64_control_flow_near_branch_operand_size;
 #[path = "control_flow/syscall_sysret.rs"]
 mod x86_64_control_flow_syscall_sysret;
 #[path = "control_flow/sysenter_sysexit.rs"]
@@ -1212,6 +1214,8 @@ mod x86_64_simd_sse_insertps;
 mod x86_64_simd_sse_lddqu;
 #[path = "simd/sse/ldmxcsr_stmxcsr.rs"]
 mod x86_64_simd_sse_ldmxcsr_stmxcsr;
+#[path = "simd/sse/legacy_rip_relative.rs"]
+mod x86_64_simd_sse_legacy_rip_relative;
 #[path = "simd/sse/lfence_mfence_sfence.rs"]
 mod x86_64_simd_sse_lfence_mfence_sfence;
 #[path = "simd/sse/maskmovdqu.rs"]
@@ -1518,6 +1522,8 @@ mod x86_64_apx_nf;
 mod x86_64_apx_push2_pop2;
 #[path = "extensions/apx/rex2.rs"]
 mod x86_64_apx_rex2;
+#[path = "extensions/apx/rip_relative.rs"]
+mod x86_64_apx_rip_relative;
 #[path = "extensions/apx/zu.rs"]
 mod x86_64_apx_zu;
 

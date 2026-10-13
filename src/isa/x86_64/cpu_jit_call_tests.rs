@@ -600,9 +600,10 @@ fn jit_callouts_remain_disabled_outside_64_bit_code_segments() {
 #[test]
 fn jit_callout_rejects_legacy_operand_size_override_until_widths_are_unified() {
     let (mut vcpu, memory) = test_vcpu_with_mem();
-    // 66 67 call qword ptr [eip+0xff8]; ret. The direct interpreter currently
-    // assigns a 16-bit near-CALL stack width to the 66h encoding, whereas the
-    // callout ABI is intentionally 64-bit only. 67h must not bypass that gate.
+    // 66 67 call qword ptr [eip+0xff8]; ret. In 64-bit mode 66h does not
+    // narrow a near CALL (Intel SDM Vol. 1 section 6.4.7), and the direct
+    // interpreter agrees, but the callout gate still declines the prefix
+    // conservatively. 67h must not bypass that gate.
     memory
         .write_slice(
             &[0x66, 0x67, 0xFF, 0x15, 0xF8, 0x0F, 0x00, 0x00, 0xC3],

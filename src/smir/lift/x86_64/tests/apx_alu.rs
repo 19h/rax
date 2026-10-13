@@ -565,3 +565,44 @@ fn lift_apx_ndd_binary_alu_aliases_second_source_without_virtual_preservation() 
         assert!(exact_shape, "unexpected direct APX NDD {name}: {result:?}");
     }
 }
+
+#[test]
+fn lift_apx_group1_iz_is_an_imm16_with_a_16_bit_operand_size() {
+    // {evex} ADD word [rip+0x20], 0x1234 is 62 F4 7D 08 81 05 disp32 iw
+    // (LLVM): EVEX.pp=01 selects a 16-bit operand, so Iz is two bytes and
+    // the RIP-relative base is the end of the 12-byte instruction.
+    let word = lift_single(&[
+        0x62, 0xF4, 0x7D, 0x08, 0x81, 0x05, 0x20, 0, 0, 0, 0x34, 0x12,
+    ])
+    .unwrap();
+    assert_eq!(word.bytes_consumed, 12);
+    assert!(word.ops.iter().any(|op| matches!(
+        &op.kind,
+        OpKind::Load {
+            addr: Address::PcRel {
+                offset: 0x20,
+                base: Some(0x100C),
+                ..
+            },
+            ..
+        }
+    )));
+
+    // The 32-bit form keeps its imm32: 14 bytes.
+    let dword = lift_single(&[
+        0x62, 0xF4, 0x7C, 0x08, 0x81, 0x05, 0x20, 0, 0, 0, 4, 3, 2, 1,
+    ])
+    .unwrap();
+    assert_eq!(dword.bytes_consumed, 14);
+    assert!(dword.ops.iter().any(|op| matches!(
+        &op.kind,
+        OpKind::Load {
+            addr: Address::PcRel {
+                offset: 0x20,
+                base: Some(0x100E),
+                ..
+            },
+            ..
+        }
+    )));
+}

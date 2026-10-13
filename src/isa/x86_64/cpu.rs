@@ -5409,6 +5409,10 @@ mod jit_mmx_tests;
 mod mmx_xmm_transfer_tests;
 
 #[cfg(test)]
+#[path = "cpu_rip_relative_sweep_tests.rs"]
+mod rip_relative_sweep_tests;
+
+#[cfg(test)]
 #[path = "cpu_enter_tests.rs"]
 mod enter_tests;
 

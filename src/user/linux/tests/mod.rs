@@ -85,6 +85,7 @@ mod signals;
 mod sockets;
 #[cfg(unix)]
 mod splice;
+mod sse_rip_relative;
 mod stack;
 #[cfg(unix)]
 mod supplied;

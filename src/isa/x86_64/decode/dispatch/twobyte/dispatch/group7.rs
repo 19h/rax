@@ -914,13 +914,13 @@ impl X86_64Vcpu {
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
-                6 => {
-                    // CLWB - treat as NOP
-                    self.regs.rip += ctx.cursor as u64;
-                    Ok(None)
-                }
-                7 => {
-                    // CLFLUSH/CLFLUSHOPT - treat as NOP
+                6 | 7 => {
+                    // CLWB, CLFLUSH, CLFLUSHOPT: no cache is modeled, but each
+                    // "is subject to all permission checking and faults
+                    // associated with a byte load" (Intel SDM Vol. 2A).
+                    // Translate without reading, so a device sees no access.
+                    self.mmu
+                        .translate(addr, crate::isa::x86_64::AccessType::Read, &self.sregs)?;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }

@@ -372,7 +372,11 @@ fn test_far_call_null_selector() {
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
 
-    assert!(run_until_hlt(&mut vcpu).is_err());
+    // Intel SDM Vol. 2A protected-mode exceptions: #GP(0).
+    assert!(matches!(
+        run_until_hlt(&mut vcpu),
+        Err(rax::error::Error::GeneralProtection { error_code: 0 })
+    ));
 }
 
 #[test]
@@ -385,7 +389,11 @@ fn test_far_call_invalid_selector() {
     ];
     let (mut vcpu, _) = setup_vm_compat(&code, None);
 
-    assert!(run_until_hlt(&mut vcpu).is_err());
+    // Intel SDM Vol. 2A protected-mode exceptions: #GP(selector).
+    assert!(matches!(
+        run_until_hlt(&mut vcpu),
+        Err(rax::error::Error::GeneralProtection { error_code: 0xFFFC })
+    ));
 }
 
 #[test]
@@ -397,7 +405,11 @@ fn test_far_call_ldt_selector() {
     ];
     let (mut vcpu, _mem) = setup_vm_compat(&code, None);
 
-    assert!(run_until_hlt(&mut vcpu).is_err());
+    // Intel SDM Vol. 2A protected-mode exceptions: #GP(selector).
+    assert!(matches!(
+        run_until_hlt(&mut vcpu),
+        Err(rax::error::Error::GeneralProtection { error_code: 0x0C })
+    ));
 }
 
 // ============================================================================

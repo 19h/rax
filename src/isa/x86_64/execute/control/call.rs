@@ -10,18 +10,16 @@ use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 use super::X86FarReturnLoadFault;
 
 /// Operand size for near branches (CALL/RET near, JMP/Jcc near) and the stack
-/// push/pop of the return address. These instructions default to 64-bit
-/// operand size in long mode (a 64-bit code segment): REX.W is ignored and only
-/// a 0x66 prefix narrows them to 16-bit. In every other mode the general
-/// operand size (`ctx.op_size`) applies. Using `ctx.op_size` directly is wrong
-/// in 64-bit mode, where it is 32-bit without REX.W — a near CALL would then
-/// push a 4-byte return address and misalign the callee's stack frame.
+/// push/pop of the return address. In 64-bit mode it is forced to 64 bits:
+/// instruction-pointer truncation, the return-address push and pop, and the
+/// indirect target size all ignore operand-size prefixes, and a relative
+/// displacement stays 32 bits (Intel SDM Vol. 1 section 6.4.7; the rel16
+/// forms are "N.S." in 64-bit mode). In every other mode the general operand
+/// size (`ctx.op_size`) applies. Using `ctx.op_size` directly is wrong in
+/// 64-bit mode, where it is 32-bit without REX.W — a near CALL would then push
+/// a 4-byte return address and misalign the callee's stack frame.
 pub(super) fn near_branch_op_size(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u8 {
-    if vcpu.sregs.cs.l {
-        if ctx.operand_size_override { 2 } else { 8 }
-    } else {
-        ctx.op_size
-    }
+    if vcpu.sregs.cs.l { 8 } else { ctx.op_size }
 }
 
 pub(super) fn validate_far_selector(vcpu: &X86_64Vcpu, selector: u16) -> Result<()> {
@@ -30,8 +28,12 @@ pub(super) fn validate_far_selector(vcpu: &X86_64Vcpu, selector: u16) -> Result<
     if vcpu.sregs.cr0 & 1 == 0 {
         return Ok(());
     }
-    if selector == 0 {
-        return Err(Error::Emulator("CALL FAR: null selector".to_string()));
+    // Far CALL/JMP/RET and IRET: a null code-segment selector is #GP(0), and
+    // one whose descriptor lies outside the table limit is #GP(selector)
+    // (Intel SDM Vol. 2A CALL, JMP, RET, and IRET protected-mode exceptions).
+    // An absent table (limit 0) holds no descriptor.
+    if selector & !3 == 0 {
+        return Err(Error::GeneralProtection { error_code: 0 });
     }
 
     let ti = (selector & 0x4) != 0;
@@ -42,17 +44,11 @@ pub(super) fn validate_far_selector(vcpu: &X86_64Vcpu, selector: u16) -> Result<
         vcpu.sregs.gdt.limit as u64
     };
 
-    if limit == 0 {
-        return Err(Error::Emulator(
-            "CALL FAR: descriptor table not present".to_string(),
-        ));
-    }
-
     let end = index * 8 + 7;
-    if end > limit {
-        return Err(Error::Emulator(
-            "CALL FAR: selector outside descriptor table limits".to_string(),
-        ));
+    if limit == 0 || end > limit {
+        return Err(Error::GeneralProtection {
+            error_code: u64::from(selector & 0xFFFC),
+        });
     }
 
     Ok(())

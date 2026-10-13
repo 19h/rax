@@ -8,7 +8,8 @@
 # The KVM-vs-emulator differential test targets (`differential`, `diff_fuzz`) are
 # gated `#![cfg(all(feature = "kvm", target_os = "linux"))]` and validate the
 # interpreter + SMIR JIT bit-exactly against real hardware, so this is their only
-# home.
+# home. They gate pull requests that touch the x86 execution planes and run
+# nightly; a divergence fails the run.
 name: KVM backend
 
 on:
@@ -18,6 +19,18 @@ on:
       - "src/backend/kvm/**"
       - "src/vm/**"
       - "tests/suites/backend/kvm/minimal.rs"
+      - ".github/workflows/kvm.yml"
+  pull_request:
+    branches: [master, main]
+    paths:
+      - "src/isa/x86_64/**"
+      - "src/smir/**"
+      - "src/backend/kvm/**"
+      - "src/vm/**"
+      - "tests/suites/differential/x86_64/**"
+      - "tests/support/x86_64/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
       - ".github/workflows/kvm.yml"
   schedule:
     - cron: "0 5 * * *"
@@ -34,9 +47,11 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  # Light job: runs on push to the KVM paths + nightly.
+  # Light job: runs on push to the KVM paths + nightly (not on pull requests:
+  # its fat-LTO release build is slow and the differential job covers PRs).
   kvm:
     name: kvm (linux-x64, default features)
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
@@ -65,16 +80,17 @@ jobs:
       - name: cargo build --release (default features, fat LTO)
         run: cargo build --release
 
-  # Heavy job: the KVM differential corpora. Nightly / on demand only — these spin
-  # up KVM VMs across large generated corpora and are far too slow for push.
+  # Gating job: the KVM differential corpora, on pull requests that touch the
+  # x86 execution planes, nightly, and on demand (too slow for every push).
+  # Hosted-runner CPUs vary (vendor, AVX-512, FP16, WAITPKG, ...). A case whose
+  # KVM run faults on an instruction the host does not implement, or that
+  # compares Intel-specific behavior on a non-Intel host, reports `[skip]` with
+  # the reason (tests/suites/differential/x86_64/kvm/host_caps.rs); every other
+  # divergence fails the job.
   kvm-differential:
     name: kvm differential (interp + JIT vs hardware)
     if: github.event_name != 'push'
     runs-on: ubuntu-24.04
-    # Hosted-runner CPU exposure varies and many generated cases deliberately
-    # exercise optional ISA state. Preserve the nightly signal without turning
-    # host capability changes into a repository-wide workflow failure.
-    continue-on-error: true
     timeout-minutes: 180
     strategy:
       fail-fast: false
@@ -99,8 +115,29 @@ jobs:
           sudo chmod 0666 /dev/kvm
           test -r /dev/kvm && test -w /dev/kvm
 
+      - name: Host CPU (decides which cases can run)
+        run: |
+          grep -m1 '^vendor_id' /proc/cpuinfo || true
+          grep -m1 '^model name' /proc/cpuinfo || true
+          grep -m1 '^flags' /proc/cpuinfo | tr ' ' '\n' \
+            | grep -E '^(avx512|waitpkg|serialize|pku|ospke|sha_ni|gfni|vaes|vpclmulqdq)' \
+            | sort | tr '\n' ' '
+          echo
+
       - name: cargo test --test ${{ matrix.test }} (default features incl. kvm + smir-jit)
-        run: cargo test --features x86_64-suite --test ${{ matrix.test }} -- --include-ignored
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo test --features x86_64-suite --test ${{ matrix.test }} -- --include-ignored --nocapture \
+            2>&1 | tee test.log
+
+      - name: Skipped cases by reason
+        if: always()
+        shell: bash
+        run: |
+          echo "skipped: $(grep -c '^\[skip\]' test.log || true)"
+          grep '^\[skip\]' test.log | sed -E 's/0x[0-9a-f]+/N/g; s/\[[0-9a-f, ]+\]/[..]/' \
+            | sort | uniq -c | sort -rn || true
 
   # AVX-512 differential corpus: rax interpreter vs. silicon over the full EVEX
   # state (32 ZMM + 8 opmask), injected through the KVM XSAVE/XCR0 area. Requires

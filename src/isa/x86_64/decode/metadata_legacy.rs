@@ -5,7 +5,7 @@ pub(super) fn fixed_legacy(
     op: u8,
     bits: u32,
     width: u8,
-    near: u8,
+    stack: u8,
     address_bits: u32,
     out: &mut Instruction,
     unsupported: &mut bool,
@@ -205,10 +205,10 @@ pub(super) fn fixed_legacy(
         out.flow = Flow::Trap;
     }
     if matches!(op, 0x9c) {
-        out.stack_pointer_increment = -(near as i32);
+        out.stack_pointer_increment = -(stack as i32);
     }
     if matches!(op, 0x9d) {
-        out.stack_pointer_increment = near as i32;
+        out.stack_pointer_increment = stack as i32;
     }
     if matches!(op,0x06|0x07|0x0e|0x16|0x17|0x1e|0x1f|0x60|0x61|0x6c..=0x6f|0xa4..=0xa7|0xaa..=0xaf|0xec..=0xef|0xd7|0x9a|0xea)
     {
@@ -221,7 +221,7 @@ pub(super) fn decode_0f(
     ctx: &mut InsnContext,
     address_bits: u32,
     width: u8,
-    near: u8,
+    branch: u8,
     out: &mut Instruction,
     relative: &mut Option<u64>,
     branch_bits: &mut u32,
@@ -232,8 +232,8 @@ pub(super) fn decode_0f(
     let rex = ctx.has_any_rex();
     out.mnemonic = match op {
         0x80..=0x8f => {
-            *relative = Some(immediate(ctx, near.min(4), true)?.value);
-            *branch_bits = near as u32 * 8;
+            *relative = Some(immediate(ctx, branch.min(4), true)?.value);
+            *branch_bits = branch as u32 * 8;
             out.flow = Flow::Conditional;
             JCC[(op & 15) as usize]
         }

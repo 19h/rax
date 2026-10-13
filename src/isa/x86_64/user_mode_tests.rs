@@ -511,6 +511,74 @@ fn permission_faults_are_precise() {
 }
 
 #[test]
+fn cmovcc_reads_its_memory_source_when_the_condition_fails() {
+    // CMOVO eax, [rdi] (0F 40 07) with OF=0. The operation reads SRC before
+    // testing the condition (Intel SDM Vol. 2A CMOVcc), so an unmapped
+    // source faults even though no move happens.
+    let mut h = harness(&[0x0F, 0x40, 0x07]);
+    h.vcpu.regs.rdi = DATA + 0x2000;
+    h.vcpu.regs.rax = 0xFFFF_FFFF_1234_5678;
+    match run(&mut h.vcpu) {
+        Err(Error::GuestAccess(f)) => {
+            assert_eq!(f.address, DATA + 0x2000);
+            assert_eq!(f.access, MemoryAccessKind::Read);
+            assert_eq!(f.kind, MemoryFaultKind::Unmapped);
+        }
+        other => panic!("expected an unmapped read, got {other:?}"),
+    }
+    assert_eq!(h.vcpu.regs.rip, CODE);
+    assert_eq!(h.vcpu.regs.rax, 0xFFFF_FFFF_1234_5678, "nothing retired");
+
+    // A readable source and a failing condition: no move, but the 32-bit
+    // destination's upper half still clears.
+    let mut h = harness(&[0x0F, 0x40, 0x07, 0xF4]);
+    h.vcpu.regs.rdi = RODATA;
+    h.vcpu.regs.rax = 0xFFFF_FFFF_1234_5678;
+    let _ = run(&mut h.vcpu);
+    assert_eq!(h.vcpu.regs.rax, 0x1234_5678);
+    assert_eq!(
+        h.vcpu.regs.rip,
+        CODE + 3,
+        "stopped at the HLT (#GP at CPL 3)"
+    );
+}
+
+#[test]
+fn cache_line_flushes_fault_like_a_byte_load() {
+    // CLFLUSH, CLFLUSHOPT, and CLWB "are subject to all permission checking
+    // and faults associated with a byte load" (Intel SDM Vol. 2A).
+    for (name, code) in [
+        ("CLFLUSH", &[0x0F, 0xAE, 0x3B][..]),
+        ("CLFLUSHOPT", &[0x66, 0x0F, 0xAE, 0x3B]),
+        ("CLWB", &[0x66, 0x0F, 0xAE, 0x33]),
+    ] {
+        let mut h = harness(code);
+        h.vcpu.regs.rbx = DATA + 0x2040;
+        match run(&mut h.vcpu) {
+            Err(Error::GuestAccess(f)) => {
+                assert_eq!(f.address, DATA + 0x2040, "{name}");
+                assert_eq!(f.access, MemoryAccessKind::Read, "{name}");
+                assert_eq!(f.kind, MemoryFaultKind::Unmapped, "{name}");
+            }
+            other => panic!("{name}: expected an unmapped read, got {other:?}"),
+        }
+        assert_eq!(h.vcpu.regs.rip, CODE, "{name}");
+
+        // A read-only line is flushed without a fault.
+        let mut code = code.to_vec();
+        code.push(0xF4);
+        let mut h = harness(&code);
+        h.vcpu.regs.rbx = RODATA + 0x40;
+        let _ = run(&mut h.vcpu);
+        assert_eq!(
+            h.vcpu.regs.rip,
+            CODE + code.len() as u64 - 1,
+            "{name} retired and stopped at the HLT"
+        );
+    }
+}
+
+#[test]
 fn page_crossing_store_into_readonly_page_commits_nothing() {
     // mov [rbx], rax straddling DATA's last bytes and an unmapped page.
     let mut h = harness(&[0x48, 0x89, 0x03]);

@@ -402,6 +402,19 @@ impl X86_64Vcpu {
         }
     }
 
+    /// Length of the immediate after the ModR/M operand of the map-4 scalar
+    /// `opcode` with operand size `op_size`: Iz (69, 81, F7) is two bytes for
+    /// a 16-bit operand and four otherwise; every other immediate form (6B,
+    /// 80, 83, C0, C1, F6) is Ib. A RIP-relative operand is relative to the
+    /// end of the instruction, after it (Intel SDM Vol. 2A section 2.2.1.6).
+    pub(crate) fn apx_immediate_len(opcode: u8, op_size: u8) -> usize {
+        match opcode {
+            0x69 | 0x81 | 0xF7 if op_size == 2 => 2,
+            0x69 | 0x81 | 0xF7 => 4,
+            _ => 1,
+        }
+    }
+
     /// APX POP2 - pop two registers with one aligned 16-byte stack transfer.
     pub(crate) fn execute_apx_pop2(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let modrm = ctx.consume_u8()?;
@@ -493,6 +506,7 @@ impl X86_64Vcpu {
         imm32: bool,
     ) -> Result<Option<VcpuExit>> {
         let op_size = Self::apx_scalar_op_size(ctx);
+        ctx.rip_relative_offset = Self::apx_immediate_len(if imm32 { 0x69 } else { 0x6B }, op_size);
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let reg = reg | ctx.evex_dest_reg();
 
@@ -678,6 +692,7 @@ impl X86_64Vcpu {
             Self::apx_scalar_op_size(ctx)
         };
 
+        ctx.rip_relative_offset = Self::apx_immediate_len(opcode, op_size);
         let (_, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let src_reg = rm | ctx.evex_rm_reg();
         let src = if is_memory {
@@ -763,6 +778,7 @@ impl X86_64Vcpu {
         if nf && matches!(shift_type, 2 | 3) {
             return self.inject_invalid_opcode();
         }
+        ctx.rip_relative_offset = Self::apx_immediate_len(opcode, op_size);
         let (_, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let rm = rm | ctx.evex_rm_reg();
         let imm = ctx.consume_u8()?;

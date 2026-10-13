@@ -26,6 +26,9 @@ use rax::isa::x86_64::{X86_64Vcpu, flags};
 use rax::vm::vcpu::{Registers, Segment, SystemRegisters, VCpu, VcpuExit};
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
+#[path = "kvm/host_caps.rs"]
+mod host_caps;
+
 // ---------------------------------------------------------------------------
 // Memory layout (all identity-mapped: GVA == GPA)
 // ---------------------------------------------------------------------------
@@ -96,6 +99,11 @@ const FLAG_MASK: u64 = flags::bits::CF
     | flags::bits::ZF
     | flags::bits::SF
     | flags::bits::OF;
+
+/// Status flags a shift or double shift by a non-zero count defines: AF is
+/// undefined (Intel SDM Vol. 2B SAL/SAR/SHL/SHR and SHLD/SHRD "Flags
+/// Affected").
+const SHIFT_FLAG_MASK: u64 = FLAG_MASK & !flags::bits::AF;
 
 // ---------------------------------------------------------------------------
 // Build the shared identity-mapped long-mode initial state.
@@ -511,6 +519,7 @@ fn run_kvm_with_sregs(
     // --- run to HLT, bounded ---
     let mut io_out = Vec::new();
     let mut iters = 0u64;
+    let mut abnormal = None;
     loop {
         iters += 1;
         if iters > MAX_ITERS {
@@ -533,9 +542,20 @@ fn run_kvm_with_sregs(
             }
             kvm_ioctls::VcpuExit::MmioWrite(..) => {}
             other => {
-                return Err(format!("kvm abnormal exit: {other:?}"));
+                abnormal = Some(format!("{other:?}"));
+                break;
             }
         }
+    }
+    if let Some(exit) = abnormal {
+        // An unhandled exception ends in a shutdown with RIP still at the
+        // faulting instruction; attribute it to host capability where the
+        // instruction needs a feature the host lacks.
+        let rip = vcpu.get_regs().map_or(0, |r| r.rip);
+        if let Some(why) = host_caps::unsupported(&supported_cpuid, code, CODE_ADDR, rip) {
+            return Err(why);
+        }
+        return Err(format!("kvm abnormal exit: {exit} at rip={rip:#x}"));
     }
 
     let final_kregs = vcpu
@@ -744,6 +764,10 @@ fn run_both_with_sregs(
         Ok(Some(s)) => s,
         Ok(None) => {
             eprintln!("[skip] /dev/kvm unavailable or undrivable; skipping differential case");
+            return None;
+        }
+        Err(e) if e.starts_with(host_caps::HOST_UNSUPPORTED) => {
+            eprintln!("[skip] {e}");
             return None;
         }
         Err(e) => panic!("KVM backend failure: {e}"),
@@ -1090,7 +1114,12 @@ fn shl_into_cf_of() {
     let mut r = regs();
     r.rax = 0x4000_0000_0000_0000;
     // 48 D1 E0  shl rax, 1  (1-bit shift defines OF)
-    check("shl1", &with_hlt(vec![0x48, 0xD1, 0xE0]), r);
+    check_flags_masked(
+        "shl1",
+        &with_hlt(vec![0x48, 0xD1, 0xE0]),
+        r,
+        SHIFT_FLAG_MASK,
+    );
 }
 
 #[test]
@@ -1099,7 +1128,12 @@ fn shl_by_cl() {
     r.rax = 0x1;
     r.rcx = 4;
     // 48 D3 E0  shl rax, cl
-    check("shl_cl", &with_hlt(vec![0x48, 0xD3, 0xE0]), r);
+    check_flags_masked(
+        "shl_cl",
+        &with_hlt(vec![0x48, 0xD3, 0xE0]),
+        r,
+        SHIFT_FLAG_MASK,
+    );
 }
 
 #[test]
@@ -1107,7 +1141,12 @@ fn shr_cf() {
     let mut r = regs();
     r.rax = 0x3; // shr by 1 -> CF from bit 0
     // 48 D1 E8  shr rax, 1
-    check("shr1", &with_hlt(vec![0x48, 0xD1, 0xE8]), r);
+    check_flags_masked(
+        "shr1",
+        &with_hlt(vec![0x48, 0xD1, 0xE8]),
+        r,
+        SHIFT_FLAG_MASK,
+    );
 }
 
 #[test]
@@ -1116,7 +1155,12 @@ fn sar_sign_extend() {
     r.rax = 0x8000_0000_0000_0000;
     r.rcx = 4;
     // 48 D3 F8  sar rax, cl
-    check("sar_cl", &with_hlt(vec![0x48, 0xD3, 0xF8]), r);
+    check_flags_masked(
+        "sar_cl",
+        &with_hlt(vec![0x48, 0xD3, 0xF8]),
+        r,
+        SHIFT_FLAG_MASK,
+    );
 }
 
 #[test]
@@ -2788,15 +2832,17 @@ fn shrd_cl() {
 
 #[test]
 fn shld_imm1_defines_of() {
-    // A 1-bit double shift DOES define OF, so compare all status flags.
+    // A 1-bit double shift DOES define OF, so compare every status flag
+    // but AF, which is undefined for a non-zero count.
     let mut r = regs();
     r.rax = 0x4000_0000_0000_0000;
     r.rbx = 0x8000_0000_0000_0000;
     // 48 0F A4 D8 01  shld rax, rbx, 1
-    check(
+    check_flags_masked(
         "shld_imm1",
         &with_hlt(vec![0x48, 0x0F, 0xA4, 0xD8, 0x01]),
         r,
+        SHIFT_FLAG_MASK,
     );
 }
 
@@ -9735,15 +9781,17 @@ fn rcl8_by_cl_wraps_mod9() {
 
 #[test]
 fn shrd_imm1_defines_of() {
-    // A 1-bit SHRD defines OF -> compare all status flags.
+    // A 1-bit SHRD defines OF -> compare every status flag but AF, which is
+    // undefined for a non-zero count.
     let mut r = regs();
     r.rax = 0x0000_0000_0000_0001;
     r.rbx = 0x8000_0000_0000_0000;
     // 48 0F AC D8 01  shrd rax, rbx, 1
-    check(
+    check_flags_masked(
         "shrd_imm1",
         &with_hlt(vec![0x48, 0x0F, 0xAC, 0xD8, 0x01]),
         r,
+        SHIFT_FLAG_MASK,
     );
 }
 
@@ -14789,6 +14837,11 @@ fn modern_flags_regs() -> Registers {
 
 #[test]
 fn cpuid_vendor_and_selected_feature_bits() {
+    // rax models an Intel CPUID; a non-Intel host reports its own vendor and
+    // features.
+    if !host_caps::intel_host("cpuid_vendor_and_selected_feature_bits") {
+        return;
+    }
     let mut code = load_rdi_data();
     code.extend_from_slice(&[
         0xB8, 0x00, 0x00, 0x00, 0x00, // mov eax, 0
@@ -14868,6 +14921,10 @@ fn cpuid_leaf1_and_extended_feature_bits() {
 
 #[test]
 fn cpuid_extended_limits_and_address_size_booleans() {
+    // rax models an Intel CPUID; a non-Intel host reports its own limits.
+    if !host_caps::intel_host("cpuid_extended_limits_and_address_size_booleans") {
+        return;
+    }
     let mut code = load_rdi_data();
     code.extend_from_slice(&[
         0xB8, 0x02, 0x00, 0x00, 0x00, // mov eax, 2
@@ -14906,6 +14963,11 @@ fn cpuid_extended_limits_and_address_size_booleans() {
 
 #[test]
 fn cpuid_xsave_feature_enumeration() {
+    // rax models an Intel CPUID; a non-Intel host reports its own XSAVE
+    // enumeration.
+    if !host_caps::intel_host("cpuid_xsave_feature_enumeration") {
+        return;
+    }
     let mut code = load_rdi_data();
     code.extend_from_slice(&[
         0xB8, 0x0D, 0x00, 0x00, 0x00, // mov eax, 0xd
@@ -15918,6 +15980,11 @@ fn sysenter_entry_loads_target_and_clears_if() {
 
 #[test]
 fn sysretq_returns_to_user_and_syscall_reenters_kernel() {
+    // SYSRET loads SS.selector = STAR[63:48] + 8 with RPL 3 (Intel SDM Vol. 2B
+    // SYSRET); AMD hosts keep RPL 0.
+    if !host_caps::intel_host("sysretq_returns_to_user_and_syscall_reenters_kernel") {
+        return;
+    }
     const IA32_STAR: u32 = 0xC000_0081;
     const IA32_LSTAR: u32 = 0xC000_0082;
     const IA32_FMASK: u32 = 0xC000_0084;
@@ -18396,22 +18463,20 @@ fn flag_std_rep_stosb_then_cld() {
     );
 }
 
-#[ignore = "ARCHITECTURALLY UNDEFINED, divergence expected: BSWAP with a 16-bit \
-operand (66 0F C8) is explicitly 'undefined' per the Intel SDM. Observed: KVM \
-(this Intel host) zeroes the swapped low 16 bits -> ax becomes 0x0000 \
-(rax=0x1122334455660000), whereas the interpreter leaves the 16-bit value \
-unchanged (rax=0x1122334455667788). Both are defensible for an undefined \
-encoding, so this is NOT a correctness bug; it is kept (ignored) to document the \
-behavioral difference the task asked us to compare."]
 #[test]
-fn bswap_r16_undefined_compare() {
-    // BSWAP on a 16-bit register (66 0F C8) is documented as UNDEFINED behavior;
-    // KVM zeroes the low 16 bits while the interpreter preserves them (see the
-    // #[ignore] note above). Comparison is intentionally disabled.
+fn bswap_r16_compares_only_defined_state() {
+    // BSWAP with a 16-bit operand (66 0F C8) leaves the 16-bit result
+    // undefined (Intel SDM Vol. 2A BSWAP): hosts zero AX, the interpreter
+    // preserves it. RAX[63:16], the other registers, and the flags are
+    // defined, so they are compared.
     let mut r = regs();
     r.rax = 0x1122_3344_5566_7788; // ax = 0x7788
-    // 66 0F C8  bswap ax
-    check("bswap_r16", &with_hlt(vec![0x66, 0x0F, 0xC8]), r);
+    let code = with_hlt(vec![0x66, 0x0F, 0xC8]);
+    let Some((interp, mut kvm)) = run_both(&code, r, zero_scratch()) else {
+        return;
+    };
+    kvm.regs.rax = (kvm.regs.rax & !0xFFFF) | (interp.regs.rax & 0xFFFF);
+    assert_match("bswap_r16", &code, &interp, &kvm, CompareOpts::default());
 }
 
 // ---------------------------------------------------------------------------
@@ -24808,6 +24873,12 @@ fn str_addr32_df_rep_forms() {
 
 #[test]
 fn str_addr32_rep_zero_count_forms() {
+    // with a zero count and 32-bit addressing the interpreter keeps the zero-
+    // extended RCX/RSI/RDI it established on Intel hosts; AMD hosts leave the
+    // upper halves; the SDM pseudo-code performs no iteration either way.
+    if !host_caps::intel_host("str_addr32_rep_zero_count_forms") {
+        return;
+    }
     fn zero_count_regs() -> Registers {
         let mut r = regs();
         r.rsi = 0xFFFF_0000_0000_0000 | DATA_ADDR | SRC_OFF;
@@ -26286,19 +26357,28 @@ fn mmx_maskmovq_addr32_destination() {
 #[test]
 fn mmx_emms_marks_x87_tags_empty() {
     const FPU_ENV_OFF: u32 = 0x100;
-
-    let s = scratch_f64(&[3.0, 7.0]);
-    let mut code = load_rdi_data();
-    code.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
-    code.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8]
-    code.extend_from_slice(&[0x0F, 0x77]); // emms
-    code.extend_from_slice(&[0xD9, 0xB7]); // fnstenv [rdi+0x100]
-    code.extend_from_slice(&FPU_ENV_OFF.to_le_bytes());
-    code.extend_from_slice(&[0x66, 0x8B, 0x87]); // mov ax, word [rdi+0x104]
-    code.extend_from_slice(&(FPU_ENV_OFF + 4).to_le_bytes());
-    code.extend_from_slice(&[0x66, 0x89, 0x47, 0x20]); // mov word [rdi+0x20], ax
-    code.push(HLT);
-    check_mem("mmx_emms_x87_empty_tags", &code, regs(), s, 0);
+    // The 28-byte protected-mode FNSTENV image: FSW at +4, FTW at +8.
+    for (label, field) in [("mmx_emms_x87_empty_tags", 8), ("mmx_emms_x87_fsw", 4)] {
+        // EMMS empties every tag on all hosts. Unlike the other MMX
+        // instructions it leaves TOP alone on Intel ("When an MMX instruction
+        // (other than the EMMS instruction) is executed ... TOS ... is set to
+        // 0", Intel SDM Vol. 1 section 9.6.2); AMD hosts clear it.
+        if field == 4 && !host_caps::intel_host(label) {
+            continue;
+        }
+        let s = scratch_f64(&[3.0, 7.0]);
+        let mut code = load_rdi_data();
+        code.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+        code.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8]
+        code.extend_from_slice(&[0x0F, 0x77]); // emms
+        code.extend_from_slice(&[0xD9, 0xB7]); // fnstenv [rdi+0x100]
+        code.extend_from_slice(&FPU_ENV_OFF.to_le_bytes());
+        code.extend_from_slice(&[0x66, 0x8B, 0x87]); // mov ax, word [rdi+0x100+field]
+        code.extend_from_slice(&(FPU_ENV_OFF + field).to_le_bytes());
+        code.extend_from_slice(&[0x66, 0x89, 0x47, 0x20]); // mov word [rdi+0x20], ax
+        code.push(HLT);
+        check_mem(label, &code, regs(), s, 0);
+    }
 }
 
 #[test]
@@ -27162,6 +27242,11 @@ fn io_string_addr32_df_rep_forms() {
 
 #[test]
 fn io_string_addr32_rep_zero_count_skips_io() {
+    // zero-count 32-bit-address REP INS/OUTS: Intel/AMD differ in the upper halves
+    // of RCX/RSI/RDI, as for the other string instructions.
+    if !host_caps::intel_host("io_string_addr32_rep_zero_count_skips_io") {
+        return;
+    }
     let mut r = regs();
     r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR | 12;
     r.rcx = 0xFFFF_0000_0000_0000;
@@ -27964,8 +28049,31 @@ fn xgetbv_reads_default_xss_with_ecx_1() {
     code.extend_from_slice(&[0x48, 0xC7, 0xC2]); // mov rdx, -1
     code.extend_from_slice(&0xFFFF_FFFFu32.to_le_bytes());
     code.extend_from_slice(&[0x0F, 0x01, 0xD0]); // xgetbv
+    let code = with_hlt(code);
 
-    check_flags_masked("xgetbv_default_xss", &with_hlt(code), regs(), FLAG_MASK);
+    // ECX=1 returns XCR0 AND XINUSE. XINUSE[i] = 0 only where component i is
+    // in its initial configuration, and "it is possible for XINUSE[i] to be
+    // 1 even when state component i is in its initial configuration" (Intel
+    // SDM Vol. 1 section 13.6). Here every component is in that state, so
+    // any subset of XCR0 is architectural: check the contract on both sides
+    // and compare everything else.
+    let Some((mut interp, kvm)) = run_both(&code, regs(), zero_scratch()) else {
+        return;
+    };
+    for (side, state) in [("interp", &interp), ("kvm", &kvm)] {
+        assert_eq!(
+            state.regs.rax & !0xE7,
+            0,
+            "{side}: XINUSE bits outside XCR0"
+        );
+        assert_eq!(state.regs.rdx, 0, "{side}: XINUSE[63:32]");
+    }
+    interp.regs.rax = kvm.regs.rax;
+    let opts = CompareOpts {
+        flag_mask: FLAG_MASK,
+        ..CompareOpts::default()
+    };
+    assert_match("xgetbv_default_xss", &code, &interp, &kvm, opts);
 }
 
 #[test]

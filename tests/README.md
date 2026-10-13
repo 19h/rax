@@ -88,6 +88,11 @@ listed below is declared explicitly with a `[[test]]` entry in the root
   each semantic leaf directly; redundant nested `mod.rs` graphs are absent.
 - External-oracle suites self-gate according to their existing host/tool
   checks; directory placement does not imply that an oracle is installed.
+- `differential` and `diff_fuzz` keep shared helpers in `#[path]` sibling
+  modules under `suites/differential/x86_64/kvm/` and `.../fuzz/`.
+  `kvm/host_caps.rs` turns a KVM shutdown into a `[skip]` only when the
+  faulting instruction needs a CPU feature the host does not enumerate, or
+  Intel-defined behavior on a non-Intel host; any other shutdown fails.
 
 ## Adding tests
 

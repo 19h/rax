@@ -242,23 +242,28 @@ impl X86_64Lifter {
                 }
                 (bytes[imm_offset] as i8 as i64, 1)
             }
+            // Iz: an imm16 with a 16-bit operand size (EVEX.pp=01), else an
+            // imm32 sign-extended to 64 bits under EVEX.W.
             0x81 => {
-                if bytes.len() < imm_offset + 4 {
+                let imm_size = if op_size == 2 { 2 } else { 4 };
+                if bytes.len() < imm_offset + imm_size {
                     return Err(LiftError::Incomplete {
                         addr: pc,
                         have: bytes.len(),
-                        need: imm_offset + 4,
+                        need: imm_offset + imm_size,
                     });
                 }
-                (
+                let imm = if imm_size == 2 {
+                    i16::from_le_bytes([bytes[imm_offset], bytes[imm_offset + 1]]) as i64
+                } else {
                     i32::from_le_bytes([
                         bytes[imm_offset],
                         bytes[imm_offset + 1],
                         bytes[imm_offset + 2],
                         bytes[imm_offset + 3],
-                    ]) as i64,
-                    4,
-                )
+                    ]) as i64
+                };
+                (imm, imm_size)
             }
             0x83 => {
                 if bytes.len() < imm_offset + 1 {

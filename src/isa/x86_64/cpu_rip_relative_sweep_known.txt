@@ -1,0 +1,10 @@
+# Expected divergences of the RIP-relative sweep
+# (cpu_rip_relative_sweep_tests.rs). One per line:
+#
+#   family head-hex kind detail reason...
+#
+# `head-hex` is the encoding through the ModR/M byte; `detail` is the
+# report's detail with spaces replaced by `_`. Only architecturally
+# legitimate differences belong here (for example an instruction whose first
+# access is not at the operand's first byte), each with its Intel SDM
+# justification. A listed divergence that stops occurring fails the test too.

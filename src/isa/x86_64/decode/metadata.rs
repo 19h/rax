@@ -278,11 +278,19 @@ fn decode_inner(bits: u32, pc: u64, bytes: &[u8], unsupported: &mut bool) -> Opt
     } else {
         4
     };
-    let near = if bits == 64 {
-        if ctx.operand_size_override { 2 } else { 8 }
+    // In 64-bit mode stack pushes and pops honor 66 (REX.W wins), while the
+    // operand size of near branches is forced to 64 bits and operand-size
+    // prefixes are silently ignored (Intel SDM Vol. 1 section 6.4.7).
+    let stack = if bits == 64 {
+        if ctx.operand_size_override && !ctx.any_rex_w() {
+            2
+        } else {
+            8
+        }
     } else {
         width
     };
+    let branch = if bits == 64 { 8 } else { width };
     let address_bits = if ctx.address_size_override {
         if bits == 16 {
             32
@@ -331,7 +339,7 @@ fn decode_inner(bits: u32, pc: u64, bytes: &[u8], unsupported: &mut bool) -> Opt
             }
             if opcode == 0xc3 || opcode == 0xc2 {
                 out.stack_pointer_increment =
-                    near as i32 + out.operands.first().map_or(0, |o| o.value as i32);
+                    branch as i32 + out.operands.first().map_or(0, |o| o.value as i32);
             } else {
                 out.operands_complete = false;
             }
@@ -355,28 +363,31 @@ fn decode_inner(bits: u32, pc: u64, bytes: &[u8], unsupported: &mut bool) -> Opt
                 _ => Flow::Conditional,
             };
             let imm_width = if opcode == 0xe8 || opcode == 0xe9 {
-                near.min(4)
+                branch.min(4)
             } else {
                 1
             };
             relative = Some(immediate(&mut ctx, imm_width, true)?.value);
-            // LOOP/JCXZ select their counter through address size; 66 does
-            // not narrow their instruction pointer like the near Jcc family.
+            // LOOP/JCXZ select their counter through address size; outside
+            // 64-bit mode 66 does not narrow their instruction pointer as it
+            // does for the other near branches.
             branch_bits = if (0xe0..=0xe3).contains(&opcode) {
                 bits
             } else {
-                near as u32 * 8
+                branch as u32 * 8
             };
             if opcode == 0xe8 {
-                out.stack_pointer_increment = -(near as i32);
+                out.stack_pointer_increment = -(branch as i32);
             }
         }
         0xfe | 0xff => {
             let group = (ctx.peek_u8().ok()? >> 3) & 7;
             let operand_width = if opcode == 0xfe {
                 1
-            } else if (2..=6).contains(&group) {
-                near
+            } else if matches!(group, 2 | 4) {
+                branch
+            } else if (3..=6).contains(&group) {
+                stack
             } else {
                 width
             };
@@ -399,8 +410,10 @@ fn decode_inner(bits: u32, pc: u64, bytes: &[u8], unsupported: &mut bool) -> Opt
                 4 | 5 => Flow::IndirectJump,
                 _ => Flow::Next,
             };
-            if group == 2 || group == 6 {
-                out.stack_pointer_increment = -(near as i32);
+            if group == 2 {
+                out.stack_pointer_increment = -(branch as i32);
+            } else if group == 6 {
+                out.stack_pointer_increment = -(stack as i32);
             }
             lockable = group <= 1 && rm.kind == OperandKind::Memory;
             out.operands.push(read_write(rm, true, group <= 1));
@@ -533,30 +546,30 @@ fn decode_inner(bits: u32, pc: u64, bytes: &[u8], unsupported: &mut bool) -> Opt
             out.mnemonic = if pop { "pop" } else { "push" }.into();
             out.operands.push(reg_operand(
                 (opcode & 7) | ctx.any_rex_b(),
-                near,
+                stack,
                 rex,
                 !pop,
                 pop,
             ));
-            out.stack_pointer_increment = if pop { near as i32 } else { -(near as i32) };
+            out.stack_pointer_increment = if pop { stack as i32 } else { -(stack as i32) };
         }
         0x68 | 0x6a => {
             out.mnemonic = "push".into();
             out.operands.push(immediate(
                 &mut ctx,
-                if opcode == 0x6a { 1 } else { near.min(4) },
+                if opcode == 0x6a { 1 } else { stack.min(4) },
                 true,
             )?);
-            out.stack_pointer_increment = -(near as i32);
+            out.stack_pointer_increment = -(stack as i32);
         }
         0x8f => {
-            let (group, _, rm) = modrm(&mut ctx, address_bits, near, bits == 64)?;
+            let (group, _, rm) = modrm(&mut ctx, address_bits, stack, bits == 64)?;
             if group != 0 {
                 return None;
             }
             out.mnemonic = "pop".into();
             out.operands.push(read_write(rm, false, true));
-            out.stack_pointer_increment = near as i32;
+            out.stack_pointer_increment = stack as i32;
         }
         0x69 | 0x6b => {
             let (_, reg, rm) = modrm(&mut ctx, address_bits, width, bits == 64)?;
@@ -615,7 +628,7 @@ fn decode_inner(bits: u32, pc: u64, bytes: &[u8], unsupported: &mut bool) -> Opt
             &mut ctx,
             address_bits,
             width,
-            near,
+            branch,
             &mut out,
             &mut relative,
             &mut branch_bits,
@@ -627,7 +640,7 @@ fn decode_inner(bits: u32, pc: u64, bytes: &[u8], unsupported: &mut bool) -> Opt
             opcode,
             bits,
             width,
-            near,
+            stack,
             address_bits,
             &mut out,
             unsupported,

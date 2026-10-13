@@ -30,6 +30,13 @@ use rax::isa::x86_64::{X86_64Vcpu, flags};
 use rax::vm::vcpu::{Registers, SystemRegisters, VCpu, VcpuExit};
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
+#[path = "fuzz/addr_form.rs"]
+mod addr_form;
+#[path = "fuzz/imm_rip_relative.rs"]
+mod imm_rip_relative;
+
+use addr_form::{ADDR_FORMS, AddrForm, encode_ea_operand};
+
 // ---------------------------------------------------------------------------
 // Memory layout (all identity-mapped: GVA == GPA) — mirrors differential.rs
 // ---------------------------------------------------------------------------
@@ -1233,7 +1240,8 @@ fn fuzz_shifts() {
             if is_rotate {
                 flags::bits::CF | flags::bits::OF
             } else {
-                FLAG_MASK
+                // AF is undefined for a non-zero count (Intel SDM Vol. 2B SAL/SAR/SHL/SHR).
+                FLAG_MASK & !flags::bits::AF
             }
         } else if is_rotate {
             flags::bits::CF
@@ -2810,35 +2818,14 @@ fn fuzz_sse_shift_imm() {
 //   reg field (moved register) = rax (enc 0)
 //   base                       = rbx (enc 3)
 //   index                      = rsi (enc 6)
-#[derive(Clone, Copy)]
-enum AddrForm {
-    Base,       // mod=00 rm=base          [rbx]
-    BaseDisp8,  // mod=01 rm=base          [rbx+d8]
-    BaseDisp32, // mod=10 rm=base          [rbx+d32]
-    Sib,        // mod=00 rm=4 SIB         [rbx + rsi*s]
-    SibDisp8,   // mod=01 rm=4 SIB + d8    [rbx + rsi*s + d8]
-    SibDisp32,  // mod=10 rm=4 SIB + d32   [rbx + rsi*s + d32]
-    SibNoIndex, // mod=00 rm=4 SIB idx=4   [rbx]            (no-index encoding)
-    SibNoBase,  // mod=00 rm=4 SIB base=5  [rsi*s + disp32] (no base)
-    RipRel,     // mod=00 rm=5             [rip + disp32]
-}
+// `AddrForm` and the operand encoder live in `fuzz/addr_form.rs`.
 
 #[test]
 fn fuzz_mem_addressing() {
     const CASES: usize = 700;
     let mut h = Harness::new(0xADD4_E55F_0FF5_E701);
     let sizes = [Size::B8, Size::B16, Size::B32, Size::B64];
-    let forms = [
-        AddrForm::Base,
-        AddrForm::BaseDisp8,
-        AddrForm::BaseDisp32,
-        AddrForm::Sib,
-        AddrForm::SibDisp8,
-        AddrForm::SibDisp32,
-        AddrForm::SibNoIndex,
-        AddrForm::SibNoBase,
-        AddrForm::RipRel,
-    ];
+    let forms = ADDR_FORMS;
 
     const REG: u8 = 0; // rax, the moved register (reg field)
     const BASE: u8 = 3; // rbx
@@ -2874,78 +2861,9 @@ fn fuzz_mem_addressing() {
         };
         code.push(opcode);
 
-        match form {
-            AddrForm::Base => {
-                code.push(modrm(0b00, REG, BASE));
-                set_reg(&mut r, BASE, ea);
-            }
-            AddrForm::BaseDisp8 => {
-                let d8 = (h.rng.next_u32() as i8) as i64;
-                code.push(modrm(0b01, REG, BASE));
-                set_reg(&mut r, BASE, ea.wrapping_sub(d8 as u64));
-                code.push(d8 as u8);
-            }
-            AddrForm::BaseDisp32 => {
-                let d32 = h.rng.next_u32() as i32 as i64;
-                code.push(modrm(0b10, REG, BASE));
-                set_reg(&mut r, BASE, ea.wrapping_sub(d32 as u64));
-                code.extend_from_slice(&(d32 as i32).to_le_bytes());
-            }
-            AddrForm::Sib => {
-                code.push(modrm(0b00, REG, 4));
-                code.push((scale_bits << 6) | (INDEX << 3) | BASE);
-                set_reg(&mut r, INDEX, idxv);
-                set_reg(&mut r, BASE, ea.wrapping_sub(idxv.wrapping_mul(scale)));
-            }
-            AddrForm::SibDisp8 => {
-                let d8 = (h.rng.next_u32() as i8) as i64;
-                code.push(modrm(0b01, REG, 4));
-                code.push((scale_bits << 6) | (INDEX << 3) | BASE);
-                set_reg(&mut r, INDEX, idxv);
-                set_reg(
-                    &mut r,
-                    BASE,
-                    ea.wrapping_sub(idxv.wrapping_mul(scale))
-                        .wrapping_sub(d8 as u64),
-                );
-                code.push(d8 as u8);
-            }
-            AddrForm::SibDisp32 => {
-                let d32 = h.rng.next_u32() as i32 as i64;
-                code.push(modrm(0b10, REG, 4));
-                code.push((scale_bits << 6) | (INDEX << 3) | BASE);
-                set_reg(&mut r, INDEX, idxv);
-                set_reg(
-                    &mut r,
-                    BASE,
-                    ea.wrapping_sub(idxv.wrapping_mul(scale))
-                        .wrapping_sub(d32 as u64),
-                );
-                code.extend_from_slice(&(d32 as i32).to_le_bytes());
-            }
-            AddrForm::SibNoIndex => {
-                // index=4 in SIB encodes "no index". EA = base.
-                code.push(modrm(0b00, REG, 4));
-                code.push((scale_bits << 6) | (4 << 3) | BASE);
-                set_reg(&mut r, BASE, ea);
-            }
-            AddrForm::SibNoBase => {
-                // mod=00, SIB base=5 => no base register, disp32 follows.
-                // EA = index*scale + disp32.
-                code.push(modrm(0b00, REG, 4));
-                code.push((scale_bits << 6) | (INDEX << 3) | 5);
-                set_reg(&mut r, INDEX, idxv);
-                let disp = ea.wrapping_sub(idxv.wrapping_mul(scale)) as i64 as i32;
-                code.extend_from_slice(&disp.to_le_bytes());
-            }
-            AddrForm::RipRel => {
-                // mod=00, rm=5 => [rip + disp32], rip = address of NEXT insn.
-                code.push(modrm(0b00, REG, 5));
-                let rip_after = CODE_ADDR + code.len() as u64 + 4;
-                let disp = ea.wrapping_sub(rip_after) as i64 as i32;
-                code.extend_from_slice(&disp.to_le_bytes());
-            }
-        }
+        encode_ea_operand(
+            &mut h.rng, form, REG, ea, scale_bits, idxv, 0, &mut code, &mut r,
+        );
         code.push(HLT);
 
         // Random scratch contents (the load source / store target window).
@@ -2992,17 +2910,7 @@ fn fuzz_lea() {
     const CASES: usize = 700;
     let mut h = Harness::new(0x1EA5_1EA5_C0DE_F00D);
     let opsizes = [Size::B16, Size::B32, Size::B64];
-    let forms = [
-        AddrForm::Base,
-        AddrForm::BaseDisp8,
-        AddrForm::BaseDisp32,
-        AddrForm::Sib,
-        AddrForm::SibDisp8,
-        AddrForm::SibDisp32,
-        AddrForm::SibNoIndex,
-        AddrForm::SibNoBase,
-        AddrForm::RipRel,
-    ];
+    let forms = ADDR_FORMS;
 
     const REG: u8 = 0; // rax (dest)
     const BASE: u8 = 3; // rbx
@@ -3111,17 +3019,7 @@ fn fuzz_lea_segment() {
     const CASES: usize = 700;
     let mut h = Harness::new(0x5E60_1EA5_0FF5_E700);
     let opsizes = [Size::B16, Size::B32, Size::B64];
-    let forms = [
-        AddrForm::Base,
-        AddrForm::BaseDisp8,
-        AddrForm::BaseDisp32,
-        AddrForm::Sib,
-        AddrForm::SibDisp8,
-        AddrForm::SibDisp32,
-        AddrForm::SibNoIndex,
-        AddrForm::SibNoBase,
-        AddrForm::RipRel,
-    ];
+    let forms = ADDR_FORMS;
 
     const REG: u8 = 0; // rax (dest)
     const BASE: u8 = 3; // rbx
@@ -3235,17 +3133,7 @@ fn fuzz_mem_addressing_segment() {
     const CASES: usize = 800;
     let mut h = Harness::new(0x5E60_ADD4_0FF5_E700);
     let sizes = [Size::B8, Size::B16, Size::B32, Size::B64];
-    let forms = [
-        AddrForm::Base,
-        AddrForm::BaseDisp8,
-        AddrForm::BaseDisp32,
-        AddrForm::Sib,
-        AddrForm::SibDisp8,
-        AddrForm::SibDisp32,
-        AddrForm::SibNoIndex,
-        AddrForm::SibNoBase,
-        AddrForm::RipRel,
-    ];
+    let forms = ADDR_FORMS;
 
     const REG: u8 = 0; // rax, the moved register (reg field)
     const BASE: u8 = 3; // rbx
@@ -3289,80 +3177,9 @@ fn fuzz_mem_addressing_segment() {
         };
         code.push(opcode);
 
-        match form {
-            AddrForm::Base => {
-                code.push(modrm(0b00, REG, BASE));
-                set_reg(&mut r, BASE, want_off);
-            }
-            AddrForm::BaseDisp8 => {
-                let d8 = (h.rng.next_u32() as i8) as i64;
-                code.push(modrm(0b01, REG, BASE));
-                set_reg(&mut r, BASE, want_off.wrapping_sub(d8 as u64));
-                code.push(d8 as u8);
-            }
-            AddrForm::BaseDisp32 => {
-                let d32 = h.rng.next_u32() as i32 as i64;
-                code.push(modrm(0b10, REG, BASE));
-                set_reg(&mut r, BASE, want_off.wrapping_sub(d32 as u64));
-                code.extend_from_slice(&(d32 as i32).to_le_bytes());
-            }
-            AddrForm::Sib => {
-                code.push(modrm(0b00, REG, 4));
-                code.push((scale_bits << 6) | (INDEX << 3) | BASE);
-                set_reg(&mut r, INDEX, idxv);
-                set_reg(
-                    &mut r,
-                    BASE,
-                    want_off.wrapping_sub(idxv.wrapping_mul(scale)),
-                );
-            }
-            AddrForm::SibDisp8 => {
-                let d8 = (h.rng.next_u32() as i8) as i64;
-                code.push(modrm(0b01, REG, 4));
-                code.push((scale_bits << 6) | (INDEX << 3) | BASE);
-                set_reg(&mut r, INDEX, idxv);
-                set_reg(
-                    &mut r,
-                    BASE,
-                    want_off
-                        .wrapping_sub(idxv.wrapping_mul(scale))
-                        .wrapping_sub(d8 as u64),
-                );
-                code.push(d8 as u8);
-            }
-            AddrForm::SibDisp32 => {
-                let d32 = h.rng.next_u32() as i32 as i64;
-                code.push(modrm(0b10, REG, 4));
-                code.push((scale_bits << 6) | (INDEX << 3) | BASE);
-                set_reg(&mut r, INDEX, idxv);
-                set_reg(
-                    &mut r,
-                    BASE,
-                    want_off
-                        .wrapping_sub(idxv.wrapping_mul(scale))
-                        .wrapping_sub(d32 as u64),
-                );
-                code.extend_from_slice(&(d32 as i32).to_le_bytes());
-            }
-            AddrForm::SibNoIndex => {
-                code.push(modrm(0b00, REG, 4));
-                code.push((scale_bits << 6) | (4 << 3) | BASE);
-                set_reg(&mut r, BASE, want_off);
-            }
-            AddrForm::SibNoBase => {
-                code.push(modrm(0b00, REG, 4));
-                code.push((scale_bits << 6) | (INDEX << 3) | 5);
-                set_reg(&mut r, INDEX, idxv);
-                let disp = want_off.wrapping_sub(idxv.wrapping_mul(scale)) as i64 as i32;
-                code.extend_from_slice(&disp.to_le_bytes());
-            }
-            AddrForm::RipRel => {
-                code.push(modrm(0b00, REG, 5));
-                let rip_after = CODE_ADDR + code.len() as u64 + 4;
-                let disp = want_off.wrapping_sub(rip_after) as i64 as i32;
-                code.extend_from_slice(&disp.to_le_bytes());
-            }
-        }
+        encode_ea_operand(
+            &mut h.rng, form, REG, want_off, scale_bits, idxv, 0, &mut code, &mut r,
+        );
         code.push(HLT);
 
         let mut scratch = [0u8; 64];
@@ -4102,7 +3919,8 @@ fn smir_shifts() {
             if is_rotate {
                 flags::bits::CF | flags::bits::OF
             } else {
-                FLAG_MASK
+                // AF is undefined for a non-zero count (Intel SDM Vol. 2B SAL/SAR/SHL/SHR).
+                FLAG_MASK & !flags::bits::AF
             }
         } else if is_rotate {
             flags::bits::CF
@@ -4644,17 +4462,7 @@ fn smir_memaddr() {
     let mut rng = Rng::new(0xADD4_E55F_0FF5_E701);
     let mut stats = SmirStats::new();
     let sizes = [Size::B8, Size::B16, Size::B32, Size::B64];
-    let forms = [
-        AddrForm::Base,
-        AddrForm::BaseDisp8,
-        AddrForm::BaseDisp32,
-        AddrForm::Sib,
-        AddrForm::SibDisp8,
-        AddrForm::SibDisp32,
-        AddrForm::SibNoIndex,
-        AddrForm::SibNoBase,
-        AddrForm::RipRel,
-    ];
+    let forms = ADDR_FORMS;
 
     const REG: u8 = 0; // rax, the moved register (reg field)
     const BASE: u8 = 3; // rbx
@@ -4690,78 +4498,9 @@ fn smir_memaddr() {
         };
         code.push(opcode);
 
-        match form {
-            AddrForm::Base => {
-                code.push(modrm(0b00, REG, BASE));
-                set_reg(&mut r, BASE, ea);
-            }
-            AddrForm::BaseDisp8 => {
-                let d8 = (rng.next_u32() as i8) as i64;
-                code.push(modrm(0b01, REG, BASE));
-                set_reg(&mut r, BASE, ea.wrapping_sub(d8 as u64));
-                code.push(d8 as u8);
-            }
-            AddrForm::BaseDisp32 => {
-                let d32 = rng.next_u32() as i32 as i64;
-                code.push(modrm(0b10, REG, BASE));
-                set_reg(&mut r, BASE, ea.wrapping_sub(d32 as u64));
-                code.extend_from_slice(&(d32 as i32).to_le_bytes());
-            }
-            AddrForm::Sib => {
-                code.push(modrm(0b00, REG, 4));
-                code.push((scale_bits << 6) | (INDEX << 3) | BASE);
-                set_reg(&mut r, INDEX, idxv);
-                set_reg(&mut r, BASE, ea.wrapping_sub(idxv.wrapping_mul(scale)));
-            }
-            AddrForm::SibDisp8 => {
-                let d8 = (rng.next_u32() as i8) as i64;
-                code.push(modrm(0b01, REG, 4));
-                code.push((scale_bits << 6) | (INDEX << 3) | BASE);
-                set_reg(&mut r, INDEX, idxv);
-                set_reg(
-                    &mut r,
-                    BASE,
-                    ea.wrapping_sub(idxv.wrapping_mul(scale))
-                        .wrapping_sub(d8 as u64),
-                );
-                code.push(d8 as u8);
-            }
-            AddrForm::SibDisp32 => {
-                let d32 = rng.next_u32() as i32 as i64;
-                code.push(modrm(0b10, REG, 4));
-                code.push((scale_bits << 6) | (INDEX << 3) | BASE);
-                set_reg(&mut r, INDEX, idxv);
-                set_reg(
-                    &mut r,
-                    BASE,
-                    ea.wrapping_sub(idxv.wrapping_mul(scale))
-                        .wrapping_sub(d32 as u64),
-                );
-                code.extend_from_slice(&(d32 as i32).to_le_bytes());
-            }
-            AddrForm::SibNoIndex => {
-                // index=4 in SIB encodes "no index". EA = base.
-                code.push(modrm(0b00, REG, 4));
-                code.push((scale_bits << 6) | (4 << 3) | BASE);
-                set_reg(&mut r, BASE, ea);
-            }
-            AddrForm::SibNoBase => {
-                // mod=00, SIB base=5 => no base register, disp32 follows.
-                // EA = index*scale + disp32.
-                code.push(modrm(0b00, REG, 4));
-                code.push((scale_bits << 6) | (INDEX << 3) | 5);
-                set_reg(&mut r, INDEX, idxv);
-                let disp = ea.wrapping_sub(idxv.wrapping_mul(scale)) as i64 as i32;
-                code.extend_from_slice(&disp.to_le_bytes());
-            }
-            AddrForm::RipRel => {
-                // mod=00, rm=5 => [rip + disp32], rip = address of NEXT insn.
-                code.push(modrm(0b00, REG, 5));
-                let rip_after = CODE_ADDR + code.len() as u64 + 4;
-                let disp = ea.wrapping_sub(rip_after) as i64 as i32;
-                code.extend_from_slice(&disp.to_le_bytes());
-            }
-        }
+        encode_ea_operand(
+            &mut rng, form, REG, ea, scale_bits, idxv, 0, &mut code, &mut r,
+        );
         code.push(HLT);
 
         // Random scratch contents (the load source / store target window).
@@ -5009,10 +4748,12 @@ fn smir_native_m0_add() {
 }
 
 // #163: a guest block that overwrites RBP must NOT be able to pivot the host
-// stack. The native lowerer now rejects guest RBP destinations before emitting
-// code so the epilogue can never consume a guest-controlled frame pointer.
+// stack. The native prologue repurposes host RBP as its frame pointer, so a
+// guest RBP destination is either rejected before code emission or committed
+// to its GuestRegs slot (the state-backed MOV forms); neither lets the
+// epilogue consume a guest-controlled frame pointer.
 #[test]
-fn smir_native_rbp_clobber_is_rejected() {
+fn smir_native_guest_rbp_write_cannot_pivot_the_host_stack() {
     use rax::smir::ir::ops::OpKind;
     use rax::smir::ir::types::{ArchReg, FunctionId, OpWidth, SrcOperand, VReg, X86Reg};
     use rax::smir::ir::{FunctionBuilder, Terminator};
@@ -5044,12 +4785,21 @@ fn smir_native_rbp_clobber_is_rejected() {
     let func = b.finish();
 
     let mut l = X86_64Lowerer::new();
-    let err = l
-        .lower_function(&func)
-        .expect_err("guest RBP destination must be rejected");
-    assert!(
-        matches!(err, LowerError::InvalidRegister(ref reg) if reg.contains("Rbp")),
-        "guest RBP destination must be rejected before native code emission, got {err:?}"
+    let res = match l.lower_function(&func) {
+        Err(LowerError::InvalidRegister(reg)) if reg.contains("Rbp") => return,
+        Err(err) => panic!("guest RBP MOV: unexpected lowering error {err:?}"),
+        Ok(res) => res,
+    };
+    let code = l.finalize().expect("finalize");
+    let mem = ExecMem::new(&code).expect("ExecMem");
+    let mut regs = GuestRegs::default();
+    regs.rflags = 0x2;
+    // Returning at all shows the epilogue restored the host frame.
+    mem.run(res.entry_offset, &mut regs);
+    assert_eq!(
+        (regs.gpr[0], regs.gpr[5]),
+        (0x1234_5678, 0xDEAD_BEEF),
+        "RAX and the guest RBP slot; got regs={regs:?}"
     );
 }
 
@@ -5715,7 +5465,8 @@ fn gen_shift_case(rng: &mut Rng) -> (Vec<u8>, Registers, CompareOpts, String) {
         if is_rotate {
             flags::bits::CF | flags::bits::OF
         } else {
-            FLAG_MASK
+            // AF is undefined for a non-zero count (Intel SDM Vol. 2B SAL/SAR/SHL/SHR).
+            FLAG_MASK & !flags::bits::AF
         }
     } else if is_rotate {
         flags::bits::CF

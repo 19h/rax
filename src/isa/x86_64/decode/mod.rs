@@ -7,6 +7,10 @@ pub mod metadata;
 #[path = "fpu_addr_tests.rs"]
 mod fpu_addr_tests;
 
+#[cfg(test)]
+#[path = "metadata_tests.rs"]
+mod metadata_tests;
+
 use crate::error::{Error, Result};
 use crate::isa::x86_64::apx::rex2_reserved_opcode_len;
 use crate::isa::x86_64::cpu::{InsnContext, Rex2Prefix, X86_64Vcpu};
