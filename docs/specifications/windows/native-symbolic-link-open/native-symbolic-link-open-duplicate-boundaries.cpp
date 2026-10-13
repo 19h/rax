@@ -1,0 +1,136 @@
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <initializer_list>
+#include <set>
+#include <vector>
+#include <windows.h>
+#include <winternl.h>
+using Open = LONG(NTAPI *)(HANDLE *, ULONG, OBJECT_ATTRIBUTES *);
+using Close = LONG(NTAPI *)(HANDLE);
+using QueryProcess = LONG(NTAPI *)(HANDLE, ULONG, void *, ULONG, ULONG *);
+static QueryProcess qp;
+static Open op;
+static Close cl;
+static unsigned count;
+static BOOL call(HANDLE source, HANDLE *out, ULONG desired, ULONG options,
+                 ULONG *exception) {
+  __try {
+    return DuplicateHandle(GetCurrentProcess(), source, GetCurrentProcess(),
+                           out, desired, TRUE, options);
+  } __except (EXCEPTION_EXECUTE_HANDLER) {
+    *exception = GetExceptionCode();
+    return FALSE;
+  }
+}
+static void fail(const char *s) {
+  printf("failure=%s error=%lu\n", s, GetLastError());
+  ExitProcess(21);
+}
+struct HandleEntry {
+  HANDLE handle;
+  uintptr_t handle_count, pointer_count;
+  ULONG access, type, attributes, reserved;
+};
+static std::set<uintptr_t> handles() {
+  std::vector<uintptr_t> data(131072);
+  ULONG required = 0;
+  LONG status = qp(GetCurrentProcess(), 51, data.data(),
+                   ULONG(data.size() * sizeof(uintptr_t)), &required);
+  if (status < 0 || data[0] > 8192 ||
+      required > data.size() * sizeof(uintptr_t))
+    fail("handle-snapshot");
+  auto rows = reinterpret_cast<HandleEntry *>(data.data() + 2);
+  std::set<uintptr_t> result;
+  for (size_t i = 0; i < data[0]; i++)
+    result.insert(uintptr_t(rows[i].handle));
+  return result;
+}
+static void one(ULONG desired, ULONG options, unsigned kind) {
+  DWORD hb = 0, ha = 0;
+  GetProcessHandleCount(GetCurrentProcess(), &hb);
+  wchar_t path[] = L"\\KnownDlls\\KnownDllPath";
+  UNICODE_STRING n{};
+  n.Length = 46;
+  n.MaximumLength = 48;
+  n.Buffer = path;
+  OBJECT_ATTRIBUTES a{};
+  a.Length = sizeof(a);
+  a.ObjectName = &n;
+  a.Attributes = 0x40;
+  HANDLE source = nullptr;
+  if (op(&source, 1, &a) < 0 || !source)
+    fail("open");
+  auto mem = static_cast<unsigned char *>(
+      VirtualAlloc(nullptr, 8192, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE));
+  if (!mem)
+    fail("allocate");
+  memset(mem, 0xA5, 8192);
+  HANDLE *out =
+      kind == 0   ? reinterpret_cast<HANDLE *>(mem)
+      : kind == 1 ? nullptr
+      : kind == 2 ? reinterpret_cast<HANDLE *>(1)
+      : kind == 6 ? reinterpret_cast<HANDLE *>(mem + 4096 - sizeof(HANDLE) / 2)
+                  : reinterpret_cast<HANDLE *>(mem);
+  DWORD old = 0;
+  if (kind >= 3 && kind <= 5 &&
+      !VirtualProtect(mem, 4096,
+                      kind == 3   ? PAGE_READWRITE | PAGE_GUARD
+                      : kind == 4 ? PAGE_NOACCESS
+                                  : PAGE_READONLY,
+                      &old))
+    fail("protect");
+  if (kind == 6 && !VirtualProtect(mem + 4096, 4096, PAGE_NOACCESS, &old))
+    fail("protect-cross");
+  auto before_handles = handles();
+  SetLastError(0xBADC0DE);
+  ULONG exception = 0;
+  BOOL ok = call(source, out, desired, options, &exception);
+  DWORD error = GetLastError(), sourceflags = 0, operation_handles = 0;
+  GetProcessHandleCount(GetCurrentProcess(), &operation_handles);
+  auto after_handles = handles();
+  BOOL live = GetHandleInformation(source, &sourceflags);
+  MEMORY_BASIC_INFORMATION m{};
+  VirtualQuery(mem, &m, sizeof(m));
+  DWORD protect = m.Protect;
+  VirtualProtect(mem, 8192, PAGE_READWRITE, &old);
+  uintptr_t output = 0;
+  bool observed = kind != 1 && kind != 2;
+  if (observed)
+    memcpy(&output, out, sizeof(output));
+  for (uintptr_t h : after_handles) {
+    if ((!before_handles.contains(h) || h == uintptr_t(source)) &&
+        cl(reinterpret_cast<HANDLE>(h)) < 0)
+      fail("close-owned");
+  }
+  VirtualFree(mem, 0, MEM_RELEASE);
+  GetProcessHandleCount(GetCurrentProcess(), &ha);
+  printf("case=%u width=%zu desired=%08lX options=%08lX output-kind=%u ok=%u "
+         "error=%lu exception=%08lX observed-output=%u output-after=%llX "
+         "output-protect=%08lX source-live=%u handles-after-operation=%lu "
+         "captured-before=%zu captured-after=%zu handles-before=%lu "
+         "handles-after=%lu\n",
+         count++, sizeof(void *), desired, options, kind, ok, error, exception,
+         observed, (unsigned long long)output, protect, live, operation_handles,
+         before_handles.size(), after_handles.size(), hb, ha);
+  if (hb != ha)
+    fail("lifetime");
+}
+int main() {
+  setvbuf(stdout, nullptr, _IONBF, 0);
+  auto n = GetModuleHandleW(L"ntdll.dll");
+  op = reinterpret_cast<Open>(GetProcAddress(n, "NtOpenSymbolicLinkObject"));
+  cl = reinterpret_cast<Close>(GetProcAddress(n, "NtClose"));
+  qp = reinterpret_cast<QueryProcess>(
+      GetProcAddress(n, "NtQueryInformationProcess"));
+  if (!op || !cl || !qp)
+    return 22;
+  for (ULONG desired : {1u, 4u, 0x01000000u, 0xFFFFFFFFu})
+    for (ULONG options : {0u, 1u, 2u, 3u})
+      for (unsigned kind = 0; kind < 7; kind++)
+        one(desired, options, kind);
+  printf("complete cases=%u\n", count);
+  return 0;
+}

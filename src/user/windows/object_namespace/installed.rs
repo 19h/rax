@@ -179,14 +179,36 @@ fn enumerate(h: &Owned) -> io::Result<Vec<CapturedEntry>> {
             name: text(&scratch, info.name)?,
             kind: text(&scratch, info.kind)?,
             target: None,
+            link_access: None,
         });
     }
     entries.sort_by(|a, b| a.name.cmp(&b.name));
     Ok(entries)
 }
-fn target(parent: &Owned, name: &[u16]) -> io::Result<Vec<u16>> {
-    let link = open(name, parent.0, 1, true, 0x40)?
+fn target(parent: &Owned, name: &[u16]) -> io::Result<(Vec<u16>, LinkAccess)> {
+    let link = open(name, parent.0, 0x0200_0000, true, 0x40)?
         .map_err(|s| invalid(&format!("selected KnownDllPath open: {s:#010x}")))?;
+    let maximum_access = basic(&link)?;
+    if maximum_access & 1 == 0 || maximum_access & !0x000F_0001 != 0 {
+        return Err(invalid(
+            "selected KnownDllPath authorization ceiling changed",
+        ));
+    }
+    let system_security_status = match open(name, parent.0, 0x0100_0000, true, 0x40)? {
+        Ok(security) => {
+            if basic(&security)? != 0x0100_0000 {
+                return Err(invalid("selected link system-security grant changed"));
+            }
+            security.close()?;
+            0
+        }
+        Err(s @ (STATUS_PRIVILEGE_NOT_HELD | STATUS_ACCESS_DENIED)) => s,
+        Err(s) => {
+            return Err(invalid(&format!(
+                "selected link system-security capture: {s:#010x}"
+            )));
+        }
+    };
     let mut units = vec![0u16; 32767];
     let mut descriptor = Unicode {
         length: 0,
@@ -206,8 +228,19 @@ fn target(parent: &Owned, name: &[u16]) -> io::Result<Vec<u16>> {
         return Err(invalid("selected KnownDllPath exceeds output bounds"));
     }
     units.truncate(usize::from(descriptor.length) / 2);
+    if basic(&link)? != maximum_access {
+        return Err(invalid(
+            "selected KnownDllPath grant changed during capture",
+        ));
+    }
     link.close()?;
-    Ok(units)
+    Ok((
+        units,
+        LinkAccess {
+            maximum_access,
+            system_security_status,
+        },
+    ))
 }
 fn basic(h: &Owned) -> io::Result<u32> {
     let mut data = [0u32; 14];
@@ -339,7 +372,9 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>) -> io::Result<Namespace> {
         if path != PATHS[0] {
             for entry in &mut entries {
                 if is(&entry.name, "KnownDllPath") && is(&entry.kind, "SymbolicLink") {
-                    entry.target = Some(target(&h, &entry.name)?);
+                    let (target, access) = target(&h, &entry.name)?;
+                    entry.target = Some(target);
+                    entry.link_access = Some(access);
                 }
             }
         }

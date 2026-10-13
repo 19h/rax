@@ -1,0 +1,26 @@
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 01s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 17 tests
+test user::windows::object_namespace::tests::symbolic_link_selection_refuses_uncaptured_grants_and_invalid_metadata ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::symbolic_link_handles_share_identity_preserve_metadata_after_catalog_drop_and_release ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::reference::native_symbolic_link_handles_replay_all_672_protected_duplicate_copy_fault_and_unreturned_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::reference::native_symbolic_link_directory_control_replays_all_3584_specific_right_filter_and_close_source_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::reference::native_symbolic_link_open_replays_all_2880_relative_root_grant_and_tag_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::query::native_symbolic_link_query_replays_all_900_descriptor_alignment_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::reference::native_symbolic_link_handles_replay_all_448_duplicate_pointer_guard_and_unreturned_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::boundary::native_symbolic_link_open_replays_all_1680_flag_length_and_pointer_priority_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::reference::native_symbolic_link_handles_replay_all_3584_extended_access_mask_and_close_source_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::native_symbolic_link_open_replays_all_3432_utf16_security_qos_and_reparse_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::reference::native_symbolic_link_handles_replay_all_9600_protected_and_same_attribute_policy_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::native_symbolic_link_open_replays_all_4756_lengths_names_rights_roots_and_aliases ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::query::native_symbolic_link_query_replays_all_3072_descriptor_copy_boundary_and_atomicity_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::boundary::native_symbolic_link_open_replays_all_20000_pointer_guard_alignment_and_crossing_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::query::native_symbolic_link_query_replays_all_15192_capacity_optional_length_fault_grant_alias_and_guard_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::query::native_symbolic_link_query_replays_all_25536_dual_fault_guard_copy_and_alias_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::name_probe::native_symbolic_link_open_replays_all_36608_name_extent_root_and_null_output_rows has been running for over 60 seconds
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::name_probe::native_symbolic_link_open_replays_all_36608_name_extent_root_and_null_output_rows ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 7709 filtered out; finished in 90.80s
+

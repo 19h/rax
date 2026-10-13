@@ -1,0 +1,16 @@
+{
+  "fresh-original-native-entry-captures": 2,
+  "fresh-source-sha256": "4bc6a9c95f085a70d9ee2f5c901a302e9a6057e83d2918cedba1017511eef982",
+  "fresh-complete-cases": 2,
+  "fresh-warmups-excluded": 1,
+  "native-service-number": "0x138",
+  "first-name": "KnownDllPath",
+  "name-length-bytes": 24,
+  "maximum-length-bytes": 26,
+  "desired-access": "0x1",
+  "attributes-flags": "0x40",
+  "attributes-size-bytes": 48,
+  "fresh-native-root-handle": "0x5c",
+  "fresh-native-result-handle": "0x60",
+  "next-implementation-status": "not implemented; mature native boundary/rights/query/duplication corpus pending"
+}

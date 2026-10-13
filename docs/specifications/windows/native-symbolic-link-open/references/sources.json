@@ -1,0 +1,16 @@
+[
+  {
+    "path": "NtOpenSymbolicLinkObject.html",
+    "url": "https://learn.microsoft.com/en-us/windows/win32/devnotes/ntopensymboliclinkobject",
+    "retrieved-utc-date": "2026-10-12",
+    "bytes": 49207,
+    "sha256": "b99c99ecd8fd9bfb7e7aae9732b6a6f31eed36661723d283cff77b19b34143b5"
+  },
+  {
+    "path": "NtQuerySymbolicLinkObject.html",
+    "url": "https://learn.microsoft.com/en-us/windows/win32/devnotes/ntquerysymboliclinkobject",
+    "retrieved-utc-date": "2026-10-12",
+    "bytes": 48942,
+    "sha256": "20525dcd1678b896737e854f4c78a85b5bc669a459acceb27e5b202af777f5c6"
+  }
+]

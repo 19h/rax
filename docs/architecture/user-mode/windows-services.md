@@ -1,4 +1,50 @@
-## Current increment: native directory objects (2026-10-12)
+## Current increment: native symbolic-link objects (2026-10-13)
+
+`NtOpenSymbolicLinkObject` and `NtQuerySymbolicLinkObject` use immutable,
+guest-owned `SymbolicLink` resources for captured KnownDllPath entries. Fixed
+installed selection captures each target, maximum grant and subject
+ACCESS_SYSTEM_SECURITY status; acquisition closes native handles before guest
+execution. Guest pointers, handles, names and desired access are evaluated
+inside the selected namespace. Uncaptured targets and security/QoS contexts
+retain explicit unsupported boundaries. Final links can be opened with
+OBJ_DONT_REPARSE; intermediate link traversal retains the directory policy.
+
+Native64 query write-probes the descriptor's first 4 B with 2 B alignment, then
+reads its fields. WoW64 captures an unaligned 8 B descriptor first and copies
+the complete descriptor back after the kernel phase. Its copy can override
+the kernel status, after reached kernel guards have been consumed; original
+MaximumLength/Buffer survive ReturnLength aliases.
+Both profiles probe the entire declared buffer capacity and optional 4 B
+ReturnLength before handle/type/query-right checks. Optional ReturnLength
+requests target bytes plus a 2 B NUL; omitting it requests only target bytes and
+never writes a terminator. Successful copies precede Length and ReturnLength
+stores. Guards, crossing faults, aliases and partial effects follow the native
+corpus rather than generic Nt/Zw prose.
+
+Generic read/execute map to 0x20001, write to 0x20000 and all to 0xF0001.
+MAXIMUM_ALLOWED expands from the captured ceiling for opens. Duplicate access
+allows zero and discards SYNCHRONIZE/MAXIMUM_ALLOWED; invalid specific link
+rights deny after eligible CLOSE_SOURCE. The independent directory control
+shows its unknown low specific rights are filtered instead. Unknown high bits
+deny before source close. Arc identity, inherited/protected handles, tagged
+roots, empty-name typed-root reopen, copy-fault cleanup and final drain retain
+the measured native object/handle lifetime.
+
+All 131,944 native rows from 15 families and four caller profiles replay on
+macOS, Linux and Windows. Seventeen portable focused tests and 18 Windows tests
+pass; the Windows test executes installed ARM64/x86 NTDLL, including x86 RET 12
+and 16 B caller-stack cleanup. Two complete fresh ARM64 original-entry/true-LR
+captures bind service 0x138 to installed MEM_IMAGE NTDLL. Fresh compatibility
+startup and physical x64-kernel proof remain unknown. Public Rust `Object`
+gains `SymbolicLink`; opaque C API 1.11.0, Assist ABI, feature defaults and
+dependency pins remain unchanged. Ordinary installed-library startup and full
+process exit are validated separately from these syscall and lifetime gates.
+The unchanged owning observer advances from scheduler call 91,011 to 97,257
+(6,246 calls); all four programs stop at `NtQueryVirtualMemory` class 14,
+service 0x23, instruction PC 0x180001240, before guest exit.
+See [symbolic-link evidence](../../specifications/windows/native-symbolic-link-open/README.md).
+
+## Previous increment: native directory objects (2026-10-12)
 
 `NtOpenDirectoryObject` selects guest-owned immutable `Directory` resources from
 three bounded installed namespace catalogs: `\`, `\KnownDlls` and

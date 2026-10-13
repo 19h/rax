@@ -1,0 +1,41 @@
+[
+  {
+    "impact": "high",
+    "finding": "All four ordinary programs stop at NtQueryVirtualMemory class14 before guest exit.",
+    "blocks-this-group": false,
+    "blocks-full-goal": true,
+    "evidence": "final ordinary programs and unchanged observer logs"
+  },
+  {
+    "impact": "high",
+    "finding": "Uncaptured link targets, wider NT/security/QoS and matching WoW64 system-path redirection remain explicit unsupported boundaries.",
+    "blocks-this-group": false,
+    "blocks-full-goal-if-reached": true,
+    "evidence": "native/directory.rs and object_namespace.rs; prior directory evidence"
+  },
+  {
+    "impact": "medium",
+    "finding": "Fresh compatibility startup and physical x64-kernel behavior remain unknown; exact captures cover Windows29683 ARM64 and its compatibility callers.",
+    "blocks-this-group": false,
+    "evidence": "61 actual producer identities and two complete fresh ARM64 captures"
+  },
+  {
+    "impact": "high",
+    "finding": "Owning embeddings exclude concurrent root changes. Nine current process consumers match the frozen roots; full current-root package/plugin/GUI validation is not established.",
+    "blocks-this-group": false,
+    "evidence": "owning-root-scope.json and final owning-source verification"
+  },
+  {
+    "impact": "medium",
+    "finding": "The prior Linux parallel run has two timer assertion failures and an EINTR readiness failure; all three pass individually and unfiltered serial runs pass. The complete causal mechanism is unknown.",
+    "blocks-this-group": false,
+    "evidence": "diagnostic Linux logs and final serial full log"
+  },
+  {
+    "impact": "medium",
+    "finding": "Windows retains four BZHI and one FP16 lowering failures in untouched source, identical to the previous published group.",
+    "blocks-this-group": false,
+    "blocks-full-goal-if-reached": true,
+    "evidence": "windows-baseline-failures.json and final full log"
+  }
+]

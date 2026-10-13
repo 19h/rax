@@ -1,0 +1,1608 @@
+{
+  "windows-version": "10.0.29683",
+  "host-machine": "ARM64",
+  "producers": [
+    {
+      "profile": "arm64",
+      "family": "native-symbolic-link-open-matrix",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-matrix-arm64",
+      "source": "native-symbolic-link-open-matrix.cpp",
+      "source-sha256": "f955eee16c4bce7336eacffdc66e8dbf109088b658375ad94c70535dd0671daf",
+      "executable": "native-symbolic-link-open-matrix-arm64.exe",
+      "log": "native-symbolic-link-open-matrix-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-matrix-arm64\\native-symbolic-link-open-matrix.cpp",
+        "bytes": 9880,
+        "sha256": "f955eee16c4bce7336eacffdc66e8dbf109088b658375ad94c70535dd0671daf"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-matrix-arm64\\native-symbolic-link-open-matrix-arm64.exe",
+        "bytes": 157184,
+        "sha256": "90c933cc505d35c752c3e6fe162408b35b14b72cab7c35c29ff3927568ccd0aa",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-matrix-arm64\\native-symbolic-link-open-matrix-arm64.log",
+        "bytes": 1051162,
+        "sha256": "7ffb33c3bc20c4724663f8320e959c9abdd15badb996186c6b9f2f089897da4b"
+      }
+    },
+    {
+      "profile": "x64",
+      "family": "native-symbolic-link-open-matrix",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-matrix-x64",
+      "source": "native-symbolic-link-open-matrix.cpp",
+      "source-sha256": "f955eee16c4bce7336eacffdc66e8dbf109088b658375ad94c70535dd0671daf",
+      "executable": "native-symbolic-link-open-matrix-x64.exe",
+      "log": "native-symbolic-link-open-matrix-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-matrix-x64\\native-symbolic-link-open-matrix.cpp",
+        "bytes": 9880,
+        "sha256": "f955eee16c4bce7336eacffdc66e8dbf109088b658375ad94c70535dd0671daf"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-matrix-x64\\native-symbolic-link-open-matrix-x64.exe",
+        "bytes": 157696,
+        "sha256": "d33a1ccf4acc22abb8dd0a6da90a0058456cb89f881253f0282660da78e6c792",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-matrix-x64\\native-symbolic-link-open-matrix-x64.log",
+        "bytes": 1051162,
+        "sha256": "40928f5f968a4a85ad4d40b99d16df5cae6a454f9b34c6a95e7303ae88753db7"
+      }
+    },
+    {
+      "profile": "x86",
+      "family": "native-symbolic-link-open-matrix",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-matrix-x86",
+      "source": "native-symbolic-link-open-matrix.cpp",
+      "source-sha256": "f955eee16c4bce7336eacffdc66e8dbf109088b658375ad94c70535dd0671daf",
+      "executable": "native-symbolic-link-open-matrix-x86.exe",
+      "log": "native-symbolic-link-open-matrix-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-matrix-x86\\native-symbolic-link-open-matrix.cpp",
+        "bytes": 9880,
+        "sha256": "f955eee16c4bce7336eacffdc66e8dbf109088b658375ad94c70535dd0671daf"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-matrix-x86\\native-symbolic-link-open-matrix-x86.exe",
+        "bytes": 129536,
+        "sha256": "6ab3291fbcc46689d6f549641a2fb19293f259c1df530f857eee38eb2b5f4e07",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-matrix-x86\\native-symbolic-link-open-matrix-x86.log",
+        "bytes": 885408,
+        "sha256": "12cd9458bbea12c7af50bc3feff8bcfcb6f9c977c83ad07be701819df4bf617b"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "family": "native-symbolic-link-open-matrix",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-matrix-x86-laa",
+      "source": "native-symbolic-link-open-matrix.cpp",
+      "source-sha256": "f955eee16c4bce7336eacffdc66e8dbf109088b658375ad94c70535dd0671daf",
+      "executable": "native-symbolic-link-open-matrix-x86-laa.exe",
+      "log": "native-symbolic-link-open-matrix-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-matrix-x86-laa\\native-symbolic-link-open-matrix.cpp",
+        "bytes": 9880,
+        "sha256": "f955eee16c4bce7336eacffdc66e8dbf109088b658375ad94c70535dd0671daf"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-matrix-x86-laa\\native-symbolic-link-open-matrix-x86-laa.exe",
+        "bytes": 129536,
+        "sha256": "0a3235391e098835cdc0b017e80a5e9329afd0e8f8db908e76d55437fc6e1e23",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-matrix-x86-laa\\native-symbolic-link-open-matrix-x86-laa.log",
+        "bytes": 885460,
+        "sha256": "74711ddda03b41ba48e90a89246ad5bf49fdc414d4f38dea0d65628f758445fa"
+      }
+    },
+    {
+      "profile": "arm64",
+      "family": "native-symbolic-link-open-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-boundaries-arm64",
+      "source": "native-symbolic-link-open-boundaries.cpp",
+      "source-sha256": "49d41a208ae9317ab3109e811fdf77075a3f267fdf6575c361f17d4680ca97e1",
+      "executable": "native-symbolic-link-open-boundaries-arm64.exe",
+      "log": "native-symbolic-link-open-boundaries-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-boundaries-arm64\\native-symbolic-link-open-boundaries.cpp",
+        "bytes": 6419,
+        "sha256": "49d41a208ae9317ab3109e811fdf77075a3f267fdf6575c361f17d4680ca97e1"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-boundaries-arm64\\native-symbolic-link-open-boundaries-arm64.exe",
+        "bytes": 147968,
+        "sha256": "d25d10e01dae6d0c09b4ec0146d094c593bcbea49a223c95a15736ca4312c3f2",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-boundaries-arm64\\native-symbolic-link-open-boundaries-arm64.log",
+        "bytes": 1846423,
+        "sha256": "3bb5f90f047041cfa9f213751c66c7d240b816a8fd25a97768265bcbe7b70127"
+      }
+    },
+    {
+      "profile": "x64",
+      "family": "native-symbolic-link-open-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-boundaries-x64",
+      "source": "native-symbolic-link-open-boundaries.cpp",
+      "source-sha256": "49d41a208ae9317ab3109e811fdf77075a3f267fdf6575c361f17d4680ca97e1",
+      "executable": "native-symbolic-link-open-boundaries-x64.exe",
+      "log": "native-symbolic-link-open-boundaries-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-boundaries-x64\\native-symbolic-link-open-boundaries.cpp",
+        "bytes": 6419,
+        "sha256": "49d41a208ae9317ab3109e811fdf77075a3f267fdf6575c361f17d4680ca97e1"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-boundaries-x64\\native-symbolic-link-open-boundaries-x64.exe",
+        "bytes": 145920,
+        "sha256": "5d0d1584e2db2ee46678706dc2796856aa3acc8259e57598296bbf53f15532c0",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-boundaries-x64\\native-symbolic-link-open-boundaries-x64.log",
+        "bytes": 1846423,
+        "sha256": "885e3d80e11cfb9fcae44b9da509eb1b3b484117b0ef7a6bba8aabd3d2f67b65"
+      }
+    },
+    {
+      "profile": "x86",
+      "family": "native-symbolic-link-open-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-boundaries-x86",
+      "source": "native-symbolic-link-open-boundaries.cpp",
+      "source-sha256": "49d41a208ae9317ab3109e811fdf77075a3f267fdf6575c361f17d4680ca97e1",
+      "executable": "native-symbolic-link-open-boundaries-x86.exe",
+      "log": "native-symbolic-link-open-boundaries-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-boundaries-x86\\native-symbolic-link-open-boundaries.cpp",
+        "bytes": 6419,
+        "sha256": "49d41a208ae9317ab3109e811fdf77075a3f267fdf6575c361f17d4680ca97e1"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-boundaries-x86\\native-symbolic-link-open-boundaries-x86.exe",
+        "bytes": 120320,
+        "sha256": "29d22d985ab19ef41303a67b3346885d919ed6bb39ec71d591bb27b0572e1738",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-boundaries-x86\\native-symbolic-link-open-boundaries-x86.log",
+        "bytes": 1842202,
+        "sha256": "373db2e0b1ab0943bebabc88e71e8ddebc3fa62dc3c9e7c4a11e233e1ff3bda8"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "family": "native-symbolic-link-open-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-boundaries-x86-laa",
+      "source": "native-symbolic-link-open-boundaries.cpp",
+      "source-sha256": "49d41a208ae9317ab3109e811fdf77075a3f267fdf6575c361f17d4680ca97e1",
+      "executable": "native-symbolic-link-open-boundaries-x86-laa.exe",
+      "log": "native-symbolic-link-open-boundaries-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-boundaries-x86-laa\\native-symbolic-link-open-boundaries.cpp",
+        "bytes": 6419,
+        "sha256": "49d41a208ae9317ab3109e811fdf77075a3f267fdf6575c361f17d4680ca97e1"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-boundaries-x86-laa\\native-symbolic-link-open-boundaries-x86-laa.exe",
+        "bytes": 120320,
+        "sha256": "5e11df8f3730da7c27590939fc6ad99a4731f6ef217d97561967a7189c6d18f3",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-boundaries-x86-laa\\native-symbolic-link-open-boundaries-x86-laa.log",
+        "bytes": 1842203,
+        "sha256": "e86fa5e32f91ae22fbb90b6bd7b638bdb9387cac812814e8fea9675b8feb9d49"
+      }
+    },
+    {
+      "profile": "arm64",
+      "family": "native-symbolic-link-open-flag-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-flag-boundaries-arm64",
+      "source": "native-symbolic-link-open-flag-boundaries.cpp",
+      "source-sha256": "3cc3b9ae3b99b70d594e2f1c6189e7f4f4b2558e307224b58a0efb0dc31f22a0",
+      "executable": "native-symbolic-link-open-flag-boundaries-arm64.exe",
+      "log": "native-symbolic-link-open-flag-boundaries-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-flag-boundaries-arm64\\native-symbolic-link-open-flag-boundaries.cpp",
+        "bytes": 6830,
+        "sha256": "3cc3b9ae3b99b70d594e2f1c6189e7f4f4b2558e307224b58a0efb0dc31f22a0"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-flag-boundaries-arm64\\native-symbolic-link-open-flag-boundaries-arm64.exe",
+        "bytes": 148480,
+        "sha256": "729d606e777123d35ac94bf6f404ac644261189a189c664805811a08644dae3c",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-flag-boundaries-arm64\\native-symbolic-link-open-flag-boundaries-arm64.log",
+        "bytes": 167312,
+        "sha256": "ff10c7a90ed750d016b25f6b30134f8490a2255fa9874b54ade5100c239b40ce"
+      }
+    },
+    {
+      "profile": "x64",
+      "family": "native-symbolic-link-open-flag-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-flag-boundaries-x64",
+      "source": "native-symbolic-link-open-flag-boundaries.cpp",
+      "source-sha256": "3cc3b9ae3b99b70d594e2f1c6189e7f4f4b2558e307224b58a0efb0dc31f22a0",
+      "executable": "native-symbolic-link-open-flag-boundaries-x64.exe",
+      "log": "native-symbolic-link-open-flag-boundaries-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-flag-boundaries-x64\\native-symbolic-link-open-flag-boundaries.cpp",
+        "bytes": 6830,
+        "sha256": "3cc3b9ae3b99b70d594e2f1c6189e7f4f4b2558e307224b58a0efb0dc31f22a0"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-flag-boundaries-x64\\native-symbolic-link-open-flag-boundaries-x64.exe",
+        "bytes": 146432,
+        "sha256": "e9adc5916ce0c5a177eb470ea0a73c2ccae0bddd032c28b16d8e9d7bba1d9d55",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-flag-boundaries-x64\\native-symbolic-link-open-flag-boundaries-x64.log",
+        "bytes": 167312,
+        "sha256": "0275d8c751c4c217245d9705267f899bdc19fb5138fea8490be77e608131fea2"
+      }
+    },
+    {
+      "profile": "x86",
+      "family": "native-symbolic-link-open-flag-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-flag-boundaries-x86",
+      "source": "native-symbolic-link-open-flag-boundaries.cpp",
+      "source-sha256": "3cc3b9ae3b99b70d594e2f1c6189e7f4f4b2558e307224b58a0efb0dc31f22a0",
+      "executable": "native-symbolic-link-open-flag-boundaries-x86.exe",
+      "log": "native-symbolic-link-open-flag-boundaries-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-flag-boundaries-x86\\native-symbolic-link-open-flag-boundaries.cpp",
+        "bytes": 6830,
+        "sha256": "3cc3b9ae3b99b70d594e2f1c6189e7f4f4b2558e307224b58a0efb0dc31f22a0"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-flag-boundaries-x86\\native-symbolic-link-open-flag-boundaries-x86.exe",
+        "bytes": 121344,
+        "sha256": "bb9954db0ee254938a78ab55278ee5225c1bc2f3cf64ef036a1b14e3185027fa",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-flag-boundaries-x86\\native-symbolic-link-open-flag-boundaries-x86.log",
+        "bytes": 166408,
+        "sha256": "7fdc17639ec29c11764a729ee664e92d7d98cd0871f9a2960ea047c25db65973"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "family": "native-symbolic-link-open-flag-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-flag-boundaries-x86-laa",
+      "source": "native-symbolic-link-open-flag-boundaries.cpp",
+      "source-sha256": "3cc3b9ae3b99b70d594e2f1c6189e7f4f4b2558e307224b58a0efb0dc31f22a0",
+      "executable": "native-symbolic-link-open-flag-boundaries-x86-laa.exe",
+      "log": "native-symbolic-link-open-flag-boundaries-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-flag-boundaries-x86-laa\\native-symbolic-link-open-flag-boundaries.cpp",
+        "bytes": 6830,
+        "sha256": "3cc3b9ae3b99b70d594e2f1c6189e7f4f4b2558e307224b58a0efb0dc31f22a0"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-flag-boundaries-x86-laa\\native-symbolic-link-open-flag-boundaries-x86-laa.exe",
+        "bytes": 121344,
+        "sha256": "cf9e6d29c0337bd61fd22c76911d507aedf7fd0311a1a404deab93da54b2e6bf",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-flag-boundaries-x86-laa\\native-symbolic-link-open-flag-boundaries-x86-laa.log",
+        "bytes": 166408,
+        "sha256": "baaff7e200c77c639cf587839de8ba36664dd8ba441ac4bdac304b0e09a34069"
+      }
+    },
+    {
+      "profile": "arm64",
+      "family": "native-symbolic-link-open-format",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-format-arm64",
+      "source": "native-symbolic-link-open-format.cpp",
+      "source-sha256": "3d66c682d5cdb2145b4bca4b0a7b1354d589a8f032007ed9bc2e67ba195e9449",
+      "executable": "native-symbolic-link-open-format-arm64.exe",
+      "log": "native-symbolic-link-open-format-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-format-arm64\\native-symbolic-link-open-format.cpp",
+        "bytes": 4656,
+        "sha256": "3d66c682d5cdb2145b4bca4b0a7b1354d589a8f032007ed9bc2e67ba195e9449"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-format-arm64\\native-symbolic-link-open-format-arm64.exe",
+        "bytes": 147456,
+        "sha256": "8de5f6842f2560816a62d0f31c0d0bc6615a6e4985247c8f6dabbd8603cc8ccc",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-format-arm64\\native-symbolic-link-open-format-arm64.log",
+        "bytes": 194253,
+        "sha256": "9a91c15db1c83c9125b6c1281d536cb1b542e2845d8c8fa44a17d7df824c8baf"
+      }
+    },
+    {
+      "profile": "x64",
+      "family": "native-symbolic-link-open-format",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-format-x64",
+      "source": "native-symbolic-link-open-format.cpp",
+      "source-sha256": "3d66c682d5cdb2145b4bca4b0a7b1354d589a8f032007ed9bc2e67ba195e9449",
+      "executable": "native-symbolic-link-open-format-x64.exe",
+      "log": "native-symbolic-link-open-format-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-format-x64\\native-symbolic-link-open-format.cpp",
+        "bytes": 4656,
+        "sha256": "3d66c682d5cdb2145b4bca4b0a7b1354d589a8f032007ed9bc2e67ba195e9449"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-format-x64\\native-symbolic-link-open-format-x64.exe",
+        "bytes": 145408,
+        "sha256": "19a0caa2c5bc07535e52d37b924a3e51324e6fd47e5afe0ebe4515548ba437e8",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-format-x64\\native-symbolic-link-open-format-x64.log",
+        "bytes": 194253,
+        "sha256": "9125b5bad9074a349dd59f6b59622006745faf2d056bb2c68b9a68cbfb1b3b74"
+      }
+    },
+    {
+      "profile": "x86",
+      "family": "native-symbolic-link-open-format",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-format-x86",
+      "source": "native-symbolic-link-open-format.cpp",
+      "source-sha256": "3d66c682d5cdb2145b4bca4b0a7b1354d589a8f032007ed9bc2e67ba195e9449",
+      "executable": "native-symbolic-link-open-format-x86.exe",
+      "log": "native-symbolic-link-open-format-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-format-x86\\native-symbolic-link-open-format.cpp",
+        "bytes": 4656,
+        "sha256": "3d66c682d5cdb2145b4bca4b0a7b1354d589a8f032007ed9bc2e67ba195e9449"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-format-x86\\native-symbolic-link-open-format-x86.exe",
+        "bytes": 120832,
+        "sha256": "47d2262a72662f4591177fbf5d1cec4679d4e38998f281ccd58af70b3b2fb78b",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-format-x86\\native-symbolic-link-open-format-x86.log",
+        "bytes": 194348,
+        "sha256": "4966903eca62f761ce5749768bb7456e3b9dcde1dad22a13810fdb17cda81c0e"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "family": "native-symbolic-link-open-format",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-format-x86-laa",
+      "source": "native-symbolic-link-open-format.cpp",
+      "source-sha256": "3d66c682d5cdb2145b4bca4b0a7b1354d589a8f032007ed9bc2e67ba195e9449",
+      "executable": "native-symbolic-link-open-format-x86-laa.exe",
+      "log": "native-symbolic-link-open-format-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-format-x86-laa\\native-symbolic-link-open-format.cpp",
+        "bytes": 4656,
+        "sha256": "3d66c682d5cdb2145b4bca4b0a7b1354d589a8f032007ed9bc2e67ba195e9449"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-format-x86-laa\\native-symbolic-link-open-format-x86-laa.exe",
+        "bytes": 120832,
+        "sha256": "79d52f68cbc1ad04c14f22f12878ff8cef0ed477bd96abd0405b10700502d982",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-format-x86-laa\\native-symbolic-link-open-format-x86-laa.log",
+        "bytes": 194348,
+        "sha256": "4966903eca62f761ce5749768bb7456e3b9dcde1dad22a13810fdb17cda81c0e"
+      }
+    },
+    {
+      "profile": "arm64",
+      "family": "native-symbolic-link-open-name-probe",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-name-probe-arm64",
+      "source": "native-symbolic-link-open-name-probe.cpp",
+      "source-sha256": "523d55aa225669381a16058dadbc02c199c4239c7366eaceaee27500d221aba9",
+      "executable": "native-symbolic-link-open-name-probe-arm64.exe",
+      "log": "native-symbolic-link-open-name-probe-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-name-probe-arm64\\native-symbolic-link-open-name-probe.cpp",
+        "bytes": 4946,
+        "sha256": "523d55aa225669381a16058dadbc02c199c4239c7366eaceaee27500d221aba9"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-name-probe-arm64\\native-symbolic-link-open-name-probe-arm64.exe",
+        "bytes": 147456,
+        "sha256": "cd1979a84f29f667bb4496b5abba194462ffa0b477b59478853e0f4f94ef65fc",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-name-probe-arm64\\native-symbolic-link-open-name-probe-arm64.log",
+        "bytes": 2063637,
+        "sha256": "b8896584c4f815c61b15772ac4780c98c14257e4662bac53a021ee3e5d4206e0"
+      }
+    },
+    {
+      "profile": "x64",
+      "family": "native-symbolic-link-open-name-probe",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-name-probe-x64",
+      "source": "native-symbolic-link-open-name-probe.cpp",
+      "source-sha256": "523d55aa225669381a16058dadbc02c199c4239c7366eaceaee27500d221aba9",
+      "executable": "native-symbolic-link-open-name-probe-x64.exe",
+      "log": "native-symbolic-link-open-name-probe-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-name-probe-x64\\native-symbolic-link-open-name-probe.cpp",
+        "bytes": 4946,
+        "sha256": "523d55aa225669381a16058dadbc02c199c4239c7366eaceaee27500d221aba9"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-name-probe-x64\\native-symbolic-link-open-name-probe-x64.exe",
+        "bytes": 145408,
+        "sha256": "787e975e0bda90d0505876b3c3eed19db8f107e52040d45b15a63eabb61af675",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-name-probe-x64\\native-symbolic-link-open-name-probe-x64.log",
+        "bytes": 2063637,
+        "sha256": "1e6801bc0b983caab83c158d5f8535d8e835decbf526461f28f0fad9521722e4"
+      }
+    },
+    {
+      "profile": "x86",
+      "family": "native-symbolic-link-open-name-probe",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-name-probe-x86",
+      "source": "native-symbolic-link-open-name-probe.cpp",
+      "source-sha256": "523d55aa225669381a16058dadbc02c199c4239c7366eaceaee27500d221aba9",
+      "executable": "native-symbolic-link-open-name-probe-x86.exe",
+      "log": "native-symbolic-link-open-name-probe-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-name-probe-x86\\native-symbolic-link-open-name-probe.cpp",
+        "bytes": 4946,
+        "sha256": "523d55aa225669381a16058dadbc02c199c4239c7366eaceaee27500d221aba9"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-name-probe-x86\\native-symbolic-link-open-name-probe-x86.exe",
+        "bytes": 120832,
+        "sha256": "e804530850412c81c818256986167c666e059cb35076753303ca05fda1672190",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-name-probe-x86\\native-symbolic-link-open-name-probe-x86.log",
+        "bytes": 2051164,
+        "sha256": "d8cb2772a88a543c28e7cc7b509ff27e5a4796e58cd61ba5f5eff677bb5bd50f"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "family": "native-symbolic-link-open-name-probe",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-name-probe-x86-laa",
+      "source": "native-symbolic-link-open-name-probe.cpp",
+      "source-sha256": "523d55aa225669381a16058dadbc02c199c4239c7366eaceaee27500d221aba9",
+      "executable": "native-symbolic-link-open-name-probe-x86-laa.exe",
+      "log": "native-symbolic-link-open-name-probe-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-name-probe-x86-laa\\native-symbolic-link-open-name-probe.cpp",
+        "bytes": 4946,
+        "sha256": "523d55aa225669381a16058dadbc02c199c4239c7366eaceaee27500d221aba9"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-name-probe-x86-laa\\native-symbolic-link-open-name-probe-x86-laa.exe",
+        "bytes": 120832,
+        "sha256": "feb8a1dbf5e9e9a65be1ea283f93918a968b8f640addac12d8cc4eca1be90fe2",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-name-probe-x86-laa\\native-symbolic-link-open-name-probe-x86-laa.log",
+        "bytes": 2051164,
+        "sha256": "d8cb2772a88a543c28e7cc7b509ff27e5a4796e58cd61ba5f5eff677bb5bd50f"
+      }
+    },
+    {
+      "profile": "arm64",
+      "family": "native-symbolic-link-open-duplicate-policy",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-policy-arm64",
+      "source": "native-symbolic-link-open-duplicate-policy.cpp",
+      "source-sha256": "9cbd4569d563a6f79608bf5ab584f5e9dd8305dd2949ca4d6da0b50de6c037d0",
+      "executable": "native-symbolic-link-open-duplicate-policy-arm64.exe",
+      "log": "native-symbolic-link-open-duplicate-policy-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-policy-arm64\\native-symbolic-link-open-duplicate-policy.cpp",
+        "bytes": 5823,
+        "sha256": "9cbd4569d563a6f79608bf5ab584f5e9dd8305dd2949ca4d6da0b50de6c037d0"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-policy-arm64\\native-symbolic-link-open-duplicate-policy-arm64.exe",
+        "bytes": 147968,
+        "sha256": "3ec4ef1bec6df71ba2d050d64ccd715e52eccbde666f48fbefa5078caffecf92",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-policy-arm64\\native-symbolic-link-open-duplicate-policy-arm64.log",
+        "bytes": 619551,
+        "sha256": "8947a3a57d7fae19a278ceffc541a4d4b69d6e41fd3bd21417dd4c46f3a5d7c9"
+      }
+    },
+    {
+      "profile": "x64",
+      "family": "native-symbolic-link-open-duplicate-policy",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-policy-x64",
+      "source": "native-symbolic-link-open-duplicate-policy.cpp",
+      "source-sha256": "9cbd4569d563a6f79608bf5ab584f5e9dd8305dd2949ca4d6da0b50de6c037d0",
+      "executable": "native-symbolic-link-open-duplicate-policy-x64.exe",
+      "log": "native-symbolic-link-open-duplicate-policy-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-policy-x64\\native-symbolic-link-open-duplicate-policy.cpp",
+        "bytes": 5823,
+        "sha256": "9cbd4569d563a6f79608bf5ab584f5e9dd8305dd2949ca4d6da0b50de6c037d0"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-policy-x64\\native-symbolic-link-open-duplicate-policy-x64.exe",
+        "bytes": 145408,
+        "sha256": "15fb2f3d02378e8c029054bea67c0c5c3df53a95c848f7fd1b830404b913b12e",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-policy-x64\\native-symbolic-link-open-duplicate-policy-x64.log",
+        "bytes": 619551,
+        "sha256": "845815212e5541fd692e5c6b25704caa091f484b0e621f7ad69fdea2ba3ad885"
+      }
+    },
+    {
+      "profile": "x86",
+      "family": "native-symbolic-link-open-duplicate-policy",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-policy-x86",
+      "source": "native-symbolic-link-open-duplicate-policy.cpp",
+      "source-sha256": "9cbd4569d563a6f79608bf5ab584f5e9dd8305dd2949ca4d6da0b50de6c037d0",
+      "executable": "native-symbolic-link-open-duplicate-policy-x86.exe",
+      "log": "native-symbolic-link-open-duplicate-policy-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-policy-x86\\native-symbolic-link-open-duplicate-policy.cpp",
+        "bytes": 5823,
+        "sha256": "9cbd4569d563a6f79608bf5ab584f5e9dd8305dd2949ca4d6da0b50de6c037d0"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-policy-x86\\native-symbolic-link-open-duplicate-policy-x86.exe",
+        "bytes": 120832,
+        "sha256": "347d6b80559e8f1f199ec1ad0373137a40f99623d907910e5dbb8ff271fba306",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-policy-x86\\native-symbolic-link-open-duplicate-policy-x86.log",
+        "bytes": 621551,
+        "sha256": "40d5f3c4782cfc44ffc74abb1eacaedde6af93282824faa41091463b701a0fe0"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "family": "native-symbolic-link-open-duplicate-policy",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-policy-x86-laa",
+      "source": "native-symbolic-link-open-duplicate-policy.cpp",
+      "source-sha256": "9cbd4569d563a6f79608bf5ab584f5e9dd8305dd2949ca4d6da0b50de6c037d0",
+      "executable": "native-symbolic-link-open-duplicate-policy-x86-laa.exe",
+      "log": "native-symbolic-link-open-duplicate-policy-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-policy-x86-laa\\native-symbolic-link-open-duplicate-policy.cpp",
+        "bytes": 5823,
+        "sha256": "9cbd4569d563a6f79608bf5ab584f5e9dd8305dd2949ca4d6da0b50de6c037d0"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-policy-x86-laa\\native-symbolic-link-open-duplicate-policy-x86-laa.exe",
+        "bytes": 120832,
+        "sha256": "f5489a890c36aae4ecab41b9bfc2225e4eb5e34896ab9a2b2e41fb2d002541c7",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-policy-x86-laa\\native-symbolic-link-open-duplicate-policy-x86-laa.log",
+        "bytes": 621551,
+        "sha256": "08e7430b0ba6404b7d5bd4a0d47ba0f89e8401c570323fc6e5dffebab60017bd"
+      }
+    },
+    {
+      "profile": "arm64",
+      "family": "native-symbolic-link-open-duplicate-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-boundaries-arm64",
+      "source": "native-symbolic-link-open-duplicate-boundaries.cpp",
+      "source-sha256": "c49120e9f94db1058424a9ad480714cfec7d1befd9e375d8d622be2014d17c36",
+      "executable": "native-symbolic-link-open-duplicate-boundaries-arm64.exe",
+      "log": "native-symbolic-link-open-duplicate-boundaries-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-boundaries-arm64\\native-symbolic-link-open-duplicate-boundaries.cpp",
+        "bytes": 5032,
+        "sha256": "c49120e9f94db1058424a9ad480714cfec7d1befd9e375d8d622be2014d17c36"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-boundaries-arm64\\native-symbolic-link-open-duplicate-boundaries-arm64.exe",
+        "bytes": 158720,
+        "sha256": "8d6f4c8992217c91da70f276db15a05b66f9919754c80522356f20bd53157d34",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-boundaries-arm64\\native-symbolic-link-open-duplicate-boundaries-arm64.log",
+        "bytes": 31340,
+        "sha256": "1b30049809eda3477080feb160d78f45d763ec7b7662dd577d5c2f45ed58426f"
+      }
+    },
+    {
+      "profile": "x64",
+      "family": "native-symbolic-link-open-duplicate-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-boundaries-x64",
+      "source": "native-symbolic-link-open-duplicate-boundaries.cpp",
+      "source-sha256": "c49120e9f94db1058424a9ad480714cfec7d1befd9e375d8d622be2014d17c36",
+      "executable": "native-symbolic-link-open-duplicate-boundaries-x64.exe",
+      "log": "native-symbolic-link-open-duplicate-boundaries-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-boundaries-x64\\native-symbolic-link-open-duplicate-boundaries.cpp",
+        "bytes": 5032,
+        "sha256": "c49120e9f94db1058424a9ad480714cfec7d1befd9e375d8d622be2014d17c36"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-boundaries-x64\\native-symbolic-link-open-duplicate-boundaries-x64.exe",
+        "bytes": 157184,
+        "sha256": "86f50f594d30244cf6580b618410b76816e96556cb486c6358fce1757c12c49e",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-boundaries-x64\\native-symbolic-link-open-duplicate-boundaries-x64.log",
+        "bytes": 31340,
+        "sha256": "1a0c7dce0d52fba51df819ccc5be8fe75816ca838074b6e0b31b6ff20474648e"
+      }
+    },
+    {
+      "profile": "x86",
+      "family": "native-symbolic-link-open-duplicate-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-boundaries-x86",
+      "source": "native-symbolic-link-open-duplicate-boundaries.cpp",
+      "source-sha256": "c49120e9f94db1058424a9ad480714cfec7d1befd9e375d8d622be2014d17c36",
+      "executable": "native-symbolic-link-open-duplicate-boundaries-x86.exe",
+      "log": "native-symbolic-link-open-duplicate-boundaries-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-boundaries-x86\\native-symbolic-link-open-duplicate-boundaries.cpp",
+        "bytes": 5032,
+        "sha256": "c49120e9f94db1058424a9ad480714cfec7d1befd9e375d8d622be2014d17c36"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-boundaries-x86\\native-symbolic-link-open-duplicate-boundaries-x86.exe",
+        "bytes": 128512,
+        "sha256": "536987d1f6f2b1f0ddee52d2629fe0e746292966d5603152b4d05c0fcb4c6efc",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-boundaries-x86\\native-symbolic-link-open-duplicate-boundaries-x86.log",
+        "bytes": 30838,
+        "sha256": "66a388d9df9f4910711c19e3af2a90829e9a27fa0dc828530985d3e08bfc301d"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "family": "native-symbolic-link-open-duplicate-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-boundaries-x86-laa",
+      "source": "native-symbolic-link-open-duplicate-boundaries.cpp",
+      "source-sha256": "c49120e9f94db1058424a9ad480714cfec7d1befd9e375d8d622be2014d17c36",
+      "executable": "native-symbolic-link-open-duplicate-boundaries-x86-laa.exe",
+      "log": "native-symbolic-link-open-duplicate-boundaries-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-boundaries-x86-laa\\native-symbolic-link-open-duplicate-boundaries.cpp",
+        "bytes": 5032,
+        "sha256": "c49120e9f94db1058424a9ad480714cfec7d1befd9e375d8d622be2014d17c36"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-boundaries-x86-laa\\native-symbolic-link-open-duplicate-boundaries-x86-laa.exe",
+        "bytes": 128512,
+        "sha256": "9716b43f7e0613fc76cbcedb1e82a583444473f98980688a23ac7cd0d111c72a",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-boundaries-x86-laa\\native-symbolic-link-open-duplicate-boundaries-x86-laa.log",
+        "bytes": 30838,
+        "sha256": "c446131179cc56e73bd6919b3b2b7cc3892829e16ff301e08efea23f12ae0c4c"
+      }
+    },
+    {
+      "profile": "arm64",
+      "family": "native-symbolic-link-open-duplicate-protected-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-protected-boundaries-arm64",
+      "source": "native-symbolic-link-open-duplicate-protected-boundaries.cpp",
+      "source-sha256": "4d8a4fc435fbc5e9bc15c4bca0e06e18505469df698c021d98da3752551febcc",
+      "executable": "native-symbolic-link-open-duplicate-protected-boundaries-arm64.exe",
+      "log": "native-symbolic-link-open-duplicate-protected-boundaries-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-protected-boundaries-arm64\\native-symbolic-link-open-duplicate-protected-boundaries.cpp",
+        "bytes": 5182,
+        "sha256": "4d8a4fc435fbc5e9bc15c4bca0e06e18505469df698c021d98da3752551febcc"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-protected-boundaries-arm64\\native-symbolic-link-open-duplicate-protected-boundaries-arm64.exe",
+        "bytes": 158720,
+        "sha256": "6093be9486b82ecf7ae2699cab1264da71ec8259e5f5c9696fcd9a1a1d2687a3",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-protected-boundaries-arm64\\native-symbolic-link-open-duplicate-protected-boundaries-arm64.log",
+        "bytes": 47010,
+        "sha256": "eee61b7b746865f6f67450378bacb9ed7dde001ab06de05002f052c502cbcb77"
+      }
+    },
+    {
+      "profile": "x64",
+      "family": "native-symbolic-link-open-duplicate-protected-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-protected-boundaries-x64",
+      "source": "native-symbolic-link-open-duplicate-protected-boundaries.cpp",
+      "source-sha256": "4d8a4fc435fbc5e9bc15c4bca0e06e18505469df698c021d98da3752551febcc",
+      "executable": "native-symbolic-link-open-duplicate-protected-boundaries-x64.exe",
+      "log": "native-symbolic-link-open-duplicate-protected-boundaries-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-protected-boundaries-x64\\native-symbolic-link-open-duplicate-protected-boundaries.cpp",
+        "bytes": 5182,
+        "sha256": "4d8a4fc435fbc5e9bc15c4bca0e06e18505469df698c021d98da3752551febcc"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-protected-boundaries-x64\\native-symbolic-link-open-duplicate-protected-boundaries-x64.exe",
+        "bytes": 157696,
+        "sha256": "d0037a4e6f7c605265f2269e48e607a838e17f5e545a40a39f7b1f7db66a4cc3",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-protected-boundaries-x64\\native-symbolic-link-open-duplicate-protected-boundaries-x64.log",
+        "bytes": 47010,
+        "sha256": "df4a47c9625c86ea76e8923ec761503fc8e5404f276f73fbd72d9ac25d4e68eb"
+      }
+    },
+    {
+      "profile": "x86",
+      "family": "native-symbolic-link-open-duplicate-protected-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-protected-boundaries-x86",
+      "source": "native-symbolic-link-open-duplicate-protected-boundaries.cpp",
+      "source-sha256": "4d8a4fc435fbc5e9bc15c4bca0e06e18505469df698c021d98da3752551febcc",
+      "executable": "native-symbolic-link-open-duplicate-protected-boundaries-x86.exe",
+      "log": "native-symbolic-link-open-duplicate-protected-boundaries-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-protected-boundaries-x86\\native-symbolic-link-open-duplicate-protected-boundaries.cpp",
+        "bytes": 5182,
+        "sha256": "4d8a4fc435fbc5e9bc15c4bca0e06e18505469df698c021d98da3752551febcc"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-protected-boundaries-x86\\native-symbolic-link-open-duplicate-protected-boundaries-x86.exe",
+        "bytes": 128512,
+        "sha256": "09563705f80ffbda521cfa264842f257c4a9ffd7af247ba4a6fcf6bc9b33bfa3",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-protected-boundaries-x86\\native-symbolic-link-open-duplicate-protected-boundaries-x86.log",
+        "bytes": 46254,
+        "sha256": "e5914ab512106ec6d6db8707de8e1bdbb7039db8838dd426833ae7eaefe7bcb5"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "family": "native-symbolic-link-open-duplicate-protected-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-protected-boundaries-x86-laa",
+      "source": "native-symbolic-link-open-duplicate-protected-boundaries.cpp",
+      "source-sha256": "4d8a4fc435fbc5e9bc15c4bca0e06e18505469df698c021d98da3752551febcc",
+      "executable": "native-symbolic-link-open-duplicate-protected-boundaries-x86-laa.exe",
+      "log": "native-symbolic-link-open-duplicate-protected-boundaries-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-protected-boundaries-x86-laa\\native-symbolic-link-open-duplicate-protected-boundaries.cpp",
+        "bytes": 5182,
+        "sha256": "4d8a4fc435fbc5e9bc15c4bca0e06e18505469df698c021d98da3752551febcc"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-protected-boundaries-x86-laa\\native-symbolic-link-open-duplicate-protected-boundaries-x86-laa.exe",
+        "bytes": 128512,
+        "sha256": "2104a09074dfbacb866b132732604dbd5fa17f478373a74e2abf8f30fd4714b8",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-protected-boundaries-x86-laa\\native-symbolic-link-open-duplicate-protected-boundaries-x86-laa.log",
+        "bytes": 46245,
+        "sha256": "78c5c90664655321210f2f62b1fd219913041adf4737479a645a2334f7ab4d8c"
+      }
+    },
+    {
+      "profile": "arm64",
+      "family": "native-symbolic-link-open-reference",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-reference-arm64",
+      "source": "native-symbolic-link-open-reference.cpp",
+      "source-sha256": "a652b04aed1abfe7921f61a51fd25243ef4c56f7e12628605bbd83f78b64dac4",
+      "executable": "native-symbolic-link-open-reference-arm64.exe",
+      "log": "native-symbolic-link-open-reference-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-reference-arm64\\native-symbolic-link-open-reference.cpp",
+        "bytes": 5487,
+        "sha256": "a652b04aed1abfe7921f61a51fd25243ef4c56f7e12628605bbd83f78b64dac4"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-reference-arm64\\native-symbolic-link-open-reference-arm64.exe",
+        "bytes": 146944,
+        "sha256": "dd5c54b002500fd997e53be2074c0cd843532c540fb9f574795f58df07e18ea4",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-reference-arm64\\native-symbolic-link-open-reference-arm64.log",
+        "bytes": 120198,
+        "sha256": "1dcf85964ec682ccd78215988a3fe2f56fe9814c90dcb4813ff4331ee99c7d01"
+      }
+    },
+    {
+      "profile": "x64",
+      "family": "native-symbolic-link-open-reference",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-reference-x64",
+      "source": "native-symbolic-link-open-reference.cpp",
+      "source-sha256": "a652b04aed1abfe7921f61a51fd25243ef4c56f7e12628605bbd83f78b64dac4",
+      "executable": "native-symbolic-link-open-reference-x64.exe",
+      "log": "native-symbolic-link-open-reference-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-reference-x64\\native-symbolic-link-open-reference.cpp",
+        "bytes": 5487,
+        "sha256": "a652b04aed1abfe7921f61a51fd25243ef4c56f7e12628605bbd83f78b64dac4"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-reference-x64\\native-symbolic-link-open-reference-x64.exe",
+        "bytes": 144896,
+        "sha256": "1c20cf3a3460f9f0527cb2d9855dc74e7fbbb3d480b5a7b59596199618af6390",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-reference-x64\\native-symbolic-link-open-reference-x64.log",
+        "bytes": 120198,
+        "sha256": "a2771701d0b2a7be7d0869ec5458c0a3dbb38fc718aeba7930b4bb5b62bca77b"
+      }
+    },
+    {
+      "profile": "x86",
+      "family": "native-symbolic-link-open-reference",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-reference-x86",
+      "source": "native-symbolic-link-open-reference.cpp",
+      "source-sha256": "a652b04aed1abfe7921f61a51fd25243ef4c56f7e12628605bbd83f78b64dac4",
+      "executable": "native-symbolic-link-open-reference-x86.exe",
+      "log": "native-symbolic-link-open-reference-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-reference-x86\\native-symbolic-link-open-reference.cpp",
+        "bytes": 5487,
+        "sha256": "a652b04aed1abfe7921f61a51fd25243ef4c56f7e12628605bbd83f78b64dac4"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-reference-x86\\native-symbolic-link-open-reference-x86.exe",
+        "bytes": 119808,
+        "sha256": "73f75b34bb563790fda46934a4cd0195ee65f223e4e28eae830e9a4311720564",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-reference-x86\\native-symbolic-link-open-reference-x86.log",
+        "bytes": 120232,
+        "sha256": "9da8d5784cca39c312fea5679b65c4074364f7edc3c90993cc759288ddfa342d"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "family": "native-symbolic-link-open-reference",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-reference-x86-laa",
+      "source": "native-symbolic-link-open-reference.cpp",
+      "source-sha256": "a652b04aed1abfe7921f61a51fd25243ef4c56f7e12628605bbd83f78b64dac4",
+      "executable": "native-symbolic-link-open-reference-x86-laa.exe",
+      "log": "native-symbolic-link-open-reference-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-reference-x86-laa\\native-symbolic-link-open-reference.cpp",
+        "bytes": 5487,
+        "sha256": "a652b04aed1abfe7921f61a51fd25243ef4c56f7e12628605bbd83f78b64dac4"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-reference-x86-laa\\native-symbolic-link-open-reference-x86-laa.exe",
+        "bytes": 119808,
+        "sha256": "4fbe01e7863f4fe37260469dac34613ad9687fbc3a9635ae6ebb477f2840c766",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-reference-x86-laa\\native-symbolic-link-open-reference-x86-laa.log",
+        "bytes": 120246,
+        "sha256": "bc4abf83566feb5fc9a120c06c5515ef1cbcc23841dd1e106b651fb5eb423c04"
+      }
+    },
+    {
+      "profile": "arm64",
+      "family": "native-symbolic-link-query-matrix",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-matrix-arm64",
+      "source": "native-symbolic-link-query-matrix.cpp",
+      "source-sha256": "2e912c5f923581b063f71c6423b7cf18db9a609cdd6bcda3acec6fc7ec60c127",
+      "executable": "native-symbolic-link-query-matrix-arm64.exe",
+      "log": "native-symbolic-link-query-matrix-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-matrix-arm64\\native-symbolic-link-query-matrix.cpp",
+        "bytes": 9805,
+        "sha256": "2e912c5f923581b063f71c6423b7cf18db9a609cdd6bcda3acec6fc7ec60c127"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-matrix-arm64\\native-symbolic-link-query-matrix-arm64.exe",
+        "bytes": 152576,
+        "sha256": "9f9aecc2fcd5d04983240a80a7255be0d265e1e4cb67014ce2399aeff3dce2c5",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-matrix-arm64\\native-symbolic-link-query-matrix-arm64.log",
+        "bytes": 6013847,
+        "sha256": "8317912ae93ef90ea5d60ffd8768c80835143f7038290a1338564ec0f920016a"
+      }
+    },
+    {
+      "profile": "x64",
+      "family": "native-symbolic-link-query-matrix",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-matrix-x64",
+      "source": "native-symbolic-link-query-matrix.cpp",
+      "source-sha256": "2e912c5f923581b063f71c6423b7cf18db9a609cdd6bcda3acec6fc7ec60c127",
+      "executable": "native-symbolic-link-query-matrix-x64.exe",
+      "log": "native-symbolic-link-query-matrix-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-matrix-x64\\native-symbolic-link-query-matrix.cpp",
+        "bytes": 9805,
+        "sha256": "2e912c5f923581b063f71c6423b7cf18db9a609cdd6bcda3acec6fc7ec60c127"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-matrix-x64\\native-symbolic-link-query-matrix-x64.exe",
+        "bytes": 151040,
+        "sha256": "1af7b953a5f087df85b327c7ec0c10172550ab3f97862d68558b4aff862d0922",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-matrix-x64\\native-symbolic-link-query-matrix-x64.log",
+        "bytes": 6013847,
+        "sha256": "52e5c9779b2a8fae0f07666407c9b34d94ad69a48afe5409bc81ecb8bd613131"
+      }
+    },
+    {
+      "profile": "x86",
+      "family": "native-symbolic-link-query-matrix",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-matrix-x86",
+      "source": "native-symbolic-link-query-matrix.cpp",
+      "source-sha256": "2e912c5f923581b063f71c6423b7cf18db9a609cdd6bcda3acec6fc7ec60c127",
+      "executable": "native-symbolic-link-query-matrix-x86.exe",
+      "log": "native-symbolic-link-query-matrix-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-matrix-x86\\native-symbolic-link-query-matrix.cpp",
+        "bytes": 9805,
+        "sha256": "2e912c5f923581b063f71c6423b7cf18db9a609cdd6bcda3acec6fc7ec60c127"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-matrix-x86\\native-symbolic-link-query-matrix-x86.exe",
+        "bytes": 124928,
+        "sha256": "0c5fa08dd4ca0670246d1a192b131e494018976794ac61276ecd199acc72a548",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-matrix-x86\\native-symbolic-link-query-matrix-x86.log",
+        "bytes": 5917299,
+        "sha256": "de9ab3dae2e3e069f820305c9d605de19b1fdcbdd72ecebf7648d1a1e81be421"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "family": "native-symbolic-link-query-matrix",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-matrix-x86-laa",
+      "source": "native-symbolic-link-query-matrix.cpp",
+      "source-sha256": "2e912c5f923581b063f71c6423b7cf18db9a609cdd6bcda3acec6fc7ec60c127",
+      "executable": "native-symbolic-link-query-matrix-x86-laa.exe",
+      "log": "native-symbolic-link-query-matrix-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-matrix-x86-laa\\native-symbolic-link-query-matrix.cpp",
+        "bytes": 9805,
+        "sha256": "2e912c5f923581b063f71c6423b7cf18db9a609cdd6bcda3acec6fc7ec60c127"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-matrix-x86-laa\\native-symbolic-link-query-matrix-x86-laa.exe",
+        "bytes": 124928,
+        "sha256": "9acc7afb887ff4148e47e6fb49dfaa286d97e1f00d6bad02859737fc5cdd127b",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-matrix-x86-laa\\native-symbolic-link-query-matrix-x86-laa.log",
+        "bytes": 5917299,
+        "sha256": "25feb535a28ef3c5347fffb3ba0a35e5cf9337b2b8c225c49fb9f8cdf163a5f9"
+      }
+    },
+    {
+      "profile": "arm64",
+      "family": "native-symbolic-link-query-alignment",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-alignment-arm64",
+      "source": "native-symbolic-link-query-alignment.cpp",
+      "source-sha256": "d7243b47ac7decaf1102287b405483d1d336a922c54106a03349b3de1cbdbf82",
+      "executable": "native-symbolic-link-query-alignment-arm64.exe",
+      "log": "native-symbolic-link-query-alignment-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-alignment-arm64\\native-symbolic-link-query-alignment.cpp",
+        "bytes": 9408,
+        "sha256": "d7243b47ac7decaf1102287b405483d1d336a922c54106a03349b3de1cbdbf82"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-alignment-arm64\\native-symbolic-link-query-alignment-arm64.exe",
+        "bytes": 151552,
+        "sha256": "4a41ec464033623ee0191877b1656392caf68499f96423849050c48df858e358",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-alignment-arm64\\native-symbolic-link-query-alignment-arm64.log",
+        "bytes": 356190,
+        "sha256": "2e146d41d827a46c224b248e5d0798b90bf13aeede979b2e742e0ab452453daa"
+      }
+    },
+    {
+      "profile": "x64",
+      "family": "native-symbolic-link-query-alignment",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-alignment-x64",
+      "source": "native-symbolic-link-query-alignment.cpp",
+      "source-sha256": "d7243b47ac7decaf1102287b405483d1d336a922c54106a03349b3de1cbdbf82",
+      "executable": "native-symbolic-link-query-alignment-x64.exe",
+      "log": "native-symbolic-link-query-alignment-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-alignment-x64\\native-symbolic-link-query-alignment.cpp",
+        "bytes": 9408,
+        "sha256": "d7243b47ac7decaf1102287b405483d1d336a922c54106a03349b3de1cbdbf82"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-alignment-x64\\native-symbolic-link-query-alignment-x64.exe",
+        "bytes": 149504,
+        "sha256": "c6774496e3faad7be1fea657c4e5744177dec1be37f76af53b78fd14ec2d1eaa",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-alignment-x64\\native-symbolic-link-query-alignment-x64.log",
+        "bytes": 356190,
+        "sha256": "e6a4750c60c445ca06e15ae0efecc0ce195c54bba40a37119e218a2bc144d9e7"
+      }
+    },
+    {
+      "profile": "x86",
+      "family": "native-symbolic-link-query-alignment",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-alignment-x86",
+      "source": "native-symbolic-link-query-alignment.cpp",
+      "source-sha256": "d7243b47ac7decaf1102287b405483d1d336a922c54106a03349b3de1cbdbf82",
+      "executable": "native-symbolic-link-query-alignment-x86.exe",
+      "log": "native-symbolic-link-query-alignment-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-alignment-x86\\native-symbolic-link-query-alignment.cpp",
+        "bytes": 9408,
+        "sha256": "d7243b47ac7decaf1102287b405483d1d336a922c54106a03349b3de1cbdbf82"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-alignment-x86\\native-symbolic-link-query-alignment-x86.exe",
+        "bytes": 122880,
+        "sha256": "056e33c60ddb09ecc9c49bb65209a595626eb30722190ea1af5e35477f23639a",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-alignment-x86\\native-symbolic-link-query-alignment-x86.log",
+        "bytes": 350490,
+        "sha256": "9773e5ac155f135760576ec2344974ed673def3dbdf88ecd0db7374468c7b6ce"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "family": "native-symbolic-link-query-alignment",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-alignment-x86-laa",
+      "source": "native-symbolic-link-query-alignment.cpp",
+      "source-sha256": "d7243b47ac7decaf1102287b405483d1d336a922c54106a03349b3de1cbdbf82",
+      "executable": "native-symbolic-link-query-alignment-x86-laa.exe",
+      "log": "native-symbolic-link-query-alignment-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-alignment-x86-laa\\native-symbolic-link-query-alignment.cpp",
+        "bytes": 9408,
+        "sha256": "d7243b47ac7decaf1102287b405483d1d336a922c54106a03349b3de1cbdbf82"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-alignment-x86-laa\\native-symbolic-link-query-alignment-x86-laa.exe",
+        "bytes": 122880,
+        "sha256": "e658efe5a89f8ba103d86bee2d98a6beba482c943ceb5cd1fc0c9175e938f1de",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-alignment-x86-laa\\native-symbolic-link-query-alignment-x86-laa.log",
+        "bytes": 350490,
+        "sha256": "e24651026a5aa88891022fee31c034afc96bb0d704538148d04e02aa967c51b5"
+      }
+    },
+    {
+      "profile": "arm64",
+      "family": "native-symbolic-link-query-copy-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-copy-boundaries-arm64",
+      "source": "native-symbolic-link-query-copy-boundaries.cpp",
+      "source-sha256": "6240a803db8364f2561876b79d805574b41e13fed6b411cf405881958ee3e09c",
+      "executable": "native-symbolic-link-query-copy-boundaries-arm64.exe",
+      "log": "native-symbolic-link-query-copy-boundaries-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-copy-boundaries-arm64\\native-symbolic-link-query-copy-boundaries.cpp",
+        "bytes": 9394,
+        "sha256": "6240a803db8364f2561876b79d805574b41e13fed6b411cf405881958ee3e09c"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-copy-boundaries-arm64\\native-symbolic-link-query-copy-boundaries-arm64.exe",
+        "bytes": 151040,
+        "sha256": "eeb080cfb39c3e9a4c6d6bdaf69a1cdd3b54eb631e3c8aad4615e9551247ecd4",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-copy-boundaries-arm64\\native-symbolic-link-query-copy-boundaries-arm64.log",
+        "bytes": 1216486,
+        "sha256": "ecc738db9f87481db8e7365e904b465539330f8b8323844f199af1f9970c6b03"
+      }
+    },
+    {
+      "profile": "x64",
+      "family": "native-symbolic-link-query-copy-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-copy-boundaries-x64",
+      "source": "native-symbolic-link-query-copy-boundaries.cpp",
+      "source-sha256": "6240a803db8364f2561876b79d805574b41e13fed6b411cf405881958ee3e09c",
+      "executable": "native-symbolic-link-query-copy-boundaries-x64.exe",
+      "log": "native-symbolic-link-query-copy-boundaries-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-copy-boundaries-x64\\native-symbolic-link-query-copy-boundaries.cpp",
+        "bytes": 9394,
+        "sha256": "6240a803db8364f2561876b79d805574b41e13fed6b411cf405881958ee3e09c"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-copy-boundaries-x64\\native-symbolic-link-query-copy-boundaries-x64.exe",
+        "bytes": 148992,
+        "sha256": "f41d96ce838d9c277135965dbb102c4d9fb5b74b2f8351910403189dfb2ea183",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-copy-boundaries-x64\\native-symbolic-link-query-copy-boundaries-x64.log",
+        "bytes": 1216486,
+        "sha256": "56853e1cc45b4a952f52fb962a0856be45ad3774e60b8be4262013765160e39d"
+      }
+    },
+    {
+      "profile": "x86",
+      "family": "native-symbolic-link-query-copy-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-copy-boundaries-x86",
+      "source": "native-symbolic-link-query-copy-boundaries.cpp",
+      "source-sha256": "6240a803db8364f2561876b79d805574b41e13fed6b411cf405881958ee3e09c",
+      "executable": "native-symbolic-link-query-copy-boundaries-x86.exe",
+      "log": "native-symbolic-link-query-copy-boundaries-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-copy-boundaries-x86\\native-symbolic-link-query-copy-boundaries.cpp",
+        "bytes": 9394,
+        "sha256": "6240a803db8364f2561876b79d805574b41e13fed6b411cf405881958ee3e09c"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-copy-boundaries-x86\\native-symbolic-link-query-copy-boundaries-x86.exe",
+        "bytes": 122880,
+        "sha256": "bf17d674b5a0a4babddd719a4303417fdedec1e5770414639980906757b3f9fa",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-copy-boundaries-x86\\native-symbolic-link-query-copy-boundaries-x86.log",
+        "bytes": 1197030,
+        "sha256": "f4803b0b27478344c98ce017c4134e8ada537634551df6d0e1863c58e8d0e1d3"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "family": "native-symbolic-link-query-copy-boundaries",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-copy-boundaries-x86-laa",
+      "source": "native-symbolic-link-query-copy-boundaries.cpp",
+      "source-sha256": "6240a803db8364f2561876b79d805574b41e13fed6b411cf405881958ee3e09c",
+      "executable": "native-symbolic-link-query-copy-boundaries-x86-laa.exe",
+      "log": "native-symbolic-link-query-copy-boundaries-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-copy-boundaries-x86-laa\\native-symbolic-link-query-copy-boundaries.cpp",
+        "bytes": 9394,
+        "sha256": "6240a803db8364f2561876b79d805574b41e13fed6b411cf405881958ee3e09c"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-copy-boundaries-x86-laa\\native-symbolic-link-query-copy-boundaries-x86-laa.exe",
+        "bytes": 122880,
+        "sha256": "1900c0fcc77c39dfefee9acd989f4467dbd4d0c643f7299e5f4085d47d0c8a43",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-copy-boundaries-x86-laa\\native-symbolic-link-query-copy-boundaries-x86-laa.log",
+        "bytes": 1197030,
+        "sha256": "0dee3409980c40a4ae9717e9ddb15d03896a13ae0e977e0ce61cfa0bd0bd2e04"
+      }
+    },
+    {
+      "profile": "arm64",
+      "family": "native-symbolic-link-open-duplicate-access",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-access-arm64",
+      "source": "native-symbolic-link-open-duplicate-access.cpp",
+      "source-sha256": "8ccc161fe6c399bf9a1f892835e4583587ff42e0870cb597ae8d61647a81c45e",
+      "executable": "native-symbolic-link-open-duplicate-access-arm64.exe",
+      "log": "native-symbolic-link-open-duplicate-access-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-access-arm64\\native-symbolic-link-open-duplicate-access.cpp",
+        "bytes": 5976,
+        "sha256": "8ccc161fe6c399bf9a1f892835e4583587ff42e0870cb597ae8d61647a81c45e"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-access-arm64\\native-symbolic-link-open-duplicate-access-arm64.exe",
+        "bytes": 147968,
+        "sha256": "ed959d9f34cb5ea3b9cfd52a80c7150ef0df1f33c5a686a48819b1f770321c8c",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-access-arm64\\native-symbolic-link-open-duplicate-access-arm64.log",
+        "bytes": 228710,
+        "sha256": "374c783f90b81b7d7d16ed0a97a79b7d1e04e139d25ed35cc142664e41c211a7"
+      }
+    },
+    {
+      "profile": "x64",
+      "family": "native-symbolic-link-open-duplicate-access",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-access-x64",
+      "source": "native-symbolic-link-open-duplicate-access.cpp",
+      "source-sha256": "8ccc161fe6c399bf9a1f892835e4583587ff42e0870cb597ae8d61647a81c45e",
+      "executable": "native-symbolic-link-open-duplicate-access-x64.exe",
+      "log": "native-symbolic-link-open-duplicate-access-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-access-x64\\native-symbolic-link-open-duplicate-access.cpp",
+        "bytes": 5976,
+        "sha256": "8ccc161fe6c399bf9a1f892835e4583587ff42e0870cb597ae8d61647a81c45e"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-access-x64\\native-symbolic-link-open-duplicate-access-x64.exe",
+        "bytes": 145920,
+        "sha256": "ed1b620f70193c9fd53a23e9cb5ba9e0927ff196c415e5f4d3c483c95c4a11e9",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-access-x64\\native-symbolic-link-open-duplicate-access-x64.log",
+        "bytes": 228710,
+        "sha256": "bec3d5d0c4f83fcc70412d62d526b95f99d2536373739d9f68118f84c0861964"
+      }
+    },
+    {
+      "profile": "x86",
+      "family": "native-symbolic-link-open-duplicate-access",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-access-x86",
+      "source": "native-symbolic-link-open-duplicate-access.cpp",
+      "source-sha256": "8ccc161fe6c399bf9a1f892835e4583587ff42e0870cb597ae8d61647a81c45e",
+      "executable": "native-symbolic-link-open-duplicate-access-x86.exe",
+      "log": "native-symbolic-link-open-duplicate-access-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-access-x86\\native-symbolic-link-open-duplicate-access.cpp",
+        "bytes": 5976,
+        "sha256": "8ccc161fe6c399bf9a1f892835e4583587ff42e0870cb597ae8d61647a81c45e"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-access-x86\\native-symbolic-link-open-duplicate-access-x86.exe",
+        "bytes": 120832,
+        "sha256": "22c6ab631934655d44b620c7857cf84f74505ed5377c5e86bb4503fb679f865c",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-access-x86\\native-symbolic-link-open-duplicate-access-x86.log",
+        "bytes": 229114,
+        "sha256": "e76566fe0851ac988df25d00cb116e9b1696666b5224ded6f4c3fa7ca0f1f7db"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "family": "native-symbolic-link-open-duplicate-access",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-access-x86-laa",
+      "source": "native-symbolic-link-open-duplicate-access.cpp",
+      "source-sha256": "8ccc161fe6c399bf9a1f892835e4583587ff42e0870cb597ae8d61647a81c45e",
+      "executable": "native-symbolic-link-open-duplicate-access-x86-laa.exe",
+      "log": "native-symbolic-link-open-duplicate-access-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-access-x86-laa\\native-symbolic-link-open-duplicate-access.cpp",
+        "bytes": 5976,
+        "sha256": "8ccc161fe6c399bf9a1f892835e4583587ff42e0870cb597ae8d61647a81c45e"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-access-x86-laa\\native-symbolic-link-open-duplicate-access-x86-laa.exe",
+        "bytes": 120832,
+        "sha256": "b31ed6e2116c1e793803c0969ca6253b6166777e0ec692f4de703dd4e4f8a4ae",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-duplicate-access-x86-laa\\native-symbolic-link-open-duplicate-access-x86-laa.log",
+        "bytes": 229238,
+        "sha256": "dddde25453a8c099d799f2d511bf27fc67687d914a58bedfb7866f94d8ef7339"
+      }
+    },
+    {
+      "profile": "arm64",
+      "family": "native-symbolic-link-directory-duplicate-access",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-directory-duplicate-access-arm64",
+      "source": "native-symbolic-link-directory-duplicate-access.cpp",
+      "source-sha256": "7b453a32c9c425feba520f818c81dd02365770b6a12f7a9846b973d5b082f03a",
+      "executable": "native-symbolic-link-directory-duplicate-access-arm64.exe",
+      "log": "native-symbolic-link-directory-duplicate-access-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-directory-duplicate-access-arm64\\native-symbolic-link-directory-duplicate-access.cpp",
+        "bytes": 5905,
+        "sha256": "7b453a32c9c425feba520f818c81dd02365770b6a12f7a9846b973d5b082f03a"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-directory-duplicate-access-arm64\\native-symbolic-link-directory-duplicate-access-arm64.exe",
+        "bytes": 147456,
+        "sha256": "8efec1b0661f91f1aa2a1341a0ab2983f9c2b243f426fa52678976f6e751acec",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-directory-duplicate-access-arm64\\native-symbolic-link-directory-duplicate-access-arm64.log",
+        "bytes": 230438,
+        "sha256": "9a179ead8e26959763b2cdbac49da53e630d5f6b0d6bf07bb61c72ef56d11c4d"
+      }
+    },
+    {
+      "profile": "x64",
+      "family": "native-symbolic-link-directory-duplicate-access",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-directory-duplicate-access-x64",
+      "source": "native-symbolic-link-directory-duplicate-access.cpp",
+      "source-sha256": "7b453a32c9c425feba520f818c81dd02365770b6a12f7a9846b973d5b082f03a",
+      "executable": "native-symbolic-link-directory-duplicate-access-x64.exe",
+      "log": "native-symbolic-link-directory-duplicate-access-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-directory-duplicate-access-x64\\native-symbolic-link-directory-duplicate-access.cpp",
+        "bytes": 5905,
+        "sha256": "7b453a32c9c425feba520f818c81dd02365770b6a12f7a9846b973d5b082f03a"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-directory-duplicate-access-x64\\native-symbolic-link-directory-duplicate-access-x64.exe",
+        "bytes": 145920,
+        "sha256": "1008ea499e699763e57337e8340ea99cee3889050214c74fa53f730f5c82a4f4",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-directory-duplicate-access-x64\\native-symbolic-link-directory-duplicate-access-x64.log",
+        "bytes": 230438,
+        "sha256": "e2044a5cf81c546887e2af5d261aed7374ef59b00938219c6a674c981db0ca71"
+      }
+    },
+    {
+      "profile": "x86",
+      "family": "native-symbolic-link-directory-duplicate-access",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-directory-duplicate-access-x86",
+      "source": "native-symbolic-link-directory-duplicate-access.cpp",
+      "source-sha256": "7b453a32c9c425feba520f818c81dd02365770b6a12f7a9846b973d5b082f03a",
+      "executable": "native-symbolic-link-directory-duplicate-access-x86.exe",
+      "log": "native-symbolic-link-directory-duplicate-access-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-directory-duplicate-access-x86\\native-symbolic-link-directory-duplicate-access.cpp",
+        "bytes": 5905,
+        "sha256": "7b453a32c9c425feba520f818c81dd02365770b6a12f7a9846b973d5b082f03a"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-directory-duplicate-access-x86\\native-symbolic-link-directory-duplicate-access-x86.exe",
+        "bytes": 120832,
+        "sha256": "488841c9087bccf0d9fa1904685bff754002a370eeac7015cc86793c5c691c9e",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-directory-duplicate-access-x86\\native-symbolic-link-directory-duplicate-access-x86.log",
+        "bytes": 230995,
+        "sha256": "044bfadbba1fc77f9a57b500e3ddf33f58b2b813774dca9650f66f69e86fd4d6"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "family": "native-symbolic-link-directory-duplicate-access",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-directory-duplicate-access-x86-laa",
+      "source": "native-symbolic-link-directory-duplicate-access.cpp",
+      "source-sha256": "7b453a32c9c425feba520f818c81dd02365770b6a12f7a9846b973d5b082f03a",
+      "executable": "native-symbolic-link-directory-duplicate-access-x86-laa.exe",
+      "log": "native-symbolic-link-directory-duplicate-access-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-directory-duplicate-access-x86-laa\\native-symbolic-link-directory-duplicate-access.cpp",
+        "bytes": 5905,
+        "sha256": "7b453a32c9c425feba520f818c81dd02365770b6a12f7a9846b973d5b082f03a"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-directory-duplicate-access-x86-laa\\native-symbolic-link-directory-duplicate-access-x86-laa.exe",
+        "bytes": 120832,
+        "sha256": "5f58bc18aecefcbd5e6036137d858728dff975254f3d9d51a544740f599de721",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-directory-duplicate-access-x86-laa\\native-symbolic-link-directory-duplicate-access-x86-laa.log",
+        "bytes": 231158,
+        "sha256": "9c1fd55c7f5ca9792843ff9c4712b97a10583e7bc6eafce829cb4ef1ab9d65eb"
+      }
+    },
+    {
+      "profile": "arm64",
+      "family": "fresh",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-arm64",
+      "source": "native-symbolic-link-open-fresh.cpp",
+      "source-sha256": "3c1511844a3f2a6cc26c1ba72afa84e970448def8d8a7628ce5da584b72996c2",
+      "executable": "native-symbolic-link-open-fresh-arm64.exe",
+      "log": "native-symbolic-link-open-fresh-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-arm64\\native-symbolic-link-open-fresh.cpp",
+        "bytes": 10357,
+        "sha256": "3c1511844a3f2a6cc26c1ba72afa84e970448def8d8a7628ce5da584b72996c2"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-arm64\\native-symbolic-link-open-fresh-arm64.exe",
+        "bytes": 167936,
+        "sha256": "c4859763d66c23cf96e0a5bc2721b0db62747bf3b817fdfc4cacd2aadbdd5754",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-open-arm64\\native-symbolic-link-open-fresh-arm64.log",
+        "bytes": 3486,
+        "sha256": "8174bf0488cac6715d91f1f5b55ab57d628089d9cb738150728f4d4728ef1df6"
+      }
+    },
+    {
+      "profile": "arm64",
+      "family": "native-symbolic-link-query-dual-faults",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-dual-faults-arm64",
+      "source": "native-symbolic-link-query-dual-faults.cpp",
+      "source-sha256": "96d3b776261ea69011807c304ee780d45776bd05227da5dca31ed6aa64edba4d",
+      "executable": "native-symbolic-link-query-dual-faults-arm64.exe",
+      "log": "native-symbolic-link-query-dual-faults-arm64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-dual-faults-arm64\\native-symbolic-link-query-dual-faults.cpp",
+        "bytes": 9556,
+        "sha256": "96d3b776261ea69011807c304ee780d45776bd05227da5dca31ed6aa64edba4d"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-dual-faults-arm64\\native-symbolic-link-query-dual-faults-arm64.exe",
+        "bytes": 151552,
+        "sha256": "7669fbac8a9d3e27fe0cfd5f537a2d1fe440217e2ec660d52cf9763b4e6ee11c",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-dual-faults-arm64\\native-symbolic-link-query-dual-faults-arm64.log",
+        "bytes": 10141395,
+        "sha256": "c62779a8b01b10e9ac8dd89a3baff93d625e07f729fe1af6d9b4b57f34693042"
+      }
+    },
+    {
+      "profile": "x64",
+      "family": "native-symbolic-link-query-dual-faults",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-dual-faults-x64",
+      "source": "native-symbolic-link-query-dual-faults.cpp",
+      "source-sha256": "96d3b776261ea69011807c304ee780d45776bd05227da5dca31ed6aa64edba4d",
+      "executable": "native-symbolic-link-query-dual-faults-x64.exe",
+      "log": "native-symbolic-link-query-dual-faults-x64.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-dual-faults-x64\\native-symbolic-link-query-dual-faults.cpp",
+        "bytes": 9556,
+        "sha256": "96d3b776261ea69011807c304ee780d45776bd05227da5dca31ed6aa64edba4d"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-dual-faults-x64\\native-symbolic-link-query-dual-faults-x64.exe",
+        "bytes": 149504,
+        "sha256": "b438745964236902a6ea2b334653c3d473de71a6ea4f8b704aaf4afc5ef46bd4",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-dual-faults-x64\\native-symbolic-link-query-dual-faults-x64.log",
+        "bytes": 10141395,
+        "sha256": "65f201b981c59097e2c35858c3b03f0b21f7d13b10b6b6625e59afa5d6234075"
+      }
+    },
+    {
+      "profile": "x86",
+      "family": "native-symbolic-link-query-dual-faults",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-dual-faults-x86",
+      "source": "native-symbolic-link-query-dual-faults.cpp",
+      "source-sha256": "96d3b776261ea69011807c304ee780d45776bd05227da5dca31ed6aa64edba4d",
+      "executable": "native-symbolic-link-query-dual-faults-x86.exe",
+      "log": "native-symbolic-link-query-dual-faults-x86.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-dual-faults-x86\\native-symbolic-link-query-dual-faults.cpp",
+        "bytes": 9556,
+        "sha256": "96d3b776261ea69011807c304ee780d45776bd05227da5dca31ed6aa64edba4d"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-dual-faults-x86\\native-symbolic-link-query-dual-faults-x86.exe",
+        "bytes": 123392,
+        "sha256": "116392cd339b37e35db5a0a39d0555f799319734b0c1be17669c1598b3d1e9cf",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-dual-faults-x86\\native-symbolic-link-query-dual-faults-x86.log",
+        "bytes": 9969939,
+        "sha256": "bdbb4047a49a9f57b43670e6dd21e6f0bf5778017d887b4fceb1ac3018d0c050"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "family": "native-symbolic-link-query-dual-faults",
+      "directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-dual-faults-x86-laa",
+      "source": "native-symbolic-link-query-dual-faults.cpp",
+      "source-sha256": "96d3b776261ea69011807c304ee780d45776bd05227da5dca31ed6aa64edba4d",
+      "executable": "native-symbolic-link-query-dual-faults-x86-laa.exe",
+      "log": "native-symbolic-link-query-dual-faults-x86-laa.log",
+      "source_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-dual-faults-x86-laa\\native-symbolic-link-query-dual-faults.cpp",
+        "bytes": 9556,
+        "sha256": "96d3b776261ea69011807c304ee780d45776bd05227da5dca31ed6aa64edba4d"
+      },
+      "executable_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-dual-faults-x86-laa\\native-symbolic-link-query-dual-faults-x86-laa.exe",
+        "bytes": 123392,
+        "sha256": "85036919ec8a75453c8cb4985b4eac8379d4e8eb76adb6f285890089a18ace3e",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "log_identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\symbolic-link-query-dual-faults-x86-laa\\native-symbolic-link-query-dual-faults-x86-laa.log",
+        "bytes": 9969939,
+        "sha256": "465392f7cdb9c99a89d91f9e97a544c8a1d049e6f94d2e33f596761a52b9d96f"
+      }
+    }
+  ],
+  "native-libraries": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+      "machine": 332,
+      "characteristics": 8450
+    }
+  ]
+}

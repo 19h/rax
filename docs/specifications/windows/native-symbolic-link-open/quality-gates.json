@@ -1,0 +1,10 @@
+{
+  "scope": "selected symbolic-link semantic group; full process goal remains active and incomplete",
+  "QG1": "pass: technical behavior, evidence and scope only",
+  "QG2": "pass: assumption-register.json includes stress tests and falsification probes",
+  "QG3": "pass for this group: 15 independently enumerated native families and native leaf/lifecycle/consumer checks; full process goal is incomplete",
+  "QG4": "pass: 32986 rows/profile times 4 = 131944; 97257 - 91011 = 6246 scheduler calls; byte extents and target bounds stated",
+  "QG5": "pass within measured scope: dual-fault guard precedence corrected and replayed; remaining unsupported and platform/build limits explicit",
+  "QG6": "pass: actual compiled source/PE/stdout/native DLL identities, fresh MEM_IMAGE SVC/return binding, source-conflict record and complete file hashes",
+  "QG7": "pass: bounded-scope.json records impact, evidence and group/full-goal blocking boundaries"
+}

@@ -17,11 +17,13 @@ fn selected(forced: bool) -> Vec<SelectedDirectory> {
                     name: "KnownDlls".encode_utf16().collect(),
                     kind: "Directory".encode_utf16().collect(),
                     target: None,
+                    link_access: None,
                 },
                 CapturedEntry {
                     name: "Other".encode_utf16().collect(),
                     kind: "Directory".encode_utf16().collect(),
                     target: None,
+                    link_access: None,
                 },
             ],
         },
@@ -34,6 +36,7 @@ fn selected(forced: bool) -> Vec<SelectedDirectory> {
                 name: "ntdll.dll".encode_utf16().collect(),
                 kind: "Section".encode_utf16().collect(),
                 target: None,
+                link_access: None,
             }],
         },
     ]
@@ -106,5 +109,45 @@ fn directory_catalog_system_root_and_subject_capture_are_bounded() {
     );
     let mut bad = super::tests::selected(true);
     bad[0].system_security_status = STATUS_INVALID_HANDLE;
+    assert!(Namespace::selected(table(), bad).is_err());
+}
+
+#[test]
+fn symbolic_link_selection_refuses_uncaptured_grants_and_invalid_metadata() {
+    let mut selected = selected(true);
+    let entry = CapturedEntry {
+        name: "KnownDllPath".encode_utf16().collect(),
+        kind: "SymbolicLink".encode_utf16().collect(),
+        target: Some("C:\\WINDOWS\\System32".encode_utf16().collect()),
+        link_access: None,
+    };
+    selected[1].entries.push(entry);
+    let name: Vec<_> = "\\KnownDlls\\KnownDllPath".encode_utf16().collect();
+    let n = Namespace::selected(table(), selected.clone()).unwrap();
+    assert_eq!(
+        n.lookup_link(None, &name, 0x40).unwrap_err(),
+        LookupError::Unselected
+    );
+    for access in [
+        LinkAccess {
+            maximum_access: 2,
+            system_security_status: STATUS_PRIVILEGE_NOT_HELD,
+        },
+        LinkAccess {
+            maximum_access: 1,
+            system_security_status: STATUS_INVALID_HANDLE,
+        },
+    ] {
+        let mut bad = selected.clone();
+        bad[1].entries.last_mut().unwrap().link_access = Some(access);
+        assert!(Namespace::selected(table(), bad).is_err());
+    }
+    let mut bad = selected;
+    let link = bad[1].entries.last_mut().unwrap();
+    link.target = None;
+    link.link_access = Some(LinkAccess {
+        maximum_access: 1,
+        system_security_status: STATUS_PRIVILEGE_NOT_HELD,
+    });
     assert!(Namespace::selected(table(), bad).is_err());
 }

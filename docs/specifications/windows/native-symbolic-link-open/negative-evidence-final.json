@@ -1,0 +1,60 @@
+{
+  "positive": "pass",
+  "negative-controls": [
+    {
+      "control": "changed-compiled-source",
+      "result": "rejected",
+      "reason": "actual compiled source binding"
+    },
+    {
+      "control": "forged-pe-machine",
+      "result": "rejected",
+      "reason": "actual PE machine"
+    },
+    {
+      "control": "forged-x86-laa",
+      "result": "rejected",
+      "reason": "actual PE LAA"
+    },
+    {
+      "control": "missing-producer-and-input",
+      "result": "rejected",
+      "reason": "independent producer inventory"
+    },
+    {
+      "control": "changed-native-dll",
+      "result": "rejected",
+      "reason": "captured installed native DLL identities"
+    },
+    {
+      "control": "changed-rehashed-input",
+      "result": "rejected",
+      "reason": "independent input partition differs: native-symbolic-link-open-matrix case=0"
+    },
+    {
+      "control": "missing-rehashed-row",
+      "result": "rejected",
+      "reason": "independent input partition cardinality: native-symbolic-link-open-matrix"
+    },
+    {
+      "control": "changed-rehashed-status",
+      "result": "rejected",
+      "reason": "native64 semantic mismatch native-symbolic-link-open-matrix"
+    },
+    {
+      "control": "changed-rehashed-fresh-lifetime",
+      "result": "rejected",
+      "reason": "fresh capture lifetime"
+    },
+    {
+      "control": "missing-rehashed-fresh-entry",
+      "result": "rejected",
+      "reason": "fresh original-entry/true-LR cardinality"
+    },
+    {
+      "control": "changed-rehashed-fresh-svc",
+      "result": "rejected",
+      "reason": "fresh live MEM_IMAGE SVC"
+    }
+  ]
+}

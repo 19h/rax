@@ -1497,3 +1497,14 @@ full-goal requirements; provenance, assumptions, metadata correction and limits:
 
 Timer2 construction, native ID/alias order, dormant IRTimer and measured limits:
 [Timer2 evidence](../../../docs/specifications/windows/native-timer2-create/README.md).
+
+Native symbolic-link open/query (2026-10-13) now uses captured KnownDllPath
+targets and grants with guest-owned immutable identity and handle lifetimes.
+Native64/WoW64 input, output, guard, alias, optional terminator and descriptor
+copy ordering replay 131,944 independent native rows on all three hosts.
+Seventeen portable focused tests and 18 Windows tests pass, including installed
+ARM64/x86 NTDLL and RET 12/16 B caller-stack cleanup. This supplies selected NT
+link services; complete ordinary installed-library execution and guest exit
+remain separate acceptance criteria. Exact provenance, assumptions, scope and
+validation limits:
+[symbolic-link evidence](../../../docs/specifications/windows/native-symbolic-link-open/README.md).

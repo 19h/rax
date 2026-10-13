@@ -205,6 +205,8 @@ pub enum Object {
     Key(std::sync::Arc<super::registry::Key>),
     /// A selected immutable NT object-manager directory, independent of files.
     Directory(std::sync::Arc<super::object_namespace::Directory>),
+    /// A selected immutable NT symbolic link, shared across guest handles.
+    SymbolicLink(std::sync::Arc<super::object_namespace::SymbolicLink>),
     /// An object this implementation only needs to name (tokens,
     /// registry keys, window stations).
     Opaque(&'static str),
@@ -230,6 +232,7 @@ impl Object {
             Object::EtwRegistration { .. } => "EtwRegistration",
             Object::Key(_) => "Key",
             Object::Directory(_) => "Directory",
+            Object::SymbolicLink(_) => "SymbolicLink",
             Object::Opaque(t) => t,
         }
     }

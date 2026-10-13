@@ -1,0 +1,4 @@
+﻿{
+    "command":  "cargo.exe test --locked --offline --no-default-features --lib symbolic_link -- --nocapture",
+    "exit-code":  0
+}

@@ -1,0 +1,14 @@
+{
+  "root-head": "e44904d10aff9dcd4c550122aa9334ec66ca57b1",
+  "rax-head": "7488e4aed83e3c7179cedbac9ef5b6a5d8041bdf",
+  "rax-status": "",
+  "owning-after-artifact-evidence": "/Users/int/Library/Caches/assist-process-emulation/object-directory-open-20261012/native-object-directory-open-owning-archive-hashes.json",
+  "next-frontier": {
+    "service": "NtOpenSymbolicLinkObject",
+    "number": "0x138",
+    "pc": "0x1800023c0",
+    "scheduler-turn": 91011
+  },
+  "fresh-producer-sha256": "4bc6a9c95f085a70d9ee2f5c901a302e9a6057e83d2918cedba1017511eef982",
+  "owned-runtime-paths": []
+}

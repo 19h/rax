@@ -1,0 +1,10 @@
+﻿[
+    {
+        "pid":  4524,
+        "script":  "native-symbolic-link-open-final-gates"
+    },
+    {
+        "pid":  4832,
+        "script":  "assist-native-symbolic-link-open-final-owned"
+    }
+]

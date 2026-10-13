@@ -1,0 +1,78 @@
+{
+  "mature-native-row-count": 131944,
+  "actual-native-producers": 61,
+  "hosts": {
+    "macos": {
+      "targeted": 17,
+      "full": [
+        7730,
+        0,
+        2
+      ],
+      "capi": 168,
+      "integration": 544,
+      "cpp-consumers": 5
+    },
+    "linux": {
+      "targeted": 17,
+      "full": [
+        7724,
+        0,
+        2
+      ],
+      "capi": 168,
+      "integration": 544,
+      "cpp-consumers": 5
+    },
+    "windows": {
+      "targeted": 18,
+      "full": [
+        7139,
+        5,
+        2
+      ],
+      "capi": 168,
+      "integration": 4,
+      "cpp-consumers": 5
+    }
+  },
+  "linux-full-selection": "unfiltered serial; the prior parallel 7720/3/2 and isolated/serial recovery are retained separately",
+  "ordinary-results": {
+    "observer-sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e",
+    "previous-turn": 91011,
+    "current-turn": 97257,
+    "scheduler-calls-advanced": 6246,
+    "next-service": "NtQueryVirtualMemory",
+    "next-class": 14,
+    "next-service-number": "0x23",
+    "instruction-pc": "0x180001240",
+    "stopped-thread-pc": "0x180001244",
+    "guest-exits": 0,
+    "programs": [
+      "C:/Windows/Temp/assist-native-rax-20261010/src/tests/fixtures/user/windows/bin/arm64/smoke.exe",
+      "C:/Windows/Temp/assist-native-rax-20261010/src/tests/fixtures/user/windows/crt_stdio/bin/arm64/msvcrt/streams.exe",
+      "C:/Windows/Temp/assist-native-rax-20261010/src/tests/fixtures/user/windows/crt_stdio/bin/arm64/ucrtbase/streams.exe",
+      "C:/Windows/System32/whoami.exe"
+    ],
+    "stop-reason": 5,
+    "archives": [
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\assist_rs.lib",
+        "bytes": 1132995580,
+        "sha256": "8b753dccd7de361f399c65613d630f00765145be93e71b86f4b8d7e45b1988ef",
+        "members": 4673,
+        "structural-member-walk": "pass"
+      },
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\librax-e6c413934cad3a8f.rlib",
+        "bytes": 745318104,
+        "sha256": "62f8682d1baf626990ca0b592401b4b7aa36a5fccf71b79353f7ca33ab641a39",
+        "members": 260,
+        "structural-member-walk": "pass"
+      }
+    ],
+    "core-features": [],
+    "source-units": 86
+  },
+  "scope": "symbolic-link group verified; full ordinary process goal remains active and incomplete"
+}

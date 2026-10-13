@@ -1,0 +1,6 @@
+{
+  "url": "https://learn.microsoft.com/en-us/windows/win32/devnotes/ntopensymboliclinkobject",
+  "conflict": "Public three-argument syntax names LinkHandle, but parameter and See-also prose refers to directory objects/NtQueryDirectoryObject.",
+  "resolution": "Use syntax for declaration provenance and actual native kernel evidence for symbolic-link semantics; do not silently treat copied directory prose as link behavior.",
+  "status": "recorded: declaration syntax remains authoritative for API shape; current installed-kernel and loaded WoW64 ordering is established by native capture and replay"
+}

@@ -15,8 +15,21 @@ pub(crate) struct CapturedEntry {
     pub(crate) name: Vec<u16>,
     pub(crate) kind: Vec<u16>,
     pub(crate) target: Option<Vec<u16>>,
+    pub(crate) link_access: Option<LinkAccess>,
 }
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct LinkAccess {
+    pub(crate) maximum_access: u32,
+    pub(crate) system_security_status: u32,
+}
+/// Selected immutable link metadata. No guest handle refers to a host HANDLE.
 #[derive(Debug)]
+pub struct SymbolicLink {
+    pub(crate) path: Vec<u16>,
+    pub(crate) target: Vec<u16>,
+    access: LinkAccess,
+}
+#[derive(Debug, Clone)]
 pub(crate) struct SelectedDirectory {
     pub(crate) path: Vec<u16>,
     pub(crate) maximum_access: u32,
@@ -28,6 +41,11 @@ pub(crate) struct SelectedDirectory {
 struct Entry {
     captured: CapturedEntry,
     child: Option<Arc<Directory>>,
+    link: Option<Arc<SymbolicLink>>,
+}
+enum SelectedObject {
+    Directory(Arc<Directory>),
+    Link(Arc<SymbolicLink>),
 }
 /// Guest-owned immutable directory metadata, independent of native HANDLEs.
 #[derive(Debug)]
@@ -92,6 +110,14 @@ impl Namespace {
                         .as_ref()
                         .is_some_and(|t| t.len() > MAX_UNITS || t.contains(&0))
                     || e.target.is_some() && !is(&e.kind, "SymbolicLink")
+                    || e.link_access.is_some_and(|a| {
+                        e.target.is_none()
+                            || a.maximum_access & !0x000F_0001 != 0
+                            || !matches!(
+                                a.system_security_status,
+                                0 | STATUS_PRIVILEGE_NOT_HELD | STATUS_ACCESS_DENIED
+                            )
+                    })
                 {
                     return Err(invalid(
                         "NT directory entry exceeds its name/type/target bounds",
@@ -108,12 +134,29 @@ impl Namespace {
                 if count > MAX_ENTRIES || bytes > MAX_TOTAL_BYTES {
                     return Err(invalid("NT directory aggregate exceeds bounds"));
                 }
+                let link = e.link_access.map(|access| {
+                    let mut path = s.path.clone();
+                    if path.len() != 1 {
+                        path.push(b'\\' as u16);
+                    }
+                    path.extend_from_slice(&e.name);
+                    Arc::new(SymbolicLink {
+                        path,
+                        target: e
+                            .target
+                            .as_ref()
+                            .expect("validated selected target")
+                            .clone(),
+                        access,
+                    })
+                });
                 if entries
                     .insert(
                         fold(&upcase, &e.name),
                         Entry {
                             captured: e,
                             child: None,
+                            link,
                         },
                     )
                     .is_some()
@@ -180,6 +223,29 @@ impl Namespace {
         name: &[u16],
         flags: u32,
     ) -> Result<Arc<Directory>, LookupError> {
+        match self.lookup_object(root, name, flags, false)? {
+            SelectedObject::Directory(d) => Ok(d),
+            SelectedObject::Link(_) => unreachable!("directory lookup"),
+        }
+    }
+    pub(crate) fn lookup_link(
+        &self,
+        root: Option<Arc<Directory>>,
+        name: &[u16],
+        flags: u32,
+    ) -> Result<Arc<SymbolicLink>, LookupError> {
+        match self.lookup_object(root, name, flags, true)? {
+            SelectedObject::Link(l) => Ok(l),
+            SelectedObject::Directory(_) => unreachable!("link lookup"),
+        }
+    }
+    fn lookup_object(
+        &self,
+        root: Option<Arc<Directory>>,
+        name: &[u16],
+        flags: u32,
+        link: bool,
+    ) -> Result<SelectedObject, LookupError> {
         let (mut dir, path) = if let Some(root) = root {
             if name.first() == Some(&(b'\\' as u16)) {
                 return Err(LookupError::Status(STATUS_OBJECT_PATH_SYNTAX_BAD));
@@ -195,7 +261,11 @@ impl Namespace {
             )
         };
         if path.is_empty() {
-            return Ok(dir);
+            return if link {
+                Err(LookupError::Status(STATUS_OBJECT_TYPE_MISMATCH))
+            } else {
+                Ok(SelectedObject::Directory(dir))
+            };
         }
         let mut parts = path.split(|&u| u == b'\\' as u16).peekable();
         while let Some(part) = parts.next() {
@@ -214,8 +284,18 @@ impl Namespace {
                     STATUS_OBJECT_NAME_NOT_FOUND
                 }))?;
             if is(&entry.captured.kind, "Directory") {
+                if link && parts.peek().is_none() {
+                    return Err(LookupError::Status(STATUS_OBJECT_TYPE_MISMATCH));
+                }
                 dir = entry.child.as_ref().ok_or(LookupError::Unselected)?.clone();
             } else if is(&entry.captured.kind, "SymbolicLink") {
+                if link && parts.peek().is_none() {
+                    return entry
+                        .link
+                        .clone()
+                        .map(SelectedObject::Link)
+                        .ok_or(LookupError::Unselected);
+                }
                 if flags & 0x1000 != 0 {
                     return Err(LookupError::Status(STATUS_REPARSE_POINT_ENCOUNTERED));
                 }
@@ -235,7 +315,40 @@ impl Namespace {
                 return Err(LookupError::Status(STATUS_OBJECT_TYPE_MISMATCH));
             }
         }
-        Ok(dir)
+        Ok(SelectedObject::Directory(dir))
+    }
+}
+impl SymbolicLink {
+    pub(crate) fn grant(&self, access: u32, duplicate: bool) -> Result<u32, u32> {
+        let mut requested = access & 0x0DFF_FFFF;
+        if duplicate {
+            requested &= !0x0010_0000;
+        }
+        for (generic, specific) in [
+            (0x8000_0000, 0x0002_0001),
+            (0x4000_0000, 0x0002_0000),
+            (0x2000_0000, 0x0002_0001),
+            (0x1000_0000, 0x000F_0001),
+        ] {
+            if access & generic != 0 {
+                requested |= specific;
+            }
+        }
+        if requested & !(0x000F_0001 | 0x0100_0000) != 0
+            || requested & 0x000F_0001 & !self.access.maximum_access != 0
+        {
+            return Err(STATUS_ACCESS_DENIED);
+        }
+        if requested & 0x0100_0000 != 0 && self.access.system_security_status != 0 {
+            return Err(self.access.system_security_status);
+        }
+        if !duplicate && access & 0x0200_0000 != 0 {
+            requested |= self.access.maximum_access;
+        }
+        if !duplicate && requested == 0 {
+            return Err(STATUS_ACCESS_DENIED);
+        }
+        Ok(requested)
     }
 }
 impl Directory {
@@ -245,7 +358,9 @@ impl Directory {
     pub(crate) fn grant(&self, access: u32, duplicate: bool) -> Result<u32, u32> {
         let mut requested = access & 0x0DFF_FFFF;
         if duplicate {
-            requested &= !0x0010_0000;
+            // The independent directory control strips unassigned low
+            // specific rights as well as SYNCHRONIZE/MAXIMUM_ALLOWED.
+            requested &= 0x010F_000F;
         }
         for (generic, specific) in [
             (0x8000_0000, 0x0002_0003),

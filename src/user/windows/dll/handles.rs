@@ -103,7 +103,10 @@ fn duplicate(c: &mut Ctx) -> ApiResult {
     if let Err(error) = process_handle(c, from) {
         return c.fail(error, 0);
     }
-    if matches!(c.p.objects.get(handle), Some(Object::Directory(_))) {
+    if matches!(
+        c.p.objects.get(handle),
+        Some(Object::Directory(_) | Object::SymbolicLink(_))
+    ) {
         return duplicate_directory(c, handle, to, out, desired, inherit, options);
     }
     if options & 1 != 0 && c.p.objects.flags(handle).is_some_and(|f| f & 2 != 0) {
@@ -293,7 +296,7 @@ fn duplicate_directory(
     // The measured kernel rejects unknown desired-access bits before honoring
     // CLOSE_SOURCE. Authorization/privilege failures occur after that point.
     if options & 2 == 0
-        && desired & !(0xF000_0000 | 0x0200_0000 | 0x0100_0000 | 0x0010_0000 | 0x000F_000F) != 0
+        && desired & !(0xF000_0000 | 0x0200_0000 | 0x0100_0000 | 0x0010_0000 | 0x000F_FFFF) != 0
     {
         if c.psize() == 4 {
             if let Some(f) = fault {
@@ -324,13 +327,14 @@ fn duplicate_directory(
         c.p.objects
             .access(handle)
             .expect("selected directory grant");
-    let Some(Object::Directory(directory)) = c.p.objects.obj(id) else {
-        unreachable!("selected directory object")
-    };
     let grant = if options & 2 != 0 {
         Ok(original)
     } else {
-        directory.grant(desired, true)
+        match c.p.objects.obj(id) {
+            Some(Object::Directory(d)) => d.grant(desired, true),
+            Some(Object::SymbolicLink(l)) => l.grant(desired, true),
+            _ => unreachable!("selected namespace resource"),
+        }
     };
     // Protected native directory sources remain live, while duplication and
     // SAME_ATTRIBUTES still succeed. The flag does not deny the operation.

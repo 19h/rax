@@ -1,4 +1,4 @@
-//! Snapshot-backed NtOpenDirectoryObject with measured native/WoW64 capture order.
+//! Snapshot-backed directory/link opens with measured native/WoW64 capture order.
 use super::query::{guard_result, probe_write};
 use crate::user::windows::arch::WinArch;
 use crate::user::windows::hle::{ApiErr, ApiResult, Ctx, Flow};
@@ -137,7 +137,7 @@ fn root(c: &Ctx, handle: u64, absolute: bool) -> Checked<Arc<Directory>> {
         _ => status(STATUS_OBJECT_TYPE_MISMATCH),
     }
 }
-fn open_object(c: &mut Ctx, access: u32, attrs: Option<Attributes>) -> Checked<u32> {
+fn open_object(c: &mut Ctx, access: u32, attrs: Option<Attributes>, link: bool) -> Checked<u32> {
     let Some(attrs) = attrs else {
         return status(STATUS_INVALID_PARAMETER);
     };
@@ -177,11 +177,44 @@ fn open_object(c: &mut Ctx, access: u32, attrs: Option<Attributes>) -> Checked<u
         .chunks_exact(2)
         .map(|b| u16::from_le_bytes([b[0], b[1]]))
         .collect();
-    let root = if attrs.root == 0 {
+    // An empty counted name opens the typed root object itself, including a
+    // symbolic-link root. Nonempty link-root traversal remains a type error.
+    let selected_link = if link && units.is_empty() {
+        match c.p.objects.get(attrs.root) {
+            Some(Object::SymbolicLink(l)) => Some(l.clone()),
+            _ => None,
+        }
+    } else {
+        None
+    };
+    let root = if attrs.root == 0 || selected_link.is_some() {
         None
     } else {
         Some(root(c, attrs.root, units.first() == Some(&(b'\\' as u16)))?)
     };
+    if link {
+        let resource = match selected_link
+            .map(Ok)
+            .unwrap_or_else(|| c.p.object_namespace.lookup_link(root, &units, attrs.flags))
+        {
+            Ok(l) => l,
+            Err(LookupError::Status(s)) => return status(s),
+            Err(LookupError::Unselected) => {
+                return Err(c
+                    .unsupported("NT link outside selected installed namespace")
+                    .into());
+            }
+        };
+        if attrs.flags & 0x120 != 0 {
+            return status(STATUS_INVALID_PARAMETER);
+        }
+        let grant = resource.grant(access, false).map_err(Failure::Status)?;
+        return c
+            .p
+            .objects
+            .open_symbolic_link(resource, attrs.flags & 2 != 0, grant)
+            .ok_or(Failure::Status(STATUS_INSUFFICIENT_RESOURCES));
+    }
     let directory = match c.p.object_namespace.lookup(root, &units, attrs.flags) {
         Ok(d) => d,
         Err(LookupError::Status(s)) => return status(s),
@@ -214,6 +247,7 @@ fn wow_redirect_probe(c: &mut Ctx, attrs: &Option<Attributes>) -> Checked<()> {
     if attrs.root != 0 {
         let root_bytes = match c.p.objects.get(attrs.root) {
             Some(Object::Directory(d)) => d.path.len() * 2,
+            Some(Object::SymbolicLink(l)) => l.path.len() * 2,
             // Native pseudo process/thread objects have an empty queried name.
             None if attrs.root == c.arch().ptr(u64::MAX)
                 || attrs.root == c.arch().ptr(u64::MAX - 1) =>
@@ -290,6 +324,12 @@ fn publish(c: &mut Ctx, out: u64, result: Checked<u32>) -> ApiResult {
     Flow::ret(status.into())
 }
 pub(super) fn open(c: &mut Ctx) -> ApiResult {
+    open_selected(c, false)
+}
+pub(super) fn open_link(c: &mut Ctx) -> ApiResult {
+    open_selected(c, true)
+}
+fn open_selected(c: &mut Ctx, link: bool) -> ApiResult {
     let (out, access, address) = (c.ptr(0)?, c.u32(1)?, c.ptr(2)?);
     let wow = c.arch() == WinArch::X86;
     if !wow {
@@ -317,6 +357,6 @@ pub(super) fn open(c: &mut Ctx) -> ApiResult {
             return finish(c, status(STATUS_ACCESS_VIOLATION));
         }
     }
-    let result = open_object(c, access, attrs);
+    let result = open_object(c, access, attrs, link);
     publish(c, out, result)
 }

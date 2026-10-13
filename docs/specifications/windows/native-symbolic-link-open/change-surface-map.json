@@ -1,0 +1,18 @@
+{
+  "plugin-lifecycle": "unaffected: no IDA lifecycle source change; guest process startup changes inside RAX",
+  "UI-state": "unaffected: no Qt/widget/copy contract change",
+  "conversation-lane": "unaffected: no agent or history source change",
+  "agent-backend": "unaffected: no native/ACP request or cancellation contract change",
+  "prompt-context": "unaffected: no embedded prompt/context change",
+  "tool-schema": "schema unchanged; process diagnostic boundary advances; nine adapter/factory/header/consumer files match current root",
+  "permission-mutation": "guest grants/lifetimes affected; fixed host metadata acquisition only; existing native-runtime permission gate unchanged",
+  "main-thread": "unaffected: guest-only execution and Win32 acquisition; no IDA/Qt API added",
+  "mesh-MCP": "unaffected: existing tool schema/discovery and transport paths; manifest checks pass",
+  "transport-crypto": "unaffected: no transport or cryptographic implementation change",
+  "persistence": "guest in-memory object/handle ownership affected; no persisted schema change",
+  "SDK-ABI": "public Rust Object gains SymbolicLink; opaque C API1.11.0 and Assist layouts unchanged by this group",
+  "optional-engines": "RAX Windows services affected; Z3/Frida/debugger integration defaults and dependency pins unchanged",
+  "update-release": "engineering records/gitlink affected; no archive layout/default/ABI-floor change",
+  "targets-platforms": "shared replay and core/CAPI compile on Windows/macOS/Linux; installed selector is Windows-only; current owning archives/consumers pass with scoped frozen roots",
+  "tests-docs": "15 independent native families, all131944 row replays, installed leaf, lifecycle tests, provenance checkers and engineering records"
+}

@@ -14,6 +14,7 @@ mod object_create;
 mod process_query;
 mod query;
 mod registry;
+mod symbolic_link;
 mod timers;
 mod topology;
 mod trace;
@@ -37,6 +38,18 @@ pub(super) static EXPORTS: &[Export] = &[
         Stdcall,
         &[Ptr, I32, Ptr],
         directory::open,
+    ),
+    Export::func(
+        "NtOpenSymbolicLinkObject",
+        Stdcall,
+        &[Ptr, I32, Ptr],
+        directory::open_link,
+    ),
+    Export::func(
+        "NtQuerySymbolicLinkObject",
+        Stdcall,
+        &[Ptr, Ptr, Ptr],
+        symbolic_link::query,
     ),
     Export::func(
         "NtAllocateVirtualMemory",

@@ -1,0 +1,29 @@
+[
+  {
+    "id": "A1",
+    "assumption": "Open/query symbolic-link behavior must be established on the current installed Windows10.0.29683.1000 before implementation.",
+    "basis": "Ordinary unchanged observer reaches NtOpenSymbolicLinkObject0x138.",
+    "dependent-result": "Guest service/object representation.",
+    "stress-test": "Native/WoW64 pointers, aliases, guards, rights and selected host target changes.",
+    "falsification-probe": "Fresh or mature native capture differs from proposed semantics.",
+    "status": "confirmed: two complete fresh installed-native captures and 131944 rows from 61 actual producers; 17/17/18 focused tests pass; the additional combined-fault capture exposed and verified the WoW64 kernel-guard consumption correction"
+  },
+  {
+    "id": "A2",
+    "assumption": "Existing readonly KnownDllPath targets can supply guest-owned link metadata without retaining host handles.",
+    "basis": "Published directory selector captures those targets on the same installed host.",
+    "dependent-result": "Immutable SymbolicLink resource.",
+    "stress-test": "Link target change, missing target, relative root and duplication/close lifetime.",
+    "falsification-probe": "Reached native operation needs state absent from captured snapshot.",
+    "status": "confirmed within the selected immutable snapshot: Arc/alias/catalog-drop/final-drain replay passes on all three hosts and Windows installed-leaf acquisition passes; target changes after selection are deliberately outside this snapshot"
+  },
+  {
+    "id": "A3",
+    "assumption": "The measured wrapper semantics apply to Windows10.0.29683.1000; other installed builds are unknown until native replay is repeated.",
+    "basis": "Current actual kernel and native DLL identities are recorded, with ABI differences captured independently.",
+    "dependent-result": "Claims about native capture and WoW64 ordering.",
+    "stress-test": "Run the same sources on a different kernel/native DLL revision.",
+    "falsification-probe": "Any changed status, bytes or guard consumption for an identical input partition.",
+    "status": "retained; limits cross-version behavioral claims"
+  }
+]

@@ -227,6 +227,7 @@ fn namespace_for_system_security(system_security_status: u32) -> Namespace {
                     .iter()
                     .filter(|e| e["directory"] == ordinal)
                     .map(|e| CapturedEntry {
+                        link_access: None,
                         name: units(e["name"]),
                         kind: units(e["type"]),
                         target: links
