@@ -1,0 +1,150 @@
+host width=8 info=24
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9BFA0000 after=0 status=00000000
+round=0 warmup=1
+call label=free-before-close-assign thread=FFFFFFFFFFFFFFFE action=0 owner=E4 input-slot=1 output-slot=1EA9C1D0000 before=0 after=1EA9C1D0000 status=00000000
+map label=free-before-close-active slot=1EA9C1D0000 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9C1D0000 after=0 status=00000000
+map label=free-before-close-released slot=1EA9C1D0000 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=free-before-close handle=E4 ok=1
+map label=free-before-close-final slot=1EA9C1D0000 result=48 base=1EA9C1D0000 allocation=0 size=7C09C33A0000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=active-close-assign thread=FFFFFFFFFFFFFFFE action=0 owner=E4 input-slot=0 output-slot=1EA9C1D0000 before=0 after=1EA9C1D0000 status=00000000
+close label=active-close handle=E4 ok=1
+map label=active-close-retained slot=1EA9C1D0000 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9C1D0000 after=0 status=00000000
+map label=active-close-final slot=1EA9C1D0000 result=48 base=1EA9C1D0000 allocation=0 size=7C09C33A0000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=zero-grant thread=FFFFFFFFFFFFFFFE action=0 owner=E8 input-slot=0 output-slot=0 before=0 after=0 status=C0000022
+close label=zero-grant-alias handle=E8 ok=1
+call label=tagged-owner thread=FFFFFFFFFFFFFFFE action=0 owner=E7 input-slot=FFFFFFFFFFFFFFFF output-slot=1EA9C1D0000 before=0 after=1EA9C1D0000 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9C1D0000 after=0 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9BFA0000 after=0 status=00000000
+call label=worker-self-assign thread=FFFFFFFFFFFFFFFE action=0 owner=E4 input-slot=0 output-slot=1EA9C1D0000 before=0 after=1EA9C1D0000 status=00000000
+worker-ready index=0 binding=1EA9C1D0000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9BFA0000 after=0 status=00000000
+call label=worker-self-assign thread=FFFFFFFFFFFFFFFE action=0 owner=E4 input-slot=0 output-slot=1EA9C1D0040 before=0 after=1EA9C1D0040 status=00000000
+worker-ready index=1 binding=1EA9C1D0040
+call label=multi-main thread=FFFFFFFFFFFFFFFE action=0 owner=E4 input-slot=0 output-slot=1EA9C1D0080 before=0 after=1EA9C1D0080 status=00000000
+query thread=F0 status=C00000BB returned=0 slot=0
+query thread=F0 status=C00000BB returned=0 slot=0
+call label=multi-thread0 thread=F0 action=0 owner=E4 input-slot=0 output-slot=0 before=0 after=0 status=C00000BB
+query thread=108 status=C00000BB returned=0 slot=0
+query thread=108 status=C00000BB returned=0 slot=0
+call label=multi-thread1 thread=108 action=0 owner=E4 input-slot=0 output-slot=0 before=0 after=0 status=C00000BB
+map label=multi-main slot=1EA9C1D0080 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+map label=multi-thread0 slot=1EA9C1D0000 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+map label=multi-thread1 slot=1EA9C1D0040 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9C1D0080 after=0 status=00000000
+call label=multi-reassign thread=FFFFFFFFFFFFFFFE action=0 owner=E4 input-slot=0 output-slot=1EA9C1D0080 before=0 after=1EA9C1D0080 status=00000000
+map label=multi-reassigned-bytes slot=1EA9C1D0080 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=multi-final-handle handle=E4 ok=1
+map label=multi-after-close slot=1EA9C1D0080 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9C1D0080 after=0 status=00000000
+worker-exit index=0 code=77
+map label=multi-one-binding slot=1EA9C1D0080 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=worker handle=F0 ok=1
+close label=ready handle=E8 ok=1
+close label=stop handle=EC ok=1
+worker-exit index=1 code=77
+map label=multi-no-binding slot=1EA9C1D0080 result=48 base=1EA9C1D0000 allocation=0 size=7C09C33A0000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+close label=worker handle=108 ok=1
+close label=ready handle=100 ok=1
+close label=stop handle=104 ok=1
+round-complete=0 exact-handle-set=1 before=68 after=68 final-slot=0
+round=1 warmup=0
+call label=free-before-close-assign thread=FFFFFFFFFFFFFFFE action=0 owner=104 input-slot=1 output-slot=1EA9C1D0000 before=0 after=1EA9C1D0000 status=00000000
+map label=free-before-close-active slot=1EA9C1D0000 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9C1D0000 after=0 status=00000000
+map label=free-before-close-released slot=1EA9C1D0000 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=free-before-close handle=104 ok=1
+map label=free-before-close-final slot=1EA9C1D0000 result=48 base=1EA9C1D0000 allocation=0 size=7C09C33A0000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=active-close-assign thread=FFFFFFFFFFFFFFFE action=0 owner=104 input-slot=0 output-slot=1EA9C1D0000 before=0 after=1EA9C1D0000 status=00000000
+close label=active-close handle=104 ok=1
+map label=active-close-retained slot=1EA9C1D0000 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9C1D0000 after=0 status=00000000
+map label=active-close-final slot=1EA9C1D0000 result=48 base=1EA9C1D0000 allocation=0 size=7C09C33A0000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=zero-grant thread=FFFFFFFFFFFFFFFE action=0 owner=100 input-slot=0 output-slot=0 before=0 after=0 status=C0000022
+close label=zero-grant-alias handle=100 ok=1
+call label=tagged-owner thread=FFFFFFFFFFFFFFFE action=0 owner=107 input-slot=FFFFFFFFFFFFFFFF output-slot=1EA9C1D0000 before=0 after=1EA9C1D0000 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9C1D0000 after=0 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9BFA0000 after=0 status=00000000
+call label=worker-self-assign thread=FFFFFFFFFFFFFFFE action=0 owner=104 input-slot=0 output-slot=1EA9C1D0000 before=0 after=1EA9C1D0000 status=00000000
+worker-ready index=0 binding=1EA9C1D0000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9BFA0000 after=0 status=00000000
+call label=worker-self-assign thread=FFFFFFFFFFFFFFFE action=0 owner=104 input-slot=0 output-slot=1EA9C1D0040 before=0 after=1EA9C1D0040 status=00000000
+worker-ready index=1 binding=1EA9C1D0040
+call label=multi-main thread=FFFFFFFFFFFFFFFE action=0 owner=104 input-slot=0 output-slot=1EA9C1D0080 before=0 after=1EA9C1D0080 status=00000000
+query thread=10C status=C00000BB returned=0 slot=0
+query thread=10C status=C00000BB returned=0 slot=0
+call label=multi-thread0 thread=10C action=0 owner=104 input-slot=0 output-slot=0 before=0 after=0 status=C00000BB
+query thread=F4 status=C00000BB returned=0 slot=0
+query thread=F4 status=C00000BB returned=0 slot=0
+call label=multi-thread1 thread=F4 action=0 owner=104 input-slot=0 output-slot=0 before=0 after=0 status=C00000BB
+map label=multi-main slot=1EA9C1D0080 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+map label=multi-thread0 slot=1EA9C1D0000 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+map label=multi-thread1 slot=1EA9C1D0040 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9C1D0080 after=0 status=00000000
+call label=multi-reassign thread=FFFFFFFFFFFFFFFE action=0 owner=104 input-slot=0 output-slot=1EA9C1D0080 before=0 after=1EA9C1D0080 status=00000000
+map label=multi-reassigned-bytes slot=1EA9C1D0080 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=multi-final-handle handle=104 ok=1
+map label=multi-after-close slot=1EA9C1D0080 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9C1D0080 after=0 status=00000000
+worker-exit index=0 code=77
+map label=multi-one-binding slot=1EA9C1D0080 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=worker handle=10C ok=1
+close label=ready handle=100 ok=1
+close label=stop handle=108 ok=1
+worker-exit index=1 code=77
+map label=multi-no-binding slot=1EA9C1D0080 result=48 base=1EA9C1D0000 allocation=0 size=7C09C33A0000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+close label=worker handle=F4 ok=1
+close label=ready handle=E8 ok=1
+close label=stop handle=F0 ok=1
+round-complete=1 exact-handle-set=1 before=68 after=68 final-slot=0
+round=2 warmup=0
+call label=free-before-close-assign thread=FFFFFFFFFFFFFFFE action=0 owner=F0 input-slot=1 output-slot=1EA9C1D0000 before=0 after=1EA9C1D0000 status=00000000
+map label=free-before-close-active slot=1EA9C1D0000 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9C1D0000 after=0 status=00000000
+map label=free-before-close-released slot=1EA9C1D0000 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=free-before-close handle=F0 ok=1
+map label=free-before-close-final slot=1EA9C1D0000 result=48 base=1EA9C1D0000 allocation=0 size=7C09C33A0000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=active-close-assign thread=FFFFFFFFFFFFFFFE action=0 owner=F0 input-slot=0 output-slot=1EA9C1D0000 before=0 after=1EA9C1D0000 status=00000000
+close label=active-close handle=F0 ok=1
+map label=active-close-retained slot=1EA9C1D0000 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9C1D0000 after=0 status=00000000
+map label=active-close-final slot=1EA9C1D0000 result=48 base=1EA9C1D0000 allocation=0 size=7C09C33A0000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=zero-grant thread=FFFFFFFFFFFFFFFE action=0 owner=E8 input-slot=0 output-slot=0 before=0 after=0 status=C0000022
+close label=zero-grant-alias handle=E8 ok=1
+call label=tagged-owner thread=FFFFFFFFFFFFFFFE action=0 owner=F3 input-slot=FFFFFFFFFFFFFFFF output-slot=1EA9C1D0000 before=0 after=1EA9C1D0000 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9C1D0000 after=0 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9BFA0000 after=0 status=00000000
+call label=worker-self-assign thread=FFFFFFFFFFFFFFFE action=0 owner=F0 input-slot=0 output-slot=1EA9C1D0000 before=0 after=1EA9C1D0000 status=00000000
+worker-ready index=0 binding=1EA9C1D0000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9BFA0000 after=0 status=00000000
+call label=worker-self-assign thread=FFFFFFFFFFFFFFFE action=0 owner=F0 input-slot=0 output-slot=1EA9C1D0040 before=0 after=1EA9C1D0040 status=00000000
+worker-ready index=1 binding=1EA9C1D0040
+call label=multi-main thread=FFFFFFFFFFFFFFFE action=0 owner=F0 input-slot=0 output-slot=1EA9C1D0080 before=0 after=1EA9C1D0080 status=00000000
+query thread=F8 status=C00000BB returned=0 slot=0
+query thread=F8 status=C00000BB returned=0 slot=0
+call label=multi-thread0 thread=F8 action=0 owner=F0 input-slot=0 output-slot=0 before=0 after=0 status=C00000BB
+query thread=110 status=C00000BB returned=0 slot=0
+query thread=110 status=C00000BB returned=0 slot=0
+call label=multi-thread1 thread=110 action=0 owner=F0 input-slot=0 output-slot=0 before=0 after=0 status=C00000BB
+map label=multi-main slot=1EA9C1D0080 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+map label=multi-thread0 slot=1EA9C1D0000 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+map label=multi-thread1 slot=1EA9C1D0040 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9C1D0080 after=0 status=00000000
+call label=multi-reassign thread=FFFFFFFFFFFFFFFE action=0 owner=F0 input-slot=0 output-slot=1EA9C1D0080 before=0 after=1EA9C1D0080 status=00000000
+map label=multi-reassigned-bytes slot=1EA9C1D0080 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=multi-final-handle handle=F0 ok=1
+map label=multi-after-close slot=1EA9C1D0080 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=1EA9C1D0080 after=0 status=00000000
+worker-exit index=0 code=77
+map label=multi-one-binding slot=1EA9C1D0080 result=48 base=1EA9C1D0000 allocation=1EA9C1D0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=worker handle=F8 ok=1
+close label=ready handle=E8 ok=1
+close label=stop handle=F4 ok=1
+worker-exit index=1 code=77
+map label=multi-no-binding slot=1EA9C1D0080 result=48 base=1EA9C1D0000 allocation=0 size=7C09C33A0000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+close label=worker handle=110 ok=1
+close label=ready handle=100 ok=1
+close label=stop handle=10C ok=1
+round-complete=2 exact-handle-set=1 before=68 after=68 final-slot=0
+complete rounds=3 warmup-excluded=1

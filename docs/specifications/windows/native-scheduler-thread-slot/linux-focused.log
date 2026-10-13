@@ -1,0 +1,11 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.33s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 4 tests
+test user::windows::process::sched::tests::services_tests::scheduler_slot_tests::native_scheduler_slot_owns_mapping_until_last_handle_and_thread_reference_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::scheduler_slot_tests::native_scheduler_slot_pool_has_128_slots_commits_second_page_and_never_reaps_reused_addresses ... ok
+test user::windows::process::sched::tests::services_tests::scheduler_slot_tests::native_scheduler_slot_wow_copy_fault_preserves_hidden_binding_and_process_drain_reclaims_views ... ok
+test user::windows::process::sched::tests::services_tests::scheduler_slot_tests::replay::native_scheduler_slot_replays_all_39488_status_guard_output_and_binding_rows ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 7733 filtered out; finished in 4.43s
+

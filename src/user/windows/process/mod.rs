@@ -332,6 +332,10 @@ pub struct Proc {
 }
 
 impl Proc {
+    /// Reclaims only retired scheduler views with the same allocation identity.
+    pub(crate) fn reclaim_scheduler_views(&mut self) -> Result<(), super::memory::VmError> {
+        self.objects.reclaim_scheduler_views(&mut self.vm)
+    }
     /// A new thread identifier (multiples of 4, as Windows allocates
     /// client IDs from its handle table).
     pub fn alloc_tid(&mut self) -> u32 {

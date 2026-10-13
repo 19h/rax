@@ -1,4 +1,34 @@
-## Current increment: scheduler shared-data constructor (2026-10-13)
+## Current increment: scheduler shared-data thread slot (2026-10-13)
+
+NtSetInformationThread class57 binds the current thread to a guest-owned
+SchedulerSharedData resource. Native24B/WoW12B Action/owner/slot layouts preserve
+native full writable-probe and WoW length/read/kernel/copy ordering, including
+hidden binding after output-copy failure. Thread access0x20 and owner access0x1
+are required. Free ignores caller owner/slot; assignment validates the owner
+before bound/noncurrent NOT_SUPPORTED. Other actions retain measured failures.
+
+Each owner lazily reserves8192B MEM_MAPPED RW and commits4096B initially.
+Its128 lowest-free64B slots commit the second page as needed; the129th binding
+fails with C000009A. Free preserves bytes; assignment zeroes64B. Handles and
+thread bindings independently retain the owner; final release/exit/drain retire
+its view. Partial drain consumption is covered. Allocation identity prevents
+ABA reuse from clearing/freeing a replacement view. Explicit native unmap
+retains the cached returned address. No guest request calls host NT, and no
+unverified TEB offset or kernel counter/timing behavior is introduced.
+
+26 actual native producer identities,39488 original byte/status/guard/binding
+rows, two complete first-entry/true-LR cases and four-profile lifetime,66-worker,
+130-worker capacity and remote/unmap controls define this bounded increment.
+Four portable and five Windows focused tests include installed ARM64/WoW64
+leaves. Exact final full/owning counts, archive/source identities,25 controlled
+falsifications, assumptions and ordinary observer results are recorded in
+[thread-slot evidence](../../specifications/windows/native-scheduler-thread-slot/README.md).
+The frozen owning roots compile current scoped RAX sources and nine matching
+current C++ consumers; unrelated current-root/plugin/GUI/package claims remain
+excluded. C API1.11.0, Assist ABI, feature defaults and dependency pins are unchanged.
+Full ordinary guest exits remain unproven; next boundaries remain explicit.
+
+## Previous increment: scheduler shared-data constructor (2026-10-13)
 
 NtSetInformationProcess class 112 creates a distinct guest-owned
 SchedulerSharedData resource, grant 0x1/flags 0, for the current process after

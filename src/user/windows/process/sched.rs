@@ -249,6 +249,11 @@ fn shutdown(p: &mut Proc, code: u32) -> ExitStatus {
         }
     }
     let objects: Vec<_> = p.objects.drain().collect();
+    if let Err(error) = p.reclaim_scheduler_views() {
+        let message = format!("scheduler view cleanup failed: {error}");
+        p.fail(message.clone());
+        return ExitStatus::Internal(message);
+    }
     for object in objects {
         if let Err(error) = crate::user::windows::dll::finish_close(Some(object)) {
             let message = format!("process file cleanup failed with Win32 error {error}");

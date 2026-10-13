@@ -1,0 +1,18 @@
+{
+  "Plugin lifecycle": "Unaffected: no plugin install, IDB, form or callback changes; engine process/thread teardown now reclaims internal scheduler views.",
+  "UI state": "Unaffected: no Qt/widgets/theme/copy contract edits.",
+  "Conversation/lane": "Unaffected: no chat, transcript, fork, cancellation or action-lane changes.",
+  "Agent backend": "Unaffected: no native/ACP request/provider/model changes.",
+  "Prompt/context": "Unaffected: no embedded prompt or IDB context input changes.",
+  "Tool schema": "Unaffected: existing process execution/memory/thread outputs consume existing opaque engine state; no tool name/schema/manifest changes.",
+  "Permission/mutation": "Unaffected: no IDB mutation/capability/approval changes; captured helpers modify only task-owned child/process/thread handles.",
+  "Main-thread dispatch": "Unaffected: portable RAX process model touches no IDA/Hex-Rays/Qt APIs; no seam changes.",
+  "Mesh/MCP": "Unaffected: no identity, routing, mesh or transport changes. Scoped bridge/CLI builds still validate embedding.",
+  "Transport/crypto": "Unaffected: no wire format, peer auth, framing, crypto or settings keys.",
+  "Persistence": "Unaffected: scheduler owner, bindings and view ledger exist only within the emulated process; no durable schema/state.",
+  "SDK/ABI": "Affected internal public Rust Object SchedulerSharedData state and process lifecycle; C API1.11.0 opaque ABI/header and Assist ABI unchanged. Existing SDK/C++ drift/link consumers checked.",
+  "Optional engines": "Affected Windows userland RAX kernel-service model and all three guest ABIs; Z3/other engines unchanged. Native same-host installed DLL selection unchanged.",
+  "Update/release": "Unaffected: no versions, dependency pins, package layout, signing, consent or update workflow changes. Engineering records/gitlink publication only.",
+  "Targets/platforms": "Shared Rust source on macOS, Linux and Windows; focused/full, C API, all-target and integration checks. Windows additionally executes actual installed ARM64/WoW64 leaves. Frozen owning roots E2fc5b48 Unix/F386ed2a Windows compile current RAX inputs and nine current matching C++ consumers. Whole current-root plugin/GUI/package evidence excluded; physical x64 kernel and other builds unknown.",
+  "Tests/docs": "Affected independent native26-producer corpus, 39488-case replay, pool/ref/drain/ABA/copy-fault tests and installed-leaf tests. Source/capture checksums and controlled falsifications separate from ordinary observer evidence."
+}

@@ -53,10 +53,10 @@ fn checked(c: &mut Ctx) -> ApiResult {
     }
     // The native operation is output-only. Caller contents never influence
     // the owner, fixed grant1 or noninheritable handle flags.
-    let Some(id) =
-        c.p.objects
-            .try_create(Object::SchedulerSharedData { pid: c.p.pid })
-    else {
+    let Some(id) = c.p.objects.try_create(Object::SchedulerSharedData {
+        pid: c.p.pid,
+        data: Default::default(),
+    }) else {
         return Flow::ret(STATUS_INSUFFICIENT_RESOURCES.into());
     };
     let Some(handle) = c.p.objects.open_access(id, false, 1) else {

@@ -17,6 +17,8 @@ use std::time::Instant;
 
 mod directory;
 mod etw;
+mod scheduler;
+pub use scheduler::SchedulerData;
 mod wait_packets;
 mod wnf;
 pub use wait_packets::CompletionPacket;
@@ -207,6 +209,8 @@ pub enum Object {
     SchedulerSharedData {
         /// The guest process owning the scheduler-data identity.
         pid: u32,
+        /// Lazy mapped view and fixed slot occupancy.
+        data: SchedulerData,
     },
     /// A private immutable runtime registry key shared by opened handles.
     Key(std::sync::Arc<super::registry::Key>),
@@ -274,6 +278,8 @@ pub struct Objects {
     /// ETW process notification registration is independent of WNF.
     etw_event: Option<ObjId>,
     wnf_subscriptions: wnf::Subscriptions,
+    scheduler_bindings: BTreeMap<u32, (ObjId, u32)>,
+    retired_scheduler_views: Vec<super::memory::SchedulerView>,
 }
 
 fn name_key(name: &str) -> String {
@@ -398,6 +404,7 @@ impl Objects {
         if matches!(e.obj, Object::WaitCompletionPacket { .. }) {
             self.forget_wait_packet(id);
         }
+        self.retire_scheduler_object(&e.obj);
         Some(e.obj)
     }
 
@@ -546,6 +553,16 @@ impl Objects {
         self.wnf_event = None;
         self.etw_event = None;
         self.wnf_subscriptions.records.clear();
+        self.scheduler_bindings.clear();
+        // Queue all views eagerly: dropping a partially consumed Drain also
+        // removes its remaining objects, without running iterator map closures.
+        for entry in self.objs.values() {
+            if let Object::SchedulerSharedData { data, .. } = &entry.obj
+                && let Some(view) = &data.view
+            {
+                self.retired_scheduler_views.push(view.clone());
+            }
+        }
         self.objs.drain().map(|(_, entry)| entry.obj)
     }
 

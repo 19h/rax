@@ -81,6 +81,11 @@ fn enter(
     if let Some(rcx) = saved_rcx {
         t.cpu.set_gpr(1, rcx);
     }
+    if let Err(error) = p.reclaim_scheduler_views() {
+        return Some(Outcome::Fail(format!(
+            "scheduler view cleanup failed: {error}"
+        )));
+    }
     Some(match result {
         Ok(Flow::Ret(Value::Int(status))) => {
             write_value(&mut t.cpu, Value::Int(status));

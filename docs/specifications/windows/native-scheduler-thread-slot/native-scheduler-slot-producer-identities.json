@@ -1,0 +1,633 @@
+{
+  "captured-utc": "2026-10-13T03:58:57.192833+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "principal": "\"nt authority\\system\",\"S-1-5-18\"",
+  "python": "3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:57:41) [MSC v.1944 64 bit (ARM64)]",
+  "inspector-identity": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-scheduler-slot-producers.py",
+    "bytes": 2137,
+    "sha256": "d4870efe57ccdfee01a041664d4f883face72cfd1538bb65cf2ac89572b2c62c"
+  },
+  "native-libraries": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+      "machine": 332,
+      "characteristics": 8450
+    }
+  ],
+  "producers": [
+    {
+      "family": "probe-v2",
+      "profile": "arm64",
+      "source": "native-scheduler-thread-slot-probe-v2.cpp",
+      "log": "native-scheduler-thread-slot-probe-v2-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-probe-v2.cpp",
+        "bytes": 9988,
+        "sha256": "8bb325dfc3c007e0ffc49778dc57a0d90e39146bd4617b558dda09bb92ab74fc"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-probe-v2-arm64.exe",
+        "bytes": 164864,
+        "sha256": "5d315ae95a11e65aa38ad1f2557e7caa486a6aa2e37eaba9febbf254d15ff379",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-probe-v2-arm64.log",
+        "bytes": 7343968,
+        "sha256": "4b0aa1dc7f6174bf7a874be142ff63969dd61d2c0b3831e86efb0442e53d3543"
+      }
+    },
+    {
+      "family": "probe-v2",
+      "profile": "x64",
+      "source": "native-scheduler-thread-slot-probe-v2.cpp",
+      "log": "native-scheduler-thread-slot-probe-v2-x64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x64\\native-scheduler-thread-slot-probe-v2.cpp",
+        "bytes": 9988,
+        "sha256": "8bb325dfc3c007e0ffc49778dc57a0d90e39146bd4617b558dda09bb92ab74fc"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x64\\native-scheduler-thread-slot-probe-v2-x64.exe",
+        "bytes": 162816,
+        "sha256": "2a5bca6a64c57753497e8f0131cb1b3336dfff9e854c9f69bafedc5a0446f970",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x64\\native-scheduler-thread-slot-probe-v2-x64.log",
+        "bytes": 7348784,
+        "sha256": "48bf99db7bcc6ec29de244d00783abe60f285b838cf2f3fe3208eb35ee0a339d"
+      }
+    },
+    {
+      "family": "probe-v2",
+      "profile": "x86",
+      "source": "native-scheduler-thread-slot-probe-v2.cpp",
+      "log": "native-scheduler-thread-slot-probe-v2-x86.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86\\native-scheduler-thread-slot-probe-v2.cpp",
+        "bytes": 9988,
+        "sha256": "8bb325dfc3c007e0ffc49778dc57a0d90e39146bd4617b558dda09bb92ab74fc"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86\\native-scheduler-thread-slot-probe-v2-x86.exe",
+        "bytes": 132608,
+        "sha256": "8c4b42d95c20f2f7eb5d667a718bdf1f04aab48c1985025e4f5a6a44a09a4988",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86\\native-scheduler-thread-slot-probe-v2-x86.log",
+        "bytes": 7304488,
+        "sha256": "60e66ba418bef29263f3fc02052ccdfbd273804d5562e9cc604f58bdcb2ed761"
+      }
+    },
+    {
+      "family": "probe-v2",
+      "profile": "x86-laa",
+      "source": "native-scheduler-thread-slot-probe-v2.cpp",
+      "log": "native-scheduler-thread-slot-probe-v2-x86-laa.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86-laa\\native-scheduler-thread-slot-probe-v2.cpp",
+        "bytes": 9988,
+        "sha256": "8bb325dfc3c007e0ffc49778dc57a0d90e39146bd4617b558dda09bb92ab74fc"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86-laa\\native-scheduler-thread-slot-probe-v2-x86-laa.exe",
+        "bytes": 132608,
+        "sha256": "1544c1c4dc93535e3fda5190902246caef8866eb09693303ec6949a7857ca5d3",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86-laa\\native-scheduler-thread-slot-probe-v2-x86-laa.log",
+        "bytes": 7304488,
+        "sha256": "0bac2cc1f880d5ee06fa165a77b6707b92c5da3dd23d4f940451525fe2ce483d"
+      }
+    },
+    {
+      "family": "fresh-v2",
+      "profile": "arm64",
+      "source": "native-scheduler-thread-slot-fresh-v2.cpp",
+      "log": "native-scheduler-thread-slot-fresh-v2-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-fresh-v2.cpp",
+        "bytes": 12320,
+        "sha256": "22e56c6c20789e40ada7b8a3c5331cb8ad9f3edd9b2e233789f918d5272a609b"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-fresh-v2-arm64.exe",
+        "bytes": 168960,
+        "sha256": "6cc660e33b5533850265369c9b42344dcaaffdeeae9e5a8cc422b5f9c7c96c7b",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-fresh-v2-arm64.log",
+        "bytes": 3240,
+        "sha256": "fa00e83911ae657b02582914f2710f5dc3c40a48aac7f5b7ce781f3fe7ed9b7a"
+      }
+    },
+    {
+      "family": "sequence",
+      "profile": "arm64",
+      "source": "native-scheduler-thread-slot-sequence.cpp",
+      "log": "native-scheduler-thread-slot-sequence-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-sequence.cpp",
+        "bytes": 14325,
+        "sha256": "5bcfa6f6e55d377158884acd8cd28545a7d439ec706cc33c34bade42a11c0768"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-sequence-arm64.exe",
+        "bytes": 169472,
+        "sha256": "bd66a4e4758788b997bb43982fbe13e32d87c211a0eb47bcf9e6b1b1a701b1a6",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-sequence-arm64.log",
+        "bytes": 216203,
+        "sha256": "8aea9df73ee831423b9ea4e09d4838826e059ae1721011f877042989c53ced8d"
+      }
+    },
+    {
+      "family": "resources-v2",
+      "profile": "arm64",
+      "source": "native-scheduler-thread-slot-resources-v2.cpp",
+      "log": "native-scheduler-thread-slot-resources-v2-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-resources-v2.cpp",
+        "bytes": 8441,
+        "sha256": "84a8bdd61ab2221296a31ae766995aa196f32ddc58a4bf0015003d67175fdfa3"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-resources-v2-arm64.exe",
+        "bytes": 162816,
+        "sha256": "f6c04ef3ad1a729cd98210b3dc6bd4ef7a2faacde11d3245b285089394508f60",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-resources-v2-arm64.log",
+        "bytes": 20641,
+        "sha256": "94bdef275d382c0835afdee0448a2b66bd44aef86a6b8a75704d1762161e0b74"
+      }
+    },
+    {
+      "family": "resources-v2",
+      "profile": "x64",
+      "source": "native-scheduler-thread-slot-resources-v2.cpp",
+      "log": "native-scheduler-thread-slot-resources-v2-x64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x64\\native-scheduler-thread-slot-resources-v2.cpp",
+        "bytes": 8441,
+        "sha256": "84a8bdd61ab2221296a31ae766995aa196f32ddc58a4bf0015003d67175fdfa3"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x64\\native-scheduler-thread-slot-resources-v2-x64.exe",
+        "bytes": 160256,
+        "sha256": "26e332793a3c2fb5636e8dd78c539f42af5a75407d18ee5fdaa2e43ee1ec364f",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x64\\native-scheduler-thread-slot-resources-v2-x64.log",
+        "bytes": 20673,
+        "sha256": "a61ddd775efbc5ea4682d137609b86b567e58e60e0e307144b7388dc9ebf0896"
+      }
+    },
+    {
+      "family": "resources-v2",
+      "profile": "x86",
+      "source": "native-scheduler-thread-slot-resources-v2.cpp",
+      "log": "native-scheduler-thread-slot-resources-v2-x86.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86\\native-scheduler-thread-slot-resources-v2.cpp",
+        "bytes": 8441,
+        "sha256": "84a8bdd61ab2221296a31ae766995aa196f32ddc58a4bf0015003d67175fdfa3"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86\\native-scheduler-thread-slot-resources-v2-x86.exe",
+        "bytes": 130048,
+        "sha256": "2ccf5fb5aa890d838e13471df50c521a0b28fed6e6d4fcdf2b24902f9e42b065",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86\\native-scheduler-thread-slot-resources-v2-x86.log",
+        "bytes": 19756,
+        "sha256": "71934eabb2d4b9b6b0ade02ffff0af0156ddcec45b1672423f8bf851284daa52"
+      }
+    },
+    {
+      "family": "resources-v2",
+      "profile": "x86-laa",
+      "source": "native-scheduler-thread-slot-resources-v2.cpp",
+      "log": "native-scheduler-thread-slot-resources-v2-x86-laa.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86-laa\\native-scheduler-thread-slot-resources-v2.cpp",
+        "bytes": 8441,
+        "sha256": "84a8bdd61ab2221296a31ae766995aa196f32ddc58a4bf0015003d67175fdfa3"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86-laa\\native-scheduler-thread-slot-resources-v2-x86-laa.exe",
+        "bytes": 130048,
+        "sha256": "a76134e3baa17770f1504c78170b795bfd543664e00315a38652b7eea0fb78cf",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86-laa\\native-scheduler-thread-slot-resources-v2-x86-laa.log",
+        "bytes": 19773,
+        "sha256": "d93a814be86cbc6704e768d66f7b2480b458292aee33e3435001932a7f2f32de"
+      }
+    },
+    {
+      "family": "pool",
+      "profile": "arm64",
+      "source": "native-scheduler-thread-slot-pool.cpp",
+      "log": "native-scheduler-thread-slot-pool-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-pool.cpp",
+        "bytes": 8592,
+        "sha256": "3c955a39ca296cac398852e724cc51b654bbe3db429b7d821ef89b8f00455185"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-pool-arm64.exe",
+        "bytes": 163328,
+        "sha256": "b28e6d9d8899c4454894ea6be044c6f204091ed71bef0ee59cf18b8e6e314efd",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-pool-arm64.log",
+        "bytes": 237815,
+        "sha256": "c88cae7dd82bf072ec06c5beccafbbbf7165a77e147cfbd90ea67a7c5fd1bc3f"
+      }
+    },
+    {
+      "family": "pool",
+      "profile": "x64",
+      "source": "native-scheduler-thread-slot-pool.cpp",
+      "log": "native-scheduler-thread-slot-pool-x64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x64\\native-scheduler-thread-slot-pool.cpp",
+        "bytes": 8592,
+        "sha256": "3c955a39ca296cac398852e724cc51b654bbe3db429b7d821ef89b8f00455185"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x64\\native-scheduler-thread-slot-pool-x64.exe",
+        "bytes": 160768,
+        "sha256": "ab8b3a5e3c464f4360d0e26662485980051c28c338419c9ca7713af6087f484c",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x64\\native-scheduler-thread-slot-pool-x64.log",
+        "bytes": 237769,
+        "sha256": "7cd2f4129ee87079ad023226386239770d370cc39cada74b565c1484d90047ba"
+      }
+    },
+    {
+      "family": "pool",
+      "profile": "x86",
+      "source": "native-scheduler-thread-slot-pool.cpp",
+      "log": "native-scheduler-thread-slot-pool-x86.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86\\native-scheduler-thread-slot-pool.cpp",
+        "bytes": 8592,
+        "sha256": "3c955a39ca296cac398852e724cc51b654bbe3db429b7d821ef89b8f00455185"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86\\native-scheduler-thread-slot-pool-x86.exe",
+        "bytes": 131072,
+        "sha256": "c469d4c510873e0b5f8aeb4df9e181b89be742ee261ce2bc63518c36d088c3a8",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86\\native-scheduler-thread-slot-pool-x86.log",
+        "bytes": 227473,
+        "sha256": "c6b7c9723881ee517b1d63cb3a8100ff8807fdb5038eb83d2f0c6df3b12f1cb7"
+      }
+    },
+    {
+      "family": "pool",
+      "profile": "x86-laa",
+      "source": "native-scheduler-thread-slot-pool.cpp",
+      "log": "native-scheduler-thread-slot-pool-x86-laa.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86-laa\\native-scheduler-thread-slot-pool.cpp",
+        "bytes": 8592,
+        "sha256": "3c955a39ca296cac398852e724cc51b654bbe3db429b7d821ef89b8f00455185"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86-laa\\native-scheduler-thread-slot-pool-x86-laa.exe",
+        "bytes": 131072,
+        "sha256": "c794bb509d173ec91d3b1adaa4121334bb532e561d0c821e1a01ee7b3d89e954",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86-laa\\native-scheduler-thread-slot-pool-x86-laa.log",
+        "bytes": 227475,
+        "sha256": "3d65b28165216cee2d16b2ddc2b9a3e540de56791766a6847ebd9e29c4239bfd"
+      }
+    },
+    {
+      "family": "capacity",
+      "profile": "arm64",
+      "source": "native-scheduler-thread-slot-capacity.cpp",
+      "log": "native-scheduler-thread-slot-capacity-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-capacity.cpp",
+        "bytes": 8649,
+        "sha256": "570b9d4a3f8da03ae6c68e8850a5e7e2a4dfb36a3638d05256b7fcb03f040af9"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-capacity-arm64.exe",
+        "bytes": 163328,
+        "sha256": "2c2fe44c621e3f4efc3af70baaa6cd0068fb994cdca00a8ab1df0299ec60d65d",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-capacity-arm64.log",
+        "bytes": 324090,
+        "sha256": "5fdab57435a6666a7d8be6363ef0f0e925d175064795d9641889ef81f06d873c"
+      }
+    },
+    {
+      "family": "capacity",
+      "profile": "x64",
+      "source": "native-scheduler-thread-slot-capacity.cpp",
+      "log": "native-scheduler-thread-slot-capacity-x64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x64\\native-scheduler-thread-slot-capacity.cpp",
+        "bytes": 8649,
+        "sha256": "570b9d4a3f8da03ae6c68e8850a5e7e2a4dfb36a3638d05256b7fcb03f040af9"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x64\\native-scheduler-thread-slot-capacity-x64.exe",
+        "bytes": 160768,
+        "sha256": "ab877b0c40c4e1bb4bf52a197fd60e3b2456aa1e3bbd22c6108f5244493a0cfd",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x64\\native-scheduler-thread-slot-capacity-x64.log",
+        "bytes": 324144,
+        "sha256": "29d805240ba15f4b68d0fb0c1491b19022bbd14d2f99b3853a9240c724304aa5"
+      }
+    },
+    {
+      "family": "capacity",
+      "profile": "x86",
+      "source": "native-scheduler-thread-slot-capacity.cpp",
+      "log": "native-scheduler-thread-slot-capacity-x86.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86\\native-scheduler-thread-slot-capacity.cpp",
+        "bytes": 8649,
+        "sha256": "570b9d4a3f8da03ae6c68e8850a5e7e2a4dfb36a3638d05256b7fcb03f040af9"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86\\native-scheduler-thread-slot-capacity-x86.exe",
+        "bytes": 132096,
+        "sha256": "04c542d908d59063f3dd53a732ed5305b5ca357077815b4826cc78b3bcee9099",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86\\native-scheduler-thread-slot-capacity-x86.log",
+        "bytes": 309820,
+        "sha256": "947b1ccdcf20ffafa690541bd5ec9aaa3800ceae38685e22dac6d9f324108e67"
+      }
+    },
+    {
+      "family": "capacity",
+      "profile": "x86-laa",
+      "source": "native-scheduler-thread-slot-capacity.cpp",
+      "log": "native-scheduler-thread-slot-capacity-x86-laa.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86-laa\\native-scheduler-thread-slot-capacity.cpp",
+        "bytes": 8649,
+        "sha256": "570b9d4a3f8da03ae6c68e8850a5e7e2a4dfb36a3638d05256b7fcb03f040af9"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86-laa\\native-scheduler-thread-slot-capacity-x86-laa.exe",
+        "bytes": 132096,
+        "sha256": "d9d3341a0ac26ea0aa9eab422add7048103df0e4feb573b918fca3c12c4a48d6",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86-laa\\native-scheduler-thread-slot-capacity-x86-laa.log",
+        "bytes": 307046,
+        "sha256": "9a382ef55708a7e40111e2ba868060b6ae9912eddbf6b8a2ef9d029d1b6ffe73"
+      }
+    },
+    {
+      "family": "boundaries",
+      "profile": "arm64",
+      "source": "native-scheduler-thread-slot-boundaries.cpp",
+      "log": "native-scheduler-thread-slot-boundaries-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-boundaries.cpp",
+        "bytes": 9649,
+        "sha256": "e0d95cf4f12d18902e7f1d95046e68d48831e565fb41e521798bb152f7ea2431"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-boundaries-arm64.exe",
+        "bytes": 163840,
+        "sha256": "add575678ecfdcc14d987f02e185650384aaadcb6e39e0b7e916c7d8971d97f7",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-boundaries-arm64.log",
+        "bytes": 46414,
+        "sha256": "44798a75982ad697eca87c593cd33e13d143a95b246397bd91729e05dfb26c03"
+      }
+    },
+    {
+      "family": "boundaries",
+      "profile": "x64",
+      "source": "native-scheduler-thread-slot-boundaries.cpp",
+      "log": "native-scheduler-thread-slot-boundaries-x64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x64\\native-scheduler-thread-slot-boundaries.cpp",
+        "bytes": 9649,
+        "sha256": "e0d95cf4f12d18902e7f1d95046e68d48831e565fb41e521798bb152f7ea2431"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x64\\native-scheduler-thread-slot-boundaries-x64.exe",
+        "bytes": 161280,
+        "sha256": "0625dd038e7e3e9b9d9e0e9ad4f8dd6e129a2d0f207ae095ea12d79c89914229",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x64\\native-scheduler-thread-slot-boundaries-x64.log",
+        "bytes": 46677,
+        "sha256": "783ae79b4defd6fb4e4a49d7f883566170065657e00eb20120482e28573ba06c"
+      }
+    },
+    {
+      "family": "boundaries",
+      "profile": "x86",
+      "source": "native-scheduler-thread-slot-boundaries.cpp",
+      "log": "native-scheduler-thread-slot-boundaries-x86.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86\\native-scheduler-thread-slot-boundaries.cpp",
+        "bytes": 9649,
+        "sha256": "e0d95cf4f12d18902e7f1d95046e68d48831e565fb41e521798bb152f7ea2431"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86\\native-scheduler-thread-slot-boundaries-x86.exe",
+        "bytes": 132096,
+        "sha256": "6ea32018ff45878e332f071339b95c2bb12bc2c2a838edd90ad161145df7a7c1",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86\\native-scheduler-thread-slot-boundaries-x86.log",
+        "bytes": 44935,
+        "sha256": "de6d24c1563924312ce9fc74ab9513674e43ad5fcacff0ece03bf1ca9511db24"
+      }
+    },
+    {
+      "family": "boundaries",
+      "profile": "x86-laa",
+      "source": "native-scheduler-thread-slot-boundaries.cpp",
+      "log": "native-scheduler-thread-slot-boundaries-x86-laa.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86-laa\\native-scheduler-thread-slot-boundaries.cpp",
+        "bytes": 9649,
+        "sha256": "e0d95cf4f12d18902e7f1d95046e68d48831e565fb41e521798bb152f7ea2431"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86-laa\\native-scheduler-thread-slot-boundaries-x86-laa.exe",
+        "bytes": 132096,
+        "sha256": "cfb5d4ec54830b51ac6dfb776bb38a049513ae2914b02437e0f4641d3ed55999",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86-laa\\native-scheduler-thread-slot-boundaries-x86-laa.log",
+        "bytes": 44735,
+        "sha256": "b26e71d32b821d875167bfd743f856416716181fe28b65c3867aca0b97387e42"
+      }
+    },
+    {
+      "family": "boundaries-v2",
+      "profile": "arm64",
+      "source": "native-scheduler-thread-slot-boundaries-v2.cpp",
+      "log": "native-scheduler-thread-slot-boundaries-v2-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-boundaries-v2.cpp",
+        "bytes": 9701,
+        "sha256": "52a7a674f5514267df0c051114788f04959348779914ea4c2088403259fd8159"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-boundaries-v2-arm64.exe",
+        "bytes": 163840,
+        "sha256": "97a51c83c2c8cdbb66f83095e069aeeccba84ded983ff5c452714084ab2b33f4",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-arm64\\native-scheduler-thread-slot-boundaries-v2-arm64.log",
+        "bytes": 47008,
+        "sha256": "4e7f0e0f176d119176b8f4c05a66f8b4799b855e5edda546433c1c727093042d"
+      }
+    },
+    {
+      "family": "boundaries-v2",
+      "profile": "x64",
+      "source": "native-scheduler-thread-slot-boundaries-v2.cpp",
+      "log": "native-scheduler-thread-slot-boundaries-v2-x64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x64\\native-scheduler-thread-slot-boundaries-v2.cpp",
+        "bytes": 9701,
+        "sha256": "52a7a674f5514267df0c051114788f04959348779914ea4c2088403259fd8159"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x64\\native-scheduler-thread-slot-boundaries-v2-x64.exe",
+        "bytes": 161280,
+        "sha256": "211656842ba52e0ad53091c40b26ff2d4c0894b3e6f30234a09be401472b357d",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x64\\native-scheduler-thread-slot-boundaries-v2-x64.log",
+        "bytes": 47153,
+        "sha256": "4c65cf970683a120c79c3727f00fbe3ac3ec62864cd1323c3cb524c63d5ac1e2"
+      }
+    },
+    {
+      "family": "boundaries-v2",
+      "profile": "x86",
+      "source": "native-scheduler-thread-slot-boundaries-v2.cpp",
+      "log": "native-scheduler-thread-slot-boundaries-v2-x86.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86\\native-scheduler-thread-slot-boundaries-v2.cpp",
+        "bytes": 9701,
+        "sha256": "52a7a674f5514267df0c051114788f04959348779914ea4c2088403259fd8159"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86\\native-scheduler-thread-slot-boundaries-v2-x86.exe",
+        "bytes": 132096,
+        "sha256": "ecef448364059f8c3929805f40ceec4e6919c50e9345554f5df4619a49cf9327",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86\\native-scheduler-thread-slot-boundaries-v2-x86.log",
+        "bytes": 45391,
+        "sha256": "d6ffd63c7a2005c3c5525045c93a9a816fc91623a409f0a488ba207ad7106512"
+      }
+    },
+    {
+      "family": "boundaries-v2",
+      "profile": "x86-laa",
+      "source": "native-scheduler-thread-slot-boundaries-v2.cpp",
+      "log": "native-scheduler-thread-slot-boundaries-v2-x86-laa.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86-laa\\native-scheduler-thread-slot-boundaries-v2.cpp",
+        "bytes": 9701,
+        "sha256": "52a7a674f5514267df0c051114788f04959348779914ea4c2088403259fd8159"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86-laa\\native-scheduler-thread-slot-boundaries-v2-x86-laa.exe",
+        "bytes": 132096,
+        "sha256": "86e6a36b97fe0cd57cb8d04257af5ebf613ff1a4c32194116fdbe733eb66b4e8",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-thread-slot-x86-laa\\native-scheduler-thread-slot-boundaries-v2-x86-laa.log",
+        "bytes": 45486,
+        "sha256": "c356e228090cc36b18facd13e4a3e4cbb9d61b41af4de46ac7c8cc6a5e6a1ccb"
+      }
+    }
+  ]
+}

@@ -16,6 +16,7 @@ mod process_set;
 mod query;
 mod registry;
 mod symbolic_link;
+mod thread_set;
 mod timers;
 mod topology;
 mod trace;
@@ -203,6 +204,12 @@ pub(super) static EXPORTS: &[Export] = &[
         Stdcall,
         &[Ptr, I32, Ptr, I32],
         process_set::information,
+    ),
+    Export::func(
+        "NtSetInformationThread",
+        Stdcall,
+        &[Ptr, I32, Ptr, I32],
+        thread_set::information,
     ),
 ];
 fn status_error(c: &mut Ctx) -> ApiResult {

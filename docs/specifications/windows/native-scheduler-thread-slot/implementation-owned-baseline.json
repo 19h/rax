@@ -1,0 +1,95 @@
+{
+  "head": "d14ac2e943a403d5f4ef53598a2414a04e2f68e8",
+  "paths": [
+    {
+      "path": "src/user/windows/objects.rs",
+      "existing": true,
+      "sha256": "af24b9acff2ed3ff26cc707f18800a598c445fd61241fb6c2fbafcd80584fe57"
+    },
+    {
+      "path": "src/user/windows/objects/scheduler.rs",
+      "existing": false,
+      "sha256": null
+    },
+    {
+      "path": "src/user/windows/memory.rs",
+      "existing": true,
+      "sha256": "2259608f1f54d3d070fa50b9f491aecb48b26b9ab4fae97aea17e7238b0fc921"
+    },
+    {
+      "path": "src/user/windows/memory/scheduler.rs",
+      "existing": false,
+      "sha256": null
+    },
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "existing": true,
+      "sha256": "acb587e213af31013def2cd498ad40c6674b885c4d1aa3148b4b9be9b6ca40e9"
+    },
+    {
+      "path": "src/user/windows/dll/native/thread_set.rs",
+      "existing": false,
+      "sha256": null
+    },
+    {
+      "path": "src/user/windows/dll/native/process_set.rs",
+      "existing": true,
+      "sha256": "643f0353c032f65d2349562b2818ce94b930d80ad2abd8430877ce92d3e13990"
+    },
+    {
+      "path": "src/user/windows/process/mod.rs",
+      "existing": true,
+      "sha256": "7343385b2d407c58edd839d1c71626377d441a75e66241b40d8219eedac9b7a0"
+    },
+    {
+      "path": "src/user/windows/hle/dispatch.rs",
+      "existing": true,
+      "sha256": "5f16b34bd41ad8799b973da5b723be4855ae54b1b8a7c219315487214d48d2b6"
+    },
+    {
+      "path": "src/user/windows/process/services.rs",
+      "existing": true,
+      "sha256": "72f6ffc141e4bc42fd7171039be9ce2f55c2cbb56b4a5c88973d855c8b32560f"
+    },
+    {
+      "path": "src/user/windows/process/thread.rs",
+      "existing": true,
+      "sha256": "37c72833cabe4e082218884635b52f4598a16f3ee592a1a471c9eaa3fdff4ea2"
+    },
+    {
+      "path": "src/user/windows/process/sched.rs",
+      "existing": true,
+      "sha256": "e022c7fbbc4b412c32e7d13f2d6e1a75fdac6dda73ec2ec53f92749e803fbbb0"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "existing": true,
+      "sha256": "200be37dae28dd53d67fcd5c32aacf16001496e5d11828c66d6ea97345d1f46d"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/scheduler_slot_tests.rs",
+      "existing": false,
+      "sha256": null
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/scheduler_slot_replay_tests.rs",
+      "existing": false,
+      "sha256": null
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/scheduler_slot_leaf_tests.rs",
+      "existing": false,
+      "sha256": null
+    },
+    {
+      "path": "docs/architecture/user-mode/windows-services.md",
+      "existing": true,
+      "sha256": "d29b21ce6471791870ef14fe1c3f32a3d185f8a9f610ca573cffdcc051f5f070"
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "existing": true,
+      "sha256": "62e9281803e143b75604cd5a211936fad6647dd1195247aa70734faa56e79df1"
+    }
+  ]
+}

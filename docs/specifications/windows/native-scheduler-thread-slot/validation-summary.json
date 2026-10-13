@@ -1,0 +1,212 @@
+{
+  "baseline-rax": "d14ac2e943a403d5f4ef53598a2414a04e2f68e8",
+  "baseline-root": "c8e00ccdffafbbe84e52f3660e1b45a21fb13c7f",
+  "full-lib": {
+    "macos": [
+      [
+        7741,
+        0,
+        2
+      ]
+    ],
+    "linux": [
+      [
+        7735,
+        0,
+        2
+      ]
+    ],
+    "windows": [
+      [
+        7153,
+        5,
+        2
+      ]
+    ]
+  },
+  "windows-failures": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "windows-baseline-failures": "exactly unchanged",
+  "focused": {
+    "macos": [
+      [
+        4,
+        0,
+        0
+      ]
+    ],
+    "linux": [
+      [
+        4,
+        0,
+        0
+      ]
+    ],
+    "windows": [
+      [
+        5,
+        0,
+        0
+      ]
+    ]
+  },
+  "capi": {
+    "macos": [
+      [
+        168,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "linux": [
+      [
+        168,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "windows": [
+      [
+        168,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "integration": {
+    "macos": [
+      [
+        544,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "linux": [
+      [
+        544,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "windows": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        0,
+        0
+      ]
+    ]
+  },
+  "all-targets": {
+    "macos": 0,
+    "linux": 0,
+    "windows": 0
+  },
+  "owning": {
+    "macos-ctests": 7,
+    "macos-protected-static-text-scans": 2,
+    "linux-cpp-consumers": 5,
+    "windows-cpp-consumers": 5,
+    "rust-source-units": 104,
+    "actual-helper-source-units": 2,
+    "current-root-matching-cpp-consumers": 9,
+    "core-features": [],
+    "unix-root": "e2fc5b483be7cad2dae17d889690cc398973c5e8",
+    "windows-root": "f386ed2aeac29a701d32f28eb73c14003eb55f7a",
+    "archives": [
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\assist_rs.lib",
+        "bytes": 1138594058,
+        "sha256": "3b0c901191ecfe7c5369fd5a96e6cf55f234d2a771d908d3fc919ed596e74b12",
+        "members": 4673,
+        "structural-member-walk": "pass"
+      },
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\librax-e6c413934cad3a8f.rlib",
+        "bytes": 750752496,
+        "sha256": "de17a0c66e25715249c0c85e20341584dc18384a0c0b53cf58a29a65c9982330",
+        "members": 260,
+        "structural-member-walk": "pass"
+      }
+    ]
+  },
+  "observer": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-scheduler-slot-after-trace.rs",
+    "bytes": 11177,
+    "sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e",
+    "compiled-executable-path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-scheduler-slot-final-after-production-trace.exe",
+    "executable-bytes": 26228736,
+    "executable-sha256": "e44aefdc2b0858bb43d9450bf2ddbd1f620a2d4b442d9092f2a9a18e915762e3"
+  },
+  "ordinary": {
+    "before-turn": 115067,
+    "after-turn": 135983,
+    "delta-scheduler-calls": 20916,
+    "programs": 4,
+    "guest-exits": 0,
+    "three-program-frontier": {
+      "service": "NtOpenThreadToken",
+      "number": "0x24",
+      "instruction-pc": "0x180001260",
+      "stopped-thread-pc": "0x180001264",
+      "args": [
+        "-2",
+        "0x2001C",
+        "0",
+        "output-stack-pointer"
+      ]
+    },
+    "whoami-frontier": "NtTraceEvent 0x5E"
+  },
+  "full-current-root-plugin-gui-packages": "not claimed; scoped frozen embeddings only",
+  "format-check": 0,
+  "independent-replay-rows": 39488,
+  "native-producers": 26,
+  "fresh-complete-first-call-cases": 2,
+  "fresh-complete-sequence-cases": 2,
+  "controlled-falsifications": 25,
+  "post-suite-source-change": "only the recorded algorithm-complexity comment; all owning embeddings rebuilt and actual source/artifact hashes refreshed after it; no executable semantics changed",
+  "quality-gates": {
+    "QG1": "no normative claims",
+    "QG2": "assumption-register.json reviewed against captures/tests",
+    "QG3": "bounded class57 assignment/free group complete; overall ordinary-exit goal remains active",
+    "QG4": "native24B/WoW12B; 128*64B=8192B; 135983-115067=20916 calls",
+    "QG5": "copy-fault hidden side effects, eager partial drain, refcounts and stale unmap/ABA covered; unrelated five baseline failures explicitly retained",
+    "QG6": "26 actual native producer identities; PHNT primary snapshots; all source/artifact provenance checked",
+    "QG7": "bounded-findings.json records remaining ordinary frontier, build/profile limits, concurrent root scope and soft document size"
+  }
+}

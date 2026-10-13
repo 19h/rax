@@ -1,0 +1,447 @@
+host width=8 info=24
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6DE00000 after=0 status=00000000
+round=0 warmup=1
+call label=free-before-close-assign thread=FFFFFFFFFFFFFFFE action=0 owner=A4 input-slot=1 output-slot=24C6E030000 before=0 after=24C6E030000 status=00000000
+map label=free-before-close-active slot=24C6E030000 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030000 after=0 status=00000000
+map label=free-before-close-released slot=24C6E030000 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=free-before-close handle=A4 ok=1
+map label=free-before-close-final slot=24C6E030000 result=48 base=24C6E030000 allocation=0 size=7DA80B920000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=active-close-assign thread=FFFFFFFFFFFFFFFE action=0 owner=A4 input-slot=0 output-slot=24C6E030000 before=0 after=24C6E030000 status=00000000
+close label=active-close handle=A4 ok=1
+map label=active-close-retained slot=24C6E030000 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030000 after=0 status=00000000
+map label=active-close-final slot=24C6E030000 result=48 base=24C6E030000 allocation=0 size=7DA80B920000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=unmap-assign thread=FFFFFFFFFFFFFFFE action=0 owner=A4 input-slot=0 output-slot=24C6E030000 before=0 after=24C6E030000 status=00000000
+map label=unmap-next-page slot=24C6E031000 result=48 base=24C6E031000 allocation=24C6E030000 size=1000 state=00002000 type=00040000 protect=00000000 allocation-protect=00000004 bytes=unreadable
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030000 after=0 status=00000000
+unmap status=00000000 slot=24C6E030000
+map label=unmap-after slot=24C6E030000 result=48 base=24C6E030000 allocation=0 size=7DA80B920000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=unmap-reassign thread=FFFFFFFFFFFFFFFE action=0 owner=A4 input-slot=0 output-slot=24C6E030000 before=0 after=24C6E030000 status=00000000
+map label=unmap-after-reassign slot=24C6E030000 result=48 base=24C6E030000 allocation=0 size=7DA80B920000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030000 after=0 status=00000000
+close label=unmap-owner handle=A4 ok=1
+call label=zero-grant thread=FFFFFFFFFFFFFFFE action=0 owner=A8 input-slot=0 output-slot=0 before=0 after=0 status=C0000022
+close label=zero-grant-alias handle=A8 ok=1
+call label=tagged-owner thread=FFFFFFFFFFFFFFFE action=0 owner=A7 input-slot=FFFFFFFFFFFFFFFF output-slot=24C6E030000 before=0 after=24C6E030000 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030000 after=0 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6DE00000 after=0 status=00000000
+call label=worker-self-assign thread=FFFFFFFFFFFFFFFE action=0 owner=A4 input-slot=0 output-slot=24C6E030000 before=0 after=24C6E030000 status=00000000
+worker-ready index=0 binding=24C6E030000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6DE00000 after=0 status=00000000
+call label=worker-self-assign thread=FFFFFFFFFFFFFFFE action=0 owner=A4 input-slot=0 output-slot=24C6E030040 before=0 after=24C6E030040 status=00000000
+worker-ready index=1 binding=24C6E030040
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=0 owner=A4 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=0 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000008
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=0 owner=1234 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000008
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=0 owner=A8 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000024
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=0 owner=BC input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000024
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=0 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000024
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=1 owner=A4 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=1 owner=1234 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=1 owner=A8 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=1 owner=BC input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=1 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=2 owner=A4 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=2 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=2 owner=1234 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=2 owner=A8 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=2 owner=BC input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=2 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=3 owner=A4 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=3 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=3 owner=1234 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=3 owner=A8 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=3 owner=BC input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=3 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=4294967295 owner=A4 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=4294967295 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=4294967295 owner=1234 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=4294967295 owner=A8 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=4294967295 owner=BC input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=B0 action=4294967295 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+call label=multi-main thread=FFFFFFFFFFFFFFFE action=0 owner=A4 input-slot=0 output-slot=24C6E030080 before=0 after=24C6E030080 status=00000000
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=multi-thread0 thread=B0 action=0 owner=A4 input-slot=0 output-slot=0 before=0 after=0 status=C00000BB
+query thread=BC status=C00000BB returned=0 slot=0
+query thread=BC status=C00000BB returned=0 slot=0
+call label=multi-thread1 thread=BC action=0 owner=A4 input-slot=0 output-slot=0 before=0 after=0 status=C00000BB
+map label=multi-main slot=24C6E030080 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+map label=multi-thread0 slot=24C6E030000 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+map label=multi-thread1 slot=24C6E030040 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030080 after=0 status=00000000
+call label=multi-reassign thread=FFFFFFFFFFFFFFFE action=0 owner=A4 input-slot=0 output-slot=24C6E030080 before=0 after=24C6E030080 status=00000000
+map label=multi-reassigned-bytes slot=24C6E030080 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=multi-final-handle handle=A4 ok=1
+map label=multi-after-close slot=24C6E030080 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030080 after=0 status=00000000
+worker-exit index=0 code=77
+map label=multi-one-binding slot=24C6E030080 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=worker handle=B0 ok=1
+close label=ready handle=A8 ok=1
+close label=stop handle=AC ok=1
+worker-exit index=1 code=77
+map label=multi-no-binding slot=24C6E030080 result=48 base=24C6E030000 allocation=0 size=7DA80B920000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+close label=worker handle=BC ok=1
+close label=ready handle=B4 ok=1
+close label=stop handle=B8 ok=1
+round-complete=0 exact-handle-set=1 before=52 after=52 final-slot=0
+round=1 warmup=0
+call label=free-before-close-assign thread=FFFFFFFFFFFFFFFE action=0 owner=B8 input-slot=1 output-slot=24C6E030000 before=0 after=24C6E030000 status=00000000
+map label=free-before-close-active slot=24C6E030000 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030000 after=0 status=00000000
+map label=free-before-close-released slot=24C6E030000 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=free-before-close handle=B8 ok=1
+map label=free-before-close-final slot=24C6E030000 result=48 base=24C6E030000 allocation=0 size=7DA80B920000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=active-close-assign thread=FFFFFFFFFFFFFFFE action=0 owner=B8 input-slot=0 output-slot=24C6E030000 before=0 after=24C6E030000 status=00000000
+close label=active-close handle=B8 ok=1
+map label=active-close-retained slot=24C6E030000 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030000 after=0 status=00000000
+map label=active-close-final slot=24C6E030000 result=48 base=24C6E030000 allocation=0 size=7DA80B920000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=unmap-assign thread=FFFFFFFFFFFFFFFE action=0 owner=B8 input-slot=0 output-slot=24C6E030000 before=0 after=24C6E030000 status=00000000
+map label=unmap-next-page slot=24C6E031000 result=48 base=24C6E031000 allocation=24C6E030000 size=1000 state=00002000 type=00040000 protect=00000000 allocation-protect=00000004 bytes=unreadable
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030000 after=0 status=00000000
+unmap status=00000000 slot=24C6E030000
+map label=unmap-after slot=24C6E030000 result=48 base=24C6E030000 allocation=0 size=7DA80B920000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=unmap-reassign thread=FFFFFFFFFFFFFFFE action=0 owner=B8 input-slot=0 output-slot=24C6E030000 before=0 after=24C6E030000 status=00000000
+map label=unmap-after-reassign slot=24C6E030000 result=48 base=24C6E030000 allocation=0 size=7DA80B920000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030000 after=0 status=00000000
+close label=unmap-owner handle=B8 ok=1
+call label=zero-grant thread=FFFFFFFFFFFFFFFE action=0 owner=B4 input-slot=0 output-slot=0 before=0 after=0 status=C0000022
+close label=zero-grant-alias handle=B4 ok=1
+call label=tagged-owner thread=FFFFFFFFFFFFFFFE action=0 owner=BB input-slot=FFFFFFFFFFFFFFFF output-slot=24C6E030000 before=0 after=24C6E030000 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030000 after=0 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6DE00000 after=0 status=00000000
+call label=worker-self-assign thread=FFFFFFFFFFFFFFFE action=0 owner=B8 input-slot=0 output-slot=24C6E030000 before=0 after=24C6E030000 status=00000000
+worker-ready index=0 binding=24C6E030000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6DE00000 after=0 status=00000000
+call label=worker-self-assign thread=FFFFFFFFFFFFFFFE action=0 owner=B8 input-slot=0 output-slot=24C6E030040 before=0 after=24C6E030040 status=00000000
+worker-ready index=1 binding=24C6E030040
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=0 owner=B8 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=0 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000008
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=0 owner=1234 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000008
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=0 owner=B4 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000024
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=0 owner=B0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000024
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=0 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000024
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=1 owner=B8 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=1 owner=1234 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=1 owner=B4 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=1 owner=B0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=1 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=2 owner=B8 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=2 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=2 owner=1234 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=2 owner=B4 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=2 owner=B0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=2 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=3 owner=B8 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=3 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=3 owner=1234 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=3 owner=B4 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=3 owner=B0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=3 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=4294967295 owner=B8 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=4294967295 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=4294967295 owner=1234 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=4294967295 owner=B4 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=4294967295 owner=B0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=C0 action=4294967295 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+call label=multi-main thread=FFFFFFFFFFFFFFFE action=0 owner=B8 input-slot=0 output-slot=24C6E030080 before=0 after=24C6E030080 status=00000000
+query thread=C0 status=C00000BB returned=0 slot=0
+query thread=C0 status=C00000BB returned=0 slot=0
+call label=multi-thread0 thread=C0 action=0 owner=B8 input-slot=0 output-slot=0 before=0 after=0 status=C00000BB
+query thread=B0 status=C00000BB returned=0 slot=0
+query thread=B0 status=C00000BB returned=0 slot=0
+call label=multi-thread1 thread=B0 action=0 owner=B8 input-slot=0 output-slot=0 before=0 after=0 status=C00000BB
+map label=multi-main slot=24C6E030080 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+map label=multi-thread0 slot=24C6E030000 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+map label=multi-thread1 slot=24C6E030040 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030080 after=0 status=00000000
+call label=multi-reassign thread=FFFFFFFFFFFFFFFE action=0 owner=B8 input-slot=0 output-slot=24C6E030080 before=0 after=24C6E030080 status=00000000
+map label=multi-reassigned-bytes slot=24C6E030080 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=multi-final-handle handle=B8 ok=1
+map label=multi-after-close slot=24C6E030080 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030080 after=0 status=00000000
+worker-exit index=0 code=77
+map label=multi-one-binding slot=24C6E030080 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=worker handle=C0 ok=1
+close label=ready handle=B4 ok=1
+close label=stop handle=BC ok=1
+worker-exit index=1 code=77
+map label=multi-no-binding slot=24C6E030080 result=48 base=24C6E030000 allocation=0 size=7DA80B920000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+close label=worker handle=B0 ok=1
+close label=ready handle=AC ok=1
+close label=stop handle=A8 ok=1
+round-complete=1 exact-handle-set=1 before=52 after=52 final-slot=0
+round=2 warmup=0
+call label=free-before-close-assign thread=FFFFFFFFFFFFFFFE action=0 owner=A8 input-slot=1 output-slot=24C6E030000 before=0 after=24C6E030000 status=00000000
+map label=free-before-close-active slot=24C6E030000 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030000 after=0 status=00000000
+map label=free-before-close-released slot=24C6E030000 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=free-before-close handle=A8 ok=1
+map label=free-before-close-final slot=24C6E030000 result=48 base=24C6E030000 allocation=0 size=7DA80B920000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=active-close-assign thread=FFFFFFFFFFFFFFFE action=0 owner=A8 input-slot=0 output-slot=24C6E030000 before=0 after=24C6E030000 status=00000000
+close label=active-close handle=A8 ok=1
+map label=active-close-retained slot=24C6E030000 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030000 after=0 status=00000000
+map label=active-close-final slot=24C6E030000 result=48 base=24C6E030000 allocation=0 size=7DA80B920000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=unmap-assign thread=FFFFFFFFFFFFFFFE action=0 owner=A8 input-slot=0 output-slot=24C6E030000 before=0 after=24C6E030000 status=00000000
+map label=unmap-next-page slot=24C6E031000 result=48 base=24C6E031000 allocation=24C6E030000 size=1000 state=00002000 type=00040000 protect=00000000 allocation-protect=00000004 bytes=unreadable
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030000 after=0 status=00000000
+unmap status=00000000 slot=24C6E030000
+map label=unmap-after slot=24C6E030000 result=48 base=24C6E030000 allocation=0 size=7DA80B920000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=unmap-reassign thread=FFFFFFFFFFFFFFFE action=0 owner=A8 input-slot=0 output-slot=24C6E030000 before=0 after=24C6E030000 status=00000000
+map label=unmap-after-reassign slot=24C6E030000 result=48 base=24C6E030000 allocation=0 size=7DA80B920000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030000 after=0 status=00000000
+close label=unmap-owner handle=A8 ok=1
+call label=zero-grant thread=FFFFFFFFFFFFFFFE action=0 owner=AC input-slot=0 output-slot=0 before=0 after=0 status=C0000022
+close label=zero-grant-alias handle=AC ok=1
+call label=tagged-owner thread=FFFFFFFFFFFFFFFE action=0 owner=AB input-slot=FFFFFFFFFFFFFFFF output-slot=24C6E030000 before=0 after=24C6E030000 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030000 after=0 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6DE00000 after=0 status=00000000
+call label=worker-self-assign thread=FFFFFFFFFFFFFFFE action=0 owner=A8 input-slot=0 output-slot=24C6E030000 before=0 after=24C6E030000 status=00000000
+worker-ready index=0 binding=24C6E030000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6DE00000 after=0 status=00000000
+call label=worker-self-assign thread=FFFFFFFFFFFFFFFE action=0 owner=A8 input-slot=0 output-slot=24C6E030040 before=0 after=24C6E030040 status=00000000
+worker-ready index=1 binding=24C6E030040
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=0 owner=A8 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=0 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000008
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=0 owner=1234 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000008
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=0 owner=AC input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000024
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=0 owner=B4 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000024
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=0 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000024
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=1 owner=A8 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=1 owner=1234 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=1 owner=AC input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=1 owner=B4 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=1 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=2 owner=A8 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=2 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=2 owner=1234 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=2 owner=AC input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=2 owner=B4 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=2 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=3 owner=A8 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=3 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=3 owner=1234 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=3 owner=AC input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=3 owner=B4 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=3 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=4294967295 owner=A8 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=4294967295 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=4294967295 owner=1234 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=4294967295 owner=AC input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=4294967295 owner=B4 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=A4 action=4294967295 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+call label=multi-main thread=FFFFFFFFFFFFFFFE action=0 owner=A8 input-slot=0 output-slot=24C6E030080 before=0 after=24C6E030080 status=00000000
+query thread=A4 status=C00000BB returned=0 slot=0
+query thread=A4 status=C00000BB returned=0 slot=0
+call label=multi-thread0 thread=A4 action=0 owner=A8 input-slot=0 output-slot=0 before=0 after=0 status=C00000BB
+query thread=B4 status=C00000BB returned=0 slot=0
+query thread=B4 status=C00000BB returned=0 slot=0
+call label=multi-thread1 thread=B4 action=0 owner=A8 input-slot=0 output-slot=0 before=0 after=0 status=C00000BB
+map label=multi-main slot=24C6E030080 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+map label=multi-thread0 slot=24C6E030000 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+map label=multi-thread1 slot=24C6E030040 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030080 after=0 status=00000000
+call label=multi-reassign thread=FFFFFFFFFFFFFFFE action=0 owner=A8 input-slot=0 output-slot=24C6E030080 before=0 after=24C6E030080 status=00000000
+map label=multi-reassigned-bytes slot=24C6E030080 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=multi-final-handle handle=A8 ok=1
+map label=multi-after-close slot=24C6E030080 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFFFFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=24C6E030080 after=0 status=00000000
+worker-exit index=0 code=77
+map label=multi-one-binding slot=24C6E030080 result=48 base=24C6E030000 allocation=24C6E030000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=worker handle=A4 ok=1
+close label=ready handle=AC ok=1
+close label=stop handle=B0 ok=1
+worker-exit index=1 code=77
+map label=multi-no-binding slot=24C6E030080 result=48 base=24C6E030000 allocation=0 size=7DA80B920000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+close label=worker handle=B4 ok=1
+close label=ready handle=B8 ok=1
+close label=stop handle=BC ok=1
+round-complete=2 exact-handle-set=1 before=52 after=52 final-slot=0
+complete rounds=3 warmup-excluded=1

@@ -33,7 +33,9 @@ use crate::error::MemoryAccessKind;
 use crate::user::mm::{AddressSpace, Mapping, MmError, PAGE_SIZE, Perms};
 
 mod extended;
+mod scheduler;
 pub use extended::AddressRequirements;
+pub(crate) use scheduler::SchedulerView;
 
 /// `SYSTEM_INFO.dwAllocationGranularity`.
 pub const ALLOCATION_GRANULARITY: u64 = 0x1_0000;

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "A1",
+    "assumption": "Mature thread availability does not establish fresh thread assignment availability.",
+    "basis": "Fresh original SVC13/true-LR returns success; independently controlled unbound/bound replay and repeated native assign/free distinguish state.",
+    "dependent-result": "Per-thread slot lifecycle and validation ordering.",
+    "stress-test": "Existing assignment, assign/query/free, same/different scheduler owner and all four caller profiles.",
+    "falsification-probe": "Fresh/mature sequence or binding state does not explain status differences.",
+    "status": "confirmed; initial mature-only unavailability hypothesis falsified"
+  },
+  {
+    "id": "A2",
+    "assumption": "Private action/handle/slot layout is ULONG plus two aligned pointer fields, native24B and WoW12B.",
+    "basis": "Four producer profiles initialize exact native24B and WoW12B records; explicit native4B padding and WoW4B outside-record tail survive all 39488 cases.",
+    "dependent-result": "ABI input/output capture.",
+    "stress-test": "Native/WoW lengths, alignment, padding, aliases and guards.",
+    "falsification-probe": "Actual compatibility converter uses another length/layout or copy ordering.",
+    "status": "confirmed for captured layouts"
+  },
+  {
+    "id": "A3",
+    "assumption": "A guest slot must own a real mapping and correct lifetime, rather than substitute success or mature NOT_SUPPORTED.",
+    "basis": "Four-profile mapping/lifetime/pool/capacity captures: 8192B reservation, 64B slots, 128 capacity, pagewise commitment, binding retains owner, final close/exit release, free retains bytes and assignment zeros them.",
+    "dependent-result": "Object references, VM mapping, thread binding/cleanup and output publication.",
+    "stress-test": "Whole-page contents, repeated assignment/query/free, handle close, thread exit and process drain.",
+    "falsification-probe": "Native lifetime or reached consumer depends on unmodeled slot data/state.",
+    "status": "confirmed for captured lifecycle; ongoing kernel timing/counter updates unknown"
+  },
+  {
+    "id": "A4",
+    "assumption": "Observed kernel/DLL behavior is bounded to build29683.1000 on ARM64 and selected compatibility callers.",
+    "basis": "Current native producer/DLL identities.",
+    "dependent-result": "Measured fault/status/layout claims.",
+    "stress-test": "Physical x64 kernel and other builds.",
+    "falsification-probe": "Another selected build yields different ordering or map ownership.",
+    "status": "retained; physical x64 kernel and other kernel/DLL builds unknown"
+  }
+]

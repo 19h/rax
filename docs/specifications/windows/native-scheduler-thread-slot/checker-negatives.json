@@ -1,0 +1,131 @@
+{
+  "positive-checker": "independent semantic checks",
+  "controlled-negatives": [
+    {
+      "mutation": "wrong kernel",
+      "expected-rejection": "native-kernel-build",
+      "exit-code": 1
+    },
+    {
+      "mutation": "missing producer",
+      "expected-rejection": "actual-producer-count",
+      "exit-code": 1
+    },
+    {
+      "mutation": "wrong executable machine",
+      "expected-rejection": "native-executable-machine",
+      "exit-code": 1
+    },
+    {
+      "mutation": "wrong LAA",
+      "expected-rejection": "native-executable-laa",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed source",
+      "expected-rejection": "actual-native-source-identity",
+      "exit-code": 1
+    },
+    {
+      "mutation": "producer failure",
+      "expected-rejection": "producer-exit",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed family",
+      "expected-rejection": "replay-partition",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed case",
+      "expected-rejection": "replay-partition",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed padding-mode",
+      "expected-rejection": "replay-partition",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed width",
+      "expected-rejection": "replay-width-exception",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed exception",
+      "expected-rejection": "replay-width-exception",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed exact-handle-set",
+      "expected-rejection": "replay-handle-restoration",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed status",
+      "expected-rejection": "replay-status-order",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed after-slot",
+      "expected-rejection": "replay-published-binding",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed before-slot",
+      "expected-rejection": "replay-before-binding",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed input-slot",
+      "expected-rejection": "replay-input-slot",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed bytes0",
+      "expected-rejection": "replay-caller-bytes",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed protection",
+      "expected-rejection": "replay-guard-effect",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed slot capacity",
+      "expected-rejection": "slot-capacity-status",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed remote target result",
+      "expected-rejection": "remote-status-order",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed release retention",
+      "expected-rejection": "mapping-reference-lifetime:active-close-retained",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed original SVC",
+      "expected-rejection": "fresh-original-svc-true-lr",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed exact true LR",
+      "expected-rejection": "fresh-original-svc-true-lr",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed fresh birth",
+      "expected-rejection": "fresh-first-assignment-success",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed full page",
+      "expected-rejection": "fresh-full-page-zero",
+      "exit-code": 1
+    }
+  ],
+  "count": 25
+}

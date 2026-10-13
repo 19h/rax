@@ -1,0 +1,33 @@
+[
+  {
+    "impact": "high",
+    "finding": "Full ordinary process exits remain unproven: current observer crosses scheduler slot assignment and reaches NtOpenThreadToken; whoami retains NtTraceEvent.",
+    "blocks-slot-group": false,
+    "blocks-overall-goal": true,
+    "evidence": "native-scheduler-slot-final-after-ordinary-processes.log and native-scheduler-slot-final-after-production-trace-output.log; validation-summary.json"
+  },
+  {
+    "impact": "medium",
+    "finding": "Private build29683 scheduler slot counters/timing updates and other kernel builds/physical x64 behavior are unknown. Captured slot bytes and ownership define this bounded increment.",
+    "blocks-slot-group": false,
+    "evidence": "26 producer identities, zero snapshots and measured mutation captures"
+  },
+  {
+    "impact": "medium",
+    "finding": "Unrelated Windows full-library BZHI/FP16 failures remain the existing baseline; full native failure names compared explicitly.",
+    "blocks-slot-group": false,
+    "evidence": "native full suite and preceding constructor full-suite captures"
+  },
+  {
+    "impact": "medium",
+    "finding": "Root contains concurrent Cluster changes outside this owned semantic group. Frozen embedding builds validate matching scoped consumers, not the entire current root/plugin/GUI/package tree.",
+    "blocks-slot-group": false,
+    "evidence": "scheduler-slot-owning-root-scope.json and preserved root status"
+  },
+  {
+    "impact": "low",
+    "finding": "Existing native-runtime engineering record exceeds the 1500-line soft file limit; new implementation/test files remain below it.",
+    "blocks-slot-group": false,
+    "evidence": "line-count check"
+  }
+]

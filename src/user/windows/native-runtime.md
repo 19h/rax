@@ -1566,3 +1566,33 @@ Physical x64-kernel, other builds and whole current-root plugin/GUI/package
 claims remain unknown or excluded. Assumptions, 21 controlled falsifications,
 complete plane map and exact evidence are in
 [scheduler-data evidence](../../../docs/specifications/windows/native-scheduler-shared-data/README.md).
+
+## Native scheduler shared-data thread slot (2026-10-13)
+
+The constructor-only frontier is superseded by NtSetInformationThread class57.
+Captured native24B/WoW12B records use Action/owner/slot at offsets0/8/16 and0/4/8.
+Native64 full writable probing precedes exact length; WoW64 length/read/kernel
+operation precede the unconditional converted caller copy. Hidden bindings
+survive copy faults. Thread grant0x20 and owner grant0x1 are required; free1
+ignores owner/slot fields; assignment0 validates the owner before refusing an
+already bound/noncurrent thread. Other actions retain measured NOT_SUPPORTED.
+
+Owners reserve8192B MEM_MAPPED RW; initial commitment4096B grows to8192B for the
+second64 slots. Each slot is64B; active capacity128, exhaustionC000009A.
+Free preserves bytes and assignment zeroes64B. A binding pins its owner after
+final handle close. Thread exit and even partially consumed table drains queue
+and reclaim all views. Allocation identity prevents ABA clearing/retirement.
+Explicit native unmap preserves a stale cached returned address without
+recreating the mapping. No guest input reaches host NT; no TEB offset is
+fabricated. Installed NTDLL owns its reached TEB store.
+
+The corpus binds26 actual native producers,39488 independent replay rows,
+two complete original-entry/SVC13/true-LR first calls, two cold8-call sequences,
+whole-page snapshots, four-profile lifetime/pool/capacity/remote/unmap controls,
+and25 rehashed controlled falsifications. Runtime/owning gates and ordinary
+observer evidence are recorded after the final source freeze in
+[thread-slot evidence](../../../docs/specifications/windows/native-scheduler-thread-slot/README.md).
+Physical x64-kernel/other builds, continuing kernel counter updates and whole
+current-root plugin/GUI/package validation remain explicit unknowns/exclusions.
+Full ordinary process exits remain unproven; the engineering validation record
+owns exact counts, baseline Windows failures, artifacts and the new frontier.

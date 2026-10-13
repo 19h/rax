@@ -1,0 +1,13 @@
+--- objects/scheduler.rs before
++++ objects/scheduler.rs after
+@@ -25,7 +25,9 @@
+             .unwrap_or(0)
+     }
+     /// Assigns the first free 64-byte slot: O(log T) binding lookup and O(1)
+-    /// bitmap selection, plus O(log A) VM work for T threads and A allocations.
++    /// bitmap selection for T threads. Existing-view VM lookup is O(log A);
++    /// initial allocation also performs the allocator's worst-case linear
++    /// search across A allocations.
+     pub(crate) fn assign_scheduler_slot(
+         &mut self,
+         vm: &mut VirtualMemory,

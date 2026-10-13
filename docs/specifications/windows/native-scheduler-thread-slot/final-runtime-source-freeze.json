@@ -1,0 +1,66 @@
+{
+  "src/user/windows/objects.rs": {
+    "bytes": 26397,
+    "sha256": "ca8d884e09e0ba820e764b0e050aa55e442020dbec09d04563136848ac3b2266"
+  },
+  "src/user/windows/objects/scheduler.rs": {
+    "bytes": 4042,
+    "sha256": "d2c173ec3ae0724e3f772ff7f0887c052c25e690fff1cd3ca1e15d16667f20f5"
+  },
+  "src/user/windows/memory.rs": {
+    "bytes": 67053,
+    "sha256": "1d35c871cbd56047aea6b9aec4a97de9b126876c7cfb41b929afaa37a02068b2"
+  },
+  "src/user/windows/memory/scheduler.rs": {
+    "bytes": 2416,
+    "sha256": "62a53ed6717dac723747a7b077269ac6c79ee5e265af0bda0c2af5621a6325ba"
+  },
+  "src/user/windows/dll/native.rs": {
+    "bytes": 16304,
+    "sha256": "98bb7bd72fd6c029d1e5561d3a005a892bbeb09df8ec20abdf5f14b6c8c3e2e5"
+  },
+  "src/user/windows/dll/native/thread_set.rs": {
+    "bytes": 4116,
+    "sha256": "5ac0b0c09d6f7ef499b974ae8693045c09ff9427501b5be78eb2a372221da13e"
+  },
+  "src/user/windows/dll/native/process_set.rs": {
+    "bytes": 3651,
+    "sha256": "6c8f52c83183e824206d38c83edba7cd193d77ee6b27ebaef8bcc78100f00332"
+  },
+  "src/user/windows/process/mod.rs": {
+    "bytes": 15745,
+    "sha256": "6e52a474adb31b1a1b8126b36d30368dd70a8a1d266fb1107bdaf759ed2758ce"
+  },
+  "src/user/windows/hle/dispatch.rs": {
+    "bytes": 48679,
+    "sha256": "bfbf8cb185ed27f3829a3ab3618d74cc82d5c953f4756c127dc22698f3bf2442"
+  },
+  "src/user/windows/process/services.rs": {
+    "bytes": 4239,
+    "sha256": "6465ae8b6aa9dcf590a61f59939ea3c90d4472b454af4a7aab8e0e0c710e2e20"
+  },
+  "src/user/windows/process/thread.rs": {
+    "bytes": 18365,
+    "sha256": "299745b7a53161f11e85ea578e56e2e15dd1ca5bac198eb03792d538f7286eef"
+  },
+  "src/user/windows/process/sched.rs": {
+    "bytes": 61386,
+    "sha256": "6be40644a6dbeed9a37373084c8280b1f7ff7855bb6a185614dadf59eea839f8"
+  },
+  "src/user/windows/process/sched/tests/services_tests.rs": {
+    "bytes": 46791,
+    "sha256": "075ad272cd408c0acf31e9c5fa6c57bdd589f352beb4ad0322d538ca65cdbc5c"
+  },
+  "src/user/windows/process/sched/tests/services_tests/scheduler_slot_tests.rs": {
+    "bytes": 8849,
+    "sha256": "c878eb180d671fd2ae012209012a02d4f59b37894535fb930ee3b2457c5988ea"
+  },
+  "src/user/windows/process/sched/tests/services_tests/scheduler_slot_replay_tests.rs": {
+    "bytes": 8475,
+    "sha256": "dd4cb405c437be458daa3b6a841cb7b7d95b833082ca84cc037abc9c932b95a6"
+  },
+  "src/user/windows/process/sched/tests/services_tests/scheduler_slot_leaf_tests.rs": {
+    "bytes": 3502,
+    "sha256": "b8d6276d92a58d7c5eee16b96b4f905e0f2a9884c9974f767b397d94335836f6"
+  }
+}

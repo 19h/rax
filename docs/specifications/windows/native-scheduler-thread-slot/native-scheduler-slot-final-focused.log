@@ -1,0 +1,31 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 18s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-tests\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 5 tests
+test user::windows::process::sched::tests::services_tests::scheduler_slot_tests::native_scheduler_slot_owns_mapping_until_last_handle_and_thread_reference_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::scheduler_slot_tests::native_scheduler_slot_pool_has_128_slots_commits_second_page_and_never_reaps_reused_addresses ... ok
+test user::windows::process::sched::tests::services_tests::scheduler_slot_tests::native_scheduler_slot_wow_copy_fault_preserves_hidden_binding_and_process_drain_reclaims_views ... ok
+test user::windows::process::sched::tests::services_tests::scheduler_slot_tests::installed::native_scheduler_slot_installed_leaf_maps_retains_releases_and_returns_all_selected_abis ... ok
+test user::windows::process::sched::tests::services_tests::scheduler_slot_tests::replay::native_scheduler_slot_replays_all_39488_status_guard_output_and_binding_rows ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 7155 filtered out; finished in 3.27s
+

@@ -1,0 +1,444 @@
+host width=4 info=12
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=A0000 after=0 status=00000000
+round=0 warmup=1
+call label=free-before-close-assign thread=FFFFFFFFFFFFFFFE action=0 owner=114 input-slot=1 output-slot=DA0000 before=0 after=DA0000 status=00000000
+map label=free-before-close-active slot=DA0000 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0000 after=0 status=00000000
+map label=free-before-close-released slot=DA0000 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=free-before-close handle=114 ok=1
+map label=free-before-close-final slot=DA0000 result=28 base=DA0000 allocation=0 size=120000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=active-close-assign thread=FFFFFFFFFFFFFFFE action=0 owner=114 input-slot=0 output-slot=DA0000 before=0 after=DA0000 status=00000000
+close label=active-close handle=114 ok=1
+map label=active-close-retained slot=DA0000 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0000 after=0 status=00000000
+map label=active-close-final slot=DA0000 result=28 base=DA0000 allocation=0 size=120000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=unmap-assign thread=FFFFFFFFFFFFFFFE action=0 owner=114 input-slot=0 output-slot=DA0000 before=0 after=DA0000 status=00000000
+map label=unmap-next-page slot=DA1000 result=28 base=DA1000 allocation=DA0000 size=1000 state=00002000 type=00040000 protect=00000000 allocation-protect=00000004 bytes=unreadable
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0000 after=0 status=00000000
+unmap status=00000000 slot=DA0000
+map label=unmap-after slot=DA0000 result=28 base=DA0000 allocation=0 size=120000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=unmap-reassign thread=FFFFFFFFFFFFFFFE action=0 owner=114 input-slot=0 output-slot=DA0000 before=0 after=DA0000 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0000 after=0 status=00000000
+close label=unmap-owner handle=114 ok=1
+call label=zero-grant thread=FFFFFFFFFFFFFFFE action=0 owner=118 input-slot=0 output-slot=0 before=0 after=0 status=C0000022
+close label=zero-grant-alias handle=118 ok=1
+call label=tagged-owner thread=FFFFFFFFFFFFFFFE action=0 owner=117 input-slot=FFFFFFFF output-slot=DA0000 before=0 after=DA0000 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0000 after=0 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=A0000 after=0 status=00000000
+call label=worker-self-assign thread=FFFFFFFFFFFFFFFE action=0 owner=114 input-slot=0 output-slot=DA0000 before=0 after=DA0000 status=00000000
+worker-ready index=0 binding=DA0000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=A0000 after=0 status=00000000
+call label=worker-self-assign thread=FFFFFFFFFFFFFFFE action=0 owner=114 input-slot=0 output-slot=DA0040 before=0 after=DA0040 status=00000000
+worker-ready index=1 binding=DA0040
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=0 owner=114 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=0 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000008
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=0 owner=1234 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000008
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=0 owner=118 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000024
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=0 owner=144 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000024
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=0 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000008
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=1 owner=114 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=1 owner=1234 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=1 owner=118 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=1 owner=144 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=1 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=2 owner=114 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=2 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=2 owner=1234 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=2 owner=118 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=2 owner=144 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=2 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=3 owner=114 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=3 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=3 owner=1234 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=3 owner=118 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=3 owner=144 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=3 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=4294967295 owner=114 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=4294967295 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=4294967295 owner=1234 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=4294967295 owner=118 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=4294967295 owner=144 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=120 action=4294967295 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+call label=multi-main thread=FFFFFFFFFFFFFFFE action=0 owner=114 input-slot=0 output-slot=DA0080 before=0 after=DA0080 status=00000000
+query thread=120 status=C00000BB returned=0 slot=0
+query thread=120 status=C00000BB returned=0 slot=0
+call label=multi-thread0 thread=120 action=0 owner=114 input-slot=0 output-slot=0 before=0 after=0 status=C00000BB
+query thread=144 status=C00000BB returned=0 slot=0
+query thread=144 status=C00000BB returned=0 slot=0
+call label=multi-thread1 thread=144 action=0 owner=114 input-slot=0 output-slot=0 before=0 after=0 status=C00000BB
+map label=multi-main slot=DA0080 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+map label=multi-thread0 slot=DA0000 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+map label=multi-thread1 slot=DA0040 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0080 after=0 status=00000000
+call label=multi-reassign thread=FFFFFFFFFFFFFFFE action=0 owner=114 input-slot=0 output-slot=DA0080 before=0 after=DA0080 status=00000000
+map label=multi-reassigned-bytes slot=DA0080 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=multi-final-handle handle=114 ok=1
+map label=multi-after-close slot=DA0080 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0080 after=0 status=00000000
+worker-exit index=0 code=77
+map label=multi-one-binding slot=DA0080 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=worker handle=120 ok=1
+close label=ready handle=118 ok=1
+close label=stop handle=11C ok=1
+worker-exit index=1 code=77
+map label=multi-no-binding slot=DA0080 result=28 base=DA0000 allocation=0 size=10000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+close label=worker handle=144 ok=1
+close label=ready handle=138 ok=1
+close label=stop handle=140 ok=1
+round-complete=0 exact-handle-set=1 before=79 after=79 final-slot=0
+round=1 warmup=0
+call label=free-before-close-assign thread=FFFFFFFFFFFFFFFE action=0 owner=140 input-slot=1 output-slot=DA0000 before=0 after=DA0000 status=00000000
+map label=free-before-close-active slot=DA0000 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0000 after=0 status=00000000
+map label=free-before-close-released slot=DA0000 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=free-before-close handle=140 ok=1
+map label=free-before-close-final slot=DA0000 result=28 base=DA0000 allocation=0 size=10000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=active-close-assign thread=FFFFFFFFFFFFFFFE action=0 owner=140 input-slot=0 output-slot=DA0000 before=0 after=DA0000 status=00000000
+close label=active-close handle=140 ok=1
+map label=active-close-retained slot=DA0000 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0000 after=0 status=00000000
+map label=active-close-final slot=DA0000 result=28 base=DA0000 allocation=0 size=10000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=unmap-assign thread=FFFFFFFFFFFFFFFE action=0 owner=140 input-slot=0 output-slot=DA0000 before=0 after=DA0000 status=00000000
+map label=unmap-next-page slot=DA1000 result=28 base=DA1000 allocation=DA0000 size=1000 state=00002000 type=00040000 protect=00000000 allocation-protect=00000004 bytes=unreadable
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0000 after=0 status=00000000
+unmap status=00000000 slot=DA0000
+map label=unmap-after slot=DA0000 result=28 base=DA0000 allocation=0 size=10000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=unmap-reassign thread=FFFFFFFFFFFFFFFE action=0 owner=140 input-slot=0 output-slot=DA0000 before=0 after=DA0000 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0000 after=0 status=00000000
+close label=unmap-owner handle=140 ok=1
+call label=zero-grant thread=FFFFFFFFFFFFFFFE action=0 owner=138 input-slot=0 output-slot=0 before=0 after=0 status=C0000022
+close label=zero-grant-alias handle=138 ok=1
+call label=tagged-owner thread=FFFFFFFFFFFFFFFE action=0 owner=143 input-slot=FFFFFFFF output-slot=DA0000 before=0 after=DA0000 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0000 after=0 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=A0000 after=0 status=00000000
+call label=worker-self-assign thread=FFFFFFFFFFFFFFFE action=0 owner=140 input-slot=0 output-slot=DA0000 before=0 after=DA0000 status=00000000
+worker-ready index=0 binding=DA0000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=A0000 after=0 status=00000000
+call label=worker-self-assign thread=FFFFFFFFFFFFFFFE action=0 owner=140 input-slot=0 output-slot=DA0040 before=0 after=DA0040 status=00000000
+worker-ready index=1 binding=DA0040
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=0 owner=140 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=0 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000008
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=0 owner=1234 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000008
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=0 owner=138 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000024
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=0 owner=180 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000024
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=0 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000008
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=1 owner=140 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=1 owner=1234 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=1 owner=138 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=1 owner=180 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=1 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=2 owner=140 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=2 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=2 owner=1234 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=2 owner=138 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=2 owner=180 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=2 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=3 owner=140 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=3 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=3 owner=1234 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=3 owner=138 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=3 owner=180 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=3 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=4294967295 owner=140 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=4294967295 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=4294967295 owner=1234 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=4294967295 owner=138 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=4294967295 owner=180 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=160 action=4294967295 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+call label=multi-main thread=FFFFFFFFFFFFFFFE action=0 owner=140 input-slot=0 output-slot=DA0080 before=0 after=DA0080 status=00000000
+query thread=160 status=C00000BB returned=0 slot=0
+query thread=160 status=C00000BB returned=0 slot=0
+call label=multi-thread0 thread=160 action=0 owner=140 input-slot=0 output-slot=0 before=0 after=0 status=C00000BB
+query thread=180 status=C00000BB returned=0 slot=0
+query thread=180 status=C00000BB returned=0 slot=0
+call label=multi-thread1 thread=180 action=0 owner=140 input-slot=0 output-slot=0 before=0 after=0 status=C00000BB
+map label=multi-main slot=DA0080 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+map label=multi-thread0 slot=DA0000 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+map label=multi-thread1 slot=DA0040 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0080 after=0 status=00000000
+call label=multi-reassign thread=FFFFFFFFFFFFFFFE action=0 owner=140 input-slot=0 output-slot=DA0080 before=0 after=DA0080 status=00000000
+map label=multi-reassigned-bytes slot=DA0080 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=multi-final-handle handle=140 ok=1
+map label=multi-after-close slot=DA0080 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0080 after=0 status=00000000
+worker-exit index=0 code=77
+map label=multi-one-binding slot=DA0080 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=worker handle=160 ok=1
+close label=ready handle=138 ok=1
+close label=stop handle=144 ok=1
+worker-exit index=1 code=77
+map label=multi-no-binding slot=DA0080 result=28 base=DA0000 allocation=0 size=10000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+close label=worker handle=180 ok=1
+close label=ready handle=178 ok=1
+close label=stop handle=17C ok=1
+round-complete=1 exact-handle-set=1 before=79 after=79 final-slot=0
+round=2 warmup=0
+call label=free-before-close-assign thread=FFFFFFFFFFFFFFFE action=0 owner=17C input-slot=1 output-slot=DA0000 before=0 after=DA0000 status=00000000
+map label=free-before-close-active slot=DA0000 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0000 after=0 status=00000000
+map label=free-before-close-released slot=DA0000 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=free-before-close handle=17C ok=1
+map label=free-before-close-final slot=DA0000 result=28 base=DA0000 allocation=0 size=10000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=active-close-assign thread=FFFFFFFFFFFFFFFE action=0 owner=17C input-slot=0 output-slot=DA0000 before=0 after=DA0000 status=00000000
+close label=active-close handle=17C ok=1
+map label=active-close-retained slot=DA0000 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0000 after=0 status=00000000
+map label=active-close-final slot=DA0000 result=28 base=DA0000 allocation=0 size=10000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=unmap-assign thread=FFFFFFFFFFFFFFFE action=0 owner=17C input-slot=0 output-slot=DA0000 before=0 after=DA0000 status=00000000
+map label=unmap-next-page slot=DA1000 result=28 base=DA1000 allocation=DA0000 size=1000 state=00002000 type=00040000 protect=00000000 allocation-protect=00000004 bytes=unreadable
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0000 after=0 status=00000000
+unmap status=00000000 slot=DA0000
+map label=unmap-after slot=DA0000 result=28 base=DA0000 allocation=0 size=10000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+call label=unmap-reassign thread=FFFFFFFFFFFFFFFE action=0 owner=17C input-slot=0 output-slot=DA0000 before=0 after=DA0000 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0000 after=0 status=00000000
+close label=unmap-owner handle=17C ok=1
+call label=zero-grant thread=FFFFFFFFFFFFFFFE action=0 owner=178 input-slot=0 output-slot=0 before=0 after=0 status=C0000022
+close label=zero-grant-alias handle=178 ok=1
+call label=tagged-owner thread=FFFFFFFFFFFFFFFE action=0 owner=17F input-slot=FFFFFFFF output-slot=DA0000 before=0 after=DA0000 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0000 after=0 status=00000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=A0000 after=0 status=00000000
+call label=worker-self-assign thread=FFFFFFFFFFFFFFFE action=0 owner=17C input-slot=0 output-slot=DA0000 before=0 after=DA0000 status=00000000
+worker-ready index=0 binding=DA0000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=A0000 after=0 status=00000000
+call label=worker-self-assign thread=FFFFFFFFFFFFFFFE action=0 owner=17C input-slot=0 output-slot=DA0040 before=0 after=DA0040 status=00000000
+worker-ready index=1 binding=DA0040
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=0 owner=17C input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=0 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000008
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=0 owner=1234 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000008
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=0 owner=178 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000024
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=0 owner=174 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000024
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=0 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C0000008
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=1 owner=17C input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=1 owner=1234 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=1 owner=178 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=1 owner=174 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=1 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=2 owner=17C input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=2 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=2 owner=1234 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=2 owner=178 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=2 owner=174 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=2 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=3 owner=17C input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=3 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=3 owner=1234 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=3 owner=178 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=3 owner=174 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=3 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=4294967295 owner=17C input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=4294967295 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=4294967295 owner=1234 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=4294967295 owner=178 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=4294967295 owner=174 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=remote-matrix thread=18C action=4294967295 owner=FFFFFFFFFFFFFFFF input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=0 after=0 status=C00000BB
+call label=multi-main thread=FFFFFFFFFFFFFFFE action=0 owner=17C input-slot=0 output-slot=DA0080 before=0 after=DA0080 status=00000000
+query thread=18C status=C00000BB returned=0 slot=0
+query thread=18C status=C00000BB returned=0 slot=0
+call label=multi-thread0 thread=18C action=0 owner=17C input-slot=0 output-slot=0 before=0 after=0 status=C00000BB
+query thread=174 status=C00000BB returned=0 slot=0
+query thread=174 status=C00000BB returned=0 slot=0
+call label=multi-thread1 thread=174 action=0 owner=17C input-slot=0 output-slot=0 before=0 after=0 status=C00000BB
+map label=multi-main slot=DA0080 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+map label=multi-thread0 slot=DA0000 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+map label=multi-thread1 slot=DA0040 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0080 after=0 status=00000000
+call label=multi-reassign thread=FFFFFFFFFFFFFFFE action=0 owner=17C input-slot=0 output-slot=DA0080 before=0 after=DA0080 status=00000000
+map label=multi-reassigned-bytes slot=DA0080 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=multi-final-handle handle=17C ok=1
+map label=multi-after-close slot=DA0080 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+call label=cleanup thread=FFFFFFFFFFFFFFFE action=1 owner=0 input-slot=FFFFFFFF output-slot=FFFFFFFFFFFFFFFF before=DA0080 after=0 status=00000000
+worker-exit index=0 code=77
+map label=multi-one-binding slot=DA0080 result=28 base=DA0000 allocation=DA0000 size=1000 state=00001000 type=00040000 protect=00000004 allocation-protect=00000004 bytes=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+close label=worker handle=18C ok=1
+close label=ready handle=178 ok=1
+close label=stop handle=180 ok=1
+worker-exit index=1 code=77
+map label=multi-no-binding slot=DA0080 result=28 base=DA0000 allocation=0 size=10000 state=00010000 type=00000000 protect=00000001 allocation-protect=00000000 bytes=unreadable
+close label=worker handle=174 ok=1
+close label=ready handle=16C ok=1
+close label=stop handle=170 ok=1
+round-complete=2 exact-handle-set=1 before=79 after=79 final-slot=0
+complete rounds=3 warmup-excluded=1

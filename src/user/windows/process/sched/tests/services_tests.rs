@@ -7,6 +7,9 @@ mod process_query_tests;
 #[path = "services_tests/scheduler_shared_tests.rs"]
 mod scheduler_shared_tests;
 
+#[path = "services_tests/scheduler_slot_tests.rs"]
+mod scheduler_slot_tests;
+
 #[path = "services_tests/emulation_basic_tests.rs"]
 mod emulation_basic_tests;
 

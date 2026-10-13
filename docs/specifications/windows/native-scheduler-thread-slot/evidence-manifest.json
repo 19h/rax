@@ -1,0 +1,616 @@
+{
+  "files": {
+    "README.md": {
+      "bytes": 6309,
+      "sha256": "22c18f4407c942271e2969fc7ba06aa376e203711c72da60b44d029a0e5473ed"
+    },
+    "assist-native-scheduler-slot-owned-final-cpp.log": {
+      "bytes": 2946,
+      "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+    },
+    "assist-native-scheduler-slot-owned-final-shipping.log": {
+      "bytes": 1584,
+      "sha256": "e9d5d945c0b60f3275509ee318596c1ccca131d110c829787d3c151195137535"
+    },
+    "assist-native-scheduler-slot-owned.ps1": {
+      "bytes": 6754,
+      "sha256": "23e632808bb63c6ce827eaa869d26de767032e04ef90e58fa9e1eabcf2c6a6fc"
+    },
+    "assumption-register.json": {
+      "bytes": 2606,
+      "sha256": "d62678486c43c12ea60794ebba101b82f28728462959297f7b11cf32af29b57c"
+    },
+    "bounded-findings.json": {
+      "bytes": 1682,
+      "sha256": "e09deee3d7001b7b02fa244adfe646ecc21c905645633bf68529c40a87b63afb"
+    },
+    "change-surface-map.json": {
+      "bytes": 2514,
+      "sha256": "8b71cdd24ab3212bb7674918ed174e38f516e561b36130339aa870828d8bf03c"
+    },
+    "check-evidence.py": {
+      "bytes": 11729,
+      "sha256": "041335448a071934927c306ae44cdf7558ae0ed7bcaf46a8a9b7089f1c11b0c9"
+    },
+    "check-negative-evidence.py": {
+      "bytes": 5408,
+      "sha256": "4bd4e742014926dcc9c14043e7cf0db51468823ccdade4277aaed6f7f30d6e19"
+    },
+    "checker-negatives.json": {
+      "bytes": 3299,
+      "sha256": "8994fe54c402886d744e777a39000b2264543e4b76cf35f3be6e54ada2da2fc0"
+    },
+    "diagnostic-initial-fresh/native-scheduler-thread-slot-fresh-arm64-build.log": {
+      "bytes": 40,
+      "sha256": "f4e31882da79de55dd6719c02f1c275cdd5eadd04da8598935d2b83e7eadada7"
+    },
+    "diagnostic-initial-fresh/native-scheduler-thread-slot-fresh-arm64-outcome.json": {
+      "bytes": 261,
+      "sha256": "1274a7c2704ff0f40a91b268879d0fec9e30fa6c1e7dfb454e46fdded656b877"
+    },
+    "diagnostic-initial-fresh/native-scheduler-thread-slot-fresh-arm64.log": {
+      "bytes": 599,
+      "sha256": "bd849bba9d7d3ec2fea5d8415dc0cc202d1550d43ba3940d92e583023a51bf7a"
+    },
+    "diagnostic-initial-fresh/native-scheduler-thread-slot-fresh-arm64.ps1": {
+      "bytes": 1842,
+      "sha256": "055a000441f7a1a94dabe0402d86897e29ef2358ebfcf6dfe40ed3709cf26358"
+    },
+    "diagnostic-initial-fresh/native-scheduler-thread-slot-fresh.cpp": {
+      "bytes": 11423,
+      "sha256": "f709429b9c5f742f3485717d9d82c76d9467f7ed732515692b78549a15091af7"
+    },
+    "final-runtime-source-freeze.json": {
+      "bytes": 2515,
+      "sha256": "1489c59ec286212c0b56f1e79c42076b644bccb2089833b34fa45b778062af23"
+    },
+    "format-check.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "implementation-owned-baseline.json": {
+      "bytes": 2969,
+      "sha256": "d8c70fb0156cbe77207290af21d8588a262df9bddce857fdcb68b6ee005baecd"
+    },
+    "inspect-scheduler-slot-final-observer.py": {
+      "bytes": 815,
+      "sha256": "832b299089a43557d295ed1163b2217ba4a6c1066dcf5499aa496ae60470ab90"
+    },
+    "inspect-scheduler-slot-owning-archives.py": {
+      "bytes": 2200,
+      "sha256": "8b94fb33d37b28ed0132f7a14c6b3b43496aaa1ebd4548b0555a0b45d6483a1b"
+    },
+    "inspect-scheduler-slot-producers.py": {
+      "bytes": 2137,
+      "sha256": "d4870efe57ccdfee01a041664d4f883face72cfd1538bb65cf2ac89572b2c62c"
+    },
+    "linux-all-targets.log": {
+      "bytes": 116,
+      "sha256": "a272bedfb64d4ed17a041d0f80834780beafe3db009a7582b7c9f1abe8c94728"
+    },
+    "linux-capi.log": {
+      "bytes": 12881,
+      "sha256": "28c43deeca6fe686ba28e8dfc9b5f4ce0c4376342cb501ef0f81fa5180f8e1ae"
+    },
+    "linux-focused.log": {
+      "bytes": 974,
+      "sha256": "dc23a96810bffb96c52c7ea0f7b296b442ec3bc6d6fb251dc2d8f347a1e06de3"
+    },
+    "linux-full.log": {
+      "bytes": 796564,
+      "sha256": "526bab21b40a0cb098edc70ed612b1c715b6b51dba5e5e8d1f9378ac299ef37f"
+    },
+    "linux-gates.json": {
+      "bytes": 3739,
+      "sha256": "ca9565c05d978ce90eb09cb2c83764d33c71723b000f3d036cea95d69f986525"
+    },
+    "linux-integration.log": {
+      "bytes": 35761,
+      "sha256": "3f153bb7208d675e08d547667cb09cf813a44b469197777ab7d78478058caba5"
+    },
+    "linux-owning-cpp.log": {
+      "bytes": 1623,
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+    },
+    "linux-owning-gates.json": {
+      "bytes": 2360,
+      "sha256": "27670254b258efe042065e0cc182cf3dfbb30c9db212f8e24524f530003a7c84"
+    },
+    "linux-owning-shipping.log": {
+      "bytes": 222,
+      "sha256": "8c788c99f912cd9d4eecd473c4d5340084d19c43e25e3f021f58db1a16d75195"
+    },
+    "macos-all-targets.log": {
+      "bytes": 136,
+      "sha256": "383d843c37a0ea4ba55c16cad03d81b9617e82021d3c34db9e254622a9adabdb"
+    },
+    "macos-capi.log": {
+      "bytes": 13015,
+      "sha256": "1e4e7e3f5c65d22bbea407c2e8e5a3f5b686732a29c7727bf45aad337adfaf96"
+    },
+    "macos-focused-final.log": {
+      "bytes": 1122,
+      "sha256": "feefd46f807364a79f1484b769f937a5786d6243da56e3bc1c8d2ddf09c5a36a"
+    },
+    "macos-focused-v2.log": {
+      "bytes": 2814,
+      "sha256": "60998d4e004dd30194ae50e65c9de72d73c0a620f4b931ea7a396407b5098a44"
+    },
+    "macos-focused-v3.log": {
+      "bytes": 1122,
+      "sha256": "87202d2dce0b1dc6dde1965634ec9bc2a7b57b11f4277a74e76dc792c21297e9"
+    },
+    "macos-focused.log": {
+      "bytes": 1058,
+      "sha256": "48a9b9ae8fa80c2c870fafda3912558d179a38ba35f2357126ed3ccefe71b11f"
+    },
+    "macos-full.log": {
+      "bytes": 796752,
+      "sha256": "0dfe8e310cf42c45b2cd542ea7c7d42e06cf33f19b331f093047904687e5129f"
+    },
+    "macos-gates.json": {
+      "bytes": 1216,
+      "sha256": "ed5fb6b5fcb9f58f983dc2282311b716893c8310c361665b9b211505f5a3c4ef"
+    },
+    "macos-integration.log": {
+      "bytes": 35927,
+      "sha256": "78794ebbd1400a0c85b693c4e19b6e48bf1e7b3b5f2f39341f1ef0521f22f183"
+    },
+    "macos-owning-build.log": {
+      "bytes": 1865,
+      "sha256": "f4cf14d1ee1cca6079ee26a9543e4bbca1d68e8139ec0fcde1ac10feffa53845"
+    },
+    "macos-owning-commands.json": {
+      "bytes": 3149,
+      "sha256": "46548b6b0b7539fee8f588ea5afac9ac25db2eb1cf8917f399e2578cdf94978b"
+    },
+    "macos-owning-configure.log": {
+      "bytes": 13294,
+      "sha256": "d5c78adfddf76febad72796cd88426429417a09d104dc7cc5bf60d82435f0f49"
+    },
+    "macos-owning-ctest.log": {
+      "bytes": 1273,
+      "sha256": "e38616e3d67c5d8ccd5987f334faa9de3ccc9b2b07d87cf9031e024387acf9b5"
+    },
+    "macos-owning-gates.json": {
+      "bytes": 3344,
+      "sha256": "907f2dff64cc1fc512698d950b89f972982c42ad239fcc6a60f895f646d7c092"
+    },
+    "macos-owning-protected-assist-cli.log": {
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    "macos-owning-protected-assist-mcp.log": {
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    "native-process-probe.cpp": {
+      "bytes": 2187,
+      "sha256": "f57571cc5961784ff841b84811bdff7626ccd582dda3a16a9be35c9aeedc5a31"
+    },
+    "native-scheduler-slot-final-after-artifacts-stderr.log": {
+      "bytes": 72,
+      "sha256": "9c73735a1033f44f00ea48e15c38d73843ff5a391557aac653bd81d564a34b5f"
+    },
+    "native-scheduler-slot-final-after-artifacts.jsonl": {
+      "bytes": 130191,
+      "sha256": "28da358ab1bff1808d7be6545f5727c9ad02305054b0868293c9689c8421af11"
+    },
+    "native-scheduler-slot-final-after-ordinary-processes.log": {
+      "bytes": 7215,
+      "sha256": "3844378d8ec088380c7e9f86a174473b882791693bbba9af4debcba87ca43d6f"
+    },
+    "native-scheduler-slot-final-after-production-trace-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-scheduler-slot-final-after-production-trace-output.log": {
+      "bytes": 47110,
+      "sha256": "47c8cde364b63fb456b9536f28540172003042f577728541463c32da0e1476a8"
+    },
+    "native-scheduler-slot-final-all-targets.log": {
+      "bytes": 986,
+      "sha256": "356bdb27e2e224e926ca4de2fdf4333adae1a3d5a7b0acaa77f08bde2a6b026a"
+    },
+    "native-scheduler-slot-final-capi.log": {
+      "bytes": 13837,
+      "sha256": "f0067503454a607caa6fbd5984ead0d530055b24652ce890ca6c872e825d32cf"
+    },
+    "native-scheduler-slot-final-focused.log": {
+      "bytes": 2142,
+      "sha256": "3bbc9f416417baa7aef54c8fbb2668b26544033ae68a0a26071781233bc5d2f7"
+    },
+    "native-scheduler-slot-final-full.log": {
+      "bytes": 754760,
+      "sha256": "e903e9207037ebe20c2b5c253dde1aa5d4225b5755dedaa6b74c6dadde107d02"
+    },
+    "native-scheduler-slot-final-gates.json": {
+      "bytes": 1244,
+      "sha256": "99827786242c7d273584e69fbb4cd16a42eec1ad927897888f19c7aea622d8c7"
+    },
+    "native-scheduler-slot-final-integration.log": {
+      "bytes": 1792,
+      "sha256": "cf513c5460efb9e5430701523deca82b1aaf2a49abf5925fbf559f857a3d5238"
+    },
+    "native-scheduler-slot-final-observer-identity.json": {
+      "bytes": 464,
+      "sha256": "7b6991dfda2b50342540a3e4081b97dc76be5b4bed2789fc2626b332f62789ab"
+    },
+    "native-scheduler-slot-final-owning-archive-hashes.json": {
+      "bytes": 18592,
+      "sha256": "8898f9304638e3e1ea038694eb65da8b637b8d60b7c96e2b730e0e5802c37cb2"
+    },
+    "native-scheduler-slot-final-owning-source-verification.json": {
+      "bytes": 2812,
+      "sha256": "2c71fb79793ed0593020da1d586af1c33766e6c09ad3c0aba13ad1215d4cb658"
+    },
+    "native-scheduler-slot-gates.ps1": {
+      "bytes": 1488,
+      "sha256": "4874a402afd2b484febd0e78e7ee5e5b77480d94e99086e9cacc920ba2c4892b"
+    },
+    "native-scheduler-slot-producer-identities.json": {
+      "bytes": 30606,
+      "sha256": "4e019b02975d38e444c3c55e54bff7559c0a5695a33531b1b90b4ab894dea4bd"
+    },
+    "native-scheduler-thread-slot-boundaries-arm64-build.log": {
+      "bytes": 45,
+      "sha256": "b7a07192898d09552e54ca4184b249c4c0546959ff5af210bd26a80ce1ce3454"
+    },
+    "native-scheduler-thread-slot-boundaries-arm64.log": {
+      "bytes": 46414,
+      "sha256": "44798a75982ad697eca87c593cd33e13d143a95b246397bd91729e05dfb26c03"
+    },
+    "native-scheduler-thread-slot-boundaries-outcomes.json": {
+      "bytes": 1147,
+      "sha256": "6d7a22e715d223729765ce05144a122436c505317c1971b09040d25f715e0d5b"
+    },
+    "native-scheduler-thread-slot-boundaries-profiles.ps1": {
+      "bytes": 2354,
+      "sha256": "05a99f4e4fb2d7857dc5a14b164ab30a1747313ca843586a782d065ed0076f15"
+    },
+    "native-scheduler-thread-slot-boundaries-v2-arm64-build.log": {
+      "bytes": 48,
+      "sha256": "6af7586fda0576fcc8215e29d42c6c8ac49bc794b1e67bcdd9b8e89b9a8ee92b"
+    },
+    "native-scheduler-thread-slot-boundaries-v2-arm64.log": {
+      "bytes": 47008,
+      "sha256": "4e7f0e0f176d119176b8f4c05a66f8b4799b855e5edda546433c1c727093042d"
+    },
+    "native-scheduler-thread-slot-boundaries-v2-outcomes.json": {
+      "bytes": 1147,
+      "sha256": "771a58d97d8ad27d3ece51860a575a93b73056b584682e70e81350edf918bb3d"
+    },
+    "native-scheduler-thread-slot-boundaries-v2-profiles.ps1": {
+      "bytes": 2399,
+      "sha256": "4cd85736964d26cd37028448bbcdbf35fa26e4c929163e3de5781335a97a9074"
+    },
+    "native-scheduler-thread-slot-boundaries-v2-x64-build.log": {
+      "bytes": 48,
+      "sha256": "6af7586fda0576fcc8215e29d42c6c8ac49bc794b1e67bcdd9b8e89b9a8ee92b"
+    },
+    "native-scheduler-thread-slot-boundaries-v2-x64.log": {
+      "bytes": 47153,
+      "sha256": "4c65cf970683a120c79c3727f00fbe3ac3ec62864cd1323c3cb524c63d5ac1e2"
+    },
+    "native-scheduler-thread-slot-boundaries-v2-x86-build.log": {
+      "bytes": 48,
+      "sha256": "6af7586fda0576fcc8215e29d42c6c8ac49bc794b1e67bcdd9b8e89b9a8ee92b"
+    },
+    "native-scheduler-thread-slot-boundaries-v2-x86-laa-build.log": {
+      "bytes": 48,
+      "sha256": "6af7586fda0576fcc8215e29d42c6c8ac49bc794b1e67bcdd9b8e89b9a8ee92b"
+    },
+    "native-scheduler-thread-slot-boundaries-v2-x86-laa.log": {
+      "bytes": 45486,
+      "sha256": "c356e228090cc36b18facd13e4a3e4cbb9d61b41af4de46ac7c8cc6a5e6a1ccb"
+    },
+    "native-scheduler-thread-slot-boundaries-v2-x86.log": {
+      "bytes": 45391,
+      "sha256": "d6ffd63c7a2005c3c5525045c93a9a816fc91623a409f0a488ba207ad7106512"
+    },
+    "native-scheduler-thread-slot-boundaries-v2.cpp": {
+      "bytes": 9701,
+      "sha256": "52a7a674f5514267df0c051114788f04959348779914ea4c2088403259fd8159"
+    },
+    "native-scheduler-thread-slot-boundaries-x64-build.log": {
+      "bytes": 45,
+      "sha256": "b7a07192898d09552e54ca4184b249c4c0546959ff5af210bd26a80ce1ce3454"
+    },
+    "native-scheduler-thread-slot-boundaries-x64.log": {
+      "bytes": 46677,
+      "sha256": "783ae79b4defd6fb4e4a49d7f883566170065657e00eb20120482e28573ba06c"
+    },
+    "native-scheduler-thread-slot-boundaries-x86-build.log": {
+      "bytes": 45,
+      "sha256": "b7a07192898d09552e54ca4184b249c4c0546959ff5af210bd26a80ce1ce3454"
+    },
+    "native-scheduler-thread-slot-boundaries-x86-laa-build.log": {
+      "bytes": 45,
+      "sha256": "b7a07192898d09552e54ca4184b249c4c0546959ff5af210bd26a80ce1ce3454"
+    },
+    "native-scheduler-thread-slot-boundaries-x86-laa.log": {
+      "bytes": 44735,
+      "sha256": "b26e71d32b821d875167bfd743f856416716181fe28b65c3867aca0b97387e42"
+    },
+    "native-scheduler-thread-slot-boundaries-x86.log": {
+      "bytes": 44935,
+      "sha256": "de6d24c1563924312ce9fc74ab9513674e43ad5fcacff0ece03bf1ca9511db24"
+    },
+    "native-scheduler-thread-slot-boundaries.cpp": {
+      "bytes": 9649,
+      "sha256": "e0d95cf4f12d18902e7f1d95046e68d48831e565fb41e521798bb152f7ea2431"
+    },
+    "native-scheduler-thread-slot-capacity-arm64-build.log": {
+      "bytes": 43,
+      "sha256": "9d88a7d61dd241fafe76f36d10ade6af1294f5aad1f27e3dc4566a65486eebba"
+    },
+    "native-scheduler-thread-slot-capacity-arm64.log": {
+      "bytes": 324090,
+      "sha256": "5fdab57435a6666a7d8be6363ef0f0e925d175064795d9641889ef81f06d873c"
+    },
+    "native-scheduler-thread-slot-capacity-outcomes.json": {
+      "bytes": 1147,
+      "sha256": "134548d4a0bd5538e13e67e01d6d973fa53a8cffe5879bd1ba7c14960903b65f"
+    },
+    "native-scheduler-thread-slot-capacity-profiles.ps1": {
+      "bytes": 2324,
+      "sha256": "d6c48546572f7e090ef2f251b4d915eb7ab8144cfd33508764e3596f4f8f1eb6"
+    },
+    "native-scheduler-thread-slot-capacity-x64-build.log": {
+      "bytes": 43,
+      "sha256": "9d88a7d61dd241fafe76f36d10ade6af1294f5aad1f27e3dc4566a65486eebba"
+    },
+    "native-scheduler-thread-slot-capacity-x64.log": {
+      "bytes": 324144,
+      "sha256": "29d805240ba15f4b68d0fb0c1491b19022bbd14d2f99b3853a9240c724304aa5"
+    },
+    "native-scheduler-thread-slot-capacity-x86-build.log": {
+      "bytes": 43,
+      "sha256": "9d88a7d61dd241fafe76f36d10ade6af1294f5aad1f27e3dc4566a65486eebba"
+    },
+    "native-scheduler-thread-slot-capacity-x86-laa-build.log": {
+      "bytes": 43,
+      "sha256": "9d88a7d61dd241fafe76f36d10ade6af1294f5aad1f27e3dc4566a65486eebba"
+    },
+    "native-scheduler-thread-slot-capacity-x86-laa.log": {
+      "bytes": 307046,
+      "sha256": "9a382ef55708a7e40111e2ba868060b6ae9912eddbf6b8a2ef9d029d1b6ffe73"
+    },
+    "native-scheduler-thread-slot-capacity-x86.log": {
+      "bytes": 309820,
+      "sha256": "947b1ccdcf20ffafa690541bd5ec9aaa3800ceae38685e22dac6d9f324108e67"
+    },
+    "native-scheduler-thread-slot-capacity.cpp": {
+      "bytes": 8649,
+      "sha256": "570b9d4a3f8da03ae6c68e8850a5e7e2a4dfb36a3638d05256b7fcb03f040af9"
+    },
+    "native-scheduler-thread-slot-fresh-v2-arm64-build.log": {
+      "bytes": 43,
+      "sha256": "bbb5e752ddc6b22781445af827f0751fcf9161a9fff3d572947f4d203604f7de"
+    },
+    "native-scheduler-thread-slot-fresh-v2-arm64-outcome.json": {
+      "bytes": 260,
+      "sha256": "de35142a94efc5e07c84d798aed2de2e0c952172638df61e9dac81cc784fd6e5"
+    },
+    "native-scheduler-thread-slot-fresh-v2-arm64.log": {
+      "bytes": 3240,
+      "sha256": "fa00e83911ae657b02582914f2710f5dc3c40a48aac7f5b7ce781f3fe7ed9b7a"
+    },
+    "native-scheduler-thread-slot-fresh-v2-arm64.ps1": {
+      "bytes": 1884,
+      "sha256": "8814244aa7dea012fa4d66e7de1f2497d9786bf45daebb04a3f844264feca314"
+    },
+    "native-scheduler-thread-slot-fresh-v2.cpp": {
+      "bytes": 12320,
+      "sha256": "22e56c6c20789e40ada7b8a3c5331cb8ad9f3edd9b2e233789f918d5272a609b"
+    },
+    "native-scheduler-thread-slot-pool-arm64-build.log": {
+      "bytes": 39,
+      "sha256": "fa8634dc3acc55e6e8d90717524dfdd211185fe1f02eb9696e2d1414a8de822a"
+    },
+    "native-scheduler-thread-slot-pool-arm64.log": {
+      "bytes": 237815,
+      "sha256": "c88cae7dd82bf072ec06c5beccafbbbf7165a77e147cfbd90ea67a7c5fd1bc3f"
+    },
+    "native-scheduler-thread-slot-pool-outcomes.json": {
+      "bytes": 1147,
+      "sha256": "1d7d67acd6e460aa7b27a68e021af1777aea7c3ea29b5f78ac43e0bc385f6428"
+    },
+    "native-scheduler-thread-slot-pool-profiles.ps1": {
+      "bytes": 2264,
+      "sha256": "6ae45465e4886569385b2ede3996b4a17d44116bb63c86f55b6e31cf79e03428"
+    },
+    "native-scheduler-thread-slot-pool-x64-build.log": {
+      "bytes": 39,
+      "sha256": "fa8634dc3acc55e6e8d90717524dfdd211185fe1f02eb9696e2d1414a8de822a"
+    },
+    "native-scheduler-thread-slot-pool-x64.log": {
+      "bytes": 237769,
+      "sha256": "7cd2f4129ee87079ad023226386239770d370cc39cada74b565c1484d90047ba"
+    },
+    "native-scheduler-thread-slot-pool-x86-build.log": {
+      "bytes": 39,
+      "sha256": "fa8634dc3acc55e6e8d90717524dfdd211185fe1f02eb9696e2d1414a8de822a"
+    },
+    "native-scheduler-thread-slot-pool-x86-laa-build.log": {
+      "bytes": 39,
+      "sha256": "fa8634dc3acc55e6e8d90717524dfdd211185fe1f02eb9696e2d1414a8de822a"
+    },
+    "native-scheduler-thread-slot-pool-x86-laa.log": {
+      "bytes": 227475,
+      "sha256": "3d65b28165216cee2d16b2ddc2b9a3e540de56791766a6847ebd9e29c4239bfd"
+    },
+    "native-scheduler-thread-slot-pool-x86.log": {
+      "bytes": 227473,
+      "sha256": "c6b7c9723881ee517b1d63cb3a8100ff8807fdb5038eb83d2f0c6df3b12f1cb7"
+    },
+    "native-scheduler-thread-slot-pool.cpp": {
+      "bytes": 8592,
+      "sha256": "3c955a39ca296cac398852e724cc51b654bbe3db429b7d821ef89b8f00455185"
+    },
+    "native-scheduler-thread-slot-probe-v2-arm64-build.log": {
+      "bytes": 43,
+      "sha256": "d40a5a5e02819b6f3c11ee5e72d07b1f28b309d6de23fd6148ddaf7720cae83f"
+    },
+    "native-scheduler-thread-slot-probe-v2-arm64.log": {
+      "bytes": 7343968,
+      "sha256": "4b0aa1dc7f6174bf7a874be142ff63969dd61d2c0b3831e86efb0442e53d3543"
+    },
+    "native-scheduler-thread-slot-probe-v2-outcomes.json": {
+      "bytes": 1147,
+      "sha256": "0dcb4df6c17fb8cbec93448243fed717790ab4f822db71a7768a86c4f130dc72"
+    },
+    "native-scheduler-thread-slot-probe-v2-profiles.ps1": {
+      "bytes": 2324,
+      "sha256": "5c554317ed837e34458bf1da666aa7202f50d1cafa211740ac5e1165ff982d55"
+    },
+    "native-scheduler-thread-slot-probe-v2-x64-build.log": {
+      "bytes": 43,
+      "sha256": "d40a5a5e02819b6f3c11ee5e72d07b1f28b309d6de23fd6148ddaf7720cae83f"
+    },
+    "native-scheduler-thread-slot-probe-v2-x64.log": {
+      "bytes": 7348784,
+      "sha256": "48bf99db7bcc6ec29de244d00783abe60f285b838cf2f3fe3208eb35ee0a339d"
+    },
+    "native-scheduler-thread-slot-probe-v2-x86-build.log": {
+      "bytes": 43,
+      "sha256": "d40a5a5e02819b6f3c11ee5e72d07b1f28b309d6de23fd6148ddaf7720cae83f"
+    },
+    "native-scheduler-thread-slot-probe-v2-x86-laa-build.log": {
+      "bytes": 43,
+      "sha256": "d40a5a5e02819b6f3c11ee5e72d07b1f28b309d6de23fd6148ddaf7720cae83f"
+    },
+    "native-scheduler-thread-slot-probe-v2-x86-laa.log": {
+      "bytes": 7304488,
+      "sha256": "0bac2cc1f880d5ee06fa165a77b6707b92c5da3dd23d4f940451525fe2ce483d"
+    },
+    "native-scheduler-thread-slot-probe-v2-x86.log": {
+      "bytes": 7304488,
+      "sha256": "60e66ba418bef29263f3fc02052ccdfbd273804d5562e9cc604f58bdcb2ed761"
+    },
+    "native-scheduler-thread-slot-probe-v2.cpp": {
+      "bytes": 9988,
+      "sha256": "8bb325dfc3c007e0ffc49778dc57a0d90e39146bd4617b558dda09bb92ab74fc"
+    },
+    "native-scheduler-thread-slot-resources-v2-arm64-build.log": {
+      "bytes": 47,
+      "sha256": "2721d1ef3ad1a405950fddf745614c89df8cd63fdb074f8e98092ba918cfa17b"
+    },
+    "native-scheduler-thread-slot-resources-v2-arm64.log": {
+      "bytes": 20641,
+      "sha256": "94bdef275d382c0835afdee0448a2b66bd44aef86a6b8a75704d1762161e0b74"
+    },
+    "native-scheduler-thread-slot-resources-v2-outcomes.json": {
+      "bytes": 1147,
+      "sha256": "cce034ca60ac42a4f2e46c1c4539a616361330728086d8f3aed6c30e2963932f"
+    },
+    "native-scheduler-thread-slot-resources-v2-profiles.ps1": {
+      "bytes": 2384,
+      "sha256": "866b7b8740aaa1f5163dcb42de3055929ba0a5331ebf75db47c90f32bacdb043"
+    },
+    "native-scheduler-thread-slot-resources-v2-x64-build.log": {
+      "bytes": 47,
+      "sha256": "2721d1ef3ad1a405950fddf745614c89df8cd63fdb074f8e98092ba918cfa17b"
+    },
+    "native-scheduler-thread-slot-resources-v2-x64.log": {
+      "bytes": 20673,
+      "sha256": "a61ddd775efbc5ea4682d137609b86b567e58e60e0e307144b7388dc9ebf0896"
+    },
+    "native-scheduler-thread-slot-resources-v2-x86-build.log": {
+      "bytes": 47,
+      "sha256": "2721d1ef3ad1a405950fddf745614c89df8cd63fdb074f8e98092ba918cfa17b"
+    },
+    "native-scheduler-thread-slot-resources-v2-x86-laa-build.log": {
+      "bytes": 47,
+      "sha256": "2721d1ef3ad1a405950fddf745614c89df8cd63fdb074f8e98092ba918cfa17b"
+    },
+    "native-scheduler-thread-slot-resources-v2-x86-laa.log": {
+      "bytes": 19773,
+      "sha256": "d93a814be86cbc6704e768d66f7b2480b458292aee33e3435001932a7f2f32de"
+    },
+    "native-scheduler-thread-slot-resources-v2-x86.log": {
+      "bytes": 19756,
+      "sha256": "71934eabb2d4b9b6b0ade02ffff0af0156ddcec45b1672423f8bf851284daa52"
+    },
+    "native-scheduler-thread-slot-resources-v2.cpp": {
+      "bytes": 8441,
+      "sha256": "84a8bdd61ab2221296a31ae766995aa196f32ddc58a4bf0015003d67175fdfa3"
+    },
+    "native-scheduler-thread-slot-sequence-arm64-build.log": {
+      "bytes": 43,
+      "sha256": "b4d37720047fb0c79bb8590798086d8e627d79d1198dfbb6ad1dc09466e2ffac"
+    },
+    "native-scheduler-thread-slot-sequence-arm64-outcome.json": {
+      "bytes": 260,
+      "sha256": "9bc4aea424095a018d1006cc29f93a02a8e52ecbb774442f981b0be0dc12777f"
+    },
+    "native-scheduler-thread-slot-sequence-arm64.log": {
+      "bytes": 216203,
+      "sha256": "8aea9df73ee831423b9ea4e09d4838826e059ae1721011f877042989c53ced8d"
+    },
+    "native-scheduler-thread-slot-sequence-arm64.ps1": {
+      "bytes": 1884,
+      "sha256": "42cfe52939e7a14ee78f146daff3e9d088a91aa9f73904a962dd3122461d6b7c"
+    },
+    "native-scheduler-thread-slot-sequence.cpp": {
+      "bytes": 14325,
+      "sha256": "5bcfa6f6e55d377158884acd8cd28545a7d439ec706cc33c34bade42a11c0768"
+    },
+    "owning-linux-cpp-build.py": {
+      "bytes": 1522,
+      "sha256": "a0d9f75e831bd3585d3e009b94e8e3f2744b137e646c157c70a7ad7950373b56"
+    },
+    "post-validation-comment-only.patch": {
+      "bytes": 563,
+      "sha256": "cf649d0108bbc7877b0fe2686d9a2dde5fc5a480269e2b135298a4664849f942"
+    },
+    "references/phnt-LICENSE": {
+      "bytes": 1092,
+      "sha256": "ad2ab542c56c606e4c19d66a7f3cdcd3ef83beffb638e7c3893b22c7a6a6c0df"
+    },
+    "references/phnt-ntpebteb.h": {
+      "bytes": 42029,
+      "sha256": "9869d45323706a6bf7cb3ed168b4ca6560aef194f1c6a4d37aaad74a356ad248"
+    },
+    "references/phnt-ntpsapi.h": {
+      "bytes": 180987,
+      "sha256": "3477b3fa901715c5ad139ae154f86d6c36f3415962731d6c0de0dd3c8417f4d8"
+    },
+    "references/sources.json": {
+      "bytes": 805,
+      "sha256": "ff4a1c79e97cd0f3408316f205124dbe457c439836256ce4220d6b696dc06748"
+    },
+    "run-owning-linux.py": {
+      "bytes": 1690,
+      "sha256": "a78aff00efcc6ab81899a7e6a5a2ecf9081075d905a4faa1eb5ee93af36b569b"
+    },
+    "run-owning-macos.py": {
+      "bytes": 526,
+      "sha256": "fcdcb2a47418eac16a13d41cc89df4ab089d06b414bbf728708d63b2f1b99da1"
+    },
+    "run-portable-gates.py": {
+      "bytes": 1579,
+      "sha256": "88bbcc28b49a73cb36bf45b7325ea0cf82295e25832388d2f0d689b170708795"
+    },
+    "scheduler-slot-owned-cpp-build.py": {
+      "bytes": 1839,
+      "sha256": "9995e244e446791e41fc1d813aaf59db7ccb7b472c064785232f4e11f63d3608"
+    },
+    "scheduler-slot-owning-root-scope.json": {
+      "bytes": 11503,
+      "sha256": "bc24525dd72ff0e49b4d0f40ffcaa7de52d57fbcddf21cc876d2dd499033fc69"
+    },
+    "scheduler-slot-owning-source-hashes.json": {
+      "bytes": 21015,
+      "sha256": "adee0b7752f6ad4260a28e975c3e4aee9a1239363366acac5943fde0deeb07d4"
+    },
+    "validation-summary.json": {
+      "bytes": 5223,
+      "sha256": "675c33b71ffb74b91e2edea9c2ef68173cb1122f09241eb0f95b4db09177b592"
+    },
+    "verify-scheduler-slot-owning-sources.py": {
+      "bytes": 1071,
+      "sha256": "2866a28c83320c8ee3f15543f77bc7878ea3489fc73fad6fd686403bf7ab9176"
+    }
+  }
+}
