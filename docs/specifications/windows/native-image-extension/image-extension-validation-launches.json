@@ -1,0 +1,10 @@
+﻿[
+    {
+        "pid":  8116,
+        "script":  "native-image-extension-gates"
+    },
+    {
+        "pid":  6752,
+        "script":  "assist-native-image-extension-owned"
+    }
+]

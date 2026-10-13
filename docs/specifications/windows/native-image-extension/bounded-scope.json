@@ -1,0 +1,41 @@
+[
+  {
+    "impact": "high",
+    "finding": "Three ordinary programs stop at NtSetInformationProcess class112 and installed whoami at NtTraceEvent before guest exit.",
+    "blocks-this-group": false,
+    "blocks-full-goal": true,
+    "evidence": "native-image-extension-final-after-ordinary-processes.log and unchanged observer"
+  },
+  {
+    "impact": "high",
+    "finding": "Kernel CFG/SCP extension mappings and host code-integrity state are not guest image owners. Native present-state controls are excluded; future guest owners must jointly extend queries/mapping/relocation/lifetime.",
+    "blocks-this-group": false,
+    "blocks-full-goal-if-reached": true,
+    "evidence": "class6 implementation, installed leaf and mature native NTDLL matrix controls"
+  },
+  {
+    "impact": "medium",
+    "finding": "Different kernel/DLL builds, physical x64 kernel and fresh compatibility startup remain unknown.",
+    "blocks-this-group": false,
+    "evidence": "13 actual producer identities and two complete fresh ARM64 cases"
+  },
+  {
+    "impact": "high",
+    "finding": "Frozen owning embeddings exclude concurrent root changes. Nine process consumers match; whole current-root package/plugin/GUI validation is not established.",
+    "blocks-this-group": false,
+    "evidence": "owning-root-scope.json and current native source verification"
+  },
+  {
+    "impact": "medium",
+    "finding": "Windows retains the same four BZHI/one FP16 lowering failures in untouched source.",
+    "blocks-this-group": false,
+    "blocks-full-goal-if-reached": true,
+    "evidence": "windows-baseline-failures.json and native unfiltered full log"
+  },
+  {
+    "impact": "low",
+    "finding": "Constant query scratch permits legal large output extents to traverse pages; a broad performance cap would alter native semantics and is not introduced.",
+    "blocks-this-group": false,
+    "evidence": "image_extension.rs whole-span probe and numeric-limit replay"
+  }
+]

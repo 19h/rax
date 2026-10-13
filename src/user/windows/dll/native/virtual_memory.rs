@@ -6,6 +6,7 @@ use crate::user::windows::memory::{AllocKind, Mem, RegionInfo};
 use crate::user::windows::nt::status::*;
 use crate::user::windows::objects::Object;
 
+mod image_extension;
 mod working_set;
 
 pub(super) fn query(c: &mut Ctx) -> ApiResult {
@@ -34,6 +35,9 @@ fn checked(c: &mut Ctx) -> ApiResult {
     } else {
         returned
     };
+    if class == 14 {
+        return image_extension::query(c, process, address, output, length, returned);
+    }
     // The pinned native enum ends at 15. Other declared classes are explicit
     // frontiers, not falsely reported as implemented or invalid.
     if class >= 15 {

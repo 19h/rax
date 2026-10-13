@@ -1,0 +1,23 @@
+[
+  {
+    "file": "phnt-ntmmapi.h",
+    "url": "https://raw.githubusercontent.com/winsiderss/phnt/master/ntmmapi.h",
+    "retrieved-utc": "2026-10-13 01:22 UTC",
+    "bytes": 92011,
+    "sha256": "8acd89a95f890f929da824cc841383770a4f21f312bb04d0d12f03cb3a00e079"
+  },
+  {
+    "file": "phnt-LICENSE",
+    "url": "https://raw.githubusercontent.com/winsiderss/phnt/master/LICENSE",
+    "retrieved-utc": "2026-10-13 01:22 UTC",
+    "bytes": 1092,
+    "sha256": "ad2ab542c56c606e4c19d66a7f3cdcd3ef83beffb638e7c3893b22c7a6a6c0df"
+  },
+  {
+    "file": "microsoft-ntqueryvirtualmemory.html",
+    "url": "https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/nf-ntifs-ntqueryvirtualmemory",
+    "retrieved-utc": "2026-10-13 01:22 UTC",
+    "bytes": 54619,
+    "sha256": "7f8e0e477c93fdf9676e916cebb22f98872b702407a380a3d38d859288fbba38"
+  }
+]

@@ -1,0 +1,250 @@
+{
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "principal": "\"nt authority\\system\",\"S-1-5-18\"",
+  "python": "3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:57:41) [MSC v.1944 64 bit (ARM64)]",
+  "inspector-identity": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-image-extension-producers.py",
+    "bytes": 2645,
+    "sha256": "e37fbe3b0042298bfdd21e10cb68e5b564452a823c8f10e45b842b6b3571d2e9"
+  },
+  "native-libraries": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+      "machine": 332,
+      "characteristics": 8450
+    }
+  ],
+  "producers": [
+    {
+      "family": "query-probe",
+      "profile": "arm64",
+      "source": "native-image-extension-query-probe.cpp",
+      "log": "native-image-extension-query-probe-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-arm64\\native-image-extension-query-probe.cpp",
+        "bytes": 4405,
+        "sha256": "f68965ce521da2f9e07c0500061289a3f6e6d61376b23367995a5c8ae95d7f19"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-arm64\\native-image-extension-query-probe-arm64.exe",
+        "bytes": 147968,
+        "sha256": "4c2ba38a241675baead217fe2eeb501642e8caa7536161f1b9e9d6fa6a9c5cb6",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-arm64\\native-image-extension-query-probe-arm64.log",
+        "bytes": 1068392,
+        "sha256": "b6a1d373ed80e5829c774310bae94bdaa86393293033fc81f130b7d2bfe673c2"
+      },
+      "rows": 4200
+    },
+    {
+      "family": "query-probe",
+      "profile": "x64",
+      "source": "native-image-extension-query-probe.cpp",
+      "log": "native-image-extension-query-probe-x64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-x64\\native-image-extension-query-probe.cpp",
+        "bytes": 4405,
+        "sha256": "f68965ce521da2f9e07c0500061289a3f6e6d61376b23367995a5c8ae95d7f19"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-x64\\native-image-extension-query-probe-x64.exe",
+        "bytes": 145408,
+        "sha256": "3fb973e539339d231904439bd0600abf23db65d66c7ff37bbfaa82dfa0347d0b",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-x64\\native-image-extension-query-probe-x64.log",
+        "bytes": 1068392,
+        "sha256": "a4082ac2520d6b1c1dac3dc2ad295201770cadf95576211a8d9a2f9ce8fce151"
+      },
+      "rows": 4200
+    },
+    {
+      "family": "query-probe",
+      "profile": "x86",
+      "source": "native-image-extension-query-probe.cpp",
+      "log": "native-image-extension-query-probe-x86.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-x86\\native-image-extension-query-probe.cpp",
+        "bytes": 4405,
+        "sha256": "f68965ce521da2f9e07c0500061289a3f6e6d61376b23367995a5c8ae95d7f19"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-x86\\native-image-extension-query-probe-x86.exe",
+        "bytes": 120832,
+        "sha256": "ac1c9ba2d42edfbc77bbbeb2764309b54d8b5e858fecf099cb04328eb8633cb8",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-x86\\native-image-extension-query-probe-x86.log",
+        "bytes": 1035296,
+        "sha256": "f99101db5585f4a2450db706c265cde94baf6d519287d56f3c45dfa530c80032"
+      },
+      "rows": 4200
+    },
+    {
+      "family": "query-probe",
+      "profile": "x86-laa",
+      "source": "native-image-extension-query-probe.cpp",
+      "log": "native-image-extension-query-probe-x86-laa.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-x86-laa\\native-image-extension-query-probe.cpp",
+        "bytes": 4405,
+        "sha256": "f68965ce521da2f9e07c0500061289a3f6e6d61376b23367995a5c8ae95d7f19"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-x86-laa\\native-image-extension-query-probe-x86-laa.exe",
+        "bytes": 120832,
+        "sha256": "da634b69fb72d1effbabba300872aca05839548527f3d77b4fb893f500c2e621",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-x86-laa\\native-image-extension-query-probe-x86-laa.log",
+        "bytes": 1035296,
+        "sha256": "0d6d9b82962d003abc7653742778f2716d6fbfa25c253be624d6df5a85dd43bd"
+      },
+      "rows": 4200
+    },
+    {
+      "family": "boundaries-v2",
+      "profile": "arm64",
+      "source": "native-image-extension-boundaries-v2.cpp",
+      "log": "native-image-extension-boundaries-v2-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-arm64\\native-image-extension-boundaries-v2.cpp",
+        "bytes": 7210,
+        "sha256": "58882d17830acf34620438a64edb643fb7e82c62b110123a95a9ad63c8ddce68"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-arm64\\native-image-extension-boundaries-v2-arm64.exe",
+        "bytes": 150016,
+        "sha256": "6fecb268e50f6a0ee610084e880eba44f846f03d22e52edce0898ac5a0b68029",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-arm64\\native-image-extension-boundaries-v2-arm64.log",
+        "bytes": 12315488,
+        "sha256": "06cb5dba7de5036cc71a3415bdf32875126ce8ff45b644899a2147af9e9e3ec4"
+      },
+      "rows": 15480
+    },
+    {
+      "family": "boundaries-v2",
+      "profile": "x64",
+      "source": "native-image-extension-boundaries-v2.cpp",
+      "log": "native-image-extension-boundaries-v2-x64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-x64\\native-image-extension-boundaries-v2.cpp",
+        "bytes": 7210,
+        "sha256": "58882d17830acf34620438a64edb643fb7e82c62b110123a95a9ad63c8ddce68"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-x64\\native-image-extension-boundaries-v2-x64.exe",
+        "bytes": 147456,
+        "sha256": "4d4b12a26041507ba95dd1e22076af68029bdfb0b63a58b6d1bbc31d3d6ef269",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-x64\\native-image-extension-boundaries-v2-x64.log",
+        "bytes": 12315488,
+        "sha256": "6a9215375bdbfd3e34276d6d0e96a2e2a7ea0f29e939fe793f69036e88a3448e"
+      },
+      "rows": 15480
+    },
+    {
+      "family": "boundaries-v2",
+      "profile": "x86",
+      "source": "native-image-extension-boundaries-v2.cpp",
+      "log": "native-image-extension-boundaries-v2-x86.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-x86\\native-image-extension-boundaries-v2.cpp",
+        "bytes": 7210,
+        "sha256": "58882d17830acf34620438a64edb643fb7e82c62b110123a95a9ad63c8ddce68"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-x86\\native-image-extension-boundaries-v2-x86.exe",
+        "bytes": 121856,
+        "sha256": "8c721dbfaa58f64d4208fb8d5dd38fff697f5ea157b5fa6265deb7224085ab4a",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-x86\\native-image-extension-boundaries-v2-x86.log",
+        "bytes": 12315472,
+        "sha256": "3fc09c08352f8879240d0360c8b589d0b6057bc747f318eb82dd34399c638cd1"
+      },
+      "rows": 15480
+    },
+    {
+      "family": "boundaries-v2",
+      "profile": "x86-laa",
+      "source": "native-image-extension-boundaries-v2.cpp",
+      "log": "native-image-extension-boundaries-v2-x86-laa.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-x86-laa\\native-image-extension-boundaries-v2.cpp",
+        "bytes": 7210,
+        "sha256": "58882d17830acf34620438a64edb643fb7e82c62b110123a95a9ad63c8ddce68"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-x86-laa\\native-image-extension-boundaries-v2-x86-laa.exe",
+        "bytes": 121856,
+        "sha256": "b76633da7159e8cc98fff9071bba1bd9baadf41eda642bd518d01be9fd23fb5c",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-x86-laa\\native-image-extension-boundaries-v2-x86-laa.log",
+        "bytes": 12315472,
+        "sha256": "ac580ee98bcf21b62d08ebecb4bbfbb29b6a1daa3ca00b2dc97c295c7498bc0e"
+      },
+      "rows": 15480
+    },
+    {
+      "family": "fresh",
+      "profile": "arm64",
+      "source": "native-image-extension-fresh.cpp",
+      "log": "native-image-extension-fresh-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-arm64\\native-image-extension-fresh.cpp",
+        "bytes": 9983,
+        "sha256": "23fc27e238840d6bb4dd656b0bbdaebe77997a2dd76494d90245e9ac72f54023"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-arm64\\native-image-extension-fresh-arm64.exe",
+        "bytes": 167936,
+        "sha256": "c01a427b4ab320fffc820101e77031ae93b646803c5cc7d409d0799c42a9d887",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-arm64\\native-image-extension-fresh-arm64.log",
+        "bytes": 3831,
+        "sha256": "771894ac9fe06c314703950db7aa93ee060ee18eb9bbb2b0425d206dc85706ae"
+      },
+      "rows": 3
+    }
+  ]
+}

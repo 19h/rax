@@ -9,6 +9,9 @@ mod installed;
 #[path = "working_set_tests.rs"]
 mod working_set;
 
+#[path = "image_extension_tests.rs"]
+mod image_extension;
+
 fn arguments(p: &mut Proc, t: &mut Thread, args: &[u64]) {
     let sp = t.cpu.sp();
     t.cpu.set_pc(0x1234_0004);

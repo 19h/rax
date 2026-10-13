@@ -1508,3 +1508,34 @@ link services; complete ordinary installed-library execution and guest exit
 remain separate acceptance criteria. Exact provenance, assumptions, scope and
 validation limits:
 [symbolic-link evidence](../../../docs/specifications/windows/native-symbolic-link-open/README.md).
+
+
+## Native absent image-extension query (2026-10-13)
+
+NtQueryVirtualMemory class 14 now describes complete guest PE images without
+kernel CFG/SCP extension owners, consistent with class-6 ImageExtensionPresent=0.
+Native64 preserves valid type/flags, writes zero RVA/size, then optional 24 B
+ReturnLength. WoW64 rejects the unavailable conversion after its existing optional
+4 B ReturnLength preprobe. Whole SIZE_T write probes, overflow/user-range guard
+suppression, pointer/handle/rights/flags/type order and aliases follow the actual
+build29683 captures; no guest input is forwarded to a native host query.
+
+Thirteen actual producers bind 83,088 mature native observations: 80,568 exact
+portable replays plus 2,520 explicit native present-SCP controls. Two complete
+fresh ARM64 original-entry/true-LR cases restore the exact native handle set.
+Five portable tests and the sixth installed ARM64/WoW64 leaf test pass. Full
+suite outcomes are recorded in the evidence table: macOS and Linux pass, while
+Windows retains the exact four BZHI/one FP16 baseline failures. C API (168 tests),
+all-target builds, integrations and five owning C++ consumers per host pass; macOS CLI/MCP,
+seven selected CTests and protected-text scans pass in scoped frozen embeddings.
+Native archives pass 4673/260-member walks, 92 actual source hashes and empty
+core features. The unchanged 11,177 B observer advances 97,257->114,140:
+114,140-97,257=16,883 scheduler calls. Three ordinary programs now stop at
+NtSetInformationProcess class 112/service 0x1C/PC 0x1800011D0; installed whoami.exe
+stops at NtTraceEvent 0x5E/PC 0x180001620. All four retain reason 5/internal failure;
+exit_code0 is not a proved guest exit. Full same-host process support remains
+an active incomplete goal. Kernel extension ownership, broader native builds,
+physical x64 kernel and whole current-root plugin/GUI/package validation remain
+explicit limits. The independent partition/provenance checker and all 17 controlled
+falsifications pass; reconciled assumptions, complete plane map and evidence are
+in [image-extension evidence](../../../docs/specifications/windows/native-image-extension/README.md).

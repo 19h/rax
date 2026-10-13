@@ -1,0 +1,37 @@
+image case=0 entry=7FF8DE2E1240 allocation=7FF8DE2E0000 type=1000000 bytes=610400D4C0035FD60000000000000000610400D4C0035FD60000000000000000
+entry case=0 call=0 function=35 thread=1408 pc=7FF8DE2E1244 lr=7FF8DE318224 args=FFFFFFFFFFFFFFFF,7FF8DE2E0000,6,BDABBEE580,18,0,
+return case=0 call=0 function=35 thread=1408 pc=7FF8DE318228 status=00000000
+entry case=0 call=1 function=35 thread=1408 pc=7FF8DE2E1244 lr=7FF8DE3B0C84 args=FFFFFFFFFFFFFFFF,0,4,BDABBEF180,50,0,
+return case=0 call=1 function=35 thread=1408 pc=7FF8DE3B0C88 status=00000000
+entry case=0 call=2 function=35 thread=1408 pc=7FF8DE2E1244 lr=7FF8DE317C6C args=FFFFFFFFFFFFFFFF,7FF8DE2E0000,E,BDABBEE2B0,18,BDABBEE2A0,
+bytes case=0 phase=output-before address=BDABBEE2B0 size=24 data=000000000000000000000000000000000000000000000000
+bytes case=0 phase=returned-before address=BDABBEE2A0 size=8 data=0000000000000000
+return case=0 call=2 function=35 thread=1408 pc=7FF8DE317C70 status=00000000
+bytes case=0 phase=output-after address=BDABBEE2B0 size=24 data=000000000000000000304700000000000010000000000000
+bytes case=0 phase=returned-after address=BDABBEE2A0 size=8 data=1800000000000000
+case=0 warmup=1 installed=1 done=1 calls=3 exit=77 handles-before=52 handles-after=57 exact-handle-set=0
+image case=1 entry=7FF8DE2E1240 allocation=7FF8DE2E0000 type=1000000 bytes=610400D4C0035FD60000000000000000610400D4C0035FD60000000000000000
+entry case=1 call=0 function=35 thread=6972 pc=7FF8DE2E1244 lr=7FF8DE318224 args=FFFFFFFFFFFFFFFF,7FF8DE2E0000,6,B3C830E220,18,0,
+return case=1 call=0 function=35 thread=6972 pc=7FF8DE318228 status=00000000
+entry case=1 call=1 function=35 thread=6972 pc=7FF8DE2E1244 lr=7FF8DE3B0C84 args=FFFFFFFFFFFFFFFF,0,4,B3C830EE20,50,0,
+return case=1 call=1 function=35 thread=6972 pc=7FF8DE3B0C88 status=00000000
+entry case=1 call=2 function=35 thread=6972 pc=7FF8DE2E1244 lr=7FF8DE317C6C args=FFFFFFFFFFFFFFFF,7FF8DE2E0000,E,B3C830DF50,18,B3C830DF40,
+bytes case=1 phase=output-before address=B3C830DF50 size=24 data=000000000000000000000000000000000000000000000000
+bytes case=1 phase=returned-before address=B3C830DF40 size=8 data=0000000000000000
+return case=1 call=2 function=35 thread=6972 pc=7FF8DE317C70 status=00000000
+bytes case=1 phase=output-after address=B3C830DF50 size=24 data=000000000000000000304700000000000010000000000000
+bytes case=1 phase=returned-after address=B3C830DF40 size=8 data=1800000000000000
+case=1 warmup=0 installed=1 done=1 calls=3 exit=77 handles-before=57 handles-after=57 exact-handle-set=1
+image case=2 entry=7FF8DE2E1240 allocation=7FF8DE2E0000 type=1000000 bytes=610400D4C0035FD60000000000000000610400D4C0035FD60000000000000000
+entry case=2 call=0 function=35 thread=9480 pc=7FF8DE2E1244 lr=7FF8DE318224 args=FFFFFFFFFFFFFFFF,7FF8DE2E0000,6,84E5CFE300,18,0,
+return case=2 call=0 function=35 thread=9480 pc=7FF8DE318228 status=00000000
+entry case=2 call=1 function=35 thread=9480 pc=7FF8DE2E1244 lr=7FF8DE3B0C84 args=FFFFFFFFFFFFFFFF,0,4,84E5CFEF00,50,0,
+return case=2 call=1 function=35 thread=9480 pc=7FF8DE3B0C88 status=00000000
+entry case=2 call=2 function=35 thread=9480 pc=7FF8DE2E1244 lr=7FF8DE317C6C args=FFFFFFFFFFFFFFFF,7FF8DE2E0000,E,84E5CFE030,18,84E5CFE020,
+bytes case=2 phase=output-before address=84E5CFE030 size=24 data=000000000000000000000000000000000000000000000000
+bytes case=2 phase=returned-before address=84E5CFE020 size=8 data=0000000000000000
+return case=2 call=2 function=35 thread=9480 pc=7FF8DE317C70 status=00000000
+bytes case=2 phase=output-after address=84E5CFE030 size=24 data=000000000000000000304700000000000010000000000000
+bytes case=2 phase=returned-after address=84E5CFE020 size=8 data=1800000000000000
+case=2 warmup=0 installed=1 done=1 calls=3 exit=77 handles-before=57 handles-after=57 exact-handle-set=1
+complete cases=2 warmup=1

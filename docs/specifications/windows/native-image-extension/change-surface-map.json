@@ -1,0 +1,18 @@
+{
+  "plugin-lifecycle": "unaffected: no IDA lifecycle source change; guest startup progresses inside RAX",
+  "UI-state": "unaffected: no Qt/widget/copy contract change",
+  "conversation-lane": "unaffected: no agent/history source change",
+  "agent-backend": "unaffected: no native/ACP request or cancellation change",
+  "prompt-context": "unaffected: no prompt/context change",
+  "tool-schema": "schema unchanged; process diagnostic frontier advances; nine current adapter/header/factory/consumer hashes match",
+  "permission-mutation": "guest process-query rights and current VM validation affected; host permission gate unchanged; no guest-driven host NT call",
+  "main-thread": "unaffected: guest-only service; no IDA/Qt API added",
+  "mesh-MCP": "unaffected: existing schema/discovery/transport paths; manifest checks pass",
+  "transport-crypto": "unaffected: no transport/crypto change",
+  "persistence": "guest VM allocation-kind/protection state observed; no persisted schema or new resource owner",
+  "SDK-ABI": "unaffected: no public C/Rust struct or enum change; opaque C API1.11.0 and Assist layouts retain existing checks",
+  "optional-engines": "RAX Windows service affected; Z3/Frida/debugger/defaults/pins unchanged by semantic implementation",
+  "update-release": "engineering records and gitlink only; no package/default/ABI-floor change",
+  "targets-platforms": "shared replay/core/CAPI build on Windows/macOS/Linux; actual installed leaves run on Windows; owning embeddings/scoped consumers pass; public target membership unchanged",
+  "tests-docs": "five portable tests, sixth native installed leaf, 83088 independent captured rows, 80568 exact replays, 2520 present-state controls, provenance/falsification and engineering records"
+}

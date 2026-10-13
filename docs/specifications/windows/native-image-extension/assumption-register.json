@@ -1,0 +1,29 @@
+[
+  {
+    "id": "A1",
+    "assumption": "Class 14 is the private MemoryImageExtensionInformation selector on the current installed native DLL/kernel.",
+    "basis": "PHNT private declaration; 83,088 mature native rows and two complete fresh original-entry/true-LR captures on recorded installed DLLs.",
+    "dependent-result": "Output layout and query dispatch.",
+    "stress-test": "Extension types, flags, sizes, allocation kinds, ABIs and native original entry.",
+    "falsification-probe": "Fresh native service/input or mature query output differs.",
+    "status": "confirmed for captured build and identities"
+  },
+  {
+    "id": "A2",
+    "assumption": "Current guest images have no kernel CFG/SCP extension mapping, consistent with their existing class-6 extension flags.",
+    "basis": "Current guest class-6 ImageExtensionPresent is zero; 80,568 exact absent-image/ABI/error replays and installed leaf test agree with native state.",
+    "dependent-result": "Measured absent-extension query behavior for guest-owned complete PE images.",
+    "stress-test": "Native self image versus installed NTDLL; native absent and present extension types; ordinary loader continuation.",
+    "falsification-probe": "Reached ordinary guest startup requires executable/data extension mapping inconsistent with absent-image contract.",
+    "status": "confirmed for current image owners; unchanged ordinary observer advances 97,257 to 114,140; present kernel extensions remain excluded"
+  },
+  {
+    "id": "A3",
+    "assumption": "Behavioral conclusions apply only to Windows10.0.29683.1000 and the recorded native DLL identities.",
+    "basis": "Current available native ARM64 kernel and compatibility callers.",
+    "dependent-result": "Native ordering and compatibility semantics.",
+    "stress-test": "Different kernel/native DLL builds and physical x64 kernel.",
+    "falsification-probe": "Identical inputs produce a changed status, bytes or guard state.",
+    "status": "retained; different builds and physical x64 kernel remain unknown"
+  }
+]

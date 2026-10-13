@@ -1,0 +1,30 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 30.47s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/red-target/debug/deps/rax-754f4d2a527a4423)
+
+running 4 tests
+
+thread 'user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_boundaries_replay_status_bytes_guards_and_process_rights' (8846623) panicked at src/user/windows/process/sched/tests/services_tests/image_extension_tests.rs:292:13:
+assertion `left == right` failed: arm64 case=9 family=0 process=0 target=3 length=0 output=0 returned=0 selector=0 status=C000000D exception=00000000 protection=00000004,00000004,00000004,00000004, bytes0=A5A5A5A5A5A5A5A50000000000000000A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 bytes1=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 bytes2=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5
+  left: 3221225476
+ right: 3221225485
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_boundaries_replay_status_bytes_guards_and_process_rights ... FAILED
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_native_validation_priority_and_wow_unavailable ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_matrix_replays_absent_images_and_abi_availability' (8846624) panicked at src/user/windows/process/sched/tests/services_tests/image_extension_tests.rs:160:13:
+assertion `left == right` failed: arm64 case=2100 target=5 type=00000000 flags=00000000 length=0 status=C000000D exception=00000000 returned=FFFFFFFFFFFFFFFF bytes=0000000000000000A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5
+  left: 3221225476
+ right: 3221225485
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_matrix_replays_absent_images_and_abi_availability ... FAILED
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_absent_metadata_matches_image_flags_and_aliases ... ok
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_boundaries_replay_status_bytes_guards_and_process_rights
+    user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_matrix_replays_absent_images_and_abi_availability
+
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 7732 filtered out; finished in 0.07s
+
+error: test failed, to rerun pass `--lib`

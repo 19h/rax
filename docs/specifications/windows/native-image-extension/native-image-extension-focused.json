@@ -1,0 +1,4 @@
+﻿{
+    "command":  "cargo.exe test --locked --offline --no-default-features --lib native_image_extension -- --nocapture",
+    "exit-code":  0
+}

@@ -1,0 +1,90 @@
+{
+  "positive": "pass",
+  "negative-controls": [
+    {
+      "control": "changed-compiled-source",
+      "result": "rejected",
+      "reason": "actual compiled source binding"
+    },
+    {
+      "control": "forged-pe-machine",
+      "result": "rejected",
+      "reason": "actual PE machine"
+    },
+    {
+      "control": "forged-x86-laa",
+      "result": "rejected",
+      "reason": "actual PE LAA"
+    },
+    {
+      "control": "missing-producer",
+      "result": "rejected",
+      "reason": "independent producer inventory"
+    },
+    {
+      "control": "changed-native-dll",
+      "result": "rejected",
+      "reason": "captured installed native DLL identities"
+    },
+    {
+      "control": "changed-rehashed-input",
+      "result": "rejected",
+      "reason": "independent input partition differs"
+    },
+    {
+      "control": "missing-rehashed-row",
+      "result": "rejected",
+      "reason": "independent input partition cardinality"
+    },
+    {
+      "control": "changed-rehashed-status",
+      "result": "rejected",
+      "reason": "same-width native semantic agreement"
+    },
+    {
+      "control": "changed-rehashed-guard-bytes",
+      "result": "rejected",
+      "reason": "same-width native semantic agreement"
+    },
+    {
+      "control": "changed-rehashed-handle-restoration",
+      "result": "rejected",
+      "reason": "native query handle restoration"
+    },
+    {
+      "control": "changed-rehashed-fresh-lifetime",
+      "result": "rejected",
+      "reason": "fresh capture lifetime"
+    },
+    {
+      "control": "missing-rehashed-fresh-entry",
+      "result": "rejected",
+      "reason": "fresh original-entry/true-LR cardinality"
+    },
+    {
+      "control": "changed-rehashed-fresh-svc",
+      "result": "rejected",
+      "reason": "fresh live MEM_IMAGE SVC"
+    },
+    {
+      "control": "changed-rehashed-fresh-thread",
+      "result": "rejected",
+      "reason": "fresh thread/function/true-LR binding"
+    },
+    {
+      "control": "changed-rehashed-fresh-query-class",
+      "result": "rejected",
+      "reason": "fresh startup query partition"
+    },
+    {
+      "control": "changed-rehashed-fresh-payload",
+      "result": "rejected",
+      "reason": "fresh actual extension payload"
+    },
+    {
+      "control": "missing-manifest-file",
+      "result": "rejected",
+      "reason": "complete evidence file inventory"
+    }
+  ]
+}

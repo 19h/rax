@@ -1,0 +1,77 @@
+{
+  "captured-native-rows": 83088,
+  "portable-replay-rows": 80568,
+  "present-extension-controls": 2520,
+  "actual-native-producers": 13,
+  "fresh-complete-cases": 2,
+  "hosts": {
+    "macos": {
+      "focused": 5,
+      "full": [
+        7735,
+        0,
+        2
+      ],
+      "capi": 168,
+      "integration": 544,
+      "cpp-consumers": 5
+    },
+    "linux": {
+      "focused": 5,
+      "full": [
+        7729,
+        0,
+        2
+      ],
+      "capi": 168,
+      "integration": 544,
+      "cpp-consumers": 5
+    },
+    "windows": {
+      "focused": 6,
+      "full": [
+        7145,
+        5,
+        2
+      ],
+      "capi": 168,
+      "integration": 4,
+      "cpp-consumers": 5
+    }
+  },
+  "ordinary-results": {
+    "observer-sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e",
+    "previous-turn": 97257,
+    "current-turn": 114140,
+    "scheduler-calls-advanced": 16883,
+    "next-service": "NtSetInformationProcess",
+    "next-class": 112,
+    "next-service-number": "0x1C",
+    "instruction-pc": "0x1800011D0",
+    "stopped-thread-pc": "0x1800011D4",
+    "guest-exits": 0,
+    "stop-reason": 5,
+    "whoami-next-service": "NtTraceEvent",
+    "whoami-service-number": "0x5E",
+    "whoami-instruction-pc": "0x180001620",
+    "archives": [
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\assist_rs.lib",
+        "bytes": 1133524966,
+        "sha256": "a958df26772394d2369f8b4c654edd813857220d217571b38784522c744c5405",
+        "members": 4673,
+        "structural-member-walk": "pass"
+      },
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\librax-e6c413934cad3a8f.rlib",
+        "bytes": 745855982,
+        "sha256": "477326fbba054c662c8c36224d3527db164b265863572c3b0278573b51d53888",
+        "members": 260,
+        "structural-member-walk": "pass"
+      }
+    ],
+    "core-features": [],
+    "source-units": 92
+  },
+  "scope": "image-extension group verified; full ordinary process goal remains active and incomplete"
+}
