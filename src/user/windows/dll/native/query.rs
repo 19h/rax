@@ -10,7 +10,7 @@ use crate::error::MemoryAccessKind;
 use crate::user::mm::PAGE_SIZE;
 use crate::user::windows::arch::WinArch;
 use crate::user::windows::hle::{ApiErr, ApiResult, Ctx, Flow};
-use crate::user::windows::memory::{ALLOCATION_GRANULARITY, Mem, MemFault};
+use crate::user::windows::memory::{ALLOCATION_GRANULARITY, Mem, MemFault, prot};
 use crate::user::windows::nt::status::{
     STATUS_ACCESS_VIOLATION, STATUS_DATATYPE_MISALIGNMENT, STATUS_GUARD_PAGE_VIOLATION,
     STATUS_INFO_LENGTH_MISMATCH, STATUS_INVALID_INFO_CLASS, STATUS_INVALID_PARAMETER,
@@ -54,6 +54,24 @@ pub(super) fn guard_result(c: &mut Ctx, result: ApiResult) -> ApiResult {
         return Flow::ret(STATUS_GUARD_PAGE_VIOLATION.into());
     }
     result
+}
+
+/// Write protection precedes guard visitation for direct caller stores.
+pub(super) fn write_guard_result(c: &mut Ctx, result: ApiResult) -> ApiResult {
+    // Native write validation denies READONLY|GUARD without visiting its
+    // guard. A writable guarded page instead consumes one reached guard.
+    if let Err(ApiErr::Fault(fault)) = &result
+        && fault.write
+        && let Some(region) = c.p.vm.query(fault.addr)
+        && region.protect & prot::GUARD != 0
+        && !matches!(
+            region.protect & 0xff,
+            prot::READWRITE | prot::WRITECOPY | prot::EXECUTE_READWRITE | prot::EXECUTE_WRITECOPY
+        )
+    {
+        return Flow::ret(STATUS_ACCESS_VIOLATION.into());
+    }
+    guard_result(c, result)
 }
 
 fn query(c: &mut Ctx) -> ApiResult {

@@ -1,0 +1,390 @@
+{
+  "baseline-rax": "bfbd06f0675e462b68b00075973348f5490b7a62",
+  "baseline-root": "c923e19ca48c36803ba8bde7d887bd8ec2a10fa0",
+  "full-lib": {
+    "macos": [
+      [
+        7745,
+        0,
+        2
+      ]
+    ],
+    "linux": [
+      [
+        7739,
+        0,
+        2
+      ]
+    ],
+    "windows": [
+      [
+        7158,
+        5,
+        2
+      ]
+    ]
+  },
+  "windows-failures": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "windows-baseline-failures": "exactly unchanged",
+  "focused": {
+    "macos": [
+      [
+        4,
+        0,
+        0
+      ]
+    ],
+    "linux": [
+      [
+        4,
+        0,
+        0
+      ]
+    ],
+    "windows": [
+      [
+        5,
+        0,
+        0
+      ]
+    ]
+  },
+  "capi": {
+    "macos": [
+      [
+        168,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "linux": [
+      [
+        168,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "windows": [
+      [
+        168,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "integration": {
+    "macos": [
+      [
+        544,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "linux": [
+      [
+        544,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "windows": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        0,
+        0
+      ]
+    ]
+  },
+  "all-targets": {
+    "macos": 0,
+    "linux": 0,
+    "windows": 0
+  },
+  "owning": {
+    "macos-ctests": 7,
+    "macos-protected-static-text-scans": 2,
+    "linux-cpp-consumers": 5,
+    "windows-cpp-consumers": 5,
+    "rust-source-units": 108,
+    "actual-helper-source-units": 2,
+    "current-root-matching-cpp-consumers": 9,
+    "core-features": [],
+    "unix-root": "e2fc5b483be7cad2dae17d889690cc398973c5e8",
+    "windows-root": "f386ed2aeac29a701d32f28eb73c14003eb55f7a",
+    "archives": [
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\assist_rs.lib",
+        "bytes": 1139700362,
+        "sha256": "1c9b925ba86dce9eb53f3a98f311f9b9933bd7710d361c7cd022dd9cbe82573c",
+        "members": 4673,
+        "structural-member-walk": "pass"
+      },
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\librax-e6c413934cad3a8f.rlib",
+        "bytes": 751869138,
+        "sha256": "ea96c002d1644c6c93a52f9cc6dc52c22ba19a90d816ae99b15e96829c15069d",
+        "members": 260,
+        "structural-member-walk": "pass"
+      }
+    ]
+  },
+  "observer": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-thread-token-after-trace.rs",
+    "bytes": 11177,
+    "sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e",
+    "compiled-executable-path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-thread-token-final-after-production-trace.exe",
+    "executable-bytes": 26230784,
+    "executable-sha256": "590fa01cb4155fc38e86bf219c7384b7301704f4b6c2d5be46c433e6a853acd9"
+  },
+  "ordinary": {
+    "before-turn": 135983,
+    "after-turn": 145453,
+    "delta-scheduler-calls": 9470,
+    "programs": 4,
+    "guest-exits": 0,
+    "three-program-frontier": "NtOpenSection (0x37) at 0x1800013b0 is not implemented",
+    "observer-frontier": "native NTDLL service NtOpenSection (0x37) at 0x1800013b0 is not implemented",
+    "threads": [
+      [
+        {
+          "context_bytes": 912,
+          "context_format": "windows_context",
+          "flags": 1610612736,
+          "id": 8,
+          "pc": "0x1800013b4",
+          "registers": [
+            "0xabe458",
+            "0xd",
+            "0xabe3d0",
+            "0x1102260",
+            "0xd",
+            "0x180361400",
+            "0x8",
+            "0xfde9",
+            "0x40",
+            "0x58",
+            "0x9",
+            "0x1803be628",
+            "0xb00000",
+            "0x18035ef4f",
+            "0x1800fc1ac",
+            "0xa",
+            "0xa8397b1dcdaf",
+            "0xa8397b1dcdaf",
+            "0x7ffdd000",
+            "0x1104cd0",
+            "0xc0000135",
+            "0x180362000",
+            "0x180362000",
+            "0x1104cd0",
+            "0x1803c9000",
+            "0xabe458",
+            "0x1104e18",
+            "0x1104e28",
+            "0xabe9d0",
+            "0xabe3c0",
+            "0x1800e613c"
+          ],
+          "sp": "0xabe3c0",
+          "state": "ready",
+          "suspend_count": 0,
+          "teb": "0x7ffdd000"
+        }
+      ],
+      [
+        {
+          "context_bytes": 912,
+          "context_format": "windows_context",
+          "flags": 1610612736,
+          "id": 8,
+          "pc": "0x1800013b4",
+          "registers": [
+            "0xc0e458",
+            "0xd",
+            "0xc0e3d0",
+            "0x1102260",
+            "0xd",
+            "0x180361400",
+            "0x8",
+            "0xfde9",
+            "0x40",
+            "0x58",
+            "0x9",
+            "0x1803be628",
+            "0xc50000",
+            "0x18035ef4f",
+            "0x1800fc1ac",
+            "0xa",
+            "0xa8397b1dcdaf",
+            "0xa8397b1dcdaf",
+            "0x7ffdd000",
+            "0x1104cd0",
+            "0xc0000135",
+            "0x180362000",
+            "0x180362000",
+            "0x1104cd0",
+            "0x1803c9000",
+            "0xc0e458",
+            "0x1104e18",
+            "0x1104e28",
+            "0xc0e9d0",
+            "0xc0e3c0",
+            "0x1800e613c"
+          ],
+          "sp": "0xc0e3c0",
+          "state": "ready",
+          "suspend_count": 0,
+          "teb": "0x7ffdd000"
+        }
+      ],
+      [
+        {
+          "context_bytes": 912,
+          "context_format": "windows_context",
+          "flags": 1610612736,
+          "id": 8,
+          "pc": "0x1800013b4",
+          "registers": [
+            "0xcee458",
+            "0xd",
+            "0xcee3d0",
+            "0x1102260",
+            "0xd",
+            "0x180361400",
+            "0x8",
+            "0xfde9",
+            "0x40",
+            "0x58",
+            "0x9",
+            "0x1803be628",
+            "0xd30000",
+            "0x18035ef4f",
+            "0x1800fc1ac",
+            "0xa",
+            "0xa8397b1dcdaf",
+            "0xa8397b1dcdaf",
+            "0x7ffdd000",
+            "0x1104cd0",
+            "0xc0000135",
+            "0x180362000",
+            "0x180362000",
+            "0x1104cd0",
+            "0x1803c9000",
+            "0xcee458",
+            "0x1104e18",
+            "0x1104e28",
+            "0xcee9d0",
+            "0xcee3c0",
+            "0x1800e613c"
+          ],
+          "sp": "0xcee3c0",
+          "state": "ready",
+          "suspend_count": 0,
+          "teb": "0x7ffdd000"
+        }
+      ],
+      [
+        {
+          "context_bytes": 912,
+          "context_format": "windows_context",
+          "flags": 2147483648,
+          "id": 8,
+          "pc": "0x180001624",
+          "registers": [
+            "0x1803464f0",
+            "0x700",
+            "0x78",
+            "0x1bdf9b0",
+            "0x0",
+            "0x1bdf990",
+            "0xd000",
+            "0x7",
+            "0x7ffdd000",
+            "0x145",
+            "0x2104cd0",
+            "0xe",
+            "0x0",
+            "0x18035f3b9",
+            "0x1800fc1ac",
+            "0xd",
+            "0x18030de00",
+            "0xffff57c686a02c81",
+            "0x7ffdd000",
+            "0x2104408",
+            "0x180346410",
+            "0x2104400",
+            "0x2104ca0",
+            "0x1803c8b34",
+            "0x180000000",
+            "0xc000007b",
+            "0x1bdfc30",
+            "0x1",
+            "0x0",
+            "0x1bdfa40",
+            "0x1800a6500"
+          ],
+          "sp": "0x1bdf9b0",
+          "state": "ready",
+          "suspend_count": 0,
+          "teb": "0x7ffdd000"
+        }
+      ]
+    ],
+    "whoami-frontier": "NtTraceEvent (0x5e) at 0x180001620 is not implemented"
+  },
+  "full-current-root-plugin-gui-packages": "not claimed; scoped frozen embeddings only",
+  "format-check": 0,
+  "mature-native-rows": 26352,
+  "independent-absent-replay-rows": 6192,
+  "independent-absent-pseudo-replay-rows": 80,
+  "independent-cross-page-replay-rows": 96,
+  "native-producers": 13,
+  "fresh-complete-first-call-cases": 2,
+  "controlled-falsifications": 33,
+  "post-suite-runtime-source-change": "None; all8 exact source hashes match the pre-gate freeze",
+  "quality-gates": {
+    "QG1": "No normative claims",
+    "QG2": "A1-A5 reconciled with source, native contrasts, copy faults and scoped artifacts",
+    "QG3": "Bounded absent-token group complete; full ordinary-exit goal remains active",
+    "QG4": "Native output8B untouched; WoW copy4B; 4*1548=6192; 4*24=96; 145453-135983=9470 calls",
+    "QG5": "null/invalid/type/grants/readonly guards/no partial crossing, pseudo width and explicit attachment refusal covered; exact5 baseline failures retained",
+    "QG6": "13 actual producer identities, original fresh entry/true-LR, primary PHNT/Microsoft/mingw snapshots and actual installed RTL translation",
+    "QG7": "bounded-findings.json records full-goal frontier, token/build/profile/owning/global-handle/small-document limits"
+  }
+}

@@ -18,6 +18,7 @@ mod registry;
 mod symbolic_link;
 mod thread_set;
 mod timers;
+mod token;
 mod topology;
 mod trace;
 mod virtual_memory;
@@ -210,6 +211,12 @@ pub(super) static EXPORTS: &[Export] = &[
         Stdcall,
         &[Ptr, I32, Ptr, I32],
         thread_set::information,
+    ),
+    Export::func(
+        "NtOpenThreadToken",
+        Stdcall,
+        &[Ptr, I32, I32, Ptr],
+        token::open_thread,
     ),
 ];
 fn status_error(c: &mut Ctx) -> ApiResult {

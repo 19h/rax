@@ -1,4 +1,34 @@
-## Current increment: scheduler shared-data thread slot (2026-10-13)
+## Current increment: absent thread-token opening (2026-10-13)
+
+`NtOpenThreadToken` decodes all four ABI arguments, validates the thread handle,
+object type and either query grant0x40/0x800, then returns STATUS_NO_TOKEN0xC000007C
+in the current personality without token attachments. Missing handles, wrong
+objects and absent query grants preserve captured INVALID_HANDLE/type/access
+precedence. DesiredAccess/OpenAsSelf cannot reach an ACL decision without a
+thread token. Token attachment/class5 remains explicitly unsupported; native
+positive token births are retained as contrast controls, not emulated success.
+
+Native64 failure output pointers are untouched. WoW64 skips null output;
+nonnull output is zeroed4B even after kernel failure. Copy faults override
+status; writable guards consume once, readonly guards remain armed, and
+cross-page faults leave no partial store. The constructor's existing write
+protection/guard policy is extracted unchanged and shared; the thread-slot
+setter retains its separate regular guard policy. RTL translation returns1008.
+
+13 actual native producers retain26352 full mature observations,6192 absent
+replays,80 absent signed/zero-extended negative pseudo rows and96 cross-page
+rows. Two complete fresh ARM64 original SVC36/true-LR cases preserve output8B
+and exact parent handle sets; child77 is a capture stop. Four portable and five
+Windows focused tests include actual installed ARM64/WoW64 leaves/RET16. The
+checker rejects33 rehashed controlled semantic/provenance falsifications.
+Full gates, current archive/source identities, assumptions, both plane maps and
+ordinary observer evidence remain separately owned by
+[thread-token evidence](../../specifications/windows/native-thread-token-open/README.md).
+C API1.11.0, Assist ABI, dependency/default-feature contracts are unchanged.
+Physical x64 kernel/other builds and whole current-root plugin/GUI/packages
+remain unknown/excluded. The overall full-process goal remains active.
+
+## Previous increment: scheduler shared-data thread slot (2026-10-13)
 
 NtSetInformationThread class57 binds the current thread to a guest-owned
 SchedulerSharedData resource. Native24B/WoW12B Action/owner/slot layouts preserve

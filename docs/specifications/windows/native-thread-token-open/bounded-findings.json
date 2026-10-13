@@ -1,0 +1,44 @@
+[
+  {
+    "impact": "high",
+    "finding": "Ordinary installed-library guest exits remain unproven; token attachment/positive token/DACL emulation is outside this absent-token group and remains an explicit Unsupported frontier.",
+    "evidence": "native-thread-token-final-after-ordinary-processes.log, native-thread-token-final-after-production-trace-output.log and explicit guest class5 attachment-refusal tests; validation-summary.json",
+    "blocks": "Overall full-process goal; does not invalidate the bounded measured absence profile."
+  },
+  {
+    "impact": "medium",
+    "finding": "Captured NT behavior is Windows10.0.29683 ARM64 kernel under SYSTEM, with ARM64/x64 compatibility/x86/x86-LAA callers; physical x64 kernel and other kernel/DLL builds unknown.",
+    "evidence": "native-thread-token-producer-identities.json; native source/executable/stdout hashes and actual DLL machines.",
+    "blocks": "Broader native build/profile claims; no such claim is made."
+  },
+  {
+    "impact": "medium",
+    "finding": "Whole current-root plugin/GUI/package validation excluded; scoped frozen owning roots only. Concurrent root cluster edits remain user-owned.",
+    "evidence": "thread-token-owning-root-scope.json and owning-source verification; current-root nine matching consumer hashes.",
+    "blocks": "Whole-root validation claims; no such claim is made."
+  },
+  {
+    "impact": "medium",
+    "finding": "Initial producer global-handle exactness failed under unrelated handle churn; canonical probes instead require exact token namespace and16 owned inputs, retaining global counts as observations.",
+    "evidence": "Task-cache diagnostic-pre-ready-probe and diagnostic-global-handle-churn; canonical v5 exact-token-and-input-handles=1 and final cleanup.",
+    "blocks": "No; excluded helpers are not positive evidence."
+  },
+  {
+    "impact": "low",
+    "finding": "Existing native-runtime.md exceeds1500-line soft ceiling; new group stays below2000 lines/150kB hard threshold. No unrelated document split.",
+    "evidence": "Owned final document line/byte check.",
+    "blocks": "No."
+  },
+  {
+    "impact": "low",
+    "finding": "Existing root engineering records include an oversized legacy process-emulation document. This group adds only short results/reference records; full semantics and evidence live in the new RAX corpus rather than expanding that legacy semantic group.",
+    "evidence": "Root AGENTS.md section9.2; root native-process-emulation.md baseline3933lines/286720B; final exact owned root diff.",
+    "blocks": "No; unrelated document reorganization excluded."
+  },
+  {
+    "impact": "medium",
+    "finding": "Five Windows full-library BZHI/FP16 failures exactly match the preceding slot-group baseline.",
+    "evidence": "native-thread-token-final-full.log vs native-scheduler-thread-slot/native-scheduler-slot-final-full.log; exact names in validation-summary.json",
+    "blocks": "No new group regression; prevents an all-Windows-tests-pass claim."
+  }
+]

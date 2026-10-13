@@ -1,0 +1,12 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 21s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/red-target/debug/deps/rax-754f4d2a527a4423)
+
+running 4 tests
+test user::windows::process::sched::tests::services_tests::thread_token_tests::native_thread_token_profile_refuses_unimplemented_impersonation_attachment_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::thread_token_tests::native_thread_token_negative_pseudo_handles_and_rtl_translation_match_all_native_profiles ... ok
+test user::windows::process::sched::tests::services_tests::thread_token_tests::native_thread_token_cross_page_copy_faults_match_all_96_original_rows ... ok
+test user::windows::process::sched::tests::services_tests::thread_token_tests::native_thread_token_replays_all_6192_absent_token_rows_with_measured_copy_guards_and_no_birth ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 7743 filtered out; finished in 1.66s
+

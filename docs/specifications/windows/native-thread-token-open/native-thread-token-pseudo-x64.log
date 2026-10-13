@@ -1,0 +1,44 @@
+width=8 rtl-status-no-token-error=1008
+state=0 oracle-status=C000007C
+case=0 state=0 mode=0 negative=3 as-self=0 input-thread=FFFFFFFFFFFFFFFD status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=1 state=0 mode=0 negative=3 as-self=1 input-thread=FFFFFFFFFFFFFFFD status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=2 state=0 mode=0 negative=4 as-self=0 input-thread=FFFFFFFFFFFFFFFC status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=3 state=0 mode=0 negative=4 as-self=1 input-thread=FFFFFFFFFFFFFFFC status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=4 state=0 mode=0 negative=5 as-self=0 input-thread=FFFFFFFFFFFFFFFB status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=5 state=0 mode=0 negative=5 as-self=1 input-thread=FFFFFFFFFFFFFFFB status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=6 state=0 mode=0 negative=6 as-self=0 input-thread=FFFFFFFFFFFFFFFA status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=7 state=0 mode=0 negative=6 as-self=1 input-thread=FFFFFFFFFFFFFFFA status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=8 state=0 mode=0 negative=7 as-self=0 input-thread=FFFFFFFFFFFFFFF9 status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=9 state=0 mode=0 negative=7 as-self=1 input-thread=FFFFFFFFFFFFFFF9 status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=10 state=0 mode=1 negative=3 as-self=0 input-thread=FFFFFFFD status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=11 state=0 mode=1 negative=3 as-self=1 input-thread=FFFFFFFD status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=12 state=0 mode=1 negative=4 as-self=0 input-thread=FFFFFFFC status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=13 state=0 mode=1 negative=4 as-self=1 input-thread=FFFFFFFC status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=14 state=0 mode=1 negative=5 as-self=0 input-thread=FFFFFFFB status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=15 state=0 mode=1 negative=5 as-self=1 input-thread=FFFFFFFB status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=16 state=0 mode=1 negative=6 as-self=0 input-thread=FFFFFFFA status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=17 state=0 mode=1 negative=6 as-self=1 input-thread=FFFFFFFA status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=18 state=0 mode=1 negative=7 as-self=0 input-thread=FFFFFFF9 status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=19 state=0 mode=1 negative=7 as-self=1 input-thread=FFFFFFF9 status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+state=1 oracle-status=00000000
+case=20 state=1 mode=0 negative=3 as-self=0 input-thread=FFFFFFFFFFFFFFFD status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=21 state=1 mode=0 negative=3 as-self=1 input-thread=FFFFFFFFFFFFFFFD status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=22 state=1 mode=0 negative=4 as-self=0 input-thread=FFFFFFFFFFFFFFFC status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=23 state=1 mode=0 negative=4 as-self=1 input-thread=FFFFFFFFFFFFFFFC status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=24 state=1 mode=0 negative=5 as-self=0 input-thread=FFFFFFFFFFFFFFFB status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=25 state=1 mode=0 negative=5 as-self=1 input-thread=FFFFFFFFFFFFFFFB status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=26 state=1 mode=0 negative=6 as-self=0 input-thread=FFFFFFFFFFFFFFFA status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=27 state=1 mode=0 negative=6 as-self=1 input-thread=FFFFFFFFFFFFFFFA status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=28 state=1 mode=0 negative=7 as-self=0 input-thread=FFFFFFFFFFFFFFF9 status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=29 state=1 mode=0 negative=7 as-self=1 input-thread=FFFFFFFFFFFFFFF9 status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=30 state=1 mode=1 negative=3 as-self=0 input-thread=FFFFFFFD status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=31 state=1 mode=1 negative=3 as-self=1 input-thread=FFFFFFFD status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=32 state=1 mode=1 negative=4 as-self=0 input-thread=FFFFFFFC status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=33 state=1 mode=1 negative=4 as-self=1 input-thread=FFFFFFFC status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=34 state=1 mode=1 negative=5 as-self=0 input-thread=FFFFFFFB status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=35 state=1 mode=1 negative=5 as-self=1 input-thread=FFFFFFFB status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=36 state=1 mode=1 negative=6 as-self=0 input-thread=FFFFFFFA status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=37 state=1 mode=1 negative=6 as-self=1 input-thread=FFFFFFFA status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=38 state=1 mode=1 negative=7 as-self=0 input-thread=FFFFFFF9 status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+case=39 state=1 mode=1 negative=7 as-self=1 input-thread=FFFFFFF9 status=C0000008 output-before=A5A5A5A5A5A5A5A5 output-after=A5A5A5A5A5A5A5A5
+complete cases=40 final-impersonation=0

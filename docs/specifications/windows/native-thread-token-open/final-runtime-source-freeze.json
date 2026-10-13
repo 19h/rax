@@ -1,0 +1,34 @@
+{
+  "src/user/windows/dll/native.rs": {
+    "bytes": 16445,
+    "sha256": "0e8cb69c634a454f7b00f0eae91a12e1e2561117696f43ee732214c13a0101ed"
+  },
+  "src/user/windows/dll/native/token.rs": {
+    "bytes": 2076,
+    "sha256": "a7304d91ddc08b442251b37fc81b4e9fa2260b52b75f3161e2f0f1be98d471f6"
+  },
+  "src/user/windows/nt.rs": {
+    "bytes": 17499,
+    "sha256": "7313c7e1c590170f0194f65acb404e8334e2e29af90f36e84d48b6f826222df3"
+  },
+  "src/user/windows/process/sched/tests/services_tests.rs": {
+    "bytes": 46865,
+    "sha256": "abf6de4b6d119429eb361ea67f9401c32bd616473c045c9146470ca632a90ec4"
+  },
+  "src/user/windows/process/sched/tests/services_tests/thread_token_tests.rs": {
+    "bytes": 13755,
+    "sha256": "5a12e756dac9128811d665b9e90b7c303298dfb78bf8d071cdd76c71371177e5"
+  },
+  "src/user/windows/process/sched/tests/services_tests/thread_token_leaf_tests.rs": {
+    "bytes": 3639,
+    "sha256": "9432951bd73a2124324905c90c57a28bdd8666d083e642eb1f034a47b814fa08"
+  },
+  "src/user/windows/dll/native/query.rs": {
+    "bytes": 12116,
+    "sha256": "eaaad57086c8f42315e85c25f35403721803dd7603f82a571b55e056d243da93"
+  },
+  "src/user/windows/dll/native/process_set.rs": {
+    "bytes": 3070,
+    "sha256": "dbc569e687a2e357368c81f9dc97d1168c9144c70cba369140d486d8a79cb346"
+  }
+}

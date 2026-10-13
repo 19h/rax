@@ -1,0 +1,334 @@
+{
+  "captured-utc": "2026-10-13T06:30:11.724945+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "principal": "\"nt authority\\system\",\"S-1-5-18\"",
+  "python": "3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:57:41) [MSC v.1944 64 bit (ARM64)]",
+  "inspector-identity": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-thread-token-producers.py",
+    "bytes": 2043,
+    "sha256": "b8ac74e47e12352ffd37e238d81a8035c4733c1a57f0a163794e08592d7bfe74"
+  },
+  "native-libraries": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+      "machine": 332,
+      "characteristics": 8450
+    }
+  ],
+  "producers": [
+    {
+      "family": "probe-v5",
+      "profile": "arm64",
+      "source": "native-thread-token-open-probe-v5.cpp",
+      "log": "native-thread-token-open-probe-v5-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-arm64\\native-thread-token-open-probe-v5.cpp",
+        "bytes": 12986,
+        "sha256": "93179b2bcfee37ac32ecfb206182abd5209b9b729261a989d10f68f4be458453"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-arm64\\native-thread-token-open-probe-v5-arm64.exe",
+        "bytes": 171520,
+        "sha256": "c2ef7e1879dc50e16c0e3257d3f270fb2c52f7fb0c64a67a4dfd70ce47179525",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-arm64\\native-thread-token-open-probe-v5-arm64.log",
+        "bytes": 3830696,
+        "sha256": "b803e08773ca1353c86a88d7767f9469d05141e9cdee24e76dd3724478d4ab2b"
+      }
+    },
+    {
+      "family": "probe-v5",
+      "profile": "x64",
+      "source": "native-thread-token-open-probe-v5.cpp",
+      "log": "native-thread-token-open-probe-v5-x64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x64\\native-thread-token-open-probe-v5.cpp",
+        "bytes": 12986,
+        "sha256": "93179b2bcfee37ac32ecfb206182abd5209b9b729261a989d10f68f4be458453"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x64\\native-thread-token-open-probe-v5-x64.exe",
+        "bytes": 169472,
+        "sha256": "71db4a62377626c660a13b6ac94de56ffc96f4cc153696be7388d4d8f028f08b",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x64\\native-thread-token-open-probe-v5-x64.log",
+        "bytes": 3837864,
+        "sha256": "2b7055b86e666df884ff10efeb45d7ef603e251d2bb852a6204154119b5c1151"
+      }
+    },
+    {
+      "family": "probe-v5",
+      "profile": "x86",
+      "source": "native-thread-token-open-probe-v5.cpp",
+      "log": "native-thread-token-open-probe-v5-x86.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x86\\native-thread-token-open-probe-v5.cpp",
+        "bytes": 12986,
+        "sha256": "93179b2bcfee37ac32ecfb206182abd5209b9b729261a989d10f68f4be458453"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x86\\native-thread-token-open-probe-v5-x86.exe",
+        "bytes": 146432,
+        "sha256": "e9a6ed9a7e91ed30c4305e1ebac2908e496578d6981189ec3ef36004ad68170e",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x86\\native-thread-token-open-probe-v5-x86.log",
+        "bytes": 3726367,
+        "sha256": "c5521d7d9b62ae653e8c8582727aad2a10587113899824e02b5c19ee85dc0854"
+      }
+    },
+    {
+      "family": "probe-v5",
+      "profile": "x86-laa",
+      "source": "native-thread-token-open-probe-v5.cpp",
+      "log": "native-thread-token-open-probe-v5-x86-laa.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x86-laa\\native-thread-token-open-probe-v5.cpp",
+        "bytes": 12986,
+        "sha256": "93179b2bcfee37ac32ecfb206182abd5209b9b729261a989d10f68f4be458453"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x86-laa\\native-thread-token-open-probe-v5-x86-laa.exe",
+        "bytes": 146432,
+        "sha256": "41e92079464537df9d0de3c1e6cb374210d414b87ac6a421bcaccd7193b46688",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x86-laa\\native-thread-token-open-probe-v5-x86-laa.log",
+        "bytes": 3726367,
+        "sha256": "d53f6d027a2591916f4fab6d16a3e34d4af46bc93cbd257e384064caa2785cb9"
+      }
+    },
+    {
+      "family": "fresh",
+      "profile": "arm64",
+      "source": "native-thread-token-open-fresh.cpp",
+      "log": "native-thread-token-open-fresh-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-arm64\\native-thread-token-open-fresh.cpp",
+        "bytes": 9502,
+        "sha256": "0d7dbf9ad1f49f44b4baf0db5cee76cff8b39f70207319ddf92d91a77cc5ac71"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-arm64\\native-thread-token-open-fresh-arm64.exe",
+        "bytes": 167424,
+        "sha256": "45b5bf560b9ef3fabbe51ec19890e140c386a4627935f3d1ef403f73bf01e1d0",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-arm64\\native-thread-token-open-fresh-arm64.log",
+        "bytes": 1848,
+        "sha256": "b80656b4148f54b0f4608867f13d453edf69d17e31374a762656c7445075c968"
+      }
+    },
+    {
+      "family": "pseudo",
+      "profile": "arm64",
+      "source": "native-thread-token-pseudo.cpp",
+      "log": "native-thread-token-pseudo-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-arm64\\native-thread-token-pseudo.cpp",
+        "bytes": 2181,
+        "sha256": "432b9ecac6cee7d04ca76d906b1db5324ab39233c753f8a43b1d37bd17218b9d"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-arm64\\native-thread-token-pseudo-arm64.exe",
+        "bytes": 144896,
+        "sha256": "e399457d874a1a458f9ab72e6aabb9a02d4c95bcfd73814029f100e73805691a",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-arm64\\native-thread-token-pseudo-arm64.log",
+        "bytes": 6055,
+        "sha256": "42c211a64f9c1ee735434bf560615315ac10a70bdefd9ccd4fe288ce2158aa88"
+      }
+    },
+    {
+      "family": "pseudo",
+      "profile": "x64",
+      "source": "native-thread-token-pseudo.cpp",
+      "log": "native-thread-token-pseudo-x64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x64\\native-thread-token-pseudo.cpp",
+        "bytes": 2181,
+        "sha256": "432b9ecac6cee7d04ca76d906b1db5324ab39233c753f8a43b1d37bd17218b9d"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x64\\native-thread-token-pseudo-x64.exe",
+        "bytes": 142336,
+        "sha256": "e1308585263522ccd1b6e46a1c20c8687dfe29e2cff0112111bbb29c8cefb23d",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x64\\native-thread-token-pseudo-x64.log",
+        "bytes": 6055,
+        "sha256": "42c211a64f9c1ee735434bf560615315ac10a70bdefd9ccd4fe288ce2158aa88"
+      }
+    },
+    {
+      "family": "pseudo",
+      "profile": "x86",
+      "source": "native-thread-token-pseudo.cpp",
+      "log": "native-thread-token-pseudo-x86.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x86\\native-thread-token-pseudo.cpp",
+        "bytes": 2181,
+        "sha256": "432b9ecac6cee7d04ca76d906b1db5324ab39233c753f8a43b1d37bd17218b9d"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x86\\native-thread-token-pseudo-x86.exe",
+        "bytes": 118272,
+        "sha256": "2c06ae23d66d1a376cfe7c15fa4aed8fc2004f4e9163615fd8260a31089d0b11",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x86\\native-thread-token-pseudo-x86.log",
+        "bytes": 4975,
+        "sha256": "5dc741bef37bf63e541facc572bb75223b24d9f3ad9e39630c07fe302d50909d"
+      }
+    },
+    {
+      "family": "pseudo",
+      "profile": "x86-laa",
+      "source": "native-thread-token-pseudo.cpp",
+      "log": "native-thread-token-pseudo-x86-laa.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x86-laa\\native-thread-token-pseudo.cpp",
+        "bytes": 2181,
+        "sha256": "432b9ecac6cee7d04ca76d906b1db5324ab39233c753f8a43b1d37bd17218b9d"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x86-laa\\native-thread-token-pseudo-x86-laa.exe",
+        "bytes": 118272,
+        "sha256": "9fffbf11cc48366bfdf226f3ac54d016b9c2c7fdee0fe43ab848fbdde40b2bac",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x86-laa\\native-thread-token-pseudo-x86-laa.log",
+        "bytes": 4975,
+        "sha256": "5dc741bef37bf63e541facc572bb75223b24d9f3ad9e39630c07fe302d50909d"
+      }
+    },
+    {
+      "family": "boundary",
+      "profile": "arm64",
+      "source": "native-thread-token-boundary.cpp",
+      "log": "native-thread-token-boundary-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-arm64\\native-thread-token-boundary.cpp",
+        "bytes": 2182,
+        "sha256": "cdf1d47951a5b02da979c2c23051c990312be4132453dbbfab0df35043885c3e"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-arm64\\native-thread-token-boundary-arm64.exe",
+        "bytes": 146432,
+        "sha256": "6c2832d816dcc847c685449e56365cbb0bb414253415ae707e9f9f38fbe24bf2",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-arm64\\native-thread-token-boundary-arm64.log",
+        "bytes": 3201,
+        "sha256": "49304ae3fe5e3dfee0e74db797c0c264fc02114b3f5471a9c89ab5c93b18ca14"
+      }
+    },
+    {
+      "family": "boundary",
+      "profile": "x64",
+      "source": "native-thread-token-boundary.cpp",
+      "log": "native-thread-token-boundary-x64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x64\\native-thread-token-boundary.cpp",
+        "bytes": 2182,
+        "sha256": "cdf1d47951a5b02da979c2c23051c990312be4132453dbbfab0df35043885c3e"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x64\\native-thread-token-boundary-x64.exe",
+        "bytes": 143360,
+        "sha256": "b675f4d9a7aec213ef5e27b4d0ec63d369975b9e13829cd0bb59a50a2d843eda",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x64\\native-thread-token-boundary-x64.log",
+        "bytes": 3201,
+        "sha256": "49304ae3fe5e3dfee0e74db797c0c264fc02114b3f5471a9c89ab5c93b18ca14"
+      }
+    },
+    {
+      "family": "boundary",
+      "profile": "x86",
+      "source": "native-thread-token-boundary.cpp",
+      "log": "native-thread-token-boundary-x86.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x86\\native-thread-token-boundary.cpp",
+        "bytes": 2182,
+        "sha256": "cdf1d47951a5b02da979c2c23051c990312be4132453dbbfab0df35043885c3e"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x86\\native-thread-token-boundary-x86.exe",
+        "bytes": 119296,
+        "sha256": "9eab66282d074173cfe11b6d1c8d381c1740abae30527c9ba59382a8ded5490a",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x86\\native-thread-token-boundary-x86.log",
+        "bytes": 3189,
+        "sha256": "214ce989ebf0e53193c6147ceed4557eb8d899114ac635516d54a711bdc4d28f"
+      }
+    },
+    {
+      "family": "boundary",
+      "profile": "x86-laa",
+      "source": "native-thread-token-boundary.cpp",
+      "log": "native-thread-token-boundary-x86-laa.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x86-laa\\native-thread-token-boundary.cpp",
+        "bytes": 2182,
+        "sha256": "cdf1d47951a5b02da979c2c23051c990312be4132453dbbfab0df35043885c3e"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x86-laa\\native-thread-token-boundary-x86-laa.exe",
+        "bytes": 119296,
+        "sha256": "726c0bcd2e43c2745833756e022bf79f738b52e310d5331ce6479419c2faedd8",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\thread-token-open-x86-laa\\native-thread-token-boundary-x86-laa.log",
+        "bytes": 3189,
+        "sha256": "214ce989ebf0e53193c6147ceed4557eb8d899114ac635516d54a711bdc4d28f"
+      }
+    }
+  ]
+}

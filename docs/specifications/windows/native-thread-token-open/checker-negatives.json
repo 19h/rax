@@ -1,0 +1,171 @@
+{
+  "positive-checker": "independent provenance and semantic checks",
+  "controlled-negatives": [
+    {
+      "mutation": "wrong kernel",
+      "expected-rejection": "native-kernel-build",
+      "exit-code": 1
+    },
+    {
+      "mutation": "wrong principal",
+      "expected-rejection": "native-principal",
+      "exit-code": 1
+    },
+    {
+      "mutation": "missing actual producer",
+      "expected-rejection": "actual-producer-count",
+      "exit-code": 1
+    },
+    {
+      "mutation": "wrong executable machine",
+      "expected-rejection": "native-executable-machine",
+      "exit-code": 1
+    },
+    {
+      "mutation": "wrong LAA bit",
+      "expected-rejection": "native-executable-laa",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed actual source",
+      "expected-rejection": "actual-native-source-identity",
+      "exit-code": 1
+    },
+    {
+      "mutation": "producer failure",
+      "expected-rejection": "producer-exit",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed mature case",
+      "expected-rejection": "replay-partition",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed mature family",
+      "expected-rejection": "replay-partition",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed mature as-self",
+      "expected-rejection": "replay-partition",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed mature width",
+      "expected-rejection": "replay-width-exception",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed mature exception",
+      "expected-rejection": "replay-width-exception",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed mature exact-token-and-input-handles",
+      "expected-rejection": "token-and-input-restoration",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed mature births",
+      "expected-rejection": "absent-no-birth",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed mature status",
+      "expected-rejection": "absent-kernel-copy-status",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed mature protection",
+      "expected-rejection": "absent-guard-effect",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed mature bytes0",
+      "expected-rejection": "absent-caller-bytes",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed extended negative selector",
+      "expected-rejection": "zero-extended-selector",
+      "exit-code": 1
+    },
+    {
+      "mutation": "erased native positive token birth",
+      "expected-rejection": "present-token-native-birth",
+      "exit-code": 1
+    },
+    {
+      "mutation": "erased anonymous restriction",
+      "expected-rejection": "anonymous-native-control",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed actual RTL mapping",
+      "expected-rejection": "rtl-no-token-error",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed signed pseudo width",
+      "expected-rejection": "pseudo-full-width-input",
+      "exit-code": 1
+    },
+    {
+      "mutation": "made pseudo token successful",
+      "expected-rejection": "pseudo-invalid-handle",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed pseudo caller bytes",
+      "expected-rejection": "pseudo-output-copy",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed cross-page copy status",
+      "expected-rejection": "boundary-status",
+      "exit-code": 1
+    },
+    {
+      "mutation": "consumed readonly guard",
+      "expected-rejection": "boundary-guard-priority",
+      "exit-code": 1
+    },
+    {
+      "mutation": "allowed partial cross-page store",
+      "expected-rejection": "boundary-no-partial-store",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed original SVC",
+      "expected-rejection": "fresh-original-svc36-ret",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed startup access",
+      "expected-rejection": "fresh-original-arguments",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed true LR",
+      "expected-rejection": "fresh-return-lr",
+      "exit-code": 1
+    },
+    {
+      "mutation": "made fresh return success",
+      "expected-rejection": "fresh-return-no-token",
+      "exit-code": 1
+    },
+    {
+      "mutation": "changed fresh output bytes",
+      "expected-rejection": "fresh-unchanged-output",
+      "exit-code": 1
+    },
+    {
+      "mutation": "lost fresh parent handle",
+      "expected-rejection": "fresh-parent-handles",
+      "exit-code": 1
+    }
+  ],
+  "count": 33
+}

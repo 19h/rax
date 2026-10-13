@@ -1,0 +1,444 @@
+{
+  "files": {
+    "README.md": {
+      "bytes": 6719,
+      "sha256": "e331b2124f26180c72cc9bc20528bfced4fb0d3b50de100026e267739d64591f"
+    },
+    "assist-native-thread-token-owned-final-cpp.log": {
+      "bytes": 2946,
+      "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+    },
+    "assist-native-thread-token-owned-final-shipping.log": {
+      "bytes": 1585,
+      "sha256": "e31da92a5eefc7eb3f4514eda4a67220bd46441985f161ec28a5b13a9e5ebcea"
+    },
+    "assist-native-thread-token-owned.ps1": {
+      "bytes": 6684,
+      "sha256": "4482265cf159b2e86f909c2cab4596e46545987d98aebdab645b7b2c0bcd6806"
+    },
+    "assumption-register.json": {
+      "bytes": 4655,
+      "sha256": "748e6ef2e72638d0e22b5a210ba2e762a346eee5f6c253e8aa91aa82a7e65447"
+    },
+    "baseline-observer-identity.json": {
+      "bytes": 464,
+      "sha256": "7b6991dfda2b50342540a3e4081b97dc76be5b4bed2789fc2626b332f62789ab"
+    },
+    "baseline-ordinary-processes.log": {
+      "bytes": 7215,
+      "sha256": "3844378d8ec088380c7e9f86a174473b882791693bbba9af4debcba87ca43d6f"
+    },
+    "baseline-production-observer.log": {
+      "bytes": 47110,
+      "sha256": "47c8cde364b63fb456b9536f28540172003042f577728541463c32da0e1476a8"
+    },
+    "baseline-provenance.json": {
+      "bytes": 1451,
+      "sha256": "aa626e0e30ff4d5154a8212e784fd911ba6576138ba236520ce5fa1618ec3582"
+    },
+    "bounded-findings.json": {
+      "bytes": 2991,
+      "sha256": "f29bfe9fae4af83d7814f4cffd8e06c6e4d2904b0daa7d46e9bdc5897e56945c"
+    },
+    "change-surface-map.json": {
+      "bytes": 2752,
+      "sha256": "b3188787db1b90e1af774c12a0f7c34bb583244ec9bab8b85b16be5766e32d6f"
+    },
+    "check-evidence.py": {
+      "bytes": 9544,
+      "sha256": "66679f1e4ba3c24e9021813c0a1e2dea7463c9a03c3deb8764c61a96a23983e0"
+    },
+    "check-negative-evidence.py": {
+      "bytes": 6395,
+      "sha256": "a14fd86bb40d7cd5e65bba88d17af1cd20923838248cdb24af115e286fb52430"
+    },
+    "checker-negatives.json": {
+      "bytes": 4487,
+      "sha256": "ddf0d6ddfc5da48b25b9a438998335a3d450f07da577aa143760d9bf72b8f6ce"
+    },
+    "final-runtime-source-freeze.json": {
+      "bytes": 1283,
+      "sha256": "77f0f68b4f8042e74e61510c1d4392e8e0062efe79b5700e7430bd90c6d857a2"
+    },
+    "format-check-exit.json": {
+      "bytes": 17,
+      "sha256": "29403780870810106334e43f749642499d343a792f1aedd6e0254b87c7016eb6"
+    },
+    "format-check.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "inspect-thread-token-final-observer.py": {
+      "bytes": 809,
+      "sha256": "2ac507b09420d50ca5a52947cd795bf0ae36d8aa6b17262c00f33dea9f121c12"
+    },
+    "inspect-thread-token-owning-archives.py": {
+      "bytes": 2196,
+      "sha256": "9554fc95ede70e5cbb87b6bd2bb2269731d6838865ebbb446f1d3c4dd93bc0fe"
+    },
+    "inspect-thread-token-producers.py": {
+      "bytes": 2043,
+      "sha256": "b8ac74e47e12352ffd37e238d81a8035c4733c1a57f0a163794e08592d7bfe74"
+    },
+    "linux-all-targets.log": {
+      "bytes": 116,
+      "sha256": "9eaf4c14830a30957a61673967ae93be91790984b3bf83f94a69cc882abdba96"
+    },
+    "linux-capi.log": {
+      "bytes": 12881,
+      "sha256": "f25c4443d1b90b8eef35cb8ccaf71194340871545e8676ec370fecb19446d01a"
+    },
+    "linux-focused.log": {
+      "bytes": 991,
+      "sha256": "34cddd6c798cf7a9cbbf15c9cc17658f259a49632a987fc75b62c8565b21f67b"
+    },
+    "linux-full.log": {
+      "bytes": 797246,
+      "sha256": "2dfd06a99d940560f710756c349181ae09407aae0f0d147c05b085812bad2422"
+    },
+    "linux-gates.json": {
+      "bytes": 3737,
+      "sha256": "2f3c995b977cd0966e7d2b0acd4c1de4bd351b2167308ed844c3b8430b230a8b"
+    },
+    "linux-integration.log": {
+      "bytes": 35761,
+      "sha256": "87555fafd777abe13eb0b7f0a9290e6b79fb9a1289cc3f9218bb8ff16ae3396c"
+    },
+    "linux-owning-cpp.log": {
+      "bytes": 1623,
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+    },
+    "linux-owning-gates.json": {
+      "bytes": 2352,
+      "sha256": "92ce8d80fbc6452421d2aa9b5d152776713acd953d42fc7ec2c1cee4064d5132"
+    },
+    "linux-owning-shipping.log": {
+      "bytes": 222,
+      "sha256": "908cc482eebc15341d03feef6314113b807e048c988f4ec8ae9d838eed0a9c11"
+    },
+    "macos-all-targets.log": {
+      "bytes": 136,
+      "sha256": "f45b106121196e2b0b95f17e2de5c6aef1c0d38a14f0b711f8e61e8318adafa6"
+    },
+    "macos-capi.log": {
+      "bytes": 13015,
+      "sha256": "263852248f934449187650518f870e42273e06d8f4f8a00d8080950f9e2a439c"
+    },
+    "macos-focused.log": {
+      "bytes": 1095,
+      "sha256": "0cdf34377a07881db4eb175a28be6e52db644f554512f233ce1b8fa92e5db16d"
+    },
+    "macos-full.log": {
+      "bytes": 798022,
+      "sha256": "4e3756477980764b2c7fae80351fae5e6e52dfd1bd176a71b389cb50d33c2725"
+    },
+    "macos-gates.json": {
+      "bytes": 1214,
+      "sha256": "76345330785c1c9bfc1454b48638c086064a841a26715301c812ca220ee72be1"
+    },
+    "macos-integration.log": {
+      "bytes": 35928,
+      "sha256": "2d0de4deabd98c7796bca43cd9779104e866bca2654e172fa2b87c4dc851f004"
+    },
+    "macos-owning-build.log": {
+      "bytes": 1865,
+      "sha256": "41a28a21443f880385dbe6cca372e9aa14f6b8e1d8c7849db5f5b732fd419358"
+    },
+    "macos-owning-configure.log": {
+      "bytes": 13295,
+      "sha256": "92d9af8e500ed02f28c5b42b6315767df899b59d1f19dd5d7113f6d499b2edda"
+    },
+    "macos-owning-ctest.log": {
+      "bytes": 1273,
+      "sha256": "aa53f428f93bbd6d973e2aec69502594df31520b5e0aeb02ee9ceeb5075820ad"
+    },
+    "macos-owning-gates.json": {
+      "bytes": 3344,
+      "sha256": "907f2dff64cc1fc512698d950b89f972982c42ad239fcc6a60f895f646d7c092"
+    },
+    "macos-owning-protected-assist-cli.log": {
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    "macos-owning-protected-assist-mcp.log": {
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    "native-process-probe.cpp": {
+      "bytes": 2187,
+      "sha256": "f57571cc5961784ff841b84811bdff7626ccd582dda3a16a9be35c9aeedc5a31"
+    },
+    "native-thread-token-after-trace.rs": {
+      "bytes": 11177,
+      "sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e"
+    },
+    "native-thread-token-boundary-arm64-build.log": {
+      "bytes": 34,
+      "sha256": "085119afbf0833ee7b20fbae2bf654afa9fae73a374b549c1c19149e50209bdf"
+    },
+    "native-thread-token-boundary-arm64.log": {
+      "bytes": 3201,
+      "sha256": "49304ae3fe5e3dfee0e74db797c0c264fc02114b3f5471a9c89ab5c93b18ca14"
+    },
+    "native-thread-token-boundary-outcomes.json": {
+      "bytes": 1147,
+      "sha256": "32335a8780cee04186c290ef0bca16090b052fee11da23d3655413779008461b"
+    },
+    "native-thread-token-boundary-profiles.ps1": {
+      "bytes": 2198,
+      "sha256": "af1b3579b5d294d611069fe53b6f846db8a0a8b80be18b0de184305ec4056d8c"
+    },
+    "native-thread-token-boundary-x64-build.log": {
+      "bytes": 34,
+      "sha256": "085119afbf0833ee7b20fbae2bf654afa9fae73a374b549c1c19149e50209bdf"
+    },
+    "native-thread-token-boundary-x64.log": {
+      "bytes": 3201,
+      "sha256": "49304ae3fe5e3dfee0e74db797c0c264fc02114b3f5471a9c89ab5c93b18ca14"
+    },
+    "native-thread-token-boundary-x86-build.log": {
+      "bytes": 34,
+      "sha256": "085119afbf0833ee7b20fbae2bf654afa9fae73a374b549c1c19149e50209bdf"
+    },
+    "native-thread-token-boundary-x86-laa-build.log": {
+      "bytes": 34,
+      "sha256": "085119afbf0833ee7b20fbae2bf654afa9fae73a374b549c1c19149e50209bdf"
+    },
+    "native-thread-token-boundary-x86-laa.log": {
+      "bytes": 3189,
+      "sha256": "214ce989ebf0e53193c6147ceed4557eb8d899114ac635516d54a711bdc4d28f"
+    },
+    "native-thread-token-boundary-x86.log": {
+      "bytes": 3189,
+      "sha256": "214ce989ebf0e53193c6147ceed4557eb8d899114ac635516d54a711bdc4d28f"
+    },
+    "native-thread-token-boundary.cpp": {
+      "bytes": 2182,
+      "sha256": "cdf1d47951a5b02da979c2c23051c990312be4132453dbbfab0df35043885c3e"
+    },
+    "native-thread-token-final-after-artifacts-stderr.log": {
+      "bytes": 72,
+      "sha256": "9116032755af23c3e54622e381d34afa9aa4fc7bc785c0058cd71dc498430cbf"
+    },
+    "native-thread-token-final-after-artifacts.jsonl": {
+      "bytes": 130191,
+      "sha256": "6639d5ef9cb0dc36a0f27b58661d9a4756675e7ff7b45037289de3ff13233838"
+    },
+    "native-thread-token-final-after-ordinary-processes.log": {
+      "bytes": 7311,
+      "sha256": "b748d212e7baf440517ffa860f63cab6684c8e3f88f5f29b2451eaac4d320419"
+    },
+    "native-thread-token-final-after-production-trace-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-thread-token-final-after-production-trace-output.log": {
+      "bytes": 48266,
+      "sha256": "715c4794352cb943dc1726c863baf488f30ae636d1cb665aef175f7597228ba3"
+    },
+    "native-thread-token-final-all-targets.log": {
+      "bytes": 986,
+      "sha256": "407d58b104cbdfe5417965307ec2c033b6a716591daf2d0bc6edd0ebe05616f7"
+    },
+    "native-thread-token-final-capi.log": {
+      "bytes": 13837,
+      "sha256": "bd401e15b1891f06887b8b6975051ebfe9161f5ddfd016e7c488760f670d9898"
+    },
+    "native-thread-token-final-focused.log": {
+      "bytes": 2106,
+      "sha256": "0436c920cffb3f76e56d53c5179e2cceb3fbac7471b4200caf63501d4d1fea78"
+    },
+    "native-thread-token-final-full.log": {
+      "bytes": 760102,
+      "sha256": "a1903e76729bc32c22e62480750da4d8d01dbd72813a721f440ae111db9323a1"
+    },
+    "native-thread-token-final-gates.json": {
+      "bytes": 1232,
+      "sha256": "5bf13bff10d25a38f9f7a836bde7e01195c010d099c0f43b88781e9e07ffa218"
+    },
+    "native-thread-token-final-integration.log": {
+      "bytes": 1792,
+      "sha256": "d140d461c75fc137bec7d1655c5da226bd83e1f80f17ba3052bccb4a541af0d2"
+    },
+    "native-thread-token-final-observer-identity.json": {
+      "bytes": 460,
+      "sha256": "edafff8914141171fa483ad51a6d035d44b8c2e3d243c66fbf388d6625788a21"
+    },
+    "native-thread-token-final-owning-archive-hashes.json": {
+      "bytes": 19241,
+      "sha256": "412513be03ce9ffe7a406fbfadf684fb3cd03ab6d03a6bb68f39004a34393168"
+    },
+    "native-thread-token-final-owning-source-verification.json": {
+      "bytes": 2812,
+      "sha256": "8fc8122b068c4fe74fa1005b0abe37b931c898628befa3ceff5a5f7f60759ac9"
+    },
+    "native-thread-token-gates.ps1": {
+      "bytes": 1482,
+      "sha256": "9c37b2201ef38c228fa789462f2917d41a7a12776a0ff579e02d5b44fadad4d9"
+    },
+    "native-thread-token-open-fresh-arm64-build.log": {
+      "bytes": 36,
+      "sha256": "dbf0496b4cf2c40d00dc14d98240349fd168cefeca0ebb0322c0a4f6af7bddf5"
+    },
+    "native-thread-token-open-fresh-arm64-outcome.json": {
+      "bytes": 259,
+      "sha256": "769647c437c07b2383f7d3cd9172f5609b4bcd0a86c1fdc5a9e67c1d30feeb05"
+    },
+    "native-thread-token-open-fresh-arm64.log": {
+      "bytes": 1848,
+      "sha256": "b80656b4148f54b0f4608867f13d453edf69d17e31374a762656c7445075c968"
+    },
+    "native-thread-token-open-fresh-arm64.ps1": {
+      "bytes": 1837,
+      "sha256": "21bf3f19edbbb477237905a376f481a6ad24c8d6971342150abb101a34efe576"
+    },
+    "native-thread-token-open-fresh.cpp": {
+      "bytes": 9502,
+      "sha256": "0d7dbf9ad1f49f44b4baf0db5cee76cff8b39f70207319ddf92d91a77cc5ac71"
+    },
+    "native-thread-token-open-probe-v5-arm64-build.log": {
+      "bytes": 39,
+      "sha256": "9c44b3db1c70b901668ff572f8b8e6972d66d91a7e310f64c2819ebd5ddf76c0"
+    },
+    "native-thread-token-open-probe-v5-arm64.log": {
+      "bytes": 3830696,
+      "sha256": "b803e08773ca1353c86a88d7767f9469d05141e9cdee24e76dd3724478d4ab2b"
+    },
+    "native-thread-token-open-probe-v5-outcomes.json": {
+      "bytes": 1147,
+      "sha256": "b16bb206f1fcf47a21379eef7365a81236dbcaeafed683533a7bf6dce95b838f"
+    },
+    "native-thread-token-open-probe-v5-profiles.ps1": {
+      "bytes": 2273,
+      "sha256": "cefd3d8773863e7ee244dccb859296953dce2db6900d37b82f5a42c6077f4766"
+    },
+    "native-thread-token-open-probe-v5-x64-build.log": {
+      "bytes": 39,
+      "sha256": "9c44b3db1c70b901668ff572f8b8e6972d66d91a7e310f64c2819ebd5ddf76c0"
+    },
+    "native-thread-token-open-probe-v5-x64.log": {
+      "bytes": 3837864,
+      "sha256": "2b7055b86e666df884ff10efeb45d7ef603e251d2bb852a6204154119b5c1151"
+    },
+    "native-thread-token-open-probe-v5-x86-build.log": {
+      "bytes": 39,
+      "sha256": "9c44b3db1c70b901668ff572f8b8e6972d66d91a7e310f64c2819ebd5ddf76c0"
+    },
+    "native-thread-token-open-probe-v5-x86-laa-build.log": {
+      "bytes": 39,
+      "sha256": "9c44b3db1c70b901668ff572f8b8e6972d66d91a7e310f64c2819ebd5ddf76c0"
+    },
+    "native-thread-token-open-probe-v5-x86-laa.log": {
+      "bytes": 3726367,
+      "sha256": "d53f6d027a2591916f4fab6d16a3e34d4af46bc93cbd257e384064caa2785cb9"
+    },
+    "native-thread-token-open-probe-v5-x86.log": {
+      "bytes": 3726367,
+      "sha256": "c5521d7d9b62ae653e8c8582727aad2a10587113899824e02b5c19ee85dc0854"
+    },
+    "native-thread-token-open-probe-v5.cpp": {
+      "bytes": 12986,
+      "sha256": "93179b2bcfee37ac32ecfb206182abd5209b9b729261a989d10f68f4be458453"
+    },
+    "native-thread-token-producer-identities.json": {
+      "bytes": 15058,
+      "sha256": "acf807a0d2e7d9516850ef648a70ecae5606936525df24c27ab7892427077278"
+    },
+    "native-thread-token-pseudo-arm64-build.log": {
+      "bytes": 32,
+      "sha256": "b1e348dfe60aaf91ef9dcca1e494fb01dca41d96e21f124f7973305c8dc565f8"
+    },
+    "native-thread-token-pseudo-arm64.log": {
+      "bytes": 6055,
+      "sha256": "42c211a64f9c1ee735434bf560615315ac10a70bdefd9ccd4fe288ce2158aa88"
+    },
+    "native-thread-token-pseudo-outcomes.json": {
+      "bytes": 1147,
+      "sha256": "743d625b2eabffaea56ca087e04035032b16a26b806f676230c063d9f27090fc"
+    },
+    "native-thread-token-pseudo-profiles.ps1": {
+      "bytes": 2168,
+      "sha256": "1792f94327f2ba77928215a82d305b2058941fb56b70409635b0c4ddb509a1b5"
+    },
+    "native-thread-token-pseudo-x64-build.log": {
+      "bytes": 32,
+      "sha256": "b1e348dfe60aaf91ef9dcca1e494fb01dca41d96e21f124f7973305c8dc565f8"
+    },
+    "native-thread-token-pseudo-x64.log": {
+      "bytes": 6055,
+      "sha256": "42c211a64f9c1ee735434bf560615315ac10a70bdefd9ccd4fe288ce2158aa88"
+    },
+    "native-thread-token-pseudo-x86-build.log": {
+      "bytes": 32,
+      "sha256": "b1e348dfe60aaf91ef9dcca1e494fb01dca41d96e21f124f7973305c8dc565f8"
+    },
+    "native-thread-token-pseudo-x86-laa-build.log": {
+      "bytes": 32,
+      "sha256": "b1e348dfe60aaf91ef9dcca1e494fb01dca41d96e21f124f7973305c8dc565f8"
+    },
+    "native-thread-token-pseudo-x86-laa.log": {
+      "bytes": 4975,
+      "sha256": "5dc741bef37bf63e541facc572bb75223b24d9f3ad9e39630c07fe302d50909d"
+    },
+    "native-thread-token-pseudo-x86.log": {
+      "bytes": 4975,
+      "sha256": "5dc741bef37bf63e541facc572bb75223b24d9f3ad9e39630c07fe302d50909d"
+    },
+    "native-thread-token-pseudo.cpp": {
+      "bytes": 2181,
+      "sha256": "432b9ecac6cee7d04ca76d906b1db5324ab39233c753f8a43b1d37bd17218b9d"
+    },
+    "phnt-ntseapi.h": {
+      "bytes": 74208,
+      "sha256": "7fa0a21902ed64036c495216fba85d0e29a1d3028fd60d09103993817d1473df"
+    },
+    "rax-change-surface-map.json": {
+      "bytes": 3532,
+      "sha256": "5629dd89ac776508653ec4793e32f7c8a699231e9c45ec4dde79d1cec8906fc3"
+    },
+    "references/microsoft-ddi-LICENSE": {
+      "bytes": 18650,
+      "sha256": "7183ef9749eb9b75e710a81a4c812a9405cc184f087500581a973e5929ac3f5e"
+    },
+    "references/microsoft-openthreadtoken.md": {
+      "bytes": 5665,
+      "sha256": "5fbdf4faaacaa8648713c3f9cffd511b78351082903e883f3a86a85fe8b5920b"
+    },
+    "references/microsoft-sdk-LICENSE": {
+      "bytes": 18650,
+      "sha256": "7183ef9749eb9b75e710a81a4c812a9405cc184f087500581a973e5929ac3f5e"
+    },
+    "references/microsoft-zwopenthreadtokenex.md": {
+      "bytes": 6386,
+      "sha256": "1eacda8b992bc9e5e0c76c2976b9b69de855ff011b9caa6d1a85e94faea104a7"
+    },
+    "references/phnt-LICENSE": {
+      "bytes": 1092,
+      "sha256": "ad2ab542c56c606e4c19d66a7f3cdcd3ef83beffb638e7c3893b22c7a6a6c0df"
+    },
+    "references/sources.json": {
+      "bytes": 1915,
+      "sha256": "5eeacf8cfa12d35f155999ed81e75e7e1b1a2abf0cbefa40d2d78feabe3dcdd1"
+    },
+    "thread-token-owned-cpp-build.py": {
+      "bytes": 1839,
+      "sha256": "9995e244e446791e41fc1d813aaf59db7ccb7b472c064785232f4e11f63d3608"
+    },
+    "thread-token-owning-root-scope.json": {
+      "bytes": 11123,
+      "sha256": "f05ee6a4c26eefe8693ae3d9575858f774650cfe09ff2551d680acf9521d9bd6"
+    },
+    "thread-token-owning-source-hashes.json": {
+      "bytes": 21776,
+      "sha256": "502dd3e95a6308bffdca0b42b845fe4f3c6dc6b97f88e3e62bf23be44b7d0d4d"
+    },
+    "validation-summary.json": {
+      "bytes": 9650,
+      "sha256": "fb44fb97c4722f479899130b3b30b618601d00594e28e51a1bfdf5f987fdce26"
+    },
+    "verify-thread-token-owning-sources.py": {
+      "bytes": 1067,
+      "sha256": "2304ecdaad6dbfc49fed3bb9779f8c449342826993fabcd73bb090fbb209c448"
+    }
+  }
+}

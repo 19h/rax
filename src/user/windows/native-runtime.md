@@ -1596,3 +1596,31 @@ Physical x64-kernel/other builds, continuing kernel counter updates and whole
 current-root plugin/GUI/package validation remain explicit unknowns/exclusions.
 Full ordinary process exits remain unproven; the engineering validation record
 owns exact counts, baseline Windows failures, artifacts and the new frontier.
+
+## Absent thread-token opening (2026-10-13)
+
+`NtOpenThreadToken` validates current/local/ended thread handle/type and either
+query grant0x40/0x800; the current no-attachment personality returns
+STATUS_NO_TOKEN0xC000007C, mapped to ERROR_NO_TOKEN1008. Invalid/type/access
+failures retain native precedence. Token objects/attachments and positive ACL
+semantics remain explicit unsupported boundaries; class5 attachment refusal is
+tested. No guest request reaches host NT and no token handle is fabricated.
+
+Native64 failure leaves output untouched. WoW64 null skips caller copy;
+nonnull writes zero4B even on kernel failure, with copy faults overriding status.
+Writable guards consume once; readonly guards remain armed; cross-page faults
+preserve caller bytes. Shared write_guard_result preserves the constructor's
+existing policy; slot setters keep their distinct measured regular guard policy.
+All four ABI arguments are decoded; absent tokens never reach DesiredAccess or
+OpenAsSelf ACL evaluation. Original installed WoW64 RET16 cleanup is tested.
+
+The corpus binds13 actual producer source/executable/stdout identities,26352
+full native mature rows (6192 absent replays),80 absent signed/zero-extended
+pseudo replays,96 boundary rows, two complete fresh original-SVC36/true-LR
+cases and33 rehashed controlled rejections. Native positive/anonymous/token
+level contrasts are retained to falsify unconditional NO_TOKEN support claims.
+Exact full gates, scoped owning108-source/2-helper/9-consumer identities,
+archives, assumptions, plane maps and the unchanged ordinary observer live in
+[thread-token evidence](../../../docs/specifications/windows/native-thread-token-open/README.md).
+Other kernel/DLL builds/physical x64 and whole current-root/plugin/GUI/package
+validation remain unknown/excluded. Full ordinary guest exits remain unproven.

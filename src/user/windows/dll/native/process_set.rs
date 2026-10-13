@@ -1,27 +1,13 @@
 //! Build29683 scheduler-data constructor; no guest request reaches host NT.
-use super::query::{guard_result, probe_write};
+use super::query::{probe_write, write_guard_result};
 use crate::user::windows::arch::WinArch;
 use crate::user::windows::hle::{ApiErr, ApiResult, Ctx, Flow};
-use crate::user::windows::memory::prot;
 use crate::user::windows::nt::status::*;
 use crate::user::windows::objects::Object;
 
 pub(super) fn information(c: &mut Ctx) -> ApiResult {
     let result = checked(c);
-    // Native write validation denies READONLY|GUARD without visiting its
-    // guard. A writable guarded page instead consumes one reached guard.
-    if let Err(ApiErr::Fault(fault)) = &result
-        && fault.write
-        && let Some(region) = c.p.vm.query(fault.addr)
-        && region.protect & prot::GUARD != 0
-        && !matches!(
-            region.protect & 0xff,
-            prot::READWRITE | prot::WRITECOPY | prot::EXECUTE_READWRITE | prot::EXECUTE_WRITECOPY
-        )
-    {
-        return Flow::ret(STATUS_ACCESS_VIOLATION.into());
-    }
-    guard_result(c, result)
+    write_guard_result(c, result)
 }
 
 fn checked(c: &mut Ctx) -> ApiResult {

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "A1",
+    "assumption": "The current guest Windows personality has no impersonation token attachments.",
+    "basis": "objects.rs has no Token variant; no token attachment service is implemented; class5 NtSetInformationThread remains Unsupported.",
+    "dependent-result": "absent_thread_token returns STATUS_NO_TOKEN only for this personality after measured handle/type/access validation.",
+    "stress-test": "current, local worker and ended threads; query grant aliases; native positive/anonymous/identification/impersonation/delegation contrasts; attachment refusal all guest ABIs.",
+    "falsification-probe": "A guest attachment API succeeds, a Token object is introduced, or a guest thread obtains an impersonation token; this implementation must then dispatch actual token state instead of treating absence as universal.",
+    "status": "confirmed for the bounded current personality; retained limit for future token support"
+  },
+  {
+    "id": "A2",
+    "assumption": "Failure output semantics differ between installed Native64 and WoW64 wrappers on the captured build.",
+    "basis": "26352 mature native rows, four-profile pseudo controls and 96 cross-page native rows; two complete original-SVC36 first calls.",
+    "dependent-result": "Native64 no failure output probe/store; WoW64 null skips copy, nonnull writes zero4B after kernel result; copy fault overrides status.",
+    "stress-test": "null, pointer1, MAX-7, unaligned stores, both page crossings, readonly/noaccess/writable guard/readonly guard; invalid/type/access/NO_TOKEN statuses.",
+    "falsification-probe": "Repeat producers on the installed DLL/kernel identities and find changed bytes, partial stores, consumed readonly guards, or changed native failure status.",
+    "status": "confirmed in the captured profiles"
+  },
+  {
+    "id": "A3",
+    "assumption": "THREAD_QUERY_INFORMATION0x40 or THREAD_QUERY_LIMITED_INFORMATION0x800 suffices in the captured build.",
+    "basis": "Original mature current/local/ended thread grants, including aliases. Microsoft ZwOpenThreadTokenEx documents QUERY_INFORMATION; that prose does not enumerate the observed limited-query acceptance.",
+    "dependent-result": "Thread access test uses mask0x840; wrong type and missing handle precede no-token result.",
+    "stress-test": "zero, SET_INFORMATION0x20 and SYNCHRONIZE0x100000 denied; each query bit independently accepted; bad/pseudo-process/Event/process rejected; signed and zero-extended negative selectors.",
+    "falsification-probe": "Captured current/local/ended handle granting only0x800 returns ACCESS_DENIED while no impersonation is active.",
+    "status": "confirmed for captured build; other builds unknown"
+  },
+  {
+    "id": "A4",
+    "assumption": "A global process-handle snapshot need not remain atomic across unrelated native handle activity.",
+    "basis": "Excluded v2/v3 producer diagnostics observed global handle count/set drift while token births were zero. Canonical v5 checks exact Token namespace plus16 owned input IDs; closes14 caller inputs, joins workers and records global counts separately.",
+    "dependent-result": "Canonical native replay accepts only exact token/input restoration; global counts are observations, not fabricated exactness.",
+    "stress-test": "worker-ready handshake, ended exit66, worker exit77, native positive token handle inspection/close, impersonation revert.",
+    "falsification-probe": "Canonical exact-token-and-input-handles differs, an owned input disappears, a new Token survives, or an owned worker fails to join.",
+    "status": "revised and confirmed; initial global-set assumption falsified"
+  },
+  {
+    "id": "A5",
+    "assumption": "Owning embedding proof is limited to recorded frozen roots plus matching current sources.",
+    "basis": "Unix e2fc5b483be7cad2dae17d889690cc398973c5e8, Windows f386ed2aeac29a701d32f28eb73c14003eb55f7a;108 current Rust source units,2 actual helper source units,9 current matching C++ consumers.",
+    "dependent-result": "Scoped shipping archive/consumer and observer claims; no whole-current-root plugin/GUI/package claim.",
+    "stress-test": "Exact source/hash verification, empty RAX core features, full archive member walks, C++ tests, protected text scans, unchanged observer11177B/d41c9536...; foreign current root edits preserved.",
+    "falsification-probe": "A source/consumer/helper byte hash differs, extra core features are selected, archive structure fails, or current root consumers diverge.",
+    "status": "confirmed for scoped108 sources/2 helpers/9 current C++ consumers and empty core features; retained native build/profile exclusion"
+  }
+]

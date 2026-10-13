@@ -1,0 +1,17 @@
+{
+  "Direct decode": "Unaffected: no instruction decode/execute, ISA state, SMIR operation/lift/interpreter/optimizer/lowerer/JIT, hardware backend or device contract is edited; existing user-mode service dispatch owns the changed behavior.",
+  "Direct execute": "Unaffected: no instruction decode/execute, ISA state, SMIR operation/lift/interpreter/optimizer/lowerer/JIT, hardware backend or device contract is edited; existing user-mode service dispatch owns the changed behavior.",
+  "CPU state": "Unaffected: no instruction decode/execute, ISA state, SMIR operation/lift/interpreter/optimizer/lowerer/JIT, hardware backend or device contract is edited; existing user-mode service dispatch owns the changed behavior.",
+  "SMIR lift": "Unaffected: no instruction decode/execute, ISA state, SMIR operation/lift/interpreter/optimizer/lowerer/JIT, hardware backend or device contract is edited; existing user-mode service dispatch owns the changed behavior.",
+  "SMIR IR": "Unaffected: no instruction decode/execute, ISA state, SMIR operation/lift/interpreter/optimizer/lowerer/JIT, hardware backend or device contract is edited; existing user-mode service dispatch owns the changed behavior.",
+  "SMIR interpreter": "Unaffected: no instruction decode/execute, ISA state, SMIR operation/lift/interpreter/optimizer/lowerer/JIT, hardware backend or device contract is edited; existing user-mode service dispatch owns the changed behavior.",
+  "Optimizer": "Unaffected: no instruction decode/execute, ISA state, SMIR operation/lift/interpreter/optimizer/lowerer/JIT, hardware backend or device contract is edited; existing user-mode service dispatch owns the changed behavior.",
+  "Native lowering": "Unaffected: no instruction decode/execute, ISA state, SMIR operation/lift/interpreter/optimizer/lowerer/JIT, hardware backend or device contract is edited; existing user-mode service dispatch owns the changed behavior.",
+  "JIT runtime": "Unaffected: no instruction decode/execute, ISA state, SMIR operation/lift/interpreter/optimizer/lowerer/JIT, hardware backend or device contract is edited; existing user-mode service dispatch owns the changed behavior.",
+  "Backend": "Unaffected: no instruction decode/execute, ISA state, SMIR operation/lift/interpreter/optimizer/lowerer/JIT, hardware backend or device contract is edited; existing user-mode service dispatch owns the changed behavior.",
+  "Machine/device": "Unaffected: no instruction decode/execute, ISA state, SMIR operation/lift/interpreter/optimizer/lowerer/JIT, hardware backend or device contract is edited; existing user-mode service dispatch owns the changed behavior.",
+  "Oracle/analysis": "Unaffected: no instruction decode/execute, ISA state, SMIR operation/lift/interpreter/optimizer/lowerer/JIT, hardware backend or device contract is edited; existing user-mode service dispatch owns the changed behavior.",
+  "Memory/MMU": "Affected caller-store fault translation: exact existing constructor write/guard policy extracted unchanged into shared write_guard_result and used for WoW64 zero4B output copy. Slot setters keep their different measured regular guard_result behavior. No page table/MMU format or CPU memory policy change.",
+  "C ABI": "No layout, numbering, header or ownership change; opaque process service semantics advance. C API168 tests and existing C++ consumers run.",
+  "Tests/docs": "New four portable tests and one actual-installed Windows test; mature/pseudo/boundary replay plus independent source/evidence and ordinary-execution records."
+}

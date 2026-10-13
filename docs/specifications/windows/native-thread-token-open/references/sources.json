@@ -1,0 +1,45 @@
+[
+  {
+    "file": "microsoft-openthreadtoken.md",
+    "url": "https://raw.githubusercontent.com/MicrosoftDocs/sdk-api/docs/sdk-api-src/content/processthreadsapi/nf-processthreadsapi-openthreadtoken.md",
+    "retrieved-utc": "2026-10-13T05:47:57.985985+00:00",
+    "bytes": 5665,
+    "sha256": "5fbdf4faaacaa8648713c3f9cffd511b78351082903e883f3a86a85fe8b5920b"
+  },
+  {
+    "file": "microsoft-zwopenthreadtokenex.md",
+    "url": "https://raw.githubusercontent.com/MicrosoftDocs/windows-driver-docs-ddi/staging/wdk-ddi-src/content/ntifs/nf-ntifs-zwopenthreadtokenex.md",
+    "retrieved-utc": "2026-10-13T05:47:58.812086+00:00",
+    "bytes": 6386,
+    "sha256": "1eacda8b992bc9e5e0c76c2976b9b69de855ff011b9caa6d1a85e94faea104a7"
+  },
+  {
+    "file": "microsoft-sdk-LICENSE",
+    "url": "https://raw.githubusercontent.com/MicrosoftDocs/sdk-api/docs/LICENSE",
+    "retrieved-utc": "2026-10-13T05:47:59.369725+00:00",
+    "bytes": 18650,
+    "sha256": "7183ef9749eb9b75e710a81a4c812a9405cc184f087500581a973e5929ac3f5e"
+  },
+  {
+    "file": "microsoft-ddi-LICENSE",
+    "url": "https://raw.githubusercontent.com/MicrosoftDocs/windows-driver-docs-ddi/staging/LICENSE",
+    "retrieved-utc": "2026-10-13T05:48:00.140691+00:00",
+    "bytes": 18650,
+    "sha256": "7183ef9749eb9b75e710a81a4c812a9405cc184f087500581a973e5929ac3f5e"
+  },
+  {
+    "file": "phnt-LICENSE",
+    "url": "https://raw.githubusercontent.com/winsiderss/phnt/master/LICENSE",
+    "retrieved-utc": "2026-10-13 02:16:57 UTC",
+    "bytes": 1092,
+    "sha256": "ad2ab542c56c606e4c19d66a7f3cdcd3ef83beffb638e7c3893b22c7a6a6c0df"
+  },
+  {
+    "file": "../phnt-ntseapi.h",
+    "url": "https://raw.githubusercontent.com/winsiderss/phnt/master/ntseapi.h",
+    "retrieved-date": "2026-10-13",
+    "revision": "master snapshot; exact upstream commit unknown",
+    "bytes": 74208,
+    "sha256": "7fa0a21902ed64036c495216fba85d0e29a1d3028fd60d09103993817d1473df"
+  }
+]

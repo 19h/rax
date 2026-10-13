@@ -1,0 +1,18 @@
+{
+  "Plugin lifecycle": "Unaffected: no plugin load/install/IDB/form callback edits; token opening neither creates a guest object nor changes thread lifetime.",
+  "UI state": "Unaffected: no Qt/widgets/theme/copy contract edits.",
+  "Conversation/lane": "Unaffected: no chat, transcript, fork, cancellation or action-lane changes.",
+  "Agent backend": "Unaffected: no native/ACP request/provider/model changes.",
+  "Prompt/context": "Unaffected: no embedded prompt or IDB context input changes.",
+  "Tool schema": "Unaffected: existing process execution/memory/thread outputs consume existing opaque engine state; no tool name/schema/manifest changes.",
+  "Permission/mutation": "Unaffected product approval policy: no IDB mutation, capability or permission API changes. Native producer side effects are limited to owned process/thread/token handles and reverted owned impersonation controls.",
+  "Main-thread dispatch": "Unaffected: portable RAX process model touches no IDA/Hex-Rays/Qt APIs; no seam changes.",
+  "Mesh/MCP": "Unaffected: no identity, routing, mesh or transport changes. Scoped bridge/CLI builds still validate embedding.",
+  "Transport/crypto": "Unaffected: no wire format, peer auth, framing, crypto or settings keys.",
+  "Persistence": "Unaffected: no schema/settings/history/storage changes; failed token opening leaves the guest object namespace unchanged.",
+  "SDK/ABI": "Affected internal native export table, appended without renumbering existing entries; STATUS_NO_TOKEN and ERROR_NO_TOKEN mapping added. Public C ABI1.11.0 headers/layout and Assist ABI unchanged; C API and existing C++ link/drift consumers checked.",
+  "Optional engines": "Affected portable Windows RAX native kernel-service dispatch for AArch64, X86_64 and WoW64. Installed DLL selection, interpreter/JIT instruction policy and other OS engines unchanged.",
+  "Update/release": "No version, TUF, package layout, signing or installer change; authorized RAX gitlink and paired engineering record publication.",
+  "Targets/platforms": "Shared Rust behavior compiled/tested on macOS, Linux amd64 and Windows ARM64; no host NT forwarding. Native Windows actual installed ARM64/WoW64 leaves run. Frozen owning roots consume108 current Rust sources and2 actual helpers;9 current matching C++ consumers verified. Physical x64 kernel, other kernel/DLL builds and whole current-root plugin/GUI/packages excluded.",
+  "Tests/docs": "Affected6192 absent-token original-row replays,80 absent signed/zero-extended pseudo rows,96 cross-page rows, explicit attachment refusal all ABIs, installed native leaves;13 actual native producers,26352 full mature rows with positive token contrasts,33 controlled evidence rejections. Ordinary observer proof remains separate."
+}

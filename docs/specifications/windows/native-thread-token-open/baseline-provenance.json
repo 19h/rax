@@ -1,0 +1,27 @@
+{
+  "records": [
+    {
+      "file": "baseline-ordinary-processes.log",
+      "source": "docs/specifications/windows/native-scheduler-thread-slot/native-scheduler-slot-final-after-ordinary-processes.log",
+      "published-rax-commit": "bfbd06f0675e462b68b00075973348f5490b7a62",
+      "bytes": 7215,
+      "sha256": "3844378d8ec088380c7e9f86a174473b882791693bbba9af4debcba87ca43d6f"
+    },
+    {
+      "file": "baseline-production-observer.log",
+      "source": "docs/specifications/windows/native-scheduler-thread-slot/native-scheduler-slot-final-after-production-trace-output.log",
+      "published-rax-commit": "bfbd06f0675e462b68b00075973348f5490b7a62",
+      "bytes": 47110,
+      "sha256": "47c8cde364b63fb456b9536f28540172003042f577728541463c32da0e1476a8"
+    },
+    {
+      "file": "baseline-observer-identity.json",
+      "source": "docs/specifications/windows/native-scheduler-thread-slot/native-scheduler-slot-final-observer-identity.json",
+      "published-rax-commit": "bfbd06f0675e462b68b00075973348f5490b7a62",
+      "bytes": 464,
+      "sha256": "7b6991dfda2b50342540a3e4081b97dc76be5b4bed2789fc2626b332f62789ab"
+    }
+  ],
+  "native-libraries": "Both source/hash/size/machine identities exactly match canonical thread-token metadata; checked directly.",
+  "regression": "Unchanged observer terminal135983 reports unimplemented NtOpenThreadToken0x24; three ordinary CRT programs stop at this exact native service before the change."
+}
