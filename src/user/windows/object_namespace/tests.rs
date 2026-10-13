@@ -14,12 +14,14 @@ fn selected(forced: bool) -> Vec<SelectedDirectory> {
             force_case_insensitive: forced,
             entries: vec![
                 CapturedEntry {
+                    section: None,
                     name: "KnownDlls".encode_utf16().collect(),
                     kind: "Directory".encode_utf16().collect(),
                     target: None,
                     link_access: None,
                 },
                 CapturedEntry {
+                    section: None,
                     name: "Other".encode_utf16().collect(),
                     kind: "Directory".encode_utf16().collect(),
                     target: None,
@@ -33,6 +35,7 @@ fn selected(forced: bool) -> Vec<SelectedDirectory> {
             system_security_status: STATUS_PRIVILEGE_NOT_HELD,
             force_case_insensitive: forced,
             entries: vec![CapturedEntry {
+                section: None,
                 name: "ntdll.dll".encode_utf16().collect(),
                 kind: "Section".encode_utf16().collect(),
                 target: None,
@@ -116,6 +119,7 @@ fn directory_catalog_system_root_and_subject_capture_are_bounded() {
 fn symbolic_link_selection_refuses_uncaptured_grants_and_invalid_metadata() {
     let mut selected = selected(true);
     let entry = CapturedEntry {
+        section: None,
         name: "KnownDllPath".encode_utf16().collect(),
         kind: "SymbolicLink".encode_utf16().collect(),
         target: Some("C:\\WINDOWS\\System32".encode_utf16().collect()),
@@ -150,4 +154,92 @@ fn symbolic_link_selection_refuses_uncaptured_grants_and_invalid_metadata() {
         system_security_status: STATUS_PRIVILEGE_NOT_HELD,
     });
     assert!(Namespace::selected(table(), bad).is_err());
+}
+#[test]
+fn native_section_open_selection_case_policy_bounds_and_uncaptured_resources_are_explicit() {
+    let path: Vec<_> = "\\KnownDlls\\ntdll.dll".encode_utf16().collect();
+    let n = Namespace::selected(table(), selected(true)).unwrap();
+    assert_eq!(
+        n.lookup_section(None, &path, 0x40, false).unwrap_err(),
+        LookupError::Unselected
+    );
+    let capture = CapturedSection {
+        maximum_access: 0x2000F,
+        system_security_status: STATUS_PRIVILEGE_NOT_HELD,
+        attributes: 0x0180_0000,
+        size: 0x473000,
+        force_case_insensitive: false,
+    };
+    let mut values = selected(true);
+    values[1].entries[0].section = Some(capture);
+    let n = Namespace::selected(table(), values.clone()).unwrap();
+    let resource = n.lookup_section(None, &path, 0, false).unwrap();
+    let upper: Vec<_> = "\\KNOWNDLLS\\NTDLL.DLL".encode_utf16().collect();
+    assert_eq!(
+        n.lookup_section(None, &upper, 0, false).unwrap_err(),
+        LookupError::Status(STATUS_OBJECT_PATH_NOT_FOUND)
+    );
+    assert!(Arc::ptr_eq(
+        &resource,
+        &n.lookup_section(None, &upper, 0x40, false).unwrap()
+    ));
+    assert_eq!(resource.grant(0xD, false), Ok(0xD));
+    assert_eq!(
+        resource.grant(0x01000000, false),
+        Err(STATUS_PRIVILEGE_NOT_HELD)
+    );
+    assert_eq!(resource.grant(0, false), Err(STATUS_ACCESS_DENIED));
+    assert_eq!(resource.grant(0, true), Ok(0));
+    assert_eq!(resource.grant(0x20, true), Ok(0));
+    assert_eq!(resource.grant(0x100000, true), Err(STATUS_ACCESS_DENIED));
+    for bad in [
+        CapturedSection {
+            maximum_access: 0,
+            ..capture
+        },
+        CapturedSection {
+            maximum_access: 0x20,
+            ..capture
+        },
+        CapturedSection {
+            maximum_access: 0x100001,
+            ..capture
+        },
+        CapturedSection {
+            system_security_status: STATUS_INVALID_HANDLE,
+            ..capture
+        },
+        CapturedSection {
+            attributes: 0x01000000,
+            ..capture
+        },
+        CapturedSection { size: 0, ..capture },
+        CapturedSection {
+            size: 0x80000000,
+            ..capture
+        },
+    ] {
+        let mut v = values.clone();
+        v[1].entries[0].section = Some(bad);
+        assert!(Namespace::selected(table(), v).is_err());
+    }
+    let mut v = values.clone();
+    v[1].entries[0].kind = "Directory".encode_utf16().collect();
+    assert!(Namespace::selected(table(), v).is_err());
+    let mut v = values.clone();
+    let mut other = v[1].entries[0].clone();
+    other.name = "other.dll".encode_utf16().collect();
+    other.section = Some(CapturedSection {
+        force_case_insensitive: true,
+        ..capture
+    });
+    v[1].entries.push(other);
+    assert!(Namespace::selected(table(), v).is_err());
+    let mut v = values;
+    v[1].entries[0].section = Some(CapturedSection {
+        force_case_insensitive: true,
+        ..capture
+    });
+    let n = Namespace::selected(table(), v).unwrap();
+    assert!(n.lookup_section(None, &upper, 0, false).is_ok());
 }

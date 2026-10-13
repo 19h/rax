@@ -1,0 +1,130 @@
+{
+  "rax": {
+    "Direct decode": {
+      "status": "unaffected",
+      "reason": "NT service and guest object semantics use existing ISA stops, registers, memory access and ABI; no owning-plane source changes."
+    },
+    "Direct execute": {
+      "status": "unaffected",
+      "reason": "NT service and guest object semantics use existing ISA stops, registers, memory access and ABI; no owning-plane source changes."
+    },
+    "CPU state": {
+      "status": "unaffected",
+      "reason": "NT service and guest object semantics use existing ISA stops, registers, memory access and ABI; no owning-plane source changes."
+    },
+    "SMIR lift": {
+      "status": "unaffected",
+      "reason": "NT service and guest object semantics use existing ISA stops, registers, memory access and ABI; no owning-plane source changes."
+    },
+    "SMIR IR": {
+      "status": "unaffected",
+      "reason": "NT service and guest object semantics use existing ISA stops, registers, memory access and ABI; no owning-plane source changes."
+    },
+    "SMIR interpreter": {
+      "status": "unaffected",
+      "reason": "NT service and guest object semantics use existing ISA stops, registers, memory access and ABI; no owning-plane source changes."
+    },
+    "Optimizer": {
+      "status": "unaffected",
+      "reason": "NT service and guest object semantics use existing ISA stops, registers, memory access and ABI; no owning-plane source changes."
+    },
+    "Native lowering": {
+      "status": "unaffected",
+      "reason": "NT service and guest object semantics use existing ISA stops, registers, memory access and ABI; no owning-plane source changes."
+    },
+    "JIT runtime": {
+      "status": "unaffected",
+      "reason": "NT service and guest object semantics use existing ISA stops, registers, memory access and ABI; no owning-plane source changes."
+    },
+    "Backend": {
+      "status": "unaffected",
+      "reason": "NT service and guest object semantics use existing ISA stops, registers, memory access and ABI; no owning-plane source changes."
+    },
+    "Machine/device": {
+      "status": "unaffected",
+      "reason": "NT service and guest object semantics use existing ISA stops, registers, memory access and ABI; no owning-plane source changes."
+    },
+    "Oracle/analysis": {
+      "status": "unaffected",
+      "reason": "NT service and guest object semantics use existing ISA stops, registers, memory access and ABI; no owning-plane source changes."
+    },
+    "C ABI": {
+      "status": "unaffected",
+      "reason": "NT service and guest object semantics use existing ISA stops, registers, memory access and ABI; no owning-plane source changes."
+    },
+    "Memory/MMU": {
+      "status": "affected consumer",
+      "reason": "Existing guard/page/capture helpers are reused; no memory adapter changes; boundary replay required."
+    },
+    "Tests/docs": {
+      "status": "affected",
+      "reason": "Native corpus, cross-host guest-ABI replay, Windows acquisition leaf, full relevant suites and records."
+    }
+  },
+  "assist": {
+    "Plugin lifecycle": {
+      "status": "unaffected",
+      "reason": "No contract or source in this plane changes; existing Rust/C API process consumers retain signatures and ABI. Owning consumer and protected-surface checks are required."
+    },
+    "UI state": {
+      "status": "unaffected",
+      "reason": "No contract or source in this plane changes; existing Rust/C API process consumers retain signatures and ABI. Owning consumer and protected-surface checks are required."
+    },
+    "Conversation/lane": {
+      "status": "unaffected",
+      "reason": "No contract or source in this plane changes; existing Rust/C API process consumers retain signatures and ABI. Owning consumer and protected-surface checks are required."
+    },
+    "Agent backend": {
+      "status": "unaffected",
+      "reason": "No contract or source in this plane changes; existing Rust/C API process consumers retain signatures and ABI. Owning consumer and protected-surface checks are required."
+    },
+    "Prompt/context": {
+      "status": "unaffected",
+      "reason": "No contract or source in this plane changes; existing Rust/C API process consumers retain signatures and ABI. Owning consumer and protected-surface checks are required."
+    },
+    "Tool schema": {
+      "status": "unaffected",
+      "reason": "No contract or source in this plane changes; existing Rust/C API process consumers retain signatures and ABI. Owning consumer and protected-surface checks are required."
+    },
+    "Permission/mutation": {
+      "status": "unaffected",
+      "reason": "No contract or source in this plane changes; existing Rust/C API process consumers retain signatures and ABI. Owning consumer and protected-surface checks are required."
+    },
+    "Main-thread dispatch": {
+      "status": "unaffected",
+      "reason": "No contract or source in this plane changes; existing Rust/C API process consumers retain signatures and ABI. Owning consumer and protected-surface checks are required."
+    },
+    "Mesh/MCP": {
+      "status": "unaffected",
+      "reason": "No contract or source in this plane changes; existing Rust/C API process consumers retain signatures and ABI. Owning consumer and protected-surface checks are required."
+    },
+    "Transport/crypto": {
+      "status": "unaffected",
+      "reason": "No contract or source in this plane changes; existing Rust/C API process consumers retain signatures and ABI. Owning consumer and protected-surface checks are required."
+    },
+    "Persistence": {
+      "status": "unaffected",
+      "reason": "No contract or source in this plane changes; existing Rust/C API process consumers retain signatures and ABI. Owning consumer and protected-surface checks are required."
+    },
+    "SDK/ABI": {
+      "status": "unaffected",
+      "reason": "No contract or source in this plane changes; existing Rust/C API process consumers retain signatures and ABI. Owning consumer and protected-surface checks are required."
+    },
+    "Update/release": {
+      "status": "unaffected",
+      "reason": "No contract or source in this plane changes; existing Rust/C API process consumers retain signatures and ABI. Owning consumer and protected-surface checks are required."
+    },
+    "Optional engines": {
+      "status": "affected",
+      "reason": "Embedded RAX process implementation and gitlink; owning Rust archives and C++ process consumers must be rebuilt."
+    },
+    "Targets/platforms": {
+      "status": "affected",
+      "reason": "Windows host acquisition implements installed NT sections; Linux/macOS execute shared controlled replay and retain their native process paths. No-default-features static C API across all three; frozen owning roots plus current matching consumers; whole-current-root GUI/packages excluded pending their independent changes."
+    },
+    "Tests/docs": {
+      "status": "affected",
+      "reason": "Two root engineering records, pin table, source-scope records and cross-platform owning validation."
+    }
+  }
+}

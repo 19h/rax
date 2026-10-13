@@ -1,0 +1,51 @@
+{
+  "baseline": "d0fc93b3d413f69dfc1e4c3fc7d5d58d094d0c7d",
+  "implementation-paths": [
+    "src/user/windows/object_namespace.rs",
+    "src/user/windows/object_namespace/section.rs",
+    "src/user/windows/object_namespace/installed.rs",
+    "src/user/windows/object_namespace/installed/section.rs",
+    "src/user/windows/object_namespace/tests.rs",
+    "src/user/windows/objects.rs",
+    "src/user/windows/objects/directory.rs",
+    "src/user/windows/sync.rs",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/directory.rs",
+    "src/user/windows/dll/handles.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/section_open_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/section_open_leaf_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/section_open_duplicate_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/symbolic_link_open_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/directory_open_tests.rs",
+    "docs/architecture/user-mode/windows-services.md",
+    "src/user/windows/native-runtime.md"
+  ],
+  "corpus": "docs/specifications/windows/native-section-open",
+  "baseline-identities": {
+    "src/user/windows/object_namespace.rs": "ee231caa7b7973d485460817a2b407209b2ac992cf8739f434e2cbabe0e70182",
+    "src/user/windows/object_namespace/section.rs": null,
+    "src/user/windows/object_namespace/installed.rs": "84627362a65b9ea87ce95469783ebbcb68a942c32db72ab3c7946843a657d717",
+    "src/user/windows/object_namespace/installed/section.rs": null,
+    "src/user/windows/object_namespace/tests.rs": "14897b15d88e1f10a538fc2fb1d7884ada957208205cd21c53876ba9a71c882b",
+    "src/user/windows/objects.rs": "ca8d884e09e0ba820e764b0e050aa55e442020dbec09d04563136848ac3b2266",
+    "src/user/windows/objects/directory.rs": "fa8478f7ffe358a33ea6bacb963bfcc59f7944960fe7687a3f9bb711ce310ca6",
+    "src/user/windows/sync.rs": "20124edb6fb6f718da7466e4aad07ee82118a30792f6cd9cf8ab0ef0e07c1cb1",
+    "src/user/windows/dll/native.rs": "0e8cb69c634a454f7b00f0eae91a12e1e2561117696f43ee732214c13a0101ed",
+    "src/user/windows/dll/native/directory.rs": "726301bc92cfab6780f986083f5389ed13d4711938742a43161cb1942f9ee21e",
+    "src/user/windows/dll/handles.rs": "a44ff7cfa94c9cfdeb3a28e634ac6ed6187bd48486b56ef76466955854a29a1c",
+    "src/user/windows/process/sched/tests/services_tests.rs": "abf6de4b6d119429eb361ea67f9401c32bd616473c045c9146470ca632a90ec4",
+    "src/user/windows/process/sched/tests/services_tests/section_open_tests.rs": null,
+    "src/user/windows/process/sched/tests/services_tests/section_open_leaf_tests.rs": null,
+    "src/user/windows/process/sched/tests/services_tests/section_open_duplicate_tests.rs": null,
+    "src/user/windows/process/sched/tests/services_tests/symbolic_link_open_tests.rs": "eb28f42405f5b2a20582b285c1bf5073efc48a212dce22af0b0af9374ee1dd32",
+    "src/user/windows/process/sched/tests/services_tests/directory_open_tests.rs": "deb8ec88cc650b0f56f7efb2d2ac1788247d225dae1594217229e84fd3e3bd5f",
+    "docs/architecture/user-mode/windows-services.md": "dca32150405e6e17ce08a79e7fd4a22f84d78e48106f9a946b8554816fc34147",
+    "src/user/windows/native-runtime.md": "bb6e9bfc4a4c8cc9bb343be92ba933ae33579dbe502a55aac0ca34ab4b0d9b8a"
+  },
+  "root-owned": [
+    "VENDORED_VERSIONS.md",
+    "src/emulation/native-process-emulation.md",
+    "vendor/rax"
+  ]
+}

@@ -1,5 +1,5 @@
-//! Snapshot-backed directory/link opens with measured native/WoW64 capture order.
-use super::query::{guard_result, probe_write};
+//! Snapshot-backed directory/link/section opens with measured native/WoW64 capture order.
+use super::query::{guard_result, probe_write, write_guard_result};
 use crate::user::windows::arch::WinArch;
 use crate::user::windows::hle::{ApiErr, ApiResult, Ctx, Flow};
 use crate::user::windows::memory::{Mem, MemFault};
@@ -7,6 +7,21 @@ use crate::user::windows::nt::status::*;
 use crate::user::windows::object_namespace::{Directory, LookupError};
 use crate::user::windows::objects::Object;
 use std::sync::Arc;
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Kind {
+    Directory,
+    Link,
+    Section,
+}
+impl Kind {
+    fn valid_flags(self) -> u32 {
+        if self == Self::Section {
+            0x11FF2
+        } else {
+            0x1FF2
+        }
+    }
+}
 enum Failure {
     Status(u32),
     Api(ApiErr),
@@ -26,11 +41,19 @@ fn status<T>(s: u32) -> Checked<T> {
     Err(Failure::Status(s))
 }
 fn finish(c: &mut Ctx, result: Checked<u32>) -> ApiResult {
+    finish_with(c, result, false)
+}
+fn finish_with(c: &mut Ctx, result: Checked<u32>, write: bool) -> ApiResult {
     let result = match result {
         Ok(s) | Err(Failure::Status(s)) => Flow::ret(s.into()),
         Err(Failure::Api(e)) => Err(e),
     };
-    match guard_result(c, result) {
+    let result = if write {
+        write_guard_result(c, result)
+    } else {
+        guard_result(c, result)
+    };
+    match result {
         Err(ApiErr::Fault(_)) => Flow::ret(STATUS_ACCESS_VIOLATION.into()),
         r => r,
     }
@@ -64,7 +87,7 @@ fn name(c: &Ctx, address: u64, wow: bool) -> Checked<Option<Name>> {
         buffer: c.read_ptr(address + if c.psize() == 4 { 4 } else { 8 })?,
     }))
 }
-fn capture(c: &mut Ctx, address: u64, wow: bool) -> Checked<Option<Attributes>> {
+fn capture(c: &mut Ctx, address: u64, wow: bool, kind: Kind) -> Checked<Option<Attributes>> {
     if address == 0 {
         return Ok(None);
     }
@@ -92,7 +115,7 @@ fn capture(c: &mut Ctx, address: u64, wow: bool) -> Checked<Option<Attributes>> 
     let qp = c.read_ptr(address + if wow { 20 } else { 40 })?;
     // Native validates attributes before following any subordinate pointers.
     // WoW64 first converts its descriptors and pointed-to security/QoS headers.
-    if !wow && flags & !0x1FF2 != 0 {
+    if !wow && flags & !kind.valid_flags() != 0 {
         return status(STATUS_INVALID_PARAMETER);
     }
     let qos = if qp == 0 {
@@ -137,11 +160,12 @@ fn root(c: &Ctx, handle: u64, absolute: bool) -> Checked<Arc<Directory>> {
         _ => status(STATUS_OBJECT_TYPE_MISMATCH),
     }
 }
-fn open_object(c: &mut Ctx, access: u32, attrs: Option<Attributes>, link: bool) -> Checked<u32> {
+fn open_object(c: &mut Ctx, access: u32, attrs: Option<Attributes>, kind: Kind) -> Checked<u32> {
+    let link = kind == Kind::Link;
     let Some(attrs) = attrs else {
         return status(STATUS_INVALID_PARAMETER);
     };
-    if attrs.flags & !0x1FF2 != 0 {
+    if attrs.flags & !kind.valid_flags() != 0 {
         return status(STATUS_INVALID_PARAMETER);
     }
     if let Some(qos) = attrs.qos {
@@ -187,6 +211,22 @@ fn open_object(c: &mut Ctx, access: u32, attrs: Option<Attributes>, link: bool) 
     } else {
         None
     };
+    // Section parsing follows an empty symbolic-link root. The selected
+    // KnownDllPath targets use DOS grammar, which the object manager rejects.
+    if kind == Kind::Section
+        && units.is_empty()
+        && let Some(Object::SymbolicLink(l)) = c.p.objects.get(attrs.root)
+    {
+        if attrs.flags & 0x1000 != 0 {
+            return status(STATUS_REPARSE_POINT_ENCOUNTERED);
+        }
+        if l.target.first() != Some(&92) {
+            return status(STATUS_OBJECT_NAME_INVALID);
+        }
+        return Err(c
+            .unsupported("NT section symbolic-link root outside captured DOS-target profile")
+            .into());
+    }
     let root = if attrs.root == 0 || selected_link.is_some() {
         None
     } else {
@@ -213,6 +253,36 @@ fn open_object(c: &mut Ctx, access: u32, attrs: Option<Attributes>, link: bool) 
             .p
             .objects
             .open_symbolic_link(resource, attrs.flags & 2 != 0, grant)
+            .ok_or(Failure::Status(STATUS_INSUFFICIENT_RESOURCES));
+    }
+    if kind == Kind::Section {
+        let section = match c.p.object_namespace.lookup_section(
+            root,
+            &units,
+            attrs.flags,
+            c.arch() == WinArch::X86,
+        ) {
+            Ok(s) => s,
+            Err(LookupError::Status(s)) => return status(s),
+            Err(LookupError::Unselected) => {
+                return Err(c
+                    .unsupported("NT section outside selected installed image namespace")
+                    .into());
+            }
+        };
+        // OPENLINK rejection precedes authorization, while EXCLUSIVE rejection
+        // follows it. Directory/link ordering remains independently captured.
+        if attrs.flags & 0x100 != 0 {
+            return status(STATUS_INVALID_PARAMETER);
+        }
+        let grant = section.grant(access, false).map_err(Failure::Status)?;
+        if attrs.flags & 0x20 != 0 {
+            return status(STATUS_INVALID_PARAMETER);
+        }
+        return c
+            .p
+            .objects
+            .open_image_section(section, attrs.flags & 2 != 0, grant)
             .ok_or(Failure::Status(STATUS_INSUFFICIENT_RESOURCES));
     }
     let directory = match c.p.object_namespace.lookup(root, &units, attrs.flags) {
@@ -248,6 +318,7 @@ fn wow_redirect_probe(c: &mut Ctx, attrs: &Option<Attributes>) -> Checked<()> {
         let root_bytes = match c.p.objects.get(attrs.root) {
             Some(Object::Directory(d)) => d.path.len() * 2,
             Some(Object::SymbolicLink(l)) => l.path.len() * 2,
+            Some(Object::ImageSection(s)) => s.path.len() * 2,
             // Native pseudo process/thread objects have an empty queried name.
             None if attrs.root == c.arch().ptr(u64::MAX)
                 || attrs.root == c.arch().ptr(u64::MAX - 1) =>
@@ -297,7 +368,8 @@ fn wow_redirect_probe(c: &mut Ctx, attrs: &Option<Attributes>) -> Checked<()> {
         .unsupported("WoW64 system-path redirection outside selected NT directories")
         .into())
 }
-fn publish(c: &mut Ctx, out: u64, result: Checked<u32>) -> ApiResult {
+fn publish(c: &mut Ctx, out: u64, result: Checked<u32>, kind: Kind) -> ApiResult {
+    let caller_store = kind == Kind::Section && c.arch() == WinArch::X86;
     let (status, handle) = match result {
         Ok(h) => (0, Some(h)),
         Err(Failure::Status(s)) => (s, None),
@@ -313,23 +385,26 @@ fn publish(c: &mut Ctx, out: u64, result: Checked<u32>) -> ApiResult {
         if let Some(h) = handle {
             let _ = c.p.objects.close(u64::from(h));
         }
-        return finish(c, Err(fault.into()));
+        return finish_with(c, Err(fault.into()), caller_store);
     }
     if let Err(e) = c.write_ptr(out, handle.map_or(0, u64::from)) {
         if let Some(h) = handle {
             let _ = c.p.objects.close(u64::from(h));
         }
-        return finish(c, Err(e.into()));
+        return finish_with(c, Err(e.into()), caller_store);
     }
     Flow::ret(status.into())
 }
 pub(super) fn open(c: &mut Ctx) -> ApiResult {
-    open_selected(c, false)
+    open_selected(c, Kind::Directory)
 }
 pub(super) fn open_link(c: &mut Ctx) -> ApiResult {
-    open_selected(c, true)
+    open_selected(c, Kind::Link)
 }
-fn open_selected(c: &mut Ctx, link: bool) -> ApiResult {
+pub(super) fn open_section(c: &mut Ctx) -> ApiResult {
+    open_selected(c, Kind::Section)
+}
+fn open_selected(c: &mut Ctx, kind: Kind) -> ApiResult {
     let (out, access, address) = (c.ptr(0)?, c.u32(1)?, c.ptr(2)?);
     let wow = c.arch() == WinArch::X86;
     if !wow {
@@ -338,13 +413,13 @@ fn open_selected(c: &mut Ctx, link: bool) -> ApiResult {
             return finish(c, Err(e.into()));
         }
     }
-    let attrs = match capture(c, address, wow) {
+    let attrs = match capture(c, address, wow, kind) {
         Ok(a) => a,
         Err(e) => {
             if wow {
                 return finish(c, Err(e));
             }
-            return publish(c, out, Err(e));
+            return publish(c, out, Err(e), kind);
         }
     };
     if wow {
@@ -357,6 +432,6 @@ fn open_selected(c: &mut Ctx, link: bool) -> ApiResult {
             return finish(c, status(STATUS_ACCESS_VIOLATION));
         }
     }
-    let result = open_object(c, access, attrs, link);
-    publish(c, out, result)
+    let result = open_object(c, access, attrs, kind);
+    publish(c, out, result, kind)
 }

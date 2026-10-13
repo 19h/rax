@@ -1,0 +1,47 @@
+[
+  {
+    "id": "A1",
+    "assumption": "Directory/link capture and publication ordering can be shared with sections when type-specific flags and case policy are explicit.",
+    "basis": "All 22584 service open rows pass, including independent section case policy, OBJ_KERNEL_HANDLE acceptance, flag/access ordering, empty link-root grammar, and WoW64 write-specific guard behavior.",
+    "dependent-result": "Common object open path",
+    "stress-test": "Guards, crossing, unaligned descriptors, malformed lengths, flags, and output faults",
+    "falsification-probe": "Replay all four raw producers against the service path",
+    "status": "confirmed for captured profiles"
+  },
+  {
+    "id": "A2",
+    "assumption": "WoW64 redirects a root object named \\KnownDlls32 to the selected \\KnownDllsChpe32 resource for section opens on this ARM64 host.",
+    "basis": "Canonical object-name controls in v3 matrix, roots 3/11/12/13 versus root 1",
+    "dependent-result": "Bounded CHPE selector",
+    "stress-test": "Reduced-grant and tagged handles, absolute/root-expanded paths, empty and wrong-type names",
+    "falsification-probe": "Canonical names and sizes differ from independent native rows",
+    "status": "confirmed for captured build and host"
+  },
+  {
+    "id": "A3",
+    "assumption": "Installed KnownDll section metadata, authorization ceiling and case policy can be retained as a bounded immutable selection after native handles close.",
+    "basis": "Windows installed native and x86 NTDLL leaves passed with typed identity, grant0xD, attributes0x01800000, positive extent, RET12 and cleanup; all93624 portable replay rows also pass. The16MiB check bounds captured string inputs; retained path storage is additional.",
+    "dependent-result": "Guest Section resource identity and access",
+    "stress-test": "Denied query/privilege, namespace mutation, case-control disagreement, non-image metadata, oversized extent",
+    "falsification-probe": "Native acquisition leaf or source identity verification fails",
+    "status": "confirmed for captured host/build and native/guest leaf profiles"
+  },
+  {
+    "id": "A4",
+    "assumption": "Section lifetime must be compared as exact section-handle and owned-input sets; global handle count is diagnostic.",
+    "basis": "Prior token helper falsified global-count atomicity; new matrices restore typed section sets",
+    "dependent-result": "Native producer cleanup evidence",
+    "stress-test": "Publication fault and alias/close slot reuse",
+    "falsification-probe": "Section birth or owned input remains after cleanup",
+    "status": "confirmed for current captures"
+  },
+  {
+    "id": "A5",
+    "assumption": "Existing five Windows lowering failures are independent of this section group.",
+    "basis": "All five final Windows lowering failure names exactly match the preceding thread-token group; 7163 passed,5 failed,2 ignored,0 filtered. All five section tests pass.",
+    "dependent-result": "Broad validation classification",
+    "stress-test": "New failure, changed failure identity, ignored or filtered tests",
+    "falsification-probe": "Compare complete final full-suite result with baseline",
+    "status": "confirmed for final suite"
+  }
+]

@@ -1,0 +1,243 @@
+{
+  "native-machine": 43620,
+  "captured-utc": "2026-10-13T08:01:04.220255+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "principal": "\"nt authority\\system\",\"S-1-5-18\"",
+  "python": "3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:57:41) [MSC v.1944 64 bit (ARM64)]",
+  "inspector-identity": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-section-producers.py",
+    "bytes": 2536,
+    "sha256": "62edd64ef8b48298b4fb639616b3be3e5631cb683441ed3ceb83fc3cb6ffa9dd"
+  },
+  "native-libraries": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+      "machine": 332,
+      "characteristics": 8450
+    }
+  ],
+  "producers": [
+    {
+      "family": "fresh",
+      "profile": "arm64",
+      "source": "native-section-open-fresh-v3.cpp",
+      "log": "native-section-open-fresh-v3-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-arm64\\native-section-open-fresh-v3.cpp",
+        "bytes": 13400,
+        "sha256": "3f8335b3dff66629ba7a7c88c0d1e32cb01ff36bfa00106933e5f9fe5988faeb"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-arm64\\native-section-open-fresh-v3-arm64.exe",
+        "bytes": 169984,
+        "sha256": "ab356447294e24c873bdfe0cf72ed90254507965c1ae61e813b568f4f68f330e",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-arm64\\native-section-open-fresh-v3-arm64.log",
+        "bytes": 8451,
+        "sha256": "d63e9ddacaefe59016b21a95c45b0e6742b79cb33f16dca552366c70ba879951"
+      }
+    },
+    {
+      "family": "probe",
+      "profile": "arm64",
+      "source": "native-section-open-probe-v3.cpp",
+      "log": "native-section-open-probe-v3-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-arm64\\native-section-open-probe-v3.cpp",
+        "bytes": 15567,
+        "sha256": "30cec3641130887db7e46f01ae31c592d838f48c8c3baaef8faaf08a4d364a48"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-arm64\\native-section-open-probe-v3-arm64.exe",
+        "bytes": 177664,
+        "sha256": "40dc79d5c1432abcf27179adc0773e4ab15e0f47f10fcc800b1ccb82721b6adb",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-arm64\\native-section-open-probe-v3-arm64.log",
+        "bytes": 1980966,
+        "sha256": "036b6e19209919d8b71395c895022b386acf42f397860a25aba59b6454be2d18"
+      }
+    },
+    {
+      "family": "probe",
+      "profile": "x64",
+      "source": "native-section-open-probe-v3.cpp",
+      "log": "native-section-open-probe-v3-x64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-x64\\native-section-open-probe-v3.cpp",
+        "bytes": 15567,
+        "sha256": "30cec3641130887db7e46f01ae31c592d838f48c8c3baaef8faaf08a4d364a48"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-x64\\native-section-open-probe-v3-x64.exe",
+        "bytes": 177152,
+        "sha256": "40254a37c974c2b8559b261a70bb7fbe50b0beaabb1acd8d9833a23c077f5f08",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-x64\\native-section-open-probe-v3-x64.log",
+        "bytes": 1981654,
+        "sha256": "150763ca9ba40e24265b168041a69d8ee82d2d92bb5381159e04c0bea087d89e"
+      }
+    },
+    {
+      "family": "probe",
+      "profile": "x86",
+      "source": "native-section-open-probe-v3.cpp",
+      "log": "native-section-open-probe-v3-x86.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-x86\\native-section-open-probe-v3.cpp",
+        "bytes": 15567,
+        "sha256": "30cec3641130887db7e46f01ae31c592d838f48c8c3baaef8faaf08a4d364a48"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-x86\\native-section-open-probe-v3-x86.exe",
+        "bytes": 151040,
+        "sha256": "b8686d6b88c5f85dba42b7462336f0b5e8f3e3d5a1db30621399aea468e4acd3",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-x86\\native-section-open-probe-v3-x86.log",
+        "bytes": 1939927,
+        "sha256": "af0182076497f14cc6d6932a844ae7baec343f996b1a689cc3698ce5ada1d348"
+      }
+    },
+    {
+      "family": "probe",
+      "profile": "x86-laa",
+      "source": "native-section-open-probe-v3.cpp",
+      "log": "native-section-open-probe-v3-x86-laa.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-x86-laa\\native-section-open-probe-v3.cpp",
+        "bytes": 15567,
+        "sha256": "30cec3641130887db7e46f01ae31c592d838f48c8c3baaef8faaf08a4d364a48"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-x86-laa\\native-section-open-probe-v3-x86-laa.exe",
+        "bytes": 151040,
+        "sha256": "0cd77295bcc42cd69e8213f6cb870198c4eec1d339439ddb71f0618b7afde6ba",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-x86-laa\\native-section-open-probe-v3-x86-laa.log",
+        "bytes": 1940371,
+        "sha256": "43c1be139d12092f66bb06fbf4d9137127047a93788de09517c42947cc2bca66"
+      }
+    },
+    {
+      "family": "duplicate",
+      "profile": "arm64",
+      "source": "native-section-open-duplicate-v2.cpp",
+      "log": "native-section-open-duplicate-v2-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-arm64\\native-section-open-duplicate-v2.cpp",
+        "bytes": 6323,
+        "sha256": "d6c34ea33a0d392b383631b0d8f83530d25b6452d4d3bfa4657119a28f05662d"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-arm64\\native-section-open-duplicate-v2-arm64.exe",
+        "bytes": 163328,
+        "sha256": "3fc3d96fd4b718c73f676c6c75df0b63d5dc26bc0bd4d7dabda92cfb44030f79",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-arm64\\native-section-open-duplicate-v2-arm64.log",
+        "bytes": 5642042,
+        "sha256": "4c81269f4979f61aec5e17421c5ed6763215fdc083061fb7386bdaadeb1fbe99"
+      }
+    },
+    {
+      "family": "duplicate",
+      "profile": "x64",
+      "source": "native-section-open-duplicate-v2.cpp",
+      "log": "native-section-open-duplicate-v2-x64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-x64\\native-section-open-duplicate-v2.cpp",
+        "bytes": 6323,
+        "sha256": "d6c34ea33a0d392b383631b0d8f83530d25b6452d4d3bfa4657119a28f05662d"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-x64\\native-section-open-duplicate-v2-x64.exe",
+        "bytes": 161280,
+        "sha256": "b39addbf9627b758a8e042fc06481063acea426e5777aca6b108d796217d3b26",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-x64\\native-section-open-duplicate-v2-x64.log",
+        "bytes": 5647184,
+        "sha256": "7832775a289883c85c8ca195be3177196844f8c6455f502b10a31f802761f87b"
+      }
+    },
+    {
+      "family": "duplicate",
+      "profile": "x86",
+      "source": "native-section-open-duplicate-v2.cpp",
+      "log": "native-section-open-duplicate-v2-x86.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-x86\\native-section-open-duplicate-v2.cpp",
+        "bytes": 6323,
+        "sha256": "d6c34ea33a0d392b383631b0d8f83530d25b6452d4d3bfa4657119a28f05662d"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-x86\\native-section-open-duplicate-v2-x86.exe",
+        "bytes": 131584,
+        "sha256": "2131917817ff5ca45c4c3a833c37cc9f568318c0a4e035e7c7b9ad7b2c9dcf31",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-x86\\native-section-open-duplicate-v2-x86.log",
+        "bytes": 5653439,
+        "sha256": "f88544ad0d8c9b8e0739eaf9355e9aa91d38cd7dc27cbae4a7f427c66564c2cf"
+      }
+    },
+    {
+      "family": "duplicate",
+      "profile": "x86-laa",
+      "source": "native-section-open-duplicate-v2.cpp",
+      "log": "native-section-open-duplicate-v2-x86-laa.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-x86-laa\\native-section-open-duplicate-v2.cpp",
+        "bytes": 6323,
+        "sha256": "d6c34ea33a0d392b383631b0d8f83530d25b6452d4d3bfa4657119a28f05662d"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-x86-laa\\native-section-open-duplicate-v2-x86-laa.exe",
+        "bytes": 131584,
+        "sha256": "179023aef82ee5bfb78580d7c9ea40ffe8273bdc48a18ef8b70c0f2295fdd0e6",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-open-x86-laa\\native-section-open-duplicate-v2-x86-laa.log",
+        "bytes": 5655199,
+        "sha256": "996cae969608bd7f794c0397c915ec5f762059aa6bd5769f81fd5d6408e6430f"
+      }
+    }
+  ]
+}

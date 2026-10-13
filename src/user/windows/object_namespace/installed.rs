@@ -2,6 +2,7 @@
 use super::*;
 use std::ffi::c_void;
 use std::ptr::null_mut;
+mod section;
 type Handle = *mut c_void;
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -176,6 +177,7 @@ fn enumerate(h: &Owned) -> io::Result<Vec<CapturedEntry>> {
         // contains that record, and both pointed-to strings are separately bounded.
         let info = unsafe { std::ptr::read(scratch.as_ptr().cast::<Info>()) };
         entries.push(CapturedEntry {
+            section: None,
             name: text(&scratch, info.name)?,
             kind: text(&scratch, info.kind)?,
             target: None,
@@ -331,7 +333,7 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>) -> io::Result<Namespace> {
         let units: Vec<_> = path.encode_utf16().collect();
         let h = match open(&units, null_mut(), 0x0200_0000, false, 0x40)? {
             Ok(h) => h,
-            Err(STATUS_OBJECT_NAME_NOT_FOUND) if path == PATHS[2] => continue,
+            Err(STATUS_OBJECT_NAME_NOT_FOUND) if path == PATHS[2] || path == PATHS[3] => continue,
             Err(s) => return Err(invalid(&format!("selected NT directory {path}: {s:#010x}"))),
         };
         let maximum_access = basic(&h)?;
@@ -371,6 +373,9 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>) -> io::Result<Namespace> {
         let force_case_insensitive = forced_case(&units, &h, &entries)?;
         if path != PATHS[0] {
             for entry in &mut entries {
+                if is(&entry.kind, "Section") {
+                    entry.section = Some(section::capture(&units, &entry.name)?);
+                }
                 if is(&entry.name, "KnownDllPath") && is(&entry.kind, "SymbolicLink") {
                     let (target, access) = target(&h, &entry.name)?;
                     entry.target = Some(target);
@@ -393,6 +398,23 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>) -> io::Result<Namespace> {
         });
     }
     let mut namespace = Namespace::selected(upcase, selected)?;
+    let arm64 = match section::arm64()? {
+        Some(value) => value,
+        None => match namespace.lookup(
+            None,
+            &"\\KnownDllsChpe32".encode_utf16().collect::<Vec<_>>(),
+            0x40,
+        ) {
+            Err(LookupError::Status(STATUS_OBJECT_NAME_NOT_FOUND)) => false,
+            _ => {
+                return Err(io::Error::new(
+                    io::ErrorKind::Unsupported,
+                    "selected CHPE namespace requires native host architecture detection",
+                ));
+            }
+        },
+    };
+    namespace.select_wow_section_root(arm64)?;
     namespace.select_wow_system_root(&system_root()?)?;
     Ok(namespace)
 }

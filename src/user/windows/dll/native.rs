@@ -218,6 +218,12 @@ pub(super) static EXPORTS: &[Export] = &[
         &[Ptr, I32, I32, Ptr],
         token::open_thread,
     ),
+    Export::func(
+        "NtOpenSection",
+        Stdcall,
+        &[Ptr, I32, Ptr],
+        directory::open_section,
+    ),
 ];
 fn status_error(c: &mut Ctx) -> ApiResult {
     Flow::ret(u64::from(super::super::nt::status_to_error(c.u32(0)?)))

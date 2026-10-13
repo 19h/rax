@@ -1,0 +1,12 @@
+[
+  {
+    "script": "check-evidence.py",
+    "exit-code": 1,
+    "rejection": "optimized verification forbidden"
+  },
+  {
+    "script": "check-negative-evidence.py",
+    "exit-code": 1,
+    "rejection": "optimized verification forbidden"
+  }
+]

@@ -1624,3 +1624,12 @@ archives, assumptions, plane maps and the unchanged ordinary observer live in
 [thread-token evidence](../../../docs/specifications/windows/native-thread-token-open/README.md).
 Other kernel/DLL builds/physical x64 and whole current-root/plugin/GUI/package
 validation remain unknown/excluded. Full ordinary guest exits remain unproven.
+
+### Installed image-section opening (2026-10-13)
+
+`NtOpenSection` now retains guest-owned typed image-section identity, captured
+authorization/case/metadata and measured native/WoW64 publication. Portable tests
+replay22584 open and71040 duplication rows; final installed, platform, owning and
+ordinary evidence is separate in
+[section-open evidence](../../../docs/specifications/windows/native-section-open/README.md).
+Guest section query/mapping and full ordinary exits remain unproven.

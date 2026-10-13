@@ -1,0 +1,371 @@
+{
+  "baseline-rax": "d0fc93b3d413f69dfc1e4c3fc7d5d58d094d0c7d",
+  "baseline-root": "ab613bda0a0700721ae98c57e09b35d90924ecd5",
+  "full-lib": {
+    "macos": [
+      [
+        7749,
+        0,
+        2
+      ]
+    ],
+    "linux": [
+      [
+        7743,
+        0,
+        2
+      ]
+    ],
+    "windows": [
+      [
+        7163,
+        5,
+        2
+      ]
+    ]
+  },
+  "focused": {
+    "macos": [
+      [
+        4,
+        0,
+        0
+      ]
+    ],
+    "linux": [
+      [
+        4,
+        0,
+        0
+      ]
+    ],
+    "windows": [
+      [
+        5,
+        0,
+        0
+      ]
+    ]
+  },
+  "capi": {
+    "macos": [
+      [
+        168,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "linux": [
+      [
+        168,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "windows": [
+      [
+        168,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "integration": {
+    "macos": [
+      [
+        544,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "linux": [
+      [
+        544,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "windows": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        0,
+        0
+      ]
+    ]
+  },
+  "windows-failures": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "windows-baseline-failures": "exactly unchanged",
+  "ignored": {
+    "macos": [
+      "test smir::lower::validation::tests::test_lift_lower_full_microkernel ... ignored",
+      "test smir::lower::validation::tests::test_roundtrip_exact_bytes_microkernel ... ignored"
+    ],
+    "linux": [
+      "test smir::lower::validation::tests::test_lift_lower_full_microkernel ... ignored",
+      "test smir::lower::validation::tests::test_roundtrip_exact_bytes_microkernel ... ignored"
+    ],
+    "windows": [
+      "test smir::lower::validation::tests::test_lift_lower_full_microkernel ... ignored",
+      "test smir::lower::validation::tests::test_roundtrip_exact_bytes_microkernel ... ignored"
+    ]
+  },
+  "all-targets": {
+    "macos": 0,
+    "linux": 0,
+    "windows": 0
+  },
+  "format": 0,
+  "native-producers": 9,
+  "open-replay-rows": 22584,
+  "duplicate-replay-rows": 71040,
+  "fresh-first-calls": 2,
+  "controlled-falsifications": 27,
+  "owning": {
+    "macos-ctests": 7,
+    "macos-protected-scans": 2,
+    "linux-cpp-consumers": 5,
+    "windows-cpp-consumers": 5,
+    "rust-source-units": 113,
+    "helpers": 2,
+    "matching-current-cpp-consumers": 9,
+    "core-features": [],
+    "whole-current-root-plugin-GUI-packages": "excluded"
+  },
+  "ordinary": {
+    "before-turn": 145453,
+    "after-turn": 161784,
+    "delta-scheduler-calls": 16331,
+    "observer-frontier": "native NTDLL service NtMapViewOfSection (0x28) at 0x1800012a0 is not implemented",
+    "cpp-frontiers": [
+      "NtMapViewOfSection (0x28) at 0x1800012a0 is not implemented",
+      "NtMapViewOfSection (0x28) at 0x1800012a0 is not implemented",
+      "NtMapViewOfSection (0x28) at 0x1800012a0 is not implemented",
+      "NtTraceEvent (0x5e) at 0x180001620 is not implemented"
+    ],
+    "cpp-threads": [
+      [
+        {
+          "context_bytes": 912,
+          "context_format": "windows_context",
+          "flags": 1073741824,
+          "id": 8,
+          "pc": "0x1800012a4",
+          "registers": [
+            "0x60",
+            "0xffffffffffffffff",
+            "0x1104e00",
+            "0x0",
+            "0x0",
+            "0x0",
+            "0x1104d78",
+            "0x1",
+            "0x0",
+            "0x80",
+            "0x0",
+            "0x0",
+            "0x8020",
+            "0x18035ef4f",
+            "0x1800fc1ac",
+            "0xa",
+            "0xa8397b1dcdaf",
+            "0xa8397b1dcdaf",
+            "0x7ffdd000",
+            "0x1104dd0",
+            "0x800000",
+            "0x60",
+            "0x1104cd0",
+            "0x7ffdd000",
+            "0x0",
+            "0x1104cd0",
+            "0xabe600",
+            "0xabe750",
+            "0xabe9d0",
+            "0xabe0f0",
+            "0x1800e877c"
+          ],
+          "sp": "0xabe0e0",
+          "state": "ready",
+          "suspend_count": 0,
+          "teb": "0x7ffdd000"
+        }
+      ],
+      [
+        {
+          "context_bytes": 912,
+          "context_format": "windows_context",
+          "flags": 1073741824,
+          "id": 8,
+          "pc": "0x1800012a4",
+          "registers": [
+            "0x60",
+            "0xffffffffffffffff",
+            "0x1104e00",
+            "0x0",
+            "0x0",
+            "0x0",
+            "0x1104d78",
+            "0x1",
+            "0x0",
+            "0x80",
+            "0x0",
+            "0x0",
+            "0x8020",
+            "0x18035ef4f",
+            "0x1800fc1ac",
+            "0xa",
+            "0xa8397b1dcdaf",
+            "0xa8397b1dcdaf",
+            "0x7ffdd000",
+            "0x1104dd0",
+            "0x800000",
+            "0x60",
+            "0x1104cd0",
+            "0x7ffdd000",
+            "0x0",
+            "0x1104cd0",
+            "0xc0e600",
+            "0xc0e750",
+            "0xc0e9d0",
+            "0xc0e0f0",
+            "0x1800e877c"
+          ],
+          "sp": "0xc0e0e0",
+          "state": "ready",
+          "suspend_count": 0,
+          "teb": "0x7ffdd000"
+        }
+      ],
+      [
+        {
+          "context_bytes": 912,
+          "context_format": "windows_context",
+          "flags": 1073741824,
+          "id": 8,
+          "pc": "0x1800012a4",
+          "registers": [
+            "0x60",
+            "0xffffffffffffffff",
+            "0x1104e00",
+            "0x0",
+            "0x0",
+            "0x0",
+            "0x1104d78",
+            "0x1",
+            "0x0",
+            "0x80",
+            "0x0",
+            "0x0",
+            "0x8020",
+            "0x18035ef4f",
+            "0x1800fc1ac",
+            "0xa",
+            "0xa8397b1dcdaf",
+            "0xa8397b1dcdaf",
+            "0x7ffdd000",
+            "0x1104dd0",
+            "0x800000",
+            "0x60",
+            "0x1104cd0",
+            "0x7ffdd000",
+            "0x0",
+            "0x1104cd0",
+            "0xcee600",
+            "0xcee750",
+            "0xcee9d0",
+            "0xcee0f0",
+            "0x1800e877c"
+          ],
+          "sp": "0xcee0e0",
+          "state": "ready",
+          "suspend_count": 0,
+          "teb": "0x7ffdd000"
+        }
+      ],
+      [
+        {
+          "context_bytes": 912,
+          "context_format": "windows_context",
+          "flags": 2147483648,
+          "id": 8,
+          "pc": "0x180001624",
+          "registers": [
+            "0x1803464f0",
+            "0x700",
+            "0x78",
+            "0x1bdf9b0",
+            "0x0",
+            "0x1bdf990",
+            "0xd000",
+            "0x7",
+            "0x7ffdd000",
+            "0x145",
+            "0x2104cd0",
+            "0xe",
+            "0x0",
+            "0x18035f3b9",
+            "0x1800fc1ac",
+            "0xd",
+            "0x18030de00",
+            "0xffff57c686a02c81",
+            "0x7ffdd000",
+            "0x2104408",
+            "0x180346410",
+            "0x2104400",
+            "0x2104ca0",
+            "0x1803c8b34",
+            "0x180000000",
+            "0xc000007b",
+            "0x1bdfc30",
+            "0x1",
+            "0x0",
+            "0x1bdfa40",
+            "0x1800a6500"
+          ],
+          "sp": "0x1bdf9b0",
+          "state": "ready",
+          "suspend_count": 0,
+          "teb": "0x7ffdd000"
+        }
+      ]
+    ],
+    "all-four-Internal": true,
+    "guest-exits": 0
+  },
+  "full-same-host-goal": "active and incomplete"
+}

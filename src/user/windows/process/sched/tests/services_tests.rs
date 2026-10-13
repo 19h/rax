@@ -7,6 +7,9 @@ mod process_query_tests;
 #[path = "services_tests/scheduler_shared_tests.rs"]
 mod scheduler_shared_tests;
 
+#[path = "services_tests/section_open_tests.rs"]
+mod section_open_tests;
+
 #[path = "services_tests/thread_token_tests.rs"]
 mod thread_token_tests;
 

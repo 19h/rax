@@ -1,0 +1,51 @@
+[
+  {
+    "file": "phnt-ntmmapi.h",
+    "url": "https://raw.githubusercontent.com/winsiderss/phnt/master/ntmmapi.h",
+    "retrieved-utc": "2026-10-13T06:50:05.903376+00:00",
+    "bytes": 92011,
+    "sha256": "8acd89a95f890f929da824cc841383770a4f21f312bb04d0d12f03cb3a00e079"
+  },
+  {
+    "file": "phnt-LICENSE",
+    "url": "https://raw.githubusercontent.com/winsiderss/phnt/master/LICENSE",
+    "retrieved-utc": "2026-10-13T06:50:06.364844+00:00",
+    "bytes": 1092,
+    "sha256": "ad2ab542c56c606e4c19d66a7f3cdcd3ef83beffb638e7c3893b22c7a6a6c0df"
+  },
+  {
+    "file": "microsoft-zwopensection.md",
+    "url": "https://raw.githubusercontent.com/MicrosoftDocs/windows-driver-docs-ddi/staging/wdk-ddi-src/content/wdm/nf-wdm-zwopensection.md",
+    "retrieved-utc": "2026-10-13T06:50:06.892232+00:00",
+    "bytes": 3946,
+    "sha256": "984b46a4335c6d8250c7d9caed3d230d8ba1f560d933b8d8d9bddf2a62b65518"
+  },
+  {
+    "file": "microsoft-ddi-LICENSE",
+    "url": "https://raw.githubusercontent.com/MicrosoftDocs/windows-driver-docs-ddi/staging/LICENSE",
+    "retrieved-utc": "2026-10-13T06:50:07.244468+00:00",
+    "bytes": 18650,
+    "sha256": "7183ef9749eb9b75e710a81a4c812a9405cc184f087500581a973e5929ac3f5e"
+  },
+  {
+    "file": "microsoft-getnativesysteminfo.md",
+    "url": "https://raw.githubusercontent.com/MicrosoftDocs/sdk-api/docs/sdk-api-src/content/sysinfoapi/nf-sysinfoapi-getnativesysteminfo.md",
+    "retrieved-utc": "2026-10-13T07:47:43.076944+00:00",
+    "bytes": 3597,
+    "sha256": "5f5a3a194cca5c7564666feb6fa4e8af5c6efeaa455ec1964187173b9c2fb9bc"
+  },
+  {
+    "file": "microsoft-iswow64process2.md",
+    "url": "https://raw.githubusercontent.com/MicrosoftDocs/sdk-api/docs/sdk-api-src/content/wow64apiset/nf-wow64apiset-iswow64process2.md",
+    "retrieved-utc": "2026-10-13T07:47:43.602832+00:00",
+    "bytes": 3664,
+    "sha256": "ce20359ff8b9c25cb4241955b2e896ad273959aee932d0bb8882e39e9b090037"
+  },
+  {
+    "file": "microsoft-sdk-LICENSE",
+    "url": "https://raw.githubusercontent.com/MicrosoftDocs/sdk-api/docs/LICENSE",
+    "retrieved-utc": "2026-10-13T07:47:44.174198+00:00",
+    "bytes": 18650,
+    "sha256": "7183ef9749eb9b75e710a81a4c812a9405cc184f087500581a973e5929ac3f5e"
+  }
+]

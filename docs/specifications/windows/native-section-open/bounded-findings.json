@@ -1,0 +1,84 @@
+[
+  {
+    "impact": "high",
+    "item": "Full ordinary same-host userland remains incomplete",
+    "evidence": [
+      "task baseline: all four ordinary runs reason5/Internal with zero guest exits",
+      "This group supplies NtOpenSection identity/authorization only; no guest NtQuerySection or image mapping/backing implementation",
+      "Final ordinary observer145453->161784(+16331), then NtMapViewOfSection0x28; all four ordinary outcomes remain reason5/Internal."
+    ],
+    "blocks-section-group": false,
+    "blocks-overall-goal": true,
+    "disposition": "Continue from the actual final ordinary frontier; do not mark the full goal complete."
+  },
+  {
+    "impact": "medium",
+    "item": "Native capture scope is one ARM64 kernel/build/subject",
+    "evidence": [
+      "native-section-producer-identities.json: IMAGE_MACHINE_ARM64, Windows29683, S-1-5-18",
+      "Four executable profiles include compatibility execution, not physical x64 kernels"
+    ],
+    "blocks-section-group": false,
+    "disposition": "Parameterize acquired grants/case/metadata; other native builds, subjects and physical x64 remain unknown."
+  },
+  {
+    "impact": "medium",
+    "item": "Whole current root, plugin, GUI and packages are excluded from frozen owning validation",
+    "evidence": [
+      "section-owning-root-scope.json records frozen Unix and Windows embeddings and current matching C++ consumers",
+      "Concurrent cluster commits/dirty work are outside this task"
+    ],
+    "blocks-section-group": false,
+    "disposition": "Keep scoped shipping archive/consumer proof separate from current whole-root proof; preserve all concurrent changes."
+  },
+  {
+    "impact": "medium",
+    "item": "Five preceding Windows lowering failures",
+    "evidence": [
+      "Preceding native-thread-token-open full log has exactly four BZHI and one FP16 failure",
+      "validation-summary.json verifies exact preceding failure identities and zero new failures"
+    ],
+    "blocks-section-group": false,
+    "disposition": "Require no new failure or changed failure identity; record actual counts and ignored tests."
+  },
+  {
+    "impact": "medium",
+    "item": "WoW64 ancillary denied-query returned-length underflow",
+    "evidence": [
+      "probe-v3 x86/x86-laa captures record 0xFFFFFFF8 for denied NtQuerySection with zero basic metadata"
+    ],
+    "blocks-section-group": false,
+    "disposition": "Preserve captured diagnostic in the checker; no guest query implementation is inferred."
+  },
+  {
+    "impact": "medium",
+    "item": "Existing native-system-info comment omits the ARM64 emulation exception",
+    "evidence": [
+      "src/user/windows/arch.rs:104",
+      "Microsoft GetNativeSystemInfo documentation: emulated x86/x64 on ARM64 can report the emulated architecture"
+    ],
+    "blocks-section-group": false,
+    "disposition": "Section CHPE selection uses dynamically resolved IsWow64Process2. Adjacent architecture policy/comment is unchanged."
+  },
+  {
+    "impact": "low",
+    "item": "Existing engineering records exceed preferred size limits",
+    "evidence": [
+      "src/user/windows/native-runtime.md exceeds1500 lines before this group",
+      "Assist native-process-emulation.md already exceeds hard size thresholds"
+    ],
+    "blocks-section-group": false,
+    "disposition": "Add only a short factual record and focused corpus link; no unrelated document restructuring."
+  },
+  {
+    "impact": "medium",
+    "item": "Pre-existing compiler/loader warnings are outside this group",
+    "evidence": [
+      "Windows partial focused build: vendor/vm-memory/src/mmap/windows.rs:22 uses unsupported stdcall ABI for ARM64, future-incompatibility warning",
+      "macos-owning-build.log: frozen owning target11.0 links installed IDA libraries built for12.0/15.0",
+      "assist-native-section-owned-final-shipping.log: frozen embedding src/claude_process/windows.rs:13 has unused import self"
+    ],
+    "blocks-section-group": false,
+    "disposition": "Record warnings independently from passing native-host checks; no dependency or package deployment-floor changes."
+  }
+]

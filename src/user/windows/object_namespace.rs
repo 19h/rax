@@ -5,7 +5,10 @@ use super::nt::status::*;
 use std::collections::BTreeMap;
 use std::io;
 use std::sync::Arc;
-pub(crate) const PATHS: [&str; 3] = ["\\", "\\KnownDlls", "\\KnownDlls32"];
+pub(crate) const PATHS: [&str; 4] = ["\\", "\\KnownDlls", "\\KnownDlls32", "\\KnownDllsChpe32"];
+mod section;
+pub(crate) use section::CapturedSection;
+pub use section::ImageSection;
 pub(crate) const MAX_ENTRIES: usize = 8192;
 const MAX_UNITS: usize = 32766;
 const MAX_TOTAL_BYTES: usize = 16 << 20;
@@ -16,6 +19,7 @@ pub(crate) struct CapturedEntry {
     pub(crate) kind: Vec<u16>,
     pub(crate) target: Option<Vec<u16>>,
     pub(crate) link_access: Option<LinkAccess>,
+    pub(crate) section: Option<CapturedSection>,
 }
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct LinkAccess {
@@ -42,10 +46,12 @@ struct Entry {
     captured: CapturedEntry,
     child: Option<Arc<Directory>>,
     link: Option<Arc<SymbolicLink>>,
+    section: Option<Arc<ImageSection>>,
 }
 enum SelectedObject {
     Directory(Arc<Directory>),
     Link(Arc<SymbolicLink>),
+    Section(Arc<ImageSection>),
 }
 /// Guest-owned immutable directory metadata, independent of native HANDLEs.
 #[derive(Debug)]
@@ -61,6 +67,8 @@ pub struct Directory {
 pub(crate) struct Namespace {
     root: Option<Arc<Directory>>,
     pub(crate) wow_system_prefix: Vec<u16>,
+    section_case: Option<bool>,
+    wow_section_root: Option<Arc<Directory>>,
 }
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum LookupError {
@@ -86,6 +94,7 @@ impl Namespace {
             return Err(invalid("NT directory selection/table exceeds bounds"));
         }
         let mut dirs = BTreeMap::new();
+        let mut section_case = None;
         let (mut count, mut bytes) = (0usize, 0usize);
         for s in selected {
             if !PATHS.iter().any(|p| is(&s.path, p))
@@ -110,6 +119,8 @@ impl Namespace {
                         .as_ref()
                         .is_some_and(|t| t.len() > MAX_UNITS || t.contains(&0))
                     || e.target.is_some() && !is(&e.kind, "SymbolicLink")
+                    || e.section
+                        .is_some_and(|a| !is(&e.kind, "Section") || s.path.len() == 1 || !a.valid())
                     || e.link_access.is_some_and(|a| {
                         e.target.is_none()
                             || a.maximum_access & !0x000F_0001 != 0
@@ -134,6 +145,20 @@ impl Namespace {
                 if count > MAX_ENTRIES || bytes > MAX_TOTAL_BYTES {
                     return Err(invalid("NT directory aggregate exceeds bounds"));
                 }
+                let section = e.section.map(|access| {
+                    let mut path = s.path.clone();
+                    path.push(92);
+                    path.extend_from_slice(&e.name);
+                    ImageSection::selected(path, access)
+                });
+                if let Some(access) = e.section {
+                    if section_case
+                        .is_some_and(|previous| previous != access.force_case_insensitive)
+                    {
+                        return Err(invalid("selected section case policies disagree"));
+                    }
+                    section_case = Some(access.force_case_insensitive);
+                }
                 let link = e.link_access.map(|access| {
                     let mut path = s.path.clone();
                     if path.len() != 1 {
@@ -157,6 +182,7 @@ impl Namespace {
                             captured: e,
                             child: None,
                             link,
+                            section,
                         },
                     )
                     .is_some()
@@ -194,6 +220,8 @@ impl Namespace {
         Ok(Self {
             root: Some(Arc::new(root)),
             wow_system_prefix: Vec::new(),
+            section_case,
+            wow_section_root: None,
         })
     }
     pub(crate) fn select_wow_system_root(&mut self, root: &[u16]) -> io::Result<()> {
@@ -223,9 +251,9 @@ impl Namespace {
         name: &[u16],
         flags: u32,
     ) -> Result<Arc<Directory>, LookupError> {
-        match self.lookup_object(root, name, flags, false)? {
+        match self.lookup_object(root, name, flags, false, false)? {
             SelectedObject::Directory(d) => Ok(d),
-            SelectedObject::Link(_) => unreachable!("directory lookup"),
+            _ => unreachable!("directory lookup"),
         }
     }
     pub(crate) fn lookup_link(
@@ -234,9 +262,9 @@ impl Namespace {
         name: &[u16],
         flags: u32,
     ) -> Result<Arc<SymbolicLink>, LookupError> {
-        match self.lookup_object(root, name, flags, true)? {
+        match self.lookup_object(root, name, flags, true, false)? {
             SelectedObject::Link(l) => Ok(l),
-            SelectedObject::Directory(_) => unreachable!("link lookup"),
+            _ => unreachable!("link lookup"),
         }
     }
     fn lookup_object(
@@ -245,6 +273,7 @@ impl Namespace {
         name: &[u16],
         flags: u32,
         link: bool,
+        section: bool,
     ) -> Result<SelectedObject, LookupError> {
         let (mut dir, path) = if let Some(root) = root {
             if name.first() == Some(&(b'\\' as u16)) {
@@ -261,7 +290,7 @@ impl Namespace {
             )
         };
         if path.is_empty() {
-            return if link {
+            return if link || section {
                 Err(LookupError::Status(STATUS_OBJECT_TYPE_MISMATCH))
             } else {
                 Ok(SelectedObject::Directory(dir))
@@ -276,7 +305,12 @@ impl Namespace {
                 .entries
                 .get(&fold(&dir.upcase, part))
                 .filter(|e| {
-                    dir.force_case_insensitive || flags & 0x40 != 0 || e.captured.name == part
+                    (if section {
+                        self.section_case.unwrap_or(false)
+                    } else {
+                        dir.force_case_insensitive
+                    }) || flags & 0x40 != 0
+                        || e.captured.name == part
                 })
                 .ok_or(LookupError::Status(if parts.peek().is_some() {
                     STATUS_OBJECT_PATH_NOT_FOUND
@@ -284,7 +318,7 @@ impl Namespace {
                     STATUS_OBJECT_NAME_NOT_FOUND
                 }))?;
             if is(&entry.captured.kind, "Directory") {
-                if link && parts.peek().is_none() {
+                if (link || section) && parts.peek().is_none() {
                     return Err(LookupError::Status(STATUS_OBJECT_TYPE_MISMATCH));
                 }
                 dir = entry.child.as_ref().ok_or(LookupError::Unselected)?.clone();
@@ -311,6 +345,12 @@ impl Namespace {
                 } else {
                     LookupError::Unselected
                 });
+            } else if section && parts.peek().is_none() && is(&entry.captured.kind, "Section") {
+                return entry
+                    .section
+                    .clone()
+                    .map(SelectedObject::Section)
+                    .ok_or(LookupError::Unselected);
             } else {
                 return Err(LookupError::Status(STATUS_OBJECT_TYPE_MISMATCH));
             }

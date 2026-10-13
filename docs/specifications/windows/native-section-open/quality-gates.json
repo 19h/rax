@@ -1,0 +1,37 @@
+[
+  {
+    "gate": "QG1",
+    "status": "pass for section-open group",
+    "evidence": "No normative judgment required; technical implementation and evidence only."
+  },
+  {
+    "gate": "QG2",
+    "status": "pass for section-open group",
+    "evidence": "A1-A5 carry explicit dependent results, stress tests, falsification probes and final statuses."
+  },
+  {
+    "gate": "QG3",
+    "status": "pass for section-open group",
+    "evidence": "This semantic group closes the actual NtOpenSection startup boundary; full-process scope remains active and incomplete."
+  },
+  {
+    "gate": "QG4",
+    "status": "pass for section-open group",
+    "evidence": "93624=4*(5646+17760);16331=161784-145453; byte/UTF16/ABI layouts and bounded captured-input storage are explicit."
+  },
+  {
+    "gate": "QG5",
+    "status": "pass for section-open group",
+    "evidence": "All native/portable section cases and owning gates pass; exact preceding Windows failures/ignored tests remain explicitly classified, with no new contradiction or hidden mapping success."
+  },
+  {
+    "gate": "QG6",
+    "status": "pass for section-open group",
+    "evidence": "Actual source/executable/stdout/kernel/principal/DLL identities, downloaded primary sources and independent after-owning verification bind claims."
+  },
+  {
+    "gate": "QG7",
+    "status": "pass for section-open group",
+    "evidence": "All RAX/Assist planes and high/medium/low bounded findings have recorded disposition and scope limits."
+  }
+]

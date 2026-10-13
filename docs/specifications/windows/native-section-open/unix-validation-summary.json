@@ -1,0 +1,90 @@
+{
+  "macos": {
+    "full": [
+      [
+        7749,
+        0,
+        2
+      ]
+    ],
+    "focused": [
+      [
+        4,
+        0,
+        0
+      ]
+    ],
+    "capi": [
+      [
+        168,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "integration": [
+      [
+        544,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "ignored": [
+      "test smir::lower::validation::tests::test_lift_lower_full_microkernel ... ignored",
+      "test smir::lower::validation::tests::test_roundtrip_exact_bytes_microkernel ... ignored"
+    ]
+  },
+  "linux": {
+    "full": [
+      [
+        7743,
+        0,
+        2
+      ]
+    ],
+    "focused": [
+      [
+        4,
+        0,
+        0
+      ]
+    ],
+    "capi": [
+      [
+        168,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "integration": [
+      [
+        544,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "ignored": [
+      "test smir::lower::validation::tests::test_lift_lower_full_microkernel ... ignored",
+      "test smir::lower::validation::tests::test_roundtrip_exact_bytes_microkernel ... ignored"
+    ]
+  }
+}

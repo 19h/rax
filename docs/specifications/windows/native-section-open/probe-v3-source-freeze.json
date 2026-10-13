@@ -1,0 +1,6 @@
+{
+  "source": "native-section-open-probe-v3.cpp",
+  "bytes": 15567,
+  "sha256": "30cec3641130887db7e46f01ae31c592d838f48c8c3baaef8faaf08a4d364a48",
+  "expected-cases": 5646
+}

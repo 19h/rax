@@ -1,4 +1,16 @@
-## Current increment: absent thread-token opening (2026-10-13)
+## Current increment: installed image-section opening (2026-10-13)
+
+`NtOpenSection` appends a stable native export and returns typed guest image-section
+handles from the selected installed KnownDll namespace. Acquisition closes native
+handles and retains bounded authorization, case-policy, attributes and extent
+metadata. All 93624 captured open/duplication rows replay through shared service
+paths. WoW64 direct-root CHPE selection and write-specific guard copyback are
+measured separately from directory/link behavior. No guest section query, image
+mapping or complete ordinary guest exit is claimed. Final platform/owning gates,
+assumptions, identities and ordinary continuation are separately recorded in
+[section-open evidence](../../specifications/windows/native-section-open/README.md).
+
+## Previous increment: absent thread-token opening (2026-10-13)
 
 `NtOpenThreadToken` decodes all four ABI arguments, validates the thread handle,
 object type and either query grant0x40/0x800, then returns STATUS_NO_TOKEN0xC000007C

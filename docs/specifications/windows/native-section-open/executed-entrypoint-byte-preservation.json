@@ -1,0 +1,7 @@
+{
+  "path": "assist-native-section-owned.ps1",
+  "bytes": 6509,
+  "sha256": "1e830aa51010567d7be71dcaf89b883bb32a7c2ef7e967447558efb89e85a9a0",
+  "retained-source-detail": "Inherited executed driver has a trailing space on line2. Its byte-exact executed source is preserved rather than reformatted after capture.",
+  "whitespace-preflight": "This driver alone is excluded from git diff whitespace checking; remains included in red review. All runtime/other authored source paths pass normal whitespace checks."
+}

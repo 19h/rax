@@ -1,0 +1,113 @@
+{
+  "rejected": 27,
+  "cases": [
+    {
+      "mutation": "host-machine",
+      "rejection": "native host/subject identity"
+    },
+    {
+      "mutation": "principal",
+      "rejection": "native host/subject identity"
+    },
+    {
+      "mutation": "kernel",
+      "rejection": "captured kernel identity"
+    },
+    {
+      "mutation": "inspector-source",
+      "rejection": "actual inspector source identity"
+    },
+    {
+      "mutation": "native-library",
+      "rejection": "captured NTDLL identities"
+    },
+    {
+      "mutation": "producer-count",
+      "rejection": "producer count"
+    },
+    {
+      "mutation": "producer-profile",
+      "rejection": "complete producer profile partition"
+    },
+    {
+      "mutation": "source-identity",
+      "rejection": "frozen source identity"
+    },
+    {
+      "mutation": "source-byte-count",
+      "rejection": "source byte count"
+    },
+    {
+      "mutation": "executable-ABI",
+      "rejection": "actual executable ABI/LAA"
+    },
+    {
+      "mutation": "LAA",
+      "rejection": "actual executable ABI/LAA"
+    },
+    {
+      "mutation": "fresh-LR",
+      "rejection": "fresh true LR"
+    },
+    {
+      "mutation": "fresh-arguments",
+      "rejection": "fresh original arguments"
+    },
+    {
+      "mutation": "fresh-root-grant",
+      "rejection": "fresh original root grant"
+    },
+    {
+      "mutation": "fresh-section-grant",
+      "rejection": "fresh exact section grant"
+    },
+    {
+      "mutation": "fresh-service",
+      "rejection": "fresh original service entry"
+    },
+    {
+      "mutation": "fresh-completion",
+      "rejection": "fresh debugger completion"
+    },
+    {
+      "mutation": "probe-partition",
+      "rejection": "probe input partition"
+    },
+    {
+      "mutation": "probe-cleanup",
+      "rejection": "probe cleanup"
+    },
+    {
+      "mutation": "probe-birth",
+      "rejection": "probe birth/status"
+    },
+    {
+      "mutation": "probe-exception",
+      "rejection": "probe ABI/exception"
+    },
+    {
+      "mutation": "probe-query-denial",
+      "rejection": "probe query-right denial"
+    },
+    {
+      "mutation": "probe-image-metadata",
+      "rejection": "probe image basic metadata"
+    },
+    {
+      "mutation": "probe-typed-publication",
+      "rejection": "probe typed publication"
+    },
+    {
+      "mutation": "duplicate-partition",
+      "rejection": "duplicate input partition"
+    },
+    {
+      "mutation": "duplicate-cleanup",
+      "rejection": "duplicate cleanup"
+    },
+    {
+      "mutation": "duplicate-error",
+      "rejection": "duplicate successful publication"
+    }
+  ]
+}

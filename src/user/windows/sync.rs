@@ -419,6 +419,7 @@ fn signaled(p: &Proc, id: ObjId, tid: u32) -> bool {
         Some(Object::File(_) | Object::Console(_) | Object::Null | Object::Pipe { .. }) => true,
         Some(
             Object::Mapping { .. }
+            | Object::ImageSection(_)
             | Object::WorkerFactory { .. }
             | Object::EtwRegistration { .. }
             | Object::SchedulerSharedData { .. }

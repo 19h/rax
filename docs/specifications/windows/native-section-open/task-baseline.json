@@ -1,0 +1,34 @@
+{
+  "root": "ab613bda0a0700721ae98c57e09b35d90924ecd5",
+  "rax": "d0fc93b3d413f69dfc1e4c3fc7d5d58d094d0c7d",
+  "root-status": [
+    " M docs/beacon-control.md",
+    " M docs/cluster-implementation.md",
+    " M rust/assist-rs/src/cluster_beacon.rs",
+    " M rust/assist-rs/src/cluster_beacon/catalog.rs",
+    " M rust/assist-rs/src/cluster_beacon/catalog/databases.rs",
+    " M rust/assist-rs/src/cluster_beacon/config.rs",
+    " M rust/assist-rs/src/cluster_beacon/kubernetes/tls_tests.rs",
+    " M rust/assist-rs/src/cluster_beacon/protocol.rs",
+    " M test/cluster/target.cmake",
+    " M test/cluster_beacon_tests.cpp",
+    " M test/cluster_capability_cli_tests.py",
+    " M test/cluster_database_tests.inl",
+    " M test/cluster_kubernetes_tests.inl",
+    "?? rust/assist-rs/src/cluster_beacon/catalog/execution.rs",
+    "?? rust/assist-rs/src/cluster_beacon/execution.rs",
+    "?? rust/assist-rs/src/cluster_beacon/execution/tests.rs",
+    "?? test/cluster_ownership_tests.inl",
+    ""
+  ],
+  "rax-status": "",
+  "ordinary-frontier": {
+    "service": "NtOpenSection",
+    "number": "0x37",
+    "instruction-pc": "0x1800013b0",
+    "thread-pc": "0x1800013b4",
+    "desired-access": "0xD",
+    "previous-turn": 145453
+  },
+  "first-phase": "read-only source analysis and owned native debugger-child captures; no implementation paths selected yet"
+}

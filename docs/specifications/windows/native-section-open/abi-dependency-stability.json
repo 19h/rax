@@ -1,0 +1,26 @@
+[
+  {
+    "path": "capi/include/rax.h",
+    "bytes": 64599,
+    "sha256": "ff917c35319d210d1d51deadcaaf8d368f82adb6794d290bde9ce2367aa3136c",
+    "unchanged-from-baseline": true
+  },
+  {
+    "path": "capi/Cargo.toml",
+    "bytes": 2031,
+    "sha256": "1e7d85ba130339b55dbf27f6090a6d85303f434975955df743e2463b795a8ea1",
+    "unchanged-from-baseline": true
+  },
+  {
+    "path": "Cargo.toml",
+    "bytes": 9655,
+    "sha256": "825fdaa40450404826885a18e950175dbe162043d4abf89ec2bb977f9c745a08",
+    "unchanged-from-baseline": true
+  },
+  {
+    "path": "Cargo.lock",
+    "bytes": 21468,
+    "sha256": "db2eaeb38f09e819fdb6f01225b68870a12d0a80e8fcff646945c729ab034a4d",
+    "unchanged-from-baseline": true
+  }
+]

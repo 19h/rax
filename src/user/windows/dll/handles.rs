@@ -105,7 +105,7 @@ fn duplicate(c: &mut Ctx) -> ApiResult {
     }
     if matches!(
         c.p.objects.get(handle),
-        Some(Object::Directory(_) | Object::SymbolicLink(_))
+        Some(Object::Directory(_) | Object::SymbolicLink(_) | Object::ImageSection(_))
     ) {
         return duplicate_directory(c, handle, to, out, desired, inherit, options);
     }
@@ -333,6 +333,7 @@ fn duplicate_directory(
         match c.p.objects.obj(id) {
             Some(Object::Directory(d)) => d.grant(desired, true),
             Some(Object::SymbolicLink(l)) => l.grant(desired, true),
+            Some(Object::ImageSection(s)) => s.grant(desired, true),
             _ => unreachable!("selected namespace resource"),
         }
     };

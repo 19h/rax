@@ -1,0 +1,23 @@
+[
+  {
+    "family": "fresh-v1",
+    "exit-code": 21,
+    "reason": "NtQueryObject basic information was queried with16384B instead of exact56B; target section syscall was not executed.",
+    "positive-evidence": false
+  },
+  {
+    "family": "fresh-v2",
+    "exit-code": 0,
+    "reason": "MSVC C4473 exposed a missing printf variadic argument; supplied-length output used undefined behavior. Canonical capture must be rerun.",
+    "positive-evidence": false
+  },
+  {
+    "family": "duplicate-v1",
+    "source-bytes": 6345,
+    "source-sha256": "710013466383328ccc27065ab5422da72151766c038ef8299b289556d1e07799",
+    "compiler-error": "MSVC C3535",
+    "executed": false,
+    "reason": "Mixed signed and unsigned initializer-list elements failed type deduction. No native rows were produced. Canonical duplicate-v2 uses an explicitly typed array.",
+    "positive-evidence": false
+  }
+]

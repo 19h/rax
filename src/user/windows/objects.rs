@@ -216,6 +216,8 @@ pub enum Object {
     Key(std::sync::Arc<super::registry::Key>),
     /// A selected immutable NT object-manager directory, independent of files.
     Directory(std::sync::Arc<super::object_namespace::Directory>),
+    /// Selected installed image-section metadata, independent of native HANDLEs.
+    ImageSection(std::sync::Arc<super::object_namespace::ImageSection>),
     /// A selected immutable NT symbolic link, shared across guest handles.
     SymbolicLink(std::sync::Arc<super::object_namespace::SymbolicLink>),
     /// An object this implementation only needs to name (tokens,
@@ -235,7 +237,7 @@ impl Object {
             Object::Process { .. } => "Process",
             Object::Timer { .. } => "Timer",
             Object::IrTimer { .. } => "IRTimer",
-            Object::Mapping { .. } => "Section",
+            Object::Mapping { .. } | Object::ImageSection(_) => "Section",
             Object::Pipe { .. } => "File",
             Object::CompletionPort { .. } => "IoCompletion",
             Object::WaitCompletionPacket { .. } => "WaitCompletionPacket",
