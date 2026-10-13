@@ -12,6 +12,7 @@ mod io_completion;
 mod nls;
 mod object_create;
 mod process_query;
+mod process_set;
 mod query;
 mod registry;
 mod symbolic_link;
@@ -196,6 +197,12 @@ pub(super) static EXPORTS: &[Export] = &[
         Stdcall,
         &[Ptr, Ptr, I32, Ptr, Ptr, Ptr],
         virtual_memory::query,
+    ),
+    Export::func(
+        "NtSetInformationProcess",
+        Stdcall,
+        &[Ptr, I32, Ptr, I32],
+        process_set::information,
     ),
 ];
 fn status_error(c: &mut Ctx) -> ApiResult {

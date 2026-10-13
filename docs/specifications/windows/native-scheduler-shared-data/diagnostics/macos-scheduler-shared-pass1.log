@@ -1,0 +1,36 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+error[E0308]: mismatched types
+  --> src/user/windows/dll/native/process_set.rs:15:16
+   |
+15 |         && let Ok(region) = c.p.vm.query(fault.addr)
+   |                ^^^^^^^^^^   ------------------------ this expression has type `std::option::Option<windows::memory::RegionInfo>`
+   |                |
+   |                expected `Option<RegionInfo>`, found `Result<_, _>`
+   |
+   = note: expected enum `std::option::Option<windows::memory::RegionInfo>`
+              found enum `std::result::Result<_, _>`
+
+error[E0004]: non-exhaustive patterns: `Some(&windows::objects::Object::SchedulerSharedData { .. })` not covered
+   --> src/user/windows/sync.rs:406:11
+    |
+406 |     match p.objects.obj(id) {
+    |           ^^^^^^^^^^^^^^^^^ pattern `Some(&windows::objects::Object::SchedulerSharedData { .. })` not covered
+    |
+note: `std::option::Option<&windows::objects::Object>` defined here
+   --> /Users/int/.rustup/toolchains/1.95.0-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs:600:1
+    |
+600 | pub enum Option<T> {
+    | ^^^^^^^^^^^^^^^^^^
+...
+608 |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+    |     ---- not covered
+    = note: the matched value is of type `std::option::Option<&windows::objects::Object>`
+help: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern or an explicit pattern as shown
+    |
+429 ~         | None => false,
+430 ~         Some(&windows::objects::Object::SchedulerSharedData { .. }) => todo!(),
+    |
+
+Some errors have detailed explanations: E0004, E0308.
+For more information about an error, try `rustc --explain E0004`.
+error: could not compile `rax` (lib test) due to 2 previous errors

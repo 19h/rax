@@ -1,4 +1,32 @@
-## Current increment: native symbolic-link objects (2026-10-13)
+## Current increment: scheduler shared-data constructor (2026-10-13)
+
+NtSetInformationProcess class 112 creates a distinct guest-owned
+SchedulerSharedData resource, grant 0x1/flags 0, for the current process after
+PROCESS_SET_INFORMATION 0x200 validation. Caller contents are ignored. Native64
+requires exactly 8 B and probes before birth; WoW64 requires 4 B and can leave a
+hidden live handle when its final caller copy faults. Writable guards consume
+once; READONLY|GUARD denies without consuming. Numeric native range/alignment
+checks precede lengths; handle/rights checks precede touching output.
+Final close and process drain release the resource; generic aliases retain its
+identity. Slot/data operations and other process owners remain explicit
+unsupported boundaries, independent of the constructor. No guest input is
+forwarded to host NT. The PHNT query-only comment conflicts with the actual
+setter capture; captured build 29683 behavior owns this contract.
+
+All 16016 constructor rows, 204 owned births and two complete fresh original
+entry/true-LR captures bind four mature caller profiles. Two portable tests and
+three Windows tests pass, including actual installed ARM64/WoW64 leaves.
+The unchanged owning observer advances114140->115067:
+115067-114140=927 scheduler calls. Three ordinary programs now stop at
+NtSetInformationThread class 57/service 0xD/PC0x1800010D0; installed whoami.exe
+still stops at NtTraceEvent 0x5E. All four retain reason 5/internal failure;
+exit_code 0 is not a guest exit. Shared constructor and scoped owning consumers
+build on Windows/macOS/Linux; exact full counts, baseline failures and archive
+provenance are in the evidence record. Public Rust Object gains the new variant;
+C API 1.11.0, Assist ABI, feature defaults and dependency pins remain unchanged.
+See [scheduler-data evidence](../../specifications/windows/native-scheduler-shared-data/README.md).
+
+## Previous increment: native symbolic-link objects (2026-10-13)
 
 `NtOpenSymbolicLinkObject` and `NtQuerySymbolicLinkObject` use immutable,
 guest-owned `SymbolicLink` resources for captured KnownDllPath entries. Fixed

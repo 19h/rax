@@ -5,7 +5,7 @@ use crate::user::windows::{
     process::{WindowsConfig, WindowsProcess},
 };
 
-pub(super) fn invoke(
+pub(in super::super) fn invoke(
     p: &mut Proc,
     t: &mut Thread,
     module: usize,

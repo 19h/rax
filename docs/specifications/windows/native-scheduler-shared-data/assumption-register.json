@@ -1,0 +1,29 @@
+[
+  {
+    "id": "A1",
+    "assumption": "Private class112 name maps to current installed kernel/native DLL; the PHNT q-only comment does not own actual setter behavior.",
+    "basis": "PHNT enum position112; native Python setter returns a handle to typeSchedulerSharedData.",
+    "dependent-result": "Native setter dispatch and new object representation.",
+    "stress-test": "Actual four compiled caller profiles, fresh original entry and differing builds.",
+    "falsification-probe": "Compiled current/native fresh capture uses another service/class or returns a different resource type.",
+    "status": "confirmed for captured build and all four caller profiles; private comment conflict resolved by actual setter captures"
+  },
+  {
+    "id": "A2",
+    "assumption": "Constructor lifetime, publication and rights can be represented entirely in the guest object table without forwarding guest requests to the host.",
+    "basis": "Current APIs allocate local objects; raw native constructor values are capture evidence only.",
+    "dependent-result": "Guest-owned SchedulerSharedData handle, duplicate and close semantics.",
+    "stress-test": "Faulted output, guard/crossing spans, restricted process rights, hidden handles, repeated birth/close and process drain.",
+    "falsification-probe": "A captured constructor row disagrees on born resource type, grant, bytes, guard or exact restoration. Later slot/data services cannot be replaced by this constructor.",
+    "status": "confirmed for constructor resource/publication/lifetime only; broader slot/data services remain explicit unsupported boundaries"
+  },
+  {
+    "id": "A3",
+    "assumption": "Observed fault/conversion semantics are bounded to build29683.1000 and recorded DLL/PE identities.",
+    "basis": "Only current ARM64 native kernel and compatibility callers available.",
+    "dependent-result": "Native/WoW precedence and ABI mapping.",
+    "stress-test": "Physical x64 kernel and another installed DLL/kernel version.",
+    "falsification-probe": "Same declared inputs produce different status/output/guard/ownership results on another build.",
+    "status": "retained build boundary; physical x64 kernel and other builds remain unknown"
+  }
+]

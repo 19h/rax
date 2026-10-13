@@ -1,0 +1,16 @@
+[
+  {
+    "file": "phnt-ntpsapi.h",
+    "url": "https://raw.githubusercontent.com/winsiderss/phnt/master/ntpsapi.h",
+    "retrieved-utc": "2026-10-13 02:16:57 UTC",
+    "bytes": 180987,
+    "sha256": "3477b3fa901715c5ad139ae154f86d6c36f3415962731d6c0de0dd3c8417f4d8"
+  },
+  {
+    "file": "phnt-LICENSE",
+    "url": "https://raw.githubusercontent.com/winsiderss/phnt/master/LICENSE",
+    "retrieved-utc": "2026-10-13 02:16:57 UTC",
+    "bytes": 1092,
+    "sha256": "ad2ab542c56c606e4c19d66a7f3cdcd3ef83beffb638e7c3893b22c7a6a6c0df"
+  }
+]

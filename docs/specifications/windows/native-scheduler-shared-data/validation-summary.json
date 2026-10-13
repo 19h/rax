@@ -1,0 +1,177 @@
+{
+  "baseline-rax": "184f17e97a065d10d388d604402f4683fd35fb04",
+  "full-lib": {
+    "macos": [
+      [
+        7737,
+        0,
+        2
+      ]
+    ],
+    "linux": [
+      [
+        7731,
+        0,
+        2
+      ]
+    ],
+    "windows": [
+      [
+        7148,
+        5,
+        2
+      ]
+    ]
+  },
+  "windows-failures": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "windows-baseline-failures": "exactly unchanged",
+  "focused": {
+    "macos": [
+      2,
+      0,
+      0
+    ],
+    "linux": [
+      2,
+      0,
+      0
+    ],
+    "windows": [
+      3,
+      0,
+      0
+    ]
+  },
+  "capi": {
+    "macos": [
+      [
+        168,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "linux": [
+      [
+        168,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "windows": [
+      [
+        168,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "integration": {
+    "macos": [
+      [
+        544,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "linux": [
+      [
+        544,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "windows": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        0,
+        0
+      ]
+    ]
+  },
+  "archives": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\assist_rs.lib",
+      "bytes": 1126976278,
+      "sha256": "65804ba6aeef6f1816e691416870f0d5fe9e7100ca8e2e9dbf1a2781cf6014ca",
+      "members": 4673,
+      "structural-member-walk": "pass"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\librax-e6c413934cad3a8f.rlib",
+      "bytes": 739318028,
+      "sha256": "2cbbd544ef73bd9bcb74299694f4885d28cf7e02097542db4c7a2fc8f73a4b28",
+      "members": 260,
+      "structural-member-walk": "pass"
+    }
+  ],
+  "compiled-sources": 95,
+  "compiled-helpers": 2,
+  "core-features": [],
+  "observer": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-scheduler-shared-after-trace.rs",
+    "bytes": 11177,
+    "sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e",
+    "compiled-executable-path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-scheduler-shared-final-after-production-trace.exe",
+    "executable-bytes": 26160128,
+    "executable-sha256": "23951d850e6f8292391c7911a32456adbea7043f3ea41d976e7f51b320589e0e"
+  },
+  "ordinary": {
+    "before-turn": 114140,
+    "after-turn": 115067,
+    "delta-scheduler-calls": 927,
+    "programs": 4,
+    "guest-exits": 0,
+    "three-program-frontier": {
+      "service": "NtSetInformationThread",
+      "number": "0xD",
+      "class": 57,
+      "length-bytes": 24,
+      "instruction-pc": "0x1800010D0",
+      "stopped-thread-pc": "0x1800010D4"
+    },
+    "whoami-frontier": "NtTraceEvent 0x5E"
+  },
+  "full-current-root-plugin-gui-packages": "not claimed; scoped frozen embeddings only",
+  "format-check": 0,
+  "independent-replay-rows": 16016,
+  "native-owned-births": 204,
+  "fresh-complete-cases": 2,
+  "controlled-falsifications": 21,
+  "macos-owning-ctests": 7
+}

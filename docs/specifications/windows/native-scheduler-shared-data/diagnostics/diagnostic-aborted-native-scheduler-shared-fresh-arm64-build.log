@@ -1,0 +1,3 @@
+native-scheduler-shared-fresh.cpp
+native-scheduler-shared-fresh.cpp(234): error C2065: 'closed': undeclared identifier
+native-scheduler-shared-fresh.cpp(235): error C2065: 'closed': undeclared identifier

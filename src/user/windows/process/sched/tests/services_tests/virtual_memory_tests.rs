@@ -4,7 +4,7 @@ use crate::user::windows::nt::status::*;
 
 #[cfg(windows)]
 #[path = "virtual_memory_leaf_tests.rs"]
-mod installed;
+pub(super) mod installed;
 
 #[path = "working_set_tests.rs"]
 mod working_set;

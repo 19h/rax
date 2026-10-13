@@ -1,0 +1,358 @@
+{
+  "README.md": {
+    "bytes": 13049,
+    "sha256": "4f6280ab5804f4422679246e69e7f5755e9283f11c96a2a827ce5603ce7a6537"
+  },
+  "assist-native-scheduler-shared-owned-final-cpp.log": {
+    "bytes": 2946,
+    "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+  },
+  "assist-native-scheduler-shared-owned-final-shipping.log": {
+    "bytes": 1584,
+    "sha256": "73111c3589ce299ea8f496257f2d6625a71f119e66cb8367f9dbd4f1a58beaf6"
+  },
+  "assist-native-scheduler-shared-owned.ps1": {
+    "bytes": 6824,
+    "sha256": "061ec320ab3a86c324eea76a538a485d7123f856c909f51388d3e37c216153a0"
+  },
+  "assumption-register.json": {
+    "bytes": 2217,
+    "sha256": "f6ead409f3935717e39707357cbb1201b62a17325dfde76e5a5bdaed10001b26"
+  },
+  "baseline-behavior.json": {
+    "bytes": 697,
+    "sha256": "981111dd93885c391b235f343f33fe0c50723d911feb9d8076c40d338aa15a58"
+  },
+  "bounded-scope.json": {
+    "bytes": 2473,
+    "sha256": "cab3da87a0c218005b0aa4bbf05e873514b02dbd3f2ddf9b9f55fc5e81c8defd"
+  },
+  "change-surface-map.json": {
+    "bytes": 3222,
+    "sha256": "12584609d72e8aad674f2c29a3a60f5083c73f2ae03fd8b7d34025bcefcd7b2b"
+  },
+  "check-evidence.py": {
+    "bytes": 12199,
+    "sha256": "485d916805e916d8a97a8f4dac85bbb3aef09b979a6d810b8fb1abafe8f0f862"
+  },
+  "check-negative-evidence.py": {
+    "bytes": 7505,
+    "sha256": "78b081ac3e4539dae68e720641e6d759adacf69c0bfc2222532a09d465ae4326"
+  },
+  "checker-negatives.json": {
+    "bytes": 2602,
+    "sha256": "0e957619788919f01da0354c3da6068970f5a6289a71d7212e86ff655da119ad"
+  },
+  "diagnostics/aborted-fresh-native-scheduler-shared-fresh-arm64.ps1": {
+    "bytes": 1766,
+    "sha256": "90d959b3b3284eaa8046588ef96c2bdb5853fd2148d0ab2220f603f643e284d3"
+  },
+  "diagnostics/aborted-fresh-native-scheduler-shared-fresh.cpp": {
+    "bytes": 11372,
+    "sha256": "f2f464983697e56dcf4fb89fb55875107f7c94e48b0075db5cc1ca8e47cf5933"
+  },
+  "diagnostics/aborted-fresh-outcome.json": {
+    "bytes": 247,
+    "sha256": "f3499a6547f4a371b52444d50c6040b19279da76e0ed3e81c94ecbee72d57d14"
+  },
+  "diagnostics/diagnostic-aborted-native-scheduler-shared-fresh-arm64-build.log": {
+    "bytes": 207,
+    "sha256": "9d5fbb36466aadaf653baab0fd37c35b248e9084fcb64058d43f7fe518d77128"
+  },
+  "diagnostics/diagnostic-aborted-native-scheduler-shared-fresh.cpp": {
+    "bytes": 11372,
+    "sha256": "f2f464983697e56dcf4fb89fb55875107f7c94e48b0075db5cc1ca8e47cf5933"
+  },
+  "diagnostics/diagnostic-macos-scheduler-shared-test-compile.log": {
+    "bytes": 441,
+    "sha256": "cebc6c09e30e7718e7a08f963c878cf0d947593fbbab5bfb73a54c5f38809331"
+  },
+  "diagnostics/macos-scheduler-shared-pass1.log": {
+    "bytes": 1772,
+    "sha256": "1c8d49916715df2be8b87d47d95ab827b9a80c6f0180f3d33a11c2e30d04674c"
+  },
+  "diagnostics/macos-scheduler-shared-pass2.log": {
+    "bytes": 1764,
+    "sha256": "985e6ed76b98c7b8ef6e90aa283718cdc031dddf297693ecd29450b935ce9fa2"
+  },
+  "format-check.log": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "inspect-scheduler-shared-final-observer.py": {
+    "bytes": 821,
+    "sha256": "7b9b65aee4bfe0ecaa0084bdd4c1769081841a4d8cbf9381777803b500396b84"
+  },
+  "inspect-scheduler-shared-owning-archives.py": {
+    "bytes": 2204,
+    "sha256": "00c603d653b74c4f01817c41851b32cc95545f11ef30ffab6a6a25b355c2c95b"
+  },
+  "inspect-scheduler-shared-producers.py": {
+    "bytes": 2591,
+    "sha256": "0cab5c85d824c4a7d1f1b75d55f07e6a79cb3e7dd43b3d840e61560b2f9d527b"
+  },
+  "linux-all-targets.log": {
+    "bytes": 116,
+    "sha256": "8631ae122ad17d8f317ae20ffa6a5c305a1246556d9de2b085d5f8a67f13296b"
+  },
+  "linux-capi.log": {
+    "bytes": 12881,
+    "sha256": "9d5110242c18e09d47ede7b32c7c9955ba54246d7e70502f3d4c4d91405c5134"
+  },
+  "linux-focused.log": {
+    "bytes": 634,
+    "sha256": "f3cf0e8596382fa265f7145a55c9663856b075c41918f753853bdd84b8fbd858"
+  },
+  "linux-full.log": {
+    "bytes": 795855,
+    "sha256": "e9ca8d40f2e5f5d1a6ae6a69411bc2f1cb151e8b2de4ecf2c2b2ea4993fd878c"
+  },
+  "linux-gates.json": {
+    "bytes": 3741,
+    "sha256": "03caa2935a1a5d81e9044c85296051993bacc9b400d064024143cf9c7cc591be"
+  },
+  "linux-integration.log": {
+    "bytes": 35761,
+    "sha256": "854201fd6c94afb31d7aae40f03606628ef09fad59448988f35820278a944823"
+  },
+  "linux-owning-cpp.log": {
+    "bytes": 1623,
+    "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+  },
+  "linux-owning-gates.json": {
+    "bytes": 2360,
+    "sha256": "580fa7af6fb9805fbd6054f02d4d1641a23b65bbbdea1d8aa9eb26d1184d5f96"
+  },
+  "linux-owning-shipping.log": {
+    "bytes": 222,
+    "sha256": "8391e646f1541bd7113fc492c9300b11d701c76ac8b89a5daaf65e0092ff4fce"
+  },
+  "macos-all-targets.log": {
+    "bytes": 136,
+    "sha256": "af00aa9417f372fb6cf644c23ce48bfcc8f5aec5bd65f5108fb032371bc69e11"
+  },
+  "macos-capi.log": {
+    "bytes": 13013,
+    "sha256": "a5991eeb03fe07c35eaf75d08d1422238a4ece1f93d2f8a274c26559d66544bd"
+  },
+  "macos-focused.log": {
+    "bytes": 674,
+    "sha256": "b5064a70f28da77cad000bc5668211f5c0d2ef9d5db961c44013214b76112d3e"
+  },
+  "macos-full.log": {
+    "bytes": 796043,
+    "sha256": "3a8d2c1debecad7c9e74c9ffe9885602478de468727165b9de797b1aa69b84f2"
+  },
+  "macos-gates.json": {
+    "bytes": 1218,
+    "sha256": "f0c6bd1fad0a9618ccf1f9a5a593d2a5a921f72075b85c6932727716f0fee89f"
+  },
+  "macos-integration.log": {
+    "bytes": 35927,
+    "sha256": "39b65fb34d62254de382bef00c7ec82d335839a18b6589d8f1f5d11c6cce847c"
+  },
+  "macos-owning-build.log": {
+    "bytes": 1865,
+    "sha256": "02d3d92765932ab94bdb4598c96cfb242ad9bb62fc597c37e66bd55647a81c9f"
+  },
+  "macos-owning-commands.json": {
+    "bytes": 3149,
+    "sha256": "46548b6b0b7539fee8f588ea5afac9ac25db2eb1cf8917f399e2578cdf94978b"
+  },
+  "macos-owning-configure.log": {
+    "bytes": 13294,
+    "sha256": "4b74cf7438584bfcae2918ce1ef6cbb395106aec11ce321686e3ae9b0cf002ec"
+  },
+  "macos-owning-ctest.log": {
+    "bytes": 1273,
+    "sha256": "69ca7e87f77beb66384bcff81075f381492bc4e1be1b3463414b2ff57cd21574"
+  },
+  "macos-owning-gates.json": {
+    "bytes": 3344,
+    "sha256": "907f2dff64cc1fc512698d950b89f972982c42ad239fcc6a60f895f646d7c092"
+  },
+  "macos-owning-protected-assist-cli.log": {
+    "bytes": 42,
+    "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+  },
+  "macos-owning-protected-assist-mcp.log": {
+    "bytes": 42,
+    "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+  },
+  "native-scheduler-shared-create-arm64-build.log": {
+    "bytes": 36,
+    "sha256": "b23b9795a20f09d3e0223dad7f86de215cac882555ac9e61a6d3b48fb54c5330"
+  },
+  "native-scheduler-shared-create-arm64.log": {
+    "bytes": 1483008,
+    "sha256": "c3e35924b1be391570e83916b1d2471294ed4c85b76dead1df1a10ab7448ab89"
+  },
+  "native-scheduler-shared-create-outcomes.json": {
+    "bytes": 1147,
+    "sha256": "e3ba7b164908091aa4f3731deea9a1f3c085923c5c2d991e35673c291aa2a591"
+  },
+  "native-scheduler-shared-create-profiles.ps1": {
+    "bytes": 2521,
+    "sha256": "901dc8b562973ebad1186ca83b2f7a199820ec2bc8fcf896222ae464406007f3"
+  },
+  "native-scheduler-shared-create-x64-build.log": {
+    "bytes": 36,
+    "sha256": "b23b9795a20f09d3e0223dad7f86de215cac882555ac9e61a6d3b48fb54c5330"
+  },
+  "native-scheduler-shared-create-x64.log": {
+    "bytes": 1483024,
+    "sha256": "68337d06548d48427ca462ce00abca8fa44ad5779905dc3c26ccaeb741f4b1c3"
+  },
+  "native-scheduler-shared-create-x86-build.log": {
+    "bytes": 36,
+    "sha256": "b23b9795a20f09d3e0223dad7f86de215cac882555ac9e61a6d3b48fb54c5330"
+  },
+  "native-scheduler-shared-create-x86-laa-build.log": {
+    "bytes": 36,
+    "sha256": "b23b9795a20f09d3e0223dad7f86de215cac882555ac9e61a6d3b48fb54c5330"
+  },
+  "native-scheduler-shared-create-x86-laa.log": {
+    "bytes": 1484678,
+    "sha256": "4d58d5b9fa7c4dd3f69bff7e3c57c93c6adc03ffd3e35300ae4433fa495c7fb0"
+  },
+  "native-scheduler-shared-create-x86.log": {
+    "bytes": 1484734,
+    "sha256": "e41a2a1d501d51b0e08a0d38158bb6ccb2ce92a4b17a710767d02ead1f1858ca"
+  },
+  "native-scheduler-shared-create.cpp": {
+    "bytes": 7444,
+    "sha256": "49d117ca5df518465b494ded5ad2b63eef77b3fad17cb88047d7786db6bb560a"
+  },
+  "native-scheduler-shared-final-after-artifacts-stderr.log": {
+    "bytes": 72,
+    "sha256": "889e8fcb8f08ad6e83f6d1ad84ded1086ccdac8a9bbed689438e70eb6cbd4a54"
+  },
+  "native-scheduler-shared-final-after-artifacts.jsonl": {
+    "bytes": 130191,
+    "sha256": "947d10f1cef277799e52380ff1c373cca1e6803976eb4e1927931d371b62fa1c"
+  },
+  "native-scheduler-shared-final-after-ordinary-processes.log": {
+    "bytes": 7287,
+    "sha256": "63a4e7a9bc0e9a482a1a5a1722a14f3fbb781872f2953629ae42e9a4016be76b"
+  },
+  "native-scheduler-shared-final-after-production-trace-build.log": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "native-scheduler-shared-final-after-production-trace-output.log": {
+    "bytes": 46613,
+    "sha256": "95fe8a56dd0a4e54aaf80601a0ac8a81e2490262d8db047987cda1dd014c0429"
+  },
+  "native-scheduler-shared-final-all-targets.log": {
+    "bytes": 986,
+    "sha256": "2f58150bc209158756017f62690ca6e9998ac3d3e6d902eb88f3499c726f4a2e"
+  },
+  "native-scheduler-shared-final-capi.log": {
+    "bytes": 13837,
+    "sha256": "ead54aed11fea1366392a9cc6b63ab8fe245f9016043c6e05cc04d116bed34c8"
+  },
+  "native-scheduler-shared-final-focused.log": {
+    "bytes": 1742,
+    "sha256": "935ca6aa17ca90d62b7841dcddf41b9a4842bf3c00345f095453a460387643f8"
+  },
+  "native-scheduler-shared-final-full.log": {
+    "bytes": 753863,
+    "sha256": "d1d8838ca88cb696c43990a4577e903323106aa38219a1183bf3e687beac2af8"
+  },
+  "native-scheduler-shared-final-gates.json": {
+    "bytes": 1256,
+    "sha256": "48237672eb2eebbf2c5bb3b816d2ec1b70b28650ae54bd31ab1454cb3a33af6d"
+  },
+  "native-scheduler-shared-final-integration.log": {
+    "bytes": 1792,
+    "sha256": "6a923608875095b34b8b69fc141c8dbc8881e1e66ec675f314d10a4dfbed1a10"
+  },
+  "native-scheduler-shared-final-observer-identity.json": {
+    "bytes": 468,
+    "sha256": "803355feab6b6c0898ec90691e724ed902defae1ffa93054782fc27361cdf1fa"
+  },
+  "native-scheduler-shared-final-owning-archive-hashes.json": {
+    "bytes": 17186,
+    "sha256": "4e16d48361b31bc2bc9043ad5ed0e690589a60e92eee8da03851dac9ec4ba152"
+  },
+  "native-scheduler-shared-final-owning-source-verification.json": {
+    "bytes": 2810,
+    "sha256": "a34eac9abe10fd4ebd536ea897da44756a26ca2b8c69452a299c429f1fcd8802"
+  },
+  "native-scheduler-shared-fresh-v2-arm64-build.log": {
+    "bytes": 38,
+    "sha256": "d48bd7115fda6b939f32920124435c6efb520edeae95c4cb73a055ad2aa16274"
+  },
+  "native-scheduler-shared-fresh-v2-arm64-outcome.json": {
+    "bytes": 260,
+    "sha256": "58843ec2f22f026fa072848089c06d5bb0c074d5f431f395da04ed27ea46dd63"
+  },
+  "native-scheduler-shared-fresh-v2-arm64.log": {
+    "bytes": 2637,
+    "sha256": "726b0d90b35f8dc3022f2dd63102c1598d97a5cd97369dfdbf412f7f62ecda6e"
+  },
+  "native-scheduler-shared-fresh-v2-arm64.ps1": {
+    "bytes": 2049,
+    "sha256": "649650ad744ef756becc0c4dbcbd63a65ee94a4c93459d4e9dc444608df4e455"
+  },
+  "native-scheduler-shared-fresh-v2.cpp": {
+    "bytes": 11418,
+    "sha256": "bcdc1b0d7ee61a6430277bb93016d3f3a20001241b5cabd69f489d20886f4486"
+  },
+  "native-scheduler-shared-gates.ps1": {
+    "bytes": 1494,
+    "sha256": "461c988d155e3c30adf0679fea64dac92003fe033599e0cb5b7093f47ae840e2"
+  },
+  "native-scheduler-shared-producer-identities.json": {
+    "bytes": 6516,
+    "sha256": "b6ea5a6f7304e96dd42ef4090764754e027e17026164a7912c40ee085773ae7a"
+  },
+  "owning-linux-cpp-build.py": {
+    "bytes": 1522,
+    "sha256": "a0d9f75e831bd3585d3e009b94e8e3f2744b137e646c157c70a7ad7950373b56"
+  },
+  "references/phnt-LICENSE": {
+    "bytes": 1092,
+    "sha256": "ad2ab542c56c606e4c19d66a7f3cdcd3ef83beffb638e7c3893b22c7a6a6c0df"
+  },
+  "references/phnt-ntpsapi.h": {
+    "bytes": 180987,
+    "sha256": "3477b3fa901715c5ad139ae154f86d6c36f3415962731d6c0de0dd3c8417f4d8"
+  },
+  "references/sources.json": {
+    "bytes": 537,
+    "sha256": "57e7ae8be1bf3880220c28de6df3c41058e0bd306ac9319bfba53cf4e851b228"
+  },
+  "run-owning-linux.py": {
+    "bytes": 1690,
+    "sha256": "a78aff00efcc6ab81899a7e6a5a2ecf9081075d905a4faa1eb5ee93af36b569b"
+  },
+  "run-owning-macos.py": {
+    "bytes": 526,
+    "sha256": "fcdcb2a47418eac16a13d41cc89df4ab089d06b414bbf728708d63b2f1b99da1"
+  },
+  "run-portable-gates.py": {
+    "bytes": 1581,
+    "sha256": "dab14632401188c00adf21fd46d855ed8c301a6084835ede9ca9718958c55f8d"
+  },
+  "scheduler-shared-owned-cpp-build.py": {
+    "bytes": 1839,
+    "sha256": "9995e244e446791e41fc1d813aaf59db7ccb7b472c064785232f4e11f63d3608"
+  },
+  "scheduler-shared-owning-root-scope.json": {
+    "bytes": 11262,
+    "sha256": "4ef0e9d724c48ab728a2124c819a5493895c1e95278adcbe10b289978e55397d"
+  },
+  "scheduler-shared-owning-source-hashes.json": {
+    "bytes": 19357,
+    "sha256": "2f6a3dd883d482bbe4be16778c78878d8ccc909957b7b4062c81e4fcb5c72cbe"
+  },
+  "validation-summary.json": {
+    "bytes": 3667,
+    "sha256": "d68a99765a2d43e46e519065f52e27881cc802acd5d21f09ec6c29b288ca45fc"
+  },
+  "verify-scheduler-shared-owning-sources.py": {
+    "bytes": 1075,
+    "sha256": "cb2419603c70f35909e8697c7990b61b2e27fb776aa02e76d906faf22b03ea0a"
+  }
+}

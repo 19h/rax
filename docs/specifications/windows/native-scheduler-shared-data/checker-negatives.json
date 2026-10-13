@@ -1,0 +1,110 @@
+{
+  "positive": "pass",
+  "negative-controls": [
+    {
+      "control": "compiled-source",
+      "result": "rejected",
+      "reason": "actual compiled source binding"
+    },
+    {
+      "control": "pe-machine",
+      "result": "rejected",
+      "reason": "actual PE machine"
+    },
+    {
+      "control": "x86-laa",
+      "result": "rejected",
+      "reason": "actual PE LAA"
+    },
+    {
+      "control": "missing-producer",
+      "result": "rejected",
+      "reason": "independent producer inventory"
+    },
+    {
+      "control": "native-dll",
+      "result": "rejected",
+      "reason": "captured installed native DLL identities"
+    },
+    {
+      "control": "input",
+      "result": "rejected",
+      "reason": "independent input partition differs"
+    },
+    {
+      "control": "missing-row",
+      "result": "rejected",
+      "reason": "independent input partition cardinality"
+    },
+    {
+      "control": "status",
+      "result": "rejected",
+      "reason": "native constructor status precedence"
+    },
+    {
+      "control": "birth",
+      "result": "rejected",
+      "reason": "native constructor birth count"
+    },
+    {
+      "control": "grant",
+      "result": "rejected",
+      "reason": "native typed handle metadata"
+    },
+    {
+      "control": "restore",
+      "result": "rejected",
+      "reason": "native exact handle restoration"
+    },
+    {
+      "control": "guard",
+      "result": "rejected",
+      "reason": "native guard protection ordering"
+    },
+    {
+      "control": "bytes",
+      "result": "rejected",
+      "reason": "native exact constructor bytes"
+    },
+    {
+      "control": "fresh-entry",
+      "result": "rejected",
+      "reason": "fresh original-entry/true-LR cardinality"
+    },
+    {
+      "control": "fresh-svc",
+      "result": "rejected",
+      "reason": "fresh live MEM_IMAGE SVC"
+    },
+    {
+      "control": "fresh-class",
+      "result": "rejected",
+      "reason": "fresh startup constructor partition"
+    },
+    {
+      "control": "fresh-thread",
+      "result": "rejected",
+      "reason": "fresh thread/function/true-LR binding"
+    },
+    {
+      "control": "fresh-publication",
+      "result": "rejected",
+      "reason": "fresh actual handle publication"
+    },
+    {
+      "control": "fresh-grant",
+      "result": "rejected",
+      "reason": "fresh actual typed handle ownership"
+    },
+    {
+      "control": "fresh-lifetime",
+      "result": "rejected",
+      "reason": "fresh capture lifetime"
+    },
+    {
+      "control": "manifest",
+      "result": "rejected",
+      "reason": "complete evidence file inventory"
+    }
+  ]
+}

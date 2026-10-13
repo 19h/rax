@@ -1,0 +1,28 @@
+image case=0 entry=7FF8DE2E11D0 allocation=7FF8DE2E0000 type=1000000 bytes=810300D4C0035FD60000000000000000A10300D4C0035FD60000000000000000
+entry case=0 call=0 function=28 thread=7836 pc=7FF8DE2E11D4 lr=7FF8DE316B70 args=FFFFFFFFFFFFFFFF,35,80000FE580,10,
+return case=0 call=0 function=28 thread=7836 pc=7FF8DE316B74 status=00000000
+entry case=0 call=1 function=28 thread=7836 pc=7FF8DE2E11D4 lr=7FF8DE3ADFEC args=FFFFFFFFFFFFFFFF,70,80000FE8E0,8,
+bytes case=0 phase=output-before address=80000FE8E0 size=8 data=0000000000000000
+return case=0 call=1 function=28 thread=7836 pc=7FF8DE3ADFF0 status=00000000
+bytes case=0 phase=output-after address=80000FE8E0 size=8 data=2000000000000000
+owner case=0 handle=20 grant=00000001 type-match=1 duplicate-closed=1
+case=0 warmup=1 installed=1 done=1 calls=2 exit=77 handles-before=52 handles-after=57 exact-handle-set=0
+image case=1 entry=7FF8DE2E11D0 allocation=7FF8DE2E0000 type=1000000 bytes=810300D4C0035FD60000000000000000A10300D4C0035FD60000000000000000
+entry case=1 call=0 function=28 thread=9580 pc=7FF8DE2E11D4 lr=7FF8DE316B70 args=FFFFFFFFFFFFFFFF,35,ADBD3DE0F0,10,
+return case=1 call=0 function=28 thread=9580 pc=7FF8DE316B74 status=00000000
+entry case=1 call=1 function=28 thread=9580 pc=7FF8DE2E11D4 lr=7FF8DE3ADFEC args=FFFFFFFFFFFFFFFF,70,ADBD3DE450,8,
+bytes case=1 phase=output-before address=ADBD3DE450 size=8 data=0000000000000000
+return case=1 call=1 function=28 thread=9580 pc=7FF8DE3ADFF0 status=00000000
+bytes case=1 phase=output-after address=ADBD3DE450 size=8 data=6400000000000000
+owner case=1 handle=64 grant=00000001 type-match=1 duplicate-closed=1
+case=1 warmup=0 installed=1 done=1 calls=2 exit=77 handles-before=57 handles-after=57 exact-handle-set=1
+image case=2 entry=7FF8DE2E11D0 allocation=7FF8DE2E0000 type=1000000 bytes=810300D4C0035FD60000000000000000A10300D4C0035FD60000000000000000
+entry case=2 call=0 function=28 thread=6024 pc=7FF8DE2E11D4 lr=7FF8DE316B70 args=FFFFFFFFFFFFFFFF,35,E24B58E510,10,
+return case=2 call=0 function=28 thread=6024 pc=7FF8DE316B74 status=00000000
+entry case=2 call=1 function=28 thread=6024 pc=7FF8DE2E11D4 lr=7FF8DE3ADFEC args=FFFFFFFFFFFFFFFF,70,E24B58E870,8,
+bytes case=2 phase=output-before address=E24B58E870 size=8 data=0000000000000000
+return case=2 call=1 function=28 thread=6024 pc=7FF8DE3ADFF0 status=00000000
+bytes case=2 phase=output-after address=E24B58E870 size=8 data=6400000000000000
+owner case=2 handle=64 grant=00000001 type-match=1 duplicate-closed=1
+case=2 warmup=0 installed=1 done=1 calls=2 exit=77 handles-before=57 handles-after=57 exact-handle-set=1
+complete cases=2 warmup=1

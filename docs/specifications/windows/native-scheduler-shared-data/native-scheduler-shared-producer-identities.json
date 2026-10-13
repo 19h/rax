@@ -1,0 +1,154 @@
+{
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "principal": "\"nt authority\\system\",\"S-1-5-18\"",
+  "python": "3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:57:41) [MSC v.1944 64 bit (ARM64)]",
+  "inspector-identity": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-scheduler-shared-producers.py",
+    "bytes": 2591,
+    "sha256": "0cab5c85d824c4a7d1f1b75d55f07e6a79cb3e7dd43b3d840e61560b2f9d527b"
+  },
+  "native-libraries": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+      "machine": 332,
+      "characteristics": 8450
+    }
+  ],
+  "producers": [
+    {
+      "family": "create",
+      "profile": "arm64",
+      "source": "native-scheduler-shared-create.cpp",
+      "log": "native-scheduler-shared-create-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-shared-arm64\\native-scheduler-shared-create.cpp",
+        "bytes": 7444,
+        "sha256": "49d117ca5df518465b494ded5ad2b63eef77b3fad17cb88047d7786db6bb560a"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-shared-arm64\\native-scheduler-shared-create-arm64.exe",
+        "bytes": 161792,
+        "sha256": "53bcca10620b80752b3e39a6763057dad24e78a026453d4ca7a4238a00f05d92",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-shared-arm64\\native-scheduler-shared-create-arm64.log",
+        "bytes": 1483008,
+        "sha256": "c3e35924b1be391570e83916b1d2471294ed4c85b76dead1df1a10ab7448ab89"
+      },
+      "rows": 4004
+    },
+    {
+      "family": "create",
+      "profile": "x64",
+      "source": "native-scheduler-shared-create.cpp",
+      "log": "native-scheduler-shared-create-x64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-shared-x64\\native-scheduler-shared-create.cpp",
+        "bytes": 7444,
+        "sha256": "49d117ca5df518465b494ded5ad2b63eef77b3fad17cb88047d7786db6bb560a"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-shared-x64\\native-scheduler-shared-create-x64.exe",
+        "bytes": 159744,
+        "sha256": "ead52b8eda46bf970ccae2af98935161ef9f54b8eabd774610b2f277735ccc03",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-shared-x64\\native-scheduler-shared-create-x64.log",
+        "bytes": 1483024,
+        "sha256": "68337d06548d48427ca462ce00abca8fa44ad5779905dc3c26ccaeb741f4b1c3"
+      },
+      "rows": 4004
+    },
+    {
+      "family": "create",
+      "profile": "x86",
+      "source": "native-scheduler-shared-create.cpp",
+      "log": "native-scheduler-shared-create-x86.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-shared-x86\\native-scheduler-shared-create.cpp",
+        "bytes": 7444,
+        "sha256": "49d117ca5df518465b494ded5ad2b63eef77b3fad17cb88047d7786db6bb560a"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-shared-x86\\native-scheduler-shared-create-x86.exe",
+        "bytes": 138240,
+        "sha256": "9bfb5af33cf80f0d3a8108d7a26f7cfb5f1fc0af8212dba9bbf438e73300efe0",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-shared-x86\\native-scheduler-shared-create-x86.log",
+        "bytes": 1484734,
+        "sha256": "e41a2a1d501d51b0e08a0d38158bb6ccb2ce92a4b17a710767d02ead1f1858ca"
+      },
+      "rows": 4004
+    },
+    {
+      "family": "create",
+      "profile": "x86-laa",
+      "source": "native-scheduler-shared-create.cpp",
+      "log": "native-scheduler-shared-create-x86-laa.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-shared-x86-laa\\native-scheduler-shared-create.cpp",
+        "bytes": 7444,
+        "sha256": "49d117ca5df518465b494ded5ad2b63eef77b3fad17cb88047d7786db6bb560a"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-shared-x86-laa\\native-scheduler-shared-create-x86-laa.exe",
+        "bytes": 138240,
+        "sha256": "cecc17e59d0092b56ba523816e7294c2a6bcdcd78a5442ea690eee384a3a78e0",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-shared-x86-laa\\native-scheduler-shared-create-x86-laa.log",
+        "bytes": 1484678,
+        "sha256": "4d58d5b9fa7c4dd3f69bff7e3c57c93c6adc03ffd3e35300ae4433fa495c7fb0"
+      },
+      "rows": 4004
+    },
+    {
+      "family": "fresh-v2",
+      "profile": "arm64",
+      "source": "native-scheduler-shared-fresh-v2.cpp",
+      "log": "native-scheduler-shared-fresh-v2-arm64.log",
+      "source-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-shared-arm64\\native-scheduler-shared-fresh-v2.cpp",
+        "bytes": 11418,
+        "sha256": "bcdc1b0d7ee61a6430277bb93016d3f3a20001241b5cabd69f489d20886f4486"
+      },
+      "executable-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-shared-arm64\\native-scheduler-shared-fresh-v2-arm64.exe",
+        "bytes": 168448,
+        "sha256": "dba37f1514d9b2267de3c02c79fbba0b098d68b7717e06f07d6ed34d2a7f0cdd",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout-identity": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\scheduler-shared-arm64\\native-scheduler-shared-fresh-v2-arm64.log",
+        "bytes": 2637,
+        "sha256": "726b0d90b35f8dc3022f2dd63102c1598d97a5cd97369dfdbf412f7f62ecda6e"
+      },
+      "rows": 3
+    }
+  ]
+}

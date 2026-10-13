@@ -421,6 +421,7 @@ fn signaled(p: &Proc, id: ObjId, tid: u32) -> bool {
             Object::Mapping { .. }
             | Object::WorkerFactory { .. }
             | Object::EtwRegistration { .. }
+            | Object::SchedulerSharedData { .. }
             | Object::Key(_)
             | Object::Directory(_)
             | Object::SymbolicLink(_)

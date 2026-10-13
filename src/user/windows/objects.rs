@@ -201,6 +201,13 @@ pub enum Object {
         /// Once-captured provider traits; caller writes cannot alter this blob.
         traits: Option<Box<[u8]>>,
     },
+    /// A process-local scheduler-data owner, distinct from a mapped Section.
+    /// Slot/data binding is a separate service; constructor handles own this
+    /// identity until their final close or process object-table drain.
+    SchedulerSharedData {
+        /// The guest process owning the scheduler-data identity.
+        pid: u32,
+    },
     /// A private immutable runtime registry key shared by opened handles.
     Key(std::sync::Arc<super::registry::Key>),
     /// A selected immutable NT object-manager directory, independent of files.
@@ -230,6 +237,7 @@ impl Object {
             Object::WaitCompletionPacket { .. } => "WaitCompletionPacket",
             Object::WorkerFactory { .. } => "TpWorkerFactory",
             Object::EtwRegistration { .. } => "EtwRegistration",
+            Object::SchedulerSharedData { .. } => "SchedulerSharedData",
             Object::Key(_) => "Key",
             Object::Directory(_) => "Directory",
             Object::SymbolicLink(_) => "SymbolicLink",

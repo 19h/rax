@@ -1,0 +1,8 @@
+{
+  "compile-exit-code": 2,
+  "error": "C2065 closed undeclared at source lines234/235",
+  "native-rows": 0,
+  "fresh-complete-cases": 0,
+  "source": "native-scheduler-shared-fresh.cpp",
+  "superseded-by": "native-scheduler-shared-fresh-v2.cpp"
+}

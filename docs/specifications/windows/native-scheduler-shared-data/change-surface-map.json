@@ -1,0 +1,82 @@
+[
+  {
+    "plane": "Plugin lifecycle",
+    "status": "unaffected",
+    "evidence-or-reason": "No Assist lifecycle edits; RAX process constructor remains inside existing adapter calls."
+  },
+  {
+    "plane": "UI state",
+    "status": "unaffected",
+    "evidence-or-reason": "No widget, ownership, focus, theme or copy change."
+  },
+  {
+    "plane": "Conversation/lane",
+    "status": "unaffected",
+    "evidence-or-reason": "Existing process-tool result schema/diagnostics unchanged; C++ consumer checks retained."
+  },
+  {
+    "plane": "Agent backend",
+    "status": "unaffected",
+    "evidence-or-reason": "No native-provider or ACP request, cancellation or result contract change."
+  },
+  {
+    "plane": "Prompt/context",
+    "status": "unaffected",
+    "evidence-or-reason": "No prompt/context inputs or embedding changed; protected-text scans passed."
+  },
+  {
+    "plane": "Tool schema",
+    "status": "unaffected",
+    "evidence-or-reason": "No tool name/schema/metadata changes; current process factory hashes unchanged and manifest CTests passed."
+  },
+  {
+    "plane": "Permission/mutation",
+    "status": "unaffected",
+    "evidence-or-reason": "Guest-local object creation; no IDB mutation or host NT call from guest input."
+  },
+  {
+    "plane": "Main-thread dispatch",
+    "status": "unaffected",
+    "evidence-or-reason": "No IDA/Qt seam calls or changed scheduling paths."
+  },
+  {
+    "plane": "Mesh/MCP",
+    "status": "unaffected",
+    "evidence-or-reason": "No transport/routing/schema edits; scoped MCP build and manifest checks passed."
+  },
+  {
+    "plane": "Transport/crypto",
+    "status": "unaffected",
+    "evidence-or-reason": "No framing, owner authentication, cryptography or secret-handling change."
+  },
+  {
+    "plane": "Persistence",
+    "status": "unaffected",
+    "evidence-or-reason": "Resources are process-local object-table entries; no persisted schema/state changed."
+  },
+  {
+    "plane": "SDK/ABI",
+    "status": "affected",
+    "evidence-or-reason": "Public Rust Object gains SchedulerSharedData; exhaustive sync arm updated. Opaque C API1.11.0/layouts and Assist headers unchanged; ABI/consumer gates pass."
+  },
+  {
+    "plane": "Optional engines",
+    "status": "affected",
+    "evidence-or-reason": "Selected RAX Windows native-service boundary changes; existing native selection, defaults, Z3 and fallback contracts unchanged."
+  },
+  {
+    "plane": "Update/release",
+    "status": "unaffected",
+    "evidence-or-reason": "No version grammar, updater, publication metadata or package-layout change; RAX gitlink engineering record follows this semantic commit."
+  },
+  {
+    "plane": "Targets/platforms",
+    "status": "affected",
+    "evidence-or-reason": "Shared constructor compiles on macOS/Linux/Windows; all three replay exact native rows. Windows installed ARM64/WoW64 leaf test; CAPI/alltargets/integration and scoped owning products/consumers validated. Physical x64 kernel/other builds remain unknown."
+  },
+  {
+    "plane": "Tests/docs",
+    "status": "affected",
+    "evidence-or-reason": "Two portable and one Windows installed test; primary/native corpus, independent positive/21negative checker, two RAX owning records and two root engineering records."
+  }
+]

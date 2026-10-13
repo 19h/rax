@@ -1,0 +1,45 @@
+[
+  {
+    "impact": "high",
+    "finding": "Three ordinary programs next reach NtSetInformationThread class57/service0xD; installed whoami.exe reaches NtTraceEvent0x5E before guest exit.",
+    "evidence": "native-scheduler-shared-final-after-ordinary-processes.log and native-scheduler-shared-final-after-production-trace-output.log",
+    "blocks-constructor": false,
+    "blocks-full-goal": true,
+    "action": "Continue as separate measured semantic groups; do not return success for unimplemented services."
+  },
+  {
+    "impact": "medium",
+    "finding": "Five Windows BZHI/FP16 native lowering failures exactly match preceding published baseline.",
+    "evidence": "native-scheduler-shared-final-full.log; preceding native-image-extension-final-full.log",
+    "blocks-constructor": false,
+    "action": "Preserve failures and tests; no broad-suite all-pass claim."
+  },
+  {
+    "impact": "medium",
+    "finding": "Private constructor ordering on other kernel/DLL builds and physical x64 kernel is unknown.",
+    "evidence": "native-scheduler-shared-producer-identities.json",
+    "blocks-constructor": false,
+    "action": "Bound claims to actual build29683 and four recorded caller profiles."
+  },
+  {
+    "impact": "medium",
+    "finding": "Scheduler slot/data operations, cross-process ownership, native kernel reference counters and resource-specific duplicate ACL policy are not established by constructor captures.",
+    "evidence": "Native constructor captures and distinct SchedulerSharedData type; process_set.rs explicit unsupported other-process path",
+    "blocks-constructor": false,
+    "action": "Retain distinct resource ownership and explicit frontier; measure reached services separately."
+  },
+  {
+    "impact": "medium",
+    "finding": "Owning validation uses frozen Unix/Windows Assist embeddings and current RAX sources; concurrent root/plugin/GUI/package state is excluded.",
+    "evidence": "scheduler-shared-owning-root-scope.json and native-scheduler-shared-final-owning-source-verification.json",
+    "blocks-constructor": false,
+    "action": "Report scoped source/target proof only."
+  },
+  {
+    "impact": "low",
+    "finding": "native-runtime.md exceeds the approximately1500-line soft ceiling before this group, below the 2000-line hard ceiling.",
+    "evidence": "Baseline1541lines; final1568lines inspected",
+    "blocks-constructor": false,
+    "action": "Append concise owning contract; do not restructure unrelated history."
+  }
+]

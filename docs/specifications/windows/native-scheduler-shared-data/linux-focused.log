@@ -1,0 +1,10 @@
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 02s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 2 tests
+test user::windows::process::sched::tests::services_tests::scheduler_shared_tests::native_scheduler_shared_birth_alias_close_and_process_drain_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::scheduler_shared_tests::native_scheduler_shared_replays_all_16016_constructor_rows_and_owned_births ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 7731 filtered out; finished in 2.02s
+

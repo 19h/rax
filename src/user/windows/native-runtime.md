@@ -1539,3 +1539,30 @@ physical x64 kernel and whole current-root plugin/GUI/package validation remain
 explicit limits. The independent partition/provenance checker and all 17 controlled
 falsifications pass; reconciled assumptions, complete plane map and evidence are
 in [image-extension evidence](../../../docs/specifications/windows/native-image-extension/README.md).
+
+## Native scheduler shared-data constructor (2026-10-13)
+
+NtSetInformationProcess class 112 returns a guest-owned SchedulerSharedData
+handle with grant 1/flags 0 for the current process. Native64 validates nonzero
+output alignment/range, exact 8 B length, handle/type/SET_INFORMATION rights,
+then probes before birth. WoW64 uses exact 4 B length and kernel birth before
+caller copy; copy faults preserve the unreturned live process-owned handle.
+Writable reached guards consume once; read-only guards deny without consumption.
+Input bytes are ignored; final alias close/drain release resource identity.
+Slot/data operations and other process owners remain explicit unsupported
+boundaries; no guest requests reach host NT. Actual build 29683 setter evidence
+resolves PHNT's query-only comment without modifying the primary snapshot.
+
+All 16016 native constructor rows and 204 births replay; two complete fresh
+original-entry/true-LR cases restore native ownership. Two portable and three
+Windows focused tests pass, including installed ARM64/WoW64 ABI cleanup.
+Full macOS 7737/0/2, Linux 7731/0/2 and Windows 7148/5/2 outcomes retain the exact
+four BZHI/one FP16 Windows baseline failures. Scoped owning archives/consumers
+and actual 95 source hashes pass; native core features remain empty.
+The unchanged 11177 B observer advances114140->115067 (+927 scheduler calls).
+Three ordinary programs reach NtSetInformationThread class 57/service 0xD;
+whoami.exe retains NtTraceEvent 0x5E. All four stop before a proved guest exit.
+Physical x64-kernel, other builds and whole current-root plugin/GUI/package
+claims remain unknown or excluded. Assumptions, 21 controlled falsifications,
+complete plane map and exact evidence are in
+[scheduler-data evidence](../../../docs/specifications/windows/native-scheduler-shared-data/README.md).

@@ -1,0 +1,16 @@
+{
+  "rax-head": "184f17e97a065d10d388d604402f4683fd35fb04",
+  "owning-native-archive-corpus": "docs/specifications/windows/native-image-extension",
+  "evidence": [
+    "native-image-extension-final-after-ordinary-processes.log",
+    "native-image-extension-final-after-production-trace-output.log",
+    "native-image-extension-final-owning-archive-hashes.json"
+  ],
+  "observer-turn": 114140,
+  "service": "NtSetInformationProcess",
+  "service-number": "0x1C",
+  "pc": "0x1800011D0",
+  "ordinary-programs-at-this-frontier": 3,
+  "guest-exits": 0,
+  "diagnostic-unit-baseline": "first attempted new-test build fails E0308 signaled bool vs i32; this is not treated as a semantic runtime baseline"
+}
