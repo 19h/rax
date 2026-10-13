@@ -276,7 +276,7 @@ fn run_kvm(
     init: &Registers,
     scratch_init: &[u8; 64],
 ) -> Result<Option<FinalState>, String> {
-    use kvm_bindings::{kvm_segment, kvm_userspace_memory_region};
+    use kvm_bindings::{KVM_MAX_CPUID_ENTRIES, kvm_segment, kvm_userspace_memory_region};
     use kvm_ioctls::Kvm;
 
     let kvm = match Kvm::new() {
@@ -312,6 +312,16 @@ fn run_kvm(
         Ok(v) => v,
         Err(_) => return Ok(None),
     };
+    // The host's supported CPUID, as `differential` installs: without it
+    // KVM's guest XCR0 holds no SSE state and the XMM inputs set below are
+    // never loaded.
+    let supported_cpuid = match kvm.get_supported_cpuid(KVM_MAX_CPUID_ENTRIES) {
+        Ok(c) => c,
+        Err(_) => return Ok(None),
+    };
+    if vcpu.set_cpuid2(&supported_cpuid).is_err() {
+        return Ok(None);
+    }
 
     let our_sregs = base_sregs();
     let mut sregs = vcpu

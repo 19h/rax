@@ -100,6 +100,9 @@ const FLAG_MASK: u64 = flags::bits::CF
     | flags::bits::SF
     | flags::bits::OF;
 
+/// Prefix of the KVM backend error for an exit other than HLT or I/O.
+const KVM_ABNORMAL_EXIT: &str = "kvm abnormal exit: ";
+
 /// Status flags a shift or double shift by a non-zero count defines: AF is
 /// undefined (Intel SDM Vol. 2B SAL/SAR/SHL/SHR and SHLD/SHRD "Flags
 /// Affected").
@@ -267,6 +270,18 @@ fn run_interpreter_with_sregs(
     scratch_init: &[u8; 64],
     sregs: &SystemRegisters,
 ) -> Result<FinalState, String> {
+    run_interpreter_traced(code, init, scratch_init, sregs, None)
+}
+
+/// As `run_interpreter_with_sregs`, also recording the address of every
+/// instruction it executes in `trace`.
+fn run_interpreter_traced(
+    code: &[u8],
+    init: &Registers,
+    scratch_init: &[u8; 64],
+    sregs: &SystemRegisters,
+    mut trace: Option<&mut Vec<u64>>,
+) -> Result<FinalState, String> {
     let regions = vec![(GuestAddress(0), MEM_SIZE)];
     let mem =
         Arc::new(GuestMemoryMmap::<()>::from_ranges(&regions).map_err(|e| format!("mem: {e:?}"))?);
@@ -301,6 +316,9 @@ fn run_interpreter_with_sregs(
         iters += 1;
         if iters > MAX_ITERS {
             return Err(format!("interpreter exceeded {MAX_ITERS} iterations"));
+        }
+        if let Some(trace) = trace.as_deref_mut() {
+            trace.push(vcpu.get_regs().map_err(|e| format!("get_regs: {e:?}"))?.rip);
         }
         match vcpu.step().map_err(|e| format!("step: {e:?}"))? {
             Some(VcpuExit::Hlt) => break,
@@ -548,14 +566,7 @@ fn run_kvm_with_sregs(
         }
     }
     if let Some(exit) = abnormal {
-        // An unhandled exception ends in a shutdown with RIP still at the
-        // faulting instruction; attribute it to host capability where the
-        // instruction needs a feature the host lacks.
-        let rip = vcpu.get_regs().map_or(0, |r| r.rip);
-        if let Some(why) = host_caps::unsupported(&supported_cpuid, code, CODE_ADDR, rip) {
-            return Err(why);
-        }
-        return Err(format!("kvm abnormal exit: {exit} at rip={rip:#x}"));
+        return Err(format!("{KVM_ABNORMAL_EXIT}{exit}"));
     }
 
     let final_kregs = vcpu
@@ -766,9 +777,16 @@ fn run_both_with_sregs(
             eprintln!("[skip] /dev/kvm unavailable or undrivable; skipping differential case");
             return None;
         }
-        Err(e) if e.starts_with(host_caps::HOST_UNSUPPORTED) => {
-            eprintln!("[skip] {e}");
-            return None;
+        Err(e) if e.starts_with(KVM_ABNORMAL_EXIT) => {
+            // KVM resets the vCPU on a shutdown, so attribute it through
+            // the instructions the interpreter executes for the same case.
+            let mut executed = Vec::new();
+            let _ = run_interpreter_traced(code, &init, &scratch_init, sregs, Some(&mut executed));
+            if let Some(why) = host_caps::unsupported(code, CODE_ADDR, &executed) {
+                eprintln!("[skip] {why}");
+                return None;
+            }
+            panic!("KVM backend failure: {e}");
         }
         Err(e) => panic!("KVM backend failure: {e}"),
     };
@@ -3141,18 +3159,27 @@ fn cmovcc_all_conditions() {
 }
 
 #[test]
-fn cmovcc_false_memory_source_not_read() {
+fn cmovcc_false_memory_source_keeps_destination() {
+    // "CMOVcc loads data from its source operand into a temporary register
+    // unconditionally" (Intel SDM Vol. 2A CMOVcc), so the source is a mapped
+    // scratch qword; with the condition false RAX keeps its value. (A source
+    // in this harness's MMIO hole would be read as zeros by KVM and cannot
+    // show whether the load happened.)
     let mut r = regs();
     r.rax = 0x1122_3344_5566_7788;
-    r.rsi = MEM_SIZE as u64 + 0x1000;
+    r.rsi = DATA_ADDR;
+    let mut s = zero_scratch();
+    s[..8].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
 
-    check(
-        "cmovcc_false_memory_source_not_read",
+    check_mem(
+        "cmovcc_false_memory_source_keeps_destination",
         &with_hlt(vec![
             0x39, 0xC0, // cmp eax, eax -> ZF=1
             0x48, 0x0F, 0x45, 0x06, // cmovne rax, qword [rsi]
         ]),
         r,
+        s,
+        FLAG_MASK,
     );
 }
 

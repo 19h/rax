@@ -2,14 +2,13 @@
 //!
 //! KVM executes the guest natively, so an instruction the host CPU does not
 //! implement raises #UD and, with no IDT in the guest, ends in a triple-fault
-//! shutdown that says nothing about the interpreter. `unsupported` decodes
-//! the instruction at the faulting RIP and reports the case as skipped only
-//! when that instruction needs a feature the KVM-supported CPUID does not
-//! enumerate, or Intel-defined behavior that a non-Intel host implements
-//! differently (rax models the Intel SDM). Every other shutdown remains a
-//! failure.
-
-use kvm_bindings::CpuId;
+//! shutdown that says nothing about the interpreter (KVM resets the vCPU on
+//! shutdown, so the faulting RIP is not recoverable from KVM). `unsupported`
+//! takes the instruction addresses the interpreter executed for the same case
+//! and reports the case as skipped only when one of those instructions needs
+//! a feature the host CPU does not enumerate, or Intel-defined behavior that
+//! a non-Intel host implements differently (rax models the Intel SDM). Every
+//! other shutdown remains a failure.
 
 /// Marks a backend error string as "this host cannot run the case".
 pub(super) const HOST_UNSUPPORTED: &str = "host cannot run this case: ";
@@ -24,25 +23,41 @@ struct HostCpu {
 }
 
 impl HostCpu {
-    fn new(cpuid: &CpuId) -> Self {
-        let mut host = HostCpu {
+    /// The host's own CPUID; KVM's guest CPUID enumerates no feature the
+    /// host lacks.
+    #[cfg(target_arch = "x86_64")]
+    #[allow(unused_unsafe)] // `__cpuid_count` is safe on newer toolchains.
+    fn new() -> Self {
+        use core::arch::x86_64::__cpuid_count;
+        // SAFETY: CPUID is available on every x86-64 processor.
+        let leaf0 = unsafe { __cpuid_count(0, 0) };
+        // SAFETY: as above; leaf 7 is read only when leaf 0 enumerates it.
+        let (leaf7, leaf7_1) = unsafe {
+            if leaf0.eax >= 7 {
+                (__cpuid_count(7, 0), __cpuid_count(7, 1))
+            } else {
+                (__cpuid_count(0, 0), __cpuid_count(0, 0))
+            }
+        };
+        HostCpu {
+            // "GenuineIntel" in EBX, EDX, ECX.
+            intel: (leaf0.ebx, leaf0.edx, leaf0.ecx) == (0x756E_6547, 0x4965_6E69, 0x6C65_746E),
+            leaf7: if leaf0.eax >= 7 {
+                [leaf7.ebx, leaf7.ecx, leaf7.edx]
+            } else {
+                [0; 3]
+            },
+            leaf7_1_eax: if leaf0.eax >= 7 { leaf7_1.eax } else { 0 },
+        }
+    }
+
+    #[cfg(not(target_arch = "x86_64"))]
+    fn new() -> Self {
+        HostCpu {
             intel: false,
             leaf7: [0; 3],
             leaf7_1_eax: 0,
-        };
-        for entry in cpuid.as_slice() {
-            match (entry.function, entry.index) {
-                (0, _) => {
-                    // "GenuineIntel" in EBX, EDX, ECX.
-                    host.intel = (entry.ebx, entry.edx, entry.ecx)
-                        == (0x756E_6547, 0x4965_6E69, 0x6C65_746E);
-                }
-                (7, 0) => host.leaf7 = [entry.ebx, entry.ecx, entry.edx],
-                (7, 1) => host.leaf7_1_eax = entry.eax,
-                _ => {}
-            }
         }
-        host
     }
 
     fn ebx(&self, bit: u32) -> bool {
@@ -98,10 +113,17 @@ impl HostCpu {
     }
 }
 
-/// Why the host cannot execute the instruction at `rip` in `code` (loaded at
-/// `code_addr`), if the case's KVM shutdown is attributable to that.
-pub(super) fn unsupported(cpuid: &CpuId, code: &[u8], code_addr: u64, rip: u64) -> Option<String> {
-    let host = HostCpu::new(cpuid);
+/// Why the host cannot run a case whose interpreter run executed the
+/// instructions at `executed` in `code` (loaded at `code_addr`): the first
+/// such instruction that needs a feature the host lacks.
+pub(super) fn unsupported(code: &[u8], code_addr: u64, executed: &[u64]) -> Option<String> {
+    let host = HostCpu::new();
+    executed
+        .iter()
+        .find_map(|&rip| instruction_gap(&host, code, code_addr, rip))
+}
+
+fn instruction_gap(host: &HostCpu, code: &[u8], code_addr: u64, rip: u64) -> Option<String> {
     let insn = code.get(usize::try_from(rip.checked_sub(code_addr)?).ok()?..)?;
     let mut i = 0;
     let mut last_legacy = None;
@@ -157,12 +179,7 @@ pub(super) fn unsupported(cpuid: &CpuId, code: &[u8], code_addr: u64, rip: u64) 
 /// compare behavior the Intel SDM defines and other vendors implement
 /// differently. Prints a skip line naming `case` otherwise.
 pub(super) fn intel_host(case: &str) -> bool {
-    #[cfg(target_arch = "x86_64")]
-    let leaf0 = unsafe { core::arch::x86_64::__cpuid(0) };
-    #[cfg(target_arch = "x86_64")]
-    let intel = (leaf0.ebx, leaf0.edx, leaf0.ecx) == (0x756E_6547, 0x4965_6E69, 0x6C65_746E);
-    #[cfg(not(target_arch = "x86_64"))]
-    let intel = false;
+    let intel = HostCpu::new().intel;
     if !intel {
         eprintln!("[skip] {case}: Intel-specific behavior; the host CPU is not Intel");
     }
