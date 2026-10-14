@@ -1,0 +1,31 @@
+{
+  "command": [
+    "rustfmt",
+    "--edition",
+    "2024",
+    "--config",
+    "skip_children=true",
+    "--check",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/nls.rs",
+    "src/user/windows/dll/native/section_map.rs",
+    "src/user/windows/dll/native/section_map/geometry.rs",
+    "src/user/windows/dll/native/virtual_memory.rs",
+    "src/user/windows/memory.rs",
+    "src/user/windows/memory/section.rs",
+    "src/user/windows/memory/section_tests.rs",
+    "src/user/windows/nt.rs",
+    "src/user/windows/object_namespace.rs",
+    "src/user/windows/object_namespace/image.rs",
+    "src/user/windows/object_namespace/image_tests.rs",
+    "src/user/windows/object_namespace/installed.rs",
+    "src/user/windows/object_namespace/installed/image.rs",
+    "src/user/windows/object_namespace/installed/section.rs",
+    "src/user/windows/object_namespace/section.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/section_map_leaf_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/section_map_replay_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/section_map_tests.rs"
+  ],
+  "exit-code": 0
+}

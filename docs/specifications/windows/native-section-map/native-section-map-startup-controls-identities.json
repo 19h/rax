@@ -1,0 +1,77 @@
+{
+  "captured-utc": "2026-10-13T13:15:34.191419+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "principal": "\"nt authority\\system\",\"S-1-5-18\"",
+  "native-machine": 43620,
+  "process-machine": 0,
+  "python": "3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:57:41) [MSC v.1944 64 bit (ARM64)]",
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-section-map-startup-controls.py",
+    "bytes": 3837,
+    "sha256": "c5728e059a8d30b5cc96e82874103878a4bff4c40fb3d5b34b210f76428e20c3"
+  },
+  "libraries": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "machine": 43620,
+      "characteristics": 8226,
+      "preferred-image-base": 6442450944
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0",
+      "machine": 43620,
+      "characteristics": 8226,
+      "preferred-image-base": 6442450944
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+      "machine": 332,
+      "characteristics": 8450,
+      "preferred-image-base": 1260912640
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df",
+      "machine": 332,
+      "characteristics": 8450,
+      "preferred-image-base": 268435456
+    }
+  ],
+  "producers": [
+    {
+      "family": "controlled-startup",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-arm64\\native-section-map-startup-controls.cpp",
+        "bytes": 19453,
+        "sha256": "66c107bec84d2f2eaeb9132c85889a08d9681e9b18360dc1cba08c49d1ac257e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-arm64\\native-section-map-startup-controls-arm64.exe",
+        "bytes": 174080,
+        "sha256": "3c1ca1cb80a4d18a24d2a391bfa5220de5521bec3741afbe4c7d8bb4d0963672",
+        "machine": 43620,
+        "characteristics": 34,
+        "preferred-image-base": 5368709120
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-arm64\\native-section-map-startup-controls-arm64.log",
+        "bytes": 86286,
+        "sha256": "b126128ed0aa8cac0c4944ec7ee2243e187f37450b0ca86c21a841b302c6e890"
+      }
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "previous-observer-turns": 161784,
+  "current-observer-turns": 168227,
+  "turn-delta": 6443,
+  "terminal": "native NTDLL service NtQueryPerformanceCounter (0x31) at 0x180001350 is not implemented",
+  "ordinary-programs": [
+    {
+      "program": "C:/Windows/Temp/assist-native-rax-20261010/src/tests/fixtures/user/windows/bin/arm64/smoke.exe",
+      "reason": 5,
+      "exit-field": 0,
+      "diagnostic": "emulator failure: native NTDLL service NtQueryPerformanceCounter (0x31) at 0x180001350 is not implemented",
+      "guest-exit-proved": false
+    },
+    {
+      "program": "C:/Windows/Temp/assist-native-rax-20261010/src/tests/fixtures/user/windows/crt_stdio/bin/arm64/msvcrt/streams.exe",
+      "reason": 5,
+      "exit-field": 0,
+      "diagnostic": "emulator failure: native NTDLL service NtQueryPerformanceCounter (0x31) at 0x180001350 is not implemented",
+      "guest-exit-proved": false
+    },
+    {
+      "program": "C:/Windows/Temp/assist-native-rax-20261010/src/tests/fixtures/user/windows/crt_stdio/bin/arm64/ucrtbase/streams.exe",
+      "reason": 5,
+      "exit-field": 0,
+      "diagnostic": "emulator failure: native NTDLL service NtQueryPerformanceCounter (0x31) at 0x180001350 is not implemented",
+      "guest-exit-proved": false
+    },
+    {
+      "program": "C:/Windows/System32/whoami.exe",
+      "reason": 5,
+      "exit-field": 0,
+      "diagnostic": "emulator failure: native NTDLL service NtTraceEvent (0x5e) at 0x180001620 is not implemented",
+      "guest-exit-proved": false
+    }
+  ],
+  "guest-exits-proved": 0,
+  "source-identity": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-section-map-after-trace.rs",
+    "bytes": 11177,
+    "sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e",
+    "compiled-executable-path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-section-map-final-after-production-trace.exe",
+    "executable-bytes": 26398720,
+    "executable-sha256": "0964339f2aaf7403b729d388e1e9be3c4995c058797610eb5dc428a3edf1eb65",
+    "executable-machine": 43620
+  },
+  "archive-identities": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\assist_rs.lib",
+      "bytes": 1150441698,
+      "sha256": "4c6d0d40b891ddb2ea2aa4b112f0a450437c2fafdf4cf752f3131959903aa823",
+      "members": 4673,
+      "structural-member-walk": "pass"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\librax-e6c413934cad3a8f.rlib",
+      "bytes": 761808230,
+      "sha256": "71d8995b6e098366e70d6ffb51b76f554ca027d7fdbd6a1609fec1ccbc5605eb",
+      "members": 260,
+      "structural-member-walk": "pass"
+    }
+  ],
+  "state": "final same-source owning archive and ordinary continuation verified; full goal remains active"
+}

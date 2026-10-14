@@ -156,13 +156,18 @@ fn write_information(c: &Ctx, address: u64, class: u32, output: u64) -> Result<(
             .expect("validated allocated address");
     let mut bytes = [0u8; 24];
     if allocation.kind == AllocKind::Image {
-        // All current image owners map complete SEC_IMAGE-style PE images.
-        // There is no guest code-integrity decision or kernel CFG/SCP extension
-        // mapping: signing level is UNCHECKED (0), extension/partial/no-execute
-        // flags are clear. Never inherit the host kernel's trust flags.
+        // Selected section views supply their logical base, complete section
+        // extent, and partial bit below. There is no guest code-integrity or
+        // kernel CFG/SCP extension mapping: signing remains UNCHECKED (0).
+        // Never inherit the host kernel's trust flags.
         let width = c.psize() as usize;
         bytes[..width].copy_from_slice(&allocation.base.to_le_bytes()[..width]);
         bytes[width..width * 2].copy_from_slice(&allocation.size.to_le_bytes()[..width]);
+        if let Some((base, size, flags)) = c.p.vm.section_image_information(address) {
+            bytes[..width].copy_from_slice(&base.to_le_bytes()[..width]);
+            bytes[width..width * 2].copy_from_slice(&size.to_le_bytes()[..width]);
+            bytes[width * 2..width * 2 + 4].copy_from_slice(&flags.to_le_bytes());
+        }
     }
     c.mem().wr(
         output,

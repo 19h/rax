@@ -1,12 +1,15 @@
 //! Bounded, immutable selection of the installed NT object namespace.
 //! NT UTF-16 names retain their protocol grammar; they are not filesystem paths.
-//! Host handles never survive selection, and guest lookups never call the host.
+//! Directory/link host handles close during selection. Selected image sections
+//! pin their native identity; guest namespace lookup itself never calls the host.
 use super::nt::status::*;
 use std::collections::BTreeMap;
 use std::io;
 use std::sync::Arc;
 pub(crate) const PATHS: [&str; 4] = ["\\", "\\KnownDlls", "\\KnownDlls32", "\\KnownDllsChpe32"];
+mod image;
 mod section;
+pub(crate) use image::{ImageRegion, ImageTemplate};
 pub(crate) use section::CapturedSection;
 pub use section::ImageSection;
 pub(crate) const MAX_ENTRIES: usize = 8192;
@@ -440,5 +443,7 @@ pub(crate) fn snapshot(_: Arc<[u16]>) -> io::Result<Namespace> {
         "installed NT object namespace requires a Windows host",
     ))
 }
+#[cfg(test)]
+pub(crate) mod image_tests;
 #[cfg(test)]
 mod tests;

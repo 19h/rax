@@ -1,0 +1,10 @@
+{
+  "native-section-map-geometry.cpp": {
+    "bytes": 20296,
+    "sha256": "00886931054abd748643226d62410859b220bc9ba48a9a5667da748fc7053855"
+  },
+  "native-section-map-geometry-profiles.ps1": {
+    "bytes": 2172,
+    "sha256": "cac37fb3acfda3b0e64d85052cfd62cb33a8e2ef1c34637931d88174e23b1b92"
+  }
+}

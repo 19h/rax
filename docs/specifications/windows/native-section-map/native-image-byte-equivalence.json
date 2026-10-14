@@ -1,0 +1,20 @@
+[
+  {
+    "section": "kernel32",
+    "arm64-mapex-case": 9,
+    "x64-ntmap-case": 1,
+    "bytes": 1511424,
+    "projected-sha256": "5d964a7c733d54b6ec20e00b6968f7fe76dbc652bfa091abb70da0f367138939",
+    "native-x64-sha256": "5d964a7c733d54b6ec20e00b6968f7fe76dbc652bfa091abb70da0f367138939",
+    "equal": true
+  },
+  {
+    "section": "ntdll",
+    "arm64-mapex-case": 12,
+    "x64-ntmap-case": 4,
+    "bytes": 4665344,
+    "projected-sha256": "d964c7360c10a450719279e1609f85e3d5a098d66c77d9f3107fd18111c865d7",
+    "native-x64-sha256": "d964c7360c10a450719279e1609f85e3d5a098d66c77d9f3107fd18111c865d7",
+    "equal": true
+  }
+]

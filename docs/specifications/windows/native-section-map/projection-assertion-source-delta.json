@@ -1,0 +1,14 @@
+{
+  "path": "src/user/windows/process/sched/tests/services_tests/section_map_leaf_tests.rs",
+  "before": {
+    "path": "src/user/windows/process/sched/tests/services_tests/section_map_leaf_tests.rs",
+    "bytes": 5041,
+    "sha256": "ce519ea366d133ace553711244ed5544fa3801b7e7144a2113ecd5b3b3dccaae"
+  },
+  "after": {
+    "path": "src/user/windows/process/sched/tests/services_tests/section_map_leaf_tests.rs",
+    "bytes": 5776,
+    "sha256": "4f5d1a9de7feafa9fa353f942facdb5f4a34e473968836f5e18e557c6c832344"
+  },
+  "scope": "cfg(test) installed leaf assertion only; shipping semantics unchanged"
+}

@@ -1,0 +1,18 @@
+{
+  "Plugin lifecycle": "Unchanged repository plugin lifecycle; affected RAX runtime reached through existing process worker. Native source/view cleanup belongs to guest process lifetime.",
+  "UI state": "Unchanged; no Qt or settings edits.",
+  "Conversation/lane": "Unchanged schemas and persistence; process result/error frontier can advance.",
+  "Agent backend": "Unchanged provider/ACP paths; existing process tool caller receives runtime results.",
+  "Prompt/context": "Unchanged; no prompt inputs or generated prompt code.",
+  "Tool schema": "Unchanged process C ABI and JSON schema; internal NtMap service dispatch added.",
+  "Permission/mutation": "Retain selected same-host fixed KnownDll section scope; no new arbitrary filesystem, process, or IDB mutation capability.",
+  "Main-thread dispatch": "No IDA or Qt calls; source acquisition runs inside existing RAX scheduler/worker ownership.",
+  "Mesh/MCP": "Unchanged transport/routing; existing tool may execute updated runtime.",
+  "Transport/crypto": "Unchanged; no transport or secret representation edits.",
+  "Persistence": "Unchanged schema; pinned HANDLE and byte templates live only in runtime process state.",
+  "SDK/ABI": "No public C struct/layout or SDK callback change; compile CAPI/static owning consumers.",
+  "Optional engines": "Affected RAX Windows runtime; Z3/Frida/debugger product paths unchanged. Native collector debugs only task-created child processes.",
+  "Update/release": "No update/release/changelog contract changes; root dependency record updated only after tested RAX publication.",
+  "Targets/platforms": "Shared map/VM code and tests compile/run on macOS/Linux/Windows; native host acquisition is Windows adapter. Non-Windows installed Windows selection remains explicit Unsupported. RAX core default features stay disabled for static owning integration.",
+  "Tests/docs": "Completed native ten-argument first-call and four-profile matrix; add strategic pinned-backing/VM/ABI/fault/lifetime tests, actual Windows installed leaves, all-target and owning checks."
+}

@@ -1,0 +1,72 @@
+[
+  {
+    "file": "phnt-ntmmapi.h",
+    "url": "https://raw.githubusercontent.com/winsiderss/phnt/master/ntmmapi.h",
+    "retrieved-utc": "2026-10-13T06:50:05.903376+00:00",
+    "bytes": 92011,
+    "sha256": "8acd89a95f890f929da824cc841383770a4f21f312bb04d0d12f03cb3a00e079"
+  },
+  {
+    "file": "phnt-LICENSE",
+    "url": "https://raw.githubusercontent.com/winsiderss/phnt/master/LICENSE",
+    "retrieved-utc": "2026-10-13T06:50:06.364844+00:00",
+    "bytes": 1092,
+    "sha256": "ad2ab542c56c606e4c19d66a7f3cdcd3ef83beffb638e7c3893b22c7a6a6c0df"
+  },
+  {
+    "file": "microsoft-ddi-LICENSE",
+    "url": "https://raw.githubusercontent.com/MicrosoftDocs/windows-driver-docs-ddi/staging/LICENSE",
+    "retrieved-utc": "2026-10-13T06:50:07.244468+00:00",
+    "bytes": 18650,
+    "sha256": "7183ef9749eb9b75e710a81a4c812a9405cc184f087500581a973e5929ac3f5e"
+  },
+  {
+    "file": "microsoft-zwmapviewofsection.md",
+    "url": "https://raw.githubusercontent.com/MicrosoftDocs/windows-driver-docs-ddi/staging/wdk-ddi-src/content/wdm/nf-wdm-zwmapviewofsection.md",
+    "retrieved-utc": "2026-10-13T10:10:36.148756+00:00",
+    "bytes": 8135,
+    "sha256": "415aecdf66cd1fdc022840949449784bcc9cdbeb04ba7a74b83dc97a558c459c"
+  },
+  {
+    "file": "microsoft-arm64-windows-abi.md",
+    "url": "https://raw.githubusercontent.com/MicrosoftDocs/cpp-docs/main/docs/build/arm64-windows-abi-conventions.md",
+    "retrieved-utc": "2026-10-13T10:10:36.634572+00:00",
+    "bytes": 19102,
+    "sha256": "ca114f82ef8d5eae781896ba95e98b5ccd2105b555360777bb6a491c1eec97aa"
+  },
+  {
+    "file": "microsoft-cpp-LICENSE",
+    "url": "https://raw.githubusercontent.com/MicrosoftDocs/cpp-docs/main/LICENSE",
+    "retrieved-utc": "2026-10-13T10:10:37.184876+00:00",
+    "bytes": 18653,
+    "sha256": "9bbc1ea9fe5c96df01b311a2ac864d5b18fc87b9948bfd14770e4b44db755ee9"
+  },
+  {
+    "file": "microsoft-ZwMapViewOfSectionEx.md",
+    "url": "https://raw.githubusercontent.com/MicrosoftDocs/windows-driver-docs-ddi/staging/wdk-ddi-src/content/wdm/nf-wdm-zwmapviewofsectionex.md",
+    "retrieved-utc": "2026-10-13T11:30:53.961030+00:00",
+    "bytes": 7102,
+    "sha256": "c85c56431928fedfa91ca0d643b4aeae8af555185b8023701aef85c5ce690524"
+  },
+  {
+    "file": "microsoft-MEM_EXTENDED_PARAMETER_TYPE.md",
+    "url": "https://raw.githubusercontent.com/MicrosoftDocs/windows-driver-docs-ddi/staging/wdk-ddi-src/content/wdm/ne-wdm-mem_extended_parameter_type.md",
+    "retrieved-utc": "2026-10-13T11:30:54.474587+00:00",
+    "bytes": 1624,
+    "sha256": "cbef77db619d38a755d48497a45d5c0d6a23a67e93903eef538b37aec82df0b9"
+  },
+  {
+    "file": "microsoft-ARM64X.md",
+    "url": "https://raw.githubusercontent.com/MicrosoftDocs/windows-dev-docs/docs/landing/arm-docs/arm64x-pe.md",
+    "retrieved-utc": "2026-10-13T11:36:01.787409+00:00",
+    "bytes": 5396,
+    "sha256": "abb049f9a11bdb3314e20f48cbe3658b9c38cc3ed1628f55cd0dfff45dcea968"
+  },
+  {
+    "file": "microsoft-windows-dev-docs-LICENSE",
+    "url": "https://raw.githubusercontent.com/MicrosoftDocs/windows-dev-docs/docs/LICENSE",
+    "retrieved-utc": "2026-10-13T11:36:01.788245+00:00",
+    "bytes": 18650,
+    "sha256": "7183ef9749eb9b75e710a81a4c812a9405cc184f087500581a973e5929ac3f5e"
+  }
+]

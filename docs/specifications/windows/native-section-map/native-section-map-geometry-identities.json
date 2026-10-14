@@ -1,0 +1,131 @@
+{
+  "captured-utc": "2026-10-13T11:07:25.063281+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "principal": "\"nt authority\\system\",\"S-1-5-18\"",
+  "native-machine": 43620,
+  "process-machine": 0,
+  "python": "3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:57:41) [MSC v.1944 64 bit (ARM64)]",
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-section-map-geometry.py",
+    "bytes": 4277,
+    "sha256": "05c5eb227cde331a111f904e5812ebb300fb657bdc8bccc538a40fd845166a15"
+  },
+  "libraries": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+      "machine": 332,
+      "characteristics": 8450
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df",
+      "machine": 332,
+      "characteristics": 8450
+    }
+  ],
+  "producers": [
+    {
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-arm64\\native-section-map-geometry.cpp",
+        "bytes": 20296,
+        "sha256": "00886931054abd748643226d62410859b220bc9ba48a9a5667da748fc7053855"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-arm64\\native-section-map-geometry-arm64.exe",
+        "bytes": 174080,
+        "sha256": "cd460d8204a58860d086f613f9ec218bd5a861b1e6111258fcb6f3ecf6871f09",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-arm64\\native-section-map-geometry-arm64.log",
+        "bytes": 59370,
+        "sha256": "4f92bdad47520554e1bf1752470b518408dd64ec7cc871a6bd48b8c553adedfd"
+      }
+    },
+    {
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x64\\native-section-map-geometry.cpp",
+        "bytes": 20296,
+        "sha256": "00886931054abd748643226d62410859b220bc9ba48a9a5667da748fc7053855"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x64\\native-section-map-geometry-x64.exe",
+        "bytes": 173056,
+        "sha256": "ee876980b8bd69b46624a60c825a12127aab2f4588140cc6984f31588407f272",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x64\\native-section-map-geometry-x64.log",
+        "bytes": 59370,
+        "sha256": "2878ed364014d597c3ee1fd8a5ba3d12fe295cebf4c324370e65b6a57bca1af5"
+      }
+    },
+    {
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x86\\native-section-map-geometry.cpp",
+        "bytes": 20296,
+        "sha256": "00886931054abd748643226d62410859b220bc9ba48a9a5667da748fc7053855"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x86\\native-section-map-geometry-x86.exe",
+        "bytes": 148992,
+        "sha256": "4ca84c6b6149097f88515cf362e1f714159a2b32d3df370a8edda5adec6986f6",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x86\\native-section-map-geometry-x86.log",
+        "bytes": 58714,
+        "sha256": "a35178b909f8155cce59989e06de0a0cbfdd646cb0327336f36baeeaa6d9c85e"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x86-laa\\native-section-map-geometry.cpp",
+        "bytes": 20296,
+        "sha256": "00886931054abd748643226d62410859b220bc9ba48a9a5667da748fc7053855"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x86-laa\\native-section-map-geometry-x86-laa.exe",
+        "bytes": 148992,
+        "sha256": "7e4f82b0082a73da47e9ff8777cd502973a8e7923b24bdacbe1d70be767adf0d",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x86-laa\\native-section-map-geometry-x86-laa.log",
+        "bytes": 58714,
+        "sha256": "d6a1de5a74db308e57325b7b5332bcd6233c2e49312563e0b76ad3b088dee94d"
+      }
+    }
+  ]
+}

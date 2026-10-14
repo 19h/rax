@@ -1,0 +1,523 @@
+image case=0 entry=7FF8DE2E12A0 allocation=7FF8DE2E0000 type=1000000 bytes=010500D4C0035FD60000000000000000010500D4C0035FD60000000000000000
+entry case=0 call=0 function=40 thread=5228 pc=7FF8DE2E12A4 lr=7FF8DE3C877C args=68,FFFFFFFFFFFFFFFF,E2B5108FE0,0,0,0,E2B5108F48,1,800000,80,
+stack case=0 sp=E2B4EFDA60 allocation=00800000 protect=00000080
+bytes case=0 phase=base-before address=E2B5108FE0 size=8 data=0000000000000000
+bytes case=0 phase=size-before address=E2B5108F48 size=8 data=0000000000000000
+object case=0 phase=section-before child-handle=68 class=0 status=00000000 need=56 supplied=56 data=100000000D0000000200000003800000C80B00002003000000000000000000000000000040000000780000000000000000000000000000000000000000000000
+object case=0 phase=section-before child-handle=68 class=1 status=00000000 need=64 supplied=16384 data=2E0030000000000000ADDB8DFD0000005C004B006E006F0077006E0044006C006C0073005C006B00650072006E0065006C00330032002E0064006C006C000000 name-units=23 name=005C004B006E006F0077006E0044006C006C0073005C006B00650072006E0065006C00330032002E0064006C006C
+object case=0 phase=section-before child-handle=68 class=2 status=00000000 need=120 supplied=16384 data=0E0010000000000058ADDB8DFD000000C539000047050000000000000000000000000000000000000BD30000BE06000000000000000000000000000000000000 name-units=7 name=00530065006300740069006F006E
+section case=0 status=00000000 need=24 data=00000000000000000000800100000000001017000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+return case=0 call=0 function=40 thread=5228 pc=7FF8DE3C8780 status=00000000
+bytes case=0 phase=base-after address=E2B5108FE0 size=8 data=000086DDF87F0000
+bytes case=0 phase=size-after address=E2B5108F48 size=8 data=0010170000000000
+region case=0 index=0 base=7FF8DD860000 allocation=7FF8DD860000 size=4096 state=1000 protect=2 allocation-protect=80 type=1000000
+bytes case=0 phase=region-prefix address=7FF8DD860000 size=64 data=4D5A90000300000004000000FFFF0000B80000000000000040000000000000000000000000000000000000000000000000000000000000000000000000010000
+region case=0 index=1 base=7FF8DD861000 allocation=7FF8DD860000 size=1028096 state=1000 protect=20 allocation-protect=80 type=1000000
+bytes case=0 phase=region-prefix address=7FF8DD861000 size=64 data=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+region case=0 index=2 base=7FF8DD95C000 allocation=7FF8DD860000 size=397312 state=1000 protect=2 allocation-protect=80 type=1000000
+bytes case=0 phase=region-prefix address=7FF8DD95C000 size=64 data=E0FE140000000000C4FE14000000000018F91400000000001661150000000000C4F81400000000008EF8140000000000FEF81400000000002AFC140000000000
+region case=0 index=3 base=7FF8DD9BD000 allocation=7FF8DD860000 size=12288 state=1000 protect=8 allocation-protect=80 type=1000000
+bytes case=0 phase=region-prefix address=7FF8DD9BD000 size=64 data=32A2DF2D992B0000CD5D20D266D4FFFF0600000050000000F05B5807C3438C9AC78A72DD8F8CB4DF4447E7F800000000000000000600000050000000BF550872
+region case=0 index=4 base=7FF8DD9C0000 allocation=7FF8DD860000 size=24576 state=1000 protect=2 allocation-protect=80 type=1000000
+bytes case=0 phase=region-prefix address=7FF8DD9C0000 size=64 data=00700000CCD61100307000006500C000A070000028DA1100D872000004DA11006074000045004201A87400004100C000E8740000C0DA1100707500008500C401
+region case=0 index=5 base=7FF8DD9C6000 allocation=7FF8DD860000 size=4096 state=1000 protect=8 allocation-protect=80 type=1000000
+bytes case=0 phase=region-prefix address=7FF8DD9C6000 size=64 data=00000000000000000000000000000000E4668ADDF87F000074678ADDF87F000044678ADDF87F0000FC668ADDF87F00001C668ADDF87F00005C678ADDF87F0000
+region case=0 index=6 base=7FF8DD9C7000 allocation=7FF8DD860000 size=40960 state=1000 protect=2 allocation-protect=80 type=1000000
+bytes case=0 phase=region-prefix address=7FF8DD9C7000 size=64 data=00200000105B070010200000206807002020000050190C003020000070190C00402000000083090050200000901D0C0060200000001E0C007020000060640900
+bytes case=0 phase=mapped-header address=7FF8DD860000 size=512 data=4D5A90000300000004000000FFFF0000B800000000000000400000000000000000000000000000000000000000000000000000000000000000000000000100000E1FBA0E00B409CD21B8014CCD21546869732070726F6772616D2063616E6E6F742062652072756E20696E20444F53206D6F64652E0D0D0A2400000000000000351369097172075A7172075A7172075AD4FF065B7572075A780A945AA072075A7172065AE978075AD4FF025B7272075AD4FF035B6D72075AD4FF045B6272075AD4FF0F5BD373075AD4FF075B7372075AD4FFF85A7072075AD4FF055B7072075A526963687172075A0000000000000000000000000000000000000000000000005045000064AA0B009873A4150000000000000000F00022200B020E3300980F00000E0700000000006074000000100000000086DDF87F000000100000000200000A0000000A0000000A000000000000000010170000040000134D1700030060410000040000000000001000000000000000001000000000000010000000000000000000001000000050A913004C0701009CB014003408000000A0160020050000000016007054000000881600905C000000B016006821000078931100700000000000000000000000000000000000000000000000000000003092110048010000000000000000000000C00F0000300000B8951200800000000000000000000000
+pe case=0 machine=AA64 sections=11 preferred=7FF8DD860000 image-size=1511424 headers=1024 entry=7460 dll-flags=4160
+pe-section case=0 index=0 name=2E6865787074686B rva=1000 virtual=23568 raw=24064 raw-offset=400 characteristics=60000020
+pe-section case=0 index=1 name=2E74657874000000 rva=7000 virtual=988790 raw=989184 raw-offset=6200 characteristics=60000020
+pe-section case=0 index=2 name=2E73706563666673 rva=F9000 virtual=4343 raw=4608 raw-offset=F7A00 characteristics=60000020
+pe-section case=0 index=3 name=666F74686B000000 rva=FB000 virtual=4096 raw=4096 raw-offset=F8C00 characteristics=60000020
+pe-section case=0 index=4 name=2E72646174610000 rva=FC000 virtual=393696 raw=393728 raw-offset=F9C00 characteristics=40000040
+pe-section case=0 index=5 name=2E64617461000000 rva=15D000 virtual=10192 raw=1536 raw-offset=159E00 characteristics=C0000040
+pe-section case=0 index=6 name=2E70646174610000 rva=160000 virtual=21748 raw=22016 raw-offset=15A400 characteristics=40000040
+pe-section case=0 index=7 name=2E64696461740000 rva=166000 virtual=480 raw=512 raw-offset=15FA00 characteristics=C0000040
+pe-section case=0 index=8 name=2E61363478726D00 rva=167000 virtual=9728 raw=9728 raw-offset=15FC00 characteristics=40000040
+pe-section case=0 index=9 name=2E72737263000000 rva=16A000 virtual=1312 raw=1536 raw-offset=162200 characteristics=40000040
+pe-section case=0 index=10 name=2E72656C6F630000 rva=16B000 virtual=24216 raw=24576 raw-offset=162800 characteristics=42000040
+relocation-directory case=0 rva=16B000 size=8552
+relocation case=0 index=0 block=0 rva=FF040 type=10
+bytes case=0 phase=relocation-target address=7FF8DD95F040 size=8 data=F0EF8CDDF87F0000
+relocation case=0 index=1 block=0 rva=FF048 type=10
+bytes case=0 phase=relocation-target address=7FF8DD95F048 size=8 data=60F18CDDF87F0000
+relocation case=0 index=2 block=0 rva=FF050 type=10
+bytes case=0 phase=relocation-target address=7FF8DD95F050 size=8 data=808595DDF87F0000
+relocation case=0 index=3 block=0 rva=FF058 type=10
+bytes case=0 phase=relocation-target address=7FF8DD95F058 size=8 data=508695DDF87F0000
+relocation case=0 index=4 block=0 rva=FF060 type=10
+bytes case=0 phase=relocation-target address=7FF8DD95F060 size=8 data=808595DDF87F0000
+relocation case=0 index=5 block=0 rva=FF068 type=10
+bytes case=0 phase=relocation-target address=7FF8DD95F068 size=8 data=708695DDF87F0000
+relocation case=0 index=6 block=0 rva=FF070 type=10
+bytes case=0 phase=relocation-target address=7FF8DD95F070 size=8 data=708695DDF87F0000
+relocation case=0 index=7 block=1 rva=1051F0 type=10
+bytes case=0 phase=relocation-target address=7FF8DD9651F0 size=8 data=60D59BDDF87F0000
+relocation case=0 index=8 block=1 rva=1051F8 type=10
+bytes case=0 phase=relocation-target address=7FF8DD9651F8 size=8 data=00D69BDDF87F0000
+relocation case=0 index=9 block=1 rva=105208 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965208 size=8 data=105296DDF87F0000
+relocation case=0 index=10 block=1 rva=105250 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965250 size=8 data=A0F98EDDF87F0000
+relocation case=0 index=11 block=1 rva=105288 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965288 size=8 data=40FA8EDDF87F0000
+relocation case=0 index=12 block=1 rva=1052C8 type=10
+bytes case=0 phase=relocation-target address=7FF8DD9652C8 size=8 data=60FA8EDDF87F0000
+relocation case=0 index=13 block=1 rva=1052D0 type=10
+bytes case=0 phase=relocation-target address=7FF8DD9652D0 size=8 data=80FA8EDDF87F0000
+relocation case=0 index=14 block=1 rva=1052D8 type=10
+bytes case=0 phase=relocation-target address=7FF8DD9652D8 size=8 data=A0FA8EDDF87F0000
+relocation case=0 index=15 block=1 rva=1052E0 type=10
+bytes case=0 phase=relocation-target address=7FF8DD9652E0 size=8 data=C0FA8EDDF87F0000
+relocation case=0 index=16 block=1 rva=1052E8 type=10
+bytes case=0 phase=relocation-target address=7FF8DD9652E8 size=8 data=E0FA8EDDF87F0000
+relocation case=0 index=17 block=1 rva=1052F0 type=10
+bytes case=0 phase=relocation-target address=7FF8DD9652F0 size=8 data=00FB8EDDF87F0000
+relocation case=0 index=18 block=1 rva=1052F8 type=10
+bytes case=0 phase=relocation-target address=7FF8DD9652F8 size=8 data=90158FDDF87F0000
+relocation case=0 index=19 block=1 rva=105310 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965310 size=8 data=B0158FDDF87F0000
+relocation case=0 index=20 block=1 rva=105318 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965318 size=8 data=D0158FDDF87F0000
+relocation case=0 index=21 block=1 rva=105320 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965320 size=8 data=F0158FDDF87F0000
+relocation case=0 index=22 block=1 rva=105328 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965328 size=8 data=10168FDDF87F0000
+relocation case=0 index=23 block=1 rva=105330 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965330 size=8 data=30168FDDF87F0000
+relocation case=0 index=24 block=1 rva=105338 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965338 size=8 data=50168FDDF87F0000
+relocation case=0 index=25 block=1 rva=105340 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965340 size=8 data=70168FDDF87F0000
+relocation case=0 index=26 block=1 rva=105348 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965348 size=8 data=90168FDDF87F0000
+relocation case=0 index=27 block=1 rva=105350 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965350 size=8 data=B0168FDDF87F0000
+relocation case=0 index=28 block=1 rva=105358 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965358 size=8 data=F0DA9BDDF87F0000
+relocation case=0 index=29 block=1 rva=105360 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965360 size=8 data=90DB9BDDF87F0000
+relocation case=0 index=30 block=1 rva=105378 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965378 size=8 data=105296DDF87F0000
+relocation case=0 index=31 block=1 rva=105388 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965388 size=8 data=B05396DDF87F0000
+relocation case=0 index=32 block=1 rva=105398 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965398 size=8 data=005496DDF87F0000
+relocation case=0 index=33 block=1 rva=1053A8 type=10
+bytes case=0 phase=relocation-target address=7FF8DD9653A8 size=8 data=505496DDF87F0000
+relocation case=0 index=34 block=1 rva=105530 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965530 size=8 data=708486DDF87F0000
+relocation case=0 index=35 block=1 rva=1055A0 type=10
+bytes case=0 phase=relocation-target address=7FF8DD9655A0 size=8 data=508586DDF87F0000
+relocation case=0 index=36 block=1 rva=105610 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965610 size=8 data=F0768ADDF87F0000
+relocation case=0 index=37 block=1 rva=105680 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965680 size=8 data=A07F86DDF87F0000
+relocation case=0 index=38 block=1 rva=1056F0 type=10
+bytes case=0 phase=relocation-target address=7FF8DD9656F0 size=8 data=C03C8FDDF87F0000
+relocation case=0 index=39 block=1 rva=105760 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965760 size=8 data=B0538FDDF87F0000
+relocation case=0 index=40 block=1 rva=105770 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965770 size=8 data=407A96DDF87F0000
+relocation case=0 index=41 block=1 rva=105778 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965778 size=8 data=B0F29BDDF87F0000
+relocation case=0 index=42 block=1 rva=1057D0 type=10
+bytes case=0 phase=relocation-target address=7FF8DD9657D0 size=8 data=A0208BDDF87F0000
+relocation case=0 index=43 block=1 rva=1057D8 type=10
+bytes case=0 phase=relocation-target address=7FF8DD9657D8 size=8 data=30218FDDF87F0000
+relocation case=0 index=44 block=1 rva=1057E0 type=10
+bytes case=0 phase=relocation-target address=7FF8DD9657E0 size=8 data=303F8BDDF87F0000
+relocation case=0 index=45 block=1 rva=1057E8 type=10
+bytes case=0 phase=relocation-target address=7FF8DD9657E8 size=8 data=30218FDDF87F0000
+relocation case=0 index=46 block=1 rva=1057F0 type=10
+bytes case=0 phase=relocation-target address=7FF8DD9657F0 size=8 data=A00D91DDF87F0000
+relocation case=0 index=47 block=1 rva=1057F8 type=10
+bytes case=0 phase=relocation-target address=7FF8DD9657F8 size=8 data=80408BDDF87F0000
+relocation case=0 index=48 block=1 rva=105800 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965800 size=8 data=D03D8BDDF87F0000
+relocation case=0 index=49 block=1 rva=105808 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965808 size=8 data=30218FDDF87F0000
+relocation case=0 index=50 block=1 rva=105810 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965810 size=8 data=C03F8BDDF87F0000
+relocation case=0 index=51 block=1 rva=105818 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965818 size=8 data=D0638FDDF87F0000
+relocation case=0 index=52 block=1 rva=105820 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965820 size=8 data=500F91DDF87F0000
+relocation case=0 index=53 block=1 rva=105828 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965828 size=8 data=70418BDDF87F0000
+relocation case=0 index=54 block=1 rva=105830 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965830 size=8 data=D0638FDDF87F0000
+relocation case=0 index=55 block=1 rva=105838 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965838 size=8 data=400F91DDF87F0000
+relocation case=0 index=56 block=1 rva=105840 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965840 size=8 data=F0408BDDF87F0000
+relocation case=0 index=57 block=1 rva=105848 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965848 size=8 data=D0638FDDF87F0000
+relocation case=0 index=58 block=1 rva=105850 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965850 size=8 data=30218FDDF87F0000
+relocation case=0 index=59 block=1 rva=105858 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965858 size=8 data=603F8BDDF87F0000
+relocation case=0 index=60 block=1 rva=105860 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965860 size=8 data=D0638FDDF87F0000
+relocation case=0 index=61 block=1 rva=105868 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965868 size=8 data=900D91DDF87F0000
+relocation case=0 index=62 block=1 rva=105870 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965870 size=8 data=20408BDDF87F0000
+relocation case=0 index=63 block=1 rva=105878 type=10
+bytes case=0 phase=relocation-target address=7FF8DD965878 size=8 data=703D8BDDF87F0000
+view-complete case=0 base=7FF8DD860000 size=1511424 regions=7 relocation-blocks=30 targets=64
+object case=0 phase=section-after child-handle=68 class=0 status=00000000 need=56 supplied=56 data=100000000D0000000200000002000100C80B00002003000000000000000000000000000040000000780000000000000000000000000000000000000000000000
+object case=0 phase=section-after child-handle=68 class=1 status=00000000 need=64 supplied=16384 data=2E0030000000000000ADDB8DFD0000005C004B006E006F0077006E0044006C006C0073005C006B00650072006E0065006C00330032002E0064006C006C000000 name-units=23 name=005C004B006E006F0077006E0044006C006C0073005C006B00650072006E0065006C00330032002E0064006C006C
+object case=0 phase=section-after child-handle=68 class=2 status=00000000 need=120 supplied=16384 data=0E0010000000000058ADDB8DFD000000C539000047050000000000000000000000000000000000000BD30000BE06000000000000000000000000000000000000 name-units=7 name=00530065006300740069006F006E
+section case=0 status=00000000 need=24 data=00000000000000000000800100000000001017000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+case=0 warmup=1 installed=1 done=1 calls=1 exit=77 handles-before=52 handles-after=57 exact-handle-set=0
+image case=1 entry=7FF8DE2E12A0 allocation=7FF8DE2E0000 type=1000000 bytes=010500D4C0035FD60000000000000000010500D4C0035FD60000000000000000
+entry case=1 call=0 function=40 thread=3064 pc=7FF8DE2E12A4 lr=7FF8DE3C877C args=68,FFFFFFFFFFFFFFFF,D3DC108FE0,0,0,0,D3DC108F48,1,800000,80,
+stack case=1 sp=D3DB74DDF0 allocation=00800000 protect=00000080
+bytes case=1 phase=base-before address=D3DC108FE0 size=8 data=0000000000000000
+bytes case=1 phase=size-before address=D3DC108F48 size=8 data=0000000000000000
+object case=1 phase=section-before child-handle=68 class=0 status=00000000 need=56 supplied=56 data=100000000D0000000200000003800000C80B00002003000000000000000000000000000040000000780000000000000000000000000000000000000000000000
+object case=1 phase=section-before child-handle=68 class=1 status=00000000 need=64 supplied=16384 data=2E0030000000000000ADDB8DFD0000005C004B006E006F0077006E0044006C006C0073005C006B00650072006E0065006C00330032002E0064006C006C000000 name-units=23 name=005C004B006E006F0077006E0044006C006C0073005C006B00650072006E0065006C00330032002E0064006C006C
+object case=1 phase=section-before child-handle=68 class=2 status=00000000 need=120 supplied=16384 data=0E0010000000000058ADDB8DFD000000C639000047050000000000000000000000000000000000000BD30000BE06000000000000000000000000000000000000 name-units=7 name=00530065006300740069006F006E
+section case=1 status=00000000 need=24 data=00000000000000000000800100000000001017000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+return case=1 call=0 function=40 thread=3064 pc=7FF8DE3C8780 status=00000000
+bytes case=1 phase=base-after address=D3DC108FE0 size=8 data=000086DDF87F0000
+bytes case=1 phase=size-after address=D3DC108F48 size=8 data=0010170000000000
+region case=1 index=0 base=7FF8DD860000 allocation=7FF8DD860000 size=4096 state=1000 protect=2 allocation-protect=80 type=1000000
+bytes case=1 phase=region-prefix address=7FF8DD860000 size=64 data=4D5A90000300000004000000FFFF0000B80000000000000040000000000000000000000000000000000000000000000000000000000000000000000000010000
+region case=1 index=1 base=7FF8DD861000 allocation=7FF8DD860000 size=1028096 state=1000 protect=20 allocation-protect=80 type=1000000
+bytes case=1 phase=region-prefix address=7FF8DD861000 size=64 data=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+region case=1 index=2 base=7FF8DD95C000 allocation=7FF8DD860000 size=397312 state=1000 protect=2 allocation-protect=80 type=1000000
+bytes case=1 phase=region-prefix address=7FF8DD95C000 size=64 data=E0FE140000000000C4FE14000000000018F91400000000001661150000000000C4F81400000000008EF8140000000000FEF81400000000002AFC140000000000
+region case=1 index=3 base=7FF8DD9BD000 allocation=7FF8DD860000 size=12288 state=1000 protect=8 allocation-protect=80 type=1000000
+bytes case=1 phase=region-prefix address=7FF8DD9BD000 size=64 data=32A2DF2D992B0000CD5D20D266D4FFFF0600000050000000F05B5807C3438C9AC78A72DD8F8CB4DF4447E7F800000000000000000600000050000000BF550872
+region case=1 index=4 base=7FF8DD9C0000 allocation=7FF8DD860000 size=24576 state=1000 protect=2 allocation-protect=80 type=1000000
+bytes case=1 phase=region-prefix address=7FF8DD9C0000 size=64 data=00700000CCD61100307000006500C000A070000028DA1100D872000004DA11006074000045004201A87400004100C000E8740000C0DA1100707500008500C401
+region case=1 index=5 base=7FF8DD9C6000 allocation=7FF8DD860000 size=4096 state=1000 protect=8 allocation-protect=80 type=1000000
+bytes case=1 phase=region-prefix address=7FF8DD9C6000 size=64 data=00000000000000000000000000000000E4668ADDF87F000074678ADDF87F000044678ADDF87F0000FC668ADDF87F00001C668ADDF87F00005C678ADDF87F0000
+region case=1 index=6 base=7FF8DD9C7000 allocation=7FF8DD860000 size=40960 state=1000 protect=2 allocation-protect=80 type=1000000
+bytes case=1 phase=region-prefix address=7FF8DD9C7000 size=64 data=00200000105B070010200000206807002020000050190C003020000070190C00402000000083090050200000901D0C0060200000001E0C007020000060640900
+bytes case=1 phase=mapped-header address=7FF8DD860000 size=512 data=4D5A90000300000004000000FFFF0000B800000000000000400000000000000000000000000000000000000000000000000000000000000000000000000100000E1FBA0E00B409CD21B8014CCD21546869732070726F6772616D2063616E6E6F742062652072756E20696E20444F53206D6F64652E0D0D0A2400000000000000351369097172075A7172075A7172075AD4FF065B7572075A780A945AA072075A7172065AE978075AD4FF025B7272075AD4FF035B6D72075AD4FF045B6272075AD4FF0F5BD373075AD4FF075B7372075AD4FFF85A7072075AD4FF055B7072075A526963687172075A0000000000000000000000000000000000000000000000005045000064AA0B009873A4150000000000000000F00022200B020E3300980F00000E0700000000006074000000100000000086DDF87F000000100000000200000A0000000A0000000A000000000000000010170000040000134D1700030060410000040000000000001000000000000000001000000000000010000000000000000000001000000050A913004C0701009CB014003408000000A0160020050000000016007054000000881600905C000000B016006821000078931100700000000000000000000000000000000000000000000000000000003092110048010000000000000000000000C00F0000300000B8951200800000000000000000000000
+pe case=1 machine=AA64 sections=11 preferred=7FF8DD860000 image-size=1511424 headers=1024 entry=7460 dll-flags=4160
+pe-section case=1 index=0 name=2E6865787074686B rva=1000 virtual=23568 raw=24064 raw-offset=400 characteristics=60000020
+pe-section case=1 index=1 name=2E74657874000000 rva=7000 virtual=988790 raw=989184 raw-offset=6200 characteristics=60000020
+pe-section case=1 index=2 name=2E73706563666673 rva=F9000 virtual=4343 raw=4608 raw-offset=F7A00 characteristics=60000020
+pe-section case=1 index=3 name=666F74686B000000 rva=FB000 virtual=4096 raw=4096 raw-offset=F8C00 characteristics=60000020
+pe-section case=1 index=4 name=2E72646174610000 rva=FC000 virtual=393696 raw=393728 raw-offset=F9C00 characteristics=40000040
+pe-section case=1 index=5 name=2E64617461000000 rva=15D000 virtual=10192 raw=1536 raw-offset=159E00 characteristics=C0000040
+pe-section case=1 index=6 name=2E70646174610000 rva=160000 virtual=21748 raw=22016 raw-offset=15A400 characteristics=40000040
+pe-section case=1 index=7 name=2E64696461740000 rva=166000 virtual=480 raw=512 raw-offset=15FA00 characteristics=C0000040
+pe-section case=1 index=8 name=2E61363478726D00 rva=167000 virtual=9728 raw=9728 raw-offset=15FC00 characteristics=40000040
+pe-section case=1 index=9 name=2E72737263000000 rva=16A000 virtual=1312 raw=1536 raw-offset=162200 characteristics=40000040
+pe-section case=1 index=10 name=2E72656C6F630000 rva=16B000 virtual=24216 raw=24576 raw-offset=162800 characteristics=42000040
+relocation-directory case=1 rva=16B000 size=8552
+relocation case=1 index=0 block=0 rva=FF040 type=10
+bytes case=1 phase=relocation-target address=7FF8DD95F040 size=8 data=F0EF8CDDF87F0000
+relocation case=1 index=1 block=0 rva=FF048 type=10
+bytes case=1 phase=relocation-target address=7FF8DD95F048 size=8 data=60F18CDDF87F0000
+relocation case=1 index=2 block=0 rva=FF050 type=10
+bytes case=1 phase=relocation-target address=7FF8DD95F050 size=8 data=808595DDF87F0000
+relocation case=1 index=3 block=0 rva=FF058 type=10
+bytes case=1 phase=relocation-target address=7FF8DD95F058 size=8 data=508695DDF87F0000
+relocation case=1 index=4 block=0 rva=FF060 type=10
+bytes case=1 phase=relocation-target address=7FF8DD95F060 size=8 data=808595DDF87F0000
+relocation case=1 index=5 block=0 rva=FF068 type=10
+bytes case=1 phase=relocation-target address=7FF8DD95F068 size=8 data=708695DDF87F0000
+relocation case=1 index=6 block=0 rva=FF070 type=10
+bytes case=1 phase=relocation-target address=7FF8DD95F070 size=8 data=708695DDF87F0000
+relocation case=1 index=7 block=1 rva=1051F0 type=10
+bytes case=1 phase=relocation-target address=7FF8DD9651F0 size=8 data=60D59BDDF87F0000
+relocation case=1 index=8 block=1 rva=1051F8 type=10
+bytes case=1 phase=relocation-target address=7FF8DD9651F8 size=8 data=00D69BDDF87F0000
+relocation case=1 index=9 block=1 rva=105208 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965208 size=8 data=105296DDF87F0000
+relocation case=1 index=10 block=1 rva=105250 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965250 size=8 data=A0F98EDDF87F0000
+relocation case=1 index=11 block=1 rva=105288 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965288 size=8 data=40FA8EDDF87F0000
+relocation case=1 index=12 block=1 rva=1052C8 type=10
+bytes case=1 phase=relocation-target address=7FF8DD9652C8 size=8 data=60FA8EDDF87F0000
+relocation case=1 index=13 block=1 rva=1052D0 type=10
+bytes case=1 phase=relocation-target address=7FF8DD9652D0 size=8 data=80FA8EDDF87F0000
+relocation case=1 index=14 block=1 rva=1052D8 type=10
+bytes case=1 phase=relocation-target address=7FF8DD9652D8 size=8 data=A0FA8EDDF87F0000
+relocation case=1 index=15 block=1 rva=1052E0 type=10
+bytes case=1 phase=relocation-target address=7FF8DD9652E0 size=8 data=C0FA8EDDF87F0000
+relocation case=1 index=16 block=1 rva=1052E8 type=10
+bytes case=1 phase=relocation-target address=7FF8DD9652E8 size=8 data=E0FA8EDDF87F0000
+relocation case=1 index=17 block=1 rva=1052F0 type=10
+bytes case=1 phase=relocation-target address=7FF8DD9652F0 size=8 data=00FB8EDDF87F0000
+relocation case=1 index=18 block=1 rva=1052F8 type=10
+bytes case=1 phase=relocation-target address=7FF8DD9652F8 size=8 data=90158FDDF87F0000
+relocation case=1 index=19 block=1 rva=105310 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965310 size=8 data=B0158FDDF87F0000
+relocation case=1 index=20 block=1 rva=105318 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965318 size=8 data=D0158FDDF87F0000
+relocation case=1 index=21 block=1 rva=105320 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965320 size=8 data=F0158FDDF87F0000
+relocation case=1 index=22 block=1 rva=105328 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965328 size=8 data=10168FDDF87F0000
+relocation case=1 index=23 block=1 rva=105330 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965330 size=8 data=30168FDDF87F0000
+relocation case=1 index=24 block=1 rva=105338 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965338 size=8 data=50168FDDF87F0000
+relocation case=1 index=25 block=1 rva=105340 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965340 size=8 data=70168FDDF87F0000
+relocation case=1 index=26 block=1 rva=105348 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965348 size=8 data=90168FDDF87F0000
+relocation case=1 index=27 block=1 rva=105350 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965350 size=8 data=B0168FDDF87F0000
+relocation case=1 index=28 block=1 rva=105358 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965358 size=8 data=F0DA9BDDF87F0000
+relocation case=1 index=29 block=1 rva=105360 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965360 size=8 data=90DB9BDDF87F0000
+relocation case=1 index=30 block=1 rva=105378 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965378 size=8 data=105296DDF87F0000
+relocation case=1 index=31 block=1 rva=105388 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965388 size=8 data=B05396DDF87F0000
+relocation case=1 index=32 block=1 rva=105398 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965398 size=8 data=005496DDF87F0000
+relocation case=1 index=33 block=1 rva=1053A8 type=10
+bytes case=1 phase=relocation-target address=7FF8DD9653A8 size=8 data=505496DDF87F0000
+relocation case=1 index=34 block=1 rva=105530 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965530 size=8 data=708486DDF87F0000
+relocation case=1 index=35 block=1 rva=1055A0 type=10
+bytes case=1 phase=relocation-target address=7FF8DD9655A0 size=8 data=508586DDF87F0000
+relocation case=1 index=36 block=1 rva=105610 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965610 size=8 data=F0768ADDF87F0000
+relocation case=1 index=37 block=1 rva=105680 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965680 size=8 data=A07F86DDF87F0000
+relocation case=1 index=38 block=1 rva=1056F0 type=10
+bytes case=1 phase=relocation-target address=7FF8DD9656F0 size=8 data=C03C8FDDF87F0000
+relocation case=1 index=39 block=1 rva=105760 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965760 size=8 data=B0538FDDF87F0000
+relocation case=1 index=40 block=1 rva=105770 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965770 size=8 data=407A96DDF87F0000
+relocation case=1 index=41 block=1 rva=105778 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965778 size=8 data=B0F29BDDF87F0000
+relocation case=1 index=42 block=1 rva=1057D0 type=10
+bytes case=1 phase=relocation-target address=7FF8DD9657D0 size=8 data=A0208BDDF87F0000
+relocation case=1 index=43 block=1 rva=1057D8 type=10
+bytes case=1 phase=relocation-target address=7FF8DD9657D8 size=8 data=30218FDDF87F0000
+relocation case=1 index=44 block=1 rva=1057E0 type=10
+bytes case=1 phase=relocation-target address=7FF8DD9657E0 size=8 data=303F8BDDF87F0000
+relocation case=1 index=45 block=1 rva=1057E8 type=10
+bytes case=1 phase=relocation-target address=7FF8DD9657E8 size=8 data=30218FDDF87F0000
+relocation case=1 index=46 block=1 rva=1057F0 type=10
+bytes case=1 phase=relocation-target address=7FF8DD9657F0 size=8 data=A00D91DDF87F0000
+relocation case=1 index=47 block=1 rva=1057F8 type=10
+bytes case=1 phase=relocation-target address=7FF8DD9657F8 size=8 data=80408BDDF87F0000
+relocation case=1 index=48 block=1 rva=105800 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965800 size=8 data=D03D8BDDF87F0000
+relocation case=1 index=49 block=1 rva=105808 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965808 size=8 data=30218FDDF87F0000
+relocation case=1 index=50 block=1 rva=105810 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965810 size=8 data=C03F8BDDF87F0000
+relocation case=1 index=51 block=1 rva=105818 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965818 size=8 data=D0638FDDF87F0000
+relocation case=1 index=52 block=1 rva=105820 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965820 size=8 data=500F91DDF87F0000
+relocation case=1 index=53 block=1 rva=105828 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965828 size=8 data=70418BDDF87F0000
+relocation case=1 index=54 block=1 rva=105830 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965830 size=8 data=D0638FDDF87F0000
+relocation case=1 index=55 block=1 rva=105838 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965838 size=8 data=400F91DDF87F0000
+relocation case=1 index=56 block=1 rva=105840 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965840 size=8 data=F0408BDDF87F0000
+relocation case=1 index=57 block=1 rva=105848 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965848 size=8 data=D0638FDDF87F0000
+relocation case=1 index=58 block=1 rva=105850 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965850 size=8 data=30218FDDF87F0000
+relocation case=1 index=59 block=1 rva=105858 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965858 size=8 data=603F8BDDF87F0000
+relocation case=1 index=60 block=1 rva=105860 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965860 size=8 data=D0638FDDF87F0000
+relocation case=1 index=61 block=1 rva=105868 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965868 size=8 data=900D91DDF87F0000
+relocation case=1 index=62 block=1 rva=105870 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965870 size=8 data=20408BDDF87F0000
+relocation case=1 index=63 block=1 rva=105878 type=10
+bytes case=1 phase=relocation-target address=7FF8DD965878 size=8 data=703D8BDDF87F0000
+view-complete case=1 base=7FF8DD860000 size=1511424 regions=7 relocation-blocks=30 targets=64
+object case=1 phase=section-after child-handle=68 class=0 status=00000000 need=56 supplied=56 data=100000000D0000000200000002000100C80B00002003000000000000000000000000000040000000780000000000000000000000000000000000000000000000
+object case=1 phase=section-after child-handle=68 class=1 status=00000000 need=64 supplied=16384 data=2E0030000000000000ADDB8DFD0000005C004B006E006F0077006E0044006C006C0073005C006B00650072006E0065006C00330032002E0064006C006C000000 name-units=23 name=005C004B006E006F0077006E0044006C006C0073005C006B00650072006E0065006C00330032002E0064006C006C
+object case=1 phase=section-after child-handle=68 class=2 status=00000000 need=120 supplied=16384 data=0E0010000000000058ADDB8DFD000000C639000047050000000000000000000000000000000000000BD30000BE06000000000000000000000000000000000000 name-units=7 name=00530065006300740069006F006E
+section case=1 status=00000000 need=24 data=00000000000000000000800100000000001017000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+case=1 warmup=0 installed=1 done=1 calls=1 exit=77 handles-before=57 handles-after=57 exact-handle-set=1
+image case=2 entry=7FF8DE2E12A0 allocation=7FF8DE2E0000 type=1000000 bytes=010500D4C0035FD60000000000000000010500D4C0035FD60000000000000000
+entry case=2 call=0 function=40 thread=9960 pc=7FF8DE2E12A4 lr=7FF8DE3C877C args=68,FFFFFFFFFFFFFFFF,8001108FE0,0,0,0,8001108F48,1,800000,80,
+stack case=2 sp=80000FDAD0 allocation=00800000 protect=00000080
+bytes case=2 phase=base-before address=8001108FE0 size=8 data=0000000000000000
+bytes case=2 phase=size-before address=8001108F48 size=8 data=0000000000000000
+object case=2 phase=section-before child-handle=68 class=0 status=00000000 need=56 supplied=56 data=100000000D0000000200000003800000C80B00002003000000000000000000000000000040000000780000000000000000000000000000000000000000000000
+object case=2 phase=section-before child-handle=68 class=1 status=00000000 need=64 supplied=16384 data=2E0030000000000000ADDB8DFD0000005C004B006E006F0077006E0044006C006C0073005C006B00650072006E0065006C00330032002E0064006C006C000000 name-units=23 name=005C004B006E006F0077006E0044006C006C0073005C006B00650072006E0065006C00330032002E0064006C006C
+object case=2 phase=section-before child-handle=68 class=2 status=00000000 need=120 supplied=16384 data=0E0010000000000058ADDB8DFD000000C639000047050000000000000000000000000000000000000BD30000BE06000000000000000000000000000000000000 name-units=7 name=00530065006300740069006F006E
+section case=2 status=00000000 need=24 data=00000000000000000000800100000000001017000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+return case=2 call=0 function=40 thread=9960 pc=7FF8DE3C8780 status=00000000
+bytes case=2 phase=base-after address=8001108FE0 size=8 data=000086DDF87F0000
+bytes case=2 phase=size-after address=8001108F48 size=8 data=0010170000000000
+region case=2 index=0 base=7FF8DD860000 allocation=7FF8DD860000 size=4096 state=1000 protect=2 allocation-protect=80 type=1000000
+bytes case=2 phase=region-prefix address=7FF8DD860000 size=64 data=4D5A90000300000004000000FFFF0000B80000000000000040000000000000000000000000000000000000000000000000000000000000000000000000010000
+region case=2 index=1 base=7FF8DD861000 allocation=7FF8DD860000 size=1028096 state=1000 protect=20 allocation-protect=80 type=1000000
+bytes case=2 phase=region-prefix address=7FF8DD861000 size=64 data=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+region case=2 index=2 base=7FF8DD95C000 allocation=7FF8DD860000 size=397312 state=1000 protect=2 allocation-protect=80 type=1000000
+bytes case=2 phase=region-prefix address=7FF8DD95C000 size=64 data=E0FE140000000000C4FE14000000000018F91400000000001661150000000000C4F81400000000008EF8140000000000FEF81400000000002AFC140000000000
+region case=2 index=3 base=7FF8DD9BD000 allocation=7FF8DD860000 size=12288 state=1000 protect=8 allocation-protect=80 type=1000000
+bytes case=2 phase=region-prefix address=7FF8DD9BD000 size=64 data=32A2DF2D992B0000CD5D20D266D4FFFF0600000050000000F05B5807C3438C9AC78A72DD8F8CB4DF4447E7F800000000000000000600000050000000BF550872
+region case=2 index=4 base=7FF8DD9C0000 allocation=7FF8DD860000 size=24576 state=1000 protect=2 allocation-protect=80 type=1000000
+bytes case=2 phase=region-prefix address=7FF8DD9C0000 size=64 data=00700000CCD61100307000006500C000A070000028DA1100D872000004DA11006074000045004201A87400004100C000E8740000C0DA1100707500008500C401
+region case=2 index=5 base=7FF8DD9C6000 allocation=7FF8DD860000 size=4096 state=1000 protect=8 allocation-protect=80 type=1000000
+bytes case=2 phase=region-prefix address=7FF8DD9C6000 size=64 data=00000000000000000000000000000000E4668ADDF87F000074678ADDF87F000044678ADDF87F0000FC668ADDF87F00001C668ADDF87F00005C678ADDF87F0000
+region case=2 index=6 base=7FF8DD9C7000 allocation=7FF8DD860000 size=40960 state=1000 protect=2 allocation-protect=80 type=1000000
+bytes case=2 phase=region-prefix address=7FF8DD9C7000 size=64 data=00200000105B070010200000206807002020000050190C003020000070190C00402000000083090050200000901D0C0060200000001E0C007020000060640900
+bytes case=2 phase=mapped-header address=7FF8DD860000 size=512 data=4D5A90000300000004000000FFFF0000B800000000000000400000000000000000000000000000000000000000000000000000000000000000000000000100000E1FBA0E00B409CD21B8014CCD21546869732070726F6772616D2063616E6E6F742062652072756E20696E20444F53206D6F64652E0D0D0A2400000000000000351369097172075A7172075A7172075AD4FF065B7572075A780A945AA072075A7172065AE978075AD4FF025B7272075AD4FF035B6D72075AD4FF045B6272075AD4FF0F5BD373075AD4FF075B7372075AD4FFF85A7072075AD4FF055B7072075A526963687172075A0000000000000000000000000000000000000000000000005045000064AA0B009873A4150000000000000000F00022200B020E3300980F00000E0700000000006074000000100000000086DDF87F000000100000000200000A0000000A0000000A000000000000000010170000040000134D1700030060410000040000000000001000000000000000001000000000000010000000000000000000001000000050A913004C0701009CB014003408000000A0160020050000000016007054000000881600905C000000B016006821000078931100700000000000000000000000000000000000000000000000000000003092110048010000000000000000000000C00F0000300000B8951200800000000000000000000000
+pe case=2 machine=AA64 sections=11 preferred=7FF8DD860000 image-size=1511424 headers=1024 entry=7460 dll-flags=4160
+pe-section case=2 index=0 name=2E6865787074686B rva=1000 virtual=23568 raw=24064 raw-offset=400 characteristics=60000020
+pe-section case=2 index=1 name=2E74657874000000 rva=7000 virtual=988790 raw=989184 raw-offset=6200 characteristics=60000020
+pe-section case=2 index=2 name=2E73706563666673 rva=F9000 virtual=4343 raw=4608 raw-offset=F7A00 characteristics=60000020
+pe-section case=2 index=3 name=666F74686B000000 rva=FB000 virtual=4096 raw=4096 raw-offset=F8C00 characteristics=60000020
+pe-section case=2 index=4 name=2E72646174610000 rva=FC000 virtual=393696 raw=393728 raw-offset=F9C00 characteristics=40000040
+pe-section case=2 index=5 name=2E64617461000000 rva=15D000 virtual=10192 raw=1536 raw-offset=159E00 characteristics=C0000040
+pe-section case=2 index=6 name=2E70646174610000 rva=160000 virtual=21748 raw=22016 raw-offset=15A400 characteristics=40000040
+pe-section case=2 index=7 name=2E64696461740000 rva=166000 virtual=480 raw=512 raw-offset=15FA00 characteristics=C0000040
+pe-section case=2 index=8 name=2E61363478726D00 rva=167000 virtual=9728 raw=9728 raw-offset=15FC00 characteristics=40000040
+pe-section case=2 index=9 name=2E72737263000000 rva=16A000 virtual=1312 raw=1536 raw-offset=162200 characteristics=40000040
+pe-section case=2 index=10 name=2E72656C6F630000 rva=16B000 virtual=24216 raw=24576 raw-offset=162800 characteristics=42000040
+relocation-directory case=2 rva=16B000 size=8552
+relocation case=2 index=0 block=0 rva=FF040 type=10
+bytes case=2 phase=relocation-target address=7FF8DD95F040 size=8 data=F0EF8CDDF87F0000
+relocation case=2 index=1 block=0 rva=FF048 type=10
+bytes case=2 phase=relocation-target address=7FF8DD95F048 size=8 data=60F18CDDF87F0000
+relocation case=2 index=2 block=0 rva=FF050 type=10
+bytes case=2 phase=relocation-target address=7FF8DD95F050 size=8 data=808595DDF87F0000
+relocation case=2 index=3 block=0 rva=FF058 type=10
+bytes case=2 phase=relocation-target address=7FF8DD95F058 size=8 data=508695DDF87F0000
+relocation case=2 index=4 block=0 rva=FF060 type=10
+bytes case=2 phase=relocation-target address=7FF8DD95F060 size=8 data=808595DDF87F0000
+relocation case=2 index=5 block=0 rva=FF068 type=10
+bytes case=2 phase=relocation-target address=7FF8DD95F068 size=8 data=708695DDF87F0000
+relocation case=2 index=6 block=0 rva=FF070 type=10
+bytes case=2 phase=relocation-target address=7FF8DD95F070 size=8 data=708695DDF87F0000
+relocation case=2 index=7 block=1 rva=1051F0 type=10
+bytes case=2 phase=relocation-target address=7FF8DD9651F0 size=8 data=60D59BDDF87F0000
+relocation case=2 index=8 block=1 rva=1051F8 type=10
+bytes case=2 phase=relocation-target address=7FF8DD9651F8 size=8 data=00D69BDDF87F0000
+relocation case=2 index=9 block=1 rva=105208 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965208 size=8 data=105296DDF87F0000
+relocation case=2 index=10 block=1 rva=105250 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965250 size=8 data=A0F98EDDF87F0000
+relocation case=2 index=11 block=1 rva=105288 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965288 size=8 data=40FA8EDDF87F0000
+relocation case=2 index=12 block=1 rva=1052C8 type=10
+bytes case=2 phase=relocation-target address=7FF8DD9652C8 size=8 data=60FA8EDDF87F0000
+relocation case=2 index=13 block=1 rva=1052D0 type=10
+bytes case=2 phase=relocation-target address=7FF8DD9652D0 size=8 data=80FA8EDDF87F0000
+relocation case=2 index=14 block=1 rva=1052D8 type=10
+bytes case=2 phase=relocation-target address=7FF8DD9652D8 size=8 data=A0FA8EDDF87F0000
+relocation case=2 index=15 block=1 rva=1052E0 type=10
+bytes case=2 phase=relocation-target address=7FF8DD9652E0 size=8 data=C0FA8EDDF87F0000
+relocation case=2 index=16 block=1 rva=1052E8 type=10
+bytes case=2 phase=relocation-target address=7FF8DD9652E8 size=8 data=E0FA8EDDF87F0000
+relocation case=2 index=17 block=1 rva=1052F0 type=10
+bytes case=2 phase=relocation-target address=7FF8DD9652F0 size=8 data=00FB8EDDF87F0000
+relocation case=2 index=18 block=1 rva=1052F8 type=10
+bytes case=2 phase=relocation-target address=7FF8DD9652F8 size=8 data=90158FDDF87F0000
+relocation case=2 index=19 block=1 rva=105310 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965310 size=8 data=B0158FDDF87F0000
+relocation case=2 index=20 block=1 rva=105318 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965318 size=8 data=D0158FDDF87F0000
+relocation case=2 index=21 block=1 rva=105320 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965320 size=8 data=F0158FDDF87F0000
+relocation case=2 index=22 block=1 rva=105328 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965328 size=8 data=10168FDDF87F0000
+relocation case=2 index=23 block=1 rva=105330 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965330 size=8 data=30168FDDF87F0000
+relocation case=2 index=24 block=1 rva=105338 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965338 size=8 data=50168FDDF87F0000
+relocation case=2 index=25 block=1 rva=105340 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965340 size=8 data=70168FDDF87F0000
+relocation case=2 index=26 block=1 rva=105348 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965348 size=8 data=90168FDDF87F0000
+relocation case=2 index=27 block=1 rva=105350 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965350 size=8 data=B0168FDDF87F0000
+relocation case=2 index=28 block=1 rva=105358 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965358 size=8 data=F0DA9BDDF87F0000
+relocation case=2 index=29 block=1 rva=105360 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965360 size=8 data=90DB9BDDF87F0000
+relocation case=2 index=30 block=1 rva=105378 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965378 size=8 data=105296DDF87F0000
+relocation case=2 index=31 block=1 rva=105388 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965388 size=8 data=B05396DDF87F0000
+relocation case=2 index=32 block=1 rva=105398 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965398 size=8 data=005496DDF87F0000
+relocation case=2 index=33 block=1 rva=1053A8 type=10
+bytes case=2 phase=relocation-target address=7FF8DD9653A8 size=8 data=505496DDF87F0000
+relocation case=2 index=34 block=1 rva=105530 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965530 size=8 data=708486DDF87F0000
+relocation case=2 index=35 block=1 rva=1055A0 type=10
+bytes case=2 phase=relocation-target address=7FF8DD9655A0 size=8 data=508586DDF87F0000
+relocation case=2 index=36 block=1 rva=105610 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965610 size=8 data=F0768ADDF87F0000
+relocation case=2 index=37 block=1 rva=105680 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965680 size=8 data=A07F86DDF87F0000
+relocation case=2 index=38 block=1 rva=1056F0 type=10
+bytes case=2 phase=relocation-target address=7FF8DD9656F0 size=8 data=C03C8FDDF87F0000
+relocation case=2 index=39 block=1 rva=105760 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965760 size=8 data=B0538FDDF87F0000
+relocation case=2 index=40 block=1 rva=105770 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965770 size=8 data=407A96DDF87F0000
+relocation case=2 index=41 block=1 rva=105778 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965778 size=8 data=B0F29BDDF87F0000
+relocation case=2 index=42 block=1 rva=1057D0 type=10
+bytes case=2 phase=relocation-target address=7FF8DD9657D0 size=8 data=A0208BDDF87F0000
+relocation case=2 index=43 block=1 rva=1057D8 type=10
+bytes case=2 phase=relocation-target address=7FF8DD9657D8 size=8 data=30218FDDF87F0000
+relocation case=2 index=44 block=1 rva=1057E0 type=10
+bytes case=2 phase=relocation-target address=7FF8DD9657E0 size=8 data=303F8BDDF87F0000
+relocation case=2 index=45 block=1 rva=1057E8 type=10
+bytes case=2 phase=relocation-target address=7FF8DD9657E8 size=8 data=30218FDDF87F0000
+relocation case=2 index=46 block=1 rva=1057F0 type=10
+bytes case=2 phase=relocation-target address=7FF8DD9657F0 size=8 data=A00D91DDF87F0000
+relocation case=2 index=47 block=1 rva=1057F8 type=10
+bytes case=2 phase=relocation-target address=7FF8DD9657F8 size=8 data=80408BDDF87F0000
+relocation case=2 index=48 block=1 rva=105800 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965800 size=8 data=D03D8BDDF87F0000
+relocation case=2 index=49 block=1 rva=105808 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965808 size=8 data=30218FDDF87F0000
+relocation case=2 index=50 block=1 rva=105810 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965810 size=8 data=C03F8BDDF87F0000
+relocation case=2 index=51 block=1 rva=105818 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965818 size=8 data=D0638FDDF87F0000
+relocation case=2 index=52 block=1 rva=105820 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965820 size=8 data=500F91DDF87F0000
+relocation case=2 index=53 block=1 rva=105828 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965828 size=8 data=70418BDDF87F0000
+relocation case=2 index=54 block=1 rva=105830 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965830 size=8 data=D0638FDDF87F0000
+relocation case=2 index=55 block=1 rva=105838 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965838 size=8 data=400F91DDF87F0000
+relocation case=2 index=56 block=1 rva=105840 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965840 size=8 data=F0408BDDF87F0000
+relocation case=2 index=57 block=1 rva=105848 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965848 size=8 data=D0638FDDF87F0000
+relocation case=2 index=58 block=1 rva=105850 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965850 size=8 data=30218FDDF87F0000
+relocation case=2 index=59 block=1 rva=105858 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965858 size=8 data=603F8BDDF87F0000
+relocation case=2 index=60 block=1 rva=105860 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965860 size=8 data=D0638FDDF87F0000
+relocation case=2 index=61 block=1 rva=105868 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965868 size=8 data=900D91DDF87F0000
+relocation case=2 index=62 block=1 rva=105870 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965870 size=8 data=20408BDDF87F0000
+relocation case=2 index=63 block=1 rva=105878 type=10
+bytes case=2 phase=relocation-target address=7FF8DD965878 size=8 data=703D8BDDF87F0000
+view-complete case=2 base=7FF8DD860000 size=1511424 regions=7 relocation-blocks=30 targets=64
+object case=2 phase=section-after child-handle=68 class=0 status=00000000 need=56 supplied=56 data=100000000D0000000200000002000100C80B00002003000000000000000000000000000040000000780000000000000000000000000000000000000000000000
+object case=2 phase=section-after child-handle=68 class=1 status=00000000 need=64 supplied=16384 data=2E0030000000000000ADDB8DFD0000005C004B006E006F0077006E0044006C006C0073005C006B00650072006E0065006C00330032002E0064006C006C000000 name-units=23 name=005C004B006E006F0077006E0044006C006C0073005C006B00650072006E0065006C00330032002E0064006C006C
+object case=2 phase=section-after child-handle=68 class=2 status=00000000 need=120 supplied=16384 data=0E0010000000000058ADDB8DFD000000C639000047050000000000000000000000000000000000000BD30000BE06000000000000000000000000000000000000 name-units=7 name=00530065006300740069006F006E
+section case=2 status=00000000 need=24 data=00000000000000000000800100000000001017000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+case=2 warmup=0 installed=1 done=1 calls=1 exit=77 handles-before=57 handles-after=57 exact-handle-set=1
+complete cases=2 warmup=1

@@ -1,0 +1,62 @@
+{
+  "actual-root-head": "df572884c0cc75b5f773729fc16e38160f38593b",
+  "owning-unix-root-head": "e2fc5b483be7cad2dae17d889690cc398973c5e8",
+  "owning-windows-root-head": "f386ed2aeac29a701d32f28eb73c14003eb55f7a",
+  "source-claims": "frozen owning embeddings, current RAX sources; concurrent root changes excluded",
+  "consumers": [
+    {
+      "path": "src/emulation/rax/rax_process.cpp",
+      "actual-sha256": "ed55d78681a9a59e384186382d998244d80ca5665793e60f5e7577d88d526564",
+      "owning-unix-sha256": "ed55d78681a9a59e384186382d998244d80ca5665793e60f5e7577d88d526564",
+      "same": true
+    },
+    {
+      "path": "src/emulation/rax/librax_loader.cpp",
+      "actual-sha256": "968294f6cf9f5e0e2af2f13a87eca456c57b5f951f6d8ccb3375f7cd16fee4c9",
+      "owning-unix-sha256": "968294f6cf9f5e0e2af2f13a87eca456c57b5f951f6d8ccb3375f7cd16fee4c9",
+      "same": true
+    },
+    {
+      "path": "src/tools/builtin/emulation/sessions/process_tool.cpp",
+      "actual-sha256": "2e367268a546344c73c288910b97ab733b825c3388b69c7a28ad3a0d3e27e2eb",
+      "owning-unix-sha256": "2e367268a546344c73c288910b97ab733b825c3388b69c7a28ad3a0d3e27e2eb",
+      "same": true
+    },
+    {
+      "path": "include/assist/emulation/rax/rax_process.hpp",
+      "actual-sha256": "525c9a3bfeb7d5626b3690905e293f2f464908039aa93497b00464f76aa8bdff",
+      "owning-unix-sha256": "525c9a3bfeb7d5626b3690905e293f2f464908039aa93497b00464f76aa8bdff",
+      "same": true
+    },
+    {
+      "path": "test/rax_process_tests.cpp",
+      "actual-sha256": "d4dacc7f185d04d7ca30acf2bf97eed71194bde9e2a22e11c1cad73d1770fcbd",
+      "owning-unix-sha256": "d4dacc7f185d04d7ca30acf2bf97eed71194bde9e2a22e11c1cad73d1770fcbd",
+      "same": true
+    },
+    {
+      "path": "test/process_tool_tests.cpp",
+      "actual-sha256": "960bb5d07a446619ee7331ca517ea9eb38b8c8b87b15f7dcf4e3c2f136336522",
+      "owning-unix-sha256": "960bb5d07a446619ee7331ca517ea9eb38b8c8b87b15f7dcf4e3c2f136336522",
+      "same": true
+    },
+    {
+      "path": "test/process_tool_unavailable_tests.cpp",
+      "actual-sha256": "c7123d9398fa405349018f4ab18953d0b7688c0afb687fca2beaf1fa226a2e72",
+      "owning-unix-sha256": "c7123d9398fa405349018f4ab18953d0b7688c0afb687fca2beaf1fa226a2e72",
+      "same": true
+    },
+    {
+      "path": "test/e14_rax_abi_drift_tests.cpp",
+      "actual-sha256": "bb0f260181f3506db1e203a018cda6de0b47daf617baf2216d5a9568c604369f",
+      "owning-unix-sha256": "bb0f260181f3506db1e203a018cda6de0b47daf617baf2216d5a9568c604369f",
+      "same": true
+    },
+    {
+      "path": "test/rust_archive_link_tests.cpp",
+      "actual-sha256": "1418965f173b0448ee5429fda9ab8556f806dc4ec70b6cc3a85de735051c9b1f",
+      "owning-unix-sha256": "1418965f173b0448ee5429fda9ab8556f806dc4ec70b6cc3a85de735051c9b1f",
+      "same": true
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "captured-utc": "2026-10-13T12:48:08.144195+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "principal": "\"nt authority\\system\",\"S-1-5-18\"",
+  "native-machine": 43620,
+  "process-machine": 0,
+  "python": "3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:57:41) [MSC v.1944 64 bit (ARM64)]",
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-section-map-low-address.py",
+    "bytes": 4292,
+    "sha256": "f8fc8ac7ed8e965540582363833dd6c4dea9b701632efe0c8098b0881cc56cec"
+  },
+  "libraries": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+      "machine": 332,
+      "characteristics": 8450
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df",
+      "machine": 332,
+      "characteristics": 8450
+    }
+  ],
+  "producers": [
+    {
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-arm64\\native-section-map-low-address.cpp",
+        "bytes": 21822,
+        "sha256": "86cece8d2a39d019e82b314af20b9effe3c867de60d6c3e81c92bebe5e4a3e5b"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-arm64\\native-section-map-low-address-arm64.exe",
+        "bytes": 174592,
+        "sha256": "2c0e1b08e5f3791373a448b9d68b31e8b2b1bfff6cfa8dd2742b699c3cb3b584",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-arm64\\native-section-map-low-address-arm64.log",
+        "bytes": 329802,
+        "sha256": "fbdc735cdb65bc1db9bf089b623b89fa48de742e3d61a7b7a2493f617990dd59"
+      }
+    },
+    {
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x64\\native-section-map-low-address.cpp",
+        "bytes": 21822,
+        "sha256": "86cece8d2a39d019e82b314af20b9effe3c867de60d6c3e81c92bebe5e4a3e5b"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x64\\native-section-map-low-address-x64.exe",
+        "bytes": 173568,
+        "sha256": "2be0fc039cb23e48e8c8b791312f83a549215c76f099059b076e97114a4c19bf",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x64\\native-section-map-low-address-x64.log",
+        "bytes": 356872,
+        "sha256": "c09432fdbd9f7fa80cc257a9b0a97ba3664daf10c750444e3a73dfe0bfd190a3"
+      }
+    },
+    {
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x86\\native-section-map-low-address.cpp",
+        "bytes": 21822,
+        "sha256": "86cece8d2a39d019e82b314af20b9effe3c867de60d6c3e81c92bebe5e4a3e5b"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x86\\native-section-map-low-address-x86.exe",
+        "bytes": 149504,
+        "sha256": "34135981036cf33c66ec8c761121ec700a16ab795f1b4bd9cfe33184bb976133",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x86\\native-section-map-low-address-x86.log",
+        "bytes": 299747,
+        "sha256": "2c4755aae4b7910342e61b522325025c90c8590b5f24bf9c39f8886905d06af4"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x86-laa\\native-section-map-low-address.cpp",
+        "bytes": 21822,
+        "sha256": "86cece8d2a39d019e82b314af20b9effe3c867de60d6c3e81c92bebe5e4a3e5b"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x86-laa\\native-section-map-low-address-x86-laa.exe",
+        "bytes": 149504,
+        "sha256": "9e354e9c13a51d04e5763733be86a00fcbfca997c733269650383aed6f4152f9",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x86-laa\\native-section-map-low-address-x86-laa.log",
+        "bytes": 323021,
+        "sha256": "1f5fdfd101e17724572786260b693d98ae02178cf4aea0aa927b97f982e3b965"
+      }
+    }
+  ]
+}

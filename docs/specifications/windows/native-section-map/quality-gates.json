@@ -1,0 +1,19 @@
+{
+  "root-QG1": "no normative content required",
+  "root-QG2": "ten material assumptions reconciled in register",
+  "root-QG3": "selected mapping increment covered; full goal explicitly incomplete",
+  "root-QG4": "byte extents, ABI widths, matrix counts and timing stated",
+  "root-QG5": "fault ordering, relocation, lifetime and collision edges; baseline failures retained",
+  "root-QG6": "primary sources and independently captured native identities bound",
+  "root-QG7": "bounded findings explicit; adjacent work untouched",
+  "rax-QG1": "assumptions reconciled",
+  "rax-QG2": "increment criteria audited; overall goal remains active",
+  "rax-QG3": "captured source/runtime/command provenance preserved",
+  "rax-QG4": "no hidden contradiction; unchanged Windows baseline failures and host timeouts retained",
+  "rax-QG5": "native controls distinct from synthetic replay and owning tests",
+  "rax-QG6": "bounded findings explicit",
+  "rax-QG7": "exact owned paths; root foreign work preserved through isolated publication",
+  "rax-QG8": "all three hosts; native installed leaves; no skip claimed as runtime proof",
+  "rax-QG9": "public ABI/defaults/pins unchanged until paired gitlink publication",
+  "publication": "Exact red, frozen-blob, parent and remote verification records live outside the committed corpus to avoid a self-referential commit identity."
+}

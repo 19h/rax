@@ -1,0 +1,10 @@
+{
+  "native-section-map-projection.cpp": {
+    "bytes": 20856,
+    "sha256": "8027b6f09923665ac4e1cb84e0a1f00dc441a7811368872e20434456cadddb7f"
+  },
+  "native-section-map-projection-profiles.ps1": {
+    "bytes": 2202,
+    "sha256": "83e235e5e57955ab3d8596d242856ee989bef73dd770e6f5b1a66a497b48f4f2"
+  }
+}

@@ -107,7 +107,17 @@ fn info(h: &Owned) -> io::Result<Basic> {
     }
     Ok(value)
 }
-pub(super) fn capture(parent: &[u16], name: &[u16]) -> io::Result<CapturedSection> {
+pub(super) fn validate(h: &Owned, attributes: u32, size: u64) -> io::Result<()> {
+    let current = info(h)?;
+    if current.attributes != attributes || current.size as u64 != size {
+        return Err(invalid("pinned native section extent/attributes changed"));
+    }
+    Ok(())
+}
+pub(super) fn capture(
+    parent: &[u16],
+    name: &[u16],
+) -> io::Result<(CapturedSection, Arc<super::image::Source>)> {
     let path: Vec<_> = parent
         .iter()
         .copied()
@@ -175,7 +185,6 @@ pub(super) fn capture(parent: &[u16], name: &[u16]) -> io::Result<CapturedSectio
             "selected section metadata/grant changed during capture",
         ));
     }
-    h.close()?;
     let captured = CapturedSection {
         maximum_access,
         system_security_status,
@@ -188,5 +197,8 @@ pub(super) fn capture(parent: &[u16], name: &[u16]) -> io::Result<CapturedSectio
             "selected installed section is outside the bounded image profile",
         ));
     }
-    Ok(captured)
+    Ok((
+        captured,
+        super::image::Source::new(h, original.attributes, original.size as u64),
+    ))
 }

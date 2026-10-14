@@ -1,0 +1,9 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 21s
+     Running unittests src/lib.rs (target/debug/deps/rax-7ff0200e1fecd2e2)
+
+running 1 test
+test user::windows::dll::native::section_map::geometry::tests::retained_randomized_low_candidate_can_fail_a_tighter_ceiling_with_free_space ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 9936 filtered out; finished in 0.01s
+

@@ -1,0 +1,10 @@
+{
+  "native-section-map-collision.cpp": {
+    "bytes": 21597,
+    "sha256": "eb54ae06f894f414d71b29c6bbf522d25a3d9cbdc601abfc9b998212e9221837"
+  },
+  "native-section-map-collision-profiles.ps1": {
+    "bytes": 2187,
+    "sha256": "6ef805e885cea4e2ba0938bfc4048c98e6e1ac5b15a8280310d7f95de0b2cb82"
+  }
+}

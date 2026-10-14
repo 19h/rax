@@ -1,0 +1,77 @@
+{
+  "captured-utc": "2026-10-13T10:12:45.296622+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "principal": "\"nt authority\\system\",\"S-1-5-18\"",
+  "native-machine": 43620,
+  "process-machine": 0,
+  "python": "3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:57:41) [MSC v.1944 64 bit (ARM64)]",
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-section-map.py",
+    "bytes": 3177,
+    "sha256": "bad3f0c2d053a6f7a8d307942f71c768be88c83deab27ea3629f2a072aa0f0d7"
+  },
+  "libraries": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "machine": 43620,
+      "characteristics": 8226,
+      "preferred-image-base": 6442450944
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0",
+      "machine": 43620,
+      "characteristics": 8226,
+      "preferred-image-base": 6442450944
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+      "machine": 332,
+      "characteristics": 8450,
+      "preferred-image-base": 1260912640
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df",
+      "machine": 332,
+      "characteristics": 8450,
+      "preferred-image-base": 268435456
+    }
+  ],
+  "producers": [
+    {
+      "family": "fresh",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-arm64\\native-section-map-fresh.cpp",
+        "bytes": 17864,
+        "sha256": "75d3c1459068b78adf022a5f307fc195f1f2ae3649d8d8b2625625da2c7f7a84"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-arm64\\native-section-map-fresh-arm64.exe",
+        "bytes": 173056,
+        "sha256": "99a93146482ca80b73dff9cb678c901518edf49c383cb5e4863f385d2229c7e5",
+        "machine": 43620,
+        "characteristics": 34,
+        "preferred-image-base": 5368709120
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-arm64\\native-section-map-fresh-arm64.log",
+        "bytes": 51261,
+        "sha256": "d9882c4e15d1a7a846bfe2ac51672e2e683a9a6d745e107393bac4798940ab67"
+      }
+    }
+  ]
+}

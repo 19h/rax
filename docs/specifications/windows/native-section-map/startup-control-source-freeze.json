@@ -1,0 +1,10 @@
+{
+  "native-section-map-startup-controls.cpp": {
+    "bytes": 19453,
+    "sha256": "66c107bec84d2f2eaeb9132c85889a08d9681e9b18360dc1cba08c49d1ac257e"
+  },
+  "native-section-map-startup-controls-arm64.ps1": {
+    "bytes": 1914,
+    "sha256": "9d5265d1e97d5320411eb68185e646d4aceb84e00f4b7dae9fcc32ff8f2100b0"
+  }
+}

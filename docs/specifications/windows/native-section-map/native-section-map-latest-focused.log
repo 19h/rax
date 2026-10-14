@@ -1,0 +1,31 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 57s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-tests\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 5 tests
+test user::windows::process::sched::tests::services_tests::section_map_tests::native_section_map_original_ten_argument_service_returns_owned_rebased_view ... ok
+test user::windows::process::sched::tests::services_tests::section_map_tests::native_section_map_wow64_late_output_fault_keeps_view_and_copyback_order ... ok
+test user::windows::process::sched::tests::services_tests::section_map_tests::installed::native_section_map_installed_leaves_copy_pinned_image_and_unmap_after_close ... ok
+test user::windows::process::sched::tests::services_tests::section_map_tests::native_section_map_protection_requires_exact_section_access_before_geometry ... ok
+test user::windows::process::sched::tests::services_tests::section_map_tests::replay::native_section_map_replays_all_4236_native_access_and_low_address_observations ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 7180 filtered out; finished in 3.97s
+

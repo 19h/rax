@@ -34,6 +34,9 @@ use crate::user::mm::{AddressSpace, Mapping, MmError, PAGE_SIZE, Perms};
 
 mod extended;
 mod scheduler;
+mod section;
+#[cfg(test)]
+mod section_tests;
 pub use extended::AddressRequirements;
 pub(crate) use scheduler::SchedulerView;
 
@@ -578,6 +581,9 @@ pub struct VirtualMemory {
     space: AddressSpace,
     allocs: BTreeMap<u64, Allocation>,
     nls_views: BTreeSet<u64>,
+    section_views: BTreeMap<u64, section::SectionView>,
+    section_low_placements: BTreeMap<usize, section::LowPlacement>,
+    default_low_image_placement: Option<u64>,
     /// Backing bytes promised for committed pages. No guest paging file
     /// is modeled; the usable frame arena bounds commitment.
     committed: u64,
@@ -605,6 +611,9 @@ impl VirtualMemory {
             space,
             allocs: BTreeMap::new(),
             nls_views: BTreeSet::new(),
+            section_views: BTreeMap::new(),
+            section_low_placements: BTreeMap::new(),
+            default_low_image_placement: None,
             committed: 0,
             commit_limit,
             low,
@@ -871,7 +880,9 @@ impl VirtualMemory {
     /// requires size zero and the original reservation base. The returned
     /// range reports the full released allocation or rounded decommit range.
     pub fn free(&mut self, base: u64, size: u64, free_type: u32) -> Result<(u64, u64), VmError> {
-        if self.is_nls_view(base) && matches!(free_type, mem::RELEASE | mem::DECOMMIT) {
+        if (self.is_nls_view(base) || self.section_view(base).is_some())
+            && matches!(free_type, mem::RELEASE | mem::DECOMMIT)
+        {
             return Err(VmError::CannotDeleteSection);
         }
         match free_type {
@@ -913,6 +924,9 @@ impl VirtualMemory {
             } else {
                 VmError::InvalidProtection
             });
+        }
+        if self.section_views.contains_key(&a.base) {
+            return Err(VmError::AlreadyCommitted);
         }
 
         if end > a.base + a.size {
@@ -985,6 +999,9 @@ impl VirtualMemory {
         let first = start & !(PAGE_SIZE - 1);
         let a = self.allocation(first).ok_or(VmError::NotAllocated)?;
         if self.nls_views.contains(&a.base) {
+            return Err(VmError::CannotDeleteSection);
+        }
+        if self.section_views.contains_key(&a.base) {
             return Err(VmError::CannotDeleteSection);
         }
 
@@ -1063,6 +1080,7 @@ impl VirtualMemory {
         self.space.unmap(base, size).map_err(mm)?;
         self.allocs.remove(&base);
         self.nls_views.remove(&base);
+        self.section_views.remove(&base);
         self.committed -= returned;
         Ok(size)
     }

@@ -15,6 +15,7 @@ mod process_query;
 mod process_set;
 mod query;
 mod registry;
+mod section_map;
 mod symbolic_link;
 mod thread_set;
 mod timers;
@@ -223,6 +224,12 @@ pub(super) static EXPORTS: &[Export] = &[
         Stdcall,
         &[Ptr, I32, Ptr],
         directory::open_section,
+    ),
+    Export::func(
+        "NtMapViewOfSection",
+        Stdcall,
+        &[Ptr, Ptr, Ptr, Ptr, Ptr, Ptr, Ptr, I32, I32, I32],
+        section_map::map,
     ),
 ];
 fn status_error(c: &mut Ctx) -> ApiResult {

@@ -1,0 +1,76 @@
+[
+  {
+    "gate": "focused",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "native_section_map",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "gate": "full",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "gate": "capi",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "-p",
+      "rax-capi",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ]
+  },
+  {
+    "gate": "all-targets",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ]
+  },
+  {
+    "gate": "integration",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--test",
+      "user_windows",
+      "--test",
+      "user_windows_memory",
+      "--",
+      "--nocapture"
+    ]
+  }
+]

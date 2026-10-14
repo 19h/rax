@@ -1,0 +1,55 @@
+[
+  {
+    "case": "source-byte",
+    "rejected": true,
+    "exit-code": 1,
+    "last-error": "ValueError: byte count: /Users/int/Library/Caches/assist-process-emulation/section-map-view-20261013/portable-verifier-stress/evidence-falsification/source-byte/native-section-map-access.cpp"
+  },
+  {
+    "case": "executed-binary",
+    "rejected": true,
+    "exit-code": 1,
+    "last-error": "ValueError: executed binary"
+  },
+  {
+    "case": "physical-kernel",
+    "rejected": true,
+    "exit-code": 1,
+    "last-error": "ValueError: same measured ARM64 kernel: access"
+  },
+  {
+    "case": "subject",
+    "rejected": true,
+    "exit-code": 1,
+    "last-error": "ValueError: measured SYSTEM subject: access"
+  },
+  {
+    "case": "native-library",
+    "rejected": true,
+    "exit-code": 1,
+    "last-error": "ValueError: unchanged native libraries: access"
+  },
+  {
+    "case": "missing-row-rehashed",
+    "rejected": true,
+    "exit-code": 1,
+    "last-error": "ValueError: ordered complete matrix: native-section-map-access-arm64.log"
+  },
+  {
+    "case": "producer-failed-exit",
+    "rejected": true,
+    "exit-code": 1,
+    "last-error": "ValueError: producer exit"
+  },
+  {
+    "case": "laa",
+    "rejected": true,
+    "exit-code": 1,
+    "last-error": "ValueError: actual executable LAA"
+  },
+  {
+    "case": "optimized",
+    "rejected": true,
+    "exit-code": 1
+  }
+]

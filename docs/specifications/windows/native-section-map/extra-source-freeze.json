@@ -1,0 +1,10 @@
+{
+  "native-section-map-extra.cpp": {
+    "bytes": 20611,
+    "sha256": "8be5d4328a4d1880a1d0fe3aea0471f98e75b0b73a9962fc1cf7783f13d05e97"
+  },
+  "native-section-map-extra-profiles.ps1": {
+    "bytes": 2127,
+    "sha256": "34a74ae97f4d5fd5174f0f568499015e70820db0f092672861612aba9725d6f5"
+  }
+}

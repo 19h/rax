@@ -1,0 +1,10 @@
+{
+  "native-section-map-equivalence.cpp": {
+    "bytes": 22680,
+    "sha256": "a6eb1a5c9f6ab9f355bde205f01499f6d57073d848080e42b3384c8180874b27"
+  },
+  "native-section-map-equivalence-profiles.ps1": {
+    "bytes": 2228,
+    "sha256": "153157f667500c92966639e0db522e9c68cbf57874532ca078fb4ee86c0db39f"
+  }
+}

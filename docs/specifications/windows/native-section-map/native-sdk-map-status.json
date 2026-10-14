@@ -1,0 +1,13 @@
+[
+  {
+    "path": "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.26100.0\\shared\\ntstatus.h",
+    "bytes": 707357,
+    "sha256": "50bfd57f92dd01c93c1960292aa428e3323043dc947cf15c0dfa6cfec0778ae6",
+    "definitions": [
+      "#define STATUS_IMAGE_NOT_AT_BASE         ((NTSTATUS)0x40000003L)",
+      "#define STATUS_IMAGE_AT_DIFFERENT_BASE   ((NTSTATUS)0x40000036L)",
+      "#define STATUS_INVALID_VIEW_SIZE         ((NTSTATUS)0xC000001FL)",
+      "#define STATUS_MAPPED_ALIGNMENT          ((NTSTATUS)0xC0000220L)"
+    ]
+  }
+]

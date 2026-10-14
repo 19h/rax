@@ -1633,3 +1633,11 @@ replay22584 open and71040 duplication rows; final installed, platform, owning an
 ordinary evidence is separate in
 [section-open evidence](../../../docs/specifications/windows/native-section-open/README.md).
 Guest section query/mapping and full ordinary exits remain unproven.
+
+### Selected image-section mapping (2026-10-14)
+
+`NtMapViewOfSection` maps pinned installed image bytes into private guest frames.
+[The mapping contract](../../../docs/architecture/user-mode/selected-image-section-mapping.md)
+and [native evidence](../../../docs/specifications/windows/native-section-map/README.md)
+record acquisition, projection, relocation, ABI, faults, lifetime and validation.
+Full ordinary Windows process completion remains unproved.

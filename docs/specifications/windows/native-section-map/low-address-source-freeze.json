@@ -1,0 +1,10 @@
+{
+  "native-section-map-low-address.cpp": {
+    "bytes": 21822,
+    "sha256": "86cece8d2a39d019e82b314af20b9effe3c867de60d6c3e81c92bebe5e4a3e5b"
+  },
+  "native-section-map-low-address-profiles.ps1": {
+    "bytes": 2217,
+    "sha256": "9ed1d91d55e4cdd54546f0f0321e21d4ff016b69f8688aa94b91856ca0aa8425"
+  }
+}

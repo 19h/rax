@@ -1,4 +1,13 @@
-## Current increment: installed image-section opening (2026-10-13)
+## Current increment: selected image-section mapping (2026-10-14)
+
+`NtMapViewOfSection` creates guest image views from pinned installed Sections,
+with native/WoW64 fault ordering, image relocation, partial/large-page geometry
+and close/unmap lifetime. See [the mapping contract](selected-image-section-mapping.md)
+and [native evidence](../../specifications/windows/native-section-map/README.md)
+for measured scope and final validation. Full ordinary Windows completion
+remains an active, unproved requirement.
+
+## Previous increment: installed image-section opening (2026-10-13)
 
 `NtOpenSection` appends a stable native export and returns typed guest image-section
 handles from the selected installed KnownDll namespace. Acquisition closes native

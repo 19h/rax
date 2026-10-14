@@ -1,0 +1,131 @@
+{
+  "captured-utc": "2026-10-13T13:03:03.968627+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "principal": "\"nt authority\\system\",\"S-1-5-18\"",
+  "native-machine": 43620,
+  "process-machine": 0,
+  "python": "3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:57:41) [MSC v.1944 64 bit (ARM64)]",
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-section-map-equivalence.py",
+    "bytes": 4289,
+    "sha256": "e5c7d94d5076b729f2d9d1960a0637645de7572df030c2acb26ec2a9e9ecaa8b"
+  },
+  "libraries": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+      "machine": 332,
+      "characteristics": 8450
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df",
+      "machine": 332,
+      "characteristics": 8450
+    }
+  ],
+  "producers": [
+    {
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-arm64\\native-section-map-equivalence.cpp",
+        "bytes": 22680,
+        "sha256": "a6eb1a5c9f6ab9f355bde205f01499f6d57073d848080e42b3384c8180874b27"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-arm64\\native-section-map-equivalence-arm64.exe",
+        "bytes": 177664,
+        "sha256": "8516d3a8d7cdc91bbf9a987a9e6566e2f9dfc39c502f006ccd33993b47f445e0",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-arm64\\native-section-map-equivalence-arm64.log",
+        "bytes": 66898,
+        "sha256": "a15c7920a9414de3adf71ff9abba4e0a7d5f7fb22809aa1f28fa1efe6c89c5f5"
+      }
+    },
+    {
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x64\\native-section-map-equivalence.cpp",
+        "bytes": 22680,
+        "sha256": "a6eb1a5c9f6ab9f355bde205f01499f6d57073d848080e42b3384c8180874b27"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x64\\native-section-map-equivalence-x64.exe",
+        "bytes": 176640,
+        "sha256": "1de41f43260135c76ddb1fa1394d6509eb805e251efb96fb2337e3db6d277008",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x64\\native-section-map-equivalence-x64.log",
+        "bytes": 66911,
+        "sha256": "96edfc0b2f684fc82ede9c1c271eacb840b80a5125d6c9064c13de185d0f1b49"
+      }
+    },
+    {
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x86\\native-section-map-equivalence.cpp",
+        "bytes": 22680,
+        "sha256": "a6eb1a5c9f6ab9f355bde205f01499f6d57073d848080e42b3384c8180874b27"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x86\\native-section-map-equivalence-x86.exe",
+        "bytes": 151552,
+        "sha256": "b0c2571272605a2126cbbab3ffaeab0a2f4c891b740813be54c9ebf75d11183d",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x86\\native-section-map-equivalence-x86.log",
+        "bytes": 66045,
+        "sha256": "5468592e5d7e8e2fde421d666cafe933882cc840223df10a8110d7cc8b7f835c"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x86-laa\\native-section-map-equivalence.cpp",
+        "bytes": 22680,
+        "sha256": "a6eb1a5c9f6ab9f355bde205f01499f6d57073d848080e42b3384c8180874b27"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x86-laa\\native-section-map-equivalence-x86-laa.exe",
+        "bytes": 151552,
+        "sha256": "df06d3146f00585f091cab159cdd25827bca22e073569f7041c6d230ff8bb501",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-map-x86-laa\\native-section-map-equivalence-x86-laa.log",
+        "bytes": 66045,
+        "sha256": "88e1eee675970c013003c11cf3859220165ad361b4a0ec84c51fac8a70aa2ff3"
+      }
+    }
+  ]
+}

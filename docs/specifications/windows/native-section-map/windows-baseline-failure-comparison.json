@@ -1,0 +1,12 @@
+{
+  "unchanged-failures": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "baseline-log": "/Users/int/Library/Caches/assist-process-emulation/section-open-20261013/native-section-open-final-full.log",
+  "current-log": "/Users/int/Downloads/assist-native-allocate-ex-transfer-20261010-2154/native-section-map-latest-full.log",
+  "current-result": "7178passed5failed2ignored"
+}

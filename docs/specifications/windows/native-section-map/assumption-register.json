@@ -1,0 +1,102 @@
+[
+  {
+    "id": "M1",
+    "assumption": "The original first native NtMapViewOfSection startup call is representative of the observed RAX boundary.",
+    "basis": "Two complete original SVC40 startup captures identify KnownDlls/kernel32.dll, pseudo current process, zero base/view inputs, allocation0x00800000 and protect0x80, unmodified success and exact parent handle-set restoration.",
+    "dependent-result": "First-call map semantics and caller layout",
+    "stress-test": "Different initial mapped section, syscall number, privilege subject or true-LR return",
+    "falsification-probe": "Native entry/source/handle/argument capture differs from ordinary observer boundary",
+    "status": "confirmed",
+    "status-detail": "confirmed for original ARM64 first startup call on measured kernel/subject"
+  },
+  {
+    "id": "M2",
+    "assumption": "Kernel mapping applies relocation/header rebasing for MEM_DIFFERENT_IMAGE_BASE_OK; without that flag a nonpreferred view retains source-relative contents. Existing loader import/PEB work remains outside NtMap.",
+    "basis": "Complete four-profile query before/after controls preserve all512headerbytes; allocation0 produces boot-relative preferred headers, allocation0x800000 produces rebased preferred headers. Original first call and startup controls independently verify preferred/partial/error placement.",
+    "dependent-result": "Map operation architecture",
+    "stress-test": "Partial slices, pointer words outside the mapped slice, native/compatibility image formats, large pages and low-address mapping",
+    "falsification-probe": "Compare byte-exact original relocation targets and mapped template deltas under each allocation flag",
+    "status": "revised",
+    "status-detail": "revised; blanket no-kernel-relocation assumption falsified"
+  },
+  {
+    "id": "M3",
+    "assumption": "Guest Section identity must retain or pin image backing across open/map/close lifetime, rather than reopening a path with only size/attribute equality.",
+    "basis": "Pinned Source Arc and independently owned native template views; installed ARM64/WoW64 leaf mapping, close-surviving-view and unmap checks passed on Windows.",
+    "dependent-result": "Image backing acquisition and lifetime design",
+    "stress-test": "Source drift, view surviving handle close, multiple views and permissions",
+    "falsification-probe": "Chosen backing can change while a guest handle/view remains live",
+    "status": "confirmed",
+    "status-detail": "Confirmed for selected installed sections; portable ownership and independent-write regressions passed on all three hosts."
+  },
+  {
+    "id": "M4",
+    "assumption": "AllocationBase and the returned image address are distinct values when large-page image views embed the image inside a larger allocation.",
+    "basis": "Excluded first/second probes case294: 2097152-byte allocation at223D7200000 and returned image223D7270000; third collector records both. Extra controls confirm explicit placement/nonzero offsets use ordinary pages; whole-image unspecified placement can use 2 MiB carriers or ordinary pages.",
+    "dependent-result": "Large-page view capture and mapping geometry",
+    "stress-test": "Header at allocation origin can be zero while returned image header is valid; late pointer faults obscure returned image address.",
+    "falsification-probe": "Complete native matrix reports allocation/image equality or inconsistent allocation containment.",
+    "status": "revised",
+    "status-detail": "revised; carrier/image distinction confirmed; opportunistic native geometry is nondeterministic"
+  },
+  {
+    "id": "M5",
+    "assumption": "MemoryImageInformation class6 query does not change the observed mapped header.",
+    "basis": "Five before/after header pairs perprofile acrossallfour profiles have512-byte equality.",
+    "dependent-result": "Separate query metadata from mapping relocation policy",
+    "stress-test": "Relocation target contents and other kernel builds remain unmeasured by this header-only control",
+    "falsification-probe": "Before/after header or relocation-byte mismatch on independently mapped fresh view",
+    "status": "confirmed",
+    "status-detail": "confirmed for measured headers only"
+  },
+  {
+    "id": "M6",
+    "assumption": "Mask-form ZeroBits accepts bit-length at least 11; values22..31 are invalid count form.",
+    "basis": "Four-profile controls: masks0x3FF and below invalid parameter;0x400..0x1000 accepted but insufficient address space for selected image.",
+    "dependent-result": "Guest address ceiling and validation",
+    "stress-test": "Count22,31; masks1023,1024,all-ones; fixed-base/spanoverflow",
+    "falsification-probe": "Native control returns another status partition at threshold or guest geometry regression fails",
+    "status": "confirmed",
+    "status-detail": "confirmed for measured kernel; portable boundary test passed on macOS"
+  },
+  {
+    "id": "M7",
+    "assumption": "The kernel ImageMachine extended parameter reproduces the x64 ARM64X view of a selected section from the native ARM64 acquisition process.",
+    "basis": "Independent four-profile captures show AA64 vs8664 headers for the same kernel Section; Microsoft defines ARM64X process projection and ImageMachine type6. ARM64 MapEx8664 controls produced AMD64 kernel32/NTDLL headers; kernel32512-byte header exactly matches actual x64 NtMap alloc0. Source preferred base and16sampled relocation values also match. CompleteSHA256kernel325d964a7c733d54b6ec20e00b6968f7fe76dbc652bfa091abb70da0f367138939;NTDLLd964c7360c10a450719279e1609f85e3d5a098d66c77d9f3107fd18111c865d7.",
+    "dependent-result": "x64 kernel section bytes and machine metadata",
+    "stress-test": "Pure ARM64 sections, ARM64X known DLLs, projected imports/exports, extension absence and failed acquisition cleanup",
+    "falsification-probe": "Native ARM64 MapEx ImageMachine8664 header/bytes differ from actual x64 NtMap view",
+    "status": "confirmed",
+    "status-detail": "Native complete projected kernel32/NTDLL hashes equal actual x64 raw views. Final installed Rust leaf additionally exercises image_for(X64), validates0x8664, independent ARM64 cache and stable repeated Arc identity."
+  },
+  {
+    "id": "M8",
+    "assumption": "Measured x64-on-ARM64 capture consumes reached base/size read guards before returning invalid PAGE status, unlike native ARM64.",
+    "basis": "Replay failed at exact native case616: x64p0=4 vsARM64p0=0x104; allGuard/ROGuard families15/16 confirm; offsetguard remains untouched.",
+    "dependent-result": "Guard consumption on rejected mappings",
+    "stress-test": "Base/size guard RW/RO; missing pointer; invalidPAGE0/FFFFFFFF; optionaloffsetguard",
+    "falsification-probe": "Independent matched controls or full replay contradict visited-guard/final-status ordering",
+    "status": "revised",
+    "status-detail": "Correction passed all 4236 replay calls on macOS, Linux and Windows. Physical x64 Windows kernel and additional coupled output aliases remain unmeasured."
+  },
+  {
+    "id": "M9",
+    "assumption": "WoW64 maps native-call error statuses through unconditional captured base/size copyback after successful input capture.",
+    "basis": "Exact replay failedx86case179;readonlybase/sizecases179,180,182,183,185,186and652..668 allreturnAVoverhandle/access/type/protection/flags failures.",
+    "dependent-result": "Failed-call copyback ordering and status",
+    "stress-test": "ReadOnlybase/size withbadsection/grant/type/PAGE/flags; guard early capture; output alias",
+    "falsification-probe": "Independent coupled-fault captures/fullmatrix contradict final AV or changed output order",
+    "status": "revised",
+    "status-detail": "Correction passed all 4236 replay calls on macOS, Linux and Windows. Physical x64 Windows kernel and additional coupled output aliases remain unmeasured."
+  },
+  {
+    "id": "M10",
+    "assumption": "Automatic low image placement reuses a randomized candidate;stricterZeroBitsmayfailthatcandidateinstead of searching allfree lowspace.",
+    "basis": "NewARM64lowlayout[64KiB,2GiB)free;ZeroBits1autoEE0000;ZeroBits8NO_MEMORY;explicit64KiB/ZeroBits8maps. OldARM64autoA30000fitsZeroBits8.",
+    "dependent-result": "Per-Section lowplacementstate and capture-driven replayseed",
+    "stress-test": "Candidateaboveceiling, fitsceiling, explicitplacement,preferredfree,unmap/retry andlivecollision",
+    "falsification-probe": "Independent native sequence reselects belowceiling despite retainedcandidate or changesaddress afterunmap",
+    "status": "confirmed",
+    "status-detail": "Four-profile native low-placement/live collisions, all4236 replay calls and expanded collision regression passed on macOS, Linux and Windows."
+  }
+]

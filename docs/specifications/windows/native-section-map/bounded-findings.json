@@ -1,0 +1,27 @@
+[
+  {
+    "impact": "medium",
+    "evidence": "macos-capi.log",
+    "finding": "Retained first macOS C API gate167pass1fail and repeat fail at unchanged30s native true wall budget. Separate resumed control exited0 after42247493us/1689turns. Final macOS C API full gate168pass0fail. Source freeze of resumed-control dylib remains unknown; it is not final shipping proof.",
+    "blocks": "No longer blocks final C API gate; retain failed observations and scope."
+  },
+  {
+    "impact": "high",
+    "finding": "ARM64X AMD64 projection establishes mapping data/metadata, not execution support for mixed ARM64EC/x64 code. Broader Windows loader/CPU transitions remain outside this mapping semantic group and require evidence for full-process support.",
+    "evidence": [
+      "Microsoft ARM64X documentation",
+      "native projection headers",
+      "src/user/windows/loader/mod.rs"
+    ],
+    "blocks": "overall arbitrary x64-on-ARM64 native process completion; not a claim of success from mapping"
+  },
+  {
+    "impact": "medium",
+    "finding": "Linux first full integration543pass1fail at unchanged30s ARM64 apiset math slice1 wall timeout; isolated repeat passed1in0.30s; subsequent full integration544pass0fail in163.00s. Original failed gate remains retained.",
+    "evidence": [
+      "linux-latest-integration.log",
+      "linux-final-integration-repeat.log"
+    ],
+    "blocks": "Does not block mapping increment publication; records nondeterministic host-duration failure without changing budget."
+  }
+]

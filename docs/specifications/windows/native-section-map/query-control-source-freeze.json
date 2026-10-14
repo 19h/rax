@@ -1,0 +1,10 @@
+{
+  "native-section-map-query-control.cpp": {
+    "bytes": 18675,
+    "sha256": "4918dbe675620c755cac691e27be2b3db811e400d99e45e64ab511b14743ec99"
+  },
+  "native-section-map-query-control-profiles.ps1": {
+    "bytes": 2247,
+    "sha256": "95eab1366fe5dc2073557b0eed3d69a64df04630bd63fff92ccff196f77fea70"
+  }
+}

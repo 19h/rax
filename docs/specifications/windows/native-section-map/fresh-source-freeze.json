@@ -1,0 +1,10 @@
+{
+  "native-section-map-fresh.cpp": {
+    "bytes": 17864,
+    "sha256": "75d3c1459068b78adf022a5f307fc195f1f2ae3649d8d8b2625625da2c7f7a84"
+  },
+  "native-section-map-fresh-arm64.ps1": {
+    "bytes": 1749,
+    "sha256": "431fe5a91425f1f4c9776949305a1e8c38bfa0dce36f64d4f1861b49c0791cad"
+  }
+}

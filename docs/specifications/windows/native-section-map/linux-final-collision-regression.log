@@ -1,0 +1,8 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.35s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 1 test
+test user::windows::dll::native::section_map::geometry::tests::retained_randomized_low_candidate_can_fail_a_tighter_ceiling_with_free_space ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7758 filtered out; finished in 0.14s
+

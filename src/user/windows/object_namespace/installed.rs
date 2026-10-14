@@ -1,7 +1,8 @@
-//! Fixed read-only host acquisition; every native handle closes before return.
+//! Fixed host acquisition; directory/link handles close and image sections pin identity.
 use super::*;
 use std::ffi::c_void;
 use std::ptr::null_mut;
+pub(super) mod image;
 mod section;
 type Handle = *mut c_void;
 #[repr(C)]
@@ -328,6 +329,7 @@ fn system_root() -> io::Result<Vec<u16>> {
     ))
 }
 pub(crate) fn snapshot(upcase: Arc<[u16]>) -> io::Result<Namespace> {
+    let mut sources = Vec::new();
     let mut selected = Vec::new();
     for path in PATHS {
         let units: Vec<_> = path.encode_utf16().collect();
@@ -374,7 +376,15 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>) -> io::Result<Namespace> {
         if path != PATHS[0] {
             for entry in &mut entries {
                 if is(&entry.kind, "Section") {
-                    entry.section = Some(section::capture(&units, &entry.name)?);
+                    let (captured, source) = section::capture(&units, &entry.name)?;
+                    let path: Vec<_> = units
+                        .iter()
+                        .copied()
+                        .chain([92])
+                        .chain(entry.name.iter().copied())
+                        .collect();
+                    entry.section = Some(captured);
+                    sources.push((path, source));
                 }
                 if is(&entry.name, "KnownDllPath") && is(&entry.kind, "SymbolicLink") {
                     let (target, access) = target(&h, &entry.name)?;
@@ -398,6 +408,15 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>) -> io::Result<Namespace> {
         });
     }
     let mut namespace = Namespace::selected(upcase, selected)?;
+    for (path, source) in sources {
+        let section = namespace
+            .lookup_section(None, &path, 0x40, false)
+            .map_err(|_| invalid("pinned section disappeared from selected namespace"))?;
+        section
+            .source
+            .set(source)
+            .map_err(|_| invalid("selected section already has a native source"))?;
+    }
     let arm64 = match section::arm64()? {
         Some(value) => value,
         None => match namespace.lookup(
