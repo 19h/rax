@@ -1,0 +1,147 @@
+{
+  "captured-utc": "2026-10-14T12:13:51.290623+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "principal": "\"nt authority\\system\",\"S-1-5-18\"",
+  "native-machine": 43620,
+  "process-machine": 0,
+  "libraries": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+      "machine": 332,
+      "characteristics": 8450
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df",
+      "machine": 332,
+      "characteristics": 8450
+    }
+  ],
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-native-tls-length-order.py",
+    "bytes": 5267,
+    "sha256": "35435c080923a2317d32dfcbee2161f33fb9dad7d10e26709383808ed622e745"
+  },
+  "producers": [
+    {
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-tls-length-order-arm64\\native-process-tls-length-order.cpp",
+        "bytes": 17546,
+        "sha256": "2f5981a378e4be56e270facd614918ba9b0bb0920e4acdf28a4712a7ae0ade1e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-tls-length-order-arm64\\native-process-tls-length-order-arm64.exe",
+        "bytes": 169472,
+        "sha256": "6f00c359658dc54b484952833af3db7490f170f5d1a237d2707fb871bd8f269b",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-tls-length-order-arm64\\native-process-tls-length-order-arm64.log",
+        "bytes": 174473,
+        "sha256": "7d91233ddc359e7b55da7e305b56bb034d085629d3048517d799270c59c51158"
+      },
+      "cases": 80
+    },
+    {
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-tls-length-order-x64\\native-process-tls-length-order.cpp",
+        "bytes": 17546,
+        "sha256": "2f5981a378e4be56e270facd614918ba9b0bb0920e4acdf28a4712a7ae0ade1e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-tls-length-order-x64\\native-process-tls-length-order-x64.exe",
+        "bytes": 169472,
+        "sha256": "43feb1c0ac9594629872153052655c0204a0929335be1ad4deeaa3d2fcec949f",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-tls-length-order-x64\\native-process-tls-length-order-x64.log",
+        "bytes": 174472,
+        "sha256": "be25cb2c506614446374cad3580d0a10aff142feb68346893486cf7cc67d8bf8"
+      },
+      "cases": 80
+    },
+    {
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-tls-length-order-x86\\native-process-tls-length-order.cpp",
+        "bytes": 17546,
+        "sha256": "2f5981a378e4be56e270facd614918ba9b0bb0920e4acdf28a4712a7ae0ade1e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-tls-length-order-x86\\native-process-tls-length-order-x86.exe",
+        "bytes": 138752,
+        "sha256": "eefd5565d2a415893f49020dd995a195d6b4615420bb7cd513fcd7963817d411",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-tls-length-order-x86\\native-process-tls-length-order-x86.log",
+        "bytes": 173901,
+        "sha256": "a9dcf237ed5587b22c1a8a519343b20f45508332ab6f2c911ef555a136fcf2b9"
+      },
+      "cases": 80
+    },
+    {
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-tls-length-order-x86-laa\\native-process-tls-length-order.cpp",
+        "bytes": 17546,
+        "sha256": "2f5981a378e4be56e270facd614918ba9b0bb0920e4acdf28a4712a7ae0ade1e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-tls-length-order-x86-laa\\native-process-tls-length-order-x86-laa.exe",
+        "bytes": 138752,
+        "sha256": "00694345a9fc09786104352f95859efec64b38254e71d997057a749c0a2eba5e",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-tls-length-order-x86-laa\\native-process-tls-length-order-x86-laa.log",
+        "bytes": 173994,
+        "sha256": "63546731822306bb7d801f14a5e968a51a4a7a8622e7535235d3c8b20ae0cfc0"
+      },
+      "cases": 80
+    }
+  ],
+  "initial-identities": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-process-tls-initial-identities.json",
+    "bytes": 13689,
+    "sha256": "1016d32b46d97ed744626028e0baca3bcf2706c847d3826dfb3eb0cf4f8d325e"
+  },
+  "accepted-initial-control-count": 176,
+  "accepted-extended-control-count": 408,
+  "accepted-length-order-count": 136,
+  "accepted-total-control-count": 1040,
+  "excluded-duplicate-control-count": 176,
+  "native-debugger-captures": 1,
+  "accepted-alias-control-count": 136,
+  "accepted-length-order-control-count": 320
+}

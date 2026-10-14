@@ -1,0 +1,32 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 54.28s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-tests\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 6 tests
+test user::windows::process::sched::tests::services_tests::process_tls_tests::native_process_tls_structural_length_check_precedes_buffer_visit ... ok
+test user::windows::process::sched::tests::services_tests::process_tls_tests::native_process_tls_compact_index_vector_and_startup_sentinel_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::process_tls_tests::native_process_tls_caller_alias_observes_native_stores_and_wow_capture ... ok
+test user::windows::process::sched::tests::services_tests::process_tls_tests::native_process_tls_invalid_lengths_handles_flags_and_guards_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::process_tls_tests::native_process_tls_later_copy_fault_and_wow_caller_copyback_preserve_state ... ok
+test user::windows::process::sched::tests::services_tests::process_tls_tests::replay::native_process_tls_original_176_controls_match_status_packet_vector_and_guards ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 7193 filtered out; finished in 1.03s
+

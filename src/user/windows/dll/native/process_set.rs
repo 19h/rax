@@ -1,4 +1,4 @@
-//! Build29683 scheduler-data constructor; no guest request reaches host NT.
+//! Build29683 process services; no guest request reaches host NT.
 use super::query::{probe_write, write_guard_result};
 use crate::user::windows::arch::WinArch;
 use crate::user::windows::hle::{ApiErr, ApiResult, Ctx, Flow};
@@ -12,6 +12,9 @@ pub(super) fn information(c: &mut Ctx) -> ApiResult {
 
 fn checked(c: &mut Ctx) -> ApiResult {
     let (process, class, output, length) = (c.ptr(0)?, c.u32(1)?, c.ptr(2)?, c.u32(3)?);
+    if class == 35 {
+        return super::process_tls::information(c, process, output, length);
+    }
     if class != 112 {
         return Err(c.unsupported(format!("NtSetInformationProcess class {class}")));
     }

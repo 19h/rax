@@ -1,0 +1,47 @@
+[
+  {
+    "id": "T1",
+    "assumption": "Installed build29683 uses the measured compact class35 contract",
+    "basis": "1040 actual native controls, four producers profiles, one ARM64 loader capture",
+    "dependent-result": "TLS adapter and measured status/store ordering",
+    "stress-test": "Aliases, malformed packets, guards, readonly caller/new vectors and partial thread mutation",
+    "falsification-probe": "Independent native identity validation, portable verifier and captured replay",
+    "status": "confirmed"
+  },
+  {
+    "id": "T2",
+    "assumption": "Native semantic evidence applies to the captured ARM64 kernel and four compatibility profiles",
+    "basis": "Same kernel, SYSTEM SID and four bound installed library identities",
+    "dependent-result": "Scope of native claims",
+    "stress-test": "Different DLL/kernel build and physical AMD64 Windows",
+    "falsification-probe": "Refresh exact physical identities and rerun native controls on the other kernel",
+    "status": "retained"
+  },
+  {
+    "id": "T3",
+    "assumption": "Guest thread identifiers reflect creation order",
+    "basis": "Proc::alloc_tid increments by4; captured multiple-thread enumeration follows creation order",
+    "dependent-result": "TLS thread enumeration",
+    "stress-test": "Owner extracted from scheduler map, sparse IDs, null vectors, bounded packet capacity",
+    "falsification-probe": "Compare multi-thread native records and scheduler-owner regressions",
+    "status": "confirmed"
+  },
+  {
+    "id": "T4",
+    "assumption": "Frozen embeddings establish scoped parity for current RAX semantics",
+    "basis": "213 exact Rust source hashes, nine matching current C++ consumer hashes, empty core features and six archive walks",
+    "dependent-result": "Cross-platform embedding conclusion",
+    "stress-test": "Concurrent root changes, plugin/GUI/package and physical AMD64 surfaces",
+    "falsification-probe": "Current root/consumer diff or source/fingerprint mismatch",
+    "status": "retained"
+  },
+  {
+    "id": "T5",
+    "assumption": "Final complexity-comment correction preserves already executed runtime/test semantics",
+    "basis": "Exact previous overlay differs in one documentation comment; final owning archives rebuilt from current bytes",
+    "dependent-result": "Broad test evidence remains applicable to final source",
+    "stress-test": "Any executable-token or test change",
+    "falsification-probe": "Byte-level replacement of the one comment must reproduce final process_tls.rs",
+    "status": "confirmed"
+  }
+]

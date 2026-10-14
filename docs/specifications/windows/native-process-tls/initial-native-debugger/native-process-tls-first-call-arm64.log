@@ -1,0 +1,4 @@
+profile width=8 child=7152 entry=7FF82FAD11D0 rva=11D0
+exception code=C000001D address=7FF82FAD11D0 first=1
+exception code=C000001D address=7FF82FAD11D0 first=0
+complete captured=0 calls=0 exit=3221225501

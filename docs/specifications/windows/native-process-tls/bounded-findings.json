@@ -1,0 +1,32 @@
+[
+  {
+    "impact": "High",
+    "item": "Ordinary Windows completion remains unproved",
+    "evidence": "Four C++ outcomes remain reason5/Internal; three CRT samples reach NtApphelpCacheControl, whoami NtTraceEvent",
+    "blocks": "full same-host goal; not this implemented semantic increment"
+  },
+  {
+    "impact": "High",
+    "item": "Root publication reconciliation and GitLab reachability",
+    "evidence": "GitHub root e8c66515 diverges from concurrent local commits; GitLab SSH connect times out",
+    "blocks": "paired root publication and local synchronization"
+  },
+  {
+    "impact": "Medium",
+    "item": "Five pre-existing Windows AArch64 failures",
+    "evidence": "Exact four BZHI and one FP16 failure identities match the preceding counter suite",
+    "blocks": "full Windows suite green claim; no new failure attributable to TLS increment"
+  },
+  {
+    "impact": "Medium",
+    "item": "Native evidence scope",
+    "evidence": "Physical ARM64 kernel; x64/x86 compatibility profiles; frozen owning roots exclude current plugin/GUI/packages",
+    "blocks": "broader native/whole-current-product claims"
+  },
+  {
+    "impact": "Low",
+    "item": "Collector diagnostics retained",
+    "evidence": "Initial BRK encoding, hybrid debugger returns, duplicate generator run and sentinel teardown were corrected or excluded",
+    "blocks": false
+  }
+]

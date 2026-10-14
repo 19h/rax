@@ -14,6 +14,7 @@ mod object_create;
 mod performance_counter;
 mod process_query;
 mod process_set;
+mod process_tls;
 mod query;
 mod registry;
 mod section_map;

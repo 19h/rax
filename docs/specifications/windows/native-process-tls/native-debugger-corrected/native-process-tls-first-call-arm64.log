@@ -1,0 +1,19 @@
+native-breakpoint instruction=D43E0000
+profile width=8 child=9272 entry=7FF82FAD11D0 rva=11D0
+entry ordinal=0 class=53 process=FFFFFFFFFFFFFFFF input=8C9BCFE1C0 length=16 caller=7FF82FB06B70
+return ordinal=0 class=53 status=00000000
+entry ordinal=1 class=112 process=FFFFFFFFFFFFFFFF input=8C9BCFE520 length=8 caller=7FF82FB9DFEC
+return ordinal=1 class=112 status=00000000
+entry ordinal=2 class=53 process=FFFFFFFFFFFFFFFF input=8C9BCFDC20 length=16 caller=7FF82FB06B70
+return ordinal=2 class=53 status=00000000
+entry ordinal=3 class=53 process=FFFFFFFFFFFFFFFF input=8C9BCFD370 length=16 caller=7FF82FB06B70
+return ordinal=3 class=53 status=00000000
+entry ordinal=4 class=35 process=FFFFFFFFFFFFFFFF input=8C9BCFDD70 length=40 caller=7FF82FBB1B20
+dump name=input-before address=8C9BCFDD70 requested=40 ok=1 error=0 got=40 hex=000000000000000001000000010000000000000000000000F09C109C8C0000000000000000000000
+tls phase=before query-status=00000000 query-returned=48 teb=8C9BAB2000 vector=8C9C108F90
+dump name=before address=8C9C108F90 requested=64 ok=1 error=0 got=64 hex=1090109C8C0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+return ordinal=4 class=35 status=00000000
+dump name=input-after address=8C9BCFDD70 requested=40 ok=1 error=0 got=40 hex=00000000000000000100000001000000020000000000000000000000000000000000000000000000
+tls phase=after query-status=00000000 query-returned=48 teb=8C9BAB2000 vector=8C9C108F90
+dump name=after address=8C9C108F90 requested=64 ok=1 error=0 got=64 hex=1090109C8C000000F09C109C8C000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+complete captured=1 calls=5 exit=41

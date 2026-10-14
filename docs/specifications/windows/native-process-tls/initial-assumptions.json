@@ -1,0 +1,20 @@
+[
+  {
+    "id": "T1",
+    "assumption": "Installed build 29683 uses the measured compact class35 index/vector replacement contract, distinct from the PHNT nominal layout",
+    "basis": "584 native controls across four profiles plus one ARM64 loader capture",
+    "dependent-result": "Future adapter design",
+    "stress-test": "Sentinel/null vectors, readonly copyback, multi-thread prefix capacity, aliases",
+    "falsification-probe": "Independent source/binary identity checks and differential kernel result/state replay",
+    "status": "revised"
+  },
+  {
+    "id": "T2",
+    "assumption": "Additional diagnostic reads preserve production execution",
+    "basis": "Same owning archive and source; only reads and output added",
+    "dependent-result": "Caller-buffer provenance",
+    "stress-test": "Inaccessible input; clock-dependent turn count",
+    "falsification-probe": "Source diff and first terminal comparison",
+    "status": "confirmed"
+  }
+]

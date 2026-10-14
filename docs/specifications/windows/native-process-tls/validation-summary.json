@@ -1,0 +1,99 @@
+{
+  "baseline-rax": "26104da23cffb6876b739c330edde610dd47f5c8",
+  "full-lib": {
+    "macos": [
+      [
+        7776,
+        0,
+        2
+      ]
+    ],
+    "linux": [
+      [
+        7770,
+        0,
+        2
+      ]
+    ],
+    "windows": [
+      [
+        7192,
+        5,
+        2
+      ]
+    ]
+  },
+  "focused-passed-per-host": 6,
+  "CAPI-passed-per-host": 168,
+  "native-calls": 1040,
+  "portable-original-replay-calls": 176,
+  "caller-byte-comparisons": 160,
+  "vector-byte-comparisons": 172,
+  "windows-baseline-failures": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "owning-scoped-rust-sources": 213,
+  "matching-current-cpp-consumers": 9,
+  "core-features": [],
+  "archives": {
+    "macos": [
+      {
+        "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+        "bytes": 509059776,
+        "sha256": "085a382ada38e9b9b498be0000aacde3ab08a6842bdaa8bbfba471974a855c0c",
+        "members": 1456,
+        "structural-member-walk": "pass"
+      },
+      {
+        "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target/aarch64-apple-darwin/debug/deps/librax-c89758aa402dc84d.rlib",
+        "bytes": 376445536,
+        "sha256": "5166e1544aa608bb7a4eee981b76a23f93c1208d620b48ed1c5b8522817a7ae0",
+        "members": 258,
+        "structural-member-walk": "pass"
+      }
+    ],
+    "linux": [
+      {
+        "path": "/target/debug/libassist_rs.a",
+        "bytes": 909907828,
+        "sha256": "242650eab689c1faefdad4bec8f6ca1f0eb258f9fd51cc3b3445e160082180c2",
+        "members": 1599,
+        "structural-member-walk": "pass"
+      },
+      {
+        "path": "/target/debug/deps/librax-a2a8568229f56ea7.rlib",
+        "bytes": 553935578,
+        "sha256": "e11383b01dcc9aa585992cb957474abd75888b2368a516e3ba90a11c9d259123",
+        "members": 259,
+        "structural-member-walk": "pass"
+      }
+    ],
+    "windows": [
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\assist_rs.lib",
+        "bytes": 1164321854,
+        "sha256": "5376c81fa45e70190387e4e10413efd93e7735ba3fc77294b3106449a11fb39d",
+        "members": 4673,
+        "structural-member-walk": "pass"
+      },
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\librax-e6c413934cad3a8f.rlib",
+        "bytes": 775976194,
+        "sha256": "5d6bedeb0204e9e45089adb2924d103e41e5bb8de37e86d7759fba39eab3b191",
+        "members": 260,
+        "structural-member-walk": "pass"
+      }
+    ]
+  },
+  "controlled-falsifications": 8,
+  "extended-terminal-turn": 2111498,
+  "ordinary-frontier": "Complete(Internal(\"native NTDLL service NtApphelpCacheControl (0x4c) at 0x180001500 is not implemented\"))",
+  "ordinary-guest-exits": 0,
+  "whole-current-root-plugin-GUI-packages": "excluded",
+  "full-same-host-goal": "active and incomplete",
+  "source-note": "full/focused Rust gates precede a complexity-comment correction; runtime statements and tests unchanged; final owning archives rebuilt from current exact source bytes"
+}

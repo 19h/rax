@@ -1,0 +1,19 @@
+{
+  "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-process-tls-after-trace.rs",
+  "bytes": 11177,
+  "sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e",
+  "compiled-executable-path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-process-tls-final-after-production-trace.exe",
+  "executable-bytes": 26456064,
+  "executable-sha256": "d562be4c92a3085c74b38463fafe53de1d442bbaf6d177ac0efb3875cb00430d",
+  "executable-machine": 43620,
+  "extended-observer": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-process-tls-extended-trace.rs",
+    "bytes": 11178,
+    "sha256": "514fdbc99de6f562002aa8a198deb79e7f5cd012db058aa1460a0e5730ae37c0",
+    "budget-turns": 3000000,
+    "original-budget-turns": 1000000,
+    "only-budget-literals-changed": true,
+    "executable-bytes": 26456064,
+    "executable-sha256": "1b61f54ff5d5b9416c31bc973f9985bd6bb6786befaec1fed0716342ec9d7f89"
+  }
+}

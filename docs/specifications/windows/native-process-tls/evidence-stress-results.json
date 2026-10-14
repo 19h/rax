@@ -1,0 +1,42 @@
+[
+  {
+    "case": "executed-source-byte",
+    "exit-code": 1,
+    "rejected": true
+  },
+  {
+    "case": "actual-executable-hash",
+    "exit-code": 1,
+    "rejected": true
+  },
+  {
+    "case": "physical-kernel",
+    "exit-code": 1,
+    "rejected": true
+  },
+  {
+    "case": "principal",
+    "exit-code": 1,
+    "rejected": true
+  },
+  {
+    "case": "library-identity",
+    "exit-code": 1,
+    "rejected": true
+  },
+  {
+    "case": "aggregate-count",
+    "exit-code": 1,
+    "rejected": true
+  },
+  {
+    "case": "status-with-refreshed-log-hash",
+    "exit-code": 1,
+    "rejected": true
+  },
+  {
+    "case": "optimized-validation",
+    "exit-code": 1,
+    "rejected": true
+  }
+]

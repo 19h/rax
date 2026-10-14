@@ -1,0 +1,18 @@
+{
+  "Plugin lifecycle": "Unaffected: no plugin/IDA lifecycle code changed; runtime library implementation only",
+  "UI state": "Unaffected: no widget, renderer, theme, focus or UI-copy consumer changed",
+  "Conversation/lane": "Unaffected: no conversation, history, cancellation or transcript contract changed",
+  "Agent backend": "Unaffected: existing emulation result and C API contracts remain",
+  "Prompt/context": "Unaffected: no prompt/context source or generator changed",
+  "Tool schema": "Unaffected: existing process tool and NtSetInformationProcess export signature retained",
+  "Permission/mutation": "Unaffected: all new mutations target guest memory/threads; no host NT request",
+  "Main-thread dispatch": "Unaffected: no IDA/Qt API added or modified",
+  "Mesh/MCP": "Unaffected: routing, identity, discovery and manifest schemas unchanged",
+  "Transport/crypto": "Unaffected: no framing, ACL, peer, replay or cryptographic source changed",
+  "Persistence": "Unaffected: no real state, schema, config or history change",
+  "SDK/ABI": "Unaffected: no C API/Assist struct, version, enum or callback layout changed; ABI consumers pass",
+  "Optional engines": "Affected: existing RAX Windows personality models class35; RAX flags and unrelated engines unchanged",
+  "Update/release": "Unaffected: no update/package ABI, dependency default or release operation",
+  "Targets/platforms": "Affected: shared Rust source built/tested on Windows/macOS/Linux; empty-feature embedding archives and current C++ consumers checked; whole current plugin/GUI/packages excluded",
+  "Tests/docs": "Affected: six Rust source files, native corpus, replay/strategic tests and short engineering links"
+}

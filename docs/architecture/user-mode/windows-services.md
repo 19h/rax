@@ -539,3 +539,11 @@ physical x64 kernel and whole current-root plugin/GUI/package validation remain
 explicit limits. The independent partition/provenance checker and all 17 controlled
 falsifications pass; reconciled assumptions, complete plane map and evidence are
 in [image-extension evidence](../../specifications/windows/native-image-extension/README.md).
+
+### Compact process TLS replacement (2026-10-14)
+
+The installed class35 packet, slot/vector changes, startup sentinel, enumeration,
+caller aliases and native/WoW64 failure ordering are documented in
+[TLS evidence](../../specifications/windows/native-process-tls/README.md).
+Its1040 native controls cover four profiles. The C API remains unchanged;
+ordinary Windows completion remains an active requirement.

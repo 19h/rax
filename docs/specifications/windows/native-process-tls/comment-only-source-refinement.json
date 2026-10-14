@@ -1,0 +1,6 @@
+{
+  "before-sha256": "5eca4787f6ff4d7542e0b4ddeeb2597bf180692a7844a8d5c09602f1c7c7cec5",
+  "after-sha256": "ed132c0a2629b7a9be8744093d828cf31dc5a6ee2126d1c91359ca33decf426a",
+  "exact-one-comment-replacement": true,
+  "runtime-statements-and-tests-unchanged": true
+}

@@ -1,0 +1,26 @@
+{
+  "src/user/windows/dll/native.rs": {
+    "bytes": 16925,
+    "sha256": "39826d715e3819496693f2d59095e069121bd24097374adb4e9ef65910d68c2f"
+  },
+  "src/user/windows/dll/native/process_set.rs": {
+    "bytes": 3163,
+    "sha256": "b13ce19debe999e55498fbb22992859e3f77dae51f3a7bd295b59ad0d1ff510e"
+  },
+  "src/user/windows/dll/native/process_tls.rs": {
+    "bytes": 9094,
+    "sha256": "ed132c0a2629b7a9be8744093d828cf31dc5a6ee2126d1c91359ca33decf426a"
+  },
+  "src/user/windows/process/sched/tests/services_tests.rs": {
+    "bytes": 47170,
+    "sha256": "16dd47e27e330f55b31a276617438158bcd197ecc16d84d07e323ffd295bc3eb"
+  },
+  "src/user/windows/process/sched/tests/services_tests/process_tls_replay_tests.rs": {
+    "bytes": 9647,
+    "sha256": "22dfe3f3ca06074e760b36d47a5da15c2c65c24dd42994429505b7d67fa6292d"
+  },
+  "src/user/windows/process/sched/tests/services_tests/process_tls_tests.rs": {
+    "bytes": 10965,
+    "sha256": "7c7fe61e5524db050e04a8e0eed6c89b1ff681b7cb1ca60ee15d0aa822abe915"
+  }
+}

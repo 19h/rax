@@ -1649,3 +1649,11 @@ helper parity are recorded in
 [the counter evidence](../../../docs/specifications/windows/native-performance-counter/README.md).
 The original observer exhausts1Mturns; a budget-only3Mderivative reaches
 process-information class35. Full ordinary Windows completion remains unproved.
+
+### Compact process TLS replacement (2026-10-14)
+
+`NtSetInformationProcess` class35 now implements captured slot/vector replacement,
+startup sentinel handling, caller stores, WoW64 conversion and partial failures.
+[TLS evidence](../../../docs/specifications/windows/native-process-tls/README.md)
+records1040 native controls and separate platform/embedding results. The unchanged
+3M observer reaches `NtApphelpCacheControl`; ordinary guest exits remain unproved.

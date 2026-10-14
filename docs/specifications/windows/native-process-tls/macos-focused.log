@@ -1,0 +1,14 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 29.58s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/macos-rax-target/debug/deps/rax-754f4d2a527a4423)
+
+running 6 tests
+test user::windows::process::sched::tests::services_tests::process_tls_tests::native_process_tls_structural_length_check_precedes_buffer_visit ... ok
+test user::windows::process::sched::tests::services_tests::process_tls_tests::native_process_tls_caller_alias_observes_native_stores_and_wow_capture ... ok
+test user::windows::process::sched::tests::services_tests::process_tls_tests::native_process_tls_compact_index_vector_and_startup_sentinel_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::process_tls_tests::native_process_tls_invalid_lengths_handles_flags_and_guards_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::process_tls_tests::native_process_tls_later_copy_fault_and_wow_caller_copyback_preserve_state ... ok
+test user::windows::process::sched::tests::services_tests::process_tls_tests::replay::native_process_tls_original_176_controls_match_status_packet_vector_and_guards ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 7772 filtered out; finished in 0.43s
+
