@@ -1,0 +1,205 @@
+{
+  "upstream": "0705e87135c6f6265e9ec618704041c3febcdf7e",
+  "mapping-rebased-commit": "a40ea6ba16a92d4cc5758836c1543d0843f63cfb",
+  "full-lib": {
+    "macos": [
+      [
+        7764,
+        0,
+        2
+      ]
+    ],
+    "linux": [
+      [
+        7758,
+        0,
+        2
+      ]
+    ],
+    "windows": [
+      [
+        7179,
+        5,
+        2
+      ]
+    ]
+  },
+  "focused": {
+    "macos": [
+      [
+        4,
+        0,
+        0
+      ]
+    ],
+    "linux": [
+      [
+        4,
+        0,
+        0
+      ]
+    ],
+    "windows": [
+      [
+        5,
+        0,
+        0
+      ]
+    ]
+  },
+  "capi": {
+    "macos": [
+      [
+        168,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "linux": [
+      [
+        168,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "windows": [
+      [
+        168,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "integration": {
+    "macos": [
+      [
+        544,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "linux": [
+      [
+        544,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "windows": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        0,
+        0
+      ]
+    ]
+  },
+  "windows-failures": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "windows-baseline-failures": "exactly unchanged",
+  "scoped-rust-source-units": 201,
+  "mapping-windows-source-units": 124,
+  "upstream-rust-source-units": 77,
+  "upstream-transferred-files": 196,
+  "matching-current-cpp-consumers": 9,
+  "core-features": [],
+  "archives": {
+    "macos": [
+      {
+        "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+        "bytes": 507860880,
+        "sha256": "f84590eb5f8fd0b7d54e7539d1f7d4dc15f1382baa74fef4f8deb66a9e0b9dc7",
+        "members": 1456,
+        "structural-member-walk": "pass"
+      },
+      {
+        "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target/aarch64-apple-darwin/debug/deps/librax-c89758aa402dc84d.rlib",
+        "bytes": 375213688,
+        "sha256": "985f0fa4b94040dab6c5c5f3582da432b7ab319276fcdb23b5e6c4180d2a0c44",
+        "members": 258,
+        "structural-member-walk": "pass"
+      }
+    ],
+    "linux": [
+      {
+        "path": "/target/debug/libassist_rs.a",
+        "bytes": 909112214,
+        "sha256": "77b9140d08530ca4085fc33a320ea488335e182c4000e707a4c9fba60666bde5",
+        "members": 1599,
+        "structural-member-walk": "pass"
+      },
+      {
+        "path": "/target/debug/deps/librax-a2a8568229f56ea7.rlib",
+        "bytes": 553108252,
+        "sha256": "d5eaa8359b47ed890892ce798e4a431f87e7e687a3059a7c164df535f30f8dba",
+        "members": 259,
+        "structural-member-walk": "pass"
+      }
+    ],
+    "windows": [
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\assist_rs.lib",
+        "bytes": 1156435852,
+        "sha256": "56b25ef66e9b2577a5106b9f1998f0a8a16b574fe9510326d77240e4836a5922",
+        "members": 4673,
+        "structural-member-walk": "pass"
+      },
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\librax-e6c413934cad3a8f.rlib",
+        "bytes": 768087676,
+        "sha256": "0fac67bb99cdec058ff3485fd9fe4388c185c99e8598a2de56edb56bb01efc52",
+        "members": 260,
+        "structural-member-walk": "pass"
+      }
+    ]
+  },
+  "ordinary": {
+    "before-turn": 161784,
+    "after-turn": 168227,
+    "delta-scheduler-calls": 6443,
+    "frontier": "native NTDLL service NtQueryPerformanceCounter (0x31) at 0x180001350 is not implemented",
+    "cpp-frontiers": [
+      "NtQueryPerformanceCounter (0x31) at 0x180001350 is not implemented",
+      "NtQueryPerformanceCounter (0x31) at 0x180001350 is not implemented",
+      "NtQueryPerformanceCounter (0x31) at 0x180001350 is not implemented",
+      "NtTraceEvent (0x5e) at 0x180001620 is not implemented"
+    ],
+    "guest-exits": 0
+  },
+  "whole-current-root-plugin-GUI-packages": "excluded",
+  "full-same-host-goal": "active and incomplete"
+}

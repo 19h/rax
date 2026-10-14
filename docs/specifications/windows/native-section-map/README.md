@@ -5,6 +5,9 @@ Native captures were collected on 2026-10-13. Final implementation and ordinary 
 The [runtime contract](../../../architecture/user-mode/selected-image-section-mapping.md)
 owns the mapping, lifetime and projection description.
 
+Current combined-source results are in [the upstream integration audit](upstream-integration/README.md).
+The tables below retain the original mapping validation before that upstream change.
+
 ## Independent native observations
 
 All four producer profiles ran under SYSTEM (S-1-5-18) on the same native ARM64

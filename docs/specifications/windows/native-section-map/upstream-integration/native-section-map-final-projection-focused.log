@@ -1,0 +1,106 @@
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.47
+   Compiling cfg-if v1.0.4
+   Compiling getrandom v0.4.3
+   Compiling windows-link v0.2.1
+   Compiling serde_core v1.0.229
+   Compiling find-msvc-tools v0.1.12
+   Compiling windows-sys v0.61.2
+   Compiling shlex v2.0.1
+   Compiling pkg-config v0.3.34
+   Compiling utf8parse v0.2.2
+   Compiling anstyle v1.0.14
+   Compiling once_cell v1.21.4
+   Compiling jobserver v0.1.35
+   Compiling once_cell_polyfill v1.70.2
+   Compiling libc v0.2.189
+   Compiling thiserror v2.0.20
+   Compiling winapi v0.3.9
+   Compiling cc v1.4.5
+   Compiling tracing-core v0.1.36
+   Compiling syn v3.0.5
+   Compiling syn v2.0.119
+   Compiling anstyle-query v1.1.5
+   Compiling anstyle-wincon v3.0.11
+   Compiling anstyle-parse v1.0.0
+   Compiling log v0.4.34
+   Compiling colorchoice v1.0.5
+   Compiling serde v1.0.229
+   Compiling zmij v1.0.23
+   Compiling regex-syntax v0.8.11
+   Compiling is_terminal_polyfill v1.70.2
+   Compiling zstd-safe v7.3.0
+   Compiling anstream v1.0.0
+   Compiling winnow v1.0.4
+   Compiling strsim v0.11.1
+   Compiling zstd-sys v2.1.0+zstd.1.5.7
+   Compiling pin-project-lite v0.2.17
+   Compiling regex-automata v0.4.18
+   Compiling serde_json v1.0.151
+   Compiling heck v0.5.0
+   Compiling lazy_static v1.5.0
+   Compiling clap_lex v1.1.0
+   Compiling sharded-slab v0.1.7
+   Compiling clap_builder v4.6.6
+   Compiling toml_parser v1.1.3+spec-1.1.0
+   Compiling toml_datetime v0.7.5+spec-1.1.0
+   Compiling serde_spanned v1.1.1
+   Compiling tracing-log v0.2.0
+   Compiling nu-ansi-term v0.50.3
+   Compiling matchers v0.2.0
+   Compiling thread_local v1.1.10
+   Compiling memchr v2.8.3
+   Compiling smallvec v1.16.0
+   Compiling toml_writer v1.1.2+spec-1.1.0
+   Compiling thiserror-impl v2.0.20
+   Compiling serde_derive v1.0.229
+   Compiling clap_derive v4.6.4
+   Compiling winnow v0.7.15
+   Compiling scroll_derive v0.12.1
+   Compiling tracing-attributes v0.1.31
+   Compiling scroll v0.12.0
+   Compiling vm-memory v0.17.1 (C:\Windows\Temp\assist-native-rax-20261010\src\vendor\vm-memory)
+   Compiling plain v0.2.3
+   Compiling itoa v1.0.18
+   Compiling clap v4.6.6
+   Compiling goblin v0.8.2
+   Compiling toml v0.9.12+spec-1.1.0
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling tracing v0.1.44
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling tracing-subscriber v0.3.23
+   Compiling ctrlc v3.5.2
+   Compiling bitflags v2.13.2
+   Compiling bincode v1.3.3
+   Compiling zstd v0.13.3
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3m 19s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-section-map\debug\deps\rax-34b728e33cbe6d97.exe)
+
+running 5 tests
+test user::windows::process::sched::tests::services_tests::section_map_tests::native_section_map_original_ten_argument_service_returns_owned_rebased_view ... ok
+test user::windows::process::sched::tests::services_tests::section_map_tests::native_section_map_wow64_late_output_fault_keeps_view_and_copyback_order ... ok
+test user::windows::process::sched::tests::services_tests::section_map_tests::installed::native_section_map_installed_leaves_copy_pinned_image_and_unmap_after_close ... ok
+test user::windows::process::sched::tests::services_tests::section_map_tests::native_section_map_protection_requires_exact_section_access_before_geometry ... ok
+test user::windows::process::sched::tests::services_tests::section_map_tests::replay::native_section_map_replays_all_4236_native_access_and_low_address_observations ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 7180 filtered out; finished in 2.08s
+

@@ -1,0 +1,12 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 19s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/red-target/debug/deps/rax-754f4d2a527a4423)
+
+running 4 tests
+test user::windows::process::sched::tests::services_tests::section_map_tests::native_section_map_original_ten_argument_service_returns_owned_rebased_view ... ok
+test user::windows::process::sched::tests::services_tests::section_map_tests::native_section_map_wow64_late_output_fault_keeps_view_and_copyback_order ... ok
+test user::windows::process::sched::tests::services_tests::section_map_tests::native_section_map_protection_requires_exact_section_access_before_geometry ... ok
+test user::windows::process::sched::tests::services_tests::section_map_tests::replay::native_section_map_replays_all_4236_native_access_and_low_address_observations ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 7762 filtered out; finished in 1.68s
+

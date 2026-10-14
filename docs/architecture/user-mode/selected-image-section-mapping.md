@@ -6,6 +6,9 @@ stops at NtQueryPerformanceCounter; all four ordinary runs remain Internal.
 Captures and primary sources
 belong to [native-section-map](../../specifications/windows/native-section-map/).
 
+The later [upstream integration audit](../../specifications/windows/native-section-map/upstream-integration/README.md)
+records combined validation after the independent AArch64 expansion.
+
 ## Contract and ownership
 
 NtMapViewOfSection is appended after the existing 41 native exports. Its ten
