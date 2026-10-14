@@ -1,0 +1,68 @@
+[
+  {
+    "scope": "prior-mapping-binary",
+    "repeat": 0,
+    "program": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\deps\\rax-34b728e33cbe6d97.exe",
+    "identity": {
+      "bytes": 397795328,
+      "sha256": "edf187ce129dcce6df39f548dc357f427cdd8a7b4a54921767559ee8873c0a13"
+    },
+    "exit-code": 0,
+    "log": "thread-cpu-prior-mapping-binary-0.log"
+  },
+  {
+    "scope": "prior-mapping-binary",
+    "repeat": 1,
+    "program": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\deps\\rax-34b728e33cbe6d97.exe",
+    "identity": {
+      "bytes": 397795328,
+      "sha256": "edf187ce129dcce6df39f548dc357f427cdd8a7b4a54921767559ee8873c0a13"
+    },
+    "exit-code": 0,
+    "log": "thread-cpu-prior-mapping-binary-1.log"
+  },
+  {
+    "scope": "prior-mapping-binary",
+    "repeat": 2,
+    "program": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\deps\\rax-34b728e33cbe6d97.exe",
+    "identity": {
+      "bytes": 397795328,
+      "sha256": "edf187ce129dcce6df39f548dc357f427cdd8a7b4a54921767559ee8873c0a13"
+    },
+    "exit-code": 0,
+    "log": "thread-cpu-prior-mapping-binary-2.log"
+  },
+  {
+    "scope": "current-counter-binary",
+    "repeat": 0,
+    "program": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\rax-d861ee8f992d7cb6.exe",
+    "identity": {
+      "bytes": 398085120,
+      "sha256": "1e18d83659bcfd491a920b730a66e4152799209fc181b952c89b0aa40d9716bf"
+    },
+    "exit-code": 101,
+    "log": "thread-cpu-current-counter-binary-0.log"
+  },
+  {
+    "scope": "current-counter-binary",
+    "repeat": 1,
+    "program": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\rax-d861ee8f992d7cb6.exe",
+    "identity": {
+      "bytes": 398085120,
+      "sha256": "1e18d83659bcfd491a920b730a66e4152799209fc181b952c89b0aa40d9716bf"
+    },
+    "exit-code": 0,
+    "log": "thread-cpu-current-counter-binary-1.log"
+  },
+  {
+    "scope": "current-counter-binary",
+    "repeat": 2,
+    "program": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\rax-d861ee8f992d7cb6.exe",
+    "identity": {
+      "bytes": 398085120,
+      "sha256": "1e18d83659bcfd491a920b730a66e4152799209fc181b952c89b0aa40d9716bf"
+    },
+    "exit-code": 0,
+    "log": "thread-cpu-current-counter-binary-2.log"
+  }
+]

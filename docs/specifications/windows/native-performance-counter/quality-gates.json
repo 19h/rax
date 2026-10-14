@@ -1,0 +1,19 @@
+{
+  "root-QG1": "no normative content required",
+  "root-QG2": "five material assumptions with probes reconciled",
+  "root-QG3": "counter increment implemented; overall process goal remains incomplete",
+  "root-QG4": "Hz/tick/ns units and observer budgets distinguished",
+  "root-QG5": "first CPU fixture failure retained; startup/window refined with same attribution assertion; five unchanged Windows baseline failures",
+  "root-QG6": "native source/executable/log identities and primary contracts verified;10corruptions rejected",
+  "root-QG7": "class35/NtTraceEvent/mixed-machine/clock-accounting limits bounded",
+  "rax-QG1": "assumptions reconciled",
+  "rax-QG2": "all16execution planes scoped; public/native/shared clock covered",
+  "rax-QG3": "source freezes and native/builtin clock epochs preserved",
+  "rax-QG4": "no hidden runtime contradiction in measured counter scope",
+  "rax-QG5": "native controls separate from captured-clock replay and owning evidence",
+  "rax-QG6": "adjacent remaining process features not folded into this increment",
+  "rax-QG7": "exact owned source/docs; root foreign work excluded",
+  "rax-QG8": "all3hosts andnative installed/public leaves; elidedtestsnotclaimedruntimeproof",
+  "rax-QG9": "CAPI1.11.0/defaults/pins unchanged; discoveryABIusesexistinginternalnativeexports",
+  "publication": "exactred/blob/parent/remoteauditrecordedoutsidecommittedcorpus;rootGitLabconnectivitypending"
+}

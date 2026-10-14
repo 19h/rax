@@ -1,4 +1,12 @@
-## Current increment: selected image-section mapping (2026-10-14)
+## Current increment: native performance-counter query (2026-10-14)
+
+`NtQueryPerformanceCounter` uses measured sequential caller stores and one
+clock source across native/public timing and shared frequency. See
+[the counter contract and evidence](../../specifications/windows/native-performance-counter/README.md).
+Ordinary CRT programs now require process-information class35; full completion
+remains unproved.
+
+## Previous increment: selected image-section mapping (2026-10-14)
 
 `NtMapViewOfSection` creates guest image views from pinned installed Sections,
 with native/WoW64 fault ordering, image relocation, partial/large-page geometry

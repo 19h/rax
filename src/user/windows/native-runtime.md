@@ -1641,3 +1641,11 @@ Guest section query/mapping and full ordinary exits remain unproven.
 and [native evidence](../../../docs/specifications/windows/native-section-map/README.md)
 record acquisition, projection, relocation, ABI, faults, lifetime and validation.
 Full ordinary Windows process completion remains unproved.
+
+### Native performance-counter query (2026-10-14)
+
+Counter/frequency stores, host clock reuse, shared-data units and native/public
+helper parity are recorded in
+[the counter evidence](../../../docs/specifications/windows/native-performance-counter/README.md).
+The original observer exhausts1Mturns; a budget-only3Mderivative reaches
+process-information class35. Full ordinary Windows completion remains unproved.

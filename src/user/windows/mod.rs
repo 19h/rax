@@ -18,6 +18,7 @@ mod nls;
 pub mod nt;
 pub mod object_namespace;
 pub mod objects;
+mod performance_clock;
 pub mod process;
 pub mod registry;
 pub mod seh;

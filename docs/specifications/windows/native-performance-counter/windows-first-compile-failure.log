@@ -1,0 +1,79 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src)
+error[E0433]: cannot find module or crate `layout` in this scope
+   --> src\user\windows\process\sched\tests\services_tests\performance_counter_leaf_tests.rs:125:22
+    |
+125 |                 .u64(layout::KUSER_SHARED_DATA + layout::kuser::QPC_FREQUENCY)
+    |                      ^^^^^^ use of unresolved module or unlinked crate `layout`
+    |
+    = help: if you wanted to use a crate named `layout`, use `cargo add layout` to add it to your `Cargo.toml`
+help: consider importing this module
+    |
+  2 + use crate::user::windows::layout;
+    |
+
+error[E0433]: cannot find module or crate `layout` in this scope
+   --> src\user\windows\process\sched\tests\services_tests\performance_counter_leaf_tests.rs:125:50
+    |
+125 |                 .u64(layout::KUSER_SHARED_DATA + layout::kuser::QPC_FREQUENCY)
+    |                                                  ^^^^^^ use of unresolved module or unlinked crate `layout`
+    |
+    = help: if you wanted to use a crate named `layout`, use `cargo add layout` to add it to your `Cargo.toml`
+help: consider importing this module
+    |
+  2 + use crate::user::windows::layout::kuser;
+    |
+help: if you import `kuser`, refer to it directly
+    |
+125 -                 .u64(layout::KUSER_SHARED_DATA + layout::kuser::QPC_FREQUENCY)
+125 +                 .u64(layout::KUSER_SHARED_DATA + kuser::QPC_FREQUENCY)
+    |
+
+error[E0433]: cannot find module or crate `layout` in this scope
+  --> src\user\windows\process\sched\tests\services_tests\performance_counter_tests.rs:72:22
+   |
+72 |                 .u64(layout::KUSER_SHARED_DATA + layout::kuser::QPC_FREQUENCY)
+   |                      ^^^^^^ use of unresolved module or unlinked crate `layout`
+   |
+   = help: if you wanted to use a crate named `layout`, use `cargo add layout` to add it to your `Cargo.toml`
+help: consider importing this module
+   |
+ 2 + use crate::user::windows::layout;
+   |
+
+error[E0433]: cannot find module or crate `layout` in this scope
+  --> src\user\windows\process\sched\tests\services_tests\performance_counter_tests.rs:72:50
+   |
+72 |                 .u64(layout::KUSER_SHARED_DATA + layout::kuser::QPC_FREQUENCY)
+   |                                                  ^^^^^^ use of unresolved module or unlinked crate `layout`
+   |
+   = help: if you wanted to use a crate named `layout`, use `cargo add layout` to add it to your `Cargo.toml`
+help: consider importing this module
+   |
+ 2 + use crate::user::windows::layout::kuser;
+   |
+help: if you import `kuser`, refer to it directly
+   |
+72 -                 .u64(layout::KUSER_SHARED_DATA + layout::kuser::QPC_FREQUENCY)
+72 +                 .u64(layout::KUSER_SHARED_DATA + kuser::QPC_FREQUENCY)
+   |
+
+For more information about this error, try `rustc --explain E0433`.
+error: could not compile `rax` (lib test) due to 4 previous errors

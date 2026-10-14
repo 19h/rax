@@ -1,0 +1,18 @@
+{
+  "Plugin lifecycle": "No IDA/plugin lifecycle edits; process constructor selects clock source and publishes shared frequency.",
+  "UI state": "No Qt/widget changes.",
+  "Conversation/lane": "No schema/state changes; ordinary process error frontier can advance.",
+  "Agent backend": "No provider/ACP edits.",
+  "Prompt/context": "No prompt edits.",
+  "Tool schema": "No C API or JSON schema changes; NtQueryPerformanceCounter appended internally.",
+  "Permission/mutation": "Existing installed native profile selects host clock; only initialized host-owned counter/frequency outputs enter host kernel32. No guest pointer/handle/argument forwarding.",
+  "Main-thread dispatch": "No IDA/Qt calls; existing process worker ownership.",
+  "Mesh/MCP": "Unchanged transport/routing; existing tool may execute updated runtime.",
+  "Transport/crypto": "Unchanged; no transport or secret representation edits.",
+  "Persistence": "Clock selection lives in process runtime only; no persisted schema.",
+  "SDK/ABI": "No public C struct/layout or SDK callback change; compile CAPI/static owning consumers.",
+  "Optional engines": "RAX Windows clock and checked native service affected; default features unchanged.",
+  "Update/release": "No release/changelog/package default changes; paired root pin and two engineering records after red publication.",
+  "Targets/platforms": "Shared service and built-in elapsed clock compile/run on all3hosts. Windows native mode reuses existing user::clock raw QPC sampling/cache; Unix clock_gettime branches are byte-preserved. Windows host monotonic conversion delegates the same raw sampler. All host clock and affected native/public/shared timing gates required. Plugin/MCP/CLI/harness compile same RAX C ABI archive.",
+  "Tests/docs": "1000four-profile native calls plus32monotonic observations; strategic fault/alias/ABI/matrix/clock and installed-leaf tests; all3full/CAPI/alltarget/integration and scoped owning/ordinary continuation."
+}

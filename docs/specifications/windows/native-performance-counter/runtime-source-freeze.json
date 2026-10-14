@@ -1,0 +1,66 @@
+{
+  "src/user/windows/mod.rs": {
+    "bytes": 728,
+    "sha256": "ac0ca27c781f083227e7ae9c13773ab2a04bfb57cb37dc56de283928ef1238a8"
+  },
+  "src/user/windows/performance_clock.rs": {
+    "bytes": 1911,
+    "sha256": "4d43c5dbf066c7c5fc514f961e3de8bc572b02db56877797fa02f9bb866f6aab"
+  },
+  "src/user/windows/performance_clock_tests.rs": {
+    "bytes": 1881,
+    "sha256": "cfb50db2bbb6f66c3d5952aaaab35ef40e35aacfeae66d76277618107787c54b"
+  },
+  "src/user/windows/dll/native.rs": {
+    "bytes": 16908,
+    "sha256": "32b366347e8a090986e7bd773decb8131a7c1b9c89ba48ab7c9502c3be0c080d"
+  },
+  "src/user/windows/dll/native/performance_counter.rs": {
+    "bytes": 1265,
+    "sha256": "72c3ed9fb26459ddee3f8ffee3990b6053cdd27a82961393ca55987c133c8962"
+  },
+  "src/user/windows/dll/kernel.rs": {
+    "bytes": 37958,
+    "sha256": "21b5ac7f5ee4c462a9fd2853ab99ed7c0df682f150c38642f678cff6b81e5f47"
+  },
+  "src/user/windows/layout.rs": {
+    "bytes": 17530,
+    "sha256": "61e838781f4f5334bb28d6e8eddac18a0ace83d1b726439b6e9b1af07e25a845"
+  },
+  "src/user/windows/process/mod.rs": {
+    "bytes": 15899,
+    "sha256": "4e8bea20204777b4b13bc0f64a43ee63186789f4ccc37ceea2aefb30f6600374"
+  },
+  "src/user/windows/process/start.rs": {
+    "bytes": 21782,
+    "sha256": "025a3ade4ab9f5e67dcabb3c069f810c307ad8c1d39c77b9e1e265b5bc9608a8"
+  },
+  "src/user/windows/process/sched.rs": {
+    "bytes": 61437,
+    "sha256": "5fc7ed4d17592fe788525de9187e05fc76919b809c3657cd4bbf113bb27332b6"
+  },
+  "src/user/windows/dll/crt/startup/storage.rs": {
+    "bytes": 33007,
+    "sha256": "49fdf864c28a5c6821e8d4987416bf71d5680a88500e2035a76f39f1c2708154"
+  },
+  "src/user/windows/process/sched/tests/services_tests.rs": {
+    "bytes": 47098,
+    "sha256": "5710d0c8fabf6c79531f7412ad3fdab8bfcdd813270765c12d573222292e6252"
+  },
+  "src/user/windows/process/sched/tests/services_tests/performance_counter_tests.rs": {
+    "bytes": 6041,
+    "sha256": "048ca067b002506da0caade5f0b96b9bdd7d4555452370408229bfea04474844"
+  },
+  "src/user/windows/process/sched/tests/services_tests/performance_counter_replay_tests.rs": {
+    "bytes": 7262,
+    "sha256": "58008d5c52db280f57e834ce4eec2064e21e2416e411a94c7b8455ea64c29da8"
+  },
+  "src/user/windows/process/sched/tests/services_tests/performance_counter_leaf_tests.rs": {
+    "bytes": 5890,
+    "sha256": "6ff33960a3b1d10faf92890517f3b2d5c7e994dc948205f1df95484eb7f1aa84"
+  },
+  "src/user/clock.rs": {
+    "bytes": 13532,
+    "sha256": "e74598d507abf8caaad15b6ad45161c13332db91449c737763067766191dea1e"
+  }
+}

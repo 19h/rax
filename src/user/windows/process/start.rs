@@ -353,6 +353,9 @@ pub(super) fn spawn_image(mut config: WindowsConfig, bytes: Vec<u8>) -> Result<P
     if let Some(runtime) = &native {
         objects.select_wnf_catalog(runtime.wnf_catalog.clone());
     }
+    let performance_clock =
+        super::super::performance_clock::PerformanceClock::select(native.is_some())
+            .map_err(SpawnError::Io)?;
     let mut p = Proc {
         arch,
         space,
@@ -382,6 +385,7 @@ pub(super) fn spawn_image(mut config: WindowsConfig, bytes: Vec<u8>) -> Result<P
         exit_code: None,
         failure: None,
         start_time: Instant::now(),
+        performance_clock,
         rng: seed,
         // Keep cookie derivation independent of the existing random stream.
         process_cookie: (seed ^ (seed >> 32)) as u32 ^ 0xA5A5_5A5A,
@@ -504,6 +508,11 @@ pub(super) fn spawn_image(mut config: WindowsConfig, bytes: Vec<u8>) -> Result<P
         message: e.message,
     })?;
     let shared = layout::KUSER_SHARED_DATA;
+    p.vm.poke(
+        shared + kuser::QPC_FREQUENCY,
+        &p.performance_clock.frequency().to_le_bytes(),
+    )
+    .map_err(|e| memory(format!("{e:?}")))?;
     let physical_pages = u32::try_from(p.vm.commit_limit() / crate::user::mm::PAGE_SIZE)
         .map_err(|_| memory("Windows physical page count exceeds ULONG"))?;
     for (off, value) in [

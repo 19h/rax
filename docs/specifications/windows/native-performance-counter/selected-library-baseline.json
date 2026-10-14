@@ -1,0 +1,34 @@
+[
+  {
+    "path": "C:\\Windows\\System32\\ntdll.dll",
+    "bytes": 4609312,
+    "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+    "machine": 43620,
+    "characteristics": 8226,
+    "preferred-image-base": 6442450944
+  },
+  {
+    "path": "C:\\Windows\\System32\\kernel32.dll",
+    "bytes": 1500304,
+    "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0",
+    "machine": 43620,
+    "characteristics": 8226,
+    "preferred-image-base": 6442450944
+  },
+  {
+    "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+    "bytes": 1849976,
+    "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+    "machine": 332,
+    "characteristics": 8450,
+    "preferred-image-base": 1260912640
+  },
+  {
+    "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+    "bytes": 696392,
+    "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df",
+    "machine": 332,
+    "characteristics": 8450,
+    "preferred-image-base": 268435456
+  }
+]

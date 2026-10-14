@@ -1,0 +1,15 @@
+{
+  "header-relative-path": "docs/specifications/windows/native-worker-factory-create/phnt-ntexapi.h",
+  "bytes": 386368,
+  "sha256": "0510ac40fa1690cd73bed8afe3ed602aaa7bb6870ab95ea9aaba36ce1f4c3d53",
+  "contract-sections": [
+    "NtQueryPerformanceCounter",
+    "FIELD_OFFSET(KUSER_SHARED_DATA, QpcFrequency)==0x300"
+  ],
+  "primary-documents": [
+    "https://learn.microsoft.com/en-us/windows/win32/devnotes/ntqueryperformancecounter",
+    "https://learn.microsoft.com/en-us/windows/win32/api/profileapi/nf-profileapi-queryperformancecounter",
+    "https://learn.microsoft.com/en-us/windows/win32/api/profileapi/nf-profileapi-queryperformancefrequency"
+  ],
+  "interpretation": "frequency is counts per second (Hz); captured24MHz is not a100ns unit. Built-in elapsed1GHz remains separate from native hostfrequency/epoch."
+}

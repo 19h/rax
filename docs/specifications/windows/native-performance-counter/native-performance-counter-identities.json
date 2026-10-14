@@ -1,0 +1,170 @@
+{
+  "captured-utc": "2026-10-14T07:00:53.262166+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "principal": "\"nt authority\\system\",\"S-1-5-18\"",
+  "native-machine": 43620,
+  "process-machine": 0,
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-native-performance-counter.py",
+    "bytes": 5098,
+    "sha256": "f840a26bd58fa95a53059e3e9e1958af22e865d2b1900ede7361db2f5bd96aa1"
+  },
+  "libraries": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+      "machine": 332,
+      "characteristics": 8450
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df",
+      "machine": 332,
+      "characteristics": 8450
+    }
+  ],
+  "producers": [
+    {
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\performance-counter-arm64\\native-performance-counter.cpp",
+        "bytes": 5646,
+        "sha256": "0de2ff3d50cfbe4cfc68ef8a193d5cf08f0a46f7012d8139527320fc53eed58c"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\performance-counter-arm64\\native-performance-counter-arm64.exe",
+        "bytes": 146432,
+        "sha256": "79e0d455d4abf695dfc8418776a791d2db5046a6998c8a65cd8bb9ff704daa52",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\performance-counter-arm64\\native-performance-counter-arm64.log",
+        "bytes": 48754,
+        "sha256": "0021f880137f0424b0103af0e0aea73b27c91236a1868a4a06d372616d53a017"
+      },
+      "calibration": {
+        "status": "00000000",
+        "counter": "39283780545",
+        "frequency": "24000000",
+        "public-frequency": "24000000",
+        "pointer-bytes": "8",
+        "arena": "B81A320000"
+      },
+      "cases": 250,
+      "monotonic-observations": 8
+    },
+    {
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\performance-counter-x64\\native-performance-counter.cpp",
+        "bytes": 5646,
+        "sha256": "0de2ff3d50cfbe4cfc68ef8a193d5cf08f0a46f7012d8139527320fc53eed58c"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\performance-counter-x64\\native-performance-counter-x64.exe",
+        "bytes": 143360,
+        "sha256": "5030a87b7801f10eb3ab8fec4db564a5b24f8f1ce39431d343c57e7fc35970eb",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\performance-counter-x64\\native-performance-counter-x64.log",
+        "bytes": 48754,
+        "sha256": "57164e5f6aea4e078b52954dd1d64c5426b6beffc6407d144a5840a01e926f55"
+      },
+      "calibration": {
+        "status": "00000000",
+        "counter": "39351374003",
+        "frequency": "24000000",
+        "public-frequency": "24000000",
+        "pointer-bytes": "8",
+        "arena": "A247FC0000"
+      },
+      "cases": 250,
+      "monotonic-observations": 8
+    },
+    {
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\performance-counter-x86\\native-performance-counter.cpp",
+        "bytes": 5646,
+        "sha256": "0de2ff3d50cfbe4cfc68ef8a193d5cf08f0a46f7012d8139527320fc53eed58c"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\performance-counter-x86\\native-performance-counter-x86.exe",
+        "bytes": 119808,
+        "sha256": "1cafd9c74e61fab2b3e7cea631a6f223f8728108fbc4148a1531135cbd9cf8cc",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\performance-counter-x86\\native-performance-counter-x86.log",
+        "bytes": 48744,
+        "sha256": "ace033a2eb3ba47cf630cfa875169daf010774122461804a06f67f6122df8693"
+      },
+      "calibration": {
+        "status": "00000000",
+        "counter": "39455835760",
+        "frequency": "24000000",
+        "public-frequency": "24000000",
+        "pointer-bytes": "4",
+        "arena": "3670000"
+      },
+      "cases": 250,
+      "monotonic-observations": 8
+    },
+    {
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\performance-counter-x86-laa\\native-performance-counter.cpp",
+        "bytes": 5646,
+        "sha256": "0de2ff3d50cfbe4cfc68ef8a193d5cf08f0a46f7012d8139527320fc53eed58c"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\performance-counter-x86-laa\\native-performance-counter-x86-laa.exe",
+        "bytes": 119808,
+        "sha256": "55932b15067470ef6f8d05ae4cc7050883855fc9ec70343e285e79fa7b203641",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\performance-counter-x86-laa\\native-performance-counter-x86-laa.log",
+        "bytes": 48751,
+        "sha256": "b2d034f0142136ef2756307929e2df58e7cd5808c9c0d78da117c649505711ce"
+      },
+      "calibration": {
+        "status": "00000000",
+        "counter": "39567884375",
+        "frequency": "24000000",
+        "public-frequency": "24000000",
+        "pointer-bytes": "4",
+        "arena": "5B20000"
+      },
+      "cases": 250,
+      "monotonic-observations": 8
+    }
+  ]
+}

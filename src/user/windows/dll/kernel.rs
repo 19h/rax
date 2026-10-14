@@ -472,13 +472,16 @@ fn tick_count64(c: &mut Ctx) -> ApiResult {
 }
 fn performance_counter(c: &mut Ctx) -> ApiResult {
     let out = c.ptr(0)?;
-    c.mem()
-        .w64(out, c.p.start_time.elapsed().as_nanos() as u64)?;
+    let counter =
+        c.p.performance_clock
+            .counter(c.p.start_time)
+            .map_err(|error| c.unsupported(format!("performance clock: {error}")))?;
+    c.mem().w64(out, counter)?;
     Flow::bool(true)
 }
 fn performance_frequency(c: &mut Ctx) -> ApiResult {
     let out = c.ptr(0)?;
-    c.mem().w64(out, 1_000_000_000)?;
+    c.mem().w64(out, c.p.performance_clock.frequency())?;
     Flow::bool(true)
 }
 fn is_debugger_present(_: &mut Ctx) -> ApiResult {

@@ -1,0 +1,260 @@
+calibration status=00000000 counter=39351374003 frequency=24000000 public-frequency=24000000 pointer-bytes=8 arena=A247FC0000
+case=0 family=matrix counter-kind=0 frequency-kind=0 status=00000000 escaped=00000000 before=39351397009 after=39351397250 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=00 b65=36 b66=6E b67=01 b68=00 b69=00 b70=00 b71=00 changed=8
+case=1 family=matrix counter-kind=0 frequency-kind=1 status=00000000 escaped=00000000 before=39351407400 after=39351407436 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=48 b65=D3 b66=86 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=2 family=matrix counter-kind=0 frequency-kind=2 status=80000002 escaped=00000000 before=39351411743 after=39351411876 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=40 b65=E4 b66=86 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=3 family=matrix counter-kind=0 frequency-kind=3 status=80000002 escaped=00000000 before=39351417591 after=39351417641 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=0E b65=FB b66=86 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=4 family=matrix counter-kind=0 frequency-kind=4 status=80000002 escaped=00000000 before=39351421707 after=39351421758 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=23 b65=0B b66=87 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=5 family=matrix counter-kind=0 frequency-kind=5 status=00000000 escaped=00000000 before=39351425757 after=39351425785 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=F6 b65=1A b66=87 b67=29 b68=00 b69=36 b70=6E b71=01 b72=00 b73=00 b74=00 b75=00 changed=12
+case=6 family=matrix counter-kind=0 frequency-kind=6 status=C0000005 escaped=00000000 before=39351429866 after=39351430047 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=03 b65=2B b66=87 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=7 family=matrix counter-kind=0 frequency-kind=7 status=C0000005 escaped=00000000 before=39351433093 after=39351433186 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=9D b65=37 b66=87 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=8 family=matrix counter-kind=0 frequency-kind=8 status=80000001 escaped=00000000 before=39351437050 after=39351437150 p0=4 p1=2 p2=1 p3=4 p4=102 p5=4 p6=2 p7=1 b64=11 b65=47 b66=87 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=9 family=matrix counter-kind=0 frequency-kind=9 status=C0000005 escaped=00000000 before=39351440999 after=39351441078 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=7D b65=56 b66=87 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=10 family=matrix counter-kind=0 frequency-kind=10 status=C0000005 escaped=00000000 before=39351447186 after=39351447274 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=AC b65=6E b66=87 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=11 family=matrix counter-kind=0 frequency-kind=11 status=C0000005 escaped=00000000 before=39351451223 after=39351451300 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=6E b65=7E b66=87 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=12 family=matrix counter-kind=0 frequency-kind=12 status=C0000005 escaped=00000000 before=39351456010 after=39351456088 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=22 b65=91 b66=87 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=13 family=matrix counter-kind=0 frequency-kind=13 status=C0000005 escaped=00000000 before=39351459890 after=39351459965 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=49 b65=A0 b66=87 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=14 family=matrix counter-kind=0 frequency-kind=14 status=C0000005 escaped=00000000 before=39351463789 after=39351463873 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=87 b65=AF b66=87 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=15 family=matrix counter-kind=1 frequency-kind=0 status=C0000005 escaped=00000000 before=39351466792 after=39351466966 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=16 family=matrix counter-kind=1 frequency-kind=1 status=C0000005 escaped=00000000 before=39351470817 after=39351470949 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=17 family=matrix counter-kind=1 frequency-kind=2 status=C0000005 escaped=00000000 before=39351474776 after=39351474905 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=18 family=matrix counter-kind=1 frequency-kind=3 status=C0000005 escaped=00000000 before=39351485898 after=39351486034 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=19 family=matrix counter-kind=1 frequency-kind=4 status=C0000005 escaped=00000000 before=39351489866 after=39351489993 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=20 family=matrix counter-kind=1 frequency-kind=5 status=C0000005 escaped=00000000 before=39351493777 after=39351493908 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=21 family=matrix counter-kind=1 frequency-kind=6 status=C0000005 escaped=00000000 before=39351498011 after=39351498136 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=22 family=matrix counter-kind=1 frequency-kind=7 status=C0000005 escaped=00000000 before=39351501797 after=39351501911 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=23 family=matrix counter-kind=1 frequency-kind=8 status=C0000005 escaped=00000000 before=39351505692 after=39351505806 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=24 family=matrix counter-kind=1 frequency-kind=9 status=C0000005 escaped=00000000 before=39351509705 after=39351509827 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=25 family=matrix counter-kind=1 frequency-kind=10 status=C0000005 escaped=00000000 before=39351513598 after=39351513714 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=26 family=matrix counter-kind=1 frequency-kind=11 status=C0000005 escaped=00000000 before=39351517414 after=39351517527 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=27 family=matrix counter-kind=1 frequency-kind=12 status=C0000005 escaped=00000000 before=39351520200 after=39351520313 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=28 family=matrix counter-kind=1 frequency-kind=13 status=C0000005 escaped=00000000 before=39351524198 after=39351524314 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=29 family=matrix counter-kind=1 frequency-kind=14 status=C0000005 escaped=00000000 before=39351528048 after=39351528164 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=30 family=matrix counter-kind=2 frequency-kind=0 status=80000002 escaped=00000000 before=39351531893 after=39351531938 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=31 family=matrix counter-kind=2 frequency-kind=1 status=80000002 escaped=00000000 before=39351535705 after=39351535749 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=32 family=matrix counter-kind=2 frequency-kind=2 status=80000002 escaped=00000000 before=39351540555 after=39351540740 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=33 family=matrix counter-kind=2 frequency-kind=3 status=80000002 escaped=00000000 before=39351544732 after=39351544797 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=34 family=matrix counter-kind=2 frequency-kind=4 status=80000002 escaped=00000000 before=39351549506 after=39351549572 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=35 family=matrix counter-kind=2 frequency-kind=5 status=80000002 escaped=00000000 before=39351553370 after=39351553410 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=36 family=matrix counter-kind=2 frequency-kind=6 status=80000002 escaped=00000000 before=39351557258 after=39351557302 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=37 family=matrix counter-kind=2 frequency-kind=7 status=80000002 escaped=00000000 before=39351560927 after=39351560966 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=38 family=matrix counter-kind=2 frequency-kind=8 status=80000002 escaped=00000000 before=39351563715 after=39351563756 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=39 family=matrix counter-kind=2 frequency-kind=9 status=80000002 escaped=00000000 before=39351567395 after=39351567435 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=40 family=matrix counter-kind=2 frequency-kind=10 status=80000002 escaped=00000000 before=39351571170 after=39351571211 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=41 family=matrix counter-kind=2 frequency-kind=11 status=80000002 escaped=00000000 before=39351576851 after=39351576980 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=42 family=matrix counter-kind=2 frequency-kind=12 status=80000002 escaped=00000000 before=39351581232 after=39351581289 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=43 family=matrix counter-kind=2 frequency-kind=13 status=80000002 escaped=00000000 before=39351585065 after=39351585113 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=44 family=matrix counter-kind=2 frequency-kind=14 status=80000002 escaped=00000000 before=39351588858 after=39351588902 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=45 family=matrix counter-kind=3 frequency-kind=0 status=80000002 escaped=00000000 before=39351592562 after=39351592603 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=46 family=matrix counter-kind=3 frequency-kind=1 status=80000002 escaped=00000000 before=39351596274 after=39351596314 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=47 family=matrix counter-kind=3 frequency-kind=2 status=80000002 escaped=00000000 before=39351599628 after=39351599671 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=48 family=matrix counter-kind=3 frequency-kind=3 status=80000002 escaped=00000000 before=39351603497 after=39351603537 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=49 family=matrix counter-kind=3 frequency-kind=4 status=80000002 escaped=00000000 before=39351606612 after=39351606653 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=50 family=matrix counter-kind=3 frequency-kind=5 status=80000002 escaped=00000000 before=39351610384 after=39351610527 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=51 family=matrix counter-kind=3 frequency-kind=6 status=80000002 escaped=00000000 before=39351614645 after=39351614755 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=52 family=matrix counter-kind=3 frequency-kind=7 status=80000002 escaped=00000000 before=39351618794 after=39351618838 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=53 family=matrix counter-kind=3 frequency-kind=8 status=80000002 escaped=00000000 before=39351622846 after=39351622888 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=54 family=matrix counter-kind=3 frequency-kind=9 status=80000002 escaped=00000000 before=39351626576 after=39351626616 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=55 family=matrix counter-kind=3 frequency-kind=10 status=80000002 escaped=00000000 before=39351630313 after=39351630351 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=56 family=matrix counter-kind=3 frequency-kind=11 status=80000002 escaped=00000000 before=39351634109 after=39351634159 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=57 family=matrix counter-kind=3 frequency-kind=12 status=80000002 escaped=00000000 before=39351638083 after=39351638133 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=58 family=matrix counter-kind=3 frequency-kind=13 status=80000002 escaped=00000000 before=39351641885 after=39351641924 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=59 family=matrix counter-kind=3 frequency-kind=14 status=80000002 escaped=00000000 before=39351645279 after=39351645317 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=60 family=matrix counter-kind=4 frequency-kind=0 status=80000002 escaped=00000000 before=39351649010 after=39351649049 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=61 family=matrix counter-kind=4 frequency-kind=1 status=80000002 escaped=00000000 before=39351652719 after=39351652759 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=62 family=matrix counter-kind=4 frequency-kind=2 status=80000002 escaped=00000000 before=39351656391 after=39351656431 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=63 family=matrix counter-kind=4 frequency-kind=3 status=80000002 escaped=00000000 before=39351660052 after=39351660091 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=64 family=matrix counter-kind=4 frequency-kind=4 status=80000002 escaped=00000000 before=39351664892 after=39351664946 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=65 family=matrix counter-kind=4 frequency-kind=5 status=80000002 escaped=00000000 before=39351668634 after=39351668674 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=66 family=matrix counter-kind=4 frequency-kind=6 status=80000002 escaped=00000000 before=39351672428 after=39351672468 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=67 family=matrix counter-kind=4 frequency-kind=7 status=80000002 escaped=00000000 before=39351676105 after=39351676144 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=68 family=matrix counter-kind=4 frequency-kind=8 status=80000002 escaped=00000000 before=39351678759 after=39351678798 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=69 family=matrix counter-kind=4 frequency-kind=9 status=80000002 escaped=00000000 before=39351682440 after=39351682479 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=70 family=matrix counter-kind=4 frequency-kind=10 status=80000002 escaped=00000000 before=39351686167 after=39351686207 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=71 family=matrix counter-kind=4 frequency-kind=11 status=80000002 escaped=00000000 before=39351689862 after=39351689904 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=72 family=matrix counter-kind=4 frequency-kind=12 status=80000002 escaped=00000000 before=39351693726 after=39351693766 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=73 family=matrix counter-kind=4 frequency-kind=13 status=80000002 escaped=00000000 before=39351697421 after=39351697462 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=74 family=matrix counter-kind=4 frequency-kind=14 status=80000002 escaped=00000000 before=39351701175 after=39351701215 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=75 family=matrix counter-kind=5 frequency-kind=0 status=00000000 escaped=00000000 before=39351704688 after=39351704717 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=00 b65=36 b66=6E b67=01 b68=00 b69=00 b70=00 b71=00 b72=09 b73=00 b74=00 b75=00 changed=12
+case=76 family=matrix counter-kind=5 frequency-kind=1 status=00000000 escaped=00000000 before=39351708496 after=39351708521 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b68=66 b69=6B b70=8B b71=29 b72=09 b73=00 b74=00 b75=00 changed=8
+case=77 family=matrix counter-kind=5 frequency-kind=2 status=80000002 escaped=00000000 before=39351713183 after=39351713228 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b68=B5 b69=7D b70=8B b71=29 b72=09 b73=00 b74=00 b75=00 changed=8
+case=78 family=matrix counter-kind=5 frequency-kind=3 status=80000002 escaped=00000000 before=39351717049 after=39351717088 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b68=CF b69=8C b70=8B b71=29 b72=09 b73=00 b74=00 b75=00 changed=8
+case=79 family=matrix counter-kind=5 frequency-kind=4 status=80000002 escaped=00000000 before=39351720938 after=39351720986 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b68=01 b69=9C b70=8B b71=29 b72=09 b73=00 b74=00 b75=00 changed=8
+case=80 family=matrix counter-kind=5 frequency-kind=5 status=00000000 escaped=00000000 before=39351724757 after=39351724782 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b68=00 b69=36 b70=6E b71=01 b72=00 b73=00 b74=00 b75=00 changed=8
+case=81 family=matrix counter-kind=5 frequency-kind=6 status=C0000005 escaped=00000000 before=39351728564 after=39351728729 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b68=CA b69=B9 b70=8B b71=29 b72=09 b73=00 b74=00 b75=00 changed=8
+case=82 family=matrix counter-kind=5 frequency-kind=7 status=C0000005 escaped=00000000 before=39351733963 after=39351734331 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b68=18 b69=CF b70=8B b71=29 b72=09 b73=00 b74=00 b75=00 changed=8
+case=83 family=matrix counter-kind=5 frequency-kind=8 status=80000001 escaped=00000000 before=39351738761 after=39351738955 p0=4 p1=2 p2=1 p3=4 p4=102 p5=4 p6=2 p7=1 b68=AD b69=E1 b70=8B b71=29 b72=09 b73=00 b74=00 b75=00 changed=8
+case=84 family=matrix counter-kind=5 frequency-kind=9 status=C0000005 escaped=00000000 before=39351746280 after=39351746409 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b68=06 b69=FF b70=8B b71=29 b72=09 b73=00 b74=00 b75=00 changed=8
+case=85 family=matrix counter-kind=5 frequency-kind=10 status=C0000005 escaped=00000000 before=39351749199 after=39351749283 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b68=69 b69=0A b70=8C b71=29 b72=09 b73=00 b74=00 b75=00 changed=8
+case=86 family=matrix counter-kind=5 frequency-kind=11 status=C0000005 escaped=00000000 before=39351753047 after=39351753167 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b68=71 b69=19 b70=8C b71=29 b72=09 b73=00 b74=00 b75=00 changed=8
+case=87 family=matrix counter-kind=5 frequency-kind=12 status=C0000005 escaped=00000000 before=39351757828 after=39351757925 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b68=1E b69=2C b70=8C b71=29 b72=09 b73=00 b74=00 b75=00 changed=8
+case=88 family=matrix counter-kind=5 frequency-kind=13 status=C0000005 escaped=00000000 before=39351761845 after=39351761926 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b68=CB b69=3B b70=8C b71=29 b72=09 b73=00 b74=00 b75=00 changed=8
+case=89 family=matrix counter-kind=5 frequency-kind=14 status=C0000005 escaped=00000000 before=39351765482 after=39351766109 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b68=7B b69=4B b70=8C b71=29 b72=09 b73=00 b74=00 b75=00 changed=8
+case=90 family=matrix counter-kind=6 frequency-kind=0 status=C0000005 escaped=00000000 before=39351769645 after=39351769748 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=91 family=matrix counter-kind=6 frequency-kind=1 status=C0000005 escaped=00000000 before=39351773465 after=39351773543 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=92 family=matrix counter-kind=6 frequency-kind=2 status=C0000005 escaped=00000000 before=39351776279 after=39351776375 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=93 family=matrix counter-kind=6 frequency-kind=3 status=C0000005 escaped=00000000 before=39351780184 after=39351780265 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=94 family=matrix counter-kind=6 frequency-kind=4 status=C0000005 escaped=00000000 before=39351783974 after=39351784044 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=95 family=matrix counter-kind=6 frequency-kind=5 status=C0000005 escaped=00000000 before=39351787965 after=39351788040 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=96 family=matrix counter-kind=6 frequency-kind=6 status=C0000005 escaped=00000000 before=39351791838 after=39351791917 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=97 family=matrix counter-kind=6 frequency-kind=7 status=C0000005 escaped=00000000 before=39351795745 after=39351795830 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=98 family=matrix counter-kind=6 frequency-kind=8 status=C0000005 escaped=00000000 before=39351799541 after=39351799613 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=99 family=matrix counter-kind=6 frequency-kind=9 status=C0000005 escaped=00000000 before=39351803232 after=39351803302 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=100 family=matrix counter-kind=6 frequency-kind=10 status=C0000005 escaped=00000000 before=39351807022 after=39351807098 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=101 family=matrix counter-kind=6 frequency-kind=11 status=C0000005 escaped=00000000 before=39351810926 after=39351811001 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=102 family=matrix counter-kind=6 frequency-kind=12 status=C0000005 escaped=00000000 before=39351814843 after=39351814912 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=103 family=matrix counter-kind=6 frequency-kind=13 status=C0000005 escaped=00000000 before=39351818709 after=39351818780 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=104 family=matrix counter-kind=6 frequency-kind=14 status=C0000005 escaped=00000000 before=39351822489 after=39351822565 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=105 family=matrix counter-kind=7 frequency-kind=0 status=C0000005 escaped=00000000 before=39351826902 after=39351826991 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=106 family=matrix counter-kind=7 frequency-kind=1 status=C0000005 escaped=00000000 before=39351834018 after=39351834253 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=107 family=matrix counter-kind=7 frequency-kind=2 status=C0000005 escaped=00000000 before=39351839213 after=39351839582 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=108 family=matrix counter-kind=7 frequency-kind=3 status=C0000005 escaped=00000000 before=39351844440 after=39351844547 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=109 family=matrix counter-kind=7 frequency-kind=4 status=C0000005 escaped=00000000 before=39351848785 after=39351848863 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=110 family=matrix counter-kind=7 frequency-kind=5 status=C0000005 escaped=00000000 before=39351853083 after=39351853156 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=111 family=matrix counter-kind=7 frequency-kind=6 status=C0000005 escaped=00000000 before=39351856982 after=39351857055 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=112 family=matrix counter-kind=7 frequency-kind=7 status=C0000005 escaped=00000000 before=39351861007 after=39351861083 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=113 family=matrix counter-kind=7 frequency-kind=8 status=C0000005 escaped=00000000 before=39351864855 after=39351864926 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=114 family=matrix counter-kind=7 frequency-kind=9 status=C0000005 escaped=00000000 before=39351868676 after=39351868745 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=115 family=matrix counter-kind=7 frequency-kind=10 status=C0000005 escaped=00000000 before=39351873151 after=39351873235 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=116 family=matrix counter-kind=7 frequency-kind=11 status=C0000005 escaped=00000000 before=39351877001 after=39351877072 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=117 family=matrix counter-kind=7 frequency-kind=12 status=C0000005 escaped=00000000 before=39351880784 after=39351880855 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=118 family=matrix counter-kind=7 frequency-kind=13 status=C0000005 escaped=00000000 before=39351884675 after=39351884753 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=119 family=matrix counter-kind=7 frequency-kind=14 status=C0000005 escaped=00000000 before=39351888403 after=39351888474 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=120 family=matrix counter-kind=8 frequency-kind=0 status=80000001 escaped=00000000 before=39351892164 after=39351892250 p0=4 p1=2 p2=1 p3=4 p4=102 p5=4 p6=2 p7=1 changed=0
+case=121 family=matrix counter-kind=8 frequency-kind=1 status=80000001 escaped=00000000 before=39351895895 after=39351895969 p0=4 p1=2 p2=1 p3=4 p4=102 p5=4 p6=2 p7=1 changed=0
+case=122 family=matrix counter-kind=8 frequency-kind=2 status=80000001 escaped=00000000 before=39351899632 after=39351899704 p0=4 p1=2 p2=1 p3=4 p4=102 p5=4 p6=2 p7=1 changed=0
+case=123 family=matrix counter-kind=8 frequency-kind=3 status=80000001 escaped=00000000 before=39351903390 after=39351903461 p0=4 p1=2 p2=1 p3=4 p4=102 p5=4 p6=2 p7=1 changed=0
+case=124 family=matrix counter-kind=8 frequency-kind=4 status=80000001 escaped=00000000 before=39351907250 after=39351907329 p0=4 p1=2 p2=1 p3=4 p4=102 p5=4 p6=2 p7=1 changed=0
+case=125 family=matrix counter-kind=8 frequency-kind=5 status=80000001 escaped=00000000 before=39351911031 after=39351911103 p0=4 p1=2 p2=1 p3=4 p4=102 p5=4 p6=2 p7=1 changed=0
+case=126 family=matrix counter-kind=8 frequency-kind=6 status=80000001 escaped=00000000 before=39351914977 after=39351915051 p0=4 p1=2 p2=1 p3=4 p4=102 p5=4 p6=2 p7=1 changed=0
+case=127 family=matrix counter-kind=8 frequency-kind=7 status=80000001 escaped=00000000 before=39351918759 after=39351918830 p0=4 p1=2 p2=1 p3=4 p4=102 p5=4 p6=2 p7=1 changed=0
+case=128 family=matrix counter-kind=8 frequency-kind=8 status=80000001 escaped=00000000 before=39351923180 after=39351923263 p0=4 p1=2 p2=1 p3=4 p4=102 p5=4 p6=2 p7=1 changed=0
+case=129 family=matrix counter-kind=8 frequency-kind=9 status=80000001 escaped=00000000 before=39351927807 after=39351928009 p0=4 p1=2 p2=1 p3=4 p4=102 p5=4 p6=2 p7=1 changed=0
+case=130 family=matrix counter-kind=8 frequency-kind=10 status=80000001 escaped=00000000 before=39351932874 after=39351932984 p0=4 p1=2 p2=1 p3=4 p4=102 p5=4 p6=2 p7=1 changed=0
+case=131 family=matrix counter-kind=8 frequency-kind=11 status=80000001 escaped=00000000 before=39351937279 after=39351937363 p0=4 p1=2 p2=1 p3=4 p4=102 p5=4 p6=2 p7=1 changed=0
+case=132 family=matrix counter-kind=8 frequency-kind=12 status=80000001 escaped=00000000 before=39351941093 after=39351941172 p0=4 p1=2 p2=1 p3=4 p4=102 p5=4 p6=2 p7=1 changed=0
+case=133 family=matrix counter-kind=8 frequency-kind=13 status=80000001 escaped=00000000 before=39351945456 after=39351945599 p0=4 p1=2 p2=1 p3=4 p4=102 p5=4 p6=2 p7=1 changed=0
+case=134 family=matrix counter-kind=8 frequency-kind=14 status=80000001 escaped=00000000 before=39351949398 after=39351949483 p0=4 p1=2 p2=1 p3=4 p4=102 p5=4 p6=2 p7=1 changed=0
+case=135 family=matrix counter-kind=9 frequency-kind=0 status=C0000005 escaped=00000000 before=39351953190 after=39351953267 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=136 family=matrix counter-kind=9 frequency-kind=1 status=C0000005 escaped=00000000 before=39351957050 after=39351957125 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=137 family=matrix counter-kind=9 frequency-kind=2 status=C0000005 escaped=00000000 before=39351960933 after=39351961004 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=138 family=matrix counter-kind=9 frequency-kind=3 status=C0000005 escaped=00000000 before=39351964718 after=39351964789 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=139 family=matrix counter-kind=9 frequency-kind=4 status=C0000005 escaped=00000000 before=39351968419 after=39351968490 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=140 family=matrix counter-kind=9 frequency-kind=5 status=C0000005 escaped=00000000 before=39351972141 after=39351972211 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=141 family=matrix counter-kind=9 frequency-kind=6 status=C0000005 escaped=00000000 before=39351975971 after=39351976042 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=142 family=matrix counter-kind=9 frequency-kind=7 status=C0000005 escaped=00000000 before=39351979701 after=39351979771 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=143 family=matrix counter-kind=9 frequency-kind=8 status=C0000005 escaped=00000000 before=39351983394 after=39351983465 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=144 family=matrix counter-kind=9 frequency-kind=9 status=C0000005 escaped=00000000 before=39351987081 after=39351987150 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=145 family=matrix counter-kind=9 frequency-kind=10 status=C0000005 escaped=00000000 before=39351990863 after=39351990932 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=146 family=matrix counter-kind=9 frequency-kind=11 status=C0000005 escaped=00000000 before=39351994523 after=39351994594 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=147 family=matrix counter-kind=9 frequency-kind=12 status=C0000005 escaped=00000000 before=39351998504 after=39351998584 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=148 family=matrix counter-kind=9 frequency-kind=13 status=C0000005 escaped=00000000 before=39352002166 after=39352002235 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=149 family=matrix counter-kind=9 frequency-kind=14 status=C0000005 escaped=00000000 before=39352006084 after=39352006156 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=150 family=matrix counter-kind=10 frequency-kind=0 status=C0000005 escaped=00000000 before=39352009866 after=39352009937 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=151 family=matrix counter-kind=10 frequency-kind=1 status=C0000005 escaped=00000000 before=39352014238 after=39352014319 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=152 family=matrix counter-kind=10 frequency-kind=2 status=C0000005 escaped=00000000 before=39352017996 after=39352018067 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=153 family=matrix counter-kind=10 frequency-kind=3 status=C0000005 escaped=00000000 before=39352021681 after=39352021753 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=154 family=matrix counter-kind=10 frequency-kind=4 status=C0000005 escaped=00000000 before=39352026693 after=39352026949 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=155 family=matrix counter-kind=10 frequency-kind=5 status=C0000005 escaped=00000000 before=39352031837 after=39352031934 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=156 family=matrix counter-kind=10 frequency-kind=6 status=C0000005 escaped=00000000 before=39352035682 after=39352035759 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=157 family=matrix counter-kind=10 frequency-kind=7 status=C0000005 escaped=00000000 before=39352039650 after=39352039721 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=158 family=matrix counter-kind=10 frequency-kind=8 status=C0000005 escaped=00000000 before=39352043323 after=39352043393 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=159 family=matrix counter-kind=10 frequency-kind=9 status=C0000005 escaped=00000000 before=39352047013 after=39352047083 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=160 family=matrix counter-kind=10 frequency-kind=10 status=C0000005 escaped=00000000 before=39352050698 after=39352050767 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=161 family=matrix counter-kind=10 frequency-kind=11 status=C0000005 escaped=00000000 before=39352054515 after=39352054585 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=162 family=matrix counter-kind=10 frequency-kind=12 status=C0000005 escaped=00000000 before=39352058286 after=39352058357 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=163 family=matrix counter-kind=10 frequency-kind=13 status=C0000005 escaped=00000000 before=39352061936 after=39352062006 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=164 family=matrix counter-kind=10 frequency-kind=14 status=C0000005 escaped=00000000 before=39352065737 after=39352065809 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=165 family=matrix counter-kind=11 frequency-kind=0 status=C0000005 escaped=00000000 before=39352069507 after=39352069577 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=166 family=matrix counter-kind=11 frequency-kind=1 status=C0000005 escaped=00000000 before=39352073196 after=39352073266 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=167 family=matrix counter-kind=11 frequency-kind=2 status=C0000005 escaped=00000000 before=39352077001 after=39352077071 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=168 family=matrix counter-kind=11 frequency-kind=3 status=C0000005 escaped=00000000 before=39352081253 after=39352081358 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=169 family=matrix counter-kind=11 frequency-kind=4 status=C0000005 escaped=00000000 before=39352085105 after=39352085177 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=170 family=matrix counter-kind=11 frequency-kind=5 status=C0000005 escaped=00000000 before=39352088936 after=39352089007 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=171 family=matrix counter-kind=11 frequency-kind=6 status=C0000005 escaped=00000000 before=39352092688 after=39352092758 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=172 family=matrix counter-kind=11 frequency-kind=7 status=C0000005 escaped=00000000 before=39352096542 after=39352096634 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=173 family=matrix counter-kind=11 frequency-kind=8 status=C0000005 escaped=00000000 before=39352100489 after=39352100564 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=174 family=matrix counter-kind=11 frequency-kind=9 status=C0000005 escaped=00000000 before=39352105887 after=39352105965 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=175 family=matrix counter-kind=11 frequency-kind=10 status=C0000005 escaped=00000000 before=39352109751 after=39352109826 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=176 family=matrix counter-kind=11 frequency-kind=11 status=C0000005 escaped=00000000 before=39352113474 after=39352113546 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=177 family=matrix counter-kind=11 frequency-kind=12 status=C0000005 escaped=00000000 before=39352117284 after=39352117356 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=178 family=matrix counter-kind=11 frequency-kind=13 status=C0000005 escaped=00000000 before=39352122523 after=39352122761 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=179 family=matrix counter-kind=11 frequency-kind=14 status=C0000005 escaped=00000000 before=39352127610 after=39352127729 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=180 family=matrix counter-kind=12 frequency-kind=0 status=C0000005 escaped=00000000 before=39352132353 after=39352132440 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=181 family=matrix counter-kind=12 frequency-kind=1 status=C0000005 escaped=00000000 before=39352136335 after=39352136483 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=182 family=matrix counter-kind=12 frequency-kind=2 status=C0000005 escaped=00000000 before=39352140824 after=39352140918 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=183 family=matrix counter-kind=12 frequency-kind=3 status=C0000005 escaped=00000000 before=39352145232 after=39352145402 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=184 family=matrix counter-kind=12 frequency-kind=4 status=C0000005 escaped=00000000 before=39352149281 after=39352149375 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=185 family=matrix counter-kind=12 frequency-kind=5 status=C0000005 escaped=00000000 before=39352153203 after=39352153291 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=186 family=matrix counter-kind=12 frequency-kind=6 status=C0000005 escaped=00000000 before=39352157002 after=39352157077 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=187 family=matrix counter-kind=12 frequency-kind=7 status=C0000005 escaped=00000000 before=39352160882 after=39352160954 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=188 family=matrix counter-kind=12 frequency-kind=8 status=C0000005 escaped=00000000 before=39352164838 after=39352164912 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=189 family=matrix counter-kind=12 frequency-kind=9 status=C0000005 escaped=00000000 before=39352168580 after=39352168651 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=190 family=matrix counter-kind=12 frequency-kind=10 status=C0000005 escaped=00000000 before=39352172362 after=39352172445 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=191 family=matrix counter-kind=12 frequency-kind=11 status=C0000005 escaped=00000000 before=39352175216 after=39352175288 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=192 family=matrix counter-kind=12 frequency-kind=12 status=C0000005 escaped=00000000 before=39352179043 after=39352179121 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=193 family=matrix counter-kind=12 frequency-kind=13 status=C0000005 escaped=00000000 before=39352182773 after=39352182844 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=194 family=matrix counter-kind=12 frequency-kind=14 status=C0000005 escaped=00000000 before=39352186492 after=39352186564 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=195 family=matrix counter-kind=13 frequency-kind=0 status=C0000005 escaped=00000000 before=39352190318 after=39352190396 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=196 family=matrix counter-kind=13 frequency-kind=1 status=C0000005 escaped=00000000 before=39352194770 after=39352194859 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=197 family=matrix counter-kind=13 frequency-kind=2 status=C0000005 escaped=00000000 before=39352198516 after=39352198589 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=198 family=matrix counter-kind=13 frequency-kind=3 status=C0000005 escaped=00000000 before=39352202244 after=39352202316 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=199 family=matrix counter-kind=13 frequency-kind=4 status=C0000005 escaped=00000000 before=39352206509 after=39352206589 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=200 family=matrix counter-kind=13 frequency-kind=5 status=C0000005 escaped=00000000 before=39352210241 after=39352210312 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=201 family=matrix counter-kind=13 frequency-kind=6 status=C0000005 escaped=00000000 before=39352213970 after=39352214040 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=202 family=matrix counter-kind=13 frequency-kind=7 status=C0000005 escaped=00000000 before=39352217916 after=39352217992 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=203 family=matrix counter-kind=13 frequency-kind=8 status=C0000005 escaped=00000000 before=39352221726 after=39352221797 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=204 family=matrix counter-kind=13 frequency-kind=9 status=C0000005 escaped=00000000 before=39352225475 after=39352225545 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=205 family=matrix counter-kind=13 frequency-kind=10 status=C0000005 escaped=00000000 before=39352229227 after=39352229299 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=206 family=matrix counter-kind=13 frequency-kind=11 status=C0000005 escaped=00000000 before=39352232997 after=39352233067 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=207 family=matrix counter-kind=13 frequency-kind=12 status=C0000005 escaped=00000000 before=39352236772 after=39352236844 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=208 family=matrix counter-kind=13 frequency-kind=13 status=C0000005 escaped=00000000 before=39352241112 after=39352241203 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=209 family=matrix counter-kind=13 frequency-kind=14 status=C0000005 escaped=00000000 before=39352245358 after=39352245436 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=210 family=matrix counter-kind=14 frequency-kind=0 status=C0000005 escaped=00000000 before=39352249837 after=39352249930 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=211 family=matrix counter-kind=14 frequency-kind=1 status=C0000005 escaped=00000000 before=39352253868 after=39352253957 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=212 family=matrix counter-kind=14 frequency-kind=2 status=C0000005 escaped=00000000 before=39352257833 after=39352257913 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=213 family=matrix counter-kind=14 frequency-kind=3 status=C0000005 escaped=00000000 before=39352261699 after=39352261783 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=214 family=matrix counter-kind=14 frequency-kind=4 status=C0000005 escaped=00000000 before=39352265632 after=39352265714 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=215 family=matrix counter-kind=14 frequency-kind=5 status=C0000005 escaped=00000000 before=39352269506 after=39352269580 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=216 family=matrix counter-kind=14 frequency-kind=6 status=C0000005 escaped=00000000 before=39352273813 after=39352273897 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=217 family=matrix counter-kind=14 frequency-kind=7 status=C0000005 escaped=00000000 before=39352277771 after=39352277848 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=218 family=matrix counter-kind=14 frequency-kind=8 status=C0000005 escaped=00000000 before=39352281924 after=39352282002 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=219 family=matrix counter-kind=14 frequency-kind=9 status=C0000005 escaped=00000000 before=39352286362 after=39352286462 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=220 family=matrix counter-kind=14 frequency-kind=10 status=C0000005 escaped=00000000 before=39352290421 after=39352290496 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=221 family=matrix counter-kind=14 frequency-kind=11 status=C0000005 escaped=00000000 before=39352294384 after=39352294484 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=222 family=matrix counter-kind=14 frequency-kind=12 status=C0000005 escaped=00000000 before=39352298281 after=39352298361 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=223 family=matrix counter-kind=14 frequency-kind=13 status=C0000005 escaped=00000000 before=39352302155 after=39352302226 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=224 family=matrix counter-kind=14 frequency-kind=14 status=C0000005 escaped=00000000 before=39352305965 after=39352306035 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=225 family=alias counter-kind=0 frequency-kind=0 status=00000000 escaped=00000000 before=39352309766 after=39352309792 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=00 b65=36 b66=6E b67=01 b68=00 b69=00 b70=00 b71=00 changed=8
+case=226 family=alias counter-kind=0 frequency-kind=1 status=80000002 escaped=00000000 before=39352317110 after=39352317299 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=EB b65=B4 b66=94 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=227 family=alias counter-kind=0 frequency-kind=2 status=80000002 escaped=00000000 before=39352321873 after=39352321950 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=6B b65=C7 b66=94 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=228 family=alias counter-kind=0 frequency-kind=3 status=80000002 escaped=00000000 before=39352325797 after=39352325843 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=BC b65=D6 b66=94 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=229 family=alias counter-kind=0 frequency-kind=4 status=00000000 escaped=00000000 before=39352328922 after=39352328948 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=F2 b65=E2 b66=94 b67=29 b68=00 b69=36 b70=6E b71=01 b72=00 b73=00 b74=00 b75=00 changed=12
+case=230 family=alias counter-kind=0 frequency-kind=5 status=80000002 escaped=00000000 before=39352333133 after=39352333181 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=65 b65=F3 b66=94 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=231 family=alias counter-kind=0 frequency-kind=6 status=80000002 escaped=00000000 before=39352336958 after=39352337003 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=53 b65=02 b66=95 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=232 family=alias counter-kind=0 frequency-kind=7 status=80000002 escaped=00000000 before=39352340877 after=39352340922 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=A3 b65=11 b66=95 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=233 family=alias counter-kind=0 frequency-kind=8 status=00000000 escaped=00000000 before=39352343755 after=39352343781 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=E2 b65=1C b66=95 b67=29 b68=09 b69=00 b70=00 b71=00 b72=00 b73=36 b74=6E b75=01 b76=00 b77=00 b78=00 b79=00 changed=16
+case=234 family=alias counter-kind=0 frequency-kind=9 status=80000002 escaped=00000000 before=39352347864 after=39352347909 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=EE b65=2C b66=95 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=235 family=alias counter-kind=0 frequency-kind=10 status=80000002 escaped=00000000 before=39352351674 after=39352351714 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=D0 b65=3B b66=95 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=236 family=alias counter-kind=0 frequency-kind=11 status=80000002 escaped=00000000 before=39352354595 after=39352354641 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=3B b65=47 b66=95 b67=29 b68=09 b69=00 b70=00 b71=00 changed=8
+case=237 family=alias counter-kind=0 frequency-kind=12 status=00000000 escaped=00000000 before=39352358484 after=39352358511 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=6C b65=56 b66=95 b67=29 b68=09 b69=00 b70=00 b71=00 b76=00 b77=36 b78=6E b79=01 b80=00 b81=00 b82=00 b83=00 changed=16
+case=238 family=reverse-alias counter-kind=1 frequency-kind=0 status=80000002 escaped=00000000 before=39352362832 after=39352362890 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=239 family=reverse-alias counter-kind=2 frequency-kind=0 status=80000002 escaped=00000000 before=39352367374 after=39352367423 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=240 family=reverse-alias counter-kind=3 frequency-kind=0 status=80000002 escaped=00000000 before=39352371408 after=39352371449 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=241 family=reverse-alias counter-kind=4 frequency-kind=0 status=00000000 escaped=00000000 before=39352375167 after=39352375193 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=00 b65=36 b66=6E b67=01 b68=00 b69=00 b70=00 b71=00 b72=09 b73=00 b74=00 b75=00 changed=12
+case=242 family=reverse-alias counter-kind=5 frequency-kind=0 status=80000002 escaped=00000000 before=39352377921 after=39352377961 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=243 family=reverse-alias counter-kind=6 frequency-kind=0 status=80000002 escaped=00000000 before=39352381662 after=39352381704 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=244 family=reverse-alias counter-kind=7 frequency-kind=0 status=80000002 escaped=00000000 before=39352385420 after=39352385460 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=245 family=reverse-alias counter-kind=8 frequency-kind=0 status=00000000 escaped=00000000 before=39352389343 after=39352389368 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=00 b65=36 b66=6E b67=01 b68=00 b69=00 b70=00 b71=00 b72=F5 b73=CE b74=95 b75=29 b76=09 b77=00 b78=00 b79=00 changed=16
+case=246 family=reverse-alias counter-kind=9 frequency-kind=0 status=80000002 escaped=00000000 before=39352393181 after=39352393225 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=247 family=reverse-alias counter-kind=10 frequency-kind=0 status=80000002 escaped=00000000 before=39352397008 after=39352397047 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=248 family=reverse-alias counter-kind=11 frequency-kind=0 status=80000002 escaped=00000000 before=39352400722 after=39352400787 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 changed=0
+case=249 family=reverse-alias counter-kind=12 frequency-kind=0 status=00000000 escaped=00000000 before=39352403513 after=39352403539 p0=4 p1=2 p2=1 p3=104 p4=102 p5=4 p6=2 p7=1 b64=00 b65=36 b66=6E b67=01 b68=00 b69=00 b70=00 b71=00 b76=51 b77=06 b78=96 b79=29 b80=09 b81=00 b82=00 b83=00 changed=16
+monotonic case=0 previous=39352406053 current=39353006561 delta=600508
+monotonic case=1 previous=39353006561 current=39353381725 delta=375164
+monotonic case=2 previous=39353381725 current=39353757542 delta=375817
+monotonic case=3 previous=39353757542 current=39354133497 delta=375955
+monotonic case=4 previous=39354133497 current=39354510108 delta=376611
+monotonic case=5 previous=39354510108 current=39355188084 delta=677976
+monotonic case=6 previous=39355188084 current=39355452793 delta=264709
+monotonic case=7 previous=39355452793 current=39355828195 delta=375402
+complete cases=250 monotonic=8 pointer-bytes=8

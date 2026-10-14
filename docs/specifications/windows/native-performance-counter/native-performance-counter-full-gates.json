@@ -1,0 +1,32 @@
+﻿[
+    {
+        "gate":  "focused",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib performance_ -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-performance-counter-full-focused.log"
+    },
+    {
+        "gate":  "full",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib -- --nocapture",
+        "exit-code":  101,
+        "log":  "native-performance-counter-full-full.log"
+    },
+    {
+        "gate":  "capi",
+        "command":  "cargo.exe test --locked --offline --no-default-features -p rax-capi -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "native-performance-counter-full-capi.log"
+    },
+    {
+        "gate":  "all-targets",
+        "command":  "cargo.exe build --locked --offline --no-default-features --all-targets",
+        "exit-code":  0,
+        "log":  "native-performance-counter-full-all-targets.log"
+    },
+    {
+        "gate":  "integration",
+        "command":  "cargo.exe test --locked --offline --no-default-features --test user_windows --test user_windows_memory -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-performance-counter-full-integration.log"
+    }
+]

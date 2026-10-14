@@ -4,6 +4,9 @@ use crate::user::windows::loader::services::tests::table;
 #[path = "services_tests/process_query_tests.rs"]
 mod process_query_tests;
 
+#[path = "services_tests/performance_counter_tests.rs"]
+mod performance_counter_tests;
+
 #[path = "services_tests/scheduler_shared_tests.rs"]
 mod scheduler_shared_tests;
 

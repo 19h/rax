@@ -1,0 +1,43 @@
+[
+  {
+    "gate": "clock",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "user::clock::tests",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "gate": "full",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "--",
+      "--nocapture"
+    ]
+  },
+  {
+    "gate": "all-targets",
+    "exit-code": 0,
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ]
+  }
+]

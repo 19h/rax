@@ -1,0 +1,116 @@
+{
+  "baseline-rax": "2de987e04ee60f3fe7dfb442c129f31c6ea27bdd",
+  "full-lib": {
+    "macos": [
+      [
+        7770,
+        0,
+        2
+      ]
+    ],
+    "linux": [
+      [
+        7764,
+        0,
+        2
+      ]
+    ],
+    "windows": [
+      [
+        7186,
+        5,
+        2
+      ]
+    ]
+  },
+  "focused": {
+    "macos": 7,
+    "linux": 7,
+    "windows": 8
+  },
+  "native-calls": 1000,
+  "monotonic-observations": 32,
+  "native-physical-kernel": "ARM64; x64/x86 compatibility processes",
+  "CAPI-passed-per-host": 168,
+  "windows-baseline-failures": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "native-frequency-Hz": 24000000,
+  "builtin-frequency-Hz": 1000000000,
+  "owning-scoped-rust-sources": 210,
+  "matching-current-cpp-consumers": 9,
+  "core-features": [],
+  "archives": {
+    "macos": [
+      {
+        "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+        "bytes": 508438400,
+        "sha256": "e262874d70bc37e7e88088280932e73aa396307dc262183efc618a93322451a3",
+        "members": 1456,
+        "structural-member-walk": "pass"
+      },
+      {
+        "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target/aarch64-apple-darwin/debug/deps/librax-c89758aa402dc84d.rlib",
+        "bytes": 375804712,
+        "sha256": "87c3cec30621be86a572d61a7c1af16544bd0c375c50814afe2c59f5d45b08b9",
+        "members": 258,
+        "structural-member-walk": "pass"
+      }
+    ],
+    "linux": [
+      {
+        "path": "/target/debug/libassist_rs.a",
+        "bytes": 911041054,
+        "sha256": "add3d9958822021fe391dbbf9f4feb415a05fb2c238c6bdfd713d09f79cd024e",
+        "members": 1599,
+        "structural-member-walk": "pass"
+      },
+      {
+        "path": "/target/debug/deps/librax-a2a8568229f56ea7.rlib",
+        "bytes": 555049558,
+        "sha256": "062b93381f6bfef396ddab042d57a28fafa614b4e6733cd8f99fe671e1de7674",
+        "members": 259,
+        "structural-member-walk": "pass"
+      }
+    ],
+    "windows": [
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\assist_rs.lib",
+        "bytes": 1161392660,
+        "sha256": "69af8b01b1eedc320dc05eb3554b26ab40367f7446a41916e99145923ea98506",
+        "members": 4673,
+        "structural-member-walk": "pass"
+      },
+      {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\librax-e6c413934cad3a8f.rlib",
+        "bytes": 773027656,
+        "sha256": "d1d76965094e37bd0c5692b4d8d0a27f5147f6da91469002c930f41308450798",
+        "members": 260,
+        "structural-member-walk": "pass"
+      }
+    ]
+  },
+  "controlled-falsifications": 10,
+  "original-observer": {
+    "bytes": 11177,
+    "budget": 1000000,
+    "outcome": "budget exhausted"
+  },
+  "extended-observer": {
+    "budget": 3000000,
+    "terminal-turn": 2110676,
+    "outcome": "Complete(Internal(\"native NTDLL service NtSetInformationProcess: Unimplemented(\\\"NtSetInformationProcess: NtSetInformationProcess class 35\\\")\"))",
+    "only-budget-literals-changed": true
+  },
+  "ordinary-guest-exits": 0,
+  "whole-current-root-plugin-GUI-packages": "excluded",
+  "retained-failures": [
+    "missing test import: first compile",
+    "first Windows full CPU-attribution timing fixture failure; strict assertion retained with startup excluded and250ms worker"
+  ],
+  "full-same-host-goal": "active and incomplete"
+}

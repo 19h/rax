@@ -1,0 +1,62 @@
+[
+  {
+    "case": "source-byte",
+    "rejected": true,
+    "exit-code": 1,
+    "last-error": "ValueError: actual recorded bytes: native-performance-counter.cpp"
+  },
+  {
+    "case": "executed-binary",
+    "rejected": true,
+    "exit-code": 1,
+    "last-error": "ValueError: executed binary identity"
+  },
+  {
+    "case": "kernel",
+    "rejected": true,
+    "exit-code": 1,
+    "last-error": "ValueError: native ARM64 inspector"
+  },
+  {
+    "case": "subject",
+    "rejected": true,
+    "exit-code": 1,
+    "last-error": "ValueError: measured kernel and SYSTEM subject"
+  },
+  {
+    "case": "library",
+    "rejected": true,
+    "exit-code": 1,
+    "last-error": "ValueError: selected library identity preserved"
+  },
+  {
+    "case": "frequency",
+    "rejected": true,
+    "exit-code": 1,
+    "last-error": "ValueError: actual calibration"
+  },
+  {
+    "case": "missing-row-rehashed",
+    "rejected": true,
+    "exit-code": 1,
+    "last-error": "ValueError: ordered complete native matrix"
+  },
+  {
+    "case": "status-rehashed",
+    "rejected": true,
+    "exit-code": 1,
+    "last-error": "ValueError: four-profile status/guard equivalence on the same kernel"
+  },
+  {
+    "case": "monotonic-rehashed",
+    "rejected": true,
+    "exit-code": 1,
+    "last-error": "ValueError: actual monotonic deltas"
+  },
+  {
+    "case": "optimized",
+    "rejected": true,
+    "exit-code": 1,
+    "last-error": "RuntimeError: optimized evidence validation rejected"
+  }
+]

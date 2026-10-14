@@ -26,6 +26,18 @@ pub fn read(clock: HostClock) -> io::Result<(i64, i64)> {
     platform::read(clock)
 }
 
+/// Raw Windows counter frequency in Hz, fixed at boot and strictly positive.
+#[cfg(windows)]
+pub(crate) fn windows_performance_frequency() -> io::Result<i64> {
+    platform::frequency()
+}
+
+/// Raw Windows counter ticks with the host epoch, before nanosecond conversion.
+#[cfg(windows)]
+pub(crate) fn windows_performance_counter() -> io::Result<i64> {
+    platform::counter()
+}
+
 #[cfg(unix)]
 mod platform {
     use super::*;
@@ -133,7 +145,7 @@ mod platform {
         ) -> i32;
     }
 
-    fn frequency() -> io::Result<i64> {
+    pub(super) fn frequency() -> io::Result<i64> {
         static FREQUENCY: OnceLock<i64> = OnceLock::new();
         if let Some(&frequency) = FREQUENCY.get() {
             return Ok(frequency);
@@ -154,6 +166,16 @@ mod platform {
         Ok(frequency)
     }
 
+    pub(super) fn counter() -> io::Result<i64> {
+        let mut ticks = 0;
+        // SAFETY: one exclusive initialized host LARGE_INTEGER. No guest
+        // address or argument enters this native clock sampling API.
+        if unsafe { QueryPerformanceCounter(&mut ticks) } == 0 {
+            return Err(io::Error::last_os_error());
+        }
+        Ok(ticks)
+    }
+
     pub fn read(clock: HostClock) -> io::Result<(i64, i64)> {
         match clock {
             HostClock::Realtime => {
@@ -167,11 +189,7 @@ mod platform {
             }
             HostClock::Monotonic => {
                 let frequency = frequency()?;
-                let mut ticks = 0;
-                // SAFETY: one writable LARGE_INTEGER.
-                if unsafe { QueryPerformanceCounter(&mut ticks) } == 0 {
-                    return Err(io::Error::last_os_error());
-                }
+                let ticks = counter()?;
                 conversion::counter(ticks, frequency)
             }
             HostClock::ProcessCpu | HostClock::ThreadCpu => {
@@ -250,14 +268,19 @@ mod tests {
 
     #[test]
     fn native_thread_clock_excludes_another_threads_work() {
+        use std::sync::{Arc, Barrier};
         use std::time::{Duration, Instant};
         let ns = |clock| {
             let (s, n) = read(clock).unwrap();
             i128::from(s) * 1_000_000_000 + i128::from(n)
         };
-        let thread_before = ns(HostClock::ThreadCpu);
-        let process_before = ns(HostClock::ProcessCpu);
-        let worker_cpu = std::thread::spawn(move || {
+        let ready = Arc::new(Barrier::new(2));
+        let begin = Arc::new(Barrier::new(2));
+        let worker_ready = ready.clone();
+        let worker_begin = begin.clone();
+        let worker = std::thread::spawn(move || {
+            worker_ready.wait();
+            worker_begin.wait();
             let start = ns(HostClock::ThreadCpu);
             let deadline = Instant::now() + Duration::from_secs(5);
             loop {
@@ -265,7 +288,7 @@ mod tests {
                     std::hint::black_box(n.wrapping_mul(n));
                 }
                 let elapsed = ns(HostClock::ThreadCpu) - start;
-                if elapsed >= 50_000_000 {
+                if elapsed >= 250_000_000 {
                     return elapsed;
                 }
                 assert!(
@@ -273,12 +296,18 @@ mod tests {
                     "worker CPU clock did not advance"
                 );
             }
-        })
-        .join()
-        .unwrap();
+        });
+        // Complete thread/CRT startup before measuring the joining caller.
+        // A 250 ms worker spans many accounting quanta; the captured Windows
+        // false failure used one 15.625 ms caller tick and 62.5 ms worker time.
+        ready.wait();
+        let thread_before = ns(HostClock::ThreadCpu);
+        let process_before = ns(HostClock::ProcessCpu);
+        begin.wait();
+        let worker_cpu = worker.join().unwrap();
         let process_cpu = ns(HostClock::ProcessCpu) - process_before;
         let joining_thread_cpu = ns(HostClock::ThreadCpu) - thread_before;
-        // The caller is blocked in join while the worker burns >= 50 ms. This
+        // The caller is blocked in join while the worker burns >= 250 ms. This
         // catches accidentally implementing both domains using GetProcessTimes.
         assert!(
             joining_thread_cpu * 4 < worker_cpu,

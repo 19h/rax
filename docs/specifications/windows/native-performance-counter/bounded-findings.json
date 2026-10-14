@@ -1,0 +1,35 @@
+[
+  {
+    "impact": "high",
+    "finding": "Full ordinary Windows completion remains unproved; threeCRTprograms now requireNtSetInformationProcessclass35 andwhoami retainsNtTraceEvent0x5E.",
+    "evidence": [
+      "native-performance-counter-final-after-ordinary-processes.log",
+      "native-performance-counter-extended-trace-output.log"
+    ],
+    "blocks": "overallgoal; not the counter semantic contract"
+  },
+  {
+    "impact": "high",
+    "finding": "Actual native adapter/leaves run ARM64/WoW64 onARM64; mixedARM64EC/x64 loader/CPU transitions remain incomplete.",
+    "evidence": "precedingmappingcontract andnativeproducerarchitectureidentities",
+    "blocks": "arbitrary x64-on-ARM64 ordinaryprocesscompletion"
+  },
+  {
+    "impact": "medium",
+    "finding": "FirstWindowsfullsuiteCPUtimefixture failedstrictquarterratio at15.625ms caller vs62.5msworker; independentrepeats currentbinary1failureof3 whilepriorbinary3pass. CPUtimeadapterbranchunchanged. Refinedfixturepreservesassertion andmeasures250msafterthreadstartup.",
+    "evidence": [
+      "windows-first-full-six-failures.log",
+      "thread-cpu-baseline-results.json"
+    ],
+    "blocks": "finalWindowsfullgate untilrefinedresultinspected"
+  },
+  {
+    "impact": "medium",
+    "finding": "Originalobserver1Mbudgetexhausted; derived3Mbudget completesclass35 at2110676turns. Absolute before/after stepcomparison usesdifferentdiagnosticbudget andmayvarywithnativeclock-basedcookies.",
+    "evidence": [
+      "native-performance-counter-final-after-production-trace-output.log",
+      "native-performance-counter-extended-trace-output.log"
+    ],
+    "blocks": "no exact unchanged-observer terminaldelta claim"
+  }
+]

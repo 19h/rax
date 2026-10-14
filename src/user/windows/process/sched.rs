@@ -794,6 +794,7 @@ mod tests {
             exit_code: None,
             failure: None,
             start_time: Instant::now(),
+            performance_clock: Default::default(),
             rng: 1,
             process_cookie: 0xA5A5_5A5B,
             cwd: vec![],

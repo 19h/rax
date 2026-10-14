@@ -1,0 +1,49 @@
+[
+  {
+    "id": "C1",
+    "assumption": "Performance frequency is implementation-dependent Hz; all guest counter APIs must use the same units and origin.",
+    "basis": "Microsoft NtQueryPerformanceCounter documentation; native four-profile calibration measured24000000Hz, unlike the unverified10MHz guess; existing HLE counter uses elapsed nanoseconds and1000000000Hz.",
+    "dependent-result": "Clock unit and public/native/shared-data parity design",
+    "stress-test": "Mix native/public counter values; query Shared QpcFrequency; compare monotonic deltas across calls and threads.",
+    "falsification-probe": "Counter/frequency pairs use different scale or origin; native/public frequencies disagree; DLL bypass sees zero/stale shared frequency.",
+    "status": "revised",
+    "status-detail": "Native Rust adapter and installed NT/public helpers passed direct host frequency/epoch brackets; shared-data frequency matches. Built-in elapsed1GHz preserved."
+  },
+  {
+    "id": "C2",
+    "assumption": "Counter publication precedes optional frequency validation/store; ULONG alignment4 applies on all measured profiles.",
+    "basis": "Four completed250-case matrices preserve counter bytes on optional output failure and accept offset4 while rejecting offsets1..3.",
+    "dependent-result": "Checked output order, alias and fault policy",
+    "stress-test": "Read-only/no-access/guard/cross-page outputs, aliases offsets0..12, invalid pointers and both pointer widths.",
+    "falsification-probe": "Independent producer or shared replay contradicts status, guard visitation or retained counter bytes.",
+    "status": "confirmed"
+  },
+  {
+    "id": "C3",
+    "assumption": "Writable guard stores consume one guard; read-only guard failures deny without consuming it.",
+    "basis": "All four native profiles: guardRW returns80000001/p3=4; guardRO returnsC0000005/p4=102. Existing write_guard_result models this distinction.",
+    "dependent-result": "Guard failure routing",
+    "stress-test": "Counter guard versus frequency guard; early invalid counter prevents frequency visitation.",
+    "falsification-probe": "Matched controls or replay leave a consumed guard armed or consume a read-only guard.",
+    "status": "confirmed"
+  },
+  {
+    "id": "C4",
+    "assumption": "The observed ordinary program boundary represents the next required native service.",
+    "basis": "Combined-upstream owning archive and unchanged observer still reach NtQueryPerformanceCounter0x31/RVA1350 at168227turns; threeCRTprograms share the boundary.",
+    "dependent-result": "Next semantic group selection",
+    "stress-test": "Combined AArch64 upstream source and final owning archive may change the boundary.",
+    "falsification-probe": "Same observer on the integrated archive stops earlier or at another service.",
+    "status": "confirmed",
+    "status-detail": "Counter service passed native/public/helper gates; ordinary C++ and extended observer now reach class35. Original1M observer budget exhaustion retained."
+  },
+  {
+    "id": "C5",
+    "assumption": "Replay normalizes runtime clock samples without weakening status, guard or caller-byte checks.",
+    "basis": "Captured test-only clock input lies within the independently sampled native before/after bracket and matches every visible counter byte. Successful frequency aliases overwrite only their8-byte captured frequency span. Failed counter stores keep exact canaries.",
+    "dependent-result": "1000-call portable matrix regression",
+    "stress-test": "Counter/frequency aliases0/4/8/12, unchanged failed stores, mismatched time brackets, cross-page faults and repeated guards.",
+    "falsification-probe": "A replay mismatch, impossible recovered sample or counter-store/order fault survives the exact byte comparison.",
+    "status": "confirmed"
+  }
+]

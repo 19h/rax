@@ -1,0 +1,14 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/macos-rax-target/debug/deps/rax-754f4d2a527a4423)
+
+running 7 tests
+test user::windows::performance_clock::tests::builtin_performance_clock_preserves_elapsed_nanoseconds_and_frequency ... ok
+test user::windows::performance_clock::tests::installed_windows_performance_clock_requires_its_native_host ... ok
+test user::clock::tests::performance_counter_scaling_does_not_overflow_or_round_up ... ok
+test user::windows::process::sched::tests::services_tests::performance_counter_tests::native_performance_counter_aliases_and_cross_page_store_are_exact ... ok
+test user::windows::process::sched::tests::services_tests::performance_counter_tests::native_performance_counter_abi_uses_one_clock_and_optional_frequency ... ok
+test user::windows::process::sched::tests::services_tests::performance_counter_tests::native_performance_counter_failed_frequency_retains_counter_and_guards ... ok
+test user::windows::process::sched::tests::services_tests::performance_counter_tests::replay::native_performance_counter_replays_all_1000_native_calls ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 7765 filtered out; finished in 0.53s
+

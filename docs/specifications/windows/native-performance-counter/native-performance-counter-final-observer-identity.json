@@ -1,0 +1,19 @@
+{
+  "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-performance-counter-after-trace.rs",
+  "bytes": 11177,
+  "sha256": "d41c953666769f60c0a4a53b098bd85f8b778133d6839be4c8ea6ca221c1734e",
+  "compiled-executable-path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-performance-counter-final-after-production-trace.exe",
+  "executable-bytes": 26420736,
+  "executable-sha256": "58aff8d8babee89f307729907c6433ae960f0757bb9f7be3363edca60b14e11a",
+  "executable-machine": 43620,
+  "extended-observer": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-performance-counter-extended-trace.rs",
+    "bytes": 11178,
+    "sha256": "514fdbc99de6f562002aa8a198deb79e7f5cd012db058aa1460a0e5730ae37c0",
+    "budget-turns": 3000000,
+    "original-budget-turns": 1000000,
+    "only-budget-literals-changed": true,
+    "executable-bytes": 26420736,
+    "executable-sha256": "dbd1fb1840a9863fa605562718df2623894f399288d9df8705939f4b9b753c75"
+  }
+}

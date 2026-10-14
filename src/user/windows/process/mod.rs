@@ -318,6 +318,8 @@ pub struct Proc {
     pub failure: Option<String>,
     /// Process start time.
     pub start_time: Instant,
+    /// Counter units and epoch shared by native/public performance timing.
+    pub(crate) performance_clock: super::performance_clock::PerformanceClock,
     /// Deterministic pseudo-random state.
     pub rng: u64,
     /// Seed-derived opaque ProcessCookie value, stable across queries/threads.

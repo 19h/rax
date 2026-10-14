@@ -11,6 +11,7 @@ mod hotpatch;
 mod io_completion;
 mod nls;
 mod object_create;
+mod performance_counter;
 mod process_query;
 mod process_set;
 mod query;
@@ -230,6 +231,12 @@ pub(super) static EXPORTS: &[Export] = &[
         Stdcall,
         &[Ptr, Ptr, Ptr, Ptr, Ptr, Ptr, Ptr, I32, I32, I32],
         section_map::map,
+    ),
+    Export::func(
+        "NtQueryPerformanceCounter",
+        Stdcall,
+        &[Ptr, Ptr],
+        performance_counter::query,
     ),
 ];
 fn status_error(c: &mut Ctx) -> ApiResult {

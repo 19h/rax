@@ -529,6 +529,8 @@ pub mod kuser {
     pub const NUMBER_OF_PHYSICAL_PAGES: u64 = 0x2E8;
     /// `SafeBootMode`.
     pub const SAFE_BOOT_MODE: u64 = 0x2EC;
+    /// `QpcFrequency` (LONGLONG), verified by PHNT FIELD_OFFSET assertions.
+    pub const QPC_FREQUENCY: u64 = 0x300;
     /// `TickCount` (`KSYSTEM_TIME`).
     pub const TICK_COUNT: u64 = 0x320;
     /// `Cookie`.

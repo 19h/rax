@@ -1,0 +1,15 @@
+
+running 1 test
+test user::clock::tests::native_thread_clock_excludes_another_threads_work ... FAILED
+
+failures:
+
+failures:
+    user::clock::tests::native_thread_clock_excludes_another_threads_work
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 7192 filtered out; finished in 0.06s
+
+
+thread 'user::clock::tests::native_thread_clock_excludes_another_threads_work' (9528) panicked at src\user\clock.rs:301:9:
+joining thread charged worker CPU: 15625000 vs 62500000 ns
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
