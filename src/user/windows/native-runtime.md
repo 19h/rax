@@ -1657,3 +1657,12 @@ startup sentinel handling, caller stores, WoW64 conversion and partial failures.
 [TLS evidence](../../../docs/specifications/windows/native-process-tls/README.md)
 records1040 native controls and separate platform/embedding results. The unchanged
 3M observer reaches `NtApphelpCacheControl`; ordinary guest exits remain unproved.
+
+## Installed compatibility-cache lookup
+
+`NtApphelpCacheControl` operation 6 now queries a bounded immutable snapshot
+of the installed base compatibility database. Counted UTF-16 names, actual flags,
+fixed packet capture, output alignment, guards, aliases and WoW64 copyback follow
+recorded native behavior. Other operations remain explicit unsupported paths.
+The [contract and native evidence](../../../docs/specifications/windows/native-apphelp-cache/README.md) own the format, assumptions,
+platform gates and ordinary-startup limits.

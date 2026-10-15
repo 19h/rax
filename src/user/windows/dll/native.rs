@@ -5,6 +5,7 @@ use super::super::memory::Mem;
 use super::super::nt::status::*;
 
 mod allocate;
+mod apphelp;
 mod directory;
 mod events;
 mod hotpatch;
@@ -30,6 +31,12 @@ mod wnf;
 mod worker_factory;
 
 pub(super) static EXPORTS: &[Export] = &[
+    Export::func(
+        "NtApphelpCacheControl",
+        Stdcall,
+        &[I32, Ptr],
+        apphelp::control,
+    ),
     Export::func("RtlNtStatusToDosError", Stdcall, &[I32], status_error),
     Export::func(
         "NtTerminateProcess",

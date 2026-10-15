@@ -1,0 +1,8 @@
+native-breakpoint instruction=D43E0000
+profile width=8 child=6856 entry=7FF82FAD1500 rva=1500
+selected mode=6 original=DEF05BDD40 selected=1 scratch=2BC56660000
+entry ordinal=0 class=6 process=6 input=1 length=512 caller=7FF82FBC4C4C
+dump name=input-before address=1 requested=512 ok=0 error=299 got=0 hex=
+return ordinal=0 class=6 status=C0000005
+dump name=input-after address=1 requested=512 ok=0 error=299 got=0 hex=
+complete captured=1 calls=0 exit=77

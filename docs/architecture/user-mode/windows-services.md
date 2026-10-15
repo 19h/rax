@@ -547,3 +547,12 @@ caller aliases and native/WoW64 failure ordering are documented in
 [TLS evidence](../../specifications/windows/native-process-tls/README.md).
 Its1040 native controls cover four profiles. The C API remains unchanged;
 ordinary Windows completion remains an active requirement.
+
+## Installed compatibility-cache lookup
+
+`NtApphelpCacheControl` operation 6 now queries a bounded immutable snapshot
+of the installed base compatibility database. Counted UTF-16 names, actual flags,
+fixed packet capture, output alignment, guards, aliases and WoW64 copyback follow
+recorded native behavior. Other operations remain explicit unsupported paths.
+The [contract and native evidence](../../specifications/windows/native-apphelp-cache/README.md) own the format, assumptions,
+platform gates and ordinary-startup limits.

@@ -1,0 +1,8 @@
+{
+  "path": "/Users/int/hexrays/kvasir/vendor/rax/src/user/windows/appcompat.rs",
+  "before-sha256": "3e70dbf2ff1efe874e094499749530a2eb2e2e38fdf92333ee780ca942e946a8",
+  "after-sha256": "f26a8b97008fc47446429df310d5e2f252bcdd1b35f130625c74511035d4ccfc",
+  "exact-sole-replacement-before": "work and O(S + E*L) storage",
+  "exact-sole-replacement-after": "work and O(B + E*L) storage",
+  "reason": "root and string tag vectors are jointly bounded by B; no executable byte changes"
+}

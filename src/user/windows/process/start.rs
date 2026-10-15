@@ -349,6 +349,10 @@ pub(super) fn spawn_image(mut config: WindowsConfig, bytes: Vec<u8>) -> Result<P
         .map(|r| r.object_namespace.clone())
         .unwrap_or_default();
     let nls = native.as_ref().and_then(|r| r.nls.clone());
+    let appcompat = native
+        .as_ref()
+        .map(|r| r.appcompat.clone())
+        .unwrap_or_default();
     let mut objects = Objects::default();
     if let Some(runtime) = &native {
         objects.select_wnf_catalog(runtime.wnf_catalog.clone());
@@ -365,6 +369,7 @@ pub(super) fn spawn_image(mut config: WindowsConfig, bytes: Vec<u8>) -> Result<P
         registry,
         object_namespace,
         nls,
+        appcompat,
         pid: 4,
         peb: layout::PEB_ADDRESS,
         params: 0,

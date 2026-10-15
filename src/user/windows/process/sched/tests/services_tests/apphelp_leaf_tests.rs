@@ -1,0 +1,93 @@
+//! Real installed ARM64/x64 host and WoW64 service leaves, including RET 8.
+use super::*;
+use crate::user::windows::{
+    loader,
+    process::{WindowsConfig, WindowsProcess},
+};
+
+#[test]
+fn native_apphelp_cache_installed_leaves_use_selected_database_and_copyback_order() {
+    let host = if cfg!(target_arch = "aarch64") {
+        WinArch::Arm64
+    } else if cfg!(target_arch = "x86_64") {
+        WinArch::X64
+    } else {
+        WinArch::X86
+    };
+    let arches = if host == WinArch::X86 {
+        vec![host]
+    } else {
+        vec![host, WinArch::X86]
+    };
+    for arch in arches {
+        let image: &[u8] = match arch {
+            WinArch::Arm64 => include_bytes!(
+                "../../../../../../../tests/fixtures/user/windows/bin/arm64/smoke.exe"
+            ),
+            WinArch::X64 => {
+                include_bytes!("../../../../../../../tests/fixtures/user/windows/bin/x64/smoke.exe")
+            }
+            WinArch::X86 => {
+                include_bytes!("../../../../../../../tests/fixtures/user/windows/bin/x86/smoke.exe")
+            }
+        };
+        let mut config =
+            WindowsConfig::embedded("C:\\native-apphelp.exe", vec![], vec![], 4096).unwrap();
+        config.native_libraries = true;
+        config.arena_bytes = 256 << 20;
+        let mut process = WindowsProcess::spawn_image(config, image.to_vec()).unwrap();
+        let p = process.state_mut();
+        let tid = *p.threads.keys().next().unwrap();
+        let mut t = p.threads.remove(&tid).unwrap();
+        let module = loader::load_dll(p, "ntdll.dll").unwrap();
+        let base = scratch(p);
+        let invoke = super::super::virtual_memory_tests::installed::invoke;
+        for name in ["KERNELBASE.dll", "apphelp.dll", "msvcrt.dll"] {
+            let expected = p.appcompat.lookup(&name.encode_utf16().collect::<Vec<_>>());
+            p.space.wr(base, &[0; 512]).unwrap();
+            let units: Vec<_> = name
+                .encode_utf16()
+                .chain([0])
+                .flat_map(u16::to_le_bytes)
+                .collect();
+            p.space.wr(base + 4096, &units).unwrap();
+            packet(
+                p,
+                base,
+                base + 4096,
+                base + 8192,
+                units.len() as u16 - 2,
+                units.len() as u16,
+                4,
+            );
+            assert_eq!(
+                invoke(p, &mut t, module, "NtApphelpCacheControl", &[6, base]),
+                STATUS_SUCCESS
+            );
+            assert_eq!(p.space.u32(base + 8192).unwrap(), expected);
+        }
+        p.space.w32(base + 8192, 0xa5a5a5a5).unwrap();
+        p.vm.protect(base, PAGE_SIZE, prot::READONLY).unwrap();
+        assert_eq!(
+            invoke(p, &mut t, module, "NtApphelpCacheControl", &[6, base]),
+            if arch == WinArch::X86 {
+                STATUS_ACCESS_VIOLATION
+            } else {
+                STATUS_SUCCESS
+            }
+        );
+        assert_eq!(
+            p.space.u32(base + 8192).unwrap(),
+            p.appcompat
+                .lookup(&"msvcrt.dll".encode_utf16().collect::<Vec<_>>())
+        );
+        p.vm.protect(base, PAGE_SIZE, prot::READWRITE).unwrap();
+        p.vm.protect(base + 8192, PAGE_SIZE, prot::READWRITE | prot::GUARD)
+            .unwrap();
+        assert_eq!(
+            invoke(p, &mut t, module, "NtApphelpCacheControl", &[6, base]),
+            STATUS_GUARD_PAGE_VIOLATION
+        );
+        assert_eq!(p.vm.query(base + 8192).unwrap().protect, prot::READWRITE);
+    }
+}

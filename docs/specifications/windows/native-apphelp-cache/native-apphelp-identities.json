@@ -1,0 +1,669 @@
+{
+  "captured-utc": "2026-10-15T05:14:02.916549+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "principal": "\"nt authority\\system\",\"S-1-5-18\"",
+  "native-machine": 43620,
+  "process-machine": 0,
+  "libraries": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+      "machine": 332,
+      "characteristics": 8450
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df",
+      "machine": 332,
+      "characteristics": 8450
+    }
+  ],
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-native-apphelp.py",
+    "bytes": 4906,
+    "sha256": "41c9d805dd29719dd7732be87a454dbafbfe9c9976a851a8df9819a0741f8fdb"
+  },
+  "producers": [
+    {
+      "group": "lookup",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-lookup-arm64\\native-apphelp-lookup.cpp",
+        "bytes": 5277,
+        "sha256": "debdf9a5e0aedf68cf6c67d13e109d64ce4b21b899d48f18be2581337177800e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-lookup-arm64\\native-apphelp-lookup-arm64.exe",
+        "bytes": 147456,
+        "sha256": "7cf815cb9462aee2ff92ac5cda02c9c4dde4d7a3eb8a60f310d86882579daec0",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-lookup-arm64\\native-apphelp-lookup-arm64.log",
+        "bytes": 25479,
+        "sha256": "0eea245bdd5ebc7ef0d9f59a62ad681375da00b49a35eeac324d258460fa9bdf"
+      },
+      "cases": 16
+    },
+    {
+      "group": "lookup",
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-lookup-x64\\native-apphelp-lookup.cpp",
+        "bytes": 5277,
+        "sha256": "debdf9a5e0aedf68cf6c67d13e109d64ce4b21b899d48f18be2581337177800e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-lookup-x64\\native-apphelp-lookup-x64.exe",
+        "bytes": 144896,
+        "sha256": "7cc34fc3569cb53544d7a6a9acdec1d13517ab9538024ec4f172d8ab8c01eb03",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-lookup-x64\\native-apphelp-lookup-x64.log",
+        "bytes": 25479,
+        "sha256": "65e94210b3eac12ec7f35643da4c1d5f815736ba262071c378b4befe180bbf95"
+      },
+      "cases": 16
+    },
+    {
+      "group": "lookup",
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-lookup-x86\\native-apphelp-lookup.cpp",
+        "bytes": 5277,
+        "sha256": "debdf9a5e0aedf68cf6c67d13e109d64ce4b21b899d48f18be2581337177800e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-lookup-x86\\native-apphelp-lookup-x86.exe",
+        "bytes": 119808,
+        "sha256": "a90612a1df42575a607d0ccab22462e8243afa89a261b9031259ddba7e4d844b",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-lookup-x86\\native-apphelp-lookup-x86.log",
+        "bytes": 25353,
+        "sha256": "35965cdd8085a60a225d5a622cedce57311aff9fa9695324f03f45f4325926c5"
+      },
+      "cases": 16
+    },
+    {
+      "group": "lookup",
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-lookup-x86-laa\\native-apphelp-lookup.cpp",
+        "bytes": 5277,
+        "sha256": "debdf9a5e0aedf68cf6c67d13e109d64ce4b21b899d48f18be2581337177800e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-lookup-x86-laa\\native-apphelp-lookup-x86-laa.exe",
+        "bytes": 119808,
+        "sha256": "46291669cfd801d501b01b56a7a1e5bc3513703b76ac44f2ff1a38ce3929ec5c",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-lookup-x86-laa\\native-apphelp-lookup-x86-laa.log",
+        "bytes": 25353,
+        "sha256": "bcec4a503c77794313e4d692b35b98d71795e335335f019e63994461eeda699c"
+      },
+      "cases": 16
+    },
+    {
+      "group": "offsets",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-offsets-arm64\\native-apphelp-offsets.cpp",
+        "bytes": 2269,
+        "sha256": "89d6e88819ba733c4ca45ad99988cb98ca853c1ab45e6efad4d0b25b64778f7d"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-offsets-arm64\\native-apphelp-offsets-arm64.exe",
+        "bytes": 146432,
+        "sha256": "e68e3d83723b0b60452a7135b8733c7f14306ab02e91a8d6697b759dbfeec77b",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-offsets-arm64\\native-apphelp-offsets-arm64.log",
+        "bytes": 1231,
+        "sha256": "2fdcec7239917b4237a5294c516e82ef54385810d4b8d63a2e87a8987ebe8441"
+      },
+      "cases": 11
+    },
+    {
+      "group": "offsets",
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-offsets-x64\\native-apphelp-offsets.cpp",
+        "bytes": 2269,
+        "sha256": "89d6e88819ba733c4ca45ad99988cb98ca853c1ab45e6efad4d0b25b64778f7d"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-offsets-x64\\native-apphelp-offsets-x64.exe",
+        "bytes": 143360,
+        "sha256": "8abfe348c78baabd8bb157dab2ac9b92ff142035ad9f3c445899e2607c16d9bc",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-offsets-x64\\native-apphelp-offsets-x64.log",
+        "bytes": 1231,
+        "sha256": "37579cd8c1aafc1c61f8fa09c6d95132f2b9cee2455394b84e45a8461c6ff774"
+      },
+      "cases": 11
+    },
+    {
+      "group": "offsets",
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-offsets-x86\\native-apphelp-offsets.cpp",
+        "bytes": 2269,
+        "sha256": "89d6e88819ba733c4ca45ad99988cb98ca853c1ab45e6efad4d0b25b64778f7d"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-offsets-x86\\native-apphelp-offsets-x86.exe",
+        "bytes": 119808,
+        "sha256": "e0eb61efa8909d2a8de31644a0d9616677f54fdb0756c2a75a38467d7b7b3683",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-offsets-x86\\native-apphelp-offsets-x86.log",
+        "bytes": 1626,
+        "sha256": "fe49d1debc662170facb1a4e0400ba04cbcbd0b028aa8cb6c7fb16f9b90dd1b2"
+      },
+      "cases": 15
+    },
+    {
+      "group": "offsets",
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-offsets-x86-laa\\native-apphelp-offsets.cpp",
+        "bytes": 2269,
+        "sha256": "89d6e88819ba733c4ca45ad99988cb98ca853c1ab45e6efad4d0b25b64778f7d"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-offsets-x86-laa\\native-apphelp-offsets-x86-laa.exe",
+        "bytes": 119808,
+        "sha256": "111850f4c727284a2486f93cbfcedc84084808c3b4d034fe3c8f962d02b7c0bb",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-offsets-x86-laa\\native-apphelp-offsets-x86-laa.log",
+        "bytes": 1626,
+        "sha256": "3700f62fbf905364e280f8b42d82e586c29c380f6d509881014d208e23238fc7"
+      },
+      "cases": 15
+    },
+    {
+      "group": "output-offsets",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-output-offsets-arm64\\native-apphelp-output-offsets.cpp",
+        "bytes": 2842,
+        "sha256": "e7ff9e13992249b5267792b43e2ca1ecf7cb108fc411ef875a40397577bc75a8"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-output-offsets-arm64\\native-apphelp-output-offsets-arm64.exe",
+        "bytes": 145408,
+        "sha256": "00c468281f25d6d29d1cb2a5bef285a484ce3054a727558b6e0bc80a3d2a1676",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-output-offsets-arm64\\native-apphelp-output-offsets-arm64.log",
+        "bytes": 1572,
+        "sha256": "685aee196f487dbed077655087e1a61a285f2db281a3bd0ad441c91ac04d06c1"
+      },
+      "cases": 11
+    },
+    {
+      "group": "output-offsets",
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-output-offsets-x64\\native-apphelp-output-offsets.cpp",
+        "bytes": 2842,
+        "sha256": "e7ff9e13992249b5267792b43e2ca1ecf7cb108fc411ef875a40397577bc75a8"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-output-offsets-x64\\native-apphelp-output-offsets-x64.exe",
+        "bytes": 142336,
+        "sha256": "1c0b3f4a32c280518114d6aefdb5c67e8ed221bc785485465ede2525fbfdc1f2",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-output-offsets-x64\\native-apphelp-output-offsets-x64.log",
+        "bytes": 1572,
+        "sha256": "456b004b8e9a79aefb65a173e2b6a65698a85f4af0f5338d921d8ab911ae926b"
+      },
+      "cases": 11
+    },
+    {
+      "group": "output-offsets",
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-output-offsets-x86\\native-apphelp-output-offsets.cpp",
+        "bytes": 2842,
+        "sha256": "e7ff9e13992249b5267792b43e2ca1ecf7cb108fc411ef875a40397577bc75a8"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-output-offsets-x86\\native-apphelp-output-offsets-x86.exe",
+        "bytes": 118784,
+        "sha256": "f21893136d52e59eb676d185fd6b8e34aaed5c8cc278a658d4050ca20147ab5c",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-output-offsets-x86\\native-apphelp-output-offsets-x86.log",
+        "bytes": 29112,
+        "sha256": "3196e883cc27219ae06874e0aa214ab8d763b426f589a11bbf62826f2a896431"
+      },
+      "cases": 210
+    },
+    {
+      "group": "output-offsets",
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-output-offsets-x86-laa\\native-apphelp-output-offsets.cpp",
+        "bytes": 2842,
+        "sha256": "e7ff9e13992249b5267792b43e2ca1ecf7cb108fc411ef875a40397577bc75a8"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-output-offsets-x86-laa\\native-apphelp-output-offsets-x86-laa.exe",
+        "bytes": 118784,
+        "sha256": "919da3ea3f98c00c0dafad6b53bbc8c3a426ae69fef4ee4588a97212ae07f154",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-output-offsets-x86-laa\\native-apphelp-output-offsets-x86-laa.log",
+        "bytes": 29112,
+        "sha256": "70cfb11e5971c2ac4c36c9c06392e0c2d4a85122527b24b772c93adac6cb23e5"
+      },
+      "cases": 210
+    },
+    {
+      "group": "names",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-names-arm64\\native-apphelp-names.cpp",
+        "bytes": 3628,
+        "sha256": "c8cd9c08ff471c394044776d6e66269466dfe987cb63b36762cff4dc1f7ed19a"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-names-arm64\\native-apphelp-names-arm64.exe",
+        "bytes": 147456,
+        "sha256": "4b7336af50a3eb3fb1608677bce85707685d82cd26fed27ae15c08bdbf601eb2",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-names-arm64\\native-apphelp-names-arm64.log",
+        "bytes": 4196,
+        "sha256": "a6a2f2d29a50e7ff36533285eac06ac70379d3794dd9e233206fcff76588b406"
+      },
+      "cases": 25
+    },
+    {
+      "group": "names",
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-names-x64\\native-apphelp-names.cpp",
+        "bytes": 3628,
+        "sha256": "c8cd9c08ff471c394044776d6e66269466dfe987cb63b36762cff4dc1f7ed19a"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-names-x64\\native-apphelp-names-x64.exe",
+        "bytes": 145408,
+        "sha256": "2f1e9f3ba36fcf3724db1edf52b81a268e62cbb3cbe472e798f3036fddd31c99",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-names-x64\\native-apphelp-names-x64.log",
+        "bytes": 4196,
+        "sha256": "a6a2f2d29a50e7ff36533285eac06ac70379d3794dd9e233206fcff76588b406"
+      },
+      "cases": 25
+    },
+    {
+      "group": "names",
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-names-x86\\native-apphelp-names.cpp",
+        "bytes": 3628,
+        "sha256": "c8cd9c08ff471c394044776d6e66269466dfe987cb63b36762cff4dc1f7ed19a"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-names-x86\\native-apphelp-names-x86.exe",
+        "bytes": 120832,
+        "sha256": "45cd0973312d5fc3286eba5819764e472cf8e86351bc9be54814594958cfa90f",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-names-x86\\native-apphelp-names-x86.log",
+        "bytes": 4196,
+        "sha256": "753dd19ac2614308b854044b6567a209e370e0f2b87878dfad1cd8dbff9ecc9e"
+      },
+      "cases": 25
+    },
+    {
+      "group": "names",
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-names-x86-laa\\native-apphelp-names.cpp",
+        "bytes": 3628,
+        "sha256": "c8cd9c08ff471c394044776d6e66269466dfe987cb63b36762cff4dc1f7ed19a"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-names-x86-laa\\native-apphelp-names-x86-laa.exe",
+        "bytes": 120832,
+        "sha256": "6a2f1210eaba2064198b7ff0f792db7aa00005c20bc8fe39182af9cca7d18337",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-names-x86-laa\\native-apphelp-names-x86-laa.log",
+        "bytes": 4196,
+        "sha256": "753dd19ac2614308b854044b6567a209e370e0f2b87878dfad1cd8dbff9ecc9e"
+      },
+      "cases": 25
+    },
+    {
+      "group": "cdb-names",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-cdb-names-arm64\\native-apphelp-cdb-names.cpp",
+        "bytes": 20663,
+        "sha256": "b59611a4cc75a2104712d467b3d2cda930c3e9d6b4ef886f5fd7dad671abb2d3"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-cdb-names-arm64\\native-apphelp-cdb-names-arm64.exe",
+        "bytes": 154112,
+        "sha256": "a46e15b68659b89191110b5e6024bd3486dde200cb4ccfe20cab00fbdcad0a0e",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-cdb-names-arm64\\native-apphelp-cdb-names-arm64.log",
+        "bytes": 30277,
+        "sha256": "b243340f54481d581ba664b437d992286fafc81d3c0cd91b57df356fab2aeadd"
+      },
+      "cases": 167
+    },
+    {
+      "group": "cdb-names",
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-cdb-names-x64\\native-apphelp-cdb-names.cpp",
+        "bytes": 20663,
+        "sha256": "b59611a4cc75a2104712d467b3d2cda930c3e9d6b4ef886f5fd7dad671abb2d3"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-cdb-names-x64\\native-apphelp-cdb-names-x64.exe",
+        "bytes": 152576,
+        "sha256": "c86d2c359050f307e24457b5801dc594dce9cda89f39782ae9015fb30b25ca61",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-cdb-names-x64\\native-apphelp-cdb-names-x64.log",
+        "bytes": 30277,
+        "sha256": "b243340f54481d581ba664b437d992286fafc81d3c0cd91b57df356fab2aeadd"
+      },
+      "cases": 167
+    },
+    {
+      "group": "cdb-names",
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-cdb-names-x86\\native-apphelp-cdb-names.cpp",
+        "bytes": 20663,
+        "sha256": "b59611a4cc75a2104712d467b3d2cda930c3e9d6b4ef886f5fd7dad671abb2d3"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-cdb-names-x86\\native-apphelp-cdb-names-x86.exe",
+        "bytes": 126976,
+        "sha256": "eca040a808aae1f213efd4b3358ad0d40aced9174bb9c4f08b8b54f61a83eb66",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-cdb-names-x86\\native-apphelp-cdb-names-x86.log",
+        "bytes": 30277,
+        "sha256": "ec0935430ddcad89a081a8f22c394475a7779f8b8af0d5c5f1719356bb9d41e7"
+      },
+      "cases": 167
+    },
+    {
+      "group": "cdb-names",
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-cdb-names-x86-laa\\native-apphelp-cdb-names.cpp",
+        "bytes": 20663,
+        "sha256": "b59611a4cc75a2104712d467b3d2cda930c3e9d6b4ef886f5fd7dad671abb2d3"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-cdb-names-x86-laa\\native-apphelp-cdb-names-x86-laa.exe",
+        "bytes": 126976,
+        "sha256": "7acd44ac8808aebf8697b8607bdd30959e8f30b5f2537e91dc05f1b28b332052",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-cdb-names-x86-laa\\native-apphelp-cdb-names-x86-laa.log",
+        "bytes": 30277,
+        "sha256": "ec0935430ddcad89a081a8f22c394475a7779f8b8af0d5c5f1719356bb9d41e7"
+      },
+      "cases": 167
+    },
+    {
+      "group": "buffers",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-buffers-arm64\\native-apphelp-buffers.cpp",
+        "bytes": 8585,
+        "sha256": "99f5ac949d7eaa9f0af2780fa0df7479d72a55235dbfb084d5dd9375d978090e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-buffers-arm64\\native-apphelp-buffers-arm64.exe",
+        "bytes": 150016,
+        "sha256": "c6068d5e9c9b2e95ad7cdf18b049cee094fd02bb42edf540ab84c2b0aeacb372",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-buffers-arm64\\native-apphelp-buffers-arm64.log",
+        "bytes": 129256,
+        "sha256": "862a9edaa5309c8ca3db939f00e564bc92be88ae0ac1ab504c840d8185473fe7"
+      },
+      "cases": 101
+    },
+    {
+      "group": "buffers",
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-buffers-x64\\native-apphelp-buffers.cpp",
+        "bytes": 8585,
+        "sha256": "99f5ac949d7eaa9f0af2780fa0df7479d72a55235dbfb084d5dd9375d978090e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-buffers-x64\\native-apphelp-buffers-x64.exe",
+        "bytes": 147456,
+        "sha256": "561e8aa6b9c101beb035ded47dfe5c39739dee3fc1c1d6395b3c7ef47961ffe1",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-buffers-x64\\native-apphelp-buffers-x64.log",
+        "bytes": 129276,
+        "sha256": "865b739ab17b53be493771735fc437491e0db6b5598be75d433dc072b2dff592"
+      },
+      "cases": 101
+    },
+    {
+      "group": "buffers",
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-buffers-x86\\native-apphelp-buffers.cpp",
+        "bytes": 8585,
+        "sha256": "99f5ac949d7eaa9f0af2780fa0df7479d72a55235dbfb084d5dd9375d978090e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-buffers-x86\\native-apphelp-buffers-x86.exe",
+        "bytes": 122880,
+        "sha256": "8670edf45152073493101c9a50d4d1e8097f350923513eecf537ca27bdf7a6da",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-buffers-x86\\native-apphelp-buffers-x86.log",
+        "bytes": 129106,
+        "sha256": "af5b5002483f4fd886db2a92aaa52e872a86453954ac7989330a4e12f1dfbd98"
+      },
+      "cases": 101
+    },
+    {
+      "group": "buffers",
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-buffers-x86-laa\\native-apphelp-buffers.cpp",
+        "bytes": 8585,
+        "sha256": "99f5ac949d7eaa9f0af2780fa0df7479d72a55235dbfb084d5dd9375d978090e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-buffers-x86-laa\\native-apphelp-buffers-x86-laa.exe",
+        "bytes": 122880,
+        "sha256": "22fad377d897a57a790a720e930d13a9d1d320eeeb6f04743ad43f981ba3c5ed",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-buffers-x86-laa\\native-apphelp-buffers-x86-laa.log",
+        "bytes": 129106,
+        "sha256": "2c32c72855ef35d15f3c29f0bf9bd28eba817b6925a9b95385464b22e33f30c1"
+      },
+      "cases": 101
+    },
+    {
+      "group": "ordering",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-ordering-arm64\\native-apphelp-ordering.cpp",
+        "bytes": 6138,
+        "sha256": "d9827bacb0b01ebde11f481f0ad572ba10096eca8ef9433e58fd96363f223e01"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-ordering-arm64\\native-apphelp-ordering-arm64.exe",
+        "bytes": 148992,
+        "sha256": "571fd852bdd641a1be506408d77428a25a5d0fbcd9eaac9e18836fdb18ee508c",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-ordering-arm64\\native-apphelp-ordering-arm64.log",
+        "bytes": 46177,
+        "sha256": "c020aff3dd0d7ba278e405325855ae442b6b0a303563a1099d9e9b0093311d26"
+      },
+      "cases": 36
+    },
+    {
+      "group": "ordering",
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-ordering-x64\\native-apphelp-ordering.cpp",
+        "bytes": 6138,
+        "sha256": "d9827bacb0b01ebde11f481f0ad572ba10096eca8ef9433e58fd96363f223e01"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-ordering-x64\\native-apphelp-ordering-x64.exe",
+        "bytes": 145920,
+        "sha256": "f6e7a02fb217cd94d5800461342bde377993a2002db310cbf85c560534adf258",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-ordering-x64\\native-apphelp-ordering-x64.log",
+        "bytes": 46177,
+        "sha256": "60eed1dc4304833c17a85ddd076ae630ca4b8a20992b7036c51d6bd99387b989"
+      },
+      "cases": 36
+    },
+    {
+      "group": "ordering",
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-ordering-x86\\native-apphelp-ordering.cpp",
+        "bytes": 6138,
+        "sha256": "d9827bacb0b01ebde11f481f0ad572ba10096eca8ef9433e58fd96363f223e01"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-ordering-x86\\native-apphelp-ordering-x86.exe",
+        "bytes": 121344,
+        "sha256": "e0c32ad7de242a1f05d52b2c1822dd7833bb3c29e085ee680956d35b29423b3d",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-ordering-x86\\native-apphelp-ordering-x86.log",
+        "bytes": 46077,
+        "sha256": "c01095a322d51c8acbd84c3ead834b3bea25b5a3f02dffb01bfed5cc4ae7c9ae"
+      },
+      "cases": 36
+    },
+    {
+      "group": "ordering",
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-ordering-x86-laa\\native-apphelp-ordering.cpp",
+        "bytes": 6138,
+        "sha256": "d9827bacb0b01ebde11f481f0ad572ba10096eca8ef9433e58fd96363f223e01"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-ordering-x86-laa\\native-apphelp-ordering-x86-laa.exe",
+        "bytes": 121344,
+        "sha256": "c4829afb7e425c34029a542ba03cf0cfd7e4697b10a0167c278c09d6563fbecc",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\apphelp-ordering-x86-laa\\native-apphelp-ordering-x86-laa.log",
+        "bytes": 46077,
+        "sha256": "d7542b689fe28bc5ee9c6ca69162b326224fd536da9672024d675435ea892c63"
+      },
+      "cases": 36
+    }
+  ],
+  "total-cases": 1874,
+  "replayed-cases": 1316,
+  "scope": "post-run actual producer inspection; physical libraries match preceding TLS native controls"
+}

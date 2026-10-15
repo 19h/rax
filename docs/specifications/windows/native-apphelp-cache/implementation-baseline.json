@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-15",
+  "rax-head": "140d279c68ef65263936bdd76069a27443f1d336",
+  "owned-runtime-files": [
+    "src/user/windows/mod.rs",
+    "src/user/windows/appcompat.rs",
+    "src/user/windows/appcompat/tests.rs",
+    "src/user/windows/native.rs",
+    "src/user/windows/process/mod.rs",
+    "src/user/windows/process/start.rs",
+    "src/user/windows/process/native_start/tests.rs",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/apphelp.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/apphelp_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/apphelp_replay_tests.rs",
+    "src/user/windows/dll/crt/startup/storage.rs",
+    "src/user/windows/process/sched.rs",
+    "src/user/windows/process/sched/tests/services_tests/apphelp_leaf_tests.rs"
+  ],
+  "pre-existing-rax-diffs": [],
+  "foreign-root-work": "Cluster/auth work preserved; no root history replay approval",
+  "planes": {
+    "direct-decode": "Unaffected: NT personality service uses existing checked memory, export routing and instruction/stop handling; no owning representation changes",
+    "direct-execute": "Unaffected: NT personality service uses existing checked memory, export routing and instruction/stop handling; no owning representation changes",
+    "CPU-state-layout": "Unaffected: NT personality service uses existing checked memory, export routing and instruction/stop handling; no owning representation changes",
+    "SMIR-lift": "Unaffected: NT personality service uses existing checked memory, export routing and instruction/stop handling; no owning representation changes",
+    "SMIR-IR": "Unaffected: NT personality service uses existing checked memory, export routing and instruction/stop handling; no owning representation changes",
+    "SMIR-interpreter": "Unaffected: NT personality service uses existing checked memory, export routing and instruction/stop handling; no owning representation changes",
+    "optimizer": "Unaffected: NT personality service uses existing checked memory, export routing and instruction/stop handling; no owning representation changes",
+    "native-lowering": "Unaffected: NT personality service uses existing checked memory, export routing and instruction/stop handling; no owning representation changes",
+    "JIT-runtime": "Unaffected: NT personality service uses existing checked memory, export routing and instruction/stop handling; no owning representation changes",
+    "backend": "Unaffected: NT personality service uses existing checked memory, export routing and instruction/stop handling; no owning representation changes",
+    "machine-device": "Unaffected: NT personality service uses existing checked memory, export routing and instruction/stop handling; no owning representation changes",
+    "oracle-analysis": "Unaffected: NT personality service uses existing checked memory, export routing and instruction/stop handling; no owning representation changes",
+    "C-ABI-layout": "Unaffected: NT personality service uses existing checked memory, export routing and instruction/stop handling; no owning representation changes",
+    "guest-memory": "Affected: bounded packet/name reads, output probe, WoW64 projection and guards via existing Mem/VM",
+    "native-runtime": "Affected: immutable installed base CDB catalog; no guest host request",
+    "targets-platforms": "Affected shared Rust builds and CAPI/owning consumer on Windows, macOS, Linux; installed input validation runs natively on Windows",
+    "tests-docs": "Affected native evidence/replay, synthetic database parser faults, three-host gates and ordinary startup frontier"
+  }
+}

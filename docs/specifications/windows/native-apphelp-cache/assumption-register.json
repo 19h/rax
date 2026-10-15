@@ -1,0 +1,56 @@
+[
+  {
+    "id": "H1",
+    "assumption": "The observed operation6 is the loader compatibility-cache continuation boundary on the installed build",
+    "basis": "Unchanged production observer and three independent C++ CRT samples",
+    "dependent-result": "First native control and next adapter",
+    "stress-test": "Native operation numbering, changed buffer schema, library/kernel version",
+    "falsification-probe": "Original native child entry/return capture and frozen library identity comparison",
+    "status": "confirmed for installed build29683; 668 candidate name controls and native entry/return"
+  },
+  {
+    "id": "H2",
+    "assumption": "Capturing an original loader call preserves ordinary owned-process behavior",
+    "basis": "Only child-local instruction traps and read-only memory observation; no argument or status replacement",
+    "dependent-result": "Baseline native return/state evidence",
+    "stress-test": "True caller return, hybrid ABI debugger context, natural child exit",
+    "falsification-probe": "Actual trap bytes, matching original entry, restored caller code, complete debug event stream and exit41",
+    "status": "confirmed for unmodified original child exiting41; later controlled children are distinct"
+  },
+  {
+    "id": "H3",
+    "assumption": "The immutable base sysmain.sdb candidate name flags represent the installed CDB lookup on this installation",
+    "basis": "167 unique candidates exactly equal native results on four ABIs; ordinary names return0",
+    "dependent-result": "Selection-time catalog and guest lookup",
+    "stress-test": "Duplicate names, case, unknown names, malformed tags, different or updated database",
+    "falsification-probe": "Live pure-parser catalog versus independent SDB API and raw native lookup; mismatch forbids equality claim",
+    "status": "confirmed on this installation; custom and concurrent database update state unverified"
+  },
+  {
+    "id": "H4",
+    "assumption": "Packet layout and WoW64 projection follow the measured build29683 profile",
+    "basis": "404 buffer controls,144 ordering controls,442 offset controls",
+    "dependent-result": "Guest pointer validation and write ordering",
+    "stress-test": "Boundary extents, RO packet, overlapping destinations, guards and invalid name length",
+    "falsification-probe": "Replay raw status, readable caller bytes, output bytes and page protections across all argument transports",
+    "status": "confirmed by 1316 raw replays on all three hosts, including installed Windows leaves"
+  },
+  {
+    "id": "H5",
+    "assumption": "Canonical installed CDB input is not replaced between check and read-only open",
+    "basis": "Existing installed-runtime trust boundary; snapshot has containment and regular-file bounds",
+    "dependent-result": "Input containment",
+    "stress-test": "Symlink/reparse replacement race",
+    "falsification-probe": "Replace the target after canonicalization and before open",
+    "status": "retained; no atomic host sandbox claim"
+  },
+  {
+    "id": "H6",
+    "assumption": "Different compatibility flags on duplicate folded names merge with bitwise OR",
+    "basis": "All observed duplicate-name entries agree; OR reproduces every167 live candidate, and synthetic conflicting flags test the chosen policy",
+    "dependent-result": "Conflicting duplicate flag behavior in unobserved databases",
+    "stress-test": "Two records for one counted name with distinct nonzero bits",
+    "falsification-probe": "Native cache built from a controlled conflicting database disagrees with OR; not performed because it changes installed cache state",
+    "status": "retained; native conflicting-duplicate equivalence unknown"
+  }
+]

@@ -1,0 +1,811 @@
+{
+  "parent": "140d279c68ef65263936bdd76069a27443f1d336",
+  "inputs": {
+    "README.md": {
+      "bytes": 12150,
+      "sha256": "9f9d8bf9618efecaf2663ad7edbecc04351e2ecbb21c18d61acc3f514866d4ef"
+    },
+    "apphelp-owning-root-scope.json": {
+      "bytes": 15399,
+      "sha256": "37677a2e56a54eb2084f65a44ee78de1282f061f1d929dd6500a5eb7455c121f"
+    },
+    "apphelp-owning-source-hashes.json": {
+      "bytes": 42047,
+      "sha256": "4c378739ee22c90e7e6f743114d91837fa52dafa1303018f364517f4b48eacbc"
+    },
+    "archive-source-revision.json": {
+      "bytes": 459,
+      "sha256": "f80f116fcf3eb95f2b12ba00d19276c7daed4b264552307424bb968930badffc"
+    },
+    "assist-native-apphelp-owned-final-cpp.log": {
+      "bytes": 2946,
+      "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+    },
+    "assist-native-apphelp-owned-final-shipping.log": {
+      "bytes": 1637,
+      "sha256": "02c0f43b1aed2cbead0dcf89f93fe5853100e5142b87f9f7009167b2783a735c"
+    },
+    "assumption-register.json": {
+      "bytes": 3695,
+      "sha256": "e555b1514f42957c58f0c3228e4ec3297abb86d38e40c67f69766e2d3556adce"
+    },
+    "buffers-source-identity.json": {
+      "bytes": 100,
+      "sha256": "49667e5fe6c7060cf074b768302d5035b5049a41b040eddaab4c8b6b1e87546f"
+    },
+    "cdb-candidate-flags.json": {
+      "bytes": 4618,
+      "sha256": "ba17895813973ac493c4068d9dfe762987f609048e36312bf57c87d254ec7e25"
+    },
+    "cdb-names-source-identity.json": {
+      "bytes": 101,
+      "sha256": "0d1cec885d83558382f9e2f3bc757eb36022add7b1fb1cbb1e893b7a08dd284c"
+    },
+    "check-final-validation.py": {
+      "bytes": 6101,
+      "sha256": "13f799ecad56f1a5cbea448f7796cb7a2d0a1c8c81d3f13d60c8dd157888f8a0"
+    },
+    "complexity-comment-only-delta.json": {
+      "bytes": 483,
+      "sha256": "0a693dceb5c288b5ee0723abff19e35135b78b18135bff120ab75e38d8d40814"
+    },
+    "evidence-stress-results.json": {
+      "bytes": 666,
+      "sha256": "2831d0c2c9527ffb11b9d12c157b3431bca8970571e696c316ec5336ea70bd2f"
+    },
+    "excluded-linux-windows-personality-first.log": {
+      "bytes": 128699,
+      "sha256": "f0502ed162f1a8e32cb7c89d161b24ace1179e8a56a10e9415f6392df407c9e6"
+    },
+    "excluded-macos-focused-first.log": {
+      "bytes": 1007,
+      "sha256": "5587f4cfe4da196ccbff46917afdc1763900de122007e881f62c1ca8e6e1d112"
+    },
+    "excluded-macos-focused-second.log": {
+      "bytes": 1484,
+      "sha256": "f797c6eeeb6358f1566e1133c3032c99d16b8b1a80f2d2ebaa5ceaa447b07521"
+    },
+    "excluded-macos-windows-personality-first.log": {
+      "bytes": 128721,
+      "sha256": "a2964d24a471d5f537dacfd3fdce31398247718846ef207a6ae52ff4c2b35d01"
+    },
+    "excluded-native-apphelp-corrected-focused.log": {
+      "bytes": 162851,
+      "sha256": "160cfea7964a90d32a2043b97e804d92b1e22b74f495dd36d821002e85341ac9"
+    },
+    "first-capture-source-identity.json": {
+      "bytes": 101,
+      "sha256": "32a18cad9bfe29c8a6f40bd5f3063020ef914193ca5a372d381974204c0b0902"
+    },
+    "fresh-controls-source-identity.json": {
+      "bytes": 101,
+      "sha256": "90d5166945e987f4d6b327e8ff860431ee0a83388bf162b3c98a1026f12d9d1c"
+    },
+    "implementation-baseline.json": {
+      "bytes": 3694,
+      "sha256": "36f63a7c330039679bad4493a73824592b6a2e91af9ec299184ea82f308de72c"
+    },
+    "inspect-installed-apphelp.py": {
+      "bytes": 1946,
+      "sha256": "598776f18a18ae3806aa9a3fcd821c06462f597ce8d0dc658d358ddb9847db33"
+    },
+    "inspect-installed-sdb.py": {
+      "bytes": 3871,
+      "sha256": "534d0716f1b9e657020d68ae3fcf40b10a84b10aad1646744866d32d439cc3cf"
+    },
+    "inspect-native-apphelp.py": {
+      "bytes": 4906,
+      "sha256": "41c9d805dd29719dd7732be87a454dbafbfe9c9976a851a8df9819a0741f8fdb"
+    },
+    "inspect-sdb-file-structure.py": {
+      "bytes": 3025,
+      "sha256": "bc994875e3404563cef8c2070b6f387eb9440978324f6ce4389e8f8d8fcb6e4a"
+    },
+    "installed-leaf-before.txt": {
+      "bytes": 3395,
+      "sha256": "e341463013afaf69ad66ecc459548374c484fd061c66e01ad362c48508df24d0"
+    },
+    "linux-full-all-targets.log": {
+      "bytes": 116,
+      "sha256": "1e759cb8ff9b5196377ef6ef1d6f2a7b1bb7aae90c73b753533e51e35ad7bcdc"
+    },
+    "linux-full-capi.log": {
+      "bytes": 12881,
+      "sha256": "fa9f02a5f678c213e0438ae38c7e6d4cc8a1158d26548fa809f8e11f2f24c6da"
+    },
+    "linux-full-full.log": {
+      "bytes": 802853,
+      "sha256": "ff0898be65c2cc3c276d2a933da5dfc87d80816e7755a3c7fa9ee02a93af64cb"
+    },
+    "linux-full-gates.json": {
+      "bytes": 2974,
+      "sha256": "32a9b177956fb26f8e6710d0b01f3876269ca406c1af06c2b4cb1e4df4cb5e2c"
+    },
+    "linux-full-integration.log": {
+      "bytes": 35761,
+      "sha256": "32c6a1f55876d9356e26f62c87ae46a947af62f31e9e64d1cfcde5d0d2b455b0"
+    },
+    "linux-owning-archive-identities.json": {
+      "bytes": 41641,
+      "sha256": "08a56d3426373c755352400c33c4b16776ad8f21bb9b29a442f223f34aad24c6"
+    },
+    "linux-owning-cpp.log": {
+      "bytes": 1623,
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+    },
+    "linux-owning-gates.json": {
+      "bytes": 2360,
+      "sha256": "8647a9d7cad2e51b5986e61fba89d43f9dd4ce3589ea566b9ec757a10ea7472b"
+    },
+    "linux-owning-shipping.log": {
+      "bytes": 222,
+      "sha256": "e9175be1f49d50296e8c2733463280a939c2498f86405b8b187069abd7c06e9e"
+    },
+    "live-native-test-revision.json": {
+      "bytes": 802,
+      "sha256": "1ee09fbfcf24646e7b2880d3ca033f3a4592b5cff0cdc5da83f23cdf2f01fde0"
+    },
+    "lookup-source-identity.json": {
+      "bytes": 100,
+      "sha256": "137bffa6006405c637cfff4cf9289986b3a6338c50d542851e730d3e403eb507"
+    },
+    "macos-full-all-targets.log": {
+      "bytes": 136,
+      "sha256": "32726e302a657d6ded883cfaa396ed439458513e773e0527dd37c6b8e77d123e"
+    },
+    "macos-full-capi.log": {
+      "bytes": 12928,
+      "sha256": "f3e76456626c2706fa04e3d3da13379f3e9f30fab4ef589b1031832490c795f4"
+    },
+    "macos-full-final.log": {
+      "bytes": 789710,
+      "sha256": "dee1bbe0215bafa32e95b4c758a94c795aa5a7080ea02eef6b341a1539fdaf64"
+    },
+    "macos-full-gates.json": {
+      "bytes": 750,
+      "sha256": "56f86ed69ce9870f80525133753e4c363fcb71732e6412a4b134f1024bb91585"
+    },
+    "macos-full-integration.log": {
+      "bytes": 35822,
+      "sha256": "e1d62ffee757bef2b7a3e41b2f99b286500aab7d85f192c36ed068b1c9810d60"
+    },
+    "macos-owning-archive-identities.json": {
+      "bytes": 42058,
+      "sha256": "19805610adacbcb0a3d5aacb9e65bcab067533004b88045a0409222f194490be"
+    },
+    "macos-owning-ctest.log": {
+      "bytes": 1273,
+      "sha256": "097191235deb78de19679757f91b74b196922039286cebbef659f57e099fa5f2"
+    },
+    "macos-owning-gates.json": {
+      "bytes": 3344,
+      "sha256": "907f2dff64cc1fc512698d950b89f972982c42ad239fcc6a60f895f646d7c092"
+    },
+    "macos-owning-protected-assist-cli.log": {
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    "macos-owning-protected-assist-mcp.log": {
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    "names-source-identity.json": {
+      "bytes": 100,
+      "sha256": "18b1f04cd3fee412ceef4de73ea7d729d0271733e6a22cdc7b426d65864afbd9"
+    },
+    "native-apphelp-buffers-arm64-build.log": {
+      "bytes": 28,
+      "sha256": "b81cae2ce1a30b8a43d07be8053b2dc217d6b082195bb7e8bc7f50c9ef78ce52"
+    },
+    "native-apphelp-buffers-arm64.log": {
+      "bytes": 129256,
+      "sha256": "862a9edaa5309c8ca3db939f00e564bc92be88ae0ac1ab504c840d8185473fe7"
+    },
+    "native-apphelp-buffers-outcomes.json": {
+      "bytes": 1150,
+      "sha256": "4871e3fc7d74b37577dc8f374581aed2a46d89490bfc77ef64e3ba0556d2466c"
+    },
+    "native-apphelp-buffers-profiles.ps1": {
+      "bytes": 2291,
+      "sha256": "cf8bfc20a7880b8c4d28071c12447a56eb23f02c1cc15e842b7e419d452a1f70"
+    },
+    "native-apphelp-buffers-x64-build.log": {
+      "bytes": 28,
+      "sha256": "b81cae2ce1a30b8a43d07be8053b2dc217d6b082195bb7e8bc7f50c9ef78ce52"
+    },
+    "native-apphelp-buffers-x64.log": {
+      "bytes": 129276,
+      "sha256": "865b739ab17b53be493771735fc437491e0db6b5598be75d433dc072b2dff592"
+    },
+    "native-apphelp-buffers-x86-build.log": {
+      "bytes": 28,
+      "sha256": "b81cae2ce1a30b8a43d07be8053b2dc217d6b082195bb7e8bc7f50c9ef78ce52"
+    },
+    "native-apphelp-buffers-x86-laa-build.log": {
+      "bytes": 28,
+      "sha256": "b81cae2ce1a30b8a43d07be8053b2dc217d6b082195bb7e8bc7f50c9ef78ce52"
+    },
+    "native-apphelp-buffers-x86-laa.log": {
+      "bytes": 129106,
+      "sha256": "2c32c72855ef35d15f3c29f0bf9bd28eba817b6925a9b95385464b22e33f30c1"
+    },
+    "native-apphelp-buffers-x86.log": {
+      "bytes": 129106,
+      "sha256": "af5b5002483f4fd886db2a92aaa52e872a86453954ac7989330a4e12f1dfbd98"
+    },
+    "native-apphelp-buffers.cpp": {
+      "bytes": 8585,
+      "sha256": "99f5ac949d7eaa9f0af2780fa0df7479d72a55235dbfb084d5dd9375d978090e"
+    },
+    "native-apphelp-cdb-names-arm64-build.log": {
+      "bytes": 30,
+      "sha256": "c6a5ca786a29ea48f55e9e5798c50389428d950ec2026fdfbeffe44163a3a9f1"
+    },
+    "native-apphelp-cdb-names-arm64.log": {
+      "bytes": 30277,
+      "sha256": "b243340f54481d581ba664b437d992286fafc81d3c0cd91b57df356fab2aeadd"
+    },
+    "native-apphelp-cdb-names-outcomes.json": {
+      "bytes": 1150,
+      "sha256": "97b9369f62e211e3928365e4ce9472fafab6243dc16328e7e88bbc4b3a585457"
+    },
+    "native-apphelp-cdb-names-profiles.ps1": {
+      "bytes": 2307,
+      "sha256": "f1d25ba694eee607e7cecfffd41f111390d662143eb3fea15771092ebb0c67fd"
+    },
+    "native-apphelp-cdb-names-x64-build.log": {
+      "bytes": 30,
+      "sha256": "c6a5ca786a29ea48f55e9e5798c50389428d950ec2026fdfbeffe44163a3a9f1"
+    },
+    "native-apphelp-cdb-names-x64.log": {
+      "bytes": 30277,
+      "sha256": "b243340f54481d581ba664b437d992286fafc81d3c0cd91b57df356fab2aeadd"
+    },
+    "native-apphelp-cdb-names-x86-build.log": {
+      "bytes": 30,
+      "sha256": "c6a5ca786a29ea48f55e9e5798c50389428d950ec2026fdfbeffe44163a3a9f1"
+    },
+    "native-apphelp-cdb-names-x86-laa-build.log": {
+      "bytes": 30,
+      "sha256": "c6a5ca786a29ea48f55e9e5798c50389428d950ec2026fdfbeffe44163a3a9f1"
+    },
+    "native-apphelp-cdb-names-x86-laa.log": {
+      "bytes": 30277,
+      "sha256": "ec0935430ddcad89a081a8f22c394475a7779f8b8af0d5c5f1719356bb9d41e7"
+    },
+    "native-apphelp-cdb-names-x86.log": {
+      "bytes": 30277,
+      "sha256": "ec0935430ddcad89a081a8f22c394475a7779f8b8af0d5c5f1719356bb9d41e7"
+    },
+    "native-apphelp-cdb-names.cpp": {
+      "bytes": 20663,
+      "sha256": "b59611a4cc75a2104712d467b3d2cda930c3e9d6b4ef886f5fd7dad671abb2d3"
+    },
+    "native-apphelp-extended-trace-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-apphelp-extended-trace-output.log": {
+      "bytes": 52832,
+      "sha256": "b9927563a248dee0099727e11878aba2118662da7bace17446549bb3fe5b369a"
+    },
+    "native-apphelp-extended-trace.ps1": {
+      "bytes": 1890,
+      "sha256": "78b338a500d6b774dd8551b9c4f8aca559d80181dc8189a5f79aee58cdc43e54"
+    },
+    "native-apphelp-extended-trace.rs": {
+      "bytes": 11178,
+      "sha256": "514fdbc99de6f562002aa8a198deb79e7f5cd012db058aa1460a0e5730ae37c0"
+    },
+    "native-apphelp-final-after-ordinary-processes.log": {
+      "bytes": 7323,
+      "sha256": "2c8ca93a71ef18365735847ac4d66b04e9a886574feee9aded27a192dd194665"
+    },
+    "native-apphelp-final-owning-archive-hashes.json": {
+      "bytes": 35905,
+      "sha256": "f6a1ce879e4bf23f1194e6ac29b8359c656736209ad738569357956e32929df8"
+    },
+    "native-apphelp-final-owning-source-verification.json": {
+      "bytes": 2812,
+      "sha256": "d209baf850b6eb5d9fe7186efb0ac13d3e29f0ffbd2a937b6076b3d0a57c89de"
+    },
+    "native-apphelp-first-call-arm64-build.log": {
+      "bytes": 31,
+      "sha256": "0666d74edc2d195fc5f6eb499fd40369af5327c3415657e343a5df7c7307f445"
+    },
+    "native-apphelp-first-call-arm64.log": {
+      "bytes": 1447,
+      "sha256": "0f41a6f8d54fb0e2c17d3d37d79819e3f774abd3328efeef198dd82f20867176"
+    },
+    "native-apphelp-first-call-outcomes.json": {
+      "bytes": 260,
+      "sha256": "5f89faa4aaaf5d4746c43c2714f5ba9aa9f215953612d651b68d746d503d262f"
+    },
+    "native-apphelp-first-call-profiles.ps1": {
+      "bytes": 2290,
+      "sha256": "0c9caa4549e2a31b8c44a8bde52d1f9bbe05d28d37a9d249fb7675b0123865af"
+    },
+    "native-apphelp-first-call-repeat-arm64-build.log": {
+      "bytes": 38,
+      "sha256": "fc05cdb0aa5cde7bfd6e01519ecfb96ac54d65cca07689a735c2bab59a69f9e2"
+    },
+    "native-apphelp-first-call-repeat-arm64.log": {
+      "bytes": 4767,
+      "sha256": "ae745b5adc8a7fd8d111f6c1a59127162a2fda74a0145eaa28d6fb96657521af"
+    },
+    "native-apphelp-first-call-repeat-outcomes.json": {
+      "bytes": 260,
+      "sha256": "a823441c3fac9f480940926bc18a144fd5ebc0b93561d65ef2035dbed4906529"
+    },
+    "native-apphelp-first-call-repeat-profiles.ps1": {
+      "bytes": 2346,
+      "sha256": "4a750375320fcfc85a7113cb05a336486b1ac632db8e8245fbe47b68d2c30125"
+    },
+    "native-apphelp-first-call-repeat.cpp": {
+      "bytes": 11162,
+      "sha256": "0abdccb7bbde048383e89d4bebe6ed5262416f2aee9db156e4c9d8f2e7313b08"
+    },
+    "native-apphelp-first-call-wide-arm64-build.log": {
+      "bytes": 36,
+      "sha256": "c2a5fd5df36150c4dbd1fd30b3d59c8c18d732d08e2c0a49dda8566e811d4277"
+    },
+    "native-apphelp-first-call-wide-arm64.log": {
+      "bytes": 2472,
+      "sha256": "5b69fb3c150caed18d2914e7658913c816cc52b399fc87928751cad4e4eb89e9"
+    },
+    "native-apphelp-first-call-wide-outcomes.json": {
+      "bytes": 260,
+      "sha256": "bef1215ca53aef6003fab73d5c35e50b990ae8e05b2fd42fc0e3d3329c5e41e1"
+    },
+    "native-apphelp-first-call-wide-profiles.ps1": {
+      "bytes": 2330,
+      "sha256": "a5f3ce9075598659c9bc1d44c3e4b0f13e29de9856bfff18237607c4760a6a35"
+    },
+    "native-apphelp-first-call-wide.cpp": {
+      "bytes": 10613,
+      "sha256": "940321ffbcc28b32542b71a660ae972fa07b6ae6edc3f38443dfb5e2cb62f028"
+    },
+    "native-apphelp-first-call.cpp": {
+      "bytes": 10613,
+      "sha256": "0f53a855e4f8bb6915b5467d63e53ab68e911b28735f94a09dbf2da6fda5e239"
+    },
+    "native-apphelp-fresh-control-0.log": {
+      "bytes": 2548,
+      "sha256": "8a08f5c328240529005fc11522bf0a653ae6504e9724fd77719f3f645a05c28e"
+    },
+    "native-apphelp-fresh-control-1.log": {
+      "bytes": 2552,
+      "sha256": "016690209188c40b418a68aa54d3e66a295907f7a08ac11d89a13cf21d24053f"
+    },
+    "native-apphelp-fresh-control-2.log": {
+      "bytes": 2552,
+      "sha256": "3933ae3d44daa0148113b2ebcb461c095fdf1b9f160cb55f913cea3e71593b5e"
+    },
+    "native-apphelp-fresh-control-3.log": {
+      "bytes": 2552,
+      "sha256": "ad3030f5313bce58cdb950cca72663f349c1a970811d89d5ae39f56e89d8cd37"
+    },
+    "native-apphelp-fresh-control-4.log": {
+      "bytes": 2551,
+      "sha256": "ca79cb651531527ce0da4b81a30c6ec80bde52460f08b857ff0dc2de22810d4d"
+    },
+    "native-apphelp-fresh-control-5.log": {
+      "bytes": 464,
+      "sha256": "2632a92a34951bec431497ed482f1b0ad53b29a7d613e692cec38c720c5d9cc7"
+    },
+    "native-apphelp-fresh-control-6.log": {
+      "bytes": 464,
+      "sha256": "f2d143dd24dfb3908f26cdc4dfe4c37b8e46c3b1b09cec6d102e84ca35f6e499"
+    },
+    "native-apphelp-fresh-control-7.log": {
+      "bytes": 2552,
+      "sha256": "9e64b45bf21ef276408d2226ee2dd1899e89d46b244602dbc05bee2ea984e2da"
+    },
+    "native-apphelp-fresh-controls-build.log": {
+      "bytes": 35,
+      "sha256": "252557a2cfe2aff437eabce909232d0669490977620ccf87d76181d0f94676a3"
+    },
+    "native-apphelp-fresh-controls.cpp": {
+      "bytes": 14253,
+      "sha256": "116ef50431502454530293cbfcda846752a20b7021e151a13aaee16f1d4f5fa3"
+    },
+    "native-apphelp-fresh-controls.ps1": {
+      "bytes": 1418,
+      "sha256": "62a8475a2e0c9f4095e23a7a578b7c2c1427039850d1a5fcf2bd80364306dafc"
+    },
+    "native-apphelp-full-all-targets.log": {
+      "bytes": 986,
+      "sha256": "95b2196a50451afb0339e00b61d67e4d0ebdd59ed77793362697224609ee1eff"
+    },
+    "native-apphelp-full-capi.log": {
+      "bytes": 13837,
+      "sha256": "d0d4a2c2d7dab24004ae4ab884777d74b14b1c57d01d74954dc3d663d72c72ac"
+    },
+    "native-apphelp-full-full.log": {
+      "bytes": 763280,
+      "sha256": "40383eb1c5357d6f7649e399f91468dc5f4a67dd0442a7d384aa0dd88d6dd1f5"
+    },
+    "native-apphelp-full-gates.json": {
+      "bytes": 960,
+      "sha256": "10f2af1debb4289a7161924fa2972180fbbf521ae9b4960f3f31622c948ad74c"
+    },
+    "native-apphelp-full-integration.log": {
+      "bytes": 1792,
+      "sha256": "d6d2bfc0c9b4a8e9cd0aae31b5c948f58162557e669d339635b0069c76ec365a"
+    },
+    "native-apphelp-identities.json": {
+      "bytes": 27871,
+      "sha256": "8227e2b9073ba2ab04d706447becbc8dad08d26270703475e0342a88835ba995"
+    },
+    "native-apphelp-live-focused.log": {
+      "bytes": 17248,
+      "sha256": "959e343a7fb91741fe8881606c8b94ce14c0aae58657d712bb06890697ab420e"
+    },
+    "native-apphelp-live-full.log": {
+      "bytes": 763114,
+      "sha256": "ca07aed41a8600003534b8408bbe978fea0cb67b3d9c420c1e6566445b22a56d"
+    },
+    "native-apphelp-lookup-arm64-build.log": {
+      "bytes": 27,
+      "sha256": "9b6f00a96c097821c2f364a31965ff8edde898ad9a5ede8d026ad4636ee0ff17"
+    },
+    "native-apphelp-lookup-arm64.log": {
+      "bytes": 25479,
+      "sha256": "0eea245bdd5ebc7ef0d9f59a62ad681375da00b49a35eeac324d258460fa9bdf"
+    },
+    "native-apphelp-lookup-outcomes.json": {
+      "bytes": 1150,
+      "sha256": "0ce6cadd8c108ef1866d31fe6c34aeb66063bc90a388aa772ab674ec5a8660d9"
+    },
+    "native-apphelp-lookup-profiles.ps1": {
+      "bytes": 2283,
+      "sha256": "41ce837537d6ca67361c4524051d2746cbc01b81f1b356dee892fd4616d5f0bb"
+    },
+    "native-apphelp-lookup-x64-build.log": {
+      "bytes": 27,
+      "sha256": "9b6f00a96c097821c2f364a31965ff8edde898ad9a5ede8d026ad4636ee0ff17"
+    },
+    "native-apphelp-lookup-x64.log": {
+      "bytes": 25479,
+      "sha256": "65e94210b3eac12ec7f35643da4c1d5f815736ba262071c378b4befe180bbf95"
+    },
+    "native-apphelp-lookup-x86-build.log": {
+      "bytes": 27,
+      "sha256": "9b6f00a96c097821c2f364a31965ff8edde898ad9a5ede8d026ad4636ee0ff17"
+    },
+    "native-apphelp-lookup-x86-laa-build.log": {
+      "bytes": 27,
+      "sha256": "9b6f00a96c097821c2f364a31965ff8edde898ad9a5ede8d026ad4636ee0ff17"
+    },
+    "native-apphelp-lookup-x86-laa.log": {
+      "bytes": 25353,
+      "sha256": "bcec4a503c77794313e4d692b35b98d71795e335335f019e63994461eeda699c"
+    },
+    "native-apphelp-lookup-x86.log": {
+      "bytes": 25353,
+      "sha256": "35965cdd8085a60a225d5a622cedce57311aff9fa9695324f03f45f4325926c5"
+    },
+    "native-apphelp-lookup.cpp": {
+      "bytes": 5277,
+      "sha256": "debdf9a5e0aedf68cf6c67d13e109d64ce4b21b899d48f18be2581337177800e"
+    },
+    "native-apphelp-names-arm64-build.log": {
+      "bytes": 26,
+      "sha256": "c38c39fdf5ac895b2704144e41b1d8144ce2b26173ac52e52023f52dd882ee11"
+    },
+    "native-apphelp-names-arm64.log": {
+      "bytes": 4196,
+      "sha256": "a6a2f2d29a50e7ff36533285eac06ac70379d3794dd9e233206fcff76588b406"
+    },
+    "native-apphelp-names-outcomes.json": {
+      "bytes": 1150,
+      "sha256": "ec41ffa528a7a7af0dcdf38459626ce15c42a385d4eac8ac8c2a79263f29b05d"
+    },
+    "native-apphelp-names-profiles.ps1": {
+      "bytes": 2275,
+      "sha256": "6be0be71221dc7ac3e1a74f2740c8d0fa7449f13af4a0d9ea1b44afb80083322"
+    },
+    "native-apphelp-names-x64-build.log": {
+      "bytes": 26,
+      "sha256": "c38c39fdf5ac895b2704144e41b1d8144ce2b26173ac52e52023f52dd882ee11"
+    },
+    "native-apphelp-names-x64.log": {
+      "bytes": 4196,
+      "sha256": "a6a2f2d29a50e7ff36533285eac06ac70379d3794dd9e233206fcff76588b406"
+    },
+    "native-apphelp-names-x86-build.log": {
+      "bytes": 26,
+      "sha256": "c38c39fdf5ac895b2704144e41b1d8144ce2b26173ac52e52023f52dd882ee11"
+    },
+    "native-apphelp-names-x86-laa-build.log": {
+      "bytes": 26,
+      "sha256": "c38c39fdf5ac895b2704144e41b1d8144ce2b26173ac52e52023f52dd882ee11"
+    },
+    "native-apphelp-names-x86-laa.log": {
+      "bytes": 4196,
+      "sha256": "753dd19ac2614308b854044b6567a209e370e0f2b87878dfad1cd8dbff9ecc9e"
+    },
+    "native-apphelp-names-x86.log": {
+      "bytes": 4196,
+      "sha256": "753dd19ac2614308b854044b6567a209e370e0f2b87878dfad1cd8dbff9ecc9e"
+    },
+    "native-apphelp-names.cpp": {
+      "bytes": 3628,
+      "sha256": "c8cd9c08ff471c394044776d6e66269466dfe987cb63b36762cff4dc1f7ed19a"
+    },
+    "native-apphelp-offsets-arm64-build.log": {
+      "bytes": 28,
+      "sha256": "ede218100fb98c7d9adb71c24b778475821e1c75cef25d6056fbfcb3ce0f893e"
+    },
+    "native-apphelp-offsets-arm64.log": {
+      "bytes": 1231,
+      "sha256": "2fdcec7239917b4237a5294c516e82ef54385810d4b8d63a2e87a8987ebe8441"
+    },
+    "native-apphelp-offsets-outcomes.json": {
+      "bytes": 1150,
+      "sha256": "91d300460de64f89b566df8de315cd11185f7faf9d8e4cc78691939631c1f743"
+    },
+    "native-apphelp-offsets-profiles.ps1": {
+      "bytes": 2291,
+      "sha256": "7fd060e7f3a3d17cac570dbd578983fcc13362c528d60b04c3ba817379459c35"
+    },
+    "native-apphelp-offsets-x64-build.log": {
+      "bytes": 28,
+      "sha256": "ede218100fb98c7d9adb71c24b778475821e1c75cef25d6056fbfcb3ce0f893e"
+    },
+    "native-apphelp-offsets-x64.log": {
+      "bytes": 1231,
+      "sha256": "37579cd8c1aafc1c61f8fa09c6d95132f2b9cee2455394b84e45a8461c6ff774"
+    },
+    "native-apphelp-offsets-x86-build.log": {
+      "bytes": 28,
+      "sha256": "ede218100fb98c7d9adb71c24b778475821e1c75cef25d6056fbfcb3ce0f893e"
+    },
+    "native-apphelp-offsets-x86-laa-build.log": {
+      "bytes": 28,
+      "sha256": "ede218100fb98c7d9adb71c24b778475821e1c75cef25d6056fbfcb3ce0f893e"
+    },
+    "native-apphelp-offsets-x86-laa.log": {
+      "bytes": 1626,
+      "sha256": "3700f62fbf905364e280f8b42d82e586c29c380f6d509881014d208e23238fc7"
+    },
+    "native-apphelp-offsets-x86.log": {
+      "bytes": 1626,
+      "sha256": "fe49d1debc662170facb1a4e0400ba04cbcbd0b028aa8cb6c7fb16f9b90dd1b2"
+    },
+    "native-apphelp-offsets.cpp": {
+      "bytes": 2269,
+      "sha256": "89d6e88819ba733c4ca45ad99988cb98ca853c1ab45e6efad4d0b25b64778f7d"
+    },
+    "native-apphelp-ordering-arm64-build.log": {
+      "bytes": 29,
+      "sha256": "27b046f2eefa942e61605e657cd5e13443c4632fb05554b50560bddb1e3b2e81"
+    },
+    "native-apphelp-ordering-arm64.log": {
+      "bytes": 46177,
+      "sha256": "c020aff3dd0d7ba278e405325855ae442b6b0a303563a1099d9e9b0093311d26"
+    },
+    "native-apphelp-ordering-outcomes.json": {
+      "bytes": 1150,
+      "sha256": "64d259fd2b9b6b3c6deecee8f307f4eb44bff7845a187a06db31dd473e9b41e2"
+    },
+    "native-apphelp-ordering-profiles.ps1": {
+      "bytes": 2299,
+      "sha256": "0878b7aa1a8acfe32821520dbf3ab90d8e9d5aa17b9c642e72fd3699fe726670"
+    },
+    "native-apphelp-ordering-x64-build.log": {
+      "bytes": 29,
+      "sha256": "27b046f2eefa942e61605e657cd5e13443c4632fb05554b50560bddb1e3b2e81"
+    },
+    "native-apphelp-ordering-x64.log": {
+      "bytes": 46177,
+      "sha256": "60eed1dc4304833c17a85ddd076ae630ca4b8a20992b7036c51d6bd99387b989"
+    },
+    "native-apphelp-ordering-x86-build.log": {
+      "bytes": 29,
+      "sha256": "27b046f2eefa942e61605e657cd5e13443c4632fb05554b50560bddb1e3b2e81"
+    },
+    "native-apphelp-ordering-x86-laa-build.log": {
+      "bytes": 29,
+      "sha256": "27b046f2eefa942e61605e657cd5e13443c4632fb05554b50560bddb1e3b2e81"
+    },
+    "native-apphelp-ordering-x86-laa.log": {
+      "bytes": 46077,
+      "sha256": "d7542b689fe28bc5ee9c6ca69162b326224fd536da9672024d675435ea892c63"
+    },
+    "native-apphelp-ordering-x86.log": {
+      "bytes": 46077,
+      "sha256": "c01095a322d51c8acbd84c3ead834b3bea25b5a3f02dffb01bfed5cc4ae7c9ae"
+    },
+    "native-apphelp-ordering.cpp": {
+      "bytes": 6138,
+      "sha256": "d9827bacb0b01ebde11f481f0ad572ba10096eca8ef9433e58fd96363f223e01"
+    },
+    "native-apphelp-output-offsets-arm64-build.log": {
+      "bytes": 35,
+      "sha256": "47ec2fd255e0108f1be26c7221af00dd729d1544c8e0d80d7d4b4b8df9c8971e"
+    },
+    "native-apphelp-output-offsets-arm64.log": {
+      "bytes": 1572,
+      "sha256": "685aee196f487dbed077655087e1a61a285f2db281a3bd0ad441c91ac04d06c1"
+    },
+    "native-apphelp-output-offsets-outcomes.json": {
+      "bytes": 1150,
+      "sha256": "9db62085eb0e3b94d8f72f3a5f155a819bd9a37788f1d88f78a7b545bcb3bf07"
+    },
+    "native-apphelp-output-offsets-profiles.ps1": {
+      "bytes": 2347,
+      "sha256": "3b4c1fc406471a0a98212694aa97f77c945c25f0564fde0763e929340fad471b"
+    },
+    "native-apphelp-output-offsets-x64-build.log": {
+      "bytes": 35,
+      "sha256": "47ec2fd255e0108f1be26c7221af00dd729d1544c8e0d80d7d4b4b8df9c8971e"
+    },
+    "native-apphelp-output-offsets-x64.log": {
+      "bytes": 1572,
+      "sha256": "456b004b8e9a79aefb65a173e2b6a65698a85f4af0f5338d921d8ab911ae926b"
+    },
+    "native-apphelp-output-offsets-x86-build.log": {
+      "bytes": 35,
+      "sha256": "47ec2fd255e0108f1be26c7221af00dd729d1544c8e0d80d7d4b4b8df9c8971e"
+    },
+    "native-apphelp-output-offsets-x86-laa-build.log": {
+      "bytes": 35,
+      "sha256": "47ec2fd255e0108f1be26c7221af00dd729d1544c8e0d80d7d4b4b8df9c8971e"
+    },
+    "native-apphelp-output-offsets-x86-laa.log": {
+      "bytes": 29112,
+      "sha256": "70cfb11e5971c2ac4c36c9c06392e0c2d4a85122527b24b772c93adac6cb23e5"
+    },
+    "native-apphelp-output-offsets-x86.log": {
+      "bytes": 29112,
+      "sha256": "3196e883cc27219ae06874e0aa214ab8d763b426f589a11bbf62826f2a896431"
+    },
+    "native-apphelp-output-offsets.cpp": {
+      "bytes": 2842,
+      "sha256": "e7ff9e13992249b5267792b43e2ca1ecf7cb108fc411ef875a40397577bc75a8"
+    },
+    "native-apphelp-section37-trace-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-apphelp-section37-trace-output.log": {
+      "bytes": 54222,
+      "sha256": "46577dbb169d2730adf7c9fdd77ccb5e285a51edad9f6ab07944be41b74ee5fa"
+    },
+    "native-apphelp-section37-trace.ps1": {
+      "bytes": 1899,
+      "sha256": "834e8930f160c60c8cbd69332195aa7f7af6e135b81027d333f477ad6577383c"
+    },
+    "native-apphelp-section37-trace.rs": {
+      "bytes": 12131,
+      "sha256": "80412b96b6a26947c0c1da40f69e7ff3323a9ea8e424d171866086643576947e"
+    },
+    "native-live-test-before.txt": {
+      "bytes": 7245,
+      "sha256": "cfd8422b0b7ae8003de46d009514268fbce8bd5f2b7c9a15a2a7693e2417db55"
+    },
+    "native-sdb-padding-initial.json": {
+      "bytes": 1431,
+      "sha256": "c21438130a6c41ed08b60ecac1064ec9c1c249acfb24ee67649262a6e377865f"
+    },
+    "native-sdb-padding-initial.py": {
+      "bytes": 2854,
+      "sha256": "86f33aa08c7ffb3764d83edcfe06589451d155296481f581e3a9e05bfa6f71a5"
+    },
+    "native-sdb-padding.json": {
+      "bytes": 1638,
+      "sha256": "dfbae69c3b444cf24b6b393125d66f28242c9a1fa78ec44a322ceb9e10731b4c"
+    },
+    "native-sdb-padding.py": {
+      "bytes": 2979,
+      "sha256": "8b1d012791259b4d8ff409237b28e9a255f25c52b646ec7383d210071123f4d0"
+    },
+    "offsets-source-identity.json": {
+      "bytes": 100,
+      "sha256": "509eee66484f1914cf23c541e947baacf2203accba48d9c1461ce16814b96ffc"
+    },
+    "ordering-source-identity.json": {
+      "bytes": 100,
+      "sha256": "06939c937b56e2b7e9595a6de82fae16a30f4b4711bc764d1c9a3e7be05de1ee"
+    },
+    "output-offsets-source-identity.json": {
+      "bytes": 100,
+      "sha256": "f7736f209f1291e76523db820c5e5c90c4b085e21e90d03b851588ffb4121308"
+    },
+    "quality-gates.json": {
+      "bytes": 718,
+      "sha256": "1da8ceee25fe16fc5c0831af95c8e5e31c14aa33b002f7cb7c318de7c1378dac"
+    },
+    "repeat-capture-source-identity.json": {
+      "bytes": 101,
+      "sha256": "78de8de54d8bef38a3d6413fba2f01a7dce84b76f706c54a5412ed929bb20e32"
+    },
+    "replay-comparison-counts.json": {
+      "bytes": 414,
+      "sha256": "cbca8feef1c163d14d9117d384a4822670fc7bb2434ef29c8c4c3c7e8515df0b"
+    },
+    "sdb-file-structure.json": {
+      "bytes": 11134,
+      "sha256": "4d2230050f96345b1ae79ee753a5b67a16eb5238dbcda351841cc910ab09df5f"
+    },
+    "stress-evidence.py": {
+      "bytes": 2417,
+      "sha256": "70ffd5127bd063e41432caa26eef2d6e75887d3fbd432f0818dab5eaee055dd6"
+    },
+    "validation-summary.json": {
+      "bytes": 1609,
+      "sha256": "1f8ce82f7fd98dfe18a7d4ef5141f81ff2f21a5cccb37748800f7ef061d125d2"
+    },
+    "verify-evidence.py": {
+      "bytes": 6089,
+      "sha256": "afdc4ba854aef5511ad7546ea3492c7a652cd601ed7b7550d078f914aedcd884"
+    },
+    "wide-capture-source-identity.json": {
+      "bytes": 101,
+      "sha256": "222f043c177601be75f05f9f6d75ebe77a9adbc74959d9f4be53dfe6b68e314f"
+    }
+  },
+  "runtime": {
+    "src/user/windows/mod.rs": {
+      "bytes": 743,
+      "sha256": "6b8c630028c7ef19542083d8c0d7b992d013ad1654cf144dd330fafc94b1199c"
+    },
+    "src/user/windows/appcompat.rs": {
+      "bytes": 9481,
+      "sha256": "f26a8b97008fc47446429df310d5e2f252bcdd1b35f130625c74511035d4ccfc"
+    },
+    "src/user/windows/appcompat/tests.rs": {
+      "bytes": 8698,
+      "sha256": "f0aeb28c10195b009805eaba395e2df00faa1487ffcaf2c7140b71fc45264b2f"
+    },
+    "src/user/windows/native.rs": {
+      "bytes": 15917,
+      "sha256": "6c308eb6a950d8810b943f2504d8ccea98ae6e84aa5f0a5ad6f114c4aac32e56"
+    },
+    "src/user/windows/process/mod.rs": {
+      "bytes": 15952,
+      "sha256": "cf5c6942cd805c18f40963bfacdbd55b463bf433f494c21f8e828b11d977d467"
+    },
+    "src/user/windows/process/start.rs": {
+      "bytes": 21914,
+      "sha256": "36f62b928fc05ee896bf255c48c02c4e26f05e89bcf782d2e6c5c604c23f4158"
+    },
+    "src/user/windows/process/native_start/tests.rs": {
+      "bytes": 12162,
+      "sha256": "4bb88021e2982a0bc7fd6c01f00e8129c13a12240b35b8a0bdf2f47413600f95"
+    },
+    "src/user/windows/dll/native.rs": {
+      "bytes": 17060,
+      "sha256": "f4fa6e79968da58e169594c21303fcebe3394777d58eb66a6484d349bed7d293"
+    },
+    "src/user/windows/dll/native/apphelp.rs": {
+      "bytes": 3449,
+      "sha256": "79b7045da6e0285c4ecb1204d9482d4c9a7c93b8077bc4b6e900673e03062517"
+    },
+    "src/user/windows/process/sched/tests/services_tests.rs": {
+      "bytes": 47234,
+      "sha256": "73aa84c7d12adf163c6bb94730478f829c6b082a5f471acb16547ec7fbdb4106"
+    },
+    "src/user/windows/process/sched/tests/services_tests/apphelp_tests.rs": {
+      "bytes": 4219,
+      "sha256": "3fc7d0e422016652184a1d67517e6811efcbac38f0a287a313a57f3ba22371f6"
+    },
+    "src/user/windows/process/sched/tests/services_tests/apphelp_replay_tests.rs": {
+      "bytes": 12723,
+      "sha256": "e4f65e4e4b0b46c6e8da35fd38b5deef1059804603bc9b4a5b708d5f8655d8e4"
+    },
+    "src/user/windows/dll/crt/startup/storage.rs": {
+      "bytes": 33050,
+      "sha256": "3b79aa5385addd182f2213c66e0c0e97e19bc00f1927977904792e447afd787b"
+    },
+    "src/user/windows/process/sched.rs": {
+      "bytes": 61480,
+      "sha256": "7d1aefeb151652825c9f92a4d086e3d13c0bce124ab19049f4210181d0264493"
+    },
+    "src/user/windows/process/sched/tests/services_tests/apphelp_leaf_tests.rs": {
+      "bytes": 3519,
+      "sha256": "e7a939c7b40e57f785cc24477d662656320d6b5b6560dd46b3e93a7953ad92df"
+    }
+  }
+}

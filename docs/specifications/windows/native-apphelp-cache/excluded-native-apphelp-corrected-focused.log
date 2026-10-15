@@ -1,0 +1,1243 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 37s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-tests\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 1015 tests
+test user::windows::appcompat::tests::appcompat_sdb_counted_names_fold_merge_and_ignore_nested_flags ... ok
+test user::windows::arch::tests::windows_integer_register_width_and_invalid_indices ... ok
+test user::windows::arch::tests::windows_machine_pointer_and_processor_mappings ... ok
+test user::windows::arch::tests::windows_cloned_x86_thread_can_reload_the_teb_selector ... ok
+test user::windows::arch::tests::windows_instruction_budget_is_exact_and_zero_is_a_noop ... ok
+test user::windows::context::tests::context_apply_preserves_instruction_counter_teb_and_unselected_float_state ... ok
+test user::windows::context::tests::context_apply_preserves_unselected_ss_gdt_and_extended_vector_state ... ok
+test user::windows::arch::tests::windows_teb_registers_are_visible_to_guest_instructions ... ok
+test user::windows::context::tests::context_arm64_x18_is_an_independently_selected_group ... ok
+test user::windows::context::tests::context_bad_architecture_flags_and_unsupported_groups_are_transactional ... ok
+test user::windows::context::tests::context_bad_mxcsr_cannot_partially_restore_integer_control_or_segments ... ok
+test user::windows::context::tests::context_capture_apply_round_trip_all_architectures ... ok
+test user::windows::context::tests::context_bad_selector_and_execution_mode_changes_are_transactional ... ok
+test user::windows::context::tests::context_x64_mxcsr_field_is_authoritative_and_status_bits_are_sanitized ... ok
+test user::windows::appcompat::tests::appcompat_sdb_rejects_truncation_bad_extent_reference_and_duplicates ... ok
+test user::windows::dll::crt::bootstrap::fp_tests::fpreset_win64_ignores_nonnull_and_unreadable_exception_slot ... ok
+test user::windows::dll::crt::bootstrap::fp_tests::fpreset_architectural_effects_and_payload_preservation_all_abis ... ok
+test user::windows::dll::crt::bootstrap::fp_tests::fpreset_x86_any_flag_bit_predicate_and_exact_saved_dword_writes ... ok
+test user::windows::dll::crt::bootstrap::fp_tests::fpreset_x86_info_effective_address_wraps_modulo_32_bits ... ok
+test user::windows::dll::crt::bootstrap::fp_tests::fpreset_x86_flags_retry_keeps_loaded_context_and_does_not_repeat_reset ... ok
+test user::windows::dll::crt::bootstrap::fp_tests::fpreset_x86_ptd_slot_read_fault_precedes_reset ... ok
+test user::windows::dll::crt::bootstrap::fp_tests::fpreset_x86_info_read_retry_keeps_snapshot_and_does_not_repeat_reset ... ok
+test user::windows::dll::crt::bootstrap::fp_tests::fpreset_x86_status_read_fault_retains_decoded_flags ... ok
+test user::windows::dll::crt::bootstrap::fp_tests::fpreset_x86_status_write_fault_restarts_rmw_read_only ... ok
+
+thread 'user::windows::appcompat::tests::appcompat_installed_file_catalog_matches_frozen_native_name_flags' (9168) panicked at src\user\windows\appcompat\tests.rs:116:77:
+called `Result::unwrap()` on an `Err` value: Custom { kind: InvalidData, error: "SDB tag exceeds its owner" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test user::windows::appcompat::tests::appcompat_installed_file_catalog_matches_frozen_native_name_flags ... FAILED
+test user::windows::dll::crt::bootstrap::fp_tests::fpreset_x86_tag_retry_does_not_repeat_status_store_or_pointer_loads ... ok
+test user::windows::dll::crt::bootstrap::tests::app_enum_is_unconditional_32_bit_state_without_ptd_allocation ... ok
+test user::windows::dll::crt::bootstrap::tests::exception_slot_is_pointer_width_null_stable_nonoverlapping_and_thread_owned ... ok
+test user::windows::dll::crt::bootstrap::tests::invalid_locale_errno_fault_captures_mode_and_does_not_call_handler_early ... ok
+test user::windows::dll::crt::bootstrap::tests::invalid_locale_sets_errno_before_checked_handler_and_preserves_handler_mutations ... ok
+test user::windows::dll::crt::bootstrap::tests::invalid_locale_without_handler_commits_errno_before_forced_exit ... ok
+test user::windows::dll::crt::bootstrap::tests::locale_returns_previous_mode_and_minus_one_changes_only_global_status ... ok
+test user::windows::dll::crt::bootstrap::tests::locale_setup_fault_preserves_register_formals_but_x86_reads_stack_after_setup ... ok
+test user::windows::dll::crt::bootstrap::tests::math_registration_stores_pointer_identity_without_validation_or_callback ... ok
+test user::windows::dll::crt::bootstrap::tests::six_genuine_ucrt_exports_have_alias_identity_without_legacy_promotion ... ok
+test user::windows::dll::crt::bootstrap::tests::x86_locale_getptd_oom_precedes_unreadable_stack_formal ... ok
+test user::windows::dll::crt::bootstrap::tests::x86_policy_stack_faults_resume_with_repaired_formals_and_no_early_effect ... ok
+test user::windows::dll::crt::initialize::tests::ascending_null_holes_and_exclusive_unmapped_end_all_abis ... ok
+test user::windows::dll::crt::initialize::tests::callback_mutations_are_read_lazily_with_captured_end_all_abis ... ok
+test user::windows::dll::crt::bootstrap::tests::getptd_bootstrap_oom_uses_existing_actual_abort_policy ... ok
+test user::windows::dll::crt::initialize::tests::discarded_continuation_has_no_global_progress_or_completion_all_abis ... ok
+test user::windows::dll::crt::bootstrap::tests::getptd_oom_abort_runs_registered_signal_then_selected_normal_exit_policy ... ok
+test user::windows::dll::crt::initialize::tests::early_error_does_not_read_inaccessible_remaining_entries_all_abis ... ok
+test user::windows::dll::crt::initialize::tests::error_initializer_uses_only_low_int_bits_and_stops_all_abis ... ok
+test user::windows::dll::crt::initialize::tests::guest_width_overflow_rejects_without_wrap_all_abis ... ok
+test user::windows::dll::crt::initialize::tests::independent_nested_initializer_continuations_all_abis ... ok
+test user::windows::dll::crt::initialize::tests::initializer_signatures_and_empty_ranges_all_abis ... ok
+test user::windows::dll::crt::initialize::tests::legacy_error_initializer_admission_matches_arch_inventory_all_abis ... ok
+test user::windows::dll::crt::initialize::tests::late_table_fault_preserves_completed_callback_frontier_all_abis ... ok
+test user::windows::dll::crt::initialize::tests::read_only_tables_are_not_modified_all_abis ... ok
+test user::windows::appcompat::tests::appcompat_sdb_rejects_depth_empty_name_and_name_budget ... ok
+test user::windows::dll::crt::initialize::tests::partial_null_word_at_page_boundary_is_a_read_fault_all_abis ... ok
+test user::windows::dll::crt::initialize::tests::repaired_read_retries_saved_cursor_and_end_not_callback_arguments_all_abis ... ok
+test user::windows::dll::crt::memory::tests::buffer_copy_fill_and_comparison_all_abis ... ok
+test user::windows::dll::crt::memory::tests::guest_width_overflow_and_size_max_fail_without_allocating_count_all_abis ... ok
+test user::windows::dll::crt::memory::tests::memmove_overlap_in_both_directions_and_identical_all_abis ... ok
+test user::windows::dll::crt::memory::tests::source_and_destination_faults_precede_buffer_writes_all_abis ... ok
+test user::windows::dll::crt::memory::tests::unsigned_byte_compare_and_search_stop_before_unneeded_fault_all_abis ... ok
+test user::windows::dll::crt::memory::tests::wide_buffers_preserve_raw_units_and_unsigned_order_all_abis ... ok
+test user::windows::dll::crt::memory::tests::zero_count_no_dereference_is_explicit_personality_profile_all_abis ... ok
+test user::windows::dll::crt::onexit::storage::tests::abandoned_receipts_preserve_owner_and_free_only_their_generation ... ok
+test user::windows::dll::crt::onexit::storage::tests::allocator_candidate_alias_does_not_zero_caller_table_or_publish_a_block ... ok
+test user::windows::dll::crt::onexit::storage::tests::corrupt_fields_never_free_arbitrary_memory_and_initialize_can_repair ... ok
+test user::windows::dll::crt::onexit::storage::tests::destroyed_private_heap_is_an_explicit_internal_error_before_callback_reads ... ok
+test user::windows::dll::crt::onexit::storage::tests::externally_freed_opaque_block_and_nonmatching_reuse_are_rejected_not_freed ... ok
+test user::windows::dll::crt::onexit::storage::tests::execute_is_lifo_skips_null_and_invalidates_until_reinitialize ... ok
+test user::windows::dll::crt::onexit::storage::tests::generation_and_guest_address_exhaustion_fail_without_publication ... ok
+test user::windows::dll::crt::onexit::storage::tests::growth_is_fresh_preserves_order_and_never_enters_malloc_ledger ... ok
+test user::windows::dll::crt::onexit::storage::tests::fixed_heap_growth_oom_preserves_full_old_table_and_block ... ok
+test user::windows::dll::crt::onexit::storage::tests::initialization_cross_page_fault_is_atomic_and_preserves_old_generation ... ok
+test user::windows::dll::crt::onexit::storage::tests::growth_source_fault_rolls_back_candidate_and_retry_uses_old_generation ... ok
+test user::windows::dll::crt::onexit::storage::tests::initialize_writes_exact_three_guest_pointers_and_requires_valid_alignment ... ok
+test user::windows::dll::crt::onexit::storage::tests::lazy_reads_observe_future_mutation_and_fault_does_not_pop_unread_slot ... ok
+test user::windows::dll::crt::onexit::storage::tests::overlapping_table_objects_and_internal_buffer_aliases_are_rejected_before_writes ... ok
+test user::windows::dll::crt::onexit::storage::tests::process_discard_reaps_all_host_blocks_without_guest_access_or_callbacks ... ok
+test user::windows::dll::crt::initialize::tests::long_null_runs_have_no_snapshot_limit_or_host_recursion_all_abis ... ok
+test user::windows::dll::crt::onexit::storage::tests::readonly_header_fault_preserves_append_detach_and_owned_blocks ... ok
+test user::windows::dll::crt::onexit::storage::tests::receipt_extraction_preserves_pre_reserved_capacity_for_live_drops ... ok
+test user::windows::dll::crt::onexit::storage::tests::reinitialize_and_nested_execute_do_not_clobber_detached_generations ... ok
+test user::windows::dll::crt::startup::codepage::tests::all_windows_decode_bytes_roundtrip_and_controls_are_not_undefined ... ok
+test user::windows::dll::crt::startup::codepage::tests::primary_windows_bestfit_examples_change_narrow_parse_syntax ... ok
+test user::windows::dll::crt::startup::codepage::tests::supplementary_and_unpaired_units_use_explicit_default_profile ... ok
+test user::windows::dll::crt::onexit::tests::abandoning_old_epoch_does_not_free_reinitialized_epoch_all_abis ... ok
+test user::windows::dll::crt::startup::parse::tests::argv0_quotes_toggle_but_backslashes_are_always_literal ... ok
+test user::windows::dll::crt::startup::parse::tests::adversarial_short_strings_roundtrip_through_a_separate_encoder ... ok
+test user::windows::dll::crt::startup::parse::tests::backslash_quote_parity_is_checked_at_small_and_long_boundaries ... ok
+test user::windows::dll::crt::startup::parse::tests::empty_and_leading_whitespace_follow_the_explicit_profile ... ok
+test user::windows::dll::crt::onexit::tests::deliberate_terminal_owner_reaps_without_replacing_exit_all_abis ... ok
+test user::windows::dll::crt::startup::parse::tests::first_raw_quote_is_metadata_not_a_globbing_or_quote_presence_test ... ok
+test user::windows::dll::crt::startup::parse::tests::literal_and_trailing_backslashes_are_not_discarded ... ok
+test user::windows::dll::crt::startup::parse::tests::only_space_and_tab_are_delimiters_and_nul_ends_input ... ok
+test user::windows::dll::crt::startup::parse::tests::primary_document_examples_are_independent_literal_expectations ... ok
+test user::windows::dll::crt::startup::parse::tests::quoted_double_quotes_empty_and_unclosed_arguments ... ok
+test user::windows::dll::crt::startup::parse::tests::utf16_units_survive_without_lossy_conversion_or_normalization ... ok
+test user::windows::dll::crt::startup::storage::tests::admission_failure_releases_reservation_and_preserves_original_no_memory_all_abis ... ok
+test user::windows::dll::crt::startup::storage::tests::actual_parameters_snapshot_aliases_and_host_owned_cleanup_all_abis ... ok
+test user::windows::dll::crt::startup::storage::tests::cleanup_attempts_all_owned_blocks_even_when_one_release_fails_all_abis ... ok
+test user::windows::dll::crt::startup::storage::tests::guest_width_addition_reports_fault_instead_of_truncating_all_abis ... ok
+test user::windows::dll::crt::startup::storage::tests::counted_utf16_at_page_end_retains_unpaired_units_without_terminator_read_all_abis ... ok
+test user::windows::dll::crt::startup::storage::tests::environment_bounds_faults_and_termination_are_checked_without_count_allocation_all_abis ... ok
+test user::windows::dll::crt::onexit::tests::genuine_table_binding_matrix_and_legacy_exclusions_all_abis ... ok
+test user::windows::dll::crt::startup::storage::tests::no_params_is_empty_input_not_config_reconstruction_all_abis ... ok
+test user::windows::dll::crt::startup::storage::tests::malformed_counted_metadata_never_allocates_a_candidate_all_abis ... ok
+test user::windows::dll::crt::startup::tests::binding_admission_does_not_promote_shims_or_arm_missing_data ... ok
+test user::windows::dll::crt::startup::storage::tests::public_cells_validate_kind_width_and_write_permission_before_allocation_all_abis ... ok
+test user::windows::dll::crt::onexit::tests::normal_process_retirement_preserves_tables_for_dll_detach_all_abis ... ok
+test user::windows::dll::crt::onexit::tests::later_x86_formal_fault_preserves_already_decoded_table ... ok
+test user::windows::dll::crt::onexit::tests::null_uninitialized_empty_and_lifo_lifecycle_all_abis ... ok
+test user::windows::dll::crt::onexit::tests::pending_slot_fault_keeps_cursor_and_clobbered_formal_all_abis ... ok
+test user::windows::dll::crt::startup::tests::arm_void_environment_getters_do_not_manufacture_integer_return ... ok
+test user::windows::dll::crt::startup::tests::alternating_widths_do_not_publish_a_vector_with_the_other_widths_count ... ok
+test user::windows::dll::crt::startup::tests::checked_output_fault_precedes_mainargs_initialization_or_configuration ... ok
+test user::windows::dll::crt::startup::tests::configure_checked_cell_repair_retains_nonzero_mode_after_arg_clobber ... ok
+test user::windows::dll::crt::startup::tests::completed_environment_stage_survives_later_argv_fault_without_duplicate_storage ... ok
+test user::windows::dll::crt::startup::tests::configure_modes_and_same_mode_guest_mutations_are_runtime_local ... ok
+test user::windows::dll::crt::startup::tests::exhausted_guest_commitment_reports_errno_and_releases_candidate_reservations ... ok
+test user::windows::dll::crt::startup::tests::invalid_configure_returns_einval_after_actual_handler_and_keeps_cells ... ok
+test user::windows::dll::crt::startup::tests::later_mainargs_source_repair_retains_already_read_startinfo_value ... ok
+test user::windows::dll::crt::startup::tests::completed_environment_stage_survives_argv_oom_without_duplicate_storage ... ok
+test user::windows::dll::crt::startup::tests::initial_environment_snapshot_is_distinct_from_mutable_current_cells ... ok
+test user::windows::dll::crt::startup::tests::later_stack_formal_repair_preserves_previously_decoded_arguments ... ok
+test user::windows::dll::crt::startup::tests::modern_legacy_mainargs_writes_exact_widths_and_null_terminated_vectors ... ok
+test user::windows::dll::crt::startup::tests::mainargs_output_repair_keeps_original_pointers_after_formal_args_are_clobbered ... ok
+test user::windows::dll::crt::startup::wildcard::tests::independent_dos_pattern_partitions ... ok
+test user::windows::dll::crt::startup::wildcard::tests::long_frontiers_do_not_use_recursive_backtracking ... ok
+test user::windows::dll::crt::startup::wildcard::tests::unsupported_paths_and_missing_directory_are_distinct ... ok
+test user::windows::dll::crt::startup::tests::new_mode_is_real_runtime_local_state_and_invalid_handler_is_called_once ... ok
+test user::windows::dll::crt::stdio::backend::tests::console_flush_failure_preserves_the_accepted_byte_count ... ok
+test user::windows::dll::crt::stdio::backend::tests::empty_transfer_performs_no_read_or_write ... ok
+test user::windows::dll::crt::stdio::backend::tests::exact_bounded_read_advances_only_the_read_prefix ... ok
+test user::windows::dll::crt::stdio::backend::tests::interrupted_operations_retry_only_the_unaccepted_suffix ... ok
+test user::windows::dll::crt::stdio::backend::tests::scratch_bounds_reject_before_any_host_effect ... ok
+test user::windows::dll::crt::stdio::backend::tests::short_writes_continue_at_the_accepted_frontier_and_retain_error_progress ... ok
+test user::windows::dll::crt::stdio::backend::tests::zero_write_is_an_error_not_an_infinite_progress_loop ... ok
+test user::windows::dll::crt::startup::tests::program_path_getters_read_current_cells_not_argv0_or_config ... ok
+test user::windows::dll::crt::startup::tests::raw_guest_command_buffers_not_config_arguments_control_both_argv_widths ... ok
+test user::windows::dll::crt::startup::tests::winmain_tail_uses_program_quotes_and_control_padding_not_argument_reparse ... ok
+test user::windows::dll::crt::startup::wildcard::tests::closed_process_does_not_expand_host_directory_entries_all_abis ... ok
+test user::windows::dll::crt::stdio::backend::tests::captured_crt_backend_preserves_bounds_and_finite_input_all_abis ... ok
+test user::windows::dll::crt::startup::wildcard::tests::actual_mapped_directory_expansion_and_prefix_byte_encoding_all_abis ... ok
+test user::windows::dll::crt::stdio::detach_tests::accepted_prefix_and_final_continuation_survive_fault_and_clobbered_formals_all_abis ... ok
+test user::windows::dll::crt::stdio::detach_tests::commit_read_candidate_preserves_input_but_reports_host_error_and_continues_all_abis ... ok
+test user::windows::dll::crt::stdio::detach_tests::ordinary_input_detach_preserves_readahead_pushback_and_revision_without_buffer_access_all_abis ... ok
+test user::windows::dll::crt::stdio::detach_tests::detach_flushes_only_initialized_ucrt_and_keeps_streams_and_handles_open_all_abis ... ok
+test user::windows::dll::crt::stdio::detach_tests::revised_active_stream_during_fault_repair_is_rejected_without_replaying_prefix_all_abis ... ok
+test user::windows::dll::crt::stdio::detach_tests::new_streams_are_not_added_to_captured_snapshot_during_fault_repair_all_abis ... ok
+test user::windows::dll::crt::stdio::detach_tests::output_host_failure_does_not_stop_later_streams_or_close_any_stream_all_abis ... ok
+test user::windows::dll::crt::stdio::detach_tests::uninitialized_runtime_detach_is_noop_without_context_or_storage_creation_all_abis ... ok
+test user::windows::dll::crt::stdio::storage::tests::adoption_is_transfer_not_duplication_and_fdopen_never_opens_or_truncates ... ok
+test user::windows::dll::crt::stdio::storage::tests::buffer_fault_and_invalid_input_preserve_old_generation_state_and_commitment ... ok
+test user::windows::dll::crt::stdio::storage::tests::caller_buffer_is_used_real_guest_storage_and_never_freed_by_close ... ok
+test user::windows::dll::crt::startup::tests::raw_replaced_command_buffer_has_no_hidden_length_cap_and_faults_at_exact_frontier ... ok
+test user::windows::dll::crt::stdio::storage::tests::close_preflight_failure_and_protected_handle_preserve_live_stream ... ok
+test user::windows::dll::crt::stdio::storage::tests::discard_is_idempotent_no_guest_writes_and_releases_only_owned_storage_and_pins ... ok
+test user::windows::dll::crt::stdio::storage::tests::external_close_and_different_object_handle_reuse_cannot_retarget_or_close_replacement ... ok
+test user::windows::dll::crt::stdio::storage::tests::fdopen_failure_is_atomic_and_closed_legacy_slot_reuse_changes_lifetime_generation ... ok
+test user::windows::dll::crt::stdio::storage::tests::file_readonly_guard_and_stale_revision_prevent_metadata_overwrite ... ok
+test user::windows::dll::crt::stdio::storage::tests::final_host_close_failure_still_closes_logical_stream_and_releases_buffer_once ... ok
+test user::windows::dll::crt::stdio::storage::tests::generation_and_revision_exhaustion_reject_without_partial_publication ... ok
+test user::windows::dll::crt::stdio::storage::tests::guest_commit_exhaustion_preserves_buffer_and_fdopen_ownership ... ok
+test user::windows::dll::crt::stdio::storage::tests::initial_profiles_have_stable_standard_files_real_cells_and_distinct_descriptors ... ok
+test user::windows::dll::crt::stdio::storage::tests::invalid_handle_flags_and_pointer_width_cannot_add_descriptors_or_pins ... ok
+test user::windows::dll::crt::stdio::storage::tests::late_data_preflight_fault_is_atomic_before_any_export_write ... ok
+test user::windows::dll::crt::stdio::storage::tests::legacy_public_fields_reflect_actual_guest_buffer_cursors_and_flags ... ok
+test user::windows::dll::crt::stdio::storage::tests::missing_standard_handles_are_unassociated_and_unsupported_pipes_still_pin ... ok
+test user::windows::dll::crt::stdio::storage::tests::owned_buffer_swap_release_and_unbuffered_ignore_invalid_size_and_pointer ... ok
+test user::windows::dll::crt::stdio::storage::tests::real_legacy_data_writes_exact_array_preserves_adjacent_bytes_and_is_not_owned_vm ... ok
+test user::windows::dll::crt::stdio::storage::tests::raw_private_vm_free_is_detected_without_freeing_a_different_size_replacement ... ok
+test user::windows::dll::crt::stdio::storage::tests::rights_modes_and_generation_checks_reject_before_ownership_transfer ... ok
+test user::windows::dll::crt::stdio::storage::tests::source_fault_and_bad_data_metadata_have_no_allocation_or_pin_effects ... ok
+test user::windows::dll::crt::stdio::storage::tests::write_prefix_cursor_and_snapshot_revisions_cannot_replay_fault_handler_progress ... ok
+test user::windows::dll::crt::stdio::tests::append_only_reduced_handle_grant_cannot_overwrite_shared_file_cursor ... ok
+test user::windows::dll::crt::stdio::tests::get_osfhandle_error_returns_guest_intptr_minus_one_on_every_abi ... ok
+test user::windows::dll::crt::stdio::tests::fdopen_w_mode_attaches_without_truncating_and_append_moves_to_end ... ok
+test user::windows::dll::crt::stdio::tests::host_read_failure_preserves_cached_lookahead_and_sets_sticky_stream_error ... ok
+test user::windows::dll::crt::stdio::tests::low_level_text_read_budgets_raw_bytes_without_refilling_contracted_output ... ok
+test user::windows::dll::crt::stdio::tests::read_buffer_is_retained_by_fflush_and_eof_is_set_only_after_attempt_past_end ... ok
+test user::windows::dll::crt::stdio::tests::mandatory_buffer_flush_failure_does_not_report_current_unwritten_items ... ok
+test user::windows::dll::crt::stdio::tests::real_user_buffer_rounding_full_flush_and_close_preserve_caller_storage ... ok
+test user::windows::dll::crt::stdio::tests::returning_invalid_handler_result_survives_errno_store_fault_without_reinvocation ... ok
+test user::windows::dll::crt::stdio::tests::low_level_text_internal_scratch_boundaries_do_not_expand_whole_call_raw_budget ... ok
+test user::windows::dll::crt::stdio::tests::read_fault_preserves_consumed_file_offset_and_overwritten_output_witness ... ok
+test user::windows::dll::crt::stdio::tests::same_stream_reconfiguration_during_fault_repair_is_rejected_without_prefix_replay ... ok
+test user::windows::dll::crt::stdio::tests::zero_stdio_requests_leave_buffer_and_flags_unchanged ... ok
+test user::windows::dll::crt::stdio::tests::unicode_even_byte_requests_reject_before_buffer_or_host_effects_and_odd_ones_validate ... ok
+test user::windows::dll::crt::stdio::tests::text_read_handles_crlf_chunk_edge_bare_cr_and_ctrl_z_without_binary_translation ... ok
+test user::windows::dll::crt::strings::tests::append_bounded_source_and_terminator_all_abis ... ok
+test user::windows::dll::crt::stdio::tests::update_stream_can_write_after_eof_without_discarding_input_on_fflush ... ok
+test user::windows::dll::crt::stdio::tests::unbuffered_write_fault_retains_host_prefix_and_captured_formals ... ok
+test user::windows::dll::crt::strings::tests::character_and_substring_search_includes_terminator_all_abis ... ok
+test user::windows::dll::crt::strings::tests::copy_padding_and_exact_count_without_extra_nul_all_abis ... ok
+test user::windows::dll::crt::strings::tests::late_string_fault_leaves_only_streamed_prefix_all_abis ... ok
+test user::windows::dll::crt::strings::tests::hostile_null_guard_and_guest_width_overflow_remain_faults_all_abis ... ok
+test user::windows::dll::crt::strings::tests::lengths_end_page_nul_and_bounded_unterminated_all_abis ... ok
+test user::windows::dll::crt::strings::tests::ordinal_unsigned_compare_stops_at_nul_or_difference_all_abis ... ok
+test user::windows::dll::crt::strings::tests::unbounded_missing_terminator_faults_without_truncated_success_all_abis ... ok
+test user::windows::dll::crt::strings::tests::zero_bound_and_empty_needle_are_explicit_no_dereference_profiles_all_abis ... ok
+test user::windows::dll::crt::stdio::tests::text_output_ctrl_z_terminates_this_request_at_exact_logical_item_frontier ... ok
+test user::windows::dll::crt::termination::exit_tests::abort_behavior_masks_are_32_bit_and_disabled_reportfault_uses_normal_exit_all_abis ... ok
+test user::windows::dll::crt::termination::exit_tests::duplicate_tls_runs_calling_threads_custom_terminate_handler_all_abis ... ok
+test user::windows::dll::crt::termination::exit_tests::dynamic_termination_named_exports_are_ucrt_only_all_abis ... ok
+test user::windows::dll::crt::termination::exit_tests::exit_selected_slot_fault_keeps_target_status_and_recursive_lock_all_abis ... ok
+test user::windows::dll::crt::termination::exit_tests::invalid_raise_errno_fault_never_repeats_handler_or_redecodes_formals_all_abis ... ok
+test user::windows::dll::crt::termination::exit_tests::full_exit_marks_completion_after_callbacks_and_releases_guard_all_abis ... ok
+test user::windows::dll::crt::termination::exit_tests::quick_exit_drains_only_quick_without_tls_all_abis ... ok
+test user::windows::dll::crt::termination::exit_tests::returning_full_tls_precedes_live_lifo_queue_and_repeats_all_abis ... ok
+test user::windows::dll::crt::termination::exit_tests::returning_cleanup_is_recursively_enterable_not_suppressed_all_abis ... ok
+test user::windows::dll::crt::termination::exit_tests::signal_action_precedence_queries_and_global_thread_identity_all_abis ... ok
+test user::windows::dll::crt::strings::tests::long_scanner_has_no_legacy_64k_cutoff_all_abis ... ok
+test user::windows::dll::crt::termination::exit_tests::software_signal_alias_query_reset_and_abort_continuation_all_abis ... ok
+test user::windows::dll::crt::termination::exit_tests::tls_executes_on_exit_caller_not_main_thread_all_abis ... ok
+test user::windows::dll::crt::termination::exit_tests::software_signal_ignore_default_term_and_invalid_paths_all_abis ... ok
+test user::windows::dll::crt::termination::lock::tests::dropping_unacquired_waiter_does_not_release_owner_or_register_target_all_abis ... ok
+test user::windows::dll::crt::termination::exit_tests::x86_later_signal_and_abort_formal_fault_retains_first_decoded_argument ... ok
+test user::windows::dll::crt::termination::lock::tests::receipt_reaping_preserves_capacity_for_still_live_guards_all_abis ... ok
+test user::windows::dll::crt::termination::exit_tests::minimal_modes_skip_both_queues_tls_and_returning_completion_all_abis ... ok
+test user::windows::dll::crt::termination::lock::tests::recursion_exhaustion_does_not_publish_guard_or_run_operation_all_abis ... ok
+test user::windows::dll::crt::termination::storage::tests::clearing_fault_preserves_selected_target_without_rereading_repaired_bytes ... ok
+test user::windows::dll::crt::termination::storage::tests::abandoned_receipt_preserves_remaining_global_callbacks_and_owner_identity ... ok
+test user::windows::dll::crt::termination::storage::tests::callback_registration_restarts_at_latest_insertion_endpoint_without_replay ... ok
+test user::windows::dll::crt::termination::storage::tests::generation_revision_and_guest_width_exhaustion_are_checked_before_effects ... ok
+test user::windows::dll::crt::termination::storage::tests::growth_during_callback_preserves_visited_holes_and_refreshes_buffer_identity ... ok
+test user::windows::dll::crt::termination::storage::tests::growth_fallback_and_total_oom_preserve_old_entries_and_live_blocks ... ok
+test user::windows::dll::crt::termination::exit_tests::tls_null_registration_is_available_then_any_duplicate_terminates_all_abis ... ok
+test user::windows::dll::crt::termination::storage::tests::in_capacity_write_fault_has_no_publication_or_block_effects ... ok
+test user::windows::dll::crt::termination::storage::tests::growth_source_fault_rolls_back_candidate_and_retry_preserves_old_callbacks ... ok
+test user::windows::dll::crt::termination::storage::tests::growth_uses_sdk_capped_increment_and_zeroes_unused_tail ... ok
+test user::windows::dll::crt::termination::storage::tests::initial_allocation_uses_four_slot_fallback_when_thirty_two_slots_do_not_fit ... ok
+test user::windows::dll::crt::termination::storage::tests::insertion_length_lifo_duplicate_callbacks_and_null_holes_match_sdk_scan ... ok
+test user::windows::dll::crt::termination::storage::tests::nested_drain_consumes_remaining_slots_once_and_outer_safely_observes_reset ... ok
+test user::windows::dll::crt::termination::exit_tests::fatal_ptd_oom_runs_abort_policy_not_catchable_no_memory_all_abis ... ok
+test user::windows::dll::crt::termination::storage::tests::non_aba_raw_free_or_destroy_is_detected_without_freeing_foreign_reuse ... ok
+test user::windows::dll::crt::termination::storage::tests::nested_reset_then_fresh_registration_uses_new_generation_even_if_base_reused ... ok
+test user::windows::dll::crt::termination::storage::tests::ordinary_and_quick_nested_tickets_are_independent_without_storage_lock_policy ... ok
+test user::windows::dll::crt::termination::storage::tests::queues_are_runtime_and_kind_isolated_and_do_not_use_malloc_ledger ... ok
+test user::windows::dll::crt::termination::storage::tests::receipt_extraction_keeps_pre_reserved_drop_capacity_and_process_discard_is_host_only ... ok
+test user::windows::dll::crt::termination::storage::tests::reentrant_registration_during_selected_slot_repair_rejects_stale_selection ... ok
+test user::windows::dll::crt::termination::storage::tests::selected_callback_is_a_value_and_nested_reset_cannot_retarget_or_replay_it ... ok
+test user::windows::dll::crt::termination::storage::tests::unread_slot_fault_keeps_cursor_and_future_guest_value_is_read_lazily ... ok
+test user::windows::dll::crt::termination::tests::different_thread_registration_parks_and_retries_captured_target_all_abis ... ok
+test user::windows::dll::crt::termination::tests::explicit_callback_can_register_both_global_kinds_recursively_all_abis ... ok
+test user::windows::dll::crt::termination::tests::expected_first_allocation_oom_returns_negative_and_unlocks_all_abis ... ok
+test user::windows::dll::crt::termination::tests::global_null_duplicate_and_separate_lifo_queues_all_abis ... ok
+test user::windows::dll::crt::termination::tests::genuine_named_bindings_and_unadmitted_legacy_names_all_abis ... ok
+test user::windows::dll::crt::termination::tests::global_private_storage_is_not_malloc_ledger_all_abis ... ok
+test user::windows::dll::crt::termination::tests::nested_explicit_drain_holds_runtime_lock_until_outer_return_all_abis ... ok
+test user::windows::dll::crt::termination::tests::other_thread_can_initialize_independent_table_while_exit_lock_is_held_all_abis ... ok
+test user::windows::dll::crt::termination::tests::registration_fault_retains_target_across_formal_clobber_all_abis ... ok
+test user::windows::dll::crt::termination::tests::raw_process_discard_frees_queues_without_accessing_noaccess_slots_all_abis ... ok
+test user::windows::dll::crt::termination::tests::runtime_locks_do_not_alias_each_other_or_guest_address_waits_all_abis ... ok
+test user::windows::dll::crt::termination::tests::nonterminal_abandonment_reports_unfinished_lock_and_reaps_it_all_abis ... ok
+test user::windows::dll::crt::termination::tests::terminal_abandonment_releases_guard_without_global_callback_execution_all_abis ... ok
+test user::windows::dll::crt::tests::checked_guest_width_oom_and_realloc_failure_preserve_original ... ok
+test user::windows::dll::crt::tests::commitment_exhaustion_reports_enomem_and_keeps_realloc_source ... ok
+test user::windows::dll::crt::tests::error_cells_are_guest_authoritative_thread_not_fiber_and_runtime_local ... ok
+test user::windows::dll::crt::tests::expand_never_moves_and_failure_does_not_resize_the_old_block ... ok
+test user::windows::dll::crt::tests::handler_queries_answer_from_what_a_guest_can_install ... ok
+test user::windows::dll::crt::tests::invalid_default_and_noreturn_bypass_guest_exception_notifications ... ok
+test user::windows::dll::crt::tests::invalid_blocks_are_corruption_not_invalid_parameter_callbacks ... ok
+test user::windows::dll::crt::tests::first_error_context_oom_is_an_explicit_admission_exception ... ok
+test user::windows::dll::crt::tests::invalid_handler_precedence_arguments_and_continuation_errno ... ok
+test user::windows::dll::crt::tests::readonly_errno_accessors_work_but_writes_and_allocators_preflight ... ok
+test user::windows::dll::crt::tests::unsupported_new_handler_registration_and_legacy_compat_wrappers_are_not_exports ... ok
+test user::windows::dll::crt::tests::strdup_and_wcsdup_preserve_terminators_and_raw_wchar_units ... ok
+test user::windows::dll::crt::tests::setters_write_exact_four_bytes_and_success_preserves_error_state ... ok
+test user::windows::dll::crt::tests::zero_allocations_alignment_zeroing_and_private_heap_ownership ... ok
+test user::windows::dll::files::tests::console_zero_length_direction_and_reduced_grants_all_abis ... ok
+test user::windows::dll::files::tests::access_grants_metadata_and_both_sharing_directions_all_abis ... ok
+test user::windows::dll::files::tests::closed_filesystem_denies_existing_paths_and_captures_console_all_abis ... ok
+test user::windows::dll::files::tests::invalid_guest_outputs_inputs_and_last_error_precede_host_effects_all_abis ... ok
+test user::windows::dll::files::tests::dispositions_roundtrip_eof_seek_extension_truncation_and_flush_all_abis ... ok
+test user::windows::dll::files::tests::duplicate_cursors_independent_opens_and_append_only_grants_all_abis ... ok
+test user::windows::dll::function_table::tests::lookup_export_exists_only_on_64_bit_kernel_hosts ... ok
+test user::windows::dll::files::tests::signed_seek_boundaries_security_attributes_and_directory_admission_all_abis ... ok
+test user::windows::dll::fls::tests::slots_are_pointer_width_correct_and_errors_do_not_fabricate_values_all_abis ... ok
+test user::windows::dll::fls::tests::free_calls_all_nonnull_contexts_and_closing_index_cannot_be_reallocated_all_abis ... ok
+test user::windows::dll::fls::tests::abandoned_callback_and_guest_teb_faults_are_explicit_all_abis ... ok
+test user::windows::dll::function_table::tests::lookup_dynamic_entry_before_add_and_after_delete_is_miss_both_abis ... ok
+test user::windows::dll::fls::tests::context_cleanup_handles_callback_rearming_and_preserves_current_identity_all_abis ... ok
+test user::windows::dll::function_table::tests::lookup_nonnull_history_is_rejected_without_output_mutation_both_abis ... ok
+test user::windows::dll::function_table::tests::lookup_output_write_fault_is_atomic_and_miss_does_not_write_both_abis ... ok
+test user::windows::dll::files::tests::nul_access_zero_length_errors_and_unsupported_requests_all_abis ... ok
+test user::windows::dll::function_table::tests::lookup_static_entry_returns_guest_pointer_and_writes_image_base_both_abis ... ok
+test user::windows::dll::kernel::tests::tls_expansion_address_uses_guest_width_and_checked_64_bit_addition ... ok
+test user::windows::dll::kernel::vch_tests::both_public_hosts_expose_vch_with_exact_scalar_abi_on_all_architectures ... ok
+test user::windows::dll::kernel::tests::heap_failure_honors_call_and_creation_exception_flags_without_last_error ... ok
+test user::windows::dll::handles::tests::duplicate_preserves_identity_grants_flags_and_rolls_back_output_faults ... ok
+test user::windows::dll::handles::tests::close_source_applies_on_output_fault_and_current_thread_becomes_real_handle ... ok
+test user::windows::dll::kernel::tests::get_command_line_a_ascii_pointer_is_process_owned_all_abis ... ok
+test user::windows::dll::kernel::tests::get_command_line_a_cp1252_best_fit_all_abis ... ok
+test user::windows::dll::kernel::tests::forged_tls_pointer_faults_and_failed_expansion_publication_frees_block ... ok
+test user::windows::dll::kernel::tests::terminate_process_checks_current_handles_and_remains_distinct_from_exit_all_abis ... ok
+test user::windows::dll::kernel::vch_tests::x86_shared_handle_space_accepts_last_slot_then_exhausts_without_mutation ... ok
+test user::windows::dll::kernel::vch_tests::cross_family_handle_collision_fails_closed_without_mutation ... ok
+test user::windows::dll::kernel::vch_tests::win64_shared_handle_space_accepts_last_slot_then_exhausts_without_mutation ... ok
+test user::windows::dll::kernel::vch_tests::null_vectored_callback_is_rejected_without_consuming_a_registration_handle ... ok
+test user::windows::dll::kernel::vch_tests::vch_and_veh_handles_are_disjoint_and_removal_is_family_specific ... ok
+test user::windows::dll::kernel::vch_tests::vch_first_prepends_zero_appends_and_duplicate_callbacks_have_distinct_handles ... ok
+test user::windows::dll::libraries::tests::abandoned_nested_guards_release_every_level_all_abis ... ok
+test user::windows::dll::libraries::tests::distinct_thread_parks_and_guest_address_wakes_cannot_unlock_loader_all_abis ... ok
+test user::windows::dll::libraries::tests::loader_lock_is_reentrant_and_released_before_normal_return_all_abis ... ok
+test user::windows::dll::libraries::tests::module_handle_ex_invalid_flags_do_not_publish_or_acquire_all_abis ... ok
+test user::windows::dll::locks::tests::completed_wait_cannot_consume_twice_and_forged_address_cannot_wake_cv ... ok
+test user::windows::dll::libraries::tests::module_handle_ex_address_count_unchanged_pin_and_name_all_abis ... ok
+test user::windows::dll::libraries::tests::unready_native_handles_cannot_acquire_counted_or_pinned_ownership_all_abis ... ok
+test user::windows::dll::libraries::tests::free_and_exit_unmaps_data_without_returning_to_guest_code_all_abis ... ok
+test user::windows::dll::locks::tests::critical_section_cross_page_init_and_late_write_faults_are_transactional ... ok
+test user::windows::dll::locks::tests::condition_cs_wake_and_timeout_reacquire_before_return_even_when_stolen ... ok
+test user::windows::dll::libraries::tests::abandoned_native_initializer_cleans_resources_before_reporting_failure_all_abis ... ok
+test user::windows::dll::libraries::tests::disable_thread_calls_rejects_executable_data_and_static_tls_all_abis ... ok
+test user::windows::dll::locks::tests::critical_section_registered_waiter_poll_and_cancel_are_single_transitions ... ok
+test user::windows::dll::locks::tests::condition_srw_modes_and_invalid_cv_fault_do_not_release_lock ... ok
+test user::windows::dll::locks::tests::critical_section_exports_follow_all_scalar_abis_and_recursive_ownership ... ok
+test user::windows::dll::native::section_map::geometry::tests::image_view_geometry_rounds_pages_and_falls_back_from_large_requests ... ok
+test user::windows::dll::native::section_map::geometry::tests::invalid_view_inputs_preserve_status_partitions ... ok
+test user::windows::dll::native::section_map::geometry::tests::retained_randomized_low_candidate_can_fail_a_tighter_ceiling_with_free_space ... ok
+test user::windows::dll::native::section_map::geometry::tests::zero_bits_count_mask_and_full_width_limits_match_native_controls ... ok
+test user::windows::dll::locks::tests::process_exit_releases_final_wait_pins_without_accessing_unreadable_lockwords ... ok
+test user::windows::dll::locks::tests::srw_acquire_release_and_wait_registration_roll_back_on_write_fault ... ok
+test user::windows::dll::locks::tests::synchronization_storage_alignment_bounds_and_recursion_overflow_fail_closed ... ok
+test user::windows::dll::locks::tests::object_wait_all_recursion_overflow_is_rejected_before_any_consumption ... ok
+test user::windows::dll::locks::tests::srw_exports_track_reader_owners_and_writer_waiters_without_false_success ... ok
+test user::windows::dll::locks::tests::wait_on_address_widths_fifo_namespace_timeout_and_checked_reads ... ok
+test user::windows::dll::native::tests::ntcontinue_rejects_invalid_state_and_explicitly_rejects_alert_delivery ... ok
+test user::windows::dll::native::tests::nt_termination_self_paths_are_forced_all_abis ... ok
+test user::windows::dll::sysinfo::tests::arm64_features_are_the_baseline_and_the_implemented_extensions ... ok
+test user::windows::dll::slist::tests::depth_wraps_at_sixteen_bits ... ok
+test user::windows::dll::sysinfo::tests::file_time_counts_from_1601_in_hundred_nanoseconds ... ok
+test user::windows::dll::slist::tests::misaligned_operations_raise_on_sixty_four_bit_windows ... ok
+test user::windows::dll::slist::tests::flush_returns_the_whole_chain_intact ... ok
+test user::windows::dll::slist::tests::a_fault_leaves_the_list_as_it_was ... ok
+test user::windows::dll::sysinfo::tests::x86_features_follow_the_cpuid_model ... ok
+test user::windows::dll::tests::builtin_forwarders_resolve_to_builtin_functions ... ok
+test user::windows::dll::tests::builtin_tables_have_no_shadowed_architecture_specific_exports ... ok
+test user::windows::dll::slist::tests::a_list_of_entries_is_pushed_in_one_operation ... ok
+test user::windows::dll::slist::tests::push_and_pop_are_last_in_first_out ... ok
+test user::windows::dll::tests::initializer_admission_distinguishes_legacy_compatibility_from_ucrt_imports ... ok
+test user::windows::dll::tests::crt_hosts_are_distinct_and_exports_use_cdecl ... ok
+test user::windows::dll::tests::kernel32_forwarders_bind_to_the_ntdll_addresses ... ok
+test user::windows::dll::sysinfo::tests::shared_processor_features_match_hle_api_for_each_guest_cpu ... ok
+test user::windows::dll::sysinfo::tests::every_guest_answers_from_its_own_cpu ... ok
+test user::windows::dll::locks::tests::zero_timeout_condition_waits_release_and_reacquire_with_checked_writes ... ok
+test user::windows::dll::threading::tests::create_thread_suspended_reservation_and_handle_grant_all_abis ... ok
+test user::windows::dll::threading::tests::creation_rejects_hostile_flags_security_and_outputs_without_publication ... ok
+test user::windows::dll::threading::tests::exhausted_or_colliding_thread_ids_fail_before_resource_mutation ... ok
+test user::windows::dll::threading::tests::manual_event_stays_signaled_until_reset_and_name_boundaries_are_checked ... ok
+test user::windows::dll::threading::tests::exit_thread_frees_owned_tls_expansion_without_trusting_forged_teb_pointer ... ok
+test user::windows::dll::threading::tests::named_event_case_namespace_collision_and_existing_properties_all_abis ... ok
+test user::windows::dll::threading::tests::multiple_waits_lowest_index_wait_all_atomicity_and_duplicate_rejection ... ok
+test user::windows::dll::threading::tests::object_names_security_and_string_faults_do_not_publish_handles ... ok
+test user::windows::dll::threading::tests::named_open_access_checks_and_last_error_success_preservation ... ok
+test user::windows::dll::threading::tests::queued_apcs_fifo_and_alertable_sleep_flow_all_abis ... ok
+test user::windows::dll::threading::tests::recursive_mutex_release_owner_and_abandonment_all_abis ... ok
+test user::windows::fs::tests::devices_are_recognized_with_extensions ... ok
+test user::windows::fs::tests::drive_map_translates_both_ways ... ok
+test user::windows::fs::tests::full_path_normalization ... ok
+test user::windows::fs::tests::host_parent_components_are_lexical_before_drive_selection ... ok
+test user::windows::fs::tests::terminal_parent_components_traverse_before_name_trimming ... ok
+test user::windows::heap::tests::blocks_are_aligned_distinct_and_reused_after_free ... ok
+test user::windows::heap::tests::creation_reserves_page_rounded_maximum_and_commits_initial_pages_only ... ok
+test user::windows::heap::tests::failed_growth_releases_new_reservation_without_changing_heap_indexes ... ok
+test user::windows::dll::threading::tests::parked_wait_refs_survive_handle_close_and_release_on_cancel ... ok
+test user::windows::heap::tests::failed_initial_commit_releases_reservation_and_reuses_address ... ok
+test user::windows::heap::tests::failed_zero_allocation_preserves_indexes_data_and_reserved_page_charge ... ok
+test user::windows::heap::tests::free_blocks_do_not_coalesce_across_segment_boundaries_in_either_order ... ok
+test user::windows::heap::tests::growable_heaps_add_segments_and_fixed_heaps_do_not ... ok
+test user::windows::heap::tests::guest_size_rounding_overflow_never_mutates_heap_or_vm ... ok
+test user::windows::heap::tests::in_place_growth_cannot_cross_adjacent_reservations ... ok
+test user::windows::heap::tests::in_place_zero_growth_fault_preserves_old_block_and_refunds_new_pages ... ok
+test user::windows::heap::tests::invalid_heap_alignment_and_initial_maximum_are_rejected_before_reserving ... ok
+test user::windows::heap::tests::moved_realloc_destination_fault_rolls_back_commit_and_preserves_original ... ok
+test user::windows::heap::tests::late_zero_fault_does_not_write_earlier_accessible_page ... ok
+test user::windows::heap::tests::partial_multi_run_commit_is_rolled_back_and_existing_protection_kept ... ok
+test user::windows::heap::tests::moved_realloc_source_fault_releases_candidate_segment_and_preserves_old_block ... ok
+test user::windows::heap::tests::realloc_grows_in_place_or_moves_and_zeroes ... ok
+test user::windows::dll::threading::tests::semaphore_release_limits_output_fault_and_existing_counts_all_abis ... ok
+test user::windows::hle::args::tests::arm64_integer_and_float_register_allocation_is_independent ... ok
+test user::windows::hle::args::tests::argument_stack_fault_is_preserved ... ok
+test user::windows::hle::args::tests::narrow_stack_argument_does_not_read_unspecified_padding ... ok
+test user::windows::hle::args::tests::pointer_addition_obeys_guest_width_and_checks_access_bounds ... ok
+test user::windows::heap::tests::same_rounded_realloc_fault_preserves_requested_size_and_bytes ... ok
+test user::windows::hle::args::tests::variadic_double_uses_x64_duplicate_integer_register ... ok
+test user::windows::hle::args::tests::variadic_x86_wide_value_advances_two_slots ... ok
+test user::windows::hle::args::tests::x64_mixed_parameters_use_positions_and_32_byte_shadow_space ... ok
+test user::windows::hle::args::tests::variadic_fault_does_not_advance_memory_or_argument_cursor ... ok
+test user::windows::hle::args::tests::x86_scalar_widths_and_cdecl_variadic_tail ... ok
+test user::windows::dll::threading::tests::thread_stack_reserve_arithmetic_is_checked_and_commit_requests_fit ... ok
+test user::windows::dll::threading::tests::suspend_resume_boundaries_and_current_real_handle_all_abis ... ok
+test user::windows::dll::threading::tests::switch_to_thread_accounts_for_suspension_and_loader_serialization ... ok
+test user::windows::dll::threading::tests::termination_signals_thread_object_and_apcs_fail_while_terminating ... ok
+test user::windows::hle::dispatch::retry_tests::arm64_veh_register_only_callback_does_not_preflight_untouched_stack_guard ... ok
+test user::windows::dll::threading::tests::wait_array_fault_and_later_invalid_handle_do_not_consume_first_object ... ok
+test user::windows::hle::dispatch::retry_tests::arm64_four_register_callback_args_need_no_stack_write ... ok
+test user::windows::hle::dispatch::retry_tests::arm64_veh_register_argument_setup_does_not_touch_guard_below_records ... ok
+test user::windows::hle::dispatch::retry_tests::x64_checked_callback_does_not_probe_unused_shadow_guard ... ok
+test user::windows::hle::dispatch::retry_tests::private_dispatcher_retry_trap_rejects_fresh_and_resume_half_entries ... ok
+test user::windows::hle::dispatch::retry_tests::leaving_same_height_frontier_discards_retry_without_executing_it_all_abis ... ok
+test user::windows::hle::dispatch::retry_tests::context_skip_at_original_stack_height_cannot_reuse_retry_all_abis ... ok
+test user::windows::hle::dispatch::retry_tests::checked_callback_fault_abandonment_drops_owner_without_calling_all_abis ... ok
+test user::windows::hle::dispatch::retry_tests::x64_ehandler_callback_guard_fault_veh_repair_preserves_selected_handler ... ok
+test user::windows::hle::dispatch::retry_tests::repaired_frontier_uses_saved_site_not_clobbered_caller_state_all_abis ... ok
+test user::windows::hle::dispatch::retry_tests::x64_dispatcher_retry_is_abandoned_when_nested_veh_changes_context_pc_or_sp ... ok
+test user::windows::hle::dispatch::retry_tests::x64_ehandler_callback_persistent_setup_fault_is_bounded ... ok
+test user::windows::hle::dispatch::retry_tests::x64_fifth_callback_argument_faults_at_actual_guarded_stack_slot ... ok
+test user::windows::hle::dispatch::retry_tests::x64_nested_guard_search_bridges_pending_dispatcher_retry_to_ehandler_rax_profile ... ok
+test user::windows::hle::dispatch::retry_tests::x64_unhandled_filter_callback_guard_fault_repair_preserves_selected_filter ... ok
+test user::windows::hle::dispatch::retry_tests::x64_rearmed_dispatcher_callback_guard_faults_stop_before_fifth_nested_dispatch ... ok
+test user::windows::hle::dispatch::retry_tests::x64_veh_callback_guard_fault_repair_preserves_selected_handler ... ok
+test user::windows::hle::dispatch::retry_tests::x64_vch_callback_guard_fault_repair_preserves_selected_handler ... ok
+test user::windows::hle::dispatch::retry_tests::same_height_context_escape_retires_successfully_started_callback_all_abis ... ok
+test user::windows::hle::dispatch::tests::callback_preflight_preserves_first_actual_write_fault_order ... ok
+test user::windows::hle::dispatch::retry_tests::x64_repaired_dispatcher_rejects_unsupported_ehandler_raise_without_scratch_search ... ok
+test user::windows::hle::dispatch::tests::failed_callback_setup_preserves_cpu_and_rejects_underflow ... ok
+test user::windows::hle::dispatch::tests::memory_exception_preserves_direction_and_fault_address ... ok
+test user::windows::hle::dispatch::retry_tests::checked_callback_setup_keeps_selected_call_across_repair_all_abis ... ok
+test user::windows::hle::dispatch::tests::unreadable_x86_teb_during_exception_dispatch_cannot_recurse_on_host ... ok
+test user::windows::hle::dispatch::tests::readonly_return_address_reads_succeed_at_entry_and_resume ... ok
+test user::windows::hle::dispatch::x86_retry_tests::x86_dispatcher_context_exhausted_stack_guard_preserves_overflow_classification ... ok
+test user::windows::hle::dispatch::x86_retry_tests::x86_dispatcher_context_guard_fault_retains_selected_frame_handler ... ok
+test user::windows::hle::dispatch::x86_retry_tests::x86_frame_handler_guard_setup_fault_is_repaired_by_veh ... ok
+test user::windows::hle::dispatch::x86_retry_tests::x86_changed_nested_context_abandons_selected_handler_retry ... ok
+test user::windows::hle::dispatch::x86_retry_tests::x86_frame_handler_persistent_readonly_setup_fault_fails_closed ... ok
+test user::windows::hle::dispatch::x86_retry_tests::x86_private_dispatcher_retry_rejects_fresh_and_resume_half ... ok
+test user::windows::hle::dispatch::x86_retry_tests::x86_repaired_frame_handler_invalid_disposition_rejects_synthetic_resume_search ... ok
+test user::windows::hle::dispatch::x86_retry_tests::x86_nested_setup_fault_continue_search_visits_teb_registration ... ok
+test user::windows::hle::dispatch::x86_retry_tests::x86_selected_scope_dispatcher_context_guard_fault_retains_taken_handler ... ok
+test user::windows::hle::dispatch::tests::callback_integer_abi_all_register_stack_boundaries ... ok
+test user::windows::hle::dispatch::x86_retry_tests::x86_unhandled_filter_guard_setup_fault_retries_original_filter ... ok
+test user::windows::hle::dispatch::x86_retry_tests::x86_vch_guard_setup_fault_retries_original_continue_slot ... ok
+test user::windows::hle::dispatch::tests::active_exception_dispatch_fault_is_terminal_and_still_consumes_guards ... ok
+test user::windows::hle::dispatch::x86_retry_tests::x86_veh_guard_setup_fault_retries_original_vectored_slot ... ok
+test user::windows::hle::dispatch::tests::callback_stack_writes_classify_protection_and_both_guard_types ... ok
+test user::windows::hle::exception::tests::exact_filters_skip_unrelated_codes_and_nest_inner_first_all_abis ... ok
+test user::windows::hle::dispatch::tests::entry_and_resume_stack_reads_classify_and_consume_guards ... ok
+test user::windows::hle::dispatch::tests::normal_and_forced_terminal_flows_remain_distinct_all_abis ... ok
+test user::windows::hle::exception::tests::protected_wait_keeps_scope_until_wait_continuation_completes_all_abis ... ok
+test user::windows::hle::exception::tests::nested_dispatcher_containment_disables_each_filter_then_searches_real_outer_handler_all_abis ... ok
+test user::windows::hle::exception::tests::normal_protected_callbacks_keep_scope_until_owner_returns_all_abis ... ok
+test user::windows::hle::exception::tests::prune_and_fiber_switch_move_or_drop_scope_ownership_all_abis ... ok
+test user::windows::hle::exception::tests::selected_handler_disables_itself_and_does_not_drop_pending_owners_all_abis ... ok
+test user::windows::hle::exception::tests::selected_unwind_data_fault_is_terminal_without_veh_or_owner_drop_all_abis ... ok
+test user::windows::hle::exception::tests::table_inner_language_handler_precedes_synthetic_boundary ... ok
+test user::windows::hle::exception::tests::table_bridges_only_exact_pending_dispatcher_retry_frontier ... ok
+test user::windows::loader::apiset::tests::families_resolve_to_their_hosts ... ok
+test user::windows::loader::apiset_schema::tests::duplicate_schema_hash_identity_is_rejected_even_when_full_names_differ ... ok
+test user::windows::loader::apiset_schema::tests::schema_identity_default_alias_and_unavailable_paths ... ok
+test user::windows::hle::exception::tests::callback_setup_av_and_guard_are_not_cpp_and_repair_keeps_protected_capture_all_abis ... ok
+test user::windows::loader::apiset::tests::crt_foundation_contracts_share_one_live_builtin_host ... ok
+test user::windows::loader::apiset_schema::tests::truncated_overflowing_invalid_utf16_and_unsupported_namespaces_fail ... ok
+test user::windows::hle::exception::tests::table_sentinel_bridges_unprotected_owner_without_fabricating_callback_return ... ok
+test user::windows::hle::exception::tests::selected_unwind_runs_inner_cleanup_before_handler_and_preserves_outer_all_abis ... ok
+test user::windows::hle::exception::tests::veh_continue_precedes_matching_scope_and_resume_trap_retires_it_all_abis ... ok
+test user::windows::hle::exception::tests::x86_inner_guest_registration_precedes_boundary_and_outer_record_follows_decline ... ok
+test user::windows::loader::data_init_tests::early_source_fault_releases_image_without_publishing_module_traps_or_runtime_all_abis ... ok
+test user::windows::loader::builtin_ready_tests::builtin_ready_order_follows_completion_and_repeated_load_is_not_duplicated_all_abis ... ok
+test user::windows::loader::data_init_tests::startup_data_installs_without_a_thread_and_repeated_load_preserves_cells_all_abis ... ok
+test user::windows::loader::data_init_tests::late_ldr_failure_aborts_data_before_module_or_trap_success_all_abis ... ok
+test user::windows::loader::dynamic::tests::detaching_entry_is_not_referenced_or_recursively_unloaded ... ok
+test user::windows::loader::builtin_ready_tests::failed_builtin_publication_never_enters_ready_ledger_and_retry_commits_once_all_abis ... ok
+test user::windows::loader::data_init_tests::successfully_installed_runtime_is_not_owned_by_forwarder_rollback_all_abis ... ok
+test user::windows::hle::exception::tests::selected_unwind_rejects_nonsearch_dispositions_without_handler_or_owner_drop_all_abis ... ok
+test user::windows::loader::dynamic::tests::forced_shutdown_discards_host_receipts_without_guest_cleanup_or_tls_loss ... ok
+test user::windows::loader::dynamic::tests::historical_slot_cap_rejects_new_images_before_allocation_but_reuses_live_modules ... ok
+test user::windows::loader::dynamic::tests::dynamic_tls_is_published_for_existing_and_new_threads_then_removed ... ok
+test user::windows::loader::dynamic::tests::exe_as_data_does_not_resolve_imports_or_allocate_tls ... ok
+test user::windows::loader::dynamic::tests::reference_sentinel_exhaustion_preserves_both_guest_and_host_counters ... ok
+test user::windows::loader::dynamic::tests::independent_nested_reference_retains_successful_dependency_after_outer_failure ... ok
+test user::windows::loader::dynamic::tests::absent_forwarded_export_rollback_removes_target_tls_and_owner_edge ... ok
+test user::windows::loader::dynamic::tests::forwarder_lookup_initializes_target_and_owns_its_dependency ... ok
+test user::windows::loader::services::tests::conditional_wow64_leaf_requires_complete_matching_branches_marker_and_thunk ... ok
+test user::windows::loader::services::tests::conflicting_numbers_and_oversized_export_tables_are_rejected ... ok
+test user::windows::loader::services::tests::derives_export_identity_and_number_from_selected_image ... ok
+test user::windows::loader::services::tests::refuses_partial_hooked_or_unrecognized_stubs ... ok
+test user::windows::loader::dynamic::tests::protected_existing_teb_prevents_all_tls_publication_and_releases_images ... ok
+test user::windows::loader::services::tests::wow64_preserves_encoded_numbers_and_requires_the_exported_transition_thunk ... ok
+test user::windows::loader::dynamic::tests::partial_ldr_name_allocation_failure_is_recoverable_without_panic ... ok
+test user::windows::memory::section_tests::partial_and_large_section_views_report_logical_geometry_and_rebase_before_slice ... ok
+test user::windows::memory::section_tests::selected_image_views_own_private_bytes_and_keep_section_after_handle_close ... ok
+test user::windows::memory::section_tests::selected_mapping_rejects_invalid_geometry_before_reservation ... ok
+test user::windows::memory::tests::commit_never_replaces_untracked_existing_bytes ... ok
+test user::windows::memory::tests::allocate_flags_are_supported_or_explicitly_rejected ... ok
+test user::windows::memory::tests::decommit_is_idempotent_and_recommit_is_zeroed ... ok
+test user::windows::loader::ldr::tests::startup_heap_access_failure_retains_no_memory_compatibility ... ok
+test user::windows::memory::tests::distinct_reservations_are_not_one_protection_region ... ok
+test user::windows::memory::tests::exhausted_combined_allocation_rolls_back_new_reservation ... ok
+test user::windows::memory::tests::commitment_crosses_pages_and_preserves_existing_contents ... ok
+test user::windows::memory::tests::commitment_charge_counts_only_new_pages_and_returns_on_free ... ok
+test user::windows::memory::tests::guard_is_one_shot_for_each_page ... ok
+test user::windows::loader::ldr::tests::startup_unwritable_peb_keeps_compatibility_status_without_allocating ... ok
+test user::windows::memory::tests::image_reported_protection_preserves_trap_mapping ... ok
+test user::windows::memory::tests::invalid_ranges_do_not_wrap_or_mutate_memory ... ok
+test user::windows::memory::tests::free_search_handles_limits_alignment_overlap_and_both_directions ... ok
+test user::windows::memory::tests::protection_combinations_follow_documented_constraints ... ok
+test user::windows::memory::tests::guest_memory_information_abi_matches_both_pointer_widths ... ok
+test user::windows::memory::tests::query_reports_forward_runs_and_distinct_initial_protection ... ok
+test user::windows::memory::tests::huge_reservations_use_only_state_boundaries ... ok
+test user::windows::memory::tests::protection_checks_every_page_before_changing_any ... ok
+test user::windows::memory::tests::utf16_unit_count_cannot_wrap_byte_length ... ok
+test user::windows::memory::tests::release_requires_original_base_and_zero_size ... ok
+test user::windows::memory::tests::protection_and_decommit_invalidate_executable_code ... ok
+test user::windows::memory::tests::reservation_rounds_base_and_inclusive_byte_coverage ... ok
+test user::windows::loader::services::tests::installed_ntdll_exports_define_the_native_service_table ... ok
+test user::windows::memory::tests::state_run_boundaries_match_independent_page_model ... ok
+test user::windows::object_namespace::image_tests::different_image_base_flag_rebases_header_and_dir64_without_changing_source ... ok
+test user::windows::object_namespace::image_tests::image_template_preserves_kernel_relocation_words_and_page_policy ... ok
+test user::windows::object_namespace::image_tests::section_template_is_shared_across_virtual_handles_without_relocation ... ok
+test user::windows::native::tests::selected_image_reads_are_read_only_and_bounded_before_copying ... ok
+test user::windows::loader::dynamic::tests::references_graph_cycles_and_stable_tombstones_all_abis ... ok
+test user::windows::object_namespace::tests::directory_catalog_system_root_and_subject_capture_are_bounded ... ok
+test user::windows::object_namespace::tests::directory_catalog_bounds_collision_and_unselected_parent_are_explicit ... ok
+test user::windows::objects::etw::tests::native_etw_notification_reference_overflow_and_drain_are_transactional ... ok
+test user::windows::objects::etw::tests::native_etw_registration_identifier_exhaustion_preserves_objects_and_handles ... ok
+test user::windows::objects::tests::explicit_handle_grants_are_preserved_without_escalation ... ok
+test user::windows::objects::tests::handles_are_lowest_free_multiples_of_four_and_ignore_tag_bits ... ok
+test user::windows::objects::tests::names_are_exact_case_and_global_namespace_is_distinct ... ok
+test user::windows::objects::tests::objects_live_until_their_last_handle_closes ... ok
+test user::windows::objects::tests::process_table_drain_removes_protected_handles_names_and_internal_refs ... ok
+test user::windows::objects::tests::protected_handles_cannot_be_closed ... ok
+test user::windows::objects::tests::wait_pins_validate_all_objects_and_multiplicities_before_commit ... ok
+test user::windows::objects::tests::worker_factory_dependency_pins_are_transactional_on_capacity_and_type_failure ... ok
+test user::windows::objects::wnf::tests::native_wnf_process_event_reference_overflow_is_transactional ... ok
+test user::windows::object_namespace::tests::symbolic_link_selection_refuses_uncaptured_grants_and_invalid_metadata ... ok
+test user::windows::performance_clock::tests::builtin_performance_clock_preserves_elapsed_nanoseconds_and_frequency ... ok
+test user::windows::performance_clock::tests::native_performance_clock_uses_host_frequency_and_epoch ... ok
+test user::windows::process::embedded_tests::closed_configuration_rejects_host_entrypoint_trace_entropy_and_colliding_keys ... ok
+test user::windows::object_namespace::tests::native_section_open_selection_case_policy_bounds_and_uncaptured_resources_are_explicit ... ok
+test user::windows::objects::wnf::tests::native_wnf_subscription_generation_exhaustion_and_owner_failure_are_transactional ... ok
+test user::windows::nls::tests::native_nls_snapshot_bounds_identity_padding_and_shared_bytes ... ok
+test user::windows::loader::dynamic::tests::rollback_bool_failure_is_distinct_from_exception_and_releases_owned_data ... ok
+
+thread 'user::windows::native::tests::installed_schema_preserves_hash_identities_and_parent_redirects' (4940) panicked at src\user\windows\native.rs:317:51:
+called `Result::unwrap()` on an `Err` value: Custom { kind: InvalidData, error: "SDB tag exceeds its owner" }
+test user::windows::native::tests::installed_schema_preserves_hash_identities_and_parent_redirects ... FAILED
+
+thread 'user::windows::native::tests::installed_numeric_revisions_match_native_windows_loader_resolution' (4464) panicked at src\user\windows\native.rs:371:51:
+called `Result::unwrap()` on an `Err` value: Custom { kind: InvalidData, error: "SDB tag exceeds its owner" }
+test user::windows::native::tests::installed_numeric_revisions_match_native_windows_loader_resolution ... FAILED
+
+thread 'user::windows::nls::installed::tests::installed_nls_section_bytes_match_independent_files_and_padding' (7500) panicked at src\user\windows\nls\installed.rs:125:81:
+called `Result::unwrap()` on an `Err` value: Custom { kind: InvalidData, error: "SDB tag exceeds its owner" }
+test user::windows::nls::installed::tests::installed_nls_section_bytes_match_independent_files_and_padding ... FAILED
+test user::windows::process::embedded_tests::closed_loader_never_falls_back_to_existing_host_dependencies ... ok
+test user::windows::process::fiber::tests::active_cleanup_does_not_destroy_other_owned_dormant_stacks_all_abis ... ok
+test user::windows::process::fiber::tests::dormant_fiber_migrates_without_thread_tls_or_stack_ownership_all_abis ... ok
+test user::windows::process::fiber::tests::fiber_continuations_seh_and_fls_follow_context_not_thread_all_abis ... ok
+test user::windows::process::fiber::tests::fiber_conversion_switch_reconversion_owns_stacks_all_abis ... ok
+test user::windows::process::fiber::tests::fiber_invalid_sizes_and_faulting_conversion_are_transactional_all_abis ... ok
+test user::windows::process::fiber::tests::x86_float_switch_restores_saving_targets_and_shares_nonsaving_targets ... ok
+test user::windows::process::fiber::tests::fiber_stack_commit_promotion_obeys_1mib_boundaries_all_abis ... ok
+test user::windows::process::fiber::tests::recycled_opaque_marker_cannot_replace_a_live_context_all_abis ... ok
+test user::windows::process::fiber::tests::loader_owned_start_wrapper_is_thread_bound_until_callback_completes_all_abis ... ok
+test user::windows::process::lifecycle::detach_tests::detach_buffer_fault_keeps_loader_guard_until_exact_retry_finishes_all_abis ... ok
+test user::windows::process::lifecycle::detach_tests::executable_pe_tls_follows_ucrt_flush_in_existing_exit_profile_all_abis ... ok
+test user::windows::process::lifecycle::tests::detach_reverses_completion_order_not_mapping_order_all_abis ... ok
+test user::windows::process::lifecycle::tests::normal_detach_preserves_thread_resources_until_exit_outcome_all_abis ... ok
+test user::windows::process::lifecycle::detach_tests::ucrt_flush_runs_between_reverse_completed_native_notifications_all_abis ... ok
+test user::windows::process::embedded_tests::default_host_entropy_starts_a_process_without_unix_device_paths ... ok
+test user::windows::process::lifecycle::tests::original_thread_and_suppressed_module_skip_thread_tls_notifications_all_abis ... ok
+test user::windows::process::lifecycle::tests::startup_commits_each_module_and_releases_lock_before_user_entry_all_abis ... ok
+test user::windows::process::lifecycle::tests::startup_false_detaches_failing_then_ready_modules_without_repeat_all_abis ... ok
+test user::windows::process::native_start::tests::native_start_attachment_boundary_requires_exact_resumed_native_entry_all_abis ... ok
+test user::windows::process::embedded_tests::supplied_dependencies_run_static_and_dynamic_loader_lifecycles_all_abis ... ok
+test user::windows::process::native_start::tests::native_start_private_loader_lists_are_not_published_in_native_peb_all_abis ... ok
+test user::windows::process::native_start::tests::native_start_resume_releases_initial_process_gate_without_attaching_peers_all_abis ... ok
+test user::windows::process::sched::tests::access_violation_parameters_distinguish_read_write_and_dep ... ok
+test user::windows::process::native_start::tests::native_start_requires_selected_native_ntdll_and_both_export_entries_all_abis ... ok
+test user::windows::process::sched::tests::apc_restoration_preserves_same_height_wait_parent_all_abis ... ok
+test user::windows::process::sched::tests::apcs_deliver_fifo_and_restore_interrupted_context ... ok
+test user::windows::process::sched::tests::bounded_tests::blocked_is_resumable_without_sleep_or_thread_loss_all_abis ... ok
+test user::windows::process::native_start::tests::native_start_context_preserves_thread_state_and_selects_native_entries_all_abis ... ok
+test user::windows::process::sched::tests::bounded_tests::failure_is_terminal_and_cached_all_abis ... ok
+test user::windows::process::sched::tests::bounded_tests::indefinite_guest_wait_returns_blocked_and_cancellation_preserves_wait_all_abis ... ok
+test user::windows::process::sched::tests::bounded_tests::last_thread_exit_completes_and_terminal_calls_do_not_repeat_teardown_all_abis ... ok
+test user::windows::process::native_start::tests::native_start_scratch_write_failure_changes_neither_context_bytes_nor_cpu_all_abis ... ok
+test user::windows::process::sched::tests::bounded_tests::separate_calls_preserve_round_robin_all_abis ... ok
+
+thread 'user::windows::process::native_start::tests::native_start_installed_process_has_cold_peb_and_loader_entry_before_first_instruction' (7532) panicked at src\user\windows\process\native_start\tests.rs:299:81:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::bounded_tests::zero_and_cancel_preserve_state_and_resume_all_abis ... ok
+test user::windows::process::sched::tests::floating_exception_selection_respects_masks_and_stack_fault ... ok
+test user::windows::process::sched::tests::exhausted_stack_guard_dispatches_veh_on_consumed_emergency_page_all_abis ... ok
+test user::windows::process::native_start::tests::native_start_installed_process_has_cold_peb_and_loader_entry_before_first_instruction ... FAILED
+test user::windows::process::sched::tests::forced_thread_termination_signals_preserved_handle ... ok
+test user::windows::process::sched::tests::monitor_tests::arm64_one_instruction_yields_preserve_same_thread_reservation ... ok
+test user::windows::process::sched::tests::hle_fetch_traps_require_live_committed_executable_guest_state ... ok
+test user::windows::process::sched::tests::monitor_tests::bounded_process_calls_preserve_reservations_until_an_actual_thread_switch ... ok
+test user::windows::process::sched::tests::monitor_tests::arm64_selected_peer_invalidates_outgoing_reservation ... ok
+test user::windows::process::native_start::tests::native_start_stack_underflow_is_rejected_before_memory_or_cpu_publication_all_abis ... ok
+test user::windows::process::fiber::tests::fiber_cap_precedes_new_stack_and_heap_effects_all_abis ... ok
+test user::windows::process::sched::tests::monitor_tests::round_robin_selection_excludes_suspended_and_blocked_threads ... ok
+test user::windows::process::sched::tests::normal_fls_exit_keeps_environment_until_callback_returns_all_abis ... ok
+test user::windows::process::sched::tests::periodic_timer_advances_by_full_periods ... ok
+test user::windows::process::sched::tests::ordinary_and_stack_guards_are_consumed_before_exception_dispatch ... ok
+test user::windows::process::sched::tests::nonterminal_fls_escape_reports_receipt_before_more_guest_execution_all_abis ... ok
+test user::windows::process::sched::tests::private_dispatcher_retry_fetch_requires_an_owned_checked_call ... ok
+test user::windows::process::sched::tests::raw_nt_services_never_infer_build_specific_numbers ... ok
+test user::windows::process::sched::tests::process_exit_cancels_wait_pins_destroys_threads_and_closes_protected_handles ... ok
+test user::windows::process::sched::tests::exit_tests::normal_process_exit_stops_before_detach_after_peer_teardown_failure_all_abis ... ok
+test user::windows::process::sched::tests::exit_tests::forced_process_exit_aborts_held_loader_without_guest_detach_all_abis ... ok
+test user::windows::process::native_start::tests::native_start_static_tls_is_owned_by_installed_loader_with_builtin_control_all_abis ... ok
+test user::windows::process::sched::tests::secondary_dll_notifications_do_not_freeze_attached_application_threads_all_abis ... ok
+test user::windows::process::sched::tests::forced_thread_exit_skips_callbacks_but_signals_and_frees_resources_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::allocate_ex_tests::native_allocate_ex_fixed_rounding_unaligned_outputs_and_rollback_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::allocate_ex_tests::installed::installed_allocate_ex_leaf_reserves_and_commits_constrained_guest_memory' (6060) panicked at src\user\windows\process\sched\tests\services_tests\allocate_ex_leaf_tests.rs:38:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::allocate_ex_tests::installed::installed_allocate_ex_leaf_reserves_and_commits_constrained_guest_memory ... FAILED
+test user::windows::process::sched::tests::services_tests::allocate_ex_tests::native_allocate_ex_full_array_capture_precedes_type_and_requirements_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::allocate_ex_tests::native_allocate_ex_default_loader_reservation_and_commit_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::allocate_ex_tests::native_allocate_ex_respects_untracked_mappings_and_fault_priority_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::allocate_ex_tests::native_allocate_ex_constrained_holes_alignment_top_down_and_commit_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::allocate_ex_tests::wow64_allocate_ex_large_address_aware_alignment_uses_guest_image_policy ... ok
+test user::windows::process::sched::tests::services_tests::allocate_ex_tests::native_allocate_ex_fault_copy_order_and_guards_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::apphelp_tests::native_apphelp_cache_rejects_other_operations_without_mutating_guest_or_host ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::apphelp_tests::installed::native_apphelp_cache_installed_leaves_use_selected_database_and_copyback_order' (3540) panicked at src\user\windows\process\sched\tests\services_tests\apphelp_leaf_tests.rs:38:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::apphelp_tests::installed::native_apphelp_cache_installed_leaves_use_selected_database_and_copyback_order ... FAILED
+test user::windows::process::sched::tests::services_tests::apphelp_tests::replay::native_apphelp_cache_768_counted_name_controls_match_output_and_packet ... ok
+test user::windows::process::sched::tests::services_tests::allocate_ex_tests::native_allocate_ex_rejects_invalid_requirements_without_mutation_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::directory_handles_share_identity_preserve_metadata_after_catalog_drop_and_release ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::boundary::native_directory_open_replays_all_1680_flag_length_and_pointer_priority_rows ... ok
+test user::windows::process::sched::tests::services_tests::allocate_ex_tests::native_allocate_ex_parameter_capture_validation_and_alignment_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::allocate_ex_tests::native_allocate_ex_wow_capture_precedes_type_validation_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::directory_open_tests::leaf::installed_directory_open_leaf_resolves_snapshot_and_ret12_cleanup' (3592) panicked at src\user\windows\process\sched\tests\services_tests\directory_open_leaf_tests.rs:98:76:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::directory_open_tests::leaf::installed_directory_open_leaf_resolves_snapshot_and_ret12_cleanup ... FAILED
+test user::windows::process::sched::tests::services_tests::allocate_ex_tests::native_allocate_ex_parameter_alignment_depends_on_wow_capture_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_448_duplicate_pointer_guard_and_unreturned_rows ... ok
+test user::windows::process::sched::tests::services_tests::allocate_ex_tests::native_allocate_ex_numa_validation_follows_capture_and_process_access_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::native_directory_open_replays_all_3048_utf16_security_qos_and_reparse_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_672_protected_duplicate_copy_fault_and_unreturned_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::native_directory_open_replays_all_3868_lengths_names_rights_roots_and_aliases ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::emulation_basic_tests::installed_emulation_basic_query_leaf_reports_guest_metadata' (9320) panicked at src\user\windows\process\sched\tests\services_tests\emulation_basic_tests.rs:348:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::emulation_basic_tests::installed_emulation_basic_query_leaf_reports_guest_metadata ... FAILED
+test user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_4800_duplicate_grants_inheritance_and_close_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_handles_replay_all_4800_protected_and_same_attribute_policy_rows ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::apphelp_tests::replay::native_apphelp_cache_548_buffer_and_ordering_controls_match_bytes_and_guards' (6264) panicked at src\user\windows\process\sched\tests\services_tests\apphelp_replay_tests.rs:250:17:
+assertion `left == right` failed: Arm64 ordering=true mode=20 input+252
+  left: 165
+ right: 0
+test user::windows::process::sched::tests::services_tests::apphelp_tests::replay::native_apphelp_cache_548_buffer_and_ordering_controls_match_bytes_and_guards ... FAILED
+test user::windows::process::sched::tests::services_tests::emulation_basic_tests::native_emulation_basic_query_length_null_and_return_faults_are_class_specific_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::emulation_basic_tests::native_emulation_basic_query_output_and_return_guards_are_one_shot_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::emulation_basic_tests::wow64_emulation_basic_query_tracks_the_executable_large_address_aware_flag ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::reference::native_directory_open_replays_all_3456_relative_root_grant_and_tag_rows ... ok
+test user::windows::process::sched::tests::services_tests::emulation_basic_tests::native_emulation_basic_query_readonly_destinations_and_output_aliases_preserve_write_order_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::emulation_basic_tests::native_emulation_basic_query_reports_guest_memory_bounds_cpu_and_preserves_wow64_padding_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::emulation_basic_tests::native_emulation_basic_query_probes_fields_before_writing_and_does_not_probe_wow64_padding_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::native_etw_notification_close_reuse_drain_and_distinct_wnf_owner_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::etw_notification_tests::leaf_tests::installed_etw_notification_leaf_checks_fault_before_commit_and_ret24_cleanup' (5064) panicked at src\user\windows\process\sched\tests\services_tests\etw_notification_leaf_tests.rs:94:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::leaf_tests::installed_etw_notification_leaf_checks_fault_before_commit_and_ret24_cleanup ... FAILED
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::native_etw_notification_replays_all_1920_mature_handle_and_length_rows ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::native_etw_notification_unknown_functions_preserve_explicit_frontier_and_memory ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::native_directory_open_replays_all_288_captured_subject_privilege_rows ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::boundary_tests::native_etw_notification_replays_all_72_fresh_output_alias_sequences ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::native_etw_notification_replays_all_48_fresh_lifetime_sequences ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::boundary_tests::native_etw_notification_replays_all_120_fresh_return_fault_transactions ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::leaf_tests::installed_etw_provider_traits_leaf_captures_once_faults_and_ret24_cleanup' (5628) panicked at src\user\windows\process\sched\tests\services_tests\etw_provider_traits_leaf_tests.rs:94:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::leaf_tests::installed_etw_provider_traits_leaf_captures_once_faults_and_ret24_cleanup ... FAILED
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_captured_state_survives_guest_writes_and_handle_reuse ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_other_functions_stay_explicit_and_nonmutating ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::boundary_tests::native_etw_provider_traits_replays_all_3960_referenced_faults_type_busy_and_status_translations ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_replays_all_2844_names_records_and_65535_byte_captures ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::boundary_tests::native_etw_provider_traits_replays_all_3456_aliases_and_retains_pre_store_snapshot ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::boundary::native_directory_open_replays_all_20000_pointer_guard_alignment_and_crossing_rows ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_independent_event_pin_and_complete_drain ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_replays_all_840_high_length_bits_as_measured_16_bit_captures ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::etw_registration_tests::leaf_tests::installed_etw_registration_leaf_captures_reply_faults_and_ret24_cleanup' (1732) panicked at src\user\windows\process\sched\tests\services_tests\etw_registration_leaf_tests.rs:94:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::leaf_tests::installed_etw_registration_leaf_captures_reply_faults_and_ret24_cleanup ... FAILED
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_replays_all_1152_duplicate_access_close_and_output_rows ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::boundary_tests::native_etw_notification_replays_all_21000_buffer_status_and_guard_rows ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_replays_all_640_duplicate_protection_guard_and_crossing_rows ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_unknown_classes_preserve_memory_and_objects ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::native_etw_provider_traits_replays_all_4128_lengths_fields_handles_and_repeats ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_replays_all_576_overlapping_header_and_returned_rows ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::event_tests::installed_ntdll_event_leaves_create_modify_and_close_shared_objects' (4696) panicked at src\user\windows\process\sched\tests\services_tests\event_tests.rs:564:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::event_tests::installed_ntdll_event_leaves_create_modify_and_close_shared_objects ... FAILED
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_replays_all_736_header_length_and_resource_rows ... ok
+test user::windows::process::sched::tests::services_tests::event_tests::native_event_interoperates_with_win32_waits_state_and_close_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::event_tests::native_event_creates_real_objects_and_closes_without_leaking_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::event_tests::native_event_rejects_unimplemented_security_and_names_without_publication_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::event_tests::native_event_retains_boolean_byte_and_reuses_manual_auto_wait_semantics_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::event_tests::native_event_output_and_attribute_fault_order_preserves_objects_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::hotpatch_tests::installed_ntdll_hotpatch_query_leaf_reports_disabled_capability' (1988) panicked at src\user\windows\process\sched\tests\services_tests\hotpatch_tests.rs:392:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::hotpatch_tests::builtin_hotpatch_query_returns_nt_fault_status_without_guest_exception_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::hotpatch_tests::installed_ntdll_hotpatch_query_leaf_reports_disabled_capability ... FAILED
+test user::windows::process::sched::tests::services_tests::hotpatch_tests::native_hotpatch_check_reports_unavailable_and_zero_return_length_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::event_tests::native_event_maps_created_handle_access_and_inherit_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::event_tests::native_event_state_probes_before_type_and_access_without_mutation_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::hypervisor_page_tests::leaf_tests::installed_hypervisor_page_query_leaf_returns_guest_null_and_actual_cleanup' (1952) panicked at src\user\windows\process\sched\tests\services_tests\hypervisor_page_leaf_tests.rs:39:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::hypervisor_page_tests::leaf_tests::installed_hypervisor_page_query_leaf_returns_guest_null_and_actual_cleanup ... FAILED
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::boundary_tests::native_etw_registration_replays_all_22400_fault_guard_and_alignment_rows ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_replays_all_8240_simultaneous_guid_and_drain_rows ... ok
+test user::windows::process::sched::tests::services_tests::hotpatch_tests::native_hotpatch_mutating_and_unknown_operations_remain_explicitly_unsupported ... ok
+test user::windows::process::sched::tests::services_tests::hypervisor_page_tests::native_hypervisor_page_guard_readonly_pairs_preserve_probe_priority_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::hypervisor_page_tests::native_hypervisor_page_guards_are_one_shot_and_short_wow64_output_is_untouched_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::hotpatch_tests::native_hotpatch_disabled_fault_priority_aliases_and_partial_return_length_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::hypervisor_page_tests::native_hypervisor_page_readonly_destinations_preserve_conversion_write_order_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::hypervisor_page_tests::native_hypervisor_page_return_boundaries_are_atomic_after_wow64_publication_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::hypervisor_page_tests::native_hypervisor_page_upper_output_span_and_direct_return_have_distinct_guard_order_native64 ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::boundary_tests::native_etw_provider_traits_replays_all_22400_base_fault_guard_and_alignment_rows ... ok
+test user::windows::process::sched::tests::services_tests::hypervisor_page_tests::native_hypervisor_page_null_output_precedes_wow64_short_length_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::hypervisor_page_tests::native_hypervisor_page_ulong_max_length_and_wrapping_output_do_not_allocate_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::hypervisor_page_tests::wow64_hypervisor_page_temporary_backing_budget_precedes_destination_probes ... ok
+test user::windows::process::sched::tests::services_tests::installed_ntdll_close_executes_its_guest_stub_and_resumes_at_ret ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::installed_native_range_query_executes_the_selected_leaf_and_actual_return' (4448) panicked at src\user\windows\process\sched\tests\services_tests.rs:1125:51:
+called `Result::unwrap()` on an `Err` value: Custom { kind: InvalidData, error: "SDB tag exceeds its owner" }
+test user::windows::process::sched::tests::services_tests::installed_native_range_query_executes_the_selected_leaf_and_actual_return ... FAILED
+
+thread 'user::windows::process::sched::tests::services_tests::installed_wow64_close_executes_the_selected_leaf_thunk_and_actual_ret_cleanup' (7844) panicked at src\user\windows\process\sched\tests\services_tests.rs:298:55:
+called `Result::unwrap()` on an `Err` value: Custom { kind: InvalidData, error: "SDB tag exceeds its owner" }
+test user::windows::process::sched::tests::services_tests::installed_wow64_close_executes_the_selected_leaf_thunk_and_actual_ret_cleanup ... FAILED
+test user::windows::process::sched::tests::services_tests::io_completion_create_tests::native_io_completion_create_constructs_real_object_and_closes_without_leak_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::io_completion_create_tests::leaf_tests::installed_io_completion_create_leaf_constructs_closes_and_returns_all_caller_arguments' (5892) panicked at src\user\windows\process\sched\tests\services_tests\io_completion_create_leaf_tests.rs:37:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::io_completion_create_tests::leaf_tests::installed_io_completion_create_leaf_constructs_closes_and_returns_all_caller_arguments ... FAILED
+test user::windows::process::sched::tests::services_tests::io_completion_create_tests::native_io_completion_create_maps_grants_and_inheritance_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::io_completion_create_tests::native_io_completion_create_preserves_unsigned_concurrency_and_guest_default_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_alloc_invalid_pointer_returns_status_without_dispatching_guest_exception ... ok
+test user::windows::process::sched::tests::services_tests::hotpatch_tests::native_hotpatch_disabled_lengths_and_opaque_version_flags_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::io_completion_create_tests::native_io_completion_create_keeps_named_security_and_privilege_boundaries_explicit_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::hypervisor_page_tests::native_hypervisor_page_return_aliases_are_written_after_pointer_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_basic_query_output_and_return_guards_are_one_shot_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_basic_query_length_null_and_return_faults_are_class_specific_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_close_preserves_kernel_resume_stack_and_arch_argument_transport ... ok
+test user::windows::process::sched::tests::services_tests::native_basic_query_readonly_destinations_and_output_aliases_preserve_write_order_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::native_closed_spawn_selects_installed_ntdll_and_guest_api_set_map' (3748) panicked at src\user\windows\process\sched\tests\services_tests.rs:420:87:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::native_closed_spawn_selects_installed_ntdll_and_guest_api_set_map ... FAILED
+native I/O completion captures: 1184 exact replays; 112 explicit nested-policy/privileged-grant exclusions
+test user::windows::process::sched::tests::services_tests::io_completion_create_tests::replay_tests::native_io_completion_create_replays_independent_constructor_and_root_captures ... ok
+test user::windows::process::sched::tests::services_tests::native_range_query_checks_write_permissions_and_orders_overlapping_outputs_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_range_query_guard_destinations_are_disarmed_once_without_guest_exception_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_basic_query_reports_guest_memory_bounds_cpu_and_preserves_wow64_padding_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_basic_query_probes_fields_before_writing_and_does_not_probe_wow64_padding_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_range_query_fault_order_and_wow64_partial_publication_match_observed_abi ... ok
+test user::windows::process::sched::tests::services_tests::native_termination_is_forced_and_unknown_services_are_diagnosed ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_bad_output_precedes_unknown_section_type_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_ntstatus_to_win32_errors_matches_installed_rtl_oracle ... ok
+test user::windows::process::sched::tests::services_tests::native_range_query_length_errors_and_unknown_classes_do_not_publish_output_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::nls_tests::installed::installed_ntdll_nls_leaves_map_actual_tables_and_unmap_all_selected_abis' (8776) panicked at src\user\windows\process\sched\tests\services_tests\nls_leaf_tests.rs:91:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_null_section_output_is_invalid_parameter_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_system_query_combined_faults_probe_output_before_returned_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::installed::installed_ntdll_nls_leaves_map_actual_tables_and_unmap_all_selected_abis ... FAILED
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_views_cannot_gain_write_or_execute_protection_or_be_freed_as_private_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_readonly_distinct_mapped_views_optional_size_and_aliases_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::numa_map_tests::leaf_tests::installed_numa_map_query_leaf_preserves_padding_and_actual_cleanup' (5564) panicked at src\user\windows\process\sched\tests\services_tests\numa_map_leaf_tests.rs:38:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::numa_map_tests::leaf_tests::installed_numa_map_query_leaf_preserves_padding_and_actual_cleanup ... FAILED
+test user::windows::process::sched::tests::services_tests::native_range_query_preserves_width_alignment_optional_length_and_kernel_resume_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_unmap_interior_owned_views_close_and_type_access_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_probe_order_context_optional_size_and_guard_priority_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::numa_map_tests::native_numa_map_guards_and_readonly_pairs_preserve_probe_priority_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::numa_map_tests::native_numa_map_return_faults_follow_wow64_success_and_leave_short_returns_untouched ... ok
+test user::windows::process::sched::tests::services_tests::numa_map_tests::native_numa_map_ulong_max_uses_output_probes_without_wow64_capture_allocation ... ok
+test user::windows::process::sched::tests::services_tests::numa_map_tests::native_numa_map_upper_output_span_rejection_and_direct_return_guard_differ_native64 ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::performance_counter_tests::installed::native_performance_counter_installed_leaves_and_public_helpers_share_clock' (264) panicked at src\user\windows\process\sched\tests\services_tests\performance_counter_leaf_tests.rs:95:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::performance_counter_tests::installed::native_performance_counter_installed_leaves_and_public_helpers_share_clock ... FAILED
+test user::windows::process::sched::tests::services_tests::performance_counter_tests::native_performance_counter_abi_uses_one_clock_and_optional_frequency ... ok
+test user::windows::process::sched::tests::services_tests::performance_counter_tests::native_performance_counter_aliases_and_cross_page_store_are_exact ... ok
+test user::windows::process::sched::tests::services_tests::performance_counter_tests::native_performance_counter_failed_frequency_retains_counter_and_guards ... ok
+test user::windows::process::sched::tests::services_tests::numa_map_tests::native_numa_map_alignment_and_null_output_precede_short_length_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::process_query_tests::installed_native_cookie_leaf_and_pointer_encoding_execute_actual_ntdll_and_returns' (5068) panicked at src\user\windows\process\sched\tests\services_tests\process_query_tests.rs:338:18:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::process_query_tests::installed_native_cookie_leaf_and_pointer_encoding_execute_actual_ntdll_and_returns ... FAILED
+test user::windows::process::sched::tests::services_tests::process_query_tests::native_process_cookie_aliases_and_each_guard_preserve_probe_write_and_retry_order_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::performance_counter_tests::replay::native_performance_counter_replays_all_1000_native_calls ... ok
+test user::windows::process::sched::tests::services_tests::process_query_tests::native_process_cookie_fault_priority_differs_from_system_queries_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::process_query_tests::native_process_cookie_for_an_unmodeled_peer_is_explicitly_unsupported ... ok
+test user::windows::process::sched::tests::services_tests::process_query_tests::native_process_cookie_is_stable_across_queries_prng_changes_and_guest_abis ... ok
+test user::windows::process::sched::tests::services_tests::process_tls_tests::native_process_tls_caller_alias_observes_native_stores_and_wow_capture ... ok
+test user::windows::process::sched::tests::services_tests::process_tls_tests::native_process_tls_compact_index_vector_and_startup_sentinel_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::process_tls_tests::native_process_tls_invalid_lengths_handles_flags_and_guards_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::process_tls_tests::native_process_tls_later_copy_fault_and_wow_caller_copyback_preserve_state ... ok
+test user::windows::process::sched::tests::services_tests::process_tls_tests::native_process_tls_structural_length_check_precedes_buffer_visit ... ok
+test user::windows::process::sched::tests::services_tests::process_query_tests::native_process_cookie_checks_exact_length_alignment_and_handle_write_grants_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::processor_feature_tests::installed_processor_feature_query_leaf_and_rtl_read_guest_policy' (8384) panicked at src\user\windows\process\sched\tests\services_tests\processor_feature_tests.rs:227:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::processor_feature_tests::installed_processor_feature_query_leaf_and_rtl_read_guest_policy ... FAILED
+test user::windows::process::sched::tests::services_tests::hypervisor_page_tests::native_hypervisor_page_width_lengths_optional_return_and_alignment_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::hypervisor_page_tests::native_hypervisor_page_output_boundaries_probe_native_extent_and_wow64_pointer_only_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::processor_feature_tests::native_processor_feature_bitmap_fault_order_guards_and_aliases_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::processor_feature_tests::native_processor_feature_bitmap_probes_unused_supplied_tail_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::builtin_registry_probe_faults_return_nt_status_without_guest_seh_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::fixed::native_segment_heap_absent_absolute_relative_and_partial_parent_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::fixed::native_segment_heap_present_raw_values_and_descendant_handle_lifetime_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::native_registry_invalid_key_precedes_unreadable_value_name_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::numa_map_tests::native_numa_map_lengths_publish_highest_node_then_one_group_and_keep_padding_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::registry_tests::installed::installed_ntdll_registry_leaves_open_query_close_selected_snapshot' (9332) panicked at src\user\windows\process\sched\tests\services_tests\registry_leaf_tests.rs:105:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::registry_tests::installed::installed_ntdll_registry_leaves_open_query_close_selected_snapshot ... FAILED
+test user::windows::process::sched::tests::services_tests::registry_tests::native_registry_open_null_output_returns_nt_status_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::native_registry_query_alignment_conversion_and_short_buffer_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::native_registry_open_odd_name_is_rejected_before_native_text_probe_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::processor_feature_tests::native_processor_feature_bitmap_lengths_and_suffix_preservation_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::native_registry_query_captures_descriptor_before_handle_but_text_after_validation_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::native_registry_selected_namespace_query_and_handle_lifetime_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::native_registry_snapshot_scope_relative_roots_type_and_access_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::native_registry_truncated_name_zeroes_incomplete_code_unit_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::native_registry_read_grants_typed_handles_close_and_nonwaitable_lifetime_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::native_registry_value_layout_lengths_case_and_defined_prefix_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::tree::native_ifeo_absolute_children_serialize_raw_values_and_preserve_outside_frontier_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::tree::native_ifeo_known_absent_root_and_children_return_name_not_found_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::tree::native_ifeo_opens_relative_paths_with_observed_absence_and_root_lifetime_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::native_registry_open_capture_order_output_zeroing_and_read_only_policy_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::scheduler_shared_tests::native_scheduler_shared_birth_alias_close_and_process_drain_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::scheduler_shared_tests::installed::native_scheduler_shared_installed_leaf_preserves_native_and_wow_births' (852) panicked at src\user\windows\process\sched\tests\services_tests\scheduler_shared_leaf_tests.rs:37:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::scheduler_shared_tests::installed::native_scheduler_shared_installed_leaf_preserves_native_and_wow_births ... FAILED
+test user::windows::process::sched::tests::services_tests::scheduler_slot_tests::native_scheduler_slot_owns_mapping_until_last_handle_and_thread_reference_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::scheduler_slot_tests::native_scheduler_slot_pool_has_128_slots_commits_second_page_and_never_reaps_reused_addresses ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::scheduler_slot_tests::installed::native_scheduler_slot_installed_leaf_maps_retains_releases_and_returns_all_selected_abis' (9812) panicked at src\user\windows\process\sched\tests\services_tests\scheduler_slot_leaf_tests.rs:36:76:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::scheduler_slot_tests::installed::native_scheduler_slot_installed_leaf_maps_retains_releases_and_returns_all_selected_abis ... FAILED
+test user::windows::process::sched::tests::services_tests::scheduler_slot_tests::native_scheduler_slot_wow_copy_fault_preserves_hidden_binding_and_process_drain_reclaims_views ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::section_map_tests::installed::native_section_map_installed_leaves_copy_pinned_image_and_unmap_after_close' (8340) panicked at src\user\windows\process\sched\tests\services_tests\section_map_leaf_tests.rs:90:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::section_map_tests::installed::native_section_map_installed_leaves_copy_pinned_image_and_unmap_after_close ... FAILED
+test user::windows::process::sched::tests::services_tests::section_map_tests::native_section_map_original_ten_argument_service_returns_owned_rebased_view ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::native_registry_query_fault_order_guards_alias_and_cross_page_prefix_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::section_map_tests::native_section_map_wow64_late_output_fault_keeps_view_and_copyback_order ... ok
+test user::windows::process::sched::tests::services_tests::process_tls_tests::replay::native_process_tls_original_176_controls_match_status_packet_vector_and_guards ... ok
+test user::windows::process::sched::tests::services_tests::section_map_tests::native_section_map_protection_requires_exact_section_access_before_geometry ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::section_open_tests::leaf::native_section_open_installed_leaves_return_typed_image_handles_and_ret12' (3688) panicked at src\user\windows\process\sched\tests\services_tests\section_open_leaf_tests.rs:93:76:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::section_open_tests::leaf::native_section_open_installed_leaves_return_typed_image_handles_and_ret12 ... FAILED
+test user::windows::process::sched::tests::services_tests::numa_map_tests::native_numa_map_return_alias_and_cross_page_publication_are_last_and_atomic_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::name_probe::native_directory_open_replays_all_26624_name_extent_root_and_null_output_rows has been running for over 60 seconds
+test user::windows::process::sched::tests::services_tests::scheduler_shared_tests::native_scheduler_shared_replays_all_16016_constructor_rows_and_owned_births ... ok
+test user::windows::process::sched::tests::services_tests::section_map_tests::replay::native_section_map_replays_all_4236_native_access_and_low_address_observations ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::boundary::native_symbolic_link_open_replays_all_1680_flag_length_and_pointer_priority_rows ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::leaf::installed_symbolic_link_open_leaf_resolves_snapshot_and_ret12_cleanup' (9752) panicked at src\user\windows\process\sched\tests\services_tests\symbolic_link_open_leaf_tests.rs:95:76:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::leaf::installed_symbolic_link_open_leaf_resolves_snapshot_and_ret12_cleanup ... FAILED
+test user::windows::process::sched::tests::services_tests::section_open_tests::native_section_open_replays_all_8832_attributes_output_unicode_and_buffer_fault_rows ... ok
+test user::windows::process::sched::tests::services_tests::section_open_tests::native_section_open_replays_all_13752_access_names_roots_flags_and_counted_string_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::native_symbolic_link_open_replays_all_3432_utf16_security_qos_and_reparse_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::native_symbolic_link_open_replays_all_4756_lengths_names_rights_roots_and_aliases ... ok
+test user::windows::process::sched::tests::services_tests::numa_map_tests::native_numa_map_probes_the_entire_output_before_any_publication_all_abis has been running for over 60 seconds
+test user::windows::process::sched::tests::services_tests::numa_map_tests::native_numa_map_probes_the_entire_output_before_any_publication_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::boundary::native_symbolic_link_open_replays_all_20000_pointer_guard_alignment_and_crossing_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::query::native_symbolic_link_query_replays_all_900_descriptor_alignment_rows ... ok
+test user::windows::process::sched::tests::services_tests::scheduler_slot_tests::replay::native_scheduler_slot_replays_all_39488_status_guard_output_and_binding_rows ... ok
+test user::windows::process::sched::tests::services_tests::section_open_tests::duplicate::native_section_open_replays_all_71040_duplicate_grants_flags_and_slot_reuse_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::reference::native_symbolic_link_directory_control_replays_all_3584_specific_right_filter_and_close_source_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::query::native_symbolic_link_query_replays_all_3072_descriptor_copy_boundary_and_atomicity_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::reference::native_symbolic_link_handles_replay_all_448_duplicate_pointer_guard_and_unreturned_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::reference::native_symbolic_link_handles_replay_all_3584_extended_access_mask_and_close_source_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::reference::native_symbolic_link_handles_replay_all_672_protected_duplicate_copy_fault_and_unreturned_rows ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::thread_token_tests::installed::native_thread_token_installed_profile_copyback_preserves_measured_guard_priority' (6304) panicked at src\user\windows\process\sched\tests\services_tests\thread_token_leaf_tests.rs:36:76:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::thread_token_tests::installed::native_thread_token_installed_profile_copyback_preserves_measured_guard_priority ... FAILED
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::symbolic_link_handles_share_identity_preserve_metadata_after_catalog_drop_and_release ... ok
+test user::windows::process::sched::tests::services_tests::thread_token_tests::native_thread_token_cross_page_copy_faults_match_all_96_original_rows ... ok
+test user::windows::process::sched::tests::services_tests::thread_token_tests::native_thread_token_negative_pseudo_handles_and_rtl_translation_match_all_native_profiles ... ok
+test user::windows::process::sched::tests::services_tests::thread_token_tests::native_thread_token_profile_refuses_unimplemented_impersonation_attachment_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::timer2_create_tests::leaf_tests::installed_timer2_create_leaf_constructs_closes_and_returns_all_caller_arguments' (6116) panicked at src\user\windows\process\sched\tests\services_tests\timer2_create_leaf_tests.rs:37:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::timer2_create_tests::leaf_tests::installed_timer2_create_leaf_constructs_closes_and_returns_all_caller_arguments ... FAILED
+test user::windows::process::sched::tests::services_tests::timer2_create_tests::native_timer2_create_constructs_real_object_and_closes_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::timer2_create_tests::native_timer2_create_duplicate_retains_dormant_waitable_object_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::reference::native_symbolic_link_open_replays_all_2880_relative_root_grant_and_tag_rows ... ok
+test user::windows::process::sched::tests::services_tests::timer2_create_tests::native_timer2_create_privilege_policy_fails_without_output_or_object_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::topology_tests::leaf_tests::installed_group_topology_query_leaf_returns_guest_topology_and_actual_cleanup' (4432) panicked at src\user\windows\process\sched\tests\services_tests\topology_leaf_tests.rs:39:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::topology_tests::leaf_tests::installed_group_topology_query_leaf_returns_guest_topology_and_actual_cleanup ... FAILED
+test user::windows::process::sched::tests::services_tests::topology_tests::native_group_topology_aliases_capture_input_and_publish_returned_last_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::native_group_topology_alignment_and_optional_returned_length_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::reference::native_symbolic_link_handles_replay_all_9600_protected_and_same_attribute_policy_rows ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::native_group_topology_guards_order_capture_and_conversion_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::native_group_topology_ignores_unmapped_extra_input_span_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::native_group_topology_fault_order_and_destination_write_order_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::native_group_topology_input_user_range_checks_precede_short_length_dispatch_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::native_group_topology_returned_guards_and_cross_page_faults_preserve_order_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::thread_token_tests::native_thread_token_replays_all_6192_absent_token_rows_with_measured_copy_guards_and_no_birth ... ok
+Timer2 original replays=8288, privilege exclusions=104
+test user::windows::process::sched::tests::services_tests::timer2_create_tests::replay_tests::native_timer2_create_replays_original_capture_order_reduced_and_alias_observations ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::native_group_topology_upper_spans_and_returned_pointer_have_distinct_guard_order_native_64_bit ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::native_group_topology_unmodeled_classes_and_relationships_stop_explicitly_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::topology_tests::numa_node_tests::leaf_tests::installed_numa_node_query_leaf_returns_guest_topology_and_actual_cleanup' (9528) panicked at src\user\windows\process\sched\tests\services_tests\numa_node_leaf_tests.rs:39:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::topology_tests::numa_node_tests::leaf_tests::installed_numa_node_query_leaf_returns_guest_topology_and_actual_cleanup ... FAILED
+test user::windows::process::sched::tests::services_tests::topology_tests::numa_node_tests::native_numa_node_aliases_capture_input_and_publish_returned_last_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::numa_node_tests::native_numa_node_alignment_and_optional_returned_length_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::numa_node_tests::native_numa_node_guards_order_capture_and_conversion_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::numa_node_tests::native_numa_node_fault_order_and_destination_write_order_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::numa_node_tests::native_numa_node_ignores_unmapped_extra_input_span_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::numa_node_tests::native_numa_node_legacy_and_extended_requests_return_relation_numa_node_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::native_group_topology_sizes_projected_cpu_and_untouched_suffix_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::numa_node_tests::native_numa_node_returned_guards_and_cross_page_faults_preserve_order_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::numa_node_tests::native_numa_node_input_user_range_checks_precede_short_length_dispatch_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::numa_node_tests::native_numa_node_unmodeled_classes_and_relationships_stop_explicitly_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::numa_node_tests::native_numa_node_upper_spans_and_returned_pointer_have_distinct_guard_order_native_64_bit ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::installed::native_image_extension_installed_leaf_matches_guest_flags_and_wow_rejection' (6504) panicked at src\user\windows\process\sched\tests\services_tests\image_extension_leaf_tests.rs:38:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::installed::native_image_extension_installed_leaf_matches_guest_flags_and_wow_rejection ... FAILED
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::query::native_symbolic_link_query_replays_all_15192_capacity_optional_length_fault_grant_alias_and_guard_rows ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_absent_metadata_matches_image_flags_and_aliases ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::numa_node_tests::native_numa_node_sizes_projected_cpu_and_untouched_suffix_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_limits_replay_without_consuming_range_rejected_guards ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_native_validation_priority_and_wow_unavailable ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::native_group_topology_partial_conversion_at_every_field_boundary_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::virtual_memory_tests::installed::installed_ntdll_virtual_memory_leaves_query_guest_images_and_nls_all_selected_abis' (9200) panicked at src\user\windows\process\sched\tests\services_tests\virtual_memory_leaf_tests.rs:205:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::installed::installed_ntdll_virtual_memory_leaves_query_guest_images_and_nls_all_selected_abis ... FAILED
+
+thread 'user::windows::process::sched::tests::services_tests::virtual_memory_tests::installed::installed_ntdll_working_set_leaf_observes_guest_residency_and_guard_all_selected_abis' (4516) panicked at src\user\windows\process\sched\tests\services_tests\virtual_memory_leaf_tests.rs:97:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::installed::installed_ntdll_working_set_leaf_observes_guest_residency_and_guard_all_selected_abis ... FAILED
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::native_virtual_memory_basic_regions_image_metadata_and_padding_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::native_virtual_memory_free_reserved_mapped_and_no_target_read_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::native_virtual_memory_image_query_private_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::native_virtual_memory_class_length_bound_priority_and_wow_optional_guards ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::native_virtual_memory_native_extent_wow_prefix_and_pointer_sized_lengths ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::native_virtual_memory_return_length_alias_is_published_last_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::native_virtual_memory_null_unaligned_outputs_and_return_length_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::native_virtual_memory_return_length_faults_and_two_guard_order_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::native_virtual_memory_shared_guard_disables_wow_length_copy_before_output ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::working_set::native_working_set_early_bounds_and_guest_conversion_budget_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::native_virtual_memory_typed_process_rights_lifetime_and_remote_frontier ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::working_set::native_working_set_incomplete_last_record_crosses_noaccess_or_guard_only_native ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::working_set::native_working_set_protection_guards_and_decommit_observe_current_guest_state ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::working_set::native_working_set_query_observes_lazy_residency_without_faulting_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::working_set::native_working_set_input_capture_precedes_wow_handle_check_and_output_copy ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::working_set::native_working_set_query_rights_closed_handle_and_failure_length_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::working_set::native_working_set_record_lengths_floor_only_wow_and_preserve_tail_bytes ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_matrix_replays_absent_images_and_abi_availability ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::working_set::native_working_set_successful_return_alias_overwrites_record_last_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::working_set::native_working_set_unmapped_reserved_and_private_image_frames_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::working_set::native_working_set_return_length_probe_guard_order_and_shared_alias_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::wait_packet_associate_tests::leaf_tests::installed_wait_packet_associate_and_cancel_leaves_return_all_arguments' (8900) panicked at src\user\windows\process\sched\tests\services_tests\wait_packet_associate_leaf_tests.rs:36:76:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::wait_packet_associate_tests::leaf_tests::installed_wait_packet_associate_and_cancel_leaves_return_all_arguments ... FAILED
+test user::windows::process::sched::tests::services_tests::wait_packet_associate_tests::native_wait_packet_associate_dispatches_all_eight_arguments ... ok
+test user::windows::process::sched::tests::services_tests::wait_packet_associate_tests::native_wait_packet_associate_cancellation_dequeue_reuse_and_full_payload_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wait_packet_associate_tests::native_wait_packet_associate_fifo_auto_reset_semaphore_and_drain_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wait_packet_associate_tests::native_wait_packet_associate_retains_dependencies_and_final_handle_close_cancels_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wait_packet_associate_tests::replay_tests::native_wait_packet_associate_replays_44_queued_boolean_and_dependency_close_boundaries ... ok
+test user::windows::process::sched::tests::services_tests::wait_packet_associate_tests::replay_tests::native_wait_packet_associate_replays_52_native_target_observations ... ok
+test user::windows::process::sched::tests::services_tests::wait_packet_associate_tests::replay_tests::native_wait_packet_associate_replays_80_busy_validation_order_observations ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::numa_node_tests::native_numa_node_partial_conversion_at_every_field_boundary_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wait_packet_create_tests::native_wait_packet_create_constructs_and_closes_without_resource_leak_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wait_packet_create_tests::native_wait_packet_create_measured_grants_inheritance_and_repeated_wait_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::wait_packet_create_tests::leaf_tests::installed_wait_packet_create_leaf_constructs_closes_and_returns_all_caller_arguments' (10100) panicked at src\user\windows\process\sched\tests\services_tests\wait_packet_create_leaf_tests.rs:37:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::wait_packet_create_tests::leaf_tests::installed_wait_packet_create_leaf_constructs_closes_and_returns_all_caller_arguments ... FAILED
+test user::windows::process::sched::tests::services_tests::wait_packet_create_tests::native_wait_packet_create_public_timer_and_event_wait_parity_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wait_packet_create_tests::native_wait_packet_create_public_waits_access_aliases_and_final_close_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wait_packet_create_tests::native_wait_packet_create_wait_any_pins_aliases_until_exactly_once_cleanup_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wait_packet_create_tests::native_wait_packet_create_preserves_explicit_namespace_security_privilege_boundaries_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::wnf_process_event_tests::leaf_tests::installed_wnf_process_event_leaf_registers_once_and_returns_one_argument' (1468) panicked at src\user\windows\process\sched\tests\services_tests\wnf_process_event_leaf_tests.rs:37:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::leaf_tests::installed_wnf_process_event_leaf_registers_once_and_returns_one_argument ... FAILED
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::native_wnf_process_event_first_registration_aliases_and_process_drain_all_abis ... ok
+native packet constructor captures: 1228 exact replays; 40 explicit nested-policy/privilege exclusions
+test user::windows::process::sched::tests::services_tests::wait_packet_create_tests::replay_tests::native_wait_packet_create_replays_independent_constructor_captures ... ok
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::native_wnf_process_event_isolated_processes_and_one_argument_never_probe_guest_memory ... ok
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::native_wnf_process_event_replays_all_48_fresh_native_sequences ... ok
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::native_wnf_process_event_status_translation_matches_installed_rtl ... ok
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::native_wnf_process_event_type_and_access_errors_precede_busy_without_pins ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::name_probe::native_symbolic_link_open_replays_all_36608_name_extent_root_and_null_output_rows has been running for over 60 seconds
+
+thread 'user::windows::process::sched::tests::services_tests::wnf_subscription_tests::leaf_tests::installed_wnf_subscription_leaves_publish_update_and_remove_fixed_64_bit_identity' (7152) panicked at src\user\windows\process\sched\tests\services_tests\wnf_subscription_leaf_tests.rs:86:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::leaf_tests::installed_wnf_subscription_leaves_publish_update_and_remove_fixed_64_bit_identity ... FAILED
+test user::windows::process::sched::tests::services_tests::wait_packet_associate_tests::replay_tests::native_wait_packet_associate_replays_60_transitions_and_220_cancel_observations ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_guard_consumption_and_denied_update_preserve_record_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_pending_metadata_matches_128_native_queue_captures_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::native_wnf_process_event_replays_all_192_initialized_native_rows ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_17152_name_mask_calls ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_228_overlapping_output_cases ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_fresh_event_order_and_closed_caller_pin_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::query::native_symbolic_link_query_replays_all_25536_dual_fault_guard_copy_and_alias_rows has been running for over 60 seconds
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_2496_pointer_status_and_output_cases ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_256_mask_updates_with_stable_identity ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_requires_selection_and_preserves_fixed_64_bit_output_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::leaf_tests::installed_worker_factory_binding_leaf_updates_state_and_returns_four_arguments' (5080) panicked at src\user\windows\process\sched\tests\services_tests\worker_factory_binding_leaf_tests.rs:37:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::leaf_tests::installed_worker_factory_binding_leaf_updates_state_and_returns_four_arguments ... FAILED
+test user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_consumes_one_guard_before_access_check_and_retry ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_dispatches_and_preserves_alias_references_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_preserves_other_properties_and_prior_state_on_errors ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_refuses_unmeasured_classes_without_state_mutation ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_840_guard_and_readonly_copy_cases ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::query::native_symbolic_link_query_replays_all_25536_dual_fault_guard_copy_and_alias_rows ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_replays_104_native_transitions ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_create_tests::native_worker_factory_create_constructs_real_object_and_closes_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::worker_factory_create_tests::leaf_tests::installed_worker_factory_create_leaf_constructs_closes_and_returns_all_caller_arguments' (6108) panicked at src\user\windows\process\sched\tests\services_tests\worker_factory_create_leaf_tests.rs:37:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::worker_factory_create_tests::leaf_tests::installed_worker_factory_create_leaf_constructs_closes_and_returns_all_caller_arguments ... FAILED
+test user::windows::process::sched::tests::services_tests::worker_factory_create_tests::native_worker_factory_create_keeps_cross_process_policy_explicit_without_publication_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_create_tests::native_worker_factory_create_owns_dependencies_through_duplicate_and_final_close_all_abis ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::worker_factory_set_tests::leaf_tests::installed_worker_factory_set_maximum_leaf_updates_state_and_returns_four_arguments' (8728) panicked at src\user\windows\process\sched\tests\services_tests\worker_factory_set_leaf_tests.rs:37:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::worker_factory_set_tests::leaf_tests::installed_worker_factory_set_maximum_leaf_updates_state_and_returns_four_arguments ... FAILED
+test user::windows::process::sched::tests::services_tests::worker_factory_set_tests::native_worker_factory_set_maximum_consumes_one_guard_before_access_check_and_retry ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_set_tests::native_worker_factory_set_maximum_dispatches_and_preserves_alias_references_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wait_packet_associate_tests::replay_tests::native_wait_packet_associate_replays_540_validation_observations ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_set_tests::native_worker_factory_set_maximum_refuses_unmeasured_classes_without_state_mutation ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::worker_factory_soft_maximum_tests::leaf_tests::installed_worker_factory_soft_maximum_leaf_updates_state_and_returns_four_arguments' (4976) panicked at src\user\windows\process\sched\tests\services_tests\worker_factory_soft_maximum_leaf_tests.rs:37:79:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidData, error: "SDB tag exceeds its owner" })
+test user::windows::process::sched::tests::services_tests::worker_factory_soft_maximum_tests::leaf_tests::installed_worker_factory_soft_maximum_leaf_updates_state_and_returns_four_arguments ... FAILED
+test user::windows::process::sched::tests::services_tests::worker_factory_soft_maximum_tests::native_worker_factory_soft_maximum_consumes_one_guard_before_access_check_and_retry ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_soft_maximum_tests::native_worker_factory_soft_maximum_dispatches_and_preserves_alias_references_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_soft_maximum_tests::native_worker_factory_soft_maximum_interleaves_independent_limits_and_failure_atomicity ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_soft_maximum_tests::native_worker_factory_soft_maximum_refuses_unmeasured_classes_without_state_mutation ... ok
+worker factory original replays=1868, policy exclusions=112
+test user::windows::process::sched::tests::services_tests::worker_factory_create_tests::replay_tests::native_worker_factory_create_replays_independent_constructor_and_order_captures ... ok
+test user::windows::process::sched::tests::services_tests::wow64_close_consumes_only_its_internal_return_and_keeps_callee_cleanup_in_guest_code ... ok
+test user::windows::process::sched::tests::services_tests::wow64_range_query_tracks_the_executable_large_address_aware_flag ... ok
+test user::windows::process::sched::tests::services_tests::wow64_stack_arguments_faults_and_unknown_numbers_have_distinct_results ... ok
+test user::windows::process::sched::tests::terminal_fls_callback_aborts_api_without_replacing_exit_all_abis ... ok
+test user::windows::process::sched::tests::timed_wait_completes_and_last_thread_exit_ends_process ... ok
+test user::windows::process::sched::tests::timer_signal_completes_object_wait_without_skipping_guest_wait ... ok
+test user::windows::process::sched::tests::unhandled_cpu_exceptions_preserve_guest_status ... ok
+test user::windows::process::stack::tests::checked_personality_stack_preparation_grows_before_writes_all_abis ... ok
+test user::windows::process::stack::tests::guard_growth_publishes_exact_frontier_and_preserves_hard_bottom_all_abis ... ok
+test user::windows::process::stack::tests::protected_teb_and_nonstack_guards_do_not_publish_growth_all_abis ... ok
+test user::windows::process::start::parameters_tests::modern_parameter_tail_is_zero_and_disjoint_from_strings_all_abis ... ok
+test user::windows::process::start::tests::program_quoting_does_not_double_literal_trailing_backslashes ... ok
+test user::windows::process::start::tests::quotes_empty_spaces_quotes_and_trailing_backslashes ... ok
+test user::windows::process::thread::tests::hostile_stack_size_releases_the_unpublished_teb ... ok
+test user::windows::process::thread::tests::inaccessible_tls_template_releases_stack_teb_and_heap_blocks ... ok
+test user::windows::process::thread::tests::overflowing_tls_template_size_and_invalid_index_are_rejected ... ok
+test user::windows::registry::fixed::tests::segment_heap_partial_selection_preserves_present_absent_scope_and_old_parent ... ok
+test user::windows::registry::fixed::tests::segment_heap_rejects_invalid_parent_scope_duplicate_and_shared_value_exhaustion ... ok
+test user::windows::registry::installed::tests::installed_ifeo_only_root_not_found_is_known_absence ... ok
+native IFEO independently checked: 54 keys, 106 values, 4756 raw bytes
+native IFEO disappearing-child injection: 2 opens, acquisition error 2
+test user::windows::registry::installed::tests::installed_ifeo_snapshot_matches_independent_complete_tree_and_raw_queries ... ok
+test user::windows::registry::installed::tests::installed_nls_snapshot_matches_independent_raw_queries_and_rtl_case_comparison ... ok
+test user::windows::registry::installed::tests::installed_runtime_snapshot_includes_session_manager_raw_values ... ok
+test user::windows::registry::installed::tests::installed_segment_heap_present_capture_adapter_reads_controlled_native_key ... ok
+test user::windows::registry::installed::tests::installed_segment_heap_root_absence_is_distinct_from_other_open_errors ... ok
+test user::windows::registry::installed::tests::installed_segment_heap_snapshot_matches_optional_native_root_presence ... ok
+test user::windows::registry::tests::registry_preserves_raw_type_bytes_surrogates_and_snapshot_handle_ownership ... ok
+test user::windows::registry::tests::registry_snapshot_rejects_table_count_name_data_total_and_case_collisions ... ok
+test user::windows::registry::tests::selected_runtime_registry_namespace_is_scoped_shares_collation_and_retains_owners ... ok
+test user::windows::registry::tests::selected_runtime_registry_rejects_key_scope_duplicates_and_aggregate_exhaustion ... ok
+test user::windows::registry::tree::tests::ifeo_closed_tree_preserves_raw_values_and_descendant_handle_lifetime ... ok
+test user::windows::registry::tree::tests::ifeo_lookup_obeys_native_separator_absence_and_closed_scope ... ok
+test user::windows::registry::tree::tests::ifeo_tree_rejects_colliding_names_grammar_depth_and_key_path_exhaustion ... ok
+test user::windows::registry::tree::tests::ifeo_values_share_existing_namespace_count_byte_and_collision_budgets ... ok
+test user::windows::seh::arm64::tests::arm64_full_frame_pair_restores_caller_and_handler ... ok
+test user::windows::seh::arm64::tests::arm64_full_pac_hint_counts_partial_prolog_and_epilog ... ok
+test user::windows::seh::arm64::tests::arm64_full_partial_prolog_and_epilog_skip_completed_instructions ... ok
+test user::windows::seh::arm64::tests::arm64_llvm_save_any_preindex_zero_encodes_16_bytes ... ok
+test user::windows::seh::arm64::tests::arm64_llvm_save_next_precedes_base_pair_in_reverse_unwind_order ... ok
+test user::windows::seh::arm64::tests::arm64_packed_chained_frame_restores_fp_lr ... ok
+test user::windows::seh::arm64::tests::arm64_packed_pac_hint_chained_and_fragment_frames ... ok
+test user::windows::seh::arm64::tests::arm64_reserved_and_faulting_unwind_leave_context_unchanged ... ok
+test user::windows::seh::arm64::tests::arm64_scalar_float_saves_preserve_high_vector_bits ... ok
+test user::windows::seh::arm64::tests::arm64_windows_cpu_keeps_pac_unwind_in_hint_profile ... ok
+test user::windows::seh::dynamic::tests::admission_cap_empty_pointer_and_reserved_arm64_flags_are_bounded ... ok
+test user::windows::seh::dynamic::tests::aggregate_entry_cap_rejects_a_second_table_without_reading_it ... ok
+test user::windows::seh::dynamic::tests::arm64_packed_and_full_xdata_use_registered_base ... ok
+test user::windows::seh::dynamic::tests::image_lookup_miss_falls_through_and_overlaps_fail_closed ... ok
+test user::windows::seh::dynamic::tests::x64_dynamic_nonleaf_unwind_registration_and_exact_pointer_delete ... ok
+test user::windows::seh::dynamic::tests::x64_metadata_fault_keeps_context_and_malformed_mutation_is_not_leaf ... ok
+test user::windows::seh::dynamic::tests::x64_unsorted_and_mutated_tables_are_read_live ... ok
+test user::windows::seh::tests::continuation_cannot_fabricate_flags_when_guest_record_is_unreadable ... ok
+test user::windows::seh::tests::continuation_checks_flags_before_continue_handlers_and_admits_continuable_context ... ok
+test user::windows::seh::tests::noncontinuable_vectored_and_unhandled_filter_cannot_resume ... ok
+test user::windows::seh::tests::terminal_exception_paths_are_forced_all_abis ... ok
+test user::windows::seh::unwind::tests::dispatcher_context_exact_page_boundary_does_not_touch_protected_next_page ... ok
+test user::windows::seh::unwind::tests::dispatcher_context_writes_exact_architecture_extent_and_preserves_sentinels ... ok
+test user::windows::seh::unwind::tests::dispatcher_context_x86_rejection_writes_nothing ... ok
+test user::windows::seh::unwind::tests::dormant_unwind_context_output_fault_is_not_success ... ok
+test user::windows::seh::unwind::tests::failed_metadata_lookup_preserves_original_exception_without_leaf_restoration ... ok
+test user::windows::seh::unwind::tests::frame_tracker_checks_cycles_lr_and_exact_cap ... ok
+test user::windows::seh::unwind::tests::genuine_leafs_finish_but_repeated_arm64_leaf_fails_closed ... ok
+test user::windows::seh::unwind::tests::lookup_distinguishes_absence_guest_fault_and_malformed_extent ... ok
+test user::windows::seh::unwind::tests::metadata_reader_rejects_adjacent_readable_mapping ... ok
+test user::windows::seh::x64::tests::x64_chained_record_cycle_is_rejected ... ok
+test user::windows::seh::x64::tests::x64_epilog_suffix_is_simulated_instead_of_replaying_prolog ... ok
+test user::windows::seh::x64::tests::x64_fault_and_reserved_metadata_leave_context_unchanged ... ok
+test user::windows::seh::x64::tests::x64_frame_register_saved_integer_and_xmm_and_handler ... ok
+test user::windows::seh::x64::tests::x64_machine_frame_late_slot_fault_is_transactional ... ok
+test user::windows::seh::x64::tests::x64_machine_frame_restores_all_five_slots_with_or_without_error_code ... ok
+test user::windows::seh::x64::tests::x64_partial_prolog_skips_unexecuted_stack_allocation ... ok
+test user::windows::seh::x64::tests::x64_small_allocation_and_push_restore_caller ... ok
+test user::windows::seh::x64::tests::x64_tail_jump_outside_function_and_rex_register_tail_jump ... ok
+test user::windows::seh::x86::tests::handler_continuation_reads_are_checked_and_self_chain_is_rejected ... ok
+test user::windows::seh::x86::tests::record_flags_fault_and_dispatcher_word_retry_are_reported ... ok
+test user::windows::seh::x86::tests::rtl_unwind_post_handler_fault_is_terminal_without_unlinking ... ok
+test user::windows::seh::x86::tests::rtl_unwind_rejects_changed_link_and_self_cycle ... ok
+test user::windows::seh::x86::tests::rtl_unwind_rejects_collided_without_fabricating_a_pop ... ok
+test user::windows::seh::x86::tests::rtl_unwind_rejects_exit_and_null_ip_before_changing_the_chain ... ok
+test user::windows::seh::x86::tests::rtl_unwind_rejects_invalid_disposition_before_unlinking ... ok
+test user::windows::seh::x86::tests::rtl_unwind_rejects_unreadable_head_target_before_allocating ... ok
+test user::windows::seh::x86::tests::unreadable_teb_and_registration_do_not_become_end_or_null_handler ... ok
+test user::windows::seh::x86::tests::valid_chain_end_and_exact_registration_cap ... ok
+test user::windows::sync::exit_tests::normal_exit_does_not_consume_completed_peer_waits_twice_all_abis ... ok
+test user::windows::sync::exit_tests::normal_exit_keeps_initialized_critical_sections_and_dead_owner_all_abis ... ok
+test user::windows::sync::exit_tests::normal_exit_never_touches_unreadable_peer_lock_storage_all_abis ... ok
+test user::windows::sync::exit_tests::normal_exit_releases_peer_object_pin_once_and_discards_address_waits_all_abis ... ok
+test user::windows::sync::exit_tests::normal_exit_retires_srw_writer_without_guest_write_and_reconciles_lazily_all_abis ... ok
+test user::windows::sync::tests::waiter_counter_overflow_rejects_without_publishing_or_writing ... ok
+test user::windows::tls::fls::tests::abandoned_free_releases_closing_slot_without_success_or_stale_values ... ok
+test user::windows::tls::fls::tests::bounded_slots_and_generation_overflow_fail_without_publication ... ok
+test user::windows::tls::fls::tests::cleanup_uses_live_generations_and_handles_rearmed_values ... ok
+test user::windows::tls::fls::tests::context_keys_migrate_without_aliasing_or_overwriting ... ok
+test user::windows::tls::fls::tests::finished_ticket_drop_cannot_clear_a_new_cleanup_admission ... ok
+test user::windows::tls::fls::tests::free_is_all_context_nonnull_and_recycling_waits_for_completion ... ok
+test user::windows::tls::fls::tests::nonconvergent_cleanup_is_bounded_and_abandonment_is_reported ... ok
+test user::windows::tls::tests::tls_indices_are_lowest_free_and_bounded ... ok
+test user::windows::wnf::tests::native_wnf_subscription_catalog_access_matches_all_72_process_name_calls ... ok
+test user::windows::wnf::tests::native_wnf_subscription_catalog_rejects_unmodeled_security_and_malformed_values ... ok
+test user::windows::wnf::tests::native_wnf_subscription_name_capture_replays_all_8192_domain_rows ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_288_fresh_process_names_and_metadata_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_boundaries_replay_status_bytes_guards_and_process_rights ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_set_tests::native_worker_factory_set_maximum_replays_all_956_native_rows ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::native_worker_factory_binding_replays_all_1196_native_rows ... ok
+test user::windows::process::sched::tests::services_tests::worker_factory_soft_maximum_tests::native_worker_factory_soft_maximum_replays_all_1196_native_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::name_probe::native_directory_open_replays_all_26624_name_extent_root_and_null_output_rows ... ok
+test user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::name_probe::native_symbolic_link_open_replays_all_36608_name_extent_root_and_null_output_rows ... ok
+
+failures:
+
+failures:
+    user::windows::appcompat::tests::appcompat_installed_file_catalog_matches_frozen_native_name_flags
+    user::windows::native::tests::installed_numeric_revisions_match_native_windows_loader_resolution
+    user::windows::native::tests::installed_schema_preserves_hash_identities_and_parent_redirects
+    user::windows::nls::installed::tests::installed_nls_section_bytes_match_independent_files_and_padding
+    user::windows::process::native_start::tests::native_start_installed_process_has_cold_peb_and_loader_entry_before_first_instruction
+    user::windows::process::sched::tests::services_tests::allocate_ex_tests::installed::installed_allocate_ex_leaf_reserves_and_commits_constrained_guest_memory
+    user::windows::process::sched::tests::services_tests::apphelp_tests::installed::native_apphelp_cache_installed_leaves_use_selected_database_and_copyback_order
+    user::windows::process::sched::tests::services_tests::apphelp_tests::replay::native_apphelp_cache_548_buffer_and_ordering_controls_match_bytes_and_guards
+    user::windows::process::sched::tests::services_tests::directory_open_tests::leaf::installed_directory_open_leaf_resolves_snapshot_and_ret12_cleanup
+    user::windows::process::sched::tests::services_tests::emulation_basic_tests::installed_emulation_basic_query_leaf_reports_guest_metadata
+    user::windows::process::sched::tests::services_tests::etw_notification_tests::leaf_tests::installed_etw_notification_leaf_checks_fault_before_commit_and_ret24_cleanup
+    user::windows::process::sched::tests::services_tests::etw_registration_tests::etw_provider_traits_tests::leaf_tests::installed_etw_provider_traits_leaf_captures_once_faults_and_ret24_cleanup
+    user::windows::process::sched::tests::services_tests::etw_registration_tests::leaf_tests::installed_etw_registration_leaf_captures_reply_faults_and_ret24_cleanup
+    user::windows::process::sched::tests::services_tests::event_tests::installed_ntdll_event_leaves_create_modify_and_close_shared_objects
+    user::windows::process::sched::tests::services_tests::hotpatch_tests::installed_ntdll_hotpatch_query_leaf_reports_disabled_capability
+    user::windows::process::sched::tests::services_tests::hypervisor_page_tests::leaf_tests::installed_hypervisor_page_query_leaf_returns_guest_null_and_actual_cleanup
+    user::windows::process::sched::tests::services_tests::installed_native_range_query_executes_the_selected_leaf_and_actual_return
+    user::windows::process::sched::tests::services_tests::installed_wow64_close_executes_the_selected_leaf_thunk_and_actual_ret_cleanup
+    user::windows::process::sched::tests::services_tests::io_completion_create_tests::leaf_tests::installed_io_completion_create_leaf_constructs_closes_and_returns_all_caller_arguments
+    user::windows::process::sched::tests::services_tests::native_closed_spawn_selects_installed_ntdll_and_guest_api_set_map
+    user::windows::process::sched::tests::services_tests::nls_tests::installed::installed_ntdll_nls_leaves_map_actual_tables_and_unmap_all_selected_abis
+    user::windows::process::sched::tests::services_tests::numa_map_tests::leaf_tests::installed_numa_map_query_leaf_preserves_padding_and_actual_cleanup
+    user::windows::process::sched::tests::services_tests::performance_counter_tests::installed::native_performance_counter_installed_leaves_and_public_helpers_share_clock
+    user::windows::process::sched::tests::services_tests::process_query_tests::installed_native_cookie_leaf_and_pointer_encoding_execute_actual_ntdll_and_returns
+    user::windows::process::sched::tests::services_tests::processor_feature_tests::installed_processor_feature_query_leaf_and_rtl_read_guest_policy
+    user::windows::process::sched::tests::services_tests::registry_tests::installed::installed_ntdll_registry_leaves_open_query_close_selected_snapshot
+    user::windows::process::sched::tests::services_tests::scheduler_shared_tests::installed::native_scheduler_shared_installed_leaf_preserves_native_and_wow_births
+    user::windows::process::sched::tests::services_tests::scheduler_slot_tests::installed::native_scheduler_slot_installed_leaf_maps_retains_releases_and_returns_all_selected_abis
+    user::windows::process::sched::tests::services_tests::section_map_tests::installed::native_section_map_installed_leaves_copy_pinned_image_and_unmap_after_close
+    user::windows::process::sched::tests::services_tests::section_open_tests::leaf::native_section_open_installed_leaves_return_typed_image_handles_and_ret12
+    user::windows::process::sched::tests::services_tests::symbolic_link_open_tests::leaf::installed_symbolic_link_open_leaf_resolves_snapshot_and_ret12_cleanup
+    user::windows::process::sched::tests::services_tests::thread_token_tests::installed::native_thread_token_installed_profile_copyback_preserves_measured_guard_priority
+    user::windows::process::sched::tests::services_tests::timer2_create_tests::leaf_tests::installed_timer2_create_leaf_constructs_closes_and_returns_all_caller_arguments
+    user::windows::process::sched::tests::services_tests::topology_tests::leaf_tests::installed_group_topology_query_leaf_returns_guest_topology_and_actual_cleanup
+    user::windows::process::sched::tests::services_tests::topology_tests::numa_node_tests::leaf_tests::installed_numa_node_query_leaf_returns_guest_topology_and_actual_cleanup
+    user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::installed::native_image_extension_installed_leaf_matches_guest_flags_and_wow_rejection
+    user::windows::process::sched::tests::services_tests::virtual_memory_tests::installed::installed_ntdll_virtual_memory_leaves_query_guest_images_and_nls_all_selected_abis
+    user::windows::process::sched::tests::services_tests::virtual_memory_tests::installed::installed_ntdll_working_set_leaf_observes_guest_residency_and_guard_all_selected_abis
+    user::windows::process::sched::tests::services_tests::wait_packet_associate_tests::leaf_tests::installed_wait_packet_associate_and_cancel_leaves_return_all_arguments
+    user::windows::process::sched::tests::services_tests::wait_packet_create_tests::leaf_tests::installed_wait_packet_create_leaf_constructs_closes_and_returns_all_caller_arguments
+    user::windows::process::sched::tests::services_tests::wnf_process_event_tests::leaf_tests::installed_wnf_process_event_leaf_registers_once_and_returns_one_argument
+    user::windows::process::sched::tests::services_tests::wnf_subscription_tests::leaf_tests::installed_wnf_subscription_leaves_publish_update_and_remove_fixed_64_bit_identity
+    user::windows::process::sched::tests::services_tests::worker_factory_binding_tests::leaf_tests::installed_worker_factory_binding_leaf_updates_state_and_returns_four_arguments
+    user::windows::process::sched::tests::services_tests::worker_factory_create_tests::leaf_tests::installed_worker_factory_create_leaf_constructs_closes_and_returns_all_caller_arguments
+    user::windows::process::sched::tests::services_tests::worker_factory_set_tests::leaf_tests::installed_worker_factory_set_maximum_leaf_updates_state_and_returns_four_arguments
+    user::windows::process::sched::tests::services_tests::worker_factory_soft_maximum_tests::leaf_tests::installed_worker_factory_soft_maximum_leaf_updates_state_and_returns_four_arguments
+
+test result: FAILED. 969 passed; 46 failed; 0 ignored; 0 measured; 6192 filtered out; finished in 219.99s
+
+error: test failed, to rerun pass `--lib`

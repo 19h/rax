@@ -1,0 +1,23 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 03s
+     Running unittests src/lib.rs (target/debug/deps/rax-754f4d2a527a4423)
+
+running 3 tests
+test user::windows::process::sched::tests::services_tests::apphelp_tests::native_apphelp_cache_rejects_other_operations_without_mutating_guest_or_host ... ok
+test user::windows::process::sched::tests::services_tests::apphelp_tests::replay::native_apphelp_cache_768_counted_name_controls_match_output_and_packet ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::apphelp_tests::replay::native_apphelp_cache_548_buffer_and_ordering_controls_match_bytes_and_guards' (6807278) panicked at src/user/windows/process/sched/tests/services_tests/apphelp_replay_tests.rs:250:17:
+assertion `left == right` failed: Arm64 ordering=true mode=19 input+378
+  left: 34
+ right: 16
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test user::windows::process::sched::tests::services_tests::apphelp_tests::replay::native_apphelp_cache_548_buffer_and_ordering_controls_match_bytes_and_guards ... FAILED
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::apphelp_tests::replay::native_apphelp_cache_548_buffer_and_ordering_controls_match_bytes_and_guards
+
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 7781 filtered out; finished in 0.56s
+
+error: test failed, to rerun pass `--lib`

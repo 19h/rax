@@ -1,0 +1,25 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+error[E0689]: can't call method `checked_add` on ambiguous numeric type `{integer}`
+  --> src/user/windows/appcompat.rs:72:18
+   |
+53 |             let (header, length) = match kind >> 12 {
+   |                  ------ you must specify a type for this binding, like `i32`
+...
+72 |                 .checked_add(length)
+   |                  ^^^^^^^^^^^
+
+error[E0063]: missing field `appcompat` in initializer of `windows::process::Proc`
+   --> src/user/windows/dll/crt/startup/storage.rs:513:9
+    |
+513 |         Proc {
+    |         ^^^^ missing `appcompat`
+
+error[E0063]: missing field `appcompat` in initializer of `windows::process::Proc`
+   --> src/user/windows/process/sched.rs:768:9
+    |
+768 |         Proc {
+    |         ^^^^ missing `appcompat`
+
+Some errors have detailed explanations: E0063, E0689.
+For more information about an error, try `rustc --explain E0063`.
+error: could not compile `rax` (lib test) due to 3 previous errors

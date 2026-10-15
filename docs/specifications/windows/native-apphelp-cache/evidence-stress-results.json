@@ -1,0 +1,32 @@
+[
+  {
+    "case": "producer-count",
+    "rejected": true,
+    "reason": "exact native producer matrix"
+  },
+  {
+    "case": "kernel-build",
+    "rejected": true,
+    "reason": "measured kernel version"
+  },
+  {
+    "case": "large-address-aware",
+    "rejected": true,
+    "reason": "producer LAA bit"
+  },
+  {
+    "case": "native-output-byte",
+    "rejected": true,
+    "reason": "native file identity: native-apphelp-buffers-arm64.log"
+  },
+  {
+    "case": "padding-next-tag",
+    "rejected": true,
+    "reason": "padded next-tag recognition"
+  },
+  {
+    "case": "file-walk-failed",
+    "rejected": true,
+    "reason": "complete installed file parser match"
+  }
+]

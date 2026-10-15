@@ -1,0 +1,11 @@
+{
+  "production-inputs-unchanged": true,
+  "archive-source-scope": 219,
+  "post-archive-source-revisions": [
+    "src/user/windows/appcompat/tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/apphelp_leaf_tests.rs"
+  ],
+  "reason": "Windows-only tests were strengthened; production code and Unix test prefix were unchanged",
+  "revision-proof": "live-native-test-revision.json",
+  "final-windows-test-scope": "native-apphelp-live-full.log"
+}

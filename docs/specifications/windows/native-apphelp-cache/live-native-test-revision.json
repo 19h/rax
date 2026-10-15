@@ -1,0 +1,17 @@
+{
+  "scope": "Only the Windows test body and Windows-only installed leaf expectations changed; all production bytes unchanged",
+  "tests": [
+    {
+      "path": "src/user/windows/appcompat/tests.rs",
+      "before-sha256": "cfd8422b0b7ae8003de46d009514268fbce8bd5f2b7c9a15a2a7693e2417db55",
+      "after-sha256": "f0aeb28c10195b009805eaba395e2df00faa1487ffcaf2c7140b71fc45264b2f",
+      "unchanged-prefix-before-windows-cfg": true
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/apphelp_leaf_tests.rs",
+      "before-sha256": "e341463013afaf69ad66ecc459548374c484fd061c66e01ad362c48508df24d0",
+      "after-sha256": "e7a939c7b40e57f785cc24477d662656320d6b5b6560dd46b3e93a7953ad92df",
+      "inclusion-owner": "apphelp_tests.rs #[cfg(windows)] mod installed"
+    }
+  ]
+}

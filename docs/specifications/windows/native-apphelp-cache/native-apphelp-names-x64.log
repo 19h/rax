@@ -1,0 +1,26 @@
+case=0 name-index=0 width=8 length=28 maximum=30 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=004B00450052004E0045004C0042004100530045002E0064006C006C
+case=1 name-index=1 width=8 length=28 maximum=30 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=006B00650072006E0065006C0062006100730065002E0064006C006C
+case=2 name-index=2 width=8 length=24 maximum=26 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=006B00650072006E0065006C00330032002E0064006C006C
+case=3 name-index=3 width=8 length=18 maximum=20 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=006E00740064006C006C002E0064006C006C
+case=4 name-index=4 width=8 length=20 maximum=22 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=007500730065007200330032002E0064006C006C
+case=5 name-index=5 width=8 length=22 maximum=24 status=00000000 escaped=00000000 value=00000080 changes= name-utf16=00610070007000680065006C0070002E0064006C006C
+case=6 name-index=6 width=8 length=24 maximum=26 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=00410063004C00610079006500720073002E0064006C006C
+case=7 name-index=7 width=8 length=24 maximum=26 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=0041006300470065006E00720061006C002E0064006C006C
+case=8 name-index=8 width=8 length=24 maximum=26 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=00410063005800740072006E0061006C002E0064006C006C
+case=9 name-index=9 width=8 length=24 maximum=26 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=00410063005300700065006300660063002E0064006C006C
+case=10 name-index=10 width=8 length=22 maximum=24 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=0041006300570069006E00520054002E0064006C006C
+case=11 name-index=11 width=8 length=20 maximum=22 status=00000000 escaped=00000000 value=00000080 changes= name-utf16=006D00730076006300720074002E0064006C006C
+case=12 name-index=12 width=8 length=24 maximum=26 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=00750063007200740062006100730065002E0064006C006C
+case=13 name-index=13 width=8 length=22 maximum=24 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=006D00730063006F007200650065002E0064006C006C
+case=14 name-index=14 width=8 length=18 maximum=20 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=006F006C006500330032002E0064006C006C
+case=15 name-index=15 width=8 length=22 maximum=24 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=007300680065006C006C00330032002E0064006C006C
+case=16 name-index=16 width=8 length=14 maximum=16 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=0066006F006F002E0064006C006C
+case=17 name-index=17 width=8 length=6 maximum=8 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=0066006F006F
+case=18 name-index=18 width=8 length=0 maximum=2 status=C000000D escaped=00000000 value=A5A5A5A5 changes= name-utf16=
+case=19 name-index=19 width=8 length=2 maximum=4 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=002E
+case=20 name-index=20 width=8 length=4 maximum=6 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=002E002E
+case=21 name-index=21 width=8 length=76 maximum=78 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=005C003F003F005C0043003A005C00570069006E0064006F00770073005C00530079007300740065006D00330032005C004B00450052004E0045004C0042004100530045002E0064006C006C
+case=22 name-index=22 width=8 length=68 maximum=70 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=0043003A005C00570069006E0064006F00770073005C00530079007300740065006D00330032005C004B00450052004E0045004C0042004100530045002E0064006C006C
+case=23 name-index=23 width=8 length=22 maximum=24 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=007300790073006D00610069006E002E007300640062
+case=24 name-index=24 width=8 length=28 maximum=30 status=00000000 escaped=00000000 value=00000000 changes= name-utf16=005F005F0043004F004D005000410054005F004C0041005900450052
+complete cases=25 operation=6

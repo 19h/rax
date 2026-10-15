@@ -22,6 +22,7 @@ pub(crate) struct NativeRuntime {
     pub(crate) registry: super::registry::Registry,
     pub(crate) object_namespace: super::object_namespace::Namespace,
     pub(crate) nls: Option<super::nls::Nls>,
+    pub(crate) appcompat: super::appcompat::Catalog,
     pub(crate) wnf_catalog: super::wnf::Catalog,
     pub(crate) startup: Option<super::process::native_start::EntryPoints>,
 }
@@ -88,6 +89,7 @@ impl NativeRuntime {
             registry: Default::default(),
             object_namespace: Default::default(),
             nls: None,
+            appcompat: Default::default(),
             wnf_catalog: Default::default(),
             startup: None,
         };
@@ -107,6 +109,8 @@ impl NativeRuntime {
         runtime.object_namespace =
             super::object_namespace::snapshot(runtime.registry.upcase_table())?;
         runtime.nls = Some(super::nls::snapshot(&runtime.registry, &schema_directory)?);
+        runtime.appcompat =
+            super::appcompat::Catalog::snapshot(&root, runtime.registry.upcase_table())?;
         runtime.wnf_catalog = super::wnf::snapshot()?;
         Ok(runtime)
     }

@@ -4,6 +4,7 @@
 //! The personality supplies process memory, loader state, threads, and DLL
 //! services through checked guest-memory accesses.
 
+mod appcompat;
 pub mod arch;
 pub mod context;
 pub mod dll;

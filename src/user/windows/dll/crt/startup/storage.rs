@@ -522,6 +522,7 @@ mod tests {
             registry: Default::default(),
             object_namespace: Default::default(),
             nls: None,
+            appcompat: Default::default(),
             pid: 4,
             peb: 0,
             params: 0,

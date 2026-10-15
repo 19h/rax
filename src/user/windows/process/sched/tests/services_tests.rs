@@ -1,6 +1,9 @@
 use super::*;
 use crate::user::windows::loader::services::tests::table;
 
+#[path = "services_tests/apphelp_tests.rs"]
+mod apphelp_tests;
+
 #[path = "services_tests/process_query_tests.rs"]
 mod process_query_tests;
 

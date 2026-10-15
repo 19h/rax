@@ -52,6 +52,7 @@ fn runtime(entries: Option<EntryPoints>) -> NativeRuntime {
         registry: Default::default(),
         object_namespace: Default::default(),
         nls: None,
+        appcompat: Default::default(),
         wnf_catalog: Default::default(),
         startup: entries,
     }

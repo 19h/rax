@@ -1,0 +1,51 @@
+{
+  "records": [
+    {
+      "tag": 36883,
+      "payload-bytes": 1,
+      "padded": false,
+      "file-sha256": "e4fc84d91e90e66838b726d443b4b47349ef67c5b7bf586e763ddce3c19ec02b",
+      "open": "rejected"
+    },
+    {
+      "tag": 36883,
+      "payload-bytes": 1,
+      "padded": true,
+      "file-sha256": "4cf9520a611068bfcd6d8c6fa99effa783d2ae6fe0b165405cefe22ecffd80bc",
+      "open": "rejected"
+    },
+    {
+      "tag": 36883,
+      "payload-bytes": 17,
+      "padded": false,
+      "file-sha256": "113cc63d17b73f895dfa85ad0f6c4cb7d4c408b4a320b0129634e391c7d97a69",
+      "open": "rejected"
+    },
+    {
+      "tag": 36883,
+      "payload-bytes": 17,
+      "padded": true,
+      "file-bytes": 54,
+      "file-sha256": "b2fba24ce8bb329e068d9a9fa5873af2466e0a86735b4c393dd3af2f5b6e0eb2",
+      "parent-tagid": 12,
+      "first-tagid": 18,
+      "next-tagid": 42,
+      "next-tag": 16434
+    },
+    {
+      "tag": 8193,
+      "payload-bytes": 1,
+      "padded": false,
+      "file-sha256": "8ce7ecb89f0700920b02d6823db8b9103ac408b8506b0bb58279aa419ee90d0a",
+      "open": "rejected"
+    },
+    {
+      "tag": 8193,
+      "payload-bytes": 1,
+      "padded": true,
+      "file-sha256": "353f4e2aa261b2142a391ea157e6768749d56e795f92548e32a8babd97c5afde",
+      "open": "rejected"
+    }
+  ],
+  "script-sha256": "86f33aa08c7ffb3764d83edcfe06589451d155296481f581e3a9e05bfa6f71a5"
+}

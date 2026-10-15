@@ -1,0 +1,175 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4m 13s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-tests\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 148 tests
+test devices::pit::tests::test_io_port_mapping ... ok
+test devices::fw_cfg::tests::add_file_appears_in_directory_with_be_size_and_select ... ok
+test backend::emulator::aarch64::user_tests::translate_addr_applies_the_user_translation ... ok
+test backend::emulator::aarch64::tests::ordinary_machine_delivers_unmapped_fault_to_guest ... ok
+test backend::emulator::cortex_m::tests::unaligned_trap_applies_to_word_loads ... ok
+test backend::emulator::riscv::cpu::user_tests::translate_addr_applies_the_user_translation ... ok
+test backend::emulator::aarch32::tests::unmapped_accesses_fault_at_the_first_missing_byte_without_retiring ... ok
+test isa::riscv::cpu::tests::vrgather_rejects_overlapping_operands ... ok
+test isa::riscv::cpu::vector_permute::tests::whole_register_move_snapshots_overlapping_source_group ... ok
+test isa::arm::aarch64::cpu::tests::memory::tbi0_applies_through_stage_1_translation ... ok
+test isa::x86_64::decode::dispatch::evex::tests::apx_push2_wraps_aligned_rsp_without_wrapping_the_transfer ... ok
+test isa::x86_64::decode::dispatch::evex::apx_movdir_tests::direct_apx_movdir_address_size_and_fs_apply_to_the_correct_operands ... ok
+test isa::x86_64::decode::fpu_addr_tests::compat32_absolute_operand_faults_even_if_rip_relative_decoy_is_mapped ... ok
+test isa::arm::aarch64::cpu::tests::simd::sve_last_scalar_selects_active_or_wrapped_element ... ok
+test isa::x86_64::execute::simd::avx512_sat_convert_tests::memory_forms_apply_masks_broadcast_and_compressed_disp8_before_conversion ... ok
+test isa::x86_64::user_mode_tests::set_xcr0_applies_xsetbv_rules ... ok
+test isa::x86_64::memory_tests::physical_access_fault_names_the_unmapped_address_once ... ok
+test isa::x86_64::execute::simd::avx512_sat_convert_tests::nontruncating_forms_apply_all_mxcsr_and_embedded_rounding_modes ... ok
+test isa::x86_64::user_mode_tests::remapping_the_translation_is_observed_immediately ... ok
+test smir::interpret::tests::scalar::addr32::x86_lea_interpretation_applies_destination_width ... ok
+test isa::x86_64::user_mode_tests::x87_canonical_unmapped_ss_operand_remains_guest_access_not_ss ... ok
+test smir::interpret::tests::evex::part3::lifted_x86_fp16_approx_preserves_masks_scalar_merge_mxcsr_and_fault_suppression ... ok
+test machine::s5l8900::runtime::dos_bounds_tests::dmadump_append_respects_cumulative_file_limit ... ok
+test smir::interpret::tests::evex::part3::x86_fp16_approx_exhaustively_satisfies_special_cases_and_error_bound ... ok
+test smir::interpret::tests::scalar::fp::x86_fp_to_int::lifted_scalar_fp_to_int_applies_daz_only_to_binary32_and_binary64 ... ok
+test smir::interpret::tests::scalar::fp::part2::lifted_horizontal_integer_family_executes_ordering_wrapping_saturation_and_faults ... ok
+test smir::interpret::tests::scalar::fp::part2::lifted_psign_family_executes_wrapping_control_aliases_and_faults ... ok
+test smir::interpret::tests::scalar::memory::test_apply_lane_op_byte ... ok
+test smir::interpret::tests::scalar::memory::test_apply_lane_op_word ... ok
+test smir::interpret::tests::scalar::fp::part2::smir_x86_scalar_shifts_apply_the_operand_count_mask ... ok
+test isa::x86_64::execute::simd::avx512::vsib::vsib_tests::vsib_scatter_partially_overlapping_elements_commit_in_lane_order ... ok
+test smir::lift::x86_64::tests::vex::lift_mmx_pinsrw_pextrw_masks_lanes_applies_rex_to_gprs_and_preserves_fault_order ... ok
+test smir::lift::x86_64::tests::pop_segment::pop_fs_gs_noncanonical_or_wrapping_range_raises_ss_before_memory ... ok
+test smir::lift::x86_64::tests::movdir64b::legacy_movdir64b_applies_addr32_and_segment_only_to_the_correct_operands ... ok
+test smir::lift::x86_64::tests::evex::fp::lift_evex_fp16_approx_covers_widths_scalar_masks_broadcast_and_reserved_fields ... ok
+test smir::interpret::tests::x87::part1::lifted_x87_fcom_fucom_order_binary80_and_apply_pop_counts ... ok
+test smir::interpret::tests::simd::packed::part3::vdotproduct_executes_vnni_accumulation_wrapping_saturation_and_signed_words ... ok
+test isa::x86_64::execute::simd::avx512_fp_special_tests::scalar_evex_special_functions_apply_exact_register_sae_domain ... ok
+test smir::lower::aarch64::tests::apx::rejects_bit_test_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_cas_apx_r31_value_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_clmul_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_bextr_bzhi_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_apx_r30_identity_mapping_x30_is_link_register ... ok
+test smir::lower::aarch64::tests::apx::rejects_cmp_test_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_addsub_carry_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_control_flow_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_bitfield_extend_truncate_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_cwd_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_exclusive_memory_apx_r31_value_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_io_in_apx_r31_destination_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_div_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_mov_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_lea_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_pair_memory_apx_r31_value_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_pdep_pext_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_predicated_memory_apx_r31_address_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_rep_stos_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_prefetch_apx_r31_address_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_mul_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_scalar_memory_apx_r31_value_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_scalar_memory_apx_r31_address_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_setcc_cmove_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_shift_rotate_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_select_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_unary_arithmetic_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::apx::rejects_unary_bit_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::arithmetic::lowers_mulsub_w8_two_imms_wrapping_zero_product_as_acc_uxtb ... ok
+test smir::lower::aarch64::tests::arithmetic::mem_helper_address_width_selects_w32_wrapping_arithmetic ... ok
+test smir::lower::aarch64::tests::atomic::rejects_atomic_cmpxadd_apx_r31_value_mapping ... ok
+test smir::lower::aarch64::tests::atomic::rejects_atomic_load_apx_r31_value_mapping ... ok
+test smir::lower::aarch64::tests::atomic::rejects_atomic_rmw_apx_r31_address_mapping ... ok
+test smir::lower::aarch64::tests::atomic::rejects_atomic_rmw_apx_r31_value_mapping ... ok
+test smir::lower::aarch64::tests::atomic::rejects_atomic_store_apx_r31_value_mapping ... ok
+test smir::lower::aarch64::tests::bit::lowers_bswap_w16_imm_as_movz_swapped ... ok
+test smir::lower::aarch64::tests::fp::rejects_scalar_fp_int_conversion_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::fp::rejects_fused_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::logic::lowers_and_w_wrapping_mask_imm ... ok
+test smir::lower::aarch64::tests::logic::lowers_orr_x_wrapping_mask_imm ... ok
+test smir::lower::aarch64::tests::misc::rejects_arm_x30_identity_mapping_x30_is_link_register ... ok
+test smir::lower::aarch64::tests::vector::rejects_vector_lane_scalar_apx_r31_identity_mapping ... ok
+test smir::lower::aarch64::tests::vector::rejects_vector_memory_apx_r31_address_mapping ... ok
+test smir::lower::aarch64::tests::xchg::rejects_xchg_apx_r31_identity_mapping ... ok
+test smir::optimize::tests::vector_alignment::wrapped_address_arithmetic_retains_proven_low_bits_without_host_overflow ... ok
+test user::image::elf::tests::total_mapping_size_uses_file_order_like_linux ... ok
+test user::image::elf::tests::mapping_geometry_matches_linux_helpers ... ok
+test smir::optimize::tests::vector_alignment::w64_shift_alignment_uses_masked_counts_and_wrapping_values ... ok
+test smir::lower::x86_64::tests::call_helpers::addr32_memory_indirect_call_builds_wrapped_sib_and_segment_addresses ... ok
+test user::linux::priority::tests::priorities_follow_the_kernels_mapping ... ok
+test user::image::macho::tests::version_commands_may_appear_once ... ok
+test user::image::macho::tests::file_mapping_can_exceed_the_segment_and_zero_fill_follows_it ... ok
+test user::image::pe::tests::base_relocations_apply_each_type ... ok
+test user::image::macho::tests::dynamic_arm64_executable_plans_its_mappings ... ok
+test user::mm::mapped_file::tests::duplicate_handles_share_identity_across_private_and_shared_sources ... ok
+test smir::lower::x86_64::tests::misc::lower_x86_fp16_approx_emits_all_widths_and_rejects_synthetic_shapes ... ok
+test user::mm::tests::discard_requires_a_fully_mapped_aligned_range ... ok
+test user::mm::tests::faults_distinguish_unmapped_from_protection ... ok
+test user::mm::tests::raw_access_ignores_permissions_but_not_mapping ... ok
+test user::mm::tests::remapping_over_populated_pages_discards_contents ... ok
+test user::mm::windows_arena::tests::read_only_mapping_upgrades_without_changing_physical_address ... ok
+test user::windows::appcompat::tests::appcompat_sdb_odd_binary_and_byte_payloads_preserve_word_tag_alignment ... ok
+test user::windows::appcompat::tests::appcompat_sdb_counted_names_fold_merge_and_ignore_nested_flags ... ok
+test user::windows::appcompat::tests::appcompat_sdb_snapshot_reads_owned_regular_file_and_rejects_escape ... ok
+test user::windows::arch::tests::windows_machine_pointer_and_processor_mappings ... ok
+test user::linux::tests::loader::mapping_names_carry_the_image_name ... ok
+test user::linux::tests::loader::later_overlapping_segments_replace_earlier_pages ... ok
+test user::windows::context::tests::context_apply_preserves_instruction_counter_teb_and_unselected_float_state ... ok
+test user::windows::context::tests::context_apply_preserves_unselected_ss_gdt_and_extended_vector_state ... ok
+test user::windows::appcompat::tests::appcompat_sdb_rejects_truncation_bad_extent_reference_and_duplicates ... ok
+test user::windows::context::tests::context_capture_apply_round_trip_all_architectures ... ok
+test user::linux::tests::embedded::closed_linux_shared_anonymous_mapping_aliases_and_survives_unmapping_all_abis ... ok
+test user::windows::dll::crt::onexit::storage::tests::overlapping_table_objects_and_internal_buffer_aliases_are_rejected_before_writes ... ok
+test user::windows::dll::crt::bootstrap::tests::exception_slot_is_pointer_width_null_stable_nonoverlapping_and_thread_owned ... ok
+test user::windows::dll::crt::initialize::tests::ascending_null_holes_and_exclusive_unmapped_end_all_abis ... ok
+test user::windows::dll::crt::bootstrap::tests::app_enum_is_unconditional_32_bit_state_without_ptd_allocation ... ok
+test user::windows::dll::crt::onexit::storage::tests::readonly_header_fault_preserves_append_detach_and_owned_blocks ... ok
+live installed CDB controls: 168 including one unknown name
+test user::windows::appcompat::tests::appcompat_installed_file_catalog_matches_live_kernel_name_flags ... ok
+test user::windows::dll::crt::strings::tests::append_bounded_source_and_terminator_all_abis ... ok
+test user::windows::dll::crt::startup::wildcard::tests::actual_mapped_directory_expansion_and_prefix_byte_encoding_all_abis ... ok
+test user::windows::dll::crt::termination::storage::tests::growth_uses_sdk_capped_increment_and_zeroes_unused_tail ... ok
+test user::windows::dll::crt::stdio::tests::fdopen_w_mode_attaches_without_truncating_and_append_moves_to_end ... ok
+test user::windows::dll::crt::stdio::tests::append_only_reduced_handle_grant_cannot_overwrite_shared_file_cursor ... ok
+test user::windows::memory::tests::image_reported_protection_preserves_trap_mapping ... ok
+test user::windows::dll::crt::tests::unsupported_new_handler_registration_and_legacy_compat_wrappers_are_not_exports ... ok
+test user::windows::memory::section_tests::selected_mapping_rejects_invalid_geometry_before_reservation ... ok
+test user::windows::dll::handles::tests::close_source_applies_on_output_fault_and_current_thread_becomes_real_handle ... ok
+test smir::lift::x86_64::tests::evex::mask::broadcast::every_evex_masked_memory_broadcast_uses_any_applicable_mask_bit_for_fault_suppression ... ok
+test user::windows::dll::kernel::vch_tests::vch_first_prepends_zero_appends_and_duplicate_callbacks_have_distinct_handles ... ok
+test user::windows::process::lifecycle::tests::detach_reverses_completion_order_not_mapping_order_all_abis ... ok
+test user::windows::process::fiber::tests::loader_owned_start_wrapper_is_thread_bound_until_callback_completes_all_abis ... ok
+test user::windows::dll::files::tests::duplicate_cursors_independent_opens_and_append_only_grants_all_abis ... ok
+test user::windows::process::sched::tests::secondary_dll_notifications_do_not_freeze_attached_application_threads_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::apphelp_tests::native_apphelp_cache_rejects_other_operations_without_mutating_guest_or_host ... ok
+test user::windows::process::sched::tests::services_tests::allocate_ex_tests::native_allocate_ex_respects_untracked_mappings_and_fault_priority_all_abis ... ok
+test user::windows::appcompat::tests::appcompat_sdb_rejects_depth_empty_name_and_name_budget ... ok
+test user::windows::process::sched::tests::services_tests::scheduler_slot_tests::native_scheduler_slot_owns_mapping_until_last_handle_and_thread_reference_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::apphelp_tests::replay::native_apphelp_cache_768_counted_name_controls_match_output_and_packet ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_readonly_distinct_mapped_views_optional_size_and_aliases_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_range_query_checks_write_permissions_and_orders_overlapping_outputs_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::native_virtual_memory_free_reserved_mapped_and_no_target_read_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::native_group_topology_ignores_unmapped_extra_input_span_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::working_set::native_working_set_unmapped_reserved_and_private_image_frames_all_abis ... ok
+test user::windows::seh::unwind::tests::metadata_reader_rejects_adjacent_readable_mapping ... ok
+test user::windows::process::sched::tests::services_tests::hypervisor_page_tests::native_hypervisor_page_ulong_max_length_and_wrapping_output_do_not_allocate_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::topology_tests::numa_node_tests::native_numa_node_ignores_unmapped_extra_input_span_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::etw_registration_tests::native_etw_registration_replays_all_576_overlapping_header_and_returned_rows ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_228_overlapping_output_cases ... ok
+test user::windows::process::sched::tests::services_tests::apphelp_tests::installed::native_apphelp_cache_installed_leaves_use_selected_database_and_copyback_order ... ok
+test user::windows::process::sched::tests::services_tests::apphelp_tests::replay::native_apphelp_cache_548_buffer_and_ordering_controls_match_bytes_and_guards ... ok
+
+test result: ok. 148 passed; 0 failed; 0 ignored; 0 measured; 7061 filtered out; finished in 14.24s
+

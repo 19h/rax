@@ -1,0 +1,55 @@
+{
+  "native": {
+    "native-producers": 28,
+    "native-calls": 1874,
+    "raw-replays": 1316,
+    "readable-input-bytes": 261076,
+    "readable-output-bytes": 3724,
+    "padding-controls": 6
+  },
+  "full-libraries": {
+    "macos": [
+      7784,
+      0,
+      2,
+      0
+    ],
+    "linux": [
+      7778,
+      0,
+      2,
+      0
+    ],
+    "windows": [
+      7202,
+      5,
+      2,
+      0
+    ]
+  },
+  "owning-scoped-rust-sources": 219,
+  "matching-current-cpp-consumers": 9,
+  "ordinary-guest-exits": 0,
+  "ordinary-next-section": "\\Windows\\SharedSection",
+  "observer-next-turn": 2114258,
+  "date": "2026-10-15",
+  "parent-rax": "140d279c68ef65263936bdd76069a27443f1d336",
+  "runtime-owned-files": 15,
+  "final-windows-focused-passed": 148,
+  "live-kernel-queries": 168,
+  "capi-per-host": 168,
+  "unix-integration-passed": 544,
+  "windows-memory-integration-passed": 4,
+  "unix-memory-integration": "0 selected; native fixture not applicable on these hosts",
+  "windows-user-integration": "0 selected by host-specific lane; installed leaf tests cover active paths",
+  "owning-macos-ctests": 7,
+  "owning-linux-and-windows-cpp-consumers-per-host": 5,
+  "original-observer-budget": 1000000,
+  "extended-observer-budget": 3000000,
+  "before-frontier": "NtApphelpCacheControl operation6 at2111498",
+  "after-frontier": "NtOpenSection service0x37 at0x1800013b0 for \\Windows\\SharedSection",
+  "whoami-frontier": "NtTraceEvent",
+  "merge-commits": 0,
+  "force-pushes": 0,
+  "full-objective": "active; ordinary Windows exits, remaining continuations and broader product/package proof remain incomplete"
+}

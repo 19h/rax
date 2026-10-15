@@ -1,0 +1,22 @@
+{
+  "buffers": {
+    "rows": 404,
+    "readable-input-bytes": 187348,
+    "readable-output-bytes": 2828
+  },
+  "ordering": {
+    "rows": 144,
+    "readable-input-bytes": 73728,
+    "readable-output-bytes": 896
+  },
+  "names": {
+    "rows": 100,
+    "readable-input-bytes": 0,
+    "readable-output-bytes": 0
+  },
+  "cdb-names": {
+    "rows": 668,
+    "readable-input-bytes": 0,
+    "readable-output-bytes": 0
+  }
+}
