@@ -1223,6 +1223,12 @@ impl EbpfLifter {
             }
 
             EbpfOp::CallImm { src_kind, imm } => {
+                if self.dialect == EbpfDialect::Rfc9669 && src_kind == 2 {
+                    return Err(LiftError::Unsupported {
+                        addr,
+                        mnemonic: "BTF helper call requires a platform resolver".into(),
+                    });
+                }
                 let static_syscalls = self
                     .dialect
                     .sbpf_version()

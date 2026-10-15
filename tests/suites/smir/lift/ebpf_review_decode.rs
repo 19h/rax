@@ -2,6 +2,66 @@ use super::*;
 use rax::isa::ebpf::{EbpfDecodeError, EbpfOp, decode_insn};
 
 #[test]
+fn btf_helper_ids_do_not_alias_the_static_helper_registry() {
+    // RFC 9669 section 4.3.1 identifies helpers by distinct static/BTF IDs.
+    // The engine has no BTF platform resolver, so a static callback with the
+    // same numeric ID must not satisfy a src_reg=2 call.
+    for endian in [Endian::Little, Endian::Big] {
+        let bytes = encode_insn(0x85, 0, 2, 0, 7, endian);
+        let insn = decode_insn(&bytes, EbpfDialect::Rfc9669, endian).unwrap();
+        let mut cpu = EbpfCpu::new(EbpfConfig {
+            endian,
+            ..EbpfConfig::default()
+        });
+        cpu.regs.r[0] = 42;
+        cpu.register_syscall(7, |_, _| Ok(700));
+        let mut memory = FlatMemory::new(16);
+        let direct = cpu.execute_decoded(&insn, &mut memory);
+        let mut lifter = EbpfLifter::new(EbpfDialect::Rfc9669, endian);
+        let lifted = lifter.lift_insn(0, &bytes, &mut LiftContext::new(lifter.source_arch()));
+        assert_eq!(direct, Err(EbpfTrap::UnsupportedBtfHelper { pc: 0, id: 7 }));
+        assert!(matches!(
+            lifted,
+            Err(rax::smir::lift::LiftError::Unsupported { .. })
+        ));
+        assert_eq!(cpu.regs.r[0], 42);
+        assert_eq!(cpu.regs.pc, 0);
+
+        let options = rax::oracle::OracleOptions {
+            isa: rax::oracle::OracleIsa::Ebpf,
+            ebpf_endian: match endian {
+                Endian::Little => rax::config::Endianness::Little,
+                Endian::Big => rax::config::Endianness::Big,
+            },
+            ..rax::oracle::OracleOptions::default()
+        };
+        let decoded = rax::oracle::decode_to_json(&bytes, &options).unwrap();
+        assert_eq!(decoded["decoded_ops"][0]["src"], 2);
+        assert!(
+            decoded["smir"]["error"]
+                .as_str()
+                .unwrap()
+                .contains("BTF helper call requires a platform resolver")
+        );
+
+        let static_bytes = encode_insn(0x85, 0, 0, 0, 7, endian);
+        let static_insn = decode_insn(&static_bytes, EbpfDialect::Rfc9669, endian).unwrap();
+        assert_eq!(cpu.execute_decoded(&static_insn, &mut memory), Ok(None));
+        assert_eq!(cpu.regs.r[0], 700);
+        assert_eq!(cpu.regs.pc, 8);
+        assert!(
+            lifter
+                .lift_insn(
+                    0,
+                    &static_bytes,
+                    &mut LiftContext::new(lifter.source_arch())
+                )
+                .is_ok()
+        );
+    }
+}
+
+#[test]
 fn rfc_unused_fields_are_rejected_in_both_byte_orders() {
     // RFC 9669 sections 3.1, 4.1-4.3, and 5.1. Each tuple is an otherwise
     // valid instruction with exactly one nonzero unused field.

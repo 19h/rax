@@ -22,7 +22,7 @@ Primary authorities: RFC 9669 sections 3-5 in
 | ID | Assumption | Basis | Dependent result | Stress test | Falsification probe | Status |
 |---|---|---|---|---|---|---|
 | A1 | RFC 9669 and the bundled Anza version matrix define the requested targets | Review and repository guide | All semantic changes | All five SBPF versions, both RFC byte orders | Compare version predicates with pinned primary source | confirmed |
-| A2 | Unsupported platform pseudo-loads may fail explicitly | Review's permitted correction; platform resolver absent | Pseudo-load rejection in execution/lift | Every subtype 1-6; preserve destination and PC | Execute each subtype without a resolver and observe any constant load | confirmed |
+| A2 | Unavailable platform address/helper resolution may fail explicitly | Review's permitted correction; RFC 4.3.1 platform helper contract | Pseudo-load and BTF-helper rejection in execution/lift | Every pseudo-load subtype 1-6; colliding helper IDs; preserve state | Observe a constant load or static callback for a missing platform resolver | confirmed |
 | A3 | Shared memory requires indivisible atomics | RFC 9669 section 5.3; GuestMemoryMmap has shared access | Direct atomic interface and implementations | Concurrent increments, CAS failure, both widths/byte orders | Lost updates or ordinary load/store used in an atomic transaction | confirmed |
 | A4 | A lifted function range describes guest bytes, not IR size | SmirFunction guest_range contract | Range tracking | Wide instructions and expanding division | Compare decoded byte extents with lifted range | confirmed |
 | A5 | Manual-frame default stack backing is stack_frame_size times max_call_depth | CPU construction has no memory-map parameter; matches reference default allocation | Initial r10 in V1/V2 | An embedding supplies a differently sized stack | Compare explicit stack backing length to this product; set r10 to that backing's top when different | retained |
@@ -248,6 +248,21 @@ These constant-time, constant-space checks close a medium-impact boundary gap.
 Complete focused gates after correction: ebpf_smir_lift 35 passed, ebpf_diff
 5 passed, isa_oracle 80 passed, with no ignored tests in these targets.
 
+## Group 9: distinct helper identifier namespaces
+
+The static helper registry cannot resolve BTF IDs independently. A CALL with
+src_reg=2 and numeric ID 7 incorrectly invoked a registered static helper 7;
+the new regression observed Ok(None) and a changed result instead of rejection.
+RFC 9669 section 4.3.1 and instruction-table src_reg values distinguish these
+identifier mechanisms. The direct CPU now returns UnsupportedBtfHelper before
+any callback or state change. SMIR lifting returns Unsupported, while decoding
+retains the valid BTF encoding for analysis. Both byte orders verify rejection,
+preserved r0/PC, oracle error reporting, and continued static-helper resolution.
+This medium-impact correction replaces namespace aliasing with an explicit
+platform capability boundary. It does not invent a BTF resolver or key mapping.
+Complete focused gates: ebpf_smir_lift 36 passed, ebpf_diff 5 passed, isa_oracle
+80 passed. No case in these targets is ignored.
+
 ## Final finding audit
 
 | External finding | Resolution | Direct evidence |
@@ -267,10 +282,10 @@ Complete focused gates after correction: ebpf_smir_lift 35 passed, ebpf_diff
 The finite matrices establish the behavior described above; full opcode-by-opcode
 conformance remains unknown. This work does not supply a Linux BPF verifier, a
 complete Solana ELF/relocation/syscall loader, or platform map/BTF pseudo-load
-resolvers. The checked constructor is for raw text at MM_BYTECODE_START with
+resolvers or a BTF helper resolver. The checked constructor is for raw text at MM_BYTECODE_START with
 explicit executable rodata addresses; custom loaders can supply their own memory
-interfaces. Helper callback keys are an embedding-defined u32 registry; separate
-platform helper/BTF key spaces are not independently modeled. These are medium
+interfaces. Static helper callback keys are an embedding-defined u32 registry;
+BTF helper execution fails explicitly. These are medium
 capability boundaries, outside the corrected instruction and raw-text execution
 contracts, and do not invalidate the measured results.
 

@@ -10,7 +10,7 @@ The eBPF path in `rax` implements instruction decoding, canonical disassembly, d
 
 - **`EbpfDialect::Rfc9669`** — IETF RFC 9669 / Linux kernel v1–v4 (`Endian::Little` and `Endian::Big`), including:
   - 64-bit (`ALU64`) and 32-bit (`ALU32`) arithmetic/logic, `MOVSX` (8/16/32-bit sign-extending moves), `SDIV`/`SMOD` (`offset == 1`), and `BPF_END` (`TO_LE`, `TO_BE`, `BSWAP16/32/64`);
-  - 64-bit (`JMP`) and 32-bit (`JMP32`) conditional branches, `JA` (`0x05`), `JA32` (`0x06`), helper calls (`src_reg == 0`), and BPF-to-BPF pseudo calls (`src_reg == 1`);
+  - 64-bit (`JMP`) and 32-bit (`JMP32`) conditional branches, `JA` (`0x05`), `JA32` (`0x06`), static helper calls (`src_reg == 0`), and BPF-to-BPF pseudo calls (`src_reg == 1`); BTF helper calls (`src_reg == 2`) decode for analysis but execution and lifting reject them without a platform BTF resolver;
   - `LDDW` (`0x18`) 128-bit wide constant loads; subtypes 1-6 decode for analysis but execution and lifting explicitly reject them without a platform resolver;
   - unsigned (`LDX_MEM`) and sign-extending (`LDX_MEMSX`) loads, `ST_MEM`, `STX_MEM`, and `BPF_ATOMIC` (`ADD`, `OR`, `AND`, `XOR` with/without `FETCH`, `XCHG`, and `CMPXCHG`).
 - **`EbpfDialect::Solana(SbpfVersion::V0..=V4)`** — Solana Bytecode Format across `V0`, `V1`, `V2`, `V3`, and `V4`:
@@ -32,7 +32,7 @@ For Solana workloads, `SbpfMemoryMapping` (`src/isa/ebpf/memory.rs`) models the 
 
 | Segment | Base address | Access |
 |---|---|---|
-| Program text | `0x1_0000_0000` | Read-only |
+| Program text | `0x1_0000_0000` | Executable fetch; ordinary data reads require a data-region mapping |
 | RODATA | Executable address in segment 1 (V0-V2), segment 0 (V3/V4) | Read-only |
 | Stack | `0x2_0000_0000` | Read-write (`V0` optional 4 KiB frame gaps; `V1`-`V4` contiguous) |
 | Heap | `0x3_0000_0000` | Read-write |
@@ -53,7 +53,7 @@ cargo run --bin rax_isa_oracle -- --arch sbpf --mode le,sbpf-v2 --seeded-effects
 
 | Cargo target | Scope |
 |---|---|
-| `ebpf_smir_lift` | Direct `EbpfCpu` vs `EbpfLifter` + `SmirInterpreter` at `OptLevel::O0` and `OptLevel::O2` across RFC 9669 (LE/BE) and Solana `SBPF` `V0`–`V4` |
+| `ebpf_smir_lift` | Direct `EbpfCpu` vs `EbpfLifter` + `SmirInterpreter` at O0/O1/O2 across RFC 9669 (LE/BE) and Solana `SBPF` `V0`–`V4` |
 | `ebpf_diff` | Parity against a specification-derived evaluator for selected deterministic ALU, memory, and call programs, plus `llvm-mc -triple=bpfel` / `bpfeb` encoding comparisons |
 | `isa_oracle` | Public JSON decode, SMIR lift, and seeded concrete execution side effects |
 

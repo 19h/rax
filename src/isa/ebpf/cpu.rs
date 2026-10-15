@@ -81,6 +81,8 @@ pub enum EbpfTrap {
     UnsupportedSyscall { pc: u64, key: u32 },
     /// A platform-specific LDDW subtype requires an unavailable resolver.
     UnsupportedPseudoLoad { pc: u64, src_type: u8 },
+    /// A BTF helper ID requires a platform resolver separate from static IDs.
+    UnsupportedBtfHelper { pc: u64, id: u32 },
     /// Instruction count limit / compute budget exceeded.
     ExceededMaxInstructions { pc: u64 },
 }
@@ -215,7 +217,8 @@ impl EbpfCpu {
         self.function_registry.insert(key, target_pc);
     }
 
-    /// Register a host syscall callback by 32-bit key.
+    /// Register a host syscall callback by 32-bit key. In RFC 9669 this
+    /// resolves static helper IDs only; BTF helper resolution is unsupported.
     pub fn register_syscall<F>(&mut self, key: u32, handler: F)
     where
         F: FnMut(&mut [u64; 11], &mut dyn EbpfMemory) -> std::result::Result<u64, EbpfTrap>
@@ -706,6 +709,9 @@ impl EbpfCpu {
 
             EbpfOp::CallImm { src_kind, imm } => {
                 let key = imm as u32;
+                if self.config.dialect == EbpfDialect::Rfc9669 && src_kind == 2 {
+                    return Err(EbpfTrap::UnsupportedBtfHelper { pc, id: key });
+                }
                 let static_syscalls = self
                     .config
                     .dialect
