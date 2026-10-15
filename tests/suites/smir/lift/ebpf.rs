@@ -22,6 +22,9 @@ use rax::smir::lift::{LiftContext, MemoryReader, SmirLifter};
 use rax::smir::optimize::{OptLevel, optimize_function};
 use rax::smir::{EbpfLifter, ExitReason, SmirContext, SmirInterpreter};
 
+#[path = "ebpf_review_decode.rs"]
+mod review_decode;
+
 struct CodeSlice<'a>(&'a [u8]);
 
 impl MemoryReader for CodeSlice<'_> {

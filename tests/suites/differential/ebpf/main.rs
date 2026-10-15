@@ -201,14 +201,13 @@ fn run_spec_ref_vm(
         let imm = read_u32(&slot[4..8], endian) as i32;
         let mut next_pc = pc + 8;
 
-        // Check if writable (R10 is read-only unless SBPF V1+ dynamic stack frames)
+        // Anza verifier: only V1/V2 ADD64_IMM may write the frame pointer.
         let dst_writable = dst < 10
-            || matches!(
-                dialect,
-                EbpfDialect::Solana(
-                    SbpfVersion::V1 | SbpfVersion::V2 | SbpfVersion::V3 | SbpfVersion::V4
-                )
-            );
+            || (opc == 0x07
+                && matches!(
+                    dialect,
+                    EbpfDialect::Solana(SbpfVersion::V1 | SbpfVersion::V2)
+                ));
 
         // Handle LDDW (0x18) and HOR64_IMM (0xF7 in Solana V2)
         if opc == 0x18 {
@@ -1199,9 +1198,15 @@ fn ebpf_rfc9669_seeded_differential_sweep() {
                         }
                         let opc = alu_hi | src_bit | class;
                         let mut prog = Vec::new();
-                        prog.extend_from_slice(&raw_insn(opc, 1, 2, off, imm, endian));
-                        prog.extend_from_slice(&raw_insn(opc, 3, 4, off, imm, endian));
-                        prog.extend_from_slice(&raw_insn(opc, 5, 6, off, imm, endian));
+                        // RFC section 3.1: clear unused register/immediate fields.
+                        let is_reg = src_bit != 0;
+                        let used_imm = if is_reg { 0 } else { imm };
+                        for (dst, source) in [(1, 2), (3, 4), (5, 6)] {
+                            let source = if is_reg { source } else { 0 };
+                            prog.extend_from_slice(&raw_insn(
+                                opc, dst, source, off, used_imm, endian,
+                            ));
+                        }
                         prog.extend_from_slice(&raw_insn(0xBF, 0, 1, 0, 0, endian));
                         prog.extend_from_slice(&raw_insn(0x0F, 0, 3, 0, 0, endian));
                         prog.extend_from_slice(&raw_insn(0x0F, 0, 5, 0, 0, endian));

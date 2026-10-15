@@ -736,7 +736,17 @@ impl EbpfLifter {
         let next_pc = addr + u64::from(insn.size);
 
         match insn.op {
-            EbpfOp::LoadImm64 { dst, imm64, .. } => {
+            EbpfOp::LoadImm64 {
+                dst,
+                src_type,
+                imm64,
+            } => {
+                if self.dialect == EbpfDialect::Rfc9669 && src_type != 0 {
+                    return Err(LiftError::Unsupported {
+                        addr,
+                        mnemonic: format!("LDDW subtype {src_type} requires a platform resolver"),
+                    });
+                }
                 let dst_reg = Self::reg(dst);
                 ops.push(SmirOp::new(
                     ctx.next_op_id(),

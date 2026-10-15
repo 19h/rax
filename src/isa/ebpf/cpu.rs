@@ -76,6 +76,8 @@ pub enum EbpfTrap {
     CallOutsideTextSegment { pc: u64, target_pc: u64 },
     /// Unregistered syscall or internal function key.
     UnsupportedSyscall { pc: u64, key: u32 },
+    /// A platform-specific LDDW subtype requires an unavailable resolver.
+    UnsupportedPseudoLoad { pc: u64, src_type: u8 },
     /// Instruction count limit / compute budget exceeded.
     ExceededMaxInstructions { pc: u64 },
 }
@@ -179,8 +181,21 @@ impl Default for EbpfCpu {
 impl EbpfCpu {
     /// Create a new eBPF / Solana SBPF CPU with the given configuration.
     pub fn new(config: EbpfConfig) -> Self {
+        let mut regs = EbpfRegisters::default();
+        let stack_size = if config
+            .dialect
+            .sbpf_version()
+            .is_some_and(|v| v.manual_stack_frame_bump())
+        {
+            config
+                .stack_frame_size
+                .saturating_mul(config.max_call_depth as u64)
+        } else {
+            config.stack_frame_size
+        };
+        regs.r[FRAME_PTR_REG as usize] = MM_STACK_START.saturating_add(stack_size);
         Self {
-            regs: EbpfRegisters::default(),
+            regs,
             config,
             call_frames: Vec::new(),
             insn_count: 0,
@@ -328,7 +343,14 @@ impl EbpfCpu {
         let endian = self.config.endian;
 
         match insn.op {
-            EbpfOp::LoadImm64 { dst, imm64, .. } => {
+            EbpfOp::LoadImm64 {
+                dst,
+                src_type,
+                imm64,
+            } => {
+                if self.config.dialect == EbpfDialect::Rfc9669 && src_type != 0 {
+                    return Err(EbpfTrap::UnsupportedPseudoLoad { pc, src_type });
+                }
                 self.regs.r[dst as usize] = imm64;
             }
 

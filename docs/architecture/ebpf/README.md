@@ -11,10 +11,10 @@ The eBPF path in `rax` implements instruction decoding, canonical disassembly, d
 - **`EbpfDialect::Rfc9669`** — IETF RFC 9669 / Linux kernel v1–v4 (`Endian::Little` and `Endian::Big`), including:
   - 64-bit (`ALU64`) and 32-bit (`ALU32`) arithmetic/logic, `MOVSX` (8/16/32-bit sign-extending moves), `SDIV`/`SMOD` (`offset == 1`), and `BPF_END` (`TO_LE`, `TO_BE`, `BSWAP16/32/64`);
   - 64-bit (`JMP`) and 32-bit (`JMP32`) conditional branches, `JA` (`0x05`), `JA32` (`0x06`), helper calls (`src_reg == 0`), and BPF-to-BPF pseudo calls (`src_reg == 1`);
-  - `LDDW` (`0x18`) 128-bit wide immediate loads and pseudo-FD/map-value forms;
+  - `LDDW` (`0x18`) 128-bit wide constant loads; subtypes 1-6 decode for analysis but execution and lifting explicitly reject them without a platform resolver;
   - unsigned (`LDX_MEM`) and sign-extending (`LDX_MEMSX`) loads, `ST_MEM`, `STX_MEM`, and `BPF_ATOMIC` (`ADD`, `OR`, `AND`, `XOR` with/without `FETCH`, `XCHG`, and `CMPXCHG`).
-- **`EbpfDialect::SolanaSbpf(SbpfVersion::V0..=V4)`** — Solana Bytecode Format across `V0`, `V1`, `V2`, `V3`, and `V4`:
-  - **`V0` / `V1`**: 32-bit `ALU32` operations sign-extend their 32-bit result to 64 bits except `MOV32_IMM`, `MOV32_REG`, `LMUL32`, `UDIV32`, and `UREM32`; `R10` is read-only with 4 KiB virtual stack frame gaps.
+- **`EbpfDialect::Solana(SbpfVersion::V0..=V4)`** — Solana Bytecode Format across `V0`, `V1`, `V2`, `V3`, and `V4`:
+  - **`V0` / `V1`**: 32-bit `ALU32` operations sign-extend their 32-bit result to 64 bits except `MOV32_IMM`, `MOV32_REG`, `LMUL32`, `UDIV32`, and `UREM32`; `R10` is read-only in V0, which supports 4 KiB stack gaps. V1 uses manual frame adjustment via `ADD64_IMM r10, imm`.
   - **`V2`**: Enables `PQR` multiply/divide/remainder instructions (`LMUL32/64`, `UHMUL64`, `SHMUL64`, `UDIV32/64`, `UREM32/64`, `SDIV32/64`, `SREM32/64`), swaps `SUB32_IMM`/`SUB64_IMM` operand order to `dst = imm - dst`, zero-extends `ADD32`/`SUB32`/`MUL32`, replaces `LDDW` with `HOR64_IMM` (`0xF7`), relocates memory load/store opcodes (`0xX2`/`0xX3`/`0xX7`/`0xX8`/`0xXC`/`0xXD`), and permits dynamic stack-frame adjustments via `ADD64_IMM r10, imm`.
   - **`V3` / `V4`**: Enables `JMP32` (`0xX6`) and disables legacy PQR/Bswap opcodes superseded in later `SBPF` revisions.
 
@@ -23,8 +23,8 @@ The eBPF path in `rax` implements instruction decoding, canonical disassembly, d
 The exported state (`EbpfRegisters` / `EbpfCpuState`) consists of:
 
 - `R0`–`R9` general-purpose 64-bit registers (`R0` return value, `R1`–`R5` call arguments, `R6`–`R9` callee-saved);
-- `R10` frame/stack pointer (read-only in RFC 9669 and `SBPF` `V0`/`V1`; adjustable by aligned `ADD64_IMM` in `SBPF` `V2`+);
-- `PC` instruction-slot counter (8 bytes per slot; `LDDW` occupies 2 slots);
+- `R10` frame/stack pointer (read-only in RFC 9669 and `SBPF` `V0`/`V3`/`V4`; adjustable by `ADD64_IMM` only in `SBPF` `V1`/`V2`);
+- `PC` byte address (8 bytes per slot; `LDDW` occupies 2 slots);
 - bounded internal call stack for BPF-to-BPF / SBPF internal calls;
 - compute-unit / instruction-meter budget.
 
@@ -33,7 +33,7 @@ For Solana workloads, `SbpfMemoryMapping` (`src/isa/ebpf/memory.rs`) models the 
 | Segment | Base address | Access |
 |---|---|---|
 | Program / RODATA | `0x1_0000_0000` | Read-only |
-| Stack | `0x2_0000_0000` | Read-write (`V0`/`V1` 4 KiB frame gaps or `V2`+ contiguous) |
+| Stack | `0x2_0000_0000` | Read-write (`V0` optional 4 KiB frame gaps; `V1`-`V4` contiguous) |
 | Heap | `0x3_0000_0000` | Read-write |
 | Input / Accounts | `0x4_0000_0000` | Read-write or read-only per region |
 
@@ -57,3 +57,13 @@ cargo run --bin rax_isa_oracle -- --arch sbpf --mode le,sbpf-v2 --seeded-effects
 | `isa_oracle` | Public JSON decode, SMIR lift, and seeded concrete execution side effects |
 
 Primary specifications and reference sources are stored under [`docs/specifications/ebpf/`](../../specifications/ebpf/PROVENANCE.md).
+
+RFC decoding rejects nonzero unused fields. SBPF decoding preserves the reference
+interpreter's ignored-field behavior. Calls preserve r6-r9 and r10; V0 advances r10
+by one frame plus an optional gap, V1/V2 leave adjustment to the program, and V3/V4
+advance by one contiguous frame. Manual-frame initial r10 defaults to the top of
+`stack_frame_size * max_call_depth` backing bytes and may be set explicitly when
+the embedding supplies a different stack size.
+
+See [the semantic verification record](verification-2026-10-15.md) for measured
+coverage and limitations.

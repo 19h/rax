@@ -12,6 +12,9 @@ use std::fmt;
 
 use crate::smir::ir::types::Endian;
 
+#[path = "validation.rs"]
+mod validation;
+
 /// Size in bytes of a basic eBPF instruction slot (64 bits).
 pub const INSN_SIZE: usize = 8;
 
@@ -48,7 +51,7 @@ impl SbpfVersion {
     /// per-call frame pointer advances.
     #[inline]
     pub const fn manual_stack_frame_bump(self) -> bool {
-        !matches!(self, Self::V0)
+        matches!(self, Self::V1 | Self::V2)
     }
 
     /// Fixed stack frame gaps between call frames (`V0` only).
@@ -498,6 +501,16 @@ fn validate_reg(reg: u8) -> Result<u8, EbpfDecodeError> {
 
 /// Decode one eBPF or Solana SBPF instruction from `bytes`.
 pub fn decode_insn(
+    bytes: &[u8],
+    dialect: EbpfDialect,
+    endian: Endian,
+) -> Result<EbpfInsn, EbpfDecodeError> {
+    let insn = decode_fields(bytes, dialect, endian)?;
+    validation::validate(&insn, dialect)?;
+    Ok(insn)
+}
+
+fn decode_fields(
     bytes: &[u8],
     dialect: EbpfDialect,
     endian: Endian,

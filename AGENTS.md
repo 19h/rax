@@ -556,8 +556,8 @@ A-profile implementation merely because both execute Thumb encodings.
   slot invariants (`opcode == 0`, `dst_reg == 0`, `src_reg == 0`, `offset == 0`)
   and rejects for truncated or jumped-into second slots.
 - Enforce `R10` frame-pointer read-only constraints in `Rfc9669` and
-  `SbpfVersion::V0..=V1`, while allowing dynamic stack frame adjustments
-  (`ADD64_IMM r10, imm`) in `SbpfVersion::V2..=V4`.
+  `SbpfVersion::V0`, `V3`, `V4`, while allowing dynamic stack frame adjustments
+  (`ADD64_IMM r10, imm`) in `SbpfVersion::V1` and `V2`.
 - Distinguish `Rfc9669` untyped division/modulo semantics (division by zero sets
   `dst = 0`, modulo by zero leaves `dst` unchanged, signed `MIN / -1` wraps to
   `MIN` and `MIN % -1` produces `0` without trapping) from Solana `SBPF`
@@ -569,7 +569,7 @@ A-profile implementation merely because both execute Thumb encodings.
   opcodes (`0xX2`/`0xX3`/`0xX7`/`0xX8`/`0xXC`/`0xXD`), `HOR64_IMM`, and
   `V3`/`V4` `JMP32`.
 - Model `SbpfMemoryMapping` 4 GiB segmented regions (`0x100000000` program/RODATA,
-  `0x200000000` stack with V0/V1 4 KiB frame gaps vs V2+ contiguous stack,
+  `0x200000000` stack with optional V0 4 KiB frame gaps vs V1+ contiguous stack,
   `0x300000000` heap, `0x400000000` input) and test unmapped, read-only, and
   unaligned fault paths.
 
