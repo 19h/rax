@@ -125,4 +125,38 @@ Native eBPF execution remains outside admission.
 
 Group 3 gates: `ebpf_smir_lift` 18 passed, `ebpf_diff` 5 passed (LLVM MC
 executed), `isa_oracle` 80 passed, portable library 7788 passed / 2 ignored.
-The two ignored tests are pre-existing explicit opt-in hardware probes.
+The two ignored tests are pre-existing full-microkernel lowering/roundtrip probes.
+
+## Group 4: atomic transactions and byte order
+
+Findings 3 and 5 are dynamically confirmed and corrected. Baseline four-thread
+increments yielded 6227 instead of 16384 (32-bit little-endian). The baseline
+big-endian atomic matrix diverged in memory bytes. Byte-only custom memory
+accepted interruptible atomics, and a failed direct CAS bypassed write permission.
+All four regressions failed before implementation.
+
+The direct memory trait now requires an indivisible transaction or rejects the
+operation. Shared GuestMemoryMmap uses checked vm-memory atomic references and
+sequentially consistent CAS. A global transaction lock prevents overlapping
+mixed-width atomics between eBPF contexts; no guest callback runs under that lock.
+The vm-memory () bitmap needs no explicit dirty notification. Private memory uses
+exclusive mutable ownership. SMIR uses the marker's guest byte order, translates
+CAS expected/replacement/previous values, and implements big-endian arithmetic
+RMW by a backend CAS loop. With k failed CAS attempts, time is O(k+1), space O(1);
+contention imposes no finite retry bound.
+
+Tests cover all 10 atomic immediate forms, both byte orders, both widths, zero,
+all-ones, asymmetric byte patterns, overflow, successful/failed comparisons,
+fetch results, register aliases, concurrent direct increments, and concurrent
+SMIR big-endian RMW. Additional segmented-memory generic atomic NEG/NAND/MIN/MAX
+operations silently returned the unchanged value; an observed temporary reversal
+failed NEG32 (3 instead of 4294967293), and the exhaustive implementation passes.
+A3 is confirmed for the tested shared backends. Custom backends retain the
+responsibility to implement indivisible underlying SMIR atomic primitives.
+
+Group 4 gates: ebpf_smir_lift 25 passed, ebpf_diff 5 passed, isa_oracle 80 passed.
+
+Bounded opportunity, medium impact, non-blocking: replace the shared-memory global
+transaction lock with region/address synchronization if throughput measurements
+justify it, while retaining mixed-width overlap exclusion. External host access
+must obey the backend's atomic/memory contract.

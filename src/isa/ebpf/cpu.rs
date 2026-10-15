@@ -326,60 +326,23 @@ impl EbpfCpu {
             } => {
                 let addr = (self.regs.r[base as usize] as i64).wrapping_add(i64::from(off)) as u64;
                 let old = mem
-                    .load(addr, width, false, endian)
+                    .atomic(
+                        addr,
+                        width,
+                        endian,
+                        kind,
+                        self.regs.r[src as usize],
+                        self.regs.r[0],
+                    )
                     .map_err(|fault| EbpfTrap::MemoryFault { pc, fault })?;
-                let mask = match width {
-                    EbpfMemWidth::B4 => 0xffff_ffffu64,
-                    _ => u64::MAX,
-                };
-                let old_m = old & mask;
-                let src_m = self.regs.r[src as usize] & mask;
                 match kind {
-                    AtomicKind::Add { fetch } => {
-                        let new_m = old_m.wrapping_add(src_m) & mask;
-                        mem.store(addr, new_m, width, endian)
-                            .map_err(|fault| EbpfTrap::MemoryFault { pc, fault })?;
-                        if fetch {
-                            self.regs.r[src as usize] = old_m;
-                        }
-                    }
-                    AtomicKind::Or { fetch } => {
-                        let new_m = (old_m | src_m) & mask;
-                        mem.store(addr, new_m, width, endian)
-                            .map_err(|fault| EbpfTrap::MemoryFault { pc, fault })?;
-                        if fetch {
-                            self.regs.r[src as usize] = old_m;
-                        }
-                    }
-                    AtomicKind::And { fetch } => {
-                        let new_m = (old_m & src_m) & mask;
-                        mem.store(addr, new_m, width, endian)
-                            .map_err(|fault| EbpfTrap::MemoryFault { pc, fault })?;
-                        if fetch {
-                            self.regs.r[src as usize] = old_m;
-                        }
-                    }
-                    AtomicKind::Xor { fetch } => {
-                        let new_m = (old_m ^ src_m) & mask;
-                        mem.store(addr, new_m, width, endian)
-                            .map_err(|fault| EbpfTrap::MemoryFault { pc, fault })?;
-                        if fetch {
-                            self.regs.r[src as usize] = old_m;
-                        }
-                    }
-                    AtomicKind::Xchg => {
-                        mem.store(addr, src_m, width, endian)
-                            .map_err(|fault| EbpfTrap::MemoryFault { pc, fault })?;
-                        self.regs.r[src as usize] = old_m;
-                    }
-                    AtomicKind::Cmpxchg => {
-                        let exp_m = self.regs.r[0] & mask;
-                        if old_m == exp_m {
-                            mem.store(addr, src_m, width, endian)
-                                .map_err(|fault| EbpfTrap::MemoryFault { pc, fault })?;
-                        }
-                        self.regs.r[0] = old_m;
-                    }
+                    AtomicKind::Add { fetch: true }
+                    | AtomicKind::Or { fetch: true }
+                    | AtomicKind::And { fetch: true }
+                    | AtomicKind::Xor { fetch: true }
+                    | AtomicKind::Xchg => self.regs.r[src as usize] = old,
+                    AtomicKind::Cmpxchg => self.regs.r[0] = old,
+                    _ => {}
                 }
             }
 

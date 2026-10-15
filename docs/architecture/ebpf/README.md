@@ -86,3 +86,13 @@ entries; unknown indirect targets remain explicit BlockNotFound frontiers until
 the embedding registers/lifts their code. A lifted function contains the reachable
 subprogram closure; `guest_range` is its minimum-to-maximum decoded byte extent.
 It does not assert that every byte inside a sparse range is an instruction.
+
+`EbpfMemory::atomic` is the indivisible transaction contract; byte-only custom
+backends reject it by default. Private FlatMemory and segmented mappings execute
+under exclusive mutable ownership. Shared GuestMemoryMmap transactions use checked
+32/64-bit host atomics and serialize overlapping mixed-width accesses. Host atomic
+users outside this interface must use a consistent width for an object. SMIR guest
+boundary metadata selects atomic byte order; big-endian arithmetic RMW uses a CAS
+loop, and compare-exchange converts both operands and the returned previous value.
+Failed comparisons still require writable memory. Shared host atomics require
+natural host alignment and reject unsupported/misaligned accesses before updates.

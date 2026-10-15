@@ -343,7 +343,18 @@ impl SmirInterpreter {
             } => {
                 let effective_addr = self.compute_address(ctx, addr);
                 let operand = ctx.read_vreg(*src);
-                let old = memory.atomic_rmw(effective_addr, *op, operand, *width, *order)?;
+                let old = if let ArchRegState::Ebpf(state) = &ctx.arch_regs {
+                    memory.atomic_rmw_endian(
+                        effective_addr,
+                        *op,
+                        operand,
+                        *width,
+                        *order,
+                        state.config.endian,
+                    )?
+                } else {
+                    memory.atomic_rmw(effective_addr, *op, operand, *width, *order)?
+                };
                 ctx.write_vreg(*dst, old);
             }
 
@@ -359,15 +370,27 @@ impl SmirInterpreter {
                 let effective_addr = self.compute_address(ctx, addr);
                 let exp = ctx.read_vreg(*expected);
                 let new = ctx.read_vreg(*new_val);
-                memory.probe(effective_addr, width.bytes() as usize, true)?;
-                let (old, succ) = memory.compare_and_swap(
-                    effective_addr,
-                    exp,
-                    new,
-                    *width,
-                    *order,
-                    order.cas_failure(),
-                )?;
+                let (old, succ) = if let ArchRegState::Ebpf(state) = &ctx.arch_regs {
+                    memory.compare_and_swap_endian(
+                        effective_addr,
+                        exp,
+                        new,
+                        *width,
+                        *order,
+                        order.cas_failure(),
+                        state.config.endian,
+                    )?
+                } else {
+                    memory.probe(effective_addr, width.bytes() as usize, true)?;
+                    memory.compare_and_swap(
+                        effective_addr,
+                        exp,
+                        new,
+                        *width,
+                        *order,
+                        order.cas_failure(),
+                    )?
+                };
                 ctx.write_vreg(*dst, old);
                 ctx.write_vreg(*success, if succ { 1 } else { 0 });
             }

@@ -5,7 +5,10 @@ use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 #[path = "layout.rs"]
 mod layout;
 
-use crate::isa::ebpf::decode::EbpfMemWidth;
+#[path = "atomics.rs"]
+mod atomics;
+
+use crate::isa::ebpf::decode::{AtomicKind, EbpfMemWidth};
 use crate::smir::ir::memory::{FlatMemory, MemoryError, SmirMemory};
 use crate::smir::ir::types::Endian;
 
@@ -43,6 +46,26 @@ pub struct EbpfMemFault {
 
 /// Abstract byte-addressable guest memory for the eBPF / Solana SBPF interpreter.
 pub trait EbpfMemory {
+    /// One indivisible guest-order atomic transaction, returning the old value.
+    /// Custom/shared backends must override this method. A byte-only backend
+    /// rejects atomics rather than synthesizing an interruptible load/store.
+    fn atomic(
+        &mut self,
+        addr: u64,
+        width: EbpfMemWidth,
+        endian: Endian,
+        kind: AtomicKind,
+        operand: u64,
+        expected: u64,
+    ) -> Result<u64, EbpfMemFault> {
+        let _ = (endian, kind, operand, expected);
+        Err(EbpfMemFault {
+            addr,
+            size: width.bytes(),
+            write: true,
+        })
+    }
+
     /// Read `buf.len()` bytes starting at `addr`.
     fn read_bytes(&mut self, addr: u64, buf: &mut [u8]) -> Result<(), EbpfMemFault>;
 
@@ -132,6 +155,18 @@ pub trait EbpfMemory {
 }
 
 impl EbpfMemory for FlatMemory {
+    fn atomic(
+        &mut self,
+        addr: u64,
+        width: EbpfMemWidth,
+        endian: Endian,
+        kind: AtomicKind,
+        operand: u64,
+        expected: u64,
+    ) -> Result<u64, EbpfMemFault> {
+        atomics::private_memory(self, addr, width, endian, kind, operand, expected)
+    }
+
     fn read_bytes(&mut self, addr: u64, buf: &mut [u8]) -> Result<(), EbpfMemFault> {
         SmirMemory::read(self, addr, buf).map_err(|_| EbpfMemFault {
             addr,
@@ -150,6 +185,18 @@ impl EbpfMemory for FlatMemory {
 }
 
 impl EbpfMemory for GuestMemoryMmap {
+    fn atomic(
+        &mut self,
+        addr: u64,
+        width: EbpfMemWidth,
+        endian: Endian,
+        kind: AtomicKind,
+        operand: u64,
+        expected: u64,
+    ) -> Result<u64, EbpfMemFault> {
+        atomics::shared_memory(self, addr, width, endian, kind, operand, expected)
+    }
+
     fn read_bytes(&mut self, addr: u64, buf: &mut [u8]) -> Result<(), EbpfMemFault> {
         self.read_slice(buf, GuestAddress(addr))
             .map_err(|_| EbpfMemFault {
@@ -170,6 +217,18 @@ impl EbpfMemory for GuestMemoryMmap {
 }
 
 impl EbpfMemory for &GuestMemoryMmap {
+    fn atomic(
+        &mut self,
+        addr: u64,
+        width: EbpfMemWidth,
+        endian: Endian,
+        kind: AtomicKind,
+        operand: u64,
+        expected: u64,
+    ) -> Result<u64, EbpfMemFault> {
+        atomics::shared_memory(self, addr, width, endian, kind, operand, expected)
+    }
+
     fn read_bytes(&mut self, addr: u64, buf: &mut [u8]) -> Result<(), EbpfMemFault> {
         self.read_slice(buf, GuestAddress(addr))
             .map_err(|_| EbpfMemFault {
@@ -326,6 +385,18 @@ impl SbpfMemoryMapping {
 }
 
 impl EbpfMemory for SbpfMemoryMapping {
+    fn atomic(
+        &mut self,
+        addr: u64,
+        width: EbpfMemWidth,
+        endian: Endian,
+        kind: AtomicKind,
+        operand: u64,
+        expected: u64,
+    ) -> Result<u64, EbpfMemFault> {
+        atomics::private_memory(self, addr, width, endian, kind, operand, expected)
+    }
+
     fn read_bytes(&mut self, addr: u64, buf: &mut [u8]) -> Result<(), EbpfMemFault> {
         let slice = self.find_slice(addr, buf.len())?;
         buf.copy_from_slice(slice);
@@ -403,7 +474,18 @@ impl SmirMemory for SbpfMemoryMapping {
             crate::smir::ir::types::AtomicOp::Or => old_m | o,
             crate::smir::ir::types::AtomicOp::Xor => old_m ^ o,
             crate::smir::ir::types::AtomicOp::Swap => o,
-            _ => old_m,
+            crate::smir::ir::types::AtomicOp::Neg => 0u64.wrapping_sub(old_m),
+            crate::smir::ir::types::AtomicOp::Nand => !(old_m & o),
+            crate::smir::ir::types::AtomicOp::Umin => old_m.min(o),
+            crate::smir::ir::types::AtomicOp::Umax => old_m.max(o),
+            crate::smir::ir::types::AtomicOp::Min | crate::smir::ir::types::AtomicOp::Max => {
+                let signed = |v: u64| ((v << (64 - bits)) as i64) >> (64 - bits);
+                if op == crate::smir::ir::types::AtomicOp::Min {
+                    signed(old_m).min(signed(o)) as u64
+                } else {
+                    signed(old_m).max(signed(o)) as u64
+                }
+            }
         } & mask;
         self.atomic_store(addr, new, size, order)?;
         Ok(old_m)

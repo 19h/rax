@@ -4,6 +4,9 @@
 
 use crate::smir::ir::types::*;
 
+#[path = "endian_atomic.rs"]
+mod endian_atomic;
+
 // ============================================================================
 // Memory Error
 // ============================================================================
@@ -78,6 +81,44 @@ impl std::error::Error for MemoryError {}
 
 /// Memory interface for SMIR execution
 pub trait SmirMemory: Send {
+    /// Guest-order RMW. Big-endian arithmetic uses a CAS loop over the
+    /// backend's indivisible little-endian atomic primitives.
+    fn atomic_rmw_endian(
+        &mut self,
+        addr: GuestAddr,
+        op: AtomicOp,
+        operand: u64,
+        size: MemWidth,
+        order: MemoryOrder,
+        endian: Endian,
+    ) -> Result<u64, MemoryError> {
+        endian_atomic::rmw(self, addr, op, operand, size, order, endian)
+    }
+
+    /// Guest-order compare/exchange with a write-permission check on failure.
+    #[allow(clippy::too_many_arguments)]
+    fn compare_and_swap_endian(
+        &mut self,
+        addr: GuestAddr,
+        expected: u64,
+        new: u64,
+        size: MemWidth,
+        success_order: MemoryOrder,
+        failure_order: MemoryOrder,
+        endian: Endian,
+    ) -> Result<(u64, bool), MemoryError> {
+        endian_atomic::compare_exchange(
+            self,
+            addr,
+            expected,
+            new,
+            size,
+            success_order,
+            failure_order,
+            endian,
+        )
+    }
+
     /// Read bytes from memory
     fn read(&mut self, addr: GuestAddr, buf: &mut [u8]) -> Result<(), MemoryError>;
 
