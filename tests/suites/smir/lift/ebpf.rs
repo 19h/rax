@@ -24,6 +24,8 @@ use rax::smir::{EbpfLifter, ExitReason, SmirContext, SmirInterpreter};
 
 #[path = "ebpf_review_decode.rs"]
 mod review_decode;
+#[path = "ebpf_review_memory.rs"]
+mod review_memory;
 
 struct CodeSlice<'a>(&'a [u8]);
 

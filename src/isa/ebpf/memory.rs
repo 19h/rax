@@ -2,6 +2,9 @@
 
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
+#[path = "layout.rs"]
+mod layout;
+
 use crate::isa::ebpf::decode::EbpfMemWidth;
 use crate::smir::ir::memory::{FlatMemory, MemoryError, SmirMemory};
 use crate::smir::ir::types::Endian;
@@ -236,7 +239,10 @@ impl SbpfMemoryMapping {
         Self { regions }
     }
 
-    /// Create a standard Solana SBPF 5-region virtual address map (`MM_RODATA_START`,
+    /// Create a V3/V4 convenience map with rodata at address zero.
+    /// Use `new_solana_with_config` for versioned executable layouts.
+    ///
+    /// Creates a 5-region virtual address map (`MM_RODATA_START`,
     /// `MM_BYTECODE_START`, `MM_STACK_START`, `MM_HEAP_START`, `MM_INPUT_START`).
     pub fn new_solana_default(
         bytecode: &[u8],
@@ -254,7 +260,7 @@ impl SbpfMemoryMapping {
         map
     }
 
-    /// Add or replace a memory region at `vm_addr`.
+    /// Add a memory region at `vm_addr`. Raw mappings must not overlap.
     pub fn add_region(&mut self, vm_addr: u64, data: Vec<u8>, writable: bool) {
         self.regions.push(SbpfMemoryRegion {
             vm_addr,

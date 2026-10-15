@@ -32,7 +32,8 @@ For Solana workloads, `SbpfMemoryMapping` (`src/isa/ebpf/memory.rs`) models the 
 
 | Segment | Base address | Access |
 |---|---|---|
-| Program / RODATA | `0x1_0000_0000` | Read-only |
+| Program text | `0x1_0000_0000` | Read-only |
+| RODATA | Executable address in segment 1 (V0-V2), segment 0 (V3/V4) | Read-only |
 | Stack | `0x2_0000_0000` | Read-write (`V0` optional 4 KiB frame gaps; `V1`-`V4` contiguous) |
 | Heap | `0x3_0000_0000` | Read-write |
 | Input / Accounts | `0x4_0000_0000` | Read-write or read-only per region |
@@ -67,3 +68,10 @@ the embedding supplies a different stack size.
 
 See [the semantic verification record](verification-2026-10-15.md) for measured
 coverage and limitations.
+
+`SbpfMemoryMapping::new_solana_with_config` accepts an explicit rodata address
+and an `EbpfConfig`, constructs V0 gaps when enabled, and rejects inconsistent
+text/rodata overlap. `new_solana_default` is the V3/V4 convenience layout with
+rodata at address zero. `with_regions` remains the raw embedding-controlled map.
+For a V0 gapped stack with 4096-byte frames, backing frame i starts at
+`MM_STACK_START + i * 8192`; the following 4096 virtual bytes are inaccessible.

@@ -76,3 +76,22 @@ but deliberately return UnsupportedPseudoLoad / LiftError::Unsupported rather
 than invent platform addresses. A2 is confirmed. Manual-frame default initial
 r10 assumes the configuration's full `stack_frame_size * max_call_depth` stack;
 embedders supplying a different backing size must set r10 explicitly.
+
+## Group 2: executable layout and stack gaps
+
+Findings 6 and 7 are addressed by a checked version-aware mapping constructor,
+while preserving the original constructor as a documented V3/V4 convenience.
+The rodata address comes from the executable, rather than an invented fixed
+offset. Legacy rodata may contain identical text bytes. Gap reads and legacy
+rodata accesses failed under the original constructor behavior; regression
+matrices cover all versions, gap enable/disable, frame/gap boundaries, writes,
+SMIR reads/probes, lifting reads, permissions, overflow, and contained text.
+
+The mapping requires a memory access to stay within a mapped region, including
+gapped frames. The pinned Anza MemoryRegion::get implementation checks whether
+the starting address lies in a gap, but can allow an unaligned access starting
+in a frame to extend beyond that frame into contiguous host backing. RAX
+intentionally rejects such accesses at the virtual gap boundary. This is a
+stricter mapping contract and a recorded difference from that reference edge.
+For F frames, construction uses O(F) regions; lookup is O(F), memory O(backing
+bytes + F). Contiguous stacks use one region.
