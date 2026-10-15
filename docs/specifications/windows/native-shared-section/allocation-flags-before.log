@@ -1,0 +1,21 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 42.84s
+     Running unittests src/lib.rs (target/debug/deps/rax-754f4d2a527a4423)
+
+running 1 test
+
+thread 'user::windows::process::sched::tests::services_tests::data_section_tests::native_data_section_replays_156_flag_controls_including_original_startup_flags' (10307876) panicked at src/user/windows/process/sched/tests/services_tests/data_section_tests.rs:152:13:
+assertion `left == right` failed: arm64 laa=false {"protect": "00000002", "commit": "0", "offset-present": "0", "case": "23", "width": "8", "offset-in": "0", "base": "25A0B910000", "offset-out": "0", "inherit": "2", "zero": "0", "size-in": "0", "size-out": "1048576", "flags": "00400000", "status": "00000000"}
+  left: 3221225485
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test user::windows::process::sched::tests::services_tests::data_section_tests::native_data_section_replays_156_flag_controls_including_original_startup_flags ... FAILED
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::data_section_tests::native_data_section_replays_156_flag_controls_including_original_startup_flags
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 7798 filtered out; finished in 0.08s
+
+error: test failed, to rerun pass `--lib`

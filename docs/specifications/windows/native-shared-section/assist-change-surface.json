@@ -1,0 +1,18 @@
+{
+  "plugin-lifecycle": "unaffected: existing native-library profile constructs the extended runtime snapshot; no plugin lifecycle source changed",
+  "ui-state": "unaffected: no Qt/UI source or state contract changed",
+  "conversation-lane": "unaffected: existing tool result/error transport, no lane/history change",
+  "agent-backend": "affected through embedded RAX runtime only; native and ACP callers use the unchanged C ABI/tool factory",
+  "prompt-context": "unaffected: no prompt/context sources changed",
+  "tool-schema": "unaffected: nine current C++ consumers retain exact recorded hashes; no factory/schema change",
+  "permission-mutation": "native-library read grant now captures fixed read-only CSR data; guest arguments never reach host APIs; no IDB mutation",
+  "main-thread-dispatch": "unaffected: process engine/host-input code uses no IDA/Qt callbacks",
+  "mesh-mcp": "unaffected: existing bridge and tool schema; scoped CLI/MCP/manifest gates refreshed",
+  "transport-crypto": "unaffected: no framing, local endpoint, secret or crypto change",
+  "persistence": "unaffected: runtime-only snapshots and handles; no persisted schema/settings changes",
+  "sdk-abi": "C ABI/layout/version unchanged; owning drift/link consumers rebuilt",
+  "optional-engines": "RAX affected with empty core features; no Z3/Frida/debugger policy change",
+  "update-release": "unaffected: no release grammar/archive layout/runtime artifact introduced; host data is acquired at runtime",
+  "targets-platforms": "portable model compiled/run macOS ARM64,Linux amd64 container,Windows ARM64; installed acquisition/leaves run Windows; fixed native controls include ARM64,x64,x86,x86-laa",
+  "tests-docs": "affected:17 native producers,532 control replays,6 controlled corpus rejections; scoped embeddings and explicit ordinary-startup frontier"
+}

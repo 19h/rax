@@ -1,0 +1,455 @@
+{
+  "captured-utc": "2026-10-15T12:10:14.551221+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "scope": "17 actual producers;532 direct NT controls,208 owned views,36 handle closes;original unmodified-argument startup map and natural exit41",
+  "libraries": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0",
+      "machine": 43620,
+      "characteristics": 8226
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+      "machine": 332,
+      "characteristics": 8450
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df",
+      "machine": 332,
+      "characteristics": 8450
+    }
+  ],
+  "producers": [
+    {
+      "group": "windows-shared-section-grants2",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-grants2-arm64\\native-windows-shared-section-grants2.cpp",
+        "bytes": 6256,
+        "sha256": "71642c76b35394f22c75e549c2c38ed1c83ff8eb89c698b426e366e14f99ebed"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-grants2-arm64\\native-windows-shared-section-grants2-arm64.exe",
+        "bytes": 148480,
+        "sha256": "74ae52f1df45616144a02c114588206383b823d81b48e7e509a76d1303ea97c8",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-grants2-arm64\\native-windows-shared-section-grants2-arm64.log",
+        "bytes": 8243,
+        "sha256": "aae3011237715e8dee3921710d39ba9b7e222d581b6029bcc0730e6d1e473429"
+      },
+      "cases": 32,
+      "mapped-views": 4,
+      "closed-handles": 6
+    },
+    {
+      "group": "windows-shared-section-grants2",
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-grants2-x64\\native-windows-shared-section-grants2.cpp",
+        "bytes": 6256,
+        "sha256": "71642c76b35394f22c75e549c2c38ed1c83ff8eb89c698b426e366e14f99ebed"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-grants2-x64\\native-windows-shared-section-grants2-x64.exe",
+        "bytes": 146432,
+        "sha256": "07a5bc39d71cbaddf608db8e813ef6ed2c55c7acb0bf4b76ae79b3fc550ab8f9",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-grants2-x64\\native-windows-shared-section-grants2-x64.log",
+        "bytes": 8243,
+        "sha256": "b0a0166717be18626a6b8cf9528f49195b52535668b4eaf7e7135cdeaf143d04"
+      },
+      "cases": 32,
+      "mapped-views": 4,
+      "closed-handles": 6
+    },
+    {
+      "group": "windows-shared-section-grants2",
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-grants2-x86\\native-windows-shared-section-grants2.cpp",
+        "bytes": 6256,
+        "sha256": "71642c76b35394f22c75e549c2c38ed1c83ff8eb89c698b426e366e14f99ebed"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-grants2-x86\\native-windows-shared-section-grants2-x86.exe",
+        "bytes": 121856,
+        "sha256": "17aad664a163701942425b2841408f3d38f2268729bcc7052817a879e179e05f",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-grants2-x86\\native-windows-shared-section-grants2-x86.log",
+        "bytes": 8081,
+        "sha256": "c2cd95292013a9c8fd9f85b3824b0bd65698819740d8dc78b7bcd4f5e8c62001"
+      },
+      "cases": 32,
+      "mapped-views": 4,
+      "closed-handles": 6
+    },
+    {
+      "group": "windows-shared-section-grants2",
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-grants2-x86-laa\\native-windows-shared-section-grants2.cpp",
+        "bytes": 6256,
+        "sha256": "71642c76b35394f22c75e549c2c38ed1c83ff8eb89c698b426e366e14f99ebed"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-grants2-x86-laa\\native-windows-shared-section-grants2-x86-laa.exe",
+        "bytes": 121856,
+        "sha256": "0fcbde8a797f2c65dbfcd3768beea29c23c69962cd3b883e528ef2f4a304ae59",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-grants2-x86-laa\\native-windows-shared-section-grants2-x86-laa.log",
+        "bytes": 8081,
+        "sha256": "d1573a3ca8ebfc46e3215c946a327d0a9d6b9f47ce0ff8305cf46ae5673c5d58"
+      },
+      "cases": 32,
+      "mapped-views": 4,
+      "closed-handles": 6
+    },
+    {
+      "group": "windows-shared-section-geometry",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-geometry-arm64\\native-windows-shared-section-geometry.cpp",
+        "bytes": 6075,
+        "sha256": "28881491716b5c10a7d7ab8e33aecb555bbc9171da2a931107763a67ac706bd0"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-geometry-arm64\\native-windows-shared-section-geometry-arm64.exe",
+        "bytes": 150016,
+        "sha256": "c3772adf6a88ad295fdddf5b1b504f9b7d0a7872cc7b0fe42dd1d436e48dbc69",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-geometry-arm64\\native-windows-shared-section-geometry-arm64.log",
+        "bytes": 52253,
+        "sha256": "c43d7755dacce629347628017a0794b503f7e65717e3250e73a1ecb65937001f"
+      },
+      "cases": 40,
+      "mapped-views": 20,
+      "closed-handles": 1
+    },
+    {
+      "group": "windows-shared-section-geometry",
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-geometry-x64\\native-windows-shared-section-geometry.cpp",
+        "bytes": 6075,
+        "sha256": "28881491716b5c10a7d7ab8e33aecb555bbc9171da2a931107763a67ac706bd0"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-geometry-x64\\native-windows-shared-section-geometry-x64.exe",
+        "bytes": 148992,
+        "sha256": "c2209a82dd50be65be356634dcde595a0da79434ec5c35157a32082629ac6420",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-geometry-x64\\native-windows-shared-section-geometry-x64.log",
+        "bytes": 52253,
+        "sha256": "493520cc1a02f3366a29e65c5f82d13fe737fd02d878621e10351b06b6af93ab"
+      },
+      "cases": 40,
+      "mapped-views": 20,
+      "closed-handles": 1
+    },
+    {
+      "group": "windows-shared-section-geometry",
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-geometry-x86\\native-windows-shared-section-geometry.cpp",
+        "bytes": 6075,
+        "sha256": "28881491716b5c10a7d7ab8e33aecb555bbc9171da2a931107763a67ac706bd0"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-geometry-x86\\native-windows-shared-section-geometry-x86.exe",
+        "bytes": 123904,
+        "sha256": "46d1c596ae1002947923db5c67998d33ada93aa3d7f9a42bd08eb329e36d30e8",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-geometry-x86\\native-windows-shared-section-geometry-x86.log",
+        "bytes": 52177,
+        "sha256": "60422e3802f6291a3e507a3da3f3e9961abf0463a65f33c8cf10faedff619b02"
+      },
+      "cases": 40,
+      "mapped-views": 20,
+      "closed-handles": 1
+    },
+    {
+      "group": "windows-shared-section-geometry",
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-geometry-x86-laa\\native-windows-shared-section-geometry.cpp",
+        "bytes": 6075,
+        "sha256": "28881491716b5c10a7d7ab8e33aecb555bbc9171da2a931107763a67ac706bd0"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-geometry-x86-laa\\native-windows-shared-section-geometry-x86-laa.exe",
+        "bytes": 123904,
+        "sha256": "2fd0d791bdd434ff4ddd1e55d0ace0361e0ede938d1cfda1c07fa4365a64ede2",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-geometry-x86-laa\\native-windows-shared-section-geometry-x86-laa.log",
+        "bytes": 52177,
+        "sha256": "7ea915ffda7a8ea8a7ea079f0d6d023a42ad92ff23af899e0d64fa5468c54f4c"
+      },
+      "cases": 40,
+      "mapped-views": 20,
+      "closed-handles": 1
+    },
+    {
+      "group": "windows-shared-section-protect",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-protect-arm64\\native-windows-shared-section-protect.cpp",
+        "bytes": 3725,
+        "sha256": "3f7ed71d95a9b33ccb96ce686c2251c30872590d5f283ba787b21b04fbffd06c"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-protect-arm64\\native-windows-shared-section-protect-arm64.exe",
+        "bytes": 145920,
+        "sha256": "35937316a8e11cd2999e5a37306b59f4f395ad960f79c7b1cf20d770a708ed72",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-protect-arm64\\native-windows-shared-section-protect-arm64.log",
+        "bytes": 3788,
+        "sha256": "4e0303199eb13d1968595b9a82bd9f0997baae167e68e4134edcaf536fc64be2"
+      },
+      "cases": 22,
+      "mapped-views": 22,
+      "closed-handles": 1
+    },
+    {
+      "group": "windows-shared-section-protect",
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-protect-x64\\native-windows-shared-section-protect.cpp",
+        "bytes": 3725,
+        "sha256": "3f7ed71d95a9b33ccb96ce686c2251c30872590d5f283ba787b21b04fbffd06c"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-protect-x64\\native-windows-shared-section-protect-x64.exe",
+        "bytes": 143872,
+        "sha256": "a544af551a8d14893a89fbb3672b42a23c061ac597c14d42e7b662a5440fbda3",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-protect-x64\\native-windows-shared-section-protect-x64.log",
+        "bytes": 3788,
+        "sha256": "4e0303199eb13d1968595b9a82bd9f0997baae167e68e4134edcaf536fc64be2"
+      },
+      "cases": 22,
+      "mapped-views": 22,
+      "closed-handles": 1
+    },
+    {
+      "group": "windows-shared-section-protect",
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-protect-x86\\native-windows-shared-section-protect.cpp",
+        "bytes": 3725,
+        "sha256": "3f7ed71d95a9b33ccb96ce686c2251c30872590d5f283ba787b21b04fbffd06c"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-protect-x86\\native-windows-shared-section-protect-x86.exe",
+        "bytes": 119296,
+        "sha256": "21176b6e77cfa97aa75c0020a93e1e1d42a866fa6b895cb0a9c380866fc0a04e",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-protect-x86\\native-windows-shared-section-protect-x86.log",
+        "bytes": 3788,
+        "sha256": "36bac39b06f186be7dde3138b9829c857eace2365372f7498095fcf958a26498"
+      },
+      "cases": 22,
+      "mapped-views": 22,
+      "closed-handles": 1
+    },
+    {
+      "group": "windows-shared-section-protect",
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-protect-x86-laa\\native-windows-shared-section-protect.cpp",
+        "bytes": 3725,
+        "sha256": "3f7ed71d95a9b33ccb96ce686c2251c30872590d5f283ba787b21b04fbffd06c"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-protect-x86-laa\\native-windows-shared-section-protect-x86-laa.exe",
+        "bytes": 119296,
+        "sha256": "967b71607133021e25a5b114257e8e0f65758acb052fa811ea26f20946718312",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-protect-x86-laa\\native-windows-shared-section-protect-x86-laa.log",
+        "bytes": 3788,
+        "sha256": "36bac39b06f186be7dde3138b9829c857eace2365372f7498095fcf958a26498"
+      },
+      "cases": 22,
+      "mapped-views": 22,
+      "closed-handles": 1
+    },
+    {
+      "group": "windows-shared-section-flags",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-flags-arm64\\native-windows-shared-section-flags.cpp",
+        "bytes": 6321,
+        "sha256": "e2da806c55af83c30f7eb6a94aa8a607d211a6756507c27112fd37699afde0b9"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-flags-arm64\\native-windows-shared-section-flags-arm64.exe",
+        "bytes": 150016,
+        "sha256": "fce257e6f04735d9208cbaba99d4ea24da96a97ca94d88710fdb3c0e5e5d3cb3",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-flags-arm64\\native-windows-shared-section-flags-arm64.log",
+        "bytes": 48914,
+        "sha256": "2b68287755fa58d7265e0a527d97bfedfae695fb22ea69f8430a5e256337bc22"
+      },
+      "cases": 39,
+      "mapped-views": 6,
+      "closed-handles": 1
+    },
+    {
+      "group": "windows-shared-section-flags",
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-flags-x64\\native-windows-shared-section-flags.cpp",
+        "bytes": 6321,
+        "sha256": "e2da806c55af83c30f7eb6a94aa8a607d211a6756507c27112fd37699afde0b9"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-flags-x64\\native-windows-shared-section-flags-x64.exe",
+        "bytes": 148992,
+        "sha256": "1560532c444730056921e38c2dc6f12f2193a68c19aff178562742528c81d5ae",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-flags-x64\\native-windows-shared-section-flags-x64.log",
+        "bytes": 48914,
+        "sha256": "519e0d92dee84779d41c399b0be6c157a9e0935aeb05a05e50ab35e700287d43"
+      },
+      "cases": 39,
+      "mapped-views": 6,
+      "closed-handles": 1
+    },
+    {
+      "group": "windows-shared-section-flags",
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-flags-x86\\native-windows-shared-section-flags.cpp",
+        "bytes": 6321,
+        "sha256": "e2da806c55af83c30f7eb6a94aa8a607d211a6756507c27112fd37699afde0b9"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-flags-x86\\native-windows-shared-section-flags-x86.exe",
+        "bytes": 123904,
+        "sha256": "4a06a4e0fe204d51cc2ca52a7f8eed0ad4846fc7d54ca625d7ad7b2474997d8c",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-flags-x86\\native-windows-shared-section-flags-x86.log",
+        "bytes": 48890,
+        "sha256": "754a913c4fbb64e13eeda2ec007cbdd48fc9dea23d9fd21f2d2dafd7ab394b72"
+      },
+      "cases": 39,
+      "mapped-views": 6,
+      "closed-handles": 1
+    },
+    {
+      "group": "windows-shared-section-flags",
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-flags-x86-laa\\native-windows-shared-section-flags.cpp",
+        "bytes": 6321,
+        "sha256": "e2da806c55af83c30f7eb6a94aa8a607d211a6756507c27112fd37699afde0b9"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-flags-x86-laa\\native-windows-shared-section-flags-x86-laa.exe",
+        "bytes": 123904,
+        "sha256": "5bbbca1fcfba09c0e74b3211ae98e5fbd43f787969a3e7edca310a68120a9834",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\windows-shared-section-flags-x86-laa\\native-windows-shared-section-flags-x86-laa.log",
+        "bytes": 48890,
+        "sha256": "6c4b7f4469f4ff86a3e4e8395ca25c36a92bc29c59313441aca224068caf28b1"
+      },
+      "cases": 39,
+      "mapped-views": 6,
+      "closed-handles": 1
+    },
+    {
+      "group": "original-first-map",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\shared-section-first-map-arm64\\native-shared-section-first-map.cpp",
+        "bytes": 12491,
+        "sha256": "3b5c073f2be6956eee1d99dfc05c365b35ef816988fff83c121f718529ead408"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\shared-section-first-map-arm64\\native-shared-section-first-map-arm64.exe",
+        "bytes": 175104,
+        "sha256": "cc441b8630c0b704ee3296771eea91b8d824d9da94e9919c1eefcc5ce9c4d995",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\shared-section-first-map-arm64\\native-shared-section-first-map-arm64.log",
+        "bytes": 4421,
+        "sha256": "7c7f5117e8804706c7be3ac6a62aa9dcdd8307fe22a30cd62384918038ec8f3e"
+      },
+      "original-arguments-and-status": true,
+      "natural-child-exit": 41
+    }
+  ],
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-shared-section-final-native.py",
+    "bytes": 4824,
+    "sha256": "a885dad38d9d515790a7cd9be6a32c8143f9899dd4ac3c643f84f267ce9d1b0a"
+  }
+}

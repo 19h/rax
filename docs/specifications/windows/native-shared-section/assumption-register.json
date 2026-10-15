@@ -1,0 +1,47 @@
+[
+  {
+    "id": "S1",
+    "assumption": "The next required section name is \\Windows\\SharedSection",
+    "basis": "Actual read-only guest name trace at turn2114258 with NtOpenSection access4",
+    "dependent-result": "Native control target and next section adapter",
+    "stress-test": "Different DLL, process session, architecture or relative root",
+    "falsification-probe": "Repeat unmodified three-million-turn observer and read actual OBJECT_ATTRIBUTES",
+    "status": "confirmed on current ARM64 smoke sample"
+  },
+  {
+    "id": "S2",
+    "assumption": "The native read-only section can be queried/mapped through owned process-local resources without changing installed state",
+    "basis": "NtOpenSection access4/5, NtMapViewOfSection PAGE_READONLY, current-process view, explicit unmap/close",
+    "dependent-result": "Native section information and data-layout observations",
+    "stress-test": "Access denial, failed mapping, unsupported query class or changed section contents",
+    "falsification-probe": "Actual kernel returns, VirtualQuery protections and release statuses",
+    "status": "confirmed by recorded direct controls and owned read-only map/unmap/close lifecycles; actual Windows runtime/leaf execution passed"
+  },
+  {
+    "id": "S3",
+    "assumption": "The captured section bytes are opaque server data; the client owns address-delta interpretation rather than a generic pointer relocation pass",
+    "basis": "Actual original-argument NtMapViewOfSection capture and native post-map code computes deltas before storing PEB fields; native owned child naturally exited41",
+    "dependent-result": "Immutable data snapshot and view bytes are preserved exactly; CSR server-reply semantics remain unknown",
+    "stress-test": "32-bit guest pointer width, alternate base, encoded heap pointers and reserved pages",
+    "falsification-probe": "Trace actual NTDLL post-map consumers and native layout to establish which fields are remote pointers, local pointers or offsets",
+    "status": "revised; original pointer-rewrite hypothesis rejected; actual consumed CSR reply fields remain a separate frontier"
+  },
+  {
+    "id": "S4",
+    "assumption": "The installed CSR section remains coherent during a bounded pair of read-only captures",
+    "basis": "Two complete region/byte captures must compare equal, at most3 attempts; all host objects/views close before guest use",
+    "dependent-result": "NativeRuntime selected shared-data input",
+    "stress-test": "Concurrent CSRSS allocation/commit or byte mutation, changed grant or unsupported protection",
+    "falsification-probe": "Native capture errors on unequal region/bytes after3 attempts or changed final GrantedAccess",
+    "status": "confirmed on current native Windows snapshot capture and original ARM64/x86 NT section leaf run"
+  },
+  {
+    "id": "S5",
+    "assumption": "Selected data mapping accepts allocation bits0x00500001 with top placement controlled by0x00100000",
+    "basis": "Original native startup passes0x00500000;156 native one-hot/combination controls across four profiles",
+    "dependent-result": "Data map flag validation and original installed leaf argument test",
+    "stress-test": "All32 one-hot bits, invalid combinations, x86 LAA boundary and original raw64-bit ULONG slot",
+    "falsification-probe": "Native status/region replay and captured original argument field8",
+    "status": "confirmed within recorded kernel/profile;initial implementation mask falsified then corrected"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "impact": "high",
+    "finding": "The current image-section model requires query rights and SEC_IMAGE attributes; this object grants read mapping but denies query access",
+    "evidence": "All four native profiles: access4 succeeds, access5 denied; MEM_MAPPED data views",
+    "blocks": "Reusing the existing image section model without a separate data contract"
+  },
+  {
+    "impact": "high",
+    "finding": "Server-address words remain opaque; generic pointer scanning would corrupt native data semantics",
+    "evidence": "Original native post-map caller code plus natural exit41, separate native views with unchanged opaque words",
+    "blocks": "Only a generic relocation design; raw immutable snapshot copies preserve native section bytes"
+  },
+  {
+    "impact": "medium",
+    "finding": "Each1MiB view has5committed pages and251reserved pages",
+    "evidence": "20,480 committed bytes +1,028,096reserved bytes =1,048,576bytes,4KiB pages",
+    "blocks": "Flat mapping or zero-filling the entire extent would change fault semantics"
+  },
+  {
+    "impact": "high",
+    "finding": "NtMapViewOfSection requests that would create commitment beyond the snapshot remain explicit unsupported frontiers; CSR server reply emulation remains unknown",
+    "evidence": "section_map/data.rs commitment guard and absence of CSR/ALPC service implementation",
+    "blocks": "Full ordinary Windows process startup; do not claim Windows guest exit or full-goal completion"
+  },
+  {
+    "impact": "high",
+    "finding": "Darwin advertises pressure2 in both native and emulated control, but native reclaim sampling is1second and emulator10seconds",
+    "evidence": "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/comparison.json",
+    "blocks": "Full same-host macOS parity; independent semantic group required; Windows snapshot source has no Darwin edits"
+  },
+  {
+    "impact": "high",
+    "finding": "i386 Linux uringio open-name-stable and openat2 fixture comparisons fail under the macOS-hosted runner",
+    "evidence": "macos-flags-final-user_linux.log;41passed/1failed/1ignored",
+    "blocks": "Full Linux process parity claim; cause unknown pending isolated fixture reproduction; Windows snapshot source has no Linux edits"
+  }
+]

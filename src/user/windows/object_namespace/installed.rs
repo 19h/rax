@@ -2,6 +2,7 @@
 use super::*;
 use std::ffi::c_void;
 use std::ptr::null_mut;
+mod data;
 pub(super) mod image;
 mod section;
 type Handle = *mut c_void;
@@ -373,7 +374,7 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>) -> io::Result<Namespace> {
         let mut entries = entries
             .ok_or_else(|| invalid("selected NT directory changed during bounded capture"))?;
         let force_case_insensitive = forced_case(&units, &h, &entries)?;
-        if path != PATHS[0] {
+        if path != PATHS[0] && path != PATHS[4] {
             for entry in &mut entries {
                 if is(&entry.kind, "Section") {
                     let (captured, source) = section::capture(&units, &entry.name)?;
@@ -433,6 +434,7 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>) -> io::Result<Namespace> {
             }
         },
     };
+    namespace.select_data_section(data::capture()?)?;
     namespace.select_wow_section_root(arm64)?;
     namespace.select_wow_system_root(&system_root()?)?;
     Ok(namespace)

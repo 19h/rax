@@ -154,3 +154,6 @@ fn native_section_map_installed_leaves_copy_pinned_image_and_unmap_after_close()
         assert!(p.vm.section_view(0x5000_0000).is_none());
     }
 }
+
+#[path = "data_section_leaf_tests.rs"]
+mod data;

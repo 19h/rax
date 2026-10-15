@@ -6,9 +6,18 @@ use super::nt::status::*;
 use std::collections::BTreeMap;
 use std::io;
 use std::sync::Arc;
-pub(crate) const PATHS: [&str; 4] = ["\\", "\\KnownDlls", "\\KnownDlls32", "\\KnownDllsChpe32"];
+pub(crate) const PATHS: [&str; 5] = [
+    "\\",
+    "\\KnownDlls",
+    "\\KnownDlls32",
+    "\\KnownDllsChpe32",
+    "\\Windows",
+];
+pub(crate) mod data;
 mod image;
 mod section;
+pub use data::DataSection;
+pub(crate) use data::SelectedSection;
 pub(crate) use image::{ImageRegion, ImageTemplate};
 pub(crate) use section::CapturedSection;
 pub use section::ImageSection;
@@ -49,12 +58,12 @@ struct Entry {
     captured: CapturedEntry,
     child: Option<Arc<Directory>>,
     link: Option<Arc<SymbolicLink>>,
-    section: Option<Arc<ImageSection>>,
+    section: Option<SelectedSection>,
 }
 enum SelectedObject {
     Directory(Arc<Directory>),
     Link(Arc<SymbolicLink>),
-    Section(Arc<ImageSection>),
+    Section(SelectedSection),
 }
 /// Guest-owned immutable directory metadata, independent of native HANDLEs.
 #[derive(Debug)]
@@ -152,7 +161,7 @@ impl Namespace {
                     let mut path = s.path.clone();
                     path.push(92);
                     path.extend_from_slice(&e.name);
-                    ImageSection::selected(path, access)
+                    SelectedSection::Image(ImageSection::selected(path, access))
                 });
                 if let Some(access) = e.section {
                     if section_case

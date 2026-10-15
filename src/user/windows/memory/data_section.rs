@@ -1,0 +1,97 @@
+//! Private guest frames for immutable selected NT data-section snapshots.
+use super::*;
+use crate::user::windows::object_namespace::DataSection;
+
+#[derive(Debug)]
+pub(super) struct DataView {
+    // Retain the selected object after every guest handle has closed.
+    _section: Arc<DataSection>,
+}
+impl VirtualMemory {
+    pub(crate) fn is_data_view(&self, address: u64) -> bool {
+        self.allocation(address)
+            .is_some_and(|a| self.data_views.contains_key(&a.base))
+    }
+    /// O(B + R log P) for copied committed bytes B, section runs R and VM
+    /// state boundaries P. Reserved runs consume no frames. Writable copies
+    /// have private frames and never change the selected host snapshot.
+    pub(crate) fn map_data_section(
+        &mut self,
+        section: Arc<DataSection>,
+        base: u64,
+        offset: u64,
+        size: u64,
+        protection: u32,
+    ) -> Result<(), VmError> {
+        if base % ALLOCATION_GRANULARITY != 0
+            || offset % ALLOCATION_GRANULARITY != 0
+            || size == 0
+            || size % PAGE_SIZE != 0
+            || offset
+                .checked_add(size)
+                .is_none_or(|end| end > section.size)
+            || !valid_protection(protection)
+            || !matches!(protection & 0xFF, 1 | 2 | 8)
+        {
+            return Err(VmError::InvalidParameter);
+        }
+        let name = String::from_utf16_lossy(&section.path).into();
+        let ordinary_protection = protection & !(prot::NOCACHE | prot::WRITECOMBINE);
+        let allocation = self.reserve(
+            Some(base),
+            size,
+            ordinary_protection,
+            AllocKind::Mapped,
+            false,
+            Some(name),
+        )?;
+        let result = (|| {
+            for region in &section.regions {
+                let Some(bytes) = &region.bytes else {
+                    continue;
+                };
+                let begin = region.offset.max(offset);
+                let end = (region.offset + region.size).min(offset + size);
+                if begin >= end {
+                    continue;
+                }
+                let address = base + begin - offset;
+                self.commit(address, end - begin, prot::READWRITE)?;
+                self.poke(
+                    address,
+                    &bytes[(begin - region.offset) as usize..(end - region.offset) as usize],
+                )
+                .map_err(|_| VmError::NoMemory)?;
+                self.protect(address, end - begin, ordinary_protection)?;
+                // Map-time cache flags are accepted by the native section
+                // mapper, while NtProtectVirtualMemory rejects adding them.
+                self.allocs
+                    .get_mut(&allocation)
+                    .expect("owned data reservation")
+                    .set_state(
+                        (address - base) / PAGE_SIZE,
+                        (address + end - begin - base) / PAGE_SIZE,
+                        PageState {
+                            committed: true,
+                            protect: protection,
+                            reported: None,
+                        },
+                    );
+            }
+            self.allocs
+                .get_mut(&allocation)
+                .expect("owned data reservation")
+                .protect = protection;
+            Ok(())
+        })();
+        if let Err(error) = result {
+            let _ = self.release(allocation);
+            return Err(error);
+        }
+        self.data_views
+            .insert(allocation, DataView { _section: section });
+        Ok(())
+    }
+}
+#[cfg(test)]
+mod tests;

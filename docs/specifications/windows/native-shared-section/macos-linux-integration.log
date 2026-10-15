@@ -1,0 +1,68 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.77s
+     Running tests/suites/user/linux/main.rs (target/debug/deps/user_linux-95cd9681b791189e)
+
+running 43 tests
+test abi_tables::every_sysno_name_is_unique_and_sorted ... ok
+test abi_tables::aarch64_syscall_numbers_match_unistd_64 ... ok
+test abi_tables::riscv64_syscall_numbers_match_unistd_64 ... ok
+test abi_tables::errno_values_match_asm_generic ... ok
+test abi_tables::i386_syscall_numbers_match_unistd_32 ... ok
+test abi_tables::x86_64_syscall_numbers_match_unistd_64 ... ok
+test abi_tables::arm_syscall_numbers_match_unistd_eabi_and_the_arm64_compat_table ... ok
+test fixtures::live_docker_oracle ... ignored, requires Docker with binfmt support for x86_64, aarch64, and riscv64
+test fixtures::i386_expectations_come_from_an_x86_64_kernel ... ok
+test fixtures::arm_expectations_come_from_an_arm64_kernel ... ok
+test cli::missing_program_is_status_127 ... ok
+test cli::non_elf_file_is_status_126 ... ok
+test fixtures::thumb_expectations_come_from_an_arm64_kernel ... ok
+test cli::unsupported_machine_is_status_126 ... ok
+test cli::strace_logs_system_calls ... ok
+test fixtures::oracle_overrides_are_consistent ... ok
+test cli::options_after_the_program_are_its_arguments ... ok
+test host_signals::without_forwarding_host_signals_act_on_rax_user ... ok
+test cli::size_options_are_validated ... ok
+test cli::exit_status_and_arguments_pass_through ... ok
+test cli::fatal_signals_are_reported ... ok
+test cli::environment_options_edit_the_guest_environment ... ok
+test programs::corpus_sources_are_upstream_or_annotated ... ok
+test host_signals::host_signals_are_forwarded_to_the_guest ... ok
+test programs::corpus_tables_are_consistent ... ok
+test fixtures::fixture_binaries_match_manifest ... ok
+test programs::noise_filters_mask_only_their_targets ... ok
+test sha256::sha256_matches_fips_180_4_examples ... ok
+test programs::corpus_x86_64_matches_linux ... ok
+test programs::corpus_x86_64_matches_linux_without_jit ... ok
+test programs::corpus_binaries_match_manifest ... ok
+test programs::corpus_aarch64_matches_linux ... ok
+test programs::corpus_riscv64_matches_linux ... ok
+test programs::corpus_riscv64_matches_linux_with_jit ... ok
+test fixtures::small_slices_do_not_change_results ... ok
+test fixtures::i386_fixtures_match_linux ... FAILED
+test fixtures::x86_64_fixtures_match_linux ... ok
+test fixtures::x86_64_fixtures_match_linux_without_jit ... ok
+test fixtures::arm_fixtures_match_linux ... ok
+test fixtures::aarch64_fixtures_match_linux ... ok
+test fixtures::thumb_fixtures_match_linux ... ok
+test fixtures::riscv64_fixtures_match_linux ... ok
+test fixtures::riscv64_fixtures_match_linux_with_jit ... ok
+
+failures:
+
+---- fixtures::i386_fixtures_match_linux stdout ----
+
+thread 'fixtures::i386_fixtures_match_linux' (10567625) panicked at tests/suites/user/linux/fixtures.rs:338:5:
+assertion `left == right` failed: i386/uringio []: stdout differs
+stderr:
+
+  left: "ok rw-file\nok rw-write\nok rw-read\nok rw-read-data\nok rw-position\nok rw-position-moved\nok rw-short\nok rw-nothing\nok rw-at-end\nok rw-write-position\nok rw-write-position-moved\nok rw-writev\nok rw-readv\nok rw-readv-data\nok rw-fixed-none\nok rw-fixed-register\nok rw-fixed\nok rw-fixed-data\nok rw-fixed-below\nok rw-fixed-past\nok rw-fixed-index\nok rw-write-fixed\nok rw-readv-fixed\nok rw-readv-fixed-data\nok rw-writev-fixed\nok rw-readv-fixed-empty\nok rw-readv-fixed-past\nok rw-readv-fixed-long\nok rw-bad-fd\nok rw-o-path\nok rw-read-write-only\nok rw-write-read-only\nok rw-hipri\nok rw-unknown-flag\nok rw-append-noappend\nok rw-atomic-read\nok rw-negative-offset\nok rw-offset-wraps\nok rw-directory\nok rw-unmapped\nok rw-buffer-select\nok rw-pi\nok rw-ioprio\nok rw-ioprio\nok rw-ioprio\nok rw-ioprio\nok rw-attr\nok rw-attr\nok rw-attr\nok rw-attr\nok rw-readv-select\nok rw-readv-select\nok rw-readv-select\nok rw-readv-select\nok rw-fixed-select\nok rw-fixed-select\nok rw-fixed-select\nok rw-fixed-select\nok rw-far-buffer\nok wait-pipe\nok wait-submit\nok wait-parked\nok wait-write\nok wait-done\nok wait-data\nok wait-nowait\nok wait-nowait-cqe\nok wait-link\nok wait-link-parked\nok wait-link-write\nok wait-link-done\nok wait-negative-offset\nok wait-room\nok wait-room-parked\nok wait-room-read\nok wait-room-done\nok wait-defer-pipe\nok wait-defer\nok wait-defer-write\nok wait-defer-kept\nok wait-defer-wait\nok wait-defer-done\nok epipe-submit\nok epipe-order\nok epipe-nosignal\nok epipe-signal-submit\nok epipe-signal-cqe\nok epipe-signal\nok wait-fixed-pipe\nok wait-fixed-register\nok wait-fixed-read\nok wait-fixed-missing\nok wait-fixed-submit\nok wait-fixed-update\nok wait-fixed-held\nok wait-fixed-write\nok wait-fixed-done\nok ops-pipe\nok ops-fsync\nok ops-fsync-link\nok ops-fsync-flags\nok ops-fsync-addr\nok ops-sfr-buf-index\nok ops-fallocate-flags\nok ops-ftruncate-len\nok ops-madvise-file-index\nok ops-fallocate\nok ops-fallocate-size\nok ops-ftruncate\nok ops-ftruncate-size\nok ops-ftruncate-read-only\nok ops-sfr\nok ops-sfr-pipe\nok ops-sfr-flags\nok ops-fadvise\nok ops-fadvise-bad\nok ops-fadvise-pipe\nok ops-madvise\nok ops-madvise-dropped\nok ops-madvise-bad\nok open-setup\nok open-setup-b\nok open\nok open-flags\nok open-cloexec\nok open-missing\nok open-create\nok open-limit-submit\nok open-limit\nok open-fifo-make\nok open-fifo\nok open-empty\nok open-fault\nok open-buf-index\nok open-fixed-file\nok open-direct-cloexec\nFAIL open-name-stable: strcmp(name, b) == 0 && fd >= 0 && read(fd, &c, 1) == 1 && c == 'A' (errno 2 No such file or directory) at line 423\nok openat2-short\nok openat2-tail\nFAIL openat2: fd >= 0 (errno 9 Bad file descriptor) at line 434\nok openat2-flag\nok openat2-mode\nok direct-setup\nok direct-no-table\nok direct-table\nok direct-named\nok direct-alloc\nok direct-past\nok direct-read\nok direct-read-data\nok install\nok install-no-cloexec\nok install-not-fixed\nok install-flags\nok install-addr\nok install-creds\nok close-slot\nok close-slot-empty\nok close\nok close-closed\nok close-again\nok close-ring\nok close-both\nok close-addr\nok close-fixed-file\nok pipe\nok pipe-works\nok pipe-flags\nok pipe-notification\nok pipe-fault\nok pipe-fault-no-fds\nok pipe-table\nok pipe-alloc\nok pipe-alloc-slots\nok pipe-named\nok pipe-named-slots\nok pipe-direct-cloexec\nok mkdirat\nok mkdirat-made\nok paths-setup\nok renameat\nok renameat-moved\nok linkat\nok symlinkat\nok symlinkat-target\nok statx\nok statx-size\nok unlinkat-missing\nok unlinkat\nok unlinkat-dir\nok unlinkat-dir-gone\nok unlinkat-flags\nok unlinkat-len\nok mkdirat-off\nok symlinkat-len\nok renameat-fixed-file\nok unlinkat-empty\nok statx-empty\nok statx-fd\nok statx-fd-size\nok xattr-setup\nok xattr-fset\nok xattr-fget\nok xattr-fget-value\nok xattr-get-length\nok xattr-set\nok xattr-get\nok xattr-exists\nok xattr-missing\nok xattr-path-fixed\nok xattr-get-flags\nok xattr-set-flags\nok xattr-empty-name\nok xattr-too-big\nok xattr-empty-path\nok xattr-value-stable\nok xattr-value-stable-get\nok xattr-value-stable-old\nFAILED\n"
+ right: "ok rw-file\nok rw-write\nok rw-read\nok rw-read-data\nok rw-position\nok rw-position-moved\nok rw-short\nok rw-nothing\nok rw-at-end\nok rw-write-position\nok rw-write-position-moved\nok rw-writev\nok rw-readv\nok rw-readv-data\nok rw-fixed-none\nok rw-fixed-register\nok rw-fixed\nok rw-fixed-data\nok rw-fixed-below\nok rw-fixed-past\nok rw-fixed-index\nok rw-write-fixed\nok rw-readv-fixed\nok rw-readv-fixed-data\nok rw-writev-fixed\nok rw-readv-fixed-empty\nok rw-readv-fixed-past\nok rw-readv-fixed-long\nok rw-bad-fd\nok rw-o-path\nok rw-read-write-only\nok rw-write-read-only\nok rw-hipri\nok rw-unknown-flag\nok rw-append-noappend\nok rw-atomic-read\nok rw-negative-offset\nok rw-offset-wraps\nok rw-directory\nok rw-unmapped\nok rw-buffer-select\nok rw-pi\nok rw-ioprio\nok rw-ioprio\nok rw-ioprio\nok rw-ioprio\nok rw-attr\nok rw-attr\nok rw-attr\nok rw-attr\nok rw-readv-select\nok rw-readv-select\nok rw-readv-select\nok rw-readv-select\nok rw-fixed-select\nok rw-fixed-select\nok rw-fixed-select\nok rw-fixed-select\nok rw-far-buffer\nok wait-pipe\nok wait-submit\nok wait-parked\nok wait-write\nok wait-done\nok wait-data\nok wait-nowait\nok wait-nowait-cqe\nok wait-link\nok wait-link-parked\nok wait-link-write\nok wait-link-done\nok wait-negative-offset\nok wait-room\nok wait-room-parked\nok wait-room-read\nok wait-room-done\nok wait-defer-pipe\nok wait-defer\nok wait-defer-write\nok wait-defer-kept\nok wait-defer-wait\nok wait-defer-done\nok epipe-submit\nok epipe-order\nok epipe-nosignal\nok epipe-signal-submit\nok epipe-signal-cqe\nok epipe-signal\nok wait-fixed-pipe\nok wait-fixed-register\nok wait-fixed-read\nok wait-fixed-missing\nok wait-fixed-submit\nok wait-fixed-update\nok wait-fixed-held\nok wait-fixed-write\nok wait-fixed-done\nok ops-pipe\nok ops-fsync\nok ops-fsync-link\nok ops-fsync-flags\nok ops-fsync-addr\nok ops-sfr-buf-index\nok ops-fallocate-flags\nok ops-ftruncate-len\nok ops-madvise-file-index\nok ops-fallocate\nok ops-fallocate-size\nok ops-ftruncate\nok ops-ftruncate-size\nok ops-ftruncate-read-only\nok ops-sfr\nok ops-sfr-pipe\nok ops-sfr-flags\nok ops-fadvise\nok ops-fadvise-bad\nok ops-fadvise-pipe\nok ops-madvise\nok ops-madvise-dropped\nok ops-madvise-bad\nok open-setup\nok open-setup-b\nok open\nok open-flags\nok open-cloexec\nok open-missing\nok open-create\nok open-limit-submit\nok open-limit\nok open-fifo-make\nok open-fifo\nok open-empty\nok open-fault\nok open-buf-index\nok open-fixed-file\nok open-direct-cloexec\nok open-name-stable\nok openat2-short\nok openat2-tail\nok openat2\nok openat2-flag\nok openat2-mode\nok direct-setup\nok direct-no-table\nok direct-table\nok direct-named\nok direct-alloc\nok direct-past\nok direct-read\nok direct-read-data\nok install\nok install-no-cloexec\nok install-not-fixed\nok install-flags\nok install-addr\nok install-creds\nok close-slot\nok close-slot-empty\nok close\nok close-closed\nok close-again\nok close-ring\nok close-both\nok close-addr\nok close-fixed-file\nok pipe\nok pipe-works\nok pipe-flags\nok pipe-notification\nok pipe-fault\nok pipe-fault-no-fds\nok pipe-table\nok pipe-alloc\nok pipe-alloc-slots\nok pipe-named\nok pipe-named-slots\nok pipe-direct-cloexec\nok mkdirat\nok mkdirat-made\nok paths-setup\nok renameat\nok renameat-moved\nok linkat\nok symlinkat\nok symlinkat-target\nok statx\nok statx-size\nok unlinkat-missing\nok unlinkat\nok unlinkat-dir\nok unlinkat-dir-gone\nok unlinkat-flags\nok unlinkat-len\nok mkdirat-off\nok symlinkat-len\nok renameat-fixed-file\nok unlinkat-empty\nok statx-empty\nok statx-fd\nok statx-fd-size\nok xattr-setup\nok xattr-fset\nok xattr-fget\nok xattr-fget-value\nok xattr-get-length\nok xattr-set\nok xattr-get\nok xattr-exists\nok xattr-missing\nok xattr-path-fixed\nok xattr-get-flags\nok xattr-set-flags\nok xattr-empty-name\nok xattr-too-big\nok xattr-empty-path\nok xattr-value-stable\nok xattr-value-stable-get\nok xattr-value-stable-old\nPASSED\n"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    fixtures::i386_fixtures_match_linux
+
+test result: FAILED. 41 passed; 1 failed; 1 ignored; 0 measured; 0 filtered out; finished in 42.90s
+
+error: test failed, to rerun pass `--test user_linux`

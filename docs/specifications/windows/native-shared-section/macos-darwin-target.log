@@ -1,0 +1,233 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.35s
+     Running tests/suites/user/darwin/main.rs (target/debug/deps/user_darwin-e04730e124a453b2)
+
+running 117 tests
+test fixtures::csr_x86_64 ... ok
+test fixtures::acl_x86_64 ... ok
+test fixtures::audit_x86_64 ... ok
+test fixtures::dispatch_x86_64 ... ok
+test fixtures::busy_wait_x86_64 ... ok
+test fixtures::exc_ports_x86_64 ... ok
+test fixtures::csr_arm64 ... ok
+test fixtures::audit_arm64 ... ok
+test fixtures::acl_arm64 ... ok
+test fixtures::dispatch_arm64 ... ok
+test fixtures::exc_ports_arm64 ... ok
+test fixtures::fork_x86_64 ... ok
+test fixtures::guard_fatal_x86_64 ... ok
+test fixtures::guard_fatal_arm64 ... ok
+test fixtures::fd_flags_x86_64 ... ok
+test fixtures::hello_x86_64 ... ok
+test fixtures::attrs_x86_64 ... ok
+test fixtures::fork_arm64 ... ok
+test fixtures::hello_arm64 ... ok
+test fixtures::identity_x86_64 ... ok
+test fixtures::exec_translated_arm64 ... ok
+test fixtures::identity_arm64 ... ok
+test fixtures::exec_x86_64 ... ok
+test fixtures::kevent_data_x86_64 ... ok
+test fixtures::kevent_data_arm64 ... ok
+test fixtures::host_services_x86_64 ... ok
+test fixtures::fd_flags_arm64 ... ok
+test fixtures::kqueue_x86_64 ... ok
+test fixtures::kqueue_arm64 ... ok
+test fixtures::iokit_x86_64 ... ok
+test fixtures::mach_exc_x86_64 ... ok
+test fixtures::mach_info_x86_64 ... ok
+test fixtures::host_services_arm64 ... ok
+test fixtures::mach_ipc_x86_64 ... ok
+test fixtures::attrs_arm64 ... ok
+test fixtures::busy_wait_arm64 ... ok
+test fixtures::mach_info_arm64 ... ok
+test fixtures::mach_exc_arm64 ... ok
+test fixtures::mach_sync_x86_64 ... ok
+test fixtures::mach_ipc_arm64 ... ok
+test fixtures::coreservices_x86_64 ... ok
+test fixtures::mach_sync_arm64 ... ok
+test fixtures::procargs_x86_64 ... ok
+test fixtures::iokit_arm64 ... ok
+test fixtures::mk_timer_x86_64 ... ok
+test fixtures::procargs_arm64 ... ok
+test fixtures::procinfo_x86_64 ... ok
+test fixtures::kqueue_at_utility_x86_64 ... ok
+test fixtures::exec_arm64 ... ok
+test fixtures::protected_open_x86_64 ... ok
+test fixtures::mk_timer_arm64 ... ok
+test fixtures::protected_open_arm64 ... ok
+test fixtures::procinfo_arm64 ... ok
+test fixtures::psem_x86_64 ... ok
+test fixtures::reclaim_x86_64 ... ok
+test fixtures::remap_x86_64 ... ok
+test fixtures::shared_wait_x86_64 ... ok
+test fixtures::psem_arm64 ... ok
+test fixtures::remap_arm64 ... ok
+test fixtures::shm_x86_64 ... ok
+/Users/int/hexrays/kvasir/vendor/rax/tests/fixtures/user/darwin/src/signals.c:20:43: warning: unused variable 'got_errno' [-Wunused-variable]
+   20 | static volatile int got_code, got_status, got_errno, self_blocked, usr2_blocked;
+      |                                           ^~~~~~~~~
+1 warning generated.
+test fixtures::shared_wait_arm64 ... ok
+/Users/int/hexrays/kvasir/vendor/rax/tests/fixtures/user/darwin/src/signals.c:20:43: warning: unused variable 'got_errno' [-Wunused-variable]
+   20 | static volatile int got_code, got_status, got_errno, self_blocked, usr2_blocked;
+      |                                           ^~~~~~~~~
+1 warning generated.
+test fixtures::shm_arm64 ... ok
+test fixtures::coreservices_arm64 ... ok
+test fixtures::sigcont_caught_only_with_the_guest_x86_64 ... ok
+test fixtures::signals_x86_64 ... ok
+test fixtures::reclaim_arm64 ... FAILED
+test fixtures::codesign_arm64 has been running for over 60 seconds
+test fixtures::codesign_x86_64 has been running for over 60 seconds
+test fixtures::mk_timer_at_utility_x86_64 ... ok
+test fixtures::signals_arm64 ... ok
+test fixtures::sigcont_caught_only_with_the_guest_arm64 ... ok
+test fixtures::sockets_x86_64 ... ok
+test fixtures::sysctl_x86_64 ... ok
+test fixtures::sysctl_arm64 ... ok
+/Users/int/hexrays/kvasir/vendor/rax/tests/fixtures/user/darwin/src/thread_state.c:48:13: warning: unused function 'show_list' [-Wunused-function]
+   48 | static void show_list(thread_t t, int flavor, mach_msg_type_number_t cnt) {
+      |             ^~~~~~~~~
+1 warning generated.
+test fixtures::spawn_bridge_x86_64 ... ok
+test fixtures::registered_ports_x86_64 ... ok
+test fixtures::sockets_arm64 ... ok
+test fixtures::thread_state_x86_64 ... ok
+test fixtures::tbi_arm64 ... ok
+test fixtures::kqueue_at_utility_arm64 ... ok
+test fixtures::procinfo_at_utility_x86_64 ... ok
+test fixtures::threads_x86_64 ... ok
+test fixtures::thread_state_arm64 ... ok
+test fixtures::spawn_bridge_arm64 ... ok
+test fixtures::volumes_x86_64 ... ok
+test fixtures::threads_arm64 ... ok
+test fixtures::volumes_arm64 ... ok
+test fixtures::vouchers_x86_64 ... ok
+test fixtures::workloop_ctl_x86_64 ... ok
+test fixtures::threads_sync_x86_64 ... ok
+test fixtures::workloop_bound_x86_64 ... ok
+test generators::abi_tables_are_current ... ok
+test fixtures::workq_x86_64 ... ok
+test generators::sysctl_tables_are_current ... ok
+test layouts::arm64_signal_frame_layouts ... ok
+test fixtures::workloop_ctl_arm64 ... ok
+test layouts::x86_64_signal_frame_layouts ... ok
+test fixtures::vouchers_arm64 ... ok
+test fixtures::xattr_x86_64 ... ok
+test generators::mig_ids_are_current ... ok
+test fixtures::workq_arm64 ... ok
+test fixtures::threads_sync_arm64 ... ok
+test fixtures::xattr_arm64 ... ok
+test support::a_run_starts_without_inherited_descriptors ... ok
+test support::a_descendant_holding_the_output_is_ended_at_the_limit ... ok
+test fixtures::workloop_bound_arm64 ... ok
+test fixtures::mk_timer_at_utility_arm64 ... ok
+test fixtures::procinfo_at_utility_arm64 ... ok
+test programs::echo ... ok
+test programs::true_and_false ... ok
+test fixtures::spawn_x86_64 ... ok
+test fixtures::registered_ports_arm64 ... ok
+test fixtures::codesign_x86_64 ... ok
+test programs::a_script_runs_its_interpreter ... ok
+test programs::cat_a_file ... ok
+test programs::env_runs_a_program ... ok
+test fixtures::spawn_arm64 has been running for over 60 seconds
+test programs::sh_runs_commands ... ok
+test fixtures::codesign_arm64 ... ok
+test fixtures::spawn_arm64 ... ok
+
+failures:
+
+---- fixtures::reclaim_arm64 stdout ----
+
+thread 'fixtures::reclaim_arm64' (10587372) panicked at tests/suites/user/darwin/support.rs:467:9:
+reclaim (arm64) differs from the native run
+--- native (status Some(0))
+rings at start: 0 1
+  size 0x4004000 prot 3/3 inherit 1 tag 22 len 1016 max 4195320
+no ring: query 0 (0, 0) trap 0x38 (7, 7) flush 0x4 resize 0x10
+allocate len 0 0x4, max below len 0x4, too large 0x3
+round capacity: 1 -> 1016, 1017 -> 2040
+allocate: 0 size 0x4000 prot 3/3 inherit 1 tag 22 len 8 max 1016
+  deadline in ten seconds 0
+  fresh: head 0 busy 0 tail 0
+  rings 0 1 same 1
+second allocate 0x20004006: tagged regions 1 -> 2, the new one 0/0
+trap 0 bytes 0, again 0 bytes 0 same deadline 1
+trap NULL 0x4, null task 0x10000003
+enter id 0 UNRECLAIMED
+flush 0 pages 3 mapped 0
+  after: head 1 busy 1 tail 1
+  DEALLOCATED
+free: flush 0 pages 4 mapped 1 byte 0xab FREED
+unaligned: flush 0 bytes 16384 pages mapped 0 0 1
+cancel 0 UNRECLAIMED
+  flush 0 bytes 0 mapped 1
+  cancel again: DEALLOCATED
+flush empty 0 bytes 0
+  empty: head 4 busy 4 tail 4
+  entry 8: ring full
+  entry 9: ring full
+  full: head 4 busy 4 tail 12
+flush 3: 0 pages 3
+resize past the mapping 0x3
+  resized: head 12 busy 12 tail 12
+resize 0 len 16, entry regions still mapped 2
+child: same ring 1, allocate 0x20004006, flush 0 pages 1 mapped 0
+parent: mapped 1  : head 12 busy 12 tail 13
+  flush 0 pages 1
+hole: flush 0x12 mapped 1 1
+  stuck: head 13 busy 14 tail 14
+  again 0x12 BUSY
+fresh process: status 0
+
+--- rax-user (status Some(0))
+rings at start: 0 1
+  size 0x4004000 prot 3/3 inherit 1 tag 22 len 1016 max 4195320
+no ring: query 0 (0, 0) trap 0x38 (7, 7) flush 0x4 resize 0x10
+allocate len 0 0x4, max below len 0x4, too large 0x3
+round capacity: 1 -> 1016, 1017 -> 2040
+allocate: 0 size 0x4000 prot 3/3 inherit 1 tag 22 len 8 max 1016
+  deadline in ten seconds 1
+  fresh: head 0 busy 0 tail 0
+  rings 0 1 same 1
+second allocate 0x20004006: tagged regions 1 -> 2, the new one 0/0
+trap 0 bytes 0, again 0 bytes 0 same deadline 1
+trap NULL 0x4, null task 0x10000003
+enter id 0 UNRECLAIMED
+flush 0 pages 3 mapped 0
+  after: head 1 busy 1 tail 1
+  DEALLOCATED
+free: flush 0 pages 4 mapped 1 byte 0xab FREED
+unaligned: flush 0 bytes 16384 pages mapped 0 0 1
+cancel 0 UNRECLAIMED
+  flush 0 bytes 0 mapped 1
+  cancel again: DEALLOCATED
+flush empty 0 bytes 0
+  empty: head 4 busy 4 tail 4
+  entry 8: ring full
+  entry 9: ring full
+  full: head 4 busy 4 tail 12
+flush 3: 0 pages 3
+resize past the mapping 0x3
+  resized: head 12 busy 12 tail 12
+resize 0 len 16, entry regions still mapped 2
+child: same ring 1, allocate 0x20004006, flush 0 pages 1 mapped 0
+parent: mapped 1  : head 12 busy 12 tail 13
+  flush 0 pages 1
+hole: flush 0x12 mapped 1 1
+  stuck: head 13 busy 14 tail 14
+  again 0x12 BUSY
+fresh process: status 0
+
+--- rax-user stderr
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    fixtures::reclaim_arm64
+
+test result: FAILED. 116 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 134.48s
+
+error: test failed, to rerun pass `--test user_darwin`

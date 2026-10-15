@@ -353,7 +353,14 @@ fn protect(c: &mut Ctx) -> ApiResult {
             Flow::ret(0)
         }
         Err(e) => {
-            if c.p.vm.is_nls_view(base) && e == super::super::memory::VmError::InvalidProtection {
+            if c.p.vm.is_nls_view(base) && e == super::super::memory::VmError::InvalidProtection
+                || c.p.vm.is_data_view(base)
+                    && matches!(
+                        e,
+                        super::super::memory::VmError::SectionProtection
+                            | super::super::memory::VmError::InvalidParameter4
+                    )
+            {
                 c.mem().w32(old_ptr, super::super::memory::prot::NOACCESS)?;
             }
             Flow::ret(e.status().into())

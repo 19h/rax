@@ -256,7 +256,7 @@ fn open_object(c: &mut Ctx, access: u32, attrs: Option<Attributes>, kind: Kind) 
             .ok_or(Failure::Status(STATUS_INSUFFICIENT_RESOURCES));
     }
     if kind == Kind::Section {
-        let section = match c.p.object_namespace.lookup_section(
+        let section = match c.p.object_namespace.lookup_installed_section(
             root,
             &units,
             attrs.flags,
@@ -266,7 +266,7 @@ fn open_object(c: &mut Ctx, access: u32, attrs: Option<Attributes>, kind: Kind) 
             Err(LookupError::Status(s)) => return status(s),
             Err(LookupError::Unselected) => {
                 return Err(c
-                    .unsupported("NT section outside selected installed image namespace")
+                    .unsupported("NT section outside selected installed namespace")
                     .into());
             }
         };
@@ -282,7 +282,7 @@ fn open_object(c: &mut Ctx, access: u32, attrs: Option<Attributes>, kind: Kind) 
         return c
             .p
             .objects
-            .open_image_section(section, attrs.flags & 2 != 0, grant)
+            .open_selected_section(section, attrs.flags & 2 != 0, grant)
             .ok_or(Failure::Status(STATUS_INSUFFICIENT_RESOURCES));
     }
     let directory = match c.p.object_namespace.lookup(root, &units, attrs.flags) {
@@ -319,6 +319,7 @@ fn wow_redirect_probe(c: &mut Ctx, attrs: &Option<Attributes>) -> Checked<()> {
             Some(Object::Directory(d)) => d.path.len() * 2,
             Some(Object::SymbolicLink(l)) => l.path.len() * 2,
             Some(Object::ImageSection(s)) => s.path.len() * 2,
+            Some(Object::DataSection(s)) => s.path.len() * 2,
             // Native pseudo process/thread objects have an empty queried name.
             None if attrs.root == c.arch().ptr(u64::MAX)
                 || attrs.root == c.arch().ptr(u64::MAX - 1) =>

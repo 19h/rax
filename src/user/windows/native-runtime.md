@@ -1666,3 +1666,11 @@ fixed packet capture, output alignment, guards, aliases and WoW64 copyback follo
 recorded native behavior. Other operations remain explicit unsupported paths.
 The [contract and native evidence](../../../docs/specifications/windows/native-apphelp-cache/README.md) own the format, assumptions,
 platform gates and ordinary-startup limits.
+
+## Selected installed CSR data section
+
+`NtOpenSection` and `NtMapViewOfSection` retain captured data-section grants,
+opaque committed bytes, reserved runs and independent view lifetime. The
+[contract and native controls](../../../docs/specifications/windows/native-shared-section/README.md) record532 native
+controls, startup allocation flags, platform evidence and remaining frontiers.
+Full ordinary Windows process completion remains an active requirement.

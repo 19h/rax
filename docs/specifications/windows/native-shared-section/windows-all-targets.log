@@ -1,0 +1,81 @@
+    Checking windows-link v0.2.1
+   Compiling cfg-if v1.0.4
+    Checking serde_core v1.0.229
+    Checking once_cell_polyfill v1.70.2
+    Checking anstyle v1.0.14
+    Checking once_cell v1.21.4
+    Checking utf8parse v0.2.2
+    Checking regex-syntax v0.8.11
+    Checking windows-sys v0.61.2
+   Compiling getrandom v0.4.3
+    Checking is_terminal_polyfill v1.70.2
+    Checking anstyle-parse v1.0.0
+    Checking colorchoice v1.0.5
+   Compiling jobserver v0.1.35
+    Checking tracing-core v0.1.36
+    Checking log v0.4.34
+    Checking winapi v0.3.9
+    Checking libc v0.2.189
+   Compiling cc v1.4.5
+    Checking thiserror v2.0.20
+    Checking clap_lex v1.1.0
+    Checking winnow v1.0.4
+    Checking pin-project-lite v0.2.17
+    Checking lazy_static v1.5.0
+    Checking strsim v0.11.1
+    Checking sharded-slab v0.1.7
+    Checking regex-automata v0.4.18
+    Checking toml_parser v1.1.3+spec-1.1.0
+    Checking tracing v0.1.44
+    Checking vm-memory v0.17.1 (C:\Windows\Temp\assist-native-rax-20261010\src\vendor\vm-memory)
+    Checking tracing-log v0.2.0
+    Checking anstyle-query v1.1.5
+    Checking anstyle-wincon v3.0.11
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+    Checking nu-ansi-term v0.50.3
+    Checking scroll v0.12.0
+    Checking zmij v1.0.23
+    Checking anstream v1.0.0
+    Checking thread_local v1.1.10
+    Checking toml_writer v1.1.2+spec-1.1.0
+    Checking itoa v1.0.18
+warning: `vm-memory` (lib) generated 1 warning
+    Checking winnow v0.7.15
+    Checking clap_builder v4.6.6
+    Checking plain v0.2.3
+    Checking serde v1.0.229
+    Checking serde_spanned v1.1.1
+    Checking toml_datetime v0.7.5+spec-1.1.0
+    Checking smallvec v1.16.0
+    Checking memchr v2.8.3
+    Checking goblin v0.8.2
+    Checking linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+    Checking ctrlc v3.5.2
+    Checking bincode v1.3.3
+    Checking serde_json v1.0.151
+    Checking matchers v0.2.0
+   Compiling zstd-sys v2.1.0+zstd.1.5.7
+    Checking tracing-subscriber v0.3.23
+    Checking bitflags v2.13.2
+    Checking toml v0.9.12+spec-1.1.0
+    Checking clap v4.6.6
+   Compiling zstd-safe v7.3.0
+    Checking zstd v0.13.3
+    Checking rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5m 27s

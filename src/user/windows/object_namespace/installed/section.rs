@@ -53,7 +53,11 @@ pub(super) fn arm64() -> io::Result<Option<bool>> {
     }
     Ok(Some(native == 0xAA64))
 }
-fn open_section(path: &[u16], access: u32, flags: u32) -> io::Result<Result<Owned, u32>> {
+pub(super) fn open_section(
+    path: &[u16],
+    access: u32,
+    flags: u32,
+) -> io::Result<Result<Owned, u32>> {
     if path.is_empty() || path.len() > MAX_UNITS {
         return Err(invalid("selected section absolute path exceeds bounds"));
     }

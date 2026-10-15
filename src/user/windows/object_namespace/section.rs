@@ -100,35 +100,12 @@ impl ImageSection {
         Ok(image)
     }
     pub(crate) fn grant(&self, access: u32, duplicate: bool) -> Result<u32, u32> {
-        let mut requested = access & 0x0DFF_FFFF;
-        if duplicate {
-            requested &= !0xFFE0;
-        }
-        for (generic, specific) in [
-            (0x8000_0000, 0x0002_0005),
-            (0x4000_0000, 0x0002_0002),
-            (0x2000_0000, 0x0002_0008),
-            (0x1000_0000, ALL),
-        ] {
-            if access & generic != 0 {
-                requested |= specific;
-            }
-        }
-        if requested & !(ALL | 0x0100_0000) != 0
-            || requested & ALL & !self.access.maximum_access != 0
-        {
-            return Err(STATUS_ACCESS_DENIED);
-        }
-        if requested & 0x0100_0000 != 0 && self.access.system_security_status != 0 {
-            return Err(self.access.system_security_status);
-        }
-        if !duplicate && access & 0x0200_0000 != 0 {
-            requested |= self.access.maximum_access;
-        }
-        if !duplicate && requested == 0 {
-            return Err(STATUS_ACCESS_DENIED);
-        }
-        Ok(requested)
+        grant(
+            self.access.maximum_access,
+            self.access.system_security_status,
+            access,
+            duplicate,
+        )
     }
 }
 impl Namespace {
@@ -159,17 +136,44 @@ impl Namespace {
         flags: u32,
         wow: bool,
     ) -> Result<Arc<ImageSection>, LookupError> {
-        if self.section_case.is_none() {
-            return Err(LookupError::Unselected);
-        }
-        let root = if wow && root.as_ref().is_some_and(|d| is(&d.path, "\\KnownDlls32")) {
-            self.wow_section_root.clone().or(root)
-        } else {
-            root
-        };
-        match self.lookup_object(root, name, flags, false, true)? {
-            SelectedObject::Section(s) => Ok(s),
-            _ => unreachable!("section lookup"),
+        match self.lookup_installed_section(root, name, flags, wow)? {
+            SelectedSection::Image(section) => Ok(section),
+            SelectedSection::Data(_) => Err(LookupError::Unselected),
         }
     }
+}
+
+pub(super) fn grant(
+    maximum_access: u32,
+    system_security_status: u32,
+    access: u32,
+    duplicate: bool,
+) -> Result<u32, u32> {
+    let mut requested = access & 0x0DFF_FFFF;
+    if duplicate {
+        requested &= !0xFFE0;
+    }
+    for (generic, specific) in [
+        (0x8000_0000, 0x0002_0005),
+        (0x4000_0000, 0x0002_0002),
+        (0x2000_0000, 0x0002_0008),
+        (0x1000_0000, ALL),
+    ] {
+        if access & generic != 0 {
+            requested |= specific;
+        }
+    }
+    if requested & !(ALL | 0x0100_0000) != 0 || requested & ALL & !maximum_access != 0 {
+        return Err(STATUS_ACCESS_DENIED);
+    }
+    if requested & 0x0100_0000 != 0 && system_security_status != 0 {
+        return Err(system_security_status);
+    }
+    if !duplicate && access & 0x0200_0000 != 0 {
+        requested |= maximum_access;
+    }
+    if !duplicate && requested == 0 {
+        return Err(STATUS_ACCESS_DENIED);
+    }
+    Ok(requested)
 }

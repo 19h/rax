@@ -1,0 +1,18 @@
+{
+  "direct-decode": "unaffected: no guest instruction encoding changes",
+  "direct-execute": "unaffected: existing guest CPUs execute installed DLL leaves",
+  "cpu-state": "unaffected: existing ten-argument NT service transport",
+  "memory-mmu": "affected: MEM_MAPPED views, reserved runs, COW, lifetime",
+  "smir-lift": "unaffected: no ISA semantic changes",
+  "smir-ir": "unaffected: no operations changed",
+  "smir-interpreter": "unaffected: memory accessed through existing AddressSpace",
+  "optimizer": "unaffected: no IR changes",
+  "native-lowering": "unaffected: no admission/lowering changes",
+  "jit-runtime": "unaffected: existing mapping invalidation used",
+  "backend": "affected: shared portable Windows process personality only",
+  "machine-device": "unaffected: no system emulation changes",
+  "oracle-analysis": "unaffected: no decode/analysis contract changes",
+  "c-abi": "layout unaffected; owning native-process consumers must recompile",
+  "tests-docs": "affected: native differential artifacts and adapter/service/VM tests",
+  "targets-platforms": "macOS ARM64 and Linux amd64 compile/run portable models; Windows ARM64 host capture plus ARM64/x64/x86/x86-laa native controls; owning empty-feature CAPI/Assist must refresh"
+}

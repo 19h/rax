@@ -218,6 +218,8 @@ pub enum Object {
     Directory(std::sync::Arc<super::object_namespace::Directory>),
     /// Selected installed image-section metadata, independent of native HANDLEs.
     ImageSection(std::sync::Arc<super::object_namespace::ImageSection>),
+    /// Selected immutable data-section bytes and native grant metadata.
+    DataSection(std::sync::Arc<super::object_namespace::DataSection>),
     /// A selected immutable NT symbolic link, shared across guest handles.
     SymbolicLink(std::sync::Arc<super::object_namespace::SymbolicLink>),
     /// An object this implementation only needs to name (tokens,
@@ -237,7 +239,7 @@ impl Object {
             Object::Process { .. } => "Process",
             Object::Timer { .. } => "Timer",
             Object::IrTimer { .. } => "IRTimer",
-            Object::Mapping { .. } | Object::ImageSection(_) => "Section",
+            Object::Mapping { .. } | Object::ImageSection(_) | Object::DataSection(_) => "Section",
             Object::Pipe { .. } => "File",
             Object::CompletionPort { .. } => "IoCompletion",
             Object::WaitCompletionPacket { .. } => "WaitCompletionPacket",

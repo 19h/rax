@@ -8,7 +8,7 @@ const SERVICE: u32 = 0x28;
 mod installed;
 #[path = "section_map_replay_tests.rs"]
 mod replay;
-fn call(p: &mut Proc, t: &mut Thread, args: &[u64]) -> u32 {
+pub(super) fn call(p: &mut Proc, t: &mut Thread, args: &[u64]) -> u32 {
     let sp = t.cpu.sp();
     t.cpu.set_pc(0x1234_0004);
     match p.arch {
@@ -53,15 +53,15 @@ fn call(p: &mut Proc, t: &mut Thread, args: &[u64]) -> u32 {
     t.cpu.set_sp(sp);
     t.cpu.gpr(0) as u32
 }
-fn scratch(p: &mut Proc) -> u64 {
+pub(super) fn scratch(p: &mut Proc) -> u64 {
     p.vm.allocate(None, 8 * 4096, mem::RESERVE | mem::COMMIT, prot::READWRITE)
         .unwrap()
         .0
 }
-fn ptr(p: &Proc, at: u64, value: u64) {
+pub(super) fn ptr(p: &Proc, at: u64, value: u64) {
     p.space.wptr(at, p.arch.ptr_size(), value).unwrap();
 }
-fn get(p: &Proc, at: u64) -> u64 {
+pub(super) fn get(p: &Proc, at: u64) -> u64 {
     p.space.ptr(at, p.arch.ptr_size()).unwrap()
 }
 fn section(p: &mut Proc, grant: u32) -> u64 {

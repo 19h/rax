@@ -145,8 +145,11 @@ pub(super) fn unmap(c: &mut Ctx) -> ApiResult {
     if allocation.kind == AllocKind::Private {
         return Flow::ret(STATUS_NOT_MAPPED_VIEW.into());
     }
-    if !c.p.vm.is_nls_view(base) && c.p.vm.section_view(base).is_none() {
-        return Err(c.unsupported("unmap outside selected NLS or image-section views"));
+    if !c.p.vm.is_nls_view(base)
+        && c.p.vm.section_view(base).is_none()
+        && !c.p.vm.is_data_view(base)
+    {
+        return Err(c.unsupported("unmap outside selected NLS, image or data-section views"));
     }
     match c.p.vm.release(base) {
         Ok(_) => Flow::ret(STATUS_SUCCESS.into()),

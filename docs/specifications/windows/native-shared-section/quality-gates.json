@@ -1,0 +1,13 @@
+{
+  "scope": "pre-publication Windows installed CSR snapshot group only;full native-library process goal remains incomplete",
+  "QG1-assumptions": "reconciledS1-S5,explicit unknowns and bounded capture",
+  "QG2-coverage": "typed grants,native acquisition,portable memory and532native controls,installed leaves,three host builds",
+  "QG3-reproducibility": "raw producer bindings,source hashes,exact log counts,empty core features,archive walks",
+  "QG4-edges": "initial flag mask regression observed red then corrected;new commitment/query/CSR protocol remain explicit frontiers",
+  "QG5-provenance": "17actual producer inspections;general API primary links;source/host/replay/leaf/embedding/ordinary evidence separated",
+  "QG6-bounded-expansion": "Darwin pressure mismatch and parallel Linux fixture interference recorded separately;no source edits to them in this group",
+  "QG7-ownership": "all changed files reconciled to exact owned ledger;shared root cluster work untouched;no staged input before task staging",
+  "QG8-behavior": "full lib and CAPI on3hosts;Windows5exact baseline lowering failures retained;new group tests all passed",
+  "QG9-consistency": "corpus and6rejection checks pass;Rust source modules built on3hosts;C ABI/layout and9C++source hashes unchanged",
+  "publication": "exact stage/red and linear upstream integration still required;all validation here pins base7951plus recorded owned files"
+}

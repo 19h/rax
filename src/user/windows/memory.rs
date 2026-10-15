@@ -32,6 +32,7 @@ use vm_memory::{Address, GuestMemory};
 use crate::error::MemoryAccessKind;
 use crate::user::mm::{AddressSpace, Mapping, MmError, PAGE_SIZE, Perms};
 
+mod data_section;
 mod extended;
 mod scheduler;
 mod section;
@@ -497,6 +498,10 @@ pub enum VmError {
     InvalidParameter,
     /// `STATUS_INVALID_PAGE_PROTECTION`.
     InvalidProtection,
+    /// `STATUS_SECTION_PROTECTION`: requested view permissions exceed the section.
+    SectionProtection,
+    /// `STATUS_INVALID_PARAMETER_4`: unsupported NtProtectVirtualMemory modifiers.
+    InvalidParameter4,
     /// `STATUS_CONFLICTING_ADDRESSES`: the range is not free.
     Conflicting,
     /// `STATUS_NO_MEMORY`: no free range of the size exists.
@@ -528,6 +533,8 @@ impl VmError {
         match self {
             VmError::InvalidParameter => STATUS_INVALID_PARAMETER,
             VmError::InvalidProtection => STATUS_INVALID_PAGE_PROTECTION,
+            VmError::SectionProtection => 0xC000_004E,
+            VmError::InvalidParameter4 => STATUS_INVALID_PARAMETER_4,
             VmError::Conflicting => STATUS_CONFLICTING_ADDRESSES,
             VmError::NoMemory => STATUS_NO_MEMORY,
             VmError::CommitmentLimit => STATUS_COMMITMENT_LIMIT,
@@ -582,6 +589,7 @@ pub struct VirtualMemory {
     allocs: BTreeMap<u64, Allocation>,
     nls_views: BTreeSet<u64>,
     section_views: BTreeMap<u64, section::SectionView>,
+    data_views: BTreeMap<u64, data_section::DataView>,
     section_low_placements: BTreeMap<usize, section::LowPlacement>,
     default_low_image_placement: Option<u64>,
     /// Backing bytes promised for committed pages. No guest paging file
@@ -612,6 +620,7 @@ impl VirtualMemory {
             allocs: BTreeMap::new(),
             nls_views: BTreeSet::new(),
             section_views: BTreeMap::new(),
+            data_views: BTreeMap::new(),
             section_low_placements: BTreeMap::new(),
             default_low_image_placement: None,
             committed: 0,
@@ -880,7 +889,7 @@ impl VirtualMemory {
     /// requires size zero and the original reservation base. The returned
     /// range reports the full released allocation or rounded decommit range.
     pub fn free(&mut self, base: u64, size: u64, free_type: u32) -> Result<(u64, u64), VmError> {
-        if (self.is_nls_view(base) || self.section_view(base).is_some())
+        if (self.is_nls_view(base) || self.section_view(base).is_some() || self.is_data_view(base))
             && matches!(free_type, mem::RELEASE | mem::DECOMMIT)
         {
             return Err(VmError::CannotDeleteSection);
@@ -925,7 +934,7 @@ impl VirtualMemory {
                 VmError::InvalidProtection
             });
         }
-        if self.section_views.contains_key(&a.base) {
+        if self.section_views.contains_key(&a.base) || self.data_views.contains_key(&a.base) {
             return Err(VmError::AlreadyCommitted);
         }
 
@@ -1001,7 +1010,7 @@ impl VirtualMemory {
         if self.nls_views.contains(&a.base) {
             return Err(VmError::CannotDeleteSection);
         }
-        if self.section_views.contains_key(&a.base) {
+        if self.section_views.contains_key(&a.base) || self.data_views.contains_key(&a.base) {
             return Err(VmError::CannotDeleteSection);
         }
 
@@ -1081,6 +1090,7 @@ impl VirtualMemory {
         self.allocs.remove(&base);
         self.nls_views.remove(&base);
         self.section_views.remove(&base);
+        self.data_views.remove(&base);
         self.committed -= returned;
         Ok(size)
     }
@@ -1095,6 +1105,17 @@ impl VirtualMemory {
         let a = self.allocation(first).ok_or(VmError::NotAllocated)?;
         if self.nls_views.contains(&a.base) && protect != prot::READONLY {
             return Err(VmError::InvalidProtection);
+        }
+        if self.data_views.contains_key(&a.base) {
+            if protect & (prot::NOCACHE | prot::WRITECOMBINE) != 0 {
+                return Err(VmError::InvalidParameter4);
+            }
+            if !matches!(
+                protect & 0xFF,
+                prot::NOACCESS | prot::READONLY | prot::WRITECOPY
+            ) {
+                return Err(VmError::SectionProtection);
+            }
         }
 
         if end > a.base + a.size {

@@ -1,0 +1,125 @@
+{
+  "baseline": "7951b3b29d1f011999b32de797e7d12dee8501b8",
+  "files": [
+    {
+      "path": "src/user/windows/dll/handles.rs",
+      "bytes": 20631,
+      "sha256": "f9ef903d377a68e1d18742545f1833cb8d5d7d29cb0f38b5ca1671a1b818279e"
+    },
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 17351,
+      "sha256": "43c13367bfbfa75de420e49b0a51b55353a8a375ca49667d62f62240de3c17e6"
+    },
+    {
+      "path": "src/user/windows/dll/native/directory.rs",
+      "bytes": 15497,
+      "sha256": "300fe3b85dd1c1f87372bc452390e64d74a7b4d69e39441261f1a080139ed232"
+    },
+    {
+      "path": "src/user/windows/dll/native/nls.rs",
+      "bytes": 5289,
+      "sha256": "f22a476fbe46e88b7c8c6dc38b851d81a39d93e24cb6d87b847c79bb45d040f3"
+    },
+    {
+      "path": "src/user/windows/dll/native/section_map.rs",
+      "bytes": 8247,
+      "sha256": "b3b02b2387f9571b0e21b2880375e50f91d7f54eeadb09110e99add4faaeae69"
+    },
+    {
+      "path": "src/user/windows/dll/native/section_map/data.rs",
+      "bytes": 3716,
+      "sha256": "76b766fa75d1038b1f408a49d79992dce68e2a56d4c4e13c9a91be4c99733e4d"
+    },
+    {
+      "path": "src/user/windows/memory.rs",
+      "bytes": 68757,
+      "sha256": "cbe751371864b7e1613ee91772630ced416fda21a486424dabf035be0991ef1d"
+    },
+    {
+      "path": "src/user/windows/memory/data_section.rs",
+      "bytes": 3628,
+      "sha256": "9037020ba185004c39d4479489456d5dc1b9f0b8f940bfe6e1d76a759ccb0972"
+    },
+    {
+      "path": "src/user/windows/memory/data_section/tests.rs",
+      "bytes": 3859,
+      "sha256": "2a96b059d446736d26b361a3916db545581f5a5c7ff31da109e8d4a1b432a801"
+    },
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "bytes": 17257,
+      "sha256": "150d6ac6ff79539177a97cd92cf2ceacea463fd7b3db5b106b493a22ca0fe8fa"
+    },
+    {
+      "path": "src/user/windows/object_namespace/data.rs",
+      "bytes": 6700,
+      "sha256": "859efb02e3aaf50a2d13aef32af198c5078e70b4c77b6ad4a6cd922d2d5896dd"
+    },
+    {
+      "path": "src/user/windows/object_namespace/data/tests.rs",
+      "bytes": 3194,
+      "sha256": "cedd0915e5b49bc1e1db685a61b43e4e742b2e6b5d42c5ebcb98eedb47aa2527"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed.rs",
+      "bytes": 15293,
+      "sha256": "5d01cd38e7c94db2c66eab8e412d535bba8ab16e225f1d1b068b41e8c5e98d1f"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/data.rs",
+      "bytes": 8683,
+      "sha256": "832c12bbe3003fe594858f2047706293ca9143d2364e71d6cc0030fc6fcce4bb"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/section.rs",
+      "bytes": 7334,
+      "sha256": "e1ed27df33e931ec5494bd0ce1c20badcc61885b42396c58e2b5d21ba4d90c69"
+    },
+    {
+      "path": "src/user/windows/object_namespace/section.rs",
+      "bytes": 5990,
+      "sha256": "a3185023725c82287e59b9d0da25ffb87f2745e2ef0cb1b8ebc61dbf0e353dec"
+    },
+    {
+      "path": "src/user/windows/objects.rs",
+      "bytes": 26747,
+      "sha256": "150fcaee2d5eed5f50c7bead52fa7a41b398d9e996749a36262bf6a00ddeb9d8"
+    },
+    {
+      "path": "src/user/windows/objects/directory.rs",
+      "bytes": 3660,
+      "sha256": "83345ab531beb2311584984cbc0e2e868a47f5e0e882bbae52d36df87de80ec7"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47308,
+      "sha256": "b0565a2225cdeeabb337116f4fbc9b25e830b3868caceb3815754ec4a36f650a"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/data_section_leaf_tests.rs",
+      "bytes": 5046,
+      "sha256": "c9dfc3a49cf35b6d2aaa452965cb5d44a5a64af6e366d57bfc4956aca03b4559"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/data_section_tests.rs",
+      "bytes": 14426,
+      "sha256": "a8bd1dd788faa7ca4d1af43a6841e9e093ba2ba2458786a2bb1d13437981c90d"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/section_map_leaf_tests.rs",
+      "bytes": 5826,
+      "sha256": "7b3c2934cc1d222b6dd781985dd48fbec0db8695b42a9940304504232219e893"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/section_map_tests.rs",
+      "bytes": 7626,
+      "sha256": "76b1fd93e361750662421a654d94817ebe333f63d8888c96bc98a11d7171fa47"
+    },
+    {
+      "path": "src/user/windows/sync.rs",
+      "bytes": 36051,
+      "sha256": "c358481bdacff726a0e984b6cbaab971b8d070faf5bb610e635788816bff8733"
+    }
+  ]
+}

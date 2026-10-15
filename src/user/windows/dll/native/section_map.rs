@@ -5,6 +5,7 @@ use crate::user::windows::hle::{ApiErr, ApiResult, Ctx, Flow};
 use crate::user::windows::memory::{Mem, valid_protection};
 use crate::user::windows::nt::status::*;
 use crate::user::windows::objects::Object;
+mod data;
 mod geometry;
 
 pub(super) fn map(c: &mut Ctx) -> ApiResult {
@@ -113,6 +114,32 @@ fn checked(c: &mut Ctx) -> ApiResult {
         return failed(c, status);
     }
     let section = match c.p.objects.get(section_handle) {
+        Some(Object::DataSection(section)) => {
+            let section = section.clone();
+            let request = data::Request {
+                handle: section_handle,
+                base,
+                size,
+                zero,
+                commit,
+                offset,
+                inherit,
+                flags,
+                protection,
+            };
+            return match data::map(c, section, request) {
+                Ok((address, length)) => {
+                    c.write_ptr(base_pointer, address)?;
+                    c.write_ptr(size_pointer, length)?;
+                    if offset_pointer != 0 {
+                        c.mem().w64(offset_pointer, offset)?;
+                    }
+                    Flow::ret(STATUS_SUCCESS.into())
+                }
+                Err(data::Failure::Status(status)) => failed(c, status),
+                Err(data::Failure::Unsupported(reason)) => Err(c.unsupported(reason)),
+            };
+        }
         Some(Object::ImageSection(section)) => section.clone(),
         Some(Object::Mapping { .. }) => {
             return Err(c.unsupported("NtMapViewOfSection for a nonselected section"));

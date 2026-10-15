@@ -1,0 +1,250 @@
+	mov	w19, w0
+	ldr	x0, [sp, #0x10]
+	bl	#-0x2d64
+	str	xzr, [sp, #0x10]
+	tbnz	w19, #0x1f, #0xa0
+	ldr	x10, [x18, #0x60]
+	movi	v7.16b, #0x0
+	ldr	x8, [sp, #0xd0]
+	mov	w6, #0x0                        // =0
+	add	x5, sp, #0x100
+	mov	x4, #0x0                        // =0
+	mov	x3, #0x1                        // =1
+	str	x8, [x10, #0x380]
+	ldr	x8, [sp, #0x20]
+	mov	w0, #0x8000                     // =32768
+	str	x8, [x10, #0x88]
+	ldp	x8, x9, [sp, #0xd0]
+	sub	x9, x9, x8
+	ldr	x8, [sp, #0x20]
+	add	x8, x9, x8
+	str	x8, [x10, #0x98]
+	ldr	x9, [sp, #0xe0]
+	adrp	x8, #3977216
+	ldp	x2, x1, [sp, #0x68]
+	stp	q7, q7, [sp, #0x100]
+	stp	q7, q7, [sp, #0x140]
+	stp	q7, q7, [sp, #0x120]
+	str	x9, [x8, #0x6d0]
+	ldr	x8, [sp, #0x78]
+	sub	x9, x8, x1
+	adrp	x8, #3977216
+	str	x9, [x8, #0x6d8]
+	mov	w8, #0x60                       // =96
+	str	w8, [sp, #0x100]
+	adrp	x8, #1609728
+	add	x8, x8, #0x3e0
+	str	x8, [sp, #0x148]
+	mov	x8, #0x1000                     // =4096
+	stp	x8, x2, [sp, #0x138]
+	bl	#0x232c8
+	adrp	x8, #3977216
+	str	x0, [x8, #0x6e8]
+	cbnz	x0, #0x20
+	ldr	w19, #0x40
+	ldr	x0, [x26, #0x6e0]
+	bl	#-0x2e10
+	ldr	x0, [sp, #0x10]
+	str	xzr, [x26, #0x6e0]
+	cbz	x0, #-0x258
+	b	#-0x26c
+	adrp	x8, #3977216
+	str	wzr, [x8, #0x6f0]
+	mov	w0, #0x0                        // =0
+	b	#-0x258
+	nop
+	udf	#0x101
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	hint	#27
+	stp	x19, x20, [sp, #-0x20]!
+	str	x21, [sp, #0x10]
+	stp	x29, x30, [sp, #-0x10]!
+	mov	x29, sp
+	adrp	x8, #3956736
+	ldrb	w9, [x8, #0x2e0]
+	ldr	w10, #0xbc
+	ubfx	x19, x0, #0, #32
+	cmp	w9, #0x0
+	mov	w8, #0xfffffff                  // =268435455
+	ccmp	w1, w10, #0xe, eq
+	ccmp	w19, w8, #0xa, lo
+	b.hi	#0x60
+	sub	w8, w10, w1
+	cmp	w8, w19, lsl #3
+	b.ls	#0x54
+	sub	w9, w8, w19, lsl #3
+	ldr	w8, #0x94
+	umull	x8, w9, w8
+	lsr	x9, x8, #32
+	add	w8, w19, #0x1
+	cmp	w8, w9, lsr #1
+	b.hs	#0x38
+	add	w8, w19, w19, lsl #2
+	add	w8, w19, w8, lsl #1
+	add	w8, w8, w1
+	add	w8, w8, #0x23
+	and	w21, w8, #0xfffffffc
+	adrp	x8, #3973120
+	ldr	w1, [x8, #0x6f0]
+	adrp	x8, #3973120
+	ldr	x0, [x8, #0x6e8]
+	mov	x2, x21
+	bl	#0x12238
+	mov	x20, x0
+	cbnz	x20, #0x1c
+	mov	x0, #0x0                        // =0
+	ldp	x29, x30, [sp], #0x10
+	ldr	x21, [sp, #0x10]
+	ldp	x19, x20, [sp], #0x20
+	hint	#31
+	ret
+	lsl	x2, x19, #3
+	str	w21, [x20]
+	mov	w1, #0x0                        // =0
+	str	wzr, [x20, #0x10]
+	add	x0, x20, #0x20
+	bl	#0x335040
+	add	x8, x19, #0x4
+	add	x8, x20, x8, lsl #3
+	mov	x0, x20
+	str	x8, [x20, #0x18]
+	b	#-0x3c
+	orn	x11, x21, x10, asr #42
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	cbz	w1, #0x54
+	ldr	x8, [x0, #0x18]
+	str	x8, [x2]
+	mov	w8, #0x7fffffff                 // =2147483647
+	cmp	w1, w8
+	b.lo	#0xc
+	mov	w0, #0x0                        // =0
+	b	#0x34
+	add	w8, w1, #0x3
+	and	w1, w8, #0xfffffffc
+	ldr	x8, [x0, #0x18]
+	add	x8, x8, w1, uxtw
+	str	x8, [x0, #0x18]
+	ldr	w8, [x0, #0x10]
+	add	x8, x0, w8, uxtw #3
+	str	x2, [x8, #0x20]
+	ldr	w8, [x0, #0x10]
+	add	w8, w8, #0x1
+	str	w8, [x0, #0x10]
+	mov	w0, w1
+	ret
+	str	xzr, [x2]
+	mov	x2, #0x0                        // =0
+	b	#-0x28
+	hint	#27
+	stp	x19, x20, [sp, #-0x20]!
+	str	x21, [sp, #0x10]
+	stp	x29, x30, [sp, #-0x10]!
+	mov	x29, sp
+	adrp	x8, #3952640
+	ldrb	w8, [x8, #0x2e0]
+	mov	x21, x1
+	ubfx	x20, x2, #0, #32
+	mov	x19, x3
+	cbnz	w8, #0x28
+	mov	x2, x19
+	mov	w1, w20
+	bl	#-0x94
+	cbz	x21, #0x18
+	cbz	w20, #0x14
+	ldr	x0, [x19]
+	mov	x2, x20
+	mov	x1, x21
+	bl	#0x334f34
+	ldp	x29, x30, [sp], #0x10
+	ldr	x21, [sp, #0x10]
+	ldp	x19, x20, [sp], #0x20
+	hint	#31
+	ret
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	udf	#0x0
+	hint	#27
+	stp	x19, x20, [sp, #-0x20]!
+	stp	x21, x22, [sp, #0x10]
+	stp	x29, x30, [sp, #-0x10]!
+	mov	x29, sp
+	adrp	x8, #3952640
+	ldrb	w8, [x8, #0x2e0]
+	mov	x20, x0
+	mov	w21, w1
+	mov	x22, x2
+	cbnz	w8, #0x3c
+	cbz	x20, #0x50
+	ldr	x19, [x20]
+	cbz	x19, #0x50
+	mov	w20, #0x0                       // =0
+	cbz	w21, #0x20
+	ldr	x1, [x22, w20, uxtw #3]
+	cbz	x1, #0xc
+	mov	x0, x19
+	bl	#0x174
+	add	w20, w20, #0x1
+	cmp	w20, w21
+	b.ne	#-0x18
+	mov	w0, #0x0                        // =0
+	b	#0x8
+	ldr	w0, #0x6c
+	ldp	x29, x30, [sp], #0x10
+	ldp	x21, x22, [sp, #0x10]
+	ldp	x19, x20, [sp], #0x20
+	hint	#31
+	ret
+	ldr	w0, #0x58
+	b	#-0x18
+	mov	w1, #0x0                        // =0
+	mov	w8, #0x0                        // =0

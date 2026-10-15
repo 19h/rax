@@ -1,0 +1,258 @@
+{
+  "scope": "Windows CSR snapshot group on7951 plus exact owned files;full process userland goal remains active",
+  "base": "7951b3b29d1f011999b32de797e7d12dee8501b8",
+  "native-controls": {
+    "producers": 17,
+    "cases": 532,
+    "released-views": 208,
+    "closed-section-handles": 36,
+    "original-native-child-exit": 41
+  },
+  "results": {
+    "macos-lib": {
+      "log": "macos-lib.log",
+      "sha256": "3323c7f3b6d6c7cdb2c6a94abc8530bfdbeced09ad28b468a1c3b21753121133",
+      "test-results": [
+        [
+          "7797",
+          "0",
+          "2",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "macos-capi": {
+      "log": "macos-capi.log",
+      "sha256": "51a94a7266a403f9dabaac385824e1d00d4d7eed6039a7d5f2a91e324160a45d",
+      "test-results": [
+        [
+          "168",
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        [
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "macos-all-targets": {
+      "log": "macos-all-targets.log",
+      "sha256": "3fc6f5c57938fc6612b4e9176a759248e5d516b507b3d1847f523bc6cc189957",
+      "test-results": []
+    },
+    "macos-windows-integration": {
+      "log": "macos-windows-integration.log",
+      "sha256": "8179c70d0daba1b13f7b2d0af321b93e3d8322254a7a0e1358ad3c0b033d2e4f",
+      "test-results": [
+        [
+          "544",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "macos-linux-integration": {
+      "log": "macos-linux-integration.log",
+      "sha256": "e00265e75eafb5013ffff90737a0974dadfee59094c1b65f67acfdc79caaa19c",
+      "test-results": [
+        [
+          "41",
+          "1",
+          "1",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "macos-darwin-target": {
+      "log": "macos-darwin-target.log",
+      "sha256": "e92df12e8ff981c955dbff25443fe959785dba7584ef4a0f6e68eb9b6f6f4963",
+      "test-results": [
+        [
+          "116",
+          "1",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "linux-lib": {
+      "log": "linux-lib.log",
+      "sha256": "109dbf11d9a2dca35824718d7f421b4ce386e81237b253d8a0f850043e0cfea4",
+      "test-results": [
+        [
+          "7791",
+          "0",
+          "2",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "linux-capi": {
+      "log": "linux-capi.log",
+      "sha256": "d6abfb04b45f4060a01134ec1abe054773fead64d3f88510cda90a81399847df",
+      "test-results": [
+        [
+          "168",
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        [
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "linux-all-targets": {
+      "log": "linux-all-targets.log",
+      "sha256": "b1a9f3af5cb6ac8ec5dc511a2c6125602c0f27586dc6350210dd905bfb117564",
+      "test-results": []
+    },
+    "linux-windows-integration": {
+      "log": "linux-windows-integration.log",
+      "sha256": "708d8802588145403284ef8733f344887c44ded486790e96577ec7597dc5103c",
+      "test-results": [
+        [
+          "544",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "linux-linux-integration": {
+      "log": "linux-linux-integration.log",
+      "sha256": "bad0efbf4719df0c092ffe6e1613a1042563dfd0025288fa3841ad96fe34aa29",
+      "test-results": [
+        [
+          "41",
+          "1",
+          "1",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "linux-darwin-target": {
+      "log": "linux-darwin-target.log",
+      "sha256": "fa2ff7cb00da675fb296baaa4cd78db258b91d0537ee2d8177e09302e20e9b4e",
+      "test-results": [
+        [
+          "117",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "windows-lib": {
+      "log": "windows-lib.log",
+      "sha256": "639548a062a51e086b5a79888a28a6c7d91e66f70a3d69882646bbde44ce1be8",
+      "test-results": [
+        [
+          "7216",
+          "5",
+          "2",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "windows-capi": {
+      "log": "windows-capi.log",
+      "sha256": "f1cfbb841d835c33b2c1c47692cd1bfd2bf5e5eca2b80b89bf9f5bd8235f9bdb",
+      "test-results": [
+        [
+          "168",
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        [
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "windows-all-targets": {
+      "log": "windows-all-targets.log",
+      "sha256": "9402166bdf0eecd65c648c392f9bdb1be68af88531c2b0b8a8a0f3d02c01dcfb",
+      "test-results": []
+    },
+    "windows-integration": {
+      "log": "windows-integration.log",
+      "sha256": "c9eadcbceedc4f7e10b26cd969cc499a196d60fe518d1a769d502bca0f95371b",
+      "test-results": [
+        [
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        [
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "macos-owning-ctest": {
+      "log": "macos-owning-ctest.log",
+      "sha256": "563e560a1de037599766dee68014e6c064c7e40819d6ed492d7c72849ff447de",
+      "test-results": []
+    },
+    "windows-owning-cpp": {
+      "log": "windows-owning-cpp.log",
+      "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214",
+      "test-results": []
+    },
+    "linux-owning-cpp": {
+      "log": "linux-owning-cpp.log",
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497",
+      "test-results": []
+    }
+  },
+  "unproved": [
+    "ordinary Windows guest exits",
+    "physical x64 kernel",
+    "whole current root/plugin/GUI/package"
+  ],
+  "known-windows-baseline-failures": [
+    "4 BZHI carry lowering",
+    "1 FP16 arithmetic lowering"
+  ],
+  "out-of-scope-failures": [
+    "macOS pressure2: native reclaim~1s vs model~10s",
+    "Parallel uringio fixtures use fixed/tmp paths;both macOS-hosted and Linux-hosted complete targets pass42/0/1 with one test thread;no assertions were weakened"
+  ],
+  "incoming-upstream": "4df4837a78cc8cf116d508efaf8f66763e45ee1e;46disjoint files;not integrated;recorded validation remains pinned to7951",
+  "serial-characterization": {
+    "macos-user-linux": "42passed/0failed/1ignored;256.26s;parallel failure preserved",
+    "linux-user-linux": "42passed/0failed/1ignored;430.91s;parallel failure preserved"
+  }
+}
