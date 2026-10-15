@@ -1,0 +1,112 @@
+[
+  {
+    "gate": "focused",
+    "command": [
+      "cargo",
+      "test",
+      "--lib",
+      "secure_connect",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 226.20532822608948,
+    "log": "macos-focused.log",
+    "sha256": "38b3c03aa6ad683f8aaaebf55d16266d9b27a5a0b5b1929ec9150aaee9eade69",
+    "source-commit": "7e3057d8efebe70e33f1b405ed3346cbeb1e9d3f"
+  },
+  {
+    "gate": "lib",
+    "command": [
+      "cargo",
+      "test",
+      "--lib",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit-code": 101,
+    "seconds": 1687.075318813324,
+    "log": "macos-lib.log",
+    "sha256": "193f3ecc6161f5345baf140a6dbf1ee2389ce6e6a0daadfcbd0074f48a364743",
+    "source-commit": "7e3057d8efebe70e33f1b405ed3346cbeb1e9d3f"
+  },
+  {
+    "gate": "capi",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "rax-capi",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit-code": 101,
+    "seconds": 392.5398590564728,
+    "log": "macos-capi.log",
+    "sha256": "ff8ad81052d4d583d61f4b5485694fc030a53f2f66719aa4ec33f1eb0da99396",
+    "source-commit": "7e3057d8efebe70e33f1b405ed3346cbeb1e9d3f"
+  },
+  {
+    "gate": "all-targets",
+    "command": [
+      "cargo",
+      "check",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--no-default-features"
+    ],
+    "exit-code": 0,
+    "seconds": 219.42760491371155,
+    "log": "macos-all-targets.log",
+    "sha256": "a4dcdf14cb364c4f769bfd3c7a798e0fdce5f2334d21aa55cf4a62fd3ae9b2cb",
+    "source-commit": "7e3057d8efebe70e33f1b405ed3346cbeb1e9d3f"
+  },
+  {
+    "gate": "windows",
+    "command": [
+      "cargo",
+      "test",
+      "--test",
+      "user_windows",
+      "--test",
+      "user_windows_memory",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 233.02330017089844,
+    "log": "macos-windows.log",
+    "sha256": "7c993a47a9ae06306e586a53df5bf29577d8f7abdfe4af13cbd1b115a99c911b",
+    "source-commit": "7e3057d8efebe70e33f1b405ed3346cbeb1e9d3f"
+  },
+  {
+    "gate": "build-user",
+    "command": [
+      "cargo",
+      "build",
+      "--bin",
+      "rax-user",
+      "--locked",
+      "--offline",
+      "--no-default-features"
+    ],
+    "exit-code": 0,
+    "seconds": 0.27376294136047363,
+    "log": "macos-build-user.log",
+    "sha256": "2bc683fb4e4f4f21ee9ee39e2b8ecce2efe20d3b1be57bda5316aa519ab3d30a",
+    "source-commit": "7e3057d8efebe70e33f1b405ed3346cbeb1e9d3f"
+  }
+]

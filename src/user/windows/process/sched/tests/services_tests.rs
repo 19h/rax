@@ -1,6 +1,9 @@
 use super::*;
 use crate::user::windows::loader::services::tests::table;
 
+#[path = "services_tests/secure_connect_tests.rs"]
+mod secure_connect_tests;
+
 #[path = "services_tests/apphelp_tests.rs"]
 mod apphelp_tests;
 

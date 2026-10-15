@@ -1,0 +1,20 @@
+[
+  {
+    "impact": "high",
+    "finding": "Existing CSR connection, real owned shared views and ordinary Windows process completion remain incomplete.",
+    "evidence": "handler returns explicit unsupported for a present ALPC port; existing startup frontier NtSecureConnectPort0x194",
+    "blocks": "full process-userland completion; does not block the measured failure-capture group"
+  },
+  {
+    "impact": "medium",
+    "finding": "Physical x64 Windows kernels and other Windows builds are unverified.",
+    "evidence": "native producer kernel records ARM64 build29683",
+    "blocks": "broader native-platform claim"
+  },
+  {
+    "impact": "medium",
+    "finding": "Host namespace changes after immutable capture are not reflected.",
+    "evidence": "Namespace selected snapshot ownership",
+    "blocks": "dynamic host namespace equivalence"
+  }
+]

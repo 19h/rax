@@ -1,0 +1,54 @@
+{
+  "recorded-utc": "2026-10-15T19:49:33.085603+00:00",
+  "binary": {
+    "path": "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target-pinned/debug/deps/rax-754f4d2a527a4423",
+    "bytes": 449014392,
+    "sha256": "b65e0007eab05cb1409bda5539f05f00644a0508f5094b53fcac016e79296faa"
+  },
+  "unmodified-exact-test": [
+    {
+      "command": [
+        "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target-pinned/debug/deps/rax-754f4d2a527a4423",
+        "user::linux::tests::uring::timeout::a_multishot_timeout_reports_each_expiry",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 0.16324710845947266,
+      "log": "macos-v2-timer-diagnostic-1.log",
+      "sha256": "5a01a5f30b618acbd74e28eaf2f43cd64de76c0f11a8406e4151aace21d8a084"
+    },
+    {
+      "command": [
+        "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target-pinned/debug/deps/rax-754f4d2a527a4423",
+        "user::linux::tests::uring::timeout::a_multishot_timeout_reports_each_expiry",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 0.057270050048828125,
+      "log": "macos-v2-timer-diagnostic-2.log",
+      "sha256": "883484a177e079f5962c7b0858def77b2f03d3b5b8e72ed3fa3eefbe1b93e36f"
+    },
+    {
+      "command": [
+        "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target-pinned/debug/deps/rax-754f4d2a527a4423",
+        "user::linux::tests::uring::timeout::a_multishot_timeout_reports_each_expiry",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 0.04970812797546387,
+      "log": "macos-v2-timer-diagnostic-3.log",
+      "sha256": "883484a177e079f5962c7b0858def77b2f03d3b5b8e72ed3fa3eefbe1b93e36f"
+    }
+  ],
+  "original-library-result": "7813 passed;1failed;2ignored",
+  "excluded-claims": [
+    "No timing threshold/assertion changed",
+    "These exact reruns are not a second complete library run"
+  ]
+}

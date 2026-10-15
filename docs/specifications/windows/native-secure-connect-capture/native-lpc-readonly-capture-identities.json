@@ -1,0 +1,548 @@
+{
+  "utc": "2026-10-15T19:09:57.294327+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "producers": [
+    {
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-readonly-capture-arm64\\native-lpc-readonly-capture.cpp",
+        "bytes": 5386,
+        "sha256": "15c627ae7087ebf9067d0cc0d68df91dfbc672ef9997dc96adc4bd9214937423"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-readonly-capture-arm64\\native-lpc-readonly-capture-arm64.exe",
+        "bytes": 175104,
+        "sha256": "1de41dd38ec81bc484da02068fc3cd7096198164099625ef7acb47382cdffa7b",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-readonly-capture-arm64\\native-lpc-readonly-capture-arm64.log",
+        "bytes": 7593,
+        "sha256": "160e37b60c95649cd37b9bc0bd344c013b2789283390a772d5fd93f894306eae"
+      },
+      "observations": [
+        {
+          "case": "0",
+          "name": "baseline",
+          "readonly-page": "-1",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "53",
+          "handles-after": "53",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "1",
+          "name": "output",
+          "readonly-page": "0",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "53",
+          "handles-after": "53",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "2",
+          "name": "name-header",
+          "readonly-page": "1",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "53",
+          "handles-after": "53",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "3",
+          "name": "name-text",
+          "readonly-page": "2",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "53",
+          "handles-after": "53",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "4",
+          "name": "qos",
+          "readonly-page": "3",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "53",
+          "handles-after": "53",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "5",
+          "name": "client-view",
+          "readonly-page": "4",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "53",
+          "handles-after": "53",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "6",
+          "name": "sid",
+          "readonly-page": "5",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "53",
+          "handles-after": "53",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "7",
+          "name": "server-view",
+          "readonly-page": "6",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "53",
+          "handles-after": "53",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "8",
+          "name": "message",
+          "readonly-page": "7",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "53",
+          "handles-after": "53",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "9",
+          "name": "information",
+          "readonly-page": "8",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "53",
+          "handles-after": "53",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "10",
+          "name": "length",
+          "readonly-page": "9",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "53",
+          "handles-after": "53",
+          "output-prefix": "a5a5a5a5"
+        }
+      ]
+    },
+    {
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-readonly-capture-x64\\native-lpc-readonly-capture.cpp",
+        "bytes": 5386,
+        "sha256": "15c627ae7087ebf9067d0cc0d68df91dfbc672ef9997dc96adc4bd9214937423"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-readonly-capture-x64\\native-lpc-readonly-capture-x64.exe",
+        "bytes": 183808,
+        "sha256": "6acbaed8f72b325ad88807697e8dd0700318c831de51f4ecd6647adb298b125f",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-readonly-capture-x64\\native-lpc-readonly-capture-x64.log",
+        "bytes": 7593,
+        "sha256": "8557d09a2f283ec9bc8f8a2d5f6486e7c54348fedfd2933f7c8b066dfe3c81d4"
+      },
+      "observations": [
+        {
+          "case": "0",
+          "name": "baseline",
+          "readonly-page": "-1",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "75",
+          "handles-after": "75",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "1",
+          "name": "output",
+          "readonly-page": "0",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "75",
+          "handles-after": "75",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "2",
+          "name": "name-header",
+          "readonly-page": "1",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "75",
+          "handles-after": "75",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "3",
+          "name": "name-text",
+          "readonly-page": "2",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "75",
+          "handles-after": "75",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "4",
+          "name": "qos",
+          "readonly-page": "3",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "75",
+          "handles-after": "75",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "5",
+          "name": "client-view",
+          "readonly-page": "4",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "75",
+          "handles-after": "75",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "6",
+          "name": "sid",
+          "readonly-page": "5",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "75",
+          "handles-after": "75",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "7",
+          "name": "server-view",
+          "readonly-page": "6",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "75",
+          "handles-after": "75",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "8",
+          "name": "message",
+          "readonly-page": "7",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "75",
+          "handles-after": "75",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "9",
+          "name": "information",
+          "readonly-page": "8",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "75",
+          "handles-after": "75",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "10",
+          "name": "length",
+          "readonly-page": "9",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "75",
+          "handles-after": "75",
+          "output-prefix": "a5a5a5a5"
+        }
+      ]
+    },
+    {
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-readonly-capture-x86\\native-lpc-readonly-capture.cpp",
+        "bytes": 5386,
+        "sha256": "15c627ae7087ebf9067d0cc0d68df91dfbc672ef9997dc96adc4bd9214937423"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-readonly-capture-x86\\native-lpc-readonly-capture-x86.exe",
+        "bytes": 142848,
+        "sha256": "35113ce0ea08ed0bd7804283ab40a2f4800e486bc0a0fb6d56bebf70a7978df6",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-readonly-capture-x86\\native-lpc-readonly-capture-x86.log",
+        "bytes": 7593,
+        "sha256": "af47ff6a5eb0e367c19d4e7fbee5e778914d8582302e51b6326934db61a0cbdd"
+      },
+      "observations": [
+        {
+          "case": "0",
+          "name": "baseline",
+          "readonly-page": "-1",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "89",
+          "handles-after": "89",
+          "output-prefix": "00000000"
+        },
+        {
+          "case": "1",
+          "name": "output",
+          "readonly-page": "0",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "2",
+          "name": "name-header",
+          "readonly-page": "1",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        },
+        {
+          "case": "3",
+          "name": "name-text",
+          "readonly-page": "2",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        },
+        {
+          "case": "4",
+          "name": "qos",
+          "readonly-page": "3",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        },
+        {
+          "case": "5",
+          "name": "client-view",
+          "readonly-page": "4",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        },
+        {
+          "case": "6",
+          "name": "sid",
+          "readonly-page": "5",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        },
+        {
+          "case": "7",
+          "name": "server-view",
+          "readonly-page": "6",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        },
+        {
+          "case": "8",
+          "name": "message",
+          "readonly-page": "7",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        },
+        {
+          "case": "9",
+          "name": "information",
+          "readonly-page": "8",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        },
+        {
+          "case": "10",
+          "name": "length",
+          "readonly-page": "9",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        }
+      ]
+    },
+    {
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-readonly-capture-x86-laa\\native-lpc-readonly-capture.cpp",
+        "bytes": 5386,
+        "sha256": "15c627ae7087ebf9067d0cc0d68df91dfbc672ef9997dc96adc4bd9214937423"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-readonly-capture-x86-laa\\native-lpc-readonly-capture-x86-laa.exe",
+        "bytes": 142848,
+        "sha256": "c221cdce679f42c3862f6df09910cf0844f53bb8de8b90df3fe649cccd20c8ab",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-readonly-capture-x86-laa\\native-lpc-readonly-capture-x86-laa.log",
+        "bytes": 7593,
+        "sha256": "c2632590636f7dc668eaeed46d12fad8e2aedc9d49e845934df1714164a55e71"
+      },
+      "observations": [
+        {
+          "case": "0",
+          "name": "baseline",
+          "readonly-page": "-1",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        },
+        {
+          "case": "1",
+          "name": "output",
+          "readonly-page": "0",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "a5a5a5a5"
+        },
+        {
+          "case": "2",
+          "name": "name-header",
+          "readonly-page": "1",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        },
+        {
+          "case": "3",
+          "name": "name-text",
+          "readonly-page": "2",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        },
+        {
+          "case": "4",
+          "name": "qos",
+          "readonly-page": "3",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        },
+        {
+          "case": "5",
+          "name": "client-view",
+          "readonly-page": "4",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        },
+        {
+          "case": "6",
+          "name": "sid",
+          "readonly-page": "5",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        },
+        {
+          "case": "7",
+          "name": "server-view",
+          "readonly-page": "6",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        },
+        {
+          "case": "8",
+          "name": "message",
+          "readonly-page": "7",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        },
+        {
+          "case": "9",
+          "name": "information",
+          "readonly-page": "8",
+          "status": "C0000005",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        },
+        {
+          "case": "10",
+          "name": "length",
+          "readonly-page": "9",
+          "status": "C0000034",
+          "exception": "00000000",
+          "handles-before": "90",
+          "handles-after": "90",
+          "output-prefix": "00000000"
+        }
+      ]
+    }
+  ],
+  "observations": 44,
+  "closed-handles": 4,
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-lpc-readonly-capture.py",
+    "bytes": 6237,
+    "sha256": "cab8417dc9512fc2f83b41717584aedc46ce40a9e9e45ba94e035fd349f73c9d"
+  },
+  "scope": "Missing private names only; compatibility ABIs on ARM64 kernel, physical x64 kernel unverified"
+}

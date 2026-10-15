@@ -1,0 +1,9 @@
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+Verified 316 actual scoped source/input hashes
+Verified9 actual frozen Windows C++ sources against current root
+assist-native-secure-capture-shipping.log EB7F9E5349CB73023451E3FC38EF2FE36CA8626C44A5CF35BCC9F5918AA662B5
+assist-native-secure-capture-cpp.log B0F277678BC54485CF58C6295345A12235DF27C7D420C5085B93AB253E75E214
+validated rlib: C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-owned\debug\deps\librax-e6c413934cad3a8f.rlib

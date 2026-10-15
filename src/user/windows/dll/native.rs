@@ -20,6 +20,7 @@ mod query;
 mod registry;
 mod section_create;
 mod section_map;
+mod secure_connect;
 mod symbolic_link;
 mod thread_set;
 mod timers;
@@ -47,6 +48,12 @@ pub(super) static EXPORTS: &[Export] = &[
     ),
     Export::func("NtTerminateThread", Stdcall, &[Ptr, I32], terminate_thread),
     Export::func("NtClose", Stdcall, &[Ptr], close),
+    Export::func(
+        "NtSecureConnectPort",
+        Stdcall,
+        &[Ptr, Ptr, Ptr, Ptr, Ptr, Ptr, Ptr, Ptr, Ptr],
+        secure_connect::connect,
+    ),
     Export::func(
         "NtCreateSection",
         Stdcall,

@@ -1,0 +1,196 @@
+{
+  "files": [
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/README.md",
+      "bytes": 2370,
+      "sha256": "1b9dc0f43fb7e1049b9da8f4542563ae3c24e559690d52f3040dfa25caf14f95",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/assist-change-surface.json",
+      "bytes": 1128,
+      "sha256": "60829143e641bb792d7d72a7da1c8f5cd6e236464a47767d541a1e905f5f78ec",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/assumption-register.json",
+      "bytes": 1752,
+      "sha256": "b4bf7c05e9f4393eb3c24bfae29aac14568ce628d24796bdc6f26517ff666acc",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/bounded-findings.json",
+      "bytes": 851,
+      "sha256": "14414b52ec344bc5a4043fe851f48b99eba1066fd12b4ce573bd0d26936aab1b",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/check.py",
+      "bytes": 1360,
+      "sha256": "7685c468164e9d76809c9f46128b3c30b7801b60ed379dcc02c2756cab3f8350",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/identity.json",
+      "bytes": 2703,
+      "sha256": "f57691c5c61165aafe1c575382ebf60b868386b199390b35779b510a0fa51810",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/inspect-lpc-missing-controls.py",
+      "bytes": 9440,
+      "sha256": "aeca94f926e671321cdd5b67f50501529f56186545fbb135aaf47141712b823d",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/inspect-secure-connect-status.py",
+      "bytes": 966,
+      "sha256": "bda5f5c3074662908446080cfc8bd41c64b2705920b803e233865572c31ddfa0",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/native-lpc-missing-controls-arm64-build.log",
+      "bytes": 33,
+      "sha256": "afbf1ff4d137e39334cab0f056594e44520cdab2a0af7f00795be12c81739922",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/native-lpc-missing-controls-arm64.log",
+      "bytes": 186301,
+      "sha256": "e212c75ddd32404fbfde44ab9fef375901655f3c3cd24413cabd7fe67b5a5660",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/native-lpc-missing-controls-identities.json",
+      "bytes": 60437,
+      "sha256": "b86cc5abf4db90a3a3f074dcc334542b81f69ae475586c21cfd566f2b1130b16",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/native-lpc-missing-controls-outcomes.json",
+      "bytes": 1150,
+      "sha256": "4625ef961fa522ddd35f9e6ac26449efcb1d251fac927e9855e07247b0ed00ff",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/native-lpc-missing-controls-profiles.ps1",
+      "bytes": 2376,
+      "sha256": "87a0681d2e9990551bf6c5cb916a56b208b0843fe563194748a0630a9e7ea92b",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/native-lpc-missing-controls-x64-build.log",
+      "bytes": 33,
+      "sha256": "afbf1ff4d137e39334cab0f056594e44520cdab2a0af7f00795be12c81739922",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/native-lpc-missing-controls-x64.log",
+      "bytes": 186301,
+      "sha256": "ac73ae5536161ef2cb1a00e9bfbd2e526a9f057136a43fafc5a1ee01f0a686f7",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/native-lpc-missing-controls-x86-build.log",
+      "bytes": 33,
+      "sha256": "afbf1ff4d137e39334cab0f056594e44520cdab2a0af7f00795be12c81739922",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/native-lpc-missing-controls-x86-laa-build.log",
+      "bytes": 33,
+      "sha256": "afbf1ff4d137e39334cab0f056594e44520cdab2a0af7f00795be12c81739922",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/native-lpc-missing-controls-x86-laa.log",
+      "bytes": 181841,
+      "sha256": "b2869dd4c3f6a5152c9b37382b2274819cd6524998b3ad80e646c733634ca050",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/native-lpc-missing-controls-x86.log",
+      "bytes": 182263,
+      "sha256": "75ce8e2ee164c0103e850a1ef45feec3325dcaa29f6e4fed69f1dec67beec687",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/native-lpc-missing-controls.cpp",
+      "bytes": 13651,
+      "sha256": "7d66d6952abe20a8762bfb68aaec5e464276be0736681e4ce8e60b9468ebcb65",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/native-secure-connect-status.json",
+      "bytes": 817,
+      "sha256": "394d57ad037d8f8313ee1dd84ba5d211dae26cf9266dc58ac78fa8779460c694",
+      "before-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/rax-change-surface.json",
+      "bytes": 2661,
+      "sha256": "c7b7e4a2de8713ea965b4fc46a2a9f17ccf369cf81e9e4f56a25f598702bfe45",
+      "before-sha256": null
+    },
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 17700,
+      "sha256": "d73e08c837589dba2b5ba57e7143ee395a4ff45c8c1fdb6ab5ec816bfc353ff2",
+      "before-sha256": "a6cbf7138919d8031b34fa3a9242ee10f62fa6de22088d222c02ff1c63159a14"
+    },
+    {
+      "path": "src/user/windows/dll/native/secure_connect.rs",
+      "bytes": 5786,
+      "sha256": "62bb784799f4a891af9d86b2dafcb66f4222c7bff101fe845641f5c23e842df8",
+      "before-sha256": null
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "bytes": 130674,
+      "sha256": "313cd1d52634a62ec20e2f10068d96070f8c0b96e485fb608fd8d77794bbcc5c",
+      "before-sha256": "60a5fe68cb154848cb11af49d633cf1b4f85a31e48713ddf6cc8c12fba3e77de"
+    },
+    {
+      "path": "src/user/windows/nt.rs",
+      "bytes": 18552,
+      "sha256": "4249579882a4e148ebc6c4363ab2077957c851b083b620479af8411c42469369",
+      "before-sha256": "da546846b01ca558ddac7e9bd0bcf1b7e658ec9557148165c210aecd24bb8dcb"
+    },
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "bytes": 17944,
+      "sha256": "74e438d54a85fb4f88a2839964e513ea4d261b144e2d4e243a806f1b7b8e9f23",
+      "before-sha256": "150d6ac6ff79539177a97cd92cf2ceacea463fd7b3db5b106b493a22ca0fe8fa"
+    },
+    {
+      "path": "src/user/windows/object_namespace/data.rs",
+      "bytes": 6707,
+      "sha256": "4ecea07cb2a38317112017246293d10e33d0443f88fef8ebb4758b649f144d34",
+      "before-sha256": "859efb02e3aaf50a2d13aef32af198c5078e70b4c77b6ad4a6cd922d2d5896dd"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47464,
+      "sha256": "b116704adb939291187b8e4940c95d12b04dbebb03c75bb1b7c926772ab26b11",
+      "before-sha256": "af8bd188c0a31e8d88758a8166e05a88c1b4f0e34ceb4e389204edf2d8a24d24"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_leaf_tests.rs",
+      "bytes": 4301,
+      "sha256": "d042b3bb390fd3f65aed1be200ba2ca843b915691ace753a6e7788358733570c",
+      "before-sha256": null
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_replay_tests.rs",
+      "bytes": 8496,
+      "sha256": "e8cde2c3cff53ab2f439fa4c152a7ee123c96d8c01e4d917282b921d9be43de8",
+      "before-sha256": null
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_tests.rs",
+      "bytes": 7514,
+      "sha256": "2e7c06f17089fd2233194b607000130d1bc6d72842c58f9e649a781a6ff37d53",
+      "before-sha256": null
+    }
+  ]
+}

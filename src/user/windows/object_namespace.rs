@@ -64,6 +64,7 @@ enum SelectedObject {
     Directory(Arc<Directory>),
     Link(Arc<SymbolicLink>),
     Section(SelectedSection),
+    Port,
 }
 /// Guest-owned immutable directory metadata, independent of native HANDLEs.
 #[derive(Debug)]
@@ -263,7 +264,7 @@ impl Namespace {
         name: &[u16],
         flags: u32,
     ) -> Result<Arc<Directory>, LookupError> {
-        match self.lookup_object(root, name, flags, false, false)? {
+        match self.lookup_object(root, name, flags, false, false, false)? {
             SelectedObject::Directory(d) => Ok(d),
             _ => unreachable!("directory lookup"),
         }
@@ -274,9 +275,18 @@ impl Namespace {
         name: &[u16],
         flags: u32,
     ) -> Result<Arc<SymbolicLink>, LookupError> {
-        match self.lookup_object(root, name, flags, true, false)? {
+        match self.lookup_object(root, name, flags, true, false, false)? {
             SelectedObject::Link(l) => Ok(l),
             _ => unreachable!("link lookup"),
+        }
+    }
+    /// Resolve captured ALPC-port presence without making a native connection.
+    /// A present entry supplies identity only; the caller still needs a selected
+    /// guest server before admitting a successful connection.
+    pub(crate) fn lookup_port(&self, name: &[u16]) -> Result<(), LookupError> {
+        match self.lookup_object(None, name, 0, false, false, true)? {
+            SelectedObject::Port => Ok(()),
+            _ => unreachable!("port lookup"),
         }
     }
     fn lookup_object(
@@ -286,6 +296,7 @@ impl Namespace {
         flags: u32,
         link: bool,
         section: bool,
+        port: bool,
     ) -> Result<SelectedObject, LookupError> {
         let (mut dir, path) = if let Some(root) = root {
             if name.first() == Some(&(b'\\' as u16)) {
@@ -302,7 +313,7 @@ impl Namespace {
             )
         };
         if path.is_empty() {
-            return if link || section {
+            return if link || section || port {
                 Err(LookupError::Status(STATUS_OBJECT_TYPE_MISMATCH))
             } else {
                 Ok(SelectedObject::Directory(dir))
@@ -330,7 +341,7 @@ impl Namespace {
                     STATUS_OBJECT_NAME_NOT_FOUND
                 }))?;
             if is(&entry.captured.kind, "Directory") {
-                if (link || section) && parts.peek().is_none() {
+                if (link || section || port) && parts.peek().is_none() {
                     return Err(LookupError::Status(STATUS_OBJECT_TYPE_MISMATCH));
                 }
                 dir = entry.child.as_ref().ok_or(LookupError::Unselected)?.clone();
@@ -363,6 +374,8 @@ impl Namespace {
                     .clone()
                     .map(SelectedObject::Section)
                     .ok_or(LookupError::Unselected);
+            } else if port && parts.peek().is_none() && is(&entry.captured.kind, "ALPC Port") {
+                return Ok(SelectedObject::Port);
             } else {
                 return Err(LookupError::Status(STATUS_OBJECT_TYPE_MISMATCH));
             }

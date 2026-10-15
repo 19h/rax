@@ -1,0 +1,20 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "-p",
+    "rax-capi",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--",
+    "--test-threads=1"
+  ],
+  "exit-code": 0,
+  "seconds": 107.86131715774536,
+  "log": "macos-v2-capi-rerun.log",
+  "sha256": "a8574af91552413564960ff7719b485118e68ed6d8b4ee7bf36c40c181792ca0",
+  "recorded-utc": "2026-10-15T20:22:27.065416+00:00",
+  "source-freeze": "epoch2-frozen-code.json",
+  "reason": "Retain initial167/1 native printf30s timeout; canonical rerun after other own local gates, no source/assertion/timeout changes"
+}

@@ -1,0 +1,57 @@
+{
+  "direct-decode": {
+    "status": "unaffected",
+    "reason": "Windows native argument capture and namespace lookup only; this instruction/IR/backend/ABI plane has no changed source or consumer"
+  },
+  "direct-execute": {
+    "status": "unaffected",
+    "reason": "Windows native argument capture and namespace lookup only; this instruction/IR/backend/ABI plane has no changed source or consumer"
+  },
+  "cpu-state": {
+    "status": "unaffected",
+    "reason": "Windows native argument capture and namespace lookup only; this instruction/IR/backend/ABI plane has no changed source or consumer"
+  },
+  "memory-mmu": "affected: existing checked guest probes and immutable NT namespace; no mapper or ISA memory semantics changed",
+  "smir-lift": {
+    "status": "unaffected",
+    "reason": "Windows native argument capture and namespace lookup only; this instruction/IR/backend/ABI plane has no changed source or consumer"
+  },
+  "smir-ir": {
+    "status": "unaffected",
+    "reason": "Windows native argument capture and namespace lookup only; this instruction/IR/backend/ABI plane has no changed source or consumer"
+  },
+  "smir-interpreter": {
+    "status": "unaffected",
+    "reason": "Windows native argument capture and namespace lookup only; this instruction/IR/backend/ABI plane has no changed source or consumer"
+  },
+  "optimizer": {
+    "status": "unaffected",
+    "reason": "Windows native argument capture and namespace lookup only; this instruction/IR/backend/ABI plane has no changed source or consumer"
+  },
+  "native-lowering": {
+    "status": "unaffected",
+    "reason": "Windows native argument capture and namespace lookup only; this instruction/IR/backend/ABI plane has no changed source or consumer"
+  },
+  "jit-runtime": {
+    "status": "unaffected",
+    "reason": "Windows native argument capture and namespace lookup only; this instruction/IR/backend/ABI plane has no changed source or consumer"
+  },
+  "backend": {
+    "status": "unaffected",
+    "reason": "Windows native argument capture and namespace lookup only; this instruction/IR/backend/ABI plane has no changed source or consumer"
+  },
+  "machine-device": {
+    "status": "unaffected",
+    "reason": "Windows native argument capture and namespace lookup only; this instruction/IR/backend/ABI plane has no changed source or consumer"
+  },
+  "oracle-analysis": {
+    "status": "unaffected",
+    "reason": "Windows native argument capture and namespace lookup only; this instruction/IR/backend/ABI plane has no changed source or consumer"
+  },
+  "c-abi": {
+    "status": "unaffected",
+    "reason": "Windows native argument capture and namespace lookup only; this instruction/IR/backend/ABI plane has no changed source or consumer"
+  },
+  "tests-docs": "affected: bounded guest argument probes and immutable namespace lookup; native failure replay, installed Windows leaves, all3host compilation/runtime gates and scoped owning embeddings",
+  "targets-platforms": "affected: Windows/macOS/Linux compile the shared handler; each runs replay/CAPI; Windows also executes installed native leaves; no host IPC"
+}

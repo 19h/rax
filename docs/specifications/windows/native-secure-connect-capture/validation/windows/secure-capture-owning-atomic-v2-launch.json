@@ -1,0 +1,16 @@
+{
+  "pid": 9936,
+  "utc": "2026-10-15T20:20:56.832284+00:00",
+  "exclusive-lock": "C:\\Windows\\Temp\\assist-native-rax-20261010\\secure-capture-owning-driver.lock",
+  "child-pid": 4316,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\assist-native-secure-capture-owned.ps1"
+  ],
+  "exit-code": 0,
+  "finished-utc": "2026-10-15T20:44:42.092136+00:00"
+}

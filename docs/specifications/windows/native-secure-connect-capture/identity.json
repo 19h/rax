@@ -1,0 +1,145 @@
+{
+  "files": [
+    {
+      "path": "inspect-lpc-missing-controls.py",
+      "bytes": 9440,
+      "sha256": "aeca94f926e671321cdd5b67f50501529f56186545fbb135aaf47141712b823d"
+    },
+    {
+      "path": "inspect-lpc-readonly-capture.py",
+      "bytes": 6237,
+      "sha256": "cab8417dc9512fc2f83b41717584aedc46ce40a9e9e45ba94e035fd349f73c9d"
+    },
+    {
+      "path": "inspect-secure-connect-status.py",
+      "bytes": 966,
+      "sha256": "bda5f5c3074662908446080cfc8bd41c64b2705920b803e233865572c31ddfa0"
+    },
+    {
+      "path": "native-lpc-missing-controls-arm64-build.log",
+      "bytes": 33,
+      "sha256": "afbf1ff4d137e39334cab0f056594e44520cdab2a0af7f00795be12c81739922"
+    },
+    {
+      "path": "native-lpc-missing-controls-arm64.log",
+      "bytes": 186301,
+      "sha256": "e212c75ddd32404fbfde44ab9fef375901655f3c3cd24413cabd7fe67b5a5660"
+    },
+    {
+      "path": "native-lpc-missing-controls-identities.json",
+      "bytes": 60437,
+      "sha256": "b86cc5abf4db90a3a3f074dcc334542b81f69ae475586c21cfd566f2b1130b16"
+    },
+    {
+      "path": "native-lpc-missing-controls-outcomes.json",
+      "bytes": 1150,
+      "sha256": "4625ef961fa522ddd35f9e6ac26449efcb1d251fac927e9855e07247b0ed00ff"
+    },
+    {
+      "path": "native-lpc-missing-controls-profiles.ps1",
+      "bytes": 2376,
+      "sha256": "87a0681d2e9990551bf6c5cb916a56b208b0843fe563194748a0630a9e7ea92b"
+    },
+    {
+      "path": "native-lpc-missing-controls-x64-build.log",
+      "bytes": 33,
+      "sha256": "afbf1ff4d137e39334cab0f056594e44520cdab2a0af7f00795be12c81739922"
+    },
+    {
+      "path": "native-lpc-missing-controls-x64.log",
+      "bytes": 186301,
+      "sha256": "ac73ae5536161ef2cb1a00e9bfbd2e526a9f057136a43fafc5a1ee01f0a686f7"
+    },
+    {
+      "path": "native-lpc-missing-controls-x86-build.log",
+      "bytes": 33,
+      "sha256": "afbf1ff4d137e39334cab0f056594e44520cdab2a0af7f00795be12c81739922"
+    },
+    {
+      "path": "native-lpc-missing-controls-x86-laa-build.log",
+      "bytes": 33,
+      "sha256": "afbf1ff4d137e39334cab0f056594e44520cdab2a0af7f00795be12c81739922"
+    },
+    {
+      "path": "native-lpc-missing-controls-x86-laa.log",
+      "bytes": 181841,
+      "sha256": "b2869dd4c3f6a5152c9b37382b2274819cd6524998b3ad80e646c733634ca050"
+    },
+    {
+      "path": "native-lpc-missing-controls-x86.log",
+      "bytes": 182263,
+      "sha256": "75ce8e2ee164c0103e850a1ef45feec3325dcaa29f6e4fed69f1dec67beec687"
+    },
+    {
+      "path": "native-lpc-missing-controls.cpp",
+      "bytes": 13651,
+      "sha256": "7d66d6952abe20a8762bfb68aaec5e464276be0736681e4ce8e60b9468ebcb65"
+    },
+    {
+      "path": "native-lpc-readonly-capture-arm64-build.log",
+      "bytes": 33,
+      "sha256": "65f2dd3a42869fefbb8f1c01df9bac225ba54286e89187f2be0e4d34a8ce4459"
+    },
+    {
+      "path": "native-lpc-readonly-capture-arm64.log",
+      "bytes": 7593,
+      "sha256": "160e37b60c95649cd37b9bc0bd344c013b2789283390a772d5fd93f894306eae"
+    },
+    {
+      "path": "native-lpc-readonly-capture-identities.json",
+      "bytes": 17005,
+      "sha256": "3d73c5217556f5114a2357422c6bce83340460dd1a720170921af3147decbf89"
+    },
+    {
+      "path": "native-lpc-readonly-capture-outcomes.json",
+      "bytes": 1150,
+      "sha256": "ec14d89af3ca565c7afe57156859f7fc944ef6abdc11292649a42c4f01e33dc9"
+    },
+    {
+      "path": "native-lpc-readonly-capture-profiles.ps1",
+      "bytes": 2585,
+      "sha256": "6a3c16740833ed82141fad2025eb1846e19356a86c0bf866ac6798281e11f1af"
+    },
+    {
+      "path": "native-lpc-readonly-capture-x64-build.log",
+      "bytes": 33,
+      "sha256": "65f2dd3a42869fefbb8f1c01df9bac225ba54286e89187f2be0e4d34a8ce4459"
+    },
+    {
+      "path": "native-lpc-readonly-capture-x64.log",
+      "bytes": 7593,
+      "sha256": "8557d09a2f283ec9bc8f8a2d5f6486e7c54348fedfd2933f7c8b066dfe3c81d4"
+    },
+    {
+      "path": "native-lpc-readonly-capture-x86-build.log",
+      "bytes": 33,
+      "sha256": "65f2dd3a42869fefbb8f1c01df9bac225ba54286e89187f2be0e4d34a8ce4459"
+    },
+    {
+      "path": "native-lpc-readonly-capture-x86-laa-build.log",
+      "bytes": 33,
+      "sha256": "65f2dd3a42869fefbb8f1c01df9bac225ba54286e89187f2be0e4d34a8ce4459"
+    },
+    {
+      "path": "native-lpc-readonly-capture-x86-laa.log",
+      "bytes": 7593,
+      "sha256": "c2632590636f7dc668eaeed46d12fad8e2aedc9d49e845934df1714164a55e71"
+    },
+    {
+      "path": "native-lpc-readonly-capture-x86.log",
+      "bytes": 7593,
+      "sha256": "af47ff6a5eb0e367c19d4e7fbee5e778914d8582302e51b6326934db61a0cbdd"
+    },
+    {
+      "path": "native-lpc-readonly-capture.cpp",
+      "bytes": 5386,
+      "sha256": "15c627ae7087ebf9067d0cc0d68df91dfbc672ef9997dc96adc4bd9214937423"
+    },
+    {
+      "path": "native-secure-connect-status.json",
+      "bytes": 817,
+      "sha256": "394d57ad037d8f8313ee1dd84ba5d211dae26cf9266dc58ac78fa8779460c694"
+    }
+  ],
+  "provenance": "actual native producers and independently inspected actual executables/stdout; raw bytes retained"
+}

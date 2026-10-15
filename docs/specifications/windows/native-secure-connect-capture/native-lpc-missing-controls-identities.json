@@ -1,0 +1,2257 @@
+{
+  "utc": "2026-10-15T18:04:11.976977+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "producers": [
+    {
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-missing-controls-arm64\\native-lpc-missing-controls.cpp",
+        "bytes": 13651,
+        "sha256": "7d66d6952abe20a8762bfb68aaec5e464276be0736681e4ce8e60b9468ebcb65"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-missing-controls-arm64\\native-lpc-missing-controls-arm64.exe",
+        "bytes": 205312,
+        "sha256": "129277f1a8f93fc592d4354f5ef558e6e82ad3b699d25f55497614cdcbd0966d",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-missing-controls-arm64\\native-lpc-missing-controls-arm64.log",
+        "bytes": 186301,
+        "sha256": "e212c75ddd32404fbfde44ab9fef375901655f3c3cd24413cabd7fe67b5a5660"
+      },
+      "cases": [
+        {
+          "case": 0,
+          "name": "baseline",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 1,
+          "name": "output-1",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 2,
+          "name": "output-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 3,
+          "name": "output-3",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 4,
+          "name": "output-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 5,
+          "name": "output-5",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 6,
+          "name": "name-1",
+          "status": "C0000033",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 7,
+          "name": "name-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 8,
+          "name": "name-3",
+          "status": "C0000033",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 9,
+          "name": "name-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 10,
+          "name": "name-5",
+          "status": "80000002",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 11,
+          "name": "name-6",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 12,
+          "name": "name-7",
+          "status": "C0000033",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 13,
+          "name": "name-8",
+          "status": "C000003A",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 14,
+          "name": "qos-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 15,
+          "name": "qos-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 16,
+          "name": "qos-length-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 17,
+          "name": "qos-length-11",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 18,
+          "name": "qos-length-12",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 19,
+          "name": "qos-length-13",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 20,
+          "name": "qos-length-4294967295",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 21,
+          "name": "impersonation-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 22,
+          "name": "impersonation-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 23,
+          "name": "impersonation-3",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 24,
+          "name": "impersonation-4",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 25,
+          "name": "impersonation-4294967295",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 26,
+          "name": "tracking-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 27,
+          "name": "effective-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 28,
+          "name": "tracking-2",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 29,
+          "name": "effective-2",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 30,
+          "name": "tracking-255",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 31,
+          "name": "effective-255",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 32,
+          "name": "client-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 33,
+          "name": "server-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 34,
+          "name": "client-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 35,
+          "name": "server-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 36,
+          "name": "client-length-0",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 37,
+          "name": "client-length-1",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 38,
+          "name": "client-length-24",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 39,
+          "name": "client-length-47",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 40,
+          "name": "client-length-49",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 41,
+          "name": "server-length-0",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 42,
+          "name": "server-length-1",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 43,
+          "name": "server-length-23",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 44,
+          "name": "server-length-25",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 45,
+          "name": "server-length-48",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 46,
+          "name": "section-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 47,
+          "name": "section-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 48,
+          "name": "section-18446744073709551615",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 49,
+          "name": "section-4294967464",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 50,
+          "name": "section-event",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 51,
+          "name": "offset-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 52,
+          "name": "offset-65536",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 53,
+          "name": "view-size-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 54,
+          "name": "view-size-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 55,
+          "name": "view-size-65537",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 56,
+          "name": "sid-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 57,
+          "name": "sid-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 58,
+          "name": "sid-3",
+          "status": "C0000078",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 59,
+          "name": "sid-4",
+          "status": "C0000078",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 60,
+          "name": "sid-5",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 61,
+          "name": "message-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 62,
+          "name": "length-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 63,
+          "name": "message-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 64,
+          "name": "length-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 65,
+          "name": "message-pointer-3",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 66,
+          "name": "length-pointer-3",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 67,
+          "name": "message-pointer-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 68,
+          "name": "length-pointer-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 69,
+          "name": "data-pointer-1",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 70,
+          "name": "data-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 71,
+          "name": "data-pointer-3",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 72,
+          "name": "information-length-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 73,
+          "name": "information-length-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 74,
+          "name": "information-length-31",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 75,
+          "name": "information-length-48",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 76,
+          "name": "information-length-64",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 77,
+          "name": "information-length-128",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 78,
+          "name": "information-length-129",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 79,
+          "name": "information-length-4096",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 80,
+          "name": "priority-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 81,
+          "name": "priority-1",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 82,
+          "name": "priority-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 83,
+          "name": "priority-3",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 84,
+          "name": "priority-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 85,
+          "name": "priority-5",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 86,
+          "name": "priority-6",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 87,
+          "name": "priority-7",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        }
+      ],
+      "status-counts": {
+        "C0000034": 47,
+        "C0000005": 24,
+        "C0000033": 3,
+        "80000002": 1,
+        "C000003A": 1,
+        "C000000D": 10,
+        "C0000078": 2
+      }
+    },
+    {
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-missing-controls-x64\\native-lpc-missing-controls.cpp",
+        "bytes": 13651,
+        "sha256": "7d66d6952abe20a8762bfb68aaec5e464276be0736681e4ce8e60b9468ebcb65"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-missing-controls-x64\\native-lpc-missing-controls-x64.exe",
+        "bytes": 216064,
+        "sha256": "e823be5afb6e01508c9a5b85b143e34232551018d7a08d0417c052f3ff1d25b0",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-missing-controls-x64\\native-lpc-missing-controls-x64.log",
+        "bytes": 186301,
+        "sha256": "ac73ae5536161ef2cb1a00e9bfbd2e526a9f057136a43fafc5a1ee01f0a686f7"
+      },
+      "cases": [
+        {
+          "case": 0,
+          "name": "baseline",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 1,
+          "name": "output-1",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 2,
+          "name": "output-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 3,
+          "name": "output-3",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 4,
+          "name": "output-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 5,
+          "name": "output-5",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 6,
+          "name": "name-1",
+          "status": "C0000033",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 7,
+          "name": "name-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 8,
+          "name": "name-3",
+          "status": "C0000033",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 9,
+          "name": "name-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 10,
+          "name": "name-5",
+          "status": "80000002",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 11,
+          "name": "name-6",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 12,
+          "name": "name-7",
+          "status": "C0000033",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 13,
+          "name": "name-8",
+          "status": "C000003A",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 14,
+          "name": "qos-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 15,
+          "name": "qos-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 16,
+          "name": "qos-length-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 17,
+          "name": "qos-length-11",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 18,
+          "name": "qos-length-12",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 19,
+          "name": "qos-length-13",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 20,
+          "name": "qos-length-4294967295",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 21,
+          "name": "impersonation-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 22,
+          "name": "impersonation-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 23,
+          "name": "impersonation-3",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 24,
+          "name": "impersonation-4",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 25,
+          "name": "impersonation-4294967295",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 26,
+          "name": "tracking-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 27,
+          "name": "effective-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 28,
+          "name": "tracking-2",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 29,
+          "name": "effective-2",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 30,
+          "name": "tracking-255",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 31,
+          "name": "effective-255",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 32,
+          "name": "client-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 33,
+          "name": "server-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 34,
+          "name": "client-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 35,
+          "name": "server-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 36,
+          "name": "client-length-0",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 37,
+          "name": "client-length-1",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 38,
+          "name": "client-length-24",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 39,
+          "name": "client-length-47",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 40,
+          "name": "client-length-49",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 41,
+          "name": "server-length-0",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 42,
+          "name": "server-length-1",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 43,
+          "name": "server-length-23",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 44,
+          "name": "server-length-25",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 45,
+          "name": "server-length-48",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 46,
+          "name": "section-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 47,
+          "name": "section-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 48,
+          "name": "section-18446744073709551615",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 49,
+          "name": "section-4294967532",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 50,
+          "name": "section-event",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 51,
+          "name": "offset-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 52,
+          "name": "offset-65536",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 53,
+          "name": "view-size-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 54,
+          "name": "view-size-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 55,
+          "name": "view-size-65537",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 56,
+          "name": "sid-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 57,
+          "name": "sid-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 58,
+          "name": "sid-3",
+          "status": "C0000078",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 59,
+          "name": "sid-4",
+          "status": "C0000078",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 60,
+          "name": "sid-5",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 61,
+          "name": "message-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 62,
+          "name": "length-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 63,
+          "name": "message-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 64,
+          "name": "length-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 65,
+          "name": "message-pointer-3",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 66,
+          "name": "length-pointer-3",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 67,
+          "name": "message-pointer-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 68,
+          "name": "length-pointer-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 69,
+          "name": "data-pointer-1",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 70,
+          "name": "data-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 71,
+          "name": "data-pointer-3",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 72,
+          "name": "information-length-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 73,
+          "name": "information-length-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 74,
+          "name": "information-length-31",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 75,
+          "name": "information-length-48",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 76,
+          "name": "information-length-64",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 77,
+          "name": "information-length-128",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 78,
+          "name": "information-length-129",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 79,
+          "name": "information-length-4096",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 80,
+          "name": "priority-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 81,
+          "name": "priority-1",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 82,
+          "name": "priority-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 83,
+          "name": "priority-3",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 84,
+          "name": "priority-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 85,
+          "name": "priority-5",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 86,
+          "name": "priority-6",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 87,
+          "name": "priority-7",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        }
+      ],
+      "status-counts": {
+        "C0000034": 47,
+        "C0000005": 24,
+        "C0000033": 3,
+        "80000002": 1,
+        "C000003A": 1,
+        "C000000D": 10,
+        "C0000078": 2
+      }
+    },
+    {
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-missing-controls-x86\\native-lpc-missing-controls.cpp",
+        "bytes": 13651,
+        "sha256": "7d66d6952abe20a8762bfb68aaec5e464276be0736681e4ce8e60b9468ebcb65"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-missing-controls-x86\\native-lpc-missing-controls-x86.exe",
+        "bytes": 167936,
+        "sha256": "edae2acab262e72f471336d8c3ba4d800f167140c80f42379db5ccc36f41edbb",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-missing-controls-x86\\native-lpc-missing-controls-x86.log",
+        "bytes": 182263,
+        "sha256": "75ce8e2ee164c0103e850a1ef45feec3325dcaa29f6e4fed69f1dec67beec687"
+      },
+      "cases": [
+        {
+          "case": 0,
+          "name": "baseline",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 1,
+          "name": "output-1",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 2,
+          "name": "output-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 3,
+          "name": "output-3",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 4,
+          "name": "output-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 5,
+          "name": "output-5",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 6,
+          "name": "name-1",
+          "status": "C0000033",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 7,
+          "name": "name-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 8,
+          "name": "name-3",
+          "status": "C0000033",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 9,
+          "name": "name-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 10,
+          "name": "name-5",
+          "status": "80000002",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 11,
+          "name": "name-6",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 12,
+          "name": "name-7",
+          "status": "C0000033",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 13,
+          "name": "name-8",
+          "status": "C000003A",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 14,
+          "name": "qos-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 15,
+          "name": "qos-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 16,
+          "name": "qos-length-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 17,
+          "name": "qos-length-11",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 18,
+          "name": "qos-length-12",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 19,
+          "name": "qos-length-13",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 20,
+          "name": "qos-length-4294967295",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 21,
+          "name": "impersonation-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 22,
+          "name": "impersonation-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 23,
+          "name": "impersonation-3",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 24,
+          "name": "impersonation-4",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 25,
+          "name": "impersonation-4294967295",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 26,
+          "name": "tracking-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 27,
+          "name": "effective-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 28,
+          "name": "tracking-2",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 29,
+          "name": "effective-2",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 30,
+          "name": "tracking-255",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 31,
+          "name": "effective-255",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 32,
+          "name": "client-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 33,
+          "name": "server-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 34,
+          "name": "client-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 35,
+          "name": "server-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 36,
+          "name": "client-length-0",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 37,
+          "name": "client-length-1",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 38,
+          "name": "client-length-24",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 39,
+          "name": "client-length-47",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 40,
+          "name": "client-length-49",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 41,
+          "name": "server-length-0",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 42,
+          "name": "server-length-1",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 43,
+          "name": "server-length-23",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 44,
+          "name": "server-length-25",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 45,
+          "name": "server-length-48",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 46,
+          "name": "section-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 47,
+          "name": "section-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 48,
+          "name": "section-18446744073709551615",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 49,
+          "name": "section-4294967568",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 50,
+          "name": "section-event",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 51,
+          "name": "offset-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 52,
+          "name": "offset-65536",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 53,
+          "name": "view-size-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 54,
+          "name": "view-size-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 55,
+          "name": "view-size-65537",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 56,
+          "name": "sid-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 57,
+          "name": "sid-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 58,
+          "name": "sid-3",
+          "status": "C0000078",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 59,
+          "name": "sid-4",
+          "status": "C0000078",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 60,
+          "name": "sid-5",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 61,
+          "name": "message-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 62,
+          "name": "length-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 63,
+          "name": "message-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 64,
+          "name": "length-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 65,
+          "name": "message-pointer-3",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 66,
+          "name": "length-pointer-3",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 67,
+          "name": "message-pointer-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 68,
+          "name": "length-pointer-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 69,
+          "name": "data-pointer-1",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 70,
+          "name": "data-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 71,
+          "name": "data-pointer-3",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 72,
+          "name": "information-length-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 73,
+          "name": "information-length-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 74,
+          "name": "information-length-31",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 75,
+          "name": "information-length-48",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 76,
+          "name": "information-length-64",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 77,
+          "name": "information-length-128",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 78,
+          "name": "information-length-129",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 79,
+          "name": "information-length-4096",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 80,
+          "name": "priority-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 81,
+          "name": "priority-1",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 82,
+          "name": "priority-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 83,
+          "name": "priority-3",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 84,
+          "name": "priority-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 85,
+          "name": "priority-5",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 86,
+          "name": "priority-6",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 87,
+          "name": "priority-7",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        }
+      ],
+      "status-counts": {
+        "C0000034": 48,
+        "C0000005": 24,
+        "C0000033": 3,
+        "80000002": 1,
+        "C000003A": 1,
+        "C000000D": 9,
+        "C0000078": 2
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-missing-controls-x86-laa\\native-lpc-missing-controls.cpp",
+        "bytes": 13651,
+        "sha256": "7d66d6952abe20a8762bfb68aaec5e464276be0736681e4ce8e60b9468ebcb65"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-missing-controls-x86-laa\\native-lpc-missing-controls-x86-laa.exe",
+        "bytes": 167936,
+        "sha256": "8be97eb3ebd22df95f862a0bd43804910c938f87176a91351333ca9fc6e3d7cd",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-missing-controls-x86-laa\\native-lpc-missing-controls-x86-laa.log",
+        "bytes": 181841,
+        "sha256": "b2869dd4c3f6a5152c9b37382b2274819cd6524998b3ad80e646c733634ca050"
+      },
+      "cases": [
+        {
+          "case": 0,
+          "name": "baseline",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 1,
+          "name": "output-1",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 2,
+          "name": "output-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 3,
+          "name": "output-3",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 4,
+          "name": "output-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 5,
+          "name": "output-5",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 6,
+          "name": "name-1",
+          "status": "C0000033",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 7,
+          "name": "name-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 8,
+          "name": "name-3",
+          "status": "C0000033",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 9,
+          "name": "name-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 10,
+          "name": "name-5",
+          "status": "80000002",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 11,
+          "name": "name-6",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 12,
+          "name": "name-7",
+          "status": "C0000033",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 13,
+          "name": "name-8",
+          "status": "C000003A",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 14,
+          "name": "qos-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 15,
+          "name": "qos-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 16,
+          "name": "qos-length-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 17,
+          "name": "qos-length-11",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 18,
+          "name": "qos-length-12",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 19,
+          "name": "qos-length-13",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 20,
+          "name": "qos-length-4294967295",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 21,
+          "name": "impersonation-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 22,
+          "name": "impersonation-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 23,
+          "name": "impersonation-3",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 24,
+          "name": "impersonation-4",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 25,
+          "name": "impersonation-4294967295",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 26,
+          "name": "tracking-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 27,
+          "name": "effective-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 28,
+          "name": "tracking-2",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 29,
+          "name": "effective-2",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 30,
+          "name": "tracking-255",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 31,
+          "name": "effective-255",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 32,
+          "name": "client-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 33,
+          "name": "server-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 34,
+          "name": "client-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 35,
+          "name": "server-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 36,
+          "name": "client-length-0",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 37,
+          "name": "client-length-1",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 38,
+          "name": "client-length-24",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 39,
+          "name": "client-length-47",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 40,
+          "name": "client-length-49",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 41,
+          "name": "server-length-0",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 42,
+          "name": "server-length-1",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 43,
+          "name": "server-length-23",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 44,
+          "name": "server-length-25",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 45,
+          "name": "server-length-48",
+          "status": "C000000D",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 46,
+          "name": "section-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 47,
+          "name": "section-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 48,
+          "name": "section-18446744073709551615",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 49,
+          "name": "section-4294967576",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 50,
+          "name": "section-event",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 51,
+          "name": "offset-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 52,
+          "name": "offset-65536",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 53,
+          "name": "view-size-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 54,
+          "name": "view-size-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 55,
+          "name": "view-size-65537",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 56,
+          "name": "sid-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 57,
+          "name": "sid-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 58,
+          "name": "sid-3",
+          "status": "C0000078",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 59,
+          "name": "sid-4",
+          "status": "C0000078",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 60,
+          "name": "sid-5",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 61,
+          "name": "message-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 62,
+          "name": "length-pointer-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 63,
+          "name": "message-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 64,
+          "name": "length-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 65,
+          "name": "message-pointer-3",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 66,
+          "name": "length-pointer-3",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 67,
+          "name": "message-pointer-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 68,
+          "name": "length-pointer-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 69,
+          "name": "data-pointer-1",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 70,
+          "name": "data-pointer-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 71,
+          "name": "data-pointer-3",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 72,
+          "name": "information-length-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 73,
+          "name": "information-length-1",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 74,
+          "name": "information-length-31",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 75,
+          "name": "information-length-48",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 76,
+          "name": "information-length-64",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 77,
+          "name": "information-length-128",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 78,
+          "name": "information-length-129",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 79,
+          "name": "information-length-4096",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 80,
+          "name": "priority-0",
+          "status": "C0000034",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 81,
+          "name": "priority-1",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 82,
+          "name": "priority-2",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 83,
+          "name": "priority-3",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 84,
+          "name": "priority-4",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 85,
+          "name": "priority-5",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 86,
+          "name": "priority-6",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        },
+        {
+          "case": 87,
+          "name": "priority-7",
+          "status": "C0000005",
+          "caller-exception": "00000000"
+        }
+      ],
+      "status-counts": {
+        "C0000034": 48,
+        "C0000005": 24,
+        "C0000033": 3,
+        "80000002": 1,
+        "C000003A": 1,
+        "C000000D": 9,
+        "C0000078": 2
+      }
+    }
+  ],
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-lpc-missing-controls.py",
+    "bytes": 9440,
+    "sha256": "aeca94f926e671321cdd5b67f50501529f56186545fbb135aaf47141712b823d"
+  },
+  "observations": 352,
+  "closed-handles": 8,
+  "caller-exceptions": 0,
+  "scope": "Unique missing endpoints only; no host service IPC; compatibility ABIs measured on ARM64 kernel; physical x64 kernel unknown"
+}

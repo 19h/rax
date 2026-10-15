@@ -1,0 +1,6 @@
+macos focused exit 0
+macos lib exit 101
+macos capi exit 101
+macos all-targets exit 0
+macos windows exit 0
+macos build-user exit 0

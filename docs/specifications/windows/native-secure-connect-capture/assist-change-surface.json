@@ -1,0 +1,18 @@
+{
+  "plugin-lifecycle": "unaffected: no plugin lifecycle code",
+  "ui-state": "unaffected: no UI code",
+  "conversation-lane": "unaffected: no conversation state",
+  "agent-backend": "unaffected: no agent providers",
+  "prompt-context": "unaffected: no prompt changes",
+  "tool-schema": "unaffected: process tools and discovery unchanged",
+  "permission-mutation": "unaffected: existing process ownership; no new capability grants",
+  "main-thread-dispatch": "unaffected: no IDA/Qt calls",
+  "mesh-mcp": "unaffected: no routing or transport",
+  "transport-crypto": "unaffected: no transport",
+  "persistence": "unaffected: no persisted schema or real-user state",
+  "sdk-abi": "unaffected: no C ABI or SDK headers",
+  "optional-engines": "affected: embedded RAX compiles the handler; no C ABI, permission or provider changes",
+  "update-release": "unaffected: no release/package ABI/default changes",
+  "targets-platforms": "affected: all3 core/CAPI and scoped owning builds; no whole-current-root, GUI or package claim",
+  "tests-docs": "affected: native capture corpus, selected-namespace tests and engineering pin records"
+}

@@ -1,0 +1,38 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 47m 37s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-tests\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 7 tests
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::native_secure_connect_invalid_sid_translation_matches_installed_ntdll ... ok
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::native_secure_connect_namespace_presence_preserves_type_case_and_selection_boundaries ... ok
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::installed::native_secure_connect_installed_nine_argument_leaves_preserve_failure_copyback_and_ret36 has been running for over 60 seconds
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::native_secure_connect_capture_bound_is_explicit_and_publishes_no_failure_handle has been running for over 60 seconds
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::native_secure_connect_never_publishes_a_handle_for_unselected_or_present_servers has been running for over 60 seconds
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::readonly::native_secure_connect_replays_all_44_readonly_probes_and_wow_copyback_rows has been running for over 60 seconds
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::replay::native_secure_connect_replays_352_measured_failures_and_exact_caller_buffers has been running for over 60 seconds
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::native_secure_connect_never_publishes_a_handle_for_unselected_or_present_servers ... ok
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::native_secure_connect_capture_bound_is_explicit_and_publishes_no_failure_handle ... ok
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::readonly::native_secure_connect_replays_all_44_readonly_probes_and_wow_copyback_rows ... ok
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::replay::native_secure_connect_replays_352_measured_failures_and_exact_caller_buffers ... ok
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::installed::native_secure_connect_installed_nine_argument_leaves_preserve_failure_copyback_and_ret36 ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 7235 filtered out; finished in 193.42s
+

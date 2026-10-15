@@ -1,0 +1,26 @@
+{
+  "reason": "correct scratch payload accounting, update assumption evidence and append completed results; no Rust execution input changed",
+  "files": [
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/README.md",
+      "bytes": 2912,
+      "sha256": "f119dbd4a2fde36876dcdd1f1ff2f67e651ef193eb3427d5b96b7c371d24b09f",
+      "after-bytes": 3250,
+      "after-sha256": "62e96b4dbe5cf7c84c753839a3e50e3c56855690a5a552aeda304e44497cc565"
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "bytes": 131033,
+      "sha256": "1bc13c459cb9dd5ffde9ca2ac4b55ad31a37bd80ed2168a3b6b0217455da1e92",
+      "after-bytes": 132707,
+      "after-sha256": "caa20e41897f050730c304164f8f5adbb46d8dfa013b16316090fb410f932375"
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/assumption-register.json",
+      "bytes": 1752,
+      "sha256": "b4bf7c05e9f4393eb3c24bfae29aac14568ce628d24796bdc6f26517ff666acc",
+      "after-bytes": 2042,
+      "after-sha256": "22fe2411cbe1b88bb4fec750de12acb1967343932e5cac6026fd3ebd19941f98"
+    }
+  ]
+}

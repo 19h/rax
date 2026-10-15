@@ -1,0 +1,615 @@
+{
+  "recorded-utc": "2026-10-15T20:49:17.359909+00:00",
+  "compiled-base": "7e3057d8efebe70e33f1b405ed3346cbeb1e9d3f",
+  "epoch": 2,
+  "native-observations": 396,
+  "native-producers": 8,
+  "native-closes": 12,
+  "library": {
+    "macos": {
+      "passed": 7814,
+      "failed": 0,
+      "ignored": 2,
+      "initial-failures-retained": 1
+    },
+    "linux": {
+      "passed": 7808,
+      "failed": 0,
+      "ignored": 2
+    },
+    "windows": {
+      "passed": 7235,
+      "failed": 5,
+      "ignored": 2,
+      "known-failure-names": [
+        "lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+        "lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+        "lowers_bzhi_x_two_imms_with_flags_sets_carry",
+        "lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+        "lowers_vector_fp16_arithmetic_runtime"
+      ]
+    }
+  },
+  "capi-passed-per-host": 168,
+  "focused": {
+    "macos": 6,
+    "linux": 6,
+    "windows": 7
+  },
+  "unix-windows-integration": 544,
+  "windows-native-memory-integration": 4,
+  "owning": {
+    "macos": "shipping CLI/MCP,7CTests,2protected scans",
+    "linux": "shipping+5C++consumers",
+    "windows": "shipping+5C++consumers",
+    "source-inputs-per-host": 274,
+    "core-features": [],
+    "scope": "frozen older exports;9 currentC++inputs matched; no whole-current-root/plugin/GUI/package claim"
+  },
+  "retained-failures": [
+    "epoch1 macOS canonical nativeTrue30s timeout twice, diagnostic continuation exits0 at42.245449s",
+    "epoch2 initial macOS multishot timer mismatch;3 exact unmodified reruns pass and complete same-binary library rerun passes",
+    "epoch2 initial C API native printf30s timeout;canonical168-test rerun passes with unchanged sources/assertions/limits",
+    "supplementary previous-group nightly Darwin workloop failure remains unresolved and outside this pinned group",
+    "Windows5pre-existing lowerer failures"
+  ],
+  "limits": [
+    "physical x64 kernel unverified; compatibilityABIs onARM64",
+    "current native full8578scan interrupted beforetests; fresh316scoped identities verified",
+    "name input uses both<=65534B byte-vector and<=32767u16/65534B unit-vector payloads plus O(N) namespace scratch",
+    "no successful CSR connection or ordinary Windows guest exit from this failure-only group"
+  ],
+  "ignored-tests": [
+    "smir::lower::validation::tests::test_lift_lower_full_microkernel",
+    "smir::lower::validation::tests::test_roundtrip_exact_bytes_microkernel"
+  ],
+  "ordinary-windows-guest-exits": 0,
+  "goal-status": "active;incomplete",
+  "files": [
+    {
+      "path": "compiled-source/src/user/windows/dll/native.rs",
+      "bytes": 17700,
+      "sha256": "d73e08c837589dba2b5ba57e7143ee395a4ff45c8c1fdb6ab5ec816bfc353ff2"
+    },
+    {
+      "path": "compiled-source/src/user/windows/dll/native/secure_connect.rs",
+      "bytes": 6549,
+      "sha256": "017c167cca44ac93b335d155cc70627cd51a7a58aa635264c0144cf5ab72bbd5"
+    },
+    {
+      "path": "compiled-source/src/user/windows/object_namespace.rs",
+      "bytes": 17944,
+      "sha256": "74e438d54a85fb4f88a2839964e513ea4d261b144e2d4e243a806f1b7b8e9f23"
+    },
+    {
+      "path": "compiled-source/src/user/windows/object_namespace/data.rs",
+      "bytes": 6707,
+      "sha256": "4ecea07cb2a38317112017246293d10e33d0443f88fef8ebb4758b649f144d34"
+    },
+    {
+      "path": "compiled-source/src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47464,
+      "sha256": "b116704adb939291187b8e4940c95d12b04dbebb03c75bb1b7c926772ab26b11"
+    },
+    {
+      "path": "compiled-source/src/user/windows/process/sched/tests/services_tests/secure_connect_tests.rs",
+      "bytes": 7573,
+      "sha256": "b4f63643d7bfec7fcfd4477e3666fcac7e8edfa5d53a3bd54f897476e6919e28"
+    },
+    {
+      "path": "compiled-source/src/user/windows/process/sched/tests/services_tests/secure_connect_replay_tests.rs",
+      "bytes": 8507,
+      "sha256": "23b96b726d3364a6f9d55464060e2f875ce6dda381c9cd32a80feaa2594441da"
+    },
+    {
+      "path": "compiled-source/src/user/windows/process/sched/tests/services_tests/secure_connect_leaf_tests.rs",
+      "bytes": 4301,
+      "sha256": "d042b3bb390fd3f65aed1be200ba2ca843b915691ace753a6e7788358733570c"
+    },
+    {
+      "path": "compiled-source/src/user/windows/native-runtime.md",
+      "bytes": 131033,
+      "sha256": "1bc13c459cb9dd5ffde9ca2ac4b55ad31a37bd80ed2168a3b6b0217455da1e92"
+    },
+    {
+      "path": "compiled-source/src/user/windows/nt.rs",
+      "bytes": 18552,
+      "sha256": "4249579882a4e148ebc6c4363ab2077957c851b083b620479af8411c42469369"
+    },
+    {
+      "path": "compiled-source/src/user/windows/process/sched/tests/services_tests/secure_connect_readonly_tests.rs",
+      "bytes": 4324,
+      "sha256": "d19f22f7fbfae2ad60a52ebe5884a034557acd7489c2af936335ec1d9e2b91e9"
+    },
+    {
+      "path": "macos/driver.log",
+      "bytes": 130,
+      "sha256": "3b2c5d71faa2ae2e8f5076df0320a584f3b5cbc56a122a8f3acb65340ff73fcb"
+    },
+    {
+      "path": "macos/macos-all-targets.log",
+      "bytes": 190,
+      "sha256": "a4dcdf14cb364c4f769bfd3c7a798e0fdce5f2334d21aa55cf4a62fd3ae9b2cb"
+    },
+    {
+      "path": "macos/macos-build-user.log",
+      "bytes": 72,
+      "sha256": "2bc683fb4e4f4f21ee9ee39e2b8ecce2efe20d3b1be57bda5316aa519ab3d30a"
+    },
+    {
+      "path": "macos/macos-capi.log",
+      "bytes": 25036,
+      "sha256": "ff8ad81052d4d583d61f4b5485694fc030a53f2f66719aa4ec33f1eb0da99396"
+    },
+    {
+      "path": "macos/macos-focused.log",
+      "bytes": 1488,
+      "sha256": "38b3c03aa6ad683f8aaaebf55d16266d9b27a5a0b5b1929ec9150aaee9eade69"
+    },
+    {
+      "path": "macos/macos-gates.json",
+      "bytes": 2693,
+      "sha256": "68d3a4ac8a0586dbf55a4c76b84f91cbf26ff56c1eb3835d03e10b3f7b00588d"
+    },
+    {
+      "path": "macos/macos-lib.log",
+      "bytes": 794407,
+      "sha256": "193f3ecc6161f5345baf140a6dbf1ee2389ce6e6a0daadfcbd0074f48a364743"
+    },
+    {
+      "path": "macos/macos-windows.log",
+      "bytes": 36059,
+      "sha256": "7c993a47a9ae06306e586a53df5bf29577d8f7abdfe4af13cbd1b115a99c911b"
+    },
+    {
+      "path": "macos/run-unix-gates.py",
+      "bytes": 1883,
+      "sha256": "66b6df561d1781d6ff1f8b58b2566f152da194245a5549df5821b8ee9c06a802"
+    },
+    {
+      "path": "macos-owning-gates.json",
+      "bytes": 2729,
+      "sha256": "f41ff7f676c45b89f076d0868240ca466db3cd70552c15b41ce153484b225f06"
+    },
+    {
+      "path": "macos-owning-archives.json",
+      "bytes": 52522,
+      "sha256": "9d66b5252505449563461f312596ae857d1138a8bf495754fe7e19e00d1f54af"
+    },
+    {
+      "path": "linux/driver.log",
+      "bytes": 126,
+      "sha256": "54026efca88419f47a7437a2ca20010c6b23a610651ad12b812a260f63f08a20"
+    },
+    {
+      "path": "linux/linux-all-targets.log",
+      "bytes": 116,
+      "sha256": "46ae5ddba94d2665f6dd9cfca7c88904b49cc2603e1652ef556af5af5322165e"
+    },
+    {
+      "path": "linux/linux-build-user.log",
+      "bytes": 72,
+      "sha256": "132d8f9813fd0518ff77c1a062a2e99512c1239c3e418eef63423374de32ac3b"
+    },
+    {
+      "path": "linux/linux-capi.log",
+      "bytes": 12535,
+      "sha256": "339ba199de997f411aae0bbe3cd7df06d2f990cd8401ca869e5247396f60c2b0"
+    },
+    {
+      "path": "linux/linux-focused.log",
+      "bytes": 1324,
+      "sha256": "5f7697a5d77b098a289da574b7924ef6653561c362d39d9d5519bc22f35508c0"
+    },
+    {
+      "path": "linux/linux-gates.json",
+      "bytes": 6859,
+      "sha256": "de4779c166171a79f438e7b944c5d1750854ac0026363daa1cc209dba6d52f59"
+    },
+    {
+      "path": "linux/linux-lib.log",
+      "bytes": 793010,
+      "sha256": "e0055c78d0a1b6645d0e121b95950b3c47c2f521f1cb24c494ba4d466547cdd8"
+    },
+    {
+      "path": "linux/linux-windows.log",
+      "bytes": 35805,
+      "sha256": "53c165eee7e88ca067612fc040b0224a4c69408080824cf37c18de9a775013ca"
+    },
+    {
+      "path": "linux/run-unix-gates.py",
+      "bytes": 1883,
+      "sha256": "66b6df561d1781d6ff1f8b58b2566f152da194245a5549df5821b8ee9c06a802"
+    },
+    {
+      "path": "linux-owning-gates.json",
+      "bytes": 2988,
+      "sha256": "07e0edd7baaafdbe45111a7e86a630602c6e954c3e5a61edfa4865673e671cc5"
+    },
+    {
+      "path": "linux-owning-archives.json",
+      "bytes": 52105,
+      "sha256": "056875e58f9477311b08b65f4be8bdc823aec668e3a3276c60d63fe9b52f229a"
+    },
+    {
+      "path": "additional-scoped-compiler-inputs.json",
+      "bytes": 885,
+      "sha256": "b9a79a74298a1b733444eebae2705c56a56fed3dbdf89e0a216e848b3451566c"
+    },
+    {
+      "path": "baseline-pinned-cli-identity.json",
+      "bytes": 339,
+      "sha256": "ac4a74d3946680c593562572e16d41d67844359e8b8ac6fca58ccd983c9f99ee"
+    },
+    {
+      "path": "check-final-gates.py",
+      "bytes": 9304,
+      "sha256": "cd6abb2e6082877281173318d501cd4810a89373880786847bb1d85adde3b52b"
+    },
+    {
+      "path": "current-cpp-consumers-reverified.json",
+      "bytes": 1925,
+      "sha256": "c50a02fbad8b090826ebff94948b9fd38c7515903760b43094c1f81f1e9136c9"
+    },
+    {
+      "path": "diagnostic-process-tool-build.log",
+      "bytes": 970,
+      "sha256": "03d053e931f0d7a335a6819afea10add96b7999788a9d0b9d35147a83e3def48"
+    },
+    {
+      "path": "diagnostic-process-tool-commands.json",
+      "bytes": 4142,
+      "sha256": "51cbc72297bab6b9f034b8cbad02a3b78eda90d890d21ccc81adf48c5c4c5737"
+    },
+    {
+      "path": "diagnostic-process-tool-continue-build.log",
+      "bytes": 973,
+      "sha256": "31e3479355dea61fcec4cb184a8ea86cec6697eaa1bf58461fd5c62d2d10eef9"
+    },
+    {
+      "path": "diagnostic-process-tool-continue-commands.json",
+      "bytes": 4296,
+      "sha256": "db43bb6e791d37dd7c98a39da6d459f917054eb566f87d40b2b6bda271711def"
+    },
+    {
+      "path": "diagnostic-process-tool-continue-run.log",
+      "bytes": 1566,
+      "sha256": "de4f0538e827fd4bdb28e0461a513e2ad243a7e503967b4564702656f62c2f9d"
+    },
+    {
+      "path": "diagnostic-process-tool-continue.cpp",
+      "bytes": 33820,
+      "sha256": "f5664d11ce156e6c5838c10f625f1d37dac23c3190de758e689e325dbf04e55c"
+    },
+    {
+      "path": "diagnostic-process-tool-run.log",
+      "bytes": 822,
+      "sha256": "a8a6dca65a6afc81eff653b77d7a2da7817da2bc3cfeec81d3be1a69b852b861"
+    },
+    {
+      "path": "diagnostic-process-tool-tests.cpp",
+      "bytes": 33402,
+      "sha256": "58af46d73610b4b7f5c24742754e2a0c69b406b705f17766b0cd52429cfcdf16"
+    },
+    {
+      "path": "epoch2-frozen-code.json",
+      "bytes": 2162,
+      "sha256": "ea3aaded50c057281830c9f9fc7c991193e896c787066cca1a02517dac004ace"
+    },
+    {
+      "path": "final-validation-requirements.json",
+      "bytes": 1745,
+      "sha256": "387d53927427fc073f47e0f56aaf4a8c94a5d3189f2e582b1d4eb110a9518429"
+    },
+    {
+      "path": "linux-owning-candidates.json",
+      "bytes": 177,
+      "sha256": "ec62073484bf7d08d13c55a525b265df23b46ddc2875ad59fb740e2c007e94dc"
+    },
+    {
+      "path": "linux-owning-commands.json",
+      "bytes": 2640,
+      "sha256": "c9164f2a628ff99bb750f29f402630691ecf2812c108f9b0d9796a14b3acea01"
+    },
+    {
+      "path": "linux-owning-cpp.log",
+      "bytes": 1623,
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+    },
+    {
+      "path": "linux-owning-driver.log",
+      "bytes": 53,
+      "sha256": "4b6bbcae58a178c797f0310ce1a1ba6608c18b304367cda672123d0aeb3ca51c"
+    },
+    {
+      "path": "linux-owning-shipping.log",
+      "bytes": 222,
+      "sha256": "c408e27afdc832f27bf326ba3b9bfb0faa5bf4fedfcc2c3b75cfbf071072b333"
+    },
+    {
+      "path": "linux-owning-v2-driver.log",
+      "bytes": 53,
+      "sha256": "4b6bbcae58a178c797f0310ce1a1ba6608c18b304367cda672123d0aeb3ca51c"
+    },
+    {
+      "path": "macos-owning-build.log",
+      "bytes": 1865,
+      "sha256": "6566a15ea99bde926bfa4f0a2173dccdca0309e30d421645dbe682a5f0940f07"
+    },
+    {
+      "path": "macos-owning-candidates.json",
+      "bytes": 343,
+      "sha256": "e6899600a0525c06d142c1082003907f823be984a2b17ec00a30a4e5f0c62fd3"
+    },
+    {
+      "path": "macos-owning-commands.json",
+      "bytes": 2005,
+      "sha256": "92d923fad5c285dee61bb30e76c76b56b6a238b0d7b7c0922fc5622f8ee8c702"
+    },
+    {
+      "path": "macos-owning-ctest-exact-replay.log",
+      "bytes": 688,
+      "sha256": "12ba1eb7f5ef4216426292075f0c5048e21ee27f976d40940cc880772de9bc97"
+    },
+    {
+      "path": "macos-owning-ctest.log",
+      "bytes": 1273,
+      "sha256": "7bf6b3f42e805f1a45ba618787b0c1e81d481037d73f615213b00f27e80f9d26"
+    },
+    {
+      "path": "macos-owning-driver.log",
+      "bytes": 52,
+      "sha256": "3060e814dcbf0652628011a578a3bf54255ed038de3fb2fa04439f63fd45043b"
+    },
+    {
+      "path": "macos-owning-independent-scans.json",
+      "bytes": 1374,
+      "sha256": "ca9deeff14c8f62efecee5eca81a5cacb3826dac086a089139bc834bcecd3be3"
+    },
+    {
+      "path": "macos-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "macos-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "macos-owning-v2-driver.log",
+      "bytes": 134,
+      "sha256": "56fa60c2a04704d549b73371ce895caca92e4cd7f07666e0dfc0586842c0ec2a"
+    },
+    {
+      "path": "macos-v2-capi-reconciliation-driver.log",
+      "bytes": 153,
+      "sha256": "31d97a33b243c22b657cfd1ad4af1f6275a3b1767d39ff63fc3658f928442b62"
+    },
+    {
+      "path": "macos-v2-capi-rerun.json",
+      "bytes": 578,
+      "sha256": "d933e17a06587fa4b7ae16e6f146060863ecfa19bd152d94f77e88e5b050a1e7"
+    },
+    {
+      "path": "macos-v2-capi-rerun.log",
+      "bytes": 12529,
+      "sha256": "a8574af91552413564960ff7719b485118e68ed6d8b4ee7bf36c40c181792ca0"
+    },
+    {
+      "path": "macos-v2-library-rerun.json",
+      "bytes": 810,
+      "sha256": "f1dd9379bcd92a2593ebd40b735c6367e2fa90aaa042a3a9d89ad02212fec8f0"
+    },
+    {
+      "path": "macos-v2-library-rerun.log",
+      "bytes": 793599,
+      "sha256": "cddbabb42617f06c5cd07020f3017abe5628c11f20e20d6320f385637cdf3231"
+    },
+    {
+      "path": "macos-v2-timer-diagnostic-1.log",
+      "bytes": 203,
+      "sha256": "5a01a5f30b618acbd74e28eaf2f43cd64de76c0f11a8406e4151aace21d8a084"
+    },
+    {
+      "path": "macos-v2-timer-diagnostic-2.log",
+      "bytes": 203,
+      "sha256": "883484a177e079f5962c7b0858def77b2f03d3b5b8e72ed3fa3eefbe1b93e36f"
+    },
+    {
+      "path": "macos-v2-timer-diagnostic-3.log",
+      "bytes": 203,
+      "sha256": "883484a177e079f5962c7b0858def77b2f03d3b5b8e72ed3fa3eefbe1b93e36f"
+    },
+    {
+      "path": "macos-v2-timer-diagnostics.json",
+      "bytes": 2144,
+      "sha256": "d84d434156bf18282c0f68a61588aa0c0c667dce8bf5927f640e8216d01ef3d9"
+    },
+    {
+      "path": "root-publication-refresh-2034.json",
+      "bytes": 286,
+      "sha256": "c522381fa5336433fdea7fe96ede085ed236c3d19e3a7034b3941527c2c48eeb"
+    },
+    {
+      "path": "secure-capture-source-hashes.json",
+      "bytes": 52418,
+      "sha256": "439b8f0595fac9e3c10f07b3609bca7bec5346ead04261df9d660e4be1e16bb1"
+    },
+    {
+      "path": "secure-capture-sources.json",
+      "bytes": 1630714,
+      "sha256": "6a2a2ffb4b0f80d842dfa9fddd8dcf5d96a693683fb9d021de7dc8112f744abf"
+    },
+    {
+      "path": "secure-capture-windows-sources.json",
+      "bytes": 1631134,
+      "sha256": "9634fe87368fddd998dc4c004628a87512f6777a3255198901836caed4ea73ab"
+    },
+    {
+      "path": "v1-linux-owning-archives.json",
+      "bytes": 52105,
+      "sha256": "c8a5b2f1aa352ff98691866de2cd8f80ac9b33476591be171d228eb1ef783863"
+    },
+    {
+      "path": "v1-linux-owning-cpp.log",
+      "bytes": 1623,
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+    },
+    {
+      "path": "v1-linux-owning-gates.json",
+      "bytes": 2988,
+      "sha256": "78b6fcbf72e1bd6751289c656104d01a25c3d28769d86ebe04b705dea54388ad"
+    },
+    {
+      "path": "v1-macos-owning-archives.json",
+      "bytes": 52522,
+      "sha256": "dfc2b286acf886981da8fd612b7a028d778eb15c34fa9921eb5c9803c16d405b"
+    },
+    {
+      "path": "v1-macos-owning-ctest-exact-replay.log",
+      "bytes": 688,
+      "sha256": "12ba1eb7f5ef4216426292075f0c5048e21ee27f976d40940cc880772de9bc97"
+    },
+    {
+      "path": "v1-macos-owning-ctest.log",
+      "bytes": 1518,
+      "sha256": "dd14ce1ab1938df733dc9e2b7a0c084e69ab2e966645d71a0f0db78b167de10f"
+    },
+    {
+      "path": "v1-macos-owning-gates.json",
+      "bytes": 1357,
+      "sha256": "4ea81d7d6b8386c3ad2b76f2fef60e50dceec28dce70a52b8a817d8352308ffd"
+    },
+    {
+      "path": "v1-macos-owning-independent-scans.json",
+      "bytes": 1374,
+      "sha256": "ca9deeff14c8f62efecee5eca81a5cacb3826dac086a089139bc834bcecd3be3"
+    },
+    {
+      "path": "v1-macos-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "v1-macos-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "v1-secure-capture-overlay.json",
+      "bytes": 8111,
+      "sha256": "47b505d37eb962c20b51293e28ea05a96fc8b509bf98a035255cb60a48f16611"
+    },
+    {
+      "path": "v1-secure-capture-source-hashes.json",
+      "bytes": 52404,
+      "sha256": "a0b3edf37ce8950708a068c56cd81fe3a2947355c868e8630de642b19f9ee9cd"
+    },
+    {
+      "path": "v1-secure-capture-sources.json",
+      "bytes": 1627500,
+      "sha256": "40450a890c8b95b23750b6d67e3788a5d696196bc6c0826c5ded08ba74f60b5c"
+    },
+    {
+      "path": "v1-secure-capture-windows-sources.json",
+      "bytes": 1627920,
+      "sha256": "12a842a2e16e4045e14bb09e9bc3de7a790a3157759e8d6539641646a22d6363"
+    },
+    {
+      "path": "windows/native-secure-capture-full-gates.json",
+      "bytes": 1232,
+      "sha256": "b8cdb4ba940eb9e8142826d51f6aaf60c7132dcc1fdb186bf97a06ae8d72e2c3"
+    },
+    {
+      "path": "windows/native-secure-capture-full-focused.log",
+      "bytes": 3472,
+      "sha256": "c9cb5367ddb6e88ec022497ce9159fd25f5d56f7296238db62146f4bdfa61cc1"
+    },
+    {
+      "path": "windows/native-secure-capture-full-full.log",
+      "bytes": 770160,
+      "sha256": "9682b258d86fef05842a294925674991fa529fa55993917665993d2a4ae66784"
+    },
+    {
+      "path": "windows/native-secure-capture-full-capi.log",
+      "bytes": 13837,
+      "sha256": "416257d63dc804c2883308e2e30cc6902a7b613fae4a4de2f6029a35ef7ea524"
+    },
+    {
+      "path": "windows/native-secure-capture-full-all-targets.log",
+      "bytes": 986,
+      "sha256": "8f935a5e21a21051ba60a7aeaab2d8e1c25b3fc4f941ffebce8fd82f00f41eae"
+    },
+    {
+      "path": "windows/native-secure-capture-full-integration.log",
+      "bytes": 1865,
+      "sha256": "03c572e52ae8f60ac814d313508a7425320aa9514289be2a701a02d92b2d5cbd"
+    },
+    {
+      "path": "windows/native-secure-capture-focused-source-verification.json",
+      "bytes": 62630,
+      "sha256": "092987c8de5361fbdec6c9acbff91a9aac4d8834d99bc916dab8b58d62ccd512"
+    },
+    {
+      "path": "windows/native-secure-capture-current-cpp-verification.json",
+      "bytes": 1935,
+      "sha256": "fe39b6ea6086877cff3cb4bb578d264eebcbf97da728bd56c0e0b6ef160dd65a"
+    },
+    {
+      "path": "windows/assist-native-secure-capture-shipping.log",
+      "bytes": 1585,
+      "sha256": "eb7f9e5349cb73023451e3fc38ef2fe36ca8626c44a5cf35bcc9f5918aa662b5"
+    },
+    {
+      "path": "windows/assist-native-secure-capture-cpp.log",
+      "bytes": 2946,
+      "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+    },
+    {
+      "path": "windows/native-secure-capture-owning-archive-hashes.json",
+      "bytes": 45040,
+      "sha256": "efbb2a2fb57594e02e0ebfd1a21b492ea966be5842b5595c5ec5446fc87a6ae0"
+    },
+    {
+      "path": "windows/secure-capture-owning-atomic-v2-launch.json",
+      "bytes": 505,
+      "sha256": "9592a3d3a5e533fec5539def4a50eb2c311012c8fc6fe62f15c4958ad0621fba"
+    },
+    {
+      "path": "windows/secure-capture-owning-atomic-v2-driver.log",
+      "bytes": 693,
+      "sha256": "833eaac4e3e1415b7ff56e5bc6801fb67e0ab8ca51cf7a89afd7131022de6309"
+    },
+    {
+      "path": "windows/assist-native-secure-capture-owned.ps1",
+      "bytes": 4384,
+      "sha256": "e551eb5f7520baf641fd9f279c4c64cece67129cb6e7c3dee848fb2759e8e74b"
+    },
+    {
+      "path": "windows/verify-secure-capture-focused-sources.py",
+      "bytes": 1591,
+      "sha256": "91d9bbce969bb71d7908dc0c12bdcdeed1c71e07c5bdaeaf83495aaadccd504f"
+    },
+    {
+      "path": "windows/verify-current-cpp-consumers.py",
+      "bytes": 1051,
+      "sha256": "604de83d4e0fbccb8748c3437339fe9191d319f234e7cc78b0398f88d7afab88"
+    },
+    {
+      "path": "windows/inspect-secure-capture-archives.py",
+      "bytes": 2187,
+      "sha256": "00cba95aa8f4ebf8fc114f63689412ae5d3047a3cd6c8f42143b745d039ee032"
+    },
+    {
+      "path": "windows/owning-source-preflight-stdout-utf16.log",
+      "bytes": 98,
+      "sha256": "4f070939dd8fed65b2ed9ecc97ffa5600094c56768b6de59224569e13b5a329b"
+    },
+    {
+      "path": "external-diagnostic-artifacts.json",
+      "bytes": 1432,
+      "sha256": "c95c69c9992270ddbaa8ff275b157a32ce1c9f434f6402a41815421eff590832"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+[
+  {
+    "id": "C1",
+    "assumption": "The captured namespace supplies the selected snapshot semantics; later external endpoint changes are not observed.",
+    "basis": "Existing immutable Namespace contract; missing controls use unique names.",
+    "dependent-result": "name/path resolution without host IPC",
+    "stress-test": "present ALPC entry, wrong type, absent name, wrong case, unselected parent and absent catalog",
+    "falsification-probe": "replay admits a handle for a present/unselected server or treats an unselected parent as absent",
+    "status": "retained",
+    "validation": "all396replays plus present/type/case/unselected namespace tests pass on allthree hosts"
+  },
+  {
+    "id": "C2",
+    "assumption": "Measured build29683 native and compatibility ABI capture behavior is the group contract; other kernels remain unverified.",
+    "basis": "8 independently inspected actual producers on ARM64 Windows;396 observations; physical x64 kernel unverified",
+    "dependent-result": "capture widths, failure order and WoW64 copyback",
+    "stress-test": "352 initial plus44readonly cases across ARM64/x64/x86/x86-LAA; all-three-host replay and installed native/WoW leaves",
+    "falsification-probe": "a verified native observation has a different NTSTATUS or failure buffer on the stated profile",
+    "status": "retained"
+  },
+  {
+    "id": "C3",
+    "assumption": "The transient information bound may reject larger requests explicitly rather than inventing a native status.",
+    "basis": "bounded capture model; measured information lengths cover up to4096 bytes",
+    "dependent-result": "resource limit and unpublished unsupported output",
+    "stress-test": "1048577-byte request and invalid data pointer, all guest architectures",
+    "falsification-probe": "oversized capture allocates proportional memory, returns success or publishes a zero failure handle",
+    "status": "retained",
+    "validation": "oversized1048577-byte request rejected explicitly on allthree guest architectures in focused tests"
+  }
+]

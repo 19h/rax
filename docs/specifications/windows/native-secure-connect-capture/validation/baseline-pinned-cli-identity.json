@@ -1,0 +1,6 @@
+{
+  "path": "/Users/int/Library/Caches/assist-process-emulation/secure-connect-port-20261015/baseline-pinned-rax-user",
+  "bytes": 48806680,
+  "sha256": "c6444b93b7e1f0fb5044d699bccfd188305ee8a67b00ee3aa72316bf258a691a",
+  "source": "published pressure-group source, pinned Rust1.95; preserved before current driver replaces executable"
+}

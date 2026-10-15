@@ -1,0 +1,61 @@
+{
+  "base": "7e3057d8efebe70e33f1b405ed3346cbeb1e9d3f",
+  "epoch": 2,
+  "files": [
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 17700,
+      "sha256": "d73e08c837589dba2b5ba57e7143ee395a4ff45c8c1fdb6ab5ec816bfc353ff2"
+    },
+    {
+      "path": "src/user/windows/dll/native/secure_connect.rs",
+      "bytes": 6549,
+      "sha256": "017c167cca44ac93b335d155cc70627cd51a7a58aa635264c0144cf5ab72bbd5"
+    },
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "bytes": 17944,
+      "sha256": "74e438d54a85fb4f88a2839964e513ea4d261b144e2d4e243a806f1b7b8e9f23"
+    },
+    {
+      "path": "src/user/windows/object_namespace/data.rs",
+      "bytes": 6707,
+      "sha256": "4ecea07cb2a38317112017246293d10e33d0443f88fef8ebb4758b649f144d34"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47464,
+      "sha256": "b116704adb939291187b8e4940c95d12b04dbebb03c75bb1b7c926772ab26b11"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_tests.rs",
+      "bytes": 7573,
+      "sha256": "b4f63643d7bfec7fcfd4477e3666fcac7e8edfa5d53a3bd54f897476e6919e28"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_replay_tests.rs",
+      "bytes": 8507,
+      "sha256": "23b96b726d3364a6f9d55464060e2f875ce6dda381c9cd32a80feaa2594441da"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_leaf_tests.rs",
+      "bytes": 4301,
+      "sha256": "d042b3bb390fd3f65aed1be200ba2ca843b915691ace753a6e7788358733570c"
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "bytes": 131033,
+      "sha256": "1bc13c459cb9dd5ffde9ca2ac4b55ad31a37bd80ed2168a3b6b0217455da1e92"
+    },
+    {
+      "path": "src/user/windows/nt.rs",
+      "bytes": 18552,
+      "sha256": "4249579882a4e148ebc6c4363ab2077957c851b083b620479af8411c42469369"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_readonly_tests.rs",
+      "bytes": 4324,
+      "sha256": "d19f22f7fbfae2ad60a52ebe5884a034557acd7489c2af936335ec1d9e2b91e9"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+In file included from /Users/int/Library/Caches/assist-process-emulation/secure-connect-port-20261015/diagnostic-process-tool-continue.cpp:1:
+In file included from /Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/test/emulation/process_elf_fixture.hpp:3:
+In file included from /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.2.sdk/usr/include/c++/v1/algorithm:1840:
+In file included from /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.2.sdk/usr/include/c++/v1/__config:15:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.2.sdk/usr/include/c++/v1/__configuration/availability.h:204:4: warning: "The selected platform is no longer supported by libc++." [-W#warnings]
+  204 | #  warning "The selected platform is no longer supported by libc++."
+      |    ^
+1 warning generated.

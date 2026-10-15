@@ -1,0 +1,29 @@
+{
+  "reason": "Diagnostic executables and object files remain outside publication;source,commands,rawlogs and exact hashes are retained",
+  "artifacts": [
+    {
+      "path": "diagnostic-process-tool-continue",
+      "bytes": 115965440,
+      "sha256": "3a82589fb3a105eda4c5fe30b1c6e5aedc1661f960a6f637b011c3ab70debab8",
+      "retained-original-path": "/Users/int/Library/Caches/assist-process-emulation/secure-connect-port-20261015/diagnostic-process-tool-continue"
+    },
+    {
+      "path": "diagnostic-process-tool-tests",
+      "bytes": 115965440,
+      "sha256": "fdb3be2277fdef05c281a917a4e5f512950992bc43d1c33148904fcff032b831",
+      "retained-original-path": "/Users/int/Library/Caches/assist-process-emulation/secure-connect-port-20261015/diagnostic-process-tool-tests"
+    },
+    {
+      "path": "diagnostic-process-tool-continue.o",
+      "bytes": 4101800,
+      "sha256": "32aaa798b231c98e5727d4761caa8728a933aacad8ccbd09ada4cf2e350530e7",
+      "retained-original-path": "/Users/int/Library/Caches/assist-process-emulation/secure-connect-port-20261015/diagnostic-process-tool-continue.o"
+    },
+    {
+      "path": "diagnostic-process-tool-tests.o",
+      "bytes": 4098056,
+      "sha256": "83ef4015b9f97667f207de8f59efe8ef25262d8a278a85acc8a9491fb209c17c",
+      "retained-original-path": "/Users/int/Library/Caches/assist-process-emulation/secure-connect-port-20261015/diagnostic-process-tool-tests.o"
+    }
+  ]
+}

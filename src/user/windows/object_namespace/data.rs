@@ -174,7 +174,7 @@ impl Namespace {
         } else {
             root
         };
-        match self.lookup_object(root, name, flags, false, true)? {
+        match self.lookup_object(root, name, flags, false, true, false)? {
             SelectedObject::Section(section) => Ok(section),
             _ => unreachable!("section lookup"),
         }

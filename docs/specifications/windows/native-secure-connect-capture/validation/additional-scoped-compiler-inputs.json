@@ -1,0 +1,25 @@
+{
+  "sources": [
+    {
+      "path": "docs/specifications/ebpf/sbpf/ebpf.rs",
+      "bytes": 32568,
+      "sha256": "53e2cce4ae04bc7be99740dd86b6cc0d88a4e6049a976d2129647d0a76bc6e46"
+    },
+    {
+      "path": "docs/specifications/ebpf/sbpf/interpreter.rs",
+      "bytes": 40044,
+      "sha256": "d9841a9f0b1d69257d77e704f4e0f03d91b2e85be9c734195246d97befc82e6b"
+    },
+    {
+      "path": "docs/specifications/ebpf/sbpf/program.rs",
+      "bytes": 23828,
+      "sha256": "52ad90f144d201b147ba39d16437e1fe8c04fa7523d7347473616d82f3b56d59"
+    },
+    {
+      "path": "docs/specifications/ebpf/sbpf/verifier.rs",
+      "bytes": 19401,
+      "sha256": "b769de34006fc31ec36a41efee8dccf7283237ec762a1d2fc89a21cb69ed8196"
+    }
+  ],
+  "basis": "actual 274-unit scoped embedding manifest includes these referenced compiler files absent from the prior broad selection; all checked directly"
+}

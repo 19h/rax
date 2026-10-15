@@ -1,0 +1,38 @@
+$ErrorActionPreference='Stop'
+$env:PATH='C:\Windows\Temp\assist-native-rax-20261010\toolchain\bin;'+$env:PATH; $env:RUSTC='C:\Windows\Temp\assist-native-rax-20261010\toolchain\bin\rustc.exe'; $env:CARGO_HOME='C:\Windows\Temp\assist-native-rax-20261010\cargo-home'; $env:CARGO_TARGET_DIR='C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-owned'; & 'C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch arm64 -HostArch arm64; 
+$env:PATH='C:\Windows\Temp\assist-native-rax-20261010\llvm\bin;'+$env:PATH
+$env:ASSIST_RESOURCE_PYTHON='C:\Windows\Temp\assist-native-rax-20261010\python\python.exe'
+$env:RUSTFLAGS='-C target-feature=+crt-static';$env:CARGO_BUILD_JOBS='2'
+
+Copy-Item -LiteralPath 'C:\Mac\Home\Downloads\assist-native-allocate-ex-transfer-20261010-2154\shared-section-owned-cpp-build.py' -Destination 'C:\Windows\Temp\assist-native-rax-20261010\shared-section-owned-cpp-build.py'
+& 'C:\Windows\Temp\assist-native-rax-20261010\python\python.exe' -B 'C:\Mac\Home\Downloads\assist-native-allocate-ex-transfer-20261010-2154\verify-secure-capture-focused-sources.py' | Tee-Object -FilePath 'C:\Mac\Home\Downloads\assist-native-allocate-ex-transfer-20261010-2154\native-secure-capture-owning-source-verification.json'
+if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+& 'C:\Windows\Temp\assist-native-rax-20261010\python\python.exe' -B 'C:\Mac\Home\Downloads\assist-native-allocate-ex-transfer-20261010-2154\verify-current-cpp-consumers.py'
+if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+Set-Location 'C:\Windows\Temp\assist-native-rax-20261010\assist\rust\assist-rs'
+& cmd.exe /d /c 'cargo.exe build --locked --offline --features rax > C:\Windows\Temp\assist-native-rax-20261010\assist-native-secure-capture-shipping.log 2>&1'
+$gateExit=$LASTEXITCODE
+Copy-Item -LiteralPath 'C:\Windows\Temp\assist-native-rax-20261010\assist-native-secure-capture-shipping.log' -Destination 'C:\Mac\Home\Downloads\assist-native-allocate-ex-transfer-20261010-2154\assist-native-secure-capture-shipping.log'
+Write-Output ('assist-native-secure-capture-shipping.log '+(Get-FileHash -Algorithm SHA256 'C:\Windows\Temp\assist-native-rax-20261010\assist-native-secure-capture-shipping.log').Hash)
+if($gateExit -ne 0){exit $gateExit}
+& cmd.exe /d /c 'C:\Windows\Temp\assist-native-rax-20261010\python\python.exe C:\Windows\Temp\assist-native-rax-20261010\shared-section-owned-cpp-build.py > C:\Windows\Temp\assist-native-rax-20261010\assist-native-secure-capture-cpp.log 2>&1'
+$gateExit=$LASTEXITCODE
+Copy-Item -LiteralPath 'C:\Windows\Temp\assist-native-rax-20261010\assist-native-secure-capture-cpp.log' -Destination 'C:\Mac\Home\Downloads\assist-native-allocate-ex-transfer-20261010-2154\assist-native-secure-capture-cpp.log'
+Write-Output ('assist-native-secure-capture-cpp.log '+(Get-FileHash -Algorithm SHA256 'C:\Windows\Temp\assist-native-rax-20261010\assist-native-secure-capture-cpp.log').Hash)
+if($gateExit -ne 0){exit $gateExit}
+Set-Location 'C:\Windows\Temp\assist-native-rax-20261010\assist\rust\assist-rs'
+& cmd.exe /d /c 'cargo.exe build --locked --offline --features rax --message-format=json > C:\Windows\Temp\assist-native-rax-20261010\native-secure-capture-after-artifacts.jsonl 2> C:\Windows\Temp\assist-native-rax-20261010\native-secure-capture-after-artifacts-stderr.log'
+if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+$rlib=$null
+foreach($line in (Get-Content 'C:\Windows\Temp\assist-native-rax-20261010\native-secure-capture-after-artifacts.jsonl')){
+ $j=$line|ConvertFrom-Json
+ if($j.reason -eq 'compiler-artifact' -and $j.target.name -eq 'rax' -and $j.manifest_path -notlike '*\capi\Cargo.toml'){
+  foreach($f in $j.filenames){if($f.EndsWith('.rlib')){$rlib=$f}}
+ }
+}
+if(!$rlib){throw 'no current RAX rlib artifact'}
+Write-Output ('validated rlib: '+$rlib)
+& cmd.exe /d /c 'C:\Windows\Temp\assist-native-rax-20261010\python\python.exe C:\Mac\Home\Downloads\assist-native-allocate-ex-transfer-20261010-2154\inspect-secure-capture-archives.py > C:\Windows\Temp\assist-native-rax-20261010\native-secure-capture-owning-archive-hashes.json'
+$archiveExit=$LASTEXITCODE
+Copy-Item -LiteralPath 'C:\Windows\Temp\assist-native-rax-20261010\native-secure-capture-owning-archive-hashes.json' -Destination 'C:\Mac\Home\Downloads\assist-native-allocate-ex-transfer-20261010-2154\native-secure-capture-owning-archive-hashes.json'
+exit $archiveExit

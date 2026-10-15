@@ -1,0 +1,17 @@
+{
+  "recorded-utc": "2026-10-15T20:20:30.568204+00:00",
+  "command": [
+    "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target-pinned/debug/deps/rax-754f4d2a527a4423",
+    "--test-threads=1"
+  ],
+  "exit-code": 0,
+  "seconds": 1836.8068652153015,
+  "log": "macos-v2-library-rerun.log",
+  "sha256": "cddbabb42617f06c5cd07020f3017abe5628c11f20e20d6320f385637cdf3231",
+  "binary": {
+    "path": "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target-pinned/debug/deps/rax-754f4d2a527a4423",
+    "bytes": 449014392,
+    "sha256": "b65e0007eab05cb1409bda5539f05f00644a0508f5094b53fcac016e79296faa"
+  },
+  "reason": "Complete unchanged library rerun after multishot timer failure; original failure and3 exact diagnostic reruns retained"
+}

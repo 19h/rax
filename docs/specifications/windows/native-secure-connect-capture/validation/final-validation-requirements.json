@@ -1,0 +1,46 @@
+{
+  "epoch": 2,
+  "native-observations": 396,
+  "native-actual-producers": 8,
+  "closed-native-handles": 12,
+  "expected-focused": {
+    "macos": 6,
+    "linux": 6,
+    "windows": 7
+  },
+  "expected-library-passed": {
+    "macos": 7814,
+    "linux": 7808,
+    "windows": 7235
+  },
+  "expected-library-ignored": 2,
+  "capi-per-host": 168,
+  "unix-windows-integration": 544,
+  "owning-macos-ctests": 7,
+  "owning-unix-and-windows-cpp": 5,
+  "owning-source-units": 274,
+  "known-windows-library-failures": [
+    "lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "retained-failures": [
+    "epoch1 macOS nativeTrue canonical30s timeout (two runs)",
+    "epoch1 diagnostic same30s timeout then continuation exits0",
+    "Windows original preflight canonical-config mismatch before mutation",
+    "Windows full scan interrupted before any tests",
+    "Windows epoch2 delta applied but scoped verifier missing4SBPF keys before tests",
+    "Linux epoch1 owning attempt symlink resolution failed before compilation"
+  ],
+  "prohibited-claims": [
+    "all tests pass including the known5 Windows failures",
+    "native x64 kernel proof from ARM64 compatibility execution",
+    "whole-current-root/plugin/GUI/package validation from scoped older exports",
+    "successful NtSecureConnectPort/CSR implementation from this failure-only group",
+    "ordinary Windows guest exit from these kernel leaves",
+    "completed full8578 native source scan"
+  ],
+  "goal-status": "active; full process-userland goal incomplete"
+}

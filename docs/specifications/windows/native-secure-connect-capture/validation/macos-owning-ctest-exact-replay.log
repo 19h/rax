@@ -1,0 +1,18 @@
+Test project /Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build
+    Start 49: assist_process_tool_tests
+1/1 Test #49: assist_process_tool_tests ........***Failed   33.68 sec
+process tool failed after 183 checks: installed runtime process failed through Assist tool
+
+
+0% tests passed, 1 tests failed out of 1
+
+Label Time Summary:
+model_tools    =  33.68 sec*proc (1 test)
+rax            =  33.68 sec*proc (1 test)
+userland       =  33.68 sec*proc (1 test)
+
+Total Test time (real) =  33.72 sec
+
+The following tests FAILED:
+	 49 - assist_process_tool_tests (Failed)                model_tools rax userland
+Errors while running CTest

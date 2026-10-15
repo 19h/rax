@@ -1704,3 +1704,62 @@ large-page/based/64K/no-change modes, larger backing requests, guest mapping and
 NtQuerySection remain explicit separate frontiers. Constructor completion is
 not ordinary process completion. See the native-section-create corpus for the
 assumption register, scope maps, primary reference and validation records.
+
+### Native secure-port argument capture
+
+`NtSecureConnectPort` now captures the original nine arguments and resolves
+missing endpoints through the selected immutable NT namespace. No caller
+handle, pointer or message reaches a host port. The build 29683 native corpus
+contains 396 independently inspected observations from eight actual producers:
+ARM64, x64, x86 and x86 large-address-aware on an ARM64 Windows kernel. It
+distinguishes returned NTSTATUS from caller SEH and retains all input/output
+bytes. All 396 caller-exception fields are zero; all per-call handle counts
+are unchanged, and twelve owned handles are explicitly closed.
+
+The WoW64 adapter stores a zero 32-bit output handle after a reached native
+failure; early wrapper capture faults leave that buffer unchanged. Missing
+port lookup precedes section-handle, view-offset and view-size validation.
+Client-view lengths 48 bytes and, for WoW64, 24 bytes are captured separately;
+the measured missing-port remote-view input is 24 bytes. Caller data is probed
+in fixed 4096-byte chunks with a 1048576-byte transient bound. Larger requests
+remain explicit unsupported boundaries and publish no output.
+
+Captured endpoint presence does not authorize success. Existing ALPC ports and
+unselected namespace branches require a selected guest server and owned shared
+views and remain explicit unsupported boundaries. This group does not advance
+the original CSR startup frontier or establish an ordinary Windows guest exit.
+See `docs/specifications/windows/native-secure-connect-capture` for producer
+identities, complete native captures, assumptions and validation records.
+
+Read-only controls additionally require writable client/remote views and
+nonempty information buffers on native and WoW64 paths. The information-length
+counter is read without a writability probe on a missing endpoint. WoW64
+view/data write faults occur after wrapper capture and still zero its output
+handle; early read-capture faults leave it unchanged.
+
+### Secure-port capture validation (2026-10-15)
+
+NtSecureConnectPort captures the original nine arguments and selected namespace
+failure behavior without host IPC. The 396 native controls from eight actual
+producers cover capture order, readonly views/data, SID validation and WoW64
+copyback; twelve handles close explicitly and no caller SEH occurs. Selected
+present endpoints remain unsupported in this group, with no successful guest
+port or ordinary Windows exit.
+
+Corrected-source library pass/fail/ignored counts are macOS 7814/0/2, Linux
+7808/0/2 and Windows 7235/5/2. Windows retains the same four BZHI and one FP16
+lowerer failures. All three hosts pass 168 C API tests, all-target compilation
+and focused tests (6 on Unix, 7 on Windows); both Unix hosts pass 544 Windows
+integration cases and Windows executes 4 native memory integration tests.
+Scoped owning builds pass all 7 macOS CTests and both protected scans, and all 5
+C++ consumers on Linux/Windows. Complete archive walks bind 274 selected RAX
+inputs per host with empty core features, using frozen older Assist exports.
+
+The initial macOS timer mismatch and native printf 30 s C API timeout remain
+retained. Three unchanged timer reruns and a complete same-binary library
+rerun pass; the canonical C API rerun passes with unchanged limits/assertions.
+Earlier nativeTrue 30 s failures and its 42.245449 s diagnostic continuation remain
+separate evidence. Other kernels and whole-current-root/plugin/GUI/package
+validation are unverified; the full process-userland objective remains active.
+
+[Checked raw evidence](../../../docs/specifications/windows/native-secure-connect-capture/validation/README.md).
