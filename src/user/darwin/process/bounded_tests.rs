@@ -1062,6 +1062,85 @@ fn embedded_sysctl_answers_guest_nodes_without_host_discovery() {
 }
 
 #[test]
+fn embedded_kernel_version_is_guest_owned_and_has_exact_copyout_boundaries() {
+    use crate::user::darwin::{
+        abi::{Errno, tables::nr},
+        arch::Rv,
+        syscall::{Ctx, bsd},
+    };
+    // Match the existing closed Mach host_kernel_version identity, including one NUL.
+    let expected = b"Darwin Kernel Version 25.0.0: root:xnu-12377.121.6/RELEASE\0";
+    let expected_len = expected.len() as u64;
+    for abi in [DarwinAbi::X86_64, DarwinAbi::Arm64] {
+        let mut process = process_with_profile(abi, true);
+        let (_, mut thread) = process.proc.threads.pop_first().unwrap();
+        let buf = thread.cpu.sp() - 1024;
+        let mut ctx = Ctx {
+            proc: &mut process.proc,
+            thread: &mut thread,
+            nr: 0,
+            pc: ENTRY,
+        };
+        ctx.write_u32(buf, 1).unwrap(); // CTL_KERN
+        ctx.write_u32(buf + 4, 4).unwrap(); // KERN_VERSION
+        ctx.write(buf + 32, b"kern.version").unwrap();
+        for named in [false, true] {
+            for capacity in [0, expected_len - 1, expected_len, 128] {
+                ctx.write(buf + 256, &[0xa5; 128]).unwrap();
+                ctx.write_u64(buf + 128, capacity).unwrap();
+                let output = if capacity == 0 { 0 } else { buf + 256 };
+                let (number, address, length) = if named {
+                    (nr::SYSCTLBYNAME, buf + 32, 12)
+                } else {
+                    (nr::SYSCTL, buf, 2)
+                };
+                let result = bsd::call(
+                    &mut ctx,
+                    number,
+                    &[address, length, output, buf + 128, 0, 0, 0, 0],
+                );
+                assert_eq!(
+                    result,
+                    if capacity == expected_len - 1 {
+                        Err(Errno::ENOMEM)
+                    } else {
+                        Ok(Rv::one(0))
+                    },
+                    "{abi:?} named={named} capacity={capacity}"
+                );
+                assert_eq!(
+                    ctx.read_u64(buf + 128).unwrap(),
+                    if capacity == expected_len - 1 {
+                        0
+                    } else {
+                        expected_len
+                    }
+                );
+                let mut bytes = [0xa5; 128];
+                if capacity >= expected_len {
+                    bytes[..expected.len()].copy_from_slice(expected);
+                }
+                assert_eq!(ctx.read(buf + 256, 128).unwrap(), bytes);
+            }
+            ctx.write_u64(buf + 128, 128).unwrap();
+            let (number, address, length) = if named {
+                (nr::SYSCTLBYNAME, buf + 32, 12)
+            } else {
+                (nr::SYSCTL, buf, 2)
+            };
+            assert_eq!(
+                bsd::call(
+                    &mut ctx,
+                    number,
+                    &[address, length, buf + 256, buf + 128, buf + 512, 1, 0, 0]
+                ),
+                Err(Errno::EPERM)
+            );
+        }
+    }
+}
+
+#[test]
 fn embedded_vm_queries_and_advice_reject_rounding_overflow() {
     use crate::user::darwin::{
         abi::{Errno, tables::nr},

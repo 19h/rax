@@ -449,6 +449,17 @@ static OVERRIDES: &[Override] = &[
         value: |_| Value::string(b"Darwin"),
     },
     Override {
+        name: "kern.version",
+        oid: &[1, 4],
+        value: |ctx| {
+            if ctx.proc.config.host_services {
+                Value::Host
+            } else {
+                Value::string(crate::user::darwin::abi::CLOSED_KERNEL_VERSION)
+            }
+        },
+    },
+    Override {
         name: "kern.osrevision",
         oid: &[1, 3],
         value: |_| Value::io_int(199_506),

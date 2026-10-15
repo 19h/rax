@@ -523,6 +523,14 @@ emulation decides. The metadata nodes (`sysctl.name`,
 `.next`, `.name2oid`, `.oidfmt`, `.oiddescr`) cover both, `next` merging
 the two walks. Writes are refused (`EPERM`) once the node is found.
 
+For an embedded process, `kern.version` (`CTL_KERN`, `KERN_VERSION`,
+OID `[1, 4]`) reports the deterministic kernel identity already used by
+Mach `host_kernel_version`, with one terminating NUL. Both numeric and
+named queries support size discovery and the normal copy-out bounds;
+this allows Intel dyld to identify the release kernel without host
+services. Other host-owned nodes remain unavailable in the closed
+profile. Processes with host services keep the host's `kern.version`.
+
 Mach absolute time, uptime, and `kern.boottime` share one
 clock that starts with the emulator. Process identity (pid, credentials,
 audit token) is the host process's, and so are its persona (`persona`,

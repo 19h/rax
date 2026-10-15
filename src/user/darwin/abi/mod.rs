@@ -14,6 +14,11 @@ use crate::user::image::macho::{self, HostCpu};
 
 pub use errno::Errno;
 
+/// Deterministic identity of the closed guest kernel, shared by sysctl and
+/// Mach `host_kernel_version` without host services.
+pub(crate) const CLOSED_KERNEL_VERSION: &[u8] =
+    b"Darwin Kernel Version 25.0.0: root:xnu-12377.121.6/RELEASE";
+
 /// How a BSD system call's success value reaches the caller's registers
 /// (`sy_return_type`, `_SYSCALL_RET_*`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

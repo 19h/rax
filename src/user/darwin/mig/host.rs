@@ -256,7 +256,7 @@ fn kernel_version(_host_services: bool) -> Vec<u8> {
             return buf;
         }
     }
-    b"Darwin Kernel Version 25.0.0: root:xnu-12377.121.6/RELEASE".to_vec()
+    crate::user::darwin::abi::CLOSED_KERNEL_VERSION.to_vec()
 }
 
 /// `host_info(flavor)` with the caller's `count` (`osfmk/kern/host.c`).
