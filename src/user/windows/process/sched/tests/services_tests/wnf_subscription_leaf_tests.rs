@@ -1,4 +1,4 @@
-//! Installed syscall leaves with fixed ULONG64 output and true x86 RET16.
+//! Installed syscall leaves with a captured catalog, ULONG64 output, and x86 RET16.
 use super::*;
 use crate::user::windows::{
     loader::{self, SymRef},
@@ -42,7 +42,12 @@ fn run_leaf(p: &mut Proc, t: &mut Thread, name: &str, args: &[u64], expected: u3
         );
     }
     assert!(returned);
-    assert_eq!(t.cpu.gpr(0), u64::from(expected));
+    assert_eq!(
+        t.cpu.gpr(0),
+        u64::from(expected),
+        "{}: {name} args={args:X?}",
+        p.arch
+    );
     assert!(t.frames.is_empty());
     assert_eq!(
         t.cpu.sp(),
@@ -85,6 +90,10 @@ fn installed_wnf_subscription_leaves_publish_update_and_remove_fixed_64_bit_iden
         config.arena_bytes = 256 << 20;
         let mut process = WindowsProcess::spawn_image(config, image.to_vec()).unwrap();
         let p = process.state_mut();
+        // Installed NTDLL supplies the ABI leaves, while these fixed names and
+        // expected permissions come from the captured catalog/security subject.
+        // A CI host's installed WNF catalog need not contain the captured name.
+        p.objects.select_wnf_catalog(catalog());
         let tid = *p.threads.keys().next().unwrap();
         let mut t = p.threads.remove(&tid).unwrap();
         let input =
