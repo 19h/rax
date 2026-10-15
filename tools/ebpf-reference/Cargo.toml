@@ -3,6 +3,7 @@ name = "rax-ebpf-reference"
 version = "0.1.0"
 edition = "2024"
 publish = false
+license = "MIT AND BSD-3-Clause"
 
 # Independent oracle tooling must not alter the engine workspace or lockfile.
 [workspace]

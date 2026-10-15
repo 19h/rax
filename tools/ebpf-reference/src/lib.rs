@@ -257,12 +257,16 @@ mod tests {
             let config = rax_config(SbpfVersion::V0, program.len());
             let mut cpu = EbpfCpu::new(config.clone());
             cpu.regs.pc = MM_BYTECODE_START;
+            cpu.regs.r[6..10].copy_from_slice(&[6, 7, 8, 9]);
             let actual = cpu.run(&mut mapping(&program, &config));
             assert_eq!(
                 matches!(actual, EbpfExit::Exit { .. }),
                 expected.is_ok(),
                 "offset={offset}: {actual:?} vs {expected:?}"
             );
+            if let Ok(registers) = expected {
+                assert_eq!(cpu.regs.r, registers);
+            }
         }
     }
 

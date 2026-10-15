@@ -546,15 +546,17 @@ A-profile implementation merely because both execute Thumb encodings.
 
 ### 8.11 eBPF and Solana SBPF semantics
 
-- Make the dialect (`EbpfDialect::Rfc9669` vs `EbpfDialect::SolanaSbpf(SbpfVersion::V0..=V4)`)
+- Make the dialect (`EbpfDialect::Rfc9669` vs `EbpfDialect::Solana(SbpfVersion::V0..=V4)`)
   and byte order (`Endian::Little` vs `Endian::Big`) explicit in decode,
   execution, SMIR lifting, oracle queries, and tests.
 - Preserve endian-dependent register nibble layout (`dst_reg` in low 4 bits on
   little-endian and high 4 bits on big-endian), `off` and `imm` byte order,
   memory access endianness, and `BPF_END` (`TO_LE`, `TO_BE`, `BSWAP`) behavior.
-- Validate 128-bit `LDDW` wide instructions completely, including continuation
-  slot invariants (`opcode == 0`, `dst_reg == 0`, `src_reg == 0`, `offset == 0`)
-  and rejects for truncated or jumped-into second slots.
+- For RFC 9669, validate complete 128-bit `LDDW` continuation headers
+  (`opcode == 0`, `dst_reg == 0`, `src_reg == 0`, `offset == 0`). SBPF follows
+  its reference's ignored-field rules; distinguish decoding from whole-program
+  verifier admission. Reject truncated instructions and execution/lifting at
+  continuation slots.
 - Enforce `R10` frame-pointer read-only constraints in `Rfc9669` and
   `SbpfVersion::V0`, `V3`, `V4`, while allowing dynamic stack frame adjustments
   (`ADD64_IMM r10, imm`) in `SbpfVersion::V1` and `V2`.

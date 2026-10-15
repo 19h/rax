@@ -149,7 +149,16 @@ Hexagon scalar/HVX instructions are lifted and interpreted through SMIR in the d
 
 ## eBPF and Solana SBPF lifting
 
-eBPF and Solana `SBPF` instructions are lifted through `EbpfLifter` (`src/smir/lift/ebpf/`) into SMIR blocks and functions over `SourceArch::Ebpf` (`EbpfReg::R0..=R10`, `EbpfReg::Pc`). The lifter preserves dialect-specific division/modulo sanitization (RFC 9669 non-trapping zero/overflow vs Solana `SBPF` trapping division/remainder), Solana `SBPF` `V0`–`V4` `ALU32` sign/zero-extension rules, `V2` `SUB_IMM` operand order, `PQR` 64×64→128-bit high multiplication (`UHMUL64`/`SHMUL64`), and `BPF_ATOMIC` read-modify-write operations. The lifted representation is verified at both `OptLevel::O0` and `OptLevel::O2` in `ebpf_smir_lift` and `ebpf_diff`.
+eBPF and Solana `SBPF` instructions are lifted through `EbpfLifter` (`src/smir/lift/ebpf/`) into
+SMIR blocks and functions over `SourceArch::Ebpf` (`EbpfReg::R(0..=10)`, `EbpfReg::Pc`). The
+lifter preserves dialect-specific division/modulo sanitization (RFC 9669 non-trapping
+zero/overflow vs Solana `SBPF` trapping division/remainder), Solana `SBPF` `V0`–`V4` `ALU32`
+sign/zero-extension rules, `V2` `SUB_IMM` operand order, `PQR` 64×64→128-bit high multiplication
+(`UHMUL64`/`SHMUL64`), and `BPF_ATOMIC` read-modify-write operations. The selected matrices run
+at O0/O1/O2 in `ebpf_smir_lift` and use the specification-derived evaluator in `ebpf_diff`.
+`EbpfLifter::lift_program` discovers separate functions; observable guest boundaries preserve
+instruction counting and precise exits. `tools/ebpf-reference` separately executes the pinned
+Anza interpreter for call/frame and memory-layout comparisons.
 
 ## Self-modifying code and cache identity
 

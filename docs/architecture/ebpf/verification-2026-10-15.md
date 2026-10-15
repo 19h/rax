@@ -299,3 +299,84 @@ Assumptions A1-A4 are confirmed for the tested contracts. A5 remains the explici
 default stack-allocation assumption; embeddings with different backing lengths
 must initialize r10 accordingly. No memory file or unrelated user content was
 modified. All staging uses exact task-owned paths.
+
+## Final validation record
+
+The final engine source is `28b3d3596690207a734737fd1fbd1af39580e6ff`.
+The documentation/tool-evidence commit following it does not alter engine code.
+Final-source commands and recorded results:
+
+| Check | Invocation | Result |
+|---|---|---|
+| Debug affected targets | `cargo +stable test --locked --no-default-features --test ebpf_smir_lift --test ebpf_diff --test isa_oracle -- --nocapture` | 36 + 5 + 80 passed, no ignored cases |
+| Release affected targets | Same invocation with `--release` | 36 + 5 + 80 passed, no ignored cases |
+| Portable library, final source | `cargo +stable test --locked --no-default-features --lib -- --test-threads=1` | 7788 passed, 2 pre-existing ignored; 331.24 s |
+| Pinned Anza interpreter | `python3 tools/ebpf-reference/run.py` | 4 tests, 30 executed configurations, no ignored cases |
+| All-target build | `cargo +stable build --locked --all-targets --no-default-features --features x86_64-suite,smir-jit` | passed |
+| All-target Clippy | Replace `build` above with `clippy` | passed |
+| Root/tool formatting | `cargo +stable fmt --all --check` and `cargo +stable fmt --manifest-path tools/ebpf-reference/Cargo.toml --check` | passed |
+| C API | `cargo +stable test --locked -p rax-capi` | 168 passed, no ignored cases |
+| Root doctests | `cargo +stable test --locked --no-default-features --features x86_64-suite,smir-jit --doc` | 0 executed; 5 existing examples ignored |
+
+The full native-feature library run completed during the earlier semantic groups:
+`cargo +stable test --locked --no-default-features --features
+x86_64-suite,smir-jit --lib -- --test-threads=1`: 9968 passed, 2 ignored,
+1213.94 s. Later eBPF-specific changes receive final-source portable-library and
+complete affected-target checks; that earlier native-feature result is not
+presented as execution of the final engine revision. eBPF native admission stays
+closed throughout.
+
+`make -C capi test` compiled its C ABI consumer and executed all 15 C/C++ examples
+successfully after Group 7. C/C++ headers, ABI identifiers, and layouts did not
+change in the later groups; the final-source Rust C API target was rerun.
+LLVM MC was `/Users/int/local/bin/llvm-mc`, version 23.0.0git, and the differential
+encoding test actually executed. Its optional-tool skip path was not taken.
+
+The two ignored library cases are
+`smir::lower::validation::tests::test_lift_lower_full_microkernel` and
+`smir::lower::validation::tests::test_roundtrip_exact_bytes_microkernel`, both
+pre-existing opt-in fixture probes. Five pre-existing documentation examples
+remain ignored; doctest exit status supplies no executed-example evidence.
+
+One parallel portable-library run failed at
+`user::darwin::bridge::mirror::tests::a_service_mapping_is_found_as_a_new_shared_region`
+on its host Mach share-mode classification assertion. That test and its source
+are unchanged from the baseline. The exact test passed in isolation, and the
+subsequent serial portable-library run passed all 7788 tests with 2 ignored in
+396.24 s. The cause of the parallel-only observation is unknown; no Darwin code
+was changed. This medium-impact host-test instability does not block the measured
+eBPF contracts, but a universal green parallel-suite claim would be unsupported.
+
+Semantic commits, in order:
+
+| Group | Commit |
+|---|---|
+| Decode, pseudo-loads, frame policy | `8bca35cb2` |
+| Versioned memory layout | `a31b044aa` |
+| SMIR call frames and boundaries | `dd40eb7b7` |
+| Atomic transactions and byte order | `12b2b59ce` |
+| Runtime frontiers and legacy resolution | `517851436` |
+| Distinct function discovery/extents | `cee2699bf` |
+| Exact reference memory translation/fetch | `e6552cc9e` |
+| Checked instruction extents | `8f6d2b64f` |
+| BTF helper namespace rejection | `28b3d3596` |
+
+Every semantic group used exact-path `git add` followed by
+`red -m --staged --run` with those same paths. Root dependency/feature/toolchain
+state and all pre-existing untracked content are preserved.
+
+## Final quality-gate audit
+
+| Gate | Result and evidence |
+|---|---|
+| QG1 | Passed: the task consists of technical claims, implementation, and measurements. |
+| QG2 | Passed: A1-A5 include basis, dependent results, stress cases, falsification probes, and final status. A5 remains an explicit embedding assumption. |
+| QG3 | Passed within the stated scope: all nine external findings have regression evidence and corrections; adjoining verified defects have separate semantic groups. |
+| QG4 | Passed: byte/bit widths and checked/truncated integer arithmetic are explicit; memory translation and extent calculations are reproducible. No approximate numerical comparisons are used. |
+| QG5 | Passed for the covered contracts: targeted regressions pass in debug/release; direct, optimized SMIR, and selected upstream executions agree. Finite coverage, unsupported platform facilities, and the unrelated parallel Darwin observation remain explicit. |
+| QG6 | Passed: primary-source revision/checksums are pinned; actual oracle execution and ignored counts are distinguished from compilation and earlier-source evidence. |
+| QG7 | Passed: high/medium findings are resolved in scope; global atomic-lock throughput, loader/verifier/resolver capability boundaries, snapshots, and other-host execution are recorded without unrelated changes. |
+
+The full conformance result remains unknown. These gates establish the bounded
+acceptance criteria and observed regressions, rather than universal equivalence
+for every possible program, platform, and execution configuration.
