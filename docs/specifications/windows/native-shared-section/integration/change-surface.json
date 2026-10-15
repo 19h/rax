@@ -1,0 +1,11 @@
+{
+  "change": "validation evidence only; source implementation and runtime contracts unchanged",
+  "rax-runtime-planes": "unchanged106 feature blobs; existing ../rax-change-surface.json remains the implementation map",
+  "assist-runtime-planes": "unchanged; existing ../assist-change-surface.json records scope",
+  "targets/platforms": {
+    "windows": "native ARM64 compiler,library,CAPI,alltargets,installed ARM64/x86 leaf,5 embedding consumers",
+    "macos": "native ARM64 compiler,library,CAPI,alltargets,7 CTests,CLI/MCP link,2 protected-text scans",
+    "linux": "amd64 container kernel,library,CAPI,alltargets,5 embedding consumers"
+  },
+  "tests/docs": "add exact source,command,count,archive and explicit failure evidence; no defaults,dependencies,ABI or permissions changed"
+}

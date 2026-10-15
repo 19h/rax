@@ -1,0 +1,20 @@
+[
+  {
+    "id": "I1",
+    "assumption": "The linear replay preserves the validated feature semantics.",
+    "basis": "51 incoming files have no owned overlap; all106 feature blobs match before/after; combined focused/full/CAPI gates",
+    "dependent-result": "publish the rebased SharedSection feature",
+    "stress-test": "shared SMIR changes and WNF fixture update; all three native configurations",
+    "falsification-probe": "feature-file hash mismatch or newly failing feature test on any host",
+    "status": "confirmed"
+  },
+  {
+    "id": "I2",
+    "assumption": "Frozen owning-root results apply only to the recorded embedding and matching9 current C++ consumers.",
+    "basis": "rechecked nine hashes; explicit old root revisions; recorded249 source units and empty-feature archive identities",
+    "dependent-result": "scoped embedding claim only",
+    "stress-test": "concurrent root Rust cluster edits, plugin/GUI/package configurations",
+    "falsification-probe": "a source hash differs or a whole-current-root claim is made without its own build evidence",
+    "status": "retained"
+  }
+]

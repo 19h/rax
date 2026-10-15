@@ -1,0 +1,51 @@
+   Compiling rax v0.1.0 (/Users/int/hexrays/kvasir/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.89s
+     Running tests/suites/user/linux/main.rs (target/debug/deps/user_linux-95cd9681b791189e)
+
+running 43 tests
+test abi_tables::aarch64_syscall_numbers_match_unistd_64 ... ok
+test abi_tables::arm_syscall_numbers_match_unistd_eabi_and_the_arm64_compat_table ... ok
+test abi_tables::errno_values_match_asm_generic ... ok
+test abi_tables::every_sysno_name_is_unique_and_sorted ... ok
+test abi_tables::i386_syscall_numbers_match_unistd_32 ... ok
+test abi_tables::riscv64_syscall_numbers_match_unistd_64 ... ok
+test abi_tables::x86_64_syscall_numbers_match_unistd_64 ... ok
+test cli::environment_options_edit_the_guest_environment ... ok
+test cli::exit_status_and_arguments_pass_through ... ok
+test cli::fatal_signals_are_reported ... ok
+test cli::missing_program_is_status_127 ... ok
+test cli::non_elf_file_is_status_126 ... ok
+test cli::options_after_the_program_are_its_arguments ... ok
+test cli::size_options_are_validated ... ok
+test cli::strace_logs_system_calls ... ok
+test cli::unsupported_machine_is_status_126 ... ok
+test fixtures::aarch64_fixtures_match_linux ... ok
+test fixtures::arm_expectations_come_from_an_arm64_kernel ... ok
+test fixtures::arm_fixtures_match_linux ... ok
+test fixtures::fixture_binaries_match_manifest ... ok
+test fixtures::i386_expectations_come_from_an_x86_64_kernel ... ok
+test fixtures::i386_fixtures_match_linux ... ok
+test fixtures::live_docker_oracle ... ignored, requires Docker with binfmt support for x86_64, aarch64, and riscv64
+test fixtures::oracle_overrides_are_consistent ... ok
+test fixtures::riscv64_fixtures_match_linux ... ok
+test fixtures::riscv64_fixtures_match_linux_with_jit ... ok
+test fixtures::small_slices_do_not_change_results ... ok
+test fixtures::thumb_expectations_come_from_an_arm64_kernel ... ok
+test fixtures::thumb_fixtures_match_linux ... ok
+test fixtures::x86_64_fixtures_match_linux ... ok
+test fixtures::x86_64_fixtures_match_linux_without_jit ... ok
+test host_signals::host_signals_are_forwarded_to_the_guest ... ok
+test host_signals::without_forwarding_host_signals_act_on_rax_user ... ok
+test programs::corpus_aarch64_matches_linux ... ok
+test programs::corpus_binaries_match_manifest ... ok
+test programs::corpus_riscv64_matches_linux ... ok
+test programs::corpus_riscv64_matches_linux_with_jit ... ok
+test programs::corpus_sources_are_upstream_or_annotated ... ok
+test programs::corpus_tables_are_consistent ... ok
+test programs::corpus_x86_64_matches_linux ... ok
+test programs::corpus_x86_64_matches_linux_without_jit ... ok
+test programs::noise_filters_mask_only_their_targets ... ok
+test sha256::sha256_matches_fips_180_4_examples ... ok
+
+test result: ok. 42 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 245.17s
+

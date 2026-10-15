@@ -1,0 +1,20 @@
+[
+  {
+    "impact": "high",
+    "finding": "Full Windows process startup remains incomplete at NtCreateSection; ordinary Windows exits remain0.",
+    "evidence": "native-shared-section-integration-after-ordinary-processes.log and production trace",
+    "blocks": "full goal, not the bounded snapshot feature"
+  },
+  {
+    "impact": "medium",
+    "finding": "Five Windows BZHI/FP16 library failures persist unchanged; broader Darwin fixture suite continues independently and preceding reclaim mismatch remains recorded.",
+    "evidence": "library logs and preceding corpus bounded-findings.json",
+    "blocks": "all-green project claim; does not falsify passing SharedSection feature tests"
+  },
+  {
+    "impact": "medium",
+    "finding": "Owning root exports are older than current root.",
+    "evidence": "owning-root-scope-recheck.json",
+    "blocks": "whole-current-root/plugin/GUI/package claim"
+  }
+]

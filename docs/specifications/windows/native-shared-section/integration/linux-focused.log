@@ -1,0 +1,17 @@
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 08s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 9 tests
+test user::windows::memory::data_section::tests::selected_data_copy_on_write_is_private_and_protection_cannot_gain_shared_write ... ok
+test user::windows::memory::data_section::tests::selected_data_partial_reserved_views_and_failed_map_are_exact ... ok
+test user::windows::memory::data_section::tests::selected_data_views_preserve_holes_opaque_bytes_and_owned_lifetime ... ok
+test user::windows::object_namespace::data::tests::selected_data_section_rejects_gaps_overlaps_extents_and_unbounded_storage ... ok
+test user::windows::object_namespace::data::tests::selected_data_section_retains_native_grants_without_requiring_query_access ... ok
+test user::windows::process::sched::tests::services_tests::data_section_tests::native_data_section_replays_128_actual_open_and_granted_access_controls ... ok
+test user::windows::process::sched::tests::services_tests::data_section_tests::native_data_section_replays_156_flag_controls_including_original_startup_flags ... ok
+test user::windows::process::sched::tests::services_tests::data_section_tests::native_data_section_replays_160_installed_geometry_status_and_region_controls ... ok
+test user::windows::process::sched::tests::services_tests::data_section_tests::native_data_section_replays_88_actual_protection_status_and_output_controls ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 7785 filtered out; finished in 1.85s
+
