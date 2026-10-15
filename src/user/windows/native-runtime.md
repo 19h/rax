@@ -1674,3 +1674,33 @@ opaque committed bytes, reserved runs and independent view lifetime. The
 [contract and native controls](../../../docs/specifications/windows/native-shared-section/README.md) record532 native
 controls, startup allocation flags, platform evidence and remaining frontiers.
 Full ordinary Windows process completion remains an active requirement.
+
+### Unnamed pagefile-section construction (2026-10-15)
+
+`NtCreateSection` now creates a real process-owned, page-rounded anonymous
+backing object for supported unnamed pagefile sections. All seven original
+arguments use the existing ARM64/x64/x86 service transport. WoW64 attribute
+conversion, early allocation/protection validation, output and 8-byte maximum
+capture, deferred validation and error-handle copyback retain the independently
+measured order. `PAGE=0` has a different validation stage from other invalid page
+values. No guest argument is forwarded to a host NT creation call.
+
+Native controls cover 10,920 creations across ARM64, x64, x86 and x86-LAA on
+ARM64 Windows build29683: 5,544 priority controls and 5,376 protection/allocation
+cross controls, with 1,516 explicitly closed section handles. The original
+owned debug child supplies an unchanged seven-argument 65,536-byte read/write
+SEC_COMMIT call and naturally exits41. The replay compares10,876 native statuses,
+output/max-size bytes, available section metadata and grants; 44 captured cases
+require explicit unsupported results for separately unimplemented modes.
+NOCACHE takes precedence over WRITECOMBINE, and WC alone rejects executable
+sections after maximum-size capture. Source, producer PE machine/LAA and stdout
+identities are retained with the corpus.
+
+Backing size is bounded at67,108,864bytes(64MiB), and positive maxima round up to
+4,096-byte pages without changing the caller's input. Same-process duplication
+retains the backing until the last handle closes; failed or unsupported calls
+publish no object. Named/file-backed/custom-security, privileged permanent,
+large-page/based/64K/no-change modes, larger backing requests, guest mapping and
+NtQuerySection remain explicit separate frontiers. Constructor completion is
+not ordinary process completion. See the native-section-create corpus for the
+assumption register, scope maps, primary reference and validation records.

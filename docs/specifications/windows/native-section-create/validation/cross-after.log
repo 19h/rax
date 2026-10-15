@@ -1,0 +1,40 @@
+warning: explicit `package.readme` can be inferred
+  --> Cargo.toml:20:1
+   |
+20 | readme = "README.md"
+   | ^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::manual_readme` is set to `warn` by default
+help: consider removing `package.readme`
+warning: `rax` (manifest) generated 1 warning
+warning: explicit `package.readme` can be inferred
+ --> capi/Cargo.toml:8:1
+  |
+8 | readme = "README.md"
+  | ^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `cargo::manual_readme` is set to `warn` by default
+help: consider removing `package.readme`
+warning: `rax-capi` (manifest) generated 1 warning
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/section-create-20261015/rax-source)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 28.67s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/section-create-20261015/target/debug/build/rax/05157604908101ea/out/rax-05157604908101ea)
+
+running 6 tests
+test user::windows::process::sched::tests::services_tests::section_create_tests::native_section_create_captures_aliased_maximum_before_publishing_and_duplicates_identity ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::native_section_create_owns_zero_filled_page_rounded_backing_and_releases_last_handle ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::native_section_create_status_mapping_matches_installed_ntdll ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::native_section_create_unsupported_modes_do_not_publish_or_allocate ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::replay::native_section_create_replays_all_5376_protection_allocation_cross_controls ... section-create arm64: native status/bytes=1344, explicit unsupported=0
+section-create x64: native status/bytes=1344, explicit unsupported=0
+section-create x86: native status/bytes=1344, explicit unsupported=0
+section-create x86: native status/bytes=1344, explicit unsupported=0
+ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::replay::native_section_create_replays_all_5544_priority_and_copyback_controls ... section-create arm64: native status/bytes=1375, explicit unsupported=11
+section-create x64: native status/bytes=1375, explicit unsupported=11
+section-create x86: native status/bytes=1375, explicit unsupported=11
+section-create x86: native status/bytes=1375, explicit unsupported=11
+ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 7800 filtered out; finished in 0.47s
+

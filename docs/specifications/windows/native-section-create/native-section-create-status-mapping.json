@@ -1,0 +1,18 @@
+{
+  "mappings": [
+    {
+      "ntstatus": "0xc0000020",
+      "win32-error": 193
+    },
+    {
+      "ntstatus": "0xc0000040",
+      "win32-error": 8
+    },
+    {
+      "ntstatus": "0xc00000f4",
+      "win32-error": 87
+    }
+  ],
+  "large-page-minimum-bytes": 2097152,
+  "inspector-sha256": "0655bc40b636dfc38bef562eab66e4a4148cc458a374b310e6e7cf30ae8e848d"
+}

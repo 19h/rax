@@ -1,0 +1,20 @@
+[
+  {
+    "impact": "high",
+    "finding": "Ordinary Windows process completion remains unknown until the owning observer reruns; previous published frontier was NtCreateSection.",
+    "evidence": "../native-shared-section/integration/native-shared-section-integration-after-production-trace-output.log",
+    "blocks": "full goal, not bounded constructor semantics"
+  },
+  {
+    "impact": "high",
+    "finding": "Mapping created pagefile sections,NT names,files,custom security,permanent/based/64K/no-change/large-page modes require separate owning contracts and explicit unsupported paths.",
+    "evidence": "src/user/windows/dll/native/section_create.rs and existing section_map.rs Mapping branch",
+    "blocks": "full process-userland goal; no successful placeholder views"
+  },
+  {
+    "impact": "medium",
+    "finding": "Physical x64 Windows kernel remains untested; x64/x86 controls run underARM64 Windows kernel29683.",
+    "evidence": "native producer identities",
+    "blocks": "physical x64-kernel proof"
+  }
+]

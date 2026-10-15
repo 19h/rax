@@ -144,6 +144,8 @@ pub enum Object {
         size: u64,
         /// Page protection.
         protect: u32,
+        /// Native SEC_* allocation attributes of this section.
+        attributes: u32,
         /// Contents of a pagefile-backed mapping, shared by its views.
         shared: Option<std::sync::Arc<crate::user::mm::SharedObject>>,
     },

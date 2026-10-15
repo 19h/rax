@@ -347,6 +347,7 @@ fn native_wait_packet_associate_replays_52_native_target_observations() {
                         file: None,
                         size: PAGE_SIZE,
                         protect: prot::READWRITE,
+                        attributes: 0x0800_0000,
                         shared: None,
                     });
                     (

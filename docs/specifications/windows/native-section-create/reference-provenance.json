@@ -1,0 +1,11 @@
+{
+  "issuing-organization": "Microsoft",
+  "title": "ZwCreateSection function (wdm.h)",
+  "last-updated": "2023-01-13",
+  "retrieved-utc": "2026-10-15T13:35:22Z",
+  "url": "https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-zwcreatesection",
+  "file": "microsoft-zwcreatesection.html",
+  "bytes": 56670,
+  "sha256": "1a5c120133a7f6311fb1674f9cfe4ddad577a57b53b196dd029850695ce8cbfb",
+  "scope": "documented7argumentcontract; native user-mode tests own parameter capture and failure priority; kernel Zw caller context is not emulated"
+}

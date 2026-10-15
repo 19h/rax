@@ -1,0 +1,38 @@
+{
+  "captured-utc": "2026-10-15T13:31:34.025733+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "source": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-first-call-arm64\\native-section-create-first-call.cpp",
+    "bytes": 12538,
+    "sha256": "82a8537ef0465dc1f09c093ff471fe8dc81635a6d7dc8748eebca49dce3f0e23"
+  },
+  "executable": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-first-call-arm64\\native-section-create-first-call-arm64.exe",
+    "bytes": 166912,
+    "sha256": "b0cd0a828b893f010bfa88e78d181b3c29ff1969c98caefd7a521931e3b1e242",
+    "machine": 43620,
+    "characteristics": 34
+  },
+  "stdout": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-first-call-arm64\\native-section-create-first-call-arm64.log",
+    "bytes": 2910,
+    "sha256": "ae66454759fed01d9c5a26e4af979ae9d7e7a6b820fa7ad3d4555b3601ef8aad"
+  },
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-section-create-first-call.py",
+    "bytes": 2792,
+    "sha256": "08207b6d2e0db159213b6f959eefcdf647e07f7661d2957cdefd4e3baaa993a5"
+  },
+  "max-size-bytes": 65536,
+  "protection": 4,
+  "allocation-attributes": 134217728,
+  "desired-access": 983071,
+  "original-native-child-exit": 41,
+  "scope": "native debugger child only; no ordinary emulated process exit"
+}

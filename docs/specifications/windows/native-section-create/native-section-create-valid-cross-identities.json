@@ -1,0 +1,106 @@
+{
+  "captured-utc": "2026-10-15T14:10:02.661778+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "producers": [
+    {
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-valid-cross-arm64\\native-section-create-valid-cross.cpp",
+        "bytes": 5572,
+        "sha256": "fc5d1041830dd48d8890dfc047eead35cdb36f4b387e463a394863b3faff6d21"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-valid-cross-arm64\\native-section-create-valid-cross-arm64.exe",
+        "bytes": 156672,
+        "sha256": "cdfc68cbc950fc2f60e7a52bb371e6240b743bf878ab1556791a502471971987",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-valid-cross-arm64\\native-section-create-valid-cross-arm64.log",
+        "bytes": 545234,
+        "sha256": "3648e786744ec47ed0cae9b52c3768e8a044fef9aa871a5bd0bb84715a7b3bca"
+      },
+      "controls": 1344,
+      "closed-handles": 288
+    },
+    {
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-valid-cross-x64\\native-section-create-valid-cross.cpp",
+        "bytes": 5572,
+        "sha256": "fc5d1041830dd48d8890dfc047eead35cdb36f4b387e463a394863b3faff6d21"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-valid-cross-x64\\native-section-create-valid-cross-x64.exe",
+        "bytes": 155136,
+        "sha256": "1f9c655ce4aa93e93ed00aa7d232d93ad75005f6425a6028e3828dc4b9bcd349",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-valid-cross-x64\\native-section-create-valid-cross-x64.log",
+        "bytes": 545234,
+        "sha256": "53459cf78561c2518f2ad8c90a375c1b896759ab348ac2222bc6cfee369f0745"
+      },
+      "controls": 1344,
+      "closed-handles": 288
+    },
+    {
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-valid-cross-x86\\native-section-create-valid-cross.cpp",
+        "bytes": 5572,
+        "sha256": "fc5d1041830dd48d8890dfc047eead35cdb36f4b387e463a394863b3faff6d21"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-valid-cross-x86\\native-section-create-valid-cross-x86.exe",
+        "bytes": 126976,
+        "sha256": "745eeef5436e99140ffb38ad8fd501696ecb8b93e8126212d26bfbeebb9d60e2",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-valid-cross-x86\\native-section-create-valid-cross-x86.log",
+        "bytes": 545234,
+        "sha256": "7508bbcd905fcca2a7cf709299cd84bc837062e62c55181287934f07f92c5fe1"
+      },
+      "controls": 1344,
+      "closed-handles": 288
+    },
+    {
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-valid-cross-x86-laa\\native-section-create-valid-cross.cpp",
+        "bytes": 5572,
+        "sha256": "fc5d1041830dd48d8890dfc047eead35cdb36f4b387e463a394863b3faff6d21"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-valid-cross-x86-laa\\native-section-create-valid-cross-x86-laa.exe",
+        "bytes": 126976,
+        "sha256": "2c4b748bd3cd33b71da34b28c66fe8157a6a6d7832d20958cf0e0d6c4046c649",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-valid-cross-x86-laa\\native-section-create-valid-cross-x86-laa.log",
+        "bytes": 545234,
+        "sha256": "7508bbcd905fcca2a7cf709299cd84bc837062e62c55181287934f07f92c5fe1"
+      },
+      "controls": 1344,
+      "closed-handles": 288
+    }
+  ],
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-section-create-valid-cross.py",
+    "bytes": 2806,
+    "sha256": "2c49c8d99211cf6e3f228cb49c83a16cf214e8f891d0b03614dd5c01e8f3d255"
+  },
+  "scope": "5376 direct creation controls and1152 released handles on ARM64 kernel; x64/x86 are compatibility modes"
+}

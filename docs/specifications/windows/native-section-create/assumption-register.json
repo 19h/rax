@@ -1,0 +1,29 @@
+[
+  {
+    "id": "C1",
+    "assumption": "Native ARM64 kernel29683 controls characterize the selected installed profile; compatibility modes are not physical x64-kernel proof.",
+    "basis": "four inspected producers and unmodified-argument native startup child",
+    "dependent-result": "constructor argument and copyback policy",
+    "stress-test": "ARM64,x64,x86,x86-LAA; pointer alignment and competing invalid inputs",
+    "falsification-probe": "replay exact source controllers on a different physical kernel and compare per-case status and bytes",
+    "status": "retained"
+  },
+  {
+    "id": "C2",
+    "assumption": "Only process-local unnamed pagefile sections are admitted; named/file-backed/security/large-page contracts require additional implementation.",
+    "basis": "original call has ObjectAttributes=NULL,FileHandle=NULL,SEC_COMMIT and65536bytes",
+    "dependent-result": "explicit unsupported boundaries rather than fabricated creation success",
+    "stress-test": "valid named,security and file-backed requests; oversized allocations",
+    "falsification-probe": "a request outside the admitted scope succeeds without backing,identity,rights and lifetime support",
+    "status": "retained"
+  },
+  {
+    "id": "C3",
+    "assumption": "Existing SharedObject anonymous backing supplies identical zero-fill and handle-owned lifetime on Windows,macOS,Linux.",
+    "basis": "SharedObject anonymous_file platform adapters and existing positional data/lifetime tests",
+    "dependent-result": "real backing for guest-created sections without forwarding guest arguments to host NT calls",
+    "stress-test": "zero-filled tail,duplicate handle,last close,failure rollback on each native host",
+    "falsification-probe": "new section tests expose nonzero data,resource leaks or platform adapter failure",
+    "status": "retained"
+  }
+]

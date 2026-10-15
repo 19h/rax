@@ -1,0 +1,8 @@
+﻿{
+    "exit-code":  0,
+    "exe-sha256":  "279FAE44E24C8AC34C9BF940C7EBEA8C674865E265CB7C456B117E8762E29386",
+    "exe-bytes":  32131072,
+    "budget-ms-per-program":  60000,
+    "source-sha256":  "A20D74618D052932FDF0914F17832474871C8103B433030A2CE83429AA759398",
+    "max-turns-per-program":  1000000
+}

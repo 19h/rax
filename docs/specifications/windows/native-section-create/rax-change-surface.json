@@ -1,0 +1,66 @@
+{
+  "direct-decode": {
+    "status": "unaffected",
+    "reason": "constructor uses existing seven-argument syscall transport; no ISA,IR,backend or public ABI changes"
+  },
+  "direct-execute": {
+    "status": "unaffected",
+    "reason": "constructor uses existing seven-argument syscall transport; no ISA,IR,backend or public ABI changes"
+  },
+  "cpu-state": {
+    "status": "affected",
+    "reason": "existing service arguments/return transport exercised forARM64,x64,x86,including real installed leaves"
+  },
+  "memory-mmu": {
+    "status": "affected",
+    "reason": "allocate anonymous host backing via existing SharedObject adapters; no guest views or address translation added in this group"
+  },
+  "smir-lift": {
+    "status": "unaffected",
+    "reason": "constructor uses existing seven-argument syscall transport; no ISA,IR,backend or public ABI changes"
+  },
+  "smir-ir": {
+    "status": "unaffected",
+    "reason": "constructor uses existing seven-argument syscall transport; no ISA,IR,backend or public ABI changes"
+  },
+  "smir-interpreter": {
+    "status": "unaffected",
+    "reason": "constructor uses existing seven-argument syscall transport; no ISA,IR,backend or public ABI changes"
+  },
+  "optimizer": {
+    "status": "unaffected",
+    "reason": "constructor uses existing seven-argument syscall transport; no ISA,IR,backend or public ABI changes"
+  },
+  "native-lowering": {
+    "status": "unaffected",
+    "reason": "constructor uses existing seven-argument syscall transport; no ISA,IR,backend or public ABI changes"
+  },
+  "jit-runtime": {
+    "status": "unaffected",
+    "reason": "constructor uses existing seven-argument syscall transport; no ISA,IR,backend or public ABI changes"
+  },
+  "backend": {
+    "status": "unaffected",
+    "reason": "constructor uses existing seven-argument syscall transport; no ISA,IR,backend or public ABI changes"
+  },
+  "machine-device": {
+    "status": "unaffected",
+    "reason": "constructor uses existing seven-argument syscall transport; no ISA,IR,backend or public ABI changes"
+  },
+  "oracle-analysis": {
+    "status": "unaffected",
+    "reason": "constructor uses existing seven-argument syscall transport; no ISA,IR,backend or public ABI changes"
+  },
+  "c-abi": {
+    "status": "unaffected",
+    "reason": "constructor uses existing seven-argument syscall transport; no ISA,IR,backend or public ABI changes"
+  },
+  "tests-docs": {
+    "status": "affected",
+    "reason": "add native corpus,constructor replay,zero-fill/lifetime/alias tests and profile scope"
+  },
+  "targets-platforms": {
+    "status": "affected",
+    "reason": "shared constructor is compiled on Windows,macOS,Linux; run native Windows leaves and all three SharedObject implementations"
+  }
+}

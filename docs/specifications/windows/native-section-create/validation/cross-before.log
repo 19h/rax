@@ -1,0 +1,100 @@
+warning: explicit `package.readme` can be inferred
+  --> Cargo.toml:20:1
+   |
+20 | readme = "README.md"
+   | ^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::manual_readme` is set to `warn` by default
+help: consider removing `package.readme`
+warning: `rax` (manifest) generated 1 warning
+warning: explicit `package.readme` can be inferred
+ --> capi/Cargo.toml:8:1
+  |
+8 | readme = "README.md"
+  | ^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `cargo::manual_readme` is set to `warn` by default
+help: consider removing `package.readme`
+warning: `rax-capi` (manifest) generated 1 warning
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/section-create-20261015/rax-source)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 32.85s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/section-create-20261015/target/debug/build/rax/05157604908101ea/out/rax-05157604908101ea)
+
+running 6 tests
+test user::windows::process::sched::tests::services_tests::section_create_tests::native_section_create_captures_aliased_maximum_before_publishing_and_duplicates_identity ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::native_section_create_owns_zero_filled_page_rounded_backing_and_releases_last_handle ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::native_section_create_status_mapping_matches_installed_ntdll ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::native_section_create_unsupported_modes_do_not_publish_or_allocate ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::replay::native_section_create_replays_all_5376_protection_allocation_cross_controls ... section-create arm64: native status/bytes=1344, explicit unsupported=0
+section-create x64: native status/bytes=1344, explicit unsupported=0
+section-create x86: native status/bytes=1344, explicit unsupported=0
+section-create x86: native status/bytes=1344, explicit unsupported=0
+
+thread 'user::windows::process::sched::tests::services_tests::section_create_tests::replay::native_section_create_replays_all_5376_protection_allocation_cross_controls' (11259723) panicked at src/user/windows/process/sched/tests/services_tests/section_create_replay_tests.rs:295:5:
+288 native mismatches:
+arm64 50 group=valid-cross width=8 maximum=1 access=000F001F protection=00000010 attributes=48000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 50 group=valid-cross width=8 maximum=1 access=000F001F protection=00000010 attributes=48000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 54 group=valid-cross width=8 maximum=1 access=000F001F protection=00000010 attributes=48000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 54 group=valid-cross width=8 maximum=1 access=000F001F protection=00000010 attributes=48000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 58 group=valid-cross width=8 maximum=1 access=000F001F protection=00000010 attributes=44000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 58 group=valid-cross width=8 maximum=1 access=000F001F protection=00000010 attributes=44000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 62 group=valid-cross width=8 maximum=1 access=000F001F protection=00000010 attributes=44000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 62 group=valid-cross width=8 maximum=1 access=000F001F protection=00000010 attributes=44000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 66 group=valid-cross width=8 maximum=1 access=000F001F protection=00000020 attributes=48000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 66 group=valid-cross width=8 maximum=1 access=000F001F protection=00000020 attributes=48000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 70 group=valid-cross width=8 maximum=1 access=000F001F protection=00000020 attributes=48000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 70 group=valid-cross width=8 maximum=1 access=000F001F protection=00000020 attributes=48000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 74 group=valid-cross width=8 maximum=1 access=000F001F protection=00000020 attributes=44000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 74 group=valid-cross width=8 maximum=1 access=000F001F protection=00000020 attributes=44000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 78 group=valid-cross width=8 maximum=1 access=000F001F protection=00000020 attributes=44000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 78 group=valid-cross width=8 maximum=1 access=000F001F protection=00000020 attributes=44000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 82 group=valid-cross width=8 maximum=1 access=000F001F protection=00000040 attributes=48000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 82 group=valid-cross width=8 maximum=1 access=000F001F protection=00000040 attributes=48000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 86 group=valid-cross width=8 maximum=1 access=000F001F protection=00000040 attributes=48000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 86 group=valid-cross width=8 maximum=1 access=000F001F protection=00000040 attributes=48000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 90 group=valid-cross width=8 maximum=1 access=000F001F protection=00000040 attributes=44000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 90 group=valid-cross width=8 maximum=1 access=000F001F protection=00000040 attributes=44000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 94 group=valid-cross width=8 maximum=1 access=000F001F protection=00000040 attributes=44000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 94 group=valid-cross width=8 maximum=1 access=000F001F protection=00000040 attributes=44000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 98 group=valid-cross width=8 maximum=1 access=000F001F protection=00000080 attributes=48000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 98 group=valid-cross width=8 maximum=1 access=000F001F protection=00000080 attributes=48000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 102 group=valid-cross width=8 maximum=1 access=000F001F protection=00000080 attributes=48000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 102 group=valid-cross width=8 maximum=1 access=000F001F protection=00000080 attributes=48000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 106 group=valid-cross width=8 maximum=1 access=000F001F protection=00000080 attributes=44000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 106 group=valid-cross width=8 maximum=1 access=000F001F protection=00000080 attributes=44000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 110 group=valid-cross width=8 maximum=1 access=000F001F protection=00000080 attributes=44000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 110 group=valid-cross width=8 maximum=1 access=000F001F protection=00000080 attributes=44000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 162 group=valid-cross width=8 maximum=4097 access=000F001F protection=00000010 attributes=48000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 162 group=valid-cross width=8 maximum=4097 access=000F001F protection=00000010 attributes=48000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 166 group=valid-cross width=8 maximum=4097 access=000F001F protection=00000010 attributes=48000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 166 group=valid-cross width=8 maximum=4097 access=000F001F protection=00000010 attributes=48000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 170 group=valid-cross width=8 maximum=4097 access=000F001F protection=00000010 attributes=44000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 170 group=valid-cross width=8 maximum=4097 access=000F001F protection=00000010 attributes=44000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 174 group=valid-cross width=8 maximum=4097 access=000F001F protection=00000010 attributes=44000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 174 group=valid-cross width=8 maximum=4097 access=000F001F protection=00000010 attributes=44000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 178 group=valid-cross width=8 maximum=4097 access=000F001F protection=00000020 attributes=48000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 178 group=valid-cross width=8 maximum=4097 access=000F001F protection=00000020 attributes=48000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 182 group=valid-cross width=8 maximum=4097 access=000F001F protection=00000020 attributes=48000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 182 group=valid-cross width=8 maximum=4097 access=000F001F protection=00000020 attributes=48000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 186 group=valid-cross width=8 maximum=4097 access=000F001F protection=00000020 attributes=44000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 186 group=valid-cross width=8 maximum=4097 access=000F001F protection=00000020 attributes=44000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 190 group=valid-cross width=8 maximum=4097 access=000F001F protection=00000020 attributes=44000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 190 group=valid-cross width=8 maximum=4097 access=000F001F protection=00000020 attributes=44000001 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+arm64 194 group=valid-cross width=8 maximum=4097 access=000F001F protection=00000040 attributes=48000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: status=00000000
+arm64 194 group=valid-cross width=8 maximum=4097 access=000F001F protection=00000040 attributes=48000000 output=0 maximum-pointer=0 object=0 file=0 object-flags=00000000 status=C0000045: output=[00, 00, 00, 00, 00, 00, 00, 00, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5],expected=[A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5, A5]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test user::windows::process::sched::tests::services_tests::section_create_tests::replay::native_section_create_replays_all_5544_priority_and_copyback_controls ... section-create arm64: native status/bytes=1375, explicit unsupported=11
+section-create x64: native status/bytes=1375, explicit unsupported=11
+section-create x86: native status/bytes=1375, explicit unsupported=11
+section-create x86: native status/bytes=1375, explicit unsupported=11
+ok
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::section_create_tests::replay::native_section_create_replays_all_5376_protection_allocation_cross_controls
+
+test result: FAILED. 5 passed; 1 failed; 0 ignored; 0 measured; 7800 filtered out; finished in 0.49s
+
+error: test failed, to rerun pass `--lib`

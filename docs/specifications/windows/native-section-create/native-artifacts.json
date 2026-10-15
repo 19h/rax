@@ -1,0 +1,189 @@
+{
+  "artifacts": [
+    {
+      "path": "inspect-section-create-first-call.py",
+      "bytes": 2792,
+      "sha256": "08207b6d2e0db159213b6f959eefcdf647e07f7661d2957cdefd4e3baaa993a5"
+    },
+    {
+      "path": "inspect-section-create-priority.py",
+      "bytes": 2783,
+      "sha256": "51de8737056130390db17c6ccce46d8dead97e10e4a3c5993614dfdf6024af0e"
+    },
+    {
+      "path": "inspect-section-create-status-mapping.py",
+      "bytes": 614,
+      "sha256": "0655bc40b636dfc38bef562eab66e4a4148cc458a374b310e6e7cf30ae8e848d"
+    },
+    {
+      "path": "inspect-section-create-valid-cross.py",
+      "bytes": 2806,
+      "sha256": "2c49c8d99211cf6e3f228cb49c83a16cf214e8f891d0b03614dd5c01e8f3d255"
+    },
+    {
+      "path": "microsoft-zwcreatesection.html",
+      "bytes": 56670,
+      "sha256": "1a5c120133a7f6311fb1674f9cfe4ddad577a57b53b196dd029850695ce8cbfb"
+    },
+    {
+      "path": "native-section-create-first-call-arm64-build.log",
+      "bytes": 38,
+      "sha256": "1bb9e125de4da37cb2b5cce5de1f0bc1df51028f0d9005a50888152f060f25ce"
+    },
+    {
+      "path": "native-section-create-first-call-arm64.log",
+      "bytes": 2910,
+      "sha256": "ae66454759fed01d9c5a26e4af979ae9d7e7a6b820fa7ad3d4555b3601ef8aad"
+    },
+    {
+      "path": "native-section-create-first-call-identities.json",
+      "bytes": 1449,
+      "sha256": "d659d3fa74a60dd2da168a2f354298e6e3ef618a075e80cf9fb9812faa2a2d83"
+    },
+    {
+      "path": "native-section-create-first-call-outcomes.json",
+      "bytes": 260,
+      "sha256": "ae84211345ed6e90d4db5c799b6523ff728156ca651d444add5845a690b4a0ef"
+    },
+    {
+      "path": "native-section-create-first-call-profiles.ps1",
+      "bytes": 2346,
+      "sha256": "1ec7beedf58aa7157a1508aa1dd08cbd60bc08d325585d9c66cfc117fec75eb0"
+    },
+    {
+      "path": "native-section-create-first-call.cpp",
+      "bytes": 12538,
+      "sha256": "82a8537ef0465dc1f09c093ff471fe8dc81635a6d7dc8748eebca49dce3f0e23"
+    },
+    {
+      "path": "native-section-create-priority-arm64-build.log",
+      "bytes": 36,
+      "sha256": "7e78b4368689e95d7f4741157f9573af135dd63d2024ea78749e45dee244e1fa"
+    },
+    {
+      "path": "native-section-create-priority-arm64.log",
+      "bytes": 513509,
+      "sha256": "d1475b4f5dafa43fc36e257810da87d26eb6c210c01e9fa49fa9aec0f6f9c816"
+    },
+    {
+      "path": "native-section-create-priority-identities.json",
+      "bytes": 4466,
+      "sha256": "1bcad677704682ed224449424ed4399e5430764c79aef34da4c0a7481425786d"
+    },
+    {
+      "path": "native-section-create-priority-outcomes.json",
+      "bytes": 1150,
+      "sha256": "2a755c901fc1a2c3fc198f0ae88b399d09cea3203fd9b0af5a4bffccfe3d3edb"
+    },
+    {
+      "path": "native-section-create-priority-profiles.ps1",
+      "bytes": 2355,
+      "sha256": "56708290961aa36f9ede52725d5bbe9ea58dc3040139def0f2130beb278f6be3"
+    },
+    {
+      "path": "native-section-create-priority-x64-build.log",
+      "bytes": 36,
+      "sha256": "7e78b4368689e95d7f4741157f9573af135dd63d2024ea78749e45dee244e1fa"
+    },
+    {
+      "path": "native-section-create-priority-x64.log",
+      "bytes": 513509,
+      "sha256": "193057cda7eb402327b2d79c21fa873d5b59c3526ea2f3ffb284c847a2acc04a"
+    },
+    {
+      "path": "native-section-create-priority-x86-build.log",
+      "bytes": 36,
+      "sha256": "7e78b4368689e95d7f4741157f9573af135dd63d2024ea78749e45dee244e1fa"
+    },
+    {
+      "path": "native-section-create-priority-x86-laa-build.log",
+      "bytes": 36,
+      "sha256": "7e78b4368689e95d7f4741157f9573af135dd63d2024ea78749e45dee244e1fa"
+    },
+    {
+      "path": "native-section-create-priority-x86-laa.log",
+      "bytes": 513033,
+      "sha256": "026de19648945b425f555aeec764bf0c95b34d86c6693da385d2feee8153ce23"
+    },
+    {
+      "path": "native-section-create-priority-x86.log",
+      "bytes": 513033,
+      "sha256": "2c88e4b161abcebf2aec91774919ecc999e56e949da396c739b382b3174600af"
+    },
+    {
+      "path": "native-section-create-priority.cpp",
+      "bytes": 7389,
+      "sha256": "2419bd1f00c559d87d828c41125972caf7cbe4b3b31c5f7ece7d06fd33ee412e"
+    },
+    {
+      "path": "native-section-create-status-mapping.json",
+      "bytes": 377,
+      "sha256": "78bc31adc49f9d59a006dfaf7b897c1775c6751a5b9baaa4e6e3e95afee414ec"
+    },
+    {
+      "path": "native-section-create-valid-cross-arm64-build.log",
+      "bytes": 39,
+      "sha256": "26e4148115648da4199f4b16b864468e79d23089afc7f6b6141cba9104c80e08"
+    },
+    {
+      "path": "native-section-create-valid-cross-arm64.log",
+      "bytes": 545234,
+      "sha256": "3648e786744ec47ed0cae9b52c3768e8a044fef9aa871a5bd0bb84715a7b3bca"
+    },
+    {
+      "path": "native-section-create-valid-cross-identities.json",
+      "bytes": 4546,
+      "sha256": "36640e46da7a662e0239187e3878e3752bd6eff61549bfaef577b82f195960d4"
+    },
+    {
+      "path": "native-section-create-valid-cross-outcomes.json",
+      "bytes": 1150,
+      "sha256": "54cc1205774262308d2cc95fcfbda9ffa9ed34f566129b040ba08f84d9047919"
+    },
+    {
+      "path": "native-section-create-valid-cross-profiles.ps1",
+      "bytes": 2379,
+      "sha256": "98255601e406b60c5593aada233fb3a97069e21ebb743ea1415efcfa3d9e6bd5"
+    },
+    {
+      "path": "native-section-create-valid-cross-x64-build.log",
+      "bytes": 39,
+      "sha256": "26e4148115648da4199f4b16b864468e79d23089afc7f6b6141cba9104c80e08"
+    },
+    {
+      "path": "native-section-create-valid-cross-x64.log",
+      "bytes": 545234,
+      "sha256": "53459cf78561c2518f2ad8c90a375c1b896759ab348ac2222bc6cfee369f0745"
+    },
+    {
+      "path": "native-section-create-valid-cross-x86-build.log",
+      "bytes": 39,
+      "sha256": "26e4148115648da4199f4b16b864468e79d23089afc7f6b6141cba9104c80e08"
+    },
+    {
+      "path": "native-section-create-valid-cross-x86-laa-build.log",
+      "bytes": 39,
+      "sha256": "26e4148115648da4199f4b16b864468e79d23089afc7f6b6141cba9104c80e08"
+    },
+    {
+      "path": "native-section-create-valid-cross-x86-laa.log",
+      "bytes": 545234,
+      "sha256": "7508bbcd905fcca2a7cf709299cd84bc837062e62c55181287934f07f92c5fe1"
+    },
+    {
+      "path": "native-section-create-valid-cross-x86.log",
+      "bytes": 545234,
+      "sha256": "7508bbcd905fcca2a7cf709299cd84bc837062e62c55181287934f07f92c5fe1"
+    },
+    {
+      "path": "native-section-create-valid-cross.cpp",
+      "bytes": 5572,
+      "sha256": "fc5d1041830dd48d8890dfc047eead35cdb36f4b387e463a394863b3faff6d21"
+    },
+    {
+      "path": "reference-provenance.json",
+      "bytes": 559,
+      "sha256": "8cfa71b1aebf39f5d22096fbe3b0d4eaaab52c004174c6d451d988b023c60e40"
+    }
+  ]
+}

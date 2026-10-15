@@ -1,0 +1,59 @@
+{
+  "base": "51aa9b11fbe4181b63f19e704c343c531bfb1d16",
+  "files": [
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 17518,
+      "sha256": "a6cbf7138919d8031b34fa3a9242ee10f62fa6de22088d222c02ff1c63159a14",
+      "before-sha256": "43c13367bfbfa75de420e49b0a51b55353a8a375ca49667d62f62240de3c17e6"
+    },
+    {
+      "path": "src/user/windows/dll/native/section_create.rs",
+      "bytes": 7439,
+      "sha256": "fa1dec170b0f74d0b0688800cbc43ab3c2328ad9dec5e5a89c2de58015224d17",
+      "before-sha256": null
+    },
+    {
+      "path": "src/user/windows/nt.rs",
+      "bytes": 18405,
+      "sha256": "da546846b01ca558ddac7e9bd0bcf1b7e658ec9557148165c210aecd24bb8dcb",
+      "before-sha256": "b1f946e7d696ace74f91c7a36d311fa49134eccfddad88cb5413a18765fa93ed"
+    },
+    {
+      "path": "src/user/windows/objects.rs",
+      "bytes": 26836,
+      "sha256": "0cba6d2b4b17775ee5f5bf77e35017ee078bc6f097d0f3757fa028a86629980f",
+      "before-sha256": "150fcaee2d5eed5f50c7bead52fa7a41b398d9e996749a36262bf6a00ddeb9d8"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47386,
+      "sha256": "af8bd188c0a31e8d88758a8166e05a88c1b4f0e34ceb4e389204edf2d8a24d24",
+      "before-sha256": "b0565a2225cdeeabb337116f4fbc9b25e830b3868caceb3815754ec4a36f650a"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/section_create_leaf_tests.rs",
+      "bytes": 4691,
+      "sha256": "284048d90c0a469ec4c5ac7abd75c08de34f792786f42122e1f5bf776842ff34",
+      "before-sha256": null
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/section_create_replay_tests.rs",
+      "bytes": 12376,
+      "sha256": "ce9c657705046a93bb7668c87047e652bb540b27ac762902823ee88180323e50",
+      "before-sha256": null
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/section_create_tests.rs",
+      "bytes": 6760,
+      "sha256": "3e368293c8d055721cf433104da43ca242344ae1b8f33db870aeadec9c130292",
+      "before-sha256": null
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/wait_packet_associate_replay_tests.rs",
+      "bytes": 23392,
+      "sha256": "ba0547617a550ccf4a5e0441e4714e8baa313e09cc6b91181451b4721d302fab",
+      "before-sha256": "7b79850f9be21059b32c552454e6daf17ae77963565ca34327d2ebaee5cdd4fd"
+    }
+  ]
+}

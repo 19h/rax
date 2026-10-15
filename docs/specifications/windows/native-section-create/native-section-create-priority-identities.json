@@ -1,0 +1,106 @@
+{
+  "captured-utc": "2026-10-15T13:49:47.925656+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "producers": [
+    {
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-priority-arm64\\native-section-create-priority.cpp",
+        "bytes": 7389,
+        "sha256": "2419bd1f00c559d87d828c41125972caf7cbe4b3b31c5f7ece7d06fd33ee412e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-priority-arm64\\native-section-create-priority-arm64.exe",
+        "bytes": 158720,
+        "sha256": "6e67d73d177d69326129519604431bed86f44e1bdcf1dba4ab8ae21aa5f815c8",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-priority-arm64\\native-section-create-priority-arm64.log",
+        "bytes": 513509,
+        "sha256": "d1475b4f5dafa43fc36e257810da87d26eb6c210c01e9fa49fa9aec0f6f9c816"
+      },
+      "controls": 1386,
+      "closed-handles": 91
+    },
+    {
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-priority-x64\\native-section-create-priority.cpp",
+        "bytes": 7389,
+        "sha256": "2419bd1f00c559d87d828c41125972caf7cbe4b3b31c5f7ece7d06fd33ee412e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-priority-x64\\native-section-create-priority-x64.exe",
+        "bytes": 158208,
+        "sha256": "adc57b78d694d561da1c2b9fc428089a7b477db4209450cdb202fdc7cce51358",
+        "machine": 34404,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-priority-x64\\native-section-create-priority-x64.log",
+        "bytes": 513509,
+        "sha256": "193057cda7eb402327b2d79c21fa873d5b59c3526ea2f3ffb284c847a2acc04a"
+      },
+      "controls": 1386,
+      "closed-handles": 91
+    },
+    {
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-priority-x86\\native-section-create-priority.cpp",
+        "bytes": 7389,
+        "sha256": "2419bd1f00c559d87d828c41125972caf7cbe4b3b31c5f7ece7d06fd33ee412e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-priority-x86\\native-section-create-priority-x86.exe",
+        "bytes": 130560,
+        "sha256": "0bd06de81310360d8021e026353c490b7bc4b227e14ddb18eed9fcc29c997bc0",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-priority-x86\\native-section-create-priority-x86.log",
+        "bytes": 513033,
+        "sha256": "2c88e4b161abcebf2aec91774919ecc999e56e949da396c739b382b3174600af"
+      },
+      "controls": 1386,
+      "closed-handles": 91
+    },
+    {
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-priority-x86-laa\\native-section-create-priority.cpp",
+        "bytes": 7389,
+        "sha256": "2419bd1f00c559d87d828c41125972caf7cbe4b3b31c5f7ece7d06fd33ee412e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-priority-x86-laa\\native-section-create-priority-x86-laa.exe",
+        "bytes": 130560,
+        "sha256": "f012b3346f08c7b6dfae10fae6ca421b589971875e0e223d1f9b0e59f8264983",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\section-create-priority-x86-laa\\native-section-create-priority-x86-laa.log",
+        "bytes": 513033,
+        "sha256": "026de19648945b425f555aeec764bf0c95b34d86c6693da385d2feee8153ce23"
+      },
+      "controls": 1386,
+      "closed-handles": 91
+    }
+  ],
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-section-create-priority.py",
+    "bytes": 2783,
+    "sha256": "51de8737056130390db17c6ccce46d8dead97e10e4a3c5993614dfdf6024af0e"
+  },
+  "scope": "5544 direct creation controls and364 released handles on ARM64 kernel; x64/x86 are compatibility modes"
+}

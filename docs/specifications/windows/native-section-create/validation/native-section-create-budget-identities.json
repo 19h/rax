@@ -1,0 +1,30 @@
+{
+  "source": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\native-section-create-budget-probe.cpp",
+    "bytes": 2447,
+    "sha256": "a20d74618d052932fdf0914f17832474871c8103b433030a2ce83429aa759398"
+  },
+  "executable": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\native-cpp\\native-section-create-budget-probe.exe",
+    "bytes": 32131072,
+    "sha256": "279fae44e24c8ac34c9bf940c7ebea8c674865e265cb7c456b117e8762e29386",
+    "machine": 43620,
+    "characteristics": 34
+  },
+  "stdout": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-section-create-budget-output.log",
+    "bytes": 7239,
+    "sha256": "ee1d8a8672048ef458e9cbf067e32f9844f413249c4eca30ede1459802df6806"
+  },
+  "observer": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-shared-section-trace.rs",
+    "bytes": 11178,
+    "sha256": "514fdbc99de6f562002aa8a198deb79e7f5cd012db058aa1460a0e5730ae37c0"
+  },
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-section-create-budget.py",
+    "bytes": 2744,
+    "sha256": "6aa3c6384e05e99d13ac637d69fe5c8f33c1fc30bb191702c7c043bce26f5423"
+  },
+  "scope": "additional60s C++ diagnostic; three explicit SecureConnectPort failures and whoami TraceEvent; ordinary guest exits0"
+}

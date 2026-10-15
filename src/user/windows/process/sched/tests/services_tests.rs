@@ -19,6 +19,9 @@ mod scheduler_shared_tests;
 #[path = "services_tests/data_section_tests.rs"]
 mod data_section_tests;
 
+#[path = "services_tests/section_create_tests.rs"]
+mod section_create_tests;
+
 #[path = "services_tests/section_map_tests.rs"]
 mod section_map_tests;
 #[path = "services_tests/section_open_tests.rs"]

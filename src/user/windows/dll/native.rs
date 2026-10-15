@@ -18,6 +18,7 @@ mod process_set;
 mod process_tls;
 mod query;
 mod registry;
+mod section_create;
 mod section_map;
 mod symbolic_link;
 mod thread_set;
@@ -46,6 +47,12 @@ pub(super) static EXPORTS: &[Export] = &[
     ),
     Export::func("NtTerminateThread", Stdcall, &[Ptr, I32], terminate_thread),
     Export::func("NtClose", Stdcall, &[Ptr], close),
+    Export::func(
+        "NtCreateSection",
+        Stdcall,
+        &[Ptr, I32, Ptr, Ptr, I32, I32, Ptr],
+        section_create::create,
+    ),
     Export::func(
         "NtOpenDirectoryObject",
         Stdcall,
