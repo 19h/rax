@@ -1994,3 +1994,44 @@ fn rejects_sparse_oracle_seed_memory_span_before_allocation() {
     assert!(err.contains("seeded memory span"), "{err}");
     assert!(err.contains("oracle seed memory limit"), "{err}");
 }
+
+#[test]
+fn decodes_ebpf_and_solana_sbpf_with_seeded_side_effects() {
+    use rax::isa::ebpf::decode::{EbpfDialect, SbpfVersion};
+
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::Ebpf;
+    opts.ebpf_dialect = EbpfDialect::Rfc9669;
+
+    // add64 r1, 42
+    let bytes = [0x07, 0x01, 0x00, 0x00, 0x2a, 0x00, 0x00, 0x00];
+    let seed = OracleSeed {
+        regs: vec![("r1".to_string(), 100)],
+        memory: vec![],
+        memory_size: None,
+    };
+    let value = decode_to_json_with_seed(&bytes, &opts, Some(&seed)).unwrap();
+    assert_eq!(value["isa"], "ebpf");
+    assert_eq!(value["dialect"], "rfc9669");
+    assert_eq!(value["decoded_ops"][0]["mnemonic"], "add64");
+    assert_eq!(value["smir"]["available"], true);
+    assert_eq!(value["side_effects"]["available"], true);
+    assert_eq!(value["side_effects"]["changed_regs"]["r1"]["after"], "0x8e");
+
+    // Solana SBPF V2: sub64 r1, 100 (swapped operands: r1 = 100 - r1)
+    let mut sbpf_opts = OracleOptions::default();
+    sbpf_opts.isa = OracleIsa::Ebpf;
+    sbpf_opts.ebpf_dialect = EbpfDialect::Solana(SbpfVersion::V2);
+    let sub_bytes = [0x17, 0x01, 0x00, 0x00, 0x64, 0x00, 0x00, 0x00];
+    let sub_seed = OracleSeed {
+        regs: vec![("r1".to_string(), 30)],
+        memory: vec![],
+        memory_size: None,
+    };
+    let sbpf_val = decode_to_json_with_seed(&sub_bytes, &sbpf_opts, Some(&sub_seed)).unwrap();
+    assert_eq!(sbpf_val["dialect"], "sbpf-v2");
+    assert_eq!(
+        sbpf_val["side_effects"]["changed_regs"]["r1"]["after"],
+        "0x46"
+    );
+}

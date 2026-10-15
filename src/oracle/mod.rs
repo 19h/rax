@@ -18,6 +18,9 @@ use serde_json::{Map, Value, json};
 use crate::config::{Endianness, HexagonIsa};
 use crate::isa::arm::ExecutionState;
 use crate::isa::arm::decoder::{Decoder as ArmDecoder, Mnemonic, Operand};
+use crate::isa::ebpf::decode::{
+    EbpfDialect, EbpfOp, INSN_SIZE as EBPF_INSN_SIZE, SbpfVersion, decode_insn as ebpf_decode_insn,
+};
 use crate::isa::hexagon::decode::{self as hex_decode, DecodedInsn as HexInsn};
 use crate::isa::hexagon::opcode as hex_opcode;
 use crate::isa::riscv::decode as rv_decode;
@@ -83,12 +86,13 @@ use crate::smir::ir::types::X86AesOp;
 use crate::smir::lift::riscv::RiscVExtensions;
 use crate::smir::{
     Aarch64Lifter, Address, ArchReg, ArmReg, AtomicOp, Avx10FP16Op, BlockId, CallTarget, Condition,
-    ControlFlow, ExtendOp, FenceKind, FlagSet, FlagUpdate, FlatMemory, FpPrecision, FpRoundMode,
-    HexagonLifter, HexagonReg, LiftContext, MemWidth, MemoryOrder, OpId, OpKind, OpWidth,
-    RiscVLifter, RiscVReg, ShiftOp, SignExtend, SmirBlock, SmirContext, SmirInterpreter,
-    SmirLifter, SmirMemory, SmirOp, SourceArch, SrcOperand, Terminator, TrapKind, VLaneOp, VReg,
-    VShiftVKind, VecCmpCond, VecElementType, VecPermuteKind, VecReduceOp, VecUnaryOp, VecWidth,
-    X86_64Lifter, X86FmaKind, X86FmaOrder, X86FpBinaryOp, X86NarrowMode, X86Reg,
+    ControlFlow, EbpfLifter, EbpfReg, Endian, ExtendOp, FenceKind, FlagSet, FlagUpdate, FlatMemory,
+    FpPrecision, FpRoundMode, HexagonLifter, HexagonReg, LiftContext, MemWidth, MemoryOrder, OpId,
+    OpKind, OpWidth, RiscVLifter, RiscVReg, ShiftOp, SignExtend, SmirBlock, SmirContext,
+    SmirInterpreter, SmirLifter, SmirMemory, SmirOp, SourceArch, SrcOperand, Terminator, TrapKind,
+    VLaneOp, VReg, VShiftVKind, VecCmpCond, VecElementType, VecPermuteKind, VecReduceOp,
+    VecUnaryOp, VecWidth, X86_64Lifter, X86FmaKind, X86FmaOrder, X86FpBinaryOp, X86NarrowMode,
+    X86Reg,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -97,6 +101,7 @@ pub enum OracleIsa {
     Arm,
     Hexagon,
     RiscV,
+    Ebpf,
     Smir,
 }
 
@@ -151,6 +156,8 @@ pub struct OracleOptions {
     pub hexagon_endian: Endianness,
     pub riscv_xlen: Xlen,
     pub riscv_isa: RiscVIsaProfile,
+    pub ebpf_dialect: EbpfDialect,
+    pub ebpf_endian: Endianness,
     pub smir_source: SourceArch,
     pub include_smir: bool,
     /// The code size of [`OracleIsa::X86_64`] input. The SMIR lifter and
@@ -169,6 +176,8 @@ impl Default for OracleOptions {
             hexagon_endian: Endianness::Little,
             riscv_xlen: Xlen::Rv64,
             riscv_isa: RiscVIsaProfile::Rv64Gc,
+            ebpf_dialect: EbpfDialect::Rfc9669,
+            ebpf_endian: Endianness::Little,
             smir_source: SourceArch::X86_64,
             include_smir: true,
             x86_code_size: X86CodeSize::Bits64,
@@ -282,6 +291,7 @@ fn decode_to_json_no_seed(bytes: &[u8], opts: &OracleOptions) -> Result<Value, S
         OracleIsa::Arm => decode_arm(bytes, opts),
         OracleIsa::Hexagon => decode_hexagon_packet(bytes, opts),
         OracleIsa::RiscV => decode_riscv(bytes, opts),
+        OracleIsa::Ebpf => decode_ebpf(bytes, opts),
         OracleIsa::Smir => Ok(decode_smir_only(bytes, opts)),
     }
 }
@@ -478,6 +488,110 @@ fn decode_riscv(bytes: &[u8], opts: &OracleOptions) -> Result<Value, String> {
         "smir": smir,
         "side_effects": side_effects_not_run(),
     }))
+}
+
+fn ebpf_endian(endian: Endianness) -> Endian {
+    match endian {
+        Endianness::Little => Endian::Little,
+        Endianness::Big => Endian::Big,
+    }
+}
+
+fn decode_ebpf(bytes: &[u8], opts: &OracleOptions) -> Result<Value, String> {
+    let endian = ebpf_endian(opts.ebpf_endian);
+    let insn = ebpf_decode_insn(bytes, opts.ebpf_dialect, endian).map_err(|e| e.to_string())?;
+    let consumed = insn.size as usize;
+    let control_flow = ebpf_control_flow(&insn, opts.pc, opts.ebpf_dialect);
+    let smir = if opts.include_smir {
+        lift_smir(SourceArch::Ebpf, &bytes[..bytes.len().min(consumed)], opts)
+    } else {
+        json!({"available": false, "reason": "disabled"})
+    };
+    let dialect_name = match opts.ebpf_dialect {
+        EbpfDialect::Rfc9669 => "rfc9669".to_string(),
+        EbpfDialect::Solana(v) => format!("sbpf-{v:?}").to_lowercase(),
+    };
+
+    Ok(json!({
+        "isa": "ebpf",
+        "dialect": dialect_name,
+        "endian": format!("{:?}", opts.ebpf_endian).to_lowercase(),
+        "pc": hex_u64(opts.pc),
+        "input": input_json(bytes),
+        "decoded_ops": [{
+            "offset": 0,
+            "size": insn.size,
+            "opc": hex_u8(insn.opc),
+            "dst": insn.dst,
+            "src": insn.src,
+            "off": insn.off,
+            "imm": insn.imm,
+            "imm2": if insn.size == 16 { Some(insn.imm2) } else { None },
+            "mnemonic": insn.mnemonic(),
+            "disasm": insn.disassemble(),
+            "op": format!("{:?}", insn.op),
+            "debug": format!("{insn:?}"),
+        }],
+        "packet_flags": null,
+        "control_flow": control_flow,
+        "smir": smir,
+        "side_effects": side_effects_not_run(),
+    }))
+}
+
+fn ebpf_control_flow(
+    insn: &crate::isa::ebpf::decode::EbpfInsn,
+    pc: u64,
+    dialect: EbpfDialect,
+) -> Value {
+    let next_pc = pc.wrapping_add(u64::from(insn.size));
+    match insn.op {
+        EbpfOp::Jump { offset_insns } => {
+            let delta = i64::from(offset_insns).wrapping_mul(EBPF_INSN_SIZE as i64);
+            let target = (next_pc as i64).wrapping_add(delta) as u64;
+            json!({
+                "kind": "branch",
+                "target": hex_u64(target),
+            })
+        }
+        EbpfOp::JumpCond {
+            cond, offset_insns, ..
+        } => {
+            let delta = i64::from(offset_insns).wrapping_mul(EBPF_INSN_SIZE as i64);
+            let target = (next_pc as i64).wrapping_add(delta) as u64;
+            json!({
+                "kind": "cond_branch",
+                "condition": format!("{cond:?}"),
+                "target": hex_u64(target),
+                "fallthrough": hex_u64(next_pc),
+            })
+        }
+        EbpfOp::CallImm { src_kind, imm } => {
+            let static_syscalls = dialect.sbpf_version().is_none_or(|v| v.static_syscalls());
+            if src_kind == 1 && static_syscalls {
+                let delta = i64::from(imm).wrapping_mul(EBPF_INSN_SIZE as i64);
+                let target = (next_pc as i64).wrapping_add(delta) as u64;
+                json!({
+                    "kind": "call",
+                    "target": hex_u64(target),
+                    "fallthrough": hex_u64(next_pc),
+                })
+            } else {
+                json!({
+                    "kind": "syscall",
+                    "key": hex_u32(imm as u32),
+                    "fallthrough": hex_u64(next_pc),
+                })
+            }
+        }
+        EbpfOp::CallReg { target_reg } => json!({
+            "kind": "indirect_call",
+            "reg": format!("r{target_reg}"),
+            "fallthrough": hex_u64(next_pc),
+        }),
+        EbpfOp::Exit => json!({"kind": "return"}),
+        _ => fallthrough_json(next_pc),
+    }
 }
 
 fn decode_hexagon_packet(bytes: &[u8], opts: &OracleOptions) -> Result<Value, String> {
@@ -774,6 +888,7 @@ fn side_effect_source(opts: &OracleOptions) -> Option<SourceArch> {
             Xlen::Rv32 => SourceArch::RiscV32,
             Xlen::Rv64 => SourceArch::RiscV64,
         }),
+        OracleIsa::Ebpf => Some(SourceArch::Ebpf),
         OracleIsa::Smir => Some(opts.smir_source),
     }
 }
@@ -845,6 +960,13 @@ fn lift_side_effect_ops(
             consumed = result.bytes_consumed;
             ops = result.ops;
         }
+        SourceArch::Ebpf => {
+            let result = EbpfLifter::new(opts.ebpf_dialect, ebpf_endian(opts.ebpf_endian))
+                .lift_insn(opts.pc, bytes, &mut ctx)
+                .map_err(|e| e.to_string())?;
+            consumed = result.bytes_consumed;
+            ops = result.ops;
+        }
         other => return Err(format!("no SMIR side-effect lifter for {other:?}")),
     }
 
@@ -866,6 +988,7 @@ fn smir_context(source: SourceArch) -> SmirContext {
             ctx.source_arch = SourceArch::RiscV32;
             ctx
         }
+        SourceArch::Ebpf => SmirContext::new_ebpf(),
         _ => SmirContext::new_x86_64(),
     }
 }
@@ -928,7 +1051,23 @@ fn parse_arch_reg(source: SourceArch, name: &str) -> Option<ArchReg> {
         SourceArch::Aarch64 => parse_arm_reg(&lower).map(ArchReg::Arm),
         SourceArch::Hexagon => parse_hexagon_reg(&lower).map(ArchReg::Hexagon),
         SourceArch::RiscV64 | SourceArch::RiscV32 => parse_riscv_reg(&lower).map(ArchReg::RiscV),
+        SourceArch::Ebpf => parse_ebpf_reg(&lower).map(ArchReg::Ebpf),
         _ => None,
+    }
+}
+
+fn parse_ebpf_reg(name: &str) -> Option<EbpfReg> {
+    match name {
+        "pc" => Some(EbpfReg::Pc),
+        "fp" => Some(EbpfReg::R(10)),
+        _ => {
+            let idx = name
+                .strip_prefix('r')
+                .or_else(|| name.strip_prefix('w'))?
+                .parse::<u8>()
+                .ok()?;
+            (idx <= 10).then_some(EbpfReg::R(idx))
+        }
     }
 }
 
@@ -1055,6 +1194,8 @@ fn lift_smir(source: SourceArch, bytes: &[u8], opts: &OracleOptions) -> Value {
         SourceArch::RiscV64 => RiscVLifter::new_rv64(riscv_extensions(opts.riscv_isa))
             .lift_insn(opts.pc, bytes, &mut ctx),
         SourceArch::RiscV32 => RiscVLifter::new_rv32(riscv_extensions(opts.riscv_isa))
+            .lift_insn(opts.pc, bytes, &mut ctx),
+        SourceArch::Ebpf => EbpfLifter::new(opts.ebpf_dialect, ebpf_endian(opts.ebpf_endian))
             .lift_insn(opts.pc, bytes, &mut ctx),
         other => {
             return json!({
@@ -4686,8 +4827,19 @@ fn arch_reg_json(reg: &ArchReg) -> Map<String, Value> {
             obj.insert("arch".to_string(), json!("riscv"));
             obj.insert("name".to_string(), json!(riscv_reg_name(reg)));
         }
+        ArchReg::Ebpf(reg) => {
+            obj.insert("arch".to_string(), json!("ebpf"));
+            obj.insert("name".to_string(), json!(ebpf_reg_name(reg)));
+        }
     }
     obj
+}
+
+fn ebpf_reg_name(reg: &EbpfReg) -> String {
+    match reg {
+        EbpfReg::R(n) => format!("r{n}"),
+        EbpfReg::Pc => "pc".to_string(),
+    }
 }
 
 fn x86_reg_name(reg: &X86Reg) -> String {

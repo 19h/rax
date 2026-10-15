@@ -80,6 +80,14 @@ name = "differential"
 path = "tests/suites/differential/x86_64/kvm.rs"
 
 [[test]]
+name = "ebpf_diff"
+path = "tests/suites/differential/ebpf/main.rs"
+
+[[test]]
+name = "ebpf_smir_lift"
+path = "tests/suites/smir/lift/ebpf.rs"
+
+[[test]]
 name = "hexagon_bare_metal"
 path = "tests/suites/machine/hexagon_baremetal/boot.rs"
 

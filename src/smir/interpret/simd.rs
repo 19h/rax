@@ -211,7 +211,7 @@ impl SmirInterpreter {
 
     #[inline]
     pub(crate) fn scalar_shift_count_mask(source_arch: SourceArch, width: OpWidth) -> u64 {
-        if source_arch == SourceArch::X86_64 && width != OpWidth::W64 {
+        if matches!(source_arch, SourceArch::X86_64 | SourceArch::Ebpf) && width != OpWidth::W64 {
             0x1F
         } else {
             0x3F
@@ -297,7 +297,7 @@ impl SmirInterpreter {
         if (val & sign_bit) != 0 {
             val | !width.mask()
         } else {
-            val
+            val & width.mask()
         }
     }
 

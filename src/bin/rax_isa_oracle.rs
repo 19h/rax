@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 use clap::{Parser, ValueEnum};
 use rax::config::{Endianness, HexagonIsa};
+use rax::isa::ebpf::decode::{EbpfDialect, SbpfVersion};
 use rax::isa::riscv::Xlen;
 use rax::oracle::{
     ArmState, OracleIsa, OracleOptions, OracleSeed, RiscVIsaProfile, X86CodeSize, decode_to_json,
@@ -47,6 +48,14 @@ struct Cli {
     #[arg(long, value_enum, default_value = "rv64gc")]
     riscv_isa: CliRiscvIsa,
 
+    /// eBPF / Solana SBPF dialect.
+    #[arg(long, value_enum)]
+    ebpf_dialect: Option<CliEbpfDialect>,
+
+    /// eBPF byte order.
+    #[arg(long, value_enum, default_value = "little")]
+    ebpf_endian: CliEndian,
+
     /// Source architecture for the smir subcommand.
     #[arg(long, value_enum, default_value = "x86-64")]
     smir_source: CliSmirSource,
@@ -76,7 +85,27 @@ enum CliIsa {
     Arm,
     Hexagon,
     Riscv,
+    #[value(alias = "bpf")]
+    Ebpf,
+    #[value(alias = "solana")]
+    Sbpf,
     Smir,
+}
+
+#[derive(Clone, Copy, Debug, ValueEnum)]
+enum CliEbpfDialect {
+    #[value(name = "rfc9669", alias = "v4", alias = "linux")]
+    Rfc9669,
+    #[value(name = "sbpf-v0", alias = "v0")]
+    SbpfV0,
+    #[value(name = "sbpf-v1", alias = "v1")]
+    SbpfV1,
+    #[value(name = "sbpf-v2", alias = "v2")]
+    SbpfV2,
+    #[value(name = "sbpf-v3", alias = "v3", alias = "sbpf")]
+    SbpfV3,
+    #[value(name = "sbpf-v4")]
+    SbpfV4,
 }
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
@@ -137,6 +166,8 @@ enum CliSmirSource {
     Hexagon,
     Riscv64,
     Riscv32,
+    #[value(alias = "bpf", alias = "sbpf")]
+    Ebpf,
 }
 
 fn main() {
@@ -154,12 +185,26 @@ fn run() -> Result<(), String> {
         parse_hex_bytes(&cli.bytes)?
     };
 
+    let ebpf_dialect = match cli.ebpf_dialect {
+        Some(CliEbpfDialect::Rfc9669) => EbpfDialect::Rfc9669,
+        Some(CliEbpfDialect::SbpfV0) => EbpfDialect::Solana(SbpfVersion::V0),
+        Some(CliEbpfDialect::SbpfV1) => EbpfDialect::Solana(SbpfVersion::V1),
+        Some(CliEbpfDialect::SbpfV2) => EbpfDialect::Solana(SbpfVersion::V2),
+        Some(CliEbpfDialect::SbpfV3) => EbpfDialect::Solana(SbpfVersion::V3),
+        Some(CliEbpfDialect::SbpfV4) => EbpfDialect::Solana(SbpfVersion::V4),
+        None => match cli.isa {
+            CliIsa::Sbpf => EbpfDialect::Solana(SbpfVersion::V3),
+            _ => EbpfDialect::Rfc9669,
+        },
+    };
+
     let opts = OracleOptions {
         isa: match cli.isa {
             CliIsa::X86_64 | CliIsa::X86 => OracleIsa::X86_64,
             CliIsa::Arm => OracleIsa::Arm,
             CliIsa::Hexagon => OracleIsa::Hexagon,
             CliIsa::Riscv => OracleIsa::RiscV,
+            CliIsa::Ebpf | CliIsa::Sbpf => OracleIsa::Ebpf,
             CliIsa::Smir => OracleIsa::Smir,
         },
         pc: cli.pc,
@@ -193,12 +238,18 @@ fn run() -> Result<(), String> {
             CliRiscvIsa::Rv64i => RiscVIsaProfile::Rv64I,
             CliRiscvIsa::Rv64imac => RiscVIsaProfile::Rv64Imac,
         },
+        ebpf_dialect,
+        ebpf_endian: match cli.ebpf_endian {
+            CliEndian::Little => Endianness::Little,
+            CliEndian::Big => Endianness::Big,
+        },
         smir_source: match cli.smir_source {
             CliSmirSource::X86_64 => SourceArch::X86_64,
             CliSmirSource::Aarch64 => SourceArch::Aarch64,
             CliSmirSource::Hexagon => SourceArch::Hexagon,
             CliSmirSource::Riscv64 => SourceArch::RiscV64,
             CliSmirSource::Riscv32 => SourceArch::RiscV32,
+            CliSmirSource::Ebpf => SourceArch::Ebpf,
         },
         include_smir: !cli.no_smir,
         x86_code_size: match cli.x86_code_size {

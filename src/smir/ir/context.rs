@@ -185,6 +185,7 @@ pub enum ArchRegState {
     Aarch64(Aarch64RegState),
     Hexagon(HexagonRegState),
     RiscV(RiscVRegState),
+    Ebpf(EbpfRegState),
 }
 
 impl ArchRegState {
@@ -195,6 +196,7 @@ impl ArchRegState {
             ArchRegState::Aarch64(arm) => arm.pc,
             ArchRegState::Hexagon(hex) => hex.pc as u64,
             ArchRegState::RiscV(rv) => rv.pc,
+            ArchRegState::Ebpf(ebpf) => ebpf.pc,
         }
     }
 
@@ -205,6 +207,7 @@ impl ArchRegState {
             ArchRegState::Aarch64(arm) => arm.pc = pc,
             ArchRegState::Hexagon(hex) => hex.pc = pc as u32,
             ArchRegState::RiscV(rv) => rv.pc = pc,
+            ArchRegState::Ebpf(ebpf) => ebpf.pc = pc,
         }
     }
 
@@ -214,7 +217,8 @@ impl ArchRegState {
             ArchRegState::X86_64(x86) => x86.gpr[4], // RSP
             ArchRegState::Aarch64(arm) => arm.sp,
             ArchRegState::Hexagon(hex) => hex.sp as u64,
-            ArchRegState::RiscV(rv) => rv.x[2], // x2 = sp
+            ArchRegState::RiscV(rv) => rv.x[2],     // x2 = sp
+            ArchRegState::Ebpf(ebpf) => ebpf.r[10], // r10 = fp
         }
     }
 
@@ -225,6 +229,7 @@ impl ArchRegState {
             ArchRegState::Aarch64(arm) => arm.sp = sp,
             ArchRegState::Hexagon(hex) => hex.sp = sp as u32,
             ArchRegState::RiscV(rv) => rv.x[2] = sp,
+            ArchRegState::Ebpf(ebpf) => ebpf.r[10] = sp,
         }
     }
 }
@@ -864,6 +869,33 @@ impl RiscVRegState {
     }
 }
 
+/// eBPF / Solana SBPF register state
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct EbpfRegState {
+    /// General-purpose registers `r0..r10` (`r10` is frame pointer `fp`).
+    pub r: [u64; 11],
+    /// Program counter in bytes.
+    pub pc: u64,
+}
+
+impl EbpfRegState {
+    pub fn new() -> Self {
+        let mut r = [0u64; 11];
+        r[10] = crate::isa::ebpf::MM_STACK_START + 4096;
+        Self { r, pc: 0 }
+    }
+
+    pub fn get_r(&self, n: u8) -> u64 {
+        self.r.get(n as usize).copied().unwrap_or(0)
+    }
+
+    pub fn set_r(&mut self, n: u8, val: u64) {
+        if let Some(slot) = self.r.get_mut(n as usize) {
+            *slot = val;
+        }
+    }
+}
+
 // ============================================================================
 // Execution Context
 // ============================================================================
@@ -960,6 +992,22 @@ impl SmirContext {
         }
     }
 
+    /// Create a new eBPF / Solana SBPF context
+    pub fn new_ebpf() -> Self {
+        SmirContext {
+            source_arch: SourceArch::Ebpf,
+            vregs: VRegFile::new(),
+            arch_regs: ArchRegState::Ebpf(EbpfRegState::new()),
+            flags: FlagState::new(),
+            pc: 0,
+            insn_count: 0,
+            cycle_count: 0,
+            exit_reason: None,
+            debug: DebugState::new(),
+            exclusive_monitor: ExclusiveMonitor::new(),
+        }
+    }
+
     /// Read a virtual register
     pub fn read_vreg(&self, vreg: VReg) -> u64 {
         match vreg {
@@ -1035,6 +1083,10 @@ impl SmirContext {
                 RiscVReg::Csr(0xc22) => 16,          // vlenb = VLEN/8 (VLEN=128)
                 _ => 0,
             },
+            (ArchRegState::Ebpf(ebpf), ArchReg::Ebpf(r)) => match r {
+                EbpfReg::R(n) => ebpf.get_r(n),
+                EbpfReg::Pc => ebpf.pc,
+            },
             _ => 0, // Architecture mismatch
         }
     }
@@ -1103,6 +1155,10 @@ impl SmirContext {
                 RiscVReg::Csr(0xc20) => rv.vl = value,
                 RiscVReg::Csr(0xc21) => rv.vtype = value,
                 _ => {}
+            },
+            (ArchRegState::Ebpf(ebpf), ArchReg::Ebpf(r)) => match r {
+                EbpfReg::R(n) => ebpf.set_r(n, value),
+                EbpfReg::Pc => ebpf.pc = value,
             },
             _ => {} // Architecture mismatch
         }

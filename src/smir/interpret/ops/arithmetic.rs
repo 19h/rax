@@ -475,10 +475,10 @@ impl SmirInterpreter {
                 };
                 let q = dividend.wrapping_div(b);
                 let r = dividend.wrapping_rem(b);
-                // x86 IDIV raises #DE when the quotient does not fit. Non-x86
-                // users of DivS are single-width operations and keep the
-                // wrapping MIN / -1 result.
-                if is_x86 {
+                // x86 IDIV and Solana SBPF SDIV/SREM raise a trap when the
+                // quotient does not fit (RFC 9669 SDIV/SMOD sanitizes MIN/-1
+                // before DivS).
+                if is_x86 || matches!(ctx.arch_regs, ArchRegState::Ebpf(_)) {
                     let qmax = (1i128 << (bits - 1)) - 1;
                     let qmin = -(1i128 << (bits - 1));
                     if q < qmin || q > qmax {

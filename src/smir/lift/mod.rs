@@ -5,6 +5,7 @@
 pub mod aarch32;
 pub mod aarch64;
 pub mod avx10;
+pub mod ebpf;
 pub mod hexagon;
 pub mod riscv;
 pub mod thumb;

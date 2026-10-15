@@ -240,6 +240,7 @@ impl SmirInterpreter {
                     ArchRegState::Aarch64(arm) => arm.x[30], // LR
                     ArchRegState::Hexagon(hex) => hex.lr as u64,
                     ArchRegState::RiscV(rv) => rv.x[1], // ra
+                    ArchRegState::Ebpf(ebpf) => ebpf.r[0],
                 };
                 BlockResult::Exit(ExitReason::Return { to: ret_addr })
             }

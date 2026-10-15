@@ -57,6 +57,7 @@ pub enum SourceArch {
     Mips32,
     Sparc64,
     Sparc32,
+    Ebpf,
 }
 
 impl SourceArch {
@@ -69,7 +70,8 @@ impl SourceArch {
             | SourceArch::Thumb
             | SourceArch::Hexagon
             | SourceArch::RiscV64
-            | SourceArch::RiscV32 => Endian::Little,
+            | SourceArch::RiscV32
+            | SourceArch::Ebpf => Endian::Little,
             SourceArch::Mips64 | SourceArch::Mips32 | SourceArch::Sparc64 | SourceArch::Sparc32 => {
                 Endian::Big
             }
@@ -78,7 +80,7 @@ impl SourceArch {
 
     /// Whether this architecture requires strict alignment
     pub fn strict_alignment(&self) -> bool {
-        !matches!(self, SourceArch::X86_64)
+        !matches!(self, SourceArch::X86_64 | SourceArch::Ebpf)
     }
 
     /// Register width in bits
@@ -88,7 +90,8 @@ impl SourceArch {
             | SourceArch::Aarch64
             | SourceArch::RiscV64
             | SourceArch::Mips64
-            | SourceArch::Sparc64 => 64,
+            | SourceArch::Sparc64
+            | SourceArch::Ebpf => 64,
             SourceArch::Aarch32
             | SourceArch::Thumb
             | SourceArch::Hexagon
@@ -157,6 +160,16 @@ pub enum ArchReg {
     Arm(ArmReg),
     Hexagon(HexagonReg),
     RiscV(RiscVReg),
+    Ebpf(EbpfReg),
+}
+
+/// eBPF / Solana SBPF register
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum EbpfReg {
+    /// General purpose registers `r0..r10` (`r10` is frame pointer `fp`).
+    R(u8),
+    /// Program counter.
+    Pc,
 }
 
 /// x86_64 register

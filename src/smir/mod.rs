@@ -72,8 +72,8 @@ pub use optimize as opt;
 // Re-export commonly used types
 pub use interpret::{BlockResult, SmirInterpreter};
 pub use ir::context::{
-    Aarch64RegState, ArchRegState, DebugState, ExitReason, HexagonRegState, RiscVRegState,
-    SmirContext, VRegFile, X86RegState, X86X87State,
+    Aarch64RegState, ArchRegState, DebugState, EbpfRegState, ExitReason, HexagonRegState,
+    RiscVRegState, SmirContext, VRegFile, X86RegState, X86X87State,
 };
 pub use ir::flags::{FlagSet, FlagState, FlagUpdate, LazyFlagOp, LazyFlags, MaterializedFlags};
 pub use ir::memory::{
@@ -83,11 +83,11 @@ pub use ir::memory::{
 pub use ir::ops::{OpKind, SmirOp, X86SatFpFormat};
 pub use ir::types::{
     Address, ArchReg, ArmReg, AtomicOp, Avx10DotProductKind, Avx10Encoding, Avx10FP16Op, BlockId,
-    BlockIdAllocator, Condition, Endian, ExtendOp, FenceKind, FpPrecision, FpRoundMode, FunctionId,
-    GuestAddr, HexagonReg, LocalId, MemWidth, MemoryOrder, ModuleId, OpId, OpWidth, RiscVReg,
-    ShiftOp, SignExtend, SourceArch, SrcOperand, VLaneOp, VReg, VRegAllocator, VShiftVKind,
-    VecCmpCond, VecElementType, VecPermuteKind, VecReduceOp, VecUnaryOp, VecWidth, VirtualId,
-    X86FmaKind, X86FmaOrder, X86FpBinaryOp, X86NarrowMode, X86Reg,
+    BlockIdAllocator, Condition, EbpfReg, Endian, ExtendOp, FenceKind, FpPrecision, FpRoundMode,
+    FunctionId, GuestAddr, HexagonReg, LocalId, MemWidth, MemoryOrder, ModuleId, OpId, OpWidth,
+    RiscVReg, ShiftOp, SignExtend, SourceArch, SrcOperand, VLaneOp, VReg, VRegAllocator,
+    VShiftVKind, VecCmpCond, VecElementType, VecPermuteKind, VecReduceOp, VecUnaryOp, VecWidth,
+    VirtualId, X86FmaKind, X86FmaOrder, X86FpBinaryOp, X86NarrowMode, X86Reg,
 };
 pub use ir::{
     CallTarget, CallingConv, FunctionBuilder, PhiNode, RuntimeFunc, SmirBlock, SmirFunction,
@@ -106,6 +106,7 @@ pub use ir::{
 };
 pub use lift::aarch64::Aarch64Lifter;
 pub use lift::avx10::{Avx10Lifter, EvexPrefix};
+pub use lift::ebpf::EbpfLifter;
 pub use lift::hexagon::HexagonLifter;
 pub use lift::riscv::RiscVLifter;
 pub use lift::x86_64::X86_64Lifter;

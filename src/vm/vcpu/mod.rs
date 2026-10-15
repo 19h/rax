@@ -123,6 +123,7 @@ pub trait VCpu: Send {
             CpuState::CortexM(s) => s.regs.pc = pc as u32,
             CpuState::RiscV(s) => s.regs.pc = pc,
             CpuState::Hexagon(s) => s.regs.set_pc(pc as u32),
+            CpuState::Ebpf(s) => s.regs.pc = pc,
         }
         self.set_state(&state)
     }

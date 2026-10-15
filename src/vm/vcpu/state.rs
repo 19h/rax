@@ -932,6 +932,12 @@ pub struct CortexMCpuState {
     pub sregs: CortexMSystemRegisters,
 }
 
+/// Complete eBPF / Solana SBPF CPU state snapshot.
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+pub struct EbpfCpuState {
+    pub regs: crate::isa::ebpf::EbpfRegisters,
+}
+
 // =============================================================================
 // Architecture-agnostic CPU State Enum
 // =============================================================================
@@ -945,6 +951,7 @@ pub enum CpuState {
     Aarch32(Aarch32CpuState),
     CortexM(CortexMCpuState),
     RiscV(RiscVCpuState),
+    Ebpf(EbpfCpuState),
 }
 
 impl CpuState {
@@ -957,6 +964,7 @@ impl CpuState {
             CpuState::Aarch32(s) => s.regs.pc as u64,
             CpuState::CortexM(s) => s.regs.pc as u64,
             CpuState::RiscV(s) => s.regs.pc,
+            CpuState::Ebpf(s) => s.regs.pc,
         }
     }
 
@@ -970,6 +978,17 @@ impl CpuState {
 
     pub fn riscv(regs: RiscVRegisters) -> Self {
         CpuState::RiscV(RiscVCpuState { regs })
+    }
+
+    pub fn ebpf(regs: crate::isa::ebpf::EbpfRegisters) -> Self {
+        CpuState::Ebpf(EbpfCpuState { regs })
+    }
+
+    pub fn as_ebpf(&self) -> Option<&EbpfCpuState> {
+        match self {
+            CpuState::Ebpf(state) => Some(state),
+            _ => None,
+        }
     }
 
     pub fn as_riscv(&self) -> Option<&RiscVCpuState> {

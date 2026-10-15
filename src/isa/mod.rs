@@ -5,6 +5,7 @@
 //! their respective top-level modules.
 
 pub mod arm;
+pub mod ebpf;
 pub mod hexagon;
 pub mod riscv;
 pub mod x86_64;

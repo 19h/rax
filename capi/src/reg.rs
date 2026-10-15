@@ -1161,6 +1161,7 @@ pub(crate) fn set_state_pc(st: &mut CpuState, pc: u64) {
         CpuState::CortexM(x) => x.regs.pc = pc as u32,
         CpuState::RiscV(x) => x.regs.pc = pc,
         CpuState::Hexagon(x) => x.regs.set_pc(pc as u32),
+        CpuState::Ebpf(x) => x.regs.pc = pc,
     }
 }
 

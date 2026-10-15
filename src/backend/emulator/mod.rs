@@ -7,6 +7,7 @@ pub mod aarch32;
 pub mod aarch64;
 pub mod armv6;
 pub mod cortex_m;
+pub mod ebpf;
 pub mod gsc;
 pub mod hexagon;
 pub mod riscv;
