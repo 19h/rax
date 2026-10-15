@@ -83,8 +83,9 @@ than IR operation counts. `SmirContext::new_ebpf_with_config` selects nondefault
 stack/depth/text policies. `SmirInterpreter::add_function` installs its blocks.
 `EbpfLifter::register_function` supplies legacy SBPF keys and possible CALLX
 entries; unknown indirect targets remain explicit BlockNotFound frontiers until
-the embedding registers/lifts their code. A lifted function contains the reachable
-subprogram closure; `guest_range` is its minimum-to-maximum decoded byte extent.
+the embedding registers/lifts their code. `EbpfLifter::lift_program` discovers the reachable program as distinct functions.
+`lift_function` follows intraprocedural successors; each `guest_range` describes
+that function's minimum-to-maximum decoded byte extent and excludes its callees.
 It does not assert that every byte inside a sparse range is an instruction.
 
 `EbpfMemory::atomic` is the indivisible transaction contract; byte-only custom

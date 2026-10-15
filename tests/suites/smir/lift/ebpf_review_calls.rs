@@ -1,6 +1,41 @@
 use super::*;
 
 #[test]
+fn caller_range_excludes_the_callee_function_body() {
+    let program = [
+        (0x85, 0, 1, 2),
+        (0x07, 0, 0, 2),
+        (0x95, 0, 0, 0),
+        (0xb7, 0, 0, 40),
+        (0x95, 0, 0, 0),
+    ]
+    .map(|(opc, dst, src, imm)| encode_insn(opc, dst, src, 0, imm, Endian::Little))
+    .concat();
+    let mut lifter = EbpfLifter::rfc9669();
+    let function = lifter
+        .lift_function(
+            0,
+            &CodeSlice(&program),
+            &mut LiftContext::new(lifter.source_arch()),
+        )
+        .unwrap();
+    assert_eq!(function.guest_range, (0, 24));
+    let functions = lifter
+        .lift_program(
+            0,
+            &CodeSlice(&program),
+            &mut LiftContext::new(lifter.source_arch()),
+        )
+        .unwrap();
+    let mut ranges = functions
+        .iter()
+        .map(|function| function.guest_range)
+        .collect::<Vec<_>>();
+    ranges.sort_unstable();
+    assert_eq!(ranges, vec![(0, 24), (24, 40)]);
+}
+
+#[test]
 fn guest_boundaries_are_observable_and_rejected_by_native_admission() {
     use rax::smir::ir::ops::{OpKind, SmirOp};
     use rax::smir::ir::types::OpId;
@@ -94,16 +129,18 @@ fn nested_legacy_and_register_calls_preserve_state_at_all_optimization_levels() 
                 let mut lifter = EbpfLifter::solana(version);
                 lifter.register_function(0x1234, 24);
                 lifter.register_function(0x5678, 56);
-                let mut function = lifter
-                    .lift_function(
+                let functions = lifter
+                    .lift_program(
                         0,
                         &CodeSlice(&program),
                         &mut LiftContext::new(lifter.source_arch()),
                     )
                     .unwrap();
-                optimize_function(&mut function, opt);
                 let mut interpreter = SmirInterpreter::new();
-                interpreter.add_function(function);
+                for mut function in functions {
+                    optimize_function(&mut function, opt);
+                    interpreter.add_function(function);
+                }
                 let mut context = SmirContext::new_ebpf_with_config(config.clone());
                 for (i, value) in initial.iter().enumerate() {
                     context.write_arch_reg(ArchReg::Ebpf(EbpfReg::R(i as u8)), *value);

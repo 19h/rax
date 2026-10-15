@@ -10,6 +10,41 @@ use crate::smir::lift::{ControlFlow, LiftContext, LiftError, MemoryReader, SmirL
 use std::collections::HashSet;
 
 impl EbpfLifter {
+    /// Lift a program into distinct functions. Call targets are discovered
+    /// separately from intraprocedural successors so each guest_range describes
+    /// one function. Registered entries supply possible indirect-call targets.
+    pub fn lift_program(
+        &mut self,
+        entry: GuestAddr,
+        mem: &dyn MemoryReader,
+        ctx: &mut LiftContext,
+    ) -> Result<Vec<SmirFunction>, LiftError> {
+        let mut pending = vec![entry];
+        let mut visited = HashSet::new();
+        let mut functions = Vec::new();
+        while let Some(address) = pending.pop() {
+            if !visited.insert(address) {
+                continue;
+            }
+            let function = self.lift_reachable_function(address, mem, ctx)?;
+            for block in &function.blocks {
+                match &block.terminator {
+                    Terminator::Call {
+                        target: CallTarget::GuestAddr(target),
+                        ..
+                    } => pending.push(*target),
+                    Terminator::Call {
+                        target: CallTarget::Indirect(_),
+                        ..
+                    } => pending.extend(self.function_registry.values().copied()),
+                    _ => {}
+                }
+            }
+            functions.push(function);
+        }
+        Ok(functions)
+    }
+
     pub(super) fn lift_block_with_end(
         &mut self,
         addr: GuestAddr,
@@ -117,8 +152,8 @@ impl EbpfLifter {
         mem: &dyn MemoryReader,
         ctx: &mut LiftContext,
     ) -> Result<SmirFunction, LiftError> {
-        let func_id = FunctionId(ctx.known_functions.len() as u32);
-        ctx.known_functions.insert(entry, func_id);
+        let proposed_id = FunctionId(ctx.known_functions.len() as u32);
+        let func_id = *ctx.known_functions.entry(entry).or_insert(proposed_id);
 
         let mut blocks = Vec::new();
         let mut worklist = vec![entry];
@@ -140,21 +175,13 @@ impl EbpfLifter {
                 max_addr = block_end;
             }
 
-            match &block.terminator {
-                Terminator::Call {
-                    target: CallTarget::GuestAddr(target),
-                    ..
-                } => worklist.push(*target),
-                Terminator::Call {
-                    target: CallTarget::Indirect(_),
-                    ..
-                } => {
-                    worklist.extend(self.function_registry.values().copied());
-                }
+            if matches!(
+                block.terminator,
                 Terminator::Trap {
-                    kind: TrapKind::SystemCall,
-                } => worklist.push(block_end),
-                _ => {}
+                    kind: TrapKind::SystemCall
+                }
+            ) {
+                worklist.push(block_end);
             }
 
             for succ in block.successors() {

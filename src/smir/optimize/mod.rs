@@ -1262,9 +1262,8 @@ pub fn branch_folding(func: &mut SmirFunction) -> usize {
     // Reachability from the entry.
     let mut reachable: HashSet<BlockId> = HashSet::new();
     let mut stack = vec![func.entry];
-    // eBPF functions include reachable subprograms and syscall continuations.
-    // Preserve registered indirect entry points conservatively; the generic
-    // successor API models calls only through their caller continuation.
+    // Syscalls are host frontiers with an eBPF guest continuation. Keep that
+    // continuation even though Trap has no generic CFG successor.
     let ebpf = func
         .blocks
         .iter()
@@ -1272,28 +1271,18 @@ pub fn branch_folding(func: &mut SmirFunction) -> usize {
         .any(|op| matches!(op.kind, OpKind::EbpfInstruction { .. }));
     if ebpf {
         for block in &func.blocks {
-            let address = match &block.terminator {
-                Terminator::Call {
-                    target: CallTarget::GuestAddr(addr),
-                    ..
-                } => Some(*addr),
-                Terminator::Call {
-                    target: CallTarget::Indirect(_),
-                    ..
-                } => {
-                    stack.extend(func.blocks.iter().map(|b| b.id));
-                    None
-                }
+            if matches!(
+                block.terminator,
                 Terminator::Trap {
-                    kind: crate::smir::ir::TrapKind::SystemCall,
-                } => block.ops.last().map(|op| op.guest_pc.wrapping_add(8)),
-                _ => None,
-            };
-            if let Some(addr) = address {
+                    kind: crate::smir::ir::TrapKind::SystemCall
+                }
+            ) && let Some(last) = block.ops.last()
+            {
+                let continuation = last.guest_pc.wrapping_add(8);
                 stack.extend(
                     func.blocks
                         .iter()
-                        .filter(|b| b.guest_pc == addr)
+                        .filter(|b| b.guest_pc == continuation)
                         .map(|b| b.id),
                 );
             }

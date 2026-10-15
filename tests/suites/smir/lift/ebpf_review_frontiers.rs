@@ -234,16 +234,18 @@ fn legacy_call_key_collision_obeys_reference_external_then_internal_order() {
             let mut lifter = EbpfLifter::solana(version);
             lifter.register_function(1234, 24);
             lifter.register_syscall(1234);
-            let mut function = lifter
-                .lift_function(
+            let functions = lifter
+                .lift_program(
                     0,
                     &CodeSlice(&program),
                     &mut LiftContext::new(lifter.source_arch()),
                 )
                 .unwrap();
-            optimize_function(&mut function, opt);
             let mut interpreter = SmirInterpreter::new();
-            interpreter.add_function(function);
+            for mut function in functions {
+                optimize_function(&mut function, opt);
+                interpreter.add_function(function);
+            }
             let mut context = SmirContext::new_ebpf_with_config(EbpfConfig::solana(version));
             context.write_arch_reg(ArchReg::Ebpf(EbpfReg::R(1)), 40);
             context.write_arch_reg(ArchReg::Ebpf(EbpfReg::R(6)), 6);

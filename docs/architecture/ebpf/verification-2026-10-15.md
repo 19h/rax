@@ -180,3 +180,15 @@ change. The regression remains as an observable-memory probe.
 
 Group 5 focused gates: ebpf_smir_lift 30 passed, ebpf_diff 5 passed, isa_oracle
 80 passed, with no ignored cases in these targets.
+
+## Group 6: program discovery and distinct function extents
+
+Self-red-team exposed a second address-range requirement: a caller's range must
+exclude the callee body. The intermediate closure representation reported (0,40)
+for a 24-byte caller, which the new regression rejected. EbpfLifter::lift_program
+now discovers a program as separate functions, while lift_function traverses only
+intraprocedural successors. The example yields (0,24) and (24,40). Call execution
+registers each function independently and optimizer reachability only needs the
+caller's syscall continuations. Caller/callee ranges, nested calls, indirect
+entries, recursion, and host syscall resumption pass in the updated harnesses.
+Focused gates: ebpf_smir_lift 31 passed, ebpf_diff 5 passed, isa_oracle 80 passed.

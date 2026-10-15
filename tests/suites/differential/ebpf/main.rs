@@ -903,7 +903,7 @@ fn run_smir_cpu(
     let mut lift_ctx = LiftContext::new(lifter.source_arch());
     lift_ctx.endian = endian;
 
-    let mut func = match lifter.lift_function(0, &CodeSlice(prog), &mut lift_ctx) {
+    let functions = match lifter.lift_program(0, &CodeSlice(prog), &mut lift_ctx) {
         Ok(f) => f,
         Err(_) => {
             let mut scratch = vec![0u8; init_scratch.len()];
@@ -912,13 +912,12 @@ fn run_smir_cpu(
         }
     };
 
-    if opt_level != OptLevel::O0 {
-        optimize_function(&mut func, opt_level);
-    }
-
     let mut interp = SmirInterpreter::new();
-    for block in &func.blocks {
-        interp.add_block(block.guest_pc, block.clone());
+    for mut function in functions {
+        if opt_level != OptLevel::O0 {
+            optimize_function(&mut function, opt_level);
+        }
+        interp.add_function(function);
     }
 
     let mut ctx = SmirContext::new_ebpf();
@@ -1455,16 +1454,18 @@ fn calls_and_returns_match_the_independent_reference_model() {
                 for opt in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
                     let mut lifter = EbpfLifter::new(dialect, endian);
                     lifter.register_function(1, 24);
-                    let mut function = lifter
-                        .lift_function(
+                    let functions = lifter
+                        .lift_program(
                             0,
                             &CodeSlice(&program),
                             &mut LiftContext::new(lifter.source_arch()),
                         )
                         .unwrap();
-                    optimize_function(&mut function, opt);
                     let mut interp = SmirInterpreter::new();
-                    interp.add_function(function);
+                    for mut function in functions {
+                        optimize_function(&mut function, opt);
+                        interp.add_function(function);
+                    }
                     let mut ctx = SmirContext::new_ebpf();
                     for (i, value) in regs.iter().enumerate() {
                         ctx.write_arch_reg(ArchReg::Ebpf(EbpfReg::R(i as u8)), *value);

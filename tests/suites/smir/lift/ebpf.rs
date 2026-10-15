@@ -132,17 +132,15 @@ fn run_smir(
     let mut lift_ctx = LiftContext::new(lifter.source_arch());
     lift_ctx.endian = endian;
 
-    let mut func = lifter
-        .lift_function(0, &CodeSlice(prog), &mut lift_ctx)
-        .unwrap_or_else(|e| panic!("failed to lift function ({dialect:?}, {endian:?}): {e}"));
-
-    if opt_level != OptLevel::O0 {
-        optimize_function(&mut func, opt_level);
-    }
-
+    let functions = lifter
+        .lift_program(0, &CodeSlice(prog), &mut lift_ctx)
+        .unwrap_or_else(|e| panic!("failed to lift program ({dialect:?}, {endian:?}): {e}"));
     let mut interp = SmirInterpreter::new();
-    for block in &func.blocks {
-        interp.add_block(block.guest_pc, block.clone());
+    for mut function in functions {
+        if opt_level != OptLevel::O0 {
+            optimize_function(&mut function, opt_level);
+        }
+        interp.add_function(function);
     }
 
     let mut ctx = SmirContext::new_ebpf();
