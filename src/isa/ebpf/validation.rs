@@ -49,6 +49,17 @@ pub(super) fn validate(insn: &EbpfInsn, dialect: EbpfDialect) -> Result<(), Ebpf
         }
     }
 
+    if matches!(
+        insn.op,
+        EbpfOp::CallImm {
+            src_kind: 2..=u8::MAX,
+            ..
+        }
+    ) && dialect.sbpf_version().is_some_and(|v| v.static_syscalls())
+    {
+        return Err(reserved());
+    }
+
     let written = match insn.op {
         EbpfOp::LoadImm64 { dst, .. }
         | EbpfOp::LoadReg { dst, .. }

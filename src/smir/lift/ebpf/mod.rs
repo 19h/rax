@@ -13,7 +13,7 @@
 //! - Atomic memory operations (`BPF_ATOMIC` `ADD`, `OR`, `AND`, `XOR`, `XCHG`,
 //!   `CMPXCHG`, with and without `BPF_FETCH`).
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 mod control_flow;
 
@@ -38,6 +38,8 @@ pub struct EbpfLifter {
     pub endian: Endian,
     /// Legacy SBPF function keys mapped to absolute guest byte addresses.
     pub function_registry: BTreeMap<u32, u64>,
+    /// Loader syscall keys, needed to preserve legacy dual resolution.
+    pub syscall_keys: BTreeSet<u32>,
 }
 
 impl EbpfLifter {
@@ -47,6 +49,7 @@ impl EbpfLifter {
             dialect,
             endian,
             function_registry: BTreeMap::new(),
+            syscall_keys: BTreeSet::new(),
         }
     }
 
@@ -63,6 +66,39 @@ impl EbpfLifter {
     /// Register the same executable function key/address used by the direct CPU.
     pub fn register_function(&mut self, key: u32, target_pc: u64) {
         self.function_registry.insert(key, target_pc);
+    }
+
+    /// Register a loader syscall key. A legacy key may also name an internal
+    /// function; SMIR exits to the host first and resumes the internal call.
+    pub fn register_syscall(&mut self, key: u32) {
+        self.syscall_keys.insert(key);
+    }
+
+    fn emit_syscall(
+        &self,
+        key: u32,
+        addr: GuestAddr,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) {
+        let num = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            ctx.next_op_id(),
+            addr,
+            OpKind::Mov {
+                dst: num,
+                src: SrcOperand::Imm(key as i64),
+                width: OpWidth::W64,
+            },
+        ));
+        ops.push(SmirOp::new(
+            ctx.next_op_id(),
+            addr,
+            OpKind::Syscall {
+                num,
+                args: (1..=5).map(Self::reg).collect(),
+            },
+        ));
     }
 
     #[inline]
@@ -1201,6 +1237,9 @@ impl EbpfLifter {
                         },
                     ))
                 } else if !static_syscalls && self.function_registry.contains_key(&(imm as u32)) {
+                    if self.syscall_keys.contains(&(imm as u32)) {
+                        self.emit_syscall(imm as u32, addr, ctx, &mut ops);
+                    }
                     Ok((
                         ops,
                         ControlFlow::Call {
@@ -1208,28 +1247,7 @@ impl EbpfLifter {
                         },
                     ))
                 } else {
-                    let num_reg = ctx.alloc_vreg();
-                    ops.push(SmirOp::new(
-                        ctx.next_op_id(),
-                        addr,
-                        OpKind::Mov {
-                            dst: num_reg,
-                            src: SrcOperand::Imm((imm as u32) as i64),
-                            width: OpWidth::W64,
-                        },
-                    ));
-                    let args = vec![
-                        Self::reg(1),
-                        Self::reg(2),
-                        Self::reg(3),
-                        Self::reg(4),
-                        Self::reg(5),
-                    ];
-                    ops.push(SmirOp::new(
-                        ctx.next_op_id(),
-                        addr,
-                        OpKind::Syscall { num: num_reg, args },
-                    ));
+                    self.emit_syscall(imm as u32, addr, ctx, &mut ops);
                     Ok((ops, ControlFlow::Syscall))
                 }
             }

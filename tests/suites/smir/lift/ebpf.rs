@@ -28,6 +28,8 @@ mod review_atomics;
 mod review_calls;
 #[path = "ebpf_review_decode.rs"]
 mod review_decode;
+#[path = "ebpf_review_frontiers.rs"]
+mod review_frontiers;
 #[path = "ebpf_review_memory.rs"]
 mod review_memory;
 

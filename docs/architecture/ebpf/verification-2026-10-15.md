@@ -160,3 +160,23 @@ Bounded opportunity, medium impact, non-blocking: replace the shared-memory glob
 transaction lock with region/address synchronization if throughput measurements
 justify it, while retaining mixed-width overlap exclusion. External host access
 must obey the backend's atomic/memory contract.
+
+## Group 5: exact runtime frontiers and legacy call resolution
+
+Four further regressions failed before changes: single stepping executed a whole
+block; SBPF division failures were generic Undefined exits; static SBPF CALL src
+kinds beyond 0/1 were accepted; and legacy keys in both registries skipped the
+external phase. The latter follows the two independent resolution branches in
+Anza interpreter CALL_IMM. Direct execution now resolves external then internal;
+the lifter accepts both registries, exits for a host syscall, and resumes a
+deferred internal call exactly once. O0/O1/O2 tests check the return value,
+callee-preserved register, PC, and instruction count across that host boundary.
+Stepping/breakpoint probes cover stopping and resuming inside an optimized block;
+division probes check cause, PC, instruction count, and unchanged destination.
+
+A proposed repeated-load optimization defect was not reproduced: a changing-memory
+backend observed both loads at O0/O1/O2. This hypothesis did not justify a code
+change. The regression remains as an observable-memory probe.
+
+Group 5 focused gates: ebpf_smir_lift 30 passed, ebpf_diff 5 passed, isa_oracle
+80 passed, with no ignored cases in these targets.

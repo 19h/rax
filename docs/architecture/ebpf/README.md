@@ -96,3 +96,10 @@ boundary metadata selects atomic byte order; big-endian arithmetic RMW uses a CA
 loop, and compare-exchange converts both operands and the returned previous value.
 Failed comparisons still require writable memory. Shared host atomics require
 natural host alignment and reject unsupported/misaligned accesses before updates.
+
+For legacy keys present in both loader and internal registries, call
+`EbpfLifter::register_syscall` as well as `register_function`. Execution exits for
+the host syscall, then resumes the deferred internal call without charging a
+second guest instruction. The direct CPU uses the same external-then-internal
+resolution order. Single stepping and breakpoints stop at guest boundaries;
+SBPF division exits retain DivideByZero/DivideOverflow and the precise fault PC.

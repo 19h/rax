@@ -50,7 +50,13 @@ impl SmirInterpreter {
 
     /// Run until exit condition
     pub fn run(&mut self, ctx: &mut SmirContext, memory: &mut dyn SmirMemory) -> ExitReason {
-        let limit = ctx.insn_count.saturating_add(self.max_insns_per_run);
+        let stepping = ctx.source_arch == SourceArch::Ebpf && ctx.debug.single_step;
+        let budget = if stepping {
+            self.max_insns_per_run.min(1)
+        } else {
+            self.max_insns_per_run
+        };
+        let limit = ctx.insn_count.saturating_add(budget);
 
         loop {
             // Check instruction limit
@@ -61,6 +67,29 @@ impl SmirInterpreter {
             // Check for pending exit
             if let Some(reason) = ctx.exit_reason.take() {
                 return reason;
+            }
+
+            if let ArchRegState::Ebpf(state) = &mut ctx.arch_regs
+                && let Some(pending) = state.pending_call.take()
+            {
+                if let Err(trap) = state
+                    .config
+                    .validate_target_pc(pending.fault_pc, pending.target_pc)
+                    .and_then(|()| {
+                        state.config.push_frame(
+                            &mut state.r,
+                            &mut state.call_frames,
+                            pending.fault_pc,
+                            pending.return_pc,
+                        )
+                    })
+                {
+                    ctx.pc = pending.fault_pc;
+                    state.pc = ctx.pc;
+                    return ExitReason::EbpfTrap(trap);
+                }
+                ctx.pc = pending.target_pc;
+                state.pc = ctx.pc;
             }
 
             // Check breakpoints
@@ -100,9 +129,10 @@ impl SmirInterpreter {
                         ctx.arch_regs.set_pc(next_pc);
                     }
                 }
-                BlockResult::Exit(reason) => {
-                    return reason;
+                BlockResult::Exit(ExitReason::InsnLimit) if stepping && ctx.insn_count >= limit => {
+                    return ExitReason::SingleStep;
                 }
+                BlockResult::Exit(reason) => return reason,
             }
 
             // Single-step mode
@@ -148,6 +178,11 @@ impl SmirInterpreter {
                         opcode: 0,
                     });
                 };
+                if ctx.debug.has_breakpoint(op.guest_pc) {
+                    ctx.pc = op.guest_pc;
+                    state.pc = op.guest_pc;
+                    return BlockResult::Exit(ExitReason::Breakpoint { addr: op.guest_pc });
+                }
                 if ctx.insn_count >= limit
                     || state
                         .config
@@ -195,6 +230,24 @@ impl SmirInterpreter {
                 ctx.insn_count = ctx.insn_count.saturating_add(1);
             }
             if let Some(reason) = ctx.exit_reason.take() {
+                if matches!(reason, ExitReason::Syscall { .. })
+                    && let ArchRegState::Ebpf(state) = &mut ctx.arch_regs
+                    && let Terminator::Call {
+                        target: CallTarget::GuestAddr(target),
+                        continuation,
+                        ..
+                    } = &block.terminator
+                {
+                    state.pending_call = Some(crate::smir::ir::context::EbpfPendingCall {
+                        target_pc: *target,
+                        fault_pc: op.guest_pc,
+                        return_pc: self
+                            .block_addrs
+                            .get(continuation)
+                            .copied()
+                            .unwrap_or_else(|| op.guest_pc.wrapping_add(8)),
+                    });
+                }
                 return BlockResult::Exit(reason);
             }
         }

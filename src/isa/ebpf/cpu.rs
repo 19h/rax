@@ -712,6 +712,14 @@ impl EbpfCpu {
                     .sbpf_version()
                     .is_none_or(|v| v.static_syscalls());
 
+                // Anza legacy CALL_IMM resolves the external registry first and
+                // then the internal registry; a colliding key executes both.
+                let mut external_resolved = false;
+                if !static_syscalls && let Some(handler) = self.syscall_handlers.get_mut(&key) {
+                    self.regs.r[0] = handler(&mut self.regs.r, mem)?;
+                    external_resolved = true;
+                }
+
                 if src_kind == 1 && static_syscalls {
                     // PC-relative local function call: target_pc = next_pc + imm * 8
                     let delta_bytes = i64::from(imm).wrapping_mul(INSN_SIZE as i64);
@@ -728,6 +736,8 @@ impl EbpfCpu {
                     self.config
                         .push_frame(&mut self.regs.r, &mut self.call_frames, pc, next_pc)?;
                     next_pc = target_pc;
+                } else if external_resolved {
+                    // The external-only legacy call has already completed.
                 } else if let Some(handler) = self.syscall_handlers.get_mut(&key) {
                     let ret = handler(&mut self.regs.r, mem)?;
                     self.regs.r[0] = ret;

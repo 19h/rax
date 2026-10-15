@@ -400,9 +400,15 @@ impl SmirInterpreter {
                 let mask = width.mask();
                 let b = (self.read_src_operand_width(ctx, src2, *width) & mask) as u128;
                 if b == 0 {
-                    ctx.request_exit(ExitReason::Undefined {
-                        addr: op.guest_pc,
-                        opcode: 0,
+                    ctx.request_exit(if matches!(ctx.arch_regs, ArchRegState::Ebpf(_)) {
+                        ExitReason::EbpfTrap(crate::isa::ebpf::EbpfTrap::DivideByZero {
+                            pc: op.guest_pc,
+                        })
+                    } else {
+                        ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        }
                     });
                     return Ok(());
                 }
@@ -455,9 +461,15 @@ impl SmirInterpreter {
                 let b = self.sign_extend(self.read_src_operand_width(ctx, src2, *width), *width)
                     as i64 as i128;
                 if b == 0 {
-                    ctx.request_exit(ExitReason::Undefined {
-                        addr: op.guest_pc,
-                        opcode: 0,
+                    ctx.request_exit(if matches!(ctx.arch_regs, ArchRegState::Ebpf(_)) {
+                        ExitReason::EbpfTrap(crate::isa::ebpf::EbpfTrap::DivideByZero {
+                            pc: op.guest_pc,
+                        })
+                    } else {
+                        ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        }
                     });
                     return Ok(());
                 }
@@ -482,9 +494,15 @@ impl SmirInterpreter {
                     let qmax = (1i128 << (bits - 1)) - 1;
                     let qmin = -(1i128 << (bits - 1));
                     if q < qmin || q > qmax {
-                        ctx.request_exit(ExitReason::Undefined {
-                            addr: op.guest_pc,
-                            opcode: 0,
+                        ctx.request_exit(if matches!(ctx.arch_regs, ArchRegState::Ebpf(_)) {
+                            ExitReason::EbpfTrap(crate::isa::ebpf::EbpfTrap::DivideOverflow {
+                                pc: op.guest_pc,
+                            })
+                        } else {
+                            ExitReason::Undefined {
+                                addr: op.guest_pc,
+                                opcode: 0,
+                            }
                         });
                         return Ok(());
                     }

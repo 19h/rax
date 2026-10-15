@@ -871,6 +871,14 @@ impl RiscVRegState {
     }
 }
 
+/// Internal call phase remaining after an externally handled legacy syscall.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct EbpfPendingCall {
+    pub target_pc: u64,
+    pub return_pc: u64,
+    pub fault_pc: u64,
+}
+
 /// eBPF / Solana SBPF register state
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct EbpfRegState {
@@ -878,6 +886,8 @@ pub struct EbpfRegState {
     pub config: crate::isa::ebpf::EbpfConfig,
     /// Callee-preserved state and architectural return PCs.
     pub call_frames: Vec<crate::isa::ebpf::EbpfCallFrame>,
+    /// Deferred internal resolution when one legacy key identifies both calls.
+    pub pending_call: Option<EbpfPendingCall>,
     /// General-purpose registers `r0..r10` (`r10` is frame pointer `fp`).
     pub r: [u64; 11],
     /// Program counter in bytes.
@@ -895,6 +905,7 @@ impl EbpfRegState {
         Self {
             config,
             call_frames: Vec::new(),
+            pending_call: None,
             r,
             pc: 0,
         }
