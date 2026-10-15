@@ -27,6 +27,7 @@ This page consolidates the current project boundary. It is intentionally conserv
 | AArch32/Thumb | software cores and profile-specific machines | none documented as a general backend | machine-specific paths including Cortex-M and SoC work | direct ISA tests, QEMU/ASL-derived cases, microkernel | no general 32-bit Linux-to-shell result |
 | Hexagon | packet-aware software emulator | none | bare-metal ELF machine | scalar/control/float/memory/HVX differential targets plus bare-metal test | public ISA selector ends at `v69`; no general OS machine |
 | RV64 | software emulator plus selected SMIR/native paths | none | bare-metal ELF machine | scalar/vector QEMU differential tests, lift/JIT tests, boot test | no privileged/Sv39 Linux-capable machine |
+| eBPF / Solana SBPF | software emulator (`EbpfCpu`, `EbpfVcpu`) plus SMIR lift/interpret (`EbpfLifter`) | none | standalone VM/contract and static oracle execution | `ebpf_diff` (reference evaluator + `llvm-mc`), `ebpf_smir_lift`, `isa_oracle`, library unit tests | interpreted and SMIR-evaluated (`O0`/`O2`); native host JIT lowering is not enabled |
 
 This matrix describes machines. [Linux process execution](#user-mode-linux-program-status)
 is a separate path for x86-64, AArch64, RV64, and partial i386 and ARM EABI compatibility;
@@ -119,6 +120,21 @@ TOML exposes profile selectors for AArch64, AArch32, Cortex-M, and Cortex-R. The
 - The runnable machine does not provide a complete privileged architecture or Sv39 Linux platform.
 - Vector comparison must state VLEN/ELEN assumptions, tested LMUL/SEW combinations, masking/tail policy, exception behavior, and QEMU version when claiming breadth.
 - Native tests are host-specific and may self-gate.
+
+## eBPF and Solana SBPF status
+
+### Established eBPF and Solana SBPF surfaces
+
+- direct decoder (`src/isa/ebpf/decode.rs`), canonical disassembler (`src/isa/ebpf/disasm.rs`), interpreter (`EbpfCpu`), `VCpu` adapter (`EbpfVcpu`), and Solana 4 GiB segmented virtual-memory mapping (`SbpfMemoryMapping`) are implemented across `EbpfDialect::Rfc9669` (little- and big-endian) and `EbpfDialect::SolanaSbpf(SbpfVersion::V0..=V4)`;
+- `EbpfLifter` (`src/smir/lift/ebpf/`) lifts RFC 9669 and Solana `SBPF` (`V0`–`V4`) instructions and functions into SMIR;
+- `ebpf_smir_lift` and `ebpf_diff` are registered integration-test targets verifying direct vs SMIR (`O0`/`O2`) vs specification reference evaluator parity and `llvm-mc -triple=bpfel` / `bpfeb` encoding/disassembly agreement;
+- `rax_isa_oracle` exposes `--arch ebpf` and `--arch sbpf` with mode flags `le`/`be` and `rfc9669`/`sbpf-v0..=sbpf-v4`.
+
+### Required eBPF and Solana SBPF qualifications
+
+- `llvm-mc` disassembly comparison in `ebpf_diff` self-skips if `llvm-mc` is absent from `PATH` and common LLVM installation prefixes; inspect test output to confirm `llvm-mc` was found.
+- Native host JIT lowering is not enabled for `SourceArch::Ebpf`.
+- Legacy BPF packet-offset loads (`BPF_ABS`/`BPF_IND`) are rejected at decode time per RFC 9669 §4.3.
 
 ## User-mode (Linux program) status
 

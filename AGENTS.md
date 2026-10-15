@@ -241,6 +241,7 @@ and callers before changing an interface.
 | `src/isa/arm/` | AArch64, AArch32/Thumb, and Cortex-M decode/CPU semantics |
 | `src/isa/riscv/` | RISC-V decode, CPU, memory, FP, compressed, crypto, CSR semantics |
 | `src/isa/hexagon/` | Hexagon packet decode, CPU, generated opcodes, scalar/HVX semantics |
+| `src/isa/ebpf/` | eBPF (RFC 9669) and Solana SBPF (V0–V4) decode, disasm, CPU, and segmented memory semantics |
 | `src/smir/ir/` | IR structure, operation taxonomy, types, flags, context, memory contracts |
 | `src/smir/lift/` | Per-ISA machine-code-to-SMIR lifting |
 | `src/smir/interpret/` | Canonical SMIR interpretation |
@@ -301,6 +302,7 @@ the exact guest frontier.
 | AArch32/Thumb semantics | `src/isa/arm/aarch32/`, `src/isa/arm/decoder/{aarch32,thumb}.rs` | `src/smir/lift/{aarch32,thumb}.rs`, ARM differential tests |
 | RISC-V semantics | `src/isa/riscv/` | `src/smir/lift/riscv/`, lift/differential/JIT tests |
 | Hexagon semantics | `src/isa/hexagon/` | `src/smir/lift/hexagon/`, packet/HVX differential tests |
+| eBPF / Solana SBPF semantics | `src/isa/ebpf/` | `src/smir/lift/ebpf/`, `tests/suites/smir/lift/ebpf.rs`, `tests/suites/differential/ebpf/main.rs` |
 | Backend contract | `src/backend/`, `src/vm/vcpu/` | state conversion, exits, snapshots, API consumers |
 | VM or boot flow | `src/vm/runtime.rs`, `src/machine/` | devices, fixtures, machine tests, README examples |
 | Device | `src/devices/` | machine maps/wiring, IRQ path, MMIO/PIO tests |
@@ -542,7 +544,36 @@ A-profile implementation merely because both execute Thumb encodings.
   change surfaces. A generated decode entry without semantic and differential
   coverage is incomplete.
 
-### 8.11 Devices and VM runtime
+### 8.11 eBPF and Solana SBPF semantics
+
+- Make the dialect (`EbpfDialect::Rfc9669` vs `EbpfDialect::SolanaSbpf(SbpfVersion::V0..=V4)`)
+  and byte order (`Endian::Little` vs `Endian::Big`) explicit in decode,
+  execution, SMIR lifting, oracle queries, and tests.
+- Preserve endian-dependent register nibble layout (`dst_reg` in low 4 bits on
+  little-endian and high 4 bits on big-endian), `off` and `imm` byte order,
+  memory access endianness, and `BPF_END` (`TO_LE`, `TO_BE`, `BSWAP`) behavior.
+- Validate 128-bit `LDDW` wide instructions completely, including continuation
+  slot invariants (`opcode == 0`, `dst_reg == 0`, `src_reg == 0`, `offset == 0`)
+  and rejects for truncated or jumped-into second slots.
+- Enforce `R10` frame-pointer read-only constraints in `Rfc9669` and
+  `SbpfVersion::V0..=V1`, while allowing dynamic stack frame adjustments
+  (`ADD64_IMM r10, imm`) in `SbpfVersion::V2..=V4`.
+- Distinguish `Rfc9669` untyped division/modulo semantics (division by zero sets
+  `dst = 0`, modulo by zero leaves `dst` unchanged, signed `MIN / -1` wraps to
+  `MIN` and `MIN % -1` produces `0` without trapping) from Solana `SBPF`
+  trapping division/remainder semantics (`DivisionByZero`, `DivideOverflow`).
+- Preserve Solana `SBPF` version-gated behavior: `V0`/`V1` 32-bit `ALU32`
+  sign-extension vs zero-extension rules, `V2` swapped `SUB_IMM` operand order
+  (`dst = imm - dst`), `V2` `PQR` class (`LMUL32/64`, `UHMUL64`, `SHMUL64`,
+  `UDIV32/64`, `UREM32/64`, `SDIV32/64`, `SREM32/64`), `V2` relocated load/store
+  opcodes (`0xX2`/`0xX3`/`0xX7`/`0xX8`/`0xXC`/`0xXD`), `HOR64_IMM`, and
+  `V3`/`V4` `JMP32`.
+- Model `SbpfMemoryMapping` 4 GiB segmented regions (`0x100000000` program/RODATA,
+  `0x200000000` stack with V0/V1 4 KiB frame gaps vs V2+ contiguous stack,
+  `0x300000000` heap, `0x400000000` input) and test unmapped, read-only, and
+  unaligned fault paths.
+
+### 8.12 Devices and VM runtime
 
 For a device or machine change:
 
@@ -558,7 +589,7 @@ For a device or machine change:
 - Treat boot fixtures and guest binaries as inputs with provenance, not opaque
   blobs to replace incidentally.
 
-### 8.12 Public Rust and C ABI
+### 8.13 Public Rust and C ABI
 
 For public Rust changes, inspect compatibility re-exports in `src/lib.rs` and
 downstream use in `capi`, examples, and tests.
@@ -785,7 +816,7 @@ as well:
   an unrelated file-wide restyle.
 - In the C API headers, retain four-space member indentation, include guards,
   fixed-width integer types, `rax_*` type/function names, and `RAX_*` constants.
-  Preserve the `extern "C"` boundary and section 8.12's ABI contracts. In the
+  Preserve the `extern "C"` boundary and section 8.13's ABI contracts. In the
   C++ wrapper, retain namespace `rax`, `UpperCamelCase` types, existing
   `camelCase` methods, same-line opening braces, and the established status,
   exception, and RAII interfaces. Follow `capi/include/rax.h` and
@@ -957,6 +988,9 @@ Use the strongest independent oracle available:
 - AArch64/AArch32: native EL0 where supported, otherwise QEMU user-mode and
   architecture specification.
 - RISC-V and Hexagon: QEMU/toolchain oracle plus the relevant ISA manual.
+- eBPF and Solana SBPF: LLVM MC (`llvm-mc -triple=bpfel` / `bpfeb`) for
+  encoding/disassembly plus the RFC 9669 / Anza `sbpf` specification reference
+  evaluator (`docs/specifications/ebpf/`).
 - Direct-vs-SMIR and interpreter-vs-JIT comparisons are essential parity tests,
   but they are not independent architectural oracles.
 
@@ -984,6 +1018,7 @@ changes.
 | AArch64/AArch32 semantics | `arm`, `arm_vfp_a32` as applicable | `arm_diff`, `arm_diff32` with native/QEMU oracle |
 | RISC-V | `riscv_smir_lift`, affected library tests | `riscv_diff`, `riscv_vector`, `riscv_smir_x86_jit`, `riscv_smir_aarch64_jit`, `riscv_boot` |
 | Hexagon | `hexagon_smir_lift`, affected library tests | `hexagon_diff`, `hexagon_cf_diff`, `hexagon_float_diff`, `hexagon_mem_diff`, `hexagon_hvx_diff`, `hexagon_hvx_mem_diff` |
+| eBPF / Solana SBPF | `ebpf_smir_lift`, affected library tests | `ebpf_diff`, `isa_oracle` |
 | KVM backend | `kvm_minimal` | `differential`, `diff_fuzz`, release build on Linux x86-64 with `/dev/kvm` |
 | PC/machine boot | `realmode_boot` or owning machine target | `microkernel_multiarch`, relevant boot fixture |
 | Linux user mode | `user_linux`, library `user::` tests | `user_linux -- --ignored` with `RAX_USER_DOCKER_ORACLE=1`; the x86-64 user-mode tests on an x86-64 host for JIT invalidation |
@@ -1189,6 +1224,8 @@ when available. Primary repository references include:
   `docs/specifications/riscv/`
 - Hexagon manuals:
   `docs/architecture/hexagon/`
+- eBPF (RFC 9669 / Linux kernel) and Solana SBPF specifications:
+  `docs/specifications/ebpf/`
 - SMIR implementation contract:
   current `src/smir/`, with derived documentation under
   `docs/specifications/smir/`

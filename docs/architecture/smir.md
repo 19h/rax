@@ -8,8 +8,8 @@ SMIR—Sigma Machine IR—is the shared intermediate representation between gues
 x86-64 ─┐
 AArch64 ├──► architecture lifter ─► SMIR module/block/op
 Hexagon ┤                              │
-RISC-V ─┘                              ├──► SMIR interpreter
-                                       ├──► optimizer
+RISC-V  ┤                              ├──► SMIR interpreter
+eBPF   ─┘                              ├──► optimizer
                                        └──► native lowering
                                               ├── x86-64 host
                                               └── AArch64 host
@@ -39,7 +39,8 @@ Each architecture-specific lifter translates a decoded guest instruction or regi
 - x86-64 supplies the production hot-region path and newer vector/APX-specific lifting work;
 - AArch64 supplies scalar, control-flow, floating-point, and expanding NEON lifting, with selected native AArch64 validation;
 - Hexagon has broad scalar/HVX lift coverage tested against its interpreter;
-- RISC-V has broad scalar, FP, vector, CSR, bit-manipulation, and crypto lift coverage tested against its interpreter.
+- RISC-V has broad scalar, FP, vector, CSR, bit-manipulation, and crypto lift coverage tested against its interpreter;
+- eBPF (`src/smir/lift/ebpf/`) lifts IETF RFC 9669 (little- and big-endian) and Solana `SBPF` (`V0`–`V4`) instructions and functions into SMIR, tested against `EbpfCpu` and the specification reference evaluator at `O0` and `O2`.
 
 “Lift complete” is only defensible when an executable source/manifest inventory defines the finite instruction set and the lift target rejects no reachable implemented instruction in that set.
 
@@ -145,6 +146,10 @@ RISC-V uses cache-keyed straight-line regions over the architectural state objec
 ## Hexagon lifting
 
 Hexagon scalar/HVX instructions are lifted and interpreted through SMIR in the dedicated lift suite. Packet semantics impose an additional obligation: the lifted representation must preserve packet-old reads, forwarding, and packet-end commit rather than treating the packet as an ordinary sequential list.
+
+## eBPF and Solana SBPF lifting
+
+eBPF and Solana `SBPF` instructions are lifted through `EbpfLifter` (`src/smir/lift/ebpf/`) into SMIR blocks and functions over `SourceArch::Ebpf` (`EbpfReg::R0..=R10`, `EbpfReg::Pc`). The lifter preserves dialect-specific division/modulo sanitization (RFC 9669 non-trapping zero/overflow vs Solana `SBPF` trapping division/remainder), Solana `SBPF` `V0`–`V4` `ALU32` sign/zero-extension rules, `V2` `SUB_IMM` operand order, `PQR` 64×64→128-bit high multiplication (`UHMUL64`/`SHMUL64`), and `BPF_ATOMIC` read-modify-write operations. The lifted representation is verified at both `OptLevel::O0` and `OptLevel::O2` in `ebpf_smir_lift` and `ebpf_diff`.
 
 ## Self-modifying code and cache identity
 

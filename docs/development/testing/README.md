@@ -58,6 +58,8 @@ cargo test --release --test differential case_name -- --exact --nocapture
 | `ci_actions_pinned` | `tests/suites/tooling/ci_actions_pinned.rs` | CI supply-chain invariant |
 | `diff_fuzz` | `tests/suites/differential/x86_64/fuzz.rs` | randomized x86/KVM/SMIR differential |
 | `differential` | `tests/suites/differential/x86_64/kvm.rs` | x86 KVM differential |
+| `ebpf_diff` | `tests/suites/differential/ebpf/main.rs` | eBPF (RFC 9669) and Solana SBPF (V0–V4) reference and `llvm-mc` differential |
+| `ebpf_smir_lift` | `tests/suites/smir/lift/ebpf.rs` | eBPF and Solana SBPF lift/IR interpretation (`O0` and `O2`) |
 | `hexagon_bare_metal` | `tests/suites/machine/hexagon_baremetal/boot.rs` | Hexagon machine boot |
 | `hexagon_cf_diff` | `tests/suites/differential/hexagon/control_flow.rs` | Hexagon control flow |
 | `hexagon_diff` | `tests/suites/differential/hexagon/scalar.rs` | Hexagon scalar differential |
@@ -115,6 +117,7 @@ This table is an interface: changing a target name breaks CI and developer comma
 | Hexagon HVX | `hexagon_hvx_diff` and/or `hexagon_hvx_mem_diff` | packet/SMIR tests |
 | RISC-V scalar | `riscv_diff` | `riscv_boot`, `riscv_smir_lift`, host JIT target if admitted |
 | RVV | `riscv_vector` | lift and both host-JIT targets where supported |
+| eBPF / Solana SBPF | `ebpf_smir_lift`, `ebpf_diff` | `isa_oracle`, library `isa::ebpf` unit tests |
 | SMIR optimizer | affected lift test plus native target | O0/O2 differential corpus and fallback counters |
 | native x86 lowerer | `smir_jit_vcpu`, relevant EVEX test | runtime `RAX_JIT_VERIFY=1`, benchmark and SMC cases |
 | native AArch64 lowerer | `aarch64_smir_native` or cross-host target | run on actual AArch64 host; fallback/flags cases |

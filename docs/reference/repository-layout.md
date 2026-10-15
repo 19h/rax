@@ -102,6 +102,7 @@ Architecture homes:
 - Arm-family directories under `src/isa/`
 - Hexagon directories under `src/isa/`
 - RISC-V directories under `src/isa/`
+- `src/isa/ebpf/`
 
 Use the owning architecture’s existing category structure rather than creating a cross-ISA “miscellaneous instructions” directory.
 

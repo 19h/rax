@@ -4,10 +4,10 @@
 </h1>
 
 <p align="center">
-  A Rust CPU emulator and virtual-machine monitor for inspecting guest execution across x86-64, Arm, Qualcomm Hexagon, and RISC-V.
+  A Rust CPU emulator and virtual-machine monitor for inspecting guest execution across x86-64, Arm, Qualcomm Hexagon, RISC-V, and eBPF / Solana SBPF.
 </p>
 
-`rax` contains software execution engines for x86-64, AArch64/AArch32, Qualcomm Hexagon, and RV64. Its x86-64 and AArch64 machines have Linux boot paths; Hexagon and RISC-V currently run bare-metal programs. Supported regions can be lifted into SMIR and, when an exact host-specific admission contract is satisfied, executed as native code on x86-64 or AArch64 hosts.
+`rax` contains software execution engines for x86-64, AArch64/AArch32, Qualcomm Hexagon, RV64, and eBPF / Solana SBPF (`V0`–`V4`). Its x86-64 and AArch64 machines have Linux boot paths; Hexagon and RISC-V currently run bare-metal programs; eBPF and Solana SBPF programs execute in direct and SMIR-lifted VM/contract contexts. Supported regions can be lifted into SMIR and, when an exact host-specific admission contract is satisfied, executed as native code on x86-64 or AArch64 hosts.
 
 `rax-user` runs Linux user-space ELF programs on Linux or macOS without booting a guest kernel. The Linux personality implements process and thread creation, signals, file and socket I/O, IPC, memory controls, and guest process tracing for x86-64, AArch64, and RV64. ELF32 i386 compatibility tasks use the x86 core in compatibility mode with a partial 32-bit syscall table. This process execution path is independent of the machine boot paths.
 
@@ -48,6 +48,7 @@ Continue with [Getting started](docs/getting-started/overview.md) for host prere
 | **AArch64 / AArch32 / Thumb / Cortex-M/R** | software Arm cores; AArch64 HVF on Apple Silicon; selected AArch64-host native lowerers | AArch64 Linux virtual machine, DT-based and profile-specific 32-bit paths, SoC and microcontroller work | native AArch64 EL0 or QEMU comparisons, generated Arm cases, machine tests, microkernel, SMIR tests | AArch64 Linux is established; no general AArch32 Linux-to-shell result is claimed |
 | **Qualcomm Hexagon** | packet-aware software emulator | bare-metal ELF machine with UART/halt integration | scalar, control-flow, floating-point, memory, HVX, HVX-memory, bare-metal, and lift targets | public ISA selector currently ends at `v69`; no general-purpose OS machine |
 | **RISC-V RV64** | software emulator; selected state-backed SMIR/native paths | bare-metal ELF machine with UART/halt integration | scalar and vector QEMU comparisons, boot test, lift tests, x86-64/AArch64-host native tests | no complete privileged architecture or Sv39 Linux-capable machine |
+| **eBPF / Solana SBPF (`V0`–`V4`)** | software emulator (`EbpfCpu`, `EbpfVcpu`); SMIR lift and `O0`/`O2` interpretation (`EbpfLifter`) | RFC 9669 (LE/BE) and Solana `SBPF` (`V0`–`V4`) programs with 4 GiB segmented memory (`SbpfMemoryMapping`) and static oracle analysis | `ebpf_diff` (reference evaluator + `llvm-mc`), `ebpf_smir_lift`, `isa_oracle`, library unit tests | interpreted and SMIR-evaluated; native host JIT lowering is not enabled for `SourceArch::Ebpf` |
 | **Linux programs (`rax-user`)** | x86-64, AArch64, and RV64 software CPUs; partial i386 and ARM EABI compatibility; admitted x86-64 regions and optional RV64 JIT | static and dynamic ELF programs, threads and child processes, guest `ptrace` | Linux-source-derived unit tests, recorded syscall fixtures and whole-program comparisons, CLI and host-signal tests | Linux/macOS hosts; one emulated CPU per process; per-ABI syscall and host-resource limits |
 
 The source and executable tests define current implementation state. The detailed pages below explain what is present, what is publicly selectable, what has a registered test, what can self-skip, and what remains unsupported.
@@ -72,6 +73,7 @@ This root `README.md` is the **single complete documentation entrypoint**. There
 - [Arm architecture](docs/architecture/arm/README.md) — public profiles, AArch64, AArch32, Thumb, Cortex-M/R, AdvSIMD/VFP, SVE-family work, machines, differential tests, and limitations.
 - [Hexagon architecture](docs/architecture/hexagon/README.md) — public revisions, packet commit, `.new` forwarding, predicates/loops, scalar and HVX state, bare-metal loading, oracle targets, and SMIR.
 - [RISC-V architecture](docs/architecture/riscv/README.md) — scalar, compressed, atomic, floating-point, bit-manipulation, crypto, RVV, bare-metal machine, QEMU comparisons, SMIR/native paths, and privileged boundary.
+- [eBPF and Solana SBPF architecture](docs/architecture/ebpf/README.md) — RFC 9669 (LE/BE) and Solana `SBPF` (`V0`–`V4`) dialects, segmented memory mapping, SMIR lifting, oracle modes, and differential testing.
 - [User-mode emulation](docs/architecture/user-mode.md) — concise execution overview and focused references for memory, ABI/loading, processes, signals, files, I/O, networking/IPC, and tracing.
 - [Machines and boot](docs/architecture/machines.md) — image detection, x86 direct/legacy boot, AArch64 virtual platform, 32-bit Arm and SoC selection, Hexagon/RISC-V machines, memory, command lines, and restore construction.
 - [Devices and platform wiring](docs/architecture/devices.md) — baseline PC devices, optional PCI attachment, interrupts, serial/VGA boundary, AArch64 and 32-bit Arm devices, bare-metal peripherals, checkpoints, and validation stages.
@@ -136,6 +138,7 @@ cargo test --release --test differential
 cargo test --release --test arm_diff
 cargo test --release --test hexagon_hvx_diff
 cargo test --release --test riscv_diff
+cargo test --release --test ebpf_diff
 
 # Linux process emulation against checked-in Linux recordings.
 cargo test --release --locked --no-default-features --features smir-jit --test user_linux

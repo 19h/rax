@@ -37,6 +37,8 @@ listed below is declared explicitly with a `[[test]]` entry in the root
 | `ci_actions_pinned` | `suites/tooling/ci_actions_pinned.rs` |
 | `diff_fuzz` | `suites/differential/x86_64/fuzz.rs` |
 | `differential` | `suites/differential/x86_64/kvm.rs` |
+| `ebpf_diff` | `suites/differential/ebpf/main.rs` |
+| `ebpf_smir_lift` | `suites/smir/lift/ebpf.rs` |
 | `hexagon_bare_metal` | `suites/machine/hexagon_baremetal/boot.rs` |
 | `hexagon_cf_diff` | `suites/differential/hexagon/control_flow.rs` |
 | `hexagon_diff` | `suites/differential/hexagon/scalar.rs` |
