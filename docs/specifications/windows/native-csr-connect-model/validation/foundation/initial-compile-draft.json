@@ -1,0 +1,16 @@
+{
+  "result": "compile101;2errors;no tests executed",
+  "source-files": [
+    {
+      "path": "src/user/windows/memory/shared_section.rs",
+      "bytes": 5860,
+      "sha256": "45b9218716dd8b8c72b9d4c9ff0bd78baa3f50b88bbe5da3055316c40013a716"
+    },
+    {
+      "path": "src/user/windows/objects/lpc/tests.rs",
+      "bytes": 9307,
+      "sha256": "538e3aff5eb8767efdcaaafffd403d21225cc555801bd61a6b6851e65ddff612"
+    }
+  ],
+  "corrections": "reference constant pattern and explicit Mem trait import"
+}

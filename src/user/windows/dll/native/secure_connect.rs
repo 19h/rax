@@ -9,9 +9,11 @@ use crate::user::windows::object_namespace::LookupError;
 
 /// Bound transient caller-data probing separately from any server capacity.
 const MAX_INFORMATION_BYTES: u64 = 1 << 20;
+mod csr;
 
 struct Capture {
     out: u64,
+    qos: u64,
     name: Option<(u16, u64)>,
     client: u64,
     client_length: Option<u32>,
@@ -77,6 +79,7 @@ fn capture(c: &mut Ctx) -> Result<Capture, ApiErr> {
     };
     Ok(Capture {
         out,
+        qos,
         name,
         client,
         client_length,
@@ -100,7 +103,13 @@ fn checked(c: &mut Ctx) -> ApiResult {
     // The measured WoW64 adapter stores a zero 32-bit HANDLE after a reached
     // native failure, including SID/data faults. Early wrapper faults above
     // leave the caller's bytes unchanged. Unsupported paths publish no output.
-    if c.arch() == WinArch::X86 && !matches!(&result, Err(ApiErr::Unimplemented(_))) {
+    if c.arch() == WinArch::X86
+        && !matches!(&result, Err(ApiErr::Unimplemented(_)))
+        && !matches!(
+            &result,
+            Ok(Flow::Ret(crate::user::windows::hle::Value::Int(0)))
+        )
+    {
         c.mem().w32(request.out, 0)?;
     }
     result
@@ -183,8 +192,11 @@ fn resolve(c: &mut Ctx, request: &Capture) -> ApiResult {
         Err(LookupError::Unselected) => {
             Err(c.unsupported("NtSecureConnectPort namespace or intermediate target is unselected"))
         }
-        Ok(()) => Err(c.unsupported(
-            "NtSecureConnectPort requires a selected guest server and owned shared views",
-        )),
+        Ok(()) => match c.p.object_namespace.csr_server(&name) {
+            Ok(server) => csr::connect(c, request, server),
+            Err(_) => Err(c.unsupported(
+                "NtSecureConnectPort requires a matched selected guest server and owned shared views",
+            )),
+        },
     }
 }

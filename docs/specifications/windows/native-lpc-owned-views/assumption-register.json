@@ -1,0 +1,29 @@
+[
+  {
+    "id": "S1",
+    "assumption": "Shared pagefile handles and their duplicated views retain the same Arc<SharedObject> identity; file-backed section aliases are outside this admitted constructor profile.",
+    "basis": "current unnamed pagefile constructor stores a single Arc shared by duplicated handles; native controls use one section for both endpoints",
+    "dependent-result": "deduplicated backing commitment across aliases",
+    "stress-test": "multiple overlapping views, section handle close, partial unmap and allocation reuse",
+    "falsification-probe": "separate admitted Arc identities reference the same pagefile object or a duplicate view incurs an extra physical backing charge",
+    "status": "retained"
+  },
+  {
+    "id": "S2",
+    "assumption": "Port view cleanup follows the final local handle, even if other object references remain; explicit unmap must prevent stale cleanup of a replacement.",
+    "basis": "30 independently inspected private LPC native cases;126closes,60released views and6private replacements preserved/freed",
+    "dependent-result": "typed endpoint last-handle hooks and generation tokens",
+    "stress-test": "duplicate-close-source, protected close, process drain, explicit unmap/private or mapped reuse",
+    "falsification-probe": "one endpoint close retires the peer view, internal refs defer local cleanup, or stale cleanup touches replacement",
+    "status": "retained"
+  },
+  {
+    "id": "S3",
+    "assumption": "Selected CSR reply metadata must match the selected section and session; native CSR pointers are opaque server addresses and never dereferenced in guest VM construction.",
+    "basis": "independent native first-call and own-PEB metadata relationships at statics offset0x750; nonzero sessions currently unknown",
+    "dependent-result": "selected guest CSR endpoint admission",
+    "stress-test": "mismatched capture/session/section,32bit address fit and snapshot lifetime",
+    "falsification-probe": "successful connection combines metadata from different section/session identities or forwards guest pointers to host",
+    "status": "retained"
+  }
+]

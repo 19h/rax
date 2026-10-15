@@ -1,0 +1,38 @@
+﻿[
+    {
+        "gate":  "focused",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib secure_connect -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-csr-model-focused.log"
+    },
+    {
+        "gate":  "lpc",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib lpc_ -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-csr-model-lpc.log"
+    },
+    {
+        "gate":  "full",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib -- --nocapture",
+        "exit-code":  101,
+        "log":  "native-csr-model-full.log"
+    },
+    {
+        "gate":  "capi",
+        "command":  "cargo.exe test --locked --offline --no-default-features -p rax-capi -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "native-csr-model-capi.log"
+    },
+    {
+        "gate":  "all-targets",
+        "command":  "cargo.exe check --locked --offline --no-default-features --all-targets",
+        "exit-code":  0,
+        "log":  "native-csr-model-all-targets.log"
+    },
+    {
+        "gate":  "integration",
+        "command":  "cargo.exe test --locked --offline --no-default-features --test user_windows --test user_windows_memory -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-csr-model-integration.log"
+    }
+]

@@ -4,7 +4,7 @@ use crate::user::windows::{
     loader::{self, SymRef},
     process::{WindowsConfig, WindowsProcess},
 };
-fn leaf(p: &mut Proc, t: &mut Thread, name: &str, args: &[u64]) -> u32 {
+pub(super) fn leaf(p: &mut Proc, t: &mut Thread, name: &str, args: &[u64]) -> u32 {
     let m = loader::load_dll(p, "ntdll.dll").unwrap();
     let entry = loader::lookup(p, m, &SymRef::Name(name.as_bytes().to_vec(), None))
         .unwrap()

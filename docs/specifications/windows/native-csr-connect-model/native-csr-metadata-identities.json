@@ -1,0 +1,69 @@
+{
+  "utc": "2026-10-15T15:59:14.162514+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "producers": [
+    {
+      "kind": "csr-readonly-metadata",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\csr-readonly-metadata-arm64\\native-csr-readonly-metadata.cpp",
+        "bytes": 3099,
+        "sha256": "e7b4a8fa4c9d9c5fe05d048223e203ffd0719df31c627dc67d2a977062405f4b"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\csr-readonly-metadata-arm64\\native-csr-readonly-metadata-arm64.exe",
+        "bytes": 146432,
+        "sha256": "9daf5beec94f9a247868f85b8a7bdd9b6c5fc9492ddec90dec0738e8f67c1951",
+        "machine": 43620
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\csr-readonly-metadata-arm64\\native-csr-readonly-metadata-arm64.log",
+        "bytes": 5022,
+        "sha256": "0582ee3000d991e074d6194008ab61c5be4471d361d6571cfda3c4cd3f9521b7"
+      },
+      "client-shared-base": 140687530131456,
+      "client-statics-base": 140687530133328,
+      "static-offset": 1872,
+      "server-shared-base": 140694362259456,
+      "server-base-peb-offset": 896,
+      "getter-code-sha256": "fb5e6979d6c3c3f1a57547f4c7c01f8d49974d9042860c97fe30df41da7ed27a"
+    },
+    {
+      "kind": "csr-readonly-metadata2",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\csr-readonly-metadata2-arm64\\native-csr-readonly-metadata2.cpp",
+        "bytes": 3425,
+        "sha256": "e5de1967ccd3e0596453f923125ab3cca137f34c9a61f774a969716cf01461d0"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\csr-readonly-metadata2-arm64\\native-csr-readonly-metadata2-arm64.exe",
+        "bytes": 146432,
+        "sha256": "01c98a790538f95ddc5f8d35643dfbd2bcc118344307c88a4cf3218d8453c524",
+        "machine": 43620
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\csr-readonly-metadata2-arm64\\native-csr-readonly-metadata2-arm64.log",
+        "bytes": 5047,
+        "sha256": "975bf3f28d36404974754fe1b6e15baf641ceac0518cce3bccc603e7e09ad0e2"
+      },
+      "client-shared-base": 140686194704384,
+      "client-statics-base": 140686194706256,
+      "static-offset": 1872,
+      "server-shared-base": 140694362259456,
+      "server-base-peb-offset": 896,
+      "getter-code-sha256": "fb5e6979d6c3c3f1a57547f4c7c01f8d49974d9042860c97fe30df41da7ed27a",
+      "server-pid": 840
+    }
+  ],
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-csr-metadata.py",
+    "bytes": 4261,
+    "sha256": "3dba388a050f125106d2af57cb994e010bf33a7c3f5c67dfb298a9d3fa13c960"
+  },
+  "scope": "actual ARM64 kernel29683 selected runtime only; captured addresses are evidence,not constants; no emulated success"
+}

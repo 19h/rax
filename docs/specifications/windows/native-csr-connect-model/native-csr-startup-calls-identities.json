@@ -1,0 +1,37 @@
+{
+  "utc": "2026-10-15T20:05:10.321709+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "source": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\csr-startup-calls-arm64\\native-csr-startup-calls.cpp",
+    "bytes": 14694,
+    "sha256": "d19ec5a559ee76e0ba02f6d934a223937eb7bff9099bc4dfe5b773ade95d2f8b"
+  },
+  "executable": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\csr-startup-calls-arm64\\native-csr-startup-calls-arm64.exe",
+    "bytes": 182272,
+    "sha256": "1d125f97f283731ebbcb3af610f38aac0a0d79cb7dbf1a316275ae83f814e1f1",
+    "machine": 43620,
+    "characteristics": 34
+  },
+  "stdout": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\csr-startup-calls-arm64\\native-csr-startup-calls-arm64.log",
+    "bytes": 9730,
+    "sha256": "816ae901a1821bd4b2fc5afd45e74638606a709c20cea520bbb94acae900329f"
+  },
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-csr-startup-calls.py",
+    "bytes": 2705,
+    "sha256": "7417502295909c8fce55b7526d5b15aa4f363387795cf2b6ab746a959d0e9a28"
+  },
+  "entered": 1,
+  "returned": 1,
+  "native-child-exit": 41,
+  "ordinary-emulated-exits": 0,
+  "scope": "four monitored main-thread native entry points; absence is bounded to those entry points and this natural owned child startup"
+}

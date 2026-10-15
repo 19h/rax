@@ -1,0 +1,62 @@
+{
+  "recorded-utc": "2026-10-15T15:50:45.756476+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-secure-connect-current.py",
+    "bytes": 3969,
+    "sha256": "8b1cdbdec77fe4a7517d4c6f17823ed43076eabcab8a519b902a270ade3366b4"
+  },
+  "producers": [
+    {
+      "kind": "secure-connect-first-call",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\secure-connect-first-call-arm64\\native-secure-connect-first-call.cpp",
+        "bytes": 13447,
+        "sha256": "d5231391dbd2b68ee1c7359be933e8a4f7cb288713e63185edbd0d13362e0a04"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\secure-connect-first-call-arm64\\native-secure-connect-first-call-arm64.exe",
+        "bytes": 168448,
+        "sha256": "cb6fbf7033fa2a50dc86bf0ec64714473173123005263f89b94141fd064a358b",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\secure-connect-first-call-arm64\\native-secure-connect-first-call-arm64.log",
+        "bytes": 3429,
+        "sha256": "1bc80dd5b2d20f35a99e2f11e510251c51e834e5d9ccd15a4552f4832f70cfce"
+      },
+      "native-child-exit": 41
+    },
+    {
+      "kind": "secure-connect-first-call2",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\secure-connect-first-call2-arm64\\native-secure-connect-first-call2.cpp",
+        "bytes": 13363,
+        "sha256": "8d9fb463dd33618e8e1b2e1f0358d952e604220044f463bee96237c8417bb8d3"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\secure-connect-first-call2-arm64\\native-secure-connect-first-call2-arm64.exe",
+        "bytes": 168448,
+        "sha256": "fd62cfd30d08ac0045d5db0b7aeced0cca53cb3e47cc644dd1b499b5fb45d2dd",
+        "machine": 43620,
+        "characteristics": 34
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\secure-connect-first-call2-arm64\\native-secure-connect-first-call2-arm64.log",
+        "bytes": 3479,
+        "sha256": "4e8914f441bb33e67fb1a823ffd0e58e84f7edea49e9a6b812f0f1db431630eb"
+      },
+      "native-child-exit": 41
+    }
+  ],
+  "ordinary-emulated-exits": 0
+}

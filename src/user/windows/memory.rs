@@ -38,8 +38,10 @@ mod scheduler;
 mod section;
 #[cfg(test)]
 mod section_tests;
+mod shared_section;
 pub use extended::AddressRequirements;
 pub(crate) use scheduler::SchedulerView;
+pub(crate) use shared_section::SharedViewOwner;
 
 /// `SYSTEM_INFO.dwAllocationGranularity`.
 pub const ALLOCATION_GRANULARITY: u64 = 0x1_0000;
@@ -590,6 +592,7 @@ pub struct VirtualMemory {
     nls_views: BTreeSet<u64>,
     section_views: BTreeMap<u64, section::SectionView>,
     data_views: BTreeMap<u64, data_section::DataView>,
+    shared_views: shared_section::SharedViews,
     section_low_placements: BTreeMap<usize, section::LowPlacement>,
     default_low_image_placement: Option<u64>,
     /// Backing bytes promised for committed pages. No guest paging file
@@ -621,6 +624,7 @@ impl VirtualMemory {
             nls_views: BTreeSet::new(),
             section_views: BTreeMap::new(),
             data_views: BTreeMap::new(),
+            shared_views: shared_section::SharedViews::default(),
             section_low_placements: BTreeMap::new(),
             default_low_image_placement: None,
             committed: 0,
@@ -889,7 +893,10 @@ impl VirtualMemory {
     /// requires size zero and the original reservation base. The returned
     /// range reports the full released allocation or rounded decommit range.
     pub fn free(&mut self, base: u64, size: u64, free_type: u32) -> Result<(u64, u64), VmError> {
-        if (self.is_nls_view(base) || self.section_view(base).is_some() || self.is_data_view(base))
+        if (self.is_nls_view(base)
+            || self.section_view(base).is_some()
+            || self.is_data_view(base)
+            || self.is_shared_view(base))
             && matches!(free_type, mem::RELEASE | mem::DECOMMIT)
         {
             return Err(VmError::CannotDeleteSection);
@@ -934,7 +941,10 @@ impl VirtualMemory {
                 VmError::InvalidProtection
             });
         }
-        if self.section_views.contains_key(&a.base) || self.data_views.contains_key(&a.base) {
+        if self.section_views.contains_key(&a.base)
+            || self.data_views.contains_key(&a.base)
+            || self.is_shared_view(a.base)
+        {
             return Err(VmError::AlreadyCommitted);
         }
 
@@ -1010,7 +1020,10 @@ impl VirtualMemory {
         if self.nls_views.contains(&a.base) {
             return Err(VmError::CannotDeleteSection);
         }
-        if self.section_views.contains_key(&a.base) || self.data_views.contains_key(&a.base) {
+        if self.section_views.contains_key(&a.base)
+            || self.data_views.contains_key(&a.base)
+            || self.is_shared_view(a.base)
+        {
             return Err(VmError::CannotDeleteSection);
         }
 
@@ -1080,17 +1093,19 @@ impl VirtualMemory {
             None => return Err(VmError::NotAllocated),
         };
         let size = a.size;
-        let returned: u64 = a
-            .runs(0, size / PAGE_SIZE)
-            .iter()
-            .filter(|(_, _, p)| p.committed)
-            .map(|(lo, hi, _)| (hi - lo) * PAGE_SIZE)
-            .sum();
+        let returned: u64 = self.released_shared_charge(base).unwrap_or_else(|| {
+            a.runs(0, size / PAGE_SIZE)
+                .iter()
+                .filter(|(_, _, p)| p.committed)
+                .map(|(lo, hi, _)| (hi - lo) * PAGE_SIZE)
+                .sum()
+        });
         self.space.unmap(base, size).map_err(mm)?;
         self.allocs.remove(&base);
         self.nls_views.remove(&base);
         self.section_views.remove(&base);
         self.data_views.remove(&base);
+        self.forget_shared_view(base);
         self.committed -= returned;
         Ok(size)
     }
@@ -1105,6 +1120,11 @@ impl VirtualMemory {
         let a = self.allocation(first).ok_or(VmError::NotAllocated)?;
         if self.nls_views.contains(&a.base) && protect != prot::READONLY {
             return Err(VmError::InvalidProtection);
+        }
+        if self.is_shared_view(a.base)
+            && !matches!(protect, prot::NOACCESS | prot::READONLY | prot::READWRITE)
+        {
+            return Err(VmError::NotSupported);
         }
         if self.data_views.contains_key(&a.base) {
             if protect & (prot::NOCACHE | prot::WRITECOMBINE) != 0 {

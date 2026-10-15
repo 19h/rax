@@ -1,0 +1,29 @@
+   Compiling vm-memory v0.17.1 (/Users/int/Library/Caches/assist-process-emulation/csr-server-reply-20261015/rax-source/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/csr-server-reply-20261015/rax-source)
+error[E0594]: cannot assign to data in an `Arc`
+  --> src/user/windows/process/sched/tests/services_tests/secure_connect_csr_tests.rs:48:5
+   |
+48 |     p.cfg.version.major = 10;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^ cannot assign
+   |
+   = help: trait `DerefMut` is required to modify through a dereference, but it is not implemented for `std::sync::Arc<windows::process::WindowsConfig>`
+
+error[E0594]: cannot assign to data in an `Arc`
+  --> src/user/windows/process/sched/tests/services_tests/secure_connect_csr_tests.rs:49:5
+   |
+49 |     p.cfg.version.build = 29683;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot assign
+   |
+   = help: trait `DerefMut` is required to modify through a dereference, but it is not implemented for `std::sync::Arc<windows::process::WindowsConfig>`
+
+error[E0594]: cannot assign to data in an `Arc`
+   --> src/user/windows/process/sched/tests/services_tests/secure_connect_csr_tests.rs:142:18
+    |
+142 |             0 => p.cfg.version.build = 26100,
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot assign
+    |
+    = help: trait `DerefMut` is required to modify through a dereference, but it is not implemented for `std::sync::Arc<windows::process::WindowsConfig>`
+
+For more information about this error, try `rustc --explain E0594`.
+error: could not compile `rax` (lib test) due to 3 previous errors

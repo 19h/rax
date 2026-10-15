@@ -1,0 +1,134 @@
+{
+  "rax": {
+    "Direct decode": {
+      "status": "unaffected",
+      "reason": "No ISA, SMIR, machine or public ABI source changes; Windows process objects and VM metadata consume the existing AddressSpace/Backing::Shared contract."
+    },
+    "Direct execute": {
+      "status": "unaffected",
+      "reason": "No ISA, SMIR, machine or public ABI source changes; Windows process objects and VM metadata consume the existing AddressSpace/Backing::Shared contract."
+    },
+    "CPU state": {
+      "status": "unaffected",
+      "reason": "No ISA, SMIR, machine or public ABI source changes; Windows process objects and VM metadata consume the existing AddressSpace/Backing::Shared contract."
+    },
+    "SMIR lift": {
+      "status": "unaffected",
+      "reason": "No ISA, SMIR, machine or public ABI source changes; Windows process objects and VM metadata consume the existing AddressSpace/Backing::Shared contract."
+    },
+    "SMIR IR": {
+      "status": "unaffected",
+      "reason": "No ISA, SMIR, machine or public ABI source changes; Windows process objects and VM metadata consume the existing AddressSpace/Backing::Shared contract."
+    },
+    "SMIR interpreter": {
+      "status": "unaffected",
+      "reason": "No ISA, SMIR, machine or public ABI source changes; Windows process objects and VM metadata consume the existing AddressSpace/Backing::Shared contract."
+    },
+    "Optimizer": {
+      "status": "unaffected",
+      "reason": "No ISA, SMIR, machine or public ABI source changes; Windows process objects and VM metadata consume the existing AddressSpace/Backing::Shared contract."
+    },
+    "Native lowering": {
+      "status": "unaffected",
+      "reason": "No ISA, SMIR, machine or public ABI source changes; Windows process objects and VM metadata consume the existing AddressSpace/Backing::Shared contract."
+    },
+    "JIT runtime": {
+      "status": "unaffected",
+      "reason": "No ISA, SMIR, machine or public ABI source changes; Windows process objects and VM metadata consume the existing AddressSpace/Backing::Shared contract."
+    },
+    "Backend": {
+      "status": "unaffected",
+      "reason": "No ISA, SMIR, machine or public ABI source changes; Windows process objects and VM metadata consume the existing AddressSpace/Backing::Shared contract."
+    },
+    "Machine/device": {
+      "status": "unaffected",
+      "reason": "No ISA, SMIR, machine or public ABI source changes; Windows process objects and VM metadata consume the existing AddressSpace/Backing::Shared contract."
+    },
+    "Oracle/analysis": {
+      "status": "unaffected",
+      "reason": "No ISA, SMIR, machine or public ABI source changes; Windows process objects and VM metadata consume the existing AddressSpace/Backing::Shared contract."
+    },
+    "C ABI": {
+      "status": "unaffected",
+      "reason": "No ISA, SMIR, machine or public ABI source changes; Windows process objects and VM metadata consume the existing AddressSpace/Backing::Shared contract."
+    },
+    "Memory/MMU": {
+      "status": "affected",
+      "reason": "Guest Windows shared aliases, protections, backing commitment and allocation-generation retirement."
+    },
+    "Tests/docs": {
+      "status": "affected",
+      "reason": "Independent native LPC controls, VM/typed-object tests and future selected CSR replay."
+    },
+    "Targets/platforms": {
+      "status": "affected",
+      "reason": "Shared Windows personality is compiled on all three hosts; native Windows backing mechanics and installed-runtime startup require native execution, Unix hosts require shared-semantic/owning checks."
+    }
+  },
+  "assist": {
+    "Plugin lifecycle": {
+      "status": "unaffected",
+      "reason": "No Assist runtime, schema, UI, SDK or package contract edits; the dependency uses its existing C ABI. Full current-root/plugin/GUI/package validation is not implied by scoped frozen embeddings."
+    },
+    "UI state": {
+      "status": "unaffected",
+      "reason": "No Assist runtime, schema, UI, SDK or package contract edits; the dependency uses its existing C ABI. Full current-root/plugin/GUI/package validation is not implied by scoped frozen embeddings."
+    },
+    "Conversation/lane": {
+      "status": "unaffected",
+      "reason": "No Assist runtime, schema, UI, SDK or package contract edits; the dependency uses its existing C ABI. Full current-root/plugin/GUI/package validation is not implied by scoped frozen embeddings."
+    },
+    "Agent backend": {
+      "status": "unaffected",
+      "reason": "No Assist runtime, schema, UI, SDK or package contract edits; the dependency uses its existing C ABI. Full current-root/plugin/GUI/package validation is not implied by scoped frozen embeddings."
+    },
+    "Prompt/context": {
+      "status": "unaffected",
+      "reason": "No Assist runtime, schema, UI, SDK or package contract edits; the dependency uses its existing C ABI. Full current-root/plugin/GUI/package validation is not implied by scoped frozen embeddings."
+    },
+    "Tool schema": {
+      "status": "unaffected",
+      "reason": "No Assist runtime, schema, UI, SDK or package contract edits; the dependency uses its existing C ABI. Full current-root/plugin/GUI/package validation is not implied by scoped frozen embeddings."
+    },
+    "Permission/mutation": {
+      "status": "unaffected",
+      "reason": "No Assist runtime, schema, UI, SDK or package contract edits; the dependency uses its existing C ABI. Full current-root/plugin/GUI/package validation is not implied by scoped frozen embeddings."
+    },
+    "Main-thread dispatch": {
+      "status": "unaffected",
+      "reason": "No Assist runtime, schema, UI, SDK or package contract edits; the dependency uses its existing C ABI. Full current-root/plugin/GUI/package validation is not implied by scoped frozen embeddings."
+    },
+    "Mesh/MCP": {
+      "status": "unaffected",
+      "reason": "No Assist runtime, schema, UI, SDK or package contract edits; the dependency uses its existing C ABI. Full current-root/plugin/GUI/package validation is not implied by scoped frozen embeddings."
+    },
+    "Transport/crypto": {
+      "status": "unaffected",
+      "reason": "No Assist runtime, schema, UI, SDK or package contract edits; the dependency uses its existing C ABI. Full current-root/plugin/GUI/package validation is not implied by scoped frozen embeddings."
+    },
+    "Persistence": {
+      "status": "unaffected",
+      "reason": "No Assist runtime, schema, UI, SDK or package contract edits; the dependency uses its existing C ABI. Full current-root/plugin/GUI/package validation is not implied by scoped frozen embeddings."
+    },
+    "SDK/ABI": {
+      "status": "unaffected",
+      "reason": "No Assist runtime, schema, UI, SDK or package contract edits; the dependency uses its existing C ABI. Full current-root/plugin/GUI/package validation is not implied by scoped frozen embeddings."
+    },
+    "Update/release": {
+      "status": "unaffected",
+      "reason": "No Assist runtime, schema, UI, SDK or package contract edits; the dependency uses its existing C ABI. Full current-root/plugin/GUI/package validation is not implied by scoped frozen embeddings."
+    },
+    "Optional engines": {
+      "status": "affected",
+      "reason": "Embedded RAX static archive consumes process-emulation VM/object changes; preserve default-features=false and C ABI."
+    },
+    "Targets/platforms": {
+      "status": "affected",
+      "reason": "Require all-three-host RAX configurations plus scoped C++ consumers and static archives; record frozen root identity separately from live root."
+    },
+    "Tests/docs": {
+      "status": "affected",
+      "reason": "Engineering records and submodule pin after completed group; exact native/compiler/source/archive evidence."
+    }
+  }
+}

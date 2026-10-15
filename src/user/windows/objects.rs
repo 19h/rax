@@ -17,6 +17,8 @@ use std::time::Instant;
 
 mod directory;
 mod etw;
+mod lpc;
+pub use lpc::LpcPort;
 mod scheduler;
 pub use scheduler::SchedulerData;
 mod wait_packets;
@@ -164,6 +166,8 @@ pub enum Object {
         /// Construction records it; completion dequeue must enforce it.
         concurrency: u32,
     },
+    /// An emulated LPC communication endpoint with an owned local section view.
+    LpcPort(LpcPort),
     /// An NT wait packet. A new packet is notification-signaled: object waits
     /// do not consume its state. Association services own later transitions.
     WaitCompletionPacket {
@@ -244,6 +248,7 @@ impl Object {
             Object::Mapping { .. } | Object::ImageSection(_) | Object::DataSection(_) => "Section",
             Object::Pipe { .. } => "File",
             Object::CompletionPort { .. } => "IoCompletion",
+            Object::LpcPort(_) => "ALPC Port",
             Object::WaitCompletionPacket { .. } => "WaitCompletionPacket",
             Object::WorkerFactory { .. } => "TpWorkerFactory",
             Object::EtwRegistration { .. } => "EtwRegistration",
@@ -286,6 +291,7 @@ pub struct Objects {
     wnf_subscriptions: wnf::Subscriptions,
     scheduler_bindings: BTreeMap<u32, (ObjId, u32)>,
     retired_scheduler_views: Vec<super::memory::SchedulerView>,
+    retired_lpc_views: Vec<super::memory::SharedViewOwner>,
 }
 
 fn name_key(name: &str) -> String {
@@ -395,7 +401,7 @@ impl Objects {
         if e.refs > 0 {
             return None;
         }
-        let e = self.objs.remove(&id)?;
+        let mut e = self.objs.remove(&id)?;
         if let Some(n) = &e.name {
             self.names.remove(n);
         }
@@ -411,6 +417,7 @@ impl Objects {
             self.forget_wait_packet(id);
         }
         self.retire_scheduler_object(&e.obj);
+        self.retire_lpc_object(&mut e.obj);
         Some(e.obj)
     }
 
@@ -497,6 +504,7 @@ impl Objects {
         }
         self.handles.remove(&key);
         if !self.handles.values().any(|handle| handle.obj == e.obj) {
+            self.retire_lpc_handle(e.obj);
             match self.obj(e.obj) {
                 // An independent object wait can still pin the packet.
                 Some(Object::WaitCompletionPacket { .. }) => self.forget_wait_packet(e.obj),
@@ -562,7 +570,12 @@ impl Objects {
         self.scheduler_bindings.clear();
         // Queue all views eagerly: dropping a partially consumed Drain also
         // removes its remaining objects, without running iterator map closures.
-        for entry in self.objs.values() {
+        for entry in self.objs.values_mut() {
+            if let Object::LpcPort(port) = &mut entry.obj
+                && let Some(view) = port.take_view()
+            {
+                self.retired_lpc_views.push(view);
+            }
             if let Object::SchedulerSharedData { data, .. } = &entry.obj
                 && let Some(view) = &data.view
             {

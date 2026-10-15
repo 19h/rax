@@ -1,0 +1,16 @@
+{
+  "pid": 6344,
+  "utc": "2026-10-15T21:20:03.479726+00:00",
+  "exclusive-lock": "C:\\Windows\\Temp\\assist-native-rax-20261010\\csr-model-owning-epoch3-driver.lock",
+  "child-pid": 2680,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\assist-native-csr-model-owned.ps1"
+  ],
+  "exit-code": 0,
+  "finished-utc": "2026-10-15T21:28:31.878366+00:00"
+}

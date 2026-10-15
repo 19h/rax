@@ -1,0 +1,6 @@
+   Compiling vm-memory v0.17.1 (/work/vendor/rax/vendor/vm-memory)
+   Compiling rax-capi v0.1.2 (/work/vendor/rax/capi)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/work/vendor/rax)
+   Compiling assist-rs v0.1.0 (/work/rust/assist-rs)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1m 56s

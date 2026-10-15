@@ -1,0 +1,20 @@
+[
+  {
+    "impact": "high",
+    "finding": "Selected CSR success and subsequent message services remain incomplete; ordinary Windows guest exits remain0.",
+    "evidence": "original native startup frontier NtSecureConnectPort 0x194 at0x180002980; capture foundation publishes no successful handles",
+    "blocks": "full same-host process goal, not this measured lifecycle foundation"
+  },
+  {
+    "impact": "medium",
+    "finding": "Physical x64 kernel and replacement by a different mapped section were not measured.",
+    "evidence": "native producer PE profiles all run on ARM64 Windows29683; six replacement traces use private allocations",
+    "blocks": "claims about those native cases; model mapped-reuse test is supplementary"
+  },
+  {
+    "impact": "medium",
+    "finding": "Pagefile alias commitment is deduplicated only for the same retained Arc<SharedObject>.",
+    "evidence": "unnamed section constructor retains one Arc; file-backed sections are not admitted by that constructor",
+    "blocks": "general file-backed section identity claim; not the selected pagefile profile"
+  }
+]

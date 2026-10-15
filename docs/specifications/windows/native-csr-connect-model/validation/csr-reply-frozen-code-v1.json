@@ -1,0 +1,56 @@
+{
+  "epoch": 1,
+  "files": [
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "bytes": 18039,
+      "sha256": "37f55807ac067dcdefad2bf8a4b427bad8ea3f462f19b62e09301025a9d88e93"
+    },
+    {
+      "path": "src/user/windows/object_namespace/csr.rs",
+      "bytes": 6252,
+      "sha256": "77fc7adf6b47c1adb7663bd1e788e1f5621a38b8a6e27ec099d2624a0ba7ff36"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed.rs",
+      "bytes": 15475,
+      "sha256": "0488a4c4320d242052cce8c05936a8cbec405e16e064dd7fef5de9eaa6999a53"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/csr.rs",
+      "bytes": 5570,
+      "sha256": "23c11c1c5ad2c27def0402fb47dba436154c08ded4bfb6c497ddc924bf927945"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/data.rs",
+      "bytes": 8826,
+      "sha256": "ac1f2367d57dc0c384c7fcc3d67f7f5e5950c378b0b84b6a4151d1bb7d7d4e11"
+    },
+    {
+      "path": "src/user/windows/dll/native/secure_connect.rs",
+      "bytes": 6874,
+      "sha256": "380fe8dd17f2ee1d3496c1b18c111f1269732ed74f3aed5a8cb8793ecaf060e1"
+    },
+    {
+      "path": "src/user/windows/dll/native/secure_connect/csr.rs",
+      "bytes": 6990,
+      "sha256": "8bfe99b068cff889e1d95f14eb9a8c1a416839a229140da17834a16b437a1d00"
+    },
+    {
+      "path": "src/user/windows/objects/lpc.rs",
+      "bytes": 2343,
+      "sha256": "71ca04dcbe517677b0c242b9377a7e08de134772d3b6a16e2023346e26c1bdb4"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_tests.rs",
+      "bytes": 7622,
+      "sha256": "9c6a905d236e6c4a163a48523a2a7c67ed00d1c5377f0b57b4ee159933f514c1"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_csr_tests.rs",
+      "bytes": 8165,
+      "sha256": "c26585493123cc5de6232298d3c429d0e25082231c9edccd84b418b1563f721a"
+    }
+  ],
+  "compiled-input-rule": "do not mutate these inputs during initial test run"
+}

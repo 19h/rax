@@ -1,0 +1,38 @@
+[
+  {
+    "impact": "high",
+    "finding": "Ordinary native Windows program completion and x64/WoW original CSR startup routes remain unverified.",
+    "evidence": "new native Windows smoke passessecureconnectionand reaches NtInitializeNlsFiles0x107 at0x1800020b0 turn2122164;whoami reaches NtTraceEvent0x5e;ordinaryexits0;12installed/replayfocus tests pass",
+    "blocks": "full process-userland objective; requires actual Windows native validation and startup continuation"
+  },
+  {
+    "impact": "medium",
+    "finding": "Other patch revisions sharing build29683 and different readonly section/session layouts are unverified.",
+    "evidence": "all primary observations use Windows10.0.29683.1000 with one1048576B section,20480B committed and statics offset0x750",
+    "blocks": "broader compatibility claims; compare native original reply/metadata after a host update before extending admission"
+  },
+  {
+    "impact": "medium",
+    "finding": "General CSR messages, thread callbacks, ALPC waits and remote CSRSS endpoint close timing are not modeled by this bounded connection.",
+    "evidence": "the four-entry original observer sees only the secure connection; existing tool services reject unsupported families; peer VM lifetime follows the endpoint object",
+    "blocks": "full Windows semantics outside observed startup path"
+  },
+  {
+    "impact": "medium",
+    "finding": "Readonly information-length behavior on successful CSR connection is unknown.",
+    "evidence": "44readonly controls measure missing endpoints; positive controls have writable length outputs",
+    "blocks": "that success input form; explicit unsupported before publication"
+  },
+  {
+    "impact": "low",
+    "finding": "Existing vm-memory emits an unsupported stdcall warning on WindowsARM64 with Rust1.95.",
+    "evidence": "unchanged vendored mmap/windows.rs22 and native capture focused build log",
+    "blocks": "future-toolchain compatibility claim; pinned compiler currently accepts it"
+  },
+  {
+    "impact": "medium",
+    "finding": "Five existing WindowsARM64 native-lowerer tests still fail.",
+    "evidence": "full library7247/5/2; exactsame fourBZHI andoneFP16failure identities as publishedcapturebaseline;lowerer sourcesunchanged",
+    "blocks": "a claimthat all Windows tests pass;doesnot invalidate measuredCSR/interpretergroup;fullgoal remainsactive"
+  }
+]

@@ -1,0 +1,177 @@
+{
+  "recorded-utc": "2026-10-15T17:54:17.916055+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "producers": [
+    {
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-view32-lifetime2-x86\\native-lpc-view32-lifetime2.cpp",
+        "bytes": 14223,
+        "sha256": "38ec787589a73f1ecf9c22199e5c84475dd0db7a058b3f9094df87635ab9819b"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-view32-lifetime2-x86\\native-lpc-view32-lifetime2-x86.exe",
+        "bytes": 150016,
+        "sha256": "0da0eccf25eba592015cade34bcb177687753c583276485e606b680993aa205a",
+        "machine": 332,
+        "characteristics": 258
+      },
+      "cases": [
+        {
+          "case": "client-first",
+          "stdout": {
+            "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-view32-lifetime2-x86\\native-lpc-view32-lifetime2-x86-client-first.log",
+            "bytes": 3586,
+            "sha256": "c0c80af023cf016960433d150e881bdf4f8b9286487550c7dd2f066dfd84046f"
+          },
+          "closed-handles": 4,
+          "mapped-and-released-views": 2,
+          "manual-unmaps": 0,
+          "private-replacements-freed": 0
+        },
+        {
+          "case": "server-first",
+          "stdout": {
+            "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-view32-lifetime2-x86\\native-lpc-view32-lifetime2-x86-server-first.log",
+            "bytes": 3610,
+            "sha256": "1e3562151d8f2190df89dee8eac0a1bb06431ed1c33d36c83c078f5d19531e97"
+          },
+          "closed-handles": 4,
+          "mapped-and-released-views": 2,
+          "manual-unmaps": 0,
+          "private-replacements-freed": 0
+        },
+        {
+          "case": "duplicate-client",
+          "stdout": {
+            "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-view32-lifetime2-x86\\native-lpc-view32-lifetime2-x86-duplicate-client.log",
+            "bytes": 4192,
+            "sha256": "91ca3b3fc8208f839e7590ca47238018d9fea4f5bf284d35155c169fb872646b"
+          },
+          "closed-handles": 5,
+          "mapped-and-released-views": 2,
+          "manual-unmaps": 0,
+          "private-replacements-freed": 0
+        },
+        {
+          "case": "unmap-client",
+          "stdout": {
+            "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-view32-lifetime2-x86\\native-lpc-view32-lifetime2-x86-unmap-client.log",
+            "bytes": 3928,
+            "sha256": "3b433d68df9136fbd6d66b5b5c4d2381b9c12c40388d119c705c928470863940"
+          },
+          "closed-handles": 4,
+          "mapped-and-released-views": 2,
+          "manual-unmaps": 1,
+          "private-replacements-freed": 0
+        },
+        {
+          "case": "unmap-private-client",
+          "stdout": {
+            "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-view32-lifetime2-x86\\native-lpc-view32-lifetime2-x86-unmap-private-client.log",
+            "bytes": 4163,
+            "sha256": "3f4a789e08fc3ffbb4c56f29cf0b5800d8a06eee9b380953dcda7f1eddba27f6"
+          },
+          "closed-handles": 4,
+          "mapped-and-released-views": 2,
+          "manual-unmaps": 1,
+          "private-replacements-freed": 1
+        }
+      ]
+    },
+    {
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-view32-lifetime2-x86-laa\\native-lpc-view32-lifetime2.cpp",
+        "bytes": 14223,
+        "sha256": "38ec787589a73f1ecf9c22199e5c84475dd0db7a058b3f9094df87635ab9819b"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-view32-lifetime2-x86-laa\\native-lpc-view32-lifetime2-x86-laa.exe",
+        "bytes": 150016,
+        "sha256": "7a8f3d0d445d282f1625db889dd53b9b6c9160887ffe94c6b3e31f3e5b747eb7",
+        "machine": 332,
+        "characteristics": 290
+      },
+      "cases": [
+        {
+          "case": "client-first",
+          "stdout": {
+            "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-view32-lifetime2-x86-laa\\native-lpc-view32-lifetime2-x86-laa-client-first.log",
+            "bytes": 3583,
+            "sha256": "252b0409846b6af22bfb4fbc14e0472db6dfe267ac658bcfedb033b45ddef0df"
+          },
+          "closed-handles": 4,
+          "mapped-and-released-views": 2,
+          "manual-unmaps": 0,
+          "private-replacements-freed": 0
+        },
+        {
+          "case": "server-first",
+          "stdout": {
+            "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-view32-lifetime2-x86-laa\\native-lpc-view32-lifetime2-x86-laa-server-first.log",
+            "bytes": 3606,
+            "sha256": "e3e988e0d57b2859bb50146fbde8addd864d6c8253e3a5b4e4b43940509175ed"
+          },
+          "closed-handles": 4,
+          "mapped-and-released-views": 2,
+          "manual-unmaps": 0,
+          "private-replacements-freed": 0
+        },
+        {
+          "case": "duplicate-client",
+          "stdout": {
+            "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-view32-lifetime2-x86-laa\\native-lpc-view32-lifetime2-x86-laa-duplicate-client.log",
+            "bytes": 4192,
+            "sha256": "7273261bdae4d5db8519779c28c592fe48306b35c1945a4493d6e36dd708223f"
+          },
+          "closed-handles": 5,
+          "mapped-and-released-views": 2,
+          "manual-unmaps": 0,
+          "private-replacements-freed": 0
+        },
+        {
+          "case": "unmap-client",
+          "stdout": {
+            "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-view32-lifetime2-x86-laa\\native-lpc-view32-lifetime2-x86-laa-unmap-client.log",
+            "bytes": 3928,
+            "sha256": "ca9bf93cf74c23830d92750d7db86b237cae0842b3615684aa5c31d3a7d4e06d"
+          },
+          "closed-handles": 4,
+          "mapped-and-released-views": 2,
+          "manual-unmaps": 1,
+          "private-replacements-freed": 0
+        },
+        {
+          "case": "unmap-private-client",
+          "stdout": {
+            "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\lpc-view32-lifetime2-x86-laa\\native-lpc-view32-lifetime2-x86-laa-unmap-private-client.log",
+            "bytes": 4163,
+            "sha256": "1404f833bc24b723e89ab1a79cf5e58d7ebd66c3e579e593225716c9db105ea0"
+          },
+          "closed-handles": 4,
+          "mapped-and-released-views": 2,
+          "manual-unmaps": 1,
+          "private-replacements-freed": 1
+        }
+      ]
+    }
+  ],
+  "inspector": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-lpc-view32-lifetime.py",
+    "bytes": 9562,
+    "sha256": "5951ccc4efdc90f6ceef26d2a80a2a4a2663e2741411538a7281847b49062fe0"
+  },
+  "native-cases": 10,
+  "closed-handles": 42,
+  "mapped-and-released-views": 20,
+  "manual-unmaps": 4,
+  "private-replacements-freed": 2,
+  "scope": "task-owned native LPC endpoints; x64/x86 compatibility ABI controls on ARM64 kernel29683; physical x64 kernel unknown; ordinary emulated exits0"
+}

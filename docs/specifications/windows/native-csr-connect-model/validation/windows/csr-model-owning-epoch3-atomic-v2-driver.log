@@ -1,0 +1,9 @@
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+Verified 285 actual CSR owning source identities
+Verified9 actual frozen Windows C++ sources against current root
+assist-native-csr-model-shipping.log 5374D751A5F2712AE3A63A321D600067572CC656DC3657B9CFB568349C9B7AB8
+assist-native-csr-model-cpp.log B0F277678BC54485CF58C6295345A12235DF27C7D420C5085B93AB253E75E214
+validated rlib: C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-owned\debug\deps\librax-e6c413934cad3a8f.rlib

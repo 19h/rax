@@ -1,0 +1,51 @@
+{
+  "accepted-source-epoch": 3,
+  "expected-library": {
+    "macos": [
+      7825,
+      0,
+      2
+    ],
+    "linux": [
+      7819,
+      0,
+      2
+    ],
+    "windows": [
+      7247,
+      5,
+      2
+    ]
+  },
+  "capi": 168,
+  "focused": {
+    "macos": 10,
+    "linux": 10,
+    "windows": 12
+  },
+  "lpc": 7,
+  "windows-integration": {
+    "Unix": 544,
+    "Windows": {
+      "user_windows": 0,
+      "user_windows_memory": 4,
+      "selection-note": "cfg-empty user_windows on Windows is compile-only,4actualmemorytests"
+    }
+  },
+  "owning": {
+    "sources": 285,
+    "core-features": [],
+    "macos": "CLI/MCP,7CTests,2protected scans",
+    "linux": "shipping+5CPP consumers",
+    "windows": "shipping+5CPP consumers",
+    "root-scope": "frozen exports with exact9currentCPPinputs matched;full currentroot/plugin/GUI/package unrun"
+  },
+  "ordinary-programs": {
+    "smoke": "unsupported NtInitializeNlsFiles0x107 at0x1800020b0 turn2122164;oldNtSecureConnectPort0x194 turn2115163passed;delta7001turns",
+    "whoami": "unsupportedNtTraceEvent0x5e turn121349",
+    "native-process-probe": "absent,notcounted"
+  },
+  "ordinary-windows-exits": 0,
+  "test-assertions-timeouts": "unchanged",
+  "foreign-builds": "untouched per userKeepvalidationrunning"
+}

@@ -1,0 +1,41 @@
+case=unmap-private-client
+profile pid=9704 width=8
+create-port status=00000000 handle=A4 width=8
+create-section status=00000000 handle=A8 maximum=65536
+bytes name=client-view-before size=48 hex=3000000000000000A8000000000000000000000000000000000001000000000000000000000000000000000000000000
+bytes name=server-view-before size=24 hex=180000000000000000000000000000000000000000000000
+bytes name=information-before size=32 hex=000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F
+connect status=00000000 handle=BC maximum-message=256 information-length=32
+server listen=00000000 accept=00000000 complete=00000000
+bytes name=request-header size=40 hex=200048000A000000E825000000000000801B00000000000088190000000000000000010000000000
+bytes name=request-data size=32 hex=000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F
+bytes name=peer-client-view size=24 hex=18000000000000000000010000000000000012885B020000
+bytes name=client-view-after size=48 hex=3000000000000000A80000000000000000000000000000000000010000000000000011885B020000000012885B020000
+bytes name=server-view-after size=24 hex=000000000000000000000000000000000000000000000000
+bytes name=information-after size=32 hex=5A0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F
+object name=client-port basic-status=00000000 returned=56 grant=001F0001 handle-count=1 pointer-count=32771
+object name=client-port type-status=00000000 returned=128 type-hex=0041004C0050004300200050006F00720074
+object name=server-peer basic-status=00000000 returned=56 grant=001F0001 handle-count=1 pointer-count=32770
+object name=server-peer type-status=00000000 returned=128 type-hex=0041004C0050004300200050006F00720074
+object name=section basic-status=00000000 returned=56 grant=000F001F handle-count=1 pointer-count=32768
+object name=section type-status=00000000 returned=120 type-hex=00530065006300740069006F006E
+region phase=connected name=client address=25B88110000 returned=48 base=25B88110000 allocation=25B88110000 size=65536 state=1000 protect=4 type=40000 read=1 got=2 data=0000
+region phase=connected name=server address=25B88120000 returned=48 base=25B88120000 allocation=25B88120000 size=65536 state=1000 protect=4 type=40000 read=1 got=2 data=0000
+region phase=canary name=client address=25B88110000 returned=48 base=25B88110000 allocation=25B88110000 size=65536 state=1000 protect=4 type=40000 read=1 got=2 data=6996
+region phase=canary name=server address=25B88120000 returned=48 base=25B88120000 allocation=25B88120000 size=65536 state=1000 protect=4 type=40000 read=1 got=2 data=6996
+manual-unmap status=00000000
+region phase=manual-unmap name=client address=25B88110000 returned=48 base=25B88110000 allocation=0 size=65536 state=10000 protect=1 type=0 read=0 got=0 data=A5A5
+region phase=manual-unmap name=server address=25B88120000 returned=48 base=25B88120000 allocation=25B88120000 size=65536 state=1000 protect=4 type=40000 read=1 got=2 data=6996
+region phase=private-reused name=client address=25B88110000 returned=48 base=25B88110000 allocation=25B88110000 size=65536 state=1000 protect=4 type=20000 read=1 got=2 data=1234
+closed name=section
+region phase=section-closed name=client address=25B88110000 returned=48 base=25B88110000 allocation=25B88110000 size=65536 state=1000 protect=4 type=20000 read=1 got=2 data=1234
+region phase=section-closed name=server address=25B88120000 returned=48 base=25B88120000 allocation=25B88120000 size=65536 state=1000 protect=4 type=40000 read=1 got=2 data=6996
+closed name=client-port
+region phase=client-closed name=client address=25B88110000 returned=48 base=25B88110000 allocation=25B88110000 size=65536 state=1000 protect=4 type=20000 read=1 got=2 data=1234
+region phase=client-closed name=server address=25B88120000 returned=48 base=25B88120000 allocation=25B88120000 size=65536 state=1000 protect=4 type=40000 read=1 got=2 data=6996
+closed name=server-peer
+region phase=peer-closed name=client address=25B88110000 returned=48 base=25B88110000 allocation=25B88110000 size=65536 state=1000 protect=4 type=20000 read=1 got=2 data=1234
+region phase=peer-closed name=server address=25B88120000 returned=48 base=25B88120000 allocation=0 size=138096891527168 state=10000 protect=1 type=0 read=0 got=0 data=A5A5
+closed name=listening-port
+cleanup-private present=1 freed=1
+complete status=0 closed-handles=4 cleanup-unmaps=0 alias=1 reply=1

@@ -1,0 +1,147 @@
+{
+  "git-base": "7e3057d8efebe70e33f1b405ed3346cbeb1e9d3f",
+  "inherited-unpublished-groups": [
+    "secure-connect capture epoch2",
+    "owned LPC views foundation corrected compile epoch2"
+  ],
+  "frozen-inherited-files": [
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 17700,
+      "sha256": "d73e08c837589dba2b5ba57e7143ee395a4ff45c8c1fdb6ab5ec816bfc353ff2"
+    },
+    {
+      "path": "src/user/windows/dll/native/secure_connect.rs",
+      "bytes": 6549,
+      "sha256": "017c167cca44ac93b335d155cc70627cd51a7a58aa635264c0144cf5ab72bbd5"
+    },
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "bytes": 17944,
+      "sha256": "74e438d54a85fb4f88a2839964e513ea4d261b144e2d4e243a806f1b7b8e9f23"
+    },
+    {
+      "path": "src/user/windows/object_namespace/data.rs",
+      "bytes": 6707,
+      "sha256": "4ecea07cb2a38317112017246293d10e33d0443f88fef8ebb4758b649f144d34"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47464,
+      "sha256": "b116704adb939291187b8e4940c95d12b04dbebb03c75bb1b7c926772ab26b11"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_tests.rs",
+      "bytes": 7573,
+      "sha256": "b4f63643d7bfec7fcfd4477e3666fcac7e8edfa5d53a3bd54f897476e6919e28"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_replay_tests.rs",
+      "bytes": 8507,
+      "sha256": "23b96b726d3364a6f9d55464060e2f875ce6dda381c9cd32a80feaa2594441da"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_leaf_tests.rs",
+      "bytes": 4301,
+      "sha256": "d042b3bb390fd3f65aed1be200ba2ca843b915691ace753a6e7788358733570c"
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "bytes": 131033,
+      "sha256": "1bc13c459cb9dd5ffde9ca2ac4b55ad31a37bd80ed2168a3b6b0217455da1e92"
+    },
+    {
+      "path": "src/user/windows/nt.rs",
+      "bytes": 18552,
+      "sha256": "4249579882a4e148ebc6c4363ab2077957c851b083b620479af8411c42469369"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_readonly_tests.rs",
+      "bytes": 4324,
+      "sha256": "d19f22f7fbfae2ad60a52ebe5884a034557acd7489c2af936335ec1d9e2b91e9"
+    },
+    {
+      "path": "src/user/windows/memory.rs",
+      "bytes": 69439,
+      "sha256": "fc6602dc19508de3a183979253d95445a07cf36750d8f353716a691148f2d000"
+    },
+    {
+      "path": "src/user/windows/memory/shared_section.rs",
+      "bytes": 5861,
+      "sha256": "f28c65c34c17f5cffe44e118bc2a10d02be156e312540ad800f624a61dba873b"
+    },
+    {
+      "path": "src/user/windows/memory/shared_section/tests.rs",
+      "bytes": 6303,
+      "sha256": "913311feb3cd616e7cbf83a0c65ef66ca2cc85f61cbd3fbff289e76af493bacf"
+    },
+    {
+      "path": "src/user/windows/objects.rs",
+      "bytes": 27362,
+      "sha256": "79eb005db20ab7f2c15dec644e31804b2c01ee1f911fb490b39c57ea61af8a03"
+    },
+    {
+      "path": "src/user/windows/objects/lpc.rs",
+      "bytes": 1881,
+      "sha256": "76f82c4ad83c7ddd863a7be303a911dff5df85e06c6e6d7a40f8017d8c390c65"
+    },
+    {
+      "path": "src/user/windows/objects/lpc/tests.rs",
+      "bytes": 9312,
+      "sha256": "fa2702fd7ec294220b6970cc85fe62ecc56ff01ed3d69c00b57637b278bcb671"
+    },
+    {
+      "path": "src/user/windows/process/mod.rs",
+      "bytes": 16065,
+      "sha256": "683e638d497b1d85f68ef08a0bf83c8eb7faf6084679fee6f9a6f379ea747c6d"
+    },
+    {
+      "path": "src/user/windows/sync.rs",
+      "bytes": 36084,
+      "sha256": "e57b159134a1a050a4cf2807876aef26c93db058c2e98c366ccddaf2dc5a6f21"
+    },
+    {
+      "path": "src/user/windows/dll/native/nls.rs",
+      "bytes": 5334,
+      "sha256": "bf719ca013def55859579e46ffc0b0319cb20ebf691af4ec69c9c6b9d2e13ba4"
+    }
+  ],
+  "new-owned-paths": [
+    "src/user/windows/object_namespace.rs",
+    "src/user/windows/object_namespace/csr.rs",
+    "src/user/windows/object_namespace/installed.rs",
+    "src/user/windows/object_namespace/installed/csr.rs",
+    "src/user/windows/object_namespace/installed/data.rs",
+    "src/user/windows/dll/native/secure_connect.rs",
+    "src/user/windows/dll/native/secure_connect/csr.rs",
+    "src/user/windows/objects/lpc.rs",
+    "src/user/windows/process/sched/tests/services_tests/secure_connect_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/secure_connect_csr_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/secure_connect_leaf_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/secure_connect_csr_leaf_tests.rs",
+    "docs/specifications/windows/native-csr-connect-model/"
+  ],
+  "integration": "publish capture first; integrate only next-group deltas on actual linear history; no mixed-base publication",
+  "scope": "Selected ARM64 Windows29683 session0 CSR reply with matched immutable section metadata and real owned client/server address spaces",
+  "active-validation": {
+    "macos": {
+      "session": 91871,
+      "log": "macos-csr-focused.log",
+      "freeze": "csr-reply-frozen-code.json epoch2;exact10; no edits during run",
+      "epoch2-result": "10/0/0;11m50scompile;0.20sruntime",
+      "epoch3-focused": "10/0/0 after nativeWindowsleafwiring",
+      "full-session": 86284
+    },
+    "linux": {
+      "session": 94902,
+      "log": "linux-focused/linux-secure_connect.log",
+      "driver": "linux-focused/run-csr-focused.py; applies inherited20 then10CSRoverrides;nextlpc7",
+      "result": "10secure_connect pass,7LPCpass;all396failure and30lifecycle replays;zero skipped;driver terminal0",
+      "epoch3-full-session": 46734
+    }
+  },
+  "previous-compile": "v1 terminal101;3Arc fixture mutation errors,corrected together usingArc::make_mut;no tests executed;v1log/source/freeze retained",
+  "pending-strategic-test": "implemented and formatted; newnativefile compiled only on WindowsARM64; actual positive or explicit unavailable branch must be checked there",
+  "checked-utc": "2026-10-15T20:42:31.631636+00:00",
+  "next-full-validation": "run-csr-full-unix.py bothhosts;7 gatesfocused,lpc,lib,capi,alltargets,windows,build-user;expectedMac7825/0/2,Linux7819/0/2;168CAPI,544Windowsintegration;actualnativeWindows andall3newscopedowningstillrequired"
+}

@@ -1,0 +1,14 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.41s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 7 tests
+test user::windows::memory::shared_section::tests::lpc_shared_view_failures_preserve_reservations_aliases_and_commitment ... ok
+test user::windows::memory::shared_section::tests::lpc_shared_views_alias_real_bytes_with_offsets_and_last_page_charges ... ok
+test user::windows::memory::shared_section::tests::lpc_view_generation_preserves_private_and_mapped_address_replacements ... ok
+test user::windows::memory::shared_section::tests::lpc_views_reject_private_decommit_and_preserve_shared_protection ... ok
+test user::windows::objects::lpc::tests::lpc_final_handle_retires_local_view_despite_internal_pins_and_protected_close ... ok
+test user::windows::objects::lpc::tests::lpc_owned_views_replay_all_30_native_lifecycle_and_private_reuse_traces ... ok
+test user::windows::objects::lpc::tests::lpc_process_drain_and_unpublished_rollback_retire_every_view_once ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 7814 filtered out; finished in 0.09s
+

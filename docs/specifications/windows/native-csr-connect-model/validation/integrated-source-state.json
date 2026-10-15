@@ -1,0 +1,111 @@
+{
+  "published-base": "6330409e225cfe7fa25d1ee524bc6b12dd5af312",
+  "verified-new-code-inputs": [
+    {
+      "path": "src/user/windows/memory.rs",
+      "bytes": 69439,
+      "sha256": "fc6602dc19508de3a183979253d95445a07cf36750d8f353716a691148f2d000"
+    },
+    {
+      "path": "src/user/windows/memory/shared_section.rs",
+      "bytes": 5861,
+      "sha256": "f28c65c34c17f5cffe44e118bc2a10d02be156e312540ad800f624a61dba873b"
+    },
+    {
+      "path": "src/user/windows/memory/shared_section/tests.rs",
+      "bytes": 6303,
+      "sha256": "913311feb3cd616e7cbf83a0c65ef66ca2cc85f61cbd3fbff289e76af493bacf"
+    },
+    {
+      "path": "src/user/windows/objects.rs",
+      "bytes": 27362,
+      "sha256": "79eb005db20ab7f2c15dec644e31804b2c01ee1f911fb490b39c57ea61af8a03"
+    },
+    {
+      "path": "src/user/windows/objects/lpc.rs",
+      "bytes": 2343,
+      "sha256": "71ca04dcbe517677b0c242b9377a7e08de134772d3b6a16e2023346e26c1bdb4"
+    },
+    {
+      "path": "src/user/windows/objects/lpc/tests.rs",
+      "bytes": 9312,
+      "sha256": "fa2702fd7ec294220b6970cc85fe62ecc56ff01ed3d69c00b57637b278bcb671"
+    },
+    {
+      "path": "src/user/windows/process/mod.rs",
+      "bytes": 16065,
+      "sha256": "683e638d497b1d85f68ef08a0bf83c8eb7faf6084679fee6f9a6f379ea747c6d"
+    },
+    {
+      "path": "src/user/windows/sync.rs",
+      "bytes": 36084,
+      "sha256": "e57b159134a1a050a4cf2807876aef26c93db058c2e98c366ccddaf2dc5a6f21"
+    },
+    {
+      "path": "src/user/windows/dll/native/nls.rs",
+      "bytes": 5334,
+      "sha256": "bf719ca013def55859579e46ffc0b0319cb20ebf691af4ec69c9c6b9d2e13ba4"
+    },
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "bytes": 18039,
+      "sha256": "37f55807ac067dcdefad2bf8a4b427bad8ea3f462f19b62e09301025a9d88e93"
+    },
+    {
+      "path": "src/user/windows/object_namespace/csr.rs",
+      "bytes": 6252,
+      "sha256": "77fc7adf6b47c1adb7663bd1e788e1f5621a38b8a6e27ec099d2624a0ba7ff36"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed.rs",
+      "bytes": 15475,
+      "sha256": "0488a4c4320d242052cce8c05936a8cbec405e16e064dd7fef5de9eaa6999a53"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/csr.rs",
+      "bytes": 5570,
+      "sha256": "23c11c1c5ad2c27def0402fb47dba436154c08ded4bfb6c497ddc924bf927945"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/data.rs",
+      "bytes": 8826,
+      "sha256": "ac1f2367d57dc0c384c7fcc3d67f7f5e5950c378b0b84b6a4151d1bb7d7d4e11"
+    },
+    {
+      "path": "src/user/windows/dll/native/secure_connect.rs",
+      "bytes": 6874,
+      "sha256": "380fe8dd17f2ee1d3496c1b18c111f1269732ed74f3aed5a8cb8793ecaf060e1"
+    },
+    {
+      "path": "src/user/windows/dll/native/secure_connect/csr.rs",
+      "bytes": 6990,
+      "sha256": "8bfe99b068cff889e1d95f14eb9a8c1a416839a229140da17834a16b437a1d00"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_tests.rs",
+      "bytes": 7622,
+      "sha256": "9c6a905d236e6c4a163a48523a2a7c67ed00d1c5377f0b57b4ee159933f514c1"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_csr_tests.rs",
+      "bytes": 8535,
+      "sha256": "4adcc06cf9a400671d102a049c629dbc4fa4a7bb84d1161792c832e8a5a7b6bc"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_leaf_tests.rs",
+      "bytes": 4312,
+      "sha256": "ee8073b40fa7c53d09b6f586cb43ac0b21f56726d82f19865c57daa1833b949f"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_csr_leaf_tests.rs",
+      "bytes": 3467,
+      "sha256": "8bd1ae10a6fc1a07758a73d5b6107b512e52572beb0e868448a5331c5c44cb34"
+    }
+  ],
+  "runtime-code-equivalence": "exact20codeinputs copied from validated epoch3;captured priorRust files/primary corpus unchanged",
+  "source": "/Users/int/Library/Caches/assist-process-emulation/csr-server-reply-20261015/rax-integrated-source",
+  "prior-source": "/Users/int/Library/Caches/assist-process-emulation/csr-server-reply-20261015/rax-source",
+  "prior-compiled-base": "7e3057d8efebe70e33f1b405ed3346cbeb1e9d3f",
+  "publication-rule": "only newfoundation/CSRdelta;preserve published capture docs/evidence",
+  "compiled-code-changed": false
+}

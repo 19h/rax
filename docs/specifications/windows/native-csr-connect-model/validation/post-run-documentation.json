@@ -1,0 +1,43 @@
+{
+  "recorded-utc": "2026-10-15T21:30:53.062669+00:00",
+  "execution-inputs-changed": false,
+  "documentation": [
+    {
+      "path": "docs/specifications/windows/native-csr-connect-model/README.md",
+      "bytes": 5996,
+      "sha256": "5e9449bf9b50c7193def66b648aeca919426a24fd51fb1ed68401eb358ee755e"
+    },
+    {
+      "path": "docs/specifications/windows/native-csr-connect-model/assumption-register.json",
+      "bytes": 3523,
+      "sha256": "54e06151f749e2a73fbba208cc22b69854500a0454337a7ceb1b08d392786fec"
+    },
+    {
+      "path": "docs/specifications/windows/native-csr-connect-model/bounded-findings.json",
+      "bytes": 2359,
+      "sha256": "ea96edd5d44f94fa7e0be6198fe37113729a5c56672a6cfc6fea61b3e69ad3c7"
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "bytes": 135120,
+      "sha256": "4351e0b9707fc4e461233fb9a557c76c40b8452b1d88294dcaa3301e2ceddfbf"
+    }
+  ],
+  "assumptions": {
+    "S1": "confirmed scoped Arc accounting",
+    "S2": "confirmed private native local handle lifetime; mapped reuse is model stress only",
+    "S3": "confirmed matching section/session and actual installed A64 success",
+    "S4": "retained bounded measured profile; other patch revisions unknown"
+  },
+  "quality-gates": {
+    "QG1": "Assumptions reconciled",
+    "QG2": "bounded CSR+LPC requirement coverage;full userland remainsincomplete",
+    "QG3": "exactbytes/counts/hashes/toolchain/rawcommands retained",
+    "QG4": "fiveunchangedfailures,zeroordinaryexits,zero nativeuser_windowsselection explicit",
+    "QG5": "actualindependentnativeproducers+installedNTDLLpositive+PHNTprovenance",
+    "QG6": "highmediumlowfindings recorded;no unrelatedlowerer/packagechanges",
+    "QG7": "isolated20codeinputs+explicitownedcorpora;mainforeignstateuntouched",
+    "QG8": "all3hosts sharedsemantic+nativeWindows+scopedowning evidence",
+    "QG9": "samefeatures,CABI,Cargo dependencies,testwiring;no ABI/schema/defaultchange"
+  }
+}

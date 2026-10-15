@@ -335,9 +335,11 @@ pub struct Proc {
 }
 
 impl Proc {
-    /// Reclaims only retired scheduler views with the same allocation identity.
+    /// Reclaims retired scheduler and LPC views with the same allocation
+    /// identity at every existing native/HLE/teardown boundary.
     pub(crate) fn reclaim_scheduler_views(&mut self) -> Result<(), super::memory::VmError> {
-        self.objects.reclaim_scheduler_views(&mut self.vm)
+        self.objects.reclaim_scheduler_views(&mut self.vm)?;
+        self.objects.reclaim_lpc_views(&mut self.vm)
     }
     /// A new thread identifier (multiples of 4, as Windows allocates
     /// client IDs from its handle table).

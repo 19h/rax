@@ -13,6 +13,7 @@ pub(crate) const PATHS: [&str; 5] = [
     "\\KnownDllsChpe32",
     "\\Windows",
 ];
+pub(crate) mod csr;
 pub(crate) mod data;
 mod image;
 mod section;
@@ -82,6 +83,7 @@ pub(crate) struct Namespace {
     pub(crate) wow_system_prefix: Vec<u16>,
     section_case: Option<bool>,
     wow_section_root: Option<Arc<Directory>>,
+    csr_server: Option<Arc<csr::CsrServer>>,
 }
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum LookupError {
@@ -235,6 +237,7 @@ impl Namespace {
             wow_system_prefix: Vec::new(),
             section_case,
             wow_section_root: None,
+            csr_server: None,
         })
     }
     pub(crate) fn select_wow_system_root(&mut self, root: &[u16]) -> io::Result<()> {

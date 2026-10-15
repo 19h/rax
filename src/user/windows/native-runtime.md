@@ -1763,3 +1763,41 @@ separate evidence. Other kernels and whole-current-root/plugin/GUI/package
 validation are unverified; the full process-userland objective remains active.
 
 [Checked raw evidence](../../../docs/specifications/windows/native-secure-connect-capture/validation/README.md).
+
+
+## Owned LPC views and selected CSR connection (2026-10-15)
+
+The Windows VM now maps real SharedObject pagefile aliases and accounts each
+retained object page once across local aliases. Typed LPC endpoint views retire
+on the final local handle, independently of internal object references; section
+handle close and duplicate port handles preserve the appropriate views. An
+allocation-generation token prevents stale close cleanup from freeing explicit
+unmap replacements. Thirty private native LPC cases across ARM64, x64, x86 and
+large-address-aware x86 profiles establish the bounded local-view behavior;
+compatibility execution on an ARM64 kernel is not physical x64 kernel evidence.
+
+A matched immutable CSR metadata selection admits the measured ARM64 Windows
+build29683/session0 startup packet. A separate modeled server VM owns its peer
+view over the same pagefile backing and maps the selected readonly CSR section.
+The connection has real typed endpoints, validated nonoverlapping outputs,
+bounded resource leases and rollback. Guest pointers and requests never enter
+host IPC. Unmeasured ABI, session, build, SID/QoS, packet, protection or readonly
+length-output forms remain explicit unsupported frontiers. Native remote CSRSS
+endpoint close timing and general CSR messaging remain unknown.
+
+The three-host epoch3 validation is recorded under
+`docs/specifications/windows/native-csr-connect-model/validation/`. Canonical
+Rust1.95.0 library results are macOS7825/0/2, Linux7819/0/2 and Windows7247/5/2
+(passed/failed/ignored); the five Windows failures are the same unrelated native
+lowerer failures retained in the preceding capture group. C API168 passes on
+each host; CSR focus10Unix/12Windows, LPCfocus7each, all-target checks and scoped
+Assist consumers pass. The native Windows success test executes installed
+ARM64 NtCreateSection/NtSecureConnectPort/NtClose with matching host metadata.
+No code, assertions or timeouts changed during these final runs.
+
+Ordinary smoke startup passes the previous secure-connection frontier and now
+stops at NtInitializeNlsFiles0x107, PC0x1800020b0, turn2122164 (7001 turns beyond
+its earlier connection boundary). Whoami still stops at NtTraceEvent0x5e.
+Ordinary Windows guest completion remains unproven. Broader full-process
+userland support remains active work. The scoped frozen-embedding checks do not
+claim full current-root/plugin/GUI/package coverage.

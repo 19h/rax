@@ -2,6 +2,7 @@
 use super::*;
 use std::ffi::c_void;
 use std::ptr::null_mut;
+mod csr;
 mod data;
 pub(super) mod image;
 mod section;
@@ -434,7 +435,11 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>) -> io::Result<Namespace> {
             }
         },
     };
-    namespace.select_data_section(data::capture()?)?;
+    let (section, csr) = data::capture()?;
+    namespace.select_data_section(section.clone())?;
+    if let Some(metadata) = csr {
+        namespace.select_csr_server(super::csr::CsrServer::selected(section, metadata)?)?;
+    }
     namespace.select_wow_section_root(arm64)?;
     namespace.select_wow_system_root(&system_root()?)?;
     Ok(namespace)

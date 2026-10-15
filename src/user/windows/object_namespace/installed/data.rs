@@ -154,7 +154,10 @@ fn regions(view: &View, size: usize) -> io::Result<Vec<DataRegion>> {
     }
     Ok(regions)
 }
-pub(super) fn capture() -> io::Result<Arc<DataSection>> {
+pub(super) fn capture() -> io::Result<(
+    Arc<DataSection>,
+    Option<crate::user::windows::object_namespace::csr::CsrMetadata>,
+)> {
     let path: Vec<_> = "\\Windows\\SharedSection".encode_utf16().collect();
     let handle = section::open_section(&path, 0x0200_0000, 0x40)?
         .map_err(|status| invalid(&format!("open selected CSR data: {status:#010x}")))?;
@@ -241,6 +244,7 @@ pub(super) fn capture() -> io::Result<Arc<DataSection>> {
     }
     let captured =
         captured.ok_or_else(|| invalid("selected CSR data changed during bounded snapshot"))?;
+    let metadata = super::csr::capture(&captured)?;
     if basic(&handle)? != maximum_access {
         return Err(invalid("selected CSR grant changed during snapshot"));
     }
@@ -253,5 +257,5 @@ pub(super) fn capture() -> io::Result<Arc<DataSection>> {
     )?;
     view.close()?;
     handle.close()?;
-    Ok(selected)
+    Ok((selected, metadata))
 }

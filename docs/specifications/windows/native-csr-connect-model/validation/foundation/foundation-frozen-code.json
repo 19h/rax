@@ -1,0 +1,53 @@
+{
+  "base": "7e3057d8efebe70e33f1b405ed3346cbeb1e9d3f",
+  "group": "shared pagefile VM and typed endpoint lifetime foundation; selected CSR reply remains subsequent work",
+  "files": [
+    {
+      "path": "src/user/windows/memory.rs",
+      "bytes": 69439,
+      "sha256": "fc6602dc19508de3a183979253d95445a07cf36750d8f353716a691148f2d000"
+    },
+    {
+      "path": "src/user/windows/memory/shared_section.rs",
+      "bytes": 5861,
+      "sha256": "f28c65c34c17f5cffe44e118bc2a10d02be156e312540ad800f624a61dba873b"
+    },
+    {
+      "path": "src/user/windows/memory/shared_section/tests.rs",
+      "bytes": 6303,
+      "sha256": "913311feb3cd616e7cbf83a0c65ef66ca2cc85f61cbd3fbff289e76af493bacf"
+    },
+    {
+      "path": "src/user/windows/objects.rs",
+      "bytes": 27362,
+      "sha256": "79eb005db20ab7f2c15dec644e31804b2c01ee1f911fb490b39c57ea61af8a03"
+    },
+    {
+      "path": "src/user/windows/objects/lpc.rs",
+      "bytes": 1881,
+      "sha256": "76f82c4ad83c7ddd863a7be303a911dff5df85e06c6e6d7a40f8017d8c390c65"
+    },
+    {
+      "path": "src/user/windows/objects/lpc/tests.rs",
+      "bytes": 9312,
+      "sha256": "fa2702fd7ec294220b6970cc85fe62ecc56ff01ed3d69c00b57637b278bcb671"
+    },
+    {
+      "path": "src/user/windows/process/mod.rs",
+      "bytes": 16065,
+      "sha256": "683e638d497b1d85f68ef08a0bf83c8eb7faf6084679fee6f9a6f379ea747c6d"
+    },
+    {
+      "path": "src/user/windows/sync.rs",
+      "bytes": 36084,
+      "sha256": "e57b159134a1a050a4cf2807876aef26c93db058c2e98c366ccddaf2dc5a6f21"
+    },
+    {
+      "path": "src/user/windows/dll/native/nls.rs",
+      "bytes": 5334,
+      "sha256": "bf719ca013def55859579e46ffc0b0319cb20ebf691af4ec69c9c6b9d2e13ba4"
+    }
+  ],
+  "active-macos-session": 83950,
+  "native-observer-source": "d19ec5a559ee76e0ba02f6d934a223937eb7bff9099bc4dfe5b773ade95d2f8b"
+}
