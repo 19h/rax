@@ -1,0 +1,12 @@
+{
+  "exit-code": 0,
+  "command": [
+    "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/reclaim-pressure-control"
+  ],
+  "pressure-before": "1",
+  "pressure-after": "1",
+  "source-sha256": "41c55e70f47add11d2fa5372d93bbc10e7298d89292f5502b32b5d8ad67c0893",
+  "exe-sha256": "7c3ae2e1b5afe96a1af23104cb39758aef4bd1d6d10baef686cd1cf6564bcc32",
+  "log-sha256": "4afc76f0e6b0cd65c0acae247d1c2f72b3a7ea59731c010e5d604f1bca735c42",
+  "recorded-utc": "2026-10-15T15:38:45.126551+00:00"
+}

@@ -1,0 +1,34 @@
+{
+  "source-base": "ba1a0a16072daf722ca2fa0ec926df53eda964bc",
+  "selected-configurations": [
+    {
+      "path": ".cargo/config.toml",
+      "bytes": 552,
+      "sha256": "a198c84574684e95de13dbb1bdb7b6c918f90fdb490c649937f697fc9621f3cd",
+      "baseline-blob-identical": true
+    },
+    {
+      "path": "Cargo.toml",
+      "bytes": 9898,
+      "sha256": "d14dd62af45c45c4d28c8a16b9b39b79a66502172efe671d6e26dc5e54d4d983",
+      "baseline-blob-identical": true
+    },
+    {
+      "path": "Cargo.lock",
+      "bytes": 21468,
+      "sha256": "db2eaeb38f09e819fdb6f01225b68870a12d0a80e8fcff646945c729ab034a4d",
+      "baseline-blob-identical": true
+    }
+  ],
+  "note": "supplemental post-run configuration witness,not an expansion of the8537 pre-run input set; unchanged source config is independently tied to initial clean base",
+  "macos-owning-effective-rustflags": [],
+  "macos-owning-rustc-fingerprint": 2179919275645516985,
+  "current-driver-environment": {
+    "RUSTUP_TOOLCHAIN": null,
+    "RUSTC": null,
+    "RUSTFLAGS": null,
+    "CARGO_ENCODED_RUSTFLAGS": null,
+    "CARGO_BUILD_TARGET": null,
+    "CARGO_BUILD_BUILD_DIR": null
+  }
+}

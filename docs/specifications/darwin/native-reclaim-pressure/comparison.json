@@ -1,0 +1,30 @@
+{
+  "native": {
+    "raw": {
+      "before": 2549708867252,
+      "after": 2549708867331,
+      "deadline": 2549732867321,
+      "numer": 125,
+      "denom": 3,
+      "pressure": 2,
+      "pressure-status": 0
+    },
+    "sampling-period-lower-seconds": "0.9999995833333333333333333334",
+    "sampling-period-upper-seconds": "1.000002875000000000000000000",
+    "interpretation": "period lies within bounds if kernel timestamp is inside the measured allocation interval"
+  },
+  "emulated": {
+    "raw": {
+      "before": 267835682,
+      "after": 267842051,
+      "deadline": 507841559,
+      "numer": 125,
+      "denom": 3,
+      "pressure": 2,
+      "pressure-status": 0
+    },
+    "sampling-period-lower-seconds": "9.999979500000000000000000001",
+    "sampling-period-upper-seconds": "10.00024487500000000000000000",
+    "interpretation": "period lies within bounds if kernel timestamp is inside the measured allocation interval"
+  }
+}

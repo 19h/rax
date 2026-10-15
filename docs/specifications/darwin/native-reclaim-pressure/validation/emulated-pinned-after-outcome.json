@@ -1,0 +1,19 @@
+{
+  "exit-code": 0,
+  "command": [
+    "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target-pinned/debug/rax-user",
+    "--arch",
+    "arm64",
+    "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/reclaim-pressure-control"
+  ],
+  "pressure-before": "1",
+  "pressure-after": "1",
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+  "cli-bytes": 48806680,
+  "cli-sha256": "c6444b93b7e1f0fb5044d699bccfd188305ee8a67b00ee3aa72316bf258a691a",
+  "source-base": "ba1a0a16072daf722ca2fa0ec926df53eda964bc",
+  "source-manifest-sha256": "944923909773f601214fff9e7b147f58a78a9da1275e1fda5563a6d9d4ed656a",
+  "control-sha256": "7c3ae2e1b5afe96a1af23104cb39758aef4bd1d6d10baef686cd1cf6564bcc32",
+  "log-sha256": "38c09b0c1b35f190312738f6dcb9d88c2eb040f53a1933bf95854c831fca40f7",
+  "recorded-utc": "2026-10-15T16:15:41.650850+00:00"
+}

@@ -1,0 +1,19 @@
+warning: explicit `package.readme` can be inferred
+  --> Cargo.toml:20:1
+   |
+20 | readme = "README.md"
+   | ^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::manual_readme` is set to `warn` by default
+help: consider removing `package.readme`
+warning: `rax` (manifest) generated 1 warning
+warning: explicit `package.readme` can be inferred
+ --> capi/Cargo.toml:8:1
+  |
+8 | readme = "README.md"
+  | ^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `cargo::manual_readme` is set to `warn` by default
+help: consider removing `package.readme`
+warning: `rax-capi` (manifest) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.15s

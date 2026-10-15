@@ -1,0 +1,55 @@
+[
+  {
+    "name": "native",
+    "command": [
+      "arch",
+      "-x86_64",
+      "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/workloop-comparison-v2/workloop_bound.x86_64"
+    ],
+    "exit-code": 0,
+    "seconds": 0.49068689346313477,
+    "stdout-sha256": "a07ad2b8046970c31f7790166c56fa94a234747bb8ddb3b1a3fcfb84b6202902"
+  },
+  {
+    "name": "baseline-nightly",
+    "command": [
+      "/Users/int/Library/Caches/assist-process-emulation/section-create-20261015/target/debug/rax-user",
+      "--arch",
+      "x86_64",
+      "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/workloop-comparison-v2/workloop_bound.x86_64"
+    ],
+    "executable-bytes": 52450040,
+    "executable-sha256": "18df78a4da82b632fe28d0d85faced5350025869102a73cb1a9a8f0d7fa38ab1",
+    "exit-code": 0,
+    "seconds": 12.535372972488403,
+    "stdout-sha256": "a07ad2b8046970c31f7790166c56fa94a234747bb8ddb3b1a3fcfb84b6202902"
+  },
+  {
+    "name": "current-nightly",
+    "command": [
+      "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target/debug/rax-user",
+      "--arch",
+      "x86_64",
+      "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/workloop-comparison-v2/workloop_bound.x86_64"
+    ],
+    "executable-bytes": 52463144,
+    "executable-sha256": "a8feb55dcd3ea74e33161c56f23c35d7b78775a18bcccb4f1158d27cc5e6bf58",
+    "exit-code": 0,
+    "seconds": 24.514163970947266,
+    "stdout-sha256": "74bff209b0c24b49e700663bb6c241e015cd172d9d4ddf8b5d6c28e651992042"
+  },
+  {
+    "name": "current-pinned",
+    "command": [
+      "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target-pinned/debug/rax-user",
+      "--arch",
+      "x86_64",
+      "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/workloop-comparison-v2/workloop_bound.x86_64"
+    ],
+    "executable-bytes": 48806680,
+    "executable-sha256": "c6444b93b7e1f0fb5044d699bccfd188305ee8a67b00ee3aa72316bf258a691a",
+    "exit-code": 0,
+    "seconds": 16.279376983642578,
+    "stdout-sha256": "a07ad2b8046970c31f7790166c56fa94a234747bb8ddb3b1a3fcfb84b6202902"
+  }
+]

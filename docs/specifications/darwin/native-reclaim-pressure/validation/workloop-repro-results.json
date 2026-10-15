@@ -1,0 +1,34 @@
+[
+  {
+    "name": "nightly",
+    "executable": "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target/debug/build/rax/b62a002722655a74/out/user_darwin-b62a002722655a74",
+    "bytes": 2035376,
+    "sha256": "dde24f7dd590da7a6be85bd7b83a1bd6db0f16b4ab57f02e9336b140e1cbcad0",
+    "command": [
+      "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target/debug/build/rax/b62a002722655a74/out/user_darwin-b62a002722655a74",
+      "--exact",
+      "fixtures::workloop_bound_x86_64",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 101,
+    "seconds": 17.953688144683838,
+    "stdout-sha256": "532910bf00b639592f5c05a124c531930ef83ffcedc5ef3a0af6949412bfa45c"
+  },
+  {
+    "name": "pinned",
+    "executable": "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target-pinned/debug/deps/user_darwin-e04730e124a453b2",
+    "bytes": 1921376,
+    "sha256": "59bf2858c0b7da8ffeb2c69bff3e622bb283ca9566f6f9c98f9d3c1cfe215635",
+    "command": [
+      "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target-pinned/debug/deps/user_darwin-e04730e124a453b2",
+      "--exact",
+      "fixtures::workloop_bound_x86_64",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 9.430280923843384,
+    "stdout-sha256": "bd9d555c506f6bad76d5d3a2f6ba8bd0e606c6dd2fdb551da7b2ac19342b693b"
+  }
+]

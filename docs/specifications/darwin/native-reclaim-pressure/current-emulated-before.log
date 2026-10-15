@@ -1,0 +1,38 @@
+rings at start: 0 1
+  size 0x4004000 prot 3/3 inherit 1 tag 22 len 1016 max 4195320
+no ring: query 0 (0, 0) trap 0x38 (7, 7) flush 0x4 resize 0x10
+allocate len 0 0x4, max below len 0x4, too large 0x3
+round capacity: 1 -> 1016, 1017 -> 2040
+sampling-control before=701727504 after=701739150 deadline=941738529 numer=125 denom=3 pressure=1 pressure-status=0
+allocate: 0 size 0x4000 prot 3/3 inherit 1 tag 22 len 8 max 1016
+  deadline in ten seconds 1
+  fresh: head 0 busy 0 tail 0
+  rings 0 1 same 1
+second allocate 0x20004006: tagged regions 1 -> 2, the new one 0/0
+trap 0 bytes 0, again 0 bytes 0 same deadline 1
+trap NULL 0x4, null task 0x10000003
+enter id 0 UNRECLAIMED
+flush 0 pages 3 mapped 0
+  after: head 1 busy 1 tail 1
+  DEALLOCATED
+free: flush 0 pages 4 mapped 1 byte 0xab FREED
+unaligned: flush 0 bytes 16384 pages mapped 0 0 1
+cancel 0 UNRECLAIMED
+  flush 0 bytes 0 mapped 1
+  cancel again: DEALLOCATED
+flush empty 0 bytes 0
+  empty: head 4 busy 4 tail 4
+  entry 8: ring full
+  entry 9: ring full
+  full: head 4 busy 4 tail 12
+flush 3: 0 pages 3
+resize past the mapping 0x3
+  resized: head 12 busy 12 tail 12
+resize 0 len 16, entry regions still mapped 2
+child: same ring 1, allocate 0x20004006, flush 0 pages 1 mapped 0
+parent: mapped 1  : head 12 busy 12 tail 13
+  flush 0 pages 1
+hole: flush 0x12 mapped 1 1
+  stuck: head 13 busy 14 tail 14
+  again 0x12 BUSY
+fresh process: status 0

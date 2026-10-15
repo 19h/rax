@@ -1,0 +1,17 @@
+--- actual-native-before
++++ frozen-selected-new
+@@ -675,3 +675,14 @@
+ admission and request selection, interpreter-line parsing, fat and thin
+ grading with binary preferences, `NCARGS` accounting, `execsigs`,
+ `fdt_exec`, the spawn layouts, and entitlement lookup in a signature.
++
++### Sampled same-host reclaim pressure
++
++The host-services profile reads the fixed read-only dispatch-pressure sysctl for
++reclaim deadlines and accounting. Normal1 selects10s/10percent,warning2 selects
++1s/5percent and critical4 selects0s/1percent. A zero period drains current bytes
++before WMA division. Embedded profiles never query that host node and retain
++the normal model; unavailable/malformed reads also retain that fallback. Active
++swapping overrides,custom tunables and asynchronous guest-ring pressure walks
++remain separate limitations. See the native-reclaim-pressure corpus for native
++timestamp brackets,Apple source provenance and completed validation records.

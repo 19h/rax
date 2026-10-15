@@ -1,0 +1,29 @@
+[
+  {
+    "id": "M1",
+    "assumption": "The read-only host dispatch-pressure node describes the pressure class used by the sampled macOS kernel; active-swapping override and customized kernel tunables are separate unknowns.",
+    "basis": "Apple xnu12377 pressure conversion and reclaim policy; native warning2 produces1s and normal1 baseline produces10s on actualDarwin27.2",
+    "dependent-result": "same-host deadline and autotrim policy",
+    "stress-test": "normal,warning/urgent,critical,unavailable/malformed read and transitions; compare native interval brackets",
+    "falsification-probe": "unchanged native controller observes a different sampling interval with stable dispatch pressure and same release profile",
+    "status": "retained"
+  },
+  {
+    "id": "M2",
+    "assumption": "Embedded/closed processes must not query host state and retain the normal model policy.",
+    "basis": "existing host_services boundary in sysctl/mod.rs and bounded-process tests",
+    "dependent-result": "host isolation and portable model behavior",
+    "stress-test": "disabled host_services with a query closure that panics if invoked",
+    "falsification-probe": "a disabled-profile policy selection invokes the host query",
+    "status": "retained"
+  },
+  {
+    "id": "M3",
+    "assumption": "A zero sampling period must fully trim current reclaimable bytes and never divide byzero.",
+    "basis": "Apple vm_reclaim.c sampling_interval_abs==0 branch before samples_elapsed division",
+    "dependent-result": "critical-policy accounting",
+    "stress-test": "nonzero last sample,current bytes and zero period; guard/cancellation paths retained",
+    "falsification-probe": "panic,division-byzero,or only WMA-minimum trimming under critical policy",
+    "status": "retained"
+  }
+]

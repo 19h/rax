@@ -1,0 +1,18 @@
+{
+  "source-bytes": 14439,
+  "source-sha256": "41c55e70f47add11d2fa5372d93bbc10e7298d89292f5502b32b5d8ad67c0893",
+  "executable-sha256": "7c3ae2e1b5afe96a1af23104cb39758aef4bd1d6d10baef686cd1cf6564bcc32",
+  "compiler-command": [
+    "xcrun",
+    "--sdk",
+    "macosx",
+    "clang",
+    "-arch",
+    "arm64",
+    "-O1",
+    "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/reclaim-pressure-control.c",
+    "-o",
+    "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/reclaim-pressure-control"
+  ],
+  "scope": "owned native reclaim resources; host pressure unchanged"
+}

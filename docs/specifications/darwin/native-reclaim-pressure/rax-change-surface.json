@@ -1,0 +1,66 @@
+{
+  "direct-decode": {
+    "status": "unaffected",
+    "reason": "sampled Darwin service policy only; no instruction,IR,backend,public ABI or serialization changes"
+  },
+  "direct-execute": {
+    "status": "unaffected",
+    "reason": "sampled Darwin service policy only; no instruction,IR,backend,public ABI or serialization changes"
+  },
+  "cpu-state": {
+    "status": "unaffected",
+    "reason": "sampled Darwin service policy only; no instruction,IR,backend,public ABI or serialization changes"
+  },
+  "memory-mmu": {
+    "status": "affected",
+    "reason": "reclaim period and trim threshold select how the existing guest ring and pages are reclaimed"
+  },
+  "smir-lift": {
+    "status": "unaffected",
+    "reason": "sampled Darwin service policy only; no instruction,IR,backend,public ABI or serialization changes"
+  },
+  "smir-ir": {
+    "status": "unaffected",
+    "reason": "sampled Darwin service policy only; no instruction,IR,backend,public ABI or serialization changes"
+  },
+  "smir-interpreter": {
+    "status": "unaffected",
+    "reason": "sampled Darwin service policy only; no instruction,IR,backend,public ABI or serialization changes"
+  },
+  "optimizer": {
+    "status": "unaffected",
+    "reason": "sampled Darwin service policy only; no instruction,IR,backend,public ABI or serialization changes"
+  },
+  "native-lowering": {
+    "status": "unaffected",
+    "reason": "sampled Darwin service policy only; no instruction,IR,backend,public ABI or serialization changes"
+  },
+  "jit-runtime": {
+    "status": "unaffected",
+    "reason": "sampled Darwin service policy only; no instruction,IR,backend,public ABI or serialization changes"
+  },
+  "backend": {
+    "status": "unaffected",
+    "reason": "sampled Darwin service policy only; no instruction,IR,backend,public ABI or serialization changes"
+  },
+  "machine-device": {
+    "status": "unaffected",
+    "reason": "sampled Darwin service policy only; no instruction,IR,backend,public ABI or serialization changes"
+  },
+  "oracle-analysis": {
+    "status": "unaffected",
+    "reason": "sampled Darwin service policy only; no instruction,IR,backend,public ABI or serialization changes"
+  },
+  "c-abi": {
+    "status": "unaffected",
+    "reason": "sampled Darwin service policy only; no instruction,IR,backend,public ABI or serialization changes"
+  },
+  "tests-docs": {
+    "status": "affected",
+    "reason": "native timing controls,policy/boundary tests and recorded source scope"
+  },
+  "targets-platforms": {
+    "status": "affected",
+    "reason": "fixed host sysctl available only on macOS; unavailable adapter and closed profile retain prior normal behavior on Windows/Linux"
+  }
+}

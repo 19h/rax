@@ -1,0 +1,415 @@
+{
+  "source-base": "ba1a0a16072daf722ca2fa0ec926df53eda964bc",
+  "source-state": "base plus three frozen Rust edits and one engineering document append; post-run proof additions excluded from8537 selected input hashes",
+  "core-toolchains": "Rust1.95 pinned all3hosts; macOS nightly1.100 results supplementary only",
+  "library-counts": {
+    "macos": [
+      7808,
+      0,
+      2
+    ],
+    "linux": [
+      7802,
+      0,
+      2
+    ],
+    "windows": [
+      7228,
+      5,
+      2
+    ]
+  },
+  "focused-passed-each": 6,
+  "capi-passed-each": 168,
+  "owning-source-fixtures": 273,
+  "ordinary-windows-guest-exits": 0,
+  "known-windows-baseline": "four BZHI and one vector FP16 lowerer failure; no new failure accepted",
+  "scope": "sampled reclaim policy and three native host core/CAPI builds; macOS native runtime; frozen older owning roots with current matching consumers; no whole-current-root/plugin/GUI/package claim",
+  "assumption-reconciliation": {
+    "M1": "retained: normal/warning native defaults; active swapping/custom tunables and naturally observed critical native pressure unknown",
+    "M2": "confirmed pure selection never invokes disabled-profile query",
+    "M3": "confirmed zero-period full current-byte trim before division including nonzero prior sample"
+  },
+  "artifacts": [
+    {
+      "path": "assist-native-reclaim-pressure-cpp.log",
+      "bytes": 2946,
+      "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+    },
+    {
+      "path": "assist-native-reclaim-pressure-shipping.log",
+      "bytes": 1585,
+      "sha256": "d9396875258d47dd1ac9f75155e09b919708c4b9a9e5f79c6352b11e16a98802"
+    },
+    {
+      "path": "commands.json",
+      "bytes": 20171,
+      "sha256": "463722bed137490996016ba9c9b2ca07ddd87298e8e273d43f27093f864c20ed"
+    },
+    {
+      "path": "configuration-provenance.json",
+      "bytes": 1144,
+      "sha256": "0e54b00f439d5003098d9efff9ba0d0e4541be44237da30c9832052157e02448"
+    },
+    {
+      "path": "early-build-user.log",
+      "bytes": 765,
+      "sha256": "3e8a3258f9ffb3a2732e027fb9f1f926f5d12131b9bde16629e3e0ca40a1a66f"
+    },
+    {
+      "path": "emulated-current-after-outcome.json",
+      "bytes": 839,
+      "sha256": "52ad98d5a3be883eaab3d017a9f09c84a2f103cddc634922bb1997736cf022c2"
+    },
+    {
+      "path": "emulated-current-after.log",
+      "bytes": 1400,
+      "sha256": "64b08a1d42c73225275a1082fe7da483430845d2e36afe3c34356ae9efb80303"
+    },
+    {
+      "path": "emulated-pinned-after-outcome.json",
+      "bytes": 900,
+      "sha256": "dd4def32deffac3e71c72121e62c5513605943a26722a35d007695950c561d9b"
+    },
+    {
+      "path": "emulated-pinned-after.log",
+      "bytes": 1397,
+      "sha256": "38c09b0c1b35f190312738f6dcb9d88c2eb040f53a1933bf95854c831fca40f7"
+    },
+    {
+      "path": "linux-all-targets.log",
+      "bytes": 116,
+      "sha256": "e868e0c90d6bd8975af4def5c81ccba6520dca3d5f65fee83eca2e54fccdb181"
+    },
+    {
+      "path": "linux-build-user.log",
+      "bytes": 72,
+      "sha256": "9116032755af23c3e54622e381d34afa9aa4fc7bc785c0058cd71dc498430cbf"
+    },
+    {
+      "path": "linux-capi.log",
+      "bytes": 12535,
+      "sha256": "9ca25f81c229e506d9ee82e67c21dc15f797b07d3a9c7116cfce3d23ebea392c"
+    },
+    {
+      "path": "linux-darwin.log",
+      "bytes": 4946,
+      "sha256": "b6a1f77c6e7de9509ce27729d3e89c48785b92353bff8cfc19209bc753a782bf"
+    },
+    {
+      "path": "linux-focused.log",
+      "bytes": 1182,
+      "sha256": "49193e205c27328774c41ff64ac86ea3a7f8eb0d2f26cd4ad7e0b06cc2598a04"
+    },
+    {
+      "path": "linux-lib.log",
+      "bytes": 791995,
+      "sha256": "02f226a3136a8c29a50e25f9dacb67a3e64c37581645b3108fc02be9de7f41c1"
+    },
+    {
+      "path": "linux-linux.log",
+      "bytes": 2832,
+      "sha256": "0abf5855c48a97f4aa577ea786ba971f96c9f08e664a14b94a40489a3c988b94"
+    },
+    {
+      "path": "linux-owning-archives.json",
+      "bytes": 51925,
+      "sha256": "a2c83968374e2bf5bf0839f66c302cffd17275348b0c15fdcfdb456cfbdaf293"
+    },
+    {
+      "path": "linux-owning-cpp.log",
+      "bytes": 1623,
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+    },
+    {
+      "path": "linux-owning-shipping.log",
+      "bytes": 415,
+      "sha256": "8002e01ed045863964fe6792e3f1c5c51492c01376e112ed209489a3373d1c52"
+    },
+    {
+      "path": "linux-windows.log",
+      "bytes": 35805,
+      "sha256": "e6f4a060f3f8a29ea242ce0233013cbd30b2d81b04a95d18f26a394ef516576f"
+    },
+    {
+      "path": "macos-all-targets.log",
+      "bytes": 2248,
+      "sha256": "fc3f321f17ad41dccc212c77b52a9e6e5498737807c829ee669b7428c016c691"
+    },
+    {
+      "path": "macos-build-user.log",
+      "bytes": 72,
+      "sha256": "f4403412cb20dc7d8a0a94c08c9c8853e4bac9b3e8489158834f30512311ed97"
+    },
+    {
+      "path": "macos-capi.log",
+      "bytes": 12660,
+      "sha256": "dff073474a61b87c3278fb39f3b2997804a6990e7061aab355cba2dd4f0b074f"
+    },
+    {
+      "path": "macos-darwin.log",
+      "bytes": 6197,
+      "sha256": "c39582b2bc044bbdf9f82a13e4009e7b78abf3e317477c0998b52c5cc460b36b"
+    },
+    {
+      "path": "macos-focused.log",
+      "bytes": 3741,
+      "sha256": "b65aa625b920648a75bb10c41e67612a8f643279f89c1231adbcc5654b0d466d"
+    },
+    {
+      "path": "macos-lib.log",
+      "bytes": 792880,
+      "sha256": "bc16a3139ea664aa9830eefa164c7be6ada2773da48d642ba5c362ccbc47fd23"
+    },
+    {
+      "path": "macos-linux.log",
+      "bytes": 3000,
+      "sha256": "8ec5defd4f1ee803aeb3b3301676d6597b1f6181ab5849d2bd47f68f6cd8dee3"
+    },
+    {
+      "path": "macos-owning-archives.json",
+      "bytes": 52342,
+      "sha256": "b593ef628ce7beb3f06d93e6c3a0d349af5c1f7343af1b0e7feca608953a22d3"
+    },
+    {
+      "path": "macos-owning-build.log",
+      "bytes": 33678,
+      "sha256": "79483a601fcfc879570dd7f1471ba8c7dc298663049d591805a0c213ed0be62b"
+    },
+    {
+      "path": "macos-owning-ctest.log",
+      "bytes": 1273,
+      "sha256": "e570184786fd91927faa76301cdef325e8734288e897c598960679e12b0f529d"
+    },
+    {
+      "path": "macos-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "macos-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "macos-windows.log",
+      "bytes": 36062,
+      "sha256": "4ce3c4c48106a845a4ec9fc4a665d681a691ab6034f5e98c6376aa06fdcc8a2c"
+    },
+    {
+      "path": "native-current-after-outcome.json",
+      "bytes": 516,
+      "sha256": "9317d2c2b09970164a0a22e4168398f5c59f05b5f0eb1141f70628f52d660aac"
+    },
+    {
+      "path": "native-current-after.log",
+      "bytes": 1409,
+      "sha256": "4afc76f0e6b0cd65c0acae247d1c2f72b3a7ea59731c010e5d604f1bca735c42"
+    },
+    {
+      "path": "native-darwin-document-before.diff",
+      "bytes": 966,
+      "sha256": "f482476ae5ed8df69716bf7912491177a7e30969c879e92916a86c49ad1d26be"
+    },
+    {
+      "path": "native-document-baseline-review.json",
+      "bytes": 257,
+      "sha256": "7665882cfeebf0ac50c7c9a53f0dba7ea041c6988e4687cc43a407c0ec54c921"
+    },
+    {
+      "path": "native-reclaim-pressure-after-artifacts-stderr.log",
+      "bytes": 72,
+      "sha256": "7c8951ade1d20e77b022536dca496fafa90cfa63393801db56afa6f352b62a6a"
+    },
+    {
+      "path": "native-reclaim-pressure-after-artifacts.jsonl",
+      "bytes": 130191,
+      "sha256": "85f14c1274e0fa0a8483b39519ab6a4a23d380a6be4e5c2dfa94724c409a3b6b"
+    },
+    {
+      "path": "native-reclaim-pressure-artifact-transfer.json",
+      "bytes": 360,
+      "sha256": "3ef6e03f143a6410db110c8184fea621f0e5e428a5a598f29f6bf996a9414045"
+    },
+    {
+      "path": "native-reclaim-pressure-full-all-targets.log",
+      "bytes": 986,
+      "sha256": "4ee2c7f035bc0e816a86cba47991e34a01cb701d3d47aec82043fc7255908f34"
+    },
+    {
+      "path": "native-reclaim-pressure-full-capi.log",
+      "bytes": 13837,
+      "sha256": "a279499fe679c03ee2d682dbe6ee965eb49d65fbb6b325cfe5c91ed91f7e495d"
+    },
+    {
+      "path": "native-reclaim-pressure-full-focused.log",
+      "bytes": 1926,
+      "sha256": "f4185ec67642fa767c893d55bd729b905efa56fc20fb83b7204490835945d63a"
+    },
+    {
+      "path": "native-reclaim-pressure-full-full.log",
+      "bytes": 767757,
+      "sha256": "3e281bb837cf2d2cdb496fb5282330efadf38d305319bc630895310b18c5dd7a"
+    },
+    {
+      "path": "native-reclaim-pressure-full-gates.json",
+      "bytes": 1250,
+      "sha256": "df92d01d839de75d3d2b04364ead2169224425b2304ba6bf6779d13362887342"
+    },
+    {
+      "path": "native-reclaim-pressure-full-integration.log",
+      "bytes": 1866,
+      "sha256": "9267945779a0e1bcfa9037f84751e776eb222c3f99c0b19049ed4f0bb97069d9"
+    },
+    {
+      "path": "native-reclaim-pressure-owning-archive-hashes.json",
+      "bytes": 44888,
+      "sha256": "b716d277cf3fb7bf7b8346dd2b98dff49074cbeb94506bc7d9052ba268446066"
+    },
+    {
+      "path": "native-reclaim-pressure-owning-source-verification.json",
+      "bytes": 190,
+      "sha256": "56e864bf9e88ba24d88883a4423587409738b70824b008b965c822e6433ba31e"
+    },
+    {
+      "path": "owned-source-hashes.json",
+      "bytes": 555,
+      "sha256": "dfbc0f9487d8ece23c5de68ad1b7d3daa3fa3df958b7775dac540943eaa30d84"
+    },
+    {
+      "path": "owning-root-scope.json",
+      "bytes": 2119,
+      "sha256": "0f1a69ed958454f92f67c2500726b8a1a5d3b5c7d6ffc98085f4402fb701bf3b"
+    },
+    {
+      "path": "pinned-build-user.log",
+      "bytes": 251,
+      "sha256": "639bc72ec7f2aed85a963e365701cc90877b2693e26d91d4d86f251bade6293e"
+    },
+    {
+      "path": "reclaim-pressure-before-mismatches.json",
+      "bytes": 175,
+      "sha256": "ad2493d402f699b56e746d13e28f8662353b7e3793987ee99138f83b1aa61f3d"
+    },
+    {
+      "path": "reclaim-pressure-source-hashes.json",
+      "bytes": 52252,
+      "sha256": "9bf2caceed4e254f2d58662cd4a06b608c5392ced3b9c88967a4d7d91ebdf868"
+    },
+    {
+      "path": "reclaim-pressure-sources.json",
+      "bytes": 1621633,
+      "sha256": "944923909773f601214fff9e7b147f58a78a9da1275e1fda5563a6d9d4ed656a"
+    },
+    {
+      "path": "supplementary-nightly-macos-all-targets.log",
+      "bytes": 3095,
+      "sha256": "9c83a009291f60e0a179db1e28caa3933719b9db4dff4eaaf164e9c6078d8501"
+    },
+    {
+      "path": "supplementary-nightly-macos-build-user.log",
+      "bytes": 643,
+      "sha256": "e3c04c4f41f9f14918d17c5f9468998d93f4486294fbfb30eeb637ca0781c0b8"
+    },
+    {
+      "path": "supplementary-nightly-macos-capi.log",
+      "bytes": 13255,
+      "sha256": "dffea067398db2eb5e1764858dc19de5ee1de764f574be177a6ae341e037fbde"
+    },
+    {
+      "path": "supplementary-nightly-macos-darwin.log",
+      "bytes": 8640,
+      "sha256": "faddf410d62d380348debf152a6e06115589df0e6cb0d57034210b226f74d730"
+    },
+    {
+      "path": "supplementary-nightly-macos-focused.log",
+      "bytes": 1747,
+      "sha256": "3d5dc4236bce5be01825ec0feb9494804ff7da28b8b323d64943e026c3047ac6"
+    },
+    {
+      "path": "supplementary-nightly-macos-lib.log",
+      "bytes": 793413,
+      "sha256": "3049439566bc505324533886c153d6730e45dedc5a957a172b460e18a576f5b2"
+    },
+    {
+      "path": "supplementary-nightly-macos-linux.log",
+      "bytes": 3590,
+      "sha256": "fe6ae349595f066320d773ab9c4ebbe07a4d2d5a741cab16a0234c77eee09ded"
+    },
+    {
+      "path": "supplementary-nightly-macos-windows.log",
+      "bytes": 36671,
+      "sha256": "c02dad1260e6e8951ff402f66c28da5010268857787637b889cbec914bb3afd1"
+    },
+    {
+      "path": "toolchain-reconciliation.json",
+      "bytes": 2225,
+      "sha256": "8385e1dd2efc65ba5d05a0ae9c47ec72c3f4c4a0c63a1dda3250749a97a94f64"
+    },
+    {
+      "path": "workloop-comparison-v2-baseline-nightly.log",
+      "bytes": 682,
+      "sha256": "a07ad2b8046970c31f7790166c56fa94a234747bb8ddb3b1a3fcfb84b6202902"
+    },
+    {
+      "path": "workloop-comparison-v2-commands.json",
+      "bytes": 2150,
+      "sha256": "1a6998f9b3b38e0522c82ed854c6e96587c4d77d95697c3d3836a456e657e375"
+    },
+    {
+      "path": "workloop-comparison-v2-current-nightly.log",
+      "bytes": 680,
+      "sha256": "74bff209b0c24b49e700663bb6c241e015cd172d9d4ddf8b5d6c28e651992042"
+    },
+    {
+      "path": "workloop-comparison-v2-current-pinned.log",
+      "bytes": 682,
+      "sha256": "a07ad2b8046970c31f7790166c56fa94a234747bb8ddb3b1a3fcfb84b6202902"
+    },
+    {
+      "path": "workloop-comparison-v2-native.log",
+      "bytes": 682,
+      "sha256": "a07ad2b8046970c31f7790166c56fa94a234747bb8ddb3b1a3fcfb84b6202902"
+    },
+    {
+      "path": "workloop-comparison-v2-results.json",
+      "bytes": 2222,
+      "sha256": "32d455dd6444113c03fb650c1a854cd978d14ca0f8e62044a029e76b9df99ce3"
+    },
+    {
+      "path": "workloop-repro-commands.json",
+      "bytes": 1178,
+      "sha256": "df2ef188369b367c03492a3f6ffe83cd9900e569eabcf9fe623f17b9cd66e22f"
+    },
+    {
+      "path": "workloop-repro-nightly.log",
+      "bytes": 1906,
+      "sha256": "532910bf00b639592f5c05a124c531930ef83ffcedc5ef3a0af6949412bfa45c"
+    },
+    {
+      "path": "workloop-repro-pinned.log",
+      "bytes": 158,
+      "sha256": "bd9d555c506f6bad76d5d3a2f6ba8bd0e606c6dd2fdb551da7b2ac19342b693b"
+    },
+    {
+      "path": "workloop-repro-results.json",
+      "bytes": 1467,
+      "sha256": "23d2cf94562e2cf6ca984ea3a873bd85d41a0bcdcbec642680659956ead6f58b"
+    }
+  ],
+  "known-windows-failures": [
+    "lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "known-nightly-finding": {
+    "test": "fixtures::workloop_bound_x86_64",
+    "full-result": "116passed/1failed",
+    "repro": "current nightly fails both test replay and same-fixture native comparison; prechange nightly and current pinned match native in that comparison",
+    "cause": "unknown; unpublished causal diagnostics continue separately",
+    "scope": "blocks an unconditional nightly/standalone correctness claim; pinned1.95 all117 native tests pass",
+    "invalid-initial-comparison": "excluded: copied fixture lacked execute mode; v2 preserves0755 and is the retained valid comparison"
+  }
+}

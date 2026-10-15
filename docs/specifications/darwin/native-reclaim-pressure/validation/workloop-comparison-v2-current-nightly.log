@@ -1,0 +1,31 @@
+main thread qos: 0x21 0x21
+init: 0
+create bound: 0
+a thread was made: 1
+create bound again: 17
+knote: 0
+serviced: 1 id_ok=1 nevents=1 ident=1 main=0
+again: 1 same thread=1
+again: 1 same thread=1
+again: 1 same thread=1
+no thread was added: 1
+destroy: 0
+its thread ended: 1
+destroy again: 22
+knote deleted: 0
+create bound with a priority: 0
+knote: 0
+serviced: 1 qos=0x15 main=0
+knote deleted: 0
+destroy: 0
+its thread ended: 1
+create with a priority: 0
+knote: 0
+serviced: 1 qos=0x15
+knote deleted: 0
+destroy: 0
+child main thread qos: 0x21 0x21
+uses bound thread: 0
+dispatch bound: waited=0 ran=4 main=0 qos=0x19 same thread=1
+dispatch priority: waited=49 ran=0 main=0 qos=0
+child: 0

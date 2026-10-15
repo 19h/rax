@@ -1,0 +1,52 @@
+{
+  "fixture": {
+    "path": "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/workloop-comparison-v2/workloop_bound.x86_64",
+    "bytes": 16000,
+    "sha256": "693e78a331a11814a25e55dc845b4a1057afe9cca3140478b4cc8c2679bbba5b",
+    "mode": "0o755"
+  },
+  "runs": [
+    {
+      "name": "native",
+      "command": [
+        "arch",
+        "-x86_64",
+        "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/workloop-comparison-v2/workloop_bound.x86_64"
+      ]
+    },
+    {
+      "name": "baseline-nightly",
+      "command": [
+        "/Users/int/Library/Caches/assist-process-emulation/section-create-20261015/target/debug/rax-user",
+        "--arch",
+        "x86_64",
+        "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/workloop-comparison-v2/workloop_bound.x86_64"
+      ],
+      "executable-bytes": 52450040,
+      "executable-sha256": "18df78a4da82b632fe28d0d85faced5350025869102a73cb1a9a8f0d7fa38ab1"
+    },
+    {
+      "name": "current-nightly",
+      "command": [
+        "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target/debug/rax-user",
+        "--arch",
+        "x86_64",
+        "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/workloop-comparison-v2/workloop_bound.x86_64"
+      ],
+      "executable-bytes": 52463144,
+      "executable-sha256": "a8feb55dcd3ea74e33161c56f23c35d7b78775a18bcccb4f1158d27cc5e6bf58"
+    },
+    {
+      "name": "current-pinned",
+      "command": [
+        "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target-pinned/debug/rax-user",
+        "--arch",
+        "x86_64",
+        "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/workloop-comparison-v2/workloop_bound.x86_64"
+      ],
+      "executable-bytes": 48806680,
+      "executable-sha256": "c6444b93b7e1f0fb5044d699bccfd188305ee8a67b00ee3aa72316bf258a691a"
+    }
+  ],
+  "invalid-previous-comparison": "v1 copyfile omitted executable mode; native exit1; excluded from behavior comparison"
+}

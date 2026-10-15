@@ -1,0 +1,20 @@
+[
+  {
+    "impact": "high",
+    "finding": "XNU active-swapping override can select period0 independently of dispatch pressure; customized kernel tunables are also not queried.",
+    "evidence": "../xnu-12377.121.6/osfmk/vm/vm_reclaim.c:309-335",
+    "blocks": "full equivalence for those profiles; not the measured warning-period correction"
+  },
+  {
+    "impact": "medium",
+    "finding": "Native and emulated runs observe host pressure at different times; transitions can change deadline output between comparisons.",
+    "evidence": "retained native/emulated timestamp and pressure controls",
+    "blocks": "requires stable measured levels for a period-equality claim"
+  },
+  {
+    "impact": "medium",
+    "finding": "Guest rings are not registered for asynchronous host-kernel trimming.",
+    "evidence": "src/user/darwin/syscall/mach/reclaim.rs module contract",
+    "blocks": "full asynchronous reclaim equivalence"
+  }
+]

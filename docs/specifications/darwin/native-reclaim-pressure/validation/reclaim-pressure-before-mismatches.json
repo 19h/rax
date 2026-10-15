@@ -1,0 +1,7 @@
+[
+  {
+    "path": "docs/architecture/user-mode/darwin.md",
+    "expected": null,
+    "actual": "43a39ea31cd8b0b0ee182cb428a25674c47372e4879de4685ebf337fc42b835b"
+  }
+]

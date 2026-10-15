@@ -1,0 +1,32 @@
+warning: explicit `package.readme` can be inferred
+  --> Cargo.toml:20:1
+   |
+20 | readme = "README.md"
+   | ^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::manual_readme` is set to `warn` by default
+help: consider removing `package.readme`
+warning: `rax` (manifest) generated 1 warning
+warning: explicit `package.readme` can be inferred
+ --> capi/Cargo.toml:8:1
+  |
+8 | readme = "README.md"
+  | ^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `cargo::manual_readme` is set to `warn` by default
+help: consider removing `package.readme`
+warning: `rax-capi` (manifest) generated 1 warning
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/rax-source)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 19s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target/debug/build/rax/05157604908101ea/out/rax-05157604908101ea)
+
+running 6 tests
+test user::darwin::syscall::mach::reclaim::pressure::tests::dispatch_levels_use_kernel_periods_and_trim_thresholds ... ok
+test user::darwin::syscall::mach::reclaim::pressure::tests::embedded_policy_never_queries_host_state ... ok
+test user::darwin::syscall::mach::reclaim::tests::critical_sample_drains_current_bytes_with_a_previous_sample_and_zero_minimum ... ok
+test user::darwin::syscall::mach::reclaim::tests::policy_periods_use_guest_clock_units ... ok
+test user::darwin::syscall::mach::reclaim::tests::rings_are_sized_as_the_kernel_sizes_them ... ok
+test user::darwin::syscall::mach::reclaim::tests::warning_threshold_trims_the_same_idle_page_normal_pressure_retains ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 7804 filtered out; finished in 0.02s
+

@@ -1,0 +1,18 @@
+{
+  "exit-code": 0,
+  "command": [
+    "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target/debug/rax-user",
+    "--arch",
+    "arm64",
+    "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/reclaim-pressure-control"
+  ],
+  "pressure-before": "1",
+  "pressure-after": "1",
+  "cli-bytes": 52463144,
+  "cli-sha256": "a8feb55dcd3ea74e33161c56f23c35d7b78775a18bcccb4f1158d27cc5e6bf58",
+  "source-base": "ba1a0a16072daf722ca2fa0ec926df53eda964bc",
+  "source-manifest-sha256": "944923909773f601214fff9e7b147f58a78a9da1275e1fda5563a6d9d4ed656a",
+  "control-sha256": "7c3ae2e1b5afe96a1af23104cb39758aef4bd1d6d10baef686cd1cf6564bcc32",
+  "log-sha256": "64b08a1d42c73225275a1082fe7da483430845d2e36afe3c34356ae9efb80303",
+  "recorded-utc": "2026-10-15T15:43:28.557766+00:00"
+}

@@ -1,0 +1,18 @@
+{
+  "plugin-lifecycle": "unaffected: no plugin lifecycle code",
+  "ui-state": "unaffected: no UI code",
+  "conversation-lane": "unaffected: no conversation state",
+  "agent-backend": "unaffected: no agent providers",
+  "prompt-context": "unaffected: no prompt changes",
+  "tool-schema": "unaffected: process tools and discovery unchanged",
+  "permission-mutation": "unaffected: existing process ownership; no new capability grants",
+  "main-thread-dispatch": "unaffected: no IDA/Qt calls",
+  "mesh-mcp": "unaffected: no routing or transport",
+  "transport-crypto": "unaffected: no transport",
+  "persistence": "unaffected: no persisted schema or real-user state",
+  "sdk-abi": "unaffected: no C ABI or SDK headers",
+  "optional-engines": "affected: embedded RAX compiles sampled policy but closed host_services path never reads host pressure",
+  "update-release": "unaffected: no release/package ABI/default changes",
+  "targets-platforms": "affected: compile/run core and CAPI all3hosts; native Darwin runtime and frozen scoped owning embeddings; no whole-root/plugin/package claim",
+  "tests-docs": "affected: pressure-policy tests,native observations and engineering pin records"
+}

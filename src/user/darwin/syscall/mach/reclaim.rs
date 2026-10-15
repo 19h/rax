@@ -10,10 +10,11 @@
 //! reclaimed) and takes slots modulo its own copy of the ring's length.
 //! A fault on the ring, an index userspace corrupted, or an entry with an
 //! unknown action kills the task with a virtual-memory guard exception.
-//! The emulated machine is never under memory pressure, so nothing else
-//! reclaims.
+//! Same-host pressure selects the sampled deadline and trim policy. The host
+//! kernel does not asynchronously walk the guest ring.
 
 use super::guard;
+mod pressure;
 use crate::user::darwin::abi::DarwinAbi;
 use crate::user::darwin::exception;
 use crate::user::darwin::mach::kr::{self, KernReturn};
@@ -32,11 +33,6 @@ const CHUNK: u64 = 16;
 const HEADER: u64 = 128;
 /// `sizeof(struct mach_vm_reclaim_entry_s)`.
 const ENTRY: u64 = 16;
-/// The sampling period without memory pressure (macOS): 10 s.
-const PERIOD_NS: u64 = 10_000_000_000;
-/// The share of the task's peak footprint an idle minimum must exceed to
-/// be trimmed without memory pressure (macOS), in percent.
-const TRIM_PERCENT: u64 = 10;
 /// Sampling periods after which a ring counts as abandoned.
 const ABANDONED: u64 = 512;
 /// `VMDR_WMA_UNIT`, and the moving average's weights.
@@ -73,14 +69,19 @@ mod flavor {
 const EFAULT: u64 = 14;
 
 /// The sampling period in the guest's `mach_absolute_time` units.
-fn period(abi: DarwinAbi) -> u64 {
+fn ticks(abi: DarwinAbi, period_ns: u64) -> u64 {
     match abi {
-        DarwinAbi::X86_64 => PERIOD_NS,
+        DarwinAbi::X86_64 => period_ns,
         DarwinAbi::Arm64 => {
-            (u128::from(PERIOD_NS) * u128::from(crate::user::darwin::arch::ARM64_COUNTER_HZ)
+            (u128::from(period_ns) * u128::from(crate::user::darwin::arch::ARM64_COUNTER_HZ)
                 / 1_000_000_000) as u64
         }
     }
+}
+
+fn deadline(ctx: &Ctx<'_>) -> u64 {
+    let policy = pressure::current(ctx.proc.config.host_services);
+    now(ctx) + ticks(ctx.proc.abi, policy.period_ns)
 }
 
 fn now(ctx: &Ctx<'_>) -> u64 {
@@ -289,7 +290,7 @@ pub fn allocate(ctx: &mut Ctx<'_>, len: u32, max_len: u32) -> Result<(u64, u64),
         wma: 0,
         peak: 0,
     });
-    Ok((at, now(ctx) + period(ctx.proc.abi)))
+    Ok((at, deadline(ctx)))
 }
 
 /// `mach_vm_deferred_reclamation_buffer_flush(num_entries)`: reclaims up
@@ -298,7 +299,7 @@ pub fn allocate(ctx: &mut Ctx<'_>, len: u32, max_len: u32) -> Result<(u64, u64),
 pub fn flush(ctx: &mut Ctx<'_>, num: u32) -> Result<(u64, u64), KernReturn> {
     let ring = ctx.proc.task.reclaim.ok_or(kr::KERN_INVALID_ARGUMENT)?;
     let bytes = reclaim(ctx, ring, Some(u64::from(num))).map_err(Stop::kr)?;
-    Ok((bytes, now(ctx) + period(ctx.proc.abi)))
+    Ok((bytes, deadline(ctx)))
 }
 
 /// `mach_vm_deferred_reclamation_buffer_resize(new_len)`: reclaims every
@@ -316,7 +317,7 @@ pub fn resize(ctx: &mut Ctx<'_>, len: u32) -> Result<(u64, u64), KernReturn> {
     if let Some(r) = ctx.proc.task.reclaim.as_mut() {
         r.len = len;
     }
-    Ok((bytes, now(ctx) + period(ctx.proc.abi)))
+    Ok((bytes, deadline(ctx)))
 }
 
 /// `mach_vm_deferred_reclamation_buffer_query`: the ring's address and
@@ -325,16 +326,66 @@ pub fn query(ctx: &Ctx<'_>) -> (u64, u64) {
     ctx.proc.task.reclaim.map_or((0, 0), |r| (r.addr, r.size))
 }
 
+/// Byte counters and clock ticks captured for one kernel-accounting sample.
+struct Sample {
+    period: u64,
+    time: u64,
+    minimum: u64,
+    current: u64,
+    page: u64,
+    footprint: u64,
+    trim_percent: u64,
+}
+fn sampled_trim(ring: &mut Ring, sample: Sample) -> u64 {
+    let Sample {
+        period: p,
+        time: t,
+        minimum: min,
+        current: cur,
+        page,
+        footprint,
+        trim_percent,
+    } = sample;
+    // XNU checks a zero interval before WMA division and drains the current
+    // count directly, including when a previous nonzero sample exists.
+    if p == 0 {
+        cur
+    } else {
+        // A ring never sampled counts as abandoned (a host's uptime is far
+        // longer than the periods it would span).
+        let periods = if ring.last_sample == 0 {
+            u64::MAX
+        } else {
+            (t - ring.last_sample) / p
+        };
+        ring.wma = if periods > ABANDONED {
+            cur.saturating_mul(WMA_UNIT) / 4
+        } else {
+            (ring.wma.saturating_mul(3) + min.saturating_mul(WMA_UNIT)) / 4
+        };
+        let unneeded = min.min(ring.wma / WMA_UNIT);
+        ring.peak = ring.peak.max(footprint);
+        if unneeded >= page
+            && unneeded >= ((u128::from(ring.peak) * u128::from(trim_percent)) / 100) as u64
+        {
+            unneeded.div_ceil(page) * page
+        } else {
+            0
+        }
+    }
+}
+
 /// `vm_deferred_reclamation_update_accounting_internal`: within a
 /// sampling period, nothing; otherwise a sample of the ring (its idle
 /// minimum over the period becomes the start of the next, and feeds a
 /// moving average of what the task did not need), and a trim from the
 /// head of the minimum the average confirms when it is at least a page
-/// and a tenth of the task's peak footprint. The bytes reclaimed and the
-/// next deadline.
+/// and the pressure-selected fraction of peak footprint. A zero period
+/// drains the current byte count directly. The bytes reclaimed and next deadline.
 fn update_accounting(ctx: &mut Ctx<'_>) -> Result<(u64, u64), KernReturn> {
     let mut ring = ctx.proc.task.reclaim.ok_or(kr::KERN_NOT_FOUND)?;
-    let p = period(ctx.proc.abi);
+    let policy = pressure::current(ctx.proc.config.host_services);
+    let p = ticks(ctx.proc.abi, policy.period_ns);
     let t = now(ctx);
     if ring.last_sample != 0 && t.saturating_sub(ring.last_sample) < p {
         return Ok((0, ring.last_sample + p));
@@ -342,27 +393,18 @@ fn update_accounting(ctx: &mut Ctx<'_>) -> Result<(u64, u64), KernReturn> {
     let min = load(ctx, ring.addr + off::RECLAIMABLE_BYTES_MIN).map_err(Stop::kr)?;
     let cur = load(ctx, ring.addr + off::RECLAIMABLE_BYTES).map_err(Stop::kr)?;
     store(ctx, ring.addr + off::RECLAIMABLE_BYTES_MIN, cur).map_err(Stop::kr)?;
-    // A ring never sampled counts as abandoned (a host's uptime is far
-    // longer than the periods it would span).
-    let periods = if ring.last_sample == 0 {
-        u64::MAX
-    } else {
-        (t - ring.last_sample) / p
-    };
-    ring.wma = if periods > ABANDONED {
-        cur.saturating_mul(WMA_UNIT) / 4
-    } else {
-        (ring.wma.saturating_mul(3) + min.saturating_mul(WMA_UNIT)) / 4
-    };
-    let unneeded = min.min(ring.wma / WMA_UNIT);
-    let footprint = ctx.proc.space.resident_pages() * crate::user::mm::PAGE_SIZE;
-    ring.peak = ring.peak.max(footprint);
-    let page = ctx.proc.vm.page;
-    let trim = if unneeded >= page && unneeded >= ring.peak * TRIM_PERCENT / 100 {
-        unneeded.div_ceil(page) * page
-    } else {
-        0
-    };
+    let trim = sampled_trim(
+        &mut ring,
+        Sample {
+            period: p,
+            time: t,
+            minimum: min,
+            current: cur,
+            page: ctx.proc.vm.page,
+            footprint: ctx.proc.space.resident_pages() * crate::user::mm::PAGE_SIZE,
+            trim_percent: policy.trim_percent,
+        },
+    );
     ring.last_sample = now(ctx);
     ctx.proc.task.reclaim = Some(ring);
     let mut bytes = 0u64;
@@ -413,9 +455,66 @@ mod tests {
         assert_eq!(round_len_to_size(0x1000, 248), 0x1000);
     }
 
+    fn sampled_ring() -> Ring {
+        Ring {
+            addr: 0,
+            size: 4096,
+            len: 1,
+            last_sample: 1,
+            wma: 4096 * WMA_UNIT,
+            peak: 81920,
+        }
+    }
     #[test]
-    fn the_period_is_ten_seconds_of_the_guest_clock() {
-        assert_eq!(period(DarwinAbi::Arm64), 240_000_000);
-        assert_eq!(period(DarwinAbi::X86_64), 10_000_000_000);
+    fn critical_sample_drains_current_bytes_with_a_previous_sample_and_zero_minimum() {
+        let mut ring = sampled_ring();
+        let saved_wma = ring.wma;
+        assert_eq!(
+            sampled_trim(
+                &mut ring,
+                Sample {
+                    period: 0,
+                    time: 2,
+                    minimum: 0,
+                    current: 8193,
+                    page: 4096,
+                    footprint: 81920,
+                    trim_percent: 1
+                }
+            ),
+            8193
+        );
+        assert_eq!(ring.wma, saved_wma);
+    }
+    #[test]
+    fn warning_threshold_trims_the_same_idle_page_normal_pressure_retains() {
+        for (trim_percent, expected) in [(10, 0), (5, 4096)] {
+            let mut ring = sampled_ring();
+            assert_eq!(
+                sampled_trim(
+                    &mut ring,
+                    Sample {
+                        period: 1,
+                        time: 2,
+                        minimum: 4096,
+                        current: 4096,
+                        page: 4096,
+                        footprint: 81920,
+                        trim_percent
+                    }
+                ),
+                expected
+            );
+        }
+    }
+
+    #[test]
+    fn policy_periods_use_guest_clock_units() {
+        assert_eq!(ticks(DarwinAbi::Arm64, 10_000_000_000), 240_000_000);
+        assert_eq!(ticks(DarwinAbi::Arm64, 1_000_000_000), 24_000_000);
+        assert_eq!(ticks(DarwinAbi::Arm64, 0), 0);
+        assert_eq!(ticks(DarwinAbi::X86_64, 10_000_000_000), 10_000_000_000);
+        assert_eq!(ticks(DarwinAbi::X86_64, 1_000_000_000), 1_000_000_000);
+        assert_eq!(ticks(DarwinAbi::X86_64, 0), 0);
     }
 }

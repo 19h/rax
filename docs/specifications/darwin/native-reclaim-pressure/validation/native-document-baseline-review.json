@@ -1,0 +1,7 @@
+{
+  "path": "docs/architecture/user-mode/darwin.md",
+  "actual-sha256": "43a39ea31cd8b0b0ee182cb428a25674c47372e4879de4685ebf337fc42b835b",
+  "base-blob-identical": true,
+  "hunks": 1,
+  "change": "append11 lines only; no Rust/source baseline exceptions"
+}

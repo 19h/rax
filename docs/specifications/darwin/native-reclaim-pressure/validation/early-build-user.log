@@ -1,0 +1,20 @@
+warning: explicit `package.readme` can be inferred
+  --> Cargo.toml:20:1
+   |
+20 | readme = "README.md"
+   | ^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::manual_readme` is set to `warn` by default
+help: consider removing `package.readme`
+warning: `rax` (manifest) generated 1 warning
+warning: explicit `package.readme` can be inferred
+ --> capi/Cargo.toml:8:1
+  |
+8 | readme = "README.md"
+  | ^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `cargo::manual_readme` is set to `warn` by default
+help: consider removing `package.readme`
+warning: `rax-capi` (manifest) generated 1 warning
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/rax-source)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4m 12s

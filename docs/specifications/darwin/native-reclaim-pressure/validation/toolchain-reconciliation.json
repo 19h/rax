@@ -1,0 +1,43 @@
+{
+  "standalone-nightly-rustc": "rustc 1.100.0-nightly (f248f4038 2026-09-05)",
+  "pinned-rustc": "rustc 1.95.0 (59807616e 2026-04-14)",
+  "standalone-nightly-cargo": "cargo 1.100.0-nightly (3c0b53475 2026-09-04)",
+  "pinned-cargo": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)",
+  "owning-rustc-info": {
+    "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target/.rustc_info.json",
+    "bytes": 3018,
+    "sha256": "c72a00c7823d81bb709f412ecdc2e680fe91ff3bf3f0b2762846c16433890ac5",
+    "contains-toolchain": "1.95.0-aarch64-apple-darwin"
+  },
+  "running-nightly-gates": "retained as supplementary; separate pinned target and logs; no global toolchain mutation",
+  "supplementary-actual-compiler-fingerprints": [
+    {
+      "path": "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target/debug/build/rax/01cbca5ed877f8ed/fingerprint/lib-rax.json",
+      "bytes": 1443,
+      "sha256": "1bdee3a53d21eedfb36a2565976184bbe42d5eba4b9e2c90cf85db14300907a8",
+      "rustc-fingerprint": 12156605359994972722,
+      "features": "[]"
+    },
+    {
+      "path": "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target/debug/build/rax/05157604908101ea/fingerprint/test-lib-rax.json",
+      "bytes": 1448,
+      "sha256": "fc52a452667090dcd0711b84a639b5c98a0cb0d4e142a445cf2a48d1569004ce",
+      "rustc-fingerprint": 12156605359994972722,
+      "features": "[]"
+    },
+    {
+      "path": "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target/debug/build/rax/01ff722d14e29e95/fingerprint/test-lib-rax.json",
+      "bytes": 1444,
+      "sha256": "2885a86578c9d17da08dfdfb32ae703c1e361d668abd2e37fc2c8b61de21cc7a",
+      "rustc-fingerprint": 12156605359994972722,
+      "features": "[]"
+    },
+    {
+      "path": "/Users/int/Library/Caches/assist-process-emulation/darwin-reclaim-pressure-20261015/target/debug/build/rax/d7e94ed4d48be65b/fingerprint/lib-rax.json",
+      "bytes": 1439,
+      "sha256": "9a48f2485e207f3c3e2460eea0b9128096f0ed6bcc48549be5eca22337a50e82",
+      "rustc-fingerprint": 12156605359994972722,
+      "features": "[]"
+    }
+  ]
+}

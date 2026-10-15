@@ -1,0 +1,53 @@
+{
+  "actual-root-head": "1c13a82ba16fea11df0b8047943acad2518d4dd9",
+  "owning-unix-root-head": "e2fc5b483be7cad2dae17d889690cc398973c5e8",
+  "owning-windows-root-head": "f386ed2aeac29a701d32f28eb73c14003eb55f7a",
+  "source-claims": "frozen older owning exports; nine current C++ consumers match; no whole-current-root/plugin/GUI/package proof",
+  "consumers": [
+    {
+      "path": "src/emulation/rax/rax_process.cpp",
+      "current-sha256": "ed55d78681a9a59e384186382d998244d80ca5665793e60f5e7577d88d526564",
+      "same-as-frozen-owning": true
+    },
+    {
+      "path": "src/emulation/rax/librax_loader.cpp",
+      "current-sha256": "968294f6cf9f5e0e2af2f13a87eca456c57b5f951f6d8ccb3375f7cd16fee4c9",
+      "same-as-frozen-owning": true
+    },
+    {
+      "path": "src/tools/builtin/emulation/sessions/process_tool.cpp",
+      "current-sha256": "2e367268a546344c73c288910b97ab733b825c3388b69c7a28ad3a0d3e27e2eb",
+      "same-as-frozen-owning": true
+    },
+    {
+      "path": "include/assist/emulation/rax/rax_process.hpp",
+      "current-sha256": "525c9a3bfeb7d5626b3690905e293f2f464908039aa93497b00464f76aa8bdff",
+      "same-as-frozen-owning": true
+    },
+    {
+      "path": "test/rax_process_tests.cpp",
+      "current-sha256": "d4dacc7f185d04d7ca30acf2bf97eed71194bde9e2a22e11c1cad73d1770fcbd",
+      "same-as-frozen-owning": true
+    },
+    {
+      "path": "test/process_tool_tests.cpp",
+      "current-sha256": "960bb5d07a446619ee7331ca517ea9eb38b8c8b87b15f7dcf4e3c2f136336522",
+      "same-as-frozen-owning": true
+    },
+    {
+      "path": "test/process_tool_unavailable_tests.cpp",
+      "current-sha256": "c7123d9398fa405349018f4ab18953d0b7688c0afb687fca2beaf1fa226a2e72",
+      "same-as-frozen-owning": true
+    },
+    {
+      "path": "test/e14_rax_abi_drift_tests.cpp",
+      "current-sha256": "bb0f260181f3506db1e203a018cda6de0b47daf617baf2216d5a9568c604369f",
+      "same-as-frozen-owning": true
+    },
+    {
+      "path": "test/rust_archive_link_tests.cpp",
+      "current-sha256": "1418965f173b0448ee5429fda9ab8556f806dc4ec70b6cc3a85de735051c9b1f",
+      "same-as-frozen-owning": true
+    }
+  ]
+}

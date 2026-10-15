@@ -31,6 +31,22 @@ use crate::user::darwin::abi::Errno;
 use crate::user::darwin::arch::{Rv, SysResult};
 use crate::user::darwin::syscall::Ctx;
 
+/// Read the fixed host pressure node through the existing bounded adapter.
+/// Only the reclaim host-services selector calls this; embedded selection never
+/// invokes it. Missing or malformed host data has no valid advertised level.
+pub(in crate::user::darwin) fn vm_pressure_level() -> Option<u32> {
+    if !host::AVAILABLE {
+        return None;
+    }
+    let oid = host::oid_of("kern.memorystatus_vm_pressure_level").ok()?;
+    let reply = host::sysctl(&oid, Some(4), None)?;
+    reply.result.ok()?;
+    if reply.len != 4 {
+        return None;
+    }
+    Some(u32::from_ne_bytes(reply.data.try_into().ok()?))
+}
+
 /// `CTL_MAXNAME`.
 const CTL_MAXNAME: u64 = 12;
 /// `MAXPATHLEN`.
