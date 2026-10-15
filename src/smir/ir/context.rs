@@ -16,6 +16,8 @@ use crate::smir::ir::{X86Segment, X86StringIoKind};
 /// Reason for execution exit
 #[derive(Clone, Debug)]
 pub enum ExitReason {
+    /// A precise eBPF / SBPF execution trap.
+    EbpfTrap(crate::isa::ebpf::EbpfTrap),
     /// Reached instruction limit
     InsnLimit,
     /// Halt instruction
@@ -872,6 +874,10 @@ impl RiscVRegState {
 /// eBPF / Solana SBPF register state
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct EbpfRegState {
+    /// Execution policy shared with the direct CPU.
+    pub config: crate::isa::ebpf::EbpfConfig,
+    /// Callee-preserved state and architectural return PCs.
+    pub call_frames: Vec<crate::isa::ebpf::EbpfCallFrame>,
     /// General-purpose registers `r0..r10` (`r10` is frame pointer `fp`).
     pub r: [u64; 11],
     /// Program counter in bytes.
@@ -880,9 +886,18 @@ pub struct EbpfRegState {
 
 impl EbpfRegState {
     pub fn new() -> Self {
+        Self::with_config(crate::isa::ebpf::EbpfConfig::default())
+    }
+
+    pub fn with_config(config: crate::isa::ebpf::EbpfConfig) -> Self {
         let mut r = [0u64; 11];
-        r[10] = crate::isa::ebpf::MM_STACK_START + 4096;
-        Self { r, pc: 0 }
+        r[10] = config.initial_frame_pointer();
+        Self {
+            config,
+            call_frames: Vec::new(),
+            r,
+            pc: 0,
+        }
     }
 
     pub fn get_r(&self, n: u8) -> u64 {
@@ -1006,6 +1021,13 @@ impl SmirContext {
             debug: DebugState::new(),
             exclusive_monitor: ExclusiveMonitor::new(),
         }
+    }
+
+    /// Create an eBPF context with explicit stack, depth, and text policies.
+    pub fn new_ebpf_with_config(config: crate::isa::ebpf::EbpfConfig) -> Self {
+        let mut ctx = Self::new_ebpf();
+        ctx.arch_regs = ArchRegState::Ebpf(EbpfRegState::with_config(config));
+        ctx
     }
 
     /// Read a virtual register

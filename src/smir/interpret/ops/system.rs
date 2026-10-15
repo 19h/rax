@@ -176,9 +176,14 @@ impl SmirInterpreter {
             // ==================================================================
             // SYSTEM / PRIVILEGED
             // ==================================================================
+            OpKind::EbpfInstruction { .. } => {}
             OpKind::Syscall { num, args } => {
                 let num_val = ctx.read_vreg(*num);
                 let arg_vals: Vec<u64> = args.iter().map(|a| ctx.read_vreg(*a)).collect();
+                if ctx.source_arch == SourceArch::Ebpf {
+                    ctx.pc = op.guest_pc.wrapping_add(8);
+                    ctx.arch_regs.set_pc(ctx.pc);
+                }
                 ctx.request_exit(ExitReason::Syscall {
                     num: num_val,
                     args: arg_vals,

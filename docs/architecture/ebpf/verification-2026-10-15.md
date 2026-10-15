@@ -95,3 +95,34 @@ intentionally rejects such accesses at the virtual gap boundary. This is a
 stricter mapping contract and a recorded difference from that reference edge.
 For F frames, construction uses O(F) regions; lookup is O(F), memory O(backing
 bytes + F). Contiguous stacks use one region.
+
+## Group 3: SMIR calls, guest boundaries, and ranges
+
+Findings 2 and 9 are addressed. Call frames share direct-CPU policy, preserve
+r6-r9/r10, and restore caller PCs. Legacy SBPF keys are explicitly registered
+with the lifter. Direct call targets and registered indirect entries are lifted;
+optimizer reachability retains these entries and syscall continuations. A function
+range now uses consumed guest bytes, including wide instructions and instructions
+that otherwise emit no operations. A4 is confirmed.
+
+Additional corrections: add_function installs executable blocks; syscalls advance
+to resumable continuations; guest instruction markers preserve precise PCs and
+accounting at O0/O1/O2; execution resumes at a marker inside an optimized block.
+SBPF CALLX truncates byte addresses to slots as the reference does. Markers are
+side-effecting, have no register inputs/outputs, fail both JIT admission checks,
+and are rejected by both host lowerers. Operation-effect and source-register
+metadata were split into bounded modules while retaining exhaustive dispatch.
+
+The original call, range, and syscall regressions failed before changes. The
+independent evaluator now models relative calls, version-specific register calls,
+frames, and returns from RFC 4.3.2 and Anza interpreter rules. It remains a
+specification-derived evaluator, not execution of the upstream SBPF crate.
+
+CFG discovery uses a visited set and an address worklist; reverse block-cache
+lookups make worst-case time O(instructions + blocks^2). Marker resume scans the
+cached block operations only when the requested PC is not already a block entry.
+Native eBPF execution remains outside admission.
+
+Group 3 gates: `ebpf_smir_lift` 18 passed, `ebpf_diff` 5 passed (LLVM MC
+executed), `isa_oracle` 80 passed, portable library 7788 passed / 2 ignored.
+The two ignored tests are pre-existing explicit opt-in hardware probes.

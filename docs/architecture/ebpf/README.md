@@ -54,7 +54,7 @@ cargo run --bin rax_isa_oracle -- --arch sbpf --mode le,sbpf-v2 --seeded-effects
 | Cargo target | Scope |
 |---|---|
 | `ebpf_smir_lift` | Direct `EbpfCpu` vs `EbpfLifter` + `SmirInterpreter` at `OptLevel::O0` and `OptLevel::O2` across RFC 9669 (LE/BE) and Solana `SBPF` `V0`–`V4` |
-| `ebpf_diff` | 4-way differential parity (`RefEvaluator` vs `EbpfCpu` vs `SMIR O0` vs `SMIR O2`) over exhaustive single-instruction matrices, randomized multi-instruction stress programs, and `llvm-mc -triple=bpfel` / `bpfeb` encoding/disassembly comparisons |
+| `ebpf_diff` | Parity against a specification-derived evaluator for selected deterministic ALU, memory, and call programs, plus `llvm-mc -triple=bpfel` / `bpfeb` encoding comparisons |
 | `isa_oracle` | Public JSON decode, SMIR lift, and seeded concrete execution side effects |
 
 Primary specifications and reference sources are stored under [`docs/specifications/ebpf/`](../../specifications/ebpf/PROVENANCE.md).
@@ -75,3 +75,14 @@ text/rodata overlap. `new_solana_default` is the V3/V4 convenience layout with
 rodata at address zero. `with_regions` remains the raw embedding-controlled map.
 For a V0 gapped stack with 4096-byte frames, backing frame i starts at
 `MM_STACK_START + i * 8192`; the following 4096 virtual bytes are inaccessible.
+
+SMIR execution carries an observable `EbpfInstruction` boundary for every guest
+instruction, including branches and EXIT. Optimization retains these boundaries;
+instruction limits, fault PCs, and resumed execution use guest instructions rather
+than IR operation counts. `SmirContext::new_ebpf_with_config` selects nondefault
+stack/depth/text policies. `SmirInterpreter::add_function` installs its blocks.
+`EbpfLifter::register_function` supplies legacy SBPF keys and possible CALLX
+entries; unknown indirect targets remain explicit BlockNotFound frontiers until
+the embedding registers/lifts their code. A lifted function contains the reachable
+subprogram closure; `guest_range` is its minimum-to-maximum decoded byte extent.
+It does not assert that every byte inside a sparse range is an instruction.

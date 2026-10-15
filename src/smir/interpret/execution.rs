@@ -43,13 +43,14 @@ impl SmirInterpreter {
         let addr = func.guest_range.0;
         for block in &func.blocks {
             self.block_addrs.insert(block.id, block.guest_pc);
+            self.block_cache.insert(block.guest_pc, block.clone());
         }
         self.func_cache.insert(addr, func);
     }
 
     /// Run until exit condition
     pub fn run(&mut self, ctx: &mut SmirContext, memory: &mut dyn SmirMemory) -> ExitReason {
-        let limit = ctx.insn_count + self.max_insns_per_run;
+        let limit = ctx.insn_count.saturating_add(self.max_insns_per_run);
 
         loop {
             // Check instruction limit
@@ -70,15 +71,34 @@ impl SmirInterpreter {
             // Get block from cache
             let block = match self.block_cache.get(&ctx.pc) {
                 Some(b) => b.clone(),
-                None => {
-                    return ExitReason::BlockNotFound { addr: ctx.pc };
+                None if ctx.source_arch == SourceArch::Ebpf => {
+                    // Resume at an observable guest boundary inside an optimized
+                    // block after an instruction limit or a retryable fault.
+                    let suffix = self.block_cache.values().find_map(|block| {
+                        let index = block.ops.iter().position(|op| {
+                            op.guest_pc == ctx.pc
+                                && matches!(op.kind, OpKind::EbpfInstruction { .. })
+                        })?;
+                        let mut suffix = block.clone();
+                        suffix.ops = block.ops[index..].to_vec();
+                        suffix.guest_pc = ctx.pc;
+                        Some(suffix)
+                    });
+                    match suffix {
+                        Some(block) => block,
+                        None => return ExitReason::BlockNotFound { addr: ctx.pc },
+                    }
                 }
+                None => return ExitReason::BlockNotFound { addr: ctx.pc },
             };
 
             // Execute block
-            match self.execute_block(ctx, memory, &block) {
+            match self.execute_block_limited(ctx, memory, &block, limit) {
                 BlockResult::Continue(next_pc) => {
                     ctx.pc = next_pc;
+                    if ctx.source_arch == SourceArch::Ebpf {
+                        ctx.arch_regs.set_pc(next_pc);
+                    }
                 }
                 BlockResult::Exit(reason) => {
                     return reason;
@@ -99,8 +119,58 @@ impl SmirInterpreter {
         memory: &mut dyn SmirMemory,
         block: &SmirBlock,
     ) -> BlockResult {
-        // Execute each operation
+        self.execute_block_limited(ctx, memory, block, u64::MAX)
+    }
+
+    fn execute_block_limited(
+        &self,
+        ctx: &mut SmirContext,
+        memory: &mut dyn SmirMemory,
+        block: &SmirBlock,
+        limit: u64,
+    ) -> BlockResult {
+        let ebpf = ctx.source_arch == SourceArch::Ebpf;
+        let guest_boundaries = ebpf
+            && block
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::EbpfInstruction { .. }));
         for op in &block.ops {
+            if let OpKind::EbpfInstruction {
+                dialect,
+                endian,
+                size,
+            } = op.kind
+            {
+                let ArchRegState::Ebpf(state) = &mut ctx.arch_regs else {
+                    return BlockResult::Exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                };
+                if ctx.insn_count >= limit
+                    || state
+                        .config
+                        .max_instructions
+                        .is_some_and(|max| ctx.insn_count >= max)
+                {
+                    ctx.pc = op.guest_pc;
+                    state.pc = op.guest_pc;
+                    return BlockResult::Exit(ExitReason::InsnLimit);
+                }
+                if !matches!(size, 8 | 16) {
+                    return BlockResult::Exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                }
+                state.config.dialect = dialect;
+                state.config.endian = endian;
+                ctx.pc = op.guest_pc;
+                state.pc = op.guest_pc;
+                ctx.insn_count = ctx.insn_count.saturating_add(1);
+            }
+
             if let Err(e) = self.execute_op(ctx, memory, op) {
                 return BlockResult::Exit(ExitReason::MemoryFault {
                     addr: match e {
@@ -121,7 +191,9 @@ impl SmirInterpreter {
                     },
                 });
             }
-            ctx.insn_count += 1;
+            if !guest_boundaries {
+                ctx.insn_count = ctx.insn_count.saturating_add(1);
+            }
             if let Some(reason) = ctx.exit_reason.take() {
                 return BlockResult::Exit(reason);
             }
@@ -225,6 +297,16 @@ impl SmirInterpreter {
             }
 
             Terminator::Return { values: _ } => {
+                if let ArchRegState::Ebpf(state) = &mut ctx.arch_regs {
+                    if let Some(frame) = state.call_frames.pop() {
+                        state.r[6..10].copy_from_slice(&frame.caller_saved_regs);
+                        state.r[10] = frame.frame_pointer;
+                        return BlockResult::Continue(frame.return_pc);
+                    }
+                    ctx.pc = ctx.pc.wrapping_add(8);
+                    state.pc = ctx.pc;
+                    return BlockResult::Exit(ExitReason::Return { to: state.r[0] });
+                }
                 // Get return address from arch-specific location
                 let ret_addr = match &ctx.arch_regs {
                     ArchRegState::X86_64(x86) => {
@@ -282,6 +364,35 @@ impl SmirInterpreter {
                         return BlockResult::Continue(addr);
                     }
                 };
+                if let ArchRegState::Ebpf(state) = &mut ctx.arch_regs {
+                    let target_addr = if state.config.dialect.is_solana()
+                        && matches!(target, CallTarget::Indirect(_))
+                    {
+                        target_addr & !7
+                    } else {
+                        target_addr
+                    };
+                    let return_pc = self
+                        .block_addrs
+                        .get(continuation)
+                        .copied()
+                        .unwrap_or_else(|| ctx.pc.wrapping_add(8));
+                    if let Err(trap) = state
+                        .config
+                        .validate_target_pc(ctx.pc, target_addr)
+                        .and_then(|()| {
+                            state.config.push_frame(
+                                &mut state.r,
+                                &mut state.call_frames,
+                                ctx.pc,
+                                return_pc,
+                            )
+                        })
+                    {
+                        return BlockResult::Exit(ExitReason::EbpfTrap(trap));
+                    }
+                    return BlockResult::Continue(target_addr);
+                }
                 BlockResult::Continue(target_addr)
             }
 

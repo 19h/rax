@@ -1,6 +1,9 @@
 //! Direct eBPF (RFC 9669) and Solana SBPF (V0–V4) CPU state, interpreter, and
 //! [`VCpu`] implementation.
 
+#[path = "calls.rs"]
+mod calls;
+
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -182,18 +185,7 @@ impl EbpfCpu {
     /// Create a new eBPF / Solana SBPF CPU with the given configuration.
     pub fn new(config: EbpfConfig) -> Self {
         let mut regs = EbpfRegisters::default();
-        let stack_size = if config
-            .dialect
-            .sbpf_version()
-            .is_some_and(|v| v.manual_stack_frame_bump())
-        {
-            config
-                .stack_frame_size
-                .saturating_mul(config.max_call_depth as u64)
-        } else {
-            config.stack_frame_size
-        };
-        regs.r[FRAME_PTR_REG as usize] = MM_STACK_START.saturating_add(stack_size);
+        regs.r[FRAME_PTR_REG as usize] = config.initial_frame_pointer();
         Self {
             regs,
             config,
@@ -233,80 +225,13 @@ impl EbpfCpu {
         self.syscall_handlers.insert(key, Box::new(handler));
     }
 
-    fn validate_target_pc(
-        &self,
-        fault_pc: u64,
-        target_pc: u64,
-    ) -> std::result::Result<(), EbpfTrap> {
-        if target_pc % (INSN_SIZE as u64) != 0 {
-            return Err(EbpfTrap::CallOutsideTextSegment {
-                pc: fault_pc,
-                target_pc,
-            });
-        }
-        if let Some((start, end)) = self.config.text_range
-            && (target_pc < start || target_pc.saturating_add(INSN_SIZE as u64) > end)
-        {
-            return Err(EbpfTrap::CallOutsideTextSegment {
-                pc: fault_pc,
-                target_pc,
-            });
-        }
-        Ok(())
-    }
-
-    fn push_call_frame(
-        &mut self,
-        fault_pc: u64,
-        return_pc: u64,
-    ) -> std::result::Result<(), EbpfTrap> {
-        if self.call_frames.len() + 1 >= self.config.max_call_depth {
-            return Err(EbpfTrap::CallDepthExceeded { pc: fault_pc });
-        }
-        let frame = EbpfCallFrame {
-            caller_saved_regs: [
-                self.regs.r[6],
-                self.regs.r[7],
-                self.regs.r[8],
-                self.regs.r[9],
-            ],
-            frame_pointer: self.regs.r[FRAME_PTR_REG as usize],
-            return_pc,
-        };
-        self.call_frames.push(frame);
-
-        match self.config.dialect {
-            EbpfDialect::Solana(ver) => {
-                if !ver.manual_stack_frame_bump() {
-                    let mult = if ver.stack_frame_gaps() && self.config.enable_stack_frame_gaps {
-                        2
-                    } else {
-                        1
-                    };
-                    let step = self.config.stack_frame_size.wrapping_mul(mult);
-                    self.regs.r[FRAME_PTR_REG as usize] =
-                        self.regs.r[FRAME_PTR_REG as usize].wrapping_add(step);
-                }
-            }
-            EbpfDialect::Rfc9669 => {
-                self.regs.r[FRAME_PTR_REG as usize] =
-                    self.regs.r[FRAME_PTR_REG as usize].wrapping_sub(self.config.stack_frame_size);
-            }
-        }
-        Ok(())
-    }
-
     /// Fetch and decode the instruction at `self.regs.pc`.
     pub fn fetch_and_decode(
         &self,
         mem: &mut dyn EbpfMemory,
     ) -> std::result::Result<EbpfInsn, EbpfTrap> {
         let pc = self.regs.pc;
-        if let Some((start, end)) = self.config.text_range
-            && (pc < start || pc.saturating_add(INSN_SIZE as u64) > end)
-        {
-            return Err(EbpfTrap::CallOutsideTextSegment { pc, target_pc: pc });
-        }
+        self.config.validate_target_pc(pc, pc)?;
         let mut buf = [0u8; 16];
         mem.read_bytes(pc, &mut buf[..8])
             .map_err(|fault| EbpfTrap::MemoryFault { pc, fault })?;
@@ -767,7 +692,7 @@ impl EbpfCpu {
             EbpfOp::Jump { offset_insns } => {
                 let delta_bytes = i64::from(offset_insns).wrapping_mul(INSN_SIZE as i64);
                 let target_pc = (next_pc as i64).wrapping_add(delta_bytes) as u64;
-                self.validate_target_pc(pc, target_pc)?;
+                self.config.validate_target_pc(pc, target_pc)?;
                 next_pc = target_pc;
             }
 
@@ -811,7 +736,7 @@ impl EbpfCpu {
                 if taken {
                     let delta_bytes = i64::from(offset_insns).wrapping_mul(INSN_SIZE as i64);
                     let target_pc = (next_pc as i64).wrapping_add(delta_bytes) as u64;
-                    self.validate_target_pc(pc, target_pc)?;
+                    self.config.validate_target_pc(pc, target_pc)?;
                     next_pc = target_pc;
                 }
             }
@@ -828,15 +753,17 @@ impl EbpfCpu {
                     // PC-relative local function call: target_pc = next_pc + imm * 8
                     let delta_bytes = i64::from(imm).wrapping_mul(INSN_SIZE as i64);
                     let target_pc = (next_pc as i64).wrapping_add(delta_bytes) as u64;
-                    self.validate_target_pc(pc, target_pc)?;
-                    self.push_call_frame(pc, next_pc)?;
+                    self.config.validate_target_pc(pc, target_pc)?;
+                    self.config
+                        .push_frame(&mut self.regs.r, &mut self.call_frames, pc, next_pc)?;
                     next_pc = target_pc;
                 } else if !static_syscalls
                     && let Some(&target_pc) = self.function_registry.get(&key)
                 {
                     // Legacy Solana SBPF V0–V2 internal function call by hash key
-                    self.validate_target_pc(pc, target_pc)?;
-                    self.push_call_frame(pc, next_pc)?;
+                    self.config.validate_target_pc(pc, target_pc)?;
+                    self.config
+                        .push_frame(&mut self.regs.r, &mut self.call_frames, pc, next_pc)?;
                     next_pc = target_pc;
                 } else if let Some(handler) = self.syscall_handlers.get_mut(&key) {
                     let ret = handler(&mut self.regs.r, mem)?;
@@ -848,9 +775,16 @@ impl EbpfCpu {
             }
 
             EbpfOp::CallReg { target_reg } => {
-                let target_pc = self.regs.r[target_reg as usize];
-                self.validate_target_pc(pc, target_pc)?;
-                self.push_call_frame(pc, next_pc)?;
+                let raw_target = self.regs.r[target_reg as usize];
+                // The reference CALLX converts the byte address to a slot index.
+                let target_pc = if self.config.dialect.is_solana() {
+                    raw_target & !7
+                } else {
+                    raw_target
+                };
+                self.config.validate_target_pc(pc, target_pc)?;
+                self.config
+                    .push_frame(&mut self.regs.r, &mut self.call_frames, pc, next_pc)?;
                 next_pc = target_pc;
             }
 

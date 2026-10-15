@@ -1,8 +1,8 @@
 //! eBPF (RFC 9669) and Solana SBPF (V0–V4) -> SMIR lift verification harness.
 //!
-//! Verifies 100% architectural state and memory parity between the direct
-//! [`EbpfCpu`] interpreter and [`EbpfLifter`] + [`SmirInterpreter`] at both
-//! `OptLevel::O0` (unoptimized) and `OptLevel::O2` (optimized) across:
+//! Compares all eleven GPRs and scratch-memory bytes for selected programs between the direct
+//! [`EbpfCpu`] interpreter and [`EbpfLifter`] + [`SmirInterpreter`] at
+//! `OptLevel::O0`, `OptLevel::O1`, and `OptLevel::O2` across:
 //! - IETF RFC 9669 / Linux kernel v1–v4 (`Endian::Little` and `Endian::Big`),
 //!   including sanitized `DIV`/`MOD` by 0, `SDIV`/`SMOD` (`MIN / -1` overflow
 //!   and truncated signed remainder), `MOVSX` (8/16/32), `BSWAP` (16/32/64),
@@ -22,6 +22,8 @@ use rax::smir::lift::{LiftContext, MemoryReader, SmirLifter};
 use rax::smir::optimize::{OptLevel, optimize_function};
 use rax::smir::{EbpfLifter, ExitReason, SmirContext, SmirInterpreter};
 
+#[path = "ebpf_review_calls.rs"]
+mod review_calls;
 #[path = "ebpf_review_decode.rs"]
 mod review_decode;
 #[path = "ebpf_review_memory.rs"]
@@ -154,7 +156,9 @@ fn run_smir(
             assert_eq!(to, regs[0]);
             NormalizedOutcome::Exited { regs, r0: regs[0] }
         }
-        ExitReason::Undefined { .. } | ExitReason::MemoryFault { .. } => NormalizedOutcome::Trapped,
+        ExitReason::EbpfTrap(_) | ExitReason::Undefined { .. } | ExitReason::MemoryFault { .. } => {
+            NormalizedOutcome::Trapped
+        }
         other => panic!("unexpected SMIR interpreter exit reason: {other:?}"),
     };
 
@@ -172,7 +176,7 @@ fn assert_direct_smir_parity(
     init_scratch: &[u8],
 ) {
     let (direct_out, direct_mem) = run_direct(prog, dialect, endian, init_regs, init_scratch);
-    for opt in [OptLevel::O0, OptLevel::O2] {
+    for opt in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
         let (smir_out, smir_mem) = run_smir(prog, dialect, endian, init_regs, init_scratch, opt);
         assert_eq!(
             direct_out, smir_out,

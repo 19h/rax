@@ -130,6 +130,7 @@ fn run_spec_ref_vm(
     let mut r = *init_regs;
     let mut pc: usize = 0;
     let mut steps = 0usize;
+    let mut frames: Vec<([u64; 4], u64, usize)> = Vec::new();
 
     let read_u16 = |buf: &[u8], e: Endian| -> u16 {
         let a = [buf[0], buf[1]];
@@ -743,11 +744,51 @@ fn run_spec_ref_vm(
                     let delta = if is_jmp64 { off as i64 } else { imm as i64 };
                     next_pc = (next_pc as i64).wrapping_add(delta.wrapping_mul(8)) as usize;
                 } else if jmp_op == 0x80 {
-                    // CALL (for local relative calls src == 1 in RFC 9669)
-                    return finish(DiffOutcome::Trapped, mem);
+                    // Independent RFC 9669 4.3.2 / Anza interpreter call model.
+                    let target = if is_reg {
+                        let register = match dialect {
+                            EbpfDialect::Solana(SbpfVersion::V0 | SbpfVersion::V1) => imm as usize,
+                            EbpfDialect::Solana(SbpfVersion::V2) => src,
+                            EbpfDialect::Solana(_) => dst,
+                            EbpfDialect::Rfc9669 => return finish(DiffOutcome::Trapped, mem),
+                        };
+                        if register >= 10 {
+                            return finish(DiffOutcome::Trapped, mem);
+                        }
+                        (r[register] & !7) as usize
+                    } else if src == 1
+                        && matches!(
+                            dialect,
+                            EbpfDialect::Rfc9669
+                                | EbpfDialect::Solana(SbpfVersion::V3 | SbpfVersion::V4)
+                        )
+                    {
+                        (next_pc as i64).wrapping_add(i64::from(imm) * 8) as usize
+                    } else {
+                        return finish(DiffOutcome::Trapped, mem);
+                    };
+                    if target % 8 != 0
+                        || target.checked_add(8).is_none_or(|end| end > prog.len())
+                        || frames.len() + 1 >= 64
+                    {
+                        return finish(DiffOutcome::Trapped, mem);
+                    }
+                    frames.push(([r[6], r[7], r[8], r[9]], r[10], next_pc));
+                    r[10] = match dialect {
+                        EbpfDialect::Rfc9669 => r[10].wrapping_sub(4096),
+                        EbpfDialect::Solana(SbpfVersion::V0) => r[10].wrapping_add(8192),
+                        EbpfDialect::Solana(SbpfVersion::V1 | SbpfVersion::V2) => r[10],
+                        EbpfDialect::Solana(_) => r[10].wrapping_add(4096),
+                    };
+                    next_pc = target;
                 } else if jmp_op == 0x90 {
-                    // EXIT / RETURN
-                    return finish(DiffOutcome::Exited { regs: r, r0: r[0] }, mem);
+                    if let Some((saved, fp, return_pc)) = frames.pop() {
+                        r[6..10].copy_from_slice(&saved);
+                        r[10] = fp;
+                        next_pc = return_pc;
+                    } else {
+                        return finish(DiffOutcome::Exited { regs: r, r0: r[0] }, mem);
+                    }
                 } else {
                     let taken = if is_jmp64 {
                         let d = r[dst];
@@ -895,7 +936,9 @@ fn run_smir_cpu(
             assert_eq!(to, regs[0]);
             DiffOutcome::Exited { regs, r0: regs[0] }
         }
-        ExitReason::Undefined { .. } | ExitReason::MemoryFault { .. } => DiffOutcome::Trapped,
+        ExitReason::EbpfTrap(_) | ExitReason::Undefined { .. } | ExitReason::MemoryFault { .. } => {
+            DiffOutcome::Trapped
+        }
         other => panic!("unexpected SMIR exit: {other:?}"),
     };
 
@@ -1367,4 +1410,83 @@ fn ebpf_solana_sbpf_memory_mapping_direct_and_smir_parity() {
         ),
         "unexpected smir_exit: {smir_exit:?}"
     );
+}
+
+#[test]
+fn calls_and_returns_match_the_independent_reference_model() {
+    for dialect in [
+        EbpfDialect::Rfc9669,
+        EbpfDialect::Solana(SbpfVersion::V0),
+        EbpfDialect::Solana(SbpfVersion::V1),
+        EbpfDialect::Solana(SbpfVersion::V2),
+        EbpfDialect::Solana(SbpfVersion::V3),
+        EbpfDialect::Solana(SbpfVersion::V4),
+    ] {
+        for endian in [Endian::Little, Endian::Big] {
+            let call = match dialect {
+                EbpfDialect::Rfc9669 | EbpfDialect::Solana(SbpfVersion::V3 | SbpfVersion::V4) => {
+                    (0x85, 0, 1, 2)
+                }
+                EbpfDialect::Solana(SbpfVersion::V0 | SbpfVersion::V1) => (0x8d, 0, 0, 3),
+                EbpfDialect::Solana(SbpfVersion::V2) => (0x8d, 0, 3, 0),
+            };
+            let program = [
+                call,
+                (0x07, 0, 0, 2),
+                (0x95, 0, 0, 0),
+                (0xb7, 6, 0, 99),
+                (0xb7, 0, 0, 40),
+                (0x95, 0, 0, 0),
+            ]
+            .map(|(opc, dst, src, imm)| raw_insn(opc, dst, src, 0, imm, endian))
+            .concat();
+            let mut regs = [0; 11];
+            regs[3] = 24;
+            regs[6] = 6;
+            regs[10] = SCRATCH_BASE + 128;
+            // Register-call targets are deliberately registered as blocks separately
+            // from the caller function, as an embedding must do for unknown targets.
+            if matches!(call.0, 0x8d) {
+                let (expected, _) = run_spec_ref_vm(&program, dialect, endian, &regs, &[]);
+                assert_eq!(
+                    run_direct_cpu(&program, dialect, endian, &regs, &[]).0,
+                    expected
+                );
+                for opt in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+                    let mut lifter = EbpfLifter::new(dialect, endian);
+                    lifter.register_function(1, 24);
+                    let mut function = lifter
+                        .lift_function(
+                            0,
+                            &CodeSlice(&program),
+                            &mut LiftContext::new(lifter.source_arch()),
+                        )
+                        .unwrap();
+                    optimize_function(&mut function, opt);
+                    let mut interp = SmirInterpreter::new();
+                    interp.add_function(function);
+                    let mut ctx = SmirContext::new_ebpf();
+                    for (i, value) in regs.iter().enumerate() {
+                        ctx.write_arch_reg(ArchReg::Ebpf(EbpfReg::R(i as u8)), *value);
+                    }
+                    assert!(matches!(
+                        interp.run(&mut ctx, &mut FlatMemory::new(64)),
+                        ExitReason::Return { to: 42 }
+                    ));
+                    if let DiffOutcome::Exited { regs, .. } = &expected {
+                        for (i, value) in regs.iter().enumerate() {
+                            assert_eq!(
+                                ctx.read_arch_reg(ArchReg::Ebpf(EbpfReg::R(i as u8))),
+                                *value
+                            );
+                        }
+                    } else {
+                        panic!("reference did not execute CALLX");
+                    }
+                }
+            } else {
+                assert_4way_diff("local_call", &program, dialect, endian, &regs, &[]);
+            }
+        }
+    }
 }
