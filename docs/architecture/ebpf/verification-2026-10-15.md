@@ -22,9 +22,10 @@ Primary authorities: RFC 9669 sections 3-5 in
 | ID | Assumption | Basis | Dependent result | Stress test | Falsification probe | Status |
 |---|---|---|---|---|---|---|
 | A1 | RFC 9669 and the bundled Anza version matrix define the requested targets | Review and repository guide | All semantic changes | All five SBPF versions, both RFC byte orders | Compare version predicates with pinned primary source | confirmed |
-| A2 | Unsupported platform pseudo-loads may fail explicitly | Review's permitted correction; platform resolver absent | Pseudo-load rejection in execution/lift | Every subtype 1-6; preserve destination and PC | Execute each subtype without a resolver and observe any constant load | retained |
-| A3 | Shared memory requires indivisible atomics | RFC 9669 section 5.3; GuestMemoryMmap has shared access | Direct atomic interface and implementations | Concurrent increments, CAS failure, both widths/byte orders | Lost updates or ordinary load/store used in an atomic transaction | retained |
+| A2 | Unsupported platform pseudo-loads may fail explicitly | Review's permitted correction; platform resolver absent | Pseudo-load rejection in execution/lift | Every subtype 1-6; preserve destination and PC | Execute each subtype without a resolver and observe any constant load | confirmed |
+| A3 | Shared memory requires indivisible atomics | RFC 9669 section 5.3; GuestMemoryMmap has shared access | Direct atomic interface and implementations | Concurrent increments, CAS failure, both widths/byte orders | Lost updates or ordinary load/store used in an atomic transaction | confirmed |
 | A4 | A lifted function range describes guest bytes, not IR size | SmirFunction guest_range contract | Range tracking | Wide instructions and expanding division | Compare decoded byte extents with lifted range | confirmed |
+| A5 | Manual-frame default stack backing is stack_frame_size times max_call_depth | CPU construction has no memory-map parameter; matches reference default allocation | Initial r10 in V1/V2 | An embedding supplies a differently sized stack | Compare explicit stack backing length to this product; set r10 to that backing's top when different | retained |
 
 ## Change-surface map
 
@@ -87,14 +88,9 @@ rodata accesses failed under the original constructor behavior; regression
 matrices cover all versions, gap enable/disable, frame/gap boundaries, writes,
 SMIR reads/probes, lifting reads, permissions, overflow, and contained text.
 
-The mapping requires a memory access to stay within a mapped region, including
-gapped frames. The pinned Anza MemoryRegion::get implementation checks whether
-the starting address lies in a gap, but can allow an unaligned access starting
-in a frame to extend beyond that frame into contiguous host backing. RAX
-intentionally rejects such accesses at the virtual gap boundary. This is a
-stricter mapping contract and a recorded difference from that reference edge.
-For F frames, construction uses O(F) regions; lookup is O(F), memory O(backing
-bytes + F). Contiguous stacks use one region.
+The initial region-per-frame representation was later replaced after executable
+upstream verification of cross-frame accesses. Group 7 records the final
+compressed translation and its exact start-address/backing-bounds contract.
 
 ## Group 3: SMIR calls, guest boundaries, and ranges
 
@@ -115,8 +111,8 @@ metadata were split into bounded modules while retaining exhaustive dispatch.
 
 The original call, range, and syscall regressions failed before changes. The
 independent evaluator now models relative calls, version-specific register calls,
-frames, and returns from RFC 4.3.2 and Anza interpreter rules. It remains a
-specification-derived evaluator, not execution of the upstream SBPF crate.
+frames, and returns from RFC 4.3.2 and Anza interpreter rules. That evaluator remains specification-derived. The separate pinned upstream
+execution oracle added in Group 7 supplies independent runtime evidence.
 
 CFG discovery uses a visited set and an address worklist; reverse block-cache
 lookups make worst-case time O(instructions + blocks^2). Marker resume scans the
@@ -192,3 +188,44 @@ registers each function independently and optimizer reachability only needs the
 caller's syscall continuations. Caller/callee ranges, nested calls, indirect
 entries, recursion, and host syscall resumption pass in the updated harnesses.
 Focused gates: ebpf_smir_lift 31 passed, ebpf_diff 5 passed, isa_oracle 80 passed.
+
+## Group 7: independent upstream execution and exact address translation
+
+The optional `tools/ebpf-reference` package compiles Anza solana-sbpf 0.25.0 from
+commit 3e1510b1eac344af15c99dcdb4c3b3e6dc2b3d7b, extracted from the checksummed
+source archive in docs. All four original bundled SBPF files match this pinned
+commit byte-for-byte. The source archive retains upstream licenses. The tool has
+a separate workspace and lockfile; the engine lockfile and dependency pins are
+unchanged. `python3 tools/ebpf-reference/run.py` verifies cached source content
+and executes the upstream interpreter with tracing enabled.
+
+The upstream VM register buffer remains stale after interpreted exit. The oracle
+therefore compares the returned r0 with the last trace before root EXIT, verifies
+call_depth=0 and EXIT encoding, and takes the eleven final GPRs from that trace.
+It does not claim that the VM register buffer supplies final registers.
+
+Executable probes confirmed two layout details requiring further corrections:
+
+- V3/V4 ordinary reads at the bytecode address were incorrectly allowed by a
+  duplicate data alias. Upstream returns AccessViolation(Load, 0x100000000, 1,
+  unallocated). EbpfMemory::fetch_bytes and the code MemoryReader now use separate
+  executable text. Guest data reads/probes use only the versioned data regions.
+- V0 translates the starting address and checks contiguous host backing. A
+  four-byte access at stack+4094 succeeds; gap-start stack+4096 fails; an access
+  extending past the final backing bytes fails. A frame-per-region model was too
+  strict. The final map uses one stack backing and compressed virtual translation.
+
+For frame size F=4096 bytes, relative virtual offset d and width n bytes:
+`f = floor(d/F)`. Odd f faults. Otherwise `p = floor(f/2)*F + d mod F`, and
+`p+n <= backing_length` is required. These are exact unsigned integer operations;
+checked address/length arithmetic rejects wrap. For d=4094, n=4, p+n=4098 bytes;
+for d=28670, n=4 with 16384 backing bytes, p+n=16386 bytes and the access faults.
+Translation is O(1), region lookup O(region_count), storage O(backing bytes).
+
+Final focused gates at this group: ebpf_smir_lift 33 passed, ebpf_diff 5 passed,
+isa_oracle 80 passed. The upstream package has 4 tests covering 30 executed
+configurations: 10 nested call/frame cases across V0-V4 and both call forms,
+15 rodata/gap/permission cases, 2 forbidden V3/V4 data aliases, and 3 V0 cross-frame
+accesses. Successful cases compare all eleven GPRs; fault probes compare exit
+classification with the upstream interpreter. Direct and SMIR O0/O1/O2 GPR
+comparisons cover the nested-call matrix. No upstream test self-skips.

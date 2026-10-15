@@ -31,3 +31,15 @@ Anza SBPF commit `3e1510b1eac344af15c99dcdb4c3b3e6dc2b3d7b`, retrieved 2026-10-1
 | `sbpf/memory_region.rs` | Virtual stack gaps and region translation | https://github.com/anza-xyz/sbpf/blob/3e1510b1eac344af15c99dcdb4c3b3e6dc2b3d7b/src/memory_region.rs | `71ae0bc37229f8cb7123da8c746fb3c80ac3fe5b4fc563205dc4c5bee8e18c66` |
 | `sbpf/vm.rs` | Version-specific initial frame pointer | https://github.com/anza-xyz/sbpf/blob/3e1510b1eac344af15c99dcdb4c3b3e6dc2b3d7b/src/vm.rs | `87c54a63bb655411682afd841c5689b194d4511402237fb91528bb611a818bd7` |
 | `sbpf/elf.rs` | Executable text and rodata addresses | https://github.com/anza-xyz/sbpf/blob/3e1510b1eac344af15c99dcdb4c3b3e6dc2b3d7b/src/elf.rs | `017c0e9b1fb9303b56114625101c1500bd223c588a7c9972a5a91633e5b9233c` |
+
+## Compiled upstream reference archive
+
+`sbpf/upstream-3e1510b1.tar.gz` is the unmodified Anza SBPF source archive
+(version 0.25.0) at commit `3e1510b1eac344af15c99dcdb4c3b3e6dc2b3d7b`,
+retrieved 2026-10-15 from
+https://codeload.github.com/anza-xyz/sbpf/tar.gz/3e1510b1eac344af15c99dcdb4c3b3e6dc2b3d7b.
+SHA-256: `51b3da377e76a9ae3ee1852a089d81ccf904b686cb90a517f03a1766e0eec127`.
+The 242 KiB archive supplies the complete interpreter/verifier and required source
+modules for the independent execution tool; upstream Apache-2.0 license files are
+retained inside it. The four original bundled `ebpf.rs`, `program.rs`,
+`interpreter.rs`, and `verifier.rs` were verified identical to this commit.

@@ -233,7 +233,7 @@ impl EbpfCpu {
         let pc = self.regs.pc;
         self.config.validate_target_pc(pc, pc)?;
         let mut buf = [0u8; 16];
-        mem.read_bytes(pc, &mut buf[..8])
+        mem.fetch_bytes(pc, &mut buf[..8])
             .map_err(|fault| EbpfTrap::MemoryFault { pc, fault })?;
         if buf[0] == 0x18 {
             if let Some((_, end)) = self.config.text_range
@@ -247,7 +247,7 @@ impl EbpfCpu {
                     },
                 });
             }
-            mem.read_bytes(pc.wrapping_add(8), &mut buf[8..16])
+            mem.fetch_bytes(pc.wrapping_add(8), &mut buf[8..16])
                 .map_err(|fault| EbpfTrap::MemoryFault { pc, fault })?;
             decode_insn(&buf[..16], self.config.dialect, self.config.endian)
                 .map_err(|error| EbpfTrap::DecodeError { pc, error })

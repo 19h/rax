@@ -1,0 +1,16 @@
+[package]
+name = "rax-ebpf-reference"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# Independent oracle tooling must not alter the engine workspace or lockfile.
+[workspace]
+
+[dependencies]
+rax = { path = "../..", default-features = false }
+solana-sbpf = { path = "../../target/ebpf-reference-source", default-features = false, features = ["tracer"] }
+
+[patch.crates-io]
+vm-memory = { path = "../../vendor/vm-memory" }
+linux-loader = { git = "https://github.com/19h/linux-loader", rev = "f745b555942c4e840a784bca61e6f3976d101960" }

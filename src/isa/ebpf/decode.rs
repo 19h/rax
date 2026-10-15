@@ -135,6 +135,11 @@ impl SbpfVersion {
     pub const fn static_syscalls(self) -> bool {
         matches!(self, Self::V3 | Self::V4)
     }
+
+    /// SIMD-0189: executable rodata uses segment zero in V3/V4.
+    pub const fn enable_lower_rodata_vaddr(self) -> bool {
+        matches!(self, Self::V3 | Self::V4)
+    }
 }
 
 /// Architectural dialect of the BPF engine.
@@ -450,7 +455,7 @@ pub enum EbpfDecodeError {
     /// Fewer than 8 bytes available for a basic instruction, or fewer than 16
     /// bytes available for a wide `LD_DW_IMM` instruction.
     UnexpectedEof { needed: usize, available: usize },
-    /// Register index outside `0..=10`.
+    /// Register index outside the operand's allowed register set.
     InvalidRegister { reg: u8 },
     /// Unknown or dialect-disabled opcode byte.
     InvalidOpcode { opc: u8 },
@@ -470,7 +475,7 @@ impl fmt::Display for EbpfDecodeError {
                 "truncated eBPF instruction: needed {needed} bytes, got {available}"
             ),
             Self::InvalidRegister { reg } => {
-                write!(f, "invalid eBPF register index r{reg} (must be 0..=10)")
+                write!(f, "invalid eBPF register operand r{reg}")
             }
             Self::InvalidOpcode { opc } => write!(f, "invalid or disabled eBPF opcode 0x{opc:02x}"),
             Self::ReservedField { opc } => {

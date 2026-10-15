@@ -46,6 +46,12 @@ pub struct EbpfMemFault {
 
 /// Abstract byte-addressable guest memory for the eBPF / Solana SBPF interpreter.
 pub trait EbpfMemory {
+    /// Read executable bytes. Unified code/data backends use ordinary reads;
+    /// SBPF executable mappings keep bytecode fetch separate from data access.
+    fn fetch_bytes(&mut self, addr: u64, buf: &mut [u8]) -> Result<(), EbpfMemFault> {
+        self.read_bytes(addr, buf)
+    }
+
     /// One indivisible guest-order atomic transaction, returning the old value.
     /// Custom/shared backends must override this method. A byte-only backend
     /// rejects atomics rather than synthesizing an interruptible load/store.
@@ -283,6 +289,8 @@ impl SbpfMemoryRegion {
 #[derive(Debug, Clone, Default)]
 pub struct SbpfMemoryMapping {
     regions: Vec<SbpfMemoryRegion>,
+    text: Option<SbpfMemoryRegion>,
+    stack_gap_size: Option<u64>,
 }
 
 impl SbpfMemoryMapping {
@@ -290,12 +298,18 @@ impl SbpfMemoryMapping {
     pub fn new() -> Self {
         Self {
             regions: Vec::new(),
+            text: None,
+            stack_gap_size: None,
         }
     }
 
     /// Create a segmented memory map from a list of regions.
     pub fn with_regions(regions: Vec<SbpfMemoryRegion>) -> Self {
-        Self { regions }
+        Self {
+            regions,
+            text: None,
+            stack_gap_size: None,
+        }
     }
 
     /// Create a V3/V4 convenience map with rodata at address zero.
@@ -312,7 +326,10 @@ impl SbpfMemoryMapping {
     ) -> Self {
         let mut map = Self::new();
         map.add_region(MM_RODATA_START, rodata.to_vec(), false);
-        map.add_region(MM_BYTECODE_START, bytecode.to_vec(), false);
+        map.text = Some(SbpfMemoryRegion::new_readonly(
+            MM_BYTECODE_START,
+            bytecode.to_vec(),
+        ));
         map.add_region(MM_STACK_START, vec![0u8; stack_size], true);
         map.add_region(MM_HEAP_START, vec![0u8; heap_size], true);
         map.add_region(MM_INPUT_START, input.to_vec(), true);
@@ -334,19 +351,63 @@ impl SbpfMemoryMapping {
             .iter()
             .find(|r| r.vm_addr == vm_addr)
             .map(|r| r.data.as_slice())
+            .or_else(|| {
+                self.text
+                    .as_ref()
+                    .filter(|text| text.vm_addr == vm_addr)
+                    .map(|text| text.data.as_slice())
+            })
     }
 
-    fn find_slice(&self, addr: u64, len: usize) -> Result<&[u8], EbpfMemFault> {
-        let end = addr.checked_add(len as u64).ok_or(EbpfMemFault {
+    fn executable_slice(&self, addr: u64, len: usize) -> Result<&[u8], EbpfMemFault> {
+        let Some(text) = &self.text else {
+            return self.find_slice(addr, len);
+        };
+        let fault = || EbpfMemFault {
             addr,
             size: len,
             write: false,
-        })?;
+        };
+        let offset = addr.checked_sub(text.vm_addr).ok_or_else(fault)?;
+        let end = offset.checked_add(len as u64).ok_or_else(fault)?;
+        if end > text.data.len() as u64 {
+            return Err(fault());
+        }
+        Ok(&text.data[offset as usize..end as usize])
+    }
+
+    fn region_offset(
+        region: &SbpfMemoryRegion,
+        gap: Option<u64>,
+        addr: u64,
+        len: usize,
+    ) -> Option<usize> {
+        addr.checked_add(len as u64)?;
+        let relative = addr.checked_sub(region.vm_addr)?;
+        let offset = if region.vm_addr == MM_STACK_START
+            && let Some(frame_size) = gap
+        {
+            let frame = relative / frame_size;
+            if frame & 1 != 0 {
+                return None;
+            }
+            // Anza MemoryRegion::get removes the gap bit from the starting
+            // address, then bounds the complete access in contiguous backing.
+            // Consequently a mapped-frame start may span its virtual gap.
+            (frame / 2)
+                .checked_mul(frame_size)?
+                .checked_add(relative % frame_size)?
+        } else {
+            relative
+        };
+        let end = offset.checked_add(len as u64)?;
+        (end <= region.data.len() as u64).then_some(offset as usize)
+    }
+
+    fn find_slice(&self, addr: u64, len: usize) -> Result<&[u8], EbpfMemFault> {
         for region in &self.regions {
-            let reg_end = region.vm_addr.saturating_add(region.data.len() as u64);
-            if addr >= region.vm_addr && end <= reg_end {
-                let off = (addr - region.vm_addr) as usize;
-                return Ok(&region.data[off..off + len]);
+            if let Some(offset) = Self::region_offset(region, self.stack_gap_size, addr, len) {
+                return Ok(&region.data[offset..offset + len]);
             }
         }
         Err(EbpfMemFault {
@@ -357,14 +418,8 @@ impl SbpfMemoryMapping {
     }
 
     fn find_slice_mut(&mut self, addr: u64, len: usize) -> Result<&mut [u8], EbpfMemFault> {
-        let end = addr.checked_add(len as u64).ok_or(EbpfMemFault {
-            addr,
-            size: len,
-            write: true,
-        })?;
         for region in &mut self.regions {
-            let reg_end = region.vm_addr.saturating_add(region.data.len() as u64);
-            if addr >= region.vm_addr && end <= reg_end {
+            if let Some(offset) = Self::region_offset(region, self.stack_gap_size, addr, len) {
                 if !region.writable {
                     return Err(EbpfMemFault {
                         addr,
@@ -372,8 +427,7 @@ impl SbpfMemoryMapping {
                         write: true,
                     });
                 }
-                let off = (addr - region.vm_addr) as usize;
-                return Ok(&mut region.data[off..off + len]);
+                return Ok(&mut region.data[offset..offset + len]);
             }
         }
         Err(EbpfMemFault {
@@ -385,6 +439,10 @@ impl SbpfMemoryMapping {
 }
 
 impl EbpfMemory for SbpfMemoryMapping {
+    fn fetch_bytes(&mut self, addr: u64, buf: &mut [u8]) -> Result<(), EbpfMemFault> {
+        buf.copy_from_slice(self.executable_slice(addr, buf.len())?);
+        Ok(())
+    }
     fn atomic(
         &mut self,
         addr: u64,
@@ -545,12 +603,8 @@ impl SmirMemory for SbpfMemoryMapping {
     fn fence(&mut self, _kind: crate::smir::ir::types::FenceKind) {}
 
     fn probe(&self, addr: u64, size: usize, write: bool) -> Result<(), MemoryError> {
-        let end = addr
-            .checked_add(size as u64)
-            .ok_or(MemoryError::OutOfBounds { addr })?;
         for region in &self.regions {
-            let reg_end = region.vm_addr.saturating_add(region.data.len() as u64);
-            if addr >= region.vm_addr && end <= reg_end {
+            if Self::region_offset(region, self.stack_gap_size, addr, size).is_some() {
                 if write && !region.writable {
                     return Err(MemoryError::AccessViolation { addr, write: true });
                 }
@@ -563,7 +617,7 @@ impl SmirMemory for SbpfMemoryMapping {
 
 impl crate::smir::lift::MemoryReader for SbpfMemoryMapping {
     fn read(&self, addr: u64, size: usize) -> Result<Vec<u8>, MemoryError> {
-        self.find_slice(addr, size)
+        self.executable_slice(addr, size)
             .map(|s| s.to_vec())
             .map_err(|_| MemoryError::OutOfBounds { addr })
     }

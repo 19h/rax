@@ -74,7 +74,9 @@ and an `EbpfConfig`, constructs V0 gaps when enabled, and rejects inconsistent
 text/rodata overlap. `new_solana_default` is the V3/V4 convenience layout with
 rodata at address zero. `with_regions` remains the raw embedding-controlled map.
 For a V0 gapped stack with 4096-byte frames, backing frame i starts at
-`MM_STACK_START + i * 8192`; the following 4096 virtual bytes are inaccessible.
+`MM_STACK_START + i * 8192`; accesses starting in the following 4096 virtual bytes fault. The reference
+translation permits an access starting in a mapped frame to extend into the
+next contiguous backing bytes, even across its virtual gap.
 
 SMIR execution carries an observable `EbpfInstruction` boundary for every guest
 instruction, including branches and EXIT. Optimization retains these boundaries;
@@ -104,3 +106,12 @@ the host syscall, then resumes the deferred internal call without charging a
 second guest instruction. The direct CPU uses the same external-then-internal
 resolution order. Single stepping and breakpoints stop at guest boundaries;
 SBPF division exits retain DivideByZero/DivideOverflow and the precise fault PC.
+
+SBPF executable text is separate from guest data permissions. In V3/V4 it is
+fetched at `MM_BYTECODE_START` without exposing a readable data alias there;
+rodata remains in segment zero. `MemoryReader` on an executable mapping reads
+code, while `EbpfMemory`/`SmirMemory` loads read the data map. Raw `with_regions`
+mappings retain an embedding-controlled unified address space.
+
+For independent execution against the pinned Anza interpreter, run
+`python3 tools/ebpf-reference/run.py`; see its [README](../../../tools/ebpf-reference/README.md).
