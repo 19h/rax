@@ -1,0 +1,68 @@
+[
+  {
+    "gate": "build",
+    "command": [
+      "cmake",
+      "--build",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build",
+      "--target",
+      "assist_idalib_cli",
+      "assist_mcp",
+      "assist_mcp_tool_manifest_tests",
+      "assist_rax_process_tests",
+      "assist_process_tool_tests",
+      "assist_process_tool_unavailable_tests",
+      "assist_e14_rax_abi_drift_tests",
+      "assist_rust_archive_link_tests",
+      "--parallel",
+      "2"
+    ],
+    "exit-code": 0,
+    "seconds": 61.27692985534668,
+    "log": "macos-owning-build.log",
+    "sha256": "52674336f743de100f5cc33f3b02b0a9ed79bf2bbd99bc76fb1c7fd7194be05b"
+  },
+  {
+    "gate": "ctest",
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build",
+      "--output-on-failure",
+      "-R",
+      "^(assist_rust_archive_link_tests|assist_rax_process_tests|assist_process_tool_tests|assist_process_tool_unavailable_tests|assist_e14_rax_abi_drift_tests|assist_mcp_tool_manifest_tests|assist_mcp_manifest_runtime_test)$"
+    ],
+    "exit-code": 0,
+    "seconds": 4.833995819091797,
+    "log": "macos-owning-ctest.log",
+    "sha256": "249852a023257a7a2ce0f2faa16dd6ce51354e63f8ffcf04751e961dc98c38ac"
+  },
+  {
+    "gate": "protected-assist-cli",
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/scripts/static_text/verify.py",
+      "--root",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-cli"
+    ],
+    "exit-code": 0,
+    "seconds": 9.039967775344849,
+    "log": "macos-owning-protected-assist-cli.log",
+    "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+  },
+  {
+    "gate": "protected-assist-mcp",
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/scripts/static_text/verify.py",
+      "--root",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-mcp"
+    ],
+    "exit-code": 0,
+    "seconds": 5.680670976638794,
+    "log": "macos-owning-protected-assist-mcp.log",
+    "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+  }
+]

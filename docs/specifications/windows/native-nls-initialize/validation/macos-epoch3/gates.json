@@ -1,0 +1,635 @@
+[
+  {
+    "gate": "focused",
+    "command": [
+      "cargo",
+      "test",
+      "--lib",
+      "native_nls",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 48.87487530708313,
+    "log": "macos-focused.log",
+    "sha256": "62047d30817f7225b3a8a3f24ab32b4174fd96bfc0c02874793e9f190155f566",
+    "frozen-source-epoch": 3,
+    "verified-code-identities": [
+      {
+        "path": "src/user/windows/nls.rs",
+        "bytes": 3934,
+        "sha256": "6fedb5470df50cb6f83fe269505aa6b959569b3c56e07400c8f833bb5bbbf2e9"
+      },
+      {
+        "path": "src/user/windows/nls/initialize.rs",
+        "bytes": 2424,
+        "sha256": "73c990485018157c18023e14a31393ed8e366429a965f6ff4a3a5262be8a5f91"
+      },
+      {
+        "path": "src/user/windows/nls/installed.rs",
+        "bytes": 6766,
+        "sha256": "fe0e0dbf4c60b61bf618d4f6e8d1bd1d29b9711bee8eeeb9b4ba6eac63cd9f7f"
+      },
+      {
+        "path": "src/user/windows/nls/installed/initialize.rs",
+        "bytes": 3659,
+        "sha256": "224b94d9a8070287bd0b45bc18a877110791f0e281f8dbcf20e0ea93822f2de6"
+      },
+      {
+        "path": "src/user/windows/native.rs",
+        "bytes": 15982,
+        "sha256": "eab4a32c0cf729cfcec4660ba7b11259876cbf48d2a4882d27b3a4b471b30939"
+      },
+      {
+        "path": "src/user/windows/dll/native.rs",
+        "bytes": 18179,
+        "sha256": "470b241b0b86faf55ece568ffaa6e8fffe1f49f46b75307c27bf613f88401be9"
+      },
+      {
+        "path": "src/user/windows/dll/native/nls.rs",
+        "bytes": 5361,
+        "sha256": "e2ff8a29cc1cc85b9d3c9cd51a64d2bd11004af59f8b4eeab448cc0173c8ed04"
+      },
+      {
+        "path": "src/user/windows/dll/native/nls/initialize.rs",
+        "bytes": 2929,
+        "sha256": "e70654e769be7d35b2881be8290df1b1ec34e7fc19d7d1dcc606f1d415731294"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests.rs",
+        "bytes": 47542,
+        "sha256": "001d31f453d9f545c9a6fa9e1f71330beb1c0ba609c6c1c9f0716fa32d03018b"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_tests.rs",
+        "bytes": 5494,
+        "sha256": "f483d06ed00b72e0ab1035931d35ca0cd3110943ae5d79f5aa6f7432027511b5"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_replay_tests.rs",
+        "bytes": 5638,
+        "sha256": "bc0d26ce9a5f9953b92f455d12d4770efa7bbbeff1ed5f5f0874843d02ae0d64"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_leaf_tests.rs",
+        "bytes": 3693,
+        "sha256": "09bb66e314b2ed827c649125d7045a87fcd6ab8f5ee46b3d0cda8c90fba4ac25"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_tests.rs",
+        "bytes": 18406,
+        "sha256": "a9700ab3c2f9cd51633631b25215b4747f08f5f86177ab1a293153762129708a"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_leaf_tests.rs",
+        "bytes": 5667,
+        "sha256": "e6ea295e631ebbad4aeba1ee73fbd33850dca050f4864ca14111f6109a2c5786"
+      }
+    ]
+  },
+  {
+    "gate": "csr",
+    "command": [
+      "cargo",
+      "test",
+      "--lib",
+      "secure_connect",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 0.931067943572998,
+    "log": "macos-csr.log",
+    "sha256": "661f40ea8598e10dfb81ddab0347e6900fdbb9aac494c0cc16f5721bfdf3baa2",
+    "frozen-source-epoch": 3,
+    "verified-code-identities": [
+      {
+        "path": "src/user/windows/nls.rs",
+        "bytes": 3934,
+        "sha256": "6fedb5470df50cb6f83fe269505aa6b959569b3c56e07400c8f833bb5bbbf2e9"
+      },
+      {
+        "path": "src/user/windows/nls/initialize.rs",
+        "bytes": 2424,
+        "sha256": "73c990485018157c18023e14a31393ed8e366429a965f6ff4a3a5262be8a5f91"
+      },
+      {
+        "path": "src/user/windows/nls/installed.rs",
+        "bytes": 6766,
+        "sha256": "fe0e0dbf4c60b61bf618d4f6e8d1bd1d29b9711bee8eeeb9b4ba6eac63cd9f7f"
+      },
+      {
+        "path": "src/user/windows/nls/installed/initialize.rs",
+        "bytes": 3659,
+        "sha256": "224b94d9a8070287bd0b45bc18a877110791f0e281f8dbcf20e0ea93822f2de6"
+      },
+      {
+        "path": "src/user/windows/native.rs",
+        "bytes": 15982,
+        "sha256": "eab4a32c0cf729cfcec4660ba7b11259876cbf48d2a4882d27b3a4b471b30939"
+      },
+      {
+        "path": "src/user/windows/dll/native.rs",
+        "bytes": 18179,
+        "sha256": "470b241b0b86faf55ece568ffaa6e8fffe1f49f46b75307c27bf613f88401be9"
+      },
+      {
+        "path": "src/user/windows/dll/native/nls.rs",
+        "bytes": 5361,
+        "sha256": "e2ff8a29cc1cc85b9d3c9cd51a64d2bd11004af59f8b4eeab448cc0173c8ed04"
+      },
+      {
+        "path": "src/user/windows/dll/native/nls/initialize.rs",
+        "bytes": 2929,
+        "sha256": "e70654e769be7d35b2881be8290df1b1ec34e7fc19d7d1dcc606f1d415731294"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests.rs",
+        "bytes": 47542,
+        "sha256": "001d31f453d9f545c9a6fa9e1f71330beb1c0ba609c6c1c9f0716fa32d03018b"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_tests.rs",
+        "bytes": 5494,
+        "sha256": "f483d06ed00b72e0ab1035931d35ca0cd3110943ae5d79f5aa6f7432027511b5"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_replay_tests.rs",
+        "bytes": 5638,
+        "sha256": "bc0d26ce9a5f9953b92f455d12d4770efa7bbbeff1ed5f5f0874843d02ae0d64"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_leaf_tests.rs",
+        "bytes": 3693,
+        "sha256": "09bb66e314b2ed827c649125d7045a87fcd6ab8f5ee46b3d0cda8c90fba4ac25"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_tests.rs",
+        "bytes": 18406,
+        "sha256": "a9700ab3c2f9cd51633631b25215b4747f08f5f86177ab1a293153762129708a"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_leaf_tests.rs",
+        "bytes": 5667,
+        "sha256": "e6ea295e631ebbad4aeba1ee73fbd33850dca050f4864ca14111f6109a2c5786"
+      }
+    ]
+  },
+  {
+    "gate": "lib",
+    "command": [
+      "cargo",
+      "test",
+      "--lib",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 387.9459729194641,
+    "log": "macos-lib.log",
+    "sha256": "7254a5e1b3462939c2f1a8b440c6dcace5f0e11b9881615efae078608592da14",
+    "frozen-source-epoch": 3,
+    "verified-code-identities": [
+      {
+        "path": "src/user/windows/nls.rs",
+        "bytes": 3934,
+        "sha256": "6fedb5470df50cb6f83fe269505aa6b959569b3c56e07400c8f833bb5bbbf2e9"
+      },
+      {
+        "path": "src/user/windows/nls/initialize.rs",
+        "bytes": 2424,
+        "sha256": "73c990485018157c18023e14a31393ed8e366429a965f6ff4a3a5262be8a5f91"
+      },
+      {
+        "path": "src/user/windows/nls/installed.rs",
+        "bytes": 6766,
+        "sha256": "fe0e0dbf4c60b61bf618d4f6e8d1bd1d29b9711bee8eeeb9b4ba6eac63cd9f7f"
+      },
+      {
+        "path": "src/user/windows/nls/installed/initialize.rs",
+        "bytes": 3659,
+        "sha256": "224b94d9a8070287bd0b45bc18a877110791f0e281f8dbcf20e0ea93822f2de6"
+      },
+      {
+        "path": "src/user/windows/native.rs",
+        "bytes": 15982,
+        "sha256": "eab4a32c0cf729cfcec4660ba7b11259876cbf48d2a4882d27b3a4b471b30939"
+      },
+      {
+        "path": "src/user/windows/dll/native.rs",
+        "bytes": 18179,
+        "sha256": "470b241b0b86faf55ece568ffaa6e8fffe1f49f46b75307c27bf613f88401be9"
+      },
+      {
+        "path": "src/user/windows/dll/native/nls.rs",
+        "bytes": 5361,
+        "sha256": "e2ff8a29cc1cc85b9d3c9cd51a64d2bd11004af59f8b4eeab448cc0173c8ed04"
+      },
+      {
+        "path": "src/user/windows/dll/native/nls/initialize.rs",
+        "bytes": 2929,
+        "sha256": "e70654e769be7d35b2881be8290df1b1ec34e7fc19d7d1dcc606f1d415731294"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests.rs",
+        "bytes": 47542,
+        "sha256": "001d31f453d9f545c9a6fa9e1f71330beb1c0ba609c6c1c9f0716fa32d03018b"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_tests.rs",
+        "bytes": 5494,
+        "sha256": "f483d06ed00b72e0ab1035931d35ca0cd3110943ae5d79f5aa6f7432027511b5"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_replay_tests.rs",
+        "bytes": 5638,
+        "sha256": "bc0d26ce9a5f9953b92f455d12d4770efa7bbbeff1ed5f5f0874843d02ae0d64"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_leaf_tests.rs",
+        "bytes": 3693,
+        "sha256": "09bb66e314b2ed827c649125d7045a87fcd6ab8f5ee46b3d0cda8c90fba4ac25"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_tests.rs",
+        "bytes": 18406,
+        "sha256": "a9700ab3c2f9cd51633631b25215b4747f08f5f86177ab1a293153762129708a"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_leaf_tests.rs",
+        "bytes": 5667,
+        "sha256": "e6ea295e631ebbad4aeba1ee73fbd33850dca050f4864ca14111f6109a2c5786"
+      }
+    ]
+  },
+  {
+    "gate": "capi",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "rax-capi",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 69.95285201072693,
+    "log": "macos-capi.log",
+    "sha256": "f0b1f73b2551cc7a6f021ccad3237c5cc6cfdd23286652c95ef43170f306fa58",
+    "frozen-source-epoch": 3,
+    "verified-code-identities": [
+      {
+        "path": "src/user/windows/nls.rs",
+        "bytes": 3934,
+        "sha256": "6fedb5470df50cb6f83fe269505aa6b959569b3c56e07400c8f833bb5bbbf2e9"
+      },
+      {
+        "path": "src/user/windows/nls/initialize.rs",
+        "bytes": 2424,
+        "sha256": "73c990485018157c18023e14a31393ed8e366429a965f6ff4a3a5262be8a5f91"
+      },
+      {
+        "path": "src/user/windows/nls/installed.rs",
+        "bytes": 6766,
+        "sha256": "fe0e0dbf4c60b61bf618d4f6e8d1bd1d29b9711bee8eeeb9b4ba6eac63cd9f7f"
+      },
+      {
+        "path": "src/user/windows/nls/installed/initialize.rs",
+        "bytes": 3659,
+        "sha256": "224b94d9a8070287bd0b45bc18a877110791f0e281f8dbcf20e0ea93822f2de6"
+      },
+      {
+        "path": "src/user/windows/native.rs",
+        "bytes": 15982,
+        "sha256": "eab4a32c0cf729cfcec4660ba7b11259876cbf48d2a4882d27b3a4b471b30939"
+      },
+      {
+        "path": "src/user/windows/dll/native.rs",
+        "bytes": 18179,
+        "sha256": "470b241b0b86faf55ece568ffaa6e8fffe1f49f46b75307c27bf613f88401be9"
+      },
+      {
+        "path": "src/user/windows/dll/native/nls.rs",
+        "bytes": 5361,
+        "sha256": "e2ff8a29cc1cc85b9d3c9cd51a64d2bd11004af59f8b4eeab448cc0173c8ed04"
+      },
+      {
+        "path": "src/user/windows/dll/native/nls/initialize.rs",
+        "bytes": 2929,
+        "sha256": "e70654e769be7d35b2881be8290df1b1ec34e7fc19d7d1dcc606f1d415731294"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests.rs",
+        "bytes": 47542,
+        "sha256": "001d31f453d9f545c9a6fa9e1f71330beb1c0ba609c6c1c9f0716fa32d03018b"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_tests.rs",
+        "bytes": 5494,
+        "sha256": "f483d06ed00b72e0ab1035931d35ca0cd3110943ae5d79f5aa6f7432027511b5"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_replay_tests.rs",
+        "bytes": 5638,
+        "sha256": "bc0d26ce9a5f9953b92f455d12d4770efa7bbbeff1ed5f5f0874843d02ae0d64"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_leaf_tests.rs",
+        "bytes": 3693,
+        "sha256": "09bb66e314b2ed827c649125d7045a87fcd6ab8f5ee46b3d0cda8c90fba4ac25"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_tests.rs",
+        "bytes": 18406,
+        "sha256": "a9700ab3c2f9cd51633631b25215b4747f08f5f86177ab1a293153762129708a"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_leaf_tests.rs",
+        "bytes": 5667,
+        "sha256": "e6ea295e631ebbad4aeba1ee73fbd33850dca050f4864ca14111f6109a2c5786"
+      }
+    ]
+  },
+  {
+    "gate": "all-targets",
+    "command": [
+      "cargo",
+      "check",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--no-default-features"
+    ],
+    "exit-code": 0,
+    "seconds": 21.430482864379883,
+    "log": "macos-all-targets.log",
+    "sha256": "400d1ab5d4d967041233c42b197eec39032b47c61d80eff2643b228b0337f4b3",
+    "frozen-source-epoch": 3,
+    "verified-code-identities": [
+      {
+        "path": "src/user/windows/nls.rs",
+        "bytes": 3934,
+        "sha256": "6fedb5470df50cb6f83fe269505aa6b959569b3c56e07400c8f833bb5bbbf2e9"
+      },
+      {
+        "path": "src/user/windows/nls/initialize.rs",
+        "bytes": 2424,
+        "sha256": "73c990485018157c18023e14a31393ed8e366429a965f6ff4a3a5262be8a5f91"
+      },
+      {
+        "path": "src/user/windows/nls/installed.rs",
+        "bytes": 6766,
+        "sha256": "fe0e0dbf4c60b61bf618d4f6e8d1bd1d29b9711bee8eeeb9b4ba6eac63cd9f7f"
+      },
+      {
+        "path": "src/user/windows/nls/installed/initialize.rs",
+        "bytes": 3659,
+        "sha256": "224b94d9a8070287bd0b45bc18a877110791f0e281f8dbcf20e0ea93822f2de6"
+      },
+      {
+        "path": "src/user/windows/native.rs",
+        "bytes": 15982,
+        "sha256": "eab4a32c0cf729cfcec4660ba7b11259876cbf48d2a4882d27b3a4b471b30939"
+      },
+      {
+        "path": "src/user/windows/dll/native.rs",
+        "bytes": 18179,
+        "sha256": "470b241b0b86faf55ece568ffaa6e8fffe1f49f46b75307c27bf613f88401be9"
+      },
+      {
+        "path": "src/user/windows/dll/native/nls.rs",
+        "bytes": 5361,
+        "sha256": "e2ff8a29cc1cc85b9d3c9cd51a64d2bd11004af59f8b4eeab448cc0173c8ed04"
+      },
+      {
+        "path": "src/user/windows/dll/native/nls/initialize.rs",
+        "bytes": 2929,
+        "sha256": "e70654e769be7d35b2881be8290df1b1ec34e7fc19d7d1dcc606f1d415731294"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests.rs",
+        "bytes": 47542,
+        "sha256": "001d31f453d9f545c9a6fa9e1f71330beb1c0ba609c6c1c9f0716fa32d03018b"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_tests.rs",
+        "bytes": 5494,
+        "sha256": "f483d06ed00b72e0ab1035931d35ca0cd3110943ae5d79f5aa6f7432027511b5"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_replay_tests.rs",
+        "bytes": 5638,
+        "sha256": "bc0d26ce9a5f9953b92f455d12d4770efa7bbbeff1ed5f5f0874843d02ae0d64"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_leaf_tests.rs",
+        "bytes": 3693,
+        "sha256": "09bb66e314b2ed827c649125d7045a87fcd6ab8f5ee46b3d0cda8c90fba4ac25"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_tests.rs",
+        "bytes": 18406,
+        "sha256": "a9700ab3c2f9cd51633631b25215b4747f08f5f86177ab1a293153762129708a"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_leaf_tests.rs",
+        "bytes": 5667,
+        "sha256": "e6ea295e631ebbad4aeba1ee73fbd33850dca050f4864ca14111f6109a2c5786"
+      }
+    ]
+  },
+  {
+    "gate": "windows",
+    "command": [
+      "cargo",
+      "test",
+      "--test",
+      "user_windows",
+      "--test",
+      "user_windows_memory",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 60.07550096511841,
+    "log": "macos-windows.log",
+    "sha256": "6f22cc1a8af204227203a337cb0cb7923884782d234d6d44c8cddd404352027c",
+    "frozen-source-epoch": 3,
+    "verified-code-identities": [
+      {
+        "path": "src/user/windows/nls.rs",
+        "bytes": 3934,
+        "sha256": "6fedb5470df50cb6f83fe269505aa6b959569b3c56e07400c8f833bb5bbbf2e9"
+      },
+      {
+        "path": "src/user/windows/nls/initialize.rs",
+        "bytes": 2424,
+        "sha256": "73c990485018157c18023e14a31393ed8e366429a965f6ff4a3a5262be8a5f91"
+      },
+      {
+        "path": "src/user/windows/nls/installed.rs",
+        "bytes": 6766,
+        "sha256": "fe0e0dbf4c60b61bf618d4f6e8d1bd1d29b9711bee8eeeb9b4ba6eac63cd9f7f"
+      },
+      {
+        "path": "src/user/windows/nls/installed/initialize.rs",
+        "bytes": 3659,
+        "sha256": "224b94d9a8070287bd0b45bc18a877110791f0e281f8dbcf20e0ea93822f2de6"
+      },
+      {
+        "path": "src/user/windows/native.rs",
+        "bytes": 15982,
+        "sha256": "eab4a32c0cf729cfcec4660ba7b11259876cbf48d2a4882d27b3a4b471b30939"
+      },
+      {
+        "path": "src/user/windows/dll/native.rs",
+        "bytes": 18179,
+        "sha256": "470b241b0b86faf55ece568ffaa6e8fffe1f49f46b75307c27bf613f88401be9"
+      },
+      {
+        "path": "src/user/windows/dll/native/nls.rs",
+        "bytes": 5361,
+        "sha256": "e2ff8a29cc1cc85b9d3c9cd51a64d2bd11004af59f8b4eeab448cc0173c8ed04"
+      },
+      {
+        "path": "src/user/windows/dll/native/nls/initialize.rs",
+        "bytes": 2929,
+        "sha256": "e70654e769be7d35b2881be8290df1b1ec34e7fc19d7d1dcc606f1d415731294"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests.rs",
+        "bytes": 47542,
+        "sha256": "001d31f453d9f545c9a6fa9e1f71330beb1c0ba609c6c1c9f0716fa32d03018b"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_tests.rs",
+        "bytes": 5494,
+        "sha256": "f483d06ed00b72e0ab1035931d35ca0cd3110943ae5d79f5aa6f7432027511b5"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_replay_tests.rs",
+        "bytes": 5638,
+        "sha256": "bc0d26ce9a5f9953b92f455d12d4770efa7bbbeff1ed5f5f0874843d02ae0d64"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_leaf_tests.rs",
+        "bytes": 3693,
+        "sha256": "09bb66e314b2ed827c649125d7045a87fcd6ab8f5ee46b3d0cda8c90fba4ac25"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_tests.rs",
+        "bytes": 18406,
+        "sha256": "a9700ab3c2f9cd51633631b25215b4747f08f5f86177ab1a293153762129708a"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_leaf_tests.rs",
+        "bytes": 5667,
+        "sha256": "e6ea295e631ebbad4aeba1ee73fbd33850dca050f4864ca14111f6109a2c5786"
+      }
+    ]
+  },
+  {
+    "gate": "build-user",
+    "command": [
+      "cargo",
+      "build",
+      "--bin",
+      "rax-user",
+      "--locked",
+      "--offline",
+      "--no-default-features"
+    ],
+    "exit-code": 0,
+    "seconds": 0.12150073051452637,
+    "log": "macos-build-user.log",
+    "sha256": "a5f4c585ee974ca44916ac30a98bbc189e067a7e0a6bc6d2e8d6bc525be724af",
+    "frozen-source-epoch": 3,
+    "verified-code-identities": [
+      {
+        "path": "src/user/windows/nls.rs",
+        "bytes": 3934,
+        "sha256": "6fedb5470df50cb6f83fe269505aa6b959569b3c56e07400c8f833bb5bbbf2e9"
+      },
+      {
+        "path": "src/user/windows/nls/initialize.rs",
+        "bytes": 2424,
+        "sha256": "73c990485018157c18023e14a31393ed8e366429a965f6ff4a3a5262be8a5f91"
+      },
+      {
+        "path": "src/user/windows/nls/installed.rs",
+        "bytes": 6766,
+        "sha256": "fe0e0dbf4c60b61bf618d4f6e8d1bd1d29b9711bee8eeeb9b4ba6eac63cd9f7f"
+      },
+      {
+        "path": "src/user/windows/nls/installed/initialize.rs",
+        "bytes": 3659,
+        "sha256": "224b94d9a8070287bd0b45bc18a877110791f0e281f8dbcf20e0ea93822f2de6"
+      },
+      {
+        "path": "src/user/windows/native.rs",
+        "bytes": 15982,
+        "sha256": "eab4a32c0cf729cfcec4660ba7b11259876cbf48d2a4882d27b3a4b471b30939"
+      },
+      {
+        "path": "src/user/windows/dll/native.rs",
+        "bytes": 18179,
+        "sha256": "470b241b0b86faf55ece568ffaa6e8fffe1f49f46b75307c27bf613f88401be9"
+      },
+      {
+        "path": "src/user/windows/dll/native/nls.rs",
+        "bytes": 5361,
+        "sha256": "e2ff8a29cc1cc85b9d3c9cd51a64d2bd11004af59f8b4eeab448cc0173c8ed04"
+      },
+      {
+        "path": "src/user/windows/dll/native/nls/initialize.rs",
+        "bytes": 2929,
+        "sha256": "e70654e769be7d35b2881be8290df1b1ec34e7fc19d7d1dcc606f1d415731294"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests.rs",
+        "bytes": 47542,
+        "sha256": "001d31f453d9f545c9a6fa9e1f71330beb1c0ba609c6c1c9f0716fa32d03018b"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_tests.rs",
+        "bytes": 5494,
+        "sha256": "f483d06ed00b72e0ab1035931d35ca0cd3110943ae5d79f5aa6f7432027511b5"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_replay_tests.rs",
+        "bytes": 5638,
+        "sha256": "bc0d26ce9a5f9953b92f455d12d4770efa7bbbeff1ed5f5f0874843d02ae0d64"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_leaf_tests.rs",
+        "bytes": 3693,
+        "sha256": "09bb66e314b2ed827c649125d7045a87fcd6ab8f5ee46b3d0cda8c90fba4ac25"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_tests.rs",
+        "bytes": 18406,
+        "sha256": "a9700ab3c2f9cd51633631b25215b4747f08f5f86177ab1a293153762129708a"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/nls_leaf_tests.rs",
+        "bytes": 5667,
+        "sha256": "e6ea295e631ebbad4aeba1ee73fbd33850dca050f4864ca14111f6109a2c5786"
+      }
+    ]
+  }
+]

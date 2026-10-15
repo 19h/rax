@@ -1,0 +1,25 @@
+case ordinal=0 operation=protect requested=00000001 status=C0000045 base=000001C7AC890000 result-base=000001C7AC890000 result-size=4096 old=00000001 state=00001000 protection=00000002 type=00040000
+unmap status=00000000
+case ordinal=1 operation=protect requested=00000002 status=00000000 base=000001C7AC890000 result-base=000001C7AC890000 result-size=4096 old=00000002 state=00001000 protection=00000002 type=00040000
+unmap status=00000000
+case ordinal=2 operation=protect requested=00000004 status=C0000045 base=000001C7AC890000 result-base=000001C7AC890000 result-size=4096 old=00000001 state=00001000 protection=00000002 type=00040000
+unmap status=00000000
+case ordinal=3 operation=protect requested=00000008 status=C0000045 base=000001C7AC890000 result-base=000001C7AC890000 result-size=4096 old=00000001 state=00001000 protection=00000002 type=00040000
+unmap status=00000000
+case ordinal=4 operation=protect requested=00000010 status=C0000045 base=000001C7AC890000 result-base=000001C7AC890000 result-size=4096 old=00000001 state=00001000 protection=00000002 type=00040000
+unmap status=00000000
+case ordinal=5 operation=protect requested=00000020 status=C0000045 base=000001C7AC890000 result-base=000001C7AC890000 result-size=4096 old=00000001 state=00001000 protection=00000002 type=00040000
+unmap status=00000000
+case ordinal=6 operation=protect requested=00000040 status=C0000045 base=000001C7AC890000 result-base=000001C7AC890000 result-size=4096 old=00000001 state=00001000 protection=00000002 type=00040000
+unmap status=00000000
+case ordinal=7 operation=protect requested=00000080 status=C0000045 base=000001C7AC890000 result-base=000001C7AC890000 result-size=4096 old=00000001 state=00001000 protection=00000002 type=00040000
+unmap status=00000000
+case ordinal=8 operation=protect requested=00000102 status=C0000045 base=000001C7AC890000 result-base=000001C7AC890000 result-size=4096 old=00000001 state=00001000 protection=00000002 type=00040000
+unmap status=00000000
+case ordinal=9 operation=protect requested=00000104 status=C0000045 base=000001C7AC890000 result-base=000001C7AC890000 result-size=4096 old=00000001 state=00001000 protection=00000002 type=00040000
+unmap status=00000000
+case ordinal=10 operation=free requested=00008000 status=C000001B base=000001C7AC890000 result-base=000001C7AC890000 result-size=0 old=A5A5A5A5 state=00001000 protection=00000002 type=00040000
+unmap status=00000000
+case ordinal=11 operation=free requested=00004000 status=C000001B base=000001C7AC890000 result-base=000001C7AC890000 result-size=4096 old=A5A5A5A5 state=00001000 protection=00000002 type=00040000
+unmap status=00000000
+complete cases=12 pointer-bytes=8

@@ -1,0 +1,17 @@
+{
+  "pid": 1492,
+  "utc": "2026-10-15T21:52:41.128971+00:00",
+  "lock": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-epoch2-driver.lock",
+  "source-epoch": 2,
+  "child-pid": 8668,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-nls-initialize-epoch2-gates.ps1"
+  ],
+  "exit-code": 101,
+  "finished-utc": "2026-10-15T22:00:16.895915+00:00"
+}

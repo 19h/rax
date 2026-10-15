@@ -1,0 +1,21 @@
+{
+  "source-epoch": 2,
+  "program": "arm64/smoke.exe",
+  "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b",
+  "previous": {
+    "service": "NtInitializeNlsFiles",
+    "number": "0x107",
+    "PC": "0x1800020b0",
+    "turn": 2122164
+  },
+  "current": {
+    "service": "NtCreateFile",
+    "number": "0x55",
+    "PC": "0x180001590",
+    "turn": 2132074
+  },
+  "delta-turns": 9910,
+  "successful-ordinary-guest-exits": 0,
+  "whoami": "unchangedNtTraceEvent0x5e;actualrecordretained",
+  "absentprobe": "notcounted"
+}

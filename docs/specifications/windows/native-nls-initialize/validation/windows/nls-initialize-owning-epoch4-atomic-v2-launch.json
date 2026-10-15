@@ -1,0 +1,16 @@
+{
+  "pid": 9112,
+  "utc": "2026-10-15T22:08:39.636865+00:00",
+  "exclusive-lock": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-owning-epoch4-driver.lock",
+  "child-pid": 7040,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\assist-native-nls-initialize-epoch4-owned.ps1"
+  ],
+  "exit-code": 0,
+  "finished-utc": "2026-10-15T22:14:13.559942+00:00"
+}

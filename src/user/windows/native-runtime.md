@@ -1801,3 +1801,44 @@ its earlier connection boundary). Whoami still stops at NtTraceEvent0x5e.
 Ordinary Windows guest completion remains unproven. Broader full-process
 userland support remains active work. The scoped frozen-embedding checks do not
 claim full current-root/plugin/GUI/package coverage.
+
+
+## Installed NLS initialization (2026-10-15)
+
+NtInitializeNlsFiles now uses a fixed selection-time readonly locale.nls
+snapshot and captured native locale ID. The measured Windows build29683
+profile preserves native64 base-before-LCID and WoW64 LCID-before-base copies,
+including aliased outputs and eight native late-copy failures that retain their
+mapped views. Views remain guest-owned and budgeted until unmap or teardown.
+The declared unused outputs are not probed. Actual x86 NTDLL RET12 overrides the
+historical four-argument PHNT prototype: x86 exports and host FFI use three
+stdcall slots; native64 retains four declared slots. Strict native leaf SP
+assertions remain enabled. Other builds remain explicit unsupported; other
+patch revisions and physical x64 kernels are unverified.
+
+Primary evidence retains316 original calls,48 protection/free controls,12 actual
+installed-leaf byte captures and one original native startup. All four producer
+profiles are on an ARM64 Windows kernel. Native/compatibility ARM64 and x86
+NtInitializeNlsFiles leaves execute in the final tests and match the actual
+locale.nls file bytes before real unmap. Existing fixed readonly NLS ownership
+and private-free refusal are independently measured for initialization views.
+
+Rust1.95.0 full-library results (passed/failed/ignored): macOS7830/0/2,
+Linux7824/0/2,Windows7253/5/2. The same five Windows native-lowerer failures and
+two ignored microkernel tests remain recorded. C API168 on each host, final
+NLS focus13Unix/14Windows, all-target checks, Unix Windows integration544 and
+native Windows memory4 pass. Scoped CLI/MCP/C++ consumers and complete archive
+walks bind299 selected inputs per host, with empty core features. Frozen Assist
+exports and nine matching current C++ files are distinct from whole-current-root,
+plugin, GUI or package proof. Source epochs and initial failures are retained;
+no assertions or timeouts are relaxed.
+
+Ordinary ARM64 smoke passes the NLS boundary and reaches NtCreateFile0x55,
+PC0x180001590,turn2132074 (9910 further observer turns), requesting
+\Device\ConDrv\Server. Whoami remains at NtTraceEvent0x5e. Ordinary Windows
+completion is still unproven. Separate controlled detached-persona diagnostics
+do not change this shipping configuration or its completion count. The full
+process-userland objective remains active.
+
+Native data, provenance, assumptions, execution-plane maps and the portable
+validation checker are under docs/specifications/windows/native-nls-initialize/.

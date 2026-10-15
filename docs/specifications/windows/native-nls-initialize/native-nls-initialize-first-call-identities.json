@@ -1,0 +1,32 @@
+{
+  "utc": "2026-10-15T21:56:21.089748+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "producers": [
+    {
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-first-call-arm64\\native-nls-initialize-first-call.cpp",
+        "bytes": 15871,
+        "sha256": "2dc8c4a4611dae330978161e5b5918357dc1289808a9120fe94642dc429d9fef"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-first-call-arm64\\native-nls-initialize-first-call-arm64.exe",
+        "bytes": 187392,
+        "sha256": "d27dbec29c0f8e89ab7ffd35ce59c42414f1840121fa564d36fa4a635cf3303d"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-first-call-arm64\\native-nls-initialize-first-call-arm64.log",
+        "bytes": 1165,
+        "sha256": "1e51107f8d1a63ccf841913c2b6e7e17508c001abf9ee74fd75b5d674ef5af12"
+      },
+      "machine": 43620,
+      "characteristics": 34
+    }
+  ]
+}

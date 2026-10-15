@@ -1,0 +1,16 @@
+{
+  "pid": 5956,
+  "utc": "2026-10-15T21:27:48.911921+00:00",
+  "lock": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-native-driver.lock",
+  "child-pid": 1996,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-nls-initialize-profiles.ps1"
+  ],
+  "exit-code": 2,
+  "completed-utc": "2026-10-15T21:28:05.199396+00:00"
+}

@@ -1,0 +1,22 @@
+{
+  "utc": "2026-10-15T22:28:41.598419+00:00",
+  "execution-inputs-changed": false,
+  "assumption-status": {
+    "N1": "confirmedboundednativecopies",
+    "N2": "confirmed8lateWoW64retainedviews",
+    "N3": "retainedimmutablemetadata/hostlocalecontract",
+    "N4": "confirmed48fixed-viewcontrols",
+    "N5": "confirmednativeRET12andactualstrictx86leafsuccess;Rust32hostunrun"
+  },
+  "quality-gates": {
+    "QG1": "assumptionsreconciledwithfalsificationprobes",
+    "QG2": "boundedNLSgroupproven;fulluserlandactiveincomplete",
+    "QG3": "rawcommands,SHA256,counts,toolchainandbytebudgetsretained",
+    "QG4": "allinitialfailures,exact5baselinefailuresand0ordinaryexits explicit",
+    "QG5": "13independentnativeproducersandinstalledleaves/files;PHNTconflictexplicit",
+    "QG6": "high/medium/lowfindingsbounded;noConDrvimplementationinscope",
+    "QG7": "isolated14codeinputs+NLSdata+engineeringrecords;foreignmainuntouched",
+    "QG8": "threeOSsharedandnativeWindowsproof;cfg-emptytargetexplicit",
+    "QG9": "sameCABI1.11,dependencyfeatures,sourcepathsandtestregistration;noABIlayout/defaultchange"
+  }
+}

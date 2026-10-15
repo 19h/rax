@@ -48,6 +48,22 @@ pub(super) static EXPORTS: &[Export] = &[
     ),
     Export::func("NtTerminateThread", Stdcall, &[Ptr, I32], terminate_thread),
     Export::func("NtClose", Stdcall, &[Ptr], close),
+    // Installed x86 leaf returns with RET12; the fourth PHNT parameter is
+    // absent from that ABI. Native64 accepts the declared fourth unused slot.
+    Export::func(
+        "NtInitializeNlsFiles",
+        Stdcall,
+        &[Ptr, Ptr, Ptr],
+        nls::initialize::initialize,
+    )
+    .only(Archs::X86),
+    Export::func(
+        "NtInitializeNlsFiles",
+        Stdcall,
+        &[Ptr, Ptr, Ptr, Ptr],
+        nls::initialize::initialize,
+    )
+    .only(Archs::WIN64),
     Export::func(
         "NtSecureConnectPort",
         Stdcall,

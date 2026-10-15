@@ -6,6 +6,8 @@ use crate::user::windows::registry::Registry;
 use std::ffi::c_void;
 use std::io;
 use std::path::Path;
+#[path = "installed/initialize.rs"]
+mod initialize;
 
 #[link(name = "ntdll")]
 unsafe extern "system" {
@@ -22,7 +24,7 @@ struct View(*mut c_void);
 impl Drop for View {
     fn drop(&mut self) {
         if !self.0.is_null() {
-            // SAFETY: process-local mapped view returned by NtGetNlsSectionPtr.
+            // SAFETY: process-local view returned by an installed NLS mapping query.
             unsafe {
                 NtUnmapViewOfSection((-1isize) as *mut c_void, self.0);
             }
@@ -68,7 +70,11 @@ fn invalid_status(name: &str, status: i32) -> io::Error {
         status as u32
     ))
 }
-pub(crate) fn snapshot(registry: &Registry, directory: &Path) -> io::Result<Nls> {
+pub(crate) fn snapshot(
+    registry: &Registry,
+    directory: &Path,
+    version: &crate::user::windows::process::WinVersion,
+) -> io::Result<Nls> {
     let mut codes = registry.codepages();
     // Fixed system-directory namespace enumeration, never a guest-selected
     // path. Include installed C_<decimal>.NLS files without registry entries.
@@ -106,7 +112,13 @@ pub(crate) fn snapshot(registry: &Registry, directory: &Path) -> io::Result<Nls>
             sections.push((key, bytes));
         }
     }
-    Nls::new(sections)
+    let nls = Nls::new(sections)?;
+    if version.major == 10 && version.minor == 0 && version.build == 29683 {
+        let (locale, bytes) = initialize::capture()?;
+        nls.with_initialize(locale, bytes)
+    } else {
+        Ok(nls)
+    }
 }
 
 #[cfg(test)]
@@ -124,7 +136,7 @@ mod tests {
         };
         let runtime = crate::user::windows::native::NativeRuntime::select(arch).unwrap();
         let directory = std::path::Path::new(&runtime.guest_root).join("System32");
-        let nls = snapshot(&registry, &directory).unwrap();
+        let nls = snapshot(&registry, &directory, &runtime.version).unwrap();
         for (kind, data, name) in [
             (11, 1252, "c_1252.nls"),
             (11, 437, "c_437.nls"),
@@ -140,6 +152,21 @@ mod tests {
             assert_eq!(bytes.len(), (file.len() + 4095) & !4095, "{name}");
             assert_eq!(&bytes[..file.len()], file.as_slice(), "{name}");
             assert!(bytes[file.len()..].iter().all(|&b| b == 0), "{name}");
+        }
+        if runtime.version.major == 10
+            && runtime.version.minor == 0
+            && runtime.version.build == 29683
+        {
+            let init = nls
+                .initialize()
+                .expect("measured native initialization profile");
+            let file = std::fs::read(directory.join("locale.nls")).unwrap();
+            assert_eq!(init.bytes.len(), (file.len() + 4095) & !4095);
+            assert_eq!(&init.bytes[..file.len()], file.as_slice());
+            assert!(init.bytes[file.len()..].iter().all(|&byte| byte == 0));
+            println!(
+                "Validated actual NtInitializeNlsFiles readonly bytes against installed locale.nls"
+            );
         }
     }
 }

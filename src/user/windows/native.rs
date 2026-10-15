@@ -108,7 +108,11 @@ impl NativeRuntime {
         runtime.registry = super::registry::snapshot()?;
         runtime.object_namespace =
             super::object_namespace::snapshot(runtime.registry.upcase_table())?;
-        runtime.nls = Some(super::nls::snapshot(&runtime.registry, &schema_directory)?);
+        runtime.nls = Some(super::nls::snapshot(
+            &runtime.registry,
+            &schema_directory,
+            &runtime.version,
+        )?);
         runtime.appcompat =
             super::appcompat::Catalog::snapshot(&root, runtime.registry.upcase_table())?;
         runtime.wnf_catalog = super::wnf::snapshot()?;

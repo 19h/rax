@@ -1,0 +1,52 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5m 34s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-tests\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 13 tests
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_ntstatus_to_win32_errors_matches_installed_rtl_oracle ... ok
+test user::windows::nls::tests::native_nls_snapshot_bounds_identity_padding_and_shared_bytes ... ok
+test user::windows::nls::initialize::tests::native_nls_initialize_snapshot_bounds_distinct_identity_and_combined_budget ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_null_section_output_is_invalid_parameter_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::nls_initialize_tests::native_nls_initialize_mapping_is_distinct_readonly_owned_and_unmaps_by_interior ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_bad_output_precedes_unknown_section_type_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::nls_initialize_tests::native_nls_initialize_unselected_or_unmeasured_profile_publishes_no_mapping_or_output ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_views_cannot_gain_write_or_execute_protection_or_be_freed_as_private_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_readonly_distinct_mapped_views_optional_size_and_aliases_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_unmap_interior_owned_views_close_and_type_access_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_probe_order_context_optional_size_and_guard_priority_all_abis ... ok
+Validated installed arm64 NtInitializeNlsFiles four arguments and locale.nls bytes with real unmap
+
+thread 'user::windows::process::sched::tests::services_tests::nls_tests::installed::initialize::native_nls_initialize_installed_leaves_map_locale_file_and_preserve_ignored_outputs' (4512) panicked at src\user\windows\process\sched\tests\services_tests\nls_leaf_tests.rs:53:5:
+assertion `left == right` failed
+  left: 2489536
+ right: 2489540
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test user::windows::process::sched::tests::services_tests::nls_tests::installed::initialize::native_nls_initialize_installed_leaves_map_locale_file_and_preserve_ignored_outputs ... FAILED
+test user::windows::process::sched::tests::services_tests::nls_initialize_tests::replay::native_nls_initialize_replays_316_actual_calls_outputs_guards_and_retained_views ... ok
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::nls_tests::installed::initialize::native_nls_initialize_installed_leaves_map_locale_file_and_preserve_ignored_outputs
+
+test result: FAILED. 12 passed; 1 failed; 0 ignored; 0 measured; 7246 filtered out; finished in 5.56s
+
+error: test failed, to rerun pass `--lib`

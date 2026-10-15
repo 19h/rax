@@ -1,0 +1,30 @@
+{
+  "created-utc": "2026-10-15T21:26:34.626905+00:00",
+  "group": "Native NtInitializeNlsFiles: currently evidence acquisition only",
+  "published-rax": "6330409e225cfe7fa25d1ee524bc6b12dd5af312",
+  "pending-dependency": "none; CSR group published and all source inputs frozen",
+  "old-frontier": "NtSecureConnectPort 0x194 at 0x180002980 turn2115163",
+  "new-frontier": "NtInitializeNlsFiles 0x107 at0x1800020b0 turn2122164",
+  "delta-turns": 7001,
+  "ordinary-windows-exits": 0,
+  "base": "aadeb22ee8287a7d268786f22cb339fedb8d56fc",
+  "owned-paths": [
+    "src/user/windows/nls.rs",
+    "src/user/windows/nls/initialize.rs",
+    "src/user/windows/nls/installed.rs",
+    "src/user/windows/nls/installed/initialize.rs",
+    "src/user/windows/native.rs",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/nls.rs",
+    "src/user/windows/dll/native/nls/initialize.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/nls_initialize_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/nls_initialize_replay_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/nls_initialize_leaf_tests.rs",
+    "docs/specifications/windows/native-nls-initialize/",
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/process/sched/tests/services_tests/nls_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/nls_leaf_tests.rs"
+  ],
+  "code-edits-not-started": false
+}

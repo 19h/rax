@@ -1,0 +1,56 @@
+{
+  "utc": "2026-10-15T21:20:35.488684+00:00",
+  "current-root-head": "1bf4164dc7d09b2cf0224a2a47ebd254c6ada4b7",
+  "frozen-windows-root-head": "f386ed2aeac29a701d32f28eb73c14003eb55f7a",
+  "verified-count": 9,
+  "files": [
+    {
+      "path": "src/tools/builtin/emulation/sessions/process_tool.cpp",
+      "bytes": 21736,
+      "sha256": "2e367268a546344c73c288910b97ab733b825c3388b69c7a28ad3a0d3e27e2eb"
+    },
+    {
+      "path": "src/emulation/rax/rax_process.cpp",
+      "bytes": 8600,
+      "sha256": "ed55d78681a9a59e384186382d998244d80ca5665793e60f5e7577d88d526564"
+    },
+    {
+      "path": "src/emulation/rax/librax_loader.cpp",
+      "bytes": 2070,
+      "sha256": "968294f6cf9f5e0e2af2f13a87eca456c57b5f951f6d8ccb3375f7cd16fee4c9"
+    },
+    {
+      "path": "src/crypto/static_text.cpp",
+      "bytes": 4502,
+      "sha256": "35c0af6231ab70d41c24a0274d2da6b3d95d3219d769e855fc6aa25e6fb3a8a1"
+    },
+    {
+      "path": "test/process_tool_tests.cpp",
+      "bytes": 33330,
+      "sha256": "960bb5d07a446619ee7331ca517ea9eb38b8c8b87b15f7dcf4e3c2f136336522"
+    },
+    {
+      "path": "test/process_tool_unavailable_tests.cpp",
+      "bytes": 1051,
+      "sha256": "c7123d9398fa405349018f4ab18953d0b7688c0afb687fca2beaf1fa226a2e72"
+    },
+    {
+      "path": "test/rax_process_tests.cpp",
+      "bytes": 14493,
+      "sha256": "d4dacc7f185d04d7ca30acf2bf97eed71194bde9e2a22e11c1cad73d1770fcbd"
+    },
+    {
+      "path": "test/e14_rax_abi_drift_tests.cpp",
+      "bytes": 772,
+      "sha256": "bb0f260181f3506db1e203a018cda6de0b47daf617baf2216d5a9568c604369f"
+    },
+    {
+      "path": "test/rust_archive_link_tests.cpp",
+      "bytes": 4324,
+      "sha256": "1418965f173b0448ee5429fda9ab8556f806dc4ec70b6cc3a85de735051c9b1f"
+    }
+  ],
+  "scope": "exact9C++inputs;headers/generated resources/dependencies and whole-root parity are not established by this comparison",
+  "reverified-utc": "2026-10-15T21:29:45.007490+00:00",
+  "current-root-reverified-head": "4dc2c3693ae278268c238ef7960e11fc25356722"
+}

@@ -5,6 +5,7 @@ use crate::user::windows::hle::{ApiErr, ApiResult, Ctx, Flow};
 use crate::user::windows::memory::{AllocKind, Mem, prot};
 use crate::user::windows::nt::status::*;
 use std::sync::Arc;
+pub(super) mod initialize;
 
 pub(super) fn get(c: &mut Ctx) -> ApiResult {
     let result = get_checked(c);

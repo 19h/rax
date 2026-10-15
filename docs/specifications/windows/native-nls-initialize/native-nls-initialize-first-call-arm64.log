@@ -1,0 +1,11 @@
+hook name=NtInitializeNlsFiles rva=20B0 count=4
+profile width=8 child=2700 controller=6700 native-breakpoint=D43E0000
+entry ordinal=0 name=NtInitializeNlsFiles caller=7FF82FB409D4 args=80000FDE00,7FF82B6E5860,0,0,
+dump name=nls-output0-before address=80000FDE00 requested=8 ok=1 error=0 got=8 hex=0000000000000000
+dump name=nls-output1-before address=7FF82B6E5860 requested=4 ok=1 error=0 got=4 hex=00000000
+return ordinal=0 name=NtInitializeNlsFiles status=00000000
+dump name=nls-output0-after address=80000FDE00 requested=8 ok=1 error=0 got=8 hex=000076A00E020000
+dump name=nls-output1-after address=7FF82B6E5860 requested=4 ok=1 error=0 got=4 hex=09040000
+nls-view base=20EA0760000 allocation=20EA0760000 bytes=864256 state=00001000 protect=00000002 type=00040000
+dump name=nls-prefix address=20EA0760000 requested=128 ok=1 error=0 got=128 hex=20000000000000000000000000000000B029000078690B00D8680C0010F00C008A29680300000000000020020000000068020900080028020800080028020900080028020A00080020020800000020020900000048020A00480010020B00480010020B00480410020500480010020500480410020B0040041002040048001002
+complete installed=1 entered=1 returned=1 exit=41

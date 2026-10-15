@@ -108,6 +108,9 @@ mod directory_open_tests;
 #[path = "services_tests/nls_tests.rs"]
 mod nls_tests;
 
+#[path = "services_tests/nls_initialize_tests.rs"]
+mod nls_initialize_tests;
+
 #[path = "services_tests/virtual_memory_tests.rs"]
 mod virtual_memory_tests;
 

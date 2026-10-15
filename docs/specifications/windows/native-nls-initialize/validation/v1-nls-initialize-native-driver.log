@@ -1,0 +1,158 @@
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+native-nls-initialize.cpp
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(131): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(132): error C2146: syntax error: missing ';' before identifier 'WINAPI'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(145): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(145): error C2086: 'int BOOL': redefinition
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(131): note: see declaration of 'BOOL'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(146): error C2146: syntax error: missing ';' before identifier 'WINAPI'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(154): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(154): error C2086: 'int BOOL': redefinition
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(131): note: see declaration of 'BOOL'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(155): error C2146: syntax error: missing ';' before identifier 'WINAPI'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(170): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(171): error C2146: syntax error: missing ';' before identifier 'WINAPI'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(179): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(179): error C2086: 'int DWORD': redefinition
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(170): note: see declaration of 'DWORD'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(180): error C2146: syntax error: missing ';' before identifier 'WINAPI'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(194): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(194): error C2059: syntax error: 'return'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(207): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(207): error C2374: '_Success_': redefinition; multiple initialization
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(194): note: see declaration of '_Success_'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(207): error C2086: 'int _Success_': redefinition
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(194): note: see declaration of '_Success_'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(207): error C2059: syntax error: 'return'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(227): error C3646: 'lpBaseOfDll': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(227): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(228): error C3646: 'SizeOfImage': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(228): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(229): error C3646: 'EntryPoint': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(229): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(232): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(232): error C2086: 'int BOOL': redefinition
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(131): note: see declaration of 'BOOL'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(233): error C2146: syntax error: missing ';' before identifier 'WINAPI'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(247): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(247): error C2086: 'int BOOL': redefinition
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(131): note: see declaration of 'BOOL'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(248): error C2146: syntax error: missing ';' before identifier 'WINAPI'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(259): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(259): error C2086: 'int BOOL': redefinition
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(131): note: see declaration of 'BOOL'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(260): error C2146: syntax error: missing ';' before identifier 'WINAPI'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(266): error C3646: 'FaultingPc': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(266): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(267): error C3646: 'FaultingVa': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(267): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(272): error C3646: 'FaultingThreadId': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(272): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(273): error C3646: 'Flags': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(273): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(276): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(276): error C2086: 'int BOOL': redefinition
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(131): note: see declaration of 'BOOL'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(277): error C2146: syntax error: missing ';' before identifier 'WINAPI'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(284): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(284): error C2086: 'int BOOL': redefinition
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(131): note: see declaration of 'BOOL'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(285): error C2146: syntax error: missing ';' before identifier 'WINAPI'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(292): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(292): error C2086: 'int DWORD': redefinition
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(170): note: see declaration of 'DWORD'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(293): error C2146: syntax error: missing ';' before identifier 'WINAPI'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(301): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(301): error C2086: 'int DWORD': redefinition
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(170): note: see declaration of 'DWORD'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(302): error C2146: syntax error: missing ';' before identifier 'WINAPI'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(316): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(316): error C2086: 'int BOOL': redefinition
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(131): note: see declaration of 'BOOL'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(317): error C2146: syntax error: missing ';' before identifier 'WINAPI'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(324): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(324): error C2086: 'int DWORD': redefinition
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(170): note: see declaration of 'DWORD'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(325): error C2146: syntax error: missing ';' before identifier 'WINAPI'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(332): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(332): error C2086: 'int DWORD': redefinition
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(170): note: see declaration of 'DWORD'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(333): error C2146: syntax error: missing ';' before identifier 'WINAPI'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(346): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(346): error C2086: 'int DWORD': redefinition
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(170): note: see declaration of 'DWORD'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(347): error C2146: syntax error: missing ';' before identifier 'WINAPI'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(354): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(354): error C2086: 'int DWORD': redefinition
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(170): note: see declaration of 'DWORD'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(355): error C2146: syntax error: missing ';' before identifier 'WINAPI'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(385): error C3646: 'Flags': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(385): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(387): error C3646: 'Protection': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(387): error C2059: syntax error: ':'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(387): error C2334: unexpected token(s) preceding ':'; skipping apparent function body
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(400): error C3646: 'NumberOfEntries': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(400): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(401): error C3646: 'WorkingSetInfo': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(401): error C2143: syntax error: missing ',' before '['
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(401): error C2238: unexpected token(s) preceding ';'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(405): error C3646: 'Flags': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(405): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(408): error C3646: 'Valid': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(408): error C2059: syntax error: ':'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(408): error C2334: unexpected token(s) preceding ':'; skipping apparent function body
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(423): error C3646: 'Valid': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(423): error C2059: syntax error: ':'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(423): error C2334: unexpected token(s) preceding ':'; skipping apparent function body
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(432): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(437): error C3646: 'VirtualAddress': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(437): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(438): error C3646: 'VirtualAttributes': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(438): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(449): error C3646: 'WINAPI': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(450): error C3646: 'K32QueryWorkingSet': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(450): error C2059: syntax error: '('
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(454): error C2238: unexpected token(s) preceding ';'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(457): error C3646: 'WINAPI': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(458): error C3646: 'K32QueryWorkingSetEx': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(458): error C2059: syntax error: '('
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(462): error C2238: unexpected token(s) preceding ';'
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(467): error C3646: 'cb': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(467): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(468): error C3646: 'PageFaultCount': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(468): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(469): error C3646: 'PeakWorkingSetSize': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(469): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(470): error C3646: 'WorkingSetSize': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(470): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(471): error C3646: 'QuotaPeakPagedPoolUsage': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(471): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(472): error C3646: 'QuotaPagedPoolUsage': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(472): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(473): error C3646: 'QuotaPeakNonPagedPoolUsage': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(473): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(474): error C3646: 'QuotaNonPagedPoolUsage': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(474): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(475): error C3646: 'PagefileUsage': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(475): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(476): error C3646: 'PeakPagefileUsage': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(476): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(502): error C3646: 'cb': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(502): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(503): error C3646: 'PageFaultCount': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(503): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(504): error C3646: 'PeakWorkingSetSize': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(504): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(505): error C3646: 'WorkingSetSize': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(505): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(506): error C3646: 'QuotaPeakPagedPoolUsage': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(506): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(507): error C3646: 'QuotaPagedPoolUsage': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(507): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(508): error C3646: 'QuotaPeakNonPagedPoolUsage': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(508): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(509): error C3646: 'QuotaNonPagedPoolUsage': unknown override specifier
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\psapi.h(509): fatal error C1003: error count exceeds 100; stopping compilation

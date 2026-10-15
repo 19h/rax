@@ -1,0 +1,21 @@
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 37.28s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 13 tests
+test user::windows::nls::initialize::tests::native_nls_initialize_snapshot_bounds_distinct_identity_and_combined_budget ... ok
+test user::windows::nls::tests::native_nls_snapshot_bounds_identity_padding_and_shared_bytes ... ok
+test user::windows::process::sched::tests::services_tests::nls_initialize_tests::native_nls_initialize_export_abi_matches_original_x86_ret12_without_shadowing ... ok
+test user::windows::process::sched::tests::services_tests::nls_initialize_tests::native_nls_initialize_mapping_is_distinct_readonly_owned_and_unmaps_by_interior ... ok
+test user::windows::process::sched::tests::services_tests::nls_initialize_tests::native_nls_initialize_unselected_or_unmeasured_profile_publishes_no_mapping_or_output ... ok
+test user::windows::process::sched::tests::services_tests::nls_initialize_tests::replay::native_nls_initialize_replays_316_actual_calls_outputs_guards_and_retained_views ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_bad_output_precedes_unknown_section_type_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_ntstatus_to_win32_errors_matches_installed_rtl_oracle ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_null_section_output_is_invalid_parameter_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_probe_order_context_optional_size_and_guard_priority_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_readonly_distinct_mapped_views_optional_size_and_aliases_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_unmap_interior_owned_views_close_and_type_access_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::nls_tests::native_nls_views_cannot_gain_write_or_execute_protection_or_be_freed_as_private_all_abis ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 7813 filtered out; finished in 2.06s
+

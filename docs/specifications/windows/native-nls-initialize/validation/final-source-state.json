@@ -1,0 +1,10 @@
+{
+  "source": "/Users/int/Library/Caches/assist-process-emulation/nls-initialize-20261015/rax-source",
+  "base": "aadeb22ee8287a7d268786f22cb339fedb8d56fc",
+  "source-epoch": 4,
+  "selected-source-inputs": 299,
+  "compiled-source-manifest": "epoch4-frozen-code.json",
+  "epoch3-Unix-source": "/Users/int/Library/Caches/assist-process-emulation/nls-initialize-20261015/rax-final-source",
+  "epoch3-still-unmodified": true,
+  "delta-from-epoch3": "oneWindows-only hostadapter file;sharedUnixruntimeandtestsunchanged"
+}

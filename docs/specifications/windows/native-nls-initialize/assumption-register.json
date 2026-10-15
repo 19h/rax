@@ -1,0 +1,48 @@
+[
+  {
+    "id": "N1",
+    "assumption": "The measured Windows10.0.29683.1000 ABI ignores declared outputs3/4 and follows native64 base-then-LCID versus WoW64 LCID-then-base stores.",
+    "basis": "316 independently identified originalcalls,alloutputbytes,guards,aliases,readonly,crosspage andbad/nullpointers",
+    "dependent-result": "new native service and four-argument stdcall transport",
+    "stress-test": "otherbuilds/patches,independentbadoutputs,ignoredguardaddresses,aliasordering",
+    "falsification-probe": "neworiginalcontrolchanges3/4orcopyorder;currentnewserviceisexplicitunsupportedonotherbuilds",
+    "status": "confirmed"
+  },
+  {
+    "id": "N2",
+    "assumption": "WoW64 late output0writefailure retains its guest-visible mapped locale section after publishing LCID.",
+    "basis": "owned native process enumerates all locale.nls mappings before/after eachcall;8failedretainedmappings across2x86profiles",
+    "dependent-result": "no rollback of published initialization mapping onlateWoW64copyfault",
+    "stress-test": "readonlyfirstoutput,crosspagewrite,aliasedoutput,repeatedcallsandunmap",
+    "falsification-probe": "actual native failure shows unchanged mapping count orreclaimsviewbeforecallerinspection",
+    "status": "confirmed"
+  },
+  {
+    "id": "N3",
+    "assumption": "Fixed native selection may capture immutable locale.nls bytes and LCID once;later host locale changes do not update the selected guest snapshot.",
+    "basis": "existing installed NLS immutable selection contract;newcallfixedno-guestinputs,RPMboundedbyactualreadonlynativeview,RAIIunmaps",
+    "dependent-result": "hostadapter and privateNlsinitializeArc",
+    "stress-test": "hostmetadatachange,badviewshape,8MiBsectionand64MiBtotalbounds,foreignunmap",
+    "falsification-probe": "anyguestvalueentershostquery,pointerescapes,oractualbyte/extentdiffersfrominstalledfile",
+    "status": "retained"
+  },
+  {
+    "id": "N4",
+    "assumption": "Initialized locale mappings share the fixed-readonly and private-free refusal contract of existing NLS views.",
+    "basis": "48independentlyidentifiedoriginalNtProtect/NtFreecontrolsacross4profiles;onlyREADONLYsucceeds,othersC0000045,privatefreeC000001B,48unmaps",
+    "dependent-result": "reuseexistingsealedNLSviewmechanics",
+    "stress-test": "NOACCESS,write/copy/execute/guardprotection,RELEASE/DECOMMIT,andNtUnmapinterior",
+    "falsification-probe": "newnativecontrolpermitschangedprotectionorprivatefree",
+    "status": "confirmed"
+  },
+  {
+    "id": "N5",
+    "assumption": "x86NtInitializeNlsFilesABIconsumes3slots;native64accepts4declaredslots.",
+    "basis": "actualinstalledx86/x86LAAleafbytesC20C00;initialstrictSPassertionshowed12Bcleanup;native64originalstartupandfour-slotpositive",
+    "dependent-result": "architecture-specificexportsignatureand32bithostFFIdeclaration",
+    "stress-test": "strictSPatinstalledleafreturn,exportshadowing,legacyPHNTprototypecallerextras",
+    "falsification-probe": "actualnativeleafreturnpops16Borcorrectthree-slotcallfailsstrictSP",
+    "status": "confirmed",
+    "validation": "nativeWindows final14/0/0;installedarm64andx86positive,strictSPassertionsbothpass;Rust32hostnativeexecutionunverified"
+  }
+]

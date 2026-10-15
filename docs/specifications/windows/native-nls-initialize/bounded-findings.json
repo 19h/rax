@@ -1,0 +1,38 @@
+[
+  {
+    "impact": "high",
+    "finding": "Ordinary Windows guest completion remains unproven.",
+    "evidence": "epoch2smokeadvances9910turnstoNtCreateFile0x55;whoamiremainsNtTraceEvent0x5e;separateprobeabsent",
+    "blocks": "full process-userland objective;doesnotblockboundedNLSgroup"
+  },
+  {
+    "impact": "medium",
+    "finding": "Other Windows builds,patchrevisionsandphysicalx64kernelbehavior are unverified.",
+    "evidence": "allprimarynativecontrols useWindows10.0.29683.1000ARM64kernel;fourprofilesincludecompatibilityABIs",
+    "blocks": "broader nativeprofileclaims;otherbuildsexplicitunsupported"
+  },
+  {
+    "impact": "medium",
+    "finding": "Five existing Windows native-lowerer failures remain part of the baseline.",
+    "evidence": "completednativefull7253/5/2;exactsamefourBZHIandoneFP16failureidentitiesassourcebaseline",
+    "blocks": "alltestspassclaim;notanNLSmechanicsfailure"
+  },
+  {
+    "impact": "medium",
+    "finding": "Host locale changes after runtime selection do not update the guest snapshot.",
+    "evidence": "NlsimmutableArcconstructor;allguestcallsuseselectedmetadataonly",
+    "blocks": "hotreloadclaim;notrequested"
+  },
+  {
+    "impact": "low",
+    "finding": "Existing WindowsARM64 vm-memory stdcall warning remains unchanged.",
+    "evidence": "samevendoredwindows.rs22andRust1.95compiler",
+    "blocks": "futurecompilercompatibilityclaim"
+  },
+  {
+    "impact": "medium",
+    "finding": "Rust32bitWindowsnativehostexecutionisnotverified.",
+    "evidence": "actualx86NTDLLRET12andstrictguestSPtestsbothverifiedonWindowsARM64;host32FFIdeclarationisimplementedbutnoRust32hostgaterun",
+    "blocks": "32bitRusthostexecutionclaim;WindowsARM64shippingnativegatespass"
+  }
+]

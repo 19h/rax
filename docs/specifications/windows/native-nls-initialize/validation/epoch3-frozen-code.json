@@ -1,0 +1,78 @@
+{
+  "base": "aadeb22ee8287a7d268786f22cb339fedb8d56fc",
+  "epoch": 3,
+  "utc": "2026-10-15T22:04:18.676877+00:00",
+  "files": [
+    {
+      "path": "src/user/windows/nls.rs",
+      "bytes": 3934,
+      "sha256": "6fedb5470df50cb6f83fe269505aa6b959569b3c56e07400c8f833bb5bbbf2e9"
+    },
+    {
+      "path": "src/user/windows/nls/initialize.rs",
+      "bytes": 2424,
+      "sha256": "73c990485018157c18023e14a31393ed8e366429a965f6ff4a3a5262be8a5f91"
+    },
+    {
+      "path": "src/user/windows/nls/installed.rs",
+      "bytes": 6766,
+      "sha256": "fe0e0dbf4c60b61bf618d4f6e8d1bd1d29b9711bee8eeeb9b4ba6eac63cd9f7f"
+    },
+    {
+      "path": "src/user/windows/nls/installed/initialize.rs",
+      "bytes": 3659,
+      "sha256": "224b94d9a8070287bd0b45bc18a877110791f0e281f8dbcf20e0ea93822f2de6"
+    },
+    {
+      "path": "src/user/windows/native.rs",
+      "bytes": 15982,
+      "sha256": "eab4a32c0cf729cfcec4660ba7b11259876cbf48d2a4882d27b3a4b471b30939"
+    },
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 18179,
+      "sha256": "470b241b0b86faf55ece568ffaa6e8fffe1f49f46b75307c27bf613f88401be9"
+    },
+    {
+      "path": "src/user/windows/dll/native/nls.rs",
+      "bytes": 5361,
+      "sha256": "e2ff8a29cc1cc85b9d3c9cd51a64d2bd11004af59f8b4eeab448cc0173c8ed04"
+    },
+    {
+      "path": "src/user/windows/dll/native/nls/initialize.rs",
+      "bytes": 2929,
+      "sha256": "e70654e769be7d35b2881be8290df1b1ec34e7fc19d7d1dcc606f1d415731294"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47542,
+      "sha256": "001d31f453d9f545c9a6fa9e1f71330beb1c0ba609c6c1c9f0716fa32d03018b"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_tests.rs",
+      "bytes": 5494,
+      "sha256": "f483d06ed00b72e0ab1035931d35ca0cd3110943ae5d79f5aa6f7432027511b5"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_replay_tests.rs",
+      "bytes": 5638,
+      "sha256": "bc0d26ce9a5f9953b92f455d12d4770efa7bbbeff1ed5f5f0874843d02ae0d64"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/nls_initialize_leaf_tests.rs",
+      "bytes": 3693,
+      "sha256": "09bb66e314b2ed827c649125d7045a87fcd6ab8f5ee46b3d0cda8c90fba4ac25"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/nls_tests.rs",
+      "bytes": 18406,
+      "sha256": "a9700ab3c2f9cd51633631b25215b4747f08f5f86177ab1a293153762129708a"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/nls_leaf_tests.rs",
+      "bytes": 5667,
+      "sha256": "e6ea295e631ebbad4aeba1ee73fbd33850dca050f4864ca14111f6109a2c5786"
+    }
+  ],
+  "correction": "x86installedleafRET12 independentlyobserved;architecture-specific3vs4slots;strictnativeSPassertionunchanged;allruntimecodecompletebeforegates"
+}

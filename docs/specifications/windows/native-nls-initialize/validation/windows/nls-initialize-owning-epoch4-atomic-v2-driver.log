@@ -1,0 +1,9 @@
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+Verified 299 actual NLS owning source identities
+Verified9 actual frozen Windows C++ sources against current root
+assist-native-nls-initialize-epoch4-shipping.log BB786EA5FEBE737ACC3980FA3EE18CEBC43FD26612B0997783C5F6A8D08DBF9F
+assist-native-nls-initialize-epoch4-cpp.log B0F277678BC54485CF58C6295345A12235DF27C7D420C5085B93AB253E75E214
+validated rlib: C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-owned\debug\deps\librax-e6c413934cad3a8f.rlib

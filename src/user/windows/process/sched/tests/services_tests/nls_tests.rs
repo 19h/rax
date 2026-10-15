@@ -6,7 +6,7 @@ use crate::user::windows::nt::status::*;
 #[path = "nls_leaf_tests.rs"]
 mod installed;
 
-fn arguments(p: &mut Proc, t: &mut Thread, args: &[u64]) {
+pub(super) fn arguments(p: &mut Proc, t: &mut Thread, args: &[u64]) {
     let sp = t.cpu.sp();
     t.cpu.set_pc(0x1234_0004);
     match p.arch {
@@ -38,7 +38,7 @@ fn arguments(p: &mut Proc, t: &mut Thread, args: &[u64]) {
         }
     }
 }
-fn dispatch(p: &mut Proc, t: &mut Thread) -> Outcome {
+pub(super) fn dispatch(p: &mut Proc, t: &mut Thread) -> Outcome {
     if p.arch == WinArch::X86 {
         super::super::super::super::services::wow64(p, t, 0x1234_0000)
     } else {

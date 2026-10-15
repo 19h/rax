@@ -1,0 +1,92 @@
+{
+  "utc": "2026-10-15T22:08:12.569493+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "producers": [
+    {
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-leaf-arm64\\native-nls-initialize-leaf.cpp",
+        "bytes": 638,
+        "sha256": "ebe55cfcf126e95b7160818a3e76c21353f47fe306abd986272c1d3d729dd7df"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-leaf-arm64\\native-nls-initialize-leaf-arm64.exe",
+        "bytes": 143872,
+        "sha256": "374277bad6299682a5fe3ac43d2fd244268e8328e624b8fb05477be467c8bb72"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-leaf-arm64\\native-nls-initialize-leaf-arm64.log",
+        "bytes": 368,
+        "sha256": "62a3a198562af7224cb179ac33cf39f79f8d4cba72dcbd66a4e42d2c1a1e800f"
+      },
+      "machine": 43620,
+      "characteristics": 34
+    },
+    {
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-leaf-x64\\native-nls-initialize-leaf.cpp",
+        "bytes": 638,
+        "sha256": "ebe55cfcf126e95b7160818a3e76c21353f47fe306abd986272c1d3d729dd7df"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-leaf-x64\\native-nls-initialize-leaf-x64.exe",
+        "bytes": 141312,
+        "sha256": "18200401de5b7e05de1307fb1ef594af3dcc1b12c962e5b1a7cf1dc65ae6b061"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-leaf-x64\\native-nls-initialize-leaf-x64.log",
+        "bytes": 368,
+        "sha256": "479d0b4b1f7041010946606b3ac90ce601ae07bee7a061b3326aa7c67ebda561"
+      },
+      "machine": 34404,
+      "characteristics": 34
+    },
+    {
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-leaf-x86\\native-nls-initialize-leaf.cpp",
+        "bytes": 638,
+        "sha256": "ebe55cfcf126e95b7160818a3e76c21353f47fe306abd986272c1d3d729dd7df"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-leaf-x86\\native-nls-initialize-leaf-x86.exe",
+        "bytes": 117248,
+        "sha256": "46df78f7b00da6e61992b11b9037c2c61d2fd1fbc04a7b4b5a51a72b49d3d019"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-leaf-x86\\native-nls-initialize-leaf-x86.log",
+        "bytes": 368,
+        "sha256": "2d1d85f18ce343d61a4f37b57b2de55c8ba6c38ee8f83bf2d405ed345dda76fe"
+      },
+      "machine": 332,
+      "characteristics": 258
+    },
+    {
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-leaf-x86-laa\\native-nls-initialize-leaf.cpp",
+        "bytes": 638,
+        "sha256": "ebe55cfcf126e95b7160818a3e76c21353f47fe306abd986272c1d3d729dd7df"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-leaf-x86-laa\\native-nls-initialize-leaf-x86-laa.exe",
+        "bytes": 117248,
+        "sha256": "bce97cc441bf6549e7907e899c5029379883c5e985db7fcf7a9eaa40f0188ffb"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-leaf-x86-laa\\native-nls-initialize-leaf-x86-laa.log",
+        "bytes": 368,
+        "sha256": "2d1d85f18ce343d61a4f37b57b2de55c8ba6c38ee8f83bf2d405ed345dda76fe"
+      },
+      "machine": 332,
+      "characteristics": 290
+    }
+  ]
+}

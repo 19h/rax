@@ -1,0 +1,17 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.40s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/csr-connection-model-20261015/target-macos/debug/deps/rax-754f4d2a527a4423)
+
+running 10 tests
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::csr::native_secure_connect_csr_leaves_unmeasured_compatibility_abis_explicitly_unsupported ... ok
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::csr::native_secure_connect_csr_refuses_unmeasured_profiles_without_outputs_or_leaks ... ok
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::csr::native_secure_connect_csr_replies_with_owned_aliases_preserved_tail_and_native_fields ... ok
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::csr::native_secure_connect_csr_requires_exact_section_identity_and_bounds_server_leases ... ok
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::native_secure_connect_capture_bound_is_explicit_and_publishes_no_failure_handle ... ok
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::native_secure_connect_invalid_sid_translation_matches_installed_ntdll ... ok
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::native_secure_connect_namespace_presence_preserves_type_case_and_selection_boundaries ... ok
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::native_secure_connect_never_publishes_a_handle_for_unselected_or_present_servers ... ok
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::readonly::native_secure_connect_replays_all_44_readonly_probes_and_wow_copyback_rows ... ok
+test user::windows::process::sched::tests::services_tests::secure_connect_tests::replay::native_secure_connect_replays_352_measured_failures_and_exact_caller_buffers ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 7822 filtered out; finished in 0.42s
+

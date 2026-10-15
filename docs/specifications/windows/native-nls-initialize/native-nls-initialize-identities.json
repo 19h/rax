@@ -1,0 +1,101 @@
+{
+  "utc": "2026-10-15T21:44:16.222842+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "ntdll": {
+    "path": "C:\\Windows\\System32\\ntdll.dll",
+    "bytes": 4609312,
+    "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+  },
+  "producers": [
+    {
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-arm64\\native-nls-initialize.cpp",
+        "bytes": 7688,
+        "sha256": "b51a47f4bfaf3b322589ca56ec79f0fbd140c57faae18e3d11ad8aeec3d1394b"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-arm64\\native-nls-initialize-arm64.exe",
+        "bytes": 150016,
+        "sha256": "53778b61cb03b709c97e09e34fc93eeeae9ece024ede21a1f02096aef89386b2"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-arm64\\native-nls-initialize-arm64.log",
+        "bytes": 59993,
+        "sha256": "48c1433eab5cb8c6188c1c3ce8356bf65a44651bab9f370b606d04023e4fde05"
+      },
+      "machine": 43620,
+      "characteristics": 34,
+      "terminal": "complete cases=79 success=35 failed=44 seh=0 unmapped=34"
+    },
+    {
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-x64\\native-nls-initialize.cpp",
+        "bytes": 7688,
+        "sha256": "b51a47f4bfaf3b322589ca56ec79f0fbd140c57faae18e3d11ad8aeec3d1394b"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-x64\\native-nls-initialize-x64.exe",
+        "bytes": 147456,
+        "sha256": "e20aa17965435ca27ae6813c8381ca20f7483d675970d59eba0aa31db9cc0cf7"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-x64\\native-nls-initialize-x64.log",
+        "bytes": 59993,
+        "sha256": "9255aa9d88d45a0a36655dbc93542260b25c8bd08c6600297b5fdbaae7496ab8"
+      },
+      "machine": 34404,
+      "characteristics": 34,
+      "terminal": "complete cases=79 success=35 failed=44 seh=0 unmapped=34"
+    },
+    {
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-x86\\native-nls-initialize.cpp",
+        "bytes": 7688,
+        "sha256": "b51a47f4bfaf3b322589ca56ec79f0fbd140c57faae18e3d11ad8aeec3d1394b"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-x86\\native-nls-initialize-x86.exe",
+        "bytes": 122880,
+        "sha256": "a3c13e8bfde43b1af91d7b54eabe8e87e93d2f56c46aa8e2cfc6e7ff57dfe901"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-x86\\native-nls-initialize-x86.log",
+        "bytes": 59570,
+        "sha256": "a2d0467710f2745a75056ee54164329e2ab7ecccfb32ce02c7443b67a77d7dda"
+      },
+      "machine": 332,
+      "characteristics": 258,
+      "terminal": "complete cases=79 success=35 failed=44 seh=0 unmapped=35"
+    },
+    {
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-x86-laa\\native-nls-initialize.cpp",
+        "bytes": 7688,
+        "sha256": "b51a47f4bfaf3b322589ca56ec79f0fbd140c57faae18e3d11ad8aeec3d1394b"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-x86-laa\\native-nls-initialize-x86-laa.exe",
+        "bytes": 122880,
+        "sha256": "b676d758c2f9113d969d7bc9c92eaa1f5a371085d815bffe1c99cb19ad490ec1"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-x86-laa\\native-nls-initialize-x86-laa.log",
+        "bytes": 59570,
+        "sha256": "46ac74fbdb1faea49a2c7687c42bc66e6ad572ed1f6c8ce2f7ea2a2a08817614"
+      },
+      "machine": 332,
+      "characteristics": 290,
+      "terminal": "complete cases=79 success=35 failed=44 seh=0 unmapped=35"
+    }
+  ]
+}

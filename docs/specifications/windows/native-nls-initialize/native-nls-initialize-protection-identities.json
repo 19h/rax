@@ -1,0 +1,92 @@
+{
+  "utc": "2026-10-15T21:49:04.313248+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "producers": [
+    {
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-protection-arm64\\native-nls-initialize-protection.cpp",
+        "bytes": 2900,
+        "sha256": "d6f5106167585faa539beb4491405a52c57f9b5ff3b4583c8b5a54a8e93aa7c8"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-protection-arm64\\native-nls-initialize-protection-arm64.exe",
+        "bytes": 144384,
+        "sha256": "7ddff44337b5a57225d33b6eb288b0d53b1d4fd8217e66e9abd77b5d9b0c0bff"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-protection-arm64\\native-nls-initialize-protection-arm64.log",
+        "bytes": 2692,
+        "sha256": "675b6bfe0789127c75330c725b92dc6449786ce3a96147db547b219aea245d9b"
+      },
+      "machine": 43620,
+      "characteristics": 34
+    },
+    {
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-protection-x64\\native-nls-initialize-protection.cpp",
+        "bytes": 2900,
+        "sha256": "d6f5106167585faa539beb4491405a52c57f9b5ff3b4583c8b5a54a8e93aa7c8"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-protection-x64\\native-nls-initialize-protection-x64.exe",
+        "bytes": 141824,
+        "sha256": "3e0abe9672625d186b9c01754ef70cb7ef5f7f644f0b09ed8fcea245f6b2f887"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-protection-x64\\native-nls-initialize-protection-x64.log",
+        "bytes": 2692,
+        "sha256": "5fb0eab1b77289388ce02c2368d42ed38c25b2eefc3542107ef3872d42237108"
+      },
+      "machine": 34404,
+      "characteristics": 34
+    },
+    {
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-protection-x86\\native-nls-initialize-protection.cpp",
+        "bytes": 2900,
+        "sha256": "d6f5106167585faa539beb4491405a52c57f9b5ff3b4583c8b5a54a8e93aa7c8"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-protection-x86\\native-nls-initialize-protection-x86.exe",
+        "bytes": 118272,
+        "sha256": "316b1f0f8a95e7f58974e201c2a4b87960a7b5ec2d443ccb5301fc701fc57c42"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-protection-x86\\native-nls-initialize-protection-x86.log",
+        "bytes": 2500,
+        "sha256": "8198f10a009032cc637ff4e57b2130229ae279518a4c39087179d44ab096f47e"
+      },
+      "machine": 332,
+      "characteristics": 258
+    },
+    {
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-protection-x86-laa\\native-nls-initialize-protection.cpp",
+        "bytes": 2900,
+        "sha256": "d6f5106167585faa539beb4491405a52c57f9b5ff3b4583c8b5a54a8e93aa7c8"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-protection-x86-laa\\native-nls-initialize-protection-x86-laa.exe",
+        "bytes": 118272,
+        "sha256": "2ddd7a69d37db53dd4716e474fb62f2e4dd14e30d5b12addfc4574ef65bbef53"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\nls-initialize-protection-x86-laa\\native-nls-initialize-protection-x86-laa.log",
+        "bytes": 2500,
+        "sha256": "1d4395f96f3b7fb98212a57a3dadbe2c4c8199407c1bcf646b96cbcc38d0acb4"
+      },
+      "machine": 332,
+      "characteristics": 290
+    }
+  ]
+}

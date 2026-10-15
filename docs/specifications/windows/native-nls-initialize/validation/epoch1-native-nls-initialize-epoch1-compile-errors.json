@@ -1,0 +1,2523 @@
+[
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///C:/Windows/Temp/assist-native-rax-20261010/src#rax@0.1.0",
+    "manifest_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "rax",
+      "src_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\src\\lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "message": {
+      "rendered": "error[E0425]: cannot find function `capture` in module `initialize`\n   --> src\\user\\windows\\nls\\installed.rs:116:43\n    |\n116 |         let (locale, bytes) = initialize::capture()?;\n    |                                           ^^^^^^^ not found in `initialize`\n    |\nnote: these functions exist but are inaccessible\n   --> src\\user\\windows\\dll\\crt\\stdio\\storage.rs:261:1\n    |\n261 | / fn capture(\n262 | |     p: &Proc,\n263 | |     fd: i32,\n264 | |     handle: u64,\n...   |\n304 | |     })\n305 | | }\n    | |_^ `crate::user::windows::dll::crt::stdio::storage::capture`: not accessible\n    |\n   ::: src\\user\\windows\\dll\\native\\apphelp.rs:25:1\n    |\n 25 |   fn capture(c: &mut Ctx) -> ApiResult {\n    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `crate::user::windows::dll::native::apphelp::capture`: not accessible\n    |\n   ::: src\\user\\windows\\dll\\native\\directory.rs:90:1\n    |\n 90 |   fn capture(c: &mut Ctx, address: u64, wow: bool, kind: Kind) -> Checked<Option<Attributes>> {\n    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `crate::user::windows::dll::native::directory::capture`: not accessible\n    |\n   ::: src\\user\\windows\\dll\\native\\object_create.rs:23:1\n    |\n 23 | / pub(super) fn capture(\n 24 | |     c: &Ctx,\n 25 | |     address: u64,\n 26 | |     kind: &str,\n...   |\n 62 | |     Ok(Ok(attrs))\n 63 | | }\n    | |_^ `crate::user::windows::dll::native::object_create::capture`: not accessible\n    |\n   ::: src\\user\\windows\\dll\\native\\secure_connect.rs:28:1\n    |\n 28 |   fn capture(c: &mut Ctx) -> Result<Capture, ApiErr> {\n    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `crate::user::windows::dll::native::secure_connect::capture`: not accessible\n    |\n   ::: src\\user\\windows\\object_namespace\\installed\\csr.rs:13:1\n    |\n 13 |   pub(super) fn capture(regions: &[DataRegion]) -> io::Result<Option<CsrMetadata>> {\n    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `crate::user::windows::object_namespace::installed::csr::capture`: not accessible\n    |\n   ::: src\\user\\windows\\object_namespace\\installed\\data.rs:157:1\n    |\n157 | / pub(super) fn capture() -> io::Result<(\n158 | |     Arc<DataSection>,\n159 | |     Option<crate::user::windows::object_namespace::csr::CsrMetadata>,\n160 | | )> {\n...   |\n260 | |     Ok((selected, metadata))\n261 | | }\n    | |_^ `crate::user::windows::object_namespace::installed::data::capture`: not accessible\n    |\n   ::: src\\user\\windows\\object_namespace\\installed\\section.rs:121:1\n    |\n121 | / pub(super) fn capture(\n122 | |     parent: &[u16],\n123 | |     name: &[u16],\n124 | | ) -> io::Result<(CapturedSection, Arc<super::image::Source>)> {\n...   |\n207 | |     ))\n208 | | }\n    | |_^ `crate::user::windows::object_namespace::installed::section::capture`: not accessible\n    |\n   ::: src\\user\\windows\\registry\\installed.rs:164:1\n    |\n164 |   fn capture(path: &'static str) -> io::Result<SelectedKey> {\n    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `crate::user::windows::registry::installed::capture`: not accessible\n    |\n   ::: src\\user\\windows\\registry\\installed\\tree.rs:10:1\n    |\n 10 |   pub(super) fn capture(registry: &Registry) -> io::Result<Option<IfeoTree>> {\n    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `crate::user::windows::registry::installed::tree::capture`: not accessible\n    |\n   ::: src\\user\\windows\\wnf\\installed.rs:111:1\n    |\n111 |   fn capture(token: &Token) -> io::Result<Subject> {\n    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `crate::user::windows::wnf::installed::capture`: not accessible\n\n",
+      "$message_type": "diagnostic",
+      "children": [
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "these functions exist but are inaccessible",
+          "rendered": null,
+          "spans": [
+            {
+              "byte_end": 9229,
+              "byte_start": 7947,
+              "column_end": 2,
+              "column_start": 1,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\dll\\crt\\stdio\\storage.rs",
+              "is_primary": true,
+              "label": "`crate::user::windows::dll::crt::stdio::storage::capture`: not accessible",
+              "line_end": 305,
+              "line_start": 261,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 12,
+                  "highlight_start": 1,
+                  "text": "fn capture("
+                },
+                {
+                  "highlight_end": 14,
+                  "highlight_start": 1,
+                  "text": "    p: &Proc,"
+                },
+                {
+                  "highlight_end": 13,
+                  "highlight_start": 1,
+                  "text": "    fd: i32,"
+                },
+                {
+                  "highlight_end": 17,
+                  "highlight_start": 1,
+                  "text": "    handle: u64,"
+                },
+                {
+                  "highlight_end": 16,
+                  "highlight_start": 1,
+                  "text": "    flags: i32,"
+                },
+                {
+                  "highlight_end": 21,
+                  "highlight_start": 1,
+                  "text": "    generation: u64,"
+                },
+                {
+                  "highlight_end": 38,
+                  "highlight_start": 1,
+                  "text": ") -> Result<Descriptor, StdioError> {"
+                },
+                {
+                  "highlight_end": 55,
+                  "highlight_start": 1,
+                  "text": "    if handle == 0 || handle == p.arch.ptr(u64::MAX) {"
+                },
+                {
+                  "highlight_end": 41,
+                  "highlight_start": 1,
+                  "text": "        return Err(StdioError::Invalid);"
+                },
+                {
+                  "highlight_end": 6,
+                  "highlight_start": 1,
+                  "text": "    }"
+                },
+                {
+                  "highlight_end": 38,
+                  "highlight_start": 1,
+                  "text": "    address(p, handle, 0, 1, false)?;"
+                },
+                {
+                  "highlight_end": 63,
+                  "highlight_start": 1,
+                  "text": "    let id = p.objects.id(handle).ok_or(StdioError::Invalid)?;"
+                },
+                {
+                  "highlight_end": 51,
+                  "highlight_start": 1,
+                  "text": "    if !p.objects.obj(id).is_some_and(file_kind) {"
+                },
+                {
+                  "highlight_end": 41,
+                  "highlight_start": 1,
+                  "text": "        return Err(StdioError::Invalid);"
+                },
+                {
+                  "highlight_end": 6,
+                  "highlight_start": 1,
+                  "text": "    }"
+                },
+                {
+                  "highlight_end": 28,
+                  "highlight_start": 1,
+                  "text": "    let access = flags & 3;"
+                },
+                {
+                  "highlight_end": 19,
+                  "highlight_start": 1,
+                  "text": "    if access == 3"
+                },
+                {
+                  "highlight_end": 100,
+                  "highlight_start": 1,
+                  "text": "        || flags & !(3 | O_APPEND | O_TEXT | O_BINARY | O_WTEXT | O_U16TEXT | O_U8TEXT | 0x80) != 0"
+                },
+                {
+                  "highlight_end": 6,
+                  "highlight_start": 1,
+                  "text": "    {"
+                },
+                {
+                  "highlight_end": 41,
+                  "highlight_start": 1,
+                  "text": "        return Err(StdioError::Invalid);"
+                },
+                {
+                  "highlight_end": 6,
+                  "highlight_start": 1,
+                  "text": "    }"
+                },
+                {
+                  "highlight_end": 84,
+                  "highlight_start": 1,
+                  "text": "    let translation = flags & (O_TEXT | O_BINARY | O_WTEXT | O_U16TEXT | O_U8TEXT);"
+                },
+                {
+                  "highlight_end": 38,
+                  "highlight_start": 1,
+                  "text": "    if translation.count_ones() > 1 {"
+                },
+                {
+                  "highlight_end": 41,
+                  "highlight_start": 1,
+                  "text": "        return Err(StdioError::Invalid);"
+                },
+                {
+                  "highlight_end": 6,
+                  "highlight_start": 1,
+                  "text": "    }"
+                },
+                {
+                  "highlight_end": 20,
+                  "highlight_start": 1,
+                  "text": "    Ok(Descriptor {"
+                },
+                {
+                  "highlight_end": 12,
+                  "highlight_start": 1,
+                  "text": "        fd,"
+                },
+                {
+                  "highlight_end": 20,
+                  "highlight_start": 1,
+                  "text": "        generation,"
+                },
+                {
+                  "highlight_end": 21,
+                  "highlight_start": 1,
+                  "text": "        revision: 0,"
+                },
+                {
+                  "highlight_end": 16,
+                  "highlight_start": 1,
+                  "text": "        handle,"
+                },
+                {
+                  "highlight_end": 26,
+                  "highlight_start": 1,
+                  "text": "        object: Some(id),"
+                },
+                {
+                  "highlight_end": 69,
+                  "highlight_start": 1,
+                  "text": "        grant: p.objects.access(handle).ok_or(StdioError::Invalid)?,"
+                },
+                {
+                  "highlight_end": 31,
+                  "highlight_start": 1,
+                  "text": "        readable: access != 1,"
+                },
+                {
+                  "highlight_end": 31,
+                  "highlight_start": 1,
+                  "text": "        writable: access != 0,"
+                },
+                {
+                  "highlight_end": 39,
+                  "highlight_start": 1,
+                  "text": "        append: flags & O_APPEND != 0,"
+                },
+                {
+                  "highlight_end": 43,
+                  "highlight_start": 1,
+                  "text": "        translation: if translation == 0 {"
+                },
+                {
+                  "highlight_end": 21,
+                  "highlight_start": 1,
+                  "text": "            O_BINARY"
+                },
+                {
+                  "highlight_end": 17,
+                  "highlight_start": 1,
+                  "text": "        } else {"
+                },
+                {
+                  "highlight_end": 24,
+                  "highlight_start": 1,
+                  "text": "            translation"
+                },
+                {
+                  "highlight_end": 11,
+                  "highlight_start": 1,
+                  "text": "        },"
+                },
+                {
+                  "highlight_end": 22,
+                  "highlight_start": 1,
+                  "text": "        stream: None,"
+                },
+                {
+                  "highlight_end": 25,
+                  "highlight_start": 1,
+                  "text": "        text_eof: false,"
+                },
+                {
+                  "highlight_end": 25,
+                  "highlight_start": 1,
+                  "text": "        lookahead: None,"
+                },
+                {
+                  "highlight_end": 7,
+                  "highlight_start": 1,
+                  "text": "    })"
+                },
+                {
+                  "highlight_end": 2,
+                  "highlight_start": 1,
+                  "text": "}"
+                }
+              ]
+            },
+            {
+              "byte_end": 791,
+              "byte_start": 755,
+              "column_end": 37,
+              "column_start": 1,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\dll\\native\\apphelp.rs",
+              "is_primary": true,
+              "label": "`crate::user::windows::dll::native::apphelp::capture`: not accessible",
+              "line_end": 25,
+              "line_start": 25,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 37,
+                  "highlight_start": 1,
+                  "text": "fn capture(c: &mut Ctx) -> ApiResult {"
+                }
+              ]
+            },
+            {
+              "byte_end": 2444,
+              "byte_start": 2353,
+              "column_end": 92,
+              "column_start": 1,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\dll\\native\\directory.rs",
+              "is_primary": true,
+              "label": "`crate::user::windows::dll::native::directory::capture`: not accessible",
+              "line_end": 90,
+              "line_start": 90,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 92,
+                  "highlight_start": 1,
+                  "text": "fn capture(c: &mut Ctx, address: u64, wow: bool, kind: Kind) -> Checked<Option<Attributes>> {"
+                }
+              ]
+            },
+            {
+              "byte_end": 2176,
+              "byte_start": 806,
+              "column_end": 2,
+              "column_start": 1,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\dll\\native\\object_create.rs",
+              "is_primary": true,
+              "label": "`crate::user::windows::dll::native::object_create::capture`: not accessible",
+              "line_end": 63,
+              "line_start": 23,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 23,
+                  "highlight_start": 1,
+                  "text": "pub(super) fn capture("
+                },
+                {
+                  "highlight_end": 13,
+                  "highlight_start": 1,
+                  "text": "    c: &Ctx,"
+                },
+                {
+                  "highlight_end": 18,
+                  "highlight_start": 1,
+                  "text": "    address: u64,"
+                },
+                {
+                  "highlight_end": 16,
+                  "highlight_start": 1,
+                  "text": "    kind: &str,"
+                },
+                {
+                  "highlight_end": 47,
+                  "highlight_start": 1,
+                  "text": ") -> Result<Result<Attributes, u32>, ApiErr> {"
+                },
+                {
+                  "highlight_end": 22,
+                  "highlight_start": 1,
+                  "text": "    if address == 0 {"
+                },
+                {
+                  "highlight_end": 46,
+                  "highlight_start": 1,
+                  "text": "        return Ok(Ok(Attributes::default()));"
+                },
+                {
+                  "highlight_end": 6,
+                  "highlight_start": 1,
+                  "text": "    }"
+                },
+                {
+                  "highlight_end": 40,
+                  "highlight_start": 1,
+                  "text": "    let wow = c.arch() == WinArch::X86;"
+                },
+                {
+                  "highlight_end": 42,
+                  "highlight_start": 1,
+                  "text": "    let size = if wow { 24 } else { 48 };"
+                },
+                {
+                  "highlight_end": 34,
+                  "highlight_start": 1,
+                  "text": "    if !wow && address % 8 != 0 {"
+                },
+                {
+                  "highlight_end": 54,
+                  "highlight_start": 1,
+                  "text": "        return Ok(Err(STATUS_DATATYPE_MISALIGNMENT));"
+                },
+                {
+                  "highlight_end": 6,
+                  "highlight_start": 1,
+                  "text": "    }"
+                },
+                {
+                  "highlight_end": 53,
+                  "highlight_start": 1,
+                  "text": "    if wow && c.mem().u32(address)? != size as u32 {"
+                },
+                {
+                  "highlight_end": 50,
+                  "highlight_start": 1,
+                  "text": "        return Ok(Err(STATUS_INVALID_PARAMETER));"
+                },
+                {
+                  "highlight_end": 6,
+                  "highlight_start": 1,
+                  "text": "    }"
+                },
+                {
+                  "highlight_end": 12,
+                  "highlight_start": 1,
+                  "text": "    c.mem()"
+                },
+                {
+                  "highlight_end": 54,
+                  "highlight_start": 1,
+                  "text": "        .probe(address, size, MemoryAccessKind::Read)"
+                },
+                {
+                  "highlight_end": 36,
+                  "highlight_start": 1,
+                  "text": "        .map_err(|fault| MemFault {"
+                },
+                {
+                  "highlight_end": 33,
+                  "highlight_start": 1,
+                  "text": "            addr: fault.address,"
+                },
+                {
+                  "highlight_end": 26,
+                  "highlight_start": 1,
+                  "text": "            write: false,"
+                },
+                {
+                  "highlight_end": 13,
+                  "highlight_start": 1,
+                  "text": "        })?;"
+                },
+                {
+                  "highlight_end": 46,
+                  "highlight_start": 1,
+                  "text": "    if c.mem().u32(address)? != size as u32 {"
+                },
+                {
+                  "highlight_end": 50,
+                  "highlight_start": 1,
+                  "text": "        return Ok(Err(STATUS_INVALID_PARAMETER));"
+                },
+                {
+                  "highlight_end": 6,
+                  "highlight_start": 1,
+                  "text": "    }"
+                },
+                {
+                  "highlight_end": 25,
+                  "highlight_start": 1,
+                  "text": "    let ptr = c.psize();"
+                },
+                {
+                  "highlight_end": 40,
+                  "highlight_start": 1,
+                  "text": "    let root = if wow { 4 } else { 8 };"
+                },
+                {
+                  "highlight_end": 29,
+                  "highlight_start": 1,
+                  "text": "    let attrs = Attributes {"
+                },
+                {
+                  "highlight_end": 43,
+                  "highlight_start": 1,
+                  "text": "        root: c.read_ptr(address + root)?,"
+                },
+                {
+                  "highlight_end": 49,
+                  "highlight_start": 1,
+                  "text": "        name: c.read_ptr(address + root + ptr)?,"
+                },
+                {
+                  "highlight_end": 55,
+                  "highlight_start": 1,
+                  "text": "        flags: c.mem().u32(address + root + ptr * 2)?,"
+                },
+                {
+                  "highlight_end": 68,
+                  "highlight_start": 1,
+                  "text": "        security: c.read_ptr(address + if wow { 16 } else { 32 })?,"
+                },
+                {
+                  "highlight_end": 63,
+                  "highlight_start": 1,
+                  "text": "        qos: c.read_ptr(address + if wow { 20 } else { 40 })?,"
+                },
+                {
+                  "highlight_end": 7,
+                  "highlight_start": 1,
+                  "text": "    };"
+                },
+                {
+                  "highlight_end": 76,
+                  "highlight_start": 1,
+                  "text": "    // Conversion of named/security structures needs its own object-manager"
+                },
+                {
+                  "highlight_end": 77,
+                  "highlight_start": 1,
+                  "text": "    // contract. Never interpret an NT directory name as a Win32 Local name."
+                },
+                {
+                  "highlight_end": 13,
+                  "highlight_start": 1,
+                  "text": "    if wow {"
+                },
+                {
+                  "highlight_end": 48,
+                  "highlight_start": 1,
+                  "text": "        supported_attributes(c, &attrs, kind)?;"
+                },
+                {
+                  "highlight_end": 6,
+                  "highlight_start": 1,
+                  "text": "    }"
+                },
+                {
+                  "highlight_end": 18,
+                  "highlight_start": 1,
+                  "text": "    Ok(Ok(attrs))"
+                },
+                {
+                  "highlight_end": 2,
+                  "highlight_start": 1,
+                  "text": "}"
+                }
+              ]
+            },
+            {
+              "byte_end": 878,
+              "byte_start": 828,
+              "column_end": 51,
+              "column_start": 1,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\dll\\native\\secure_connect.rs",
+              "is_primary": true,
+              "label": "`crate::user::windows::dll::native::secure_connect::capture`: not accessible",
+              "line_end": 28,
+              "line_start": 28,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 51,
+                  "highlight_start": 1,
+                  "text": "fn capture(c: &mut Ctx) -> Result<Capture, ApiErr> {"
+                }
+              ]
+            },
+            {
+              "byte_end": 541,
+              "byte_start": 461,
+              "column_end": 81,
+              "column_start": 1,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\object_namespace\\installed\\csr.rs",
+              "is_primary": true,
+              "label": "`crate::user::windows::object_namespace::installed::csr::capture`: not accessible",
+              "line_end": 13,
+              "line_start": 13,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 81,
+                  "highlight_start": 1,
+                  "text": "pub(super) fn capture(regions: &[DataRegion]) -> io::Result<Option<CsrMetadata>> {"
+                }
+              ]
+            },
+            {
+              "byte_end": 8825,
+              "byte_start": 5173,
+              "column_end": 2,
+              "column_start": 1,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\object_namespace\\installed\\data.rs",
+              "is_primary": true,
+              "label": "`crate::user::windows::object_namespace::installed::data::capture`: not accessible",
+              "line_end": 261,
+              "line_start": 157,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 40,
+                  "highlight_start": 1,
+                  "text": "pub(super) fn capture() -> io::Result<("
+                },
+                {
+                  "highlight_end": 22,
+                  "highlight_start": 1,
+                  "text": "    Arc<DataSection>,"
+                },
+                {
+                  "highlight_end": 70,
+                  "highlight_start": 1,
+                  "text": "    Option<crate::user::windows::object_namespace::csr::CsrMetadata>,"
+                },
+                {
+                  "highlight_end": 5,
+                  "highlight_start": 1,
+                  "text": ")> {"
+                },
+                {
+                  "highlight_end": 76,
+                  "highlight_start": 1,
+                  "text": "    let path: Vec<_> = \"\\\\Windows\\\\SharedSection\".encode_utf16().collect();"
+                },
+                {
+                  "highlight_end": 66,
+                  "highlight_start": 1,
+                  "text": "    let handle = section::open_section(&path, 0x0200_0000, 0x40)?"
+                },
+                {
+                  "highlight_end": 89,
+                  "highlight_start": 1,
+                  "text": "        .map_err(|status| invalid(&format!(\"open selected CSR data: {status:#010x}\")))?;"
+                },
+                {
+                  "highlight_end": 42,
+                  "highlight_start": 1,
+                  "text": "    let maximum_access = basic(&handle)?;"
+                },
+                {
+                  "highlight_end": 76,
+                  "highlight_start": 1,
+                  "text": "    let security = match section::open_section(&path, 0x0100_0000, 0x40)? {"
+                },
+                {
+                  "highlight_end": 26,
+                  "highlight_start": 1,
+                  "text": "        Ok(security) => {"
+                },
+                {
+                  "highlight_end": 50,
+                  "highlight_start": 1,
+                  "text": "            if basic(&security)? != 0x0100_0000 {"
+                },
+                {
+                  "highlight_end": 76,
+                  "highlight_start": 1,
+                  "text": "                return Err(invalid(\"selected CSR security grant differs\"));"
+                },
+                {
+                  "highlight_end": 14,
+                  "highlight_start": 1,
+                  "text": "            }"
+                },
+                {
+                  "highlight_end": 31,
+                  "highlight_start": 1,
+                  "text": "            security.close()?;"
+                },
+                {
+                  "highlight_end": 14,
+                  "highlight_start": 1,
+                  "text": "            0"
+                },
+                {
+                  "highlight_end": 10,
+                  "highlight_start": 1,
+                  "text": "        }"
+                },
+                {
+                  "highlight_end": 84,
+                  "highlight_start": 1,
+                  "text": "        Err(status @ (STATUS_ACCESS_DENIED | STATUS_PRIVILEGE_NOT_HELD)) => status,"
+                },
+                {
+                  "highlight_end": 25,
+                  "highlight_start": 1,
+                  "text": "        Err(status) => {"
+                },
+                {
+                  "highlight_end": 41,
+                  "highlight_start": 1,
+                  "text": "            return Err(invalid(&format!("
+                },
+                {
+                  "highlight_end": 63,
+                  "highlight_start": 1,
+                  "text": "                \"selected CSR security status: {status:#010x}\""
+                },
+                {
+                  "highlight_end": 17,
+                  "highlight_start": 1,
+                  "text": "            )));"
+                },
+                {
+                  "highlight_end": 10,
+                  "highlight_start": 1,
+                  "text": "        }"
+                },
+                {
+                  "highlight_end": 7,
+                  "highlight_start": 1,
+                  "text": "    };"
+                },
+                {
+                  "highlight_end": 31,
+                  "highlight_start": 1,
+                  "text": "    let altered: Vec<_> = path"
+                },
+                {
+                  "highlight_end": 16,
+                  "highlight_start": 1,
+                  "text": "        .iter()"
+                },
+                {
+                  "highlight_end": 34,
+                  "highlight_start": 1,
+                  "text": "        .map(|&unit| match unit {"
+                },
+                {
+                  "highlight_end": 34,
+                  "highlight_start": 1,
+                  "text": "            65..=90 => unit + 32,"
+                },
+                {
+                  "highlight_end": 35,
+                  "highlight_start": 1,
+                  "text": "            97..=122 => unit - 32,"
+                },
+                {
+                  "highlight_end": 23,
+                  "highlight_start": 1,
+                  "text": "            _ => unit,"
+                },
+                {
+                  "highlight_end": 11,
+                  "highlight_start": 1,
+                  "text": "        })"
+                },
+                {
+                  "highlight_end": 20,
+                  "highlight_start": 1,
+                  "text": "        .collect();"
+                },
+                {
+                  "highlight_end": 90,
+                  "highlight_start": 1,
+                  "text": "    let explicit = section::open_section(&altered, 0x0200_0000, 0x40)?.map_err(|status| {"
+                },
+                {
+                  "highlight_end": 26,
+                  "highlight_start": 1,
+                  "text": "        invalid(&format!("
+                },
+                {
+                  "highlight_end": 64,
+                  "highlight_start": 1,
+                  "text": "            \"selected CSR explicit case status: {status:#010x}\""
+                },
+                {
+                  "highlight_end": 11,
+                  "highlight_start": 1,
+                  "text": "        ))"
+                },
+                {
+                  "highlight_end": 9,
+                  "highlight_start": 1,
+                  "text": "    })?;"
+                },
+                {
+                  "highlight_end": 45,
+                  "highlight_start": 1,
+                  "text": "    if basic(&explicit)? != maximum_access {"
+                },
+                {
+                  "highlight_end": 66,
+                  "highlight_start": 1,
+                  "text": "        return Err(invalid(\"selected CSR folded grant differs\"));"
+                },
+                {
+                  "highlight_end": 6,
+                  "highlight_start": 1,
+                  "text": "    }"
+                },
+                {
+                  "highlight_end": 23,
+                  "highlight_start": 1,
+                  "text": "    explicit.close()?;"
+                },
+                {
+                  "highlight_end": 90,
+                  "highlight_start": 1,
+                  "text": "    let force_case_insensitive = match section::open_section(&altered, 0x0200_0000, 0)? {"
+                },
+                {
+                  "highlight_end": 24,
+                  "highlight_start": 1,
+                  "text": "        Ok(folded) => {"
+                },
+                {
+                  "highlight_end": 51,
+                  "highlight_start": 1,
+                  "text": "            if basic(&folded)? != maximum_access {"
+                },
+                {
+                  "highlight_end": 72,
+                  "highlight_start": 1,
+                  "text": "                return Err(invalid(\"selected CSR case grant differs\"));"
+                },
+                {
+                  "highlight_end": 14,
+                  "highlight_start": 1,
+                  "text": "            }"
+                },
+                {
+                  "highlight_end": 29,
+                  "highlight_start": 1,
+                  "text": "            folded.close()?;"
+                },
+                {
+                  "highlight_end": 17,
+                  "highlight_start": 1,
+                  "text": "            true"
+                },
+                {
+                  "highlight_end": 10,
+                  "highlight_start": 1,
+                  "text": "        }"
+                },
+                {
+                  "highlight_end": 83,
+                  "highlight_start": 1,
+                  "text": "        Err(STATUS_OBJECT_NAME_NOT_FOUND | STATUS_OBJECT_PATH_NOT_FOUND) => false,"
+                },
+                {
+                  "highlight_end": 25,
+                  "highlight_start": 1,
+                  "text": "        Err(status) => {"
+                },
+                {
+                  "highlight_end": 41,
+                  "highlight_start": 1,
+                  "text": "            return Err(invalid(&format!("
+                },
+                {
+                  "highlight_end": 59,
+                  "highlight_start": 1,
+                  "text": "                \"selected CSR case status: {status:#010x}\""
+                },
+                {
+                  "highlight_end": 17,
+                  "highlight_start": 1,
+                  "text": "            )));"
+                },
+                {
+                  "highlight_end": 10,
+                  "highlight_start": 1,
+                  "text": "        }"
+                },
+                {
+                  "highlight_end": 7,
+                  "highlight_start": 1,
+                  "text": "    };"
+                },
+                {
+                  "highlight_end": 56,
+                  "highlight_start": 1,
+                  "text": "    let (mut address, mut size) = (null_mut(), 0usize);"
+                },
+                {
+                  "highlight_end": 77,
+                  "highlight_start": 1,
+                  "text": "    // SAFETY: fixed successfully owned host section; current-process pseudo"
+                },
+                {
+                  "highlight_end": 79,
+                  "highlight_start": 1,
+                  "text": "    // handle, exclusive native address/SIZE_T outputs, no guest inputs, and a"
+                },
+                {
+                  "highlight_end": 84,
+                  "highlight_start": 1,
+                  "text": "    // read-only view with zero commitment request. No installed bytes are written."
+                },
+                {
+                  "highlight_end": 11,
+                  "highlight_start": 1,
+                  "text": "    check("
+                },
+                {
+                  "highlight_end": 17,
+                  "highlight_start": 1,
+                  "text": "        unsafe {"
+                },
+                {
+                  "highlight_end": 32,
+                  "highlight_start": 1,
+                  "text": "            NtMapViewOfSection("
+                },
+                {
+                  "highlight_end": 26,
+                  "highlight_start": 1,
+                  "text": "                handle.0,"
+                },
+                {
+                  "highlight_end": 37,
+                  "highlight_start": 1,
+                  "text": "                (-1isize) as Handle,"
+                },
+                {
+                  "highlight_end": 30,
+                  "highlight_start": 1,
+                  "text": "                &mut address,"
+                },
+                {
+                  "highlight_end": 19,
+                  "highlight_start": 1,
+                  "text": "                0,"
+                },
+                {
+                  "highlight_end": 19,
+                  "highlight_start": 1,
+                  "text": "                0,"
+                },
+                {
+                  "highlight_end": 28,
+                  "highlight_start": 1,
+                  "text": "                null_mut(),"
+                },
+                {
+                  "highlight_end": 27,
+                  "highlight_start": 1,
+                  "text": "                &mut size,"
+                },
+                {
+                  "highlight_end": 19,
+                  "highlight_start": 1,
+                  "text": "                2,"
+                },
+                {
+                  "highlight_end": 19,
+                  "highlight_start": 1,
+                  "text": "                0,"
+                },
+                {
+                  "highlight_end": 32,
+                  "highlight_start": 1,
+                  "text": "                prot::READONLY,"
+                },
+                {
+                  "highlight_end": 14,
+                  "highlight_start": 1,
+                  "text": "            )"
+                },
+                {
+                  "highlight_end": 11,
+                  "highlight_start": 1,
+                  "text": "        },"
+                },
+                {
+                  "highlight_end": 37,
+                  "highlight_start": 1,
+                  "text": "        \"map selected CSR snapshot\","
+                },
+                {
+                  "highlight_end": 8,
+                  "highlight_start": 1,
+                  "text": "    )?;"
+                },
+                {
+                  "highlight_end": 30,
+                  "highlight_start": 1,
+                  "text": "    let view = View(address);"
+                },
+                {
+                  "highlight_end": 86,
+                  "highlight_start": 1,
+                  "text": "    if address.is_null() || size == 0 || size as u64 > MAX_SIZE || size % 4096 != 0 {"
+                },
+                {
+                  "highlight_end": 71,
+                  "highlight_start": 1,
+                  "text": "        return Err(invalid(\"selected CSR native map exceeds bounds\"));"
+                },
+                {
+                  "highlight_end": 6,
+                  "highlight_start": 1,
+                  "text": "    }"
+                },
+                {
+                  "highlight_end": 29,
+                  "highlight_start": 1,
+                  "text": "    let mut captured = None;"
+                },
+                {
+                  "highlight_end": 20,
+                  "highlight_start": 1,
+                  "text": "    for _ in 0..3 {"
+                },
+                {
+                  "highlight_end": 43,
+                  "highlight_start": 1,
+                  "text": "        let first = regions(&view, size)?;"
+                },
+                {
+                  "highlight_end": 44,
+                  "highlight_start": 1,
+                  "text": "        if first == regions(&view, size)? {"
+                },
+                {
+                  "highlight_end": 36,
+                  "highlight_start": 1,
+                  "text": "            captured = Some(first);"
+                },
+                {
+                  "highlight_end": 19,
+                  "highlight_start": 1,
+                  "text": "            break;"
+                },
+                {
+                  "highlight_end": 10,
+                  "highlight_start": 1,
+                  "text": "        }"
+                },
+                {
+                  "highlight_end": 6,
+                  "highlight_start": 1,
+                  "text": "    }"
+                },
+                {
+                  "highlight_end": 19,
+                  "highlight_start": 1,
+                  "text": "    let captured ="
+                },
+                {
+                  "highlight_end": 95,
+                  "highlight_start": 1,
+                  "text": "        captured.ok_or_else(|| invalid(\"selected CSR data changed during bounded snapshot\"))?;"
+                },
+                {
+                  "highlight_end": 52,
+                  "highlight_start": 1,
+                  "text": "    let metadata = super::csr::capture(&captured)?;"
+                },
+                {
+                  "highlight_end": 43,
+                  "highlight_start": 1,
+                  "text": "    if basic(&handle)? != maximum_access {"
+                },
+                {
+                  "highlight_end": 75,
+                  "highlight_start": 1,
+                  "text": "        return Err(invalid(\"selected CSR grant changed during snapshot\"));"
+                },
+                {
+                  "highlight_end": 6,
+                  "highlight_start": 1,
+                  "text": "    }"
+                },
+                {
+                  "highlight_end": 42,
+                  "highlight_start": 1,
+                  "text": "    let selected = DataSection::selected("
+                },
+                {
+                  "highlight_end": 24,
+                  "highlight_start": 1,
+                  "text": "        maximum_access,"
+                },
+                {
+                  "highlight_end": 18,
+                  "highlight_start": 1,
+                  "text": "        security,"
+                },
+                {
+                  "highlight_end": 32,
+                  "highlight_start": 1,
+                  "text": "        force_case_insensitive,"
+                },
+                {
+                  "highlight_end": 21,
+                  "highlight_start": 1,
+                  "text": "        size as u64,"
+                },
+                {
+                  "highlight_end": 18,
+                  "highlight_start": 1,
+                  "text": "        captured,"
+                },
+                {
+                  "highlight_end": 8,
+                  "highlight_start": 1,
+                  "text": "    )?;"
+                },
+                {
+                  "highlight_end": 19,
+                  "highlight_start": 1,
+                  "text": "    view.close()?;"
+                },
+                {
+                  "highlight_end": 21,
+                  "highlight_start": 1,
+                  "text": "    handle.close()?;"
+                },
+                {
+                  "highlight_end": 29,
+                  "highlight_start": 1,
+                  "text": "    Ok((selected, metadata))"
+                },
+                {
+                  "highlight_end": 2,
+                  "highlight_start": 1,
+                  "text": "}"
+                }
+              ]
+            },
+            {
+              "byte_end": 7333,
+              "byte_start": 4365,
+              "column_end": 2,
+              "column_start": 1,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\object_namespace\\installed\\section.rs",
+              "is_primary": true,
+              "label": "`crate::user::windows::object_namespace::installed::section::capture`: not accessible",
+              "line_end": 208,
+              "line_start": 121,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 23,
+                  "highlight_start": 1,
+                  "text": "pub(super) fn capture("
+                },
+                {
+                  "highlight_end": 20,
+                  "highlight_start": 1,
+                  "text": "    parent: &[u16],"
+                },
+                {
+                  "highlight_end": 18,
+                  "highlight_start": 1,
+                  "text": "    name: &[u16],"
+                },
+                {
+                  "highlight_end": 64,
+                  "highlight_start": 1,
+                  "text": ") -> io::Result<(CapturedSection, Arc<super::image::Source>)> {"
+                },
+                {
+                  "highlight_end": 30,
+                  "highlight_start": 1,
+                  "text": "    let path: Vec<_> = parent"
+                },
+                {
+                  "highlight_end": 16,
+                  "highlight_start": 1,
+                  "text": "        .iter()"
+                },
+                {
+                  "highlight_end": 18,
+                  "highlight_start": 1,
+                  "text": "        .copied()"
+                },
+                {
+                  "highlight_end": 21,
+                  "highlight_start": 1,
+                  "text": "        .chain([92])"
+                },
+                {
+                  "highlight_end": 37,
+                  "highlight_start": 1,
+                  "text": "        .chain(name.iter().copied())"
+                },
+                {
+                  "highlight_end": 20,
+                  "highlight_start": 1,
+                  "text": "        .collect();"
+                },
+                {
+                  "highlight_end": 52,
+                  "highlight_start": 1,
+                  "text": "    let h = open_section(&path, 0x0200_0000, 0x40)?"
+                },
+                {
+                  "highlight_end": 88,
+                  "highlight_start": 1,
+                  "text": "        .map_err(|s| invalid(&format!(\"selected installed section open: {s:#010x}\")))?;"
+                },
+                {
+                  "highlight_end": 37,
+                  "highlight_start": 1,
+                  "text": "    let maximum_access = basic(&h)?;"
+                },
+                {
+                  "highlight_end": 30,
+                  "highlight_start": 1,
+                  "text": "    let original = info(&h)?;"
+                },
+                {
+                  "highlight_end": 81,
+                  "highlight_start": 1,
+                  "text": "    let system_security_status = match open_section(&path, 0x0100_0000, 0x40)? {"
+                },
+                {
+                  "highlight_end": 26,
+                  "highlight_start": 1,
+                  "text": "        Ok(security) => {"
+                },
+                {
+                  "highlight_end": 50,
+                  "highlight_start": 1,
+                  "text": "            if basic(&security)? != 0x0100_0000 {"
+                },
+                {
+                  "highlight_end": 87,
+                  "highlight_start": 1,
+                  "text": "                return Err(invalid(\"selected section system-security grant changed\"));"
+                },
+                {
+                  "highlight_end": 14,
+                  "highlight_start": 1,
+                  "text": "            }"
+                },
+                {
+                  "highlight_end": 31,
+                  "highlight_start": 1,
+                  "text": "            security.close()?;"
+                },
+                {
+                  "highlight_end": 14,
+                  "highlight_start": 1,
+                  "text": "            0"
+                },
+                {
+                  "highlight_end": 10,
+                  "highlight_start": 1,
+                  "text": "        }"
+                },
+                {
+                  "highlight_end": 74,
+                  "highlight_start": 1,
+                  "text": "        Err(s @ (STATUS_PRIVILEGE_NOT_HELD | STATUS_ACCESS_DENIED)) => s,"
+                },
+                {
+                  "highlight_end": 20,
+                  "highlight_start": 1,
+                  "text": "        Err(s) => {"
+                },
+                {
+                  "highlight_end": 41,
+                  "highlight_start": 1,
+                  "text": "            return Err(invalid(&format!("
+                },
+                {
+                  "highlight_end": 70,
+                  "highlight_start": 1,
+                  "text": "                \"selected section system-security capture: {s:#010x}\""
+                },
+                {
+                  "highlight_end": 17,
+                  "highlight_start": 1,
+                  "text": "            )));"
+                },
+                {
+                  "highlight_end": 10,
+                  "highlight_start": 1,
+                  "text": "        }"
+                },
+                {
+                  "highlight_end": 7,
+                  "highlight_start": 1,
+                  "text": "    };"
+                },
+                {
+                  "highlight_end": 31,
+                  "highlight_start": 1,
+                  "text": "    let altered: Vec<_> = path"
+                },
+                {
+                  "highlight_end": 16,
+                  "highlight_start": 1,
+                  "text": "        .iter()"
+                },
+                {
+                  "highlight_end": 20,
+                  "highlight_start": 1,
+                  "text": "        .map(|&u| {"
+                },
+                {
+                  "highlight_end": 40,
+                  "highlight_start": 1,
+                  "text": "            if (65..=90).contains(&u) {"
+                },
+                {
+                  "highlight_end": 23,
+                  "highlight_start": 1,
+                  "text": "                u + 32"
+                },
+                {
+                  "highlight_end": 48,
+                  "highlight_start": 1,
+                  "text": "            } else if (97..=122).contains(&u) {"
+                },
+                {
+                  "highlight_end": 23,
+                  "highlight_start": 1,
+                  "text": "                u - 32"
+                },
+                {
+                  "highlight_end": 21,
+                  "highlight_start": 1,
+                  "text": "            } else {"
+                },
+                {
+                  "highlight_end": 18,
+                  "highlight_start": 1,
+                  "text": "                u"
+                },
+                {
+                  "highlight_end": 14,
+                  "highlight_start": 1,
+                  "text": "            }"
+                },
+                {
+                  "highlight_end": 11,
+                  "highlight_start": 1,
+                  "text": "        })"
+                },
+                {
+                  "highlight_end": 20,
+                  "highlight_start": 1,
+                  "text": "        .collect();"
+                },
+                {
+                  "highlight_end": 62,
+                  "highlight_start": 1,
+                  "text": "    let explicit = open_section(&altered, 0x0200_0000, 0x40)?"
+                },
+                {
+                  "highlight_end": 93,
+                  "highlight_start": 1,
+                  "text": "        .map_err(|s| invalid(&format!(\"selected section explicit case probe: {s:#010x}\")))?;"
+                },
+                {
+                  "highlight_end": 77,
+                  "highlight_start": 1,
+                  "text": "    if basic(&explicit)? != maximum_access || info(&explicit)? != original {"
+                },
+                {
+                  "highlight_end": 28,
+                  "highlight_start": 1,
+                  "text": "        return Err(invalid("
+                },
+                {
+                  "highlight_end": 69,
+                  "highlight_start": 1,
+                  "text": "            \"selected section explicit case identity/grant changed\","
+                },
+                {
+                  "highlight_end": 12,
+                  "highlight_start": 1,
+                  "text": "        ));"
+                },
+                {
+                  "highlight_end": 6,
+                  "highlight_start": 1,
+                  "text": "    }"
+                },
+                {
+                  "highlight_end": 23,
+                  "highlight_start": 1,
+                  "text": "    explicit.close()?;"
+                },
+                {
+                  "highlight_end": 81,
+                  "highlight_start": 1,
+                  "text": "    let force_case_insensitive = match open_section(&altered, 0x0200_0000, 0)? {"
+                },
+                {
+                  "highlight_end": 24,
+                  "highlight_start": 1,
+                  "text": "        Ok(folded) => {"
+                },
+                {
+                  "highlight_end": 81,
+                  "highlight_start": 1,
+                  "text": "            if basic(&folded)? != maximum_access || info(&folded)? != original {"
+                },
+                {
+                  "highlight_end": 36,
+                  "highlight_start": 1,
+                  "text": "                return Err(invalid("
+                },
+                {
+                  "highlight_end": 75,
+                  "highlight_start": 1,
+                  "text": "                    \"selected section folded case identity/grant changed\","
+                },
+                {
+                  "highlight_end": 20,
+                  "highlight_start": 1,
+                  "text": "                ));"
+                },
+                {
+                  "highlight_end": 14,
+                  "highlight_start": 1,
+                  "text": "            }"
+                },
+                {
+                  "highlight_end": 29,
+                  "highlight_start": 1,
+                  "text": "            folded.close()?;"
+                },
+                {
+                  "highlight_end": 17,
+                  "highlight_start": 1,
+                  "text": "            true"
+                },
+                {
+                  "highlight_end": 10,
+                  "highlight_start": 1,
+                  "text": "        }"
+                },
+                {
+                  "highlight_end": 83,
+                  "highlight_start": 1,
+                  "text": "        Err(STATUS_OBJECT_NAME_NOT_FOUND | STATUS_OBJECT_PATH_NOT_FOUND) => false,"
+                },
+                {
+                  "highlight_end": 20,
+                  "highlight_start": 1,
+                  "text": "        Err(s) => {"
+                },
+                {
+                  "highlight_end": 41,
+                  "highlight_start": 1,
+                  "text": "            return Err(invalid(&format!("
+                },
+                {
+                  "highlight_end": 66,
+                  "highlight_start": 1,
+                  "text": "                \"selected section case policy capture: {s:#010x}\""
+                },
+                {
+                  "highlight_end": 17,
+                  "highlight_start": 1,
+                  "text": "            )));"
+                },
+                {
+                  "highlight_end": 10,
+                  "highlight_start": 1,
+                  "text": "        }"
+                },
+                {
+                  "highlight_end": 7,
+                  "highlight_start": 1,
+                  "text": "    };"
+                },
+                {
+                  "highlight_end": 63,
+                  "highlight_start": 1,
+                  "text": "    if basic(&h)? != maximum_access || info(&h)? != original {"
+                },
+                {
+                  "highlight_end": 28,
+                  "highlight_start": 1,
+                  "text": "        return Err(invalid("
+                },
+                {
+                  "highlight_end": 70,
+                  "highlight_start": 1,
+                  "text": "            \"selected section metadata/grant changed during capture\","
+                },
+                {
+                  "highlight_end": 12,
+                  "highlight_start": 1,
+                  "text": "        ));"
+                },
+                {
+                  "highlight_end": 6,
+                  "highlight_start": 1,
+                  "text": "    }"
+                },
+                {
+                  "highlight_end": 37,
+                  "highlight_start": 1,
+                  "text": "    let captured = CapturedSection {"
+                },
+                {
+                  "highlight_end": 24,
+                  "highlight_start": 1,
+                  "text": "        maximum_access,"
+                },
+                {
+                  "highlight_end": 32,
+                  "highlight_start": 1,
+                  "text": "        system_security_status,"
+                },
+                {
+                  "highlight_end": 32,
+                  "highlight_start": 1,
+                  "text": "        force_case_insensitive,"
+                },
+                {
+                  "highlight_end": 41,
+                  "highlight_start": 1,
+                  "text": "        attributes: original.attributes,"
+                },
+                {
+                  "highlight_end": 36,
+                  "highlight_start": 1,
+                  "text": "        size: original.size as u64,"
+                },
+                {
+                  "highlight_end": 7,
+                  "highlight_start": 1,
+                  "text": "    };"
+                },
+                {
+                  "highlight_end": 27,
+                  "highlight_start": 1,
+                  "text": "    if !captured.valid() {"
+                },
+                {
+                  "highlight_end": 28,
+                  "highlight_start": 1,
+                  "text": "        return Err(invalid("
+                },
+                {
+                  "highlight_end": 79,
+                  "highlight_start": 1,
+                  "text": "            \"selected installed section is outside the bounded image profile\","
+                },
+                {
+                  "highlight_end": 12,
+                  "highlight_start": 1,
+                  "text": "        ));"
+                },
+                {
+                  "highlight_end": 6,
+                  "highlight_start": 1,
+                  "text": "    }"
+                },
+                {
+                  "highlight_end": 9,
+                  "highlight_start": 1,
+                  "text": "    Ok(("
+                },
+                {
+                  "highlight_end": 18,
+                  "highlight_start": 1,
+                  "text": "        captured,"
+                },
+                {
+                  "highlight_end": 81,
+                  "highlight_start": 1,
+                  "text": "        super::image::Source::new(h, original.attributes, original.size as u64),"
+                },
+                {
+                  "highlight_end": 7,
+                  "highlight_start": 1,
+                  "text": "    ))"
+                },
+                {
+                  "highlight_end": 2,
+                  "highlight_start": 1,
+                  "text": "}"
+                }
+              ]
+            },
+            {
+              "byte_end": 4967,
+              "byte_start": 4910,
+              "column_end": 58,
+              "column_start": 1,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\registry\\installed.rs",
+              "is_primary": true,
+              "label": "`crate::user::windows::registry::installed::capture`: not accessible",
+              "line_end": 164,
+              "line_start": 164,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 58,
+                  "highlight_start": 1,
+                  "text": "fn capture(path: &'static str) -> io::Result<SelectedKey> {"
+                }
+              ]
+            },
+            {
+              "byte_end": 536,
+              "byte_start": 462,
+              "column_end": 75,
+              "column_start": 1,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\registry\\installed\\tree.rs",
+              "is_primary": true,
+              "label": "`crate::user::windows::registry::installed::tree::capture`: not accessible",
+              "line_end": 10,
+              "line_start": 10,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 75,
+                  "highlight_start": 1,
+                  "text": "pub(super) fn capture(registry: &Registry) -> io::Result<Option<IfeoTree>> {"
+                }
+              ]
+            },
+            {
+              "byte_end": 3677,
+              "byte_start": 3629,
+              "column_end": 49,
+              "column_start": 1,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\wnf\\installed.rs",
+              "is_primary": true,
+              "label": "`crate::user::windows::wnf::installed::capture`: not accessible",
+              "line_end": 111,
+              "line_start": 111,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 49,
+                  "highlight_start": 1,
+                  "text": "fn capture(token: &Token) -> io::Result<Subject> {"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "level": "error",
+      "message": "cannot find function `capture` in module `initialize`",
+      "spans": [
+        {
+          "byte_end": 4477,
+          "byte_start": 4470,
+          "column_end": 50,
+          "column_start": 43,
+          "expansion": null,
+          "file_name": "src\\user\\windows\\nls\\installed.rs",
+          "is_primary": true,
+          "label": "not found in `initialize`",
+          "line_end": 116,
+          "line_start": 116,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 50,
+              "highlight_start": 43,
+              "text": "        let (locale, bytes) = initialize::capture()?;"
+            }
+          ]
+        }
+      ],
+      "code": {
+        "code": "E0425",
+        "explanation": "An unresolved name was used.\n\nErroneous code examples:\n\n```compile_fail,E0425\nsomething_that_doesnt_exist::foo;\n// error: unresolved name `something_that_doesnt_exist::foo`\n\n// or:\n\ntrait Foo {\n    fn bar() {\n        Self; // error: unresolved name `Self`\n    }\n}\n\n// or:\n\nlet x = unknown_variable;  // error: unresolved name `unknown_variable`\n```\n\nPlease verify that the name wasn't misspelled and ensure that the\nidentifier being referred to is valid for the given situation. Example:\n\n```\nenum something_that_does_exist {\n    Foo,\n}\n```\n\nOr:\n\n```\nmod something_that_does_exist {\n    pub static foo : i32 = 0i32;\n}\n\nsomething_that_does_exist::foo; // ok!\n```\n\nOr:\n\n```\nlet unknown_variable = 12u32;\nlet x = unknown_variable; // ok!\n```\n\nIf the item is not defined in the current module, it must be imported using a\n`use` statement, like so:\n\n```\n# mod foo { pub fn bar() {} }\n# fn main() {\nuse foo::bar;\nbar();\n# }\n```\n\nIf the item you are importing is not defined in some super-module of the\ncurrent module, then it must also be declared as public (e.g., `pub fn`).\n"
+      }
+    }
+  },
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///C:/Windows/Temp/assist-native-rax-20261010/src#rax@0.1.0",
+    "manifest_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "rax",
+      "src_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\src\\lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "message": {
+      "rendered": "error[E0592]: duplicate definitions with name `with_initialize`\n  --> src\\user\\windows\\nls\\initialize.rs:15:5\n   |\n15 |     pub(crate) fn with_initialize(mut self, locale: u32, bytes: Vec<u8>) -> io::Result<Self> {\n   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n   |     |\n   |     duplicate definitions for `with_initialize`\n   |     other definition for `with_initialize`\n\n",
+      "$message_type": "diagnostic",
+      "children": [],
+      "level": "error",
+      "message": "duplicate definitions with name `with_initialize`",
+      "spans": [
+        {
+          "byte_end": 551,
+          "byte_start": 463,
+          "column_end": 93,
+          "column_start": 5,
+          "expansion": null,
+          "file_name": "src\\user\\windows\\nls\\initialize.rs",
+          "is_primary": true,
+          "label": "duplicate definitions for `with_initialize`",
+          "line_end": 15,
+          "line_start": 15,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 93,
+              "highlight_start": 5,
+              "text": "    pub(crate) fn with_initialize(mut self, locale: u32, bytes: Vec<u8>) -> io::Result<Self> {"
+            }
+          ]
+        },
+        {
+          "byte_end": 551,
+          "byte_start": 463,
+          "column_end": 93,
+          "column_start": 5,
+          "expansion": null,
+          "file_name": "src\\user\\windows\\nls\\initialize.rs",
+          "is_primary": false,
+          "label": "other definition for `with_initialize`",
+          "line_end": 15,
+          "line_start": 15,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 93,
+              "highlight_start": 5,
+              "text": "    pub(crate) fn with_initialize(mut self, locale: u32, bytes: Vec<u8>) -> io::Result<Self> {"
+            }
+          ]
+        }
+      ],
+      "code": {
+        "code": "E0592",
+        "explanation": "This error occurs when you defined methods or associated functions with same\nname.\n\nErroneous code example:\n\n```compile_fail,E0592\nstruct Foo;\n\nimpl Foo {\n    fn bar() {} // previous definition here\n}\n\nimpl Foo {\n    fn bar() {} // duplicate definition here\n}\n```\n\nA similar error is E0201. The difference is whether there is one declaration\nblock or not. To avoid this error, you must give each `fn` a unique name.\n\n```\nstruct Foo;\n\nimpl Foo {\n    fn bar() {}\n}\n\nimpl Foo {\n    fn baz() {} // define with different name\n}\n```\n"
+      }
+    }
+  },
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///C:/Windows/Temp/assist-native-rax-20261010/src#rax@0.1.0",
+    "manifest_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "rax",
+      "src_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\src\\lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "message": {
+      "rendered": "error[E0592]: duplicate definitions with name `initialize`\n  --> src\\user\\windows\\nls\\initialize.rs:34:5\n   |\n34 |     pub(crate) fn initialize(&self) -> Option<&Initialize> {\n   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n   |     |\n   |     duplicate definitions for `initialize`\n   |     other definition for `initialize`\n\n",
+      "$message_type": "diagnostic",
+      "children": [],
+      "level": "error",
+      "message": "duplicate definitions with name `initialize`",
+      "spans": [
+        {
+          "byte_end": 1170,
+          "byte_start": 1116,
+          "column_end": 59,
+          "column_start": 5,
+          "expansion": null,
+          "file_name": "src\\user\\windows\\nls\\initialize.rs",
+          "is_primary": true,
+          "label": "duplicate definitions for `initialize`",
+          "line_end": 34,
+          "line_start": 34,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 59,
+              "highlight_start": 5,
+              "text": "    pub(crate) fn initialize(&self) -> Option<&Initialize> {"
+            }
+          ]
+        },
+        {
+          "byte_end": 1170,
+          "byte_start": 1116,
+          "column_end": 59,
+          "column_start": 5,
+          "expansion": null,
+          "file_name": "src\\user\\windows\\nls\\initialize.rs",
+          "is_primary": false,
+          "label": "other definition for `initialize`",
+          "line_end": 34,
+          "line_start": 34,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 59,
+              "highlight_start": 5,
+              "text": "    pub(crate) fn initialize(&self) -> Option<&Initialize> {"
+            }
+          ]
+        }
+      ],
+      "code": {
+        "code": "E0592",
+        "explanation": "This error occurs when you defined methods or associated functions with same\nname.\n\nErroneous code example:\n\n```compile_fail,E0592\nstruct Foo;\n\nimpl Foo {\n    fn bar() {} // previous definition here\n}\n\nimpl Foo {\n    fn bar() {} // duplicate definition here\n}\n```\n\nA similar error is E0201. The difference is whether there is one declaration\nblock or not. To avoid this error, you must give each `fn` a unique name.\n\n```\nstruct Foo;\n\nimpl Foo {\n    fn bar() {}\n}\n\nimpl Foo {\n    fn baz() {} // define with different name\n}\n```\n"
+      }
+    }
+  },
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///C:/Windows/Temp/assist-native-rax-20261010/src#rax@0.1.0",
+    "manifest_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "rax",
+      "src_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\src\\lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "message": {
+      "rendered": "error[E0034]: multiple applicable items in scope\n  --> src\\user\\windows\\dll\\native\\nls\\initialize.rs:32:33\n   |\n32 |             .and_then(|nls| nls.initialize())\n   |                                 ^^^^^^^^^^ multiple `initialize` found\n   |\nnote: candidate #1 is defined in an impl for the type `Nls`\n  --> src\\user\\windows\\nls\\initialize.rs:34:5\n   |\n34 |     pub(crate) fn initialize(&self) -> Option<&Initialize> {\n   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nnote: candidate #2 is defined in an impl for the type `Nls`\n  --> src\\user\\windows\\nls\\initialize.rs:34:5\n   |\n34 |     pub(crate) fn initialize(&self) -> Option<&Initialize> {\n   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n",
+      "$message_type": "diagnostic",
+      "children": [
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "candidate #1 is defined in an impl for the type `Nls`",
+          "rendered": null,
+          "spans": [
+            {
+              "byte_end": 1170,
+              "byte_start": 1116,
+              "column_end": 59,
+              "column_start": 5,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\nls\\initialize.rs",
+              "is_primary": true,
+              "label": null,
+              "line_end": 34,
+              "line_start": 34,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 59,
+                  "highlight_start": 5,
+                  "text": "    pub(crate) fn initialize(&self) -> Option<&Initialize> {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "candidate #2 is defined in an impl for the type `Nls`",
+          "rendered": null,
+          "spans": [
+            {
+              "byte_end": 1170,
+              "byte_start": 1116,
+              "column_end": 59,
+              "column_start": 5,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\nls\\initialize.rs",
+              "is_primary": true,
+              "label": null,
+              "line_end": 34,
+              "line_start": 34,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 59,
+                  "highlight_start": 5,
+                  "text": "    pub(crate) fn initialize(&self) -> Option<&Initialize> {"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "level": "error",
+      "message": "multiple applicable items in scope",
+      "spans": [
+        {
+          "byte_end": 1294,
+          "byte_start": 1284,
+          "column_end": 43,
+          "column_start": 33,
+          "expansion": null,
+          "file_name": "src\\user\\windows\\dll\\native\\nls\\initialize.rs",
+          "is_primary": true,
+          "label": "multiple `initialize` found",
+          "line_end": 32,
+          "line_start": 32,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 43,
+              "highlight_start": 33,
+              "text": "            .and_then(|nls| nls.initialize())"
+            }
+          ]
+        }
+      ],
+      "code": {
+        "code": "E0034",
+        "explanation": "The compiler doesn't know what method to call because more than one method\nhas the same prototype.\n\nErroneous code example:\n\n```compile_fail,E0034\nstruct Test;\n\ntrait Trait1 {\n    fn foo();\n}\n\ntrait Trait2 {\n    fn foo();\n}\n\nimpl Trait1 for Test { fn foo() {} }\nimpl Trait2 for Test { fn foo() {} }\n\nfn main() {\n    Test::foo() // error, which foo() to call?\n}\n```\n\nTo avoid this error, you have to keep only one of them and remove the others.\nSo let's take our example and fix it:\n\n```\nstruct Test;\n\ntrait Trait1 {\n    fn foo();\n}\n\nimpl Trait1 for Test { fn foo() {} }\n\nfn main() {\n    Test::foo() // and now that's good!\n}\n```\n\nHowever, a better solution would be using fully explicit naming of type and\ntrait:\n\n```\nstruct Test;\n\ntrait Trait1 {\n    fn foo();\n}\n\ntrait Trait2 {\n    fn foo();\n}\n\nimpl Trait1 for Test { fn foo() {} }\nimpl Trait2 for Test { fn foo() {} }\n\nfn main() {\n    <Test as Trait1>::foo()\n}\n```\n\nOne last example:\n\n```\ntrait F {\n    fn m(&self);\n}\n\ntrait G {\n    fn m(&self);\n}\n\nstruct X;\n\nimpl F for X { fn m(&self) { println!(\"I am F\"); } }\nimpl G for X { fn m(&self) { println!(\"I am G\"); } }\n\nfn main() {\n    let f = X;\n\n    F::m(&f); // it displays \"I am F\"\n    G::m(&f); // it displays \"I am G\"\n}\n```\n"
+      }
+    }
+  },
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///C:/Windows/Temp/assist-native-rax-20261010/src#rax@0.1.0",
+    "manifest_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "rax",
+      "src_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\src\\lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "message": {
+      "rendered": "error[E0034]: multiple applicable items in scope\n  --> src\\user\\windows\\dll\\native\\nls\\initialize.rs:33:14\n   |\n33 |             .cloned()\n   |              ^^^^^^ multiple `cloned` found\n   |\n   = note: candidate #1 is defined in an impl for the type `std::option::Option<&T>`\n   = note: candidate #2 is defined in an impl for the type `std::option::Option<&mut T>`\n\n",
+      "$message_type": "diagnostic",
+      "children": [
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "candidate #1 is defined in an impl for the type `std::option::Option<&T>`",
+          "rendered": null,
+          "spans": []
+        },
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "candidate #2 is defined in an impl for the type `std::option::Option<&mut T>`",
+          "rendered": null,
+          "spans": []
+        }
+      ],
+      "level": "error",
+      "message": "multiple applicable items in scope",
+      "spans": [
+        {
+          "byte_end": 1317,
+          "byte_start": 1311,
+          "column_end": 20,
+          "column_start": 14,
+          "expansion": null,
+          "file_name": "src\\user\\windows\\dll\\native\\nls\\initialize.rs",
+          "is_primary": true,
+          "label": "multiple `cloned` found",
+          "line_end": 33,
+          "line_start": 33,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 20,
+              "highlight_start": 14,
+              "text": "            .cloned()"
+            }
+          ]
+        }
+      ],
+      "code": {
+        "code": "E0034",
+        "explanation": "The compiler doesn't know what method to call because more than one method\nhas the same prototype.\n\nErroneous code example:\n\n```compile_fail,E0034\nstruct Test;\n\ntrait Trait1 {\n    fn foo();\n}\n\ntrait Trait2 {\n    fn foo();\n}\n\nimpl Trait1 for Test { fn foo() {} }\nimpl Trait2 for Test { fn foo() {} }\n\nfn main() {\n    Test::foo() // error, which foo() to call?\n}\n```\n\nTo avoid this error, you have to keep only one of them and remove the others.\nSo let's take our example and fix it:\n\n```\nstruct Test;\n\ntrait Trait1 {\n    fn foo();\n}\n\nimpl Trait1 for Test { fn foo() {} }\n\nfn main() {\n    Test::foo() // and now that's good!\n}\n```\n\nHowever, a better solution would be using fully explicit naming of type and\ntrait:\n\n```\nstruct Test;\n\ntrait Trait1 {\n    fn foo();\n}\n\ntrait Trait2 {\n    fn foo();\n}\n\nimpl Trait1 for Test { fn foo() {} }\nimpl Trait2 for Test { fn foo() {} }\n\nfn main() {\n    <Test as Trait1>::foo()\n}\n```\n\nOne last example:\n\n```\ntrait F {\n    fn m(&self);\n}\n\ntrait G {\n    fn m(&self);\n}\n\nstruct X;\n\nimpl F for X { fn m(&self) { println!(\"I am F\"); } }\nimpl G for X { fn m(&self) { println!(\"I am G\"); } }\n\nfn main() {\n    let f = X;\n\n    F::m(&f); // it displays \"I am F\"\n    G::m(&f); // it displays \"I am G\"\n}\n```\n"
+      }
+    }
+  },
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///C:/Windows/Temp/assist-native-rax-20261010/src#rax@0.1.0",
+    "manifest_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "rax",
+      "src_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\src\\lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "message": {
+      "rendered": "error[E0308]: mismatched types\n  --> src\\user\\windows\\nls\\initialize.rs:27:32\n   |\n27 |           self.initialize = Some(Initialize {\n   |  ___________________________----_^\n   | |                           |\n   | |                           arguments to this enum variant are incorrect\n28 | |             locale,\n29 | |             bytes: bytes.into(),\n30 | |         });\n   | |_________^ expected `Initialize`, found a different `Initialize`\n   |\n   = note: `Initialize` and `Initialize` have similar names, but are actually distinct types\nnote: `Initialize` is defined in module `crate::user::windows::nls::installed::initialize` of the current crate\n  --> src\\user\\windows\\nls\\initialize.rs:7:1\n   |\n 7 | pub(crate) struct Initialize {\n   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nnote: `Initialize` is defined in module `crate::user::windows::nls::initialize` of the current crate\n  --> src\\user\\windows\\nls\\initialize.rs:7:1\n   |\n 7 | pub(crate) struct Initialize {\n   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nhelp: the type constructed contains `user::windows::nls::installed::initialize::Initialize` due to the type of the argument passed\n  --> src\\user\\windows\\nls\\initialize.rs:27:27\n   |\n27 |            self.initialize = Some(Initialize {\n   |   ___________________________^    -\n   |  |________________________________|\n28 | ||             locale,\n29 | ||             bytes: bytes.into(),\n30 | ||         });\n   | ||_________-^\n   | |__________|\n   |            this argument influences the type of `Some`\nnote: tuple variant defined here\n  --> /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\\core\\src\\option.rs:608:4\n\n",
+      "$message_type": "diagnostic",
+      "children": [
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "`Initialize` and `Initialize` have similar names, but are actually distinct types",
+          "rendered": null,
+          "spans": []
+        },
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "`Initialize` is defined in module `crate::user::windows::nls::installed::initialize` of the current crate",
+          "rendered": null,
+          "spans": [
+            {
+              "byte_end": 227,
+              "byte_start": 199,
+              "column_end": 29,
+              "column_start": 1,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\nls\\initialize.rs",
+              "is_primary": true,
+              "label": null,
+              "line_end": 7,
+              "line_start": 7,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 29,
+                  "highlight_start": 1,
+                  "text": "pub(crate) struct Initialize {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "`Initialize` is defined in module `crate::user::windows::nls::initialize` of the current crate",
+          "rendered": null,
+          "spans": [
+            {
+              "byte_end": 227,
+              "byte_start": 199,
+              "column_end": 29,
+              "column_start": 1,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\nls\\initialize.rs",
+              "is_primary": true,
+              "label": null,
+              "line_end": 7,
+              "line_start": 7,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 29,
+                  "highlight_start": 1,
+                  "text": "pub(crate) struct Initialize {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "children": [],
+          "code": null,
+          "level": "help",
+          "message": "the type constructed contains `user::windows::nls::installed::initialize::Initialize` due to the type of the argument passed",
+          "rendered": null,
+          "spans": [
+            {
+              "byte_end": 1085,
+              "byte_start": 1010,
+              "column_end": 10,
+              "column_start": 32,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\nls\\initialize.rs",
+              "is_primary": false,
+              "label": "this argument influences the type of `Some`",
+              "line_end": 30,
+              "line_start": 27,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 44,
+                  "highlight_start": 32,
+                  "text": "        self.initialize = Some(Initialize {"
+                },
+                {
+                  "highlight_end": 20,
+                  "highlight_start": 1,
+                  "text": "            locale,"
+                },
+                {
+                  "highlight_end": 33,
+                  "highlight_start": 1,
+                  "text": "            bytes: bytes.into(),"
+                },
+                {
+                  "highlight_end": 10,
+                  "highlight_start": 1,
+                  "text": "        });"
+                }
+              ]
+            },
+            {
+              "byte_end": 1086,
+              "byte_start": 1005,
+              "column_end": 11,
+              "column_start": 27,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\nls\\initialize.rs",
+              "is_primary": true,
+              "label": null,
+              "line_end": 30,
+              "line_start": 27,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 44,
+                  "highlight_start": 27,
+                  "text": "        self.initialize = Some(Initialize {"
+                },
+                {
+                  "highlight_end": 20,
+                  "highlight_start": 1,
+                  "text": "            locale,"
+                },
+                {
+                  "highlight_end": 33,
+                  "highlight_start": 1,
+                  "text": "            bytes: bytes.into(),"
+                },
+                {
+                  "highlight_end": 11,
+                  "highlight_start": 1,
+                  "text": "        });"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "tuple variant defined here",
+          "rendered": null,
+          "spans": [
+            {
+              "byte_end": 24373,
+              "byte_start": 24369,
+              "column_end": 9,
+              "column_start": 5,
+              "expansion": null,
+              "file_name": "/rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\\core\\src\\option.rs",
+              "is_primary": true,
+              "label": null,
+              "line_end": 608,
+              "line_start": 608,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": []
+            }
+          ]
+        }
+      ],
+      "level": "error",
+      "message": "mismatched types",
+      "spans": [
+        {
+          "byte_end": 1085,
+          "byte_start": 1010,
+          "column_end": 10,
+          "column_start": 32,
+          "expansion": null,
+          "file_name": "src\\user\\windows\\nls\\initialize.rs",
+          "is_primary": true,
+          "label": "expected `Initialize`, found a different `Initialize`",
+          "line_end": 30,
+          "line_start": 27,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 44,
+              "highlight_start": 32,
+              "text": "        self.initialize = Some(Initialize {"
+            },
+            {
+              "highlight_end": 20,
+              "highlight_start": 1,
+              "text": "            locale,"
+            },
+            {
+              "highlight_end": 33,
+              "highlight_start": 1,
+              "text": "            bytes: bytes.into(),"
+            },
+            {
+              "highlight_end": 10,
+              "highlight_start": 1,
+              "text": "        });"
+            }
+          ]
+        },
+        {
+          "byte_end": 1009,
+          "byte_start": 1005,
+          "column_end": 31,
+          "column_start": 27,
+          "expansion": null,
+          "file_name": "src\\user\\windows\\nls\\initialize.rs",
+          "is_primary": false,
+          "label": "arguments to this enum variant are incorrect",
+          "line_end": 27,
+          "line_start": 27,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 31,
+              "highlight_start": 27,
+              "text": "        self.initialize = Some(Initialize {"
+            }
+          ]
+        }
+      ],
+      "code": {
+        "code": "E0308",
+        "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+      }
+    }
+  },
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///C:/Windows/Temp/assist-native-rax-20261010/src#rax@0.1.0",
+    "manifest_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "rax",
+      "src_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\src\\lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "message": {
+      "rendered": "error[E0308]: mismatched types\n  --> src\\user\\windows\\nls\\initialize.rs:35:9\n   |\n34 |     pub(crate) fn initialize(&self) -> Option<&Initialize> {\n   |                                        ------------------- expected `std::option::Option<&user::windows::nls::installed::initialize::Initialize>` because of return type\n35 |         self.initialize.as_ref()\n   |         ^^^^^^^^^^^^^^^^^^^^^^^^ expected `Initialize`, found a different `Initialize`\n   |\n   = note: `Initialize` and `Initialize` have similar names, but are actually distinct types\nnote: `Initialize` is defined in module `crate::user::windows::nls::initialize` of the current crate\n  --> src\\user\\windows\\nls\\initialize.rs:7:1\n   |\n 7 | pub(crate) struct Initialize {\n   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nnote: `Initialize` is defined in module `crate::user::windows::nls::installed::initialize` of the current crate\n  --> src\\user\\windows\\nls\\initialize.rs:7:1\n   |\n 7 | pub(crate) struct Initialize {\n   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n",
+      "$message_type": "diagnostic",
+      "children": [
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "`Initialize` and `Initialize` have similar names, but are actually distinct types",
+          "rendered": null,
+          "spans": []
+        },
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "`Initialize` is defined in module `crate::user::windows::nls::initialize` of the current crate",
+          "rendered": null,
+          "spans": [
+            {
+              "byte_end": 227,
+              "byte_start": 199,
+              "column_end": 29,
+              "column_start": 1,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\nls\\initialize.rs",
+              "is_primary": true,
+              "label": null,
+              "line_end": 7,
+              "line_start": 7,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 29,
+                  "highlight_start": 1,
+                  "text": "pub(crate) struct Initialize {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "`Initialize` is defined in module `crate::user::windows::nls::installed::initialize` of the current crate",
+          "rendered": null,
+          "spans": [
+            {
+              "byte_end": 227,
+              "byte_start": 199,
+              "column_end": 29,
+              "column_start": 1,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\nls\\initialize.rs",
+              "is_primary": true,
+              "label": null,
+              "line_end": 7,
+              "line_start": 7,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 29,
+                  "highlight_start": 1,
+                  "text": "pub(crate) struct Initialize {"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "level": "error",
+      "message": "mismatched types",
+      "spans": [
+        {
+          "byte_end": 1205,
+          "byte_start": 1181,
+          "column_end": 33,
+          "column_start": 9,
+          "expansion": null,
+          "file_name": "src\\user\\windows\\nls\\initialize.rs",
+          "is_primary": true,
+          "label": "expected `Initialize`, found a different `Initialize`",
+          "line_end": 35,
+          "line_start": 35,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 33,
+              "highlight_start": 9,
+              "text": "        self.initialize.as_ref()"
+            }
+          ]
+        },
+        {
+          "byte_end": 1170,
+          "byte_start": 1151,
+          "column_end": 59,
+          "column_start": 40,
+          "expansion": null,
+          "file_name": "src\\user\\windows\\nls\\initialize.rs",
+          "is_primary": false,
+          "label": "expected `std::option::Option<&user::windows::nls::installed::initialize::Initialize>` because of return type",
+          "line_end": 34,
+          "line_start": 34,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 59,
+              "highlight_start": 40,
+              "text": "    pub(crate) fn initialize(&self) -> Option<&Initialize> {"
+            }
+          ]
+        }
+      ],
+      "code": {
+        "code": "E0308",
+        "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+      }
+    }
+  },
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///C:/Windows/Temp/assist-native-rax-20261010/src#rax@0.1.0",
+    "manifest_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "rax",
+      "src_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\src\\lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "message": {
+      "rendered": "error[E0034]: multiple applicable items in scope\n   --> src\\user\\windows\\nls\\installed.rs:117:13\n    |\n117 |         nls.with_initialize(locale, bytes)\n    |             ^^^^^^^^^^^^^^^ multiple `with_initialize` found\n    |\nnote: candidate #1 is defined in an impl for the type `Nls`\n   --> src\\user\\windows\\nls\\initialize.rs:15:5\n    |\n 15 |     pub(crate) fn with_initialize(mut self, locale: u32, bytes: Vec<u8>) -> io::Result<Self> {\n    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nnote: candidate #2 is defined in an impl for the type `Nls`\n   --> src\\user\\windows\\nls\\initialize.rs:15:5\n    |\n 15 |     pub(crate) fn with_initialize(mut self, locale: u32, bytes: Vec<u8>) -> io::Result<Self> {\n    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n",
+      "$message_type": "diagnostic",
+      "children": [
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "candidate #1 is defined in an impl for the type `Nls`",
+          "rendered": null,
+          "spans": [
+            {
+              "byte_end": 551,
+              "byte_start": 463,
+              "column_end": 93,
+              "column_start": 5,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\nls\\initialize.rs",
+              "is_primary": true,
+              "label": null,
+              "line_end": 15,
+              "line_start": 15,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 93,
+                  "highlight_start": 5,
+                  "text": "    pub(crate) fn with_initialize(mut self, locale: u32, bytes: Vec<u8>) -> io::Result<Self> {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "candidate #2 is defined in an impl for the type `Nls`",
+          "rendered": null,
+          "spans": [
+            {
+              "byte_end": 551,
+              "byte_start": 463,
+              "column_end": 93,
+              "column_start": 5,
+              "expansion": null,
+              "file_name": "src\\user\\windows\\nls\\initialize.rs",
+              "is_primary": true,
+              "label": null,
+              "line_end": 15,
+              "line_start": 15,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 93,
+                  "highlight_start": 5,
+                  "text": "    pub(crate) fn with_initialize(mut self, locale: u32, bytes: Vec<u8>) -> io::Result<Self> {"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "level": "error",
+      "message": "multiple applicable items in scope",
+      "spans": [
+        {
+          "byte_end": 4509,
+          "byte_start": 4494,
+          "column_end": 28,
+          "column_start": 13,
+          "expansion": null,
+          "file_name": "src\\user\\windows\\nls\\installed.rs",
+          "is_primary": true,
+          "label": "multiple `with_initialize` found",
+          "line_end": 117,
+          "line_start": 117,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 28,
+              "highlight_start": 13,
+              "text": "        nls.with_initialize(locale, bytes)"
+            }
+          ]
+        }
+      ],
+      "code": {
+        "code": "E0034",
+        "explanation": "The compiler doesn't know what method to call because more than one method\nhas the same prototype.\n\nErroneous code example:\n\n```compile_fail,E0034\nstruct Test;\n\ntrait Trait1 {\n    fn foo();\n}\n\ntrait Trait2 {\n    fn foo();\n}\n\nimpl Trait1 for Test { fn foo() {} }\nimpl Trait2 for Test { fn foo() {} }\n\nfn main() {\n    Test::foo() // error, which foo() to call?\n}\n```\n\nTo avoid this error, you have to keep only one of them and remove the others.\nSo let's take our example and fix it:\n\n```\nstruct Test;\n\ntrait Trait1 {\n    fn foo();\n}\n\nimpl Trait1 for Test { fn foo() {} }\n\nfn main() {\n    Test::foo() // and now that's good!\n}\n```\n\nHowever, a better solution would be using fully explicit naming of type and\ntrait:\n\n```\nstruct Test;\n\ntrait Trait1 {\n    fn foo();\n}\n\ntrait Trait2 {\n    fn foo();\n}\n\nimpl Trait1 for Test { fn foo() {} }\nimpl Trait2 for Test { fn foo() {} }\n\nfn main() {\n    <Test as Trait1>::foo()\n}\n```\n\nOne last example:\n\n```\ntrait F {\n    fn m(&self);\n}\n\ntrait G {\n    fn m(&self);\n}\n\nstruct X;\n\nimpl F for X { fn m(&self) { println!(\"I am F\"); } }\nimpl G for X { fn m(&self) { println!(\"I am G\"); } }\n\nfn main() {\n    let f = X;\n\n    F::m(&f); // it displays \"I am F\"\n    G::m(&f); // it displays \"I am G\"\n}\n```\n"
+      }
+    }
+  }
+]

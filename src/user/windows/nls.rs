@@ -7,10 +7,12 @@ use std::sync::Arc;
 pub(crate) const MAX_SECTION_BYTES: usize = 8 << 20;
 const MAX_TOTAL_BYTES: usize = 64 << 20;
 const MAX_SECTIONS: usize = 4102; // At most 4096 registry candidates plus 6 fixed tables.
+mod initialize;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Nls {
     sections: BTreeMap<(u32, u32), Arc<[u8]>>,
+    initialize: Option<initialize::Initialize>,
 }
 impl Nls {
     pub(crate) fn new(sections: Vec<((u32, u32), Vec<u8>)>) -> io::Result<Self> {
@@ -19,6 +21,7 @@ impl Nls {
         }
         let mut result = Self {
             sections: BTreeMap::new(),
+            initialize: None,
         };
         let mut total = 0usize;
         for ((kind, data), mut bytes) in sections {
@@ -57,7 +60,11 @@ mod installed;
 #[cfg(windows)]
 pub(crate) use installed::snapshot;
 #[cfg(not(windows))]
-pub(crate) fn snapshot(_: &super::registry::Registry, _: &std::path::Path) -> io::Result<Nls> {
+pub(crate) fn snapshot(
+    _: &super::registry::Registry,
+    _: &std::path::Path,
+    _: &super::process::WinVersion,
+) -> io::Result<Nls> {
     Err(io::Error::new(
         io::ErrorKind::Unsupported,
         "installed NLS sections require Windows",
