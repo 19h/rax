@@ -31,7 +31,10 @@ impl EbpfConfig {
             });
         }
         if let Some((start, end)) = self.text_range
-            && (target_pc < start || target_pc.saturating_add(INSN_SIZE as u64) > end)
+            && (target_pc < start
+                || target_pc
+                    .checked_add(INSN_SIZE as u64)
+                    .is_none_or(|next_pc| next_pc > end))
         {
             return Err(EbpfTrap::CallOutsideTextSegment {
                 pc: fault_pc,

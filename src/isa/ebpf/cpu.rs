@@ -237,13 +237,13 @@ impl EbpfCpu {
             .map_err(|fault| EbpfTrap::MemoryFault { pc, fault })?;
         if buf[0] == 0x18 {
             if let Some((_, end)) = self.config.text_range
-                && pc.saturating_add(16) > end
+                && pc.checked_add(16).is_none_or(|next_pc| next_pc > end)
             {
                 return Err(EbpfTrap::DecodeError {
                     pc,
                     error: EbpfDecodeError::UnexpectedEof {
                         needed: 16,
-                        available: 8,
+                        available: end.saturating_sub(pc) as usize,
                     },
                 });
             }

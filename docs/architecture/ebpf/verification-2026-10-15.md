@@ -229,3 +229,58 @@ configurations: 10 nested call/frame cases across V0-V4 and both call forms,
 accesses. Successful cases compare all eleven GPRs; fault probes compare exit
 classification with the upstream interpreter. Direct and SMIR O0/O1/O2 GPR
 comparisons cover the nested-call matrix. No upstream test self-skips.
+
+## Group 8: representable instruction extents
+
+The final boundary audit found two further configured-text defects. An aligned
+call target at 0xfffffffffffffff8 passed a saturating eight-byte extent check,
+changed the stack frame, and then faulted at the callee fetch. A wide instruction
+at 0xfffffffffffffff0 was accepted even with exclusive text end u64::MAX, leaving
+only 15 text bytes. Both regressions failed before correction.
+
+Instruction extents now use checked addition. For the call, (2^64 - 8) + 8 =
+2^64 bytes, outside a representable u64 exclusive end. For LDDW, (2^64 - 16)
+to (2^64 - 1) supplies 15 bytes rather than the required 16 bytes. The direct CPU
+rejects this wide instruction after only its first eight-byte fetch, reporting
+the actual available length. The shared call validator rejects the call at the
+caller PC before register/frame changes; direct and SMIR O0/O1/O2 agree.
+These constant-time, constant-space checks close a medium-impact boundary gap.
+Complete focused gates after correction: ebpf_smir_lift 35 passed, ebpf_diff
+5 passed, isa_oracle 80 passed, with no ignored tests in these targets.
+
+## Final finding audit
+
+| External finding | Resolution | Direct evidence |
+|---|---|---|
+| 1: V3/V4 frame policy | Manual frames only in V1/V2; V0 gaps; V3/V4 fixed contiguous frames | Nested direct/SMIR matrix and 10 upstream call configurations |
+| 2: SMIR calls/returns | Shadow frames, precise continuation, r6-r9/r10 preservation; legacy registry and dual resolution | r0=42 regression, nested/recursive/CALLX cases, host resumption, upstream GPRs |
+| 3: big-endian atomics | Convert within indivisible CAS/RMW transactions and return old values in guest order | Both widths, all 10 immediate forms, aliases, O0/O1/O2, concurrent SMIR |
+| 4: pseudo-load execution | Explicit unsupported execution/lift for subtypes 1-6 without a resolver | Both byte orders; destination and PC preserved on rejection |
+| 5: shared atomicity | Transaction trait, synchronized shared host atomics, no byte-only fallback | Observed lost-update baseline; direct four-thread and shared-SMIR counters |
+| 6: V0 gaps | Compressed reference translation, gap-start checks, contiguous backing bounds | Upstream gap-start and three cross-frame cases; direct/SMIR probes |
+| 7: rodata layout | Explicit versioned rodata address; separate code fetch; no V3/V4 data alias | 15 upstream data/permission configurations and 2 alias cases |
+| 8: reserved fields | Strict RFC unused fields; r10 write rules; invalid static SBPF call kinds | LE/BE malformed-field matrix; shared decoder/lifter/oracle paths |
+| 9: function ranges | Consumed guest bytes and distinct function discovery | Wide/division/empty-IR extents and separate (0,24)/(24,40) function ranges |
+
+## Verification scope and remaining boundaries
+
+The finite matrices establish the behavior described above; full opcode-by-opcode
+conformance remains unknown. This work does not supply a Linux BPF verifier, a
+complete Solana ELF/relocation/syscall loader, or platform map/BTF pseudo-load
+resolvers. The checked constructor is for raw text at MM_BYTECODE_START with
+explicit executable rodata addresses; custom loaders can supply their own memory
+interfaces. Helper callback keys are an embedding-defined u32 registry; separate
+platform helper/BTF key spaces are not independently modeled. These are medium
+capability boundaries, outside the corrected instruction and raw-text execution
+contracts, and do not invalidate the measured results.
+
+Native eBPF JIT admission remains disabled. Linux/Windows native execution and
+full cross-platform runtime conformance were not established by this macOS
+AArch64 run. The upstream tool deliberately runs interpretation rather than the
+Anza native JIT. Full VM snapshot/migration of callback registries and shadow call
+frames is outside this register/execution verification.
+
+Assumptions A1-A4 are confirmed for the tested contracts. A5 remains the explicit
+default stack-allocation assumption; embeddings with different backing lengths
+must initialize r10 accordingly. No memory file or unrelated user content was
+modified. All staging uses exact task-owned paths.

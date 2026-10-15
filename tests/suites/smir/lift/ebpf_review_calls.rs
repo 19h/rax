@@ -1,6 +1,110 @@
 use super::*;
 
 #[test]
+fn overflowing_wide_instruction_is_rejected_before_continuation_fetch() {
+    use rax::isa::ebpf::{EbpfDecodeError, EbpfMemFault, EbpfMemory};
+
+    struct FetchMemory {
+        reads: usize,
+    }
+    impl EbpfMemory for FetchMemory {
+        fn read_bytes(&mut self, _: u64, out: &mut [u8]) -> Result<(), EbpfMemFault> {
+            self.reads += 1;
+            out.fill(0);
+            if self.reads == 1 {
+                out[0] = 0x18;
+            }
+            Ok(())
+        }
+
+        fn write_bytes(&mut self, addr: u64, bytes: &[u8]) -> Result<(), EbpfMemFault> {
+            Err(EbpfMemFault {
+                addr,
+                size: bytes.len(),
+                write: true,
+            })
+        }
+    }
+    let pc = u64::MAX - 15;
+    let mut cpu = EbpfCpu::new(EbpfConfig {
+        text_range: Some((pc, u64::MAX)),
+        ..EbpfConfig::default()
+    });
+    cpu.regs.pc = pc;
+    let mut memory = FetchMemory { reads: 0 };
+    assert_eq!(
+        cpu.fetch_and_decode(&mut memory),
+        Err(EbpfTrap::DecodeError {
+            pc,
+            error: EbpfDecodeError::UnexpectedEof {
+                needed: 16,
+                available: 15,
+            },
+        })
+    );
+    assert_eq!(memory.reads, 1);
+    assert_eq!(cpu.regs.pc, pc);
+}
+
+#[test]
+fn overflowing_call_target_is_rejected_before_frame_mutation() {
+    // An eight-byte instruction at 2^64 - 8 extends beyond the exclusive
+    // text end u64::MAX. Saturating addition would incorrectly admit it.
+    let target_pc = u64::MAX & !7;
+    assert_eq!(target_pc.checked_add(8), None);
+    for version in [SbpfVersion::V3, SbpfVersion::V4] {
+        let config = EbpfConfig {
+            text_range: Some((0, u64::MAX)),
+            ..EbpfConfig::solana(version)
+        };
+        let program = [
+            encode_insn(0x8d, 1, 0, 0, 0, Endian::Little),
+            encode_insn(0x95, 0, 0, 0, 0, Endian::Little),
+        ]
+        .concat();
+        let expected = EbpfTrap::CallOutsideTextSegment { pc: 0, target_pc };
+        let mut direct = EbpfCpu::new(config.clone());
+        direct.regs.r[1] = target_pc;
+        let initial_regs = direct.regs.r;
+        let mut memory = FlatMemory::new(program.len());
+        memory.load(0, &program);
+        assert_eq!(direct.run(&mut memory), EbpfExit::Trap(expected.clone()));
+        assert_eq!(direct.regs.r, initial_regs);
+        assert_eq!(direct.regs.pc, 0);
+        assert_eq!(direct.insn_count, 1);
+
+        for opt in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+            let mut lifter = EbpfLifter::solana(version);
+            let mut function = lifter
+                .lift_function(
+                    0,
+                    &CodeSlice(&program),
+                    &mut LiftContext::new(lifter.source_arch()),
+                )
+                .unwrap();
+            optimize_function(&mut function, opt);
+            let mut interpreter = SmirInterpreter::new();
+            interpreter.add_function(function);
+            let mut context = SmirContext::new_ebpf_with_config(config.clone());
+            context.write_arch_reg(ArchReg::Ebpf(EbpfReg::R(1)), target_pc);
+            assert!(matches!(
+                interpreter.run(&mut context, &mut memory),
+                ExitReason::EbpfTrap(actual) if actual == expected
+            ));
+            assert_eq!(context.pc, 0);
+            assert_eq!(context.insn_count, 1);
+            for (index, value) in initial_regs.iter().enumerate() {
+                assert_eq!(
+                    context.read_arch_reg(ArchReg::Ebpf(EbpfReg::R(index as u8))),
+                    *value,
+                    "{version:?} {opt:?} r{index}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
 fn caller_range_excludes_the_callee_function_body() {
     let program = [
         (0x85, 0, 1, 2),
