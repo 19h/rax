@@ -1,0 +1,10 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.35s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 3 tests
+test user::windows::process::sched::tests::services_tests::token_query_tests::native_token_query_reads_retained_false_true_and_missing_subject_state ... ok
+test user::windows::process::sched::tests::services_tests::access_check_tests::captured_impersonation_token_query_uses_its_subject_without_primary_capture ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::native_token_query_replays_all_7320_native_profile_rows ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 7841 filtered out; finished in 0.44s
+

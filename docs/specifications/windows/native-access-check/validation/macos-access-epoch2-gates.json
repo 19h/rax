@@ -1,0 +1,57 @@
+[
+  {
+    "gate": "access",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "access_check_tests",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 48.71717075000015,
+    "log": "macos-access-epoch2-access.log",
+    "sha256": "d6766d63915c5abeae4ae46d46fd8d9d94ad733ab270a627a4026223b34c4a3c"
+  },
+  {
+    "gate": "token",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "token_query",
+      "--",
+      "--nocapture"
+    ],
+    "exit-code": 0,
+    "seconds": 0.36586800000077346,
+    "log": "macos-access-epoch2-token.log",
+    "sha256": "c5646ae8b1c2961ff7ace5ac782751813410de53b9d812ad92b09d8c3d86cf03"
+  },
+  {
+    "gate": "wnf",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "user::windows::wnf::tests",
+      "--",
+      "--nocapture"
+    ],
+    "exit-code": 0,
+    "seconds": 0.168289416999869,
+    "log": "macos-access-epoch2-wnf.log",
+    "sha256": "7598f7e6a7ee7dca93e13cc8cf47218479932ca954a21a6e4339a6df3672c849"
+  }
+]

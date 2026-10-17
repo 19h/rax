@@ -1,0 +1,23 @@
+{
+  "phase": "initial source frozen while Linux and native Windows complete",
+  "macos-initial": "3 passed / 3 failed in access module; all replay failures report unmodeled descriptor revision",
+  "next-diagnostics": [
+    "Add architecture/arguments/current descriptor bytes to invoke assertion after initial jobs finish to identify exact replay row",
+    "Require Outcome::Fail and exact unsupported reason instead of any non-Continue outcome",
+    "Consider refusing recursive generic mapping or MAXIMUM_ALLOWED ACE masks rather than inferring unmeasured behavior"
+  ],
+  "verified-native-status-map": [
+    {
+      "ntstatus": "0xC000005C",
+      "win32": 1309
+    },
+    {
+      "ntstatus": "0xC0000079",
+      "win32": 1338
+    },
+    {
+      "ntstatus": "0xC00000E6",
+      "win32": 1360
+    }
+  ]
+}

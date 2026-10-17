@@ -1,0 +1,23 @@
+{
+  "reviewed": [
+    "all fourteen Rust paths against captured native corpus",
+    "primary/impersonation pseudo-handle interpretation and access8 gate",
+    "unchanged WNF subscription permission behavior",
+    "native64/WoW64 descriptor conversion and early privilege count",
+    "typed subject ownership, nonwaitable Token case and class29 consistency",
+    "bounded SID/ACL capture, privilege byte arithmetic and output aliases",
+    "exact five pre-existing native failures and zero full-suite filters"
+  ],
+  "source-changes-required": false,
+  "remaining": [
+    "Windows scoped owning archive completion",
+    "complete evidence collection/checker/stress",
+    "exact staging and red publication",
+    "paired root pin and linear fast-forward"
+  ],
+  "limitations": [
+    "unmodeled restricted/AppContainer/OWNER RIGHTS or nonclassic ACL profile",
+    "private-token output-fault behavior not independently established on physical x64/WoW64 kernels",
+    "no ordinary application exit yet"
+  ]
+}

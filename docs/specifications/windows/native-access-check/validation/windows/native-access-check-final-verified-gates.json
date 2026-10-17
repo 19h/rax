@@ -1,0 +1,117 @@
+{
+  "gates": [
+    {
+      "gate": "access",
+      "command": "cargo.exe test --locked --offline --no-default-features --lib access_check_tests -- --nocapture --test-threads=1",
+      "exit-code": 0,
+      "log": "native-access-check-final-access.log",
+      "sha256": "4aeeff327d189d553788baaeb45a4c74510015c1818a2a1f73050eb80ff73256"
+    },
+    {
+      "gate": "token",
+      "command": "cargo.exe test --locked --offline --no-default-features --lib token_query -- --nocapture --test-threads=1",
+      "exit-code": 0,
+      "log": "native-access-check-final-token.log",
+      "sha256": "45bef35732a0cfaf29dc746ba483de898365c941f365d9f83b20c9dfefcf0e82"
+    },
+    {
+      "gate": "wnf",
+      "command": "cargo.exe test --locked --offline --no-default-features --lib user::windows::wnf::tests -- --nocapture --test-threads=1",
+      "exit-code": 0,
+      "log": "native-access-check-final-wnf.log",
+      "sha256": "f0f7de28afba79dfba498a69d6c3bf0ab8df59575b2df0328161a0717b069f2f"
+    },
+    {
+      "gate": "all-targets",
+      "command": "cargo.exe check --locked --offline --no-default-features --all-targets",
+      "exit-code": 0,
+      "log": "native-access-check-final-all-targets.log",
+      "sha256": "6f192206a4fc55fc4adcc0023b7accfbd805e4e5aeacbe65a28a11e6e2dd2601"
+    },
+    {
+      "gate": "integration",
+      "command": "cargo.exe test --locked --offline --no-default-features --test user_windows --test user_windows_memory -- --nocapture --test-threads=1",
+      "exit-code": 0,
+      "log": "native-access-check-final-integration.log",
+      "sha256": "5ae3ba9afd36c7381afeb64ec012986f005e2bee075359e38f1fe69748dcc9ec"
+    },
+    {
+      "gate": "capi",
+      "command": "cargo.exe test --locked --offline --no-default-features -p rax-capi -- --nocapture --test-threads=1",
+      "exit-code": 0,
+      "log": "native-access-check-final-capi.log",
+      "sha256": "c0c956d402e13e1ac0223d40fe4b12f56ed24e2aa8df5c9e6ed772536dce5bef"
+    },
+    {
+      "gate": "full",
+      "command": "cargo.exe test --locked --offline --no-default-features --lib -- --nocapture --test-threads=1",
+      "exit-code": 101,
+      "log": "native-access-check-final-full.log",
+      "sha256": "80c315319a2a8a98d3e86736684e476043c1390d585de65f338a90b3c01c7389"
+    }
+  ],
+  "summaries": {
+    "access": [
+      [
+        7,
+        0,
+        0,
+        7274
+      ]
+    ],
+    "token": [
+      [
+        4,
+        0,
+        0,
+        7277
+      ]
+    ],
+    "wnf": [
+      [
+        4,
+        0,
+        0,
+        7277
+      ]
+    ],
+    "all-targets": [],
+    "integration": [
+      [
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        0,
+        0,
+        0
+      ]
+    ],
+    "capi": [
+      [
+        168,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "full": [
+      [
+        7274,
+        5,
+        2,
+        0
+      ]
+    ]
+  },
+  "scope": "published token parent plus fourteen access-check source inputs and three native fixtures; no ordinary success inference"
+}

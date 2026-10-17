@@ -1,5 +1,6 @@
 //! Query-only token acquisition during installed-runtime selection.
 use super::catalog::{Group, Subject, sid};
+use crate::user::windows::security::Privilege;
 use std::ffi::c_void;
 use std::io;
 use std::ptr::null_mut;
@@ -112,6 +113,21 @@ fn capture(token: &Token) -> io::Result<Subject> {
     let user = group(&information(token, 1)?, 0)?.sid;
     let enabled_groups = groups(&information(token, 2)?)?;
     let restricted = groups(&information(token, 11)?)?;
+    let raw_privileges = information(token, 3)?;
+    let count = raw_privileges
+        .get(..4)
+        .map(|bytes| u32::from_ne_bytes(bytes.try_into().unwrap()) as usize)
+        .ok_or_else(|| invalid("truncated token privilege count"))?;
+    if count > 4096 || raw_privileges.len() != 4 + 12 * count {
+        return Err(invalid("token privileges exceed their bounded buffer"));
+    }
+    let privileges = raw_privileges[4..]
+        .chunks_exact(12)
+        .map(|record| Privilege {
+            luid: u64::from_ne_bytes(record[..8].try_into().unwrap()),
+            attributes: u32::from_ne_bytes(record[8..].try_into().unwrap()),
+        })
+        .collect();
     let flags = information(token, 29)?;
     if flags.len() != 4 {
         return Err(invalid("WNF AppContainer flag is not a DWORD"));
@@ -121,6 +137,7 @@ fn capture(token: &Token) -> io::Result<Subject> {
         groups: enabled_groups,
         restricted,
         app_container: u32::from_ne_bytes(flags.try_into().unwrap()) != 0,
+        privileges,
     })
 }
 pub(super) fn subject() -> io::Result<Subject> {

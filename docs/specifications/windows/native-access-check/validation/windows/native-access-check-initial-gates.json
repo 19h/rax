@@ -1,0 +1,26 @@
+﻿[
+    {
+        "gate":  "access",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib access_check_tests -- --nocapture",
+        "exit-code":  101,
+        "log":  "native-access-check-initial-access.log"
+    },
+    {
+        "gate":  "token",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib token_query -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-access-check-initial-token.log"
+    },
+    {
+        "gate":  "wnf",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib user::windows::wnf::tests -- --nocapture",
+        "exit-code":  0,
+        "log":  "native-access-check-initial-wnf.log"
+    },
+    {
+        "gate":  "all-targets",
+        "command":  "cargo.exe check --locked --offline --no-default-features --all-targets",
+        "exit-code":  0,
+        "log":  "native-access-check-initial-all-targets.log"
+    }
+]

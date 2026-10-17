@@ -230,6 +230,8 @@ pub enum Object {
     SymbolicLink(std::sync::Arc<super::object_namespace::SymbolicLink>),
     /// This process's immutable captured primary-token subject; no host HANDLE.
     PrimaryToken,
+    /// An immutable captured impersonation subject, never a host token HANDLE.
+    ImpersonationToken(std::sync::Arc<super::security::Subject>),
     /// An object this implementation only needs to name (unmodeled tokens,
     /// registry keys, window stations).
     Opaque(&'static str),
@@ -258,7 +260,7 @@ impl Object {
             Object::Key(_) => "Key",
             Object::Directory(_) => "Directory",
             Object::SymbolicLink(_) => "SymbolicLink",
-            Object::PrimaryToken => "Token",
+            Object::PrimaryToken | Object::ImpersonationToken(_) => "Token",
             Object::Opaque(t) => t,
         }
     }

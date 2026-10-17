@@ -1,0 +1,17 @@
+{
+  "pid": 8788,
+  "utc": "2026-10-17T19:45:16.867898+00:00",
+  "lock": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-v4-native-driver.lock",
+  "scope": "native NtAccessCheck controlled descriptor, primary and impersonation token observations; no RAX source mutation",
+  "child-pid": 6824,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-access-check-v4-profiles.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T19:45:34.225581+00:00"
+}

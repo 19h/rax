@@ -1,0 +1,14 @@
+[
+  {
+    "path": "access-check.html",
+    "url": "https://learn.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-accesscheck",
+    "bytes": 57735,
+    "sha256": "897446637edef6891dbb8ef46a5af2e31da8ec5a343cceef5dbec975d834eb0a"
+  },
+  {
+    "path": "generic-mapping.html",
+    "url": "https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-generic_mapping",
+    "bytes": 50878,
+    "sha256": "41479c7cf244420a52d9ed70bfd4f47743e22afe22d217f2823c41c58aa0dc5f"
+  }
+]

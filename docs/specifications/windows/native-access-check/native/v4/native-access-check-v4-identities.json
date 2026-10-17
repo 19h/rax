@@ -1,0 +1,104 @@
+{
+  "scope": "four producer ABIs on the same ARM64 Windows10.0.29683 kernel; all controlled subjects are non-AppContainer primary and explicit impersonation tokens; no guest implementation proof",
+  "producers": [
+    {
+      "profile": "arm64",
+      "machine": 43620,
+      "large-address-aware": true,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-v4-arm64\\native-access-check-v4.cpp",
+        "bytes": 7569,
+        "sha256": "be1f2679b56b118a42e5278d28d0fd83cdf601e95b969f50b34a522d00710d19"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-v4-arm64\\native-access-check-v4-arm64.exe",
+        "bytes": 149504,
+        "sha256": "d5eae35aa8ffbf0640a30f492eeeaf1d2045ce3a917a416a8897630aff1c6825"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-v4-arm64\\native-access-check-v4-arm64.log",
+        "bytes": 1466788,
+        "sha256": "bcbb05f22e223225861b795288ae6d64778ed8c060274cd7d8bd6aa83e13e344"
+      },
+      "calls": 4410,
+      "escaped-exceptions": 0,
+      "closed-handles": 3,
+      "released-descriptors": 6
+    },
+    {
+      "profile": "x64",
+      "machine": 34404,
+      "large-address-aware": true,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-v4-x64\\native-access-check-v4.cpp",
+        "bytes": 7569,
+        "sha256": "be1f2679b56b118a42e5278d28d0fd83cdf601e95b969f50b34a522d00710d19"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-v4-x64\\native-access-check-v4-x64.exe",
+        "bytes": 146944,
+        "sha256": "69f236fc4ae25e2e4e846e3d1d03a5c36db50a2d6d87408b17e3f085ba219539"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-v4-x64\\native-access-check-v4-x64.log",
+        "bytes": 1466786,
+        "sha256": "7626c747fc38cb6cec72ddcdb72d789255f658654c092272a1b409352e3719f0"
+      },
+      "calls": 4410,
+      "escaped-exceptions": 0,
+      "closed-handles": 3,
+      "released-descriptors": 6
+    },
+    {
+      "profile": "x86",
+      "machine": 332,
+      "large-address-aware": false,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-v4-x86\\native-access-check-v4.cpp",
+        "bytes": 7569,
+        "sha256": "be1f2679b56b118a42e5278d28d0fd83cdf601e95b969f50b34a522d00710d19"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-v4-x86\\native-access-check-v4-x86.exe",
+        "bytes": 121856,
+        "sha256": "ad3afa6080927b6d51948b5d77561c0452c4015326fec7b905a75e0de955273c"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-v4-x86\\native-access-check-v4-x86.log",
+        "bytes": 1466746,
+        "sha256": "31c3c4baa0e54c464ac016fc9f4c7c169e18dec0141f88639b912d28c493a8fe"
+      },
+      "calls": 4410,
+      "escaped-exceptions": 0,
+      "closed-handles": 3,
+      "released-descriptors": 6
+    },
+    {
+      "profile": "x86-laa",
+      "machine": 332,
+      "large-address-aware": true,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-v4-x86-laa\\native-access-check-v4.cpp",
+        "bytes": 7569,
+        "sha256": "be1f2679b56b118a42e5278d28d0fd83cdf601e95b969f50b34a522d00710d19"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-v4-x86-laa\\native-access-check-v4-x86-laa.exe",
+        "bytes": 121856,
+        "sha256": "65dc29753a28bfc9c0b4383f7d4a9fc902e214f8c527d1a37afca7ca5eaceb16"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-v4-x86-laa\\native-access-check-v4-x86-laa.log",
+        "bytes": 1466750,
+        "sha256": "ebb73ad4c74f0a22700055ddc6553eb98091f8718070eb4d4c7508022f9f96f8"
+      },
+      "calls": 4410,
+      "escaped-exceptions": 0,
+      "closed-handles": 3,
+      "released-descriptors": 6
+    }
+  ],
+  "calls": 17640,
+  "closed-handles": 12,
+  "released-descriptors": 24
+}

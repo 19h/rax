@@ -1,0 +1,26 @@
+{
+  "arm64": {
+    "return": "00000000",
+    "returned": "56",
+    "granted": "00000000",
+    "access-status": "C0000022"
+  },
+  "x64": {
+    "return": "00000000",
+    "returned": "56",
+    "granted": "00000000",
+    "access-status": "C0000022"
+  },
+  "x86": {
+    "return": "00000000",
+    "returned": "56",
+    "granted": "00000000",
+    "access-status": "C0000022"
+  },
+  "x86-laa": {
+    "return": "00000000",
+    "returned": "56",
+    "granted": "00000000",
+    "access-status": "C0000022"
+  }
+}

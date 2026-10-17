@@ -1,0 +1,7 @@
+{
+  "source-sha256": "6e7a27a613e6ae13259e12a7acfe194d0cada5da5d9669d536138f0405531a0b",
+  "rows": 1296,
+  "native-host": "ARM64 Windows10.0.29683",
+  "source-and-cartesian-matrix": "verified",
+  "claim-boundary": "native ARM64 oracle only; guest adapter and WoW64 privilege records unverified"
+}

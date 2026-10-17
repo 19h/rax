@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "prlctl",
+    "exec",
+    "a5b14f9a-d292-4610-a04d-df4ca4337c9d",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "-B",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-access-descriptor-alignment.py"
+  ],
+  "exit-code": 0,
+  "stdout": "[(0, '0x0'), (1, '0x80000002'), (2, '0x80000002'), (3, '0x80000002'), (4, '0x0'), (5, '0x80000002'), (6, '0x80000002'), (7, '0x80000002'), (8, '0x0'), (9, '0x80000002'), (10, '0x80000002'), (11, '0x80000002'), (12, '0x0'), (13, '0x80000002'), (14, '0x80000002'), (15, '0x80000002')]\n",
+  "stderr": ""
+}

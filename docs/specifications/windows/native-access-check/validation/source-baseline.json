@@ -1,0 +1,6 @@
+{
+  "base": "23ac34c5d0d0f6afff762431442d2fab52cda7f9",
+  "root": "/Users/int/Library/Caches/assist-process-emulation/native-access-check-20261017/rax-source",
+  "initial-status": "",
+  "intent": "captured subject and native-measured NtAccessCheck adapter; no prior token files owned by this group yet"
+}

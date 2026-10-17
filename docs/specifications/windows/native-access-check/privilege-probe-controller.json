@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "prlctl",
+    "exec",
+    "a5b14f9a-d292-4610-a04d-df4ca4337c9d",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "-B",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-access-privileges.py"
+  ],
+  "exit-code": 0,
+  "stdout": "completed 972 native ARM64 calls; 5 closed handles; 12 released descriptors\n",
+  "stderr": ""
+}

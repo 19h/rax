@@ -1,0 +1,29 @@
+{
+  "base": "23ac34c5d0d0f6afff762431442d2fab52cda7f9",
+  "owned": [
+    "src/user/windows/mod.rs",
+    "src/user/windows/security.rs",
+    "src/user/windows/wnf/catalog.rs",
+    "src/user/windows/wnf/installed.rs",
+    "src/user/windows/wnf/tests.rs",
+    "src/user/windows/objects.rs",
+    "src/user/windows/objects/wnf.rs",
+    "src/user/windows/sync.rs",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/token_query.rs",
+    "src/user/windows/dll/native/access_check.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/access_check_tests.rs",
+    "src/user/windows/nt.rs"
+  ],
+  "planes": {
+    "subject-capture": "extend existing bounded native capture and retain immutable principal",
+    "native-service": "add measured access check, no host forwarding",
+    "guest-objects": "typed captured impersonation object; primary token marker retained",
+    "writable-memory": "measured native64/WoW64 capture and publication",
+    "public-C-ABI": "unchanged",
+    "CPU-lifters/JIT": "unchanged",
+    "filesystem/registry/WNF-permission-rules": "unchanged",
+    "platforms": "shared Rust semantics on all hosts; native acquisition only Windows; final three-host full/owning validation required"
+  }
+}

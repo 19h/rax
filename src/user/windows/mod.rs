@@ -22,6 +22,7 @@ pub mod objects;
 mod performance_clock;
 pub mod process;
 pub mod registry;
+mod security;
 pub mod seh;
 pub mod sync;
 pub mod tls;

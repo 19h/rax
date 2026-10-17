@@ -1,0 +1,722 @@
+{
+  "utc": "2026-10-17T20:24:53.548058+00:00",
+  "parent": "23ac34c5d0d0f6afff762431442d2fab52cda7f9",
+  "selected-owning-inputs": 319,
+  "files": [
+    {
+      "path": "access-validation-stress-results.json",
+      "bytes": 597,
+      "sha256": "fa2cbb9c99b29dccbcb70aad4257a6296646924289db8242206f86769142fefc"
+    },
+    {
+      "path": "collect-access-archives.py",
+      "bytes": 3338,
+      "sha256": "20191729341973753941a2622908f75112868965f0daa380c8daa79c24d7d737"
+    },
+    {
+      "path": "collect-access-validation.py",
+      "bytes": 5802,
+      "sha256": "d02d793aa1f89a742fc4ece58b202f2c7a1aa08d38746bd3ad6bb378804ad848"
+    },
+    {
+      "path": "compiled-source/final/docs/specifications/windows/native-access-check/cases.json",
+      "bytes": 3356243,
+      "sha256": "1ec4acd2c59b1ec99c407cf11563b61f8d94f0549966a86520fbdc5847e0273c"
+    },
+    {
+      "path": "compiled-source/final/docs/specifications/windows/native-access-check/descriptors.json",
+      "bytes": 845,
+      "sha256": "5ecb83926e0fa9f0fca83a511dd33ea5e34abd2794ce2b55d08f82b85126f770"
+    },
+    {
+      "path": "compiled-source/final/docs/specifications/windows/native-access-check/native-access-privileges-v2.json",
+      "bytes": 570525,
+      "sha256": "36e8ddc254945f206d03425325be1ddef5315f1e2ff83ff0ef1104dacc0a5ae4"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/dll/native.rs",
+      "bytes": 18530,
+      "sha256": "1002ffd84203d89a51fdee8668ce8f1c5d8ea10e09842ed2a93811e2bb30cb6d"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/dll/native/access_check.rs",
+      "bytes": 6815,
+      "sha256": "d4bffe610c7e20c8d36c925702e9e1ac292e5b1c7f93f7f4a80f362cabd5cc03"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/dll/native/token_query.rs",
+      "bytes": 3026,
+      "sha256": "bc4c37cff9aca4f79ca18649fc329e9946ebbe63f7b0dbc3acb691571563b532"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/mod.rs",
+      "bytes": 757,
+      "sha256": "41ae7501568af5c13448848ccfe3c15317df86217c004b4b3943f769597c20b7"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/nt.rs",
+      "bytes": 19109,
+      "sha256": "5bb094a7e4ae4142654f863c136a1b9a34557cc2b61c67d011b1a16f1e7f7d03"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/objects.rs",
+      "bytes": 27694,
+      "sha256": "5e37dd7e2be62aa6f90923f1782a262e036babb38c46c96b09d16818d18579d4"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/objects/wnf.rs",
+      "bytes": 7304,
+      "sha256": "01bbe9fdf31cd38dbc1c8232ec065b83b82ae361d4760b5f4beef5c1f1e77a71"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47767,
+      "sha256": "c492b78fc66edf6d220e33dfd7d5172c7013e3edfa12592f82c3e4594aa50e8d"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/process/sched/tests/services_tests/access_check_tests.rs",
+      "bytes": 25152,
+      "sha256": "3f3ffd6366d09a77c554a5188f42d7ebd07a5eef0b1e31d53a485967db844fc2"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/security.rs",
+      "bytes": 7449,
+      "sha256": "a3d603eac64bdbc6c5635f48acca6665f0c022765459951f71d4b110d5907cef"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/sync.rs",
+      "bytes": 36163,
+      "sha256": "7a1cb1d5f6ef154604f7b60900ec2acb1317f11b95256fac2d7c1e7904006a4c"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/wnf/catalog.rs",
+      "bytes": 7719,
+      "sha256": "8e4c16ff7cf48930c3c5c1a677cc3f78be7f444a5e8949472e5f15ce34e227e6"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/wnf/installed.rs",
+      "bytes": 5519,
+      "sha256": "23c19af50d5238aebe500e7adaaf28f97e5532414ef12fa6ea11d86ab941a616"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/wnf/tests.rs",
+      "bytes": 7049,
+      "sha256": "36e1d2b43f0af7d26c8f7980b85cab8edbf7fe927b0f1a5684f1a73100447756"
+    },
+    {
+      "path": "compiled-source/initial/docs/specifications/windows/native-access-check/cases.json",
+      "bytes": 3356243,
+      "sha256": "1ec4acd2c59b1ec99c407cf11563b61f8d94f0549966a86520fbdc5847e0273c"
+    },
+    {
+      "path": "compiled-source/initial/docs/specifications/windows/native-access-check/descriptors.json",
+      "bytes": 845,
+      "sha256": "5ecb83926e0fa9f0fca83a511dd33ea5e34abd2794ce2b55d08f82b85126f770"
+    },
+    {
+      "path": "compiled-source/initial/docs/specifications/windows/native-access-check/native-access-privileges-v2.json",
+      "bytes": 570525,
+      "sha256": "36e8ddc254945f206d03425325be1ddef5315f1e2ff83ff0ef1104dacc0a5ae4"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/dll/native.rs",
+      "bytes": 18530,
+      "sha256": "1002ffd84203d89a51fdee8668ce8f1c5d8ea10e09842ed2a93811e2bb30cb6d"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/dll/native/access_check.rs",
+      "bytes": 6815,
+      "sha256": "d4bffe610c7e20c8d36c925702e9e1ac292e5b1c7f93f7f4a80f362cabd5cc03"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/dll/native/token_query.rs",
+      "bytes": 3026,
+      "sha256": "bc4c37cff9aca4f79ca18649fc329e9946ebbe63f7b0dbc3acb691571563b532"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/mod.rs",
+      "bytes": 757,
+      "sha256": "41ae7501568af5c13448848ccfe3c15317df86217c004b4b3943f769597c20b7"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/nt.rs",
+      "bytes": 19109,
+      "sha256": "5bb094a7e4ae4142654f863c136a1b9a34557cc2b61c67d011b1a16f1e7f7d03"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/objects.rs",
+      "bytes": 27694,
+      "sha256": "5e37dd7e2be62aa6f90923f1782a262e036babb38c46c96b09d16818d18579d4"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/objects/wnf.rs",
+      "bytes": 7304,
+      "sha256": "01bbe9fdf31cd38dbc1c8232ec065b83b82ae361d4760b5f4beef5c1f1e77a71"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47767,
+      "sha256": "c492b78fc66edf6d220e33dfd7d5172c7013e3edfa12592f82c3e4594aa50e8d"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/process/sched/tests/services_tests/access_check_tests.rs",
+      "bytes": 24534,
+      "sha256": "a55e443b98cf30a9960cba3411b778a987f4eb46959bc20a21cfde4468007cc4"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/security.rs",
+      "bytes": 7449,
+      "sha256": "a3d603eac64bdbc6c5635f48acca6665f0c022765459951f71d4b110d5907cef"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/sync.rs",
+      "bytes": 36163,
+      "sha256": "7a1cb1d5f6ef154604f7b60900ec2acb1317f11b95256fac2d7c1e7904006a4c"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/wnf/catalog.rs",
+      "bytes": 7719,
+      "sha256": "8e4c16ff7cf48930c3c5c1a677cc3f78be7f444a5e8949472e5f15ce34e227e6"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/wnf/installed.rs",
+      "bytes": 5519,
+      "sha256": "23c19af50d5238aebe500e7adaaf28f97e5532414ef12fa6ea11d86ab941a616"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/wnf/tests.rs",
+      "bytes": 7049,
+      "sha256": "36e1d2b43f0af7d26c8f7980b85cab8edbf7fe927b0f1a5684f1a73100447756"
+    },
+    {
+      "path": "epoch2-change.json",
+      "bytes": 406,
+      "sha256": "ce4fb73e2d6bfd9129fe3c510cad7a81456e4e7c556e7b82100628b5a013c173"
+    },
+    {
+      "path": "epoch2-owning-source-hashes.json",
+      "bytes": 61375,
+      "sha256": "b3597ab4c0026a80db1ac5bc7ec243eb89f2706a03bf083aacf9c17fff34cd55"
+    },
+    {
+      "path": "final-review-notes.json",
+      "bytes": 1005,
+      "sha256": "f249cc4481b2e52ce3ad8381120c5426eb29646f11b8d4a3bb2f3ffb4dfb9372"
+    },
+    {
+      "path": "final-source-inputs.json",
+      "bytes": 3070,
+      "sha256": "6d0d3d9aaf4e4fdffa47353ed082b05faa74e683df5a5e6b9b46290e0066d674"
+    },
+    {
+      "path": "initial-access-source.json",
+      "bytes": 2461,
+      "sha256": "c9424a67acf8091bdfd16ccfb48cf82f055ce04b3c052389d40adcea20d92578"
+    },
+    {
+      "path": "initial-fixture-debugger-command.json",
+      "bytes": 908,
+      "sha256": "4d102f039f9ae8dd56179220f67285e3c3b7b4daedab54790becc78a699425de"
+    },
+    {
+      "path": "initial-fixture-debugger.log",
+      "bytes": 3273,
+      "sha256": "57ff06ad2b6da88b1ae9bd19801b6140502d245a77877ffde4a2dd6229c6c412"
+    },
+    {
+      "path": "initial-overlay-identities.json",
+      "bytes": 4279,
+      "sha256": "45899af24169e6783fcec3435afef94c2181d52f14ab7a4c7b3fd56f443d104a"
+    },
+    {
+      "path": "initial-owning-source-hashes.json",
+      "bytes": 61375,
+      "sha256": "5f1e62cd453f9cbee0157560aa20202121447fae41754c1196dfc4667dc32321"
+    },
+    {
+      "path": "initial-review-notes.json",
+      "bytes": 807,
+      "sha256": "3276aa43b9c827fe1633ada5c4a47b7ba4a18d53c4e0c46f24278a92b2e1d5e3"
+    },
+    {
+      "path": "latest-published-cpp-consumer-identities.json",
+      "bytes": 2907,
+      "sha256": "fd207fda21c92a934fb8ab615d555ae80b118836b3bd0b4d6e708b07a79cb46f"
+    },
+    {
+      "path": "linux-access-epoch2-access.log",
+      "bytes": 1220,
+      "sha256": "e876612a53c9c328e6655f4a292a159e6d7499ba0205740248be99db3a4d8d90"
+    },
+    {
+      "path": "linux-access-epoch2-gates.json",
+      "bytes": 3320,
+      "sha256": "ead888766ab52fced783ccd2c9bd7c2e4630ab230311dcb8319e90359c985561"
+    },
+    {
+      "path": "linux-access-epoch2-token.log",
+      "bytes": 724,
+      "sha256": "05b572b68ae5f35c12d98008fb881808f4f693c880777d384dc654ab07959ea9"
+    },
+    {
+      "path": "linux-access-epoch2-wnf.log",
+      "bytes": 708,
+      "sha256": "8440e1393f6a38dcfaf72fad153c73993ff86a7cfef9c63c9cd9dc8631442525"
+    },
+    {
+      "path": "linux-access-final-all-targets.log",
+      "bytes": 309,
+      "sha256": "5607f1610cb648f1f4fcada0ef5fd0beb4440f30f05cd7837c1183e7d1e500b6"
+    },
+    {
+      "path": "linux-access-final-capi.log",
+      "bytes": 12490,
+      "sha256": "4e069ddeaf1580c4b268860d7989025a1777f90f6dd46439651df9867527d898"
+    },
+    {
+      "path": "linux-access-final-gates.json",
+      "bytes": 4401,
+      "sha256": "c4fa8f0ea28414a8b886ea62b0891f3fceaf8729033a1fc481b9400b67c795f8"
+    },
+    {
+      "path": "linux-access-final-lib.log",
+      "bytes": 798085,
+      "sha256": "ac7b454be76879e7e8ff66617317dc8a8efeb56a1975f875d628d04d1593c49b"
+    },
+    {
+      "path": "linux-access-final-windows.log",
+      "bytes": 35805,
+      "sha256": "01506345dd7b771761c779e263d2dda9d36d5cf68e2fc527d731fe93130c932c"
+    },
+    {
+      "path": "linux-access-initial-access.log",
+      "bytes": 3271,
+      "sha256": "2e5f85993d9ae299ebbaf9996e0561dd0e2d11cf1d5093d6ef7ea0a87c9f64ea"
+    },
+    {
+      "path": "linux-access-initial-gates.json",
+      "bytes": 1132,
+      "sha256": "c358ae8ee1e84bfbaa5d7d614c517d2c73bd186dc8422f0d3a43c74b731061a5"
+    },
+    {
+      "path": "linux-final-owning-archive-identities.json",
+      "bytes": 62638,
+      "sha256": "a623134cafd26178f1ac63e8c425d321eeeee2fae701b67ac2fd990ff754ae5f"
+    },
+    {
+      "path": "linux-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "d92fff8d7d7db0b96333a3183bd93bbe513b4936deb104dd5422e5cb527f6d77"
+    },
+    {
+      "path": "linux-owning-artifacts.log",
+      "bytes": 159806,
+      "sha256": "b7c7f6ec186ad633c898fdfec764c1835eb0ed89a273ebdd088e0628da52d7a4"
+    },
+    {
+      "path": "linux-owning-commands.json",
+      "bytes": 5302,
+      "sha256": "5de570c1d6bc8f92ae4093ceaff1d80eed9e957a8e458866f3770399d411a5c1"
+    },
+    {
+      "path": "linux-owning-cpp.log",
+      "bytes": 1623,
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+    },
+    {
+      "path": "linux-owning-gates.json",
+      "bytes": 6011,
+      "sha256": "4943ffb63536c57232d79615dc62e74aa0306d09f426fa4fa89b2f700d6452fd"
+    },
+    {
+      "path": "linux-owning-shipping.log",
+      "bytes": 415,
+      "sha256": "5549bd399ccc0adb2eeef1daa68fca9758593997e2489331b1f54b82e63bbc27"
+    },
+    {
+      "path": "macos-access-epoch2-access.log",
+      "bytes": 1379,
+      "sha256": "d6766d63915c5abeae4ae46d46fd8d9d94ad733ab270a627a4026223b34c4a3c"
+    },
+    {
+      "path": "macos-access-epoch2-gates.json",
+      "bytes": 1235,
+      "sha256": "c912701c179dc8fddbb99c71d3bb55a65ad199b75bfed66affdb37848f1cb46a"
+    },
+    {
+      "path": "macos-access-epoch2-token.log",
+      "bytes": 809,
+      "sha256": "c5646ae8b1c2961ff7ace5ac782751813410de53b9d812ad92b09d8c3d86cf03"
+    },
+    {
+      "path": "macos-access-epoch2-wnf.log",
+      "bytes": 793,
+      "sha256": "7598f7e6a7ee7dca93e13cc8cf47218479932ca954a21a6e4339a6df3672c849"
+    },
+    {
+      "path": "macos-access-final-all-targets.log",
+      "bytes": 457,
+      "sha256": "ac057afe6258b9d01c5af01adc62799178e5f78a984764ca61df512d83679224"
+    },
+    {
+      "path": "macos-access-final-capi.log",
+      "bytes": 12650,
+      "sha256": "3cd247334fbc8e2dc3c8d5a385619844dcba0a16519994d9e936a7c1e8b2c484"
+    },
+    {
+      "path": "macos-access-final-gates.json",
+      "bytes": 1622,
+      "sha256": "ba4d5dead0eb11d9bb97edccff5011b8ccdb5db83072c8c840b48a7f30dda787"
+    },
+    {
+      "path": "macos-access-final-lib.log",
+      "bytes": 798908,
+      "sha256": "7db45bca5b7dea9ed8d9587ba1fc9cb59c229bced7f5c18272de2d5f93707cfb"
+    },
+    {
+      "path": "macos-access-final-windows.log",
+      "bytes": 36048,
+      "sha256": "ef49049aba025128d13f7c4a6cbc98179631e5d43800e80390801dd0b8d9f75b"
+    },
+    {
+      "path": "macos-access-initial-access.log",
+      "bytes": 3513,
+      "sha256": "335e944443876382c0ca21c5bf40404aef20d0eb59ac378efceab46c56258c5d"
+    },
+    {
+      "path": "macos-access-initial-gates.json",
+      "bytes": 436,
+      "sha256": "668ac121cf039a55cdac1db8fdddf5b58e330552e03a8f45532d0970b5b865e8"
+    },
+    {
+      "path": "macos-final-owning-archive-identities.json",
+      "bytes": 64025,
+      "sha256": "5c41eada28802d7d68f80b36e654f10cde3164916421072f184cdb68059fe6e4"
+    },
+    {
+      "path": "macos-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "80836d4e3ab3cf74b484d65cc1b8f01e7fa00caeabffa8d1faad4615149d44e4"
+    },
+    {
+      "path": "macos-owning-artifacts.log",
+      "bytes": 131080,
+      "sha256": "9c3fc76c729232f2b982b13a98732b68c98d77c11ae94234341f182fd01ee1a6"
+    },
+    {
+      "path": "macos-owning-build.log",
+      "bytes": 33678,
+      "sha256": "4da99f4c1175d7f71acde963d8e29f42d20340a74f6de2dfd98c8739656ace15"
+    },
+    {
+      "path": "macos-owning-commands.json",
+      "bytes": 3823,
+      "sha256": "843037c51c192f1388ae95192085c5bc6c5c78899e99ae82f6aa69e7201082ee"
+    },
+    {
+      "path": "macos-owning-ctest.log",
+      "bytes": 1273,
+      "sha256": "1056a9889c16c9029eba4df4c1702265b072cae2817c21c9af8866ddd3125b11"
+    },
+    {
+      "path": "macos-owning-gates.json",
+      "bytes": 4911,
+      "sha256": "126ff0d1311956105e83af5a3e3d04137162ef1acd18affc3a0b654f6cbcb3e7"
+    },
+    {
+      "path": "macos-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "macos-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "owned-source-plan.json",
+      "bytes": 1294,
+      "sha256": "785921aeb9c625ae210910c1d528aa481345368197e97b66a8c5748306381d2b"
+    },
+    {
+      "path": "owning-linux-cpp-build.py",
+      "bytes": 1522,
+      "sha256": "a0d9f75e831bd3585d3e009b94e8e3f2744b137e646c157c70a7ad7950373b56"
+    },
+    {
+      "path": "owning-validation-boundary.json",
+      "bytes": 326,
+      "sha256": "f8d5a99723eeb723979f45776323ea56b7be46d5bd0406fbbb77cea244121159"
+    },
+    {
+      "path": "run-access-epoch2-unix.py",
+      "bytes": 1966,
+      "sha256": "d58b2785c5ab6374e2aaa815c119b0aa704c609012698a23ecc26974ce6e8837"
+    },
+    {
+      "path": "run-access-final-unix.py",
+      "bytes": 2878,
+      "sha256": "7b5728c92f738bf693984828ce45dd40ad9e7e75dec2c80f27e1df390dd9ba08"
+    },
+    {
+      "path": "run-access-initial-unix.py",
+      "bytes": 1968,
+      "sha256": "8d31bc913c2d06dcd62389c44da5cca1c8dc74409ab09a0079b2b536c2b43c66"
+    },
+    {
+      "path": "run-owning-gates.py",
+      "bytes": 736,
+      "sha256": "d57d89ac46a192373fd91c44c41d099835797f7f16ffbe88541e79d990f0ee5e"
+    },
+    {
+      "path": "source-baseline.json",
+      "bytes": 305,
+      "sha256": "b6446da26b9ef3e970846a627165c68fafe82ae87caf4a42e0b7c3add1a7a14d"
+    },
+    {
+      "path": "stress-access-validation.py",
+      "bytes": 3520,
+      "sha256": "f348b4e06e5d8f7cf2429c9b06e16f37fc2e81dd91d06e8f1a9c17204d06ce19"
+    },
+    {
+      "path": "windows/access-check-epoch2-delta.json",
+      "bytes": 26375,
+      "sha256": "95d55ce5628861a12521e9f5cedf6b395633ddaca8e97d269103e294136e1159"
+    },
+    {
+      "path": "windows/access-check-final-core-driver.log",
+      "bytes": 1099,
+      "sha256": "eccea3c24540ce233d3e938cb48b4128d69bb1cb02dbd4e2ce8bda791cc00260"
+    },
+    {
+      "path": "windows/access-check-final-launch.json",
+      "bytes": 726,
+      "sha256": "dc6d9438ee478f74631cb828aa90160b634d1822e1e08c5eb6751f1ddf9a3eb9"
+    },
+    {
+      "path": "windows/access-check-final-owning-driver.log",
+      "bytes": 712,
+      "sha256": "f185de7715a456f294f393cb357a65c6867806a18d812d2335dcdf31bfad3aed"
+    },
+    {
+      "path": "windows/access-check-final-owning-source-hashes.json",
+      "bytes": 61375,
+      "sha256": "b3597ab4c0026a80db1ac5bc7ec243eb89f2706a03bf083aacf9c17fff34cd55"
+    },
+    {
+      "path": "windows/access-check-initial-driver.log",
+      "bytes": 4306,
+      "sha256": "d46e9d291941329a821ea1121389de042f27ebd3e86e864a148758b53e75353e"
+    },
+    {
+      "path": "windows/access-check-initial-launch.json",
+      "bytes": 479,
+      "sha256": "6c4c75be9ef6ed3575c983d32b47247c9cc9b66449aae27f48741f8c0a1905b0"
+    },
+    {
+      "path": "windows/apply-access-check-epoch2.py",
+      "bytes": 1831,
+      "sha256": "c17f7448a8ce65b7cb76304e4dad05970e973f31cce1cfcf09ae5af9edc97c47"
+    },
+    {
+      "path": "windows/apply-access-check-initial.py",
+      "bytes": 3314,
+      "sha256": "a113d7f2cc46ee1f09166c6035df442d57bbf073d5a8eaef1a3690c28102bfba"
+    },
+    {
+      "path": "windows/assist-native-access-check-final-cpp.log",
+      "bytes": 2946,
+      "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+    },
+    {
+      "path": "windows/assist-native-access-check-final-owned.ps1",
+      "bytes": 4459,
+      "sha256": "99694851b80c2214de005a86795bbfbcbffd9becb5b612b78a5b212df63957d8"
+    },
+    {
+      "path": "windows/assist-native-access-check-final-shipping.log",
+      "bytes": 1584,
+      "sha256": "03b72e160f0c85cde7dd8c93c2e09a772820b5068e0cd414075e1677ddc24e65"
+    },
+    {
+      "path": "windows/current-cpp-consumers-reverified.json",
+      "bytes": 1925,
+      "sha256": "c50a02fbad8b090826ebff94948b9fd38c7515903760b43094c1f81f1e9136c9"
+    },
+    {
+      "path": "windows/inspect-access-check-final-archives.py",
+      "bytes": 2202,
+      "sha256": "81657489a5d97464793e615f2a21fa4cbdee282f601c52388ec855e43706549a"
+    },
+    {
+      "path": "windows/native-access-check-epoch2-source-verification.json",
+      "bytes": 544,
+      "sha256": "0ea2c7cd8687492a166636b17a6316ebfdccbfb24f32355faca2edf4691cc0d0"
+    },
+    {
+      "path": "windows/native-access-check-final-access.log",
+      "bytes": 2309,
+      "sha256": "4aeeff327d189d553788baaeb45a4c74510015c1818a2a1f73050eb80ff73256"
+    },
+    {
+      "path": "windows/native-access-check-final-after-artifacts-stderr.log",
+      "bytes": 72,
+      "sha256": "9d892c5778d0c975f64a671e66ea5a753502353da3addd1dfdf3825225e406a2"
+    },
+    {
+      "path": "windows/native-access-check-final-after-artifacts.jsonl",
+      "bytes": 130191,
+      "sha256": "ea4071e303e362841262465fbb4c7b6af8a83337601bb9ad8fcbad1d67119949"
+    },
+    {
+      "path": "windows/native-access-check-final-all-targets.log",
+      "bytes": 986,
+      "sha256": "6f192206a4fc55fc4adcc0023b7accfbd805e4e5aeacbe65a28a11e6e2dd2601"
+    },
+    {
+      "path": "windows/native-access-check-final-build-user-artifacts.jsonl",
+      "bytes": 90587,
+      "sha256": "4b4088900a2baad3f1cb9874c3e18605786a0980d1389e7ac2b267d5d17cb01c"
+    },
+    {
+      "path": "windows/native-access-check-final-build-user.log",
+      "bytes": 146,
+      "sha256": "71d82633fdc318c3cd8236163b8f3e9c2509cc9f77a0cb3ec43a38b5e58a204c"
+    },
+    {
+      "path": "windows/native-access-check-final-capi.log",
+      "bytes": 13764,
+      "sha256": "c0c956d402e13e1ac0223d40fe4b12f56ed24e2aa8df5c9e6ed772536dce5bef"
+    },
+    {
+      "path": "windows/native-access-check-final-full.log",
+      "bytes": 772805,
+      "sha256": "80c315319a2a8a98d3e86736684e476043c1390d585de65f338a90b3c01c7389"
+    },
+    {
+      "path": "windows/native-access-check-final-gates.json",
+      "bytes": 1796,
+      "sha256": "2d0fe4c8ed1c334fb0341369d0d46f9c658968ea230de2f9eb329784c8b4bb57"
+    },
+    {
+      "path": "windows/native-access-check-final-gates.ps1",
+      "bytes": 3464,
+      "sha256": "239fa096f77dfe7ec27da6a14590e08c9af0870b7ac6b522f246a6f682eeecf3"
+    },
+    {
+      "path": "windows/native-access-check-final-integration.log",
+      "bytes": 1865,
+      "sha256": "5ae3ba9afd36c7381afeb64ec012986f005e2bee075359e38f1fe69748dcc9ec"
+    },
+    {
+      "path": "windows/native-access-check-final-observer-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "windows/native-access-check-final-ordinary-0.log",
+      "bytes": 57390,
+      "sha256": "338e79d1bd5675495a350b5251a58871470ef05c78a45e8ae78343279f4ea042"
+    },
+    {
+      "path": "windows/native-access-check-final-ordinary-2.log",
+      "bytes": 60099,
+      "sha256": "412c74a66c6b2635ba6c470fd393af0c4750995453bc218a215ebdf08ae0d9b5"
+    },
+    {
+      "path": "windows/native-access-check-final-ordinary-outcomes.json",
+      "bytes": 1428,
+      "sha256": "5f6e3b93e9379d0938b80cffc096cf9de1d032ef922780f8bea90ae9ded488d1"
+    },
+    {
+      "path": "windows/native-access-check-final-owning-archive-hashes.json",
+      "bytes": 52603,
+      "sha256": "d531cab5a9a72f7e13c2962433adfe7a29312b7b78fe330d06b7dadb8fcd4916"
+    },
+    {
+      "path": "windows/native-access-check-final-owning-source-identities.json",
+      "bytes": 62103,
+      "sha256": "92e028a945e06421b19e0fe92a1d7d5111fd31d9c54a32bc712d9c8d792b153c"
+    },
+    {
+      "path": "windows/native-access-check-final-owning-source-verification.json",
+      "bytes": 120,
+      "sha256": "eae04848411bf98affa81051b6c8b0954d614dbf38e9895c93f90220d991a97d"
+    },
+    {
+      "path": "windows/native-access-check-final-token.log",
+      "bytes": 1793,
+      "sha256": "45bef35732a0cfaf29dc746ba483de898365c941f365d9f83b20c9dfefcf0e82"
+    },
+    {
+      "path": "windows/native-access-check-final-verified-gates.json",
+      "bytes": 3189,
+      "sha256": "43b9e491332e1f0203fd9e22efcef2cc733b8b6cbb32040507f177982b605d78"
+    },
+    {
+      "path": "windows/native-access-check-final-wnf.log",
+      "bytes": 1614,
+      "sha256": "f0f7de28afba79dfba498a69d6c3bf0ab8df59575b2df0328161a0717b069f2f"
+    },
+    {
+      "path": "windows/native-access-check-initial-access.log",
+      "bytes": 4170,
+      "sha256": "b5efd498707b60148f9616c043b49d2d41c7f0668d9fcfddb46f58d0f74cfdb1"
+    },
+    {
+      "path": "windows/native-access-check-initial-all-targets.log",
+      "bytes": 986,
+      "sha256": "77ad17bf045325d42ef8a119d975792098b6cc894f698a2f350a515c66e0dd3c"
+    },
+    {
+      "path": "windows/native-access-check-initial-gates.json",
+      "bytes": 975,
+      "sha256": "63f4aff3c99e2753a5f2f922e834b1a10065053187fecbfa88178e3da762fe18"
+    },
+    {
+      "path": "windows/native-access-check-initial-gates.ps1",
+      "bytes": 1583,
+      "sha256": "f7c55162da5f0138620d64b7acc09002b4ff18d89143b8092c219860822cdac4"
+    },
+    {
+      "path": "windows/native-access-check-initial-source-verification.json",
+      "bytes": 4688,
+      "sha256": "e800a9673767077efc534b10c9e1cb96a8e4c9b830b2dbb2f1c88cf1c0c8d53c"
+    },
+    {
+      "path": "windows/native-access-check-initial-token.log",
+      "bytes": 1793,
+      "sha256": "32b29993febc0aba191965efbc8c128897421bbf1cee0046b4624e53fde85151"
+    },
+    {
+      "path": "windows/native-access-check-initial-wnf.log",
+      "bytes": 1614,
+      "sha256": "53558c0362ddbc41b410bb786a983a8a2aaf2ea82628fa545b63d0a537837c0e"
+    },
+    {
+      "path": "windows/native-secure-capture-current-cpp-verification.json",
+      "bytes": 1935,
+      "sha256": "bd684c57a0c922280ffe0bb274aa63d07ab7c07e0f0dcfe2579ea8a5ec0893c1"
+    },
+    {
+      "path": "windows/run-access-check-final-atomic.py",
+      "bytes": 5598,
+      "sha256": "00dff80466fec31dd0d11ce0538484c1ce5e138760ae3a30e3174abe39016e5e"
+    },
+    {
+      "path": "windows/run-access-check-final-observations.py",
+      "bytes": 1501,
+      "sha256": "3e5c073acc8a5f57df3bc434e1944c943ad78fead77fe0082f17319ce1ac3895"
+    },
+    {
+      "path": "windows/run-access-check-initial.py",
+      "bytes": 1413,
+      "sha256": "bc4ee4e525a2b6b96068496272620bbff9484b9091634d7689f6d9c4fc6d85f2"
+    },
+    {
+      "path": "windows/verify-access-check-final-owning-sources.py",
+      "bytes": 1188,
+      "sha256": "136832ef5da7a772c687a8b5da2bde4ec5bbaf1c7fe847424d2039f23b9ced3a"
+    }
+  ]
+}

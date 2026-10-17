@@ -1,5 +1,6 @@
 //! Build29683 name validation and bounded classic-DACL admission.
 use crate::user::windows::registry::Value;
+pub(super) use crate::user::windows::security::{Group, Subject};
 use std::collections::BTreeMap;
 use std::io;
 use std::sync::Arc;
@@ -26,18 +27,6 @@ impl Name {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Group {
-    pub(crate) sid: Vec<u8>,
-    pub(crate) attributes: u32,
-}
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Subject {
-    pub(crate) user: Vec<u8>,
-    pub(crate) groups: Vec<Group>,
-    pub(crate) restricted: Vec<Group>,
-    pub(crate) app_container: bool,
-}
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Permission {
     Missing,
@@ -48,7 +37,7 @@ pub(crate) enum Permission {
 #[derive(Debug, Clone, Default)]
 pub(crate) struct Catalog {
     records: Arc<BTreeMap<u64, Option<u32>>>,
-    primary_app_container: Option<bool>,
+    primary_subject: Option<Arc<Subject>>,
 }
 fn invalid(message: &'static str) -> io::Error {
     io::Error::new(io::ErrorKind::InvalidData, message)
@@ -151,6 +140,7 @@ impl Catalog {
     /// A total ACE count, S captured token SID count. No host pointer is retained.
     pub(crate) fn selected(values: Vec<Value>, subject: Subject) -> io::Result<Self> {
         if values.len() > 4096
+            || subject.privileges.len() > 4096
             || sid(&subject.user) != Some(subject.user.as_slice())
             || subject
                 .groups
@@ -202,13 +192,18 @@ impl Catalog {
         }
         Ok(Self {
             records: Arc::new(records),
-            primary_app_container: Some(subject.app_container),
+            primary_subject: Some(Arc::new(subject)),
         })
     }
     /// Retains the same validated primary-token property used for WNF grants.
     /// `None` is an absent snapshot, not a non-AppContainer token.
     pub(crate) fn primary_app_container(&self) -> Option<bool> {
-        self.primary_app_container
+        self.primary_subject
+            .as_ref()
+            .map(|subject| subject.app_container)
+    }
+    pub(crate) fn primary_subject(&self) -> Option<Arc<Subject>> {
+        self.primary_subject.clone()
     }
     pub(crate) fn permission(&self, name: u64, event_mask: u32) -> Permission {
         let Some(grant) = self.records.get(&name) else {

@@ -1,0 +1,111 @@
+{
+  "utc": "2026-10-17T20:01:19.545613+00:00",
+  "base": "23ac34c5d0d0f6afff762431442d2fab52cda7f9",
+  "files": [
+    {
+      "path": "src/user/windows/mod.rs",
+      "bytes": 757,
+      "sha256": "41ae7501568af5c13448848ccfe3c15317df86217c004b4b3943f769597c20b7",
+      "previous-sha256": "6b8c630028c7ef19542083d8c0d7b992d013ad1654cf144dd330fafc94b1199c"
+    },
+    {
+      "path": "src/user/windows/security.rs",
+      "bytes": 7449,
+      "sha256": "a3d603eac64bdbc6c5635f48acca6665f0c022765459951f71d4b110d5907cef",
+      "previous-sha256": null
+    },
+    {
+      "path": "src/user/windows/wnf/catalog.rs",
+      "bytes": 7719,
+      "sha256": "8e4c16ff7cf48930c3c5c1a677cc3f78be7f444a5e8949472e5f15ce34e227e6",
+      "previous-sha256": "13b2d6c1071092e0c8f8b90cc8deb2e76cd49aee5c8b241874bcc2dcaa50eaa2"
+    },
+    {
+      "path": "src/user/windows/wnf/installed.rs",
+      "bytes": 5519,
+      "sha256": "23c19af50d5238aebe500e7adaaf28f97e5532414ef12fa6ea11d86ab941a616",
+      "previous-sha256": "4e766d374e8bb3f327907da34ea4049da5a4cf62d97f46288da048229172e7f8"
+    },
+    {
+      "path": "src/user/windows/wnf/tests.rs",
+      "bytes": 7049,
+      "sha256": "36e1d2b43f0af7d26c8f7980b85cab8edbf7fe927b0f1a5684f1a73100447756",
+      "previous-sha256": "be80295c53d8125aad461246b57ba50b679986680bb8e9341ce4e5c406555325"
+    },
+    {
+      "path": "src/user/windows/objects.rs",
+      "bytes": 27694,
+      "sha256": "5e37dd7e2be62aa6f90923f1782a262e036babb38c46c96b09d16818d18579d4",
+      "previous-sha256": "5be289156de5ee9d9901ab514ea88c94adc7c66b135a5b405f67dfe557fad4db"
+    },
+    {
+      "path": "src/user/windows/objects/wnf.rs",
+      "bytes": 7304,
+      "sha256": "01bbe9fdf31cd38dbc1c8232ec065b83b82ae361d4760b5f4beef5c1f1e77a71",
+      "previous-sha256": "23e1d2afcf2277173e25c58c1aace3adab3ac6dd7982a16376d75dfb30874c61"
+    },
+    {
+      "path": "src/user/windows/sync.rs",
+      "bytes": 36163,
+      "sha256": "7a1cb1d5f6ef154604f7b60900ec2acb1317f11b95256fac2d7c1e7904006a4c",
+      "previous-sha256": "1b6209a4ac12b5757f85a3115b6ab15efb9570a51c996a3d622ce70f13b9c6bf"
+    },
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 18530,
+      "sha256": "1002ffd84203d89a51fdee8668ce8f1c5d8ea10e09842ed2a93811e2bb30cb6d",
+      "previous-sha256": "661204483a9ca6e0fbd6f969a2537845292d3e213d2f51886dcda9963282fe33"
+    },
+    {
+      "path": "src/user/windows/dll/native/token_query.rs",
+      "bytes": 3026,
+      "sha256": "bc4c37cff9aca4f79ca18649fc329e9946ebbe63f7b0dbc3acb691571563b532",
+      "previous-sha256": "7e90e164d4c676a92b8e83f5b917b3a4bf874970368c187fc2a41afe8751a515"
+    },
+    {
+      "path": "src/user/windows/dll/native/access_check.rs",
+      "bytes": 6815,
+      "sha256": "d4bffe610c7e20c8d36c925702e9e1ac292e5b1c7f93f7f4a80f362cabd5cc03",
+      "previous-sha256": null
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47767,
+      "sha256": "c492b78fc66edf6d220e33dfd7d5172c7013e3edfa12592f82c3e4594aa50e8d",
+      "previous-sha256": "2ea2b4ebafefd1ec2b733a85d1e7ef33c283fc356f215bb245d9e70d06a8b130"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/access_check_tests.rs",
+      "bytes": 24534,
+      "sha256": "a55e443b98cf30a9960cba3411b778a987f4eb46959bc20a21cfde4468007cc4",
+      "previous-sha256": null
+    },
+    {
+      "path": "src/user/windows/nt.rs",
+      "bytes": 19109,
+      "sha256": "5bb094a7e4ae4142654f863c136a1b9a34557cc2b61c67d011b1a16f1e7f7d03",
+      "previous-sha256": "4249579882a4e148ebc6c4363ab2077957c851b083b620479af8411c42469369"
+    },
+    {
+      "path": "docs/specifications/windows/native-access-check/cases.json",
+      "bytes": 3356243,
+      "sha256": "1ec4acd2c59b1ec99c407cf11563b61f8d94f0549966a86520fbdc5847e0273c",
+      "previous-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-access-check/descriptors.json",
+      "bytes": 845,
+      "sha256": "5ecb83926e0fa9f0fca83a511dd33ea5e34abd2794ce2b55d08f82b85126f770",
+      "previous-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-access-check/native-access-privileges-v2.json",
+      "bytes": 570525,
+      "sha256": "36e8ddc254945f206d03425325be1ddef5315f1e2ff83ff0ef1104dacc0a5ae4",
+      "previous-sha256": null
+    }
+  ],
+  "selected-source-count": 319,
+  "native-cargo-adapter-preserved": "9f80616d633d948feeba5b201bfa4fe98c8fd736f3f48469b6481279584d8f4c",
+  "scope": "fourteen access-check source inputs and three fixtures atop published token source; selected319 inputs"
+}

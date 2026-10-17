@@ -1,0 +1,54 @@
+(lldb) target create "/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/rax-754f4d2a527a4423"
+Current executable set to '/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/rax-754f4d2a527a4423' (arm64).
+(lldb) breakpoint set --file access_check.rs --line 52
+Breakpoint 1: where = rax-754f4d2a527a4423`rax::user::windows::dll::native::access_check::capture::h2906c6eac7944982 + 684 at access_check.rs:52:22, address = 0x0000000101a6c75c
+(lldb) run --exact user::windows::process::sched::tests::services_tests::access_check_tests::native_access_check_replays_all_17640_native_logical_rows --nocapture
+
+running 1 test
+Process 62897 launched: '/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/rax-754f4d2a527a4423' (arm64)
+Process 62897 stopped
+* thread #2, name = 'user::windows::process::sched::tests::services_tests::access_ch', stop reason = breakpoint 1.1
+       frame #0: 0x0000000101a6c75c rax-754f4d2a527a4423`rax::user::windows::dll::native::access_check::capture::h2906c6eac7944982(c=0x000000016fffec30, address=2162688, wow_header=Option<&[u8]> @ 0x000000016fffd2f0) at access_check.rs:52:22
+   49  	    };
+   50  	    let control = u16::from_le_bytes([prefix[2], prefix[3]]);
+   51  	    if prefix[0] != 1 {
+-> 52  	        return Err(c.unsupported("unmodeled access-check descriptor revision"));
+    	                     ^
+   53  	    }
+   54  	    let relative = control & 0x8000 != 0;
+   55  	    let wide = !relative && c.arch() != WinArch::X86;
+(lldb) frame variable address control
+(unsigned long) address = 2162688
+(unsigned short) control = 33
+(lldb) frame select 1
+frame #1: 0x0000000101a6dce8 rax-754f4d2a527a4423`rax::user::windows::dll::native::access_check::checked::he1e26f8a6af92021(c=0x000000016fffec30) at access_check.rs:176:26
+   173 	        Ok(subject) => subject,
+   174 	        Err(status) => return Flow::ret(status.into()),
+   175 	    };
+-> 176 	    let captured = match capture(c, descriptor, wow_header.as_deref())? {
+    	                         ^
+   177 	        Capture::Descriptor(descriptor) => descriptor,
+   178 	        Capture::Status(status) => return Flow::ret(status.into()),
+   179 	    };
+(lldb) frame variable descriptor token desired generic privileges length_ptr granted status
+(unsigned long) descriptor = 2162688
+(unsigned long) token = 18446744073709551612
+(unsigned int) desired = 0
+(unsigned long) generic = 2170880
+(unsigned long) privileges = 2179072
+(unsigned long) length_ptr = 2187264
+(unsigned long) granted = 2195456
+(unsigned long) status = 2203648
+(lldb) frame select 3
+frame #3: 0x0000000101a2e1fc rax-754f4d2a527a4423`rax::user::windows::process::services::enter::hdd7bb2aaeb6540cb(p=0x000000016ffff760, t=0x0000000170000600, number=33, pc=305397760, sp=2162624, resume=305397764, wow64_return=false) at services.rs:72:18
+   69  	    if saved_rcx.is_some() {
+   70  	        t.cpu.set_gpr(1, t.cpu.gpr(10));
+   71  	    }
+-> 72  	    let result = (api.imp)(&mut Ctx {
+    	                 ^
+   73  	        p,
+   74  	        t,
+   75  	        api,
+(lldb) frame variable sp number
+(unsigned long) sp = 2162624
+(unsigned int) number = 33

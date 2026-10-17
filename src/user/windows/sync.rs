@@ -429,6 +429,7 @@ fn signaled(p: &Proc, id: ObjId, tid: u32) -> bool {
             | Object::Directory(_)
             | Object::SymbolicLink(_)
             | Object::PrimaryToken
+            | Object::ImpersonationToken(_)
             | Object::Opaque(_),
         )
         | None => false,

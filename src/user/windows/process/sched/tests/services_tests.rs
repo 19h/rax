@@ -36,6 +36,8 @@ mod section_open_tests;
 #[path = "services_tests/thread_token_tests.rs"]
 mod thread_token_tests;
 
+#[path = "services_tests/access_check_tests.rs"]
+mod access_check_tests;
 #[path = "services_tests/token_query_tests.rs"]
 mod token_query_tests;
 

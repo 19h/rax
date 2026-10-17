@@ -32,6 +32,7 @@ fn checked(c: &mut Ctx) -> ApiResult {
     if token == thread_token {
         return Flow::ret(STATUS_NO_TOKEN.into());
     }
+    let mut captured_flag = None;
     if token != process_token && token != effective_token {
         if token == c.arch().ptr(u64::MAX) || token == c.arch().ptr(u64::MAX - 1) {
             return Flow::ret(STATUS_OBJECT_TYPE_MISMATCH.into());
@@ -43,13 +44,20 @@ fn checked(c: &mut Ctx) -> ApiResult {
                     return Flow::ret(STATUS_ACCESS_DENIED.into());
                 }
             }
+            Some(Object::ImpersonationToken(subject)) => {
+                if c.p.objects.access(token).unwrap_or(0) & 8 == 0 {
+                    return Flow::ret(STATUS_ACCESS_DENIED.into());
+                }
+                captured_flag = Some(subject.app_container);
+            }
             Some(Object::Opaque("Token")) => {
                 return Err(c.unsupported("opaque token has no modeled primary subject"));
             }
             Some(_) => return Flow::ret(STATUS_OBJECT_TYPE_MISMATCH.into()),
         }
     }
-    let Some(app_container) = c.p.objects.primary_token_app_container() else {
+    let Some(app_container) = captured_flag.or_else(|| c.p.objects.primary_token_app_container())
+    else {
         return Err(c.unsupported("primary-token subject is not captured"));
     };
     // Native writes the required length before either short-buffer return or

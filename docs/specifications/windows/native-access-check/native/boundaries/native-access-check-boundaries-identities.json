@@ -1,0 +1,109 @@
+{
+  "scope": "four producer ABIs on the same ARM64 Windows10.0.29683 kernel; controlled primary-token pseudo-handles, invalid and query-denied handles; no guest implementation proof",
+  "producers": [
+    {
+      "profile": "arm64",
+      "machine": 43620,
+      "large-address-aware": true,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-boundaries-arm64\\native-access-check-boundaries.cpp",
+        "bytes": 6820,
+        "sha256": "0f05b6e59fe8cd521904549300962d9483b526d3871d719e69a5f8808b55f7b4"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-boundaries-arm64\\native-access-check-boundaries-arm64.exe",
+        "bytes": 149504,
+        "sha256": "7b6c32b66cef1cc90ecba0c2bffbe3fe355774fd4197ab4b63568035934eb38e"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-boundaries-arm64\\native-access-check-boundaries-arm64.log",
+        "bytes": 579497,
+        "sha256": "c62fcf817bc44c18dc7fa33ecb2ce4aa55653b654070b7934be637ffb8ec6316"
+      },
+      "calls": 1500,
+      "escaped-exceptions": 0,
+      "closed-handles": 3,
+      "released-descriptors": 1,
+      "released-arenas": 1
+    },
+    {
+      "profile": "x64",
+      "machine": 34404,
+      "large-address-aware": true,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-boundaries-x64\\native-access-check-boundaries.cpp",
+        "bytes": 6820,
+        "sha256": "0f05b6e59fe8cd521904549300962d9483b526d3871d719e69a5f8808b55f7b4"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-boundaries-x64\\native-access-check-boundaries-x64.exe",
+        "bytes": 146432,
+        "sha256": "4f8e7601b9b8411659283c08bd819d4482355d64eed5b0b8dab4624899e42abf"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-boundaries-x64\\native-access-check-boundaries-x64.log",
+        "bytes": 579495,
+        "sha256": "b3cdefc46242154c3fab933ca9aefa42a7fad8c266fe54f9f0d6b9cb6437b59b"
+      },
+      "calls": 1500,
+      "escaped-exceptions": 0,
+      "closed-handles": 3,
+      "released-descriptors": 1,
+      "released-arenas": 1
+    },
+    {
+      "profile": "x86",
+      "machine": 332,
+      "large-address-aware": false,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-boundaries-x86\\native-access-check-boundaries.cpp",
+        "bytes": 6820,
+        "sha256": "0f05b6e59fe8cd521904549300962d9483b526d3871d719e69a5f8808b55f7b4"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-boundaries-x86\\native-access-check-boundaries-x86.exe",
+        "bytes": 121856,
+        "sha256": "34cd2b621f65de2f3590753aa81ad16c61e39c9bea713340bcc90d3ccab80f4b"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-boundaries-x86\\native-access-check-boundaries-x86.log",
+        "bytes": 579495,
+        "sha256": "b244f6abda442472e787783b0ebbbad1c4bbddc0503a1d6633ad99f15205bcb9"
+      },
+      "calls": 1500,
+      "escaped-exceptions": 0,
+      "closed-handles": 3,
+      "released-descriptors": 1,
+      "released-arenas": 1
+    },
+    {
+      "profile": "x86-laa",
+      "machine": 332,
+      "large-address-aware": true,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-boundaries-x86-laa\\native-access-check-boundaries.cpp",
+        "bytes": 6820,
+        "sha256": "0f05b6e59fe8cd521904549300962d9483b526d3871d719e69a5f8808b55f7b4"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-boundaries-x86-laa\\native-access-check-boundaries-x86-laa.exe",
+        "bytes": 121856,
+        "sha256": "95830a1af04bde72d5604af7e0f227618e336f2755ad2f53ee77511593b9141f"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\access-check-boundaries-x86-laa\\native-access-check-boundaries-x86-laa.log",
+        "bytes": 579499,
+        "sha256": "b07f42f702d07ccb33589087aba342cbb97cf15b8c9b1f258a88d609142fc6c1"
+      },
+      "calls": 1500,
+      "escaped-exceptions": 0,
+      "closed-handles": 3,
+      "released-descriptors": 1,
+      "released-arenas": 1
+    }
+  ],
+  "calls": 6000,
+  "closed-handles": 12,
+  "released-descriptors": 4,
+  "released-arenas": 4
+}

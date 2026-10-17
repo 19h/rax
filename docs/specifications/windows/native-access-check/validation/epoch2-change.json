@@ -1,0 +1,7 @@
+{
+  "path": "src/user/windows/process/sched/tests/services_tests/access_check_tests.rs",
+  "previous-sha256": "a55e443b98cf30a9960cba3411b778a987f4eb46959bc20a21cfde4468007cc4",
+  "sha256": "3f3ffd6366d09a77c554a5188f42d7ebd07a5eef0b1e31d53a485967db844fc2",
+  "bytes": 25152,
+  "scope": "test caller reserves x64 argument storage; unsupported tests require the intended diagnostic; no production change"
+}

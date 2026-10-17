@@ -1,0 +1,28 @@
+{
+  "pid": 8788,
+  "utc": "2026-10-17T20:06:39.038101+00:00",
+  "state": "finished",
+  "base": "23ac34c5d0d0f6afff762431442d2fab52cda7f9",
+  "scope": "native source/base/config verification, unchanged observer, core and retained owning carrier",
+  "child-pid": 10580,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\assist-native-access-check-final-owned.ps1"
+  ],
+  "core-exit-code": 0,
+  "full-library": [
+    [
+      7274,
+      5,
+      2,
+      0
+    ]
+  ],
+  "owning-exit-code": 0,
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T20:24:48.462776+00:00"
+}

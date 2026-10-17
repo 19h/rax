@@ -1996,3 +1996,39 @@ The retained carrier public ABI minor184 versus current186 remains explicit;
 these results do not establish a whole-current-root or interactive IDA build.
 The complete evidence checker passes and rejects five controlled corruptions
 or overstatements of the recorded results.
+
+
+## Captured-subject access checks (2026-10-17 UTC)
+
+`NtAccessCheck` now evaluates the admitted classic-DACL profile against the
+captured primary subject or a guest-owned captured impersonation subject.
+The existing bounded native subject acquisition also retains privileges;
+querying access never forwards a guest pointer, desired mask or token handle
+to a host token API. The primary subject remains available when the WNF
+catalog has no records. `NtQueryInformationToken` class 29 can also report the
+captured property of a typed impersonation object.
+
+The adapter keeps native64 and WoW64 descriptor capture order separate, then
+uses a common evaluator for ordered allow/deny ACEs, owner rights, absent/NULL
+versus empty DACLs, maximum access and the measured security/take-ownership
+privileges. It preserves distinct function and access-status outputs, the
+minimum 20-byte privilege capacity, actual 8/20/32-byte header publication,
+alias ordering, and the caller's successful capacity. Unsupported token/ACE/
+SACL profiles stop explicitly instead of fabricating an access decision.
+
+The native corpus has 23,640 logical/pointer calls on four producer ABIs,
+1,296 additional ARM64 private-token calls, descriptor-alignment controls and
+three measured RTL error translations. Real installed ARM64, x86 and x86-LAA
+leaves replay 17,730 logical/pointer calls. The initial synthetic x64 fixture
+placed the eighth argument at its adjacent descriptor allocation; reserving
+caller stack storage fixes that test setup without changing the production
+adapter. The original source epoch and failures remain in the evidence.
+
+The unchanged ordinary observer now passes the access check and stops at
+`NtQueryWnfStateData` service 0x170, PC 0x180002740: turn 2,139,682 for ARM64
+smoke and 2,142,044 for whoami. Both advance 4,221 turns from their prior access
+check boundary. Neither is a completed application. General impersonation,
+restricted/AppContainer access evaluation and complete ordinary Windows
+execution remain outside this admitted profile.
+
+[Contract, assumptions and validation](../../../docs/specifications/windows/native-access-check/README.md).

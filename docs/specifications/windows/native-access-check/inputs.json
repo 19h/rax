@@ -1,0 +1,314 @@
+{
+  "files": [
+    {
+      "path": "capture-access-subject.py",
+      "bytes": 4023,
+      "sha256": "3c24433328a1161bc81c4c3ab156cf321035322e230cab79b287040d05c85823"
+    },
+    {
+      "path": "capture/access-check-capture-driver.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9"
+    },
+    {
+      "path": "capture/access-check-capture-launch.json",
+      "bytes": 276,
+      "sha256": "fa2932d96c5623d102400bca3443f5a7f37fc2a045dbaa6550a93a96868ea0ef"
+    },
+    {
+      "path": "capture/native-access-check-capture.log",
+      "bytes": 123920,
+      "sha256": "72cee699bb6480ccb815065033d4ce2724c2517612bf089d58586ed66630a99d"
+    },
+    {
+      "path": "capture/native-access-check-trace.rs",
+      "bytes": 14387,
+      "sha256": "60c37b665973df61ab86660b7ae457a57c79759994c392b6ec5ad95835665734"
+    },
+    {
+      "path": "capture/run-access-check-capture.ps1",
+      "bytes": 1190,
+      "sha256": "e3a4381c753c02f217cc0057bc99f61d5808a91ecc7afb9b80b7fc1574c228f6"
+    },
+    {
+      "path": "capture/run-access-check-capture.py",
+      "bytes": 1138,
+      "sha256": "648d1236c22a3217dbd3a97a9791796814bed7a49c2db4e9dc695da763f4a362"
+    },
+    {
+      "path": "captured-inputs.json",
+      "bytes": 1376,
+      "sha256": "7d5d661f2c6f11a2b4985ef589e3856720ee1036aede1c705966f81f664443eb"
+    },
+    {
+      "path": "captured-shape-native-results.json",
+      "bytes": 501,
+      "sha256": "c6f1857d7c1d56bbd6612eee0e31f11e81dc26f612d40ee2f0c630348db99e8a"
+    },
+    {
+      "path": "descriptor-alignment-controller.json",
+      "bytes": 627,
+      "sha256": "9343da00f11de3ae5cef6472b25c3f051b15b87c2535f4763bf8c6435997dd55"
+    },
+    {
+      "path": "descriptors.json",
+      "bytes": 845,
+      "sha256": "5ecb83926e0fa9f0fca83a511dd33ea5e34abd2794ce2b55d08f82b85126f770"
+    },
+    {
+      "path": "native-access-check-subject.json",
+      "bytes": 2688,
+      "sha256": "d5dc008fbce10da957aa72d157d1cd5764c94bc365107ce4863e6c64018f99aa"
+    },
+    {
+      "path": "native-access-descriptor-alignment.json",
+      "bytes": 5582,
+      "sha256": "53d716ce951b74bdc110258adfa8a04b690e573562fd2a9002aa675cea4bdab5"
+    },
+    {
+      "path": "native-access-descriptor-alignment.py",
+      "bytes": 3644,
+      "sha256": "d88d2cc0d8a6e660725cd5d595ebcb4aaf3dcf7c506a4cae6a0cb54c9bce5396"
+    },
+    {
+      "path": "native-access-privileges-v2.json",
+      "bytes": 570525,
+      "sha256": "36e8ddc254945f206d03425325be1ddef5315f1e2ff83ff0ef1104dacc0a5ae4"
+    },
+    {
+      "path": "native-access-privileges-v2.py",
+      "bytes": 6542,
+      "sha256": "6e7a27a613e6ae13259e12a7acfe194d0cada5da5d9669d536138f0405531a0b"
+    },
+    {
+      "path": "native-access-privileges.json",
+      "bytes": 428379,
+      "sha256": "b2fb4bb23fd863b39da4203a2954df4325940d3b1c5c64de65fa3236a38dd266"
+    },
+    {
+      "path": "native-access-privileges.py",
+      "bytes": 6401,
+      "sha256": "ebca9dc2969d7b1249ba415f5711190abb2dd9c0408a97ba18649dc8187b7d95"
+    },
+    {
+      "path": "native-access-status-map.json",
+      "bytes": 474,
+      "sha256": "c3ab44815edbd9c80d7db0b3af59c129080d869e4568f65bd9eed7a2ee46049c"
+    },
+    {
+      "path": "native-access-status-map.py",
+      "bytes": 840,
+      "sha256": "5f81848a2c0a210177678833b5dbb6028f980db51bcdd610813c1bfda3180c2c"
+    },
+    {
+      "path": "native/boundaries/access-check-boundaries-native-launch.json",
+      "bytes": 638,
+      "sha256": "0e240e13a2f61328b77a7241e44d53de4be3a13c1f4768d85f81d26161374621"
+    },
+    {
+      "path": "native/boundaries/inspect-access-check-boundaries-producers.py",
+      "bytes": 4329,
+      "sha256": "a03915aa238dc63d91da827cf6b353207ebae814c7e1ffd75229312f30212b80"
+    },
+    {
+      "path": "native/boundaries/native-access-check-boundaries-arm64-build.log",
+      "bytes": 36,
+      "sha256": "b32b6e70dd00c8ee3c0e64d2e9b26610a692bcd5b83076ca2ecd632d80869621"
+    },
+    {
+      "path": "native/boundaries/native-access-check-boundaries-arm64.log",
+      "bytes": 579497,
+      "sha256": "c62fcf817bc44c18dc7fa33ecb2ce4aa55653b654070b7934be637ffb8ec6316"
+    },
+    {
+      "path": "native/boundaries/native-access-check-boundaries-identities.json",
+      "bytes": 4626,
+      "sha256": "e7aea1d82a43d9dc19972bc7a94f1570134ee0c2e033c1aa1cb2a0643ff6b812"
+    },
+    {
+      "path": "native/boundaries/native-access-check-boundaries-outcomes.json",
+      "bytes": 1150,
+      "sha256": "23dd8297af5ff7f9f77193760d79a23c6779ebe02ac32c2773facbe676a6cd14"
+    },
+    {
+      "path": "native/boundaries/native-access-check-boundaries-profiles.ps1",
+      "bytes": 2219,
+      "sha256": "cb5169a67dc845a25022bae397f8fecc99e4ddaff5e2cad4f48d5da91a191fea"
+    },
+    {
+      "path": "native/boundaries/native-access-check-boundaries-x64-build.log",
+      "bytes": 36,
+      "sha256": "b32b6e70dd00c8ee3c0e64d2e9b26610a692bcd5b83076ca2ecd632d80869621"
+    },
+    {
+      "path": "native/boundaries/native-access-check-boundaries-x64.log",
+      "bytes": 579495,
+      "sha256": "b3cdefc46242154c3fab933ca9aefa42a7fad8c266fe54f9f0d6b9cb6437b59b"
+    },
+    {
+      "path": "native/boundaries/native-access-check-boundaries-x86-build.log",
+      "bytes": 36,
+      "sha256": "b32b6e70dd00c8ee3c0e64d2e9b26610a692bcd5b83076ca2ecd632d80869621"
+    },
+    {
+      "path": "native/boundaries/native-access-check-boundaries-x86-laa-build.log",
+      "bytes": 36,
+      "sha256": "b32b6e70dd00c8ee3c0e64d2e9b26610a692bcd5b83076ca2ecd632d80869621"
+    },
+    {
+      "path": "native/boundaries/native-access-check-boundaries-x86-laa.log",
+      "bytes": 579499,
+      "sha256": "b07f42f702d07ccb33589087aba342cbb97cf15b8c9b1f258a88d609142fc6c1"
+    },
+    {
+      "path": "native/boundaries/native-access-check-boundaries-x86.log",
+      "bytes": 579495,
+      "sha256": "b244f6abda442472e787783b0ebbbad1c4bbddc0503a1d6633ad99f15205bcb9"
+    },
+    {
+      "path": "native/boundaries/native-access-check-boundaries.cpp",
+      "bytes": 6820,
+      "sha256": "0f05b6e59fe8cd521904549300962d9483b526d3871d719e69a5f8808b55f7b4"
+    },
+    {
+      "path": "native/boundaries/run-access-check-boundaries-atomic.py",
+      "bytes": 1576,
+      "sha256": "5c61a0a435fe6a4ecbf3f21a752f786f2962bd8fd01bb8a2666efe201a06b7d3"
+    },
+    {
+      "path": "native/v4/access-check-v4-native-launch.json",
+      "bytes": 622,
+      "sha256": "6cdb905b4120ee58558d65508cf5d0c8e30faec54664726402d5971ca18b33b3"
+    },
+    {
+      "path": "native/v4/inspect-access-check-v4-producers.py",
+      "bytes": 4195,
+      "sha256": "a4d88d6e2907c28e410664b918903c7c1bff5e1df3bd787407b2fc6724df5731"
+    },
+    {
+      "path": "native/v4/native-access-check-v4-arm64-build.log",
+      "bytes": 28,
+      "sha256": "d4064a019c137f2aab237fdd856a6dab1eb6795f0d023023cc9610c28e8d026e"
+    },
+    {
+      "path": "native/v4/native-access-check-v4-arm64.log",
+      "bytes": 1466788,
+      "sha256": "bcbb05f22e223225861b795288ae6d64778ed8c060274cd7d8bd6aa83e13e344"
+    },
+    {
+      "path": "native/v4/native-access-check-v4-identities.json",
+      "bytes": 4312,
+      "sha256": "0274bb2f286cd405ce3daa94a980ed4327ac70efded4ebfb941e1e7f9c60d86a"
+    },
+    {
+      "path": "native/v4/native-access-check-v4-outcomes.json",
+      "bytes": 1150,
+      "sha256": "7f7df6fe038224a9d4f5b5337d3e8426bab401a1f29ff93051c8b2072e0ea9bd"
+    },
+    {
+      "path": "native/v4/native-access-check-v4-profiles.ps1",
+      "bytes": 2163,
+      "sha256": "aa20c14c79aab779881ce7081cc81704a606ee218fe96f059eb061340a8f38d8"
+    },
+    {
+      "path": "native/v4/native-access-check-v4-x64-build.log",
+      "bytes": 28,
+      "sha256": "d4064a019c137f2aab237fdd856a6dab1eb6795f0d023023cc9610c28e8d026e"
+    },
+    {
+      "path": "native/v4/native-access-check-v4-x64.log",
+      "bytes": 1466786,
+      "sha256": "7626c747fc38cb6cec72ddcdb72d789255f658654c092272a1b409352e3719f0"
+    },
+    {
+      "path": "native/v4/native-access-check-v4-x86-build.log",
+      "bytes": 28,
+      "sha256": "d4064a019c137f2aab237fdd856a6dab1eb6795f0d023023cc9610c28e8d026e"
+    },
+    {
+      "path": "native/v4/native-access-check-v4-x86-laa-build.log",
+      "bytes": 28,
+      "sha256": "d4064a019c137f2aab237fdd856a6dab1eb6795f0d023023cc9610c28e8d026e"
+    },
+    {
+      "path": "native/v4/native-access-check-v4-x86-laa.log",
+      "bytes": 1466750,
+      "sha256": "ebb73ad4c74f0a22700055ddc6553eb98091f8718070eb4d4c7508022f9f96f8"
+    },
+    {
+      "path": "native/v4/native-access-check-v4-x86.log",
+      "bytes": 1466746,
+      "sha256": "31c3c4baa0e54c464ac016fc9f4c7c169e18dec0141f88639b912d28c493a8fe"
+    },
+    {
+      "path": "native/v4/native-access-check-v4.cpp",
+      "bytes": 7569,
+      "sha256": "be1f2679b56b118a42e5278d28d0fd83cdf601e95b969f50b34a522d00710d19"
+    },
+    {
+      "path": "native/v4/run-access-check-v4-atomic.py",
+      "bytes": 1544,
+      "sha256": "6fdb4b1246c58baafc787fa25be685b91594dafab23f32d2752eac85a755bb39"
+    },
+    {
+      "path": "prepare-access-evidence.py",
+      "bytes": 6536,
+      "sha256": "06fd2c81b42a20f2837344f86035f00ed9aeb0c2a229f9fc3a2a935cc8ef7e45"
+    },
+    {
+      "path": "primary/access-check.html",
+      "bytes": 57735,
+      "sha256": "897446637edef6891dbb8ef46a5af2e31da8ec5a343cceef5dbec975d834eb0a"
+    },
+    {
+      "path": "primary/generic-mapping.html",
+      "bytes": 50878,
+      "sha256": "41479c7cf244420a52d9ed70bfd4f47743e22afe22d217f2823c41c58aa0dc5f"
+    },
+    {
+      "path": "primary/phnt-LICENSE",
+      "bytes": 1092,
+      "sha256": "ad2ab542c56c606e4c19d66a7f3cdcd3ef83beffb638e7c3893b22c7a6a6c0df"
+    },
+    {
+      "path": "primary/phnt-ntseapi.h",
+      "bytes": 74208,
+      "sha256": "7fa0a21902ed64036c495216fba85d0e29a1d3028fd60d09103993817d1473df"
+    },
+    {
+      "path": "primary/phnt-source.json",
+      "bytes": 214,
+      "sha256": "cfaa6ae59853c34b223ab36f23ae019ac0427dc6f630fff34e48d2cf7c7ecce8"
+    },
+    {
+      "path": "primary/sources.json",
+      "bytes": 502,
+      "sha256": "8164cc8aaec4d0f4bc8546ea087d9a30fb58b3a1ecb1c5609981cdf34a8e6091"
+    },
+    {
+      "path": "privilege-probe-controller.json",
+      "bytes": 410,
+      "sha256": "a43dbd8b5ddb847950c929bbfd52810d7431fc51deea81cf254ed55032230bea"
+    },
+    {
+      "path": "privilege-v2-probe-controller.json",
+      "bytes": 414,
+      "sha256": "da9806a2f5de1a70b06873fac89e60aa2bf58a50c2c721cf0cfedae580b025fd"
+    },
+    {
+      "path": "privilege-v2-verification.json",
+      "bytes": 297,
+      "sha256": "2bfd24e3e8441c3e6b40b3a2ad156f6899e62aae572111aee80796f98e56cf07"
+    },
+    {
+      "path": "status-map-controller.json",
+      "bytes": 720,
+      "sha256": "13bdc6ea1a271789535f55d08fee61b05f08cf378b9205a7b768225cf3eed975"
+    },
+    {
+      "path": "subject-capture-controller.json",
+      "bytes": 2013,
+      "sha256": "f4086fc8eb244272bdb9da08c50b655f71ef8a43958e6ab4fc52a48ff14e7e1f"
+    }
+  ]
+}

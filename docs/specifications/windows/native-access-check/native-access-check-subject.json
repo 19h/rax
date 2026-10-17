@@ -1,0 +1,151 @@
+{
+  "utc": "2026-10-17T19:50:24.989097+00:00",
+  "pid": 5556,
+  "machine": "ARM64",
+  "os-version": "10.0.29683",
+  "pointer-bytes": 8,
+  "source-sha256": "3c24433328a1161bc81c4c3ab156cf321035322e230cab79b287040d05c85823",
+  "token-access": 8,
+  "closed-handles": 1,
+  "stable-captures": 2,
+  "subject": {
+    "user": {
+      "sid": "010100000000000512000000",
+      "attributes": 0
+    },
+    "groups": [
+      {
+        "sid": "01020000000000052000000020020000",
+        "attributes": 14
+      },
+      {
+        "sid": "010100000000000100000000",
+        "attributes": 7
+      },
+      {
+        "sid": "01010000000000050b000000",
+        "attributes": 7
+      },
+      {
+        "sid": "010100000000001000400000",
+        "attributes": 96
+      }
+    ],
+    "restricted": [],
+    "app-container": 0,
+    "privileges": [
+      {
+        "luid": 3,
+        "attributes": 0
+      },
+      {
+        "luid": 4,
+        "attributes": 3
+      },
+      {
+        "luid": 5,
+        "attributes": 0
+      },
+      {
+        "luid": 7,
+        "attributes": 3
+      },
+      {
+        "luid": 8,
+        "attributes": 0
+      },
+      {
+        "luid": 9,
+        "attributes": 0
+      },
+      {
+        "luid": 10,
+        "attributes": 0
+      },
+      {
+        "luid": 11,
+        "attributes": 3
+      },
+      {
+        "luid": 12,
+        "attributes": 0
+      },
+      {
+        "luid": 13,
+        "attributes": 3
+      },
+      {
+        "luid": 14,
+        "attributes": 3
+      },
+      {
+        "luid": 15,
+        "attributes": 3
+      },
+      {
+        "luid": 16,
+        "attributes": 3
+      },
+      {
+        "luid": 17,
+        "attributes": 0
+      },
+      {
+        "luid": 18,
+        "attributes": 0
+      },
+      {
+        "luid": 19,
+        "attributes": 0
+      },
+      {
+        "luid": 20,
+        "attributes": 3
+      },
+      {
+        "luid": 21,
+        "attributes": 3
+      },
+      {
+        "luid": 22,
+        "attributes": 0
+      },
+      {
+        "luid": 23,
+        "attributes": 3
+      },
+      {
+        "luid": 25,
+        "attributes": 0
+      },
+      {
+        "luid": 28,
+        "attributes": 0
+      },
+      {
+        "luid": 29,
+        "attributes": 3
+      },
+      {
+        "luid": 30,
+        "attributes": 3
+      },
+      {
+        "luid": 33,
+        "attributes": 3
+      },
+      {
+        "luid": 34,
+        "attributes": 3
+      },
+      {
+        "luid": 35,
+        "attributes": 3
+      },
+      {
+        "luid": 36,
+        "attributes": 3
+      }
+    ]
+  }
+}

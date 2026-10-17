@@ -1,0 +1,25 @@
+{
+  "utc": "2026-10-17T20:03:47.339794+00:00",
+  "argv": [
+    "lldb",
+    "--no-lldbinit",
+    "--batch",
+    "-o",
+    "breakpoint set --file access_check.rs --line 52",
+    "-o",
+    "run --exact user::windows::process::sched::tests::services_tests::access_check_tests::native_access_check_replays_all_17640_native_logical_rows --nocapture",
+    "-o",
+    "frame variable address control",
+    "-o",
+    "frame select 1",
+    "-o",
+    "frame variable descriptor token desired generic privileges length_ptr granted status",
+    "-o",
+    "frame select 3",
+    "-o",
+    "frame variable sp number",
+    "/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/rax-754f4d2a527a4423"
+  ],
+  "exit-code": 0,
+  "finding": "x64 descriptor=0x210000, entry SP=0x20ffc0; argument7 store at SP+8+7*8 equals descriptor, so fixture must reserve caller stack storage"
+}

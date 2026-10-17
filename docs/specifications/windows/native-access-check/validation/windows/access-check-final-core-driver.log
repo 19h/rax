@@ -1,0 +1,15 @@
+{"utc": "2026-10-17T20:06:39.470867+00:00", "base": "23ac34c5d0d0f6afff762431442d2fab52cda7f9", "changed": {"path": "src/user/windows/process/sched/tests/services_tests/access_check_tests.rs", "previous-sha256": "a55e443b98cf30a9960cba3411b778a987f4eb46959bc20a21cfde4468007cc4", "sha256": "3f3ffd6366d09a77c554a5188f42d7ebd07a5eef0b1e31d53a485967db844fc2", "bytes": 25152}, "selected-source-count": 319, "scope": "test caller stack and exact unsupported assertions only; production code unchanged"}
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+ordinary observation 0 complete;guest terminal output requires review
+ordinary observation 1 complete;guest terminal output requires review
+ordinary observation 2 complete;guest terminal output requires review
+gate access exit=0
+gate token exit=0
+gate wnf exit=0
+gate all-targets exit=0
+gate integration exit=0
+gate capi exit=0
+gate full exit=101

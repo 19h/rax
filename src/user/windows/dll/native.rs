@@ -4,6 +4,7 @@ use super::super::hle::{ApiResult, Archs, Arg::*, Conv::Stdcall, Ctx, Export, Fl
 use super::super::memory::Mem;
 use super::super::nt::status::*;
 
+mod access_check;
 mod allocate;
 mod apphelp;
 mod directory;
@@ -283,6 +284,12 @@ pub(super) static EXPORTS: &[Export] = &[
         Stdcall,
         &[Ptr, I32, Ptr, I32, Ptr],
         token_query::information,
+    ),
+    Export::func(
+        "NtAccessCheck",
+        Stdcall,
+        &[Ptr, Ptr, I32, Ptr, Ptr, Ptr, Ptr, Ptr],
+        access_check::access,
     ),
 ];
 fn status_error(c: &mut Ctx) -> ApiResult {

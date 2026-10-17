@@ -32,6 +32,7 @@ fn subject() -> Subject {
         groups: Vec::new(),
         restricted: Vec::new(),
         app_container: false,
+        privileges: Vec::new(),
     };
     for line in SUBJECT.lines().filter(|line| line.starts_with("sid ")) {
         let row: HashMap<_, _> = line
