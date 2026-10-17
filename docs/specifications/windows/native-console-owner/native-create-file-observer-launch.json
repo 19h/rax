@@ -1,0 +1,16 @@
+{
+  "pid": 5820,
+  "utc": "2026-10-15T21:56:02.235685+00:00",
+  "lock": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-create-file-observer-driver.lock",
+  "child-pid": 7772,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-native-create-file-observer.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-15T21:59:38.024380+00:00"
+}

@@ -1,0 +1,17 @@
+{
+  "pid": 6920,
+  "utc": "2026-10-15T23:07:23.674508+00:00",
+  "lock": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-owner-epoch1-driver.lock",
+  "source-epoch": 1,
+  "child-pid": 2876,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-console-owner-epoch1-gates.ps1"
+  ],
+  "exit-code": 101,
+  "finished-utc": "2026-10-16T02:40:38.367287+00:00"
+}

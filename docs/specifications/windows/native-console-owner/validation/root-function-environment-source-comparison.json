@@ -1,0 +1,30 @@
+{
+  "head": "749cdd3ddd4b5225ee8f509333281eb1ca0173e6",
+  "scope": "separate function-level minimal Windows environment,not process startup;public assist Rust header also compared",
+  "files": [
+    {
+      "path": "rust/assist-rs/src/emulation_windows_env.rs",
+      "bytes": 10686,
+      "sha256": "113da294d78ee448027bc5c667799e7b97b2006da13f5430b3b0de69d5382ed1",
+      "matches-frozen-export": true
+    },
+    {
+      "path": "rust/assist-rs/src/emulation_windows_env/ffi.rs",
+      "bytes": 3769,
+      "sha256": "63dded968c47f6ba0d0e24d5070128261ef281f8e42ba37ab7f0f186eb6f16e2",
+      "matches-frozen-export": true
+    },
+    {
+      "path": "rust/assist-rs/src/emulation_windows_env/tests.rs",
+      "bytes": 8825,
+      "sha256": "7ee3218e4746122587fb62eca45bfad4ee420f3138c3fd6d503dc65e1dd5c53b",
+      "matches-frozen-export": true
+    },
+    {
+      "path": "rust/assist-rs/include/assist_rs.h",
+      "bytes": 358330,
+      "sha256": "31fc93420ed14b256fdfb374d170a41ab7457105539ee8cd75070d81205cebb6",
+      "matches-frozen-export": false
+    }
+  ]
+}

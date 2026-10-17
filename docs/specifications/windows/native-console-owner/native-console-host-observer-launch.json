@@ -1,0 +1,16 @@
+{
+  "pid": 5200,
+  "utc": "2026-10-15T22:39:45.987576+00:00",
+  "lock": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-console-host-observer-driver.lock",
+  "child-pid": 8772,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-native-console-host-observer.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-15T22:40:42.759283+00:00"
+}

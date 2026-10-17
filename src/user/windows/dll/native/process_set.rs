@@ -12,6 +12,9 @@ pub(super) fn information(c: &mut Ctx) -> ApiResult {
 
 fn checked(c: &mut Ctx) -> ApiResult {
     let (process, class, output, length) = (c.ptr(0)?, c.u32(1)?, c.ptr(2)?, c.u32(3)?);
+    if class == 49 {
+        return super::process_console::set(c, process, output, length);
+    }
     if class == 35 {
         return super::process_tls::information(c, process, output, length);
     }

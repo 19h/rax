@@ -1,0 +1,11 @@
+{
+  "pid": 2576,
+  "utc": "2026-10-16T02:07:51.307939+00:00",
+  "state": "finished",
+  "scope": "preserve current compile/tests; await actual initial101 and inspect old focused results; then run unchanged final native gates directly",
+  "handoff-source-sha256": "a7d1aa84829628979a0a494b5818fb584414dcf721da07b70f0fa41c229216a2",
+  "last-verified-live-utc": "2026-10-16T02:40:38.499574+00:00",
+  "verified-initial-pid": 6920,
+  "exit-code": 0,
+  "finished-utc": "2026-10-16T17:51:50.231485+00:00"
+}

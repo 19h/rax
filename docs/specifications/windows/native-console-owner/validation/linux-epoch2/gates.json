@@ -1,0 +1,768 @@
+[
+  {
+    "gate": "focused",
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "/Users/int/Library/Caches/assist-process-emulation/native-create-file-20261015/rax-final-source:/work/vendor/rax:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_BUILD_JOBS=2",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+      "cargo",
+      "test",
+      "--lib",
+      "native_console_owner",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 372.2418518066406,
+    "log": "linux-focused.log",
+    "sha256": "135511caf2fbb6a21bbdf6a495a74181ef862cb98222ee6ba165b4a6c1331b01",
+    "frozen-source-epoch": 2,
+    "verified-code-identities": [
+      {
+        "path": "src/user/windows/dll/native.rs",
+        "bytes": 18200,
+        "sha256": "8025a71c2999dd5f94d4c48cc6623be8ebb8dcfd4e37923a893eb12623853408"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_set.rs",
+        "bytes": 3262,
+        "sha256": "9479c0e6b4b649ffeed034f467b30d7c4fa5c5ac5bbdbabc3beb5302aebb492f"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_query.rs",
+        "bytes": 2427,
+        "sha256": "b961c7af6645dd268c97c60177fd932a9407c28942b431e28e28959d20f54e85"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_console.rs",
+        "bytes": 4112,
+        "sha256": "10218ee9ef9ce4b8be6059e2b805a547981ec26325d99570bdcd850f23f730b3"
+      },
+      {
+        "path": "src/user/windows/process/mod.rs",
+        "bytes": 16338,
+        "sha256": "3361d773bdd2ea462d4833df6ab5221464b53e08c37d334aff9ab88073fef920"
+      },
+      {
+        "path": "src/user/windows/process/start.rs",
+        "bytes": 22415,
+        "sha256": "130ff6a0645cb79d4156b7063768b7485146ddc62ce0c4d15afdcaeea20616ef"
+      },
+      {
+        "path": "src/user/windows/process/sched.rs",
+        "bytes": 61517,
+        "sha256": "490a28a97a594a4e4cd53db1409c7712895fbe512de0ed41181f978c22ef3044"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests.rs",
+        "bytes": 47622,
+        "sha256": "4ff902e96a9a500faa44af0e62ae3e03e4183372539eee696637f57f0d2135d4"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_tests.rs",
+        "bytes": 6914,
+        "sha256": "c31279032bc0a6001edc96146b898a048c87d23f5852e9ab8b1995716cac861c"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_replay_tests.rs",
+        "bytes": 10741,
+        "sha256": "0deddc0d8fea3da77d46a7cee29b3b42acd447151b57ab7ec2aa9866c793f962"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_leaf_tests.rs",
+        "bytes": 4783,
+        "sha256": "ed35be632f22992f65450972cf1eb1ede8fc923e7b9228d639e633ff111f6820"
+      },
+      {
+        "path": "src/user/windows/process/embedded_tests.rs",
+        "bytes": 7196,
+        "sha256": "2e9d50f48c99b2a9cd03bfd5b36bc186f3134dba0916b9336787ac9f9141376e"
+      },
+      {
+        "path": "src/user/windows/dll/crt/startup/storage.rs",
+        "bytes": 33087,
+        "sha256": "375b104adccdd1cabef4c3b2fd99cb5fb82ffb01bbca883255faeae991b463eb"
+      }
+    ]
+  },
+  {
+    "gate": "prior-services",
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "/Users/int/Library/Caches/assist-process-emulation/native-create-file-20261015/rax-final-source:/work/vendor/rax:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_BUILD_JOBS=2",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+      "cargo",
+      "test",
+      "--lib",
+      "process_query_tests",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 7.8026087284088135,
+    "log": "linux-prior-services.log",
+    "sha256": "7fe3d18634072652f24724cfc805336ca2e15f4a63247baa8452c989468daab4",
+    "frozen-source-epoch": 2,
+    "verified-code-identities": [
+      {
+        "path": "src/user/windows/dll/native.rs",
+        "bytes": 18200,
+        "sha256": "8025a71c2999dd5f94d4c48cc6623be8ebb8dcfd4e37923a893eb12623853408"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_set.rs",
+        "bytes": 3262,
+        "sha256": "9479c0e6b4b649ffeed034f467b30d7c4fa5c5ac5bbdbabc3beb5302aebb492f"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_query.rs",
+        "bytes": 2427,
+        "sha256": "b961c7af6645dd268c97c60177fd932a9407c28942b431e28e28959d20f54e85"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_console.rs",
+        "bytes": 4112,
+        "sha256": "10218ee9ef9ce4b8be6059e2b805a547981ec26325d99570bdcd850f23f730b3"
+      },
+      {
+        "path": "src/user/windows/process/mod.rs",
+        "bytes": 16338,
+        "sha256": "3361d773bdd2ea462d4833df6ab5221464b53e08c37d334aff9ab88073fef920"
+      },
+      {
+        "path": "src/user/windows/process/start.rs",
+        "bytes": 22415,
+        "sha256": "130ff6a0645cb79d4156b7063768b7485146ddc62ce0c4d15afdcaeea20616ef"
+      },
+      {
+        "path": "src/user/windows/process/sched.rs",
+        "bytes": 61517,
+        "sha256": "490a28a97a594a4e4cd53db1409c7712895fbe512de0ed41181f978c22ef3044"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests.rs",
+        "bytes": 47622,
+        "sha256": "4ff902e96a9a500faa44af0e62ae3e03e4183372539eee696637f57f0d2135d4"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_tests.rs",
+        "bytes": 6914,
+        "sha256": "c31279032bc0a6001edc96146b898a048c87d23f5852e9ab8b1995716cac861c"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_replay_tests.rs",
+        "bytes": 10741,
+        "sha256": "0deddc0d8fea3da77d46a7cee29b3b42acd447151b57ab7ec2aa9866c793f962"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_leaf_tests.rs",
+        "bytes": 4783,
+        "sha256": "ed35be632f22992f65450972cf1eb1ede8fc923e7b9228d639e633ff111f6820"
+      },
+      {
+        "path": "src/user/windows/process/embedded_tests.rs",
+        "bytes": 7196,
+        "sha256": "2e9d50f48c99b2a9cd03bfd5b36bc186f3134dba0916b9336787ac9f9141376e"
+      },
+      {
+        "path": "src/user/windows/dll/crt/startup/storage.rs",
+        "bytes": 33087,
+        "sha256": "375b104adccdd1cabef4c3b2fd99cb5fb82ffb01bbca883255faeae991b463eb"
+      }
+    ]
+  },
+  {
+    "gate": "all-targets",
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "/Users/int/Library/Caches/assist-process-emulation/native-create-file-20261015/rax-final-source:/work/vendor/rax:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_BUILD_JOBS=2",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+      "cargo",
+      "check",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--no-default-features"
+    ],
+    "exit-code": 0,
+    "seconds": 4.318190097808838,
+    "log": "linux-all-targets.log",
+    "sha256": "8b271f32754aa79b02cdbf827170c834c40cbec8fc0a7d7c8657b8db93407fec",
+    "frozen-source-epoch": 2,
+    "verified-code-identities": [
+      {
+        "path": "src/user/windows/dll/native.rs",
+        "bytes": 18200,
+        "sha256": "8025a71c2999dd5f94d4c48cc6623be8ebb8dcfd4e37923a893eb12623853408"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_set.rs",
+        "bytes": 3262,
+        "sha256": "9479c0e6b4b649ffeed034f467b30d7c4fa5c5ac5bbdbabc3beb5302aebb492f"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_query.rs",
+        "bytes": 2427,
+        "sha256": "b961c7af6645dd268c97c60177fd932a9407c28942b431e28e28959d20f54e85"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_console.rs",
+        "bytes": 4112,
+        "sha256": "10218ee9ef9ce4b8be6059e2b805a547981ec26325d99570bdcd850f23f730b3"
+      },
+      {
+        "path": "src/user/windows/process/mod.rs",
+        "bytes": 16338,
+        "sha256": "3361d773bdd2ea462d4833df6ab5221464b53e08c37d334aff9ab88073fef920"
+      },
+      {
+        "path": "src/user/windows/process/start.rs",
+        "bytes": 22415,
+        "sha256": "130ff6a0645cb79d4156b7063768b7485146ddc62ce0c4d15afdcaeea20616ef"
+      },
+      {
+        "path": "src/user/windows/process/sched.rs",
+        "bytes": 61517,
+        "sha256": "490a28a97a594a4e4cd53db1409c7712895fbe512de0ed41181f978c22ef3044"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests.rs",
+        "bytes": 47622,
+        "sha256": "4ff902e96a9a500faa44af0e62ae3e03e4183372539eee696637f57f0d2135d4"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_tests.rs",
+        "bytes": 6914,
+        "sha256": "c31279032bc0a6001edc96146b898a048c87d23f5852e9ab8b1995716cac861c"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_replay_tests.rs",
+        "bytes": 10741,
+        "sha256": "0deddc0d8fea3da77d46a7cee29b3b42acd447151b57ab7ec2aa9866c793f962"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_leaf_tests.rs",
+        "bytes": 4783,
+        "sha256": "ed35be632f22992f65450972cf1eb1ede8fc923e7b9228d639e633ff111f6820"
+      },
+      {
+        "path": "src/user/windows/process/embedded_tests.rs",
+        "bytes": 7196,
+        "sha256": "2e9d50f48c99b2a9cd03bfd5b36bc186f3134dba0916b9336787ac9f9141376e"
+      },
+      {
+        "path": "src/user/windows/dll/crt/startup/storage.rs",
+        "bytes": 33087,
+        "sha256": "375b104adccdd1cabef4c3b2fd99cb5fb82ffb01bbca883255faeae991b463eb"
+      }
+    ]
+  },
+  {
+    "gate": "windows",
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "/Users/int/Library/Caches/assist-process-emulation/native-create-file-20261015/rax-final-source:/work/vendor/rax:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_BUILD_JOBS=2",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+      "cargo",
+      "test",
+      "--test",
+      "user_windows",
+      "--test",
+      "user_windows_memory",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 597.2116391658783,
+    "log": "linux-windows.log",
+    "sha256": "692824588c499fef67ec062fd0cde8be28ed6e9ecb74b575f9f4cf71bdc84117",
+    "frozen-source-epoch": 2,
+    "verified-code-identities": [
+      {
+        "path": "src/user/windows/dll/native.rs",
+        "bytes": 18200,
+        "sha256": "8025a71c2999dd5f94d4c48cc6623be8ebb8dcfd4e37923a893eb12623853408"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_set.rs",
+        "bytes": 3262,
+        "sha256": "9479c0e6b4b649ffeed034f467b30d7c4fa5c5ac5bbdbabc3beb5302aebb492f"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_query.rs",
+        "bytes": 2427,
+        "sha256": "b961c7af6645dd268c97c60177fd932a9407c28942b431e28e28959d20f54e85"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_console.rs",
+        "bytes": 4112,
+        "sha256": "10218ee9ef9ce4b8be6059e2b805a547981ec26325d99570bdcd850f23f730b3"
+      },
+      {
+        "path": "src/user/windows/process/mod.rs",
+        "bytes": 16338,
+        "sha256": "3361d773bdd2ea462d4833df6ab5221464b53e08c37d334aff9ab88073fef920"
+      },
+      {
+        "path": "src/user/windows/process/start.rs",
+        "bytes": 22415,
+        "sha256": "130ff6a0645cb79d4156b7063768b7485146ddc62ce0c4d15afdcaeea20616ef"
+      },
+      {
+        "path": "src/user/windows/process/sched.rs",
+        "bytes": 61517,
+        "sha256": "490a28a97a594a4e4cd53db1409c7712895fbe512de0ed41181f978c22ef3044"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests.rs",
+        "bytes": 47622,
+        "sha256": "4ff902e96a9a500faa44af0e62ae3e03e4183372539eee696637f57f0d2135d4"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_tests.rs",
+        "bytes": 6914,
+        "sha256": "c31279032bc0a6001edc96146b898a048c87d23f5852e9ab8b1995716cac861c"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_replay_tests.rs",
+        "bytes": 10741,
+        "sha256": "0deddc0d8fea3da77d46a7cee29b3b42acd447151b57ab7ec2aa9866c793f962"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_leaf_tests.rs",
+        "bytes": 4783,
+        "sha256": "ed35be632f22992f65450972cf1eb1ede8fc923e7b9228d639e633ff111f6820"
+      },
+      {
+        "path": "src/user/windows/process/embedded_tests.rs",
+        "bytes": 7196,
+        "sha256": "2e9d50f48c99b2a9cd03bfd5b36bc186f3134dba0916b9336787ac9f9141376e"
+      },
+      {
+        "path": "src/user/windows/dll/crt/startup/storage.rs",
+        "bytes": 33087,
+        "sha256": "375b104adccdd1cabef4c3b2fd99cb5fb82ffb01bbca883255faeae991b463eb"
+      }
+    ]
+  },
+  {
+    "gate": "capi",
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "/Users/int/Library/Caches/assist-process-emulation/native-create-file-20261015/rax-final-source:/work/vendor/rax:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_BUILD_JOBS=2",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+      "cargo",
+      "test",
+      "-p",
+      "rax-capi",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 36.519749879837036,
+    "log": "linux-capi.log",
+    "sha256": "c0b419ad9df4577bea57944430e0a75b0227cca836b708f9e9a86551bafa0620",
+    "frozen-source-epoch": 2,
+    "verified-code-identities": [
+      {
+        "path": "src/user/windows/dll/native.rs",
+        "bytes": 18200,
+        "sha256": "8025a71c2999dd5f94d4c48cc6623be8ebb8dcfd4e37923a893eb12623853408"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_set.rs",
+        "bytes": 3262,
+        "sha256": "9479c0e6b4b649ffeed034f467b30d7c4fa5c5ac5bbdbabc3beb5302aebb492f"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_query.rs",
+        "bytes": 2427,
+        "sha256": "b961c7af6645dd268c97c60177fd932a9407c28942b431e28e28959d20f54e85"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_console.rs",
+        "bytes": 4112,
+        "sha256": "10218ee9ef9ce4b8be6059e2b805a547981ec26325d99570bdcd850f23f730b3"
+      },
+      {
+        "path": "src/user/windows/process/mod.rs",
+        "bytes": 16338,
+        "sha256": "3361d773bdd2ea462d4833df6ab5221464b53e08c37d334aff9ab88073fef920"
+      },
+      {
+        "path": "src/user/windows/process/start.rs",
+        "bytes": 22415,
+        "sha256": "130ff6a0645cb79d4156b7063768b7485146ddc62ce0c4d15afdcaeea20616ef"
+      },
+      {
+        "path": "src/user/windows/process/sched.rs",
+        "bytes": 61517,
+        "sha256": "490a28a97a594a4e4cd53db1409c7712895fbe512de0ed41181f978c22ef3044"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests.rs",
+        "bytes": 47622,
+        "sha256": "4ff902e96a9a500faa44af0e62ae3e03e4183372539eee696637f57f0d2135d4"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_tests.rs",
+        "bytes": 6914,
+        "sha256": "c31279032bc0a6001edc96146b898a048c87d23f5852e9ab8b1995716cac861c"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_replay_tests.rs",
+        "bytes": 10741,
+        "sha256": "0deddc0d8fea3da77d46a7cee29b3b42acd447151b57ab7ec2aa9866c793f962"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_leaf_tests.rs",
+        "bytes": 4783,
+        "sha256": "ed35be632f22992f65450972cf1eb1ede8fc923e7b9228d639e633ff111f6820"
+      },
+      {
+        "path": "src/user/windows/process/embedded_tests.rs",
+        "bytes": 7196,
+        "sha256": "2e9d50f48c99b2a9cd03bfd5b36bc186f3134dba0916b9336787ac9f9141376e"
+      },
+      {
+        "path": "src/user/windows/dll/crt/startup/storage.rs",
+        "bytes": 33087,
+        "sha256": "375b104adccdd1cabef4c3b2fd99cb5fb82ffb01bbca883255faeae991b463eb"
+      }
+    ]
+  },
+  {
+    "gate": "build-user",
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "/Users/int/Library/Caches/assist-process-emulation/native-create-file-20261015/rax-final-source:/work/vendor/rax:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_BUILD_JOBS=2",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+      "cargo",
+      "build",
+      "--bin",
+      "rax-user",
+      "--locked",
+      "--offline",
+      "--no-default-features"
+    ],
+    "exit-code": 0,
+    "seconds": 3.1343460083007812,
+    "log": "linux-build-user.log",
+    "sha256": "132d8f9813fd0518ff77c1a062a2e99512c1239c3e418eef63423374de32ac3b",
+    "frozen-source-epoch": 2,
+    "verified-code-identities": [
+      {
+        "path": "src/user/windows/dll/native.rs",
+        "bytes": 18200,
+        "sha256": "8025a71c2999dd5f94d4c48cc6623be8ebb8dcfd4e37923a893eb12623853408"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_set.rs",
+        "bytes": 3262,
+        "sha256": "9479c0e6b4b649ffeed034f467b30d7c4fa5c5ac5bbdbabc3beb5302aebb492f"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_query.rs",
+        "bytes": 2427,
+        "sha256": "b961c7af6645dd268c97c60177fd932a9407c28942b431e28e28959d20f54e85"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_console.rs",
+        "bytes": 4112,
+        "sha256": "10218ee9ef9ce4b8be6059e2b805a547981ec26325d99570bdcd850f23f730b3"
+      },
+      {
+        "path": "src/user/windows/process/mod.rs",
+        "bytes": 16338,
+        "sha256": "3361d773bdd2ea462d4833df6ab5221464b53e08c37d334aff9ab88073fef920"
+      },
+      {
+        "path": "src/user/windows/process/start.rs",
+        "bytes": 22415,
+        "sha256": "130ff6a0645cb79d4156b7063768b7485146ddc62ce0c4d15afdcaeea20616ef"
+      },
+      {
+        "path": "src/user/windows/process/sched.rs",
+        "bytes": 61517,
+        "sha256": "490a28a97a594a4e4cd53db1409c7712895fbe512de0ed41181f978c22ef3044"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests.rs",
+        "bytes": 47622,
+        "sha256": "4ff902e96a9a500faa44af0e62ae3e03e4183372539eee696637f57f0d2135d4"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_tests.rs",
+        "bytes": 6914,
+        "sha256": "c31279032bc0a6001edc96146b898a048c87d23f5852e9ab8b1995716cac861c"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_replay_tests.rs",
+        "bytes": 10741,
+        "sha256": "0deddc0d8fea3da77d46a7cee29b3b42acd447151b57ab7ec2aa9866c793f962"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_leaf_tests.rs",
+        "bytes": 4783,
+        "sha256": "ed35be632f22992f65450972cf1eb1ede8fc923e7b9228d639e633ff111f6820"
+      },
+      {
+        "path": "src/user/windows/process/embedded_tests.rs",
+        "bytes": 7196,
+        "sha256": "2e9d50f48c99b2a9cd03bfd5b36bc186f3134dba0916b9336787ac9f9141376e"
+      },
+      {
+        "path": "src/user/windows/dll/crt/startup/storage.rs",
+        "bytes": 33087,
+        "sha256": "375b104adccdd1cabef4c3b2fd99cb5fb82ffb01bbca883255faeae991b463eb"
+      }
+    ]
+  },
+  {
+    "gate": "lib",
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/int/hexrays/kvasir:/work:ro",
+      "-v",
+      "/Users/int/Library/Caches/assist-process-emulation/native-create-file-20261015/rax-final-source:/work/vendor/rax:ro",
+      "-v",
+      "rax-cargo-registry:/usr/local/cargo/registry",
+      "-v",
+      "rax-cargo-git:/usr/local/cargo/git",
+      "-v",
+      "rax-user-target:/target",
+      "-e",
+      "CARGO_BUILD_JOBS=2",
+      "-e",
+      "CARGO_TARGET_DIR=/target",
+      "-e",
+      "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+      "-w",
+      "/work/vendor/rax",
+      "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+      "cargo",
+      "test",
+      "--lib",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 1188.8482639789581,
+    "log": "linux-lib.log",
+    "sha256": "04abcff2a570422381c861577de60055577a90f8638c95bb09e419eb1e672529",
+    "frozen-source-epoch": 2,
+    "verified-code-identities": [
+      {
+        "path": "src/user/windows/dll/native.rs",
+        "bytes": 18200,
+        "sha256": "8025a71c2999dd5f94d4c48cc6623be8ebb8dcfd4e37923a893eb12623853408"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_set.rs",
+        "bytes": 3262,
+        "sha256": "9479c0e6b4b649ffeed034f467b30d7c4fa5c5ac5bbdbabc3beb5302aebb492f"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_query.rs",
+        "bytes": 2427,
+        "sha256": "b961c7af6645dd268c97c60177fd932a9407c28942b431e28e28959d20f54e85"
+      },
+      {
+        "path": "src/user/windows/dll/native/process_console.rs",
+        "bytes": 4112,
+        "sha256": "10218ee9ef9ce4b8be6059e2b805a547981ec26325d99570bdcd850f23f730b3"
+      },
+      {
+        "path": "src/user/windows/process/mod.rs",
+        "bytes": 16338,
+        "sha256": "3361d773bdd2ea462d4833df6ab5221464b53e08c37d334aff9ab88073fef920"
+      },
+      {
+        "path": "src/user/windows/process/start.rs",
+        "bytes": 22415,
+        "sha256": "130ff6a0645cb79d4156b7063768b7485146ddc62ce0c4d15afdcaeea20616ef"
+      },
+      {
+        "path": "src/user/windows/process/sched.rs",
+        "bytes": 61517,
+        "sha256": "490a28a97a594a4e4cd53db1409c7712895fbe512de0ed41181f978c22ef3044"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests.rs",
+        "bytes": 47622,
+        "sha256": "4ff902e96a9a500faa44af0e62ae3e03e4183372539eee696637f57f0d2135d4"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_tests.rs",
+        "bytes": 6914,
+        "sha256": "c31279032bc0a6001edc96146b898a048c87d23f5852e9ab8b1995716cac861c"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_replay_tests.rs",
+        "bytes": 10741,
+        "sha256": "0deddc0d8fea3da77d46a7cee29b3b42acd447151b57ab7ec2aa9866c793f962"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_console_leaf_tests.rs",
+        "bytes": 4783,
+        "sha256": "ed35be632f22992f65450972cf1eb1ede8fc923e7b9228d639e633ff111f6820"
+      },
+      {
+        "path": "src/user/windows/process/embedded_tests.rs",
+        "bytes": 7196,
+        "sha256": "2e9d50f48c99b2a9cd03bfd5b36bc186f3134dba0916b9336787ac9f9141376e"
+      },
+      {
+        "path": "src/user/windows/dll/crt/startup/storage.rs",
+        "bytes": 33087,
+        "sha256": "375b104adccdd1cabef4c3b2fd99cb5fb82ffb01bbca883255faeae991b463eb"
+      }
+    ]
+  }
+]

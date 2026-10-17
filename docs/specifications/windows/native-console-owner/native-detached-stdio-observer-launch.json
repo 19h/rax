@@ -1,0 +1,16 @@
+{
+  "pid": 8432,
+  "utc": "2026-10-15T22:14:41.483657+00:00",
+  "lock": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-detached-stdio-observer-driver.lock",
+  "child-pid": 3684,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-native-detached-stdio-observer.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-15T22:22:39.656393+00:00"
+}

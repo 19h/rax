@@ -23,6 +23,9 @@ pub(super) fn information(c: &mut Ctx) -> ApiResult {
 fn query(c: &mut Ctx) -> ApiResult {
     let (handle, class, output, length, returned) =
         (c.ptr(0)?, c.u32(1)?, c.ptr(2)?, c.u32(3)?, c.ptr(4)?);
+    if class == 49 {
+        return super::process_console::query(c, handle, output, length, returned);
+    }
     // Native process queries check output alignment before ReturnLength, but
     // defer touching output pages until after class/length/handle validation.
     // This also applies to WoW64 class 36; system-query conversion is different.

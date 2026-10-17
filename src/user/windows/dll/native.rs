@@ -13,6 +13,7 @@ mod io_completion;
 mod nls;
 mod object_create;
 mod performance_counter;
+mod process_console;
 mod process_query;
 mod process_set;
 mod process_tls;

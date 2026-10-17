@@ -1,0 +1,42 @@
+[
+  {
+    "file": "phnt-ntpsapi.h",
+    "url": "https://raw.githubusercontent.com/winsiderss/phnt/53fbbdc5b5d2b08761db1c7b26bfa8c820924356/ntpsapi.h",
+    "revision": "53fbbdc5b5d2b08761db1c7b26bfa8c820924356",
+    "sha256": "3477b3fa901715c5ad139ae154f86d6c36f3415962731d6c0de0dd3c8417f4d8",
+    "bytes": 180987,
+    "scope": "exact prior archived primary bytes, unchanged; class49 ULONG_PTR and detached sentinel declarations"
+  },
+  {
+    "file": "phnt-ntrtl.h",
+    "url": "https://raw.githubusercontent.com/winsiderss/phnt/53fbbdc5b5d2b08761db1c7b26bfa8c820924356/ntrtl.h",
+    "revision": "53fbbdc5b5d2b08761db1c7b26bfa8c820924356",
+    "sha256": "8d37faeb36dd01d0f9931cc25ce35857848deacb28b21196b8a76732e2f3f3a3",
+    "bytes": 340232,
+    "scope": "exact prior archived primary bytes, unchanged; class49 ULONG_PTR and detached sentinel declarations"
+  },
+  {
+    "file": "phnt-LICENSE",
+    "url": "https://raw.githubusercontent.com/winsiderss/phnt/53fbbdc5b5d2b08761db1c7b26bfa8c820924356/LICENSE",
+    "revision": "53fbbdc5b5d2b08761db1c7b26bfa8c820924356",
+    "sha256": "ad2ab542c56c606e4c19d66a7f3cdcd3ef83beffb638e7c3893b22c7a6a6c0df",
+    "bytes": 1092,
+    "scope": "exact prior archived primary bytes, unchanged; class49 ULONG_PTR and detached sentinel declarations"
+  },
+  {
+    "file": "microsoft-process-creation-flags.html",
+    "url": "https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags",
+    "retrieved-utc": "2026-10-15T23:03:11.346898+00:00",
+    "sha256": "3fe78cd6e8456a879853f7d159327e6e6997332008e9db8558ac0c5d40d0a9a7",
+    "bytes": 60994,
+    "scope": "DETACHED_PROCESS and STARTF_USESTDHANDLES documented creation/standard stream contract; private class49 status/order uses measured native sources instead"
+  },
+  {
+    "file": "microsoft-startupinfow.html",
+    "url": "https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/ns-processthreadsapi-startupinfow",
+    "retrieved-utc": "2026-10-15T23:03:11.905319+00:00",
+    "sha256": "b8b3e7ab657dd65c929eb9e91d76fef19ab4155e93bfc9a4e57ed63d1bedbead",
+    "bytes": 70058,
+    "scope": "DETACHED_PROCESS and STARTF_USESTDHANDLES documented creation/standard stream contract; private class49 status/order uses measured native sources instead"
+  }
+]

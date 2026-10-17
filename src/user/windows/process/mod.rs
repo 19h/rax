@@ -326,6 +326,10 @@ pub struct Proc {
     /// Seed-derived opaque ProcessCookie value, stable across queries/threads.
     /// This compatibility value does not provide a cryptographic guarantee.
     pub(crate) process_cookie: u32,
+    /// Private ProcessConsoleHostProcess value. The standalone root has no
+    /// modeled parent (PID 0); creation therefore starts with owner tag 2.
+    /// Native detached initialization replaces it with tag 1 through class49.
+    pub(crate) console_host_process: u64,
     /// Current directory (Windows path, with a trailing backslash).
     pub cwd: Vec<u16>,
     /// The executable's `SizeOfStackReserve` (the default thread stack).

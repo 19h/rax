@@ -1,0 +1,70 @@
+{
+  "base": "b0c3f8d374bc85068479f6b59f9ab24b0fe78827",
+  "files": [
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 18200,
+      "sha256": "8025a71c2999dd5f94d4c48cc6623be8ebb8dcfd4e37923a893eb12623853408"
+    },
+    {
+      "path": "src/user/windows/dll/native/process_set.rs",
+      "bytes": 3262,
+      "sha256": "9479c0e6b4b649ffeed034f467b30d7c4fa5c5ac5bbdbabc3beb5302aebb492f"
+    },
+    {
+      "path": "src/user/windows/dll/native/process_query.rs",
+      "bytes": 2427,
+      "sha256": "b961c7af6645dd268c97c60177fd932a9407c28942b431e28e28959d20f54e85"
+    },
+    {
+      "path": "src/user/windows/dll/native/process_console.rs",
+      "bytes": 4009,
+      "sha256": "dbf54d44021e67e4dc9690c7a9f5879db71e709afd46b989ce83baddef57b3a6"
+    },
+    {
+      "path": "src/user/windows/process/mod.rs",
+      "bytes": 16338,
+      "sha256": "3361d773bdd2ea462d4833df6ab5221464b53e08c37d334aff9ab88073fef920"
+    },
+    {
+      "path": "src/user/windows/process/start.rs",
+      "bytes": 22415,
+      "sha256": "130ff6a0645cb79d4156b7063768b7485146ddc62ce0c4d15afdcaeea20616ef"
+    },
+    {
+      "path": "src/user/windows/process/sched.rs",
+      "bytes": 61517,
+      "sha256": "490a28a97a594a4e4cd53db1409c7712895fbe512de0ed41181f978c22ef3044"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47622,
+      "sha256": "4ff902e96a9a500faa44af0e62ae3e03e4183372539eee696637f57f0d2135d4"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/process_console_tests.rs",
+      "bytes": 5491,
+      "sha256": "2098528d2b9790e49232f1df1578b7e43f3df565ddb35139130d855e7c28d1a9"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/process_console_replay_tests.rs",
+      "bytes": 10741,
+      "sha256": "0deddc0d8fea3da77d46a7cee29b3b42acd447151b57ab7ec2aa9866c793f962"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/process_console_leaf_tests.rs",
+      "bytes": 4783,
+      "sha256": "ed35be632f22992f65450972cf1eb1ede8fc923e7b9228d639e633ff111f6820"
+    },
+    {
+      "path": "src/user/windows/process/embedded_tests.rs",
+      "bytes": 7196,
+      "sha256": "2e9d50f48c99b2a9cd03bfd5b36bc186f3134dba0916b9336787ac9f9141376e"
+    },
+    {
+      "path": "src/user/windows/dll/crt/startup/storage.rs",
+      "bytes": 33087,
+      "sha256": "375b104adccdd1cabef4c3b2fd99cb5fb82ffb01bbca883255faeae991b463eb"
+    }
+  ]
+}

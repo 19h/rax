@@ -17,6 +17,53 @@ fn config() -> WindowsConfig {
 }
 
 #[test]
+fn native_console_owner_startup_has_detached_redirected_parameters_for_both_stream_routes() {
+    use crate::user::windows::layout::offsets;
+    use crate::user::windows::memory::Mem;
+    use crate::user::windows::objects::{Object, StdStream};
+    for arch in crate::user::windows::arch::WinArch::ALL {
+        let name = match arch {
+            crate::user::windows::arch::WinArch::X86 => "x86",
+            crate::user::windows::arch::WinArch::X64 => "x64",
+            crate::user::windows::arch::WinArch::Arm64 => "arm64",
+        };
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/user/windows/bin")
+            .join(name)
+            .join("smoke.exe");
+        let bytes = std::fs::read(&path).unwrap();
+        for host_streams in [false, true] {
+            let mut cfg = if host_streams {
+                WindowsConfig::new(&path, vec![])
+            } else {
+                WindowsConfig::embedded("C:\\app\\detached.exe", vec![], vec![], 4096).unwrap()
+            };
+            cfg.arena_bytes = 64 << 20;
+            let process = WindowsProcess::spawn_image(cfg, bytes.clone()).unwrap();
+            let p = process.state();
+            let o = offsets(arch);
+            assert_eq!(
+                p.space.ptr(p.params + o.pp_console_handle, o.ptr).unwrap(),
+                arch.ptr(u64::MAX)
+            );
+            assert_eq!(p.space.u32(p.params + o.pp_window_flags).unwrap(), 0x100);
+            assert_eq!(p.console_host_process, 2);
+            for (offset, stream) in [
+                (o.pp_std_input, StdStream::In),
+                (o.pp_std_output, StdStream::Out),
+                (o.pp_std_error, StdStream::Err),
+            ] {
+                let handle = p.space.ptr(p.params + offset, o.ptr).unwrap();
+                assert!(
+                    matches!(p.objects.get(handle), Some(Object::Console(actual)) if *actual == stream)
+                );
+            }
+            assert_eq!(matches!(p.cfg.console, Console::Host), host_streams);
+        }
+    }
+}
+
+#[test]
 fn supplied_dependencies_run_static_and_dynamic_loader_lifecycles_all_abis() {
     for arch in ["x86", "x64", "arm64"] {
         for exe in ["startup.exe", "forward-miss.exe"] {

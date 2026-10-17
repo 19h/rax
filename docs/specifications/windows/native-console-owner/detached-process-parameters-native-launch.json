@@ -1,0 +1,16 @@
+{
+  "pid": 8704,
+  "utc": "2026-10-15T22:12:31.012786+00:00",
+  "lock": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-process-parameters-native-driver.lock",
+  "child-pid": 4348,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-detached-process-parameters-profiles.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-15T22:14:51.564048+00:00"
+}

@@ -1,0 +1,52 @@
+{
+  "baseline": {
+    "verified-native-producers": 16,
+    "primary-calls": 544,
+    "primary-success": 130,
+    "primary-failure": 414,
+    "repeat-sets": 136,
+    "state-helper-queries": 1224,
+    "seh": 0,
+    "suspended-parameter-snapshots": 12,
+    "scope": "retained independent native records and bytes; this portable check does not rerun native producers or prove ordinary guest completion"
+  },
+  "adversarial-cases": [
+    {
+      "case": "raw-byte-digest",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic": "AssertionError: native-console-owner-arm64.log"
+    },
+    {
+      "case": "executable-identity-mismatch",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic": "AssertionError"
+    },
+    {
+      "case": "native-pe-machine",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic": "AssertionError"
+    },
+    {
+      "case": "changed-kernel-profile",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic": "AssertionError"
+    },
+    {
+      "case": "wow-query-status-with-updated-digest",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic": "AssertionError"
+    },
+    {
+      "case": "detached-sentinel-with-updated-digest",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic": "AssertionError"
+    }
+  ],
+  "scope": "temporary owned copies only; repository native/source bytes were preserved"
+}

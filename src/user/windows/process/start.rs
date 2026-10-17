@@ -119,6 +119,15 @@ fn params(p: &mut Proc, image_path: &str) -> Result<(), SpawnError> {
     p.space
         .w32(at + o.pp_flags, 1)
         .map_err(|e| memory(format!("{e:?}")))?;
+    // Both configured routes provide standard streams without a native guest
+    // console session. Match DETACHED_PROCESS with STARTF_USESTDHANDLES rather
+    // than asking installed KernelBase to create a ConDrv console server.
+    p.space
+        .wptr(at + o.pp_console_handle, o.ptr, p.arch.ptr(u64::MAX))
+        .map_err(|e| memory(format!("{e:?}")))?;
+    p.space
+        .w32(at + o.pp_window_flags, 0x100)
+        .map_err(|e| memory(format!("{e:?}")))?;
     for (stream, off) in [
         (StdStream::In, o.pp_std_input),
         (StdStream::Out, o.pp_std_output),
@@ -394,6 +403,7 @@ pub(super) fn spawn_image(mut config: WindowsConfig, bytes: Vec<u8>) -> Result<P
         rng: seed,
         // Keep cookie derivation independent of the existing random stream.
         process_cookie: (seed ^ (seed >> 32)) as u32 ^ 0xA5A5_5A5A,
+        console_host_process: 2,
         cwd: cwd.encode_utf16().collect(),
         exe_stack_reserve: h.stack_reserve,
         exe_stack_commit: h.stack_commit,

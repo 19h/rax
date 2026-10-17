@@ -1,0 +1,130 @@
+{
+  "utc": "2026-10-16T01:01:01.654248+00:00",
+  "source-epoch": 2,
+  "hosts": {
+    "macos": {
+      "completed-gates": 7,
+      "all-exit-codes": 0,
+      "summaries-passed-failed-ignored-filtered": {
+        "focused": [
+          [
+            6,
+            0,
+            0,
+            7832
+          ]
+        ],
+        "prior-services": [
+          [
+            5,
+            0,
+            0,
+            7833
+          ]
+        ],
+        "all-targets": [],
+        "windows": [
+          [
+            544,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "capi": [
+          [
+            168,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "build-user": [],
+        "lib": [
+          [
+            7836,
+            0,
+            2,
+            0
+          ]
+        ]
+      },
+      "native-windows-memory-execution": false,
+      "scope": "shared portable replay on this host; installed Windows leaves remain a separate native gate"
+    },
+    "linux": {
+      "completed-gates": 7,
+      "all-exit-codes": 0,
+      "summaries-passed-failed-ignored-filtered": {
+        "focused": [
+          [
+            6,
+            0,
+            0,
+            7826
+          ]
+        ],
+        "prior-services": [
+          [
+            5,
+            0,
+            0,
+            7827
+          ]
+        ],
+        "all-targets": [],
+        "windows": [
+          [
+            544,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "capi": [
+          [
+            168,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "build-user": [],
+        "lib": [
+          [
+            7830,
+            0,
+            2,
+            0
+          ]
+        ]
+      },
+      "native-windows-memory-execution": false,
+      "scope": "shared portable replay on this host; installed Windows leaves remain a separate native gate"
+    }
+  }
+}

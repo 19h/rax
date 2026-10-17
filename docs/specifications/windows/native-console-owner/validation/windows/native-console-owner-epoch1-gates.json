@@ -1,0 +1,6 @@
+﻿{
+    "gate":  "focused",
+    "command":  "cargo.exe test --locked --offline --no-default-features --lib native_console_owner -- --nocapture",
+    "exit-code":  101,
+    "log":  "native-console-owner-epoch1-focused.log"
+}

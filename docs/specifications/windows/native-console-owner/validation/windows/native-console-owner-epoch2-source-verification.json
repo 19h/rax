@@ -1,0 +1,200 @@
+{
+  "utc": "2026-10-16T02:41:29.533064+00:00",
+  "published-base": "b0c3f8d374bc85068479f6b59f9ab24b0fe78827",
+  "epoch": 2,
+  "verified-count": 21,
+  "files": [
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "before": {
+        "bytes": 18200,
+        "sha256": "8025a71c2999dd5f94d4c48cc6623be8ebb8dcfd4e37923a893eb12623853408"
+      },
+      "bytes": 18200,
+      "sha256": "8025a71c2999dd5f94d4c48cc6623be8ebb8dcfd4e37923a893eb12623853408"
+    },
+    {
+      "path": "src/user/windows/dll/native/process_set.rs",
+      "before": {
+        "bytes": 3262,
+        "sha256": "9479c0e6b4b649ffeed034f467b30d7c4fa5c5ac5bbdbabc3beb5302aebb492f"
+      },
+      "bytes": 3262,
+      "sha256": "9479c0e6b4b649ffeed034f467b30d7c4fa5c5ac5bbdbabc3beb5302aebb492f"
+    },
+    {
+      "path": "src/user/windows/dll/native/process_query.rs",
+      "before": {
+        "bytes": 2427,
+        "sha256": "b961c7af6645dd268c97c60177fd932a9407c28942b431e28e28959d20f54e85"
+      },
+      "bytes": 2427,
+      "sha256": "b961c7af6645dd268c97c60177fd932a9407c28942b431e28e28959d20f54e85"
+    },
+    {
+      "path": "src/user/windows/dll/native/process_console.rs",
+      "before": {
+        "bytes": 4009,
+        "sha256": "dbf54d44021e67e4dc9690c7a9f5879db71e709afd46b989ce83baddef57b3a6"
+      },
+      "bytes": 4112,
+      "sha256": "10218ee9ef9ce4b8be6059e2b805a547981ec26325d99570bdcd850f23f730b3"
+    },
+    {
+      "path": "src/user/windows/process/mod.rs",
+      "before": {
+        "bytes": 16338,
+        "sha256": "3361d773bdd2ea462d4833df6ab5221464b53e08c37d334aff9ab88073fef920"
+      },
+      "bytes": 16338,
+      "sha256": "3361d773bdd2ea462d4833df6ab5221464b53e08c37d334aff9ab88073fef920"
+    },
+    {
+      "path": "src/user/windows/process/start.rs",
+      "before": {
+        "bytes": 22415,
+        "sha256": "130ff6a0645cb79d4156b7063768b7485146ddc62ce0c4d15afdcaeea20616ef"
+      },
+      "bytes": 22415,
+      "sha256": "130ff6a0645cb79d4156b7063768b7485146ddc62ce0c4d15afdcaeea20616ef"
+    },
+    {
+      "path": "src/user/windows/process/sched.rs",
+      "before": {
+        "bytes": 61517,
+        "sha256": "490a28a97a594a4e4cd53db1409c7712895fbe512de0ed41181f978c22ef3044"
+      },
+      "bytes": 61517,
+      "sha256": "490a28a97a594a4e4cd53db1409c7712895fbe512de0ed41181f978c22ef3044"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "before": {
+        "bytes": 47622,
+        "sha256": "4ff902e96a9a500faa44af0e62ae3e03e4183372539eee696637f57f0d2135d4"
+      },
+      "bytes": 47622,
+      "sha256": "4ff902e96a9a500faa44af0e62ae3e03e4183372539eee696637f57f0d2135d4"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/process_console_tests.rs",
+      "before": {
+        "bytes": 5491,
+        "sha256": "2098528d2b9790e49232f1df1578b7e43f3df565ddb35139130d855e7c28d1a9"
+      },
+      "bytes": 6914,
+      "sha256": "c31279032bc0a6001edc96146b898a048c87d23f5852e9ab8b1995716cac861c"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/process_console_replay_tests.rs",
+      "before": {
+        "bytes": 10741,
+        "sha256": "0deddc0d8fea3da77d46a7cee29b3b42acd447151b57ab7ec2aa9866c793f962"
+      },
+      "bytes": 10741,
+      "sha256": "0deddc0d8fea3da77d46a7cee29b3b42acd447151b57ab7ec2aa9866c793f962"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/process_console_leaf_tests.rs",
+      "before": {
+        "bytes": 4783,
+        "sha256": "ed35be632f22992f65450972cf1eb1ede8fc923e7b9228d639e633ff111f6820"
+      },
+      "bytes": 4783,
+      "sha256": "ed35be632f22992f65450972cf1eb1ede8fc923e7b9228d639e633ff111f6820"
+    },
+    {
+      "path": "src/user/windows/process/embedded_tests.rs",
+      "before": {
+        "bytes": 7196,
+        "sha256": "2e9d50f48c99b2a9cd03bfd5b36bc186f3134dba0916b9336787ac9f9141376e"
+      },
+      "bytes": 7196,
+      "sha256": "2e9d50f48c99b2a9cd03bfd5b36bc186f3134dba0916b9336787ac9f9141376e"
+    },
+    {
+      "path": "src/user/windows/dll/crt/startup/storage.rs",
+      "before": {
+        "bytes": 33087,
+        "sha256": "375b104adccdd1cabef4c3b2fd99cb5fb82ffb01bbca883255faeae991b463eb"
+      },
+      "bytes": 33087,
+      "sha256": "375b104adccdd1cabef4c3b2fd99cb5fb82ffb01bbca883255faeae991b463eb"
+    },
+    {
+      "path": "docs/specifications/windows/native-console-owner/native-console-owner-arm64-build.log",
+      "before": {
+        "bytes": 26,
+        "sha256": "2fd45b4ad2b2d15a7acadd2eda2e5a1f5ff7dcfb44b356238d1e479bd1e8fd4a"
+      },
+      "bytes": 26,
+      "sha256": "2fd45b4ad2b2d15a7acadd2eda2e5a1f5ff7dcfb44b356238d1e479bd1e8fd4a"
+    },
+    {
+      "path": "docs/specifications/windows/native-console-owner/native-console-owner-arm64.log",
+      "before": {
+        "bytes": 134447,
+        "sha256": "78ca9174c3ee2c5d445af155f835afa89327109d8e3501034b09a9fe89ee7c76"
+      },
+      "bytes": 134447,
+      "sha256": "78ca9174c3ee2c5d445af155f835afa89327109d8e3501034b09a9fe89ee7c76"
+    },
+    {
+      "path": "docs/specifications/windows/native-console-owner/native-console-owner-x64-build.log",
+      "before": {
+        "bytes": 26,
+        "sha256": "2fd45b4ad2b2d15a7acadd2eda2e5a1f5ff7dcfb44b356238d1e479bd1e8fd4a"
+      },
+      "bytes": 26,
+      "sha256": "2fd45b4ad2b2d15a7acadd2eda2e5a1f5ff7dcfb44b356238d1e479bd1e8fd4a"
+    },
+    {
+      "path": "docs/specifications/windows/native-console-owner/native-console-owner-x64.log",
+      "before": {
+        "bytes": 134458,
+        "sha256": "7ac48c8b97b2ba9eb46bbda8e16c875a256b6f5eaf9ef83defbc2d2ab7924147"
+      },
+      "bytes": 134458,
+      "sha256": "7ac48c8b97b2ba9eb46bbda8e16c875a256b6f5eaf9ef83defbc2d2ab7924147"
+    },
+    {
+      "path": "docs/specifications/windows/native-console-owner/native-console-owner-x86-build.log",
+      "before": {
+        "bytes": 26,
+        "sha256": "2fd45b4ad2b2d15a7acadd2eda2e5a1f5ff7dcfb44b356238d1e479bd1e8fd4a"
+      },
+      "bytes": 26,
+      "sha256": "2fd45b4ad2b2d15a7acadd2eda2e5a1f5ff7dcfb44b356238d1e479bd1e8fd4a"
+    },
+    {
+      "path": "docs/specifications/windows/native-console-owner/native-console-owner-x86-laa-build.log",
+      "before": {
+        "bytes": 26,
+        "sha256": "2fd45b4ad2b2d15a7acadd2eda2e5a1f5ff7dcfb44b356238d1e479bd1e8fd4a"
+      },
+      "bytes": 26,
+      "sha256": "2fd45b4ad2b2d15a7acadd2eda2e5a1f5ff7dcfb44b356238d1e479bd1e8fd4a"
+    },
+    {
+      "path": "docs/specifications/windows/native-console-owner/native-console-owner-x86-laa.log",
+      "before": {
+        "bytes": 132365,
+        "sha256": "b567020016cfcf1b8cba8c46ffa3cd6129378e838f84491b6c4b6c4a8d759a1f"
+      },
+      "bytes": 132365,
+      "sha256": "b567020016cfcf1b8cba8c46ffa3cd6129378e838f84491b6c4b6c4a8d759a1f"
+    },
+    {
+      "path": "docs/specifications/windows/native-console-owner/native-console-owner-x86.log",
+      "before": {
+        "bytes": 132362,
+        "sha256": "172ce07be52da74b3c2aae4b08dc67a0353e6f036dd6fb13e61388330f4d37f3"
+      },
+      "bytes": 132362,
+      "sha256": "172ce07be52da74b3c2aae4b08dc67a0353e6f036dd6fb13e61388330f4d37f3"
+    }
+  ],
+  "native-cargo-adapter-preserved": true,
+  "all-changed-inputs-have-fresh-native-mtimes": true,
+  "scope": "exact13Rust and new primary corpus overlay;unchanged capture inputs retain their previous verified source evidence;no new full-tree hash claim"
+}

@@ -1,0 +1,128 @@
+{
+  "utc": "2026-10-15T22:53:41.998852+00:00",
+  "base": "b0c3f8d374bc85068479f6b59f9ab24b0fe78827",
+  "worktree": "/Users/int/Library/Caches/assist-process-emulation/native-create-file-20261015/rax-final-source",
+  "owned-code-and-engineering": [
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/process_set.rs",
+    "src/user/windows/dll/native/process_query.rs",
+    "src/user/windows/dll/native/process_console.rs",
+    "src/user/windows/process/mod.rs",
+    "src/user/windows/process/start.rs",
+    "src/user/windows/process/sched.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/process_console_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/process_console_replay_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/process_console_leaf_tests.rs",
+    "src/user/windows/process/embedded_tests.rs",
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/dll/crt/startup/storage.rs"
+  ],
+  "owned-corpus": "docs/specifications/windows/native-console-owner/",
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "The existing Host and Captured console modes route streams without implementing a native guest console session.",
+      "basis": "WindowsConfig console field, embedded_tests purpose, Object::Console I/O adapters; no AllocConsole/AttachConsole/GetConsoleMode export.",
+      "dependent-result": "Initialize detached redirected process parameters for both routes.",
+      "stress-test": "All three guest ABIs, both stream routes, stream identities and captured I/O unchanged.",
+      "falsification-probe": "Find or execute an owning ConDrv console session adapter; compare native suspended redirected-detached snapshots.",
+      "status": "confirmed",
+      "validation": "Final macOS/Linux focused startup test executes x86, x64 and ARM64 with both Host/Captured routes and exact guest stream identities; independent native redirected-detached snapshots agree."
+    },
+    {
+      "id": "A2",
+      "assumption": "Private class49 semantics are specific to installed Windows10.0.29683.1000.",
+      "basis": "Native ARM64/x64/WoW64/LAA producer matrices; PHNT supplies only ULONG_PTR qs annotation.",
+      "dependent-result": "Guest-owned process owner state and native ABI-specific checked adapters.",
+      "stress-test": "Exact/oversized lengths, tagged values, real-self handles, invalid handles, alignment/guards/aliases.",
+      "falsification-probe": "Independent native source/PE/stdout inspection and replay of every retained native row.",
+      "status": "retained",
+      "validation": "Final full libraries macOS7836/0/2, Linux7830/0/2, Windows7260/5/2; exact five existing Windows lowerer failures retained. Focus6Unix/7Windows includes all544primary and136repeat rows and actual installed native/WoW leaves."
+    },
+    {
+      "id": "A3",
+      "assumption": "Retained carrier builds validate the unchanged RAX-facing1.11.0 interface and selected current C++sources, with an explicit legacy Assist-header boundary.",
+      "basis": "Nine C++sources match published root749cdd3d; function-level environment is unchanged. Frozen Assist public header minor184 differs from current186 in unrelated cluster/SMT additions.",
+      "dependent-result": "Scoped retained carrier checks only;no whole-current-root/plugin/GUI/package claim.",
+      "stress-test": "Three-host static archives, CLI/MCP and five C++ consumers; verify current owning source equality.",
+      "falsification-probe": "Detect an ABI header change, selected consumer mismatch, or unexpected core feature.",
+      "status": "revised",
+      "validation": "Final macOS6/6, Linux4/4 and Windows shipping/five C++/artifact/archive checks completed; actual carrier/core archive walks bind309 selected inputs with core features[]. Frozen carrier boundary remains184 versus compared root749cdd3d186; no whole-current-root claim."
+    },
+    {
+      "id": "A4",
+      "assumption": "The standalone guest root has no modeled parent, so its creation owner is PID0|2; no native creator PID enters the guest.",
+      "basis": "Existing root pid4 and no parent field; native suspended-child probes explicitly match owner=creatorPID|2. Native creator-tag encoding is measured; using absent parent PID0 is an explicit standalone model choice, not a measured native parent0 process.",
+      "dependent-result": "Initialize private console_host_process to2, before native detached initialization sets1.",
+      "stress-test": "Initial state, per-process independence, owner full-width writes, captured/Host stream routing.",
+      "falsification-probe": "Find an existing modeled parent contract or a native suspended owner differing from creatorPID|2.",
+      "status": "retained"
+    }
+  ],
+  "rax-change-surface": {
+    "Direct decode": "unaffected: service entry decoding unchanged",
+    "Direct execute": "unaffected: CPU execution unchanged",
+    "CPU state": "unaffected: register ABI machinery reused",
+    "Memory/MMU": "affected: native caller probes use existing guest memory and guard contracts",
+    "SMIR lift": "unaffected: no instruction or lifting change",
+    "SMIR IR": "unaffected: no operation change",
+    "SMIR interpreter": "unaffected: service dispatch is outside SMIR instruction semantics",
+    "Optimizer": "unaffected: no IR transformation change",
+    "Native lowering": "unaffected: no machine code emission change",
+    "JIT runtime": "unaffected: existing service frontier retained",
+    "Backend": "unaffected: portable process personality only",
+    "Machine/device": "unaffected: no machine/device configuration",
+    "Oracle/analysis": "unaffected: decode/oracle JSON unchanged",
+    "C ABI": "unaffected: no public layout/status/ABI version change",
+    "Tests/docs": "affected: direct service matrices, native-row replay, installed leaves, startup persona and evidence"
+  },
+  "assist-change-surface": {
+    "Plugin lifecycle": "unaffected: no change to this product-plane contract",
+    "UI state": "unaffected: no change to this product-plane contract",
+    "Conversation/lane": "unaffected: no change to this product-plane contract",
+    "Agent backend": "unaffected: no change to this product-plane contract",
+    "Prompt/context": "unaffected: no change to this product-plane contract",
+    "Tool schema": "unaffected: no change to this product-plane contract",
+    "Permission/mutation": "unaffected: no change to this product-plane contract",
+    "Main-thread dispatch": "unaffected: no change to this product-plane contract",
+    "Mesh/MCP": "unaffected: no change to this product-plane contract",
+    "Transport/crypto": "unaffected: no change to this product-plane contract",
+    "Persistence": "unaffected: no change to this product-plane contract",
+    "SDK/ABI": "unaffected: no change to this product-plane contract",
+    "Update/release": "unaffected: no change to this product-plane contract",
+    "Optional engines": "affected: process-level RAX private owner/startup semantics; separate minimal function-level emulation_windows_env does not spawn a Windows process or dispatch these services and is unchanged",
+    "Targets/platforms": "affected: portable Windows guest behavior compiles/runs tests on macOS/Linux/Windows; installed DLL positive leaves run on native Windows; selected owning CLI/MCP/C++ consumers on three hosts; no new package inputs",
+    "Tests/docs": "affected: evidence corpus, native-runtime engineering notes and paired root dependency records"
+  },
+  "bounded-findings": [
+    {
+      "impact": "high",
+      "finding": "Ordinary installed Windows startup is still incomplete; controlled input mutation is not production success.",
+      "evidence": "native-console-host-0.log; prior unmodified native-create-file-frontier.log",
+      "blocks": "full requested Windows userland completion"
+    },
+    {
+      "impact": "medium",
+      "finding": "Five pre-existing Windows AArch64 lowerer test failures remain outside this service group.",
+      "evidence": "published native-nls-initialize validation logs",
+      "blocks": "all-tests-pass claim only"
+    },
+    {
+      "impact": "high",
+      "finding": "Installed NtReadFile/NtWriteFile are not registered by the current native-service adapter; standard-stream syscall support remains outside this owner-information group.",
+      "evidence": "src/user/windows/dll/mod.rs::nt_service selects only native::EXPORTS; src/user/windows/dll/native.rs has no NtReadFile/NtWriteFile entry.",
+      "blocks": "full original Windows userland completion; does not invalidate detached persona or measured class49 contract"
+    },
+    {
+      "impact": "medium",
+      "finding": "Frozen Assist carrier uses public ABI1.184 while current public header is1.186. RAX1.11.0 declarations and nine current selected C++sources are unchanged; current header adds unrelated cluster/SMT declarations.",
+      "evidence": "root-function-environment-source-comparison.json and source diff;latest-published-cpp-consumer-identities.json",
+      "blocks": "whole-current-root/GUI/package proof;retained carrier results must remain explicitly scoped"
+    }
+  ],
+  "source-epochs": {
+    "epoch1": "rax-source retained unchanged; first synthetic WoW transition SP expectation failed",
+    "epoch2": "rax-final-source; exact WoW transition SP delta and NULL capture ordering corrected; explicit NULL priority regression added"
+  }
+}

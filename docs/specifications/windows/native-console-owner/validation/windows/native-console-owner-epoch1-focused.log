@@ -1,0 +1,62 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 41m 50s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-tests\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 6 tests
+test user::windows::process::embedded_tests::native_console_owner_startup_has_detached_redirected_parameters_for_both_stream_routes has been running for over 60 seconds
+test user::windows::process::sched::tests::services_tests::process_console_tests::installed::native_console_owner_installed_native_and_wow_leaves_preserve_values_faults_and_actual_returns has been running for over 60 seconds
+test user::windows::process::sched::tests::services_tests::process_console_tests::native_console_owner_query_unmodeled_peer_remains_explicitly_unsupported has been running for over 60 seconds
+test user::windows::process::sched::tests::services_tests::process_console_tests::native_console_owner_rejected_tags_leave_prior_state_unchanged_all_abis has been running for over 60 seconds
+test user::windows::process::sched::tests::services_tests::process_console_tests::native_console_owner_tagged_values_are_process_local_without_objects_or_entropy has been running for over 60 seconds
+test user::windows::process::sched::tests::services_tests::process_console_tests::replay::native_console_owner_replays_all_544_rows_and_136_repeat_sets_from_four_native_profiles has been running for over 60 seconds
+
+thread 'user::windows::process::sched::tests::services_tests::process_console_tests::native_console_owner_rejected_tags_leave_prior_state_unchanged_all_abis' (1612) panicked at src\user\windows\process\sched\tests\services_tests\process_console_tests.rs:51:5:
+assertion `left == right` failed
+  left: 2162628
+ right: 2162624
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'user::windows::process::sched::tests::services_tests::process_console_tests::native_console_owner_tagged_values_are_process_local_without_objects_or_entropy' (9540) panicked at src\user\windows\process\sched\tests\services_tests\process_console_tests.rs:51:5:
+assertion `left == right` failed
+  left: 2162628
+ right: 2162624
+test user::windows::process::embedded_tests::native_console_owner_startup_has_detached_redirected_parameters_for_both_stream_routes ... ok
+test user::windows::process::sched::tests::services_tests::process_console_tests::native_console_owner_query_unmodeled_peer_remains_explicitly_unsupported ... ok
+test user::windows::process::sched::tests::services_tests::process_console_tests::native_console_owner_rejected_tags_leave_prior_state_unchanged_all_abis ... FAILED
+test user::windows::process::sched::tests::services_tests::process_console_tests::native_console_owner_tagged_values_are_process_local_without_objects_or_entropy ... FAILED
+
+thread 'user::windows::process::sched::tests::services_tests::process_console_tests::replay::native_console_owner_replays_all_544_rows_and_136_repeat_sets_from_four_native_profiles' (7420) panicked at src\user\windows\process\sched\tests\services_tests\process_console_tests.rs:51:5:
+assertion `left == right` failed
+  left: 2162628
+ right: 2162624
+test user::windows::process::sched::tests::services_tests::process_console_tests::replay::native_console_owner_replays_all_544_rows_and_136_repeat_sets_from_four_native_profiles ... FAILED
+test user::windows::process::sched::tests::services_tests::process_console_tests::installed::native_console_owner_installed_native_and_wow_leaves_preserve_values_faults_and_actual_returns ... ok
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::process_console_tests::native_console_owner_rejected_tags_leave_prior_state_unchanged_all_abis
+    user::windows::process::sched::tests::services_tests::process_console_tests::native_console_owner_tagged_values_are_process_local_without_objects_or_entropy
+    user::windows::process::sched::tests::services_tests::process_console_tests::replay::native_console_owner_replays_all_544_rows_and_136_repeat_sets_from_four_native_profiles
+
+test result: FAILED. 3 passed; 3 failed; 0 ignored; 0 measured; 7260 filtered out; finished in 119.53s
+
+error: test failed, to rerun pass `--lib`

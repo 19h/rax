@@ -1,0 +1,593 @@
+{
+  "utc": "2026-10-15T23:03:01.185234+00:00",
+  "kernel": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "scope": "independent native source, PE, executable, stdout, parameter and lifecycle verification; no executable copied into repository",
+  "producers": [
+    {
+      "family": "matrix",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-owner-arm64\\native-console-owner.cpp",
+        "bytes": 16452,
+        "sha256": "db3f0c27ec1c400ede33e68d8f23a0b4c86ccd6a747810eafe4cb180c7d77268"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-owner-arm64\\native-console-owner-arm64.exe",
+        "bytes": 167424,
+        "sha256": "41b67aecc0a567b4956fd355433d2b9cc248ad3d7dda50c648ab1adc4fb77ac3"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-owner-arm64\\native-console-owner-arm64.log",
+        "bytes": 134447,
+        "sha256": "78ca9174c3ee2c5d445af155f835afa89327109d8e3501034b09a9fe89ee7c76"
+      },
+      "machine": 43620,
+      "characteristics": 34,
+      "cases": 136,
+      "primary-success": 35,
+      "primary-failure": 101,
+      "repeat-sets": 34,
+      "seh": 0,
+      "reported-ntdll-path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+      "reported-path-file": {
+        "path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+        "bytes": 4609312,
+        "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+      },
+      "loaded-leaves": [
+        {
+          "name": "NtSetInformationProcess",
+          "pointer-bytes": "8",
+          "hex": "810300D4C0035FD60000000000000000A10300D4C0035FD60000000000000000"
+        },
+        {
+          "name": "NtQueryInformationProcess",
+          "pointer-bytes": "8",
+          "hex": "210300D4C0035FD60000000000000000410300D4C0035FD60000000000000000"
+        }
+      ]
+    },
+    {
+      "family": "matrix",
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-owner-x64\\native-console-owner.cpp",
+        "bytes": 16452,
+        "sha256": "db3f0c27ec1c400ede33e68d8f23a0b4c86ccd6a747810eafe4cb180c7d77268"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-owner-x64\\native-console-owner-x64.exe",
+        "bytes": 166912,
+        "sha256": "046f5cbb05b10faef539b23a598182cef54606a9d46644c6f146977c8233a17a"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-owner-x64\\native-console-owner-x64.log",
+        "bytes": 134458,
+        "sha256": "7ac48c8b97b2ba9eb46bbda8e16c875a256b6f5eaf9ef83defbc2d2ab7924147"
+      },
+      "machine": 34404,
+      "characteristics": 34,
+      "cases": 136,
+      "primary-success": 35,
+      "primary-failure": 101,
+      "repeat-sets": 34,
+      "seh": 0,
+      "reported-ntdll-path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+      "reported-path-file": {
+        "path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+        "bytes": 4609312,
+        "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+      },
+      "loaded-leaves": [
+        {
+          "name": "NtSetInformationProcess",
+          "pointer-bytes": "8",
+          "hex": "4C8BD1B81C000000F604250803FE7F0175030F05C3CD2EC30F1F840000000000"
+        },
+        {
+          "name": "NtQueryInformationProcess",
+          "pointer-bytes": "8",
+          "hex": "4C8BD1B819000000F604250803FE7F0175030F05C3CD2EC30F1F840000000000"
+        }
+      ]
+    },
+    {
+      "family": "matrix",
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-owner-x86\\native-console-owner.cpp",
+        "bytes": 16452,
+        "sha256": "db3f0c27ec1c400ede33e68d8f23a0b4c86ccd6a747810eafe4cb180c7d77268"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-owner-x86\\native-console-owner-x86.exe",
+        "bytes": 137216,
+        "sha256": "7142cc3158e53c24f501d40d2e8fb717d9de1d3d419a556a806b16b1fc0471c4"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-owner-x86\\native-console-owner-x86.log",
+        "bytes": 132362,
+        "sha256": "172ce07be52da74b3c2aae4b08dc67a0353e6f036dd6fb13e61388330f4d37f3"
+      },
+      "machine": 332,
+      "characteristics": 258,
+      "cases": 136,
+      "primary-success": 30,
+      "primary-failure": 106,
+      "repeat-sets": 34,
+      "seh": 0,
+      "reported-ntdll-path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+      "reported-path-file": {
+        "path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+        "bytes": 4609312,
+        "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+      },
+      "loaded-leaves": [
+        {
+          "name": "NtSetInformationProcess",
+          "pointer-bytes": "4",
+          "hex": "B81C000000BAB09B0977FFD2C2100090B81D000000BAB09B0977FFD2C21C0090"
+        },
+        {
+          "name": "NtQueryInformationProcess",
+          "pointer-bytes": "4",
+          "hex": "B819000000E8000000005A807A144B750E64FF15C0000000C214000000ED76BA"
+        }
+      ]
+    },
+    {
+      "family": "matrix",
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-owner-x86-laa\\native-console-owner.cpp",
+        "bytes": 16452,
+        "sha256": "db3f0c27ec1c400ede33e68d8f23a0b4c86ccd6a747810eafe4cb180c7d77268"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-owner-x86-laa\\native-console-owner-x86-laa.exe",
+        "bytes": 137216,
+        "sha256": "dfec4cb533319d67d8aa0b6d20bcec80fa8399a05439022e3e6674307772fd34"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-owner-x86-laa\\native-console-owner-x86-laa.log",
+        "bytes": 132365,
+        "sha256": "b567020016cfcf1b8cba8c46ffa3cd6129378e838f84491b6c4b6c4a8d759a1f"
+      },
+      "machine": 332,
+      "characteristics": 290,
+      "cases": 136,
+      "primary-success": 30,
+      "primary-failure": 106,
+      "repeat-sets": 34,
+      "seh": 0,
+      "reported-ntdll-path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+      "reported-path-file": {
+        "path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+        "bytes": 4609312,
+        "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+      },
+      "loaded-leaves": [
+        {
+          "name": "NtSetInformationProcess",
+          "pointer-bytes": "4",
+          "hex": "B81C000000BAB09B0977FFD2C2100090B81D000000BAB09B0977FFD2C21C0090"
+        },
+        {
+          "name": "NtQueryInformationProcess",
+          "pointer-bytes": "4",
+          "hex": "B819000000E8000000005A807A144B750E64FF15C0000000C214000000ED76BA"
+        }
+      ]
+    },
+    {
+      "family": "initial",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-host-initial-arm64\\native-console-host-initial.cpp",
+        "bytes": 13285,
+        "sha256": "46bcf67d2184c7d18eb3b49df6a143e0a93daf98c8a167db8796ad5d74d1e390"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-host-initial-arm64\\native-console-host-initial-arm64.exe",
+        "bytes": 145920,
+        "sha256": "5a354de6aab8fb81f79ba737098238062743e468039f47341ecaf6da338aacda"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-host-initial-arm64\\native-console-host-initial-arm64.log",
+        "bytes": 5357,
+        "sha256": "8263884f7c1cffaddc82764dd7b547734d78437466f7c2ef582c0fd0ca5134bb"
+      },
+      "machine": 43620,
+      "characteristics": 34,
+      "parameter-bytes": 1096,
+      "console-handle": "0xffffffffffffffff",
+      "window-flags": "0x100",
+      "scope": "suspended child fixture is x86 non-LAA even when its controller is x86-LAA",
+      "creation-owner": {
+        "parent-pid": 2900,
+        "owner": {
+          "status": "00000000",
+          "value": "B56",
+          "returned": "00000008"
+        }
+      },
+      "reported-ntdll-path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+      "reported-path-file": {
+        "path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+        "bytes": 4609312,
+        "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+      },
+      "loaded-leaves": [
+        {
+          "name": "NtSetInformationProcess",
+          "pointer-bytes": "8",
+          "hex": "810300D4C0035FD60000000000000000A10300D4C0035FD60000000000000000"
+        },
+        {
+          "name": "NtQueryInformationProcess",
+          "pointer-bytes": "8",
+          "hex": "210300D4C0035FD60000000000000000410300D4C0035FD60000000000000000"
+        }
+      ]
+    },
+    {
+      "family": "initial",
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-host-initial-x64\\native-console-host-initial.cpp",
+        "bytes": 13285,
+        "sha256": "46bcf67d2184c7d18eb3b49df6a143e0a93daf98c8a167db8796ad5d74d1e390"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-host-initial-x64\\native-console-host-initial-x64.exe",
+        "bytes": 143360,
+        "sha256": "0dd61fdd8dd1041c0dd46da224a2d2e29d8d00735ba5d944e78e80b31cf465fa"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-host-initial-x64\\native-console-host-initial-x64.log",
+        "bytes": 5300,
+        "sha256": "89612f920498d7855cd7865005e33becfd3ff3bfa98430bf7f0ad149cc8967fe"
+      },
+      "machine": 34404,
+      "characteristics": 34,
+      "parameter-bytes": 1096,
+      "console-handle": "0xffffffffffffffff",
+      "window-flags": "0x100",
+      "scope": "suspended child fixture is x86 non-LAA even when its controller is x86-LAA",
+      "creation-owner": {
+        "parent-pid": 5396,
+        "owner": {
+          "status": "00000000",
+          "value": "1516",
+          "returned": "00000008"
+        }
+      },
+      "reported-ntdll-path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+      "reported-path-file": {
+        "path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+        "bytes": 4609312,
+        "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+      },
+      "loaded-leaves": [
+        {
+          "name": "NtSetInformationProcess",
+          "pointer-bytes": "8",
+          "hex": "4C8BD1B81C000000F604250803FE7F0175030F05C3CD2EC30F1F840000000000"
+        },
+        {
+          "name": "NtQueryInformationProcess",
+          "pointer-bytes": "8",
+          "hex": "4C8BD1B819000000F604250803FE7F0175030F05C3CD2EC30F1F840000000000"
+        }
+      ]
+    },
+    {
+      "family": "initial",
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-host-initial-x86\\native-console-host-initial.cpp",
+        "bytes": 13285,
+        "sha256": "46bcf67d2184c7d18eb3b49df6a143e0a93daf98c8a167db8796ad5d74d1e390"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-host-initial-x86\\native-console-host-initial-x86.exe",
+        "bytes": 120832,
+        "sha256": "cf8177a69679df7e952830385633bedeba9ee9c98ec1c383bc2e8ae2cfc9662b"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-host-initial-x86\\native-console-host-initial-x86.log",
+        "bytes": 4437,
+        "sha256": "e04858f2c5a9939872c557af65281646bda148f24c7ca93f3542b92b4ced39fb"
+      },
+      "machine": 332,
+      "characteristics": 258,
+      "parameter-bytes": 708,
+      "console-handle": "0xffffffff",
+      "window-flags": "0x100",
+      "scope": "suspended child fixture is x86 non-LAA even when its controller is x86-LAA",
+      "creation-owner": {
+        "parent-pid": 3380,
+        "owner": {
+          "status": "C0000003",
+          "value": "A5A5A5A5",
+          "returned": "B6B6B6B6"
+        }
+      },
+      "reported-ntdll-path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+      "reported-path-file": {
+        "path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+        "bytes": 4609312,
+        "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+      },
+      "loaded-leaves": [
+        {
+          "name": "NtSetInformationProcess",
+          "pointer-bytes": "4",
+          "hex": "B81C000000BAB09B0977FFD2C2100090B81D000000BAB09B0977FFD2C21C0090"
+        },
+        {
+          "name": "NtQueryInformationProcess",
+          "pointer-bytes": "4",
+          "hex": "B819000000E8000000005A807A144B750E64FF15C0000000C214000000ED76BA"
+        }
+      ]
+    },
+    {
+      "family": "initial",
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-host-initial-x86-laa\\native-console-host-initial.cpp",
+        "bytes": 13285,
+        "sha256": "46bcf67d2184c7d18eb3b49df6a143e0a93daf98c8a167db8796ad5d74d1e390"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-host-initial-x86-laa\\native-console-host-initial-x86-laa.exe",
+        "bytes": 120832,
+        "sha256": "48d6cf2cb05081bb664b2ca369d7c4b11b8f7beaf1587c2fd3f747bbe2049a4e"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-host-initial-x86-laa\\native-console-host-initial-x86-laa.log",
+        "bytes": 4443,
+        "sha256": "f038f97468c2a3dde05146f8ed4d758931cce0c1ec2dcee54e0aa07762e9e7a0"
+      },
+      "machine": 332,
+      "characteristics": 290,
+      "parameter-bytes": 708,
+      "console-handle": "0xffffffff",
+      "window-flags": "0x100",
+      "scope": "suspended child fixture is x86 non-LAA even when its controller is x86-LAA",
+      "creation-owner": {
+        "parent-pid": 7844,
+        "owner": {
+          "status": "C0000003",
+          "value": "A5A5A5A5",
+          "returned": "B6B6B6B6"
+        }
+      },
+      "reported-ntdll-path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+      "reported-path-file": {
+        "path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+        "bytes": 4609312,
+        "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+      },
+      "loaded-leaves": [
+        {
+          "name": "NtSetInformationProcess",
+          "pointer-bytes": "4",
+          "hex": "B81C000000BAB09B0977FFD2C2100090B81D000000BAB09B0977FFD2C21C0090"
+        },
+        {
+          "name": "NtQueryInformationProcess",
+          "pointer-bytes": "4",
+          "hex": "B819000000E8000000005A807A144B750E64FF15C0000000C214000000ED76BA"
+        }
+      ]
+    },
+    {
+      "family": "plain",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-process-parameters-arm64\\native-detached-process-parameters.cpp",
+        "bytes": 10323,
+        "sha256": "8d577e71bd91f38530bdf4b24278b67cf65792e411a451fad37523a1c4031232"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-process-parameters-arm64\\native-detached-process-parameters-arm64.exe",
+        "bytes": 142336,
+        "sha256": "9d3068db3cbc5e2ba3e622d09d727eb5c43110ff87776a898f15e88e78374554"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-process-parameters-arm64\\native-detached-process-parameters-arm64.log",
+        "bytes": 4657,
+        "sha256": "09695cdf6206be66db14aaf907c9ff9840e44082d569b84eb2f3124ac19823e4"
+      },
+      "machine": 43620,
+      "characteristics": 34,
+      "parameter-bytes": 1096,
+      "console-handle": "0xffffffffffffffff",
+      "window-flags": "0x0",
+      "scope": "suspended child fixture is x86 non-LAA even when its controller is x86-LAA"
+    },
+    {
+      "family": "plain",
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-process-parameters-x64\\native-detached-process-parameters.cpp",
+        "bytes": 10323,
+        "sha256": "8d577e71bd91f38530bdf4b24278b67cf65792e411a451fad37523a1c4031232"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-process-parameters-x64\\native-detached-process-parameters-x64.exe",
+        "bytes": 139776,
+        "sha256": "f5b6b4cedcdfbf9b2adfcdd58b7f20ac32abe2a2325d911932a73c505914a1b5"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-process-parameters-x64\\native-detached-process-parameters-x64.log",
+        "bytes": 4597,
+        "sha256": "ee82a717200446c92b918ddfb67ef7732d12328059f48abf0e9f04d8261b5c63"
+      },
+      "machine": 34404,
+      "characteristics": 34,
+      "parameter-bytes": 1096,
+      "console-handle": "0xffffffffffffffff",
+      "window-flags": "0x0",
+      "scope": "suspended child fixture is x86 non-LAA even when its controller is x86-LAA"
+    },
+    {
+      "family": "plain",
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-process-parameters-x86\\native-detached-process-parameters.cpp",
+        "bytes": 10323,
+        "sha256": "8d577e71bd91f38530bdf4b24278b67cf65792e411a451fad37523a1c4031232"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-process-parameters-x86\\native-detached-process-parameters-x86.exe",
+        "bytes": 118272,
+        "sha256": "96b6eaa76d1fdd3b193bd505ac4e16ceb9c6f9a01cd14e0be3085144127f0ee2"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-process-parameters-x86\\native-detached-process-parameters-x86.log",
+        "bytes": 3757,
+        "sha256": "25b7726e162f8ed142f1b15b5b51794bed24754bc93c09d4357983e916f7d966"
+      },
+      "machine": 332,
+      "characteristics": 258,
+      "parameter-bytes": 708,
+      "console-handle": "0xffffffff",
+      "window-flags": "0x0",
+      "scope": "suspended child fixture is x86 non-LAA even when its controller is x86-LAA"
+    },
+    {
+      "family": "plain",
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-process-parameters-x86-laa\\native-detached-process-parameters.cpp",
+        "bytes": 10323,
+        "sha256": "8d577e71bd91f38530bdf4b24278b67cf65792e411a451fad37523a1c4031232"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-process-parameters-x86-laa\\native-detached-process-parameters-x86-laa.exe",
+        "bytes": 118272,
+        "sha256": "949eb1b27712486719cdeff86ba7b9b6318023f859bd446e0ad19c5797edf146"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-process-parameters-x86-laa\\native-detached-process-parameters-x86-laa.log",
+        "bytes": 3756,
+        "sha256": "73331b0c2d1e77e966ee11fbfb3d7535b3d3b4b89f31643d52db0c7faf185932"
+      },
+      "machine": 332,
+      "characteristics": 290,
+      "parameter-bytes": 708,
+      "console-handle": "0xffffffff",
+      "window-flags": "0x0",
+      "scope": "suspended child fixture is x86 non-LAA even when its controller is x86-LAA"
+    },
+    {
+      "family": "redirected",
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-redirected-parameters-arm64\\native-detached-redirected-parameters.cpp",
+        "bytes": 11742,
+        "sha256": "814a771f30e947f4817808d564a8f6e1398e39f5e3f2af4a75230655cbbc8f55"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-redirected-parameters-arm64\\native-detached-redirected-parameters-arm64.exe",
+        "bytes": 143872,
+        "sha256": "595b432a551593ae34602ea6cae024b8f47e8118882b79e43c8389212632dce7"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-redirected-parameters-arm64\\native-detached-redirected-parameters-arm64.log",
+        "bytes": 4842,
+        "sha256": "1df0df20bb8a060903d8d3b67756b13a57135626e99af61b6bead7eefd22b6e6"
+      },
+      "machine": 43620,
+      "characteristics": 34,
+      "parameter-bytes": 1096,
+      "console-handle": "0xffffffffffffffff",
+      "window-flags": "0x100",
+      "scope": "suspended child fixture is x86 non-LAA even when its controller is x86-LAA"
+    },
+    {
+      "family": "redirected",
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-redirected-parameters-x64\\native-detached-redirected-parameters.cpp",
+        "bytes": 11742,
+        "sha256": "814a771f30e947f4817808d564a8f6e1398e39f5e3f2af4a75230655cbbc8f55"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-redirected-parameters-x64\\native-detached-redirected-parameters-x64.exe",
+        "bytes": 141312,
+        "sha256": "b622ccb720b3295f9f79cc4d84da7391e03d401b43d69f56cbf828e2b4ac8c7f"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-redirected-parameters-x64\\native-detached-redirected-parameters-x64.log",
+        "bytes": 4782,
+        "sha256": "3e178135abd97c0f2bae6f6a006f450c23097d05dcec6f86311fadf3c2a93f8a"
+      },
+      "machine": 34404,
+      "characteristics": 34,
+      "parameter-bytes": 1096,
+      "console-handle": "0xffffffffffffffff",
+      "window-flags": "0x100",
+      "scope": "suspended child fixture is x86 non-LAA even when its controller is x86-LAA"
+    },
+    {
+      "family": "redirected",
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-redirected-parameters-x86\\native-detached-redirected-parameters.cpp",
+        "bytes": 11742,
+        "sha256": "814a771f30e947f4817808d564a8f6e1398e39f5e3f2af4a75230655cbbc8f55"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-redirected-parameters-x86\\native-detached-redirected-parameters-x86.exe",
+        "bytes": 118784,
+        "sha256": "998d3fd62471b79f9f28ae6489743d577a1d21a9def4662197e0a6ec350c84db"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-redirected-parameters-x86\\native-detached-redirected-parameters-x86.log",
+        "bytes": 3921,
+        "sha256": "0f62c3df9bb3cc45f8b456d5895f507a8092bbf7be2705aeec8ad1ab5c043568"
+      },
+      "machine": 332,
+      "characteristics": 258,
+      "parameter-bytes": 708,
+      "console-handle": "0xffffffff",
+      "window-flags": "0x100",
+      "scope": "suspended child fixture is x86 non-LAA even when its controller is x86-LAA"
+    },
+    {
+      "family": "redirected",
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-redirected-parameters-x86-laa\\native-detached-redirected-parameters.cpp",
+        "bytes": 11742,
+        "sha256": "814a771f30e947f4817808d564a8f6e1398e39f5e3f2af4a75230655cbbc8f55"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-redirected-parameters-x86-laa\\native-detached-redirected-parameters-x86-laa.exe",
+        "bytes": 118784,
+        "sha256": "72fb382580192cf756e9f23884390752f0e3a9f35d8af7b4cc09dda8dca65177"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-redirected-parameters-x86-laa\\native-detached-redirected-parameters-x86-laa.log",
+        "bytes": 3917,
+        "sha256": "49e243081cb3de70cb9457fc419d827dc704705e7085e9c1952dd6fb37d5dd93"
+      },
+      "machine": 332,
+      "characteristics": 290,
+      "parameter-bytes": 708,
+      "console-handle": "0xffffffff",
+      "window-flags": "0x100",
+      "scope": "suspended child fixture is x86 non-LAA even when its controller is x86-LAA"
+    }
+  ]
+}

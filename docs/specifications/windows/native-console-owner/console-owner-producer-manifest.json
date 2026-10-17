@@ -1,0 +1,26 @@
+[
+  {
+    "stem": "native-console-owner",
+    "directory": "console-owner",
+    "kind": "matrix",
+    "source-sha256": "db3f0c27ec1c400ede33e68d8f23a0b4c86ccd6a747810eafe4cb180c7d77268"
+  },
+  {
+    "stem": "native-console-host-initial",
+    "directory": "console-host-initial",
+    "kind": "initial",
+    "source-sha256": "46bcf67d2184c7d18eb3b49df6a143e0a93daf98c8a167db8796ad5d74d1e390"
+  },
+  {
+    "stem": "native-detached-process-parameters",
+    "directory": "detached-process-parameters",
+    "kind": "plain",
+    "source-sha256": "8d577e71bd91f38530bdf4b24278b67cf65792e411a451fad37523a1c4031232"
+  },
+  {
+    "stem": "native-detached-redirected-parameters",
+    "directory": "detached-redirected-parameters",
+    "kind": "redirected",
+    "source-sha256": "814a771f30e947f4817808d564a8f6e1398e39f5e3f2af4a75230655cbbc8f55"
+  }
+]

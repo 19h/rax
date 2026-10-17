@@ -1,0 +1,30 @@
+﻿[
+    {
+        "profile":  "arm64",
+        "source-hash":  "8D577E71BD91F38530BDF4B24278B67CF65792E411A451FAD37523A1C4031232",
+        "exit-code":  0,
+        "exe-bytes":  142336,
+        "exe-sha256":  "9D3068DB3CBC5E2BA3E622D09D727EB5C43110FF87776A898F15E88E78374554"
+    },
+    {
+        "profile":  "x64",
+        "source-hash":  "8D577E71BD91F38530BDF4B24278B67CF65792E411A451FAD37523A1C4031232",
+        "exit-code":  0,
+        "exe-bytes":  139776,
+        "exe-sha256":  "F5B6B4CEDCDFBF9B2ADFCDD58B7F20AC32ABE2A2325D911932A73C505914A1B5"
+    },
+    {
+        "profile":  "x86",
+        "source-hash":  "8D577E71BD91F38530BDF4B24278B67CF65792E411A451FAD37523A1C4031232",
+        "exit-code":  0,
+        "exe-bytes":  118272,
+        "exe-sha256":  "96B6EAA76D1FDD3B193BD505AC4E16CEB9C6F9A01CD14E0BE3085144127F0EE2"
+    },
+    {
+        "profile":  "x86-laa",
+        "source-hash":  "8D577E71BD91F38530BDF4B24278B67CF65792E411A451FAD37523A1C4031232",
+        "exit-code":  0,
+        "exe-bytes":  118272,
+        "exe-sha256":  "949EB1B27712486719CDEFF86BA7B9B6318023F859BD446E0AD19C5797EDF146"
+    }
+]

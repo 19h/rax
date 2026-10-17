@@ -1,0 +1,17 @@
+{
+  "utc": "2026-10-16T02:24:13.318324+00:00",
+  "observation-process-created-utc": "2026-10-16T01:15:15.371538Z",
+  "replacement-written-utc": "2026-10-16T01:15:18.872Z",
+  "loaded-observation-variant": {
+    "path": "epoch1-observation-driver-detached-fallback.py",
+    "sha256": "cde9f888804158d2101b4ea138a3eb8b29b700c208e91b136a7311d5f286ef97",
+    "binding": "inferred from unique output and process creation preceding replacement; at-load source digest not captured"
+  },
+  "continuation": {
+    "path": "run-console-owner-continuation-after-initial.py",
+    "sha256": "936214486eb3033088e36eb66a90c0e7c7d25581a2b297404ec025011fc21554",
+    "handoff-sha256": "a7d1aa84829628979a0a494b5818fb584414dcf721da07b70f0fa41c229216a2",
+    "actual-native-record": "console-owner-native-continuation.json",
+    "initial-tests": "retain actual old focused outcome; no superseded inference"
+  }
+}

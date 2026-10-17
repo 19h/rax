@@ -1,0 +1,16 @@
+{
+  "pid": 8252,
+  "utc": "2026-10-15T22:57:42.796488+00:00",
+  "lock": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-owner-native-driver.lock",
+  "child-pid": 8100,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-console-owner-profiles.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-15T22:58:43.440421+00:00"
+}

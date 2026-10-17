@@ -1,0 +1,9 @@
+{
+  "utc": "2026-10-16T01:52:30.675407+00:00",
+  "parent-pid": 6548,
+  "source": "existing epoch1 ordinary-observation driver",
+  "scope": "separate optional read-only diagnostic; not a primary gate or guest success",
+  "job-breakaway": true,
+  "child-pid": 8740,
+  "state": "requested; native atomic record is authoritative"
+}

@@ -1,0 +1,16 @@
+{
+  "pid": 2576,
+  "utc": "2026-10-16T02:40:46.027863+00:00",
+  "state": "finished",
+  "epoch1-native-focused": "ran; initial native focused result retained",
+  "scope": "same corrected Windows core and owning gates; no test assertion, selection or production parameter change",
+  "final-source-epoch": 2,
+  "updated-utc": "2026-10-16T17:51:50.120046+00:00",
+  "ordinary-outcomes-sha256": "26b2863d8b7c40ba32cebbdd7756cfa90692c58747c5985d07fe585acb2bc0c2",
+  "trace-producer-child-pid": 2884,
+  "final-core-exit-code": 0,
+  "diagnostic-exit-code": 0,
+  "trace-producer-exit-code": 2,
+  "final-owning-exit-code": 0,
+  "exit-code": 0
+}

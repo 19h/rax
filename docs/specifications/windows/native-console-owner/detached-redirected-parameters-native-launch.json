@@ -1,0 +1,16 @@
+{
+  "pid": 8928,
+  "utc": "2026-10-15T22:50:37.356775+00:00",
+  "lock": "C:\\Windows\\Temp\\assist-native-rax-20261010\\detached-redirected-parameters-native-driver.lock",
+  "child-pid": 9092,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-detached-redirected-parameters-profiles.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-15T22:50:47.979855+00:00"
+}

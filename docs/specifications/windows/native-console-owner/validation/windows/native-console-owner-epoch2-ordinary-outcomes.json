@@ -1,0 +1,25 @@
+[
+  {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+    "scope": "actual production startup via unchanged observer,native_libraries=true,slice_insns1,3Mturn ceiling;controller0 does not imply guest exit",
+    "program-sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b",
+    "controller-exit-code": 0,
+    "seconds": 646.4403095245361,
+    "log": "native-console-owner-epoch2-ordinary-0.log",
+    "sha256": "479bbb02a503d5d6933bd15a8b7f4e94a48c0ba578ea781054e8e9fee9d0a4be"
+  },
+  {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\native-process-probe.exe",
+    "scope": "actual production startup via unchanged observer,native_libraries=true,slice_insns1,3Mturn ceiling;controller0 does not imply guest exit",
+    "unavailable": "program file absent;not counted as execution"
+  },
+  {
+    "path": "C:\\Windows\\System32\\whoami.exe",
+    "scope": "actual production startup via unchanged observer,native_libraries=true,slice_insns1,3Mturn ceiling;controller0 does not imply guest exit",
+    "program-sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6",
+    "controller-exit-code": 0,
+    "seconds": 121.8985104560852,
+    "log": "native-console-owner-epoch2-ordinary-2.log",
+    "sha256": "ea13a01a2eb3f24bd205794ef3a2df0284a746698d2b5cc3a5668e221bd0c810"
+  }
+]

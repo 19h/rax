@@ -1842,3 +1842,78 @@ process-userland objective remains active.
 
 Native data, provenance, assumptions, execution-plane maps and the portable
 validation checker are under docs/specifications/windows/native-nls-initialize/.
+
+
+## Detached standard streams and process-owner information (2026-10-16 UTC)
+
+The process constructor describes both Host and Captured stream routes as a
+`DETACHED_PROCESS` with `STARTF_USESTDHANDLES`: pointer-width `ConsoleHandle=-1`,
+`WindowFlags=0x100`, and the existing guest-owned standard handles. These routes
+provide streams without a native guest console session. This avoids requesting
+an unimplemented ConDrv server solely because the parameter block was zeroed.
+The separate minimal function-level environment does not run this process
+constructor or native-service dispatcher and remains unchanged.
+
+The selected build 29683 class 49 `ProcessConsoleHostProcess` setter and query use
+process-local guest state. Native64 set checks 8-byte alignment and the supplied
+upper user span before exact length 8, requires the self pseudo-handle, reads one
+pointer, accepts low tag bits `01` and stores the full-width value. WoW64 requires
+length >= 4 and captures one non-NULL unaligned ULONG before handle validation;
+NULL passes through and is read only after that check. Excess WoW64 caller
+length does not cause a larger capture or allocation. Even a real self handle
+with all process access is rejected by the setter.
+
+Native64 query checks 4-byte output alignment and upper span, visits optional
+4-byte ReturnLength, requires length 8, validates process/type/query rights,
+probes output, writes the owner and finally writes return length 8. Query rights
+are PROCESS_QUERY_INFORMATION or PROCESS_QUERY_LIMITED_INFORMATION. The measured
+WoW64 query rejects the class before touching either destination. An unmodeled
+peer remains explicitly unsupported. READONLY|GUARD output and ReturnLength
+have distinct measured guard priority; readable prefixes at failed page
+crossings and owner/length aliases are retained in the native corpus.
+
+Native suspended children report creation owner `creator PID|2`; the standalone
+guest root has no modeled parent and explicitly starts at `0|2`. Native detached
+initialization then sets 1. Zero parent is a model boundary, not a native creator
+identity. Guest values never trigger host process lookup or host kernel calls.
+The transfer sizes are fixed 4/8 bytes plus an optional 4-byte return length, with
+constant auxiliary storage and no guest-length-sized allocation.
+
+The primary evidence independently verifies 16 native producers and 12 suspended
+parameter snapshots across ARM64, x64, x86 and x86-LAA controller profiles on an
+ARM64 kernel. The canonical 544 primary class 49 calls include 130 successes and
+414 measured status failures; 136 repeat setters and 1,224 helper queries are
+separate counts. No escaping structured exception occurred. Snapshot x86-LAA
+controllers launch the same non-LAA x86 child, so they do not establish LAA child
+address geometry. Executable bytes are not checked into the corpus.
+
+The source epochs preserve the initial synthetic WoW64 SP expectation failure.
+The transition pops its own 4-byte call return address; the installed NTDLL
+setter/query RET instructions then complete 20/24-byte x86 stack changes. Tests
+assert each boundary explicitly: transition SP+4 and installed setter/query
+SP+20/SP+24. The incorrect initial zero-pop expectation remains in the frozen
+first epoch. A separate regression checks WoW64 NULL passthrough versus non-NULL
+capture priority. Both corrected Unix focused runs execute all 544 primary rows and 136 repeat
+setters. Native Windows leaves, full libraries, scoped carrier archives and
+ordinary startup have distinct validation records; controller exit 0 and controlled
+parameter mutation do not establish ordinary guest completion.
+
+Final Rust1.95.0 full libraries (passed/failed/ignored) are macOS7836/0/2,
+Linux7830/0/2 and Windows7260/5/2. The exact five existing Windows AArch64
+lowerer failures remain recorded. Focus6Unix/7Windows, C API168 per host,
+all-target checks, Unix Windows integration544 and native memory4 complete.
+Actual installed NTDLL setters/queries pass separate strict return checks.
+Scoped Assist carriers bind309 inputs and empty core features on all three
+hosts. They retain Assist public ABI minor184 versus the compared root749cdd3d
+minor186, and do not establish whole-current-root, GUI or package validation.
+The original native epoch ran and retained its exact three synthetic SP failures;
+its continuation then completed the corrected core and owning gates. Ordinary
+startup records preserve controller timeouts and unsupported native calls;
+no successful ordinary Windows application exit is established.
+
+The C ABI remains 1.11.0; no dependency, default-feature, schema, permission or
+package-layout change is introduced. Native NtReadFile/NtWriteFile dispatch and
+NtTraceEvent remain outside this owner-information group. Whole-current-root,
+GUI and package validation remain separate from retained carrier checks.
+
+[Native contract, assumptions, source maps and primary provenance](../../../docs/specifications/windows/native-console-owner/README.md).

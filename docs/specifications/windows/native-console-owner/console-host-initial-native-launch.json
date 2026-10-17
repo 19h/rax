@@ -1,0 +1,16 @@
+{
+  "pid": 5900,
+  "utc": "2026-10-15T22:54:30.323261+00:00",
+  "lock": "C:\\Windows\\Temp\\assist-native-rax-20261010\\console-host-initial-native-driver.lock",
+  "child-pid": 1832,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-console-host-initial-profiles.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-15T22:55:25.508427+00:00"
+}

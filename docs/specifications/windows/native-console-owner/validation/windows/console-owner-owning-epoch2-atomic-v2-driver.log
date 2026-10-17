@@ -1,0 +1,10 @@
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+Verified 309 actual console-owner owning source identities
+Verified9 actual frozen Windows C++ sources against current root
+assist-native-console-owner-epoch2-shipping.log A1E68F2D2B804D2A50897FE005523F3A9890FFD171109ED7D919CC7A237AD67E
+assist-native-console-owner-epoch2-cpp.log B0F277678BC54485CF58C6295345A12235DF27C7D420C5085B93AB253E75E214
+validated rlib: C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-owned\debug\deps\librax-e6c413934cad3a8f.rlib
+Auxiliary CLI proof exit: 1; see native-cli-epoch1-proof.json

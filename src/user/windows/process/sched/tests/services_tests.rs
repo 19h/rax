@@ -10,6 +10,9 @@ mod apphelp_tests;
 #[path = "services_tests/process_query_tests.rs"]
 mod process_query_tests;
 
+#[path = "services_tests/process_console_tests.rs"]
+mod process_console_tests;
+
 #[path = "services_tests/process_tls_tests.rs"]
 mod process_tls_tests;
 

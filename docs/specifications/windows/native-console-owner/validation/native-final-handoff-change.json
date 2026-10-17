@@ -1,0 +1,16 @@
+{
+  "utc": "2026-10-16T01:15:18.872991+00:00",
+  "state": "queued in unstarted ordinary-observation phase; not yet executed",
+  "before-observation-driver-sha256": "cde9f888804158d2101b4ea138a3eb8b29b700c208e91b136a7311d5f286ef97",
+  "after-observation-driver-sha256": "9a2d74a8f08b1273deb7c61bbb8b198bf5b85abd45b1ddf33f263736c9f04465",
+  "before-final-launcher-sha256": "62022e3d79668e08e9444674f022850ad8e5a9654e8a4b93153e3667d07e5a44",
+  "after-final-launcher-sha256": "078c078ce6bbe9b70d3f3bc78100e34ecacc61dfa3024c146fb5073b25eeae8b",
+  "original-ordinary-body-preserved-byte-for-byte": true,
+  "epoch1-native-focused": "not run; intentionally superseded by final epoch2; original3SPfailures retained on bothUnixhosts",
+  "native-epoch2-gates": "unchanged focused/prior/alltargets/integration/CAPI/full; same native PS/source overlay and assertions",
+  "native-owning": "unchanged shipping/5CPP/fullarchiveidentities; runs within original job if RPC unavailable",
+  "native-first-error": "parallel read-only baseline diagnostic; parent waits before owning target replaces original archive",
+  "primary-native-return101-meaning": "successful handoff completed then original obsolete test phase stopped; not a test-failure claim",
+  "after-owning-launcher-sha256": "f7d598dd987fa276809f6036e12f043cf4c4d2916cdec5e3d0734f6bf5de7232",
+  "idempotence": "Already-terminal native0 record returns0 without starting another producer; running/failed records still refuse duplicates."
+}

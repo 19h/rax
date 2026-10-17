@@ -1,0 +1,16 @@
+{
+  "utc": "2026-10-16T01:03:41.548096+00:00",
+  "path": "run-console-owner-epoch1-observations.py",
+  "before": {
+    "bytes": 1507,
+    "sha256": "7ff61428e13529092feab2a8b3234e4e896531e9e8e03373d8332d7777710ea9"
+  },
+  "after": {
+    "bytes": 3258,
+    "sha256": "cde9f888804158d2101b4ea138a3eb8b29b700c208e91b136a7311d5f286ef97"
+  },
+  "scope": "unstarted Python observation orchestration only; all original three program rows, observer source, production parameters, limits, output hashes and Rust epochs unchanged; optional detached diagnostic runs after primary observations",
+  "basis": "new Parallels exec jobs return255; existing native driver can load this task-owned shared helper at its next phase",
+  "preconditions": "no ordinary outcomes or auxiliary launch record existed before edit",
+  "auxiliary-is-not-validation-success": true
+}
