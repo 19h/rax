@@ -1,0 +1,78 @@
+[
+  {
+    "gate": "query",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "wnf::query_tests",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 97.65826754099999,
+    "log": "macos-wnf-epoch2-query.log",
+    "sha256": "70c782a77c8a951efc5e0e4e79827458d57ab30143e5c1d148c1753aec78e64f"
+  },
+  {
+    "gate": "service",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "wnf_query_tests",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 0.7539004999998724,
+    "log": "macos-wnf-epoch2-service.log",
+    "sha256": "668588b04b5aeb1e33374cb82f6284ff17d859a38a2ca716429588302eb9a236"
+  },
+  {
+    "gate": "subscription",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "user::windows::wnf::tests",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 0.20173224999962258,
+    "log": "macos-wnf-epoch2-subscription.log",
+    "sha256": "09f0bd97f230f852852c32fa2ae4f6a551569b53d43e9121d04da8cea193f722"
+  },
+  {
+    "gate": "access",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "access_check_tests",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 1.2235156250008004,
+    "log": "macos-wnf-epoch2-access.log",
+    "sha256": "78966e662ce51817578e044c43963fdbeeb8be366ef39df4113655a785b0cf66"
+  }
+]

@@ -1,0 +1,5 @@
+{
+  "scope": "v4 fourth state is another readable payload control; its owned-denied label does not imply denied rights",
+  "cause": "intended selector replacement did not match the formatted multiline constructor",
+  "resolution": "v5 explicitly passes denied_security for state3 and must record native ACCESS_DENIED before any denial claim"
+}

@@ -1,0 +1,6 @@
+﻿{
+    "gate":  "query",
+    "command":  "cargo.exe test --locked --offline --no-default-features --lib wnf::query_tests -- --nocapture --test-threads=1",
+    "exit-code":  101,
+    "log":  "native-wnf-query-initial-query.log"
+}

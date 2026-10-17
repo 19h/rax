@@ -1,0 +1,123 @@
+{
+  "utc": "2026-10-17T20:31:10.869676+00:00",
+  "reason": "completed identical initial compile failures; stop redundant filters before correcting source",
+  "drivers": [
+    {
+      "host": "macos",
+      "root": 78006,
+      "processes": [
+        {
+          "pid": 78006,
+          "command": "/opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -B run-wnf-initial-unix.py macos"
+        },
+        {
+          "pid": 78488,
+          "command": "/Users/int/.rustup/toolchains/1.95.0-aarch64-apple-darwin/bin/cargo test --locked --offline --no-default-features --lib user::windows::wnf::tests -- --nocapture --test-threads=1"
+        },
+        {
+          "pid": 78489,
+          "command": "/Users/int/.rustup/toolchains/1.95.0-aarch64-apple-darwin/bin/rustc --crate-name rax --edition=2024 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --allow=warnings --allow=clippy::all --test --check-cfg cfg(docsrs,test) --check-cfg cfg(feature, values(\"debug\", \"default\", \"hvf\", \"kvm\", \"kvm-bindings\", \"kvm-ioctls\", \"profiling\", \"smir-jit\", \"trace\", \"x86-suite\", \"x86_64-suite\")) -C metadata=f0e7626b6b704520 -C extra-filename=-754f4d2a527a4423 --out-dir /Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps -C incremental=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/incremental -L dependency=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps --extern bincode=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/libbincode-abc5a317d739581c.rlib --extern bitflags=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/libbitflags-b22c84a9b31d04f4.rlib --extern clap=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/libclap-9918f3444580cb39.rlib --extern ctrlc=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/libctrlc-8d95f6045d3fe04c.rlib --extern getrandom=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/libgetrandom-bfd3130d00313c0f.rlib --extern goblin=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/libgoblin-bb13758e4bce832c.rlib --extern libc=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/liblibc-0bee42dd2af2b654.rlib --extern linux_loader=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/liblinux_loader-e3fff224e1ebc8a9.rlib --extern serde=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/libserde-c5d67e52f60c1494.rlib --extern serde_json=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/libserde_json-44500654cf5d50da.rlib --extern thiserror=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/libthiserror-52b908da04952d38.rlib --extern toml=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/libtoml-cb444f3baa4f8e3e.rlib --extern tracing=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/libtracing-1c6b6530004d0a46.rlib --extern tracing_subscriber=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/libtracing_subscriber-2261793a1d01106e.rlib --extern vm_memory=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/libvm_memory-744a27c2cf754f1c.rlib --extern zstd=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/libzstd-19f0ee9e8c841b14.rlib -L native=/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/build/zstd-sys-d2b9efbd16567b72/out"
+        }
+      ],
+      "completed-gates": [
+        {
+          "gate": "query",
+          "argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--offline",
+            "--no-default-features",
+            "--lib",
+            "wnf::query_tests",
+            "--",
+            "--nocapture",
+            "--test-threads=1"
+          ],
+          "exit-code": 101,
+          "seconds": 53.49068408399944,
+          "log": "macos-wnf-initial-query.log",
+          "sha256": "acf1d4474d151c56831825d5d5e246c874a397db12dded33fe1723efe5344adf"
+        },
+        {
+          "gate": "service",
+          "argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--offline",
+            "--no-default-features",
+            "--lib",
+            "wnf_query_tests",
+            "--",
+            "--nocapture",
+            "--test-threads=1"
+          ],
+          "exit-code": 101,
+          "seconds": 53.47202429200024,
+          "log": "macos-wnf-initial-service.log",
+          "sha256": "86cf2f965685ba99db2b2af8d7034e16c5c255eddd304b3eb053540c718d0982"
+        }
+      ]
+    },
+    {
+      "host": "linux",
+      "root": 78007,
+      "processes": [
+        {
+          "pid": 78007,
+          "command": "/opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -B run-wnf-initial-unix.py linux"
+        },
+        {
+          "pid": 78461,
+          "command": "docker run --rm --platform linux/amd64 -v /Users/int/hexrays/kvasir:/work:ro -v /Users/int/Library/Caches/assist-process-emulation/native-wnf-query-20261017/rax-source:/work/vendor/rax:ro -v rax-cargo-registry:/usr/local/cargo/registry -v rax-cargo-git:/usr/local/cargo/git -v rax-user-target:/target -e CARGO_TARGET_DIR=/target -e CARGO_BUILD_JOBS=2 -e RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu -w /work/vendor/rax assist-rax-validation-rustfmt:1.95-bullseye-20261015 cargo test --locked --offline --no-default-features --lib wnf_query_tests -- --nocapture --test-threads=1"
+        }
+      ],
+      "completed-gates": [
+        {
+          "gate": "query",
+          "argv": [
+            "docker",
+            "run",
+            "--rm",
+            "--platform",
+            "linux/amd64",
+            "-v",
+            "/Users/int/hexrays/kvasir:/work:ro",
+            "-v",
+            "/Users/int/Library/Caches/assist-process-emulation/native-wnf-query-20261017/rax-source:/work/vendor/rax:ro",
+            "-v",
+            "rax-cargo-registry:/usr/local/cargo/registry",
+            "-v",
+            "rax-cargo-git:/usr/local/cargo/git",
+            "-v",
+            "rax-user-target:/target",
+            "-e",
+            "CARGO_TARGET_DIR=/target",
+            "-e",
+            "CARGO_BUILD_JOBS=2",
+            "-e",
+            "RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu",
+            "-w",
+            "/work/vendor/rax",
+            "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+            "cargo",
+            "test",
+            "--locked",
+            "--offline",
+            "--no-default-features",
+            "--lib",
+            "wnf::query_tests",
+            "--",
+            "--nocapture",
+            "--test-threads=1"
+          ],
+          "exit-code": 101,
+          "seconds": 90.21379295800034,
+          "log": "linux-wnf-initial-query.log",
+          "sha256": "262f35823dfb3cf1243696b78ba2aff0d53016d98c4a9e4a9e68150720c820ae"
+        }
+      ]
+    }
+  ]
+}

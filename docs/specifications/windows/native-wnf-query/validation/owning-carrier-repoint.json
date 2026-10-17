@@ -1,0 +1,6 @@
+{
+  "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/vendor/rax",
+  "previous": "/Users/int/Library/Caches/assist-process-emulation/native-access-check-20261017/rax-source",
+  "current": "/Users/int/Library/Caches/assist-process-emulation/native-wnf-query-20261017/rax-source",
+  "reason": "completed AccessCheck owning gates; final WNF source is frozen"
+}

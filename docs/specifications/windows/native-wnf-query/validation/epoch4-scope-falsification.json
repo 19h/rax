@@ -1,0 +1,12 @@
+{
+  "finding": "Noncurrent session1 is valid; its missing state returns NAME_NOT_FOUND, unlike unallocated IDs. Other user namespace existence is also not established by the captured current-user snapshot.",
+  "evidence": "wnf-owned-cross-scope.json",
+  "fix": "Fail explicitly for uncaptured session/user scope; retain native comparisons only within admitted snapshot namespace",
+  "changes": [
+    "src/user/windows/dll/native/wnf_query.rs",
+    "src/user/windows/process/sched/tests/services_tests/wnf_query_tests.rs"
+  ],
+  "original-validation": "Preserved under epoch3-validation and source-epochs/epoch3; cancelled only task-owned remaining runs",
+  "final-compiled-inputs": 13,
+  "final-selected-inputs": 327
+}

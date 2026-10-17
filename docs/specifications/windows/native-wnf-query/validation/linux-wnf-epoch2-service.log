@@ -1,0 +1,12 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.30s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 5 tests
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_absent_and_unavailable_captures_refuse_without_output_fabrication ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_explicit_process_scope_accepts_zero_rights_and_keeps_ownership ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_replays_8640_logical_calls_with_type_scope_and_denial ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_replays_all_6240_boundary_calls_and_generated_name_bytes ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_snapshot_is_immutable_across_output_changes_and_empty_capacity ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 7848 filtered out; finished in 1.05s
+

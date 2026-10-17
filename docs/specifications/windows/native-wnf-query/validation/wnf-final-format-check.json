@@ -1,0 +1,24 @@
+{
+  "argv": [
+    "rustfmt",
+    "+1.95.0",
+    "--check",
+    "--edition",
+    "2024",
+    "--config",
+    "skip_children=true",
+    "src/user/windows/wnf.rs",
+    "src/user/windows/wnf/catalog.rs",
+    "src/user/windows/wnf/query.rs",
+    "src/user/windows/wnf/query_tests.rs",
+    "src/user/windows/wnf/installed_query.rs",
+    "src/user/windows/objects/wnf.rs",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/wnf_query.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/wnf_query_tests.rs"
+  ],
+  "exit-code": 0,
+  "stdout": "",
+  "stderr": ""
+}

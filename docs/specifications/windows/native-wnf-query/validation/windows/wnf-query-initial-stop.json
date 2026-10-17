@@ -1,0 +1,19 @@
+{
+  "utc": "2026-10-17T20:31:13.226674+00:00",
+  "reason": "stop redundant retries after completed initial compile failure; preserve frozen source and first result",
+  "identity": {
+    "ProcessId": 9176,
+    "ParentProcessId": 8144,
+    "CommandLine": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-wnf-query-initial-gates.ps1"
+  },
+  "argv": [
+    "taskkill.exe",
+    "/PID",
+    "9176",
+    "/T",
+    "/F"
+  ],
+  "exit-code": 0,
+  "stdout": "SUCCESS: The process with PID 5544 (child process of PID 4664) has been terminated.\nSUCCESS: The process with PID 4664 (child process of PID 7104) has been terminated.\nSUCCESS: The process with PID 7104 (child process of PID 9176) has been terminated.\nSUCCESS: The process with PID 9176 (child process of PID 8144) has been terminated.\n",
+  "stderr": ""
+}

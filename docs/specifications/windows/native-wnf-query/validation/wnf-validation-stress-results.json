@@ -1,0 +1,27 @@
+[
+  {
+    "case": "raw-corruption",
+    "rejected": true,
+    "exception": "windows/native-wnf-query-final4-full.log"
+  },
+  {
+    "case": "empty-native-gates",
+    "rejected": true,
+    "exception": "complete native final gates"
+  },
+  {
+    "case": "forged-zero-failures",
+    "rejected": true,
+    "exception": "native full count"
+  },
+  {
+    "case": "incomplete-owning-driver",
+    "rejected": true,
+    "exception": "native chain complete"
+  },
+  {
+    "case": "missing-final-unix-gates",
+    "rejected": true,
+    "exception": "complete unique gates linux-wnf-final4-gates.json"
+  }
+]

@@ -1,0 +1,109 @@
+{
+  "scope": "four producer ABIs on one ARM64 Windows kernel; private temporary System-scope states and controlled read-only names",
+  "producers": [
+    {
+      "profile": "arm64",
+      "machine": 43620,
+      "large-address-aware": true,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-boundaries-arm64\\native-wnf-query-boundaries.cpp",
+        "bytes": 10196,
+        "sha256": "4f7c5af4506f11a03c3c937aa66d46d8a9c1be803557cc324841f1c41196ee80"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-boundaries-arm64\\native-wnf-query-boundaries-arm64.exe",
+        "bytes": 156672,
+        "sha256": "45140ea7622ccff8ac0e9aa7efc5fbe620849df534600f417f9dc6efaf9344ef"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-boundaries-arm64\\native-wnf-query-boundaries-arm64.log",
+        "bytes": 608498,
+        "sha256": "53ec3f0a69f9bd78bda44665fe578d89c7b6cf2108a93bee235c4a016217454f"
+      },
+      "calls": 1560,
+      "escaped-exceptions": 0,
+      "deleted-states": 3,
+      "released-arenas": 1,
+      "released-descriptors": 1,
+      "closed-handles": 1
+    },
+    {
+      "profile": "x64",
+      "machine": 34404,
+      "large-address-aware": true,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-boundaries-x64\\native-wnf-query-boundaries.cpp",
+        "bytes": 10196,
+        "sha256": "4f7c5af4506f11a03c3c937aa66d46d8a9c1be803557cc324841f1c41196ee80"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-boundaries-x64\\native-wnf-query-boundaries-x64.exe",
+        "bytes": 155648,
+        "sha256": "44dce935117a09291f98a80fe3d2d4a2afb1e40a84390ec9a7a9dfe62e823dcc"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-boundaries-x64\\native-wnf-query-boundaries-x64.log",
+        "bytes": 608496,
+        "sha256": "ab0aa926c5e5ac69f20303d58054cf45d8d3128e74b686f40a0be5624902956c"
+      },
+      "calls": 1560,
+      "escaped-exceptions": 0,
+      "deleted-states": 3,
+      "released-arenas": 1,
+      "released-descriptors": 1,
+      "closed-handles": 1
+    },
+    {
+      "profile": "x86",
+      "machine": 332,
+      "large-address-aware": false,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-boundaries-x86\\native-wnf-query-boundaries.cpp",
+        "bytes": 10196,
+        "sha256": "4f7c5af4506f11a03c3c937aa66d46d8a9c1be803557cc324841f1c41196ee80"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-boundaries-x86\\native-wnf-query-boundaries-x86.exe",
+        "bytes": 128000,
+        "sha256": "0d0f555f3e4cf7c2ed8dc63ecc6410c0ec0903c189fcf3e93f3333189a241687"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-boundaries-x86\\native-wnf-query-boundaries-x86.log",
+        "bytes": 608496,
+        "sha256": "ae954a385f02f9931ec7e1ce5ef9a1d92acfd7a5eb05b8e8a3f3483aa72b0afa"
+      },
+      "calls": 1560,
+      "escaped-exceptions": 0,
+      "deleted-states": 3,
+      "released-arenas": 1,
+      "released-descriptors": 1,
+      "closed-handles": 1
+    },
+    {
+      "profile": "x86-laa",
+      "machine": 332,
+      "large-address-aware": true,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-boundaries-x86-laa\\native-wnf-query-boundaries.cpp",
+        "bytes": 10196,
+        "sha256": "4f7c5af4506f11a03c3c937aa66d46d8a9c1be803557cc324841f1c41196ee80"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-boundaries-x86-laa\\native-wnf-query-boundaries-x86-laa.exe",
+        "bytes": 128000,
+        "sha256": "cfeb78340aec96ae7634fc809c5b02eed82a4c269a3d7268cd175d6aafc27e7d"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-boundaries-x86-laa\\native-wnf-query-boundaries-x86-laa.log",
+        "bytes": 608500,
+        "sha256": "e5ebdf369b1242703f96d5dc90b2dbb868e7b04632d4c3204a4fe31a1c7fab6d"
+      },
+      "calls": 1560,
+      "escaped-exceptions": 0,
+      "deleted-states": 3,
+      "released-arenas": 1,
+      "released-descriptors": 1,
+      "closed-handles": 1
+    }
+  ]
+}

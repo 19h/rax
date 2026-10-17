@@ -29,6 +29,13 @@ fn levels(mask: u32) -> u32 {
 }
 
 impl Objects {
+    pub(crate) fn wnf_queries(&self) -> Option<std::sync::Arc<crate::user::windows::wnf::Queries>> {
+        self.wnf_subscriptions
+            .catalog
+            .as_ref()
+            .and_then(Catalog::queries)
+    }
+
     pub(crate) fn primary_token_subject(
         &self,
     ) -> Option<std::sync::Arc<crate::user::windows::security::Subject>> {

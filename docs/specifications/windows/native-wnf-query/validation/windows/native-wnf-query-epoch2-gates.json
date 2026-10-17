@@ -1,0 +1,32 @@
+﻿[
+    {
+        "gate":  "query",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib wnf::query_tests -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "native-wnf-query-epoch2-query.log"
+    },
+    {
+        "gate":  "service",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib wnf_query_tests -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "native-wnf-query-epoch2-service.log"
+    },
+    {
+        "gate":  "subscription",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib user::windows::wnf::tests -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "native-wnf-query-epoch2-subscription.log"
+    },
+    {
+        "gate":  "access",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib access_check_tests -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "native-wnf-query-epoch2-access.log"
+    },
+    {
+        "gate":  "all-targets",
+        "command":  "cargo.exe check --locked --offline --no-default-features --all-targets",
+        "exit-code":  0,
+        "log":  "native-wnf-query-epoch2-all-targets.log"
+    }
+]

@@ -1,0 +1,40 @@
+[
+  {
+    "gate": "query",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "wnf::query_tests",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 101,
+    "seconds": 53.49068408399944,
+    "log": "macos-wnf-initial-query.log",
+    "sha256": "acf1d4474d151c56831825d5d5e246c874a397db12dded33fe1723efe5344adf"
+  },
+  {
+    "gate": "service",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "wnf_query_tests",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 101,
+    "seconds": 53.47202429200024,
+    "log": "macos-wnf-initial-service.log",
+    "sha256": "86cf2f965685ba99db2b2af8d7034e16c5c255eddd304b3eb053540c718d0982"
+  }
+]

@@ -1,0 +1,48 @@
+{
+  "utc": "2026-10-17T20:42:49.221897+00:00",
+  "reason": "correct confirmed uncaptured namespace admission before final validation",
+  "drivers": [
+    {
+      "root": 79854,
+      "suffix": " -B run-wnf-final-unix.py macos",
+      "processes": [
+        {
+          "pid": 79854,
+          "command": "/opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -B run-wnf-final-unix.py macos"
+        },
+        {
+          "pid": 84482,
+          "command": "/Users/int/.rustup/toolchains/1.95.0-aarch64-apple-darwin/bin/cargo test --locked --offline --no-default-features --lib -- --test-threads=1"
+        },
+        {
+          "pid": 84483,
+          "command": "/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/rax-754f4d2a527a4423 --test-threads=1"
+        }
+      ]
+    },
+    {
+      "root": 79855,
+      "suffix": " -B run-wnf-final-unix.py linux",
+      "processes": [
+        {
+          "pid": 79855,
+          "command": "/opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -B run-wnf-final-unix.py linux"
+        },
+        {
+          "pid": 85403,
+          "command": "docker run --rm --platform linux/amd64 -v /Users/int/hexrays/kvasir:/work:ro -v /Users/int/Library/Caches/assist-process-emulation/native-wnf-query-20261017/rax-source:/work/vendor/rax:ro -v rax-cargo-registry:/usr/local/cargo/registry -v rax-cargo-git:/usr/local/cargo/git -v rax-user-target:/target -e CARGO_TARGET_DIR=/target -e CARGO_BUILD_JOBS=2 -e RUSTUP_TOOLCHAIN=1.95.0-x86_64-unknown-linux-gnu -w /work/vendor/rax assist-rax-validation-rustfmt:1.95-bullseye-20261015 cargo test --locked --offline --no-default-features --lib -- --test-threads=1"
+        }
+      ]
+    },
+    {
+      "root": 84854,
+      "suffix": " -B watch-wnf-ordinary.py",
+      "processes": [
+        {
+          "pid": 84854,
+          "command": "/opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -B watch-wnf-ordinary.py"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.20s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-tests\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 7 tests
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_absent_and_unavailable_captures_refuse_without_output_fabrication ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_explicit_process_scope_accepts_zero_rights_and_keeps_ownership ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_installed_leaves_replay_logical_and_boundary_matrices ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_replays_8640_logical_calls_with_type_scope_and_denial ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_replays_all_6240_boundary_calls_and_generated_name_bytes ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_replays_selected_scopes_and_refuses_uncaptured_namespaces ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_snapshot_is_immutable_across_output_changes_and_empty_capacity ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 7287 filtered out; finished in 3.86s
+

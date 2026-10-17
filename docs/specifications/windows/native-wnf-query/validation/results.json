@@ -1,0 +1,1492 @@
+{
+  "utc": "2026-10-17T20:59:44.901958+00:00",
+  "parent": "7279261c3ab518e0d0b027817cabf776e9700eb8",
+  "selected-owning-inputs": 327,
+  "files": [
+    {
+      "path": "apply-local-epoch2.py",
+      "bytes": 4830,
+      "sha256": "5f7eed120e045c0aeee3d2cc74f1e6e43e9111a1fc9dfc9fd81666d56460ac91"
+    },
+    {
+      "path": "apply-local-epoch4.py",
+      "bytes": 6902,
+      "sha256": "4acf7fbaf9b8a80a064e2eb0f280f35d25e51732de6f2c3bbfa35056b98cedeb"
+    },
+    {
+      "path": "collect-wnf-archives.py",
+      "bytes": 3335,
+      "sha256": "54b0148b1f3578ee7b69231010c92ecb23a387d4aaedb5e6c857c24f10712d84"
+    },
+    {
+      "path": "collect-wnf-validation-epoch3.py",
+      "bytes": 6007,
+      "sha256": "79b47aae519003e88101c6b6cf2a6b5612a561468d5a91270bb9cc7a884a6ba3"
+    },
+    {
+      "path": "collect-wnf-validation.py",
+      "bytes": 5090,
+      "sha256": "6cceb363fbd465db47110bfa2532d142b06949b1c5cf0269c96341d7ead23859"
+    },
+    {
+      "path": "compiled-source/epoch2/docs/specifications/windows/native-wnf-query/cases.json",
+      "bytes": 3073867,
+      "sha256": "3721b74e1a7f8b303213070d77d25a0fa84dfb52efb1de1d1d8b47f79a38a11b"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/dll/native.rs",
+      "bytes": 18685,
+      "sha256": "964238c3a78d71c467c6ad6421add4e53b57f33b5d286b96dc8bbeb7ebf06cd0"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/dll/native/wnf_query.rs",
+      "bytes": 4288,
+      "sha256": "1065b7a7e6a82ae49dfcf99026f441e9d929a7370e145c8ba24e7855a42cd364"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/objects/wnf.rs",
+      "bytes": 7526,
+      "sha256": "1fa0306fea4d145014ebf0b267add937a6dab672acce53792021f879d9578ee8"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47835,
+      "sha256": "4415e7413459fb2c18a0e55d70c1aa819369a2acebbf588dae9d61578f40d918"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/process/sched/tests/services_tests/wnf_query_tests.rs",
+      "bytes": 21189,
+      "sha256": "ec8941419b9871c19e33ec07a4095ebe9a78e46af6ed22848408e7382f63cfa2"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/wnf.rs",
+      "bytes": 1266,
+      "sha256": "32871ada8977c652462d259ecafeb563ddabf08cd79809579557461dbc497172"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/wnf/catalog.rs",
+      "bytes": 8032,
+      "sha256": "233cf66c3278696a88fe9fe1a87dab3f68ac17cc7f6415716d893ba3b97b9c24"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/wnf/installed_query.rs",
+      "bytes": 3693,
+      "sha256": "f5736cf1a3b0b27e43aad305f846bf82e8255c1c680f011bbc21ba2bd5e3b94f"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/wnf/query.rs",
+      "bytes": 8945,
+      "sha256": "f43fc9c6d92fa35eaf2e6204b8cc59fafbdd8844aef2f0730acee5429574c9a1"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/wnf/query_tests.rs",
+      "bytes": 7603,
+      "sha256": "aeb5e8308e9e1f7f6554ee15dad7bfb4874375452cb67f5b468dd9586eade75c"
+    },
+    {
+      "path": "compiled-source/epoch3/docs/specifications/windows/native-wnf-query/cases.json",
+      "bytes": 3073867,
+      "sha256": "3721b74e1a7f8b303213070d77d25a0fa84dfb52efb1de1d1d8b47f79a38a11b"
+    },
+    {
+      "path": "compiled-source/epoch3/docs/specifications/windows/native-wnf-query/controls/wnf-private-scope-order.json",
+      "bytes": 64281,
+      "sha256": "4a2064236a05fa686ddc0c87f4b61c1e5de33cbfafd738b7825504400d4bf5dd"
+    },
+    {
+      "path": "compiled-source/epoch3/src/user/windows/dll/native.rs",
+      "bytes": 18685,
+      "sha256": "964238c3a78d71c467c6ad6421add4e53b57f33b5d286b96dc8bbeb7ebf06cd0"
+    },
+    {
+      "path": "compiled-source/epoch3/src/user/windows/dll/native/wnf_query.rs",
+      "bytes": 4288,
+      "sha256": "1065b7a7e6a82ae49dfcf99026f441e9d929a7370e145c8ba24e7855a42cd364"
+    },
+    {
+      "path": "compiled-source/epoch3/src/user/windows/objects/wnf.rs",
+      "bytes": 7526,
+      "sha256": "1fa0306fea4d145014ebf0b267add937a6dab672acce53792021f879d9578ee8"
+    },
+    {
+      "path": "compiled-source/epoch3/src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47835,
+      "sha256": "4415e7413459fb2c18a0e55d70c1aa819369a2acebbf588dae9d61578f40d918"
+    },
+    {
+      "path": "compiled-source/epoch3/src/user/windows/process/sched/tests/services_tests/wnf_query_tests.rs",
+      "bytes": 25451,
+      "sha256": "62014964ee13cdc8736903665dcc84d7228e3bdb2317660bb76bdd9ffd92a3ff"
+    },
+    {
+      "path": "compiled-source/epoch3/src/user/windows/wnf.rs",
+      "bytes": 1266,
+      "sha256": "32871ada8977c652462d259ecafeb563ddabf08cd79809579557461dbc497172"
+    },
+    {
+      "path": "compiled-source/epoch3/src/user/windows/wnf/catalog.rs",
+      "bytes": 8032,
+      "sha256": "233cf66c3278696a88fe9fe1a87dab3f68ac17cc7f6415716d893ba3b97b9c24"
+    },
+    {
+      "path": "compiled-source/epoch3/src/user/windows/wnf/installed_query.rs",
+      "bytes": 3693,
+      "sha256": "f5736cf1a3b0b27e43aad305f846bf82e8255c1c680f011bbc21ba2bd5e3b94f"
+    },
+    {
+      "path": "compiled-source/epoch3/src/user/windows/wnf/query.rs",
+      "bytes": 8945,
+      "sha256": "f43fc9c6d92fa35eaf2e6204b8cc59fafbdd8844aef2f0730acee5429574c9a1"
+    },
+    {
+      "path": "compiled-source/epoch3/src/user/windows/wnf/query_tests.rs",
+      "bytes": 7603,
+      "sha256": "aeb5e8308e9e1f7f6554ee15dad7bfb4874375452cb67f5b468dd9586eade75c"
+    },
+    {
+      "path": "compiled-source/final/docs/specifications/windows/native-wnf-query/cases.json",
+      "bytes": 3073867,
+      "sha256": "3721b74e1a7f8b303213070d77d25a0fa84dfb52efb1de1d1d8b47f79a38a11b"
+    },
+    {
+      "path": "compiled-source/final/docs/specifications/windows/native-wnf-query/controls/wnf-owned-cross-scope.json",
+      "bytes": 2362,
+      "sha256": "328d3112b4e2ec3e58de828f3f0ef09591f9b344e779b029928f53bc30bbdc24"
+    },
+    {
+      "path": "compiled-source/final/docs/specifications/windows/native-wnf-query/controls/wnf-private-scope-order.json",
+      "bytes": 64281,
+      "sha256": "4a2064236a05fa686ddc0c87f4b61c1e5de33cbfafd738b7825504400d4bf5dd"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/dll/native.rs",
+      "bytes": 18685,
+      "sha256": "964238c3a78d71c467c6ad6421add4e53b57f33b5d286b96dc8bbeb7ebf06cd0"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/dll/native/wnf_query.rs",
+      "bytes": 4381,
+      "sha256": "3bd33aecca845ed1ebae08bc07207751cbd461084f86cf7f509c1cc6fc176049"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/objects/wnf.rs",
+      "bytes": 7526,
+      "sha256": "1fa0306fea4d145014ebf0b267add937a6dab672acce53792021f879d9578ee8"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47835,
+      "sha256": "4415e7413459fb2c18a0e55d70c1aa819369a2acebbf588dae9d61578f40d918"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/process/sched/tests/services_tests/wnf_query_tests.rs",
+      "bytes": 28256,
+      "sha256": "a8547b4251a0206b5e0227d7d1ca17a385cae6138acf11900c80fc029e5a0418"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/wnf.rs",
+      "bytes": 1266,
+      "sha256": "32871ada8977c652462d259ecafeb563ddabf08cd79809579557461dbc497172"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/wnf/catalog.rs",
+      "bytes": 8032,
+      "sha256": "233cf66c3278696a88fe9fe1a87dab3f68ac17cc7f6415716d893ba3b97b9c24"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/wnf/installed_query.rs",
+      "bytes": 3693,
+      "sha256": "f5736cf1a3b0b27e43aad305f846bf82e8255c1c680f011bbc21ba2bd5e3b94f"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/wnf/query.rs",
+      "bytes": 8945,
+      "sha256": "f43fc9c6d92fa35eaf2e6204b8cc59fafbdd8844aef2f0730acee5429574c9a1"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/wnf/query_tests.rs",
+      "bytes": 7603,
+      "sha256": "aeb5e8308e9e1f7f6554ee15dad7bfb4874375452cb67f5b468dd9586eade75c"
+    },
+    {
+      "path": "compiled-source/initial/docs/specifications/windows/native-wnf-query/cases.json",
+      "bytes": 3073867,
+      "sha256": "3721b74e1a7f8b303213070d77d25a0fa84dfb52efb1de1d1d8b47f79a38a11b"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/dll/native.rs",
+      "bytes": 18685,
+      "sha256": "964238c3a78d71c467c6ad6421add4e53b57f33b5d286b96dc8bbeb7ebf06cd0"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/dll/native/wnf_query.rs",
+      "bytes": 4288,
+      "sha256": "1065b7a7e6a82ae49dfcf99026f441e9d929a7370e145c8ba24e7855a42cd364"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/objects/wnf.rs",
+      "bytes": 7526,
+      "sha256": "1fa0306fea4d145014ebf0b267add937a6dab672acce53792021f879d9578ee8"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47789,
+      "sha256": "942a40eb354a01c70635da536e3fc5c61dbbd36b79e8e898a35799428546c105"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/process/sched/tests/services_tests/wnf_query_tests.rs",
+      "bytes": 21189,
+      "sha256": "ec8941419b9871c19e33ec07a4095ebe9a78e46af6ed22848408e7382f63cfa2"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/wnf.rs",
+      "bytes": 1266,
+      "sha256": "32871ada8977c652462d259ecafeb563ddabf08cd79809579557461dbc497172"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/wnf/catalog.rs",
+      "bytes": 8032,
+      "sha256": "233cf66c3278696a88fe9fe1a87dab3f68ac17cc7f6415716d893ba3b97b9c24"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/wnf/installed_query.rs",
+      "bytes": 2555,
+      "sha256": "cbb116d50eb188a333bf7b8474c53ef4fba887e12aebb072e416b920ec723aeb"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/wnf/query.rs",
+      "bytes": 8945,
+      "sha256": "f43fc9c6d92fa35eaf2e6204b8cc59fafbdd8844aef2f0730acee5429574c9a1"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/wnf/query_tests.rs",
+      "bytes": 6535,
+      "sha256": "72abfca33a08fa7b67f2d69c796130c5ec436ba49d08f746c4603c353c9ed1e8"
+    },
+    {
+      "path": "epoch2-owning-source-hashes.json",
+      "bytes": 62458,
+      "sha256": "b8353b62db27db5e0b6c9d413c96fa247bfc73fbc2e30d2ed7f8864d288b4f39"
+    },
+    {
+      "path": "epoch2-source-inputs.json",
+      "bytes": 2971,
+      "sha256": "922d3b085634899ea1f2646c54d438788b73577043ffdd42ce782c8b3a2ee024"
+    },
+    {
+      "path": "epoch3-owning-source-hashes.json",
+      "bytes": 62747,
+      "sha256": "ccbcc5d8b503df4c6a384f33a285aa08548f79bd2b94a11abf342d02cbbc2cb0"
+    },
+    {
+      "path": "epoch3-source-inputs.json",
+      "bytes": 3220,
+      "sha256": "fd045624e43aa402e844832eaf295b7e5c97f0a06f466d9915fd4505f9e99ab2"
+    },
+    {
+      "path": "epoch3-validation-stopped.json",
+      "bytes": 2194,
+      "sha256": "d8bc0feaa836aed454ace060c29879c03a2ab98bf946b118d3918cd76d0e2747"
+    },
+    {
+      "path": "epoch4-owning-source-hashes.json",
+      "bytes": 62930,
+      "sha256": "0fc4a8bd2c8afc33eb3768224bf3f3da1abf11bb15f6073a27b37b2f2131ea98"
+    },
+    {
+      "path": "epoch4-scope-falsification.json",
+      "bytes": 719,
+      "sha256": "0dcccedfb75527b569b6df5444d12b77b2aa4ca134f021fb3fdac4ee119c9b6e"
+    },
+    {
+      "path": "epoch4-source-inputs.json",
+      "bytes": 3528,
+      "sha256": "d98da21a804a0b6875e151da008879986d01f8ed3f75ea25aa12affde5af0f21"
+    },
+    {
+      "path": "final-owning-source-hashes.json",
+      "bytes": 62930,
+      "sha256": "0fc4a8bd2c8afc33eb3768224bf3f3da1abf11bb15f6073a27b37b2f2131ea98"
+    },
+    {
+      "path": "finalize-wnf-review.py",
+      "bytes": 5890,
+      "sha256": "d505ddfb0d6a597df26a05ed5cc6c44b9e8f300e00df3664fdc44d42404645e4"
+    },
+    {
+      "path": "initial-owning-source-hashes.json",
+      "bytes": 62458,
+      "sha256": "5e99b5baba7b19c500f2ecad2acf7d4e0ffe16d332cb2ecc29f891311ad48f4f"
+    },
+    {
+      "path": "initial-review-notes.json",
+      "bytes": 1088,
+      "sha256": "0d4745919968dab56d7d2c77a5a8379347b6f59b2b747992e5f9213d8b15f19d"
+    },
+    {
+      "path": "initial-source-inputs.json",
+      "bytes": 2644,
+      "sha256": "cc43a558df3790d4506ddd97843b0f1f502cba755ec8a2ab62fdb970aaf2940a"
+    },
+    {
+      "path": "initial-unix-retries-stopped.json",
+      "bytes": 7869,
+      "sha256": "2c9f967baacced741d1189e2e02f814cb2829ca3d043433ad184ad20da6befe6"
+    },
+    {
+      "path": "latest-published-cpp-consumer-identities.json",
+      "bytes": 2907,
+      "sha256": "fd207fda21c92a934fb8ab615d555ae80b118836b3bd0b4d6e708b07a79cb46f"
+    },
+    {
+      "path": "linux-final4-owning-archive-identities.json",
+      "bytes": 64152,
+      "sha256": "c029f2d62eaf582fd45726cc35d3628b12ada026fffebbc37d4d5cfef4a05462"
+    },
+    {
+      "path": "linux-owning4-archive-identities.log",
+      "bytes": 180,
+      "sha256": "b8ce745b21036366430af5129d4bbaa353d2d4802d34bb5ef46c8b0656a7cde7"
+    },
+    {
+      "path": "linux-owning4-artifacts.log",
+      "bytes": 159806,
+      "sha256": "e1c3aba890e6f3ebe41b521627fd6fbd72dcc3315f068228faee95906ed2ebaf"
+    },
+    {
+      "path": "linux-owning4-commands.json",
+      "bytes": 5261,
+      "sha256": "88f424a77e3e0e33900b79240a23ac6a17cdd51185ab7bfdfeb523b1a4c6c77b"
+    },
+    {
+      "path": "linux-owning4-cpp.log",
+      "bytes": 1623,
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+    },
+    {
+      "path": "linux-owning4-gates.json",
+      "bytes": 5978,
+      "sha256": "550292b117bca1ce775630ae59a969467db494e137eaa2e6bdc31808dbd4da61"
+    },
+    {
+      "path": "linux-owning4-shipping.log",
+      "bytes": 222,
+      "sha256": "3933e6f71720338aa74321ed15b2e3baca19a3c45710574bfb86b719fc665488"
+    },
+    {
+      "path": "linux-wnf-epoch2-access.log",
+      "bytes": 1176,
+      "sha256": "26227d0e53dc0cad582848b4c1aaeb6c429964311e516282f838240ea6e27aa9"
+    },
+    {
+      "path": "linux-wnf-epoch2-gates.json",
+      "bytes": 4496,
+      "sha256": "d3f510273772aba57325c6fccf3ed3fece4c702fa63e968362a896fe3be5b0cf"
+    },
+    {
+      "path": "linux-wnf-epoch2-query.log",
+      "bytes": 768,
+      "sha256": "3c80b6c9c50df9ad7c273b1bd0d387ab503e12241a65ae737267c733014b82bc"
+    },
+    {
+      "path": "linux-wnf-epoch2-service.log",
+      "bytes": 1068,
+      "sha256": "d6589b71d8a8736fe7e32e4e9b71eda42b0f72e34dff40e7f66fef13fc37ca6a"
+    },
+    {
+      "path": "linux-wnf-epoch2-subscription.log",
+      "bytes": 708,
+      "sha256": "0bf149bc361e5019b87880f01ad04b6650b832a0c93cd7d399f2a02d0e851d66"
+    },
+    {
+      "path": "linux-wnf-epoch3-access.log",
+      "bytes": 1176,
+      "sha256": "2e4252bf3d2c9b61a4ac563c6724fc7162b83f6f12653f8c39284b63e2ccf5cb"
+    },
+    {
+      "path": "linux-wnf-epoch3-gates.json",
+      "bytes": 4496,
+      "sha256": "a8245db99c56e27e36eda588a185e087ba25f1637b2eeb90279e943f45f220e3"
+    },
+    {
+      "path": "linux-wnf-epoch3-query.log",
+      "bytes": 768,
+      "sha256": "40bdfcf67186390394b5a144a73c5664e474ba401245807638984059c87750f9"
+    },
+    {
+      "path": "linux-wnf-epoch3-service.log",
+      "bytes": 1229,
+      "sha256": "24a8915a3e37824ff722c2af71ddf90606ce58145b25f5583daa1c14f65ef514"
+    },
+    {
+      "path": "linux-wnf-epoch3-subscription.log",
+      "bytes": 708,
+      "sha256": "1c27924fd244a0932a224c7ae1f339c171ccbf1921681414d63fe3f6903d1aaf"
+    },
+    {
+      "path": "linux-wnf-epoch4-access.log",
+      "bytes": 1176,
+      "sha256": "ffe6e0f5298b74468dbdc7d9bade31edc92705897196b02753e0aa1e9e6e9aed"
+    },
+    {
+      "path": "linux-wnf-epoch4-gates.json",
+      "bytes": 4495,
+      "sha256": "8eb16820547310a127714f22fb00f9753d390c02f682ca673b8d6dcfd4a4fb7c"
+    },
+    {
+      "path": "linux-wnf-epoch4-query.log",
+      "bytes": 768,
+      "sha256": "196eec4d62d2c866e14268f57467e59b6d48b868c88fca1b95a945329c4d6158"
+    },
+    {
+      "path": "linux-wnf-epoch4-service.log",
+      "bytes": 1226,
+      "sha256": "0974dde57f33539074bddf7c0a92c829591606a32bc9622589869928dfbafcae"
+    },
+    {
+      "path": "linux-wnf-epoch4-subscription.log",
+      "bytes": 708,
+      "sha256": "69fd8355d1816b8ce8f46716b1d2add7e4c871195491763a46c48bbcfacd4984"
+    },
+    {
+      "path": "linux-wnf-final4-all-targets.log",
+      "bytes": 116,
+      "sha256": "516facb5e393e514d028fd8e2d0f48b6682781c1eb3ff081c8d8edf7dbb1a0af"
+    },
+    {
+      "path": "linux-wnf-final4-capi.log",
+      "bytes": 12490,
+      "sha256": "6afda8432d0b081d04ced57379feccca107a6137a493a69c6ea173c0bc8543f6"
+    },
+    {
+      "path": "linux-wnf-final4-gates.json",
+      "bytes": 4381,
+      "sha256": "1e6f35929367c9c02da5ce2d35f8b625abf83409dcf798ee9bf0a2260d6aa429"
+    },
+    {
+      "path": "linux-wnf-final4-lib.log",
+      "bytes": 799505,
+      "sha256": "93c4d6f043e7a79af433789884d9640aaa1e5faa1b25c01220b9b188b844ee1a"
+    },
+    {
+      "path": "linux-wnf-final4-windows.log",
+      "bytes": 35805,
+      "sha256": "22be5e09e68c6355011aa44335737a9dce051b8af8d9e46205b5ce48897cc378"
+    },
+    {
+      "path": "linux-wnf-initial-gates.json",
+      "bytes": 1121,
+      "sha256": "02734d26fe5b1890f811131f3bd1feafb96fe3b3c2d09dd1364c96053707ef45"
+    },
+    {
+      "path": "linux-wnf-initial-query.log",
+      "bytes": 6563,
+      "sha256": "262f35823dfb3cf1243696b78ba2aff0d53016d98c4a9e4a9e68150720c820ae"
+    },
+    {
+      "path": "linux-wnf-initial-service.log",
+      "bytes": 6175,
+      "sha256": "0e7c936a4a0a2f3b46f62dd3eee0e0e7b2d4db1a42dfa3bbe99bf156d8a99391"
+    },
+    {
+      "path": "macos-final4-owning-archive-identities.json",
+      "bytes": 65536,
+      "sha256": "bdbf74ba45671d913237f68628b158e2f02953784ab5359a0814a41b10fc94a8"
+    },
+    {
+      "path": "macos-owning4-archive-identities.log",
+      "bytes": 180,
+      "sha256": "a9ee51c6fb51ce344ce77a54da98b23d490a1d4580ae1b28af50a2a53f7db2dd"
+    },
+    {
+      "path": "macos-owning4-artifacts.log",
+      "bytes": 131080,
+      "sha256": "931491844ce7923931379fce9c6497ac6737b11c3535e76f7dc8c9bf5ad6d348"
+    },
+    {
+      "path": "macos-owning4-build.log",
+      "bytes": 1865,
+      "sha256": "1f06b8412186ec47f93d6fa4caf972d51fa389c4c197bc8029a0315f745647dd"
+    },
+    {
+      "path": "macos-owning4-commands.json",
+      "bytes": 3806,
+      "sha256": "f02ef5de7c4df4ea7b87840b69e5f0edf45b4677a828d3700182f86229fe0f69"
+    },
+    {
+      "path": "macos-owning4-ctest.log",
+      "bytes": 1273,
+      "sha256": "e1e3c7312f0ef89a6daa6ef18b519fe2927ecf8dc1d00285bcaf6c01b3ea663c"
+    },
+    {
+      "path": "macos-owning4-gates.json",
+      "bytes": 4899,
+      "sha256": "595a90fbebe1616d572a90fc2a16c0ca6cd546a3ef0b2f42830253b9295956a1"
+    },
+    {
+      "path": "macos-owning4-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "macos-owning4-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "macos-wnf-epoch2-access.log",
+      "bytes": 1261,
+      "sha256": "78966e662ce51817578e044c43963fdbeeb8be366ef39df4113655a785b0cf66"
+    },
+    {
+      "path": "macos-wnf-epoch2-gates.json",
+      "bytes": 1729,
+      "sha256": "d9be09aca163b68a840f5a857a33bf1b3838bb01661da3ff5a126a711d884460"
+    },
+    {
+      "path": "macos-wnf-epoch2-query.log",
+      "bytes": 924,
+      "sha256": "70c782a77c8a951efc5e0e4e79827458d57ab30143e5c1d148c1753aec78e64f"
+    },
+    {
+      "path": "macos-wnf-epoch2-service.log",
+      "bytes": 1153,
+      "sha256": "668588b04b5aeb1e33374cb82f6284ff17d859a38a2ca716429588302eb9a236"
+    },
+    {
+      "path": "macos-wnf-epoch2-subscription.log",
+      "bytes": 793,
+      "sha256": "09f0bd97f230f852852c32fa2ae4f6a551569b53d43e9121d04da8cea193f722"
+    },
+    {
+      "path": "macos-wnf-epoch3-access.log",
+      "bytes": 1261,
+      "sha256": "0424661e918f905078ec2cdac993c9391b9069598448aa4276685a714c3a0c50"
+    },
+    {
+      "path": "macos-wnf-epoch3-gates.json",
+      "bytes": 1729,
+      "sha256": "58bd49ffedc33135e05b44e89d5daf4bcb6a062533412db1a4de74b39991f66e"
+    },
+    {
+      "path": "macos-wnf-epoch3-query.log",
+      "bytes": 924,
+      "sha256": "172c1efd7136d339db6154c9fa4e8d7c7378a166e132ea67f6b859c4ba0923cf"
+    },
+    {
+      "path": "macos-wnf-epoch3-service.log",
+      "bytes": 1314,
+      "sha256": "4f953f3e2a0a9c6329bca95f7496c02eaf8a1c2560e933aac7e2fc9d25597f04"
+    },
+    {
+      "path": "macos-wnf-epoch3-subscription.log",
+      "bytes": 793,
+      "sha256": "3aa9c974130b14b67f9efa9b62d4c231daf05756ae7e53419826072078cbe145"
+    },
+    {
+      "path": "macos-wnf-epoch4-access.log",
+      "bytes": 1261,
+      "sha256": "9c4609f08a1d8360b22cefcc8ad0bcc605b557007cd94303669f4c912dd1200f"
+    },
+    {
+      "path": "macos-wnf-epoch4-gates.json",
+      "bytes": 1730,
+      "sha256": "b318a3c0d5e7f75fbb3fcb20f99552a9fd28d1cf1fae69776a4e87fe195cea28"
+    },
+    {
+      "path": "macos-wnf-epoch4-query.log",
+      "bytes": 924,
+      "sha256": "01cb5b1b0f037f523705c15c3dc196e5e371ce98f32f4523fcf84d376c4c9e29"
+    },
+    {
+      "path": "macos-wnf-epoch4-service.log",
+      "bytes": 1311,
+      "sha256": "0d6314b0257a9ef23ee23adc5dc7ca1e5d73aaa87d61207a4567d2b7c53f7282"
+    },
+    {
+      "path": "macos-wnf-epoch4-subscription.log",
+      "bytes": 793,
+      "sha256": "c162bf3ccfdfcebe26636b89b440453d53358cd133c5ac3f24c71956efbb3c2d"
+    },
+    {
+      "path": "macos-wnf-final4-all-targets.log",
+      "bytes": 187,
+      "sha256": "23cc1c720c4722d8da867d785ac565e55e491a87887ad7e5aae8265dfc5797d7"
+    },
+    {
+      "path": "macos-wnf-final4-capi.log",
+      "bytes": 12647,
+      "sha256": "ac44a74ac1fc25736a072848fe9fe5b1172201af6e0c8c09305b773cfb364f90"
+    },
+    {
+      "path": "macos-wnf-final4-gates.json",
+      "bytes": 1613,
+      "sha256": "d09211f473b37c331ddc16a6f7fe833f86c18f28bff645ae7a672b84fae232fe"
+    },
+    {
+      "path": "macos-wnf-final4-lib.log",
+      "bytes": 800328,
+      "sha256": "8b53604a8138fd2963b0898e8b109cbd8a7348c7c1db91abe35268056f3474c1"
+    },
+    {
+      "path": "macos-wnf-final4-windows.log",
+      "bytes": 36045,
+      "sha256": "b368aabe4916e40c767e5a078e1e2257941d72113dcb24c38beb62eef699c47b"
+    },
+    {
+      "path": "macos-wnf-initial-gates.json",
+      "bytes": 858,
+      "sha256": "9bc083ed20d78721cbc1df69a5d74b0531d9b7895073d9c1a9d2ce9cabd8cddc"
+    },
+    {
+      "path": "macos-wnf-initial-query.log",
+      "bytes": 6858,
+      "sha256": "acf1d4474d151c56831825d5d5e246c874a397db12dded33fe1723efe5344adf"
+    },
+    {
+      "path": "macos-wnf-initial-service.log",
+      "bytes": 6594,
+      "sha256": "86cf2f965685ba99db2b2af8d7034e16c5c255eddd304b3eb053540c718d0982"
+    },
+    {
+      "path": "macos-wnf-initial-subscription.log",
+      "bytes": 6399,
+      "sha256": "0c549a6a7261e6062eb4f7226f9c9228c7be06b73fcee78f9c3c73c33aa0996b"
+    },
+    {
+      "path": "owned-source-plan.json",
+      "bytes": 2388,
+      "sha256": "1c217b01c1843d4425ececfbfb49ce62ebc94a6a1d041e372fb33f4f69cbbf92"
+    },
+    {
+      "path": "owning-carrier-repoint.json",
+      "bytes": 427,
+      "sha256": "54b19185085d54066521e832e89db8184cfe0f1b8ae82fe1f6bbed621a778b94"
+    },
+    {
+      "path": "owning-linux-cpp-build.py",
+      "bytes": 1522,
+      "sha256": "a0d9f75e831bd3585d3e009b94e8e3f2744b137e646c157c70a7ad7950373b56"
+    },
+    {
+      "path": "owning-validation-boundary.json",
+      "bytes": 326,
+      "sha256": "f8d5a99723eeb723979f45776323ea56b7be46d5bd0406fbbb77cea244121159"
+    },
+    {
+      "path": "run-owning4-after-focus.py",
+      "bytes": 472,
+      "sha256": "efd47e0af8731efbb405a8876a7fc5d85c84867e47b10850320ec97b00c9face"
+    },
+    {
+      "path": "run-owning4-gates.py",
+      "bytes": 739,
+      "sha256": "8931d96e3774f7888af8d1e47028f641b6c414ad1d3d4031351cd08cc7630b12"
+    },
+    {
+      "path": "run-wnf-epoch2-unix.py",
+      "bytes": 1737,
+      "sha256": "06e404e593ddb9a6359683730b0ee05ef70d08c0d190598d58a421dfa91de072"
+    },
+    {
+      "path": "run-wnf-epoch3-unix.py",
+      "bytes": 1737,
+      "sha256": "06342665b53b4276ccfa96f45a8003166bfde5f6e43183b3e2f9d029cffc043d"
+    },
+    {
+      "path": "run-wnf-epoch4-unix.py",
+      "bytes": 1737,
+      "sha256": "272abb799bcf74949d1ddfab2e83874e3af75a3b24222643330dfa9112e5ef2c"
+    },
+    {
+      "path": "run-wnf-final4-unix.py",
+      "bytes": 2871,
+      "sha256": "0e6531c8e6facfd9f05113ed397a4dad0a635c5a878d40a0ba743f7584dbdb7a"
+    },
+    {
+      "path": "run-wnf-initial-unix.py",
+      "bytes": 1743,
+      "sha256": "7a4046c665b3dd085ceb7da5b72c781408cb7e6959ab483d795a37b0cd2a475c"
+    },
+    {
+      "path": "scope-replay-append.rs",
+      "bytes": 2747,
+      "sha256": "d60672ed769b69db271eaa6e1f822b8489f762bd2cf0849f936182cafbb6d693"
+    },
+    {
+      "path": "source-baseline.json",
+      "bytes": 335,
+      "sha256": "dd311faaef750e19c0d0156c7d1df46bfcc80817b40b1a0a122d61be67bd27ba"
+    },
+    {
+      "path": "stress-wnf-validation.py",
+      "bytes": 2662,
+      "sha256": "c1b3e62f0594c411cb1e7c75a0cc94d1fb7f64ddbea5491b7df1f95d3d2264e1"
+    },
+    {
+      "path": "superseded-epoch3/final-owning-source-hashes.json",
+      "bytes": 62747,
+      "sha256": "ccbcc5d8b503df4c6a384f33a285aa08548f79bd2b94a11abf342d02cbbc2cb0"
+    },
+    {
+      "path": "superseded-epoch3/linux-final-owning-archive-identities.json",
+      "bytes": 63936,
+      "sha256": "77568d0a3f4e9c7401a2b00ffa5f07f97b1eb195c2c9deb5b3ab207a7597ed4e"
+    },
+    {
+      "path": "superseded-epoch3/linux-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "0c9626577812dd8d3bdf83b11d074bf5689711f639c42d900409576e2f588be7"
+    },
+    {
+      "path": "superseded-epoch3/linux-owning-artifacts.log",
+      "bytes": 159806,
+      "sha256": "d2b87efa55db03725fdaa65e521c272b429afdd49fa2e65e478d327d933afc63"
+    },
+    {
+      "path": "superseded-epoch3/linux-owning-commands.json",
+      "bytes": 5259,
+      "sha256": "11bf0d3ea5de74232c0d8606059cb46d8b48ad731a02e955f7cd11357bd7f20e"
+    },
+    {
+      "path": "superseded-epoch3/linux-owning-cpp.log",
+      "bytes": 1623,
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+    },
+    {
+      "path": "superseded-epoch3/linux-owning-gates.json",
+      "bytes": 5973,
+      "sha256": "06778756c8a0ebc40ed02988230d37cd5fd904c0c0692d7f8c99a2d4474c87b1"
+    },
+    {
+      "path": "superseded-epoch3/linux-owning-shipping.log",
+      "bytes": 415,
+      "sha256": "92ab360787ba7956184584b32aa12ece06785160d8c02daed2585c8a232da0b5"
+    },
+    {
+      "path": "superseded-epoch3/linux-wnf-final-all-targets.log",
+      "bytes": 309,
+      "sha256": "5b417530601ccd779a2f0ecb706c5a34a7872a83af97ffef42a87263b7abb938"
+    },
+    {
+      "path": "superseded-epoch3/linux-wnf-final-capi.log",
+      "bytes": 12491,
+      "sha256": "50d46655feb924d28123c549ea8f7ab0728af28d7c0ecb79b690c70ea6110cd9"
+    },
+    {
+      "path": "superseded-epoch3/linux-wnf-final-gates.json",
+      "bytes": 3314,
+      "sha256": "3902fb9c0ba23749e9f00813864f4ea824c8a856bb91918bf7700c21c4dcdc3d"
+    },
+    {
+      "path": "superseded-epoch3/linux-wnf-final-lib.log",
+      "bytes": 275354,
+      "sha256": "dee3fa59d679b621aad3fcea0979253238244b23e60711b7c987183bae328460"
+    },
+    {
+      "path": "superseded-epoch3/linux-wnf-final-windows.log",
+      "bytes": 35805,
+      "sha256": "0df8d8f2ee6746a0b6ce8a3f96b68077c616687e0ebd590a18b86b268b6cb733"
+    },
+    {
+      "path": "superseded-epoch3/macos-final-owning-archive-identities.json",
+      "bytes": 65320,
+      "sha256": "8e1312d755400ab93959af7234ed4e8cc4ed1e564c72d9c8bf0e47127e5f2f41"
+    },
+    {
+      "path": "superseded-epoch3/macos-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "5fc0d7da287348ecdeafdb146d3c511fc9f6c9273d8290f34033b037ed855382"
+    },
+    {
+      "path": "superseded-epoch3/macos-owning-artifacts.log",
+      "bytes": 131080,
+      "sha256": "5d088c0ea2f5a898bc35a46e31062cbaa1a52e35d45ae5a2f7de0fb19e4fb978"
+    },
+    {
+      "path": "superseded-epoch3/macos-owning-build.log",
+      "bytes": 33678,
+      "sha256": "e4aab9f86fcde2e627fa5edb6188e3b6c5741102e84d0778ee9db581645e5fa9"
+    },
+    {
+      "path": "superseded-epoch3/macos-owning-commands.json",
+      "bytes": 3804,
+      "sha256": "c3beeb4b0b277d6d016ed54c637c51a35ecd1aa0a517835aeb47ed08f32696c1"
+    },
+    {
+      "path": "superseded-epoch3/macos-owning-ctest.log",
+      "bytes": 1273,
+      "sha256": "f01240da2308cd59a9f9be55c4e882676f7f04be4ef5589f9b58c4f35a6641a1"
+    },
+    {
+      "path": "superseded-epoch3/macos-owning-gates.json",
+      "bytes": 4881,
+      "sha256": "2cdcc4965d0ad45cff5a4e7fae878f337f249fd2d2618c23f77335a0e6ac2d48"
+    },
+    {
+      "path": "superseded-epoch3/macos-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "superseded-epoch3/macos-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "superseded-epoch3/macos-wnf-final-all-targets.log",
+      "bytes": 451,
+      "sha256": "b2092dfabff880346d0ffa3f288c66c5822b4c2e69a6156ecdf387b03ce4b3b4"
+    },
+    {
+      "path": "superseded-epoch3/macos-wnf-final-capi.log",
+      "bytes": 12647,
+      "sha256": "b72978f83fff409191a5c706a6cb0c32e898e019153ccbe89f7908644c6d4359"
+    },
+    {
+      "path": "superseded-epoch3/macos-wnf-final-gates.json",
+      "bytes": 1238,
+      "sha256": "17d3ce34787d25318b31426aa805ab493527ae8bf2160e61191b4d6e73bde3e3"
+    },
+    {
+      "path": "superseded-epoch3/macos-wnf-final-lib.log",
+      "bytes": 762575,
+      "sha256": "ab8efe697a3c5fdbd402aa117fb0a07ed130999ccd98b98b27b081db1634a1a7"
+    },
+    {
+      "path": "superseded-epoch3/macos-wnf-final-windows.log",
+      "bytes": 36045,
+      "sha256": "5071a38470a6bbc0369bd291e519b67eb997ce385fafac3f5cfd56de4d9dd11c"
+    },
+    {
+      "path": "windows/apply-wnf-query-epoch2.py",
+      "bytes": 3273,
+      "sha256": "83b27d1f1c655dddf76e09b4499437f7f924307a498390929240be25ea1ff25d"
+    },
+    {
+      "path": "windows/apply-wnf-query-epoch3.py",
+      "bytes": 3276,
+      "sha256": "9a1492f9fb49e9ed7934b1cdac379b4a9cfed525ef35b0bc70bc500d674352c3"
+    },
+    {
+      "path": "windows/apply-wnf-query-epoch4.py",
+      "bytes": 3319,
+      "sha256": "518f001f5445cf38b6fc8f8d24d4abf0230706cd96f9dfd88e1769fe154664b1"
+    },
+    {
+      "path": "windows/apply-wnf-query-initial.py",
+      "bytes": 3300,
+      "sha256": "b36dff016a60e86c3d2adcfa94eba74327bcfa4faf40789600090420596a657c"
+    },
+    {
+      "path": "windows/assist-native-wnf-query-final-owned.ps1",
+      "bytes": 4402,
+      "sha256": "05b271091a93d8369e9595904d5057ac01d7b2071ebe1a5a9a49b7398486cf65"
+    },
+    {
+      "path": "windows/assist-native-wnf-query-final4-cpp.log",
+      "bytes": 2946,
+      "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+    },
+    {
+      "path": "windows/assist-native-wnf-query-final4-owned.ps1",
+      "bytes": 4421,
+      "sha256": "fdb7272857e5109cdc5165fc0cc27007cd41437c76a046a1be779594c15eef05"
+    },
+    {
+      "path": "windows/assist-native-wnf-query-final4-shipping.log",
+      "bytes": 1584,
+      "sha256": "625a86ae6551b02720556389a448fc880c1cf773a3f88bcde92bf430c088721f"
+    },
+    {
+      "path": "windows/current-cpp-consumers-reverified.json",
+      "bytes": 1925,
+      "sha256": "c50a02fbad8b090826ebff94948b9fd38c7515903760b43094c1f81f1e9136c9"
+    },
+    {
+      "path": "windows/inspect-wnf-query-boundaries.py",
+      "bytes": 3718,
+      "sha256": "e8df29c5d25204ab1b784375c261b2c150757157a9c5c5e1714dc54c900cfd94"
+    },
+    {
+      "path": "windows/inspect-wnf-query-defender.ps1",
+      "bytes": 248,
+      "sha256": "b859d0c7798ab43cb358dbcdb1bcfa27e6a69f9a7e17eb264c593b2dd6415bfe"
+    },
+    {
+      "path": "windows/inspect-wnf-query-final-archives.py",
+      "bytes": 2196,
+      "sha256": "7619a982d0f6c196cfb573b03b91b0fcab5ed7905921ccb03719adc2d3183261"
+    },
+    {
+      "path": "windows/inspect-wnf-query-final4-archives.py",
+      "bytes": 2198,
+      "sha256": "477110185f0c5530aa9689d5be044a0353d963f24a1e367dca3343dc67155f75"
+    },
+    {
+      "path": "windows/inspect-wnf-query-final4-progress.py",
+      "bytes": 262,
+      "sha256": "2f41257f19f21cf4be9d311c00ddb10af895750a89a368371352138f52f6cf01"
+    },
+    {
+      "path": "windows/inspect-wnf-query-v3.py",
+      "bytes": 3635,
+      "sha256": "ec5829be7e62ad13d028472292a1562ba6744dbf0325cfefd844e5b83c13f154"
+    },
+    {
+      "path": "windows/inspect-wnf-query-v5-partial.py",
+      "bytes": 3695,
+      "sha256": "0479590a2ecf6a1a5c9ae883e4a4c9a5b2c14048e360c870dbf184f8a745e2a8"
+    },
+    {
+      "path": "windows/native-secure-capture-current-cpp-verification.json",
+      "bytes": 1935,
+      "sha256": "8da9e93a869a26307079569da72cb5b6172f947825dea07114a0be2860d150e9"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch2-access.log",
+      "bytes": 2235,
+      "sha256": "6a1b68589ea2c728f012f08f7f301db7c5ad87c63c767a911c62b9e0e6d761e5"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch2-all-targets.log",
+      "bytes": 986,
+      "sha256": "ebf1a6d5d877aabf0ff0378acf3ce6d1311c5405d19c85124861099dea15cb3b"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch2-gates.json",
+      "bytes": 1290,
+      "sha256": "335a9ee70173a4d98d8b4e36d1c36cd4e7197383189b3dd2b42aae6ebf33cd93"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch2-gates.ps1",
+      "bytes": 1716,
+      "sha256": "b3612f116f0fb563b7be1aefa62a27a46994e56dbf63346686e22055f28446ac"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch2-query.log",
+      "bytes": 1946,
+      "sha256": "9791b5d9a47ff487ad5485b2745664d6cd68a34538eb9ebc2bc488a79515da2f"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch2-service.log",
+      "bytes": 2128,
+      "sha256": "acdc2bea16e534e7cfa9b0ec386f49afb09514bb8d04d2f7aec2e4676fdfe9ad"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch2-source-verification.json",
+      "bytes": 1180,
+      "sha256": "094a94039f7a70066cf9cb26f4ae270cfebebab6c05d18d51fe3d5b665739989"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch2-subscription.log",
+      "bytes": 1614,
+      "sha256": "01f4af7ae00274a8c82f3bc90e047be8bb28e5354a62a03bddf1c498df3438bb"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch3-gates.ps1",
+      "bytes": 1535,
+      "sha256": "3137d75e324cefca672e9fcc14da570aeefe9a3241efb137577fda452edfebeb"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch3-retry-gates.json",
+      "bytes": 243,
+      "sha256": "9877ae47b389ac190056425b1ae092684431522eb390327f1debd2d65c463da8"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch3-retry-gates.ps1",
+      "bytes": 1552,
+      "sha256": "42185ad0c91d52bccd94447606d9ae3c0830340a75e242b1f937cf7b0e3e2608"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch3-retry-service.log",
+      "bytes": 2363,
+      "sha256": "845f47332e80d92d6604b77243c3d02d0ca3b71dbd8c70d3ce49933b7ab6b5d9"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch3-source-verification.json",
+      "bytes": 903,
+      "sha256": "07405e97faeb1bd9a4965a8d420515401e56af04b1b1c55b1ec4acdeb02438b6"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch4-access.log",
+      "bytes": 2235,
+      "sha256": "445e23199d207b865462f83bf44cf16fb5a83a1b77938dffc5959f6394183c56"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch4-all-targets.log",
+      "bytes": 986,
+      "sha256": "690d100f47769ff3086fe1cb5683b8134424c51ab83b8a546863a7736f7136bc"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch4-gates.json",
+      "bytes": 1290,
+      "sha256": "1bc3bce72991e1e1fd0782bb14e79a155723a8f9d02f01d0993531b06ff35972"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch4-gates.ps1",
+      "bytes": 1716,
+      "sha256": "59b6551a002839913c07c19a9ebd19b4decc078ce75eabf243af3b7d81833e91"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch4-query.log",
+      "bytes": 1946,
+      "sha256": "a1b0594289815f54143a4d83e63150d1aef56f41d0fbf06e6fd841a5fec6fb00"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch4-service.log",
+      "bytes": 2286,
+      "sha256": "ca3913eed92874db31f2360272a7b72e281b0a90022dd4ad6c2b2b58da919b5d"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch4-source-verification.json",
+      "bytes": 1201,
+      "sha256": "3190d507ad955c4dcaf016d36dd9fdf5c9768baee740fb6d1a90f763c7b92f3c"
+    },
+    {
+      "path": "windows/native-wnf-query-epoch4-subscription.log",
+      "bytes": 1614,
+      "sha256": "b5affab1e79901797204ecf232cfd149ad3f1589932442b575c86c1c4c88b999"
+    },
+    {
+      "path": "windows/native-wnf-query-final-build-user-artifacts.jsonl",
+      "bytes": 90587,
+      "sha256": "28476cf0bcb245ede9cf05b0e4d8c1c29b978d14af9b03e9be6a67782956391a"
+    },
+    {
+      "path": "windows/native-wnf-query-final-build-user.log",
+      "bytes": 146,
+      "sha256": "5cf81277f141777c81f4241dc6c0ecd08bb1a640524e11c3f9950878cff4fd44"
+    },
+    {
+      "path": "windows/native-wnf-query-final-gates.ps1",
+      "bytes": 3254,
+      "sha256": "136dcbcec5a45534557906dddd1ca3eb587cbda080da60779477befc08c913a9"
+    },
+    {
+      "path": "windows/native-wnf-query-final-observer-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "windows/native-wnf-query-final-ordinary-0.log",
+      "bytes": 57108,
+      "sha256": "e7f34d4b5471aafa235519502a756f90bff1dc6a875efcedf0097e330cc57dbf"
+    },
+    {
+      "path": "windows/native-wnf-query-final-ordinary-outcomes.json",
+      "bytes": 913,
+      "sha256": "9bd32524614e65db3d5e3f8ba15f1e4547d4e85b99fd875c50d4835446bb25a6"
+    },
+    {
+      "path": "windows/native-wnf-query-final-source-verification.json",
+      "bytes": 63280,
+      "sha256": "5a8c4f7fbfe4a68e2445e8e9c2311a95f9caca55ca916dfeb262ab9778dfa8f9"
+    },
+    {
+      "path": "windows/native-wnf-query-final4-after-artifacts-stderr.log",
+      "bytes": 72,
+      "sha256": "9d892c5778d0c975f64a671e66ea5a753502353da3addd1dfdf3825225e406a2"
+    },
+    {
+      "path": "windows/native-wnf-query-final4-after-artifacts.jsonl",
+      "bytes": 130191,
+      "sha256": "320d5d3da9e71ccd813fb43702f0acad1a6767d3950575b82c6ffe6365f7d57e"
+    },
+    {
+      "path": "windows/native-wnf-query-final4-build-user-artifacts.jsonl",
+      "bytes": 90587,
+      "sha256": "9a7f34071ff57e7a7496a6e2123958e839c12f7e97272e9edf4645bb77712fc6"
+    },
+    {
+      "path": "windows/native-wnf-query-final4-build-user.log",
+      "bytes": 146,
+      "sha256": "3b51ccd117b8c380c2859292c022d16a33f60814752f377abc32013c25777332"
+    },
+    {
+      "path": "windows/native-wnf-query-final4-capi.log",
+      "bytes": 13764,
+      "sha256": "c68bce38dfcea0fbf82edbbe1969ba1f435454a1c1a8f3d40563e1e6886ddd33"
+    },
+    {
+      "path": "windows/native-wnf-query-final4-full.log",
+      "bytes": 774619,
+      "sha256": "28ad5c5b179828f3bb006a283ff67bb83ccf18e98fd6bb5717e4647fe16a10b7"
+    },
+    {
+      "path": "windows/native-wnf-query-final4-gates.json",
+      "bytes": 782,
+      "sha256": "e46212d62ffadd03db94112f2c27683ce211b2bd6164791751eede6330169973"
+    },
+    {
+      "path": "windows/native-wnf-query-final4-gates.ps1",
+      "bytes": 3269,
+      "sha256": "e5dcf17d415aa5ce851df8c2cbe03837e91dca262b651b6e3a1955b772defbb1"
+    },
+    {
+      "path": "windows/native-wnf-query-final4-integration.log",
+      "bytes": 1865,
+      "sha256": "62c24d3123f77aaf15514f6b487dd7286421914a67b7c34adca19413cc44e143"
+    },
+    {
+      "path": "windows/native-wnf-query-final4-observer-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "windows/native-wnf-query-final4-ordinary-0.log",
+      "bytes": 57172,
+      "sha256": "4f9ea49fbb2f3befe7bc31b908ff99abea2d6227365ede3b764acec6d7971024"
+    },
+    {
+      "path": "windows/native-wnf-query-final4-ordinary-2.log",
+      "bytes": 59720,
+      "sha256": "3f35b165b037297acd11ddd4755eb46c75e23e20636366277123874f9a8d6434"
+    },
+    {
+      "path": "windows/native-wnf-query-final4-ordinary-outcomes.json",
+      "bytes": 1424,
+      "sha256": "1e90dd8934f61393c5e085d3ff5d9e1b0f140218a47160367542a726de51e6e9"
+    },
+    {
+      "path": "windows/native-wnf-query-final4-owning-archive-hashes.json",
+      "bytes": 53895,
+      "sha256": "fcd082dd642a0c13b3030b3153d817eaa2289fee8109497d774ee451a7aef437"
+    },
+    {
+      "path": "windows/native-wnf-query-final4-owning-source-identities.json",
+      "bytes": 63656,
+      "sha256": "d90e38439b4ea44bee062be2cd952d7a1b08959de97547091447733b038a16e0"
+    },
+    {
+      "path": "windows/native-wnf-query-final4-owning-source-verification.json",
+      "bytes": 114,
+      "sha256": "2c2d722bc38d0e537578557d8b263febd55820cd4a72fefe38bc3f0001531abe"
+    },
+    {
+      "path": "windows/native-wnf-query-final4-source-verification.json",
+      "bytes": 63500,
+      "sha256": "decbd47d8ff83e380b13895ef772c90f79652015426e50a9996952c86db30e0c"
+    },
+    {
+      "path": "windows/native-wnf-query-final4-verified-gates.json",
+      "bytes": 1070,
+      "sha256": "41c48f6271c054d36a87a7bba489e3c8b4c64daf031b8bff37e6a716ce47c60c"
+    },
+    {
+      "path": "windows/native-wnf-query-initial-gates.json",
+      "bytes": 237,
+      "sha256": "33f88b6830e98da309661e5ba38c42a85abf2865677e8474148e57407bf0b5e0"
+    },
+    {
+      "path": "windows/native-wnf-query-initial-gates.ps1",
+      "bytes": 1602,
+      "sha256": "6c18741cf11398a17874798e09df3ce49497f3cb4e1a062985e369c7a80511b0"
+    },
+    {
+      "path": "windows/native-wnf-query-initial-query.log",
+      "bytes": 7964,
+      "sha256": "58fd0c3c65d11aded5b045761529cee5f2dd4aa4b3b1d29e56d145b598e9a8c4"
+    },
+    {
+      "path": "windows/native-wnf-query-initial-source-verification.json",
+      "bytes": 3020,
+      "sha256": "e8c7026336d280ccc4904cccec0405a604cd5e5690738b57feecf18a12100b81"
+    },
+    {
+      "path": "windows/run-wnf-query-boundaries-atomic.py",
+      "bytes": 1569,
+      "sha256": "404866540fdb77b4d57562b61c4e12bd5d4d74f780d33b7b6f1098ee99f08ebd"
+    },
+    {
+      "path": "windows/run-wnf-query-capture.ps1",
+      "bytes": 1176,
+      "sha256": "0eeeafdc230030114c6f646f20dcad9de7c37f987c11fbd96509d7487fb9860b"
+    },
+    {
+      "path": "windows/run-wnf-query-capture.py",
+      "bytes": 1123,
+      "sha256": "e68c72bc207c3db13b6cec57d3641827f39dd342273e097f38cc7128d410bdbc"
+    },
+    {
+      "path": "windows/run-wnf-query-chain.py",
+      "bytes": 4460,
+      "sha256": "1af222e0e2402bcd6a481d79438062eabc75e06d3abc253eb88f2405d18eb88b"
+    },
+    {
+      "path": "windows/run-wnf-query-epoch2-atomic.py",
+      "bytes": 1308,
+      "sha256": "cb93b22f622a2b4a1a42e3b5f7ab6498f78aef61ad5a9041e9276a68131f6a2b"
+    },
+    {
+      "path": "windows/run-wnf-query-epoch3-atomic.py",
+      "bytes": 1308,
+      "sha256": "1d13bde39baad7c474ba6b00c228d7b0fbbc0b0f338cf5941cbcf730fcb50de0"
+    },
+    {
+      "path": "windows/run-wnf-query-epoch3-retry-atomic.py",
+      "bytes": 1332,
+      "sha256": "fc32414530565f7753e693329d6de71f244040a5ee4542e63417e527f4087dc9"
+    },
+    {
+      "path": "windows/run-wnf-query-epoch4-atomic.py",
+      "bytes": 1308,
+      "sha256": "c0cb31fce82896be5ab9bbfc9c81b0fced4eda88e68d156c1a4f7af8438aa49c"
+    },
+    {
+      "path": "windows/run-wnf-query-final-observations.py",
+      "bytes": 1492,
+      "sha256": "1be4c10fc14c4b5ee1076df899d805d505273d606a57e83d935e57fdc390659f"
+    },
+    {
+      "path": "windows/run-wnf-query-final-retry-chain.py",
+      "bytes": 4490,
+      "sha256": "db914c70ca8fe6df5ec674f900369d3c538155c0403bbb776b0039e170a9eabc"
+    },
+    {
+      "path": "windows/run-wnf-query-final4-chain.py",
+      "bytes": 4089,
+      "sha256": "07a161972406fa6ef422232e35936d3332086c4f4cbfda5b716d9abd1ab65e9d"
+    },
+    {
+      "path": "windows/run-wnf-query-final4-observations.py",
+      "bytes": 1495,
+      "sha256": "6d07d0f41601a37874ec230316694205422decb0df9c844d039ba1b7025a489c"
+    },
+    {
+      "path": "windows/run-wnf-query-initial-atomic.py",
+      "bytes": 1312,
+      "sha256": "7b8319ff2e4f42a4b77d2261ae182131a8110327b08195daa29bfba237a1dff8"
+    },
+    {
+      "path": "windows/run-wnf-query-v1-atomic.py",
+      "bytes": 1537,
+      "sha256": "b055b355492cf70621fce62b1fd1c091cf94ee1551a96ad3437d04b33bd7bb5e"
+    },
+    {
+      "path": "windows/run-wnf-query-v2-atomic.py",
+      "bytes": 1537,
+      "sha256": "af74bd34b6e81e89fb3f39e68dcb97dd1edef57821ec45088a3017e75c61536f"
+    },
+    {
+      "path": "windows/run-wnf-query-v3-atomic.py",
+      "bytes": 1537,
+      "sha256": "cfaaf75b70a41f34dbf19c9e5ad8ca1ff37a10ff62471e24fcddac1650672d34"
+    },
+    {
+      "path": "windows/run-wnf-query-v4-atomic.py",
+      "bytes": 1537,
+      "sha256": "97bc69ff0c8ae50ea6ddedad888457087461e92ca58e28b549fbf6e2c0417dcd"
+    },
+    {
+      "path": "windows/run-wnf-query-v5-atomic.py",
+      "bytes": 1537,
+      "sha256": "ab56d2d7ecae1ea51327329cb76c5ecdad82621609d306520fb5313d9aa21330"
+    },
+    {
+      "path": "windows/run-wnf-query-v5-continuation-atomic.py",
+      "bytes": 1589,
+      "sha256": "9dbe9389bfe33bd02fcde25d30112f892065f92f0aa8cedf5485bda642210da5"
+    },
+    {
+      "path": "windows/stop-wnf-epoch3-final.py",
+      "bytes": 1267,
+      "sha256": "54c896e93496682354d689036c2040d714fc5bbdf45f449cdc564d6d88561342"
+    },
+    {
+      "path": "windows/stop-wnf-initial-retries.py",
+      "bytes": 1359,
+      "sha256": "d2983e475ac0e0f8f951b91c6a813e487c4a298d05dad7dded29eae197d31da6"
+    },
+    {
+      "path": "windows/verify-wnf-query-current.py",
+      "bytes": 1352,
+      "sha256": "e89abd31704c1153f77c9eee6faf7620e104f0d086a971eb58bbff66eb6e4b74"
+    },
+    {
+      "path": "windows/verify-wnf-query-current4.py",
+      "bytes": 1348,
+      "sha256": "dc12488217334a01b03c93da043c6a81a77ce5fb9736daa999b60875c6fd8d2e"
+    },
+    {
+      "path": "windows/verify-wnf-query-epoch3-retry.py",
+      "bytes": 706,
+      "sha256": "630f8b427ea58513b59010729de6405b658cad33817305d88008249d459f4500"
+    },
+    {
+      "path": "windows/verify-wnf-query-final-owning-sources.py",
+      "bytes": 1173,
+      "sha256": "ebcaec201ec4b4fd8d19c69b2c5fd6e753468b1a24824da5e94b258b357b5528"
+    },
+    {
+      "path": "windows/verify-wnf-query-final4-owning-sources.py",
+      "bytes": 1175,
+      "sha256": "c6c8f3567cbdd4dc00b79b65520dc4bad9b1af98ab34cabec7bece7e606c5a4a"
+    },
+    {
+      "path": "windows/wnf-epoch3-final-stopped.json",
+      "bytes": 810,
+      "sha256": "e2fa16ee4929397758b87c5f676a10d240a71a9fd02be53d2388302590707c7a"
+    },
+    {
+      "path": "windows/wnf-query-epoch2-driver.log",
+      "bytes": 1386,
+      "sha256": "3eb06e908475b036826ba63b6f5090cb53a70a448092c9750e6f61c8a5fb1127"
+    },
+    {
+      "path": "windows/wnf-query-epoch2-launch.json",
+      "bytes": 475,
+      "sha256": "00c09c5f0a3d5fe55a2132caa5763e3be1d26b0394b7f8963fd8965c799752fe"
+    },
+    {
+      "path": "windows/wnf-query-epoch2-overlay.json",
+      "bytes": 61920,
+      "sha256": "3bdf472b513d5f42ac4466a3861c62eaad884fe1d5730534c88bd78083411c7e"
+    },
+    {
+      "path": "windows/wnf-query-epoch2-owning-source-hashes.json",
+      "bytes": 62458,
+      "sha256": "b8353b62db27db5e0b6c9d413c96fa247bfc73fbc2e30d2ed7f8864d288b4f39"
+    },
+    {
+      "path": "windows/wnf-query-epoch3-driver.log",
+      "bytes": 1513,
+      "sha256": "7fbdf0a9a8c5a8cd661c21c3f3f1852032b466ecdedce2beb3a8019e3a896d8d"
+    },
+    {
+      "path": "windows/wnf-query-epoch3-launch.json",
+      "bytes": 476,
+      "sha256": "959052a2f1ff678aeb5d9610f3aec8b43cb4d02c7d0c809591e0b28309072260"
+    },
+    {
+      "path": "windows/wnf-query-epoch3-overlay.json",
+      "bytes": 99544,
+      "sha256": "57fec3aba5893851f92004fdf18da8710baa5bdfee5c0ee078d17db768965b3e"
+    },
+    {
+      "path": "windows/wnf-query-epoch3-owning-source-hashes.json",
+      "bytes": 62747,
+      "sha256": "ccbcc5d8b503df4c6a384f33a285aa08548f79bd2b94a11abf342d02cbbc2cb0"
+    },
+    {
+      "path": "windows/wnf-query-epoch3-retry-driver.log",
+      "bytes": 329,
+      "sha256": "be7dcccb076f7a3e82b3b82af2d790b9479497ff56e6cbed5996a45c6f3bc474"
+    },
+    {
+      "path": "windows/wnf-query-epoch3-retry-launch.json",
+      "bytes": 480,
+      "sha256": "37d5beb4919b47e8ad7af2f19c21b6ffaf384986e833cc3eb295bfc83f3c89f4"
+    },
+    {
+      "path": "windows/wnf-query-epoch4-driver.log",
+      "bytes": 1407,
+      "sha256": "4b1bf7bbf91b504947a053bbe60681e98816928f0acd7028f63fb93217c9d10d"
+    },
+    {
+      "path": "windows/wnf-query-epoch4-launch.json",
+      "bytes": 474,
+      "sha256": "88dba8e0863e36645c52f6a9234e599aca357bae4958864f23f9b8c08c1961e1"
+    },
+    {
+      "path": "windows/wnf-query-epoch4-overlay.json",
+      "bytes": 37569,
+      "sha256": "a2aca030a1840b96bf918800d364aef5432da098b19649dead7eefb43ddba07d"
+    },
+    {
+      "path": "windows/wnf-query-epoch4-owning-source-hashes.json",
+      "bytes": 62930,
+      "sha256": "0fc4a8bd2c8afc33eb3768224bf3f3da1abf11bb15f6073a27b37b2f2131ea98"
+    },
+    {
+      "path": "windows/wnf-query-final-epoch3-driver.log",
+      "bytes": 414,
+      "sha256": "592b53bb9e7f08956ab3abd2afdb1701696628b2e8ab86039a7104c52d335905"
+    },
+    {
+      "path": "windows/wnf-query-final-launch.json",
+      "bytes": 1084,
+      "sha256": "9fed66fc8da5c4c970a25bfd0b399c3f67aa925c314de2862580fc9a0924fd37"
+    },
+    {
+      "path": "windows/wnf-query-final-owning-source-hashes.json",
+      "bytes": 62747,
+      "sha256": "ccbcc5d8b503df4c6a384f33a285aa08548f79bd2b94a11abf342d02cbbc2cb0"
+    },
+    {
+      "path": "windows/wnf-query-final-retry-core-driver.log",
+      "bytes": 425,
+      "sha256": "4995fb950e0df00e2f1cd8582b8ec0378d48361810df5fd0b1d0576f475f1cb9"
+    },
+    {
+      "path": "windows/wnf-query-final-retry-epoch3-driver.log",
+      "bytes": 418,
+      "sha256": "43fc9f26f45ec3f06dd4a0512eff4aac7c66a641f979d400c48599bc4c733754"
+    },
+    {
+      "path": "windows/wnf-query-final-retry-launch.json",
+      "bytes": 1142,
+      "sha256": "a0c4d681e2b2db5bea868c652f87eddca3347cd9f9668014da59f69b660fd7cb"
+    },
+    {
+      "path": "windows/wnf-query-final4-core-driver.log",
+      "bytes": 559,
+      "sha256": "f3bab956828e1c0e93bcad95f4b4df4ed4ae1e4b243b87ca2347d0f45a25d33c"
+    },
+    {
+      "path": "windows/wnf-query-final4-launch.json",
+      "bytes": 557,
+      "sha256": "b9b2c6cfb79dce5147dcd284b42f34adc72aae106af4a1ea71906e0cdc082153"
+    },
+    {
+      "path": "windows/wnf-query-final4-owning-driver.log",
+      "bytes": 705,
+      "sha256": "ede18e8a0dd8c7290772fe54132c0d082ccbf92015236a473f6238b460296fd0"
+    },
+    {
+      "path": "windows/wnf-query-final4-owning-source-hashes.json",
+      "bytes": 62930,
+      "sha256": "0fc4a8bd2c8afc33eb3768224bf3f3da1abf11bb15f6073a27b37b2f2131ea98"
+    },
+    {
+      "path": "windows/wnf-query-initial-driver.log",
+      "bytes": 2816,
+      "sha256": "a47e9d0190d2e10795fe778ae09c5ac665af5a0a6e52f3dac6b431a744a43cd4"
+    },
+    {
+      "path": "windows/wnf-query-initial-launch.json",
+      "bytes": 476,
+      "sha256": "62128488aeb63dfc28ce30df763f5910bccb023b31a577a5ef10489808cb6b60"
+    },
+    {
+      "path": "windows/wnf-query-initial-overlay.json",
+      "bytes": 3676254,
+      "sha256": "15c3856679073ef9955b9b89b65a643e506ade6fbc8ed79c80a31a778fb411cb"
+    },
+    {
+      "path": "windows/wnf-query-initial-owning-source-hashes.json",
+      "bytes": 62458,
+      "sha256": "5e99b5baba7b19c500f2ecad2acf7d4e0ffe16d332cb2ecc29f891311ad48f4f"
+    },
+    {
+      "path": "windows/wnf-query-initial-stop.json",
+      "bytes": 917,
+      "sha256": "21b263163111741c461d79bf0f0ae18d6ee4bd848993b1ea9e1fe015e1d8da5a"
+    },
+    {
+      "path": "wnf-final-format-check.json",
+      "bytes": 647,
+      "sha256": "9dd89e43c8267201c991f345e80bc4ab782b0ac97a9550b6ba798719cf244b17"
+    },
+    {
+      "path": "wnf-final-review.json",
+      "bytes": 2131,
+      "sha256": "7c6f1a10a9c712433acf69f73f1d5711cf5bb11c3e83ee956982323f98400923"
+    },
+    {
+      "path": "wnf-validation-stress-results.json",
+      "bytes": 592,
+      "sha256": "a175b9783f7564b10234acd51296abd4f44b6fb57d3e0c9843322846cfe9142e"
+    }
+  ]
+}

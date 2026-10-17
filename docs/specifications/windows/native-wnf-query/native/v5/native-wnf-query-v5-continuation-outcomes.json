@@ -1,0 +1,16 @@
+﻿[
+    {
+        "profile":  "x86",
+        "source-hash":  "BB4F3C8F9A5D969B794A73EE4115650D336923A660F4B9132EA2E679129EF04E",
+        "exit-code":  0,
+        "exe-bytes":  126976,
+        "exe-sha256":  "6E2AAECDCC5E7829CE0D669586749FB6A50B874BF07DC6A4DD2857E2373A395A"
+    },
+    {
+        "profile":  "x86-laa",
+        "source-hash":  "BB4F3C8F9A5D969B794A73EE4115650D336923A660F4B9132EA2E679129EF04E",
+        "exit-code":  0,
+        "exe-bytes":  126976,
+        "exe-sha256":  "D37B06FCAE7B5DC775A8294A145BAD4F81824D2F3ADB377A9D9BA84C35373192"
+    }
+]

@@ -1,0 +1,95 @@
+{
+  "utc": "2026-10-17T20:42:23.953602+00:00",
+  "source-sha256": "ae567b09fcb14f547d0dcb0c21a91cc3435a3cc70ed2731c2562ff9b73e2e6aa",
+  "scope": "only newly created probe-owned temporary names; no existing state modified",
+  "rows": [
+    {
+      "op": "create",
+      "scope": 1,
+      "name": "41c64e6da4f67005",
+      "status": 0
+    },
+    {
+      "op": "update",
+      "scope": 1,
+      "target": "current",
+      "status": 0
+    },
+    {
+      "op": "update",
+      "scope": 1,
+      "target": "other",
+      "status": 3221225524
+    },
+    {
+      "op": "query",
+      "scope": 1,
+      "target": "current",
+      "status": 0,
+      "stamp": 1,
+      "length": 4,
+      "bytes": "44332211a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5"
+    },
+    {
+      "op": "query",
+      "scope": 1,
+      "target": "other",
+      "status": 3221225524,
+      "stamp": 2779096485,
+      "length": 64,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5"
+    },
+    {
+      "op": "create",
+      "scope": 2,
+      "name": "41c64e6da4f678c5",
+      "status": 0
+    },
+    {
+      "op": "update",
+      "scope": 2,
+      "target": "current",
+      "status": 0
+    },
+    {
+      "op": "update",
+      "scope": 2,
+      "target": "other",
+      "status": 3221225524
+    },
+    {
+      "op": "query",
+      "scope": 2,
+      "target": "current",
+      "status": 0,
+      "stamp": 1,
+      "length": 4,
+      "bytes": "44332211a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5"
+    },
+    {
+      "op": "query",
+      "scope": 2,
+      "target": "other",
+      "status": 3221225524,
+      "stamp": 2779096485,
+      "length": 64,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5"
+    }
+  ],
+  "cleanup": [
+    {
+      "kind": "state",
+      "name": "41c64e6da4f67005",
+      "status": 0
+    },
+    {
+      "kind": "state",
+      "name": "41c64e6da4f678c5",
+      "status": 0
+    },
+    {
+      "kind": "descriptor",
+      "ok": true
+    }
+  ]
+}

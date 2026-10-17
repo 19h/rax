@@ -1,0 +1,11 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.30s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 4 tests
+test user::windows::wnf::tests::native_wnf_subscription_catalog_access_matches_all_72_process_name_calls ... ok
+test user::windows::wnf::tests::native_wnf_subscription_catalog_rejects_unmodeled_security_and_malformed_values ... ok
+test user::windows::wnf::tests::native_wnf_subscription_name_capture_replays_all_8192_domain_rows ... ok
+test user::windows::wnf::tests::primary_token_property_is_retained_independently_of_catalog_records ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 7850 filtered out; finished in 0.20s
+

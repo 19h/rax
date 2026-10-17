@@ -1,0 +1,188 @@
+   Compiling vm-memory v0.17.1 (/Users/int/Library/Caches/assist-process-emulation/native-wnf-query-20261017/rax-source/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-wnf-query-20261017/rax-source)
+error[E0583]: file not found for module `wnf_query_tests`
+    --> src/user/windows/process/sched/tests/services_tests.rs:1248:1
+     |
+1248 | mod wnf_query_tests;
+     | ^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: to create the module `wnf_query_tests`, create file "src/user/windows/process/sched/tests/wnf_query_tests.rs" or "src/user/windows/process/sched/tests/wnf_query_tests/mod.rs"
+     = note: if there is a `mod wnf_query_tests` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0433]: cannot find module or crate `io` in this scope
+  --> src/user/windows/wnf/query_tests.rs:35:20
+   |
+35 |         .collect::<io::Result<Vec<_>>>()
+   |                    ^^ use of unresolved module or unlinked crate `io`
+   |
+   = help: if you wanted to use a crate named `io`, use `cargo add io` to add it to your `Cargo.toml`
+note: these modules exist but are inaccessible:
+      crate::user::windows::registry::tests::io
+  --> src/user/darwin/syscall/bsd/socket/mod.rs:23:1
+   |
+23 | mod io;
+   | ^^^^^^^ `crate::user::darwin::syscall::bsd::socket::io`: not accessible
+   |
+  ::: src/user/windows/dll/crt/stdio/mod.rs:7:1
+   |
+ 7 | mod io;
+   | ^^^^^^^ `crate::user::windows::dll::crt::stdio::io`: not accessible
+   |
+  ::: src/user/windows/dll/files/mod.rs:8:1
+   |
+ 8 | mod io;
+   | ^^^^^^^ `crate::user::windows::dll::files::io`: not accessible
+help: a builtin type with a similar name exists
+   |
+35 -         .collect::<io::Result<Vec<_>>>()
+35 +         .collect::<i8::Result<Vec<_>>>()
+   |
+help: consider importing one of these modules
+   |
+ 1 + use crate::user::linux::syscall::io;
+   |
+ 1 + use crate::user::linux::syscall::net::io;
+   |
+ 1 + use std::io;
+   |
+
+error[E0425]: cannot find value `STATUS_SUCCESS` in this scope
+  --> src/user/windows/wnf/query_tests.rs:90:10
+   |
+90 |         (STATUS_SUCCESS, 9, 8)
+   |          ^^^^^^^^^^^^^^ not found in this scope
+   |
+help: consider importing this constant
+   |
+ 1 + use crate::user::windows::nt::status::STATUS_SUCCESS;
+   |
+
+error[E0433]: cannot find type `Arc` in this scope
+  --> src/user/windows/wnf/query_tests.rs:98:20
+   |
+98 |             bytes: Arc::from([1, 0, 0, 0, 0, 0, 0, 0])
+   |                    ^^^ use of undeclared type `Arc`
+   |
+   = note: struct `crate::user::windows::registry::tests::Arc` exists but is inaccessible
+help: consider importing this struct
+   |
+ 1 + use std::sync::Arc;
+   |
+
+error[E0425]: cannot find value `STATUS_SUCCESS` in this scope
+   --> src/user/windows/wnf/query_tests.rs:104:10
+    |
+104 |         (STATUS_SUCCESS, calls, 0)
+    |          ^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this constant
+    |
+  1 + use crate::user::windows::nt::status::STATUS_SUCCESS;
+    |
+
+error[E0425]: cannot find value `STATUS_BUFFER_TOO_SMALL` in this scope
+   --> src/user/windows/wnf/query_tests.rs:114:10
+    |
+114 |         (STATUS_BUFFER_TOO_SMALL, 99, 16)
+    |          ^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this constant
+    |
+  1 + use crate::user::windows::nt::status::STATUS_BUFFER_TOO_SMALL;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/user/windows/wnf/query_tests.rs:121:20
+    |
+121 |             bytes: Arc::from([])
+    |                    ^^^ use of undeclared type `Arc`
+    |
+    = note: struct `crate::user::windows::registry::tests::Arc` exists but is inaccessible
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find value `STATUS_ACCESS_DENIED` in this scope
+   --> src/user/windows/wnf/query_tests.rs:124:20
+    |
+124 |     for status in [STATUS_ACCESS_DENIED, STATUS_OBJECT_NAME_NOT_FOUND] {
+    |                    ^^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this constant
+    |
+  1 + use crate::user::windows::nt::status::STATUS_ACCESS_DENIED;
+    |
+
+error[E0425]: cannot find value `STATUS_OBJECT_NAME_NOT_FOUND` in this scope
+   --> src/user/windows/wnf/query_tests.rs:124:42
+    |
+124 |     for status in [STATUS_ACCESS_DENIED, STATUS_OBJECT_NAME_NOT_FOUND] {
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this constant
+    |
+  1 + use crate::user::windows::nt::status::STATUS_OBJECT_NAME_NOT_FOUND;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/user/windows/wnf/query_tests.rs:144:20
+    |
+144 |             bytes: Arc::from([0u8; 8]),
+    |                    ^^^ use of undeclared type `Arc`
+    |
+    = note: struct `crate::user::windows::registry::tests::Arc` exists but is inaccessible
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find value `STATUS_ACCESS_DENIED` in this scope
+   --> src/user/windows/wnf/query_tests.rs:150:52
+    |
+150 |             vec![(definition(0, 0), Record::Status(STATUS_ACCESS_DENIED))],
+    |                                                    ^^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this constant
+    |
+  1 + use crate::user::windows::nt::status::STATUS_ACCESS_DENIED;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/user/windows/wnf/query_tests.rs:161:28
+    |
+161 |                     bytes: Arc::from([1])
+    |                            ^^^ use of undeclared type `Arc`
+    |
+    = note: struct `crate::user::windows::registry::tests::Arc` exists but is inaccessible
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find value `STATUS_INVALID_PARAMETER` in this scope
+   --> src/user/windows/wnf/query_tests.rs:172:32
+    |
+172 |                 Record::Status(STATUS_INVALID_PARAMETER)
+    |                                ^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this constant
+    |
+  1 + use crate::user::windows::nt::status::STATUS_INVALID_PARAMETER;
+    |
+
+error[E0425]: cannot find value `STATUS_SUCCESS` in this scope
+   --> src/user/windows/wnf/query_tests.rs:189:14
+    |
+189 |             (STATUS_SUCCESS, 0, bytes.len())
+    |              ^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this constant
+    |
+  1 + use crate::user::windows::nt::status::STATUS_SUCCESS;
+    |
+
+Some errors have detailed explanations: E0425, E0433, E0583.
+For more information about an error, try `rustc --explain E0425`.
+error: could not compile `rax` (lib test) due to 14 previous errors

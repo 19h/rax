@@ -1,13 +1,30 @@
 //! Immutable WNF provisioning and subject metadata selected with native DLLs.
 //! Guest requests use private records and never acquire a host token or HKEY.
 mod catalog;
+mod query;
 pub(crate) use catalog::{Catalog, Name, Permission};
+pub(crate) use query::{Data, Definition, Queries, Record};
 #[cfg(windows)]
 mod installed;
+#[cfg(windows)]
+mod installed_query;
 
 #[cfg(windows)]
 pub(crate) fn snapshot() -> std::io::Result<Catalog> {
-    Catalog::selected(super::registry::wnf_values()?, installed::subject()?)
+    let values = super::registry::wnf_values()?;
+    let subject = installed::subject()?;
+    let definitions = values
+        .iter()
+        .map(Definition::parse)
+        .collect::<std::io::Result<Vec<_>>>()?;
+    let queries = installed_query::snapshot(definitions)?;
+    if subject != installed::subject()? {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "native WNF subject changed during query-state selection",
+        ));
+    }
+    Ok(Catalog::selected(values, subject)?.with_queries(queries))
 }
 
 #[cfg(not(windows))]
@@ -20,3 +37,6 @@ pub(crate) fn snapshot() -> std::io::Result<Catalog> {
 
 #[cfg(test)]
 pub(crate) mod tests;
+
+#[cfg(test)]
+mod query_tests;

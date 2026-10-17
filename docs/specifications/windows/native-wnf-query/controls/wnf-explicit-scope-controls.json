@@ -1,0 +1,287 @@
+{
+  "utc": "2026-10-17T20:18:58.312870+00:00",
+  "source-sha256": "d576a7dfb928ac5d33e5cd009c7da212a3c71031853ffaa29aa9451504c634c6",
+  "closed-handles": 1,
+  "rows": [
+    {
+      "name": "process",
+      "scope": "none",
+      "capacity": 0,
+      "status": 0,
+      "stamp": 0,
+      "length": 0,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "process",
+      "scope": "none",
+      "capacity": 64,
+      "status": 0,
+      "stamp": 0,
+      "length": 0,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "process",
+      "scope": "current-process",
+      "capacity": 0,
+      "status": 0,
+      "stamp": 0,
+      "length": 0,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "process",
+      "scope": "current-process",
+      "capacity": 64,
+      "status": 0,
+      "stamp": 0,
+      "length": 0,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "process",
+      "scope": "current-thread",
+      "capacity": 0,
+      "status": 3221225508,
+      "stamp": 2779096485,
+      "length": 0,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "process",
+      "scope": "current-thread",
+      "capacity": 64,
+      "status": 3221225508,
+      "stamp": 2779096485,
+      "length": 64,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "process",
+      "scope": "real-process",
+      "capacity": 0,
+      "status": 0,
+      "stamp": 0,
+      "length": 0,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "process",
+      "scope": "real-process",
+      "capacity": 64,
+      "status": 0,
+      "stamp": 0,
+      "length": 0,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "process",
+      "scope": "invalid",
+      "capacity": 0,
+      "status": 3221225480,
+      "stamp": 2779096485,
+      "length": 0,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "process",
+      "scope": "invalid",
+      "capacity": 64,
+      "status": 3221225480,
+      "stamp": 2779096485,
+      "length": 64,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "process",
+      "scope": "pointer-to-process-handle",
+      "capacity": 0,
+      "status": 3221225480,
+      "stamp": 2779096485,
+      "length": 0,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "process",
+      "scope": "pointer-to-process-handle",
+      "capacity": 64,
+      "status": 3221225480,
+      "stamp": 2779096485,
+      "length": 64,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "process",
+      "scope": "pointer-to-pid",
+      "capacity": 0,
+      "status": 3221225480,
+      "stamp": 2779096485,
+      "length": 0,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "process",
+      "scope": "pointer-to-pid",
+      "capacity": 64,
+      "status": 3221225480,
+      "stamp": 2779096485,
+      "length": 64,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "system",
+      "scope": "none",
+      "capacity": 0,
+      "status": 3221225507,
+      "stamp": 1,
+      "length": 8,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "system",
+      "scope": "none",
+      "capacity": 64,
+      "status": 0,
+      "stamp": 1,
+      "length": 8,
+      "bytes": "0100000000000000a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "system",
+      "scope": "current-process",
+      "capacity": 0,
+      "status": 3221225485,
+      "stamp": 2779096485,
+      "length": 0,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "system",
+      "scope": "current-process",
+      "capacity": 64,
+      "status": 3221225485,
+      "stamp": 2779096485,
+      "length": 64,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "system",
+      "scope": "current-thread",
+      "capacity": 0,
+      "status": 3221225485,
+      "stamp": 2779096485,
+      "length": 0,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "system",
+      "scope": "current-thread",
+      "capacity": 64,
+      "status": 3221225485,
+      "stamp": 2779096485,
+      "length": 64,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "system",
+      "scope": "real-process",
+      "capacity": 0,
+      "status": 3221225485,
+      "stamp": 2779096485,
+      "length": 0,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "system",
+      "scope": "real-process",
+      "capacity": 64,
+      "status": 3221225485,
+      "stamp": 2779096485,
+      "length": 64,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "system",
+      "scope": "invalid",
+      "capacity": 0,
+      "status": 3221225485,
+      "stamp": 2779096485,
+      "length": 0,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "system",
+      "scope": "invalid",
+      "capacity": 64,
+      "status": 3221225485,
+      "stamp": 2779096485,
+      "length": 64,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "system",
+      "scope": "pointer-to-process-handle",
+      "capacity": 0,
+      "status": 3221225485,
+      "stamp": 2779096485,
+      "length": 0,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "system",
+      "scope": "pointer-to-process-handle",
+      "capacity": 64,
+      "status": 3221225485,
+      "stamp": 2779096485,
+      "length": 64,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "system",
+      "scope": "pointer-to-pid",
+      "capacity": 0,
+      "status": 3221225485,
+      "stamp": 2779096485,
+      "length": 0,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    },
+    {
+      "name": "system",
+      "scope": "pointer-to-pid",
+      "capacity": 64,
+      "status": 3221225485,
+      "stamp": 2779096485,
+      "length": 64,
+      "bytes": "a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5",
+      "last-error": 2115087309
+    }
+  ]
+}

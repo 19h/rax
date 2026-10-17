@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "prlctl",
+    "exec",
+    "a5b14f9a-d292-4610-a04d-df4ca4337c9d",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "-B",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\probe-owned-cross-scope.py"
+  ],
+  "exit-code": 0,
+  "stdout": "[{'op': 'create', 'scope': 1, 'name': '41c64e6da4f67005', 'status': 0}, {'op': 'update', 'scope': 1, 'target': 'current', 'status': 0}, {'op': 'update', 'scope': 1, 'target': 'other', 'status': 3221225524}, {'op': 'query', 'scope': 1, 'target': 'current', 'status': 0, 'stamp': 1, 'length': 4, 'bytes': '44332211a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5'}, {'op': 'query', 'scope': 1, 'target': 'other', 'status': 3221225524, 'stamp': 2779096485, 'length': 64, 'bytes': 'a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5'}, {'op': 'create', 'scope': 2, 'name': '41c64e6da4f678c5', 'status': 0}, {'op': 'update', 'scope': 2, 'target': 'current', 'status': 0}, {'op': 'update', 'scope': 2, 'target': 'other', 'status': 3221225524}, {'op': 'query', 'scope': 2, 'target': 'current', 'status': 0, 'stamp': 1, 'length': 4, 'bytes': '44332211a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5'}, {'op': 'query', 'scope': 2, 'target': 'other', 'status': 3221225524, 'stamp': 2779096485, 'length': 64, 'bytes': 'a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5'}] [{'kind': 'state', 'name': '41c64e6da4f67005', 'status': 0}, {'kind': 'state', 'name': '41c64e6da4f678c5', 'status': 0}, {'kind': 'descriptor', 'ok': True}]\n",
+  "stderr": ""
+}

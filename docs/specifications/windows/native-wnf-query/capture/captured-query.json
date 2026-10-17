@@ -1,0 +1,14 @@
+{
+  "source-sha256": "ec86898b0feaeef4058d713baae7a59dd0888e45419a8b94bde0819b36cf6221",
+  "trace-sha256": "130909654c071d66e6baf36a26220c93fb2b163205457d8cc416367018f165a2",
+  "state-name": "0280032ea3bc0875",
+  "decoded-version": 1,
+  "decoded-lifetime": 0,
+  "decoded-scope": 0,
+  "decoded-persist-data": false,
+  "type-id-raw": "6364f948d652854e9c02f2c14e17264e",
+  "explicit-scope": null,
+  "capacity": 4096,
+  "stamp-before": 0,
+  "claim": "actual guest query input; no completed query result"
+}

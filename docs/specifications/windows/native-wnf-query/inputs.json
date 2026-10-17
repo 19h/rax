@@ -1,0 +1,520 @@
+{
+  "scope": "draft native query corpus; no source implementation or final validation yet",
+  "files": [
+    {
+      "path": "capture/capture.log",
+      "bytes": 133990,
+      "sha256": "130909654c071d66e6baf36a26220c93fb2b163205457d8cc416367018f165a2"
+    },
+    {
+      "path": "capture/captured-query.json",
+      "bytes": 502,
+      "sha256": "fde87f618d1224969767a7349a955d5425c00425d6ae655248b9927b7c1c8aed"
+    },
+    {
+      "path": "capture/native-wnf-query-trace.rs",
+      "bytes": 15260,
+      "sha256": "ec86898b0feaeef4058d713baae7a59dd0888e45419a8b94bde0819b36cf6221"
+    },
+    {
+      "path": "capture/wnf-query-capture-launch.json",
+      "bytes": 278,
+      "sha256": "8d379379282040ae096da80c45132d6689fde51bd7f3b5762f72fbc589524ac9"
+    },
+    {
+      "path": "cases.json",
+      "bytes": 3073867,
+      "sha256": "3721b74e1a7f8b303213070d77d25a0fa84dfb52efb1de1d1d8b47f79a38a11b"
+    },
+    {
+      "path": "controls/arm64-controls-controller.json",
+      "bytes": 617,
+      "sha256": "caac8156c2622d7adc460c78b469e868adbf1a026590396546c6da88a2093685"
+    },
+    {
+      "path": "controls/arm64-controls-v2-controller.json",
+      "bytes": 922,
+      "sha256": "3fd70e61202a1de75dd5fab181b356b0fe4eae3c38fa9d3d425bfb74e35dfb86"
+    },
+    {
+      "path": "controls/arm64-controls-v3-controller.json",
+      "bytes": 34316,
+      "sha256": "c8d75807ba129b9edcd3139cb019aab953cef415ffe5e522b59466ee10aae4c3"
+    },
+    {
+      "path": "controls/defender-readonly-inspection.json",
+      "bytes": 434,
+      "sha256": "0b606bfca35da81579e49e225a7737e26687dcba35f25c4a3a3fde0502648742"
+    },
+    {
+      "path": "controls/explicit-scope-controller.json",
+      "bytes": 1598,
+      "sha256": "e19a20b4db235285feb597f1d80b6ecc4da4afbc64bac6155b529383e7b1b008"
+    },
+    {
+      "path": "controls/owned-cross-scope-controller.json",
+      "bytes": 1853,
+      "sha256": "015d252e1f54e604399fdf0b59684a17583db6d0f7f417c3c2455e4e02f04189"
+    },
+    {
+      "path": "controls/private-scope-command.json",
+      "bytes": 393,
+      "sha256": "5e4a4efbbc8958063ad5ddc7111220d613a2a6ee9d96f745357a291bcca3a3a3"
+    },
+    {
+      "path": "controls/probe-explicit-scope.py",
+      "bytes": 2635,
+      "sha256": "d576a7dfb928ac5d33e5cd009c7da212a3c71031853ffaa29aa9451504c634c6"
+    },
+    {
+      "path": "controls/probe-owned-cross-scope.py",
+      "bytes": 3304,
+      "sha256": "ae567b09fcb14f547d0dcb0c21a91cc3435a3cc70ed2731c2562ff9b73e2e6aa"
+    },
+    {
+      "path": "controls/probe-private-scope-order.py",
+      "bytes": 5340,
+      "sha256": "35585f93aaedeb45b237af9dcaaf909716e3faf0e34bb3d09c59969d8802ff16"
+    },
+    {
+      "path": "controls/probe-process-scope-rights-v2.py",
+      "bytes": 1868,
+      "sha256": "fcd110a5b24fb417db770803dbafc238a348e5835d39bbe17dfbf97b8466f60f"
+    },
+    {
+      "path": "controls/probe-process-scope-rights.py",
+      "bytes": 1628,
+      "sha256": "4116ed2a3d17a84a8c25fe37cd6b36f0102a0296440e8ade0f7811cd099411f4"
+    },
+    {
+      "path": "controls/probe-wnf-query-arm64-v2.py",
+      "bytes": 3277,
+      "sha256": "a254237eddece5edee7a328eec17bad71285fbfe46f2b2e2b0073916bcecb3be"
+    },
+    {
+      "path": "controls/probe-wnf-query-arm64-v3.py",
+      "bytes": 3281,
+      "sha256": "7b705d542ca760bdcc723f5c0a74af71a9be14da5f0256b2e882323a6db1b3e7"
+    },
+    {
+      "path": "controls/probe-wnf-query-arm64.py",
+      "bytes": 3626,
+      "sha256": "8c6025e04916a1b05bf98e00493782e4ffc15dc3ffea3fd644570ecc6f4503f3"
+    },
+    {
+      "path": "controls/process-scope-rights-controller.json",
+      "bytes": 672,
+      "sha256": "0dbddff8e6b9467c0719ab08b62dcb1fd2746462bb600aa0b5da2ddc0a91a53c"
+    },
+    {
+      "path": "controls/process-scope-rights-v2-controller.json",
+      "bytes": 827,
+      "sha256": "68ad528e5851a6b82032f043e52e7339cbe2ac20717ca4d17ce9e80b3b4ee408"
+    },
+    {
+      "path": "controls/query-v4-scope-correction.json",
+      "bytes": 344,
+      "sha256": "375c271fd2124636138633ec035ec7984f228ff20eee8116ff89476ba7a49710"
+    },
+    {
+      "path": "controls/recheck-wnf-failed-probe.py",
+      "bytes": 845,
+      "sha256": "2a624ede6058ebf9118ea7fa6e3ed362024e1412a0ce060d31232e12e4fa8a36"
+    },
+    {
+      "path": "controls/v5-partial-inspection-command.json",
+      "bytes": 446,
+      "sha256": "b99826d682d086b09d5533fb30f160ff6205ba810eb2433857dc1ca5392e5e44"
+    },
+    {
+      "path": "controls/wnf-explicit-scope-controls.json",
+      "bytes": 9940,
+      "sha256": "3ea1bc158aec7f796e5a5205e2f79387a378cb40b5d871596f684baee18150ab"
+    },
+    {
+      "path": "controls/wnf-failed-probe-name-recheck.json",
+      "bytes": 245,
+      "sha256": "be08702f81a7b1defa497e6fd1484ef4ef87e39145c1f3c8a57c7ac119c53d6a"
+    },
+    {
+      "path": "controls/wnf-owned-cross-scope.json",
+      "bytes": 2362,
+      "sha256": "328d3112b4e2ec3e58de828f3f0ef09591f9b344e779b029928f53bc30bbdc24"
+    },
+    {
+      "path": "controls/wnf-private-scope-order.json",
+      "bytes": 64281,
+      "sha256": "4a2064236a05fa686ddc0c87f4b61c1e5de33cbfafd738b7825504400d4bf5dd"
+    },
+    {
+      "path": "controls/wnf-process-scope-rights-v2.json",
+      "bytes": 950,
+      "sha256": "5c73f941dd4660fd2f72398deb1fe48074fffc21c0bbf8457eab9635a65eee83"
+    },
+    {
+      "path": "controls/wnf-query-arm64-controls-v2.json",
+      "bytes": 26365,
+      "sha256": "20df2b98c25eeefc3462295ffc30559c648560767f236ad2920fbc867a4fdb42"
+    },
+    {
+      "path": "controls/wnf-query-arm64-controls-v3.json",
+      "bytes": 36906,
+      "sha256": "cdcc9af458c0063b1b8b1090fb462915441846da5feb36190d53ef35d4b6c82e"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v1-arm64-build.log",
+      "bytes": 22,
+      "sha256": "26f81141e17091f0d3a2b73100873ad3cd5678a6342f0a06897db62e0e5f6c66"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v1-arm64.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v1-outcomes.json",
+      "bytes": 261,
+      "sha256": "ce9e5a28c3868bc1b3b215732fc0d5319556c7dfd94b4f7fad4026628c45c9bb"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v1-profiles.ps1",
+      "bytes": 2130,
+      "sha256": "c728120888a19e5c12cb45e7879870869ef869998d80467d8981b293412ddd21"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v2-arm64-build.log",
+      "bytes": 25,
+      "sha256": "1114ae81c01858273a345068ac7dbf22c4dcb3c2f69f8c5e2b2b5a664e8bfd79"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v2-arm64.log",
+      "bytes": 101,
+      "sha256": "76a37bce3c1df35634eaeafb6090be8b901e8142b8d31d4e3fdc59306e1ce8f3"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v2-outcomes.json",
+      "bytes": 261,
+      "sha256": "fbb5ad59efdc69320728468db97796c53448b63864f965b390686a8ecbe65ed9"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v2-profiles.ps1",
+      "bytes": 2142,
+      "sha256": "673d4f7732089904c41b20d4f1922358571c6a0aecf48825b2b533f629c5b32f"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v2.cpp",
+      "bytes": 6988,
+      "sha256": "2c0b578bb55d4e840f5392df50f055c317a3d7c8ea219a51e438024ff640303a"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v4-arm64-build.log",
+      "bytes": 25,
+      "sha256": "bfc662b7bf077ba50bfec004ca8be9a6ca2d2e4f7db1ca542415609265b7baaf"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v4-arm64.log",
+      "bytes": 620800,
+      "sha256": "8032c5e935137e8419195ed1d0712ad85ba6eb3e9ab1ee5433a0438de7e48b47"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v4-outcomes.json",
+      "bytes": 1150,
+      "sha256": "3b41334dc29605f9dbeecfb51be484d7024a6b23ff2aabb5288e42bf736d9f5a"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v4-profiles.ps1",
+      "bytes": 2142,
+      "sha256": "a2afc48d02eafa524064b8b2f844dc66b16e7f31a350e505e7870fcb2bd76f16"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v4-x64-build.log",
+      "bytes": 25,
+      "sha256": "bfc662b7bf077ba50bfec004ca8be9a6ca2d2e4f7db1ca542415609265b7baaf"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v4-x64.log",
+      "bytes": 620798,
+      "sha256": "aaba3388293f13495df0ef6c6b46e651e949cc4574dafd27f0876af0d1fcc57d"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v4-x86-build.log",
+      "bytes": 25,
+      "sha256": "bfc662b7bf077ba50bfec004ca8be9a6ca2d2e4f7db1ca542415609265b7baaf"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v4-x86-laa-build.log",
+      "bytes": 25,
+      "sha256": "bfc662b7bf077ba50bfec004ca8be9a6ca2d2e4f7db1ca542415609265b7baaf"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v4-x86-laa.log",
+      "bytes": 620802,
+      "sha256": "1f39cb5ff6b901dc6d2f2a0d2697ed6b0c6fce2e5390e94e86e82706eab6504d"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v4-x86.log",
+      "bytes": 620798,
+      "sha256": "ac239660666c3f9e257e2b8f814b56fcf04ed834d3249bcaf9fb0a7c5ae61ff4"
+    },
+    {
+      "path": "failed-probes/native-wnf-query-v4.cpp",
+      "bytes": 7533,
+      "sha256": "06bc05d2c1644a3ecae6eaf123c6c19323a7ed7a92593a74e427ddddd8b864ad"
+    },
+    {
+      "path": "failed-probes/native-wnf-query.cpp",
+      "bytes": 6949,
+      "sha256": "ae36dcf60486e591b348d6ec89a18d4b70e2c657521e263ed1c3790ff486aca7"
+    },
+    {
+      "path": "failed-probes/wnf-query-v1-native-launch.json",
+      "bytes": 623,
+      "sha256": "65d3f0edefd2961b4bcfad87c19b8b840312ae2b76384a9ef52b6ba3ccb29c48"
+    },
+    {
+      "path": "failed-probes/wnf-query-v2-native-launch.json",
+      "bytes": 623,
+      "sha256": "056fd9c0adc1b94a779b2d94f9813e4111334d1da0d6dd09c91ed488df7bf72d"
+    },
+    {
+      "path": "failed-probes/wnf-query-v4-native-launch.json",
+      "bytes": 621,
+      "sha256": "dc146eeed0f80ed8645b67201809a2ea64a81b2c6dcae1798015893f92a450a0"
+    },
+    {
+      "path": "native/boundaries/inspect-wnf-query-boundaries.py",
+      "bytes": 3718,
+      "sha256": "e8df29c5d25204ab1b784375c261b2c150757157a9c5c5e1714dc54c900cfd94"
+    },
+    {
+      "path": "native/boundaries/native-wnf-query-boundaries-arm64-build.log",
+      "bytes": 33,
+      "sha256": "698033c4a99d78d8252e7511f013fbfc2f4fd711e51461b9964654a3c05d26bb"
+    },
+    {
+      "path": "native/boundaries/native-wnf-query-boundaries-arm64.log",
+      "bytes": 608498,
+      "sha256": "53ec3f0a69f9bd78bda44665fe578d89c7b6cf2108a93bee235c4a016217454f"
+    },
+    {
+      "path": "native/boundaries/native-wnf-query-boundaries-identities.json",
+      "bytes": 4521,
+      "sha256": "863b968ee3b098406861db4823282c055dddcbb8ba0497f3802b7e0d8473b0b4"
+    },
+    {
+      "path": "native/boundaries/native-wnf-query-boundaries-outcomes.json",
+      "bytes": 1150,
+      "sha256": "ef6ef6c7f75c13fdc7d259bbe11b9e905ec56a3a0c3ce154812339ba00eb09d2"
+    },
+    {
+      "path": "native/boundaries/native-wnf-query-boundaries-profiles.ps1",
+      "bytes": 2198,
+      "sha256": "82c7ffa5f62744d5ba57af3dccc8ed350385cffbe0410122decfb842115f0c02"
+    },
+    {
+      "path": "native/boundaries/native-wnf-query-boundaries-x64-build.log",
+      "bytes": 33,
+      "sha256": "698033c4a99d78d8252e7511f013fbfc2f4fd711e51461b9964654a3c05d26bb"
+    },
+    {
+      "path": "native/boundaries/native-wnf-query-boundaries-x64.log",
+      "bytes": 608496,
+      "sha256": "ab0aa926c5e5ac69f20303d58054cf45d8d3128e74b686f40a0be5624902956c"
+    },
+    {
+      "path": "native/boundaries/native-wnf-query-boundaries-x86-build.log",
+      "bytes": 33,
+      "sha256": "698033c4a99d78d8252e7511f013fbfc2f4fd711e51461b9964654a3c05d26bb"
+    },
+    {
+      "path": "native/boundaries/native-wnf-query-boundaries-x86-laa-build.log",
+      "bytes": 33,
+      "sha256": "698033c4a99d78d8252e7511f013fbfc2f4fd711e51461b9964654a3c05d26bb"
+    },
+    {
+      "path": "native/boundaries/native-wnf-query-boundaries-x86-laa.log",
+      "bytes": 608500,
+      "sha256": "e5ebdf369b1242703f96d5dc90b2dbb868e7b04632d4c3204a4fe31a1c7fab6d"
+    },
+    {
+      "path": "native/boundaries/native-wnf-query-boundaries-x86.log",
+      "bytes": 608496,
+      "sha256": "ae954a385f02f9931ec7e1ce5ef9a1d92acfd7a5eb05b8e8a3f3483aa72b0afa"
+    },
+    {
+      "path": "native/boundaries/native-wnf-query-boundaries.cpp",
+      "bytes": 10196,
+      "sha256": "4f7c5af4506f11a03c3c937aa66d46d8a9c1be803557cc324841f1c41196ee80"
+    },
+    {
+      "path": "native/boundaries/run-wnf-query-boundaries-atomic.py",
+      "bytes": 1569,
+      "sha256": "404866540fdb77b4d57562b61c4e12bd5d4d74f780d33b7b6f1098ee99f08ebd"
+    },
+    {
+      "path": "native/boundaries/wnf-query-boundaries-native-launch.json",
+      "bytes": 636,
+      "sha256": "2051defebf6c38f1abcd2fc9634f055eb04afae69008d76d35b724e4868ad497"
+    },
+    {
+      "path": "native/v3/inspect-wnf-query-v3.py",
+      "bytes": 3635,
+      "sha256": "ec5829be7e62ad13d028472292a1562ba6744dbf0325cfefd844e5b83c13f154"
+    },
+    {
+      "path": "native/v3/native-wnf-query-v3-arm64-build.log",
+      "bytes": 25,
+      "sha256": "3fd6c29a66fd3a8309dfbe71ed663e2d6767063269a72048c099e0ca21c0343e"
+    },
+    {
+      "path": "native/v3/native-wnf-query-v3-arm64.log",
+      "bytes": 551408,
+      "sha256": "3b8f90435d705593bbe237289a107e3d31409404876169d23f6f72047bb46de1"
+    },
+    {
+      "path": "native/v3/native-wnf-query-v3-identities.json",
+      "bytes": 4325,
+      "sha256": "58259a95cff73c131a95bbaa3582a041bb09fae420b1fc9608206243d69e5153"
+    },
+    {
+      "path": "native/v3/native-wnf-query-v3-outcomes.json",
+      "bytes": 1150,
+      "sha256": "90e7e9d6f97d3a738260ac3ff69c0b08d7cc849b9007ca94eefce7dcf7b1da17"
+    },
+    {
+      "path": "native/v3/native-wnf-query-v3-profiles.ps1",
+      "bytes": 2142,
+      "sha256": "f8f02815b2099e546b4083da7049a945a6f6f4146eebdc562cea10ee606bf590"
+    },
+    {
+      "path": "native/v3/native-wnf-query-v3-x64-build.log",
+      "bytes": 25,
+      "sha256": "3fd6c29a66fd3a8309dfbe71ed663e2d6767063269a72048c099e0ca21c0343e"
+    },
+    {
+      "path": "native/v3/native-wnf-query-v3-x64.log",
+      "bytes": 551406,
+      "sha256": "2817f34fe70723038f5dcafd80428757bdfdb0a126a0cbdeadcd8e19189370d0"
+    },
+    {
+      "path": "native/v3/native-wnf-query-v3-x86-build.log",
+      "bytes": 25,
+      "sha256": "3fd6c29a66fd3a8309dfbe71ed663e2d6767063269a72048c099e0ca21c0343e"
+    },
+    {
+      "path": "native/v3/native-wnf-query-v3-x86-laa-build.log",
+      "bytes": 25,
+      "sha256": "3fd6c29a66fd3a8309dfbe71ed663e2d6767063269a72048c099e0ca21c0343e"
+    },
+    {
+      "path": "native/v3/native-wnf-query-v3-x86-laa.log",
+      "bytes": 551410,
+      "sha256": "af03f90b0351febbf0dcd7694e59009384bc2f334a4dec94e03d0889950fb922"
+    },
+    {
+      "path": "native/v3/native-wnf-query-v3-x86.log",
+      "bytes": 551406,
+      "sha256": "9b97c894fccae78854497a048c480f5f6cbaf3ffd4c6db5e7e95c176cb31da68"
+    },
+    {
+      "path": "native/v3/native-wnf-query-v3.cpp",
+      "bytes": 7229,
+      "sha256": "0735731cd8b2bce2f4f2a73847c7f9f316aee1f6db28137c3fbb4b744c770727"
+    },
+    {
+      "path": "native/v3/run-wnf-query-v3-atomic.py",
+      "bytes": 1537,
+      "sha256": "cfaaf75b70a41f34dbf19c9e5ad8ca1ff37a10ff62471e24fcddac1650672d34"
+    },
+    {
+      "path": "native/v3/wnf-query-v3-native-launch.json",
+      "bytes": 622,
+      "sha256": "e25e4c754a172eb89e5642192391c92b7a6ad07959e1daef65934dce553f845a"
+    },
+    {
+      "path": "native/v5/inspect-wnf-query-v5-partial.py",
+      "bytes": 3695,
+      "sha256": "0479590a2ecf6a1a5c9ae883e4a4c9a5b2c14048e360c870dbf184f8a745e2a8"
+    },
+    {
+      "path": "native/v5/native-wnf-query-v5-arm64.log",
+      "bytes": 620800,
+      "sha256": "44bb6fbb3f3309d085004312c77f637d2f0241352ff3d7c597c469ce355816e1"
+    },
+    {
+      "path": "native/v5/native-wnf-query-v5-continuation-outcomes.json",
+      "bytes": 580,
+      "sha256": "e54a2a1fa1184bfbab8f4dbd8e8178c8d4d88b3f2415217e00d7f353403a3fe1"
+    },
+    {
+      "path": "native/v5/native-wnf-query-v5-continuation-profiles.ps1",
+      "bytes": 2139,
+      "sha256": "eb94c7bb6419e5adc88da8af1693c5b3d502dc293d775189d0b67e03950257e4"
+    },
+    {
+      "path": "native/v5/native-wnf-query-v5-outcomes.json",
+      "bytes": 260,
+      "sha256": "aabe56478dc47d1dcb2f7649575dc734d497efe850c36d65f4eea1ce2a0539f4"
+    },
+    {
+      "path": "native/v5/native-wnf-query-v5-partial-identities.json",
+      "bytes": 3367,
+      "sha256": "6daaafe0a34193f0960e9e1b99b2ddcf3812b2055465072b432557e61e7ea2b2"
+    },
+    {
+      "path": "native/v5/native-wnf-query-v5-profiles.ps1",
+      "bytes": 2142,
+      "sha256": "5ec8c17ebe4babb7c10b2cb6a1d739221a30042aab5cb296bda7654f4f00a618"
+    },
+    {
+      "path": "native/v5/native-wnf-query-v5-x64.log",
+      "bytes": 620798,
+      "sha256": "32d828a4887f4b7e160d094c23ec4db3f27bda04c66163e53e1b542035d69881"
+    },
+    {
+      "path": "native/v5/native-wnf-query-v5-x86-laa.log",
+      "bytes": 620802,
+      "sha256": "ed038fef89e5ab82575d9756172a036e24324d7437f68a23d89668fc2aa671c2"
+    },
+    {
+      "path": "native/v5/native-wnf-query-v5-x86.log",
+      "bytes": 620798,
+      "sha256": "97833c66e6af76bfd8f8983e8b213fe6dc62d5fbd651eff6b65eb4153cfaf295"
+    },
+    {
+      "path": "native/v5/native-wnf-query-v5.cpp",
+      "bytes": 7560,
+      "sha256": "bb4f3c8f9a5d969b794a73ee4115650d336923a660f4b9132ea2e679129ef04e"
+    },
+    {
+      "path": "native/v5/wnf-query-v5-continuation-native-launch.json",
+      "bytes": 649,
+      "sha256": "66ccaa214cf5ab4b17465bf2501bfb4262086c024c597d51e92392cc2cf89a13"
+    },
+    {
+      "path": "native/v5/wnf-query-v5-native-launch.json",
+      "bytes": 621,
+      "sha256": "f1f1e6e4ab25a25c71cbf44e1ba66adb290a95b4b7bda2c55b2f1635c2faedcd"
+    },
+    {
+      "path": "primary/phnt-LICENSE",
+      "bytes": 1092,
+      "sha256": "ad2ab542c56c606e4c19d66a7f3cdcd3ef83beffb638e7c3893b22c7a6a6c0df"
+    },
+    {
+      "path": "primary/phnt-ntexapi.h",
+      "bytes": 386368,
+      "sha256": "0510ac40fa1690cd73bed8afe3ed602aaa7bb6870ab95ea9aaba36ce1f4c3d53"
+    },
+    {
+      "path": "primary/phnt-source.json",
+      "bytes": 273,
+      "sha256": "a06408e658fc9673a4004476b8bea7bb5042e967cfbf393377ddf3227492e0ce"
+    },
+    {
+      "path": "provenance-notes.md",
+      "bytes": 1694,
+      "sha256": "c157967170f5adc76734cd4e36ada33e37eb075f3f96e6c2fa526d5e790301fa"
+    }
+  ]
+}

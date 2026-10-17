@@ -33,6 +33,7 @@ mod trace;
 mod virtual_memory;
 mod wait_packet;
 mod wnf;
+mod wnf_query;
 mod worker_factory;
 
 pub(super) static EXPORTS: &[Export] = &[
@@ -290,6 +291,12 @@ pub(super) static EXPORTS: &[Export] = &[
         Stdcall,
         &[Ptr, Ptr, I32, Ptr, Ptr, Ptr, Ptr, Ptr],
         access_check::access,
+    ),
+    Export::func(
+        "NtQueryWnfStateData",
+        Stdcall,
+        &[Ptr, Ptr, Ptr, Ptr, Ptr, Ptr],
+        wnf_query::query,
     ),
 ];
 fn status_error(c: &mut Ctx) -> ApiResult {

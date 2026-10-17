@@ -1,0 +1,16 @@
+{
+  "phase": "initial frozen source, awaiting complete compile diagnostics",
+  "found": [
+    "The metadata test module imported query exports but not the parent's private imports; add explicit Arc, io and NTSTATUS imports in the correction epoch.",
+    "Native WNF calls use the host effective thread token. Query capture must refuse an impersonating host thread before and after acquisition so primary-token binding is meaningful.",
+    "The service test module also needs its explicit #[path = \"services_tests/wnf_query_tests.rs\"] attribute, matching existing sibling registration."
+  ],
+  "do-not-change-yet": "Keep the eleven initial inputs frozen until all current initial drivers complete.",
+  "bounded-out-of-scope": [
+    {
+      "impact": "low",
+      "finding": "The inherited carrier-manifest description still says selected310 although its executable source list has319 entries. The new derived WNF final manifest will distinguish the old carrier baseline from the current326 source inputs. Original historical records remain unchanged.",
+      "blocks": false
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-wnf-query-20261017/rax-source)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 45.01s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/rax-754f4d2a527a4423)
+
+running 4 tests
+test user::windows::wnf::query_tests::query_capture_bounds_retries_and_never_imports_host_process_payload ... ok
+test user::windows::wnf::query_tests::query_catalog_rejects_duplicate_invalid_and_over_budget_data ... ok
+test user::windows::wnf::query_tests::query_provisioning_parses_every_native_record_and_the_single_typed_tail ... ok
+test user::windows::wnf::query_tests::query_provisioning_refuses_malformed_offsets_sid_extents_and_unknown_trailers ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 7856 filtered out; finished in 0.04s
+

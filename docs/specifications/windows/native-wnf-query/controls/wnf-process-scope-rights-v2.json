@@ -1,0 +1,49 @@
+{
+  "utc": "2026-10-17T20:26:31.022537+00:00",
+  "source-sha256": "fcd110a5b24fb417db770803dbafc238a348e5835d39bbe17dfbf97b8466f60f",
+  "closed-handles": 6,
+  "rows": [
+    {
+      "access": 0,
+      "status": 0,
+      "stamp": 0,
+      "length": 0,
+      "last-error": 2115087309
+    },
+    {
+      "access": 1,
+      "status": 0,
+      "stamp": 0,
+      "length": 0,
+      "last-error": 2115087309
+    },
+    {
+      "access": 16,
+      "status": 0,
+      "stamp": 0,
+      "length": 0,
+      "last-error": 2115087309
+    },
+    {
+      "access": 1024,
+      "status": 0,
+      "stamp": 0,
+      "length": 0,
+      "last-error": 2115087309
+    },
+    {
+      "access": 4096,
+      "status": 0,
+      "stamp": 0,
+      "length": 0,
+      "last-error": 2115087309
+    },
+    {
+      "access": 2097151,
+      "status": 0,
+      "stamp": 0,
+      "length": 0,
+      "last-error": 2115087309
+    }
+  ]
+}

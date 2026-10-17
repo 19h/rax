@@ -2032,3 +2032,44 @@ restricted/AppContainer access evaluation and complete ordinary Windows
 execution remain outside this admitted profile.
 
 [Contract, assumptions and validation](../../../docs/specifications/windows/native-access-check/README.md).
+
+## Selected WNF state queries (2026-10-17 UTC)
+
+`NtQueryWnfStateData` reads immutable state selected with the native runtime.
+The fixed Notifications metadata supplies state names, maximum lengths and
+optional TypeIds. Bounded native acquisition uses only those validated names,
+retains stable pairs of status/stamp/data, and requires an unchanged primary
+subject and no host-thread impersonation. Guest calls never forward a pointer,
+name, TypeId or process handle to the host.
+
+The new process starts with independent empty process-scoped data and stamp
+zero; native read admission is retained without importing host process-private
+payloads. Other selected scopes retain selection-time snapshots. Name, GUID,
+length and output probes preserve the measured order, byte alignment, guard
+behavior and aliases. A short buffer receives current stamp and required
+length. Data copies only after sufficient capacity, and the caller's capacity
+does not control host allocation.
+
+Explicit scope uses the decoded namespace: NULL for System/Machine, a DWORD
+for the captured Session, the captured SID for User and a guest process handle for Process. A current
+process handle with zero granted access is accepted. Uncaptured sessions/users, different guest processes,
+unmeasured explicit PhysicalMachine scope and unavailable data profiles return
+explicit diagnostics. Creation, update and delivery remain separate services;
+no empty or successful result substitutes for an unavailable snapshot.
+
+The original four-profile evidence contains 7,680 V3 logical and 6,240 pointer
+calls. V5 adds real read denial, with 6,480 calls on three independently
+inspected producers. Its additional x64 stdout is corroborative only: the
+executable was quarantined before independent identity verification. The
+actual installed ARM64/x86/x86-LAA leaves replay 11,160 logical/pointer calls.
+Additional session/user/machine and typed-denial controls retain their native
+ARM64 provenance and have four-ABI portable replay.
+
+[Native contract, source epochs and validation](../../../docs/specifications/windows/native-wnf-query/README.md).
+
+Final WNF-query validation binds 327 selected inputs and complete archives on
+Windows, macOS and Linux. Full library passed/failed/ignored counts are
+7287/5/2, 7858/0/2 and 7852/0/2 respectively; the five Windows lowerer failures
+are unchanged. Ordinary smoke/whoami advance 2202 turns to System-scoped
+NtSubscribeWnfStateChange 0x1cd and remain incomplete. The scoped frozen Assist
+carrier ABI 184/current186 boundary remains explicit in the retained proof.

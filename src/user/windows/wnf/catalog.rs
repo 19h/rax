@@ -38,6 +38,7 @@ pub(crate) enum Permission {
 pub(crate) struct Catalog {
     records: Arc<BTreeMap<u64, Option<u32>>>,
     primary_subject: Option<Arc<Subject>>,
+    queries: Option<Arc<super::Queries>>,
 }
 fn invalid(message: &'static str) -> io::Error {
     io::Error::new(io::ErrorKind::InvalidData, message)
@@ -193,7 +194,15 @@ impl Catalog {
         Ok(Self {
             records: Arc::new(records),
             primary_subject: Some(Arc::new(subject)),
+            queries: None,
         })
+    }
+    pub(crate) fn with_queries(mut self, queries: super::Queries) -> Self {
+        self.queries = Some(Arc::new(queries));
+        self
+    }
+    pub(crate) fn queries(&self) -> Option<Arc<super::Queries>> {
+        self.queries.clone()
     }
     /// Retains the same validated primary-token property used for WNF grants.
     /// `None` is an absent snapshot, not a non-AppContainer token.

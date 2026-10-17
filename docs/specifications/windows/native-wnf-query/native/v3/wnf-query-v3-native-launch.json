@@ -1,0 +1,17 @@
+{
+  "pid": 11144,
+  "utc": "2026-10-17T20:13:37.629331+00:00",
+  "lock": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v3-native-driver.lock",
+  "scope": "native NtQueryWnfStateData on private temporary process states and controlled read-only names; no RAX source mutation",
+  "child-pid": 8516,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-wnf-query-v3-profiles.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T20:14:05.237061+00:00"
+}

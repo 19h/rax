@@ -1,0 +1,84 @@
+{
+  "scope": "three verified producer ABIs on one ARM64 Windows kernel; x64 executed but executable quarantined before identity verification",
+  "x64-identity": "pending user review of Defender quarantine",
+  "producers": [
+    {
+      "profile": "arm64",
+      "machine": 43620,
+      "large-address-aware": true,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v5-arm64\\native-wnf-query-v5.cpp",
+        "bytes": 7560,
+        "sha256": "bb4f3c8f9a5d969b794a73ee4115650d336923a660f4b9132ea2e679129ef04e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v5-arm64\\native-wnf-query-v5-arm64.exe",
+        "bytes": 154624,
+        "sha256": "98d16c1aa0caf16e0540a482f92bca4af7bfce64d4d643bfb5b53f362f72fff4"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v5-arm64\\native-wnf-query-v5-arm64.log",
+        "bytes": 620800,
+        "sha256": "44bb6fbb3f3309d085004312c77f637d2f0241352ff3d7c597c469ce355816e1"
+      },
+      "calls": 2160,
+      "escaped-exceptions": 0,
+      "deleted-states": 4,
+      "released-arenas": 1,
+      "released-descriptors": 2,
+      "closed-handles": 1
+    },
+    {
+      "profile": "x86",
+      "machine": 332,
+      "large-address-aware": false,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v5-x86\\native-wnf-query-v5.cpp",
+        "bytes": 7560,
+        "sha256": "bb4f3c8f9a5d969b794a73ee4115650d336923a660f4b9132ea2e679129ef04e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v5-x86\\native-wnf-query-v5-x86.exe",
+        "bytes": 126976,
+        "sha256": "6e2aaecdcc5e7829ce0d669586749fb6a50b874bf07dc6a4dd2857e2373a395a"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v5-x86\\native-wnf-query-v5-x86.log",
+        "bytes": 620798,
+        "sha256": "97833c66e6af76bfd8f8983e8b213fe6dc62d5fbd651eff6b65eb4153cfaf295"
+      },
+      "calls": 2160,
+      "escaped-exceptions": 0,
+      "deleted-states": 4,
+      "released-arenas": 1,
+      "released-descriptors": 2,
+      "closed-handles": 1
+    },
+    {
+      "profile": "x86-laa",
+      "machine": 332,
+      "large-address-aware": true,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v5-x86-laa\\native-wnf-query-v5.cpp",
+        "bytes": 7560,
+        "sha256": "bb4f3c8f9a5d969b794a73ee4115650d336923a660f4b9132ea2e679129ef04e"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v5-x86-laa\\native-wnf-query-v5-x86-laa.exe",
+        "bytes": 126976,
+        "sha256": "d37b06fcae7b5dc775a8294a145bad4f81824d2f3adb377a9d9ba84c35373192"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v5-x86-laa\\native-wnf-query-v5-x86-laa.log",
+        "bytes": 620802,
+        "sha256": "ed038fef89e5ab82575d9756172a036e24324d7437f68a23d89668fc2aa671c2"
+      },
+      "calls": 2160,
+      "escaped-exceptions": 0,
+      "deleted-states": 4,
+      "released-arenas": 1,
+      "released-descriptors": 2,
+      "closed-handles": 1
+    }
+  ]
+}

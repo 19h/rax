@@ -1,0 +1,16 @@
+{
+  "pid": 7652,
+  "utc": "2026-10-17T20:36:31.857578+00:00",
+  "state": "failed",
+  "base": "7279261c3ab518e0d0b027817cabf776e9700eb8",
+  "child-pid": 10548,
+  "argv": [
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "-B",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-wnf-query-epoch3-atomic.py"
+  ],
+  "epoch3-exit-code": 1,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-wnf-query-chain.py\", line 34, in <module>\n    r[label+'-exit-code']=code;save();need(code==0,'native '+label+' stage failed')\n                                      ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-wnf-query-chain.py\", line 13, in need\n    if not v:raise RuntimeError(m)\n             ^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: native epoch3 stage failed\n",
+  "completed-utc": "2026-10-17T20:37:09.063352+00:00"
+}

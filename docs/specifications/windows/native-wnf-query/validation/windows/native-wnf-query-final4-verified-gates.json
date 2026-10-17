@@ -1,0 +1,31 @@
+{
+  "gates": [
+    {
+      "gate": "integration",
+      "command": "cargo.exe test --locked --offline --no-default-features --test user_windows --test user_windows_memory -- --nocapture --test-threads=1",
+      "exit-code": 0,
+      "log": "native-wnf-query-final4-integration.log",
+      "sha256": "62c24d3123f77aaf15514f6b487dd7286421914a67b7c34adca19413cc44e143"
+    },
+    {
+      "gate": "capi",
+      "command": "cargo.exe test --locked --offline --no-default-features -p rax-capi -- --nocapture --test-threads=1",
+      "exit-code": 0,
+      "log": "native-wnf-query-final4-capi.log",
+      "sha256": "c68bce38dfcea0fbf82edbbe1969ba1f435454a1c1a8f3d40563e1e6886ddd33"
+    },
+    {
+      "gate": "full",
+      "command": "cargo.exe test --locked --offline --no-default-features --lib -- --nocapture --test-threads=1",
+      "exit-code": 101,
+      "log": "native-wnf-query-final4-full.log",
+      "sha256": "28ad5c5b179828f3bb006a283ff67bb83ccf18e98fd6bb5717e4647fe16a10b7"
+    }
+  ],
+  "full": [
+    7287,
+    5,
+    2,
+    0
+  ]
+}

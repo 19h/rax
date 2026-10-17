@@ -1,0 +1,121 @@
+[
+  {
+    "gate": "build",
+    "command": [
+      "cmake",
+      "--build",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build",
+      "--target",
+      "assist_idalib_cli",
+      "assist_mcp",
+      "assist_mcp_tool_manifest_tests",
+      "assist_rax_process_tests",
+      "assist_process_tool_tests",
+      "assist_process_tool_unavailable_tests",
+      "assist_e14_rax_abi_drift_tests",
+      "assist_rust_archive_link_tests",
+      "--parallel",
+      "2"
+    ],
+    "exit-code": 0,
+    "seconds": 33.70606207847595,
+    "log": "macos-owning4-build.log",
+    "sha256": "1f06b8412186ec47f93d6fa4caf972d51fa389c4c197bc8029a0315f745647dd"
+  },
+  {
+    "gate": "ctest",
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build",
+      "--output-on-failure",
+      "-R",
+      "^(assist_rust_archive_link_tests|assist_rax_process_tests|assist_process_tool_tests|assist_process_tool_unavailable_tests|assist_e14_rax_abi_drift_tests|assist_mcp_tool_manifest_tests|assist_mcp_manifest_runtime_test)$"
+    ],
+    "exit-code": 0,
+    "seconds": 4.718642950057983,
+    "log": "macos-owning4-ctest.log",
+    "sha256": "e1e3c7312f0ef89a6daa6ef18b519fe2927ecf8dc1d00285bcaf6c01b3ea663c"
+  },
+  {
+    "gate": "protected-assist-cli",
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/scripts/static_text/verify.py",
+      "--root",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-cli"
+    ],
+    "exit-code": 0,
+    "seconds": 9.223856210708618,
+    "log": "macos-owning4-protected-assist-cli.log",
+    "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+  },
+  {
+    "gate": "protected-assist-mcp",
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/scripts/static_text/verify.py",
+      "--root",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-mcp"
+    ],
+    "exit-code": 0,
+    "seconds": 5.713517904281616,
+    "log": "macos-owning4-protected-assist-mcp.log",
+    "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+  },
+  {
+    "gate": "artifacts",
+    "cwd": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs",
+    "command": [
+      "cmake",
+      "-E",
+      "env",
+      "CARGO_TARGET_DIR=/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target",
+      "CARGO_PROFILE_RELEASE_STRIP=false",
+      "MACOSX_DEPLOYMENT_TARGET=10.15",
+      "ASSIST_RESOURCE_PYTHON=/opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+      "CARGO_BUILD_JOBS=2",
+      "RUSTUP_TOOLCHAIN=1.95.0",
+      "/Users/int/.cargo/bin/cargo",
+      "build",
+      "--locked",
+      "--offline",
+      "--manifest-path",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs/Cargo.toml",
+      "--package",
+      "assist-rs",
+      "--target",
+      "aarch64-apple-darwin",
+      "--features",
+      "rax",
+      "--message-format=json"
+    ],
+    "exit-code": 0,
+    "seconds": 0.2498180866241455,
+    "log": "macos-owning4-artifacts.log",
+    "sha256": "931491844ce7923931379fce9c6497ac6737b11c3535e76f7dc8c9bf5ad6d348"
+  },
+  {
+    "gate": "archive-identities",
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/native-wnf-query-20261017/collect-wnf-archives.py",
+      "--host",
+      "macos",
+      "--source",
+      "/Users/int/Library/Caches/assist-process-emulation/native-wnf-query-20261017/rax-source",
+      "--manifest",
+      "/Users/int/Library/Caches/assist-process-emulation/native-wnf-query-20261017/final-owning-source-hashes.json",
+      "--messages",
+      "/Users/int/Library/Caches/assist-process-emulation/native-wnf-query-20261017/macos-owning4-artifacts.log",
+      "--output",
+      "/Users/int/Library/Caches/assist-process-emulation/native-wnf-query-20261017/macos-final4-owning-archive-identities.json"
+    ],
+    "exit-code": 0,
+    "seconds": 0.5576987266540527,
+    "log": "macos-owning4-archive-identities.log",
+    "sha256": "a9ee51c6fb51ce344ce77a54da98b23d490a1d4580ae1b28af50a2a53f7db2dd"
+  }
+]

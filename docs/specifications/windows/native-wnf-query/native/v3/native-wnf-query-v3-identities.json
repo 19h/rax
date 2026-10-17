@@ -1,0 +1,109 @@
+{
+  "scope": "four producer ABIs on one ARM64 Windows kernel; private temporary System-scope states and controlled read-only names",
+  "producers": [
+    {
+      "profile": "arm64",
+      "machine": 43620,
+      "large-address-aware": true,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v3-arm64\\native-wnf-query-v3.cpp",
+        "bytes": 7229,
+        "sha256": "0735731cd8b2bce2f4f2a73847c7f9f316aee1f6db28137c3fbb4b744c770727"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v3-arm64\\native-wnf-query-v3-arm64.exe",
+        "bytes": 154112,
+        "sha256": "9878c5fca3c9adc4d2ae599e6a6bf60e15dcdd4af94222eceb19644a1c51761b"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v3-arm64\\native-wnf-query-v3-arm64.log",
+        "bytes": 551408,
+        "sha256": "3b8f90435d705593bbe237289a107e3d31409404876169d23f6f72047bb46de1"
+      },
+      "calls": 1920,
+      "escaped-exceptions": 0,
+      "deleted-states": 3,
+      "released-arenas": 1,
+      "released-descriptors": 1,
+      "closed-handles": 1
+    },
+    {
+      "profile": "x64",
+      "machine": 34404,
+      "large-address-aware": true,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v3-x64\\native-wnf-query-v3.cpp",
+        "bytes": 7229,
+        "sha256": "0735731cd8b2bce2f4f2a73847c7f9f316aee1f6db28137c3fbb4b744c770727"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v3-x64\\native-wnf-query-v3-x64.exe",
+        "bytes": 153088,
+        "sha256": "d1d2d1ed70acd873be64d62cd90e94f36a6ac4dc8b438a3f85c958a177ba3ee4"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v3-x64\\native-wnf-query-v3-x64.log",
+        "bytes": 551406,
+        "sha256": "2817f34fe70723038f5dcafd80428757bdfdb0a126a0cbdeadcd8e19189370d0"
+      },
+      "calls": 1920,
+      "escaped-exceptions": 0,
+      "deleted-states": 3,
+      "released-arenas": 1,
+      "released-descriptors": 1,
+      "closed-handles": 1
+    },
+    {
+      "profile": "x86",
+      "machine": 332,
+      "large-address-aware": false,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v3-x86\\native-wnf-query-v3.cpp",
+        "bytes": 7229,
+        "sha256": "0735731cd8b2bce2f4f2a73847c7f9f316aee1f6db28137c3fbb4b744c770727"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v3-x86\\native-wnf-query-v3-x86.exe",
+        "bytes": 126464,
+        "sha256": "48377cf3492409a13bf2e049819b9562d420be2e6afc2bd6a23238c094ad0d6a"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v3-x86\\native-wnf-query-v3-x86.log",
+        "bytes": 551406,
+        "sha256": "9b97c894fccae78854497a048c480f5f6cbaf3ffd4c6db5e7e95c176cb31da68"
+      },
+      "calls": 1920,
+      "escaped-exceptions": 0,
+      "deleted-states": 3,
+      "released-arenas": 1,
+      "released-descriptors": 1,
+      "closed-handles": 1
+    },
+    {
+      "profile": "x86-laa",
+      "machine": 332,
+      "large-address-aware": true,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v3-x86-laa\\native-wnf-query-v3.cpp",
+        "bytes": 7229,
+        "sha256": "0735731cd8b2bce2f4f2a73847c7f9f316aee1f6db28137c3fbb4b744c770727"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v3-x86-laa\\native-wnf-query-v3-x86-laa.exe",
+        "bytes": 126464,
+        "sha256": "6b4ad0c35e03fbf6a6bc545dadaa0b0a92fcd803d740e9a0f76954876612832c"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wnf-query-v3-x86-laa\\native-wnf-query-v3-x86-laa.log",
+        "bytes": 551410,
+        "sha256": "af03f90b0351febbf0dcd7694e59009384bc2f334a4dec94e03d0889950fb922"
+      },
+      "calls": 1920,
+      "escaped-exceptions": 0,
+      "deleted-states": 3,
+      "released-arenas": 1,
+      "released-descriptors": 1,
+      "closed-handles": 1
+    }
+  ]
+}

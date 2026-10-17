@@ -1,0 +1,61 @@
+{
+  "utc": "2026-10-17T20:59:56.836766+00:00",
+  "scope": "NtQueryWnfStateData semantic group",
+  "complete-user-goal": false,
+  "assumptions": {
+    "A1": "retained immutable initial-environment snapshot; no live host mutation equivalence",
+    "A2": "confirmed guest process state isolation and zero-right current-process handle",
+    "A3": "confirmed for1613 metadata values; unknown formats refuse",
+    "A4": "confirmed absent host impersonation and owned-thread restoration",
+    "A5": "four-ABI portable replay; actual ARM64/x86/x86-LAA leaf execution; x64 V5 identity unverified",
+    "A6": "falsified by valid noncurrent session; explicit refusal replaces guessed status"
+  },
+  "bounded-findings": [
+    {
+      "impact": "high",
+      "item": "ordinary execution now reaches System WNF subscribe but no application succeeds",
+      "blocks-complete-user-goal": true
+    },
+    {
+      "impact": "medium",
+      "item": "other Windows builds/physical x64 kernel and live WNF mutation/delivery unmeasured",
+      "blocks-this-group": false
+    },
+    {
+      "impact": "medium",
+      "item": "Defender removed V5 x64 producer before independent identity check;excluded from verified count",
+      "blocks-this-group": false
+    }
+  ],
+  "quality-gates": {
+    "QG1": "descriptive engineering only",
+    "QG2": "assumptions revisited and false namespace assumption corrected",
+    "QG3": "query group implemented and replayed; full process goal explicitly incomplete",
+    "QG4": "byte limits, ABI extents, case counts and turn deltas checked",
+    "QG5": "known native failures and partial proof scopes explicit",
+    "QG6": "native producer hashes, primary declaration and compiled source identities bound",
+    "QG7": "remaining boundaries recorded"
+  },
+  "full-libraries": {
+    "macos": [
+      7858,
+      0,
+      2
+    ],
+    "linux": [
+      7852,
+      0,
+      2
+    ],
+    "windows": [
+      7287,
+      5,
+      2
+    ]
+  },
+  "ordinary-success": false,
+  "ordinary-next-service": "NtSubscribeWnfStateChange0x1cd",
+  "ordinary-delta-turns": 2202,
+  "selected-owning-inputs": 327,
+  "proof-stress-cases": 5
+}

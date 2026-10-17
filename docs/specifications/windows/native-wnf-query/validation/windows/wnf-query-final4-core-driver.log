@@ -1,0 +1,11 @@
+Verified 327 current final native inputs
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+ordinary observation 0 complete;guest terminal output requires review
+ordinary observation 1 complete;guest terminal output requires review
+ordinary observation 2 complete;guest terminal output requires review
+gate integration exit=0
+gate capi exit=0
+gate full exit=101

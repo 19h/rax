@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "prlctl",
+    "exec",
+    "a5b14f9a-d292-4610-a04d-df4ca4337c9d",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "-B",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\probe-explicit-scope.py"
+  ],
+  "exit-code": 0,
+  "stdout": "[('process', 'none', 0, '0x0'), ('process', 'none', 64, '0x0'), ('process', 'current-process', 0, '0x0'), ('process', 'current-process', 64, '0x0'), ('process', 'current-thread', 0, '0xc0000024'), ('process', 'current-thread', 64, '0xc0000024'), ('process', 'real-process', 0, '0x0'), ('process', 'real-process', 64, '0x0'), ('process', 'invalid', 0, '0xc0000008'), ('process', 'invalid', 64, '0xc0000008'), ('process', 'pointer-to-process-handle', 0, '0xc0000008'), ('process', 'pointer-to-process-handle', 64, '0xc0000008'), ('process', 'pointer-to-pid', 0, '0xc0000008'), ('process', 'pointer-to-pid', 64, '0xc0000008'), ('system', 'none', 0, '0xc0000023'), ('system', 'none', 64, '0x0'), ('system', 'current-process', 0, '0xc000000d'), ('system', 'current-process', 64, '0xc000000d'), ('system', 'current-thread', 0, '0xc000000d'), ('system', 'current-thread', 64, '0xc000000d'), ('system', 'real-process', 0, '0xc000000d'), ('system', 'real-process', 64, '0xc000000d'), ('system', 'invalid', 0, '0xc000000d'), ('system', 'invalid', 64, '0xc000000d'), ('system', 'pointer-to-process-handle', 0, '0xc000000d'), ('system', 'pointer-to-process-handle', 64, '0xc000000d'), ('system', 'pointer-to-pid', 0, '0xc000000d'), ('system', 'pointer-to-pid', 64, '0xc000000d')]\n",
+  "stderr": ""
+}

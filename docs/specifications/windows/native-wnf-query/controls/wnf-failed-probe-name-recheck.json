@@ -1,0 +1,8 @@
+{
+  "utc": "2026-10-17T20:15:15.849542+00:00",
+  "name": "0x41c64e6da4ac6045",
+  "status": 3221225524,
+  "stamp": 2779096485,
+  "length": 64,
+  "scope": "read-only check of failed-probe temporary name after its creator process exited"
+}

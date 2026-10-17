@@ -1,0 +1,27 @@
+{
+  "utc": "2026-10-17T20:31:25.219803+00:00",
+  "base": "7279261c3ab518e0d0b027817cabf776e9700eb8",
+  "files": [
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47835,
+      "sha256": "4415e7413459fb2c18a0e55d70c1aa819369a2acebbf588dae9d61578f40d918",
+      "previous-sha256": "942a40eb354a01c70635da536e3fc5c61dbbd36b79e8e898a35799428546c105"
+    },
+    {
+      "path": "src/user/windows/wnf/installed_query.rs",
+      "bytes": 3693,
+      "sha256": "f5736cf1a3b0b27e43aad305f846bf82e8255c1c680f011bbc21ba2bd5e3b94f",
+      "previous-sha256": "cbb116d50eb188a333bf7b8474c53ef4fba887e12aebb072e416b920ec723aeb"
+    },
+    {
+      "path": "src/user/windows/wnf/query_tests.rs",
+      "bytes": 7603,
+      "sha256": "aeb5e8308e9e1f7f6554ee15dad7bfb4874375452cb67f5b468dd9586eade75c",
+      "previous-sha256": "72abfca33a08fa7b67f2d69c796130c5ec436ba49d08f746c4603c353c9ed1e8"
+    }
+  ],
+  "selected-source-count": 325,
+  "native-cargo-adapter-preserved": "9f80616d633d948feeba5b201bfa4fe98c8fd736f3f48469b6481279584d8f4c",
+  "scope": "corrected imports/test path plus host-thread guard;325 selected inputs"
+}

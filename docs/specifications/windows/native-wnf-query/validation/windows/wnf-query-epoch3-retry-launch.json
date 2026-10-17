@@ -1,0 +1,17 @@
+{
+  "pid": 6780,
+  "utc": "2026-10-17T20:37:34.372946+00:00",
+  "state": "finished",
+  "base": "7279261c3ab518e0d0b027817cabf776e9700eb8",
+  "child-pid": 492,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-wnf-query-epoch3-retry-gates.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T20:39:30.252630+00:00"
+}

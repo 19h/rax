@@ -1,0 +1,5 @@
+{
+  "exit-code": 0,
+  "stdout": "{\n    \"ThreatID\":  2147731250,\n    \"ActionSuccess\":  true,\n    \"InitialDetectionTime\":  \"\\/Date(1792268221337)\\/\",\n    \"LastThreatStatusChangeTime\":  \"\\/Date(1792268233606)\\/\",\n    \"Resources\":  [\n                      \"file:_C:\\\\Windows\\\\Temp\\\\assist-native-rax-20261010\\\\wnf-query-v5-x64\\\\native-wnf-query-v5-x64.exe\"\n                  ]\n}\n",
+  "stderr": ""
+}

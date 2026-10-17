@@ -1,0 +1,73 @@
+[
+  {
+    "gate": "all-targets",
+    "argv": [
+      "cargo",
+      "check",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ],
+    "exit-code": 0,
+    "seconds": 22.924648041999717,
+    "log": "macos-wnf-final4-all-targets.log",
+    "sha256": "23cc1c720c4722d8da867d785ac565e55e491a87887ad7e5aae8265dfc5797d7"
+  },
+  {
+    "gate": "windows",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--test",
+      "user_windows",
+      "--test",
+      "user_windows_memory",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit-code": 0,
+    "seconds": 77.2523951660005,
+    "log": "macos-wnf-final4-windows.log",
+    "sha256": "b368aabe4916e40c767e5a078e1e2257941d72113dcb24c38beb62eef699c47b"
+  },
+  {
+    "gate": "capi",
+    "argv": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "capi/Cargo.toml",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 16.547194124999805,
+    "log": "macos-wnf-final4-capi.log",
+    "sha256": "ac44a74ac1fc25736a072848fe9fe5b1172201af6e0c8c09305b773cfb364f90"
+  },
+  {
+    "gate": "lib",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 332.7707721249999,
+    "log": "macos-wnf-final4-lib.log",
+    "sha256": "8b53604a8138fd2963b0898e8b109cbd8a7348c7c1db91abe35268056f3474c1"
+  }
+]

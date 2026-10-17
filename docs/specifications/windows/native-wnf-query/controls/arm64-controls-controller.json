@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "prlctl",
+    "exec",
+    "a5b14f9a-d292-4610-a04d-df4ca4337c9d",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "-B",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\probe-wnf-query-arm64.py"
+  ],
+  "exit-code": 1,
+  "stdout": "",
+  "stderr": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\probe-wnf-query-arm64.py\", line 53, in <module>\n    raise RuntimeError('owned temporary state cleanup failed')\nRuntimeError: owned temporary state cleanup failed\n"
+}

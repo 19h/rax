@@ -1,0 +1,6 @@
+﻿{
+    "gate":  "service",
+    "command":  "cargo.exe test --locked --offline --no-default-features --lib wnf_query_tests -- --nocapture --test-threads=1",
+    "exit-code":  0,
+    "log":  "native-wnf-query-epoch3-retry-service.log"
+}

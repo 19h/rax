@@ -1,0 +1,19 @@
+{
+  "utc": "2026-10-17T20:42:50.040593+00:00",
+  "reason": "native cross-scope falsification requires correcting uncaptured namespace admission",
+  "identity": {
+    "ProcessId": 5344,
+    "ParentProcessId": 6792,
+    "CommandLine": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-wnf-query-final-gates.ps1"
+  },
+  "argv": [
+    "taskkill.exe",
+    "/PID",
+    "5344",
+    "/T",
+    "/F"
+  ],
+  "exit-code": 0,
+  "stdout": "SUCCESS: The process with PID 4300 (child process of PID 2164) has been terminated.\nSUCCESS: The process with PID 2164 (child process of PID 5344) has been terminated.\nSUCCESS: The process with PID 5344 (child process of PID 6792) has been terminated.\n",
+  "stderr": ""
+}

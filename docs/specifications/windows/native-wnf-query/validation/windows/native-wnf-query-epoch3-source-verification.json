@@ -1,0 +1,21 @@
+{
+  "utc": "2026-10-17T20:36:55.626746+00:00",
+  "base": "7279261c3ab518e0d0b027817cabf776e9700eb8",
+  "files": [
+    {
+      "path": "docs/specifications/windows/native-wnf-query/controls/wnf-private-scope-order.json",
+      "bytes": 64281,
+      "sha256": "4a2064236a05fa686ddc0c87f4b61c1e5de33cbfafd738b7825504400d4bf5dd",
+      "previous-sha256": null
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/wnf_query_tests.rs",
+      "bytes": 25451,
+      "sha256": "62014964ee13cdc8736903665dcc84d7228e3bdb2317660bb76bdd9ffd92a3ff",
+      "previous-sha256": "ec8941419b9871c19e33ec07a4095ebe9a78e46af6ed22848408e7382f63cfa2"
+    }
+  ],
+  "selected-source-count": 326,
+  "native-cargo-adapter-preserved": "9f80616d633d948feeba5b201bfa4fe98c8fd736f3f48469b6481279584d8f4c",
+  "scope": "scope replay test and native-control fixture;326 selected inputs"
+}

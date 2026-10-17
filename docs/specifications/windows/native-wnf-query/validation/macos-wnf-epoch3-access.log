@@ -1,0 +1,13 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/rax-754f4d2a527a4423)
+
+running 6 tests
+test user::windows::process::sched::tests::services_tests::access_check_tests::captured_impersonation_token_query_uses_its_subject_without_primary_capture ... ok
+test user::windows::process::sched::tests::services_tests::access_check_tests::native_access_check_added_statuses_keep_win32_translation ... ok
+test user::windows::process::sched::tests::services_tests::access_check_tests::native_access_check_replays_all_17640_native_logical_rows ... ok
+test user::windows::process::sched::tests::services_tests::access_check_tests::native_access_check_replays_all_6000_native_pointer_rows ... ok
+test user::windows::process::sched::tests::services_tests::access_check_tests::native_access_check_replays_private_token_privilege_records_all_guest_abis ... ok
+test user::windows::process::sched::tests::services_tests::access_check_tests::native_access_check_unmodeled_subjects_and_aces_never_fabricate_access ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 7854 filtered out; finished in 1.15s
+

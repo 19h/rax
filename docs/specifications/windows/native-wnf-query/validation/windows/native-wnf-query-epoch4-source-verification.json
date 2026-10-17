@@ -1,0 +1,27 @@
+{
+  "utc": "2026-10-17T20:43:38.099584+00:00",
+  "base": "7279261c3ab518e0d0b027817cabf776e9700eb8",
+  "files": [
+    {
+      "path": "docs/specifications/windows/native-wnf-query/controls/wnf-owned-cross-scope.json",
+      "bytes": 2362,
+      "sha256": "328d3112b4e2ec3e58de828f3f0ef09591f9b344e779b029928f53bc30bbdc24",
+      "previous-sha256": null
+    },
+    {
+      "path": "src/user/windows/dll/native/wnf_query.rs",
+      "bytes": 4381,
+      "sha256": "3bd33aecca845ed1ebae08bc07207751cbd461084f86cf7f509c1cc6fc176049",
+      "previous-sha256": "1065b7a7e6a82ae49dfcf99026f441e9d929a7370e145c8ba24e7855a42cd364"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/wnf_query_tests.rs",
+      "bytes": 28256,
+      "sha256": "a8547b4251a0206b5e0227d7d1ca17a385cae6138acf11900c80fc029e5a0418",
+      "previous-sha256": "62014964ee13cdc8736903665dcc84d7228e3bdb2317660bb76bdd9ffd92a3ff"
+    }
+  ],
+  "selected-source-count": 327,
+  "native-cargo-adapter-preserved": "9f80616d633d948feeba5b201bfa4fe98c8fd736f3f48469b6481279584d8f4c",
+  "scope": "explicit uncaptured namespace refusal plus native falsification fixture;327 selected inputs"
+}

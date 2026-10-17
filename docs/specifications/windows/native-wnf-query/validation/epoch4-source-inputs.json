@@ -1,0 +1,82 @@
+{
+  "files": [
+    {
+      "path": "docs/specifications/windows/native-wnf-query/cases.json",
+      "bytes": 3073867,
+      "sha256": "3721b74e1a7f8b303213070d77d25a0fa84dfb52efb1de1d1d8b47f79a38a11b",
+      "previous-sha256": "3721b74e1a7f8b303213070d77d25a0fa84dfb52efb1de1d1d8b47f79a38a11b"
+    },
+    {
+      "path": "docs/specifications/windows/native-wnf-query/controls/wnf-owned-cross-scope.json",
+      "bytes": 2362,
+      "sha256": "328d3112b4e2ec3e58de828f3f0ef09591f9b344e779b029928f53bc30bbdc24",
+      "previous-sha256": null
+    },
+    {
+      "path": "docs/specifications/windows/native-wnf-query/controls/wnf-private-scope-order.json",
+      "bytes": 64281,
+      "sha256": "4a2064236a05fa686ddc0c87f4b61c1e5de33cbfafd738b7825504400d4bf5dd",
+      "previous-sha256": "4a2064236a05fa686ddc0c87f4b61c1e5de33cbfafd738b7825504400d4bf5dd"
+    },
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 18685,
+      "sha256": "964238c3a78d71c467c6ad6421add4e53b57f33b5d286b96dc8bbeb7ebf06cd0",
+      "previous-sha256": "964238c3a78d71c467c6ad6421add4e53b57f33b5d286b96dc8bbeb7ebf06cd0"
+    },
+    {
+      "path": "src/user/windows/dll/native/wnf_query.rs",
+      "bytes": 4381,
+      "sha256": "3bd33aecca845ed1ebae08bc07207751cbd461084f86cf7f509c1cc6fc176049",
+      "previous-sha256": "1065b7a7e6a82ae49dfcf99026f441e9d929a7370e145c8ba24e7855a42cd364"
+    },
+    {
+      "path": "src/user/windows/objects/wnf.rs",
+      "bytes": 7526,
+      "sha256": "1fa0306fea4d145014ebf0b267add937a6dab672acce53792021f879d9578ee8",
+      "previous-sha256": "1fa0306fea4d145014ebf0b267add937a6dab672acce53792021f879d9578ee8"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47835,
+      "sha256": "4415e7413459fb2c18a0e55d70c1aa819369a2acebbf588dae9d61578f40d918",
+      "previous-sha256": "4415e7413459fb2c18a0e55d70c1aa819369a2acebbf588dae9d61578f40d918"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/wnf_query_tests.rs",
+      "bytes": 28256,
+      "sha256": "a8547b4251a0206b5e0227d7d1ca17a385cae6138acf11900c80fc029e5a0418",
+      "previous-sha256": "62014964ee13cdc8736903665dcc84d7228e3bdb2317660bb76bdd9ffd92a3ff"
+    },
+    {
+      "path": "src/user/windows/wnf.rs",
+      "bytes": 1266,
+      "sha256": "32871ada8977c652462d259ecafeb563ddabf08cd79809579557461dbc497172",
+      "previous-sha256": "32871ada8977c652462d259ecafeb563ddabf08cd79809579557461dbc497172"
+    },
+    {
+      "path": "src/user/windows/wnf/catalog.rs",
+      "bytes": 8032,
+      "sha256": "233cf66c3278696a88fe9fe1a87dab3f68ac17cc7f6415716d893ba3b97b9c24",
+      "previous-sha256": "233cf66c3278696a88fe9fe1a87dab3f68ac17cc7f6415716d893ba3b97b9c24"
+    },
+    {
+      "path": "src/user/windows/wnf/installed_query.rs",
+      "bytes": 3693,
+      "sha256": "f5736cf1a3b0b27e43aad305f846bf82e8255c1c680f011bbc21ba2bd5e3b94f",
+      "previous-sha256": "f5736cf1a3b0b27e43aad305f846bf82e8255c1c680f011bbc21ba2bd5e3b94f"
+    },
+    {
+      "path": "src/user/windows/wnf/query.rs",
+      "bytes": 8945,
+      "sha256": "f43fc9c6d92fa35eaf2e6204b8cc59fafbdd8844aef2f0730acee5429574c9a1",
+      "previous-sha256": "f43fc9c6d92fa35eaf2e6204b8cc59fafbdd8844aef2f0730acee5429574c9a1"
+    },
+    {
+      "path": "src/user/windows/wnf/query_tests.rs",
+      "bytes": 7603,
+      "sha256": "aeb5e8308e9e1f7f6554ee15dad7bfb4874375452cb67f5b468dd9586eade75c",
+      "previous-sha256": "aeb5e8308e9e1f7f6554ee15dad7bfb4874375452cb67f5b468dd9586eade75c"
+    }
+  ]
+}

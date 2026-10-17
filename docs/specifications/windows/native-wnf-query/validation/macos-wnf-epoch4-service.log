@@ -1,0 +1,13 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/native-cookie-owner-20261016/target-macos/debug/deps/rax-754f4d2a527a4423)
+
+running 6 tests
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_absent_and_unavailable_captures_refuse_without_output_fabrication ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_explicit_process_scope_accepts_zero_rights_and_keeps_ownership ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_replays_8640_logical_calls_with_type_scope_and_denial ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_replays_all_6240_boundary_calls_and_generated_name_bytes ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_replays_selected_scopes_and_refuses_uncaptured_namespaces ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_snapshot_is_immutable_across_output_changes_and_empty_capacity ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 7854 filtered out; finished in 0.66s
+

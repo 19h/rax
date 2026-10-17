@@ -1,0 +1,49 @@
+{
+  "utc": "2026-10-17T20:26:38.773273+00:00",
+  "base": "7279261c3ab518e0d0b027817cabf776e9700eb8",
+  "owned": [
+    "src/user/windows/wnf.rs",
+    "src/user/windows/wnf/catalog.rs",
+    "src/user/windows/wnf/query.rs",
+    "src/user/windows/wnf/query_tests.rs",
+    "src/user/windows/wnf/installed_query.rs",
+    "src/user/windows/objects/wnf.rs",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/wnf_query.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/wnf_query_tests.rs",
+    "src/user/windows/native-runtime.md"
+  ],
+  "planes": {
+    "native acquisition": "bounded fixed provisioned names and immutable query data, no guest-driven host requests",
+    "guest objects": "query catalog captured with immutable subject; private process initial state; explicit scope stays guest-owned",
+    "native service": "NtQueryWnfStateData registration and measured six-pointer ABI/probe/publication",
+    "shared semantics": "same Rust adapter on Windows/macOS/Linux",
+    "host adapters": "only Windows native snapshot acquisition; other hosts remain explicitly unavailable",
+    "C ABI/defaults/dependencies": "unaffected",
+    "decoder/SMIR/JIT": "unaffected",
+    "UI/permissions/transport/persistence": "unaffected",
+    "packaging": "no new runtime dependency; kernel32 fixed exports only",
+    "verification": "all four ABI replay; native ARM64/x86/x86-LAA leaves; three-host full and scoped owning carriers required"
+  },
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "selection-time immutable shared WNF data supplies initial native environment",
+      "test": "bounded stable repeated capture, subject before/after match, unstable result explicit",
+      "status": "retained pending implementation validation"
+    },
+    {
+      "id": "A2",
+      "assumption": "a new emulated process starts with private empty process-scope state",
+      "test": "two independent guests; current-process scope handles; live host payload never imported",
+      "status": "retained"
+    },
+    {
+      "id": "A3",
+      "assumption": "measured header format is self-relative SD plus4-byte max plus optional16-byte TypeId",
+      "test": "all1613 metadata records, everytruncation and malformed/overlap fixture",
+      "status": "confirmed for corpus; unknown formats refuse"
+    }
+  ]
+}
