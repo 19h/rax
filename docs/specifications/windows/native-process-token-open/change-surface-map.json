@@ -1,0 +1,17 @@
+{
+  "decode": "unaffected: no decoder, instruction, memory mapping, optimizer, device or public C ABI change",
+  "execute": "unaffected: no decoder, instruction, memory mapping, optimizer, device or public C ABI change",
+  "SMIR": "unaffected: no decoder, instruction, memory mapping, optimizer, device or public C ABI change",
+  "optimizer": "unaffected: no decoder, instruction, memory mapping, optimizer, device or public C ABI change",
+  "native-lowering": "unaffected: no decoder, instruction, memory mapping, optimizer, device or public C ABI change",
+  "JIT-runtime": "unaffected: no decoder, instruction, memory mapping, optimizer, device or public C ABI change",
+  "device": "unaffected: no decoder, instruction, memory mapping, optimizer, device or public C ABI change",
+  "C-ABI": "unaffected: no decoder, instruction, memory mapping, optimizer, device or public C ABI change",
+  "Windows-userland": "affected: NtOpenProcessToken dispatch, guest token ownership and per-handle grants",
+  "host-acquisition": "affected: capture primary-token access ceiling and security status with immutable native selection",
+  "WNF": "subject/catalog carries the profile; WNF grant evaluation must remain unchanged",
+  "memory": "existing checked stores/probes and guard mechanics; no new mapping policy",
+  "targets-platforms": "same shared adapter on Windows/macOS/Linux; native acquisition and installed leaf only on Windows; all target configurations required",
+  "Assist": "RAX pin and engineering records only; no tool-schema, UI, permissions, transport or persistence change",
+  "tests-docs": "three-host full suites, native/portable replay, no-birth/lifetime, missing capture and actual carrier checks"
+}

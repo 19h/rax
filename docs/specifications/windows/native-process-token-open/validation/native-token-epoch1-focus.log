@@ -1,0 +1,39 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src-token-open)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3m 29s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-system-time-final\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 13 tests
+test user::windows::objects::primary_token::tests::native_process_token_handles_share_identity_and_survive_final_close ... ok
+test user::windows::objects::primary_token::tests::native_process_token_identifier_exhaustion_has_no_birth ... ok
+test user::windows::objects::primary_token::tests::native_process_token_reference_exhaustion_preserves_existing_owner ... ok
+test user::windows::process::sched::tests::services_tests::process_token_open_tests::installed::native_process_token_installed_leaf_matches_grants_faults_and_ret12 ... ok
+test user::windows::process::sched::tests::services_tests::process_token_open_tests::native_process_token_missing_capture_and_foreign_subject_refuse_without_birth ... ok
+test user::windows::process::sched::tests::services_tests::process_token_open_tests::native_process_token_opens_share_identity_and_keep_independent_grants_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::process_token_open_tests::native_process_token_respects_a_reduced_captured_ceiling_and_security_grant ... ok
+test user::windows::process::sched::tests::services_tests::process_token_open_tests::replay::native_process_token_replays_4096_initial_handle_access_and_output_records ... ok
+test user::windows::process::sched::tests::services_tests::process_token_open_tests::replay::native_process_token_replays_52860_native_access_masks_and_exact_grants ... ok
+test user::windows::process::sched::tests::services_tests::process_token_open_tests::replay::native_process_token_replays_8640_native_output_boundary_records ... ok
+test user::windows::security::token::tests::native_process_token_profile_orders_illegal_bits_privilege_and_grants ... ok
+test user::windows::security::token::tests::native_process_token_profile_preserves_measured_generic_mappings ... ok
+test user::windows::security::token::tests::native_process_token_profile_rejects_unknown_capture_shapes ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 7331 filtered out; finished in 4.27s
+

@@ -13,19 +13,22 @@ mod installed_query;
 #[cfg(windows)]
 pub(crate) fn snapshot() -> std::io::Result<Catalog> {
     let values = super::registry::wnf_values()?;
-    let subject = installed::subject()?;
+    let selection = installed::subject()?;
     let definitions = values
         .iter()
         .map(Definition::parse)
         .collect::<std::io::Result<Vec<_>>>()?;
     let queries = installed_query::snapshot(definitions)?;
-    if subject != installed::subject()? {
+    if selection != installed::subject()? {
         return Err(std::io::Error::new(
             std::io::ErrorKind::InvalidData,
-            "native WNF subject changed during query-state selection",
+            "native WNF subject or token access changed during query-state selection",
         ));
     }
-    Ok(Catalog::selected(values, subject)?.with_queries(queries))
+    let (subject, access) = selection;
+    Ok(Catalog::selected(values, subject)?
+        .with_primary_token_access(access)
+        .with_queries(queries))
 }
 
 #[cfg(not(windows))]

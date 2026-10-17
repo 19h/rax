@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "C:\Mac\Home\Downloads\assist-native-allocate-ex-transfer-20261010-2154\prepare-token-epoch1.py", line 11, in <module>
+    raw=(target/row['path']).read_bytes()
+  File "pathlib\__init__.py", line 782, in read_bytes
+  File "pathlib\__init__.py", line 776, in open
+FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Windows\\Temp\\assist-native-rax-20261010\\src-token-open\\docs\\specifications\\windows\\native-dynamic-function-table\\native\\dynamic-table-observer.rs'

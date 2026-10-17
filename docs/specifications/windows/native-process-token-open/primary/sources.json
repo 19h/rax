@@ -1,0 +1,41 @@
+{
+  "utc": "2026-10-17T23:10:20.587533+00:00",
+  "files": [
+    {
+      "path": "primary/ntopenprocesstoken.html",
+      "url": "https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/nf-ntifs-ntopenprocesstoken",
+      "bytes": 53418,
+      "sha256": "4cf2a9f8f280ac9b30dffd22c373fe2d25456cf98a53a28b2af7b7ef24d8c17c"
+    },
+    {
+      "path": "primary/access-mask.html",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/secauthz/access-mask",
+      "bytes": 54051,
+      "sha256": "b81a2ff1d0e72485ba19b2e59602b264bba8d78f86689f86420070524760ac0c"
+    },
+    {
+      "path": "primary/access-rights-token.html",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/secauthz/access-rights-for-access-token-objects",
+      "bytes": 50812,
+      "sha256": "d57490d1594ae2bf9baed62b9ba6a0a67c9874eef787811734579552f17cc1eb"
+    },
+    {
+      "path": "primary/openprocesstoken.html",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-openprocesstoken",
+      "bytes": 55314,
+      "sha256": "afbbb0dfc25749dc85e035e745a1edafaee787b63165617d9966129c59a60e4d"
+    },
+    {
+      "path": "primary/ntseapi.h",
+      "url": "https://raw.githubusercontent.com/winsiderss/phnt/53fbbdc5b5d2b08761db1c7b26bfa8c820924356/ntseapi.h",
+      "bytes": 74208,
+      "sha256": "7fa0a21902ed64036c495216fba85d0e29a1d3028fd60d09103993817d1473df"
+    },
+    {
+      "path": "primary/LICENSE",
+      "url": "https://raw.githubusercontent.com/winsiderss/phnt/53fbbdc5b5d2b08761db1c7b26bfa8c820924356/LICENSE",
+      "bytes": 1092,
+      "sha256": "ad2ab542c56c606e4c19d66a7f3cdcd3ef83beffb638e7c3893b22c7a6a6c0df"
+    }
+  ]
+}

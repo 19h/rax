@@ -19,6 +19,7 @@ mod directory;
 mod etw;
 mod lpc;
 pub use lpc::LpcPort;
+mod primary_token;
 mod scheduler;
 pub use scheduler::SchedulerData;
 mod wait_packets;
@@ -293,6 +294,8 @@ pub struct Objects {
     wnf_event: Option<ObjId>,
     /// ETW process notification registration is independent of WNF.
     etw_event: Option<ObjId>,
+    /// The immutable primary token survives the last caller handle.
+    primary_token: Option<ObjId>,
     wnf_subscriptions: wnf::Subscriptions,
     scheduler_bindings: BTreeMap<u32, (ObjId, u32)>,
     retired_scheduler_views: Vec<super::memory::SchedulerView>,
@@ -571,6 +574,7 @@ impl Objects {
         self.packets = Default::default();
         self.wnf_event = None;
         self.etw_event = None;
+        self.primary_token = None;
         self.wnf_subscriptions.records.clear();
         self.scheduler_bindings.clear();
         // Queue all views eagerly: dropping a partially consumed Drain also

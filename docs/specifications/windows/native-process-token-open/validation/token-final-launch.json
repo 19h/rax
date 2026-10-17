@@ -1,0 +1,19 @@
+{
+  "pid": 8480,
+  "utc": "2026-10-17T23:24:18.231772+00:00",
+  "state": "finished",
+  "source": "src-token-open",
+  "source-inputs": 5677,
+  "child-pid": 3620,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-token-final-core.ps1"
+  ],
+  "core-exit-code": 0,
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T23:57:01.388297+00:00"
+}

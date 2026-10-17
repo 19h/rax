@@ -1,0 +1,31 @@
+{
+  "utc": "2026-10-17T23:25:15.074511+00:00",
+  "argv": [
+    "rustfmt",
+    "+1.95.0",
+    "--check",
+    "--edition",
+    "2024",
+    "--config",
+    "skip_children=true",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/process_token.rs",
+    "src/user/windows/security.rs",
+    "src/user/windows/security/token.rs",
+    "src/user/windows/security/token/tests.rs",
+    "src/user/windows/objects.rs",
+    "src/user/windows/objects/primary_token.rs",
+    "src/user/windows/objects/wnf.rs",
+    "src/user/windows/wnf.rs",
+    "src/user/windows/wnf/catalog.rs",
+    "src/user/windows/wnf/installed.rs",
+    "src/user/windows/wnf/installed/access.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/process_token_open_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/process_token_open_replay_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/process_token_open_leaf_tests.rs"
+  ],
+  "exit-code": 0,
+  "stdout": "",
+  "stderr": ""
+}

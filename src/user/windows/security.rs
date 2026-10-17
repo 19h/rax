@@ -1,4 +1,6 @@
 //! Captured token subjects and bounded classic-DACL evaluation.
+pub(crate) mod token;
+
 use super::nt::status::{STATUS_ACCESS_DENIED, STATUS_PRIVILEGE_NOT_HELD};
 
 #[derive(Debug, Clone, PartialEq, Eq)]

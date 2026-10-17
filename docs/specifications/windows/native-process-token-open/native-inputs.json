@@ -1,0 +1,334 @@
+{
+  "files": [
+    {
+      "path": "native/host-version.json",
+      "bytes": 291,
+      "sha256": "044ad1ba4448003e9e09f840105070a7a620a5adbb9cc38e64ed0936cbf9ae74"
+    },
+    {
+      "path": "native/native-process-token-open-access.cpp",
+      "bytes": 8793,
+      "sha256": "0c63f746812491dd73b7aff2a416a705a5becc4190c471746479576e56b3b353"
+    },
+    {
+      "path": "native/native-process-token-open-access.ps1",
+      "bytes": 1864,
+      "sha256": "c5d9297a1c5e3dbfd583ec27c95685446c0d417256c798e19bbbb77c884c73ca"
+    },
+    {
+      "path": "native/native-process-token-open-boundary-v3.cpp",
+      "bytes": 7819,
+      "sha256": "ab50c665fb7ba6b032e1c41beb57b2120bd7ff404d8be6fc17e5e5cbaad92506"
+    },
+    {
+      "path": "native/native-process-token-open-boundary-v3.ps1",
+      "bytes": 1914,
+      "sha256": "305255019ca52c14b866c320180bf596566474165ea3780ceb8d6f6d199882ee"
+    },
+    {
+      "path": "native/native-process-token-open-initial.cpp",
+      "bytes": 8398,
+      "sha256": "83cb73078dd5d61e9a3221edc8e331dbafebf5091d6b3706a7a70d6c8e0028dd"
+    },
+    {
+      "path": "native/native-process-token-open-initial.ps1",
+      "bytes": 1858,
+      "sha256": "4bf104ad5a7a3061cbf551c75941343f9625066b12df0be77caf96291c3cb845"
+    },
+    {
+      "path": "native/native-process-token-open-lifetime.cpp",
+      "bytes": 5089,
+      "sha256": "02c7e31f0aaedae6f4e44125322de623cc4d1195ad151bf0ffa2f7079ea18180"
+    },
+    {
+      "path": "native/native-process-token-open-lifetime.ps1",
+      "bytes": 1884,
+      "sha256": "375a1d030753f05facede581a79e9efa3ab1356e0951c6a63cfc676825a9979c"
+    },
+    {
+      "path": "native/process-token-open-access-arm64-build.log",
+      "bytes": 38,
+      "sha256": "6701f47846b77ef6e4c223940e4f1ef75c3ab8ac0391abc3a0767c9373c9b6b2"
+    },
+    {
+      "path": "native/process-token-open-access-arm64-identity.json",
+      "bytes": 532,
+      "sha256": "5ef4d56190165751da5b1d8f1890c90caf4b368b0a12e286effa5baa59f7ab69"
+    },
+    {
+      "path": "native/process-token-open-access-arm64.log",
+      "bytes": 4342812,
+      "sha256": "82342323bdb8125fb78d1d56975e70546867193f0cc9fae22ab706ad6695d046"
+    },
+    {
+      "path": "native/process-token-open-access-launch.json",
+      "bytes": 542,
+      "sha256": "15abce868ffee01635f7b048b95173b7a0841e5d8b551f1d2c8a91adce3169bd"
+    },
+    {
+      "path": "native/process-token-open-access-x64-build.log",
+      "bytes": 38,
+      "sha256": "6701f47846b77ef6e4c223940e4f1ef75c3ab8ac0391abc3a0767c9373c9b6b2"
+    },
+    {
+      "path": "native/process-token-open-access-x64-identity.json",
+      "bytes": 524,
+      "sha256": "d294557f8d4b090b7f4e20b35180456aa102c21cef8547279b1400bd2d07cdec"
+    },
+    {
+      "path": "native/process-token-open-access-x64.log",
+      "bytes": 4345903,
+      "sha256": "62892fcc64122710c8b0ff580a9352b09016ccfcc523a49eef08b616f3272aa1"
+    },
+    {
+      "path": "native/process-token-open-access-x86-build.log",
+      "bytes": 38,
+      "sha256": "6701f47846b77ef6e4c223940e4f1ef75c3ab8ac0391abc3a0767c9373c9b6b2"
+    },
+    {
+      "path": "native/process-token-open-access-x86-identity.json",
+      "bytes": 522,
+      "sha256": "d43da2d744a654911b26b19002983aa830da513b612eeb492cad8a3826c1e62b"
+    },
+    {
+      "path": "native/process-token-open-access-x86-laa-build.log",
+      "bytes": 38,
+      "sha256": "6701f47846b77ef6e4c223940e4f1ef75c3ab8ac0391abc3a0767c9373c9b6b2"
+    },
+    {
+      "path": "native/process-token-open-access-x86-laa-identity.json",
+      "bytes": 536,
+      "sha256": "b6d6b0c45973f6d92be332d27b86e1d7a927b4e6bd095fd865243f0f1c9c31aa"
+    },
+    {
+      "path": "native/process-token-open-access-x86-laa.log",
+      "bytes": 4210573,
+      "sha256": "68f1a0bfe938474695c02cdc80bfba157fa5c03e953205a5b2504c56e3d325ec"
+    },
+    {
+      "path": "native/process-token-open-access-x86.log",
+      "bytes": 4210569,
+      "sha256": "502c4f46c79ed0ca91dd1830396581c308bd1ef1795ee2215b3445550ab7d2fc"
+    },
+    {
+      "path": "native/process-token-open-boundary-v3-arm64-build.log",
+      "bytes": 43,
+      "sha256": "f6fc0d6ce34dcee3ccf8d705b7d47d755e34db9eebb7b173f4231de790c28b7d"
+    },
+    {
+      "path": "native/process-token-open-boundary-v3-arm64-identity.json",
+      "bytes": 542,
+      "sha256": "6e69b071f385ead55f3c953a2577b62bc056df575de7987503ed95fd4b39a427"
+    },
+    {
+      "path": "native/process-token-open-boundary-v3-arm64.log",
+      "bytes": 755134,
+      "sha256": "3581448ae680d50cd4305ae5c7ac3a1efc9efea4f7bc497a6e67446af21019d0"
+    },
+    {
+      "path": "native/process-token-open-boundary-v3-launch.json",
+      "bytes": 546,
+      "sha256": "75c55e52f6dc922ff3abb633faf9e554346c8065b3678ea72c0bf4b437fea224"
+    },
+    {
+      "path": "native/process-token-open-boundary-v3-x64-build.log",
+      "bytes": 43,
+      "sha256": "f6fc0d6ce34dcee3ccf8d705b7d47d755e34db9eebb7b173f4231de790c28b7d"
+    },
+    {
+      "path": "native/process-token-open-boundary-v3-x64-identity.json",
+      "bytes": 534,
+      "sha256": "b327ad5518ad25e33b8c52a7fab01106e0c499456895fcffa37541545fa56a35"
+    },
+    {
+      "path": "native/process-token-open-boundary-v3-x64.log",
+      "bytes": 755258,
+      "sha256": "a384b4b76d11af35afd044ca09bb744215d710ec2f543374b1e799308dd3469a"
+    },
+    {
+      "path": "native/process-token-open-boundary-v3-x86-build.log",
+      "bytes": 43,
+      "sha256": "f6fc0d6ce34dcee3ccf8d705b7d47d755e34db9eebb7b173f4231de790c28b7d"
+    },
+    {
+      "path": "native/process-token-open-boundary-v3-x86-identity.json",
+      "bytes": 532,
+      "sha256": "21ca3ad97a85dd1d1fbe3202775452b5a69d3c57560d47c89806d6b31bfc29e9"
+    },
+    {
+      "path": "native/process-token-open-boundary-v3-x86-laa-build.log",
+      "bytes": 43,
+      "sha256": "f6fc0d6ce34dcee3ccf8d705b7d47d755e34db9eebb7b173f4231de790c28b7d"
+    },
+    {
+      "path": "native/process-token-open-boundary-v3-x86-laa-identity.json",
+      "bytes": 546,
+      "sha256": "54e8de161a26171e22f998050ffd573f7ed8e476fe4832e325d88481a81a6a02"
+    },
+    {
+      "path": "native/process-token-open-boundary-v3-x86-laa.log",
+      "bytes": 730422,
+      "sha256": "0d0f487f7537a0ca3e370e4131feafab6c5b9a46eafffe9dd293885e86a8cce7"
+    },
+    {
+      "path": "native/process-token-open-boundary-v3-x86.log",
+      "bytes": 730302,
+      "sha256": "4835a9157a99a777f8eccca6aa80bd7bfc8a483f3289863aefbf0b83e17df3d1"
+    },
+    {
+      "path": "native/process-token-open-initial-arm64-build.log",
+      "bytes": 39,
+      "sha256": "d65f53e7164657898350c369d5e8cf9099763ee9b2749c7181f77ab6bf835bf3"
+    },
+    {
+      "path": "native/process-token-open-initial-arm64-identity.json",
+      "bytes": 534,
+      "sha256": "c818babcacdf0d1d653fb30afcc39a544748b11a8e7beaabf3d19df5dd0a6f1e"
+    },
+    {
+      "path": "native/process-token-open-initial-arm64.log",
+      "bytes": 335174,
+      "sha256": "5881bfac9328756b1bc003fd862bf4ba6206453db09ac690cd11ba54b8615c81"
+    },
+    {
+      "path": "native/process-token-open-initial-launch.json",
+      "bytes": 543,
+      "sha256": "d91237f81a2d074bd500be5f7aeff79ac46bd801f74543775d3eed738da9e249"
+    },
+    {
+      "path": "native/process-token-open-initial-x64-build.log",
+      "bytes": 39,
+      "sha256": "d65f53e7164657898350c369d5e8cf9099763ee9b2749c7181f77ab6bf835bf3"
+    },
+    {
+      "path": "native/process-token-open-initial-x64-identity.json",
+      "bytes": 526,
+      "sha256": "a48bee6a4439c0d310deed07d09c7e9e0b014878516822c65a9d39d1c7dea33c"
+    },
+    {
+      "path": "native/process-token-open-initial-x64.log",
+      "bytes": 335228,
+      "sha256": "9178486f4127d846efe61fd92efbac0c3a22d6c970fa7196a8178368c5bc1e97"
+    },
+    {
+      "path": "native/process-token-open-initial-x86-build.log",
+      "bytes": 39,
+      "sha256": "d65f53e7164657898350c369d5e8cf9099763ee9b2749c7181f77ab6bf835bf3"
+    },
+    {
+      "path": "native/process-token-open-initial-x86-identity.json",
+      "bytes": 524,
+      "sha256": "2c5cb5e27708daba5343a6a5f441817b8cdb123cb2cb9288f1e7fe25d54618e0"
+    },
+    {
+      "path": "native/process-token-open-initial-x86-laa-build.log",
+      "bytes": 39,
+      "sha256": "d65f53e7164657898350c369d5e8cf9099763ee9b2749c7181f77ab6bf835bf3"
+    },
+    {
+      "path": "native/process-token-open-initial-x86-laa-identity.json",
+      "bytes": 538,
+      "sha256": "53ee71fbaec85e939dff2d53f72a2cf575d26d749f667e0ac80701eb88637a45"
+    },
+    {
+      "path": "native/process-token-open-initial-x86-laa.log",
+      "bytes": 325830,
+      "sha256": "2c781cc466202bfb2054691a3eb7de69c865f153c500053a1bca4b515aa4d04d"
+    },
+    {
+      "path": "native/process-token-open-initial-x86.log",
+      "bytes": 325826,
+      "sha256": "fe4ea44af581f04d373e9d060db6e79a1aaba173c318638285e4893fd9b21f2f"
+    },
+    {
+      "path": "native/process-token-open-lifetime-arm64-build.log",
+      "bytes": 40,
+      "sha256": "67c6ba9cd28697fe2e68600af267e3f88f4a6bb939cca9f34df4fb84ffc470ab"
+    },
+    {
+      "path": "native/process-token-open-lifetime-arm64-identity.json",
+      "bytes": 536,
+      "sha256": "e33e209389aca2a37154e274768a957f57d82de6573a32986e7e8b4e27e7465b"
+    },
+    {
+      "path": "native/process-token-open-lifetime-arm64.log",
+      "bytes": 6560,
+      "sha256": "9590a8ed10845370fa81fed5166841d59c82949a20e2f711737209bc4cef12b3"
+    },
+    {
+      "path": "native/process-token-open-lifetime-launch.json",
+      "bytes": 545,
+      "sha256": "8f6b8031bf62a0038ab06ffe44e10aa1add93d8858f3388e092143f1b43f724e"
+    },
+    {
+      "path": "native/process-token-open-lifetime-x64-build.log",
+      "bytes": 40,
+      "sha256": "67c6ba9cd28697fe2e68600af267e3f88f4a6bb939cca9f34df4fb84ffc470ab"
+    },
+    {
+      "path": "native/process-token-open-lifetime-x64-identity.json",
+      "bytes": 528,
+      "sha256": "44ed62516c537e83512d13e5f475ac6a14def565dbd79c72ea126b5537c27f31"
+    },
+    {
+      "path": "native/process-token-open-lifetime-x64.log",
+      "bytes": 6574,
+      "sha256": "6f0875aabdf24e08f8fca03b5d6c8a3664ca8ea5f28d7838b7fc55510bee2ed7"
+    },
+    {
+      "path": "native/process-token-open-lifetime-x86-build.log",
+      "bytes": 40,
+      "sha256": "67c6ba9cd28697fe2e68600af267e3f88f4a6bb939cca9f34df4fb84ffc470ab"
+    },
+    {
+      "path": "native/process-token-open-lifetime-x86-identity.json",
+      "bytes": 526,
+      "sha256": "9d5c5f4638f1f78b04ea0738c1e92e611ef635987aa98e301ef4e5a554418434"
+    },
+    {
+      "path": "native/process-token-open-lifetime-x86-laa-build.log",
+      "bytes": 40,
+      "sha256": "67c6ba9cd28697fe2e68600af267e3f88f4a6bb939cca9f34df4fb84ffc470ab"
+    },
+    {
+      "path": "native/process-token-open-lifetime-x86-laa-identity.json",
+      "bytes": 540,
+      "sha256": "f9ed4033b78fcccf8227c3d02c2b885ef139b13d6ccaa743613e86dc36d8fc26"
+    },
+    {
+      "path": "native/process-token-open-lifetime-x86-laa.log",
+      "bytes": 6262,
+      "sha256": "e00075dc25c9b66b5ab89b4e23a4f068b8c32b57c32d326a27ae74255c6f969e"
+    },
+    {
+      "path": "native/process-token-open-lifetime-x86.log",
+      "bytes": 6258,
+      "sha256": "bd3b63b008c38200428763e78879a1e0071203576112338900da56fc5dfae8f5"
+    },
+    {
+      "path": "native/producer-identities.json",
+      "bytes": 14057,
+      "sha256": "4f467b5bef54d7f4f327f0c4cbe44bf99e4ce3acdf0e78d2a00f6480f4358f13"
+    },
+    {
+      "path": "native/run-process-token-open-access.py",
+      "bytes": 1184,
+      "sha256": "a352488f85a46174719115d864abd0ae8e1c03de0f02117e19e25a24f5a12dcd"
+    },
+    {
+      "path": "native/run-process-token-open-boundary-v3.py",
+      "bytes": 1204,
+      "sha256": "ffe1a9c3496b8f85c037099547962501b394e2a9b01a14aa1ad563d5ec2c7051"
+    },
+    {
+      "path": "native/run-process-token-open-initial.py",
+      "bytes": 1188,
+      "sha256": "ffb243618520b38afabe6d9064cd7ee6c638f5f1e5abbd018885412b8ce1c3be"
+    },
+    {
+      "path": "native/run-process-token-open-lifetime.py",
+      "bytes": 1192,
+      "sha256": "57d3908c3346f3b83f3bdbbb0a95de120ab73c2687d55555c6587982e2e8bbc2"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "case": "missing-profile",
+    "rejected": true,
+    "error": "ValueError: complete producer axes"
+  },
+  {
+    "case": "wrong-machine",
+    "rejected": true,
+    "error": "ValueError: native PE machine"
+  },
+  {
+    "case": "false-birth",
+    "rejected": true,
+    "error": "ValueError: exact returned handle birth"
+  },
+  {
+    "case": "wrong-grant",
+    "rejected": true,
+    "error": "ValueError: measured native access grant"
+  },
+  {
+    "case": "wrong-status",
+    "rejected": true,
+    "error": "ValueError: measured access precedence"
+  },
+  {
+    "case": "missing-row",
+    "rejected": true,
+    "error": "ValueError: complete native operation sequence"
+  },
+  {
+    "case": "wrong-lifetime",
+    "rejected": true,
+    "error": "ValueError: parallel handles report the same token handle count"
+  },
+  {
+    "case": "wrong-last-error",
+    "rejected": true,
+    "error": "ValueError: no escaped exceptions, handle loss or last-error change"
+  }
+]

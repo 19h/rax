@@ -1,0 +1,17 @@
+{
+  "pid": 8596,
+  "utc": "2026-10-17T22:58:55.818230+00:00",
+  "state": "finished",
+  "scope": "read-only own-process token opening probes; only child-owned handles, memory and returned token handles",
+  "child-pid": 2540,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-process-token-open-initial.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T22:59:28.298412+00:00"
+}

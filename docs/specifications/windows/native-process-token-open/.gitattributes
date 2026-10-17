@@ -1,0 +1,2 @@
+# Keep native transcripts and their recorded hashes identical on every host.
+* -text

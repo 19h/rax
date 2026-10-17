@@ -1,0 +1,41 @@
+{
+  "scope": "Representative native and primary evidence plus authored Markdown remain byte-identical under core.autocrlf=true.",
+  "files": [
+    {
+      "path": "native/process-token-open-access-arm64.log",
+      "raw-git-blob": "90e0509fa2d40ce7eed246072d4200eec2b01524",
+      "autocrlf-true-git-blob": "90e0509fa2d40ce7eed246072d4200eec2b01524",
+      "equal": true
+    },
+    {
+      "path": "native/native-process-token-open-initial.ps1",
+      "raw-git-blob": "36641faceabb1d34d712cd29f335ca21eb93a64c",
+      "autocrlf-true-git-blob": "36641faceabb1d34d712cd29f335ca21eb93a64c",
+      "equal": true
+    },
+    {
+      "path": "native/native-process-token-open-initial.cpp",
+      "raw-git-blob": "9e7dfc42d4c0184b5cf7a3fbe198215236afc6e8",
+      "autocrlf-true-git-blob": "9e7dfc42d4c0184b5cf7a3fbe198215236afc6e8",
+      "equal": true
+    },
+    {
+      "path": "native/producer-identities.json",
+      "raw-git-blob": "05fa5d3e7070ef92b6c8ec3e6a958a6a8f0cbfc5",
+      "autocrlf-true-git-blob": "05fa5d3e7070ef92b6c8ec3e6a958a6a8f0cbfc5",
+      "equal": true
+    },
+    {
+      "path": "primary/ntopenprocesstoken.html",
+      "raw-git-blob": "9234c97fc778fbe23e416894fdb75a02257207b3",
+      "autocrlf-true-git-blob": "9234c97fc778fbe23e416894fdb75a02257207b3",
+      "equal": true
+    },
+    {
+      "path": "README.md",
+      "raw-git-blob": "1a7dd0d2912db67d650267c4d3410043761dd38a",
+      "autocrlf-true-git-blob": "1a7dd0d2912db67d650267c4d3410043761dd38a",
+      "equal": true
+    }
+  ]
+}

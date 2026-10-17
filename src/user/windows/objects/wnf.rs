@@ -52,6 +52,14 @@ impl Objects {
             .as_ref()
             .and_then(Catalog::primary_app_container)
     }
+    pub(crate) fn primary_token_access(
+        &self,
+    ) -> Option<crate::user::windows::security::token::Access> {
+        self.wnf_subscriptions
+            .catalog
+            .as_ref()
+            .and_then(Catalog::primary_token_access)
+    }
 
     pub(crate) fn select_wnf_catalog(&mut self, catalog: Catalog) {
         self.wnf_subscriptions.catalog = Some(catalog);

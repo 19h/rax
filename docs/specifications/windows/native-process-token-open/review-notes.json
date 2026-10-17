@@ -1,0 +1,16 @@
+{
+  "review": "source fixed after successful focused epoch",
+  "ownership": "17 permitted source/document paths plus the token proof directory; no unrelated paths modified",
+  "source-checks": [
+    "Native host handles are private RAII values and cannot reach the guest token table.",
+    "Guest NtOpenProcessToken does not call any host API.",
+    "First successful open retains one process-owned object reference; independent caller grants and final-close/reopen are checked.",
+    "Missing access/subject capture and other-process requests fail explicitly without handle or object creation.",
+    "WoW64 negative output stores and native64 no-store behavior use the measured checked-memory/guard policy.",
+    "Generic access precedence has direct native evidence and reduced-ceiling/security-success model checks.",
+    "New installed acquisition is cfg(windows); shared access/ownership/dispatch code compiles on all three hosts.",
+    "No dependency, C ABI, default feature, package layout, decoder or native lowerer change.",
+    "AddressSpace::probe populates writable frames before handle allocation; subsequent bounded writes use the same serialized address space and do not allocate missing backing."
+  ],
+  "validation": "Completed bounded token-opening gates; check-validation.py binds exact outcomes and known limitations."
+}

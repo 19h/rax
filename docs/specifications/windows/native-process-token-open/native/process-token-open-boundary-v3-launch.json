@@ -1,0 +1,17 @@
+{
+  "pid": 7456,
+  "utc": "2026-10-17T23:02:00.292810+00:00",
+  "state": "finished",
+  "scope": "read-only own-process token opening probes; only child-owned handles, memory and returned token handles",
+  "child-pid": 456,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-process-token-open-boundary-v3.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T23:02:21.179396+00:00"
+}

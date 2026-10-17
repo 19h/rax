@@ -38,6 +38,7 @@ pub(crate) enum Permission {
 pub(crate) struct Catalog {
     records: Arc<BTreeMap<u64, Option<u32>>>,
     primary_subject: Option<Arc<Subject>>,
+    primary_token_access: Option<crate::user::windows::security::token::Access>,
     queries: Option<Arc<super::Queries>>,
 }
 fn invalid(message: &'static str) -> io::Error {
@@ -201,12 +202,25 @@ impl Catalog {
         Ok(Self {
             records: Arc::new(records),
             primary_subject: Some(Arc::new(subject)),
+            primary_token_access: None,
             queries: None,
         })
     }
     pub(crate) fn with_queries(mut self, queries: super::Queries) -> Self {
         self.queries = Some(Arc::new(queries));
         self
+    }
+    pub(crate) fn with_primary_token_access(
+        mut self,
+        access: crate::user::windows::security::token::Access,
+    ) -> Self {
+        self.primary_token_access = Some(access);
+        self
+    }
+    pub(crate) fn primary_token_access(
+        &self,
+    ) -> Option<crate::user::windows::security::token::Access> {
+        self.primary_token_access
     }
     pub(crate) fn queries(&self) -> Option<Arc<super::Queries>> {
         self.queries.clone()

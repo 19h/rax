@@ -1,0 +1,57 @@
+identity profile=arm64 width=8
+open ordinal=0 label=first requested=00000008 status=00000000 last-error=4A2E19F7 output=A4
+handle label=first value=A4 count=2 pointers=32778 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+open ordinal=1 label=parallel requested=00000001 status=00000000 last-error=4A2E19F7 output=A8
+handle label=parallel value=A8 count=3 pointers=65545 granted=00000001 attributes=00000000 token-type-status=C0000022 token-type=0 returned=0
+handle label=first-after-open value=A4 count=3 pointers=98312 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+open ordinal=2 label=parallel requested=00000002 status=00000000 last-error=4A2E19F7 output=AC
+handle label=parallel value=AC count=4 pointers=98311 granted=00000002 attributes=00000000 token-type-status=C0000022 token-type=0 returned=0
+handle label=first-after-open value=A4 count=4 pointers=131078 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+open ordinal=3 label=parallel requested=00000008 status=00000000 last-error=4A2E19F7 output=B0
+handle label=parallel value=B0 count=5 pointers=131077 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+handle label=first-after-open value=A4 count=5 pointers=163844 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+open ordinal=4 label=parallel requested=00020000 status=00000000 last-error=4A2E19F7 output=B8
+handle label=parallel value=B8 count=6 pointers=163843 granted=00020000 attributes=00000000 token-type-status=C0000022 token-type=0 returned=0
+handle label=first-after-open value=A4 count=6 pointers=196610 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+open ordinal=5 label=parallel requested=02000000 status=00000000 last-error=4A2E19F7 output=BC
+handle label=parallel value=BC count=7 pointers=196609 granted=000F01FF attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+handle label=first-after-open value=A4 count=7 pointers=229376 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+open ordinal=6 label=parallel requested=10000000 status=00000000 last-error=4A2E19F7 output=C8
+handle label=parallel value=C8 count=8 pointers=229375 granted=000F01FF attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+handle label=first-after-open value=A4 count=8 pointers=262142 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+close ordinal=7 label=first status=00000000 last-error=4A2E19F7
+handle label=after-first-close value=A8 count=7 pointers=229379 granted=00000001 attributes=00000000 token-type-status=C0000022 token-type=0 returned=0
+handle label=after-first-close value=AC count=7 pointers=229378 granted=00000002 attributes=00000000 token-type-status=C0000022 token-type=0 returned=0
+handle label=after-first-close value=B0 count=7 pointers=229377 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+handle label=after-first-close value=B8 count=7 pointers=229376 granted=00020000 attributes=00000000 token-type-status=C0000022 token-type=0 returned=0
+handle label=after-first-close value=BC count=7 pointers=229375 granted=000F01FF attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+handle label=after-first-close value=C8 count=7 pointers=229374 granted=000F01FF attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+open ordinal=8 label=process-low-alias requested=00000008 status=00000000 last-error=4A2E19F7 output=CC
+handle label=process-low-alias value=CC count=8 pointers=229373 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+close ordinal=9 label=alias-token status=00000000 last-error=4A2E19F7
+open ordinal=10 label=process-low-alias requested=00000008 status=00000000 last-error=4A2E19F7 output=CC
+handle label=process-low-alias value=CC count=8 pointers=229386 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+close ordinal=11 label=alias-token status=00000000 last-error=4A2E19F7
+open ordinal=12 label=process-low-alias requested=00000008 status=00000000 last-error=4A2E19F7 output=CC
+handle label=process-low-alias value=CC count=8 pointers=229385 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+close ordinal=13 label=alias-token status=00000000 last-error=4A2E19F7
+open ordinal=14 label=process-low-alias requested=00000008 status=00000000 last-error=4A2E19F7 output=CC
+handle label=process-low-alias value=CC count=8 pointers=229384 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+close ordinal=15 label=alias-token status=00000000 last-error=4A2E19F7
+open ordinal=16 label=process-high-alias requested=00000008 status=C0000008 last-error=4A2E19F7 output=A5A5A5A5
+open ordinal=17 label=process-high-alias requested=00000008 status=C0000008 last-error=4A2E19F7 output=A5A5A5A5
+open ordinal=18 label=process-high-alias requested=00000008 status=C0000008 last-error=4A2E19F7 output=A5A5A5A5
+handle label=duplicate value=A4 count=8 pointers=229384 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+handle label=original-with-duplicate value=B0 count=8 pointers=262151 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+close ordinal=19 label=original status=00000000 last-error=4A2E19F7
+handle label=duplicate-after-close value=A4 count=7 pointers=229384 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+close ordinal=20 label=tagged-duplicate status=00000000 last-error=4A2E19F7
+close ordinal=21 label=remaining status=00000000 last-error=4A2E19F7
+close ordinal=22 label=remaining status=00000000 last-error=4A2E19F7
+close ordinal=23 label=remaining status=00000000 last-error=4A2E19F7
+close ordinal=24 label=remaining status=00000000 last-error=4A2E19F7
+close ordinal=25 label=remaining status=00000000 last-error=4A2E19F7
+open ordinal=26 label=after-last-close requested=00000008 status=00000000 last-error=4A2E19F7 output=C8
+handle label=after-last-close value=C8 count=2 pointers=32781 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+close ordinal=27 label=last status=00000000 last-error=4A2E19F7
+complete operations=28

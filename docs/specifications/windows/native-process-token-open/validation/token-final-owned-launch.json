@@ -1,0 +1,16 @@
+{
+  "pid": 5276,
+  "utc": "2026-10-17T23:24:19.147626+00:00",
+  "state": "finished",
+  "child-pid": 5220,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\assist-native-token-final-owned.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T23:31:01.583776+00:00"
+}

@@ -1,0 +1,51 @@
+[
+  {
+    "impact": "high",
+    "finding": "The final ordinary-program outcomes are retained exactly in validation/ordinary-analysis.json; full process emulation remains incomplete.",
+    "evidence": "validation/ordinary-analysis.json",
+    "blocks": "Full process-userland goal; not this bounded token-opening contract.",
+    "action": "Continue from the measured next boundary as a separate semantic group."
+  },
+  {
+    "impact": "medium",
+    "finding": "The first boundary setup used an invalid protection combination and v1/v2 had a printf argument mismatch.",
+    "evidence": "boundary-setup-correction.json in the task cache; only boundary-v3 is admitted.",
+    "blocks": "Invalid rows cannot define behavior.",
+    "action": "Retain failures separately and use verified v3 records."
+  },
+  {
+    "impact": "low",
+    "finding": "Identifier/reference exhaustion is tested in the model; native resource-exhaustion status and quotas are unmeasured.",
+    "evidence": "src/user/windows/objects/primary_token.rs and dll/native/process_token.rs",
+    "blocks": "No native quota or exhaustion-status equivalence claim.",
+    "action": "Retain the common modeled allocator failure and explicit no-birth semantics."
+  },
+  {
+    "impact": "medium",
+    "finding": "Five existing Windows BZHI/FP16 lowerer failures remain; two existing microkernel tests are ignored.",
+    "evidence": "validation/native-token-final-full.log",
+    "blocks": "No new failure in this semantic group; full green Windows regression is not claimed.",
+    "action": "Preserve exact failure and ignore identities."
+  },
+  {
+    "impact": "medium",
+    "finding": "Frozen Rust carrier minor184 differs from compared root196 and upstream root199.",
+    "evidence": "validation/upstream-cpp-consumer-compatibility.json and actual archive records",
+    "blocks": "Whole-current-root or package validation is not claimed.",
+    "action": "Bind unchanged selected C++ sources and retain exact carrier provenance."
+  },
+  {
+    "impact": "low",
+    "finding": "The 106 native lifetime operations are corroborated by representative model tests, not an exact row replay.",
+    "evidence": "native lifetime transcripts and objects/primary_token.rs",
+    "blocks": "No full-row lifetime replay claim.",
+    "action": "Keep native observations distinct from model regression coverage."
+  },
+  {
+    "impact": "medium",
+    "finding": "Token mutation, impersonation changes and other-process primary tokens are outside the captured immutable token contract.",
+    "evidence": "dll/native/process_token.rs and assumption P1",
+    "blocks": "Any future implementation must refresh or replace the captured profile.",
+    "action": "Keep unsupported paths explicit; do not assume the profile can survive token mutation."
+  }
+]

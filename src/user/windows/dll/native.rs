@@ -18,6 +18,7 @@ mod process_console;
 mod process_query;
 mod process_set;
 mod process_tls;
+mod process_token;
 mod query;
 mod registry;
 mod section_create;
@@ -256,6 +257,12 @@ pub(super) static EXPORTS: &[Export] = &[
         Stdcall,
         &[Ptr, I32, Ptr, I32],
         thread_set::information,
+    ),
+    Export::func(
+        "NtOpenProcessToken",
+        Stdcall,
+        &[Ptr, I32, Ptr],
+        process_token::open,
     ),
     Export::func(
         "NtOpenThreadToken",

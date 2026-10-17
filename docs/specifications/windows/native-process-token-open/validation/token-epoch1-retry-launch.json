@@ -1,0 +1,16 @@
+{
+  "pid": 10800,
+  "utc": "2026-10-17T23:19:51.293345+00:00",
+  "state": "finished",
+  "child-pid": 1444,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-token-epoch1-retry.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T23:23:31.110126+00:00"
+}

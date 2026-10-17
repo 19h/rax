@@ -1,0 +1,30 @@
+{
+  "QG1": {
+    "status": "pass for the bounded process-token-opening group",
+    "evidence": "Technical behavior, measurements and validation only."
+  },
+  "QG2": {
+    "status": "pass for the bounded process-token-opening group",
+    "evidence": "assumption-register.json; captured immutable token assumption retained with falsification probe."
+  },
+  "QG3": {
+    "status": "pass for the bounded process-token-opening group",
+    "evidence": "check-validation.py; full process-userland objective remains incomplete."
+  },
+  "QG4": {
+    "status": "pass for the bounded process-token-opening group",
+    "evidence": "Explicit access masks, HANDLE widths, counts and O(1)/O(H) resource costs."
+  },
+  "QG5": {
+    "status": "pass for the bounded process-token-opening group",
+    "evidence": "Native/WoW64 fault ordering, missing capture, rights precedence, handle identity and known external failures recorded."
+  },
+  "QG6": {
+    "status": "pass for the bounded process-token-opening group",
+    "evidence": "Pinned primary references, sixteen post-run producer identities, raw controls and actual selected artifacts."
+  },
+  "QG7": {
+    "status": "pass for the bounded process-token-opening group",
+    "evidence": "bounded-scope.json; token mutation, whole-root builds and next application boundary remain explicit."
+  }
+}

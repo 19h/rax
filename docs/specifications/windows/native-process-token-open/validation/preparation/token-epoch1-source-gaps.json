@@ -1,0 +1,286 @@
+[
+  {
+    "path": "docs/specifications/windows/native-dynamic-function-table/native/dynamic-table-observer.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/epoch6-owner-leaf-after.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/epoch6-owner-leaf-before.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/dll/native.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/dll/native/section_map.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/dll/native/section_map/geometry.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/dll/native/virtual_memory.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/dll/native/virtual_memory/image_extension.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/loader/mod.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/loader/native_image.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/loader/native_image_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/memory.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/memory/section.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/memory/section_extension_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/object_namespace.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/object_namespace/image.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/object_namespace/image_extension_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/object_namespace/installed/image.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/object_namespace/installed/image/extensions.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/process/sched/tests/services_tests/image_extension_leaf_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/process/sched/tests/services_tests/image_extension_owner_leaf_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/process/sched/tests/services_tests/image_extension_owner_replay_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/process/sched/tests/services_tests/image_extension_owner_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch2/src/user/windows/process/sched/tests/services_tests/image_extension_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch3/src/user/windows/memory/section.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/dll/native.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/dll/native/section_map.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/dll/native/section_map/geometry.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/dll/native/virtual_memory.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/dll/native/virtual_memory/image_extension.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/loader/mod.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/loader/native_image.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/loader/native_image_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/memory.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/memory/section.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/memory/section_extension_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/object_namespace.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/object_namespace/image.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/object_namespace/image_extension_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/object_namespace/installed.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/object_namespace/installed/image.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/object_namespace/installed/image/extensions.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/object_namespace/installed/section.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/process/sched/tests/services_tests/image_extension_leaf_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/process/sched/tests/services_tests/image_extension_owner_leaf_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/process/sched/tests/services_tests/image_extension_owner_replay_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/process/sched/tests/services_tests/image_extension_owner_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/process/sched/tests/services_tests/image_extension_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch4/src/user/windows/process/sched/tests/services_tests/virtual_memory_leaf_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/epoch5/src/user/windows/process/sched/tests/services_tests/virtual_memory_leaf_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/dll/native/section_map.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/dll/native/section_map/geometry.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/dll/native/virtual_memory.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/dll/native/virtual_memory/image_extension.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/loader/mod.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/loader/native_image.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/loader/native_image_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/memory.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/memory/section.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/memory/section_extension_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/object_namespace.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/object_namespace/image.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/object_namespace/image_extension_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/object_namespace/installed/image.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/object_namespace/installed/image/extensions.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/process/sched/tests/services_tests/image_extension_leaf_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/process/sched/tests/services_tests/image_extension_owner_leaf_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/process/sched/tests/services_tests/image_extension_owner_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-image-extension-owner/validation/source-epochs/initial/src/user/windows/process/sched/tests/services_tests/image_extension_tests.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-system-time/validation/image-owner-leaf-before.rs",
+    "reason": "missing"
+  },
+  {
+    "path": "docs/specifications/windows/native-system-time/validation/thread-before-epoch7.rs",
+    "reason": "missing"
+  }
+]

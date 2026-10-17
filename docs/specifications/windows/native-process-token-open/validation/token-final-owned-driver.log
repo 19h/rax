@@ -1,0 +1,13 @@
+Junction created for C:\Windows\Temp\assist-native-rax-20261010\assist\vendor\rax <<===>> C:\Windows\Temp\assist-native-rax-20261010\src-token-open
+Retargeted verified task-owned RAX junction
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+Verified 401 owning source identities and 3 helpers
+Verified9 actual frozen Windows C++ sources against current root
+assist-native-token-final-shipping.log 60B2355DA5871EE429E36F80581B753612BCF72D55F3AACB0AE63085A45A9DD4
+assist-native-token-final-cpp.log B0F277678BC54485CF58C6295345A12235DF27C7D420C5085B93AB253E75E214
+validated rlib: C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-owned\debug\deps\librax-e6c413934cad3a8f.rlib
+Verified 401 owning source identities and 3 helpers
+windows [(1203329606, 4674, '62bf407bcd107b2fc700f8ac24d25daabe67ffa00206c9fc76675aa26451215c'), (813912236, 260, 'bf7e77720e1d39b902b2692bef90e406fa7b8027305b4d47e38aea70fe4868c0')]

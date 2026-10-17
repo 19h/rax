@@ -5,6 +5,8 @@ use std::ffi::c_void;
 use std::io;
 use std::ptr::null_mut;
 
+mod access;
+
 type Handle = *mut c_void;
 #[link(name = "kernel32")]
 unsafe extern "system" {
@@ -13,7 +15,6 @@ unsafe extern "system" {
 }
 #[link(name = "advapi32")]
 unsafe extern "system" {
-    fn OpenProcessToken(process: Handle, access: u32, out: *mut Handle) -> i32;
     fn GetTokenInformation(
         token: Handle,
         class: u32,
@@ -25,7 +26,7 @@ unsafe extern "system" {
 struct Token(Handle);
 impl Drop for Token {
     fn drop(&mut self) {
-        // SAFETY: exclusive query-only token handle from OpenProcessToken.
+        // SAFETY: exclusive native token handle, never exposed to the guest.
         unsafe {
             CloseHandle(self.0);
         }
@@ -140,18 +141,12 @@ fn capture(token: &Token) -> io::Result<Subject> {
         privileges,
     })
 }
-pub(super) fn subject() -> io::Result<Subject> {
-    let mut handle = null_mut();
-    // SAFETY: pseudo current-process handle; TOKEN_QUERY=8 only; exclusive
-    // output becomes an RAII owner and never enters guest state.
-    if unsafe { OpenProcessToken(GetCurrentProcess(), 8, &mut handle) } == 0 {
-        return Err(io::Error::last_os_error());
-    }
-    let token = Token(handle);
+pub(super) fn subject() -> io::Result<(Subject, crate::user::windows::security::token::Access)> {
+    let (token, access) = access::select()?;
     for _ in 0..3 {
         let first = capture(&token)?;
         if first == capture(&token)? {
-            return Ok(first);
+            return Ok((first, access));
         }
     }
     Err(invalid(

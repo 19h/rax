@@ -1,0 +1,17 @@
+{
+  "sys-getwindowsversion": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ],
+  "platform-version": [
+    10,
+    0,
+    29683
+  ],
+  "platform-machine": "ARM64",
+  "ntdll-bytes": 4609312,
+  "ntdll-sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+}

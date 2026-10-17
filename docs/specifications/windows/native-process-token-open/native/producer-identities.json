@@ -1,0 +1,406 @@
+{
+  "captured-utc": "2026-10-17T23:10:11.143368+00:00",
+  "producers": [
+    {
+      "kind": "initial",
+      "profile": "arm64",
+      "source": {
+        "path": "native-process-token-open-initial.cpp",
+        "bytes": 8398,
+        "sha256": "83cb73078dd5d61e9a3221edc8e331dbafebf5091d6b3706a7a70d6c8e0028dd"
+      },
+      "exe": {
+        "profile": "arm64",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-token-open-initial-arm64\\probe.exe",
+        "bytes": 161792,
+        "sha256": "490782e4c8ac3271cdfbbb9a930ef88994ba5b0ea02f1d2abba2a85e52465b00",
+        "machine": 43620,
+        "large-address-aware": true
+      },
+      "exit-code": 0,
+      "log": {
+        "path": "process-token-open-initial-arm64.log",
+        "bytes": 335174,
+        "sha256": "5881bfac9328756b1bc003fd862bf4ba6206453db09ac690cd11ba54b8615c81"
+      },
+      "case-count": 1024,
+      "tracked-open-close-count": 0
+    },
+    {
+      "kind": "initial",
+      "profile": "x64",
+      "source": {
+        "path": "native-process-token-open-initial.cpp",
+        "bytes": 8398,
+        "sha256": "83cb73078dd5d61e9a3221edc8e331dbafebf5091d6b3706a7a70d6c8e0028dd"
+      },
+      "exe": {
+        "profile": "x64",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-token-open-initial-x64\\probe.exe",
+        "bytes": 161280,
+        "sha256": "4d79470b8be227e4ff8fe73a7a83cfee0bb2996f8f39035e29b6590d38acb82a",
+        "machine": 34404,
+        "large-address-aware": true
+      },
+      "exit-code": 0,
+      "log": {
+        "path": "process-token-open-initial-x64.log",
+        "bytes": 335228,
+        "sha256": "9178486f4127d846efe61fd92efbac0c3a22d6c970fa7196a8178368c5bc1e97"
+      },
+      "case-count": 1024,
+      "tracked-open-close-count": 0
+    },
+    {
+      "kind": "initial",
+      "profile": "x86",
+      "source": {
+        "path": "native-process-token-open-initial.cpp",
+        "bytes": 8398,
+        "sha256": "83cb73078dd5d61e9a3221edc8e331dbafebf5091d6b3706a7a70d6c8e0028dd"
+      },
+      "exe": {
+        "profile": "x86",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-token-open-initial-x86\\probe.exe",
+        "bytes": 139776,
+        "sha256": "ddda31a311a4935d9fc675c6f99e26fa49c29333e9bc3a417410075256d01de1",
+        "machine": 332,
+        "large-address-aware": false
+      },
+      "exit-code": 0,
+      "log": {
+        "path": "process-token-open-initial-x86.log",
+        "bytes": 325826,
+        "sha256": "fe4ea44af581f04d373e9d060db6e79a1aaba173c318638285e4893fd9b21f2f"
+      },
+      "case-count": 1024,
+      "tracked-open-close-count": 0
+    },
+    {
+      "kind": "initial",
+      "profile": "x86-laa",
+      "source": {
+        "path": "native-process-token-open-initial.cpp",
+        "bytes": 8398,
+        "sha256": "83cb73078dd5d61e9a3221edc8e331dbafebf5091d6b3706a7a70d6c8e0028dd"
+      },
+      "exe": {
+        "profile": "x86-laa",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-token-open-initial-x86-laa\\probe.exe",
+        "bytes": 139776,
+        "sha256": "30e1c169dc96c752ae714099b6bb1a27e829ba9403710bb7d01f0667941e5633",
+        "machine": 332,
+        "large-address-aware": true
+      },
+      "exit-code": 0,
+      "log": {
+        "path": "process-token-open-initial-x86-laa.log",
+        "bytes": 325830,
+        "sha256": "2c781cc466202bfb2054691a3eb7de69c865f153c500053a1bca4b515aa4d04d"
+      },
+      "case-count": 1024,
+      "tracked-open-close-count": 0
+    },
+    {
+      "kind": "boundary-v3",
+      "profile": "arm64",
+      "source": {
+        "path": "native-process-token-open-boundary-v3.cpp",
+        "bytes": 7819,
+        "sha256": "ab50c665fb7ba6b032e1c41beb57b2120bd7ff404d8be6fc17e5e5cbaad92506"
+      },
+      "exe": {
+        "profile": "arm64",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-token-open-boundary-v3-arm64\\probe.exe",
+        "bytes": 161792,
+        "sha256": "abb425263cc4ff9b30474ea891e0977a7b1c51160d43d195bf2ed3806f7096b0",
+        "machine": 43620,
+        "large-address-aware": true
+      },
+      "exit-code": 0,
+      "log": {
+        "path": "process-token-open-boundary-v3-arm64.log",
+        "bytes": 755134,
+        "sha256": "3581448ae680d50cd4305ae5c7ac3a1efc9efea4f7bc497a6e67446af21019d0"
+      },
+      "case-count": 2160,
+      "tracked-open-close-count": 0
+    },
+    {
+      "kind": "boundary-v3",
+      "profile": "x64",
+      "source": {
+        "path": "native-process-token-open-boundary-v3.cpp",
+        "bytes": 7819,
+        "sha256": "ab50c665fb7ba6b032e1c41beb57b2120bd7ff404d8be6fc17e5e5cbaad92506"
+      },
+      "exe": {
+        "profile": "x64",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-token-open-boundary-v3-x64\\probe.exe",
+        "bytes": 161280,
+        "sha256": "387d971ef54d34b0e6e837bb71876b5b919cc95dc097915708983a1d6ebd9ac9",
+        "machine": 34404,
+        "large-address-aware": true
+      },
+      "exit-code": 0,
+      "log": {
+        "path": "process-token-open-boundary-v3-x64.log",
+        "bytes": 755258,
+        "sha256": "a384b4b76d11af35afd044ca09bb744215d710ec2f543374b1e799308dd3469a"
+      },
+      "case-count": 2160,
+      "tracked-open-close-count": 0
+    },
+    {
+      "kind": "boundary-v3",
+      "profile": "x86",
+      "source": {
+        "path": "native-process-token-open-boundary-v3.cpp",
+        "bytes": 7819,
+        "sha256": "ab50c665fb7ba6b032e1c41beb57b2120bd7ff404d8be6fc17e5e5cbaad92506"
+      },
+      "exe": {
+        "profile": "x86",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-token-open-boundary-v3-x86\\probe.exe",
+        "bytes": 138752,
+        "sha256": "429a2ece1691e21ca010ab51bab99eccc24d5dac3cbd596f9c7c0ef6dde65a0b",
+        "machine": 332,
+        "large-address-aware": false
+      },
+      "exit-code": 0,
+      "log": {
+        "path": "process-token-open-boundary-v3-x86.log",
+        "bytes": 730302,
+        "sha256": "4835a9157a99a777f8eccca6aa80bd7bfc8a483f3289863aefbf0b83e17df3d1"
+      },
+      "case-count": 2160,
+      "tracked-open-close-count": 0
+    },
+    {
+      "kind": "boundary-v3",
+      "profile": "x86-laa",
+      "source": {
+        "path": "native-process-token-open-boundary-v3.cpp",
+        "bytes": 7819,
+        "sha256": "ab50c665fb7ba6b032e1c41beb57b2120bd7ff404d8be6fc17e5e5cbaad92506"
+      },
+      "exe": {
+        "profile": "x86-laa",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-token-open-boundary-v3-x86-laa\\probe.exe",
+        "bytes": 138752,
+        "sha256": "3624347781e982470cedf437ca59df415e70e97c0e23de2d48c123fd980a83c2",
+        "machine": 332,
+        "large-address-aware": true
+      },
+      "exit-code": 0,
+      "log": {
+        "path": "process-token-open-boundary-v3-x86-laa.log",
+        "bytes": 730422,
+        "sha256": "0d0f487f7537a0ca3e370e4131feafab6c5b9a46eafffe9dd293885e86a8cce7"
+      },
+      "case-count": 2160,
+      "tracked-open-close-count": 0
+    },
+    {
+      "kind": "access",
+      "profile": "arm64",
+      "source": {
+        "path": "native-process-token-open-access.cpp",
+        "bytes": 8793,
+        "sha256": "0c63f746812491dd73b7aff2a416a705a5becc4190c471746479576e56b3b353"
+      },
+      "exe": {
+        "profile": "arm64",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-token-open-access-arm64\\probe.exe",
+        "bytes": 171008,
+        "sha256": "2e0bf963ed4eb0c5e75d5b58767431c484208d04ef1092dfa36e65afa6d5d190",
+        "machine": 43620,
+        "large-address-aware": true
+      },
+      "exit-code": 0,
+      "log": {
+        "path": "process-token-open-access-arm64.log",
+        "bytes": 4342812,
+        "sha256": "82342323bdb8125fb78d1d56975e70546867193f0cc9fae22ab706ad6695d046"
+      },
+      "case-count": 13215,
+      "tracked-open-close-count": 0
+    },
+    {
+      "kind": "access",
+      "profile": "x64",
+      "source": {
+        "path": "native-process-token-open-access.cpp",
+        "bytes": 8793,
+        "sha256": "0c63f746812491dd73b7aff2a416a705a5becc4190c471746479576e56b3b353"
+      },
+      "exe": {
+        "profile": "x64",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-token-open-access-x64\\probe.exe",
+        "bytes": 169984,
+        "sha256": "586aaa89ec99130ee7e56c4c10f3129dc999a76cfce90d1ceb8968de33c6ad6b",
+        "machine": 34404,
+        "large-address-aware": true
+      },
+      "exit-code": 0,
+      "log": {
+        "path": "process-token-open-access-x64.log",
+        "bytes": 4345903,
+        "sha256": "62892fcc64122710c8b0ff580a9352b09016ccfcc523a49eef08b616f3272aa1"
+      },
+      "case-count": 13215,
+      "tracked-open-close-count": 0
+    },
+    {
+      "kind": "access",
+      "profile": "x86",
+      "source": {
+        "path": "native-process-token-open-access.cpp",
+        "bytes": 8793,
+        "sha256": "0c63f746812491dd73b7aff2a416a705a5becc4190c471746479576e56b3b353"
+      },
+      "exe": {
+        "profile": "x86",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-token-open-access-x86\\probe.exe",
+        "bytes": 144896,
+        "sha256": "c096e9cab0618f54cfdfb86e1bbefca86c250c23d189e336e07067ea3415ccf6",
+        "machine": 332,
+        "large-address-aware": false
+      },
+      "exit-code": 0,
+      "log": {
+        "path": "process-token-open-access-x86.log",
+        "bytes": 4210569,
+        "sha256": "502c4f46c79ed0ca91dd1830396581c308bd1ef1795ee2215b3445550ab7d2fc"
+      },
+      "case-count": 13215,
+      "tracked-open-close-count": 0
+    },
+    {
+      "kind": "access",
+      "profile": "x86-laa",
+      "source": {
+        "path": "native-process-token-open-access.cpp",
+        "bytes": 8793,
+        "sha256": "0c63f746812491dd73b7aff2a416a705a5becc4190c471746479576e56b3b353"
+      },
+      "exe": {
+        "profile": "x86-laa",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-token-open-access-x86-laa\\probe.exe",
+        "bytes": 144896,
+        "sha256": "d05d1ec4a948f6c2ad0017d2430e3e80a0f38726fa665ac2212a444a7b14a29b",
+        "machine": 332,
+        "large-address-aware": true
+      },
+      "exit-code": 0,
+      "log": {
+        "path": "process-token-open-access-x86-laa.log",
+        "bytes": 4210573,
+        "sha256": "68f1a0bfe938474695c02cdc80bfba157fa5c03e953205a5b2504c56e3d325ec"
+      },
+      "case-count": 13215,
+      "tracked-open-close-count": 0
+    },
+    {
+      "kind": "lifetime",
+      "profile": "arm64",
+      "source": {
+        "path": "native-process-token-open-lifetime.cpp",
+        "bytes": 5089,
+        "sha256": "02c7e31f0aaedae6f4e44125322de623cc4d1195ad151bf0ffa2f7079ea18180"
+      },
+      "exe": {
+        "profile": "arm64",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-token-open-lifetime-arm64\\probe.exe",
+        "bytes": 155136,
+        "sha256": "9d21f085799cc60994d896933b80ef56732ff6aefbcbd4ba7bb30e84219514fd",
+        "machine": 43620,
+        "large-address-aware": true
+      },
+      "exit-code": 0,
+      "log": {
+        "path": "process-token-open-lifetime-arm64.log",
+        "bytes": 6560,
+        "sha256": "9590a8ed10845370fa81fed5166841d59c82949a20e2f711737209bc4cef12b3"
+      },
+      "case-count": 0,
+      "tracked-open-close-count": 28
+    },
+    {
+      "kind": "lifetime",
+      "profile": "x64",
+      "source": {
+        "path": "native-process-token-open-lifetime.cpp",
+        "bytes": 5089,
+        "sha256": "02c7e31f0aaedae6f4e44125322de623cc4d1195ad151bf0ffa2f7079ea18180"
+      },
+      "exe": {
+        "profile": "x64",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-token-open-lifetime-x64\\probe.exe",
+        "bytes": 153600,
+        "sha256": "ccaac3a2a4db4a0ef7cccc9b9e27098712e794a55a737c167fb41299366be810",
+        "machine": 34404,
+        "large-address-aware": true
+      },
+      "exit-code": 0,
+      "log": {
+        "path": "process-token-open-lifetime-x64.log",
+        "bytes": 6574,
+        "sha256": "6f0875aabdf24e08f8fca03b5d6c8a3664ca8ea5f28d7838b7fc55510bee2ed7"
+      },
+      "case-count": 0,
+      "tracked-open-close-count": 28
+    },
+    {
+      "kind": "lifetime",
+      "profile": "x86",
+      "source": {
+        "path": "native-process-token-open-lifetime.cpp",
+        "bytes": 5089,
+        "sha256": "02c7e31f0aaedae6f4e44125322de623cc4d1195ad151bf0ffa2f7079ea18180"
+      },
+      "exe": {
+        "profile": "x86",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-token-open-lifetime-x86\\probe.exe",
+        "bytes": 125440,
+        "sha256": "7b2af8fc661993fbcbacef449554eae2e4ce6fc9036feb34dc38c25caf78649c",
+        "machine": 332,
+        "large-address-aware": false
+      },
+      "exit-code": 0,
+      "log": {
+        "path": "process-token-open-lifetime-x86.log",
+        "bytes": 6258,
+        "sha256": "bd3b63b008c38200428763e78879a1e0071203576112338900da56fc5dfae8f5"
+      },
+      "case-count": 0,
+      "tracked-open-close-count": 25
+    },
+    {
+      "kind": "lifetime",
+      "profile": "x86-laa",
+      "source": {
+        "path": "native-process-token-open-lifetime.cpp",
+        "bytes": 5089,
+        "sha256": "02c7e31f0aaedae6f4e44125322de623cc4d1195ad151bf0ffa2f7079ea18180"
+      },
+      "exe": {
+        "profile": "x86-laa",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\process-token-open-lifetime-x86-laa\\probe.exe",
+        "bytes": 125440,
+        "sha256": "d07290e9e6c56b8f009742f87f167dec746488cb77e5fd77a9bec556ecc9b410",
+        "machine": 332,
+        "large-address-aware": true
+      },
+      "exit-code": 0,
+      "log": {
+        "path": "process-token-open-lifetime-x86-laa.log",
+        "bytes": 6262,
+        "sha256": "e00075dc25c9b66b5ab89b4e23a4f068b8c32b57c32d326a27ae74255c6f969e"
+      },
+      "case-count": 0,
+      "tracked-open-close-count": 25
+    }
+  ],
+  "scope": "Four profiles on one native ARM64 Windows host. Pointer/grant/lifetime controls only; no RAX implementation yet."
+}

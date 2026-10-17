@@ -1,0 +1,54 @@
+identity profile=x86 width=4
+open ordinal=0 label=first requested=00000008 status=00000000 last-error=4A2E19F7 output=114
+handle label=first value=114 count=2 pointers=32776 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+open ordinal=1 label=parallel requested=00000001 status=00000000 last-error=4A2E19F7 output=118
+handle label=parallel value=118 count=3 pointers=65543 granted=00000001 attributes=00000000 token-type-status=C0000022 token-type=0 returned=0
+handle label=first-after-open value=114 count=3 pointers=98310 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+open ordinal=2 label=parallel requested=00000002 status=00000000 last-error=4A2E19F7 output=11C
+handle label=parallel value=11C count=4 pointers=98309 granted=00000002 attributes=00000000 token-type-status=C0000022 token-type=0 returned=0
+handle label=first-after-open value=114 count=4 pointers=131076 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+open ordinal=3 label=parallel requested=00000008 status=00000000 last-error=4A2E19F7 output=128
+handle label=parallel value=128 count=5 pointers=131075 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+handle label=first-after-open value=114 count=5 pointers=163842 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+open ordinal=4 label=parallel requested=00020000 status=00000000 last-error=4A2E19F7 output=12C
+handle label=parallel value=12C count=6 pointers=163841 granted=00020000 attributes=00000000 token-type-status=C0000022 token-type=0 returned=0
+handle label=first-after-open value=114 count=6 pointers=196608 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+open ordinal=5 label=parallel requested=02000000 status=00000000 last-error=4A2E19F7 output=130
+handle label=parallel value=130 count=7 pointers=196607 granted=000F01FF attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+handle label=first-after-open value=114 count=7 pointers=229374 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+open ordinal=6 label=parallel requested=10000000 status=00000000 last-error=4A2E19F7 output=134
+handle label=parallel value=134 count=8 pointers=229387 granted=000F01FF attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+handle label=first-after-open value=114 count=8 pointers=262154 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+close ordinal=7 label=first status=00000000 last-error=4A2E19F7
+handle label=after-first-close value=118 count=7 pointers=229391 granted=00000001 attributes=00000000 token-type-status=C0000022 token-type=0 returned=0
+handle label=after-first-close value=11C count=7 pointers=229390 granted=00000002 attributes=00000000 token-type-status=C0000022 token-type=0 returned=0
+handle label=after-first-close value=128 count=7 pointers=229389 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+handle label=after-first-close value=12C count=7 pointers=229388 granted=00020000 attributes=00000000 token-type-status=C0000022 token-type=0 returned=0
+handle label=after-first-close value=130 count=7 pointers=229387 granted=000F01FF attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+handle label=after-first-close value=134 count=7 pointers=229386 granted=000F01FF attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+open ordinal=8 label=process-low-alias requested=00000008 status=00000000 last-error=4A2E19F7 output=138
+handle label=process-low-alias value=138 count=8 pointers=229385 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+close ordinal=9 label=alias-token status=00000000 last-error=4A2E19F7
+open ordinal=10 label=process-low-alias requested=00000008 status=00000000 last-error=4A2E19F7 output=138
+handle label=process-low-alias value=138 count=8 pointers=229384 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+close ordinal=11 label=alias-token status=00000000 last-error=4A2E19F7
+open ordinal=12 label=process-low-alias requested=00000008 status=00000000 last-error=4A2E19F7 output=138
+handle label=process-low-alias value=138 count=8 pointers=229383 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+close ordinal=13 label=alias-token status=00000000 last-error=4A2E19F7
+open ordinal=14 label=process-low-alias requested=00000008 status=00000000 last-error=4A2E19F7 output=138
+handle label=process-low-alias value=138 count=8 pointers=229382 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+close ordinal=15 label=alias-token status=00000000 last-error=4A2E19F7
+handle label=duplicate value=114 count=8 pointers=229382 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+handle label=original-with-duplicate value=128 count=8 pointers=262149 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+close ordinal=16 label=original status=00000000 last-error=4A2E19F7
+handle label=duplicate-after-close value=114 count=7 pointers=229382 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+close ordinal=17 label=tagged-duplicate status=00000000 last-error=4A2E19F7
+close ordinal=18 label=remaining status=00000000 last-error=4A2E19F7
+close ordinal=19 label=remaining status=00000000 last-error=4A2E19F7
+close ordinal=20 label=remaining status=00000000 last-error=4A2E19F7
+close ordinal=21 label=remaining status=00000000 last-error=4A2E19F7
+close ordinal=22 label=remaining status=00000000 last-error=4A2E19F7
+open ordinal=23 label=after-last-close requested=00000008 status=00000000 last-error=4A2E19F7 output=134
+handle label=after-last-close value=134 count=2 pointers=32779 granted=00000008 attributes=00000000 token-type-status=00000000 token-type=1 returned=4
+close ordinal=24 label=last status=00000000 last-error=4A2E19F7
+complete operations=25

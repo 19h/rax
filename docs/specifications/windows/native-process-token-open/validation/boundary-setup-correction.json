@@ -1,0 +1,7 @@
+{
+  "failed-source-sha256": "48bf5e9ebd36fd9928fd5bb3c70d57c2854f12a69dfafdb1c2275f59355d99ac",
+  "failure": "PAGE_NOACCESS | PAGE_GUARD is rejected by VirtualProtect with error87 before the corresponding call.",
+  "correction": "Limit to ten valid native page-protection modes; preserve original setup failure.",
+  "additional-failure": "v1/v2 printf received two extra arguments because the format literal spans two source lines; the serialized records are invalid and excluded.",
+  "formatter-correction": "v3 adds both fields explicitly and treats C4473/C4474/C4477 as compiler errors."
+}

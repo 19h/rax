@@ -2188,3 +2188,30 @@ while the paired root is Rust ABI minor 196.
 The unchanged production observer now stops at `NtOpenProcessToken` (0x133),
 smoke turn 2,149,659 and whoami turn 2,152,008. Neither is a successful guest exit.
 See the [native contract, assumptions and evidence](../../../docs/specifications/windows/native-dynamic-function-table/README.md).
+
+
+## Native primary process-token opening (2026-10-17)
+
+`NtOpenProcessToken` now creates guest-owned handles with captured maximum
+access and system-security status. Native generic mappings, rights precedence,
+WoW64 failure stores, caller-buffer probing and page guards follow 65596
+replayed native calls. A single process-owned token identity survives caller
+closes; 106 separate native lifetime operations corroborate representative
+object/duplicate/close tests. Sixteen producers cover ARM64, x64 compatibility,
+x86 and x86-LAA on one ARM64 Windows kernel; no physical x64-kernel measurement
+is claimed. Missing capture and other-process requests remain explicit
+unsupported boundaries.
+
+Full suites are macOS 7903/0/2, Linux 7897/0/2 and Windows 7337/5/2; the five
+known Windows lowerer failures remain. C API 168, all-target checks and scoped
+Assist consumers/archive walks pass. Core source verification covers 5677
+inputs; owning archives cover 401 selected inputs. Frozen Rust ABI184 and the
+compared/upstream ABI196/199 distinction remains explicit.
+
+The unchanged production observer outcomes are:
+
+- `terminal turn=2149788 Complete(Internal("native NTDLL service NtQueryInformationToken: Unimplemented(\"NtQueryInformationToken: NtQueryInformationToken class 12\")"))`
+- `terminal turn=2152137 Complete(Internal("native NTDLL service NtQueryInformationToken: Unimplemented(\"NtQueryInformationToken: NtQueryInformationToken class 12\")"))`
+
+Full ordinary Windows application completion remains unproven. See the
+[native contract and complete evidence](../../../docs/specifications/windows/native-process-token-open/README.md).

@@ -1,0 +1,71 @@
+{
+  "base": "9653419cf8981989356ed40f2b75ada0d447aea5",
+  "utc": "2026-10-17T23:13:54.569213+00:00",
+  "paths": [
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/process_token.rs",
+    "src/user/windows/security.rs",
+    "src/user/windows/security/token.rs",
+    "src/user/windows/security/token/tests.rs",
+    "src/user/windows/objects.rs",
+    "src/user/windows/objects/primary_token.rs",
+    "src/user/windows/objects/wnf.rs",
+    "src/user/windows/wnf.rs",
+    "src/user/windows/wnf/catalog.rs",
+    "src/user/windows/wnf/installed.rs",
+    "src/user/windows/wnf/installed/access.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/process_token_open_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/process_token_open_replay_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/process_token_open_leaf_tests.rs",
+    "src/user/windows/native-runtime.md"
+  ],
+  "documentation-prefix": "docs/specifications/windows/native-process-token-open/",
+  "existing-source-identities": [
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 19075,
+      "sha256": "96de9d9e678a31dc80a7c0cf95d2229dd2cfde47f472d6a8627d798807df17b5"
+    },
+    {
+      "path": "src/user/windows/security.rs",
+      "bytes": 7449,
+      "sha256": "a3d603eac64bdbc6c5635f48acca6665f0c022765459951f71d4b110d5907cef"
+    },
+    {
+      "path": "src/user/windows/objects.rs",
+      "bytes": 27694,
+      "sha256": "5e37dd7e2be62aa6f90923f1782a262e036babb38c46c96b09d16818d18579d4"
+    },
+    {
+      "path": "src/user/windows/objects/wnf.rs",
+      "bytes": 8481,
+      "sha256": "01a3daca7498941abcdd9e8808bdfe8f609bcdd9a33af98d832a855305687a67"
+    },
+    {
+      "path": "src/user/windows/wnf.rs",
+      "bytes": 1321,
+      "sha256": "344cb76e05c8dce55fa07465d1ffba7f36d481f94f5838dddf15d47fc90eca77"
+    },
+    {
+      "path": "src/user/windows/wnf/catalog.rs",
+      "bytes": 9373,
+      "sha256": "8dd4213d8969d2041cf939a573aa0834739be37d675bafca7eaf264f2d059ef6"
+    },
+    {
+      "path": "src/user/windows/wnf/installed.rs",
+      "bytes": 5519,
+      "sha256": "23c19af50d5238aebe500e7adaaf28f97e5532414ef12fa6ea11d86ab941a616"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 48097,
+      "sha256": "47c24010b2168b2c8623f934424728d563a432de752219e2d6cca77854e2911c"
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "bytes": 158978,
+      "sha256": "978614e1d993b2d140902ca1e8629d2365d4bf1d61b210bb367ecb11c39c30ee"
+    }
+  ]
+}

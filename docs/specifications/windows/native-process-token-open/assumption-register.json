@@ -1,0 +1,48 @@
+[
+  {
+    "id": "P1",
+    "assumption": "A captured maximum primary-token grant and system-security open status govern this process while guest token mutation and impersonation are unsupported.",
+    "basis": [
+      "Existing immutable native Subject selection",
+      "Four-profile access controls"
+    ],
+    "dependent-result": "No host token request during a guest syscall; preserve the selected authorization ceiling.",
+    "stress-test": "Reduced maximum mask, absent capture, security success/denial, generic and illegal bits.",
+    "falsification-probe": "Supported guest operation changes token identity, DACL or privilege state without refreshing its profile.",
+    "status": "retained"
+  },
+  {
+    "id": "P2",
+    "assumption": "The native64 and WoW64 output paths have distinct fault priority and failure stores.",
+    "basis": [
+      "initial and boundary-v3 transcripts"
+    ],
+    "dependent-result": "Probe/store policy and no handle birth on output faults.",
+    "stress-test": "Invalid process, denied request, null output, unaligned/crossing pointers and ten valid protection modes.",
+    "falsification-probe": "Any replayed status, bytes, guard state, birth or last-error value differs from its native row.",
+    "status": "confirmed by all 65596 replay rows and three-host focused tests"
+  },
+  {
+    "id": "P3",
+    "assumption": "Repeated process-token opens refer to one primary token with independent handle grants.",
+    "basis": [
+      "lifetime producer handle-count increments, aliases and duplicate lifetime"
+    ],
+    "dependent-result": "Process-owned token ObjId, per-handle rights and stable identity after closes.",
+    "stress-test": "Multiple opens, duplicate then original close, tagged handles and final-close/reopen.",
+    "falsification-probe": "Separate token objects or premature token destruction is observable.",
+    "status": "confirmed by native controls and three-host object/lifetime tests"
+  },
+  {
+    "id": "P4",
+    "assumption": "Current native evidence is limited to one ARM64 Windows 10.0.29683 kernel and its four caller profiles.",
+    "basis": [
+      "native/host-version.json",
+      "post-run producer identities"
+    ],
+    "dependent-result": "Do not claim physical x64-kernel or arbitrary Windows-version measurements.",
+    "stress-test": "PE machine/LAA verification and stable source/artifact hashes.",
+    "falsification-probe": "A profile lacks its actual machine, post-run identity or completed transcript.",
+    "status": "confirmed"
+  }
+]
