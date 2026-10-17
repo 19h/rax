@@ -1,0 +1,21 @@
+{
+  "formula": "L(m)=8|(m&1?2:m&14?4:0); initial=m&L(m) plus new-data bit for nonzero selected stamp unequal to requested; a nonempty notification queue does not resignal when data is added; registration does not retroactively signal",
+  "profiles": [
+    {
+      "profile": "captured-system",
+      "rows": 192,
+      "all-matched": true
+    },
+    {
+      "profile": "empty",
+      "rows": 192,
+      "all-matched": true
+    },
+    {
+      "profile": "value",
+      "rows": 192,
+      "all-matched": true
+    }
+  ],
+  "tested-cases": 576
+}

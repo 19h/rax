@@ -1,6 +1,6 @@
 //! Process notification ownership; delivery requires separate WNF state services.
 use super::{ObjId, Object, Objects};
-use crate::user::windows::wnf::{Catalog, Permission};
+use crate::user::windows::wnf::{Catalog, Name, Permission};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -65,6 +65,28 @@ impl Objects {
     pub(crate) fn wnf_subscription(&self, name: u64) -> Option<&Subscription> {
         self.wnf_subscriptions.records.get(&name)
     }
+    pub(crate) fn wnf_subscription_stamp(
+        &self,
+        name: u64,
+        mask: u32,
+    ) -> Result<Option<u32>, &'static str> {
+        if !Name::decode(name).is_some_and(|parsed| parsed.scope == 0) {
+            return Ok(None);
+        }
+        if mask & 0x0E != 0 {
+            return Err(
+                "System WNF subscriber-level notifications require uncaptured shared state",
+            );
+        }
+        if mask & 1 == 0 {
+            return Ok(None);
+        }
+        self.wnf_subscriptions
+            .catalog
+            .as_ref()
+            .ok_or("System WNF subscription metadata was not selected")?
+            .subscription_stamp(name)
+    }
     /// O(log N) time/O(N) retained subscriptions, bounded by selected names.
     /// IDs are opaque private generations; no host subscription is created.
     pub(crate) fn subscribe_wnf(
@@ -76,11 +98,18 @@ impl Objects {
         if self.wnf_permission(name, mask) != Some(Permission::Allowed) || mask & !0x1F != 0 {
             return Err("WNF subscription was not admitted");
         }
+        let selected_stamp = self.wnf_subscription_stamp(name, mask)?;
         let previous = self.wnf_subscriptions.records.get(&name);
         let old_mask = previous.map_or(0, |sub| sub.event_mask);
         let old_levels = previous.map_or(0, |sub| levels(sub.event_mask));
-        let arrived = mask & levels(mask) & (!old_mask | !old_levels);
-        let pending = previous.map_or(0, |sub| sub.pending_mask & mask) | arrived;
+        let retained = previous.map_or(0, |sub| sub.pending_mask & mask);
+        let arrived = mask & levels(mask) & (!old_mask | !old_levels)
+            | if selected_stamp.is_some_and(|selected| selected != stamp) && retained == 0 {
+                1
+            } else {
+                0
+            };
+        let pending = retained | arrived;
         let id = if let Some(previous) = previous {
             previous.id
         } else {

@@ -1,0 +1,20 @@
+﻿[
+    {
+        "gate":  "integration",
+        "command":  "cargo.exe test --locked --offline --no-default-features --test user_windows --test user_windows_memory -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "native-wnf-system-final-integration.log"
+    },
+    {
+        "gate":  "capi",
+        "command":  "cargo.exe test --locked --offline --no-default-features -p rax-capi -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "native-wnf-system-final-capi.log"
+    },
+    {
+        "gate":  "full",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib -- --nocapture --test-threads=1",
+        "exit-code":  101,
+        "log":  "native-wnf-system-final-full.log"
+    }
+]

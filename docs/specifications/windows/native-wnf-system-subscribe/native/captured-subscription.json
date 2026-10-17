@@ -1,0 +1,19 @@
+{
+  "records": [
+    {
+      "args": "[11037c0, 0, 11, abe918]",
+      "state-name": "41911a28a3bc10b5",
+      "output": "Ok([00, 00, 00, 00, 00, 00, 00, 00])"
+    },
+    {
+      "args": "[1106ac0, 1, 11, abe118]",
+      "state-name": "0280032ea3bc0875",
+      "output": "Ok([00, 00, 00, 00, 00, 00, 00, 00])"
+    }
+  ],
+  "failing-state-name": "0280032ea3bc0875",
+  "source-epoch": "WNF query final4",
+  "source-sha256": "605a74b49da31a82d0ff3578d8d83e185f0ef1c93eb955413b5f9385ea38f2f7",
+  "trace-sha256": "463482022e7d196c2db98e0466af7872bf6c3237b063234d84b06c149d16c1d7",
+  "parser": "all subscription calls retained; final call is the failing boundary"
+}

@@ -55,7 +55,7 @@ pub(super) fn sid(bytes: &[u8]) -> Option<&[u8]> {
     }
     bytes.get(..8 + usize::from(bytes[1]) * 4)
 }
-fn matches(subject: &Subject, candidate: &[u8], deny: bool, restricted: bool) -> bool {
+pub(super) fn matches(subject: &Subject, candidate: &[u8], deny: bool, restricted: bool) -> bool {
     if !restricted && subject.user == candidate {
         return true;
     }
@@ -178,6 +178,13 @@ impl Catalog {
             let maximum = u32le(&value.data, length - 4).unwrap();
             let grant = if parsed.scope == 3 && maximum <= 4096 {
                 grants(&value.data[..length - 4], &subject)
+            } else if parsed.scope == 0 {
+                super::Definition::parse(&value)
+                    .ok()
+                    .and_then(|definition| {
+                        let trailer = if definition.type_id.is_some() { 20 } else { 4 };
+                        super::system::grants(&value.data[..length - trailer], &subject)
+                    })
             } else {
                 None
             };
@@ -186,8 +193,8 @@ impl Catalog {
         // A publish-only grant is not represented by the recorded provisioned
         // process catalog. Its mask conversion remains unmodeled rather than
         // applying an unverified access requirement.
-        for grant in records.values_mut() {
-            if *grant == Some(2) {
+        for (name, grant) in records.iter_mut() {
+            if Name::decode(*name).is_some_and(|parsed| parsed.scope == 3) && *grant == Some(2) {
                 *grant = None;
             }
         }
@@ -203,6 +210,21 @@ impl Catalog {
     }
     pub(crate) fn queries(&self) -> Option<Arc<super::Queries>> {
         self.queries.clone()
+    }
+    pub(crate) fn subscription_stamp(&self, name: u64) -> Result<Option<u32>, &'static str> {
+        let queries = self
+            .queries
+            .as_ref()
+            .ok_or("System WNF subscription requires selected query metadata")?;
+        match queries.get(name).map(|(_, record)| record) {
+            Some(super::Record::Data(data)) if data.stamp != 0 => Ok(Some(data.stamp)),
+            Some(super::Record::Data(data)) if data.bytes.is_empty() => Ok(None),
+            Some(super::Record::Status(
+                crate::user::windows::nt::status::STATUS_OBJECT_NAME_NOT_FOUND,
+            )) => Ok(None),
+            Some(super::Record::Unavailable(reason)) => Err(reason),
+            _ => Err("System WNF data admission is outside the selected subscription profile"),
+        }
     }
     /// Retains the same validated primary-token property used for WNF grants.
     /// `None` is an absent snapshot, not a non-AppContainer token.
@@ -221,13 +243,10 @@ impl Catalog {
         let Some(grant) = grant else {
             return Permission::Unmodeled;
         };
-        let required = if event_mask == 0 {
-            0
-        } else if event_mask & 0x0E != 0 {
-            3
-        } else {
-            1
-        };
+        if Name::decode(name).is_some_and(|parsed| parsed.scope == 0) && self.queries.is_none() {
+            return Permission::Unmodeled;
+        }
+        let required = u32::from(event_mask & 0x11 != 0) | (u32::from(event_mask & 0x0E != 0) << 1);
         if grant & required == required {
             Permission::Allowed
         } else {

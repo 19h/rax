@@ -1,0 +1,32 @@
+{
+  "utc": "2026-10-17T21:00:47.898696+00:00",
+  "base": "44d21496b9c81e3911e7bbb4160eb13b22ca183d",
+  "root": "/Users/int/Library/Caches/assist-process-emulation/native-wnf-system-subscribe-20261017/rax-source",
+  "status": "## HEAD (no branch)\n",
+  "owned": [
+    "src/user/windows/wnf.rs",
+    "src/user/windows/wnf/catalog.rs",
+    "src/user/windows/wnf/system.rs",
+    "src/user/windows/wnf/system_tests.rs",
+    "src/user/windows/objects/wnf.rs",
+    "src/user/windows/dll/native/wnf.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/wnf_system_subscription_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/wnf_system_subscription_leaf_tests.rs",
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/process/sched/tests/services_tests/wnf_subscription_tests.rs"
+  ],
+  "documentation-root": "docs/specifications/windows/native-wnf-system-subscribe",
+  "planes": {
+    "native acquisition": "reuse immutable query and primary-subject snapshots; no additional host subscriptions",
+    "guest objects": "System read subscription data-pending semantics and private IDs",
+    "guest service": "preserve measured pointer/order/output; explicitly refuse uncaptured write/subscriber-level profiles",
+    "shared semantics": "same Rust metadata/service behavior on Windows macOS Linux",
+    "host adapter": "unchanged Windows-only installed-library snapshot with explicit unavailability elsewhere",
+    "public C ABI/defaults/dependencies": "unaffected",
+    "CPU lifting/JIT": "unaffected",
+    "UI/transport/persistence/permissions": "unaffected",
+    "packaging": "no new runtime dependency",
+    "verification": "native permission/fresh/transition/triple corpora; four-ABI portable replay and installed ARM64/x86/x86-LAA leaves; full three-host core and scoped owning carriers"
+  }
+}

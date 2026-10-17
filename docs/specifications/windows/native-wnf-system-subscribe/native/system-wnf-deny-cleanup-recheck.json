@@ -1,0 +1,6 @@
+{
+  "name": "0x41c64e6da42b8845",
+  "query-status": 0,
+  "exists": 0,
+  "scope": "read-only recheck of the probe-owned name after its creator process exited"
+}

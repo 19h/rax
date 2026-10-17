@@ -1,0 +1,20 @@
+﻿[
+    {
+        "gate":  "system",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib system_wnf -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "native-wnf-system-epoch2-system.log"
+    },
+    {
+        "gate":  "regression",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib wnf -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "native-wnf-system-epoch2-regression.log"
+    },
+    {
+        "gate":  "all-targets",
+        "command":  "cargo.exe check --locked --offline --no-default-features --all-targets",
+        "exit-code":  0,
+        "log":  "native-wnf-system-epoch2-all-targets.log"
+    }
+]

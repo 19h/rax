@@ -1,0 +1,59 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.31s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 40 tests
+test user::windows::objects::wnf::tests::native_wnf_process_event_reference_overflow_is_transactional ... ok
+test user::windows::objects::wnf::tests::native_wnf_subscription_generation_exhaustion_and_owner_failure_are_transactional ... ok
+test user::windows::process::sched::tests::services_tests::etw_notification_tests::native_etw_notification_close_reuse_drain_and_distinct_wnf_owner_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::native_wnf_process_event_first_registration_aliases_and_process_drain_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::native_wnf_process_event_isolated_processes_and_one_argument_never_probe_guest_memory ... ok
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::native_wnf_process_event_replays_all_192_initialized_native_rows ... ok
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::native_wnf_process_event_replays_all_48_fresh_native_sequences ... ok
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::native_wnf_process_event_status_translation_matches_installed_rtl ... ok
+test user::windows::process::sched::tests::services_tests::wnf_process_event_tests::native_wnf_process_event_type_and_access_errors_precede_busy_without_pins ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_absent_and_unavailable_captures_refuse_without_output_fabrication ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_explicit_process_scope_accepts_zero_rights_and_keeps_ownership ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_replays_8640_logical_calls_with_type_scope_and_denial ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_replays_all_6240_boundary_calls_and_generated_name_bytes ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_replays_selected_scopes_and_refuses_uncaptured_namespaces ... ok
+test user::windows::process::sched::tests::services_tests::wnf_query_tests::native_wnf_query_snapshot_is_immutable_across_output_changes_and_empty_capacity ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_fresh_event_order_and_closed_caller_pin_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_guard_consumption_and_denied_update_preserve_record_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_pending_metadata_matches_128_native_queue_captures_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_288_fresh_process_names_and_metadata_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_17152_name_mask_calls ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_228_overlapping_output_cases ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_2496_pointer_status_and_output_cases ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_256_mask_updates_with_stable_identity ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_replays_all_840_guard_and_readonly_copy_cases ... ok
+test user::windows::process::sched::tests::services_tests::wnf_subscription_tests::native_wnf_subscription_requires_selection_and_preserves_fixed_64_bit_output_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_system_subscription_tests::native_system_wnf_fresh_access_and_queue_order_replay_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::wnf_system_subscription_tests::native_system_wnf_fresh_access_and_queue_order_replay_all_abis' (41) panicked at src/user/windows/process/sched/tests/services_tests/wnf_system_subscription_tests.rs:142:13:
+assertion `left == right` failed: {"after":"1","calls":"4","case":"34","end":"00000000","exit":"77","handles-after":"54","handles-before":"54","id":"000000000001E1E3","mask":"00000001","registered":"00000000","repeat":"00000000","repeat-id":"000000000001E1E3","stamp":"00000000","state0":"0","state1":"0","state2":"1","state3":"1","state4":"1","status":"00000000","type0":"1","type1":"1","type2":"1","type3":"1","type4":"1","warmup":"0","width":"8"}
+  left: 1
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test user::windows::process::sched::tests::services_tests::wnf_system_subscription_tests::native_system_wnf_read_mask_and_stamp_transitions_replay_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_system_subscription_tests::native_system_wnf_unknown_data_and_failed_requests_are_transactional ... ok
+test user::windows::wnf::query_tests::query_capture_bounds_retries_and_never_imports_host_process_payload ... ok
+test user::windows::wnf::query_tests::query_catalog_rejects_duplicate_invalid_and_over_budget_data ... ok
+test user::windows::wnf::query_tests::query_provisioning_parses_every_native_record_and_the_single_typed_tail ... ok
+test user::windows::wnf::query_tests::query_provisioning_refuses_malformed_offsets_sid_extents_and_unknown_trailers ... ok
+test user::windows::wnf::system_tests::native_system_wnf_actual_typed_descriptor_requires_selected_queries ... ok
+test user::windows::wnf::system_tests::native_system_wnf_permissions_match_3456_recorded_calls ... ok
+test user::windows::wnf::system_tests::native_system_wnf_query_admission_is_not_replaced_by_empty_data ... ok
+test user::windows::wnf::system_tests::native_system_wnf_unknown_descriptors_and_subjects_remain_unavailable ... ok
+test user::windows::wnf::tests::native_wnf_subscription_catalog_access_matches_all_72_process_name_calls ... ok
+test user::windows::wnf::tests::native_wnf_subscription_catalog_rejects_unmodeled_security_and_malformed_values ... ok
+test user::windows::wnf::tests::native_wnf_subscription_name_capture_replays_all_8192_domain_rows ... ok
+test user::windows::wnf::tests::primary_token_property_is_retained_independently_of_catalog_records ... ok
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::wnf_system_subscription_tests::native_system_wnf_fresh_access_and_queue_order_replay_all_abis
+
+test result: FAILED. 39 passed; 1 failed; 0 ignored; 0 measured; 7821 filtered out; finished in 8.40s
+
+error: test failed, to rerun pass `--lib`

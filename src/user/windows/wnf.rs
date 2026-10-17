@@ -2,6 +2,7 @@
 //! Guest requests use private records and never acquire a host token or HKEY.
 mod catalog;
 mod query;
+mod system;
 pub(crate) use catalog::{Catalog, Name, Permission};
 pub(crate) use query::{Data, Definition, Queries, Record};
 #[cfg(windows)]
@@ -40,3 +41,6 @@ pub(crate) mod tests;
 
 #[cfg(test)]
 mod query_tests;
+
+#[cfg(test)]
+pub(crate) mod system_tests;

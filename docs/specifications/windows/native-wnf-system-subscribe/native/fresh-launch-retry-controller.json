@@ -1,0 +1,15 @@
+{
+  "utc": "2026-10-17T20:51:58.476463+00:00",
+  "argv": [
+    "prlctl",
+    "exec",
+    "a5b14f9a-d292-4610-a04d-df4ca4337c9d",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "-B",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-system-wnf-subscribe-fresh-probe.py"
+  ],
+  "exit-code": 0,
+  "stdout": "{\"pid\": 10372, \"utc\": \"2026-10-17T20:51:43.585984+00:00\", \"state\": \"finished\", \"scope\": \"only probe-owned temporary System names; no existing host state mutated\", \"child-pid\": 2884, \"argv\": [\"powershell.exe\", \"-NoProfile\", \"-ExecutionPolicy\", \"Bypass\", \"-File\", \"C:\\\\Mac\\\\Home\\\\Downloads\\\\assist-native-allocate-ex-transfer-20261010-2154\\\\native-system-wnf-subscribe-fresh.ps1\"], \"exit-code\": 0, \"completed-utc\": \"2026-10-17T20:51:58.425085+00:00\"}\n",
+  "stderr": "",
+  "guard": "prior launch/lock checked; native script uses exclusive creation"
+}

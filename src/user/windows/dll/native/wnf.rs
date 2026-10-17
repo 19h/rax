@@ -58,11 +58,14 @@ fn subscribe_name(c: &mut Ctx, name: u64, stamp: u32, mask: u32) -> Result<(u32,
         Some(Permission::Denied) => return Ok((STATUS_ACCESS_DENIED, 0)),
         Some(Permission::Unmodeled) => {
             return Err(c.unsupported(
-                "WNF state scope or security descriptor is outside the measured process profile",
+                "WNF state scope or security descriptor is outside the selected subscription profile",
             ));
         }
         Some(Permission::Allowed) => {}
     }
+    c.p.objects
+        .wnf_subscription_stamp(name, mask)
+        .map_err(|message| c.unsupported(message))?;
     let id =
         c.p.objects
             .subscribe_wnf(name, stamp, mask)

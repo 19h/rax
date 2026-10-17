@@ -1,0 +1,29 @@
+   Compiling vm-memory v0.17.1 (/work/vendor/rax/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 17s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 7 tests
+test user::windows::process::sched::tests::services_tests::wnf_system_subscription_tests::native_system_wnf_fresh_access_and_queue_order_replay_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::wnf_system_subscription_tests::native_system_wnf_fresh_access_and_queue_order_replay_all_abis' (359) panicked at src/user/windows/process/sched/tests/services_tests/wnf_system_subscription_tests.rs:142:13:
+assertion `left == right` failed: {"after":"1","calls":"4","case":"34","end":"00000000","exit":"77","handles-after":"54","handles-before":"54","id":"000000000001E1E3","mask":"00000001","registered":"00000000","repeat":"00000000","repeat-id":"000000000001E1E3","stamp":"00000000","state0":"0","state1":"0","state2":"1","state3":"1","state4":"1","status":"00000000","type0":"1","type1":"1","type2":"1","type3":"1","type4":"1","warmup":"0","width":"8"}
+  left: 1
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test user::windows::process::sched::tests::services_tests::wnf_system_subscription_tests::native_system_wnf_read_mask_and_stamp_transitions_replay_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_system_subscription_tests::native_system_wnf_unknown_data_and_failed_requests_are_transactional ... ok
+test user::windows::wnf::system_tests::native_system_wnf_actual_typed_descriptor_requires_selected_queries ... ok
+test user::windows::wnf::system_tests::native_system_wnf_permissions_match_3456_recorded_calls ... ok
+test user::windows::wnf::system_tests::native_system_wnf_query_admission_is_not_replaced_by_empty_data ... ok
+test user::windows::wnf::system_tests::native_system_wnf_unknown_descriptors_and_subjects_remain_unavailable ... ok
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::wnf_system_subscription_tests::native_system_wnf_fresh_access_and_queue_order_replay_all_abis
+
+test result: FAILED. 6 passed; 1 failed; 0 ignored; 0 measured; 7854 filtered out; finished in 0.37s
+
+error: test failed, to rerun pass `--lib`

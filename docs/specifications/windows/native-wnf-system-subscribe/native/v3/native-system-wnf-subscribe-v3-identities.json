@@ -1,0 +1,81 @@
+{
+  "scope": "four producer ABIs on one ARM64 Windows kernel; only own temporary System names",
+  "producers": [
+    {
+      "profile": "arm64",
+      "source-sha256": "edd443e8b06fa244b65d5226309818767675b4af139cf44d1273a65aeb4d8c9a",
+      "executable": {
+        "sha256": "c1081393403591614fde316d0d2b7e468edd37672af3ccb5458a131cda35ae43",
+        "bytes": 147968,
+        "machine": 43620
+      },
+      "stdout": {
+        "sha256": "a0a68ea1037d47dd52f36fe40cfabf0c1e8389146a05a7be8b0f581b697c4032",
+        "bytes": 125143
+      },
+      "cases": 768,
+      "created": 8,
+      "deleted": 8,
+      "freed": 8,
+      "subscriptions": 279,
+      "unsubscribed": 279
+    },
+    {
+      "profile": "x64",
+      "source-sha256": "edd443e8b06fa244b65d5226309818767675b4af139cf44d1273a65aeb4d8c9a",
+      "executable": {
+        "sha256": "e7c0a776a163698fd561df35a2834ffe3eab9753429edee5dd7a7f189a86a630",
+        "bytes": 145408,
+        "machine": 34404
+      },
+      "stdout": {
+        "sha256": "a3d90e767916c6533c33270e04a32495bcfa45dc49e5d9fbfcdf4a52f223ebd2",
+        "bytes": 125141
+      },
+      "cases": 768,
+      "created": 8,
+      "deleted": 8,
+      "freed": 8,
+      "subscriptions": 279,
+      "unsubscribed": 279
+    },
+    {
+      "profile": "x86",
+      "source-sha256": "edd443e8b06fa244b65d5226309818767675b4af139cf44d1273a65aeb4d8c9a",
+      "executable": {
+        "sha256": "a2e679a8355cc69225f13387c0a7701f2d697cda9a89e154bab439cc65b0dd6b",
+        "bytes": 120832,
+        "machine": 332
+      },
+      "stdout": {
+        "sha256": "6640a5c72d0c203b218c74b549f310d8e7077c9c4daedd959d6fce22a27a2498",
+        "bytes": 125141
+      },
+      "cases": 768,
+      "created": 8,
+      "deleted": 8,
+      "freed": 8,
+      "subscriptions": 279,
+      "unsubscribed": 279
+    },
+    {
+      "profile": "x86-laa",
+      "source-sha256": "edd443e8b06fa244b65d5226309818767675b4af139cf44d1273a65aeb4d8c9a",
+      "executable": {
+        "sha256": "da270d14099cdf0d54d402be1ca887d71676b93cdd55f86d761a6cbc6c350c35",
+        "bytes": 120832,
+        "machine": 332
+      },
+      "stdout": {
+        "sha256": "1df84b4dcb68c0e5996c1878081ee6b0678820c510ee4203d14e7bcfd2373b0f",
+        "bytes": 125145
+      },
+      "cases": 768,
+      "created": 8,
+      "deleted": 8,
+      "freed": 8,
+      "subscriptions": 279,
+      "unsubscribed": 279
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "utc": "2026-10-17T21:23:18.575516+00:00",
+  "scope": "selected System WNF read subscriptions",
+  "complete-user-goal": false,
+  "assumptions": {
+    "S1": "3456 native permission calls and all shared/installed replay checks pass for the bounded profile",
+    "S2": "1344 native event cases,3360 modeled four-ABI sequences and2376 installed cases;preserve pending data and event ordering",
+    "S3": "shared System non-read notification state remains explicitly unsupported",
+    "S4": "zero-length initialized data confirmed by192 fresh native cases"
+  },
+  "library-results": {
+    "macos": [
+      7865,
+      0,
+      2
+    ],
+    "linux": [
+      7859,
+      0,
+      2
+    ],
+    "windows": [
+      7295,
+      5,
+      2
+    ]
+  },
+  "known-native-failures": 5,
+  "selected-owning-inputs": 332,
+  "quality-gates": {
+    "QG1": "descriptive engineering only",
+    "QG2": "assumptions tested, retained or explicitly rejected",
+    "QG3": "read-subscription group complete; general System events/full process goal incomplete",
+    "QG4": "byte extents, counts, mask equations and turn deltas checked",
+    "QG5": "initial assertion-order error and stale wait guard retained; production unchanged across epochs",
+    "QG6": "source and native identities bound;exact old native failures preserved",
+    "QG7": "remaining native image-extension/unwind boundary explicit"
+  },
+  "ordinary-success": false,
+  "ordinary-turns": [
+    2144480,
+    2146842
+  ],
+  "ordinary-delta": 2596,
+  "remaining-high-impact": [
+    "native executable image extension ownership",
+    "secondary SEH frame lookup/handling remains unproven",
+    "general shared System notifications and delivery"
+  ]
+}

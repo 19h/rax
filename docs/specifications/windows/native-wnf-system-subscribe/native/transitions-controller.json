@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "prlctl",
+    "exec",
+    "a5b14f9a-d292-4610-a04d-df4ca4337c9d",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "-B",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-system-wnf-subscribe-transitions-probe.py"
+  ],
+  "exit-code": 0,
+  "stdout": "{\"pid\": 6464, \"utc\": \"2026-10-17T20:55:01.233229+00:00\", \"state\": \"finished\", \"scope\": \"existing System state read-only; only child subscriptions and owned event resets\", \"child-pid\": 6824, \"argv\": [\"powershell.exe\", \"-NoProfile\", \"-ExecutionPolicy\", \"Bypass\", \"-File\", \"C:\\\\Mac\\\\Home\\\\Downloads\\\\assist-native-allocate-ex-transfer-20261010-2154\\\\native-system-wnf-subscribe-transitions.ps1\"], \"exit-code\": 0, \"completed-utc\": \"2026-10-17T20:55:14.339239+00:00\"}\n",
+  "stderr": ""
+}

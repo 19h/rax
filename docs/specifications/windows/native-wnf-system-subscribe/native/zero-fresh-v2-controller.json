@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "prlctl",
+    "exec",
+    "a5b14f9a-d292-4610-a04d-df4ca4337c9d",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "-B",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-system-wnf-subscribe-zero-fresh-v2-probe.py"
+  ],
+  "exit-code": 0,
+  "stdout": "{\"pid\": 2268, \"utc\": \"2026-10-17T21:06:11.409918+00:00\", \"state\": \"finished\", \"scope\": \"only probe-owned temporary System names; no existing host state mutated\", \"child-pid\": 9572, \"argv\": [\"powershell.exe\", \"-NoProfile\", \"-ExecutionPolicy\", \"Bypass\", \"-File\", \"C:\\\\Mac\\\\Home\\\\Downloads\\\\assist-native-allocate-ex-transfer-20261010-2154\\\\native-system-wnf-subscribe-zero-fresh-v2.ps1\"], \"exit-code\": 0, \"completed-utc\": \"2026-10-17T21:06:23.129458+00:00\"}\n",
+  "stderr": ""
+}

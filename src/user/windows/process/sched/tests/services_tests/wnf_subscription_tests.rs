@@ -14,7 +14,7 @@ const POISON: u64 = 0xA5A5A5A5A5A5A5A5;
 fn field(row: &HashMap<&str, &str>, name: &str, radix: u32) -> u64 {
     u64::from_str_radix(row[name], radix).unwrap()
 }
-fn call(p: &mut Proc, t: &mut Thread, args: [u64; 4]) -> Outcome {
+pub(super) fn call(p: &mut Proc, t: &mut Thread, args: [u64; 4]) -> Outcome {
     let sp = t.cpu.sp();
     t.cpu.set_pc(0x1234_0004);
     match p.arch {

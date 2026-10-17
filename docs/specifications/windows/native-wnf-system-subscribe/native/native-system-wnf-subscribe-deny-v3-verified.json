@@ -1,0 +1,13 @@
+{
+  "source-sha256": "db2a699d042704b136e4ee87e0cb3ddbc5d5653d25d33ae339e74a06791d41ce",
+  "executable-sha256": "d0ad84770e1d79fac62021ecf7d89125be00e95a6599b8ed162e76b84aa275da",
+  "executable-bytes": 147968,
+  "machine": 43620,
+  "stdout-sha256": "f90edf77540b19b67dc8dc3e0f5e5fa7cbe9ce33b32fa11d32b6cd9f417d45e4",
+  "stdout-bytes": 62704,
+  "calls": 384,
+  "deleted": 4,
+  "freed": 4,
+  "subscriptions": 144,
+  "unsubscribed": 144
+}

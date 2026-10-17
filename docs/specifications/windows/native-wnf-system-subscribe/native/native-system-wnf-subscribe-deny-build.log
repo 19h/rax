@@ -1,0 +1,2 @@
+native-system-wnf-subscribe-deny.cpp
+LINK : fatal error LNK1181: cannot open input file 'arm64-deny.obj'

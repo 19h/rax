@@ -1,0 +1,5 @@
+{
+  "sha256": "88c7cee767d9182e8dc036e34ec8291cd8127038ed1ed902ed990e8cd598d908",
+  "bytes": 14899,
+  "scope": "fresh ARM64 owned children; read/subscription only for actual typed System state; restore patches and terminate each owned child77"
+}

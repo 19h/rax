@@ -1,0 +1,10 @@
+{
+  "source-sha256": "605a74b49da31a82d0ff3578d8d83e185f0ef1c93eb955413b5f9385ea38f2f7",
+  "executable-sha256": "8c62492bb4068d8e4e45bc9d441d862cdf2e43d349b1995d1d8e882c3deaf804",
+  "rlib-path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\librax-b3cb012e55bc2251.rlib",
+  "rlib-sha256": "bfc515fe732e80408c6867cf4ac4439e3cc6c702946037647b87755ac60d0127",
+  "program-sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b",
+  "scope": "read-only observation of guest memory at actual subscription call; final4 production core; not an application success claim",
+  "controller-exit-code": 0,
+  "log-sha256": "463482022e7d196c2db98e0466af7872bf6c3237b063234d84b06c149d16c1d7"
+}

@@ -1,0 +1,55 @@
+[
+  {
+    "gate": "system",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "system_wnf",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 39.334163499999704,
+    "log": "macos-wnf-system-epoch2-system.log",
+    "sha256": "e16ee7bd4635f534faf5c4023afe0eb119d9b9e9162d6d9205db239a41239b2c"
+  },
+  {
+    "gate": "regression",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "wnf",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 6.106391833000089,
+    "log": "macos-wnf-system-epoch2-regression.log",
+    "sha256": "420008166fd678d5735ca0f36dacccf01f4a9d92369d57e732fc6e6401ad8c85"
+  },
+  {
+    "gate": "all-targets",
+    "argv": [
+      "cargo",
+      "check",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ],
+    "exit-code": 0,
+    "seconds": 17.784203332999823,
+    "log": "macos-wnf-system-epoch2-all-targets.log",
+    "sha256": "51268298305f7c01144a718e59a49a5a4d0ee0a0986856a7919496338080cf26"
+  }
+]

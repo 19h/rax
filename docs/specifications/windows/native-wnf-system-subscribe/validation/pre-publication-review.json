@@ -1,0 +1,24 @@
+{
+  "utc": "2026-10-17T21:21:54.970979+00:00",
+  "baseline": "44d21496b9c81e3911e7bbb4160eb13b22ca183d",
+  "changed-tracked": [
+    "src/user/windows/dll/native/wnf.rs",
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/objects/wnf.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/wnf_subscription_tests.rs",
+    "src/user/windows/wnf.rs",
+    "src/user/windows/wnf/catalog.rs"
+  ],
+  "unrelated-tracked-changes": [],
+  "owned-compile-inputs-verified": 11,
+  "whitespace": "pass",
+  "review": [
+    "no public ABI, default-feature, dependency or package-layout edits",
+    "System admission requires query capture; unsupported non-read masks refuse after access checks",
+    "initial-versus-corrected production implementation hashes agree",
+    "native permission, queue, absent/denied/unstable and zero-length controls are distinct",
+    "no new host calls in the guest subscription path; no new unsafe blocks in implementation",
+    "full-suite results still pending; ordinary exits remain unsuccessful"
+  ]
+}

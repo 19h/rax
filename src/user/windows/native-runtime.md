@@ -2073,3 +2073,26 @@ Windows, macOS and Linux. Full library passed/failed/ignored counts are
 are unchanged. Ordinary smoke/whoami advance 2202 turns to System-scoped
 NtSubscribeWnfStateChange 0x1cd and remain incomplete. The scoped frozen Assist
 carrier ABI 184/current186 boundary remains explicit in the retained proof.
+
+### System WNF read subscriptions
+
+Selected System-scoped states support read subscriptions through the same
+private process notification owner. The measured classic-DACL profile maps
+generic read/write/all rights, admits the recorded untrusted mandatory label,
+and refuses other descriptor/subject profiles. System subscription admission
+requires the selected query snapshot. Shared subscriber-level notifications
+remain unavailable when the caller has the corresponding rights; access denial
+is reported before that unsupported boundary.
+
+Initial data notification depends on the selected change stamp. Repeated
+requests retain queued data, including when the new requested stamp matches
+the selected stamp. Event registration does not retroactively signal the queue;
+manual event reset does not discard it. No guest subscription registers a host
+subscription or mutates existing host state.
+
+Final System-WNF validation binds 332 inputs and complete archives on Windows,
+macOS and Linux. Full library passed/failed/ignored counts are 7295/5/2,
+7865/0/2 and 7859/0/2 respectively; the five Windows lowerer failures are
+unchanged. Smoke and whoami advance 2596 turns past the subscription boundary,
+then fail an instruction fetch and SEH frame walk. Neither completes normally.
+The scoped frozen Assist ABI 184/current186 boundary remains explicit.

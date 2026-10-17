@@ -1,0 +1,60 @@
+{
+  "base": "44d21496b9c81e3911e7bbb4160eb13b22ca183d",
+  "files": [
+    {
+      "path": "docs/specifications/windows/native-wnf-system-subscribe/cases.json",
+      "bytes": 1290309,
+      "sha256": "384d8ceececa337f76c45dfa47a7bdd236e778bb1b9351ef25de0fe00eda4681"
+    },
+    {
+      "path": "src/user/windows/dll/native/wnf.rs",
+      "bytes": 4721,
+      "sha256": "90c9dbc992e7f620cfdb76eac89d78e5345e9eb7828c2807059444705fe4fb57"
+    },
+    {
+      "path": "src/user/windows/objects/wnf.rs",
+      "bytes": 8481,
+      "sha256": "01a3daca7498941abcdd9e8808bdfe8f609bcdd9a33af98d832a855305687a67"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47931,
+      "sha256": "bef615b53a11d8208e27872b606a69009f875dd52d19e2e1a11a25369bb41e23"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/wnf_subscription_tests.rs",
+      "bytes": 29726,
+      "sha256": "c4f49ac9b107cbd2a083a681492e037da0ec0cbd4e6dfe0eb796f68bbc0490d3"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/wnf_system_subscription_leaf_tests.rs",
+      "bytes": 780,
+      "sha256": "9c9bac04b4d7f552196c94416fa47b6e79286358240b827d5359797e54b88e27"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/wnf_system_subscription_tests.rs",
+      "bytes": 12099,
+      "sha256": "dbdac18b8e9ee0d9c937ab2ac34b6efe0fc4b4aca08d3f44eb68e6e433be7777"
+    },
+    {
+      "path": "src/user/windows/wnf.rs",
+      "bytes": 1321,
+      "sha256": "344cb76e05c8dce55fa07465d1ffba7f36d481f94f5838dddf15d47fc90eca77"
+    },
+    {
+      "path": "src/user/windows/wnf/catalog.rs",
+      "bytes": 9373,
+      "sha256": "8dd4213d8969d2041cf939a573aa0834739be37d675bafca7eaf264f2d059ef6"
+    },
+    {
+      "path": "src/user/windows/wnf/system.rs",
+      "bytes": 3543,
+      "sha256": "de8607f188c5c56109d51613b8fdc8818bec50b3485eee6e344aec52cece86e2"
+    },
+    {
+      "path": "src/user/windows/wnf/system_tests.rs",
+      "bytes": 7064,
+      "sha256": "010e16f9a2b4d804a6e2326bad8e91fe14b1b9679ddbc961400887890b9f4d77"
+    }
+  ]
+}

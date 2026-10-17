@@ -1,0 +1,17 @@
+{
+  "pid": 1440,
+  "utc": "2026-10-17T20:56:15.784633+00:00",
+  "state": "finished",
+  "scope": "existing System state read-only; only child subscriptions and owned event resets",
+  "child-pid": 5892,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-system-wnf-subscribe-triples-v2.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T20:56:28.685841+00:00"
+}

@@ -1,0 +1,20 @@
+﻿[
+    {
+        "gate":  "system",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib system_wnf -- --nocapture --test-threads=1",
+        "exit-code":  101,
+        "log":  "native-wnf-system-initial-system.log"
+    },
+    {
+        "gate":  "regression",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib wnf -- --nocapture --test-threads=1",
+        "exit-code":  101,
+        "log":  "native-wnf-system-initial-regression.log"
+    },
+    {
+        "gate":  "all-targets",
+        "command":  "cargo.exe check --locked --offline --no-default-features --all-targets",
+        "exit-code":  0,
+        "log":  "native-wnf-system-initial-all-targets.log"
+    }
+]

@@ -1,0 +1,17 @@
+{
+  "pid": 4756,
+  "utc": "2026-10-17T21:07:03.969702+00:00",
+  "state": "finished",
+  "base": "44d21496b9c81e3911e7bbb4160eb13b22ca183d",
+  "child-pid": 5904,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-wnf-system-epoch2-gates.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T21:10:04.163088+00:00"
+}

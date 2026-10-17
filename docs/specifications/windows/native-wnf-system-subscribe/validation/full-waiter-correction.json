@@ -1,0 +1,17 @@
+{
+  "utc": "2026-10-17T21:10:12.509206+00:00",
+  "reason": "stale copied epoch4 readiness guard prevented any Unix full build from launching",
+  "stopped-childless-owned-waiters": [
+    {
+      "pid": 97974,
+      "command": "/opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -B /Users/int/Library/Caches/assist-process-emulation/native-wnf-system-subscribe-20261017/run-system-final-unix.py macos"
+    },
+    {
+      "pid": 98053,
+      "command": "/opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -B /Users/int/Library/Caches/assist-process-emulation/native-wnf-system-subscribe-20261017/run-system-final-unix.py linux"
+    }
+  ],
+  "original-sha256": "34fa22c329f21812acebc1a5a326ee3d8ba5a44567dc24a0c0ea20c8fafcdb83",
+  "corrected-sha256": "cf2c83e65485c4d92427be1a0edb04a58cd5f5093dc5ddbba2b76c78cdd8fee7",
+  "source-changes": false
+}

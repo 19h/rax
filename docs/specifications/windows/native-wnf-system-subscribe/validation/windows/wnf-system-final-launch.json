@@ -1,0 +1,20 @@
+{
+  "pid": 7676,
+  "utc": "2026-10-17T21:08:28.093904+00:00",
+  "state": "finished",
+  "base": "44d21496b9c81e3911e7bbb4160eb13b22ca183d",
+  "epoch2-exit-code": 0,
+  "child-pid": 8808,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\assist-native-wnf-system-final-owned.ps1"
+  ],
+  "core-exit-code": 0,
+  "owning-exit-code": 0,
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T21:23:02.664616+00:00"
+}

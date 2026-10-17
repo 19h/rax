@@ -1,0 +1,6 @@
+native-system-wnf-subscribe-triples.cpp
+native-system-wnf-subscribe-triples.cpp(403): warning C4477: 'printf' : format string '%016llX' requires an argument of type 'unsigned __int64', but variadic argument 16 has type 'LONG'
+native-system-wnf-subscribe-triples.cpp(403): note: consider using '%lX' in the format string
+native-system-wnf-subscribe-triples.cpp(403): error C4473: 'printf' : not enough arguments passed for format string
+native-system-wnf-subscribe-triples.cpp(403): note: placeholders and their parameters expect 32 variadic arguments, but 30 were provided
+native-system-wnf-subscribe-triples.cpp(403): note: the missing variadic argument 31 is required by format string '%lu'

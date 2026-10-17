@@ -1,0 +1,12 @@
+{
+  "changes": [
+    "docs/specifications/windows/native-wnf-system-subscribe/cases.json",
+    "src/user/windows/process/sched/tests/services_tests/wnf_system_subscription_leaf_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/wnf_system_subscription_tests.rs",
+    "src/user/windows/wnf/system_tests.rs"
+  ],
+  "production-changed": false,
+  "cause": "test compared after subscription with native state1 recorded before subscription when event was registered first",
+  "new-native-control": "initialized zero-length data stamp1,192 fresh child cases",
+  "retained-initial": "source-epochs/initial"
+}

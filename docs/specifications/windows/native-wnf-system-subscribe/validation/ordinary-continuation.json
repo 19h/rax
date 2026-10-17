@@ -1,0 +1,22 @@
+{
+  "source-epoch": 2,
+  "ordinary-success": false,
+  "rows": [
+    {
+      "program": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b",
+      "turn": 2144480,
+      "prior-turn": 2141884,
+      "delta": 2596,
+      "terminal": "terminal turn=2144480 Complete(Internal(\"SEH frame walk cyclic or exceeds 4096 frames at PC 0x7ff82b0dc4bc, SP 0xabe1f0\"))",
+      "log-sha256": "1f7a78677565a7320fa7d4276bbc02fe24a153fc53d3ca6ea249b099f4b5a4be"
+    },
+    {
+      "program": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6",
+      "turn": 2146842,
+      "prior-turn": 2144246,
+      "delta": 2596,
+      "terminal": "terminal turn=2146842 Complete(Internal(\"SEH frame walk cyclic or exceeds 4096 frames at PC 0x7ff82b0dc4bc, SP 0x1bde1f0\"))",
+      "log-sha256": "ec475d951ea05c54fa59800123357d5b07acab73fa17b0959f44c32450e0cdbf"
+    }
+  ]
+}

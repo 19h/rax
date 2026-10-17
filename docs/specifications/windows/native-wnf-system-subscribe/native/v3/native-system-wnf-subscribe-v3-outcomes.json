@@ -1,0 +1,26 @@
+﻿[
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "source-sha256":  "edd443e8b06fa244b65d5226309818767675b4af139cf44d1273a65aeb4d8c9a",
+        "log":  "native-system-wnf-subscribe-v3-arm64.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "source-sha256":  "edd443e8b06fa244b65d5226309818767675b4af139cf44d1273a65aeb4d8c9a",
+        "log":  "native-system-wnf-subscribe-v3-x64.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "source-sha256":  "edd443e8b06fa244b65d5226309818767675b4af139cf44d1273a65aeb4d8c9a",
+        "log":  "native-system-wnf-subscribe-v3-x86.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "source-sha256":  "edd443e8b06fa244b65d5226309818767675b4af139cf44d1273a65aeb4d8c9a",
+        "log":  "native-system-wnf-subscribe-v3-x86-laa.log"
+    }
+]

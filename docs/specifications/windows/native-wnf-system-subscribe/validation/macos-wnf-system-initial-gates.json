@@ -1,0 +1,55 @@
+[
+  {
+    "gate": "system",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "system_wnf",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 101,
+    "seconds": 99.16422299999977,
+    "log": "macos-wnf-system-initial-system.log",
+    "sha256": "640c570e8e09a6d082413bfc3e296732ab0b5982b6ecb902d3502ed53272b474"
+  },
+  {
+    "gate": "regression",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "wnf",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 101,
+    "seconds": 5.869348625001294,
+    "log": "macos-wnf-system-initial-regression.log",
+    "sha256": "5d3034cc497f5248257afd61eb7dc76380a21b2aa06202639dc885395badd8f2"
+  },
+  {
+    "gate": "all-targets",
+    "argv": [
+      "cargo",
+      "check",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ],
+    "exit-code": 0,
+    "seconds": 59.311946792000526,
+    "log": "macos-wnf-system-initial-all-targets.log",
+    "sha256": "0dd49f9c76b35a643563d0f8ea95d96610e20f570ce69316225aa5181a88b8ad"
+  }
+]

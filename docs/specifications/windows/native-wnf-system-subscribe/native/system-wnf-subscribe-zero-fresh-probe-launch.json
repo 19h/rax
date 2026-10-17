@@ -1,0 +1,17 @@
+{
+  "pid": 8808,
+  "utc": "2026-10-17T21:05:25.948338+00:00",
+  "state": "finished",
+  "scope": "only probe-owned temporary System names; no existing host state mutated",
+  "child-pid": 5880,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-system-wnf-subscribe-zero-fresh.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T21:05:37.283150+00:00"
+}

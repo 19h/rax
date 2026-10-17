@@ -1,0 +1,34 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 33s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-tests\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 8 tests
+test user::windows::process::sched::tests::services_tests::wnf_system_subscription_tests::installed::native_system_wnf_installed_leaves_replay_792_cases_per_producer ... ok
+test user::windows::process::sched::tests::services_tests::wnf_system_subscription_tests::native_system_wnf_fresh_access_and_queue_order_replay_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_system_subscription_tests::native_system_wnf_read_mask_and_stamp_transitions_replay_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_system_subscription_tests::native_system_wnf_unknown_data_and_failed_requests_are_transactional ... ok
+test user::windows::wnf::system_tests::native_system_wnf_actual_typed_descriptor_requires_selected_queries ... ok
+test user::windows::wnf::system_tests::native_system_wnf_permissions_match_3456_recorded_calls ... ok
+test user::windows::wnf::system_tests::native_system_wnf_query_admission_is_not_replaced_by_empty_data ... ok
+test user::windows::wnf::system_tests::native_system_wnf_unknown_descriptors_and_subjects_remain_unavailable ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 7294 filtered out; finished in 3.14s
+

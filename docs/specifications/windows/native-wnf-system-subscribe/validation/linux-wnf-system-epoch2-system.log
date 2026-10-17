@@ -1,0 +1,15 @@
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 57.64s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 7 tests
+test user::windows::process::sched::tests::services_tests::wnf_system_subscription_tests::native_system_wnf_fresh_access_and_queue_order_replay_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_system_subscription_tests::native_system_wnf_read_mask_and_stamp_transitions_replay_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::wnf_system_subscription_tests::native_system_wnf_unknown_data_and_failed_requests_are_transactional ... ok
+test user::windows::wnf::system_tests::native_system_wnf_actual_typed_descriptor_requires_selected_queries ... ok
+test user::windows::wnf::system_tests::native_system_wnf_permissions_match_3456_recorded_calls ... ok
+test user::windows::wnf::system_tests::native_system_wnf_query_admission_is_not_replaced_by_empty_data ... ok
+test user::windows::wnf::system_tests::native_system_wnf_unknown_descriptors_and_subjects_remain_unavailable ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 7854 filtered out; finished in 0.46s
+
