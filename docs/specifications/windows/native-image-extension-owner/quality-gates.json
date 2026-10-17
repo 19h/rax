@@ -1,0 +1,32 @@
+{
+  "scope": "native image-extension ownership semantic group; full process-userland objective remains incomplete",
+  "QG1": {
+    "status": "pass",
+    "evidence": "technical implementation and measurements only"
+  },
+  "QG2": {
+    "status": "pass",
+    "evidence": "assumption-register.json; revised ordinary-path assumption"
+  },
+  "QG3": {
+    "status": "pass within stated group",
+    "evidence": "check-validation.py and frozen source epochs; full goal remains incomplete"
+  },
+  "QG4": {
+    "status": "pass",
+    "evidence": "PE size, view size and allocation footprint kept separate; bounded page and relocation tests"
+  },
+  "QG5": {
+    "status": "pass within stated group",
+    "evidence": "exact five baseline failures, ignored/excluded cases, earlier NtQuerySystemTime boundary and compatibility limits are explicit"
+  },
+  "QG6": {
+    "status": "pass",
+    "evidence": "native-inputs.json, external-images.json, validation/inputs.json and checker outputs"
+  },
+  "QG7": {
+    "status": "pass",
+    "evidence": "bounded-scope.json; no unrelated subsystem changes"
+  },
+  "adversarial-source-review": "checked tail overflow/overlap, independent rebase identities, full/partial/large geometry, protection precedence, teardown ownership and selected-path bootstrap admission"
+}

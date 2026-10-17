@@ -36,6 +36,7 @@ pub(crate) mod apiset_schema;
 pub mod builtin;
 mod dynamic;
 pub mod ldr;
+mod native_image;
 pub(crate) mod services;
 mod supplied;
 
@@ -1149,7 +1150,11 @@ fn load_image(
             "native runtime image mapping exceeds 64 MiB",
         ));
     }
-    let base = map_pe(p, &pe, name)?;
+    let selected_native = native_image::map(p, &pe, host_path.as_deref())?;
+    let base = match selected_native {
+        Some(base) => base,
+        None => map_pe(p, &pe, name)?,
+    };
     let file_name = path.rsplit('\\').next().unwrap_or(name).to_owned();
     let module = Module {
         name: file_name,
@@ -1193,7 +1198,9 @@ fn load_image(
             p.modules.list[idx].tls = setup_tls(p, &pe, base)?;
             bind_imports(p, idx, &pe)?;
         }
-        protect_sections(p, &pe, base)?;
+        if selected_native.is_none() {
+            protect_sections(p, &pe, base)?;
+        }
         if h.is_dll()
             && (name.eq_ignore_ascii_case("ntdll.dll")
                 || p.modules.list[idx].name.eq_ignore_ascii_case("ntdll.dll"))

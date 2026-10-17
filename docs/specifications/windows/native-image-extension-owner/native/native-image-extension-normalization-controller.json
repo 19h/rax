@@ -1,0 +1,14 @@
+{
+  "utc": "2026-10-17T21:25:53.308077+00:00",
+  "argv": [
+    "prlctl",
+    "exec",
+    "a5b14f9a-d292-4610-a04d-df4ca4337c9d",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "-B",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\probe-native-image-extension-normalization.py"
+  ],
+  "exit-code": 0,
+  "stdout": "ntdll.dll True 1957 diff bytes 32 ranges 14\nkernelbase.dll True 233748 diff bytes 12 ranges 3\nkernel32.dll True 4140 diff bytes 8 ranges 2\n",
+  "stderr": ""
+}

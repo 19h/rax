@@ -40,7 +40,7 @@ fn native_image_extension_installed_leaf_matches_guest_flags_and_wow_rejection()
         let tid = *p.threads.keys().next().unwrap();
         let mut t = p.threads.remove(&tid).unwrap();
         let module = loader::load_dll(p, "ntdll.dll").unwrap();
-        let target = p.modules.list[module].base;
+        let target = p.modules.exe().base;
         let base =
             p.vm.allocate(
                 None,

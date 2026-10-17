@@ -1,0 +1,18 @@
+{
+  "plugin-lifecycle": "unaffected: no Assist lifecycle source changes",
+  "ui": "unaffected: no widget or copy changes",
+  "conversation": "unaffected: no transcript or agent-state changes",
+  "backend": "unaffected: process adapter C ABI unchanged",
+  "prompt-context": "unaffected: no prompt or context input changes",
+  "tool-schema": "unaffected: existing process engine selection and schema",
+  "permission-mutation": "affected: existing authorized native library selection acquires owned read-only image views; no arbitrary host memory mapping",
+  "main-thread": "unaffected: RAX process runtime only",
+  "mesh-mcp": "unaffected: unchanged caller protocol",
+  "transport-crypto": "unaffected: no transport or crypto changes",
+  "persistence": "unaffected: no schema or durable state changes",
+  "sdk-abi": "unaffected: existing C ABI and Rust API defaults",
+  "optional-engines": "affected: native Windows process memory/loader behavior; no synthetic HLE fallback",
+  "updates-packaging": "unaffected: no new runtime dependency or packaged resource; Rust compilation owns new modules",
+  "targets-platforms": "affected: portable ownership/query logic builds on all hosts; native acquisition and kernel controls run on Windows",
+  "tests-docs": "affected: native image ownership, rebase, lifecycle, bootstrap, absent/present query controls and engineering records"
+}

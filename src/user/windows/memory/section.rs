@@ -1,6 +1,6 @@
 //! Private guest frames for immutable pinned kernel image sections.
 use super::*;
-use crate::user::windows::object_namespace::{ImageSection, ImageTemplate};
+use crate::user::windows::object_namespace::{ImageExtension, ImageSection, ImageTemplate};
 
 #[derive(Debug)]
 pub(crate) struct SectionView {
@@ -8,6 +8,7 @@ pub(crate) struct SectionView {
     pub(crate) image_base: u64,
     pub(crate) offset: u64,
     pub(crate) size: u64,
+    pub(crate) extensions: [Option<ImageExtension>; 2],
 }
 #[derive(Debug)]
 pub(super) struct LowPlacement {
@@ -66,6 +67,24 @@ impl VirtualMemory {
         {
             return Err(VmError::InvalidParameter);
         }
+        let extensions = if !large && offset == 0 && size == image.bytes.len() as u64 {
+            image.extensions.clone()
+        } else {
+            [None, None]
+        };
+        let extent = extensions
+            .iter()
+            .flatten()
+            .map(|e| e.rva + e.bytes.len() as u64)
+            .max()
+            .unwrap_or(size);
+        if image_base
+            .checked_sub(allocation_base)
+            .and_then(|prefix| prefix.checked_add(extent))
+            .is_none_or(|end| end > allocation_size)
+        {
+            return Err(VmError::InvalidParameter);
+        }
         let data = image
             .view_bytes(
                 image_base
@@ -102,6 +121,16 @@ impl VirtualMemory {
                     self.protect(address, end - begin, region.protection)?;
                 }
             }
+            for extension in extensions.iter().flatten() {
+                let address = image_base + extension.rva;
+                let length = extension.bytes.len() as u64;
+                if !large {
+                    self.commit(address, length, prot::READWRITE)?;
+                }
+                self.poke(address, &extension.bytes)
+                    .map_err(|_| VmError::NoMemory)?;
+                self.protect(address, length, prot::EXECUTE_READ)?;
+            }
             Ok(())
         })();
         if let Err(error) = result {
@@ -115,6 +144,7 @@ impl VirtualMemory {
                 image_base,
                 offset,
                 size,
+                extensions,
             },
         );
         Ok(())
@@ -126,6 +156,28 @@ impl VirtualMemory {
     pub(crate) fn section_image_information(&self, address: u64) -> Option<(u64, u64, u32)> {
         let view = self.section_view(address)?;
         let partial = view.offset != 0 || view.size != view.section.size;
-        Some((view.image_base, view.section.size, u32::from(partial)))
+        Some((
+            view.image_base,
+            view.section.size,
+            u32::from(partial)
+                | if view.extensions.iter().any(Option::is_some) {
+                    0x40
+                } else {
+                    0
+                },
+        ))
+    }
+    pub(crate) fn section_image_extension(&self, address: u64, kind: u32) -> Option<(u64, u64)> {
+        let view = self.section_view(address)?;
+        let extension = view.extensions.get(kind as usize)?.as_ref()?;
+        Some((extension.rva, extension.bytes.len() as u64))
+    }
+    pub(crate) fn intersects_image_extension(&self, first: u64, end: u64) -> bool {
+        self.section_view(first).is_some_and(|view| {
+            view.extensions.iter().flatten().any(|e| {
+                let start = view.image_base + e.rva;
+                first < start + e.bytes.len() as u64 && end > start
+            })
+        })
     }
 }

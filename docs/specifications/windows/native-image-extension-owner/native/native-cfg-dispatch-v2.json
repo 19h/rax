@@ -1,0 +1,386 @@
+{
+  "scope": "read-only loaded system DLL metadata; no state modifications",
+  "modules": [
+    {
+      "name": "ntdll.dll",
+      "path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+      "actual-base": 140703928483840,
+      "header-preferred-base": 140703928483840,
+      "image-size": 4665344,
+      "machine": 43620,
+      "load-config-rva": 3557456,
+      "load-config-size": 328,
+      "samples": [
+        {
+          "address": 140703933149184,
+          "region": {
+            "base": 140703933149184,
+            "allocation": 140703928483840,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "40010000c001000040000000c000000000000000f805000080020000c002000040030000c00300004804000080050000"
+        },
+        {
+          "address": 140703933149376,
+          "region": {
+            "base": 140703933149184,
+            "allocation": 140703928483840,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "load-config-pointers": [
+        {
+          "field": "GuardCFCheckFunctionPointer",
+          "slot": 140703932563624,
+          "target": 140703929487648,
+          "sample": {
+            "address": 140703929487648,
+            "region": {
+              "base": 140703929487360,
+              "allocation": 140703928483840,
+              "allocation_protect": 128,
+              "size": 2379776,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd61f2003d51f2003d5000000007f2303d5f353bca9f55b01a9f76302a9f96b03a9fd7bbea9fd03009110e4004f"
+          }
+        },
+        {
+          "field": "GuardCFDispatchFunctionPointer",
+          "slot": 140703932559400,
+          "target": 140703930032128,
+          "sample": {
+            "address": 140703930032128,
+            "region": {
+              "base": 140703930032128,
+              "allocation": 140703928483840,
+              "allocation_protect": 128,
+              "size": 1835008,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "20011fd60000000000000000000000000d00001400000000000000000000000028fc0614000000000000000000000000"
+          }
+        }
+      ],
+      "queries": [
+        {
+          "class": 6,
+          "extension-type": null,
+          "status": 0,
+          "returned": 24,
+          "bytes": "0000ad2ff87f000000304700000000007000000000000000"
+        },
+        {
+          "class": 14,
+          "extension-type": 0,
+          "status": 0,
+          "returned": 24,
+          "bytes": "000000000000000000304700000000000010000000000000",
+          "flags": 0,
+          "rva": 4665344,
+          "size": 4096,
+          "sample": {
+            "address": 140703933149376,
+            "region": {
+              "base": 140703933149184,
+              "allocation": 140703928483840,
+              "allocation_protect": 128,
+              "size": 4096,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          }
+        },
+        {
+          "class": 14,
+          "extension-type": 1,
+          "status": 0,
+          "returned": 24,
+          "bytes": "010000000000000000000000000000000000000000000000",
+          "flags": 0,
+          "rva": 0,
+          "size": 0
+        }
+      ]
+    },
+    {
+      "name": "kernelbase.dll",
+      "path": "C:\\WINDOWS\\System32\\KERNELBASE.dll",
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9",
+      "actual-base": 140703850692608,
+      "header-preferred-base": 140703850692608,
+      "image-size": 7233536,
+      "machine": 43620,
+      "load-config-rva": 5998128,
+      "load-config-size": 328,
+      "samples": [
+        {
+          "address": 140703857926144,
+          "region": {
+            "base": 140703857926144,
+            "allocation": 140703850692608,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "40010000c001000040000000c000000000000000f805000080020000c002000040030000c00300004804000080050000"
+        },
+        {
+          "address": 140703857926336,
+          "region": {
+            "base": 140703857926144,
+            "allocation": 140703850692608,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "address": 140703853862960,
+          "region": {
+            "base": 140703853862912,
+            "allocation": 140703850692608,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "24742e150000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "branch-target": 140703933149376,
+          "target-region": {
+            "base": 140703933149184,
+            "allocation": 140703928483840,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "target-bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "load-config-pointers": [
+        {
+          "field": "GuardCFCheckFunctionPointer",
+          "slot": 140703853875264,
+          "target": 140703852865696,
+          "sample": {
+            "address": 140703852865696,
+            "region": {
+              "base": 140703852863488,
+              "allocation": 140703850692608,
+              "allocation_protect": 128,
+              "size": 1003520,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd61f2003d51f2003d541c40e007f2303d5f30f1ff8fd7bbea9fd030091130440f9130400b4b63ffe97c0000036"
+          }
+        },
+        {
+          "field": "GuardCFDispatchFunctionPointer",
+          "slot": 140703853875272,
+          "target": 140703852278752,
+          "sample": {
+            "address": 140703852278752,
+            "region": {
+              "base": 140703852277760,
+              "allocation": 140703850692608,
+              "allocation_protect": 128,
+              "size": 1589248,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "20011fd630f4fff01002009100021fd60000000000000000000000007f2303d5fd7bbfa9fd0301aaa3430091a21b40b9"
+          }
+        }
+      ],
+      "queries": [
+        {
+          "class": 6,
+          "extension-type": null,
+          "status": 0,
+          "returned": 24,
+          "bytes": "00000a2bf87f000000606e00000000007000000000000000"
+        },
+        {
+          "class": 14,
+          "extension-type": 0,
+          "status": 0,
+          "returned": 24,
+          "bytes": "000000000000000000606e00000000000010000000000000",
+          "flags": 0,
+          "rva": 7233536,
+          "size": 4096,
+          "sample": {
+            "address": 140703857926336,
+            "region": {
+              "base": 140703857926144,
+              "allocation": 140703850692608,
+              "allocation_protect": 128,
+              "size": 4096,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          }
+        },
+        {
+          "class": 14,
+          "extension-type": 1,
+          "status": 0,
+          "returned": 24,
+          "bytes": "010000000000000000000000000000000000000000000000",
+          "flags": 0,
+          "rva": 0,
+          "size": 0
+        }
+      ]
+    },
+    {
+      "name": "kernel32.dll",
+      "path": "C:\\WINDOWS\\System32\\KERNEL32.DLL",
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0",
+      "actual-base": 140703867797504,
+      "header-preferred-base": 140703867797504,
+      "image-size": 1511424,
+      "machine": 43620,
+      "load-config-rva": 1151536,
+      "load-config-size": 328,
+      "samples": [
+        {
+          "address": 140703869308928,
+          "region": {
+            "base": 140703869308928,
+            "allocation": 140703867797504,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "40010000c001000040000000c000000000000000f805000080020000c002000040030000c00300004804000080050000"
+        },
+        {
+          "address": 140703869309120,
+          "region": {
+            "base": 140703869308928,
+            "allocation": 140703867797504,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "load-config-pointers": [
+        {
+          "field": "GuardCFCheckFunctionPointer",
+          "slot": 140703868842048,
+          "target": 140703868252144,
+          "sample": {
+            "address": 140703868252144,
+            "region": {
+              "base": 140703868248064,
+              "allocation": 140703867797504,
+              "allocation_protect": 128,
+              "size": 581632,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd61f2003d51f2003d5000000007f2303d5fd7bbfa9fd030091681c40f9080180b909f57e92286869f8280108cb"
+          }
+        },
+        {
+          "field": "GuardCFDispatchFunctionPointer",
+          "slot": 140703868842056,
+          "target": 140703868252512,
+          "sample": {
+            "address": 140703868252512,
+            "region": {
+              "base": 140703868252160,
+              "allocation": 140703867797504,
+              "allocation_protect": 128,
+              "size": 577536,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "20011fd6000000000000000000000000710700d0f00740f9310240f9f06330cb1f0211eb81000054ff430091c0035fd6"
+          }
+        }
+      ],
+      "queries": [
+        {
+          "class": 6,
+          "extension-type": null,
+          "status": 0,
+          "returned": 24,
+          "bytes": "00000f2cf87f000000101700000000007000000000000000"
+        },
+        {
+          "class": 14,
+          "extension-type": 0,
+          "status": 0,
+          "returned": 24,
+          "bytes": "000000000000000000101700000000000010000000000000",
+          "flags": 0,
+          "rva": 1511424,
+          "size": 4096,
+          "sample": {
+            "address": 140703869309120,
+            "region": {
+              "base": 140703869308928,
+              "allocation": 140703867797504,
+              "allocation_protect": 128,
+              "size": 4096,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          }
+        },
+        {
+          "class": 14,
+          "extension-type": 1,
+          "status": 0,
+          "returned": 24,
+          "bytes": "010000000000000000000000000000000000000000000000",
+          "flags": 0,
+          "rva": 0,
+          "size": 0
+        }
+      ]
+    }
+  ]
+}

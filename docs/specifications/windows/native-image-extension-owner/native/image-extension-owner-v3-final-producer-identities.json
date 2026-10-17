@@ -1,0 +1,42 @@
+[
+  {
+    "profile": "arm64",
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-owner-v3-arm64\\native-image-extension-owner-probe-v3-arm64.exe",
+    "bytes": 160768,
+    "sha256": "afcbd5f4613c9caf0a1740a5cccc579b46e355f77a376ee87668cd83a84e7eb0",
+    "machine": 43620,
+    "large-address-aware": true,
+    "source-sha256": "ca9e1ad7e97200e2dd6c793e0d56875b271f36fa32fbfaf147782ae370943092",
+    "stdout-sha256": "f64fc8949348339186b404d224909b00185d28ead33b2ef93b22877f4bc5f2fd"
+  },
+  {
+    "profile": "x64",
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-owner-v3-x64\\native-image-extension-owner-probe-v3-x64.exe",
+    "bytes": 158208,
+    "sha256": "f55e2d3616ad3cee9f867e8f1733d95ad812fe7792be34260859bbb848ff0e1a",
+    "machine": 34404,
+    "large-address-aware": true,
+    "source-sha256": "ca9e1ad7e97200e2dd6c793e0d56875b271f36fa32fbfaf147782ae370943092",
+    "stdout-sha256": "4199cca7454a8074450be9f1b52dc1c6f0d8462c44244cd6796dc9d1629332b1"
+  },
+  {
+    "profile": "x86",
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-owner-v3-x86\\native-image-extension-owner-probe-v3-x86.exe",
+    "bytes": 131584,
+    "sha256": "ab72d63b4019dc0508b249045fd496ea4045e1f0c2d5a4cdc9cd938f1e1febe6",
+    "machine": 332,
+    "large-address-aware": false,
+    "source-sha256": "ca9e1ad7e97200e2dd6c793e0d56875b271f36fa32fbfaf147782ae370943092",
+    "stdout-sha256": "f0e89a22554e1e3f7b311595dc0c95d1753ab56fa537f797496b120031ef39ab"
+  },
+  {
+    "profile": "x86-laa",
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\image-extension-owner-v3-x86-laa\\native-image-extension-owner-probe-v3-x86-laa.exe",
+    "bytes": 131584,
+    "sha256": "930ab71c4f6645773ce51d5d5c1824e8b91adddd11623d9d454904a1b9aa34e3",
+    "machine": 332,
+    "large-address-aware": true,
+    "source-sha256": "ca9e1ad7e97200e2dd6c793e0d56875b271f36fa32fbfaf147782ae370943092",
+    "stdout-sha256": "069ba5a229909080ef9ef9b8295a70a567046c11b7334a68424dd2c7e63fd42b"
+  }
+]

@@ -1,0 +1,12 @@
+[
+  {
+    "path": "collected-native-image-extension-final-after-artifacts.jsonl",
+    "bytes": 130191,
+    "sha256": "9fb7c972ac2c0624c01f2ad5db914b43853e3a6c9eaa39e9a18d307b587cc4d5"
+  },
+  {
+    "path": "collected-native-image-extension-final-after-artifacts-stderr.log",
+    "bytes": 72,
+    "sha256": "a8dd5b4f852b782842253d071162bc7c3c44c3a9a07131cd1159e45bbb802a10"
+  }
+]

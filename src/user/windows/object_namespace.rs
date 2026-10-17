@@ -19,7 +19,7 @@ mod image;
 mod section;
 pub use data::DataSection;
 pub(crate) use data::SelectedSection;
-pub(crate) use image::{ImageRegion, ImageTemplate};
+pub(crate) use image::{ImageExtension, ImageRegion, ImageTemplate};
 pub(crate) use section::CapturedSection;
 pub use section::ImageSection;
 pub(crate) const MAX_ENTRIES: usize = 8192;
@@ -81,6 +81,7 @@ pub struct Directory {
 pub(crate) struct Namespace {
     root: Option<Arc<Directory>>,
     pub(crate) wow_system_prefix: Vec<u16>,
+    pub(crate) native_machine: Option<u16>,
     section_case: Option<bool>,
     wow_section_root: Option<Arc<Directory>>,
     csr_server: Option<Arc<csr::CsrServer>>,
@@ -238,6 +239,7 @@ impl Namespace {
             section_case,
             wow_section_root: None,
             csr_server: None,
+            native_machine: None,
         })
     }
     pub(crate) fn select_wow_system_root(&mut self, root: &[u16]) -> io::Result<()> {
@@ -468,6 +470,8 @@ pub(crate) fn snapshot(_: Arc<[u16]>) -> io::Result<Namespace> {
         "installed NT object namespace requires a Windows host",
     ))
 }
+#[cfg(test)]
+pub(crate) mod image_extension_tests;
 #[cfg(test)]
 pub(crate) mod image_tests;
 #[cfg(test)]

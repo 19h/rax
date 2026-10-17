@@ -1,0 +1,94 @@
+[
+  {
+    "gate": "focus",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "image_extension",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 122.05063524999969,
+    "log": "macos-image-extension-final-focus.log",
+    "sha256": "0c1bdae0f64adb3442ca516434024d5f4a1bf8d81e23eba2aec228cda9a6e754"
+  },
+  {
+    "gate": "full",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 350.09428687499894,
+    "log": "macos-image-extension-final-full.log",
+    "sha256": "c626453521f3ab770bffd66a504138666c61fe9e9647a19d8775021560ba884d"
+  },
+  {
+    "gate": "capi",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "-p",
+      "rax-capi",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 69.752178834,
+    "log": "macos-image-extension-final-capi.log",
+    "sha256": "83a88fa88c13fa33f9fb9ee2804bdae78f1254591e4214a5af6cb6b967004846"
+  },
+  {
+    "gate": "integration",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--test",
+      "user_windows",
+      "--test",
+      "user_windows_memory",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 70.32985595799983,
+    "log": "macos-image-extension-final-integration.log",
+    "sha256": "dd640e88bfe2f146ed27730c5e72cfc12f05ddb20c7cc93b965a9e3415bdf190"
+  },
+  {
+    "gate": "all-targets",
+    "argv": [
+      "cargo",
+      "check",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ],
+    "exit-code": 0,
+    "seconds": 94.66926624999905,
+    "log": "macos-image-extension-final-all-targets.log",
+    "sha256": "295a04ac98e68de29ae269825d7a8a8f850a06cef5bea6f82b3a4fd90079385c"
+  }
+]

@@ -1,0 +1,8 @@
+Verified 5546 source inputs; copied 267
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+gate focus exit=0
+gate regression exit=101
+gate all-targets exit=0

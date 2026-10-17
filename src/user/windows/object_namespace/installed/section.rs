@@ -28,7 +28,7 @@ unsafe extern "system" {
     fn GetModuleHandleW(name: *const u16) -> Handle;
     fn GetProcAddress(module: Handle, name: *const u8) -> *mut c_void;
 }
-pub(super) fn arm64() -> io::Result<Option<bool>> {
+pub(super) fn native_machine() -> io::Result<Option<u16>> {
     let module_name: Vec<_> = "kernel32.dll\0".encode_utf16().collect();
     // SAFETY: owned terminated module name; the already-loaded system module is
     // process-lifetime storage. No reference is acquired or released here.
@@ -51,7 +51,13 @@ pub(super) fn arm64() -> io::Result<Option<bool>> {
     if unsafe { query((-1isize) as Handle, &mut process, &mut native) } == 0 {
         return Err(io::Error::last_os_error());
     }
-    Ok(Some(native == 0xAA64))
+    if !matches!(native, 0x14C | 0x8664 | 0xAA64) {
+        return Err(io::Error::new(
+            io::ErrorKind::Unsupported,
+            "selected native Windows machine is not supported",
+        ));
+    }
+    Ok(Some(native))
 }
 pub(super) fn open_section(
     path: &[u16],

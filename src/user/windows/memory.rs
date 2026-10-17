@@ -37,6 +37,8 @@ mod extended;
 mod scheduler;
 mod section;
 #[cfg(test)]
+mod section_extension_tests;
+#[cfg(test)]
 mod section_tests;
 mod shared_section;
 pub use extended::AddressRequirements;
@@ -1140,6 +1142,11 @@ impl VirtualMemory {
 
         if end > a.base + a.size {
             return Err(VmError::InvalidAddress);
+        }
+        // Native image-extension pages report MEM_COMMIT in class 0, but
+        // NtProtectVirtualMemory rejects their protection changes as uncommitted.
+        if self.intersects_image_extension(first, end) {
+            return Err(VmError::NotCommitted);
         }
         Self::check_protection(a, protect)?;
         let base = a.base;

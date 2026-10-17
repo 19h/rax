@@ -1,4 +1,4 @@
-//! Class14 for complete guest images without kernel CFG/SCP extension owners.
+//! Class14 for guest image owners and their selected CFG/SCP extension mappings.
 //! Native64 absence is a measured successful zero RVA/size. The installed WoW64
 //! wrapper rejects this class after its optional ReturnLength preprobe.
 use super::{probe_write, process_status};
@@ -64,11 +64,13 @@ pub(super) fn query(
     if c.mem().u32(output)? >= 2 {
         return Flow::ret(STATUS_INVALID_PARAMETER.into());
     }
-    // Current image owners advertise ImageExtensionPresent=0 in class6. Keep
-    // their actual guest state: neither native host SCP bytes nor host trust
-    // flags are inherited. A future extension owner must extend both queries
-    // and own the corresponding mapping/relocation/lifetime as one contract.
-    c.mem().wr(output + 8, &[0; 16])?;
+    let kind = c.mem().u32(output)?;
+    let (rva, size) =
+        c.p.vm
+            .section_image_extension(address, kind)
+            .unwrap_or((0, 0));
+    c.mem().w64(output + 8, rva)?;
+    c.mem().w64(output + 16, size)?;
     if returned != 0 {
         c.mem().w64(returned, 24)?;
     }

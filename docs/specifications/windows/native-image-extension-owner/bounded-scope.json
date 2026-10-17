@@ -1,0 +1,40 @@
+[
+  {
+    "impact": "high",
+    "finding": "Full x64 compatibility execution on an ARM64 host remains incomplete. An ARM64 MapEx AMD64 projection exposes type0, while a real x64 compatibility caller observes the additional type1 extension.",
+    "evidence": [
+      "native/native-image-extension-machine-views.json",
+      "native/native-image-extension-owner-probe-v3-x64.log"
+    ],
+    "blocks": "Full cross-architecture goal; not a claim established by this native same-architecture owner group.",
+    "action": "Preserve explicit runtime boundary; do not infer whole-process equivalence from projected bytes."
+  },
+  {
+    "impact": "high",
+    "finding": "SEH recovery beyond the earlier missing-fetch observation remains unproven; the selected-image bootstrap now stops earlier at unimplemented NtQuerySystemTime",
+    "evidence": [
+      "validation/ordinary-final-analysis.json",
+      "previous ordinary observer SEH cycle after unmapped fetch"
+    ],
+    "blocks": "Blocks full ordinary program completion, not the controlled image ownership contract",
+    "action": "Implement the measured service in a separate semantic group; do not infer SEH correction or forward progress from changed turn counts"
+  },
+  {
+    "impact": "medium",
+    "finding": "Four BZHI and one FP16 native Windows lowering tests failed in the preceding published baseline.",
+    "evidence": [
+      "previous System WNF full native validation"
+    ],
+    "blocks": "No new owner semantic assertion is waived; the exact five baseline failures remain separately audited.",
+    "action": "Retain failure identities; do not report all tests passing."
+  },
+  {
+    "impact": "low",
+    "finding": "Full mapped Windows DLL captures are needed for independent normalization checks.",
+    "evidence": [
+      "external-images.json"
+    ],
+    "blocks": "No",
+    "action": "Keep full bytes in task capture cache and publish identities plus reproducible native producers."
+  }
+]

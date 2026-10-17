@@ -2,6 +2,7 @@
 use super::*;
 use crate::user::windows::memory::{mem, prot};
 use std::fmt;
+mod extensions;
 
 #[repr(C)]
 #[derive(Default)]
@@ -108,6 +109,23 @@ impl Source {
         self.acquire(Some(machine))
     }
     fn acquire(&self, machine: Option<u16>) -> io::Result<Arc<ImageTemplate>> {
+        let (original, view) = self.capture(machine, 0)?;
+        let image = if original.extensions.iter().any(Option::is_some) {
+            // Keep all three independent views alive until comparison completes;
+            // otherwise the kernel may reuse an identical temporary address.
+            let (first, first_view) = self.capture(machine, 0x0080_0000)?;
+            let (second, second_view) = self.capture(machine, 0x0080_0000)?;
+            let image = ImageTemplate::with_rebase(original, &first, &second)?;
+            second_view.close()?;
+            first_view.close()?;
+            image
+        } else {
+            original
+        };
+        view.close()?;
+        Ok(image)
+    }
+    fn capture(&self, machine: Option<u16>, flags: u32) -> io::Result<(Arc<ImageTemplate>, View)> {
         if !(4096..=super::super::image::MAX_IMAGE_BYTES).contains(&self.size) {
             return Err(invalid("selected kernel image template exceeds 64 MiB"));
         }
@@ -167,7 +185,7 @@ impl Source {
                     &mut address,
                     null_mut(),
                     &mut size,
-                    0,
+                    flags,
                     prot::READONLY,
                     &mut parameter,
                     1,
@@ -184,7 +202,7 @@ impl Source {
                     null_mut(),
                     &mut size,
                     2,
-                    0,
+                    flags,
                     prot::READONLY,
                 )
             }
@@ -275,8 +293,25 @@ impl Source {
             offset += region.size;
         }
         section::validate(&self.handle, self.attributes, self.size)?;
-        let image = ImageTemplate::selected(bytes, regions)?;
-        view.close()?;
-        Ok(image)
+        let extensions = extensions::capture(address, size)?;
+        let image = ImageTemplate::selected_extended(bytes, regions, extensions)?;
+        if flags & 0x0080_0000 != 0 && image.preferred != address as usize as u64 {
+            return Err(invalid(
+                "native flagged image did not publish its actual base",
+            ));
+        }
+        let native_machine = section::native_machine()?;
+        if native_machine.is_none() && image.extensions.iter().any(Option::is_some) {
+            return Err(io::Error::new(
+                io::ErrorKind::Unsupported,
+                "image extensions require native machine identity",
+            ));
+        }
+        let image = if native_machine.is_some_and(|machine| image.machine != machine) {
+            ImageTemplate::without_large_pages(image)?
+        } else {
+            image
+        };
+        Ok((image, view))
     }
 }

@@ -1,0 +1,975 @@
+{
+  "captured-utc": "2026-10-17T22:16:33.641034+00:00",
+  "files": [
+    {
+      "path": "validation/analyze-image-ordinary.py",
+      "bytes": 1281,
+      "sha256": "2b96ee8888c657b3eef85482f0aae25c84b6eb1c9f8ee1383aa2f4a5a2159fe1"
+    },
+    {
+      "path": "validation/apply-image-extension-epoch6.py",
+      "bytes": 1220,
+      "sha256": "9d42beb87ead01b753e0d2aebdb0b4b4dc300484c2cb085648e9cb09fea7efb2"
+    },
+    {
+      "path": "validation/assist-native-image-extension-final-cpp.log",
+      "bytes": 2946,
+      "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+    },
+    {
+      "path": "validation/assist-native-image-extension-final-owned.ps1",
+      "bytes": 4516,
+      "sha256": "f01d9b9086348bafcabee639ecbda9bf30e30663934fdc10f116de1a030460d4"
+    },
+    {
+      "path": "validation/assist-native-image-extension-final-shipping.log",
+      "bytes": 1584,
+      "sha256": "78f5839da0ac177f278ca2bfecb8cec238ffa98b6448b56142f06e27090c4394"
+    },
+    {
+      "path": "validation/collected-image-final-owning-artifacts.json",
+      "bytes": 390,
+      "sha256": "bdb840d3a68e99b06e4864c9221274ee8b20942fc6ee37f9c1af56ac1a59c550"
+    },
+    {
+      "path": "validation/collected-native-image-extension-final-after-artifacts-stderr.log",
+      "bytes": 72,
+      "sha256": "a8dd5b4f852b782842253d071162bc7c3c44c3a9a07131cd1159e45bbb802a10"
+    },
+    {
+      "path": "validation/collected-native-image-extension-final-after-artifacts.jsonl",
+      "bytes": 130191,
+      "sha256": "9fb7c972ac2c0624c01f2ad5db914b43853e3a6c9eaa39e9a18d307b587cc4d5"
+    },
+    {
+      "path": "validation/current-cpp-consumers-after-fast-forward.json",
+      "bytes": 1879,
+      "sha256": "7becade8c8a91f10e41c2e09fc138e88897396093ca2c60838b0d5c9375cecfe"
+    },
+    {
+      "path": "validation/current-cpp-consumers-reverified.json",
+      "bytes": 1800,
+      "sha256": "1fb4fb14a8ff7780fa27e1c80a919bc04b9b87f1f7f9896031e25fd476821f9f"
+    },
+    {
+      "path": "validation/epoch1-complete-source-inputs.json",
+      "bytes": 1052723,
+      "sha256": "d3ba40f193cb4b247b81bbc2a53646a815560c68bb10c3b47575d785402d4e5a"
+    },
+    {
+      "path": "validation/epoch1-frozen-source.json",
+      "bytes": 2518,
+      "sha256": "bdb4becc1287a04ecbee908bba4075e87745603016a44eb78451ad040ae3b035"
+    },
+    {
+      "path": "validation/epoch2-frozen-source.json",
+      "bytes": 3090,
+      "sha256": "d976cfcdda8dd0c5dcf66636f281cc165296951c64883378210b6b7625fe0986"
+    },
+    {
+      "path": "validation/epoch3-complete-source-inputs.json",
+      "bytes": 1053208,
+      "sha256": "316456dde68fd4f4811cef692c6f338de99f93a9f4be82aadf021b42014954ca"
+    },
+    {
+      "path": "validation/epoch3-frozen-source.json",
+      "bytes": 3245,
+      "sha256": "a3cbc6c151ddfc4bff112372ec65f11aa99ca48fbabfc74319f022e510d98608"
+    },
+    {
+      "path": "validation/epoch4-complete-source-inputs.json",
+      "bytes": 1053208,
+      "sha256": "40b83b43b2ec47e3055cb459e6eee8136c28d3641c7098828024bcdfed6bbf1f"
+    },
+    {
+      "path": "validation/epoch4-frozen-source.json",
+      "bytes": 3341,
+      "sha256": "e362df1ba8bbf4c61d6b9044add66eeac98467a4e93fda0ce2742e5f2e5074cf"
+    },
+    {
+      "path": "validation/epoch5-complete-source-inputs.json",
+      "bytes": 1053208,
+      "sha256": "5b04fc340b8ebaa138a2e19f95e1923dfc81641d83dbddc8bdd855d36eadc11b"
+    },
+    {
+      "path": "validation/epoch5-frozen-source.json",
+      "bytes": 3693,
+      "sha256": "a8b3eafc96a8b9a08bd4fb2cc8575cc2525b32561e19fa59a055e109c6925ea3"
+    },
+    {
+      "path": "validation/epoch6-change.json",
+      "bytes": 622,
+      "sha256": "ada6d3c067486d026ed242363593026add564d16246633f7f774e84f70d1669c"
+    },
+    {
+      "path": "validation/epoch6-complete-source-inputs.json",
+      "bytes": 1053208,
+      "sha256": "bb54ad5ba0311165202f47e75bdbe8a834d14dfc24a0038fa6b515490d127f87"
+    },
+    {
+      "path": "validation/epoch6-frozen-source.json",
+      "bytes": 3666,
+      "sha256": "f788bdf697db5146f44d38c5a642fe00a88b1bc4e30d6dabd4ab2aac6ae38288"
+    },
+    {
+      "path": "validation/epoch6-owner-leaf-after.rs",
+      "bytes": 7406,
+      "sha256": "e0d33bab5119b5f0ac5ad6fbe34d2a8ea94768e013b5549df7ce69158b7ea995"
+    },
+    {
+      "path": "validation/epoch6-owner-leaf-before.rs",
+      "bytes": 6655,
+      "sha256": "476ba837f0d9e3cda7dcea588766e31877373616ade37c58998f2d7c864bdd5a"
+    },
+    {
+      "path": "validation/final-owning-source-hashes.json",
+      "bytes": 65914,
+      "sha256": "4cd022d6b60a663154e7bc9cdd3df36fc7bcb1c9dfa916afa40f473ee6ac3c05"
+    },
+    {
+      "path": "validation/image-extension-epoch1-driver.log",
+      "bytes": 352,
+      "sha256": "18275a15b74e3fea24002fd8b7aaf91330987feb70618dcd64693d643be9e89d"
+    },
+    {
+      "path": "validation/image-extension-epoch1-launch.json",
+      "bytes": 481,
+      "sha256": "469070258a4b28b153faef764b9d786efcfac33c57d4abed441298c21954356a"
+    },
+    {
+      "path": "validation/image-extension-epoch1-source-verification.json",
+      "bytes": 1080500,
+      "sha256": "81da9a77f1cba5488dc6ddef9e02d4c94ab87a1c64f1b994f3e78b5cb4a1f6b2"
+    },
+    {
+      "path": "validation/image-extension-epoch5-source-verification.json",
+      "bytes": 1080972,
+      "sha256": "9fc8da577d2c3db673e4a125b769f82a8179f79c01af5feb3e381d025f887f35"
+    },
+    {
+      "path": "validation/image-extension-epoch6-driver.log",
+      "bytes": 321,
+      "sha256": "d46cd415e0a00b7bd3e2779a7f014c1de6d12d6d7d39ba0edc671f6eb7427a20"
+    },
+    {
+      "path": "validation/image-extension-epoch6-launch.json",
+      "bytes": 189,
+      "sha256": "cfbe8d4a5e74fece97c401bef86e93e97756e0e89626848a4e80d7784c75e61b"
+    },
+    {
+      "path": "validation/image-extension-epoch6-source-verification.json",
+      "bytes": 1080965,
+      "sha256": "9b59d2c5b08a2293c59a346b54bdba3149ae5da1f8f3454c48da9dfbbcb30321"
+    },
+    {
+      "path": "validation/image-extension-final-owned-driver.log",
+      "bytes": 721,
+      "sha256": "e11c363a37c25ba5ba525fe9dc23ba7a8047879937754806ca75e96f70c9b28a"
+    },
+    {
+      "path": "validation/image-extension-final-owned-launch.json",
+      "bytes": 509,
+      "sha256": "27fa20ef9b34ad87aac7ff168010a4e692277fb375169edcff31e423895cf94e"
+    },
+    {
+      "path": "validation/image-extension-final-owning-source-hashes.json",
+      "bytes": 65914,
+      "sha256": "4cd022d6b60a663154e7bc9cdd3df36fc7bcb1c9dfa916afa40f473ee6ac3c05"
+    },
+    {
+      "path": "validation/image-extension-final-v2-core-driver.log",
+      "bytes": 581,
+      "sha256": "aea356096f692caa5b62e5c6666762724bf27d679d0478a017ab6f08447a6590"
+    },
+    {
+      "path": "validation/image-extension-final-v2-focus-driver.log",
+      "bytes": 299,
+      "sha256": "516f05aa5d70688908769cb6c850b612d180cc9e3a04ec29642ac8ff3d0ffdaa"
+    },
+    {
+      "path": "validation/image-extension-final-v2-launch.json",
+      "bytes": 716,
+      "sha256": "81b09cb44249192e054859ec637dd11351d77356e6731e98655ad355f92ebf1b"
+    },
+    {
+      "path": "validation/inspect-image-extension-final-archives.py",
+      "bytes": 2208,
+      "sha256": "72452a91cab6fd576c93e4b5ad7b5c368d621790c0703ff45ecff3231b92d153"
+    },
+    {
+      "path": "validation/linux-image-extension-epoch1-all-targets.log",
+      "bytes": 363,
+      "sha256": "0f28a9c505076dc1de10134cd600a775346adc70bf0ab786af14574be9622069"
+    },
+    {
+      "path": "validation/linux-image-extension-epoch1-focus.log",
+      "bytes": 2803,
+      "sha256": "ea714851e8a7754c4fa444e5ddbc54f1000b57e4195e73c5d181b3f95c2faaf4"
+    },
+    {
+      "path": "validation/linux-image-extension-epoch1-regression.log",
+      "bytes": 140903,
+      "sha256": "9a72482b1bccb82dd00b9d8547dbfed10522bcc169699b72b12fbc81811a8c73"
+    },
+    {
+      "path": "validation/linux-image-extension-epoch2-focus.log",
+      "bytes": 905,
+      "sha256": "9df9bfb6b33a4bfbbfec1ba97f4ef62226fa99ea3107678da7342d9f3f7114fc"
+    },
+    {
+      "path": "validation/linux-image-extension-epoch3-all-targets.log",
+      "bytes": 72,
+      "sha256": "8950be1e8f4499f41b8e38ef15f09a0e2671be53a43aa5dec4d794320908881d"
+    },
+    {
+      "path": "validation/linux-image-extension-epoch3-focus.log",
+      "bytes": 3126,
+      "sha256": "23c7c102c7250cb63236e75c161562b51afdefe5d619fa053106b8d3bf434285"
+    },
+    {
+      "path": "validation/linux-image-extension-epoch3-regression.log",
+      "bytes": 141477,
+      "sha256": "20c5433bfe8d92b2fa389c7a9f816e31e14d172e9b3c0400cb8a351a7ca3f1ee"
+    },
+    {
+      "path": "validation/linux-image-extension-final-all-targets.log",
+      "bytes": 1976,
+      "sha256": "763cfb0fb2f04d0708072b8cc5b296766a895d7453cc5d7dbcf16a35034d665a"
+    },
+    {
+      "path": "validation/linux-image-extension-final-capi.log",
+      "bytes": 12909,
+      "sha256": "666cfe3e19bd318432f38008833dafaddb5149a55b5fb8f7af9556520fdbc66a"
+    },
+    {
+      "path": "validation/linux-image-extension-final-focus.log",
+      "bytes": 5544,
+      "sha256": "d4bf8e062ba5ea10fe4ea6ae8fedc6ba893ade4001d8a20a7be206a90475f020"
+    },
+    {
+      "path": "validation/linux-image-extension-final-full.log",
+      "bytes": 816941,
+      "sha256": "bcb67bead7ab215761a8dc3408a48ab050c6f35cde21f6c7cf450d9fde69d500"
+    },
+    {
+      "path": "validation/linux-image-extension-final-gates.json",
+      "bytes": 6831,
+      "sha256": "2ccd1f03c6016511de5c1c64809a9f9137627c1c3b43c81e49851e4854440fb3"
+    },
+    {
+      "path": "validation/linux-image-extension-final-integration.log",
+      "bytes": 35860,
+      "sha256": "7cd943743e911e53d4666d9ddacf5ef7a6996b94ae79d1cc82d0fca8bcbec9e1"
+    },
+    {
+      "path": "validation/linux-image-extension-final-original-receipt.json",
+      "bytes": 5812,
+      "sha256": "7c45f468adde41c404482ad85f479383018bf5933d73a31d02254e25aaa69d1d"
+    },
+    {
+      "path": "validation/linux-image-final-owning-archive-identities.json",
+      "bytes": 67153,
+      "sha256": "28553714b109395d5be6c6270bf1e2b9fadd6fa2998fa9afbfbfe9bd9c98451a"
+    },
+    {
+      "path": "validation/linux-image-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "d5a076562712603a8f4edc339430f131856c946ebbfcc4d6dfe81f576c7c10ca"
+    },
+    {
+      "path": "validation/linux-image-owning-artifacts.log",
+      "bytes": 159806,
+      "sha256": "5812ce58e82f418d87e457816d8b198ae0747dc5d308f2b2fd476c314765bd54"
+    },
+    {
+      "path": "validation/linux-image-owning-commands.json",
+      "bytes": 5483,
+      "sha256": "64c614f110b856b8553bac52b082eb35257a2e9ac2619e3f9890407a29e22c9c"
+    },
+    {
+      "path": "validation/linux-image-owning-cpp.log",
+      "bytes": 1623,
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+    },
+    {
+      "path": "validation/linux-image-owning-gates.json",
+      "bytes": 6220,
+      "sha256": "fc8a73806d7da838fc49517f3208b43662b7b6ee31ecae01c7f4adf52fbe9979"
+    },
+    {
+      "path": "validation/linux-image-owning-shipping.log",
+      "bytes": 415,
+      "sha256": "5549bd399ccc0adb2eeef1daa68fca9758593997e2489331b1f54b82e63bbc27"
+    },
+    {
+      "path": "validation/macos-image-extension-epoch1-all-targets.log",
+      "bytes": 475,
+      "sha256": "9201b9af7ff3f033392c95e67db32062be6ac97d48d59e4c95b9b331d79ef1ea"
+    },
+    {
+      "path": "validation/macos-image-extension-epoch1-focus.log",
+      "bytes": 3053,
+      "sha256": "b3886f461def032427df45af1543ad99280e2315c2ab0b24ea41ad07ac61e3a3"
+    },
+    {
+      "path": "validation/macos-image-extension-epoch1-regression.log",
+      "bytes": 140988,
+      "sha256": "87de1f16a7c546278a7fcfd6ac2d59cdeb49fe21166be450897319b9dfd5985f"
+    },
+    {
+      "path": "validation/macos-image-extension-epoch2-focus.log",
+      "bytes": 1142,
+      "sha256": "e1d1f0114eb5fecb3da3fd006235b11fcdda07d1c97729edfc3441c45605ec93"
+    },
+    {
+      "path": "validation/macos-image-extension-epoch3-all-targets.log",
+      "bytes": 206,
+      "sha256": "670f1dc6e8c67d25686ff36034c0a2519a7d4e96b13b1d45beb486aa9022666f"
+    },
+    {
+      "path": "validation/macos-image-extension-epoch3-focus.log",
+      "bytes": 3300,
+      "sha256": "f7c683760fd15dcb430553ba13748126fd78e6c296c25f84e9b973e2d2912fbe"
+    },
+    {
+      "path": "validation/macos-image-extension-epoch3-regression.log",
+      "bytes": 141504,
+      "sha256": "3aa24331dfb99145c3d5e5e40abda1a65a9f0a5880b30f583a6c1f7c6138d4a4"
+    },
+    {
+      "path": "validation/macos-image-extension-final-all-targets.log",
+      "bytes": 2270,
+      "sha256": "295a04ac98e68de29ae269825d7a8a8f850a06cef5bea6f82b3a4fd90079385c"
+    },
+    {
+      "path": "validation/macos-image-extension-final-capi.log",
+      "bytes": 13165,
+      "sha256": "83a88fa88c13fa33f9fb9ee2804bdae78f1254591e4214a5af6cb6b967004846"
+    },
+    {
+      "path": "validation/macos-image-extension-final-focus.log",
+      "bytes": 5909,
+      "sha256": "0c1bdae0f64adb3442ca516434024d5f4a1bf8d81e23eba2aec228cda9a6e754"
+    },
+    {
+      "path": "validation/macos-image-extension-final-full.log",
+      "bytes": 816954,
+      "sha256": "c626453521f3ab770bffd66a504138666c61fe9e9647a19d8775021560ba884d"
+    },
+    {
+      "path": "validation/macos-image-extension-final-gates.json",
+      "bytes": 2897,
+      "sha256": "98205b1fb5e69efff49207defe23827dc380391d739f28d61d907bfeda1c2a7b"
+    },
+    {
+      "path": "validation/macos-image-extension-final-integration.log",
+      "bytes": 36092,
+      "sha256": "dd640e88bfe2f146ed27730c5e72cfc12f05ddb20c7cc93b965a9e3415bdf190"
+    },
+    {
+      "path": "validation/macos-image-extension-final-original-receipt.json",
+      "bytes": 2118,
+      "sha256": "a06740ebba55e7f258f63b0581a469023bd4a420657b454c0de432cc722a5920"
+    },
+    {
+      "path": "validation/macos-image-final-owning-archive-identities.json",
+      "bytes": 68549,
+      "sha256": "5bd2265c4481bdeb31f2166950929375484393ab700b6a46617e83ec26f972a6"
+    },
+    {
+      "path": "validation/macos-image-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "7ee7febdb4233465b40102bd57e639d949406df4de1257daa2a7f7e50c4f2e06"
+    },
+    {
+      "path": "validation/macos-image-owning-artifacts.log",
+      "bytes": 131080,
+      "sha256": "cbbd427b1dfcf4a9d064998740657450dfbbe5916bef254c780b5c0a6ed4b737"
+    },
+    {
+      "path": "validation/macos-image-owning-build.log",
+      "bytes": 33678,
+      "sha256": "de52ea1b7d151208e8fce575177aec614f14aac46eae3b5fde31210610406822"
+    },
+    {
+      "path": "validation/macos-image-owning-commands.json",
+      "bytes": 3884,
+      "sha256": "f7295a30e78228a0f73cc5fb4a20a99d657064c3a195663ef26b4c89951d2b77"
+    },
+    {
+      "path": "validation/macos-image-owning-ctest.log",
+      "bytes": 1273,
+      "sha256": "db7c724e12d6736df6b56d8ab639c5094b06f60b8d40079b89b7c0b46fb3b229"
+    },
+    {
+      "path": "validation/macos-image-owning-gates.json",
+      "bytes": 5010,
+      "sha256": "24938fda3f9d5ece18f11c84f4400493d87df80a3054dd8582d5a6c49854c556"
+    },
+    {
+      "path": "validation/macos-image-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/macos-image-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/native-epoch6-controller.json",
+      "bytes": 239,
+      "sha256": "b1e4be53490b25f55db0b8c494fb866d2c2198b811fa159968f0fcd467f464e1"
+    },
+    {
+      "path": "validation/native-evidence-stress.json",
+      "bytes": 649,
+      "sha256": "98c3af813aaef794e2a56a18bfe643faaf5543fbc8eee27413cde1bfc072448d"
+    },
+    {
+      "path": "validation/native-final-controller.json",
+      "bytes": 1531,
+      "sha256": "8c357968987b5a919b24c69843267a9bec147ae6244f5452c390bdc0bb7e25e5"
+    },
+    {
+      "path": "validation/native-final-owned-controller.json",
+      "bytes": 590,
+      "sha256": "15484a0a7a40c39c633f41f4bd8828704f5564892b7c99470d245ef4ff72cba5"
+    },
+    {
+      "path": "validation/native-final-v2-controller.json",
+      "bytes": 987,
+      "sha256": "b277dd432c7b1b748c6e71fbf174ac9f7b9be2b8848f57b5deaa49b7f6f7abfb"
+    },
+    {
+      "path": "validation/native-image-extension-epoch1-all-targets.log",
+      "bytes": 986,
+      "sha256": "6a91a3e1db456490c6e75a789baaeedcc4b0f70d55db815104ac51ec949b737b"
+    },
+    {
+      "path": "validation/native-image-extension-epoch1-focus.log",
+      "bytes": 3933,
+      "sha256": "725c8f045f8cb4b9e98423f520a4eb61eeb9240d216cb0e2ca06b4acf1e14f5e"
+    },
+    {
+      "path": "validation/native-image-extension-epoch1-gates.json",
+      "bytes": 774,
+      "sha256": "0cd878f63acb118cfc8afe32924300e30eb5ddb9397901b3a6f5930a5cf582f6"
+    },
+    {
+      "path": "validation/native-image-extension-epoch1-gates.ps1",
+      "bytes": 1649,
+      "sha256": "7dda83290891a38268eb5512c13370c0310b7626479d6791dab512e8cada2210"
+    },
+    {
+      "path": "validation/native-image-extension-epoch1-regression.log",
+      "bytes": 153221,
+      "sha256": "757c2b0df3e78dfeb22cf1526fa0b2c9e30e6efe794282573d9530ad95415a60"
+    },
+    {
+      "path": "validation/native-image-extension-epoch6-all-targets.log",
+      "bytes": 986,
+      "sha256": "a61b1bb8570a255d91b1da93cb259708377d389aded837f8b0429b456fd539e8"
+    },
+    {
+      "path": "validation/native-image-extension-epoch6-focus.log",
+      "bytes": 4451,
+      "sha256": "4c394384b96d43daa7fc6cc1a8f46e8cb640dc4c69e76e73c476399500b0053f"
+    },
+    {
+      "path": "validation/native-image-extension-epoch6-gates.json",
+      "bytes": 503,
+      "sha256": "f31b2cc690fa984856062e14d2270256e66ad59f55f1d8aeb49e6aab9bdb49d4"
+    },
+    {
+      "path": "validation/native-image-extension-epoch6.ps1",
+      "bytes": 1608,
+      "sha256": "6a7f978532a72f04d1a13a5fe673b1a8db221483896cdd3fcdf67b4f0364bac7"
+    },
+    {
+      "path": "validation/native-image-extension-final-all-targets.log",
+      "bytes": 3074,
+      "sha256": "d1481f48520c6178c4ffa5bc8afa3024ef004adf2f1159cd96d63b39d659d93a"
+    },
+    {
+      "path": "validation/native-image-extension-final-build-user-artifacts.jsonl",
+      "bytes": 91001,
+      "sha256": "bc50fdbdd1fc635aa84f12c5022f9673c08b79b42bd2431c6f94fb84119bf4a5"
+    },
+    {
+      "path": "validation/native-image-extension-final-build-user.log",
+      "bytes": 146,
+      "sha256": "a426b8def29e58d15deadad35a89ee76c2625ebc17373e6babbf31cfcfc8d41f"
+    },
+    {
+      "path": "validation/native-image-extension-final-capi.log",
+      "bytes": 13766,
+      "sha256": "cabb6ac47fa9f3c77c74f8f04088f95b85b8e7fcdd850ddcb18c7cd7154a88d8"
+    },
+    {
+      "path": "validation/native-image-extension-final-core.ps1",
+      "bytes": 3399,
+      "sha256": "ec7fb6f941c940e1c9aa5c99d58cb37922390d338f2149f56ca09b8af07d3d23"
+    },
+    {
+      "path": "validation/native-image-extension-final-focus-focus.log",
+      "bytes": 6983,
+      "sha256": "6444ca5f959b5e0b898e8969c1f96e8bcf720b0ef2043509995d72d44699e8e1"
+    },
+    {
+      "path": "validation/native-image-extension-final-focus-gates.json",
+      "bytes": 274,
+      "sha256": "8f8d693728c0d756e638f0e25671400494865cc13677b757d3bfe901bdfb8571"
+    },
+    {
+      "path": "validation/native-image-extension-final-focus-v1.ps1",
+      "bytes": 1579,
+      "sha256": "536947fb99fcd1e09d22a020741bf78ff3405ff90ac52c47ac82ecc1202cd8a4"
+    },
+    {
+      "path": "validation/native-image-extension-final-focus.ps1",
+      "bytes": 1577,
+      "sha256": "8d5b2dfacc6104d3aeda4ead271eebd922558a6ca969ed00e4d1274f60b2ca20"
+    },
+    {
+      "path": "validation/native-image-extension-final-full.log",
+      "bytes": 777841,
+      "sha256": "5c9e7f141e649d61eccab5ef6166f3d5fb3f75dd20625370acf25102f6d7315a"
+    },
+    {
+      "path": "validation/native-image-extension-final-gates.json",
+      "bytes": 1030,
+      "sha256": "a8e0512be41a2ab38bdc4b26b496647feca04d2251241ea0abfb1c3e8bd22409"
+    },
+    {
+      "path": "validation/native-image-extension-final-integration.log",
+      "bytes": 1869,
+      "sha256": "9996eecee15dc5d3a9daa99c97d7672b6c9b0cccfe9cf621a448ee8e55c06d8e"
+    },
+    {
+      "path": "validation/native-image-extension-final-observer-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "validation/native-image-extension-final-ordinary-0.log",
+      "bytes": 46441,
+      "sha256": "acd861350125e5b42dfb18089e6a1b16e1fbfc02e914bef8b10cebfa71f80696"
+    },
+    {
+      "path": "validation/native-image-extension-final-ordinary-2.log",
+      "bytes": 48683,
+      "sha256": "0da7b89831004a2800d8dabd3e6c77f3c10f524a9548713be3b3ad3a04e1a9d0"
+    },
+    {
+      "path": "validation/native-image-extension-final-ordinary-outcomes.json",
+      "bytes": 1435,
+      "sha256": "8ddd4d12284f0fbd6aa956aad13d20215867398a66d72b2731d04aed01ea8a34"
+    },
+    {
+      "path": "validation/native-image-extension-final-owning-archive-hashes.json",
+      "bytes": 56457,
+      "sha256": "c53a65fb949b29e8396fab118c2aaf0862c8868e2c32b1528c13b0ff4102a04a"
+    },
+    {
+      "path": "validation/native-image-extension-final-owning-source-identities.json",
+      "bytes": 66719,
+      "sha256": "0e73fe6ee62996d13d3a3b683fca06b01c4c9344b168d2d17d9a202ce0b37b28"
+    },
+    {
+      "path": "validation/native-image-extension-final-owning-source-verification.json",
+      "bytes": 126,
+      "sha256": "9b1f2a93aca0167f7953e4c8a5641fd7a06de34c4830e608616c3b66de0722fe"
+    },
+    {
+      "path": "validation/normalize-final-receipt.py",
+      "bytes": 1104,
+      "sha256": "3aec6037d0c553ab6a7d28d096e6b7359d31dd133491372734172ae00d40bfcc"
+    },
+    {
+      "path": "validation/ordinary-final-analysis.json",
+      "bytes": 2086,
+      "sha256": "1a66b7f9381c86a78c1e07fb73fb6cb8e0b37edfab32b2e8b5daf25f3e99b9ec"
+    },
+    {
+      "path": "validation/owning-link-update.json",
+      "bytes": 397,
+      "sha256": "38a913b68b338984d3e57873930c7a22d6e6f75a386c8246362be4ce40a3a6c0"
+    },
+    {
+      "path": "validation/run-image-extension-epoch6.py",
+      "bytes": 1087,
+      "sha256": "1d7878bb980f3c7516ffc058285da1894981695b1630bc4a4b8fbce826326f29"
+    },
+    {
+      "path": "validation/run-image-extension-final-observations.py",
+      "bytes": 1510,
+      "sha256": "f0940d6632c267cde6afb8ad5ff4500eb85ebb02aa6893f2603401da24896bcb"
+    },
+    {
+      "path": "validation/run-image-extension-final-owned.py",
+      "bytes": 1469,
+      "sha256": "4f728f9c654b0f5d02660271e6cc42c4a80df307c80d9e2607e3b15f2d3785ea"
+    },
+    {
+      "path": "validation/run-image-extension-final-unix.py",
+      "bytes": 1817,
+      "sha256": "50077b0c2863b856be386e776775eeed535e50ab7cd796d850f263dea6503e2a"
+    },
+    {
+      "path": "validation/run-image-extension-final-v2.py",
+      "bytes": 4180,
+      "sha256": "edce81c8258ba3384f51b6d4a155555f0dfdc5e39c42c841951ca57bc4a540ff"
+    },
+    {
+      "path": "validation/run-image-owning-gates.py",
+      "bytes": 754,
+      "sha256": "5e109ec738c6abbff9c0a822a8d0e768eda79002de0a2d51cb3a7a93b9432c00"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/dll/native/section_map/geometry.rs",
+      "bytes": 14512,
+      "sha256": "64dfba3eaf30f160e4a102fb626071cce20872a68c0c3e11bf85ac3813a491c2"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/dll/native/section_map.rs",
+      "bytes": 8331,
+      "sha256": "c9bd260a6cc28b610ae4e3a967cb09f761e9fee10bc46bdbb1f64935443a1896"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/dll/native/virtual_memory/image_extension.rs",
+      "bytes": 2798,
+      "sha256": "fffd8c204648391e2a4430c2dcfb39d18e072bf81fca3d91f05e68b665489b1a"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/dll/native/virtual_memory.rs",
+      "bytes": 6769,
+      "sha256": "8005856f8357a59b6f804a00eb96afe25efbcbab4117d408be18ce6bba2d89ee"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/dll/native.rs",
+      "bytes": 18982,
+      "sha256": "bc6d5785b4cc5bbc73bd2cba8f41f373bb1c1d4d7036af64d43319e0925b4358"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/loader/mod.rs",
+      "bytes": 52178,
+      "sha256": "a2947183c9d26540d918ad94c366745a72611bbad3325d636aa7abe99259f2c8"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/loader/native_image.rs",
+      "bytes": 3099,
+      "sha256": "b694bcf0a21c62dc23b38411779d6a14e46e6103a2fd15c7a8530becd584cde9"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/loader/native_image_tests.rs",
+      "bytes": 3774,
+      "sha256": "ea5e9e5e378ffaeb224764d3fda05ec3a72a74a82a2abaeaf3e31d741ca760bb"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/memory/section.rs",
+      "bytes": 7022,
+      "sha256": "2b510a2a378a27e131ac1c9b99faef9c77cbaef2becfa0d75b5bb055aa099b4e"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/memory/section_extension_tests.rs",
+      "bytes": 4327,
+      "sha256": "ee1805fb18fa068709713077699ed53bf63b523d7a78e27fa8b17b954f6f5ff7"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/memory.rs",
+      "bytes": 69752,
+      "sha256": "6154a05d730399e43c8decb8e0706e1f8255b8a65b27fe84b156ce3757db258f"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/object_namespace/image.rs",
+      "bytes": 9956,
+      "sha256": "83bec2a43be372c34998acf59841621b2f7091e00ee7a0ac9e86284d3f1f89d3"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/object_namespace/image_extension_tests.rs",
+      "bytes": 3524,
+      "sha256": "1b40ed9ea5f0fa9e5efec5175d6f1ab64063c35e77ffbe1b2880b6a1d9e68107"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/object_namespace/installed/image/extensions.rs",
+      "bytes": 4395,
+      "sha256": "1d91addf02503e1aef8c38bedc033228fc68ff21edb92b9b5f12b97fb9092da2"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/object_namespace/installed/image.rs",
+      "bytes": 12070,
+      "sha256": "38866039d79d6654949fd1f3c98a6d4ea7fb93f9f513a7f485ec68361cf04dcc"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/object_namespace.rs",
+      "bytes": 18106,
+      "sha256": "d157a76927527a12dfbbb372f209f0f88cb028115a559b368267fa085aeee969"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/process/sched/tests/services_tests/image_extension_leaf_tests.rs",
+      "bytes": 3295,
+      "sha256": "3ae396cd449b10bb629307273a40f1c2797f37b700cc44e3e6509f8a782be041"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/process/sched/tests/services_tests/image_extension_owner_leaf_tests.rs",
+      "bytes": 5598,
+      "sha256": "ddf47ee198b3963cfe7ec76ae8139d613e1e980b4e315e73e92894eb660d13b6"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/process/sched/tests/services_tests/image_extension_owner_replay_tests.rs",
+      "bytes": 2768,
+      "sha256": "2c55524590b59f84de957a2838944439d9ca46c6dad4ccb26bbcf628193cf5cb"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/process/sched/tests/services_tests/image_extension_owner_tests.rs",
+      "bytes": 3275,
+      "sha256": "0430bc073079cc2c1148f82bd549488faa6af1f4757b5a73de3b90ef9f6b8516"
+    },
+    {
+      "path": "validation/source-epochs/epoch2/src/user/windows/process/sched/tests/services_tests/image_extension_tests.rs",
+      "bytes": 17435,
+      "sha256": "7bcb958679b969a9ee1a7d9575c309cf71f23d7bf9a1b5e2e8cf7e45683be802"
+    },
+    {
+      "path": "validation/source-epochs/epoch3/src/user/windows/memory/section.rs",
+      "bytes": 7022,
+      "sha256": "8fb6a787204ce3301f73e985fe601a8ecb8f46f8ede48597931542c33cbcd720"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/dll/native/section_map/geometry.rs",
+      "bytes": 14512,
+      "sha256": "64dfba3eaf30f160e4a102fb626071cce20872a68c0c3e11bf85ac3813a491c2"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/dll/native/section_map.rs",
+      "bytes": 8331,
+      "sha256": "c9bd260a6cc28b610ae4e3a967cb09f761e9fee10bc46bdbb1f64935443a1896"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/dll/native/virtual_memory/image_extension.rs",
+      "bytes": 2798,
+      "sha256": "fffd8c204648391e2a4430c2dcfb39d18e072bf81fca3d91f05e68b665489b1a"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/dll/native/virtual_memory.rs",
+      "bytes": 6769,
+      "sha256": "8005856f8357a59b6f804a00eb96afe25efbcbab4117d408be18ce6bba2d89ee"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/dll/native.rs",
+      "bytes": 18982,
+      "sha256": "bc6d5785b4cc5bbc73bd2cba8f41f373bb1c1d4d7036af64d43319e0925b4358"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/loader/mod.rs",
+      "bytes": 52178,
+      "sha256": "a2947183c9d26540d918ad94c366745a72611bbad3325d636aa7abe99259f2c8"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/loader/native_image.rs",
+      "bytes": 3400,
+      "sha256": "5d8b5ca40c238e72c3a1e035ca69e2b31310391aa5348feff3c02c8748f3c4fe"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/loader/native_image_tests.rs",
+      "bytes": 3774,
+      "sha256": "ea5e9e5e378ffaeb224764d3fda05ec3a72a74a82a2abaeaf3e31d741ca760bb"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/memory/section.rs",
+      "bytes": 7022,
+      "sha256": "8fb6a787204ce3301f73e985fe601a8ecb8f46f8ede48597931542c33cbcd720"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/memory/section_extension_tests.rs",
+      "bytes": 4327,
+      "sha256": "ee1805fb18fa068709713077699ed53bf63b523d7a78e27fa8b17b954f6f5ff7"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/memory.rs",
+      "bytes": 69752,
+      "sha256": "6154a05d730399e43c8decb8e0706e1f8255b8a65b27fe84b156ce3757db258f"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/object_namespace/image.rs",
+      "bytes": 9956,
+      "sha256": "83bec2a43be372c34998acf59841621b2f7091e00ee7a0ac9e86284d3f1f89d3"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/object_namespace/image_extension_tests.rs",
+      "bytes": 3524,
+      "sha256": "1b40ed9ea5f0fa9e5efec5175d6f1ab64063c35e77ffbe1b2880b6a1d9e68107"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/object_namespace/installed/image/extensions.rs",
+      "bytes": 4395,
+      "sha256": "1d91addf02503e1aef8c38bedc033228fc68ff21edb92b9b5f12b97fb9092da2"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/object_namespace/installed/image.rs",
+      "bytes": 12224,
+      "sha256": "edb9bcb145f11403f29a998dd59acec4714f6124b73cc919703306381b08fb3e"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/object_namespace/installed/section.rs",
+      "bytes": 7541,
+      "sha256": "debc57ca92465460ecbed09afbf7960d56e9579add3b8d834543aa9bc6f36aa8"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/object_namespace/installed.rs",
+      "bytes": 15582,
+      "sha256": "11099693bf07c6a144d01d75f43e7e6ce74733ad5f688dbdc000b84cfc9526d8"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/object_namespace.rs",
+      "bytes": 18184,
+      "sha256": "fcd2d22122ee0240b3adaba63797bc309ff5acd2600ea73b96f837fbed3d9c49"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/process/sched/tests/services_tests/image_extension_leaf_tests.rs",
+      "bytes": 3295,
+      "sha256": "3ae396cd449b10bb629307273a40f1c2797f37b700cc44e3e6509f8a782be041"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/process/sched/tests/services_tests/image_extension_owner_leaf_tests.rs",
+      "bytes": 6655,
+      "sha256": "476ba837f0d9e3cda7dcea588766e31877373616ade37c58998f2d7c864bdd5a"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/process/sched/tests/services_tests/image_extension_owner_replay_tests.rs",
+      "bytes": 2768,
+      "sha256": "2c55524590b59f84de957a2838944439d9ca46c6dad4ccb26bbcf628193cf5cb"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/process/sched/tests/services_tests/image_extension_owner_tests.rs",
+      "bytes": 3275,
+      "sha256": "0430bc073079cc2c1148f82bd549488faa6af1f4757b5a73de3b90ef9f6b8516"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/process/sched/tests/services_tests/image_extension_tests.rs",
+      "bytes": 17435,
+      "sha256": "7bcb958679b969a9ee1a7d9575c309cf71f23d7bf9a1b5e2e8cf7e45683be802"
+    },
+    {
+      "path": "validation/source-epochs/epoch4/src/user/windows/process/sched/tests/services_tests/virtual_memory_leaf_tests.rs",
+      "bytes": 11068,
+      "sha256": "02c0444f0d3eeafc18b2d7658749238981a353b78a5b206917ff42c68aeaaac8"
+    },
+    {
+      "path": "validation/source-epochs/epoch5/src/user/windows/process/sched/tests/services_tests/virtual_memory_leaf_tests.rs",
+      "bytes": 11211,
+      "sha256": "ee199bdb38f988fb3543351defc6bcd2fae5f50ce1c7084bbe02ab2a4cbc7315"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/dll/native/section_map/geometry.rs",
+      "bytes": 13834,
+      "sha256": "a540caac5c440abe1470362c098f426488e70dbd696bf93c055e3f30935e3b57"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/dll/native/section_map.rs",
+      "bytes": 8304,
+      "sha256": "f0225fc480383a35d71808628de93479aa29301d54f56931b1872f028039684c"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/dll/native/virtual_memory/image_extension.rs",
+      "bytes": 2798,
+      "sha256": "fffd8c204648391e2a4430c2dcfb39d18e072bf81fca3d91f05e68b665489b1a"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/dll/native/virtual_memory.rs",
+      "bytes": 6769,
+      "sha256": "8005856f8357a59b6f804a00eb96afe25efbcbab4117d408be18ce6bba2d89ee"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/loader/mod.rs",
+      "bytes": 52178,
+      "sha256": "a2947183c9d26540d918ad94c366745a72611bbad3325d636aa7abe99259f2c8"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/loader/native_image.rs",
+      "bytes": 3069,
+      "sha256": "3149f9c15ae55f8233468d45b84a36e98bdc093e86b169a7fe80bbe0f7adf05c"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/loader/native_image_tests.rs",
+      "bytes": 3774,
+      "sha256": "ea5e9e5e378ffaeb224764d3fda05ec3a72a74a82a2abaeaf3e31d741ca760bb"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/memory/section.rs",
+      "bytes": 7022,
+      "sha256": "2b510a2a378a27e131ac1c9b99faef9c77cbaef2becfa0d75b5bb055aa099b4e"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/memory/section_extension_tests.rs",
+      "bytes": 4327,
+      "sha256": "ee1805fb18fa068709713077699ed53bf63b523d7a78e27fa8b17b954f6f5ff7"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/memory.rs",
+      "bytes": 69752,
+      "sha256": "6154a05d730399e43c8decb8e0706e1f8255b8a65b27fe84b156ce3757db258f"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/object_namespace/image.rs",
+      "bytes": 8764,
+      "sha256": "ecc4a16e1b6de2c568999a0d1512d8b9ef84a28ee26313268e6fcad53898fb4c"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/object_namespace/image_extension_tests.rs",
+      "bytes": 2882,
+      "sha256": "3a073391e0e30e0cfc275de1c6ba5e934f4324d615e6101044129ff1dd148acc"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/object_namespace/installed/image/extensions.rs",
+      "bytes": 4395,
+      "sha256": "1d91addf02503e1aef8c38bedc033228fc68ff21edb92b9b5f12b97fb9092da2"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/object_namespace/installed/image.rs",
+      "bytes": 11501,
+      "sha256": "ae27e7d96d583dc8069763fec5587cebf9f4cb8ca4dd1b41a2230ad6eb860101"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/object_namespace.rs",
+      "bytes": 18106,
+      "sha256": "d157a76927527a12dfbbb372f209f0f88cb028115a559b368267fa085aeee969"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/process/sched/tests/services_tests/image_extension_leaf_tests.rs",
+      "bytes": 3295,
+      "sha256": "3ae396cd449b10bb629307273a40f1c2797f37b700cc44e3e6509f8a782be041"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/process/sched/tests/services_tests/image_extension_owner_leaf_tests.rs",
+      "bytes": 5598,
+      "sha256": "ddf47ee198b3963cfe7ec76ae8139d613e1e980b4e315e73e92894eb660d13b6"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/process/sched/tests/services_tests/image_extension_owner_tests.rs",
+      "bytes": 3213,
+      "sha256": "3885ce0b5d5f6a95c4b69756d7caf1956716ed0c19d718a539924420d07047bc"
+    },
+    {
+      "path": "validation/source-epochs/initial/src/user/windows/process/sched/tests/services_tests/image_extension_tests.rs",
+      "bytes": 17435,
+      "sha256": "7bcb958679b969a9ee1a7d9575c309cf71f23d7bf9a1b5e2e8cf7e45683be802"
+    },
+    {
+      "path": "validation/validation-stress.json",
+      "bytes": 629,
+      "sha256": "d37d0cff4bd81acc53f9c1c765f74851583e4d32e65f576d9bf1e14af3dd29b1"
+    },
+    {
+      "path": "validation/verify-image-extension-final-owning-sources.py",
+      "bytes": 1203,
+      "sha256": "2940f7d5af6047ddf862cd8f00ae0220eb81956ec9c6fc56474e1866fd43ec3c"
+    },
+    {
+      "path": "validation/verify-image-extension-final.py",
+      "bytes": 685,
+      "sha256": "fe8198f206bd3d9bf87f758b598f15d4d37ff92bef42acee947a1a16ce0fc25a"
+    }
+  ]
+}

@@ -405,6 +405,13 @@ fn protect(c: &mut Ctx) -> ApiResult {
             Flow::ret(0)
         }
         Err(e) => {
+            if e == super::super::memory::VmError::NotCommitted
+                && c.p
+                    .vm
+                    .intersects_image_extension(base, base.saturating_add(size))
+            {
+                c.mem().w32(old_ptr, super::super::memory::prot::NOACCESS)?;
+            }
             if c.p.vm.is_nls_view(base) && e == super::super::memory::VmError::InvalidProtection
                 || c.p.vm.is_data_view(base)
                     && matches!(

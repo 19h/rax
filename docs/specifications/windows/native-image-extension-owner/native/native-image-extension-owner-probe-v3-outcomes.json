@@ -1,0 +1,26 @@
+﻿[
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "source-sha256":  "ca9e1ad7e97200e2dd6c793e0d56875b271f36fa32fbfaf147782ae370943092",
+        "log":  "native-image-extension-owner-probe-v3-arm64.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "source-sha256":  "ca9e1ad7e97200e2dd6c793e0d56875b271f36fa32fbfaf147782ae370943092",
+        "log":  "native-image-extension-owner-probe-v3-x64.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "source-sha256":  "ca9e1ad7e97200e2dd6c793e0d56875b271f36fa32fbfaf147782ae370943092",
+        "log":  "native-image-extension-owner-probe-v3-x86.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "source-sha256":  "ca9e1ad7e97200e2dd6c793e0d56875b271f36fa32fbfaf147782ae370943092",
+        "log":  "native-image-extension-owner-probe-v3-x86-laa.log"
+    }
+]

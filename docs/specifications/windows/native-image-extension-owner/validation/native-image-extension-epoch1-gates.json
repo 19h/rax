@@ -1,0 +1,20 @@
+﻿[
+    {
+        "gate":  "focus",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib image_extension -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "native-image-extension-epoch1-focus.log"
+    },
+    {
+        "gate":  "regression",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib user::windows -- --nocapture --test-threads=1",
+        "exit-code":  101,
+        "log":  "native-image-extension-epoch1-regression.log"
+    },
+    {
+        "gate":  "all-targets",
+        "command":  "cargo.exe check --locked --offline --no-default-features --all-targets",
+        "exit-code":  0,
+        "log":  "native-image-extension-epoch1-all-targets.log"
+    }
+]

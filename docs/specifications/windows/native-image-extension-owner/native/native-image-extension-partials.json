@@ -1,0 +1,2196 @@
+{
+  "handles-before": 113,
+  "handles-after": 113,
+  "rows": [
+    {
+      "name": "ntdll.dll",
+      "image-size": 4665344,
+      "flags": 0,
+      "requested": 0,
+      "status": 1073741827,
+      "base": 2180409327616,
+      "returned-size": 4665344,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000304700000000007000000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000304700000000000010000000000000",
+        "flags": 0,
+        "rva": 4665344,
+        "size": 4096,
+        "sample": {
+          "address": 2180413993152,
+          "region": {
+            "base": 2180413992960,
+            "allocation": 2180409327616,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180413988864,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "extension": {
+          "base": 2180413992960,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        },
+        "extension-last": {
+          "base": 2180413992960,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        }
+      },
+      "tail-ret": "c0035fd6",
+      "unmap-status": 0
+    },
+    {
+      "name": "ntdll.dll",
+      "image-size": 4665344,
+      "flags": 0,
+      "requested": 4096,
+      "status": 1073741827,
+      "base": 2180409327616,
+      "returned-size": 4096,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000304700000000003100000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000000000000000000000000000000000",
+        "flags": 0,
+        "rva": 0,
+        "size": 0
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180413988864,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508069363712,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension": {
+          "base": 2180413992960,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508069359616,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension-last": {
+          "base": 2180413992960,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508069359616,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        }
+      },
+      "tail-ret": null,
+      "unmap-status": 0
+    },
+    {
+      "name": "ntdll.dll",
+      "image-size": 4665344,
+      "flags": 0,
+      "requested": 65536,
+      "status": 1073741827,
+      "base": 2180409327616,
+      "returned-size": 65536,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000304700000000003100000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000000000000000000000000000000000",
+        "flags": 0,
+        "rva": 0,
+        "size": 0
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180413988864,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508069363712,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension": {
+          "base": 2180413992960,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508069359616,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension-last": {
+          "base": 2180413992960,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508069359616,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        }
+      },
+      "tail-ret": null,
+      "unmap-status": 0
+    },
+    {
+      "name": "ntdll.dll",
+      "image-size": 4665344,
+      "flags": 0,
+      "requested": 4661248,
+      "status": 1073741827,
+      "base": 2180409327616,
+      "returned-size": 4661248,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000304700000000003100000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000000000000000000000000000000000",
+        "flags": 0,
+        "rva": 0,
+        "size": 0
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180413988864,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508069363712,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension": {
+          "base": 2180413992960,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508069359616,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension-last": {
+          "base": 2180413992960,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508069359616,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        }
+      },
+      "tail-ret": null,
+      "unmap-status": 0
+    },
+    {
+      "name": "ntdll.dll",
+      "image-size": 4665344,
+      "flags": 0,
+      "requested": 4665344,
+      "status": 1073741827,
+      "base": 2180409327616,
+      "returned-size": 4665344,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000304700000000007000000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000304700000000000010000000000000",
+        "flags": 0,
+        "rva": 4665344,
+        "size": 4096,
+        "sample": {
+          "address": 2180413993152,
+          "region": {
+            "base": 2180413992960,
+            "allocation": 2180409327616,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180413988864,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "extension": {
+          "base": 2180413992960,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        },
+        "extension-last": {
+          "base": 2180413992960,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        }
+      },
+      "tail-ret": "c0035fd6",
+      "unmap-status": 0
+    },
+    {
+      "name": "ntdll.dll",
+      "image-size": 4665344,
+      "flags": 0,
+      "requested": 4669440,
+      "status": 3221225503,
+      "base": null,
+      "returned-size": 4669440
+    },
+    {
+      "name": "ntdll.dll",
+      "image-size": 4665344,
+      "flags": 8388608,
+      "requested": 0,
+      "status": 1073741878,
+      "base": 2180409327616,
+      "returned-size": 4665344,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000304700000000007000000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000304700000000000010000000000000",
+        "flags": 0,
+        "rva": 4665344,
+        "size": 4096,
+        "sample": {
+          "address": 2180413993152,
+          "region": {
+            "base": 2180413992960,
+            "allocation": 2180409327616,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180413988864,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "extension": {
+          "base": 2180413992960,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        },
+        "extension-last": {
+          "base": 2180413992960,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        }
+      },
+      "tail-ret": "c0035fd6",
+      "unmap-status": 0
+    },
+    {
+      "name": "ntdll.dll",
+      "image-size": 4665344,
+      "flags": 8388608,
+      "requested": 4096,
+      "status": 1073741878,
+      "base": 2180409327616,
+      "returned-size": 4096,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000304700000000003100000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000000000000000000000000000000000",
+        "flags": 0,
+        "rva": 0,
+        "size": 0
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180413988864,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508069363712,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension": {
+          "base": 2180413992960,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508069359616,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension-last": {
+          "base": 2180413992960,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508069359616,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        }
+      },
+      "tail-ret": null,
+      "unmap-status": 0
+    },
+    {
+      "name": "ntdll.dll",
+      "image-size": 4665344,
+      "flags": 8388608,
+      "requested": 65536,
+      "status": 1073741878,
+      "base": 2180409327616,
+      "returned-size": 65536,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000304700000000003100000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000000000000000000000000000000000",
+        "flags": 0,
+        "rva": 0,
+        "size": 0
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180413988864,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508069363712,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension": {
+          "base": 2180413992960,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508069359616,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension-last": {
+          "base": 2180413992960,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508069359616,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        }
+      },
+      "tail-ret": null,
+      "unmap-status": 0
+    },
+    {
+      "name": "ntdll.dll",
+      "image-size": 4665344,
+      "flags": 8388608,
+      "requested": 4661248,
+      "status": 1073741878,
+      "base": 2180409327616,
+      "returned-size": 4661248,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000304700000000003100000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000000000000000000000000000000000",
+        "flags": 0,
+        "rva": 0,
+        "size": 0
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180413988864,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508069363712,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension": {
+          "base": 2180413992960,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508069359616,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension-last": {
+          "base": 2180413992960,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508069359616,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        }
+      },
+      "tail-ret": null,
+      "unmap-status": 0
+    },
+    {
+      "name": "ntdll.dll",
+      "image-size": 4665344,
+      "flags": 8388608,
+      "requested": 4665344,
+      "status": 1073741878,
+      "base": 2180409327616,
+      "returned-size": 4665344,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000304700000000007000000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000304700000000000010000000000000",
+        "flags": 0,
+        "rva": 4665344,
+        "size": 4096,
+        "sample": {
+          "address": 2180413993152,
+          "region": {
+            "base": 2180413992960,
+            "allocation": 2180409327616,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180413988864,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "extension": {
+          "base": 2180413992960,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        },
+        "extension-last": {
+          "base": 2180413992960,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        }
+      },
+      "tail-ret": "c0035fd6",
+      "unmap-status": 0
+    },
+    {
+      "name": "ntdll.dll",
+      "image-size": 4665344,
+      "flags": 8388608,
+      "requested": 4669440,
+      "status": 3221225503,
+      "base": null,
+      "returned-size": 4669440
+    },
+    {
+      "name": "kernelbase.dll",
+      "image-size": 7233536,
+      "flags": 0,
+      "requested": 0,
+      "status": 1073741827,
+      "base": 2180409327616,
+      "returned-size": 7233536,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000606e00000000007000000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000606e00000000000010000000000000",
+        "flags": 0,
+        "rva": 7233536,
+        "size": 4096,
+        "sample": {
+          "address": 2180416561344,
+          "region": {
+            "base": 2180416561152,
+            "allocation": 2180409327616,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180416557056,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "extension": {
+          "base": 2180416561152,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        },
+        "extension-last": {
+          "base": 2180416561152,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        }
+      },
+      "tail-ret": "c0035fd6",
+      "unmap-status": 0
+    },
+    {
+      "name": "kernelbase.dll",
+      "image-size": 7233536,
+      "flags": 0,
+      "requested": 4096,
+      "status": 1073741827,
+      "base": 2180409327616,
+      "returned-size": 4096,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000606e00000000003100000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000000000000000000000000000000000",
+        "flags": 0,
+        "rva": 0,
+        "size": 0
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180416557056,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508066795520,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension": {
+          "base": 2180416561152,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508066791424,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension-last": {
+          "base": 2180416561152,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508066791424,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        }
+      },
+      "tail-ret": null,
+      "unmap-status": 0
+    },
+    {
+      "name": "kernelbase.dll",
+      "image-size": 7233536,
+      "flags": 0,
+      "requested": 65536,
+      "status": 1073741827,
+      "base": 2180409327616,
+      "returned-size": 65536,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000606e00000000003100000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000000000000000000000000000000000",
+        "flags": 0,
+        "rva": 0,
+        "size": 0
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180416557056,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508066795520,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension": {
+          "base": 2180416561152,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508066791424,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension-last": {
+          "base": 2180416561152,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508066791424,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        }
+      },
+      "tail-ret": null,
+      "unmap-status": 0
+    },
+    {
+      "name": "kernelbase.dll",
+      "image-size": 7233536,
+      "flags": 0,
+      "requested": 7229440,
+      "status": 1073741827,
+      "base": 2180409327616,
+      "returned-size": 7229440,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000606e00000000003100000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000000000000000000000000000000000",
+        "flags": 0,
+        "rva": 0,
+        "size": 0
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180416557056,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508066795520,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension": {
+          "base": 2180416561152,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508066791424,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension-last": {
+          "base": 2180416561152,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508066791424,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        }
+      },
+      "tail-ret": null,
+      "unmap-status": 0
+    },
+    {
+      "name": "kernelbase.dll",
+      "image-size": 7233536,
+      "flags": 0,
+      "requested": 7233536,
+      "status": 1073741827,
+      "base": 2180409327616,
+      "returned-size": 7233536,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000606e00000000007000000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000606e00000000000010000000000000",
+        "flags": 0,
+        "rva": 7233536,
+        "size": 4096,
+        "sample": {
+          "address": 2180416561344,
+          "region": {
+            "base": 2180416561152,
+            "allocation": 2180409327616,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180416557056,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "extension": {
+          "base": 2180416561152,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        },
+        "extension-last": {
+          "base": 2180416561152,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        }
+      },
+      "tail-ret": "c0035fd6",
+      "unmap-status": 0
+    },
+    {
+      "name": "kernelbase.dll",
+      "image-size": 7233536,
+      "flags": 0,
+      "requested": 7237632,
+      "status": 3221225503,
+      "base": null,
+      "returned-size": 7237632
+    },
+    {
+      "name": "kernelbase.dll",
+      "image-size": 7233536,
+      "flags": 8388608,
+      "requested": 0,
+      "status": 1073741878,
+      "base": 2180409327616,
+      "returned-size": 7233536,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000606e00000000007000000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000606e00000000000010000000000000",
+        "flags": 0,
+        "rva": 7233536,
+        "size": 4096,
+        "sample": {
+          "address": 2180416561344,
+          "region": {
+            "base": 2180416561152,
+            "allocation": 2180409327616,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180416557056,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "extension": {
+          "base": 2180416561152,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        },
+        "extension-last": {
+          "base": 2180416561152,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        }
+      },
+      "tail-ret": "c0035fd6",
+      "unmap-status": 0
+    },
+    {
+      "name": "kernelbase.dll",
+      "image-size": 7233536,
+      "flags": 8388608,
+      "requested": 4096,
+      "status": 1073741878,
+      "base": 2180409327616,
+      "returned-size": 4096,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000606e00000000003100000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000000000000000000000000000000000",
+        "flags": 0,
+        "rva": 0,
+        "size": 0
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180416557056,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508066795520,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension": {
+          "base": 2180416561152,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508066791424,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension-last": {
+          "base": 2180416561152,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508066791424,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        }
+      },
+      "tail-ret": null,
+      "unmap-status": 0
+    },
+    {
+      "name": "kernelbase.dll",
+      "image-size": 7233536,
+      "flags": 8388608,
+      "requested": 65536,
+      "status": 1073741878,
+      "base": 2180409327616,
+      "returned-size": 65536,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000606e00000000003100000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000000000000000000000000000000000",
+        "flags": 0,
+        "rva": 0,
+        "size": 0
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180416557056,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508066795520,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension": {
+          "base": 2180416561152,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508066791424,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension-last": {
+          "base": 2180416561152,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508066791424,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        }
+      },
+      "tail-ret": null,
+      "unmap-status": 0
+    },
+    {
+      "name": "kernelbase.dll",
+      "image-size": 7233536,
+      "flags": 8388608,
+      "requested": 7229440,
+      "status": 1073741878,
+      "base": 2180409327616,
+      "returned-size": 7229440,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000606e00000000003100000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000000000000000000000000000000000",
+        "flags": 0,
+        "rva": 0,
+        "size": 0
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180416557056,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508066795520,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension": {
+          "base": 2180416561152,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508066791424,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension-last": {
+          "base": 2180416561152,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508066791424,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        }
+      },
+      "tail-ret": null,
+      "unmap-status": 0
+    },
+    {
+      "name": "kernelbase.dll",
+      "image-size": 7233536,
+      "flags": 8388608,
+      "requested": 7233536,
+      "status": 1073741878,
+      "base": 2180409327616,
+      "returned-size": 7233536,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000606e00000000007000000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000606e00000000000010000000000000",
+        "flags": 0,
+        "rva": 7233536,
+        "size": 4096,
+        "sample": {
+          "address": 2180416561344,
+          "region": {
+            "base": 2180416561152,
+            "allocation": 2180409327616,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180416557056,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "extension": {
+          "base": 2180416561152,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        },
+        "extension-last": {
+          "base": 2180416561152,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        }
+      },
+      "tail-ret": "c0035fd6",
+      "unmap-status": 0
+    },
+    {
+      "name": "kernelbase.dll",
+      "image-size": 7233536,
+      "flags": 8388608,
+      "requested": 7237632,
+      "status": 3221225503,
+      "base": null,
+      "returned-size": 7237632
+    },
+    {
+      "name": "kernel32.dll",
+      "image-size": 1511424,
+      "flags": 0,
+      "requested": 0,
+      "status": 1073741827,
+      "base": 2180409327616,
+      "returned-size": 1511424,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000101700000000007000000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000101700000000000010000000000000",
+        "flags": 0,
+        "rva": 1511424,
+        "size": 4096,
+        "sample": {
+          "address": 2180410839232,
+          "region": {
+            "base": 2180410839040,
+            "allocation": 2180409327616,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180410834944,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "extension": {
+          "base": 2180410839040,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        },
+        "extension-last": {
+          "base": 2180410839040,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        }
+      },
+      "tail-ret": "c0035fd6",
+      "unmap-status": 0
+    },
+    {
+      "name": "kernel32.dll",
+      "image-size": 1511424,
+      "flags": 0,
+      "requested": 4096,
+      "status": 1073741827,
+      "base": 2180409327616,
+      "returned-size": 4096,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000101700000000003100000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000000000000000000000000000000000",
+        "flags": 0,
+        "rva": 0,
+        "size": 0
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180410834944,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508072517632,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension": {
+          "base": 2180410839040,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508072513536,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension-last": {
+          "base": 2180410839040,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508072513536,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        }
+      },
+      "tail-ret": null,
+      "unmap-status": 0
+    },
+    {
+      "name": "kernel32.dll",
+      "image-size": 1511424,
+      "flags": 0,
+      "requested": 65536,
+      "status": 1073741827,
+      "base": 2180409327616,
+      "returned-size": 65536,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000101700000000003100000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000000000000000000000000000000000",
+        "flags": 0,
+        "rva": 0,
+        "size": 0
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180410834944,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508072517632,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension": {
+          "base": 2180410839040,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508072513536,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension-last": {
+          "base": 2180410839040,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508072513536,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        }
+      },
+      "tail-ret": null,
+      "unmap-status": 0
+    },
+    {
+      "name": "kernel32.dll",
+      "image-size": 1511424,
+      "flags": 0,
+      "requested": 1507328,
+      "status": 1073741827,
+      "base": 2180409327616,
+      "returned-size": 1507328,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000101700000000003100000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000000000000000000000000000000000",
+        "flags": 0,
+        "rva": 0,
+        "size": 0
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180410834944,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508072517632,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension": {
+          "base": 2180410839040,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508072513536,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension-last": {
+          "base": 2180410839040,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508072513536,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        }
+      },
+      "tail-ret": null,
+      "unmap-status": 0
+    },
+    {
+      "name": "kernel32.dll",
+      "image-size": 1511424,
+      "flags": 0,
+      "requested": 1511424,
+      "status": 1073741827,
+      "base": 2180409327616,
+      "returned-size": 1511424,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000101700000000007000000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000101700000000000010000000000000",
+        "flags": 0,
+        "rva": 1511424,
+        "size": 4096,
+        "sample": {
+          "address": 2180410839232,
+          "region": {
+            "base": 2180410839040,
+            "allocation": 2180409327616,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180410834944,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "extension": {
+          "base": 2180410839040,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        },
+        "extension-last": {
+          "base": 2180410839040,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        }
+      },
+      "tail-ret": "c0035fd6",
+      "unmap-status": 0
+    },
+    {
+      "name": "kernel32.dll",
+      "image-size": 1511424,
+      "flags": 0,
+      "requested": 1515520,
+      "status": 3221225503,
+      "base": null,
+      "returned-size": 1515520
+    },
+    {
+      "name": "kernel32.dll",
+      "image-size": 1511424,
+      "flags": 8388608,
+      "requested": 0,
+      "status": 1073741878,
+      "base": 2180409327616,
+      "returned-size": 1511424,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000101700000000007000000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000101700000000000010000000000000",
+        "flags": 0,
+        "rva": 1511424,
+        "size": 4096,
+        "sample": {
+          "address": 2180410839232,
+          "region": {
+            "base": 2180410839040,
+            "allocation": 2180409327616,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180410834944,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "extension": {
+          "base": 2180410839040,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        },
+        "extension-last": {
+          "base": 2180410839040,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        }
+      },
+      "tail-ret": "c0035fd6",
+      "unmap-status": 0
+    },
+    {
+      "name": "kernel32.dll",
+      "image-size": 1511424,
+      "flags": 8388608,
+      "requested": 4096,
+      "status": 1073741878,
+      "base": 2180409327616,
+      "returned-size": 4096,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000101700000000003100000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000000000000000000000000000000000",
+        "flags": 0,
+        "rva": 0,
+        "size": 0
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180410834944,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508072517632,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension": {
+          "base": 2180410839040,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508072513536,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension-last": {
+          "base": 2180410839040,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508072513536,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        }
+      },
+      "tail-ret": null,
+      "unmap-status": 0
+    },
+    {
+      "name": "kernel32.dll",
+      "image-size": 1511424,
+      "flags": 8388608,
+      "requested": 65536,
+      "status": 1073741878,
+      "base": 2180409327616,
+      "returned-size": 65536,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000101700000000003100000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000000000000000000000000000000000",
+        "flags": 0,
+        "rva": 0,
+        "size": 0
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180410834944,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508072517632,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension": {
+          "base": 2180410839040,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508072513536,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension-last": {
+          "base": 2180410839040,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508072513536,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        }
+      },
+      "tail-ret": null,
+      "unmap-status": 0
+    },
+    {
+      "name": "kernel32.dll",
+      "image-size": 1511424,
+      "flags": 8388608,
+      "requested": 1507328,
+      "status": 1073741878,
+      "base": 2180409327616,
+      "returned-size": 1507328,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000101700000000003100000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000000000000000000000000000000000",
+        "flags": 0,
+        "rva": 0,
+        "size": 0
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180410834944,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508072517632,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension": {
+          "base": 2180410839040,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508072513536,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        },
+        "extension-last": {
+          "base": 2180410839040,
+          "allocation": null,
+          "allocation_protect": 0,
+          "size": 138508072513536,
+          "state": 65536,
+          "protect": 1,
+          "kind": 0
+        }
+      },
+      "tail-ret": null,
+      "unmap-status": 0
+    },
+    {
+      "name": "kernel32.dll",
+      "image-size": 1511424,
+      "flags": 8388608,
+      "requested": 1511424,
+      "status": 1073741878,
+      "base": 2180409327616,
+      "returned-size": 1511424,
+      "image-information": {
+        "class": 6,
+        "extension-type": null,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000086aafb01000000101700000000007000000000000000"
+      },
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000101700000000000010000000000000",
+        "flags": 0,
+        "rva": 1511424,
+        "size": 4096,
+        "sample": {
+          "address": 2180410839232,
+          "region": {
+            "base": 2180410839040,
+            "allocation": 2180409327616,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "regions": {
+        "first": {
+          "base": 2180409327616,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "image-last": {
+          "base": 2180410834944,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2,
+          "kind": 16777216
+        },
+        "extension": {
+          "base": 2180410839040,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        },
+        "extension-last": {
+          "base": 2180410839040,
+          "allocation": 2180409327616,
+          "allocation_protect": 128,
+          "size": 4096,
+          "state": 4096,
+          "protect": 32,
+          "kind": 16777216
+        }
+      },
+      "tail-ret": "c0035fd6",
+      "unmap-status": 0
+    },
+    {
+      "name": "kernel32.dll",
+      "image-size": 1511424,
+      "flags": 8388608,
+      "requested": 1515520,
+      "status": 3221225503,
+      "base": null,
+      "returned-size": 1515520
+    }
+  ]
+}

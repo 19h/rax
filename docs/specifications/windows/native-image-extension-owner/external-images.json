@@ -1,0 +1,95 @@
+{
+  "scope": "Full mapped Windows DLL bytes remain in the task-owned capture cache and are not published. Regenerate with the included native producer when validating on another host.",
+  "files": [
+    {
+      "path": "native/ntdll.dll.view1.bin.gz",
+      "bytes": 1919784,
+      "sha256": "c22bc69f4604637205c98e3642dc44af930964557aa79cd2d3e64de415125921"
+    },
+    {
+      "path": "native/kernelbase.dll.view1.bin.gz",
+      "bytes": 2169673,
+      "sha256": "c5c50d7b051703fabaf9e8822d013d6e6cc440e9ec232d3d30ff1f5d8a8dfe4f"
+    },
+    {
+      "path": "native/kernel32.dll.view1.bin.gz",
+      "bytes": 626184,
+      "sha256": "bc64b74ebe94f303f82e7a7b3501fdf1490a98c336c3ed4828bd89731a69884b"
+    },
+    {
+      "path": "native/kernelbase.dll.view0.bin.gz",
+      "bytes": 2169637,
+      "sha256": "53d8ed0abda0467eb244122ab42893cc8022bdbe2e40b780de9a4fc051e7ac8d"
+    },
+    {
+      "path": "native/kernel32.dll.view0.bin.gz",
+      "bytes": 626183,
+      "sha256": "6b639981c76877f8457fc61561115dd315d7d3a761a202248e8b9ce5f134c757"
+    },
+    {
+      "path": "native/ntdll.dll.view0.bin.gz",
+      "bytes": 1919786,
+      "sha256": "cf728e1890b2082d495ade2ae21ed26f3668a6e8b0b876e04ca8ae127c1721f5"
+    },
+    {
+      "path": "native/kernel32.dll.view2.bin.gz",
+      "bytes": 626186,
+      "sha256": "e0667d4468dba4397a5291a2cafda453a667ec331eb991a2503887293e6e30d6"
+    },
+    {
+      "path": "native/kernelbase.dll.view2.bin.gz",
+      "bytes": 2169673,
+      "sha256": "425f4e06d7c4507af3642f555bfbd4f53fb54f9127eb65f97a7f01eff6ad03dd"
+    },
+    {
+      "path": "native/ntdll.dll.view2.bin.gz",
+      "bytes": 1919780,
+      "sha256": "93fe59875c648bd24761305e2b8bfca7162071b2f724c94ba174b290d7c993fe"
+    },
+    {
+      "path": "native/ntdll.dll.projected-view0.bin.gz",
+      "bytes": 1919791,
+      "sha256": "e5296750deb7184214ed44da1eec0b4e568c5fa64ae76bc820df1e39559149ac"
+    },
+    {
+      "path": "native/kernel32.dll.projected-view0.bin.gz",
+      "bytes": 626156,
+      "sha256": "fcfe6dbd20993dfdc70bc0adc80956819efb980c30cac1770b02f41547635c3f"
+    },
+    {
+      "path": "native/kernel32.dll.projected-view2.bin.gz",
+      "bytes": 626153,
+      "sha256": "3a5be9f7033c2ca64a38c2d9629d432e416331cd576a58b3df011e21f35eb332"
+    },
+    {
+      "path": "native/ntdll.dll.projected-view2.bin.gz",
+      "bytes": 1919777,
+      "sha256": "fe1c250ac4408c1494c4936ee494332b81d71fda5b019467786ffa0adc2bf7fb"
+    },
+    {
+      "path": "native/kernelbase.dll.projected-view1.bin.gz",
+      "bytes": 2169755,
+      "sha256": "c1712bd76067ec8236771b2936911a57c8d697ec1f231e5b756ce402b5937113"
+    },
+    {
+      "path": "native/kernel32.dll.projected-view1.bin.gz",
+      "bytes": 626157,
+      "sha256": "57fd4dd9e843b79d6515cb1d9bfe859d83ba51465d296c9b82fb0d522cc209b2"
+    },
+    {
+      "path": "native/kernelbase.dll.projected-view2.bin.gz",
+      "bytes": 2169603,
+      "sha256": "9baf732851ee4b929b2a9e8e30dd9c1a1ebe5907d124b6c6d6ccf7b0fe9b5d6c"
+    },
+    {
+      "path": "native/ntdll.dll.projected-view1.bin.gz",
+      "bytes": 1919778,
+      "sha256": "c064ab634b290aa58defea0cd2c4ed19934ab9b7dbd62447699e0e0217d18fa5"
+    },
+    {
+      "path": "native/kernelbase.dll.projected-view0.bin.gz",
+      "bytes": 2169639,
+      "sha256": "30449c39fb9f9e17e7c59977fa81eb46ddb55e5b6b3cb2f66bd9efd18eae2894"
+    }
+  ]
+}

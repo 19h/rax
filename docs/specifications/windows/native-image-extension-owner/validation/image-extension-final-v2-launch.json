@@ -1,0 +1,36 @@
+{
+  "pid": 6356,
+  "utc": "2026-10-17T21:44:02.449313+00:00",
+  "state": "finished",
+  "base": "bb697c7da3400d3fc2905cfbcfd7b4e68306ceee",
+  "source-epoch": 5,
+  "child-pid": 1896,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-image-extension-final-core.ps1"
+  ],
+  "focus-exit-code": 0,
+  "focus-counts": [
+    [
+      20,
+      0,
+      0,
+      7296
+    ]
+  ],
+  "core-exit-code": 0,
+  "full-counts": [
+    [
+      7309,
+      5,
+      2,
+      0
+    ]
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T22:11:08.633128+00:00"
+}

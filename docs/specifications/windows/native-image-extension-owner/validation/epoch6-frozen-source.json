@@ -1,0 +1,32 @@
+{
+  "base": "bb697c7da3400d3fc2905cfbcfd7b4e68306ceee",
+  "source": "/Users/int/Library/Caches/assist-process-emulation/native-image-extension-owner-20261017/rax-source-final",
+  "files": {
+    "src/user/windows/dll/native.rs": "bc6d5785b4cc5bbc73bd2cba8f41f373bb1c1d4d7036af64d43319e0925b4358",
+    "src/user/windows/dll/native/section_map.rs": "c9bd260a6cc28b610ae4e3a967cb09f761e9fee10bc46bdbb1f64935443a1896",
+    "src/user/windows/dll/native/section_map/geometry.rs": "64dfba3eaf30f160e4a102fb626071cce20872a68c0c3e11bf85ac3813a491c2",
+    "src/user/windows/dll/native/virtual_memory.rs": "8005856f8357a59b6f804a00eb96afe25efbcbab4117d408be18ce6bba2d89ee",
+    "src/user/windows/dll/native/virtual_memory/image_extension.rs": "fffd8c204648391e2a4430c2dcfb39d18e072bf81fca3d91f05e68b665489b1a",
+    "src/user/windows/loader/mod.rs": "a2947183c9d26540d918ad94c366745a72611bbad3325d636aa7abe99259f2c8",
+    "src/user/windows/memory.rs": "6154a05d730399e43c8decb8e0706e1f8255b8a65b27fe84b156ce3757db258f",
+    "src/user/windows/memory/section.rs": "8fb6a787204ce3301f73e985fe601a8ecb8f46f8ede48597931542c33cbcd720",
+    "src/user/windows/object_namespace.rs": "fcd2d22122ee0240b3adaba63797bc309ff5acd2600ea73b96f837fbed3d9c49",
+    "src/user/windows/object_namespace/image.rs": "83bec2a43be372c34998acf59841621b2f7091e00ee7a0ac9e86284d3f1f89d3",
+    "src/user/windows/object_namespace/installed.rs": "11099693bf07c6a144d01d75f43e7e6ce74733ad5f688dbdc000b84cfc9526d8",
+    "src/user/windows/object_namespace/installed/image.rs": "edb9bcb145f11403f29a998dd59acec4714f6124b73cc919703306381b08fb3e",
+    "src/user/windows/object_namespace/installed/section.rs": "debc57ca92465460ecbed09afbf7960d56e9579add3b8d834543aa9bc6f36aa8",
+    "src/user/windows/process/sched/tests/services_tests/image_extension_leaf_tests.rs": "3ae396cd449b10bb629307273a40f1c2797f37b700cc44e3e6509f8a782be041",
+    "src/user/windows/process/sched/tests/services_tests/image_extension_tests.rs": "7bcb958679b969a9ee1a7d9575c309cf71f23d7bf9a1b5e2e8cf7e45683be802",
+    "src/user/windows/loader/native_image.rs": "5d8b5ca40c238e72c3a1e035ca69e2b31310391aa5348feff3c02c8748f3c4fe",
+    "src/user/windows/loader/native_image_tests.rs": "ea5e9e5e378ffaeb224764d3fda05ec3a72a74a82a2abaeaf3e31d741ca760bb",
+    "src/user/windows/memory/section_extension_tests.rs": "ee1805fb18fa068709713077699ed53bf63b523d7a78e27fa8b17b954f6f5ff7",
+    "src/user/windows/object_namespace/image_extension_tests.rs": "1b40ed9ea5f0fa9e5efec5175d6f1ab64063c35e77ffbe1b2880b6a1d9e68107",
+    "src/user/windows/object_namespace/installed/image/extensions.rs": "1d91addf02503e1aef8c38bedc033228fc68ff21edb92b9b5f12b97fb9092da2",
+    "src/user/windows/process/sched/tests/services_tests/image_extension_owner_leaf_tests.rs": "e0d33bab5119b5f0ac5ad6fbe34d2a8ea94768e013b5549df7ce69158b7ea995",
+    "src/user/windows/process/sched/tests/services_tests/image_extension_owner_replay_tests.rs": "2c55524590b59f84de957a2838944439d9ca46c6dad4ccb26bbcf628193cf5cb",
+    "src/user/windows/process/sched/tests/services_tests/image_extension_owner_tests.rs": "0430bc073079cc2c1148f82bd549488faa6af1f4757b5a73de3b90ef9f6b8516",
+    "docs/specifications/windows/native-image-extension-owner/native/native-image-extension-lifetime-v2.json": "23be86a2b58b05b11fc892ddc21e6a659feeb26a58c335b9be2cbdb91a37f549",
+    "src/user/windows/process/sched/tests/services_tests/virtual_memory_leaf_tests.rs": "ee199bdb38f988fb3543351defc6bcd2fae5f50ce1c7084bbe02ab2a4cbc7315"
+  },
+  "note": "Epoch6 changes only the cfg(windows) test: preserves strict native extension checks when available and validates empty-extension fallback on older kernels."
+}

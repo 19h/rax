@@ -1,0 +1,46 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 58s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-image-extension-final\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 20 tests
+test user::windows::dll::native::section_map::geometry::tests::image_extension_compatibility_large_flag_keeps_ordinary_geometry_and_conflict_validation ... ok
+test user::windows::dll::native::section_map::geometry::tests::image_extension_owner_geometry_reserves_full_tail_and_omits_partial_or_large_tail ... ok
+test user::windows::loader::native_image::tests::image_extension_bootstrap_does_not_reclassify_supplied_ntdll_name ... ok
+test user::windows::loader::native_image::tests::image_extension_bootstrap_rejects_identity_mismatch_and_occupied_range_without_fallback ... ok
+test user::windows::loader::native_image::tests::image_extension_bootstrap_uses_selected_base_and_keeps_module_size_separate ... ok
+test user::windows::memory::section_extension_tests::image_extension_owner_large_view_does_not_publish_an_extension ... ok
+test user::windows::memory::section_extension_tests::image_extension_owner_maps_full_views_and_releases_every_tail_page ... ok
+test user::windows::memory::section_extension_tests::image_extension_owner_omits_partial_tails_and_rejects_insufficient_reservations ... ok
+test user::windows::object_namespace::image_extension_tests::image_extension_native_rebase_requires_two_equal_normalized_views ... ok
+test user::windows::object_namespace::image_extension_tests::image_extension_owner_bounds_geometry_and_preserves_declared_image_size ... ok
+test user::windows::object_namespace::image_extension_tests::image_extension_rebase_rejects_duplicate_address_and_preserves_compatibility_page_policy ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::installed::native_image_extension_installed_leaf_matches_guest_flags_and_wow_rejection ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_absent_metadata_matches_image_flags_and_aliases ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_boundaries_replay_status_bytes_guards_and_process_rights ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_limits_replay_without_consuming_range_rejected_guards ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_matrix_replays_absent_images_and_abi_availability ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_native_validation_priority_and_wow_unavailable ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::owner::image_extension_owner_queries_full_views_tail_addresses_aliases_and_release ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::owner::installed::image_extension_owner_installed_ntdll_leaf_reports_owned_bootstrap_tail ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::owner::replay::image_extension_owner_replays_native_protection_failures_without_copyback_drift ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 7296 filtered out; finished in 23.41s
+

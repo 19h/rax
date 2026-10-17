@@ -1,0 +1,32 @@
+[
+  {
+    "case": "missing-focus",
+    "exit-code": 1,
+    "rejected-for": "native focus"
+  },
+  {
+    "case": "wrong-core-features",
+    "exit-code": 1,
+    "rejected-for": "native owned archives"
+  },
+  {
+    "case": "wrong-source",
+    "exit-code": 1,
+    "rejected-for": "final source"
+  },
+  {
+    "case": "false-ordinary-success",
+    "exit-code": 1,
+    "rejected-for": "ordinary exit accounting"
+  },
+  {
+    "case": "missing-native-memory",
+    "exit-code": 1,
+    "rejected-for": "native memory adapter"
+  },
+  {
+    "case": "optimized",
+    "exit-code": 1,
+    "rejected-for": "optimized validation is rejected"
+  }
+]

@@ -1,0 +1,17 @@
+    Blocking waiting for file lock on artifact directory
+   Compiling vm-memory v0.17.1 (/Users/int/Library/Caches/assist-process-emulation/native-image-extension-owner-20261017/rax-source-epoch2/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-image-extension-owner-20261017/rax-source-epoch2)
+error[E0624]: method `intersects_image_extension` is private
+   --> src/user/windows/dll/native.rs:411:22
+    |
+411 |                     .intersects_image_extension(base, base.saturating_add(size))
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^ private method
+    |
+   ::: src/user/windows/memory/section.rs:175:5
+    |
+175 |     pub(super) fn intersects_image_extension(&self, first: u64, end: u64) -> bool {
+    |     ----------------------------------------------------------------------------- private method defined here
+
+For more information about this error, try `rustc --explain E0624`.
+error: could not compile `rax` (lib test) due to 1 previous error

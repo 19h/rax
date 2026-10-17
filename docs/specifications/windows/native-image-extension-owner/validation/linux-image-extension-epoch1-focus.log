@@ -1,0 +1,25 @@
+   Compiling vm-memory v0.17.1 (/work/vendor/rax/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 35s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 15 tests
+test user::windows::dll::native::section_map::geometry::tests::image_extension_owner_geometry_reserves_full_tail_and_omits_partial_or_large_tail ... ok
+test user::windows::loader::native_image::tests::image_extension_bootstrap_does_not_reclassify_supplied_ntdll_name ... ok
+test user::windows::loader::native_image::tests::image_extension_bootstrap_rejects_identity_mismatch_and_occupied_range_without_fallback ... ok
+test user::windows::loader::native_image::tests::image_extension_bootstrap_uses_selected_base_and_keeps_module_size_separate ... ok
+test user::windows::memory::section_extension_tests::image_extension_owner_large_view_does_not_publish_an_extension ... ok
+test user::windows::memory::section_extension_tests::image_extension_owner_maps_full_views_and_releases_every_tail_page ... ok
+test user::windows::memory::section_extension_tests::image_extension_owner_omits_partial_tails_and_rejects_insufficient_reservations ... ok
+test user::windows::object_namespace::image_extension_tests::image_extension_native_rebase_requires_two_equal_normalized_views ... ok
+test user::windows::object_namespace::image_extension_tests::image_extension_owner_bounds_geometry_and_preserves_declared_image_size ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_absent_metadata_matches_image_flags_and_aliases ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_boundaries_replay_status_bytes_guards_and_process_rights ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_limits_replay_without_consuming_range_rejected_guards ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_matrix_replays_absent_images_and_abi_availability ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::native_image_extension_native_validation_priority_and_wow_unavailable ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::image_extension::owner::image_extension_owner_queries_full_views_tail_addresses_aliases_and_release ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 7856 filtered out; finished in 10.85s
+

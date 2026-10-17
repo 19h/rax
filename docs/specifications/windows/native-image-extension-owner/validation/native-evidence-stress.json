@@ -1,0 +1,32 @@
+[
+  {
+    "case": "missing-case",
+    "rejected-for": "ordered native case partition",
+    "exit-code": 1
+  },
+  {
+    "case": "wrong-protection-output",
+    "rejected-for": "native protection outputs",
+    "exit-code": 1
+  },
+  {
+    "case": "changed-machine",
+    "rejected-for": "actual PE machine",
+    "exit-code": 1
+  },
+  {
+    "case": "changed-handles",
+    "rejected-for": "handle count changed",
+    "exit-code": 1
+  },
+  {
+    "case": "changed-rebase",
+    "rejected-for": "independent native rebase closure",
+    "exit-code": 1
+  },
+  {
+    "case": "optimized",
+    "rejected-for": "optimized checker rejected",
+    "exit-code": 1
+  }
+]

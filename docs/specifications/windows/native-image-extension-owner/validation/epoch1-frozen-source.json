@@ -1,0 +1,24 @@
+{
+  "base": "bb697c7da3400d3fc2905cfbcfd7b4e68306ceee",
+  "files": {
+    "src/user/windows/dll/native/section_map.rs": "f0225fc480383a35d71808628de93479aa29301d54f56931b1872f028039684c",
+    "src/user/windows/dll/native/section_map/geometry.rs": "a540caac5c440abe1470362c098f426488e70dbd696bf93c055e3f30935e3b57",
+    "src/user/windows/dll/native/virtual_memory.rs": "8005856f8357a59b6f804a00eb96afe25efbcbab4117d408be18ce6bba2d89ee",
+    "src/user/windows/dll/native/virtual_memory/image_extension.rs": "fffd8c204648391e2a4430c2dcfb39d18e072bf81fca3d91f05e68b665489b1a",
+    "src/user/windows/loader/mod.rs": "a2947183c9d26540d918ad94c366745a72611bbad3325d636aa7abe99259f2c8",
+    "src/user/windows/memory.rs": "6154a05d730399e43c8decb8e0706e1f8255b8a65b27fe84b156ce3757db258f",
+    "src/user/windows/memory/section.rs": "2b510a2a378a27e131ac1c9b99faef9c77cbaef2becfa0d75b5bb055aa099b4e",
+    "src/user/windows/object_namespace.rs": "d157a76927527a12dfbbb372f209f0f88cb028115a559b368267fa085aeee969",
+    "src/user/windows/object_namespace/image.rs": "ecc4a16e1b6de2c568999a0d1512d8b9ef84a28ee26313268e6fcad53898fb4c",
+    "src/user/windows/object_namespace/installed/image.rs": "ae27e7d96d583dc8069763fec5587cebf9f4cb8ca4dd1b41a2230ad6eb860101",
+    "src/user/windows/process/sched/tests/services_tests/image_extension_leaf_tests.rs": "3ae396cd449b10bb629307273a40f1c2797f37b700cc44e3e6509f8a782be041",
+    "src/user/windows/process/sched/tests/services_tests/image_extension_tests.rs": "7bcb958679b969a9ee1a7d9575c309cf71f23d7bf9a1b5e2e8cf7e45683be802",
+    "src/user/windows/loader/native_image.rs": "3149f9c15ae55f8233468d45b84a36e98bdc093e86b169a7fe80bbe0f7adf05c",
+    "src/user/windows/loader/native_image_tests.rs": "ea5e9e5e378ffaeb224764d3fda05ec3a72a74a82a2abaeaf3e31d741ca760bb",
+    "src/user/windows/memory/section_extension_tests.rs": "ee1805fb18fa068709713077699ed53bf63b523d7a78e27fa8b17b954f6f5ff7",
+    "src/user/windows/object_namespace/image_extension_tests.rs": "3a073391e0e30e0cfc275de1c6ba5e934f4324d615e6101044129ff1dd148acc",
+    "src/user/windows/object_namespace/installed/image/extensions.rs": "1d91addf02503e1aef8c38bedc033228fc68ff21edb92b9b5f12b97fb9092da2",
+    "src/user/windows/process/sched/tests/services_tests/image_extension_owner_leaf_tests.rs": "ddf47ee198b3963cfe7ec76ae8139d613e1e980b4e315e73e92894eb660d13b6",
+    "src/user/windows/process/sched/tests/services_tests/image_extension_owner_tests.rs": "3885ce0b5d5f6a95c4b69756d7caf1956716ed0c19d718a539924420d07047bc"
+  }
+}

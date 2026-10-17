@@ -1,0 +1,14 @@
+{
+  "utc": "2026-10-17T21:24:44.956529+00:00",
+  "argv": [
+    "prlctl",
+    "exec",
+    "a5b14f9a-d292-4610-a04d-df4ca4337c9d",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "-B",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\probe-native-image-extension-flag-comparison.py"
+  ],
+  "exit-code": 0,
+  "stdout": "ntdll.dll 0x0 0x1e6d8dd0000 0x7ff82fad0000 [('0x1e6d8dd1000', '010000d4', '0x0')]\nntdll.dll 0x800000 0x1e6d9250000 0x1e6d9250000 [('0x1e6d9251000', '010000d4', '0x0')]\nntdll.dll 0x800000 0x1e6d96d0000 0x1e6d96d0000 [('0x1e6d96d1000', '010000d4', '0x0')]\nkernelbase.dll 0x0 0x1e6d8dd0000 0x7ff82b0a0000 [('0x1e6d90d6000', '00000000', '0x0'), ('0x1e6d90d6030', '24742e15', '0x1e6ddc730c0'), ('0x1e6d90d6040', '00000000', '0x0'), ('0x1e6d90d6050', '00000000', '0x0')]\nkernelbase.dll 0x800000 0x1e6d94c0000 0x1e6d94c0000 [('0x1e6d97c6000', '00000000', '0x0'), ('0x1e6d97c6030', 'e8f4f917', '0x1e6d96433d0'), ('0x1e6d97c6040', '00000000', '0x0'), ('0x1e6d97c6050', '00000000', '0x0')]\nkernelbase.dll 0x800000 0x1e6d9bb0000 0x1e6d9bb0000 [('0x1e6d9eb6000', '00000000', '0x0'), ('0x1e6d9eb6030', 'e8f4f917', '0x1e6d9d333d0'), ('0x1e6d9eb6040', '00000000', '0x0'), ('0x1e6d9eb6050', '00000000', '0x0')]\nkernel32.dll 0x0 0x1e6d8dd0000 0x7ff82c0f0000 [('0x1e6d8dd1000', '00000000', '0x0')]\nkernel32.dll 0x800000 0x1e6d8f50000 0x1e6d8f50000 [('0x1e6d8f51000', '00000000', '0x0')]\nkernel32.dll 0x800000 0x1e6d90d0000 0x1e6d90d0000 [('0x1e6d90d1000', '00000000', '0x0')]\n",
+  "stderr": ""
+}

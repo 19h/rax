@@ -1,0 +1,14 @@
+{
+  "utc": "2026-10-17T21:43:27.650018+00:00",
+  "argv": [
+    "prlctl",
+    "exec",
+    "a5b14f9a-d292-4610-a04d-df4ca4337c9d",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "-B",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-image-extension-final.py"
+  ],
+  "exit-code": 1,
+  "stdout": "{\"pid\": 4688, \"utc\": \"2026-10-17T21:43:22.493445+00:00\", \"state\": \"failed\", \"base\": \"bb697c7da3400d3fc2905cfbcfd7b4e68306ceee\", \"source-epoch\": 5, \"child-pid\": 8300, \"argv\": [\"powershell.exe\", \"-NoProfile\", \"-ExecutionPolicy\", \"Bypass\", \"-File\", \"C:\\\\Mac\\\\Home\\\\Downloads\\\\assist-native-allocate-ex-transfer-20261010-2154\\\\native-image-extension-final-focus.ps1\"], \"focus-exit-code\": 1, \"exit-code\": 1, \"error\": \"Traceback (most recent call last):\\n  File \\\"C:\\\\Mac\\\\Home\\\\Downloads\\\\assist-native-allocate-ex-transfer-20261010-2154\\\\run-image-extension-final.py\\\", line 25, in <module>\\n    r[stage+'-exit-code']=code;save();need(code==0,'native '+stage+' stage failed')\\n                                      ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"C:\\\\Mac\\\\Home\\\\Downloads\\\\assist-native-allocate-ex-transfer-20261010-2154\\\\run-image-extension-final.py\\\", line 8, in need\\n    if not v:raise RuntimeError(m)\\n             ^^^^^^^^^^^^^^^^^^^^^\\nRuntimeError: native focus stage failed\\n\", \"completed-utc\": \"2026-10-17T21:43:27.586250+00:00\"}\n",
+  "stderr": ""
+}

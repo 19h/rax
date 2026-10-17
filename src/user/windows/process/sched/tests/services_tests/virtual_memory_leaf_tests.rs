@@ -207,8 +207,10 @@ fn installed_ntdll_virtual_memory_leaves_query_guest_images_and_nls_all_selected
         let tid = *p.threads.keys().next().unwrap();
         let mut t = p.threads.remove(&tid).unwrap();
         let module = loader::load_dll(p, "ntdll.dll").unwrap();
-        let ntdll_base = p.modules.list[module].base;
-        let ntdll_size = p.modules.list[module].size;
+        // Keep this absent-image case on the executable. The separate owner
+        // leaf test compares installed NTDLL extension metadata with the host.
+        let image_base = p.modules.exe().base;
+        let image_size = p.modules.exe().size;
         let base =
             p.vm.allocate(
                 None,
@@ -226,7 +228,7 @@ fn installed_ntdll_virtual_memory_leaves_query_guest_images_and_nls_all_selected
                 "NtQueryVirtualMemory",
                 &[
                     arch.ptr(u64::MAX),
-                    ntdll_base + 1,
+                    image_base + 1,
                     6,
                     base + 128,
                     64,
@@ -235,10 +237,10 @@ fn installed_ntdll_virtual_memory_leaves_query_guest_images_and_nls_all_selected
             ),
             STATUS_SUCCESS
         );
-        assert_eq!(read_ptr(p, base + 128), ntdll_base);
+        assert_eq!(read_ptr(p, base + 128), image_base);
         assert_eq!(
             read_ptr(p, base + 128 + if arch.is64() { 8 } else { 4 }),
-            ntdll_size
+            image_size
         );
         assert_eq!(
             p.space
@@ -300,7 +302,7 @@ fn installed_ntdll_virtual_memory_leaves_query_guest_images_and_nls_all_selected
                 &mut t,
                 module,
                 "NtQueryVirtualMemory",
-                &[arch.ptr(u64::MAX), ntdll_base, 6, 0, 64, 0]
+                &[arch.ptr(u64::MAX), image_base, 6, 0, 64, 0]
             ),
             if arch == WinArch::X86 {
                 STATUS_SUCCESS
@@ -319,7 +321,7 @@ fn installed_ntdll_virtual_memory_leaves_query_guest_images_and_nls_all_selected
                     &mut t,
                     module,
                     "NtQueryVirtualMemory",
-                    &[arch.ptr(u64::MAX), ntdll_base, 6, out, 64, out + alias]
+                    &[arch.ptr(u64::MAX), image_base, 6, out, 64, out + alias]
                 ),
                 if arch == WinArch::X86 {
                     STATUS_SUCCESS
@@ -329,7 +331,7 @@ fn installed_ntdll_virtual_memory_leaves_query_guest_images_and_nls_all_selected
             );
             assert_eq!(p.vm.query(out).unwrap().protect & prot::GUARD, 0);
             if arch == WinArch::X86 {
-                assert_eq!(read_ptr(p, out), ntdll_base);
+                assert_eq!(read_ptr(p, out), image_base);
                 if alias != 0 {
                     assert_eq!(p.space.u32(out + alias).unwrap(), 0xA5A5_A5A5);
                 }

@@ -1,0 +1,5 @@
+{
+  "exit-code": 0,
+  "stdout": "{\"state\": \"finished\", \"pid\": 6912, \"utc\": \"2026-10-17T22:12:47.180722+00:00\", \"child-pid\": 10676, \"exit-code\": 0, \"completed-utc\": \"2026-10-17T22:16:11.270225+00:00\"}\n",
+  "stderr": ""
+}

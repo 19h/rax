@@ -2,6 +2,8 @@
 use super::*;
 use crate::user::windows::memory::AllocKind;
 use std::collections::HashMap;
+#[path = "image_extension_owner_tests.rs"]
+mod owner;
 
 #[cfg(windows)]
 #[path = "image_extension_leaf_tests.rs"]
@@ -145,8 +147,8 @@ fn native_image_extension_matrix_replays_absent_images_and_abi_availability() {
             count += 1;
             let target = number(&f, "target", 10);
             assert_eq!(number(&f, "exception", 16), 0);
-            // Installed native NTDLL owns actual SCP mappings. The guest has
-            // no such image owner; these three targets are explicit controls.
+            // This fixture models absent images. Present NTDLL controls belong
+            // to the separate owner tests and are excluded from this corpus.
             if arch.is64() && [0, 2, 3].contains(&target) {
                 present_controls += 1;
                 continue;

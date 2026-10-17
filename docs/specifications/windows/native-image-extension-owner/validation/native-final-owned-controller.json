@@ -1,0 +1,6 @@
+{
+  "utc": "2026-10-17T22:00:34.688181+00:00",
+  "exit-code": 0,
+  "stdout": "{\"pid\": 6924, \"utc\": \"2026-10-17T21:54:28.082117+00:00\", \"state\": \"finished\", \"base\": \"bb697c7da3400d3fc2905cfbcfd7b4e68306ceee\", \"source-epoch\": 5, \"child-pid\": 9148, \"argv\": [\"powershell.exe\", \"-NoProfile\", \"-ExecutionPolicy\", \"Bypass\", \"-File\", \"C:\\\\Mac\\\\Home\\\\Downloads\\\\assist-native-allocate-ex-transfer-20261010-2154\\\\assist-native-image-extension-final-owned.ps1\"], \"exit-code\": 0, \"completed-utc\": \"2026-10-17T22:00:34.563274+00:00\"}\n",
+  "stderr": ""
+}

@@ -419,8 +419,10 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>) -> io::Result<Namespace> {
             .set(source)
             .map_err(|_| invalid("selected section already has a native source"))?;
     }
-    let arm64 = match section::arm64()? {
-        Some(value) => value,
+    let native_machine = section::native_machine()?;
+    namespace.native_machine = native_machine;
+    let arm64 = match native_machine {
+        Some(value) => value == 0xAA64,
         None => match namespace.lookup(
             None,
             &"\\KnownDllsChpe32".encode_utf16().collect::<Vec<_>>(),

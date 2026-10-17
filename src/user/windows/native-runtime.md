@@ -18,7 +18,8 @@ The selector obtains the Windows and system directories through wide Win32
 APIs, and obtains the actual version through `RtlGetVersion`. Canonical host
 paths remain distinct from guest paths: the `\\?\` prefix added by Windows
 canonicalization is not placed in guest loader/process parameters. Installed
-DLL files and their native-mode mappings are bounded to 67,108,864 bytes.
+DLL files and declared PE image bytes are bounded to 67,108,864 bytes. A selected
+image extension may add up to 131,072 bytes to its allocation, as described below.
 Application DLLs remain subject to general host-file access or explicit supplied
 bytes. Supplied bytes override installed files in native mode. KnownDLL names
 select installed system files; no missing installed DLL selects an HLE image.
@@ -2096,3 +2097,50 @@ macOS and Linux. Full library passed/failed/ignored counts are 7295/5/2,
 unchanged. Smoke and whoami advance 2596 turns past the subscription boundary,
 then fail an instruction fetch and SEH frame walk. Neither completes normally.
 The scoped frozen Assist ABI 184/current186 boundary remains explicit.
+
+
+## Selected native image extensions
+
+A complete selected kernel image can own two bounded CFG/SCP extension types.
+The PE image size and the returned section view size exclude these pages. The
+single guest allocation owns the image, its extensions, and their shared
+release lifetime; class 6 and class 14 describe that same state. Partial views
+omit the extensions. Each component is at most 65,536 bytes and page-aligned;
+the complete tail is bounded to 131,072 bytes beyond the PE image.
+
+Native acquisition copies only its own pinned section views. It checks class-14
+metadata, allocation identity, executable page protection, and copied extents.
+Two concurrently held relocated views must normalize to the same complete
+image before their guard adjustments are accepted. Ordinary PE relocations
+alone do not account for those adjustments. Host signing levels remain outside
+the guest trust policy.
+
+The initial exact installed NTDLL uses this selected image at its native
+preferred base when extensions are present. A conflicting range fails rather
+than relocating cross-image guard branches implicitly. Explicitly supplied
+images retain their existing loader policy. The compatibility page policy uses
+the kernel-reported machine, not the compiler target of the host executable.
+Native ARM64 large-page image views omit the extension; measured compatibility
+calls retain ordinary image pages even when the large-page flag is requested.
+
+Protection changes that intersect an owned extension report
+STATUS_NOT_COMMITTED and PAGE_NOACCESS in the old-protection output, matching
+the selected native contract. Unmapping any interior address releases the
+complete image allocation. Its extension metadata disappears with that owner.
+
+The evidence and limits are in
+[the image-extension owner specification](../../../docs/specifications/windows/native-image-extension-owner/README.md).
+ARM64-host AMD64 image projection does not by itself reproduce the additional
+emulated SCP page reported to a real x64 compatibility process. This remains
+part of the broader incomplete cross-architecture runtime, independently of
+native same-architecture image ownership.
+
+
+The image-owner final gates passed on the frozen source with full library
+counts macOS7878/0/2, Linux7872/0/2 and Windows7309/5/2 (passed/failed/ignored).
+The five Windows lowerer failures are unchanged. Epoch6 changes only a Windows test for older-kernel absence handling; its
+20 focused cases and all-target check pass. C API168, scoped C++ consumers and
+complete shipping archives cover identical epoch5 production source.
+The non-test selected-NTDLL path stops earlier at `NtQuerySystemTime` (0x5a),
+at smoke turn97964 and whoami turn98028; neither application exits normally.
+These are different startup paths, not a forward turn-count improvement.

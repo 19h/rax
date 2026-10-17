@@ -1,0 +1,17 @@
+{
+  "pid": 2616,
+  "utc": "2026-10-17T21:28:26.373745+00:00",
+  "state": "finished",
+  "base": "bb697c7da3400d3fc2905cfbcfd7b4e68306ceee",
+  "child-pid": 8592,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-image-extension-epoch1-gates.ps1"
+  ],
+  "exit-code": 1,
+  "completed-utc": "2026-10-17T21:43:01.180483+00:00"
+}

@@ -69,6 +69,37 @@ pub(super) fn with_low_placement(
     wow: bool,
     low_placement: Option<u64>,
 ) -> Result<Plan, u32> {
+    with_extensions(
+        vm,
+        preferred,
+        full_size,
+        requested_base,
+        requested_size,
+        offset,
+        zero,
+        commit,
+        flags,
+        wow,
+        low_placement,
+        0,
+        true,
+    )
+}
+pub(super) fn with_extensions(
+    vm: &VirtualMemory,
+    preferred: u64,
+    full_size: u64,
+    requested_base: u64,
+    requested_size: u64,
+    offset: u64,
+    zero: u64,
+    commit: u64,
+    flags: u32,
+    wow: bool,
+    low_placement: Option<u64>,
+    extension_size: u64,
+    large_pages: bool,
+) -> Result<Plan, u32> {
     let high = ceiling(zero, vm.high())?;
     let size_limit = if wow {
         if vm.high() > 0x7FFF_0000 {
@@ -106,10 +137,22 @@ pub(super) fn with_low_placement(
     if size > remaining {
         return Err(STATUS_INVALID_VIEW_SIZE);
     }
+    let footprint = size
+        .checked_add(
+            if offset == 0
+                && size == full_size
+                && !(large_pages && flags & 0x2000_0000 != 0 && requested_base == 0)
+            {
+                extension_size
+            } else {
+                0
+            },
+        )
+        .ok_or(STATUS_INVALID_PARAMETER)?;
     if requested_base != 0
         && zero != 0
         && requested_base
-            .checked_add(size)
+            .checked_add(footprint)
             .is_none_or(|end| end > high)
     {
         return Err(STATUS_INVALID_PARAMETER);
@@ -120,12 +163,12 @@ pub(super) fn with_low_placement(
     }
     // Native SEC_IMAGE large pages are opportunistic. Explicit placement and
     // nonzero offsets use the ordinary image page policy in the recorded calls.
-    let large = requested_large && requested_base == 0 && offset == 0;
+    let large = large_pages && requested_large && requested_base == 0 && offset == 0;
     let top = flags & mem::TOP_DOWN != 0;
     if large {
         let prefix = preferred % (2 << 20);
         let allocation_size = prefix
-            .checked_add(size)
+            .checked_add(footprint)
             .and_then(|n| n.checked_add((2 << 20) - 1))
             .ok_or(STATUS_INVALID_PARAMETER)?
             & !((2 << 20) - 1);
@@ -146,19 +189,24 @@ pub(super) fn with_low_placement(
         .ok_or(STATUS_CONFLICTING_ADDRESSES)?;
     let image_base = if requested_base != 0 {
         requested_base
-    } else if preferred.checked_add(size).is_some_and(|end| end <= high)
-        && vm.is_free(preferred, size)
+    } else if preferred
+        .checked_add(footprint)
+        .is_some_and(|end| end <= high)
+        && vm.is_free(preferred, footprint)
     {
         preferred
     } else if let Some(placement) = low_placement.filter(|_| high <= 1u64 << 32) {
         // The native randomized low image candidate is retained across unmap.
         // A stricter ZeroBits ceiling can reject it even with other free low
         // addresses. Explicit bases and a free preferred base bypass the hint.
-        if placement.checked_add(size).is_none_or(|end| end > high) {
+        if placement
+            .checked_add(footprint)
+            .is_none_or(|end| end > high)
+        {
             return Err(STATUS_NO_MEMORY);
         }
         vm.find_free(
-            size,
+            footprint,
             ALLOCATION_GRANULARITY,
             placement.max(vm.low()),
             high,
@@ -166,16 +214,16 @@ pub(super) fn with_low_placement(
         )
         .ok_or(STATUS_NO_MEMORY)?
     } else {
-        vm.find_free(size, ALLOCATION_GRANULARITY, vm.low(), high, top)
+        vm.find_free(footprint, ALLOCATION_GRANULARITY, vm.low(), high, top)
             .ok_or(STATUS_NO_MEMORY)?
     };
-    if !vm.is_free(image_base, size) {
+    if !vm.is_free(image_base, footprint) {
         return Err(STATUS_CONFLICTING_ADDRESSES);
     }
     Ok(Plan {
         allocation_base: image_base,
         image_base,
-        allocation_size: size,
+        allocation_size: footprint,
         size,
         offset,
         large,
@@ -197,6 +245,40 @@ mod tests {
             65536,
             1 << 32,
         )
+    }
+    #[test]
+    fn image_extension_compatibility_large_flag_keeps_ordinary_geometry_and_conflict_validation() {
+        let vm = memory();
+        let p = with_extensions(
+            &vm, 0x70000000, 0x3000, 0, 0, 0, 0, 0, 0x20000000, false, None, 0x2000, false,
+        )
+        .unwrap();
+        assert!(!p.large);
+        assert_eq!(p.allocation_size, 0x5000);
+        assert_eq!(
+            with_extensions(
+                &vm, 0x70000000, 0x3000, 0, 0, 0, 0, 0, 0x20800000, false, None, 0x2000, false
+            )
+            .err(),
+            Some(STATUS_INVALID_PARAMETER)
+        );
+    }
+    #[test]
+    fn image_extension_owner_geometry_reserves_full_tail_and_omits_partial_or_large_tail() {
+        let vm = memory();
+        for (size, flags, allocation, large) in [
+            (0, 0, 0x5000, false),
+            (0x3000, 0, 0x5000, false),
+            (0x1000, 0, 0x1000, false),
+            (0, 0x20000000, 0x200000, true),
+        ] {
+            let p = with_extensions(
+                &vm, 0x70000000, 0x3000, 0, size, 0, 0, 0, flags, false, None, 0x2000, true,
+            )
+            .unwrap();
+            assert_eq!(p.allocation_size, allocation);
+            assert_eq!(p.large, large);
+        }
     }
     #[test]
     fn zero_bits_count_mask_and_full_width_limits_match_native_controls() {

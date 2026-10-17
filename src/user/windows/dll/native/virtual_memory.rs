@@ -157,8 +157,8 @@ fn write_information(c: &Ctx, address: u64, class: u32, output: u64) -> Result<(
     let mut bytes = [0u8; 24];
     if allocation.kind == AllocKind::Image {
         // Selected section views supply their logical base, complete section
-        // extent, and partial bit below. There is no guest code-integrity or
-        // kernel CFG/SCP extension mapping: signing remains UNCHECKED (0).
+        // extent, partial bit and actual extension presence below. The guest
+        // does not inherit host code-integrity state: signing remains UNCHECKED (0).
         // Never inherit the host kernel's trust flags.
         let width = c.psize() as usize;
         bytes[..width].copy_from_slice(&allocation.base.to_le_bytes()[..width]);

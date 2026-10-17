@@ -1,0 +1,14 @@
+{
+  "utc": "2026-10-17T21:29:20.015757+00:00",
+  "argv": [
+    "prlctl",
+    "exec",
+    "a5b14f9a-d292-4610-a04d-df4ca4337c9d",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "-B",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\probe-native-image-extension-lifetime-v2.py"
+  ],
+  "exit-code": 0,
+  "stdout": "rows 252 statuses Counter({('protect', '0xc000002d'): 216, ('unmap', '0x0'): 24, ('free', '0xc000001b'): 6, ('free', '0xc000009f'): 6}) handles 113 113\n",
+  "stderr": ""
+}

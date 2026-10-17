@@ -1,0 +1,829 @@
+{
+  "handles-before": 113,
+  "handles-after": 113,
+  "rows": [
+    {
+      "name": "ntdll.dll",
+      "index": 0,
+      "flags": 0,
+      "base": 2200322310144,
+      "size": 4665344,
+      "status": 1073741827,
+      "preferred": 140703928483840,
+      "sha256": "174729ffa54639d6b9fcdd6f6ba6a8160d9d8a0dd706c6f9c67172d1482025b9",
+      "archive": "ntdll.dll.view0.bin.gz",
+      "archive-sha256": "cf728e1890b2082d495ade2ae21ed26f3668a6e8b0b876e04ca8ae127c1721f5",
+      "regions": [
+        {
+          "offset": 0,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 4096,
+          "size": 3379200,
+          "state": 4096,
+          "protect": 32
+        },
+        {
+          "offset": 3383296,
+          "size": 536576,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 3919872,
+          "size": 73728,
+          "state": 4096,
+          "protect": 8
+        },
+        {
+          "offset": 3993600,
+          "size": 86016,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 4079616,
+          "size": 40960,
+          "state": 4096,
+          "protect": 8
+        },
+        {
+          "offset": 4120576,
+          "size": 544768,
+          "state": 4096,
+          "protect": 2
+        }
+      ],
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000304700000000000010000000000000",
+        "flags": 0,
+        "rva": 4665344,
+        "size": 4096,
+        "sample": {
+          "address": 2200326975680,
+          "region": {
+            "base": 2200326975488,
+            "allocation": 2200322310144,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "name": "ntdll.dll",
+      "index": 1,
+      "flags": 8388608,
+      "base": 2200327028736,
+      "size": 4665344,
+      "status": 1073741878,
+      "preferred": 2200327028736,
+      "sha256": "54b6df98869b732dd66c2e09ca8b9a62c24fadee4918bf98a458f89a4bbedae0",
+      "archive": "ntdll.dll.view1.bin.gz",
+      "archive-sha256": "c22bc69f4604637205c98e3642dc44af930964557aa79cd2d3e64de415125921",
+      "regions": [
+        {
+          "offset": 0,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 4096,
+          "size": 3379200,
+          "state": 4096,
+          "protect": 32
+        },
+        {
+          "offset": 3383296,
+          "size": 536576,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 3919872,
+          "size": 73728,
+          "state": 4096,
+          "protect": 8
+        },
+        {
+          "offset": 3993600,
+          "size": 86016,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 4079616,
+          "size": 40960,
+          "state": 4096,
+          "protect": 8
+        },
+        {
+          "offset": 4120576,
+          "size": 544768,
+          "state": 4096,
+          "protect": 2
+        }
+      ],
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000304700000000000010000000000000",
+        "flags": 0,
+        "rva": 4665344,
+        "size": 4096,
+        "sample": {
+          "address": 2200331694272,
+          "region": {
+            "base": 2200331694080,
+            "allocation": 2200327028736,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "name": "ntdll.dll",
+      "index": 2,
+      "flags": 8388608,
+      "base": 2200331747328,
+      "size": 4665344,
+      "status": 1073741878,
+      "preferred": 2200331747328,
+      "sha256": "d9e9b61cb669c8714cbe6087871f5b364fefa1eee81e1f9db3f5f5685b0f549f",
+      "archive": "ntdll.dll.view2.bin.gz",
+      "archive-sha256": "93fe59875c648bd24761305e2b8bfca7162071b2f724c94ba174b290d7c993fe",
+      "regions": [
+        {
+          "offset": 0,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 4096,
+          "size": 3379200,
+          "state": 4096,
+          "protect": 32
+        },
+        {
+          "offset": 3383296,
+          "size": 536576,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 3919872,
+          "size": 73728,
+          "state": 4096,
+          "protect": 8
+        },
+        {
+          "offset": 3993600,
+          "size": 86016,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 4079616,
+          "size": 40960,
+          "state": 4096,
+          "protect": 8
+        },
+        {
+          "offset": 4120576,
+          "size": 544768,
+          "state": 4096,
+          "protect": 2
+        }
+      ],
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000304700000000000010000000000000",
+        "flags": 0,
+        "rva": 4665344,
+        "size": 4096,
+        "sample": {
+          "address": 2200336412864,
+          "region": {
+            "base": 2200336412672,
+            "allocation": 2200331747328,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "normalization": {
+        "normalized-sha256": "8a6e5b0edc05ace61e7e7badb5195b288a286f8bfe6df5e4bf6f74a3806db5d7",
+        "equal": true,
+        "kinds": {
+          "10": 1957,
+          "0": 21
+        },
+        "fixups": 1957,
+        "difference-ranges": [
+          [
+            3379232,
+            3379236
+          ],
+          [
+            3379248,
+            3379252
+          ],
+          [
+            3379264,
+            3379268
+          ],
+          [
+            3379280,
+            3379282
+          ],
+          [
+            3379296,
+            3379298
+          ],
+          [
+            3379312,
+            3379314
+          ],
+          [
+            3379329,
+            3379330
+          ],
+          [
+            3379344,
+            3379346
+          ],
+          [
+            3379360,
+            3379364
+          ],
+          [
+            3379377,
+            3379378
+          ],
+          [
+            3379392,
+            3379394
+          ],
+          [
+            3379408,
+            3379410
+          ],
+          [
+            3379425,
+            3379426
+          ],
+          [
+            3379441,
+            3379442
+          ]
+        ],
+        "difference-bytes": 32
+      }
+    },
+    {
+      "name": "kernelbase.dll",
+      "index": 0,
+      "flags": 0,
+      "base": 2200322310144,
+      "size": 7233536,
+      "status": 1073741827,
+      "preferred": 140703850692608,
+      "sha256": "e833dbd39fd3a075b1b3427369263dd37ceb90ce5865fa837fc73c2b7294f522",
+      "archive": "kernelbase.dll.view0.bin.gz",
+      "archive-sha256": "53d8ed0abda0467eb244122ab42893cc8022bdbe2e40b780de9a4fc051e7ac8d",
+      "regions": [
+        {
+          "offset": 0,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 4096,
+          "size": 3170304,
+          "state": 4096,
+          "protect": 32
+        },
+        {
+          "offset": 3174400,
+          "size": 3371008,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 6545408,
+          "size": 86016,
+          "state": 4096,
+          "protect": 8
+        },
+        {
+          "offset": 6631424,
+          "size": 90112,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 6721536,
+          "size": 8192,
+          "state": 4096,
+          "protect": 8
+        },
+        {
+          "offset": 6729728,
+          "size": 503808,
+          "state": 4096,
+          "protect": 2
+        }
+      ],
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000606e00000000000010000000000000",
+        "flags": 0,
+        "rva": 7233536,
+        "size": 4096,
+        "sample": {
+          "address": 2200329543872,
+          "region": {
+            "base": 2200329543680,
+            "allocation": 2200322310144,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "name": "kernelbase.dll",
+      "index": 1,
+      "flags": 8388608,
+      "base": 2200329584640,
+      "size": 7233536,
+      "status": 1073741878,
+      "preferred": 2200329584640,
+      "sha256": "30336d26504d3a3d19f1c924b8fc928d974df25d99b517764a5ffa4a20865942",
+      "archive": "kernelbase.dll.view1.bin.gz",
+      "archive-sha256": "c5c50d7b051703fabaf9e8822d013d6e6cc440e9ec232d3d30ff1f5d8a8dfe4f",
+      "regions": [
+        {
+          "offset": 0,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 4096,
+          "size": 3170304,
+          "state": 4096,
+          "protect": 32
+        },
+        {
+          "offset": 3174400,
+          "size": 3371008,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 6545408,
+          "size": 86016,
+          "state": 4096,
+          "protect": 8
+        },
+        {
+          "offset": 6631424,
+          "size": 90112,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 6721536,
+          "size": 8192,
+          "state": 4096,
+          "protect": 8
+        },
+        {
+          "offset": 6729728,
+          "size": 503808,
+          "state": 4096,
+          "protect": 2
+        }
+      ],
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000606e00000000000010000000000000",
+        "flags": 0,
+        "rva": 7233536,
+        "size": 4096,
+        "sample": {
+          "address": 2200336818368,
+          "region": {
+            "base": 2200336818176,
+            "allocation": 2200329584640,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "name": "kernelbase.dll",
+      "index": 2,
+      "flags": 8388608,
+      "base": 2200336859136,
+      "size": 7233536,
+      "status": 1073741878,
+      "preferred": 2200336859136,
+      "sha256": "f163e809b1d2ccd12c1db968947fb5d33d2ed9f57d3c2453578216e7389b7c1d",
+      "archive": "kernelbase.dll.view2.bin.gz",
+      "archive-sha256": "425f4e06d7c4507af3642f555bfbd4f53fb54f9127eb65f97a7f01eff6ad03dd",
+      "regions": [
+        {
+          "offset": 0,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 4096,
+          "size": 3170304,
+          "state": 4096,
+          "protect": 32
+        },
+        {
+          "offset": 3174400,
+          "size": 3371008,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 6545408,
+          "size": 86016,
+          "state": 4096,
+          "protect": 8
+        },
+        {
+          "offset": 6631424,
+          "size": 90112,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 6721536,
+          "size": 8192,
+          "state": 4096,
+          "protect": 8
+        },
+        {
+          "offset": 6729728,
+          "size": 503808,
+          "state": 4096,
+          "protect": 2
+        }
+      ],
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000606e00000000000010000000000000",
+        "flags": 0,
+        "rva": 7233536,
+        "size": 4096,
+        "sample": {
+          "address": 2200344092864,
+          "region": {
+            "base": 2200344092672,
+            "allocation": 2200336859136,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "normalization": {
+        "normalized-sha256": "1b0dc0c7f2149924da250028501219d790f5213b20f7e38b111b4b64be0f0e5e",
+        "equal": true,
+        "kinds": {
+          "10": 233748,
+          "0": 308
+        },
+        "fixups": 233748,
+        "difference-ranges": [
+          [
+            3170320,
+            3170324
+          ],
+          [
+            3170336,
+            3170340
+          ],
+          [
+            3170352,
+            3170356
+          ]
+        ],
+        "difference-bytes": 12
+      }
+    },
+    {
+      "name": "kernel32.dll",
+      "index": 0,
+      "flags": 0,
+      "base": 2200322310144,
+      "size": 1511424,
+      "status": 1073741827,
+      "preferred": 140703867797504,
+      "sha256": "8ed9a692a1c988bc0403d4d36ccefbf962c4c757e9b7222f373d5bc02c621cf9",
+      "archive": "kernel32.dll.view0.bin.gz",
+      "archive-sha256": "6b639981c76877f8457fc61561115dd315d7d3a761a202248e8b9ce5f134c757",
+      "regions": [
+        {
+          "offset": 0,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 4096,
+          "size": 1028096,
+          "state": 4096,
+          "protect": 32
+        },
+        {
+          "offset": 1032192,
+          "size": 397312,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 1429504,
+          "size": 12288,
+          "state": 4096,
+          "protect": 8
+        },
+        {
+          "offset": 1441792,
+          "size": 24576,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 1466368,
+          "size": 4096,
+          "state": 4096,
+          "protect": 8
+        },
+        {
+          "offset": 1470464,
+          "size": 40960,
+          "state": 4096,
+          "protect": 2
+        }
+      ],
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000101700000000000010000000000000",
+        "flags": 0,
+        "rva": 1511424,
+        "size": 4096,
+        "sample": {
+          "address": 2200323821760,
+          "region": {
+            "base": 2200323821568,
+            "allocation": 2200322310144,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "name": "kernel32.dll",
+      "index": 1,
+      "flags": 8388608,
+      "base": 2200323883008,
+      "size": 1511424,
+      "status": 1073741878,
+      "preferred": 2200323883008,
+      "sha256": "9a0ab4b109e6c4f895a2e4004e7dff763e2e6bc2105255822dc1f6587f0f8987",
+      "archive": "kernel32.dll.view1.bin.gz",
+      "archive-sha256": "bc64b74ebe94f303f82e7a7b3501fdf1490a98c336c3ed4828bd89731a69884b",
+      "regions": [
+        {
+          "offset": 0,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 4096,
+          "size": 1028096,
+          "state": 4096,
+          "protect": 32
+        },
+        {
+          "offset": 1032192,
+          "size": 397312,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 1429504,
+          "size": 12288,
+          "state": 4096,
+          "protect": 8
+        },
+        {
+          "offset": 1441792,
+          "size": 24576,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 1466368,
+          "size": 4096,
+          "state": 4096,
+          "protect": 8
+        },
+        {
+          "offset": 1470464,
+          "size": 40960,
+          "state": 4096,
+          "protect": 2
+        }
+      ],
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000101700000000000010000000000000",
+        "flags": 0,
+        "rva": 1511424,
+        "size": 4096,
+        "sample": {
+          "address": 2200325394624,
+          "region": {
+            "base": 2200325394432,
+            "allocation": 2200323883008,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "name": "kernel32.dll",
+      "index": 2,
+      "flags": 8388608,
+      "base": 2200325455872,
+      "size": 1511424,
+      "status": 1073741878,
+      "preferred": 2200325455872,
+      "sha256": "4ea660be32009e79995c9084447266bafc9b2590e6a2563da339648ac6f9f8d9",
+      "archive": "kernel32.dll.view2.bin.gz",
+      "archive-sha256": "e0667d4468dba4397a5291a2cafda453a667ec331eb991a2503887293e6e30d6",
+      "regions": [
+        {
+          "offset": 0,
+          "size": 4096,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 4096,
+          "size": 1028096,
+          "state": 4096,
+          "protect": 32
+        },
+        {
+          "offset": 1032192,
+          "size": 397312,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 1429504,
+          "size": 12288,
+          "state": 4096,
+          "protect": 8
+        },
+        {
+          "offset": 1441792,
+          "size": 24576,
+          "state": 4096,
+          "protect": 2
+        },
+        {
+          "offset": 1466368,
+          "size": 4096,
+          "state": 4096,
+          "protect": 8
+        },
+        {
+          "offset": 1470464,
+          "size": 40960,
+          "state": 4096,
+          "protect": 2
+        }
+      ],
+      "extension": {
+        "class": 14,
+        "extension-type": 0,
+        "status": 0,
+        "returned": 24,
+        "bytes": "000000000000000000101700000000000010000000000000",
+        "flags": 0,
+        "rva": 1511424,
+        "size": 4096,
+        "sample": {
+          "address": 2200326967488,
+          "region": {
+            "base": 2200326967296,
+            "allocation": 2200325455872,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "normalization": {
+        "normalized-sha256": "0fc326b73792ff90cb31ab0aa3e04bf7ff1943b837edcf9d4b23d4376e138c16",
+        "equal": true,
+        "kinds": {
+          "10": 4140,
+          "0": 16
+        },
+        "fixups": 4140,
+        "difference-ranges": [
+          [
+            1028112,
+            1028116
+          ],
+          [
+            1028128,
+            1028132
+          ]
+        ],
+        "difference-bytes": 8
+      }
+    }
+  ]
+}

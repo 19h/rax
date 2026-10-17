@@ -1,0 +1,1038 @@
+{
+  "handles-before": 113,
+  "handles-after": 113,
+  "rows": [
+    {
+      "name": "ntdll.dll",
+      "flags": 0,
+      "status": 1073741827,
+      "base": 2090992467968,
+      "size": 4665344,
+      "header-preferred": 140703928483840,
+      "queries": [
+        {
+          "class": 14,
+          "extension-type": 0,
+          "status": 0,
+          "returned": 24,
+          "bytes": "000000000000000000304700000000000010000000000000",
+          "flags": 0,
+          "rva": 4665344,
+          "size": 4096,
+          "sample": {
+            "address": 2090997133504,
+            "region": {
+              "base": 2090997133312,
+              "allocation": 2090992467968,
+              "allocation_protect": 128,
+              "size": 4096,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "full-bytes": "40010000c001000040000000c000000000000000f805000080020000c002000040030000c00300004804000080050000e4040000ec0400000000000000000000c0035fd600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020011fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020011fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f0bd99d27035b1f2f0acc8f29046e2f200021fd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000014000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000001400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100080d2106eb0f290becff21000e0f2ec0310aa71fd4fd3116a713870394cd33026d09a1f0240f240010054c0035fd6f0030caa71fd4fd3116a713870394cd33026d09a1f0240f240000054c0035fd67f0d40f2a1010054704540a9290900581f0209eb2101005410090058100211ca1f3e40f2a100005429fe50d369c1298b2b390091ebffff1710b991d230fda5f210ffcff21000e0f21002403930090034690140393ffd037141010054690540393f950071c101005469090091290140b969c1298b291900912b0140f9d9ffff173fa50371c100005469050091290140b969c1298b2b150091d2ffff177f1140f2a102005469c540a9100500583f0110eb10050058200250fae1010054690140f91004005831ad60d3e92f60b33f0110eb210100543fa607f1e2000054108084d230fca5f210ffcff21000e0f20b7a71f8c0035fd6e9030baaeb030aaac0035fd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000488bc448895820555de90000000000004c8bd1b800000000f604250803fe7f0175030f05c3cd2ec300000000000000000000000000000000000000000000000090af94d2b0fba5f210ffcff21000e0f200021fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000090040b9ca0080d20a00b8f23f010a6ba0000054e1031faa400180d260003ed400003ed420008052c0035fd670011008e4000000c00500000000000000000000cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        {
+          "class": 14,
+          "extension-type": 1,
+          "status": 0,
+          "returned": 24,
+          "bytes": "010000000000000000000000000000000000000000000000",
+          "flags": 0,
+          "rva": 0,
+          "size": 0
+        }
+      ],
+      "samples": [
+        {
+          "address": 2090992472064,
+          "region": {
+            "base": 2090992472064,
+            "allocation": 2090992467968,
+            "allocation_protect": 128,
+            "size": 3379200,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "010000d4c0035fd60000000000000000210000d4c0035fd60000000000000000410000d4c0035fd60000000000000000"
+        }
+      ],
+      "load-config": "4801000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000098dceb2ff87f000000000000000000000000000000000000a840eb2ff87f00002830eb2ff87f000048a8e02ff87f0000a41800000000000000754110000000000000000000000000000000000000000000000000000000007c23e12ff87f00000100000000000000000000000000000078c2e32ff87f000000000000000000000000000000000000a410000012000000000000000000000000000000000000000000000000000000000000000000000000a0e02ff87f0000a8010000000000000000000000000000000000000000000000000000000000002030eb2ff87f000000000000000000000000000000000000",
+      "guard-pointers": [
+        {
+          "offset": 112,
+          "slot": 140703932563624,
+          "target": 140703929487648,
+          "sample": {
+            "address": 140703929487648,
+            "region": {
+              "base": 140703929487360,
+              "allocation": 140703928483840,
+              "allocation_protect": 128,
+              "size": 2379776,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd61f2003d51f2003d5000000007f2303d5f353bca9f55b01a9f76302a9f96b03a9fd7bbea9fd03009110e4004f"
+          }
+        },
+        {
+          "offset": 120,
+          "slot": 140703932559400,
+          "target": 140703930032128,
+          "sample": {
+            "address": 140703930032128,
+            "region": {
+              "base": 140703930032128,
+              "allocation": 140703928483840,
+              "allocation_protect": 128,
+              "size": 1835008,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "20011fd60000000000000000000000000d00001400000000000000000000000028fc0614000000000000000000000000"
+          }
+        }
+      ]
+    },
+    {
+      "name": "ntdll.dll",
+      "flags": 8388608,
+      "status": 1073741878,
+      "base": 2090997186560,
+      "size": 4665344,
+      "header-preferred": 2090997186560,
+      "queries": [
+        {
+          "class": 14,
+          "extension-type": 0,
+          "status": 0,
+          "returned": 24,
+          "bytes": "000000000000000000304700000000000010000000000000",
+          "flags": 0,
+          "rva": 4665344,
+          "size": 4096,
+          "sample": {
+            "address": 2091001852096,
+            "region": {
+              "base": 2091001851904,
+              "allocation": 2090997186560,
+              "allocation_protect": 128,
+              "size": 4096,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "full-bytes": "40010000c001000040000000c000000000000000f805000080020000c002000040030000c00300004804000080050000e4040000ec0400000000000000000000c0035fd600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020011fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020011fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f0bd99d27035b1f2f0acc8f29046e2f200021fd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000014000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000001400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100080d2106eb0f290becff21000e0f2ec0310aa71fd4fd3116a713870394cd33026d09a1f0240f240010054c0035fd6f0030caa71fd4fd3116a713870394cd33026d09a1f0240f240000054c0035fd67f0d40f2a1010054704540a9290900581f0209eb2101005410090058100211ca1f3e40f2a100005429fe50d369c1298b2b390091ebffff1710b991d230fda5f210ffcff21000e0f21002403930090034690140393ffd037141010054690540393f950071c101005469090091290140b969c1298b291900912b0140f9d9ffff173fa50371c100005469050091290140b969c1298b2b150091d2ffff177f1140f2a102005469c540a9100500583f0110eb10050058200250fae1010054690140f91004005831ad60d3e92f60b33f0110eb210100543fa607f1e2000054108084d230fca5f210ffcff21000e0f20b7a71f8c0035fd6e9030baaeb030aaac0035fd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000488bc448895820555de90000000000004c8bd1b800000000f604250803fe7f0175030f05c3cd2ec300000000000000000000000000000000000000000000000090af94d2b0fba5f210ffcff21000e0f200021fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000090040b9ca0080d20a00b8f23f010a6ba0000054e1031faa400180d260003ed400003ed420008052c0035fd670011008e4000000c00500000000000000000000cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        {
+          "class": 14,
+          "extension-type": 1,
+          "status": 0,
+          "returned": 24,
+          "bytes": "010000000000000000000000000000000000000000000000",
+          "flags": 0,
+          "rva": 0,
+          "size": 0
+        }
+      ],
+      "samples": [
+        {
+          "address": 2090997190656,
+          "region": {
+            "base": 2090997190656,
+            "allocation": 2090997186560,
+            "allocation_protect": 128,
+            "size": 3379200,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "010000d4c0035fd60000000000000000210000d4c0035fd60000000000000000410000d4c0035fd60000000000000000"
+        }
+      ],
+      "load-config": "4801000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000098dc63d9e601000000000000000000000000000000000000a84063d9e6010000283063d9e601000048a858d9e6010000a41800000000000000754110000000000000000000000000000000000000000000000000000000007c2359d9e60100000100000000000000000000000000000078c25bd9e601000000000000000000000000000000000000a410000012000000000000000000000000000000000000000000000000000000000000000000000000a058d9e6010000a801000000000000000000000000000000000000000000000000000000000000203063d9e601000000000000000000000000000000000000",
+      "guard-pointers": [
+        {
+          "offset": 112,
+          "slot": 2091001266344,
+          "target": 2090998190368,
+          "sample": {
+            "address": 2090998190368,
+            "region": {
+              "base": 2090998190080,
+              "allocation": 2090997186560,
+              "allocation_protect": 128,
+              "size": 2379776,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd61f2003d51f2003d5000000007f2303d5f353bca9f55b01a9f76302a9f96b03a9fd7bbea9fd03009110e4004f"
+          }
+        },
+        {
+          "offset": 120,
+          "slot": 2091001262120,
+          "target": 2090998734848,
+          "sample": {
+            "address": 2090998734848,
+            "region": {
+              "base": 2090998734848,
+              "allocation": 2090997186560,
+              "allocation_protect": 128,
+              "size": 1835008,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "20011fd60000000000000000000000000d00001400000000000000000000000028fc0614000000000000000000000000"
+          }
+        }
+      ]
+    },
+    {
+      "name": "ntdll.dll",
+      "flags": 8388608,
+      "status": 1073741878,
+      "base": 2091001905152,
+      "size": 4665344,
+      "header-preferred": 2091001905152,
+      "queries": [
+        {
+          "class": 14,
+          "extension-type": 0,
+          "status": 0,
+          "returned": 24,
+          "bytes": "000000000000000000304700000000000010000000000000",
+          "flags": 0,
+          "rva": 4665344,
+          "size": 4096,
+          "sample": {
+            "address": 2091006570688,
+            "region": {
+              "base": 2091006570496,
+              "allocation": 2091001905152,
+              "allocation_protect": 128,
+              "size": 4096,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "full-bytes": "40010000c001000040000000c000000000000000f805000080020000c002000040030000c00300004804000080050000e4040000ec0400000000000000000000c0035fd600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020011fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020011fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f0bd99d27035b1f2f0acc8f29046e2f200021fd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000014000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000001400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100080d2106eb0f290becff21000e0f2ec0310aa71fd4fd3116a713870394cd33026d09a1f0240f240010054c0035fd6f0030caa71fd4fd3116a713870394cd33026d09a1f0240f240000054c0035fd67f0d40f2a1010054704540a9290900581f0209eb2101005410090058100211ca1f3e40f2a100005429fe50d369c1298b2b390091ebffff1710b991d230fda5f210ffcff21000e0f21002403930090034690140393ffd037141010054690540393f950071c101005469090091290140b969c1298b291900912b0140f9d9ffff173fa50371c100005469050091290140b969c1298b2b150091d2ffff177f1140f2a102005469c540a9100500583f0110eb10050058200250fae1010054690140f91004005831ad60d3e92f60b33f0110eb210100543fa607f1e2000054108084d230fca5f210ffcff21000e0f20b7a71f8c0035fd6e9030baaeb030aaac0035fd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000488bc448895820555de90000000000004c8bd1b800000000f604250803fe7f0175030f05c3cd2ec300000000000000000000000000000000000000000000000090af94d2b0fba5f210ffcff21000e0f200021fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000090040b9ca0080d20a00b8f23f010a6ba0000054e1031faa400180d260003ed400003ed420008052c0035fd670011008e4000000c00500000000000000000000cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        {
+          "class": 14,
+          "extension-type": 1,
+          "status": 0,
+          "returned": 24,
+          "bytes": "010000000000000000000000000000000000000000000000",
+          "flags": 0,
+          "rva": 0,
+          "size": 0
+        }
+      ],
+      "samples": [
+        {
+          "address": 2091001909248,
+          "region": {
+            "base": 2091001909248,
+            "allocation": 2091001905152,
+            "allocation_protect": 128,
+            "size": 3379200,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "010000d4c0035fd60000000000000000210000d4c0035fd60000000000000000410000d4c0035fd60000000000000000"
+        }
+      ],
+      "load-config": "4801000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000098dcabd9e601000000000000000000000000000000000000a840abd9e60100002830abd9e601000048a8a0d9e6010000a41800000000000000754110000000000000000000000000000000000000000000000000000000007c23a1d9e60100000100000000000000000000000000000078c2a3d9e601000000000000000000000000000000000000a410000012000000000000000000000000000000000000000000000000000000000000000000000000a0a0d9e6010000a8010000000000000000000000000000000000000000000000000000000000002030abd9e601000000000000000000000000000000000000",
+      "guard-pointers": [
+        {
+          "offset": 112,
+          "slot": 2091005984936,
+          "target": 2091002908960,
+          "sample": {
+            "address": 2091002908960,
+            "region": {
+              "base": 2091002908672,
+              "allocation": 2091001905152,
+              "allocation_protect": 128,
+              "size": 2379776,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd61f2003d51f2003d5000000007f2303d5f353bca9f55b01a9f76302a9f96b03a9fd7bbea9fd03009110e4004f"
+          }
+        },
+        {
+          "offset": 120,
+          "slot": 2091005980712,
+          "target": 2091003453440,
+          "sample": {
+            "address": 2091003453440,
+            "region": {
+              "base": 2091003453440,
+              "allocation": 2091001905152,
+              "allocation_protect": 128,
+              "size": 1835008,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "20011fd60000000000000000000000000d00001400000000000000000000000028fc0614000000000000000000000000"
+          }
+        }
+      ]
+    },
+    {
+      "name": "kernelbase.dll",
+      "flags": 0,
+      "status": 1073741827,
+      "base": 2090992467968,
+      "size": 7233536,
+      "header-preferred": 140703850692608,
+      "queries": [
+        {
+          "class": 14,
+          "extension-type": 0,
+          "status": 0,
+          "returned": 24,
+          "bytes": "000000000000000000606e00000000000010000000000000",
+          "flags": 0,
+          "rva": 7233536,
+          "size": 4096,
+          "sample": {
+            "address": 2090999701696,
+            "region": {
+              "base": 2090999701504,
+              "allocation": 2090992467968,
+              "allocation_protect": 128,
+              "size": 4096,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "full-bytes": "40010000c001000040000000c000000000000000f805000080020000c002000040030000c00300004804000080050000e4040000ec0400000000000000000000c0035fd600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020011fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020011fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f0bd99d27035b1f2f0acc8f29046e2f200021fd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000014000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000001400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100080d2106eb0f290becff21000e0f2ec0310aa71fd4fd3116a713870394cd33026d09a1f0240f240010054c0035fd6f0030caa71fd4fd3116a713870394cd33026d09a1f0240f240000054c0035fd67f0d40f2a1010054704540a9290900581f0209eb2101005410090058100211ca1f3e40f2a100005429fe50d369c1298b2b390091ebffff1710b991d230fda5f210ffcff21000e0f21002403930090034690140393ffd037141010054690540393f950071c101005469090091290140b969c1298b291900912b0140f9d9ffff173fa50371c100005469050091290140b969c1298b2b150091d2ffff177f1140f2a102005469c540a9100500583f0110eb10050058200250fae1010054690140f91004005831ad60d3e92f60b33f0110eb210100543fa607f1e2000054108084d230fca5f210ffcff21000e0f20b7a71f8c0035fd6e9030baaeb030aaac0035fd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000488bc448895820555de90000000000004c8bd1b800000000f604250803fe7f0175030f05c3cd2ec300000000000000000000000000000000000000000000000090af94d2b0fba5f210ffcff21000e0f200021fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000090040b9ca0080d20a00b8f23f010a6ba0000054e1031faa400180d260003ed400003ed420008052c0035fd670011008e4000000c00500000000000000000000cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        {
+          "class": 14,
+          "extension-type": 1,
+          "status": 0,
+          "returned": 24,
+          "bytes": "010000000000000000000000000000000000000000000000",
+          "flags": 0,
+          "rva": 0,
+          "size": 0
+        }
+      ],
+      "samples": [
+        {
+          "address": 2090995638272,
+          "region": {
+            "base": 2090995638272,
+            "allocation": 2090992467968,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "0000000000000000000000001015ffffec742e150000000000000000f014ffffc8742e15000000000000000000000000"
+        },
+        {
+          "address": 2090995638320,
+          "region": {
+            "base": 2090995638272,
+            "allocation": 2090992467968,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "24742e150000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "branch-target": 2091074924736,
+          "target-region": {
+            "base": 2091074924544,
+            "allocation": null,
+            "allocation_protect": 0,
+            "size": 138595490910208,
+            "state": 65536,
+            "protect": 1,
+            "kind": 0
+          },
+          "target-bytes": null
+        },
+        {
+          "address": 2090995638336,
+          "region": {
+            "base": 2090995638272,
+            "allocation": 2090992467968,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "address": 2090995638352,
+          "region": {
+            "base": 2090995638272,
+            "allocation": 2090992467968,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "load-config": "4801000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000e06d2bf87f00000000000000000000000000000000000040903a2bf87f000048903a2bf87f000054953a2bf87f0000c52100000000000000754110000000000000000000000000303e3b2bf87f00000700000000000000000000000000000000000000000000000000000000000000a8e2652bf87f000000000000000000000000000000000000d03907000a000000000000000000000000000000000000000000000000000000000000000000000080903a2bf87f0000f70000000000000000000000000000000000000000000000000000000000000078903a2bf87f000000000000000000000000000000000000",
+      "guard-pointers": [
+        {
+          "offset": 112,
+          "slot": 140703853875264,
+          "target": 140703852865696,
+          "sample": {
+            "address": 140703852865696,
+            "region": {
+              "base": 140703852863488,
+              "allocation": 140703850692608,
+              "allocation_protect": 128,
+              "size": 1003520,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd61f2003d51f2003d541c40e007f2303d5f30f1ff8fd7bbea9fd030091130440f9130400b4b63ffe97c0000036"
+          }
+        },
+        {
+          "offset": 120,
+          "slot": 140703853875272,
+          "target": 140703852278752,
+          "sample": {
+            "address": 140703852278752,
+            "region": {
+              "base": 140703852277760,
+              "allocation": 140703850692608,
+              "allocation_protect": 128,
+              "size": 1589248,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "20011fd630f4fff01002009100021fd60000000000000000000000007f2303d5fd7bbfa9fd0301aaa3430091a21b40b9"
+          }
+        }
+      ]
+    },
+    {
+      "name": "kernelbase.dll",
+      "flags": 8388608,
+      "status": 1073741878,
+      "base": 2090999742464,
+      "size": 7233536,
+      "header-preferred": 2090999742464,
+      "queries": [
+        {
+          "class": 14,
+          "extension-type": 0,
+          "status": 0,
+          "returned": 24,
+          "bytes": "000000000000000000606e00000000000010000000000000",
+          "flags": 0,
+          "rva": 7233536,
+          "size": 4096,
+          "sample": {
+            "address": 2091006976192,
+            "region": {
+              "base": 2091006976000,
+              "allocation": 2090999742464,
+              "allocation_protect": 128,
+              "size": 4096,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "full-bytes": "40010000c001000040000000c000000000000000f805000080020000c002000040030000c00300004804000080050000e4040000ec0400000000000000000000c0035fd600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020011fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020011fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f0bd99d27035b1f2f0acc8f29046e2f200021fd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000014000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000001400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100080d2106eb0f290becff21000e0f2ec0310aa71fd4fd3116a713870394cd33026d09a1f0240f240010054c0035fd6f0030caa71fd4fd3116a713870394cd33026d09a1f0240f240000054c0035fd67f0d40f2a1010054704540a9290900581f0209eb2101005410090058100211ca1f3e40f2a100005429fe50d369c1298b2b390091ebffff1710b991d230fda5f210ffcff21000e0f21002403930090034690140393ffd037141010054690540393f950071c101005469090091290140b969c1298b291900912b0140f9d9ffff173fa50371c100005469050091290140b969c1298b2b150091d2ffff177f1140f2a102005469c540a9100500583f0110eb10050058200250fae1010054690140f91004005831ad60d3e92f60b33f0110eb210100543fa607f1e2000054108084d230fca5f210ffcff21000e0f20b7a71f8c0035fd6e9030baaeb030aaac0035fd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000488bc448895820555de90000000000004c8bd1b800000000f604250803fe7f0175030f05c3cd2ec300000000000000000000000000000000000000000000000090af94d2b0fba5f210ffcff21000e0f200021fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000090040b9ca0080d20a00b8f23f010a6ba0000054e1031faa400180d260003ed400003ed420008052c0035fd670011008e4000000c00500000000000000000000cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        {
+          "class": 14,
+          "extension-type": 1,
+          "status": 0,
+          "returned": 24,
+          "bytes": "010000000000000000000000000000000000000000000000",
+          "flags": 0,
+          "rva": 0,
+          "size": 0
+        }
+      ],
+      "samples": [
+        {
+          "address": 2091002912768,
+          "region": {
+            "base": 2091002912768,
+            "allocation": 2090999742464,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "0000000000000000000000001015ffff44c5ff170000000000000000f014ffff3cc5ff17000000000000000000000000"
+        },
+        {
+          "address": 2091002912816,
+          "region": {
+            "base": 2091002912768,
+            "allocation": 2090999742464,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "e8f4f9170000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "branch-target": 2091001328592,
+          "target-region": {
+            "base": 2091001327616,
+            "allocation": 2090999742464,
+            "allocation_protect": 128,
+            "size": 1589248,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "target-bytes": "300c00d0102240f900021fd60000000020011fd630f4fff01002009100021fd60000000000000000000000007f2303d5"
+        },
+        {
+          "address": 2091002912832,
+          "region": {
+            "base": 2091002912768,
+            "allocation": 2090999742464,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "address": 2091002912848,
+          "region": {
+            "base": 2091002912768,
+            "allocation": 2090999742464,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "load-config": "4801000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000e0afd9e60100000000000000000000000000000000000040907cd9e601000048907cd9e601000054957cd9e6010000c52100000000000000754110000000000000000000000000303e7dd9e60100000700000000000000000000000000000000000000000000000000000000000000a8e2a7d9e601000000000000000000000000000000000000d03907000a000000000000000000000000000000000000000000000000000000000000000000000080907cd9e6010000f70000000000000000000000000000000000000000000000000000000000000078907cd9e601000000000000000000000000000000000000",
+      "guard-pointers": [
+        {
+          "offset": 112,
+          "slot": 2091002925120,
+          "target": 2091001915552,
+          "sample": {
+            "address": 2091001915552,
+            "region": {
+              "base": 2091001913344,
+              "allocation": 2090999742464,
+              "allocation_protect": 128,
+              "size": 1003520,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd61f2003d51f2003d541c40e007f2303d5f30f1ff8fd7bbea9fd030091130440f9130400b4b63ffe97c0000036"
+          }
+        },
+        {
+          "offset": 120,
+          "slot": 2091002925128,
+          "target": 2091001328608,
+          "sample": {
+            "address": 2091001328608,
+            "region": {
+              "base": 2091001327616,
+              "allocation": 2090999742464,
+              "allocation_protect": 128,
+              "size": 1589248,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "20011fd630f4fff01002009100021fd60000000000000000000000007f2303d5fd7bbfa9fd0301aaa3430091a21b40b9"
+          }
+        }
+      ]
+    },
+    {
+      "name": "kernelbase.dll",
+      "flags": 8388608,
+      "status": 1073741878,
+      "base": 2091007016960,
+      "size": 7233536,
+      "header-preferred": 2091007016960,
+      "queries": [
+        {
+          "class": 14,
+          "extension-type": 0,
+          "status": 0,
+          "returned": 24,
+          "bytes": "000000000000000000606e00000000000010000000000000",
+          "flags": 0,
+          "rva": 7233536,
+          "size": 4096,
+          "sample": {
+            "address": 2091014250688,
+            "region": {
+              "base": 2091014250496,
+              "allocation": 2091007016960,
+              "allocation_protect": 128,
+              "size": 4096,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "full-bytes": "40010000c001000040000000c000000000000000f805000080020000c002000040030000c00300004804000080050000e4040000ec0400000000000000000000c0035fd600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020011fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020011fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f0bd99d27035b1f2f0acc8f29046e2f200021fd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000014000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000001400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100080d2106eb0f290becff21000e0f2ec0310aa71fd4fd3116a713870394cd33026d09a1f0240f240010054c0035fd6f0030caa71fd4fd3116a713870394cd33026d09a1f0240f240000054c0035fd67f0d40f2a1010054704540a9290900581f0209eb2101005410090058100211ca1f3e40f2a100005429fe50d369c1298b2b390091ebffff1710b991d230fda5f210ffcff21000e0f21002403930090034690140393ffd037141010054690540393f950071c101005469090091290140b969c1298b291900912b0140f9d9ffff173fa50371c100005469050091290140b969c1298b2b150091d2ffff177f1140f2a102005469c540a9100500583f0110eb10050058200250fae1010054690140f91004005831ad60d3e92f60b33f0110eb210100543fa607f1e2000054108084d230fca5f210ffcff21000e0f20b7a71f8c0035fd6e9030baaeb030aaac0035fd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000488bc448895820555de90000000000004c8bd1b800000000f604250803fe7f0175030f05c3cd2ec300000000000000000000000000000000000000000000000090af94d2b0fba5f210ffcff21000e0f200021fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000090040b9ca0080d20a00b8f23f010a6ba0000054e1031faa400180d260003ed400003ed420008052c0035fd670011008e4000000c00500000000000000000000cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        {
+          "class": 14,
+          "extension-type": 1,
+          "status": 0,
+          "returned": 24,
+          "bytes": "010000000000000000000000000000000000000000000000",
+          "flags": 0,
+          "rva": 0,
+          "size": 0
+        }
+      ],
+      "samples": [
+        {
+          "address": 2091010187264,
+          "region": {
+            "base": 2091010187264,
+            "allocation": 2091007016960,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "0000000000000000000000001015ffff44c5ff170000000000000000f014ffff3cc5ff17000000000000000000000000"
+        },
+        {
+          "address": 2091010187312,
+          "region": {
+            "base": 2091010187264,
+            "allocation": 2091007016960,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "e8f4f9170000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "branch-target": 2091008603088,
+          "target-region": {
+            "base": 2091008602112,
+            "allocation": 2091007016960,
+            "allocation_protect": 128,
+            "size": 1589248,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "target-bytes": "300c00d0102240f900021fd60000000020011fd630f4fff01002009100021fd60000000000000000000000007f2303d5"
+        },
+        {
+          "address": 2091010187328,
+          "region": {
+            "base": 2091010187264,
+            "allocation": 2091007016960,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "address": 2091010187344,
+          "region": {
+            "base": 2091010187264,
+            "allocation": 2091007016960,
+            "allocation_protect": 128,
+            "size": 4096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "load-config": "4801000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000e01edae6010000000000000000000000000000000000004090ebd9e60100004890ebd9e60100005495ebd9e6010000c52100000000000000754110000000000000000000000000303eecd9e60100000700000000000000000000000000000000000000000000000000000000000000a8e216dae601000000000000000000000000000000000000d03907000a00000000000000000000000000000000000000000000000000000000000000000000008090ebd9e6010000f7000000000000000000000000000000000000000000000000000000000000007890ebd9e601000000000000000000000000000000000000",
+      "guard-pointers": [
+        {
+          "offset": 112,
+          "slot": 2091010199616,
+          "target": 2091009190048,
+          "sample": {
+            "address": 2091009190048,
+            "region": {
+              "base": 2091009187840,
+              "allocation": 2091007016960,
+              "allocation_protect": 128,
+              "size": 1003520,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd61f2003d51f2003d541c40e007f2303d5f30f1ff8fd7bbea9fd030091130440f9130400b4b63ffe97c0000036"
+          }
+        },
+        {
+          "offset": 120,
+          "slot": 2091010199624,
+          "target": 2091008603104,
+          "sample": {
+            "address": 2091008603104,
+            "region": {
+              "base": 2091008602112,
+              "allocation": 2091007016960,
+              "allocation_protect": 128,
+              "size": 1589248,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "20011fd630f4fff01002009100021fd60000000000000000000000007f2303d5fd7bbfa9fd0301aaa3430091a21b40b9"
+          }
+        }
+      ]
+    },
+    {
+      "name": "kernel32.dll",
+      "flags": 0,
+      "status": 1073741827,
+      "base": 2090992467968,
+      "size": 1511424,
+      "header-preferred": 140703867797504,
+      "queries": [
+        {
+          "class": 14,
+          "extension-type": 0,
+          "status": 0,
+          "returned": 24,
+          "bytes": "000000000000000000101700000000000010000000000000",
+          "flags": 0,
+          "rva": 1511424,
+          "size": 4096,
+          "sample": {
+            "address": 2090993979584,
+            "region": {
+              "base": 2090993979392,
+              "allocation": 2090992467968,
+              "allocation_protect": 128,
+              "size": 4096,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "full-bytes": "40010000c001000040000000c000000000000000f805000080020000c002000040030000c00300004804000080050000e4040000ec0400000000000000000000c0035fd600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020011fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020011fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f0bd99d27035b1f2f0acc8f29046e2f200021fd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000014000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000001400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100080d2106eb0f290becff21000e0f2ec0310aa71fd4fd3116a713870394cd33026d09a1f0240f240010054c0035fd6f0030caa71fd4fd3116a713870394cd33026d09a1f0240f240000054c0035fd67f0d40f2a1010054704540a9290900581f0209eb2101005410090058100211ca1f3e40f2a100005429fe50d369c1298b2b390091ebffff1710b991d230fda5f210ffcff21000e0f21002403930090034690140393ffd037141010054690540393f950071c101005469090091290140b969c1298b291900912b0140f9d9ffff173fa50371c100005469050091290140b969c1298b2b150091d2ffff177f1140f2a102005469c540a9100500583f0110eb10050058200250fae1010054690140f91004005831ad60d3e92f60b33f0110eb210100543fa607f1e2000054108084d230fca5f210ffcff21000e0f20b7a71f8c0035fd6e9030baaeb030aaac0035fd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000488bc448895820555de90000000000004c8bd1b800000000f604250803fe7f0175030f05c3cd2ec300000000000000000000000000000000000000000000000090af94d2b0fba5f210ffcff21000e0f200021fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000090040b9ca0080d20a00b8f23f010a6ba0000054e1031faa400180d260003ed400003ed420008052c0035fd670011008e4000000c00500000000000000000000cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        {
+          "class": 14,
+          "extension-type": 1,
+          "status": 0,
+          "returned": 24,
+          "bytes": "010000000000000000000000000000000000000000000000",
+          "flags": 0,
+          "rva": 0,
+          "size": 0
+        }
+      ],
+      "samples": [
+        {
+          "address": 2090992472064,
+          "region": {
+            "base": 2090992472064,
+            "allocation": 2090992467968,
+            "allocation_protect": 128,
+            "size": 1028096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "load-config": "4801000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000d0242cf87f00000000000000000000000000000000000040f01e2cf87f000048f01e2cf87f0000ecf21e2cf87f0000fd1200000000000000754110000000000000000000000000e0511f2cf87f00000100000000000000000000000000000000000000000000000000000000000000e8cc202cf87f000000000000000000000000000000000000682100000b000000000000000000000000000000000000000000000000000000000000000000000080f01e2cf87f00007c0000000000000000000000000000000000000000000000000000000000000078f01e2cf87f000000000000000000000000000000000000",
+      "guard-pointers": [
+        {
+          "offset": 112,
+          "slot": 140703868842048,
+          "target": 140703868252144,
+          "sample": {
+            "address": 140703868252144,
+            "region": {
+              "base": 140703868248064,
+              "allocation": 140703867797504,
+              "allocation_protect": 128,
+              "size": 581632,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd61f2003d51f2003d5000000007f2303d5fd7bbfa9fd030091681c40f9080180b909f57e92286869f8280108cb"
+          }
+        },
+        {
+          "offset": 120,
+          "slot": 140703868842056,
+          "target": 140703868252512,
+          "sample": {
+            "address": 140703868252512,
+            "region": {
+              "base": 140703868252160,
+              "allocation": 140703867797504,
+              "allocation_protect": 128,
+              "size": 577536,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "20011fd6000000000000000000000000710700d0f00740f9310240f9f06330cb1f0211eb81000054ff430091c0035fd6"
+          }
+        }
+      ]
+    },
+    {
+      "name": "kernel32.dll",
+      "flags": 8388608,
+      "status": 1073741878,
+      "base": 2090994040832,
+      "size": 1511424,
+      "header-preferred": 2090994040832,
+      "queries": [
+        {
+          "class": 14,
+          "extension-type": 0,
+          "status": 0,
+          "returned": 24,
+          "bytes": "000000000000000000101700000000000010000000000000",
+          "flags": 0,
+          "rva": 1511424,
+          "size": 4096,
+          "sample": {
+            "address": 2090995552448,
+            "region": {
+              "base": 2090995552256,
+              "allocation": 2090994040832,
+              "allocation_protect": 128,
+              "size": 4096,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "full-bytes": "40010000c001000040000000c000000000000000f805000080020000c002000040030000c00300004804000080050000e4040000ec0400000000000000000000c0035fd600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020011fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020011fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f0bd99d27035b1f2f0acc8f29046e2f200021fd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000014000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000001400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100080d2106eb0f290becff21000e0f2ec0310aa71fd4fd3116a713870394cd33026d09a1f0240f240010054c0035fd6f0030caa71fd4fd3116a713870394cd33026d09a1f0240f240000054c0035fd67f0d40f2a1010054704540a9290900581f0209eb2101005410090058100211ca1f3e40f2a100005429fe50d369c1298b2b390091ebffff1710b991d230fda5f210ffcff21000e0f21002403930090034690140393ffd037141010054690540393f950071c101005469090091290140b969c1298b291900912b0140f9d9ffff173fa50371c100005469050091290140b969c1298b2b150091d2ffff177f1140f2a102005469c540a9100500583f0110eb10050058200250fae1010054690140f91004005831ad60d3e92f60b33f0110eb210100543fa607f1e2000054108084d230fca5f210ffcff21000e0f20b7a71f8c0035fd6e9030baaeb030aaac0035fd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000488bc448895820555de90000000000004c8bd1b800000000f604250803fe7f0175030f05c3cd2ec300000000000000000000000000000000000000000000000090af94d2b0fba5f210ffcff21000e0f200021fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000090040b9ca0080d20a00b8f23f010a6ba0000054e1031faa400180d260003ed400003ed420008052c0035fd670011008e4000000c00500000000000000000000cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        {
+          "class": 14,
+          "extension-type": 1,
+          "status": 0,
+          "returned": 24,
+          "bytes": "010000000000000000000000000000000000000000000000",
+          "flags": 0,
+          "rva": 0,
+          "size": 0
+        }
+      ],
+      "samples": [
+        {
+          "address": 2090994044928,
+          "region": {
+            "base": 2090994044928,
+            "allocation": 2090994040832,
+            "allocation_protect": 128,
+            "size": 1028096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "load-config": "4801000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000d00ad9e60100000000000000000000000000000000000040f004d9e601000048f004d9e6010000ecf204d9e6010000fd1200000000000000754110000000000000000000000000e05105d9e60100000100000000000000000000000000000000000000000000000000000000000000e8cc06d9e601000000000000000000000000000000000000682100000b000000000000000000000000000000000000000000000000000000000000000000000080f004d9e60100007c0000000000000000000000000000000000000000000000000000000000000078f004d9e601000000000000000000000000000000000000",
+      "guard-pointers": [
+        {
+          "offset": 112,
+          "slot": 2090995085376,
+          "target": 2090994495472,
+          "sample": {
+            "address": 2090994495472,
+            "region": {
+              "base": 2090994491392,
+              "allocation": 2090994040832,
+              "allocation_protect": 128,
+              "size": 581632,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd61f2003d51f2003d5000000007f2303d5fd7bbfa9fd030091681c40f9080180b909f57e92286869f8280108cb"
+          }
+        },
+        {
+          "offset": 120,
+          "slot": 2090995085384,
+          "target": 2090994495840,
+          "sample": {
+            "address": 2090994495840,
+            "region": {
+              "base": 2090994495488,
+              "allocation": 2090994040832,
+              "allocation_protect": 128,
+              "size": 577536,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "20011fd6000000000000000000000000710700d0f00740f9310240f9f06330cb1f0211eb81000054ff430091c0035fd6"
+          }
+        }
+      ]
+    },
+    {
+      "name": "kernel32.dll",
+      "flags": 8388608,
+      "status": 1073741878,
+      "base": 2090995613696,
+      "size": 1511424,
+      "header-preferred": 2090995613696,
+      "queries": [
+        {
+          "class": 14,
+          "extension-type": 0,
+          "status": 0,
+          "returned": 24,
+          "bytes": "000000000000000000101700000000000010000000000000",
+          "flags": 0,
+          "rva": 1511424,
+          "size": 4096,
+          "sample": {
+            "address": 2090997125312,
+            "region": {
+              "base": 2090997125120,
+              "allocation": 2090995613696,
+              "allocation_protect": 128,
+              "size": 4096,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "full-bytes": "40010000c001000040000000c000000000000000f805000080020000c002000040030000c00300004804000080050000e4040000ec0400000000000000000000c0035fd600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0035fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020011fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020011fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f0bd99d27035b1f2f0acc8f29046e2f200021fd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000014000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000001400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100080d2106eb0f290becff21000e0f2ec0310aa71fd4fd3116a713870394cd33026d09a1f0240f240010054c0035fd6f0030caa71fd4fd3116a713870394cd33026d09a1f0240f240000054c0035fd67f0d40f2a1010054704540a9290900581f0209eb2101005410090058100211ca1f3e40f2a100005429fe50d369c1298b2b390091ebffff1710b991d230fda5f210ffcff21000e0f21002403930090034690140393ffd037141010054690540393f950071c101005469090091290140b969c1298b291900912b0140f9d9ffff173fa50371c100005469050091290140b969c1298b2b150091d2ffff177f1140f2a102005469c540a9100500583f0110eb10050058200250fae1010054690140f91004005831ad60d3e92f60b33f0110eb210100543fa607f1e2000054108084d230fca5f210ffcff21000e0f20b7a71f8c0035fd6e9030baaeb030aaac0035fd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000488bc448895820555de90000000000004c8bd1b800000000f604250803fe7f0175030f05c3cd2ec300000000000000000000000000000000000000000000000090af94d2b0fba5f210ffcff21000e0f200021fd60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000090040b9ca0080d20a00b8f23f010a6ba0000054e1031faa400180d260003ed400003ed420008052c0035fd670011008e4000000c00500000000000000000000cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        {
+          "class": 14,
+          "extension-type": 1,
+          "status": 0,
+          "returned": 24,
+          "bytes": "010000000000000000000000000000000000000000000000",
+          "flags": 0,
+          "rva": 0,
+          "size": 0
+        }
+      ],
+      "samples": [
+        {
+          "address": 2090995617792,
+          "region": {
+            "base": 2090995617792,
+            "allocation": 2090995613696,
+            "allocation_protect": 128,
+            "size": 1028096,
+            "state": 4096,
+            "protect": 32,
+            "kind": 16777216
+          },
+          "bytes": "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "load-config": "4801000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000d022d9e60100000000000000000000000000000000000040f01cd9e601000048f01cd9e6010000ecf21cd9e6010000fd1200000000000000754110000000000000000000000000e0511dd9e60100000100000000000000000000000000000000000000000000000000000000000000e8cc1ed9e601000000000000000000000000000000000000682100000b000000000000000000000000000000000000000000000000000000000000000000000080f01cd9e60100007c0000000000000000000000000000000000000000000000000000000000000078f01cd9e601000000000000000000000000000000000000",
+      "guard-pointers": [
+        {
+          "offset": 112,
+          "slot": 2090996658240,
+          "target": 2090996068336,
+          "sample": {
+            "address": 2090996068336,
+            "region": {
+              "base": 2090996064256,
+              "allocation": 2090995613696,
+              "allocation_protect": 128,
+              "size": 581632,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "c0035fd61f2003d51f2003d5000000007f2303d5fd7bbfa9fd030091681c40f9080180b909f57e92286869f8280108cb"
+          }
+        },
+        {
+          "offset": 120,
+          "slot": 2090996658248,
+          "target": 2090996068704,
+          "sample": {
+            "address": 2090996068704,
+            "region": {
+              "base": 2090996068352,
+              "allocation": 2090995613696,
+              "allocation_protect": 128,
+              "size": 577536,
+              "state": 4096,
+              "protect": 32,
+              "kind": 16777216
+            },
+            "bytes": "20011fd6000000000000000000000000710700d0f00740f9310240f9f06330cb1f0211eb81000054ff430091c0035fd6"
+          }
+        }
+      ]
+    }
+  ]
+}

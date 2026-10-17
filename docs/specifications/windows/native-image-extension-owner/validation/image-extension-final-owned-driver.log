@@ -1,0 +1,9 @@
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+Verified 342 actual image-extension owning source identities
+Verified9 actual frozen Windows C++ sources against current root
+assist-native-image-extension-final-shipping.log 78F5839DA0AC177F278CA2BFECB8CEC238FFA98B6448B56142F06E27090C4394
+assist-native-image-extension-final-cpp.log B0F277678BC54485CF58C6295345A12235DF27C7D420C5085B93AB253E75E214
+validated rlib: C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-owned\debug\deps\librax-e6c413934cad3a8f.rlib

@@ -1,0 +1,66 @@
+[
+  {
+    "id": "A1",
+    "assumption": "The recorded ordinary failure begins with the missing NTDLL extension fetch; the SEH cycle is subsequent.",
+    "basis": [
+      "native/native-cfg-dispatch-v2.json",
+      "previous System WNF ordinary observer logs",
+      "validation/ordinary-final-analysis.json"
+    ],
+    "dependent-result": "Correct the observed image ownership omission; do not infer ordinary completion or SEH recovery from turn counts",
+    "stress-test": "Unchanged smoke and whoami observer with non-test final core.",
+    "falsification-probe": "The same initial fetch remains unmapped, or an earlier failing service is observed.",
+    "status": "revised: final selected-image bootstrap stops earlier at NtQuerySystemTime; missing-page ownership is verified by focused/native leaf controls, not by a completed ordinary run"
+  },
+  {
+    "id": "A2",
+    "assumption": "A selected extension has the lifetime and allocation identity of its full image view.",
+    "basis": [
+      "native/native-image-extension-partials.json",
+      "native/native-image-extension-lifetime-v2.json",
+      "native/native-image-extension-owner-probe-v3-arm64.log"
+    ],
+    "dependent-result": "One allocation owns original image and extension; query metadata is removed on release.",
+    "stress-test": "Partial views, interior unmap, changed protection, overflow and short reservation.",
+    "falsification-probe": "Independent extension allocation, protection mutation, or surviving extension after unmap.",
+    "status": "confirmed for captured profiles"
+  },
+  {
+    "id": "A3",
+    "assumption": "An image rebase transformation is admissible only when two concurrently held native views normalize identically.",
+    "basis": [
+      "native/native-image-extension-normalization.json",
+      "native/native-image-extension-projected-normalization.json",
+      "external-images.json"
+    ],
+    "dependent-result": "The kernel-adjusted guard bytes are retained separately from the ordinary mapping template.",
+    "stress-test": "Different live bases, changed byte, duplicate base, changed metadata, unsupported relocation.",
+    "falsification-probe": "Normalized bytes/page policy/extensions disagree or the flagged header differs from the actual map base.",
+    "status": "retained as a runtime admission condition; confirmed on the captured images"
+  },
+  {
+    "id": "A4",
+    "assumption": "Compatibility page behavior must follow the kernel-reported native machine rather than the build target.",
+    "basis": [
+      "native/native-image-extension-owner-probe-v3-arm64.log",
+      "native/native-image-extension-owner-probe-v3-x64.log",
+      "native/native-image-extension-owner-probe-v3-x86.log"
+    ],
+    "dependent-result": "Compatibility templates retain ordinary geometry when LARGE_PAGES is requested; native templates preserve their large-page mapping rule.",
+    "stress-test": "Native, x64 compatibility, x86 and x86-LAA callers; combined large/rebase flags; independent IsWow64Process2 check.",
+    "falsification-probe": "Recorded native-machine identity or mapped protections disagree with the selected policy.",
+    "status": "confirmed on kernel 10.0.29683.1000; other kernel behavior is not proved by this capture"
+  },
+  {
+    "id": "A5",
+    "assumption": "Only the exact selected installed NTDLL may use the kernel snapshot for initial bootstrap.",
+    "basis": [
+      "src/user/windows/loader/native_image.rs",
+      "src/user/windows/loader/native_image_tests.rs"
+    ],
+    "dependent-result": "Supplied DLLs keep their existing policy; selected NTDLL uses the preferred image and extension range together.",
+    "stress-test": "Mismatched image identity, occupied range, supplied basename and absent extension.",
+    "falsification-probe": "An unrelated supplied path acquires native bootstrap policy or a conflicting range silently relocates.",
+    "status": "confirmed by focused and final subsystem tests; ordinary programs remain incomplete at NtQuerySystemTime"
+  }
+]

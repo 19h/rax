@@ -169,7 +169,7 @@ fn checked(c: &mut Ctx) -> ApiResult {
     let image = section
         .image_for(c.arch())
         .map_err(|error| c.unsupported(format!("selected image section backing: {error}")))?;
-    let plan = match geometry::with_low_placement(
+    let plan = match geometry::with_extensions(
         &c.p.vm,
         image.preferred,
         section.size,
@@ -181,6 +181,8 @@ fn checked(c: &mut Ctx) -> ApiResult {
         flags,
         wow,
         c.p.vm.section_low_placement(&section),
+        image.allocation_size() - image.bytes.len() as u64,
+        image.large_pages,
     ) {
         Ok(plan) => plan,
         Err(status) => return failed(c, status),
