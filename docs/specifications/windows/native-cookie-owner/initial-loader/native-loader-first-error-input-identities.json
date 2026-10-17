@@ -1,0 +1,14 @@
+{
+  "utc": "2026-10-16T01:56:13.329695+00:00",
+  "scope": "independent complete copy of retained published NLS/b0c baseline; not owner epoch2",
+  "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\librax-e6c413934cad3a8f.rlib",
+  "retained-copy": "C:\\Windows\\Temp\\assist-native-rax-20261010\\librax-loader-retained-old-core.rlib",
+  "bytes": 798517506,
+  "sha256": "7019413aeb14b57f34ffc6ceb3f36f618c97c1bd7070a88ad88fe23aabc62c04",
+  "source-mtime-ns": 1792102154631882200,
+  "source-size-and-mtime-stable-through-copy": true,
+  "no-owning-target-writer-before-or-after-copy": true,
+  "observer-sha256": "8a6e9c274f43ea41990158295b175918e27a2ab69636e4cc18e1f297d5cbb6f6",
+  "core-features": [],
+  "rustc-crt": "target-feature=+crt-static"
+}

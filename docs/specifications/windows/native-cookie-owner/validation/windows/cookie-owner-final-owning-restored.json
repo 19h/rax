@@ -1,0 +1,24 @@
+{
+  "pid": 4956,
+  "utc": "2026-10-17T19:32:34.705612+00:00",
+  "scope": "restore checksum-bound missing files in task-owned dependency caches; owning checks only",
+  "restored-files": 10001,
+  "verified-files": 10001,
+  "configs": {
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\.cargo\\config.toml": "9f80616d633d948feeba5b201bfa4fe98c8fd736f3f48469b6481279584d8f4c",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\rust\\assist-rs\\.cargo\\config.toml": "130c31a2e62640f6bb9be62ed57d5779fc7df52553ca3a52b6b41d38883c1b15"
+  },
+  "archive-sha256": "a3447d60cce6b066807a9ceba5147f532638c9076fb690f3672badebccee2000",
+  "state": "finished",
+  "child-pid": 9760,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\assist-native-cookie-owner-final-restored-owned.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T19:35:01.767044+00:00"
+}

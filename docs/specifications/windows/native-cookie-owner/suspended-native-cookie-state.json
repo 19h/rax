@@ -1,0 +1,31 @@
+{
+  "pid": 5864,
+  "first-thread-resumed": false,
+  "modules": [
+    {
+      "mapped-path": "\\Device\\HarddiskVolume3\\Windows\\Temp\\assist-native-rax-20261010\\cookie-owner-arm64\\native-cookie-owner-arm64.exe",
+      "base": 140699659010048,
+      "cookie-va": 140699659173888,
+      "suspended-cookie": 47936899621426,
+      "file": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\cookie-owner-arm64\\native-cookie-owner-arm64.exe",
+        "bytes": 167424,
+        "sha256": "114a2d12af521414e1386e403961e4c225ebbf23ead69a9ce659c58d84768439",
+        "cookie": 47936899621426
+      }
+    },
+    {
+      "mapped-path": "\\Device\\HarddiskVolume3\\Windows\\System32\\ntdll.dll",
+      "base": 140703928483840,
+      "cookie-va": 140703932603544,
+      "suspended-cookie": 47936899621426,
+      "file": {
+        "path": "C:\\Windows\\System32\\ntdll.dll",
+        "bytes": 4609312,
+        "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+        "cookie": 47936899621426
+      }
+    }
+  ],
+  "cleanup": "pass"
+}

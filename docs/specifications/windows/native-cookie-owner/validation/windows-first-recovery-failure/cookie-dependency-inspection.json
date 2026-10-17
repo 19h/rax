@@ -1,0 +1,2144 @@
+{
+  "config": {
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\src\\.cargo\\config.toml": "[source.crates-io]\nreplace-with = \"vendored-sources\"\n\n[source.\"git+https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960\"]\ngit = \"https://github.com/19h/linux-loader\"\nrev = \"f745b555942c4e840a784bca61e6f3976d101960\"\nreplace-with = \"vendored-sources\"\n\n[source.vendored-sources]\ndirectory = \"C:/Windows/Temp/assist-native-rax-20261010/dependencies\"\n"
+  },
+  "directories": [
+    {
+      "name": "aes-0.9.3",
+      "manifest": true,
+      "expected": 41,
+      "missing": 40,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "aho-corasick-1.1.5",
+      "manifest": true,
+      "expected": 47,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "anstream-1.0.0",
+      "manifest": true,
+      "expected": 20,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "anstyle-1.0.14",
+      "manifest": true,
+      "expected": 14,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "anstyle-parse-1.0.0",
+      "manifest": true,
+      "expected": 14,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "anstyle-query-1.1.5",
+      "manifest": true,
+      "expected": 10,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "anstyle-wincon-3.0.11",
+      "manifest": true,
+      "expected": 13,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "apple-native-keyring-store-1.0.2",
+      "manifest": true,
+      "expected": 14,
+      "missing": 13,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "async-broadcast-0.7.2",
+      "manifest": true,
+      "expected": 15,
+      "missing": 14,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/CODE_OF_CONDUCT.md",
+        ".github/CONTRIBUTING.md"
+      ]
+    },
+    {
+      "name": "async-channel-2.5.0",
+      "manifest": true,
+      "expected": 11,
+      "missing": 10,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "async-executor-1.14.0",
+      "manifest": true,
+      "expected": 19,
+      "missing": 18,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "async-io-2.6.0",
+      "manifest": true,
+      "expected": 31,
+      "missing": 30,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "async-lock-3.4.2",
+      "manifest": true,
+      "expected": 22,
+      "missing": 21,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "async-process-2.5.0",
+      "manifest": true,
+      "expected": 17,
+      "missing": 16,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "async-recursion-1.2.0",
+      "manifest": true,
+      "expected": 57,
+      "missing": 56,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/dependabot.yml",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "name": "async-signal-0.2.14",
+      "manifest": true,
+      "expected": 15,
+      "missing": 14,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "async-task-4.7.1",
+      "manifest": true,
+      "expected": 29,
+      "missing": 28,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "async-trait-0.1.92",
+      "manifest": true,
+      "expected": 52,
+      "missing": 51,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/FUNDING.yml",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "name": "atomic-waker-1.1.2",
+      "manifest": true,
+      "expected": 11,
+      "missing": 10,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "autocfg-1.5.1",
+      "manifest": true,
+      "expected": 22,
+      "missing": 21,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "base64-0.23.1",
+      "manifest": true,
+      "expected": 38,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "bincode-1.3.3",
+      "manifest": true,
+      "expected": 23,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "bitflags-2.13.2",
+      "manifest": true,
+      "expected": 63,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "block-buffer-0.12.1",
+      "manifest": true,
+      "expected": 12,
+      "missing": 11,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "block-padding-0.4.2",
+      "manifest": true,
+      "expected": 9,
+      "missing": 8,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "block2-0.6.2",
+      "manifest": true,
+      "expected": 17,
+      "missing": 16,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "blocking-1.7.0",
+      "manifest": true,
+      "expected": 11,
+      "missing": 10,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "bumpalo-3.20.3",
+      "manifest": true,
+      "expected": 19,
+      "missing": 18,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "byteorder-1.5.0",
+      "manifest": true,
+      "expected": 13,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "bytes-1.12.1",
+      "manifest": true,
+      "expected": 40,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "cbc-0.2.1",
+      "manifest": true,
+      "expected": 17,
+      "missing": 16,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "cc-1.4.7",
+      "manifest": true,
+      "expected": 27,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "cfg-if-1.0.5",
+      "manifest": true,
+      "expected": 13,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "cfg_aliases-0.2.2",
+      "manifest": true,
+      "expected": 9,
+      "missing": 8,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "cipher-0.5.2",
+      "manifest": true,
+      "expected": 26,
+      "missing": 25,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "clap-4.6.7",
+      "manifest": true,
+      "expected": 147,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "clap_builder-4.6.7",
+      "manifest": true,
+      "expected": 64,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "clap_derive-4.6.7",
+      "manifest": true,
+      "expected": 23,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "clap_lex-1.1.1",
+      "manifest": true,
+      "expected": 9,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "cmov-0.5.4",
+      "manifest": true,
+      "expected": 19,
+      "missing": 18,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "colorchoice-1.0.5",
+      "manifest": true,
+      "expected": 8,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "combine-4.6.8",
+      "manifest": true,
+      "expected": 31,
+      "missing": 30,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "concurrent-queue-2.5.0",
+      "manifest": true,
+      "expected": 17,
+      "missing": 16,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "const-oid-0.10.2",
+      "manifest": true,
+      "expected": 22,
+      "missing": 21,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "core-foundation-0.10.1",
+      "manifest": true,
+      "expected": 28,
+      "missing": 27,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "core-foundation-sys-0.8.7",
+      "manifest": true,
+      "expected": 45,
+      "missing": 44,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.toml.orig",
+        "LICENSE-APACHE"
+      ]
+    },
+    {
+      "name": "cpubits-0.1.1",
+      "manifest": true,
+      "expected": 9,
+      "missing": 8,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "cpufeatures-0.3.1",
+      "manifest": true,
+      "expected": 16,
+      "missing": 15,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "crossbeam-utils-0.8.23",
+      "manifest": true,
+      "expected": 32,
+      "missing": 31,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "crypto-common-0.2.2",
+      "manifest": true,
+      "expected": 11,
+      "missing": 10,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "ctrlc-3.5.2",
+      "manifest": true,
+      "expected": 20,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "ctutils-0.4.3",
+      "manifest": true,
+      "expected": 21,
+      "missing": 20,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "digest-0.11.3",
+      "manifest": true,
+      "expected": 26,
+      "missing": 25,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "dispatch2-0.3.1",
+      "manifest": true,
+      "expected": 26,
+      "missing": 25,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "endi-1.1.1",
+      "manifest": true,
+      "expected": 11,
+      "missing": 10,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/workflows/release.yml",
+        ".github/workflows/rust.yml"
+      ]
+    },
+    {
+      "name": "enumflags2-0.7.12",
+      "manifest": true,
+      "expected": 13,
+      "missing": 12,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/workflows/rust.yml",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "enumflags2_derive-0.7.12",
+      "manifest": true,
+      "expected": 7,
+      "missing": 6,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "equivalent-1.0.2",
+      "manifest": true,
+      "expected": 9,
+      "missing": 8,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/workflows/ci.yml",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "errno-0.3.14",
+      "manifest": true,
+      "expected": 17,
+      "missing": 16,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/dependabot.yml",
+        ".github/workflows/main.yml"
+      ]
+    },
+    {
+      "name": "event-listener-5.4.2",
+      "manifest": true,
+      "expected": 15,
+      "missing": 14,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "event-listener-strategy-0.5.4",
+      "manifest": true,
+      "expected": 10,
+      "missing": 9,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "fastrand-2.5.0",
+      "manifest": true,
+      "expected": 13,
+      "missing": 12,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "find-msvc-tools-0.1.13",
+      "manifest": true,
+      "expected": 18,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "futures-core-0.3.34",
+      "manifest": true,
+      "expected": 14,
+      "missing": 13,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "futures-io-0.3.34",
+      "manifest": true,
+      "expected": 8,
+      "missing": 7,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "futures-lite-2.6.1",
+      "manifest": true,
+      "expected": 15,
+      "missing": 14,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "futures-macro-0.3.34",
+      "manifest": true,
+      "expected": 11,
+      "missing": 10,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "futures-task-0.3.34",
+      "manifest": true,
+      "expected": 14,
+      "missing": 13,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "futures-util-0.3.34",
+      "manifest": true,
+      "expected": 193,
+      "missing": 192,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "getrandom-0.2.17",
+      "manifest": true,
+      "expected": 38,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "getrandom-0.4.3",
+      "manifest": true,
+      "expected": 48,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "goblin-0.8.2",
+      "manifest": true,
+      "expected": 54,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "hashbrown-0.17.1",
+      "manifest": true,
+      "expected": 49,
+      "missing": 48,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "heck-0.5.0",
+      "manifest": true,
+      "expected": 16,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "hermit-abi-0.5.3",
+      "manifest": true,
+      "expected": 9,
+      "missing": 8,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "hex-0.4.3",
+      "manifest": true,
+      "expected": 15,
+      "missing": 14,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/workflows/rust.yml",
+        ".gitlab-ci.yml"
+      ]
+    },
+    {
+      "name": "hkdf-0.13.0",
+      "manifest": true,
+      "expected": 21,
+      "missing": 20,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "hmac-0.13.0",
+      "manifest": true,
+      "expected": 25,
+      "missing": 24,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "http-1.5.0",
+      "manifest": true,
+      "expected": 34,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "httparse-1.10.1",
+      "manifest": true,
+      "expected": 24,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "httpdate-1.0.3",
+      "manifest": true,
+      "expected": 10,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "hybrid-array-0.4.15",
+      "manifest": true,
+      "expected": 23,
+      "missing": 22,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".clippy.toml",
+        ".codecov.yml"
+      ]
+    },
+    {
+      "name": "indexmap-2.14.2",
+      "manifest": true,
+      "expected": 42,
+      "missing": 41,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/workflows/ci.yml",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "inout-0.2.2",
+      "manifest": true,
+      "expected": 14,
+      "missing": 13,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "is_terminal_polyfill-1.70.2",
+      "manifest": true,
+      "expected": 8,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "itoa-1.0.18",
+      "manifest": true,
+      "expected": 13,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "jni-0.22.4",
+      "manifest": true,
+      "expected": 76,
+      "missing": 75,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "jni-macros-0.22.4",
+      "manifest": true,
+      "expected": 14,
+      "missing": 13,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "jni-sys-0.4.1",
+      "manifest": true,
+      "expected": 9,
+      "missing": 8,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "jni-sys-macros-0.4.1",
+      "manifest": true,
+      "expected": 6,
+      "missing": 5,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "jobserver-0.1.35",
+      "manifest": true,
+      "expected": 20,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "js-sys-0.3.106",
+      "manifest": true,
+      "expected": 18,
+      "missing": 17,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "keyring-core-1.0.0",
+      "manifest": true,
+      "expected": 18,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "lazy_static-1.5.0",
+      "manifest": true,
+      "expected": 20,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "libc-0.2.189",
+      "manifest": true,
+      "expected": 403,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "linux-loader-0.13.2",
+      "manifest": true,
+      "expected": 53,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "linux-raw-sys-0.12.1",
+      "manifest": true,
+      "expected": 473,
+      "missing": 472,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CODE_OF_CONDUCT.md",
+        "COPYRIGHT"
+      ]
+    },
+    {
+      "name": "log-0.4.34",
+      "manifest": true,
+      "expected": 22,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "matchers-0.2.0",
+      "manifest": true,
+      "expected": 9,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "memchr-2.8.3",
+      "manifest": true,
+      "expected": 58,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "memoffset-0.9.1",
+      "manifest": true,
+      "expected": 12,
+      "missing": 11,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/workflows/ci.yml",
+        "CHANGELOG.md"
+      ]
+    },
+    {
+      "name": "nix-0.31.3",
+      "manifest": true,
+      "expected": 126,
+      "missing": 124,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "nu-ansi-term-0.50.3",
+      "manifest": true,
+      "expected": 27,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "num-0.4.3",
+      "manifest": true,
+      "expected": 8,
+      "missing": 7,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.toml.orig",
+        "LICENSE-APACHE"
+      ]
+    },
+    {
+      "name": "num-bigint-0.4.8",
+      "manifest": true,
+      "expected": 52,
+      "missing": 51,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "num-complex-0.4.6",
+      "manifest": true,
+      "expected": 12,
+      "missing": 11,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.toml.orig",
+        "LICENSE-APACHE"
+      ]
+    },
+    {
+      "name": "num-integer-0.1.47",
+      "manifest": true,
+      "expected": 16,
+      "missing": 15,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "num-iter-0.1.46",
+      "manifest": true,
+      "expected": 9,
+      "missing": 8,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "num-rational-0.4.2",
+      "manifest": true,
+      "expected": 9,
+      "missing": 8,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.toml.orig",
+        "LICENSE-APACHE"
+      ]
+    },
+    {
+      "name": "num-traits-0.2.19",
+      "manifest": true,
+      "expected": 28,
+      "missing": 27,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.toml.orig",
+        "LICENSE-APACHE"
+      ]
+    },
+    {
+      "name": "objc2-0.6.4",
+      "manifest": true,
+      "expected": 120,
+      "missing": 119,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "objc2-encode-4.1.0",
+      "manifest": true,
+      "expected": 12,
+      "missing": 11,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "once_cell-1.21.4",
+      "manifest": true,
+      "expected": 28,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "once_cell_polyfill-1.70.2",
+      "manifest": true,
+      "expected": 9,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "openssl-probe-0.2.1",
+      "manifest": true,
+      "expected": 11,
+      "missing": 10,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/workflows/main.yml",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "ordered-stream-0.2.0",
+      "manifest": true,
+      "expected": 10,
+      "missing": 9,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.toml.orig",
+        "LICENSE-APACHE"
+      ]
+    },
+    {
+      "name": "parking-2.2.1",
+      "manifest": true,
+      "expected": 11,
+      "missing": 10,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "percent-encoding-2.3.2",
+      "manifest": true,
+      "expected": 8,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "pin-project-lite-0.2.17",
+      "manifest": true,
+      "expected": 81,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "piper-0.2.5",
+      "manifest": true,
+      "expected": 14,
+      "missing": 13,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/dependabot.yml",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "name": "pkg-config-0.3.34",
+      "manifest": true,
+      "expected": 15,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "plain-0.2.3",
+      "manifest": true,
+      "expected": 11,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "polling-3.11.0",
+      "manifest": true,
+      "expected": 33,
+      "missing": 32,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "proc-macro-crate-3.5.0",
+      "manifest": true,
+      "expected": 13,
+      "missing": 12,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/workflows/rust.yml",
+        ".rustfmt.toml"
+      ]
+    },
+    {
+      "name": "proc-macro2-1.0.107",
+      "manifest": true,
+      "expected": 32,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "quote-1.0.47",
+      "manifest": true,
+      "expected": 34,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "r-efi-6.0.0",
+      "manifest": true,
+      "expected": 68,
+      "missing": 67,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/workflows/publish.yml",
+        ".github/workflows/rust-tests.yml"
+      ]
+    },
+    {
+      "name": "regex-1.13.1",
+      "manifest": true,
+      "expected": 55,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "regex-automata-0.4.18",
+      "manifest": true,
+      "expected": 107,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "regex-syntax-0.8.11",
+      "manifest": true,
+      "expected": 42,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "ring-0.17.14",
+      "manifest": true,
+      "expected": 391,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "rustc_version-0.4.1",
+      "manifest": true,
+      "expected": 12,
+      "missing": 11,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/FUNDING.yml",
+        ".github/dependabot.yml"
+      ]
+    },
+    {
+      "name": "rustix-1.1.5",
+      "manifest": true,
+      "expected": 331,
+      "missing": 330,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGES.md",
+        "CODE_OF_CONDUCT.md"
+      ]
+    },
+    {
+      "name": "rustls-0.23.45",
+      "manifest": true,
+      "expected": 119,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "rustls-native-certs-0.8.4",
+      "manifest": true,
+      "expected": 13,
+      "missing": 12,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "rustls-pki-types-1.15.1",
+      "manifest": true,
+      "expected": 32,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "rustls-platform-verifier-0.7.0",
+      "manifest": true,
+      "expected": 48,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "rustls-platform-verifier-android-0.1.1",
+      "manifest": true,
+      "expected": 8,
+      "missing": 7,
+      "examples": [
+        "Cargo.toml.orig",
+        "maven/pom.xml",
+        "maven/rustls/rustls-platform-verifier/0.1.1/_remote.repositories"
+      ]
+    },
+    {
+      "name": "rustls-webpki-0.103.15",
+      "manifest": true,
+      "expected": 28,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "rustversion-1.0.23",
+      "manifest": true,
+      "expected": 38,
+      "missing": 37,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/FUNDING.yml",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "name": "same-file-1.0.6",
+      "manifest": true,
+      "expected": 15,
+      "missing": 14,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "COPYING",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "schannel-0.1.29",
+      "manifest": true,
+      "expected": 21,
+      "missing": 20,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "scroll-0.12.0",
+      "manifest": true,
+      "expected": 15,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "scroll_derive-0.12.1",
+      "manifest": true,
+      "expected": 7,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "secret-service-5.2.0",
+      "manifest": true,
+      "expected": 26,
+      "missing": 25,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/workflows/ci.yaml",
+        "CHANGELOG.md"
+      ]
+    },
+    {
+      "name": "security-framework-3.7.0",
+      "manifest": true,
+      "expected": 46,
+      "missing": 45,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "security-framework-sys-2.17.0",
+      "manifest": true,
+      "expected": 31,
+      "missing": 30,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "semver-1.0.28",
+      "manifest": true,
+      "expected": 24,
+      "missing": 23,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/FUNDING.yml",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "name": "serde-1.0.229",
+      "manifest": true,
+      "expected": 33,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "serde_core-1.0.229",
+      "manifest": true,
+      "expected": 27,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "serde_derive-1.0.229",
+      "manifest": true,
+      "expected": 36,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "serde_json-1.0.151",
+      "manifest": true,
+      "expected": 88,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "serde_repr-0.1.21",
+      "manifest": true,
+      "expected": 25,
+      "missing": 24,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/FUNDING.yml",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "name": "serde_spanned-1.1.1",
+      "manifest": true,
+      "expected": 10,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "sha2-0.11.0",
+      "manifest": true,
+      "expected": 49,
+      "missing": 48,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "sharded-slab-0.1.7",
+      "manifest": true,
+      "expected": 36,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "shlex-2.0.1",
+      "manifest": true,
+      "expected": 12,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "signal-hook-registry-1.4.8",
+      "manifest": true,
+      "expected": 11,
+      "missing": 10,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "simd_cesu8-1.2.0",
+      "manifest": true,
+      "expected": 28,
+      "missing": 27,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".editorconfig",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "name": "simdutf8-0.1.5",
+      "manifest": true,
+      "expected": 26,
+      "missing": 25,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "slab-0.4.12",
+      "manifest": true,
+      "expected": 13,
+      "missing": 12,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "smallvec-1.16.1",
+      "manifest": true,
+      "expected": 11,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "strsim-0.11.1",
+      "manifest": true,
+      "expected": 11,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "subtle-2.6.1",
+      "manifest": true,
+      "expected": 10,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "syn-2.0.119",
+      "manifest": true,
+      "expected": 105,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "syn-3.0.6",
+      "manifest": true,
+      "expected": 104,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "tempfile-3.27.0",
+      "manifest": true,
+      "expected": 27,
+      "missing": 26,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "thiserror-2.0.20",
+      "manifest": true,
+      "expected": 104,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "thiserror-impl-2.0.20",
+      "manifest": true,
+      "expected": 17,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "thread_local-1.1.10",
+      "manifest": true,
+      "expected": 13,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "toml-0.9.12+spec-1.1.0",
+      "manifest": true,
+      "expected": 46,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "toml_datetime-0.7.5+spec-1.1.0",
+      "manifest": true,
+      "expected": 11,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "toml_datetime-1.1.2+spec-1.1.0",
+      "manifest": true,
+      "expected": 11,
+      "missing": 10,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "toml_edit-0.25.15+spec-1.1.0",
+      "manifest": true,
+      "expected": 45,
+      "missing": 44,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "toml_parser-1.1.3+spec-1.1.0",
+      "manifest": true,
+      "expected": 22,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "toml_writer-1.1.2+spec-1.1.0",
+      "manifest": true,
+      "expected": 13,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "tracing-0.1.44",
+      "manifest": true,
+      "expected": 93,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "tracing-attributes-0.1.31",
+      "manifest": true,
+      "expected": 30,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "tracing-core-0.1.36",
+      "manifest": true,
+      "expected": 28,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "tracing-log-0.2.0",
+      "manifest": true,
+      "expected": 12,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "tracing-subscriber-0.3.23",
+      "manifest": true,
+      "expected": 87,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "typenum-1.20.1",
+      "manifest": true,
+      "expected": 24,
+      "missing": 23,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "uds_windows-1.2.1",
+      "manifest": true,
+      "expected": 18,
+      "missing": 17,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "unicode-ident-1.0.26",
+      "manifest": true,
+      "expected": 23,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "untrusted-0.9.0",
+      "manifest": true,
+      "expected": 17,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "ureq-3.4.2",
+      "manifest": true,
+      "expected": 57,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "ureq-proto-0.6.4",
+      "manifest": true,
+      "expected": 53,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "utf8-zero-0.8.1",
+      "manifest": true,
+      "expected": 14,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "utf8parse-0.2.2",
+      "manifest": true,
+      "expected": 9,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "uuid-1.27.0",
+      "manifest": true,
+      "expected": 30,
+      "missing": 29,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "valuable-0.1.1",
+      "manifest": true,
+      "expected": 23,
+      "missing": 22,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "walkdir-2.5.0",
+      "manifest": true,
+      "expected": 18,
+      "missing": 17,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/workflows/ci.yml",
+        "COPYING"
+      ]
+    },
+    {
+      "name": "wasi-0.11.1+wasi-snapshot-preview1",
+      "manifest": true,
+      "expected": 16,
+      "missing": 15,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/workflows/main.yml",
+        ".gitmodules"
+      ]
+    },
+    {
+      "name": "wasm-bindgen-0.2.129",
+      "manifest": true,
+      "expected": 26,
+      "missing": 25,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "wasm-bindgen-macro-0.2.129",
+      "manifest": true,
+      "expected": 9,
+      "missing": 8,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "wasm-bindgen-macro-support-0.2.129",
+      "manifest": true,
+      "expected": 14,
+      "missing": 13,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "wasm-bindgen-shared-0.2.129",
+      "manifest": true,
+      "expected": 11,
+      "missing": 10,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "webpki-root-certs-1.0.9",
+      "manifest": true,
+      "expected": 9,
+      "missing": 8,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "webpki-roots-1.0.9",
+      "manifest": true,
+      "expected": 12,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "winapi-0.3.9",
+      "manifest": true,
+      "expected": 411,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "winapi-i686-pc-windows-gnu-0.4.0",
+      "manifest": true,
+      "expected": 1391,
+      "missing": 1390,
+      "examples": [
+        "Cargo.toml.orig",
+        "build.rs",
+        "lib/libwinapi_aclui.a"
+      ]
+    },
+    {
+      "name": "winapi-util-0.1.11",
+      "manifest": true,
+      "expected": 16,
+      "missing": 15,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".github/FUNDING.yml",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "name": "winapi-x86_64-pc-windows-gnu-0.4.0",
+      "manifest": true,
+      "expected": 1420,
+      "missing": 1419,
+      "examples": [
+        "Cargo.toml.orig",
+        "build.rs",
+        "lib/libwinapi_aclui.a"
+      ]
+    },
+    {
+      "name": "windows-link-0.2.1",
+      "manifest": true,
+      "expected": 8,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "windows-native-keyring-store-1.1.0",
+      "manifest": true,
+      "expected": 14,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "windows-sys-0.52.0",
+      "manifest": true,
+      "expected": 241,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "windows-sys-0.61.2",
+      "manifest": true,
+      "expected": 257,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "windows-targets-0.52.6",
+      "manifest": true,
+      "expected": 7,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "windows_aarch64_gnullvm-0.52.6",
+      "manifest": true,
+      "expected": 8,
+      "missing": 7,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.toml.orig",
+        "build.rs"
+      ]
+    },
+    {
+      "name": "windows_aarch64_msvc-0.52.6",
+      "manifest": true,
+      "expected": 8,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "windows_i686_gnu-0.52.6",
+      "manifest": true,
+      "expected": 8,
+      "missing": 7,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.toml.orig",
+        "build.rs"
+      ]
+    },
+    {
+      "name": "windows_i686_gnullvm-0.52.6",
+      "manifest": true,
+      "expected": 8,
+      "missing": 7,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.toml.orig",
+        "build.rs"
+      ]
+    },
+    {
+      "name": "windows_i686_msvc-0.52.6",
+      "manifest": true,
+      "expected": 8,
+      "missing": 7,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.toml.orig",
+        "build.rs"
+      ]
+    },
+    {
+      "name": "windows_x86_64_gnu-0.52.6",
+      "manifest": true,
+      "expected": 8,
+      "missing": 7,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.toml.orig",
+        "build.rs"
+      ]
+    },
+    {
+      "name": "windows_x86_64_gnullvm-0.52.6",
+      "manifest": true,
+      "expected": 8,
+      "missing": 7,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.toml.orig",
+        "build.rs"
+      ]
+    },
+    {
+      "name": "windows_x86_64_msvc-0.52.6",
+      "manifest": true,
+      "expected": 8,
+      "missing": 7,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.toml.orig",
+        "build.rs"
+      ]
+    },
+    {
+      "name": "winnow-0.7.15",
+      "manifest": true,
+      "expected": 105,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "winnow-1.0.4",
+      "manifest": true,
+      "expected": 107,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "zbus-5.19.0",
+      "manifest": true,
+      "expected": 115,
+      "missing": 114,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "zbus-secret-service-keyring-store-1.0.1",
+      "manifest": true,
+      "expected": 15,
+      "missing": 14,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "Cargo.lock",
+        "Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "zbus_macros-5.19.0",
+      "manifest": true,
+      "expected": 13,
+      "missing": 12,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "zbus_names-4.3.4",
+      "manifest": true,
+      "expected": 18,
+      "missing": 17,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "zcheapstr-1.1.0",
+      "manifest": true,
+      "expected": 17,
+      "missing": 16,
+      "examples": [
+        ".cargo_vcs_info.json",
+        ".commitlintrc.mjs",
+        ".editorconfig"
+      ]
+    },
+    {
+      "name": "zeroize-1.9.0",
+      "manifest": true,
+      "expected": 16,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "zmij-1.0.23",
+      "manifest": true,
+      "expected": 16,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "zstd-0.13.3",
+      "manifest": true,
+      "expected": 33,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "zstd-safe-7.3.0",
+      "manifest": true,
+      "expected": 13,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "zstd-sys-2.1.0+zstd.1.5.7",
+      "manifest": true,
+      "expected": 129,
+      "missing": 0,
+      "examples": []
+    },
+    {
+      "name": "zvariant-5.15.0",
+      "manifest": true,
+      "expected": 95,
+      "missing": 94,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "zvariant_derive-5.15.0",
+      "manifest": true,
+      "expected": 11,
+      "missing": 10,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    },
+    {
+      "name": "zvariant_utils-4.2.0",
+      "manifest": true,
+      "expected": 22,
+      "missing": 21,
+      "examples": [
+        ".cargo_vcs_info.json",
+        "CHANGELOG.md",
+        "Cargo.lock"
+      ]
+    }
+  ]
+}

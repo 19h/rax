@@ -27,7 +27,9 @@
 //!   it imports (post-order of the import graph), as `DllMain` order is.
 //! - **Security cookie.** A `/GS` cookie still holding its default value
 //!   (0xBB40E64E, or 0x00002B992DDFA232 for PE32+) is replaced with a
-//!   random value, whose upper 16 bits are clear for PE32+.
+//!   random value, whose upper 16 bits are clear for PE32+, in built-in DLL
+//!   mode. Installed RTL owns cookie initialization in native library mode;
+//!   mapping validates the cookie span without changing its initial bytes.
 
 pub mod apiset;
 pub(crate) mod apiset_schema;
@@ -36,6 +38,9 @@ mod dynamic;
 pub mod ldr;
 pub(crate) mod services;
 mod supplied;
+
+#[cfg(test)]
+mod cookie_tests;
 
 pub(crate) use dynamic::{
     LoadPlan, LookupPlan, UnloadPlan, attach_started, attach_succeeded, begin_load, begin_lookup,
@@ -453,6 +458,13 @@ fn init_security_cookie(p: &mut Proc, pe: &PeImage, base: u64) -> Result<(), Loa
         p.space.u32(va).map(u64::from)
     }
     .map_err(|_| LoadError::new(STATUS_INVALID_IMAGE_FORMAT, "unreadable security cookie"))?;
+    // Native RTL requires a default cookie on entry for current images. A
+    // preseeded main image is rejected as STATUS_INVALID_IMAGE_FORMAT before
+    // guest entry. Keep validation above, but leave initialization to the
+    // selected installed loader for both executable and DLL mappings.
+    if p.native.is_some() {
+        return Ok(());
+    }
     let default = if is64 {
         0x0000_2B99_2DDF_A232
     } else {

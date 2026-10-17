@@ -1,0 +1,17 @@
+{
+  "pid": 6224,
+  "utc": "2026-10-16T02:29:50.445222+00:00",
+  "lock": "C:\\Windows\\Temp\\assist-native-rax-20261010\\cookie-owner-native-driver.lock",
+  "scope": "native suspended disposable child cookie ownership counterprobe; no RAX source mutation",
+  "child-pid": 8072,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-cookie-owner-profiles.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-16T02:42:00.775999+00:00"
+}

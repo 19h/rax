@@ -1,0 +1,22 @@
+[
+  {
+    "case": "raw-corruption",
+    "rejected": true,
+    "exception": "windows/native-cookie-owner-final-full.log"
+  },
+  {
+    "case": "empty-native-gates",
+    "rejected": true,
+    "exception": "six native core gates"
+  },
+  {
+    "case": "forged-zero-failures",
+    "rejected": true,
+    "exception": "native full library"
+  },
+  {
+    "case": "incomplete-owning-driver",
+    "rejected": true,
+    "exception": "completed owning-only restoration"
+  }
+]

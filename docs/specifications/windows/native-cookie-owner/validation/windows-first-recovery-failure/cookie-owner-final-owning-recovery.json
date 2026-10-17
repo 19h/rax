@@ -1,0 +1,20 @@
+{
+  "pid": 1656,
+  "utc": "2026-10-17T19:30:46.466282+00:00",
+  "scope": "restore missing task-owned junction and rerun owning checks only; core evidence unchanged",
+  "junction-target": "\\\\?\\C:\\Windows\\Temp\\assist-native-rax-20261010\\src",
+  "capi-manifest-sha256": "1e7d85ba130339b55dbf27f6090a6d85303f434975955df743e2463b795a8ea1",
+  "state": "failed",
+  "child-pid": 4988,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\assist-native-cookie-owner-final-recovered-owned.ps1"
+  ],
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-cookie-owning-recovery.py\", line 51, in main\n    require(row['exit-code'] == 0, 'recovered owning checks failed')\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-cookie-owning-recovery.py\", line 18, in require\n    raise ValueError(message)\nValueError: recovered owning checks failed\n",
+  "completed-utc": "2026-10-17T19:30:49.258052+00:00"
+}

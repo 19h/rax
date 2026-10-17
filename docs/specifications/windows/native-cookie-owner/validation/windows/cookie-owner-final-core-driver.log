@@ -1,0 +1,14 @@
+{"utc": "2026-10-17T19:11:01.556861+00:00", "base": "8b038b528d8cd88e44e5ebd672ef14e365c480a5", "files": [{"path": "src/user/windows/loader/mod.rs", "bytes": 51956, "sha256": "f551654690b4f01183b65864a16ded434eef092c2b93db772c6edc7b948949f8", "previous-sha256": "f4dcb610e097c0f370f52cb30a589cae77c26a92a7d329f50ca4792f97b19238"}, {"path": "src/user/windows/loader/cookie_tests.rs", "bytes": 5742, "sha256": "80911682d49d83a6242634ddcd586bbb2a5fd6a52dc1e9142eef1b4f5281c77f", "previous-sha256": null}], "selected-source-count": 310, "native-cargo-adapter-preserved": "9f80616d633d948feeba5b201bfa4fe98c8fd736f3f48469b6481279584d8f4c", "scope": "two exact cookie inputs atop completed console-owner source; selected310 inputs"}
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+ordinary observation 0 complete;guest terminal output requires review
+ordinary observation 1 complete;guest terminal output requires review
+ordinary observation 2 complete;guest terminal output requires review
+gate focused exit=0
+gate prior-services exit=0
+gate all-targets exit=0
+gate integration exit=0
+gate capi exit=0
+gate full exit=101

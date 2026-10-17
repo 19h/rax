@@ -1,0 +1,7 @@
+error: failed to load manifest for dependency `rax-capi`
+
+Caused by:
+  failed to read `C:\Windows\Temp\assist-native-rax-20261010\assist\vendor\rax\capi\Cargo.toml`
+
+Caused by:
+  The system cannot find the path specified. (os error 3)

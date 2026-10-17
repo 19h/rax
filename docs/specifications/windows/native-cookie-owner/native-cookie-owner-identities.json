@@ -1,0 +1,403 @@
+{
+  "scope": "actual native suspended task-owned children on one ARM64 kernel; counterfactual mutations are not emulator success results",
+  "kernel": {
+    "major": 10,
+    "minor": 0,
+    "build": 29683,
+    "native-processor-architecture": 12
+  },
+  "inspector-python": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "bytes": 105304,
+    "sha256": "052604e9a996df81925f9d9ab865fdac5fbd7e8e89644298e88ddcdb6aa85b06"
+  },
+  "inspector-python-pe": {
+    "machine": 43620,
+    "large-address-aware": true,
+    "major-subsystem-version": 6
+  },
+  "producers": [
+    {
+      "profile": "arm64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\cookie-owner-arm64\\native-cookie-owner.cpp",
+        "bytes": 9844,
+        "sha256": "84bd3ec255fa747f84c22150e8254f544379bdbf6bc53ce7d245ddd3593f9a7a"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\cookie-owner-arm64\\native-cookie-owner-arm64.exe",
+        "bytes": 167424,
+        "sha256": "114a2d12af521414e1386e403961e4c225ebbf23ead69a9ce659c58d84768439"
+      },
+      "pe": {
+        "machine": 43620,
+        "large-address-aware": true,
+        "major-subsystem-version": 10
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\cookie-owner-arm64\\native-cookie-owner-arm64.log",
+        "bytes": 1185,
+        "sha256": "6751b07b52a6b79b0a4d2b5ff7367a7c31e58e19baaead9a52377ef6ab7c9504"
+      },
+      "cases": [
+        {
+          "profile": "arm64",
+          "name": "untouched",
+          "pointer-bytes": "8",
+          "major": "10",
+          "file-cookie": "00002B992DDFA232",
+          "suspended-cookie": "00002B992DDFA232",
+          "cookie-va": "00007FF731348000",
+          "image-base": "00007FF731320000",
+          "written": "0",
+          "written-value": "0000000000000000",
+          "wait": "00000000",
+          "exit": "00000000",
+          "reported": "1",
+          "cookie": "00005FFB81716432",
+          "cleanup": "pass",
+          "child-record": "cookie=00005FFB81716432 major=10 "
+        },
+        {
+          "profile": "arm64",
+          "name": "restore-default",
+          "pointer-bytes": "8",
+          "major": "10",
+          "file-cookie": "00002B992DDFA232",
+          "suspended-cookie": "00002B992DDFA232",
+          "cookie-va": "00007FF731348000",
+          "image-base": "00007FF731320000",
+          "written": "1",
+          "written-value": "00002B992DDFA232",
+          "wait": "00000000",
+          "exit": "00000000",
+          "reported": "1",
+          "cookie": "000016FEA29786B5",
+          "cleanup": "pass",
+          "child-record": "cookie=000016FEA29786B5 major=10 "
+        },
+        {
+          "profile": "arm64",
+          "name": "preseed",
+          "pointer-bytes": "8",
+          "major": "10",
+          "file-cookie": "00002B992DDFA232",
+          "suspended-cookie": "00002B992DDFA232",
+          "cookie-va": "00007FF731348000",
+          "image-base": "00007FF731320000",
+          "written": "1",
+          "written-value": "0000123456789ABC",
+          "wait": "00000000",
+          "exit": "C000007B",
+          "reported": "0",
+          "cleanup": "pass",
+          "child-record": ""
+        },
+        {
+          "profile": "arm64",
+          "name": "zero",
+          "pointer-bytes": "8",
+          "major": "10",
+          "file-cookie": "00002B992DDFA232",
+          "suspended-cookie": "00002B992DDFA232",
+          "cookie-va": "00007FF731348000",
+          "image-base": "00007FF731320000",
+          "written": "1",
+          "written-value": "0000000000000000",
+          "wait": "00000000",
+          "exit": "C000007B",
+          "reported": "0",
+          "cleanup": "pass",
+          "child-record": ""
+        }
+      ]
+    },
+    {
+      "profile": "x64",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\cookie-owner-x64\\native-cookie-owner.cpp",
+        "bytes": 9844,
+        "sha256": "84bd3ec255fa747f84c22150e8254f544379bdbf6bc53ce7d245ddd3593f9a7a"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\cookie-owner-x64\\native-cookie-owner-x64.exe",
+        "bytes": 165888,
+        "sha256": "e579a6ebb9be3f870ca3dcd36f49f71b3ce7a623d61676c5634c05310de547d1"
+      },
+      "pe": {
+        "machine": 34404,
+        "large-address-aware": true,
+        "major-subsystem-version": 10
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\cookie-owner-x64\\native-cookie-owner-x64.log",
+        "bytes": 1177,
+        "sha256": "3601fbd63c1f8a61a61e91854b76668a468b34f532c479377176b6061968df8e"
+      },
+      "cases": [
+        {
+          "profile": "x64",
+          "name": "untouched",
+          "pointer-bytes": "8",
+          "major": "10",
+          "file-cookie": "00002B992DDFA232",
+          "suspended-cookie": "00002B992DDFA232",
+          "cookie-va": "00007FF7BE1B7000",
+          "image-base": "00007FF7BE190000",
+          "written": "0",
+          "written-value": "0000000000000000",
+          "wait": "00000000",
+          "exit": "00000000",
+          "reported": "1",
+          "cookie": "00004F6BBAD19797",
+          "cleanup": "pass",
+          "child-record": "cookie=00004F6BBAD19797 major=10 "
+        },
+        {
+          "profile": "x64",
+          "name": "restore-default",
+          "pointer-bytes": "8",
+          "major": "10",
+          "file-cookie": "00002B992DDFA232",
+          "suspended-cookie": "00002B992DDFA232",
+          "cookie-va": "00007FF7BE1B7000",
+          "image-base": "00007FF7BE190000",
+          "written": "1",
+          "written-value": "00002B992DDFA232",
+          "wait": "00000000",
+          "exit": "00000000",
+          "reported": "1",
+          "cookie": "0000465491042E39",
+          "cleanup": "pass",
+          "child-record": "cookie=0000465491042E39 major=10 "
+        },
+        {
+          "profile": "x64",
+          "name": "preseed",
+          "pointer-bytes": "8",
+          "major": "10",
+          "file-cookie": "00002B992DDFA232",
+          "suspended-cookie": "00002B992DDFA232",
+          "cookie-va": "00007FF7BE1B7000",
+          "image-base": "00007FF7BE190000",
+          "written": "1",
+          "written-value": "0000123456789ABC",
+          "wait": "00000000",
+          "exit": "C000007B",
+          "reported": "0",
+          "cleanup": "pass",
+          "child-record": ""
+        },
+        {
+          "profile": "x64",
+          "name": "zero",
+          "pointer-bytes": "8",
+          "major": "10",
+          "file-cookie": "00002B992DDFA232",
+          "suspended-cookie": "00002B992DDFA232",
+          "cookie-va": "00007FF7BE1B7000",
+          "image-base": "00007FF7BE190000",
+          "written": "1",
+          "written-value": "0000000000000000",
+          "wait": "00000000",
+          "exit": "C000007B",
+          "reported": "0",
+          "cleanup": "pass",
+          "child-record": ""
+        }
+      ]
+    },
+    {
+      "profile": "x86",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\cookie-owner-x86\\native-cookie-owner.cpp",
+        "bytes": 9844,
+        "sha256": "84bd3ec255fa747f84c22150e8254f544379bdbf6bc53ce7d245ddd3593f9a7a"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\cookie-owner-x86\\native-cookie-owner-x86.exe",
+        "bytes": 134656,
+        "sha256": "d9168ca912f369e01a7871a82544f549680883c29fb3f49931cacab804c5c117"
+      },
+      "pe": {
+        "machine": 332,
+        "large-address-aware": false,
+        "major-subsystem-version": 10
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\cookie-owner-x86\\native-cookie-owner-x86.log",
+        "bytes": 1177,
+        "sha256": "6e9dcac3ef5e345b0175b1014299c5845d5ddd73de739dc02cdd8dd2c304266c"
+      },
+      "cases": [
+        {
+          "profile": "x86",
+          "name": "untouched",
+          "pointer-bytes": "4",
+          "major": "10",
+          "file-cookie": "00000000BB40E64E",
+          "suspended-cookie": "00000000BB40E64E",
+          "cookie-va": "0000000000491000",
+          "image-base": "0000000000470000",
+          "written": "0",
+          "written-value": "0000000000000000",
+          "wait": "00000000",
+          "exit": "00000000",
+          "reported": "1",
+          "cookie": "000000000DD3B76F",
+          "cleanup": "pass",
+          "child-record": "cookie=000000000DD3B76F major=10 "
+        },
+        {
+          "profile": "x86",
+          "name": "restore-default",
+          "pointer-bytes": "4",
+          "major": "10",
+          "file-cookie": "00000000BB40E64E",
+          "suspended-cookie": "00000000BB40E64E",
+          "cookie-va": "0000000000491000",
+          "image-base": "0000000000470000",
+          "written": "1",
+          "written-value": "00000000BB40E64E",
+          "wait": "00000000",
+          "exit": "00000000",
+          "reported": "1",
+          "cookie": "00000000C997A172",
+          "cleanup": "pass",
+          "child-record": "cookie=00000000C997A172 major=10 "
+        },
+        {
+          "profile": "x86",
+          "name": "preseed",
+          "pointer-bytes": "4",
+          "major": "10",
+          "file-cookie": "00000000BB40E64E",
+          "suspended-cookie": "00000000BB40E64E",
+          "cookie-va": "0000000000491000",
+          "image-base": "0000000000470000",
+          "written": "1",
+          "written-value": "0000000012345678",
+          "wait": "00000000",
+          "exit": "C000007B",
+          "reported": "0",
+          "cleanup": "pass",
+          "child-record": ""
+        },
+        {
+          "profile": "x86",
+          "name": "zero",
+          "pointer-bytes": "4",
+          "major": "10",
+          "file-cookie": "00000000BB40E64E",
+          "suspended-cookie": "00000000BB40E64E",
+          "cookie-va": "0000000000491000",
+          "image-base": "0000000000470000",
+          "written": "1",
+          "written-value": "0000000000000000",
+          "wait": "00000000",
+          "exit": "C000007B",
+          "reported": "0",
+          "cleanup": "pass",
+          "child-record": ""
+        }
+      ]
+    },
+    {
+      "profile": "x86-laa",
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\cookie-owner-x86-laa\\native-cookie-owner.cpp",
+        "bytes": 9844,
+        "sha256": "84bd3ec255fa747f84c22150e8254f544379bdbf6bc53ce7d245ddd3593f9a7a"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\cookie-owner-x86-laa\\native-cookie-owner-x86-laa.exe",
+        "bytes": 134656,
+        "sha256": "fa04781f5d05d5f27c3bb6b452233c7ff01e86a73843411a0f76299f3d82894c"
+      },
+      "pe": {
+        "machine": 332,
+        "large-address-aware": true,
+        "major-subsystem-version": 10
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\cookie-owner-x86-laa\\native-cookie-owner-x86-laa.log",
+        "bytes": 1193,
+        "sha256": "3b7f0f5e2600f622bb7345edc75b39c7ed3175b3a6cfe023c469eb3baf184b92"
+      },
+      "cases": [
+        {
+          "profile": "x86-laa",
+          "name": "untouched",
+          "pointer-bytes": "4",
+          "major": "10",
+          "file-cookie": "00000000BB40E64E",
+          "suspended-cookie": "00000000BB40E64E",
+          "cookie-va": "0000000000051000",
+          "image-base": "0000000000030000",
+          "written": "0",
+          "written-value": "0000000000000000",
+          "wait": "00000000",
+          "exit": "00000000",
+          "reported": "1",
+          "cookie": "00000000EEBAD1A8",
+          "cleanup": "pass",
+          "child-record": "cookie=00000000EEBAD1A8 major=10 "
+        },
+        {
+          "profile": "x86-laa",
+          "name": "restore-default",
+          "pointer-bytes": "4",
+          "major": "10",
+          "file-cookie": "00000000BB40E64E",
+          "suspended-cookie": "00000000BB40E64E",
+          "cookie-va": "0000000000051000",
+          "image-base": "0000000000030000",
+          "written": "1",
+          "written-value": "00000000BB40E64E",
+          "wait": "00000000",
+          "exit": "00000000",
+          "reported": "1",
+          "cookie": "0000000051CA670E",
+          "cleanup": "pass",
+          "child-record": "cookie=0000000051CA670E major=10 "
+        },
+        {
+          "profile": "x86-laa",
+          "name": "preseed",
+          "pointer-bytes": "4",
+          "major": "10",
+          "file-cookie": "00000000BB40E64E",
+          "suspended-cookie": "00000000BB40E64E",
+          "cookie-va": "0000000000051000",
+          "image-base": "0000000000030000",
+          "written": "1",
+          "written-value": "0000000012345678",
+          "wait": "00000000",
+          "exit": "C000007B",
+          "reported": "0",
+          "cleanup": "pass",
+          "child-record": ""
+        },
+        {
+          "profile": "x86-laa",
+          "name": "zero",
+          "pointer-bytes": "4",
+          "major": "10",
+          "file-cookie": "00000000BB40E64E",
+          "suspended-cookie": "00000000BB40E64E",
+          "cookie-va": "0000000000051000",
+          "image-base": "0000000000030000",
+          "written": "1",
+          "written-value": "0000000000000000",
+          "wait": "00000000",
+          "exit": "C000007B",
+          "reported": "0",
+          "cleanup": "pass",
+          "child-record": ""
+        }
+      ]
+    }
+  ],
+  "children": 16,
+  "closed-child-handle-pairs": 16
+}

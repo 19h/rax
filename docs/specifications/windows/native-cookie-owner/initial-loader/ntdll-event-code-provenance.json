@@ -1,0 +1,174 @@
+{
+  "image-sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+  "pdb-sha256": "980319d403947ad730a61aacfc6150aab678decf027cf6a54a38806fb2ebf205",
+  "sections": [
+    {
+      "index": 1,
+      "name": ".text",
+      "virtual-address": 4096,
+      "virtual-bytes": 3299701,
+      "raw-bytes": 3299840,
+      "raw-offset": 1536
+    },
+    {
+      "index": 2,
+      "name": ".specffs",
+      "virtual-address": 3305472,
+      "virtual-bytes": 4160,
+      "raw-bytes": 4608,
+      "raw-offset": 3301376
+    },
+    {
+      "index": 3,
+      "name": ".zhexpth",
+      "virtual-address": 3313664,
+      "virtual-bytes": 4208,
+      "raw-bytes": 4608,
+      "raw-offset": 3305984
+    },
+    {
+      "index": 4,
+      "name": "SCPCFG",
+      "virtual-address": 3321856,
+      "virtual-bytes": 4784,
+      "raw-bytes": 5120,
+      "raw-offset": 3310592
+    },
+    {
+      "index": 5,
+      "name": "SCPCFGFP",
+      "virtual-address": 3330048,
+      "virtual-bytes": 4784,
+      "raw-bytes": 5120,
+      "raw-offset": 3315712
+    },
+    {
+      "index": 6,
+      "name": "SCPCFGNP",
+      "virtual-address": 3338240,
+      "virtual-bytes": 4784,
+      "raw-bytes": 5120,
+      "raw-offset": 3320832
+    },
+    {
+      "index": 7,
+      "name": "SCPCFGES",
+      "virtual-address": 3346432,
+      "virtual-bytes": 4784,
+      "raw-bytes": 5120,
+      "raw-offset": 3325952
+    },
+    {
+      "index": 8,
+      "name": "RT",
+      "virtual-address": 3354624,
+      "virtual-bytes": 8824,
+      "raw-bytes": 9216,
+      "raw-offset": 3331072
+    },
+    {
+      "index": 9,
+      "name": "PAGE",
+      "virtual-address": 3366912,
+      "virtual-bytes": 10740,
+      "raw-bytes": 10752,
+      "raw-offset": 3340288
+    },
+    {
+      "index": 10,
+      "name": "fothk",
+      "virtual-address": 3379200,
+      "virtual-bytes": 4096,
+      "raw-bytes": 4096,
+      "raw-offset": 3351040
+    },
+    {
+      "index": 11,
+      "name": ".rdata",
+      "virtual-address": 3383296,
+      "virtual-bytes": 536150,
+      "raw-bytes": 536576,
+      "raw-offset": 3355136
+    },
+    {
+      "index": 12,
+      "name": ".data",
+      "virtual-address": 3919872,
+      "virtual-bytes": 72224,
+      "raw-bytes": 9216,
+      "raw-offset": 3891712
+    },
+    {
+      "index": 13,
+      "name": ".pdata",
+      "virtual-address": 3993600,
+      "virtual-bytes": 79296,
+      "raw-bytes": 79360,
+      "raw-offset": 3900928
+    },
+    {
+      "index": 14,
+      "name": ".00cfg",
+      "virtual-address": 4075520,
+      "virtual-bytes": 48,
+      "raw-bytes": 512,
+      "raw-offset": 3980288
+    },
+    {
+      "index": 15,
+      "name": ".mrdata",
+      "virtual-address": 4079616,
+      "virtual-bytes": 40152,
+      "raw-bytes": 40448,
+      "raw-offset": 3980800
+    },
+    {
+      "index": 16,
+      "name": ".a64xrm",
+      "virtual-address": 4120576,
+      "virtual-bytes": 20552,
+      "raw-bytes": 20992,
+      "raw-offset": 4021248
+    },
+    {
+      "index": 17,
+      "name": ".rsrc",
+      "virtual-address": 4145152,
+      "virtual-bytes": 509400,
+      "raw-bytes": 509440,
+      "raw-offset": 4042240
+    },
+    {
+      "index": 18,
+      "name": ".reloc",
+      "virtual-address": 4657152,
+      "virtual-bytes": 6220,
+      "raw-bytes": 6656,
+      "raw-offset": 4551680
+    }
+  ],
+  "independent-trace-instructions": [
+    {
+      "rva": "0xa64b8",
+      "file-offset": 678584,
+      "trace-bytes": "e73b00fd",
+      "file-bytes": "e73b00fd",
+      "equal": true
+    },
+    {
+      "rva": "0xa64fc",
+      "file-offset": 678652,
+      "trace-bytes": "496cfd97",
+      "file-bytes": "496cfd97",
+      "equal": true
+    },
+    {
+      "rva": "0x1620",
+      "file-offset": 3104,
+      "trace-bytes": "c10b00d4",
+      "file-bytes": "c10b00d4",
+      "equal": true
+    }
+  ],
+  "scope": "Filesystem image and three loaded instructions match; public symbol labels remain inference. PE CodeView age1 and public PDB information-stream age4 differ; DBI age1."
+}

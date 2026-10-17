@@ -1,0 +1,30 @@
+{
+  "utc": "2026-10-16T02:37:11.006881+00:00",
+  "scope": "public data structure and process/memory API mechanics; no documented private cookie-ordering claim",
+  "sources": [
+    {
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-image_load_config_directory64",
+      "path": "load-config.html",
+      "bytes": 58989,
+      "sha256": "5b648427614e43bbbfc6589b5795afe918e41a37649ed1ed205ce4e66a0296e6"
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags",
+      "path": "process-flags.html",
+      "bytes": 60994,
+      "sha256": "3fe78cd6e8456a879853f7d159327e6e6997332008e9db8558ac0c5d40d0a9a7"
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-readprocessmemory",
+      "path": "read-memory.html",
+      "bytes": 53210,
+      "sha256": "187730f37c4159aa732f9968190efafe9b534742e03e5ab1869e0e1be91e87a0"
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-writeprocessmemory",
+      "path": "write-memory.html",
+      "bytes": 53563,
+      "sha256": "e9099ac7bfbf024e7bddd154384c07f11e2948ea960a39d6387a52f6a2e7ca42"
+    }
+  ]
+}

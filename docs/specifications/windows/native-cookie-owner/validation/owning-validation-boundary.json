@@ -1,0 +1,8 @@
+{
+  "root-publication-base": "749cdd3ddd4b5225ee8f509333281eb1ca0173e6",
+  "frozen-assist-public-abi-minor": 184,
+  "current-assist-public-abi-minor": 186,
+  "rax-public-abi": "1.11.0",
+  "selected-current-cpp-count": 9,
+  "scope": "Retained exports test RAX-facing interface; current whole-root/GUI/package proof excluded"
+}

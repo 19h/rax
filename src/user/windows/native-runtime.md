@@ -1917,3 +1917,37 @@ NtTraceEvent remain outside this owner-information group. Whole-current-root,
 GUI and package validation remain separate from retained carrier checks.
 
 [Native contract, assumptions, source maps and primary provenance](../../../docs/specifications/windows/native-console-owner/README.md).
+
+
+## Native loader security-cookie ownership (2026-10-17 UTC)
+
+The shared PE mapper validates the load-configuration cookie span but preserves
+its bytes whenever an actual installed runtime is selected. Built-in DLL mode
+retains its previous default-cookie seeding and entropy behavior. The change
+applies to both executable and DLL mapping without adding a host call or changing
+C ABI1.11.0, dependency pins, default features or guest token policy.
+
+Sixteen independently inspected native child observations cover ARM64, x64,
+x86 and x86-LAA on the recorded ARM64 Windows10.0.29683 kernel. File-default and
+explicit-default controls reach child entry; preseeded and zero-cookie controls
+fail with 0xC000007B before entry. A separate suspended ARM64 read verifies the
+file-default cookie in both the main image and the actual NTDLL mapping. Loader
+and CRT contributions after the first instruction are not separately attributed.
+
+Rust1.95.0 full-library results (passed/failed/ignored) are macOS7839/0/2,
+Linux7833/0/2 and Windows7263/5/2. The exact existing four BZHI and one FP16
+Windows lowerer failures remain. C API168 per host, all-target checks, Unix
+Windows integration544, native memory4, three cookie regressions and prior owner
+service checks pass. Three retained Assist carriers bind310 source inputs and
+empty core features to structurally walked archives. Their public ABI minor184
+versus current186 remains a scoped validation boundary, not whole-current-root,
+plugin, GUI or package proof. Failed timing/environment/cache attempts remain
+recorded separately without weakened assertions or changed dependency pins.
+
+Ordinary ARM64 smoke and installed whoami now both reach unsupported
+NtQueryInformationToken class29 through current-process-token pseudo-handle-4,
+at PC0x180001220 (turn2130489 and turn2132851 respectively). Neither observation
+establishes an ordinary Windows process exit. The full process-userland
+objective remains incomplete.
+
+[Native measurements, assumptions and validation](../../../docs/specifications/windows/native-cookie-owner/README.md).

@@ -1,0 +1,200 @@
+{
+  "first-status": "first-invalid-image-status turn=102175 thread=8 PC=0x1800da078 SP=0x1bde970 registers=[c000007b, 140000000, 12150, 1bde8c0, 1bde980, 2104b48, 2104b38, 1bdea70, 140001f60, a, 15040, 7, 15200, 0, 0, 15000, a8397b1dcdaf, a8397b1dcdaf, 7ffdd000, 0, 1400000e0, 140000000, 2104af0, 5, 1, c000007b, 1, 7ffdf000, 1bde9d0, 1bde970, 1800da0dc]",
+  "bounded-instruction-history": [
+    {
+      "turn": 102143,
+      "pc": "0x18003dd44",
+      "bytes": "08, 90, 40, b9",
+      "mnemonic": "LDR"
+    },
+    {
+      "turn": 102144,
+      "pc": "0x18003dd48",
+      "bytes": "a8, 03, 58, 37",
+      "mnemonic": "TBNZ"
+    },
+    {
+      "turn": 102145,
+      "pc": "0x18003dd4c",
+      "bytes": "ba, ff, ff, 17",
+      "mnemonic": "B"
+    },
+    {
+      "turn": 102146,
+      "pc": "0x18003dc34",
+      "bytes": "f3, 07, 00, b4",
+      "mnemonic": "CBZ"
+    },
+    {
+      "turn": 102147,
+      "pc": "0x18003dc38",
+      "bytes": "68, 02, 40, f9",
+      "mnemonic": "LDR"
+    },
+    {
+      "turn": 102148,
+      "pc": "0x18003dc3c",
+      "bytes": "fa, 0c, 00, 58",
+      "mnemonic": "LDR"
+    },
+    {
+      "turn": 102149,
+      "pc": "0x18003dc40",
+      "bytes": "1f, 01, 1a, eb",
+      "mnemonic": "CMP"
+    },
+    {
+      "turn": 102150,
+      "pc": "0x18003dc44",
+      "bytes": "61, 07, 00, 54",
+      "mnemonic": "BCC"
+    },
+    {
+      "turn": 102151,
+      "pc": "0x18003dd30",
+      "bytes": "00, 00, 80, 52",
+      "mnemonic": "MOVZ"
+    },
+    {
+      "turn": 102152,
+      "pc": "0x18003dd34",
+      "bytes": "f8, ff, ff, 17",
+      "mnemonic": "B"
+    },
+    {
+      "turn": 102153,
+      "pc": "0x18003dd14",
+      "bytes": "fd, 7b, c4, a8",
+      "mnemonic": "LDP"
+    },
+    {
+      "turn": 102154,
+      "pc": "0x18003dd18",
+      "bytes": "f9, 6b, 43, a9",
+      "mnemonic": "LDP"
+    },
+    {
+      "turn": 102155,
+      "pc": "0x18003dd1c",
+      "bytes": "f7, 63, 42, a9",
+      "mnemonic": "LDP"
+    },
+    {
+      "turn": 102156,
+      "pc": "0x18003dd20",
+      "bytes": "f5, 5b, 41, a9",
+      "mnemonic": "LDP"
+    },
+    {
+      "turn": 102157,
+      "pc": "0x18003dd24",
+      "bytes": "f3, 53, c4, a8",
+      "mnemonic": "LDP"
+    },
+    {
+      "turn": 102158,
+      "pc": "0x18003dd28",
+      "bytes": "ff, 23, 03, d5",
+      "mnemonic": "HINT"
+    },
+    {
+      "turn": 102159,
+      "pc": "0x18003dd2c",
+      "bytes": "c0, 03, 5f, d6",
+      "mnemonic": "RET"
+    },
+    {
+      "turn": 102160,
+      "pc": "0x1800da0dc",
+      "bytes": "28, f9, ff, d0",
+      "mnemonic": "ADRP"
+    },
+    {
+      "turn": 102161,
+      "pc": "0x1800da0e0",
+      "bytes": "08, 01, 00, 91",
+      "mnemonic": "ADD"
+    },
+    {
+      "turn": 102162,
+      "pc": "0x1800da0e4",
+      "bytes": "bf, 02, 08, eb",
+      "mnemonic": "CMP"
+    },
+    {
+      "turn": 102163,
+      "pc": "0x1800da0e8",
+      "bytes": "00, 01, 00, 54",
+      "mnemonic": "BCC"
+    },
+    {
+      "turn": 102164,
+      "pc": "0x1800da0ec",
+      "bytes": "c8, 1e, 40, f9",
+      "mnemonic": "LDR"
+    },
+    {
+      "turn": 102165,
+      "pc": "0x1800da0f0",
+      "bytes": "c8, 00, 00, b4",
+      "mnemonic": "CBZ"
+    },
+    {
+      "turn": 102166,
+      "pc": "0x1800da0f4",
+      "bytes": "89, 92, 40, 79",
+      "mnemonic": "LDRH"
+    },
+    {
+      "turn": 102167,
+      "pc": "0x1800da0f8",
+      "bytes": "3f, 19, 00, 71",
+      "mnemonic": "CMP"
+    },
+    {
+      "turn": 102168,
+      "pc": "0x1800da0fc",
+      "bytes": "e0, 02, 00, 54",
+      "mnemonic": "BCC"
+    },
+    {
+      "turn": 102169,
+      "pc": "0x1800da100",
+      "bytes": "3f, 1d, 00, 71",
+      "mnemonic": "CMP"
+    },
+    {
+      "turn": 102170,
+      "pc": "0x1800da104",
+      "bytes": "a2, fc, ff, 54",
+      "mnemonic": "BCC"
+    },
+    {
+      "turn": 102171,
+      "pc": "0x1800da098",
+      "bytes": "80, 03, 00, 35",
+      "mnemonic": "CBNZ"
+    },
+    {
+      "turn": 102172,
+      "pc": "0x1800da09c",
+      "bytes": "b9, 07, 00, 18",
+      "mnemonic": "LDR"
+    },
+    {
+      "turn": 102173,
+      "pc": "0x1800da0a0",
+      "bytes": "f5, ff, ff, 17",
+      "mnemonic": "B"
+    },
+    {
+      "turn": 102174,
+      "pc": "0x1800da074",
+      "bytes": "e0, 03, 19, 2a",
+      "mnemonic": "MOV"
+    }
+  ],
+  "inference": "Published PDB labels identify LdrInitSecurityCookie returning0 and LdrpProcessMappedModule rejecting the entry-bearing main image with MajorSubsystemVersion10. RAX init_security_cookie preinitializes default native image cookies. Native counterprobe is required before changing ownership.",
+  "evidence": "Exact first-status/history and loader/mod.rs init_security_cookie callsites; public PDB names retain GUID/age caveat",
+  "event-payload": "Captured34B reference begins UTF16 C:\\WINDOWS\\SYSTE plusNUL; not the previously hypothesized hex-status string. Root cause of this truncated path is unknown."
+}

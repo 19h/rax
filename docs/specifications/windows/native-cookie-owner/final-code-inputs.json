@@ -1,0 +1,18 @@
+{
+  "base": "8b038b528d8cd88e44e5ebd672ef14e365c480a5",
+  "utc": "2026-10-17T18:29:02.245411+00:00",
+  "files": [
+    {
+      "path": "src/user/windows/loader/mod.rs",
+      "bytes": 51956,
+      "sha256": "f551654690b4f01183b65864a16ded434eef092c2b93db772c6edc7b948949f8",
+      "previous-sha256": "f4dcb610e097c0f370f52cb30a589cae77c26a92a7d329f50ca4792f97b19238"
+    },
+    {
+      "path": "src/user/windows/loader/cookie_tests.rs",
+      "bytes": 5742,
+      "sha256": "80911682d49d83a6242634ddcd586bbb2a5fd6a52dc1e9142eef1b4f5281c77f",
+      "previous-sha256": null
+    }
+  ]
+}

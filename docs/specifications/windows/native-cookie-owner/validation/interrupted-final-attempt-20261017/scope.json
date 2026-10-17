@@ -1,0 +1,6 @@
+{
+  "utc": "2026-10-17T19:08:27.248452+00:00",
+  "macos": "old shell handle missing; no matching live task process; all-target compiler log incomplete; no completed gate result",
+  "linux": "all four commands failed to connect to stopped Docker daemon; no compilation or tests established",
+  "retry": "same frozen source and assertions; restart supported local environments and retain this attempt separately"
+}

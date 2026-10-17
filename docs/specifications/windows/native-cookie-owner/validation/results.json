@@ -1,0 +1,627 @@
+{
+  "utc": "2026-10-17T19:35:17.963732+00:00",
+  "parent": "8b038b528d8cd88e44e5ebd672ef14e365c480a5",
+  "selected-owning-inputs": 310,
+  "files": [
+    {
+      "path": "collect-cookie-archives.py",
+      "bytes": 3338,
+      "sha256": "09545dcf0cfbd126225869c3f66170a5b4df2168ec5d50a59a2e6cab252f797d"
+    },
+    {
+      "path": "collect-cookie-validation.py",
+      "bytes": 5507,
+      "sha256": "d6f05745efd31228d1660f457db462350533aab78349b2f75ec42bb64d0d6cf3"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/loader/cookie_tests.rs",
+      "bytes": 5742,
+      "sha256": "80911682d49d83a6242634ddcd586bbb2a5fd6a52dc1e9142eef1b4f5281c77f"
+    },
+    {
+      "path": "compiled-source/final/src/user/windows/loader/mod.rs",
+      "bytes": 51956,
+      "sha256": "f551654690b4f01183b65864a16ded434eef092c2b93db772c6edc7b948949f8"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/loader/cookie_tests.rs",
+      "bytes": 5742,
+      "sha256": "80911682d49d83a6242634ddcd586bbb2a5fd6a52dc1e9142eef1b4f5281c77f"
+    },
+    {
+      "path": "compiled-source/initial/src/user/windows/loader/mod.rs",
+      "bytes": 51956,
+      "sha256": "f551654690b4f01183b65864a16ded434eef092c2b93db772c6edc7b948949f8"
+    },
+    {
+      "path": "cookie-validation-stress-results.json",
+      "bytes": 462,
+      "sha256": "5a99520c97dfedb37fcc2b3aa3a229d302d7c228711d06fdf409fac1df3e2aa8"
+    },
+    {
+      "path": "final-code-inputs.json",
+      "bytes": 583,
+      "sha256": "5399d2bc1fc5c7d7fb49c355cfdecef0d3bd0ce8ca4d199ace0c4b29aa5ec06c"
+    },
+    {
+      "path": "final-owning-source-hashes.json",
+      "bytes": 59635,
+      "sha256": "ea441e949137dace5d8c8562b03731f30f1a84c30f1fb7a143a38509bc06ed22"
+    },
+    {
+      "path": "initial-scope.json",
+      "bytes": 2902,
+      "sha256": "afe73d5088cd534b94681157c74acfd52c5ac1c470056c10dcf2eb0c0eb7e7a9"
+    },
+    {
+      "path": "interrupted-final-attempt-20261017/linux-cookie-final-all-targets.log",
+      "bytes": 226,
+      "sha256": "0eb295fcbe6b0815b4d8691eeb30caf0a68ea84c168f72f5b62f93f6126c1aa3"
+    },
+    {
+      "path": "interrupted-final-attempt-20261017/linux-cookie-final-capi.log",
+      "bytes": 226,
+      "sha256": "0eb295fcbe6b0815b4d8691eeb30caf0a68ea84c168f72f5b62f93f6126c1aa3"
+    },
+    {
+      "path": "interrupted-final-attempt-20261017/linux-cookie-final-gates.json",
+      "bytes": 4429,
+      "sha256": "a5f27251da635c17c7167d46245247fe971dff5eec1d04f2e7b991e32f572eb3"
+    },
+    {
+      "path": "interrupted-final-attempt-20261017/linux-cookie-final-lib.log",
+      "bytes": 226,
+      "sha256": "0eb295fcbe6b0815b4d8691eeb30caf0a68ea84c168f72f5b62f93f6126c1aa3"
+    },
+    {
+      "path": "interrupted-final-attempt-20261017/linux-cookie-final-windows.log",
+      "bytes": 226,
+      "sha256": "0eb295fcbe6b0815b4d8691eeb30caf0a68ea84c168f72f5b62f93f6126c1aa3"
+    },
+    {
+      "path": "interrupted-final-attempt-20261017/macos-cookie-final-all-targets.log",
+      "bytes": 396,
+      "sha256": "74127d41e6eac32ca3340db936d9dcf014dffda0df618fc3f84c49d3e448ef43"
+    },
+    {
+      "path": "interrupted-final-attempt-20261017/scope.json",
+      "bytes": 413,
+      "sha256": "a776266f4db449df6a88f32843a04bd009f4f301f8964a2f89b901accd946e4f"
+    },
+    {
+      "path": "latest-published-cpp-consumer-identities.json",
+      "bytes": 2907,
+      "sha256": "fd207fda21c92a934fb8ab615d555ae80b118836b3bd0b4d6e708b07a79cb46f"
+    },
+    {
+      "path": "linux-final-owning-archive-identities.json",
+      "bytes": 60898,
+      "sha256": "1437af39dbc48a08f09bde29667506343e90fa3dc02fe95220079744f882fe8e"
+    },
+    {
+      "path": "linux-focused-initial-result.json",
+      "bytes": 1007,
+      "sha256": "04eae2d39b225fbe3bd83ef7f7fc610a4969c2742ead2ad975ec8242e41ebf5f"
+    },
+    {
+      "path": "linux-focused-initial.log",
+      "bytes": 889,
+      "sha256": "7964fcce0e334744a53c6b67746b74f7ac11f1c70913f253124bed336fb334f9"
+    },
+    {
+      "path": "linux-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "05d147e52d8cb683417263ae239d8179ab7ff0194f10c6eff261a216200bae97"
+    },
+    {
+      "path": "linux-owning-artifacts.log",
+      "bytes": 159806,
+      "sha256": "005d76ce993a39e98f02a2e58d99b3e0992cbffcbb342a25b78a15b06f289611"
+    },
+    {
+      "path": "linux-owning-commands.json",
+      "bytes": 5355,
+      "sha256": "a90046964218a9902a665cdb726e9072c5c24fe522b4dd56ee35f10f38438b3f"
+    },
+    {
+      "path": "linux-owning-cpp.log",
+      "bytes": 1623,
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+    },
+    {
+      "path": "linux-owning-gates.json",
+      "bytes": 6068,
+      "sha256": "b18b8587ad146ee13b961ea8b5403f01223b4530657a8f25747072ed7ce18e8d"
+    },
+    {
+      "path": "linux-owning-shipping.log",
+      "bytes": 415,
+      "sha256": "3d973c1f5898e22f08cf3b80d42bf8885dfe53f8eedea88f6e458787eade3f0f"
+    },
+    {
+      "path": "linux/final/gates.json",
+      "bytes": 4426,
+      "sha256": "8e61a0593cad435189119713cfcd7637fe1ad00e5ec7cb38bc10659539d1544f"
+    },
+    {
+      "path": "linux/final/linux-cookie-final-all-targets.log",
+      "bytes": 309,
+      "sha256": "50698eea0505771b189515bddb3b4118546b2b0a1c811fda3ff2397e25131629"
+    },
+    {
+      "path": "linux/final/linux-cookie-final-capi.log",
+      "bytes": 12491,
+      "sha256": "c5d39b41fd3288f6df681101ab541e93d8fadfc79ff6ff9d107d5e3037abab10"
+    },
+    {
+      "path": "linux/final/linux-cookie-final-lib.log",
+      "bytes": 796814,
+      "sha256": "414cd37891dfb95a1ec7535e37b157aecddb7da7844177cab9cc68d36ffdd5ac"
+    },
+    {
+      "path": "linux/final/linux-cookie-final-windows.log",
+      "bytes": 35998,
+      "sha256": "18d270084a352349906d358b55e29afdd656d5e56b71e5547f4cb0388288a2d7"
+    },
+    {
+      "path": "linux/initial/gates.json",
+      "bytes": 4341,
+      "sha256": "47a46611abbf12b4e2e938515f6860b68f9ed64eeec5d998e4631d64052f2777"
+    },
+    {
+      "path": "linux/initial/linux-cookie-all-targets.log",
+      "bytes": 309,
+      "sha256": "64574901c8a278129f4f9fa17e8e6f9de870414336eccc4280939f9051561e43"
+    },
+    {
+      "path": "linux/initial/linux-cookie-capi.log",
+      "bytes": 12492,
+      "sha256": "4d4368457d2f42e0027e587441f656cbd60a5667a225cecab7f79b43e16445f6"
+    },
+    {
+      "path": "linux/initial/linux-cookie-lib.log",
+      "bytes": 798269,
+      "sha256": "436de49876104d2a2a996a3d85b3820fc5d5d4a0cd1dcf80d6aea9b31c402986"
+    },
+    {
+      "path": "linux/initial/linux-cookie-windows.log",
+      "bytes": 35805,
+      "sha256": "890df60058bf785f851fa03ceda0914ae908ca5e20bed3429859bd1f61894a35"
+    },
+    {
+      "path": "macos-final-owning-archive-identities.json",
+      "bytes": 62285,
+      "sha256": "c4df2227088e963314705af9a01d79385020f36eb68c6b8d152ff4c5a4dea3db"
+    },
+    {
+      "path": "macos-focused-initial.log",
+      "bytes": 3435,
+      "sha256": "728e410b824072868b7eafc50045cb2592f356509937c4d0dfcedda224e0782b"
+    },
+    {
+      "path": "macos-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "83091fea145a6373963145aa46516c1c110526b39e1fbc2840548901aee2536e"
+    },
+    {
+      "path": "macos-owning-artifacts.log",
+      "bytes": 131080,
+      "sha256": "1bd3773db122c07aa0e96e5bcdccbb44584703f699a3746fedebcc5ead3446c2"
+    },
+    {
+      "path": "macos-owning-build.log",
+      "bytes": 33678,
+      "sha256": "562a7132177bf619270f6f59341dc63126d8e7168f93f3df76bd7cb3f7ab2150"
+    },
+    {
+      "path": "macos-owning-commands.json",
+      "bytes": 3828,
+      "sha256": "756f1b0ea3936002c1b2880506e29228f967becfc6c8d064aa09ac0fbb7cc0d6"
+    },
+    {
+      "path": "macos-owning-ctest.log",
+      "bytes": 1273,
+      "sha256": "187624ead6cfa38bec89f5a29e11ab64715d596802423a3e1a166eac3b345ea1"
+    },
+    {
+      "path": "macos-owning-gates.json",
+      "bytes": 4916,
+      "sha256": "0cc040eaefd7c3cb9513347d7f4d72fa1464fea02fb098b7f62d07ad3af4f73a"
+    },
+    {
+      "path": "macos-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "macos-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "macos/final/gates.json",
+      "bytes": 1618,
+      "sha256": "2564605c43f981229b0656e730dd3c948a6ef75340a1f31b0b7d195a0af0536a"
+    },
+    {
+      "path": "macos/final/macos-cookie-final-all-targets.log",
+      "bytes": 196,
+      "sha256": "816dce69700a6670052565c93c1d859a699f2709c27288447956feb5e98b44e9"
+    },
+    {
+      "path": "macos/final/macos-cookie-final-capi.log",
+      "bytes": 12656,
+      "sha256": "7e208ebdae162b769e8c83e5e8c980fb169d161988ca1bfa022475321ecb95bc"
+    },
+    {
+      "path": "macos/final/macos-cookie-final-lib.log",
+      "bytes": 797717,
+      "sha256": "8d2499afdc870d2570cf3ab378629ecf6047e2c53661141695e7883f799efed0"
+    },
+    {
+      "path": "macos/final/macos-cookie-final-windows.log",
+      "bytes": 36327,
+      "sha256": "7fa1f76e0d1b6a17aa61b805e6a33c48fd9321b957306791ccefa195aef46c40"
+    },
+    {
+      "path": "macos/initial/gates.json",
+      "bytes": 1563,
+      "sha256": "cceb0b223f3908b3d0c6d7249bb612704b470b7365e3cd342dd4c2127269cd73"
+    },
+    {
+      "path": "macos/initial/macos-cookie-all-targets.log",
+      "bytes": 2240,
+      "sha256": "d63fd8216ee6a1d010e7128cd54313e21e57ae4d48826a025df8a9f6d41e11a2"
+    },
+    {
+      "path": "macos/initial/macos-cookie-capi.log",
+      "bytes": 12651,
+      "sha256": "1d9e0f03fa847db61a846ae75e0eea3b0d26ee5c2d6306e9f42768425bee177e"
+    },
+    {
+      "path": "macos/initial/macos-cookie-lib.log",
+      "bytes": 798088,
+      "sha256": "e71592a33f9c1bd5e95e67c104dd4deb21663c2d45d2f40047cce2a70d76006e"
+    },
+    {
+      "path": "macos/initial/macos-cookie-windows.log",
+      "bytes": 36049,
+      "sha256": "03f5b86cb9f781471d446c87a7596f824cbd96b235daf20b0cf2737e94d189a9"
+    },
+    {
+      "path": "owning-linux-cpp-build.py",
+      "bytes": 1522,
+      "sha256": "a0d9f75e831bd3585d3e009b94e8e3f2744b137e646c157c70a7ad7950373b56"
+    },
+    {
+      "path": "owning-validation-boundary.json",
+      "bytes": 326,
+      "sha256": "f8d5a99723eeb723979f45776323ea56b7be46d5bd0406fbbb77cea244121159"
+    },
+    {
+      "path": "run-cookie-final-unix.py",
+      "bytes": 2157,
+      "sha256": "8929f74d78a64fc30a2e8f450528d1bad02fad2cfe54bcdbaca71d0fd263bdd5"
+    },
+    {
+      "path": "run-cookie-unix-gates.py",
+      "bytes": 2113,
+      "sha256": "b04ce42d5eaa690674e315c9d2493f6650897cd4022405764fa434516f59f8fc"
+    },
+    {
+      "path": "run-owning-gates.py",
+      "bytes": 736,
+      "sha256": "d57d89ac46a192373fd91c44c41d099835797f7f16ffbe88541e79d990f0ee5e"
+    },
+    {
+      "path": "stress-cookie-validation.py",
+      "bytes": 2507,
+      "sha256": "710a9ab0a6fad8f4bbf1d5f656830f4e1c4f21ed2b3cc105e4922bac86099377"
+    },
+    {
+      "path": "windows-first-recovery-failure/assist-native-cookie-owner-final-recovered-owned.ps1",
+      "bytes": 4649,
+      "sha256": "ccc087c53d9fd79adf33f8a523f82af1e62d75ce4bca20e99cdea1eb9545331a"
+    },
+    {
+      "path": "windows-first-recovery-failure/assist-native-cookie-owner-final-recovered-shipping.log",
+      "bytes": 589,
+      "sha256": "19c79fc5dc04ea97b41c1a5052e9ac647236f072e07ce25abd6914fb905e5c69"
+    },
+    {
+      "path": "windows-first-recovery-failure/cookie-dependency-inspection.json",
+      "bytes": 43567,
+      "sha256": "76358992d8b0936fc0314b71b275a54172aadf2b52b481a3a0ba937fd16cb2ca"
+    },
+    {
+      "path": "windows-first-recovery-failure/cookie-dependency-missing.json",
+      "bytes": 1185180,
+      "sha256": "83118f4bcd4ef93a0cdee60c942c6e3579f1a028c769d69b24c8910a9aa60331"
+    },
+    {
+      "path": "windows-first-recovery-failure/cookie-owner-final-owning-recovery.json",
+      "bytes": 1262,
+      "sha256": "e6a0801c556b2b5a678cf7d1fc01b7e900dfdba410dbbea089c9844d385b4668"
+    },
+    {
+      "path": "windows-first-recovery-failure/cookie-owner-final-recovery-driver.log",
+      "bytes": 489,
+      "sha256": "81823eda2c5c26e2f4b0f9f4beca8aa7681c8e9a7cffd27d272319b6153470de"
+    },
+    {
+      "path": "windows-first-recovery-failure/run-cookie-owning-recovery.py",
+      "bytes": 3310,
+      "sha256": "d0a8bdf66255fb06a99c892126146998acc95643bbcc16bbc28cde4901dbd8be"
+    },
+    {
+      "path": "windows-initial-owning-failure/assist-native-cookie-owner-final-owned.ps1",
+      "bytes": 4459,
+      "sha256": "fdff0e4d67029954b7f97e4bf9c25542692dd1987e0af83f3347065394993664"
+    },
+    {
+      "path": "windows-initial-owning-failure/assist-native-cookie-owner-final-shipping.log",
+      "bytes": 235,
+      "sha256": "6ca26f6ca7feddea31076c3b813ff54f4d7d4e9e19bcb8634b686ec224394f6d"
+    },
+    {
+      "path": "windows-initial-owning-failure/cookie-owner-final-launch.json",
+      "bytes": 1314,
+      "sha256": "721c73d3c3ee401fcc5b022fa0c337a262c17639b773d84b80bf7029bdeeca7b"
+    },
+    {
+      "path": "windows-initial-owning-failure/cookie-owner-final-owning-driver.log",
+      "bytes": 479,
+      "sha256": "2c11d4ccc462050dd92007cf6b87b9162a34560acbd54aed1249836d5fcad26d"
+    },
+    {
+      "path": "windows-initial-owning-failure/native-cookie-owner-final-owning-source-verification.json",
+      "bytes": 122,
+      "sha256": "a674981a7cf4f50b80a083ec0a077fa98284d3c5aaf42d0c71549cd9864043f1"
+    },
+    {
+      "path": "windows/apply-cookie-owner-final.py",
+      "bytes": 3336,
+      "sha256": "94bb1f2ab93e49da12f23bee854abfa3da80d0d9ebfdcdfb2a7814e1c888b0a5"
+    },
+    {
+      "path": "windows/assist-native-cookie-owner-final-owned.ps1",
+      "bytes": 4459,
+      "sha256": "fdff0e4d67029954b7f97e4bf9c25542692dd1987e0af83f3347065394993664"
+    },
+    {
+      "path": "windows/assist-native-cookie-owner-final-restored-cpp.log",
+      "bytes": 2946,
+      "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+    },
+    {
+      "path": "windows/assist-native-cookie-owner-final-restored-owned.ps1",
+      "bytes": 4630,
+      "sha256": "cadebb99e1f3c18a7ff592dd761b844c67c2a1b6ff380b56eb495d92251cd9db"
+    },
+    {
+      "path": "windows/assist-native-cookie-owner-final-restored-shipping.log",
+      "bytes": 1584,
+      "sha256": "9788c491ae78db63ccbf5cc2cbfd7c50646268ecd55b3ddbcef8e89f8d252e36"
+    },
+    {
+      "path": "windows/cookie-dependency-missing.json",
+      "bytes": 1185180,
+      "sha256": "83118f4bcd4ef93a0cdee60c942c6e3579f1a028c769d69b24c8910a9aa60331"
+    },
+    {
+      "path": "windows/cookie-dependency-restore-inputs.json",
+      "bytes": 2115381,
+      "sha256": "5480cf718300fa5110920b723204342aafd92a195ce05420e816ed3ee96cfdb2"
+    },
+    {
+      "path": "windows/cookie-owner-final-core-driver.log",
+      "bytes": 1319,
+      "sha256": "87cedf2254c7fcd48042c9045831ad21e61b3b9a64126122350a86ef4c99f467"
+    },
+    {
+      "path": "windows/cookie-owner-final-launch.json",
+      "bytes": 1314,
+      "sha256": "721c73d3c3ee401fcc5b022fa0c337a262c17639b773d84b80bf7029bdeeca7b"
+    },
+    {
+      "path": "windows/cookie-owner-final-overlay.json",
+      "bytes": 60244,
+      "sha256": "9cd7db39f70ffb6d0c2aa17955f05c7ca20ff444cb60c9c6cef93afbf8706223"
+    },
+    {
+      "path": "windows/cookie-owner-final-owning-driver.log",
+      "bytes": 479,
+      "sha256": "2c11d4ccc462050dd92007cf6b87b9162a34560acbd54aed1249836d5fcad26d"
+    },
+    {
+      "path": "windows/cookie-owner-final-owning-restored.json",
+      "bytes": 1024,
+      "sha256": "f73cef0098fbb2159ac8b3a02822548a2d4b762ca4ad30adf8c8b29a6b8b7844"
+    },
+    {
+      "path": "windows/cookie-owner-final-owning-source-hashes.json",
+      "bytes": 59635,
+      "sha256": "ea441e949137dace5d8c8562b03731f30f1a84c30f1fb7a143a38509bc06ed22"
+    },
+    {
+      "path": "windows/cookie-owner-final-restored-driver.log",
+      "bytes": 731,
+      "sha256": "ea24c20aa6b578e84bfbeabe76f232464113d3422b1b89349f41b0777bf7912f"
+    },
+    {
+      "path": "windows/cookie-owner-final-restored-owning-source-hashes.json",
+      "bytes": 59635,
+      "sha256": "ea441e949137dace5d8c8562b03731f30f1a84c30f1fb7a143a38509bc06ed22"
+    },
+    {
+      "path": "windows/current-cpp-consumers-reverified.json",
+      "bytes": 1925,
+      "sha256": "c50a02fbad8b090826ebff94948b9fd38c7515903760b43094c1f81f1e9136c9"
+    },
+    {
+      "path": "windows/inspect-cookie-dependencies.py",
+      "bytes": 701,
+      "sha256": "d4b0a858beb2e481be688c063ff3573f23c4a3cfecb2ead0a0369050d698dc86"
+    },
+    {
+      "path": "windows/inspect-cookie-dependencies2.py",
+      "bytes": 935,
+      "sha256": "fd2760a1cbbf6b7c65446079abdd729860bf48b82d715d0c61801d49bbe23b49"
+    },
+    {
+      "path": "windows/inspect-cookie-owner-final-archives.py",
+      "bytes": 2202,
+      "sha256": "12c20110620c2ff300eb384629f9aa63a45eb0cfbb2d77382e5b549b2c33df80"
+    },
+    {
+      "path": "windows/inspect-cookie-owner-final-restored-archives.py",
+      "bytes": 2220,
+      "sha256": "5ff1f2175edf8209ab8d6d727b5f18366f0a3dac49596e1410f10bf7f96879d6"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-all-targets.log",
+      "bytes": 986,
+      "sha256": "bf78af868676716e0cb01fe5c18e48c47c75a4d3271c7690d769d48b60ff1d6c"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-build-user.log",
+      "bytes": 146,
+      "sha256": "d3829e02c31af677d6d0f2f4920f842d5090690688772ef1257ce7ac585a9793"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-capi.log",
+      "bytes": 13765,
+      "sha256": "516a51f05ed858243a87067e45d9c6fc4b75bb1da6497772021d48ab595f3509"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-focused.log",
+      "bytes": 1632,
+      "sha256": "4aeb3740f5813aa3e30e60a2f8a22e822b056d7aaf410557fae0fe6dd7a330eb"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-full.log",
+      "bytes": 771172,
+      "sha256": "f75555282b9089230508d70a4568d1f01ad6a001ebee0f8b7f599c4879043691"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-gates.json",
+      "bytes": 1528,
+      "sha256": "6e0eb7cc2e11fa2d372ef9b07cdf61da382685f3bf825c577608b4ed52c92e24"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-gates.ps1",
+      "bytes": 3336,
+      "sha256": "ac70690ec1203bb550a1fe7aad916c16f321a093daabd6f3bf6b662dedc63b7c"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-integration.log",
+      "bytes": 1865,
+      "sha256": "662de08d6617af639deafbc7f3917323ed7d2ee39dfb0cfe6492c08c0d1eb705"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-observer-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-ordinary-0.log",
+      "bytes": 55142,
+      "sha256": "f19367b3c06bc5b7786dc19ec6fa7c273e1efe447b323687b377b6da651ec8c1"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-ordinary-2.log",
+      "bytes": 57655,
+      "sha256": "f2276f476c76ab205137355d88c0f2088fa96e2c1b990cf496779cc5ea5443ef"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-ordinary-outcomes.json",
+      "bytes": 1428,
+      "sha256": "1776caf68407877d9a9c5bab2fd27bc209d15295133c960c87816279a74bd82d"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-owning-source-identities.json",
+      "bytes": 60316,
+      "sha256": "eb07776fb957c0716e3e3c91b14f9f2608bff12ab198adba0b46f2c2a4704769"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-owning-source-verification.json",
+      "bytes": 122,
+      "sha256": "a674981a7cf4f50b80a083ec0a077fa98284d3c5aaf42d0c71549cd9864043f1"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-prior-services.log",
+      "bytes": 2356,
+      "sha256": "bde89f8f8913e9d139f35c09c599f0314f0fac6731bc9a1a48a26bb666b617c7"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-restored-after-artifacts-stderr.log",
+      "bytes": 72,
+      "sha256": "2461b00c8697c4189b2de92ca6fb05b5d72273c78a0a47b1ce4e83ccca077b70"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-restored-after-artifacts.jsonl",
+      "bytes": 130191,
+      "sha256": "5c07da6d79937d621cb7aaaf52635c3f17746639a634532c16777b9477170f81"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-restored-owning-archive-hashes.json",
+      "bytes": 51115,
+      "sha256": "606b8f3bebaad7bc6f6f48a22c36b753232dfd4b94fd5d095e54d8848a3698fc"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-restored-owning-source-identities.json",
+      "bytes": 60316,
+      "sha256": "2de57e8c78199b7427d0f8022683c182984d3899ccd1fc2c258d778d814e2092"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-restored-owning-source-verification.json",
+      "bytes": 122,
+      "sha256": "a674981a7cf4f50b80a083ec0a077fa98284d3c5aaf42d0c71549cd9864043f1"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-source-verification.json",
+      "bytes": 834,
+      "sha256": "54dc434d0fc4e06bb66a59e591f4c16d832f9e67755da20014cd4aa7d40cd1d6"
+    },
+    {
+      "path": "windows/native-cookie-owner-final-verified-gates.json",
+      "bytes": 2738,
+      "sha256": "68bd84ab74128e82e555b2eed178b843c92e8672c5e9d38137a261cddbcfb5bb"
+    },
+    {
+      "path": "windows/native-secure-capture-current-cpp-verification.json",
+      "bytes": 1935,
+      "sha256": "d4074f012e867b757ab954a8d8f267eba7357a08d18cb1413d28799e1f87143b"
+    },
+    {
+      "path": "windows/run-cookie-owner-final-atomic.py",
+      "bytes": 5464,
+      "sha256": "f119f1bcb80f287e0f580f318ceb55f80eb2ece02fb1a8c4c57f49445ab9ab24"
+    },
+    {
+      "path": "windows/run-cookie-owner-final-observations.py",
+      "bytes": 1501,
+      "sha256": "17ae807e281d4c9fe4bf03ef844b673c4f82387901d639694b839c32f31a92a4"
+    },
+    {
+      "path": "windows/run-cookie-owning-restored.py",
+      "bytes": 3430,
+      "sha256": "3c7fd4437d0e0b8cbd471811d115fdc76c10f7cf628d0311bfdbaf8716e72832"
+    },
+    {
+      "path": "windows/verify-cookie-owner-final-owning-sources.py",
+      "bytes": 1188,
+      "sha256": "7e4e3729852508505ffe72a3d2cee1d44905d82008f618e97483c48f15c33691"
+    },
+    {
+      "path": "windows/verify-cookie-owner-final-restored-owning-sources.py",
+      "bytes": 1206,
+      "sha256": "df939e9ab23bfd4fff7800a9516fc783ad23d2b7f9e14d20a52a0c3ef175f24c"
+    },
+    {
+      "path": "windows/verify-current-cpp-consumers.py",
+      "bytes": 1051,
+      "sha256": "604de83d4e0fbccb8748c3437339fe9191d319f234e7cc78b0398f88d7afab88"
+    }
+  ]
+}

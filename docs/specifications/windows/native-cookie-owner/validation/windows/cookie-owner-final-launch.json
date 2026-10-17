@@ -1,0 +1,29 @@
+{
+  "pid": 7808,
+  "utc": "2026-10-17T19:10:58.193879+00:00",
+  "state": "failed",
+  "base": "8b038b528d8cd88e44e5ebd672ef14e365c480a5",
+  "scope": "native source/base/config verification, unchanged observer, core and retained owning carrier",
+  "child-pid": 5668,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\assist-native-cookie-owner-final-owned.ps1"
+  ],
+  "core-exit-code": 0,
+  "full-library": [
+    [
+      7263,
+      5,
+      2,
+      0
+    ]
+  ],
+  "owning-exit-code": 101,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-cookie-owner-final-atomic.py\", line 84, in main\n    require(code == 0, 'native ' + stage + ' driver did not complete: ' + str(code))\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-cookie-owner-final-atomic.py\", line 27, in require\n    raise ValueError(text)\nValueError: native owning driver did not complete: 101\n",
+  "completed-utc": "2026-10-17T19:28:49.092503+00:00"
+}

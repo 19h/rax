@@ -1,0 +1,14 @@
+error: failed to load source for dependency `linux-loader`
+
+Caused by:
+  unable to update https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555
+
+Caused by:
+  failed to update replaced source https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555
+
+Caused by:
+  failed to parse manifest at `C:\Windows\Temp\assist-native-rax-20261010\assist-dependencies\async-task-4.7.1\Cargo.toml`
+
+Caused by:
+  no targets specified in the manifest
+  either src/lib.rs, src/main.rs, a [lib] section, or [[bin]] section must be present

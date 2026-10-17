@@ -1,0 +1,172 @@
+{
+  "utc": "2026-10-17T19:13:52.010544+00:00",
+  "source-parent": "8b038b528d8cd88e44e5ebd672ef14e365c480a5",
+  "scope": "native cookie ownership measurements and retained first invalid-image diagnosis only; fixed-core validation is separate",
+  "files": [
+    {
+      "path": "native-cookie-owner.cpp",
+      "bytes": 9844,
+      "sha256": "84bd3ec255fa747f84c22150e8254f544379bdbf6bc53ce7d245ddd3593f9a7a"
+    },
+    {
+      "path": "native-cookie-owner-profiles.ps1",
+      "bytes": 2129,
+      "sha256": "e32bea37c8917a31718943ffd7170b69005d8733ccbd8506ec848e1a24c20c9c"
+    },
+    {
+      "path": "run-cookie-owner-atomic.py",
+      "bytes": 1502,
+      "sha256": "7914bc92cc809976aa04e3c1a473467c4a9f336c0af7f612a9d536af694aae49"
+    },
+    {
+      "path": "inspect-cookie-owner-producers.py",
+      "bytes": 5498,
+      "sha256": "6ca0c6a3e446699711d4603a91833eca8316ec1af305dd3d0c7a8e99e46db8a1"
+    },
+    {
+      "path": "native-cookie-owner-outcomes.json",
+      "bytes": 1150,
+      "sha256": "f93f71f61dfc8570600f7ac97cadc776391a13891fce462c304f3b0d876e3dc0"
+    },
+    {
+      "path": "native-cookie-owner-identities.json",
+      "bytes": 14002,
+      "sha256": "020aafba61ccecbb1c4a4e9c88dd1ad5cfc6520727b78564cdea8bdeb9ac18ba"
+    },
+    {
+      "path": "cookie-owner-native-launch.json",
+      "bytes": 591,
+      "sha256": "46aa5f036c292f0c36d181bddbeb56bff6e54bad87323e1ea42be07a3e62f6d6"
+    },
+    {
+      "path": "cookie-owner-native-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "probe-suspended-native-cookie.py",
+      "bytes": 6308,
+      "sha256": "4caa839b36585e3b32d312de69905ae4b60fa97eedc3a42ab316c6d8173cd2d7"
+    },
+    {
+      "path": "suspended-native-cookie-state.json",
+      "bytes": 1095,
+      "sha256": "ef2ba6217569548243c013dd970ef89af89732913e7e1422ec9c618c7bcbf310"
+    },
+    {
+      "path": "native-cookie-owner-arm64.log",
+      "bytes": 1185,
+      "sha256": "6751b07b52a6b79b0a4d2b5ff7367a7c31e58e19baaead9a52377ef6ab7c9504"
+    },
+    {
+      "path": "native-cookie-owner-arm64-build.log",
+      "bytes": 25,
+      "sha256": "d1b767bf530e68bbbf502256af11f6d30000ad31c0e5a2fc1c452e795cd5e7d6"
+    },
+    {
+      "path": "native-cookie-owner-x64.log",
+      "bytes": 1177,
+      "sha256": "3601fbd63c1f8a61a61e91854b76668a468b34f532c479377176b6061968df8e"
+    },
+    {
+      "path": "native-cookie-owner-x64-build.log",
+      "bytes": 25,
+      "sha256": "d1b767bf530e68bbbf502256af11f6d30000ad31c0e5a2fc1c452e795cd5e7d6"
+    },
+    {
+      "path": "native-cookie-owner-x86.log",
+      "bytes": 1177,
+      "sha256": "6e9dcac3ef5e345b0175b1014299c5845d5ddd73de739dc02cdd8dd2c304266c"
+    },
+    {
+      "path": "native-cookie-owner-x86-build.log",
+      "bytes": 25,
+      "sha256": "d1b767bf530e68bbbf502256af11f6d30000ad31c0e5a2fc1c452e795cd5e7d6"
+    },
+    {
+      "path": "native-cookie-owner-x86-laa.log",
+      "bytes": 1193,
+      "sha256": "3b7f0f5e2600f622bb7345edc75b39c7ed3175b3a6cfe023c469eb3baf184b92"
+    },
+    {
+      "path": "native-cookie-owner-x86-laa-build.log",
+      "bytes": 25,
+      "sha256": "d1b767bf530e68bbbf502256af11f6d30000ad31c0e5a2fc1c452e795cd5e7d6"
+    },
+    {
+      "path": "initial-loader/native-loader-first-error.rs",
+      "bytes": 19890,
+      "sha256": "8a6e9c274f43ea41990158295b175918e27a2ab69636e4cc18e1f297d5cbb6f6"
+    },
+    {
+      "path": "initial-loader/native-loader-first-error-input-identities.json",
+      "bytes": 807,
+      "sha256": "55757679825ce72642b62c87400a1270bbb5443a65c16e4d4dd47515f40dd78b"
+    },
+    {
+      "path": "initial-loader/native-loader-first-error-outcome.json",
+      "bytes": 553,
+      "sha256": "7f6219313e5d6dc5cd8248abbb82c80b68406c175a01219c600b2a88dc40449f"
+    },
+    {
+      "path": "initial-loader/native-loader-first-error-whoami.log",
+      "bytes": 93554,
+      "sha256": "b7d64943c4a6660e42709a5a6124c1779332c38ed0142835e891997bc0185eb7"
+    },
+    {
+      "path": "initial-loader/loader-cookie-first-status-analysis.json",
+      "bytes": 4828,
+      "sha256": "a7bea8e124d463c4f3b00a10c0588e3233cf8ddbb523674f5aab5c6e6af866f4"
+    },
+    {
+      "path": "initial-loader/ntdll-event-code-provenance.json",
+      "bytes": 3969,
+      "sha256": "1e7406b24cf2814bd74633703b8fb6feaed785e69ab9b92ff12447219ece7d5a"
+    },
+    {
+      "path": "suspended-cookie-probe-v1.py",
+      "bytes": 6301,
+      "sha256": "0d5c5515246249764d98bcb53e2479d8f989bea6b094fb2dbd5454fb9656b99d"
+    },
+    {
+      "path": "suspended-cookie-probe-v1-failure.json",
+      "bytes": 482,
+      "sha256": "a1246dd02b83cfc6b9891c78cf8f8dc1c614f762f3b53ec28b78feb5eb4b8b33"
+    },
+    {
+      "path": "final-code-inputs.json",
+      "bytes": 583,
+      "sha256": "5399d2bc1fc5c7d7fb49c355cfdecef0d3bd0ce8ca4d199ace0c4b29aa5ec06c"
+    },
+    {
+      "path": "final-owning-source-hashes.json",
+      "bytes": 59635,
+      "sha256": "ea441e949137dace5d8c8562b03731f30f1a84c30f1fb7a143a38509bc06ed22"
+    },
+    {
+      "path": "primary/load-config.html",
+      "bytes": 58989,
+      "sha256": "5b648427614e43bbbfc6589b5795afe918e41a37649ed1ed205ce4e66a0296e6"
+    },
+    {
+      "path": "primary/process-flags.html",
+      "bytes": 60994,
+      "sha256": "3fe78cd6e8456a879853f7d159327e6e6997332008e9db8558ac0c5d40d0a9a7"
+    },
+    {
+      "path": "primary/read-memory.html",
+      "bytes": 53210,
+      "sha256": "187730f37c4159aa732f9968190efafe9b534742e03e5ab1869e0e1be91e87a0"
+    },
+    {
+      "path": "primary/sources.json",
+      "bytes": 1222,
+      "sha256": "a2f811386fbc45e964b4fc7fe8e89627af42168753dbb28bb9ea17f38b6d9051"
+    },
+    {
+      "path": "primary/write-memory.html",
+      "bytes": 53563,
+      "sha256": "e9099ac7bfbf024e7bddd154384c07f11e2948ea960a39d6387a52f6a2e7ca42"
+    }
+  ]
+}

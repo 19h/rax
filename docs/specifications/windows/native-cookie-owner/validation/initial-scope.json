@@ -1,0 +1,56 @@
+{
+  "utc": "2026-10-16T02:40:55.257876+00:00",
+  "baseline": "b0c3f8d374bc85068479f6b59f9ab24b0fe78827",
+  "scope": "isolated cookie-ownership semantic group; no console-owner or CLI overlays; publication follows pending groups and combined validation",
+  "owned": [
+    "src/user/windows/loader/mod.rs",
+    "src/user/windows/loader/cookie_tests.rs"
+  ],
+  "compiled-inputs": [
+    {
+      "path": "src/user/windows/loader/mod.rs",
+      "bytes": 51956,
+      "sha256": "f551654690b4f01183b65864a16ded434eef092c2b93db772c6edc7b948949f8"
+    },
+    {
+      "path": "src/user/windows/loader/cookie_tests.rs",
+      "bytes": 5742,
+      "sha256": "80911682d49d83a6242634ddcd586bbb2a5fd6a52dc1e9142eef1b4f5281c77f"
+    }
+  ],
+  "assumptions": [
+    {
+      "id": "K1",
+      "assumption": "Native RTL owns cookie seeding after the initial suspended state",
+      "basis": "actual ARM64 and x64 native baseline/default-restoration start; preseed and zero fail C000007B; x86 pending",
+      "dependent-result": "defer seeding when an actual selected native runtime exists",
+      "stress-test": "x86,x64,ARM64; custom/default/zero; DLL and root common initializer; malformed spans; no HLE entropy consumed",
+      "falsification-probe": "native x86 suspended image already initialized or actual installed loader needs a preseeded cookie",
+      "status": "retained"
+    }
+  ],
+  "rax-change-surface": {
+    "Loader/native process": "affected: same common cookie initializer called by executable and DLL mapping; validation remains before deferral",
+    "CPU/decoder/SMIR/JIT": "unaffected: no changed instructions, models, lowering or execution adapters",
+    "Memory/MMU": "unaffected implementation; fixed-width existing read validation retained",
+    "C ABI": "unaffected layout/signatures; process startup behavior changes through existing entrypoints",
+    "Targets/platforms": "affected shared loader compiles all hosts; synthetic all-ABI regressions on each; positive installed runtime runs require Windows",
+    "Tests/docs": "affected focused cookie tests and actual native oracle; engineering documentation pending"
+  },
+  "assist-change-surface": {
+    "Plugin/UI/lane/agent/prompt/tool-schema/permissions/dispatch/mesh/transport/persistence/update": "unaffected: no Assist implementation contract changed",
+    "Optional engines/targets/tests": "affected: paired RAX pin and scoped owning checks required before publication"
+  },
+  "bounded-findings": [
+    {
+      "impact": "high",
+      "finding": "Owner and CLI semantic groups remain uncommitted and native validation is running",
+      "blocks": "cookie publication must follow their final parents and combined checks"
+    },
+    {
+      "impact": "high",
+      "finding": "Ordinary Win32 process completion remains unproved; a cookie-frontier advance is not a completed application",
+      "blocks": "full original objective"
+    }
+  ]
+}

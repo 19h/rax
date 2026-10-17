@@ -1,0 +1,9 @@
+{
+  "utc": "2026-10-16T02:03:26.185879+00:00",
+  "scope": "read-only first STATUS_INVALID_IMAGE_FORMAT history and bounded event references; retained published NLS/b0c baseline; no parameter/register/service override",
+  "program-sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6",
+  "executable-sha256": "896bdbc1ae701c1f980c99fdd6561a5ce306826246956242df1533f63e7d10c9",
+  "controller-exit-code": 0,
+  "seconds": 23.00599979099934,
+  "log-sha256": "b7d64943c4a6660e42709a5a6124c1779332c38ed0142835e891997bc0185eb7"
+}

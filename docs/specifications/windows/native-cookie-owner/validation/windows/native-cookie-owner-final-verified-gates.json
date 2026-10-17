@@ -1,0 +1,102 @@
+{
+  "gates": [
+    {
+      "gate": "focused",
+      "command": "cargo.exe test --locked --offline --no-default-features --lib user::windows::loader::cookie_tests -- --nocapture",
+      "exit-code": 0,
+      "log": "native-cookie-owner-final-focused.log",
+      "sha256": "4aeb3740f5813aa3e30e60a2f8a22e822b056d7aaf410557fae0fe6dd7a330eb"
+    },
+    {
+      "gate": "prior-services",
+      "command": "cargo.exe test --locked --offline --no-default-features --lib native_console_owner -- --nocapture",
+      "exit-code": 0,
+      "log": "native-cookie-owner-final-prior-services.log",
+      "sha256": "bde89f8f8913e9d139f35c09c599f0314f0fac6731bc9a1a48a26bb666b617c7"
+    },
+    {
+      "gate": "all-targets",
+      "command": "cargo.exe check --locked --offline --no-default-features --all-targets",
+      "exit-code": 0,
+      "log": "native-cookie-owner-final-all-targets.log",
+      "sha256": "bf78af868676716e0cb01fe5c18e48c47c75a4d3271c7690d769d48b60ff1d6c"
+    },
+    {
+      "gate": "integration",
+      "command": "cargo.exe test --locked --offline --no-default-features --test user_windows --test user_windows_memory -- --nocapture",
+      "exit-code": 0,
+      "log": "native-cookie-owner-final-integration.log",
+      "sha256": "662de08d6617af639deafbc7f3917323ed7d2ee39dfb0cfe6492c08c0d1eb705"
+    },
+    {
+      "gate": "capi",
+      "command": "cargo.exe test --locked --offline --no-default-features -p rax-capi -- --nocapture --test-threads=1",
+      "exit-code": 0,
+      "log": "native-cookie-owner-final-capi.log",
+      "sha256": "516a51f05ed858243a87067e45d9c6fc4b75bb1da6497772021d48ab595f3509"
+    },
+    {
+      "gate": "full",
+      "command": "cargo.exe test --locked --offline --no-default-features --lib -- --nocapture --test-threads=1",
+      "exit-code": 101,
+      "log": "native-cookie-owner-final-full.log",
+      "sha256": "f75555282b9089230508d70a4568d1f01ad6a001ebee0f8b7f599c4879043691"
+    }
+  ],
+  "summaries": {
+    "focused": [
+      [
+        3,
+        0,
+        0,
+        7267
+      ]
+    ],
+    "prior-services": [
+      [
+        7,
+        0,
+        0,
+        7263
+      ]
+    ],
+    "all-targets": [],
+    "integration": [
+      [
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        0,
+        0,
+        0
+      ]
+    ],
+    "capi": [
+      [
+        168,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "full": [
+      [
+        7263,
+        5,
+        2,
+        0
+      ]
+    ]
+  },
+  "scope": "published console-owner parent plus exact two cookie inputs; no ordinary success inference"
+}

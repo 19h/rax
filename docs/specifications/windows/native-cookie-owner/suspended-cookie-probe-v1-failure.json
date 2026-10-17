@@ -1,0 +1,8 @@
+{
+  "utc": "2026-10-17T19:10:18.276707+00:00",
+  "source-sha256": "0d5c5515246249764d98bcb53e2479d8f989bea6b094fb2dbd5454fb9656b99d",
+  "exit-code": 1,
+  "error": "TypeError: region.base was None for the initial free region at address0",
+  "cleanup": "native finally block terminated/reaped child and closed both handles before original TypeError propagated",
+  "scope": "no completed module-state measurement; corrected zero-address conversion permits a new bounded observation"
+}
