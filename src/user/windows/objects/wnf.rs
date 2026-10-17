@@ -29,6 +29,15 @@ fn levels(mask: u32) -> u32 {
 }
 
 impl Objects {
+    /// Primary subject captured with the selected immutable native catalog.
+    /// An absent capture is distinct from a non-AppContainer subject.
+    pub(crate) fn primary_token_app_container(&self) -> Option<bool> {
+        self.wnf_subscriptions
+            .catalog
+            .as_ref()
+            .and_then(Catalog::primary_app_container)
+    }
+
     pub(crate) fn select_wnf_catalog(&mut self, catalog: Catalog) {
         self.wnf_subscriptions.catalog = Some(catalog);
     }

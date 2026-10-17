@@ -1,0 +1,12 @@
+{"utc": "2026-10-17T19:42:47.647070+00:00", "base": "aa9bcc5651164ade3265e124de9a6d4f778f561f", "changed": {"path": "src/user/windows/process/sched/tests/services_tests/token_query_tests.rs", "previous-sha256": "3b48c7f0fc30fd4926b9ad8154d5469c70b9840b952e5bdd6747e759e0c6fc84", "sha256": "be6673ee7897c1e8c69b8a364f3fc0fb3aa3d70e6002e0c10c8f72e3e6ad9061", "bytes": 13611}, "selected-source-count": 313, "scope": "Windows-only test module reference; production code unchanged and original observations retained"}
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+gate focused exit=0
+gate subject exit=0
+gate cookie exit=0
+gate all-targets exit=0
+gate integration exit=0
+gate capi exit=0
+gate full exit=101

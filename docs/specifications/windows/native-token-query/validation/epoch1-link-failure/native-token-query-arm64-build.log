@@ -1,0 +1,3 @@
+native-token-query.cpp
+native-token-query.obj : error LNK2019: unresolved external symbol __imp_OpenProcessToken referenced in function main
+native-token-query-arm64.exe : fatal error LNK1120: 1 unresolved externals

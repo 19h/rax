@@ -1,0 +1,822 @@
+{
+  "utc": "2026-10-17T19:55:51.403536+00:00",
+  "parent": "aa9bcc5651164ade3265e124de9a6d4f778f561f",
+  "selected-owning-inputs": 313,
+  "files": [
+    {
+      "path": "collect-token-archives.py",
+      "bytes": 3338,
+      "sha256": "09545dcf0cfbd126225869c3f66170a5b4df2168ec5d50a59a2e6cab252f797d"
+    },
+    {
+      "path": "collect-token-validation.py",
+      "bytes": 5132,
+      "sha256": "df223d71b314978f2a08d4caac7f4ad0a43f2f68966a88927c2925362a0d3398"
+    },
+    {
+      "path": "collect-token-when-complete.py",
+      "bytes": 2828,
+      "sha256": "ee4d4de24d21629ad9df5af58f3f8eec7278739e4400492b04b79317127c5a6b"
+    },
+    {
+      "path": "compiled-source/epoch1/docs/specifications/windows/native-token-query/cases.json",
+      "bytes": 352754,
+      "sha256": "9a99714f9bb74d517ef19dab82e9b216ea8ed4fc2ddf7ff75634a6828f5a788e"
+    },
+    {
+      "path": "compiled-source/epoch1/src/user/windows/dll/native.rs",
+      "bytes": 18364,
+      "sha256": "661204483a9ca6e0fbd6f969a2537845292d3e213d2f51886dcda9963282fe33"
+    },
+    {
+      "path": "compiled-source/epoch1/src/user/windows/dll/native/token.rs",
+      "bytes": 2066,
+      "sha256": "ac7364cbb5d407bac5d347142ca4522d55489b0c50862b1b62c1bd0bdb996981"
+    },
+    {
+      "path": "compiled-source/epoch1/src/user/windows/dll/native/token_query.rs",
+      "bytes": 2674,
+      "sha256": "7e90e164d4c676a92b8e83f5b917b3a4bf874970368c187fc2a41afe8751a515"
+    },
+    {
+      "path": "compiled-source/epoch1/src/user/windows/objects.rs",
+      "bytes": 27516,
+      "sha256": "5be289156de5ee9d9901ab514ea88c94adc7c66b135a5b405f67dfe557fad4db"
+    },
+    {
+      "path": "compiled-source/epoch1/src/user/windows/objects/wnf.rs",
+      "bytes": 7045,
+      "sha256": "23e1d2afcf2277173e25c58c1aace3adab3ac6dd7982a16376d75dfb30874c61"
+    },
+    {
+      "path": "compiled-source/epoch1/src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47694,
+      "sha256": "2ea2b4ebafefd1ec2b733a85d1e7ef33c283fc356f215bb245d9e70d06a8b130"
+    },
+    {
+      "path": "compiled-source/epoch1/src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+      "bytes": 13618,
+      "sha256": "3b48c7f0fc30fd4926b9ad8154d5469c70b9840b952e5bdd6747e759e0c6fc84"
+    },
+    {
+      "path": "compiled-source/epoch1/src/user/windows/sync.rs",
+      "bytes": 36119,
+      "sha256": "1b6209a4ac12b5757f85a3115b6ab15efb9570a51c996a3d622ce70f13b9c6bf"
+    },
+    {
+      "path": "compiled-source/epoch1/src/user/windows/wnf/catalog.rs",
+      "bytes": 7776,
+      "sha256": "13b2d6c1071092e0c8f8b90cc8deb2e76cd49aee5c8b241874bcc2dcaa50eaa2"
+    },
+    {
+      "path": "compiled-source/epoch1/src/user/windows/wnf/tests.rs",
+      "bytes": 7017,
+      "sha256": "be80295c53d8125aad461246b57ba50b679986680bb8e9341ce4e5c406555325"
+    },
+    {
+      "path": "compiled-source/epoch2/docs/specifications/windows/native-token-query/cases.json",
+      "bytes": 352754,
+      "sha256": "9a99714f9bb74d517ef19dab82e9b216ea8ed4fc2ddf7ff75634a6828f5a788e"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/dll/native.rs",
+      "bytes": 18364,
+      "sha256": "661204483a9ca6e0fbd6f969a2537845292d3e213d2f51886dcda9963282fe33"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/dll/native/token.rs",
+      "bytes": 2066,
+      "sha256": "ac7364cbb5d407bac5d347142ca4522d55489b0c50862b1b62c1bd0bdb996981"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/dll/native/token_query.rs",
+      "bytes": 2674,
+      "sha256": "7e90e164d4c676a92b8e83f5b917b3a4bf874970368c187fc2a41afe8751a515"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/objects.rs",
+      "bytes": 27516,
+      "sha256": "5be289156de5ee9d9901ab514ea88c94adc7c66b135a5b405f67dfe557fad4db"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/objects/wnf.rs",
+      "bytes": 7045,
+      "sha256": "23e1d2afcf2277173e25c58c1aace3adab3ac6dd7982a16376d75dfb30874c61"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47694,
+      "sha256": "2ea2b4ebafefd1ec2b733a85d1e7ef33c283fc356f215bb245d9e70d06a8b130"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+      "bytes": 13611,
+      "sha256": "be6673ee7897c1e8c69b8a364f3fc0fb3aa3d70e6002e0c10c8f72e3e6ad9061"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/sync.rs",
+      "bytes": 36119,
+      "sha256": "1b6209a4ac12b5757f85a3115b6ab15efb9570a51c996a3d622ce70f13b9c6bf"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/wnf/catalog.rs",
+      "bytes": 7776,
+      "sha256": "13b2d6c1071092e0c8f8b90cc8deb2e76cd49aee5c8b241874bcc2dcaa50eaa2"
+    },
+    {
+      "path": "compiled-source/epoch2/src/user/windows/wnf/tests.rs",
+      "bytes": 7017,
+      "sha256": "be80295c53d8125aad461246b57ba50b679986680bb8e9341ce4e5c406555325"
+    },
+    {
+      "path": "completed-artifact-copy.json",
+      "bytes": 495,
+      "sha256": "1da4bc67143edfadece5e2e8320f75a1996e93006ccf8708f89e2d762e62d0d4"
+    },
+    {
+      "path": "epoch1-code-inputs.json",
+      "bytes": 2836,
+      "sha256": "78175119e0b73eaad1cf904d6ef969d2e8e672435fabe9408fb95b3744122038"
+    },
+    {
+      "path": "epoch1-link-failure/native-token-query-arm64-build.log",
+      "bytes": 219,
+      "sha256": "d874777be0bfc4d363d1bde930d5fd993fde2646f57bc6efb7dfc44899513c69"
+    },
+    {
+      "path": "epoch1-link-failure/native-token-query-profiles.ps1",
+      "bytes": 2122,
+      "sha256": "7510b735770342ef3db32ab22133ef23ec6e5f472085c12312e3ae080aa7e3e5"
+    },
+    {
+      "path": "epoch1-link-failure/run-token-query-atomic.py",
+      "bytes": 1502,
+      "sha256": "921f4e2b9a6fd65bcaa87e6d47759450131e2d81bc647bc729392e7aed2b713a"
+    },
+    {
+      "path": "epoch1-link-failure/token-query-native-driver.log",
+      "bytes": 460,
+      "sha256": "5b6b4804a12ce7be9f32b54a75a226cd15bf2bb3e648239a51ea813df44a3b07"
+    },
+    {
+      "path": "epoch1-link-failure/token-query-native-launch.json",
+      "bytes": 589,
+      "sha256": "bf63f9657d3d7f04a6df83a4b7b5e48fa3d1427e5bfe6ea0722c1ac59f1b2e5f"
+    },
+    {
+      "path": "epoch2-change.json",
+      "bytes": 819,
+      "sha256": "3f2d357faed073ca24fa274af6d1cc3da8beab631a39f1039f0d7abf7e2ccd1b"
+    },
+    {
+      "path": "epoch2-code-inputs.json",
+      "bytes": 2836,
+      "sha256": "aad7df50b4d4e1451323e0bf16b8b15dc4529c4dd66c691cf77c3e509abd1869"
+    },
+    {
+      "path": "epoch2-owning-source-hashes.json",
+      "bytes": 60214,
+      "sha256": "3ef91c645ceb950dd2dd33cea981f699ba8e41c4d672c7bc2dcc5f9b23e94e47"
+    },
+    {
+      "path": "epoch2-token-open-failure/native-token-query-v2-arm64.log",
+      "bytes": 63,
+      "sha256": "0021f916e34203da6e9063dc80a40a74452cb574f4b0fa5b429a2b1659c8f72d"
+    },
+    {
+      "path": "epoch2-token-open-failure/native-token-query-v2-profiles.ps1",
+      "bytes": 2156,
+      "sha256": "598c404cd26a44d98ba8b60f382529417a19abf9ef575ac45cbefbd4940f7b96"
+    },
+    {
+      "path": "epoch2-token-open-failure/native-token-query.cpp",
+      "bytes": 7357,
+      "sha256": "725b28447e189be40c1bbc3191f5b3d1d100371d0a1d715e3d92d5c850e40c85"
+    },
+    {
+      "path": "epoch2-token-open-failure/token-query-v2-native-driver.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9"
+    },
+    {
+      "path": "epoch2-token-open-failure/token-query-v2-native-launch.json",
+      "bytes": 595,
+      "sha256": "a4031c959e42f354ef353a9cfe4ad806716fa10a05080a42448cc0d3cfe7303b"
+    },
+    {
+      "path": "latest-published-cpp-consumer-identities.json",
+      "bytes": 2907,
+      "sha256": "fd207fda21c92a934fb8ab615d555ae80b118836b3bd0b4d6e708b07a79cb46f"
+    },
+    {
+      "path": "linux-final-owning-archive-identities.json",
+      "bytes": 61477,
+      "sha256": "43c8de16862e3bc5c04d9e0aab56068034ad8928e4ed24b886961c1676e77657"
+    },
+    {
+      "path": "linux-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "a3c65d8b01452cb90af7ef850f5047cd49ad54e16af6ce44c238ced2cadb5007"
+    },
+    {
+      "path": "linux-owning-artifacts.log",
+      "bytes": 159806,
+      "sha256": "8d426d4e32f3dd122d50d08e4207d6291c9ae65ccaa0f2a92543e43d56843642"
+    },
+    {
+      "path": "linux-owning-commands.json",
+      "bytes": 5342,
+      "sha256": "5d9baabe0b08ff571a7f03f620ef24d48ab427075dcacf0ed6c117cebe4c8920"
+    },
+    {
+      "path": "linux-owning-cpp.log",
+      "bytes": 1623,
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+    },
+    {
+      "path": "linux-owning-epoch1/linux-final-owning-archive-identities.json",
+      "bytes": 61477,
+      "sha256": "8f83d22d18fabeebf3b6804a9e4365847771901fb380106fb29a309055a81c4f"
+    },
+    {
+      "path": "linux-owning-epoch1/linux-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "4c9f3b7463671b5754a37b580c570deac46baf9ca70ca7339e3020d77e4a7ed6"
+    },
+    {
+      "path": "linux-owning-epoch1/linux-owning-artifacts.log",
+      "bytes": 159806,
+      "sha256": "3a6ad548cf3e5533fa91761fc1e3b3372c7815e8f3a9f3e949b98501a7c09498"
+    },
+    {
+      "path": "linux-owning-epoch1/linux-owning-commands.json",
+      "bytes": 5287,
+      "sha256": "a5abd4a17fb63f077cc2fd3c36a953a3f5c7af6d3e9a971dd7e2fb5fffce2f47"
+    },
+    {
+      "path": "linux-owning-epoch1/linux-owning-cpp.log",
+      "bytes": 1623,
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+    },
+    {
+      "path": "linux-owning-epoch1/linux-owning-gates.json",
+      "bytes": 6001,
+      "sha256": "1efb4afd9e09ee1c9f757de77fb12261ef18621b3cc9bd39ebb7f6f778a7ec70"
+    },
+    {
+      "path": "linux-owning-epoch1/linux-owning-shipping.log",
+      "bytes": 415,
+      "sha256": "2d8c033aecbe7b9944f06cd4763d5cf8b59a736631f3b9aaca78d424971891df"
+    },
+    {
+      "path": "linux-owning-gates.json",
+      "bytes": 6053,
+      "sha256": "af5ac51c47659906142745de8963e51d26b0b1251c6535f2a360981c2d8bf30a"
+    },
+    {
+      "path": "linux-owning-shipping.log",
+      "bytes": 415,
+      "sha256": "db38d9ae8a50f032ad6c8aa118783ca58d1848a74b5a800174b8782919a4a878"
+    },
+    {
+      "path": "linux-token-epoch2-all-targets.log",
+      "bytes": 309,
+      "sha256": "1571bb4236b7f503686120d8c0045ab3a922989b4a52ceddc77da95c167fb0eb"
+    },
+    {
+      "path": "linux-token-epoch2-cookie.log",
+      "bytes": 652,
+      "sha256": "c5f06637cd1be1e829790ffa21916da4d2977b51b048297f8b111fabce07c819"
+    },
+    {
+      "path": "linux-token-epoch2-focused.log",
+      "bytes": 799,
+      "sha256": "da3c1adeb22c24fd4b3ea8cb849bf01631b7f284fc7574fb35856cc15cdd8dc5"
+    },
+    {
+      "path": "linux-token-epoch2-gates.json",
+      "bytes": 4405,
+      "sha256": "0cebe7a632dce28c0378ee0795dadb5499c33551bb611650174e4d88d2375d5b"
+    },
+    {
+      "path": "linux-token-epoch2-subject.log",
+      "bytes": 371,
+      "sha256": "05e36401751f595d6f46a25bbb147536f7269697c57fbda6dd75f3eabda1947b"
+    },
+    {
+      "path": "linux-token-final-all-targets.log",
+      "bytes": 309,
+      "sha256": "c55fc3f5640f3e896a5d0c5f878e94a720a6d1c18e034c96dfb1346927802994"
+    },
+    {
+      "path": "linux-token-final-capi.log",
+      "bytes": 12490,
+      "sha256": "81701c460fcbed0546d24e1d329f84e63ff21bc21f089467896c68615e813f94"
+    },
+    {
+      "path": "linux-token-final-cookie.log",
+      "bytes": 652,
+      "sha256": "c5f06637cd1be1e829790ffa21916da4d2977b51b048297f8b111fabce07c819"
+    },
+    {
+      "path": "linux-token-final-focused.log",
+      "bytes": 799,
+      "sha256": "befb1a91e6f506c748d8b7543ef0cecc2d6e964d8f85e9946b3b6e728dd280cf"
+    },
+    {
+      "path": "linux-token-final-gates.json",
+      "bytes": 7712,
+      "sha256": "fccb031752ee2020779ac6046366d86194c5daad1ceaa350ae63e5e7b7a635e8"
+    },
+    {
+      "path": "linux-token-final-lib.log",
+      "bytes": 797174,
+      "sha256": "b42f582792e7e6f0a7ddf26a18ce1ec64bf25726add94ddff07b22f8c888334d"
+    },
+    {
+      "path": "linux-token-final-subject.log",
+      "bytes": 371,
+      "sha256": "4d1446aff97803cacb9e4c26192985a3afb66a1fdd84249066d7304500e3ec39"
+    },
+    {
+      "path": "linux-token-final-windows.log",
+      "bytes": 35805,
+      "sha256": "73a3a076c5530fc0f0a801363b4fe20e5fb0e25f6107921209035260045ee589"
+    },
+    {
+      "path": "macos-final-owning-archive-identities.json",
+      "bytes": 62863,
+      "sha256": "0a4d0c15b83643938f2dc6b0cc07a98fbe763627642514efb07ff5cc5fa26e6f"
+    },
+    {
+      "path": "macos-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "ee0bd6f799a082109e113469865e95d1076af09d8880e03ba3002adf23c58037"
+    },
+    {
+      "path": "macos-owning-artifacts.log",
+      "bytes": 131080,
+      "sha256": "df0861842ff3933d6f015c84632d6ff18e493be9047d2de2d20fd48188c2e064"
+    },
+    {
+      "path": "macos-owning-build.log",
+      "bytes": 33678,
+      "sha256": "7c7eeefc71a8656943a2d772aace0229e17735ba5b026fe425cccae545d34557"
+    },
+    {
+      "path": "macos-owning-commands.json",
+      "bytes": 3823,
+      "sha256": "24f4189280d6a2a2c5b36ec827b26a9f8080d4b307121cdc141a50800c31ba8f"
+    },
+    {
+      "path": "macos-owning-ctest.log",
+      "bytes": 1273,
+      "sha256": "71c257eb6212a9521f48cb2581a0835a01d7e562c1c9f64d7799c5d503ca99e1"
+    },
+    {
+      "path": "macos-owning-epoch1/macos-final-owning-archive-identities.json",
+      "bytes": 62863,
+      "sha256": "43a6e8a9fea273bb008315650a532964041bf647a306dbdb8b36c7aa16114392"
+    },
+    {
+      "path": "macos-owning-epoch1/macos-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "bb441bc7a03b21f9bc68d6f7ecc45cc1eaa2c137c9add1d78f07d842006d900d"
+    },
+    {
+      "path": "macos-owning-epoch1/macos-owning-artifacts.log",
+      "bytes": 131080,
+      "sha256": "3d9c120adf1371e3b8d7ad399e6af4a4af8decab48b39f4a89e453af7a6b3d60"
+    },
+    {
+      "path": "macos-owning-epoch1/macos-owning-build.log",
+      "bytes": 320983,
+      "sha256": "053d7a4fd572ea9dbcefa2217616afac7769cb502b865361456c81f7e06bcc4e"
+    },
+    {
+      "path": "macos-owning-epoch1/macos-owning-commands.json",
+      "bytes": 3816,
+      "sha256": "88d2eb5398525ad87cf204f1d0bb472c6142112def742583f17c2d8751571cb6"
+    },
+    {
+      "path": "macos-owning-epoch1/macos-owning-ctest.log",
+      "bytes": 1273,
+      "sha256": "ce531d871c40ba29ae1253ffd85a6fd624c7461d55964494e62918a07c77e248"
+    },
+    {
+      "path": "macos-owning-epoch1/macos-owning-gates.json",
+      "bytes": 4904,
+      "sha256": "b03b7a4f7dd5fc48413fb7504522080941f6247eb4d88760928f71e729faeb8c"
+    },
+    {
+      "path": "macos-owning-epoch1/macos-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "macos-owning-epoch1/macos-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "macos-owning-gates.json",
+      "bytes": 4910,
+      "sha256": "cac9815d19032e3d779a8a9918841dfe69d60faa73338fb20bc875e156f0ce71"
+    },
+    {
+      "path": "macos-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "macos-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "macos-token-epoch2-all-targets.log",
+      "bytes": 467,
+      "sha256": "f1a2905e02add262e77dc493b8a602a958b9fbab5326be17cc9818e6f80573ef"
+    },
+    {
+      "path": "macos-token-epoch2-cookie.log",
+      "bytes": 737,
+      "sha256": "a7d67b3f4e29d2517b1fc0abd6beb6a7671f3b4d71894f21284aa2fcedfa76de"
+    },
+    {
+      "path": "macos-token-epoch2-focused.log",
+      "bytes": 1042,
+      "sha256": "c740a6b15b963bf871f3122fd2d130c9f9efbf83a5a9ee30967c1f88019b9e00"
+    },
+    {
+      "path": "macos-token-epoch2-gates.json",
+      "bytes": 1607,
+      "sha256": "53de0119a87c8d7a9be0d50347cb82673ad5d9d27506fd81b5a4abbe23f975de"
+    },
+    {
+      "path": "macos-token-epoch2-subject.log",
+      "bytes": 456,
+      "sha256": "b18078f79ab093b0b1e662789ccc831ac108a05e2ab075d54098d13eb3489b9a"
+    },
+    {
+      "path": "macos-token-final-all-targets.log",
+      "bytes": 455,
+      "sha256": "07e632af5d77f55a7918e328895a89bf99fcb5dc54c4b070b7070eb76cfa5211"
+    },
+    {
+      "path": "macos-token-final-capi.log",
+      "bytes": 12649,
+      "sha256": "631e210d248746fcd4eb48538eedd0a59e317989dde007db1d0a52f87eefd2a2"
+    },
+    {
+      "path": "macos-token-final-cookie.log",
+      "bytes": 737,
+      "sha256": "a7d67b3f4e29d2517b1fc0abd6beb6a7671f3b4d71894f21284aa2fcedfa76de"
+    },
+    {
+      "path": "macos-token-final-focused.log",
+      "bytes": 764,
+      "sha256": "f6b2a634d901b56f330aeb0b6f8cf322e259ab6b0d8a5ac9b302089309c37815"
+    },
+    {
+      "path": "macos-token-final-gates.json",
+      "bytes": 2851,
+      "sha256": "67dc29c046e395b4436195728c81ce39eeedafc9a6935d71a798d17130056e5b"
+    },
+    {
+      "path": "macos-token-final-lib.log",
+      "bytes": 797997,
+      "sha256": "1ea82753cec5ae53c3eb58d704f335d2ef871499586ce7b424d7997d24e2b4c9"
+    },
+    {
+      "path": "macos-token-final-subject.log",
+      "bytes": 456,
+      "sha256": "b18078f79ab093b0b1e662789ccc831ac108a05e2ab075d54098d13eb3489b9a"
+    },
+    {
+      "path": "macos-token-final-windows.log",
+      "bytes": 36047,
+      "sha256": "eff22453bb524db324ae78d40b7dd89e76494c4b4339c2edb2dbeebf7c4f6664"
+    },
+    {
+      "path": "macos-token-preliminary-v1-compile-failure-result.json",
+      "bytes": 111,
+      "sha256": "29b9d4471fabca732ed3dc0cfd54a9504a877f6c80efc31cf9f3b40a8850a1c9"
+    },
+    {
+      "path": "macos-token-preliminary-v1-compile-failure.log",
+      "bytes": 2057,
+      "sha256": "bc9b44c1c2975b2e9fbecf2064653cd961a118261e5782bcc6bd8c2e43e6bab1"
+    },
+    {
+      "path": "macos-token-preliminary-v2-result.json",
+      "bytes": 119,
+      "sha256": "c3a928120fb8faefd44058448af97dc19620ad7ffbc8e4343b89ce6d6bb42be7"
+    },
+    {
+      "path": "macos-token-preliminary-v2.log",
+      "bytes": 764,
+      "sha256": "c75eb22027e132a04c6a96c91d83efa8d24165c590d5178c55a78f886eb07abc"
+    },
+    {
+      "path": "owning-linux-cpp-build.py",
+      "bytes": 1522,
+      "sha256": "a0d9f75e831bd3585d3e009b94e8e3f2744b137e646c157c70a7ad7950373b56"
+    },
+    {
+      "path": "owning-validation-boundary.json",
+      "bytes": 326,
+      "sha256": "f8d5a99723eeb723979f45776323ea56b7be46d5bd0406fbbb77cea244121159"
+    },
+    {
+      "path": "preliminary-token-code.json",
+      "bytes": 1639,
+      "sha256": "6aa6349bc9b5acd7fadaf444c1e8a3c5491357f58628bd294dacb8974722b24d"
+    },
+    {
+      "path": "preliminary-token-v2-code.json",
+      "bytes": 1805,
+      "sha256": "58e58f611551ada81ecbf569f3386740db372b9289d464f12b905d3cf111b0af"
+    },
+    {
+      "path": "prepare-token-epoch2-native.py",
+      "bytes": 2052,
+      "sha256": "1d1394fa8aec2977bc1f6d7a77283fd5ce72ec5599bebd6296ac63cb796971f4"
+    },
+    {
+      "path": "prepare-token-final.py",
+      "bytes": 2183,
+      "sha256": "73dd30c0ad4ec124c029c4ee9db99aed0517a82a504568d76ce7e5525bb42999"
+    },
+    {
+      "path": "run-owning-gates.py",
+      "bytes": 736,
+      "sha256": "d57d89ac46a192373fd91c44c41d099835797f7f16ffbe88541e79d990f0ee5e"
+    },
+    {
+      "path": "run-token-epoch2-unix.py",
+      "bytes": 2682,
+      "sha256": "b53c36bcd2e09dab3bb28673561cfff7d338f98f749eac97f5eb77aa46bfe8aa"
+    },
+    {
+      "path": "run-token-final-unix.py",
+      "bytes": 2501,
+      "sha256": "52c440d8fbbd39699c81c2574eb7ad4a243a383c07268681988b3d370008e58d"
+    },
+    {
+      "path": "stress-token-validation.py",
+      "bytes": 3522,
+      "sha256": "7f9a8fb635070b29060578b29b47f45ae711ebd4fe8dd2a393ff6565f08323c5"
+    },
+    {
+      "path": "token-scope.json",
+      "bytes": 3915,
+      "sha256": "549d4e83526993c5afa96501dbc80ca7f72a33655cfca70671489bfb9b6a82ee"
+    },
+    {
+      "path": "token-validation-stress-results.json",
+      "bytes": 560,
+      "sha256": "9ee341f9986263eea1d565025e6ad9d9c8a87834d9a0e768a2a47575fc5c5b72"
+    },
+    {
+      "path": "unix-source-equivalence.json",
+      "bytes": 508,
+      "sha256": "fa001dbc68ca1d39515fccc95e9211b648434673e983027a46bf4486ddceef89"
+    },
+    {
+      "path": "windows/apply-token-query-epoch2.py",
+      "bytes": 1673,
+      "sha256": "b4e1137edd5cc71f65c30b4417872e488e821c14fcd12e6138c2b92d23c9727f"
+    },
+    {
+      "path": "windows/apply-token-query-final.py",
+      "bytes": 3310,
+      "sha256": "56019bf61432cae2e9bd54d0ca97a7391ba1d28da75242a3396e56e78a0e5d84"
+    },
+    {
+      "path": "windows/assist-native-token-query-epoch2-cpp.log",
+      "bytes": 2946,
+      "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+    },
+    {
+      "path": "windows/assist-native-token-query-epoch2-owned.ps1",
+      "bytes": 4459,
+      "sha256": "253cc8e4957013650c0288673aeb8baa735c8adb2242fa236fad898ac3b4c934"
+    },
+    {
+      "path": "windows/assist-native-token-query-epoch2-shipping.log",
+      "bytes": 1584,
+      "sha256": "e5d1282fe1cfd3d9ef787ab5ad4612bbda95e883163aad19ebe5f2cdd67b7a31"
+    },
+    {
+      "path": "windows/current-cpp-consumers-reverified.json",
+      "bytes": 1925,
+      "sha256": "c50a02fbad8b090826ebff94948b9fd38c7515903760b43094c1f81f1e9136c9"
+    },
+    {
+      "path": "windows/inspect-token-query-epoch2-archives.py",
+      "bytes": 2202,
+      "sha256": "dc2c36eeb07cc1d4860ca1c07fec198943dd80a02b58d31dff242d828b27dd4e"
+    },
+    {
+      "path": "windows/native-secure-capture-current-cpp-verification.json",
+      "bytes": 1935,
+      "sha256": "eeacff38d4d3f000491aaae32d7ed49746f72bfdc63a158167bda82c72427e90"
+    },
+    {
+      "path": "windows/native-token-query-epoch2-after-artifacts-stderr.log",
+      "bytes": 72,
+      "sha256": "f4403412cb20dc7d8a0a94c08c9c8853e4bac9b3e8489158834f30512311ed97"
+    },
+    {
+      "path": "windows/native-token-query-epoch2-after-artifacts.jsonl",
+      "bytes": 130191,
+      "sha256": "0da83ac20b409410f8ce413514145485f3cff8e3a9f381c17ccf866e41d86a22"
+    },
+    {
+      "path": "windows/native-token-query-epoch2-all-targets.log",
+      "bytes": 986,
+      "sha256": "e0b10aafe49ea2dfabfc4a95741d325577914740d340812a64a62aa8541cf5e5"
+    },
+    {
+      "path": "windows/native-token-query-epoch2-capi.log",
+      "bytes": 13764,
+      "sha256": "cce0c457649491d276881f1db3ce9f70aae55cf75a64635f68a1f058fbf1c25c"
+    },
+    {
+      "path": "windows/native-token-query-epoch2-cookie.log",
+      "bytes": 1558,
+      "sha256": "258f9d50299fb5f67a6b261990d76298bcf7ec39fee806b16dd7c57bf07adbfa"
+    },
+    {
+      "path": "windows/native-token-query-epoch2-focused.log",
+      "bytes": 1705,
+      "sha256": "da4e487b21142c12c232168125a7b55143db73396d7976c0db5ad613c407dbb4"
+    },
+    {
+      "path": "windows/native-token-query-epoch2-full.log",
+      "bytes": 771739,
+      "sha256": "7140c1eb67e50300c0beb055dbf1bf7e7d28cd54588b7e2cd31ac8bcf5b633ad"
+    },
+    {
+      "path": "windows/native-token-query-epoch2-gates.json",
+      "bytes": 1766,
+      "sha256": "c53aec7d07770c4e25447cf7a2a156effa515ec397c291f81ed44297acb4b01c"
+    },
+    {
+      "path": "windows/native-token-query-epoch2-gates.ps1",
+      "bytes": 1743,
+      "sha256": "b1fe0f3edd12659cf5295988839426148e75824a12132e5192303162a081f92e"
+    },
+    {
+      "path": "windows/native-token-query-epoch2-integration.log",
+      "bytes": 1865,
+      "sha256": "32a5b3fadb3f236ad354d924902b6b52463f1e8a095bec1a49aad4656a48b2bb"
+    },
+    {
+      "path": "windows/native-token-query-epoch2-owning-archive-hashes.json",
+      "bytes": 51610,
+      "sha256": "204ab707451e8fc1b2f36b0f233d5ba16900ae8d74c618529659fb99240e0ef7"
+    },
+    {
+      "path": "windows/native-token-query-epoch2-owning-source-identities.json",
+      "bytes": 60910,
+      "sha256": "701663c8a17bf9deb41621b4d23a7560540fb2f717a523439a35029d8693af8e"
+    },
+    {
+      "path": "windows/native-token-query-epoch2-owning-source-verification.json",
+      "bytes": 122,
+      "sha256": "2b95268e0d2bfdf559247d86e09935b91fbc7950a78c94de6b989823a879d253"
+    },
+    {
+      "path": "windows/native-token-query-epoch2-source-verification.json",
+      "bytes": 557,
+      "sha256": "30b7fdba4c63a4cf0ed5dc3e4e7045696700589a24528efa12624ba9aa25f252"
+    },
+    {
+      "path": "windows/native-token-query-epoch2-subject.log",
+      "bytes": 1277,
+      "sha256": "143ec567efb4b44f5460cfa8a6e9fe80019de8e0943c34c9769183ea8b1483d2"
+    },
+    {
+      "path": "windows/native-token-query-epoch2-verified-gates.json",
+      "bytes": 3157,
+      "sha256": "8d8a211a18d20a3202dd2f9534e3c981d97a5f5c488b38135c005819b171b70a"
+    },
+    {
+      "path": "windows/native-token-query-final-build-user-artifacts.jsonl",
+      "bytes": 90587,
+      "sha256": "fc3cc313b8246816b91da785220e6170f4483d9a4b857087d6c7552790760359"
+    },
+    {
+      "path": "windows/native-token-query-final-build-user.log",
+      "bytes": 146,
+      "sha256": "c33f1175b290fbfffeebf6e8228eac3a991167329dd17e4f7b65fc367fc2f934"
+    },
+    {
+      "path": "windows/native-token-query-final-focused.log",
+      "bytes": 4025,
+      "sha256": "e575e611ac9c83a5759fbb1f26838024f49a934ca37df3133565cf22c261ea00"
+    },
+    {
+      "path": "windows/native-token-query-final-gates.json",
+      "bytes": 219,
+      "sha256": "0d59077b76925d1d38320baf6fabbd641235aaaac9152cb3d3219eb0d7fe2947"
+    },
+    {
+      "path": "windows/native-token-query-final-gates.ps1",
+      "bytes": 3367,
+      "sha256": "ecb5d8ba450414cff9ee06caf5d9d2f472053bc596de4c90707b1e3a02396ec1"
+    },
+    {
+      "path": "windows/native-token-query-final-observer-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "windows/native-token-query-final-ordinary-0.log",
+      "bytes": 57279,
+      "sha256": "a8a43be654fcb2007b2587cdaf22937137d9fc662cbd132a56000da9eda24b92"
+    },
+    {
+      "path": "windows/native-token-query-final-ordinary-2.log",
+      "bytes": 60080,
+      "sha256": "23e6852dbe7e68833611326bb21b4ddc51c2519c893995eadca8f4b96957e3bc"
+    },
+    {
+      "path": "windows/native-token-query-final-ordinary-outcomes.json",
+      "bytes": 1425,
+      "sha256": "7c5d3c54baf5c81d02fece9a721ea2ede4cd5e63f85978f57637128265b78a5b"
+    },
+    {
+      "path": "windows/native-token-query-final-source-verification.json",
+      "bytes": 3208,
+      "sha256": "c0bef9f41aa7266e7fd9c1121d26692c10d879f372cf75c721a0f40cd18a6e3f"
+    },
+    {
+      "path": "windows/run-token-query-epoch2-atomic.py",
+      "bytes": 5547,
+      "sha256": "c432cd493e8c94ddb8ba2f4ea4b1084b0ed487b20307bd9b822879c2002449f0"
+    },
+    {
+      "path": "windows/run-token-query-final-atomic.py",
+      "bytes": 5539,
+      "sha256": "da17425e0f23831d3add5381b786757681198cef6869137eefa2258a784cb105"
+    },
+    {
+      "path": "windows/run-token-query-final-observations.py",
+      "bytes": 1498,
+      "sha256": "113a83a9cca4161edaaca7b73cecc0c657545f3e9025726b6cdb012e862cc5e3"
+    },
+    {
+      "path": "windows/token-query-epoch2-core-driver.log",
+      "bytes": 905,
+      "sha256": "74d0b60f69f2e3e5f3c2965592177c3286703b88988c072b744b7f33c2ebe344"
+    },
+    {
+      "path": "windows/token-query-epoch2-delta.json",
+      "bytes": 14376,
+      "sha256": "f6e1f134e7681959fd8938478331417e125d46365ffa8addf6266d7a724bf6ef"
+    },
+    {
+      "path": "windows/token-query-epoch2-launch.json",
+      "bytes": 725,
+      "sha256": "c1210e81b512abde564f66c32674677339dbd15668a3c2a04adc808a46050206"
+    },
+    {
+      "path": "windows/token-query-epoch2-owning-driver.log",
+      "bytes": 713,
+      "sha256": "f98099f460f071f3f9e9f3b9d67c6d9bd1fa504788abf4fc6d72e7fa5603ee9b"
+    },
+    {
+      "path": "windows/token-query-epoch2-owning-source-hashes.json",
+      "bytes": 60214,
+      "sha256": "3ef91c645ceb950dd2dd33cea981f699ba8e41c4d672c7bc2dcc5f9b23e94e47"
+    },
+    {
+      "path": "windows/token-query-final-core-driver.log",
+      "bytes": 3219,
+      "sha256": "f2275a0489ecf6b2b0236892f1e9faa120ac63b9f7ae47b1bf4826d8f1958199"
+    },
+    {
+      "path": "windows/token-query-final-launch.json",
+      "bytes": 1193,
+      "sha256": "dd8383087548dfcf77a32de8db093a328440bccebdb4bfb5adb3e245ae3907be"
+    },
+    {
+      "path": "windows/token-query-final-overlay.json",
+      "bytes": 589731,
+      "sha256": "d36b0c2860becfaac5cf6dfea5ebf089c92a538154f813176410046dfd4fa981"
+    },
+    {
+      "path": "windows/token-query-final-owning-source-hashes.json",
+      "bytes": 60214,
+      "sha256": "39bacbaaee851a3599c4112f4892d41582d4ed7f1f84b7eefe4d55356e3a6c65"
+    },
+    {
+      "path": "windows/verify-token-query-epoch2-owning-sources.py",
+      "bytes": 1188,
+      "sha256": "8f0c36812ad07a35f3199e11cb46743d497df0347aed5601aa1591cd90dadf3e"
+    }
+  ]
+}

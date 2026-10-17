@@ -1,0 +1,27 @@
+[
+  {
+    "case": "raw-corruption",
+    "rejected": true,
+    "exception": "windows/native-token-query-epoch2-full.log"
+  },
+  {
+    "case": "empty-native-gates",
+    "rejected": true,
+    "exception": "seven native gates"
+  },
+  {
+    "case": "forged-zero-failures",
+    "rejected": true,
+    "exception": "native full count"
+  },
+  {
+    "case": "incomplete-owning-driver",
+    "rejected": true,
+    "exception": "native driver completion"
+  },
+  {
+    "case": "missing-final-unix-gates",
+    "rejected": true,
+    "exception": "four final Unix gates"
+  }
+]

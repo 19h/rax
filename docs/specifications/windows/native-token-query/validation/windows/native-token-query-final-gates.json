@@ -1,0 +1,6 @@
+﻿{
+    "gate":  "focused",
+    "command":  "cargo.exe test --locked --offline --no-default-features --lib token_query -- --nocapture",
+    "exit-code":  101,
+    "log":  "native-token-query-final-focused.log"
+}

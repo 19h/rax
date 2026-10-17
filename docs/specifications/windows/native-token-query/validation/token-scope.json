@@ -1,0 +1,88 @@
+{
+  "utc": "2026-10-17T19:28:50.306850+00:00",
+  "base": "8b038b528d8cd88e44e5ebd672ef14e365c480a5",
+  "owned": [
+    "src/user/windows/wnf/catalog.rs",
+    "src/user/windows/wnf/tests.rs",
+    "src/user/windows/objects.rs",
+    "src/user/windows/sync.rs",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/token.rs",
+    "src/user/windows/dll/native/token_query.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+    "src/user/windows/objects/wnf.rs"
+  ],
+  "dependency": "fast-forward to forthcoming cookie commit before compilation/final validation; dirty owned files do not overlap cookie delta",
+  "assumptions": [
+    {
+      "id": "T1",
+      "assumption": "All usable native runtimes retain the creator token AppContainer flag from the same WNF subject snapshot.",
+      "basis": "wnf::snapshot always calls installed::subject; capture uses TokenInformationClass29 with exact4-byte validation.",
+      "stress-test": "true,false,absent snapshot;empty catalog;clone;no new host acquisition at query time",
+      "falsification-probe": "native runtime reaches query withoutcaptured flag, or flag differs fromsamecaptured subject",
+      "status": "retained"
+    },
+    {
+      "id": "T2",
+      "assumption": "Current/effective token pseudo-handles reference the captured primary subject in the existing no-impersonation model.",
+      "basis": "Native1070-row matrices and prior measured NtOpenThreadToken no-impersonation contract.",
+      "stress-test": "thread token-5,invalid/type/access failures,bothdestinations,guards,aliases,oversizedlengths acrossall4profiles",
+      "falsification-probe": "independent native probe or strict installed-leaf execution disagrees",
+      "status": "retained"
+    }
+  ],
+  "bounded-findings": [
+    {
+      "impact": "high",
+      "finding": "General token creation,impersonation and other query classes remain unimplemented;this doesnotcomplete full Windows execution."
+    },
+    {
+      "impact": "medium",
+      "finding": "Native controls cover non-AppContainer primary subjects;truebit serialization mustbe traced fromdocumentedDWORDandretainedsnapshotratherthan claimednative true-token measurement."
+    }
+  ],
+  "initial-identities": [
+    {
+      "path": "src/user/windows/wnf/catalog.rs",
+      "sha256": "b1987ca8d7f25b994ce075afd52234107241d3c9867d6ca8ea0319c995aeb838"
+    },
+    {
+      "path": "src/user/windows/wnf/tests.rs",
+      "sha256": "5558b2ece13374256f93e1f253d6b0b11530e6acb5c493b4339a1c813c2d414e"
+    },
+    {
+      "path": "src/user/windows/objects.rs",
+      "sha256": "79eb005db20ab7f2c15dec644e31804b2c01ee1f911fb490b39c57ea61af8a03"
+    },
+    {
+      "path": "src/user/windows/sync.rs",
+      "sha256": "e57b159134a1a050a4cf2807876aef26c93db058c2e98c366ccddaf2dc5a6f21"
+    },
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "sha256": "8025a71c2999dd5f94d4c48cc6623be8ebb8dcfd4e37923a893eb12623853408"
+    },
+    {
+      "path": "src/user/windows/dll/native/token.rs",
+      "sha256": "a7304d91ddc08b442251b37fc81b4e9fa2260b52b75f3161e2f0f1be98d471f6"
+    },
+    {
+      "path": "src/user/windows/dll/native/token_query.rs",
+      "sha256": null
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "sha256": "4ff902e96a9a500faa44af0e62ae3e03e4183372539eee696637f57f0d2135d4"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+      "sha256": null
+    },
+    {
+      "path": "src/user/windows/objects/wnf.rs",
+      "sha256": "d34e89ffae9fd774bb354f1bedb714c5720659710f517cd9beb76838b6dd120a"
+    }
+  ],
+  "preliminary-compilation": "macOS focused adapter checks may run on published console-owner parent while the independent cookie embedding check completes; final full/owning gates require the cookie parent"
+}

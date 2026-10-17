@@ -36,6 +36,9 @@ mod section_open_tests;
 #[path = "services_tests/thread_token_tests.rs"]
 mod thread_token_tests;
 
+#[path = "services_tests/token_query_tests.rs"]
+mod token_query_tests;
+
 #[path = "services_tests/scheduler_slot_tests.rs"]
 mod scheduler_slot_tests;
 

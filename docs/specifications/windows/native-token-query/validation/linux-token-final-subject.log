@@ -1,0 +1,8 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.30s
+     Running unittests src/lib.rs (/target/debug/deps/rax-094640fccc97af0f)
+
+running 1 test
+test user::windows::wnf::tests::primary_token_property_is_retained_independently_of_catalog_records ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7837 filtered out; finished in 0.01s
+

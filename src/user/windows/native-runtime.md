@@ -1951,3 +1951,48 @@ establishes an ordinary Windows process exit. The full process-userland
 objective remains incomplete.
 
 [Native measurements, assumptions and validation](../../../docs/specifications/windows/native-cookie-owner/README.md).
+
+
+## Captured primary-token AppContainer query (2026-10-17 UTC)
+
+`NtQueryInformationToken` class 29 now returns the primary subject's captured
+AppContainer Boolean. Native WNF selection retains that property even for an
+empty catalog; absence of a capture remains explicit unsupported. Process and
+effective token pseudo-handles share the current no-impersonation subject.
+Guest-owned primary-token objects require TOKEN_QUERY (0x0008); they contain no
+host HANDLE. Other token information classes and general impersonation remain
+separate unsupported boundaries.
+
+Four native producers record 7,320 calls on one Windows 10.0.29683 ARM64 kernel.
+The shared adapter preserves the measured complete-span/ReturnLength probe
+order, guard consumption, handle/type/access precedence, short-buffer length
+and overlapping DWORD publication. Portable replay covers all four profiles;
+real installed ARM64, x86 and x86-LAA stubs replay 5,490 calls. Installed x64
+guest-runtime acquisition on ARM64 is not established by this evidence.
+
+| Host | Full library passed/failed/ignored | Token/subject/cookie focused | C API |
+| --- | --- | --- | --- |
+| macOS | 7842/0/2 | 2/1/3 | 168 |
+| Linux | 7836/0/2 | 2/1/3 | 168 |
+| Windows ARM64 | 7267/5/2 | 3/1/3 | 168 |
+
+All-target checks pass on all three hosts, Unix Windows integration runs 544
+cases, and native Windows memory integration runs 4. The five Windows failures
+remain the same four BZHI and one FP16 lowerer failures. The original native
+test compile failure and the corrected Windows-only module reference remain
+separate source epochs. The second epoch receives fresh Unix focused/compile
+checks; unchanged Unix compiled items also have the complete first-epoch runs.
+
+The unchanged ordinary observer now reaches NtAccessCheck service 0 at
+0x180001000, at turns2,135,461 and2,137,823 for ARM64 smoke and whoami. Neither
+is a successful guest exit. RAX C ABI 1.11.0 and empty core features are unchanged.
+
+[Native measurements, assumptions and validation](../../../docs/specifications/windows/native-token-query/README.md).
+
+The final scoped Assist carriers pass on all three hosts, each with313 bound
+source inputs, empty core features and two complete archive walks. macOS runs
+seven CTests and two scans; Linux and Windows each run five C++ consumers.
+The retained carrier public ABI minor184 versus current186 remains explicit;
+these results do not establish a whole-current-root or interactive IDA build.
+The complete evidence checker passes and rejects five controlled corruptions
+or overstatements of the recorded results.

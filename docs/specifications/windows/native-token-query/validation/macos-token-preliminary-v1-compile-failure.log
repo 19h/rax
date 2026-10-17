@@ -1,0 +1,37 @@
+   Compiling vm-memory v0.17.1 (/Users/int/Library/Caches/assist-process-emulation/native-token-query-20261017/rax-source/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-token-query-20261017/rax-source)
+error[E0609]: no field `wnf_catalog` on type `&mut windows::process::Proc`
+  --> src/user/windows/dll/native/token_query.rs:52:35
+   |
+52 |     let Some(app_container) = c.p.wnf_catalog.primary_app_container() else {
+   |                                   ^^^^^^^^^^^ unknown field
+   |
+   = note: available fields are: `arch`, `space`, `vm`, `cfg`, `native` ... and 31 others
+
+error[E0609]: no field `wnf_catalog` on type `&mut windows::process::Proc`
+  --> src/user/windows/process/sched/tests/services_tests/token_query_tests.rs:45:11
+   |
+45 |         p.wnf_catalog = crate::user::windows::wnf::tests::empty_subject_catalog(false);
+   |           ^^^^^^^^^^^ unknown field
+   |
+   = note: available fields are: `arch`, `space`, `vm`, `cfg`, `native` ... and 31 others
+
+error[E0609]: no field `wnf_catalog` on type `&mut windows::process::Proc`
+   --> src/user/windows/process/sched/tests/services_tests/token_query_tests.rs:268:15
+    |
+268 |             p.wnf_catalog = crate::user::windows::wnf::tests::empty_subject_catalog(flag);
+    |               ^^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `arch`, `space`, `vm`, `cfg`, `native` ... and 31 others
+
+error[E0609]: no field `wnf_catalog` on type `&mut windows::process::Proc`
+   --> src/user/windows/process/sched/tests/services_tests/token_query_tests.rs:284:11
+    |
+284 |         p.wnf_catalog = Default::default();
+    |           ^^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `arch`, `space`, `vm`, `cfg`, `native` ... and 31 others
+
+For more information about this error, try `rustc --explain E0609`.
+error: could not compile `rax` (lib test) due to 4 previous errors

@@ -1,0 +1,17 @@
+{
+  "pid": 8544,
+  "utc": "2026-10-17T19:17:59.309674+00:00",
+  "lock": "C:\\Windows\\Temp\\assist-native-rax-20261010\\token-query-native-driver.lock",
+  "scope": "native class29 primary/effective/thread token query validation; no RAX source mutation",
+  "child-pid": 11064,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-token-query-profiles.ps1"
+  ],
+  "exit-code": 2,
+  "completed-utc": "2026-10-17T19:18:04.080795+00:00"
+}

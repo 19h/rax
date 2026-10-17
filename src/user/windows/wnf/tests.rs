@@ -54,6 +54,22 @@ fn subject() -> Subject {
     assert!(SUBJECT.contains("handles-before=59 handles-after=59"));
     subject
 }
+
+pub(crate) fn empty_subject_catalog(app_container: bool) -> Catalog {
+    let mut selected = subject();
+    selected.app_container = app_container;
+    Catalog::selected(Vec::new(), selected).unwrap()
+}
+
+#[test]
+fn primary_token_property_is_retained_independently_of_catalog_records() {
+    assert_eq!(Catalog::default().primary_app_container(), None);
+    for flag in [false, true] {
+        let catalog = empty_subject_catalog(flag);
+        assert_eq!(catalog.primary_app_container(), Some(flag));
+        assert_eq!(catalog.clone().primary_app_container(), Some(flag));
+    }
+}
 pub(crate) fn values() -> Vec<Value> {
     let json: serde_json::Value =
         serde_json::from_str(REGISTRY.trim_start_matches('\u{feff}')).unwrap();

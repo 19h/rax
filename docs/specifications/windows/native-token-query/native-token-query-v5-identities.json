@@ -1,0 +1,104 @@
+{
+  "scope": "four producer ABIs on the same ARM64 Windows10.0.29683 kernel; all controlled subjects are primary non-AppContainer tokens; no guest implementation proof",
+  "producers": [
+    {
+      "profile": "arm64",
+      "machine": 43620,
+      "large-address-aware": true,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\token-query-v5-arm64\\native-token-query-v5.cpp",
+        "bytes": 8816,
+        "sha256": "8b15c55550e7b33b3effdf7d8847f794794b71e944c524e0e6eec3976b7b732c"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\token-query-v5-arm64\\native-token-query-v5-arm64.exe",
+        "bytes": 151040,
+        "sha256": "b8d5436e6d3fd266fdf66a09b9bf5164c980cd885b9d463624903bae9e23f01e"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\token-query-v5-arm64\\native-token-query-v5-arm64.log",
+        "bytes": 698877,
+        "sha256": "948c8d9f2ac4d6c8bc600528f2daad52eae54587cec24217a06385b4294131b0"
+      },
+      "calls": 1830,
+      "escaped-exceptions": 0,
+      "closed-handles": 3,
+      "released-arenas": 1
+    },
+    {
+      "profile": "x64",
+      "machine": 34404,
+      "large-address-aware": true,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\token-query-v5-x64\\native-token-query-v5.cpp",
+        "bytes": 8816,
+        "sha256": "8b15c55550e7b33b3effdf7d8847f794794b71e944c524e0e6eec3976b7b732c"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\token-query-v5-x64\\native-token-query-v5-x64.exe",
+        "bytes": 148480,
+        "sha256": "0fa615c419d727a6c888ac4992e9fc880a771085f7bb253c17c937775c1f62b6"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\token-query-v5-x64\\native-token-query-v5-x64.log",
+        "bytes": 699424,
+        "sha256": "053e61b259fd281a3509a0258fd089163d8c7d5dae77d726adc238cdfdb6fa81"
+      },
+      "calls": 1830,
+      "escaped-exceptions": 0,
+      "closed-handles": 3,
+      "released-arenas": 1
+    },
+    {
+      "profile": "x86",
+      "machine": 332,
+      "large-address-aware": false,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\token-query-v5-x86\\native-token-query-v5.cpp",
+        "bytes": 8816,
+        "sha256": "8b15c55550e7b33b3effdf7d8847f794794b71e944c524e0e6eec3976b7b732c"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\token-query-v5-x86\\native-token-query-v5-x86.exe",
+        "bytes": 122368,
+        "sha256": "23315c597c8ae969e7bbbed4d274d420c4c6a67d81b485984cb4572caa91085d"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\token-query-v5-x86\\native-token-query-v5-x86.log",
+        "bytes": 678904,
+        "sha256": "a0fe97dad45436d01a5318fe733a9c155bc5eb20bb8b7c9d12e9b09cc6e482f8"
+      },
+      "calls": 1830,
+      "escaped-exceptions": 0,
+      "closed-handles": 3,
+      "released-arenas": 1
+    },
+    {
+      "profile": "x86-laa",
+      "machine": 332,
+      "large-address-aware": true,
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\token-query-v5-x86-laa\\native-token-query-v5.cpp",
+        "bytes": 8816,
+        "sha256": "8b15c55550e7b33b3effdf7d8847f794794b71e944c524e0e6eec3976b7b732c"
+      },
+      "executable": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\token-query-v5-x86-laa\\native-token-query-v5-x86-laa.exe",
+        "bytes": 122368,
+        "sha256": "90926f438c4cc5a932444c4b44381cc6925c7493dbd472869ef2b673333402f3"
+      },
+      "stdout": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\token-query-v5-x86-laa\\native-token-query-v5-x86-laa.log",
+        "bytes": 678908,
+        "sha256": "5867219f0c48e41a36093fd79522f80f217962f5d117a41f04c4fe5039ec3fdf"
+      },
+      "calls": 1830,
+      "escaped-exceptions": 0,
+      "closed-handles": 3,
+      "released-arenas": 1
+    }
+  ],
+  "calls": 7320,
+  "closed-handles": 12,
+  "released-arenas": 4
+}

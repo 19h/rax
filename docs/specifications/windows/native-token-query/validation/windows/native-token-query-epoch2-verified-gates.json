@@ -1,0 +1,117 @@
+{
+  "gates": [
+    {
+      "gate": "focused",
+      "command": "cargo.exe test --locked --offline --no-default-features --lib token_query -- --nocapture",
+      "exit-code": 0,
+      "log": "native-token-query-epoch2-focused.log",
+      "sha256": "da4e487b21142c12c232168125a7b55143db73396d7976c0db5ad613c407dbb4"
+    },
+    {
+      "gate": "subject",
+      "command": "cargo.exe test --locked --offline --no-default-features --lib primary_token_property_is_retained -- --nocapture",
+      "exit-code": 0,
+      "log": "native-token-query-epoch2-subject.log",
+      "sha256": "143ec567efb4b44f5460cfa8a6e9fe80019de8e0943c34c9769183ea8b1483d2"
+    },
+    {
+      "gate": "cookie",
+      "command": "cargo.exe test --locked --offline --no-default-features --lib user::windows::loader::cookie_tests -- --nocapture",
+      "exit-code": 0,
+      "log": "native-token-query-epoch2-cookie.log",
+      "sha256": "258f9d50299fb5f67a6b261990d76298bcf7ec39fee806b16dd7c57bf07adbfa"
+    },
+    {
+      "gate": "all-targets",
+      "command": "cargo.exe check --locked --offline --no-default-features --all-targets",
+      "exit-code": 0,
+      "log": "native-token-query-epoch2-all-targets.log",
+      "sha256": "e0b10aafe49ea2dfabfc4a95741d325577914740d340812a64a62aa8541cf5e5"
+    },
+    {
+      "gate": "integration",
+      "command": "cargo.exe test --locked --offline --no-default-features --test user_windows --test user_windows_memory -- --nocapture",
+      "exit-code": 0,
+      "log": "native-token-query-epoch2-integration.log",
+      "sha256": "32a5b3fadb3f236ad354d924902b6b52463f1e8a095bec1a49aad4656a48b2bb"
+    },
+    {
+      "gate": "capi",
+      "command": "cargo.exe test --locked --offline --no-default-features -p rax-capi -- --nocapture --test-threads=1",
+      "exit-code": 0,
+      "log": "native-token-query-epoch2-capi.log",
+      "sha256": "cce0c457649491d276881f1db3ce9f70aae55cf75a64635f68a1f058fbf1c25c"
+    },
+    {
+      "gate": "full",
+      "command": "cargo.exe test --locked --offline --no-default-features --lib -- --nocapture --test-threads=1",
+      "exit-code": 101,
+      "log": "native-token-query-epoch2-full.log",
+      "sha256": "7140c1eb67e50300c0beb055dbf1bf7e7d28cd54588b7e2cd31ac8bcf5b633ad"
+    }
+  ],
+  "summaries": {
+    "focused": [
+      [
+        3,
+        0,
+        0,
+        7271
+      ]
+    ],
+    "subject": [
+      [
+        1,
+        0,
+        0,
+        7273
+      ]
+    ],
+    "cookie": [
+      [
+        3,
+        0,
+        0,
+        7271
+      ]
+    ],
+    "all-targets": [],
+    "integration": [
+      [
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        0,
+        0,
+        0
+      ]
+    ],
+    "capi": [
+      [
+        168,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "full": [
+      [
+        7267,
+        5,
+        2,
+        0
+      ]
+    ]
+  },
+  "scope": "published cookie parent plus ten token source inputs and canonical native fixture; no ordinary success inference"
+}

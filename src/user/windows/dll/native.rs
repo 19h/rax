@@ -26,6 +26,7 @@ mod symbolic_link;
 mod thread_set;
 mod timers;
 mod token;
+mod token_query;
 mod topology;
 mod trace;
 mod virtual_memory;
@@ -276,6 +277,12 @@ pub(super) static EXPORTS: &[Export] = &[
         Stdcall,
         &[Ptr, Ptr],
         performance_counter::query,
+    ),
+    Export::func(
+        "NtQueryInformationToken",
+        Stdcall,
+        &[Ptr, I32, Ptr, I32, Ptr],
+        token_query::information,
     ),
 ];
 fn status_error(c: &mut Ctx) -> ApiResult {

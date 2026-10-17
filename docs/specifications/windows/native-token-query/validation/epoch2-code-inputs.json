@@ -1,0 +1,71 @@
+{
+  "base": "aa9bcc5651164ade3265e124de9a6d4f778f561f",
+  "files": [
+    {
+      "path": "src/user/windows/wnf/catalog.rs",
+      "bytes": 7776,
+      "sha256": "13b2d6c1071092e0c8f8b90cc8deb2e76cd49aee5c8b241874bcc2dcaa50eaa2",
+      "previous-sha256": "b1987ca8d7f25b994ce075afd52234107241d3c9867d6ca8ea0319c995aeb838"
+    },
+    {
+      "path": "src/user/windows/wnf/tests.rs",
+      "bytes": 7017,
+      "sha256": "be80295c53d8125aad461246b57ba50b679986680bb8e9341ce4e5c406555325",
+      "previous-sha256": "5558b2ece13374256f93e1f253d6b0b11530e6acb5c493b4339a1c813c2d414e"
+    },
+    {
+      "path": "src/user/windows/objects.rs",
+      "bytes": 27516,
+      "sha256": "5be289156de5ee9d9901ab514ea88c94adc7c66b135a5b405f67dfe557fad4db",
+      "previous-sha256": "79eb005db20ab7f2c15dec644e31804b2c01ee1f911fb490b39c57ea61af8a03"
+    },
+    {
+      "path": "src/user/windows/sync.rs",
+      "bytes": 36119,
+      "sha256": "1b6209a4ac12b5757f85a3115b6ab15efb9570a51c996a3d622ce70f13b9c6bf",
+      "previous-sha256": "e57b159134a1a050a4cf2807876aef26c93db058c2e98c366ccddaf2dc5a6f21"
+    },
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 18364,
+      "sha256": "661204483a9ca6e0fbd6f969a2537845292d3e213d2f51886dcda9963282fe33",
+      "previous-sha256": "8025a71c2999dd5f94d4c48cc6623be8ebb8dcfd4e37923a893eb12623853408"
+    },
+    {
+      "path": "src/user/windows/dll/native/token.rs",
+      "bytes": 2066,
+      "sha256": "ac7364cbb5d407bac5d347142ca4522d55489b0c50862b1b62c1bd0bdb996981",
+      "previous-sha256": "a7304d91ddc08b442251b37fc81b4e9fa2260b52b75f3161e2f0f1be98d471f6"
+    },
+    {
+      "path": "src/user/windows/dll/native/token_query.rs",
+      "bytes": 2674,
+      "sha256": "7e90e164d4c676a92b8e83f5b917b3a4bf874970368c187fc2a41afe8751a515",
+      "previous-sha256": null
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 47694,
+      "sha256": "2ea2b4ebafefd1ec2b733a85d1e7ef33c283fc356f215bb245d9e70d06a8b130",
+      "previous-sha256": "4ff902e96a9a500faa44af0e62ae3e03e4183372539eee696637f57f0d2135d4"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+      "bytes": 13611,
+      "sha256": "be6673ee7897c1e8c69b8a364f3fc0fb3aa3d70e6002e0c10c8f72e3e6ad9061",
+      "previous-sha256": null
+    },
+    {
+      "path": "src/user/windows/objects/wnf.rs",
+      "bytes": 7045,
+      "sha256": "23e1d2afcf2277173e25c58c1aace3adab3ac6dd7982a16376d75dfb30874c61",
+      "previous-sha256": "d34e89ffae9fd774bb354f1bedb714c5720659710f517cd9beb76838b6dd120a"
+    },
+    {
+      "path": "docs/specifications/windows/native-token-query/cases.json",
+      "bytes": 352754,
+      "sha256": "9a99714f9bb74d517ef19dab82e9b216ea8ed4fc2ddf7ff75634a6828f5a788e",
+      "previous-sha256": null
+    }
+  ]
+}

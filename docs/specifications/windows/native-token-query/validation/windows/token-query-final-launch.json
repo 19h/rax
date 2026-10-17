@@ -1,0 +1,20 @@
+{
+  "pid": 7124,
+  "utc": "2026-10-17T19:37:09.515369+00:00",
+  "state": "failed",
+  "base": "aa9bcc5651164ade3265e124de9a6d4f778f561f",
+  "scope": "native source/base/config verification, unchanged observer, core and retained owning carrier",
+  "child-pid": 6832,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-token-query-final-gates.ps1"
+  ],
+  "core-exit-code": 101,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-token-query-final-atomic.py\", line 85, in main\n    require(code == 0, 'native ' + stage + ' driver did not complete: ' + str(code))\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-token-query-final-atomic.py\", line 27, in require\n    raise ValueError(text)\nValueError: native core driver did not complete: 101\n",
+  "completed-utc": "2026-10-17T19:41:38.821002+00:00"
+}

@@ -1,0 +1,19 @@
+{
+  "kind": "Windows-only test module path correction",
+  "changed-file": "src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+  "old": {
+    "path": "src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+    "bytes": 13618,
+    "sha256": "3b48c7f0fc30fd4926b9ad8154d5469c70b9840b952e5bdd6747e759e0c6fc84",
+    "previous-sha256": null
+  },
+  "new": {
+    "path": "src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+    "bytes": 13611,
+    "sha256": "be6673ee7897c1e8c69b8a364f3fc0fb3aa3d70e6002e0c10c8f72e3e6ad9061",
+    "previous-sha256": null
+  },
+  "production-inputs-identical": true,
+  "unix-full-epoch": "epoch1",
+  "final-unix-plan": "all-targets and focused tests; affected module is cfg(windows); final owning archives bind updated source"
+}

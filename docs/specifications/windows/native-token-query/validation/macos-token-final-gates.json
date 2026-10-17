@@ -1,0 +1,127 @@
+[
+  {
+    "gate": "focused",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "token_query",
+      "--",
+      "--nocapture"
+    ],
+    "exit-code": 0,
+    "seconds": 38.67665395899985,
+    "log": "macos-token-final-focused.log",
+    "sha256": "f6b2a634d901b56f330aeb0b6f8cf322e259ab6b0d8a5ac9b302089309c37815"
+  },
+  {
+    "gate": "subject",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "primary_token_property_is_retained",
+      "--",
+      "--nocapture"
+    ],
+    "exit-code": 0,
+    "seconds": 0.14510258399968734,
+    "log": "macos-token-final-subject.log",
+    "sha256": "b18078f79ab093b0b1e662789ccc831ac108a05e2ab075d54098d13eb3489b9a"
+  },
+  {
+    "gate": "cookie",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "user::windows::loader::cookie_tests",
+      "--",
+      "--nocapture"
+    ],
+    "exit-code": 0,
+    "seconds": 0.09671083300008831,
+    "log": "macos-token-final-cookie.log",
+    "sha256": "a7d67b3f4e29d2517b1fc0abd6beb6a7671f3b4d71894f21284aa2fcedfa76de"
+  },
+  {
+    "gate": "all-targets",
+    "argv": [
+      "cargo",
+      "check",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ],
+    "exit-code": 0,
+    "seconds": 63.2968535,
+    "log": "macos-token-final-all-targets.log",
+    "sha256": "07e632af5d77f55a7918e328895a89bf99fcb5dc54c4b070b7070eb76cfa5211"
+  },
+  {
+    "gate": "windows",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--test",
+      "user_windows",
+      "--test",
+      "user_windows_memory",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit-code": 0,
+    "seconds": 113.77167341599989,
+    "log": "macos-token-final-windows.log",
+    "sha256": "eff22453bb524db324ae78d40b7dd89e76494c4b4339c2edb2dbeebf7c4f6664"
+  },
+  {
+    "gate": "capi",
+    "argv": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "capi/Cargo.toml",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 19.050564499999837,
+    "log": "macos-token-final-capi.log",
+    "sha256": "631e210d248746fcd4eb48538eedd0a59e317989dde007db1d0a52f87eefd2a2"
+  },
+  {
+    "gate": "lib",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 330.9721785830002,
+    "log": "macos-token-final-lib.log",
+    "sha256": "1ea82753cec5ae53c3eb58d704f335d2ef871499586ce7b424d7997d24e2b4c9"
+  }
+]

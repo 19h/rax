@@ -1,0 +1,71 @@
+[
+  {
+    "gate": "focused",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "token_query",
+      "--",
+      "--nocapture"
+    ],
+    "exit-code": 0,
+    "seconds": 90.17882491699993,
+    "log": "macos-token-epoch2-focused.log",
+    "sha256": "c740a6b15b963bf871f3122fd2d130c9f9efbf83a5a9ee30967c1f88019b9e00"
+  },
+  {
+    "gate": "subject",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "primary_token_property_is_retained",
+      "--",
+      "--nocapture"
+    ],
+    "exit-code": 0,
+    "seconds": 0.1357775000001311,
+    "log": "macos-token-epoch2-subject.log",
+    "sha256": "b18078f79ab093b0b1e662789ccc831ac108a05e2ab075d54098d13eb3489b9a"
+  },
+  {
+    "gate": "cookie",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "user::windows::loader::cookie_tests",
+      "--",
+      "--nocapture"
+    ],
+    "exit-code": 0,
+    "seconds": 0.08715137499984849,
+    "log": "macos-token-epoch2-cookie.log",
+    "sha256": "a7d67b3f4e29d2517b1fc0abd6beb6a7671f3b4d71894f21284aa2fcedfa76de"
+  },
+  {
+    "gate": "all-targets",
+    "argv": [
+      "cargo",
+      "check",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ],
+    "exit-code": 0,
+    "seconds": 54.254127125000196,
+    "log": "macos-token-epoch2-all-targets.log",
+    "sha256": "f1a2905e02add262e77dc493b8a602a958b9fbab5326be17cc9818e6f80573ef"
+  }
+]

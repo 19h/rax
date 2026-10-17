@@ -228,7 +228,9 @@ pub enum Object {
     DataSection(std::sync::Arc<super::object_namespace::DataSection>),
     /// A selected immutable NT symbolic link, shared across guest handles.
     SymbolicLink(std::sync::Arc<super::object_namespace::SymbolicLink>),
-    /// An object this implementation only needs to name (tokens,
+    /// This process's immutable captured primary-token subject; no host HANDLE.
+    PrimaryToken,
+    /// An object this implementation only needs to name (unmodeled tokens,
     /// registry keys, window stations).
     Opaque(&'static str),
 }
@@ -256,6 +258,7 @@ impl Object {
             Object::Key(_) => "Key",
             Object::Directory(_) => "Directory",
             Object::SymbolicLink(_) => "SymbolicLink",
+            Object::PrimaryToken => "Token",
             Object::Opaque(t) => t,
         }
     }

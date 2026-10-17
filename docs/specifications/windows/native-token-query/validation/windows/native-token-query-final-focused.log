@@ -1,0 +1,82 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src)
+error[E0433]: cannot find `virtual_memory_tests` in `super`
+   --> src\user\windows\process\sched\tests\services_tests\token_query_tests.rs:344:40
+    |
+344 |             let actual = super::super::virtual_memory_tests::installed::invoke(
+    |                                        ^^^^^^^^^^^^^^^^^^^^ could not find `virtual_memory_tests` in `super`
+    |
+note: these modules exist but are inaccessible
+   --> src\user\windows\process\sched\tests\services_tests\secure_connect_tests.rs:12:1
+    |
+ 12 | mod installed;
+    | ^^^^^^^^^^^^^^ `crate::user::windows::process::sched::tests::services_tests::secure_connect_tests::installed`: not accessible
+    |
+   ::: src\user\windows\process\sched\tests\services_tests\apphelp_tests.rs:12:1
+    |
+ 12 | mod installed;
+    | ^^^^^^^^^^^^^^ `crate::user::windows::process::sched::tests::services_tests::apphelp_tests::installed`: not accessible
+    |
+   ::: src\user\windows\process\sched\tests\services_tests\nls_tests.rs:7:1
+    |
+  7 | mod installed;
+    | ^^^^^^^^^^^^^^ `crate::user::windows::process::sched::tests::services_tests::nls_tests::installed`: not accessible
+    |
+   ::: src\user\windows\process\sched\tests\services_tests\process_console_tests.rs:10:1
+    |
+ 10 | mod installed;
+    | ^^^^^^^^^^^^^^ `crate::user::windows::process::sched::tests::services_tests::process_console_tests::installed`: not accessible
+    |
+   ::: src\user\windows\process\sched\tests\services_tests\registry_tests.rs:98:1
+    |
+ 98 | mod installed;
+    | ^^^^^^^^^^^^^^ `crate::user::windows::process::sched::tests::services_tests::registry_tests::installed`: not accessible
+    |
+   ::: src\user\windows\process\sched\tests\services_tests\scheduler_shared_tests.rs:10:1
+    |
+ 10 | mod installed;
+    | ^^^^^^^^^^^^^^ `crate::user::windows::process::sched::tests::services_tests::scheduler_shared_tests::installed`: not accessible
+    |
+   ::: src\user\windows\process\sched\tests\services_tests\section_create_tests.rs:7:1
+    |
+  7 | mod installed;
+    | ^^^^^^^^^^^^^^ `crate::user::windows::process::sched::tests::services_tests::section_create_tests::installed`: not accessible
+    |
+   ::: src\user\windows\process\sched\tests\services_tests\allocate_ex_tests.rs:8:1
+    |
+  8 | mod installed;
+    | ^^^^^^^^^^^^^^ `crate::user::windows::process::sched::tests::services_tests::allocate_ex_tests::installed`: not accessible
+    |
+   ::: src\user\windows\process\sched\tests\services_tests\thread_token_tests.rs:7:1
+    |
+  7 | mod installed;
+    | ^^^^^^^^^^^^^^ `crate::user::windows::process::sched::tests::services_tests::thread_token_tests::installed`: not accessible
+help: consider importing this module
+    |
+  2 + use crate::user::windows::process::sched::tests::services_tests::virtual_memory_tests::installed;
+    |
+help: if you import `installed`, refer to it directly
+    |
+344 -             let actual = super::super::virtual_memory_tests::installed::invoke(
+344 +             let actual = installed::invoke(
+    |
+
+For more information about this error, try `rustc --explain E0433`.
+error: could not compile `rax` (lib test) due to 1 previous error

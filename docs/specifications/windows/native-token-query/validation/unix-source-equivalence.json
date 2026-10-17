@@ -1,0 +1,8 @@
+{
+  "path": "src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+  "only-changed-item": "#[cfg(windows)] native_token_query_installed_leaves_replay_every_record_on_available_profiles",
+  "non-windows-prefix-sha256": "ba237208918a78d337e6aba01f950ee2517397439dbe4b8d4203d5754c5726c3",
+  "old-sha256": "3b48c7f0fc30fd4926b9ad8154d5469c70b9840b952e5bdd6747e759e0c6fc84",
+  "new-sha256": "be6673ee7897c1e8c69b8a364f3fc0fb3aa3d70e6002e0c10c8f72e3e6ad9061",
+  "other-inputs-identical": 10
+}

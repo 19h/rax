@@ -1,0 +1,62 @@
+{
+  "source-sha256": "8b15c55550e7b33b3effdf7d8847f794794b71e944c524e0e6eec3976b7b732c",
+  "files": [
+    {
+      "path": "native-token-query-v5-arm64.log",
+      "bytes": 698877,
+      "sha256": "948c8d9f2ac4d6c8bc600528f2daad52eae54587cec24217a06385b4294131b0"
+    },
+    {
+      "path": "native-token-query-v5-x64.log",
+      "bytes": 699424,
+      "sha256": "053e61b259fd281a3509a0258fd089163d8c7d5dae77d726adc238cdfdb6fa81"
+    },
+    {
+      "path": "native-token-query-v5-x86.log",
+      "bytes": 678904,
+      "sha256": "a0fe97dad45436d01a5318fe733a9c155bc5eb20bb8b7c9d12e9b09cc6e482f8"
+    },
+    {
+      "path": "native-token-query-v5-x86-laa.log",
+      "bytes": 678908,
+      "sha256": "5867219f0c48e41a36093fd79522f80f217962f5d117a41f04c4fe5039ec3fdf"
+    },
+    {
+      "path": "native-token-query-v5.cpp",
+      "bytes": 8816,
+      "sha256": "8b15c55550e7b33b3effdf7d8847f794794b71e944c524e0e6eec3976b7b732c"
+    },
+    {
+      "path": "native-token-query-v5-profiles.ps1",
+      "bytes": 2156,
+      "sha256": "1a760d22c75e3b521e7f2a60cc02c9afa81248fd1f6f1ac8f40003133da3b5fa"
+    },
+    {
+      "path": "run-token-query-v5-atomic.py",
+      "bytes": 1514,
+      "sha256": "41d4580a12ebcc7645f640898d65030389c2ade2404c107f773a46d65cf5e824"
+    },
+    {
+      "path": "native-token-query-v5-outcomes.json",
+      "bytes": 1150,
+      "sha256": "46926f4014dd5c4ad8f8d70bcf60131aec1ef9519263b06db3579b178b7f0b13"
+    },
+    {
+      "path": "token-query-v5-native-launch.json",
+      "bytes": 594,
+      "sha256": "27321943ed8a0aa34cc3eab606b91c6b811adfc144b6a3c8da0d9740024d1323"
+    },
+    {
+      "path": "native-token-query-v5-identities.json",
+      "bytes": 4230,
+      "sha256": "69eb37ea2946426bd4cb7fb1f626f7ab47389076b6b5019b595028b6123de56e"
+    },
+    {
+      "path": "inspect-token-query-v5-producers.py",
+      "bytes": 4198,
+      "sha256": "b58df1ecca618a2f7c30ec7740b84235b3799f6d9ebc5860558ba95f90f2903c"
+    }
+  ],
+  "cases-sha256": "9a99714f9bb74d517ef19dab82e9b216ea8ed4fc2ddf7ff75634a6828f5a788e",
+  "scope": "four native profiles have identical normalized semantic rows; actual pointers and handle identities remain in raw logs"
+}

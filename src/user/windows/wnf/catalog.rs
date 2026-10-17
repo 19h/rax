@@ -48,6 +48,7 @@ pub(crate) enum Permission {
 #[derive(Debug, Clone, Default)]
 pub(crate) struct Catalog {
     records: Arc<BTreeMap<u64, Option<u32>>>,
+    primary_app_container: Option<bool>,
 }
 fn invalid(message: &'static str) -> io::Error {
     io::Error::new(io::ErrorKind::InvalidData, message)
@@ -201,7 +202,13 @@ impl Catalog {
         }
         Ok(Self {
             records: Arc::new(records),
+            primary_app_container: Some(subject.app_container),
         })
+    }
+    /// Retains the same validated primary-token property used for WNF grants.
+    /// `None` is an absent snapshot, not a non-AppContainer token.
+    pub(crate) fn primary_app_container(&self) -> Option<bool> {
+        self.primary_app_container
     }
     pub(crate) fn permission(&self, name: u64, event_mask: u32) -> Permission {
         let Some(grant) = self.records.get(&name) else {

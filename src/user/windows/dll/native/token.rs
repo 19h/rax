@@ -39,8 +39,8 @@ fn absent_thread_token(c: &Ctx, handle: u64) -> u32 {
             Some(_) => return STATUS_OBJECT_TYPE_MISMATCH,
         }
     }
-    // This kernel personality has no token objects or token-attachment
-    // service. Its new and ended threads have no impersonation token.
+    // This kernel personality has no thread-token attachment service.
+    // Its new and ended threads have no impersonation token.
     // NtSetInformationThread class5 and impersonation-producing services
     // remain explicit unsupported boundaries, rather than changing this state.
     STATUS_NO_TOKEN

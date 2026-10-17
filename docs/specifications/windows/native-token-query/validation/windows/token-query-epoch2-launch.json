@@ -1,0 +1,28 @@
+{
+  "pid": 8800,
+  "utc": "2026-10-17T19:42:47.333081+00:00",
+  "state": "finished",
+  "base": "aa9bcc5651164ade3265e124de9a6d4f778f561f",
+  "scope": "native source/base/config verification, unchanged observer, core and retained owning carrier",
+  "child-pid": 8744,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\assist-native-token-query-epoch2-owned.ps1"
+  ],
+  "core-exit-code": 0,
+  "full-library": [
+    [
+      7267,
+      5,
+      2,
+      0
+    ]
+  ],
+  "owning-exit-code": 0,
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T19:55:43.628502+00:00"
+}
