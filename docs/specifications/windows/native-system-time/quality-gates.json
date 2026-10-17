@@ -1,0 +1,30 @@
+{
+  "QG1": {
+    "status": "pass within the clock semantic group",
+    "evidence": "Technical implementation and measurements only"
+  },
+  "QG2": {
+    "status": "pass within the clock semantic group",
+    "evidence": "assumption-register.json, including retained nonmonotonic clock bracket condition"
+  },
+  "QG3": {
+    "status": "pass within the clock semantic group",
+    "evidence": "check-validation.py; full process-userland objective remains incomplete"
+  },
+  "QG4": {
+    "status": "pass within the clock semantic group",
+    "evidence": "100 ns FILETIME units, explicit 1601 epoch and atomic eight-byte output"
+  },
+  "QG5": {
+    "status": "pass within the clock semantic group",
+    "evidence": "Exact five baseline and two resolved TLS fixture failures, excluded tests and ordinary frontier recorded"
+  },
+  "QG6": {
+    "status": "pass within the clock semantic group",
+    "evidence": "Primary declaration, 820 native controls, post-run identities and bound validation logs"
+  },
+  "QG7": {
+    "status": "pass within the clock semantic group",
+    "evidence": "bounded-scope.json; no adjacent lowerer or class53 implementation included"
+  }
+}

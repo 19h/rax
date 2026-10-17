@@ -1,0 +1,42 @@
+[
+  {
+    "profile": "arm64",
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\system-time-v2-arm64\\native-system-time-v2-probe-arm64.exe",
+    "bytes": 148480,
+    "sha256": "2770ae6ab9abbc62581746fbe262b7bba31ec59ea2ecc3c9133945b595b27e0a",
+    "machine": 43620,
+    "large-address-aware": true,
+    "source-sha256": "7459a8e1a34e9b8a4144a9587af76918f46c23cd2bab926d9966b07e6eda1544",
+    "stdout-sha256": "1b4518ff50f87277b03b2bcdfdd0294f09b09b0e22329533b66db2a64d8d6549"
+  },
+  {
+    "profile": "x64",
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\system-time-v2-x64\\native-system-time-v2-probe-x64.exe",
+    "bytes": 146432,
+    "sha256": "6984a881c7f8171f909628074fae6149ba1d8e97c096b447c64d65911261f55d",
+    "machine": 34404,
+    "large-address-aware": true,
+    "source-sha256": "7459a8e1a34e9b8a4144a9587af76918f46c23cd2bab926d9966b07e6eda1544",
+    "stdout-sha256": "9a9171987db8d5feb37cfab7192232d618d42cd18bb1d1902b6939495b9c8443"
+  },
+  {
+    "profile": "x86",
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\system-time-v2-x86\\native-system-time-v2-probe-x86.exe",
+    "bytes": 121344,
+    "sha256": "233e1c542dd68c675d31916193163434a15cc4529e73e9df7b003d76529cba64",
+    "machine": 332,
+    "large-address-aware": false,
+    "source-sha256": "7459a8e1a34e9b8a4144a9587af76918f46c23cd2bab926d9966b07e6eda1544",
+    "stdout-sha256": "c42607fffefe00a8dbae1e402922641e1fbd2876fad7be682dc9229344009364"
+  },
+  {
+    "profile": "x86-laa",
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\system-time-v2-x86-laa\\native-system-time-v2-probe-x86-laa.exe",
+    "bytes": 121344,
+    "sha256": "d748f9f8117a98f292e7680198797e4847ca29b6059a817b30d3835efb2cb8bf",
+    "machine": 332,
+    "large-address-aware": true,
+    "source-sha256": "7459a8e1a34e9b8a4144a9587af76918f46c23cd2bab926d9966b07e6eda1544",
+    "stdout-sha256": "628f15b1ded8e00444629886a8f572abcc42ac0769ae1306e7c7f6c99d82f8fa"
+  }
+]

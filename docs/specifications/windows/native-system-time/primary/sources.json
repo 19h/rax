@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "path": "primary/ntquerysystemtime.html",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-ntquerysystemtime",
+      "bytes": 50754,
+      "sha256": "840d938176e3830f12f3e3b70d5f6674d4bf1408e3453994f4a29f9db807840f"
+    }
+  ]
+}

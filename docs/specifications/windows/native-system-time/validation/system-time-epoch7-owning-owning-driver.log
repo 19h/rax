@@ -1,0 +1,13 @@
+Junction created for C:\Windows\Temp\assist-native-rax-20261010\assist\vendor\rax <<===>> C:\Windows\Temp\assist-native-rax-20261010\src-system-time
+Retargeted verified task-owned RAX junction
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+Verified 354 owning source identities and 3 helpers
+Verified9 actual frozen Windows C++ sources against current root
+assist-native-system-time-final-shipping.log 78E11FB24362E2ECB24554E312D7D3B0C98FFCD3D86FEAC58EC81DC2890D0441
+assist-native-system-time-final-cpp.log B0F277678BC54485CF58C6295345A12235DF27C7D420C5085B93AB253E75E214
+validated rlib: C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-owned\debug\deps\librax-e6c413934cad3a8f.rlib
+Verified 354 owning source identities and 3 helpers
+windows [(1199839418, 4674, 'c22a3e8adb6e851a1251c7e6ffa09afa97bbaa6e4c4d60471fd33f8134f6a27c'), (810436508, 260, 'bba3acaee25d56fb981be412e3637078b8ab2a68c49523b4b35b1214f56849c4')]

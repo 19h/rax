@@ -1,0 +1,31 @@
+[
+  {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-system-time\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+    "scope": "actual production startup via unchanged observer,native_libraries=true,slice_insns1,3Mturn ceiling;controller0 does not imply guest exit",
+    "program-sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b",
+    "controller-exit-code": 0,
+    "seconds": 2.948239803314209,
+    "log": "native-system-time-final-ordinary-0.log",
+    "sha256": "5f9baa31631ce42849d422cad4ebfd19b80b415c9a1367c614717d71815f8cdb",
+    "terminal-lines": [
+      "terminal turn=97977 Complete(Internal(\"native NTDLL service NtSetInformationProcess: Unimplemented(\\\"NtSetInformationProcess: NtSetInformationProcess class 53\\\")\"))"
+    ]
+  },
+  {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\native-process-probe.exe",
+    "scope": "actual production startup via unchanged observer,native_libraries=true,slice_insns1,3Mturn ceiling;controller0 does not imply guest exit",
+    "unavailable": "program file absent;not counted as execution"
+  },
+  {
+    "path": "C:\\Windows\\System32\\whoami.exe",
+    "scope": "actual production startup via unchanged observer,native_libraries=true,slice_insns1,3Mturn ceiling;controller0 does not imply guest exit",
+    "program-sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6",
+    "controller-exit-code": 0,
+    "seconds": 3.3752739429473877,
+    "log": "native-system-time-final-ordinary-2.log",
+    "sha256": "6bbb169094020cbffe9b668154661c4b4a55cf5c36a7dc2b962db751a911104d",
+    "terminal-lines": [
+      "terminal turn=98041 Complete(Internal(\"native NTDLL service NtSetInformationProcess: Unimplemented(\\\"NtSetInformationProcess: NtSetInformationProcess class 53\\\")\"))"
+    ]
+  }
+]

@@ -1,0 +1,42 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.19s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-system-time-final\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 17 tests
+test user::windows::heap::tests::blocks_are_aligned_distinct_and_reused_after_free ... ok
+test user::windows::heap::tests::creation_reserves_page_rounded_maximum_and_commits_initial_pages_only ... ok
+test user::windows::heap::tests::failed_growth_releases_new_reservation_without_changing_heap_indexes ... ok
+test user::windows::heap::tests::failed_initial_commit_releases_reservation_and_reuses_address ... ok
+test user::windows::heap::tests::failed_zero_allocation_preserves_indexes_data_and_reserved_page_charge ... ok
+test user::windows::heap::tests::free_blocks_do_not_coalesce_across_segment_boundaries_in_either_order ... ok
+test user::windows::heap::tests::growable_heaps_add_segments_and_fixed_heaps_do_not ... ok
+test user::windows::heap::tests::guest_size_rounding_overflow_never_mutates_heap_or_vm ... ok
+test user::windows::heap::tests::in_place_growth_cannot_cross_adjacent_reservations ... ok
+test user::windows::heap::tests::in_place_zero_growth_fault_preserves_old_block_and_refunds_new_pages ... ok
+test user::windows::heap::tests::invalid_heap_alignment_and_initial_maximum_are_rejected_before_reserving ... ok
+test user::windows::heap::tests::late_zero_fault_does_not_write_earlier_accessible_page ... ok
+test user::windows::heap::tests::moved_realloc_destination_fault_rolls_back_commit_and_preserves_original ... ok
+test user::windows::heap::tests::moved_realloc_source_fault_releases_candidate_segment_and_preserves_old_block ... ok
+test user::windows::heap::tests::partial_multi_run_commit_is_rolled_back_and_existing_protection_kept ... ok
+test user::windows::heap::tests::realloc_grows_in_place_or_moves_and_zeroes ... ok
+test user::windows::heap::tests::same_rounded_realloc_fault_preserves_requested_size_and_bytes ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 7302 filtered out; finished in 0.01s
+

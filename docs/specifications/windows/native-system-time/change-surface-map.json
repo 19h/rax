@@ -1,0 +1,18 @@
+{
+  "plugin-lifecycle": "unaffected: no Assist load, form or teardown changes",
+  "ui": "unaffected: no widgets, rendering or copy changed",
+  "conversation": "unaffected: no lanes, replay or persistence changed",
+  "agent-backend": "unaffected: no provider or native/ACP transport changed",
+  "prompt-context": "unaffected: no prompt/schema/context inputs changed",
+  "tool-schema": "unaffected: existing process engine and tool schema unchanged",
+  "permission-mutation": "affected only inside existing guest process: samples the same host clock as GetSystemTimeAsFileTime and writes an eight-byte guest result; no new host mutation or filesystem permission",
+  "main-thread": "unaffected: pure RAX process runtime, no IDA/Qt API",
+  "mesh-mcp": "unaffected: no identity, routing, protocol or discovery changes",
+  "crypto-transport": "unaffected: no crypto or transport changes",
+  "persistence": "unaffected: no durable format or state roots changed",
+  "sdk-abi": "unaffected: internal NTDLL service export; RAX C ABI remains 1.11.0",
+  "optional-engines": "affected: installed Windows NTDLL can complete this service through the common guest adapter",
+  "update-package": "unaffected layout/dependencies: existing Rust module compiled in the embedded core; no new runtime artifact",
+  "platform-targets": "affected: common service uses existing Windows/macOS/Linux clock adapters; portable ABI replay on all hosts, installed NTDLL leaf on Windows; core, C API and scoped Assist consumers require validation",
+  "tests-docs": "affected: four-profile native controls, complete call replay, actual installed leaf and explicit incomplete application outcomes"
+}

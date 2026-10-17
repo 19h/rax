@@ -2144,3 +2144,23 @@ complete shipping archives cover identical epoch5 production source.
 The non-test selected-NTDLL path stops earlier at `NtQuerySystemTime` (0x5a),
 at smoke turn97964 and whoami turn98028; neither application exits normally.
 These are different startup paths, not a forward turn-count improvement.
+
+
+## Native system time (2026-10-17)
+
+`NtQuerySystemTime` uses the existing host realtime adapter and FILETIME epoch.
+Four native caller profiles supply 820 cases covering four-byte alignment,
+atomic eight-byte output, page crossings, readonly/noaccess/guard ordering and
+preserved last error. The installed ARM64 and x86 leaves and four-profile replay
+pass. Full suites: macOS 7880/0/2, Linux 7874/0/2, Windows 7310/7/2. Five Windows
+lowerer failures are unchanged; two TLS fixture failures in that original run
+are corrected in the final test-only epoch and pass fresh three-host TLS/heap
+checks. C API 168, all-target checks, scoped C++ consumers
+and complete empty-feature carrier/core archives are recorded with 354 selected
+source/fixture inputs. The prior image owner's Windows-only portability test is
+inherited and freshly checked without a production-source change.
+
+The unchanged ordinary observer advances 13 instructions beyond the clock call,
+then reports unimplemented `NtSetInformationProcess` class 53 at smoke turn 97977
+and whoami turn 98041. Neither application exits successfully. See the
+[native controls and validation](../../../docs/specifications/windows/native-system-time/README.md).

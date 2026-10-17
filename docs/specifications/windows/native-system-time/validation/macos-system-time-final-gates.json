@@ -1,0 +1,95 @@
+[
+  {
+    "argv": [
+      "cargo",
+      "+1.95.0",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "native_system_time",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "log": "macos-system-time-final-focus.log",
+    "sha256": "a8101e851b7ba662f6e67c4ca9c90d0229e191c2f5011d7e56bc3c16ad3168da",
+    "gate": "focus",
+    "original-log": "macos-system-time-focus.log"
+  },
+  {
+    "gate": "full",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 340.85455541600095,
+    "log": "macos-system-time-final-full.log",
+    "sha256": "0d9fe0917cc4b3651bf31d7b693001b3b5a1ddb3d35d79adde9bfe4c6803b83a"
+  },
+  {
+    "gate": "capi",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "-p",
+      "rax-capi",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 113.51732795800126,
+    "log": "macos-system-time-final-capi.log",
+    "sha256": "5f732ba52e08d5f9b600cfdd278b8befc9d663fe9a3d52c8b76e8e7af90d8ac6"
+  },
+  {
+    "gate": "integration",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--test",
+      "user_windows",
+      "--test",
+      "user_windows_memory",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 59.739167625000846,
+    "log": "macos-system-time-final-integration.log",
+    "sha256": "decea57d8b344945e6f4dcef87b3bf22a9ce3b0a411881d2c0bc68841fe2a8f1"
+  },
+  {
+    "gate": "all-targets",
+    "argv": [
+      "cargo",
+      "check",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ],
+    "exit-code": 0,
+    "seconds": 66.52910437500032,
+    "log": "macos-system-time-final-all-targets.log",
+    "sha256": "248cf395feb5e8c22d1937c43bdb8ece501566b8105822b5643242a9c9e40344"
+  }
+]

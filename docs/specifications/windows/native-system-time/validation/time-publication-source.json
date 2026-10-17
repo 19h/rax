@@ -1,0 +1,35 @@
+{
+  "base": "030646b992f51dbd2de03608a7a58c90cc4c448b",
+  "old-validation-source": "/Users/int/Library/Caches/assist-process-emulation/native-system-time-20261017/rax-source",
+  "publication-source": "/Users/int/Library/Caches/assist-process-emulation/native-system-time-20261017/rax-source-final",
+  "copied-time-sources": [
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "sha256": "96de9d9e678a31dc80a7c0cf95d2229dd2cfde47f472d6a8627d798807df17b5"
+    },
+    {
+      "path": "src/user/windows/dll/native/system_time.rs",
+      "sha256": "1b483a7816b9e21d1351da908d93bc986f5221c74c979653f37ea841d403eaf5"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "sha256": "4e605a103ccde4f257f4c7dc3aa8fa7ef73dd571820782c9eec8e593e48a7583"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/system_time_tests.rs",
+      "sha256": "8e23a4f0073d6f76bab31b98f6ebbb37d1195751bf71517744d96b1d80b453b0"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/system_time_replay_tests.rs",
+      "sha256": "ec5c6c67e3e0d103c74af8aee76c27524877327d4b7938f5476febe2303de10f"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/system_time_leaf_tests.rs",
+      "sha256": "6ff354b938c600b65037f7bccf140d170b9e40f60f465cc6d64248c51d0a8fc0"
+    }
+  ],
+  "only-Rust-difference-from-validation-source": [
+    "src/user/windows/process/sched/tests/services_tests/image_extension_owner_leaf_tests.rs"
+  ],
+  "reason": "inherited Windows-only image owner test portability correction; shipping inputs identical"
+}

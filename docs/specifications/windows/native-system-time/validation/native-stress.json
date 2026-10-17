@@ -1,0 +1,32 @@
+[
+  {
+    "case": "missing-profile",
+    "rejected": true,
+    "error": "ValueError: producer profiles"
+  },
+  {
+    "case": "failed-producer",
+    "rejected": true,
+    "error": "ValueError: native producer exits"
+  },
+  {
+    "case": "wrong-status",
+    "rejected": true,
+    "error": "ValueError: per-case status and precedence"
+  },
+  {
+    "case": "wrong-guard",
+    "rejected": true,
+    "error": "ValueError: exact guard lifetime"
+  },
+  {
+    "case": "wrong-clock",
+    "rejected": true,
+    "error": "ValueError: clock bounds"
+  },
+  {
+    "case": "missing-case",
+    "rejected": true,
+    "error": "ValueError: complete native axes"
+  }
+]

@@ -1,0 +1,55 @@
+[
+  {
+    "gate": "thread-focus",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "user::windows::process::thread::tests",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 103.55655129200022,
+    "log": "macos-system-time-epoch7-thread-focus.log",
+    "sha256": "de5a35fe4763d27709f481c98dbe57028a9a5b5da4831c459af4b0e8f149d19b"
+  },
+  {
+    "gate": "heap-focus",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "user::windows::heap::tests",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 0.15055291700082307,
+    "log": "macos-system-time-epoch7-heap-focus.log",
+    "sha256": "68d8b61cba664239fa351c0c939e7997054044807f92411e8e8656634f4f1c45"
+  },
+  {
+    "gate": "all-targets",
+    "argv": [
+      "cargo",
+      "check",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ],
+    "exit-code": 0,
+    "seconds": 66.36655162500028,
+    "log": "macos-system-time-epoch7-all-targets.log",
+    "sha256": "596cc98038b5c5ea804071f3de3458bde0af540ee8525313c1a9d522d6e87b80"
+  }
+]

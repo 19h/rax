@@ -19,6 +19,9 @@ mod process_tls_tests;
 #[path = "services_tests/performance_counter_tests.rs"]
 mod performance_counter_tests;
 
+#[path = "services_tests/system_time_tests.rs"]
+mod system_time_tests;
+
 #[path = "services_tests/scheduler_shared_tests.rs"]
 mod scheduler_shared_tests;
 

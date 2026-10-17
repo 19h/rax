@@ -1,0 +1,9 @@
+{
+  "path": "src/user/windows/process/thread.rs",
+  "before-sha256": "299745b7a53161f11e85ea578e56e2e15dd1ca5bac198eb03792d538f7286eef",
+  "after-sha256": "1ed97c4862cb3d55afa8b6f1279a2bbb9714d811c89a64d45bf977fb4d4beb0c",
+  "before-bytes": 18365,
+  "after-bytes": 19682,
+  "scope": "test-only: warm deliberate heap cache before commitment assertion; additionally assert exact live blocks and allocation/page-state rollback; production prefix identical",
+  "native-original-full-result": "7310 passed,7 failed,2 ignored; two old thread tests assumed HeapFree decommits cache pages"
+}

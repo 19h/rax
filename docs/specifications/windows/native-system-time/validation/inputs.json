@@ -1,0 +1,489 @@
+{
+  "files": [
+    {
+      "path": "validation/assist-native-system-time-final-cpp.log",
+      "bytes": 2946,
+      "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+    },
+    {
+      "path": "validation/assist-native-system-time-final-shipping.log",
+      "bytes": 1821,
+      "sha256": "78e11fb24362e2ecb24554e312d7d3b0c98ffcd3d86feac58ec81dc2890d0441"
+    },
+    {
+      "path": "validation/core-source-bridge.json",
+      "bytes": 1047433,
+      "sha256": "010b396d43b323f43d3c6c29a5dfd6573b499f10640a651524bd6799398de68d"
+    },
+    {
+      "path": "validation/current-cpp-consumers-time-root.json",
+      "bytes": 1907,
+      "sha256": "bc5f3de5423de9f0ad019b8ebb4478821691772edd03a91d1b5111ed8e92738a"
+    },
+    {
+      "path": "validation/image-owner-leaf-before.rs",
+      "bytes": 6655,
+      "sha256": "476ba837f0d9e3cda7dcea588766e31877373616ade37c58998f2d7c864bdd5a"
+    },
+    {
+      "path": "validation/linux-system-time-epoch7-all-targets.log",
+      "bytes": 309,
+      "sha256": "e1c5358aa08c6866012aec638bb391a32c9064f8464f68d7b946c12bd4a10f74"
+    },
+    {
+      "path": "validation/linux-system-time-epoch7-gates.json",
+      "bytes": 3440,
+      "sha256": "3f2fb6f792672f188c5a4ca71f2ddbf9995b15c2e48cd2f65e4fd1f832d061a0"
+    },
+    {
+      "path": "validation/linux-system-time-epoch7-heap-focus.log",
+      "bytes": 2035,
+      "sha256": "e3b434c1192c625b02556a0d62ab17a1ec56507007337a2e12758769f768fc7f"
+    },
+    {
+      "path": "validation/linux-system-time-epoch7-thread-focus.log",
+      "bytes": 843,
+      "sha256": "3342ade178b3c0d72cde308cd96fc13dac466164a1746e0bd5756b58e4e407e2"
+    },
+    {
+      "path": "validation/linux-system-time-final-all-targets.log",
+      "bytes": 1976,
+      "sha256": "6e28b6c621934ebf316d5e3aaaf4be80b2bace214faac0b67cd86752be675e24"
+    },
+    {
+      "path": "validation/linux-system-time-final-capi.log",
+      "bytes": 12899,
+      "sha256": "91655137054bce8c27a90401ada97800ca7c1d2cb092b032b68d9c0654463b75"
+    },
+    {
+      "path": "validation/linux-system-time-final-focus.log",
+      "bytes": 3010,
+      "sha256": "21ab8109405940667552293448a24dd71a78ed1de8cb3710f723601840ea9eb1"
+    },
+    {
+      "path": "validation/linux-system-time-final-full.log",
+      "bytes": 817224,
+      "sha256": "a752f32c627c37b4e182f96eadea29f3a6d3588ba81ab267ed0aff44c9704a5c"
+    },
+    {
+      "path": "validation/linux-system-time-final-gates.json",
+      "bytes": 5666,
+      "sha256": "63d68e24baa09a839656fab4fb4ea2f238ba001f875fee6262bd99be2ceaf018"
+    },
+    {
+      "path": "validation/linux-system-time-final-integration.log",
+      "bytes": 35840,
+      "sha256": "185064358533b1397ccaf9b1b8e5c563d5654e37eb972c77e36beb20e44c9401"
+    },
+    {
+      "path": "validation/linux-time-final-owning-archive-identities.json",
+      "bytes": 69788,
+      "sha256": "f8d0f044cf42779474d9b99d618541ad4a44f2f48ac89c9f78fd7086f3fa59fe"
+    },
+    {
+      "path": "validation/linux-time-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "02060ee41be6cd7ad134b258659304d258ecde7c517e152419a6d8a5898f7522"
+    },
+    {
+      "path": "validation/linux-time-owning-artifacts.log",
+      "bytes": 159806,
+      "sha256": "b815f7063f6005858b820429f52b5558d63eab324066f4213c530ffdb32b6e76"
+    },
+    {
+      "path": "validation/linux-time-owning-cpp.log",
+      "bytes": 1623,
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+    },
+    {
+      "path": "validation/linux-time-owning-gates.json",
+      "bytes": 6081,
+      "sha256": "d177960d18d77a43fd9fd67de4477aafa82d1f3fb3b278838815e77db92bc581"
+    },
+    {
+      "path": "validation/linux-time-owning-shipping.log",
+      "bytes": 415,
+      "sha256": "54e9817cee9fac1a0dacce9d1a1c517e1cf360ae03856599bdac02f8af525873"
+    },
+    {
+      "path": "validation/macos-inputs.json",
+      "bytes": 1615,
+      "sha256": "917eee678b9820a1227a6053ef6ca7e397ae06f7d5ebb76b7c93bec12c0fe2ee"
+    },
+    {
+      "path": "validation/macos-system-time-epoch7-all-targets.log",
+      "bytes": 467,
+      "sha256": "596cc98038b5c5ea804071f3de3458bde0af540ee8525313c1a9d522d6e87b80"
+    },
+    {
+      "path": "validation/macos-system-time-epoch7-gates.json",
+      "bytes": 1290,
+      "sha256": "80ae4079cb6a6b0c5b8610ecccb17e16578f02684025feb4831954d55c003a77"
+    },
+    {
+      "path": "validation/macos-system-time-epoch7-heap-focus.log",
+      "bytes": 2101,
+      "sha256": "68d8b61cba664239fa351c0c939e7997054044807f92411e8e8656634f4f1c45"
+    },
+    {
+      "path": "validation/macos-system-time-epoch7-thread-focus.log",
+      "bytes": 1067,
+      "sha256": "de5a35fe4763d27709f481c98dbe57028a9a5b5da4831c459af4b0e8f149d19b"
+    },
+    {
+      "path": "validation/macos-system-time-final-all-targets.log",
+      "bytes": 2238,
+      "sha256": "248cf395feb5e8c22d1937c43bdb8ece501566b8105822b5643242a9c9e40344"
+    },
+    {
+      "path": "validation/macos-system-time-final-capi.log",
+      "bytes": 13117,
+      "sha256": "5f732ba52e08d5f9b600cfdd278b8befc9d663fe9a3d52c8b76e8e7af90d8ac6"
+    },
+    {
+      "path": "validation/macos-system-time-final-focus.log",
+      "bytes": 3338,
+      "sha256": "a8101e851b7ba662f6e67c4ca9c90d0229e191c2f5011d7e56bc3c16ad3168da"
+    },
+    {
+      "path": "validation/macos-system-time-final-full.log",
+      "bytes": 817231,
+      "sha256": "0d9fe0917cc4b3651bf31d7b693001b3b5a1ddb3d35d79adde9bfe4c6803b83a"
+    },
+    {
+      "path": "validation/macos-system-time-final-gates.json",
+      "bytes": 2141,
+      "sha256": "c3d806ad555ca8bb4b3597b5f1bb9d324786d17b0e72e6201fe2e857db6c11a9"
+    },
+    {
+      "path": "validation/macos-system-time-final-integration.log",
+      "bytes": 36044,
+      "sha256": "decea57d8b344945e6f4dcef87b3bf22a9ce3b0a411881d2c0bc68841fe2a8f1"
+    },
+    {
+      "path": "validation/macos-system-time-focus.json",
+      "bytes": 351,
+      "sha256": "2f250409ab044814f4c5b9317057055fa72739635693f3cdc0f84cc854b66988"
+    },
+    {
+      "path": "validation/macos-time-final-owning-archive-identities.json",
+      "bytes": 71174,
+      "sha256": "c520228c37b54b723ff6c8426ee2301049d813a7e442540272f77bff458729e4"
+    },
+    {
+      "path": "validation/macos-time-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "68159696dc822ad45a60e403e4fe37bd8523b0ec6bd9eb3f43d24bc8e78c5d66"
+    },
+    {
+      "path": "validation/macos-time-owning-artifacts.log",
+      "bytes": 131080,
+      "sha256": "1eb64fd6ff8f1f99e05f4a08131d6ee1ca299b499d93264e696a54ace7740bbd"
+    },
+    {
+      "path": "validation/macos-time-owning-build.log",
+      "bytes": 32919,
+      "sha256": "0308ecaddaf44f1910921f71dde9382e1f398c0c94b0a704f356a79a6d1d9e1f"
+    },
+    {
+      "path": "validation/macos-time-owning-ctest.log",
+      "bytes": 1273,
+      "sha256": "60753c36f892a292a3e0cfb96877de7c18867f6b24fd924380d065578604caca"
+    },
+    {
+      "path": "validation/macos-time-owning-gates.json",
+      "bytes": 6187,
+      "sha256": "6ffc5f33d2f61f5e4a653c732943703961868c07d1197ec86731baf6a370c730"
+    },
+    {
+      "path": "validation/macos-time-owning-prime-artifacts.log",
+      "bytes": 131845,
+      "sha256": "3638951f1f2e46a8ea481dcca9478ae66ebfc0b0c155ed618ccb23f1f838b490"
+    },
+    {
+      "path": "validation/macos-time-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/macos-time-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/missing-fixtures-native-system-time-final-focus-focus.log",
+      "bytes": 433454,
+      "sha256": "24fe89a3f879a7da818a8c895f2e72448e458be0fad1e915a1f57f34f0538a76"
+    },
+    {
+      "path": "validation/missing-lock-native-system-time-final-focus-focus.log",
+      "bytes": 523,
+      "sha256": "bd1a9c793c17bc4b861eadbe7ea853ea54763e4eb3ee1a93ebcd27272d51de94"
+    },
+    {
+      "path": "validation/missing-manifests-native-system-time-final-focus-focus.log",
+      "bytes": 393,
+      "sha256": "92225b31f084282e54e45006b060f1a64f3afdd4ccde4e163c546f5f8f17171e"
+    },
+    {
+      "path": "validation/native-stress.json",
+      "bytes": 649,
+      "sha256": "11474c13fbb26515ca317c50e34def94aa47d40ea162ed5bf33568c4e8e3a4d4"
+    },
+    {
+      "path": "validation/native-system-time-epoch7-all-targets.log",
+      "bytes": 998,
+      "sha256": "60fd09021aa05ef6ba41a510711944c67fe7e7f6b9d79b5f6bb66e84014f30e4"
+    },
+    {
+      "path": "validation/native-system-time-epoch7-focus.log",
+      "bytes": 1715,
+      "sha256": "ed7e68caf5f599057309162db0ded289a456479e94aec7286572df2557ba8e6b"
+    },
+    {
+      "path": "validation/native-system-time-epoch7-gates.json",
+      "bytes": 1338,
+      "sha256": "a8f9ddb8a90a7f6c923e98bfb8a033b506da7469f9655a46a27e962919e81e19"
+    },
+    {
+      "path": "validation/native-system-time-epoch7-heap-focus.log",
+      "bytes": 2921,
+      "sha256": "90bac298bd21c4858380385c7dca426e8970029adea056d97e6fd483955b59b6"
+    },
+    {
+      "path": "validation/native-system-time-epoch7-image-focus.log",
+      "bytes": 4373,
+      "sha256": "a72675290e7b676afbb57fcf286bf97b941f99d294e6f740f7f69e65977c373d"
+    },
+    {
+      "path": "validation/native-system-time-epoch7-thread-focus.log",
+      "bytes": 1492,
+      "sha256": "25f785efcc7dd5da3af500c1f09ed6d00fa94670b24a91158faa1bc012e09bf9"
+    },
+    {
+      "path": "validation/native-system-time-final-after-artifacts.jsonl",
+      "bytes": 130191,
+      "sha256": "34b6784e7ffaede74c5f9f79422d1ccfd07f9df6073cda09032c05f4f01e8ede"
+    },
+    {
+      "path": "validation/native-system-time-final-all-targets.log",
+      "bytes": 3098,
+      "sha256": "aec66b66d61471a35d6dd6f62b0fe587240d0d228f188e55499ec1a807add285"
+    },
+    {
+      "path": "validation/native-system-time-final-build-user-artifacts.jsonl",
+      "bytes": 90317,
+      "sha256": "902de28215effe2e36987c7de2fd1176277ab1a46d91f0c26949bce0915d2173"
+    },
+    {
+      "path": "validation/native-system-time-final-build-user.log",
+      "bytes": 158,
+      "sha256": "327818fb38dcd9ca29492e9f6ae5130f86b9945b9fcb4399f570384f7e334b66"
+    },
+    {
+      "path": "validation/native-system-time-final-capi.log",
+      "bytes": 13776,
+      "sha256": "32b9d4a7ac2b032da7dfcd551f4c7d7eed4be4a179e5b9058853934f0d8fe03e"
+    },
+    {
+      "path": "validation/native-system-time-final-focus-focus.log",
+      "bytes": 1715,
+      "sha256": "aa6d85bf08c61d8417de7905fdd2fe46c0e7a43ef4ce97331bb0d4231a7aaffd"
+    },
+    {
+      "path": "validation/native-system-time-final-focus-gates.json",
+      "bytes": 273,
+      "sha256": "9db7c76aa2aabe077869952130a546b42b93d53dfd1b699bf266d7d324d80a9d"
+    },
+    {
+      "path": "validation/native-system-time-final-full.log",
+      "bytes": 778984,
+      "sha256": "ec395155eb85099508c23ee252d008f2893556d08873338d9b41d855eec2d9b5"
+    },
+    {
+      "path": "validation/native-system-time-final-gates.json",
+      "bytes": 1014,
+      "sha256": "2f92bb22828dac8425f2aa80ba06f284233f3fea604c1ecfe1fed7c13f5f2f16"
+    },
+    {
+      "path": "validation/native-system-time-final-integration.log",
+      "bytes": 1873,
+      "sha256": "1bbe656c4bd521f6e692a8f2ae589f7e8e292c8560a0ee411a81606da026676e"
+    },
+    {
+      "path": "validation/native-system-time-final-observer-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "validation/native-system-time-final-ordinary-0.log",
+      "bytes": 46594,
+      "sha256": "5f9baa31631ce42849d422cad4ebfd19b80b415c9a1367c614717d71815f8cdb"
+    },
+    {
+      "path": "validation/native-system-time-final-ordinary-2.log",
+      "bytes": 48833,
+      "sha256": "6bbb169094020cbffe9b668154661c4b4a55cf5c36a7dc2b962db751a911104d"
+    },
+    {
+      "path": "validation/native-system-time-final-ordinary-outcomes.json",
+      "bytes": 1438,
+      "sha256": "d4a7c3e049716e5cc1b68dcd5fc65def9fc13168a6037ce772326845818f275a"
+    },
+    {
+      "path": "validation/native-system-time-final-owning-archive-hashes.json",
+      "bytes": 72361,
+      "sha256": "db927c797ba6503e3968bc2e2f97c8e42bbb1b9de4f3e3c107c4e01680ab9d69"
+    },
+    {
+      "path": "validation/native-system-time-final-owning-source-verification.json",
+      "bytes": 108,
+      "sha256": "2a745ed148f87675ea4d5c3de1bda341ea07078bc2d931d9f495648c4c13e324"
+    },
+    {
+      "path": "validation/native-time-final-owning-archive-identities.json",
+      "bytes": 72359,
+      "sha256": "d9fc958193089a99da47b1298f254dbd73dbe14aa0dac63d23dcd001e75e2bbd"
+    },
+    {
+      "path": "validation/native-time-inherited-image-epoch6.json",
+      "bytes": 571,
+      "sha256": "6c1ea0782c7d6dc698dbe183b8db5db90d741394fc0569d06b3fa46060d6c17f"
+    },
+    {
+      "path": "validation/native-time-owning-junction.json",
+      "bytes": 238,
+      "sha256": "d85ae3cb165efdb30bfe172e3ac3fb5c4511aabce6d56c3ec731ae611df3fe90"
+    },
+    {
+      "path": "validation/native-time-owning-source-identities.json",
+      "bytes": 70232,
+      "sha256": "a4fcf7ca492b8b96e15cdd418d52eab7d5ebe611ac86877fc7ac61735b672d18"
+    },
+    {
+      "path": "validation/native-time-thread-epoch7.json",
+      "bytes": 593,
+      "sha256": "6dba4b98f765f6ca6474649cf3326a340353b962110829a15903fc7d88996b31"
+    },
+    {
+      "path": "validation/ordinary-analysis.json",
+      "bytes": 1833,
+      "sha256": "37f873228d7ac4e725e5f5451eafdbf6f29df0b7d9ecec31b0fd39d57319e153"
+    },
+    {
+      "path": "validation/preparation/missing-fixtures-native-system-time-final-focus-focus.log",
+      "bytes": 433454,
+      "sha256": "24fe89a3f879a7da818a8c895f2e72448e458be0fad1e915a1f57f34f0538a76"
+    },
+    {
+      "path": "validation/preparation/missing-fixtures-system-time-isolated-v4-focus-driver.log",
+      "bytes": 303,
+      "sha256": "1571e5ebf56bb91e1b16f38bad64f28d6740a23546c0fdb857f405bf9d14e28b"
+    },
+    {
+      "path": "validation/preparation/missing-fixtures-system-time-isolated-v4-launch.json",
+      "bytes": 896,
+      "sha256": "36ea72db6abccffc2e130ab93818720fe55f924debdb02ef6388a5ab9f14390e"
+    },
+    {
+      "path": "validation/preparation/missing-lock-native-system-time-final-focus-focus.log",
+      "bytes": 523,
+      "sha256": "bd1a9c793c17bc4b861eadbe7ea853ea54763e4eb3ee1a93ebcd27272d51de94"
+    },
+    {
+      "path": "validation/preparation/missing-lock-system-time-isolated-v3-focus-driver.log",
+      "bytes": 303,
+      "sha256": "322bdc4b009deabedda1269b9dab8d57c3f19cbf30b3180a20526ee7070b429e"
+    },
+    {
+      "path": "validation/preparation/missing-lock-system-time-isolated-v3-launch.json",
+      "bytes": 896,
+      "sha256": "50244cdf58f4bed0d5382f0b1e37b3de0c692b126799a849200f62cd15cfd4da"
+    },
+    {
+      "path": "validation/preparation/missing-manifests-native-system-time-final-focus-focus.log",
+      "bytes": 393,
+      "sha256": "92225b31f084282e54e45006b060f1a64f3afdd4ccde4e163c546f5f8f17171e"
+    },
+    {
+      "path": "validation/preparation/missing-manifests-system-time-isolated-v2-focus-driver.log",
+      "bytes": 303,
+      "sha256": "955dc69d80b588fd01794e608879cb026208c26272a6d107989605ac28c88f9f"
+    },
+    {
+      "path": "validation/preparation/missing-manifests-system-time-isolated-v2-launch.json",
+      "bytes": 897,
+      "sha256": "4cb5be8e5a04e4534f8c5a40037f06d55d67296b915611da309d941c51c1ee0d"
+    },
+    {
+      "path": "validation/system-time-epoch7-owning-epoch7-driver.log",
+      "bytes": 507,
+      "sha256": "da9a213e172bec6e3166083bfd74e0589d040c19becfdf17140960159c59e904"
+    },
+    {
+      "path": "validation/system-time-epoch7-owning-launch.json",
+      "bytes": 546,
+      "sha256": "5a5a72ddeb03fd7e1e93e622ea57393f2ac32cb44a10ff47abd8d8f9cf298a52"
+    },
+    {
+      "path": "validation/system-time-epoch7-owning-owning-driver.log",
+      "bytes": 1136,
+      "sha256": "d952ae61fe5e82e51a4cd4f22645f7f1a3a1909ec304c76effad281dc3ec56d2"
+    },
+    {
+      "path": "validation/system-time-isolated-v5-core-driver.log",
+      "bytes": 586,
+      "sha256": "e3af50990ac802c3850e6c932d2b2ea909e73c174c95f2188ed699322f28e7e6"
+    },
+    {
+      "path": "validation/system-time-isolated-v5-focus-driver.log",
+      "bytes": 354,
+      "sha256": "f1777e4bf19b4b523bee07bb5bb94d47d70a3f80297ea02afc91baf44a0121d4"
+    },
+    {
+      "path": "validation/system-time-isolated-v5-launch.json",
+      "bytes": 534,
+      "sha256": "e2a138ca4c0b19adcb75064715e54742b9c72f7bdd477e5ce43273bb2bee1da6"
+    },
+    {
+      "path": "validation/thread-before-epoch7.rs",
+      "bytes": 18365,
+      "sha256": "299745b7a53161f11e85ea578e56e2e15dd1ca5bac198eb03792d538f7286eef"
+    },
+    {
+      "path": "validation/time-frozen-source.json",
+      "bytes": 4080,
+      "sha256": "94e99f758f5df4c9cfb9cb9f840145801b8adb90bae68b3cef60ec5fce95b138"
+    },
+    {
+      "path": "validation/time-full-snapshot-source-inputs.json",
+      "bytes": 4239689,
+      "sha256": "d833386340feef825dc5803f6b58790e7a2922a04c90dd796755b4f20775b78b"
+    },
+    {
+      "path": "validation/time-inherited-image-epoch6.json",
+      "bytes": 403,
+      "sha256": "ed183e44863ecb05ee36ec83d02c163f4ebe61e83e7a3c8d9752a9c657005f09"
+    },
+    {
+      "path": "validation/time-owning-source-hashes.json",
+      "bytes": 68604,
+      "sha256": "e36804d5e9575998fec827aca88697644d8f931796d499595cc710286ff0c3a9"
+    },
+    {
+      "path": "validation/time-publication-source.json",
+      "bytes": 1624,
+      "sha256": "8758cf9a5cabf2cdb13f3e852f46cca01c004185c1517fd398fbfa8b2104a806"
+    },
+    {
+      "path": "validation/time-thread-epoch7.json",
+      "bytes": 584,
+      "sha256": "78c47dba0c2a7cec42d9baf1b03e05f32a08cc5522393b7655ce495d4f704b87"
+    },
+    {
+      "path": "validation/validation-stress.json",
+      "bytes": 761,
+      "sha256": "a35f20aa9a8457a3760d93d6cb6b6b78c466a13508f04236d767b7c00d6306c9"
+    }
+  ]
+}

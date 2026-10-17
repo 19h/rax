@@ -1,0 +1,5 @@
+{
+  "exit-code": 0,
+  "stdout": "{\"pid\": 280, \"utc\": \"2026-10-17T21:55:35.358446+00:00\", \"state\": \"finished\", \"scope\": \"read-only system time queries and probe-owned memory only\", \"child-pid\": 2268, \"argv\": [\"powershell.exe\", \"-NoProfile\", \"-ExecutionPolicy\", \"Bypass\", \"-File\", \"C:\\\\Mac\\\\Home\\\\Downloads\\\\assist-native-allocate-ex-transfer-20261010-2154\\\\native-system-time-v2-probe-profiles.ps1\"], \"exit-code\": 0, \"completed-utc\": \"2026-10-17T21:57:19.238599+00:00\"}\n",
+  "stderr": ""
+}

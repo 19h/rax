@@ -1,0 +1,23 @@
+[
+  {
+    "impact": "high",
+    "finding": "Both ordinary programs pass the clock service and stop at NtSetInformationProcess class53.",
+    "evidence": "validation/ordinary-analysis.json",
+    "blocks": "Full ordinary emulation; does not invalidate the measured clock service",
+    "action": "Continue class53 as a separate semantic group; do not claim successful application completion."
+  },
+  {
+    "impact": "medium",
+    "finding": "Five pre-existing AArch64 lowering failures are independent of this service.",
+    "evidence": "validation/native-system-time-final-full.log",
+    "blocks": "Not waived; compare exact identities in the full native run",
+    "action": "Exact five baseline failure identities verified; no lowerer source changed."
+  },
+  {
+    "impact": "medium",
+    "finding": "Two cold TLS rollback fixtures assumed HeapFree decommits cached pages; added native service changed heap packing and exposed the assumption.",
+    "evidence": "validation/native-system-time-final-full.log and final epoch7 TLS/heap focused logs",
+    "blocks": "Resolved by test-only fixture setup and stronger live-block/allocation assertions; no thread or heap production code changed.",
+    "action": "Retain the original seven-failure full run and explicitly bind final focused validation."
+  }
+]

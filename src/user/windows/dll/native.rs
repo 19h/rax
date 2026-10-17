@@ -24,6 +24,7 @@ mod section_create;
 mod section_map;
 mod secure_connect;
 mod symbolic_link;
+mod system_time;
 mod thread_set;
 mod timers;
 mod token;
@@ -280,6 +281,7 @@ pub(super) static EXPORTS: &[Export] = &[
         &[Ptr, Ptr],
         performance_counter::query,
     ),
+    Export::func("NtQuerySystemTime", Stdcall, &[Ptr], system_time::query),
     Export::func(
         "NtQueryInformationToken",
         Stdcall,

@@ -1,0 +1,20 @@
+{
+  "pid": 7808,
+  "utc": "2026-10-17T22:30:57.547775+00:00",
+  "state": "finished",
+  "source": "src-system-time",
+  "selected-source-inputs": 354,
+  "child-pid": 4544,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\assist-native-system-time-final-owned.ps1"
+  ],
+  "epoch7-exit-code": 0,
+  "owning-exit-code": 0,
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T22:36:31.908827+00:00"
+}

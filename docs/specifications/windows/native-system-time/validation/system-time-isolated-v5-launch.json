@@ -1,0 +1,20 @@
+{
+  "pid": 1544,
+  "utc": "2026-10-17T22:09:20.030375+00:00",
+  "state": "finished",
+  "source": "src-system-time",
+  "source-inputs": 18805,
+  "child-pid": 1684,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-system-time-isolated-v5-core.ps1"
+  ],
+  "focus-exit-code": 0,
+  "core-exit-code": 0,
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T22:30:56.667524+00:00"
+}

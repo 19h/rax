@@ -1,0 +1,32 @@
+﻿[
+    {
+        "gate":  "focus",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib native_system_time -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "native-system-time-epoch7-focus.log"
+    },
+    {
+        "gate":  "thread-focus",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib user::windows::process::thread::tests -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "native-system-time-epoch7-thread-focus.log"
+    },
+    {
+        "gate":  "heap-focus",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib user::windows::heap::tests -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "native-system-time-epoch7-heap-focus.log"
+    },
+    {
+        "gate":  "image-focus",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib image_extension -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "native-system-time-epoch7-image-focus.log"
+    },
+    {
+        "gate":  "all-targets",
+        "command":  "cargo.exe check --locked --offline --no-default-features --all-targets",
+        "exit-code":  0,
+        "log":  "native-system-time-epoch7-all-targets.log"
+    }
+]

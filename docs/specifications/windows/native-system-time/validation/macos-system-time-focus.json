@@ -1,0 +1,18 @@
+{
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_system_time",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit-code": 0,
+  "log": "macos-system-time-focus.log",
+  "sha256": "a8101e851b7ba662f6e67c4ca9c90d0229e191c2f5011d7e56bc3c16ad3168da"
+}

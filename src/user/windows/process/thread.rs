@@ -507,13 +507,43 @@ mod tests {
     }
 
     fn assert_failure_rolls_back(p: &mut Proc, stack_size: u64, expected: u32) {
+        let live_blocks = p.heaps.blocks(p.process_heap);
+        // HeapFree returns blocks to the allocator but deliberately retains
+        // committed pages. Warm the exact small TLS allocation shapes before
+        // measuring thread rollback, independent of the loader's heap packing.
+        if p.modules.next_tls_index != 0 {
+            let array = p
+                .heaps
+                .alloc(
+                    &mut p.vm,
+                    p.process_heap,
+                    p.arch.ptr_size() * u64::from(p.modules.next_tls_index),
+                    true,
+                )
+                .unwrap();
+            let block = p.heaps.alloc(&mut p.vm, p.process_heap, 1, true).unwrap();
+            p.heaps.free(p.process_heap, block).unwrap();
+            p.heaps.free(p.process_heap, array).unwrap();
+        }
+        assert_eq!(p.heaps.blocks(p.process_heap), live_blocks);
         let committed = p.vm.committed_bytes();
+        let allocations: Vec<_> =
+            p.vm.allocations()
+                .map(|a| (a.base, a.size, a.kind, a.pages.clone()))
+                .collect();
         let thread_count = p.threads.len();
         let object_count = p.objects.iter_mut().count();
         let next_teb = layout::PEB_ADDRESS - 2 * layout::teb_stride(p.arch);
         let before = p.vm.query(next_teb).unwrap();
         assert_eq!(create(p, 0x1234_0000, 0, stack_size, false), Err(expected));
         assert_eq!(p.vm.committed_bytes(), committed);
+        assert_eq!(p.heaps.blocks(p.process_heap), live_blocks);
+        assert_eq!(
+            p.vm.allocations()
+                .map(|a| (a.base, a.size, a.kind, a.pages.clone()))
+                .collect::<Vec<_>>(),
+            allocations
+        );
         assert_eq!(p.threads.len(), thread_count);
         assert_eq!(p.objects.iter_mut().count(), object_count);
         assert_eq!(p.vm.query(next_teb).unwrap(), before);

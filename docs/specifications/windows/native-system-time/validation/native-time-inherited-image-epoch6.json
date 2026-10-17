@@ -1,0 +1,10 @@
+{
+  "path": "src/user/windows/process/sched/tests/services_tests/image_extension_owner_leaf_tests.rs",
+  "before-sha256": "476ba837f0d9e3cda7dcea588766e31877373616ade37c58998f2d7c864bdd5a",
+  "after-sha256": "e0d33bab5119b5f0ac5ad6fbe34d2a8ea94768e013b5549df7ce69158b7ea995",
+  "after-bytes": 7406,
+  "scope": "inherit the already-published Windows-only image owner test; production inputs unchanged",
+  "utc": "2026-10-17T22:30:57.979814+00:00",
+  "actual-before-sha256": "476ba837f0d9e3cda7dcea588766e31877373616ade37c58998f2d7c864bdd5a",
+  "applied": true
+}

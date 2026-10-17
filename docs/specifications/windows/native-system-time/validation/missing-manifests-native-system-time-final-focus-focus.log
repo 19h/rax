@@ -1,0 +1,8 @@
+error: failed to load manifest for workspace member `C:\Windows\Temp\assist-native-rax-20261010\src-system-time\capi`
+referenced by workspace at `C:\Windows\Temp\assist-native-rax-20261010\src-system-time\Cargo.toml`
+
+Caused by:
+  failed to read `C:\Windows\Temp\assist-native-rax-20261010\src-system-time\capi\Cargo.toml`
+
+Caused by:
+  The system cannot find the file specified. (os error 2)

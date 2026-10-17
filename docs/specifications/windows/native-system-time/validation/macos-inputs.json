@@ -1,0 +1,50 @@
+{
+  "files": [
+    {
+      "path": "macos-system-time-final-all-targets.log",
+      "bytes": 2238,
+      "sha256": "248cf395feb5e8c22d1937c43bdb8ece501566b8105822b5643242a9c9e40344"
+    },
+    {
+      "path": "macos-system-time-final-capi.log",
+      "bytes": 13117,
+      "sha256": "5f732ba52e08d5f9b600cfdd278b8befc9d663fe9a3d52c8b76e8e7af90d8ac6"
+    },
+    {
+      "path": "macos-system-time-final-focus.log",
+      "bytes": 3338,
+      "sha256": "a8101e851b7ba662f6e67c4ca9c90d0229e191c2f5011d7e56bc3c16ad3168da"
+    },
+    {
+      "path": "macos-system-time-final-full.log",
+      "bytes": 817231,
+      "sha256": "0d9fe0917cc4b3651bf31d7b693001b3b5a1ddb3d35d79adde9bfe4c6803b83a"
+    },
+    {
+      "path": "macos-system-time-final-gates.json",
+      "bytes": 2141,
+      "sha256": "c3d806ad555ca8bb4b3597b5f1bb9d324786d17b0e72e6201fe2e857db6c11a9"
+    },
+    {
+      "path": "macos-system-time-final-integration.log",
+      "bytes": 36044,
+      "sha256": "decea57d8b344945e6f4dcef87b3bf22a9ce3b0a411881d2c0bc68841fe2a8f1"
+    },
+    {
+      "path": "macos-system-time-focus.json",
+      "bytes": 351,
+      "sha256": "2f250409ab044814f4c5b9317057055fa72739635693f3cdc0f84cc854b66988"
+    },
+    {
+      "path": "time-frozen-source.json",
+      "bytes": 4080,
+      "sha256": "94e99f758f5df4c9cfb9cb9f840145801b8adb90bae68b3cef60ec5fce95b138"
+    },
+    {
+      "path": "time-full-snapshot-source-inputs.json",
+      "bytes": 4239689,
+      "sha256": "d833386340feef825dc5803f6b58790e7a2922a04c90dd796755b4f20775b78b"
+    }
+  ],
+  "scope": "completed macOS stages; native Windows and Linux still pending"
+}

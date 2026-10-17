@@ -1,0 +1,8 @@
+﻿[
+    {
+        "gate":  "focus",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib native_system_time -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "native-system-time-final-focus-focus.log"
+    }
+]

@@ -1,0 +1,26 @@
+﻿[
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "source-sha256":  "7459a8e1a34e9b8a4144a9587af76918f46c23cd2bab926d9966b07e6eda1544",
+        "log":  "native-system-time-v2-probe-arm64.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "source-sha256":  "7459a8e1a34e9b8a4144a9587af76918f46c23cd2bab926d9966b07e6eda1544",
+        "log":  "native-system-time-v2-probe-x64.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "source-sha256":  "7459a8e1a34e9b8a4144a9587af76918f46c23cd2bab926d9966b07e6eda1544",
+        "log":  "native-system-time-v2-probe-x86.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "source-sha256":  "7459a8e1a34e9b8a4144a9587af76918f46c23cd2bab926d9966b07e6eda1544",
+        "log":  "native-system-time-v2-probe-x86-laa.log"
+    }
+]

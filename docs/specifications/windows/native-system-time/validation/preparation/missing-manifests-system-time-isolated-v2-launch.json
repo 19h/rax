@@ -1,0 +1,20 @@
+{
+  "pid": 5552,
+  "utc": "2026-10-17T22:00:59.354388+00:00",
+  "state": "failed",
+  "source": "src-system-time",
+  "source-inputs": 5561,
+  "child-pid": 10000,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-system-time-isolated-v2-focus.ps1"
+  ],
+  "focus-exit-code": 1,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-system-time-isolated-v2.py\", line 16, in <module>\n    if code:raise RuntimeError('native time '+stage+' failed: '+str(code))\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: native time focus failed: 1\n",
+  "completed-utc": "2026-10-17T22:02:29.326028+00:00"
+}
