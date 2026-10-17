@@ -1,0 +1,13 @@
+Junction created for C:\Windows\Temp\assist-native-rax-20261010\assist\vendor\rax <<===>> C:\Windows\Temp\assist-native-rax-20261010\src-dynamic-table
+Retargeted verified task-owned RAX junction
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+Verified 361 owning source identities and 3 helpers
+Verified9 actual frozen Windows C++ sources against current root
+assist-native-dynamic-final-shipping.log 180892E95648A07D2334C8417500E247665CCF722C762178D9B6E66D4462DC5D
+assist-native-dynamic-final-cpp.log B0F277678BC54485CF58C6295345A12235DF27C7D420C5085B93AB253E75E214
+validated rlib: C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-owned\debug\deps\librax-e6c413934cad3a8f.rlib
+Verified 361 owning source identities and 3 helpers
+windows [(1206063334, 4674, '28f9e9556e2a1e27c1e1dc816467e1f4c9f4be69cb3b7ec9a64706e64b6d923c'), (816658562, 260, '327f9f9e59406b5f13a0d2b66b655a6ebeb12c80d60c6f5b64fb990975c55cf5')]

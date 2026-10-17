@@ -1,0 +1,38 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src-dynamic-table)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3m 03s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-system-time-final\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 12 tests
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::installed::native_dynamic_function_table_installed_leaf_preserves_native_transport ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::native_dynamic_function_table_invalid_process_precedes_length_and_pointer_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::native_dynamic_function_table_process_range_lifecycle_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::native_dynamic_function_table_status_mapping_matches_native_rtl ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::native_dynamic_function_table_survives_descriptor_range_and_thread_lifetime ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::replay::native_dynamic_function_table_replays_all_key_byte_perturbations ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::replay::native_dynamic_function_table_replays_duplicate_and_value_key_lifetime ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::replay::native_dynamic_function_table_replays_initial_and_handle_boundaries ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::replay::native_dynamic_function_table_replays_isolated_ranges_and_overlap ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::replay::native_dynamic_function_table_replays_ordered_sequences_and_native_status_mappings ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::replay::native_dynamic_function_table_replays_pointer_guard_and_length_records ... ok
+test user::windows::seh::kernel_dynamic::tests::native_dynamic_function_table_quota_preserves_state_and_recovers_after_delete ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 7319 filtered out; finished in 5.30s
+

@@ -1,0 +1,5012 @@
+{
+  "utc": "2026-10-17T22:43:21.177142+00:00",
+  "identities": [
+    {
+      "kind": "initial",
+      "profile": "arm64",
+      "source": "native-dynamic-table-initial.cpp",
+      "source-bytes": 1714,
+      "source-sha256": "c5bbf890f886383e05877a526baa0c0cb9f9e3486485bae67ce6f62fc07fe91e",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-initial-arm64\\probe.exe",
+      "exe-bytes": 145920,
+      "exe-sha256": "6f9e13ed86147d1d844b07d9eb99a129cc01223f240b0aa3169ef2c6821a3d11",
+      "machine": 43620,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-initial-arm64-0.log",
+          "bytes": 107,
+          "sha256": "b33be623e3b02253c02a3e734e91339b544a42f32564120b26e30e5c51c3a23b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-arm64-1.log",
+          "bytes": 107,
+          "sha256": "ff2b9a979eea396a1b588007e2d03ec97cb03b7bd3006575f2a40b9244338da7",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-arm64-2.log",
+          "bytes": 107,
+          "sha256": "28b751c078baac5aa3161da8e34d2a33e1903f5dd8932b03557b32a0f855b87d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-arm64-3.log",
+          "bytes": 107,
+          "sha256": "7123a7c47c81a5ff0e66b9aab4669966f1e87a0807c204ca3caf9a9fcedbdb0a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-arm64-4.log",
+          "bytes": 107,
+          "sha256": "4a686e4a4062cf012f801bd44a9d264261d0b0f4eff7a07207b300945fc45d05",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-arm64-5.log",
+          "bytes": 107,
+          "sha256": "4348ce6b3f9d37c668b26f1b55c01e56f688b0b874a415070c8fe276d9852c7a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-arm64-6.log",
+          "bytes": 106,
+          "sha256": "8fee76b250e61df68afc95a7be0adb6079895f90b78a62c541cf6276a1f8d34b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-arm64-7.log",
+          "bytes": 107,
+          "sha256": "c39cac3382700e7d3e6b36c84a44285cec22face0a5fc8be4cbc5e5ab91d1768",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-arm64-8.log",
+          "bytes": 107,
+          "sha256": "a98dc3316e43d28bc6688d961eb60096932fa413362bebb6a2c931127790251e",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "initial",
+      "profile": "x64",
+      "source": "native-dynamic-table-initial.cpp",
+      "source-bytes": 1714,
+      "source-sha256": "c5bbf890f886383e05877a526baa0c0cb9f9e3486485bae67ce6f62fc07fe91e",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-initial-x64\\probe.exe",
+      "exe-bytes": 143872,
+      "exe-sha256": "0dc2379188798ae347a9fe37f4617c431c12a19374c24dbfe2021ec7c3d14dd4",
+      "machine": 34404,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-initial-x64-0.log",
+          "bytes": 105,
+          "sha256": "a017df22e0ec7cc51d40d755eb755ae25eb0ef0cee38c8caa73dcc2ea3baf66f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x64-1.log",
+          "bytes": 105,
+          "sha256": "ec506803995db943d73a962a0f48831c338242af93bbc17829f5fc045390d0b5",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x64-2.log",
+          "bytes": 105,
+          "sha256": "aa8419fc6c631e0438f27c99928dc925edf1ea15cacf3035db01b16540b9bfda",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x64-3.log",
+          "bytes": 105,
+          "sha256": "83f75531fe78ca28e95b280c9f5f06b305d620cf91f17fbd22d9ef223e6e13f7",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x64-4.log",
+          "bytes": 105,
+          "sha256": "10cc2c07489e3baaba06fd9c0a9940e6a9d9a15f4b01ad798d8ada2d4cf67e05",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x64-5.log",
+          "bytes": 105,
+          "sha256": "bae052af5b90e237709626d1b98dadff9340313405f1a657c2da3aaa3e7a1cd3",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x64-6.log",
+          "bytes": 104,
+          "sha256": "61a6abadb4c9b74337fa1281734caa1ffd7c42485a139518e92f1abec04bc352",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x64-7.log",
+          "bytes": 105,
+          "sha256": "d89b877d11f7c3c7dc2560d7770f9de84ebffef2defe51c9d6cba6e88f32a9df",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x64-8.log",
+          "bytes": 105,
+          "sha256": "86f7d33c47816db318db45aa182dcf213c4061e9a827e465b2a07bc24ae23f27",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "initial",
+      "profile": "x86",
+      "source": "native-dynamic-table-initial.cpp",
+      "source-bytes": 1714,
+      "source-sha256": "c5bbf890f886383e05877a526baa0c0cb9f9e3486485bae67ce6f62fc07fe91e",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-initial-x86\\probe.exe",
+      "exe-bytes": 126464,
+      "exe-sha256": "bcbd142aae135f6eed1321a158ef0b81108a0e2aacfb16df4549d5cdce6b5632",
+      "machine": 332,
+      "large-address-aware": false,
+      "logs": [
+        {
+          "path": "dynamic-table-initial-x86-0.log",
+          "bytes": 104,
+          "sha256": "eee46ff4895f74c28aa386a4589e113498cee4ec2866cc65a559a8ef61b11901",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x86-1.log",
+          "bytes": 104,
+          "sha256": "7bb324beed5807b9456f1bc68fc7dc07d10a13cb2e8e6502a2c095a61e36d5d1",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x86-2.log",
+          "bytes": 104,
+          "sha256": "dfe8496a4be901b35673940f31d7bea274064bf20bda2a32385bff2828fc2caf",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x86-3.log",
+          "bytes": 104,
+          "sha256": "3a5756da167ce030ee6e492765d3985027dd0b8dc38b0bc0f33f30dc0051a0c9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x86-4.log",
+          "bytes": 104,
+          "sha256": "cbed0253e5416e049df3811c62de61110f9ee6998321042843befdf9c2187539",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x86-5.log",
+          "bytes": 104,
+          "sha256": "4b484702a123ae8b03b2bf5f82afc959d6bce24cdee02952303090db738e7e3c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x86-6.log",
+          "bytes": 104,
+          "sha256": "31f33770377572296b885261282b1ea9745f11d83be38bbbc30f9e74898db5a8",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x86-7.log",
+          "bytes": 104,
+          "sha256": "0ced3a76e5bc5ff0de11ad7caf2867d0a9c34b3cc445bb835f66d639752f85c4",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x86-8.log",
+          "bytes": 104,
+          "sha256": "529c42e47eb2d6a1d8cbc15491e7446f35a761d701e09421712fc0a0b8ce40ba",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "initial",
+      "profile": "x86-laa",
+      "source": "native-dynamic-table-initial.cpp",
+      "source-bytes": 1714,
+      "source-sha256": "c5bbf890f886383e05877a526baa0c0cb9f9e3486485bae67ce6f62fc07fe91e",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-initial-x86-laa\\probe.exe",
+      "exe-bytes": 126464,
+      "exe-sha256": "55afbda792335f0dcaf2d5f2f32a06609e342969e61878d10f7414d138b40a48",
+      "machine": 332,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-initial-x86-laa-0.log",
+          "bytes": 108,
+          "sha256": "0fd540f8ea1cfe0aca160ebb4da32fe1038756fc12e6c4533cf4129bc61d7ea7",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x86-laa-1.log",
+          "bytes": 108,
+          "sha256": "5ffd6b72275211cfb39eb2fb0af740c2f926b76d688981542dfb5d7b2824086e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x86-laa-2.log",
+          "bytes": 108,
+          "sha256": "e1720118ee9151204534bafc1e89d49230de86722ce0f8c6b5c380c58915cf06",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x86-laa-3.log",
+          "bytes": 108,
+          "sha256": "31559f4c148776ddc6388b3f42921f86a105f7a40cf5e68cdb3c8a0b0a905421",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x86-laa-4.log",
+          "bytes": 108,
+          "sha256": "234021d2e0ce7e0dbc40168aade3c8df788c7a77bb71fd6e0d8f64913d75a6bd",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x86-laa-5.log",
+          "bytes": 108,
+          "sha256": "c39ea810b7e763066b6ee351eef4c10166d66f884f0725352720663b048f4f93",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x86-laa-6.log",
+          "bytes": 108,
+          "sha256": "efef01cfe53437977285aeb5cbc688fe4f3cecb16cffe45de618208b8de4f46c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x86-laa-7.log",
+          "bytes": 108,
+          "sha256": "025a324427c235ed681f7b3ffcc3deb467306e8c8856142c006d4b68470073fa",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-initial-x86-laa-8.log",
+          "bytes": 108,
+          "sha256": "1433ee5a2a831d2a48b3de907b364de5279769a079de6e5de3ca466005af0c22",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "lifecycle",
+      "profile": "arm64",
+      "source": "native-dynamic-table-lifecycle.cpp",
+      "source-bytes": 3040,
+      "source-sha256": "b3723fad08753431d3fc4a8938b0d6e54c0a4f1782a557bc90ff66a65bd029d8",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-lifecycle-arm64\\probe.exe",
+      "exe-bytes": 146432,
+      "exe-sha256": "93fd16c05c231e93c6bf7ef2f383894eb086494db260393bb74c7e5030ff10ca",
+      "machine": 43620,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-lifecycle-arm64-0.log",
+          "bytes": 2573,
+          "sha256": "d65495ba343d0af6f5fdd0c2098951956cb8727cb2932dbb4fcd79c7ee28497f",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "lifecycle",
+      "profile": "x64",
+      "source": "native-dynamic-table-lifecycle.cpp",
+      "source-bytes": 3040,
+      "source-sha256": "b3723fad08753431d3fc4a8938b0d6e54c0a4f1782a557bc90ff66a65bd029d8",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-lifecycle-x64\\probe.exe",
+      "exe-bytes": 143872,
+      "exe-sha256": "8c04755a6cd3e8c77be6c97bbc7cab4e640eadd19ac7341ef2a95019f57e0f6a",
+      "machine": 34404,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-lifecycle-x64-0.log",
+          "bytes": 2571,
+          "sha256": "d735688a213ff5c62efb875a60cb77517f2b8ea55e501d03c81c2e8e7006ed43",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "lifecycle",
+      "profile": "x86",
+      "source": "native-dynamic-table-lifecycle.cpp",
+      "source-bytes": 3040,
+      "source-sha256": "b3723fad08753431d3fc4a8938b0d6e54c0a4f1782a557bc90ff66a65bd029d8",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-lifecycle-x86\\probe.exe",
+      "exe-bytes": 126976,
+      "exe-sha256": "575d42f5bd4e4260acfc73e738c4fad94d0f6ea5261da8258f6ab4dc8b1e6be9",
+      "machine": 332,
+      "large-address-aware": false,
+      "logs": [
+        {
+          "path": "dynamic-table-lifecycle-x86-0.log",
+          "bytes": 2571,
+          "sha256": "42cda5a115421406c20f2034592038b94b65c4909d060e9ddc9631d605c1751a",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "lifecycle",
+      "profile": "x86-laa",
+      "source": "native-dynamic-table-lifecycle.cpp",
+      "source-bytes": 3040,
+      "source-sha256": "b3723fad08753431d3fc4a8938b0d6e54c0a4f1782a557bc90ff66a65bd029d8",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-lifecycle-x86-laa\\probe.exe",
+      "exe-bytes": 126976,
+      "exe-sha256": "3e9babf621e693fdf403d919b819725c3f621d5e65df6fccbe9c66c1b89f00cd",
+      "machine": 332,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-lifecycle-x86-laa-0.log",
+          "bytes": 2575,
+          "sha256": "039d4bee958d42fc9b58343e05ac741954d95fb0c1322d1baaefa399a5dfc2f0",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "key",
+      "profile": "arm64",
+      "source": "native-dynamic-table-key.cpp",
+      "source-bytes": 1626,
+      "source-sha256": "33d96600e526e065b4e0ef655a36cc4e66851bdca76c6ad23399a8e45d246eef",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-key-arm64\\probe.exe",
+      "exe-bytes": 144896,
+      "exe-sha256": "d705ff7af4f510f3c79ca321974dfa65166043d22253d500aa9a143c1351ca62",
+      "machine": 43620,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-key-arm64-0.log",
+          "bytes": 14151,
+          "sha256": "672a9cb8f60ec24c25ad75a6dad52caf132a9e520d228c528b8da1b391a6b3cd",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "key",
+      "profile": "x64",
+      "source": "native-dynamic-table-key.cpp",
+      "source-bytes": 1626,
+      "source-sha256": "33d96600e526e065b4e0ef655a36cc4e66851bdca76c6ad23399a8e45d246eef",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-key-x64\\probe.exe",
+      "exe-bytes": 141824,
+      "exe-sha256": "a0cd9ab99559f73f5ccba83af4f26253ede4bd06d4e995fe3dc4a483520948ee",
+      "machine": 34404,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-key-x64-0.log",
+          "bytes": 14149,
+          "sha256": "c132ceba7d51eca4973ed84097559a0f5b9c50cfa0c2b147a24a97a80147ceeb",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "key",
+      "profile": "x86",
+      "source": "native-dynamic-table-key.cpp",
+      "source-bytes": 1626,
+      "source-sha256": "33d96600e526e065b4e0ef655a36cc4e66851bdca76c6ad23399a8e45d246eef",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-key-x86\\probe.exe",
+      "exe-bytes": 117760,
+      "exe-sha256": "23a003e3ee332f39912b6846b3ee9271c47a42863826e7d0b951e2d0cdc330ff",
+      "machine": 332,
+      "large-address-aware": false,
+      "logs": [
+        {
+          "path": "dynamic-table-key-x86-0.log",
+          "bytes": 14149,
+          "sha256": "fed2adcbf6c4a4dce9590d9d9ab19238da3ce4f1d7e7c5ac47855d220c4d9a7a",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "key",
+      "profile": "x86-laa",
+      "source": "native-dynamic-table-key.cpp",
+      "source-bytes": 1626,
+      "source-sha256": "33d96600e526e065b4e0ef655a36cc4e66851bdca76c6ad23399a8e45d246eef",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-key-x86-laa\\probe.exe",
+      "exe-bytes": 117760,
+      "exe-sha256": "86c1f9f563a8bab6a69c40c1cb77b627f41d30b85035db2015a254b13243b98a",
+      "machine": 332,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-key-x86-laa-0.log",
+          "bytes": 14153,
+          "sha256": "72c7ffb04d6795e25d69d806ff0734d0b5390d0c442622d02f5f534f9fccc456",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "boundary",
+      "profile": "arm64",
+      "source": "native-dynamic-table-boundary.cpp",
+      "source-bytes": 4866,
+      "source-sha256": "b149b404d97261629895486aaf77e4dd538f4718e67e14f38915eedcd8e15200",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-boundary-arm64\\probe.exe",
+      "exe-bytes": 154112,
+      "exe-sha256": "f1e8a6e84d952f24a9628a9fb255568befbf2c77e6a6b3676dd867204d6c0dfc",
+      "machine": 43620,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-boundary-arm64-0.log",
+          "bytes": 145586,
+          "sha256": "533603c2b4d857564a71a716435087b12d28f2577e08abacdcabc53e956628d3",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "boundary",
+      "profile": "x64",
+      "source": "native-dynamic-table-boundary.cpp",
+      "source-bytes": 4866,
+      "source-sha256": "b149b404d97261629895486aaf77e4dd538f4718e67e14f38915eedcd8e15200",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-boundary-x64\\probe.exe",
+      "exe-bytes": 152576,
+      "exe-sha256": "4ec4f942823bb199f747309a94ae4cebff0f38cfb3d94ca6fe43f2e37b3ebb5b",
+      "machine": 34404,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-boundary-x64-0.log",
+          "bytes": 145584,
+          "sha256": "d8b7481ade0f2787869d55cfe1f99e916ee04391488e4dea4e96fd98cde4fb93",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "boundary",
+      "profile": "x86",
+      "source": "native-dynamic-table-boundary.cpp",
+      "source-bytes": 4866,
+      "source-sha256": "b149b404d97261629895486aaf77e4dd538f4718e67e14f38915eedcd8e15200",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-boundary-x86\\probe.exe",
+      "exe-bytes": 132608,
+      "exe-sha256": "8c23ed5b17fdc9eb441d5e5cb2d39daa34c20319357b863c40edc02b248c9641",
+      "machine": 332,
+      "large-address-aware": false,
+      "logs": [
+        {
+          "path": "dynamic-table-boundary-x86-0.log",
+          "bytes": 145777,
+          "sha256": "d53af1ba40c1ef512253286d42c95c58dd3ced1a294840f2a1c5e6df10019cca",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "boundary",
+      "profile": "x86-laa",
+      "source": "native-dynamic-table-boundary.cpp",
+      "source-bytes": 4866,
+      "source-sha256": "b149b404d97261629895486aaf77e4dd538f4718e67e14f38915eedcd8e15200",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-boundary-x86-laa\\probe.exe",
+      "exe-bytes": 132608,
+      "exe-sha256": "f622e46758b2b025630538a095ee8ff0d37a6419df82d27cc5e0a9ab3c4eeda7",
+      "machine": 332,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-boundary-x86-laa-0.log",
+          "bytes": 145781,
+          "sha256": "7cf9eeeba0abc858469dce011cef85dfdfb54bb6266a74e96aafec7ddff6eff2",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "ranges",
+      "profile": "arm64",
+      "source": "native-dynamic-table-ranges.cpp",
+      "source-bytes": 3295,
+      "source-sha256": "22a5246694f91f5d28721608db63b2a576f05b29b5f975fd0396a31efb0a0426",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-ranges-arm64\\probe.exe",
+      "exe-bytes": 146432,
+      "exe-sha256": "ec96f63bcad13dbe71a2e05c899046e3b06f94f3161eba1740943e23928a83bd",
+      "machine": 43620,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-ranges-arm64-0.log",
+          "bytes": 13069,
+          "sha256": "176dacb1393dc12e6e619d105bedb1633bf7d265ebf98aa0546217258dc4ba8c",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "ranges",
+      "profile": "x64",
+      "source": "native-dynamic-table-ranges.cpp",
+      "source-bytes": 3295,
+      "source-sha256": "22a5246694f91f5d28721608db63b2a576f05b29b5f975fd0396a31efb0a0426",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-ranges-x64\\probe.exe",
+      "exe-bytes": 143872,
+      "exe-sha256": "dded76c17d34f6137043e000e41e88106d39199ca6ca67c0bad7e38b5fe01342",
+      "machine": 34404,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-ranges-x64-0.log",
+          "bytes": 13067,
+          "sha256": "b1cf1984fd43543ed8503250ab654c5be332bb490ca0738bab15f25e5c3fb0ad",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "ranges",
+      "profile": "x86",
+      "source": "native-dynamic-table-ranges.cpp",
+      "source-bytes": 3295,
+      "source-sha256": "22a5246694f91f5d28721608db63b2a576f05b29b5f975fd0396a31efb0a0426",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-ranges-x86\\probe.exe",
+      "exe-bytes": 119808,
+      "exe-sha256": "ec7fad4039e016b33d43841ca6262738a5bcb5a81689237e2310c9c38ede8cb0",
+      "machine": 332,
+      "large-address-aware": false,
+      "logs": [
+        {
+          "path": "dynamic-table-ranges-x86-0.log",
+          "bytes": 13067,
+          "sha256": "b47dd51f063f71deecd463512d10068bb6c4fcd392cf39e9c8c42d6fd415c63f",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "ranges",
+      "profile": "x86-laa",
+      "source": "native-dynamic-table-ranges.cpp",
+      "source-bytes": 3295,
+      "source-sha256": "22a5246694f91f5d28721608db63b2a576f05b29b5f975fd0396a31efb0a0426",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-ranges-x86-laa\\probe.exe",
+      "exe-bytes": 119808,
+      "exe-sha256": "506b4d08cb88647e2e49dfebb1122d891dc4a0030c84b34bdd25259802007077",
+      "machine": 332,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-ranges-x86-laa-0.log",
+          "bytes": 13071,
+          "sha256": "f5e994820ca42b7e2407cfb15287bbff3a089da784f5df7a2f5accb5edb9bdd4",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "ranges-isolated",
+      "profile": "arm64",
+      "source": "native-dynamic-table-ranges-isolated.cpp",
+      "source-bytes": 3510,
+      "source-sha256": "7277b38bff5e8527461dec2e059bbd434e71595f01b2422a002583dbe16ab8e0",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-ranges-isolated-arm64\\probe.exe",
+      "exe-bytes": 147456,
+      "exe-sha256": "cd2e256bcb9ad9a77ab685554575fdb9e740dd87fc84416bf5e226c99f381bef",
+      "machine": 43620,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-0.log",
+          "bytes": 343,
+          "sha256": "7c953500e7c174c05786c0ce9cf87c248c33a9e24961aab3f168b64fbcd5fb64",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-1.log",
+          "bytes": 343,
+          "sha256": "00559b3fe86b992d152eb6adecafa330b697b919f38d25f2a3c99575d9b43f70",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-2.log",
+          "bytes": 343,
+          "sha256": "fa0e6fbe77746bc77e949717134c97c20523938ba52dd7002772bd228bf244d5",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-3.log",
+          "bytes": 343,
+          "sha256": "00055cf8dd15d7da3b393a5652a24781539be231f75c2eeddb09537f32f04f90",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-4.log",
+          "bytes": 343,
+          "sha256": "977d64f7b24cbbd10a7c8ce6bfca93b60cff5323952e8c01de043f3ed4c59a3d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-5.log",
+          "bytes": 343,
+          "sha256": "2ac03f74aa6f733827363bc2d436bc7eab5749ce4b37f06aca47e6fc58ced580",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-6.log",
+          "bytes": 343,
+          "sha256": "eb6d90cacf4e2b86579a692a6d6c84138acd6328443f8967faa1a8598d08f112",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-7.log",
+          "bytes": 343,
+          "sha256": "1677a6d0733e941889e6c9fb6e646cf9bebb8af7c1bbbc843668d968e819f53d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-8.log",
+          "bytes": 343,
+          "sha256": "ca98939595ddeaca84e91134d53b8d67e50e269f2702754a5fcd57d24f01b569",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-9.log",
+          "bytes": 343,
+          "sha256": "f1ab3450252e67f200ad1c9e738c035ae46359dfaa2bbd1de84ac202c5d35483",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-10.log",
+          "bytes": 345,
+          "sha256": "0777256b85eb312dd5ec2b5f4abba80f372a38d81c07efb6da35ff2617fa9bd9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-11.log",
+          "bytes": 345,
+          "sha256": "d9cf18f6457a6de6b8ddbeff67c578bb1292eaefc00703a94ba605151b9c07c5",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-12.log",
+          "bytes": 345,
+          "sha256": "8f79de46ce4b50c41c4e788eb919bd49044ab7f746ac169ffe3641817fdaa1ba",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-13.log",
+          "bytes": 345,
+          "sha256": "b93b7d6cce3c27ce268dee94947f09a5dc723fa67d8d5f4826878a0c82fdd376",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-14.log",
+          "bytes": 345,
+          "sha256": "a343ce5f4cc1f080858b851c5c66d01b478b2a69a7acbde430a9b929302e1c31",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-15.log",
+          "bytes": 345,
+          "sha256": "4f2aa27db75c90b32d391c956c758fed467747256f32ebcdebf8b1d25c610124",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-16.log",
+          "bytes": 345,
+          "sha256": "dfb94c17850e82a696b502499f5036049d5d0813d47aac8c246e8ad05fe19670",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-17.log",
+          "bytes": 345,
+          "sha256": "4ed086acd1ce649ba1bbd7694a9c9f20caf4d4825f4d56f7ec12db9bae85e198",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-18.log",
+          "bytes": 345,
+          "sha256": "fc0100ea596d25a1027dfcf632fb7f8ca8d614da644e035948fda1fb7a4a4531",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-19.log",
+          "bytes": 345,
+          "sha256": "de7ba4a35c0367cf81faaa01cc8aef1576f37f487f419fe5f4f0581ae2397d15",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-20.log",
+          "bytes": 345,
+          "sha256": "d90f5d46be8ad2db47c2091feff382a7dfae29bb8221ee01e28d0461281c9638",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-21.log",
+          "bytes": 345,
+          "sha256": "5f0759a6f2a96bec1117ba45e20b4112da3ad90d81fa93819b79db79bde46d9a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-22.log",
+          "bytes": 345,
+          "sha256": "6e03bf2d06fbe72e281e787cfce69fb32f008b2a631d1e7176d73af8fda7b98d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-23.log",
+          "bytes": 345,
+          "sha256": "0bde825d703c7422875cc5c81c9b258384428507a2e1f9606e15b1e367f10e65",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-24.log",
+          "bytes": 345,
+          "sha256": "ce74fec21b0eb79e8846ba82ef10d2acb064eb7959e38e3869e78f5854dc0270",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-25.log",
+          "bytes": 345,
+          "sha256": "4285e212dc91b0a02f37f94c68c6d1789ef49b7e46af8afd1fa572f5f4969292",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-26.log",
+          "bytes": 345,
+          "sha256": "b4a8f5a2f76e2cb26746e22ab83a5c9972bf1d7c30ea0a439a306cc987455d31",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-27.log",
+          "bytes": 345,
+          "sha256": "6859b4962e15544f12a084684acba593c800976af75678ee2ed97f2a59e47ecd",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-28.log",
+          "bytes": 345,
+          "sha256": "137355104c4ad609c72fa82069549d118c1b3bd2096a54aad2d812cd686e443f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-29.log",
+          "bytes": 345,
+          "sha256": "2b7485cdf9aa99a5678be7bfe9f533608c6dd93616281176813a29a08c19ef27",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-30.log",
+          "bytes": 345,
+          "sha256": "740272639216c62e35b537d90659543f54336dfda01174d020fea8bba5f9c8c6",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-31.log",
+          "bytes": 345,
+          "sha256": "5e0fb00f9e9c9a137d2af6dba017138c21d7eeeb6fc14bedc7abae7da55c4208",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-32.log",
+          "bytes": 345,
+          "sha256": "aedf97315ae6f508e533d21fc6fb2d39b27d4f26046e3c0cd5cb11df39557953",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-33.log",
+          "bytes": 345,
+          "sha256": "8557768a932624acac4f4e22098fd8c62c8ad454e7ba2f8132963f4a4b09874b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-34.log",
+          "bytes": 345,
+          "sha256": "0945b12845414d14bc3f9a063bbd02dd6b1bbc50b882150aaa92673a92bc6079",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-35.log",
+          "bytes": 347,
+          "sha256": "3caa04ca1429d905b812f261e52ba10e91a4bec9e6dbe3dca0c44a619406fe54",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-36.log",
+          "bytes": 347,
+          "sha256": "e83e449c972c3b9da8184a1879746b137b87e59d805daa457aaa2f6a51faaf7c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-37.log",
+          "bytes": 347,
+          "sha256": "701d975490ccaad3e706dee8995d2e584455bce704daa98e9cd584e525195e62",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-38.log",
+          "bytes": 347,
+          "sha256": "7bad7200b1699f56cd4efcff6807ad8a52a2c8e64198c162f79bfde2fbfc88e1",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-39.log",
+          "bytes": 347,
+          "sha256": "4f956c04415e98ec5578762d0de6f3689f7500bd6c7096f288df52e4a18b49f2",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-40.log",
+          "bytes": 347,
+          "sha256": "008d7ed661919fb30789f1b7a3adc89c6756c8fa676107243e06510e90c6c264",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-41.log",
+          "bytes": 349,
+          "sha256": "dcd0f2609b81cfaf1670b7294ba94b6693fe653d9dfdce4f66db61bdf5d085df",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-42.log",
+          "bytes": 349,
+          "sha256": "d9efd8ab60e22f94732b7ab64648874e728d13a568d0c42de73e4142236222d5",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-43.log",
+          "bytes": 349,
+          "sha256": "54b3fd064f7130c469b5aab5aabf5999adbf8e85fd496b687c7258c841b2a54d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-44.log",
+          "bytes": 350,
+          "sha256": "e364a5c5512180ee9f5870fccb83d56ec88b5d925b56cf833a50037102d65c0d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-45.log",
+          "bytes": 350,
+          "sha256": "44ec978735d98f38de8da4dc8bde16f7a2a95018207b4f662c142f35ca4d6157",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-46.log",
+          "bytes": 350,
+          "sha256": "c1f1939df95f656e07a84ba7ba868878003db389a31b341c69e0030bd8e1a841",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-47.log",
+          "bytes": 350,
+          "sha256": "6cb976f3b5f8497b48121cfee8198623b9f38e8979acc73f3d5d9364f4bf83b0",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-48.log",
+          "bytes": 350,
+          "sha256": "6a5e6829bf8fe13a06a20132dcbfd609df452731cd8f85487555d138b6200cf5",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-49.log",
+          "bytes": 350,
+          "sha256": "45cbe81bd3aecf84fd0bc1c79d369b1c15b8cb53ccfa1cadf8ef7d5b58300e68",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-arm64-50.log",
+          "bytes": 350,
+          "sha256": "1e75cde894966bd5eda42eb7c2efac48b9ad151c2917f56ccec3b888d789c281",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "ranges-isolated",
+      "profile": "x64",
+      "source": "native-dynamic-table-ranges-isolated.cpp",
+      "source-bytes": 3510,
+      "source-sha256": "7277b38bff5e8527461dec2e059bbd434e71595f01b2422a002583dbe16ab8e0",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-ranges-isolated-x64\\probe.exe",
+      "exe-bytes": 145408,
+      "exe-sha256": "768f59392c6d78045e20c480219ccc3df4856e4e1b64e1e2f489fb1885e97cfb",
+      "machine": 34404,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-ranges-isolated-x64-0.log",
+          "bytes": 341,
+          "sha256": "2b8045ee0c92247d7eb743e80942d9a271207b96b66b030e16d355a98256aacd",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-1.log",
+          "bytes": 341,
+          "sha256": "82a474b17f5327c119531d3e6e53a8a01b7387ed53741f2915f09430ff08d5fb",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-2.log",
+          "bytes": 341,
+          "sha256": "ae7857769acb729605ab28a632e0e213a481ceddcbfb8337a25a85eee7687878",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-3.log",
+          "bytes": 341,
+          "sha256": "fa88a3ee0afd9f46cff4e4db34ecb6d3b51a4c983f0954ae05057bf18cb70115",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-4.log",
+          "bytes": 341,
+          "sha256": "75fe88eb017336264921d6cd9e354f2d457aeea55bd5dd7de82afd8698ce3939",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-5.log",
+          "bytes": 341,
+          "sha256": "94d4aa7a9cc53f44fdf674a7bce98c8dabf62ac909837e612325d0680bd70255",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-6.log",
+          "bytes": 341,
+          "sha256": "a4f63221f737ec1c2c9e83cb808ea9522c8835778864816656f4aaa68a7d9a9c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-7.log",
+          "bytes": 341,
+          "sha256": "1ae1c4a515dc7b06e4565b100b83a9837c23f10b50e08b13eafbefbc972af5c6",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-8.log",
+          "bytes": 341,
+          "sha256": "aa95c23adb1a952f9a74f1713e744187035a1d9537bc75083a58c5dade821aeb",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-9.log",
+          "bytes": 341,
+          "sha256": "6ca53d449f1420468e8c13e73959cbd8171016c01b5d6da0ef41605f7f674546",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-10.log",
+          "bytes": 343,
+          "sha256": "7d8e87098c54cef805bcdea30db299d468e6e7b99cca109282f0c3f606e6e4f6",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-11.log",
+          "bytes": 343,
+          "sha256": "52c89f839044bcb69be6b494a4b55b54861b82f5f2de07595a62aeb60833afca",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-12.log",
+          "bytes": 343,
+          "sha256": "ff3452e567e9a04205b1526c0941898bdd0b946abf06e17ce6de265cb31b7c29",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-13.log",
+          "bytes": 343,
+          "sha256": "2a5140796185c078ea5ce40a0c85a97b9b2ad6f34171227b81fad65e39db49d3",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-14.log",
+          "bytes": 343,
+          "sha256": "baebccc0e79efd2681c9421ca2260f90ec7c6b6d6dd440ca3ae12af9b79044c3",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-15.log",
+          "bytes": 343,
+          "sha256": "e9e25dec0a562b2a0e4b552d6e28995907c8c1fa4c10d81b7eb2eaf05cc9f0b1",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-16.log",
+          "bytes": 343,
+          "sha256": "ea7bac3ea120e8308838cda2a1b8339a72e18bdaf101ed567a8ceed0f8242112",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-17.log",
+          "bytes": 343,
+          "sha256": "e68b217a6ea3f85dc1bb1d500c12af26f5753038e78eda5810c3672624b11e8e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-18.log",
+          "bytes": 343,
+          "sha256": "afca0c307daee5203f8f11a72d8b6544073732506d82581b8434aaade521e855",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-19.log",
+          "bytes": 343,
+          "sha256": "d03b3b3c53fab92fbd175600531c52b94a94750a66f7ad5a64fb6a7734788277",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-20.log",
+          "bytes": 343,
+          "sha256": "4b16c03934e42554ee59e646543b283fd042c534580b44f4feb24c7219c686e0",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-21.log",
+          "bytes": 343,
+          "sha256": "6ac749fe629fc2aa9b5385a989bd1046f7f21ea65d558f5042362ccf763adbea",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-22.log",
+          "bytes": 343,
+          "sha256": "bf7953f12a8a1bbd3ab798550d476c31898574738751c690d2e91543d1ffdb6e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-23.log",
+          "bytes": 343,
+          "sha256": "e95b485212a1d6ce75785cbae0d6b188291e827ca5e920a7b50c81851e9fccc7",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-24.log",
+          "bytes": 343,
+          "sha256": "fb8d523b0f3917e4b86f43671c9268df77eab40ae566b15593a6ee7c4043bd48",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-25.log",
+          "bytes": 343,
+          "sha256": "a882091e1e7051f40819a718b2a68bf9524e95d82fb002bece61061eef9ea8c8",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-26.log",
+          "bytes": 343,
+          "sha256": "0ee688bc7061242388de49846956754d66af69ed099cf2e5fc0860a144f23a0e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-27.log",
+          "bytes": 343,
+          "sha256": "6aaecaa1951cf6194332f6f378505f2f3fd9df61b43e0a1661c94d348e5bf7ac",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-28.log",
+          "bytes": 343,
+          "sha256": "f740e21a034828edce8ec8423152d37cd531c839428a865e37bb30de5cc302d7",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-29.log",
+          "bytes": 343,
+          "sha256": "65e7f86aa28f688b53d24aaec0eba984999ef90d8047dd02fb573b51b34535a2",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-30.log",
+          "bytes": 343,
+          "sha256": "4c994fff139ed7ed1bab5668d106ecab0a67edf34b513fb8e6568d20899a2f73",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-31.log",
+          "bytes": 343,
+          "sha256": "05338250490aa046d1a31d0c2b92d8f359a15ec2489a70a48823ad21fca82743",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-32.log",
+          "bytes": 343,
+          "sha256": "c060bb5c59cecd662ee117e7d84adbad018c4148a3e0e0321caedbf02aa89da1",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-33.log",
+          "bytes": 343,
+          "sha256": "f50196fd3197fce05657fbd0089c72a91aab12900772bdb4de3b71b6adacc645",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-34.log",
+          "bytes": 343,
+          "sha256": "0734f6f636f4c1f6a7dac1febde5ad27a4144a9765a63b5ea7342ed463b4cab2",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-35.log",
+          "bytes": 345,
+          "sha256": "e5968b33b1fd1517216d4e742d8da22f3851ac293685f9ffeb9db3064ac633c9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-36.log",
+          "bytes": 345,
+          "sha256": "77ddfc767b7b15d9eb14e0adfe1b184f6400dd53d79499b52ba67d949f9c6fc2",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-37.log",
+          "bytes": 345,
+          "sha256": "9b3b0f7eb2f40f799bd9566c11ba0038d926a7f787c1ea22a8d73f2be10bb0df",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-38.log",
+          "bytes": 345,
+          "sha256": "c3ff9313683d357d41729a5dc05d42eb1b9e7e3669d7f309ddd744cfe7b6666d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-39.log",
+          "bytes": 345,
+          "sha256": "f6a2b71c2056145138c762bb480ccc2d28806bb4df75ae95174bac84a129734e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-40.log",
+          "bytes": 345,
+          "sha256": "4d003688b5dbac4beca0439da22e7c24107a42e9fb17c4faa7bfb92585305fa1",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-41.log",
+          "bytes": 347,
+          "sha256": "f4ae8eca53326282acab504939e563c3da6058a7d59b99003e232b9fa643fbe6",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-42.log",
+          "bytes": 347,
+          "sha256": "27c0f49d9c8219ee901c2e23128569c54d6a4e9b3cdfe564ad2623eddc873870",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-43.log",
+          "bytes": 347,
+          "sha256": "a179a7d2c8ed99ca8bf2384cc34b0a6f2e7cdd8ff9d541b7e9801c532230dfb6",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-44.log",
+          "bytes": 348,
+          "sha256": "7942f31f41a74180f790d36ef1dec9d8ad6e5964b078b680c227e9548c25fb1b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-45.log",
+          "bytes": 348,
+          "sha256": "1648b77fc36aba987cc99188b7cc91d931266b3421fc722f822a63f817529c1c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-46.log",
+          "bytes": 348,
+          "sha256": "88b3901250da0b447515635e1901f03778ee7f42c06d3e900d9156110b1d363b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-47.log",
+          "bytes": 348,
+          "sha256": "646534ca4abc3ad346c4f87edcc1db5888d9ce8cb865fc3ff7456ad85bd1ae31",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-48.log",
+          "bytes": 348,
+          "sha256": "ab5b2ca9084281e16aec184e06f7e13add013c08a47d65592c7bff16a8849333",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-49.log",
+          "bytes": 348,
+          "sha256": "f75e785ce7099cbed7747f11b8575e93360e46497df0f5f02a79905f8be3ce09",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x64-50.log",
+          "bytes": 348,
+          "sha256": "5d8c50d2dc39fa6403fc169796d208af4cf018ec6361d8b62ea2484d78700102",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "ranges-isolated",
+      "profile": "x86",
+      "source": "native-dynamic-table-ranges-isolated.cpp",
+      "source-bytes": 3510,
+      "source-sha256": "7277b38bff5e8527461dec2e059bbd434e71595f01b2422a002583dbe16ab8e0",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-ranges-isolated-x86\\probe.exe",
+      "exe-bytes": 120832,
+      "exe-sha256": "882ec3e8e0c2b1f380c05f2afc3aa97ab61e3ba78612e921fb0c4b07c181e337",
+      "machine": 332,
+      "large-address-aware": false,
+      "logs": [
+        {
+          "path": "dynamic-table-ranges-isolated-x86-0.log",
+          "bytes": 341,
+          "sha256": "db16e10b60d94219afb484109b1793a4cb6bf1193a072e0bd51fbac19b8a15fc",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-1.log",
+          "bytes": 341,
+          "sha256": "f17538b7ee6558f1994bb24077886c6fc6a8304e3a74a3ebc770995322db68d7",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-2.log",
+          "bytes": 341,
+          "sha256": "15fc20641d3c6f4e1ef0f08a620f38e8ace104f80ea39e0862963d69e35190fa",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-3.log",
+          "bytes": 341,
+          "sha256": "23c6b7948be5f0f563da601882f422e5bb62936b864fa51a846d77914aafb8f1",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-4.log",
+          "bytes": 341,
+          "sha256": "d7e1e344a89f2c45416f332a218f4b10b8389904d33db1b0862f8dcf69c535e0",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-5.log",
+          "bytes": 341,
+          "sha256": "b636a476dede867de8e77fa72088fee31c3dc3b8073760f1301507691530b783",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-6.log",
+          "bytes": 341,
+          "sha256": "3a2ff20102bf768e2e27df72ef5b4df0bf78d3e16b7438d593c6c3e8501c1c5a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-7.log",
+          "bytes": 341,
+          "sha256": "49f48c6c5be8f0c9c5a01bd502c2a004d01599a3df770a9cb4fbe21aa28feb30",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-8.log",
+          "bytes": 341,
+          "sha256": "670c5006cf211a0598505874cf7b72b58a101b1e3acefa2038c885135ef5cd3c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-9.log",
+          "bytes": 341,
+          "sha256": "b5f32b62cd892b26f45a3141a12dbfdcdedc658259fb75ad0618415026959fec",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-10.log",
+          "bytes": 343,
+          "sha256": "322f08bf54b9814458dc7900323b3d199c13047a5461b92bba2d572cd6e68622",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-11.log",
+          "bytes": 343,
+          "sha256": "55e04783a78deb92b05e90e0e138249068febbd1df3ce8192043b9d6af7e3fa7",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-12.log",
+          "bytes": 343,
+          "sha256": "9d7773989898a146109a510454d4c223edd501e1035a0cd378e1b5d99a743bd8",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-13.log",
+          "bytes": 343,
+          "sha256": "3955aa8de51a1b32be4a2be74a1b139d3dae89344f162f9a4e4eed61582c586a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-14.log",
+          "bytes": 343,
+          "sha256": "50485f623ac413a0a2aba6ac606cd3387125a8817cf8d3f51d1f431ddf15a092",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-15.log",
+          "bytes": 343,
+          "sha256": "854a055b239699896684b9461aac8f3b8dd8581f669c1f1e4965de55870c778e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-16.log",
+          "bytes": 343,
+          "sha256": "dbe4617befeafd57280273d4cfa06fcd57a6a40de63d36eb185b18346713b0df",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-17.log",
+          "bytes": 343,
+          "sha256": "990ec4f70e89ce51ee259de049ce9b3266b2365ae5b710c18bc308956f87f64f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-18.log",
+          "bytes": 343,
+          "sha256": "a08c281896705f4bd6c93bab59fb2ee930675b15128fd282aa3a94ee102183a6",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-19.log",
+          "bytes": 343,
+          "sha256": "691246eecf247f610e1b5887f256fb01719074db47418213c3feb11f179d61cc",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-20.log",
+          "bytes": 343,
+          "sha256": "b241a466fd6dcad527a87639084d68ded467c0766fde21732b133a94b527e3ea",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-21.log",
+          "bytes": 343,
+          "sha256": "8714d2576d3b06dafde718cde934dd17a7ba1696b248969c63cc2591c0b49a45",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-22.log",
+          "bytes": 343,
+          "sha256": "09ea0597a3a54f817bc9c8d7245d9da5c42b3b2c02fb1e0a8b184bda168c6e66",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-23.log",
+          "bytes": 343,
+          "sha256": "3a2931cdbd74cf30728f7588b3808fe82d66d953eae75643bac993511f65a6ed",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-24.log",
+          "bytes": 343,
+          "sha256": "2993e323b2307a25f9977136939d1f7fdb89fbdf86c3536b93ae6bf5c479c2f9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-25.log",
+          "bytes": 343,
+          "sha256": "0689d395d364e9b0b163ec25beae12c689564a52e46cbd3d61cb5315dbe354a0",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-26.log",
+          "bytes": 343,
+          "sha256": "a5cbd688f36e7cb95e648b5d107637344f1d44f243447ca42649b1e347cf994a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-27.log",
+          "bytes": 343,
+          "sha256": "1afe6376f1c253b0177c5aa998a07e11cb5519b5f10ea2b8b360114159cdcbb2",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-28.log",
+          "bytes": 343,
+          "sha256": "e2a8aba2359ffa07323ddca4a322a53de50bb579ec3fa05fa4a18ae3aa24f7a0",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-29.log",
+          "bytes": 343,
+          "sha256": "babd568f39a3de1cc7b31c0f637cc912a36063349d5a670306fcc3ebf47e150f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-30.log",
+          "bytes": 343,
+          "sha256": "af250d6e4f64d65ec6e1e35c825834fd8f9f721fd3b7277defa69a366a8f340e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-31.log",
+          "bytes": 343,
+          "sha256": "205abdf312a2768c2b0eb89f69020656cca4b119ebd570241873878f8f505cf8",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-32.log",
+          "bytes": 343,
+          "sha256": "f2f92e151e762fabbe922f84fb78d24560d250df5223c302b36d5330a3776ab4",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-33.log",
+          "bytes": 343,
+          "sha256": "fd921f696c1f9fe2d3269969f40c9aac255fc9138ddeac9b58bfcbc1cc2e13e2",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-34.log",
+          "bytes": 343,
+          "sha256": "3043bd8a9d400349ecbafd45f5fdbd5ea7418997b8eb4b3b59ca90355fd1018c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-35.log",
+          "bytes": 345,
+          "sha256": "88ae1a3f80e0b19bb6bd8302e1c43ffb7370c35a64b2667ea4b1db77bb5c1953",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-36.log",
+          "bytes": 345,
+          "sha256": "9c4105e57a5d81d697652ae1517db2db15a97c9588ae3b990f3b565fffe867c0",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-37.log",
+          "bytes": 345,
+          "sha256": "5d86b87587f5f0df67c560819f049d952002bdc2bb51b278b192591b1486f553",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-38.log",
+          "bytes": 345,
+          "sha256": "3644cbe3fadb6603907c3c199c92f2a9325083d397f572cf04296dac32085a58",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-39.log",
+          "bytes": 345,
+          "sha256": "b42145f3928901ac5b24bc1dece361614901c0cad41b773c43f0e7541ac41d15",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-40.log",
+          "bytes": 345,
+          "sha256": "52a9b7d446d5f395e8f449a3aae31fedcb291adb7c8fec6b1002b08fb80701ae",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-41.log",
+          "bytes": 347,
+          "sha256": "5ecfec80a7b0a90ad69047b08dd2d7d9a7d768d78422a61629d158858b4a0c24",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-42.log",
+          "bytes": 347,
+          "sha256": "66a6ff6a6e994c0816e1699d2ceda5ac925951b60a54605abd8d59a932104ed9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-43.log",
+          "bytes": 347,
+          "sha256": "6c04d1e364155060b2ee1027f3891f645b8c1794d55f6481bc4f298d14016d3c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-44.log",
+          "bytes": 348,
+          "sha256": "b7ea56accde2fd5289d4beabd2c5d5dc0f4a7ae83a6fd7deb4e531dddfe5e9ea",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-45.log",
+          "bytes": 348,
+          "sha256": "be3534bc2ed44846a5f2146c69de4f0deb26db393fcf62815fbf250f8decaffd",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-46.log",
+          "bytes": 348,
+          "sha256": "1424c9a5e39dfe28d86d26a9e3dfc50e152f04a1636a7f4fd115177e6966d1e1",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-47.log",
+          "bytes": 348,
+          "sha256": "0c28acb5f0b0a905e4b6354de6d4dbb1d122de4ba50fa9a14fd718d93fb642eb",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-48.log",
+          "bytes": 348,
+          "sha256": "f6f554df4bde509c75317113a2b7f5cdd184a48817507e088934c4c5a8bef8a4",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-49.log",
+          "bytes": 348,
+          "sha256": "c5647c8c3852d238b81287f63e12522d5dc572d356e3d239043f0cd439c9d18c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-50.log",
+          "bytes": 348,
+          "sha256": "7706fe9595d731790245bb7e3887c7f4e8df3c5ba6d1d66be4f54ad9fd2a489e",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "ranges-isolated",
+      "profile": "x86-laa",
+      "source": "native-dynamic-table-ranges-isolated.cpp",
+      "source-bytes": 3510,
+      "source-sha256": "7277b38bff5e8527461dec2e059bbd434e71595f01b2422a002583dbe16ab8e0",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-ranges-isolated-x86-laa\\probe.exe",
+      "exe-bytes": 120832,
+      "exe-sha256": "251495ebf5fb60d8a12bf2224c1f945a63f3833f00cf5f4f89edd4dd1f7366c1",
+      "machine": 332,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-0.log",
+          "bytes": 345,
+          "sha256": "e821bc1381703174f13cff793eb3bc333b07199bcd1cba16ba40d45c97bc28a5",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-1.log",
+          "bytes": 345,
+          "sha256": "ef2c0a620121612d2d08db0432709455a9c670e07bdf7d6784340b5b76a541a2",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-2.log",
+          "bytes": 345,
+          "sha256": "6c6c48df20a171c2fff5a102574f215b8ca983952e9b5a547a16b08d730d2ea9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-3.log",
+          "bytes": 345,
+          "sha256": "df7c371c99526247103001493f30b7b86a9ba6b60af9403099acab978749fa0b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-4.log",
+          "bytes": 345,
+          "sha256": "738806caf4ab9fb41b94cad60438e3e543be36463b17ac934b334e4a7816b905",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-5.log",
+          "bytes": 345,
+          "sha256": "9159fea20ed04581664be0d83bae765bfb25f92848ce5872625242062a265c3e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-6.log",
+          "bytes": 345,
+          "sha256": "bf30180231df8154d4a18381d8034988026b8665f8905638c8f236fac28a6ae7",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-7.log",
+          "bytes": 345,
+          "sha256": "1c47ea09394c3be5bd0422378b811d280517c9a422e6d939e40aa772c342c802",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-8.log",
+          "bytes": 345,
+          "sha256": "b81f46c6c5c6f38b4e1b7e70358cd355828e54cb792d8d1a4c6a69b7eab7f592",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-9.log",
+          "bytes": 345,
+          "sha256": "75c2fe62f8adf7255e7d6bb9d38e2bc92c7bc45d7cae7f874b7fc91c93452e29",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-10.log",
+          "bytes": 347,
+          "sha256": "fcedc432b55de0fe16403af2b5176515b787c3016d40197428f065afcfc382bd",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-11.log",
+          "bytes": 347,
+          "sha256": "292d059e9eaaa01bb8db9b7db530642016fe0dc9c5f692042f68cb1c884343f4",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-12.log",
+          "bytes": 347,
+          "sha256": "84fb1af0567bb16f6bdb1b19fe2851133967999b31b672feaf25c51b4d8305bd",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-13.log",
+          "bytes": 347,
+          "sha256": "417cb3cbce702aa4e8e2d11badbecb49eb33d176b91bec8cd6008e1a2ab8c42a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-14.log",
+          "bytes": 347,
+          "sha256": "e7d61c7a9394ee3444d10fa0d6154e7334c1af289472ff058b144db903f52643",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-15.log",
+          "bytes": 347,
+          "sha256": "65d2c8dea5088251a3ab76511f8ca1e24ff3d1fd8316733db6a4a1ddabfc054f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-16.log",
+          "bytes": 347,
+          "sha256": "1599c6098c258eecc4b30cc9fa539229723290426f4b42ee1f1a2c67a8bc1856",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-17.log",
+          "bytes": 347,
+          "sha256": "30a8ce68133212378520c96e104f852479cab3adca2cedfa4b09af5991fcd968",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-18.log",
+          "bytes": 347,
+          "sha256": "5f67c9da681c616633da590f6bc6e7fd866037a56e464a4dc34f1617a4bf7db3",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-19.log",
+          "bytes": 347,
+          "sha256": "a8f25f7a1945451440a0540b728aab1e31c2aa56c993016af1c19e93da214823",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-20.log",
+          "bytes": 347,
+          "sha256": "887b4f3fd6d31e8134b1ed3facb2cbb05c6c4c6721a9b6e521164acdfd1685d2",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-21.log",
+          "bytes": 347,
+          "sha256": "771aae462011b1d65bee322949bc2cc24fb92cd6f12748a00053c20a1b4fd17b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-22.log",
+          "bytes": 347,
+          "sha256": "80befdd6af0064c473ede8e0ea8f05680a016020262205b25732152b0f98f747",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-23.log",
+          "bytes": 347,
+          "sha256": "29842aab115b5dd556d0c853dd37d206afc545d41428eae5dc4a404e84077d89",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-24.log",
+          "bytes": 347,
+          "sha256": "e22c6b849804c90b4f0e5951fcbf14754460f80051a40e10ec9527a64b5fc0d9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-25.log",
+          "bytes": 347,
+          "sha256": "58bfb6335252e0dfe9903150093033b4114f4e27872017a993ca6e0765cb019b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-26.log",
+          "bytes": 347,
+          "sha256": "e62878c9f2c0375b5cfbf4e9cdf5cb3cceddae12bd783e724751caae1b408427",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-27.log",
+          "bytes": 347,
+          "sha256": "c248d37279ffa44b675ae504f0bf6a73d3930dc3aeefd7c78e01664be70f10ac",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-28.log",
+          "bytes": 347,
+          "sha256": "dae969e6f1111b54e32d55c563378c35f2882d4af29ab7dc2e9f9195d0a89c84",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-29.log",
+          "bytes": 347,
+          "sha256": "a3d6dfbeee9c5eb016f516d236a9c39ad5dfa70cea6ba8fdaa3aeda15d9c5ba4",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-30.log",
+          "bytes": 347,
+          "sha256": "0ae1bb63677b93d5d4baaf86304a5cc89f70f643e8b7f085da1c278a4fb114d5",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-31.log",
+          "bytes": 347,
+          "sha256": "08613fbf17821a4b0132845beab41b8eb1ca03a4985bb94825e9c471eae0ce1d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-32.log",
+          "bytes": 347,
+          "sha256": "20509840a4e0eaa2d9cd07d3d064913a0a932d9fb8e5ef7aea3f1148f4ee1374",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-33.log",
+          "bytes": 347,
+          "sha256": "fe006ad86e85b4677e6937da4f187d66f82ce63f33a1f6f229cc1c732095ba5b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-34.log",
+          "bytes": 347,
+          "sha256": "14ebb8628fbe2e9d5263876ae00c46deaed4548d9295b36e2e90e203e8a44d6d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-35.log",
+          "bytes": 349,
+          "sha256": "2f47c8b2b35a55efd863fd61ba0cedbae78e4975dc66430fd91d6e6eb5630e7a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-36.log",
+          "bytes": 349,
+          "sha256": "c53be5d9fa1f4b57a4be920a7384ad33506785abf523ce5efdd4111fb024f5ac",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-37.log",
+          "bytes": 349,
+          "sha256": "4a12cdcd37fe5aee516f7943387b17c5247ffee86dcee9da1ad81d5536fdf5cb",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-38.log",
+          "bytes": 349,
+          "sha256": "3eebf66bf3b04ad4e531b13d30232004808dd69416f41a9055efe75169c99566",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-39.log",
+          "bytes": 349,
+          "sha256": "87221fc26333557c0ddfff71f4e87801f744c9861c06bca591a4f9d950186c85",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-40.log",
+          "bytes": 349,
+          "sha256": "7a27ea1a2b834c66b920e8c9c87838d140fac5b8fe92c27c7f917931debf5c15",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-41.log",
+          "bytes": 351,
+          "sha256": "525f326409a14fe3b1d0c8a344a627623058456e28af6fa589ef45b7bc4933f4",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-42.log",
+          "bytes": 351,
+          "sha256": "362b99d52f9544fe500bc6a040bf6f66698ef10d729cdfdc415cefe8a7b07a21",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-43.log",
+          "bytes": 351,
+          "sha256": "e09856db94618aa2cf3bf60df7ba98bc9980168a39c3eaf7f7794d1f89d51417",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-44.log",
+          "bytes": 352,
+          "sha256": "6e3685db48e30b54060cf72763a281cd2c2110ef6a523464a6116e50a721b5c5",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-45.log",
+          "bytes": 352,
+          "sha256": "297c6fad41f5ef60b4975a687f5705c5708b0b439396352263334d240c95c443",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-46.log",
+          "bytes": 352,
+          "sha256": "73384acb6c7b735227e21d7df4d84bc3cc9111b5c0275928df694150e13823cd",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-47.log",
+          "bytes": 352,
+          "sha256": "2b85f945fc822a0f116b59bdc68806bdf837dcba292ab87a88facd873c27504b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-48.log",
+          "bytes": 352,
+          "sha256": "03c8725b4fdd85c2370c359268b239d1a3d4dc97cfe489683a07a1969bfe5e27",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-49.log",
+          "bytes": 352,
+          "sha256": "624e95f9d5757d52b9a82bb950720057712bec2996fe09ff89af0d7bceceed1e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-ranges-isolated-x86-laa-50.log",
+          "bytes": 352,
+          "sha256": "f19ef9bb4842da1d458aa7e11338f5c14bbe9f8cca96bd4a3b558cc2611ec4ae",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "overlap",
+      "profile": "arm64",
+      "source": "native-dynamic-table-overlap.cpp",
+      "source-bytes": 2454,
+      "source-sha256": "9b763100e110b2fd7c504b9e56ae9794af8d6f5a8f5d3e2167f2d22cff2a328b",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-overlap-arm64\\probe.exe",
+      "exe-bytes": 145408,
+      "exe-sha256": "accd0645c699a61c3b8f7d33ade7c0a3cf1d5515fa6ec6c8c588ea2794ae94a3",
+      "machine": 43620,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-overlap-arm64-0.log",
+          "bytes": 244,
+          "sha256": "13d4ef3389dac040f33d0c555a995513806f31ac547a62eb6e9f24735d3b17b7",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-1.log",
+          "bytes": 244,
+          "sha256": "87dd6dc98e06c879b8f892c27f32ab408a1138593926447ca122dc8ba470d7fb",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-2.log",
+          "bytes": 244,
+          "sha256": "b72a6cd2a88cd4f67bcc2295b4386718e079013fa5025bd7f75c19f5b585f71e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-3.log",
+          "bytes": 244,
+          "sha256": "a4fc49b97929d07958b403e93a42b55ef0d55882bb31933a4431dbe6777764ea",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-4.log",
+          "bytes": 244,
+          "sha256": "f753ce864370bfd5f4f9bcbdd7481fed6deba83f8397340b6a4697e959b8f1d4",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-5.log",
+          "bytes": 244,
+          "sha256": "11713c1617c8e081d3c1cf3f53bbde9008bb8c77029015018ff08eb8fa56d07a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-6.log",
+          "bytes": 244,
+          "sha256": "e787f8614618e60e60f0c22c600b30743aca878993613ee9e2871f2f27f3205c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-7.log",
+          "bytes": 244,
+          "sha256": "ca87f3580b6da827dcf54a315004116a46e9ca1ec491581c04e5370d096b340c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-8.log",
+          "bytes": 244,
+          "sha256": "549c1e5d34f278d98bfacc858e476f90df0e4aee8a7b6069c191466b59b7522f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-9.log",
+          "bytes": 244,
+          "sha256": "706e55978897401b30afce9e6b1ef23893194487463af6d8ef049605a4e06be9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-10.log",
+          "bytes": 245,
+          "sha256": "61d2477d148ec3817a7a657b1ed25286ddcea00737b12745ab2b3fc6dcc252cd",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-11.log",
+          "bytes": 245,
+          "sha256": "cf301039ddc3f5a8f2faf616aaf7de66ff5e7c8db6a870ad33c38a5527fed6e8",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-12.log",
+          "bytes": 245,
+          "sha256": "df0e019fadcb80c1bbaac7559eb33270176146789b1706c366ba33291b0b6625",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-13.log",
+          "bytes": 245,
+          "sha256": "d2a1bfdcdfa56af112f9411978d8fe798d0dc326d60f40fb52b1a322fdbed94b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-14.log",
+          "bytes": 245,
+          "sha256": "fb04d00f35c3babf1d023c988faceff1ef161a259c11eff712d236790883ccfa",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-15.log",
+          "bytes": 245,
+          "sha256": "e3af1a67ae60f3851d5bda07f47eab3712e2f6071d7e68b0b4ff508fb7e7e35d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-16.log",
+          "bytes": 245,
+          "sha256": "e102b2abc52e77c7d8a01d50f654dea37898ed0d2d401f59e6639748e38a2c21",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-17.log",
+          "bytes": 245,
+          "sha256": "74e41a1081210f4cd3b081600c721799b3dbf71962b45f7a7642803242397f4b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-18.log",
+          "bytes": 245,
+          "sha256": "9599e4d7aa85717d95ff79b26d34b94c45448aa2bf12825cd5fb7c96834ccd57",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-19.log",
+          "bytes": 245,
+          "sha256": "b90b26bf404afe08b1af42f54af1d5879b7fd13d76d304779dbbe2624cc2acc9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-20.log",
+          "bytes": 245,
+          "sha256": "2d4b74a5b2c87020df69477e86e9dbfc95e5c28e26a85dcf93be6545fc4cd9a9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-21.log",
+          "bytes": 246,
+          "sha256": "0dcf5120567cf47fec21e8c4f8aebb186b14b0e4a6e734abcf038d84f02728ed",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-22.log",
+          "bytes": 246,
+          "sha256": "6e5227cc6d7b09dc270a037239bebd2e965aba3a46af06203be35f2200e1efa4",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-23.log",
+          "bytes": 246,
+          "sha256": "ae1e24eee7088f89a2922de792aec4e8e5478d95bd1b62a3f156e615beda7aae",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-24.log",
+          "bytes": 246,
+          "sha256": "5c1265bb3831648ad48ba65a60142a2a94dbc98726806aa2df23d685c1415b5b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-25.log",
+          "bytes": 246,
+          "sha256": "89623edfd7616977bd3847df57906352dba6cbec53f25bcabcd547847b97007f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-26.log",
+          "bytes": 246,
+          "sha256": "c94c1de72c71646eff89575f8c3d16a833e1d6f2f1cd390f2b2bce865abb2fb2",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-27.log",
+          "bytes": 246,
+          "sha256": "22bf61bfeacb92a0221857ce24c812d1febf0b34d817e340bf89002a789054a9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-28.log",
+          "bytes": 246,
+          "sha256": "dc8dcc9259a4f2b89174681f04bebd72f3aa4443db1b999c1e17909498c08752",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-29.log",
+          "bytes": 246,
+          "sha256": "5f6f170c0ba1096222bc2e24fe63fd01a8a56dd9889fe89a6a3732d49a46f0f9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-30.log",
+          "bytes": 246,
+          "sha256": "a63ebe52bb7a9aaebdd0bea74d5e2efe27b24a8bbc527c65c1b0c2703fc86043",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-31.log",
+          "bytes": 246,
+          "sha256": "dd1672b3c751276cd402ba4a656e53f5dd9ead76fe525df3a18c56cfa35f8f5f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-32.log",
+          "bytes": 246,
+          "sha256": "2bada0b0f0cef6d22c5a607192001c35d3d5dca2197c21fb9216abd57429f960",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-33.log",
+          "bytes": 246,
+          "sha256": "accf384bfab0dc96fd0d484e4921b2b77513452f2f894a850017eec78f2a5278",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-34.log",
+          "bytes": 246,
+          "sha256": "870d30ffbbcaf406c15cfe3de49c90f7db4e898f5a77ae1e65c3543d4a596e34",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-35.log",
+          "bytes": 246,
+          "sha256": "a15423da240eff3c0ea7f810d2a4b5b131d8ee11516c6b1dd947721dcc8cba50",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-36.log",
+          "bytes": 246,
+          "sha256": "d2fdab556400521aa931c89c33a26d69f35832df0b603eb46a187e295beb0632",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-37.log",
+          "bytes": 246,
+          "sha256": "14402a880a1997dba5bdc5d5eb4246985ad876ee23841072559cc3c298f8afcd",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-38.log",
+          "bytes": 246,
+          "sha256": "017c09852a2dce2bb9f6694d4be9878d56fc85f1453eb5562c4f7de2e57ddaf9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-39.log",
+          "bytes": 246,
+          "sha256": "a03c5dc71eb33055ca7f81acdf8ef589a3d66067a09c9308aba6482ab269005f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-40.log",
+          "bytes": 246,
+          "sha256": "180a46cbf6798816134bfdfb017dbdb9dbe97ae2755ba9fca783d9078268f532",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-41.log",
+          "bytes": 246,
+          "sha256": "4214cfcb2394b22dfcd9bba5d4d0a3c946519d25f6bc703685437f53c9d2a4d2",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-42.log",
+          "bytes": 248,
+          "sha256": "7f8361b0c17f3049a2bc4279dc07a80976383cbf7e01d3d86cd7e3fde4a1f902",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-43.log",
+          "bytes": 248,
+          "sha256": "afa06692c1849180d0005f102c3e381e333be0b9bddedb12f71bfb7f20f57de8",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-44.log",
+          "bytes": 248,
+          "sha256": "71c70a3fd8d36cb0dde3d162647c7e75c0450ff9c1bc49decb7096cb8528bc0c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-45.log",
+          "bytes": 248,
+          "sha256": "c3fd81f0b9106b01d65dac934f7013bb394ff3d995a9976922d925b583535f3e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-46.log",
+          "bytes": 248,
+          "sha256": "45bcdddf8ff661fa67020630c3a1b410d626c6d125422e9cc32ec12aefa3c274",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-47.log",
+          "bytes": 248,
+          "sha256": "0264be7991d140be4aeb204386d7475f9b18d70e8a240160c3804264648a6ba2",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-48.log",
+          "bytes": 248,
+          "sha256": "97bf86445b1870013d40113070aaa97d5e45ae38f9084b521d876646d4113c02",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-49.log",
+          "bytes": 248,
+          "sha256": "ee2e37da435b8a0c27c26b91c6c03b3fa8eeeac93ea1caf3af29adb1745500d0",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-50.log",
+          "bytes": 248,
+          "sha256": "675780a8a9f3a9f2a96b1335f8da65435e39d844255c428b3a271c22a56ac92f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-51.log",
+          "bytes": 248,
+          "sha256": "a3bf092e57b348dc87da483b56ee03973b67d60cd895242a42ca6ee48378986c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-52.log",
+          "bytes": 248,
+          "sha256": "d5ef364b8b78ce28fabbdf59ad448abe1938e2189ae246c9752f3b7132c60221",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-53.log",
+          "bytes": 248,
+          "sha256": "1459f221bf8dffba37ee2255b16e045c51a91da7a807a9ec9bdf6a35264e78ed",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-54.log",
+          "bytes": 248,
+          "sha256": "7d97a1bd6000f28a428ca267a3ed253269807356d6e6eb392ea53338efdcf4d9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-arm64-55.log",
+          "bytes": 248,
+          "sha256": "0d88e2c3aa2c8cc7f85ba7e8dd1df116925cd42aff086e59097d3a4dcf2bbd3d",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "overlap",
+      "profile": "x64",
+      "source": "native-dynamic-table-overlap.cpp",
+      "source-bytes": 2454,
+      "source-sha256": "9b763100e110b2fd7c504b9e56ae9794af8d6f5a8f5d3e2167f2d22cff2a328b",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-overlap-x64\\probe.exe",
+      "exe-bytes": 143360,
+      "exe-sha256": "cb6f954c4803400c24426522654c9056f9f75f1303a53078aa1785a838ab0d72",
+      "machine": 34404,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-overlap-x64-0.log",
+          "bytes": 242,
+          "sha256": "1de3428210709d52e948ee867250051961372348dc4a8bdd3dd5fa6597aa4e91",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-1.log",
+          "bytes": 242,
+          "sha256": "88467e5f094369a6976dd8dbb38e3665ff835a927e06c118b579eb4fff5bff96",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-2.log",
+          "bytes": 242,
+          "sha256": "d760ed904335152bee3c1ac4e0a5e387f9c98bae2edcf8071e165869912048df",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-3.log",
+          "bytes": 242,
+          "sha256": "6ca0ec09b03b986b1fcbf7a80a66a4d90dfe77bbd7acd3f4520660678612bc58",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-4.log",
+          "bytes": 242,
+          "sha256": "1ff83c0e7f7951211ae29c894b060bbf9fc0162d5055ed02c56e35f59b8299c7",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-5.log",
+          "bytes": 242,
+          "sha256": "11c82635437d0f6be68cc2c31c01d8581fc88a34afe41d8daa79b3b473e7b4ce",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-6.log",
+          "bytes": 242,
+          "sha256": "1eec4746ef79c107f234392ee2e33feee66dd1bca1a6321a7049d4c6d55e5acf",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-7.log",
+          "bytes": 242,
+          "sha256": "325291048b2d6798bc9643a4b074d29122073b740ad81664aa8401e73d62bd59",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-8.log",
+          "bytes": 242,
+          "sha256": "7b953809ec93ad4c162b72eac14a5ee6d5f2c13fe3b1fc2a40acd1a5e88c81c1",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-9.log",
+          "bytes": 242,
+          "sha256": "87f9bf7555e7821763f763f64b6e584a0c96d1f235b6842f4230efd44836a9c1",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-10.log",
+          "bytes": 243,
+          "sha256": "6d9aea995488fe3d01ef76bfe7b792e49c73a8f97ebedd347279d03fb6bf099b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-11.log",
+          "bytes": 243,
+          "sha256": "a3551503e6a852432bf01084cfc6cce7ec427d357047e98815d0e60f3d08dab2",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-12.log",
+          "bytes": 243,
+          "sha256": "b7163414af89472bbc69911699795c2ecb340a8ddf386ff3a04c58bb23cdc89e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-13.log",
+          "bytes": 243,
+          "sha256": "8baefbc1d69c46f75ac8a15915eb3ea690ebdc0b42a7bd513271af8e37ecbe02",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-14.log",
+          "bytes": 243,
+          "sha256": "6717fbe7f6c46bc853596c6d81c73b2224bd3fa574c4a2bd9936c9790cd89218",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-15.log",
+          "bytes": 243,
+          "sha256": "a9e4650d9245426e4ba63da09620152ab5c2b511649622fdedf1de022d3036bc",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-16.log",
+          "bytes": 243,
+          "sha256": "c1c125b02bfae57af0117a8e01687fff52ebad991b5df471fd025db51e9f923e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-17.log",
+          "bytes": 243,
+          "sha256": "5c03a99e17d4a4868438e25c52570e9f3e3b94410317249b47db6ed02a91261d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-18.log",
+          "bytes": 243,
+          "sha256": "7cbb267f53d337fd83669db1bf6e6c0ef4dc353e393f6720a73cfc86565b527e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-19.log",
+          "bytes": 243,
+          "sha256": "0aef19e9fcb62025b1ef1ddb611647de96d6dac80e473bc986a3b7754a9dde0a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-20.log",
+          "bytes": 243,
+          "sha256": "ae57a93121483665fa2b6b56e8cc0acbf02b3d92bf13a99e8572b02a9068d896",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-21.log",
+          "bytes": 244,
+          "sha256": "2dafaf4be1ff1546be80a4ad3862e5a43339cd620158dbe0ea6bea6e89b0f545",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-22.log",
+          "bytes": 244,
+          "sha256": "7625163dbe25e2b53519ade3cf3849ff5b0274817b691dedbca4c6515711c933",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-23.log",
+          "bytes": 244,
+          "sha256": "aa90030951c300bb92e7214da21889bd6d6a9eee5baf3901d5531849d0c99762",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-24.log",
+          "bytes": 244,
+          "sha256": "9029a88f0af8e8fcaf744cad9928426dc35b7e8637b603e572d689f909fc0a16",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-25.log",
+          "bytes": 244,
+          "sha256": "14b4fdd4529b47f0223b6b465d5a4180a699f39ec9ce5f3ae59a8804c501b54a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-26.log",
+          "bytes": 244,
+          "sha256": "8bf22ec00483272808e7cba6f99e0fd636129b94b522cae84e1a5d583abd7f2a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-27.log",
+          "bytes": 244,
+          "sha256": "c8dcbed1018bad4d63c9ec613831cfa364bab922ab7c3e6dd8cbdc9f5d1f1609",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-28.log",
+          "bytes": 244,
+          "sha256": "c50e724dd4fb1117378ffbbd065d13e35e06828c954736231d2a5d85e05c31d4",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-29.log",
+          "bytes": 244,
+          "sha256": "b4da5ae39a7f6a0d32a6e7c4744899093cca9711794e4f1ff63ef08d43c23b4a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-30.log",
+          "bytes": 244,
+          "sha256": "43ed951a540c929e66556bf892c199c3f5e7d0733d76baa7367fd4945f77f6ea",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-31.log",
+          "bytes": 244,
+          "sha256": "51842b23e30921435bacd1924f4f73fb01348da4a76f5ac6a3b7ccb32b640c20",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-32.log",
+          "bytes": 244,
+          "sha256": "f1bc851c295a4c348a6dbea4a3954bb7462ff9e9460d3a29094b55d4b25cb011",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-33.log",
+          "bytes": 244,
+          "sha256": "5d19a8e3a37570500957e0499862a16db21a15e536cf1fc0b0732e1feb678c9d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-34.log",
+          "bytes": 244,
+          "sha256": "61863f9004e821e3c5466ae4e089476c83fa445763b07b205cb1f6b3bd4a9621",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-35.log",
+          "bytes": 244,
+          "sha256": "b5e4481d3fa50110e94fbfc4071d838d87d87ddd9fa0bf9ea0c2e0f05f691b6e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-36.log",
+          "bytes": 244,
+          "sha256": "72d63ca2fb77d282b836ed775228f1d785d0ce90d1aa131c909ba3ed83012381",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-37.log",
+          "bytes": 244,
+          "sha256": "8d621b1fd66a3fb88dd770063ea073f41831517446310ab381f0841a61de6aa3",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-38.log",
+          "bytes": 244,
+          "sha256": "8e2762c26801ba643226564b23aaccb9693c041146d85540b6e14d9cdca07812",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-39.log",
+          "bytes": 244,
+          "sha256": "688d09ad962c00b3486975654d591ad820f2c39e9233216ebe884fa7d71e3c92",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-40.log",
+          "bytes": 244,
+          "sha256": "3f9d717a298b123222248b7822e6725e7eedfb4b4ca08e24fce3a039ba3fe0f0",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-41.log",
+          "bytes": 244,
+          "sha256": "0d81ab4e839424728a41ed11e312c33394dcb1362dfc9821964dc46eb881e35f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-42.log",
+          "bytes": 246,
+          "sha256": "42b1be677396ace51556e8c0b0512156a27c71d4711d9484cde6b0d522493401",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-43.log",
+          "bytes": 246,
+          "sha256": "a8d2db7da95065749b34031edc0f225610b4aec4fdfa72e2a5cb078d3bbe41be",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-44.log",
+          "bytes": 246,
+          "sha256": "a1cde0902601585f06146764185ba54a75296a2de88c1345f7746b6102993e07",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-45.log",
+          "bytes": 246,
+          "sha256": "c67b77053b02487887486ba154e7ede99ca2935a7a281d89e0010a97f114a007",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-46.log",
+          "bytes": 246,
+          "sha256": "06ce983d53b03d0dc2fd5ff93015ba622e789a38a78d0fe8dc41770333f1b3ea",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-47.log",
+          "bytes": 246,
+          "sha256": "e8331463344b032083379e278ffefefca83a5f492d34089a83d987fa654d9472",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-48.log",
+          "bytes": 246,
+          "sha256": "35b6d4e98fce975ab7ce05c656fd227b31055f30752e66d4f99512fe96276620",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-49.log",
+          "bytes": 246,
+          "sha256": "6a922e99435e830403975fc22e6793a8acca2ea99a7087332fe703f7251cfd24",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-50.log",
+          "bytes": 246,
+          "sha256": "30404a3f6767278c81dd23aaf086d814c72719bc9d48be2c8ad55d23585134ca",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-51.log",
+          "bytes": 246,
+          "sha256": "d706541f95c5cf0d3f544dfe8c1f0e09441a73900ebfd82eb24212a04270a986",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-52.log",
+          "bytes": 246,
+          "sha256": "204c997256393a9009f60abffe75035889dd3d4f75116dff269701ed639ccca7",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-53.log",
+          "bytes": 246,
+          "sha256": "53697406c90c81e144e53f0afcfa3a13ed2b435afa6a769df98407fb5f4c767d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-54.log",
+          "bytes": 246,
+          "sha256": "73e2d8d8c061c160c6255ea0ddf8711d33bfe091c3b840c3d1ebb3e1c39d66a2",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x64-55.log",
+          "bytes": 246,
+          "sha256": "74655c3c8df7a232d528272f6e7d0f305057354b415269bea3a5e19c490f4659",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "overlap",
+      "profile": "x86",
+      "source": "native-dynamic-table-overlap.cpp",
+      "source-bytes": 2454,
+      "source-sha256": "9b763100e110b2fd7c504b9e56ae9794af8d6f5a8f5d3e2167f2d22cff2a328b",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-overlap-x86\\probe.exe",
+      "exe-bytes": 118784,
+      "exe-sha256": "91170e7b7c1f472b88a67c1e880743d676df73a17065ef563b52732109ebe5bd",
+      "machine": 332,
+      "large-address-aware": false,
+      "logs": [
+        {
+          "path": "dynamic-table-overlap-x86-0.log",
+          "bytes": 242,
+          "sha256": "165cc845ef6c27e6eb9c6bd606807cc0d9277f8c138351ed70d02155b2b7214a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-1.log",
+          "bytes": 242,
+          "sha256": "b6a33d6a4781c2b29f18d2039e0896ac190a1b8c0e49db6d902622e859f6a459",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-2.log",
+          "bytes": 242,
+          "sha256": "37a3d09f2b70cf2189a679c985c2a3468b3d99cb2b61a2a6dfbe0d1526983910",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-3.log",
+          "bytes": 242,
+          "sha256": "9197290868336efdc6b99cb58e0db71872b025ee980690764091ec7dbe6fed5b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-4.log",
+          "bytes": 242,
+          "sha256": "e8010d98bd9778ac53d706ad3ebcc8a715067ce60e77f3c5432626c55eaaf127",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-5.log",
+          "bytes": 242,
+          "sha256": "23ae35e9e52da28967e838a7b856f4bf32dd94c2a483c138a1cb57d5c0419651",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-6.log",
+          "bytes": 242,
+          "sha256": "647e094fe46a9c8980f14754c5eb0b3406835c96595130cbbe5ee6688676463f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-7.log",
+          "bytes": 242,
+          "sha256": "74ccc8527ce3cd123d0d5b176dd8c1e0a8bf82b5b89ecdde08b1d3ea3384707f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-8.log",
+          "bytes": 242,
+          "sha256": "5bb50fe9417a3d8364771d84a4868b02bda321b770b1ca5a7f596d0fbb88274f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-9.log",
+          "bytes": 242,
+          "sha256": "007dd77a8b202d4b879853b66d76d91f559fcc802a9ea11da27ca85d244d0f0d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-10.log",
+          "bytes": 243,
+          "sha256": "6a8c5594b03667ad4a88957cf13b24f14f3d769635b03da0e8bb86a5d09cea33",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-11.log",
+          "bytes": 243,
+          "sha256": "36e1c04351ca79696a63b9f4450899609d2bd21dc8df0fb92d330b76c3fdd7c0",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-12.log",
+          "bytes": 243,
+          "sha256": "5fc67e81b2ba5fbc69a3d0e37f75048e441b5dc243ce4da037622961e4e8f98d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-13.log",
+          "bytes": 243,
+          "sha256": "6c9de01d6fb7c11681d8edbf62a7fb5963bdaf093bf0fe90c535edae45cabdbd",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-14.log",
+          "bytes": 243,
+          "sha256": "dbbe5eb66e04125e4aa01486cdf27a7d52e49c52f2bd26f605132ed1ba40ecd3",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-15.log",
+          "bytes": 243,
+          "sha256": "b9be6dcd8948ec932e24ac502cb3b48d0a5452e7273db4d80c06b099f1c0775a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-16.log",
+          "bytes": 243,
+          "sha256": "0a5ed4d7f66365799116b0b94e05395bf919b04a7ae07dc888368a09be1fac0c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-17.log",
+          "bytes": 243,
+          "sha256": "d2576833c2a2967c59954a16a72404fbc2ab2c9c1314368237c50562b0c4692e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-18.log",
+          "bytes": 243,
+          "sha256": "295b22cf48842b0881505f8c9bc6f07ea97882b6e23e3f3d8bc3426d7e547a92",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-19.log",
+          "bytes": 243,
+          "sha256": "15fbdfff07a513ff6224edb4e76ad637cd8f7b2aa7590980d576f0ee6da70feb",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-20.log",
+          "bytes": 243,
+          "sha256": "7f39ddea34c22b10d5bb474de4de495111685ef4e368ce44b4726b842d95199a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-21.log",
+          "bytes": 244,
+          "sha256": "086ffd8c4cc3c91cb4b811c4e6a3fd84b874fee9115e064996537657fb236326",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-22.log",
+          "bytes": 244,
+          "sha256": "9ec07cb33c0c3374e161896dfa5ab15c97d42531098fd631105dee1602143645",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-23.log",
+          "bytes": 244,
+          "sha256": "f59ceafe8367b0db08f86204272bb88f7574f7d2aedb2ba56a6071d8eac0e1fd",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-24.log",
+          "bytes": 244,
+          "sha256": "74d1d28196ae4ffcca708c341dd9495d40d1b9f2f85877b1029fa59ec20afd9e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-25.log",
+          "bytes": 244,
+          "sha256": "e16e1c641b4006ea6600e49db2b75c03a61332c2fab59905b73a91bae8b21b17",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-26.log",
+          "bytes": 244,
+          "sha256": "e8a494561f6c2bb9121f95a0cee19475669fbb1766209da4e801eed372324744",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-27.log",
+          "bytes": 244,
+          "sha256": "c7f2900f8e7f1244fbae974b9fd0d1bd8546721d4a035d78d28cb969edbab44e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-28.log",
+          "bytes": 244,
+          "sha256": "6a6117dcbecb144c5ad4e1886330dce2fada5dae6f338a163fa112032c4a1047",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-29.log",
+          "bytes": 244,
+          "sha256": "5c0988fb645de5788f1be8e77dafd9a7b0228eb8fb52d343c769a73dc3ed8341",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-30.log",
+          "bytes": 244,
+          "sha256": "30760952f2116bcd1a12705013528d7df767ba0a584c55cad884bedde1e83876",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-31.log",
+          "bytes": 244,
+          "sha256": "d2f547b67ab1aada4a2abdbbd0d52b4a50e62c8f1a5ef5155fb653971c7ff3e9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-32.log",
+          "bytes": 244,
+          "sha256": "4914d89fd6616f98e4d40dc0976469b5bc92b40b86ce231d712d8ea6e504c41f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-33.log",
+          "bytes": 244,
+          "sha256": "0f4b4e37a3f24daa4965a970abd5ec3fc7fb377fc5d5f9609c88a5f26c1c5831",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-34.log",
+          "bytes": 244,
+          "sha256": "04e682c8658c10f53b2900b1aa30392499ee6f58140e92255ec154ecb60e65f6",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-35.log",
+          "bytes": 244,
+          "sha256": "3541019429fec3dec94c566190d46e9f6704c953725777cfa17410a0e6f890d7",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-36.log",
+          "bytes": 244,
+          "sha256": "79acdd1173dc2523e256c7082eae02ea2b7f3c15701bbf3ce9dedd9dd27b3fc0",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-37.log",
+          "bytes": 244,
+          "sha256": "b413c6546257268bc91113a755ff34b7ac194267041c327faeeb9cba2f053018",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-38.log",
+          "bytes": 244,
+          "sha256": "cad7991c6064ba2730fb85517c0d752c888810e28fa96a60d86e7174e4e7a670",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-39.log",
+          "bytes": 244,
+          "sha256": "e736890592461a9a45d1fc8935259875dd5a52fa80a7d5fcf390c802de19f1c6",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-40.log",
+          "bytes": 244,
+          "sha256": "bfb616e6afb88fd07a8cfdea0658e1c58d6f89d4924f25ccddb13c82de0e1300",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-41.log",
+          "bytes": 244,
+          "sha256": "bd194719e9d991283c354e3fee76b8cdb323dd935914f982f81145da1451f1df",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-42.log",
+          "bytes": 246,
+          "sha256": "647ac8f0c83358f9b33bdcf0acda7a114d093629c446a919a5aa150972fa77d4",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-43.log",
+          "bytes": 246,
+          "sha256": "8e5122a8f2534d5c9bc3e55941d54ff51fbc0c373e39359aca037c70a95553ff",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-44.log",
+          "bytes": 246,
+          "sha256": "37645e9a9f398664fc21e463d0602ed9051331cdb5ae1e0032b332351358632c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-45.log",
+          "bytes": 246,
+          "sha256": "21239540a40fa3a40e58bc2f41a4bd893f59899cbca37bd27d51932ddb3677e0",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-46.log",
+          "bytes": 246,
+          "sha256": "316bf9824b498168db022099b1817ea92a8f2e2228abd989a27eea3a850a2c34",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-47.log",
+          "bytes": 246,
+          "sha256": "8f081fb3b2a3771b619b894053672d504a004caee88d796061e9326e0e2fae21",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-48.log",
+          "bytes": 246,
+          "sha256": "633544c14f0d373a70aeb2c2284209c9f9569e1c233cace52f08928a8a8fe06a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-49.log",
+          "bytes": 246,
+          "sha256": "c5607f5c56d8534d398c1e4676e245355031bc0bffbc1384909834d0892ba8cd",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-50.log",
+          "bytes": 246,
+          "sha256": "1faf7afe9a1a949052d1c6a6355648c2ea864969baac5757ef4286cbe4db9928",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-51.log",
+          "bytes": 246,
+          "sha256": "d73a07e49cd5f20a10cdb60f98b2ecc474b1e8cba8f033e3f07416c67eec3171",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-52.log",
+          "bytes": 246,
+          "sha256": "f24523e8c62385798283bafd247013c596296bd5d400a9ffad14fd368fd749cd",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-53.log",
+          "bytes": 246,
+          "sha256": "eaa5b01a7f5208466f90c8fb78ec60fce1e901a97fa96d92169aba762251d4b4",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-54.log",
+          "bytes": 246,
+          "sha256": "82bdc9b7aac8b8d64745eea1977cabacc1844124832d1a9356e12c3d3befafdb",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-55.log",
+          "bytes": 246,
+          "sha256": "1976a86378b85ea87a28e46b4b3ec5fcfadaadbe4f5287e7976b8a1bd2403809",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "overlap",
+      "profile": "x86-laa",
+      "source": "native-dynamic-table-overlap.cpp",
+      "source-bytes": 2454,
+      "source-sha256": "9b763100e110b2fd7c504b9e56ae9794af8d6f5a8f5d3e2167f2d22cff2a328b",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-overlap-x86-laa\\probe.exe",
+      "exe-bytes": 118784,
+      "exe-sha256": "c39c40165ef66d5ab95772a5227ea80977155ca978f48b0d083ec46aec7abed4",
+      "machine": 332,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-overlap-x86-laa-0.log",
+          "bytes": 246,
+          "sha256": "73de1b86ec36f94f8e6e8cb518ffcefe5ed4116e5a11a12d932f3dd5353ca51b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-1.log",
+          "bytes": 246,
+          "sha256": "b8350773e8d72e457825b425514d04dd24cee5db7a950c88ae9c267d2f7181d6",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-2.log",
+          "bytes": 246,
+          "sha256": "5d55bcdaf806ff6566f8a3ac255301a8e0cc86a2ef73d3463f0ced250f621d7b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-3.log",
+          "bytes": 246,
+          "sha256": "86561877b0510cdd2de66fdcfbc42fdcd1745ba8d513552822a24804539abf1c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-4.log",
+          "bytes": 246,
+          "sha256": "5146127adb1d64b7914a24c24970177beddf05a22b4ac15246997f306060d088",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-5.log",
+          "bytes": 246,
+          "sha256": "39f3add3ce72afa62c4386b03d13e9d14a3cf8072ef569368b5b884aa981cd87",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-6.log",
+          "bytes": 246,
+          "sha256": "8ae74ba04c57a11ab44cf26ec89eb45c6148690c4d083eaf39312813e972753c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-7.log",
+          "bytes": 246,
+          "sha256": "b442d473c42616e3b6b5ad8b5a0ae518d08fe55d94726332d6eb8f073b762605",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-8.log",
+          "bytes": 246,
+          "sha256": "5d7a6aced260a6805ba6c28b05f8a04470b54d97d63d264e0d052bb34eb8ca67",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-9.log",
+          "bytes": 246,
+          "sha256": "d8fe93315c145ac26617dac2c24edfbb1c46fc7045a532c040f22a730e23ffbb",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-10.log",
+          "bytes": 247,
+          "sha256": "df19e5e59ccb1fbdb1d0d280950ecb3b2d48589d8a7a2a2688f3037d5051feb5",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-11.log",
+          "bytes": 247,
+          "sha256": "ea91e20404340c63c4441cf8a8664f5db6fa6e4c126e604c02e57efec8c03d3b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-12.log",
+          "bytes": 247,
+          "sha256": "5f31fc44712243ac979fa0c665d641c43612f9e40ef5883f477560e164e5abfa",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-13.log",
+          "bytes": 247,
+          "sha256": "482ad8b14c47c6161925eaf030e7c5bace603b2e4b061561f07e9f4e0a55b55c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-14.log",
+          "bytes": 247,
+          "sha256": "825b9ef29f10b4a34eae5b450605596b574ded2730841cdd95d14ea49f5ffc45",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-15.log",
+          "bytes": 247,
+          "sha256": "767442925d3f18cd0dece2e8a311212a8eea8986aa55ae71dab11baedfcee346",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-16.log",
+          "bytes": 247,
+          "sha256": "a54caddf2dfaa65204ecfa9b3811b9a477d6c95e65a89788953b6b1285e3de20",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-17.log",
+          "bytes": 247,
+          "sha256": "1168bff90253e5c94d559b4597fc4cf14c54053d0b0a9bf1eabddccec0938ff6",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-18.log",
+          "bytes": 247,
+          "sha256": "2829fe1c0b78067bea555cc1caab6eb52165bf2c9e90e0e1edd3ef4dba3c0e26",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-19.log",
+          "bytes": 247,
+          "sha256": "91feece442832c74a0720a7c6271bfc83662cf5043056514f22e933403356f1a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-20.log",
+          "bytes": 247,
+          "sha256": "30d0bad36681e10cb76eb1fa44bbd4f902978d78eec3c81f7ea62a58967d71fe",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-21.log",
+          "bytes": 248,
+          "sha256": "adf9cc33418fc3e0d82d693a442898c3b64f8b41ac0232e789c85137c0a1ec13",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-22.log",
+          "bytes": 248,
+          "sha256": "d36d25ea5557e36ee472217c0a17af7d2b45d48d83179099b7633205933baa68",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-23.log",
+          "bytes": 248,
+          "sha256": "f793887719936b47c81dbab3aeef038fe94ad57ad2b33a5c970741390584de2c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-24.log",
+          "bytes": 248,
+          "sha256": "8eb2157eebd1f1174c9cc108ddc86058f93b8a30921900da0762416609b36940",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-25.log",
+          "bytes": 248,
+          "sha256": "c025604ce92c28b9ece9f8fff4705cbb480cb09ffad74d140e45821aa3af1d8f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-26.log",
+          "bytes": 248,
+          "sha256": "34f5b6cb5f64ba4b7ada6ffd897f24b6f39edf551bfa36860a2e9f8875b7f028",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-27.log",
+          "bytes": 248,
+          "sha256": "64f4621ef9a69118779be2d0a0420c6faddb08f64d6ac8cae41e5e9f0eea7b7d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-28.log",
+          "bytes": 248,
+          "sha256": "1be73b6d236b082a17829ee821aa31550b8cd0cd3fafbca652e3920a0fede35f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-29.log",
+          "bytes": 248,
+          "sha256": "1772c807bc069eadbbbb02f653511d8fa3d890f634be98da2eb5d1e22c941c8d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-30.log",
+          "bytes": 248,
+          "sha256": "fd9b749c646536c39b2fc65aff6d5a8214e88e1452381b444de3f8fadea8b527",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-31.log",
+          "bytes": 248,
+          "sha256": "fa224f781b0ff86309bc77bee232c4747f243bb0bc5aa06721f7b11406549829",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-32.log",
+          "bytes": 248,
+          "sha256": "06a3b41a37e26efa5f2e6aae5c5ad31e19ff98c53ccc3e09af49fc4c47a9e438",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-33.log",
+          "bytes": 248,
+          "sha256": "ee5ca37316ba886f5f2de5563b16e5b3b7f6c568fab7fdcc16432c3b5a7a1119",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-34.log",
+          "bytes": 248,
+          "sha256": "a8417008418c78b97e44e031065139b843e62516201f6e07973341f478aee737",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-35.log",
+          "bytes": 248,
+          "sha256": "4241a0e61b86d769a908302bd8102526f136daa0419788ea210d88f863643e7d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-36.log",
+          "bytes": 248,
+          "sha256": "0ea82965a8baca985613962deba65fa8725581448f0f8bb5f9a92c3fd2df216d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-37.log",
+          "bytes": 248,
+          "sha256": "9524bc8544915192b6dfb3f2135ebfef1498fa3951818b4b41530860c2fc3d99",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-38.log",
+          "bytes": 248,
+          "sha256": "fa4582397148f087b26789ad41170fdae1940cca108688f41fa6eb7a3208793c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-39.log",
+          "bytes": 248,
+          "sha256": "3db319bed7fa679a79f56eb698563f8f41fcdaab5c99cf5ca07e0eb6155cec0b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-40.log",
+          "bytes": 248,
+          "sha256": "c613e3e9a5031ce2b64899091e7659fe97cac0ab542bd1f85deec1f84950a0f1",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-41.log",
+          "bytes": 248,
+          "sha256": "23a480c36793437dd55c75c435f088fb39f3c51c84f902340928d8e76e4573d9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-42.log",
+          "bytes": 250,
+          "sha256": "d37ee4d831e45b53ebbd539fd0ce41ef0fa2cf5c4efd680d9229d57e3493fccf",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-43.log",
+          "bytes": 250,
+          "sha256": "4a492b00de60a21564d138a37854675856b59fe3e796d23d76b12896bfe745e9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-44.log",
+          "bytes": 250,
+          "sha256": "ca38e247d1a546e730e57a77dcde46d7cfc00fb83d83dab5f8cc70f38c402692",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-45.log",
+          "bytes": 250,
+          "sha256": "2bc97a5e1b35701dcc5788024d5aac6a2542abe28b29f07c48b0e7ee96f65f57",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-46.log",
+          "bytes": 250,
+          "sha256": "02f12e780ab5a9779a442e073d997b8c7b29968cae25cd58a083259aee6c21f1",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-47.log",
+          "bytes": 250,
+          "sha256": "7ec49f93c07e005455c61e989a698999039ec3b1b93c0a4c9a84f6d25f72363a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-48.log",
+          "bytes": 250,
+          "sha256": "c8f5e73782ea51de6e0bd9fa8568e798f089027fdad7ba6d8fe29c7600fc0a4d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-49.log",
+          "bytes": 250,
+          "sha256": "45c40f10c2bd4f45c99742b878c470cad40a312c65c35cdff0907def6066a0f5",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-50.log",
+          "bytes": 250,
+          "sha256": "1194fe67eeb0a0d14bd39a1c05c408a6444514030f179485f33c2e87f16304ec",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-51.log",
+          "bytes": 250,
+          "sha256": "393e637b4ecf191c353aaeccf11f152b9e11febe72a67141750a10648858dec0",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-52.log",
+          "bytes": 250,
+          "sha256": "0c51bb737d1e75d9ac9c649b4766330c4ffdf909bb3fb880c7b69c9d2b624c9f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-53.log",
+          "bytes": 250,
+          "sha256": "3838821474d9bfdc3bb2cc069854498fdd8261545ea2558329043091ec6ac23f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-54.log",
+          "bytes": 250,
+          "sha256": "606bb03e85c94a02f2b9c381710c28dc1ca31632e7cd6181725c8d3119aeb094",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overlap-x86-laa-55.log",
+          "bytes": 250,
+          "sha256": "36990bff76abb0e231aedcb8733fcf73becfad53f3a60affe48142f9926e7335",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "overflow",
+      "profile": "arm64",
+      "source": "native-dynamic-table-overflow.cpp",
+      "source-bytes": 2448,
+      "source-sha256": "7791ca5a70a0ecdeb7783e202e6d1680ccd90efd16f800767abd88e1d5cb117f",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-overflow-arm64\\probe.exe",
+      "exe-bytes": 145408,
+      "exe-sha256": "931d4ec121aa99f92a38f73326f350c7da5736e0914b83afe8ff5477211734bf",
+      "machine": 43620,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-overflow-arm64-0.log",
+          "bytes": 301,
+          "sha256": "89763d2989b695d7e2dc66608aa13c8d367e538efb98c30e18a4867d4028d084",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-arm64-1.log",
+          "bytes": 301,
+          "sha256": "ee14087427df21a0f5cf613335dd18494d11ad7772e786cbefa09c508711d0d2",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-arm64-2.log",
+          "bytes": 301,
+          "sha256": "ea29a11116f8e86d726743017dfe611475ccd57e260ec8530be4cd1f5bfa5f57",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-arm64-3.log",
+          "bytes": 301,
+          "sha256": "b845d24e144c2c6c1469e47a1bf3f2050fcea1d81ff1327e72291c3d73003aff",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-arm64-4.log",
+          "bytes": 301,
+          "sha256": "4b69785756e6ba6e6e27066ed43f4bfa8e3b3d7707f1863b22f2890cac8c4394",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-arm64-5.log",
+          "bytes": 301,
+          "sha256": "3ab9007e78f83aed51e4f7435fcd7d10bee30480353a05cde7be104d9773503c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-arm64-6.log",
+          "bytes": 301,
+          "sha256": "b9904f801afcecad1fb6e790b33619fee8c8321fc7780a9afeeafbba9f1ecc37",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-arm64-7.log",
+          "bytes": 301,
+          "sha256": "a8c16418c08072a3b19e0e0cb3d0fab8a9b1d78214dd723dbebefd64920af826",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-arm64-8.log",
+          "bytes": 301,
+          "sha256": "a635f23a79e8d83dd9cd6c4c245f6575f0714c2fbf4661031229191bf9d115a7",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-arm64-9.log",
+          "bytes": 301,
+          "sha256": "641636587ab111864cd03c2c6214f4336d6639ecb39b81a882fdf864882c31ee",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-arm64-10.log",
+          "bytes": 303,
+          "sha256": "b9cb44cefcf033800d789fbb41d969a03d55aa6e7e5c3d2206022b50547fd816",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-arm64-11.log",
+          "bytes": 303,
+          "sha256": "54beba9339ceb7db6f70717e106a71a199b3facacfb55f8a820aaf10f88491f0",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-arm64-12.log",
+          "bytes": 303,
+          "sha256": "2a3e51d9a846013ae4f8fec121dc12f176c287ae8bda0d408f233d167b24cb2a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-arm64-13.log",
+          "bytes": 303,
+          "sha256": "04ce7fc0f46f0a19ec24ce2bda311ffe74ce039441a90183f045e9f76a2c7524",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-arm64-14.log",
+          "bytes": 303,
+          "sha256": "ecd2c623ff1b6b17941bcdfbefffdb0de622e3318d4e8e996a7bae13f7137f01",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "overflow",
+      "profile": "x64",
+      "source": "native-dynamic-table-overflow.cpp",
+      "source-bytes": 2448,
+      "source-sha256": "7791ca5a70a0ecdeb7783e202e6d1680ccd90efd16f800767abd88e1d5cb117f",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-overflow-x64\\probe.exe",
+      "exe-bytes": 142848,
+      "exe-sha256": "9288c0493ce3d3a2e2530d799594a971a332597c73e091423d6df4511fc01784",
+      "machine": 34404,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-overflow-x64-0.log",
+          "bytes": 299,
+          "sha256": "3c0d2925fcf2a9f77d0a73fbf5fe2b944a268db8e4aa198ea44cc8d34d8f71fb",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x64-1.log",
+          "bytes": 299,
+          "sha256": "eac40c229f3291e22a5ce1952277e988bb8f8cf04a8edaa89c334bf3f2731761",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x64-2.log",
+          "bytes": 299,
+          "sha256": "509d33f89c8b2acc1c821dcd365365beb24ec08c44a536f5261e6fa277e98dbd",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x64-3.log",
+          "bytes": 299,
+          "sha256": "989c679ca8a95ad9a953dd520fc26a4951de4a3c06325412a6b7e1998d98d8e4",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x64-4.log",
+          "bytes": 299,
+          "sha256": "6974932769b3cff97bd4655ef461cf0af4f12e4005d2753aea10cae7d61324ae",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x64-5.log",
+          "bytes": 299,
+          "sha256": "1afeabc46f307ebd3e5bef85a3a9525c3add5c04268fabd30fde4696b5b697b4",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x64-6.log",
+          "bytes": 299,
+          "sha256": "ad2ce396cce7dba23e20ded74b03a11a348b021aac14b9ddb9089e1543cb7145",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x64-7.log",
+          "bytes": 299,
+          "sha256": "dde455ed4b3e2245b60dc093601a8afc51cb7fa9116e68bf4092f7464e09ceac",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x64-8.log",
+          "bytes": 299,
+          "sha256": "b9827f5d8a5495750768af6aa179a85c43cf5c5b6564564ed7bee501df9b0799",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x64-9.log",
+          "bytes": 299,
+          "sha256": "f46dc2fd590c97869ebee0ed1060fa79b7337658ca4f7198ec66068ba87e393b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x64-10.log",
+          "bytes": 301,
+          "sha256": "71ff59d3f13932fc0a2e443fe2764e602d08931747b4b650cb854d8d0780d4ff",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x64-11.log",
+          "bytes": 301,
+          "sha256": "d7a6956702607904e71fa53132277a6b85c97b28c9c996a940b79f167a60f9d3",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x64-12.log",
+          "bytes": 301,
+          "sha256": "d6af64d1dfa837b21510a9c3c4d99f5af14cfc3b36a454c55d6c39e773a9b2d0",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x64-13.log",
+          "bytes": 301,
+          "sha256": "2f8a74e46ae04c07526c8212dd27e043622882bb647664334a1dbd1634c20e65",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x64-14.log",
+          "bytes": 301,
+          "sha256": "9ab81bebb3233b4d66f75cb58e7bea44a9b04b43779ccc01a2a93a0dfe14ce45",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "overflow",
+      "profile": "x86",
+      "source": "native-dynamic-table-overflow.cpp",
+      "source-bytes": 2448,
+      "source-sha256": "7791ca5a70a0ecdeb7783e202e6d1680ccd90efd16f800767abd88e1d5cb117f",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-overflow-x86\\probe.exe",
+      "exe-bytes": 118784,
+      "exe-sha256": "941d1f65b72d28c4ee41599070006139b774f08b572b6fae2638ffde33c556ec",
+      "machine": 332,
+      "large-address-aware": false,
+      "logs": [
+        {
+          "path": "dynamic-table-overflow-x86-0.log",
+          "bytes": 299,
+          "sha256": "c86920da17bdf55e4c294517b9e4cd653455f573fb0ca0c4b482ba92ca388202",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-1.log",
+          "bytes": 299,
+          "sha256": "8b8fd6764c8076ac8d5e3182fb84680733fa1ab0032deb6a3d1eaa05f9bde7c5",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-2.log",
+          "bytes": 299,
+          "sha256": "b9f9eaa86b728cf03b1d1438859e71cb93a89278ae392d2ada5c64e8adfaa348",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-3.log",
+          "bytes": 299,
+          "sha256": "a1fe62707ead448faac4ea753e0409ccde85a2951c317943d97f56d8b6ee0e22",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-4.log",
+          "bytes": 299,
+          "sha256": "086839766cd1d3acbb4d6af62b0594db3594baf67d86dea1c1e1e7b195aecddc",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-5.log",
+          "bytes": 299,
+          "sha256": "48f693deec711b5029ea12e074630d2121dd39e0444b5e14f8fc9a436cf5e765",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-6.log",
+          "bytes": 299,
+          "sha256": "1e720f0db95badf6f729c00e152f628bc6fbfcd31e2dcfe1a2ee951773c164a6",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-7.log",
+          "bytes": 299,
+          "sha256": "47ef21dacc313b0ef06d6065dea21bfbfaaab2f7ff3fdb57f4b625535399dcb6",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-8.log",
+          "bytes": 299,
+          "sha256": "3435c51c9f2299bb456ae226022cb7963e0f0f43c0b0b15222653cb09979e209",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-9.log",
+          "bytes": 299,
+          "sha256": "c75607af9be016188841a4f4ad50cbbbfc3a5d3ed4ed3f23282e30275399d7df",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-10.log",
+          "bytes": 301,
+          "sha256": "1c4d9fd420101864eaa241360a2f178702b79d651e42fb13ed6b69052785b57b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-11.log",
+          "bytes": 301,
+          "sha256": "342fc830bcd2ee6ad7cf55e556744dcf41f910293b971ccf0ee4c0522b19e90f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-12.log",
+          "bytes": 301,
+          "sha256": "24ef9b2110eb775a373b3902287cb48230f155d404630fd823c3dde8ad9ec954",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-13.log",
+          "bytes": 301,
+          "sha256": "74acb518ba3b94131f84b17b7c1d65b033a276cf0a91f23c5786437a3ad6f462",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-14.log",
+          "bytes": 301,
+          "sha256": "b0cddc4f8b40e33d412af773bbc692492ef9ac8095054cbcef768226b6cf1cdf",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "overflow",
+      "profile": "x86-laa",
+      "source": "native-dynamic-table-overflow.cpp",
+      "source-bytes": 2448,
+      "source-sha256": "7791ca5a70a0ecdeb7783e202e6d1680ccd90efd16f800767abd88e1d5cb117f",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-overflow-x86-laa\\probe.exe",
+      "exe-bytes": 118784,
+      "exe-sha256": "6815da3801476258bd0251c8e374e8dafe334bb14aaa26412acf6ec114777485",
+      "machine": 332,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-overflow-x86-laa-0.log",
+          "bytes": 303,
+          "sha256": "f220140079acd922898c87d69f15c4cb5f067ef32d4a5c3611f6bd1a7082b51b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-laa-1.log",
+          "bytes": 303,
+          "sha256": "af2a2b296041894811086b5b65cd8adfb9420651f54e50eb032a0a0c15d48ce9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-laa-2.log",
+          "bytes": 303,
+          "sha256": "057813372e222cdc61c88d2c35d5656f94001a3e2c54c0d09839fa29e8905d12",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-laa-3.log",
+          "bytes": 303,
+          "sha256": "db738e80e49e2d075bc068a81a5e81f021bc791def7a8ba1baee97ca9eff202a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-laa-4.log",
+          "bytes": 303,
+          "sha256": "e22a493f87927e29ad04c490854a0c883ff6a2a9e13b8aaf51b33d9397a9d4a1",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-laa-5.log",
+          "bytes": 303,
+          "sha256": "c31b80d94ccc3dfa69e9b5fdc4cb82fdd992bce01d9a2a477fe76548665a562a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-laa-6.log",
+          "bytes": 303,
+          "sha256": "f16674f06c24704c7aaf04f018b173170f0933bffaf4295fc80cf668eb67fe0c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-laa-7.log",
+          "bytes": 303,
+          "sha256": "41e123cc14ec7336dd45990230215884e59159900fe2741f28596a499a2a3544",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-laa-8.log",
+          "bytes": 303,
+          "sha256": "231720f2edc04b4ff77a354b209bee556c11017d9a76db555a1d34c9e1d9a0ff",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-laa-9.log",
+          "bytes": 303,
+          "sha256": "628899536598299aac93a63e4ef55580f3098d8af644836dde3ad30c0e36e71b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-laa-10.log",
+          "bytes": 305,
+          "sha256": "98591f90e38bfa0ccac1c278eec872474267fc4f8f816300b2dd96a112ef7c55",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-laa-11.log",
+          "bytes": 305,
+          "sha256": "87830d8bfe16f754a4ba8a41c6709d49b932043a48b993a2f409d6e24f75df61",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-laa-12.log",
+          "bytes": 305,
+          "sha256": "ffb155047a4ed79244d18b6215d959d6007d22287e5a6bc0436c44490fb45fdd",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-laa-13.log",
+          "bytes": 305,
+          "sha256": "8177c268adb7b7f75b1a115b0dc84ec82753f33bd8439fa264017d9b5dfafde1",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-overflow-x86-laa-14.log",
+          "bytes": 305,
+          "sha256": "8bccf8376320c3f3b41bdb8a07f40efd0179acf1a2c80a1eadf31f37178b9a0e",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "lifetime",
+      "profile": "arm64",
+      "source": "native-dynamic-table-lifetime.cpp",
+      "source-bytes": 3301,
+      "source-sha256": "0f7c87a682fd811b971f01ba84ca3a05fd9467e62d85b5e819dcc0860146f826",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-lifetime-arm64\\probe.exe",
+      "exe-bytes": 146432,
+      "exe-sha256": "bba03f349d856167eb6c41ac25f25f7dba6e658ed9bd072b8d25bd58ec36fd1c",
+      "machine": 43620,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-lifetime-arm64-0.log",
+          "bytes": 1658,
+          "sha256": "3707b48e49f7ffd46d4a358abf48dbf8adeaf1bc4eccb5699f680ef9ad8bf6de",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "lifetime",
+      "profile": "x64",
+      "source": "native-dynamic-table-lifetime.cpp",
+      "source-bytes": 3301,
+      "source-sha256": "0f7c87a682fd811b971f01ba84ca3a05fd9467e62d85b5e819dcc0860146f826",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-lifetime-x64\\probe.exe",
+      "exe-bytes": 143872,
+      "exe-sha256": "57cb7d34c2c64b1a536256c44219a1202659dc5d4ac605883cbb82eb11cfb9ae",
+      "machine": 34404,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-lifetime-x64-0.log",
+          "bytes": 1656,
+          "sha256": "7f6d00daf03a307e9aa66501537099815b86a0e4985348840e45ea2bf3a979e7",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "lifetime",
+      "profile": "x86",
+      "source": "native-dynamic-table-lifetime.cpp",
+      "source-bytes": 3301,
+      "source-sha256": "0f7c87a682fd811b971f01ba84ca3a05fd9467e62d85b5e819dcc0860146f826",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-lifetime-x86\\probe.exe",
+      "exe-bytes": 126464,
+      "exe-sha256": "9e984dc09c0dfce10178624e2fe85f0ea4c03854489992ace743a4cad4b40c21",
+      "machine": 332,
+      "large-address-aware": false,
+      "logs": [
+        {
+          "path": "dynamic-table-lifetime-x86-0.log",
+          "bytes": 1656,
+          "sha256": "3ecc8e400de22b9b8b4c6f8ec9db08b70287500ac844024bbdc92ffc743b6584",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "lifetime",
+      "profile": "x86-laa",
+      "source": "native-dynamic-table-lifetime.cpp",
+      "source-bytes": 3301,
+      "source-sha256": "0f7c87a682fd811b971f01ba84ca3a05fd9467e62d85b5e819dcc0860146f826",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-lifetime-x86-laa\\probe.exe",
+      "exe-bytes": 126464,
+      "exe-sha256": "5e33d8a059181a6892c969caf1de6a81d172681b1520dd401d0b42db82632a16",
+      "machine": 332,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-lifetime-x86-laa-0.log",
+          "bytes": 1660,
+          "sha256": "2ea2325cd55ec1ca579e9bc3fc2d4a3c22566c3c8f2f584e3819fc94a14f80b4",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "zero-overlap",
+      "profile": "arm64",
+      "source": "native-dynamic-table-zero-overlap.cpp",
+      "source-bytes": 2105,
+      "source-sha256": "5b0182d89cb158ebb3287dbfb1f0aac3340fb13e951918a7e95921d2dfafefd6",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-zero-overlap-arm64\\probe.exe",
+      "exe-bytes": 145408,
+      "exe-sha256": "7b4496bd5e2687ea958b779a69fee8d4e8a394fadddc572095114a18a755a900",
+      "machine": 43620,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-zero-overlap-arm64-0.log",
+          "bytes": 244,
+          "sha256": "5b70e971b99ffe1342521ce9659441192fd73572b63c920768f96dcf988d7782",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-arm64-1.log",
+          "bytes": 244,
+          "sha256": "89fa8ce3df5c9a9df0a633978004d48b5f2c61c834e1063505871500a30db38f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-arm64-2.log",
+          "bytes": 244,
+          "sha256": "892414c7e19d7cc06e2763069f3b091d200bc76e8d80b4b09c5ef5d4b381f8fb",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-arm64-3.log",
+          "bytes": 244,
+          "sha256": "e526f394368887bb095dd76913c0e5db183fc823e89f1949ca36dbd7bb5e70bd",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-arm64-4.log",
+          "bytes": 244,
+          "sha256": "63d8ee0e09bd4b4f93137acad72000f1e3effb1acff87c948f692bdb77f670fe",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-arm64-5.log",
+          "bytes": 244,
+          "sha256": "62fe4e4be1443cb0b8c2a5df4252d3fbea96159ba8a791950da84be491449436",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-arm64-6.log",
+          "bytes": 244,
+          "sha256": "870f721e79b15dc334f54b01a14ed086fdfd23cd7bc60e3aa2e19a9585a5a9fa",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-arm64-7.log",
+          "bytes": 244,
+          "sha256": "a02d9f24ed93d78a5de648abdd76f34a89aa84e84563deb7726f904fbf0a08f6",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-arm64-8.log",
+          "bytes": 244,
+          "sha256": "7ea77287de18db74b7b5249ec6cd942169f248b54f227ab816dc075f5b5ee268",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "zero-overlap",
+      "profile": "x64",
+      "source": "native-dynamic-table-zero-overlap.cpp",
+      "source-bytes": 2105,
+      "source-sha256": "5b0182d89cb158ebb3287dbfb1f0aac3340fb13e951918a7e95921d2dfafefd6",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-zero-overlap-x64\\probe.exe",
+      "exe-bytes": 142848,
+      "exe-sha256": "65894f17eaa0a104ed530e5333857a04ac28208eb362280160036c7cf4b45a76",
+      "machine": 34404,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-zero-overlap-x64-0.log",
+          "bytes": 242,
+          "sha256": "f5047e0e13542fc837907bb0d031e0e26ffda43148c9ec3ae7581ab8eabb8ecd",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x64-1.log",
+          "bytes": 242,
+          "sha256": "69630943c9551875cf48b961d0f87d450bb075d5ce83aa1aa4f44a7304981f89",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x64-2.log",
+          "bytes": 242,
+          "sha256": "a9e54e2d0cd51a61f44f1c314c7231ec2c99b01934341ef0f64ff73392f6104b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x64-3.log",
+          "bytes": 242,
+          "sha256": "a25c4bd061248e13aba1a12b87d4378c39f21d2e97229347b2a06770e027491b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x64-4.log",
+          "bytes": 242,
+          "sha256": "ac77ca32f2846f2260daacff7d0745b0785016a47fef6ea32eaa4ae574e0961d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x64-5.log",
+          "bytes": 242,
+          "sha256": "f33c8bf7d7d94bcbab1aca59515726ace5da3c765a55731d00900f310b360d47",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x64-6.log",
+          "bytes": 242,
+          "sha256": "0e4f5509081737690a0c73c326b4e553fd09c2fd75fbd2b30ab47dfdb56a750f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x64-7.log",
+          "bytes": 242,
+          "sha256": "16c64e8220cbf51b0f2030f415f7a55f0e43d322a32940f6ee5fdb724adde74b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x64-8.log",
+          "bytes": 242,
+          "sha256": "ba1b0e6b1dad7bd252f42dabeba139c2d3443bb31394114639e7fe4f1b38b280",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "zero-overlap",
+      "profile": "x86",
+      "source": "native-dynamic-table-zero-overlap.cpp",
+      "source-bytes": 2105,
+      "source-sha256": "5b0182d89cb158ebb3287dbfb1f0aac3340fb13e951918a7e95921d2dfafefd6",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-zero-overlap-x86\\probe.exe",
+      "exe-bytes": 118272,
+      "exe-sha256": "d89996123a5e9896911cd0ce0ecfec6bf90d34aa1a93dcc13a8f8100613a9f6c",
+      "machine": 332,
+      "large-address-aware": false,
+      "logs": [
+        {
+          "path": "dynamic-table-zero-overlap-x86-0.log",
+          "bytes": 242,
+          "sha256": "3638c9ef00655c970144a216ea802cd1545eadee4a8bd527979141591ce22717",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x86-1.log",
+          "bytes": 242,
+          "sha256": "026009b85c3ba3027eb29cfb3a1ba81c64a0876769973a6cfbd63ab8f60d6ac9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x86-2.log",
+          "bytes": 242,
+          "sha256": "143e13547291b12bfbd755fb81c70fa1f3ceb14c332a4dc539df8dae58b2fb09",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x86-3.log",
+          "bytes": 242,
+          "sha256": "ed1c925d1f08ac80dbca7b904fed019b1e38f0a468b4905a6494d8179f4cddc4",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x86-4.log",
+          "bytes": 242,
+          "sha256": "fa77423e09cf0ab45a1981e168a0f3f338c1c9a3f5f323388ef78e68ce4ec562",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x86-5.log",
+          "bytes": 242,
+          "sha256": "707e4b90f5f4a003e17008a20796b965b552acb69030dc48d47a5360dffb9e16",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x86-6.log",
+          "bytes": 242,
+          "sha256": "19eab2039c6633021883fe142875280b3e0abb4960dbd2778c4e07f11b4a60f5",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x86-7.log",
+          "bytes": 242,
+          "sha256": "cd37c0a41393790c6343336e8557b62c6fad873df988aa586ee88ee6e8232ba9",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x86-8.log",
+          "bytes": 242,
+          "sha256": "d1703c8aa5d8cf823387c73853c7a86a52e7cc10aee986474bd9bcc2c1b1d754",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "zero-overlap",
+      "profile": "x86-laa",
+      "source": "native-dynamic-table-zero-overlap.cpp",
+      "source-bytes": 2105,
+      "source-sha256": "5b0182d89cb158ebb3287dbfb1f0aac3340fb13e951918a7e95921d2dfafefd6",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-zero-overlap-x86-laa\\probe.exe",
+      "exe-bytes": 118272,
+      "exe-sha256": "844c74fd87b5ab3edccd21eecd4cb346bd7b622b9ea9b90c86ae16317682188e",
+      "machine": 332,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-zero-overlap-x86-laa-0.log",
+          "bytes": 246,
+          "sha256": "e3a6e21747d9f69d97d7e3f54184d68c4a9d9c8952c9d6c3d9e0cd0bf4dfc55f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x86-laa-1.log",
+          "bytes": 246,
+          "sha256": "297f51722c1ab7d5af40b64dbcb1f7dc891c33b1f2de326e01bd36d4d94b5bdf",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x86-laa-2.log",
+          "bytes": 246,
+          "sha256": "8962166d784b9337dcd01caf7501f2fb413ac728f9cb0434d24d1590a766de3f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x86-laa-3.log",
+          "bytes": 246,
+          "sha256": "a9d3850fe4b8894a19adc56f86cdd237f92ae80f7884098db76a5f6cce32a627",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x86-laa-4.log",
+          "bytes": 246,
+          "sha256": "17be02a70db7deb1d9b837776aca95df35e3c575954ff5d06afb1be675ca1528",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x86-laa-5.log",
+          "bytes": 246,
+          "sha256": "5a6ff065536ebd27255a18590086c40477f0b6a239efd61f8cc1a78df2d5e983",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x86-laa-6.log",
+          "bytes": 246,
+          "sha256": "9d62574a5e6eb1ce0dea7538c5764dcd1f164de43db903c370528151b22589b1",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x86-laa-7.log",
+          "bytes": 246,
+          "sha256": "cb7fff80cda32cc4752e703eafff13473a7876493aab820121c74d03f68ebe1f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-zero-overlap-x86-laa-8.log",
+          "bytes": 246,
+          "sha256": "ad3e329b074ac40a565d8e5801aca7f423864d90e202094ad968fac01d51741c",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "sequence",
+      "profile": "arm64",
+      "source": "native-dynamic-table-sequence.cpp",
+      "source-bytes": 2134,
+      "source-sha256": "e989bebe28e6483392856e32baabb46121704eaa4331c1bbe0a12a55a7bf4b94",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-sequence-arm64\\probe.exe",
+      "exe-bytes": 145920,
+      "exe-sha256": "3fba53adbc673060b694fb9c563ada1929bd20fac10a02eff714f711da84c8b3",
+      "machine": 43620,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-sequence-arm64-0.log",
+          "bytes": 510,
+          "sha256": "e242d9ab09a09417621f2f191904f1f8e100690e8b7119e38a642113a98f7cef",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-1.log",
+          "bytes": 694,
+          "sha256": "6748094eab33395544166f284c4e9cd5116f59910ecae5a468e10665b70ef38b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-2.log",
+          "bytes": 880,
+          "sha256": "39a7d6cc69e33c8778a2c45468748a03e9227e852ed6eb38180614a32581265c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-3.log",
+          "bytes": 1066,
+          "sha256": "46462f922edc56c4cf48c560702ae7676d91a8b819564d7f20fb2ebc072ddf68",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-4.log",
+          "bytes": 1252,
+          "sha256": "6496655dffde2f17babb429bf88a2a2bed3c8d8d0ba37bc628fbab84724325b8",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-5.log",
+          "bytes": 1438,
+          "sha256": "7aa7ff1abbe84a532fb4df18b8e9b64c584b4ddef9db7c49cb8d1c06354100a4",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-6.log",
+          "bytes": 1624,
+          "sha256": "aa3ee1965b852ddab810820d944150cfccc1bdbe690f8a41d73d03dd0c7c5e9a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-7.log",
+          "bytes": 1810,
+          "sha256": "ee53b4835f7eefbcc41a11a13df1950be86d5c4cc7bd3c6493e9ce0adfd3c195",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-8.log",
+          "bytes": 1996,
+          "sha256": "2fb3469817ed916d1e2b8b0428bfc6bd9172dfe3f00ad987fc7ccb2e14c60c95",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-9.log",
+          "bytes": 2182,
+          "sha256": "22d25e7e0d279af5f53e43f0f41581a96ac351462cdf7e8217076c986531d4f1",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-10.log",
+          "bytes": 2370,
+          "sha256": "8818bc0b201ee17d385be0f752b186421d76d3a8ef2018fc5b326a4f64d5ab47",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-11.log",
+          "bytes": 2556,
+          "sha256": "e51106997d87aab956178aed01cde409afc5416fa1ba403b966e5dbc26144601",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-12.log",
+          "bytes": 2742,
+          "sha256": "b7cbf6135173f6590ff44302a5007f6e851468bd6d3bbf82c8d50f58cab25d66",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-13.log",
+          "bytes": 1033,
+          "sha256": "74fdd6059a138372bcc9342b262d887919f951d41cfa0aeb036501935d46a8e6",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-14.log",
+          "bytes": 1219,
+          "sha256": "50a4665b68c11750741ff3844af00f890cecc9b09933e7e1f396f7fb77403166",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-15.log",
+          "bytes": 1405,
+          "sha256": "2c2385b3baf507911a276daee2f339602afd347dd69b6d643a8b86ac79411c53",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-16.log",
+          "bytes": 1591,
+          "sha256": "34e0a7517f9fc6fecb2effd363e66001abb4f77aecf0feca4198c321171ecbdc",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-17.log",
+          "bytes": 1777,
+          "sha256": "05c39dc29f2f0fbab8fe5e7c0794e8c319bf5574d51118d589ca988b16a522cb",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-18.log",
+          "bytes": 1963,
+          "sha256": "ea3da52ec9a6af5b4b48ab5b473ab68d3b386b1aa1df895d49c82149e2b05d58",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-19.log",
+          "bytes": 2149,
+          "sha256": "d980e15702dca2ee9ad297f6485d9c32358bfd140770a6a9cfc974d76fc56a13",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-20.log",
+          "bytes": 2335,
+          "sha256": "87a8af77baaa094259ed31bba9e235d432612eef704381f5f3ebbd4430d418db",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-21.log",
+          "bytes": 2521,
+          "sha256": "cd880c47fb543c7ed148ba2790d904eea32bb8cc431f2121992756eda9b1f614",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-22.log",
+          "bytes": 2707,
+          "sha256": "365c40898b386ce0ee164c2c21f5947ce6cfddab16717e862d5f0051c9af0aa5",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-23.log",
+          "bytes": 2894,
+          "sha256": "e35bd9385815d761342dfb114c11f2a5f76b077352aad2b5e5c6e5a9d5073a35",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-24.log",
+          "bytes": 3080,
+          "sha256": "bf8d6ec44695f3380ecb296f40a543d6f7de2f3e2687f2517ad2a32602e91ae0",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-arm64-25.log",
+          "bytes": 3266,
+          "sha256": "e480c5c1269736b757ba40e3b682958d1ccc0865fa083011145e72e3e266af46",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "sequence",
+      "profile": "x64",
+      "source": "native-dynamic-table-sequence.cpp",
+      "source-bytes": 2134,
+      "source-sha256": "e989bebe28e6483392856e32baabb46121704eaa4331c1bbe0a12a55a7bf4b94",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-sequence-x64\\probe.exe",
+      "exe-bytes": 143872,
+      "exe-sha256": "8a57822209f63d9bf976c78cfda9aa4640b01eb4023b04f8e02707de112e1d83",
+      "machine": 34404,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-sequence-x64-0.log",
+          "bytes": 508,
+          "sha256": "f0ddc50e9a5e8380bb1ba821faeb80bb193b7252ffe6399f46ce07b0e8598c1f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-1.log",
+          "bytes": 692,
+          "sha256": "e92203cfa25919d57620b8d29ea3499eb1e7bba8fae3a92e10769f1b8f38d687",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-2.log",
+          "bytes": 878,
+          "sha256": "9a24cdbe555a86c6f30c02a777fc1392e3d6a9c7cc5d68d8510cacb23e8dbd7a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-3.log",
+          "bytes": 1064,
+          "sha256": "3528b055ebcc734fd61cd6b20d1d190d62cf648a20915317664e64a7c2040aba",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-4.log",
+          "bytes": 1250,
+          "sha256": "4eda2ba28bb8b32c802c37efe3603f0381a6e473eb417aad1d50fe4487913790",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-5.log",
+          "bytes": 1436,
+          "sha256": "19605853862e36dec30bf0a0ccde25dc94aee38e5d39de60c50bacca8a44a119",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-6.log",
+          "bytes": 1622,
+          "sha256": "d3c068f46c2b203528eadbec26ae8d51cb493130843dc2b54647cabea897a1b8",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-7.log",
+          "bytes": 1808,
+          "sha256": "de9e25bb88864848f799a6e425991a9d6e9f56583bc29f791efc723e82cf47f7",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-8.log",
+          "bytes": 1994,
+          "sha256": "51a3452d0dfb2bb5365cc21a969009c93d9049c67b341bbaea1b544909329065",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-9.log",
+          "bytes": 2180,
+          "sha256": "52b4b9c18a3689ac581d641174f18dff8b829c5453f61712d07f03d6dcd160c3",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-10.log",
+          "bytes": 2368,
+          "sha256": "dfc53d4faf82b372a05ef1ed13233f597e057628715b1bc20833884838ada5d1",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-11.log",
+          "bytes": 2554,
+          "sha256": "88c374bd193c164e3d950f1d2f89024c77994ea9ee98c717e42e764b4adbfa5b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-12.log",
+          "bytes": 2740,
+          "sha256": "7d2ff78bf9367cd848dc0f7dc9d611a363871355f1f17d20560c6af8dd96819c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-13.log",
+          "bytes": 1031,
+          "sha256": "1bd3347b1a47a0d86d81e9b7d9c2328b5fca28a068b2c31243ef916b06a003ca",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-14.log",
+          "bytes": 1217,
+          "sha256": "05e5cf8faf29b7248868ccab5aaae1a9a1f563a6bc82de018bbf3c386d77a325",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-15.log",
+          "bytes": 1403,
+          "sha256": "40fbf93ae0ee775138db5bc692c98fb921b0accfa16dcc198955c31755fec97f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-16.log",
+          "bytes": 1589,
+          "sha256": "7f7a8ca3ff3731783d894995172abb8a67a0899249f09aa76ac2107a9fb71d70",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-17.log",
+          "bytes": 1775,
+          "sha256": "6f32d452aedb1925472d44e60a88e58072505b97f2d7a664c904d8c6e757e7bc",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-18.log",
+          "bytes": 1961,
+          "sha256": "9f3fbdd510c4613ae8602d9cf98c72cbbaacc96fe2150b352660d41050c58047",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-19.log",
+          "bytes": 2147,
+          "sha256": "ba688f0765d2fead0f30f8edda532a7bebd88bd1b054bcf61145bfcc4e7cf201",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-20.log",
+          "bytes": 2333,
+          "sha256": "6b5027f5d26ed77a10d9eed272dc7450b36327ecfb1f3dad09267a234e359f2e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-21.log",
+          "bytes": 2519,
+          "sha256": "3fbe53431dfb8cf2663cd2c1116482e668c32f84579183f3cd4636c3a6bbb618",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-22.log",
+          "bytes": 2705,
+          "sha256": "70131219adae14c2bc1a2d96bedcfda6407c1809d921dc83140ef4b1899df1a4",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-23.log",
+          "bytes": 2892,
+          "sha256": "93dbcacda7b06d6f90123dd1482ea5418b23397a7ee89ec91c693a005313c179",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-24.log",
+          "bytes": 3078,
+          "sha256": "6860aaa41f381f1a2c35e61c44dfca50234f4014e5bebada34e39129ee259472",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x64-25.log",
+          "bytes": 3264,
+          "sha256": "49639d9e82bb599365303c2414148038546f462252a22796ac7a53cfe08fad5d",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "sequence",
+      "profile": "x86",
+      "source": "native-dynamic-table-sequence.cpp",
+      "source-bytes": 2134,
+      "source-sha256": "e989bebe28e6483392856e32baabb46121704eaa4331c1bbe0a12a55a7bf4b94",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-sequence-x86\\probe.exe",
+      "exe-bytes": 118784,
+      "exe-sha256": "4844ecefb01bf3180c78b259f8d9f899c5f76645eb1d2fc4d0723f7311fdfd30",
+      "machine": 332,
+      "large-address-aware": false,
+      "logs": [
+        {
+          "path": "dynamic-table-sequence-x86-0.log",
+          "bytes": 508,
+          "sha256": "845c11e564b7373bc6d3b21a9a1f84c439df930fb75061e9429f4e437433e4f3",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-1.log",
+          "bytes": 692,
+          "sha256": "b76788582824092095d84bdef729a5e7492abd59de38e1130e346f48cbc8b999",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-2.log",
+          "bytes": 878,
+          "sha256": "180b585a2ea468da3a6e503733d00949a4213d26724c599fe5217b5a5b0d387b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-3.log",
+          "bytes": 1064,
+          "sha256": "308c0d06e7152a880f5c140ae8a462816ead1b68768690f137a1d7d840ad37a2",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-4.log",
+          "bytes": 1250,
+          "sha256": "ee933f23dd5502370dd70a81c74546604c1b08a855a087e7549fb492ef9cee9f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-5.log",
+          "bytes": 1436,
+          "sha256": "87507610e169925874072034bf288cce26a1be0c5034d7ac3cc6be41ad098453",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-6.log",
+          "bytes": 1622,
+          "sha256": "d05745e5e1dcff93b5bfcb97f66316bec4f5432f17599d59a19fc222dea9f219",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-7.log",
+          "bytes": 1808,
+          "sha256": "542bc28ac18b8710c3f660944e2ae32404cccdcd7b727ed5f027c057faf896b5",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-8.log",
+          "bytes": 1994,
+          "sha256": "92e703d764b6ee92ec92c74a50a2a671c0d9812b14a86b9b6c4fee0cc6981f5d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-9.log",
+          "bytes": 2180,
+          "sha256": "c64e080afb855d2b17baca70884d6de7a90f8b6ed13de0ced31ddeea6b21075a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-10.log",
+          "bytes": 2368,
+          "sha256": "6014d0adf3f2422ad0ada3236501e5991ddf20a8a351b5e6ab082aa9d5e7556d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-11.log",
+          "bytes": 2554,
+          "sha256": "e7007eb4865cb0ac4fa76921065bf1f84d2d5d3b212f772f351bdf3e342de3a5",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-12.log",
+          "bytes": 2740,
+          "sha256": "a17e101216a1cee36d0e61eb05993408feebb847ddf866bad38da4bfb915820c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-13.log",
+          "bytes": 1031,
+          "sha256": "525afc43ddf589bee809ad45a524f2e00d51af22339be0a1ee73ddcfd5e08094",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-14.log",
+          "bytes": 1217,
+          "sha256": "e8fd162f1af6d6682e7726c87a5a411d71ce086d79e53c27a503843d1e870e74",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-15.log",
+          "bytes": 1403,
+          "sha256": "ef4921c02fb8507b6c6b76035fbc6c8d733d2234a57753823d5391c9850a35cf",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-16.log",
+          "bytes": 1589,
+          "sha256": "4f4dba643ffcd00b839ca556f6480ad88c193c9809559ab3eec8f595a5867972",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-17.log",
+          "bytes": 1775,
+          "sha256": "319c56b8f5470438b3adacc28a888d56ef5705c477bff83ab39913f0837e85c7",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-18.log",
+          "bytes": 1961,
+          "sha256": "6a2c4ce80d3656407fc2764565d5cd00bb7d8a32ca67fa016c88af64512c8bae",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-19.log",
+          "bytes": 2147,
+          "sha256": "14100307c4f18f33b35f9d0c94fa1d31fe3794967dd3862c9d9b0fab671e9711",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-20.log",
+          "bytes": 2333,
+          "sha256": "f01c3ba8246aa5999d0db5b3915ab5cfb4b1bf0d35876b1fe27798873f6e20d8",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-21.log",
+          "bytes": 2519,
+          "sha256": "9b622c8c98130a732cc659d35426bd7826790756985c5349e8fa66d9a36a079f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-22.log",
+          "bytes": 2705,
+          "sha256": "ab1e0241724a85d5e613154873b592423a13107c97c4ff9e979307ff41de111e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-23.log",
+          "bytes": 2892,
+          "sha256": "61ca46d1271cf31bbf740d76f656f5b57466f8ef25eca3a37b04c1c5ce1b58eb",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-24.log",
+          "bytes": 3078,
+          "sha256": "e65823d21e544bcfd87090d1bae9c54c8cd3ba40b16c5f123a82db61bff2361c",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-25.log",
+          "bytes": 3264,
+          "sha256": "62e4b805d21a9bc35195a8ab2071f8aaef9df4e06e51151346960fd42bfc920e",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "sequence",
+      "profile": "x86-laa",
+      "source": "native-dynamic-table-sequence.cpp",
+      "source-bytes": 2134,
+      "source-sha256": "e989bebe28e6483392856e32baabb46121704eaa4331c1bbe0a12a55a7bf4b94",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-sequence-x86-laa\\probe.exe",
+      "exe-bytes": 118784,
+      "exe-sha256": "5383af7e060d0f54ea7df7f93aad1cc1e44f6a702e12c97d253e5771ba01be39",
+      "machine": 332,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-sequence-x86-laa-0.log",
+          "bytes": 512,
+          "sha256": "617b9a84e029818f7c15ee25003e03390a2841d3d0aa763037a0509b3b5a5547",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-1.log",
+          "bytes": 696,
+          "sha256": "a35f14632eaef550003b12b8abeb64d7b6ddca5b218aab08b7595d7e6b7c9f05",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-2.log",
+          "bytes": 882,
+          "sha256": "cdd735730e95ecf35535d810349a28e07010676634e65fd20fc49c8e00b7a99e",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-3.log",
+          "bytes": 1068,
+          "sha256": "e632fcd87dbfecd735e2c6757f30bb624897dcc64de0396d8212a092369c1d36",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-4.log",
+          "bytes": 1254,
+          "sha256": "ae99f003133ddf98d74f49894f1c35cc38c5f4ac7b1aea41a7dfa868c8d18782",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-5.log",
+          "bytes": 1440,
+          "sha256": "dadcc7118b2c6df74c658593d7272aac2018da406f264a99d423555adb394d71",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-6.log",
+          "bytes": 1626,
+          "sha256": "c065036ac4b80279d381702979ac3b4a95529b83d0d62f3ec7e9639f7dc34eda",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-7.log",
+          "bytes": 1812,
+          "sha256": "6c7fae86364ed112dfd4d4440e099d40bc7183acbbcc4439cc1a6777655f846b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-8.log",
+          "bytes": 1998,
+          "sha256": "530d4c1f701f0e2024bf3256f01e80b2e541574a5e966d80ff431dedfe1698d3",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-9.log",
+          "bytes": 2184,
+          "sha256": "2c82876608474f716ca539cdef54d95f2c5d81e1e1c5869407c434db2bda7209",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-10.log",
+          "bytes": 2372,
+          "sha256": "76200cc4ab365b9fb10b05e6ab7e65a432d0f1abc8f0b7e5bdbe79693d559e07",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-11.log",
+          "bytes": 2558,
+          "sha256": "373a0c61488ab1692f6c4c4b52f463b9c04811b124fd97ba538be3dbf64a7dbb",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-12.log",
+          "bytes": 2744,
+          "sha256": "1e25270f9139e8157c331f3f543bc9be5a9fee5481a5bf03dd711446864947f6",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-13.log",
+          "bytes": 1035,
+          "sha256": "d88f4dd496ac091345b464d8440fb40cf970ad7f8c14e1cdcac915ee7fa35ef0",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-14.log",
+          "bytes": 1221,
+          "sha256": "2f8b0a0e89c36504f1ebb1eb514ab2f76d1ae93a148c7b697bcee60a339d851b",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-15.log",
+          "bytes": 1407,
+          "sha256": "752773b040a6cf7c47439e7013a6add3520fb1915775082ad3c4ded3f133ac15",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-16.log",
+          "bytes": 1593,
+          "sha256": "b3bea9949fbfe444ab37d27a6ad76e3d19fe686af5fa870b8fba319e9cc7c00f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-17.log",
+          "bytes": 1779,
+          "sha256": "47c406fc2d10f3ec78d0d49ef3c4066f6735692d3efb410e3749f40144919cf7",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-18.log",
+          "bytes": 1965,
+          "sha256": "9fca241f78007cf3eac8f852912706640681295b036a722725cb33d9bf46c985",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-19.log",
+          "bytes": 2151,
+          "sha256": "7ea24e2b08cd9411ee65db367185448cd37ade1b2f2113d4b4f63c3f6fbd8b06",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-20.log",
+          "bytes": 2337,
+          "sha256": "a919972306db74e4cb5e7d31178263007570303cbca55ebaca67170cb4a98479",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-21.log",
+          "bytes": 2523,
+          "sha256": "cb251d7526e0fab8130175ff974b2c40ce356ef7e0843257c588948018f4aaf2",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-22.log",
+          "bytes": 2709,
+          "sha256": "604f84996351019e9ef7114e03caa06985395fc9bb3cc0f1a9dc90ff55d5a087",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-23.log",
+          "bytes": 2896,
+          "sha256": "f19f847280066f5da19c069e8619c74b5b1d4d4776588baa14942d84ba1abeeb",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-24.log",
+          "bytes": 3082,
+          "sha256": "f966f88c6ffdc4228b4155c860e9fca236dc4222cb9e6dcc18e0eceb5b8a83bd",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-sequence-x86-laa-25.log",
+          "bytes": 3268,
+          "sha256": "118037c448e96a713ad55a6cfde12374f6a93fe4a46888fdfde7410030ef869a",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "status-map",
+      "profile": "arm64",
+      "source": "native-dynamic-table-status-map.cpp",
+      "source-bytes": 953,
+      "source-sha256": "47dba9429c2dcb8737ba8392246c26234e715565689667e5920272a9f5818164",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-status-map-arm64\\probe.exe",
+      "exe-bytes": 144384,
+      "exe-sha256": "50c1ef5482c1e1c34a4387111e623ef7e32d7b1f54f3842d9be500804626bc35",
+      "machine": 43620,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-status-map-arm64-0.log",
+          "bytes": 2083,
+          "sha256": "8bdcaf91f676c22160b1c2b5891ebd23c761bcdaebcb14cdfdfdd4283ebb4bb6",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "status-map",
+      "profile": "x64",
+      "source": "native-dynamic-table-status-map.cpp",
+      "source-bytes": 953,
+      "source-sha256": "47dba9429c2dcb8737ba8392246c26234e715565689667e5920272a9f5818164",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-status-map-x64\\probe.exe",
+      "exe-bytes": 141312,
+      "exe-sha256": "144a29e3d0098935da468afdd24664e6c1417c087258ab75d7301e74a1e37485",
+      "machine": 34404,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-status-map-x64-0.log",
+          "bytes": 2039,
+          "sha256": "52df2fa9b0e0037d8f4765ec823852f90bd9a2308d934160742ea6c90fcc1e76",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "status-map",
+      "profile": "x86",
+      "source": "native-dynamic-table-status-map.cpp",
+      "source-bytes": 953,
+      "source-sha256": "47dba9429c2dcb8737ba8392246c26234e715565689667e5920272a9f5818164",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-status-map-x86\\probe.exe",
+      "exe-bytes": 117248,
+      "exe-sha256": "6882bec7fcb63282dc639861844e55312edd76475a3cb1e480c471a436d1ec8a",
+      "machine": 332,
+      "large-address-aware": false,
+      "logs": [
+        {
+          "path": "dynamic-table-status-map-x86-0.log",
+          "bytes": 2039,
+          "sha256": "79ddcf6f7f8f0fe431153e735192316e7d3c26778a91144e61d989eaadcf90d8",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "status-map",
+      "profile": "x86-laa",
+      "source": "native-dynamic-table-status-map.cpp",
+      "source-bytes": 953,
+      "source-sha256": "47dba9429c2dcb8737ba8392246c26234e715565689667e5920272a9f5818164",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-status-map-x86-laa\\probe.exe",
+      "exe-bytes": 117248,
+      "exe-sha256": "6f87b8afe0a284e066af884c5a6ac9d7f40daf4ea56fc19a054af56fc23e0bc9",
+      "machine": 332,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-status-map-x86-laa-0.log",
+          "bytes": 2127,
+          "sha256": "a37500a659ca79ad4304f4f7a1b1fa3c637526d11a94d0130d8e5605ab1c1192",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "handle-boundary",
+      "profile": "arm64",
+      "source": "native-dynamic-table-handle-boundary.cpp",
+      "source-bytes": 2118,
+      "source-sha256": "ff64183d4b4f9a3c2c8ef3d03d50a69b8946a5fe6f3ef479315d19ac8119e917",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-handle-boundary-arm64\\probe.exe",
+      "exe-bytes": 146432,
+      "exe-sha256": "08eb63e930afd87af197ce258d5923554ccdc6df3d6d2e1a2b114d5fab320571",
+      "machine": 43620,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-handle-boundary-arm64-9.log",
+          "bytes": 107,
+          "sha256": "2b6a8fdd4e1907ed785d707139baa728b2fbb993551c75c5b59753a7dc672ab3",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-arm64-10.log",
+          "bytes": 108,
+          "sha256": "3139899ec5f56691ee41ada1ed1e28b1468bed0ed537aa16209a1de50e3c4897",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-arm64-11.log",
+          "bytes": 108,
+          "sha256": "f0cad696af871f64c889444193b3700fe42aee1e4d561ddf5f5264e4545e3ebb",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-arm64-12.log",
+          "bytes": 108,
+          "sha256": "8c95118e7fa324e5cf420e8d3a6fb85bcf51ce1e1b6257c33eb42dfb154b3228",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-arm64-13.log",
+          "bytes": 108,
+          "sha256": "6f2e0baa183c2c6b744d6e7afdef0f542b4018ff5250aabd3fd825cf0897b01d",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-arm64-14.log",
+          "bytes": 108,
+          "sha256": "289b85eb675621a812959011fc523ea8470c5d21b7de68cf83f56840af4f8f1a",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "handle-boundary",
+      "profile": "x64",
+      "source": "native-dynamic-table-handle-boundary.cpp",
+      "source-bytes": 2118,
+      "source-sha256": "ff64183d4b4f9a3c2c8ef3d03d50a69b8946a5fe6f3ef479315d19ac8119e917",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-handle-boundary-x64\\probe.exe",
+      "exe-bytes": 143872,
+      "exe-sha256": "bd45218b90b04d89dcd68a7dd137b0708017dc752973a76240c3e8a32f2c1ede",
+      "machine": 34404,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-handle-boundary-x64-9.log",
+          "bytes": 105,
+          "sha256": "020971f1ce36730da17e8b75bf0b2ff503e47b16538c396dc5c97a6b127fd0b2",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-x64-10.log",
+          "bytes": 106,
+          "sha256": "fe0ac002e86723e48df179998bbd79c9fb1c5ec90ac715abd1ea98724000bd10",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-x64-11.log",
+          "bytes": 106,
+          "sha256": "4b965af173f0409a57a8290ca3890d74f6266f318c7ce595a32f663cdebab49f",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-x64-12.log",
+          "bytes": 106,
+          "sha256": "6553f29d465913c3c35133f357402cba767dfd45d4875bd0615b668da93f54a0",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-x64-13.log",
+          "bytes": 106,
+          "sha256": "270f4b7bc5efcc54f8579e7786a4880978acd60f259c0000243cb24ca8495c0a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-x64-14.log",
+          "bytes": 106,
+          "sha256": "260c938cb653ffefddb2fbafbec04de05e75e3e2fd34029098af41c32c033ab5",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "handle-boundary",
+      "profile": "x86",
+      "source": "native-dynamic-table-handle-boundary.cpp",
+      "source-bytes": 2118,
+      "source-sha256": "ff64183d4b4f9a3c2c8ef3d03d50a69b8946a5fe6f3ef479315d19ac8119e917",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-handle-boundary-x86\\probe.exe",
+      "exe-bytes": 126464,
+      "exe-sha256": "1376ef190b66ca20e6259511c51577850884dc86e1df91f4a3cfd43cae044b06",
+      "machine": 332,
+      "large-address-aware": false,
+      "logs": [
+        {
+          "path": "dynamic-table-handle-boundary-x86-9.log",
+          "bytes": 104,
+          "sha256": "5993b0d34baf308191fa661cec335eb7e78fbb2f11bc647596a94f8d54594fc7",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-x86-10.log",
+          "bytes": 105,
+          "sha256": "e644eeacfd611ee755041868cea13157939c12c27b86048f2d5bca9cf71a78ec",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-x86-11.log",
+          "bytes": 105,
+          "sha256": "1575cfe66ff5413466474a3c506409fe57861e4524e348bc7c679f2be405ffd7",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-x86-12.log",
+          "bytes": 105,
+          "sha256": "7e4b9e5dae1ea5fd34b2b501dd1afe552bbbd248a08d885e868c356aaed3bc34",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-x86-13.log",
+          "bytes": 105,
+          "sha256": "6377e5c69d0a7185e2b142dda8720dcc9e6af21bd79510d72913b7adf40391c8",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-x86-14.log",
+          "bytes": 105,
+          "sha256": "d6fa1ce212935629117c8c09b310dd30675828a4feeab96519d7dfae896228f4",
+          "exit-code": 0
+        }
+      ]
+    },
+    {
+      "kind": "handle-boundary",
+      "profile": "x86-laa",
+      "source": "native-dynamic-table-handle-boundary.cpp",
+      "source-bytes": 2118,
+      "source-sha256": "ff64183d4b4f9a3c2c8ef3d03d50a69b8946a5fe6f3ef479315d19ac8119e917",
+      "exe": "C:\\Windows\\Temp\\assist-native-rax-20261010\\dynamic-table-handle-boundary-x86-laa\\probe.exe",
+      "exe-bytes": 126464,
+      "exe-sha256": "45373cf4b0ce13f68b223e45187e2690684558b3baef70ca7feaaac33ed58aeb",
+      "machine": 332,
+      "large-address-aware": true,
+      "logs": [
+        {
+          "path": "dynamic-table-handle-boundary-x86-laa-9.log",
+          "bytes": 108,
+          "sha256": "d1a5345ea94eb592e30a71591ec7141c4a439a797e9e3cc98d36ab0a56ff779a",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-x86-laa-10.log",
+          "bytes": 109,
+          "sha256": "bc6ef55f6d7b90412eae16223f015733781cfee9c0e6fe0cda99c4b15a8cca03",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-x86-laa-11.log",
+          "bytes": 109,
+          "sha256": "562eef3b5f24e3b1fb94a94927b3385a9a9c62c63111afb5a8d48c4dba3b75da",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-x86-laa-12.log",
+          "bytes": 109,
+          "sha256": "a8649948e7a002befba2d08c91d6a00526b43efab87309ce6d770cb618d5f270",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-x86-laa-13.log",
+          "bytes": 109,
+          "sha256": "800fe96bcc4103c829eb75406f4778dc2643dfc0142bbbf97a06d7de87d1e080",
+          "exit-code": 0
+        },
+        {
+          "path": "dynamic-table-handle-boundary-x86-laa-14.log",
+          "bytes": 109,
+          "sha256": "ab828f8e138ad5dff40d10aba589238656a1a8fc76408bfc3769e75038e47e33",
+          "exit-code": 0
+        }
+      ]
+    }
+  ],
+  "windows-version": [
+    10,
+    0,
+    29683,
+    2,
+    ""
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "cargo",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_dynamic_function_table",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit-code": 0,
+  "seconds": 45.245869159698486,
+  "log": "macos-dynamic-final-focus.log",
+  "sha256": "74d7f8e9c43e2435b40b29efaa46963f11e369d1556192d5b02b7f27062065d8",
+  "gate": "focus"
+}

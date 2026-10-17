@@ -1,0 +1,8 @@
+{
+  "basis": "Replace the two Mem::rd calls in retained epoch2 source with original AddressSpace::read calls.",
+  "verified-against": {
+    "path": "src/user/windows/dll/native/process_set/dynamic_table.rs",
+    "bytes": 2252,
+    "sha256": "deccf5fd7ebb69a63ab7eaff82695d0b5fb36dc139fed57cd6eb3c142ca5c480"
+  }
+}

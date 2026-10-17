@@ -1,0 +1,21 @@
+{
+  "direct-decode": "unaffected: native syscall bookkeeping, no CPU instruction or public ABI change",
+  "direct-execute": "unaffected: native syscall bookkeeping, no CPU instruction or public ABI change",
+  "SMIR-lift": "unaffected: native syscall bookkeeping, no CPU instruction or public ABI change",
+  "SMIR-IR": "unaffected: native syscall bookkeeping, no CPU instruction or public ABI change",
+  "SMIR-interpreter": "unaffected: native syscall bookkeeping, no CPU instruction or public ABI change",
+  "optimizer": "unaffected: native syscall bookkeeping, no CPU instruction or public ABI change",
+  "native-lowering": "unaffected: native syscall bookkeeping, no CPU instruction or public ABI change",
+  "JIT-runtime": "unaffected: native syscall bookkeeping, no CPU instruction or public ABI change",
+  "backend": "unaffected: native syscall bookkeeping, no CPU instruction or public ABI change",
+  "machine-device": "unaffected: native syscall bookkeeping, no CPU instruction or public ABI change",
+  "oracle-analysis": "unaffected: native syscall bookkeeping, no CPU instruction or public ABI change",
+  "C-ABI": "unaffected: native syscall bookkeeping, no CPU instruction or public ABI change",
+  "CPU-state": "affected only by existing syscall argument/status path; registers, last-error and return cleanup must be preserved",
+  "memory-MMU": "uses existing checked read and guard consumption; no memory or page changes",
+  "Windows-userland": "new process-owned native function-table ranges and exact query rejection/lifetime",
+  "status-mapping": "add returned BAD_FUNCTION_TABLE constant and native-proven DOS mapping; verify INTEGER_OVERFLOW mapping",
+  "platforms": "shared model compiled/run on macOS, Linux, Windows; actual installed NTDLL leaf and native four-profile controls on Windows",
+  "targets": "existing core + rax-capi + frozen Assist consumers; no target/membership/dependency/default changes",
+  "tests-docs": "Data-driven native replay (14808 calls/conversions), separate 56 native lifetime controls, dedicated shared-state/free-lifetime regression, native installed leaf and ordinary continuation."
+}

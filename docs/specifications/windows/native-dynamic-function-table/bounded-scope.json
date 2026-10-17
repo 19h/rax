@@ -1,0 +1,58 @@
+[
+  {
+    "impact": "high",
+    "finding": "Both ordinary programs pass class53 and stop at NtOpenProcessToken service0x133.",
+    "evidence": "validation/ordinary-analysis.json",
+    "blocks": "Full process-userland objective; not the measured dynamic-table range contract.",
+    "action": "Continue token opening as a separate semantic group; no application success claimed."
+  },
+  {
+    "impact": "high",
+    "finding": "The original sequential range probe retained an extreme range whose removal overflowed, contaminating subsequent rows.",
+    "evidence": "ranges versus ranges-isolated native controls",
+    "blocks": "Contaminated rows cannot define the contract",
+    "action": "Retain the diagnostic transcript but derive range semantics from separate child-process controls."
+  },
+  {
+    "impact": "medium",
+    "finding": "x64 controls are compatibility callers on ARM64 Windows, not physical x64-kernel evidence.",
+    "evidence": "post-run PE and OS identities",
+    "blocks": "Physical x64-kernel equivalence is not claimed",
+    "action": "Keep target compilation, compatibility callers and native kernel evidence separate."
+  },
+  {
+    "impact": "low",
+    "finding": "The 56 native descriptor/range/thread lifetime calls are not an exact row replay; representative free/thread semantics have a dedicated regression.",
+    "evidence": "native lifetime transcripts and dynamic_function_table_tests.rs",
+    "blocks": "No full-row lifetime replay claim.",
+    "action": "Keep native measurements distinct from representative model tests."
+  },
+  {
+    "impact": "high",
+    "finding": "General native SEH recovery is not established by registering kernel ranges.",
+    "evidence": "diagnostics/dynamic-table-smoke-observer.log and distinct SehState registries",
+    "blocks": "No claim of general exception recovery.",
+    "action": "Keep kernel range ownership separate from fixed user-mode arrays."
+  },
+  {
+    "impact": "medium",
+    "finding": "Five pre-existing Windows lowerer failures remain in the full suite.",
+    "evidence": "validation/native-dynamic-final-full.log",
+    "blocks": "Not introduced by this group; all changed-contract checks pass.",
+    "action": "Retain exact failure identities; do not suppress, skip or relabel them."
+  },
+  {
+    "impact": "medium",
+    "finding": "The frozen Assist Rust carrier minor184 differs from the current root minor196.",
+    "evidence": "validation/current-cpp-consumers-dynamic-root.json and archive records",
+    "blocks": "Whole-current-root or packaging proof is not claimed.",
+    "action": "Bind unchanged selected C++ sources and identify the exact frozen carrier."
+  },
+  {
+    "impact": "low",
+    "finding": "The 65536-entry range limit is emulator policy; the native Windows quota is unknown.",
+    "evidence": "src/user/windows/seh/kernel_dynamic.rs and assumption D3",
+    "blocks": "No native quota equivalence claim.",
+    "action": "Test unchanged state at rejection and successful readmission after deletion."
+  }
+]

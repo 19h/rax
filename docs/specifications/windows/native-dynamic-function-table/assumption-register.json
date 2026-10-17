@@ -1,0 +1,57 @@
+[
+  {
+    "id": "D1",
+    "assumption": "Captured Windows 10.0.29683 behavior owns class53 pointer, range and lifetime rules for this same-host implementation.",
+    "basis": [
+      "native four-profile transcripts",
+      "ordinary loaded NTDLL diagnostic capture"
+    ],
+    "dependent-result": "Shared adapter and process-owned registry.",
+    "stress-test": "Four ABIs, 16-byte outer access, BaseAddress then MaximumAddress inner field access, guards, invalid handles/lengths, overlap, descriptor/free/thread lifetime",
+    "falsification-probe": "Any native row or installed-leaf result differs from the shared model.",
+    "status": "confirmed",
+    "history": [
+      "Initial whole-prefix access assumption falsified by native first-page NOACCESS and two-guard controls.",
+      "Final model reads BaseAddress then MaximumAddress only; all three hosts pass the selected data-driven replay families and dedicated lifetime tests."
+    ]
+  },
+  {
+    "id": "D2",
+    "assumption": "Removal selects the earliest remaining registration at an equal base before comparing its extent.",
+    "basis": [
+      "native zero-overlap controls",
+      "native 0..12 duplicate sequences with and without neighboring intervals"
+    ],
+    "dependent-result": "Insertion-order registry with first-base removal.",
+    "stress-test": "Empty duplicates followed by a nonempty equal-base range and alternating removals.",
+    "falsification-probe": "Native removes a later extent while an earlier unequal extent remains.",
+    "status": "confirmed",
+    "validation": "Captured sequence families replay unchanged on all three hosts."
+  },
+  {
+    "id": "D3",
+    "assumption": "The emulator admits at most 65536 live native dynamic ranges.",
+    "basis": [
+      "existing bounded emulation policy",
+      "host memory and scan cost require explicit admission control"
+    ],
+    "dependent-result": "At the explicit emulator quota, return STATUS_INSUFFICIENT_RESOURCES without changing state.",
+    "stress-test": "Full quota, rejected addition, remove one and add one.",
+    "falsification-probe": "Rejection changes the ledger or quota does not recover after deletion.",
+    "status": "retained",
+    "validation": "The quota test preserves the ledger on rejection and permits admission after deletion on all three hosts."
+  },
+  {
+    "id": "D4",
+    "assumption": "Kernel range ownership is distinct from user-mode fixed function arrays and survives freeing either the descriptor or its range.",
+    "basis": [
+      "native lifetime controls",
+      "ordinary type3 record with one zero array entry"
+    ],
+    "dependent-result": "No VM-free hook and no accidental admission into fixed-array unwind lookup.",
+    "stress-test": "Free descriptor/range, retain overlapping refusal, remove through a new descriptor, share through another thread.",
+    "falsification-probe": "Native deletion or lookup demonstrates automatic range removal or requires fixed-array registration.",
+    "status": "confirmed",
+    "limitation": "General exception recovery remains unproven."
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "pid": 7772,
+  "utc": "2026-10-17T22:54:32.397780+00:00",
+  "state": "finished",
+  "source": "src-dynamic-table",
+  "source-inputs": 5566,
+  "child-pid": 6352,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-dynamic-final-core.ps1"
+  ],
+  "core-exit-code": 0,
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T23:12:18.878898+00:00"
+}

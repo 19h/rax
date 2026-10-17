@@ -1,0 +1,19 @@
+{
+  "pid": 4228,
+  "utc": "2026-10-17T22:48:08.925149+00:00",
+  "state": "finished",
+  "source": "src-dynamic-table",
+  "source-inputs": "dynamic-epoch3-source-inputs.json",
+  "child-pid": 10520,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-dynamic-epoch3-focus.ps1"
+  ],
+  "focus-exit-code": 0,
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T22:51:23.284432+00:00"
+}

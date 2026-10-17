@@ -22,6 +22,9 @@ mod performance_counter_tests;
 #[path = "services_tests/system_time_tests.rs"]
 mod system_time_tests;
 
+#[path = "services_tests/dynamic_function_table_tests.rs"]
+mod dynamic_function_table_tests;
+
 #[path = "services_tests/scheduler_shared_tests.rs"]
 mod scheduler_shared_tests;
 

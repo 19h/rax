@@ -1,0 +1,2 @@
+identity profile=x86-laa index=6 width=4
+case axis=size-boundary ordinal=6 base=0000040000000000 maximum=00000400FFFFEFFF minimum=0000000000000000 functions=0000000000000000 remove-base=0000040000000000 remove-maximum=00000400FFFFEFFF add=00000000 remove=00000000 cleanup=00000000 last-error=4A2E19F7

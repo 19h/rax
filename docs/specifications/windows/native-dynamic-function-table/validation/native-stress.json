@@ -1,0 +1,42 @@
+[
+  {
+    "case": "missing-profile",
+    "rejected": true,
+    "error": "ValueError: native producer count"
+  },
+  {
+    "case": "failed-producer",
+    "rejected": true,
+    "error": "ValueError: native exit/stdout"
+  },
+  {
+    "case": "wrong-machine",
+    "rejected": true,
+    "error": "ValueError: native PE machine"
+  },
+  {
+    "case": "wrong-fault-status",
+    "rejected": true,
+    "error": "ValueError: native read fault precedence"
+  },
+  {
+    "case": "wrong-guard-lifetime",
+    "rejected": true,
+    "error": "ValueError: native read guard lifetime"
+  },
+  {
+    "case": "missing-sequence-operation",
+    "rejected": true,
+    "error": "ValueError: ordered sequence ordinals"
+  },
+  {
+    "case": "wrong-last-error",
+    "rejected": true,
+    "error": "ValueError: native last-error preservation"
+  },
+  {
+    "case": "wrong-status-conversion",
+    "rejected": true,
+    "error": "ValueError: native DOS status conversions"
+  }
+]

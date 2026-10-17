@@ -1,0 +1,16 @@
+identity profile=x86 width=4
+case ordinal=0 label=add-range status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=1 label=add-range-after-unmap status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=2 label=remove-range-after-unmap status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=3 label=add-range-after-remove status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=4 label=remove-range-again status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=5 label=add-descriptor status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=6 label=remove-after-descriptor-free status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=7 label=add-fresh-descriptor status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=8 label=remove-fresh-descriptor status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=9 label=worker status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=10 label=parent-remove-worker-range status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=11 label=parent-add-range status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=12 label=worker status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=13 label=parent-remove-after-worker status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+complete cases=14

@@ -1,0 +1,16 @@
+{
+  "files": [
+    "src/user/windows/dll/native/process_set.rs",
+    "src/user/windows/dll/native/process_set/dynamic_table.rs",
+    "src/user/windows/seh/mod.rs",
+    "src/user/windows/seh/kernel_dynamic.rs",
+    "src/user/windows/nt.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/dynamic_function_table_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/dynamic_function_table_replay_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/dynamic_function_table_leaf_tests.rs"
+  ],
+  "exit-code": 0,
+  "stdout": "",
+  "stderr": ""
+}

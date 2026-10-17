@@ -1,0 +1,12 @@
+identity profile=x86-laa scenario=1 duplicates=1 neighbors=0
+operation ordinal=0 delta=0 size=0 remove=0 status=00000000
+operation ordinal=1 delta=0 size=1 remove=0 status=00000000
+operation ordinal=2 delta=0 size=1 remove=1 status=00000000
+operation ordinal=3 delta=0 size=0 remove=1 status=00000000
+operation ordinal=4 delta=0 size=1 remove=1 status=00000000
+operation ordinal=5 delta=0 size=0 remove=1 status=00000000
+operation ordinal=6 delta=0 size=1 remove=1 status=00000000
+operation ordinal=7 delta=0 size=0 remove=1 status=00000000
+operation ordinal=8 delta=0 size=1 remove=1 status=00000000
+operation ordinal=9 delta=0 size=0 remove=1 status=00000000
+complete operations=10

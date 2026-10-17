@@ -1,0 +1,28 @@
+identity profile=arm64 width=8
+case ordinal=0 label=add-A status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=1 label=duplicate-A status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=2 label=remove-A-first status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=3 label=remove-A-second status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=4 label=remove-A-third status=C00000FF exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=5 label=remove-B-never-added status=C00000FF exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=6 label=add-B status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=7 label=remove-B-255 status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=8 label=remove-B-2 status=C00000FF exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=9 label=add-A-again status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=10 label=remove-A-mutated status=C00000FF exception=00000000 last-error=4A2E19F7 input-unchanged=1
+handle name=null available=0
+case ordinal=11 label=null status=C000000D exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=12 label=cleanup-self status=00000000 exception=00000000 last-error=4A2E19F7 input-unchanged=1
+handle name=current-thread available=1
+case ordinal=13 label=current-thread status=C000000D exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=14 label=cleanup-self status=C00000FF exception=00000000 last-error=4A2E19F7 input-unchanged=1
+handle name=self-zero-rights available=0
+case ordinal=15 label=self-zero-rights status=C000000D exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=16 label=cleanup-self status=C00000FF exception=00000000 last-error=4A2E19F7 input-unchanged=1
+handle name=self-set-information available=1
+case ordinal=17 label=self-set-information status=C000000D exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=18 label=cleanup-self status=C00000FF exception=00000000 last-error=4A2E19F7 input-unchanged=1
+handle name=self-query-limited available=1
+case ordinal=19 label=self-query-limited status=C000000D exception=00000000 last-error=4A2E19F7 input-unchanged=1
+case ordinal=20 label=cleanup-self status=C00000FF exception=00000000 last-error=4A2E19F7 input-unchanged=1
+complete cases=21 A-unchanged=1 B-unchanged=1

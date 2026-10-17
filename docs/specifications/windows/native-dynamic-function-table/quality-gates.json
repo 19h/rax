@@ -1,0 +1,30 @@
+{
+  "QG1": {
+    "status": "pass for the dynamic-table semantic group",
+    "evidence": "Technical implementation, measurements and evidence only."
+  },
+  "QG2": {
+    "status": "pass for the dynamic-table semantic group",
+    "evidence": "assumption-register.json; revised ordered-access assumption explicitly retained."
+  },
+  "QG3": {
+    "status": "pass for the dynamic-table semantic group",
+    "evidence": "check-validation.py; the full process-userland goal remains incomplete."
+  },
+  "QG4": {
+    "status": "pass for the dynamic-table semantic group",
+    "evidence": "Byte widths, alignments, checked/wrapping extents and O(N) costs are explicit."
+  },
+  "QG5": {
+    "status": "pass for the dynamic-table semantic group",
+    "evidence": "Distinct overflow bounds, empty overlaps, insertion order, native faults and known external failures are recorded."
+  },
+  "QG6": {
+    "status": "pass for the dynamic-table semantic group",
+    "evidence": "Pinned primary declarations, raw controls, post-run identities, exact final source and native execution."
+  },
+  "QG7": {
+    "status": "pass for the dynamic-table semantic group",
+    "evidence": "bounded-scope.json; token opening and general SEH are separate unfinished work."
+  }
+}

@@ -1,0 +1,428 @@
+program C:\Windows\Temp\assist-native-rax-20261010\src-dynamic-table\tests\fixtures\user\windows\bin\arm64\smoke.exe
+arch=arm64 PEB=0x7ffdf000 ProcessHeap=Ok(0) heaps=Heaps { heaps: {65536: Heap { flags: 0, align: 16, max: 0, segments: [(65536, 1048576)], free: {69184: 1044928}, by_size: {(1044928, 69184)}, used: {66960: (48, 34), 66896: (16, 8), 67056: (480, 470), 68384: (32, 26), 69104: (48, 34), 65792: (1104, 1096), 66912: (48, 34), 68416: (288, 288), 68304: (80, 66), 67632: (288, 288), 68016: (288, 288), 67920: (64, 60), 67008: (48, 40), 67984: (32, 20), 68704: (80, 70), 68784: (32, 30), 68816: (288, 288), 69152: (32, 20), 67536: (96, 88)} }}, align: 16 }
+module probe.exe base=0x140000000 size=0x3000 entry=0x140001048
+module ntdll.dll base=0x7ff82fad0000 size=0x473000 entry=0x0
+module kernel32.dll base=0x180000000 size=0x171000 entry=0x180007460
+module KernelBase.dll base=0x150000 size=0x6e6000 entry=0x15bf90
+diagnostic progress turn=0 thread=8 PC=0x7ff82fbbf6e0 SP=0x93fbf0 registers=[93fc30, 7ff82fad0000, 0, 0, 0, 0, 0, 0]
+kernel-before turn=36 service=0x36 PC=0x7ff82fad13a0 registers=[fa, 7ff82fe9a4c0, 10, 93fb80, 0, 0]
+kernel-after turn=36 service=0x36 PC=0x7ff82fad13a4 X0=0x0
+kernel-before turn=119 service=0x31 PC=0x7ff82fad1350 registers=[93fb18, 0, 7ff82febdc98, 0, 0, 0]
+kernel-after turn=119 service=0x31 PC=0x7ff82fad1354 X0=0x0
+kernel-before turn=153 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93fb10, 93fb08, 4, 93fb00, 0]
+kernel-after turn=153 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=163 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93fb10, 93fb08, 8, 93fb00, 0]
+kernel-after turn=163 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=213 service=0x48 PC=0x7ff82fad14c0 registers=[7ff82fe99350, 1f0003, 0, 0, 0, 0]
+kernel-after turn=213 service=0x48 PC=0x7ff82fad14c4 X0=0x0
+kernel-before turn=232 service=0x119 PC=0x7ff82fad21d0 registers=[9, 93fb48, 8, 93fb40, 0, 0]
+hotpatch-before info=0x93fb48 bytes=Ok([01, 00, 00, 00, 00, 00, 00, 00]) returned=0x93fb40 bytes=Ok([00, 00, 00, 00])
+kernel-after turn=232 service=0x119 PC=0x7ff82fad21d4 X0=0xc00000bb
+hotpatch-after info=0x93fb48 bytes=Ok([01, 00, 00, 00, 00, 00, 00, 00]) returned=0x93fb40 bytes=Ok([00, 00, 00, 00])
+kernel-before turn=282 service=0xe PC=0x7ff82fad10e0 registers=[10, 0, 1488, 93fb40, 0, 0]
+kernel-after turn=282 service=0xe PC=0x7ff82fad10e4 X0=0x0
+kernel-before turn=324 service=0x48 PC=0x7ff82fad14c0 registers=[7ff82fe993a0, 1f0003, 0, 0, 0, 0]
+kernel-after turn=324 service=0x48 PC=0x7ff82fad14c4 X0=0x0
+kernel-before turn=370 service=0x36 PC=0x7ff82fad13a0 registers=[0, 93fa70, 40, 0, 0, 0]
+kernel-after turn=370 service=0x36 PC=0x7ff82fad13a4 X0=0x0
+kernel-before turn=490 service=0x19 PC=0x7ff82fad11a0 registers=[ffffffffffffffff, 24, 93ea40, 4, 0, 0]
+kernel-after turn=490 service=0x19 PC=0x7ff82fad11a4 X0=0x0
+kernel-before turn=781 service=0x12 PC=0x7ff82fad1130 registers=[93e8b8, 80000000, 93e8f0, 93e930, 0, 7ff82fe1f740]
+NtOpenKey attributes=0x93e8f0 bytes=Ok([30, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, e0, e8, 93, 00, 00, 00, 00, 00, 40, 02, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00])
+NtOpenKey name struct=0x93e8e0 length=126 buffer=0x7ff82fe1f6d0 bytes=Ok([5c, 00, 52, 00, 65, 00, 67, 00, 69, 00, 73, 00, 74, 00, 72, 00, 79, 00, 5c, 00, 4d, 00, 61, 00, 63, 00, 68, 00, 69, 00, 6e, 00, 65, 00, 5c, 00, 53, 00, 79, 00, 73, 00, 74, 00, 65, 00, 6d, 00, 5c, 00, 43, 00, 75, 00, 72, 00, 72, 00, 65, 00, 6e, 00, 74, 00, 43, 00, 6f, 00, 6e, 00, 74, 00, 72, 00, 6f, 00, 6c, 00, 53, 00, 65, 00, 74, 00, 5c, 00, 43, 00, 6f, 00, 6e, 00, 74, 00, 72, 00, 6f, 00, 6c, 00, 5c, 00, 4e, 00, 6c, 00, 73, 00, 5c, 00, 43, 00, 6f, 00, 64, 00, 65, 00, 50, 00, 61, 00, 67, 00, 65, 00])
+kernel-after turn=781 service=0x12 PC=0x7ff82fad1134 X0=0x0
+NtOpenKey output handle bytes=Ok([18, 00, 00, 00, 00, 00, 00, 00])
+kernel-before turn=821 service=0x17 PC=0x7ff82fad1180 registers=[18, 93e8c0, 2, 93e920, 24, 93e8b0]
+NtQueryValueKey name length=6 bytes=Ok([41, 00, 43, 00, 50, 00])
+kernel-after turn=821 service=0x17 PC=0x7ff82fad1184 X0=0x0
+NtQueryValueKey output=Ok([00, 00, 00, 00, 01, 00, 00, 00, 0a, 00, 00, 00, 31, 00, 32, 00, 35, 00, 32, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00]) ResultLength=Ok([16, 00, 00, 00])
+kernel-before turn=1000 service=0x17 PC=0x7ff82fad1180 registers=[18, 93e8c0, 2, 93e920, 24, 93e8b0]
+NtQueryValueKey name length=10 bytes=Ok([4f, 00, 45, 00, 4d, 00, 43, 00, 50, 00])
+kernel-after turn=1000 service=0x17 PC=0x7ff82fad1184 X0=0x0
+NtQueryValueKey output=Ok([00, 00, 00, 00, 01, 00, 00, 00, 08, 00, 00, 00, 34, 00, 33, 00, 37, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00]) ResultLength=Ok([14, 00, 00, 00])
+kernel-before turn=1128 service=0xf PC=0x7ff82fad10f0 registers=[18, a, 93e9a4, 93e920, 24, 93e92c]
+kernel-after turn=1128 service=0xf PC=0x7ff82fad10f4 X0=0x0
+kernel-before turn=1173 service=0x101 PC=0x7ff82fad2050 registers=[b, 4e4, 0, 7ff82fe8dd00, 0, 93e92c]
+kernel-after turn=1173 service=0x101 PC=0x7ff82fad2054 X0=0x0
+NtGetNlsSectionPtr output=Ok(940000) size-pointer=0x0 size=Ok([]) view=Some(RegionInfo { base: 9699328, allocation_base: 9699328, allocation_protect: 2, size: 69632, state: 4096, protect: 2, kind: 262144 }) prefix=Some([0d, 00, e4, 04, 01, 00, 3f, 00, 3f, 00, 3f, 00, 3f, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 03, 01, 00, 00, 01, 00])
+kernel-before turn=1184 service=0x101 PC=0x7ff82fad2050 registers=[b, 1b5, 0, 7ff82fe8dd08, 0, 93e92c]
+kernel-after turn=1184 service=0x101 PC=0x7ff82fad2054 X0=0x0
+NtGetNlsSectionPtr output=Ok(960000) size-pointer=0x0 size=Ok([]) view=Some(RegionInfo { base: 9830400, allocation_base: 9830400, allocation_protect: 2, size: 69632, state: 4096, protect: 2, kind: 262144 }) prefix=Some([0d, 00, b5, 01, 01, 00, 3f, 00, 3f, 00, 3f, 00, 3f, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 03, 02, 00, 00, 01, 00])
+kernel-before turn=2484 service=0x23 PC=0x7ff82fad1240 registers=[ffffffffffffffff, 7ff82fad0000, 6, 93e980, 18, 0]
+kernel-after turn=2484 service=0x23 PC=0x7ff82fad1244 X0=0x0
+NtQueryVirtualMemory address=0x7ff82fad0000 output=0x93e980 supplied-bytes=24 record=Ok([00, 00, ad, 2f, f8, 7f, 00, 00, 00, 30, 47, 00, 00, 00, 00, 00, 40, 00, 00, 00, 00, 00, 00, 00]) length-pointer=0x0 length-bytes=Ok([])
+kernel-before turn=2850 service=0x23 PC=0x7ff82fad1240 registers=[ffffffffffffffff, 0, 4, 93f580, 50, 0]
+kernel-after turn=2850 service=0x23 PC=0x7ff82fad1244 X0=0x0
+NtQueryVirtualMemory address=0x0 output=0x93f580 supplied-bytes=80 record=Ok([70, 13, ad, 2f, f8, 7f, 00, 00, 01, 02, 00, 05, 00, 00, 00, 00, e0, 14, ad, 2f, f8, 7f, 00, 00, 01, 02, 00, 05, 00, 00, 00, 00, 10, 14, ad, 2f, f8, 7f, 00, 00, 01, 02, 00, 05, 00, 00, 00, 00, b0, 13, ad, 2f, f8, 7f, 00, 00, 01, 02, 00, 05, 00, 00, 00, 00, a0, 12, ad, 2f, f8, 7f, 00, 00, 01, 02, 00, 05, 00, 00, 00, 00]) length-pointer=0x0 length-bytes=Ok([])
+kernel-before turn=3200 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93e940, 93e938, 2, 93e930, 0]
+kernel-after turn=3200 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=3309 service=0x12 PC=0x7ff82fad1130 registers=[93e688, 1, 7ff82fe30e70, 93ea68, 93ea18, 93e9e0]
+NtOpenKey attributes=0x7ff82fe30e70 bytes=Ok([30, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 78, 0d, e3, 2f, f8, 7f, 00, 00, 40, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00])
+NtOpenKey name struct=0x7ff82fe30d78 length=132 buffer=0x7ff82fe2f100 bytes=Ok([5c, 00, 52, 00, 65, 00, 67, 00, 69, 00, 73, 00, 74, 00, 72, 00, 79, 00, 5c, 00, 4d, 00, 41, 00, 43, 00, 48, 00, 49, 00, 4e, 00, 45, 00, 5c, 00, 53, 00, 79, 00, 73, 00, 74, 00, 65, 00, 6d, 00, 5c, 00, 43, 00, 75, 00, 72, 00, 72, 00, 65, 00, 6e, 00, 74, 00, 43, 00, 6f, 00, 6e, 00, 74, 00, 72, 00, 6f, 00, 6c, 00, 53, 00, 65, 00, 74, 00, 5c, 00, 43, 00, 6f, 00, 6e, 00, 74, 00, 72, 00, 6f, 00, 6c, 00, 5c, 00, 53, 00, 65, 00, 73, 00, 73, 00, 69, 00, 6f, 00, 6e, 00, 20, 00, 4d, 00, 61, 00, 6e, 00, 61, 00, 67, 00, 65, 00, 72, 00])
+kernel-after turn=3309 service=0x12 PC=0x7ff82fad1134 X0=0x0
+NtOpenKey output handle bytes=Ok([18, 00, 00, 00, 00, 00, 00, 00])
+kernel-before turn=3320 service=0x17 PC=0x7ff82fad1180 registers=[18, 7ff82fe30db8, 2, 93e690, 50, 93e680]
+NtQueryValueKey name length=64 bytes=Ok([52, 00, 61, 00, 69, 00, 73, 00, 65, 00, 45, 00, 78, 00, 63, 00, 65, 00, 70, 00, 74, 00, 69, 00, 6f, 00, 6e, 00, 4f, 00, 6e, 00, 50, 00, 6f, 00, 73, 00, 73, 00, 69, 00, 62, 00, 6c, 00, 65, 00, 44, 00, 65, 00, 61, 00, 64, 00, 6c, 00, 6f, 00, 63, 00, 6b, 00])
+kernel-after turn=3320 service=0x17 PC=0x7ff82fad1184 X0=0xc0000034
+NtQueryValueKey output=Ok([00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00]) ResultLength=Ok([00, 00, 00, 00])
+kernel-before turn=3325 service=0xf PC=0x7ff82fad10f0 registers=[18, 7ff82fe30db8, 2, 93e690, 50, 93e680]
+kernel-after turn=3325 service=0xf PC=0x7ff82fad10f4 X0=0x0
+kernel-before turn=3477 service=0x12 PC=0x7ff82fad1130 registers=[93e5d0, 9, 93e5d8, 93e738, 50, 93e680]
+NtOpenKey attributes=0x93e5d8 bytes=Ok([30, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 10, d0, e1, 2f, f8, 7f, 00, 00, 40, 02, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00])
+NtOpenKey name struct=0x7ff82fe1d010 length=182 buffer=0x7ff82fe1ce30 bytes=Ok([5c, 00, 52, 00, 65, 00, 67, 00, 69, 00, 73, 00, 74, 00, 72, 00, 79, 00, 5c, 00, 4d, 00, 61, 00, 63, 00, 68, 00, 69, 00, 6e, 00, 65, 00, 5c, 00, 53, 00, 6f, 00, 66, 00, 74, 00, 77, 00, 61, 00, 72, 00, 65, 00, 5c, 00, 4d, 00, 69, 00, 63, 00, 72, 00, 6f, 00, 73, 00, 6f, 00, 66, 00, 74, 00, 5c, 00, 57, 00, 69, 00, 6e, 00, 64, 00, 6f, 00, 77, 00, 73, 00, 20, 00, 4e, 00, 54, 00, 5c, 00, 43, 00, 75, 00, 72, 00, 72, 00, 65, 00, 6e, 00, 74, 00, 56, 00, 65, 00, 72, 00, 73, 00, 69, 00, 6f, 00, 6e, 00, 5c, 00, 49, 00, 6d, 00, 61, 00, 67, 00, 65, 00, 20, 00, 46, 00, 69, 00, 6c, 00, 65, 00, 20, 00, 45, 00, 78, 00, 65, 00, 63, 00, 75, 00, 74, 00, 69, 00, 6f, 00, 6e, 00, 20, 00, 4f, 00, 70, 00, 74, 00, 69, 00, 6f, 00, 6e, 00, 73, 00])
+kernel-after turn=3477 service=0x12 PC=0x7ff82fad1134 X0=0x0
+NtOpenKey output handle bytes=Ok([18, 00, 00, 00, 00, 00, 00, 00])
+kernel-before turn=3510 service=0x12 PC=0x7ff82fad1130 registers=[93e658, 9, 93e6a0, 93e738, 50, 93e680]
+NtOpenKey attributes=0x93e6a0 bytes=Ok([30, 00, 00, 00, 00, 00, 00, 00, 18, 00, 00, 00, 00, 00, 00, 00, 90, e6, 93, 00, 00, 00, 00, 00, 40, 02, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00])
+NtOpenKey name struct=0x93e690 length=18 buffer=0x1056e bytes=Ok([70, 00, 72, 00, 6f, 00, 62, 00, 65, 00, 2e, 00, 65, 00, 78, 00, 65, 00])
+kernel-after turn=3510 service=0x12 PC=0x7ff82fad1134 X0=0xc0000034
+NtOpenKey output handle bytes=Ok([00, 00, 00, 00, 00, 00, 00, 00])
+kernel-before turn=4534 service=0x12 PC=0x7ff82fad1130 registers=[93e668, 1, 93e670, 0, 0, 93e680]
+NtOpenKey attributes=0x93e670 bytes=Ok([30, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 40, cb, e1, 2f, f8, 7f, 00, 00, 40, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00])
+NtOpenKey name struct=0x7ff82fe1cb40 length=158 buffer=0x7ff82fe1c5d0 bytes=Ok([5c, 00, 52, 00, 65, 00, 67, 00, 69, 00, 73, 00, 74, 00, 72, 00, 79, 00, 5c, 00, 4d, 00, 61, 00, 63, 00, 68, 00, 69, 00, 6e, 00, 65, 00, 5c, 00, 53, 00, 59, 00, 53, 00, 54, 00, 45, 00, 4d, 00, 5c, 00, 43, 00, 75, 00, 72, 00, 72, 00, 65, 00, 6e, 00, 74, 00, 43, 00, 6f, 00, 6e, 00, 74, 00, 72, 00, 6f, 00, 6c, 00, 53, 00, 65, 00, 74, 00, 5c, 00, 43, 00, 6f, 00, 6e, 00, 74, 00, 72, 00, 6f, 00, 6c, 00, 5c, 00, 53, 00, 65, 00, 73, 00, 73, 00, 69, 00, 6f, 00, 6e, 00, 20, 00, 4d, 00, 61, 00, 6e, 00, 61, 00, 67, 00, 65, 00, 72, 00, 5c, 00, 53, 00, 65, 00, 67, 00, 6d, 00, 65, 00, 6e, 00, 74, 00, 20, 00, 48, 00, 65, 00, 61, 00, 70, 00])
+kernel-after turn=4534 service=0x12 PC=0x7ff82fad1134 X0=0xc0000034
+NtOpenKey output handle bytes=Ok([00, 00, 00, 00, 00, 00, 00, 00])
+kernel-before turn=5291 service=0x19 PC=0x7ff82fad11a0 registers=[ffffffffffffffff, 24, 93e970, 4, 0, 4]
+kernel-after turn=5291 service=0x19 PC=0x7ff82fad11a4 X0=0x0
+kernel-before turn=6813 service=0x12 PC=0x7ff82fad1130 registers=[93e908, 9, 93e950, 93eab8, 93e764, 4]
+NtOpenKey attributes=0x93e950 bytes=Ok([30, 00, 00, 00, 00, 00, 00, 00, 18, 00, 00, 00, 00, 00, 00, 00, 40, e9, 93, 00, 00, 00, 00, 00, 40, 02, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00])
+NtOpenKey name struct=0x93e940 length=18 buffer=0x1056e bytes=Ok([70, 00, 72, 00, 6f, 00, 62, 00, 65, 00, 2e, 00, 65, 00, 78, 00, 65, 00])
+kernel-after turn=6813 service=0x12 PC=0x7ff82fad1134 X0=0xc0000034
+NtOpenKey output handle bytes=Ok([00, 00, 00, 00, 00, 00, 00, 00])
+kernel-before turn=6846 service=0x19 PC=0x7ff82fad11a0 registers=[ffffffffffffffff, 24, 93e9b0, 4, 0, 4]
+kernel-after turn=6846 service=0x19 PC=0x7ff82fad11a4 X0=0x0
+kernel-before turn=7073 service=0x36 PC=0x7ff82fad13a0 registers=[0, 93f4e0, 40, 0, 0, 4]
+kernel-after turn=7073 service=0x36 PC=0x7ff82fad13a4 X0=0x0
+kernel-before turn=11676 service=0x36 PC=0x7ff82fad13a0 registers=[3e, 93f4a0, 40, 0, 7ff82fe95978, 4]
+kernel-after turn=11676 service=0x36 PC=0x7ff82fad13a4 X0=0x0
+kernel-before turn=11785 service=0x78 PC=0x7ff82fad17c0 registers=[ffffffffffffffff, 7ff82fe950d8, 93e9a0, 102000, 4, 93e930]
+NtAllocateVirtualMemoryEx base-pointer=0x7ff82fe950d8 raw=Ok([00, 00, 00, 00, 00, 00, 00, 00]) size-pointer=0x93e9a0 raw=Ok([00, 10, 00, 02, 00, 00, 00, 00]) extended=0x93e930 count=1 raw=Ok([01, 00, 00, 00, 00, 00, 00, 00, 10, e9, 93, 00, 00, 00, 00, 00])
+address-requirements pointer=0x93e910 raw=Ok([00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00])
+kernel-after turn=11785 service=0x78 PC=0x7ff82fad17c4 X0=0x0
+kernel-before turn=11867 service=0x78 PC=0x7ff82fad17c0 registers=[ffffffffffffffff, 7ff82fe950d0, 93e9a8, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0x7ff82fe950d0 raw=Ok([00, 00, fe, ff, ff, 7f, 00, 00]) size-pointer=0x93e9a8 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=11867 service=0x78 PC=0x7ff82fad17c4 X0=0x0
+kernel-before turn=12012 service=0x78 PC=0x7ff82fad17c0 registers=[ffffffffffffffff, 7ff82fe95140, 93e9a0, 102000, 4, 93e930]
+NtAllocateVirtualMemoryEx base-pointer=0x7ff82fe95140 raw=Ok([00, 00, 00, 00, 00, 00, 00, 00]) size-pointer=0x93e9a0 raw=Ok([00, 00, 02, 00, 01, 00, 00, 00]) extended=0x93e930 count=1 raw=Ok([01, 00, 00, 00, 00, 00, 00, 00, 10, e9, 93, 00, 00, 00, 00, 00])
+address-requirements pointer=0x93e910 raw=Ok([00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00])
+kernel-after turn=12012 service=0x78 PC=0x7ff82fad17c4 X0=0x0
+kernel-before turn=13788 service=0x16e PC=0x7ff82fad2720 registers=[6b, 93d8e0, 4, 93d8e8, c50, 0]
+NtQuerySystemInformationEx class=0x6b input=0x93d8e0 input-bytes=4 raw=Ok([04, 00, 00, 00]) output=0x93d8e8 output-bytes=3152 returned=0x0
+kernel-after turn=13788 service=0x16e PC=0x7ff82fad2724 X0=0x0
+kernel-before turn=14188 service=0x78 PC=0x7ff82fad17c0 registers=[ffffffffffffffff, 93e3a0, 93e3c8, 2000, 4, 93e330]
+NtAllocateVirtualMemoryEx base-pointer=0x93e3a0 raw=Ok([00, 00, 00, 00, 00, 00, 00, 00]) size-pointer=0x93e3c8 raw=Ok([00, 00, 00, 01, 00, 00, 00, 00]) extended=0x93e330 count=1 raw=Ok([01, 00, 00, 00, 00, 00, 00, 00, 10, e3, 93, 00, 00, 00, 00, 00])
+address-requirements pointer=0x93e310 raw=Ok([00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 01, 00, 00, 00, 00])
+kernel-after turn=14188 service=0x78 PC=0x7ff82fad17c4 X0=0x0
+kernel-before turn=14330 service=0x78 PC=0x7ff82fad17c0 registers=[ffffffffffffffff, 93e2d8, 93e2d0, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0x93e2d8 raw=Ok([00, 00, fc, fd, ff, 7f, 00, 00]) size-pointer=0x93e2d0 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=14330 service=0x78 PC=0x7ff82fad17c4 X0=0x0
+kernel-before turn=14442 service=0x78 PC=0x7ff82fad17c0 registers=[ffffffffffffffff, 93e2d8, 93e2d0, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0x93e2d8 raw=Ok([00, 00, fc, fd, fe, 7f, 00, 00]) size-pointer=0x93e2d0 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=14442 service=0x78 PC=0x7ff82fad17c4 X0=0x0
+kernel-before turn=16661 service=0x78 PC=0x7ff82fad17c0 registers=[ffffffffffffffff, 93e500, 93e4a8, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0x93e500 raw=Ok([00, 00, 00, 01, 00, 00, 00, 00]) size-pointer=0x93e4a8 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=16661 service=0x78 PC=0x7ff82fad17c4 X0=0x0
+kernel-before turn=19029 service=0x78 PC=0x7ff82fad17c0 registers=[ffffffffffffffff, 93e3b0, 93e3c8, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0x93e3b0 raw=Ok([00, 00, 10, 01, 00, 00, 00, 00]) size-pointer=0x93e3c8 raw=Ok([00, 30, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=19029 service=0x78 PC=0x7ff82fad17c4 X0=0x0
+kernel-before turn=19232 service=0x78 PC=0x7ff82fad17c0 registers=[ffffffffffffffff, 93e408, 93e400, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0x93e408 raw=Ok([00, 00, fe, fd, ff, 7f, 00, 00]) size-pointer=0x93e400 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=19232 service=0x78 PC=0x7ff82fad17c4 X0=0x0
+kernel-before turn=23612 service=0x78 PC=0x7ff82fad17c0 registers=[ffffffffffffffff, 93e590, 93e538, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0x93e590 raw=Ok([00, 00, 20, 01, 00, 00, 00, 00]) size-pointer=0x93e538 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=23612 service=0x78 PC=0x7ff82fad17c4 X0=0x0
+kernel-before turn=26332 service=0x78 PC=0x7ff82fad17c0 registers=[ffffffffffffffff, 93e450, 93e468, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0x93e450 raw=Ok([00, 00, 30, 01, 00, 00, 00, 00]) size-pointer=0x93e468 raw=Ok([00, 20, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=26332 service=0x78 PC=0x7ff82fad17c4 X0=0x0
+kernel-before turn=28595 service=0x78 PC=0x7ff82fad17c0 registers=[ffffffffffffffff, 93e4c0, 93e4d8, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0x93e4c0 raw=Ok([00, 20, 30, 01, 00, 00, 00, 00]) size-pointer=0x93e4d8 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=28595 service=0x78 PC=0x7ff82fad17c4 X0=0x0
+kernel-before turn=33068 service=0x78 PC=0x7ff82fad17c0 registers=[ffffffffffffffff, 93e5e0, 93e5f8, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0x93e5e0 raw=Ok([00, 30, 10, 01, 00, 00, 00, 00]) size-pointer=0x93e5f8 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=33068 service=0x78 PC=0x7ff82fad17c4 X0=0x0
+kernel-before turn=33699 service=0x36 PC=0x7ff82fad13a0 registers=[c5, 93eb58, 8, 0, 0, 93e900]
+kernel-after turn=33699 service=0x36 PC=0x7ff82fad13a4 X0=0x0
+kernel-before turn=33861 service=0x36 PC=0x7ff82fad13a0 registers=[37, 93ef40, 408, 93ea04, 93f348, 93e900]
+kernel-after turn=33861 service=0x36 PC=0x7ff82fad13a4 X0=0x0
+kernel-before turn=33883 service=0x16e PC=0x7ff82fad2720 registers=[6b, 93ea08, 4, 0, 0, 93e9dc]
+NtQuerySystemInformationEx class=0x6b input=0x93ea08 input-bytes=4 raw=Ok([04, 00, 00, 00]) output=0x0 output-bytes=0 returned=0x93e9dc
+kernel-after turn=33883 service=0x16e PC=0x7ff82fad2724 X0=0xc0000004
+kernel-before turn=34698 service=0x16e PC=0x7ff82fad2720 registers=[6b, 93ea08, 4, 1103090, 50, 93e9dc]
+NtQuerySystemInformationEx class=0x6b input=0x93ea08 input-bytes=4 raw=Ok([04, 00, 00, 00]) output=0x1103090 output-bytes=80 returned=0x93e9dc
+kernel-after turn=34698 service=0x16e PC=0x7ff82fad2724 X0=0x0
+kernel-before turn=40743 service=0x16e PC=0x7ff82fad2720 registers=[6b, 93e654, 4, 0, 0, 93e650]
+NtQuerySystemInformationEx class=0x6b input=0x93e654 input-bytes=4 raw=Ok([06, 00, 00, 00]) output=0x0 output-bytes=0 returned=0x93e650
+kernel-after turn=40743 service=0x16e PC=0x7ff82fad2724 X0=0xc0000004
+kernel-before turn=41558 service=0x16e PC=0x7ff82fad2720 registers=[6b, 93e654, 4, 1103510, 30, 93e650]
+NtQuerySystemInformationEx class=0x6b input=0x93e654 input-bytes=4 raw=Ok([06, 00, 00, 00]) output=0x1103510 output-bytes=48 returned=0x93e650
+kernel-after turn=41558 service=0x16e PC=0x7ff82fad2724 X0=0x0
+kernel-before turn=42281 service=0xb2 PC=0x7ff82fad1b60 registers=[11032c0, 1f0003, 0, 4, 0, 93e4c0]
+kernel-after turn=42281 service=0xb2 PC=0x7ff82fad1b64 X0=0x0
+kernel-before turn=42306 service=0xd5 PC=0x7ff82fad1d90 registers=[11032b8, f00ff, 0, 1c, ffffffffffffffff, 7ff82fb8fad0]
+NtCreateWorkerFactory ten-args regs=[11032b8, f00ff, 0, 1c, ffffffffffffffff, 7ff82fb8fad0, 1103280, 200] stack=Ok([00, 00, 10, 00, 00, 00, 00, 00, 00, 10, 00, 00, 00, 00, 00, 00])
+kernel-after turn=42306 service=0xd5 PC=0x7ff82fad1d94 X0=0x0
+kernel-before turn=42395 service=0xcc PC=0x7ff82fad1d00 registers=[1103310, 0, 0, 8, 100002, 7ff82fb8fad0]
+kernel-after turn=42395 service=0xcc PC=0x7ff82fad1d04 X0=0x0
+kernel-before turn=42402 service=0xd2 PC=0x7ff82fad1d60 registers=[1103318, 1, 0, 8, 100002, 7ff82fb8fad0]
+kernel-after turn=42402 service=0xd2 PC=0x7ff82fad1d64 X0=0x0
+kernel-before turn=42415 service=0x92 PC=0x7ff82fad1960 registers=[28, 1c, 24, 1103320, 11032f0, 0]
+kernel-after turn=42415 service=0x92 PC=0x7ff82fad1964 X0=0x0
+kernel-before turn=42523 service=0xcc PC=0x7ff82fad1d00 registers=[1103388, 0, 0, 8, 100002, 0]
+kernel-after turn=42523 service=0xcc PC=0x7ff82fad1d04 X0=0x0
+kernel-before turn=42530 service=0xd2 PC=0x7ff82fad1d60 registers=[1103390, 1, 0, 8, 100002, 0]
+kernel-after turn=42530 service=0xd2 PC=0x7ff82fad1d64 X0=0x0
+kernel-before turn=42543 service=0x92 PC=0x7ff82fad1960 registers=[30, 1c, 2c, 1103398, 11032f0, 0]
+kernel-after turn=42543 service=0x92 PC=0x7ff82fad1964 X0=0x0
+kernel-before turn=42794 service=0x1b1 PC=0x7ff82fad2b50 registers=[20, 5, 93e720, 4, 11032f0, 0]
+kernel-after turn=42794 service=0x1b1 PC=0x7ff82fad2b54 X0=0x0
+kernel-before turn=42839 service=0x1b1 PC=0x7ff82fad2b50 registers=[20, e, 93e730, 4, 11032f0, 0]
+kernel-after turn=42839 service=0x1b1 PC=0x7ff82fad2b54 X0=0x0
+kernel-before turn=43032 service=0x1b1 PC=0x7ff82fad2b50 registers=[20, 3, 93e8f0, 4, 11032f0, 0]
+kernel-after turn=43032 service=0x1b1 PC=0x7ff82fad2b54 X0=0x0
+kernel-before turn=43071 service=0x48 PC=0x7ff82fad14c0 registers=[93e910, 1f0003, 0, 1, 0, 0]
+kernel-after turn=43071 service=0x48 PC=0x7ff82fad14c4 X0=0x0
+kernel-before turn=43950 service=0xd2 PC=0x7ff82fad1d60 registers=[1103680, 1, 0, 11036c0, 11036f0, 93e7f0]
+kernel-after turn=43950 service=0xd2 PC=0x7ff82fad1d64 X0=0x0
+kernel-before turn=44473 service=0x1c5 PC=0x7ff82fad2c90 registers=[34, 11036d8, 11036dc, 0, 93e780, 10]
+kernel-after turn=44473 service=0x1c5 PC=0x7ff82fad2c94 X0=0x0
+kernel-before turn=44542 service=0x92 PC=0x7ff82fad1960 registers=[38, 1c, 34, 1103698, 1103510, 0]
+kernel-after turn=44542 service=0x92 PC=0x7ff82fad1964 X0=0x0
+kernel-before turn=46460 service=0x1cd PC=0x7ff82fad2d10 registers=[11037c0, 0, 11, 93e918, 0, 93e840]
+kernel-after turn=46460 service=0x1cd PC=0x7ff82fad2d14 X0=0x0
+kernel-before turn=48913 service=0x48 PC=0x7ff82fad14c0 registers=[93e808, 1f0003, 0, 1, 0, 93e8b0]
+kernel-after turn=48913 service=0x48 PC=0x7ff82fad14c4 X0=0x0
+kernel-before turn=49791 service=0xd2 PC=0x7ff82fad1d60 registers=[1103be0, 1, 0, 1103c20, 1103c50, 93e6e0]
+kernel-after turn=49791 service=0xd2 PC=0x7ff82fad1d64 X0=0x0
+kernel-before turn=50378 service=0x92 PC=0x7ff82fad1960 registers=[40, 1c, 3c, 1103bf8, 1103a70, 0]
+kernel-after turn=50378 service=0x92 PC=0x7ff82fad1964 X0=0x0
+kernel-before turn=50422 service=0x1d6 PC=0x7ff82fad2da0 registers=[1b, 93e800, 4, 0, 0, 93e804]
+kernel-after turn=50422 service=0x1d6 PC=0x7ff82fad2da4 X0=0x0
+kernel-before turn=50474 service=0x1d6 PC=0x7ff82fad2da0 registers=[f, 93e880, a0, 93e880, a0, 93e870]
+kernel-after turn=50474 service=0x1d6 PC=0x7ff82fad2da4 X0=0x0
+kernel-before turn=50860 service=0x1d6 PC=0x7ff82fad2da0 registers=[1e, 93e8e0, 18, 93e900, 78, 93e8d0]
+kernel-after turn=50860 service=0x1d6 PC=0x7ff82fad2da4 X0=0x0
+kernel-before turn=51934 service=0x1d6 PC=0x7ff82fad2da0 registers=[f, 93e880, a0, 93e880, a0, 93e870]
+kernel-after turn=51934 service=0x1d6 PC=0x7ff82fad2da4 X0=0x0
+kernel-before turn=53286 service=0x1d6 PC=0x7ff82fad2da0 registers=[f, 93e880, a0, 93e880, a0, 93e870]
+kernel-after turn=53286 service=0x1d6 PC=0x7ff82fad2da4 X0=0x0
+kernel-before turn=54778 service=0x1d6 PC=0x7ff82fad2da0 registers=[f, 93e880, a0, 93e880, a0, 93e870]
+kernel-after turn=54778 service=0x1d6 PC=0x7ff82fad2da4 X0=0x0
+kernel-before turn=56055 service=0x78 PC=0x7ff82fad17c0 registers=[ffffffffffffffff, 93e550, 93e568, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0x93e550 raw=Ok([00, 40, 10, 01, 00, 00, 00, 00]) size-pointer=0x93e568 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=56055 service=0x78 PC=0x7ff82fad17c4 X0=0x0
+kernel-before turn=56754 service=0x1d6 PC=0x7ff82fad2da0 registers=[f, 93e840, a0, 93e840, a0, 93e830]
+kernel-after turn=56754 service=0x1d6 PC=0x7ff82fad2da4 X0=0x0
+kernel-before turn=57215 service=0x1d6 PC=0x7ff82fad2da0 registers=[1e, 93e8a0, 18, 93e8c0, 78, 93e890]
+kernel-after turn=57215 service=0x1d6 PC=0x7ff82fad2da4 X0=0x0
+kernel-before turn=89827 service=0x1e PC=0x7ff82fad11f0 registers=[ffffffffffffffff, 93ea98, 93eb70, 8000, 10548, 11047e8]
+kernel-after turn=89827 service=0x1e PC=0x7ff82fad11f4 X0=0xc000009f
+kernel-before turn=90842 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93e990, 93e980, 4, 93e970, 1104828]
+kernel-after turn=90842 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=90869 service=0x58 PC=0x7ff82fad15c0 registers=[7ff82feb41d8, 3, 93ec00, 4, 93e970, 1104828]
+kernel-after turn=90869 service=0x58 PC=0x7ff82fad15c4 X0=0x0
+kernel-before turn=90919 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93e940, 93e938, 2, 93e930, 1104828]
+kernel-after turn=90919 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=90956 service=0x138 PC=0x7ff82fad23c0 registers=[93ead0, 1, 93ec00, 2, 93e930, 1104828]
+kernel-after turn=90956 service=0x138 PC=0x7ff82fad23c4 X0=0x0
+kernel-before turn=91737 service=0x16b PC=0x7ff82fad26f0 registers=[5c, 7ff82fe99240, 93ea5c, 1104840, 0, 93e900]
+kernel-after turn=91737 service=0x16b PC=0x7ff82fad26f4 X0=0x0
+kernel-before turn=91743 service=0xf PC=0x7ff82fad10f0 registers=[5c, 7ff82fe99240, 93ea5c, 1104840, 0, 93e900]
+kernel-after turn=91743 service=0xf PC=0x7ff82fad10f4 X0=0x0
+kernel-before turn=97097 service=0x23 PC=0x7ff82fad1240 registers=[ffffffffffffffff, 7ff82fad0000, e, 93e6b0, 18, 93e6a0]
+kernel-after turn=97097 service=0x23 PC=0x7ff82fad1244 X0=0x0
+NtQueryVirtualMemory address=0x7ff82fad0000 output=0x93e6b0 supplied-bytes=24 record=Ok([00, 00, 00, 00, 00, 00, 00, 00, 00, 30, 47, 00, 00, 00, 00, 00, 00, 10, 00, 00, 00, 00, 00, 00]) length-pointer=0x93e6a0 length-bytes=Ok([18, 00, 00, 00, 00, 00, 00, 00])
+kernel-before turn=97964 service=0x5a PC=0x7ff82fad15e0 registers=[1104b08, 0, 0, 1104ae0, 0, 93e570]
+kernel-after turn=97964 service=0x5a PC=0x7ff82fad15e4 X0=0x0
+kernel-before turn=97977 service=0x1c PC=0x7ff82fad11d0 registers=[ffffffffffffffff, 35, 93e640, 10, 0, 93e570]
+kernel-after turn=97977 service=0x1c PC=0x7ff82fad11d4 X0=0x0
+kernel-before turn=98022 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93e600, 93e5f0, 4, 93e5e0, 93e570]
+kernel-after turn=98022 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=98143 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93e5b0, 93e5a8, 2, 93e5a0, 93e570]
+kernel-after turn=98143 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=98482 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93e990, 93e980, 4, 93e970, 93e570]
+kernel-after turn=98482 service=0x50 PC=0x7ff82fad1544 X0=0x0
+diagnostic progress turn=100000 thread=8 PC=0x7ff82fba2f0c SP=0x93e9c0 registers=[7ff82fea73c8, 93eb90, 0, 4, 93e970, 83c8, 1079, 7ff82fad0000]
+kernel-before turn=100085 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93e940, 93e938, 2, 93e930, 83c8]
+kernel-after turn=100085 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=103121 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93e8e0, 93e8d0, 4, 93e8c0, 1104be8]
+kernel-after turn=103121 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=103209 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93e890, 93e888, 2, 93e880, 1104be8]
+kernel-after turn=103209 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=103291 service=0x23 PC=0x7ff82fad1240 registers=[ffffffffffffffff, 140000000, e, 93e920, 18, 93e910]
+kernel-after turn=103291 service=0x23 PC=0x7ff82fad1244 X0=0x0
+NtQueryVirtualMemory address=0x140000000 output=0x93e920 supplied-bytes=24 record=Ok([00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00]) length-pointer=0x93e910 length-bytes=Ok([18, 00, 00, 00, 00, 00, 00, 00])
+kernel-before turn=114981 service=0x1c PC=0x7ff82fad11d0 registers=[ffffffffffffffff, 70, 93e9a0, 8, 93e804, 110214c]
+kernel-after turn=114981 service=0x1c PC=0x7ff82fad11d4 X0=0x0
+kernel-before turn=115904 service=0xd PC=0x7ff82fad10d0 registers=[fffffffffffffffe, 39, 93e980, 18, 1104d60, 93e8d0]
+kernel-after turn=115904 service=0xd PC=0x7ff82fad10d4 X0=0x0
+kernel-before turn=136620 service=0x24 PC=0x7ff82fad1260 registers=[fffffffffffffffe, 2001c, 0, 93e510, ffe0, 110221c]
+kernel-after turn=136620 service=0x24 PC=0x7ff82fad1264 X0=0xc000007c
+kernel-before turn=139470 service=0x78 PC=0x7ff82fad17c0 registers=[ffffffffffffffff, 93e080, 93e098, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0x93e080 raw=Ok([00, 50, 10, 01, 00, 00, 00, 00]) size-pointer=0x93e098 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=139470 service=0x78 PC=0x7ff82fad17c4 X0=0x0
+kernel-before turn=146589 service=0x37 PC=0x7ff82fad13b0 registers=[93e458, d, 93e3d0, 93e3b0, 93e18a, 1102260]
+kernel-after turn=146589 service=0x37 PC=0x7ff82fad13b4 X0=0x0
+kernel-before turn=162768 service=0x28 PC=0x7ff82fad12a0 registers=[60, ffffffffffffffff, 1104ea0, 0, 0, 0]
+kernel-after turn=162768 service=0x28 PC=0x7ff82fad12a4 X0=0x0
+kernel-before turn=169298 service=0x31 PC=0x7ff82fad1350 registers=[93e108, 0, 119230, 93e0b0, 93e170, 1102338]
+kernel-after turn=169298 service=0x31 PC=0x7ff82fad1354 X0=0x0
+kernel-before turn=169582 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93e080, 93e078, 2, 93e070, 1102338]
+kernel-after turn=169582 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=169877 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93e0d0, 93e0c0, 4, 93e0b0, 1102338]
+kernel-after turn=169877 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=170019 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93e080, 93e078, 2, 93e070, 1102338]
+kernel-after turn=170019 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=170145 service=0x23 PC=0x7ff82fad1240 registers=[ffffffffffffffff, 7ff82c0f0000, e, 93e110, 18, 93e100]
+kernel-after turn=170145 service=0x23 PC=0x7ff82fad1244 X0=0x0
+NtQueryVirtualMemory address=0x7ff82c0f0000 output=0x93e110 supplied-bytes=24 record=Ok([00, 00, 00, 00, 00, 00, 00, 00, 00, 10, 17, 00, 00, 00, 00, 00, 00, 10, 00, 00, 00, 00, 00, 00]) length-pointer=0x93e100 length-bytes=Ok([18, 00, 00, 00, 00, 00, 00, 00])
+kernel-before turn=171033 service=0x5a PC=0x7ff82fad15e0 registers=[1105098, 0, 0, 1105070, 0, 93dfd0]
+kernel-after turn=171033 service=0x5a PC=0x7ff82fad15e4 X0=0x0
+kernel-before turn=171046 service=0x1c PC=0x7ff82fad11d0 registers=[ffffffffffffffff, 35, 93e0a0, 10, 0, 93dfd0]
+kernel-after turn=171046 service=0x1c PC=0x7ff82fad11d4 X0=0x0
+kernel-before turn=171099 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93e060, 93e050, 4, 93e040, 93dfd0]
+kernel-after turn=171099 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=171315 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93e010, 93e008, 2, 93e000, 93dfd0]
+kernel-after turn=171315 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=171920 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93deb0, 93deb8, 4, 1104e00, 93dfd0]
+kernel-after turn=171920 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=197457 service=0x37 PC=0x7ff82fad13b0 registers=[93dba8, d, 93db20, 93db00, 93d8de, 1102380]
+kernel-after turn=197457 service=0x37 PC=0x7ff82fad13b4 X0=0x0
+diagnostic progress turn=200000 thread=8 PC=0x7ff82fb03ce4 SP=0x93d0a0 registers=[93d0e0, 7ff82fe3258b, 1, 7ff82fe3258b, 1, 7ff82fe31400, 8, 4e4]
+kernel-before turn=213881 service=0x28 PC=0x7ff82fad12a0 registers=[64, ffffffffffffffff, 11055d0, 0, 0, 0]
+kernel-after turn=213881 service=0x28 PC=0x7ff82fad12a4 X0=0x0
+kernel-before turn=220206 service=0x31 PC=0x7ff82fad1350 registers=[93d858, 0, 5b8630, 93d800, 93d8c0, 110245c]
+kernel-after turn=220206 service=0x31 PC=0x7ff82fad1354 X0=0x0
+kernel-before turn=220506 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93d7d0, 93d7c8, 2, 93d7c0, 110245c]
+kernel-after turn=220506 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=220801 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93d820, 93d810, 4, 93d800, 110245c]
+kernel-after turn=220801 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=220973 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93d7d0, 93d7c8, 2, 93d7c0, 7ff82feb4560]
+kernel-after turn=220973 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=221099 service=0x23 PC=0x7ff82fad1240 registers=[ffffffffffffffff, 7ff82b0a0000, e, 93d860, 18, 93d850]
+kernel-after turn=221099 service=0x23 PC=0x7ff82fad1244 X0=0x0
+NtQueryVirtualMemory address=0x7ff82b0a0000 output=0x93d860 supplied-bytes=24 record=Ok([00, 00, 00, 00, 00, 00, 00, 00, 00, 60, 6e, 00, 00, 00, 00, 00, 00, 10, 00, 00, 00, 00, 00, 00]) length-pointer=0x93d850 length-bytes=Ok([18, 00, 00, 00, 00, 00, 00, 00])
+kernel-before turn=221987 service=0x5a PC=0x7ff82fad15e0 registers=[11057c8, 0, 0, 11057a0, 0, 93d720]
+kernel-after turn=221987 service=0x5a PC=0x7ff82fad15e4 X0=0x0
+kernel-before turn=222000 service=0x1c PC=0x7ff82fad11d0 registers=[ffffffffffffffff, 35, 93d7f0, 10, 0, 93d720]
+kernel-after turn=222000 service=0x1c PC=0x7ff82fad11d4 X0=0x0
+kernel-before turn=222053 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93d7b0, 93d7a0, 4, 93d790, 93d720]
+kernel-after turn=222053 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=222387 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93d760, 93d758, 2, 93d750, 93d720]
+kernel-after turn=222387 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=222994 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 93d600, 93d608, 4, 1105530, 93d720]
+kernel-after turn=222994 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=242492 service=0xf PC=0x7ff82fad10f0 registers=[64, 1, 0, 1105878, 0, 93d4d0]
+kernel-after turn=242492 service=0xf PC=0x7ff82fad10f4 X0=0x0
+diagnostic progress turn=300000 thread=8 PC=0x7ff82fbb650c SP=0x93dbe0 registers=[93dd80, 93e760, 200, 0, 1104e70, 1105190, 93e5f0, 7ff82fe321d0]
+diagnostic progress turn=400000 thread=8 PC=0x7ff82fd3e030 SP=0x93d630 registers=[11001c, 110060, a956a629, a36c593f, 93d650, 26810, 239cc, a956a629]
+diagnostic progress turn=500000 thread=8 PC=0x7ff82fae57f4 SP=0x93d690 registers=[99e0bc73, 93df6a, 1a, 15, 25, 93d6b0, 133c30, 1c]
+diagnostic progress turn=600000 thread=8 PC=0x7ff82fbab4fc SP=0x93dc80 registers=[93df30, 1104d70, 1104e70, 0, 1105368, 93df08, 100, 100]
+diagnostic progress turn=700000 thread=8 PC=0x7ff82fae57f4 SP=0x93d690 registers=[748cc8df, 93df70, 1c, 18, 25, 93d6b0, 133bb8, 1c]
+diagnostic progress turn=800000 thread=8 PC=0x7ff82fc4ad60 SP=0x93dd50 registers=[7ff82c24576c, 7ff82fe87680, 46, 45, 8080, 1d22012247ae4e00, 0, 4673726566667542]
+diagnostic progress turn=900000 thread=8 PC=0x7ff82fc4ae28 SP=0x93dd50 registers=[7ff82c23f528, 7ff82fe868a8, 3b, 932b9ba378000000, 735100646e6e5a78, 2621070015000000, 7f7f7f7f7f7f7f7f, 745201656f6f5b79]
+diagnostic progress turn=1000000 thread=8 PC=0x7ff82fc4ae84 SP=0x93dd50 registers=[7ff82c23e9b7, 7ff82fe814d0, 4f, 4c, 80, 436c74524e3b4e00, 4, 4d744e006e6f6974]
+diagnostic progress turn=1100000 thread=8 PC=0x7ff82fbad5f4 SP=0x93dd50 registers=[0, 7ff82b6cbb18, 0, 47657400000000, 80000000, 7449470000000000, 0, 5074654700737265]
+diagnostic progress turn=1200000 thread=8 PC=0x7ff82fbad578 SP=0x93dd50 registers=[ffffffffffffffff, 7ff82b6c8b10, 33, 8390000000000000, 0, 1b16000000000000, ffffffffffffffff, 4e65746176697250]
+diagnostic progress turn=1300000 thread=8 PC=0x7ff82fc4ae00 SP=0x93dd50 registers=[7ff82c242096, 7ff82b6cafdd, 44, 4b, 0, 1b13140000000000, 2, 6c6c614300576570]
+diagnostic progress turn=1400000 thread=8 PC=0x7ff82fbad4fc SP=0x93dd50 registers=[0, 7ff82b6cd128, 0, 49734465766500, 80, 10140000734d0000, 0, 6c65766544734900]
+diagnostic progress turn=1500000 thread=8 PC=0x7ff82fc4ae00 SP=0x93dd50 registers=[7ff82c243f9f, 7ff82b6c7923, 41, 41, 0, 1400000000000000, 6, 78744374634165]
+diagnostic progress turn=1600000 thread=8 PC=0x7ff82fc4adf4 SP=0x93dd50 registers=[7ff82c244ea0, 7ff82b6cef89, 46, 79, 80000000, 6577510016000000, 2, 726575510041656d]
+kernel-before turn=1614384 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 1104de0, 1104de8, 2, 93dd20, 2d69702300000000]
+kernel-after turn=1614384 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=1614663 service=0xf PC=0x7ff82fad10f0 registers=[60, 0, 14a7, 93dc38, 93dd20, 2d69702300000000]
+kernel-after turn=1614663 service=0xf PC=0x7ff82fad10f4 X0=0x0
+diagnostic progress turn=1700000 thread=8 PC=0x7ff82fbad574 SP=0x93e2d0 registers=[ffffffffffffffff, 7ff82fe81347, 43, 44, 0, 3f31001d09040300, ffffffffffffffff, 43746547744e006c]
+diagnostic progress turn=1800000 thread=8 PC=0x7ff82fc4ae08 SP=0x93e2d0 registers=[7ff82b6d4027, 7ff82fe887ea, 52, 52, 0, 3d203c1200000000, 6, 7373656363417469]
+diagnostic progress turn=1900000 thread=8 PC=0x7ff82fbad558 SP=0x93e2d0 registers=[0, 7ff82fe856db, 0, 0, 8000, 0, 0, 7465476c7452006c]
+diagnostic progress turn=2000000 thread=8 PC=0x7ff82fc4ae00 SP=0x93e2d0 registers=[7ff82b6d5f15, 7ff82fe881a4, 52, 52, 0, 3f2d040600000000, 4, 616d726f666e4974]
+diagnostic progress turn=2100000 thread=8 PC=0x7ff82fbad538 SP=0x93e2d0 registers=[7ff82b0a0000, 0, 620600, 93e320, 8000, 4e00000000000000, 0, 64616552744e0065]
+kernel-before turn=2108912 service=0x50 PC=0x7ff82fad1540 registers=[ffffffffffffffff, 1105510, 1105518, 2, 93e2a0, 736d2d6900200000]
+kernel-after turn=2108912 service=0x50 PC=0x7ff82fad1544 X0=0x0
+kernel-before turn=2111804 service=0x1c PC=0x7ff82fad11d0 registers=[ffffffffffffffff, 23, 93e1f0, 28, 1105960, 93e070]
+kernel-after turn=2111804 service=0x1c PC=0x7ff82fad11d4 X0=0x0
+kernel-before turn=2112626 service=0x4c PC=0x7ff82fad1500 registers=[6, 93e260, 2, 28, 1105960, 1105790]
+kernel-after turn=2112626 service=0x4c PC=0x7ff82fad1504 X0=0x0
+kernel-before turn=2113137 service=0x4c PC=0x7ff82fad1500 registers=[6, 93e290, 0, 28, 1105960, 1105060]
+kernel-after turn=2113137 service=0x4c PC=0x7ff82fad1504 X0=0x0
+kernel-before turn=2114031 service=0x36 PC=0x7ff82fad13a0 registers=[32, 93dfd0, 8, 0, 7ff82fe310d0, 7ff82b0abf90]
+kernel-after turn=2114031 service=0x36 PC=0x7ff82fad13a4 X0=0x0
+kernel-before turn=2114216 service=0x36 PC=0x7ff82fad13a0 registers=[0, 7ff82b6eb200, 40, 0, 7ff82b5ac6d0, 93e030]
+kernel-after turn=2114216 service=0x36 PC=0x7ff82fad13a4 X0=0x0
+kernel-before turn=2115367 service=0x37 PC=0x7ff82fad13b0 registers=[93ddc0, 4, 93de50, 1105960, 93e030, 1105980]
+kernel-after turn=2115367 service=0x37 PC=0x7ff82fad13b4 X0=0x0
+kernel-before turn=2116238 service=0x4a PC=0x7ff82fad14e0 registers=[93dde8, f001f, 0, 93dde0, 4, 8000000]
+kernel-after turn=2116238 service=0x4a PC=0x7ff82fad14e4 X0=0x0
+kernel-before turn=2116272 service=0x194 PC=0x7ff82fad2980 registers=[7ff82fe9e6e0, 7ff82fe9e6c0, 93df10, 93de00, 11059b0, 93de30]
+kernel-after turn=2116272 service=0x194 PC=0x7ff82fad2984 X0=0x0
+kernel-before turn=2116277 service=0xf PC=0x7ff82fad10f0 registers=[64, 7ff82fe9e6c0, 93df10, 93de00, 11059b0, 93de30]
+kernel-after turn=2116277 service=0xf PC=0x7ff82fad10f4 X0=0x0
+kernel-before turn=2116985 service=0x28 PC=0x7ff82fad12a0 registers=[60, ffffffffffffffff, 93ddd0, 0, 0, 0]
+kernel-after turn=2116985 service=0x28 PC=0x7ff82fad12a4 X0=0x0
+kernel-before turn=2116990 service=0xf PC=0x7ff82fad10f0 registers=[60, ffffffffffffffff, 93ddd0, 0, 0, 0]
+kernel-after turn=2116990 service=0xf PC=0x7ff82fad10f4 X0=0x0
+kernel-before turn=2117162 service=0x36 PC=0x7ff82fad13a0 registers=[0, 93dd00, 40, 0, 0, 93deb0]
+kernel-after turn=2117162 service=0x36 PC=0x7ff82fad13a4 X0=0x0
+kernel-before turn=2122500 service=0x78 PC=0x7ff82fad17c0 registers=[ffffffffffffffff, 93dbc0, 93dbd8, 1000, 4, 0]
+NtAllocateVirtualMemoryEx base-pointer=0x93dbc0 raw=Ok([00, 60, 10, 01, 00, 00, 00, 00]) size-pointer=0x93dbd8 raw=Ok([00, 10, 00, 00, 00, 00, 00, 00]) extended=0x0 count=0 raw=Err(MemFault { addr: 00, write: false })
+kernel-after turn=2122500 service=0x78 PC=0x7ff82fad17c4 X0=0x0
+kernel-before turn=2123205 service=0x107 PC=0x7ff82fad20b0 registers=[93dfa0, 7ff82b6e5860, 0, 11061e0, 1106230, 93dee0]
+kernel-after turn=2123205 service=0x107 PC=0x7ff82fad20b4 X0=0x0
+kernel-before turn=2124499 service=0x101 PC=0x7ff82fad2050 registers=[b, 4e4, 0, 93db20, 93db28, 93da60]
+kernel-after turn=2124499 service=0x101 PC=0x7ff82fad2054 X0=0x0
+NtGetNlsSectionPtr output=Ok(a80000) size-pointer=0x93db28 size=Ok([00, 10, 01, 00]) view=Some(RegionInfo { base: 11010048, allocation_base: 11010048, allocation_protect: 2, size: 69632, state: 4096, protect: 2, kind: 262144 }) prefix=Some([0d, 00, e4, 04, 01, 00, 3f, 00, 3f, 00, 3f, 00, 3f, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 03, 01, 00, 00, 01, 00])
+kernel-before turn=2125558 service=0x101 PC=0x7ff82fad2050 registers=[b, 1b5, 0, 93db20, 93db28, 93da60]
+kernel-after turn=2125558 service=0x101 PC=0x7ff82fad2054 X0=0x0
+NtGetNlsSectionPtr output=Ok(aa0000) size-pointer=0x93db28 size=Ok([00, 10, 01, 00]) view=Some(RegionInfo { base: 11141120, allocation_base: 11141120, allocation_protect: 2, size: 69632, state: 4096, protect: 2, kind: 262144 }) prefix=Some([0d, 00, b5, 01, 01, 00, 3f, 00, 3f, 00, 3f, 00, 3f, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 03, 02, 00, 00, 01, 00])
+kernel-before turn=2128441 service=0x1c PC=0x7ff82fad11d0 registers=[ffffffffffffffff, 31, 93df58, 8, 0, a]
+kernel-after turn=2128441 service=0x1c PC=0x7ff82fad11d4 X0=0x0
+kernel-before turn=2129854 service=0x1d6 PC=0x7ff82fad2da0 registers=[f, 93dec0, a0, 93dec0, a0, 93deb0]
+kernel-after turn=2129854 service=0x1d6 PC=0x7ff82fad2da4 X0=0x0
+kernel-before turn=2130616 service=0x1d6 PC=0x7ff82fad2da0 registers=[1e, 93df20, 18, 93df40, 78, 93df10]
+kernel-after turn=2130616 service=0x1d6 PC=0x7ff82fad2da4 X0=0x0
+kernel-before turn=2131333 service=0x21 PC=0x7ff82fad1220 registers=[fffffffffffffffc, 1d, 93df04, 4, 93df08, 1]
+kernel-after turn=2131333 service=0x21 PC=0x7ff82fad1224 X0=0x0
+kernel-before turn=2136264 service=0x0 PC=0x7ff82fad1000 registers=[93dcd0, fffffffffffffffc, 1, 7ff82fe1bd98, 93de80, 93dcb0]
+kernel-after turn=2136264 service=0x0 PC=0x7ff82fad1004 X0=0x0
+kernel-before turn=2136555 service=0x0 PC=0x7ff82fad1000 registers=[93dcd0, fffffffffffffffc, 1, 7ff82fe1bd98, 93de80, 93dcb0]
+kernel-after turn=2136555 service=0x0 PC=0x7ff82fad1004 X0=0x0
+kernel-before turn=2137786 service=0x1d6 PC=0x7ff82fad2da0 registers=[f, 93e140, a0, 93e140, a0, 93e130]
+kernel-after turn=2137786 service=0x1d6 PC=0x7ff82fad2da4 X0=0x0
+kernel-before turn=2140461 service=0x170 PC=0x7ff82fad2740 registers=[93e168, 93e1e0, 0, 93e150, 93d150, 93e154]
+kernel-after turn=2140461 service=0x170 PC=0x7ff82fad2744 X0=0x0
+kernel-before turn=2142662 service=0x1cd PC=0x7ff82fad2d10 registers=[1106ca0, 1, 11, 93e118, b510bca3281a9141, 280032ea3bc0875]
+kernel-after turn=2142662 service=0x1cd PC=0x7ff82fad2d14 X0=0x0
+kernel-before turn=2149659 service=0x133 PC=0x7ff82fad2370 registers=[ffffffffffffffff, 8, 93def0, 7ff82b59784c, 1, 93dfa0]
+kernel-after turn=2149659 service=0x133 PC=0x7ff82fad2374 X0=0xffffffffffffffff
+turn=2149628 thread=8 PC=0x7ff82fb0a204 SP=0x93df20 bytes=Ok([c0, 03, 5f, d6]) insn=Some("Ok(DecodedInsn { mnemonic: RET, cond: None, operands: [Reg(Register { num: 30, is_64bit: true, is_sp: false, kind: Gpr })], sets_flags: false, raw: 3596551104, size: 4, state: Aarch64 })") registers=[1d, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 3c, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 93e1d0, 7ff82b6e1f20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93e180, 7ff82b0d9f34]
+turn=2149629 thread=8 PC=0x7ff82b0d9f34 SP=0x93df20 bytes=Ok([e0, 03, 00, 91]) insn=Some("Ok(DecodedInsn { mnemonic: MOV, cond: None, operands: [Reg(Register { num: 0, is_64bit: true, is_sp: false, kind: Gpr }), Reg(Register { num: 31, is_64bit: true, is_sp: true, kind: Sp })], sets_flags: false, raw: 2432697312, size: 4, state: Aarch64 })") registers=[1d, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 3c, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 93e1d0, 7ff82b6e1f20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93e180, 7ff82b0d9f34]
+turn=2149630 thread=8 PC=0x7ff82b0d9f38 SP=0x93df20 bytes=Ok([ff, 03, 00, f9]) insn=Some("Ok(DecodedInsn { mnemonic: STR, cond: None, operands: [Reg(Register { num: 31, is_64bit: true, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 31, is_64bit: true, is_sp: true, kind: Sp }, offset: Imm(0), mode: Offset })], sets_flags: false, raw: 4177527807, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 3c, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 93e1d0, 7ff82b6e1f20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93e180, 7ff82b0d9f34]
+turn=2149631 thread=8 PC=0x7ff82b0d9f3c SP=0x93df20 bytes=Ok([d9, 1d, 03, 94]) insn=Some("Ok(DecodedInsn { mnemonic: BL, cond: None, operands: [Label(816996)], sets_flags: false, raw: 2483232217, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 3c, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 93e1d0, 7ff82b6e1f20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93e180, 7ff82b0d9f34]
+turn=2149632 thread=8 PC=0x7ff82b1a16a0 SP=0x93df20 bytes=Ok([7f, 23, 03, d5]) insn=Some("Ok(DecodedInsn { mnemonic: HINT, cond: None, operands: [Imm(Immediate { value: 27, shift: 0 })], sets_flags: false, raw: 3573752703, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 3c, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 93e1d0, 7ff82b6e1f20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93e180, 7ff82b0d9f40]
+turn=2149633 thread=8 PC=0x7ff82b1a16a4 SP=0x93df20 bytes=Ok([ff, 83, 00, d1]) insn=Some("Ok(DecodedInsn { mnemonic: SUB, cond: None, operands: [Reg(Register { num: 31, is_64bit: true, is_sp: true, kind: Sp }), Reg(Register { num: 31, is_64bit: true, is_sp: true, kind: Sp }), Imm(Immediate { value: 32, shift: 0 })], sets_flags: false, raw: 3506471935, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 3c, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 93e1d0, 7ff82b6e1f20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93e180, 7ff82b0d9f40]
+turn=2149634 thread=8 PC=0x7ff82b1a16a8 SP=0x93df00 bytes=Ok([fd, 7b, bd, a9]) insn=Some("Ok(DecodedInsn { mnemonic: STP, cond: None, operands: [Reg(Register { num: 29, is_64bit: true, is_sp: false, kind: Gpr }), Reg(Register { num: 30, is_64bit: true, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 31, is_64bit: true, is_sp: true, kind: Sp }, offset: Imm(-48), mode: PreIndex })], sets_flags: false, raw: 2847767549, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 3c, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 93e1d0, 7ff82b6e1f20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93e180, 7ff82b0d9f40]
+turn=2149635 thread=8 PC=0x7ff82b1a16ac SP=0x93ded0 bytes=Ok([fd, 03, 00, 91]) insn=Some("Ok(DecodedInsn { mnemonic: MOV, cond: None, operands: [Reg(Register { num: 29, is_64bit: true, is_sp: false, kind: Gpr }), Reg(Register { num: 31, is_64bit: true, is_sp: true, kind: Sp })], sets_flags: false, raw: 2432697341, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 3c, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 93e1d0, 7ff82b6e1f20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93e180, 7ff82b0d9f40]
+turn=2149636 thread=8 PC=0x7ff82b1a16b0 SP=0x93ded0 bytes=Ok([ff, 17, 00, f9]) insn=Some("Ok(DecodedInsn { mnemonic: STR, cond: None, operands: [Reg(Register { num: 31, is_64bit: true, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 31, is_64bit: true, is_sp: true, kind: Sp }, offset: Imm(40), mode: Offset })], sets_flags: false, raw: 4177532927, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 3c, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 93e1d0, 7ff82b6e1f20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149637 thread=8 PC=0x7ff82b1a16b4 SP=0x93ded0 bytes=Ok([00, 02, 00, b4]) insn=Some("Ok(DecodedInsn { mnemonic: CBZ, cond: None, operands: [Reg(Register { num: 0, is_64bit: true, is_sp: false, kind: Gpr }), Label(64)], sets_flags: false, raw: 3019899392, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 3c, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 93e1d0, 7ff82b6e1f20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149638 thread=8 PC=0x7ff82b1a16b8 SP=0x93ded0 bytes=Ok([f3, 53, 03, a9]) insn=Some("Ok(DecodedInsn { mnemonic: STP, cond: None, operands: [Reg(Register { num: 19, is_64bit: true, is_sp: false, kind: Gpr }), Reg(Register { num: 20, is_64bit: true, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 31, is_64bit: true, is_sp: true, kind: Sp }, offset: Imm(48), mode: Offset })], sets_flags: false, raw: 2835567603, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 3c, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 93e1d0, 7ff82b6e1f20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149639 thread=8 PC=0x7ff82b1a16bc SP=0x93ded0 bytes=Ok([f5, 5b, 04, a9]) insn=Some("Ok(DecodedInsn { mnemonic: STP, cond: None, operands: [Reg(Register { num: 21, is_64bit: true, is_sp: false, kind: Gpr }), Reg(Register { num: 22, is_64bit: true, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 31, is_64bit: true, is_sp: true, kind: Sp }, offset: Imm(64), mode: Offset })], sets_flags: false, raw: 2835635189, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 3c, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 93e1d0, 7ff82b6e1f20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149640 thread=8 PC=0x7ff82b1a16c0 SP=0x93ded0 bytes=Ok([f4, 03, 00, aa]) insn=Some("Ok(DecodedInsn { mnemonic: MOV, cond: None, operands: [Reg(Register { num: 20, is_64bit: true, is_sp: false, kind: Gpr }), Reg(Register { num: 0, is_64bit: true, is_sp: false, kind: Gpr })], sets_flags: false, raw: 2852127732, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 3c, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 93e1d0, 7ff82b6e1f20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149641 thread=8 PC=0x7ff82b1a16c4 SP=0x93ded0 bytes=Ok([48, 2a, 00, b0]) insn=Some("Ok(DecodedInsn { mnemonic: ADRP, cond: None, operands: [Reg(Register { num: 8, is_64bit: true, is_sp: false, kind: Gpr }), Label(5541888)], sets_flags: false, raw: 2952800840, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 3c, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 93e1d0, 93df20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149642 thread=8 PC=0x7ff82b1a16c8 SP=0x93ded0 bytes=Ok([13, 81, 3e, 91]) insn=Some("Ok(DecodedInsn { mnemonic: ADD, cond: None, operands: [Reg(Register { num: 19, is_64bit: true, is_sp: false, kind: Gpr }), Reg(Register { num: 8, is_64bit: true, is_sp: false, kind: Gpr }), Imm(Immediate { value: 4000, shift: 0 })], sets_flags: false, raw: 2436792595, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 7ff82b6ea000, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 93e1d0, 93df20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149643 thread=8 PC=0x7ff82b1a16cc SP=0x93ded0 bytes=Ok([68, 02, 40, f9]) insn=Some("Ok(DecodedInsn { mnemonic: LDR, cond: None, operands: [Reg(Register { num: 8, is_64bit: true, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 19, is_64bit: true, is_sp: false, kind: Gpr }, offset: Imm(0), mode: Offset })], sets_flags: false, raw: 4181721704, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 7ff82b6ea000, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 7ff82b6eafa0, 93df20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149644 thread=8 PC=0x7ff82b1a16d0 SP=0x93ded0 bytes=Ok([e8, 01, 00, b4]) insn=Some("Ok(DecodedInsn { mnemonic: CBZ, cond: None, operands: [Reg(Register { num: 8, is_64bit: true, is_sp: false, kind: Gpr }), Label(60)], sets_flags: false, raw: 3019899368, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 0, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 7ff82b6eafa0, 93df20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149645 thread=8 PC=0x7ff82b1a170c SP=0x93ded0 bytes=Ok([e8, 03, 12, aa]) insn=Some("Ok(DecodedInsn { mnemonic: MOV, cond: None, operands: [Reg(Register { num: 8, is_64bit: true, is_sp: false, kind: Gpr }), Reg(Register { num: 18, is_64bit: true, is_sp: false, kind: Gpr })], sets_flags: false, raw: 2853307368, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 0, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 7ff82b6eafa0, 93df20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149646 thread=8 PC=0x7ff82b1a1710 SP=0x93ded0 bytes=Ok([9f, 02, 00, f9]) insn=Some("Ok(DecodedInsn { mnemonic: STR, cond: None, operands: [Reg(Register { num: 31, is_64bit: true, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 20, is_64bit: true, is_sp: false, kind: Gpr }, offset: Imm(0), mode: Offset })], sets_flags: false, raw: 4177527455, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 7ffdd000, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 7ff82b6eafa0, 93df20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149647 thread=8 PC=0x7ff82b1a1714 SP=0x93ded0 bytes=Ok([ff, 13, 00, f9]) insn=Some("Ok(DecodedInsn { mnemonic: STR, cond: None, operands: [Reg(Register { num: 31, is_64bit: true, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 31, is_64bit: true, is_sp: true, kind: Sp }, offset: Imm(32), mode: Offset })], sets_flags: false, raw: 4177531903, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 7ffdd000, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 7ff82b6eafa0, 93df20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149648 thread=8 PC=0x7ff82b1a1718 SP=0x93ded0 bytes=Ok([16, 00, 80, 52]) insn=Some("Ok(DecodedInsn { mnemonic: MOVZ, cond: None, operands: [Reg(Register { num: 22, is_64bit: false, is_sp: false, kind: Gpr }), Imm(Immediate { value: 0, shift: 0 })], sets_flags: false, raw: 1384120342, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 7ffdd000, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 7ff82b6eafa0, 93df20, 7ff82b6e1000, 7ff82b0df860, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149649 thread=8 PC=0x7ff82b1a171c SP=0x93ded0 bytes=Ok([ff, 7f, 01, a9]) insn=Some("Ok(DecodedInsn { mnemonic: STP, cond: None, operands: [Reg(Register { num: 31, is_64bit: true, is_sp: false, kind: Gpr }), Reg(Register { num: 31, is_64bit: true, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 31, is_64bit: true, is_sp: true, kind: Sp }, offset: Imm(16), mode: Offset })], sets_flags: false, raw: 2835447807, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 7ffdd000, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 7ff82b6eafa0, 93df20, 7ff82b6e1000, 0, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149650 thread=8 PC=0x7ff82b1a1720 SP=0x93ded0 bytes=Ok([08, 9d, 57, b9]) insn=Some("Ok(DecodedInsn { mnemonic: LDR, cond: None, operands: [Reg(Register { num: 8, is_64bit: false, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 8, is_64bit: true, is_sp: false, kind: Gpr }, offset: Imm(6044), mode: Offset })], sets_flags: false, raw: 3109526792, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 7ffdd000, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 7ff82b6eafa0, 93df20, 7ff82b6e1000, 0, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149651 thread=8 PC=0x7ff82b1a1724 SP=0x93ded0 bytes=Ok([48, 04, 00, 35]) insn=Some("Ok(DecodedInsn { mnemonic: CBNZ, cond: None, operands: [Reg(Register { num: 8, is_64bit: false, is_sp: false, kind: Gpr }), Label(136)], sets_flags: false, raw: 889193544, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 0, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 7ff82b6eafa0, 93df20, 7ff82b6e1000, 0, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149652 thread=8 PC=0x7ff82b1a1728 SP=0x93ded0 bytes=Ok([e2, 83, 00, 91]) insn=Some("Ok(DecodedInsn { mnemonic: ADD, cond: None, operands: [Reg(Register { num: 2, is_64bit: true, is_sp: false, kind: Gpr }), Reg(Register { num: 31, is_64bit: true, is_sp: true, kind: Sp }), Imm(Immediate { value: 32, shift: 0 })], sets_flags: false, raw: 2432730082, size: 4, state: Aarch64 })") registers=[93df20, 0, 5, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 0, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 7ff82b6eafa0, 93df20, 7ff82b6e1000, 0, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149653 thread=8 PC=0x7ff82b1a172c SP=0x93ded0 bytes=Ok([01, 01, 80, 52]) insn=Some("Ok(DecodedInsn { mnemonic: MOVZ, cond: None, operands: [Reg(Register { num: 1, is_64bit: false, is_sp: false, kind: Gpr }), Imm(Immediate { value: 8, shift: 0 })], sets_flags: false, raw: 1384120577, size: 4, state: Aarch64 })") registers=[93df20, 0, 93def0, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 0, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 7ff82b6eafa0, 93df20, 7ff82b6e1000, 0, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149654 thread=8 PC=0x7ff82b1a1730 SP=0x93ded0 bytes=Ok([00, 00, 80, 92]) insn=Some("Ok(DecodedInsn { mnemonic: MOVN, cond: None, operands: [Reg(Register { num: 0, is_64bit: true, is_sp: false, kind: Gpr }), Imm(Immediate { value: 0, shift: 0 })], sets_flags: false, raw: 2457862144, size: 4, state: Aarch64 })") registers=[93df20, 8, 93def0, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 0, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 7ff82b6eafa0, 93df20, 7ff82b6e1000, 0, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149655 thread=8 PC=0x7ff82b1a1734 SP=0x93ded0 bytes=Ok([65, 47, 02, 94]) insn=Some("Ok(DecodedInsn { mnemonic: BL, cond: None, operands: [Label(597396)], sets_flags: false, raw: 2483177317, size: 4, state: Aarch64 })") registers=[ffffffffffffffff, 8, 93def0, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 0, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 7ff82b6eafa0, 93df20, 7ff82b6e1000, 0, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b0d9f40]
+turn=2149656 thread=8 PC=0x7ff82b2334c8 SP=0x93ded0 bytes=Ok([b0, 0b, 00, 90]) insn=Some("Ok(DecodedInsn { mnemonic: ADRP, cond: None, operands: [Reg(Register { num: 16, is_64bit: true, is_sp: false, kind: Gpr }), Label(1523712)], sets_flags: false, raw: 2415922096, size: 4, state: Aarch64 })") registers=[ffffffffffffffff, 8, 93def0, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 0, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fb0a1e0, 63bad7f6c630, 7ffdd000, 7ff82b6eafa0, 93df20, 7ff82b6e1000, 0, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b1a1738]
+turn=2149657 thread=8 PC=0x7ff82b2334cc SP=0x93ded0 bytes=Ok([10, c2, 42, f9]) insn=Some("Ok(DecodedInsn { mnemonic: LDR, cond: None, operands: [Reg(Register { num: 16, is_64bit: true, is_sp: false, kind: Gpr }), Mem(MemOperand { base: Register { num: 16, is_64bit: true, is_sp: false, kind: Gpr }, offset: Imm(1408), mode: Offset })], sets_flags: false, raw: 4181901840, size: 4, state: Aarch64 })") registers=[ffffffffffffffff, 8, 93def0, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 0, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82b3a7000, 63bad7f6c630, 7ffdd000, 7ff82b6eafa0, 93df20, 7ff82b6e1000, 0, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b1a1738]
+turn=2149658 thread=8 PC=0x7ff82b2334d0 SP=0x93ded0 bytes=Ok([00, 02, 1f, d6]) insn=Some("Ok(DecodedInsn { mnemonic: BR, cond: None, operands: [Reg(Register { num: 16, is_64bit: true, is_sp: false, kind: Gpr })], sets_flags: false, raw: 3592356352, size: 4, state: Aarch64 })") registers=[ffffffffffffffff, 8, 93def0, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 0, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fad2370, 63bad7f6c630, 7ffdd000, 7ff82b6eafa0, 93df20, 7ff82b6e1000, 0, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b1a1738]
+turn=2149659 thread=8 PC=0x7ff82fad2370 SP=0x93ded0 bytes=Ok([61, 26, 00, d4]) insn=Some("Ok(DecodedInsn { mnemonic: SVC, cond: None, operands: [Imm(Immediate { value: 307, shift: 0 })], sets_flags: false, raw: 3556779617, size: 4, state: Aarch64 })") registers=[ffffffffffffffff, 8, 93def0, 7ff82b59784c, 1, 93dfa0, 0, 4e4, 0, 3a, 93d980, 1, 32, 7ff82b597920, 7ff82fbcb46c, 0, 7ff82fad2370, 63bad7f6c630, 7ffdd000, 7ff82b6eafa0, 93df20, 7ff82b6e1000, 0, 0, 0, 7ff82b6e1f20, 11055e8, 1, 93e9d0, 93ded0, 7ff82b1a1738]
+terminal turn=2149659 Complete(Internal("native NTDLL service NtOpenProcessToken (0x133) at 0x7ff82fad2370 is not implemented"))

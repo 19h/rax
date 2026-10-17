@@ -1,0 +1,20 @@
+identity profile=x86 scenario=14 duplicates=1 neighbors=1
+operation ordinal=0 delta=-4096 size=1 remove=0 status=00000000
+operation ordinal=1 delta=4096 size=1 remove=0 status=00000000
+operation ordinal=2 delta=0 size=0 remove=0 status=00000000
+operation ordinal=3 delta=0 size=1 remove=0 status=00000000
+operation ordinal=4 delta=-8192 size=1 remove=0 status=00000000
+operation ordinal=5 delta=8192 size=1 remove=0 status=00000000
+operation ordinal=6 delta=0 size=1 remove=1 status=00000000
+operation ordinal=7 delta=0 size=0 remove=1 status=00000000
+operation ordinal=8 delta=0 size=1 remove=1 status=00000000
+operation ordinal=9 delta=0 size=0 remove=1 status=00000000
+operation ordinal=10 delta=0 size=1 remove=1 status=00000000
+operation ordinal=11 delta=0 size=0 remove=1 status=00000000
+operation ordinal=12 delta=0 size=1 remove=1 status=00000000
+operation ordinal=13 delta=0 size=0 remove=1 status=00000000
+operation ordinal=14 delta=-4096 size=1 remove=1 status=00000000
+operation ordinal=15 delta=4096 size=1 remove=1 status=00000000
+operation ordinal=16 delta=-8192 size=1 remove=1 status=00000000
+operation ordinal=17 delta=8192 size=1 remove=1 status=00000000
+complete operations=18

@@ -1,0 +1,77 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src-dynamic-table)
+error[E0277]: `?` couldn't convert the error to `hle::ApiErr`
+   --> src\user\windows\dll\native\process_set\dynamic_table.rs:32:42
+    |
+ 16 | pub(super) fn information(c: &mut Ctx, process: u64, input: u64, length: u32) -> ApiResult {
+    |                                                                                  --------- expected `hle::ApiErr` because of this
+...
+ 32 |     c.mem().read(input, &mut information)?;
+    |             -----------------------------^ the trait `From<error::memory::GuestMemoryFault>` is not implemented for `hle::ApiErr`
+    |             |
+    |             this can't be annotated with `?` because it has type `Result<_, error::memory::GuestMemoryFault>`
+    |
+note: `hle::ApiErr` needs to implement `From<error::memory::GuestMemoryFault>`
+   --> src\user\windows\hle\mod.rs:363:1
+    |
+363 | pub enum ApiErr {
+    | ^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+help: the following other types implement trait `From<T>`
+   --> src\user\windows\hle\mod.rs:375:1
+    |
+375 | impl From<MemFault> for ApiErr {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `hle::ApiErr` implements `From<user::windows::memory::MemFault>`
+    |
+   ::: src\user\windows\sync.rs:59:1
+    |
+ 59 | impl From<SyncError> for super::hle::ApiErr {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `hle::ApiErr` implements `From<user::windows::sync::SyncError>`
+
+error[E0277]: `?` couldn't convert the error to `hle::ApiErr`
+   --> src\user\windows\dll\native\process_set\dynamic_table.rs:42:37
+    |
+ 16 | pub(super) fn information(c: &mut Ctx, process: u64, input: u64, length: u32) -> ApiResult {
+    |                                                                                  --------- expected `hle::ApiErr` because of this
+...
+ 42 |     c.mem().read(table, &mut record)?;
+    |             ------------------------^ the trait `From<error::memory::GuestMemoryFault>` is not implemented for `hle::ApiErr`
+    |             |
+    |             this can't be annotated with `?` because it has type `Result<_, error::memory::GuestMemoryFault>`
+    |
+note: `hle::ApiErr` needs to implement `From<error::memory::GuestMemoryFault>`
+   --> src\user\windows\hle\mod.rs:363:1
+    |
+363 | pub enum ApiErr {
+    | ^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+help: the following other types implement trait `From<T>`
+   --> src\user\windows\hle\mod.rs:375:1
+    |
+375 | impl From<MemFault> for ApiErr {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `hle::ApiErr` implements `From<user::windows::memory::MemFault>`
+    |
+   ::: src\user\windows\sync.rs:59:1
+    |
+ 59 | impl From<SyncError> for super::hle::ApiErr {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `hle::ApiErr` implements `From<user::windows::sync::SyncError>`
+
+For more information about this error, try `rustc --explain E0277`.
+error: could not compile `rax` (lib test) due to 2 previous errors

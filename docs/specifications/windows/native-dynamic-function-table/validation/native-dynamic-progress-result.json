@@ -1,0 +1,11 @@
+{
+  "source-sha256": "ddfcc8e01705309f38c9dba1d50be7073d0627677da7fe455fef78a6e579afda",
+  "core": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\deps\\librax-b3cb012e55bc2251.rlib",
+  "core-features": [],
+  "scope": "diagnostic-only progress and first-block capture; unchanged guest execution",
+  "build-exit-code": 0,
+  "exe-sha256-before": "92bb90b360570b1334177a3d88928a9cc0ce9c3b992af3692576ad1a8eff8157",
+  "trace-exit-code": 0,
+  "trace-sha256": "482f21ad403b092a18075cfcbbf466118310f67acc6ff4835b7c3eeffdc14617",
+  "exe-sha256-after": "92bb90b360570b1334177a3d88928a9cc0ce9c3b992af3692576ad1a8eff8157"
+}

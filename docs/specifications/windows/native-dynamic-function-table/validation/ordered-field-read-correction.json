@@ -1,0 +1,6 @@
+{
+  "path": "src/user/windows/dll/native/process_set/dynamic_table.rs",
+  "sha256": "fe065d11866b942992f9e9e3809994a61fd41d60507557f5172d1ca141679277",
+  "evidence": "boundary axis1 mode1 offset4080 permits inaccessible prefix; axis1 mode9 offset4048 consumes only second-page guard",
+  "change": "BaseAddress u64 read at48 then MaximumAddress u64 at40, no prefix read"
+}

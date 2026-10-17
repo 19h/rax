@@ -24,6 +24,7 @@
 
 pub mod arm64;
 pub(crate) mod dynamic;
+pub(crate) mod kernel_dynamic;
 pub mod unwind;
 pub mod x64;
 pub mod x86;
@@ -68,6 +69,8 @@ pub struct SehState {
     pub next_handle: u64,
     /// Guest-owned dynamic unwind tables, registered by their original array pointer.
     pub(crate) dynamic_tables: Vec<dynamic::Table>,
+    /// Native kernel range ledger; independent of user-mode unwind arrays.
+    pub(crate) kernel_dynamic_tables: kernel_dynamic::Tables,
 }
 
 /// The `STATUS_*` name of an exception code, when it is one.

@@ -1,0 +1,6 @@
+{
+  "file": "src/user/windows/dll/native/process_set/dynamic_table.rs",
+  "after-sha256": "c80b9faca822f7cdbea953a5a3b58e737444c61ca41b9c555828ceab67508b57",
+  "reason": "use Windows Mem::rd, returning MemFault; generic AddressSpace::read returns GuestMemoryFault",
+  "production-effect": "same checked 16-byte and 56-byte reads through the owning Windows error adapter"
+}

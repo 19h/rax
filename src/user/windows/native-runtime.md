@@ -2164,3 +2164,27 @@ The unchanged ordinary observer advances 13 instructions beyond the clock call,
 then reports unimplemented `NtSetInformationProcess` class 53 at smoke turn 97977
 and whoami turn 98041. Neither application exits successfully. See the
 [native controls and validation](../../../docs/specifications/windows/native-system-time/README.md).
+
+
+## Native process dynamic function-table ranges (2026-10-17)
+
+`NtSetInformationProcess` class 53 now maintains a bounded process-owned range
+ledger, separate from user-mode fixed unwind arrays. Native 64-bit calls validate the
+current-process pseudohandle, length 16 bytes, outer alignment 8 bytes and inner alignment 4 bytes,
+then reads BaseAddress before MaximumAddress. WoW64 returns success without
+accessing the packet. Add/remove have distinct overflow bounds and preserve
+insertion-order duplicate/empty-range behavior. No host pointer or kernel call
+participates in guest registration.
+
+The group retains 52 post-run producer identities and 712 child executions,
+including a contaminated sequential range diagnostic explicitly excluded from
+the contract. Clean controls record 14,864 service/status-conversion calls.
+Three-host full suites are macOS 7891/0/2, Linux 7885/0/2 and Windows 7324/5/2;
+Windows retains exactly the five known lowerer failures. C API 168, all-target
+checks and scoped Assist consumers pass. Actual empty-feature core/carrier
+archives bind 361 selected source inputs; the frozen carrier remains Rust ABI minor 184
+while the paired root is Rust ABI minor 196.
+
+The unchanged production observer now stops at `NtOpenProcessToken` (0x133),
+smoke turn 2,149,659 and whoami turn 2,152,008. Neither is a successful guest exit.
+See the [native contract, assumptions and evidence](../../../docs/specifications/windows/native-dynamic-function-table/README.md).

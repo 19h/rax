@@ -1,0 +1,30 @@
+{
+  "scope": "Prior clock implementation, diagnostic-only read of ordinary class53 packet; not a final application success or native-kernel producer.",
+  "files": [
+    {
+      "path": "diagnostics/dynamic-table-observer.rs.txt",
+      "bytes": 13207,
+      "sha256": "705af66f2eb297dadb57dd08ec2e7bbf638d5d3f3dc2c24e33c3d003858170fb"
+    },
+    {
+      "path": "diagnostics/dynamic-table-observer.ps1",
+      "bytes": 1913,
+      "sha256": "2d3b43ad8488e40b61a685bd7b81ff0648c9031666ef27c9bef698d6d42f047d"
+    },
+    {
+      "path": "diagnostics/dynamic-table-smoke-observer.log",
+      "bytes": 47476,
+      "sha256": "66724a69e1d2b5ab8813941867445e3ffc96fe08fc9a14dbed910720429207e9"
+    },
+    {
+      "path": "diagnostics/dynamic-table-whoami-observer.log",
+      "bytes": 49716,
+      "sha256": "7bf3b10bdabe6cc2fcca241ed256ec827d6bcbfe50b0e0b7e6d4c41d23881d21"
+    },
+    {
+      "path": "diagnostics/dynamic-table-observer-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

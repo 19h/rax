@@ -1,0 +1,31 @@
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 24s
+     Running unittests src/lib.rs (/target/system-time-final/debug/deps/rax-094640fccc97af0f)
+
+running 11 tests
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::native_dynamic_function_table_invalid_process_precedes_length_and_pointer_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::native_dynamic_function_table_process_range_lifecycle_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::native_dynamic_function_table_status_mapping_matches_native_rtl ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::native_dynamic_function_table_survives_descriptor_range_and_thread_lifetime ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::replay::native_dynamic_function_table_replays_all_key_byte_perturbations ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::replay::native_dynamic_function_table_replays_duplicate_and_value_key_lifetime ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::replay::native_dynamic_function_table_replays_initial_and_handle_boundaries ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::replay::native_dynamic_function_table_replays_isolated_ranges_and_overlap ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::replay::native_dynamic_function_table_replays_ordered_sequences_and_native_status_mappings ... ok
+test user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::replay::native_dynamic_function_table_replays_pointer_guard_and_length_records ... 
+thread 'user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::replay::native_dynamic_function_table_replays_pointer_guard_and_length_records' (308) panicked at src/user/windows/process/sched/tests/services_tests/dynamic_function_table_replay_tests.rs:37:5:
+assertion `left == right` failed: status: {"after0":"1","after1":"4","axis":"1","cleanup":"00000000","exception":"00000000","last-error":"4A2E19F7","mode":"1","offset":"4080","ordinal":"372","p0":"1","p1":"4","record":"case","status":"00000000","unchanged":"1"}
+  left: 3221225477
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test user::windows::seh::kernel_dynamic::tests::native_dynamic_function_table_quota_preserves_state_and_recovers_after_delete ... ok
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::dynamic_function_table_tests::replay::native_dynamic_function_table_replays_pointer_guard_and_length_records
+
+test result: FAILED. 10 passed; 1 failed; 0 ignored; 0 measured; 7876 filtered out; finished in 4.77s
+
+error: test failed, to rerun pass `--lib`

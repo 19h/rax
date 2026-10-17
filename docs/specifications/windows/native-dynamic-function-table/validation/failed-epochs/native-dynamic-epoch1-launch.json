@@ -1,0 +1,20 @@
+{
+  "pid": 3060,
+  "utc": "2026-10-17T22:44:26.764239+00:00",
+  "state": "failed",
+  "source": "src-dynamic-table",
+  "source-inputs": "dynamic-initial-source-inputs.json",
+  "child-pid": 4300,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-dynamic-initial-focus.ps1"
+  ],
+  "focus-exit-code": 1,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-dynamic-initial-focus.py\", line 16, in <module>\n    if code:raise RuntimeError('native time '+stage+' failed: '+str(code))\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: native time focus failed: 1\n",
+  "completed-utc": "2026-10-17T22:47:42.760883+00:00"
+}

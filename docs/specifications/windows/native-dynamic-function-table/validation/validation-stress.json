@@ -1,0 +1,32 @@
+[
+  {
+    "case": "different-native-failure",
+    "rejected": true,
+    "error": "ValueError: native baseline failure identities"
+  },
+  {
+    "case": "missing-ignored-test",
+    "rejected": true,
+    "error": "ValueError: ignored test identities native"
+  },
+  {
+    "case": "invented-native-integration",
+    "rejected": true,
+    "error": "ValueError: integration selection native"
+  },
+  {
+    "case": "changed-source",
+    "rejected": true,
+    "error": "ValueError: final source Cargo.toml"
+  },
+  {
+    "case": "enabled-core-defaults",
+    "rejected": true,
+    "error": "ValueError: empty-feature core native"
+  },
+  {
+    "case": "invented-program-success",
+    "rejected": true,
+    "error": "ValueError: ordinary measured terminal outcome"
+  }
+]
