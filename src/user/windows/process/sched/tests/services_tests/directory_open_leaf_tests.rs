@@ -5,7 +5,7 @@ use crate::user::windows::{
     process::{WindowsConfig, WindowsProcess},
 };
 
-fn run_leaf(p: &mut Proc, t: &mut Thread, args: [u64; 3], expected: u32) {
+pub(super) fn run_leaf(p: &mut Proc, t: &mut Thread, args: [u64; 3], expected: u32) {
     let module = loader::load_dll(p, "ntdll.dll").unwrap();
     let entry = loader::lookup(
         p,

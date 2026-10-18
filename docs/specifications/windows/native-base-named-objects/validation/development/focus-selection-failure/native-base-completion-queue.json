@@ -1,0 +1,14 @@
+{
+  "utc": "2026-10-18T12:08:19.720626+00:00",
+  "state": "finished",
+  "argv": [
+    "prlctl",
+    "exec",
+    "a5b14f9a-d292-4610-a04d-df4ca4337c9d",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "-B",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\finish-native-base-epoch2.py"
+  ],
+  "exit-code": 1,
+  "completed-utc": "2026-10-18T12:08:48.003136+00:00"
+}

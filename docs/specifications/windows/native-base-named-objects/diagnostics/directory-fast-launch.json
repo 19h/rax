@@ -1,0 +1,71 @@
+{
+  "pid": 9948,
+  "state": "finished",
+  "utc": "2026-10-18T01:23:39.180944+00:00",
+  "scope": "new read-only diagnostic observer; original W observer unchanged",
+  "source-before": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\directory-fast-trace.rs",
+    "bytes": 2994,
+    "sha256": "1a5d047c324cdcc365d697273bacca64536d0c4366ee58dc0e66764119efa907"
+  },
+  "child": 10736,
+  "executable-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\directory-fast\\directory-fast-trace.exe",
+    "bytes": 26522112,
+    "sha256": "2c905f3ccbf1d8472fc4eb071d52b4e878dbf7a77460a4ee6622acc301bda99c"
+  },
+  "outcomes": [
+    {
+      "program": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-token-scalars\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "log": "directory-fast-0.log",
+      "exit-code": 0,
+      "seconds": 77.10061662498629,
+      "log-identity": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\directory-fast-0.log",
+        "bytes": 518,
+        "sha256": "75aa92a99b3a9231f6b123578558fd09be8d340f5546d152fa250fa02755e99f"
+      },
+      "program-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-token-scalars\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      }
+    },
+    {
+      "program": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "log": "directory-fast-1.log",
+      "exit-code": 0,
+      "seconds": 62.81311491597444,
+      "log-identity": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\directory-fast-1.log",
+        "bytes": 440,
+        "sha256": "0affabb97ca7f53df2f0d34ed8ea7e416cdaff9ffa17d83ed003ade37382b625"
+      },
+      "program-after": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      }
+    }
+  ],
+  "source-after": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\directory-fast-trace.rs",
+    "bytes": 2994,
+    "sha256": "1a5d047c324cdcc365d697273bacca64536d0c4366ee58dc0e66764119efa907"
+  },
+  "executable-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\directory-fast\\directory-fast-trace.exe",
+    "bytes": 26522112,
+    "sha256": "2c905f3ccbf1d8472fc4eb071d52b4e878dbf7a77460a4ee6622acc301bda99c"
+  },
+  "exit_code": 0,
+  "completed-utc": "2026-10-18T01:26:15.814206+00:00"
+}

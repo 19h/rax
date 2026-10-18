@@ -1,0 +1,136 @@
+{
+  "plugin-lifecycle": {
+    "status": "unaffected",
+    "reason": "No plugin load/teardown or IDA callbacks change; the RAX process backend remains behind its existing entry points."
+  },
+  "UI-state": {
+    "status": "unaffected",
+    "reason": "No Qt widgets, ownership, rendering or copy changes."
+  },
+  "conversation-lane": {
+    "status": "unaffected",
+    "reason": "No transcript, cancellation, lane or history implementation changes."
+  },
+  "agent-backend": {
+    "status": "unaffected",
+    "reason": "Provider and orchestration code are unchanged; selected NT directory data is private to the process-emulation backend."
+  },
+  "prompt-context": {
+    "status": "unaffected",
+    "reason": "No prompts, context collection or anonymization changes."
+  },
+  "tool-schema": {
+    "status": "unaffected",
+    "reason": "Existing emulation options and result schemas remain unchanged; no new tool is registered."
+  },
+  "permission-mutation": {
+    "status": "affected",
+    "reason": "Capture current-host directory grants and case policy without forwarding guest opens or creating host namespace objects. Guest handles continue to refer to private captured metadata."
+  },
+  "main-thread-dispatch": {
+    "status": "unaffected",
+    "reason": "The Rust userland engine calls no IDA, Hex-Rays or Qt API."
+  },
+  "mesh-MCP": {
+    "status": "unaffected",
+    "reason": "No routing, identity, discovery manifest or external protocol change."
+  },
+  "transport-crypto": {
+    "status": "unaffected",
+    "reason": "No framing, credentials or cryptographic data changes."
+  },
+  "persistence": {
+    "status": "unaffected",
+    "reason": "Captured properties are private to one process runtime; no persisted schema or path changes."
+  },
+  "SDK-ABI": {
+    "status": "unaffected",
+    "reason": "The directory tree and completeness flag are internal Rust state. Exported C layouts, signatures and ABI versions are unchanged."
+  },
+  "optional-engines": {
+    "status": "affected",
+    "reason": "RAX installed Windows runtime gains BaseNamedObjects and selected-session ancestry. Other engines are unchanged."
+  },
+  "update-release": {
+    "status": "affected",
+    "reason": "After complete validation, publish a separate RAX semantic group and paired root pin/engineering records through the authorized workflow. No release notes, defaults or package layout changes."
+  },
+  "targets-platforms": {
+    "status": "affected",
+    "reason": "Portable Rust selection/tree/probe-policy code and service tests require macOS, Linux and Windows validation. Native acquisition and independent installed-leaf checks run on Windows. C API/retained Assist consumers and packaging are audited separately; no public ABI or installed-file layout is changed."
+  },
+  "tests-docs": {
+    "status": "affected",
+    "reason": "Native access/coherence evidence, direct and installed-leaf tests, full three-host core checks and retained-consumer scope are bound in validation/."
+  },
+  "rax-execution-planes": {
+    "direct-decode": {
+      "status": "unaffected",
+      "reason": "No instruction decoder or encoding changes."
+    },
+    "direct-execute": {
+      "status": "unaffected",
+      "reason": "Existing CPU execution and syscall ABI dispatch are unchanged; only selected process objects change."
+    },
+    "cpu-state": {
+      "status": "unaffected",
+      "reason": "No register, exception, exported CPU-state or serialization layout changes."
+    },
+    "memory-mmu": {
+      "status": "unaffected",
+      "reason": "No guest address-space, memory-probe, page permission, atomic or MMU implementation changes."
+    },
+    "smir-lift": {
+      "status": "unaffected",
+      "reason": "No lifter changes or new instruction admission."
+    },
+    "smir-ir": {
+      "status": "unaffected",
+      "reason": "No IR operation or type changes."
+    },
+    "smir-interpreter": {
+      "status": "unaffected",
+      "reason": "No canonical IR behavior changes."
+    },
+    "optimizer": {
+      "status": "unaffected",
+      "reason": "No IR transformation or optimization changes."
+    },
+    "native-lowering": {
+      "status": "unaffected",
+      "reason": "No host emitter or lowering changes."
+    },
+    "jit-runtime": {
+      "status": "unaffected",
+      "reason": "No JIT gate, trampoline, clobber, cache or exit changes."
+    },
+    "backend": {
+      "status": "unaffected",
+      "reason": "KVM/HVF and software CPU adapters are unchanged."
+    },
+    "machine-device": {
+      "status": "unaffected",
+      "reason": "No board, device, MMIO, PIO or DMA changes."
+    },
+    "oracle-analysis": {
+      "status": "unaffected",
+      "reason": "No static oracle schema or architectural effect model changes."
+    },
+    "c-abi": {
+      "status": "unaffected",
+      "reason": "Only private Rust namespace state and native selection wiring change; exported C headers/layouts/functions remain unchanged."
+    },
+    "user-mode-runtime": {
+      "status": "affected",
+      "reason": "Installed Windows directory capture, selected-session tree assembly and object-open metadata/lifetime contracts."
+    },
+    "tests-docs": {
+      "status": "affected",
+      "reason": "Native input/identity/coherence evidence, direct service and installed-leaf tests, three-host full-core and C API/consumer gates."
+    }
+  },
+  "partial-membership": {
+    "status": "affected",
+    "reason": "Directory completeness is private state; incomplete membership cannot prove object absence. No public ABI changes."
+  }
+}

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "N1",
+    "assumption": "The development copy exactly inherits the frozen scalar source before the namespace edits.",
+    "basis": "All 5718 copied inputs were checked against the W manifest.",
+    "dependent-result": "Isolated prototype development while W native validation continues.",
+    "stress-test": "Port only the namespace-owned files after the scalar commit exists.",
+    "falsification-probe": "Any inherited input differs at final port time.",
+    "status": "confirmed",
+    "qualification": "Final worktree and native selected source identities agree; full three-host regression is retained."
+  },
+  {
+    "id": "N2",
+    "assumption": "The selected primary-token session identifies the ordinary BaseNamedObjects path.",
+    "basis": "Current session-0 startup and direct native opens use the global path; nonzero-session paths are explicitly modeled.",
+    "dependent-result": "Selection of session ancestors and local BaseNamedObjects.",
+    "stress-test": "Sessions 1, 42 and UINT32_MAX; independent native leaf, missing ancestors and mismatched sessions.",
+    "falsification-probe": "Native startup in a selected context requests a different path.",
+    "status": "confirmed",
+    "qualification": "Global session-0 and explicit session-1 paths were measured under the native session-0 principal; another principal's grants remain outside that evidence."
+  },
+  {
+    "id": "N3",
+    "assumption": "Matching unique pairs establish complete captured membership; stable intersections establish only incomplete membership.",
+    "basis": "Native traversal showed duplicate entries and changing memberships.",
+    "dependent-result": "Three complete-capture attempts remain bounded. Non-image fallbacks must return Unselected for absent entries; image directories still require complete capture.",
+    "stress-test": "Duplicate names, changed types, case-fold collisions and changed consecutive lists.",
+    "falsification-probe": "Capture silently admits inconsistent lists or is claimed to follow later host changes.",
+    "status": "confirmed",
+    "qualification": "Revised incomplete-membership contract passed three-host full regression and 16 controlled native churn captures; the original 16 capture failures remain recorded."
+  },
+  {
+    "id": "N4",
+    "assumption": "A failed case-policy sample is not evidence of a directory case policy.",
+    "basis": "Source review found that three not-found results could otherwise be mistaken for forced-insensitive lookup in a changing directory.",
+    "dependent-result": "Bounded candidate sampling accepts only a known-existing success/type-mismatch reference with matching explicit-insensitive result.",
+    "stress-test": "Deleted sample, denied access, mismatched explicit result and all missing outcomes.",
+    "falsification-probe": "Any absent or inaccessible sample is admitted as case-policy evidence.",
+    "status": "confirmed",
+    "qualification": "Pure rejection tests, Windows installed-leaf tests and final full regression pass for the bounded source change."
+  },
+  {
+    "id": "N5",
+    "assumption": "The selected 5718 core/workspace inputs form a self-contained Cargo source copy.",
+    "basis": "Initial prototype copy used that verification manifest alone.",
+    "dependent-result": "Ability to run prototype tests without the baseline repository fixtures and path-patched dependency.",
+    "stress-test": "Cargo resolves vm-memory and compiles every include_str/include_bytes input.",
+    "falsification-probe": "Missing dependency manifest or compile-time fixture.",
+    "status": "falsified",
+    "qualification": "The real Git worktree supplies the omitted baseline fixtures and unchanged vendored dependency; prototype preparation failures remain recorded."
+  },
+  {
+    "id": "N6",
+    "assumption": "A non-image directory can retain useful stable membership without proving complete membership.",
+    "basis": "An opened directory handle and stable entries remain valid despite other names changing.",
+    "dependent-result": "Runtime selection continues under owned namespace churn while unknown names are refused.",
+    "stress-test": "Duplicate/case collisions, additions/deletions/type changes, incomplete ancestors, and a controlled native event producer.",
+    "falsification-probe": "Any absent partial-directory name returns a fabricated absence status, or a selected child loses identity.",
+    "status": "confirmed",
+    "qualification": "Revised incomplete-membership contract passed three-host full regression and 16 controlled native churn captures; the original 16 capture failures remain recorded."
+  }
+]

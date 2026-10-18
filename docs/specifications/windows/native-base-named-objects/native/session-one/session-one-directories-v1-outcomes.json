@@ -1,0 +1,26 @@
+﻿[
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "source":  "1c81ffd3e5bf027950440aae3ce6e52ec7d5ec1b6078a4b31b49002e136d31cf",
+        "log":  "session-one-directories-v1-arm64.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "source":  "1c81ffd3e5bf027950440aae3ce6e52ec7d5ec1b6078a4b31b49002e136d31cf",
+        "log":  "session-one-directories-v1-x64.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "source":  "1c81ffd3e5bf027950440aae3ce6e52ec7d5ec1b6078a4b31b49002e136d31cf",
+        "log":  "session-one-directories-v1-x86.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "source":  "1c81ffd3e5bf027950440aae3ce6e52ec7d5ec1b6078a4b31b49002e136d31cf",
+        "log":  "session-one-directories-v1-x86-laa.log"
+    }
+]

@@ -13,6 +13,8 @@ mod leaf;
 mod name_probe;
 #[path = "directory_open_reference_tests.rs"]
 mod reference;
+#[path = "directory_session_tests.rs"]
+mod session_directories;
 const SERVICE: u32 = 0x58;
 macro_rules! corpus {
     ($f:literal) => {

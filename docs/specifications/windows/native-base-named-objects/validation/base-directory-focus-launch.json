@@ -1,0 +1,9 @@
+{
+  "pid": 3592,
+  "state": "finished",
+  "utc": "2026-10-18T01:40:58.979688+00:00",
+  "source-inputs": 5728,
+  "child": 8544,
+  "exit_code": 0,
+  "completed-utc": "2026-10-18T01:44:33.825427+00:00"
+}

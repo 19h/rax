@@ -1,0 +1,4 @@
+{
+  "source-sha256": "1a5d047c324cdcc365d697273bacca64536d0c4366ee58dc0e66764119efa907",
+  "scope": "Same production startup, first 2100000 scheduler turns run as one bounded call; no guest state writes or instruction changes; observations begin afterward."
+}

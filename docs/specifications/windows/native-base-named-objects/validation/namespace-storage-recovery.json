@@ -1,0 +1,72 @@
+{
+  "utc": "2026-10-18T12:04:47.323838+00:00",
+  "state": "finished",
+  "source-epoch": 2,
+  "original-driver": {
+    "pid": 5368,
+    "utc": "2026-10-18T11:18:35.828812+00:00",
+    "state": "failed",
+    "source": "src-base-named-objects",
+    "source-inputs": 5728,
+    "source-epoch": 2,
+    "child-pid": 6188,
+    "argv": [
+      "powershell.exe",
+      "-NoProfile",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-base-final-core.ps1"
+    ],
+    "core-exit-code": 101,
+    "exit-code": 1,
+    "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-base-final-core.py\", line 16, in <module>\n    if code:raise RuntimeError('native token '+stage+' failed: '+str(code))\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: native token core failed: 101\n",
+    "completed-utc": "2026-10-18T12:03:56.450657+00:00"
+  },
+  "storage-cleanup": {
+    "utc": "2026-10-18T12:04:32.346165+00:00",
+    "deleted-directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\incremental",
+    "files": 3278,
+    "bytes": 12865926250,
+    "free-before": 0,
+    "free-after": 12440932352,
+    "preserved": "All source trees, debug/deps archives and executables, logs, other build targets"
+  },
+  "environment": {
+    "CARGO_INCREMENTAL": "0"
+  },
+  "checks": [
+    {
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\verify-base-final.py"
+      ],
+      "log": "namespace-recovery-source-before.log",
+      "exit-code": 0
+    },
+    {
+      "argv": [
+        "powershell.exe",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\recover-namespace-check.ps1"
+      ],
+      "log": "namespace-recovery-driver.log",
+      "exit-code": 0
+    },
+    {
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\verify-base-final.py"
+      ],
+      "log": "namespace-recovery-source-after.log",
+      "exit-code": 0
+    }
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T12:08:14.890026+00:00"
+}

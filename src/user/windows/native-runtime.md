@@ -2272,3 +2272,32 @@ Unchanged ordinary-observer outcomes:
 Both executed ordinary programs pass token classes 12, 29 and 42, then stop at an uncaptured NtOpenDirectoryObject namespace: smoke at turn 2149956 and whoami at turn 2152305. Neither terminal is a successful guest exit; the broader process-userland goal remains incomplete.
 
 [Native contract and full evidence](../../../docs/specifications/windows/native-token-scalars/README.md).
+
+
+## Selected native base named-object directories (2026-10-18)
+
+The installed Windows runtime now captures `\BaseNamedObjects` and the selected
+nonzero token-session ancestry. Deepest-first tree construction preserves shared
+absolute/relative identity. Missing parents and unavailable case-policy samples
+are explicit failures. After bounded complete-capture attempts, changing
+non-image directories retain only a stable unique intersection and are marked
+incomplete. An absent entry in them remains unselected; KnownDLL images still
+require coherent capture. Image-section
+capture remains limited to the KnownDLL families. Guest requests do not acquire
+host handles. Existing public C ABI, defaults and dependencies remain unchanged.
+
+Native proof binds 3072 access cases and 24 enumerations / 17436 entry records,
+including two failed snapshot pairs. Direct replay covers 1280 selected access
+rows. Full suites are macOS7921/0/2, Linux7915/0/2 and Windows7358/5/2, retaining
+five known lowerer failures and two existing ignores. Focus12/12/13, C API168,
+all-target checks and scoped retained Assist consumers pass. Source identities
+bind 5728 core/workspace and 419 owning inputs; two actual Cargo archives per
+host have complete member walks and empty core features. Frozen RustABI184 and
+compared/current root Rust remain distinct.
+
+- `terminal turn=2149970 Complete(Internal("native NTDLL service NtQueryInformationToken: Unimplemented(\"NtQueryInformationToken: NtQueryInformationToken class 44\")"))`
+- `terminal turn=2152319 Complete(Internal("native NTDLL service NtQueryInformationToken: Unimplemented(\"NtQueryInformationToken: NtQueryInformationToken class 44\")"))`
+
+Both ordinary programs open the captured BaseNamedObjects directory successfully and stop at the following unimplemented NtQueryInformationToken class44 call. Neither program reaches a successful guest exit.
+
+[Contract and evidence](../../../docs/specifications/windows/native-base-named-objects/README.md).

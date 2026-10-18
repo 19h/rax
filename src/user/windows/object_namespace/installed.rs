@@ -260,54 +260,51 @@ fn basic(h: &Owned) -> io::Result<u32> {
     Ok(data[1])
 }
 fn forced_case(path: &[u16], h: &Owned, entries: &[CapturedEntry]) -> io::Result<bool> {
-    let sample = entries
-        .iter()
-        .find(|e| {
-            e.name
-                .iter()
-                .any(|u| (65..=90).contains(u) || (97..=122).contains(u))
-        })
-        .ok_or_else(|| invalid("selected directory has no case-policy probe entry"))?;
-    let altered: Vec<_> = sample
-        .name
-        .iter()
-        .map(|&u| {
-            if (65..=90).contains(&u) {
-                u + 32
-            } else if (97..=122).contains(&u) {
-                u - 32
-            } else {
-                u
-            }
-        })
-        .collect();
     let probe = |name: &[u16], flags: u32| -> io::Result<u32> {
         match open(name, h.0, 1, false, flags)? {
             Ok(handle) => {
                 handle.close()?;
                 Ok(0)
             }
-            Err(s) => Ok(s),
+            Err(status) => Ok(status),
         }
     };
-    let original = probe(&sample.name, 0)?;
-    let folded = probe(&altered, 0)?;
-    let explicit = probe(&altered, 0x40)?;
-    if original != explicit {
-        return Err(invalid(
-            "selected directory explicit case-fold probe is inconsistent",
-        ));
+    // A live namespace can remove a sampled child after enumeration. Try a
+    // bounded set of candidates, and never infer policy from a missing child.
+    for sample in entries
+        .iter()
+        .filter(|e| {
+            e.name
+                .iter()
+                .any(|u| (65..=90).contains(u) || (97..=122).contains(u))
+        })
+        .take(16)
+    {
+        let altered: Vec<_> = sample
+            .name
+            .iter()
+            .map(|&u| {
+                if (65..=90).contains(&u) {
+                    u + 32
+                } else if (97..=122).contains(&u) {
+                    u - 32
+                } else {
+                    u
+                }
+            })
+            .collect();
+        if let Some(policy) = case_probe_policy(
+            probe(&sample.name, 0)?,
+            probe(&altered, 0)?,
+            probe(&altered, 0x40)?,
+        ) {
+            return Ok(policy);
+        }
     }
-    if folded == original {
-        Ok(true)
-    } else if folded == STATUS_OBJECT_NAME_NOT_FOUND {
-        Ok(false)
-    } else {
-        Err(invalid(&format!(
-            "selected NT directory case policy changed for {}",
-            String::from_utf16_lossy(path)
-        )))
-    }
+    Err(invalid(&format!(
+        "selected NT directory has no stable accessible case-policy sample: {}",
+        String::from_utf16_lossy(path)
+    )))
 }
 fn system_root() -> io::Result<Vec<u16>> {
     // SAFETY: the installed native export returns the current process's stable
@@ -330,11 +327,13 @@ fn system_root() -> io::Result<Vec<u16>> {
         "native NT system root is not terminated within 260 WCHARs",
     ))
 }
-pub(crate) fn snapshot(upcase: Arc<[u16]>) -> io::Result<Namespace> {
+pub(crate) fn snapshot(upcase: Arc<[u16]>, session: u32) -> io::Result<Namespace> {
     let mut sources = Vec::new();
     let mut selected = Vec::new();
-    for path in PATHS {
-        let units: Vec<_> = path.encode_utf16().collect();
+    let mut incomplete = Vec::new();
+    for units in selection_paths(Some(session)) {
+        let path =
+            String::from_utf16(&units).map_err(|_| invalid("selected NT path is not UTF-16"))?;
         let h = match open(&units, null_mut(), 0x0200_0000, false, 0x40)? {
             Ok(h) => h,
             Err(STATUS_OBJECT_NAME_NOT_FOUND) if path == PATHS[2] || path == PATHS[3] => continue,
@@ -360,22 +359,32 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>) -> io::Result<Namespace> {
             }
         };
         let mut entries = None;
+        let mut last = None;
         for _ in 0..3 {
             let first = enumerate(&h)?;
             let second = enumerate(&h)?;
-            if first
-                .iter()
-                .map(|e| (&e.name, &e.kind))
-                .eq(second.iter().map(|e| (&e.name, &e.kind)))
-            {
+            if entries_coherent(&upcase, &first, &second) {
                 entries = Some(first);
                 break;
             }
+            last = Some((first, second));
         }
-        let mut entries = entries
-            .ok_or_else(|| invalid("selected NT directory changed during bounded capture"))?;
+        let mut entries = match entries {
+            Some(entries) => entries,
+            None if !image_directory(&units) => {
+                let (first, second) = last.expect("three bounded captures were attempted");
+                incomplete.push(units.clone());
+                stable_volatile_entries(&upcase, &first, &second)
+                    .ok_or_else(|| invalid("partial NT directory capture exceeds bounds"))?
+            }
+            None => {
+                return Err(invalid(&format!(
+                    "selected image directory changed during bounded capture: {path}"
+                )));
+            }
+        };
         let force_case_insensitive = forced_case(&units, &h, &entries)?;
-        if path != PATHS[0] && path != PATHS[4] {
+        if image_directory(&units) {
             for entry in &mut entries {
                 if is(&entry.kind, "Section") {
                     let (captured, source) = section::capture(&units, &entry.name)?;
@@ -409,7 +418,8 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>) -> io::Result<Namespace> {
             entries,
         });
     }
-    let mut namespace = Namespace::selected(upcase, selected)?;
+    let mut namespace =
+        Namespace::selected_for_session_partial(upcase, selected, Some(session), &incomplete)?;
     for (path, source) in sources {
         let section = namespace
             .lookup_section(None, &path, 0x40, false)

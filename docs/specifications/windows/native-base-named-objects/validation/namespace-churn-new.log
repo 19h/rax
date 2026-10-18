@@ -1,0 +1,17 @@
+﻿capture index=0 result=ok
+capture index=1 result=ok
+capture index=2 result=ok
+capture index=3 result=ok
+capture index=4 result=ok
+capture index=5 result=ok
+capture index=6 result=ok
+capture index=7 result=ok
+capture index=8 result=ok
+capture index=9 result=ok
+capture index=10 result=ok
+capture index=11 result=ok
+capture index=12 result=ok
+capture index=13 result=ok
+capture index=14 result=ok
+capture index=15 result=ok
+complete captures=16 ok=16 failed=0 created=9591 closed=9591 error=None scope=capture-only-no-guest-execution

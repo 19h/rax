@@ -1,0 +1,16 @@
+{
+  "pid": 1832,
+  "utc": "2026-10-18T11:18:55.651211+00:00",
+  "state": "finished",
+  "child-pid": 9016,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\assist-native-base-final-owned.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T11:30:44.206037+00:00"
+}

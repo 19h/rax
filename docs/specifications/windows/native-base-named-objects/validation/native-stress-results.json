@@ -1,0 +1,52 @@
+[
+  {
+    "case": "hidden-churn-handle-leak",
+    "rejected": true,
+    "error": "ValueError: Original churn handle lifetime"
+  },
+  {
+    "case": "missing-native-profile",
+    "rejected": true,
+    "error": "ValueError: four native profiles"
+  },
+  {
+    "case": "wrong-PE-machine",
+    "rejected": true,
+    "error": "ValueError: native PE machine and LAA"
+  },
+  {
+    "case": "invented-directory-grant",
+    "rejected": true,
+    "error": "ValueError: native exact query/traverse/create grants"
+  },
+  {
+    "case": "invented-OPENLINK-success",
+    "rejected": true,
+    "error": "ValueError: native directory OPENLINK rejection"
+  },
+  {
+    "case": "hidden-handle-leak",
+    "rejected": true,
+    "error": "ValueError: no leaked native handles"
+  },
+  {
+    "case": "invented-snapshot-uniqueness",
+    "rejected": true,
+    "error": "ValueError: coherence uniqueness claim"
+  },
+  {
+    "case": "invented-coherent-pair",
+    "rejected": true,
+    "error": "ValueError: coherence pair claim"
+  },
+  {
+    "case": "changed-diagnostic-image",
+    "rejected": true,
+    "error": "ValueError: diagnostic executable identity"
+  },
+  {
+    "case": "invented-guest-success",
+    "rejected": true,
+    "error": "ValueError: recorded directory boundary, not successful guest exit"
+  }
+]

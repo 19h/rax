@@ -1,0 +1,82 @@
+[
+  {
+    "profile": "arm64",
+    "passes": 6,
+    "entry-rows": 4362,
+    "pairs": [
+      true,
+      false,
+      true
+    ],
+    "handles-before": 56,
+    "handles-after": 56,
+    "pe": {
+      "profile": "arm64",
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\directory-coherence-v2-arm64\\probe.exe",
+      "bytes": 187904,
+      "sha256": "e3d17f1d468fae64c6b4c786a7d95b3406e9d54387a22a3510d54d67cac7d99e",
+      "machine": 43620,
+      "large-address-aware": true
+    }
+  },
+  {
+    "profile": "x64",
+    "passes": 6,
+    "entry-rows": 4362,
+    "pairs": [
+      true,
+      false,
+      true
+    ],
+    "handles-before": 78,
+    "handles-after": 78,
+    "pe": {
+      "profile": "x64",
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\directory-coherence-v2-x64\\probe.exe",
+      "bytes": 189952,
+      "sha256": "bd697ed331b088fe4a0edb987f51c7fd8f97f8565ad9606ead5d5c1eaa56763a",
+      "machine": 34404,
+      "large-address-aware": true
+    }
+  },
+  {
+    "profile": "x86",
+    "passes": 6,
+    "entry-rows": 4356,
+    "pairs": [
+      true,
+      true,
+      true
+    ],
+    "handles-before": 93,
+    "handles-after": 93,
+    "pe": {
+      "profile": "x86",
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\directory-coherence-v2-x86\\probe.exe",
+      "bytes": 153600,
+      "sha256": "2f424ff8815d385fb03ffbdc376001b886861c32fdd27911807c4ed77bb74939",
+      "machine": 332,
+      "large-address-aware": false
+    }
+  },
+  {
+    "profile": "x86-laa",
+    "passes": 6,
+    "entry-rows": 4356,
+    "pairs": [
+      true,
+      true,
+      true
+    ],
+    "handles-before": 93,
+    "handles-after": 93,
+    "pe": {
+      "profile": "x86-laa",
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\directory-coherence-v2-x86-laa\\probe.exe",
+      "bytes": 153600,
+      "sha256": "16f79d306be3bae73d7b543bc977137202a90390ee4b93b9d1f91f12431c8863",
+      "machine": 332,
+      "large-address-aware": true
+    }
+  }
+]

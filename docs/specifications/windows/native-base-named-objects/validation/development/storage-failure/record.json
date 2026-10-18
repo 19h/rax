@@ -1,0 +1,5 @@
+{
+  "utc": "2026-10-18T12:04:28.151289+00:00",
+  "source-epoch": 2,
+  "failure": "Windows error112 writing rustc query-cache.bin; unchanged source and successful full-suite results retained."
+}

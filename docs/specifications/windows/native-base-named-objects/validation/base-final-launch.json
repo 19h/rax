@@ -1,0 +1,12 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "source": "src-base-named-objects",
+  "source-inputs": 5728,
+  "source-epoch": 2,
+  "core-exit-code": 0,
+  "original-driver-record": "base-final-launch.json.storage-failure",
+  "recovery-record": "namespace-storage-recovery.json",
+  "completed-utc": "2026-10-18T12:08:14.890026+00:00",
+  "scope": "Original integration/C API/full results plus the recovered all-target check."
+}

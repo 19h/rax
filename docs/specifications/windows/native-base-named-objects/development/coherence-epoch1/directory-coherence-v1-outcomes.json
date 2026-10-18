@@ -1,0 +1,8 @@
+﻿[
+    {
+        "profile":  "arm64",
+        "exit-code":  21,
+        "source":  "f99f667ff7cb3b13186e58962173bc7c015c9a3b74659bf3296bef6d874be361",
+        "log":  "directory-coherence-v1-arm64.log"
+    }
+]

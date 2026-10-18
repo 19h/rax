@@ -1,0 +1,10 @@
+[
+  {
+    "program-sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b",
+    "terminal": "terminal turn=2149970 Complete(Internal(\"native NTDLL service NtQueryInformationToken: Unimplemented(\\\"NtQueryInformationToken: NtQueryInformationToken class 44\\\")\"))"
+  },
+  {
+    "program-sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6",
+    "terminal": "terminal turn=2152319 Complete(Internal(\"native NTDLL service NtQueryInformationToken: Unimplemented(\\\"NtQueryInformationToken: NtQueryInformationToken class 44\\\")\"))"
+  }
+]

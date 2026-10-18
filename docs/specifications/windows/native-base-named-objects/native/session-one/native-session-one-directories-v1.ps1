@@ -1,0 +1,30 @@
+$ErrorActionPreference='Stop'
+$s='C:\Mac\Home\Downloads\assist-native-allocate-ex-transfer-20261010-2154'
+$b='C:\Windows\Temp\assist-native-rax-20261010'
+$rows=@()
+foreach($profile in @('arm64','x64','x86','x86-laa')){
+ $arch=if($profile -eq 'x86-laa'){'x86'}else{$profile}
+ $root=$b+'\session-one-directories-v1-'+$profile
+ [IO.Directory]::CreateDirectory($root)|Out-Null
+ Copy-Item ($s+'\native-session-one-directories-v1.cpp') ($root+'\native-session-one-directories-v1.cpp')
+ if((Get-FileHash ($root+'\native-session-one-directories-v1.cpp')).Hash.ToLowerInvariant() -ne '1c81ffd3e5bf027950440aae3ce6e52ec7d5ec1b6078a4b31b49002e136d31cf'){throw 'source changed'}
+ & 'C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch $arch -HostArch arm64
+ Set-Location $root
+ $laa=if($profile -eq 'x86-laa'){' /LARGEADDRESSAWARE'}else{''}
+ & cmd.exe /d /c ('cl.exe /nologo /std:c++20 /MT /GS /we4129 /we4473 /we4474 /we4477 native-session-one-directories-v1.cpp advapi32.lib /link /SUBSYSTEM:CONSOLE,10.0 /OUT:probe.exe'+$laa+' > build.log 2>&1')
+ $build=$LASTEXITCODE
+ Copy-Item ($root+'\build.log') ($s+'\session-one-directories-v1-'+$profile+'-build.log')
+ if($build -ne 0){exit $build}
+ & ($b+'\python\python.exe') -B ($s+'\inspect-system-time-v2-pe.py') ($root+'\probe.exe') $profile > ($s+'\session-one-directories-v1-'+$profile+'-before.json')
+ if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+ $log='session-one-directories-v1-'+$profile+'.log'
+ & cmd.exe /d /c ('probe.exe '+$profile+' > '+$log+' 2>&1')
+ $code=$LASTEXITCODE
+ Copy-Item ($root+'\'+$log) ($s+'\'+$log)
+ $rows+=@{profile=$profile;'exit-code'=$code;log=$log;source=(Get-FileHash ($root+'\native-session-one-directories-v1.cpp')).Hash.ToLowerInvariant()}
+ ConvertTo-Json -InputObject @($rows) -Depth 4|Set-Content -Encoding utf8 ($s+'\session-one-directories-v1-outcomes.json')
+ & ($b+'\python\python.exe') -B ($s+'\inspect-system-time-v2-pe.py') ($root+'\probe.exe') $profile > ($s+'\session-one-directories-v1-'+$profile+'-after.json')
+ if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+ if($code -ne 0){exit $code}
+}
+exit 0

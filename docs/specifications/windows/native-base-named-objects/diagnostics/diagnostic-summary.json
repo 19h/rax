@@ -1,0 +1,38 @@
+[
+  {
+    "observer": "directory-frontier",
+    "program-sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b",
+    "turn": 2149956,
+    "nt-name": "\\BaseNamedObjects",
+    "log": "directory-frontier-0.log",
+    "log-sha256": "301c1f5b70119624778857900a308c456ed92be46fbe9affd9081b56f8fa81f7",
+    "terminal": "unimplemented selected namespace, not a successful guest exit"
+  },
+  {
+    "observer": "directory-frontier",
+    "program-sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6",
+    "turn": 2152305,
+    "nt-name": "\\BaseNamedObjects",
+    "log": "directory-frontier-1.log",
+    "log-sha256": "f92b417977e27b365ea4e86cefd05f1bc579843d6fc6b61d45fec4ef58f20387",
+    "terminal": "unimplemented selected namespace, not a successful guest exit"
+  },
+  {
+    "observer": "directory-fast",
+    "program-sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b",
+    "turn": 2149956,
+    "nt-name": "\\BaseNamedObjects",
+    "log": "directory-fast-0.log",
+    "log-sha256": "75aa92a99b3a9231f6b123578558fd09be8d340f5546d152fa250fa02755e99f",
+    "terminal": "unimplemented selected namespace, not a successful guest exit"
+  },
+  {
+    "observer": "directory-fast",
+    "program-sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6",
+    "turn": 2152305,
+    "nt-name": "\\BaseNamedObjects",
+    "log": "directory-fast-1.log",
+    "log-sha256": "0affabb97ca7f53df2f0d34ed8ea7e416cdaff9ffa17d83ed003ade37382b625",
+    "terminal": "unimplemented selected namespace, not a successful guest exit"
+  }
+]

@@ -1,0 +1,26 @@
+﻿[
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "source":  "ff25729e0675ef9e576e7fd651b6bc47428b2d631b2487328213eb13f8002bb5",
+        "log":  "directory-coherence-v2-arm64.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "source":  "ff25729e0675ef9e576e7fd651b6bc47428b2d631b2487328213eb13f8002bb5",
+        "log":  "directory-coherence-v2-x64.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "source":  "ff25729e0675ef9e576e7fd651b6bc47428b2d631b2487328213eb13f8002bb5",
+        "log":  "directory-coherence-v2-x86.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "source":  "ff25729e0675ef9e576e7fd651b6bc47428b2d631b2487328213eb13f8002bb5",
+        "log":  "directory-coherence-v2-x86-laa.log"
+    }
+]

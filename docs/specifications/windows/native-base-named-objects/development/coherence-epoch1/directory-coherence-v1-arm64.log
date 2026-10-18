@@ -1,0 +1,3 @@
+identity profile=arm64 pointer-bytes=8 build=10.0.29683 token-session=0 process-session=0 private-namespace=0
+selected status=C000003B
+failure=selected-open win32=0

@@ -1,0 +1,10 @@
+error: failed to load source for dependency `vm-memory`
+
+Caused by:
+  unable to update /Users/int/Library/Caches/assist-process-emulation/native-base-named-objects-20261018/prototype-source/vendor/vm-memory
+
+Caused by:
+  failed to read `/Users/int/Library/Caches/assist-process-emulation/native-base-named-objects-20261018/prototype-source/vendor/vm-memory/Cargo.toml`
+
+Caused by:
+  No such file or directory (os error 2)

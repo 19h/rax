@@ -1,0 +1,8 @@
+﻿{
+    "sha256-before":  "81b8119ae8570e1b1d236e815268aaab33ed377a45dee7a78f74e1f08014200e",
+    "selection":  "Same Cargo-selected test binary as the complete native library suite",
+    "exe":  "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\deps\\rax-d861ee8f992d7cb6.exe",
+    "exit-code":  0,
+    "source-epoch":  2,
+    "sha256-after":  "81b8119ae8570e1b1d236e815268aaab33ed377a45dee7a78f74e1f08014200e"
+}

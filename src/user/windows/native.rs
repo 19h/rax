@@ -106,8 +106,13 @@ impl NativeRuntime {
             ));
         }
         runtime.registry = super::registry::snapshot()?;
+        runtime.wnf_catalog = super::wnf::snapshot()?;
+        let token_session = runtime
+            .wnf_catalog
+            .primary_token_session_id()
+            .ok_or_else(|| invalid("native primary-token session is not captured"))?;
         runtime.object_namespace =
-            super::object_namespace::snapshot(runtime.registry.upcase_table())?;
+            super::object_namespace::snapshot(runtime.registry.upcase_table(), token_session)?;
         runtime.nls = Some(super::nls::snapshot(
             &runtime.registry,
             &schema_directory,
@@ -115,7 +120,6 @@ impl NativeRuntime {
         )?);
         runtime.appcompat =
             super::appcompat::Catalog::snapshot(&root, runtime.registry.upcase_table())?;
-        runtime.wnf_catalog = super::wnf::snapshot()?;
         Ok(runtime)
     }
 

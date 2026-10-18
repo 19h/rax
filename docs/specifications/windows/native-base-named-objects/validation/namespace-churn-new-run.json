@@ -1,0 +1,52 @@
+{
+  "utc": "2026-10-18T11:27:42.006607+00:00",
+  "state": "finished",
+  "source-epoch": 2,
+  "cargo-artifact": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///C:/Windows/Temp/assist-native-rax-20261010/src-base-named-objects#rax@0.1.0",
+    "manifest_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-base-named-objects\\Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "rax",
+      "src_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-base-named-objects\\src\\lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 2,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": false
+    },
+    "features": [],
+    "filenames": [
+      "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\deps\\librax-b3cb012e55bc2251.rlib",
+      "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\deps\\librax-b3cb012e55bc2251.rmeta"
+    ],
+    "executable": null,
+    "fresh": false
+  },
+  "artifact-stream-sha256": "d41896c9bb828dd3e747187f49f04adecdc5cecec5ef52d5da7957cde2ea7bbb",
+  "argv": [
+    "prlctl",
+    "exec",
+    "a5b14f9a-d292-4610-a04d-df4ca4337c9d",
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\namespace-churn-new.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T11:28:54.665768+00:00"
+}

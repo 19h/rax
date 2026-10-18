@@ -1,0 +1,5 @@
+{
+  "utc": "2026-10-18T12:09:15.420531+00:00",
+  "cause": "The selector expected a forward slash in the Cargo test-source label, but Windows prints src\\lib.rs. No focus tests ran in this attempt.",
+  "correction": "Accept either native separator while selecting the exact full-suite executable. Source/compiled test binary unchanged."
+}

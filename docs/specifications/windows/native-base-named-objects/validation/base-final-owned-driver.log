@@ -1,0 +1,12 @@
+Retargeted verified task-owned RAX junction
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+Verified 419 owning source identities and 3 helpers
+Verified9 actual frozen Windows C++ sources against current root
+assist-native-base-final-shipping.log EA1A2387E134B148A5BF8B07978374DBBCD116C3881E2199E4FC87E68E52E1C1
+assist-native-base-final-cpp.log B0F277678BC54485CF58C6295345A12235DF27C7D420C5085B93AB253E75E214
+validated rlib: C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-owned\debug\deps\librax-e6c413934cad3a8f.rlib
+Verified 419 owning source identities and 3 helpers
+windows [(1206679206, 4674, 'b5b62b1f233d4d678ee336ae22a2cb95f0a3317633a1925fd8aa06117749bff3'), (816941832, 260, 'eebfceb9caf667ca079734217cdeaf4951cb3aecb5dbe8a10257759c49b43076')]

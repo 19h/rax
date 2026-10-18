@@ -1,0 +1,21 @@
+{
+  "pid": 5368,
+  "utc": "2026-10-18T11:18:35.828812+00:00",
+  "state": "failed",
+  "source": "src-base-named-objects",
+  "source-inputs": 5728,
+  "source-epoch": 2,
+  "child-pid": 6188,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-base-final-core.ps1"
+  ],
+  "core-exit-code": 101,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-base-final-core.py\", line 16, in <module>\n    if code:raise RuntimeError('native token '+stage+' failed: '+str(code))\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: native token core failed: 101\n",
+  "completed-utc": "2026-10-18T12:03:56.450657+00:00"
+}

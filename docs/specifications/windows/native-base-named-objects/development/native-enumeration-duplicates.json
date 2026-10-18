@@ -1,0 +1,40 @@
+[
+  {
+    "profile": "arm64",
+    "rows": 746,
+    "unique-entries": 746,
+    "duplicates": []
+  },
+  {
+    "profile": "x64",
+    "rows": 746,
+    "unique-entries": 745,
+    "duplicates": [
+      {
+        "path": 0,
+        "name": "SM0:1272:304:WilStaging_02_p0",
+        "type": "Semaphore",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "profile": "x86",
+    "rows": 745,
+    "unique-entries": 744,
+    "duplicates": [
+      {
+        "path": 0,
+        "name": "SM0:7340:304:WilStaging_02_p0h",
+        "type": "Semaphore",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "profile": "x86-laa",
+    "rows": 745,
+    "unique-entries": 745,
+    "duplicates": []
+  }
+]

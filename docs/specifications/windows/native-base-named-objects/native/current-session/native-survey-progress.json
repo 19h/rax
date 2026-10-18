@@ -1,0 +1,173 @@
+{
+  "completed-profiles": [
+    {
+      "profile": "arm64",
+      "pe": {
+        "profile": "arm64",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\session-directories-v1-arm64\\probe.exe",
+        "bytes": 164864,
+        "sha256": "c9a093daa029977bb15973227a46cefdbb66dc4afd4aeb95fe442761139dab05",
+        "machine": 43620,
+        "large-address-aware": true
+      },
+      "identity": "identity profile=arm64 pointer-bytes=8 build=10.0.29683 token-session=0 process-session=0 private-namespace=0",
+      "paths": [
+        {
+          "ordinal": 0,
+          "name": "\\BaseNamedObjects"
+        },
+        {
+          "ordinal": 1,
+          "name": "\\Sessions"
+        },
+        {
+          "ordinal": 2,
+          "name": "\\Sessions\\0"
+        },
+        {
+          "ordinal": 3,
+          "name": "\\Sessions\\0\\BaseNamedObjects"
+        },
+        {
+          "ordinal": 4,
+          "name": "\\Sessions\\0\\BaseNamedObjects\\Restricted"
+        },
+        {
+          "ordinal": 5,
+          "name": "\\BaseNamedObjects\\Restricted"
+        }
+      ],
+      "matrix-opens": 384,
+      "entries": 746,
+      "handles-before": 56,
+      "handles-after": 56
+    },
+    {
+      "profile": "x64",
+      "pe": {
+        "profile": "x64",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\session-directories-v1-x64\\probe.exe",
+        "bytes": 162816,
+        "sha256": "4f44e72467ade2632e1f32f5729bac12c82a4a5b7964f20022a82d50c6a61531",
+        "machine": 34404,
+        "large-address-aware": true
+      },
+      "identity": "identity profile=x64 pointer-bytes=8 build=10.0.29683 token-session=0 process-session=0 private-namespace=0",
+      "paths": [
+        {
+          "ordinal": 0,
+          "name": "\\BaseNamedObjects"
+        },
+        {
+          "ordinal": 1,
+          "name": "\\Sessions"
+        },
+        {
+          "ordinal": 2,
+          "name": "\\Sessions\\0"
+        },
+        {
+          "ordinal": 3,
+          "name": "\\Sessions\\0\\BaseNamedObjects"
+        },
+        {
+          "ordinal": 4,
+          "name": "\\Sessions\\0\\BaseNamedObjects\\Restricted"
+        },
+        {
+          "ordinal": 5,
+          "name": "\\BaseNamedObjects\\Restricted"
+        }
+      ],
+      "matrix-opens": 384,
+      "entries": 746,
+      "handles-before": 78,
+      "handles-after": 78
+    },
+    {
+      "profile": "x86",
+      "pe": {
+        "profile": "x86",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\session-directories-v1-x86\\probe.exe",
+        "bytes": 133632,
+        "sha256": "e9cfe0e73a0b9c46a458b7109a4408c4ac4cc42d6a17f8ae81657ed814a71dc4",
+        "machine": 332,
+        "large-address-aware": false
+      },
+      "identity": "identity profile=x86 pointer-bytes=4 build=10.0.29683 token-session=0 process-session=0 private-namespace=0",
+      "paths": [
+        {
+          "ordinal": 0,
+          "name": "\\BaseNamedObjects"
+        },
+        {
+          "ordinal": 1,
+          "name": "\\Sessions"
+        },
+        {
+          "ordinal": 2,
+          "name": "\\Sessions\\0"
+        },
+        {
+          "ordinal": 3,
+          "name": "\\Sessions\\0\\BaseNamedObjects"
+        },
+        {
+          "ordinal": 4,
+          "name": "\\Sessions\\0\\BaseNamedObjects\\Restricted"
+        },
+        {
+          "ordinal": 5,
+          "name": "\\BaseNamedObjects\\Restricted"
+        }
+      ],
+      "matrix-opens": 384,
+      "entries": 745,
+      "handles-before": 93,
+      "handles-after": 93
+    },
+    {
+      "profile": "x86-laa",
+      "pe": {
+        "profile": "x86-laa",
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\session-directories-v1-x86-laa\\probe.exe",
+        "bytes": 133632,
+        "sha256": "99d95b66f2d387b709c3e2bbeac4ddb9750fb364c486a43aacb7e86f4898d078",
+        "machine": 332,
+        "large-address-aware": true
+      },
+      "identity": "identity profile=x86-laa pointer-bytes=4 build=10.0.29683 token-session=0 process-session=0 private-namespace=0",
+      "paths": [
+        {
+          "ordinal": 0,
+          "name": "\\BaseNamedObjects"
+        },
+        {
+          "ordinal": 1,
+          "name": "\\Sessions"
+        },
+        {
+          "ordinal": 2,
+          "name": "\\Sessions\\0"
+        },
+        {
+          "ordinal": 3,
+          "name": "\\Sessions\\0\\BaseNamedObjects"
+        },
+        {
+          "ordinal": 4,
+          "name": "\\Sessions\\0\\BaseNamedObjects\\Restricted"
+        },
+        {
+          "ordinal": 5,
+          "name": "\\BaseNamedObjects\\Restricted"
+        }
+      ],
+      "matrix-opens": 384,
+      "entries": 745,
+      "handles-before": 93,
+      "handles-after": 93
+    }
+  ],
+  "complete": true
+}

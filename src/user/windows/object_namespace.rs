@@ -6,13 +6,108 @@ use super::nt::status::*;
 use std::collections::BTreeMap;
 use std::io;
 use std::sync::Arc;
-pub(crate) const PATHS: [&str; 5] = [
+pub(crate) const PATHS: [&str; 6] = [
     "\\",
     "\\KnownDlls",
     "\\KnownDlls32",
     "\\KnownDllsChpe32",
     "\\Windows",
+    "\\BaseNamedObjects",
 ];
+/// Fixed installation roots plus the selected primary token's session roots.
+/// Object-manager names use NT separators independently of host filesystem paths.
+pub(crate) fn selection_paths(session: Option<u32>) -> Vec<Vec<u16>> {
+    let mut result: Vec<Vec<u16>> = PATHS.iter().map(|s| s.encode_utf16().collect()).collect();
+    if let Some(session) = session.filter(|&value| value != 0) {
+        for path in [
+            "\\Sessions".to_owned(),
+            format!("\\Sessions\\{session}"),
+            format!("\\Sessions\\{session}\\BaseNamedObjects"),
+        ] {
+            result.push(path.encode_utf16().collect());
+        }
+    }
+    result
+}
+
+pub(crate) fn image_directory(path: &[u16]) -> bool {
+    PATHS[1..4].iter().any(|name| is(path, name))
+}
+
+/// Both lists must describe the same unique names and types. The native
+/// enumeration API may repeat entries while its live namespace changes.
+#[cfg(any(windows, test))]
+pub(crate) fn entries_coherent(
+    upcase: &[u16],
+    first: &[CapturedEntry],
+    second: &[CapturedEntry],
+) -> bool {
+    if upcase.len() != 65536
+        || first.len() != second.len()
+        || !first
+            .iter()
+            .zip(second)
+            .all(|(a, b)| a.name == b.name && a.kind == b.kind)
+    {
+        return false;
+    }
+    let mut names = std::collections::BTreeSet::new();
+    first
+        .iter()
+        .all(|entry| names.insert(fold(upcase, &entry.name)))
+}
+
+/// Retain only unambiguous names/types observed in both bounded lists.
+/// Missing members of the resulting partial directory remain unselected.
+#[cfg(any(windows, test))]
+pub(crate) fn stable_volatile_entries(
+    upcase: &[u16],
+    first: &[CapturedEntry],
+    second: &[CapturedEntry],
+) -> Option<Vec<CapturedEntry>> {
+    if upcase.len() != 65536 || first.len() > MAX_ENTRIES || second.len() > MAX_ENTRIES {
+        return None;
+    }
+    let unique = |entries: &[CapturedEntry]| {
+        let mut names: BTreeMap<Vec<u16>, Option<CapturedEntry>> = BTreeMap::new();
+        for entry in entries {
+            let key = fold(upcase, &entry.name);
+            names
+                .entry(key)
+                .and_modify(|old| *old = None)
+                .or_insert_with(|| Some(entry.clone()));
+        }
+        names
+    };
+    let first = unique(first);
+    let second = unique(second);
+    Some(
+        first
+            .into_iter()
+            .filter_map(|(key, entry)| {
+                let entry = entry?;
+                let other = second.get(&key)?.as_ref()?;
+                (entry.name == other.name && entry.kind == other.kind).then_some(entry)
+            })
+            .collect(),
+    )
+}
+
+/// A disappearing or inaccessible sample supplies no case-policy evidence.
+#[cfg(any(windows, test))]
+pub(crate) fn case_probe_policy(original: u32, folded: u32, explicit: u32) -> Option<bool> {
+    if !matches!(original, STATUS_SUCCESS | STATUS_OBJECT_TYPE_MISMATCH) || explicit != original {
+        return None;
+    }
+    if folded == original {
+        Some(true)
+    } else if folded == STATUS_OBJECT_NAME_NOT_FOUND {
+        Some(false)
+    } else {
+        None
+    }
+}
+
 pub(crate) mod csr;
 pub(crate) mod data;
 mod image;
@@ -74,6 +169,7 @@ pub struct Directory {
     pub(crate) maximum_access: u32,
     system_security_status: u32,
     force_case_insensitive: bool,
+    entries_complete: bool,
     upcase: Arc<[u16]>,
     entries: BTreeMap<Vec<u16>, Entry>,
 }
@@ -106,14 +202,39 @@ impl Namespace {
         upcase: Arc<[u16]>,
         selected: Vec<SelectedDirectory>,
     ) -> io::Result<Self> {
-        if upcase.len() != 65536 || selected.is_empty() || selected.len() > PATHS.len() {
+        Self::selected_for_session(upcase, selected, None)
+    }
+    pub(crate) fn selected_for_session(
+        upcase: Arc<[u16]>,
+        selected: Vec<SelectedDirectory>,
+        session: Option<u32>,
+    ) -> io::Result<Self> {
+        Self::selected_for_session_partial(upcase, selected, session, &[])
+    }
+    pub(crate) fn selected_for_session_partial(
+        upcase: Arc<[u16]>,
+        selected: Vec<SelectedDirectory>,
+        session: Option<u32>,
+        incomplete: &[Vec<u16>],
+    ) -> io::Result<Self> {
+        let allowed = selection_paths(session);
+        let mut seen = std::collections::BTreeSet::new();
+        if incomplete.iter().any(|p| {
+            !allowed.contains(p)
+                || image_directory(p)
+                || !selected.iter().any(|s| s.path == *p)
+                || !seen.insert(p.clone())
+        }) {
+            return Err(invalid("invalid partial NT directory selection"));
+        }
+        if upcase.len() != 65536 || selected.is_empty() || selected.len() > allowed.len() {
             return Err(invalid("NT directory selection/table exceeds bounds"));
         }
         let mut dirs = BTreeMap::new();
         let mut section_case = None;
         let (mut count, mut bytes) = (0usize, 0usize);
         for s in selected {
-            if !PATHS.iter().any(|p| is(&s.path, p))
+            if !allowed.contains(&s.path)
                 || s.maximum_access & !ALL_ACCESS != 0
                 || !matches!(
                     s.system_security_status,
@@ -212,6 +333,7 @@ impl Namespace {
                 maximum_access: s.maximum_access,
                 system_security_status: s.system_security_status,
                 force_case_insensitive: s.force_case_insensitive,
+                entries_complete: !incomplete.contains(&key),
                 upcase: upcase.clone(),
                 entries,
             };
@@ -219,20 +341,42 @@ impl Namespace {
                 return Err(invalid("duplicate NT directory selection"));
             }
         }
-        let mut root = dirs
-            .remove(&vec![b'\\' as u16])
-            .ok_or_else(|| invalid("NT directory root is not selected"))?;
-        for (path, dir) in dirs {
-            let name = &path[1..];
-            let entry = root
+        // Attach deepest nodes first so every Arc already owns its selected
+        // descendants. A selected child requires an independently captured parent.
+        let mut paths: Vec<_> = dirs.keys().filter(|p| p.len() != 1).cloned().collect();
+        paths.sort_by_key(|path| std::cmp::Reverse(path.len()));
+        for path in paths {
+            let separator = path
+                .iter()
+                .rposition(|&unit| unit == 92)
+                .ok_or_else(|| invalid("selected NT directory has no parent separator"))?;
+            let parent_path = if separator == 0 {
+                vec![92]
+            } else {
+                path[..separator].to_vec()
+            };
+            let name = &path[separator + 1..];
+            let child = dirs
+                .remove(&path)
+                .expect("selected directory key is present");
+            let parent = dirs
+                .get_mut(&parent_path)
+                .ok_or_else(|| invalid("selected NT directory parent is not captured"))?;
+            let entry = parent
                 .entries
                 .get_mut(&fold(&upcase, name))
-                .ok_or_else(|| invalid("selected NT directory is absent from captured root"))?;
-            if !is(&entry.captured.kind, "Directory") || entry.captured.name != name {
-                return Err(invalid("selected NT directory root type/name changed"));
+                .ok_or_else(|| invalid("selected NT directory is absent from captured parent"))?;
+            if !is(&entry.captured.kind, "Directory")
+                || entry.captured.name != name
+                || entry.child.is_some()
+            {
+                return Err(invalid("selected NT directory parent type/name changed"));
             }
-            entry.child = Some(Arc::new(dir));
+            entry.child = Some(Arc::new(child));
         }
+        let root = dirs
+            .remove(&vec![92])
+            .ok_or_else(|| invalid("NT directory root is not selected"))?;
         Ok(Self {
             root: Some(Arc::new(root)),
             wow_system_prefix: Vec::new(),
@@ -340,11 +484,17 @@ impl Namespace {
                     }) || flags & 0x40 != 0
                         || e.captured.name == part
                 })
-                .ok_or(LookupError::Status(if parts.peek().is_some() {
-                    STATUS_OBJECT_PATH_NOT_FOUND
-                } else {
-                    STATUS_OBJECT_NAME_NOT_FOUND
-                }))?;
+                .ok_or_else(|| {
+                    if !dir.entries_complete {
+                        LookupError::Unselected
+                    } else {
+                        LookupError::Status(if parts.peek().is_some() {
+                            STATUS_OBJECT_PATH_NOT_FOUND
+                        } else {
+                            STATUS_OBJECT_NAME_NOT_FOUND
+                        })
+                    }
+                })?;
             if is(&entry.captured.kind, "Directory") {
                 if (link || section || port) && parts.peek().is_none() {
                     return Err(LookupError::Status(STATUS_OBJECT_TYPE_MISMATCH));
@@ -464,7 +614,7 @@ mod installed;
 #[cfg(windows)]
 pub(crate) use installed::snapshot;
 #[cfg(not(windows))]
-pub(crate) fn snapshot(_: Arc<[u16]>) -> io::Result<Namespace> {
+pub(crate) fn snapshot(_: Arc<[u16]>, _: u32) -> io::Result<Namespace> {
     Err(io::Error::new(
         io::ErrorKind::Unsupported,
         "installed NT object namespace requires a Windows host",
@@ -476,3 +626,6 @@ pub(crate) mod image_extension_tests;
 pub(crate) mod image_tests;
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+pub(crate) mod base_named_object_tests;

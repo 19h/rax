@@ -1,0 +1,62 @@
+[
+  {
+    "case": "invented-churn-success",
+    "rejected": true,
+    "error": "ValueError: Revised churn successful captures"
+  },
+  {
+    "case": "hidden-recovery-failure",
+    "rejected": true,
+    "error": "ValueError: successful recovered command and source checks"
+  },
+  {
+    "case": "removed-byte-preservation",
+    "rejected": true,
+    "error": "ValueError: proof line-ending attributes"
+  },
+  {
+    "case": "different-native-failure",
+    "rejected": true,
+    "error": "ValueError: native baseline failure identities"
+  },
+  {
+    "case": "missing-ignored-test",
+    "rejected": true,
+    "error": "ValueError: ignored test identities native"
+  },
+  {
+    "case": "invented-native-integration",
+    "rejected": true,
+    "error": "ValueError: integration selection native"
+  },
+  {
+    "case": "changed-source",
+    "rejected": true,
+    "error": "ValueError: final source Cargo.lock"
+  },
+  {
+    "case": "enabled-core-defaults",
+    "rejected": true,
+    "error": "ValueError: empty-feature core native"
+  },
+  {
+    "case": "wrong-core-configuration",
+    "rejected": true,
+    "error": "ValueError: core configuration native/integration"
+  },
+  {
+    "case": "wrong-owning-artifact",
+    "rejected": true,
+    "error": "ValueError: actual Cargo-selected artifact records native"
+  },
+  {
+    "case": "different-owner-archive",
+    "rejected": true,
+    "error": "ValueError: owner diagnostic before/after identity archive"
+  },
+  {
+    "case": "invented-program-success",
+    "rejected": true,
+    "error": "ValueError: measured class44 boundary; controller zero is not a guest exit"
+  }
+]

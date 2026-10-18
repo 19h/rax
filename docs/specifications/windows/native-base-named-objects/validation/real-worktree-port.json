@@ -1,0 +1,15 @@
+{
+  "utc": "2026-10-18T01:43:56.122226+00:00",
+  "base": "be05c4b474dbf76be910e0f50dbc4be3262c16ce",
+  "source-inputs": 5728,
+  "owned-source-files": [
+    "src/user/windows/object_namespace.rs",
+    "src/user/windows/object_namespace/installed.rs",
+    "src/user/windows/native.rs",
+    "src/user/windows/object_namespace/base_named_object_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/directory_open_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/directory_session_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/directory_open_leaf_tests.rs"
+  ],
+  "status": "Port matches prototype source and native prepared source exactly; final validation pending."
+}

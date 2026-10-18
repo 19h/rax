@@ -1,0 +1,4 @@
+program=C:\Windows\Temp\assist-native-rax-20261010\src-token-scalars\tests\fixtures\user\windows\bin\arm64\smoke.exe prefix-turns=2100000 result=BudgetExhausted
+directory turn=2149956 access=0xf root=Ok(0) flags=Ok(40)
+directory name="\\BaseNamedObjects" length=34 raw=[5c, 42, 61, 73, 65, 4e, 61, 6d, 65, 64, 4f, 62, 6a, 65, 63, 74, 73]
+terminal turn=2149956 Complete(Internal("native NTDLL service NtOpenDirectoryObject: Unimplemented(\"NtOpenDirectoryObject: NT directory outside selected installed namespace\")"))

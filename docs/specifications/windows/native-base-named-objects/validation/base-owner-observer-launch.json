@@ -1,0 +1,83 @@
+{
+  "pid": 2656,
+  "state": "finished",
+  "utc": "2026-10-18T12:06:00.335871+00:00",
+  "scope": "Additional diagnostic linked to the validated retained-owner core archive; final core-driver observations remain separate.",
+  "archive": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\librax-e6c413934cad3a8f.rlib",
+    "bytes": 816941832,
+    "sha256": "eebfceb9caf667ca079734217cdeaf4951cb3aecb5dbe8a10257759c49b43076",
+    "members": 260,
+    "structural-member-walk": "pass"
+  },
+  "source-before": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\base-owner-observer.rs",
+    "bytes": 2994,
+    "sha256": "1a5d047c324cdcc365d697273bacca64536d0c4366ee58dc0e66764119efa907"
+  },
+  "child": 11128,
+  "executable-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\base-owner-observer.exe",
+    "bytes": 26815488,
+    "sha256": "43f9954da05f5a586086cf200b4dac5505d965c686ecedc2fd247ae011005a16"
+  },
+  "outcomes": [
+    {
+      "program-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-base-named-objects\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "log": "base-owner-observer-0.log",
+      "exit-code": 0,
+      "seconds": 83.85251799999969,
+      "program-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-base-named-objects\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "log-identity": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\base-owner-observer-0.log",
+        "bytes": 510,
+        "sha256": "fa9bcd5d5dc06c411ba7ebbca7e9b78e24040cffb0002f9ec7bd2d520737112f"
+      }
+    },
+    {
+      "program-before": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "log": "base-owner-observer-1.log",
+      "exit-code": 0,
+      "seconds": 61.410974958969746,
+      "program-after": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "log-identity": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\base-owner-observer-1.log",
+        "bytes": 427,
+        "sha256": "f8d9a05e0ce6e82ac6806c357b4c7ef229e9c27003032ff7be293830280cd614"
+      }
+    }
+  ],
+  "exit_code": 0,
+  "source-after": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\base-owner-observer.rs",
+    "bytes": 2994,
+    "sha256": "1a5d047c324cdcc365d697273bacca64536d0c4366ee58dc0e66764119efa907"
+  },
+  "executable-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\base-owner-observer.exe",
+    "bytes": 26815488,
+    "sha256": "43f9954da05f5a586086cf200b4dac5505d965c686ecedc2fd247ae011005a16"
+  },
+  "archive-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\librax-e6c413934cad3a8f.rlib",
+    "bytes": 816941832,
+    "sha256": "eebfceb9caf667ca079734217cdeaf4951cb3aecb5dbe8a10257759c49b43076"
+  },
+  "completed-utc": "2026-10-18T12:08:46.805508+00:00"
+}

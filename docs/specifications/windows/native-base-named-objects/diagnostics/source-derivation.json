@@ -1,0 +1,42 @@
+{
+  "parent-sha256": "514fdbc99de6f562002aa8a198deb79e7f5cd012db058aa1460a0e5730ae37c0",
+  "diagnostic-sha256": "d5f5dba7cd758ec430d98542891dcb4c809cf2e4fbcc52f8b75895eba891d206",
+  "change": "read-only OBJECT_ATTRIBUTES and UNICODE_STRING logging before NtOpenDirectoryObject; original observer remains unchanged",
+  "core-source-manifest-sha256": "e655aaeccf745f84e2da329bd39bc100dc1efd0fd6b2812500bcc1d554cf37f0",
+  "core-artifact-stream-sha256": "f36206e9f9a8377d50807adf0c0f83a204e6383a444a17fe11f4a75bf89b39f8",
+  "selected-core-artifacts": [
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///C:/Windows/Temp/assist-native-rax-20261010/src-token-scalars#rax@0.1.0",
+      "manifest_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-token-scalars\\Cargo.toml",
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "rax",
+        "src_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-token-scalars\\src\\lib.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": true,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 2,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": false
+      },
+      "features": [],
+      "filenames": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\deps\\librax-b3cb012e55bc2251.rlib",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\deps\\librax-b3cb012e55bc2251.rmeta"
+      ],
+      "executable": null,
+      "fresh": false
+    }
+  ]
+}

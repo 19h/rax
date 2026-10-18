@@ -1,0 +1,14 @@
+{
+  "utc": "2026-10-18T12:09:21.118601+00:00",
+  "source-epoch": 2,
+  "checks": [
+    {
+      "script": "verify-base-final.py",
+      "exit-code": 0
+    },
+    {
+      "script": "verify-base-post-run.py",
+      "exit-code": 0
+    }
+  ]
+}

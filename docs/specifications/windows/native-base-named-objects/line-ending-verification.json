@@ -1,0 +1,40 @@
+{
+  "files": [
+    {
+      "path": "native/current-session/native-session-directories-v1.cpp",
+      "raw-git-blob": "f7a5db01367dd31eea80eb7ccc67460cd42f80db",
+      "autocrlf-true-git-blob": "f7a5db01367dd31eea80eb7ccc67460cd42f80db",
+      "equal": true
+    },
+    {
+      "path": "native/current-session/native-session-directories-v1.ps1",
+      "raw-git-blob": "6b8832ded0e6079cd53a4a8133576fd278b0ecf6",
+      "autocrlf-true-git-blob": "6b8832ded0e6079cd53a4a8133576fd278b0ecf6",
+      "equal": true
+    },
+    {
+      "path": "session-directories-v1-arm64.log",
+      "raw-git-blob": "728ed016ae4d460a1aed1aab966a21d0932eb500",
+      "autocrlf-true-git-blob": "728ed016ae4d460a1aed1aab966a21d0932eb500",
+      "equal": true
+    },
+    {
+      "path": "native/coherence/directory-coherence-v2-arm64-before.json",
+      "raw-git-blob": "6da8ff3368f907a224701166cb5702ecc47ff4c8",
+      "autocrlf-true-git-blob": "6da8ff3368f907a224701166cb5702ecc47ff4c8",
+      "equal": true
+    },
+    {
+      "path": "diagnostics/directory-fast-0.log",
+      "raw-git-blob": "f7c01b3cdaf6f15a93f04798389703c662106218",
+      "autocrlf-true-git-blob": "f7c01b3cdaf6f15a93f04798389703c662106218",
+      "equal": true
+    },
+    {
+      "path": "README.md",
+      "raw-git-blob": "f6798fee6c687d85762abd646f95371ea539e5e1",
+      "autocrlf-true-git-blob": "f6798fee6c687d85762abd646f95371ea539e5e1",
+      "equal": true
+    }
+  ]
+}

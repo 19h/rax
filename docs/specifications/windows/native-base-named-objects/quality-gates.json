@@ -1,0 +1,64 @@
+{
+  "scope": "Selected native base named-object directory group; broader process-userland goal assessed separately.",
+  "rax": {
+    "QG1": {
+      "status": "pass",
+      "evidence": "Reconciled assumption-register.json."
+    },
+    "QG2": {
+      "status": "pass",
+      "evidence": "Native opens, tree/coherence tests, and ordinary crossing."
+    },
+    "QG3": {
+      "status": "pass",
+      "evidence": "Raw native sources, identities, calculations and command logs."
+    },
+    "QG4": {
+      "status": "pass",
+      "evidence": "Explicit unstable capture and uncaptured-resource cases."
+    },
+    "QG5": {
+      "status": "pass",
+      "evidence": "Native sources, raw outputs and actual Cargo artifact records."
+    },
+    "QG6": {
+      "status": "pass",
+      "evidence": "bounded-scope.json."
+    },
+    "QG7": {
+      "status": "pass",
+      "evidence": "Exact-owned worktree and parent be05c4b4."
+    },
+    "QG8": {
+      "status": "pass",
+      "evidence": "Three full platform suites, scoped carriers and recorded outcomes."
+    },
+    "QG9": {
+      "status": "pass",
+      "evidence": "Canonical source/test wiring and checks."
+    }
+  },
+  "assist": {
+    "QG1": {
+      "status": "pass for bounded group"
+    },
+    "QG2": {
+      "status": "pass for bounded group"
+    },
+    "QG3": {
+      "status": "pass for bounded group"
+    },
+    "QG4": {
+      "status": "pass for bounded group"
+    },
+    "QG5": {
+      "status": "pass for bounded group"
+    },
+    "QG6": {
+      "status": "pass for bounded group"
+    },
+    "QG7": {
+      "status": "pass for bounded group"
+    }
+  }
+}

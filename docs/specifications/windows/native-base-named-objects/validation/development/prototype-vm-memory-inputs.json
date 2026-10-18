@@ -1,0 +1,230 @@
+{
+  "reason": "Cargo manifest requires the unchanged vendored path patch in addition to core selected-source inputs. First attempt stopped before Rust compilation.",
+  "files": [
+    {
+      "path": "vendor/vm-memory/.buildkite/custom-tests.json",
+      "bytes": 532,
+      "sha256": "8435c8de544d02ec5d13da674e3d082212c1df910a42d501df6a8e030a115d8b"
+    },
+    {
+      "path": "vendor/vm-memory/.buildkite/pipeline.windows.yml",
+      "bytes": 1708,
+      "sha256": "41b699ad4e5d989f3bb237b99972707760b6305b84fd44a600758cc75c44d20e"
+    },
+    {
+      "path": "vendor/vm-memory/.cargo/audit.toml",
+      "bytes": 644,
+      "sha256": "58ffabb1249a29828ba922f075973ffa0b0a7633f2af81b34b2523a0f02005e0"
+    },
+    {
+      "path": "vendor/vm-memory/.cargo/config.toml",
+      "bytes": 110,
+      "sha256": "c2f1c2fd93436e068cfb14eef3dff8a79d25d1f03c11baf6acbcfbdc9fd3a465"
+    },
+    {
+      "path": "vendor/vm-memory/.cargo_vcs_info.json",
+      "bytes": 94,
+      "sha256": "61d226669768551f4a501faa0b93f8599a3ffa839f89a72a19e0286dbc8dc560"
+    },
+    {
+      "path": "vendor/vm-memory/.github/dependabot.yml",
+      "bytes": 846,
+      "sha256": "1f9e72c92437d5ca45ea2efca4677a951205adf458e05280f0c0d0065598b964"
+    },
+    {
+      "path": "vendor/vm-memory/.github/workflows/publish.yml",
+      "bytes": 506,
+      "sha256": "0b5ff804f5f576588e033fe191508ee865f53fe988b5087a855cd08b0c141d8c"
+    },
+    {
+      "path": "vendor/vm-memory/.gitignore",
+      "bytes": 30,
+      "sha256": "6b937008e0a58a438c32574627db6961a4d2aff4bf5c703d4e45cb56ef3b168a"
+    },
+    {
+      "path": "vendor/vm-memory/.gitmodules",
+      "bytes": 97,
+      "sha256": "577f1a10b3ef569ea09f907fc310fb63ed03ab6b7f82474cafdbbdec643a8f7e"
+    },
+    {
+      "path": "vendor/vm-memory/.platform",
+      "bytes": 23,
+      "sha256": "3638930eedf0f1443302f5f70d4e5a267ceb05f8963a8820f974427d4b3f5a53"
+    },
+    {
+      "path": "vendor/vm-memory/CHANGELOG.md",
+      "bytes": 11067,
+      "sha256": "7316e6d9b8cadea1b59b781da8c6b32ec427a7f24e9e05f9f3d5ca906f73138f"
+    },
+    {
+      "path": "vendor/vm-memory/CODEOWNERS",
+      "bytes": 74,
+      "sha256": "c5bd416f73e6631016c94233806e9356a35e922544db35bc83cf514f382f616c"
+    },
+    {
+      "path": "vendor/vm-memory/Cargo.toml",
+      "bytes": 2102,
+      "sha256": "b4e94eae3c97a4dc1a6781c8e9f2ee40d76c159a0c1e821aa860c601d3916f96"
+    },
+    {
+      "path": "vendor/vm-memory/Cargo.toml.orig",
+      "bytes": 1311,
+      "sha256": "11ec14216476d7fd5e472c70c074e55be8ea0c5c9fc365f86a917068d93f4776"
+    },
+    {
+      "path": "vendor/vm-memory/DESIGN.md",
+      "bytes": 6708,
+      "sha256": "35e9671628e330fbd62a0f00b8726cb09c82bda4779834a1b762ed9036f9330f"
+    },
+    {
+      "path": "vendor/vm-memory/LICENSE-APACHE",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "vendor/vm-memory/LICENSE-BSD-3-Clause",
+      "bytes": 1562,
+      "sha256": "a6d3ebd1c2f37d4fd83d0676621f695fc0cc2d8c6e646cdbb831b46e0650c208"
+    },
+    {
+      "path": "vendor/vm-memory/RAX-PATCHES.md",
+      "bytes": 2557,
+      "sha256": "e7e1fd4e44461217711a4223526d4822b64f3afd43f9838f6a35cfe959e93eb3"
+    },
+    {
+      "path": "vendor/vm-memory/README.md",
+      "bytes": 3313,
+      "sha256": "f9fd1d519777a1a052aaa11e54a79c0dc1781379d2406f800c10ed04283a20cd"
+    },
+    {
+      "path": "vendor/vm-memory/TODO.md",
+      "bytes": 151,
+      "sha256": "275c82047e4a1a1f8db0787839645220f11ca376776cb979fdb0ecb0a33fe781"
+    },
+    {
+      "path": "vendor/vm-memory/UPSTREAM.json",
+      "bytes": 4311,
+      "sha256": "68685e7f6085ec63a772392a238b46d05270ab66655fcd11c5f7927289a4730b"
+    },
+    {
+      "path": "vendor/vm-memory/benches/guest_memory.rs",
+      "bytes": 934,
+      "sha256": "7adf5ababaef6d425cab1c277359767b90ae58435d2d6508135b41833eb951a0"
+    },
+    {
+      "path": "vendor/vm-memory/benches/main.rs",
+      "bytes": 1361,
+      "sha256": "6e9a93a36ac6b1c58cc20cee633b114ebb294acdbf1c8c4d2b0ac2e267e88e65"
+    },
+    {
+      "path": "vendor/vm-memory/benches/mmap/mod.rs",
+      "bytes": 6887,
+      "sha256": "9c4ece1e6ca3b910fdef67491eae387c4aaf8bf429ccfe794cc2b80a569f3272"
+    },
+    {
+      "path": "vendor/vm-memory/benches/volatile.rs",
+      "bytes": 1723,
+      "sha256": "bfbedd54107d55f38940b1c6babc7476d7a968ffc76322f891f4c775eaa0ef55"
+    },
+    {
+      "path": "vendor/vm-memory/coverage_config_aarch64.json",
+      "bytes": 132,
+      "sha256": "2cd2ee0df2a0b9101b7a5970466e495c14461e45482f41dcd81cfea785904818"
+    },
+    {
+      "path": "vendor/vm-memory/coverage_config_x86_64.json",
+      "bytes": 133,
+      "sha256": "fd3e43ef333e33e0550e84ab5b080f5fcbe74823e40c05c4c3661cb0411f2a24"
+    },
+    {
+      "path": "vendor/vm-memory/src/address.rs",
+      "bytes": 12792,
+      "sha256": "e73a5650d3bbbaa70b2d3fc90ef2fc226108750bcb5f119b6ab7629bab635946"
+    },
+    {
+      "path": "vendor/vm-memory/src/atomic.rs",
+      "bytes": 10032,
+      "sha256": "c6a89d4694e6902471d9940339a2805499510ca355ef4c85590afab483937815"
+    },
+    {
+      "path": "vendor/vm-memory/src/atomic_integer.rs",
+      "bytes": 3540,
+      "sha256": "470c14fc9c9f8a2425d4d1c78c638a41066564288f9c9fae8f83056e03589b86"
+    },
+    {
+      "path": "vendor/vm-memory/src/bitmap/backend/atomic_bitmap.rs",
+      "bytes": 11078,
+      "sha256": "526ad6a53a12456a04a7d6a400f47d8c8e6169697a2480ecf675db4febcda756"
+    },
+    {
+      "path": "vendor/vm-memory/src/bitmap/backend/mod.rs",
+      "bytes": 236,
+      "sha256": "6c2e2a89898f386e8deff279a0afba73353f942bd9e6bf59ae4191a4250602ae"
+    },
+    {
+      "path": "vendor/vm-memory/src/bitmap/backend/slice.rs",
+      "bytes": 3760,
+      "sha256": "5a91e97c4660a7ef8a6107f04c064ad49028de7866b2f20d1234b96d00b08fe4"
+    },
+    {
+      "path": "vendor/vm-memory/src/bitmap/mod.rs",
+      "bytes": 12115,
+      "sha256": "dc636ba373500b4d50f2ebc80853e9586e73025f47d033fd1af514f847609467"
+    },
+    {
+      "path": "vendor/vm-memory/src/bytes.rs",
+      "bytes": 24770,
+      "sha256": "d4876f3735ce50203c7daff8af128f460c3ac22ba3e95b26af6feb65feb95e33"
+    },
+    {
+      "path": "vendor/vm-memory/src/endian.rs",
+      "bytes": 5021,
+      "sha256": "f9802c48fe4984e40babaaeba7fdeecaa6bdb8e0ebf8190311ac0df55660bad5"
+    },
+    {
+      "path": "vendor/vm-memory/src/guest_memory.rs",
+      "bytes": 35819,
+      "sha256": "b351827c83fd96640279a4a964dc2a2787d2b8bd1b60a49c48d19bde70dc1d4f"
+    },
+    {
+      "path": "vendor/vm-memory/src/io.rs",
+      "bytes": 25385,
+      "sha256": "700412b0f7b7209dc89740f49516ccbbeca6283ab0df8f53d567a3ba0a2e518e"
+    },
+    {
+      "path": "vendor/vm-memory/src/lib.rs",
+      "bytes": 2928,
+      "sha256": "d8a6f5928fa481c7b5d4b9d29aac34826c5ac804ba93dd9373f86e1fa4d0eb1b"
+    },
+    {
+      "path": "vendor/vm-memory/src/mmap/mod.rs",
+      "bytes": 26597,
+      "sha256": "d2d61f480fad16d75047c44e5b69d32ef36bceac3df5a50a509b3ecbb7baeb68"
+    },
+    {
+      "path": "vendor/vm-memory/src/mmap/unix.rs",
+      "bytes": 22922,
+      "sha256": "b2e7d30b5450ac1cbc20fab326210e7dd19abfeccec1ac374c5079fe661bb351"
+    },
+    {
+      "path": "vendor/vm-memory/src/mmap/windows.rs",
+      "bytes": 13759,
+      "sha256": "82f186716a7469b95a191dcb8f1fccee8cbcaa0f14a21130a6b23cd9f346ece1"
+    },
+    {
+      "path": "vendor/vm-memory/src/mmap/xen.rs",
+      "bytes": 35980,
+      "sha256": "d53ce006aeed81e0610c799453ce19059bb4c9832263fb37beac2d748cb4147e"
+    },
+    {
+      "path": "vendor/vm-memory/src/region.rs",
+      "bytes": 25958,
+      "sha256": "46f887b2542b23dea451e6009d7dbb768780112e4106ec10d6109d3a0817755c"
+    },
+    {
+      "path": "vendor/vm-memory/src/volatile_memory.rs",
+      "bytes": 80303,
+      "sha256": "8f85d0c026182237a6d004cad8afdb861566fcb3e3777c7ac63b3ec8873c6051"
+    }
+  ]
+}

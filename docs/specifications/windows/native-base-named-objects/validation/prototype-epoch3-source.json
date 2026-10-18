@@ -1,0 +1,33 @@
+{
+  "files": [
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "sha256": "2c481ccc115267fd9aff8d73ea72e4e1104f0c665561e85803d1734ecc25a1fc"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed.rs",
+      "sha256": "0890d90d722a0e6c1744cd108d46bb7be1f9b96cb702cfda210c934c0da0fdcc"
+    },
+    {
+      "path": "src/user/windows/native.rs",
+      "sha256": "eb6c7c8c15d5e496e66564ce24c65dc7d608d5fee62a0c32ce2c7d1d720320a2"
+    },
+    {
+      "path": "src/user/windows/object_namespace/base_named_object_tests.rs",
+      "sha256": "5f60aba8360a4284846780450b5d48bf7684122d66ce70cbb78d45333a4f1cf3"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/directory_open_tests.rs",
+      "sha256": "31885a37da6c5d3e6a992e465171627a706c5dacab2348cc2547666d7058bbd9"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/directory_session_tests.rs",
+      "sha256": "9ebdc6a951655c045dc8ed21b32a061280dd563a6500300f81d128933e1fe356"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/directory_open_leaf_tests.rs",
+      "sha256": "178939aaff4dbb4f7011ef75482272374b4fc49a2382bbfd3b106f726804858c"
+    }
+  ],
+  "note": "Native slot initialization and current-principal session-one path rows are exact."
+}

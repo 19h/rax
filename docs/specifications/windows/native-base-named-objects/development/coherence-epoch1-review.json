@@ -1,0 +1,7 @@
+{
+  "result": "probe construction failure before enumeration",
+  "native-status": "0xC000003B",
+  "cause": "C++ source contained an unrecognized backslash escape before BaseNamedObjects; compiler warning C4129 was not fatal.",
+  "correction": "Version2 has the literal leading NT separator, makes C4129 fatal, and checks unique names independently of type.",
+  "validation": "Version1 does not establish directory capture instability or failure."
+}

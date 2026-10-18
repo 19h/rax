@@ -1,0 +1,9 @@
+{
+  "utc": "2026-10-18T12:04:32.346165+00:00",
+  "deleted-directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\incremental",
+  "files": 3278,
+  "bytes": 12865926250,
+  "free-before": 0,
+  "free-after": 12440932352,
+  "preserved": "All source trees, debug/deps archives and executables, logs, other build targets"
+}

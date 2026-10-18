@@ -1,0 +1,18 @@
+
+running 13 tests
+test user::windows::object_namespace::base_named_object_tests::native_base_named_object_case_probe_never_admits_a_disappeared_sample ... ok
+test user::windows::object_namespace::base_named_object_tests::native_base_named_object_nested_paths_preserve_absolute_relative_identity ... ok
+test user::windows::object_namespace::base_named_object_tests::native_base_named_object_partial_ancestors_keep_selected_identity ... ok
+test user::windows::object_namespace::base_named_object_tests::native_base_named_object_partial_capture_keeps_only_unique_stable_names ... ok
+test user::windows::object_namespace::base_named_object_tests::native_base_named_object_partial_capture_refuses_uncaptured_names ... ok
+test user::windows::object_namespace::base_named_object_tests::native_base_named_object_selection_keeps_uncaptured_resources_explicit ... ok
+test user::windows::object_namespace::base_named_object_tests::native_base_named_object_selection_paths_are_canonical_and_bounded ... ok
+test user::windows::object_namespace::base_named_object_tests::native_base_named_object_snapshot_coherence_rejects_live_duplicates_and_changes ... ok
+test user::windows::object_namespace::base_named_object_tests::native_base_named_object_tree_rejects_missing_ancestors_wrong_types_and_sessions ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::session_directories::native_base_named_object_installed_leaf_matches_independent_current_token_open ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::session_directories::native_base_named_object_nested_open_preserves_relative_identity_and_handle_lifetime ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::session_directories::native_base_named_object_open_replays_all_1024_native_session_one_access_rows ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::session_directories::native_base_named_object_open_replays_all_256_native_access_rows ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 7352 filtered out; finished in 2.04s
+

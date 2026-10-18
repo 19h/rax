@@ -1,0 +1,5 @@
+{
+  "failure": "The new access-row test initialized the output to A5 and assumed unchanged failure output. The retained native probe initializes its HANDLE to NULL.",
+  "correction": "Match the retained native input/output slot state and keep status, granted-access and handle-lifetime assertions. Existing native pointer-order tests retain their own measured sentinels.",
+  "scope": "Test fixture correction; no production behavior changed."
+}

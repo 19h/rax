@@ -1,0 +1,71 @@
+{
+  "pid": 492,
+  "state": "finished",
+  "utc": "2026-10-18T01:15:46.290492+00:00",
+  "scope": "new read-only diagnostic observer; original W observer unchanged",
+  "source-before": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\directory-frontier-trace.rs",
+    "bytes": 14090,
+    "sha256": "d5f5dba7cd758ec430d98542891dcb4c809cf2e4fbcc52f8b75895eba891d206"
+  },
+  "child": 240,
+  "executable-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\directory-frontier\\directory-frontier-trace.exe",
+    "bytes": 26892288,
+    "sha256": "0c58ec60b7f1f9d26f153880cdc0c266f4144e4e2f956c72254795b57ef298e4"
+  },
+  "outcomes": [
+    {
+      "program": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-token-scalars\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "log": "directory-frontier-0.log",
+      "exit-code": 0,
+      "seconds": 473.0629342920147,
+      "log-identity": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\directory-frontier-0.log",
+        "bytes": 64296,
+        "sha256": "301c1f5b70119624778857900a308c456ed92be46fbe9affd9081b56f8fa81f7"
+      },
+      "program-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-token-scalars\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      }
+    },
+    {
+      "program": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "log": "directory-frontier-1.log",
+      "exit-code": 0,
+      "seconds": 99.78617279103491,
+      "log-identity": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\directory-frontier-1.log",
+        "bytes": 66997,
+        "sha256": "f92b417977e27b365ea4e86cefd05f1bc579843d6fc6b61d45fec4ef58f20387"
+      },
+      "program-after": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      }
+    }
+  ],
+  "source-after": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\directory-frontier-trace.rs",
+    "bytes": 14090,
+    "sha256": "d5f5dba7cd758ec430d98542891dcb4c809cf2e4fbcc52f8b75895eba891d206"
+  },
+  "executable-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\directory-frontier\\directory-frontier-trace.exe",
+    "bytes": 26892288,
+    "sha256": "0c58ec60b7f1f9d26f153880cdc0c266f4144e4e2f956c72254795b57ef298e4"
+  },
+  "exit_code": 0,
+  "completed-utc": "2026-10-18T01:25:27.838816+00:00"
+}

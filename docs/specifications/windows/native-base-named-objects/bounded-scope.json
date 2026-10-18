@@ -1,0 +1,35 @@
+[
+  {
+    "impact": "high",
+    "finding": "Both ordinary programs open the captured BaseNamedObjects directory successfully and stop at the following unimplemented NtQueryInformationToken class44 call. Neither program reaches a successful guest exit.",
+    "evidence": "validation/ordinary-analysis.json",
+    "blocks": "Full process-userland objective",
+    "action": "Implement and validate the selected namespace; continue from the resulting production boundary."
+  },
+  {
+    "impact": "high",
+    "finding": "Live native enumeration may never produce three coherent pairs while independent processes create objects.",
+    "evidence": "Sibling coherence-v2-summary.json and raw native logs",
+    "blocks": "Direct admission of arbitrary raw lists",
+    "action": "Keep strict KnownDLL capture. Mark non-image intersection snapshots incomplete and refuse unknown names."
+  },
+  {
+    "impact": "medium",
+    "finding": "Nonzero-session path survey uses the current session-0 host principal; it does not impersonate an interactive user.",
+    "evidence": "Native producer identity and selection-session fields",
+    "blocks": "Claims about the permissions of another user token",
+    "action": "Keep capture tied to actual calling context and native scope explicit."
+  },
+  {
+    "impact": "medium",
+    "finding": "Five existing Windows lowerer failures and two ignored microkernel tests remain explicit.",
+    "evidence": "validation/native-base-final-full.log",
+    "blocks": "An all-green regression claim; not attributed to this group."
+  },
+  {
+    "impact": "medium",
+    "finding": "Frozen carrier ABI184 differs from compared/current root Rust.",
+    "evidence": "validation/upstream-cpp-consumer-compatibility.json",
+    "blocks": "Whole-current-root GUI/plugin/package validation is not claimed."
+  }
+]

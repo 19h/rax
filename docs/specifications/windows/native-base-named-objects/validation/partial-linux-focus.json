@@ -1,0 +1,29 @@
+{
+  "utc": "2026-10-18T11:27:06.433249+00:00",
+  "argv": [
+    "docker",
+    "run",
+    "--rm",
+    "--platform",
+    "linux/amd64",
+    "-v",
+    "/Users/int/hexrays/kvasir:/work:ro",
+    "-v",
+    "/Users/int/Library/Caches/assist-process-emulation/native-base-named-objects-20261018/rax-source:/work/vendor/rax:ro",
+    "-v",
+    "rax-user-target:/target",
+    "-w",
+    "/work/vendor/rax",
+    "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+    "/target/system-time-final/debug/deps/rax-094640fccc97af0f",
+    "native_base_named_object",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit-code": 0,
+  "test-executable": "/target/system-time-final/debug/deps/rax-094640fccc97af0f",
+  "executable-sha256-before": "4fade3c083cb724f866d523df87743f36e252fce5720ef23cbf9046bf087a87e",
+  "executable-sha256-after": "4fade3c083cb724f866d523df87743f36e252fce5720ef23cbf9046bf087a87e",
+  "source-epoch": 2,
+  "selection": "Same test executable selected by current full Cargo suite."
+}

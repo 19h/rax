@@ -1,0 +1,7 @@
+missing Cargo-selected full-test executable
+At C:\Mac\Home\Downloads\assist-native-allocate-ex-transfer-20261010-2154\partial-native-focus.ps1:7 char:11
++ if(!$bin){throw 'missing Cargo-selected full-test executable'}
++           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (missing Cargo-s...test executable:String) [], RuntimeException
+    + FullyQualifiedErrorId : missing Cargo-selected full-test executable
+ 
