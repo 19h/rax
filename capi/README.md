@@ -135,6 +135,7 @@ cargo build -p rax-capi --release --features jit
 | Hooks | `rax_hook_add_code`/`block`/`intr`/`io_in`/`io_out`/`mmio_read`/`mmio_write`/`invalid`/`mem`, `rax_hook_del` |
 | Context | `rax_context_save`, `rax_context_restore` |
 | Stateless analysis | `rax_decode`, `rax_analyze` |
+| Scalar SMIR lifting | `rax_smir_lift_x64` |
 
 ### Stateless instruction analysis
 
@@ -238,3 +239,18 @@ See `examples/`:
 ## License
 
 MIT (matching the RAX engine).
+
+### Scalar SMIR export
+
+`rax_smir_lift_x64` exports one AMD64 instruction into caller-owned,
+versioned, pointer-free operation records. It preserves operands, widths,
+address calculation, flag updates, instruction provenance, and control flow.
+Unsupported semantics and insufficient output capacity publish zero usable
+operations. `rax_smir_instruction.flags == RAX_SMIR_COMPLETE` together with
+`RAX_OK` is required before consuming a fill result.
+
+C API 1.5 adds the BT/BTS/BTR/BTC scalar operations. Memory forms retain their
+load/store sequence and commit CF after the update; locked memory operations
+remain rejected when they cannot be represented atomically. The ABI record
+layouts and scalar SMIR ABI version remain unchanged. See
+`examples/x86_64_smir.c` for a bounded C consumer.

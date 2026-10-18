@@ -188,3 +188,79 @@ fn legacy_high_byte_extension_keeps_its_semantic_hint() {
     assert_eq!(ext.a.id, 0);
     assert_eq!(ext.source_width_bits, 8);
 }
+
+#[test]
+fn scalar_bit_test_family_has_explicit_carry_and_operands() {
+    for (bytes, opcode, width, register, index) in [
+        (
+            vec![0x48, 0x0f, 0xba, 0xf8, 0x19],
+            RAX_SMIR_BTC,
+            64,
+            0,
+            0x19,
+        ),
+        (vec![0x66, 0x0f, 0xba, 0xe0, 0x0f], RAX_SMIR_BT, 16, 0, 0xf),
+        (vec![0x0f, 0xba, 0xe8, 0x1f], RAX_SMIR_BTS, 32, 0, 0x1f),
+        (
+            vec![0x48, 0x0f, 0xba, 0xf3, 0x3f],
+            RAX_SMIR_BTR,
+            64,
+            3,
+            0x3f,
+        ),
+    ] {
+        let (_, ops) = lift(&bytes);
+        let bit = ops.iter().find(|op| op.opcode == opcode).unwrap();
+        assert_eq!(
+            (
+                bit.width_bits,
+                bit.flags_mask,
+                bit.a.kind,
+                bit.a.id,
+                bit.b.kind,
+                bit.b.value
+            ),
+            (width, 1, 2, register, 3, index)
+        );
+        assert_eq!(bit.dst.kind, if opcode == RAX_SMIR_BT { 0 } else { 2 });
+    }
+}
+
+#[test]
+fn memory_bit_test_preserves_accesses_and_rejects_atomic_projection() {
+    let (_, ops) = lift(&[0x48, 0x0f, 0xba, 0x28, 3]); // bts qword [rax],3
+    assert!(ops.iter().any(|op| op.opcode == RAX_SMIR_LOAD));
+    assert!(
+        ops.iter()
+            .any(|op| op.opcode == RAX_SMIR_BT && op.flags_mask == 1)
+    );
+    assert!(ops.iter().any(|op| op.opcode == RAX_SMIR_STORE));
+    let load = ops
+        .iter()
+        .position(|op| op.opcode == RAX_SMIR_LOAD)
+        .unwrap();
+    let store = ops
+        .iter()
+        .position(|op| op.opcode == RAX_SMIR_STORE)
+        .unwrap();
+    let flags = ops.iter().position(|op| op.opcode == RAX_SMIR_BT).unwrap();
+    assert!(
+        load < store && store < flags,
+        "CF must commit after the faultable store"
+    );
+    let input = [0xf0, 0x48, 0x0f, 0xba, 0x38, 3]; // lock btc qword [rax],3
+    let mut result = RaxSmirInstruction::default();
+    let mut out = [RaxSmirOp::default(); 64];
+    assert_eq!(
+        rax_smir_lift_x64(
+            0x1000,
+            input.as_ptr().cast(),
+            input.len(),
+            &mut result,
+            out.as_mut_ptr(),
+            out.len()
+        ),
+        RaxStatus::Unsupported
+    );
+    assert_eq!((result.flags, result.op_count), (RAX_SMIR_UNSUPPORTED, 0));
+}

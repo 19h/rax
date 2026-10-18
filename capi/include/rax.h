@@ -49,7 +49,7 @@ extern "C" {
  * Versioning
  * ======================================================================== */
 #define RAX_API_MAJOR 1u
-#define RAX_API_MINOR 4u
+#define RAX_API_MINOR 5u
 #define RAX_API_PATCH 0u
 
 /* ===========================================================================
@@ -765,6 +765,13 @@ RAX_API rax_status rax_analyze(int arch, uint32_t mode, uint64_t pc,
 #define RAX_SMIR_CMC_CF 41u
 #define RAX_SMIR_MATERIALIZE_FLAGS 42u
 #define RAX_SMIR_NOP 43u
+/* BT family: b is masked by width_bits-1; CF receives the old bit.
+ * Memory bit-string address adjustment is represented by preceding ops.
+ * Locked memory forms remain unsupported unless exported atomically. */
+#define RAX_SMIR_BT 44u
+#define RAX_SMIR_BTS 45u
+#define RAX_SMIR_BTR 46u
+#define RAX_SMIR_BTC 47u
     typedef struct rax_smir_operand
     {
         uint32_t kind;
