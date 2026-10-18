@@ -157,7 +157,7 @@ pushes. Tags must be exactly `v<version>` from `capi/Cargo.toml`, for example
 `v0.1.0`. To release a prerelease, use matching versions such as package
 `0.2.0-rc.1` and tag `v0.2.0-rc.1`; GitHub marks it as a prerelease. Mismatched
 or malformed tags fail before building. This does not change the independent
-C ABI version (currently 1.12.0).
+C ABI version (currently 1.13.0).
 
 | SDK triple | Build/runtime-test host | Compilation baseline |
 |---|---|---|
@@ -316,6 +316,7 @@ cargo build -p rax-capi --release --features jit
 | Context | `rax_context_save`, `rax_context_restore` |
 | User mode (ABI 1.5) | `RAX_MODE_USER`, `rax_hook_add_syscall`, `RAX_STOP_SYSCALL`, `rax_emu_last_exception` |
 | Stateless analysis | `rax_decode`, `rax_instruction_info`, `rax_analyze` (C++: `rax::decode`, `rax::instructionInfo`, `rax::analyze`) |
+| Scalar SMIR lifting | `rax_smir_lift_x64` |
 
 ### Stateless instruction analysis
 
@@ -724,3 +725,18 @@ bookkeeping, and the owner thread's host stack. Loading is bounded by input size
 not by the later run deadline. The full-process ABI assumes finite console input
 and immutable supplied dependencies (P1/P2 in `docs/embedding.md`); mutation of a
 virtual disk and persistent asynchronous console reads require additional APIs.
+
+### Scalar SMIR export
+
+`rax_smir_lift_x64` exports one AMD64 instruction into caller-owned,
+versioned, pointer-free operation records. It preserves operands, widths,
+address calculation, flag updates, instruction provenance, and control flow.
+Unsupported semantics and insufficient output capacity publish zero usable
+operations. `rax_smir_instruction.flags == RAX_SMIR_COMPLETE` together with
+`RAX_OK` is required before consuming a fill result.
+
+C API 1.13 adds the BT/BTS/BTR/BTC scalar operations. Memory forms retain their
+load/store sequence and commit CF after the update; locked memory operations
+remain rejected when they cannot be represented atomically. The ABI record
+layouts and scalar SMIR ABI version remain unchanged. See
+`examples/x86_64_smir.c` for a bounded C consumer.

@@ -57,6 +57,10 @@ pub const RAX_SMIR_SET_DF: u32 = 40;
 pub const RAX_SMIR_CMC_CF: u32 = 41;
 pub const RAX_SMIR_MATERIALIZE_FLAGS: u32 = 42;
 pub const RAX_SMIR_NOP: u32 = 43;
+pub const RAX_SMIR_BT: u32 = 44;
+pub const RAX_SMIR_BTS: u32 = 45;
+pub const RAX_SMIR_BTR: u32 = 46;
+pub const RAX_SMIR_BTC: u32 = 47;
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct RaxSmirOperand {
@@ -385,6 +389,44 @@ fn operation(op: &SmirOp) -> Checked<RaxSmirOp> {
             width,
             flags,
         } => unary!(RAX_SMIR_DEC, dst, src, width, flags),
+        OpKind::Bt {
+            src: value,
+            index,
+            width,
+        } => {
+            o.opcode = RAX_SMIR_BT;
+            o.a = reg(*value)?;
+            o.b = src(index)?;
+            o.width_bits = width.bits();
+            o.flags_mask = 1;
+        }
+        OpKind::Bts {
+            dst,
+            src: value,
+            index,
+            width,
+        } => {
+            bin!(RAX_SMIR_BTS, dst, value, index, width, FlagUpdate::None);
+            o.flags_mask = 1;
+        }
+        OpKind::Btr {
+            dst,
+            src: value,
+            index,
+            width,
+        } => {
+            bin!(RAX_SMIR_BTR, dst, value, index, width, FlagUpdate::None);
+            o.flags_mask = 1;
+        }
+        OpKind::Btc {
+            dst,
+            src: value,
+            index,
+            width,
+        } => {
+            bin!(RAX_SMIR_BTC, dst, value, index, width, FlagUpdate::None);
+            o.flags_mask = 1;
+        }
         OpKind::Not { dst, src, width } => unary!(RAX_SMIR_NOT, dst, src, width, FlagUpdate::None),
         OpKind::Bswap { dst, src, width } => {
             unary!(RAX_SMIR_BSWAP, dst, src, width, FlagUpdate::None)
