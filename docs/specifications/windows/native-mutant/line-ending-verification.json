@@ -1,0 +1,34 @@
+{
+  "files": [
+    {
+      "path": "README.md",
+      "raw-git-blob": "328d068c4aa16faa8cc3c3c7a9265f6f3d89d133",
+      "autocrlf-true-git-blob": "328d068c4aa16faa8cc3c3c7a9265f6f3d89d133"
+    },
+    {
+      "path": "native/native-faults/native-mutant-faults-v2-arm64.log",
+      "raw-git-blob": "fd0e64bb1911cd93f806bc079eea6df303c8d12c",
+      "autocrlf-true-git-blob": "fd0e64bb1911cd93f806bc079eea6df303c8d12c"
+    },
+    {
+      "path": "native/native-names-v6/native-mutant-names-v6.cpp",
+      "raw-git-blob": "630c06db34e84f9200b0d8ab9f86b96f29aee037",
+      "autocrlf-true-git-blob": "630c06db34e84f9200b0d8ab9f86b96f29aee037"
+    },
+    {
+      "path": "replay/query-x86.tsv",
+      "raw-git-blob": "9ba5b3561b3c94cf8b6de9c54841f621038cc9a4",
+      "autocrlf-true-git-blob": "9ba5b3561b3c94cf8b6de9c54841f621038cc9a4"
+    },
+    {
+      "path": "primary/compareobjecthandles.md",
+      "raw-git-blob": "28e8e0678d410730bc17f97d1421c15688c5fc85",
+      "autocrlf-true-git-blob": "28e8e0678d410730bc17f97d1421c15688c5fc85"
+    },
+    {
+      "path": "validation/mutant-native-epoch4c-gates.json",
+      "raw-git-blob": "d68716cea5a8609df671fb8670839b7f8cad60b4",
+      "autocrlf-true-git-blob": "d68716cea5a8609df671fb8670839b7f8cad60b4"
+    }
+  ]
+}

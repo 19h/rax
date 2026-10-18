@@ -1,0 +1,17 @@
+{
+  "gate": "archive-identities",
+  "command": [
+    "python3",
+    "/Users/int/Library/Caches/assist-process-emulation/native-mutant-create-20261018/collect-mutant-archives.py",
+    "--host",
+    "macos",
+    "--source",
+    "/Users/int/Library/Caches/assist-process-emulation/native-mutant-create-20261018/mutant-source",
+    "--manifest",
+    "/Users/int/Library/Caches/assist-process-emulation/native-mutant-create-20261018/mutant-owning-source-hashes.json",
+    "--messages",
+    "/Users/int/Library/Caches/assist-process-emulation/native-mutant-create-20261018/macos-mutant-owning-artifacts.log",
+    "--output",
+    "/Users/int/Library/Caches/assist-process-emulation/native-mutant-create-20261018/macos-mutant-final-owning-archive-identities.json"
+  ]
+}

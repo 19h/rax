@@ -1,0 +1,37 @@
+{
+  "attempts": [
+    {
+      "record": "mutant-native-epoch3-gates.json",
+      "state": "failed",
+      "exit-code": 1,
+      "failure-category": "CreateProcess cargo executable discovery",
+      "sha256": "e1a95f2bcd0c2ef31eea38e22bfc296d683cd5fb91017d8ea38f1662f48a5687"
+    },
+    {
+      "record": "mutant-native-epoch3b-gates.json",
+      "state": "failed",
+      "exit-code": 1,
+      "failure-category": "Missing offline Cargo source configuration",
+      "sha256": "885136c5bd6bce37d6acc2b5032bc075d5b3c56dbbafa9266e24e67406294718"
+    },
+    {
+      "record": "mutant-native-epoch4-gates.json",
+      "state": "failed",
+      "exit-code": 1,
+      "failure-category": "Missing vm-memory package metadata",
+      "sha256": "203265e99f5ee31ffa200e2c1a503d0104faa1f5390c9865fd95985d1f2d3af5"
+    },
+    {
+      "record": "mutant-native-epoch4b-gates.json",
+      "state": "failed",
+      "exit-code": 1,
+      "failure-category": "Missing static include fixtures",
+      "sha256": "97afdb4c859e6d71ccee7eba7e2d7ea946056fac5b7fc43a511026cd005f9718"
+    }
+  ],
+  "final-record": "mutant-native-epoch4c-gates.json",
+  "final-driver": "run-mutant-native-epoch4c.py",
+  "final-driver-sha256": "29fde44ae045ea4e671c97ffcc4c54fde0be9e97e337133f8fe15cbfea8c182e",
+  "actual-guarded-predecessor": "mutant-native-epoch4b-gates.json",
+  "qualification": "The retained final raw prior-record label says epoch4. Actual final driver explicitly loads epoch4b, verifies that missing-include failure, restores absent baseline files, then runs all final gates. The historical label is retained verbatim."
+}

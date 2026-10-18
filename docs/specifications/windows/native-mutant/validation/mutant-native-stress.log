@@ -1,0 +1,39 @@
+Verified 25200 query, 12800 create-fault, 200 release and 892 grant/lifecycle rows; naming revisions 4/5/6 and 48 Win32 identity comparisons; all replay projections match native bytes
+Verified 24 namespace runs, 36 link targets, 24 routed events and four empty-prefix creation rejections
+[
+  {
+    "case": "query-projection",
+    "rejected": true,
+    "error": "AssertionError"
+  },
+  {
+    "case": "release-state",
+    "rejected": true,
+    "error": "AssertionError"
+  },
+  {
+    "case": "create-cartesian-index",
+    "rejected": true,
+    "error": "AssertionError"
+  },
+  {
+    "case": "win32-nul-identity",
+    "rejected": true,
+    "error": "AssertionError"
+  },
+  {
+    "case": "missing-handle-closure",
+    "rejected": true,
+    "error": "AssertionError"
+  },
+  {
+    "case": "both-ntdll-identities",
+    "rejected": true,
+    "error": "AssertionError"
+  },
+  {
+    "case": "private-global-routing",
+    "rejected": true,
+    "error": "AssertionError"
+  }
+]

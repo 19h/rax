@@ -74,6 +74,12 @@ mod numa_map_tests;
 #[path = "services_tests/event_tests.rs"]
 mod event_tests;
 
+#[path = "services_tests/mutant_tests.rs"]
+mod mutant_tests;
+
+#[path = "services_tests/mutant_replay_tests.rs"]
+mod mutant_replay_tests;
+
 #[path = "services_tests/io_completion_create_tests.rs"]
 mod io_completion_create_tests;
 

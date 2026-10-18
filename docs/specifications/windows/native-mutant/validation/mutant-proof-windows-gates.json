@@ -1,0 +1,32 @@
+{
+  "state": "finished",
+  "pid": 6044,
+  "steps": [
+    {
+      "name": "native",
+      "exit-code": 0,
+      "log": "mutant-proof-windows-native.log",
+      "bytes": 185,
+      "sha256": "6d9aea48c8b160e014e33cffa4c3287957638e12faa4ce0035e7757ed9d74dd1"
+    },
+    {
+      "name": "private-bno",
+      "exit-code": 0,
+      "log": "mutant-proof-windows-private-bno.log",
+      "bytes": 105,
+      "sha256": "3b8d1e733c4164667a296f1bb6482ad72ba520d41e114c02be7c368656302bf1"
+    },
+    {
+      "name": "validation",
+      "exit-code": 0,
+      "log": "mutant-proof-windows-validation.log",
+      "bytes": 90,
+      "sha256": "789560b9852ecd4bdae1ce2d6135801f7710c4de4cd372b7a87ece90c597e1f8"
+    }
+  ],
+  "source-root": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-mutant-epoch4",
+  "utc": "2026-10-18T23:56:23.686971+00:00",
+  "archive-sha256": "243a18622a9a2b39a1b1b7a3c0ec95dd20c7c3b99a35074e88b0f425e86bf366",
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T23:56:35.431656+00:00"
+}

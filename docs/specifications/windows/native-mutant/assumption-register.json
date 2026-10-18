@@ -1,0 +1,69 @@
+[
+  {
+    "id": "M1",
+    "assumption": "Native mutant objects are private guest Mutex instances and never host synchronization handles.",
+    "basis": "objects/named.rs and native/mutant.rs use the existing guest table.",
+    "dependent-result": "create/open/waits/release/lifetime",
+    "stress-test": "host-name collision, duplicate and final close",
+    "falsification-probe": "trace native FFI: no guest request reaches a host mutant function",
+    "status": "confirmed"
+  },
+  {
+    "id": "M2",
+    "assumption": "The retained build29683 observations define the measured native/WoW64 probe and copy profile.",
+    "basis": "four ABI profiles, source/PE/NTDLL before-after identities and native matrices",
+    "dependent-result": "all kernel fault-order and padding claims",
+    "stress-test": "25200 query,12800 create-fault,200 release rows plus raw UTF-16 and Win32 comparisons",
+    "falsification-probe": "Replay all twelve native projections; rerun the bound producers on another kernel/profile to test portability",
+    "status": "retained",
+    "qualification": "Retained for this one-kernel measured profile; not universal NT behavior."
+  },
+  {
+    "id": "M3",
+    "assumption": "Selected Local/Global links determine installed named-object identity; embedded keys keep their original policy.",
+    "basis": "published object reparse proof and native named survey",
+    "dependent-result": "private named registry plus Win32/native interoperability",
+    "stress-test": "session0 alias, nonzero-session distinction, case variants, zero-right root and last close",
+    "falsification-probe": "all new named tests and complete existing threading tests",
+    "status": "confirmed",
+    "qualification": "Selected public/session roots only; private subtree support remains absent."
+  },
+  {
+    "id": "M4",
+    "assumption": "An enabled BNO prefix cannot silently use the public default root.",
+    "basis": "private-bno-prerequisite:24 namespace runs,36 link targets,24 routed events; four empty-prefix CreateProcess rejections do not establish token-set behavior",
+    "dependent-result": "fail-closed Win32 named calls until private subtree selection is implemented",
+    "stress-test": "ASCII/Unicode private prefixes and missing capture metadata",
+    "falsification-probe": "enable primary BNO in the guest fixture and assert no object is published",
+    "status": "confirmed",
+    "qualification": "Explicit refusal is established; successful private-namespace execution is not."
+  },
+  {
+    "id": "M5",
+    "assumption": "Explicit descriptors, QoS, permanent lifetime and ACCESS_SYSTEM_SECURITY remain outside the current one-principal guest profile.",
+    "basis": "existing native event/completion policy; native actual SACL grant can succeed",
+    "dependent-result": "explicit unsupported results; no fabricated privilege denial or authorization claim",
+    "stress-test": "bad descriptor probes, existing object, all generic rights",
+    "falsification-probe": "full security-policy implementation or an ordinary guest request needing these inputs falsifies sufficiency for full goal",
+    "status": "retained"
+  },
+  {
+    "id": "M6",
+    "assumption": "The sparse selected source list needs unchanged native baseline fixtures and package metadata to compile.",
+    "basis": "Native epoch4b compiler reported missing static include fixtures; epoch4c restores only absent files.",
+    "dependent-result": "Attribution of native final compilation and tests",
+    "stress-test": "Verify5762 selected inputs,23 package files and13236 restored baseline files before/after every gate",
+    "falsification-probe": "Any non-document restored regular file mismatches current source; any selected override changes",
+    "status": "revised",
+    "qualification": "Not a complete compilation-input manifest; historical docs and Git symlink text are explicitly retained."
+  },
+  {
+    "id": "M7",
+    "assumption": "Retained ABI184 carriers validate the matched RAX consumers, not whole-current-root products.",
+    "basis": "Eight C++ consumer/adapter files match current root; independent static-text and Rust ABI changes remain.",
+    "dependent-result": "Scope of shipping-carrier validation",
+    "stress-test": "Actual Cargo-selected two archives/host, complete member walks, empty core features, exact C++ comparisons",
+    "falsification-probe": "Changed affected consumer bytes, wrong artifact selection or default-enabled core features",
+    "status": "retained"
+  }
+]

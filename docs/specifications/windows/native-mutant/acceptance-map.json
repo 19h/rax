@@ -1,0 +1,107 @@
+[
+  {
+    "requirement": "Four native mutant services",
+    "implementation": [
+      "src/user/windows/dll/native.rs",
+      "src/user/windows/dll/native/mutant.rs",
+      "src/user/windows/dll/native/mutant/attributes.rs",
+      "src/user/windows/dll/native/mutant/query.rs"
+    ],
+    "evidence": [
+      "native/native-v2",
+      "native/native-faults",
+      "native/native-create-faults-v2",
+      "validation/mutant-native-epoch4c-focus.log"
+    ]
+  },
+  {
+    "requirement": "Installed Win32/native identity; preserve embedded policy",
+    "implementation": [
+      "src/user/windows/objects/named.rs",
+      "src/user/windows/object_namespace/named.rs",
+      "src/user/windows/dll/threading/objects.rs"
+    ],
+    "evidence": [
+      "native/native-names-v4",
+      "native/native-names-v5",
+      "native/native-names-v6",
+      "validation/mutant-focus-epoch4.log"
+    ]
+  },
+  {
+    "requirement": "Exact native/WoW64 query/create/release fault order",
+    "implementation": [
+      "src/user/windows/dll/native/mutant.rs",
+      "src/user/windows/dll/native/mutant/attributes.rs",
+      "src/user/windows/dll/native/mutant/query.rs"
+    ],
+    "evidence": [
+      "replay/",
+      "check-native.py",
+      "src/user/windows/process/sched/tests/services_tests/mutant_replay_tests.rs"
+    ]
+  },
+  {
+    "requirement": "Raw proof and primary provenance",
+    "implementation": [
+      "check-native.py",
+      "check-private-bno.py",
+      "stress-native.py"
+    ],
+    "evidence": [
+      "native-inputs.json",
+      "private-bno-inputs.json",
+      "primary-provenance.json",
+      "validation/mutant-native-stress.json"
+    ]
+  },
+  {
+    "requirement": "Windows/macOS/Linux complete selected build/test configurations",
+    "implementation": [
+      "src/user/windows/dll/native.rs",
+      "src/user/windows/objects.rs",
+      "src/user/windows/object_namespace.rs"
+    ],
+    "evidence": [
+      "validation/mutant-macos-epoch4-gates.json",
+      "validation/mutant-linux-epoch4-gates.json",
+      "validation/mutant-native-epoch4c-gates.json"
+    ],
+    "qualification": "Exact five pre-existing Windows failures, two ignores and cfg-excluded integration binaries are explicit."
+  },
+  {
+    "requirement": "Retained Assist consumers and actual archive identities",
+    "implementation": [
+      "Existing C API and root RAX adapters; no ABI/target/default/package changes"
+    ],
+    "evidence": [
+      "validation/macos-mutant-final-owning-archive-identities.json",
+      "validation/linux-mutant-final-owning-archive-identities.json",
+      "validation/native-mutant-final-owning-archive-identities.json",
+      "validation/mutant-upstream-source-comparison.json"
+    ],
+    "qualification": "ABI184 frozen Rust carriers; eight C++ consumers match current root; whole-current-root GUI/plugin/package execution is not claimed."
+  },
+  {
+    "requirement": "Ordinary production-path advancement and full-goal limitations",
+    "implementation": [
+      "Private guest mutant state used by actual retained core"
+    ],
+    "evidence": [
+      "validation/mutant-owner-observer-launch.json",
+      "validation/mutant-ordinary-reviewed.json",
+      "bounded-scope.json"
+    ],
+    "qualification": "Both actual guest creates succeed then stop at native wait; no successful ordinary guest exit."
+  },
+  {
+    "requirement": "Exact red commit plus paired root publication",
+    "implementation": [
+      "Exact owned staging, linear history, RAX commit/push and root gitlink plus two engineering records"
+    ],
+    "evidence": [
+      "Git tree and paired root VENDORED_VERSIONS.md / src/emulation/native-process-emulation.md entries"
+    ],
+    "qualification": "External publication records are retained in task cache after commit; this source group does not self-reference a future commit hash."
+  }
+]

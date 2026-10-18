@@ -1,0 +1,36 @@
+native-mutant-faults.cpp
+native-mutant-faults.cpp(69): error C3312: no callable 'begin' function found for type 'initializer list'
+native-mutant-faults.cpp(69): error C3312: no callable 'end' function found for type 'initializer list'
+native-mutant-faults.cpp(69): error C2143: syntax error: missing ';' before ':'
+native-mutant-faults.cpp(69): error C2143: syntax error: missing ';' before '{'
+native-mutant-faults.cpp(69): error C2143: syntax error: missing ')' before '{'
+native-mutant-faults.cpp(69): error C2143: syntax error: missing ';' before '}'
+native-mutant-faults.cpp(69): error C2059: syntax error: ')'
+native-mutant-faults.cpp(71): error C2065: 'origin': undeclared identifier
+native-mutant-faults.cpp(71): error C7732: expected an expression before ']'
+native-mutant-faults.cpp(139): error C3312: no callable 'begin' function found for type 'initializer list'
+native-mutant-faults.cpp(139): error C3312: no callable 'end' function found for type 'initializer list'
+native-mutant-faults.cpp(139): error C2143: syntax error: missing ';' before ':'
+native-mutant-faults.cpp(139): error C2143: syntax error: missing ';' before '{'
+native-mutant-faults.cpp(139): error C2143: syntax error: missing ')' before '{'
+native-mutant-faults.cpp(139): error C2143: syntax error: missing ';' before '}'
+native-mutant-faults.cpp(139): error C2059: syntax error: ')'
+native-mutant-faults.cpp(142): error C3312: no callable 'begin' function found for type 'initializer list'
+native-mutant-faults.cpp(142): error C3312: no callable 'end' function found for type 'initializer list'
+native-mutant-faults.cpp(142): error C2143: syntax error: missing ';' before ':'
+native-mutant-faults.cpp(142): error C2143: syntax error: missing ';' before '{'
+native-mutant-faults.cpp(142): error C2143: syntax error: missing ')' before '{'
+native-mutant-faults.cpp(142): error C2143: syntax error: missing ';' before '}'
+native-mutant-faults.cpp(142): error C2059: syntax error: ')'
+native-mutant-faults.cpp(143): error C2065: 'out_mode': undeclared identifier
+native-mutant-faults.cpp(144): error C2065: 'ret_mode': undeclared identifier
+native-mutant-faults.cpp(144): error C2065: 'ret_mode': undeclared identifier
+native-mutant-faults.cpp(145): error C2065: 'ret_mode': undeclared identifier
+native-mutant-faults.cpp(148): error C2065: 'handle': undeclared identifier
+native-mutant-faults.cpp(148): error C2065: 'klass': undeclared identifier
+native-mutant-faults.cpp(148): error C2065: 'length': undeclared identifier
+native-mutant-faults.cpp(152): error C2065: 'handle': undeclared identifier
+native-mutant-faults.cpp(152): error C2065: 'klass': undeclared identifier
+native-mutant-faults.cpp(152): error C2065: 'length': undeclared identifier
+native-mutant-faults.cpp(152): error C2065: 'out_mode': undeclared identifier
+native-mutant-faults.cpp(152): error C2065: 'ret_mode': undeclared identifier

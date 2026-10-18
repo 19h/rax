@@ -2347,3 +2347,25 @@ Both ordinary programs still stop at NtCreateMutant; successful guest execution
 and private BNO subtree selection remain incomplete.
 
 [Contract and evidence](../../../docs/specifications/windows/native-object-reparse/README.md).
+
+
+## Native guest mutants and installed named identity (2026-10-19)
+
+NtCreateMutant, NtOpenMutant, NtReleaseMutant and NtQueryMutant0/1 use private
+guest mutex state, native/WoW64 probe/copy rules and selected raw UTF-16 names.
+Installed Win32 event/mutex/semaphore calls share those names; embedded behavior
+remains unchanged. Private BNO and explicit security/privilege contexts remain
+unsupported. No guest request opens a host synchronization handle.
+
+Final core suites: macOS7945/0/2, Linux7939/0/2, Windows7384/5/2. The exact five
+existing Windows lowerer failures and two ignores remain explicit. Focus11/11/11,
+C API168 per host, all-target checks and scoped retained consumers pass. Native
+proof covers25200 query,12800 create-fault and200 release rows, grant/lifecycle
+and raw-name/Win32 identity cases. Selected source5762 is qualified by separately
+verified native fixture/package restoration; retained-owner inputs456.
+
+Both unchanged ordinary programs create a guest mutant successfully and then stop at unimplemented NtWaitForSingleObject (0x4). Neither reaches a successful guest exit.
+Native wait services, private BNO, security and full execution remain incomplete.
+Public ABI, defaults, dependency pins and package layouts are unchanged.
+
+[Contract and evidence](../../../docs/specifications/windows/native-mutant/README.md).

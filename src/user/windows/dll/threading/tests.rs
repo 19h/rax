@@ -47,6 +47,7 @@ fn api(name: &str) -> &'static Api {
     EXPORTS
         .iter()
         .chain(super::super::kernel::EXPORTS.iter())
+        .chain(super::super::native::EXPORTS.iter())
         .find_map(|export| match &export.item {
             Item::Func(api) if api.name == name => Some(api),
             _ => None,
@@ -85,6 +86,184 @@ fn put_name(c: &Ctx, addr: u64, name: &str) {
     c.mem()
         .put_wstr(addr, &name.encode_utf16().collect::<Vec<_>>())
         .unwrap();
+}
+
+#[test]
+fn native_mutant_and_win32_share_installed_names_and_cross_type_collisions_all_abis() {
+    use crate::user::windows::nt::status::*;
+    use crate::user::windows::object_namespace::reparse_tests;
+    for arch in WinArch::ALL {
+        for session in [0, 42] {
+            with_context(arch, |c, data| {
+                c.p.object_namespace = reparse_tests::sample(session);
+                c.p.objects.select_wnf_catalog(
+                    crate::user::windows::wnf::tests::empty_subject_catalog(false)
+                        .with_primary_token_session_id(session)
+                        .with_primary_token_bno(
+                            crate::user::windows::security::token::bno::Isolation::new(None)
+                                .unwrap(),
+                        ),
+                );
+                put_name(c, data, "Local\\SharedMutant");
+                let first = integer(c, "CreateMutexW", &[0, 1, data]);
+                assert_ne!(first, 0);
+                let base = if session == 0 {
+                    "\\BaseNamedObjects".to_owned()
+                } else {
+                    format!("\\Sessions\\{session}\\BaseNamedObjects")
+                };
+                let oa = data + 512;
+                let descriptor = data + 576;
+                let text = data + 640;
+                put_name(c, text, &format!("{base}\\SharedMutant"));
+                let length = (base.encode_utf16().count() + "\\SharedMutant".len()) * 2;
+                let width = c.psize();
+                c.mem().wr(oa, &[0; 48]).unwrap();
+                c.mem().w32(oa, if arch.is64() { 48 } else { 24 }).unwrap();
+                c.write_ptr(oa + 2 * width, descriptor).unwrap();
+                c.mem().wr(descriptor, &[0; 16]).unwrap();
+                c.mem().w16(descriptor, length as u16).unwrap();
+                c.write_ptr(descriptor + width, text).unwrap();
+                assert_eq!(integer(c, "NtOpenMutant", &[data + 256, 1, oa]), 0);
+                let alias = c.read_ptr(data + 256).unwrap();
+                assert_eq!(c.p.objects.id(alias), c.p.objects.id(first));
+                assert_eq!(integer(c, "NtReleaseMutant", &[alias, 0]), 0);
+                assert_eq!(integer(c, "ReleaseMutex", &[first]), 0);
+                assert_eq!(c.last_error().unwrap(), ERROR_NOT_OWNER);
+                c.p.objects.close(alias).unwrap();
+                put_name(c, data, "SharedMutant");
+                let same = integer(c, "CreateMutexW", &[0, 0, data]);
+                assert_eq!(c.p.objects.id(same), c.p.objects.id(first));
+                assert_eq!(c.last_error().unwrap(), ERROR_ALREADY_EXISTS);
+                c.p.objects.close(same).unwrap();
+                assert_eq!(integer(c, "CreateEventW", &[0, 1, 0, data]), 0);
+                assert_eq!(c.last_error().unwrap(), ERROR_INVALID_HANDLE);
+                c.p.objects.close(first).unwrap();
+                let event = integer(c, "CreateEventW", &[0, 1, 0, data]);
+                assert_ne!(event, 0);
+                c.mem().w32(oa + 3 * width, 0x80).unwrap();
+                assert_eq!(
+                    integer(c, "NtCreateMutant", &[data + 256, 1, oa, 0]),
+                    u64::from(STATUS_OBJECT_TYPE_MISMATCH)
+                );
+                c.p.objects.close(event).unwrap();
+            });
+        }
+    }
+}
+
+#[test]
+fn native_mutant_raw_win32_names_share_nt_identity_without_unicode_normalization() {
+    use crate::user::windows::object_namespace::reparse_tests;
+    use crate::user::windows::security::token::bno::Isolation;
+    for arch in WinArch::ALL {
+        with_context(arch, |c, data| {
+            c.p.object_namespace = reparse_tests::sample(0);
+            c.p.objects.select_wnf_catalog(
+                crate::user::windows::wnf::tests::empty_subject_catalog(false)
+                    .with_primary_token_session_id(0)
+                    .with_primary_token_bno(Isolation::new(None).unwrap()),
+            );
+            let before = c.p.objects.handle_count();
+            for suffix in [
+                vec![0, 65],
+                vec![0xD800],
+                vec![0xDC00],
+                vec![47, 65],
+                vec![46],
+                vec![46, 46],
+            ] {
+                let native: Vec<_> = "\\BaseNamedObjects\\RawInterop_"
+                    .encode_utf16()
+                    .chain(suffix.iter().copied())
+                    .collect();
+                let win32: Vec<_> = "Local\\RawInterop_"
+                    .encode_utf16()
+                    .chain(suffix.iter().copied())
+                    .collect();
+                let (oa, descriptor, text) = (data + 512, data + 576, data + 640);
+                let width = c.psize();
+                c.mem().wr(oa, &[0; 48]).unwrap();
+                c.mem().w32(oa, if arch.is64() { 48 } else { 24 }).unwrap();
+                c.write_ptr(oa + 2 * width, descriptor).unwrap();
+                c.mem().wr(descriptor, &[0; 16]).unwrap();
+                c.mem().w16(descriptor, (2 * native.len()) as u16).unwrap();
+                c.write_ptr(descriptor + width, text).unwrap();
+                c.mem().put_wstr(text, &native).unwrap();
+                assert_eq!(
+                    integer(c, "NtCreateMutant", &[data + 256, 0x1F0001, oa, 0]),
+                    0
+                );
+                let original = c.read_ptr(data + 256).unwrap();
+                c.mem().put_wstr(data, &win32).unwrap();
+                let first = integer(c, "CreateMutexW", &[0, 0, data]);
+                assert_ne!(first, 0, "{arch} raw suffix {suffix:x?}");
+                let nul_terminated = suffix.contains(&0);
+                assert_eq!(
+                    c.p.objects.id(first) == c.p.objects.id(original),
+                    !nul_terminated
+                );
+                assert_eq!(
+                    c.last_error().unwrap(),
+                    if nul_terminated {
+                        0
+                    } else {
+                        ERROR_ALREADY_EXISTS
+                    }
+                );
+                c.set_last_error(0xA5A5_A5A5).unwrap();
+                let opened = integer(c, "OpenMutexW", &[1, 0, data]);
+                assert_ne!(opened, 0);
+                assert_eq!(c.p.objects.id(opened), c.p.objects.id(first));
+                assert_eq!(c.last_error().unwrap(), 0xA5A5_A5A5);
+                for handle in [opened, first, original] {
+                    c.p.objects.close(handle).unwrap();
+                }
+                assert_eq!(c.p.objects.handle_count(), before);
+            }
+            c.p.object_namespace = Default::default();
+            for prefix in ["Local\\", "Global\\"] {
+                let invalid: Vec<_> = prefix.encode_utf16().chain([0xD800, 92, 65]).collect();
+                c.mem().put_wstr(data, &invalid).unwrap();
+                assert_eq!(integer(c, "CreateMutexW", &[0, 0, data]), 0);
+                assert_eq!(c.last_error().unwrap(), ERROR_NOT_SUPPORTED);
+            }
+        });
+    }
+}
+
+#[test]
+fn native_mutant_private_bno_and_missing_capture_refuse_without_public_fallback() {
+    use crate::user::windows::object_namespace::reparse_tests;
+    use crate::user::windows::security::token::bno::Isolation;
+    for arch in WinArch::ALL {
+        with_context(arch, |c, data| {
+            c.p.object_namespace = reparse_tests::sample(0);
+            for prefix in [None, Some("Isolated".encode_utf16().collect::<Vec<_>>())] {
+                let mut catalog = crate::user::windows::wnf::tests::empty_subject_catalog(false)
+                    .with_primary_token_session_id(0);
+                if let Some(prefix) = prefix {
+                    catalog = catalog.with_primary_token_bno(Isolation::new(Some(prefix)).unwrap());
+                }
+                c.p.objects.select_wnf_catalog(catalog);
+                put_name(c, data, "Local\\PrivateName");
+                let before = (c.p.objects.handle_count(), c.p.objects.iter().count());
+                assert_eq!(integer(c, "CreateMutexW", &[0, 0, data]), 0);
+                assert_eq!(c.last_error().unwrap(), ERROR_NOT_SUPPORTED);
+                assert_eq!(
+                    (c.p.objects.handle_count(), c.p.objects.iter().count()),
+                    before
+                );
+                let anonymous = integer(c, "CreateMutexW", &[0, 0, 0]);
+                assert_ne!(anonymous, 0);
+                c.p.objects.close(anonymous).unwrap();
+                assert_eq!(
+                    (c.p.objects.handle_count(), c.p.objects.iter().count()),
+                    before
+                );
+            }
+        });
+    }
 }
 
 #[test]

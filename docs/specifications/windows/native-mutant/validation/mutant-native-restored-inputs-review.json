@@ -1,0 +1,259 @@
+{
+  "source": "mutant-native-epoch4c-gates.json",
+  "total-restored-files": 13236,
+  "supplemental-package-files": 23,
+  "selected-source-files": 5762,
+  "representation-or-document-differences": [
+    {
+      "path": "docs/specifications/windows/native-process-token-open/assumption-register.json",
+      "classification": "Retained historical documentation, not selected compiled source",
+      "expected": {
+        "path": "docs/specifications/windows/native-process-token-open/assumption-register.json",
+        "bytes": 2494,
+        "sha256": "55765f4cb125e62ad941b7d7cf5d4f747ee4ba182e5d8b1e629cc90b3a2b7d37"
+      },
+      "current-sha256": "7bbe17cf08fb18558a99ba3d3f6372a595c06a5ac6a0e54dcea024d9befb8e7e"
+    },
+    {
+      "path": "docs/specifications/windows/native-process-token-open/bounded-scope.json",
+      "classification": "Retained historical documentation, not selected compiled source",
+      "expected": {
+        "path": "docs/specifications/windows/native-process-token-open/bounded-scope.json",
+        "bytes": 720,
+        "sha256": "295816b03cb10521564db7ec1d3cc940325c8808dcf034c7f384d775b8d94bea"
+      },
+      "current-sha256": "bc8322cab84a4df8d52d98d3d189eb178c7899e2904df99d2b597bb2cb8f4808"
+    },
+    {
+      "path": "docs/specifications/windows/native-process-token-open/check-native.py",
+      "classification": "Retained historical documentation, not selected compiled source",
+      "expected": {
+        "path": "docs/specifications/windows/native-process-token-open/check-native.py",
+        "bytes": 6280,
+        "sha256": "01b749f37ba80227c8a6e69b2f6740a0c03b9d354e2500579f07f3e641306aea"
+      },
+      "current-sha256": "aacae992b2eea4f0e4c9ca20e0f1ef43bd12461232da8587b58769a6aacc81c6"
+    },
+    {
+      "path": "docs/specifications/windows/native-process-token-open/README.md",
+      "classification": "Retained historical documentation, not selected compiled source",
+      "expected": {
+        "path": "docs/specifications/windows/native-process-token-open/README.md",
+        "bytes": 491,
+        "sha256": "c602e1575078f714462dc701a4defd693c2f72799238754d7fec63b11b40747e"
+      },
+      "current-sha256": "64d7f0bc5a066455fd548aa7acc76d9120ccbdd0d833092c515af3dc6af5fbb1"
+    },
+    {
+      "path": "docs/specifications/windows/native-system-time/assumption-register.json",
+      "classification": "Retained historical documentation, not selected compiled source",
+      "expected": {
+        "path": "docs/specifications/windows/native-system-time/assumption-register.json",
+        "bytes": 2146,
+        "sha256": "172aefbf3b96befff5ec7031fea7a4627a207729fd140fc9544df81f01a21fe8"
+      },
+      "current-sha256": "57924640a94bbeaf662a4eee0d070347e53063743b6a933f86c73f0d9d9a0a43"
+    },
+    {
+      "path": "docs/specifications/windows/native-system-time/bounded-scope.json",
+      "classification": "Retained historical documentation, not selected compiled source",
+      "expected": {
+        "path": "docs/specifications/windows/native-system-time/bounded-scope.json",
+        "bytes": 768,
+        "sha256": "ba29eb21dce32fe5867805dca817f31dc11da03cf7cdf670e3e6b7f7dfc3e757"
+      },
+      "current-sha256": "85085369b9079b048e8dc0d3a03776bb201df02d0f420b8e7709e1d06c943675"
+    },
+    {
+      "path": "docs/specifications/windows/native-system-time/check-native.py",
+      "classification": "Retained historical documentation, not selected compiled source",
+      "expected": {
+        "path": "docs/specifications/windows/native-system-time/check-native.py",
+        "bytes": 3146,
+        "sha256": "9fcb292fb2f4c2ee154c4221a2793801fc40977fbbf9392d85693229e664052e"
+      },
+      "current-sha256": "085185bb512f92eb131791e64335b8166bfd31fd5f300d62e20347c45a145a08"
+    },
+    {
+      "path": "docs/specifications/windows/native-system-time/README.md",
+      "classification": "Retained historical documentation, not selected compiled source",
+      "expected": {
+        "path": "docs/specifications/windows/native-system-time/README.md",
+        "bytes": 2089,
+        "sha256": "1ac0c541a147258981a1f39e0fe2143ee89d8de7fa5a93f46cbcbbc6f0c0c7bf"
+      },
+      "current-sha256": "432bfe90051ddcbc4aa01ab66d81ff4b133526704846b927f7947234e533bd78"
+    },
+    {
+      "path": "initrd_root/bin/cat",
+      "classification": "Git symlink stored as link text on Windows",
+      "expected": {
+        "path": "initrd_root/bin/cat",
+        "bytes": 7,
+        "sha256": "9d75f0d7c398df565d7ac04c6819b62d6d8f9560f5eb4672596ecd8f7e96ae91"
+      },
+      "local-link-target": "busybox"
+    },
+    {
+      "path": "initrd_root/bin/cttyhack",
+      "classification": "Git symlink stored as link text on Windows",
+      "expected": {
+        "path": "initrd_root/bin/cttyhack",
+        "bytes": 7,
+        "sha256": "9d75f0d7c398df565d7ac04c6819b62d6d8f9560f5eb4672596ecd8f7e96ae91"
+      },
+      "local-link-target": "busybox"
+    },
+    {
+      "path": "initrd_root/bin/cut",
+      "classification": "Git symlink stored as link text on Windows",
+      "expected": {
+        "path": "initrd_root/bin/cut",
+        "bytes": 7,
+        "sha256": "9d75f0d7c398df565d7ac04c6819b62d6d8f9560f5eb4672596ecd8f7e96ae91"
+      },
+      "local-link-target": "busybox"
+    },
+    {
+      "path": "initrd_root/bin/echo",
+      "classification": "Git symlink stored as link text on Windows",
+      "expected": {
+        "path": "initrd_root/bin/echo",
+        "bytes": 7,
+        "sha256": "9d75f0d7c398df565d7ac04c6819b62d6d8f9560f5eb4672596ecd8f7e96ae91"
+      },
+      "local-link-target": "busybox"
+    },
+    {
+      "path": "initrd_root/bin/grep",
+      "classification": "Git symlink stored as link text on Windows",
+      "expected": {
+        "path": "initrd_root/bin/grep",
+        "bytes": 7,
+        "sha256": "9d75f0d7c398df565d7ac04c6819b62d6d8f9560f5eb4672596ecd8f7e96ae91"
+      },
+      "local-link-target": "busybox"
+    },
+    {
+      "path": "initrd_root/bin/head",
+      "classification": "Git symlink stored as link text on Windows",
+      "expected": {
+        "path": "initrd_root/bin/head",
+        "bytes": 7,
+        "sha256": "9d75f0d7c398df565d7ac04c6819b62d6d8f9560f5eb4672596ecd8f7e96ae91"
+      },
+      "local-link-target": "busybox"
+    },
+    {
+      "path": "initrd_root/bin/ls",
+      "classification": "Git symlink stored as link text on Windows",
+      "expected": {
+        "path": "initrd_root/bin/ls",
+        "bytes": 7,
+        "sha256": "9d75f0d7c398df565d7ac04c6819b62d6d8f9560f5eb4672596ecd8f7e96ae91"
+      },
+      "local-link-target": "busybox"
+    },
+    {
+      "path": "initrd_root/bin/mkdir",
+      "classification": "Git symlink stored as link text on Windows",
+      "expected": {
+        "path": "initrd_root/bin/mkdir",
+        "bytes": 7,
+        "sha256": "9d75f0d7c398df565d7ac04c6819b62d6d8f9560f5eb4672596ecd8f7e96ae91"
+      },
+      "local-link-target": "busybox"
+    },
+    {
+      "path": "initrd_root/bin/mknod",
+      "classification": "Git symlink stored as link text on Windows",
+      "expected": {
+        "path": "initrd_root/bin/mknod",
+        "bytes": 7,
+        "sha256": "9d75f0d7c398df565d7ac04c6819b62d6d8f9560f5eb4672596ecd8f7e96ae91"
+      },
+      "local-link-target": "busybox"
+    },
+    {
+      "path": "initrd_root/bin/mount",
+      "classification": "Git symlink stored as link text on Windows",
+      "expected": {
+        "path": "initrd_root/bin/mount",
+        "bytes": 7,
+        "sha256": "9d75f0d7c398df565d7ac04c6819b62d6d8f9560f5eb4672596ecd8f7e96ae91"
+      },
+      "local-link-target": "busybox"
+    },
+    {
+      "path": "initrd_root/bin/poweroff",
+      "classification": "Git symlink stored as link text on Windows",
+      "expected": {
+        "path": "initrd_root/bin/poweroff",
+        "bytes": 7,
+        "sha256": "9d75f0d7c398df565d7ac04c6819b62d6d8f9560f5eb4672596ecd8f7e96ae91"
+      },
+      "local-link-target": "busybox"
+    },
+    {
+      "path": "initrd_root/bin/reboot",
+      "classification": "Git symlink stored as link text on Windows",
+      "expected": {
+        "path": "initrd_root/bin/reboot",
+        "bytes": 7,
+        "sha256": "9d75f0d7c398df565d7ac04c6819b62d6d8f9560f5eb4672596ecd8f7e96ae91"
+      },
+      "local-link-target": "busybox"
+    },
+    {
+      "path": "initrd_root/bin/setsid",
+      "classification": "Git symlink stored as link text on Windows",
+      "expected": {
+        "path": "initrd_root/bin/setsid",
+        "bytes": 7,
+        "sha256": "9d75f0d7c398df565d7ac04c6819b62d6d8f9560f5eb4672596ecd8f7e96ae91"
+      },
+      "local-link-target": "busybox"
+    },
+    {
+      "path": "initrd_root/bin/sh",
+      "classification": "Git symlink stored as link text on Windows",
+      "expected": {
+        "path": "initrd_root/bin/sh",
+        "bytes": 7,
+        "sha256": "9d75f0d7c398df565d7ac04c6819b62d6d8f9560f5eb4672596ecd8f7e96ae91"
+      },
+      "local-link-target": "busybox"
+    },
+    {
+      "path": "initrd_root/bin/sleep",
+      "classification": "Git symlink stored as link text on Windows",
+      "expected": {
+        "path": "initrd_root/bin/sleep",
+        "bytes": 7,
+        "sha256": "9d75f0d7c398df565d7ac04c6819b62d6d8f9560f5eb4672596ecd8f7e96ae91"
+      },
+      "local-link-target": "busybox"
+    },
+    {
+      "path": "initrd_root/bin/uname",
+      "classification": "Git symlink stored as link text on Windows",
+      "expected": {
+        "path": "initrd_root/bin/uname",
+        "bytes": 7,
+        "sha256": "9d75f0d7c398df565d7ac04c6819b62d6d8f9560f5eb4672596ecd8f7e96ae91"
+      },
+      "local-link-target": "busybox"
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "classification": "Retained historical documentation, not selected compiled source",
+      "expected": {
+        "path": "src/user/windows/native-runtime.md",
+        "bytes": 158978,
+        "sha256": "978614e1d993b2d140902ca1e8629d2365d4bf1d61b210bb367ecb11c39c30ee"
+      },
+      "current-sha256": "ec108d2c03cd437ab61f5db52b9b1c8f1235c70780f4cf4b38d49878ed92766f"
+    }
+  ],
+  "scope": "All restored current non-document regular files match. Windows symlink text matches Git link targets. Historical document differences do not replace selected source/fixture inputs; exact retained document bytes are collected separately."
+}

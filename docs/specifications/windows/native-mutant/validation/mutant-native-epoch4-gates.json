@@ -1,0 +1,70 @@
+{
+  "pid": 892,
+  "utc": "2026-10-18T23:24:23.643212+00:00",
+  "state": "failed",
+  "source-epoch": 4,
+  "steps": [
+    {
+      "name": "compiler-environment",
+      "argv": [
+        "powershell.exe",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\mutant-native-compiler-env-epoch4.ps1"
+      ],
+      "cwd": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-mutant-epoch4",
+      "started-utc": "2026-10-18T23:27:00.360367+00:00",
+      "exit-code": 0,
+      "log": "mutant-native-epoch4-compiler-environment.log",
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9",
+      "bytes": 241,
+      "results": []
+    },
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-mutant-epoch4",
+      "started-utc": "2026-10-18T23:27:02.465886+00:00",
+      "exit-code": 0,
+      "log": "mutant-native-epoch4-toolchain.log",
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5",
+      "bytes": 36,
+      "results": []
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_mutant",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "cwd": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-mutant-epoch4",
+      "started-utc": "2026-10-18T23:27:02.491240+00:00",
+      "exit-code": 101,
+      "log": "mutant-native-epoch4-focus.log",
+      "sha256": "8268ff199f4002a10ce9c979a131486366719763810fff80567937b00236ba58",
+      "bytes": 355,
+      "results": []
+    }
+  ],
+  "free-before-bytes": 10982121472,
+  "native-cargo-config-sha256": "9f80616d633d948feeba5b201bfa4fe98c8fd736f3f48469b6481279584d8f4c",
+  "prepared-source-inputs": 5762,
+  "child-pid": 864,
+  "current-step": "focus",
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-mutant-native-epoch4.py\", line 121, in <module>\n    raise RuntimeError('native gate failed: ' + name)\nRuntimeError: native gate failed: focus\n",
+  "completed-utc": "2026-10-18T23:27:04.579515+00:00"
+}

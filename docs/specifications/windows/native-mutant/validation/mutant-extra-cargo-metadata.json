@@ -1,0 +1,117 @@
+[
+  {
+    "path": "vendor/vm-memory/Cargo.toml",
+    "bytes": 2102,
+    "sha256": "b4e94eae3c97a4dc1a6781c8e9f2ee40d76c159a0c1e821aa860c601d3916f96"
+  },
+  {
+    "path": "vendor/vm-memory/LICENSE-APACHE",
+    "bytes": 11358,
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  {
+    "path": "vendor/vm-memory/CHANGELOG.md",
+    "bytes": 11067,
+    "sha256": "7316e6d9b8cadea1b59b781da8c6b32ec427a7f24e9e05f9f3d5ca906f73138f"
+  },
+  {
+    "path": "vendor/vm-memory/coverage_config_aarch64.json",
+    "bytes": 132,
+    "sha256": "2cd2ee0df2a0b9101b7a5970466e495c14461e45482f41dcd81cfea785904818"
+  },
+  {
+    "path": "vendor/vm-memory/CODEOWNERS",
+    "bytes": 74,
+    "sha256": "c5bd416f73e6631016c94233806e9356a35e922544db35bc83cf514f382f616c"
+  },
+  {
+    "path": "vendor/vm-memory/TODO.md",
+    "bytes": 151,
+    "sha256": "275c82047e4a1a1f8db0787839645220f11ca376776cb979fdb0ecb0a33fe781"
+  },
+  {
+    "path": "vendor/vm-memory/.gitmodules",
+    "bytes": 97,
+    "sha256": "577f1a10b3ef569ea09f907fc310fb63ed03ab6b7f82474cafdbbdec643a8f7e"
+  },
+  {
+    "path": "vendor/vm-memory/README.md",
+    "bytes": 3313,
+    "sha256": "f9fd1d519777a1a052aaa11e54a79c0dc1781379d2406f800c10ed04283a20cd"
+  },
+  {
+    "path": "vendor/vm-memory/LICENSE-BSD-3-Clause",
+    "bytes": 1562,
+    "sha256": "a6d3ebd1c2f37d4fd83d0676621f695fc0cc2d8c6e646cdbb831b46e0650c208"
+  },
+  {
+    "path": "vendor/vm-memory/.gitignore",
+    "bytes": 30,
+    "sha256": "6b937008e0a58a438c32574627db6961a4d2aff4bf5c703d4e45cb56ef3b168a"
+  },
+  {
+    "path": "vendor/vm-memory/RAX-PATCHES.md",
+    "bytes": 2557,
+    "sha256": "e7e1fd4e44461217711a4223526d4822b64f3afd43f9838f6a35cfe959e93eb3"
+  },
+  {
+    "path": "vendor/vm-memory/DESIGN.md",
+    "bytes": 6708,
+    "sha256": "35e9671628e330fbd62a0f00b8726cb09c82bda4779834a1b762ed9036f9330f"
+  },
+  {
+    "path": "vendor/vm-memory/.cargo_vcs_info.json",
+    "bytes": 94,
+    "sha256": "61d226669768551f4a501faa0b93f8599a3ffa839f89a72a19e0286dbc8dc560"
+  },
+  {
+    "path": "vendor/vm-memory/UPSTREAM.json",
+    "bytes": 4311,
+    "sha256": "68685e7f6085ec63a772392a238b46d05270ab66655fcd11c5f7927289a4730b"
+  },
+  {
+    "path": "vendor/vm-memory/Cargo.toml.orig",
+    "bytes": 1311,
+    "sha256": "11ec14216476d7fd5e472c70c074e55be8ea0c5c9fc365f86a917068d93f4776"
+  },
+  {
+    "path": "vendor/vm-memory/.platform",
+    "bytes": 23,
+    "sha256": "3638930eedf0f1443302f5f70d4e5a267ceb05f8963a8820f974427d4b3f5a53"
+  },
+  {
+    "path": "vendor/vm-memory/coverage_config_x86_64.json",
+    "bytes": 133,
+    "sha256": "fd3e43ef333e33e0550e84ab5b080f5fcbe74823e40c05c4c3661cb0411f2a24"
+  },
+  {
+    "path": "vendor/vm-memory/.cargo/audit.toml",
+    "bytes": 644,
+    "sha256": "58ffabb1249a29828ba922f075973ffa0b0a7633f2af81b34b2523a0f02005e0"
+  },
+  {
+    "path": "vendor/vm-memory/.cargo/config.toml",
+    "bytes": 110,
+    "sha256": "c2f1c2fd93436e068cfb14eef3dff8a79d25d1f03c11baf6acbcfbdc9fd3a465"
+  },
+  {
+    "path": "vendor/vm-memory/.github/dependabot.yml",
+    "bytes": 846,
+    "sha256": "1f9e72c92437d5ca45ea2efca4677a951205adf458e05280f0c0d0065598b964"
+  },
+  {
+    "path": "vendor/vm-memory/.buildkite/pipeline.windows.yml",
+    "bytes": 1708,
+    "sha256": "41b699ad4e5d989f3bb237b99972707760b6305b84fd44a600758cc75c44d20e"
+  },
+  {
+    "path": "vendor/vm-memory/.buildkite/custom-tests.json",
+    "bytes": 532,
+    "sha256": "8435c8de544d02ec5d13da674e3d082212c1df910a42d501df6a8e030a115d8b"
+  },
+  {
+    "path": "vendor/vm-memory/.github/workflows/publish.yml",
+    "bytes": 506,
+    "sha256": "0b5ff804f5f576588e033fe191508ee865f53fe988b5087a855cd08b0c141d8c"
+  }
+]

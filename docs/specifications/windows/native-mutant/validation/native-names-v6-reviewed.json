@@ -1,0 +1,42 @@
+[
+  {
+    "profile": "arm64",
+    "native-cases": 156,
+    "win32-interoperability-cases": 12,
+    "acquired": 101,
+    "closed": 101,
+    "process-handle-count": 49,
+    "nul-truncation-distinct": true,
+    "surrogate-slash-dot-identities-shared": true
+  },
+  {
+    "profile": "x64",
+    "native-cases": 156,
+    "win32-interoperability-cases": 12,
+    "acquired": 101,
+    "closed": 101,
+    "process-handle-count": 65,
+    "nul-truncation-distinct": true,
+    "surrogate-slash-dot-identities-shared": true
+  },
+  {
+    "profile": "x86",
+    "native-cases": 156,
+    "win32-interoperability-cases": 12,
+    "acquired": 101,
+    "closed": 101,
+    "process-handle-count": 76,
+    "nul-truncation-distinct": true,
+    "surrogate-slash-dot-identities-shared": true
+  },
+  {
+    "profile": "x86-laa",
+    "native-cases": 156,
+    "win32-interoperability-cases": 12,
+    "acquired": 101,
+    "closed": 101,
+    "process-handle-count": 76,
+    "nul-truncation-distinct": true,
+    "surrogate-slash-dot-identities-shared": true
+  }
+]

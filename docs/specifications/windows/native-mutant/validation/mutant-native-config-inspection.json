@@ -1,0 +1,48 @@
+[
+  {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-object-reparse-epoch1\\.cargo\\config.toml",
+    "exists": true,
+    "bytes": 374,
+    "sha256": "9f80616d633d948feeba5b201bfa4fe98c8fd736f3f48469b6481279584d8f4c",
+    "source": {
+      "crates-io": {
+        "replace-with": "vendored-sources"
+      },
+      "git+https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960": {
+        "git": "https://github.com/19h/linux-loader",
+        "rev": "f745b555942c4e840a784bca61e6f3976d101960",
+        "replace-with": "vendored-sources"
+      },
+      "vendored-sources": {
+        "directory": "C:/Windows/Temp/assist-native-rax-20261010/dependencies"
+      }
+    },
+    "target": null,
+    "build": null
+  },
+  {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-bno-isolation-prototype\\.cargo\\config.toml",
+    "exists": true,
+    "bytes": 374,
+    "sha256": "9f80616d633d948feeba5b201bfa4fe98c8fd736f3f48469b6481279584d8f4c",
+    "source": {
+      "crates-io": {
+        "replace-with": "vendored-sources"
+      },
+      "git+https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960": {
+        "git": "https://github.com/19h/linux-loader",
+        "rev": "f745b555942c4e840a784bca61e6f3976d101960",
+        "replace-with": "vendored-sources"
+      },
+      "vendored-sources": {
+        "directory": "C:/Windows/Temp/assist-native-rax-20261010/dependencies"
+      }
+    },
+    "target": null,
+    "build": null
+  },
+  {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\cargo-home\\config.toml",
+    "exists": false
+  }
+]

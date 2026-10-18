@@ -3,6 +3,43 @@ use super::*;
 fn units(s: &str) -> Vec<u16> {
     s.encode_utf16().collect()
 }
+
+#[test]
+fn native_mutant_captured_counted_names_preserve_nuls_surrogates_and_literals() {
+    for name in [
+        vec![65, 0, 66],
+        vec![0xD800],
+        vec![0xDC00],
+        units("Raw/Name"),
+        units("."),
+        units(".."),
+    ] {
+        let mut values = captures(0);
+        values[1].entries.push(CapturedEntry {
+            name: name.clone(),
+            kind: units("Mutant"),
+            target: None,
+            link_access: None,
+            section: None,
+        });
+        let namespace = Namespace::selected(table(), values).unwrap();
+        let root = namespace
+            .lookup(None, &units("\\BaseNamedObjects"), 0)
+            .unwrap();
+        assert_eq!(
+            root.entries
+                .get(&fold(&root.upcase, &name))
+                .unwrap()
+                .captured
+                .name,
+            name
+        );
+        assert_eq!(
+            namespace.lookup(Some(root), &name, 0).unwrap_err(),
+            LookupError::Status(STATUS_OBJECT_TYPE_MISMATCH)
+        );
+    }
+}
 pub(crate) fn table() -> Arc<[u16]> {
     (0..=u16::MAX)
         .map(|u| if (97..=122).contains(&u) { u - 32 } else { u })

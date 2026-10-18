@@ -1,0 +1,16 @@
+[
+  {
+    "impact": "high",
+    "finding": "Ordinary smoke and whoami remain incomplete at NtOpenProcessToken.",
+    "evidence": "prior native-dynamic-function-table/validation/ordinary-analysis.json",
+    "blocks": "Full process-userland goal",
+    "action": "Implement and validate token opening, then rerun unchanged observers."
+  },
+  {
+    "impact": "medium",
+    "finding": "The first boundary setup used an invalid protection combination and v1/v2 had a printf argument mismatch.",
+    "evidence": "boundary-setup-correction.json in the task cache; only boundary-v3 is admitted.",
+    "blocks": "Invalid rows cannot define behavior.",
+    "action": "Retain failures separately and use verified v3 records."
+  }
+]

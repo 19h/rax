@@ -1,0 +1,126 @@
+{
+  "direct-decode": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "direct-execute": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "CPU-state": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "memory-MMU": {
+    "status": "affected",
+    "reason": "NT caller access order, exact copies, guard visitation and native/WoW64 conversion are tested. The underlying memory engine and architectural MMU are unchanged."
+  },
+  "SMIR-lift": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "SMIR-IR": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "SMIR-interpreter": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "optimizer": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "native-lowering": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "JIT-runtime": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "backend": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "machine-device": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "oracle-analysis": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "C-ABI": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "plugin-lifecycle": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "UI-state": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "conversation-lane": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "agent-backend": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "prompt-context": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "tool-schema": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "main-thread-dispatch": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "mesh-MCP": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "transport-crypto": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "persistent-schema": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "SDK-ABI": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "optional-engines": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "update-release": {
+    "status": "unaffected",
+    "reason": "No source change in this plane; Windows guest NT/HLE adapters use the existing execution and memory contracts."
+  },
+  "user-mode-runtime": {
+    "status": "affected",
+    "reason": "Four native mutant services, raw selected directory names, Win32/native identity and guest object lifetime."
+  },
+  "permission-mutation": {
+    "status": "affected",
+    "reason": "One-principal guest access masks and explicit unsupported policy; no host synchronization handle is opened for a guest request."
+  },
+  "targets-platforms": {
+    "status": "affected",
+    "reason": "Shared Rust modules are compiled on Windows/macOS/Linux. C API and retained Assist carriers/consumers exercise existing target wiring; no package resource or target membership changes. Whole-current-root products remain a separately stated limit."
+  },
+  "tests-docs": {
+    "status": "affected",
+    "reason": "Eleven focused tests, twelve native projections, retained fault/identity producers, three-host suites and actual shipping archive evidence."
+  }
+}

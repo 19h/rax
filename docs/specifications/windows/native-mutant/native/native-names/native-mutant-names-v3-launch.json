@@ -1,0 +1,9 @@
+{
+  "pid": 9952,
+  "utc": "2026-10-18T12:09:32.439688+00:00",
+  "state": "finished",
+  "scope": "Only process-private anonymous mutants and unique own named mutants/events. Existing foreign objects are not opened or changed. All acquired handles are closed and process handle counts compared.",
+  "child-pid": 10096,
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T12:09:47.319124+00:00"
+}

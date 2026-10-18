@@ -1,0 +1,318 @@
+{
+  "runs": [
+    {
+      "producer": "bno-namespace-precreate",
+      "profile": "arm64",
+      "mode": "disabled-empty",
+      "session": 0,
+      "parent": "\\BaseNamedObjects",
+      "opened-before-own-event": true,
+      "closed-child-handles": 4,
+      "link-targets": [],
+      "global-event-outside-private-parent": null
+    },
+    {
+      "producer": "bno-namespace-precreate",
+      "profile": "arm64",
+      "mode": "enabled-ascii",
+      "session": 0,
+      "parent": "\\BaseNamedObjects\\AssistBnoProof_10768",
+      "opened-before-own-event": true,
+      "closed-child-handles": 5,
+      "link-targets": [],
+      "global-event-outside-private-parent": null
+    },
+    {
+      "producer": "bno-namespace-precreate",
+      "profile": "arm64",
+      "mode": "enabled-unicode",
+      "session": 0,
+      "parent": "\\BaseNamedObjects\\AssistBno_\u03a9_\u4e2d_4228",
+      "opened-before-own-event": true,
+      "closed-child-handles": 5,
+      "link-targets": [],
+      "global-event-outside-private-parent": null
+    },
+    {
+      "producer": "bno-namespace-precreate",
+      "profile": "x64",
+      "mode": "disabled-empty",
+      "session": 0,
+      "parent": "\\BaseNamedObjects",
+      "opened-before-own-event": true,
+      "closed-child-handles": 4,
+      "link-targets": [],
+      "global-event-outside-private-parent": null
+    },
+    {
+      "producer": "bno-namespace-precreate",
+      "profile": "x64",
+      "mode": "enabled-ascii",
+      "session": 0,
+      "parent": "\\BaseNamedObjects\\AssistBnoProof_7832",
+      "opened-before-own-event": true,
+      "closed-child-handles": 5,
+      "link-targets": [],
+      "global-event-outside-private-parent": null
+    },
+    {
+      "producer": "bno-namespace-precreate",
+      "profile": "x64",
+      "mode": "enabled-unicode",
+      "session": 0,
+      "parent": "\\BaseNamedObjects\\AssistBno_\u03a9_\u4e2d_6648",
+      "opened-before-own-event": true,
+      "closed-child-handles": 5,
+      "link-targets": [],
+      "global-event-outside-private-parent": null
+    },
+    {
+      "producer": "bno-namespace-precreate",
+      "profile": "x86",
+      "mode": "disabled-empty",
+      "session": 0,
+      "parent": "\\BaseNamedObjects",
+      "opened-before-own-event": true,
+      "closed-child-handles": 4,
+      "link-targets": [],
+      "global-event-outside-private-parent": null
+    },
+    {
+      "producer": "bno-namespace-precreate",
+      "profile": "x86",
+      "mode": "enabled-ascii",
+      "session": 0,
+      "parent": "\\BaseNamedObjects\\AssistBnoProof_2224",
+      "opened-before-own-event": true,
+      "closed-child-handles": 5,
+      "link-targets": [],
+      "global-event-outside-private-parent": null
+    },
+    {
+      "producer": "bno-namespace-precreate",
+      "profile": "x86",
+      "mode": "enabled-unicode",
+      "session": 0,
+      "parent": "\\BaseNamedObjects\\AssistBno_\u03a9_\u4e2d_8208",
+      "opened-before-own-event": true,
+      "closed-child-handles": 5,
+      "link-targets": [],
+      "global-event-outside-private-parent": null
+    },
+    {
+      "producer": "bno-namespace-precreate",
+      "profile": "x86-laa",
+      "mode": "disabled-empty",
+      "session": 0,
+      "parent": "\\BaseNamedObjects",
+      "opened-before-own-event": true,
+      "closed-child-handles": 4,
+      "link-targets": [],
+      "global-event-outside-private-parent": null
+    },
+    {
+      "producer": "bno-namespace-precreate",
+      "profile": "x86-laa",
+      "mode": "enabled-ascii",
+      "session": 0,
+      "parent": "\\BaseNamedObjects\\AssistBnoProof_11244",
+      "opened-before-own-event": true,
+      "closed-child-handles": 5,
+      "link-targets": [],
+      "global-event-outside-private-parent": null
+    },
+    {
+      "producer": "bno-namespace-precreate",
+      "profile": "x86-laa",
+      "mode": "enabled-unicode",
+      "session": 0,
+      "parent": "\\BaseNamedObjects\\AssistBno_\u03a9_\u4e2d_10404",
+      "opened-before-own-event": true,
+      "closed-child-handles": 5,
+      "link-targets": [],
+      "global-event-outside-private-parent": null
+    },
+    {
+      "producer": "bno-routing",
+      "profile": "arm64",
+      "mode": "disabled-empty",
+      "session": 0,
+      "parent": "\\BaseNamedObjects",
+      "opened-before-own-event": true,
+      "closed-child-handles": 9,
+      "link-targets": [
+        "\\BaseNamedObjects",
+        "\\BaseNamedObjects",
+        "\\Sessions\\BNOLINKS"
+      ],
+      "global-event-outside-private-parent": false
+    },
+    {
+      "producer": "bno-routing",
+      "profile": "arm64",
+      "mode": "enabled-ascii",
+      "session": 0,
+      "parent": "\\BaseNamedObjects\\AssistBnoProof_5552",
+      "opened-before-own-event": true,
+      "closed-child-handles": 10,
+      "link-targets": [
+        "\\BaseNamedObjects\\AssistBnoProof_5552",
+        "\\BaseNamedObjects",
+        "\\BaseNamedObjects\\Session"
+      ],
+      "global-event-outside-private-parent": true
+    },
+    {
+      "producer": "bno-routing",
+      "profile": "arm64",
+      "mode": "enabled-unicode",
+      "session": 0,
+      "parent": "\\BaseNamedObjects\\AssistBno_\u03a9_\u4e2d_4736",
+      "opened-before-own-event": true,
+      "closed-child-handles": 10,
+      "link-targets": [
+        "\\BaseNamedObjects\\AssistBno_\u03a9_\u4e2d_4736",
+        "\\BaseNamedObjects",
+        "\\BaseNamedObjects\\Session"
+      ],
+      "global-event-outside-private-parent": true
+    },
+    {
+      "producer": "bno-routing",
+      "profile": "x64",
+      "mode": "disabled-empty",
+      "session": 0,
+      "parent": "\\BaseNamedObjects",
+      "opened-before-own-event": true,
+      "closed-child-handles": 9,
+      "link-targets": [
+        "\\BaseNamedObjects",
+        "\\BaseNamedObjects",
+        "\\Sessions\\BNOLINKS"
+      ],
+      "global-event-outside-private-parent": false
+    },
+    {
+      "producer": "bno-routing",
+      "profile": "x64",
+      "mode": "enabled-ascii",
+      "session": 0,
+      "parent": "\\BaseNamedObjects\\AssistBnoProof_8436",
+      "opened-before-own-event": true,
+      "closed-child-handles": 10,
+      "link-targets": [
+        "\\BaseNamedObjects\\AssistBnoProof_8436",
+        "\\BaseNamedObjects",
+        "\\BaseNamedObjects\\Session"
+      ],
+      "global-event-outside-private-parent": true
+    },
+    {
+      "producer": "bno-routing",
+      "profile": "x64",
+      "mode": "enabled-unicode",
+      "session": 0,
+      "parent": "\\BaseNamedObjects\\AssistBno_\u03a9_\u4e2d_8136",
+      "opened-before-own-event": true,
+      "closed-child-handles": 10,
+      "link-targets": [
+        "\\BaseNamedObjects\\AssistBno_\u03a9_\u4e2d_8136",
+        "\\BaseNamedObjects",
+        "\\BaseNamedObjects\\Session"
+      ],
+      "global-event-outside-private-parent": true
+    },
+    {
+      "producer": "bno-routing",
+      "profile": "x86",
+      "mode": "disabled-empty",
+      "session": 0,
+      "parent": "\\BaseNamedObjects",
+      "opened-before-own-event": true,
+      "closed-child-handles": 9,
+      "link-targets": [
+        "\\BaseNamedObjects",
+        "\\BaseNamedObjects",
+        "\\Sessions\\BNOLINKS"
+      ],
+      "global-event-outside-private-parent": false
+    },
+    {
+      "producer": "bno-routing",
+      "profile": "x86",
+      "mode": "enabled-ascii",
+      "session": 0,
+      "parent": "\\BaseNamedObjects\\AssistBnoProof_2684",
+      "opened-before-own-event": true,
+      "closed-child-handles": 10,
+      "link-targets": [
+        "\\BaseNamedObjects\\AssistBnoProof_2684",
+        "\\BaseNamedObjects",
+        "\\BaseNamedObjects\\Session"
+      ],
+      "global-event-outside-private-parent": true
+    },
+    {
+      "producer": "bno-routing",
+      "profile": "x86",
+      "mode": "enabled-unicode",
+      "session": 0,
+      "parent": "\\BaseNamedObjects\\AssistBno_\u03a9_\u4e2d_5248",
+      "opened-before-own-event": true,
+      "closed-child-handles": 10,
+      "link-targets": [
+        "\\BaseNamedObjects\\AssistBno_\u03a9_\u4e2d_5248",
+        "\\BaseNamedObjects",
+        "\\BaseNamedObjects\\Session"
+      ],
+      "global-event-outside-private-parent": true
+    },
+    {
+      "producer": "bno-routing",
+      "profile": "x86-laa",
+      "mode": "disabled-empty",
+      "session": 0,
+      "parent": "\\BaseNamedObjects",
+      "opened-before-own-event": true,
+      "closed-child-handles": 9,
+      "link-targets": [
+        "\\BaseNamedObjects",
+        "\\BaseNamedObjects",
+        "\\Sessions\\BNOLINKS"
+      ],
+      "global-event-outside-private-parent": false
+    },
+    {
+      "producer": "bno-routing",
+      "profile": "x86-laa",
+      "mode": "enabled-ascii",
+      "session": 0,
+      "parent": "\\BaseNamedObjects\\AssistBnoProof_8696",
+      "opened-before-own-event": true,
+      "closed-child-handles": 10,
+      "link-targets": [
+        "\\BaseNamedObjects\\AssistBnoProof_8696",
+        "\\BaseNamedObjects",
+        "\\BaseNamedObjects\\Session"
+      ],
+      "global-event-outside-private-parent": true
+    },
+    {
+      "producer": "bno-routing",
+      "profile": "x86-laa",
+      "mode": "enabled-unicode",
+      "session": 0,
+      "parent": "\\BaseNamedObjects\\AssistBno_\u03a9_\u4e2d_5200",
+      "opened-before-own-event": true,
+      "closed-child-handles": 10,
+      "link-targets": [
+        "\\BaseNamedObjects\\AssistBno_\u03a9_\u4e2d_5200",
+        "\\BaseNamedObjects",
+        "\\BaseNamedObjects\\Session"
+      ],
+      "global-event-outside-private-parent": true
+    }
+  ],
+  "empty-prefix-control": "four CreateProcess attribute rejections; token-set behavior unknown",
+  "qualification": "One ARM64 kernel, session0 principal. Preopen is before the probe event, not before all native CRT initialization."
+}

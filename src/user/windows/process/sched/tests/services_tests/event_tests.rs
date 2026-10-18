@@ -80,7 +80,7 @@ fn native_event_creates_real_objects_and_closes_without_leaking_all_abis() {
     }
 }
 
-fn setup(arch: WinArch) -> (super::super::super::super::WindowsProcess, Thread, u64) {
+pub(super) fn setup(arch: WinArch) -> (super::super::super::super::WindowsProcess, Thread, u64) {
     let (mut process, t) = fixture(arch, "NtCreateEvent", 0x48);
     let p = process.state_mut();
     let scratch =
@@ -97,7 +97,7 @@ fn setup(arch: WinArch) -> (super::super::super::super::WindowsProcess, Thread, 
         .unwrap();
     (process, t, scratch)
 }
-fn call(p: &mut Proc, t: &mut Thread, name: &str, args: &[u64]) -> Outcome {
+pub(super) fn call(p: &mut Proc, t: &mut Thread, name: &str, args: &[u64]) -> Outcome {
     let module = p.modules.nt_services.as_ref().unwrap().0;
     p.modules.nt_services = Some((module, table(p.arch, name, 0x48)));
     let sp = t.cpu.sp();
@@ -111,14 +111,14 @@ fn call(p: &mut Proc, t: &mut Thread, name: &str, args: &[u64]) -> Outcome {
     t.cpu.set_sp(sp);
     result
 }
-fn status(p: &mut Proc, t: &mut Thread, name: &str, args: &[u64]) -> u32 {
+pub(super) fn status(p: &mut Proc, t: &mut Thread, name: &str, args: &[u64]) -> u32 {
     assert_eq!(call(p, t, name, args), Outcome::Continue);
     t.cpu.gpr(0) as u32
 }
-fn handle(p: &Proc, address: u64) -> u64 {
+pub(super) fn handle(p: &Proc, address: u64) -> u64 {
     p.space.ptr(address, p.arch.ptr_size()).unwrap()
 }
-fn attrs(p: &mut Proc, address: u64, length: u32, flags: u32, root: u64) {
+pub(super) fn attrs(p: &mut Proc, address: u64, length: u32, flags: u32, root: u64) {
     let width = p.arch.ptr_size();
     let size = if p.arch.is64() { 48 } else { 24 };
     p.space.wr(address, &vec![0; size]).unwrap();

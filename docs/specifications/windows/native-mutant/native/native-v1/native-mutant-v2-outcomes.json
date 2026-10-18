@@ -1,0 +1,7 @@
+﻿[
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "log":  "native-mutant-v2-arm64.log"
+    }
+]

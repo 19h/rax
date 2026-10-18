@@ -1,0 +1,16 @@
+[
+  {
+    "impact": "high",
+    "finding": "The preceding image group has no completed ordinary program: selected NTDLL stops at this service.",
+    "evidence": "../native-image-extension-owner/validation/ordinary-final-analysis.json",
+    "blocks": "Full ordinary emulation until continued and validated",
+    "action": "Use the unchanged production observer after native validation; report the next actual result."
+  },
+  {
+    "impact": "medium",
+    "finding": "Five pre-existing AArch64 lowering failures are independent of this service.",
+    "evidence": "../native-image-extension-owner/validation/native-image-extension-final-full.log",
+    "blocks": "Not waived; compare exact identities in the full native run",
+    "action": "Report them separately."
+  }
+]

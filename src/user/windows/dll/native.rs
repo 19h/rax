@@ -11,6 +11,7 @@ mod directory;
 mod events;
 mod hotpatch;
 mod io_completion;
+mod mutant;
 mod nls;
 mod object_create;
 mod performance_counter;
@@ -39,6 +40,20 @@ mod wnf_query;
 mod worker_factory;
 
 pub(super) static EXPORTS: &[Export] = &[
+    Export::func(
+        "NtCreateMutant",
+        Stdcall,
+        &[Ptr, I32, Ptr, I32],
+        mutant::create,
+    ),
+    Export::func("NtOpenMutant", Stdcall, &[Ptr, I32, Ptr], mutant::open),
+    Export::func("NtReleaseMutant", Stdcall, &[Ptr, Ptr], mutant::release),
+    Export::func(
+        "NtQueryMutant",
+        Stdcall,
+        &[Ptr, I32, Ptr, I32, Ptr],
+        mutant::query,
+    ),
     Export::func(
         "NtApphelpCacheControl",
         Stdcall,

@@ -1,0 +1,32 @@
+[
+  {
+    "impact": "high",
+    "finding": "Both unchanged ordinary programs create a guest mutant successfully and then stop at unimplemented NtWaitForSingleObject (0x4). Neither reaches a successful guest exit.",
+    "evidence": "validation/mutant-ordinary-reviewed.json",
+    "blocks": "Full process-userland goal."
+  },
+  {
+    "impact": "high",
+    "finding": "Private BNO subtree selection, explicit security/QoS, permanent lifetime, privilege and cross-process authorization remain incomplete.",
+    "evidence": "native/mutant.rs unsupported branches and private-bno-prerequisite",
+    "blocks": "Full emulation in those contexts; no success claim is made."
+  },
+  {
+    "impact": "medium",
+    "finding": "One physical ARM64 kernel and session-zero principal underlie all four native ABI profiles.",
+    "evidence": "native producer identity records",
+    "blocks": "Universal other-kernel/principal claims."
+  },
+  {
+    "impact": "medium",
+    "finding": "Native source transfer initially omitted fixtures; failed preparation epochs remain retained and final closure is separately repaired and bound.",
+    "evidence": "validation/mutant-native-restored-inputs-review.json",
+    "blocks": "Claims that the original5762-input manifest alone was sufficient."
+  },
+  {
+    "impact": "medium",
+    "finding": "Frozen ABI184 carrier evidence differs from whole-current-root GUI/plugin/package validation.",
+    "evidence": "validation/mutant-upstream-source-comparison.json",
+    "blocks": "Unqualified current-root validation claims."
+  }
+]

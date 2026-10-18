@@ -1,0 +1,714 @@
+{
+  "files": [
+    {
+      "path": "validation/assist-native-mutant-final-cpp.log",
+      "bytes": 2946,
+      "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+    },
+    {
+      "path": "validation/assist-native-mutant-final-shipping.log",
+      "bytes": 1584,
+      "sha256": "35e8142bfcb3df9a4ab729fb631f6bd99709ea3951581185b1557f17d185cf79"
+    },
+    {
+      "path": "validation/current-cpp-consumers-mutant-root.json",
+      "bytes": 2148,
+      "sha256": "529ae6f5da72a4bc2fff7eeb51978606643a869c65d0900aa87a6ff36bda92eb"
+    },
+    {
+      "path": "validation/drivers/collect-mutant-archives.py",
+      "bytes": 3340,
+      "sha256": "cb5364b972f951eb60725f4fa687851dbbe922a38ee23517a38bd8c4b42b50c5"
+    },
+    {
+      "path": "validation/drivers/collect-mutant-final.py",
+      "bytes": 4093,
+      "sha256": "106c4fc18fb4e9135aa396ceb5f2b24f931c4339bbe6ab999b3997e489a4a4d1"
+    },
+    {
+      "path": "validation/drivers/collect-mutant-native-restored-documents.py",
+      "bytes": 970,
+      "sha256": "19b05b6a16c7705440be8663bb15cd1710cdb5beb8f90620199b96739566a764"
+    },
+    {
+      "path": "validation/drivers/linux-mutant-owning-commands.json",
+      "bytes": 5356,
+      "sha256": "64b3370e02ad18d9c56ac1373fde988981cdc68c009d51d5d114d855ddf5eda3"
+    },
+    {
+      "path": "validation/drivers/macos-mutant-owning-commands.json",
+      "bytes": 4894,
+      "sha256": "8dae1a33e213a7b39eb1cb650ac6e695ed302cf9c50520ec94c4281e38269235"
+    },
+    {
+      "path": "validation/drivers/owning-linux-cpp-build.py",
+      "bytes": 1522,
+      "sha256": "a0d9f75e831bd3585d3e009b94e8e3f2744b137e646c157c70a7ad7950373b56"
+    },
+    {
+      "path": "validation/drivers/prepare-mutant-root.py",
+      "bytes": 3074,
+      "sha256": "7c41ae91ea4298f39fb64fb181d08a59d9fee6686b6797269aa1414bbd9ab295"
+    },
+    {
+      "path": "validation/drivers/run-mutant-native-epoch3.py",
+      "bytes": 5782,
+      "sha256": "359686986d9c8511886dec0ea3795081493b50d5a2398391da43ea59026aa5d1"
+    },
+    {
+      "path": "validation/drivers/run-mutant-native-epoch3b.py",
+      "bytes": 4964,
+      "sha256": "95d5555f6d0d990eb94f1d9a942630e331689a2a5f63b4f1ef3b1516adfca7fe"
+    },
+    {
+      "path": "validation/drivers/run-mutant-native-epoch4.py",
+      "bytes": 6508,
+      "sha256": "11727ca1f1a06c2d28f2fe625065090d219591f6b3082e225123d828cb43fb04"
+    },
+    {
+      "path": "validation/drivers/run-mutant-native-epoch4b.py",
+      "bytes": 6545,
+      "sha256": "a1a49d03b61b3a5a0b1fea3c36f498889e9fef9f1a4acc21b6ad9243a7306d6c"
+    },
+    {
+      "path": "validation/drivers/run-mutant-native-epoch4c.py",
+      "bytes": 6577,
+      "sha256": "29fde44ae045ea4e671c97ffcc4c54fde0be9e97e337133f8fe15cbfea8c182e"
+    },
+    {
+      "path": "validation/drivers/run-mutant-owning-gates.py",
+      "bytes": 757,
+      "sha256": "d8f2283b70ab7bf0180d317520fcc65d99eea36dafb950df84c6955d25f81540"
+    },
+    {
+      "path": "validation/drivers/run-mutant-proof-windows.py",
+      "bytes": 1790,
+      "sha256": "7ed6bb2d7344472392d8e39e71e9679c45b7f014b5463fb8d0b3a4c85dd8ddb9"
+    },
+    {
+      "path": "validation/drivers/run-mutant-unix-epoch4.py",
+      "bytes": 3761,
+      "sha256": "58983be48405484bb0db7c508e0fdee758b1cbded7d1ed7f493f8ad22d51b47b"
+    },
+    {
+      "path": "validation/linux-mutant-final-owning-archive-identities.json",
+      "bytes": 91281,
+      "sha256": "ea63c33f4bbbfe95de4e7bd0513a3fa0076c5b96d7f6d237cad4a18d69889fd4"
+    },
+    {
+      "path": "validation/linux-mutant-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "b67e4e8bb277035720b48e9c87b75c49e233c169af3b292dfaa4d1b9ad6dbb5f"
+    },
+    {
+      "path": "validation/linux-mutant-owning-artifacts.log",
+      "bytes": 159806,
+      "sha256": "eba62cffa7f4bd579287dd06c0621d12d7c98f04f22275cc77d4994f2ed899fd"
+    },
+    {
+      "path": "validation/linux-mutant-owning-commands.json",
+      "bytes": 5356,
+      "sha256": "64b3370e02ad18d9c56ac1373fde988981cdc68c009d51d5d114d855ddf5eda3"
+    },
+    {
+      "path": "validation/linux-mutant-owning-cpp.log",
+      "bytes": 1623,
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+    },
+    {
+      "path": "validation/linux-mutant-owning-gates.json",
+      "bytes": 6149,
+      "sha256": "6a8d5f377404f76bf597cd23da89e4c9de77ab3e1ef152c4b91bcf12aa7c1794"
+    },
+    {
+      "path": "validation/linux-mutant-owning-shipping.log",
+      "bytes": 415,
+      "sha256": "975f48bbf6088e39c64ac80b1efbb6108ed0ad69b931566497962cac6ccbf0ba"
+    },
+    {
+      "path": "validation/linux-mutant-refresh-archive-command.json",
+      "bytes": 1429,
+      "sha256": "45543413a9632dd339353acb86891c25922936cbc40e2c9ec00e95e6cf8ffbb2"
+    },
+    {
+      "path": "validation/linux-mutant-refresh-archive.log",
+      "bytes": 180,
+      "sha256": "b67e4e8bb277035720b48e9c87b75c49e233c169af3b292dfaa4d1b9ad6dbb5f"
+    },
+    {
+      "path": "validation/macos-mutant-final-owning-archive-identities.json",
+      "bytes": 92669,
+      "sha256": "62192d5795930b0f4841d27fbda45e6f3c7f331512eb523c19ebc7211540efcf"
+    },
+    {
+      "path": "validation/macos-mutant-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "150c33cb46423902c58d1767ceec1b86cf2c535f61d8fd76a90fa5b4bd04a479"
+    },
+    {
+      "path": "validation/macos-mutant-owning-artifacts.log",
+      "bytes": 131080,
+      "sha256": "c96167a88555f732090445a7d8e53bd62d8a14fd0ebf9cae41d008fcc80bd718"
+    },
+    {
+      "path": "validation/macos-mutant-owning-build.log",
+      "bytes": 32919,
+      "sha256": "aedde945abe20acffa08054952ff295bf538ec78b90240d838babec151f6a30a"
+    },
+    {
+      "path": "validation/macos-mutant-owning-commands.json",
+      "bytes": 4894,
+      "sha256": "8dae1a33e213a7b39eb1cb650ac6e695ed302cf9c50520ec94c4281e38269235"
+    },
+    {
+      "path": "validation/macos-mutant-owning-ctest.log",
+      "bytes": 1273,
+      "sha256": "da1084f3b9749aa79d80c4348b8e0424b56a7d28ed963b2dbf238c4191a74816"
+    },
+    {
+      "path": "validation/macos-mutant-owning-gates.json",
+      "bytes": 6268,
+      "sha256": "de3c2021d145fa39172f6b577235e49f2c2d20aab6d71c6224ff21a16b2a9261"
+    },
+    {
+      "path": "validation/macos-mutant-owning-prime-artifacts.log",
+      "bytes": 131845,
+      "sha256": "8126a4ad690187a1819439936219e1e050bf0abf8855208afb5606f8d03663ae"
+    },
+    {
+      "path": "validation/macos-mutant-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/macos-mutant-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/macos-mutant-refresh-archive-command.json",
+      "bytes": 762,
+      "sha256": "96481b3e6582edcc67e5af64c2d3feee84b8eec44116fe176565e90d7f59215b"
+    },
+    {
+      "path": "validation/macos-mutant-refresh-archive.log",
+      "bytes": 180,
+      "sha256": "150c33cb46423902c58d1767ceec1b86cf2c535f61d8fd76a90fa5b4bd04a479"
+    },
+    {
+      "path": "validation/mutant-baseline-epoch1-reviewed.json",
+      "bytes": 477,
+      "sha256": "818c7a043f28fc39d38bbe30f9ad3117480b3fcaff1e52fc81d1aa70032d020c"
+    },
+    {
+      "path": "validation/mutant-baseline-epoch1.log",
+      "bytes": 6280,
+      "sha256": "32d26aab0a388c58866a74b212858cac362752c17e517503e239abaa0a9f414a"
+    },
+    {
+      "path": "validation/mutant-baseline-epoch3.log",
+      "bytes": 8068,
+      "sha256": "f5bbff04187ee5e59ad5e6c921a3d0aaaef742806893a6d469911ebb20b0aa29"
+    },
+    {
+      "path": "validation/mutant-baseline-epoch4-reviewed.json",
+      "bytes": 414,
+      "sha256": "5f2ef653a1ede9ac331b7ac9deefd7c91410590eb20fa33a12fe024e29970e0b"
+    },
+    {
+      "path": "validation/mutant-baseline-epoch4.log",
+      "bytes": 8794,
+      "sha256": "1238588408b3f2d8ad69142db5857ad0a030c4d085642edd1d39c764c19fbcf5"
+    },
+    {
+      "path": "validation/mutant-baseline-port.json",
+      "bytes": 604,
+      "sha256": "9ccbef150846f1971fff1d1ce8acf9b765461df8be530fd2d43c26f86bfbd249"
+    },
+    {
+      "path": "validation/mutant-extra-cargo-metadata.json",
+      "bytes": 3636,
+      "sha256": "09bdd8157110234a4fc7f0d0bdb24c220b4e4aa3fa3567860a02c6ee46fb1d52"
+    },
+    {
+      "path": "validation/mutant-final-owned-driver.log",
+      "bytes": 1138,
+      "sha256": "f920386f53b41b2770e1ee8a2c9aac19a41da31b2419d64386eef4bab9489b9f"
+    },
+    {
+      "path": "validation/mutant-final-owned-launch.json",
+      "bytes": 422,
+      "sha256": "618b6245e6860d95eb421e2e85b629cb3d94bf3be774da809d6c2626991359ba"
+    },
+    {
+      "path": "validation/mutant-focus-epoch1.log",
+      "bytes": 5567,
+      "sha256": "386558f0e6359aaad75f0a835c0455a8b21c20862746416cf4ce94889989fcc9"
+    },
+    {
+      "path": "validation/mutant-focus-epoch2.log",
+      "bytes": 1499,
+      "sha256": "0d7e9040c0a478e6edb8f223c77c96e68706738813ac0b7ab4a1c4f011236e1f"
+    },
+    {
+      "path": "validation/mutant-focus-epoch3.log",
+      "bytes": 1901,
+      "sha256": "08edb0583665d13fd953d87f839d5ff48eb83a40b9fc3ab61a9e9e2e4f8f0c32"
+    },
+    {
+      "path": "validation/mutant-focus-epoch4.log",
+      "bytes": 2055,
+      "sha256": "abf8ee2ee1390c1608305158d09628cb78deec2c69e1f9e85a09650a2411d172"
+    },
+    {
+      "path": "validation/mutant-linux-epoch4-all-targets.log",
+      "bytes": 309,
+      "sha256": "26ec700dfddd3134d309cb5c6d8706e5b02d77d1e0eef407d36d80f0eeb5b5a9"
+    },
+    {
+      "path": "validation/mutant-linux-epoch4-capi.log",
+      "bytes": 12905,
+      "sha256": "d2b9666160cdcb1e062b2461923b3763f74fbc98c3b696abe0294c8b41285257"
+    },
+    {
+      "path": "validation/mutant-linux-epoch4-focus.log",
+      "bytes": 1909,
+      "sha256": "b23f9726a84d6db78c0376ad9bd6c97fe538affc8a6c679ff7d1e222271a786e"
+    },
+    {
+      "path": "validation/mutant-linux-epoch4-full.log",
+      "bytes": 827105,
+      "sha256": "eb940d6129e2ac74ceddfdf17d48e88f2d72a2a033df4af74d1b0a12df3cd47e"
+    },
+    {
+      "path": "validation/mutant-linux-epoch4-gates.json",
+      "bytes": 7628,
+      "sha256": "7999908d0d82b2b8c596dee9e3f36e8dfba8c9f16e893cb4d217c7a65ee6501a"
+    },
+    {
+      "path": "validation/mutant-linux-epoch4-integration.log",
+      "bytes": 35852,
+      "sha256": "d137495d49ad13b2e19530826170d8437108baf1508185f4f60ca92316df8605"
+    },
+    {
+      "path": "validation/mutant-macos-epoch4-all-targets.log",
+      "bytes": 2248,
+      "sha256": "c3741acfb5aa7a3fd1b5e78793aac7befeb67935bf3f01ab2c7a80159821a30e"
+    },
+    {
+      "path": "validation/mutant-macos-epoch4-capi.log",
+      "bytes": 13138,
+      "sha256": "a16da39ed0f6b3c7bf056146fcc46b1b11b2e92d51daae4e483b2293a2898c80"
+    },
+    {
+      "path": "validation/mutant-macos-epoch4-full.log",
+      "bytes": 827115,
+      "sha256": "79e55c0737ea7075a5ead03be1c23cc60a63455b509c47769aa4d97dd3bb7059"
+    },
+    {
+      "path": "validation/mutant-macos-epoch4-gates.json",
+      "bytes": 2753,
+      "sha256": "78e09d667a5dfc00443ae1be7a6c27d7c172da66489f6e9df4a61fea6468afe8"
+    },
+    {
+      "path": "validation/mutant-macos-epoch4-integration.log",
+      "bytes": 36067,
+      "sha256": "05ba4c50b1254e7b949ec64a48f0ddc32f6598b672e6742d709b2927bbb5ad2c"
+    },
+    {
+      "path": "validation/mutant-native-baseline-failures.json",
+      "bytes": 635,
+      "sha256": "9f679114d1dd64361640d4c11e5f124b248e159ad234777bb9b53855f848750b"
+    },
+    {
+      "path": "validation/mutant-native-cargo-config.toml",
+      "bytes": 374,
+      "sha256": "9f80616d633d948feeba5b201bfa4fe98c8fd736f3f48469b6481279584d8f4c"
+    },
+    {
+      "path": "validation/mutant-native-compiler-env-epoch4.json",
+      "bytes": 4122,
+      "sha256": "e6ca43bcdcbd3067b5de05d051259d4d3abf0bfa5283a98daac14fd508a05fad"
+    },
+    {
+      "path": "validation/mutant-native-compiler-env.json",
+      "bytes": 4122,
+      "sha256": "e6ca43bcdcbd3067b5de05d051259d4d3abf0bfa5283a98daac14fd508a05fad"
+    },
+    {
+      "path": "validation/mutant-native-config-inspection.json",
+      "bytes": 1664,
+      "sha256": "c5eea64bc8f730094a8cfc86ebe012630da32ea74220fe9e3f39caa191778d38"
+    },
+    {
+      "path": "validation/mutant-native-epoch3-compiler-environment.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9"
+    },
+    {
+      "path": "validation/mutant-native-epoch3-gates.json",
+      "bytes": 1756,
+      "sha256": "e1a95f2bcd0c2ef31eea38e22bfc296d683cd5fb91017d8ea38f1662f48a5687"
+    },
+    {
+      "path": "validation/mutant-native-epoch3-toolchain.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "validation/mutant-native-epoch3b-focus.log",
+      "bytes": 293,
+      "sha256": "aa27619386d1dfd2f47d132de188667712858e3b9f7922cd4bc72510042e57b0"
+    },
+    {
+      "path": "validation/mutant-native-epoch3b-gates.json",
+      "bytes": 1846,
+      "sha256": "885136c5bd6bce37d6acc2b5032bc075d5b3c56dbbafa9266e24e67406294718"
+    },
+    {
+      "path": "validation/mutant-native-epoch3b-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "validation/mutant-native-epoch4-compiler-environment.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9"
+    },
+    {
+      "path": "validation/mutant-native-epoch4-focus.log",
+      "bytes": 355,
+      "sha256": "8268ff199f4002a10ce9c979a131486366719763810fff80567937b00236ba58"
+    },
+    {
+      "path": "validation/mutant-native-epoch4-gates.json",
+      "bytes": 2601,
+      "sha256": "203265e99f5ee31ffa200e2c1a503d0104faa1f5390c9865fd95985d1f2d3af5"
+    },
+    {
+      "path": "validation/mutant-native-epoch4-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "validation/mutant-native-epoch4b-focus.log",
+      "bytes": 438506,
+      "sha256": "531e39aac73dd45f790e40da523994f44cdee5b519af5ebe0375159be51d0992"
+    },
+    {
+      "path": "validation/mutant-native-epoch4b-gates.json",
+      "bytes": 5868,
+      "sha256": "97afdb4c859e6d71ccee7eba7e2d7ea946056fac5b7fc43a511026cd005f9718"
+    },
+    {
+      "path": "validation/mutant-native-epoch4b-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "validation/mutant-native-epoch4c-all-targets.log",
+      "bytes": 1000,
+      "sha256": "a9ab55de9bee7169e689f2de7ce965d2084900635d0d0c62955090f1967d51d5"
+    },
+    {
+      "path": "validation/mutant-native-epoch4c-capi.log",
+      "bytes": 13869,
+      "sha256": "f783c79b495c1974ba936e4f832953401d154ecc08c2a28e41df7d34c969f67d"
+    },
+    {
+      "path": "validation/mutant-native-epoch4c-focus.log",
+      "bytes": 2839,
+      "sha256": "4ee2cd85af4a9ba2a6610727f38f1551d6aff3132b6ae689b3a1ca04be6a6676"
+    },
+    {
+      "path": "validation/mutant-native-epoch4c-full.log",
+      "bytes": 789411,
+      "sha256": "6c64f0d60d856c2599f87ae92b7edf024948b4ffcb770e1b7255c8a97c91ef7d"
+    },
+    {
+      "path": "validation/mutant-native-epoch4c-gates.json",
+      "bytes": 2847108,
+      "sha256": "4322cbeefb14a21fa1adfc980f6f6f8676cd41928330a52298c77f2dde2a4079"
+    },
+    {
+      "path": "validation/mutant-native-epoch4c-integration.log",
+      "bytes": 1887,
+      "sha256": "39e2e6f5515a560a62410e7d61376241c98be03d9f4481d544c955aab1df067e"
+    },
+    {
+      "path": "validation/mutant-native-epoch4c-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "validation/mutant-native-overrides-epoch3.json",
+      "bytes": 4117,
+      "sha256": "9294cc2fdcfc89f8cf26e7a1709f673e1386a4b49af55f8f46e10785f557a633"
+    },
+    {
+      "path": "validation/mutant-native-overrides-epoch4.json",
+      "bytes": 4879,
+      "sha256": "a7b0fa61eb8d1a8a27543df549318102d8f2fa6d28938cc49d6cefed8cb05878"
+    },
+    {
+      "path": "validation/mutant-native-preparation-lineage.json",
+      "bytes": 1597,
+      "sha256": "5ba694f26675aa570f01683a2a159fb40d3c2599685234dff7b13cd7fbfc787d"
+    },
+    {
+      "path": "validation/mutant-native-restored-inputs-review.json",
+      "bytes": 10257,
+      "sha256": "47f24b6fd1edc9485b9bfebf494ebf23b2422fa3c5c8518af40ef9c01eda614b"
+    },
+    {
+      "path": "validation/mutant-native-stress.json",
+      "bytes": 801,
+      "sha256": "ef9970b078d648c5623ffe1b78a3a88ff37084ad63a6318d13634e94b442e3b6"
+    },
+    {
+      "path": "validation/mutant-native-stress.log",
+      "bytes": 964,
+      "sha256": "5db5e24350dfea9ef760c7c6a66d781b97308a7b3f69061e0fd2cfb584be82a1"
+    },
+    {
+      "path": "validation/mutant-ordinary-reviewed.json",
+      "bytes": 1089,
+      "sha256": "1bfd75dca6ce26c8222469864fdfbaff7099c23caaa384ccd0e1e751d2e8b387"
+    },
+    {
+      "path": "validation/mutant-owned-source-plan.json",
+      "bytes": 2557,
+      "sha256": "e1886f37a3a14c45250c3d9ccb019e3ecc142085b3d08d2d856124dd0ba5e55f"
+    },
+    {
+      "path": "validation/mutant-owner-observer-0.log",
+      "bytes": 643,
+      "sha256": "734b6b24d3a20649ad048aa7f655c6e6c4686bea0c168269190845c8a21ecb43"
+    },
+    {
+      "path": "validation/mutant-owner-observer-1.log",
+      "bytes": 567,
+      "sha256": "85ff81d08a19dd762a8a2892b47eb7cb5460ecdf003dc933a0b4a6c0b620c061"
+    },
+    {
+      "path": "validation/mutant-owner-observer-build.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9"
+    },
+    {
+      "path": "validation/mutant-owner-observer-launch.json",
+      "bytes": 3629,
+      "sha256": "1272e8aa43d4f83e71ceae80f5360c606f62c4689c4fe6fdcbc486da97c64166"
+    },
+    {
+      "path": "validation/mutant-owner-observer-source.json",
+      "bytes": 305,
+      "sha256": "b28de64c6d6b1158f1095da945cfc0c07e7bab6864195c639cd0586b6743dc23"
+    },
+    {
+      "path": "validation/mutant-owning-prepared.json",
+      "bytes": 435,
+      "sha256": "5e1da962b342eafc9b30721397499ed5a8e8ba5d9b8a3d1ad92084785a2c299d"
+    },
+    {
+      "path": "validation/mutant-owning-source-hashes.json",
+      "bytes": 90035,
+      "sha256": "930e1592ce416fb11b4b2323db62dc77739479162f73e3a4ebc31f99a9d70e9e"
+    },
+    {
+      "path": "validation/mutant-proof-linux.log",
+      "bytes": 377,
+      "sha256": "12c3bdd5ca444680a10a534cecd3932323847ddfb49f3a8292d4edeebc9426df"
+    },
+    {
+      "path": "validation/mutant-proof-transfer.json",
+      "bytes": 124,
+      "sha256": "e3084b32fc670a095f0ed8da8cd8b96a92d7fbe14fb36892517c200f3c13e3d0"
+    },
+    {
+      "path": "validation/mutant-proof-windows-gates.json",
+      "bytes": 1028,
+      "sha256": "b6c9fd09f8905c00e96d6872a556571eed87241788e5dfb92dfaf5942dba97c1"
+    },
+    {
+      "path": "validation/mutant-proof-windows-native.log",
+      "bytes": 185,
+      "sha256": "6d9aea48c8b160e014e33cffa4c3287957638e12faa4ce0035e7757ed9d74dd1"
+    },
+    {
+      "path": "validation/mutant-proof-windows-private-bno.log",
+      "bytes": 105,
+      "sha256": "3b8d1e733c4164667a296f1bb6482ad72ba520d41e114c02be7c368656302bf1"
+    },
+    {
+      "path": "validation/mutant-proof-windows-validation.log",
+      "bytes": 90,
+      "sha256": "789560b9852ecd4bdae1ce2d6135801f7710c4de4cd372b7a87ece90c597e1f8"
+    },
+    {
+      "path": "validation/mutant-root-base.json",
+      "bytes": 86,
+      "sha256": "1c19c26f35e2b914a46478de030381243e66a993d20e76e914e0e2b165690f4d"
+    },
+    {
+      "path": "validation/mutant-source-epoch1.json",
+      "bytes": 1100615,
+      "sha256": "30e427a2665aa25932dfafbf8aed4f7104ffee552a4f2082e64e9b88185f7d23"
+    },
+    {
+      "path": "validation/mutant-source-epoch2.json",
+      "bytes": 1100615,
+      "sha256": "de5d979f5f627f7e01fa8465986abe7f4a2927cb3f152de10510189d4c183bf8"
+    },
+    {
+      "path": "validation/mutant-source-epoch3.json",
+      "bytes": 1100615,
+      "sha256": "1121509c8745ead4928fd91ccc308b5c2524bf23c6470b7a057f44cd2a4b5feb"
+    },
+    {
+      "path": "validation/mutant-source-epoch4.json",
+      "bytes": 1101417,
+      "sha256": "52fde93e4ea23cf50db5bb431aa2378c615702347b5b61dcd10c27a3fc57c71a"
+    },
+    {
+      "path": "validation/mutant-upstream-source-comparison.json",
+      "bytes": 4484,
+      "sha256": "0a980ce8925720715f267901fed110dc1b0f32dad72d26f48b7a96c8cb2f31d9"
+    },
+    {
+      "path": "validation/native-mutant-final-after-artifacts.jsonl",
+      "bytes": 130191,
+      "sha256": "76f53b96efdc13b01e2f99357e094d8f39cd774660efb29d34f9d10d8a26e65c"
+    },
+    {
+      "path": "validation/native-mutant-final-current-cpp-verification.json",
+      "bytes": 1935,
+      "sha256": "1af5af146cbf1e371315af7b318265e66b1d8349f97344a86d117008e2a9ef70"
+    },
+    {
+      "path": "validation/native-mutant-final-owning-archive-hashes.json",
+      "bytes": 94341,
+      "sha256": "bf8a3f8c885271b7d9824d75d355171d0eef845e71296e1753266df33c34a5d6"
+    },
+    {
+      "path": "validation/native-mutant-final-owning-archive-identities.json",
+      "bytes": 94339,
+      "sha256": "7b895a056a05babf64908671fc492a0feacc45b97522c248376053c9079a9349"
+    },
+    {
+      "path": "validation/native-mutant-final-owning-source-verification.json",
+      "bytes": 108,
+      "sha256": "36857cb36bdc84e4985d71f31f87ceb9b3f33d5d1e93ae0e653070074fcbc275"
+    },
+    {
+      "path": "validation/native-names-v4-reviewed.json",
+      "bytes": 1261,
+      "sha256": "ab3cddc8fc437f03d539371502b6ac302155df722ec0aba2e6d9c41c3405c1d6"
+    },
+    {
+      "path": "validation/native-names-v5-reviewed.json",
+      "bytes": 26969,
+      "sha256": "4564f5e93cf78f38e6b9019e25e47ed31d7d8724d0f2fde1a4d653c09ed4f5b8"
+    },
+    {
+      "path": "validation/native-names-v6-reviewed.json",
+      "bytes": 1029,
+      "sha256": "bc21a43b76bcc63ed860a2a9ddccf204054a502b5200293d0af2011515b94b63"
+    },
+    {
+      "path": "validation/native-restored-documents/docs/specifications/windows/native-process-token-open/README.md",
+      "bytes": 491,
+      "sha256": "c602e1575078f714462dc701a4defd693c2f72799238754d7fec63b11b40747e"
+    },
+    {
+      "path": "validation/native-restored-documents/docs/specifications/windows/native-process-token-open/assumption-register.json",
+      "bytes": 2494,
+      "sha256": "55765f4cb125e62ad941b7d7cf5d4f747ee4ba182e5d8b1e629cc90b3a2b7d37"
+    },
+    {
+      "path": "validation/native-restored-documents/docs/specifications/windows/native-process-token-open/bounded-scope.json",
+      "bytes": 720,
+      "sha256": "295816b03cb10521564db7ec1d3cc940325c8808dcf034c7f384d775b8d94bea"
+    },
+    {
+      "path": "validation/native-restored-documents/docs/specifications/windows/native-process-token-open/check-native.py",
+      "bytes": 6280,
+      "sha256": "01b749f37ba80227c8a6e69b2f6740a0c03b9d354e2500579f07f3e641306aea"
+    },
+    {
+      "path": "validation/native-restored-documents/docs/specifications/windows/native-system-time/README.md",
+      "bytes": 2089,
+      "sha256": "1ac0c541a147258981a1f39e0fe2143ee89d8de7fa5a93f46cbcbbc6f0c0c7bf"
+    },
+    {
+      "path": "validation/native-restored-documents/docs/specifications/windows/native-system-time/assumption-register.json",
+      "bytes": 2146,
+      "sha256": "172aefbf3b96befff5ec7031fea7a4627a207729fd140fc9544df81f01a21fe8"
+    },
+    {
+      "path": "validation/native-restored-documents/docs/specifications/windows/native-system-time/bounded-scope.json",
+      "bytes": 768,
+      "sha256": "ba29eb21dce32fe5867805dca817f31dc11da03cf7cdf670e3e6b7f7dfc3e757"
+    },
+    {
+      "path": "validation/native-restored-documents/docs/specifications/windows/native-system-time/check-native.py",
+      "bytes": 3146,
+      "sha256": "9fcb292fb2f4c2ee154c4221a2793801fc40977fbbf9392d85693229e664052e"
+    },
+    {
+      "path": "validation/native-restored-documents/src/user/windows/native-runtime.md",
+      "bytes": 158978,
+      "sha256": "978614e1d993b2d140902ca1e8629d2365d4bf1d61b210bb367ecb11c39c30ee"
+    },
+    {
+      "path": "validation/owner-diagnostic/mutant-owner-observer-build.ps1",
+      "bytes": 1029,
+      "sha256": "ccc81499f67b0865c90f23de7c2dbe20508ddf019905ed3e4bc388c274fa10a0"
+    },
+    {
+      "path": "validation/owner-diagnostic/mutant-owner-observer.rs",
+      "bytes": 4210,
+      "sha256": "adff6a95e16d29c0559585226c67fa5178f01e617404ebb84de583d698ea56df"
+    },
+    {
+      "path": "validation/owner-diagnostic/run-mutant-owner-observer.py",
+      "bytes": 3379,
+      "sha256": "ecd804c25a5bb7b41ee93c37405082534b7e61161e81ad1d9930c601b0b7b913"
+    },
+    {
+      "path": "validation/proof-runs.json",
+      "bytes": 772,
+      "sha256": "9dcbfdc02bfd917c3c5af70553ae49cf889688ad19f2f17e3d9d23b9d4cc7b18"
+    },
+    {
+      "path": "validation/windows/assist-native-mutant-final-owned.ps1",
+      "bytes": 4822,
+      "sha256": "aba83fcfce64f154340074dfb35ecdb4f7ab9b86dd599ce011b12cb38116d285"
+    },
+    {
+      "path": "validation/windows/inspect-mutant-final-archives.py",
+      "bytes": 715,
+      "sha256": "37a41afa70e392594c26934cf58695da329685ca97553c71ed562fe67049721d"
+    },
+    {
+      "path": "validation/windows/prepare-mutant-owning-junction.py",
+      "bytes": 1452,
+      "sha256": "a065348c931a2318d584dfb23c853a7c5162c16ddff9a4b3199e3bf4b9a606f1"
+    },
+    {
+      "path": "validation/windows/run-mutant-final-owned.py",
+      "bytes": 1359,
+      "sha256": "b53f0ad3393ba2437a6fd0cb09ce0d6d817fda171868da2d0457a9507d79dbde"
+    },
+    {
+      "path": "validation/windows/verify-mutant-cpp-consumers.py",
+      "bytes": 1062,
+      "sha256": "97a878f7e73a351431dd60f27692a746dd9c97d11f00658770deb2cface00a78"
+    },
+    {
+      "path": "validation/windows/verify-mutant-owning-sources.py",
+      "bytes": 1573,
+      "sha256": "d4af70e46d276d7bdb8621793a7437aec8a97ff78c4b333ac273dd7154ed2b7c"
+    }
+  ]
+}

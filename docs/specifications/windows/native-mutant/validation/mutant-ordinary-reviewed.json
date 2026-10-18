@@ -1,0 +1,23 @@
+{
+  "successful-guest-exits": 0,
+  "programs": [
+    {
+      "program": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-mutant-epoch4\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "terminal-line": "terminal turn=2151176 Complete(Internal(\"native NTDLL service NtWaitForSingleObject (0x4) at 0x7fff38a41040 is not implemented\"))",
+      "mutant-result-line": "mutant-result turn=2151112 tid=8 status=Some(0) handle=Ok(6c) kind=Some(\"Mutant\")"
+    },
+    {
+      "program": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "terminal-line": "terminal turn=2153525 Complete(Internal(\"native NTDLL service NtWaitForSingleObject (0x4) at 0x7fff38a41040 is not implemented\"))",
+      "mutant-result-line": "mutant-result turn=2153461 tid=8 status=Some(0) handle=Ok(6c) kind=Some(\"Mutant\")"
+    }
+  ]
+}

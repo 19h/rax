@@ -1,0 +1,380 @@
+{
+  "scope": "Earlier native prerequisites only; enabled private subtree support remains unimplemented.",
+  "files": [
+    {
+      "path": "private-bno-prerequisite/bno-namespace-empty-precreate-arm64.log",
+      "bytes": 82,
+      "sha256": "5fa8833861c961ea9621d2c0cdcea845613a64afa5ff08574672bc0f39858355"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-empty-precreate-x64.log",
+      "bytes": 82,
+      "sha256": "5fa8833861c961ea9621d2c0cdcea845613a64afa5ff08574672bc0f39858355"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-empty-precreate-x86-laa.log",
+      "bytes": 82,
+      "sha256": "5fa8833861c961ea9621d2c0cdcea845613a64afa5ff08574672bc0f39858355"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-empty-precreate-x86.log",
+      "bytes": 82,
+      "sha256": "5fa8833861c961ea9621d2c0cdcea845613a64afa5ff08574672bc0f39858355"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-empty-precreate.json",
+      "bytes": 3253,
+      "sha256": "23e4324fb641e3d0399b0888be336924ce8eb9a4af78f4e0874de8959b548794"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-arm64-after.json",
+      "bytes": 528,
+      "sha256": "40a72624b8a4bc22d39034b5eadaf572ed0eb2386a423ec8d54f96d1515eba6c"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-arm64-before.json",
+      "bytes": 528,
+      "sha256": "40a72624b8a4bc22d39034b5eadaf572ed0eb2386a423ec8d54f96d1515eba6c"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-arm64-build.log",
+      "bytes": 36,
+      "sha256": "b062907f1e9f8db1bab491bb186ce7b9d17e9a76c85796a695ac10ecb51d80d0"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-arm64-disabled-empty.log",
+      "bytes": 885,
+      "sha256": "eb63ce32ea7e79521b97a419d186f1526280303e6b8ec688c15f36eff4395052"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-arm64-enabled-ascii.log",
+      "bytes": 1660,
+      "sha256": "cc8af61fe17fcb4db4f59de6720c269029e1ae90719fdc76ded8f7df2ca633c0"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-arm64-enabled-unicode.log",
+      "bytes": 1612,
+      "sha256": "2afdf09bcbbe3a153ee030cecf12df0e0fa3dbb18a0dc63c8f48b7caa1c8478f"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-arm64-source-after.json",
+      "bytes": 249,
+      "sha256": "4dc6f702158e8d9e073663f59d5688c06f565ba603d2a0ca67378ddb9760cdd0"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-controller-after.json",
+      "bytes": 222,
+      "sha256": "5c0ff10ddae2b3d3b54cf0e45179e9f83a5ca1587a6e85d69c33d846d9bd6484"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-controller-before.json",
+      "bytes": 222,
+      "sha256": "5c0ff10ddae2b3d3b54cf0e45179e9f83a5ca1587a6e85d69c33d846d9bd6484"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-launch.json",
+      "bytes": 306,
+      "sha256": "78fa6561ffdc948679c30f3b945c5f9cdf1111a529e6072deb52137eb818670e"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-outcomes.json",
+      "bytes": 2096,
+      "sha256": "df58df63e2b90d749bfec779a46a43ee0b9a14bbcf1f2483d9a7c05af5976873"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x64-after.json",
+      "bytes": 520,
+      "sha256": "db78afdb7aa9dd7feedf442d272d21d04ea2f74376bcfb16c0f2d38b49b7e98f"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x64-before.json",
+      "bytes": 520,
+      "sha256": "db78afdb7aa9dd7feedf442d272d21d04ea2f74376bcfb16c0f2d38b49b7e98f"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x64-build.log",
+      "bytes": 36,
+      "sha256": "b062907f1e9f8db1bab491bb186ce7b9d17e9a76c85796a695ac10ecb51d80d0"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x64-disabled-empty.log",
+      "bytes": 883,
+      "sha256": "d480032ff54c1ddb8a4b88604afff93fb64ea2e4b4b9a23ac6d2f7cc25223f71"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x64-enabled-ascii.log",
+      "bytes": 1634,
+      "sha256": "a1009452192f10db78935cefa967882094e73ce4889852648d0065fc51d84e3b"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x64-enabled-unicode.log",
+      "bytes": 1610,
+      "sha256": "373e978ba082c3fdc2428276ef66b8db5a7ba82a516ee3999158762112134962"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x64-source-after.json",
+      "bytes": 247,
+      "sha256": "0eac7f5d17e18f9915fefcd6d5a729e61c9df81989b1d31939315d486378b50f"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x86-after.json",
+      "bytes": 518,
+      "sha256": "18c86c77e4d0812b8fa32efe0a400ac833c7975a59c8223afa9c3211e77e2177"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x86-before.json",
+      "bytes": 518,
+      "sha256": "18c86c77e4d0812b8fa32efe0a400ac833c7975a59c8223afa9c3211e77e2177"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x86-build.log",
+      "bytes": 36,
+      "sha256": "b062907f1e9f8db1bab491bb186ce7b9d17e9a76c85796a695ac10ecb51d80d0"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x86-disabled-empty.log",
+      "bytes": 883,
+      "sha256": "2666ffda06e0e8fbc0b72558398661ac503110c9966972da92a8da509fedfdd2"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x86-enabled-ascii.log",
+      "bytes": 1634,
+      "sha256": "666fc1fc0f3a83fde1d2d92dc323928d36aebd7898b4380c2bffd5869f458e2e"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x86-enabled-unicode.log",
+      "bytes": 1610,
+      "sha256": "d29bee7dd05b0d1f2ccdda7f66294d3bdf4523ffed4cf7bdd56a8bf85955bad5"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x86-laa-after.json",
+      "bytes": 532,
+      "sha256": "8aba556fd8c30bf35e3301d6b4831f5ceccc865dbc0fcc3c2e9bf0eb32f22aec"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x86-laa-before.json",
+      "bytes": 532,
+      "sha256": "8aba556fd8c30bf35e3301d6b4831f5ceccc865dbc0fcc3c2e9bf0eb32f22aec"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x86-laa-build.log",
+      "bytes": 36,
+      "sha256": "b062907f1e9f8db1bab491bb186ce7b9d17e9a76c85796a695ac10ecb51d80d0"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x86-laa-disabled-empty.log",
+      "bytes": 891,
+      "sha256": "ba5c9e55896aa59865bf401d9a65b606b58b4d55b82eb3b7e6d9ce76b53a77a1"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x86-laa-enabled-ascii.log",
+      "bytes": 1662,
+      "sha256": "611e44921152eb6915e28d4aea7ca658f3f0b5de951c76ff17ed38255c5c5c86"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x86-laa-enabled-unicode.log",
+      "bytes": 1638,
+      "sha256": "2e6698ccd63690ee1070ebb8c8da205b159bfc7f277cd3645c4b8873b5036070"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x86-laa-source-after.json",
+      "bytes": 251,
+      "sha256": "c1782abdb60cadb308cc4163a3a05c100ab35082c6b1453753aca64ccdcfd96d"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/bno-namespace-precreate-x86-source-after.json",
+      "bytes": 247,
+      "sha256": "d8bc24f5a9d797f20cadea9669cae199d26a9280d109ef05cc121300496029ff"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-namespace-precreate/native-bno-namespace-precreate.cpp",
+      "bytes": 6208,
+      "sha256": "0ee97d214e5082be5e1e284c037f756db3bd68a321858e498230d0eab50c2a03"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-arm64-after.json",
+      "bytes": 504,
+      "sha256": "419f03c3ae03482da91e0f729aef9b24990556c7176b506756257dce8d168926"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-arm64-before.json",
+      "bytes": 504,
+      "sha256": "419f03c3ae03482da91e0f729aef9b24990556c7176b506756257dce8d168926"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-arm64-build.log",
+      "bytes": 24,
+      "sha256": "9ba31a27de3c31c469c71b3fa12b777a8b28043ba67b919dc464cb3dfc79c876"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-arm64-disabled-empty.log",
+      "bytes": 2358,
+      "sha256": "1ace465efde9a0b0bd60f3b82bfeb2ef4f40f5026dcb9516165c6082e7325139"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-arm64-enabled-ascii.log",
+      "bytes": 3538,
+      "sha256": "a3e44ee2298ec329ecad0f11addc8ceb0f08752d3e61996fe18f35c9c1e9ece5"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-arm64-enabled-unicode.log",
+      "bytes": 3494,
+      "sha256": "cf4b683c35bfc3ce591b143199d22db3a289a71a484e67de732abb82e82d8f37"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-arm64-source-after.json",
+      "bytes": 225,
+      "sha256": "fd5a915acf6057a9a07aa52e5ea5e923552c3350c64499eabc33584e0ef19d16"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-controller-after.json",
+      "bytes": 222,
+      "sha256": "5c0ff10ddae2b3d3b54cf0e45179e9f83a5ca1587a6e85d69c33d846d9bd6484"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-controller-before.json",
+      "bytes": 222,
+      "sha256": "5c0ff10ddae2b3d3b54cf0e45179e9f83a5ca1587a6e85d69c33d846d9bd6484"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-launch.json",
+      "bytes": 307,
+      "sha256": "ef05e87fbb1d7cc14ae00e9c37685fc2dc29e37eb714ed39db05ad96322226cd"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-outcomes.json",
+      "bytes": 1952,
+      "sha256": "96cd54b0b66afd789e61453100c9dcf15c2dd60666e9d192af1b60d4a349e692"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x64-after.json",
+      "bytes": 496,
+      "sha256": "90a1ef47c50f87b7e61dbb7028808e6494285e9ede6057b3ebebc133b2a1bf1b"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x64-before.json",
+      "bytes": 496,
+      "sha256": "90a1ef47c50f87b7e61dbb7028808e6494285e9ede6057b3ebebc133b2a1bf1b"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x64-build.log",
+      "bytes": 24,
+      "sha256": "9ba31a27de3c31c469c71b3fa12b777a8b28043ba67b919dc464cb3dfc79c876"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x64-disabled-empty.log",
+      "bytes": 2356,
+      "sha256": "1c479b864ebd3924196421ef77e292d13c2281b2d8ad9e5d0faa0f7c21602a61"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x64-enabled-ascii.log",
+      "bytes": 3536,
+      "sha256": "6a53b154c0227970e0dd213196011621d510bbf4a2284f460796b1acedde7232"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x64-enabled-unicode.log",
+      "bytes": 3492,
+      "sha256": "9080368a7cc8b3df00129a418bb09cbc2013761f0ba5a11e8551efd7e1e3e3e3"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x64-source-after.json",
+      "bytes": 223,
+      "sha256": "09640fe5032cb2ae7ec5771f19591de9a24b51b9b9e183f2e811c9f92bf46a39"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x86-after.json",
+      "bytes": 494,
+      "sha256": "1639089d385578f40022ed9aa2082e7a43ff0ace0a01c1ed8a68c1c607d4d21f"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x86-before.json",
+      "bytes": 494,
+      "sha256": "1639089d385578f40022ed9aa2082e7a43ff0ace0a01c1ed8a68c1c607d4d21f"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x86-build.log",
+      "bytes": 24,
+      "sha256": "9ba31a27de3c31c469c71b3fa12b777a8b28043ba67b919dc464cb3dfc79c876"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x86-disabled-empty.log",
+      "bytes": 2356,
+      "sha256": "a359bb0c0b804953e6641999570c3b418eda7b69bd954f5555aac85aed1c224f"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x86-enabled-ascii.log",
+      "bytes": 3536,
+      "sha256": "8f8a49ddd1aea7c6d134e3eec67c7b07838cbb8adecadb936c711145d6e85a90"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x86-enabled-unicode.log",
+      "bytes": 3512,
+      "sha256": "855603d61a462fb66ab1111206a653f9d3ec33a6779eecc3f561984bf4d42d81"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x86-laa-after.json",
+      "bytes": 508,
+      "sha256": "4dced02f432d221af13fa8cc64d61bb22c8f959bb8493ee7bea06cd771dd3a93"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x86-laa-before.json",
+      "bytes": 508,
+      "sha256": "4dced02f432d221af13fa8cc64d61bb22c8f959bb8493ee7bea06cd771dd3a93"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x86-laa-build.log",
+      "bytes": 24,
+      "sha256": "9ba31a27de3c31c469c71b3fa12b777a8b28043ba67b919dc464cb3dfc79c876"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x86-laa-disabled-empty.log",
+      "bytes": 2360,
+      "sha256": "793e9036479f7e9fb310df7d64e533f8bef673838773be9168c9de8e57af9d77"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x86-laa-enabled-ascii.log",
+      "bytes": 3540,
+      "sha256": "7e95c976ed64388fda4da9ed135848f37b66e3ef00a829b0798cbdf7e2fea96d"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x86-laa-enabled-unicode.log",
+      "bytes": 3496,
+      "sha256": "2f35f08d011d6753d335c4817daf8f72e0629e478cf7c20609175dbc9aaf4b66"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x86-laa-source-after.json",
+      "bytes": 227,
+      "sha256": "f6f37f00999f356b9a316b67026baec750db62ba9b0963f984ad578a49d2362f"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/bno-routing-x86-source-after.json",
+      "bytes": 223,
+      "sha256": "256a32988689284887c7b5b1809ec0afd6a611c3ed7cb701ab67da52edd3239d"
+    },
+    {
+      "path": "private-bno-prerequisite/bno-routing/native-bno-routing.cpp",
+      "bytes": 8955,
+      "sha256": "0a6b2c4fc90cc006e0f8b9ffc63b5a9c0e019dc197dab7092d4dad84f662a7e1"
+    },
+    {
+      "path": "private-bno-prerequisite/collect-routing.py",
+      "bytes": 6744,
+      "sha256": "5b036297a92d01957512472fa555ed55360353aadd81304ab34184bd3caa48ba"
+    },
+    {
+      "path": "private-bno-prerequisite/routing-reviewed.json",
+      "bytes": 9684,
+      "sha256": "84684360f56b631f105c3e0782d498205538030521a2be732d1ea59acc5721d9"
+    }
+  ]
+}

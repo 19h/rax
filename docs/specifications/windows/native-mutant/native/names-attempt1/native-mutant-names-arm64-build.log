@@ -1,0 +1,92 @@
+native-mutant-names.cpp
+native-mutant-names.cpp(152): error C3535: cannot deduce type for 'auto &&' from 'initializer list'
+native-mutant-names.cpp(152): error C2440: 'initializing': cannot convert from 'initializer list' to 'std::initializer_list<<error>> &&'
+native-mutant-names.cpp(152): note: Reason: cannot convert from 'initializer list' to 'std::initializer_list<<error>>'
+native-mutant-names.cpp(152): note: Element '1': no conversion from 'std::wstring' to '<error>'
+native-mutant-names.cpp(152): note: Element '5': no conversion from 'std::basic_string<wchar_t,std::char_traits<wchar_t>,std::allocator<wchar_t>>' to '<error>'
+native-mutant-names.cpp(152): note: Element '6': no conversion from 'std::basic_string<wchar_t,std::char_traits<wchar_t>,std::allocator<wchar_t>>' to '<error>'
+native-mutant-names.cpp(154): error C2664: 'void run(const char *,bool,HANDLE,std::wstring,ULONG,ULONG,ULONG,bool,ULONG,int)': cannot convert argument 4 from 'const _Elem' to 'std::wstring'
+        with
+        [
+            _Elem=<error>
+        ]
+native-mutant-names.cpp(154): note: 'std::basic_string<wchar_t,std::char_traits<wchar_t>,std::allocator<wchar_t>>::basic_string': no overloaded function could convert all the argument types
+C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\xstring(818): note: could be 'std::basic_string<wchar_t,std::char_traits<wchar_t>,std::allocator<wchar_t>>::basic_string(const _Elem *const )'
+        with
+        [
+            _Elem=wchar_t
+        ]
+native-mutant-names.cpp(154): note: 'std::basic_string<wchar_t,std::char_traits<wchar_t>,std::allocator<wchar_t>>::basic_string(const _Elem *const )': cannot convert argument 1 from 'const _Elem' to 'const _Elem *const '
+        with
+        [
+            _Elem=wchar_t
+        ]
+        and
+        [
+            _Elem=<error>
+        ]
+        and
+        [
+            _Elem=wchar_t
+        ]
+native-mutant-names.cpp(154): note: Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or parenthesized function-style cast
+C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\xstring(1390): note: or       'std::basic_string<wchar_t,std::char_traits<wchar_t>,std::allocator<wchar_t>>::basic_string(std::initializer_list<_Elem>,const _Alloc &)'
+        with
+        [
+            _Elem=wchar_t,
+            _Alloc=std::allocator<wchar_t>
+        ]
+native-mutant-names.cpp(154): note: 'std::basic_string<wchar_t,std::char_traits<wchar_t>,std::allocator<wchar_t>>::basic_string(std::initializer_list<_Elem>,const _Alloc &)': cannot convert argument 1 from 'const _Elem' to 'std::initializer_list<_Elem>'
+        with
+        [
+            _Elem=wchar_t,
+            _Alloc=std::allocator<wchar_t>
+        ]
+        and
+        [
+            _Elem=<error>
+        ]
+        and
+        [
+            _Elem=wchar_t
+        ]
+native-mutant-names.cpp(154): note: Conversion requires a second user-defined-conversion operator or constructor
+C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\xstring(1207): note: or       'std::basic_string<wchar_t,std::char_traits<wchar_t>,std::allocator<wchar_t>>::basic_string(const _Ty &,const unsigned __int64,const unsigned __int64,const _Alloc &)'
+        with
+        [
+            _Alloc=std::allocator<wchar_t>
+        ]
+C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\xstring(848): note: or       'std::basic_string<wchar_t,std::char_traits<wchar_t>,std::allocator<wchar_t>>::basic_string(_Iter,_Iter,const _Alloc &)'
+        with
+        [
+            _Alloc=std::allocator<wchar_t>
+        ]
+C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\xstring(842): note: or       'std::basic_string<wchar_t,std::char_traits<wchar_t>,std::allocator<wchar_t>>::basic_string(const unsigned __int64,const _Elem,const _Alloc &)'
+        with
+        [
+            _Elem=wchar_t,
+            _Alloc=std::allocator<wchar_t>
+        ]
+C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\xstring(825): note: or       'std::basic_string<wchar_t,std::char_traits<wchar_t>,std::allocator<wchar_t>>::basic_string(const _Elem *const ,const _Alloc &)'
+        with
+        [
+            _Elem=wchar_t,
+            _Alloc=std::allocator<wchar_t>
+        ]
+C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\xstring(812): note: or       'std::basic_string<wchar_t,std::char_traits<wchar_t>,std::allocator<wchar_t>>::basic_string(const _Elem *const ,const unsigned __int64,const _Alloc &)'
+        with
+        [
+            _Elem=wchar_t,
+            _Alloc=std::allocator<wchar_t>
+        ]
+native-mutant-names.cpp(154): note: while trying to match the argument list '(const _Elem)'
+        with
+        [
+            _Elem=<error>
+        ]
+native-mutant-names.cpp(65): note: see declaration of 'run'
+native-mutant-names.cpp(154): note: while trying to match the argument list '(const char [14], bool, HANDLE, const _Elem)'
+        with
+        [
+            _Elem=<error>
+        ]

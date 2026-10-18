@@ -111,10 +111,12 @@ pub(crate) fn case_probe_policy(original: u32, folded: u32, explicit: u32) -> Op
 pub(crate) mod csr;
 pub(crate) mod data;
 mod image;
+mod named;
 mod section;
 pub use data::DataSection;
 pub(crate) use data::SelectedSection;
 pub(crate) use image::{ImageExtension, ImageRegion, ImageTemplate};
+pub(crate) use named::Name as NativeName;
 pub(crate) use section::CapturedSection;
 pub use section::ImageSection;
 pub(crate) const MAX_ENTRIES: usize = 8192;
@@ -248,7 +250,6 @@ impl Namespace {
                 if e.name.is_empty()
                     || e.name.len() > MAX_UNITS
                     || e.name.contains(&(b'\\' as u16))
-                    || e.name.contains(&0)
                     || e.kind.is_empty()
                     || e.kind.len() > 255
                     || e.kind.contains(&0)

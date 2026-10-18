@@ -1,0 +1,56 @@
+{
+  "base": "390309d0a09f58643c38e7014adea82742bd2c41",
+  "paths": [
+    "src/user/windows/object_namespace.rs",
+    "src/user/windows/object_namespace/named.rs",
+    "src/user/windows/objects.rs",
+    "src/user/windows/objects/named.rs",
+    "src/user/windows/dll/threading/objects.rs",
+    "src/user/windows/dll/threading/tests.rs",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/mutant.rs",
+    "src/user/windows/dll/native/mutant/attributes.rs",
+    "src/user/windows/dll/native/mutant/query.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/event_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/mutant_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/mutant_replay_tests.rs",
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/object_namespace/base_named_object_tests.rs"
+  ],
+  "acceptance": [
+    "private guest named/anonymous NtCreateMutant and NtOpenMutant",
+    "shared installed Win32/native identities; embedded names preserved",
+    "NtReleaseMutant and NtQueryMutant0/1 native and WoW64 ordering",
+    "measured rights/boolean/namespace/case/lifetime behavior",
+    "native raw/projection integrity checks",
+    "three-host complete affected binaries and actual retained consumers",
+    "measured ordinary-program mutant success, subsequent service boundary and remaining full-goal limits",
+    "exact red commit and paired root publication"
+  ],
+  "scope-map": {
+    "affected": [
+      "Windows guest object namespace identity, handle lifetime, NT/HLE synchronization services, scheduler wait/abandonment consumers, tests and engineering records"
+    ],
+    "unaffected": [
+      "ISA decoding/direct execution/SMIR/JIT: no CPU contract changes",
+      "ABI/dependency/default/package layout: no public layout, pin or manifest changes",
+      "Linux/macOS process personalities: independent code paths, complete portable core regression runs required"
+    ],
+    "unknown": [
+      "private BNO subtree selection remains an independently measured prerequisite; no private prefix success claim"
+    ]
+  },
+  "bounded-scope": [
+    {
+      "impact": "high",
+      "item": "private BNO prefix capture remains incomplete",
+      "blocks": "full goal, not selected-directory mutant semantics"
+    },
+    {
+      "impact": "medium",
+      "item": "five pre-existing native Windows lowerer failures",
+      "blocks": "unqualified green-suite claim; exact baseline comparison required"
+    }
+  ]
+}

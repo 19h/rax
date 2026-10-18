@@ -1,0 +1,9 @@
+{
+  "pid": 10932,
+  "utc": "2026-10-18T19:02:26.218704+00:00",
+  "state": "finished",
+  "scope": "Only process-private unnamed mutants/events and private VirtualAlloc buffers. Creation output/attribute fault and alias order; no permanent objects. Every successful handle is closed and process handle counts are compared.",
+  "child-pid": 10348,
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T19:03:04.089445+00:00"
+}

@@ -1,0 +1,10 @@
+error: failed to load source for dependency `vm-memory`
+
+Caused by:
+  unable to update C:\Windows\Temp\assist-native-rax-20261010\src-mutant-epoch4\vendor\vm-memory
+
+Caused by:
+  failed to read `C:\Windows\Temp\assist-native-rax-20261010\src-mutant-epoch4\vendor\vm-memory\Cargo.toml`
+
+Caused by:
+  The system cannot find the file specified. (os error 2)

@@ -1,0 +1,5 @@
+{
+  "bytes": 4210,
+  "sha256": "adff6a95e16d29c0559585226c67fa5178f01e617404ebb84de583d698ea56df",
+  "basis": "Same ordinary-program observer with additional read-only before/after NtCreateMutant evidence. No guest behavior is replaced or skipped; prefix run_slice executes the actual2.1million turns."
+}

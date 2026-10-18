@@ -1,0 +1,37 @@
+{
+  "retrieval-check-utc": "2026-10-18T23:44:01.612904+00:00",
+  "primary-urls": [
+    "https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createmutexw",
+    "https://raw.githubusercontent.com/winsiderss/systeminformer/master/phnt/include/ntexapi.h",
+    "https://learn.microsoft.com/en-us/windows/win32/api/handleapi/nf-handleapi-compareobjecthandles",
+    "https://raw.githubusercontent.com/MicrosoftDocs/sdk-api/docs/sdk-api-src/content/handleapi/nf-handleapi-compareobjecthandles.md",
+    "https://raw.githubusercontent.com/MicrosoftDocs/sdk-api/docs/LICENSE"
+  ],
+  "scope": "Previously retained primary copies below are the design inputs. Live primary pages were rechecked; their unrelated newer content is not a dependency refresh. Native fault ordering comes from retained observations, not documentation prose. CompareObjectHandles documentation describes the independent host identity oracle; guest fault and raw UTF-16 behavior comes from measured native rows. NTDLL files are pinned; loaded Win32 DLL images are not comprehensively pinned.",
+  "files": [
+    {
+      "path": "../native-wnf-query/primary/phnt-ntexapi.h",
+      "repository-path": "docs/specifications/windows/native-wnf-query/primary/phnt-ntexapi.h",
+      "bytes": 386368,
+      "sha256": "0510ac40fa1690cd73bed8afe3ed602aaa7bb6870ab95ea9aaba36ce1f4c3d53"
+    },
+    {
+      "path": "../services/thread-sync/createmutexw.md",
+      "repository-path": "docs/specifications/windows/services/thread-sync/createmutexw.md",
+      "bytes": 11260,
+      "sha256": "88127724113337aa1f31095768bb191481f47d376313c0d02317b59f9727d3f1"
+    },
+    {
+      "path": "primary/compareobjecthandles.md",
+      "repository-path": "docs/specifications/windows/native-mutant/primary/compareobjecthandles.md",
+      "bytes": 4773,
+      "sha256": "ec676d665b5fee1e940ad08f3298d1ac10f04e29344789e0e1406dc4ca6c7848"
+    },
+    {
+      "path": "primary/LICENSE.sdk-api",
+      "repository-path": "docs/specifications/windows/native-mutant/primary/LICENSE.sdk-api",
+      "bytes": 18650,
+      "sha256": "7183ef9749eb9b75e710a81a4c812a9405cc184f087500581a973e5929ac3f5e"
+    }
+  ]
+}

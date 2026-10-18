@@ -1,0 +1,7 @@
+error: failed to load source for dependency `linux-loader`
+
+Caused by:
+  unable to update https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555
+
+Caused by:
+  can't checkout from 'https://github.com/19h/linux-loader': you are in the offline mode (--offline)

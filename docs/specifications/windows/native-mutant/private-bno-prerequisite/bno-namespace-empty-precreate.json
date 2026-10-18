@@ -1,0 +1,80 @@
+{
+  "utc": "2026-10-18T19:05:41.699111+00:00",
+  "pid": 5768,
+  "state": "finished",
+  "controller-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-isolation-child\\child-control.exe",
+    "bytes": 158720,
+    "sha256": "4d2197c5b680de69d14feb17c048e937c20324a315c2a22b60a3de60ac9a0aa1"
+  },
+  "runs": [
+    {
+      "profile": "arm64",
+      "exe-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-namespace-precreate-arm64\\probe.exe",
+        "bytes": 196608,
+        "sha256": "bf990564d9d3710f1008d9b06fdb0551063122c3e767ce21caebbc8185f89b25"
+      },
+      "log": "bno-namespace-empty-precreate-arm64.log",
+      "exit-code": 26,
+      "exe-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-namespace-precreate-arm64\\probe.exe",
+        "bytes": 196608,
+        "sha256": "bf990564d9d3710f1008d9b06fdb0551063122c3e767ce21caebbc8185f89b25"
+      }
+    },
+    {
+      "profile": "x64",
+      "exe-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-namespace-precreate-x64\\probe.exe",
+        "bytes": 197120,
+        "sha256": "3394a3c3275c97a0969bfef4b3d41a0da339a2817962ae1194d9ab16b0690e36"
+      },
+      "log": "bno-namespace-empty-precreate-x64.log",
+      "exit-code": 26,
+      "exe-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-namespace-precreate-x64\\probe.exe",
+        "bytes": 197120,
+        "sha256": "3394a3c3275c97a0969bfef4b3d41a0da339a2817962ae1194d9ab16b0690e36"
+      }
+    },
+    {
+      "profile": "x86",
+      "exe-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-namespace-precreate-x86\\probe.exe",
+        "bytes": 161792,
+        "sha256": "0b4714ede0e37b962247802756458cd9ea74306eec3fb5c53baba0616e727cd8"
+      },
+      "log": "bno-namespace-empty-precreate-x86.log",
+      "exit-code": 26,
+      "exe-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-namespace-precreate-x86\\probe.exe",
+        "bytes": 161792,
+        "sha256": "0b4714ede0e37b962247802756458cd9ea74306eec3fb5c53baba0616e727cd8"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "exe-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-namespace-precreate-x86-laa\\probe.exe",
+        "bytes": 161792,
+        "sha256": "13aee198e2bb81b4d5c5355f61156965cdbe09483d52915d58f8511d8dcd5e7d"
+      },
+      "log": "bno-namespace-empty-precreate-x86-laa.log",
+      "exit-code": 26,
+      "exe-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-namespace-precreate-x86-laa\\probe.exe",
+        "bytes": 161792,
+        "sha256": "13aee198e2bb81b4d5c5355f61156965cdbe09483d52915d58f8511d8dcd5e7d"
+      }
+    }
+  ],
+  "controller-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-isolation-child\\child-control.exe",
+    "bytes": 158720,
+    "sha256": "4d2197c5b680de69d14feb17c048e937c20324a315c2a22b60a3de60ac9a0aa1"
+  },
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T19:05:41.774672+00:00",
+  "scope": "All outcomes retained; individual child status is data, not forced to success."
+}

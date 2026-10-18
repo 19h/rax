@@ -1,0 +1,51 @@
+{
+  "cases": [
+    {
+      "case": "changed-selected-source",
+      "rejected": true,
+      "error": "ValueError: source identity Cargo.lock"
+    },
+    {
+      "case": "new-native-failure",
+      "rejected": true,
+      "error": "ValueError: exact five existing Windows failures"
+    },
+    {
+      "case": "hidden-ignore",
+      "rejected": true,
+      "error": "ValueError: ignored identities native"
+    },
+    {
+      "case": "missing-all-target-check",
+      "rejected": true,
+      "error": "ValueError: complete gate selection native"
+    },
+    {
+      "case": "missing-native-fixture-closure",
+      "rejected": true,
+      "error": "ValueError: repaired native compilation input closure"
+    },
+    {
+      "case": "enabled-core-defaults",
+      "rejected": true,
+      "error": "ValueError: empty-feature current archive native"
+    },
+    {
+      "case": "wrong-actual-artifact",
+      "rejected": true,
+      "error": "ValueError: actual selected artifacts native"
+    },
+    {
+      "case": "false-current-source-equality",
+      "rejected": true,
+      "error": "ValueError: current C++ consumers"
+    },
+    {
+      "case": "invented-ordinary-guest-exit",
+      "rejected": true,
+      "error": "ValueError: explicit remaining native wait boundary"
+    }
+  ],
+  "all-rejected": true,
+  "count": 9
+}

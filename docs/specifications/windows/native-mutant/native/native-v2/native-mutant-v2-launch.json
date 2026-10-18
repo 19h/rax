@@ -1,0 +1,9 @@
+{
+  "pid": 2628,
+  "utc": "2026-10-18T11:49:27.372273+00:00",
+  "state": "finished",
+  "scope": "Only process-private unnamed mutants and own unique Local names; permanent objects excluded.",
+  "child-pid": 4648,
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T11:50:08.073400+00:00"
+}

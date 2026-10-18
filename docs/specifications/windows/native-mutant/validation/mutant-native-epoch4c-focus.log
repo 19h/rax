@@ -1,0 +1,37 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src-mutant-epoch4)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3m 40s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-bno-isolation-prototype\debug\deps\rax-b799307a7949aa6b.exe)
+
+running 11 tests
+test user::windows::dll::threading::tests::native_mutant_and_win32_share_installed_names_and_cross_type_collisions_all_abis ... ok
+test user::windows::dll::threading::tests::native_mutant_private_bno_and_missing_capture_refuse_without_public_fallback ... ok
+test user::windows::dll::threading::tests::native_mutant_raw_win32_names_share_nt_identity_without_unicode_normalization ... ok
+test user::windows::object_namespace::base_named_object_tests::native_mutant_captured_counted_names_preserve_nuls_surrogates_and_literals ... ok
+test user::windows::process::sched::tests::services_tests::mutant_replay_tests::native_mutant_create_replays_all_12800_native_fault_status_cases ... ok
+test user::windows::process::sched::tests::services_tests::mutant_replay_tests::native_mutant_query_replays_all_25200_native_status_and_copy_cases ... ok
+test user::windows::process::sched::tests::services_tests::mutant_replay_tests::native_mutant_release_replays_all_200_native_fault_and_state_cases ... ok
+test user::windows::process::sched::tests::services_tests::mutant_tests::native_mutant_create_grants_boolean_and_last_close_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::mutant_tests::native_mutant_empty_names_null_attributes_and_root_types_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::mutant_tests::native_mutant_named_aliases_case_collision_and_root_grants_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::mutant_tests::native_mutant_query_release_wait_recursion_and_abandonment_all_abis ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 7380 filtered out; finished in 16.50s
+

@@ -1,0 +1,12 @@
+﻿[
+    {
+        "Algorithm":  "SHA256",
+        "Hash":  "502D4678206C8FD564972A3F82BFE63FE1A451CB5A6804AC0A9823B65FCBB61F",
+        "Path":  "C:\\Windows\\System32\\ntdll.dll"
+    },
+    {
+        "Algorithm":  "SHA256",
+        "Hash":  "FFD2B7FF39889C5599C8A8451EEF5C852ACEE9101DA5CE5A6DEF8B8E60A6627E",
+        "Path":  "C:\\Windows\\SysWOW64\\ntdll.dll"
+    }
+]

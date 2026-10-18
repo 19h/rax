@@ -1,0 +1,41 @@
+{
+  "cases": [
+    {
+      "case": "query-projection",
+      "rejected": true,
+      "error": "AssertionError"
+    },
+    {
+      "case": "release-state",
+      "rejected": true,
+      "error": "AssertionError"
+    },
+    {
+      "case": "create-cartesian-index",
+      "rejected": true,
+      "error": "AssertionError"
+    },
+    {
+      "case": "win32-nul-identity",
+      "rejected": true,
+      "error": "AssertionError"
+    },
+    {
+      "case": "missing-handle-closure",
+      "rejected": true,
+      "error": "AssertionError"
+    },
+    {
+      "case": "both-ntdll-identities",
+      "rejected": true,
+      "error": "AssertionError"
+    },
+    {
+      "case": "private-global-routing",
+      "rejected": true,
+      "error": "AssertionError"
+    }
+  ],
+  "all-rejected": true,
+  "count": 7
+}

@@ -1,0 +1,9 @@
+{
+  "pid": 1360,
+  "utc": "2026-10-18T19:29:01.073394+00:00",
+  "state": "finished",
+  "scope": "Only own child processes and own uniquely named events; existing process tokens and objects unchanged.",
+  "child-pid": 10888,
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T19:29:23.522074+00:00"
+}

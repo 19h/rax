@@ -1,0 +1,50 @@
+[
+  {
+    "profile": "arm64",
+    "cases": 144,
+    "acquired": 77,
+    "closed": 77,
+    "process-handles-before": 49,
+    "process-handles-after": 49,
+    "escaped-exceptions": 0,
+    "prior-101-statuses-equal": true,
+    "zero-right-root-create-open": "success",
+    "open-after-owned-last-close": "C0000034"
+  },
+  {
+    "profile": "x64",
+    "cases": 144,
+    "acquired": 77,
+    "closed": 77,
+    "process-handles-before": 65,
+    "process-handles-after": 65,
+    "escaped-exceptions": 0,
+    "prior-101-statuses-equal": true,
+    "zero-right-root-create-open": "success",
+    "open-after-owned-last-close": "C0000034"
+  },
+  {
+    "profile": "x86",
+    "cases": 144,
+    "acquired": 77,
+    "closed": 77,
+    "process-handles-before": 76,
+    "process-handles-after": 76,
+    "escaped-exceptions": 0,
+    "prior-101-statuses-equal": true,
+    "zero-right-root-create-open": "success",
+    "open-after-owned-last-close": "C0000034"
+  },
+  {
+    "profile": "x86-laa",
+    "cases": 144,
+    "acquired": 77,
+    "closed": 77,
+    "process-handles-before": 76,
+    "process-handles-after": 76,
+    "escaped-exceptions": 0,
+    "prior-101-statuses-equal": true,
+    "zero-right-root-create-open": "success",
+    "open-after-owned-last-close": "C0000034"
+  }
+]

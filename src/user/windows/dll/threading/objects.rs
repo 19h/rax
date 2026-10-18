@@ -14,6 +14,52 @@ enum Kind {
     Mutex,
     Semaphore,
 }
+
+enum Name {
+    Embedded(String),
+    Installed(crate::user::windows::object_namespace::NativeName),
+}
+impl Name {
+    fn lookup(&self, c: &Ctx) -> Option<ObjId> {
+        match self {
+            Self::Embedded(name) => c.p.objects.by_name(name),
+            Self::Installed(name) => c.p.objects.by_native_name(name),
+        }
+    }
+    fn create(self, c: &mut Ctx, object: Object) -> Option<(ObjId, bool)> {
+        match self {
+            Self::Embedded(name) => c.p.objects.try_create_named(&name, object),
+            Self::Installed(name) => c.p.objects.try_create_native_named(name, object),
+        }
+    }
+}
+
+fn resolve_name(c: &Ctx, name: Vec<u16>) -> Checked<Name> {
+    let session =
+        c.p.objects
+            .primary_token_session_id()
+            .ok_or(ServiceError::Win32(ERROR_NOT_SUPPORTED))?;
+    let bno =
+        c.p.objects
+            .primary_token_bno()
+            .ok_or(ServiceError::Win32(ERROR_NOT_SUPPORTED))?;
+    if bno.prefix().is_some() {
+        return Err(ServiceError::Win32(ERROR_NOT_SUPPORTED));
+    }
+    c.p.object_namespace
+        .named_win32(session, &name)
+        .map(Name::Installed)
+        .map_err(|error| {
+            ServiceError::Win32(match error {
+                crate::user::windows::object_namespace::LookupError::Status(status) => {
+                    super::super::super::nt::status_to_error(status)
+                }
+                crate::user::windows::object_namespace::LookupError::Unselected => {
+                    ERROR_NOT_SUPPORTED
+                }
+            })
+        })
+}
 impl Kind {
     fn matches(self, object: &Object) -> bool {
         matches!(
@@ -32,9 +78,9 @@ impl Kind {
     }
 }
 
-/// Full UTF-16 scalar names, ASCII ANSI names, <=260 units plus NUL. Reject
-/// code-page-dependent ANSI and unpaired UTF-16 rather than lossy aliases.
-fn name(c: &Ctx, addr: u64, wide: bool) -> Checked<Option<String>> {
+/// Counted NT units in installed mode, scalar UTF-16 in the embedded profile,
+/// and ASCII ANSI names. The existing bound is260 units plus the terminator.
+fn name(c: &Ctx, addr: u64, wide: bool) -> Checked<Option<Name>> {
     if addr == 0 {
         return Ok(None);
     }
@@ -51,20 +97,33 @@ fn name(c: &Ctx, addr: u64, wide: bool) -> Checked<Option<String>> {
             if units.is_empty() {
                 return Err(ServiceError::Win32(ERROR_INVALID_NAME));
             }
-            let value =
-                String::from_utf16(&units).map_err(|_| ServiceError::Win32(ERROR_NOT_SUPPORTED))?;
-            let remainder = value
-                .strip_prefix("Global\\")
-                .or_else(|| value.strip_prefix("Local\\"));
+            // Embedded decoding precedes its path checks. Installed names
+            // retain their counted UTF-16 units without scalar conversion.
+            let embedded = if c.p.object_namespace.is_selected() {
+                None
+            } else {
+                Some(
+                    String::from_utf16(&units)
+                        .map_err(|_| ServiceError::Win32(ERROR_NOT_SUPPORTED))?,
+                )
+            };
+            let global: Vec<_> = "Global\\".encode_utf16().collect();
+            let local: Vec<_> = "Local\\".encode_utf16().collect();
+            let remainder = units
+                .strip_prefix(global.as_slice())
+                .or_else(|| units.strip_prefix(local.as_slice()));
             if let Some(remainder) = remainder {
-                if remainder.is_empty() || remainder.contains('\\') {
+                if remainder.is_empty() || remainder.contains(&92) {
                     return Err(ServiceError::Win32(ERROR_INVALID_NAME));
                 }
-            } else if value.contains('\\') {
+            } else if units.contains(&92) {
                 // Private and system namespaces have no admitted implementation.
                 return Err(ServiceError::Win32(ERROR_NOT_SUPPORTED));
             }
-            return Ok(Some(value));
+            return match embedded {
+                Some(value) => Ok(Some(Name::Embedded(value))),
+                None => resolve_name(c, units).map(Some),
+            };
         }
         if index == 260 {
             return Err(ServiceError::Win32(ERROR_FILENAME_EXCED_RANGE));
@@ -100,8 +159,8 @@ fn object(c: &Ctx, handle: u64, kind: Kind, access: u32) -> Checked<ObjId> {
     Ok(id)
 }
 
-fn create(c: &mut Ctx, attrs: u64, name: Option<String>, kind: Kind, new: Object) -> ApiResult {
-    let existing = name.as_deref().and_then(|name| c.p.objects.by_name(name));
+fn create(c: &mut Ctx, attrs: u64, name: Option<Name>, kind: Kind, new: Object) -> ApiResult {
+    let existing = name.as_ref().and_then(|name| name.lookup(c));
     if let Some(id) = existing
         && !c
             .p
@@ -117,8 +176,8 @@ fn create(c: &mut Ctx, attrs: u64, name: Option<String>, kind: Kind, new: Object
     };
     // LastError is an output too; validate before publishing any object/handle.
     writable(c, c.t.teb + offsets(c.arch()).teb_last_error, 4)?;
-    let result = if let Some(name) = name.as_deref() {
-        c.p.objects.try_create_named(name, new)
+    let result = if let Some(name) = name {
+        name.create(c, new)
     } else {
         c.p.objects.try_create(new).map(|id| (id, false))
     };
@@ -198,7 +257,7 @@ fn create_semaphore(c: &mut Ctx, wide: bool) -> ApiResult {
         Ok(name) => name,
         Err(error) => return failure(c, error, 0),
     };
-    let existing = name.as_deref().and_then(|name| c.p.objects.by_name(name));
+    let existing = name.as_ref().and_then(|name| name.lookup(c));
     // Win32 ignores both counts when an existing same-type name is opened.
     if existing.is_none() && (max <= 0 || count < 0 || count > max) {
         return c.fail(ERROR_INVALID_PARAMETER, 0);
@@ -239,7 +298,7 @@ fn open(c: &mut Ctx, wide: bool, kind: Kind) -> ApiResult {
         Ok(None) => return c.fail(ERROR_INVALID_PARAMETER, 0),
         Err(error) => return failure(c, error, 0),
     };
-    let Some(id) = c.p.objects.by_name(&name) else {
+    let Some(id) = name.lookup(c) else {
         return c.fail(ERROR_FILE_NOT_FOUND, 0);
     };
     if !c

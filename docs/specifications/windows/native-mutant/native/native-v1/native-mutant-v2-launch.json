@@ -1,0 +1,7 @@
+{
+  "pid": 2628,
+  "utc": "2026-10-18T11:49:27.372273+00:00",
+  "state": "running",
+  "scope": "Only process-private unnamed mutants and own unique Local names; permanent objects excluded.",
+  "child-pid": 4648
+}

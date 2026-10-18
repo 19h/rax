@@ -1,0 +1,11 @@
+{
+  "utc": "2026-10-18T23:35:26.573080+00:00",
+  "parent": "390309d0a09f58643c38e7014adea82742bd2c41",
+  "passed": 0,
+  "failed": 11,
+  "ignored": 0,
+  "filtered": 7936,
+  "exit-code": 101,
+  "log-sha256": "1238588408b3f2d8ad69142db5857ad0a030c4d085642edd1d39c764c19fbcf5",
+  "scope": "Tests only ported to parent; all eleven new behavior tests fail, including raw-name capture and private BNO fallback checks."
+}

@@ -1,0 +1,137 @@
+[
+  {
+    "path": "docs/specifications/windows/native-mutant/replay/create-arm64.tsv",
+    "bytes": 117290,
+    "sha256": "32237872218e3b4b3b3fb3f32a9a78deb12a5ea120445f4790f9e6381df60998"
+  },
+  {
+    "path": "docs/specifications/windows/native-mutant/replay/create-x64.tsv",
+    "bytes": 117290,
+    "sha256": "32237872218e3b4b3b3fb3f32a9a78deb12a5ea120445f4790f9e6381df60998"
+  },
+  {
+    "path": "docs/specifications/windows/native-mutant/replay/create-x86-laa.tsv",
+    "bytes": 117290,
+    "sha256": "0d065f53c9afe4f6011fac943c81de06b0bf41d91b92dd9b7633758a9be69304"
+  },
+  {
+    "path": "docs/specifications/windows/native-mutant/replay/create-x86.tsv",
+    "bytes": 117290,
+    "sha256": "0d065f53c9afe4f6011fac943c81de06b0bf41d91b92dd9b7633758a9be69304"
+  },
+  {
+    "path": "docs/specifications/windows/native-mutant/replay/query-arm64.tsv",
+    "bytes": 1574940,
+    "sha256": "ab1b0a412f54f243d19ee2504d7df54cd479d27a77f7b631c9a6d1071bd6472c"
+  },
+  {
+    "path": "docs/specifications/windows/native-mutant/replay/query-x64.tsv",
+    "bytes": 1574940,
+    "sha256": "ab1b0a412f54f243d19ee2504d7df54cd479d27a77f7b631c9a6d1071bd6472c"
+  },
+  {
+    "path": "docs/specifications/windows/native-mutant/replay/query-x86-laa.tsv",
+    "bytes": 1574940,
+    "sha256": "d7456e97c3d90735cd0667f9e6c1ea0bce1b48933d26d204af729f17cafba6e7"
+  },
+  {
+    "path": "docs/specifications/windows/native-mutant/replay/query-x86.tsv",
+    "bytes": 1574940,
+    "sha256": "d7456e97c3d90735cd0667f9e6c1ea0bce1b48933d26d204af729f17cafba6e7"
+  },
+  {
+    "path": "docs/specifications/windows/native-mutant/replay/release-arm64.tsv",
+    "bytes": 9590,
+    "sha256": "7519ece0ff3606552b1e673e225ba71b0c909ae48b9fc9bc25b47dfff086c741"
+  },
+  {
+    "path": "docs/specifications/windows/native-mutant/replay/release-x64.tsv",
+    "bytes": 9590,
+    "sha256": "7519ece0ff3606552b1e673e225ba71b0c909ae48b9fc9bc25b47dfff086c741"
+  },
+  {
+    "path": "docs/specifications/windows/native-mutant/replay/release-x86-laa.tsv",
+    "bytes": 9590,
+    "sha256": "7519ece0ff3606552b1e673e225ba71b0c909ae48b9fc9bc25b47dfff086c741"
+  },
+  {
+    "path": "docs/specifications/windows/native-mutant/replay/release-x86.tsv",
+    "bytes": 9590,
+    "sha256": "7519ece0ff3606552b1e673e225ba71b0c909ae48b9fc9bc25b47dfff086c741"
+  },
+  {
+    "path": "src/user/windows/dll/native.rs",
+    "bytes": 19633,
+    "sha256": "13d12e97807337812e2b441e40a38d3a61c2909195183aa742206d987364887b"
+  },
+  {
+    "path": "src/user/windows/dll/native/mutant.rs",
+    "bytes": 8243,
+    "sha256": "f6f67c1bdf7805f4fcbad7e36566b1eb4c5183a1c886530d281eed7d4d691d7b"
+  },
+  {
+    "path": "src/user/windows/dll/native/mutant/attributes.rs",
+    "bytes": 2868,
+    "sha256": "e2bc74128f11e5e14c4d369e36bb5a97dcaa32319a0a131c654387cd20b81ea8"
+  },
+  {
+    "path": "src/user/windows/dll/native/mutant/query.rs",
+    "bytes": 3662,
+    "sha256": "7b128070e4d3357d3c2b85027fb90ddd15692713f156afae71224af672637a1c"
+  },
+  {
+    "path": "src/user/windows/dll/threading/objects.rs",
+    "bytes": 13048,
+    "sha256": "b30607284f81f549afe4313c047dc7293da5e16f8b9eab5f731db88a6a44f6ef"
+  },
+  {
+    "path": "src/user/windows/dll/threading/tests.rs",
+    "bytes": 36216,
+    "sha256": "cd7ed8c990a51b9114a7033080e045ca6760fc6fadb52e0010324ef1c78b45a9"
+  },
+  {
+    "path": "src/user/windows/object_namespace.rs",
+    "bytes": 24984,
+    "sha256": "01900dbc17468cd3daa9b8cd2ae2200ea6f8ea49d43120660f96874e3a6fc95b"
+  },
+  {
+    "path": "src/user/windows/object_namespace/base_named_object_tests.rs",
+    "bytes": 11542,
+    "sha256": "84dfbd7e5fbc5725b44cc7eb870732b20d6ae5ac2f85823d8dcd53cf2e1f8cf9"
+  },
+  {
+    "path": "src/user/windows/object_namespace/named.rs",
+    "bytes": 3775,
+    "sha256": "cb88583ec665ef275a0d93b33e1fc2754133e375f2743af765b6ce99138ec237"
+  },
+  {
+    "path": "src/user/windows/objects.rs",
+    "bytes": 27959,
+    "sha256": "bccb05a13aaf92777552577ad419a84bd91e586bc4528d14b8914ebe868fe292"
+  },
+  {
+    "path": "src/user/windows/objects/named.rs",
+    "bytes": 1187,
+    "sha256": "fa9dcc04f617e1a75ee8be58e5434507bb6916971657e96827d7ff887b6a6b7c"
+  },
+  {
+    "path": "src/user/windows/process/sched/tests/services_tests.rs",
+    "bytes": 48321,
+    "sha256": "67cb0e8742eb30bb789ee8a48824846d7e901c8dd4e3b61f4539f92c7ba40920"
+  },
+  {
+    "path": "src/user/windows/process/sched/tests/services_tests/event_tests.rs",
+    "bytes": 28536,
+    "sha256": "fbf44400479884f09b38a4e59fad75a1392a3fd83cee326234c12e2436b9d2cf"
+  },
+  {
+    "path": "src/user/windows/process/sched/tests/services_tests/mutant_replay_tests.rs",
+    "bytes": 13839,
+    "sha256": "22392641c34df391dfb338d466c500296dedd326e63548439bb4a2e5314388c4"
+  },
+  {
+    "path": "src/user/windows/process/sched/tests/services_tests/mutant_tests.rs",
+    "bytes": 10071,
+    "sha256": "2786c7d50b095e56e03d18cd2c016998a2b8def963a921f8056a59bca885e66e"
+  }
+]

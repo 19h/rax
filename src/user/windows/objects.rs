@@ -18,6 +18,7 @@ use std::time::Instant;
 mod directory;
 mod etw;
 mod lpc;
+mod named;
 pub use lpc::LpcPort;
 mod primary_token;
 mod scheduler;
@@ -272,6 +273,7 @@ struct Entry {
     obj: Object,
     refs: u32,
     name: Option<String>,
+    native_name: Option<super::object_namespace::NativeName>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -338,6 +340,7 @@ impl Objects {
                 obj,
                 refs: 0,
                 name: None,
+                native_name: None,
             },
         );
         self.next = next;

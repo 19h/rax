@@ -1,0 +1,103 @@
+{
+  "utc": "2026-10-18T23:36:43.650072+00:00",
+  "state": "finished",
+  "source-epoch": 4,
+  "host": "macos",
+  "driver-pid": 22966,
+  "child-pid": 63452,
+  "current-step": "all-targets",
+  "steps": [
+    {
+      "name": "full",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 444.64137883299554,
+      "log": "mutant-macos-epoch4-full.log",
+      "sha256": "79e55c0737ea7075a5ead03be1c23cc60a63455b509c47769aa4d97dd3bb7059",
+      "results": [
+        "ok. 7945 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 443.79s"
+      ]
+    },
+    {
+      "name": "capi",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 63.112567707998096,
+      "log": "mutant-macos-epoch4-capi.log",
+      "sha256": "a16da39ed0f6b3c7bf056146fcc46b1b11b2e92d51daae4e483b2293a2898c80",
+      "results": [
+        "ok. 168 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.77s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "integration",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--test",
+        "user_windows",
+        "--test",
+        "user_windows_memory",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 62.34022579199518,
+      "log": "mutant-macos-epoch4-integration.log",
+      "sha256": "05ba4c50b1254e7b949ec64a48f0ddc32f6598b672e6742d709b2927bbb5ad2c",
+      "results": [
+        "ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 58.65s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "exit-code": 0,
+      "seconds": 59.126828833002946,
+      "log": "mutant-macos-epoch4-all-targets.log",
+      "sha256": "c3741acfb5aa7a3fd1b5e78793aac7befeb67935bf3f01ab2c7a80159821a30e",
+      "results": []
+    }
+  ],
+  "last-exit-code": 0,
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T23:37:42.774318+00:00"
+}

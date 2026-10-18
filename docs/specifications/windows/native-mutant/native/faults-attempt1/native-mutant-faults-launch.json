@@ -1,0 +1,9 @@
+{
+  "pid": 8304,
+  "utc": "2026-10-18T12:11:39.380045+00:00",
+  "state": "finished",
+  "scope": "Only process-private unnamed mutants/events and private VirtualAlloc buffers. Query/release memory-fault ordering and handle rights; process handle counts are compared.",
+  "child-pid": 6660,
+  "exit-code": 2,
+  "completed-utc": "2026-10-18T12:11:47.609558+00:00"
+}

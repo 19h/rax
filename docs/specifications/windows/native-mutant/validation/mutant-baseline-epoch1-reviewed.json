@@ -1,0 +1,11 @@
+{
+  "utc": "2026-10-18T19:59:29.299945+00:00",
+  "parent": "390309d0a09f58643c38e7014adea82742bd2c41",
+  "exit-code": 101,
+  "passed": 0,
+  "failed": 7,
+  "ignored": 0,
+  "filtered": 7936,
+  "scope": "All new mutant tests compile on unchanged implementation and fail. Six service tests reach unsupported NtCreateMutant; the shared Win32 test fails to find the absent native API descriptor.",
+  "log-sha256": "32d26aab0a388c58866a74b212858cac362752c17e517503e239abaa0a9f414a"
+}

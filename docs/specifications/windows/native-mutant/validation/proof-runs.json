@@ -1,0 +1,19 @@
+{
+  "utc": "2026-10-18T23:57:24.305665+00:00",
+  "proof-inputs-sha256-before-added-run-reports": "dcd70c610a5dd082a2b0344b2fbd81a484c3adf4a95c394f903ec223785c79cd",
+  "linux": {
+    "exit-code": 0,
+    "log": "mutant-proof-linux.log",
+    "bytes": 377,
+    "sha256": "12c3bdd5ca444680a10a534cecd3932323847ddfb49f3a8292d4edeebc9426df",
+    "platform": "linux/amd64",
+    "checks": [
+      "check-native.py",
+      "check-private-bno.py",
+      "check-validation.py"
+    ],
+    "source-root": "/source"
+  },
+  "windows-record": "mutant-proof-windows-gates.json",
+  "qualification": "The captured immutable ZIP verifies the pre-report proof snapshot; the additional logs and transfer metadata are appended afterward. Compiled source and checker definitions are unchanged."
+}

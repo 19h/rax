@@ -1,0 +1,83 @@
+{
+  "pid": 3632,
+  "state": "finished",
+  "utc": "2026-10-18T23:43:34.081059+00:00",
+  "scope": "Additional diagnostic linked to the validated retained-owner core archive; final core-driver observations remain separate.",
+  "archive": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+    "bytes": 501055912,
+    "sha256": "7939bf0cf6e651fc31ac3aa8a4ab95b00c331f7c26b77df09f7570d2fcc213f7",
+    "members": 20,
+    "structural-member-walk": "pass"
+  },
+  "source-before": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\mutant-owner-observer.rs",
+    "bytes": 4210,
+    "sha256": "adff6a95e16d29c0559585226c67fa5178f01e617404ebb84de583d698ea56df"
+  },
+  "child": 2492,
+  "executable-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\mutant-owner-observer.exe",
+    "bytes": 26785280,
+    "sha256": "92b21a9ace3a2cfe33f168f9ffbc087209872857095525c5a8e4e5c1a4a3340b"
+  },
+  "outcomes": [
+    {
+      "program-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-mutant-epoch4\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "log": "mutant-owner-observer-0.log",
+      "exit-code": 0,
+      "seconds": 42.27062187500087,
+      "program-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-mutant-epoch4\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "log-identity": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\mutant-owner-observer-0.log",
+        "bytes": 643,
+        "sha256": "734b6b24d3a20649ad048aa7f655c6e6c4686bea0c168269190845c8a21ecb43"
+      }
+    },
+    {
+      "program-before": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "log": "mutant-owner-observer-1.log",
+      "exit-code": 0,
+      "seconds": 41.45179229099995,
+      "program-after": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "log-identity": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\mutant-owner-observer-1.log",
+        "bytes": 567,
+        "sha256": "85ff81d08a19dd762a8a2892b47eb7cb5460ecdf003dc933a0b4a6c0b620c061"
+      }
+    }
+  ],
+  "exit_code": 0,
+  "source-after": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\mutant-owner-observer.rs",
+    "bytes": 4210,
+    "sha256": "adff6a95e16d29c0559585226c67fa5178f01e617404ebb84de583d698ea56df"
+  },
+  "executable-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\mutant-owner-observer.exe",
+    "bytes": 26785280,
+    "sha256": "92b21a9ace3a2cfe33f168f9ffbc087209872857095525c5a8e4e5c1a4a3340b"
+  },
+  "archive-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+    "bytes": 501055912,
+    "sha256": "7939bf0cf6e651fc31ac3aa8a4ab95b00c331f7c26b77df09f7570d2fcc213f7"
+  },
+  "completed-utc": "2026-10-18T23:45:06.726276+00:00"
+}

@@ -1,0 +1,13 @@
+Junction created for C:\Windows\Temp\assist-native-rax-20261010\assist\vendor\rax <<===>> C:\Windows\Temp\assist-native-rax-20261010\src-mutant-epoch4
+Retargeted verified task-owned RAX junction
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+Verified 456 owning source identities and 3 helpers
+Verified9 actual frozen Windows C++ sources against compared source snapshot
+assist-native-mutant-final-shipping.log 35E8142BFCB3DF9A4AB729FB631F6BD99709EA3951581185B1557F17D185CF79
+assist-native-mutant-final-cpp.log B0F277678BC54485CF58C6295345A12235DF27C7D420C5085B93AB253E75E214
+validated rlib: C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-owned\debug\deps\librax-934115059aa64c85.rlib
+Verified 456 owning source identities and 3 helpers
+windows [(848342382, 3946, '48f7d49b8dfb52cf85bb952578bc7138ba1657707fe8d5628ca4c93ab08f6a04'), (501055912, 20, '7939bf0cf6e651fc31ac3aa8a4ab95b00c331f7c26b77df09f7570d2fcc213f7')]

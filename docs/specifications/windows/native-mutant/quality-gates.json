@@ -1,0 +1,23 @@
+{
+  "scope": "Bounded mutant group only. The full process-userland objective remains active and incomplete.",
+  "user": {
+    "QG1": "No normative claim required",
+    "QG2": "M1-M7 stress/falsification probes recorded",
+    "QG3": "Owned acceptance criteria mapped to implementation and evidence",
+    "QG4": "Explicit byte/UTF-16/ABI lengths and exact Cartesian dimensions",
+    "QG5": "Unknown full execution and unsupported contexts exposed",
+    "QG6": "Retained primary/native identities and actual artifact selection",
+    "QG7": "High/medium findings recorded without adjacent code edits"
+  },
+  "rax": {
+    "QG1": "pass for the stated bounded group; evidence in check-native.py and check-validation.py",
+    "QG2": "pass for the stated bounded group; evidence in check-native.py and check-validation.py",
+    "QG3": "pass for the stated bounded group; evidence in check-native.py and check-validation.py",
+    "QG4": "pass for the stated bounded group; evidence in check-native.py and check-validation.py",
+    "QG5": "pass for the stated bounded group; evidence in check-native.py and check-validation.py",
+    "QG6": "pass for the stated bounded group; evidence in check-native.py and check-validation.py",
+    "QG7": "pass for the stated bounded group; evidence in check-native.py and check-validation.py",
+    "QG8": "pass for the stated bounded group; evidence in check-native.py and check-validation.py",
+    "QG9": "pass for the stated bounded group; evidence in check-native.py and check-validation.py"
+  }
+}

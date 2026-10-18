@@ -1,0 +1,12 @@
+{
+  "utc": "2026-10-18T19:53:12.362361+00:00",
+  "parent": "390309d0a09f58643c38e7014adea82742bd2c41",
+  "paths": [
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/event_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/mutant_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/mutant_replay_tests.rs",
+    "src/user/windows/dll/threading/tests.rs"
+  ],
+  "scope": "Only new tests, their registration, visibility of existing test helpers, and exact native projections; no implementation changes"
+}

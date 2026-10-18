@@ -1,0 +1,33 @@
+{
+  "pid": 8564,
+  "utc": "2026-10-18T23:18:43.583640+00:00",
+  "state": "failed",
+  "source-epoch": 3,
+  "steps": [
+    {
+      "name": "compiler-environment",
+      "argv": [
+        "powershell.exe",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\mutant-native-compiler-env.ps1"
+      ],
+      "cwd": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-mutant-epoch3",
+      "started-utc": "2026-10-18T23:19:59.457165+00:00",
+      "exit-code": 0,
+      "log": "mutant-native-epoch3-compiler-environment.log",
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9",
+      "bytes": 241,
+      "results": []
+    }
+  ],
+  "free-before-bytes": 11253379072,
+  "prepared-source-inputs": 5758,
+  "child-pid": 7100,
+  "current-step": "compiler-environment",
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-mutant-native-epoch3.py\", line 90, in <module>\n    code, version = run('toolchain', ['cargo.exe', '--version'], R, env)\n                    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-mutant-native-epoch3.py\", line 34, in run\n    process = subprocess.Popen(args, cwd=cwd, env=env, stdout=log, stderr=subprocess.STDOUT)\n  File \"subprocess.py\", line 1038, in __init__\n  File \"subprocess.py\", line 1552, in _execute_child\nFileNotFoundError: [WinError 2] The system cannot find the file specified\n",
+  "completed-utc": "2026-10-18T23:20:01.968003+00:00"
+}

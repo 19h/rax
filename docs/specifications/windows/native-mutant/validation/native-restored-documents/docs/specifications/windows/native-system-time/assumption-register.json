@@ -1,0 +1,39 @@
+[
+  {
+    "id": "T1",
+    "assumption": "NtQuerySystemTime uses the existing real-time clock policy shared with GetSystemTimeAsFileTime.",
+    "basis": [
+      "src/user/windows/dll/sysinfo.rs",
+      "src/user/clock.rs"
+    ],
+    "dependent-result": "Native syscall samples host UTC and writes one FILETIME-format LARGE_INTEGER.",
+    "stress-test": "Compare the output with bracketing host samples on every guest ABI; keep failure output unchanged.",
+    "falsification-probe": "Value falls outside the bracket or uses a different epoch/frequency.",
+    "status": "confirmed in macOS/Linux focused replay; native installed-leaf and full validation pending"
+  },
+  {
+    "id": "T2",
+    "assumption": "The measured pointer and guard rules are shared by the selected native ARM64 and compatibility x64/x86 wrappers.",
+    "basis": [
+      "native/native-system-time-v2-probe-arm64.log",
+      "native/native-system-time-v2-probe-x64.log",
+      "native/native-system-time-v2-probe-x86.log",
+      "native/native-system-time-v2-probe-x86-laa.log"
+    ],
+    "dependent-result": "One shared adapter handles all guest ABIs with ULONG alignment and atomic eight-byte writes.",
+    "stress-test": "205 cases per profile: alignment, crossing pages, protection, guard consumption, invalid upper addresses.",
+    "falsification-probe": "A profile reports different status, partial bytes, or guard lifetime.",
+    "status": "confirmed for 820 calls from four native caller profiles on the captured kernel; guest native validation pending"
+  },
+  {
+    "id": "T3",
+    "assumption": "Clock adjustments need not be monotonic; test bracketing assumes no backward adjustment during one call.",
+    "basis": [
+      "https://learn.microsoft.com/en-us/windows/win32/sysinfo/system-time"
+    ],
+    "dependent-result": "Short validation brackets compare clock origin and scale without promising monotonic behavior.",
+    "stress-test": "Preserve host sample bounds in native records and report inconsistent brackets.",
+    "falsification-probe": "After sample precedes before sample during validation.",
+    "status": "retained as a validation condition"
+  }
+]
