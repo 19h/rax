@@ -254,3 +254,13 @@ load/store sequence and commit CF after the update; locked memory operations
 remain rejected when they cannot be represented atomically. The ABI record
 layouts and scalar SMIR ABI version remain unchanged. See
 `examples/x86_64_smir.c` for a bounded C consumer.
+
+C API 1.6 extends the same pointer-free records with operand kind 4 (XMM0..15)
+and a bounded legacy 128-bit subset: moves, loads/stores, lane insert/extract,
+MOVD/MOVQ, XOR, and temporary broadcast. Alignment checks remain explicit and
+ordered before memory effects. Lane indices and widths are retained. An XMM
+write preserves the backing state above bit 127. VEX/EVEX, MMX and floating-point
+arithmetic remain unsupported; rejection and capacity failure publish no prefix.
+This extension does not rename the existing `rax_smir_lift_x64` entry point or
+change any record layout. Old consumers must continue rejecting unknown operand
+kinds/opcodes/widths rather than treating a complete record as a known operation.
