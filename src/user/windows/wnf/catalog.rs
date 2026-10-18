@@ -41,6 +41,7 @@ pub(crate) struct Catalog {
     primary_token_access: Option<crate::user::windows::security::token::Access>,
     primary_token_session_id: Option<u32>,
     primary_token_scalars: Option<crate::user::windows::security::token::scalars::Scalars>,
+    primary_token_bno: Option<Arc<crate::user::windows::security::token::bno::Isolation>>,
     queries: Option<Arc<super::Queries>>,
 }
 fn invalid(message: &'static str) -> io::Error {
@@ -207,6 +208,7 @@ impl Catalog {
             primary_token_access: None,
             primary_token_session_id: None,
             primary_token_scalars: None,
+            primary_token_bno: None,
             queries: None,
         })
     }
@@ -250,6 +252,20 @@ impl Catalog {
         self.primary_token_scalars
             .as_ref()
             .and_then(|values| values.get(class))
+    }
+
+    pub(crate) fn with_primary_token_bno(
+        mut self,
+        value: crate::user::windows::security::token::bno::Isolation,
+    ) -> Self {
+        self.primary_token_bno = Some(Arc::new(value));
+        self
+    }
+
+    pub(crate) fn primary_token_bno(
+        &self,
+    ) -> Option<Arc<crate::user::windows::security::token::bno::Isolation>> {
+        self.primary_token_bno.clone()
     }
 
     pub(crate) fn primary_token_session_id(&self) -> Option<u32> {

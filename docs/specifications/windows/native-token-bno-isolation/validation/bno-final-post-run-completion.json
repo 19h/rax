@@ -1,0 +1,19 @@
+{
+  "utc": "2026-10-18T12:16:41.161352+00:00",
+  "source-epoch": 5,
+  "namespace-epoch": 2,
+  "checks": [
+    {
+      "script": "run-bno-owner-observer.py",
+      "exit-code": 0
+    },
+    {
+      "script": "verify-bno-final-source.py",
+      "exit-code": 0
+    },
+    {
+      "script": "verify-bno-post-run.py",
+      "exit-code": 0
+    }
+  ]
+}

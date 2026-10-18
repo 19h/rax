@@ -1,0 +1,17 @@
+{
+  "pid": 8768,
+  "utc": "2026-10-18T01:58:32.317855+00:00",
+  "state": "finished",
+  "scope": "private child process BNO isolation controls; no existing process token or Defender settings changed; only child-owned token/event handles and memory",
+  "child-pid": 8068,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-bno-isolation-child.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T02:01:29.407039+00:00"
+}

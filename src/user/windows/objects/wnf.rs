@@ -75,6 +75,15 @@ impl Objects {
             .and_then(|catalog| catalog.primary_token_scalar(class))
     }
 
+    pub(crate) fn primary_token_bno(
+        &self,
+    ) -> Option<std::sync::Arc<crate::user::windows::security::token::bno::Isolation>> {
+        self.wnf_subscriptions
+            .catalog
+            .as_ref()
+            .and_then(Catalog::primary_token_bno)
+    }
+
     pub(crate) fn primary_token_session_id(&self) -> Option<u32> {
         self.wnf_subscriptions
             .catalog

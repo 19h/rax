@@ -1,0 +1,16 @@
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-bno-isolation-20261018/prototype-source)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 35s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/native-bno-isolation-20261018/target-macos-prototype/debug/deps/rax-754f4d2a527a4423)
+
+running 8 tests
+test user::windows::dll::native::token_query::bno_copy::tests::bno_prefix_store_plan_covers_each_byte_without_exceeding_capture ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::bno_isolation::copy_boundaries::native_token_bno_replays_all_measured_copy_boundary_offsets ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::bno_isolation::native_token_bno_complete_prefix_preserves_padding_and_trailing_bytes ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::bno_isolation::native_token_bno_missing_capture_does_not_invent_disabled_isolation ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::bno_isolation::native_token_bno_replays_all_66720_queries_and_isolated_children ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::bno_isolation::native_token_bno_requires_a_primary_subject_and_keeps_impersonation_explicit ... ok
+test user::windows::security::token::bno::tests::bno_model_preserves_disabled_empty_unicode_and_raw_utf16 ... ok
+test user::windows::security::token::bno::tests::bno_native_capture_validates_layout_and_copies_owned_prefix ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 7920 filtered out; finished in 32.39s
+

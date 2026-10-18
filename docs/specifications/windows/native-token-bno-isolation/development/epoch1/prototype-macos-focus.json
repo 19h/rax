@@ -1,0 +1,88 @@
+{
+  "utc": "2026-10-18T02:02:40.405705+00:00",
+  "argv": [
+    "cargo",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "bno_",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "source-epoch": 1,
+  "files": [
+    {
+      "path": "src/user/windows/security/token.rs",
+      "bytes": 2349,
+      "sha256": "bc21ddd9e0254e328c071424ec8f18485beb16117b978f5ab2b8db377ff837f4"
+    },
+    {
+      "path": "src/user/windows/security/token/bno.rs",
+      "bytes": 2313,
+      "sha256": "75c897ed0af6b0781a20a36916606c070c2e8187bcb2adfca188533a35c92ffb"
+    },
+    {
+      "path": "src/user/windows/security/token/bno/tests.rs",
+      "bytes": 3361,
+      "sha256": "437ca7cf057a7c3380248317a114927b6f65935f9fdf8327300a003293ca1159"
+    },
+    {
+      "path": "src/user/windows/wnf/installed.rs",
+      "bytes": 5945,
+      "sha256": "e8a2457980b23c11de5fd0f1c0696e76d2989e31f6f2033ede38493b6ca0c473"
+    },
+    {
+      "path": "src/user/windows/wnf/installed/bno.rs",
+      "bytes": 2114,
+      "sha256": "22c9576fe1f792dd86538e082af4fcf51f93a98b69dbd4c86df3b36968e61ef3"
+    },
+    {
+      "path": "src/user/windows/wnf/catalog.rs",
+      "bytes": 11375,
+      "sha256": "7a6f35b1aadb66e03e2f1fedb3504eb5c384c1c9d64de30eae29479a74d8294c"
+    },
+    {
+      "path": "src/user/windows/wnf.rs",
+      "bytes": 1585,
+      "sha256": "8fe24c4db849394ff56ee1644a604c1770d71bbd8d1b55660bd422daf7e51c5c"
+    },
+    {
+      "path": "src/user/windows/objects/wnf.rs",
+      "bytes": 9518,
+      "sha256": "813c1820a2305e6f5dbee0abab222e8f99daea49e154b576862efc1c6d654c96"
+    },
+    {
+      "path": "src/user/windows/dll/native/token_query.rs",
+      "bytes": 6460,
+      "sha256": "8b11a390ccd1e77ba1bae79ae01a01857c44902f6f0df59eea54981d662dc5f5"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+      "bytes": 13775,
+      "sha256": "8ec819e62fe164ccf31c3a4a277ea6e127b57f477196720bf0deec5cc172c7e7"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_bno_tests.rs",
+      "bytes": 10136,
+      "sha256": "c1d90cca4d1504421ca32b35201a29036e754e7660a0aba2662caec21542b769"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_bno_native_tests.rs",
+      "bytes": 6872,
+      "sha256": "acc5e767aa32397c5ab0d6fa3fe7030b418005573e4bcceba84cc138e4f5773c"
+    },
+    {
+      "path": "docs/specifications/windows/native-token-bno-isolation/cases.json",
+      "bytes": 11441269,
+      "sha256": "5f07b7127db0ed4fbab48ccc9c862f74f91b9823c25a1ee3966ceada4c8c3668"
+    }
+  ],
+  "state": "finished",
+  "target": "/Users/int/Library/Caches/assist-process-emulation/native-bno-isolation-20261018/target-macos-prototype",
+  "scope": "Intermediate isolated prototype focus; namespace final source remains separate.",
+  "exit-code": 101,
+  "seconds": 197.9574911594391
+}

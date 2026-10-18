@@ -1,0 +1,206 @@
+﻿[
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-8.log",
+        "length":  8
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-15.log",
+        "length":  15
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-16.log",
+        "length":  16
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-17.log",
+        "length":  17
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-31.log",
+        "length":  31
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-32.log",
+        "length":  32
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-33.log",
+        "length":  33
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-63.log",
+        "length":  63
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-64.log",
+        "length":  64
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-65.log",
+        "length":  65
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-66.log",
+        "length":  66
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-67.log",
+        "length":  67
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-127.log",
+        "length":  127
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-128.log",
+        "length":  128
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-129.log",
+        "length":  129
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-134.log",
+        "length":  134
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-135.log",
+        "length":  135
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-laa-8.log",
+        "length":  8
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-laa-15.log",
+        "length":  15
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-laa-16.log",
+        "length":  16
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-laa-17.log",
+        "length":  17
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-laa-31.log",
+        "length":  31
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-laa-32.log",
+        "length":  32
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-laa-33.log",
+        "length":  33
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-laa-63.log",
+        "length":  63
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-laa-64.log",
+        "length":  64
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-laa-65.log",
+        "length":  65
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-laa-66.log",
+        "length":  66
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-laa-67.log",
+        "length":  67
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-laa-127.log",
+        "length":  127
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-laa-128.log",
+        "length":  128
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-laa-129.log",
+        "length":  129
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-laa-134.log",
+        "length":  134
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "bno-copy-curve-x86-laa-135.log",
+        "length":  135
+    }
+]

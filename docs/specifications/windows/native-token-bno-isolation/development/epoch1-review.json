@@ -1,0 +1,6 @@
+{
+  "cause": "WoW64 class44 does not share native64 complete-span/alignment probes. It validates token, directly stores mandatory ReturnLength, then copies translated fields. Epoch1 reused the scalar-query probe path.",
+  "evidence": "prototype-macos-focus.log: x86 primary length0xffffffff native success versus emulated STATUS_ACCESS_VIOLATION",
+  "correction": "Select the existing direct-store guard handler only for class44 WoW64; skip its initial caller-buffer probes. Keep every other token selector unchanged.",
+  "test-scope": "All66720 raw query cases remain asserted. Live native64 odd-alignment comparisons are scoped to native64; WoW64 live comparisons use aligned destinations and the separately measured converted header."
+}

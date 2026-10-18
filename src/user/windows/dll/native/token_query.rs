@@ -1,5 +1,7 @@
 //! Captured primary-token properties with measured caller-probe ordering.
-use super::query::{guard_result, probe_write};
+mod bno_copy;
+
+use super::query::{guard_result, probe_write, write_guard_result};
 use crate::user::windows::arch::WinArch;
 use crate::user::windows::hle::{ApiResult, Ctx, Flow};
 use crate::user::windows::memory::Mem;
@@ -8,14 +10,19 @@ use crate::user::windows::objects::Object;
 use crate::user::windows::security::token::scalars::{self, CapturedScalar};
 
 pub(super) fn information(c: &mut Ctx) -> ApiResult {
-    let result = checked(c);
-    guard_result(c, result)
+    let mut direct_copies = false;
+    let result = checked(c, &mut direct_copies);
+    if direct_copies {
+        write_guard_result(c, result)
+    } else {
+        guard_result(c, result)
+    }
 }
 
-fn checked(c: &mut Ctx) -> ApiResult {
+fn checked(c: &mut Ctx, direct_copies: &mut bool) -> ApiResult {
     let (token, class, output, length, returned) =
         (c.ptr(0)?, c.u32(1)?, c.ptr(2)?, c.u32(3)?, c.ptr(4)?);
-    if !matches!(class, 12 | 29) && !scalars::is_class(class) {
+    if !matches!(class, 12 | 29 | 44) && !scalars::is_class(class) {
         return Err(c.unsupported(format!("NtQueryInformationToken class {class}")));
     }
     // These WoW64 wrappers reject the selector without touching either
@@ -23,16 +30,20 @@ fn checked(c: &mut Ctx) -> ApiResult {
     if c.arch() == WinArch::X86 && matches!(class, 40 | 45) {
         return Flow::ret(STATUS_INVALID_INFO_CLASS.into());
     }
-    // Both native64 and WoW64 probe the complete supplied span before token
-    // validation. ReturnLength is mandatory and permits unaligned ULONG stores.
-    // Do not reject a long span before visiting its first guarded page.
-    if length != 0 {
+    // The WoW64 class44 converter validates its private native result first,
+    // then stores ReturnLength and the converted fields directly. It neither
+    // aligns nor probes the caller's entire capacity. Other supported classes
+    // retain their complete-span probe before token validation.
+    *direct_copies = c.arch() == WinArch::X86 && class == 44;
+    if !*direct_copies && length != 0 {
         if output % 4 != 0 {
             return Flow::ret(STATUS_DATATYPE_MISALIGNMENT.into());
         }
         probe_write(c, output, length as usize)?;
     }
-    probe_write(c, returned, 4)?;
+    if !*direct_copies {
+        probe_write(c, returned, 4)?;
+    }
     let property = c.p.objects.primary_token_scalar(class);
     // A captured native invalid-class result follows both probes but precedes
     // handle/type/access checks. It never publishes ReturnLength.
@@ -84,6 +95,9 @@ fn checked(c: &mut Ctx) -> ApiResult {
             Some(_) => return Flow::ret(STATUS_OBJECT_TYPE_MISMATCH.into()),
         }
     }
+    if class == 44 {
+        return bno_information(c, output, length, returned);
+    }
     let primary = match class {
         12 if c.p.objects.primary_token_app_container().is_some() => {
             c.p.objects.primary_token_session_id()
@@ -115,6 +129,46 @@ fn checked(c: &mut Ctx) -> ApiResult {
         c.mem().w8(output, value as u8)?;
     } else {
         c.mem().w32(output, value)?;
+    }
+    Flow::ret(STATUS_SUCCESS.into())
+}
+
+fn bno_information(c: &mut Ctx, output: u64, length: u32, returned: u64) -> ApiResult {
+    if c.p.objects.primary_token_app_container().is_none() {
+        return Err(c.unsupported("primary-token subject is not captured"));
+    }
+    let value =
+        c.p.objects
+            .primary_token_bno()
+            .ok_or_else(|| c.unsupported("primary-token BNO isolation is not captured"))?;
+    let width = c.psize() as usize;
+    let required = value
+        .required_bytes(width)
+        .ok_or_else(|| c.unsupported("TokenBnoIsolation pointer width is unsupported"))?;
+    c.mem().w32(returned, required)?;
+    if length < required {
+        return Flow::ret(STATUS_BUFFER_TOO_SMALL.into());
+    }
+    let header = (2 * width) as u64;
+    // The converter clears the pointer before publishing the enabled flag.
+    // A later flag fault therefore leaves NULL. Once the flag is stored, the
+    // pointer is published before the bounded prefix copy is attempted.
+    c.write_ptr(output, 0)?;
+    c.mem()
+        .w8(output + width as u64, u8::from(value.prefix().is_some()))?;
+    if let Some(prefix) = value.prefix() {
+        c.write_ptr(output, output + header)?;
+        if c.arch() == WinArch::X86 {
+            let bytes: Vec<_> = prefix
+                .iter()
+                .copied()
+                .chain(std::iter::once(0))
+                .flat_map(u16::to_le_bytes)
+                .collect();
+            bno_copy::copy(c, output + header, &bytes)?;
+        } else {
+            c.mem().put_wstr(output + header, prefix)?;
+        }
     }
     Flow::ret(STATUS_SUCCESS.into())
 }

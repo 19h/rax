@@ -1,0 +1,52 @@
+[
+  {
+    "id": "B1",
+    "assumption": "Native class44 writes a pointer-bearing header and an optional contiguous UTF-16 prefix in the caller buffer.",
+    "basis": "Four baseline profiles and twelve private child-process profiles; Microsoft winnt.h declaration.",
+    "dependent-result": "Owned capture decoder and guest-width serialization.",
+    "stress-test": "Disabled, ASCII, Unicode, short and oversized lengths, overlapping ReturnLength and protection faults.",
+    "falsification-probe": "Re-run the raw producer and compare pointer displacement, required length and byte footprints.",
+    "status": "confirmed",
+    "qualification": "On Windows kernel 10.0.29683; header16 for native64 and8 for WoW64."
+  },
+  {
+    "id": "B2",
+    "assumption": "The selected immutable primary-token context may retain BNO metadata without holding a host pointer or handle.",
+    "basis": "Existing coherent native primary-token snapshot and new owned-value decoder.",
+    "dependent-result": "Class44 guest query follows the same identity and access gate as existing token properties.",
+    "stress-test": "Missing subject/capture, invalid or denied handles, explicit impersonation metadata refusal, repeated snapshot acquisition.",
+    "falsification-probe": "Focused/full tests; observe a guest mutation path that changes the retained primary token.",
+    "status": "confirmed",
+    "qualification": "Captured subject/access/missing-metadata and repeated-acquisition tests pass in the final three-host suites. No guest mutation of the captured host token is introduced."
+  },
+  {
+    "id": "B3",
+    "assumption": "The 64KiB capture limit bounds the modeled prefix while preserving native UTF-16 code units.",
+    "basis": "Existing native-token allocation limit; widest header16 plus terminator2 leaves32759 code units.",
+    "dependent-result": "Finite allocation and serialization extent.",
+    "stress-test": "Maximum, one over maximum, embedded NUL, unpaired UTF-16 and invalid native pointer/length.",
+    "falsification-probe": "A supported native token returning a larger valid class44 structure.",
+    "status": "retained",
+    "qualification": "A larger native capture is an explicit error, never truncation."
+  },
+  {
+    "id": "B4",
+    "assumption": "Prototype namespace source matches the intended preceding namespace semantic group.",
+    "basis": "prototype-parent-inputs.json binds copied namespace files over be05c4b4.",
+    "dependent-result": "Eventual port and publication parent.",
+    "stress-test": "Compare all selected source bytes against the real worktree after the namespace group is committed.",
+    "falsification-probe": "Any source hash or baseline path conflict at port.",
+    "status": "confirmed",
+    "qualification": "Final port matches all 5737 tested source/data inputs on the published namespace parent."
+  },
+  {
+    "id": "B5",
+    "assumption": "The observed WoW64 prefix-copy side effects are stable across repeated calls and private children on the captured kernel.",
+    "basis": "95,088 additional calls in 46 native child runs cover every page-boundary offset, four protections and three capacities, including 0xffffffff.",
+    "dependent-result": "Ordered bounded store planner for class44 WoW64.",
+    "stress-test": "ASCII, Unicode and 17 length-boundary controls; partial header/prefix writes and guard consumption; raw/corpus corruption controls.",
+    "falsification-probe": "Any native raw row disagrees with replay, or another supported native kernel exposes a different store order.",
+    "status": "confirmed",
+    "qualification": "All 161808 observations pass the final macOS, Linux and Windows replays. Actual converter callee identity and other physical kernels remain unverified."
+  }
+]

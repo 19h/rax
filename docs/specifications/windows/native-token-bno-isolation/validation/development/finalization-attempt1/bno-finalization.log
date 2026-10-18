@@ -1,0 +1,23 @@
+Collected 102 final BNO validation inputs
+Native BNO proof: 66720 calls, 16 successful runs, 10 post-run identities
+Native BNO copy proof: 95088 calls, 46 child runs, 15 post-run identities
+Verified six native proof newline-preservation samples
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/native-bno-isolation-20261018/finalize-bno-records.py", line 48, in <module>
+    run(D / 'check-validation.py')
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/native-bno-isolation-20261018/finalize-bno-records.py", line 19, in run
+    raise RuntimeError(result.stdout[-3000:] + result.stderr[-3000:])
+RuntimeError: Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/native-bno-isolation-20261018/rax-source/docs/specifications/windows/native-token-bno-isolation/check-validation.py", line 166, in <module>
+    archive = load(V / (host + '-bno-final-owning-archive-identities.json'))
+  File "/Users/int/Library/Caches/assist-process-emulation/native-bno-isolation-20261018/rax-source/docs/specifications/windows/native-token-bno-isolation/check-validation.py", line 21, in load
+    raw = path.read_bytes()
+  File "/opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/lib/python3.15/pathlib/__init__.py", line 976, in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/lib/python3.15/pathlib/__init__.py", line 970, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/int/Library/Caches/assist-process-emulation/native-bno-isolation-20261018/rax-source/docs/specifications/windows/native-token-bno-isolation/validation/macos-bno-final-owning-archive-identities.json'
+

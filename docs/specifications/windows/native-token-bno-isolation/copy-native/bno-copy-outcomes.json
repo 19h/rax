@@ -1,0 +1,74 @@
+﻿[
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "mode":  "ascii",
+        "log":  "bno-copy-arm64-ascii.log"
+    },
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "mode":  "unicode",
+        "log":  "bno-copy-arm64-unicode.log"
+    },
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "mode":  "long",
+        "log":  "bno-copy-arm64-long.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "mode":  "ascii",
+        "log":  "bno-copy-x64-ascii.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "mode":  "unicode",
+        "log":  "bno-copy-x64-unicode.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "mode":  "long",
+        "log":  "bno-copy-x64-long.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "mode":  "ascii",
+        "log":  "bno-copy-x86-ascii.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "mode":  "unicode",
+        "log":  "bno-copy-x86-unicode.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "mode":  "long",
+        "log":  "bno-copy-x86-long.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "mode":  "ascii",
+        "log":  "bno-copy-x86-laa-ascii.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "mode":  "unicode",
+        "log":  "bno-copy-x86-laa-unicode.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "mode":  "long",
+        "log":  "bno-copy-x86-laa-long.log"
+    }
+]

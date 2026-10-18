@@ -1,0 +1,29 @@
+{
+  "plugin-lifecycle": "unaffected: no Assist lifecycle source is changed",
+  "ui-state": "unaffected: no widget or rendering code is changed",
+  "conversation-lane": "unaffected: no transcript or cancellation contract is changed",
+  "agent-backend": "unaffected: no native-provider or ACP code is changed",
+  "prompt-context": "unaffected: no prompt source changes",
+  "tool-schema": "unaffected: existing process tooling and schema remain unchanged",
+  "permission-mutation": "unaffected: no permission policy or host-token mutation is introduced",
+  "main-thread-dispatch": "unaffected: private RAX process code makes no IDA/Qt calls",
+  "mesh-mcp": "unaffected: no transport or discovery changes",
+  "transport-crypto": "unaffected: no protocol or cryptographic code changes",
+  "persistence": "unaffected: no persisted schema or configuration changes",
+  "sdk-abi": "unaffected: private structs only; no public C ABI layout changes",
+  "optional-engines": "affected: RAX Windows native process metadata and private token-query dispatch",
+  "update-release": "unaffected: no updater, package layout, version or release-note changes",
+  "targets-platforms": "affected: shared guest model compiles on Windows/macOS/Linux; only native Windows capture calls NTDLL, behind the existing cfg adapter",
+  "tests-docs": "affected: native producers, metadata/parser/dispatch cases, installed-leaf check and reproducible engineering records",
+  "decoder-isa": "unaffected: no instruction decode or CPU-state representation changes",
+  "direct-interpreter": "unaffected: no instruction execution changes; only existing syscall dispatch results",
+  "memory-mmu": "unaffected: existing native-token probe and guard helpers are reused",
+  "smir-lifting-optimizer": "unaffected: no IR, translation or optimization source changes",
+  "jit-backends": "unaffected: no JIT, KVM/HVF/WHP or backend code changes",
+  "host-oracle": "affected: independent native NtQueryInformationToken probes and byte comparisons",
+  "c-api-carrier": "unaffected public ABI: existing static carrier must be rebuilt and validated for the private implementation",
+  "final-validation": {
+    "status": "affected",
+    "reason": "Portable and native query/copy semantics, full three-host suites, C API and retained consumer evidence are bound in validation/."
+  }
+}

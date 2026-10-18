@@ -1,0 +1,74 @@
+﻿[
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "mode":  "disabled-empty",
+        "log":  "bno-isolation-child-arm64-disabled-empty.log"
+    },
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "mode":  "enabled-ascii",
+        "log":  "bno-isolation-child-arm64-enabled-ascii.log"
+    },
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "mode":  "enabled-unicode",
+        "log":  "bno-isolation-child-arm64-enabled-unicode.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "mode":  "disabled-empty",
+        "log":  "bno-isolation-child-x64-disabled-empty.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "mode":  "enabled-ascii",
+        "log":  "bno-isolation-child-x64-enabled-ascii.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "mode":  "enabled-unicode",
+        "log":  "bno-isolation-child-x64-enabled-unicode.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "mode":  "disabled-empty",
+        "log":  "bno-isolation-child-x86-disabled-empty.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "mode":  "enabled-ascii",
+        "log":  "bno-isolation-child-x86-enabled-ascii.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "mode":  "enabled-unicode",
+        "log":  "bno-isolation-child-x86-enabled-unicode.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "mode":  "disabled-empty",
+        "log":  "bno-isolation-child-x86-laa-disabled-empty.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "mode":  "enabled-ascii",
+        "log":  "bno-isolation-child-x86-laa-enabled-ascii.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "mode":  "enabled-unicode",
+        "log":  "bno-isolation-child-x86-laa-enabled-unicode.log"
+    }
+]

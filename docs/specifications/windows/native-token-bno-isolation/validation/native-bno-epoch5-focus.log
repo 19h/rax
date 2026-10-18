@@ -1,0 +1,35 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src-bno-isolation-prototype)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 9m 10s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-bno-isolation-prototype\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 9 tests
+test user::windows::dll::native::token_query::bno_copy::tests::bno_prefix_store_plan_covers_each_byte_without_exceeding_capture ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::bno_isolation::copy_boundaries::native_token_bno_replays_all_measured_copy_boundary_offsets ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::bno_isolation::native::native_token_bno_installed_leaves_match_independent_bytes_and_alignment ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::bno_isolation::native_token_bno_complete_prefix_preserves_padding_and_trailing_bytes ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::bno_isolation::native_token_bno_missing_capture_does_not_invent_disabled_isolation ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::bno_isolation::native_token_bno_replays_all_66720_queries_and_isolated_children ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::bno_isolation::native_token_bno_requires_a_primary_subject_and_keeps_impersonation_explicit ... ok
+test user::windows::security::token::bno::tests::bno_model_preserves_disabled_empty_unicode_and_raw_utf16 ... ok
+test user::windows::security::token::bno::tests::bno_native_capture_validates_layout_and_copies_owned_prefix ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 7365 filtered out; finished in 53.32s
+

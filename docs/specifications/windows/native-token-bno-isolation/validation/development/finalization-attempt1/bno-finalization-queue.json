@@ -1,0 +1,8 @@
+{
+  "pid": 20370,
+  "utc": "2026-10-18T12:11:23.685173+00:00",
+  "state": "failed",
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-bno-isolation-20261018/queue-bno-final.py\", line 71, in <module>\n    run([sys.executable, '-B', str(B / 'finalize-bno-records.py')], 'bno-finalization.log')\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-bno-isolation-20261018/queue-bno-final.py\", line 27, in run\n    raise RuntimeError('command failed: ' + repr(args) + '; log=' + log)\nRuntimeError: command failed: ['/opt/homebrew/opt/python@3.15/bin/python3.15', '-B', '/Users/int/Library/Caches/assist-process-emulation/native-bno-isolation-20261018/finalize-bno-records.py']; log=bno-finalization.log\n",
+  "completed-utc": "2026-10-18T12:16:51.433847+00:00"
+}

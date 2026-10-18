@@ -1,0 +1,15 @@
+{
+  "utc": "2026-10-18T12:11:14.795140+00:00",
+  "namespace-publication": {
+    "utc": "2026-10-18T12:11:00.995118+00:00",
+    "root": "e7fa3477850fbea5ce3ee819574f0a6946df172e",
+    "rax": "d0a9b63c1109a915d425d385873bfc15776d3fe3",
+    "state": "both clean; both root remotes and RAX origin verified"
+  },
+  "sources": 428,
+  "source-epoch": 5,
+  "windows-validation-CARGO_INCREMENTAL": "0",
+  "unix-link-before": "/Users/int/Library/Caches/assist-process-emulation/native-base-named-objects-20261018/rax-source",
+  "unix-link-after": "/Users/int/Library/Caches/assist-process-emulation/native-bno-isolation-20261018/rax-source",
+  "scope": "Frozen ABI184 carriers; current C++ source equality is checked separately."
+}

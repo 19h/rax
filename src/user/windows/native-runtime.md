@@ -2301,3 +2301,29 @@ compared/current root Rust remain distinct.
 Both ordinary programs open the captured BaseNamedObjects directory successfully and stop at the following unimplemented NtQueryInformationToken class44 call. Neither program reaches a successful guest exit.
 
 [Contract and evidence](../../../docs/specifications/windows/native-base-named-objects/README.md).
+
+
+## Captured TokenBnoIsolation (2026-10-18)
+
+The installed Windows runtime captures the primary token's optional BNO prefix
+into owned UTF-16 storage. Class44 queries return the captured state with a guest
+pointer. Native64 probing and WoW64 ordered direct stores preserve the observed
+fault boundaries, header padding and partial prefix writes. The bounded copy
+planner reproduces the captured 16-byte store order; the actual native callee
+identity and other kernel implementations remain unproven. No host token pointer
+or handle is retained. Public C ABI, dependency pins and defaults are unchanged.
+
+Native proof binds 161,808 observations across four ABI profiles on one ARM64
+Windows kernel. Full suites are macOS7929/0/2, Linux7923/0/2 and Windows7367/5/2;
+the five known Windows lowerer failures and two existing ignores remain explicit.
+Focus8/8/9, C API168, all-target checks and scoped retained Assist consumers pass.
+The exact final port matches 5737 compiled source/data inputs and 428 selected
+owning inputs. Frozen ABI184 carrier results are distinct from current root Rust.
+
+- `terminal turn=2150070 Complete(Internal("native NTDLL service NtCreateMutant (0xba) at 0x7ff82fad1be0 is not implemented"))`
+- `terminal turn=2152419 Complete(Internal("native NTDLL service NtCreateMutant (0xba) at 0x7ff82fad1be0 is not implemented"))`
+
+Both ordinary programs return success from class44 and advance100 observer turns to unsupported NtCreateMutant. Neither reaches a successful guest exit.
+
+Enabled-prefix private-directory routing remains a separate unimplemented part
+of complete process emulation. [Contract and evidence](../../../docs/specifications/windows/native-token-bno-isolation/README.md).

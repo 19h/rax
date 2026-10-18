@@ -1,0 +1,17 @@
+{
+  "pid": 10664,
+  "utc": "2026-10-18T01:56:35.815656+00:00",
+  "state": "finished",
+  "scope": "read-only native class44 pointer-bearing token query; no token or Defender settings changed; only child-owned token/event handles and memory",
+  "child-pid": 6688,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-bno-isolation-survey.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T01:58:20.346805+00:00"
+}

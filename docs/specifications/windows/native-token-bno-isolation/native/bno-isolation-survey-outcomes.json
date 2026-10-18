@@ -1,0 +1,26 @@
+﻿[
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "class":  44,
+        "log":  "bno-isolation-survey-arm64-class44.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "class":  44,
+        "log":  "bno-isolation-survey-x64-class44.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "class":  44,
+        "log":  "bno-isolation-survey-x86-class44.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "class":  44,
+        "log":  "bno-isolation-survey-x86-laa-class44.log"
+    }
+]

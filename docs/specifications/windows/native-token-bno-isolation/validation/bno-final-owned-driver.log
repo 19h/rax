@@ -1,0 +1,13 @@
+Junction created for C:\Windows\Temp\assist-native-rax-20261010\assist\vendor\rax <<===>> C:\Windows\Temp\assist-native-rax-20261010\src-bno-isolation-prototype
+Retargeted verified task-owned RAX junction
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+Verified 428 owning source identities and 3 helpers
+Verified9 actual frozen Windows C++ sources against current root
+assist-native-bno-final-shipping.log 223A698DA68A31B731E5EFC6B04949E979AB2105B54AADFAEBA085184FA8B290
+assist-native-bno-final-cpp.log B0F277678BC54485CF58C6295345A12235DF27C7D420C5085B93AB253E75E214
+validated rlib: C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-owned\debug\deps\librax-934115059aa64c85.rlib
+Verified 428 owning source identities and 3 helpers
+windows [(847867380, 3946, '17e4e288fbc417ea24d35fb2d385b99fb15803bea57be5d12e14c592064f9b46'), (500513736, 20, '81f4dc47507e884420cea68386522b4494a90802d235bf83dcf5de487b459d35')]

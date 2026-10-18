@@ -1,0 +1,57 @@
+{
+  "utc": "2026-10-18T02:00:36.903072+00:00",
+  "status-before": "## HEAD (no branch)\n M src/user/windows/native.rs\n M src/user/windows/object_namespace.rs\n M src/user/windows/object_namespace/installed.rs\n M src/user/windows/process/sched/tests/services_tests/directory_open_leaf_tests.rs\n M src/user/windows/process/sched/tests/services_tests/directory_open_tests.rs\n?? docs/specifications/windows/native-base-named-objects/\n?? src/user/windows/object_namespace/base_named_object_tests.rs\n?? src/user/windows/process/sched/tests/services_tests/directory_session_tests.rs\n",
+  "paths": [
+    "src/user/windows/security/token.rs",
+    "src/user/windows/security/token/bno.rs",
+    "src/user/windows/security/token/bno/tests.rs",
+    "src/user/windows/wnf/installed.rs",
+    "src/user/windows/wnf/installed/bno.rs",
+    "src/user/windows/wnf/catalog.rs",
+    "src/user/windows/wnf.rs",
+    "src/user/windows/objects/wnf.rs",
+    "src/user/windows/dll/native/token_query.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_bno_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_bno_native_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_bno_copy_tests.rs",
+    "src/user/windows/dll/native/token_query/bno_copy.rs"
+  ],
+  "baseline-owned-files": [
+    {
+      "path": "src/user/windows/security/token.rs",
+      "bytes": 2329,
+      "sha256": "98a392b5fa7e3aa49fe1b0e0accd51188a6ee9d164b13f6882dab5267e88a8be"
+    },
+    {
+      "path": "src/user/windows/wnf/installed.rs",
+      "bytes": 5778,
+      "sha256": "dce36f9233a8a22d9f1fc505ddb0c005c9107eeabb96a4e09260e18c7b20f016"
+    },
+    {
+      "path": "src/user/windows/wnf/catalog.rs",
+      "bytes": 10849,
+      "sha256": "22e36ba4f5c887caf0869dd073b7d5690812f1e7a98dde523a8202f39683f60d"
+    },
+    {
+      "path": "src/user/windows/wnf.rs",
+      "bytes": 1543,
+      "sha256": "b4f58c4b0a683792e79e213949e2d10a47fdbea3013ef82e82505547cca5df4a"
+    },
+    {
+      "path": "src/user/windows/objects/wnf.rs",
+      "bytes": 9246,
+      "sha256": "90786b543f6d624f1ebf15809079d9a0294286163f7af33c36c40d39cbc3b251"
+    },
+    {
+      "path": "src/user/windows/dll/native/token_query.rs",
+      "bytes": 5155,
+      "sha256": "fc31c8b58e0d959de57c39de6acf6e4ff91d9f5e93e4e1be3a792b7206975d75"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+      "bytes": 13724,
+      "sha256": "2754e124e6d60737c9bb6247686a972ffdb82aba731534b23db8e41ea881482f"
+    }
+  ]
+}

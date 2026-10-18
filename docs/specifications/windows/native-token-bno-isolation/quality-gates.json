@@ -1,0 +1,55 @@
+{
+  "scope": "TokenBnoIsolation capture/query/copy group; broader process execution remains incomplete.",
+  "rax": {
+    "QG1": {
+      "status": "pass for bounded group"
+    },
+    "QG2": {
+      "status": "pass for bounded group"
+    },
+    "QG3": {
+      "status": "pass for bounded group"
+    },
+    "QG4": {
+      "status": "pass for bounded group"
+    },
+    "QG5": {
+      "status": "pass for bounded group"
+    },
+    "QG6": {
+      "status": "pass for bounded group"
+    },
+    "QG7": {
+      "status": "pass for bounded group"
+    },
+    "QG8": {
+      "status": "pass for bounded group"
+    },
+    "QG9": {
+      "status": "pass for bounded group"
+    }
+  },
+  "assist": {
+    "QG1": {
+      "status": "pass for bounded group"
+    },
+    "QG2": {
+      "status": "pass for bounded group"
+    },
+    "QG3": {
+      "status": "pass for bounded group"
+    },
+    "QG4": {
+      "status": "pass for bounded group"
+    },
+    "QG5": {
+      "status": "pass for bounded group"
+    },
+    "QG6": {
+      "status": "pass for bounded group"
+    },
+    "QG7": {
+      "status": "pass for bounded group"
+    }
+  }
+}

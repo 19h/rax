@@ -1,0 +1,65 @@
+{
+  "utc": "2026-10-18T02:02:16.986291+00:00",
+  "files": [
+    {
+      "profile": "arm64",
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-isolation-survey-arm64\\native-bno-isolation-survey.cpp",
+      "bytes": 11267,
+      "sha256": "7e5c5a7a8b05128140c0c4c61a0398767407157a7459993ff6d8a8f09ce27565"
+    },
+    {
+      "profile": "arm64",
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-isolation-survey-arm64\\probe.exe",
+      "bytes": 153088,
+      "sha256": "551f96ca973fb63e334330a6f02523fa9a4b9162cb477dfce27486c8d0474d71"
+    },
+    {
+      "profile": "x64",
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-isolation-survey-x64\\native-bno-isolation-survey.cpp",
+      "bytes": 11267,
+      "sha256": "7e5c5a7a8b05128140c0c4c61a0398767407157a7459993ff6d8a8f09ce27565"
+    },
+    {
+      "profile": "x64",
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-isolation-survey-x64\\probe.exe",
+      "bytes": 152064,
+      "sha256": "bd848587846f3784be28c3e5608ef511e6af961761a344913d1b696a6bee1919"
+    },
+    {
+      "profile": "x86",
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-isolation-survey-x86\\native-bno-isolation-survey.cpp",
+      "bytes": 11267,
+      "sha256": "7e5c5a7a8b05128140c0c4c61a0398767407157a7459993ff6d8a8f09ce27565"
+    },
+    {
+      "profile": "x86",
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-isolation-survey-x86\\probe.exe",
+      "bytes": 125440,
+      "sha256": "59014d75a08080136fc3e78e9020e69e628759fa45ac91f11fa3aa89d2de1f5f"
+    },
+    {
+      "profile": "x86-laa",
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-isolation-survey-x86-laa\\native-bno-isolation-survey.cpp",
+      "bytes": 11267,
+      "sha256": "7e5c5a7a8b05128140c0c4c61a0398767407157a7459993ff6d8a8f09ce27565"
+    },
+    {
+      "profile": "x86-laa",
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-isolation-survey-x86-laa\\probe.exe",
+      "bytes": 125440,
+      "sha256": "31bac8415ebf4af31fdb25fcad70291e7a51aa628063e4d8ebba4bbc4e815cbf"
+    },
+    {
+      "profile": "child-controller",
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-isolation-child\\native-bno-isolation-child.cpp",
+      "bytes": 3558,
+      "sha256": "f6b8a02161abdc141cf3c1b8cc09dd9cf1f6824fe5e4ad14b9a69dfa0c4abb9a"
+    },
+    {
+      "profile": "child-controller",
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-isolation-child\\child-control.exe",
+      "bytes": 158720,
+      "sha256": "4d2197c5b680de69d14feb17c048e937c20324a315c2a22b60a3de60ac9a0aa1"
+    }
+  ]
+}

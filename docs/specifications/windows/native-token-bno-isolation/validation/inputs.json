@@ -1,0 +1,559 @@
+{
+  "files": [
+    {
+      "path": "validation/assist-native-bno-final-cpp.log",
+      "bytes": 2946,
+      "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+    },
+    {
+      "path": "validation/assist-native-bno-final-shipping.log",
+      "bytes": 1821,
+      "sha256": "223a698da68a31b731e5efc6b04949e979ab2105b54aadfaeba085184fa8b290"
+    },
+    {
+      "path": "validation/base-final-main-state.json",
+      "bytes": 223,
+      "sha256": "00eb7d7d334cf10d1745251aad39fb9ec4ec424bbe785454af2f2c9b01a829eb"
+    },
+    {
+      "path": "validation/bno-epoch5-prepared.json",
+      "bytes": 1274,
+      "sha256": "8af235703e804c870a2f6bce65b213635b57fb240def6a1a760b422b9d5616ae"
+    },
+    {
+      "path": "validation/bno-epoch5-source.json",
+      "bytes": 1096506,
+      "sha256": "ac6ffba5dfb7e1eed451f3f816b1e11c4c9f0bd3f9f4fbefb3246e47bd7d6716"
+    },
+    {
+      "path": "validation/bno-final-owned-driver.log",
+      "bytes": 1130,
+      "sha256": "4f9e1f09dd9046474e5273b1046832e7dd4c8852d8bd9a0e3aad5a131778e153"
+    },
+    {
+      "path": "validation/bno-final-owned-launch.json",
+      "bytes": 421,
+      "sha256": "7a279be874721291cd1e80b7fc1cc21bd578201c9ebee0ea183169550b35f730"
+    },
+    {
+      "path": "validation/bno-final-post-run-completion.json",
+      "bytes": 365,
+      "sha256": "fb496182710db06ff0fea4a0e2775a0a088c11efb09cd93f32fbf63bdf86d5a6"
+    },
+    {
+      "path": "validation/bno-native-epoch5-driver.log",
+      "bytes": 561,
+      "sha256": "5884252c3ec363ca68efc85a18e51a9d2e80f7c1460dbef8599a7c05709bba38"
+    },
+    {
+      "path": "validation/bno-native-epoch5-launch.json",
+      "bytes": 266,
+      "sha256": "d3464811b780e6d1927709132032a4aa433b393bcc66186b896fa6cbe8f1ad51"
+    },
+    {
+      "path": "validation/bno-native-epoch5-prepare.log",
+      "bytes": 54,
+      "sha256": "0e17b374c3f2fae0b72d9fc392aa7531e2326979b36e0f3978ddac3bde71b7c2"
+    },
+    {
+      "path": "validation/bno-ordinary-reviewed.json",
+      "bytes": 1268,
+      "sha256": "e47db6b76f8cadcdd2d862a9da544c93135a73ded7786c818f2c69642c35a184"
+    },
+    {
+      "path": "validation/bno-owner-observer-0.log",
+      "bytes": 472,
+      "sha256": "ce1c1d48a784654a35bf9a2eb7c4be09c31a1b79bf94247fe13d3348b7547be4"
+    },
+    {
+      "path": "validation/bno-owner-observer-1.log",
+      "bytes": 384,
+      "sha256": "7ab893a0de6546a7a7e4514539c683b819bce51333eb6ad8593be272d0635b8e"
+    },
+    {
+      "path": "validation/bno-owner-observer-build.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9"
+    },
+    {
+      "path": "validation/bno-owner-observer-launch.json",
+      "bytes": 3627,
+      "sha256": "31ac2325a3fe2691f3b85dfc5a054263e480a2b3e0fd9019a80767ae0919e063"
+    },
+    {
+      "path": "validation/bno-owner-observer-transport.log",
+      "bytes": 3123,
+      "sha256": "de5e5439f5cbb794f3a7721785771e5c0cba2e5a8f7bc211e2c131dc543fe466"
+    },
+    {
+      "path": "validation/bno-owning-prepared.json",
+      "bytes": 722,
+      "sha256": "4418e10a6486a0cdcb390d65fe9dda38c3ec441ba9fa96a3b2c8042285a9ca57"
+    },
+    {
+      "path": "validation/bno-owning-source-hashes.json",
+      "bytes": 84531,
+      "sha256": "45e1f89b8b9d676c549eb2054cdbdd99fc4969373df6f8b26cea2423cf6d0a78"
+    },
+    {
+      "path": "validation/current-cpp-consumers-bno-root.json",
+      "bytes": 1959,
+      "sha256": "6874f40f59afb8825d2e596514caeccc68ff4623097ddebf8aeeb1701744057f"
+    },
+    {
+      "path": "validation/development/finalization-attempt1/bno-finalization-queue.json",
+      "bytes": 952,
+      "sha256": "30fdf3d25bce043efd540a95e3c243d3e79c70e942fadf7feee1c6f9d218bd7c"
+    },
+    {
+      "path": "validation/development/finalization-attempt1/bno-finalization.log",
+      "bytes": 2024,
+      "sha256": "529829fe9f004b9a544864465b305449e0cd97a51c158bbd642539f1af02701c"
+    },
+    {
+      "path": "validation/development/finalization-attempt1/check-bno-validation.py",
+      "bytes": 14031,
+      "sha256": "ec19836a8257a4662f7ba4bb3e6e55a5d649e075eb3bbd3ca4d3d2b0d248f511"
+    },
+    {
+      "path": "validation/development/finalization-attempt1/collect-bno-final.py",
+      "bytes": 3782,
+      "sha256": "48179edc8b876902cd12b049be48c63f561fadcb5a51dde407a03ac9cb16bcd8"
+    },
+    {
+      "path": "validation/drivers/bno-native-epoch5-focus.ps1",
+      "bytes": 3464,
+      "sha256": "52aefc5ad841e05ebc91f8d78b455cbab48f95e8d2be2d5371b92e3b4cf0bca8"
+    },
+    {
+      "path": "validation/drivers/collect-bno-archives.py",
+      "bytes": 3347,
+      "sha256": "9047996745dd5187a947078e51f74cf1f6905662e70da1025f416c45a8f057f5"
+    },
+    {
+      "path": "validation/drivers/collect-bno-final.py",
+      "bytes": 3804,
+      "sha256": "bc6fcc1894dedde1873819d97cec1a1d6ff90336b8ee0caa2bdcb195c3a9cde6"
+    },
+    {
+      "path": "validation/drivers/finish-bno-final.py",
+      "bytes": 1374,
+      "sha256": "df9b593015dbfae9ebecc7fe056088844edca7bf0fdf575d8fdb9c9d69b68e4c"
+    },
+    {
+      "path": "validation/drivers/linux-bno-owning-commands.json",
+      "bytes": 5317,
+      "sha256": "b53f335795fba8820aed2fedc88c4f6987f59dd28ba26fe766f0448f492bc77a"
+    },
+    {
+      "path": "validation/drivers/macos-bno-owning-commands.json",
+      "bytes": 4879,
+      "sha256": "450e8ded152c07c4d11139166ae0722e36f08b7e99708290bc48a4ca2b3fc663"
+    },
+    {
+      "path": "validation/drivers/owning-linux-cpp-build.py",
+      "bytes": 1522,
+      "sha256": "a0d9f75e831bd3585d3e009b94e8e3f2744b137e646c157c70a7ad7950373b56"
+    },
+    {
+      "path": "validation/drivers/port-bno-final.py",
+      "bytes": 2986,
+      "sha256": "5e45dfacaff91b558f443f5629fb672dfda65905b6dc66ccdb768e42cb4a5108"
+    },
+    {
+      "path": "validation/drivers/prepare-bno-final-tools.py",
+      "bytes": 9195,
+      "sha256": "2a47bc7a7cdc30475ccaeeec57aad011376ccb1953eb35191d701ff66c37065c"
+    },
+    {
+      "path": "validation/drivers/prepare-bno-native-epoch5.py",
+      "bytes": 2187,
+      "sha256": "5953d9dedce02943b2ccb2f4c3ad7f23e964972899cc322b923274f671c24617"
+    },
+    {
+      "path": "validation/drivers/prepare-bno-owning.py",
+      "bytes": 5197,
+      "sha256": "e8073a7600802a15356b991b4d4a1806dbb481aa5e30e8bad1322277e802de96"
+    },
+    {
+      "path": "validation/drivers/run-bno-epoch5-observations.py",
+      "bytes": 1636,
+      "sha256": "42bce3aebb8501df533208c9a517fe739bb2fe47e404f257e9ba53873bb9f075"
+    },
+    {
+      "path": "validation/drivers/run-bno-native-epoch5.py",
+      "bytes": 2169,
+      "sha256": "0b924ae9783283823bb148d1e74b17afa17a45021a5f4e0bf95049db1504127b"
+    },
+    {
+      "path": "validation/drivers/run-bno-owning-gates.py",
+      "bytes": 748,
+      "sha256": "a7577c536520cf780c5fbbb92b1f749c61100254cfcc10e65a84fbe34598ffe2"
+    },
+    {
+      "path": "validation/drivers/run-bno-unix-epoch5.py",
+      "bytes": 2926,
+      "sha256": "1fb17019a9dcc3c67ad56513327fce4cc4fd7d5eeb886901284dd05e3074e99d"
+    },
+    {
+      "path": "validation/drivers/verify-bno-final-source.py",
+      "bytes": 528,
+      "sha256": "1b29d3c3787cc3c3f139f8d25df5715ff944bc971946ec76b030faa3af7d224d"
+    },
+    {
+      "path": "validation/drivers/verify-bno-post-run.py",
+      "bytes": 753,
+      "sha256": "7c71986762b38e62e58970ae6477d42c57dbfad9242b7a7e5b0565a0e5448440"
+    },
+    {
+      "path": "validation/final-port.json",
+      "bytes": 1073,
+      "sha256": "e6910844b85cf8c03a685a9a05bd1c65ac88a3faab02c1cea259e2cb5c676f25"
+    },
+    {
+      "path": "validation/linux-bno-epoch5-all-targets.log",
+      "bytes": 1976,
+      "sha256": "8637c084654c78e3cdcb2e7c8ec0f67ffa4a3587b4a34d9db3da72adecdfada4"
+    },
+    {
+      "path": "validation/linux-bno-epoch5-capi.log",
+      "bytes": 12905,
+      "sha256": "16a5841e5d07f115fd7d1a43573cef0a55740e7220ab6ce41f56208f2f3b37d4"
+    },
+    {
+      "path": "validation/linux-bno-epoch5-full.log",
+      "bytes": 824820,
+      "sha256": "9edbedbc9616676a962e2c88cbbd7ceed0871d124ee09dc5ad870313e31e2c64"
+    },
+    {
+      "path": "validation/linux-bno-epoch5-gates.json",
+      "bytes": 4746,
+      "sha256": "bd95769b87e8a9d81da68311a356408b9cd9acfd0b17ed571b9caf1714242579"
+    },
+    {
+      "path": "validation/linux-bno-epoch5-integration.log",
+      "bytes": 35853,
+      "sha256": "a7fa08ae51e02f1b882fff6a49b2d47ed210787bdf851e0389e5de5a6ab76fc8"
+    },
+    {
+      "path": "validation/linux-bno-final-owning-archive-identities.json",
+      "bytes": 85753,
+      "sha256": "c11426002758f1da92433f81aa07a57adb4c77bc318cc39683269f7c82d9a7ac"
+    },
+    {
+      "path": "validation/linux-bno-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "0cd7bf62d0e492afb8b300894d241b162407331a7282f74db7b8a9cb1514700f"
+    },
+    {
+      "path": "validation/linux-bno-owning-artifacts.log",
+      "bytes": 159806,
+      "sha256": "1721e0a3c4a16c3764568440ae914b55e4e38ab86b4ff0e2cb4cf67a78a2ff13"
+    },
+    {
+      "path": "validation/linux-bno-owning-commands.json",
+      "bytes": 5317,
+      "sha256": "b53f335795fba8820aed2fedc88c4f6987f59dd28ba26fe766f0448f492bc77a"
+    },
+    {
+      "path": "validation/linux-bno-owning-cpp.log",
+      "bytes": 1623,
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+    },
+    {
+      "path": "validation/linux-bno-owning-gates.json",
+      "bytes": 6046,
+      "sha256": "c4f633178dee01aca8a346426cc059a0af43ff7b200738402b634c3832339747"
+    },
+    {
+      "path": "validation/linux-bno-owning-shipping.log",
+      "bytes": 415,
+      "sha256": "b7c5cac9f7278989338edb668bdedb6188f7a9214b18f99962c2791344bce2c0"
+    },
+    {
+      "path": "validation/macos-bno-epoch5-all-targets.log",
+      "bytes": 2254,
+      "sha256": "bd568c0246a186cc2d4220c5245243b718147ba407328cf9ea54c71427495857"
+    },
+    {
+      "path": "validation/macos-bno-epoch5-capi.log",
+      "bytes": 13147,
+      "sha256": "0c0df54366b579730af80046a4e3698c6ac3e30a4a8926539830a968a2e4b655"
+    },
+    {
+      "path": "validation/macos-bno-epoch5-full.log",
+      "bytes": 824833,
+      "sha256": "109d0ca34f6b0334437871a00b68ef5e05d9e7dc60e876311d742da093313e7f"
+    },
+    {
+      "path": "validation/macos-bno-epoch5-gates.json",
+      "bytes": 1841,
+      "sha256": "6b22d754cf114e591fa3de01a62983bde008ece5dd4f3e37f6bd49acd3e474e7"
+    },
+    {
+      "path": "validation/macos-bno-epoch5-integration.log",
+      "bytes": 36128,
+      "sha256": "17320ba3593978ffcd990615ef3f0c5be258498d76ceaf93c43ab09a8bca2845"
+    },
+    {
+      "path": "validation/macos-bno-final-owning-archive-identities.json",
+      "bytes": 87141,
+      "sha256": "c01a2e96822071a86c1f22f9b7480e5970ec1f74d7c1398b789e2bcd6d09f2a8"
+    },
+    {
+      "path": "validation/macos-bno-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "a55e2a5042e423fc09a3d9aea79010ad963cc1623a0d843bc353b97f0cb0db25"
+    },
+    {
+      "path": "validation/macos-bno-owning-artifacts.log",
+      "bytes": 131080,
+      "sha256": "c824767bac1d6dec95314e159900191a5f47a4d875dffaa2a8294670eb318447"
+    },
+    {
+      "path": "validation/macos-bno-owning-build.log",
+      "bytes": 32919,
+      "sha256": "f8ac0505cf77bd610d28b04e82169fd9b359d593d1a3c04ad6bc60d87028c049"
+    },
+    {
+      "path": "validation/macos-bno-owning-commands.json",
+      "bytes": 4879,
+      "sha256": "450e8ded152c07c4d11139166ae0722e36f08b7e99708290bc48a4ca2b3fc663"
+    },
+    {
+      "path": "validation/macos-bno-owning-ctest.log",
+      "bytes": 1273,
+      "sha256": "33cf786bc8f2e4aafb957c38c30b7cb89e0017b74f6e710d2533be53f7764409"
+    },
+    {
+      "path": "validation/macos-bno-owning-gates.json",
+      "bytes": 6176,
+      "sha256": "5c16a483cc8d39b7e9ee1c8e9e87087585ff70b05269d2e9e1e8ff570235bcd5"
+    },
+    {
+      "path": "validation/macos-bno-owning-prime-artifacts.log",
+      "bytes": 131845,
+      "sha256": "d56d8a1dbd363dc530ba0f1e73f0202fab7fe21be2d65d57ffa80303ff9c902d"
+    },
+    {
+      "path": "validation/macos-bno-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/macos-bno-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/native-bno-epoch5-all-targets.log",
+      "bytes": 3122,
+      "sha256": "823a3975a80681e7e7c8dd9b1e38213bbb9465a1475f67a59a1ca936ee15d555"
+    },
+    {
+      "path": "validation/native-bno-epoch5-archive-after.json",
+      "bytes": 257,
+      "sha256": "3b378eb15da17404da40879f70f852e14db8a9d5de41bae438ad603ab72c3adf"
+    },
+    {
+      "path": "validation/native-bno-epoch5-archive-before.json",
+      "bytes": 257,
+      "sha256": "3b378eb15da17404da40879f70f852e14db8a9d5de41bae438ad603ab72c3adf"
+    },
+    {
+      "path": "validation/native-bno-epoch5-build-user-artifacts.jsonl",
+      "bytes": 91703,
+      "sha256": "1a4afd20cdd4fc4deec5a8f20ba70bedf63476624eac48475927c20263df61ad"
+    },
+    {
+      "path": "validation/native-bno-epoch5-build-user.log",
+      "bytes": 170,
+      "sha256": "6ddd2358d5d22bc596394234051f999d84f0671b92699f1919c19b32bc6dda98"
+    },
+    {
+      "path": "validation/native-bno-epoch5-capi.log",
+      "bytes": 13792,
+      "sha256": "cd49c99ad1679e45a443399068b2760a862b829ab87913b8b667d1bbe2fc462a"
+    },
+    {
+      "path": "validation/native-bno-epoch5-focus.log",
+      "bytes": 2675,
+      "sha256": "dc98ab452348c0bb28f6caf0f9306533f7fa59ac23ca8e82397dd74b4c7c0f0a"
+    },
+    {
+      "path": "validation/native-bno-epoch5-full.log",
+      "bytes": 786942,
+      "sha256": "f17ca2b42d8e42162c329c29254b2b62bfb30679481ea4d83290f0c59548d863"
+    },
+    {
+      "path": "validation/native-bno-epoch5-gates.json",
+      "bytes": 1224,
+      "sha256": "ea1d0a5d7165d46836b45063e20c174226a892d1dd879faacf03ca96cfef7561"
+    },
+    {
+      "path": "validation/native-bno-epoch5-integration.log",
+      "bytes": 1898,
+      "sha256": "faa408f48097887ed4c3fa422ec3ce869af83d9e2686760e322ff170955feb3c"
+    },
+    {
+      "path": "validation/native-bno-epoch5-observer-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "validation/native-bno-epoch5-ordinary-0.log",
+      "bytes": 62807,
+      "sha256": "32ee2ccf73e7e317e7c40a184d540b2ceb2a5b40f9acbb14036b605230c94dc6"
+    },
+    {
+      "path": "validation/native-bno-epoch5-ordinary-2.log",
+      "bytes": 65526,
+      "sha256": "044ebd1dc0ad829d385127adffa3e26e3aab9a14af6dcbf41d664265a8af0f2d"
+    },
+    {
+      "path": "validation/native-bno-epoch5-ordinary-outcomes.json",
+      "bytes": 1630,
+      "sha256": "f69662e83e3a33fcb6f0e34a7d03b7486238add8f7d6fddd19c73d3737a044a6"
+    },
+    {
+      "path": "validation/native-bno-final-after-artifacts.jsonl",
+      "bytes": 130191,
+      "sha256": "3b69a1eda3f6bc0648cca7d4d45d078680b66d4f0b5ca2fbd9060e9eb843f204"
+    },
+    {
+      "path": "validation/native-bno-final-current-cpp-verification.json",
+      "bytes": 1935,
+      "sha256": "0b06e0f24b91fa3f2ac85c2426130e086bc9fa17367b36af4dfc5e1105f2295f"
+    },
+    {
+      "path": "validation/native-bno-final-owning-archive-hashes.json",
+      "bytes": 88673,
+      "sha256": "c79cc12c9dd5f1e12cfe6e0b8e4099168d0885086ea1291df1c6c10b02298a94"
+    },
+    {
+      "path": "validation/native-bno-final-owning-archive-identities.json",
+      "bytes": 88671,
+      "sha256": "9822ba057327770328d222121f940266151abf24da4b3583b4605435d7aeb70e"
+    },
+    {
+      "path": "validation/native-bno-final-owning-source-verification.json",
+      "bytes": 108,
+      "sha256": "1b3d43c3e140dc593555f3099ab392732a2e838b52a25c7edc178bae08b91951"
+    },
+    {
+      "path": "validation/native-bno-final-post-run-identities.json",
+      "bytes": 1454,
+      "sha256": "051f425fce6bd5e706efc337d560dfc6daa6c3061cea907092185de5a6500989"
+    },
+    {
+      "path": "validation/native-bno-final-post-run-verifier.log",
+      "bytes": 1290,
+      "sha256": "f9e89273dbaf6d2ce3f76b7362017b67cd39d1a2e593a5bfa67ce03df4840507"
+    },
+    {
+      "path": "validation/native-bno-final-source-post-run.log",
+      "bytes": 47,
+      "sha256": "111898447a14c2a82a156f8cc8442c242c59734e50263d61dfa456c511bbe31d"
+    },
+    {
+      "path": "validation/native-bno-owning-junction.json",
+      "bytes": 269,
+      "sha256": "a12cbf09a351c85beb568c5377e0e692e4f6212cbc065297d99ec5c2eafea7eb"
+    },
+    {
+      "path": "validation/native-bno-owning-source-identities.json",
+      "bytes": 86554,
+      "sha256": "09e1910e1744f0295812834300cf5ea912d8999efbd7d61c50fc2659e1059d0c"
+    },
+    {
+      "path": "validation/ordinary-analysis.json",
+      "bytes": 1603,
+      "sha256": "a1200e694aa9426cb8795a02237e02f3ab0abcaa55b14ad2be2aea848f11bd90"
+    },
+    {
+      "path": "validation/owned-source-plan.json",
+      "bytes": 2619,
+      "sha256": "31e68abceb4c0c2cdb645f69f9aeb61ccda03ba45dda21d95a87be0ef31edeaa"
+    },
+    {
+      "path": "validation/owner-diagnostic/bno-owner-observer-build.ps1",
+      "bytes": 1018,
+      "sha256": "a12d391d94e8f67652583312eaaf92f2445763f7a9e23b8e38fe72b9f300ea67"
+    },
+    {
+      "path": "validation/owner-diagnostic/bno-owner-observer.rs",
+      "bytes": 2994,
+      "sha256": "1a5d047c324cdcc365d697273bacca64536d0c4366ee58dc0e66764119efa907"
+    },
+    {
+      "path": "validation/owner-diagnostic/run-bno-owner-observer.py",
+      "bytes": 3362,
+      "sha256": "945523cc4491413dce57c7c2dfc2bf40ba1564853b27e3a76842150a6b0ff999"
+    },
+    {
+      "path": "validation/prototype-linux-focus-epoch5.json",
+      "bytes": 1137,
+      "sha256": "ecf698004bec9faaa0720b99a88a570b3032546713b44469db0bc6ca4ba9984d"
+    },
+    {
+      "path": "validation/prototype-linux-focus-epoch5.log",
+      "bytes": 3945,
+      "sha256": "c0608ea5eaf02a93ebaa74ab588d8000dd3bdb45ad113114af7c18778935e642"
+    },
+    {
+      "path": "validation/prototype-macos-focus-epoch5.json",
+      "bytes": 459,
+      "sha256": "03d9c8701496d522fb09634f9b94edad12adfcd8b49ca05c52d9ae7c1261150f"
+    },
+    {
+      "path": "validation/prototype-macos-focus-epoch5.log",
+      "bytes": 1708,
+      "sha256": "5d9d6be6262e8e69891f2a8b7ce48784867a606b64e3ea937735ba15461c3212"
+    },
+    {
+      "path": "validation/upstream-cpp-consumer-compatibility.json",
+      "bytes": 6838,
+      "sha256": "03d2dd01a324854e72a04afcfb89a6969bd76c68c5c334e1b6bde7d84bb6f019"
+    },
+    {
+      "path": "validation/upstream-source-drift-review.json",
+      "bytes": 4512,
+      "sha256": "443ffe17fae3330cf2bdbeae5b4bfbab89137956750dc351d823c1b279670b72"
+    },
+    {
+      "path": "validation/validation-stress.json",
+      "bytes": 1428,
+      "sha256": "2c168ef84ba8b984b62d433b951afdd29935a598774cd2ad644b0439ca05b902"
+    },
+    {
+      "path": "validation/windows/assist-native-bno-final-owned.ps1",
+      "bytes": 4753,
+      "sha256": "36455cf0f8fbbc7133c6a4f94e241bb9402b27a0709a2204e3428ff45050efe9"
+    },
+    {
+      "path": "validation/windows/inspect-bno-final-archives.py",
+      "bytes": 707,
+      "sha256": "131fdbe1d3eafe63da5a0b4ffcf743f9026302002d2093d8aa31b24a949d188b"
+    },
+    {
+      "path": "validation/windows/prepare-bno-owning-junction.py",
+      "bytes": 1453,
+      "sha256": "10227eb7de36f830f386a3e18689546b680b18aefe904ccec6e8a6b5f6096056"
+    },
+    {
+      "path": "validation/windows/run-bno-final-owned.py",
+      "bytes": 1347,
+      "sha256": "4078fe320382476e0b479a2178a3c9f21f690537f7d2c5d1b2ba77c8e76d3cc5"
+    },
+    {
+      "path": "validation/windows/verify-bno-cpp-consumers.py",
+      "bytes": 1044,
+      "sha256": "a140bc6b4cf0354083fd5f2e5ce954332f4d352035e3ae3f2e23bc6061c2fe19"
+    },
+    {
+      "path": "validation/windows/verify-bno-owning-sources.py",
+      "bytes": 1577,
+      "sha256": "de1ac200531b87a5fb46aaef4be096eca0d05e546828ac0071331de17aa4e44b"
+    }
+  ]
+}

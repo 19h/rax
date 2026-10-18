@@ -1,0 +1,185 @@
+{
+  "utc": "2026-10-18T19:00:55.667528+00:00",
+  "upstream-parent": "78cb4c510e9989a9462ec027850b698ef8f17429",
+  "upstream-abi-minor": 259,
+  "compared-root": "e7fa3477850fbea5ce3ee819574f0a6946df172e",
+  "compared-abi-minor": 241,
+  "frozen-carrier-abi-minor": 184,
+  "files": [
+    {
+      "path": "src/tools/builtin/emulation/sessions/process_tool.cpp",
+      "bytes": 21736,
+      "sha256": "2e367268a546344c73c288910b97ab733b825c3388b69c7a28ad3a0d3e27e2eb"
+    },
+    {
+      "path": "src/emulation/rax/rax_process.cpp",
+      "bytes": 8600,
+      "sha256": "ed55d78681a9a59e384186382d998244d80ca5665793e60f5e7577d88d526564"
+    },
+    {
+      "path": "src/emulation/rax/librax_loader.cpp",
+      "bytes": 2070,
+      "sha256": "968294f6cf9f5e0e2af2f13a87eca456c57b5f951f6d8ccb3375f7cd16fee4c9"
+    },
+    {
+      "path": "src/crypto/static_text.cpp",
+      "bytes": 4502,
+      "sha256": "35c0af6231ab70d41c24a0274d2da6b3d95d3219d769e855fc6aa25e6fb3a8a1"
+    },
+    {
+      "path": "test/process_tool_tests.cpp",
+      "bytes": 33330,
+      "sha256": "960bb5d07a446619ee7331ca517ea9eb38b8c8b87b15f7dcf4e3c2f136336522"
+    },
+    {
+      "path": "test/process_tool_unavailable_tests.cpp",
+      "bytes": 1051,
+      "sha256": "c7123d9398fa405349018f4ab18953d0b7688c0afb687fca2beaf1fa226a2e72"
+    },
+    {
+      "path": "test/rax_process_tests.cpp",
+      "bytes": 14493,
+      "sha256": "d4dacc7f185d04d7ca30acf2bf97eed71194bde9e2a22e11c1cad73d1770fcbd"
+    },
+    {
+      "path": "test/e14_rax_abi_drift_tests.cpp",
+      "bytes": 772,
+      "sha256": "bb0f260181f3506db1e203a018cda6de0b47daf617baf2216d5a9568c604369f"
+    },
+    {
+      "path": "test/rust_archive_link_tests.cpp",
+      "bytes": 4324,
+      "sha256": "1418965f173b0448ee5429fda9ab8556f806dc4ec70b6cc3a85de735051c9b1f"
+    }
+  ],
+  "reviewed-unrelated-drift": {
+    "utc": "2026-10-18T19:00:50.624425+00:00",
+    "upstream-root": "78cb4c510e9989a9462ec027850b698ef8f17429",
+    "compared-root": "e7fa3477850fbea5ce3ee819574f0a6946df172e",
+    "upstream-abi-minor": 259,
+    "status": "reviewed",
+    "files": [
+      {
+        "validated": {
+          "path": "src/tools/builtin/emulation/sessions/process_tool.cpp",
+          "bytes": 21736,
+          "sha256": "2e367268a546344c73c288910b97ab733b825c3388b69c7a28ad3a0d3e27e2eb"
+        },
+        "upstream": {
+          "path": "src/tools/builtin/emulation/sessions/process_tool.cpp",
+          "bytes": 21736,
+          "sha256": "2e367268a546344c73c288910b97ab733b825c3388b69c7a28ad3a0d3e27e2eb"
+        },
+        "equal": true
+      },
+      {
+        "validated": {
+          "path": "src/emulation/rax/rax_process.cpp",
+          "bytes": 8600,
+          "sha256": "ed55d78681a9a59e384186382d998244d80ca5665793e60f5e7577d88d526564"
+        },
+        "upstream": {
+          "path": "src/emulation/rax/rax_process.cpp",
+          "bytes": 8600,
+          "sha256": "ed55d78681a9a59e384186382d998244d80ca5665793e60f5e7577d88d526564"
+        },
+        "equal": true
+      },
+      {
+        "validated": {
+          "path": "src/emulation/rax/librax_loader.cpp",
+          "bytes": 2070,
+          "sha256": "968294f6cf9f5e0e2af2f13a87eca456c57b5f951f6d8ccb3375f7cd16fee4c9"
+        },
+        "upstream": {
+          "path": "src/emulation/rax/librax_loader.cpp",
+          "bytes": 2070,
+          "sha256": "968294f6cf9f5e0e2af2f13a87eca456c57b5f951f6d8ccb3375f7cd16fee4c9"
+        },
+        "equal": true
+      },
+      {
+        "validated": {
+          "path": "src/crypto/static_text.cpp",
+          "bytes": 4502,
+          "sha256": "35c0af6231ab70d41c24a0274d2da6b3d95d3219d769e855fc6aa25e6fb3a8a1"
+        },
+        "upstream": {
+          "path": "src/crypto/static_text.cpp",
+          "bytes": 2136,
+          "sha256": "1835211daeff4b7089081214c070f78f73606ec0f9a1f99cf448280402580372"
+        },
+        "equal": false
+      },
+      {
+        "validated": {
+          "path": "test/process_tool_tests.cpp",
+          "bytes": 33330,
+          "sha256": "960bb5d07a446619ee7331ca517ea9eb38b8c8b87b15f7dcf4e3c2f136336522"
+        },
+        "upstream": {
+          "path": "test/process_tool_tests.cpp",
+          "bytes": 33330,
+          "sha256": "960bb5d07a446619ee7331ca517ea9eb38b8c8b87b15f7dcf4e3c2f136336522"
+        },
+        "equal": true
+      },
+      {
+        "validated": {
+          "path": "test/process_tool_unavailable_tests.cpp",
+          "bytes": 1051,
+          "sha256": "c7123d9398fa405349018f4ab18953d0b7688c0afb687fca2beaf1fa226a2e72"
+        },
+        "upstream": {
+          "path": "test/process_tool_unavailable_tests.cpp",
+          "bytes": 1051,
+          "sha256": "c7123d9398fa405349018f4ab18953d0b7688c0afb687fca2beaf1fa226a2e72"
+        },
+        "equal": true
+      },
+      {
+        "validated": {
+          "path": "test/rax_process_tests.cpp",
+          "bytes": 14493,
+          "sha256": "d4dacc7f185d04d7ca30acf2bf97eed71194bde9e2a22e11c1cad73d1770fcbd"
+        },
+        "upstream": {
+          "path": "test/rax_process_tests.cpp",
+          "bytes": 14493,
+          "sha256": "d4dacc7f185d04d7ca30acf2bf97eed71194bde9e2a22e11c1cad73d1770fcbd"
+        },
+        "equal": true
+      },
+      {
+        "validated": {
+          "path": "test/e14_rax_abi_drift_tests.cpp",
+          "bytes": 772,
+          "sha256": "bb0f260181f3506db1e203a018cda6de0b47daf617baf2216d5a9568c604369f"
+        },
+        "upstream": {
+          "path": "test/e14_rax_abi_drift_tests.cpp",
+          "bytes": 772,
+          "sha256": "bb0f260181f3506db1e203a018cda6de0b47daf617baf2216d5a9568c604369f"
+        },
+        "equal": true
+      },
+      {
+        "validated": {
+          "path": "test/rust_archive_link_tests.cpp",
+          "bytes": 4324,
+          "sha256": "1418965f173b0448ee5429fda9ab8556f806dc4ec70b6cc3a85de735051c9b1f"
+        },
+        "upstream": {
+          "path": "test/rust_archive_link_tests.cpp",
+          "bytes": 4324,
+          "sha256": "1418965f173b0448ee5429fda9ab8556f806dc4ec70b6cc3a85de735051c9b1f"
+        },
+        "equal": true
+      }
+    ],
+    "matched-files": 8,
+    "review": "Only static_text.cpp differs among the nine selected files. Its diff moves static-text crypto/resource ownership behind the current Rust bridge, including assist_rs_static_text_wipe. No RAX adapter or process-consumer test changes. Retained ABI184 carriers continue to prove the validated source snapshot; this review does not prove the current static-text bridge or a whole-current-root product build.",
+    "diff-sha256": "e5c15d9830f1c3061aaa3277cd3282aaf7003a39a0facefe1115b9086240574d"
+  },
+  "scope": "Eight selected RAX/consumer source files match. Static-text source differs and has a pinned explicit review; retained-carrier results cover the compared source snapshot. Whole-current-root products are not established."
+}

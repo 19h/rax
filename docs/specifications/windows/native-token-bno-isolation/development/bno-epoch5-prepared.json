@@ -1,0 +1,26 @@
+{
+  "utc": "2026-10-18T11:28:20.681701+00:00",
+  "archive-sha256": "723e748c51a31db6d15d61712150b2d50a2bdaddf6d67b9e3815ea1030e79a8c",
+  "source-inputs": 5737,
+  "override-paths": [
+    "src/user/windows/object_namespace.rs",
+    "src/user/windows/object_namespace/installed.rs",
+    "src/user/windows/object_namespace/base_named_object_tests.rs",
+    "src/user/windows/security/token.rs",
+    "src/user/windows/security/token/bno.rs",
+    "src/user/windows/security/token/bno/tests.rs",
+    "src/user/windows/wnf/installed.rs",
+    "src/user/windows/wnf/installed/bno.rs",
+    "src/user/windows/wnf/catalog.rs",
+    "src/user/windows/wnf.rs",
+    "src/user/windows/objects/wnf.rs",
+    "src/user/windows/dll/native/token_query.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_bno_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_bno_native_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_bno_copy_tests.rs",
+    "src/user/windows/dll/native/token_query/bno_copy.rs",
+    "docs/specifications/windows/native-token-bno-isolation/cases.json",
+    "docs/specifications/windows/native-token-bno-isolation/copy-cases.json"
+  ]
+}

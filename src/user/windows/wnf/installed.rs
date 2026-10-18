@@ -6,6 +6,7 @@ use std::io;
 use std::ptr::null_mut;
 
 mod access;
+mod bno;
 mod scalars;
 
 type Handle = *mut c_void;
@@ -117,6 +118,7 @@ fn capture(
     Subject,
     u32,
     crate::user::windows::security::token::scalars::Scalars,
+    crate::user::windows::security::token::bno::Isolation,
 )> {
     let user = group(&information(token, 1)?, 0)?.sid;
     let enabled_groups = groups(&information(token, 2)?)?;
@@ -155,6 +157,7 @@ fn capture(
         },
         session,
         scalars::capture(token)?,
+        bno::capture(token)?,
     ))
 }
 pub(super) fn subject() -> io::Result<(
@@ -162,13 +165,14 @@ pub(super) fn subject() -> io::Result<(
     crate::user::windows::security::token::Access,
     u32,
     crate::user::windows::security::token::scalars::Scalars,
+    crate::user::windows::security::token::bno::Isolation,
 )> {
     let (token, access) = access::select()?;
     for _ in 0..3 {
         let first = capture(&token)?;
         if first == capture(&token)? {
-            let (subject, session, scalars) = first;
-            return Ok((subject, access, session, scalars));
+            let (subject, session, scalars, bno) = first;
+            return Ok((subject, access, session, scalars, bno));
         }
     }
     Err(invalid(

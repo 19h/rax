@@ -1,0 +1,23 @@
+{
+  "utc": "2026-10-18T12:11:14.279584+00:00",
+  "parent": "d0a9b63c1109a915d425d385873bfc15776d3fe3",
+  "baseline-status": "## HEAD (no branch)\n",
+  "compiled-inputs": 5737,
+  "owned-rust-paths": [
+    "src/user/windows/security/token.rs",
+    "src/user/windows/security/token/bno.rs",
+    "src/user/windows/security/token/bno/tests.rs",
+    "src/user/windows/wnf/installed.rs",
+    "src/user/windows/wnf/installed/bno.rs",
+    "src/user/windows/wnf/catalog.rs",
+    "src/user/windows/wnf.rs",
+    "src/user/windows/objects/wnf.rs",
+    "src/user/windows/dll/native/token_query.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_bno_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_bno_native_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_bno_copy_tests.rs",
+    "src/user/windows/dll/native/token_query/bno_copy.rs"
+  ],
+  "scope": "All 5737 tested Rust/workspace/data inputs match; only owned BNO files were ported."
+}

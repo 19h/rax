@@ -1,0 +1,40 @@
+{
+  "files": [
+    {
+      "path": "native/native-bno-isolation-survey.cpp",
+      "raw-git-blob": "3f289f27ee0cdbba571bb9f1383073a3105f4fe0",
+      "autocrlf-true-git-blob": "3f289f27ee0cdbba571bb9f1383073a3105f4fe0",
+      "equal": true
+    },
+    {
+      "path": "cases.json",
+      "raw-git-blob": "64f3918fe6aeabb68a6d7994dc4f20b750202b9f",
+      "autocrlf-true-git-blob": "64f3918fe6aeabb68a6d7994dc4f20b750202b9f",
+      "equal": true
+    },
+    {
+      "path": "copy-cases.json",
+      "raw-git-blob": "9473e10e72d173b479252909cd0d28daf0306756",
+      "autocrlf-true-git-blob": "9473e10e72d173b479252909cd0d28daf0306756",
+      "equal": true
+    },
+    {
+      "path": "README.md",
+      "raw-git-blob": "f8f511f14cd1c417bbf72f36cd4eaf85f17106d6",
+      "autocrlf-true-git-blob": "f8f511f14cd1c417bbf72f36cd4eaf85f17106d6",
+      "equal": true
+    },
+    {
+      "path": "check-native.py",
+      "raw-git-blob": "c3318ada9b280cf46d6a25901059be0afac26eca",
+      "autocrlf-true-git-blob": "c3318ada9b280cf46d6a25901059be0afac26eca",
+      "equal": true
+    },
+    {
+      "path": "check-copy-native.py",
+      "raw-git-blob": "c05be912ea1b2d44c9c87da0058ae8b168b11fa4",
+      "autocrlf-true-git-blob": "c05be912ea1b2d44c9c87da0058ae8b168b11fa4",
+      "equal": true
+    }
+  ]
+}

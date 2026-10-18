@@ -1,0 +1,26 @@
+{
+  "utc": "2026-10-18T11:42:01.225357+00:00",
+  "source-epoch": 5,
+  "status": "reviewed",
+  "outcomes": [
+    {
+      "log": "native-bno-epoch5-ordinary-0.log",
+      "program-sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b",
+      "sha256": "32ee2ccf73e7e317e7c40a184d540b2ceb2a5b40f9acbb14036b605230c94dc6",
+      "class44-success-turn": 2149970,
+      "terminal-turn": 2150070,
+      "observer-turns-advanced": 100,
+      "terminal": "terminal turn=2150070 Complete(Internal(\"native NTDLL service NtCreateMutant (0xba) at 0x7ff82fad1be0 is not implemented\"))"
+    },
+    {
+      "log": "native-bno-epoch5-ordinary-2.log",
+      "program-sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6",
+      "sha256": "044ebd1dc0ad829d385127adffa3e26e3aab9a14af6dcbf41d664265a8af0f2d",
+      "class44-success-turn": 2152319,
+      "terminal-turn": 2152419,
+      "observer-turns-advanced": 100,
+      "terminal": "terminal turn=2152419 Complete(Internal(\"native NTDLL service NtCreateMutant (0xba) at 0x7ff82fad1be0 is not implemented\"))"
+    }
+  ],
+  "summary": "Both ordinary programs return success from class44 and advance100 observer turns to unsupported NtCreateMutant. Neither reaches a successful guest exit."
+}

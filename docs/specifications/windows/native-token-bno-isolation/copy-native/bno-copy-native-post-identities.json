@@ -1,0 +1,80 @@
+{
+  "utc": "2026-10-18T11:26:02.141340+00:00",
+  "files": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-copy-arm64\\probe.exe",
+      "bytes": 147456,
+      "sha256": "7036d32f767f10380b43afdf0627a1a64ccc28022999d8841e2412dcc957d9f3"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-copy-arm64\\native-bno-copy-boundaries.cpp",
+      "bytes": 3501,
+      "sha256": "83189ac043b406bcac2782e05bf14e3556c16d80ed8898aff7620309238d657e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-copy-x64\\probe.exe",
+      "bytes": 145408,
+      "sha256": "8689df0ed71215c6547c74cc401fb318d8f2a06af2bb9c4394eab50eb3d95a4c"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-copy-x64\\native-bno-copy-boundaries.cpp",
+      "bytes": 3501,
+      "sha256": "83189ac043b406bcac2782e05bf14e3556c16d80ed8898aff7620309238d657e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-copy-x86\\probe.exe",
+      "bytes": 120832,
+      "sha256": "427d5ef00cabb68c431f3f623b4bbda60733649763f452a45d4f79f3661efe3e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-copy-x86\\native-bno-copy-boundaries.cpp",
+      "bytes": 3501,
+      "sha256": "83189ac043b406bcac2782e05bf14e3556c16d80ed8898aff7620309238d657e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-copy-x86-laa\\probe.exe",
+      "bytes": 120832,
+      "sha256": "66f187e699d13734059bb70e871ed4adab33b065c120fc6f211f4ee96c9339a3"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-copy-x86-laa\\native-bno-copy-boundaries.cpp",
+      "bytes": 3501,
+      "sha256": "83189ac043b406bcac2782e05bf14e3556c16d80ed8898aff7620309238d657e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-copy-controller\\controller.exe",
+      "bytes": 158720,
+      "sha256": "8e28c5fc51e62632dedb550acc0a882d5bcbdc1a3c03a5e10467ff7b00e5a384"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-copy-controller\\native-bno-copy-child.cpp",
+      "bytes": 3801,
+      "sha256": "0c8c05094853ef5f7aeaa71565dbf1b03a22b40c573fdf95bb533f702d543ba8"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-copy-curve-controller\\controller.exe",
+      "bytes": 161792,
+      "sha256": "081b4c718598f97e2d7757579733de59af59ddf1a0ad6e57f31ff02fd3f5fdf4"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\bno-copy-curve-controller\\native-bno-copy-curve-child.cpp",
+      "bytes": 4256,
+      "sha256": "fb6ac40384206b54bb0ea7f1050b1130d3e0bcf3a8bce8f28d95a6cc906d3149"
+    },
+    {
+      "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-bno-copy-boundaries.cpp",
+      "bytes": 3501,
+      "sha256": "83189ac043b406bcac2782e05bf14e3556c16d80ed8898aff7620309238d657e"
+    },
+    {
+      "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-bno-copy-child.cpp",
+      "bytes": 3801,
+      "sha256": "0c8c05094853ef5f7aeaa71565dbf1b03a22b40c573fdf95bb533f702d543ba8"
+    },
+    {
+      "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-bno-copy-curve-child.cpp",
+      "bytes": 4256,
+      "sha256": "fb6ac40384206b54bb0ea7f1050b1130d3e0bcf3a8bce8f28d95a6cc906d3149"
+    }
+  ]
+}

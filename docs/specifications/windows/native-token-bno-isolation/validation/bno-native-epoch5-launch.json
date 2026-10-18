@@ -1,0 +1,11 @@
+{
+  "pid": 3092,
+  "utc": "2026-10-18T11:30:45.567182+00:00",
+  "state": "finished",
+  "source-epoch": 5,
+  "namespace-epoch": 2,
+  "child-pid": 1116,
+  "exit-code": 0,
+  "post-source-inputs": 5737,
+  "completed-utc": "2026-10-18T12:11:16.253124+00:00"
+}

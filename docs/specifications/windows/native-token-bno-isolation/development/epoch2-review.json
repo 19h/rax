@@ -1,0 +1,6 @@
+{
+  "finding": "The enabled WoW64 converter clears IsolationPrefix before storing IsolationEnabled. A flag-store fault leaves NULL; a later prefix-copy fault can retain a non-NULL pointer.",
+  "evidence": "Native enabled x86 role24 retains00000000; roles43-45 retain the rebased pointer before their prefix-copy fault.",
+  "correction": "Null pointer store, flag store, pointer publication, bounded UTF-16 copy. Normalize proven native pointer bytes even for a later copy failure.",
+  "raw-native-inputs": "unchanged; the earlier normalizer only handled successful queries and failed to relocate already-published pointers on a later fault."
+}

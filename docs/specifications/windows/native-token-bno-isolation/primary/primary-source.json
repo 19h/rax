@@ -1,0 +1,43 @@
+{
+  "url": "https://raw.githubusercontent.com/microsoft/win32metadata/main/generation/WinSDK/RecompiledIdlHeaders/um/winnt.h",
+  "retrieved": "2026-10-18T01:56:36.597082+00:00",
+  "bytes": 849622,
+  "sha256": "404019933323ca25f5db8ce14437483e1054398ce454d5c75df2e187cec2ae40",
+  "scope": "Microsoft SDK declaration; native output/error behavior is measured separately",
+  "additional-sources": [
+    {
+      "path": "WinBase.h",
+      "url": "https://raw.githubusercontent.com/microsoft/win32metadata/main/generation/WinSDK/RecompiledIdlHeaders/um/WinBase.h",
+      "bytes": 261606,
+      "sha256": "1b8913de810e25f0f6ea8d91f5b736e48888d0e6a2b1003b9ca476f3c2262379",
+      "retrieved": "2026-10-18T01:58:54.961355+00:00"
+    },
+    {
+      "path": "phnt-ntpsapi.h",
+      "url": "https://raw.githubusercontent.com/winsiderss/phnt/master/ntpsapi.h",
+      "bytes": 180987,
+      "sha256": "3477b3fa901715c5ad139ae154f86d6c36f3415962731d6c0de0dd3c8417f4d8",
+      "retrieved": "2026-10-18T01:58:54.961789+00:00"
+    }
+  ],
+  "verified-commit-pins": [
+    {
+      "path": "winnt.h",
+      "commit": "0f012441d654d3bb7de898fdc664b5fcad52bdcc",
+      "pinned-url": "https://raw.githubusercontent.com/microsoft/win32metadata/0f012441d654d3bb7de898fdc664b5fcad52bdcc/generation/WinSDK/RecompiledIdlHeaders/um/winnt.h",
+      "sha256": "404019933323ca25f5db8ce14437483e1054398ce454d5c75df2e187cec2ae40"
+    },
+    {
+      "path": "WinBase.h",
+      "commit": "0f012441d654d3bb7de898fdc664b5fcad52bdcc",
+      "pinned-url": "https://raw.githubusercontent.com/microsoft/win32metadata/0f012441d654d3bb7de898fdc664b5fcad52bdcc/generation/WinSDK/RecompiledIdlHeaders/um/WinBase.h",
+      "sha256": "1b8913de810e25f0f6ea8d91f5b736e48888d0e6a2b1003b9ca476f3c2262379"
+    },
+    {
+      "path": "phnt-ntpsapi.h",
+      "commit": "53fbbdc5b5d2b08761db1c7b26bfa8c820924356",
+      "pinned-url": "https://raw.githubusercontent.com/winsiderss/phnt/53fbbdc5b5d2b08761db1c7b26bfa8c820924356/ntpsapi.h",
+      "sha256": "3477b3fa901715c5ad139ae154f86d6c36f3415962731d6c0de0dd3c8417f4d8"
+    }
+  ]
+}

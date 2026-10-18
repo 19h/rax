@@ -1,0 +1,83 @@
+[
+  {
+    "gate": "full",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "source-epoch": 5,
+    "namespace-epoch": 2,
+    "exit-code": 0,
+    "seconds": 439.17104987499624,
+    "log": "macos-bno-epoch5-full.log",
+    "sha256": "109d0ca34f6b0334437871a00b68ef5e05d9e7dc60e876311d742da093313e7f"
+  },
+  {
+    "gate": "capi",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "-p",
+      "rax-capi",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "source-epoch": 5,
+    "namespace-epoch": 2,
+    "exit-code": 0,
+    "seconds": 66.88127554100356,
+    "log": "macos-bno-epoch5-capi.log",
+    "sha256": "0c0df54366b579730af80046a4e3698c6ac3e30a4a8926539830a968a2e4b655"
+  },
+  {
+    "gate": "integration",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--test",
+      "user_windows",
+      "--test",
+      "user_windows_memory",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "source-epoch": 5,
+    "namespace-epoch": 2,
+    "exit-code": 0,
+    "seconds": 61.07541899999342,
+    "log": "macos-bno-epoch5-integration.log",
+    "sha256": "17320ba3593978ffcd990615ef3f0c5be258498d76ceaf93c43ab09a8bca2845"
+  },
+  {
+    "gate": "all-targets",
+    "argv": [
+      "cargo",
+      "check",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ],
+    "source-epoch": 5,
+    "namespace-epoch": 2,
+    "exit-code": 0,
+    "seconds": 65.96552595799585,
+    "log": "macos-bno-epoch5-all-targets.log",
+    "sha256": "bd568c0246a186cc2d4220c5245243b718147ba407328cf9ea54c71427495857"
+  }
+]

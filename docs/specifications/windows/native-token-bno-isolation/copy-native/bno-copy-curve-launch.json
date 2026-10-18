@@ -1,0 +1,17 @@
+{
+  "pid": 9692,
+  "utc": "2026-10-18T02:11:25.398722+00:00",
+  "state": "finished",
+  "scope": "private child process BNO isolation controls; no existing process token or Defender settings changed; only child-owned token/event handles and memory",
+  "child-pid": 10484,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-bno-copy-curve.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T02:14:29.768711+00:00"
+}

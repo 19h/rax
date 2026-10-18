@@ -1,0 +1,674 @@
+{
+  "files": [
+    {
+      "path": "native/bno-isolation-child-arm64-disabled-empty.log",
+      "bytes": 2378452,
+      "sha256": "4d1a0ff0864781a42013f3a47e24d9a3c8d077572eaf9b4417ee2ec007d88e87"
+    },
+    {
+      "path": "native/bno-isolation-child-arm64-enabled-ascii.log",
+      "bytes": 2378640,
+      "sha256": "fef9af8ab4b61d79bed911b455230b17cc5c6bbf39a417360f9baf8e6d0e5c75"
+    },
+    {
+      "path": "native/bno-isolation-child-arm64-enabled-unicode.log",
+      "bytes": 2378624,
+      "sha256": "de0b85e3a452398b3d9150c0f791004c02de9ba675f62c0bfa54a2b58aa8c90f"
+    },
+    {
+      "path": "native/bno-isolation-child-build.log",
+      "bytes": 32,
+      "sha256": "8c1568a3240ca7b763932d67265f23e1543a65f7d0311c63f3f74eb822cb4ecf"
+    },
+    {
+      "path": "native/bno-isolation-child-driver.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9"
+    },
+    {
+      "path": "native/bno-isolation-child-identity-after.json",
+      "bytes": 524,
+      "sha256": "302477cca5593000adaa488d6e7738621989e9d0cc9ba53e5f46866ca859f56c"
+    },
+    {
+      "path": "native/bno-isolation-child-identity-before.json",
+      "bytes": 524,
+      "sha256": "302477cca5593000adaa488d6e7738621989e9d0cc9ba53e5f46866ca859f56c"
+    },
+    {
+      "path": "native/bno-isolation-child-launch.json",
+      "bytes": 582,
+      "sha256": "f16d4bd6219e0ae6741f26082da9dc30b6ac73cebdfbf87bf6b43dfbeddb3a7f"
+    },
+    {
+      "path": "native/bno-isolation-child-outcomes.json",
+      "bytes": 2048,
+      "sha256": "46c57981d599d763237ffdef70a819bf38bba12b69d3fcc999ab88bc65e4b201"
+    },
+    {
+      "path": "native/bno-isolation-child-x64-disabled-empty.log",
+      "bytes": 2379701,
+      "sha256": "ad3338b378bdf685fd7dd463cbf67270d0d98ebaf0ec5afb3eb3000719c7dc8a"
+    },
+    {
+      "path": "native/bno-isolation-child-x64-enabled-ascii.log",
+      "bytes": 2379889,
+      "sha256": "fc2d975aa40ab9b9818384cb30ab6133910414eb4a96c0b0dd8c691cccafd858"
+    },
+    {
+      "path": "native/bno-isolation-child-x64-enabled-unicode.log",
+      "bytes": 2379873,
+      "sha256": "1cb1a1a27eff70cdb3265bab7e32478ade90042c315aa5cfdb7b5cb0e9d62ede"
+    },
+    {
+      "path": "native/bno-isolation-child-x86-disabled-empty.log",
+      "bytes": 2280666,
+      "sha256": "b689040e95d1dfa2077e03ebe473e41c97b7978caccda99b1318639104005b23"
+    },
+    {
+      "path": "native/bno-isolation-child-x86-enabled-ascii.log",
+      "bytes": 2280062,
+      "sha256": "4cdcb19044e102c723328c8a5c7bc7ebf313056cec3cf0e0709e53ecfad584f8"
+    },
+    {
+      "path": "native/bno-isolation-child-x86-enabled-unicode.log",
+      "bytes": 2280056,
+      "sha256": "3b0eb06cf12941941358e5e6160cf5a578549035b7ae60b8c1b78d5963aadaa8"
+    },
+    {
+      "path": "native/bno-isolation-child-x86-laa-disabled-empty.log",
+      "bytes": 2280670,
+      "sha256": "ca686126881f3f0ebf2fa66aa3a4a0ca30d9e22d2d57b734b8d87e758166d532"
+    },
+    {
+      "path": "native/bno-isolation-child-x86-laa-enabled-ascii.log",
+      "bytes": 2280068,
+      "sha256": "88009d8828c5a0a87e53b1f23346c0a8cbe5167b177e412847cd00a527c6971a"
+    },
+    {
+      "path": "native/bno-isolation-child-x86-laa-enabled-unicode.log",
+      "bytes": 2280060,
+      "sha256": "440b70fdcd30911839d9c9b6ec4f95b08794be1da7f0d44a42c20dfda063a2db"
+    },
+    {
+      "path": "native/bno-isolation-survey-arm64-build.log",
+      "bytes": 33,
+      "sha256": "52ac5fddaf75eea87743b0967efad0614a24e11d4a474c33f2a12cb7627d1886"
+    },
+    {
+      "path": "native/bno-isolation-survey-arm64-class44.log",
+      "bytes": 2378315,
+      "sha256": "f99500e24050410d0140a0f19a7c8412f404dd9988f60a08b78bd69042690962"
+    },
+    {
+      "path": "native/bno-isolation-survey-arm64-identity-before.json",
+      "bytes": 522,
+      "sha256": "1f502590be18fddb6f380e3c87e629812a1edb51a6ec5c998c25f7136e1698e8"
+    },
+    {
+      "path": "native/bno-isolation-survey-arm64-identity.json",
+      "bytes": 522,
+      "sha256": "1f502590be18fddb6f380e3c87e629812a1edb51a6ec5c998c25f7136e1698e8"
+    },
+    {
+      "path": "native/bno-isolation-survey-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native/bno-isolation-survey-launch.json",
+      "bytes": 575,
+      "sha256": "3d179f135e41018a00f2c7f00862410a6b7c6ab73f0196bec58bf7457467e6de"
+    },
+    {
+      "path": "native/bno-isolation-survey-outcomes.json",
+      "bytes": 612,
+      "sha256": "176cc7226a6ea38f35c564b6a9b518b60700a92642baae8c18576fbcb3a63c4f"
+    },
+    {
+      "path": "native/bno-isolation-survey-x64-build.log",
+      "bytes": 33,
+      "sha256": "52ac5fddaf75eea87743b0967efad0614a24e11d4a474c33f2a12cb7627d1886"
+    },
+    {
+      "path": "native/bno-isolation-survey-x64-class44.log",
+      "bytes": 2379564,
+      "sha256": "c11dabf51002a0078c9421bb3d32dc84dd3581c1f0ecaa029ef40ec39203e947"
+    },
+    {
+      "path": "native/bno-isolation-survey-x64-identity-before.json",
+      "bytes": 514,
+      "sha256": "1749784d04bb7eadf6c3215d56d68122f90ffce3b77efcd06be756c9d46ea493"
+    },
+    {
+      "path": "native/bno-isolation-survey-x64-identity.json",
+      "bytes": 514,
+      "sha256": "1749784d04bb7eadf6c3215d56d68122f90ffce3b77efcd06be756c9d46ea493"
+    },
+    {
+      "path": "native/bno-isolation-survey-x86-build.log",
+      "bytes": 33,
+      "sha256": "52ac5fddaf75eea87743b0967efad0614a24e11d4a474c33f2a12cb7627d1886"
+    },
+    {
+      "path": "native/bno-isolation-survey-x86-class44.log",
+      "bytes": 2280528,
+      "sha256": "fbde061531c7445456bc070f4a897ff42c120e414c04c4f6fb13fc73e23888fc"
+    },
+    {
+      "path": "native/bno-isolation-survey-x86-identity-before.json",
+      "bytes": 512,
+      "sha256": "1f10a4958aa96a127af57db4abcc4e42f10503d8ad96de607244873e92661bc2"
+    },
+    {
+      "path": "native/bno-isolation-survey-x86-identity.json",
+      "bytes": 512,
+      "sha256": "1f10a4958aa96a127af57db4abcc4e42f10503d8ad96de607244873e92661bc2"
+    },
+    {
+      "path": "native/bno-isolation-survey-x86-laa-build.log",
+      "bytes": 33,
+      "sha256": "52ac5fddaf75eea87743b0967efad0614a24e11d4a474c33f2a12cb7627d1886"
+    },
+    {
+      "path": "native/bno-isolation-survey-x86-laa-class44.log",
+      "bytes": 2280533,
+      "sha256": "d3f27ebcc0293910775e1cbe42a0eb0087c8d04d8d19368ec12d6177d879fec2"
+    },
+    {
+      "path": "native/bno-isolation-survey-x86-laa-identity-before.json",
+      "bytes": 526,
+      "sha256": "237bca78014a4e216b7d2dba1ded162eb58ea560f81e2955daf8dea48049826e"
+    },
+    {
+      "path": "native/bno-isolation-survey-x86-laa-identity.json",
+      "bytes": 526,
+      "sha256": "237bca78014a4e216b7d2dba1ded162eb58ea560f81e2955daf8dea48049826e"
+    },
+    {
+      "path": "native/bno-native-post-identities.json",
+      "bytes": 2711,
+      "sha256": "6aa55e5cdac96d997ea5bd6f702d70ed50c402b07b91617ee63aca10ae5edf12"
+    },
+    {
+      "path": "native/native-bno-isolation-survey.cpp",
+      "bytes": 11267,
+      "sha256": "7e5c5a7a8b05128140c0c4c61a0398767407157a7459993ff6d8a8f09ce27565"
+    },
+    {
+      "path": "native/native-bno-isolation-survey.ps1",
+      "bytes": 2084,
+      "sha256": "54fe0f9d6236c4f5404164656fe2d0a0776d47bee256cc6eafe411a20dc64a81"
+    },
+    {
+      "path": "native/run-bno-isolation-survey.py",
+      "bytes": 1201,
+      "sha256": "744cca4fbfef41571733a7ad4f9a9c73c2559c3b5480c39c48ea22efaff3fff7"
+    },
+    {
+      "path": "native/native-bno-isolation-child.cpp",
+      "bytes": 3558,
+      "sha256": "f6b8a02161abdc141cf3c1b8cc09dd9cf1f6824fe5e4ad14b9a69dfa0c4abb9a"
+    },
+    {
+      "path": "native/native-bno-isolation-child.ps1",
+      "bytes": 1969,
+      "sha256": "150615f4a9f108bf594b212132e0a72e4fe254d018612dc94cdddb76b9c110be"
+    },
+    {
+      "path": "native/run-bno-isolation-child.py",
+      "bytes": 1206,
+      "sha256": "322b92e2ea13feaac886d6d3450500fcc99eba1d95bb9e681b0e0c9531d5cc37"
+    },
+    {
+      "path": "native/verify-bno-native.py",
+      "bytes": 966,
+      "sha256": "1862593461a807c44f844b32dbaf3cde4ae12a589802a0202b3acb248cc36832"
+    },
+    {
+      "path": "native/make-replay-corpus.py",
+      "bytes": 3962,
+      "sha256": "0d094c59ef2a66df0ca49bdc9d2c1b4ae1d65c0889240bd401c98573b33417e4"
+    },
+    {
+      "path": "native/source-derivation.json",
+      "bytes": 434,
+      "sha256": "1f9c9389cb33fd9466d24d457c2712301e05657ed146841f8e967d46e8523e56"
+    },
+    {
+      "path": "primary/winnt.h",
+      "bytes": 849622,
+      "sha256": "404019933323ca25f5db8ce14437483e1054398ce454d5c75df2e187cec2ae40"
+    },
+    {
+      "path": "primary/WinBase.h",
+      "bytes": 261606,
+      "sha256": "1b8913de810e25f0f6ea8d91f5b736e48888d0e6a2b1003b9ca476f3c2262379"
+    },
+    {
+      "path": "primary/phnt-ntpsapi.h",
+      "bytes": 180987,
+      "sha256": "3477b3fa901715c5ad139ae154f86d6c36f3415962731d6c0de0dd3c8417f4d8"
+    },
+    {
+      "path": "primary/primary-source.json",
+      "bytes": 2076,
+      "sha256": "1a03a48bd08cf35b5e23beafdc6494e7b01cbc6ab02efb79cd30b42cbe1da008"
+    },
+    {
+      "path": "cases.json",
+      "bytes": 11441269,
+      "sha256": "5506945f8cd2fc7d58ea4f0e5ee906d78906e10ef182204a2c201f2d805f3daf"
+    },
+    {
+      "path": "copy-native/bno-copy-arm64-after.json",
+      "bytes": 498,
+      "sha256": "a0493687a4b7ab3955c74adec2a251fb70f0f69392585d84a626cb29b06c7ccd"
+    },
+    {
+      "path": "copy-native/bno-copy-arm64-ascii.log",
+      "bytes": 291761,
+      "sha256": "b523ac6f41a026ed302621ffdbc606d56b79bd29d7876588812248bf92e5172c"
+    },
+    {
+      "path": "copy-native/bno-copy-arm64-before.json",
+      "bytes": 498,
+      "sha256": "a0493687a4b7ab3955c74adec2a251fb70f0f69392585d84a626cb29b06c7ccd"
+    },
+    {
+      "path": "copy-native/bno-copy-arm64-build.log",
+      "bytes": 32,
+      "sha256": "5c55f761865fe30091ede3531dc30af22d735a4dd8e6727bd2b54503b9ac044d"
+    },
+    {
+      "path": "copy-native/bno-copy-arm64-long.log",
+      "bytes": 1951360,
+      "sha256": "a71a1b3bf81c6fd5579bb62357ddf0133c6d36cf7b872c4ebda594c7a425a829"
+    },
+    {
+      "path": "copy-native/bno-copy-arm64-unicode.log",
+      "bytes": 283093,
+      "sha256": "54848116a36d2e1028e30e97426fc3c8311d892b1f2234541515bb81be31d65e"
+    },
+    {
+      "path": "copy-native/bno-copy-controller-after.json",
+      "bytes": 518,
+      "sha256": "3d1b04983f74322770dd64fd03a537f8da8fa640e4d57854ac276ee836499742"
+    },
+    {
+      "path": "copy-native/bno-copy-controller-before.json",
+      "bytes": 518,
+      "sha256": "3d1b04983f74322770dd64fd03a537f8da8fa640e4d57854ac276ee836499742"
+    },
+    {
+      "path": "copy-native/bno-copy-controller-build.log",
+      "bytes": 27,
+      "sha256": "0b60c809946acc40f8720abff50c6e8f406348422b25288df9a6c113db260b40"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-after.json",
+      "bytes": 530,
+      "sha256": "624b7584474ac10b7d5242b01b2e44288c5b3eb83f1c210e43c30b94ab04a596"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-before.json",
+      "bytes": 530,
+      "sha256": "624b7584474ac10b7d5242b01b2e44288c5b3eb83f1c210e43c30b94ab04a596"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-build.log",
+      "bytes": 33,
+      "sha256": "df58348d86fc29951f2db75055b3bccc97ea3f00d7695360c9b3e02fcefa602c"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-driver.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-launch.json",
+      "bytes": 578,
+      "sha256": "9ff764d200f2f67070e2952e32b482a0dff07430f98b4a3487fe3bda7a22ea50"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-outcomes.json",
+      "bytes": 4852,
+      "sha256": "e177154eceb4ab80751abba660aefa8cd5caf248e6410a029aac86e98122fad2"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-127.log",
+      "bytes": 1705518,
+      "sha256": "8a0add57b21f482c085bfac538f4b62623006e23b820b96b845fbe5799b7f294"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-128.log",
+      "bytes": 1724194,
+      "sha256": "61b5f4171a7b3fc1266f42cb1e2a09c78fd889387330cf93626f046d8574dee3"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-129.log",
+      "bytes": 1742966,
+      "sha256": "cf4e2f54ba4c54d4d9f23c799903f951ed440ec1c349ed9d05df0a0943227b25"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-134.log",
+      "bytes": 1838266,
+      "sha256": "05608b49cdbae34b0cfba3f02241fa8223dceddeaa7149f9c6a8463e892f4f53"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-135.log",
+      "bytes": 1857614,
+      "sha256": "8f25de9c9198204f128e5be337b1a66d4278cd655ba8e2459c4f668d5855c9e9"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-15.log",
+      "bytes": 221738,
+      "sha256": "47b513fd59c31cd1f0a3b3f5ed5c0e8b23670ed39463175a73e2631405c1f2d7"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-16.log",
+      "bytes": 229614,
+      "sha256": "bbc89cfc48eb65896ff3895ad56ce1357ad70f1433a90b33b270cefd6c4a0323"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-17.log",
+      "bytes": 237586,
+      "sha256": "c3100bd954f17b9e814e45b55f4f93b3c0d05033dfc9f0cde99fafe57164b3a6"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-31.log",
+      "bytes": 359595,
+      "sha256": "d8687a6964c28dfdfc7917a509943b7d59c1f37494891c4aa55a104a2f893173"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-32.log",
+      "bytes": 369055,
+      "sha256": "db0483a5762620613711743a060a070a8b533c77a3faf6b0c1c23b944a78301a"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-33.log",
+      "bytes": 378611,
+      "sha256": "b9e027f03a5b30a2841ebd188357ae642f0dea6aac9b61b69b4f514025b6f568"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-63.log",
+      "bytes": 709932,
+      "sha256": "02383b8cd166b83d9ac1939549df548e3d7ef5ff5dfc6f90744f8fa33ae6661c"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-64.log",
+      "bytes": 720412,
+      "sha256": "e94766ea08362161ea9216c3e0af6560a151c134f21e6d04ceb1ac9209bd5528"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-65.log",
+      "bytes": 735092,
+      "sha256": "6c65f7a31e098b77a394e518be3af1a94b1e18e8fa246ed882ef9c991b3af444"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-66.log",
+      "bytes": 747816,
+      "sha256": "542643f69819aad473822e745131cad0c0631f3673e173e6e3b070d2995e0e3a"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-67.log",
+      "bytes": 760636,
+      "sha256": "5b401d02533f17f7ec77d07ce60765a7bd7897eacd05b86b0241bf2b6f050a07"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-8.log",
+      "bytes": 169292,
+      "sha256": "33210232d7030770dbb361721a37e2ebb3fac594c83c70e1f8eb88e96c3dd3cd"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-laa-127.log",
+      "bytes": 1705522,
+      "sha256": "748cf2b30202c8383c255b9e742b886895a28c5bfae0d3ba66d538c017fd87ba"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-laa-128.log",
+      "bytes": 1724198,
+      "sha256": "1af44a4d1750b5e226b0ed47b1a07cbd084c2ec57bd3f756c1fdc4765db588e1"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-laa-129.log",
+      "bytes": 1742970,
+      "sha256": "bab9e509c27565cf2232d5633c86991dac9115398cd7742d67bee86310cb4640"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-laa-134.log",
+      "bytes": 1838270,
+      "sha256": "6c75c8a53dcdc481733c9782cd44c803e129eea9f765ebf910c9864deccfc6a8"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-laa-135.log",
+      "bytes": 1857618,
+      "sha256": "da44af649d75ad089d02bdeb7785ab1521a2f42c303add93a2afa5d5acbbc5b7"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-laa-15.log",
+      "bytes": 221742,
+      "sha256": "6118f44b4cbc441ba20cebff6c774aad6548893625e995c55c8c1590f8c1dbb9"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-laa-16.log",
+      "bytes": 229618,
+      "sha256": "80c44b0f46db04d333ca6230d9fa6942c185400a1ac11f145ab0d8bfeb06d76e"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-laa-17.log",
+      "bytes": 237590,
+      "sha256": "6007475da788a10ddae6e820c3bc9c8ac9f566d4fdd6aa6a7e0f49ce50e15625"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-laa-31.log",
+      "bytes": 359599,
+      "sha256": "de866134d9b797b09594d56b5bca3353e4c9e1bf1347c4ee643a84bee749716a"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-laa-32.log",
+      "bytes": 369059,
+      "sha256": "4710babd9c3e209d1015e5490e5db38722da5fc636e6ddf88f14021265cb435b"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-laa-33.log",
+      "bytes": 378615,
+      "sha256": "1775e0562e64fa3606f2a65260d392e54d28a74178d0116dfbfb3e694a16e9ff"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-laa-63.log",
+      "bytes": 709936,
+      "sha256": "5ea45f0a2da53262a4d4a9d769a580bf02998f7f9f6c25a6e3aff48582e18bc7"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-laa-64.log",
+      "bytes": 722468,
+      "sha256": "7adddbe286da782bed1cc7b846221d52f932e2a86f67efa2a2ca0663c9a63906"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-laa-65.log",
+      "bytes": 735096,
+      "sha256": "2b0359efdf7491785a528b00463799ee41296633e98688c168d548cec688f8b6"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-laa-66.log",
+      "bytes": 747820,
+      "sha256": "9202a9dfe32fef6d1bf1c5200770b53a9f8ae57758974f45b8f812d5cda178e7"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-laa-67.log",
+      "bytes": 760640,
+      "sha256": "c7bcb9f0f1cd81c2d8bd072497046ed849782032075dbea63265e3f0a82efa82"
+    },
+    {
+      "path": "copy-native/bno-copy-curve-x86-laa-8.log",
+      "bytes": 169296,
+      "sha256": "b3053d2549b527eb5689eb879e1b6da3312e9257719ff575f4f3bab83bb99de4"
+    },
+    {
+      "path": "copy-native/bno-copy-driver.log",
+      "bytes": 1205,
+      "sha256": "a2dbaad023d48b921850dd850eccabf89929388b361a2617f96823eefdbfe2f2"
+    },
+    {
+      "path": "copy-native/bno-copy-launch.json",
+      "bytes": 571,
+      "sha256": "c9eef0955c05570574e086b24d92eebd30e67247606ecb72efc2b42b69dfd354"
+    },
+    {
+      "path": "copy-native/bno-copy-native-post-identities.json",
+      "bytes": 3520,
+      "sha256": "285fb4fd9543d82cc1fd7f27649b3cae8993351bf6bb538768b2eba1297d90db"
+    },
+    {
+      "path": "copy-native/bno-copy-outcomes.json",
+      "bytes": 1708,
+      "sha256": "bd4f82d7b56cff1a36dfa4613b4efce77904d6706720ace8e196b34e9ba0340f"
+    },
+    {
+      "path": "copy-native/bno-copy-x64-after.json",
+      "bytes": 490,
+      "sha256": "a74c1951c6e0b3a31bea89b2d409dcd52f1ab3edd48d964a0538fc17defa1be9"
+    },
+    {
+      "path": "copy-native/bno-copy-x64-ascii.log",
+      "bytes": 291759,
+      "sha256": "ce37b7dc44da7da300c05dcf1907e84aade67091c74c9e1b6eba13f8fbc27769"
+    },
+    {
+      "path": "copy-native/bno-copy-x64-before.json",
+      "bytes": 490,
+      "sha256": "a74c1951c6e0b3a31bea89b2d409dcd52f1ab3edd48d964a0538fc17defa1be9"
+    },
+    {
+      "path": "copy-native/bno-copy-x64-build.log",
+      "bytes": 32,
+      "sha256": "5c55f761865fe30091ede3531dc30af22d735a4dd8e6727bd2b54503b9ac044d"
+    },
+    {
+      "path": "copy-native/bno-copy-x64-long.log",
+      "bytes": 1951358,
+      "sha256": "ac3be1c0153bc3a3f540c79e8dd151d7b3240ded54dd6921dca7d2ed673cac3c"
+    },
+    {
+      "path": "copy-native/bno-copy-x64-unicode.log",
+      "bytes": 283091,
+      "sha256": "6da8625c8e732f11b334b8d32cff27abab4134b5feaf9e4b799bef980e9a6ee7"
+    },
+    {
+      "path": "copy-native/bno-copy-x86-after.json",
+      "bytes": 488,
+      "sha256": "cff232118bd43028a37cab765db5f7cb0b6d72220c23ebc80e8e807678577cf5"
+    },
+    {
+      "path": "copy-native/bno-copy-x86-ascii.log",
+      "bytes": 253818,
+      "sha256": "cf7158cf28dd188ff8760e7ccdc46d818a1dcf2381e442bf3037815b5430caeb"
+    },
+    {
+      "path": "copy-native/bno-copy-x86-before.json",
+      "bytes": 488,
+      "sha256": "cff232118bd43028a37cab765db5f7cb0b6d72220c23ebc80e8e807678577cf5"
+    },
+    {
+      "path": "copy-native/bno-copy-x86-build.log",
+      "bytes": 32,
+      "sha256": "5c55f761865fe30091ede3531dc30af22d735a4dd8e6727bd2b54503b9ac044d"
+    },
+    {
+      "path": "copy-native/bno-copy-x86-laa-after.json",
+      "bytes": 502,
+      "sha256": "252db7f3097e07d0a66c92a3426aff2934f6f8b46e6ec5dd7e994ab6104c6f31"
+    },
+    {
+      "path": "copy-native/bno-copy-x86-laa-ascii.log",
+      "bytes": 262082,
+      "sha256": "0697e8d81ea9c6afe232325c27ca89ec3c6910aac5763b9cc2694f572d4014e3"
+    },
+    {
+      "path": "copy-native/bno-copy-x86-laa-before.json",
+      "bytes": 502,
+      "sha256": "252db7f3097e07d0a66c92a3426aff2934f6f8b46e6ec5dd7e994ab6104c6f31"
+    },
+    {
+      "path": "copy-native/bno-copy-x86-laa-build.log",
+      "bytes": 32,
+      "sha256": "5c55f761865fe30091ede3531dc30af22d735a4dd8e6727bd2b54503b9ac044d"
+    },
+    {
+      "path": "copy-native/bno-copy-x86-laa-long.log",
+      "bytes": 1857618,
+      "sha256": "9d860eb732ae9a406b6b2c5cddb457f971688f0271cea695e55bae77b60e2271"
+    },
+    {
+      "path": "copy-native/bno-copy-x86-laa-unicode.log",
+      "bytes": 245658,
+      "sha256": "f13ac6b911c0f55ffcb91d0a499f403b864b8f5e62483b13f9d1641c0723cc0f"
+    },
+    {
+      "path": "copy-native/bno-copy-x86-long.log",
+      "bytes": 1857614,
+      "sha256": "f5e81968d50fadc4450b15ba235add64df95e52b8ee8b22f6290085d1bc8be9a"
+    },
+    {
+      "path": "copy-native/bno-copy-x86-unicode.log",
+      "bytes": 244706,
+      "sha256": "b843b9d05593e671fb5ce96acf7c8ebadac1672fd13ae0c5dfab892fd2379b7d"
+    },
+    {
+      "path": "copy-native/make-copy-corpus.py",
+      "bytes": 2861,
+      "sha256": "73f34b70bdfea3b4cb0048574642639e4f5ba85cab886785d04e4b3738155fb4"
+    },
+    {
+      "path": "copy-native/native-bno-copy-boundaries.cpp",
+      "bytes": 3501,
+      "sha256": "83189ac043b406bcac2782e05bf14e3556c16d80ed8898aff7620309238d657e"
+    },
+    {
+      "path": "copy-native/native-bno-copy-child.cpp",
+      "bytes": 3801,
+      "sha256": "0c8c05094853ef5f7aeaa71565dbf1b03a22b40c573fdf95bb533f702d543ba8"
+    },
+    {
+      "path": "copy-native/native-bno-copy-curve-child.cpp",
+      "bytes": 4256,
+      "sha256": "fb6ac40384206b54bb0ea7f1050b1130d3e0bcf3a8bce8f28d95a6cc906d3149"
+    },
+    {
+      "path": "copy-native/native-bno-copy-curve.ps1",
+      "bytes": 1860,
+      "sha256": "0415cfbaa78de3356b6f29d6ca58b94adefc4649ef1bae3fca11d54d272fcdad"
+    },
+    {
+      "path": "copy-native/native-bno-copy.ps1",
+      "bytes": 3137,
+      "sha256": "35bf3f629bff20a829683f1f2795fee5496bc680d9ae38418c8c23f7c80447d6"
+    },
+    {
+      "path": "copy-native/run-bno-copy-curve.py",
+      "bytes": 1186,
+      "sha256": "a221f2fddb2e97d10021ed4a317ed4185cca93fba12fd038a854f9942b560d3a"
+    },
+    {
+      "path": "copy-native/run-bno-copy.py",
+      "bytes": 1162,
+      "sha256": "c4552c6c944b2d8a5df1a6f09c11ed2417833e01807d37f11917406682ddfde3"
+    },
+    {
+      "path": "copy-native/verify-bno-copy-native.py",
+      "bytes": 1112,
+      "sha256": "59833671a91e673230061b8deddf064cc28a5c350e82b138e5aed346de54f878"
+    },
+    {
+      "path": "copy-cases.json",
+      "bytes": 34410882,
+      "sha256": "566371208bdc88a6384a4cacc4cf7d5e1f45005d1b039bd7561e94e42697a8ba"
+    },
+    {
+      "path": "copy-native/stress-results.json",
+      "bytes": 778,
+      "sha256": "3afd45c36c7de689fdb605898ef5191fc821700e6bd24f6c6d7292c49923017a"
+    }
+  ]
+}

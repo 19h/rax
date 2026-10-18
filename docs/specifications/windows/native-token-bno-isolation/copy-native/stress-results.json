@@ -1,0 +1,32 @@
+[
+  {
+    "case": "native-copy-source",
+    "rejected": true,
+    "error": "ValueError: native copy producer source"
+  },
+  {
+    "case": "native-copy-machine",
+    "rejected": true,
+    "error": "ValueError: native copy executable ABI"
+  },
+  {
+    "case": "missing-copy-profile",
+    "rejected": true,
+    "error": "ValueError: native copy child completion"
+  },
+  {
+    "case": "copy-handle-leak",
+    "rejected": true,
+    "error": "ValueError: native child and fixture lifetime"
+  },
+  {
+    "case": "missing-copy-row",
+    "rejected": true,
+    "error": "ValueError: copy replay corpus exactly matches native observations"
+  },
+  {
+    "case": "invented-copy-success-raw-and-corpus",
+    "rejected": true,
+    "error": "ValueError: native copy semantic fingerprint"
+  }
+]

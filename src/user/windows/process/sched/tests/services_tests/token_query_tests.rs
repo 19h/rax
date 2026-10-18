@@ -8,6 +8,9 @@ mod session_id;
 #[path = "token_scalar_tests.rs"]
 mod scalar_properties;
 
+#[path = "token_bno_tests.rs"]
+mod bno_isolation;
+
 fn setup(arch: WinArch, laa: bool) -> (WindowsProcess, Thread, u64, [u64; 3]) {
     setup_runtime(arch, laa, false)
 }

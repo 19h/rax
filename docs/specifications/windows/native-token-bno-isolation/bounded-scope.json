@@ -1,0 +1,45 @@
+[
+  {
+    "impact": "high",
+    "finding": "Both ordinary programs return success from class44 and advance100 observer turns to unsupported NtCreateMutant. Neither reaches a successful guest exit.",
+    "evidence": "validation/ordinary-analysis.json",
+    "blocks": "Overall process-userland completion and any successful-exit claim."
+  },
+  {
+    "impact": "high",
+    "finding": "Returning an enabled BNO prefix does not capture its corresponding object directory.",
+    "evidence": "Class44 private child controls and existing object-namespace selection whitelist.",
+    "blocks": "An enabled guest startup completion claim if it opens that uncaptured directory."
+  },
+  {
+    "impact": "medium",
+    "finding": "Four executable profiles share one ARM64 Windows kernel; different Windows builds and native x64/x86 kernels remain unmeasured.",
+    "evidence": "native probe identity lines",
+    "blocks": "Universal Windows-build equivalence claims."
+  },
+  {
+    "impact": "medium",
+    "finding": "Frozen Assist carrier ABI184 and newer root Rust are distinct validation surfaces.",
+    "evidence": "Preceding namespace group retained-carrier manifests.",
+    "blocks": "Whole-current-root GUI/plugin/package validation claims."
+  },
+  {
+    "impact": "medium",
+    "finding": "Native copy-side-effect observations come from one ARM64 Windows kernel with x64/x86 compatibility layers. Actual converter callee identity and other kernel implementations remain unverified.",
+    "evidence": "copy-native raw runs and copy-locations observations in the task cache",
+    "blocks": "Universal Windows kernel/architecture claims; the bounded native comparison is explicit."
+  },
+  {
+    "impact": "high",
+    "finding": "An enabled BNO prefix can identify a private namespace subtree beyond the fixed paths selected by the namespace capture. Class44 metadata alone does not populate that subtree.",
+    "evidence": "src/user/windows/object_namespace.rs selection_paths and selected_for_session_partial; src/user/windows/dll/native/token_query.rs bno_information",
+    "blocks": "Broader process execution that needs those private directory objects; the class44 query contract is independently bounded.",
+    "action": "Keep enabled metadata tests explicit; audit the first private-directory request when validating an enabled-token process."
+  },
+  {
+    "impact": "medium",
+    "finding": "Five existing Windows lowerer failures and two ignored tests remain explicit.",
+    "evidence": "validation/native-bno-epoch5-full.log",
+    "blocks": "An all-green regression claim."
+  }
+]
