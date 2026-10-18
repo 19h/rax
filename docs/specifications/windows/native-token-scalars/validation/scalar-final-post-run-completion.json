@@ -1,0 +1,15 @@
+{
+  "utc": "2026-10-18T01:40:49.385050+00:00",
+  "checks": [
+    {
+      "script": "verify-scalar-final.py",
+      "log": "native-scalar-final-source-post-run.log",
+      "exit-code": 0
+    },
+    {
+      "script": "verify-scalar-post-run.py",
+      "log": "native-scalar-final-post-run-verifier.log",
+      "exit-code": 0
+    }
+  ]
+}

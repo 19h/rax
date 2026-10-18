@@ -1,0 +1,15 @@
+{
+  "utc": "2026-10-18T00:42:07.585051+00:00",
+  "observed-command": [
+    "python3",
+    "-B",
+    "proof/stress-native.py"
+  ],
+  "exit-code": 1,
+  "observed-error": "RuntimeError: accepted altered evidence wrong-elevation-length-priority",
+  "cause": "The semantic checker pinned invalid-handle elevation size output but did not pin the corresponding primary-token size output.",
+  "source-before-fix": {
+    "check-native.py": "db4809be23f83739fd88a59c874cde4c0e9ca1aa739ead0727a1aa7fdaf8eb77",
+    "stress-native.py": "0b6e1dbb81c03baa6f2981e09995e7258ac447a990635483c63a123acf331aaa"
+  }
+}

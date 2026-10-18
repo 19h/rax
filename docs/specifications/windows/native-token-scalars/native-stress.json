@@ -1,0 +1,32 @@
+[
+  {
+    "case": "missing-post-profile",
+    "rejected": true,
+    "error": "ValueError: complete post-run native profiles"
+  },
+  {
+    "case": "wrong-PE-machine",
+    "rejected": true,
+    "error": "ValueError: machine and LAA"
+  },
+  {
+    "case": "invented-DWORD-width",
+    "rejected": true,
+    "error": "ValueError: native selector status, width and value"
+  },
+  {
+    "case": "wrong-elevation-length-priority",
+    "rejected": true,
+    "error": "ValueError: elevation exact length precedes handle"
+  },
+  {
+    "case": "wrong-WoW64-probe-priority",
+    "rejected": true,
+    "error": "ValueError: WoW64 pre-probe rejection"
+  },
+  {
+    "case": "invented-private-DWORD-preservation",
+    "rejected": true,
+    "error": "ValueError: private Boolean normalization"
+  }
+]

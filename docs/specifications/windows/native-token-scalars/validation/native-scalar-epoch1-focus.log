@@ -1,0 +1,60 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src-token-scalars)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3m 49s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-system-time-final\debug\deps\rax-d861ee8f992d7cb6.exe)
+
+running 34 tests
+test smir::interpret::tests::evex::part3::x86_fixup_imm_exact_semantics_cover_tokens_responses_daz_and_reports ... ok
+test user::mm::windows_identity::tests::last_owner_reaps_entry_and_reopen_does_not_reuse_token ... ok
+test user::windows::objects::primary_token::tests::native_process_token_handles_share_identity_and_survive_final_close ... ok
+test user::windows::objects::primary_token::tests::native_process_token_identifier_exhaustion_has_no_birth ... ok
+test user::windows::objects::primary_token::tests::native_process_token_reference_exhaustion_preserves_existing_owner ... ok
+test user::windows::process::sched::tests::services_tests::access_check_tests::captured_impersonation_token_query_uses_its_subject_without_primary_capture ... ok
+test user::windows::process::sched::tests::services_tests::access_check_tests::native_access_check_replays_private_token_privilege_records_all_guest_abis ... ok
+test user::windows::process::sched::tests::services_tests::process_token_open_tests::installed::native_process_token_installed_leaf_matches_grants_faults_and_ret12 ... ok
+test user::windows::process::sched::tests::services_tests::process_token_open_tests::native_process_token_missing_capture_and_foreign_subject_refuse_without_birth ... ok
+test user::windows::process::sched::tests::services_tests::process_token_open_tests::native_process_token_opens_share_identity_and_keep_independent_grants_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::process_token_open_tests::native_process_token_respects_a_reduced_captured_ceiling_and_security_grant ... ok
+test user::windows::process::sched::tests::services_tests::process_token_open_tests::replay::native_process_token_replays_4096_initial_handle_access_and_output_records ... ok
+test user::windows::process::sched::tests::services_tests::process_token_open_tests::replay::native_process_token_replays_52860_native_access_masks_and_exact_grants ... ok
+test user::windows::process::sched::tests::services_tests::process_token_open_tests::replay::native_process_token_replays_8640_native_output_boundary_records ... ok
+test user::windows::process::sched::tests::services_tests::thread_token_tests::installed::native_thread_token_installed_profile_copyback_preserves_measured_guard_priority ... ok
+test user::windows::process::sched::tests::services_tests::thread_token_tests::native_thread_token_cross_page_copy_faults_match_all_96_original_rows ... ok
+test user::windows::process::sched::tests::services_tests::thread_token_tests::native_thread_token_negative_pseudo_handles_and_rtl_translation_match_all_native_profiles ... ok
+test user::windows::process::sched::tests::services_tests::thread_token_tests::native_thread_token_profile_refuses_unimplemented_impersonation_attachment_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::thread_token_tests::native_thread_token_replays_all_6192_absent_token_rows_with_measured_copy_guards_and_no_birth ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::native_token_query_installed_leaves_replay_every_record_on_available_profiles ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::native_token_query_reads_retained_false_true_and_missing_subject_state ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::native_token_query_replays_all_7320_native_profile_rows ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::scalar_properties::native_token_scalars_installed_leaves_match_independent_host_capture ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::scalar_properties::native_token_scalars_preserve_nonzero_values_and_refuse_uncaptured_identity ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::scalar_properties::native_token_scalars_replay_all_109800_native_matrix_queries ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::session_id::native_token_session_id_installed_leaves_replay_native_profiles ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::session_id::native_token_session_id_preserves_nonzero_values_and_rejects_missing_identity ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::session_id::native_token_session_id_replays_all_7320_native_rows ... ok
+test user::windows::process::start::token_session_id_tests::native_token_session_id_keeps_peb_process_session_separate_from_token_value ... ok
+test user::windows::security::token::scalars::tests::native_token_scalar_capture_separates_missing_invalid_class_and_checked_values ... ok
+test user::windows::security::token::tests::native_process_token_profile_orders_illegal_bits_privilege_and_grants ... ok
+test user::windows::security::token::tests::native_process_token_profile_preserves_measured_generic_mappings ... ok
+test user::windows::security::token::tests::native_process_token_profile_rejects_unknown_capture_shapes ... ok
+test user::windows::wnf::tests::primary_token_property_is_retained_independently_of_catalog_records ... ok
+
+test result: ok. 34 passed; 0 failed; 0 ignored; 0 measured; 7318 filtered out; finished in 39.89s
+

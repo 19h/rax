@@ -6,6 +6,7 @@ use std::io;
 use std::ptr::null_mut;
 
 mod access;
+mod scalars;
 
 type Handle = *mut c_void;
 #[link(name = "kernel32")]
@@ -110,7 +111,13 @@ fn groups(buffer: &[u8]) -> io::Result<Vec<Group>> {
         .map(|i| group(buffer, start + i * stride))
         .collect()
 }
-fn capture(token: &Token) -> io::Result<(Subject, u32)> {
+fn capture(
+    token: &Token,
+) -> io::Result<(
+    Subject,
+    u32,
+    crate::user::windows::security::token::scalars::Scalars,
+)> {
     let user = group(&information(token, 1)?, 0)?.sid;
     let enabled_groups = groups(&information(token, 2)?)?;
     let restricted = groups(&information(token, 11)?)?;
@@ -147,16 +154,21 @@ fn capture(token: &Token) -> io::Result<(Subject, u32)> {
             privileges,
         },
         session,
+        scalars::capture(token)?,
     ))
 }
-pub(super) fn subject() -> io::Result<(Subject, crate::user::windows::security::token::Access, u32)>
-{
+pub(super) fn subject() -> io::Result<(
+    Subject,
+    crate::user::windows::security::token::Access,
+    u32,
+    crate::user::windows::security::token::scalars::Scalars,
+)> {
     let (token, access) = access::select()?;
     for _ in 0..3 {
         let first = capture(&token)?;
         if first == capture(&token)? {
-            let (subject, session) = first;
-            return Ok((subject, access, session));
+            let (subject, session, scalars) = first;
+            return Ok((subject, access, session, scalars));
         }
     }
     Err(invalid(

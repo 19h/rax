@@ -1,0 +1,67 @@
+//! Native fixed-width token properties; no guest request enters this adapter.
+use super::{Handle, Token, invalid};
+use crate::user::windows::nt::status::STATUS_INVALID_INFO_CLASS;
+use crate::user::windows::security::token::scalars::{CLASSES, CapturedScalar, Scalars, width};
+use std::ffi::c_void;
+use std::io;
+
+#[link(name = "ntdll")]
+unsafe extern "system" {
+    fn NtQueryInformationToken(
+        token: Handle,
+        class: u32,
+        output: *mut c_void,
+        bytes: u32,
+        returned: *mut u32,
+    ) -> i32;
+}
+
+pub(super) fn capture(token: &Token) -> io::Result<Scalars> {
+    let mut values = Vec::with_capacity(CLASSES.len());
+    for class in CLASSES {
+        // A u32 enforces the native four-byte alignment, even for byte queries.
+        let mut native_output = 0xA5A5_A5A5u32;
+        let mut returned = 0;
+        // SAFETY: a live private query handle, four owned initialized bytes,
+        // and an exclusive ULONG output. No native pointer escapes this call.
+        let status = unsafe {
+            NtQueryInformationToken(
+                token.0,
+                class,
+                (&mut native_output as *mut u32).cast(),
+                4,
+                &mut returned,
+            )
+        } as u32;
+        let output = native_output.to_ne_bytes();
+        let value = if status == STATUS_INVALID_INFO_CLASS {
+            if returned != 0 || output != [0xA5; 4] {
+                return Err(invalid(
+                    "unavailable native token class changed its outputs",
+                ));
+            }
+            CapturedScalar::InvalidClass
+        } else {
+            let expected = width(class).ok_or_else(|| {
+                invalid("native token query became available with an unmodeled layout")
+            })?;
+            if status != 0 || returned != expected {
+                return Err(io::Error::other(format!(
+                    "native token class {class} capture failed: status={status:#010x}, bytes={returned}"
+                )));
+            }
+            let value = if expected == 1 {
+                if output[1..] != [0xA5; 3] {
+                    return Err(invalid("native token byte query changed adjacent bytes"));
+                }
+                u32::from(output[0])
+            } else {
+                u32::from_ne_bytes(output)
+            };
+            CapturedScalar::Value(value)
+        };
+        values.push((class, value));
+    }
+    Scalars::selected(values)
+        .ok_or_else(|| invalid("native token scalar capture is outside its domain"))
+}

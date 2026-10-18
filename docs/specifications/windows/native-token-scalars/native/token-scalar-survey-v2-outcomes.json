@@ -1,0 +1,362 @@
+﻿[
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "class":  15,
+        "log":  "token-scalar-survey-v2-arm64-class15.log"
+    },
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "class":  18,
+        "log":  "token-scalar-survey-v2-arm64-class18.log"
+    },
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "class":  20,
+        "log":  "token-scalar-survey-v2-arm64-class20.log"
+    },
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "class":  21,
+        "log":  "token-scalar-survey-v2-arm64-class21.log"
+    },
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "class":  23,
+        "log":  "token-scalar-survey-v2-arm64-class23.log"
+    },
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "class":  24,
+        "log":  "token-scalar-survey-v2-arm64-class24.log"
+    },
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "class":  26,
+        "log":  "token-scalar-survey-v2-arm64-class26.log"
+    },
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "class":  27,
+        "log":  "token-scalar-survey-v2-arm64-class27.log"
+    },
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "class":  32,
+        "log":  "token-scalar-survey-v2-arm64-class32.log"
+    },
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "class":  40,
+        "log":  "token-scalar-survey-v2-arm64-class40.log"
+    },
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "class":  42,
+        "log":  "token-scalar-survey-v2-arm64-class42.log"
+    },
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "class":  45,
+        "log":  "token-scalar-survey-v2-arm64-class45.log"
+    },
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "class":  46,
+        "log":  "token-scalar-survey-v2-arm64-class46.log"
+    },
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "class":  47,
+        "log":  "token-scalar-survey-v2-arm64-class47.log"
+    },
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "class":  48,
+        "log":  "token-scalar-survey-v2-arm64-class48.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "class":  15,
+        "log":  "token-scalar-survey-v2-x64-class15.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "class":  18,
+        "log":  "token-scalar-survey-v2-x64-class18.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "class":  20,
+        "log":  "token-scalar-survey-v2-x64-class20.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "class":  21,
+        "log":  "token-scalar-survey-v2-x64-class21.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "class":  23,
+        "log":  "token-scalar-survey-v2-x64-class23.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "class":  24,
+        "log":  "token-scalar-survey-v2-x64-class24.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "class":  26,
+        "log":  "token-scalar-survey-v2-x64-class26.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "class":  27,
+        "log":  "token-scalar-survey-v2-x64-class27.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "class":  32,
+        "log":  "token-scalar-survey-v2-x64-class32.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "class":  40,
+        "log":  "token-scalar-survey-v2-x64-class40.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "class":  42,
+        "log":  "token-scalar-survey-v2-x64-class42.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "class":  45,
+        "log":  "token-scalar-survey-v2-x64-class45.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "class":  46,
+        "log":  "token-scalar-survey-v2-x64-class46.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "class":  47,
+        "log":  "token-scalar-survey-v2-x64-class47.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "class":  48,
+        "log":  "token-scalar-survey-v2-x64-class48.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "class":  15,
+        "log":  "token-scalar-survey-v2-x86-class15.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "class":  18,
+        "log":  "token-scalar-survey-v2-x86-class18.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "class":  20,
+        "log":  "token-scalar-survey-v2-x86-class20.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "class":  21,
+        "log":  "token-scalar-survey-v2-x86-class21.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "class":  23,
+        "log":  "token-scalar-survey-v2-x86-class23.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "class":  24,
+        "log":  "token-scalar-survey-v2-x86-class24.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "class":  26,
+        "log":  "token-scalar-survey-v2-x86-class26.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "class":  27,
+        "log":  "token-scalar-survey-v2-x86-class27.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "class":  32,
+        "log":  "token-scalar-survey-v2-x86-class32.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "class":  40,
+        "log":  "token-scalar-survey-v2-x86-class40.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "class":  42,
+        "log":  "token-scalar-survey-v2-x86-class42.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "class":  45,
+        "log":  "token-scalar-survey-v2-x86-class45.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "class":  46,
+        "log":  "token-scalar-survey-v2-x86-class46.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "class":  47,
+        "log":  "token-scalar-survey-v2-x86-class47.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "class":  48,
+        "log":  "token-scalar-survey-v2-x86-class48.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "class":  15,
+        "log":  "token-scalar-survey-v2-x86-laa-class15.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "class":  18,
+        "log":  "token-scalar-survey-v2-x86-laa-class18.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "class":  20,
+        "log":  "token-scalar-survey-v2-x86-laa-class20.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "class":  21,
+        "log":  "token-scalar-survey-v2-x86-laa-class21.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "class":  23,
+        "log":  "token-scalar-survey-v2-x86-laa-class23.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "class":  24,
+        "log":  "token-scalar-survey-v2-x86-laa-class24.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "class":  26,
+        "log":  "token-scalar-survey-v2-x86-laa-class26.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "class":  27,
+        "log":  "token-scalar-survey-v2-x86-laa-class27.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "class":  32,
+        "log":  "token-scalar-survey-v2-x86-laa-class32.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "class":  40,
+        "log":  "token-scalar-survey-v2-x86-laa-class40.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "class":  42,
+        "log":  "token-scalar-survey-v2-x86-laa-class42.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "class":  45,
+        "log":  "token-scalar-survey-v2-x86-laa-class45.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "class":  46,
+        "log":  "token-scalar-survey-v2-x86-laa-class46.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "class":  47,
+        "log":  "token-scalar-survey-v2-x86-laa-class47.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "class":  48,
+        "log":  "token-scalar-survey-v2-x86-laa-class48.log"
+    }
+]

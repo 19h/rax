@@ -1,0 +1,19 @@
+{
+  "base": "19f28635c84a62dbc99b67d4775e8289dd6bc5ba",
+  "utc": "2026-10-18T00:52:34.887087+00:00",
+  "paths": [
+    "src/user/windows/dll/native/token_query.rs",
+    "src/user/windows/objects/wnf.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_scalar_tests.rs",
+    "src/user/windows/security/token/scalars/tests.rs",
+    "src/user/windows/security/token/scalars.rs",
+    "src/user/windows/security/token.rs",
+    "src/user/windows/wnf/catalog.rs",
+    "src/user/windows/wnf/installed/scalars.rs",
+    "src/user/windows/wnf/installed.rs",
+    "src/user/windows/wnf.rs",
+    "src/user/windows/native-runtime.md"
+  ],
+  "documentation-prefix": "docs/specifications/windows/native-token-scalars/"
+}

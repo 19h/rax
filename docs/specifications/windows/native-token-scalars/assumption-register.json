@@ -1,0 +1,56 @@
+[
+  {
+    "id": "P1",
+    "assumption": "All candidate native token scalar queries require four output bytes.",
+    "basis": "Win32 enumeration descriptions and PHNT annotations; provisional survey design.",
+    "dependent-result": "Initial reference query acceptance.",
+    "stress-test": "Record exact native NTSTATUS, ReturnLength and adjacent bytes for all selectors/profiles.",
+    "falsification-probe": "A successful query returns a length other than four.",
+    "status": "falsified: native64 class21 returns one byte; version2 measures length instead of asserting four"
+  },
+  {
+    "id": "P2",
+    "assumption": "The selected primary token is immutable for the guest process lifetime.",
+    "basis": "Existing process-runtime contract admits no token mutation or host-thread impersonation.",
+    "dependent-result": "Guest queries can use captured metadata without host calls.",
+    "stress-test": "Missing subject, missing property, mismatched token identity, unsupported impersonation and native repeated-capture disagreement.",
+    "falsification-probe": "An admitted guest operation changes the selected token or one of its captured properties.",
+    "status": "retained"
+  },
+  {
+    "id": "P3",
+    "assumption": "Native NtQueryInformationToken behavior must be measured separately from Win32 GetTokenInformation descriptions.",
+    "basis": "Native class21 returned one byte; the Win32 enum describes a DWORD. The APIs are distinct.",
+    "dependent-result": "Capture uses the native API and adapter decisions follow the native caller matrix.",
+    "stress-test": "Compare status, width, access precedence and byte preservation across four caller profiles.",
+    "falsification-probe": "A design decision relies only on the other API's description.",
+    "status": "confirmed for the complete native survey; interfaces remain distinct"
+  },
+  {
+    "id": "P4",
+    "assumption": "Four profiles on one ARM64 Windows kernel establish only that measured kernel/profile set.",
+    "basis": "Each producer records RtlGetVersion, PE machine/LAA and source/binary identities.",
+    "dependent-result": "No physical x64-kernel or universal Windows-version coverage claim.",
+    "stress-test": "Complete ordered rows and post-run identity for every profile/selector.",
+    "falsification-probe": "Missing producer, unfinished matrix or mismatched source/binary identity.",
+    "status": "confirmed for the measured kernel and four caller profiles"
+  },
+  {
+    "id": "P5",
+    "assumption": "Private-namespace values normalize every nonzero tested setter value to one.",
+    "basis": "Twenty-four private-token value controls across four caller profiles.",
+    "dependent-result": "Class42 is a Boolean-valued four-byte field, distinct from arbitrary session IDs.",
+    "stress-test": "Zero, one, seven, 0x12345678, 0x80000000 and 0xffffffff; duplicate-token value and successful thread reversion.",
+    "falsification-probe": "Any retained private control differs from zero-versus-nonzero normalization.",
+    "status": "confirmed for tested values and kernel"
+  },
+  {
+    "id": "P6",
+    "assumption": "A four-byte byte array on the Rust stack provides the native output alignment.",
+    "basis": "Initial native capture and test oracle used [u8;4], whose type alignment is one; the measured API requires four-byte output alignment.",
+    "dependent-result": "Native reference/capture calls must not depend on compiler stack placement.",
+    "stress-test": "Changed stack layout or compiler optimization must retain valid aligned native pointers.",
+    "falsification-probe": "Compare align_of::<[u8;4]>() with the measured four-byte requirement.",
+    "status": "falsified for byte-array type alignment; revised to explicit u32 storage and confirmed by corrected focused and final validation"
+  }
+]

@@ -2245,3 +2245,30 @@ Full ordinary Windows application completion remains unproven. See the
 [native contract and exact validation evidence](../../../docs/specifications/windows/native-token-session-id/README.md).
 
 The preserved upstream parent `e4f998244e3eec728f87a85482d4aa62566e802b` uses Rust ABI minor 203; its selected C++ sources match. Its newer Rust code is outside the retained carrier validation.
+
+
+## Captured native scalar token queries (2026-10-18)
+
+Fifteen additional `NtQueryInformationToken` selectors now follow captured native
+values or explicit invalid-class capabilities. Six measured behaviors distinguish
+minimum DWORD buffers, TokenElevation's exact length and early ReturnLength,
+TokenHasRestrictions' byte result with four-byte alignment, and WoW64/native
+unavailable-selector probe ordering. Missing capture and unmodeled impersonation
+properties remain explicit refusals; no guest token mutation or host forwarding
+is added. Native buffer storage is explicitly four-byte aligned.
+
+Native proof contains 109800 matrix queries, 60 references and separately 24 private
+Boolean cases / 72 queries / 24 setters. The final core/workspace binds 5718 inputs. Full
+suites are macOS 7909/0/2, Linux 7903/0/2 and Windows 7345/5/2, retaining the five
+known Windows lowerer failures. C API 168, all-target checks and scoped owning
+consumers/complete empty-core-feature archives pass; owning records bind 409 inputs.
+Frozen RustABI 184 and compared/upstream root ABIs remain distinct.
+
+Unchanged ordinary-observer outcomes:
+
+- `terminal turn=2149956 Complete(Internal("native NTDLL service NtOpenDirectoryObject: Unimplemented(\"NtOpenDirectoryObject: NT directory outside selected installed namespace\")"))`
+- `terminal turn=2152305 Complete(Internal("native NTDLL service NtOpenDirectoryObject: Unimplemented(\"NtOpenDirectoryObject: NT directory outside selected installed namespace\")"))`
+
+Both executed ordinary programs pass token classes 12, 29 and 42, then stop at an uncaptured NtOpenDirectoryObject namespace: smoke at turn 2149956 and whoami at turn 2152305. Neither terminal is a successful guest exit; the broader process-userland goal remains incomplete.
+
+[Native contract and full evidence](../../../docs/specifications/windows/native-token-scalars/README.md).

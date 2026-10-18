@@ -1,0 +1,75 @@
+[
+  {
+    "gate": "full",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 750.5710048675537,
+    "log": "macos-scalar-final-full.log",
+    "sha256": "330b42e8d24593505e68994a34d495c54a9adf62065c31d5e5bd39663f706ad2"
+  },
+  {
+    "gate": "capi",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "-p",
+      "rax-capi",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 141.2815089225769,
+    "log": "macos-scalar-final-capi.log",
+    "sha256": "6f4d5ff5ef221c350a4ce604beee40bdb1310aa25af83cc890dbb153f23c1749"
+  },
+  {
+    "gate": "integration",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--test",
+      "user_windows",
+      "--test",
+      "user_windows_memory",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 216.95345282554626,
+    "log": "macos-scalar-final-integration.log",
+    "sha256": "055d67c8766f61987de2363e1f215f93c1f9d060eac061d073a18a145500ee8e"
+  },
+  {
+    "gate": "all-targets",
+    "argv": [
+      "cargo",
+      "check",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ],
+    "exit-code": 0,
+    "seconds": 157.31405425071716,
+    "log": "macos-scalar-final-all-targets.log",
+    "sha256": "1e64e4744db95065bd769a8e4d4e1e625ce668e166b6b6a1aed52ca48a30877e"
+  }
+]

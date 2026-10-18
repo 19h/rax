@@ -1,0 +1,13 @@
+Junction created for C:\Windows\Temp\assist-native-rax-20261010\assist\vendor\rax <<===>> C:\Windows\Temp\assist-native-rax-20261010\src-token-scalars
+Retargeted verified task-owned RAX junction
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+Verified 409 owning source identities and 3 helpers
+Verified9 actual frozen Windows C++ sources against current root
+assist-native-scalar-final-shipping.log 3FC6F18FF227FFCE36404C51B342E56591ACCD1723A01F0539A8C57E2F446643
+assist-native-scalar-final-cpp.log B0F277678BC54485CF58C6295345A12235DF27C7D420C5085B93AB253E75E214
+validated rlib: C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-owned\debug\deps\librax-e6c413934cad3a8f.rlib
+Verified 409 owning source identities and 3 helpers
+windows [(1205415480, 4674, 'c7ea4c72b31c679c742d8beec02d8ff1bcaeff91c281bf5c2ea1c2567912f569'), (815668340, 260, '2fcfabac7a13403b1287e7265a345df880a8468bb6ebba6346f87dbe715430c2')]

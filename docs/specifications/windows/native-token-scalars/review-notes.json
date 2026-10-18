@@ -1,0 +1,49 @@
+{
+  "alignment-correction": {
+    "utc": "2026-10-18T01:00:12.862299+00:00",
+    "before": [
+      {
+        "path": "src/user/windows/wnf/installed/scalars.rs",
+        "bytes": 2296,
+        "sha256": "c25612a32f5697b61203f460bfe0dd89d35fc5accc436e813ea5d35e0eeb406a"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/token_scalar_tests.rs",
+        "bytes": 14904,
+        "sha256": "74266508675c76fbde1510697d95c0645903b2e3a8e4944fd5527d0a2976da4a"
+      }
+    ],
+    "after": [
+      {
+        "path": "src/user/windows/wnf/installed/scalars.rs",
+        "bytes": 2545,
+        "sha256": "ac213fc96a473214cca22da53d0ebd3ada803253c6e48a13860b741cd72f5bea"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/token_scalar_tests.rs",
+        "bytes": 15176,
+        "sha256": "5679e53debf09b804cdc978e28dff563981a002e16a6f7bedccc52cc81ecc079"
+      }
+    ],
+    "reason": "Use u32 storage to guarantee the measured native four-byte alignment; guest query semantics unchanged."
+  },
+  "ordinary-review": {
+    "status": "reviewed",
+    "summary": "Both executed ordinary programs pass token classes 12, 29 and 42, then stop at an uncaptured NtOpenDirectoryObject namespace: smoke at turn 2149956 and whoami at turn 2152305. Neither terminal is a successful guest exit; the broader process-userland goal remains incomplete.",
+    "outcomes": [
+      {
+        "program-sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b",
+        "terminal": "terminal turn=2149956 Complete(Internal(\"native NTDLL service NtOpenDirectoryObject: Unimplemented(\\\"NtOpenDirectoryObject: NT directory outside selected installed namespace\\\")\"))",
+        "log": "native-scalar-final-ordinary-0.log",
+        "sha256": "53e6bb85751ba330c40d72b011a8562ba480b954d75135605e40c55103c98748"
+      },
+      {
+        "program-sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6",
+        "terminal": "terminal turn=2152305 Complete(Internal(\"native NTDLL service NtOpenDirectoryObject: Unimplemented(\\\"NtOpenDirectoryObject: NT directory outside selected installed namespace\\\")\"))",
+        "log": "native-scalar-final-ordinary-2.log",
+        "sha256": "17e49dc5eaf49c3bef3fc34f8e5e3dc4bb29b2b551e0817b6e86c9ba7b274231"
+      }
+    ]
+  },
+  "scope": "Captured scalar query group; broader process-userland objective remains separate from these bounded results."
+}

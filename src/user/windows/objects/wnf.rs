@@ -65,6 +65,16 @@ impl Objects {
         self.wnf_subscriptions.catalog = Some(catalog);
     }
 
+    pub(crate) fn primary_token_scalar(
+        &self,
+        class: u32,
+    ) -> Option<crate::user::windows::security::token::scalars::CapturedScalar> {
+        self.wnf_subscriptions
+            .catalog
+            .as_ref()
+            .and_then(|catalog| catalog.primary_token_scalar(class))
+    }
+
     pub(crate) fn primary_token_session_id(&self) -> Option<u32> {
         self.wnf_subscriptions
             .catalog

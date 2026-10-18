@@ -1,0 +1,19 @@
+{
+  "pid": 6916,
+  "utc": "2026-10-18T01:05:30.548527+00:00",
+  "state": "finished",
+  "source": "src-token-scalars",
+  "source-inputs": 5718,
+  "child-pid": 11252,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-scalar-final-core.ps1"
+  ],
+  "core-exit-code": 0,
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T01:40:42.415022+00:00"
+}

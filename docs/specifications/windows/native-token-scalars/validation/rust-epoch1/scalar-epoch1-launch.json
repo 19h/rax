@@ -1,0 +1,16 @@
+{
+  "pid": 8492,
+  "utc": "2026-10-18T00:53:31.884421+00:00",
+  "state": "finished",
+  "child-pid": 10656,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-scalar-epoch1.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T00:59:40.476344+00:00"
+}

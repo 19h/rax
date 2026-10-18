@@ -1,0 +1,30 @@
+{
+  "QG1": {
+    "status": "pass for the bounded scalar-query group",
+    "evidence": "Technical implementation and native observations only."
+  },
+  "QG2": {
+    "status": "pass for the bounded scalar-query group",
+    "evidence": "assumption-register.json and explicit source-epoch alignment correction."
+  },
+  "QG3": {
+    "status": "pass for the bounded scalar-query group",
+    "evidence": "check-validation.py; broader process-userland objective remains open."
+  },
+  "QG4": {
+    "status": "pass for the bounded scalar-query group",
+    "evidence": "Byte/DWORD widths, explicit alignment, counts and bounded complexity."
+  },
+  "QG5": {
+    "status": "pass for the bounded scalar-query group",
+    "evidence": "Six measured behaviors, absent capture, unavailable classes and exact regression identities."
+  },
+  "QG6": {
+    "status": "pass for the bounded scalar-query group",
+    "evidence": "Primary sources, native post-run identities, raw matrices and actual selected Cargo artifacts."
+  },
+  "QG7": {
+    "status": "pass for the bounded scalar-query group",
+    "evidence": "bounded-scope.json and exact ordinary outcomes."
+  }
+}

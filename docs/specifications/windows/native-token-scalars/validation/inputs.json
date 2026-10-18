@@ -1,0 +1,614 @@
+{
+  "files": [
+    {
+      "path": "validation/alignment-fix-applied.json",
+      "bytes": 971,
+      "sha256": "31b7690652a112187a6c5e27536575246302e698c4efb040f535161c7a176c77"
+    },
+    {
+      "path": "validation/apply-alignment-fix.py",
+      "bytes": 3258,
+      "sha256": "6fb4b02d6f91e6126f19c1b0c6814a39a58cacf5ea75d415b67df6a12c62b5a1"
+    },
+    {
+      "path": "validation/assist-native-scalar-final-cpp.log",
+      "bytes": 2946,
+      "sha256": "b0f277678bc54485cf58c6295345a12235df27c7d420c5085b93ab253e75e214"
+    },
+    {
+      "path": "validation/assist-native-scalar-final-shipping.log",
+      "bytes": 1584,
+      "sha256": "3fc6f18ff227ffce36404c51b342e56591accd1723a01f0539a8c57e2f446643"
+    },
+    {
+      "path": "validation/collect-scalar-archives.py",
+      "bytes": 3346,
+      "sha256": "3062619c8caa1d2de1de5fd308ea29e4ca2f7ec019c486a0a9490a216e983fe9"
+    },
+    {
+      "path": "validation/current-cpp-consumers-scalar-root.json",
+      "bytes": 1959,
+      "sha256": "eb26e4cb98d5f54859123a0cb02b960205c8e16398ac91f39778ef033f994a09"
+    },
+    {
+      "path": "validation/linux-scalar-epoch1-focus.json",
+      "bytes": 991,
+      "sha256": "dbabde54e6bb0760b950efc8411b75ea8b52bb8ca3bb9ab3d0b2e4ca9974ba5d"
+    },
+    {
+      "path": "validation/linux-scalar-epoch1-focus.log",
+      "bytes": 4838,
+      "sha256": "e81aee05da15cd94255ee4b14717b50a969c58ad3b5eeef69c88076918611105"
+    },
+    {
+      "path": "validation/linux-scalar-epoch2-focus.json",
+      "bytes": 990,
+      "sha256": "183fb69eff86e69ee9204d401186a4a5f630bcd2e9c08a599659fdce1c808015"
+    },
+    {
+      "path": "validation/linux-scalar-epoch2-focus.log",
+      "bytes": 4645,
+      "sha256": "4aba2946376db9962ff2f6a97cac0efa2960269211e5701ba8fa668e4877ea99"
+    },
+    {
+      "path": "validation/linux-scalar-final-all-targets.log",
+      "bytes": 309,
+      "sha256": "a76c5855ad63eb5d8788d9f7849316436ab6a9ced1f3588b2044e4e46bc8ae4f"
+    },
+    {
+      "path": "validation/linux-scalar-final-capi.log",
+      "bytes": 12899,
+      "sha256": "f22ab0e5b4b3f4df7e589c09afc503cc5988d6ef1949cf86d3d34da278bd2940"
+    },
+    {
+      "path": "validation/linux-scalar-final-full.log",
+      "bytes": 821762,
+      "sha256": "7d7585ea1738649507bad3b3c1bb1a927a67fc99fea7069ea6c86177b002e43a"
+    },
+    {
+      "path": "validation/linux-scalar-final-gates.json",
+      "bytes": 4552,
+      "sha256": "70f702ca6feaae8813f92464a69fee35f6a34afbcfe06e3bce1f187489709a62"
+    },
+    {
+      "path": "validation/linux-scalar-final-integration.log",
+      "bytes": 35840,
+      "sha256": "7ae9155ea551124e98f1ddf33ff09f4e7dba0ccb3a5207ff835edd26a33d0dee"
+    },
+    {
+      "path": "validation/linux-scalar-final-owning-archive-identities.json",
+      "bytes": 81798,
+      "sha256": "6f383436e6a880610300f9b35a9019d0c28d28cb5bbbf39b04f1c2a2db572506"
+    },
+    {
+      "path": "validation/linux-scalar-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "8b912e7ddd1d7db72346a3b796ebc007c9adb3311c437f03a54538d145f5dd2a"
+    },
+    {
+      "path": "validation/linux-scalar-owning-artifacts.log",
+      "bytes": 159806,
+      "sha256": "5dbb459676af26c60a1728e25b2c711747c99f1c705636bc47e5d0cc60257982"
+    },
+    {
+      "path": "validation/linux-scalar-owning-commands.json",
+      "bytes": 5459,
+      "sha256": "13a75920d6ace16dba78d0ac53a18de3f52e8fa113026c85247cef584e1d19d3"
+    },
+    {
+      "path": "validation/linux-scalar-owning-cpp.log",
+      "bytes": 1623,
+      "sha256": "654c261ed7378aaed6990c140445dd6a20067dae86e5f2e0b446b80ee64f8497"
+    },
+    {
+      "path": "validation/linux-scalar-owning-gates.json",
+      "bytes": 6198,
+      "sha256": "d0e8a131637cb5541e9acece7e4aaf74f1bcd81bfa4d50a00f7758ce725b9584"
+    },
+    {
+      "path": "validation/linux-scalar-owning-shipping.log",
+      "bytes": 415,
+      "sha256": "1977e3687714aa14311b5346df4cdd8433e08bb5cb773440f52155bda5125c9f"
+    },
+    {
+      "path": "validation/macos-scalar-epoch1-focus.json",
+      "bytes": 316,
+      "sha256": "09abbee14ca2d2d0c2661306b682842fd324c7b1f088e6a2715705d602a375c5"
+    },
+    {
+      "path": "validation/macos-scalar-epoch1-focus.log",
+      "bytes": 5074,
+      "sha256": "a6f711f7bc3ef5f518bd1c4584125f94d0451796530a6c8f6d82709500dd7fe8"
+    },
+    {
+      "path": "validation/macos-scalar-epoch2-focus.json",
+      "bytes": 316,
+      "sha256": "612b8991162b9e2dcfd21c75f95adb53b436992f9e2151efa1f7ffb8011a2181"
+    },
+    {
+      "path": "validation/macos-scalar-epoch2-focus.log",
+      "bytes": 4796,
+      "sha256": "59a9958069a4105e49755babc383ae41fd627a6eb75004fd9a44cb749dc4d259"
+    },
+    {
+      "path": "validation/macos-scalar-final-all-targets.log",
+      "bytes": 479,
+      "sha256": "1e64e4744db95065bd769a8e4d4e1e625ce668e166b6b6a1aed52ca48a30877e"
+    },
+    {
+      "path": "validation/macos-scalar-final-capi.log",
+      "bytes": 13143,
+      "sha256": "6f4d5ff5ef221c350a4ce604beee40bdb1310aa25af83cc890dbb153f23c1749"
+    },
+    {
+      "path": "validation/macos-scalar-final-full.log",
+      "bytes": 821872,
+      "sha256": "330b42e8d24593505e68994a34d495c54a9adf62065c31d5e5bd39663f706ad2"
+    },
+    {
+      "path": "validation/macos-scalar-final-gates.json",
+      "bytes": 1654,
+      "sha256": "df27890f4caa3ffc08ee0a6fd65f64d64b47947e301ced61c3d1846a90207ad7"
+    },
+    {
+      "path": "validation/macos-scalar-final-integration.log",
+      "bytes": 36058,
+      "sha256": "055d67c8766f61987de2363e1f215f93c1f9d060eac061d073a18a145500ee8e"
+    },
+    {
+      "path": "validation/macos-scalar-final-owning-archive-identities.json",
+      "bytes": 83196,
+      "sha256": "335884310ca4cc2d93bc22dd7f20eee15f1c4c4ae079676b66a850d0a52acb03"
+    },
+    {
+      "path": "validation/macos-scalar-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "e1136508cd77fb825160ebc7b978e8a00c8c36e08c1f3f30a5927abfac92f4f7"
+    },
+    {
+      "path": "validation/macos-scalar-owning-artifacts.log",
+      "bytes": 131080,
+      "sha256": "b1de676b12c810822604973afe6e9369c13ad9b566a2a70c1f41a5363fa07aeb"
+    },
+    {
+      "path": "validation/macos-scalar-owning-build.log",
+      "bytes": 32919,
+      "sha256": "bca6e7ae9ed96be0466855fa167d91126781c290d2cd79f147141abfb983d67d"
+    },
+    {
+      "path": "validation/macos-scalar-owning-commands.json",
+      "bytes": 4941,
+      "sha256": "5e2329d023af411e122bdd57f59bda10aebed1e95637754c7d5d900b5b27da91"
+    },
+    {
+      "path": "validation/macos-scalar-owning-ctest.log",
+      "bytes": 1273,
+      "sha256": "678e72f476fc47b0045b3e8406cb82da165f97e8d6db84f25a7b16f4710e4ee8"
+    },
+    {
+      "path": "validation/macos-scalar-owning-gates.json",
+      "bytes": 6263,
+      "sha256": "b32984b5c9edbec51fd100b3af1f3bb3ae40bbe514e5fd055812c1afa6e7ff5a"
+    },
+    {
+      "path": "validation/macos-scalar-owning-prime-artifacts.log",
+      "bytes": 131949,
+      "sha256": "01ffdbcd2ace9d93c88028c1ae2cd1a6d05dda18060bbf7c5578189adb11092a"
+    },
+    {
+      "path": "validation/macos-scalar-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/macos-scalar-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/native-scalar-epoch1-focus.log",
+      "bytes": 6421,
+      "sha256": "4747d256fe18f5920634b1dab51d81f1d179841d930b1bd992a3577159e5c849"
+    },
+    {
+      "path": "validation/native-scalar-epoch1-gates.json",
+      "bytes": 100,
+      "sha256": "77b1793ddd869340399636596da39b9c5d60922e4ac973ee8344e7961e2029c5"
+    },
+    {
+      "path": "validation/native-scalar-epoch2-focus.log",
+      "bytes": 6421,
+      "sha256": "250fa9de69035ce6e90508ad6182ce368c8fe65c2c03d60fbda344599f2a4f73"
+    },
+    {
+      "path": "validation/native-scalar-epoch2-gates.json",
+      "bytes": 100,
+      "sha256": "681f700c4678750383b77c5e8018b1c44fc9ab151c7c0359c57c93ad3547308d"
+    },
+    {
+      "path": "validation/native-scalar-final-after-artifacts.jsonl",
+      "bytes": 130191,
+      "sha256": "2caa288bb854c4e08483fa8af8a97f50090e907250651b9459feace746580e32"
+    },
+    {
+      "path": "validation/native-scalar-final-all-targets.log",
+      "bytes": 1000,
+      "sha256": "eb7826616143b9d79b0865b9799cbc7c1952042f5b38ebf5b0336e6015db3b99"
+    },
+    {
+      "path": "validation/native-scalar-final-build-user-artifacts.jsonl",
+      "bytes": 90341,
+      "sha256": "f36206e9f9a8377d50807adf0c0f83a204e6383a444a17fe11f4a75bf89b39f8"
+    },
+    {
+      "path": "validation/native-scalar-final-build-user.log",
+      "bytes": 217,
+      "sha256": "30428619c50c2e0e68eb0961237287c208c96e1c1ec19e029a1b6e258d3b67eb"
+    },
+    {
+      "path": "validation/native-scalar-final-capi.log",
+      "bytes": 13776,
+      "sha256": "ee19db1055f22ae0b53f4f73d28de0911e635313f1cd3e33de8afa0def5bb63c"
+    },
+    {
+      "path": "validation/native-scalar-final-current-cpp-verification.json",
+      "bytes": 1935,
+      "sha256": "7e9d91a1cb4f68430119cf41adbb610b3956864873cd04dc94c874b8d0f37d80"
+    },
+    {
+      "path": "validation/native-scalar-final-full.log",
+      "bytes": 783515,
+      "sha256": "4f18059e77661a6ded7eb957e9d56c5f83ebaeb29ffd02ffd463f6eccee81eba"
+    },
+    {
+      "path": "validation/native-scalar-final-gates.json",
+      "bytes": 994,
+      "sha256": "6df0dae875406076b38156e2b299ae0a4be5dfa3ecd55c8519847b1caf755e8f"
+    },
+    {
+      "path": "validation/native-scalar-final-integration.log",
+      "bytes": 1875,
+      "sha256": "7c4dfc309e7fc496651e342827c3c84821396cdecddc9da4c2edb3384f4f6a3d"
+    },
+    {
+      "path": "validation/native-scalar-final-observer-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "validation/native-scalar-final-ordinary-0.log",
+      "bytes": 63301,
+      "sha256": "53e6bb85751ba330c40d72b011a8562ba480b954d75135605e40c55103c98748"
+    },
+    {
+      "path": "validation/native-scalar-final-ordinary-2.log",
+      "bytes": 65998,
+      "sha256": "17e49dc5eaf49c3bef3fc34f8e5e3dc4bb29b2b551e0817b6e86c9ba7b274231"
+    },
+    {
+      "path": "validation/native-scalar-final-ordinary-outcomes.json",
+      "bytes": 1429,
+      "sha256": "343a762129f197ab710f05058f63e940e4b7e070fff986c8d0bf8b35e9f487ca"
+    },
+    {
+      "path": "validation/native-scalar-final-owning-archive-hashes.json",
+      "bytes": 84625,
+      "sha256": "a52ec9e493e1e0997ada1735c961d05d494fd5cd19ef51045c350ec5246f90bd"
+    },
+    {
+      "path": "validation/native-scalar-final-owning-archive-identities.json",
+      "bytes": 84623,
+      "sha256": "a9e7676d0ed6c141919f40cff1bb947e0e2e901d509ace9259dd6061c94cb45f"
+    },
+    {
+      "path": "validation/native-scalar-final-owning-source-verification.json",
+      "bytes": 108,
+      "sha256": "0d5a4af3ddd915fc91d452b7df65a3f6205166bfda7ede90937f62e75bc62a94"
+    },
+    {
+      "path": "validation/native-scalar-final-post-run-identities.json",
+      "bytes": 1436,
+      "sha256": "e3024e7c7b87e962841a54356dd34b2f7e2562786dfb31681ce5862fd1a908c4"
+    },
+    {
+      "path": "validation/native-scalar-final-post-run-verifier.log",
+      "bytes": 1272,
+      "sha256": "3bd29399ab0cf0f912d1e09dd338fe98c61f16aef1959830b34bf48bf175fa51"
+    },
+    {
+      "path": "validation/native-scalar-final-source-post-run.log",
+      "bytes": 49,
+      "sha256": "27a6caf3297c5fb082ed123d1082906a783671e5bc0d118a92308766e5b0f599"
+    },
+    {
+      "path": "validation/native-stress.json",
+      "bytes": 780,
+      "sha256": "d7ad27fa63e70d74a9a23029b70cd998e38284633b3407e15649fc55195aeccd"
+    },
+    {
+      "path": "validation/ordinary-analysis.json",
+      "bytes": 1854,
+      "sha256": "0417eaf12df2821872a08dca6ff30ca67c98d3a37ea3f28afe0dbdb23c521bff"
+    },
+    {
+      "path": "validation/ordinary-contract.json",
+      "bytes": 609,
+      "sha256": "759af55d25b0aa88f7258a566f45a8cd86a96049957680e05d2b4008095e81c8"
+    },
+    {
+      "path": "validation/owned-source-plan.json",
+      "bytes": 798,
+      "sha256": "8f54192483073866f104b6ee9b56fb829f4ede7754b0f66988879b1a6c51ba21"
+    },
+    {
+      "path": "validation/owning-linux-cpp-build.py",
+      "bytes": 1522,
+      "sha256": "a0d9f75e831bd3585d3e009b94e8e3f2744b137e646c157c70a7ad7950373b56"
+    },
+    {
+      "path": "validation/prepare-native-scalar-final.py",
+      "bytes": 1582,
+      "sha256": "e91716abe54ac598168406efb9e39b3e390e851f8bd8ff8406a61aeee2418abd"
+    },
+    {
+      "path": "validation/prepare-scalar-epoch1.py",
+      "bytes": 4118,
+      "sha256": "0bd988bc7f6283e0368751da109cf975533c8fb18f7452645f640a59c13bdd0e"
+    },
+    {
+      "path": "validation/prepare-scalar-epoch2.py",
+      "bytes": 3463,
+      "sha256": "3358330b1d717360a3a6137f3c00bc5862a1aef280ee4f978127fc86e19947af"
+    },
+    {
+      "path": "validation/prepare-scalar-final.py",
+      "bytes": 4248,
+      "sha256": "be5d2f03efca9d8995e89da74b4d1230e2d5a06d146a0de3d13a2b3db95b9684"
+    },
+    {
+      "path": "validation/run-scalar-epoch1-focus.py",
+      "bytes": 1321,
+      "sha256": "7c6d949b323ad2f904f2d849c43f330794d816bba2a2af77ae8c7786b65003e0"
+    },
+    {
+      "path": "validation/run-scalar-epoch2-focus.py",
+      "bytes": 1321,
+      "sha256": "8da1621b454080dfcbb4b752b36f9116f29ac0b41db9f1379d88fc267ba23570"
+    },
+    {
+      "path": "validation/run-scalar-final.py",
+      "bytes": 1645,
+      "sha256": "52169d8679ff435a0cce2b2fb1be9b0be98484502da05efe00a82a58b4e35279"
+    },
+    {
+      "path": "validation/run-scalar-owning-gates.py",
+      "bytes": 757,
+      "sha256": "58dfec242a5d34dfbbfeac2d25e143f2b8f7b29d0c9353e078df678997ebdc25"
+    },
+    {
+      "path": "validation/rust-epoch1/linux-scalar-epoch1-focus.json",
+      "bytes": 991,
+      "sha256": "dbabde54e6bb0760b950efc8411b75ea8b52bb8ca3bb9ab3d0b2e4ca9974ba5d"
+    },
+    {
+      "path": "validation/rust-epoch1/linux-scalar-epoch1-focus.log",
+      "bytes": 4838,
+      "sha256": "e81aee05da15cd94255ee4b14717b50a969c58ad3b5eeef69c88076918611105"
+    },
+    {
+      "path": "validation/rust-epoch1/macos-scalar-epoch1-focus.json",
+      "bytes": 316,
+      "sha256": "09abbee14ca2d2d0c2661306b682842fd324c7b1f088e6a2715705d602a375c5"
+    },
+    {
+      "path": "validation/rust-epoch1/macos-scalar-epoch1-focus.log",
+      "bytes": 5074,
+      "sha256": "a6f711f7bc3ef5f518bd1c4584125f94d0451796530a6c8f6d82709500dd7fe8"
+    },
+    {
+      "path": "validation/rust-epoch1/native-scalar-epoch1-focus.log",
+      "bytes": 6421,
+      "sha256": "4747d256fe18f5920634b1dab51d81f1d179841d930b1bd992a3577159e5c849"
+    },
+    {
+      "path": "validation/rust-epoch1/native-scalar-epoch1-gates.json",
+      "bytes": 100,
+      "sha256": "77b1793ddd869340399636596da39b9c5d60922e4ac973ee8344e7961e2029c5"
+    },
+    {
+      "path": "validation/rust-epoch1/scalar-epoch1-driver.log",
+      "bytes": 285,
+      "sha256": "6bd9b1d5c40155b1435e441856960863b980f0131b24822f3186055f77eed8a8"
+    },
+    {
+      "path": "validation/rust-epoch1/scalar-epoch1-launch.json",
+      "bytes": 412,
+      "sha256": "6dfa764b0bab31f157951ef84bb4d6290755f6da20598294cc943595b0163ee0"
+    },
+    {
+      "path": "validation/rust-epoch1/scalar-epoch1-source.json",
+      "bytes": 1094737,
+      "sha256": "df5aaeb504d2ff792fa0a4400e1bd54b4be194e87387c18994574e73704c32e3"
+    },
+    {
+      "path": "validation/rust-epoch1/source/src/user/windows/process/sched/tests/services_tests/token_scalar_tests.rs.txt",
+      "bytes": 14904,
+      "sha256": "74266508675c76fbde1510697d95c0645903b2e3a8e4944fd5527d0a2976da4a"
+    },
+    {
+      "path": "validation/rust-epoch1/source/src/user/windows/wnf/installed/scalars.rs.txt",
+      "bytes": 2296,
+      "sha256": "c25612a32f5697b61203f460bfe0dd89d35fc5accc436e813ea5d35e0eeb406a"
+    },
+    {
+      "path": "validation/scalar-epoch1-driver.log",
+      "bytes": 285,
+      "sha256": "6bd9b1d5c40155b1435e441856960863b980f0131b24822f3186055f77eed8a8"
+    },
+    {
+      "path": "validation/scalar-epoch1-launch.json",
+      "bytes": 412,
+      "sha256": "6dfa764b0bab31f157951ef84bb4d6290755f6da20598294cc943595b0163ee0"
+    },
+    {
+      "path": "validation/scalar-epoch1-source.json",
+      "bytes": 1094737,
+      "sha256": "df5aaeb504d2ff792fa0a4400e1bd54b4be194e87387c18994574e73704c32e3"
+    },
+    {
+      "path": "validation/scalar-epoch2-driver.log",
+      "bytes": 285,
+      "sha256": "a1a78b6d46e9a53df3356bc727367e6c5edefd38e10de5daa7936e1efb9d54b3"
+    },
+    {
+      "path": "validation/scalar-epoch2-launch.json",
+      "bytes": 411,
+      "sha256": "5093d3cab11edd8e90e8ff64cdd163178a95a5bd0cefcba2fdb19b6a1468fd9a"
+    },
+    {
+      "path": "validation/scalar-epoch2-source.json",
+      "bytes": 1092967,
+      "sha256": "e655aaeccf745f84e2da329bd39bc100dc1efd0fd6b2812500bcc1d554cf37f0"
+    },
+    {
+      "path": "validation/scalar-final-core-driver.log",
+      "bytes": 591,
+      "sha256": "c5443ce4f7d7bfaee13cf45c20296d4773085faadfcb7b7606081e184b4b11fb"
+    },
+    {
+      "path": "validation/scalar-final-launch.json",
+      "bytes": 500,
+      "sha256": "3c314aa16b220ca4c8fe1d8338d8830c43e230ca19010cb74ce2563dbe389cdf"
+    },
+    {
+      "path": "validation/scalar-final-owned-driver.log",
+      "bytes": 1128,
+      "sha256": "acdf1b6df84e53c4a2e57c94912917613a018ca279d9af15f31e7561e3f96c2d"
+    },
+    {
+      "path": "validation/scalar-final-owned-launch.json",
+      "bytes": 423,
+      "sha256": "42941f1d7799cb30ed69225438644bab44b12c26c22e673dc1244d7d26bb25fe"
+    },
+    {
+      "path": "validation/scalar-final-post-run-completion.json",
+      "bytes": 350,
+      "sha256": "902ce82b8a320892bf754bdda0973f08736ef5d1fafb2de2d3871b5cb4e4bf9c"
+    },
+    {
+      "path": "validation/scalar-final-source.json",
+      "bytes": 1092967,
+      "sha256": "e655aaeccf745f84e2da329bd39bc100dc1efd0fd6b2812500bcc1d554cf37f0"
+    },
+    {
+      "path": "validation/scalar-owning-source-hashes.json",
+      "bytes": 80561,
+      "sha256": "65a0530889fbed840067c39f5ac829bf6440381248ac16222d7d9394b08ec956"
+    },
+    {
+      "path": "validation/scalar-owning-unix-link.json",
+      "bytes": 300,
+      "sha256": "5a8158fafd0b0af47a8fbfd3f092dac329905714dc4744da292da4819d40590c"
+    },
+    {
+      "path": "validation/upstream-cpp-consumer-compatibility.json",
+      "bytes": 1938,
+      "sha256": "f5aae09a16ccca2db172e0e421d6e21bf769a774595bd054e02d376f125b3b32"
+    },
+    {
+      "path": "validation/validation-stress.json",
+      "bytes": 1195,
+      "sha256": "5ba4a858714593442f0447613b81198c5e89bc5ef7b466212e12c471427d1653"
+    },
+    {
+      "path": "validation/windows/assist-native-scalar-final-owned.ps1",
+      "bytes": 4795,
+      "sha256": "749c49bb9da478c68e4524c59dcd2d3acfa41a34ca7f360141737cd6c5f98ee3"
+    },
+    {
+      "path": "validation/windows/finish-scalar-evidence.py",
+      "bytes": 1053,
+      "sha256": "8467c6fb5f1dfa89986cc55e8dfc2c490ecaecb96e59161c4659d6732c2a759a"
+    },
+    {
+      "path": "validation/windows/inspect-scalar-final-archives.py",
+      "bytes": 715,
+      "sha256": "b1dd4098de1ae1761dc2757dbf0691be1b5c42296a5f816c9f3d334ceba5b687"
+    },
+    {
+      "path": "validation/windows/native-scalar-epoch1.ps1",
+      "bytes": 1065,
+      "sha256": "e55092dbcee9d9d4af13b0f057c45ee9a52851ff6654a428636e117c9d8c18ef"
+    },
+    {
+      "path": "validation/windows/native-scalar-epoch2.ps1",
+      "bytes": 1065,
+      "sha256": "6c92dae0f3c60c50cf719e665ab43829bd3cb64b7a47ab2c5677e321a64f2f04"
+    },
+    {
+      "path": "validation/windows/native-scalar-final-core.ps1",
+      "bytes": 3274,
+      "sha256": "6b205e46ee341e3ed32299d295a28e03dc1f4e1e8065d61710fa2c3f91385b21"
+    },
+    {
+      "path": "validation/windows/prepare-scalar-epoch1-native.py",
+      "bytes": 1780,
+      "sha256": "e655e146dfce373eaf5fe862feb8cece39a2e3c4216412b78d0c007dd5187bfc"
+    },
+    {
+      "path": "validation/windows/prepare-scalar-epoch2-native.py",
+      "bytes": 1599,
+      "sha256": "1fda015b0545938ff72fb0c14c30231325eecf835bf6dfb1c455c5df14deae2b"
+    },
+    {
+      "path": "validation/windows/prepare-scalar-owning-junction.py",
+      "bytes": 1371,
+      "sha256": "5af31bd56b8ca026446fe3c9b8e5648609c8eb19e2808a740da59bff6326c2c8"
+    },
+    {
+      "path": "validation/windows/run-scalar-epoch1.py",
+      "bytes": 1052,
+      "sha256": "4449b5d400e4aaa8adf23bf36208f6cd4ef27bd2b6525c5c513b808b825b23a8"
+    },
+    {
+      "path": "validation/windows/run-scalar-epoch2.py",
+      "bytes": 1052,
+      "sha256": "ddce1a71765da34015ae8514054fb9dd53f38936598775a05858f8744c20d4d0"
+    },
+    {
+      "path": "validation/windows/run-scalar-final-core.py",
+      "bytes": 1476,
+      "sha256": "d47e0fac41bca11d85b03d09ccc5da272a83e3b791a7e6527443ef7fe6a90e84"
+    },
+    {
+      "path": "validation/windows/run-scalar-final-observations.py",
+      "bytes": 1497,
+      "sha256": "b6dcfa70fe789da5ef2a098dd5e7bff6e6a57322fbe9128ac3a72fa749a71199"
+    },
+    {
+      "path": "validation/windows/run-scalar-final-owned.py",
+      "bytes": 1359,
+      "sha256": "3a47482e30696efb50bef493874ade8eece2a504b89caccf035c48b40f0c8786"
+    },
+    {
+      "path": "validation/windows/verify-scalar-cpp-consumers.py",
+      "bytes": 1050,
+      "sha256": "7dda70d7323bb4cdbc74812316a2c877ab671a1a9625ebf61ce111c2a1480694"
+    },
+    {
+      "path": "validation/windows/verify-scalar-final.py",
+      "bytes": 560,
+      "sha256": "2f78d92bb61159f8e85d055c25417713cae859e478908873eda1933518b941cb"
+    },
+    {
+      "path": "validation/windows/verify-scalar-owning-sources.py",
+      "bytes": 1573,
+      "sha256": "a74a99d68a6278b32f3615fcebc1d974fa84f416e5a5f6bf6f36cb927274b8f8"
+    },
+    {
+      "path": "validation/windows/verify-scalar-post-run.py",
+      "bytes": 738,
+      "sha256": "56bffcc21e9af40feab00f1f7f9e8498acf0d12c23579b60ebc28e5badbc5179"
+    }
+  ]
+}

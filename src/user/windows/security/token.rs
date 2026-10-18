@@ -4,6 +4,8 @@ use crate::user::windows::nt::status::{
     STATUS_ACCESS_DENIED, STATUS_PRIVILEGE_NOT_HELD, STATUS_SUCCESS,
 };
 
+pub(crate) mod scalars;
+
 const ALL_ACCESS: u32 = 0x000F_01FF;
 const LEGAL_ACCESS: u32 = 0x031F_FFFF;
 const SYSTEM_SECURITY: u32 = 0x0100_0000;

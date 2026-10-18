@@ -1,9 +1,11 @@
 //! Captured primary-token properties with measured caller-probe ordering.
 use super::query::{guard_result, probe_write};
+use crate::user::windows::arch::WinArch;
 use crate::user::windows::hle::{ApiResult, Ctx, Flow};
 use crate::user::windows::memory::Mem;
 use crate::user::windows::nt::status::*;
 use crate::user::windows::objects::Object;
+use crate::user::windows::security::token::scalars::{self, CapturedScalar};
 
 pub(super) fn information(c: &mut Ctx) -> ApiResult {
     let result = checked(c);
@@ -13,8 +15,13 @@ pub(super) fn information(c: &mut Ctx) -> ApiResult {
 fn checked(c: &mut Ctx) -> ApiResult {
     let (token, class, output, length, returned) =
         (c.ptr(0)?, c.u32(1)?, c.ptr(2)?, c.u32(3)?, c.ptr(4)?);
-    if !matches!(class, 12 | 29) {
+    if !matches!(class, 12 | 29) && !scalars::is_class(class) {
         return Err(c.unsupported(format!("NtQueryInformationToken class {class}")));
+    }
+    // These WoW64 wrappers reject the selector without touching either
+    // destination, unlike the native64 class checks below.
+    if c.arch() == WinArch::X86 && matches!(class, 40 | 45) {
+        return Flow::ret(STATUS_INVALID_INFO_CLASS.into());
     }
     // Both native64 and WoW64 probe the complete supplied span before token
     // validation. ReturnLength is mandatory and permits unaligned ULONG stores.
@@ -26,6 +33,20 @@ fn checked(c: &mut Ctx) -> ApiResult {
         probe_write(c, output, length as usize)?;
     }
     probe_write(c, returned, 4)?;
+    let property = c.p.objects.primary_token_scalar(class);
+    // A captured native invalid-class result follows both probes but precedes
+    // handle/type/access checks. It never publishes ReturnLength.
+    if property == Some(CapturedScalar::InvalidClass) {
+        return Flow::ret(STATUS_INVALID_INFO_CLASS.into());
+    }
+    // TOKEN_ELEVATION publishes its exact required size before validating
+    // the handle, and rejects both shorter and longer buffers.
+    if class == 20 {
+        c.mem().w32(returned, 4)?;
+        if length != 4 {
+            return Flow::ret(STATUS_INFO_LENGTH_MISMATCH.into());
+        }
+    }
     let process_token = c.arch().ptr(u64::MAX - 3);
     let thread_token = c.arch().ptr(u64::MAX - 4);
     let effective_token = c.arch().ptr(u64::MAX - 5);
@@ -48,8 +69,12 @@ fn checked(c: &mut Ctx) -> ApiResult {
                 if c.p.objects.access(token).unwrap_or(0) & 8 == 0 {
                     return Flow::ret(STATUS_ACCESS_DENIED.into());
                 }
-                if class == 12 {
-                    return Err(c.unsupported("impersonation-token SessionId is not captured"));
+                if class != 29 {
+                    return Err(c.unsupported(if class == 12 {
+                        "impersonation-token SessionId is not captured".to_owned()
+                    } else {
+                        format!("impersonation-token class {class} is not captured")
+                    }));
                 }
                 captured_value = Some(u32::from(subject.app_container));
             }
@@ -64,21 +89,32 @@ fn checked(c: &mut Ctx) -> ApiResult {
             c.p.objects.primary_token_session_id()
         }
         29 => c.p.objects.primary_token_app_container().map(u32::from),
+        _ if c.p.objects.primary_token_app_container().is_some() => match property {
+            Some(CapturedScalar::Value(value)) => Some(value),
+            _ => None,
+        },
         _ => None,
     };
     let Some(value) = captured_value.or(primary) else {
         return Err(c.unsupported(if class == 12 {
             "primary-token SessionId is not captured"
-        } else {
+        } else if class == 29 {
             "primary-token subject is not captured"
+        } else {
+            "primary-token scalar property is not captured"
         }));
     };
     // Native writes the required length before either short-buffer return or
     // successful data publication. Overlapping output therefore wins.
-    c.mem().w32(returned, 4)?;
-    if length < 4 {
+    let required = scalars::width(class).unwrap_or(4);
+    c.mem().w32(returned, required)?;
+    if length < required {
         return Flow::ret(STATUS_BUFFER_TOO_SMALL.into());
     }
-    c.mem().w32(output, value)?;
+    if required == 1 {
+        c.mem().w8(output, value as u8)?;
+    } else {
+        c.mem().w32(output, value)?;
+    }
     Flow::ret(STATUS_SUCCESS.into())
 }

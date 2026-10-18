@@ -1,0 +1,66 @@
+{
+  "plugin-lifecycle": {
+    "status": "unaffected",
+    "reason": "No plugin load/teardown or IDA callbacks change; the RAX process backend remains behind its existing entry points."
+  },
+  "UI-state": {
+    "status": "unaffected",
+    "reason": "No Qt widgets, ownership, rendering or copy changes."
+  },
+  "conversation-lane": {
+    "status": "unaffected",
+    "reason": "No transcript, cancellation, lane or history implementation changes."
+  },
+  "agent-backend": {
+    "status": "unaffected",
+    "reason": "Native/ACP orchestration and provider requests do not consume the private token metadata."
+  },
+  "prompt-context": {
+    "status": "unaffected",
+    "reason": "No prompts, context collection or anonymization changes."
+  },
+  "tool-schema": {
+    "status": "unaffected",
+    "reason": "Existing emulation options and result schemas remain unchanged; no new tool is registered."
+  },
+  "permission-mutation": {
+    "status": "affected",
+    "reason": "Token reads retain measured TOKEN_QUERY grants and rejection ordering. No guest token mutation or host-call forwarding is added."
+  },
+  "main-thread-dispatch": {
+    "status": "unaffected",
+    "reason": "The Rust userland engine calls no IDA, Hex-Rays or Qt API."
+  },
+  "mesh-MCP": {
+    "status": "unaffected",
+    "reason": "No routing, identity, discovery manifest or external protocol change."
+  },
+  "transport-crypto": {
+    "status": "unaffected",
+    "reason": "No framing, credentials or cryptographic data changes."
+  },
+  "persistence": {
+    "status": "unaffected",
+    "reason": "Captured properties are private to one process runtime; no persisted schema or path changes."
+  },
+  "SDK-ABI": {
+    "status": "unaffected",
+    "reason": "The new map is internal Rust state. No exported C layout, function signature or ABI version changes."
+  },
+  "optional-engines": {
+    "status": "affected",
+    "reason": "RAX gains native scalar token-query semantics through the existing userland backend. Z3 and other engines are unchanged."
+  },
+  "update-release": {
+    "status": "affected",
+    "reason": "The eventual RAX pin and engineering records must be paired. No package layout, defaults, dependency or release automation change is intended."
+  },
+  "targets-platforms": {
+    "status": "affected",
+    "reason": "Shared query/model code compiled and ran on macOS, Linux and Windows; the narrow Windows acquisition adapter ran on Windows ARM64. Core and retained C API/Assist consumers were verified separately. Four native caller profiles share one ARM64 kernel; physical x64-kernel and whole-current-root package validation are not claimed."
+  },
+  "tests-docs": {
+    "status": "affected",
+    "reason": "Native matrices, both focused epochs, full three-host gates, exact artifacts and retained application outcomes are recorded."
+  }
+}

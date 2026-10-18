@@ -1,0 +1,44 @@
+[
+  {
+    "impact": "high",
+    "finding": "Both executed ordinary programs pass token classes 12, 29 and 42, then stop at an uncaptured NtOpenDirectoryObject namespace: smoke at turn 2149956 and whoami at turn 2152305. Neither terminal is a successful guest exit; the broader process-userland goal remains incomplete.",
+    "evidence": "validation/ordinary-analysis.json",
+    "blocks": "Full process-userland goal",
+    "action": "Apply and validate the scalar group, then continue from actual unchanged-observer results."
+  },
+  {
+    "impact": "high",
+    "finding": "Class21 is a byte query; class20 requires an exact four-byte buffer; unsupported selector phases differ on WoW64.",
+    "evidence": "native version2 matrices and cases.json",
+    "blocks": "A single undifferentiated DWORD query path",
+    "action": "Use distinct measured width/length/rejection phases."
+  },
+  {
+    "impact": "medium",
+    "finding": "Native proof covers one ARM64 kernel and compatibility callers.",
+    "evidence": "producer version, PE machine/LAA and post-run identities",
+    "blocks": "Claims about physical x64 kernels or every Windows version",
+    "action": "Preserve exact scope and captured runtime availability."
+  },
+  {
+    "impact": "medium",
+    "finding": "Token mutation and uncaptured impersonation-token properties remain unsupported.",
+    "evidence": "existing runtime ownership model and drafted primary-only capture",
+    "blocks": "Any claim that captured values follow mutable guest token state",
+    "action": "Refuse missing or mismatched capture; do not forward guest calls to the host."
+  },
+  {
+    "impact": "medium",
+    "finding": "Five existing Windows lowerer failures and two ignored microkernel tests remain.",
+    "evidence": "validation/native-scalar-final-full.log",
+    "blocks": "No fully green Windows regression claim.",
+    "action": "Retain exact identities."
+  },
+  {
+    "impact": "medium",
+    "finding": "Retained carrier ABI 184 differs from compared/upstream root Rust ABIs.",
+    "evidence": "validation/upstream-cpp-consumer-compatibility.json",
+    "blocks": "Whole-current-root and package validation are not claimed.",
+    "action": "Preserve source and artifact boundaries."
+  }
+]

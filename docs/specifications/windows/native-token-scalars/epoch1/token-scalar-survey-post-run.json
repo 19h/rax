@@ -1,0 +1,54 @@
+[
+  {
+    "profile": "arm64",
+    "source": {
+      "bytes": 9369,
+      "sha256": "5a7ef1350ac9244c3970b574de34e1ca1e5953e9954b7d0e1770251b758a642c"
+    },
+    "executable": {
+      "bytes": 152064,
+      "sha256": "aa9b045d0ccbfefb9ecee01c822724ba49f778f26ff43ef073884167f2adf82e",
+      "machine": 43620,
+      "large-address-aware": true
+    }
+  },
+  {
+    "profile": "x64",
+    "source": {
+      "bytes": 9369,
+      "sha256": "5a7ef1350ac9244c3970b574de34e1ca1e5953e9954b7d0e1770251b758a642c"
+    },
+    "executable": {
+      "bytes": 151040,
+      "sha256": "ee3cceefbdf22a9b6abf10f0908fcc0df134a1691022b41a8403fe3c52957a96",
+      "machine": 34404,
+      "large-address-aware": true
+    }
+  },
+  {
+    "profile": "x86",
+    "source": {
+      "bytes": 9369,
+      "sha256": "5a7ef1350ac9244c3970b574de34e1ca1e5953e9954b7d0e1770251b758a642c"
+    },
+    "executable": {
+      "bytes": 123904,
+      "sha256": "c4f75c7e8cbd6170b05b9d74ede3afe1efe35e2f3755f9d5e8378880b169f825",
+      "machine": 332,
+      "large-address-aware": false
+    }
+  },
+  {
+    "profile": "x86-laa",
+    "source": {
+      "bytes": 9369,
+      "sha256": "5a7ef1350ac9244c3970b574de34e1ca1e5953e9954b7d0e1770251b758a642c"
+    },
+    "executable": {
+      "bytes": 123904,
+      "sha256": "a17d220e91ccecca4f02c3700fcdd528060ffd7d5f33a2fa2450926663346fe8",
+      "machine": 332,
+      "large-address-aware": true
+    }
+  }
+]

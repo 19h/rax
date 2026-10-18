@@ -1,0 +1,41 @@
+{
+  "scope": "Six representative native/primary/corpus/authored files retain exact bytes with autocrlf=true.",
+  "files": [
+    {
+      "path": "native/native-token-scalar-survey-v2.cpp",
+      "raw-git-blob": "884162b0bb536724d4a9437ca9706893077fb1c8",
+      "autocrlf-true-git-blob": "884162b0bb536724d4a9437ca9706893077fb1c8",
+      "equal": true
+    },
+    {
+      "path": "native/native-token-scalar-survey-v2.ps1",
+      "raw-git-blob": "1b15d0e2ff0e3b8dcbcd06917e5b21be76720d95",
+      "autocrlf-true-git-blob": "1b15d0e2ff0e3b8dcbcd06917e5b21be76720d95",
+      "equal": true
+    },
+    {
+      "path": "native/token-scalar-survey-v2-arm64-class21.log",
+      "raw-git-blob": "32ec687f495d98947393ee0bc8066c2fc23e4279",
+      "autocrlf-true-git-blob": "32ec687f495d98947393ee0bc8066c2fc23e4279",
+      "equal": true
+    },
+    {
+      "path": "primary/phnt-ntseapi.h",
+      "raw-git-blob": "e017316ffc2ed563ffeeebdbfa9c8101481eb118",
+      "autocrlf-true-git-blob": "e017316ffc2ed563ffeeebdbfa9c8101481eb118",
+      "equal": true
+    },
+    {
+      "path": "cases.json",
+      "raw-git-blob": "7b5cf248cd06883ef2f0a9828d6fc21479039054",
+      "autocrlf-true-git-blob": "7b5cf248cd06883ef2f0a9828d6fc21479039054",
+      "equal": true
+    },
+    {
+      "path": "README.md",
+      "raw-git-blob": "651687747e9af066ae7a587ce76f72943ea00993",
+      "autocrlf-true-git-blob": "651687747e9af066ae7a587ce76f72943ea00993",
+      "equal": true
+    }
+  ]
+}

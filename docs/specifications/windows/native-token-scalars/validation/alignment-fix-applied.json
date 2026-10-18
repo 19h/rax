@@ -1,0 +1,28 @@
+{
+  "utc": "2026-10-18T01:00:12.862299+00:00",
+  "before": [
+    {
+      "path": "src/user/windows/wnf/installed/scalars.rs",
+      "bytes": 2296,
+      "sha256": "c25612a32f5697b61203f460bfe0dd89d35fc5accc436e813ea5d35e0eeb406a"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_scalar_tests.rs",
+      "bytes": 14904,
+      "sha256": "74266508675c76fbde1510697d95c0645903b2e3a8e4944fd5527d0a2976da4a"
+    }
+  ],
+  "after": [
+    {
+      "path": "src/user/windows/wnf/installed/scalars.rs",
+      "bytes": 2545,
+      "sha256": "ac213fc96a473214cca22da53d0ebd3ada803253c6e48a13860b741cd72f5bea"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_scalar_tests.rs",
+      "bytes": 15176,
+      "sha256": "5679e53debf09b804cdc978e28dff563981a002e16a6f7bedccc52cc81ecc079"
+    }
+  ],
+  "reason": "Use u32 storage to guarantee the measured native four-byte alignment; guest query semantics unchanged."
+}

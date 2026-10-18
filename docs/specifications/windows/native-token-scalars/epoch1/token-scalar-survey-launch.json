@@ -1,0 +1,17 @@
+{
+  "pid": 1860,
+  "utc": "2026-10-18T00:28:43.931981+00:00",
+  "state": "finished",
+  "scope": "read-only native scalar token property queries; only child-owned token/event handles and memory",
+  "child-pid": 4232,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-token-scalar-survey.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T00:34:00.324604+00:00"
+}
