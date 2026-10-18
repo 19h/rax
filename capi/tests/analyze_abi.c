@@ -23,6 +23,11 @@ RAX_TEST_STATIC_ASSERT(offsetof(rax_analysis_effect, access) == 8u, "effect acce
 RAX_TEST_STATIC_ASSERT(offsetof(rax_analysis_effect, value) == 48u, "effect value offset");
 RAX_TEST_STATIC_ASSERT(offsetof(rax_analysis_effect, _reserved) == 72u, "effect reserve offset");
 
+RAX_TEST_STATIC_ASSERT(sizeof(rax_smir_operand) == 16u, "SMIR operand ABI drift");
+RAX_TEST_STATIC_ASSERT(sizeof(rax_smir_address) == 64u, "SMIR address ABI drift");
+RAX_TEST_STATIC_ASSERT(sizeof(rax_smir_op) == 184u, "SMIR operation ABI drift");
+RAX_TEST_STATIC_ASSERT(sizeof(rax_smir_instruction) == 136u, "SMIR instruction ABI drift");
+
 static rax_status consume(const uint8_t *bytes, size_t length)
 {
     rax_analysis summary;

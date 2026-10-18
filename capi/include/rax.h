@@ -49,7 +49,7 @@ extern "C" {
  * Versioning
  * ======================================================================== */
 #define RAX_API_MAJOR 1u
-#define RAX_API_MINOR 11u
+#define RAX_API_MINOR 12u
 #define RAX_API_PATCH 0u
 
 /* ===========================================================================
@@ -1176,6 +1176,113 @@ RAX_API rax_status rax_process_stdin_feed(const rax_process *process,
  * NULL/0 consumes no bytes; use inspection to query pending byte counts. */
 RAX_API rax_status rax_process_output_read(const rax_process *process, uint32_t stream,
     uint8_t *out, size_t capacity, size_t *written);
+
+/* Versioned, pointer-free scalar SMIR for an x86-64 instruction.
+ * Included by rax.h inside extern "C". No engine, JIT, or guest execution.
+ * All structures are outputs; callers allocate the full published size.
+ * Operands: NONE=0, TEMP=1 (instruction-local), ARCH=2, IMM=3 (u64 bits).
+ * ARCH: GPR encoding 0..31, RIP=32, RFLAGS=33, FS.base=34, GS.base=35.
+ * auxiliary bit 8 selects bits 15:8 for extension sources; bit 0 selects
+ * signed loads or the immediate boolean for SET_CF/SET_DF.
+ * Widths are bits. Arithmetic follows SMIR modular bit-vector semantics.
+ * Flag mask: CF=1, ZF=2, SF=4, OF=8, PF=16, AF=32. Undefined flags
+ * retain SMIR's deterministic model; consumers must not infer ISA definedness.
+ * Address = base + index*scale + displacement, with optional segment base.
+ * address_bits=32 truncates before adding segment; address_bits=64 otherwise.
+ * condition: EQ NE ULT ULE UGT UGE SLT SLE SGT SGE NEG POS OF NO_OF P NP ALWAYS
+ * encoded 0..16. ULT means x86 CF=1.
+ */
+#define RAX_SMIR_ABI_VERSION 1u
+#define RAX_SMIR_COMPLETE 1u
+#define RAX_SMIR_UNSUPPORTED 2u
+#define RAX_SMIR_TRUNCATED 4u
+#define RAX_SMIR_MOV 1u
+#define RAX_SMIR_ADD 2u
+#define RAX_SMIR_SUB 3u
+#define RAX_SMIR_ADC 4u
+#define RAX_SMIR_SBB 5u
+#define RAX_SMIR_AND 6u
+#define RAX_SMIR_OR 7u
+#define RAX_SMIR_XOR 8u
+#define RAX_SMIR_AND_NOT 9u
+#define RAX_SMIR_SHL 10u
+#define RAX_SMIR_SHR 11u
+#define RAX_SMIR_SAR 12u
+#define RAX_SMIR_ROL 13u
+#define RAX_SMIR_ROR 14u
+#define RAX_SMIR_RCL 15u
+#define RAX_SMIR_RCR 16u
+#define RAX_SMIR_NEG 17u
+#define RAX_SMIR_INC 18u
+#define RAX_SMIR_DEC 19u
+#define RAX_SMIR_NOT 20u
+#define RAX_SMIR_CMP 21u
+#define RAX_SMIR_TEST 22u
+#define RAX_SMIR_MUL_U 23u
+#define RAX_SMIR_MUL_S 24u
+#define RAX_SMIR_DIV_U 25u
+#define RAX_SMIR_DIV_S 26u
+#define RAX_SMIR_BSWAP 27u
+#define RAX_SMIR_ZERO_EXTEND 28u
+#define RAX_SMIR_SIGN_EXTEND 29u
+#define RAX_SMIR_TRUNCATE 30u
+#define RAX_SMIR_LEA 31u
+#define RAX_SMIR_LOAD 32u
+#define RAX_SMIR_STORE 33u
+#define RAX_SMIR_SELECT 34u
+#define RAX_SMIR_CMOVE 35u
+#define RAX_SMIR_SET_CC 36u
+#define RAX_SMIR_READ_FLAGS 37u
+#define RAX_SMIR_WRITE_FLAGS 38u
+#define RAX_SMIR_SET_CF 39u
+#define RAX_SMIR_SET_DF 40u
+#define RAX_SMIR_CMC_CF 41u
+#define RAX_SMIR_MATERIALIZE_FLAGS 42u
+#define RAX_SMIR_NOP 43u
+    typedef struct rax_smir_operand
+    {
+        uint32_t kind;
+        uint32_t id;
+        uint64_t value;
+    } rax_smir_operand;
+    typedef struct rax_smir_address
+    {
+        rax_smir_operand base, index, segment;
+        uint64_t displacement;
+        uint32_t scale, address_bits;
+    } rax_smir_address;
+    typedef struct rax_smir_op
+    {
+        uint32_t struct_size, abi_version, opcode, width_bits;
+        uint32_t source_width_bits, flags_mask, condition, auxiliary;
+        rax_smir_operand dst, dst2, a, b, c;
+        rax_smir_address address;
+        uint64_t guest_pc;
+    } rax_smir_op;
+    /* flow: NEXT=0, BRANCH=1, CONDITION=2, CONDITION_REG=3,
+ * INDIRECT=4, INDIRECT_MEMORY=5, CALL=6, CALL_REG=7,
+ * CALL_MEMORY=8, RETURN=9, TRAP=10, SYSCALL=11.
+ * targets are absolute guest addresses, never host pointers.
+ */
+    typedef struct rax_smir_instruction
+    {
+        uint32_t struct_size, abi_version, flags, bytes_consumed;
+        uint32_t op_count, required_op_count, temporary_count, flow;
+        uint32_t condition, reserved;
+        uint64_t target, fallthrough;
+        rax_smir_operand predicate;
+        rax_smir_address address;
+    } rax_smir_instruction;
+    /* len must be 1..15. NULL ops with capacity=0 is a size query.
+ * Unsupported semantics return RAX_ERR_UNSUPPORTED with zero published ops.
+ * Insufficient capacity returns RAX_ERR_BOUNDS with zero published ops (no
+ * executable prefix). Only RAX_OK plus COMPLETE is consumable.
+ * Caller buffers must be aligned, writable, disjoint and of declared sizes;
+ * input must be readable and must not overlap output. No pointers are retained.
+ */
+    RAX_API rax_status rax_smir_lift_x64(uint64_t pc, const void *bytes, size_t len,
+                                         rax_smir_instruction *out, rax_smir_op *ops,
+                                         size_t capacity);
 
 #ifdef __cplusplus
 } /* extern "C" */

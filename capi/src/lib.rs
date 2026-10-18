@@ -48,6 +48,7 @@ mod mem;
 mod process;
 mod reg;
 mod run;
+mod smir;
 mod status;
 mod user;
 mod vcpu;
@@ -59,6 +60,7 @@ mod tests;
 pub use fault::*;
 pub use instruction_info::*;
 pub use process::*;
+pub use smir::*;
 pub use status::RaxStatus;
 
 // Re-export the FFI surface and ABI constants from each module so they form a
@@ -113,7 +115,7 @@ pub use user::{
 /// ABI major version. Incremented only on a breaking ABI change.
 pub const RAX_API_MAJOR: u32 = 1;
 /// ABI minor version. Incremented when backward-compatible additions are made.
-pub const RAX_API_MINOR: u32 = 11;
+pub const RAX_API_MINOR: u32 = 12;
 /// ABI patch version.
 pub const RAX_API_PATCH: u32 = 0;
 
@@ -179,7 +181,7 @@ pub extern "C" fn rax_version_string() -> *const c_char {
     concat!(
         env!("CARGO_PKG_VERSION"),
         " (rax-capi ABI ",
-        "1.11.0",
+        "1.12.0",
         ")\0"
     )
     .as_ptr() as *const c_char
