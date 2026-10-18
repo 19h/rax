@@ -1,6 +1,6 @@
 use super::*;
 
-fn lift(bytes: &[u8]) -> (RaxSmirInstruction, Vec<RaxSmirOp>) {
+pub(super) fn lift(bytes: &[u8]) -> (RaxSmirInstruction, Vec<RaxSmirOp>) {
     let mut out = RaxSmirInstruction::default();
     assert_eq!(
         rax_smir_lift_x64(
@@ -90,7 +90,7 @@ fn address_size_segment_and_branch_targets_are_explicit() {
 
 #[test]
 fn truncation_never_publishes_an_executable_prefix() {
-    let bytes = [0x48, 0x01, 0xd8];
+    let bytes = [0x48u8, 0x01, 0xd8];
     let sentinel = RaxSmirOp {
         opcode: 0xdeadbeef,
         ..Default::default()
@@ -118,8 +118,8 @@ fn truncation_never_publishes_an_executable_prefix() {
 fn unsupported_and_invalid_inputs_fail_closed() {
     let mut out = RaxSmirInstruction::default();
     let mut ops = [RaxSmirOp::default(); 8];
-    // SSE output cannot be silently projected into scalar registers.
-    let simd = [0x0f, 0x57, 0xc0];
+    // Floating-point arithmetic is outside the bit-vector subset.
+    let simd = [0x0fu8, 0x58, 0xc0];
     assert_eq!(
         rax_smir_lift_x64(
             0,
@@ -248,7 +248,7 @@ fn memory_bit_test_preserves_accesses_and_rejects_atomic_projection() {
         load < store && store < flags,
         "CF must commit after the faultable store"
     );
-    let input = [0xf0, 0x48, 0x0f, 0xba, 0x38, 3]; // lock btc qword [rax],3
+    let input = [0xf0u8, 0x48, 0x0f, 0xba, 0x38, 3]; // lock btc qword [rax],3
     let mut result = RaxSmirInstruction::default();
     let mut out = [RaxSmirOp::default(); 64];
     assert_eq!(

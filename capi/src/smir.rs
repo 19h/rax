@@ -1,4 +1,4 @@
-//! Bounded scalar SMIR export. Unsupported operations fail atomically.
+//! Bounded scalar/legacy-XMM SMIR export. Unsupported operations fail atomically.
 use crate::{RaxStatus, guard};
 use rax_engine::smir::{
     ir::{
@@ -61,6 +61,17 @@ pub const RAX_SMIR_BT: u32 = 44;
 pub const RAX_SMIR_BTS: u32 = 45;
 pub const RAX_SMIR_BTR: u32 = 46;
 pub const RAX_SMIR_BTC: u32 = 47;
+pub const RAX_SMIR_OPERAND_XMM: u32 = 4;
+pub const RAX_SMIR_VMOV: u32 = 48;
+pub const RAX_SMIR_VLOAD: u32 = 49;
+pub const RAX_SMIR_VSTORE: u32 = 50;
+pub const RAX_SMIR_VINSERT: u32 = 51;
+pub const RAX_SMIR_VEXTRACT: u32 = 52;
+pub const RAX_SMIR_X86_MOVDQ: u32 = 53;
+pub const RAX_SMIR_CHECK_ALIGNMENT: u32 = 54;
+pub const RAX_SMIR_VXOR: u32 = 55;
+pub const RAX_SMIR_VBROADCAST: u32 = 56;
+mod vector;
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct RaxSmirOperand {
@@ -117,6 +128,15 @@ pub struct RaxSmirInstruction {
 }
 type Checked<T> = Result<T, ()>;
 fn reg(r: VReg) -> Checked<RaxSmirOperand> {
+    if let VReg::Arch(ArchReg::X86(X86Reg::Xmm(index))) = r {
+        return (index < 16)
+            .then_some(RaxSmirOperand {
+                kind: 4,
+                id: index.into(),
+                value: 0,
+            })
+            .ok_or(());
+    }
     Ok(match r {
         VReg::Virtual(v) => RaxSmirOperand {
             kind: 1,
@@ -238,6 +258,9 @@ fn addr(a: &Address, pc: u64) -> Checked<RaxSmirAddress> {
 fn operation(op: &SmirOp) -> Checked<RaxSmirOp> {
     if matches!(op.x86_hint, Some(X86OpHint::ShiftGroup6)) {
         return Err(());
+    }
+    if let Some(record) = vector::operation(op)? {
+        return Ok(record);
     }
     let mut o = RaxSmirOp {
         struct_size: size_of::<RaxSmirOp>() as u32,
@@ -621,7 +644,10 @@ fn operation(op: &SmirOp) -> Checked<RaxSmirOp> {
         }
         o.auxiliary |= 0x100;
     }
-    if o.width_bits > 64 || o.source_width_bits > 64 {
+    if o.width_bits > 64
+        || o.source_width_bits > 64
+        || [o.dst, o.dst2, o.a, o.b, o.c].iter().any(|r| r.kind == 4)
+    {
         return Err(());
     }
     Ok(o)
@@ -741,18 +767,26 @@ pub extern "C" fn rax_smir_lift_x64(
                 .into_iter()
                 .map(|(r, v)| Ok((reg(VReg::Arch(r))?, reg(v)?)))
                 .collect::<Checked<Vec<_>>>()?;
-            bindings.sort_by_key(|(r, _)| r.id);
+            bindings.sort_by_key(|(r, _)| (r.kind, r.id));
             for (dst, a) in bindings {
                 records.push(RaxSmirOp {
                     struct_size: size_of::<RaxSmirOp>() as u32,
                     abi_version: 1,
-                    opcode: RAX_SMIR_MOV,
-                    width_bits: 64,
+                    opcode: if dst.kind == 4 {
+                        RAX_SMIR_VMOV
+                    } else {
+                        RAX_SMIR_MOV
+                    },
+                    width_bits: if dst.kind == 4 { 128 } else { 64 },
                     dst,
                     a,
                     guest_pc: pc,
                     ..Default::default()
                 });
+            }
+            if records.iter().any(|r| r.opcode >= RAX_SMIR_VMOV) && !vector::legacy_encoding(input)
+            {
+                return Err(());
             }
             Ok(records)
         })();
@@ -786,3 +820,6 @@ pub extern "C" fn rax_smir_lift_x64(
 }
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod vector_tests;

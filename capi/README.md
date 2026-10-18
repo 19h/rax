@@ -157,7 +157,7 @@ pushes. Tags must be exactly `v<version>` from `capi/Cargo.toml`, for example
 `v0.1.0`. To release a prerelease, use matching versions such as package
 `0.2.0-rc.1` and tag `v0.2.0-rc.1`; GitHub marks it as a prerelease. Mismatched
 or malformed tags fail before building. This does not change the independent
-C ABI version (currently 1.13.0).
+C ABI version (currently 1.14.0).
 
 | SDK triple | Build/runtime-test host | Compilation baseline |
 |---|---|---|
@@ -740,3 +740,13 @@ load/store sequence and commit CF after the update; locked memory operations
 remain rejected when they cannot be represented atomically. The ABI record
 layouts and scalar SMIR ABI version remain unchanged. See
 `examples/x86_64_smir.c` for a bounded C consumer.
+
+C API 1.14 extends the same pointer-free records with operand kind 4 (XMM0..15)
+and a bounded legacy 128-bit subset: moves, loads/stores, lane insert/extract,
+MOVD/MOVQ, XOR, and temporary broadcast. Alignment checks remain explicit and
+ordered before memory effects. Lane indices and widths are retained. An XMM
+write preserves the backing state above bit 127. VEX/EVEX, MMX and floating-point
+arithmetic remain unsupported; rejection and capacity failure publish no prefix.
+This extension does not rename the existing `rax_smir_lift_x64` entry point or
+change any record layout. Old consumers must continue rejecting unknown operand
+kinds/opcodes/widths rather than treating a complete record as a known operation.

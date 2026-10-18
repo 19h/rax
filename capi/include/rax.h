@@ -49,7 +49,7 @@ extern "C" {
  * Versioning
  * ======================================================================== */
 #define RAX_API_MAJOR 1u
-#define RAX_API_MINOR 13u
+#define RAX_API_MINOR 14u
 #define RAX_API_PATCH 0u
 
 /* ===========================================================================
@@ -1177,11 +1177,13 @@ RAX_API rax_status rax_process_stdin_feed(const rax_process *process,
 RAX_API rax_status rax_process_output_read(const rax_process *process, uint32_t stream,
     uint8_t *out, size_t capacity, size_t *written);
 
-/* Versioned, pointer-free scalar SMIR for an x86-64 instruction.
+/* Versioned, pointer-free scalar/legacy-XMM SMIR for an x86-64 instruction.
  * Included by rax.h inside extern "C". No engine, JIT, or guest execution.
  * All structures are outputs; callers allocate the full published size.
  * Operands: NONE=0, TEMP=1 (instruction-local), ARCH=2, IMM=3 (u64 bits).
  * ARCH: GPR encoding 0..31, RIP=32, RFLAGS=33, FS.base=34, GS.base=35.
+ * XMM=4 uses id 0..15 and contains the low 128 bits. Legacy writes preserve
+ * the architectural backing state above bit 127. VEX/EVEX are unsupported.
  * auxiliary bit 8 selects bits 15:8 for extension sources; bit 0 selects
  * signed loads or the immediate boolean for SET_CF/SET_DF.
  * Widths are bits. Arithmetic follows SMIR modular bit-vector semantics.
@@ -1246,6 +1248,25 @@ RAX_API rax_status rax_process_output_read(const rax_process *process, uint32_t 
 #define RAX_SMIR_BTS 45u
 #define RAX_SMIR_BTR 46u
 #define RAX_SMIR_BTC 47u
+/* Legacy 128-bit vector subset. Structure layouts and ABI version stay fixed.
+ * VMOV/VLOAD/VSTORE/VXOR operate on 128 bits. VINSERT/VEXTRACT use
+ * source_width_bits as lane width and auxiliary as zero-based lane index;
+ * VEXTRACT returns 64 bits, sign-extended iff condition==1. VBROADCAST writes
+ * a temporary: auxiliary lanes are filled, remaining low-128 bits are zero.
+ * X86_MOVDQ transfers 32/64 bits; an XMM destination clears its other low-128
+ * bits, a 32-bit GPR destination zero-extends. CHECK_ALIGNMENT is ordered before
+ * memory effects and faults when address & (auxiliary-1) != 0.
+ * Unsupported instructions and insufficient capacity publish no prefix. */
+#define RAX_SMIR_OPERAND_XMM 4u
+#define RAX_SMIR_VMOV 48u
+#define RAX_SMIR_VLOAD 49u
+#define RAX_SMIR_VSTORE 50u
+#define RAX_SMIR_VINSERT 51u
+#define RAX_SMIR_VEXTRACT 52u
+#define RAX_SMIR_X86_MOVDQ 53u
+#define RAX_SMIR_CHECK_ALIGNMENT 54u
+#define RAX_SMIR_VXOR 55u
+#define RAX_SMIR_VBROADCAST 56u
     typedef struct rax_smir_operand
     {
         uint32_t kind;
