@@ -1,0 +1,17 @@
+{
+  "pid": 10080,
+  "utc": "2026-10-17T23:42:14.427464+00:00",
+  "state": "finished",
+  "scope": "query nonzero session IDs on child-owned duplicate tokens; existing privilege enabled only on a private token and selected only on the child thread",
+  "child-pid": 1432,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-token-session-private.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T23:42:26.620352+00:00"
+}

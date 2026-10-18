@@ -1,0 +1,114 @@
+{
+  "files": [
+    {
+      "path": "native-token-session-id.cpp",
+      "bytes": 9134,
+      "sha256": "52c9f215468cc70ba851cdff669224b87b4bb440a2270836ad3c0baf9b0a90cf"
+    },
+    {
+      "path": "native-token-session-id.ps1",
+      "bytes": 1787,
+      "sha256": "a4a04eb9f581aafe836936cba0027a71905af4718751c6a68438c3e69349d65f"
+    },
+    {
+      "path": "run-token-session-id.py",
+      "bytes": 1136,
+      "sha256": "609f6ec0ec8a629adf7f92058b1bde24ec5646e136bf96a1d24def6cf1cd4ef9"
+    },
+    {
+      "path": "source-baseline.json",
+      "bytes": 365,
+      "sha256": "3a07c23a6246a5c9a2d86fbc96d781c6c6854a66394b1ff9dbb057fdf238386c"
+    },
+    {
+      "path": "native-identities.json",
+      "bytes": 2706,
+      "sha256": "99ba1912261b3a8a31f91b514c0093740441e25bd30d269c760268f2df725835"
+    },
+    {
+      "path": "token-session-id-launch.json",
+      "bytes": 521,
+      "sha256": "2ae3ccc0ea242211694dbbf58fa258f0e63ef59dfa3c46471e3bdd5b7d01489b"
+    },
+    {
+      "path": "token-session-id-post-run.json",
+      "bytes": 1456,
+      "sha256": "7a72b2e36f1124bed718ae71f8b223ef1c847f3a63e82fedd352fb1cd68a0afa"
+    },
+    {
+      "path": "cases.json",
+      "bytes": 488249,
+      "sha256": "d9d529f243d7791402db6010821023138e2e8cb027277d298a4f8a091fc710ae"
+    },
+    {
+      "path": "token-session-id-arm64.log",
+      "bytes": 698922,
+      "sha256": "f68faec00f653e184356bcc8babb8cb9cc013e4e1ded7671a2cea28a859e69a5"
+    },
+    {
+      "path": "token-session-id-arm64-build.log",
+      "bytes": 29,
+      "sha256": "42f7b4322f6e663a455b9a87b0aac3b3a54362d30e111a9ac42fa9f3431114b4"
+    },
+    {
+      "path": "token-session-id-arm64-identity.json",
+      "bytes": 514,
+      "sha256": "834388845f2c25a9eb5c18aeadad2bd8f528730530bf9befe53053948d925cd8"
+    },
+    {
+      "path": "token-session-id-x64.log",
+      "bytes": 699469,
+      "sha256": "ecd397fa8b18c3e4d8c018772c05a59422ea67d9777084c279c4face067760e9"
+    },
+    {
+      "path": "token-session-id-x64-build.log",
+      "bytes": 29,
+      "sha256": "42f7b4322f6e663a455b9a87b0aac3b3a54362d30e111a9ac42fa9f3431114b4"
+    },
+    {
+      "path": "token-session-id-x64-identity.json",
+      "bytes": 506,
+      "sha256": "4de58e03004fb49e594f6e0016d5e66fab4678724dc62b5756c68c4e707c7132"
+    },
+    {
+      "path": "token-session-id-x86.log",
+      "bytes": 678949,
+      "sha256": "2876b7b57411b2c9c66ac8491c0727b300727c49524889d1a91e15c0387ce1f9"
+    },
+    {
+      "path": "token-session-id-x86-build.log",
+      "bytes": 29,
+      "sha256": "42f7b4322f6e663a455b9a87b0aac3b3a54362d30e111a9ac42fa9f3431114b4"
+    },
+    {
+      "path": "token-session-id-x86-identity.json",
+      "bytes": 504,
+      "sha256": "0a86d0977be9d3448ee796f2a62389d79bb6fb058e395887b17351ca99807538"
+    },
+    {
+      "path": "token-session-id-x86-laa.log",
+      "bytes": 678953,
+      "sha256": "7e3a77ac86e0dfe60213ce16ef7117a0490bf685e1ca8b1f2f4e95b99027b789"
+    },
+    {
+      "path": "token-session-id-x86-laa-build.log",
+      "bytes": 29,
+      "sha256": "42f7b4322f6e663a455b9a87b0aac3b3a54362d30e111a9ac42fa9f3431114b4"
+    },
+    {
+      "path": "token-session-id-x86-laa-identity.json",
+      "bytes": 518,
+      "sha256": "946b1cf008239ca1cab0d1a92d6fa7e9576c4cf2f2caa7712a72652510c681e2"
+    },
+    {
+      "path": "token-session-id-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "token-session-id-outcomes.json",
+      "bytes": 472,
+      "sha256": "01846209ed55db571842dec119feb6c594ec6bdf128947df620aace2f57884a6"
+    }
+  ]
+}

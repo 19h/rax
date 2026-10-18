@@ -1,0 +1,8 @@
+{
+  "utc": "2026-10-17T23:32:08.423046+00:00",
+  "sha256": "52c9f215468cc70ba851cdff669224b87b4bb440a2270836ad3c0baf9b0a90cf",
+  "bytes": 9134,
+  "source": "native-token-session-id.cpp",
+  "scope": "native observation only; no RAX source change; current token group remains uncommitted",
+  "observed-frontier": "smoke turn2149788 NtQueryInformationToken class12"
+}

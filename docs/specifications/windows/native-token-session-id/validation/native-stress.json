@@ -1,0 +1,57 @@
+[
+  {
+    "case": "missing-profile",
+    "rejected": true,
+    "error": "ValueError: four native producers"
+  },
+  {
+    "case": "missing-post-run-profile",
+    "rejected": true,
+    "error": "ValueError: complete post-run native profiles"
+  },
+  {
+    "case": "wrong-machine",
+    "rejected": true,
+    "error": "ValueError: native machine and LAA"
+  },
+  {
+    "case": "wrong-success-status",
+    "rejected": true,
+    "error": "ValueError: successful SessionId DWORD and required length"
+  },
+  {
+    "case": "missing-row",
+    "rejected": true,
+    "error": "ValueError: complete ordered rows"
+  },
+  {
+    "case": "wrong-last-error",
+    "rejected": true,
+    "error": "ValueError: no escaped exception or last-error change"
+  },
+  {
+    "case": "wrong-native-value",
+    "rejected": true,
+    "error": "ValueError: measured native session value"
+  },
+  {
+    "case": "changed-source",
+    "rejected": true,
+    "error": "ValueError: post-run native source"
+  },
+  {
+    "case": "wrong-private-value",
+    "rejected": true,
+    "error": "subprocess.CalledProcessError: Command '['/opt/homebrew/opt/python@3.15/bin/python3.15', '-B', '/private/var/folders/m5/xcy1lpz12mb19rld1y8vxphh0000gn/T/token-session-proof-88a275jq/proof/check-private.py']' returned non-zero exit status 1."
+  },
+  {
+    "case": "private-thread-not-reverted",
+    "rejected": true,
+    "error": "subprocess.CalledProcessError: Command '['/opt/homebrew/opt/python@3.15/bin/python3.15', '-B', '/private/var/folders/m5/xcy1lpz12mb19rld1y8vxphh0000gn/T/token-session-proof-li4jdwq5/proof/check-private.py']' returned non-zero exit status 1."
+  },
+  {
+    "case": "private-missing-high-bit",
+    "rejected": true,
+    "error": "subprocess.CalledProcessError: Command '['/opt/homebrew/opt/python@3.15/bin/python3.15', '-B', '/private/var/folders/m5/xcy1lpz12mb19rld1y8vxphh0000gn/T/token-session-proof-cq5l13fr/proof/check-private.py']' returned non-zero exit status 1."
+  }
+]

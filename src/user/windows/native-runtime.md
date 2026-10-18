@@ -2215,3 +2215,33 @@ The unchanged production observer outcomes are:
 
 Full ordinary Windows application completion remains unproven. See the
 [native contract and complete evidence](../../../docs/specifications/windows/native-process-token-open/README.md).
+
+
+## Captured TokenSessionId and process-session identity (2026-10-18)
+
+`NtQueryInformationToken` class 12 publishes the primary token's separately
+captured session DWORD, following the measured probes, handle rights, required
+length and caller-byte ordering. Class 29 retains its AppContainer behavior.
+Missing capture and impersonation-session requests remain explicitly
+unsupported. No guest query calls a host token API. The PEB session field uses
+the process session already captured by `ProcessIdToSessionId`, independently
+of the token value; no guest token setter is added.
+
+Four native caller profiles supply 7320 replayed queries. Separately, 24 private
+token cases supply 72 queries and 24 setters for zero, nonzero and high-bit
+DWORD values. All use one ARM64 Windows kernel; x64 is a compatibility caller.
+Full suites are macOS 7906/0/2, Linux 7900/0/2 and Windows 7341/5/2 with the five
+existing Windows lowerer failures. C API 168, all-targets, scoped Assist C++
+consumers and two complete empty-core-feature archive walks per host pass.
+Core/workspace verification binds 5713 inputs; archive verification binds 404.
+Frozen Rust ABI 184 and compared root ABI 200 remain separate evidence surfaces.
+
+The unchanged ordinary observer passes the previous class-12 frontier and ends:
+
+- `terminal turn=2149815 Complete(Internal("native NTDLL service NtQueryInformationToken: Unimplemented(\"NtQueryInformationToken: NtQueryInformationToken class 42\")"))`
+- `terminal turn=2152164 Complete(Internal("native NTDLL service NtQueryInformationToken: Unimplemented(\"NtQueryInformationToken: NtQueryInformationToken class 42\")"))`
+
+Full ordinary Windows application completion remains unproven. See the
+[native contract and exact validation evidence](../../../docs/specifications/windows/native-token-session-id/README.md).
+
+The preserved upstream parent `e4f998244e3eec728f87a85482d4aa62566e802b` uses Rust ABI minor 203; its selected C++ sources match. Its newer Rust code is outside the retained carrier validation.

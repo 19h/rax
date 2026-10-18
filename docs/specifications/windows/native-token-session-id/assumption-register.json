@@ -1,0 +1,38 @@
+[
+  {
+    "id": "S1",
+    "assumption": "The selected primary token remains immutable during the guest run.",
+    "basis": "Existing no-impersonation/no-token-mutation runtime contract.",
+    "dependent-result": "Query from captured metadata without a host call.",
+    "stress-test": "Missing subject/session and unsupported impersonation metadata.",
+    "falsification-probe": "An admitted guest operation changes primary token session state.",
+    "status": "retained"
+  },
+  {
+    "id": "S2",
+    "assumption": "Classes 12 and 29 share the measured caller-probe order on this kernel.",
+    "basis": "All 7,320 native class-12 rows match the prior class-29 byte/protection outcomes.",
+    "dependent-result": "One checked DWORD query adapter.",
+    "stress-test": "Complete supplied spans, unaligned and overlapping outputs, guard priority, invalid handles.",
+    "falsification-probe": "Any native replay or installed-leaf outcome differs.",
+    "status": "confirmed for the measured kernel and three-host replay"
+  },
+  {
+    "id": "S3",
+    "assumption": "Token session and process session have separate ownership.",
+    "basis": "Separate native APIs, private-token value controls and the existing WNF process-session capture.",
+    "dependent-result": "PEB uses process metadata; token query uses token metadata.",
+    "stress-test": "Different token/process values, zero, UINT32_MAX and unchanged adjacent bytes.",
+    "falsification-probe": "A codepath replaces either with the other.",
+    "status": "confirmed by separate capture paths, native private controls and cross-ABI regression"
+  },
+  {
+    "id": "S4",
+    "assumption": "Native evidence covers one ARM64 Windows 10.0.29683 kernel and four caller profiles.",
+    "basis": "Source/PE/log post-run identities.",
+    "dependent-result": "No physical x64-kernel or other Windows-version measurement is claimed.",
+    "stress-test": "Machine, LAA, hashes and complete call axes.",
+    "falsification-probe": "A producer lacks a completed verified identity.",
+    "status": "confirmed"
+  }
+]

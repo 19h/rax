@@ -1,0 +1,51 @@
+[
+  {
+    "impact": "high",
+    "finding": "Both ordinary programs pass the previous class-12 call and reach the exact next boundary recorded in the unchanged observer logs.",
+    "evidence": "validation/ordinary-analysis.json",
+    "blocks": "The full goal remains open.",
+    "action": "Continue from the measured boundary as a separate semantic group."
+  },
+  {
+    "impact": "medium",
+    "finding": "CSR capture and connection retain the existing measured session-0 profile.",
+    "evidence": "object_namespace/installed/csr.rs and dll/native/secure_connect/csr.rs",
+    "blocks": "General other-session CSR completion is not claimed.",
+    "action": "Preserve explicit refusal; never reuse session-0 backing for another session."
+  },
+  {
+    "impact": "medium",
+    "finding": "Five existing Windows BZHI/FP16 lowerer failures and two ignored microkernel tests remain.",
+    "evidence": "validation/native-session-final-full.log",
+    "blocks": "A fully green Windows regression is not claimed.",
+    "action": "Preserve exact failure and ignored-test identities."
+  },
+  {
+    "impact": "medium",
+    "finding": "Frozen Rust carrier ABI184 differs from compared root ABI200.",
+    "evidence": "validation/current-cpp-consumers-session-root.json and archive records",
+    "blocks": "Whole-current-root and package validation is not claimed.",
+    "action": "Bind nine unchanged C++ source files and exact carrier inputs."
+  },
+  {
+    "impact": "medium",
+    "finding": "Impersonation-token SessionId, token mutation and general other-session CSR completion are unsupported.",
+    "evidence": "dll/native/token_query.rs; object_namespace/installed/csr.rs",
+    "blocks": "Those capabilities are outside this captured immutable-primary-token query.",
+    "action": "Retain explicit refusal and separate process/token values."
+  },
+  {
+    "impact": "low",
+    "finding": "Seventy-two private-token queries corroborate DWORD values and duplicate lifetime; they are separate from the 7320-row caller-boundary replay.",
+    "evidence": "check-private.py and private producer logs",
+    "blocks": "No row-for-row guest replay claim for private setters.",
+    "action": "Keep the two evidence categories distinct."
+  },
+  {
+    "impact": "medium",
+    "finding": "The existing vm-memory Windows adapter emits a deprecated stdcall calling-convention warning on ARM64. The same warning exists in the preceding token-opening gate.",
+    "evidence": "validation/native-session-final-all-targets.log and ../native-process-token-open/validation/native-token-final-all-targets.log",
+    "blocks": "No error with pinned Rust1.95.0; no dependency change is made in this group.",
+    "action": "Retain the warning as a separate dependency compatibility item."
+  }
+]

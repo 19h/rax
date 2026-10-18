@@ -1,0 +1,41 @@
+{
+  "scope": "Representative native and primary evidence plus authored Markdown remain byte-identical under core.autocrlf=true.",
+  "files": [
+    {
+      "path": "token-session-id-arm64.log",
+      "raw-git-blob": "d87fce866b4a48070aa9a83c180f2679fe995997",
+      "autocrlf-true-git-blob": "d87fce866b4a48070aa9a83c180f2679fe995997",
+      "equal": true
+    },
+    {
+      "path": "native-token-session-id.ps1",
+      "raw-git-blob": "264f8c851bc0dc379ac30dd7cffe685b11c8b9ec",
+      "autocrlf-true-git-blob": "264f8c851bc0dc379ac30dd7cffe685b11c8b9ec",
+      "equal": true
+    },
+    {
+      "path": "native-token-session-id.cpp",
+      "raw-git-blob": "029c5450171873ffca6379bb9845d00b3a38a493",
+      "autocrlf-true-git-blob": "029c5450171873ffca6379bb9845d00b3a38a493",
+      "equal": true
+    },
+    {
+      "path": "native-identities.json",
+      "raw-git-blob": "6a7605bce73fda07b152c3eb8f34724efa9ee040",
+      "autocrlf-true-git-blob": "6a7605bce73fda07b152c3eb8f34724efa9ee040",
+      "equal": true
+    },
+    {
+      "path": "primary/phnt-ntseapi.h",
+      "raw-git-blob": "e017316ffc2ed563ffeeebdbfa9c8101481eb118",
+      "autocrlf-true-git-blob": "e017316ffc2ed563ffeeebdbfa9c8101481eb118",
+      "equal": true
+    },
+    {
+      "path": "README.md",
+      "raw-git-blob": "96e931f7a6147c72e4ca2658e4979385c62e735d",
+      "autocrlf-true-git-blob": "96e931f7a6147c72e4ca2658e4979385c62e735d",
+      "equal": true
+    }
+  ]
+}

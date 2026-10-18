@@ -1,0 +1,19 @@
+{
+  "pid": 5008,
+  "utc": "2026-10-18T00:13:23.905619+00:00",
+  "state": "finished",
+  "source": "src-token-session-id",
+  "source-inputs": 5713,
+  "child-pid": 10828,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-session-final-core.ps1"
+  ],
+  "core-exit-code": 0,
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T00:50:30.800561+00:00"
+}

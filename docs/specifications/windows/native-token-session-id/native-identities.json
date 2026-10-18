@@ -1,0 +1,93 @@
+{
+  "producers": [
+    {
+      "profile": "arm64",
+      "source": {
+        "bytes": 9134,
+        "sha256": "52c9f215468cc70ba851cdff669224b87b4bb440a2270836ad3c0baf9b0a90cf"
+      },
+      "executable": {
+        "bytes": 151040,
+        "sha256": "734bf194a034c4b69dbccdac485a02009f319e0c5df1eb9461e2e7a59c565a4c",
+        "machine": 43620,
+        "large-address-aware": true
+      },
+      "stdout": {
+        "path": "token-session-id-arm64.log",
+        "bytes": 698922,
+        "sha256": "f68faec00f653e184356bcc8babb8cb9cc013e4e1ded7671a2cea28a859e69a5"
+      },
+      "calls": 1830,
+      "closed-handles": 3,
+      "released-arenas": 1,
+      "captured-session-id": 0
+    },
+    {
+      "profile": "x64",
+      "source": {
+        "bytes": 9134,
+        "sha256": "52c9f215468cc70ba851cdff669224b87b4bb440a2270836ad3c0baf9b0a90cf"
+      },
+      "executable": {
+        "bytes": 148480,
+        "sha256": "c7837595162b31f34629b6e457aee03a19264a42c30fe3cef9bf0f8d5823254d",
+        "machine": 34404,
+        "large-address-aware": true
+      },
+      "stdout": {
+        "path": "token-session-id-x64.log",
+        "bytes": 699469,
+        "sha256": "ecd397fa8b18c3e4d8c018772c05a59422ea67d9777084c279c4face067760e9"
+      },
+      "calls": 1830,
+      "closed-handles": 3,
+      "released-arenas": 1,
+      "captured-session-id": 0
+    },
+    {
+      "profile": "x86",
+      "source": {
+        "bytes": 9134,
+        "sha256": "52c9f215468cc70ba851cdff669224b87b4bb440a2270836ad3c0baf9b0a90cf"
+      },
+      "executable": {
+        "bytes": 122880,
+        "sha256": "b8c1a06dd027374fd583e544efdd35abde7cae8650cbb31fa7a95698ecae34be",
+        "machine": 332,
+        "large-address-aware": false
+      },
+      "stdout": {
+        "path": "token-session-id-x86.log",
+        "bytes": 678949,
+        "sha256": "2876b7b57411b2c9c66ac8491c0727b300727c49524889d1a91e15c0387ce1f9"
+      },
+      "calls": 1830,
+      "closed-handles": 3,
+      "released-arenas": 1,
+      "captured-session-id": 0
+    },
+    {
+      "profile": "x86-laa",
+      "source": {
+        "bytes": 9134,
+        "sha256": "52c9f215468cc70ba851cdff669224b87b4bb440a2270836ad3c0baf9b0a90cf"
+      },
+      "executable": {
+        "bytes": 122880,
+        "sha256": "89b412d5dcee249431ab59280716c5662b4622f92f47289fe481a2fe92e02e71",
+        "machine": 332,
+        "large-address-aware": true
+      },
+      "stdout": {
+        "path": "token-session-id-x86-laa.log",
+        "bytes": 678953,
+        "sha256": "7e3a77ac86e0dfe60213ce16ef7117a0490bf685e1ca8b1f2f4e95b99027b789"
+      },
+      "calls": 1830,
+      "closed-handles": 3,
+      "released-arenas": 1,
+      "captured-session-id": 0
+    }
+  ],
+  "calls": 7320
+}

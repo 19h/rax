@@ -39,6 +39,7 @@ pub(crate) struct Catalog {
     records: Arc<BTreeMap<u64, Option<u32>>>,
     primary_subject: Option<Arc<Subject>>,
     primary_token_access: Option<crate::user::windows::security::token::Access>,
+    primary_token_session_id: Option<u32>,
     queries: Option<Arc<super::Queries>>,
 }
 fn invalid(message: &'static str) -> io::Error {
@@ -203,6 +204,7 @@ impl Catalog {
             records: Arc::new(records),
             primary_subject: Some(Arc::new(subject)),
             primary_token_access: None,
+            primary_token_session_id: None,
             queries: None,
         })
     }
@@ -224,6 +226,15 @@ impl Catalog {
     }
     pub(crate) fn queries(&self) -> Option<Arc<super::Queries>> {
         self.queries.clone()
+    }
+
+    pub(crate) fn with_primary_token_session_id(mut self, session: u32) -> Self {
+        self.primary_token_session_id = Some(session);
+        self
+    }
+
+    pub(crate) fn primary_token_session_id(&self) -> Option<u32> {
+        self.primary_token_session_id
     }
     pub(crate) fn subscription_stamp(&self, name: u64) -> Result<Option<u32>, &'static str> {
         let queries = self

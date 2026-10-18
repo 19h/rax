@@ -110,7 +110,7 @@ fn groups(buffer: &[u8]) -> io::Result<Vec<Group>> {
         .map(|i| group(buffer, start + i * stride))
         .collect()
 }
-fn capture(token: &Token) -> io::Result<Subject> {
+fn capture(token: &Token) -> io::Result<(Subject, u32)> {
     let user = group(&information(token, 1)?, 0)?.sid;
     let enabled_groups = groups(&information(token, 2)?)?;
     let restricted = groups(&information(token, 11)?)?;
@@ -133,20 +133,30 @@ fn capture(token: &Token) -> io::Result<Subject> {
     if flags.len() != 4 {
         return Err(invalid("WNF AppContainer flag is not a DWORD"));
     }
-    Ok(Subject {
-        user,
-        groups: enabled_groups,
-        restricted,
-        app_container: u32::from_ne_bytes(flags.try_into().unwrap()) != 0,
-        privileges,
-    })
+    let session = information(token, 12)?;
+    if session.len() != 4 {
+        return Err(invalid("native token SessionId is not a DWORD"));
+    }
+    let session = u32::from_ne_bytes(session.try_into().unwrap());
+    Ok((
+        Subject {
+            user,
+            groups: enabled_groups,
+            restricted,
+            app_container: u32::from_ne_bytes(flags.try_into().unwrap()) != 0,
+            privileges,
+        },
+        session,
+    ))
 }
-pub(super) fn subject() -> io::Result<(Subject, crate::user::windows::security::token::Access)> {
+pub(super) fn subject() -> io::Result<(Subject, crate::user::windows::security::token::Access, u32)>
+{
     let (token, access) = access::select()?;
     for _ in 0..3 {
         let first = capture(&token)?;
         if first == capture(&token)? {
-            return Ok((first, access));
+            let (subject, session) = first;
+            return Ok((subject, access, session));
         }
     }
     Err(invalid(

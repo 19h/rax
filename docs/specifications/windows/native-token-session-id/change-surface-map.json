@@ -1,0 +1,10 @@
+{
+  "Windows userland": "Class-12 query dispatch and independent token/process session values.",
+  "Native acquisition": "Capture an exact DWORD on a private query handle; repeat selection detects changes.",
+  "PEB": "Initialize the architecture-specific process-session field from existing WNF Queries.session.",
+  "WNF": "Carry the new optional token property; access policy and query data are unchanged.",
+  "Decoder, SMIR, JIT, devices, public C ABI": "Unchanged; no exported layout, decoder or lowering changes.",
+  "Targets/platforms": "Shared query and PEB code on Windows, macOS and Linux; native acquisition/leaf checks on Windows. All three configurations are required.",
+  "Assist": "RAX pin and engineering records; no UI, tool-schema or persistence changes.",
+  "Tests/docs": "7,320 native matrix rows, 24 private value controls, nonzero model values, PEB separation, existing class 29 and three-host carrier checks."
+}

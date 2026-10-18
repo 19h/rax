@@ -13,7 +13,7 @@ pub(super) fn information(c: &mut Ctx) -> ApiResult {
 fn checked(c: &mut Ctx) -> ApiResult {
     let (token, class, output, length, returned) =
         (c.ptr(0)?, c.u32(1)?, c.ptr(2)?, c.u32(3)?, c.ptr(4)?);
-    if class != 29 {
+    if !matches!(class, 12 | 29) {
         return Err(c.unsupported(format!("NtQueryInformationToken class {class}")));
     }
     // Both native64 and WoW64 probe the complete supplied span before token
@@ -32,7 +32,7 @@ fn checked(c: &mut Ctx) -> ApiResult {
     if token == thread_token {
         return Flow::ret(STATUS_NO_TOKEN.into());
     }
-    let mut captured_flag = None;
+    let mut captured_value = None;
     if token != process_token && token != effective_token {
         if token == c.arch().ptr(u64::MAX) || token == c.arch().ptr(u64::MAX - 1) {
             return Flow::ret(STATUS_OBJECT_TYPE_MISMATCH.into());
@@ -48,7 +48,10 @@ fn checked(c: &mut Ctx) -> ApiResult {
                 if c.p.objects.access(token).unwrap_or(0) & 8 == 0 {
                     return Flow::ret(STATUS_ACCESS_DENIED.into());
                 }
-                captured_flag = Some(subject.app_container);
+                if class == 12 {
+                    return Err(c.unsupported("impersonation-token SessionId is not captured"));
+                }
+                captured_value = Some(u32::from(subject.app_container));
             }
             Some(Object::Opaque("Token")) => {
                 return Err(c.unsupported("opaque token has no modeled primary subject"));
@@ -56,9 +59,19 @@ fn checked(c: &mut Ctx) -> ApiResult {
             Some(_) => return Flow::ret(STATUS_OBJECT_TYPE_MISMATCH.into()),
         }
     }
-    let Some(app_container) = captured_flag.or_else(|| c.p.objects.primary_token_app_container())
-    else {
-        return Err(c.unsupported("primary-token subject is not captured"));
+    let primary = match class {
+        12 if c.p.objects.primary_token_app_container().is_some() => {
+            c.p.objects.primary_token_session_id()
+        }
+        29 => c.p.objects.primary_token_app_container().map(u32::from),
+        _ => None,
+    };
+    let Some(value) = captured_value.or(primary) else {
+        return Err(c.unsupported(if class == 12 {
+            "primary-token SessionId is not captured"
+        } else {
+            "primary-token subject is not captured"
+        }));
     };
     // Native writes the required length before either short-buffer return or
     // successful data publication. Overlapping output therefore wins.
@@ -66,6 +79,6 @@ fn checked(c: &mut Ctx) -> ApiResult {
     if length < 4 {
         return Flow::ret(STATUS_BUFFER_TOO_SMALL.into());
     }
-    c.mem().w32(output, u32::from(app_container))?;
+    c.mem().w32(output, value)?;
     Flow::ret(STATUS_SUCCESS.into())
 }

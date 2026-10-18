@@ -1,0 +1,11 @@
+error: failed to load source for dependency `linux-loader`
+
+Caused by:
+  unable to update https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960
+
+Caused by:
+  the source git+https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960 requires a lock file to be present first before it can be
+  used against vendored source code
+
+  remove the source replacement configuration, generate a lock file, and then
+  restore the source replacement configuration to continue the build

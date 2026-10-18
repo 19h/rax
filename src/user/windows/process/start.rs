@@ -17,6 +17,14 @@ fn memory(e: impl std::fmt::Display) -> SpawnError {
     SpawnError::Memory(e.to_string())
 }
 
+/// PEB identity belongs to the process session, independently of token fields.
+fn initialize_session_id(p: &mut Proc) -> Result<(), SpawnError> {
+    let session = p.objects.wnf_queries().map_or(0, |queries| queries.session);
+    p.space
+        .w32(p.peb + offsets(p.arch).peb_session_id, session)
+        .map_err(|e| memory(format!("{e:?}")))
+}
+
 /// Quotes one argument using the Microsoft C runtime backslash/quote rules.
 /// Time and space are O(n) in UTF-8 bytes, with no change to Unicode scalars.
 pub fn quote_arg(arg: &str) -> String {
@@ -451,6 +459,7 @@ pub(super) fn spawn_image(mut config: WindowsConfig, bytes: Vec<u8>) -> Result<P
     p.space
         .w32(p.peb + o.peb_os_platform_id, 2)
         .map_err(|e| memory(format!("{e:?}")))?;
+    initialize_session_id(&mut p)?;
     params(&mut p, &image_path)?;
     if let Some(runtime) = p.native.as_ref() {
         let schema = runtime.apisets.bytes.clone();
@@ -591,6 +600,10 @@ pub(super) fn spawn_image(mut config: WindowsConfig, bytes: Vec<u8>) -> Result<P
 #[cfg(test)]
 #[path = "start/parameters_tests.rs"]
 mod parameters_tests;
+
+#[cfg(test)]
+#[path = "start/token_session_id_tests.rs"]
+mod token_session_id_tests;
 
 #[cfg(test)]
 mod tests {

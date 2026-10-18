@@ -1,0 +1,32 @@
+   Compiling vm-memory v0.17.1 (/Users/int/Library/Caches/assist-process-emulation/native-token-session-id-20261017/rax-source/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-token-session-id-20261017/rax-source)
+error[E0308]: mismatched types
+   --> src/user/windows/process/sched/tests/services_tests/token_session_id_tests.rs:178:62
+    |
+178 |           let id = p.objects.create(Object::ImpersonationToken(Subject {
+    |  ___________________________________--------------------------_^
+    | |                                   |
+    | |                                   arguments to this enum variant are incorrect
+179 | |             user: vec![],
+180 | |             groups: vec![],
+181 | |             restricted: vec![],
+182 | |             app_container: true,
+183 | |             privileges: vec![],
+184 | |         }));
+    | |_________^ expected `Arc<Subject>`, found `Subject`
+    |
+    = note: expected struct `std::sync::Arc<windows::security::Subject>`
+               found struct `windows::security::Subject`
+note: tuple variant defined here
+   --> src/user/windows/objects.rs:235:5
+    |
+235 |     ImpersonationToken(std::sync::Arc<super::security::Subject>),
+    |     ^^^^^^^^^^^^^^^^^^
+help: call `Into::into` on this expression to convert `windows::security::Subject` into `std::sync::Arc<windows::security::Subject>`
+    |
+184 |         }.into()));
+    |          +++++++
+
+For more information about this error, try `rustc --explain E0308`.
+error: could not compile `rax` (lib test) due to 1 previous error

@@ -1,0 +1,17 @@
+{
+  "pid": 1704,
+  "utc": "2026-10-17T23:32:08.556897+00:00",
+  "state": "finished",
+  "scope": "read-only class12 token session-id queries; only child-owned token/event handles and memory",
+  "child-pid": 1340,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-token-session-id.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-17T23:32:36.234583+00:00"
+}

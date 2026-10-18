@@ -64,6 +64,13 @@ impl Objects {
     pub(crate) fn select_wnf_catalog(&mut self, catalog: Catalog) {
         self.wnf_subscriptions.catalog = Some(catalog);
     }
+
+    pub(crate) fn primary_token_session_id(&self) -> Option<u32> {
+        self.wnf_subscriptions
+            .catalog
+            .as_ref()
+            .and_then(Catalog::primary_token_session_id)
+    }
     pub(crate) fn wnf_permission(&self, name: u64, mask: u32) -> Option<Permission> {
         self.wnf_subscriptions
             .catalog

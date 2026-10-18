@@ -1,0 +1,23 @@
+{
+  "utc": "2026-10-18T00:28:09.575749+00:00",
+  "status": "reviewed",
+  "observations": [
+    {
+      "program-sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b",
+      "log-sha256": "80753a44897e18622837ccb9bd106876a21b709320d97703953087fe9c354746",
+      "class12-turn": 2149788,
+      "class29-turn": 2149802,
+      "class42-stop-turn": 2149815,
+      "terminal": "terminal turn=2149815 Complete(Internal(\"native NTDLL service NtQueryInformationToken: Unimplemented(\\\"NtQueryInformationToken: NtQueryInformationToken class 42\\\")\"))"
+    },
+    {
+      "program-sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6",
+      "log-sha256": "54554e849dcff4a57bc7770c8001e900eb00a723e4a2e8c44db4d39d710176f8",
+      "class12-turn": 2152137,
+      "class29-turn": 2152151,
+      "class42-stop-turn": 2152164,
+      "terminal": "terminal turn=2152164 Complete(Internal(\"native NTDLL service NtQueryInformationToken: Unimplemented(\\\"NtQueryInformationToken: NtQueryInformationToken class 42\\\")\"))"
+    }
+  ],
+  "next-boundary": "NtQueryInformationToken class42 TokenPrivateNameSpace"
+}

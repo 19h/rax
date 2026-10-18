@@ -1,0 +1,59 @@
+{
+  "base": "c68d2c589a7121a3dcd9263fbbfa5854238b7d0b",
+  "utc": "2026-10-17T23:58:56.553888+00:00",
+  "paths": [
+    "src/user/windows/dll/native/token_query.rs",
+    "src/user/windows/objects/wnf.rs",
+    "src/user/windows/process/start.rs",
+    "src/user/windows/process/start/token_session_id_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_session_id_tests.rs",
+    "src/user/windows/wnf.rs",
+    "src/user/windows/wnf/catalog.rs",
+    "src/user/windows/wnf/installed.rs",
+    "src/user/windows/native-runtime.md"
+  ],
+  "existing-source-identities": [
+    {
+      "path": "src/user/windows/dll/native/token_query.rs",
+      "bytes": 3026,
+      "sha256": "bc4c37cff9aca4f79ca18649fc329e9946ebbe63f7b0dbc3acb691571563b532"
+    },
+    {
+      "path": "src/user/windows/objects/wnf.rs",
+      "bytes": 8734,
+      "sha256": "cb617fe4db91855dbf9754718eb83a46ef41759258ad3c6c89a0896f63bfa468"
+    },
+    {
+      "path": "src/user/windows/process/start.rs",
+      "bytes": 22415,
+      "sha256": "130ff6a0645cb79d4156b7063768b7485146ddc62ce0c4d15afdcaeea20616ef"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+      "bytes": 13611,
+      "sha256": "be6673ee7897c1e8c69b8a364f3fc0fb3aa3d70e6002e0c10c8f72e3e6ad9061"
+    },
+    {
+      "path": "src/user/windows/wnf.rs",
+      "bytes": 1432,
+      "sha256": "d9448b3b736f8c96281fbe58cddca6eb54b31c1b48618fdb2c42c21d567c3ce6"
+    },
+    {
+      "path": "src/user/windows/wnf/catalog.rs",
+      "bytes": 9865,
+      "sha256": "4ad0c141f69924a5ec5ea52d70d398eec146f55bd653f29630d096f4d1a01e62"
+    },
+    {
+      "path": "src/user/windows/wnf/installed.rs",
+      "bytes": 5219,
+      "sha256": "4ede43903cdd4649ffbadce82d027bc2d068a375fe033836e15aa8e37ace2c70"
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "bytes": 160616,
+      "sha256": "ce58da8ce385ffa238662dd7075ec3185b9661b15663906b667c4eb67a8303b0"
+    }
+  ],
+  "documentation-prefix": "docs/specifications/windows/native-token-session-id/"
+}

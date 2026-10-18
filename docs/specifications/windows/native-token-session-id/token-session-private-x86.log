@@ -1,0 +1,8 @@
+identity profile=x86 pointer-bytes=4 private-token-session-controls=1
+case requested=00000000 set-status=00000000 before-status=00000000 before=00000000 before-length=4 after-status=00000000 after=00000000 after-length=4 duplicate-status=00000000 duplicate=00000000 duplicate-length=4 last-error=7E11ABCD
+case requested=00000001 set-status=00000000 before-status=00000000 before=00000000 before-length=4 after-status=00000000 after=00000001 after-length=4 duplicate-status=00000000 duplicate=00000001 duplicate-length=4 last-error=7E11ABCD
+case requested=00000007 set-status=00000000 before-status=00000000 before=00000000 before-length=4 after-status=00000000 after=00000007 after-length=4 duplicate-status=00000000 duplicate=00000007 duplicate-length=4 last-error=7E11ABCD
+case requested=12345678 set-status=00000000 before-status=00000000 before=00000000 before-length=4 after-status=00000000 after=12345678 after-length=4 duplicate-status=00000000 duplicate=12345678 duplicate-length=4 last-error=7E11ABCD
+case requested=80000000 set-status=00000000 before-status=00000000 before=00000000 before-length=4 after-status=00000000 after=80000000 after-length=4 duplicate-status=00000000 duplicate=80000000 duplicate-length=4 last-error=7E11ABCD
+case requested=FFFFFFFF set-status=00000000 before-status=00000000 before=00000000 before-length=4 after-status=00000000 after=FFFFFFFF after-length=4 duplicate-status=00000000 duplicate=FFFFFFFF duplicate-length=4 last-error=7E11ABCD
+complete cases=6 successful-private-session-changes=6 reverted=1

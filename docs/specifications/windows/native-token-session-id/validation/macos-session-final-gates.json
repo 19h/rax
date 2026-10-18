@@ -1,0 +1,75 @@
+[
+  {
+    "gate": "full",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 838.2091701030731,
+    "log": "macos-session-final-full.log",
+    "sha256": "55ce67269d2c6d15859fbda248a4d619cd1f848cce88d404ba287c92e08568e5"
+  },
+  {
+    "gate": "capi",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "-p",
+      "rax-capi",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 140.6147267818451,
+    "log": "macos-session-final-capi.log",
+    "sha256": "2fae74faa7f40c21ef9e6a4df017d0d3ba10d6df38d6fcf0b6e5680c60576299"
+  },
+  {
+    "gate": "integration",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--test",
+      "user_windows",
+      "--test",
+      "user_windows_memory",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit-code": 0,
+    "seconds": 96.89987421035767,
+    "log": "macos-session-final-integration.log",
+    "sha256": "87927bf789ccab340042ddcb832a98fbe117edbd08109afe5f139af562136658"
+  },
+  {
+    "gate": "all-targets",
+    "argv": [
+      "cargo",
+      "check",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ],
+    "exit-code": 0,
+    "seconds": 90.62626576423645,
+    "log": "macos-session-final-all-targets.log",
+    "sha256": "00b46bce64a2c5a3ef1dfbb45a1d400ba2e2b53ab3fe1c2744e6850e7abc8817"
+  }
+]

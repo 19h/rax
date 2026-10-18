@@ -2,6 +2,9 @@
 use super::*;
 use crate::user::windows::process::{WindowsConfig, WindowsProcess};
 
+#[path = "token_session_id_tests.rs"]
+mod session_id;
+
 fn setup(arch: WinArch, laa: bool) -> (WindowsProcess, Thread, u64, [u64; 3]) {
     setup_runtime(arch, laa, false)
 }

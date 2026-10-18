@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "cargo",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "token",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit-code": 0,
+  "seconds": 295.77838110923767,
+  "sha256": "4a00ade3e13e499ea0f355c1090977a7db6d4130b67182a6fccead5572a69c4a"
+}

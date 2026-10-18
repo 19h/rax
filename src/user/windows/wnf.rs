@@ -25,9 +25,10 @@ pub(crate) fn snapshot() -> std::io::Result<Catalog> {
             "native WNF subject or token access changed during query-state selection",
         ));
     }
-    let (subject, access) = selection;
+    let (subject, access, session) = selection;
     Ok(Catalog::selected(values, subject)?
         .with_primary_token_access(access)
+        .with_primary_token_session_id(session)
         .with_queries(queries))
 }
 

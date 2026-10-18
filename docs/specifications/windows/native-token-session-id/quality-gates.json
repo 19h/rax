@@ -1,0 +1,30 @@
+{
+  "QG1": {
+    "status": "pass for the bounded TokenSessionId group",
+    "evidence": "Technical implementation and recorded behavior only."
+  },
+  "QG2": {
+    "status": "pass for the bounded TokenSessionId group",
+    "evidence": "assumption-register.json; immutable-primary-token assumption retained with falsification probe."
+  },
+  "QG3": {
+    "status": "pass for the bounded TokenSessionId group",
+    "evidence": "check-validation.py; full userland objective remains incomplete."
+  },
+  "QG4": {
+    "status": "pass for the bounded TokenSessionId group",
+    "evidence": "DWORD is four bytes; explicit profile counts, probe spans, addresses and complexity."
+  },
+  "QG5": {
+    "status": "pass for the bounded TokenSessionId group",
+    "evidence": "Separate process/token sessions, guard ordering, missing capture and exact pre-existing failures."
+  },
+  "QG6": {
+    "status": "pass for the bounded TokenSessionId group",
+    "evidence": "Primary source identities, native source/PE/log identities and actual Cargo artifacts."
+  },
+  "QG7": {
+    "status": "pass for the bounded TokenSessionId group",
+    "evidence": "bounded-scope.json records the next runtime boundary and excluded capabilities."
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "sources": [
+    {
+      "name": "token-information-class",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/winnt/ne-winnt-token_information_class",
+      "retrieved-utc": "2026-10-18T00:12:25.083763+00:00",
+      "response-bytes": 69492,
+      "response-sha256": "5aeee9df1a356e14e2be7362744d7e2d828d3ed20342628eed62c453a6da891c",
+      "limited-excerpt": "The buffer receives a DWORD value that indicates the Terminal Services session identifier that is associated with the token.",
+      "retention": "URL, response identity and limited excerpt; full page is not included in the repository."
+    },
+    {
+      "name": "process-session",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-processidtosessionid",
+      "retrieved-utc": "2026-10-18T00:12:25.550975+00:00",
+      "response-bytes": 52755,
+      "response-sha256": "7bdaf07e35b760e4de778b0beffc950f6ecc57697fa3082cc23f946b64047010",
+      "limited-excerpt": "Retrieves the Remote Desktop Services session associated with a specified process.",
+      "retention": "URL, response identity and limited excerpt; full page is not included in the repository."
+    },
+    {
+      "name": "duplicate-token",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-duplicatetokenex",
+      "retrieved-utc": "2026-10-18T00:12:26.025064+00:00",
+      "response-bytes": 58466,
+      "response-sha256": "8cb29666571e64852c1b31c2bd2848708063e33e196732229909692791693ed2",
+      "limited-excerpt": "creates a new access token that duplicates an existing token",
+      "retention": "URL, response identity and limited excerpt; full page is not included in the repository."
+    },
+    {
+      "name": "set-token-information",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-settokeninformation",
+      "retrieved-utc": "2026-10-18T00:12:26.416925+00:00",
+      "response-bytes": 53774,
+      "response-sha256": "e35f6b5519f46b5b69e65491d52a92e45ba8b4bfefb8225a8ec81a1a746f79a8",
+      "limited-excerpt": "The information that this function sets replaces existing information.",
+      "retention": "URL, response identity and limited excerpt; full page is not included in the repository."
+    }
+  ]
+}
