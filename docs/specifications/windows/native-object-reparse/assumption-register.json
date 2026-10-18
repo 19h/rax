@@ -1,0 +1,22 @@
+[
+  {
+    "id": "L1",
+    "assumption": "Captured Local/Global links can resolve to the same selected directory identity without opening a host handle during guest execution.",
+    "basis": "Six independent target queries per ABI profile, and repeated directory chains on the native kernel.",
+    "dependent-result": "Bounded captured object-manager path resolver.",
+    "stress-test": "Absolute/relative paths, session-one local/global mapping, case flags, opaque targets, incomplete directories and cycles.",
+    "falsification-probe": "Native link target/open matrices disagree with the selected-tree or guest service results.",
+    "status": "confirmed",
+    "qualification": "Bounded current-kernel native proof, three-host full suites, installed leaves and retained consumers pass for this source group; broader execution remains incomplete."
+  },
+  {
+    "id": "L2",
+    "assumption": "The measured reparse bound is63 successful links, with STATUS_OBJECT_NAME_NOT_FOUND for the64th.",
+    "basis": "Native directory chain producer traverses0..72,128,256,1024 links on four ABI profiles.",
+    "dependent-result": "Finite recursion and matching refusal status.",
+    "stress-test": "63/64 boundary, cycles and OBJ_DONT_REPARSE precedence.",
+    "falsification-probe": "Any raw native row or replay differs; another supported kernel has a different limit.",
+    "status": "confirmed",
+    "qualification": "Bounded current-kernel native proof, three-host full suites, installed leaves and retained consumers pass for this source group; broader execution remains incomplete."
+  }
+]

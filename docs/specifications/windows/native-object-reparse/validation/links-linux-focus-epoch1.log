@@ -1,0 +1,15 @@
+   Compiling vm-memory v0.17.1 (/work/vendor/rax/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 15s
+     Running unittests src/lib.rs (/target/bno-isolation-prototype/debug/deps/rax-094640fccc97af0f)
+
+running 5 tests
+test user::windows::object_namespace::reparse_tests::native_object_reparse_bounds_cycles_and_preserves_incomplete_membership ... ok
+test user::windows::object_namespace::reparse_tests::native_object_reparse_keeps_case_unknown_targets_and_link_queries_distinct ... ok
+test user::windows::object_namespace::reparse_tests::native_object_reparse_matches_the_sixty_three_link_boundary_and_refusal_order ... ok
+test user::windows::object_namespace::reparse_tests::native_object_reparse_preserves_local_global_absolute_relative_identity ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::object_reparse::native_object_reparse_open_replays_all_2432_native_chain_and_flag_rows ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 7925 filtered out; finished in 0.81s
+

@@ -1,0 +1,9 @@
+{
+  "pid": 8128,
+  "utc": "2026-10-18T11:56:48.549768+00:00",
+  "state": "finished",
+  "scope": "Read-only queries of fixed Local, Global and Session symbolic links; no host object creation.",
+  "child-pid": 1876,
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T11:57:11.711651+00:00"
+}

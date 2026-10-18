@@ -447,6 +447,21 @@ impl Namespace {
         section: bool,
         port: bool,
     ) -> Result<SelectedObject, LookupError> {
+        self.lookup_object_reparsed(root, name, flags, link, section, port, 0)
+    }
+
+    /// Native object-manager parsing admits63 reparses. Keep every expansion
+    /// within the selected name budget; guest execution never opens host handles.
+    fn lookup_object_reparsed(
+        &self,
+        root: Option<Arc<Directory>>,
+        name: &[u16],
+        flags: u32,
+        link: bool,
+        section: bool,
+        port: bool,
+        reparses: u8,
+    ) -> Result<SelectedObject, LookupError> {
         let (mut dir, path) = if let Some(root) = root {
             if name.first() == Some(&(b'\\' as u16)) {
                 return Err(LookupError::Status(STATUS_OBJECT_PATH_SYNTAX_BAD));
@@ -516,13 +531,32 @@ impl Namespace {
                     .target
                     .as_ref()
                     .ok_or(LookupError::Unselected)?;
-                // The selected KnownDllPath targets are native DOS paths. Object-manager
-                // parsing rejects them; this is not a filesystem translation operation.
-                return Err(if target.first() != Some(&(b'\\' as u16)) {
-                    LookupError::Status(STATUS_OBJECT_NAME_INVALID)
-                } else {
-                    LookupError::Unselected
-                });
+                // DOS KnownDllPath values remain outside object-manager parsing.
+                if target.first() != Some(&(b'\\' as u16)) {
+                    return Err(LookupError::Status(STATUS_OBJECT_NAME_INVALID));
+                }
+                // The64th reparse fails even when a previously selected target
+                // exists. DONT_REPARSE above has independent earlier precedence.
+                if reparses == 63 {
+                    return Err(LookupError::Status(STATUS_OBJECT_NAME_NOT_FOUND));
+                }
+                let mut expanded = target.clone();
+                for remaining in parts {
+                    expanded.push(b'\\' as u16);
+                    expanded.extend_from_slice(remaining);
+                    if expanded.len() > MAX_UNITS {
+                        return Err(LookupError::Unselected);
+                    }
+                }
+                return self.lookup_object_reparsed(
+                    None,
+                    &expanded,
+                    flags,
+                    link,
+                    section,
+                    port,
+                    reparses + 1,
+                );
             } else if section && parts.peek().is_none() && is(&entry.captured.kind, "Section") {
                 return entry
                     .section
@@ -629,3 +663,6 @@ mod tests;
 
 #[cfg(test)]
 pub(crate) mod base_named_object_tests;
+
+#[cfg(test)]
+pub(crate) mod reparse_tests;

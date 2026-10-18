@@ -1,0 +1,214 @@
+[
+  {
+    "profile": "arm64",
+    "links": [
+      {
+        "open": "00000000",
+        "path": "\\BaseNamedObjects\\Local",
+        "query": "00000000",
+        "length": "34",
+        "required": "36",
+        "target": "\\BaseNamedObjects"
+      },
+      {
+        "open": "00000000",
+        "path": "\\BaseNamedObjects\\Global",
+        "query": "00000000",
+        "length": "34",
+        "required": "36",
+        "target": "\\BaseNamedObjects"
+      },
+      {
+        "open": "00000000",
+        "path": "\\BaseNamedObjects\\Session",
+        "query": "00000000",
+        "length": "36",
+        "required": "38",
+        "target": "\\Sessions\\BNOLINKS"
+      },
+      {
+        "open": "00000000",
+        "path": "\\Sessions\\1\\BaseNamedObjects\\Local",
+        "query": "00000000",
+        "length": "56",
+        "required": "58",
+        "target": "\\Sessions\\1\\BaseNamedObjects"
+      },
+      {
+        "open": "00000000",
+        "path": "\\Sessions\\1\\BaseNamedObjects\\Global",
+        "query": "00000000",
+        "length": "34",
+        "required": "36",
+        "target": "\\BaseNamedObjects"
+      },
+      {
+        "open": "00000000",
+        "path": "\\Sessions\\1\\BaseNamedObjects\\Session",
+        "query": "00000000",
+        "length": "36",
+        "required": "38",
+        "target": "\\Sessions\\BNOLINKS"
+      }
+    ]
+  },
+  {
+    "profile": "x64",
+    "links": [
+      {
+        "open": "00000000",
+        "path": "\\BaseNamedObjects\\Local",
+        "query": "00000000",
+        "length": "34",
+        "required": "36",
+        "target": "\\BaseNamedObjects"
+      },
+      {
+        "open": "00000000",
+        "path": "\\BaseNamedObjects\\Global",
+        "query": "00000000",
+        "length": "34",
+        "required": "36",
+        "target": "\\BaseNamedObjects"
+      },
+      {
+        "open": "00000000",
+        "path": "\\BaseNamedObjects\\Session",
+        "query": "00000000",
+        "length": "36",
+        "required": "38",
+        "target": "\\Sessions\\BNOLINKS"
+      },
+      {
+        "open": "00000000",
+        "path": "\\Sessions\\1\\BaseNamedObjects\\Local",
+        "query": "00000000",
+        "length": "56",
+        "required": "58",
+        "target": "\\Sessions\\1\\BaseNamedObjects"
+      },
+      {
+        "open": "00000000",
+        "path": "\\Sessions\\1\\BaseNamedObjects\\Global",
+        "query": "00000000",
+        "length": "34",
+        "required": "36",
+        "target": "\\BaseNamedObjects"
+      },
+      {
+        "open": "00000000",
+        "path": "\\Sessions\\1\\BaseNamedObjects\\Session",
+        "query": "00000000",
+        "length": "36",
+        "required": "38",
+        "target": "\\Sessions\\BNOLINKS"
+      }
+    ]
+  },
+  {
+    "profile": "x86",
+    "links": [
+      {
+        "open": "00000000",
+        "path": "\\BaseNamedObjects\\Local",
+        "query": "00000000",
+        "length": "34",
+        "required": "36",
+        "target": "\\BaseNamedObjects"
+      },
+      {
+        "open": "00000000",
+        "path": "\\BaseNamedObjects\\Global",
+        "query": "00000000",
+        "length": "34",
+        "required": "36",
+        "target": "\\BaseNamedObjects"
+      },
+      {
+        "open": "00000000",
+        "path": "\\BaseNamedObjects\\Session",
+        "query": "00000000",
+        "length": "36",
+        "required": "38",
+        "target": "\\Sessions\\BNOLINKS"
+      },
+      {
+        "open": "00000000",
+        "path": "\\Sessions\\1\\BaseNamedObjects\\Local",
+        "query": "00000000",
+        "length": "56",
+        "required": "58",
+        "target": "\\Sessions\\1\\BaseNamedObjects"
+      },
+      {
+        "open": "00000000",
+        "path": "\\Sessions\\1\\BaseNamedObjects\\Global",
+        "query": "00000000",
+        "length": "34",
+        "required": "36",
+        "target": "\\BaseNamedObjects"
+      },
+      {
+        "open": "00000000",
+        "path": "\\Sessions\\1\\BaseNamedObjects\\Session",
+        "query": "00000000",
+        "length": "36",
+        "required": "38",
+        "target": "\\Sessions\\BNOLINKS"
+      }
+    ]
+  },
+  {
+    "profile": "x86-laa",
+    "links": [
+      {
+        "open": "00000000",
+        "path": "\\BaseNamedObjects\\Local",
+        "query": "00000000",
+        "length": "34",
+        "required": "36",
+        "target": "\\BaseNamedObjects"
+      },
+      {
+        "open": "00000000",
+        "path": "\\BaseNamedObjects\\Global",
+        "query": "00000000",
+        "length": "34",
+        "required": "36",
+        "target": "\\BaseNamedObjects"
+      },
+      {
+        "open": "00000000",
+        "path": "\\BaseNamedObjects\\Session",
+        "query": "00000000",
+        "length": "36",
+        "required": "38",
+        "target": "\\Sessions\\BNOLINKS"
+      },
+      {
+        "open": "00000000",
+        "path": "\\Sessions\\1\\BaseNamedObjects\\Local",
+        "query": "00000000",
+        "length": "56",
+        "required": "58",
+        "target": "\\Sessions\\1\\BaseNamedObjects"
+      },
+      {
+        "open": "00000000",
+        "path": "\\Sessions\\1\\BaseNamedObjects\\Global",
+        "query": "00000000",
+        "length": "34",
+        "required": "36",
+        "target": "\\BaseNamedObjects"
+      },
+      {
+        "open": "00000000",
+        "path": "\\Sessions\\1\\BaseNamedObjects\\Session",
+        "query": "00000000",
+        "length": "36",
+        "required": "38",
+        "target": "\\Sessions\\BNOLINKS"
+      }
+    ]
+  }
+]

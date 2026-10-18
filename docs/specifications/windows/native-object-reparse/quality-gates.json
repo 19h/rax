@@ -1,0 +1,23 @@
+{
+  "scope": "Selected fixed-root object-manager link group; full process-emulation goal remains incomplete.",
+  "rax": {
+    "QG1": "pass for bounded group",
+    "QG2": "pass for bounded group",
+    "QG3": "pass for bounded group",
+    "QG4": "pass for bounded group",
+    "QG5": "pass for bounded group",
+    "QG6": "pass for bounded group",
+    "QG7": "pass for bounded group",
+    "QG8": "pass for bounded group",
+    "QG9": "pass for bounded group"
+  },
+  "assist": {
+    "QG1": "pass for bounded group",
+    "QG2": "pass for bounded group",
+    "QG3": "pass for bounded group",
+    "QG4": "pass for bounded group",
+    "QG5": "pass for bounded group",
+    "QG6": "pass for bounded group",
+    "QG7": "pass for bounded group"
+  }
+}

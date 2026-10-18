@@ -1,0 +1,83 @@
+[
+  {
+    "gate": "full",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "source-epoch": 1,
+    "parent-rax": "ce29b4a4bca74a668d7f029e8a69da6a2e0340e7",
+    "exit-code": 0,
+    "seconds": 372.97854358301265,
+    "log": "links-macos-epoch1-full.log",
+    "sha256": "309c503cd13eba2c200b6d6e4700cd9c322d611a7b36defcb5ab496fffc066f8"
+  },
+  {
+    "gate": "capi",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "-p",
+      "rax-capi",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "source-epoch": 1,
+    "parent-rax": "ce29b4a4bca74a668d7f029e8a69da6a2e0340e7",
+    "exit-code": 0,
+    "seconds": 72.02453266600787,
+    "log": "links-macos-epoch1-capi.log",
+    "sha256": "1bbb73343058962a09c304bf6b91dbb9fb920bb66f26f33ce2d588abbdbf2842"
+  },
+  {
+    "gate": "integration",
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--test",
+      "user_windows",
+      "--test",
+      "user_windows_memory",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "source-epoch": 1,
+    "parent-rax": "ce29b4a4bca74a668d7f029e8a69da6a2e0340e7",
+    "exit-code": 0,
+    "seconds": 60.739103874992,
+    "log": "links-macos-epoch1-integration.log",
+    "sha256": "7dce82887137ac91475b1d08c6a637a01a7fb7eeb0c86104c973ab2ba2c3be67"
+  },
+  {
+    "gate": "all-targets",
+    "argv": [
+      "cargo",
+      "check",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--all-targets"
+    ],
+    "source-epoch": 1,
+    "parent-rax": "ce29b4a4bca74a668d7f029e8a69da6a2e0340e7",
+    "exit-code": 0,
+    "seconds": 64.57531262500561,
+    "log": "links-macos-epoch1-all-targets.log",
+    "sha256": "b28e6a15d8c4a6e2a392284e072689bf6b30b5310ac53f71696584dbd1386304"
+  }
+]

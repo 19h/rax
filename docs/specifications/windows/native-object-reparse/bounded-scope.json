@@ -1,0 +1,26 @@
+[
+  {
+    "impact": "high",
+    "finding": "Both unchanged ordinary programs still stop at unimplemented NtCreateMutant. Neither reaches a successful guest exit.",
+    "evidence": "validation/links-owner-observer-launch.json",
+    "blocks": "Full process-userland completion."
+  },
+  {
+    "impact": "high",
+    "finding": "Enabled-token private BNO directories remain outside the selected fixed roots.",
+    "evidence": "src/user/windows/object_namespace.rs selection_paths",
+    "blocks": "Complete execution in those token contexts; not claimed by this fixed-root link group."
+  },
+  {
+    "impact": "medium",
+    "finding": "Four ABI profiles share one ARM64 Windows kernel and session-zero principal.",
+    "evidence": "Native producer identity fields.",
+    "blocks": "Other physical-kernel or token-grant equivalence claims."
+  },
+  {
+    "impact": "medium",
+    "finding": "Frozen ABI184 carriers and current root Rust differ.",
+    "evidence": "validation/links-upstream-source-comparison.json",
+    "blocks": "Whole-current-root GUI/plugin/package validation claims."
+  }
+]

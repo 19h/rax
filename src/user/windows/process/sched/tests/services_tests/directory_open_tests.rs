@@ -748,3 +748,6 @@ fn native_directory_open_replays_all_288_captured_subject_privilege_rows() {
     }
     assert_eq!(total, 288);
 }
+
+#[path = "directory_link_tests.rs"]
+mod object_reparse;

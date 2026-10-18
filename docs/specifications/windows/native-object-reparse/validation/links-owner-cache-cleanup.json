@@ -1,0 +1,33 @@
+{
+  "utc": "2026-10-18T19:17:38.773800+00:00",
+  "deleted-directory": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\incremental",
+  "files": 1678,
+  "bytes": 3633460512,
+  "free-before": 6046150656,
+  "free-after": 9442258944,
+  "archives-before": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\assist_rs.lib",
+      "bytes": 847867380,
+      "sha256": "17e4e288fbc417ea24d35fb2d385b99fb15803bea57be5d12e14c592064f9b46"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 500513736,
+      "sha256": "81f4dc47507e884420cea68386522b4494a90802d235bf83dcf5de487b459d35"
+    }
+  ],
+  "archives-after": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\assist_rs.lib",
+      "bytes": 847867380,
+      "sha256": "17e4e288fbc417ea24d35fb2d385b99fb15803bea57be5d12e14c592064f9b46"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 500513736,
+      "sha256": "81f4dc47507e884420cea68386522b4494a90802d235bf83dcf5de487b459d35"
+    }
+  ],
+  "scope": "Only the stopped retained-owner incremental cache. Source, archives, executables and logs retained."
+}

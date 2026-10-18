@@ -1,0 +1,13 @@
+Junction created for C:\Windows\Temp\assist-native-rax-20261010\assist\vendor\rax <<===>> C:\Windows\Temp\assist-native-rax-20261010\src-object-reparse-epoch1
+Retargeted verified task-owned RAX junction
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+Verified 434 owning source identities and 3 helpers
+Verified9 actual frozen Windows C++ sources against compared source snapshot
+assist-native-links-final-shipping.log 7B6196C325F8A9697C58B2A9151287800B29AB0F51B45F8FEA3BF024712EDC59
+assist-native-links-final-cpp.log B0F277678BC54485CF58C6295345A12235DF27C7D420C5085B93AB253E75E214
+validated rlib: C:\Windows\Temp\assist-native-rax-20261010\target-io-completion-owned\debug\deps\librax-934115059aa64c85.rlib
+Verified 434 owning source identities and 3 helpers
+windows [(848019080, 3946, '4923530571179c94dc194c0f0c7753750777ae6446785951fde005e98f506636'), (500666446, 20, 'a1ab0b2a6bcf79c619fceb6600c4cae719daedf6618a07b69ace056995c634d4')]

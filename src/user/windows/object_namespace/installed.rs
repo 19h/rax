@@ -192,11 +192,11 @@ fn enumerate(h: &Owned) -> io::Result<Vec<CapturedEntry>> {
 }
 fn target(parent: &Owned, name: &[u16]) -> io::Result<(Vec<u16>, LinkAccess)> {
     let link = open(name, parent.0, 0x0200_0000, true, 0x40)?
-        .map_err(|s| invalid(&format!("selected KnownDllPath open: {s:#010x}")))?;
+        .map_err(|s| invalid(&format!("selected NT symbolic-link open: {s:#010x}")))?;
     let maximum_access = basic(&link)?;
     if maximum_access & 1 == 0 || maximum_access & !0x000F_0001 != 0 {
         return Err(invalid(
-            "selected KnownDllPath authorization ceiling changed",
+            "selected NT symbolic-link authorization ceiling changed",
         ));
     }
     let system_security_status = match open(name, parent.0, 0x0100_0000, true, 0x40)? {
@@ -224,18 +224,18 @@ fn target(parent: &Owned, name: &[u16]) -> io::Result<(Vec<u16>, LinkAccess)> {
     // SAFETY: live query-only link, initialized native descriptor and exclusive
     // bounded UTF-16 destination. Query does not retain either pointer.
     let s = unsafe { NtQuerySymbolicLinkObject(link.0, &mut descriptor, &mut returned) };
-    check(s, "NtQuerySymbolicLinkObject selected KnownDllPath")?;
+    check(s, "NtQuerySymbolicLinkObject selected NT symbolic-link")?;
     if descriptor.length % 2 != 0
         || usize::from(descriptor.length) > units.len() * 2
         || descriptor.buffer != units.as_mut_ptr()
         || returned > units.len() as u32 * 2
     {
-        return Err(invalid("selected KnownDllPath exceeds output bounds"));
+        return Err(invalid("selected NT symbolic-link exceeds output bounds"));
     }
     units.truncate(usize::from(descriptor.length) / 2);
     if basic(&link)? != maximum_access {
         return Err(invalid(
-            "selected KnownDllPath grant changed during capture",
+            "selected NT symbolic-link grant changed during capture",
         ));
     }
     link.close()?;
@@ -397,11 +397,23 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>, session: u32) -> io::Result<Namespace
                     entry.section = Some(captured);
                     sources.push((path, source));
                 }
-                if is(&entry.name, "KnownDllPath") && is(&entry.kind, "SymbolicLink") {
-                    let (target, access) = target(&h, &entry.name)?;
-                    entry.target = Some(target);
-                    entry.link_access = Some(access);
-                }
+            }
+        }
+        // These are object-manager directory links, distinct from native DOS
+        // KnownDllPath values. Capture bounded metadata now; guest parsing uses
+        // only this immutable copy and selected directory identities.
+        let base_directory =
+            units.ends_with(&"\\BaseNamedObjects".encode_utf16().collect::<Vec<_>>());
+        for entry in &mut entries {
+            let known_dll = image_directory(&units) && is(&entry.name, "KnownDllPath");
+            let base_link = base_directory
+                && ["Local", "Global", "Session"]
+                    .iter()
+                    .any(|name| is(&entry.name, name));
+            if is(&entry.kind, "SymbolicLink") && (known_dll || base_link) {
+                let (target, access) = target(&h, &entry.name)?;
+                entry.target = Some(target);
+                entry.link_access = Some(access);
             }
         }
         if basic(&h)? != maximum_access {

@@ -1,0 +1,33 @@
+{
+  "pid": 9744,
+  "utc": "2026-10-18T19:11:57.168821+00:00",
+  "state": "finished",
+  "source-epoch": 1,
+  "checks": [
+    {
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\prepare-links-native-epoch1.py"
+      ],
+      "exit-code": 0,
+      "log": "links-native-preparation-epoch1.log"
+    },
+    {
+      "argv": [
+        "powershell.exe",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\links-native-focus-epoch1.ps1"
+      ],
+      "exit-code": 0,
+      "log": "links-native-driver-epoch1.log"
+    }
+  ],
+  "child-pid": 6036,
+  "exit-code": 0,
+  "post-source-inputs": 5743,
+  "completed-utc": "2026-10-18T19:16:37.077288+00:00"
+}

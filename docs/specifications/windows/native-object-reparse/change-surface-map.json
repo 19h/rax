@@ -1,0 +1,118 @@
+{
+  "direct-decode": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "direct-execute": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "CPU-state": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "memory-MMU": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "SMIR-lift": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "SMIR-IR": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "SMIR-interpreter": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "optimizer": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "native-lowering": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "JIT-runtime": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "backend": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "machine-device": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "oracle-analysis": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "C-ABI": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "plugin-lifecycle": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "UI": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "conversation-agent": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "prompt-context": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "tool-schema": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "main-thread-dispatch": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "mesh-MCP": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "transport-crypto": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "persistence": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "SDK": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "package-layout": {
+    "status": "unaffected",
+    "reason": "Only private Windows userland namespace parsing/capture and its tests change."
+  },
+  "user-mode-runtime": {
+    "status": "affected",
+    "reason": "Captured selected-directory links, bounded reparsing, alias identity and explicit unselected targets."
+  },
+  "permission-mutation": {
+    "status": "affected",
+    "reason": "Read native link metadata during capture; guest requests use private snapshots and do not acquire host handles."
+  },
+  "targets-platforms": {
+    "status": "affected",
+    "reason": "Portable semantics compile/run on all three hosts; Windows additionally runs native capture and installed NTDLL leaves. C API and retained consumers are separately bound."
+  },
+  "tests-docs": {
+    "status": "affected",
+    "reason": "Native sources/rows, independent checks, boundary/cycle/case/identity tests and three-host evidence."
+  }
+}

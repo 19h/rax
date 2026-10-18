@@ -2327,3 +2327,23 @@ Both ordinary programs return success from class44 and advance100 observer turns
 
 Enabled-prefix private-directory routing remains a separate unimplemented part
 of complete process emulation. [Contract and evidence](../../../docs/specifications/windows/native-token-bno-isolation/README.md).
+
+
+## Captured object-manager directory links (2026-10-18)
+
+Selected base named-object directories now retain Local/Global/Session targets.
+Guest parsing follows captured metadata into selected directories, preserving
+alias identity without opening host handles. Native63/64 reparse boundaries and
+DONT_REPARSE precedence are reproduced; DOS and uncaptured targets remain distinct.
+Public C ABI, defaults, dependency pins and package layout are unchanged.
+
+Native proof covers2432 directory opens and24 target queries on four ABI profiles
+of one ARM64 Windows kernel. Full suites are macOS7934/0/2, Linux7928/0/2 and
+Windows7373/5/2; five existing Windows lowerer failures and two ignores remain.
+Focus5/5/6, C API168, all-target checks and scoped retained consumers pass.
+The final source binds5743 inputs and434 retained-owner inputs.
+
+Both ordinary programs still stop at NtCreateMutant; successful guest execution
+and private BNO subtree selection remain incomplete.
+
+[Contract and evidence](../../../docs/specifications/windows/native-object-reparse/README.md).

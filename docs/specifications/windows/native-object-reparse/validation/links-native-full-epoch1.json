@@ -1,0 +1,24 @@
+{
+  "pid": 3796,
+  "utc": "2026-10-18T19:18:37.108023+00:00",
+  "state": "finished",
+  "source-epoch": 1,
+  "checks": [
+    {
+      "argv": [
+        "powershell.exe",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\links-native-full-epoch1.ps1"
+      ],
+      "exit-code": 0,
+      "log": "links-native-full-driver-epoch1.log"
+    }
+  ],
+  "child-pid": 6312,
+  "exit-code": 0,
+  "post-source-inputs": 5743,
+  "completed-utc": "2026-10-18T19:37:04.086178+00:00"
+}

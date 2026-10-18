@@ -1,0 +1,40 @@
+{
+  "files": [
+    {
+      "path": "native-object-reparse-v2.cpp",
+      "raw-git-blob": "de4c0dc04ebeaf5aa060bc14c3f57e7b056688a8",
+      "autocrlf-true-git-blob": "de4c0dc04ebeaf5aa060bc14c3f57e7b056688a8",
+      "equal": true
+    },
+    {
+      "path": "native-object-reparse-v2.ps1",
+      "raw-git-blob": "2a12713156854232d4dac908d67e13c189e6cb93",
+      "autocrlf-true-git-blob": "2a12713156854232d4dac908d67e13c189e6cb93",
+      "equal": true
+    },
+    {
+      "path": "native-object-reparse-v2-arm64.log",
+      "raw-git-blob": "a98151298cf298ddf546fe5d56f4612bc662b879",
+      "autocrlf-true-git-blob": "a98151298cf298ddf546fe5d56f4612bc662b879",
+      "equal": true
+    },
+    {
+      "path": "native-object-reparse-v2-arm64-before.json",
+      "raw-git-blob": "f329da194c2c37d839624ce67f9a5a06374b806b",
+      "autocrlf-true-git-blob": "f329da194c2c37d839624ce67f9a5a06374b806b",
+      "equal": true
+    },
+    {
+      "path": "native-targets/native-base-links-arm64.log",
+      "raw-git-blob": "f9f21e3751d20bc16b93d9d4de16016785dc798c",
+      "autocrlf-true-git-blob": "f9f21e3751d20bc16b93d9d4de16016785dc798c",
+      "equal": true
+    },
+    {
+      "path": "README.md",
+      "raw-git-blob": "36295b430212bc5a7ba57aa665676c3a4519cc37",
+      "autocrlf-true-git-blob": "36295b430212bc5a7ba57aa665676c3a4519cc37",
+      "equal": true
+    }
+  ]
+}

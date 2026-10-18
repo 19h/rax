@@ -1,0 +1,16 @@
+{
+  "pid": 2188,
+  "utc": "2026-10-18T19:21:33.075484+00:00",
+  "state": "finished",
+  "child-pid": 5124,
+  "argv": [
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\assist-native-links-final-owned.ps1"
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T19:27:14.327395+00:00"
+}

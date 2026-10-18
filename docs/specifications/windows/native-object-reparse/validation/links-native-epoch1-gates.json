@@ -1,0 +1,26 @@
+﻿[
+    {
+        "gate":  "integration",
+        "command":  "cargo.exe test --locked --offline --no-default-features --test user_windows --test user_windows_memory -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "links-native-epoch1-integration.log"
+    },
+    {
+        "gate":  "capi",
+        "command":  "cargo.exe test --locked --offline --no-default-features -p rax-capi -- --nocapture --test-threads=1",
+        "exit-code":  0,
+        "log":  "links-native-epoch1-capi.log"
+    },
+    {
+        "gate":  "full",
+        "command":  "cargo.exe test --locked --offline --no-default-features --lib -- --nocapture --test-threads=1",
+        "exit-code":  101,
+        "log":  "links-native-epoch1-full.log"
+    },
+    {
+        "gate":  "all-targets",
+        "command":  "cargo.exe check --locked --offline --no-default-features --all-targets",
+        "exit-code":  0,
+        "log":  "links-native-epoch1-all-targets.log"
+    }
+]

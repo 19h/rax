@@ -1,0 +1,37 @@
+[
+  {
+    "case": "source-changed",
+    "rejected": true,
+    "error": "ValueError: native producer source"
+  },
+  {
+    "case": "invented-64th-success",
+    "rejected": true,
+    "error": "ValueError: native chain or flag result"
+  },
+  {
+    "case": "lost-handle-close",
+    "rejected": true,
+    "error": "ValueError: native reparse handle lifetime"
+  },
+  {
+    "case": "wrong-executable-machine",
+    "rejected": true,
+    "error": "ValueError: native executable ABI and identity"
+  },
+  {
+    "case": "missing-profile",
+    "rejected": true,
+    "error": "ValueError: four successful native profiles"
+  },
+  {
+    "case": "invented-target-summary",
+    "rejected": true,
+    "error": "ValueError: target summary independently reconstructed"
+  },
+  {
+    "case": "unclaimed-session-principal",
+    "rejected": true,
+    "error": "ValueError: session-one paths use the actual session-zero caller"
+  }
+]

@@ -1,0 +1,41 @@
+{
+  "utc": "2026-10-18T19:08:17.395298+00:00",
+  "base": "ce29b4a4bca74a668d7f029e8a69da6a2e0340e7",
+  "paths": [
+    "src/user/windows/object_namespace.rs",
+    "src/user/windows/object_namespace/installed.rs",
+    "src/user/windows/object_namespace/reparse_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/directory_open_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/directory_link_tests.rs",
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/process/sched/tests/services_tests/directory_session_tests.rs"
+  ],
+  "baseline-owned-files": [
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "bytes": 23669,
+      "sha256": "df017ec5ac9d1f2f33d1df9ff9a4fc52495cf02870aae1f195a4eccfd9867baa"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed.rs",
+      "bytes": 16198,
+      "sha256": "a4338d74c658cd3ca8dc4c835cf1aea964b5c3113a1503d03bd3e503dc946d53"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/directory_open_tests.rs",
+      "bytes": 26170,
+      "sha256": "31885a37da6c5d3e6a992e465171627a706c5dacab2348cc2547666d7058bbd9"
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "bytes": 168225,
+      "sha256": "b071e6bb6f1fd6207d3bff554c02a8c3ac943805fa357ad70ab53984c58f82c1"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/directory_session_tests.rs",
+      "bytes": 11039,
+      "sha256": "9ebdc6a951655c045dc8ed21b32a061280dd563a6500300f81d128933e1fe356"
+    }
+  ],
+  "documentation-prefix": "docs/specifications/windows/native-object-reparse/"
+}

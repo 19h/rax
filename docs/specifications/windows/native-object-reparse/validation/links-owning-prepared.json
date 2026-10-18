@@ -1,0 +1,8 @@
+{
+  "utc": "2026-10-18T19:21:15.598953+00:00",
+  "sources": 434,
+  "source-epoch": 1,
+  "unix-link-before": "/Users/int/Library/Caches/assist-process-emulation/native-bno-isolation-20261018/rax-source",
+  "unix-link-after": "/Users/int/Library/Caches/assist-process-emulation/native-mutant-create-20261018/prototype-source",
+  "scope": "Frozen ABI184 carriers, with current-root source drift separated from their execution evidence."
+}

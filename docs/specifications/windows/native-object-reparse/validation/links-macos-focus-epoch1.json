@@ -1,0 +1,21 @@
+{
+  "utc": "2026-10-18T19:10:49.661777+00:00",
+  "source-epoch": 1,
+  "parent-rax": "ce29b4a4bca74a668d7f029e8a69da6a2e0340e7",
+  "argv": [
+    "cargo",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_object_reparse",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "state": "finished",
+  "manifest-sha256": "ba8afcbb6cc28860b93caeca3b0cb395b8490c795c1c1a299da8a1e8abf7014c",
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T19:12:32.391090+00:00"
+}

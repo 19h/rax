@@ -1,0 +1,9 @@
+{
+  "pid": 9984,
+  "utc": "2026-10-18T19:07:29.689746+00:00",
+  "state": "finished",
+  "scope": "Read-only opens of existing BaseNamedObjects Local/Global links; every opened handle is closed and handle counts compared.",
+  "child-pid": 7304,
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T19:07:39.638214+00:00"
+}

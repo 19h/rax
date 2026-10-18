@@ -1,0 +1,15 @@
+   Compiling vm-memory v0.17.1 (/Users/int/Library/Caches/assist-process-emulation/native-mutant-create-20261018/prototype-source/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-mutant-create-20261018/prototype-source)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 41s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/native-bno-isolation-20261018/target-macos-prototype/debug/deps/rax-754f4d2a527a4423)
+
+running 5 tests
+test user::windows::object_namespace::reparse_tests::native_object_reparse_bounds_cycles_and_preserves_incomplete_membership ... ok
+test user::windows::object_namespace::reparse_tests::native_object_reparse_keeps_case_unknown_targets_and_link_queries_distinct ... ok
+test user::windows::object_namespace::reparse_tests::native_object_reparse_matches_the_sixty_three_link_boundary_and_refusal_order ... ok
+test user::windows::object_namespace::reparse_tests::native_object_reparse_preserves_local_global_absolute_relative_identity ... ok
+test user::windows::process::sched::tests::services_tests::directory_open_tests::object_reparse::native_object_reparse_open_replays_all_2432_native_chain_and_flag_rows ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 7931 filtered out; finished in 0.43s
+

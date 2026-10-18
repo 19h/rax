@@ -182,7 +182,7 @@ fn native_base_named_object_nested_open_preserves_relative_identity_and_handle_l
 }
 
 #[cfg(windows)]
-fn native_reference(path: &[u16], access: u32) -> u32 {
+pub(super) fn native_reference(path: &[u16], access: u32) -> u32 {
     use std::ffi::c_void;
     #[repr(C)]
     struct Unicode {
