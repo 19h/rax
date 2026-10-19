@@ -1,0 +1,267 @@
+{
+  "state": "finished",
+  "pid": 4448,
+  "steps": [
+    {
+      "name": "build",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostARM64\\ARM64\\cl.exe",
+        "/FoC:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\continue-capi-objects\\",
+        "/nologo",
+        "/std:c++20",
+        "/O1",
+        "/MT",
+        "/EHsc",
+        "/utf-8",
+        "/DNOMINMAX",
+        "/IC:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\include",
+        "/IC:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\vendor\\rax\\capi\\include",
+        "/IC:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\json",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\continue-owning-capi.cpp",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\src\\emulation\\rax\\rax_process.cpp",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+        "ws2_32.lib",
+        "userenv.lib",
+        "ntdll.lib",
+        "bcrypt.lib",
+        "advapi32.lib",
+        "/Fe:C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\continue-owning-capi.exe"
+      ],
+      "exit-code": 0,
+      "seconds": 6.039032458997099,
+      "log": "continue-owning-capi-b-build.log",
+      "bytes": 63,
+      "sha256": "de6773e4d8460149bca3b57bea10e237e9cfc0018e40ec00d52067724781a8ef"
+    },
+    {
+      "name": "ordinary",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\continue-owning-capi.exe",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-continue-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "C:\\Windows\\System32\\whoami.exe"
+      ],
+      "exit-code": 0,
+      "seconds": 6.15952037498937,
+      "log": "continue-owning-capi-b-ordinary.log",
+      "bytes": 1169,
+      "sha256": "5705435e9d8c110f2d3e6303043d0a49e45530507ddfec24a7016aecc18b361f"
+    }
+  ],
+  "carrier-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+    "bytes": 858763432,
+    "sha256": "f02d1f4cd8681843f29ddaa63e72251c17d1ca5bdc5d2f1d4ea97ea2c6da9bbd"
+  },
+  "source-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\continue-owning-capi.cpp",
+    "bytes": 3573,
+    "sha256": "706cb2a46c143a557f3c565792d954c40e596ddbd767a2138a9d2303e94261e3"
+  },
+  "adapter-inputs-before": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\include\\assist\\emulation\\rax\\rax_process.hpp",
+      "bytes": 2970,
+      "sha256": "525c9a3bfeb7d5626b3690905e293f2f464908039aa93497b00464f76aa8bdff"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\include\\assist\\emulation\\rax\\librax_loader.hpp",
+      "bytes": 7710,
+      "sha256": "5aa38b2f472231ebd086711fec46ca07167ea5155d95c01ae3b74d57d6303437"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\src\\emulation\\rax\\rax_process.cpp",
+      "bytes": 8600,
+      "sha256": "ed55d78681a9a59e384186382d998244d80ca5665793e60f5e7577d88d526564"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\vendor\\rax\\capi\\include\\rax.h",
+      "bytes": 70196,
+      "sha256": "e8438269c7f9411da7c92dff70942dbb839570cda9a6ac1bec0b78ed731e829a"
+    }
+  ],
+  "programs-before": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-continue-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+      "bytes": 3584,
+      "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+    },
+    {
+      "path": "C:\\Windows\\System32\\whoami.exe",
+      "bytes": 84480,
+      "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+    }
+  ],
+  "runtime-before": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    }
+  ],
+  "native-before": [
+    {
+      "exit-code": 0,
+      "stdout-hex": "",
+      "stderr-hex": ""
+    },
+    {
+      "exit-code": 0,
+      "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+      "stderr-hex": ""
+    }
+  ],
+  "current-step": "ordinary",
+  "child-pid": 6264,
+  "executable-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\continue-owning-capi.exe",
+    "bytes": 32575488,
+    "sha256": "a3ac8a087df73365737b732fe02479a670bb221c439811b85216ca14f923d675"
+  },
+  "outcomes": [
+    {
+      "diagnostic": "exited with status 0 (0x0)",
+      "elapsed-us": 2199268,
+      "exit-code": 0,
+      "native-runtime": true,
+      "program": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-continue-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+      "reason": 4,
+      "slice-instructions": 4096,
+      "stderr-hex": "",
+      "stdout-hex": "",
+      "turns-started": 975
+    },
+    {
+      "diagnostic": "emulator failure: native NTDLL service NtQueryVirtualMemory: Unimplemented(\"NtQueryVirtualMemory: NtQueryVirtualMemory class 3\")",
+      "elapsed-us": 2113411,
+      "exit-code": 0,
+      "native-runtime": true,
+      "program": "C:\\Windows\\System32\\whoami.exe",
+      "reason": 5,
+      "slice-instructions": 4096,
+      "stderr-hex": "",
+      "stdout-hex": "",
+      "turns-started": 922
+    }
+  ],
+  "native-after": [
+    {
+      "exit-code": 0,
+      "stdout-hex": "",
+      "stderr-hex": ""
+    },
+    {
+      "exit-code": 0,
+      "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+      "stderr-hex": ""
+    }
+  ],
+  "programs-after": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-continue-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+      "bytes": 3584,
+      "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+    },
+    {
+      "path": "C:\\Windows\\System32\\whoami.exe",
+      "bytes": 84480,
+      "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+    }
+  ],
+  "runtime-after": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    }
+  ],
+  "source-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\continue-owning-capi.cpp",
+    "bytes": 3573,
+    "sha256": "706cb2a46c143a557f3c565792d954c40e596ddbd767a2138a9d2303e94261e3"
+  },
+  "carrier-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+    "bytes": 858763432,
+    "sha256": "f02d1f4cd8681843f29ddaa63e72251c17d1ca5bdc5d2f1d4ea97ea2c6da9bbd"
+  },
+  "adapter-inputs-after": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\include\\assist\\emulation\\rax\\rax_process.hpp",
+      "bytes": 2970,
+      "sha256": "525c9a3bfeb7d5626b3690905e293f2f464908039aa93497b00464f76aa8bdff"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\include\\assist\\emulation\\rax\\librax_loader.hpp",
+      "bytes": 7710,
+      "sha256": "5aa38b2f472231ebd086711fec46ca07167ea5155d95c01ae3b74d57d6303437"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\src\\emulation\\rax\\rax_process.cpp",
+      "bytes": 8600,
+      "sha256": "ed55d78681a9a59e384186382d998244d80ca5665793e60f5e7577d88d526564"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\vendor\\rax\\capi\\include\\rax.h",
+      "bytes": 70196,
+      "sha256": "e8438269c7f9411da7c92dff70942dbb839570cda9a6ac1bec0b78ed731e829a"
+    }
+  ],
+  "executable-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\continue-owning-capi.exe",
+    "bytes": 32575488,
+    "sha256": "a3ac8a087df73365737b732fe02479a670bb221c439811b85216ca14f923d675"
+  },
+  "exit-code": 0,
+  "scope": "Retained Assist C++ RaxProcess adapter, C ABI and actual owning carrier execute native-runtime smoke to EXITED4/code0. Whoami remains FAILED5/class3. Source/runtime/program/carrier/exe identities and native controls stable; slice4096 changes observer-turn granularity.",
+  "utc": "2026-10-19T22:34:49.045517+00:00"
+}

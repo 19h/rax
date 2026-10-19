@@ -1,0 +1,9 @@
+{
+  "state": "verified",
+  "utc": "2026-10-19T23:44:38.313525+00:00",
+  "source-epoch": 3,
+  "files": 25071,
+  "bytes": 1834290186,
+  "all-inputs-unchanged": true,
+  "scope": "Complete current compilation graph on macOS, including compiled native datasets and symlink-text. Derived evidence documentation excluded by frozen source contract."
+}

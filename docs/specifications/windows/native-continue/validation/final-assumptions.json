@@ -1,0 +1,43 @@
+{
+  "scope": "One Windows29683ARM64 kernel/four ABI views; this semantic group, not the complete process objective.",
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "One build29683 ARM64 kernel/four ABI views bounds the observed contract.",
+      "basis": "Completed native-continue-v2:52captured-context resumes104postchecks48callbacks; corrected x86 wrapper PC/SP independently equal intended worker continuation.",
+      "dependent-result": "Shared alert/queue/LastError behavior",
+      "stress-test": "False/nonzero byte values, preexisting alert with and without callbacks, appended callback and LastError mutation",
+      "falsification-probe": "Another ABI trace disagrees, source/PE/module drifts or any captured-context continuation differs",
+      "status": "confirmed"
+    },
+    {
+      "id": "A2",
+      "assumption": "Existing saved APC machinery can deliver against a newly restored context without retaining the replaced NtContinue frame.",
+      "basis": "begin_apcs captures current RegContext and returns Flow::Resume(saved); native callbacks occur before the target resume marker",
+      "dependent-result": "New explicit alertable resume flow and checked frame pruning",
+      "stress-test": "Different target PC/SP/GPRs, nested continuation from an APC, pending cancellation and bad context",
+      "falsification-probe": "A callback uses old source SP/context, a stale frame resumes, or restored GPR0 becomes fabricated status",
+      "status": "revised",
+      "validation": "Confirmed after revision: native and HLE share same-height ownership pruning; nine shared/ten native focused tests, complete three-host gates, active-callback cancellation/forced exit and actual ordinary smoke success."
+    },
+    {
+      "id": "A3",
+      "assumption": "The current one-argument Win32 APC producer and owned user alert bit remain the modeled queue/state boundary.",
+      "basis": "No native three-argument queue/alert producer is registered; prior alert group already states the boundary",
+      "dependent-result": "Reuse a single per-thread alert-priority policy for NtTestAlert and NtContinue",
+      "stress-test": "Preexisting alert suppresses initial APC delivery; false TestAlert leaves it pending",
+      "falsification-probe": "A supported producer requires another queue/state representation",
+      "status": "confirmed"
+    },
+    {
+      "id": "A4",
+      "assumption": "The published alert parent and the original frozen parent have an identical compilation graph for this group.",
+      "basis": "The parent transition711876bc->5d475727 changes only prior-feature derived proof; no changed path intersects the frozen25069input graph.",
+      "dependent-result": "Linear semantic publication on5d475727 without repeating identical compilation inputs.",
+      "stress-test": "Preserve all12owned files and rehash every source input, including symlink-text and compiled case data.",
+      "falsification-probe": "Any changed parent path intersects the compilation graph, an owned digest differs, or a complete source rehash fails.",
+      "status": "confirmed",
+      "validation": "continue-parent-publication-integration.json records exact path difference and unchanged inputs. Native source was independently materialized and hash-checked before each gate."
+    }
+  ]
+}

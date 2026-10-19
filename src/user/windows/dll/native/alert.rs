@@ -1,17 +1,17 @@
 //! Owned user-alert consumption and synchronous guest APC delivery.
 use crate::user::windows::hle::{ApiResult, Ctx, Flow};
 use crate::user::windows::nt::status::{STATUS_ALERTED, STATUS_SUCCESS};
+use crate::user::windows::process::thread::AlertCheck;
 use crate::user::windows::sync::Wait;
 use std::time::Instant;
 
 pub(super) fn test(c: &mut Ctx) -> ApiResult {
     // An existing user alert wins over a queued APC and is consumed exactly
     // once. Guest thread state never queries or changes a host thread alert.
-    if std::mem::take(&mut c.t.user_alerted) {
-        return Flow::ret(u64::from(STATUS_ALERTED));
-    }
-    if c.t.apcs.is_empty() {
-        return Flow::ret(u64::from(STATUS_SUCCESS));
+    match c.t.check_user_alert() {
+        AlertCheck::Alerted => return Flow::ret(u64::from(STATUS_ALERTED)),
+        AlertCheck::Empty => return Flow::ret(u64::from(STATUS_SUCCESS)),
+        AlertCheck::PendingApcs => {}
     }
     // Reuse the scheduler's checked wait/APC frame ownership: it captures the
     // interrupted CPU, drains the queue (including nested/appended work), then

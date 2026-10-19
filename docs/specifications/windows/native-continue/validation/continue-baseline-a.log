@@ -1,0 +1,37 @@
+   Compiling vm-memory v0.17.1 (/Users/int/.assist-continue-20261019/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/.assist-continue-20261019)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 44s
+     Running unittests src/lib.rs (target/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 3 tests
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_consumes_existing_alert_before_callbacks_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_consumes_existing_alert_before_callbacks_all_abis' (13894011) panicked at src/user/windows/process/sched/tests/services_tests/continue_alert_tests.rs:105:9:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtContinue: Unimplemented(\"NtContinue: NtContinue alertable APC delivery\")")
+ right: Continue
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_empty_resume_restores_target_without_fabricated_status_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_empty_resume_restores_target_without_fabricated_status_all_abis' (13894012) panicked at src/user/windows/process/sched/tests/services_tests/continue_alert_tests.rs:57:9:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtContinue: Unimplemented(\"NtContinue: NtContinue alertable APC delivery\")")
+ right: Continue
+FAILED
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_pending_apcs_capture_replaced_context_and_resume_it_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_pending_apcs_capture_replaced_context_and_resume_it_all_abis' (13894013) panicked at src/user/windows/process/sched/tests/services_tests/continue_alert_tests.rs:76:9:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtContinue: Unimplemented(\"NtContinue: NtContinue alertable APC delivery\")")
+ right: Continue
+FAILED
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_consumes_existing_alert_before_callbacks_all_abis
+    user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_empty_resume_restores_target_without_fabricated_status_all_abis
+    user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_pending_apcs_capture_replaced_context_and_resume_it_all_abis
+
+test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 8072 filtered out; finished in 0.02s
+
+error: test failed, to rerun pass `--lib`

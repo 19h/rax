@@ -1,0 +1,79 @@
+{
+  "scope": "Exact identities permit historical epoch1 source receipts to be checked alongside fresh epoch2 execution; historical gates are not substituted for current gates.",
+  "files": [
+    {
+      "path": "docs/specifications/windows/native-continue/supplement-cases.json",
+      "before": null,
+      "after": {
+        "bytes": 16449,
+        "sha256": "785531e387f32eb11735730bd0cdfbbee9c127b1eb2cd39c4346a1333127cfac"
+      }
+    },
+    {
+      "path": "src/user/windows/hle/dispatch.rs",
+      "before": {
+        "bytes": 49287,
+        "sha256": "db0a372e1d54cf536185ef8ced3fd5fbb31f49e332c6b6f4ce6126f47aed9195"
+      },
+      "after": {
+        "bytes": 49702,
+        "sha256": "00db6bc1b0724e9d3dc442253165e7ca34046951117bd381a7c19ed53078529b"
+      }
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "before": {
+        "bytes": 193472,
+        "sha256": "dc204e3e5952ba37b6699e17d644cce0e583d6678763e04a92e85174b607c475"
+      },
+      "after": {
+        "bytes": 193934,
+        "sha256": "2ae5c00ef75dd47cd3ae71ad0e5155ed2fd17a0eae721a7c7a4003ff05c229b5"
+      }
+    },
+    {
+      "path": "src/user/windows/process/mod.rs",
+      "before": {
+        "bytes": 16380,
+        "sha256": "9b0ec4b0f670b3a2f980b567ca50be1a141609a427154b10fa87ce89bb213698"
+      },
+      "after": {
+        "bytes": 16401,
+        "sha256": "4c9c74c7b509aa2377f32b2edbbb404a615208379c47a851880404c0482b063f"
+      }
+    },
+    {
+      "path": "src/user/windows/process/sched.rs",
+      "before": {
+        "bytes": 62670,
+        "sha256": "96d12b1ee422e167e7f426b86bb5374ba4ea53f3243e1f584e3b4ffbea3c1e7e"
+      },
+      "after": {
+        "bytes": 62754,
+        "sha256": "699fb94a57a74831669fdec702d0389fa69639461622e39f10c35b4c4fc2dcf8"
+      }
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/continue_alert_leaf_tests.rs",
+      "before": {
+        "bytes": 5587,
+        "sha256": "71fd19d73c8fe628553b43d719d0722bdcb98abae6c8a9ed48ce9278d5f32a27"
+      },
+      "after": {
+        "bytes": 7335,
+        "sha256": "78c14741c8de4c5dc45d9db8157d3a7befe46c302f546ab42100dfb2fba87c9a"
+      }
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/continue_alert_tests.rs",
+      "before": {
+        "bytes": 18068,
+        "sha256": "e2b3a680668052e7bd05374f0ec5c8fe2eabadb5208fd47720f874d968099b62"
+      },
+      "after": {
+        "bytes": 26054,
+        "sha256": "0420a7f564c4028411c06fb248a89b4c33555d9d08ff143ce63217cc0e9f9611"
+      }
+    }
+  ]
+}

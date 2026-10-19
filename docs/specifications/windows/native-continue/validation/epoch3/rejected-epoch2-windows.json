@@ -1,0 +1,72 @@
+{
+  "state": "failed",
+  "pid": 1376,
+  "utc": "2026-10-19T22:52:15.730965+00:00",
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.038308667004457675,
+      "log": "continue-native-epoch2-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5",
+      "results": []
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_continue_alert",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 207.2457209580025,
+      "log": "continue-native-epoch2-focus.log",
+      "bytes": 3458,
+      "sha256": "f4858118528a4499a308e7a6d165d4520dc526f1d0b0580e503ee0a28ee86a86",
+      "results": [
+        "ok. 13 passed; 0 failed; 0 ignored; 0 measured; 7537 filtered out; finished in 2.07s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 947.163490750012,
+      "log": "continue-native-epoch2-full.log",
+      "bytes": 815250,
+      "sha256": "267a9c803b94cc6edd3093929e8cbf37ed65c28b87d84e6cfa859f3970c12bdc",
+      "results": [
+        "FAILED. 7542 passed; 6 failed; 2 ignored; 0 measured; 0 filtered out; finished in 946.70s"
+      ]
+    }
+  ],
+  "verified-source-inputs": 25070,
+  "verified-source-bytes": 1834269504,
+  "current-step": "full",
+  "child-pid": 10152,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-continue-native-epoch2.py\", line 62, in <module>\n    final=output[output.rfind('\\nfailures:\\n'):];failures=set(re.findall(r'^    (\\S+)\\r?$',final,re.M));assert code==101 and failures==baseline\n                                                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "completed-utc": "2026-10-19T23:12:18.245552+00:00"
+}

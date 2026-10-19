@@ -1,0 +1,14 @@
+{
+  "scope": "Current epoch3 candidate, with historical successful and rejected candidates retained separately. Full process goal and whole-current-root validation remain separate.",
+  "gates": {
+    "QG1": "pass: no normative judgment required",
+    "QG2": "pass: A5 active callback ownership and A6 upstream integration confirmed with falsification probes; historical A1-A4 retained",
+    "QG3": "pass within semantic group: current source, native controls, complete three-host gates and both owning execution boundaries; publication audited separately",
+    "QG4": "pass: source25071files1834290186bytes;3812owning inputs; BOOLEAN8bits, context912/1232/716bytes; distinct observer/C API slice granularity",
+    "QG5": "pass: failed exact-target baseline and rejected descriptor-only wait regression preserved; current ownership preserves both invariants; Windows retains exact5known lowerer failures",
+    "QG6": "pass: pinned primary/native source/kernel/runtime/PE/projection and current source/artifact/ordinary/C ABI identities",
+    "QG7": "pass: whoami class3, native producer/debugger context boundary, public Rust enum and current-root CI disk limit remain explicit",
+    "QG8": "pass: native68resumes136postchecks76callbacks,12shared13native tests, full3hosts/CAPI183/integration544nonWin4Win/all-targets and rebuilt owning consumers",
+    "QG9": "pass: module registration/explicit ownership; public CABI/defaults/dependencies unchanged"
+  }
+}

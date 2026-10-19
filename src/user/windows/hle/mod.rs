@@ -256,6 +256,9 @@ pub enum Flow {
     /// Resume at a full register context (`NtContinue`, `longjmp`, the
     /// target of an unwind).
     Resume(Box<RegContext>),
+    /// Replace the register context, then test the guest user alert and deliver
+    /// pending APCs against that context (`NtContinue` with `TestAlert`).
+    ResumeAlertable(Box<RegContext>),
     /// Raise an exception as `RaiseException` does: the context is the
     /// caller's state inside this export (PC at the resume trap).
     Raise(ExceptionRecord),

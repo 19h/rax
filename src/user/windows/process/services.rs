@@ -3,8 +3,9 @@
 
 use super::{Proc, Thread};
 use crate::user::windows::arch::WinArch;
+use crate::user::windows::context::RegContext;
 use crate::user::windows::dll;
-use crate::user::windows::hle::dispatch::{Outcome, prune, write_value};
+use crate::user::windows::hle::dispatch::{Outcome, prune_resumed_context, write_value};
 use crate::user::windows::hle::{ApiErr, Ctx, Flow, Value};
 use crate::user::windows::nt::status::STATUS_ACCESS_VIOLATION;
 
@@ -108,15 +109,8 @@ fn enter(
             }
             Outcome::Continue
         }
-        Ok(Flow::Resume(context)) => match context.apply(&mut t.cpu) {
-            Ok(()) => {
-                prune(t, t.cpu.sp());
-                Outcome::Continue
-            }
-            Err(status) => Outcome::Fail(format!(
-                "{name}: context restoration rejected with status {status:#010x}"
-            )),
-        },
+        Ok(Flow::Resume(context)) => resume_context(p, t, &name, &context, false),
+        Ok(Flow::ResumeAlertable(context)) => resume_context(p, t, &name, &context, true),
         Ok(Flow::TerminateProcess(status)) => Outcome::ProcessTerminate(status),
         Ok(Flow::TerminateThread(status)) => Outcome::ThreadTerminate(status),
         Err(error) => Outcome::Fail(format!("native NTDLL service {name}: {error:?}")),
@@ -124,4 +118,24 @@ fn enter(
             "native NTDLL service {name} requires an unsupported kernel continuation"
         )),
     })
+}
+
+fn resume_context(
+    p: &mut Proc,
+    t: &mut Thread,
+    name: &str,
+    context: &RegContext,
+    alertable: bool,
+) -> Outcome {
+    if let Err(status) = context.apply(&mut t.cpu) {
+        return Outcome::Fail(format!(
+            "{name}: context restoration rejected with status {status:#010x}"
+        ));
+    }
+    prune_resumed_context(t);
+    if alertable {
+        super::continue_alertable(p, t)
+    } else {
+        Outcome::Continue
+    }
 }

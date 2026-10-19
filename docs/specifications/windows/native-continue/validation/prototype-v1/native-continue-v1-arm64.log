@@ -1,0 +1,70 @@
+profile=arm64 pointer=8 context-bytes=912
+resume case=0 test=0 seen=0 last=0000C0DE tid=00000438
+check case=0 index=0 status=00000000 before=0 after=0 last=0000C0DE
+check case=0 index=1 status=00000000 before=0 after=0 last=0000C0DE
+worker case=0 wait=00000000 exit=0
+resume case=1 test=1 seen=0 last=0000C0DE tid=00000274
+check case=1 index=0 status=00000000 before=0 after=0 last=0000C0DE
+check case=1 index=1 status=00000000 before=0 after=0 last=0000C0DE
+worker case=1 wait=00000000 exit=0
+resume case=2 test=0 seen=0 last=0000C0DE tid=000015FC
+check case=2 index=0 status=00000000 before=0 after=1 last=0000C0DE
+check case=2 index=1 status=00000000 before=1 after=1 last=0000C0DE
+event case=2 index=0 value=1111 phase=3 last=0000C0DE tid=000015FC
+worker case=2 wait=00000000 exit=0
+resume case=3 test=1 seen=1 last=0000C0DE tid=00001900
+check case=3 index=0 status=00000000 before=1 after=1 last=0000C0DE
+check case=3 index=1 status=00000000 before=1 after=1 last=0000C0DE
+event case=3 index=0 value=1111 phase=1 last=0000C0DE tid=00001900
+worker case=3 wait=00000000 exit=0
+resume case=4 test=1 seen=2 last=0000C0DE tid=00002580
+check case=4 index=0 status=00000000 before=2 after=2 last=0000C0DE
+check case=4 index=1 status=00000000 before=2 after=2 last=0000C0DE
+event case=4 index=0 value=1111 phase=1 last=0000C0DE tid=00002580
+event case=4 index=1 value=2222 phase=1 last=0000C0DE tid=00002580
+worker case=4 wait=00000000 exit=0
+resume case=5 test=1 seen=3 last=0000C0DE tid=00000644
+check case=5 index=0 status=00000000 before=3 after=3 last=0000C0DE
+check case=5 index=1 status=00000000 before=3 after=3 last=0000C0DE
+event case=5 index=0 value=1111 phase=1 last=0000C0DE tid=00000644
+event case=5 index=1 value=2222 phase=1 last=0000C0DE tid=00000644
+event case=5 index=2 value=3333 phase=1 last=0000C0DE tid=00000644
+worker case=5 wait=00000000 exit=0
+alert case=6 status=00000000 seen=0
+resume case=6 test=1 seen=0 last=0000C0DE tid=00001CD0
+check case=6 index=0 status=00000000 before=0 after=1 last=0000C0DE
+check case=6 index=1 status=00000000 before=1 after=1 last=0000C0DE
+event case=6 index=0 value=1111 phase=3 last=0000C0DE tid=00001CD0
+worker case=6 wait=00000000 exit=0
+alert case=7 status=00000000 seen=0
+resume case=7 test=1 seen=0 last=0000C0DE tid=00001A4C
+check case=7 index=0 status=00000000 before=0 after=0 last=0000C0DE
+check case=7 index=1 status=00000000 before=0 after=0 last=0000C0DE
+worker case=7 wait=00000000 exit=0
+alert case=8 status=00000000 seen=0
+resume case=8 test=0 seen=0 last=0000C0DE tid=0000258C
+check case=8 index=0 status=00000101 before=0 after=0 last=0000C0DE
+check case=8 index=1 status=00000000 before=0 after=1 last=0000C0DE
+event case=8 index=0 value=1111 phase=4 last=0000C0DE tid=0000258C
+worker case=8 wait=00000000 exit=0
+resume case=9 test=1 seen=1 last=0000ABCD tid=00002554
+check case=9 index=0 status=00000000 before=1 after=1 last=0000C0DE
+check case=9 index=1 status=00000000 before=1 after=1 last=0000C0DE
+event case=9 index=0 value=4444 phase=1 last=0000C0DE tid=00002554
+worker case=9 wait=00000000 exit=0
+resume case=10 test=2 seen=1 last=0000C0DE tid=000012F4
+check case=10 index=0 status=00000000 before=1 after=1 last=0000C0DE
+check case=10 index=1 status=00000000 before=1 after=1 last=0000C0DE
+event case=10 index=0 value=1111 phase=1 last=0000C0DE tid=000012F4
+worker case=10 wait=00000000 exit=0
+resume case=11 test=255 seen=1 last=0000C0DE tid=000024C0
+check case=11 index=0 status=00000000 before=1 after=1 last=0000C0DE
+check case=11 index=1 status=00000000 before=1 after=1 last=0000C0DE
+event case=11 index=0 value=1111 phase=1 last=0000C0DE tid=000024C0
+worker case=11 wait=00000000 exit=0
+alert case=12 status=00000000 seen=0
+resume case=12 test=0 seen=0 last=0000C0DE tid=000016D0
+check case=12 index=0 status=00000101 before=0 after=0 last=0000C0DE
+check case=12 index=1 status=00000000 before=0 after=0 last=0000C0DE
+worker case=12 wait=00000000 exit=0
+complete cases=13

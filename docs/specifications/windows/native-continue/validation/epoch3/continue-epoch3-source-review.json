@@ -1,0 +1,20 @@
+{
+  "utc": "2026-10-19T23:25:12.254835+00:00",
+  "head-before-publication": "b79c32ca2839568f5c06d123d2f8243e490ba2a4",
+  "reviewed-feature-contract": [
+    "BOOLEAN low8bits; full context validated before alert/queue mutation",
+    "Shared guest alert priority, restored-target APC scheduling without synthetic wait/status",
+    "Private APC descriptor plus active callback marker; exact same PC/SP abandonment; interrupted wait preserved",
+    "HLE export frame pop and native no-pop remain distinct narrow mechanics",
+    "No host continuation/alert forwarding; existing one-argument queue; native3arg producers still explicit frontier",
+    "Public Rust Flow enum addition disclosed; C ABI1.14/default/dependencies unchanged"
+  ],
+  "reviewed-coverage": [
+    "compiled preimplementation failures retained",
+    "native base52/104/48 and supplement16/32/28",
+    "12shared and13native checks including installed host/WoW64 callback leaves",
+    "Existing interrupted wait preservation asserted with all12continuation checks",
+    "Rejected descriptor-only broad candidate retained; final exact marker rule is frozen across3hosts"
+  ],
+  "status": "source review passed; publication waits for complete current3host and owning receipts"
+}

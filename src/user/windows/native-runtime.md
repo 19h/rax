@@ -1349,8 +1349,9 @@ sizes, with existing export lookup cost on first resolution.
 Native thread attachment occurs only at the exact resumed RtlUserThreadStart PC,
 releasing the existing initial-process scheduling gate without host DLL/TLS
 notifications. Built-in startup remains unchanged. Native exit uses installed
-RTL/NtTerminate routes; alertable NtContinue(TRUE) remains explicitly unsupported
-and must not discard pending APCs.
+RTL/NtTerminate routes. Alertable NtContinue now applies the checked replacement
+context before testing guest alerts or delivering queued APCs; see the owned
+continuation section below.
 
 Six independent suspended-child initial PEB/context/TEB captures cover ARM64,
 x64 compatibility and WoW64. ARM64/WoW64 child-only loader breakpoints confirm
@@ -1425,9 +1426,9 @@ The byte-identical ordinary observer receives length mismatch at40500, its
 48-byte NUMA retry succeeds at41325, and it stops at NtCreateIoCompletion0xB2
 at42051:1551 additional scheduler calls, not instructions. All four owning
 ordinary programs report reason5/exit_code0/internal failure at that next
-service, with no claim of successful process completion. Alertable NtContinue,
-I/O completion, wider NT services and full application/package/IDA validation
-remain outstanding. Physical pure x64 Windows proof and native x86-64 Linux
+service, with no claim of successful process completion. At that capture,
+alertable NtContinue, I/O completion, wider NT services and full
+application/package/IDA validation remained outstanding. Physical pure x64 Windows proof and native x86-64 Linux
 proof remain distinct from ARM64 compatibility/container translation.
 
 Primary captures, producer/machine identities, A1-A3 reconciled assumption
@@ -2700,3 +2701,29 @@ guest queue retains one argument, and native three-argument queue producers
 remain separate unsupported frontiers. `Thread.user_alerted` is owned Rust
 state initialized false; no guest call invokes a host alert operation.
 [Native observations, replay scope and validation](../../../docs/specifications/windows/native-test-alert/README.md).
+
+### Owned alertable context replacement
+
+`NtContinue` validates the supplied architecture context before changing alert
+or queue state. `TestAlert` uses its low eight bits (`BOOLEAN`). False resumes
+without an alert check. True first applies the replacement context and removes
+abandoned continuations, then consumes an existing guest user alert before
+considering APCs. A consumed alert leaves the APC queue pending. Otherwise the
+existing scheduler captures the replacement context, drains FIFO and appended
+one-argument Win32 APCs, and restores that target. No synthetic wait or status
+return overwrites the supplied result registers. Callback writes to guest TEB
+memory remain observable. Both native-service and HLE context replacement use
+the same stack-height/frontier rule for abandoned continuations.
+
+An APC delivery owner at the replacement SP is discarded even when the target
+PC exactly equals its interrupted PC. The dispatcher recognizes that owner by
+its private API descriptor identity and active callback stack marker; ordinary checked-operation/retry frames
+retain their existing frontier rule. Supplemental native controls cover a
+callback's direct NtContinue(FALSE/TRUE), an empty remaining queue, and a user
+alert created inside the callback. The abandoned callback does not return.
+
+The public Rust `Flow` enum adds `ResumeAlertable`; the opaque C ABI and feature
+defaults are unchanged. No guest call invokes a host alert or continuation
+operation. Native three-argument APC queue and alert producers remain separate
+unsupported frontiers.
+[Native captured-context observations and validation](../../../docs/specifications/windows/native-continue/README.md).

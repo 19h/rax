@@ -1,0 +1,24 @@
+{
+  "assumptions": [
+    {
+      "id": "A5",
+      "assumption": "Only an active APC callback owner is abandoned at the exact target PC/SP; a suspended wait parent remains owned.",
+      "basis": "Compiled0/1 exact-target regression exposed missing teardown; epoch2 descriptor-only pruning falsified the existing wait-parent test. callback_sp is published for an active call and cleared before its continuation resumes.",
+      "dependent-result": "Descriptor identity plus active callback marker in shared resumed-context pruning.",
+      "stress-test": "FALSE/TRUE same-target continuation, empty/remaining queue, alert inside callback, native/HLE parity, interrupted wait and checked retry lifetimes.",
+      "falsification-probe": "An exact-target stale frame survives, a wait is dropped, native order disagrees, or a broad/native/owning gate fails.",
+      "status": "confirmed",
+      "validation": "Fresh full/CAPI/integration/all-target gates and owning closure pass on all three hosts;13selected combined wait/continuation prototype checks,12shared/13native focus and native supplemental16/32/28 agree. Exact source/archive/program/runtime identities are stable."
+    },
+    {
+      "id": "A6",
+      "assumption": "Concurrent b79c32ca tooling integration preserves all12feature inputs and runtime code.",
+      "basis": "Nine workflow/tooling/reference paths; no src/capi/manifest/lock change or owned-path overlap. AGENTS only adds the workflow reference.",
+      "dependent-result": "Linear publication on current upstream with fresh combined-source validation.",
+      "stress-test": "Full three-host and all-target compilation include the new tooling surface; all source and owning artifacts are bound.",
+      "falsification-probe": "A protected digest differs, an upstream path overlaps, or a current gate/identity check fails.",
+      "status": "confirmed",
+      "validation": "Fresh full/CAPI/integration/all-target gates and owning closure pass on all three hosts;13selected combined wait/continuation prototype checks,12shared/13native focus and native supplemental16/32/28 agree. Exact source/archive/program/runtime identities are stable."
+    }
+  ]
+}

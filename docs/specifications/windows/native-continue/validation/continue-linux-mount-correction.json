@@ -1,0 +1,7 @@
+{
+  "receipt": "continue-linux-epoch1-gates.json",
+  "exit-code": 125,
+  "scope": "Docker failed before starting Cargo; no Linux test ran.",
+  "cause": "The new read-only source mount lacked target/linux, so the nested target-volume mountpoint could not be created.",
+  "correction": "Created the task-owned ignored mountpoint and launched the same frozen source with separate b logs/receipt and container name. Product inputs unchanged."
+}

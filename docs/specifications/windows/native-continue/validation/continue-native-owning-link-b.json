@@ -1,0 +1,11 @@
+{
+  "state": "finished",
+  "pid": 4960,
+  "steps": [],
+  "exit-code": 0,
+  "before": "\\\\?\\C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alert-epoch4",
+  "after": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-continue-epoch1",
+  "source-inputs": 3811,
+  "qualification": "Explicit verified handoff prepares the new target for the already waiting owning controller, whose generated admission expects that target to be selected. Prior owning archive/ordinary runs are finished; no build is restarted.",
+  "utc": "2026-10-19T22:04:54.978145+00:00"
+}

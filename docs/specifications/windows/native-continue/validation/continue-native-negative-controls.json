@@ -1,0 +1,71 @@
+{
+  "controls": [
+    {
+      "name": "resume-before-true-apc",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "false-delivers-apc",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "existing-alert-priority",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "pending-alert-lost",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "fifo",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "appended-phase",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "last-error-restoration",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "callback-thread",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "x86-capture-wrapper",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "profile-machine",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "boolean-byte",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "replay-dataset",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "source-drift",
+      "rejected": true,
+      "error-type": "AssertionError"
+    }
+  ],
+  "all-rejected": true,
+  "scope": "Native log identities are rebound in launch receipt and native envelope after each mutation; semantic source/ABI/state checks reject the corrupted record."
+}

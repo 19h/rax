@@ -1,0 +1,15 @@
+{
+  "state": "failed",
+  "pid": 21294,
+  "steps": [
+    {
+      "name": "negative-controls",
+      "exit-code": 1,
+      "log": "continue-epoch3-proof-negative-controls.log"
+    }
+  ],
+  "utc": "2026-10-19T23:44:55.123414+00:00",
+  "step": "negative-controls",
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-continue-20261019/run-continue-epoch3-proof.py\", line 22, in <module>\n    run('negative-controls',[sys.executable,'-B',str(Q/'stress-continue-epoch3.py')])\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-continue-20261019/run-continue-epoch3-proof.py\", line 12, in run\n    r['steps'].append({'name':name,'exit-code':code,'log':log.name});save();assert code==0,log.read_text(errors='replace')\n                                                                                   ^^^^^^^\nAssertionError: Rejected coherent-library-count\nRejected filtered-full-selection\nRejected unrecognized-windows-failure\nRejected rejected-wait-regression-lost\nRejected unconfirmed-ownership-assumption\nRejected upstream-feature-overlap\nRejected zero-archive-walk\nRejected owning-core-drift\nRejected wrong-smoke-exit\nRejected wrong-restored-stack\nTraceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-continue-20261019/stress-continue-epoch3.py\", line 26, in <module>\n    root=Path(temporary)/name;shutil.copytree(D,root);mutate(root)\n                                                      ~~~~~~^^^^^^\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-continue-20261019/stress-continue-epoch3.py\", line 21, in capi\n    v=root/'validation/epoch3';d=json.loads((v/'capi.json').read_text());out=(v/d['steps'][1]['log']).read_text();old=next(x for x in out.splitlines()if x.startswith('api-result '));row=json.loads(old[len('api-result '):]);row['reason']=5;new='api-result '+json.dumps(row,separators=(',',':'));logchange(root,'capi.json','ordinary',old,new);edit(root,'capi.json',lambda d:d['outcomes'][0].update(reason=5))\n                                                                                                                                                                                                                                                                                                      ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-continue-20261019/stress-continue-epoch3.py\", line 10, in logchange\n    if x['log']==f.name:x['log-sha256']=row['sha256']\n       ~^^^^^^^\nKeyError: 'log'\n\n"
+}

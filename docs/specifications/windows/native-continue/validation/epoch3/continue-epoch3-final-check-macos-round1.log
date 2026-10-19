@@ -1,0 +1,78 @@
+{
+  "host": "macos",
+  "state": "verified",
+  "source-files": 25071,
+  "source-bytes": 1834290186,
+  "owning-source-inputs": 3812,
+  "library-gates": {
+    "macos": {
+      "passed": 8082,
+      "failed": 0,
+      "ignored": 2
+    },
+    "linux": {
+      "passed": 8076,
+      "failed": 0,
+      "ignored": 2
+    },
+    "windows": {
+      "passed": 7543,
+      "failed": 5,
+      "ignored": 2
+    }
+  },
+  "native-resumes": 68,
+  "native-post-checks": 136,
+  "native-callbacks": 76,
+  "ordinary-smoke-exit": 0,
+  "whoami-frontier": "NtQueryVirtualMemory class3",
+  "full-process-goal-complete": false,
+  "scope": "Exact selections and retained ABI184 consumers; current-root whole GUI/plugin/packages remain separate.",
+  "epoch1-library-gates": {
+    "macos": {
+      "passed": 8079,
+      "failed": 0,
+      "ignored": 2
+    },
+    "linux": {
+      "passed": 8073,
+      "failed": 0,
+      "ignored": 2
+    },
+    "windows": {
+      "passed": 7540,
+      "failed": 5,
+      "ignored": 2
+    }
+  },
+  "epoch3": {
+    "source-epoch": 3,
+    "source-files": 25071,
+    "source-bytes": 1834290186,
+    "owning-source-inputs": 3812,
+    "library-gates": {
+      "macos": {
+        "passed": 8082,
+        "failed": 0,
+        "ignored": 2
+      },
+      "linux": {
+        "passed": 8076,
+        "failed": 0,
+        "ignored": 2
+      },
+      "windows": {
+        "passed": 7543,
+        "failed": 5,
+        "ignored": 2
+      }
+    },
+    "actual-core": {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 508150228,
+      "sha256": "01d41dc9e2c65f22a61967cf6a4c42045c2e9b7be5c484dd3386f5c2b100d641"
+    },
+    "ordinary-smoke-exit": 0,
+    "full-process-goal-complete": false
+  }
+}

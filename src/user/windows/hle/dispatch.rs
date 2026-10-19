@@ -88,6 +88,24 @@ fn prune_same_height_frontier(t: &mut Thread, pc: u64, sp: u64) {
     }
 }
 
+/// Apply the common ownership rule after a nonlocal context replacement. Native
+/// service entry has no export frame to pop, but can abandon the same waiting
+/// or callback continuation at its original stack height just as HLE does.
+pub(crate) fn prune_resumed_context(t: &mut Thread) {
+    prune(t, t.cpu.sp());
+    // An explicit context replacement may restore the APC's exact interrupted
+    // PC/SP. That abandons its delivery owner even when the frontier matches;
+    // checked operation/retry frames retain the ordinary rule below.
+    while t.frames.last().is_some_and(|frame| {
+        frame.entry_sp == t.cpu.sp()
+            && frame.callback_sp.is_some()
+            && crate::user::windows::process::is_apc_dispatcher(frame.api)
+    }) {
+        t.frames.pop();
+    }
+    prune_same_height_frontier(t, t.cpu.pc(), t.cpu.sp());
+}
+
 /// Runs export `api`, entered at trap slot `pc`.
 pub fn enter(p: &mut Proc, t: &mut Thread, api: &'static Api, pc: u64) -> Outcome {
     let entry_sp = t.cpu.sp();
@@ -578,18 +596,8 @@ pub fn complete(p: &mut Proc, t: &mut Thread, site: CallSite, result: ApiResult)
             t.state = ThreadState::Waiting(wait);
             Outcome::Park
         }
-        Ok(Flow::Resume(ctx)) => {
-            pop_frame(t, &site);
-            if let Err(status) = ctx.apply(&mut t.cpu) {
-                return Outcome::Fail(format!(
-                    "{}: context restoration rejected with status {status:#010x}",
-                    site.api.name
-                ));
-            }
-            prune(t, t.cpu.sp());
-            prune_same_height_frontier(t, t.cpu.pc(), t.cpu.sp());
-            Outcome::Continue
-        }
+        Ok(Flow::Resume(ctx)) => resume_context(p, t, &site, &ctx, false),
+        Ok(Flow::ResumeAlertable(ctx)) => resume_context(p, t, &site, &ctx, true),
         Ok(Flow::Raise(rec)) => {
             // The repaired pseudo-dispatcher has no guest return address at
             // its private +8 half-slot. Raising from the generic export
@@ -673,6 +681,28 @@ pub fn complete(p: &mut Proc, t: &mut Thread, site: CallSite, result: ApiResult)
         Err(ApiErr::Raise(rec)) => raise_at(p, t, &site, rec),
         Err(ApiErr::Unimplemented(what)) => Outcome::Fail(format!("unimplemented: {what}")),
         Err(ApiErr::Internal(msg)) => Outcome::Fail(msg),
+    }
+}
+
+fn resume_context(
+    p: &mut Proc,
+    t: &mut Thread,
+    site: &CallSite,
+    context: &RegContext,
+    alertable: bool,
+) -> Outcome {
+    pop_frame(t, site);
+    if let Err(status) = context.apply(&mut t.cpu) {
+        return Outcome::Fail(format!(
+            "{}: context restoration rejected with status {status:#010x}",
+            site.api.name
+        ));
+    }
+    prune_resumed_context(t);
+    if alertable {
+        crate::user::windows::process::continue_alertable(p, t)
+    } else {
+        Outcome::Continue
     }
 }
 

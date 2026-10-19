@@ -1,0 +1,29 @@
+[
+  {
+    "impact": "high",
+    "item": "Whoami remains at virtual-memory class3. Smoke succeeds through actual owning core and retained C++/C ABI; this does not complete all Windows or all-platform userland behavior.",
+    "evidence": "ordinary.json/capi.json, native controls and before-after source/artifact/runtime identities",
+    "blocks-current-group": false,
+    "blocks-full-process-goal": true
+  },
+  {
+    "impact": "high",
+    "item": "Epoch2 identified an active callback by descriptor alone, dropping a wait parent using that descriptor in existing preservation coverage.",
+    "evidence": "rejected-epoch2-macos/linux/windows receipts, exact-target baseline, current combined selected checks and full suites",
+    "blocks-current-group": false,
+    "resolution": "Require a published active callback marker as well as private descriptor identity; preserve existing assertion and checked retry/wait policy."
+  },
+  {
+    "impact": "medium",
+    "item": "C ABI debugger context editing is a separate path from guest NtContinue; no debugger lifecycle policy changes.",
+    "evidence": "capi/src/process/runtime.rs WriteContext and guest Flow dispatch paths",
+    "blocks-current-group": false
+  },
+  {
+    "impact": "high",
+    "item": "Retained Assist ABI184 linked consumers do not establish whole current-root GUI/plugin/package behavior. Publication base root ABI270 includes concurrent mirror/history changes. Parent pipeline71509: five package builds passed; Windows x64 checkout failed authentication; macOS unit compile exhausted runner disk; Linux failed four tests; Windows process-tool test failed NT directory parent identity. Current base pipeline71512 independently repeats Windows namespace-parent and macOS disk failures.",
+    "evidence": "owning manifests/selections; pipeline71509/jobs424839,424843,424838,424840 on root1c06f967; pipeline71512/jobs424872,424871 on rootc2eb730d",
+    "blocks-current-group": false,
+    "blocks-whole-current-root-proof": true
+  }
+]

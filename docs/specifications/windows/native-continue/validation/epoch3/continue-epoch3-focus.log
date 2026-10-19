@@ -1,0 +1,21 @@
+   Compiling rax v0.1.0 (/Users/int/.assist-continue-20261019)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 41.51s
+     Running unittests src/lib.rs (target/debug/deps/rax-754f4d2a527a4423)
+
+running 13 tests
+test user::windows::process::sched::tests::apc_restoration_preserves_same_height_wait_parent_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_active_callback_cancellation_and_forced_exit_keep_owned_lifetimes_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_consumes_existing_alert_before_callbacks_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_empty_resume_restores_target_without_fabricated_status_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_exact_interrupted_hle_target_discards_apc_owner_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_exact_interrupted_target_discards_abandoned_apc_frame_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_from_callback_discards_replaced_same_height_continuation_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_hle_export_matches_native_replacement_and_queue_order_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_invalid_context_preserves_alert_queue_and_teb_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_pending_apcs_capture_replaced_context_and_resume_it_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_replays_16_exact_target_resumes_32_checks_and_28_callbacks_all_profiles ... ok
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_replays_52_resumes_104_post_checks_and_48_callbacks_all_profiles ... ok
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_uses_boolean_byte_and_preserves_false_pending_state_all_abis ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 8071 filtered out; finished in 0.41s
+

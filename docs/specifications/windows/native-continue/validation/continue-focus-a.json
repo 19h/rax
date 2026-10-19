@@ -1,0 +1,20 @@
+{
+  "utc": "2026-10-19T21:45:10.043662+00:00",
+  "exit-code": 0,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_continue_alert",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "log": "continue-focus-a.log",
+  "bytes": 1046,
+  "sha256": "16acd5dd24c028b9666bef7eeaba6c5cf1c04cb5b56c241b5f5acbe0dcb30504"
+}

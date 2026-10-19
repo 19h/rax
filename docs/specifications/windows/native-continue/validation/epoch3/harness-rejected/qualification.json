@@ -1,0 +1,5 @@
+{
+  "state": "rejected-harness",
+  "scope": "All current runtime/build gates pass within the declared exact Windows failure boundary. The corruption helper assumed every outcome carried a log field; C API outcome records have no such field. Ten controls were rejected before the helper itself raised KeyError while constructing the C API corruption. No accepted proof or runtime source changed.",
+  "correction": "Use optional log lookup in helper and rerun the evidence audit only; preserve all completed platform gates."
+}

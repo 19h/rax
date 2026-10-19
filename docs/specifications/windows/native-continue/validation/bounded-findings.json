@@ -1,0 +1,43 @@
+[
+  {
+    "impact": "high",
+    "item": "Whoami remains at NtQueryVirtualMemory class3; successful smoke alone does not complete general Windows or full three-platform process support.",
+    "evidence": "ordinary.json and exact native/guest output comparison",
+    "blocks-current-group": false,
+    "blocks-full-process-goal": true
+  },
+  {
+    "impact": "high",
+    "item": "Native non-alertable context replacement previously retained an abandoned APC frame at equal stack height.",
+    "evidence": "continue-focus-c7pass1fail, then continue-focus-d9pass0fail and full/native validation",
+    "blocks-current-group": false,
+    "resolution": "Shared native/HLE resumed-context pruning handles both alertable and non-alertable replacement."
+  },
+  {
+    "impact": "medium",
+    "item": "Public Rust Flow gains ResumeAlertable; opaque CABI1.14/defaults/dependencies remain unchanged.",
+    "evidence": "source diff and all-target/CAPI/consumer gates",
+    "blocks-current-group": false
+  },
+  {
+    "impact": "high",
+    "item": "Retained ABI184 consumers do not establish whole current-root ABI264 GUI/plugin/package behavior.",
+    "evidence": "Owning source manifests and exact consumer selections; parent root pipeline71509 is separate evidence",
+    "blocks-current-group": false,
+    "blocks-full-process-goal": true
+  },
+  {
+    "impact": "high",
+    "item": "Parent current-root macOS CI failed before unit execution because its runner ran out of disk during C++ compilation.",
+    "evidence": {
+      "pipeline": 71509,
+      "job": 424839,
+      "commit": "1c06f967e34f05088fa493b3924fd8d4522ec75d",
+      "failure": "No space left on device",
+      "macos-arm64-package-build": "passed",
+      "linux-x64-package-build": "passed"
+    },
+    "blocks-current-semantic-core-group": false,
+    "blocks-whole-current-root-proof": true
+  }
+]

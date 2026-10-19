@@ -1,0 +1,19 @@
+   Compiling rax v0.1.0 (/Users/int/.assist-continue-20261019)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 44.15s
+     Running unittests src/lib.rs (target/debug/deps/rax-754f4d2a527a4423)
+
+running 1 test
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_exact_interrupted_target_discards_abandoned_apc_frame_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_exact_interrupted_target_discards_abandoned_apc_frame_all_abis' (14241176) panicked at src/user/windows/process/sched/tests/services_tests/continue_alert_tests.rs:414:13:
+exact interrupted PC/SP must abandon the APC owner x86/0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_exact_interrupted_target_discards_abandoned_apc_frame_all_abis
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 8081 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `--lib`

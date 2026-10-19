@@ -1,0 +1,71 @@
+{
+  "utc": "2026-10-19T21:35:26.931836+00:00",
+  "acceptance": [
+    "Native captured-context TestAlert0/1/2/255 and alert/APC order measured on four ABI views",
+    "Target context is restored before APC entry; API never overwrites restored result registers with fabricated status0",
+    "User alert consumption, FIFO/appending/nesting/cancellation/teardown and no per-guest host forwarding",
+    "Genuine compiled tests-only failure baseline, real native/WoW64 leaves, cross-platform complete gates and actual ordinary smoke advancement",
+    "Exact semantic red commit and paired root publication after the current alert parent is published"
+  ],
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "One build29683 ARM64 kernel/four ABI views bounds the observed contract.",
+      "basis": "Completed native-continue-v2:52captured-context resumes104postchecks48callbacks; corrected x86 wrapper PC/SP independently equal intended worker continuation.",
+      "dependent-result": "Shared alert/queue/LastError behavior",
+      "stress-test": "False/nonzero byte values, preexisting alert with and without callbacks, appended callback and LastError mutation",
+      "falsification-probe": "Another ABI trace disagrees, source/PE/module drifts or any captured-context continuation differs",
+      "status": "confirmed"
+    },
+    {
+      "id": "A2",
+      "assumption": "Existing saved APC machinery can deliver against a newly restored context without retaining the replaced NtContinue frame.",
+      "basis": "begin_apcs captures current RegContext and returns Flow::Resume(saved); native callbacks occur before the target resume marker",
+      "dependent-result": "New explicit alertable resume flow and checked frame pruning",
+      "stress-test": "Different target PC/SP/GPRs, nested continuation from an APC, pending cancellation and bad context",
+      "falsification-probe": "A callback uses old source SP/context, a stale frame resumes, or restored GPR0 becomes fabricated status",
+      "status": "revised",
+      "validation": "Nine shared tests pass. The7pass1fail callback-replacement regression exposed a preexisting stale native continuation at equal stack height. Native and HLE now use the common ownership rule; full/native gates remain pending."
+    },
+    {
+      "id": "A3",
+      "assumption": "The current one-argument Win32 APC producer and owned user alert bit remain the modeled queue/state boundary.",
+      "basis": "No native three-argument queue/alert producer is registered; prior alert group already states the boundary",
+      "dependent-result": "Reuse a single per-thread alert-priority policy for NtTestAlert and NtContinue",
+      "stress-test": "Preexisting alert suppresses initial APC delivery; false TestAlert leaves it pending",
+      "falsification-probe": "A supported producer requires another queue/state representation",
+      "status": "confirmed"
+    }
+  ],
+  "bounded-findings": [
+    {
+      "impact": "high",
+      "item": "Full Windows guest exit remains unproved: smoke currently stops at NtContinue TestAlert1, whoami at virtual-memory class3.",
+      "blocks-full-goal": true
+    },
+    {
+      "impact": "medium",
+      "item": "Public Rust Flow gains an alertable resume variant; opaque C ABI/defaults/dependencies remain unchanged.",
+      "blocks-current-group": false
+    },
+    {
+      "impact": "high",
+      "item": "Native context replacement previously retained an abandoned APC continuation at the same stack height.",
+      "evidence": "continue-focus-c.json/log:7passed1failed at x86/TestAlert0; corrected shared ownership rule passes continue-focus-d9/0.",
+      "blocks-current-group": false,
+      "resolution": "Implemented and shared-tested; native/full validation pending."
+    }
+  ],
+  "surface-map": {
+    "direct-decode": "Unaffected: no ISA encoding or decoder changes.",
+    "direct-execute": "Unaffected: existing CPU adapters apply architecture RegContext.",
+    "cpu-state": "Affected: checked replacement precedes APC capture; result registers retain supplied values.",
+    "memory-mmu": "Unaffected implementation: existing RegContext read/validate and callback stack checked writes are reused. Invalid pointers/flags preserve queue/alert/TEB state.",
+    "smir-lift-ir-interpreter-optimizer-lowering-jit": "Unaffected: no instruction representation, lowering admission or JIT change. Native/full tests still exercise current upstream core.",
+    "backend-machine-device-oracle": "Unaffected: user process HLE and native-service scheduling only.",
+    "c-abi": "Opaque and unchanged; public Rust Flow enum adds ResumeAlertable.",
+    "scheduling-lifecycle": "Affected: shared user-alert priority and same-height context-pruning; cancellation and forced-exit coverage.",
+    "windows-macos-linux": "Same shared runtime sources compiled and executed by all three host gates. Windows-only test executes real installed native/WoW64 leaves.",
+    "tests-docs": "New shared/native modules registered in the existing library target; exact native replay is compiled via include_str. Documentation and primary/raw proof are separate from product source."
+  }
+}

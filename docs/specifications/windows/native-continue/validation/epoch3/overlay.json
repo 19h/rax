@@ -1,0 +1,175 @@
+{
+  "files": [
+    {
+      "path": ".github/workflows/README.md",
+      "before": {
+        "bytes": 7598,
+        "sha256": "5dc74694fad4f35546c70082c07d60a001eca40a6f145bcd470af8819893e75b"
+      },
+      "after": {
+        "bytes": 8771,
+        "sha256": "eac48c6969a34ca3876bc3080df1aa0ae75646348d3198a4c1ffe8f49b01bbe2"
+      }
+    },
+    {
+      "path": ".github/workflows/ebpf-validation.yml",
+      "before": null,
+      "after": {
+        "bytes": 9516,
+        "sha256": "2bf180de14f6599bbefc6bf8a466b5d0294732c8f44fa3cdd315012ec42bb3ca"
+      }
+    },
+    {
+      "path": "AGENTS.md",
+      "before": {
+        "bytes": 69139,
+        "sha256": "d2ac529c7d89a8b088e7aaec5aed377497d1458f0dfc130da070403f16683a09"
+      },
+      "after": {
+        "bytes": 69224,
+        "sha256": "7c9a77d3ef7122137ebb8cae260b58edd3a206eddb18c8b770c7ab163e6d6693"
+      }
+    },
+    {
+      "path": "docs/architecture/ebpf/verification-2026-10-16.md",
+      "before": {
+        "bytes": 37850,
+        "sha256": "310660a9c523f67b52182b3cf6b63c2481743d913749cf2e564fa30e946362d1"
+      },
+      "after": {
+        "bytes": 38500,
+        "sha256": "33a0ebf186c2f250f6f76d34056b5593d11f4bb2b307e8aafef60344a2a3d4ca"
+      }
+    },
+    {
+      "path": "docs/specifications/ebpf/PROVENANCE.md",
+      "before": {
+        "bytes": 6820,
+        "sha256": "f3050349f7b3a1e332b3a213365a18fad0835750693722ac04131db59882dc4d"
+      },
+      "after": {
+        "bytes": 7247,
+        "sha256": "7c874e6aaa50a10f304361d83d970309b44705ea04dd15086d3b43b0ffccaf6d"
+      }
+    },
+    {
+      "path": "docs/specifications/windows/native-continue/supplement-cases.json",
+      "before": null,
+      "after": {
+        "bytes": 16449,
+        "sha256": "785531e387f32eb11735730bd0cdfbbee9c127b1eb2cd39c4346a1333127cfac"
+      }
+    },
+    {
+      "path": "src/user/windows/hle/dispatch.rs",
+      "before": {
+        "bytes": 49287,
+        "sha256": "db0a372e1d54cf536185ef8ced3fd5fbb31f49e332c6b6f4ce6126f47aed9195"
+      },
+      "after": {
+        "bytes": 49757,
+        "sha256": "1342a8ac3c25cd758c6870c39d10976d0f40998ff9f43f302fad41047c87c466"
+      }
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "before": {
+        "bytes": 193472,
+        "sha256": "dc204e3e5952ba37b6699e17d644cce0e583d6678763e04a92e85174b607c475"
+      },
+      "after": {
+        "bytes": 193967,
+        "sha256": "4af3d2537d92c8332f806b11a7d12174d107ae2c82877a8c63f3e9dcb446fed2"
+      }
+    },
+    {
+      "path": "src/user/windows/process/mod.rs",
+      "before": {
+        "bytes": 16380,
+        "sha256": "9b0ec4b0f670b3a2f980b567ca50be1a141609a427154b10fa87ce89bb213698"
+      },
+      "after": {
+        "bytes": 16401,
+        "sha256": "4c9c74c7b509aa2377f32b2edbbb404a615208379c47a851880404c0482b063f"
+      }
+    },
+    {
+      "path": "src/user/windows/process/sched.rs",
+      "before": {
+        "bytes": 62670,
+        "sha256": "96d12b1ee422e167e7f426b86bb5374ba4ea53f3243e1f584e3b4ffbea3c1e7e"
+      },
+      "after": {
+        "bytes": 62754,
+        "sha256": "699fb94a57a74831669fdec702d0389fa69639461622e39f10c35b4c4fc2dcf8"
+      }
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/continue_alert_leaf_tests.rs",
+      "before": {
+        "bytes": 5587,
+        "sha256": "71fd19d73c8fe628553b43d719d0722bdcb98abae6c8a9ed48ce9278d5f32a27"
+      },
+      "after": {
+        "bytes": 7335,
+        "sha256": "78c14741c8de4c5dc45d9db8157d3a7befe46c302f546ab42100dfb2fba87c9a"
+      }
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/continue_alert_tests.rs",
+      "before": {
+        "bytes": 18068,
+        "sha256": "e2b3a680668052e7bd05374f0ec5c8fe2eabadb5208fd47720f874d968099b62"
+      },
+      "after": {
+        "bytes": 26054,
+        "sha256": "0420a7f564c4028411c06fb248a89b4c33555d9d08ff143ce63217cc0e9f9611"
+      }
+    },
+    {
+      "path": "tests/suites/tooling/ci_actions_pinned.rs",
+      "before": {
+        "bytes": 18282,
+        "sha256": "d080504933d820ef240d2b328e441a7503b9ae887700ed126d90010ce6292a89"
+      },
+      "after": {
+        "bytes": 25001,
+        "sha256": "d3b655b2fec8edc4cad7559910b70b0f33bd91ef0fe8a0a02320d0cb4e5de8cc"
+      }
+    },
+    {
+      "path": "tools/ebpf-conformance/README.md",
+      "before": {
+        "bytes": 4989,
+        "sha256": "7840f7b2239162167c1b67934390e91ce1cc7506c59ac998cb2ba9143e4c03d8"
+      },
+      "after": {
+        "bytes": 5493,
+        "sha256": "4a8e06a0e9b6caa9470a0bed444843cab6b19493bde96e3e5a2756398f9d127b"
+      }
+    },
+    {
+      "path": "tools/ebpf-conformance/run.py",
+      "before": {
+        "bytes": 15596,
+        "sha256": "5d4d95924567c576baef80bd038e7d66505f30a36ab7db40888c475b82d8bc7e"
+      },
+      "after": {
+        "bytes": 16297,
+        "sha256": "3592f688501c23ffd35f7e6181f0842223ee7368f6bf851a9d74a7e8eeec26af"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/README.md",
+      "before": {
+        "bytes": 7972,
+        "sha256": "798f009d9e1c6bf9963bed58cf5d591508142fb6913682d53f4dda53fe86f5a8"
+      },
+      "after": {
+        "bytes": 8791,
+        "sha256": "5aea726efc93ba6a19635b42270352cdc4ee545373a8563398d44ed481affd73"
+      }
+    }
+  ],
+  "scope": "Historical epoch1 source identities are mapped explicitly; fresh epoch3 gates establish the current source separately."
+}

@@ -24,6 +24,7 @@ pub(crate) mod thread;
 pub use super::dll::libraries::LoaderState;
 pub use fiber::FiberState;
 pub use sched::RunStatus;
+pub(crate) use sched::{continue_alertable, is_apc_dispatcher};
 pub use thread::{Thread, ThreadState};
 
 use std::collections::BTreeMap;

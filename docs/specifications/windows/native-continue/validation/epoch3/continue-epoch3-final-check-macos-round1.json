@@ -1,0 +1,31 @@
+{
+  "state": "finished",
+  "utc": "2026-10-19T23:45:43.668459+00:00",
+  "host": "macos",
+  "round": 1,
+  "pid": 63275,
+  "steps": [
+    {
+      "name": "portable-proof",
+      "argv": [
+        "python3",
+        "-B",
+        "/Users/int/.assist-continue-20261019/docs/specifications/windows/native-continue/check_validation.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-continue-20261019"
+      ],
+      "exit-code": 0,
+      "log": "continue-epoch3-final-check-macos-round1.log",
+      "bytes": 1791,
+      "sha256": "dded60fa06968524ae2ba1b2e735db811c37efdd8cda79f579e00c7dedfbe077"
+    }
+  ],
+  "exit-code": 0,
+  "envelope": {
+    "bytes": 54334,
+    "sha256": "6b1ea90b9c3ffe394de7d5ea73be3d8f57a3a225863f9093a592763e5793f714"
+  },
+  "completed-utc": "2026-10-19T23:45:47.014371+00:00"
+}

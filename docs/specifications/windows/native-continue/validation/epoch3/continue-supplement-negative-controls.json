@@ -1,0 +1,51 @@
+{
+  "controls": [
+    {
+      "name": "false-abandonment-delivers-early",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "true-abandonment-delivers-late",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "inside-alert-priority",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "inside-alert-status",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "null-saved-target",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-worker-exit",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "callback-thread",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "supplement-projection",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "supplement-source",
+      "rejected": true,
+      "error-type": "AssertionError"
+    }
+  ],
+  "all-rejected": true,
+  "scope": "Supplement launch/log/outer hashes rebound; independent native order/context/source/profile checks remain unchanged."
+}

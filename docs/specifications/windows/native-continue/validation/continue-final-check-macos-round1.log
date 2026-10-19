@@ -1,0 +1,31 @@
+{
+  "host": "macos",
+  "state": "verified",
+  "source-files": 25069,
+  "source-bytes": 1834242339,
+  "owning-source-inputs": 3811,
+  "library-gates": {
+    "macos": {
+      "passed": 8079,
+      "failed": 0,
+      "ignored": 2
+    },
+    "linux": {
+      "passed": 8073,
+      "failed": 0,
+      "ignored": 2
+    },
+    "windows": {
+      "passed": 7540,
+      "failed": 5,
+      "ignored": 2
+    }
+  },
+  "native-resumes": 52,
+  "native-post-checks": 104,
+  "native-callbacks": 48,
+  "ordinary-smoke-exit": 0,
+  "whoami-frontier": "NtQueryVirtualMemory class3",
+  "full-process-goal-complete": false,
+  "scope": "Exact selections and retained ABI184 consumers; current-root whole GUI/plugin/packages remain separate."
+}

@@ -1,0 +1,33 @@
+{
+  "files": [
+    {
+      "role": "include/assist/emulation/rax/rax_process.hpp",
+      "bytes": 2970,
+      "sha256": "525c9a3bfeb7d5626b3690905e293f2f464908039aa93497b00464f76aa8bdff",
+      "repository-commit": "e2fc5b483be7cad2dae17d889690cc398973c5e8",
+      "git-blob": "c98b4fc3bc0d64c57a0b3ec2a90b8225804b4ab2"
+    },
+    {
+      "role": "include/assist/emulation/rax/librax_loader.hpp",
+      "bytes": 7710,
+      "sha256": "5aa38b2f472231ebd086711fec46ca07167ea5155d95c01ae3b74d57d6303437",
+      "repository-commit": "e2fc5b483be7cad2dae17d889690cc398973c5e8",
+      "git-blob": "5d7ad9b4aafb3bf74f5287f54da2361e1a4e4b9b"
+    },
+    {
+      "role": "src/emulation/rax/rax_process.cpp",
+      "bytes": 8600,
+      "sha256": "ed55d78681a9a59e384186382d998244d80ca5665793e60f5e7577d88d526564",
+      "repository-commit": "e2fc5b483be7cad2dae17d889690cc398973c5e8",
+      "git-blob": "32ae6add17a4091e9e77170afa5999b6433a2a3e"
+    },
+    {
+      "role": "vendor/rax/capi/include/rax.h",
+      "bytes": 70196,
+      "sha256": "e8438269c7f9411da7c92dff70942dbb839570cda9a6ac1bec0b78ed731e829a",
+      "repository-commit": "5d475727a72106d24fbd4178df69a6f85efbf85f",
+      "git-blob": "34ee4b68a242ed6778530346f540b3f1a3cd62a5"
+    }
+  ],
+  "scope": "Native before/after digests are matched to committed source blobs. Retained Assist implementation bytes remain in their owning repository; RAX header bytes are covered by the RAX frozen source graph."
+}

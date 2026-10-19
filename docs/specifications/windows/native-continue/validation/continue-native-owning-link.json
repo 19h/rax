@@ -1,0 +1,8 @@
+{
+  "state": "failed",
+  "pid": 8792,
+  "steps": [],
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\prepare-continue-native-link.py\", line 9, in <module>\n    d=json.loads((S/'continue-native-epoch1-gates.json').read_text());assert d['state']!='failed'\n  File \"json\\__init__.py\", line 346, in loads\n  File \"json\\decoder.py\", line 345, in decode\n  File \"json\\decoder.py\", line 363, in raw_decode\njson.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)\n",
+  "utc": "2026-10-19T22:03:01.899059+00:00"
+}

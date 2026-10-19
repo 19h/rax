@@ -1,0 +1,13 @@
+   Compiling vm-memory v0.17.1 (/Users/int/.assist-continue-20261019/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/.assist-continue-20261019)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 13s
+     Running unittests src/lib.rs (target/debug/deps/rax-754f4d2a527a4423)
+
+running 3 tests
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_consumes_existing_alert_before_callbacks_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_empty_resume_restores_target_without_fabricated_status_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::continue_alert_tests::native_continue_alert_pending_apcs_capture_replaced_context_and_resume_it_all_abis ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 8072 filtered out; finished in 0.04s
+

@@ -1,0 +1,23 @@
+{
+  "utc": "2026-10-19T22:50:57.346268+00:00",
+  "exit-code": 0,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_continue_alert",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "log": "continue-epoch2-focus.log",
+  "bytes": 2402,
+  "sha256": "c4453e9f82bac4b967c3e70aae403fbb9a814f1df80b4bb0de819d86f9ed56af",
+  "results": [
+    "ok. 12 passed; 0 failed; 0 ignored; 0 measured; 8072 filtered out; finished in 0.42s"
+  ]
+}

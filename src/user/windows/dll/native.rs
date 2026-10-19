@@ -506,9 +506,9 @@ fn protect(c: &mut Ctx) -> ApiResult {
     }
 }
 fn continue_context(c: &mut Ctx) -> ApiResult {
-    if c.u32(1)? != 0 {
-        return Err(c.unsupported("NtContinue alertable APC delivery"));
-    }
+    // NT BOOLEAN is eight bits. Validate the complete context before any alert
+    // or queue mutation; dispatch applies it before starting an APC frame.
+    let test_alert = c.u32(1)? as u8 != 0;
     let address = c.ptr(0)?;
     if address % super::super::context::RegContext::align(c.arch()) != 0 {
         return Flow::ret(STATUS_INVALID_PARAMETER.into());
@@ -517,7 +517,11 @@ fn continue_context(c: &mut Ctx) -> ApiResult {
     if let Err(status) = context.validate(&c.t.cpu) {
         return Flow::ret(status.into());
     }
-    Ok(Flow::Resume(Box::new(context)))
+    Ok(if test_alert {
+        Flow::ResumeAlertable(Box::new(context))
+    } else {
+        Flow::Resume(Box::new(context))
+    })
 }
 fn capture_context(c: &mut Ctx) -> ApiResult {
     let addr = c.ptr(0)?;
@@ -630,7 +634,7 @@ mod tests {
     }
 
     #[test]
-    fn ntcontinue_rejects_invalid_state_and_explicitly_rejects_alert_delivery() {
+    fn ntcontinue_validates_state_before_selecting_context_resume_and_alert_check() {
         let mut cfg = WindowsConfig::new("context-api-test.exe", Vec::new());
         cfg.seed = Some(1);
         cfg.arena_bytes = 64 << 20;
@@ -683,8 +687,8 @@ mod tests {
         c.t.cpu.set_gpr(1, address);
         c.t.cpu.set_gpr(2, 1);
         assert!(matches!(
-            continue_context(&mut c),
-            Err(ApiErr::Unimplemented(_))
+            continue_context(&mut c).unwrap(),
+            Flow::ResumeAlertable(_)
         ));
         c.t.cpu.set_gpr(2, 0);
         c.t.cpu.set_gpr(1, u64::MAX - 15);

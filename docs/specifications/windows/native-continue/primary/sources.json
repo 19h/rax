@@ -1,0 +1,9 @@
+{
+  "url": "https://raw.githubusercontent.com/winsiderss/phnt/53fbbdc5b5d2b08761db1c7b26bfa8c820924356/ntxcapi.h",
+  "utc": "2026-10-19T20:51:00.363887+00:00",
+  "bytes": 2556,
+  "sha256": "515ea365ad333fd3739f11228133dd4c6f26a958caffc36dcaacae512df19bd3",
+  "local-path": "/Users/int/.assist-alert3-20261019/target/next-native-continue/primary/phnt-ntxcapi.h",
+  "scope": "Primary declaration for next reached NtContinue TestAlert frontier; no current candidate edits.",
+  "file": "phnt-ntxcapi.h"
+}

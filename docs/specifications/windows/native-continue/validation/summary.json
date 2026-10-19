@@ -1,0 +1,127 @@
+{
+  "utc": "2026-10-19T22:28:26.511109+00:00",
+  "source-epoch": 1,
+  "source-files": 25069,
+  "source-bytes": 1834242339,
+  "published-code-parent": "5d475727a72106d24fbd4178df69a6f85efbf85f",
+  "native-resumes": 52,
+  "native-post-checks": 104,
+  "native-callbacks": 48,
+  "native-corruptions-rejected": 13,
+  "focused-shared-tests": 9,
+  "focused-windows-tests": 10,
+  "library-gates": {
+    "macos": {
+      "passed": 8079,
+      "failed": 0,
+      "ignored": 2
+    },
+    "linux": {
+      "passed": 8073,
+      "failed": 0,
+      "ignored": 2
+    },
+    "windows": {
+      "passed": 7540,
+      "failed": 5,
+      "ignored": 2
+    }
+  },
+  "capi-per-host": 183,
+  "integration": {
+    "macos": 544,
+    "linux": 544,
+    "windows": 4
+  },
+  "ordinary-programs": {
+    "actual-core": {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 508624474,
+      "sha256": "0654968feb60b5a26d6a6c971c33c569a06e5a78674c8ed1daa55435b56b60b4"
+    },
+    "outcomes": [
+      {
+        "name": "smoke",
+        "terminal-turn": 3115529,
+        "terminal": "Complete(Exited(0))",
+        "native": {
+          "exit-code": 0,
+          "stdout-hex": "",
+          "stderr-hex": ""
+        },
+        "continue-leaves": [
+          "entry=0x7fff38a41470 svc-pc=0x7fff38a41470 service=0x43"
+        ],
+        "continue-calls": [
+          "turn=2943204 tid=8 test=1 context=0x93fc30 flags=0x400017 target-pc=0x7fff38b24d30 target-sp=0x93ffc0 target-gpr0=0x140001048 target-gpr3=0x0 validation=Ok(()) alerted=false queued=0"
+        ],
+        "continue-results": [
+          "turn=2943204 tid=8 pc=0x7fff38b24d30 sp=0x93ffc0 gpr0=0x140001048 gpr3=0x0 alerted=false queued=0 frames=0 wait-status=None"
+        ],
+        "console": [
+          "program=C:\\Windows\\Temp\\assist-native-rax-20261010\\src-continue-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe stream=stdout bytes=0 hex=",
+          "program=C:\\Windows\\Temp\\assist-native-rax-20261010\\src-continue-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe stream=stderr bytes=0 hex="
+        ]
+      },
+      {
+        "name": "whoami",
+        "terminal-turn": 2966197,
+        "terminal": "Complete(Internal(\"native NTDLL service NtQueryVirtualMemory: Unimplemented(\\\"NtQueryVirtualMemory: NtQueryVirtualMemory class 3\\\")\"))",
+        "native": {
+          "exit-code": 0,
+          "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+          "stderr-hex": ""
+        },
+        "continue-leaves": [
+          "entry=0x7fff38a41470 svc-pc=0x7fff38a41470 service=0x43"
+        ],
+        "continue-calls": [],
+        "continue-results": [],
+        "console": [
+          "program=C:\\Windows\\System32\\whoami.exe stream=stdout bytes=0 hex=",
+          "program=C:\\Windows\\System32\\whoami.exe stream=stderr bytes=0 hex="
+        ]
+      }
+    ]
+  },
+  "ordinary-smoke-success": true,
+  "full-process-goal-complete": false,
+  "retained-assist-abi": 184,
+  "current-root-abi": 264,
+  "whole-current-root-products-validated": false,
+  "scope": "One Windows29683 ARM64 kernel/four producer ABI views, actual installed native/WoW64 leaves, complete three-host selections and retained ABI184 consumers. One ordinary ARM64 smoke guest exits0; whoami remains unsupported at virtual-memory class3.",
+  "harness-qualifications": "Linux attempt a stopped before Cargo because its read-only mount lacked a nested target mountpoint. Native owning link handoff a hit a transient partial JSON write; b retries that read and verifies the exact3811inputs before switching the task-owned junction. Parent integration changes only prior feature derived proof outside the complete compilation graph; corrected symlink-text verification confirms every25069inputs. Raw attempts remain preserved. The first C++ boundary controller could not locate cl.exe before creating a compiler process; b uses the absolute captured toolchain path, a case-normalized Windows environment, and isolated object output. Product inputs remained unchanged.",
+  "owning-cpp-capi": {
+    "scope": "Retained Assist ABI184 adapter/C ABI/actual carrier; distinct from current-root whole GUI/plugin/package proof.",
+    "smoke-exit-reason": 4,
+    "smoke-exit-code": 0,
+    "smoke-elapsed-us": 2199268,
+    "smoke-turns": 975,
+    "slice-instructions": 4096,
+    "whoami-frontier": "NtQueryVirtualMemory class3"
+  },
+  "final-corruptions-rejected": 20,
+  "portable-proof-round1": {
+    "macos": {
+      "exit-code": 0,
+      "envelope": {
+        "bytes": 25306,
+        "sha256": "19a6d861574a37024a5dd7ea418650d47ee1d98affbe71a25939868a57f31e2c"
+      }
+    },
+    "linux": {
+      "exit-code": 0,
+      "envelope": {
+        "bytes": 25306,
+        "sha256": "19a6d861574a37024a5dd7ea418650d47ee1d98affbe71a25939868a57f31e2c"
+      }
+    },
+    "windows": {
+      "exit-code": 0,
+      "envelope": {
+        "bytes": 25306,
+        "sha256": "19a6d861574a37024a5dd7ea418650d47ee1d98affbe71a25939868a57f31e2c"
+      }
+    }
+  }
+}

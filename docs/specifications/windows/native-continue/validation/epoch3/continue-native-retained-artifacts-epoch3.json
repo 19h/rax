@@ -1,0 +1,57 @@
+{
+  "state": "finished",
+  "pid": 9132,
+  "artifacts": [
+    {
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+        "bytes": 858287990,
+        "sha256": "cf3bd05290c1bb28ac275564c91ff9c068f643b9e925d1b91c0103e7fbbb514b"
+      },
+      "retained": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-continue-epoch3\\target\\retained-owning-epoch3\\assist_rs.lib",
+        "bytes": 858287990,
+        "sha256": "cf3bd05290c1bb28ac275564c91ff9c068f643b9e925d1b91c0103e7fbbb514b"
+      }
+    },
+    {
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+        "bytes": 508150228,
+        "sha256": "01d41dc9e2c65f22a61967cf6a4c42045c2e9b7be5c484dd3386f5c2b100d641"
+      },
+      "retained": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-continue-epoch3\\target\\retained-owning-epoch3\\librax-934115059aa64c85.rlib",
+        "bytes": 508150228,
+        "sha256": "01d41dc9e2c65f22a61967cf6a4c42045c2e9b7be5c484dd3386f5c2b100d641"
+      }
+    },
+    {
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\continue-ordinary-owner-epoch3.exe",
+        "bytes": 27015168,
+        "sha256": "37edd80206abb25ef1e5d49115c9a3dc7103927429f8ef86793610ad94a0d731"
+      },
+      "retained": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-continue-epoch3\\target\\retained-owning-epoch3\\continue-ordinary-owner-epoch3.exe",
+        "bytes": 27015168,
+        "sha256": "37edd80206abb25ef1e5d49115c9a3dc7103927429f8ef86793610ad94a0d731"
+      }
+    },
+    {
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\continue-owning-capi-epoch3.exe",
+        "bytes": 32574464,
+        "sha256": "9e2de015dff8088d85bf57901e208397c24724ae047bbba4155cd2b5510e8507"
+      },
+      "retained": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-continue-epoch3\\target\\retained-owning-epoch3\\continue-owning-capi-epoch3.exe",
+        "bytes": 32574464,
+        "sha256": "9e2de015dff8088d85bf57901e208397c24724ae047bbba4155cd2b5510e8507"
+      }
+    }
+  ],
+  "exit-code": 0,
+  "scope": "Private byte copies preserve the actual owning archives and observer executable before later semantic-group rebuilds reuse their Cargo output paths. Runtime DLLs are not copied.",
+  "utc": "2026-10-19T23:27:14.466567+00:00"
+}

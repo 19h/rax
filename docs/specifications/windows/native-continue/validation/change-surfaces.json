@@ -1,0 +1,12 @@
+{
+  "direct-decode": "Unaffected: no ISA encoding or decoder changes.",
+  "direct-execute": "Unaffected: existing CPU adapters apply architecture RegContext.",
+  "cpu-state": "Affected: checked replacement precedes APC capture; result registers retain supplied values.",
+  "memory-mmu": "Unaffected implementation: existing RegContext read/validate and callback stack checked writes are reused. Invalid pointers/flags preserve queue/alert/TEB state.",
+  "smir-lift-ir-interpreter-optimizer-lowering-jit": "Unaffected: no instruction representation, lowering admission or JIT change. Native/full tests still exercise current upstream core.",
+  "backend-machine-device-oracle": "Unaffected: user process HLE and native-service scheduling only.",
+  "c-abi": "Opaque and unchanged; public Rust Flow enum adds ResumeAlertable.",
+  "scheduling-lifecycle": "Affected: shared user-alert priority and same-height context-pruning; cancellation and forced-exit coverage.",
+  "windows-macos-linux": "Same shared runtime sources compiled and executed by all three host gates. Windows-only test executes real installed native/WoW64 leaves.",
+  "tests-docs": "New shared/native modules registered in the existing library target; exact native replay is compiled via include_str. Documentation and primary/raw proof are separate from product source."
+}

@@ -1,0 +1,66 @@
+{
+  "controls": [
+    {
+      "name": "coherent-library-count",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "filtered-full-selection",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "unrecognized-windows-failure",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "rejected-wait-regression-lost",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "unconfirmed-ownership-assumption",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "upstream-feature-overlap",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "zero-archive-walk",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "owning-core-drift",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "wrong-smoke-exit",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "wrong-restored-stack",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "capi-success-converted-to-failure",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "false-full-process-completion",
+      "rejected": true,
+      "error-type": "AssertionError"
+    }
+  ],
+  "all-rejected": true,
+  "scope": "Direct current checker evaluated with relevant log/receipt hashes and coherent result rows rebound; no outer envelope rejection substitutes for current semantics."
+}

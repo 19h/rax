@@ -1,0 +1,11 @@
+program=C:\Windows\Temp\assist-native-rax-20261010\src-continue-epoch3\tests\fixtures\user\windows\bin\arm64\smoke.exe prefix-turns=2100000 result=BudgetExhausted
+continue-leaf entry=0x7fff38a41470 svc-pc=0x7fff38a41470 service=0x43
+alert-call turn=2943177 tid=8 pc=0x7fff38a42d70 user-alerted=false queued=0
+alert-result turn=2943177 tid=8 status=0x0 pc=0x7fff38a42d74 user-alerted=false queued=0 frames=0
+continue-call turn=2943204 tid=8 test=1 context=0x93fc30 flags=0x400017 target-pc=0x7fff38b24d30 target-sp=0x93ffc0 target-gpr0=0x140001048 target-gpr3=0x0 validation=Ok(()) alerted=false queued=0
+continue-result turn=2943204 tid=8 pc=0x7fff38b24d30 sp=0x93ffc0 gpr0=0x140001048 gpr3=0x0 alerted=false queued=0 frames=0 wait-status=None
+progress turn=3000000 result=BudgetExhausted
+terminal turn=3115529 Complete(Exited(0))
+guest-console program=C:\Windows\Temp\assist-native-rax-20261010\src-continue-epoch3\tests\fixtures\user\windows\bin\arm64\smoke.exe stream=stdout bytes=0 hex=
+guest-console program=C:\Windows\Temp\assist-native-rax-20261010\src-continue-epoch3\tests\fixtures\user\windows\bin\arm64\smoke.exe stream=stderr bytes=0 hex=
+observation-finished program=C:\Windows\Temp\assist-native-rax-20261010\src-continue-epoch3\tests\fixtures\user\windows\bin\arm64\smoke.exe turn-limit=10000000 reached-alert=1 reached-continue=1 terminal=true

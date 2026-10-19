@@ -1,0 +1,21 @@
+Rejected coherent-library-count
+Rejected filtered-full-selection
+Rejected unrecognized-windows-failure
+Rejected rejected-wait-regression-lost
+Rejected unconfirmed-ownership-assumption
+Rejected upstream-feature-overlap
+Rejected zero-archive-walk
+Rejected owning-core-drift
+Rejected wrong-smoke-exit
+Rejected wrong-restored-stack
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/native-continue-20261019/stress-continue-epoch3.py", line 26, in <module>
+    root=Path(temporary)/name;shutil.copytree(D,root);mutate(root)
+                                                      ~~~~~~^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/native-continue-20261019/stress-continue-epoch3.py", line 21, in capi
+    v=root/'validation/epoch3';d=json.loads((v/'capi.json').read_text());out=(v/d['steps'][1]['log']).read_text();old=next(x for x in out.splitlines()if x.startswith('api-result '));row=json.loads(old[len('api-result '):]);row['reason']=5;new='api-result '+json.dumps(row,separators=(',',':'));logchange(root,'capi.json','ordinary',old,new);edit(root,'capi.json',lambda d:d['outcomes'][0].update(reason=5))
+                                                                                                                                                                                                                                                                                                      ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/native-continue-20261019/stress-continue-epoch3.py", line 10, in logchange
+    if x['log']==f.name:x['log-sha256']=row['sha256']
+       ~^^^^^^^
+KeyError: 'log'

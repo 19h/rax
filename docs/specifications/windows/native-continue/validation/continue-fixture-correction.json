@@ -1,0 +1,7 @@
+{
+  "failed-attempt": "continue-focus-b.json",
+  "classification": "invalid test fixture assumption",
+  "cause": "CONTEXT bit0x10 is ARM64_X18, a supported ARM64 group, rather than an invalid universal context group. NtContinue correctly resumed a context selecting only that group.",
+  "correction": "The invalid-group test now uses bit0x8000 and explicitly asserts RegContext::validate rejects it before service invocation. No product source changed for this correction.",
+  "unchanged-proof": "The same compiled selection passed the complete52resume104postcheck48callback native replay."
+}

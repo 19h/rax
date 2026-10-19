@@ -730,6 +730,19 @@ static APC: Api = Api {
     imp: unused_apc_entry,
 };
 
+pub(crate) fn is_apc_dispatcher(api: &Api) -> bool {
+    std::ptr::eq(api, &APC)
+}
+
+/// The caller has already applied and pruned the replacement context. Capture
+/// that target for APC return, without a synthetic wait or NTSTATUS result.
+pub(crate) fn continue_alertable(p: &mut Proc, t: &mut Thread) -> Outcome {
+    match t.check_user_alert() {
+        thread::AlertCheck::Alerted | thread::AlertCheck::Empty => Outcome::Continue,
+        thread::AlertCheck::PendingApcs => begin_apcs(p, t, None),
+    }
+}
+
 fn begin_apcs(p: &mut Proc, t: &mut Thread, wait_status: Option<u64>) -> Outcome {
     let saved = RegContext::capture(&t.cpu);
     let sp = t.cpu.sp();

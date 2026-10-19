@@ -1,0 +1,35 @@
+{
+  "state": "failed",
+  "source-epoch": 2,
+  "host": "macos",
+  "driver-pid": 3125,
+  "steps": [
+    {
+      "name": "full",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 527.1000570410106,
+      "log": "continue-macos-epoch2-full.log",
+      "bytes": 849060,
+      "sha256": "4f82e8780ea20de88ef1688200f5f10c44fff9b4f735fa9f28e6aaf054a542c8",
+      "results": [
+        "FAILED. 8081 passed; 1 failed; 2 ignored; 0 measured; 0 filtered out; finished in 431.67s"
+      ]
+    }
+  ],
+  "utc": "2026-10-19T22:52:16.940755+00:00",
+  "child-pid": 3153,
+  "current-step": "full",
+  "last-exit-code": 101
+}

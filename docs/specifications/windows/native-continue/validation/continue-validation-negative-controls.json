@@ -1,0 +1,96 @@
+{
+  "controls": [
+    {
+      "name": "coherent-library-count",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "filtered-full-selection",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "unrecognized-windows-failure",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "capi-count",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "integration-count",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "frozen-source-hash",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "parent-compiled-intersection",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "owning-helper-hash",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "zero-archive-walk",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "owning-core-drift",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-control-failure",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "wrong-smoke-exit",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "fabricated-zero-result-register",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "wrong-restored-stack",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "false-whole-root-validation",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "false-full-process-completion",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "retained-byte-copy-drift",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "kernel-profile-drift",
+      "rejected": true,
+      "error-type": "AssertionError"
+    }
+  ],
+  "all-rejected": true,
+  "scope": "Outer envelope and relevant log/receipt hashes are rebound after each corruption; coherent counts are changed together. Source/checker semantics remain fixed."
+}

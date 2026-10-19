@@ -1,0 +1,30 @@
+profile=x64 pointer=8 context-bytes=1232
+abandon case=13 test=0 seen=1 target-pc=00007FF7865B1665 target-sp=000000800087EFC0
+resume case=13 test=1 seen=1 last=0000C0DE tid=00001B90
+check case=13 index=0 status=00000000 before=1 after=2 last=0000C0DE
+check case=13 index=1 status=00000000 before=2 after=2 last=0000C0DE
+event case=13 index=0 value=1111 phase=1 last=0000C0DE tid=00001B90
+event case=13 index=1 value=2222 phase=3 last=0000C0DE tid=00001B90
+worker case=13 wait=00000000 exit=0
+abandon case=14 test=1 seen=1 target-pc=00007FF7865B1665 target-sp=000000800087EF10
+resume case=14 test=1 seen=2 last=0000C0DE tid=000009DC
+check case=14 index=0 status=00000000 before=2 after=2 last=0000C0DE
+check case=14 index=1 status=00000000 before=2 after=2 last=0000C0DE
+event case=14 index=0 value=1111 phase=1 last=0000C0DE tid=000009DC
+event case=14 index=1 value=2222 phase=1 last=0000C0DE tid=000009DC
+worker case=14 wait=00000000 exit=0
+abandon case=15 test=0 seen=1 target-pc=00007FF7865B1665 target-sp=000000800087EDD0
+resume case=15 test=1 seen=1 last=0000C0DE tid=000025F0
+check case=15 index=0 status=00000000 before=1 after=1 last=0000C0DE
+check case=15 index=1 status=00000000 before=1 after=1 last=0000C0DE
+event case=15 index=0 value=1111 phase=1 last=0000C0DE tid=000025F0
+worker case=15 wait=00000000 exit=0
+inside-alert case=16 status=00000000 seen=1
+abandon case=16 test=1 seen=1 target-pc=00007FF7865B1665 target-sp=000000800087EE50
+resume case=16 test=1 seen=1 last=0000C0DE tid=00000590
+check case=16 index=0 status=00000000 before=1 after=2 last=0000C0DE
+check case=16 index=1 status=00000000 before=2 after=2 last=0000C0DE
+event case=16 index=0 value=1111 phase=1 last=0000C0DE tid=00000590
+event case=16 index=1 value=2222 phase=3 last=0000C0DE tid=00000590
+worker case=16 wait=00000000 exit=0
+complete cases=4

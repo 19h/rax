@@ -1,0 +1,23 @@
+{
+  "utc": "2026-10-19T22:48:13.277958+00:00",
+  "exit-code": 0,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_continue_alert",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "log": "continue-exact-target-fix.log",
+  "bytes": 2220,
+  "sha256": "18cbad3cfac4377a9f6483bd83d8fe2c702d53c68a37cf56f88f4620e438b0fe",
+  "results": [
+    "ok. 11 passed; 0 failed; 0 ignored; 0 measured; 8072 filtered out; finished in 0.37s"
+  ]
+}

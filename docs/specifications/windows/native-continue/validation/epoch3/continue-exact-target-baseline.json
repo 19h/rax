@@ -1,0 +1,41 @@
+{
+  "utc": "2026-10-19T22:44:52.994097+00:00",
+  "exit-code": 101,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_continue_alert_exact_interrupted_target",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "inputs": [
+    {
+      "path": "src/user/windows/hle/dispatch.rs",
+      "bytes": 49287,
+      "sha256": "db0a372e1d54cf536185ef8ced3fd5fbb31f49e332c6b6f4ce6126f47aed9195"
+    },
+    {
+      "path": "src/user/windows/process/sched.rs",
+      "bytes": 62670,
+      "sha256": "96d12b1ee422e167e7f426b86bb5374ba4ea53f3243e1f584e3b4ffbea3c1e7e"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/continue_alert_tests.rs",
+      "bytes": 19101,
+      "sha256": "6092f2fdce5c0692369a9d7bbc95befe6dbd478b21fd1041953fb958d1ce2b76"
+    }
+  ],
+  "inputs-unchanged": true,
+  "log": "continue-exact-target-baseline.log",
+  "bytes": 1150,
+  "sha256": "3e38c47cab704ad7ace0e20a4f4111bb7a4748bf44d0053ffcbb28048a51920b",
+  "results": [
+    "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 8081 filtered out; finished in 0.01s"
+  ]
+}

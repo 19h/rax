@@ -101,6 +101,14 @@ pub struct Thread {
     pub attached: bool,
 }
 
+/// Priority of an owned user-alert check. An existing alert is consumed before
+/// queued APCs; the queue itself is not modified by this decision.
+pub(crate) enum AlertCheck {
+    Alerted,
+    PendingApcs,
+    Empty,
+}
+
 /// Default stack reservation when an image specifies none (1 MiB).
 const DEFAULT_STACK: u64 = 0x10_0000;
 
@@ -479,6 +487,16 @@ pub fn destroy(p: &mut Proc, t: Thread, code: u32) {
 }
 
 impl Thread {
+    pub(crate) fn check_user_alert(&mut self) -> AlertCheck {
+        if std::mem::take(&mut self.user_alerted) {
+            AlertCheck::Alerted
+        } else if self.apcs.is_empty() {
+            AlertCheck::Empty
+        } else {
+            AlertCheck::PendingApcs
+        }
+    }
+
     /// FLS follows the selected fiber; TLS continues to follow this thread.
     pub fn fls_key(&self) -> crate::user::windows::tls::FlsKey {
         self.current_fiber.map_or(

@@ -1,0 +1,83 @@
+profile=x86-laa pointer=4 context-bytes=716
+capture case=0 pc=006514B6 expected-pc=006514B6 sp=057EF72C expected-sp=057EF72C flags=00010007
+resume case=0 test=0 seen=0 last=0000C0DE tid=00000B6C
+check case=0 index=0 status=00000000 before=0 after=0 last=0000C0DE
+check case=0 index=1 status=00000000 before=0 after=0 last=0000C0DE
+worker case=0 wait=00000000 exit=0
+capture case=1 pc=006514B6 expected-pc=006514B6 sp=0592F84C expected-sp=0592F84C flags=00010007
+resume case=1 test=1 seen=0 last=0000C0DE tid=00001DB8
+check case=1 index=0 status=00000000 before=0 after=0 last=0000C0DE
+check case=1 index=1 status=00000000 before=0 after=0 last=0000C0DE
+worker case=1 wait=00000000 exit=0
+capture case=2 pc=006514B6 expected-pc=006514B6 sp=0592F73C expected-sp=0592F73C flags=00010007
+resume case=2 test=0 seen=0 last=0000C0DE tid=00001EEC
+check case=2 index=0 status=00000000 before=0 after=1 last=0000C0DE
+check case=2 index=1 status=00000000 before=1 after=1 last=0000C0DE
+event case=2 index=0 value=1111 phase=3 last=0000C0DE tid=00001EEC
+worker case=2 wait=00000000 exit=0
+capture case=3 pc=006514B6 expected-pc=006514B6 sp=0592F5BC expected-sp=0592F5BC flags=00010007
+resume case=3 test=1 seen=1 last=0000C0DE tid=00001210
+check case=3 index=0 status=00000000 before=1 after=1 last=0000C0DE
+check case=3 index=1 status=00000000 before=1 after=1 last=0000C0DE
+event case=3 index=0 value=1111 phase=1 last=0000C0DE tid=00001210
+worker case=3 wait=00000000 exit=0
+capture case=4 pc=006514B6 expected-pc=006514B6 sp=0592F7CC expected-sp=0592F7CC flags=00010007
+resume case=4 test=1 seen=2 last=0000C0DE tid=00001904
+check case=4 index=0 status=00000000 before=2 after=2 last=0000C0DE
+check case=4 index=1 status=00000000 before=2 after=2 last=0000C0DE
+event case=4 index=0 value=1111 phase=1 last=0000C0DE tid=00001904
+event case=4 index=1 value=2222 phase=1 last=0000C0DE tid=00001904
+worker case=4 wait=00000000 exit=0
+capture case=5 pc=006514B6 expected-pc=006514B6 sp=0592FA3C expected-sp=0592FA3C flags=00010007
+resume case=5 test=1 seen=3 last=0000C0DE tid=00000A04
+check case=5 index=0 status=00000000 before=3 after=3 last=0000C0DE
+check case=5 index=1 status=00000000 before=3 after=3 last=0000C0DE
+event case=5 index=0 value=1111 phase=1 last=0000C0DE tid=00000A04
+event case=5 index=1 value=2222 phase=1 last=0000C0DE tid=00000A04
+event case=5 index=2 value=3333 phase=1 last=0000C0DE tid=00000A04
+worker case=5 wait=00000000 exit=0
+alert case=6 status=00000000 seen=0
+capture case=6 pc=006514B6 expected-pc=006514B6 sp=0592F6AC expected-sp=0592F6AC flags=00010007
+resume case=6 test=1 seen=0 last=0000C0DE tid=000009DC
+check case=6 index=0 status=00000000 before=0 after=1 last=0000C0DE
+check case=6 index=1 status=00000000 before=1 after=1 last=0000C0DE
+event case=6 index=0 value=1111 phase=3 last=0000C0DE tid=000009DC
+worker case=6 wait=00000000 exit=0
+alert case=7 status=00000000 seen=0
+capture case=7 pc=006514B6 expected-pc=006514B6 sp=0592FA2C expected-sp=0592FA2C flags=00010007
+resume case=7 test=1 seen=0 last=0000C0DE tid=0000122C
+check case=7 index=0 status=00000000 before=0 after=0 last=0000C0DE
+check case=7 index=1 status=00000000 before=0 after=0 last=0000C0DE
+worker case=7 wait=00000000 exit=0
+alert case=8 status=00000000 seen=0
+capture case=8 pc=006514B6 expected-pc=006514B6 sp=0592F3BC expected-sp=0592F3BC flags=00010007
+resume case=8 test=0 seen=0 last=0000C0DE tid=00001EFC
+check case=8 index=0 status=00000101 before=0 after=0 last=0000C0DE
+check case=8 index=1 status=00000000 before=0 after=1 last=0000C0DE
+event case=8 index=0 value=1111 phase=4 last=0000C0DE tid=00001EFC
+worker case=8 wait=00000000 exit=0
+capture case=9 pc=006514B6 expected-pc=006514B6 sp=0592F80C expected-sp=0592F80C flags=00010007
+resume case=9 test=1 seen=1 last=0000ABCD tid=0000272C
+check case=9 index=0 status=00000000 before=1 after=1 last=0000C0DE
+check case=9 index=1 status=00000000 before=1 after=1 last=0000C0DE
+event case=9 index=0 value=4444 phase=1 last=0000C0DE tid=0000272C
+worker case=9 wait=00000000 exit=0
+capture case=10 pc=006514B6 expected-pc=006514B6 sp=0592FA6C expected-sp=0592FA6C flags=00010007
+resume case=10 test=2 seen=1 last=0000C0DE tid=000024CC
+check case=10 index=0 status=00000000 before=1 after=1 last=0000C0DE
+check case=10 index=1 status=00000000 before=1 after=1 last=0000C0DE
+event case=10 index=0 value=1111 phase=1 last=0000C0DE tid=000024CC
+worker case=10 wait=00000000 exit=0
+capture case=11 pc=006514B6 expected-pc=006514B6 sp=0592F96C expected-sp=0592F96C flags=00010007
+resume case=11 test=255 seen=1 last=0000C0DE tid=0000195C
+check case=11 index=0 status=00000000 before=1 after=1 last=0000C0DE
+check case=11 index=1 status=00000000 before=1 after=1 last=0000C0DE
+event case=11 index=0 value=1111 phase=1 last=0000C0DE tid=0000195C
+worker case=11 wait=00000000 exit=0
+alert case=12 status=00000000 seen=0
+capture case=12 pc=006514B6 expected-pc=006514B6 sp=0592F71C expected-sp=0592F71C flags=00010007
+resume case=12 test=0 seen=0 last=0000C0DE tid=00001C74
+check case=12 index=0 status=00000101 before=0 after=0 last=0000C0DE
+check case=12 index=1 status=00000000 before=0 after=0 last=0000C0DE
+worker case=12 wait=00000000 exit=0
+complete cases=13

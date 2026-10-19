@@ -1,0 +1,7 @@
+program=C:\Windows\System32\whoami.exe prefix-turns=2100000 result=BudgetExhausted
+continue-leaf entry=0x7fff38a41470 svc-pc=0x7fff38a41470 service=0x43
+terminal turn=2966197 Complete(Internal("native NTDLL service NtQueryVirtualMemory: Unimplemented(\"NtQueryVirtualMemory: NtQueryVirtualMemory class 3\")"))
+final-thread tid=8 pc=0x7fff38a41244 sp=0x1a5dbf0 args=[ffffffffffffffff, 1d60000, 3, 1a5dc40, 30, 0, 0, 0] bytes=Ok([c0, 3, 5f, d6, 0, 0, 0, 0, 0, 0, 0, 0, 61, 4, 0, d4]) last-error=Ok(6)
+guest-console program=C:\Windows\System32\whoami.exe stream=stdout bytes=0 hex=
+guest-console program=C:\Windows\System32\whoami.exe stream=stderr bytes=0 hex=
+observation-finished program=C:\Windows\System32\whoami.exe turn-limit=10000000 reached-alert=0 reached-continue=0 terminal=true

@@ -1,0 +1,40 @@
+{
+  "utc": "2026-10-19T21:38:37.169464+00:00",
+  "exit-code": 101,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_continue_alert",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "inputs": [
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 21164,
+      "sha256": "f913e7ec599a16e69352d51662e26b8ef84de48f6a75ff2ea56eb8f4e33bd169"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 49641,
+      "sha256": "fe1b163bf808e793995087bdd202eef47a700f6f5f7cabdc63e48ad02ba1032b"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/continue_alert_tests.rs",
+      "bytes": 4430,
+      "sha256": "0fb6d554e63143850059d7a30bcc853a4032304ce3bbcb36a9f491451b5caa1a"
+    }
+  ],
+  "log": "continue-baseline-a.log",
+  "bytes": 2992,
+  "sha256": "ccf981391116ce7d1fc0538a200cac27f428fc46bec2e24e22b5a1edd3c93b91",
+  "results": [
+    "FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 8072 filtered out; finished in 0.02s"
+  ]
+}

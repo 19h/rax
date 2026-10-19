@@ -1,0 +1,16 @@
+{
+  "controls": [
+    {
+      "name": "capi-wrong-smoke-exit-reason",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "capi-carrier-drift",
+      "rejected": true,
+      "error-type": "AssertionError"
+    }
+  ],
+  "all-rejected": true,
+  "scope": "Independent C API proof checker; ordinary API record and log hashes rebound when changed."
+}

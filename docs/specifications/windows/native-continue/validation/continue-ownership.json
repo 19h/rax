@@ -1,0 +1,21 @@
+{
+  "base": "5d475727a72106d24fbd4178df69a6f85efbf85f",
+  "code-base": "1b25f3438f63d8cc256ae05ca4270e675a084163 plus unchanged NtTestAlert code",
+  "scope": "Current semantic group based on the published alert commit. Entire frozen compilation graph preserved byte-for-byte across proof-only parent transition.",
+  "paths": [
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/alert.rs",
+    "src/user/windows/hle/mod.rs",
+    "src/user/windows/hle/dispatch.rs",
+    "src/user/windows/process/mod.rs",
+    "src/user/windows/process/thread.rs",
+    "src/user/windows/process/sched.rs",
+    "src/user/windows/process/services.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/continue_alert_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/continue_alert_leaf_tests.rs",
+    "src/user/windows/native-runtime.md"
+  ],
+  "evidence-prefix": "docs/specifications/windows/native-continue/",
+  "original-base": "711876bcf74e4113fe9ce2d31b439033243fc5c0"
+}

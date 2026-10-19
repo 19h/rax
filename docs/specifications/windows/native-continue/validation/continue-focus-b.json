@@ -1,0 +1,23 @@
+{
+  "utc": "2026-10-19T21:47:27.989523+00:00",
+  "exit-code": 101,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_continue_alert",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "log": "continue-focus-b.log",
+  "bytes": 1989,
+  "sha256": "abb050c5ae2de545723fcded89cbae2eddaa32b7a4c1cb8d5c29b031e868d707",
+  "results": [
+    "FAILED. 5 passed; 1 failed; 0 ignored; 0 measured; 8072 filtered out; finished in 0.30s"
+  ]
+}
